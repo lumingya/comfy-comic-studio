@@ -385,108 +385,44 @@ function toggleTheme() {
     }
 }
 
-// Synchronous LocalStorage load (First screen fast render)
-function syncLoadFromLocalStorage() {
-    // Load templates
-    const savedTpls = localStorage.getItem('comfy_comic_templates');
-    if (savedTpls) {
-        templates = JSON.parse(savedTpls);
-    } else {
-        templates = JSON.parse(JSON.stringify(defaultTemplates));
-        localStorage.setItem('comfy_comic_templates', JSON.stringify(templates));
-    }
+// Initialize memory variables with fallback defaults when cloud data is missing
+function initMemoryStateWithDefaults() {
+    templates = JSON.parse(JSON.stringify(defaultTemplates));
     activeTemplateId = templates[0]?.id || null;
 
-    // Load batch matrix
-    const savedMatrix = localStorage.getItem('comfy_comic_matrix');
-    if (savedMatrix) {
-        batchMatrix = JSON.parse(savedMatrix);
-    } else {
-        batchMatrix.rows = JSON.parse(JSON.stringify(defaultMatrixRows));
-        localStorage.setItem('comfy_comic_matrix', JSON.stringify(batchMatrix));
-    }
+    batchMatrix.rows = JSON.parse(JSON.stringify(defaultMatrixRows));
 
-    // Load Galleries
-    const savedG = localStorage.getItem('comfy_comic_galleries');
-    if (savedG) {
-        savedGalleries = JSON.parse(savedG);
-        savedGalleries.forEach(book => {
-            if (book.steps) {
-                book.steps.forEach(step => {
-                    if (step.image && step.image.includes('photo-1511295742364')) {
-                        step.image = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600';
-                    }
-                });
-            }
-        });
-        localStorage.setItem('comfy_comic_galleries', JSON.stringify(savedGalleries));
-    } else {
-        savedGalleries = JSON.parse(JSON.stringify(seedGalleries));
-        localStorage.setItem('comfy_comic_galleries', JSON.stringify(savedGalleries));
-    }
+    savedGalleries = JSON.parse(JSON.stringify(seedGalleries));
+    
+    comfyWorkflows = [];
+    activeWorkflowId = null;
 
-    // Load comfy nodes setup (multi workflow)
-    const savedWorkflows = localStorage.getItem('comfy_workflows');
-    const savedActiveId = localStorage.getItem('comfy_active_workflow_id');
-    if (savedWorkflows) {
-        comfyWorkflows = JSON.parse(savedWorkflows);
-    }
-    if (savedActiveId) {
-        activeWorkflowId = savedActiveId;
-    }
-
-    loadBatchRunStateFromStorage();
+    batchRunState = createEmptyBatchRunState();
 }
 
-// Master state initialization wrapper (Combines LocalStorage and ComfyUI server disk storage)
+// Master state initialization wrapper (Pure local server disk storage)
 async function loadLocalStorageData() {
-    // 1. 先同步加载本地缓存（秒开首屏）
-    syncLoadFromLocalStorage();
-    
-    // Migrate from old single workflow if list is empty
-    if (comfyWorkflows.length === 0) {
-        const oldRaw = localStorage.getItem('comfy_workflow_raw');
-        if (oldRaw) {
-            const parsedOld = JSON.parse(oldRaw);
-            const oldId = "wf_" + Date.now();
-            comfyWorkflows.push({
-                id: oldId,
-                name: "已导入的工作流",
-                raw: parsedOld,
-                nodePositive: localStorage.getItem('comfy_node_positive') || '6',
-                nodeNegative: localStorage.getItem('comfy_node_negative') || '',
-                nodeOutput: localStorage.getItem('comfy_node_output') || '9'
-            });
-            activeWorkflowId = oldId;
-            saveWorkflowsToStorage();
-        }
+    // 强制关闭模拟模式，默认采用真实绘图与LLM生成
+    isMockMode = false;
+
+    // 1. 尝试从 ComfyUI 后端服务器磁盘拉取最新落盘配置
+    const loadedFromServer = await loadConfigFromComfyServer();
+    if (!loadedFromServer) {
+        // 如果服务器磁盘没有，强制用出厂默认初始化内存状态
+        initMemoryStateWithDefaults();
+        // 并且保存一份初始的到服务器
+        await executeServerSave();
     }
 
+    // 2. 绘制所有视图模块，保证完全同步状态
+    renderTemplatesList();
+    renderMatrixTable();
+    populateTemplateDropdowns();
+    renderGallery();
     renderWorkflowSelector();
     if (activeWorkflowId) {
         selectWorkflow(activeWorkflowId, false);
     }
-
-    document.getElementById('comfy-url-input').value = localStorage.getItem('comfy_api_url') || 'http://127.0.0.1:8188';
-
-    // Load LLM keys
-    document.getElementById('llm-base-url').value = localStorage.getItem('llm_base_url') || 'https://api.openai.com/v1';
-    document.getElementById('llm-api-key').value = localStorage.getItem('llm_api_key') || '';
-    document.getElementById('llm-model-name').value = localStorage.getItem('llm_model_name') || 'gpt-4o';
-    
-    // 强制关闭模拟模式，默认采用真实绘图与LLM生成
-    isMockMode = false;
-    
-    // 初始化 LLM 相关设置
-    const savedProvider = localStorage.getItem('llm_provider') || 'openai';
-    const providerSel = document.getElementById('llm-provider');
-    if (providerSel) providerSel.value = savedProvider;
-    
-    const savedChunkSize = localStorage.getItem('llm_chunk_size') || '10';
-    const chunkInput = document.getElementById('llm-chunk-size');
-    if (chunkInput) chunkInput.value = savedChunkSize;
-
-    syncXmlSystemPromptInput();
 
     // Bind Node ID text input events for persistence
     document.getElementById('node-id-positive').addEventListener('input', (e) => {
@@ -505,19 +441,6 @@ async function loadLocalStorageData() {
         updateActiveWorkflowConfig('nodeOutput', val);
     });
 
-    // 2. 异步尝试从 ComfyUI 后端服务器磁盘拉取最新落盘配置
-    const loadedFromServer = await loadConfigFromComfyServer();
-    if (loadedFromServer) {
-        // 如果服务器磁盘有最新的，强制重新绘制所有视图模块，保证完全同步落盘状态
-        renderTemplatesList();
-        renderMatrixTable();
-        populateTemplateDropdowns();
-        renderGallery();
-        renderWorkflowSelector();
-        if (activeWorkflowId) {
-            selectWorkflow(activeWorkflowId, false);
-        }
-    }
     reviveInterruptedBatchIfNeeded();
     syncXmlSystemPromptInput();
 }
@@ -2131,11 +2054,11 @@ async function executeServerSave() {
         comfyWorkflows: comfyWorkflows,
         activeWorkflowId: activeWorkflowId,
         batchRunState: batchRunState,
-        xmlSystemPrompt: localStorage.getItem('xml_system_prompt') || '',
-        nodePositive: localStorage.getItem('comfy_node_positive') || '6',
-        nodeNegative: localStorage.getItem('comfy_node_negative') || '',
-        nodeOutput: localStorage.getItem('comfy_node_output') || '9',
-        updatedAt: parseInt(localStorage.getItem('comfy_comic_updated_at') || '0')
+        xmlSystemPrompt: document.getElementById('xml-system-prompt')?.value || '',
+        nodePositive: document.getElementById('node-id-positive')?.value || '6',
+        nodeNegative: document.getElementById('node-id-negative')?.value || '',
+        nodeOutput: document.getElementById('node-id-output')?.value || '9',
+        updatedAt: Date.now()
     };
 
     try {
@@ -2195,18 +2118,7 @@ async function loadConfigFromComfyServer() {
             return false;
         }
 
-        const localUpdatedAt = localStorage.getItem('comfy_comic_updated_at') !== null ? parseInt(localStorage.getItem('comfy_comic_updated_at') || '0') : -1;
         const serverUpdatedAt = parseInt(appState.updatedAt || '0');
-
-        console.log(`[Sync] Timestamp Check - Local: ${localUpdatedAt}, Server: ${serverUpdatedAt}`);
-
-        // 如果本地被用户修改的时间戳最新，说明拉取时发生了更近的写操作或离线更新，阻止覆盖，并反向同步
-        if (localUpdatedAt > serverUpdatedAt) {
-            console.warn('[Sync] Local state is newer. Overwrite cloud config with local configs.');
-            saveConfigToComfyServer();
-            if (syncStatusEl) syncStatusEl.innerHTML = '';
-            return false;
-        }
 
         if (appState) {
             if (appState.templates) {

@@ -50,6 +50,28 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
                 
                 # Validate JSON format
                 data = json.loads(post_data.decode('utf-8'))
+                
+                # 安全红线拦截校验：防止客户端空缓存反向冲刷抹除已有配置与画册
+                if os.path.exists(DATA_FILE):
+                    try:
+                        with open(DATA_FILE, 'r', encoding='utf-8') as f:
+                            current_data = json.load(f)
+                    except Exception:
+                        current_data = {}
+                    
+                    old_tpls_count = len(current_data.get("templates", []))
+                    new_tpls_count = len(data.get("templates", []))
+                    old_gals_count = len(current_data.get("savedGalleries", []))
+                    new_gals_count = len(data.get("savedGalleries", []))
+                    
+                    if new_tpls_count < old_tpls_count or new_gals_count < old_gals_count:
+                        print(f"[Sync Blocked] Prevented overwriting existing database ({old_tpls_count} templates, {old_gals_count} galleries) with shrunken client payload ({new_tpls_count} templates, {new_gals_count} galleries).")
+                        self.send_response(400)
+                        self.send_header('Content-Type', 'application/json')
+                        self.end_headers()
+                        self.wfile.write(json.dumps({"error": "Sync blocked: Attempted to overwrite database with empty payload."}).encode('utf-8'))
+                        return
+
                 with open(DATA_FILE, 'w', encoding='utf-8') as f:
                     json.dump(data, f, indent=2, ensure_ascii=False)
                 
