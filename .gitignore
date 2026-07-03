@@ -1,0 +1,13 @@
+comfy_comic_data.json
+comfy_comic_data.json.bak-*
+comfy_comic_data.json.bak*
+images/
+*.log
+.gemini/
+.agents/
+.DS_Store
+Thumbs.db
+node_modules/
+dist/
+build/
+*.bak

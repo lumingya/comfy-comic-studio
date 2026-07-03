@@ -1,0 +1,148 @@
+body {
+    font-family: 'Plus Jakarta Sans', 'Noto Sans SC', sans-serif;
+    transition: background-color 0.3s, color 0.3s;
+}
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+}
+.dark ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.5);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.7);
+}
+.pixiv-card-shadow {
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.1);
+}
+.dark .pixiv-card-shadow {
+    box-shadow: 0 4px 25px -2px rgba(0, 0, 0, 0.5);
+}
+.neon-border-active {
+    border-color: #3b82f6;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+}
+/* Mobile compatibility tweaks */
+@media (max-width: 768px) {
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+    .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Pixiv Immersive Manga Reader Styles */
+.pixiv-manga-card {
+    width: 100%;
+    background: #0f172a; /* Slate 900 */
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 0 1px rgba(255, 255, 255, 0.1);
+    display: block;
+    margin-bottom: 28px;
+    box-sizing: border-box;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.pixiv-manga-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.8), 0 0 2px rgba(59, 130, 246, 0.2);
+}
+.pixiv-image-frame {
+    position: relative;
+    background: #020617; /* Slate 950 */
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.pixiv-image-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+/* 海量卡片容器性能提升：视口外的 DOM 元素暂不参与排版与绘制 */
+.llm-story-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 180px; /* 预估卡片实际渲染高度，防滚动条抖动 */
+}
+
+/* Chatbox Styles */
+.chat-bubble-user {
+    align-self: flex-end;
+    background-color: #2563eb; /* bg-blue-600 */
+    color: #ffffff;
+    border-radius: 16px 16px 2px 16px;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+}
+.chat-bubble-assistant {
+    align-self: flex-start;
+    background-color: #f1f5f9; /* bg-slate-100 */
+    color: #0f172a; /* text-slate-900 */
+    border-radius: 16px 16px 16px 2px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.dark .chat-bubble-assistant {
+    background-color: #1e293b; /* bg-slate-800 */
+    color: #f8fafc; /* text-slate-50 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.chat-bubble-tool {
+    align-self: center;
+    background-color: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+    border: 1px dashed rgba(139, 92, 246, 0.25);
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 11px;
+}
+.chat-session-item {
+    transition: all 0.2s ease;
+}
+.chat-session-item .delete-session-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.chat-session-item:hover .delete-session-btn {
+    opacity: 1;
+}
+@media (hover: none) {
+    .chat-session-item .delete-session-btn {
+        opacity: 0.6;
+    }
+}
+/* Typing Indicator Dot Animation */
+.typing-dots span {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: currentColor;
+    opacity: 0.4;
+    animation: typing-bounce 1.4s infinite both;
+}
+.typing-dots span:nth-child(2) {
+    animation-delay: .2s;
+}
+.typing-dots span:nth-child(3) {
+    animation-delay: .4s;
+}
+@keyframes typing-bounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+}
+

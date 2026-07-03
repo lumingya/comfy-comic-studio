@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComfyComic Studio - 连环画批量生成与故事画布系统</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-blue-600 to-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-blue-500/20">
+                    <i data-lucide="sparkles" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-black bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">
+                        ComfyComic Studio
+                    </h1>
+                    <p class="text-[10px] text-slate-500 dark:text-slate-400 font-mono tracking-widest uppercase">
+                        AI Batch Sequence Creator v2.1
+                    </p>
+                </div>
+            </div>
+
+            <!-- Main Navigation tabs -->
+            <nav class="hidden md:flex space-x-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl">
+                <button onclick="switchTab('gallery')" id="tab-btn-gallery" class="nav-tab px-4 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 bg-white dark:bg-slate-700 text-blue-600 dark:text-white shadow-sm">
+                    <i data-lucide="image" class="w-4 h-4"></i>
+                    画廊展厅 (Pixiv)
+                </button>
+                <button onclick="switchTab('templates')" id="tab-btn-templates" class="nav-tab px-4 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+                    <i data-lucide="layout" class="w-4 h-4"></i>
+                    连环画模板配置
+                </button>
+                <button onclick="switchTab('variables')" id="tab-btn-variables" class="nav-tab px-4 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+                    <i data-lucide="users" class="w-4 h-4"></i>
+                    批量角色矩阵
+                </button>
+                <button onclick="switchTab('workflow')" id="tab-btn-workflow" class="nav-tab px-4 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+                    <i data-lucide="git-merge" class="w-4 h-4"></i>
+                    ComfyUI 工作流
+                </button>
+                <button onclick="switchTab('llm')" id="tab-btn-llm" class="nav-tab px-4 py-1.5 rounded-lg text-sm font-semibold transition-all flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100">
+                    <i data-lucide="cpu" class="w-4 h-4"></i>
+                    LLM 剧情与模板
+                </button>
+            </nav>
+
+            <div class="flex items-center space-x-3">
+                <!-- Cloud Sync Status Indicator -->
+                <div id="cloud-sync-status" class="flex items-center space-x-1.5 text-slate-500 rounded-lg select-none transition-all duration-300"></div>
+
+                <!-- ComfyUI connection pill -->
+                <div id="comfy-status-badge" class="flex items-center space-x-1.5 px-3 py-1 bg-amber-500/10 text-amber-500 dark:bg-amber-400/10 dark:text-amber-400 border border-amber-500/20 rounded-full text-xs font-semibold">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    <span id="comfy-status-text">模拟引擎启动</span>
+                </div>
+
+                <!-- Theme switch -->
+                <button onclick="toggleTheme()" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="切换深浅色">
+                    <i data-lucide="sun" class="w-5 h-5 block dark:hidden"></i>
+                    <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Navigation bar -->
+        <div class="md:hidden flex justify-around border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2">
+            <button onclick="switchTab('gallery')" id="mobile-tab-btn-gallery" class="mobile-nav-tab flex flex-col items-center text-xs font-medium text-blue-500">
+                <i data-lucide="image" class="w-5 h-5"></i>
+                <span>画廊</span>
+            </button>
+            <button onclick="switchTab('templates')" id="mobile-tab-btn-templates" class="mobile-nav-tab flex flex-col items-center text-xs font-medium text-slate-400">
+                <i data-lucide="layout" class="w-5 h-5"></i>
+                <span>模板</span>
+            </button>
+            <button onclick="switchTab('variables')" id="mobile-tab-btn-variables" class="mobile-nav-tab flex flex-col items-center text-xs font-medium text-slate-400">
+                <i data-lucide="users" class="w-5 h-5"></i>
+                <span>矩阵</span>
+            </button>
+            <button onclick="switchTab('workflow')" id="mobile-tab-btn-workflow" class="mobile-nav-tab flex flex-col items-center text-xs font-medium text-slate-400">
+                <i data-lucide="git-merge" class="w-5 h-5"></i>
+                <span>设置</span>
+            </button>
+            <button onclick="switchTab('llm')" id="mobile-tab-btn-llm" class="mobile-nav-tab flex flex-col items-center text-xs font-medium text-slate-400">
+                <i data-lucide="cpu" class="w-5 h-5"></i>
+                <span>LLM</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- TAB 1: PIXIV STYLE GALLERY -->
+        <section id="tab-gallery" class="tab-pane space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-2xl font-black flex items-center gap-2">
+                        <i data-lucide="images" class="text-blue-500"></i>
+                        故事画廊展厅
+                    </h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        以 Pixiv 插画合集风格呈现的连环画册，汇聚批量生成的全套连续剧本。
+                    </p>
+                </div>
+                
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <!-- LLM Indicator -->
+                    <div class="text-xs bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 px-3 py-1.5 rounded-lg flex items-center gap-1">
+                        <i data-lucide="brain-circuit" class="w-4 h-4"></i>
+                        <span>已对接 LLM 剧情引擎</span>
+                    </div>
+
+                    <button onclick="switchTab('variables')" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl text-xs hover:shadow-lg transition cursor-pointer flex items-center gap-1.5 ml-auto">
+                        <i data-lucide="play" class="w-3.5 h-3.5"></i>
+                        开始批量生成任务
+                    </button>
+                </div>
+            </div>
+
+            <!-- Empty State / Load Grid -->
+            <div id="gallery-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Dynamically generated Pixiv items -->
+            </div>
+        </section>
+
+
+        <!-- TAB 2: COMIC TEMPLATES CONFIG -->
+        <section id="tab-templates" class="tab-pane hidden space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-2xl font-black flex items-center gap-2">
+                        <i data-lucide="layout" class="text-indigo-500"></i>
+                        连环画模板配置中心
+                    </h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        设计连环画的多幕叙事公式。每幕画面均可使用自由格式占位符，由执行时替换。
+                    </p>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="createNewTemplate()" class="px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1.5">
+                        <i data-lucide="plus" class="w-3.5 h-3.5 text-emerald-500"></i>
+                        创建全新模板
+                    </button>
+                    <button onclick="restoreDefaultTemplates()" class="px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1.5">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-blue-500"></i>
+                        恢复默认模板
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-12 gap-8 items-start">
+                <!-- Left Sidebar: Templates list -->
+                <div id="templates-sidebar-container" class="lg:col-span-3 space-y-4 transition-all duration-300">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">模板库</h3>
+                    <div id="templates-list-container" class="space-y-2">
+                        <!-- Loaded by JS -->
+                    </div>
+                </div>
+
+                <!-- Right Pane: Active Template steps constructor -->
+                <div id="templates-editor-container" class="lg:col-span-9 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-4">
+                        <div class="flex items-center gap-3">
+                            <button onclick="toggleTemplatesSidebar()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition shrink-0" title="展开/收起左侧模板库">
+                                <i id="toggle-sidebar-icon" data-lucide="chevrons-left" class="w-4 h-4"></i>
+                            </button>
+                            <div>
+                                <input type="text" id="tpl-title-input" class="text-base font-bold bg-transparent border-b border-dashed border-slate-300 dark:border-slate-700 focus:border-blue-500 focus:outline-none w-60 text-slate-900 dark:text-slate-100" placeholder="模板标题">
+                                <input type="text" id="tpl-desc-input" class="text-xs text-slate-500 dark:text-slate-400 bg-transparent block mt-1 focus:outline-none w-80 line-clamp-1" placeholder="模板简介">
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            
+                            <button id="btn-ai-refine-chat" onclick="openChatRefinementModal()" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition">
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                                AI 聊天精修 💬
+                            </button>
+                            <button onclick="saveCurrentTemplate()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-xl flex items-center gap-1.5 transition">
+                                <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                                保存模板
+                            </button>
+                            <button onclick="deleteCurrentTemplate()" class="px-3 py-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                删除
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Steps Container -->
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-bold flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
+                                <i data-lucide="sequence" class="w-4 h-4 text-indigo-400"></i>
+                                连续幕分镜设定 (Sequence Frames)
+                            </span>
+                            <button onclick="addNewStepToActive()" class="px-3 py-1 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-semibold rounded-lg flex items-center gap-1 transition">
+                                <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i>
+                                添加下一幕 (Frame)
+                            </button>
+                        </div>
+
+                        <!-- Step Card Stack -->
+                        <div id="steps-editor-container" class="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                            <!-- Dynamic Step elements -->
+                        </div>
+                    </div>
+
+                    <div class="bg-indigo-500/5 border border-indigo-500/10 rounded-xl p-4 flex gap-3">
+                        <i data-lucide="help-circle" class="w-5 h-5 text-indigo-400 shrink-0 mt-0.5"></i>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 space-y-1">
+                            <strong class="text-slate-700 dark:text-slate-300 block">如何设计可重用模板？</strong>
+                            <p>1. 在分镜的提示词中，写入大括号占位符，如 <code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-blue-500 font-mono">{character}</code>、<code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-purple-500 font-mono">{outfit}</code>。</p>
+                            <p>2. 在“批量角色矩阵”中，配置相同命名的变量字段。运行生成时，系统会用矩阵里的实际内容对每幕分镜进行组合渲染。</p>
+                            <p>3. 可以使用 <code class="bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded text-emerald-500 font-mono">{llm_concept}</code> 来引导大语言模型为不同的主角生成贴合特定主线的故事剧本！</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- TAB 3: BATCH CHARACTER MATRIX & RUNNER -->
+        <section id="tab-variables" class="tab-pane hidden space-y-6 max-w-4xl mx-auto">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-2xl font-black flex items-center gap-2">
+                        <i data-lucide="users" class="text-purple-500"></i>
+                        批量任务与变量矩阵
+                    </h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        定义要生成的角色实例。系统将取代变量进模板中，实现一键成批生成连环画。
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-6">
+                <!-- Card 1: Configuration list -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div class="flex justify-between items-center cursor-pointer select-none" onclick="toggleSection('variables-config-section', 'variables-config-arrow')">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-bold text-slate-800 dark:text-slate-200">批量任务配置表</span>
+                            <span class="text-xs bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full text-slate-500" id="matrix-stats-lbl">0 组角色已就绪</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="flex gap-2" onclick="event.stopPropagation()">
+                                <button onclick="addMatrixRow()" class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition">
+                                    <i data-lucide="user-plus" class="w-3.5 h-3.5 text-blue-500"></i>
+                                    添加一行角色
+                                </button>
+                                <button onclick="addCustomVariableColumn()" class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition" title="为模板增设额外的占位符列">
+                                    <i data-lucide="grid-plus" class="w-3.5 h-3.5 text-purple-500"></i>
+                                    新增变量字段
+                                </button>
+                            </div>
+                            <i id="variables-config-arrow" data-lucide="chevron-up" class="w-4 h-4 text-slate-400 transition-transform duration-300"></i>
+                        </div>
+                    </div>
+
+                    <div id="variables-config-section" class="space-y-6">
+                        <!-- Dynamic Table for character variables -->
+                        <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-xl">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead>
+                                    <tr class="bg-slate-50 dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 text-slate-400 font-bold">
+                                        <th class="p-3 w-12 text-center">启用</th>
+                                        <th class="p-3 w-36">画册标题/概念名称</th>
+                                        <th class="p-3 min-w-[140px] text-blue-400 font-mono">{character} 核心特征</th>
+                                        <th class="p-3 min-w-[120px] text-indigo-400 font-mono">{style} 画风</th>
+                                        <!-- Extra dynamic columns will append here -->
+                                        <th id="dynamic-th-placeholder" class="p-0"></th>
+                                        <th class="p-3 w-16 text-center">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="matrix-tbody" class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                                    <!-- Generated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Control Panel -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div class="flex justify-between items-center cursor-pointer select-none" onclick="toggleSection('variables-run-section', 'variables-run-arrow')">
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <i data-lucide="play-circle" class="text-emerald-500 w-5 h-5 animate-pulse"></i>
+                            批量执行控制台
+                        </h3>
+                        <i id="variables-run-arrow" data-lucide="chevron-up" class="w-4 h-4 text-slate-400 transition-transform duration-300"></i>
+                    </div>
+
+                    <div id="variables-run-section" class="space-y-6">
+                        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                            选择您配置的连环画模板，系统将开启并发或串行生成逻辑，向 ComfyUI 发送批量生图。
+                        </p>
+
+                        <!-- Template Selector -->
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-bold text-slate-400">选择当前执行模板：</label>
+                            <select id="matrix-template-selector" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200">
+                                <!-- Populated dynamically -->
+                            </select>
+                        </div>
+
+                        <!-- Progress tracking -->
+                        <div id="progress-card" class="bg-slate-900 border border-slate-800 p-4 rounded-xl hidden space-y-3 font-mono text-[11px]">
+                            <div class="flex justify-between text-slate-300">
+                                <span id="progress-lbl">正在生成第 1/2 套画册</span>
+                                <span id="progress-pct" class="text-blue-400 font-bold">0%</span>
+                            </div>
+                            <!-- Progress bar -->
+                            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div id="progress-bar-inner" class="bg-gradient-to-r from-blue-500 to-indigo-500 h-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <!-- Log messages list -->
+                            <div id="progress-logs" class="h-28 overflow-y-auto space-y-1 text-slate-400 pr-1 select-text">
+                                <!-- Logs injected here -->
+                            </div>
+                        </div>
+
+                        <!-- Start buttons -->
+                        <div class="pt-2 space-y-2.5">
+                            <button onclick="startBatchGeneration()" id="btn-run-batch" class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs hover:shadow-lg transition cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20">
+                                <i data-lucide="play" class="w-4 h-4"></i>
+                                启动批量图片绘制 (⚡ ComfyUI)
+                            </button>
+                            <button onclick="cancelBatchGeneration()" id="btn-cancel-batch" class="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs hover:shadow-lg transition cursor-pointer hidden items-center justify-center gap-2">
+                                <i data-lucide="circle-slash" class="w-4 h-4"></i>
+                                停止执行
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- TAB 4: WORKFLOW IMPORT & CONFIGURE -->
+        <section id="tab-workflow" class="tab-pane hidden space-y-6 max-w-4xl mx-auto">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-2xl font-black flex items-center gap-2">
+                        <i data-lucide="git-merge" class="text-emerald-500"></i>
+                        ComfyUI 连接配置
+                    </h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        在这里配置 ComfyUI 的 API 形式工作流，用于图像绘制。
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-6">
+                <!-- ComfyUI Node mapping panel -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div class="flex justify-between items-center cursor-pointer select-none border-b border-slate-100 dark:border-slate-800 pb-4" onclick="toggleSection('workflow-import-section', 'workflow-import-arrow')">
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <i data-lucide="file-code" class="text-emerald-400 w-5 h-5"></i>
+                            导入 ComfyUI API 工作流 (JSON)
+                        </h3>
+                        <div class="flex items-center gap-3">
+                            <span class="text-[10px] text-slate-400 font-mono">Developer Mode JSON Only</span>
+                            <i id="workflow-import-arrow" data-lucide="chevron-up" class="w-4 h-4 text-slate-400 transition-transform duration-300"></i>
+                        </div>
+                    </div>
+
+                    <div id="workflow-import-section" class="space-y-6">
+                        <!-- Workflow selector & management -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-slate-400">选择当前活动工作流 (Active Workflow)</label>
+                            <div class="flex items-center gap-2">
+                                <div class="flex-grow">
+                                    <select id="workflow-selector" onchange="selectWorkflow(this.value, true)" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200 font-medium">
+                                        <option value="">-- 暂无工作流，请在下方上传 --</option>
+                                    </select>
+                                </div>
+                                <button onclick="renameWorkflow()" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-300 transition flex items-center justify-center shrink-0" title="重命名当前工作流">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="deleteWorkflow()" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition flex items-center justify-center shrink-0" title="删除当前工作流">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- JSON File upload drag and drop -->
+                        <div class="border-2 border-dashed border-slate-300 dark:border-slate-800 rounded-2xl p-6 text-center hover:border-blue-500 dark:hover:border-blue-500 transition relative">
+                            <input type="file" id="workflow-file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".json" onchange="handleWorkflowUpload(event)">
+                            <div class="space-y-2 pointer-events-none">
+                                <div class="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+                                    <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                                </div>
+                                <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">点击上传 或 拖拽 ComfyUI 导出的 API JSON 文件</p>
+                            </div>
+                        </div>
+
+                        <!-- Detected Node Dropdowns -->
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-slate-400 flex items-center gap-1">
+                                    积极提示词节点 (Positive Prompt Node)
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <select id="node-select-positive" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200">
+                                    <option value="">-- 请上传工作流或手动输入 --</option>
+                                </select>
+                                <input type="text" id="node-id-positive" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs focus:outline-none text-slate-800 dark:text-slate-200 mt-1" placeholder="或直接填写节点ID（例如：6）">
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-slate-400 flex items-center gap-1">
+                                    消极提示词节点 (Negative Prompt Node)
+                                    <span class="text-slate-400">(可选)</span>
+                                </label>
+                                <select id="node-select-negative" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200">
+                                    <option value="">-- 请上传工作流或手动输入 --</option>
+                                </select>
+                                <input type="text" id="node-id-negative" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs focus:outline-none text-slate-800 dark:text-slate-200 mt-1" placeholder="不填则使用工作流内的默认消极词">
+                            </div>
+
+                            <div class="space-y-1.5 md:col-span-2">
+                                <label class="block text-xs font-bold text-slate-400 flex items-center gap-1">
+                                    图像输出与接收节点 (SaveImage/PreviewImage Node)
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <select id="node-select-output" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-800 dark:text-slate-200">
+                                    <option value="">-- 请上传工作流或手动输入 --</option>
+                                </select>
+                                <input type="text" id="node-id-output" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs focus:outline-none text-slate-800 dark:text-slate-200 mt-1" placeholder="或直接填写节点ID（例如：9）">
+                            </div>
+                        </div>
+
+                        <!-- Server connection settings -->
+                        <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
+                            <h4 class="text-xs font-bold text-slate-400">ComfyUI 实例连接配置</h4>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div class="space-y-1.5">
+                                    <label class="block text-xs font-medium text-slate-500">API 域名地址</label>
+                                    <input type="text" id="comfy-url-input" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs focus:outline-none" value="http://127.0.0.1:8188">
+                                </div>
+                                <div class="flex items-end">
+                                    <button onclick="testComfyConnection()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition">
+                                        <i data-lucide="radio" class="w-4 h-4 text-blue-500"></i>
+                                        测试连接本地 ComfyUI 服务
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+字数控制在 40~60 字以内，风格契合情感，直接输出句子，不要附带任何无关分析，更不要加上第几幕的前缀。</textarea>
+                            </div>
+                        </div>
+
+                        <button onclick="testLlmConnection()" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition shadow-lg shadow-purple-500/15">
+                            <i data-lucide="cpu" class="w-4 h-4"></i>
+                            测试 LLM 服务连接
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: LLM ENGINE & TEMPLATE GENERATION -->
+        <section id="tab-llm" class="tab-pane hidden space-y-6 max-w-4xl mx-auto">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+                <div>
+                    <h2 class="text-2xl font-black flex items-center gap-2">
+                        <i data-lucide="cpu" class="text-purple-500"></i>
+                        大模型剧情与模板引擎
+                    </h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">
+                        配置大模型 API 并为您的漫画角色批量生成、微调剧本，或利用 AI 直接生成全新的连环画 XML 模板。
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-6">
+                <!-- Card 1: LLM API Configuration -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div class="flex justify-between items-center cursor-pointer select-none" onclick="toggleSection('llm-config-section', 'llm-config-arrow')">
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <i data-lucide="settings" class="text-purple-400 w-5 h-5"></i>
+                            LLM 剧情生成器参数配置
+                        </h3>
+                        <i id="llm-config-arrow" data-lucide="chevron-up" class="w-4 h-4 text-slate-400 transition-transform duration-300"></i>
+                    </div>
+
+                    <div id="llm-config-section" class="grid md:grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-medium text-slate-500">大模型 API 提供商 (Provider)</label>
+                            <select id="llm-provider" onchange="onLlmProviderChange()" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs focus:outline-none text-slate-800 dark:text-slate-200 font-medium">
+                                <option value="openai">OpenAI (GPT系列)</option>
+                                <option value="deepseek">DeepSeek (深求系列)</option>
+                                <option value="custom">其它 / 自定义 (支持 OpenAI 兼容 API)</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-1.5">
+                            <label class="block text-xs font-medium text-slate-500">指定模型名称 (Model)</label>
+                            <input type="text" id="llm-model-name" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs focus:outline-none text-slate-800 dark:text-slate-200" value="gpt-4o" placeholder="例如 deepseek-chat 或 gpt-4o">
+                        </div>
+
+                        <div class="space-y-1.5 md:col-span-2">
+                            <label class="block text-xs font-medium text-slate-500">API 基准地址 (Base URL)</label>
+                            <input type="text" id="llm-base-url" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs focus:outline-none text-slate-800 dark:text-slate-200" value="https://api.openai.com/v1" placeholder="例如 https://api.deepseek.com/v1">
+                        </div>
+
+                        <div class="space-y-1.5 md:col-span-2">
+                            <label class="block text-xs font-medium text-slate-500">API Key 密钥</label>
+                            <input type="password" id="llm-api-key" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs focus:outline-none text-slate-800 dark:text-slate-200" placeholder="sk-...">
+                        </div>
+
+                        <div class="space-y-1.5 md:col-span-2">
+                            <label class="block text-xs font-medium text-slate-500">大模型专属系统指令 (System Prompt)</label>
+                            <textarea id="llm-system-prompt" rows="3" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-[11px] focus:outline-none leading-relaxed text-slate-800 dark:text-slate-200">你是一个专业的R18成人本子/同人漫画剧情策划和编剧。请根据用户提供的“全局故事主线大纲”、“当前画面的图像提示词”，以及“上一幕的剧情梗概”，为当前画面创作符合R18本子风格的剧情文案（包含角色的生动对话、心理活动或大胆的涩涩场景描写，不要用高雅旁白，要能突出人物个性和剧情张力）。
+字数控制在 40~60 字以内，风格大胆诱人，直接输出剧情，不要附带任何无关分析，更不要加上第几幕的前缀。</textarea>
+                        </div>
+
+                        <div class="space-y-1.5 md:col-span-2">
+                            <label class="block text-xs font-medium text-slate-500 flex justify-between">
+                                <span>一次生成的剧情数量 (分批大小)：</span>
+                                <span class="text-[10px] text-slate-400 font-normal">设定每次发给大模型的剧情分段数（以维护上下文关联性）</span>
+                            </label>
+                            <input type="number" id="llm-chunk-size" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs focus:outline-none text-slate-800 dark:text-slate-200" value="10" min="1" max="100">
+                        </div>
+
+                        <div class="md:col-span-2 pt-2">
+                            <button onclick="testLlmConnection()" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition shadow-lg shadow-purple-500/15 cursor-pointer">
+                                <i data-lucide="cpu" class="w-4 h-4"></i>
+                                测试 LLM 服务连接
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Script Generation Control & Dynamic Captions Editing -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div class="flex justify-between items-center cursor-pointer select-none" onclick="toggleSection('llm-generate-section', 'llm-generate-arrow')">
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <i data-lucide="play-circle" class="text-purple-500 w-5 h-5"></i>
+                            批量剧情生成与手动微调
+                        </h3>
+                        <i id="llm-generate-arrow" data-lucide="chevron-up" class="w-4 h-4 text-slate-400 transition-transform duration-300"></i>
+                    </div>
+
+                    <div id="llm-generate-section" class="space-y-6">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-slate-400">选择要创作剧情的角色：</label>
+                                <select id="llm-row-selector" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs focus:outline-none text-slate-800 dark:text-slate-200 font-medium">
+                                    <!-- Populated dynamically from matrix rows -->
+                                </select>
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-slate-400">选择当前执行模板：</label>
+                                <select id="llm-template-selector" onchange="onLlmTemplateChange()" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs focus:outline-none text-slate-800 dark:text-slate-200 font-medium">
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button onclick="generateLlmStorylinesBatch()" id="btn-llm-gen-scripts" class="flex-grow py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-purple-500/15">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i>
+                                一键分批生成所选角色剧情 (🧠 LLM)
+                            </button>
+                            <button onclick="cancelLlmGeneration()" id="btn-llm-cancel-scripts" class="py-3 px-6 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs hover:shadow-lg transition hidden flex items-center justify-center gap-2 cursor-pointer">
+                                <i data-lucide="circle-slash" class="w-4 h-4"></i>
+                                停止
+                            </button>
+                        </div>
+
+                        <!-- Progress block -->
+                        <div id="llm-progress-card" class="bg-slate-950 border border-slate-800 p-4 rounded-xl hidden space-y-2 font-mono text-[11px]">
+                            <div class="flex justify-between text-slate-300">
+                                <span id="llm-progress-lbl">准备生成剧情...</span>
+                                <span id="llm-progress-pct" class="text-purple-400 font-bold">0%</span>
+                            </div>
+                            <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div id="llm-progress-bar-inner" class="bg-gradient-to-r from-purple-500 to-indigo-500 h-full transition-all duration-300" style="width: 0%"></div>
+                            </div>
+                            <div id="llm-progress-logs" class="h-20 overflow-y-auto space-y-1 text-slate-400 pr-1 select-text"></div>
+                        </div>
+
+                        <!-- Elegant Vertical List of Generated/Editable Captions -->
+                        <div class="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <h4 class="text-xs font-bold text-slate-400 flex items-center gap-1.5">
+                                <i data-lucide="align-left" class="w-4 h-4"></i>
+                                剧情文本大纲及微调控制（优雅竖排）
+                            </h4>
+                            <div id="llm-vertical-captions-list" class="space-y-4">
+                                <p class="text-xs text-slate-500 text-center py-6">请先选择角色和模板，然后点击上方一键生成，或直接在此编写剧情内容。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: AI Template XML Generator -->
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 space-y-6">
+                    <div class="flex justify-between items-center cursor-pointer select-none" onclick="toggleSection('llm-xml-section', 'llm-xml-arrow')">
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                            <i data-lucide="sparkles" class="text-purple-500 w-5 h-5"></i>
+                            LLM 智能设计新模板（XML 格式）
+                        </h3>
+                        <i id="llm-xml-arrow" data-lucide="chevron-up" class="w-4 h-4 text-slate-400 transition-transform duration-300"></i>
+                    </div>
+
+                    <div id="llm-xml-section" class="space-y-6">
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-slate-400">题材大纲要求描述：</label>
+                            <textarea id="xml-template-prompt" rows="3" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs focus:outline-none" placeholder="例如：一个修女在深林里迷路，遭遇魔物，从最初的反抗到被魔能感召并契约，最终堕落成为暗夜魔女的30幕大尺度剧情。要求分镜画面偏向神秘幽暗画风，中文台词充满禁忌和沉沦感。"></textarea>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <label class="block text-xs font-bold text-slate-400">XML 模板默认系统提示词：</label>
+                                <button onclick="restoreDefaultXmlSystemPrompt()" class="px-3 py-1.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition w-fit">
+                                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-purple-500"></i>
+                                    恢复默认
+                                </button>
+                            </div>
+                            <textarea id="xml-system-prompt" rows="9" oninput="saveXmlSystemPromptConfig()" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-[11px] focus:outline-none focus:border-purple-500 transition font-mono leading-relaxed text-slate-800 dark:text-slate-200" placeholder="配置发送给大模型的 XML 模板生成系统提示词。支持 {panelCount} 占位符。"></textarea>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400">支持 <code class="font-mono text-purple-400">{panelCount}</code> 占位符，生成时会替换为目标总幕数，建议输出 <code class="font-mono text-purple-400">&lt;模板&gt;</code> 和 <code class="font-mono text-purple-400">&lt;分镜1...&gt;</code> 结构。</p>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-slate-400">目标分镜数量 (总幕数)：</label>
+                                <input type="number" id="xml-template-count" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 text-xs focus:outline-none text-slate-800 dark:text-slate-200" value="30" min="1" max="100">
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-slate-400 flex items-center gap-1">
+                                    API 配置选项：
+                                </label>
+                                <div class="flex items-center h-10">
+                                    <label class="relative inline-flex items-center cursor-pointer text-xs text-slate-600 dark:text-slate-300">
+                                        <input type="checkbox" id="xml-reuse-api-cfg" checked class="sr-only peer" onchange="toggleXmlCustomApiPanel()">
+                                        <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-purple-500"></div>
+                                        <span class="ml-2">复用本页上方主大模型 API 配置</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Optional custom API Config for XML generation -->
+                        <div id="xml-custom-api-panel" class="hidden grid md:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-medium text-slate-500">XML 专属 API 提供商</label>
+                                <select id="xml-llm-provider" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs focus:outline-none text-slate-800 dark:text-slate-200 font-medium">
+                                    <option value="openai">OpenAI (GPT系列)</option>
+                                    <option value="deepseek">DeepSeek (深求系列)</option>
+                                    <option value="custom">其它 / 自定义</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-medium text-slate-500">XML 专属模型名称 (Model)</label>
+                                <input type="text" id="xml-llm-model" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs focus:outline-none text-slate-800 dark:text-slate-200" value="gpt-4o">
+                            </div>
+                            <div class="space-y-1.5 md:col-span-2">
+                                <label class="block text-xs font-medium text-slate-500">XML 专属 API 地址 (Base URL)</label>
+                                <input type="text" id="xml-llm-base-url" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs focus:outline-none text-slate-800 dark:text-slate-200" value="https://api.openai.com/v1">
+                            </div>
+                            <div class="space-y-1.5 md:col-span-2">
+                                <label class="block text-xs font-medium text-slate-500">XML 专属 API Key</label>
+                                <input type="password" id="xml-llm-api-key" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 text-xs focus:outline-none text-slate-800 dark:text-slate-200" placeholder="sk-...">
+                            </div>
+                        </div>
+
+                        <button onclick="generateXmlTemplateWithLlm()" id="btn-xml-gen" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl text-xs hover:shadow-lg transition flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-indigo-500/15">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i>
+                            AI 智能设计新模板 (XML 格式)
+                        </button>
+
+                        <!-- Code / XML Output block -->
+                        <div id="xml-output-block" class="hidden space-y-3 pt-2">
+                            <div class="flex justify-between items-center">
+                                <h4 class="text-xs font-bold text-slate-400">生成的 XML 模板结构</h4>
+                                <button onclick="saveXmlAsSystemTemplate()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-xl shadow-lg transition flex items-center gap-1.5 cursor-pointer">
+                                    <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                                    保存为系统内置模板并即时启用
+                                </button>
+                            </div>
+                            <textarea id="xml-output-textarea" rows="12" class="w-full bg-slate-950 border border-slate-800 text-emerald-400 text-xs font-mono rounded-xl p-4 focus:outline-none leading-relaxed select-text" readonly></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- IMMERSIVE PIXIV DETAIL VIEWER MODAL -->
+    <!-- Pixiv Full-Screen Immersive Work Page -->
+    <div id="pixiv-modal" class="fixed inset-0 z-50 bg-slate-950 hidden flex-col lg:flex-row overflow-hidden animate-fade-in">
+        
+        <!-- Left: Pure Immersive Image Scroll Column (Occupies 75% width on desktop) -->
+        <div class="w-full lg:w-[75%] h-2/3 lg:h-full bg-black overflow-y-auto p-4 md:p-8 space-y-6 relative" id="modal-comic-strip">
+            <!-- Large borderless frames injected here -->
+        </div>
+
+        <!-- Right: Docked Metadata & Story Sidebar (Occupies 25% width, full height, docked to right edge) -->
+        <div class="w-full lg:w-[25%] h-1/3 lg:h-full bg-slate-900 border-t lg:border-t-0 lg:border-l border-slate-800 p-6 flex flex-col justify-between overflow-hidden relative">
+            
+            <!-- Standard Close Icon (Top-right of sidebar) -->
+            <button onclick="closePixivModal()" class="absolute top-4 right-4 z-10 p-2.5 rounded-full bg-slate-800/80 hover:bg-slate-700 text-white transition cursor-pointer border border-white/10" title="关闭">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+                
+                <!-- Main scrollable body -->
+                <div class="flex-grow overflow-y-auto space-y-6 pr-2 mb-4">
+                    <!-- Title & Artist -->
+                    <div class="space-y-2">
+                        <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 text-[10px] font-bold uppercase tracking-wider">Pixiv Premium Collection</span>
+                        <h3 class="text-xl font-black text-slate-900 dark:text-slate-100" id="modal-title">未来之翼的都市传说</h3>
+                        <div class="flex items-center gap-2">
+                            <div class="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 text-white flex items-center justify-center text-xs font-bold">CC</div>
+                            <div>
+                                <span class="text-xs font-bold text-slate-800 dark:text-slate-300">ComfyComic AI</span>
+                                <span class="text-[9px] text-slate-500 block">生成于 2026-03-05</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Meta Tags -->
+                    <div class="flex flex-wrap gap-1.5" id="modal-tags">
+                        <!-- tags -->
+                    </div>
+
+                    <!-- Text section for each narrative -->
+                    <div class="space-y-3 bg-slate-50 dark:bg-slate-950 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+                        <span class="text-xs font-bold text-slate-400 block border-b border-slate-100 dark:border-slate-800 pb-1.5 flex items-center gap-1">
+                            <i data-lucide="scroll" class="w-3.5 h-3.5 text-purple-400"></i>
+                            剧本大纲 (Story Synopsis)
+                        </span>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed" id="modal-synopsis">
+                            一个关于都市重组与意志觉醒的故事。
+                        </p>
+                    </div>
+
+                    <!-- Step narrative indicators -->
+                    <div class="space-y-3">
+                        <span class="text-xs font-bold text-slate-400 block">逐幕情景剧情 (Narratives)</span>
+                        <div class="space-y-2" id="modal-narratives-list">
+                            <!-- Injected by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Operations (Always fixed at bottom) -->
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 shrink-0">
+                    <div class="flex gap-1.5">
+                        <button onclick="deleteCurrentBook()" class="p-2.5 rounded-xl border border-red-200 dark:border-red-900/50 hover:bg-red-500/10 text-red-500 hover:border-red-500/40 transition group" title="彻底删除此画册">
+                            <i data-lucide="trash-2" class="w-5 h-5 group-hover:scale-110 transition"></i>
+                        </button>
+                        <button onclick="likeCurrentBook()" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-red-500/10 text-slate-500 hover:text-red-500 transition group" title="点赞收藏">
+                            <i data-lucide="heart" class="w-5 h-5 group-hover:scale-110 transition"></i>
+                        </button>
+                        <button class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition" title="分享">
+                            <i data-lucide="share-2" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <button onclick="exportMangaHTML()" class="flex-grow py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-blue-500/15 cursor-pointer">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        打包下载整本漫画
+                    </button>
+                </div>
+
+            </div>
+    </div>
+
+    <!-- SCRIPT EDITOR MODAL -->
+    <div id="script-modal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl shadow-2xl p-6 space-y-4 animate-scale-up border border-slate-200 dark:border-slate-800 flex flex-col max-h-[85vh]">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <i data-lucide="scroll" class="text-purple-400 w-5 h-5"></i>
+                    剧本旁白编辑器 - <span id="script-modal-title" class="text-blue-500 font-extrabold"></span>
+                </h3>
+                <button onclick="closeScriptModal()" class="p-1 rounded-full text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div id="script-editor-container" class="space-y-4 overflow-y-auto pr-1 flex-grow">
+                <!-- Dynamically generated script fields -->
+            </div>
+            
+            <div class="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800">
+                <button onclick="generateScriptForCurrentRow()" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 transition">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    AI 一键重新生成剧本
+                </button>
+                <button onclick="saveAndCloseScriptModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs transition">
+                    保存并关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-6 mt-12 transition">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="text-xs text-slate-500 dark:text-slate-400">
+                &copy; 2026 ComfyComic Studio. 赋能通用工作流，打造无限连环画连载。
+            </div>
+            <div class="flex items-center space-x-6 text-xs text-slate-500 dark:text-slate-400">
+                <a href="#" onclick="switchTab('gallery')" class="hover:text-blue-500">画廊展厅</a>
+                <a href="#" onclick="switchTab('templates')" class="hover:text-blue-500">画册公式</a>
+                <a href="#" onclick="switchTab('variables')" class="hover:text-blue-500">批量生产</a>
+                <a href="#" onclick="switchTab('workflow')" class="hover:text-blue-500">工作流配置</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- AI 聊天精修 (Chatbox 对标) Modal -->
+    <div id="chat-refinement-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md hidden transition-opacity duration-300">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-5xl h-[650px] flex overflow-hidden transform scale-95 transition-transform duration-300">
+            <!-- 左侧会话栏 -->
+            <div class="w-64 bg-slate-50 dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col p-4 space-y-4 select-none shrink-0">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">精修对话历史</span>
+                    <button onclick="createNewChatSession()" class="p-1.5 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-lg text-blue-500 transition-colors" title="新建对话">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    </button>
+                </div>
+                <!-- 列表 -->
+                <div id="chat-sessions-list" class="flex-grow overflow-y-auto space-y-1.5 pr-1">
+                    <!-- JS 动态注入 -->
+                </div>
+            </div>
+
+            <!-- 右侧聊天区 -->
+            <div class="flex-grow flex flex-col h-full bg-white dark:bg-slate-900">
+                <!-- 顶部栏 -->
+                <div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center select-none">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-purple-500/10 text-purple-600 dark:text-purple-400 p-1.5 rounded-lg">
+                            <i data-lucide="sparkles" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <h3 id="chat-current-title" class="text-sm font-bold text-slate-800 dark:text-slate-100">AI 聊天精修助手</h3>
+                            <p class="text-[10px] text-slate-400 dark:text-slate-500 font-mono">通过聊天指令自动调用工具修改模板数据</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="clearCurrentSessionMessages()" class="px-2.5 py-1.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 transition" title="清空当前消息">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            清空
+                        </button>
+                        <button onclick="closeChatRefinementModal()" class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 transition" title="关闭窗口">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 消息展示区 -->
+                <div id="chat-messages-container" class="flex-grow overflow-y-auto p-6 space-y-4 bg-slate-50/30 dark:bg-slate-950/20">
+                    <!-- JS 动态注入气泡 -->
+                </div>
+
+                <!-- 底部输入框 -->
+                <div class="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col gap-2">
+                    <div class="flex gap-2 items-end">
+                        <textarea id="chat-user-input" rows="1" class="flex-grow bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500/50 text-slate-800 dark:text-slate-200 resize-none h-[42px] max-h-32 leading-relaxed" placeholder="输入精修要求。例如：'帮我把第三幕的提示词改得更具赛博朋克感，顺便把第一幕剧情改成女孩有些惊讶。'" onkeydown="handleChatInputKeydown(event)"></textarea>
+                        <button id="chat-send-btn" onclick="sendChatMessage()" class="p-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl cursor-pointer flex items-center justify-center shrink-0 shadow-lg shadow-blue-500/10 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:pointer-events-none" disabled>
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS LOGIC AND ENGINES -->
+    <script src="llm.js?v=2026_v2.2"></script>
+    <script src="comfy.js?v=2026_v2.2"></script>
+    <script src="app.js?v=2026_v2.2"></script>
+</body>
+</html>
