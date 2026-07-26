@@ -42,9 +42,6 @@ MAX_IMAGE_BYTES = 50 * 1024 * 1024
 CONFIG_LOCK = threading.RLock()
 PUBLIC_FILES = {
     "/index.html",
-    "/app.js",
-    "/comfy.js",
-    "/llm.js",
     "/styles.css",
     "/favicon.svg",
 }

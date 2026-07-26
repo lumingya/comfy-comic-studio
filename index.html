@@ -952,9 +952,18 @@
         </div>
     </div>
 
-    <!-- JS LOGIC AND ENGINES -->
-    <script src="llm.js?v=2026_v2.2"></script>
-    <script src="comfy.js?v=2026_v2.2"></script>
-    <script src="app.js?v=2026_v2.2"></script>
+    <!-- 应用逻辑：按职责拆分为多个经典脚本，共享同一个全局词法作用域。
+         加载顺序有意义：core.js 声明其余模块共用的顶层状态，必须排在最前。 -->
+    <script src="js/core.js?v=2026_v2.3"></script>
+    <script src="js/sync.js?v=2026_v2.3"></script>
+    <script src="js/llm.js?v=2026_v2.3"></script>
+    <script src="js/comfy.js?v=2026_v2.3"></script>
+    <script src="js/templates.js?v=2026_v2.3"></script>
+    <script src="js/matrix.js?v=2026_v2.3"></script>
+    <script src="js/workflow.js?v=2026_v2.3"></script>
+    <script src="js/gallery.js?v=2026_v2.3"></script>
+    <script src="js/batch.js?v=2026_v2.3"></script>
+    <script src="js/story.js?v=2026_v2.3"></script>
+    <script src="js/chat.js?v=2026_v2.3"></script>
 </body>
 </html>

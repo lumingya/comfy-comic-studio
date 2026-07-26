@@ -34,14 +34,11 @@ async function waitForServer(timeoutMs = 20000) {
 }
 
 const sandbox = mkdtempSync(path.join(tmpdir(), 'ccs-smoke-'));
-for (const name of ['app.js', 'index.html', 'server.py', 'styles.css', 'favicon.svg']) {
+for (const name of ['index.html', 'server.py', 'styles.css', 'favicon.svg']) {
     cpSync(path.join(ROOT, name), path.join(sandbox, name));
 }
 for (const dir of ['vendor', 'js']) {
-    if (existsSync(path.join(ROOT, dir))) cpSync(path.join(ROOT, dir), path.join(sandbox, dir), { recursive: true });
-}
-for (const name of ['comfy.js', 'llm.js']) {
-    if (existsSync(path.join(ROOT, name))) cpSync(path.join(ROOT, name), path.join(sandbox, name));
+    cpSync(path.join(ROOT, dir), path.join(sandbox, dir), { recursive: true });
 }
 mkdirSync(path.join(sandbox, 'images'), { recursive: true });
 
@@ -127,8 +124,40 @@ try {
     });
     check('画廊封面不引用外网图片地址', remoteImages.length === 0, remoteImages.join(', '));
 
-    // 关键路径 7：服务端静态资源边界
-    for (const [p, expected] of [['/data/llm.json', 404], ['/server.py', 404], ['/index.html', 200], ['/app.js', 200]]) {
+    // 关键路径 7：五个主标签页都能切换且不报错
+    for (const tab of ['gallery', 'templates', 'variables', 'workflow', 'llm']) {
+        await page.click(`#tab-btn-${tab}`);
+        check(`标签页 ${tab} 可切换并可见`, await page.locator(`#tab-${tab}`).isVisible());
+    }
+
+    // 关键路径 8：各个弹窗都能打开、渲染内容并关闭
+    await page.click('#tab-btn-gallery');
+    await page.locator('#gallery-container > div').first().click();
+    check('画册详情弹窗可打开', await page.locator('#pixiv-modal').isVisible());
+    check('详情弹窗渲染出分镜', await page.locator('#modal-comic-strip .pixiv-manga-card').count() > 0);
+    await page.evaluate(() => closePixivModal());
+    check('画册详情弹窗可关闭', !(await page.locator('#pixiv-modal').isVisible()));
+
+    await page.click('#tab-btn-templates');
+    await page.evaluate(() => openChatRefinementModal());
+    check('AI 精修聊天窗可打开', await page.locator('#chat-refinement-modal').isVisible());
+    check('聊天会话列表非空', await page.locator('#chat-sessions-list > div').count() > 0);
+    await page.evaluate(() => closeChatRefinementModal());
+
+    await page.click('#tab-btn-variables');
+    const rowsBefore = await page.locator('#matrix-tbody tr').count();
+    await page.evaluate(() => addMatrixRow());
+    check('矩阵可新增一行', await page.locator('#matrix-tbody tr').count() === rowsBefore + 1);
+    await page.evaluate(() => openScriptModal(batchMatrix.rows[0].id));
+    check('剧本编辑弹窗可打开', await page.locator('#script-modal').isVisible());
+    check('剧本编辑弹窗渲染出输入框', await page.locator('#script-modal .script-textarea').count() > 0);
+    await page.evaluate(() => closeScriptModal());
+
+    await page.click('#tab-btn-llm');
+    check('LLM 剧情卡片已渲染', await page.locator('#llm-vertical-captions-list .llm-story-card').count() > 0);
+
+    // 关键路径 9：服务端静态资源边界
+    for (const [p, expected] of [['/data/llm.json', 404], ['/server.py', 404], ['/index.html', 200], ['/js/core.js', 200], ['/vendor/lucide.min.js', 200], ['/js/../server.py', 404]]) {
         const res = await fetch(`${BASE}${p}`);
         check(`静态边界 ${p} -> ${expected}`, res.status === expected, `got ${res.status}`);
     }
