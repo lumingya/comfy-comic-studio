@@ -91,6 +91,34 @@ class SplitConfigTests(unittest.TestCase):
             self.assertEqual(restored["llmConfig"]["model"], "test-model")
             self.assertEqual(restored["xmlSystemPrompt"], "prompt")
 
+    def test_unchanged_config_files_are_not_rewritten(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_files = {
+                key: os.path.join(temp_dir, f"{key}.json") for key in server.CONFIG_FILES
+            }
+            payload = {
+                "templates": [{"id": "tpl-1", "steps": []}],
+                "batchMatrix": {"columns": [], "rows": []},
+                "savedGalleries": [],
+                "comfyWorkflows": [],
+                "comfyConfig": {},
+                "llmConfig": {},
+                "xmlConfig": {},
+                "chatConfig": {},
+                "uiConfig": {},
+                "batchRunState": {"status": "idle"},
+            }
+            with patch.object(server, "CONFIG_FILES", config_files):
+                first = server.write_split_config(payload)
+                self.assertEqual(sorted(first), sorted(server.CONFIG_FILES))
+
+                # 同一份数据再写一次：一个文件都不应该被重写
+                self.assertEqual(server.write_split_config(payload), [])
+
+                # 只动 llmConfig，就只有 llm.json 被重写
+                payload["llmConfig"] = {"model": "changed"}
+                self.assertEqual(server.write_split_config(payload), ["llm"])
+
     def test_incomplete_or_corrupt_split_config_is_not_merged(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             config_files = {

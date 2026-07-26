@@ -286,11 +286,27 @@ def read_json_file(path, default=None):
         return json.load(f)
 
 def write_json_file(path, data):
+    """Write atomically, and skip the write entirely when nothing changed.
+
+    The client POSTs its whole state on every save, so all six config files
+    were rewritten each time -- including content.json and comfy.json, which
+    are ~170 KB each and barely ever change together. During a batch run that
+    meant hundreds of KB of pointless disk churn every few hundred ms.
+    """
+    serialized = json.dumps(data, indent=2, ensure_ascii=False)
+    try:
+        with open(path, 'r', encoding='utf-8') as existing:
+            if existing.read() == serialized:
+                return False
+    except (OSError, ValueError):
+        pass
+
     os.makedirs(os.path.dirname(path), exist_ok=True)
     tmp_path = f"{path}.tmp"
     with open(tmp_path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write(serialized)
     os.replace(tmp_path, path)
+    return True
 
 def normalize_merged_config(data):
     if not isinstance(data, dict):
@@ -391,9 +407,12 @@ def split_config_payload(data):
 
 def write_split_config(data):
     payloads = split_config_payload(data)
+    written = []
     with CONFIG_LOCK:
         for key, payload in payloads.items():
-            write_json_file(CONFIG_FILES[key], payload)
+            if write_json_file(CONFIG_FILES[key], payload):
+                written.append(key)
+    return written
 
 class ComicRequestHandler(SimpleHTTPRequestHandler):
     def is_origin_allowed(self):
@@ -505,9 +524,9 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
                     })
                     return
 
-                write_split_config(data)
+                written = write_split_config(data)
 
-                self.send_json(200, {"status": "success", "files": list(CONFIG_FILES.keys())})
+                self.send_json(200, {"status": "success", "files": written})
             except PayloadTooLargeError as e:
                 self.send_json(413, {"error": str(e)})
             except Exception as e:

@@ -331,7 +331,7 @@ function addLog(msg, colorClass = "text-slate-400") {
         colorClass
     });
     batchRunState.logs = batchRunState.logs.slice(-300);
-    saveBatchRunStateToStorage(true);
+    saveBatchRunStateToStorage('throttled');
 }
 
 // Generate script captions for all selected matrix rows (pure LLM phase with chunk size support)

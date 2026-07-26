@@ -271,7 +271,40 @@ try {
     check('按标题排序生效', JSON.stringify(sortedTitles) === JSON.stringify([...sortedTitles].sort((a, b) => String(a).localeCompare(String(b), 'zh-CN'))));
     await page.selectOption('#gallery-sort-select', 'newest');
 
-    // 关键路径 13：服务端静态资源边界
+    // 关键路径 13：断点续画 —— 只重跑缺失/降级的分镜
+    await page.click('#tab-btn-gallery');
+    const resumeTarget = await page.evaluate(() => {
+        const book = savedGalleries.find(b => b.status === 'complete' && (b.steps || []).length >= 2);
+        // 制造一本“断在中途”的画册：删掉最后一幕，再把第一幕打成降级占位图
+        book.steps = book.steps.slice(0, book.steps.length - 1);
+        book.steps[0].image = OFFLINE_PLACEHOLDER_IMAGE;
+        book.status = 'canceled';
+        book.inProgress = false;
+        renderGallery();
+        return { id: book.id, total: book.totalSteps, remaining: book.steps.length };
+    });
+    const missing = await page.evaluate((id) =>
+        getMissingPanelIndices(savedGalleries.find(b => b.id === id)), resumeTarget.id);
+    check('能识别出缺失与降级的分镜', missing.length === 2, JSON.stringify(missing));
+    check('未完成的卡片上出现补齐按钮',
+        await page.locator(`[data-book-id="${resumeTarget.id}"] button:has-text("补齐")`).count() === 1);
+
+    const resumePromise = page.evaluate((id) => resumeBookGeneration(id), resumeTarget.id);
+    await page.waitForSelector('#ccs-dialog-host', { timeout: 5000 });
+    await page.click('.ccs-dialog-confirm');
+    await resumePromise;
+    const resumed = await page.evaluate((id) => savedGalleries.find(b => b.id === id), resumeTarget.id);
+    check('补齐后画册恢复完整', resumed.status === 'complete', resumed.status);
+    check('补齐后分镜数量回到模板总幕数', (resumed.steps || []).length === resumeTarget.total,
+        `${(resumed.steps || []).length} vs ${resumeTarget.total}`);
+    check('补齐后不再有缺失分镜',
+        (await page.evaluate((id) => getMissingPanelIndices(savedGalleries.find(b => b.id === id)), resumeTarget.id)).length === 0);
+    check('补齐后分镜顺序仍然正确', await page.evaluate((id) => {
+        const b = savedGalleries.find(x => x.id === id);
+        return getOrderedBookSteps(b).every((s, i) => (s.stepIndex ?? i) === i);
+    }, resumeTarget.id));
+
+    // 关键路径 14：服务端静态资源边界
     for (const [p, expected] of [['/data/llm.json', 404], ['/server.py', 404], ['/index.html', 200], ['/js/core.js', 200], ['/vendor/lucide.min.js', 200], ['/js/../server.py', 404]]) {
         const res = await fetch(`${BASE}${p}`);
         check(`静态边界 ${p} -> ${expected}`, res.status === expected, `got ${res.status}`);

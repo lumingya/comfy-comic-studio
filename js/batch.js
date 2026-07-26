@@ -1,5 +1,200 @@
 // js/batch.js - 批量出图流水线：任务编排、进度、取消与失败降级。
 
+// 一本画册里还缺哪些幕。
+// “缺”有两种：这一幕根本没生成（中断/失败留下的空档），
+// 以及生成时 ComfyUI 报错、被降级成了本地占位图。
+function getMissingPanelIndices(book) {
+    const total = Number(book?.totalSteps) || (Array.isArray(book?.steps) ? book.steps.length : 0);
+    if (!total) return [];
+
+    const rendered = new Map();
+    (book.steps || []).forEach((step, fallbackIdx) => {
+        const idx = Number.isInteger(step?.stepIndex) ? step.stepIndex : fallbackIdx;
+        rendered.set(idx, step);
+    });
+
+    const missing = [];
+    for (let idx = 0; idx < total; idx++) {
+        const step = rendered.get(idx);
+        if (!step || !step.image || step.image === OFFLINE_PLACEHOLDER_IMAGE) missing.push(idx);
+    }
+    return missing;
+}
+
+// 把一幕画好之后写回画册（可能是补齐已有位置，也可能是新增）。
+function upsertBookPanel(book, stepIndex, panel) {
+    if (!Array.isArray(book.steps)) book.steps = [];
+    const existing = book.steps.findIndex((step, fallbackIdx) =>
+        (Number.isInteger(step?.stepIndex) ? step.stepIndex : fallbackIdx) === stepIndex);
+    const entry = { stepIndex, ...panel };
+    if (existing >= 0) book.steps[existing] = entry;
+    else book.steps.push(entry);
+    book.generatedSteps = book.steps.length;
+    book.updatedAt = Date.now();
+}
+
+// 画一幕：生产模式走 ComfyUI，模拟模式走本地矢量图。
+// 失败时返回本地占位图，这样“哪些幕需要补”这个判断始终成立。
+async function renderPanelImage(promptText, seedHint, panelIndex, panelName) {
+    if (isMockMode) {
+        addLog(`⚡ [模拟生图中] ComfyUI 接收节点并启动 KSampler...`);
+        await sleep(600);
+        if (cancelRequested) throw new BatchCancelError("User requested cancellation.");
+        addLog(`✅ [模拟成功] 图像已接收！`, "text-emerald-500");
+        return getMockVisual(seedHint, panelIndex, panelName);
+    }
+
+    addLog(`⚡ 向 ComfyUI 发送绘制任务，等待渲染队列...`);
+    try {
+        const url = await submitToRealComfy(promptText);
+        addLog(`✅ 图像接收下载完成！`, "text-emerald-500");
+        return url;
+    } catch (err) {
+        if (err instanceof BatchCancelError || err.name === 'BatchCancelError' || cancelRequested) {
+            throw new BatchCancelError("User requested cancellation.");
+        }
+        addLog(`❌ ComfyUI 生成图片错误: ${err.message}`, "text-red-500 font-bold");
+        addLog(`已启用纯本地 SVG 矢量图进行安全降级容错，稍后可用“补齐”只重跑这一幕。`, "text-amber-400");
+        return OFFLINE_PLACEHOLDER_IMAGE;
+    }
+}
+
+// 只重跑一本画册里缺失/失败的分镜。
+// 在此之前，一轮 30 幕的任务如果在第 28 幕断掉，唯一的办法是整本从头再来 ——
+// 已经画好的 27 张图会被重画一遍，白白烧掉几十分钟 GPU 时间。
+async function resumeBookGeneration(bookId) {
+    if (runningBatch) {
+        notifyWarning('已经有批量任务在跑了，等它结束再补齐。');
+        return;
+    }
+
+    const book = savedGalleries.find(item => item.id === bookId);
+    if (!book) return;
+
+    const missing = getMissingPanelIndices(book);
+    if (missing.length === 0) {
+        notify('这本画册已经是完整的了。', { type: 'success' });
+        return;
+    }
+
+    const tpl = templates.find(t => t.id === book.templateId);
+    const row = (batchMatrix.rows || []).find(r => r.id === book.rowId);
+    if (!tpl || !row) {
+        notifyError('找不到这本画册对应的模板或角色行，无法补齐。可以改用单页精修重绘。');
+        return;
+    }
+
+    if (!isMockMode && !comfyWorkflowRaw) {
+        notifyWarning('生产模式下需要先导入 ComfyUI 工作流才能补齐。');
+        return;
+    }
+
+    const confirmed = await confirmAction({
+        title: `补齐「${book.title}」缺失的 ${missing.length} 幕？`,
+        message: `已经画好的 ${(book.totalSteps || 0) - missing.length} 幕不会重画，只重跑第 `
+            + `${missing.slice(0, 8).map(i => i + 1).join('、')}${missing.length > 8 ? ' 等' : ''} 幕。`,
+        confirmText: '开始补齐'
+    });
+    if (!confirmed) return;
+
+    runningBatch = true;
+    cancelRequested = false;
+    switchTab('variables');
+    document.getElementById('progress-card')?.classList.remove('hidden');
+    document.getElementById('btn-run-batch')?.classList.add('hidden');
+    const cancelBtn = document.getElementById('btn-cancel-batch');
+    if (cancelBtn) {
+        cancelBtn.classList.remove('hidden');
+        cancelBtn.classList.add('flex');
+        cancelBtn.disabled = false;
+    }
+
+    batchRunState = createEmptyBatchRunState();
+    setBatchRunState('active', {
+        sessionId: BATCH_SESSION_ID,
+        tplId: tpl.id,
+        templateTitle: tpl.title,
+        activeBookId: book.id,
+        currentBookTitle: book.title,
+        progressPct: 0,
+        progressLabel: `补齐《${book.title}》缺失的 ${missing.length} 幕`,
+        startedAt: Date.now()
+    }, true);
+
+    book.inProgress = true;
+    book.status = 'generating';
+    saveGalleriesToStorage();
+    renderGallery();
+
+    addLog(`🩹 开始补齐《${book.title}》：共 ${missing.length} 幕待重绘。`, "text-blue-400 font-bold");
+    const storyCaptions = getActiveStoryCaptions(row, tpl.id);
+
+    try {
+        for (let n = 0; n < missing.length; n++) {
+            if (cancelRequested) throw new BatchCancelError("User requested cancellation.");
+
+            const idx = missing[n];
+            const step = tpl.steps[idx];
+            if (!step) {
+                addLog(`⚠️ 模板里已经没有第 ${idx + 1} 幕了，跳过。`, "text-amber-400");
+                continue;
+            }
+
+            const prompt = replaceTemplatePlaceholders(step.prompt, row);
+            addLog(`📍 正在补齐第 ${idx + 1} 幕 [${step.name}]...`);
+            const image = await renderPanelImage(prompt, row.style, idx, step.name);
+
+            upsertBookPanel(book, idx, {
+                name: step.name,
+                prompt,
+                caption: storyCaptions[idx] || replaceTemplatePlaceholders(step.caption, row),
+                image
+            });
+            saveGalleriesToStorage();
+            refreshGalleryCard(book.id);
+            setBatchProgress(Math.floor(((n + 1) / missing.length) * 100), `补齐《${book.title}》 ${n + 1}/${missing.length}`);
+        }
+
+        const stillMissing = getMissingPanelIndices(book);
+        book.inProgress = false;
+        book.status = stillMissing.length === 0 ? 'complete' : 'failed';
+        book.completedAt = Date.now();
+        saveGalleriesToStorage();
+        renderGallery();
+
+        if (stillMissing.length === 0) {
+            addLog(`🎉 《${book.title}》已补齐完整。`, "text-emerald-400 font-bold");
+            setBatchRunState('completed', { progressPct: 100, progressLabel: '补齐完成' }, true);
+            notify(`《${book.title}》已补齐完整。`, { type: 'success' });
+        } else {
+            addLog(`⚠️ 仍有 ${stillMissing.length} 幕没能画出来。`, "text-amber-400 font-bold");
+            setBatchRunState('failed', { progressLabel: `仍缺 ${stillMissing.length} 幕` }, true);
+            notifyWarning(`还有 ${stillMissing.length} 幕没画成，检查 ComfyUI 日志后可以再补一次。`);
+        }
+    } catch (err) {
+        book.inProgress = false;
+        book.status = 'canceled';
+        book.updatedAt = Date.now();
+        saveGalleriesToStorage();
+        renderGallery();
+        const isCancel = err instanceof BatchCancelError || err.name === 'BatchCancelError';
+        addLog(isCancel ? '🛑 补齐任务已被手动终止，已画好的分镜都已保留。' : `❌ 补齐过程出错：${err.message}`,
+            "text-red-500 font-bold");
+        setBatchRunState(isCancel ? 'canceled' : 'failed', { progressLabel: isCancel ? '补齐已停止' : '补齐失败' }, true);
+        if (!isCancel) notifyError(`补齐中断：${err.message}`);
+    } finally {
+        runningBatch = false;
+        cancelRequested = false;
+        document.getElementById('btn-run-batch')?.classList.remove('hidden');
+        const btn = document.getElementById('btn-cancel-batch');
+        if (btn) {
+            btn.classList.add('hidden');
+            btn.classList.remove('flex');
+            btn.disabled = false;
+        }
+    }
+}
+
 // --- TAB 3: DECOUPLED IMAGE DRAWING PIPELINE ---
 async function cancelBatchGeneration() {
     const canControlPersistedRun = batchRunState.status === 'active' || batchRunState.status === 'stale';
@@ -199,7 +394,7 @@ async function startBatchGeneration() {
                 newBook.generatedSteps = newBook.steps.length;
                 newBook.updatedAt = Date.now();
                 saveGalleriesToStorage();
-                renderGallery();
+                refreshGalleryCard(newBook.id);
 
                 currentFinishedSubmission++;
                 const percent = Math.floor((currentFinishedSubmission / grandTotalSubmissions) * 100);

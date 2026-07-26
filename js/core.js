@@ -801,13 +801,50 @@ function loadBatchRunStateFromStorage() {
     }
 }
 
+// 批量运行状态每秒会更新很多次（每条日志、每次进度）。之前每一次都会触发一轮
+// saveConfigToComfyServer()，而那是把整份状态（含全部画册，通常几百 KB）序列化
+// 后 POST 出去。跑一轮 30 幕 × 5 角色的任务，等于持续每 500ms 往磁盘刷几百 KB。
+// 这里把“日志/进度这类高频、可丢失的状态”降级为节流同步；状态迁移
+// （开始/完成/取消/失败）仍然立即落盘。
+const BATCH_STATE_SYNC_INTERVAL_MS = 4000;
+let lastBatchStateSyncAt = 0;
+let pendingBatchStateSyncTimer = null;
+
+function syncBatchStateToServerThrottled() {
+    const now = Date.now();
+    const elapsed = now - lastBatchStateSyncAt;
+    if (elapsed >= BATCH_STATE_SYNC_INTERVAL_MS) {
+        lastBatchStateSyncAt = now;
+        saveConfigToComfyServer();
+        return;
+    }
+    if (pendingBatchStateSyncTimer) return;
+    // 保证最后一次更新一定会被写出去，不会因为节流而丢掉尾巴。
+    pendingBatchStateSyncTimer = setTimeout(() => {
+        pendingBatchStateSyncTimer = null;
+        lastBatchStateSyncAt = Date.now();
+        saveConfigToComfyServer();
+    }, BATCH_STATE_SYNC_INTERVAL_MS - elapsed);
+}
+
+function flushBatchStateSync() {
+    if (pendingBatchStateSyncTimer) {
+        clearTimeout(pendingBatchStateSyncTimer);
+        pendingBatchStateSyncTimer = null;
+    }
+    lastBatchStateSyncAt = Date.now();
+    saveConfigToComfyServer();
+}
+
 function saveBatchRunStateToStorage(syncServer = false) {
     batchRunState = normalizeBatchRunState({
         ...batchRunState,
         updatedAt: Date.now()
     });
     localStorage.setItem(BATCH_STATE_KEY, JSON.stringify(batchRunState));
-    if (syncServer) {
+    if (syncServer === 'throttled') {
+        syncBatchStateToServerThrottled();
+    } else if (syncServer) {
         saveConfigToComfyServer();
     }
 }
@@ -818,7 +855,10 @@ function setBatchRunState(status, extra = {}, syncServer = true) {
         ...extra,
         status
     });
-    saveBatchRunStateToStorage(syncServer);
+    // 状态迁移是低频且要紧的事件：先写本地，再立即推服务端。
+    saveBatchRunStateToStorage(false);
+    if (syncServer === true) flushBatchStateSync();
+    else if (syncServer) syncBatchStateToServerThrottled();
     renderBatchConsoleFromState();
 }
 
@@ -834,7 +874,7 @@ function setBatchProgress(percent, label) {
     if (barEl) barEl.style.width = `${safePercent}%`;
     if (labelEl && batchRunState.progressLabel) labelEl.innerText = batchRunState.progressLabel;
 
-    saveBatchRunStateToStorage(true);
+    saveBatchRunStateToStorage('throttled');
 }
 
 function renderBatchConsoleFromState() {

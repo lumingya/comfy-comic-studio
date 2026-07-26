@@ -165,6 +165,115 @@ function resetPixivModalScroll() {
     });
 }
 
+// 单张画册卡片的 HTML。抽出来是为了在批量出图过程中只重画受影响的那一张，
+// 而不是每出一张图就整栅格重建 + 全局扫一遍图标。
+function buildGalleryCardHtml(book) {
+    const steps = getOrderedBookSteps(book);
+    const coverImage = steps[0]?.image || OFFLINE_PLACEHOLDER_IMAGE;
+    const totalFrames = book.totalSteps || steps.length || 0;
+    const generatedFrames = steps.length;
+    const isInProgress = book.inProgress || book.status === 'generating';
+    const isCanceled = book.status === 'canceled';
+    const isFailed = book.status === 'failed';
+    const completionText = isInProgress
+        ? `生成中 ${generatedFrames}/${totalFrames || '?'}`
+        : isCanceled
+            ? `已中断 ${generatedFrames}/${totalFrames || '?'}`
+            : isFailed
+                ? `生成失败 ${generatedFrames}/${totalFrames || '?'}`
+                : "100% 完整";
+    const frameBadgeText = totalFrames ? `${generatedFrames}/${totalFrames} P` : `${generatedFrames} P`;
+    const storyLabel = book.storyTitle || '默认剧情';
+    const statusBadge = isInProgress
+        ? '<div class="absolute top-2 right-2 bg-amber-500 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow animate-pulse">生成中</div>'
+        : isCanceled
+            ? '<div class="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow">已中断</div>'
+            : isFailed
+                ? '<div class="absolute top-2 right-2 bg-red-700 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow">失败</div>'
+                : '';
+
+    // 未完成的画册：直接在卡片上给一个“继续补齐”的入口。
+    const missingCount = getMissingPanelIndices(book).length;
+    const resumeButton = (!isInProgress && missingCount > 0) ? `
+                <button
+                    onclick="event.stopPropagation(); resumeBookGeneration(${inlineJsString(book.id)})"
+                    class="absolute bottom-2 left-2 px-2.5 py-1 rounded-lg bg-blue-600/95 hover:bg-blue-500 text-white text-[10px] font-bold flex items-center gap-1 shadow-lg border border-blue-400/30 transition"
+                    title="只重跑缺失或失败的 ${missingCount} 幕，已完成的不动"
+                >
+                    <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+                    补齐 ${missingCount} 幕
+                </button>` : '';
+
+    const cardHtml = `
+        <div data-book-id="${escapeHtml(book.id)}" onclick="openPixivModal(${inlineJsString(book.id)})" class="group bg-white dark:bg-slate-900 rounded-2xl overflow-hidden pixiv-card-shadow border border-slate-100 dark:border-slate-800 hover:scale-[1.02] transition-all duration-300 cursor-pointer flex flex-col justify-between h-[360px] relative">
+            <!-- Cover Image and frame indicator badge -->
+            <div class="relative h-[220px] overflow-hidden bg-slate-950">
+                <img src="${escapeHtml(coverImage)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Cover">
+                <div class="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
+                    <i data-lucide="layers" class="w-3 h-3"></i>
+                    <span>${frameBadgeText}</span>
+                </div>
+                <div class="absolute top-2 left-2 bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow">
+                    ${escapeHtml(book.characterName)}
+                </div>
+                ${statusBadge}
+                <!-- 删除按钮：悬停时显示，阻止冒泡防止打开画册 -->
+                <button
+                    onclick="event.stopPropagation(); deleteGallery(${inlineJsString(book.id)})"
+                    class="absolute ${statusBadge ? 'top-9' : 'top-2'} right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 w-7 h-7 rounded-full bg-red-600/90 hover:bg-red-500 backdrop-blur-md flex items-center justify-center shadow-lg border border-red-400/30"
+                    title="删除这本画册"
+                >
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5 text-white"></i>
+                </button>
+                ${resumeButton}
+            </div>
+
+            <!-- Card metadata -->
+            <div class="p-4 flex-grow flex flex-col justify-between space-y-2">
+                <div>
+                    <h3 class="font-black text-sm text-slate-900 dark:text-slate-100 line-clamp-1 group-hover:text-blue-500 transition-colors">
+                        ${escapeHtml(book.title)}
+                    </h3>
+                    <p class="text-[11px] text-slate-400 mt-0.5 font-mono">
+                        模板: ${escapeHtml(book.templateTitle)}
+                    </p>
+                    <p class="text-[11px] text-purple-500 dark:text-purple-300 mt-0.5 font-semibold line-clamp-1">
+                        剧情: ${escapeHtml(storyLabel)}
+                    </p>
+                </div>
+                
+                <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                    ${escapeHtml(book.synopsis || "暂无剧本介绍。")}
+                </p>
+
+                <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2 text-[10px] text-slate-400">
+                    <span class="flex items-center gap-1">
+                        <i data-lucide="heart" class="w-3.5 h-3.5 text-pink-500 ${book.liked ? 'fill-pink-500' : 'fill-pink-500/20'}"></i>
+                        <span>${getBookLikeCount(book)} 赞</span>
+                    </span>
+                    <span>${completionText}</span>
+                </div>
+            </div>
+        </div>
+    `;
+    return cardHtml;
+}
+
+// 只替换某一本画册对应的那张卡片。批量出图时每完成一幕就调用它，
+// 代替 renderGallery() —— 后者会重建全部卡片并对整个文档重跑一次图标渲染。
+function refreshGalleryCard(bookId) {
+    const book = savedGalleries.find(item => item.id === bookId);
+    const card = document.querySelector(`#gallery-container [data-book-id="${CSS.escape(String(bookId))}"]`);
+    if (!book || !card) {
+        // 卡片还不在 DOM 里（比如刚创建，或被当前筛选条件挡住），退回整表重画。
+        renderGallery();
+        return;
+    }
+    card.outerHTML = buildGalleryCardHtml(book);
+    const replaced = document.querySelector(`#gallery-container [data-book-id="${CSS.escape(String(bookId))}"]`);
+    if (replaced) initLucide(replaced);
+}
+
 function renderGallery() {
     const container = document.getElementById('gallery-container');
     container.innerHTML = '';
@@ -201,82 +310,7 @@ function renderGallery() {
     }
 
     visibleBooks.forEach((book) => {
-        const steps = getOrderedBookSteps(book);
-        const coverImage = steps[0]?.image || OFFLINE_PLACEHOLDER_IMAGE;
-        const totalFrames = book.totalSteps || steps.length || 0;
-        const generatedFrames = steps.length;
-        const isInProgress = book.inProgress || book.status === 'generating';
-        const isCanceled = book.status === 'canceled';
-        const isFailed = book.status === 'failed';
-        const completionText = isInProgress
-            ? `生成中 ${generatedFrames}/${totalFrames || '?'}`
-            : isCanceled
-                ? `已中断 ${generatedFrames}/${totalFrames || '?'}`
-                : isFailed
-                    ? `生成失败 ${generatedFrames}/${totalFrames || '?'}`
-                    : "100% 完整";
-        const frameBadgeText = totalFrames ? `${generatedFrames}/${totalFrames} P` : `${generatedFrames} P`;
-        const storyLabel = book.storyTitle || '默认剧情';
-        const statusBadge = isInProgress
-            ? '<div class="absolute top-2 right-2 bg-amber-500 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow animate-pulse">生成中</div>'
-            : isCanceled
-                ? '<div class="absolute top-2 right-2 bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow">已中断</div>'
-                : isFailed
-                    ? '<div class="absolute top-2 right-2 bg-red-700 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow">失败</div>'
-                    : '';
-
-        const cardHtml = `
-            <div onclick="openPixivModal(${inlineJsString(book.id)})" class="group bg-white dark:bg-slate-900 rounded-2xl overflow-hidden pixiv-card-shadow border border-slate-100 dark:border-slate-800 hover:scale-[1.02] transition-all duration-300 cursor-pointer flex flex-col justify-between h-[360px] relative">
-                <!-- Cover Image and frame indicator badge -->
-                <div class="relative h-[220px] overflow-hidden bg-slate-950">
-                    <img src="${escapeHtml(coverImage)}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Cover">
-                    <div class="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1">
-                        <i data-lucide="layers" class="w-3 h-3"></i>
-                        <span>${frameBadgeText}</span>
-                    </div>
-                    <div class="absolute top-2 left-2 bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded shadow">
-                        ${escapeHtml(book.characterName)}
-                    </div>
-                    ${statusBadge}
-                    <!-- 删除按钮：悬停时显示，阻止冒泡防止打开画册 -->
-                    <button
-                        onclick="event.stopPropagation(); deleteGallery(${inlineJsString(book.id)})"
-                        class="absolute ${statusBadge ? 'top-9' : 'top-2'} right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 w-7 h-7 rounded-full bg-red-600/90 hover:bg-red-500 backdrop-blur-md flex items-center justify-center shadow-lg border border-red-400/30"
-                        title="删除这本画册"
-                    >
-                        <i data-lucide="trash-2" class="w-3.5 h-3.5 text-white"></i>
-                    </button>
-                </div>
-
-                <!-- Card metadata -->
-                <div class="p-4 flex-grow flex flex-col justify-between space-y-2">
-                    <div>
-                        <h3 class="font-black text-sm text-slate-900 dark:text-slate-100 line-clamp-1 group-hover:text-blue-500 transition-colors">
-                            ${escapeHtml(book.title)}
-                        </h3>
-                        <p class="text-[11px] text-slate-400 mt-0.5 font-mono">
-                            模板: ${escapeHtml(book.templateTitle)}
-                        </p>
-                        <p class="text-[11px] text-purple-500 dark:text-purple-300 mt-0.5 font-semibold line-clamp-1">
-                            剧情: ${escapeHtml(storyLabel)}
-                        </p>
-                    </div>
-                    
-                    <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                        ${escapeHtml(book.synopsis || "暂无剧本介绍。")}
-                    </p>
-
-                    <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2 text-[10px] text-slate-400">
-                        <span class="flex items-center gap-1">
-                            <i data-lucide="heart" class="w-3.5 h-3.5 text-pink-500 ${book.liked ? 'fill-pink-500' : 'fill-pink-500/20'}"></i>
-                            <span>${getBookLikeCount(book)} 赞</span>
-                        </span>
-                        <span>${completionText}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        container.insertAdjacentHTML('beforeend', cardHtml);
+        container.insertAdjacentHTML('beforeend', buildGalleryCardHtml(book));
     });
     initLucide(container);
 }
