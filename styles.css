@@ -724,3 +724,27 @@ body {
     .ccs-palette-hint { display: none; }
     .ccs-palette-footer { display: none; }
 }
+
+/* 分镜卡片右上角的排序 / 复制 / 删除小按钮 */
+.step-tool-btn {
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #94a3b8;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+.step-tool-btn:hover:not(:disabled) {
+    color: #2563eb;
+    background: rgba(59, 130, 246, 0.12);
+}
+.step-tool-btn.is-danger:hover:not(:disabled) {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
+}
+.step-tool-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}

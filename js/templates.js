@@ -182,9 +182,20 @@ function populateActiveTemplateSteps() {
             <div class="step-editor-card p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 bg-slate-50 dark:bg-slate-950/40 relative space-y-3">
                 <div class="flex justify-between items-center">
                     <span class="text-xs font-bold font-mono text-blue-500">分镜 ${String(idx + 1).padStart(2, '0')} / FRAME</span>
-                    <button onclick="removeStepFromActive(${idx})" class="p-1 rounded hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition">
-                        <i data-lucide="minus-circle" class="w-4 h-4"></i>
-                    </button>
+                    <div class="flex items-center gap-0.5">
+                        <button type="button" onclick="moveStepInActive(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} class="step-tool-btn" title="上移一幕" aria-label="上移一幕">
+                            <i data-lucide="arrow-up" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button type="button" onclick="moveStepInActive(${idx}, 1)" ${idx === t.steps.length - 1 ? 'disabled' : ''} class="step-tool-btn" title="下移一幕" aria-label="下移一幕">
+                            <i data-lucide="arrow-down" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button type="button" onclick="duplicateStepInActive(${idx})" class="step-tool-btn" title="在下方复制一幕" aria-label="复制这一幕">
+                            <i data-lucide="copy-plus" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button type="button" onclick="removeStepFromActive(${idx})" class="step-tool-btn is-danger" title="删除这一幕" aria-label="删除这一幕">
+                            <i data-lucide="minus-circle" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="grid md:grid-cols-12 gap-3">
@@ -209,7 +220,7 @@ function populateActiveTemplateSteps() {
         `;
         container.insertAdjacentHTML('beforeend', stepCard);
     });
-    initLucide();
+    initLucide(container);
 }
 
 // 将当前 DOM 里的编辑值同步回 templates 内存（防止 re-render 时覆盖用户未保存的编辑）
@@ -236,6 +247,42 @@ function syncDomToActiveTemplate() {
     });
 }
 
+// 分镜顺序此前只能靠 AI 精修里的 swap_frames 调整，手动编辑器里连上下移动都没有；
+// 想把第 7 幕挪到第 3 幕，只能把两边的名称、提示词、旁白逐字段互相复制粘贴。
+function moveStepInActive(idx, delta) {
+    const t = templates.find(temp => temp.id === activeTemplateId);
+    if (!t) return;
+
+    const target = idx + delta;
+    if (target < 0 || target >= t.steps.length) return;
+
+    syncDomToActiveTemplate();
+    const [moved] = t.steps.splice(idx, 1);
+    t.steps.splice(target, 0, moved);
+    populateActiveTemplateSteps();
+    saveTemplatesToStorage();
+
+    // 让被移动的那张卡片保持在视野里，长模板下不至于“移动完就找不到了”
+    document.querySelectorAll('.step-editor-card')[target]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+function duplicateStepInActive(idx) {
+    const t = templates.find(temp => temp.id === activeTemplateId);
+    if (!t || !t.steps[idx]) return;
+
+    syncDomToActiveTemplate();
+    const source = t.steps[idx];
+    t.steps.splice(idx + 1, 0, {
+        name: `${source.name}（副本）`,
+        prompt: source.prompt,
+        caption: source.caption
+    });
+    populateActiveTemplateSteps();
+    saveTemplatesToStorage();
+    notify('已在下方复制这一幕，改几个词就是新的分镜。', { type: 'success' });
+    document.querySelectorAll('.step-editor-card')[idx + 1]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
 function addNewStepToActive() {
     const t = templates.find(temp => temp.id === activeTemplateId);
     if (!t) return;
@@ -249,6 +296,8 @@ function addNewStepToActive() {
     });
 
     populateActiveTemplateSteps();
+    saveTemplatesToStorage();
+    document.querySelectorAll('.step-editor-card')[t.steps.length - 1]?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
 function removeStepFromActive(idx) {
@@ -263,6 +312,7 @@ function removeStepFromActive(idx) {
     syncDomToActiveTemplate(); // 先把当前 DOM 编辑内容同步回内存
     t.steps.splice(idx, 1);
     populateActiveTemplateSteps();
+    saveTemplatesToStorage();
 }
 
 // Collapsible templates sidebar manager

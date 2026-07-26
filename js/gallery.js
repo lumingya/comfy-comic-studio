@@ -1,6 +1,64 @@
 // js/gallery.js - 画廊展厅、沉浸式画册阅读器、单页重绘与离线导出。
 
 // --- TAB 1: PIXIV GALLERY RENDERING ---
+
+// 画廊检索：批量跑几轮之后画册数量很容易上百，没有检索就只能靠滚动找。
+// 状态保存在内存里，刷新页面回到默认视图。
+const galleryView = { query: '', status: 'all', sort: 'newest' };
+
+function onGalleryFilterChange() {
+    galleryView.query = String(getElementValue('gallery-search-input', '') || '').trim().toLowerCase();
+    galleryView.status = getElementValue('gallery-status-filter', 'all') || 'all';
+    galleryView.sort = getElementValue('gallery-sort-select', 'newest') || 'newest';
+    renderGallery();
+}
+
+function getBookSearchHaystack(book) {
+    if (book._searchIndex && book._searchStamp === book.updatedAt) return book._searchIndex;
+    const parts = [
+        book.title, book.characterName, book.templateTitle, book.storyTitle,
+        book.synopsis, (book.tags || []).join(' ')
+    ];
+    (book.steps || []).forEach(step => {
+        parts.push(step.name, step.caption);
+    });
+    const index = parts.filter(Boolean).join(' ').toLowerCase();
+    // 缓存到画册对象上；updatedAt 变了才重算，避免每次输入都重扫全部分镜。
+    Object.defineProperty(book, '_searchIndex', { value: index, writable: true, configurable: true, enumerable: false });
+    Object.defineProperty(book, '_searchStamp', { value: book.updatedAt, writable: true, configurable: true, enumerable: false });
+    return index;
+}
+
+function bookMatchesStatusFilter(book, status) {
+    if (status === 'all') return true;
+    if (status === 'liked') return !!book.liked;
+    const isDone = !book.inProgress && book.status !== 'canceled' && book.status !== 'failed' && book.status !== 'generating';
+    return status === 'complete' ? isDone : !isDone;
+}
+
+function getVisibleGalleryBooks() {
+    const { query, status, sort } = galleryView;
+    const filtered = savedGalleries.filter(book =>
+        bookMatchesStatusFilter(book, status)
+        && (!query || getBookSearchHaystack(book).includes(query))
+    );
+
+    const stepCount = (book) => (Array.isArray(book.steps) ? book.steps.length : 0);
+    const created = (book) => Number(book.createdAt) || 0;
+    if (sort === 'oldest') filtered.sort((a, b) => created(a) - created(b));
+    else if (sort === 'title') filtered.sort((a, b) => String(a.title || '').localeCompare(String(b.title || ''), 'zh-CN'));
+    else if (sort === 'panels') filtered.sort((a, b) => stepCount(b) - stepCount(a));
+    else filtered.sort((a, b) => created(b) - created(a));
+
+    return filtered;
+}
+
+function renderGalleryResultCount(visibleCount) {
+    const el = document.getElementById('gallery-result-count');
+    if (!el) return;
+    const total = savedGalleries.length;
+    el.innerText = visibleCount === total ? `共 ${total} 本` : `${visibleCount} / ${total} 本`;
+}
 function getGalleryRelationKey(book) {
     if (!book) return '';
     if (book.rowId && book.templateId) {
@@ -111,6 +169,23 @@ function renderGallery() {
     const container = document.getElementById('gallery-container');
     container.innerHTML = '';
 
+    const visibleBooks = getVisibleGalleryBooks();
+    renderGalleryResultCount(visibleBooks.length);
+
+    if (savedGalleries.length > 0 && visibleBooks.length === 0) {
+        container.innerHTML = `
+            <div class="col-span-full py-16 text-center space-y-4">
+                <div class="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
+                    <i data-lucide="search-x" class="w-8 h-8"></i>
+                </div>
+                <h4 class="font-bold text-slate-700 dark:text-slate-300">没有符合条件的画册</h4>
+                <p class="text-xs text-slate-400">试试换个关键词，或把状态筛选改回“全部状态”。</p>
+            </div>
+        `;
+        initLucide(container);
+        return;
+    }
+
     if (savedGalleries.length === 0) {
         container.innerHTML = `
             <div class="col-span-full py-16 text-center space-y-4">
@@ -125,7 +200,7 @@ function renderGallery() {
         return;
     }
 
-    savedGalleries.forEach((book, index) => {
+    visibleBooks.forEach((book) => {
         const steps = getOrderedBookSteps(book);
         const coverImage = steps[0]?.image || OFFLINE_PLACEHOLDER_IMAGE;
         const totalFrames = book.totalSteps || steps.length || 0;
@@ -203,7 +278,7 @@ function renderGallery() {
         `;
         container.insertAdjacentHTML('beforeend', cardHtml);
     });
-    initLucide();
+    initLucide(container);
 }
 
 // 删除指定画册

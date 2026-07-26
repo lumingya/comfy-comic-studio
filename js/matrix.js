@@ -1,6 +1,59 @@
 // js/matrix.js - 批量角色矩阵、变量列管理与剧本旁白编辑弹窗。
 
 // --- TAB 3: BATCH MATRIX ---
+// 矩阵表头：列名、列说明，以及重命名 / 删除该列的入口。
+function getMatrixColumnHeaderMeta(col) {
+    const lower = String(col || '').toLowerCase();
+    if (/^character\d*$/.test(lower)) {
+        return {
+            label: lower === 'character' ? '人物核心特征' : '人物占位符',
+            className: 'text-blue-400',
+            minWidthClass: 'min-w-[150px]'
+        };
+    }
+    if (lower === 'style') {
+        return { label: '画风', className: 'text-indigo-400', minWidthClass: 'min-w-[120px]' };
+    }
+    if (lower === 'outfit') {
+        return { label: '服装/造型', className: 'text-pink-400', minWidthClass: 'min-w-[120px]' };
+    }
+    return { label: '自定义变量', className: 'text-purple-400', minWidthClass: 'min-w-[120px]' };
+}
+
+function renderMatrixTableHeader() {
+    const headerRow = document.getElementById('matrix-header-row');
+    if (!headerRow) return;
+
+    const variableHeaders = batchMatrix.columns.map(col => {
+        const meta = getMatrixColumnHeaderMeta(col);
+        const isCore = DEFAULT_MATRIX_COLUMNS.includes(col);
+        const deleteBtn = isCore ? '' : `<button type="button" onclick="deleteMatrixColumn(${inlineJsString(col)})" class="step-tool-btn is-danger" title="删除 {${escapeHtml(col)}} 这一列" aria-label="删除变量 ${escapeHtml(col)}"><i data-lucide="trash-2" class="w-3 h-3"></i></button>`;
+        return `
+            <th class="p-3 ${meta.minWidthClass} ${meta.className} font-mono align-top">
+                <div class="flex items-start justify-between gap-1">
+                    <div class="min-w-0">
+                        <div class="truncate">{${escapeHtml(col)}}</div>
+                        <div class="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500 font-semibold">${escapeHtml(meta.label)}</div>
+                    </div>
+                    <div class="flex items-center gap-0.5 shrink-0">
+                        <button type="button" onclick="renameMatrixColumn(${inlineJsString(col)})" class="step-tool-btn" title="重命名 {${escapeHtml(col)}}（会同步改写所有模板里的占位符）" aria-label="重命名变量 ${escapeHtml(col)}">
+                            <i data-lucide="pencil" class="w-3 h-3"></i>
+                        </button>
+                        ${deleteBtn}
+                    </div>
+                </div>
+            </th>
+        `;
+    }).join('');
+
+    headerRow.innerHTML = `
+        <th class="p-3 w-12 text-center">启用</th>
+        <th class="p-3 w-36">画册标题/概念名称</th>
+        ${variableHeaders}
+        <th class="p-3 w-16 text-center">操作</th>
+    `;
+}
+
 function renderMatrixTable() {
     normalizeBatchMatrixState();
     renderMatrixTableHeader();
@@ -129,6 +182,112 @@ async function addCustomVariableColumn() {
     saveMatrixToStorage();
     renderMatrixTable();
     notify(`已新增变量字段 {${sanitized}}，现在可以在分镜提示词里使用它了。`, { type: 'success' });
+}
+
+// 统计某个占位符在所有模板的提示词 / 旁白里被引用了多少处。
+function countPlaceholderUsage(name) {
+    const token = `{${name}}`;
+    let count = 0;
+    templates.forEach(tpl => {
+        (tpl.steps || []).forEach(step => {
+            count += String(step.prompt || '').split(token).length - 1;
+            count += String(step.caption || '').split(token).length - 1;
+        });
+    });
+    return count;
+}
+
+function rewritePlaceholderInTemplates(oldName, newName) {
+    const from = `{${oldName}}`;
+    const to = `{${newName}}`;
+    let rewritten = 0;
+    templates.forEach(tpl => {
+        (tpl.steps || []).forEach(step => {
+            if (String(step.prompt || '').includes(from)) {
+                step.prompt = step.prompt.split(from).join(to);
+                rewritten++;
+            }
+            if (String(step.caption || '').includes(from)) {
+                step.caption = step.caption.split(from).join(to);
+                rewritten++;
+            }
+        });
+    });
+    return rewritten;
+}
+
+// 重命名一列变量。关键是同步改写所有模板里的 {占位符}：
+// 只改列名不改模板，等于让整套模板静默失效 —— 出图时占位符会原样进提示词。
+async function renameMatrixColumn(oldName) {
+    normalizeBatchMatrixState();
+    if (!batchMatrix.columns.includes(oldName)) return;
+
+    const usage = countPlaceholderUsage(oldName);
+    const newName = await promptText({
+        title: `重命名变量 {${oldName}}`,
+        message: usage > 0
+            ? `所有模板里的 ${usage} 处 {${oldName}} 会被同步改写成新名称。`
+            : '当前没有任何模板引用这个占位符。',
+        label: '新的占位符名称',
+        value: oldName,
+        confirmText: '重命名',
+        validate: (value) => {
+            const sanitized = sanitizeMatrixVariableName(value);
+            if (!sanitized) return '无效的变量名称，请只使用字母、数字或下划线。';
+            if (sanitized === oldName) return '新名称和原名称相同。';
+            if (MATRIX_RESERVED_FIELDS.has(sanitized)) return `“${sanitized}” 是系统保留字段。`;
+            if (batchMatrix.columns.includes(sanitized)) return `“${sanitized}” 这一列已经存在了。`;
+            return '';
+        }
+    });
+    if (newName === null) return;
+
+    const sanitized = sanitizeMatrixVariableName(newName);
+    batchMatrix.columns = batchMatrix.columns.map(col => (col === oldName ? sanitized : col));
+    batchMatrix.rows.forEach(row => {
+        row[sanitized] = row[oldName] ?? '';
+        delete row[oldName];
+    });
+    const rewritten = rewritePlaceholderInTemplates(oldName, sanitized);
+
+    saveMatrixToStorage();
+    saveTemplatesToStorage();
+    renderMatrixTable();
+    renderTemplatesList();
+    notify(`{${oldName}} 已改名为 {${sanitized}}，同步改写了模板中的 ${rewritten} 处引用。`, { type: 'success' });
+}
+
+// 删除一列变量。
+// 此前既没有入口，就算手动从 columns 里去掉也无效：normalizeBatchMatrixState()
+// 会从每一行残留的同名 key 上把这一列重新收集回来。所以必须两边一起清。
+async function deleteMatrixColumn(name) {
+    normalizeBatchMatrixState();
+    if (!batchMatrix.columns.includes(name)) return;
+    if (DEFAULT_MATRIX_COLUMNS.includes(name)) {
+        notifyWarning(`{${name}} 是内置变量，不能删除。`);
+        return;
+    }
+
+    const usage = countPlaceholderUsage(name);
+    const confirmed = await confirmAction({
+        title: `删除变量 {${name}}？`,
+        message: usage > 0
+            ? `所有角色行里这一列填的内容都会被清空。\n另外还有 ${usage} 处模板提示词/旁白在引用 {${name}}，删除后它们不会再被替换，需要你自己改掉。`
+            : '所有角色行里这一列填的内容都会被清空。当前没有模板引用它。',
+        confirmText: '删除该列',
+        danger: true
+    });
+    if (!confirmed) return;
+
+    batchMatrix.columns = batchMatrix.columns.filter(col => col !== name);
+    batchMatrix.rows.forEach(row => { delete row[name]; });
+
+    saveMatrixToStorage();
+    renderMatrixTable();
+    notify(usage > 0
+        ? `已删除变量 {${name}}，请记得处理模板里剩下的 ${usage} 处引用。`
+        : `已删除变量 {${name}}。`,
+        { type: usage > 0 ? 'warning' : 'success' });
 }
 
 function populateTemplateDropdowns() {

@@ -162,60 +162,8 @@ function normalizeBatchMatrixState() {
         });
 }
 
-function getMatrixColumnHeaderMeta(col) {
-    const lower = String(col || '').toLowerCase();
-    if (/^character\d*$/.test(lower)) {
-        return {
-            label: lower === 'character' ? '人物核心特征' : '人物占位符',
-            className: 'text-blue-400',
-            minWidthClass: 'min-w-[150px]'
-        };
-    }
-    if (lower === 'style') {
-        return {
-            label: '画风',
-            className: 'text-indigo-400',
-            minWidthClass: 'min-w-[120px]'
-        };
-    }
-    if (lower === 'outfit') {
-        return {
-            label: '服装/造型',
-            className: 'text-pink-400',
-            minWidthClass: 'min-w-[120px]'
-        };
-    }
-    return {
-        label: '自定义变量',
-        className: 'text-purple-400',
-        minWidthClass: 'min-w-[120px]'
-    };
-}
-
-function renderMatrixTableHeader() {
-    const headerRow = document.getElementById('matrix-header-row');
-    if (!headerRow) return;
-
-    const variableHeaders = batchMatrix.columns.map(col => {
-        const meta = getMatrixColumnHeaderMeta(col);
-        return `
-            <th class="p-3 ${meta.minWidthClass} ${meta.className} font-mono">
-                <div>{${escapeHtml(col)}}</div>
-                <div class="mt-0.5 text-[10px] text-slate-400 dark:text-slate-500 font-semibold">${escapeHtml(meta.label)}</div>
-            </th>
-        `;
-    }).join('');
-
-    headerRow.innerHTML = `
-        <th class="p-3 w-12 text-center">启用</th>
-        <th class="p-3 w-36">画册标题/概念名称</th>
-        ${variableHeaders}
-        <th class="p-3 w-16 text-center">操作</th>
-    `;
-}
-
-// 全局主线大纲：显式填写的优先，否则退回模板自身的简介（模板编辑器里那一栏
-// 的提示语就是“在这里描述这个连环画的主线思路”，本来就是干这个用的）。
+// 全局主线大纲：显式填写的优先，否则退回模板自身的简介（模板编辑器里那一栏的
+// 提示语就是“在这里描述这个连环画的主线思路”，本来就是干这个用的）。
 // 在此之前 story.js 每次都硬编码传空字符串，大模型拿到的主线永远是空的。
 function resolveGlobalStoryOutline(tpl = null) {
     const explicit = String(getElementValue('global-story-prompt', '') || '').trim();

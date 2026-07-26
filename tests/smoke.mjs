@@ -215,7 +215,63 @@ try {
     });
     check('留空时回落到模板简介', outlineFallback === (await page.evaluate(() => templates[0].desc)), outlineFallback);
 
-    // 关键路径 12：服务端静态资源边界
+    // 关键路径 12：编辑体验 —— 分镜排序 / 复制、变量列增删改、画廊检索
+    await page.click('#tab-btn-templates');
+    const stepNamesBefore = await page.evaluate(() => templates.find(t => t.id === activeTemplateId).steps.map(s => s.name));
+    if (stepNamesBefore.length >= 2) {
+        await page.evaluate(() => moveStepInActive(0, 1));
+        const after = await page.evaluate(() => templates.find(t => t.id === activeTemplateId).steps.map(s => s.name));
+        check('分镜可以下移一位', after[0] === stepNamesBefore[1] && after[1] === stepNamesBefore[0], after.join(' | '));
+    }
+    const countBeforeDup = await page.evaluate(() => templates.find(t => t.id === activeTemplateId).steps.length);
+    await page.evaluate(() => duplicateStepInActive(0));
+    check('分镜可以就地复制', await page.evaluate(() => templates.find(t => t.id === activeTemplateId).steps.length) === countBeforeDup + 1);
+
+    await page.click('#tab-btn-variables');
+    await page.evaluate(() => {
+        batchMatrix.columns.push('smoketestvar');
+        batchMatrix.rows.forEach(row => { row.smoketestvar = 'v'; });
+        templates[0].steps[0].prompt += ' {smoketestvar}';
+        renderMatrixTable();
+    });
+    check('自定义变量列出现在表头上', await page.locator('#matrix-header-row th:has-text("smoketestvar")').count() === 1);
+
+    // 重命名必须同步改写模板里的占位符，否则模板会静默失效
+    const renamePromise = page.evaluate(() => renameMatrixColumn('smoketestvar'));
+    await page.waitForSelector('#ccs-dialog-input', { timeout: 5000 });
+    await page.fill('#ccs-dialog-input', 'renamedvar');
+    await page.click('.ccs-dialog-confirm');
+    await renamePromise;
+    check('重命名后矩阵列名已更新', await page.evaluate(() => batchMatrix.columns.includes('renamedvar')));
+    check('重命名同步改写了模板占位符', await page.evaluate(() => templates[0].steps[0].prompt.includes('{renamedvar}')));
+    check('旧占位符已从模板中消失', await page.evaluate(() => !templates[0].steps[0].prompt.includes('{smoketestvar}')));
+
+    // 删除必须把行上的同名 key 一起清掉，否则规范化时这一列会被重新收集回来
+    const deletePromise = page.evaluate(() => deleteMatrixColumn('renamedvar'));
+    await page.waitForSelector('#ccs-dialog-host', { timeout: 5000 });
+    await page.click('.ccs-dialog-confirm');
+    await deletePromise;
+    await page.evaluate(() => normalizeBatchMatrixState());
+    check('删除的变量列不会被规范化重新拉回来', await page.evaluate(() => !batchMatrix.columns.includes('renamedvar')));
+    check('删除的变量列已从每一行上移除', await page.evaluate(() => batchMatrix.rows.every(r => r.renamedvar === undefined)));
+    check('内置变量列不提供删除按钮', await page.evaluate(() => {
+        const headers = Array.from(document.querySelectorAll('#matrix-header-row th'));
+        const styleHeader = headers.find(th => th.textContent.includes('{style}'));
+        return styleHeader ? styleHeader.querySelectorAll('.is-danger').length === 0 : false;
+    }));
+
+    await page.click('#tab-btn-gallery');
+    const totalBooks = await page.evaluate(() => savedGalleries.length);
+    await page.fill('#gallery-search-input', 'zzz-definitely-no-such-book');
+    check('搜不到时显示空结果态', await page.locator('#gallery-container > div').count() === 1);
+    await page.fill('#gallery-search-input', '');
+    check('清空搜索后画册全部回来', await page.locator('#gallery-container > div').count() === totalBooks);
+    await page.selectOption('#gallery-sort-select', 'title');
+    const sortedTitles = await page.evaluate(() => getVisibleGalleryBooks().map(b => b.title));
+    check('按标题排序生效', JSON.stringify(sortedTitles) === JSON.stringify([...sortedTitles].sort((a, b) => String(a).localeCompare(String(b), 'zh-CN'))));
+    await page.selectOption('#gallery-sort-select', 'newest');
+
+    // 关键路径 13：服务端静态资源边界
     for (const [p, expected] of [['/data/llm.json', 404], ['/server.py', 404], ['/index.html', 200], ['/js/core.js', 200], ['/vendor/lucide.min.js', 200], ['/js/../server.py', 404]]) {
         const res = await fetch(`${BASE}${p}`);
         check(`静态边界 ${p} -> ${expected}`, res.status === expected, `got ${res.status}`);

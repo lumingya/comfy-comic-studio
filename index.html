@@ -127,6 +127,31 @@
                 </div>
             </div>
 
+            <!-- 检索工具条：画册攒多了以后靠肉眼在网格里翻是不现实的 -->
+            <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+                <div class="relative flex-grow">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+                    <input type="search" id="gallery-search-input" oninput="onGalleryFilterChange()" placeholder="搜索标题、角色、模板、剧情或分镜台词…" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-3 py-2.5 text-xs focus:outline-none focus:border-blue-500 transition text-slate-800 dark:text-slate-200">
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <label for="gallery-status-filter" class="sr-only">按状态筛选</label>
+                    <select id="gallery-status-filter" onchange="onGalleryFilterChange()" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-xs focus:outline-none text-slate-800 dark:text-slate-200">
+                        <option value="all">全部状态</option>
+                        <option value="complete">已完成</option>
+                        <option value="unfinished">未完成 / 失败</option>
+                        <option value="liked">已点赞</option>
+                    </select>
+                    <label for="gallery-sort-select" class="sr-only">排序方式</label>
+                    <select id="gallery-sort-select" onchange="onGalleryFilterChange()" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2.5 text-xs focus:outline-none text-slate-800 dark:text-slate-200">
+                        <option value="newest">最新在前</option>
+                        <option value="oldest">最早在前</option>
+                        <option value="title">按标题</option>
+                        <option value="panels">按分镜数</option>
+                    </select>
+                    <span id="gallery-result-count" class="text-[11px] text-slate-400 whitespace-nowrap"></span>
+                </div>
+            </div>
+
             <!-- Empty State / Load Grid -->
             <div id="gallery-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 <!-- Dynamically generated Pixiv items -->
