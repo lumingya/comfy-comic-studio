@@ -11,25 +11,152 @@ class BatchCancelError extends Error {
     }
 }
 
+class ComfyWorkflowError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ComfyWorkflowError';
+    }
+}
+
 // 2. 带有 AbortController 超时机制的高可靠性 fetch 封装
 async function fetchWithTimeout(resource, options = {}) {
-    const { timeout = 10000 } = options;
+    const { timeout = 10000, signal: externalSignal, ...fetchOptions } = options;
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
+    let timedOut = false;
+    const abortFromExternalSignal = () => controller.abort(externalSignal?.reason);
+    if (externalSignal?.aborted) {
+        abortFromExternalSignal();
+    } else {
+        externalSignal?.addEventListener('abort', abortFromExternalSignal, { once: true });
+    }
+    const id = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+    }, timeout);
     try {
         const response = await fetch(resource, {
-            ...options,
+            ...fetchOptions,
             signal: controller.signal
         });
-        clearTimeout(id);
         return response;
     } catch (err) {
-        clearTimeout(id);
-        if (err.name === 'AbortError') {
+        if (err.name === 'AbortError' && timedOut) {
             throw new Error(`连接请求超时，限制为 ${timeout}ms`);
         }
         throw err;
+    } finally {
+        clearTimeout(id);
+        externalSignal?.removeEventListener('abort', abortFromExternalSignal);
     }
+}
+
+const COMFY_SEED_MAX = Number.MAX_SAFE_INTEGER;
+
+function generateComfySeed() {
+    const cryptoObj = (typeof window !== 'undefined' && window.crypto) || (typeof globalThis !== 'undefined' && globalThis.crypto);
+    if (cryptoObj && typeof cryptoObj.getRandomValues === 'function') {
+        const values = new Uint32Array(2);
+        cryptoObj.getRandomValues(values);
+        const seed = (values[0] * 0x200000) + (values[1] >>> 11);
+        return seed > 0 ? seed : 1;
+    }
+    return Math.max(1, Math.floor(Math.random() * COMFY_SEED_MAX));
+}
+
+function isComfyNodeLink(value) {
+    return Array.isArray(value)
+        && value.length >= 2
+        && (typeof value[0] === 'string' || typeof value[0] === 'number')
+        && typeof value[1] === 'number';
+}
+
+function isSeedInputName(inputName) {
+    return String(inputName || '').toLowerCase().includes('seed');
+}
+
+function isNumericSeedString(value) {
+    return typeof value === 'string' && /^\d+$/.test(value.trim());
+}
+
+function randomizeComfyWorkflowSeeds(workflow) {
+    const changes = [];
+    const touchedInputs = new Set();
+    const nodeSeeds = new Map();
+    const linkedSeedSourceNodeIds = new Set();
+
+    if (!workflow || typeof workflow !== 'object') return changes;
+
+    const getSeedForNode = (nodeId) => {
+        const id = String(nodeId);
+        if (!nodeSeeds.has(id)) nodeSeeds.set(id, generateComfySeed());
+        return nodeSeeds.get(id);
+    };
+
+    const setSeedInput = (nodeId, node, key, asString = false) => {
+        if (!node || !node.inputs) return false;
+        const marker = `${nodeId}.${key}`;
+        if (touchedInputs.has(marker)) return false;
+
+        const seed = getSeedForNode(nodeId);
+        node.inputs[key] = asString ? String(seed) : seed;
+        touchedInputs.add(marker);
+        changes.push({ nodeId: String(nodeId), key, seed });
+        return true;
+    };
+
+    const entries = Object.entries(workflow);
+    entries.forEach(([nodeId, node]) => {
+        if (!node || typeof node !== 'object' || !node.inputs || typeof node.inputs !== 'object') return;
+
+        Object.entries(node.inputs).forEach(([key, value]) => {
+            if (!isSeedInputName(key)) return;
+
+            if (typeof value === 'number' && Number.isFinite(value)) {
+                setSeedInput(nodeId, node, key);
+            } else if (isNumericSeedString(value)) {
+                setSeedInput(nodeId, node, key, true);
+            } else if (isComfyNodeLink(value)) {
+                linkedSeedSourceNodeIds.add(String(value[0]));
+            }
+        });
+    });
+
+    linkedSeedSourceNodeIds.forEach((sourceNodeId) => {
+        const sourceNode = workflow[sourceNodeId];
+        if (!sourceNode || typeof sourceNode !== 'object' || !sourceNode.inputs || typeof sourceNode.inputs !== 'object') return;
+
+        let updatedSource = false;
+        Object.entries(sourceNode.inputs).forEach(([key, value]) => {
+            if (!isSeedInputName(key)) return;
+
+            if (typeof value === 'number' && Number.isFinite(value)) {
+                updatedSource = setSeedInput(sourceNodeId, sourceNode, key) || updatedSource;
+            } else if (isNumericSeedString(value)) {
+                updatedSource = setSeedInput(sourceNodeId, sourceNode, key, true) || updatedSource;
+            }
+        });
+
+        if (!updatedSource && typeof sourceNode.inputs.value === 'number' && Number.isFinite(sourceNode.inputs.value)) {
+            setSeedInput(sourceNodeId, sourceNode, 'value');
+        } else if (!updatedSource && isNumericSeedString(sourceNode.inputs.value)) {
+            setSeedInput(sourceNodeId, sourceNode, 'value', true);
+        }
+    });
+
+    entries.forEach(([nodeId, node]) => {
+        if (!node || typeof node !== 'object' || !node.inputs || typeof node.inputs !== 'object') return;
+        const classType = String(node.class_type || '').toLowerCase();
+        const title = String(node._meta?.title || '').toLowerCase();
+        if (!classType.includes('seed') && !title.includes('seed') && !title.includes('随机种')) return;
+
+        if (typeof node.inputs.value === 'number' && Number.isFinite(node.inputs.value)) {
+            setSeedInput(nodeId, node, 'value');
+        } else if (isNumericSeedString(node.inputs.value)) {
+            setSeedInput(nodeId, node, 'value', true);
+        }
+    });
+
+    return changes;
 }
 
 // Test local comfy Connection (supporting cors and system_stats check)
@@ -45,6 +172,9 @@ async function testComfyConnection(silent = false) {
 
     const url = document.getElementById('comfy-url-input').value.trim();
     localStorage.setItem('comfy_api_url', url);
+    if (typeof window.saveComfyConfigFromDom === 'function') {
+        window.saveComfyConfigFromDom();
+    }
 
     try {
         // Test endpoint /system_stats
@@ -74,6 +204,9 @@ function toggleEngineMode(notify = true) {
     }
     isMockMode = toggle.checked;
     localStorage.setItem('comfy_is_mock', isMockMode);
+    if (typeof window.saveComfyConfigFromDom === 'function') {
+        window.saveComfyConfigFromDom();
+    }
     
     const tip = document.getElementById('engine-mode-tip');
     if (isMockMode) {
@@ -95,6 +228,13 @@ async function submitToRealComfy(positivePromptText) {
 
     // Clone our JSON template
     const workflowPayload = JSON.parse(JSON.stringify(comfyWorkflowRaw));
+    const seedChanges = randomizeComfyWorkflowSeeds(workflowPayload);
+    if (seedChanges.length > 0) {
+        addLog(`已刷新 ${seedChanges.length} 个 ComfyUI Seed，本次主 Seed: ${seedChanges[0].seed}`, "text-emerald-400");
+        console.log('[ComfyUI] Randomized seed inputs:', seedChanges);
+    } else {
+        addLog("未在当前工作流中发现可自动刷新的 Seed 字段，将沿用工作流原始设置。", "text-amber-400");
+    }
 
     // Inject modified positive text
     if (workflowPayload[posNodeId]) {
@@ -193,7 +333,7 @@ async function submitToRealComfy(positivePromptText) {
     // Start polling history for completion
     let completed = false;
     let checkAttempts = 0;
-    const maxAttempts = 120; // 2 minutes timeout
+    const maxAttempts = 120; // 4 minutes timeout at a 2-second polling interval
     let outImgUrl = "";
 
     while (!completed && checkAttempts < maxAttempts) {
@@ -210,21 +350,32 @@ async function submitToRealComfy(positivePromptText) {
                 const hData = await hRes.json();
                 if (hData[promptId]) {
                     // Prompt completed! Let's parse output
-                    const outputs = hData[promptId].outputs;
-                    if (outputs && outputs[outNodeId] && outputs[outNodeId].images) {
+                    const historyEntry = hData[promptId];
+                    const statusMessages = Array.isArray(historyEntry.status?.messages)
+                        ? historyEntry.status.messages.map(item => Array.isArray(item) ? item.join(': ') : String(item)).join('; ')
+                        : '';
+                    if (historyEntry.status?.status_str === 'error') {
+                        throw new ComfyWorkflowError(`ComfyUI 工作流执行失败${statusMessages ? `：${statusMessages}` : '，请查看 ComfyUI 控制台日志。'}`);
+                    }
+
+                    const outputs = historyEntry.outputs;
+                    if (outputs && outputs[outNodeId] && Array.isArray(outputs[outNodeId].images) && outputs[outNodeId].images.length > 0) {
                         const imgInfo = outputs[outNodeId].images[0];
                         const filename = imgInfo.filename;
                         const subfolder = imgInfo.subfolder || "";
                         const type = imgInfo.type || "output";
                         
-                        outImgUrl = `${baseUrl}/view?filename=${encodeURIComponent(filename)}&subfolder=${encodeURIComponent(subfolder)}&type=${type}`;
+                        outImgUrl = `${baseUrl}/view?filename=${encodeURIComponent(filename)}&subfolder=${encodeURIComponent(subfolder)}&type=${encodeURIComponent(type)}`;
                         completed = true;
                     } else {
-                        throw new Error("图像生成已完成，但在指定的输出节点中找不到渲染完的图像。请确认输出节点ID配置正确。");
+                        throw new ComfyWorkflowError(`图像生成已完成，但输出节点 ${outNodeId || '（未配置）'} 中没有可用图像。请检查输出节点 ID。`);
                     }
                 }
             }
         } catch (err) {
+            if (err instanceof ComfyWorkflowError || err instanceof BatchCancelError) {
+                throw err;
+            }
             console.warn(`[History Polling Attempt ${checkAttempts} Failed]: ${err.message}`);
             // 局部偶发性的通信瞬断允许自动重试直到 maxAttempts，不立即崩溃；但如果是用户主动取消，则直接重抛中断
             if (cancelRequested) {

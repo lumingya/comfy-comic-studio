@@ -9,16 +9,61 @@ XML 根标签为 <模板>，格式规范严格如下：
   <分镜列表>
     <分镜1>
       <名称>第一幕：名称</名称>
-      <提示词>当前幕画面英文提示词，必须包含占位符变量 {character}、{style} 以及可选的 {outfit}</提示词>
-      <剧情>当前幕的中文剧情内容/台词，需包含占位符变量 {character}</剧情>
+      <提示词>当前幕画面英文提示词，必须包含至少一个人物占位符变量（如 {character}、{character1}、{character2}）、{style} 以及可选的 {outfit}</提示词>
+      <剧情>当前幕的中文剧情内容/台词，可以使用人物占位符变量（如 {character}、{character1}、{character2}）</剧情>
     </分镜1>
     ... (一共正好有 {panelCount} 个 <分镜1> 到 <分镜xxx> 标签)
   </分镜列表>
 </模板>
 
-提示词要求：画面的英文提示词中必须合理嵌入 {character}、{style} 和 {outfit}，用大括号包裹，供系统替换。例如: "A beautiful raw photo of {character}, {style}, lying on a bed, wearing {outfit}, blushing..."`;
+提示词要求：画面的英文提示词中必须合理嵌入人物变量、{style} 和可选的 {outfit}，人物变量可以按角色数量自定义为 {character}、{character1}、{character2} 等，用大括号包裹，供系统替换。例如: "A beautiful raw photo of {character1} standing beside {character2}, {style}, wearing {outfit}, cinematic lighting..."`;
 
 window.DEFAULT_XML_TEMPLATE_SYSTEM_PROMPT = DEFAULT_XML_TEMPLATE_SYSTEM_PROMPT;
+
+const LLM_REQUEST_TIMEOUT_MS = 120000;
+
+function getLlmChatCompletionsUrl(baseUrl) {
+    return `${String(baseUrl || '').replace(/\/+$/, '')}/chat/completions`;
+}
+
+async function fetchLlmWithTimeout(resource, options = {}) {
+    const { timeout = LLM_REQUEST_TIMEOUT_MS, signal: externalSignal, ...fetchOptions } = options;
+    const controller = new AbortController();
+    let timedOut = false;
+    const abortFromExternalSignal = () => controller.abort(externalSignal?.reason);
+
+    if (externalSignal?.aborted) {
+        abortFromExternalSignal();
+    } else {
+        externalSignal?.addEventListener('abort', abortFromExternalSignal, { once: true });
+    }
+
+    const timeoutId = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+    }, timeout);
+
+    try {
+        return await fetch(resource, { ...fetchOptions, signal: controller.signal });
+    } catch (err) {
+        if (err.name === 'AbortError' && timedOut) {
+            throw new Error(`LLM 请求超时（${Math.round(timeout / 1000)} 秒），请检查服务地址或稍后重试。`);
+        }
+        throw err;
+    } finally {
+        clearTimeout(timeoutId);
+        externalSignal?.removeEventListener('abort', abortFromExternalSignal);
+    }
+}
+
+async function getLlmResponseError(res) {
+    try {
+        const errData = await res.json();
+        return errData.error?.message || errData.message || `HTTP ${res.status}`;
+    } catch (err) {
+        return `${res.statusText || 'LLM 请求失败'} (HTTP ${res.status})`;
+    }
+}
 
 function resolveXmlTemplateSystemPrompt(systemPromptTemplate, panelCount) {
     const source = (systemPromptTemplate || DEFAULT_XML_TEMPLATE_SYSTEM_PROMPT).trim() || DEFAULT_XML_TEMPLATE_SYSTEM_PROMPT;
@@ -47,7 +92,7 @@ ${currentPrompt}
 请根据上面的要素，创作当前这一幕的字幕旁白。
     `;
 
-    const res = await fetch(`${baseUrl}/chat/completions`, {
+    const res = await fetchLlmWithTimeout(getLlmChatCompletionsUrl(baseUrl), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -68,8 +113,7 @@ ${currentPrompt}
         const data = await res.json();
         return data.choices[0].message.content.trim();
     } else {
-        const errData = await res.json();
-        throw new Error(errData.error?.message || `HTTP ${res.status}`);
+        throw new Error(await getLlmResponseError(res));
     }
 }
 
@@ -95,7 +139,7 @@ ${stepsText}
 
 请直接返回对应的 JSON 字符串数组，数组中必须正好包含 ${preparedPanels.length} 个元素。`;
 
-    const res = await fetch(`${baseUrl}/chat/completions`, {
+    const res = await fetchLlmWithTimeout(getLlmChatCompletionsUrl(baseUrl), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -125,8 +169,7 @@ ${stepsText}
         }
         throw new Error("模型返回的内容无法解析为有效的 JSON 数组");
     } else {
-        const errData = await res.json();
-        throw new Error(errData.error?.message || `HTTP ${res.status}`);
+        throw new Error(await getLlmResponseError(res));
     }
 }
 
@@ -168,7 +211,7 @@ ${chunkDetails}
 
 请直接返回对应的 JSON 字符串数组，数组中必须正好包含 ${chunkPanels.length} 个元素。`;
 
-    const res = await fetch(`${baseUrl}/chat/completions`, {
+    const res = await fetchLlmWithTimeout(getLlmChatCompletionsUrl(baseUrl), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -198,8 +241,7 @@ ${chunkDetails}
         }
         throw new Error("大模型返回的内容无法解析为当前批次的 JSON 数组");
     } else {
-        const errData = await res.json();
-        throw new Error(errData.error?.message || `HTTP ${res.status}`);
+        throw new Error(await getLlmResponseError(res));
     }
 }
 
@@ -215,7 +257,7 @@ async function requestXmlTemplateFromLlm(userIdea, panelCount, provider, apiKey,
     目标总分镜幕数：${panelCount} 幕。
     请立即为我设计这个 XML 模板！`;
 
-    const res = await fetch(`${baseUrl}/chat/completions`, {
+    const res = await fetchLlmWithTimeout(getLlmChatCompletionsUrl(baseUrl), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -235,14 +277,65 @@ async function requestXmlTemplateFromLlm(userIdea, panelCount, provider, apiKey,
         const data = await res.json();
         return data.choices[0].message.content.trim();
     } else {
-        const errData = await res.json();
-        throw new Error(errData.error?.message || `HTTP ${res.status}`);
+        throw new Error(await getLlmResponseError(res));
     }
 }
 
 // ==========================================
 // AI 聊天精修 - Function Calling 注册及请求
 // ==========================================
+
+const DEFAULT_CHAT_REFINEMENT_SYSTEM_PROMPT = `你是一个内置于连环画漫画生成器（ComfyComic Studio）的智能精修助手。你的任务是根据用户的指令直接或者间接调整当前的连环画漫画模板。
+你拥有一些工具，能够帮助你获取当前模板状态并执行修改操作（如修改标题、大纲、分镜名称、分镜绘图Prompt、剧情Caption、以及添加/删除/调整分镜顺序）。
+交互原则：
+1. 始终优先调用 get_current_template_details 工具来获取当前的漫画模板状态，如果用户要求修改或者微调的话。
+2. 当用户命令你修改任何内容时，如果有对应的工具可以调用，请【立即调用】该工具执行修改。不要纸上谈兵只输出文字，而是切实去调用工具！
+3. 如果工具调用返回的结果有错误，请在你的最终中文回复里以人类可读的形式进行总结。
+4. 如果修改已成功完成，请在中文回复中告知用户修改了什么，以及新的大纲或分镜长什么样，提醒用户在主界面查看。
+5. 永远严格保护大括号包裹的变量（如 {character}, {character1}, {character2}, {style}, {outfit} 等占位符）！不要破坏它们，因为这些是系统批量生图和文本替换的命脉！
+6. 如果用户需要进行整体风格美化（如画面提示词超分细节润色、剧情文案语气大改等），可以使用 batch_update_prompts_and_captions 或循环调用 update_frame_prompt_and_caption 工具来实现。
+7. 用简洁友好的中文与用户交流。`;
+
+function getChatRefinementSystemPrompt() {
+    const storedPrompt = localStorage.getItem('comfy_comic_chat_system_prompt') || '';
+    return storedPrompt.trim() || DEFAULT_CHAT_REFINEMENT_SYSTEM_PROMPT;
+}
+
+function buildChatContentForApi(msg) {
+    const attachments = Array.isArray(msg.attachments) ? msg.attachments : [];
+    const baseText = msg.content || '';
+    if (attachments.length === 0) {
+        return baseText || null;
+    }
+
+    const textParts = [baseText].filter(Boolean);
+    const imageParts = [];
+
+    attachments.forEach((att, idx) => {
+        const label = `附件 ${idx + 1}：${att.name || '未命名文件'}`;
+        if (att.kind === 'image' && att.dataUrl) {
+            textParts.push(`[${label}] 图片已随消息上传，请结合图片内容理解用户意图。`);
+            imageParts.push({
+                type: 'image_url',
+                image_url: { url: att.dataUrl }
+            });
+        } else if (att.text) {
+            textParts.push(`[${label}]\n${att.text}`);
+        } else {
+            textParts.push(`[${label}] 文件已上传，但未能提取文本内容。`);
+        }
+    });
+
+    const textContent = textParts.join('\n\n') || '请参考附件内容。';
+    if (imageParts.length === 0) {
+        return textContent;
+    }
+
+    return [
+        { type: 'text', text: textContent },
+        ...imageParts
+    ];
+}
 
 const CHAT_REFINEMENT_TOOLS = [
     {
@@ -290,8 +383,8 @@ const CHAT_REFINEMENT_TOOLS = [
                 properties: {
                     frameIndex: { type: "integer", description: "分镜幕的索引值，0-indexed。例如：第一幕对应 0，第二幕对应 1，以此类推。" },
                     name: { type: "string", description: "可选。该幕的中文新名称，例如 '第一幕：深夜回家'" },
-                    prompt: { type: "string", description: "可选。更新后的英文绘图提示词，必须合理嵌入 {character}, {style}, {outfit} 变量占位符" },
-                    caption: { type: "string", description: "可选。更新后的中文剧情台词，必须合理嵌入 {character} 占位符" }
+                    prompt: { type: "string", description: "可选。更新后的英文绘图提示词，必须合理嵌入可自定义人物变量（如 {character}, {character1}, {character2}）、{style}, {outfit} 等占位符" },
+                    caption: { type: "string", description: "可选。更新后的中文剧情台词，可以使用可自定义人物变量（如 {character1}, {character2}）" }
                 },
                 required: ["frameIndex"]
             }
@@ -307,8 +400,8 @@ const CHAT_REFINEMENT_TOOLS = [
                 properties: {
                     insertIndex: { type: "integer", description: "插入的索引位置，0-indexed。如果省略，则默认追加到当前所有分镜的末尾。" },
                     name: { type: "string", description: "新一幕的中文名称，例如 '第三幕：突发危机'" },
-                    prompt: { type: "string", description: "新一幕的英文绘图提示词，必须合理嵌入 {character}, {style}, {outfit} 占位符" },
-                    caption: { type: "string", description: "新一幕的中文剧情台词，必须合理嵌入 {character} 占位符" }
+                    prompt: { type: "string", description: "新一幕的英文绘图提示词，必须合理嵌入可自定义人物变量（如 {character}, {character1}, {character2}）、{style}, {outfit} 等占位符" },
+                    caption: { type: "string", description: "新一幕的中文剧情台词，可以使用可自定义人物变量（如 {character1}, {character2}）" }
                 },
                 required: ["name", "prompt", "caption"]
             }
@@ -358,8 +451,8 @@ const CHAT_REFINEMENT_TOOLS = [
                             type: "object",
                             properties: {
                                 frameIndex: { type: "integer", description: "分镜索引，0-indexed" },
-                                prompt: { type: "string", description: "可选。更新后的英文提示词，必须使用 {character}, {style}, {outfit} 等占位符" },
-                                caption: { type: "string", description: "可选。更新后的中文剧情台词，必须使用 {character} 占位符" }
+                                prompt: { type: "string", description: "可选。更新后的英文提示词，必须使用可自定义人物变量（如 {character}, {character1}, {character2}）、{style}, {outfit} 等占位符" },
+                                caption: { type: "string", description: "可选。更新后的中文剧情台词，可以使用可自定义人物变量（如 {character1}, {character2}）" }
                             },
                             required: ["frameIndex"]
                         }
@@ -373,7 +466,7 @@ const CHAT_REFINEMENT_TOOLS = [
 
 window.CHAT_REFINEMENT_TOOLS = CHAT_REFINEMENT_TOOLS;
 
-async function requestLlmChatWithTools(messages) {
+async function requestLlmChatWithTools(messages, options = {}) {
     const baseUrl = document.getElementById('llm-base-url').value.trim();
     const apiKey = document.getElementById('llm-api-key').value.trim();
     const model = document.getElementById('llm-model-name').value.trim();
@@ -382,23 +475,20 @@ async function requestLlmChatWithTools(messages) {
         throw new Error("API Key 密钥未配置，请先在 LLM 剧情与模板面板中输入并保存！");
     }
 
-    const systemPrompt = `你是一个内置于连环画漫画生成器（ComfyComic Studio）的智能精修助手。你的任务是根据用户的指令直接或者间接调整当前的连环画漫画模板。
-你拥有一些工具，能够帮助你获取当前模板状态并执行修改操作（如修改标题、大纲、分镜名称、分镜绘图Prompt、剧情Caption、以及添加/删除/调整分镜顺序）。
-交互原则：
-1. 始终优先调用 get_current_template_details 工具来获取当前的漫画模板状态，如果用户要求修改或者微调的话。
-2. 当用户命令你修改任何内容时，如果有对应的工具可以调用，请【立即调用】该工具执行修改。不要纸上谈兵只输出文字，而是切实去调用工具！
-3. 如果工具调用返回的结果有错误，请在你的最终中文回复里以人类可读的形式进行总结。
-4. 如果修改已成功完成，请在中文回复中告知用户修改了什么，以及新的大纲或分镜长什么样，提醒用户在主界面查看。
-5. 永远严格保护大括号包裹的变量（如 {character}, {style}, {outfit} 等占位符）！不要破坏它们，因为这些是系统批量生图和文本替换的命脉！
-6. 如果用户需要进行整体风格美化（如画面提示词超分细节润色、剧情文案语气大改等），可以使用 batch_update_prompts_and_captions 或循环调用 update_frame_prompt_and_caption 工具来实现。
-7. 用简洁友好的中文与用户交流。`;
+    const systemPrompt = getChatRefinementSystemPrompt();
 
     // 组装完整的消息流
+    const visibleMessages = messages.filter(msg => !(
+        msg.role === 'assistant'
+        && !msg.tool_calls
+        && !(msg.content || '').trim()
+    ));
+
     const formattedMessages = [
         { role: 'system', content: systemPrompt },
-        ...messages.map(msg => ({
+        ...visibleMessages.map(msg => ({
             role: msg.role,
-            content: msg.content || null,
+            content: buildChatContentForApi(msg),
             tool_calls: msg.tool_calls || undefined,
             name: msg.name || undefined,
             tool_call_id: msg.tool_call_id || undefined
@@ -413,12 +503,13 @@ async function requestLlmChatWithTools(messages) {
         tool_choice: "auto"
     };
 
-    const res = await fetch(`${baseUrl}/chat/completions`, {
+    const res = await fetchLlmWithTimeout(getLlmChatCompletionsUrl(baseUrl), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${apiKey}`
         },
+        signal: options.signal,
         body: JSON.stringify(bodyData)
     });
 
@@ -426,10 +517,10 @@ async function requestLlmChatWithTools(messages) {
         const data = await res.json();
         return data.choices[0].message;
     } else {
-        const errData = await res.json();
-        throw new Error(errData.error?.message || `HTTP ${res.status}`);
+        throw new Error(await getLlmResponseError(res));
     }
 }
 
 window.requestLlmChatWithTools = requestLlmChatWithTools;
-
+window.DEFAULT_CHAT_REFINEMENT_SYSTEM_PROMPT = DEFAULT_CHAT_REFINEMENT_SYSTEM_PROMPT;
+window.getChatRefinementSystemPrompt = getChatRefinementSystemPrompt;

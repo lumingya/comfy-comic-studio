@@ -1,0 +1,33 @@
+{
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "globals": {
+    "BatchCancelError": "readonly",
+    "addLog": "readonly",
+    "cancelRequested": "readonly",
+    "comfyWorkflowRaw": "readonly",
+    "getMockVisual": "readonly",
+    "interruptComfy": "readonly",
+    "isMockMode": "writable",
+    "lucide": "readonly",
+    "requestLlmAllCaptions": "readonly",
+    "requestLlmChatWithTools": "readonly",
+    "requestLlmChunkCaptions": "readonly",
+    "requestLlmContinuity": "readonly",
+    "requestXmlTemplateFromLlm": "readonly",
+    "simulateLlmStoryline": "readonly",
+    "sleep": "readonly",
+    "submitToRealComfy": "readonly",
+    "testComfyConnection": "readonly"
+  },
+  "parserOptions": {
+    "ecmaVersion": 2021,
+    "sourceType": "script"
+  },
+  "rules": {
+    "no-const-assign": "error",
+    "no-undef": "error"
+  }
+}

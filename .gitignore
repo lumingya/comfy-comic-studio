@@ -1,10 +1,15 @@
 comfy_comic_data.json
 comfy_comic_data.json.bak-*
 comfy_comic_data.json.bak*
+data/
 images/
 *.log
 .gemini/
 .agents/
+.playwright-cli/
+output/
+__pycache__/
+*.py[cod]
 .DS_Store
 Thumbs.db
 node_modules/
