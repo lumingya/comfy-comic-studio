@@ -366,3 +366,121 @@ async function loadConfigFromComfyServer() {
     }
     return false;
 }
+
+// ============================================================================
+// 💼 配置备份与恢复
+// ----------------------------------------------------------------------------
+// data/ 与 images/ 都在 .gitignore 里，用户换机器或重装时没有任何一键搬迁的
+// 办法，只能手工拷目录。这里提供导出/导入单个 JSON 备份包。
+// 注意：备份包含 LLM API Key，导出时会提示用户妥善保管。
+// ============================================================================
+
+const BACKUP_FORMAT_VERSION = 1;
+
+function buildBackupPayload() {
+    const state = buildAppStatePayload(false);
+    delete state.forceWrite;
+    return {
+        format: 'comfy-comic-studio-backup',
+        version: BACKUP_FORMAT_VERSION,
+        exportedAt: new Date().toISOString(),
+        state
+    };
+}
+
+function exportConfigBackup() {
+    try {
+        const payload = JSON.stringify(buildBackupPayload(), null, 2);
+        const blob = new Blob([payload], { type: 'application/json;charset=utf-8' });
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+        link.href = objectUrl;
+        link.download = `comfy-comic-backup-${stamp}.json`;
+        link.click();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+        notify('备份已导出。文件内含 LLM API Key，请勿分享给他人。', {
+            type: 'success',
+            title: '配置备份完成',
+            duration: 7000
+        });
+    } catch (err) {
+        notifyError(`导出备份失败：${err.message}`);
+    }
+}
+
+// 备份里不含 images/ 下的图片文件，只含引用它们的路径；
+// 换机器时仍需要把 images/ 一起拷过去，这一点在确认框里明确告知用户。
+function importConfigBackup() {
+    const picker = document.createElement('input');
+    picker.type = 'file';
+    picker.accept = 'application/json,.json';
+    picker.addEventListener('change', async () => {
+        const file = picker.files && picker.files[0];
+        if (!file) return;
+        try {
+            const parsed = JSON.parse(await file.text());
+            const state = parsed && parsed.format === 'comfy-comic-studio-backup' ? parsed.state : parsed;
+            if (!state || typeof state !== 'object' || !Array.isArray(state.templates)) {
+                throw new Error('文件不是有效的 ComfyComic Studio 备份包');
+            }
+
+            const confirmed = await confirmAction({
+                title: '用备份覆盖当前全部数据？',
+                message: `备份导出于 ${parsed.exportedAt || '未知时间'}\n`
+                    + `包含 ${state.templates.length} 个模板、`
+                    + `${(state.savedGalleries || []).length} 本画册、`
+                    + `${(state.comfyWorkflows || []).length} 个工作流。\n\n`
+                    + '当前的模板、画册、角色矩阵和工作流会被整体替换，此操作不可撤销。\n'
+                    + '（备份不含 images/ 目录下的图片文件，换机器时请一并拷贝。）',
+                confirmText: '覆盖并恢复',
+                danger: true
+            });
+            if (!confirmed) return;
+
+            await applyImportedBackupState(state);
+            notify('配置已从备份恢复。', { type: 'success', title: '恢复完成' });
+        } catch (err) {
+            notifyError(`导入备份失败：${err.message}`);
+        }
+    });
+    picker.click();
+}
+
+async function applyImportedBackupState(state) {
+    templates = Array.isArray(state.templates) ? state.templates : [];
+    activeTemplateId = state.activeTemplateId || templates[0]?.id || null;
+    batchMatrix = state.batchMatrix && typeof state.batchMatrix === 'object'
+        ? state.batchMatrix
+        : { columns: DEFAULT_MATRIX_COLUMNS.slice(), rows: [] };
+    savedGalleries = Array.isArray(state.savedGalleries) ? state.savedGalleries : [];
+    comfyWorkflows = Array.isArray(state.comfyWorkflows) ? state.comfyWorkflows : [];
+    activeWorkflowId = state.activeWorkflowId || comfyWorkflows[0]?.id || null;
+    batchRunState = normalizeBatchRunState(state.batchRunState);
+
+    normalizeBatchMatrixState();
+
+    if (state.comfyConfig) syncComfyConfigToLocalStorage(state.comfyConfig);
+    if (state.llmConfig) syncLlmConfigToLocalStorage(state.llmConfig);
+    if (state.xmlConfig) syncXmlConfigToLocalStorage(state.xmlConfig);
+    if (state.chatConfig) applyChatConfig(state.chatConfig);
+    if (state.uiConfig) syncUiConfigToLocalStorage(state.uiConfig);
+
+    applyLlmConfig();
+    applyXmlConfig();
+    applyComfyConfig();
+    applyUiConfig();
+
+    renderTemplatesList();
+    renderMatrixTable();
+    populateTemplateDropdowns();
+    renderGallery();
+    renderWorkflowSelector();
+    if (activeWorkflowId) selectWorkflow(activeWorkflowId, false);
+    populateLlmStorySelector();
+    renderLlmCaptionsList();
+    renderBatchConsoleFromState();
+
+    // 恢复是刻意的“缩小写入”，必须带 forceWrite 才能穿过服务端的防冲刷红线。
+    await enqueueSaveTask(true);
+}

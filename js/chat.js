@@ -364,12 +364,14 @@ function openChatSystemPromptPanel() {
     updateChatSystemPromptCounter();
     setChatSystemPromptStatus("已加载");
     panel.classList.remove('hidden');
+    syncLegacyOverlayState('chat-system-prompt', true, closeChatSystemPromptPanel);
     initLucide(panel);
 }
 
 function closeChatSystemPromptPanel() {
     const panel = document.getElementById('chat-system-prompt-panel');
     if (panel) panel.classList.add('hidden');
+    syncLegacyOverlayState('chat-system-prompt', false, closeChatSystemPromptPanel);
 }
 
 function toggleChatSystemPromptPanel() {
@@ -392,7 +394,7 @@ function saveChatSystemPromptEditor() {
     const editor = document.getElementById('chat-system-prompt-editor');
     if (!editor) return;
     if (!editor.value.trim()) {
-        alert("系统提示词不能为空。");
+        notifyWarning("系统提示词不能为空。");
         return;
     }
     localStorage.setItem(CHAT_SYSTEM_PROMPT_STORAGE_KEY, editor.value);
@@ -668,14 +670,14 @@ async function handleChatAttachmentUpload(event) {
 
     for (const file of files) {
         if (pendingChatAttachments.length >= CHAT_ATTACHMENT_MAX_COUNT) {
-            alert(`最多同时上传 ${CHAT_ATTACHMENT_MAX_COUNT} 个附件。`);
+            notifyWarning(`最多同时上传 ${CHAT_ATTACHMENT_MAX_COUNT} 个附件。`);
             break;
         }
         try {
             const attachment = await readChatAttachment(file);
             pendingChatAttachments.push(attachment);
         } catch (err) {
-            alert(`${file.name} 读取失败：${err.message}`);
+            notifyError(`${file.name} 读取失败：${err.message}`);
         }
     }
 
@@ -831,7 +833,7 @@ function attachChatMessageEditor(bubble, contentEl, msg, canDelete, editLabel) {
             const nextContent = readEditableChatText(contentEl);
             const hasAttachments = Array.isArray(msg.attachments) && msg.attachments.length > 0;
             if (!nextContent.trim() && !hasAttachments) {
-                alert("消息内容不能为空。如果不需要这条消息，可以双击删除。");
+                notifyWarning("消息内容不能为空。如果不需要这条消息，可以双击删除。");
                 contentEl.focus();
                 focusEditableTextEnd(contentEl);
                 return;
@@ -945,7 +947,7 @@ function openChatRefinementModal() {
     // 先检查当前是否有激活的模板
     const t = templates.find(temp => temp.id === activeTemplateId);
     if (!t) {
-        alert("请先选择或创建一个漫画模板，才能启动 AI 聊天精修！");
+        notifyWarning("请先选择或创建一个漫画模板，再启动 AI 聊天精修。");
         return;
     }
 
@@ -958,6 +960,7 @@ function openChatRefinementModal() {
         chatRefinementCloseTimer = null;
     }
     modal.classList.remove('hidden');
+    syncLegacyOverlayState('chat-modal', true, closeChatRefinementModal);
     const transformTarget = modal.querySelector('.transform');
     if (chatRefinementOpenTimer) clearTimeout(chatRefinementOpenTimer);
     chatRefinementOpenTimer = setTimeout(() => {
@@ -978,6 +981,7 @@ function openChatRefinementModal() {
 function closeChatRefinementModal() {
     const modal = document.getElementById('chat-refinement-modal');
     if (!modal) return;
+    syncLegacyOverlayState('chat-modal', false, closeChatRefinementModal);
     if (chatRefinementOpenTimer) {
         clearTimeout(chatRefinementOpenTimer);
         chatRefinementOpenTimer = null;
@@ -1017,14 +1021,21 @@ function switchChatSession(id) {
     renderChatMessages();
 }
 
-function deleteChatSession(id, event) {
+async function deleteChatSession(id, event) {
     if (event) event.stopPropagation();
     if (chatSessions.length <= 1) {
-        alert("至少需要保留一个对话历史！");
+        notifyWarning("至少需要保留一个对话历史。");
         return;
     }
-    
-    if (!confirm("确定要删除这个对话历史吗？")) return;
+
+    const session = chatSessions.find(s => s.id === id);
+    const confirmed = await confirmAction({
+        title: '删除这个对话历史？',
+        message: `「${session?.title || '未命名对话'}」中的 ${session?.messages?.length || 0} 条消息会被移除。`,
+        confirmText: '删除对话',
+        danger: true
+    });
+    if (!confirmed) return;
 
     chatSessions = chatSessions.filter(s => s.id !== id);
     if (activeChatSessionId === id) {
@@ -1044,10 +1055,16 @@ function renameChatSession(id, newTitle) {
     }
 }
 
-function clearCurrentSessionMessages() {
-    let session = chatSessions.find(s => s.id === activeChatSessionId);
+async function clearCurrentSessionMessages() {
+    const session = chatSessions.find(s => s.id === activeChatSessionId);
     if (!session) return;
-    if (!confirm("确定要清空当前会话的所有聊天消息吗？")) return;
+    const confirmed = await confirmAction({
+        title: '清空当前会话？',
+        message: '这个会话里的所有聊天消息都会被移除，模板本身不受影响。',
+        confirmText: '清空消息',
+        danger: true
+    });
+    if (!confirmed) return;
 
     session.messages = [
         {
@@ -1196,13 +1213,18 @@ function renderChatMessages() {
         const canDelete = (isUser || idx > 0) && msg.role !== 'tool' && !(msg.role === 'assistant' && msg.tool_calls);
         if (canDelete) {
             bubble.title = "双击删除此消息";
-            bubble.ondblclick = () => {
+            bubble.ondblclick = async () => {
                 if (bubble.classList.contains('is-editing')) return;
-                if (confirm("确定要删除这条消息吗？")) {
-                    session.messages.splice(idx, 1);
-                    saveChatSessions();
-                    renderChatMessages();
-                }
+                const confirmed = await confirmAction({
+                    title: '删除这条消息？',
+                    message: '删除后会话上下文会随之改变，AI 后续回复也会受影响。',
+                    confirmText: '删除消息',
+                    danger: true
+                });
+                if (!confirmed) return;
+                session.messages.splice(idx, 1);
+                saveChatSessions();
+                renderChatMessages();
             };
         }
         if (canEditMessage) {

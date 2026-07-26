@@ -165,8 +165,8 @@ async function testComfyConnection(silent = false) {
     const text = document.getElementById('comfy-status-text');
 
     if (isMockMode) {
-        badge.className = "flex items-center space-x-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-full text-xs font-semibold";
-        text.innerText = "模拟引擎启动中";
+        if (badge) badge.className = "flex items-center space-x-1.5 px-3 py-1 bg-amber-500/10 text-amber-600 dark:bg-amber-400/10 dark:text-amber-400 border border-amber-500/20 rounded-full text-xs font-semibold";
+        if (text) text.innerText = "模拟模式运行中";
         return;
     }
 
@@ -182,7 +182,7 @@ async function testComfyConnection(silent = false) {
         if (res.ok) {
             badge.className = "flex items-center space-x-1.5 px-3 py-1 bg-emerald-600/10 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-400 border border-emerald-500/20 rounded-full text-xs font-semibold";
             text.innerText = "ComfyUI 已连接";
-            if (!silent) alert("连接成功！ComfyUI 实例处于在线状态。");
+            if (!silent) notify("ComfyUI 实例在线，连接正常。", { type: "success" });
         } else {
             throw new Error("HTTP Status " + res.status);
         }
@@ -190,33 +190,50 @@ async function testComfyConnection(silent = false) {
         badge.className = "flex items-center space-x-1.5 px-3 py-1 bg-red-500/10 text-red-500 border border-red-500/20 rounded-full text-xs font-semibold";
         text.innerText = "ComfyUI 未连通";
         if (!silent) {
-            alert(`连接失败。\n1. 请检查 ComfyUI 是否正常运行在 ${url}\n2. 这是典型的浏览器 CORS 跨域安全阻拦。\n请确保在启动器中勾选了“允许跨域 / 开启 CORS”，或者在 ComfyUI 启动命令行里添加了参数 --enable-cors-header 并重启了 ComfyUI。`);
+            notifyError(`连不上 ${url}。\n1) 确认 ComfyUI 正在运行；\n2) 多半是浏览器 CORS 拦截：在启动器里勾选“允许跨域”，或给 ComfyUI 加上 --enable-cors-header 后重启。`, { title: "ComfyUI 连接失败", duration: 12000 });
         }
     }
 }
 
-// Toggle engine mode between Mock Mode and Production Mode
-function toggleEngineMode(notify = true) {
+const MOCK_MODE_TIP = '模拟模式：不连接 ComfyUI 或大模型，用本地生成的矢量画面和示例剧情跑通整条流程。'
+    + '适合还没装好 ComfyUI，或者只想先看看模板与批量流程长什么样的时候。';
+const PRODUCTION_MODE_TIP = '生产模式：向本地 ComfyUI 和你配置的大模型 API 发送真实请求。请先确认两边服务都已启动，地址与密钥都填对了。';
+
+// 在模拟 / 生产模式之间切换。
+// 形参不能命名为 notify —— 那会遮蔽全局的 notify() 提示函数。
+function toggleEngineMode(announce = true) {
     const toggle = document.getElementById('engine-mock-toggle');
     if (!toggle) {
         isMockMode = false;
         return;
     }
     isMockMode = toggle.checked;
-    localStorage.setItem('comfy_is_mock', isMockMode);
+    localStorage.setItem('comfy_is_mock', String(isMockMode));
     if (typeof window.saveComfyConfigFromDom === 'function') {
         window.saveComfyConfigFromDom();
     }
-    
-    const tip = document.getElementById('engine-mode-tip');
-    if (isMockMode) {
-        if (tip) tip.innerText = "当前开启“模拟模式”：不连接外部 ComfyUI 或 LLM 服务，生成高度真实的画集和情景，用于调试系统全生命流程。";
-        if (notify) alert("已切换至：模拟模式（无需部署即可体验连环画批量生成）");
-    } else {
-        if (tip) tip.innerText = "当前开启“生产模式”：系统会真枪实弹向您本地的 ComfyUI 以及 LLM API 发送真实请求，请确保相关服务已开启。";
-        if (notify) alert("已切换至：生产模式。请确保 ComfyUI 及大模型 API 均已开启并配置正确！");
+
+    renderEngineModeUi();
+
+    if (announce) {
+        if (isMockMode) {
+            notify('已切换到模拟模式：无需部署 ComfyUI 也能跑完整个批量流程。', { type: 'warning', title: '模拟模式' });
+        } else {
+            notify('已切换到生产模式：请确认 ComfyUI 与大模型 API 都已就绪。', { type: 'info', title: '生产模式' });
+        }
     }
     testComfyConnection(true);
+}
+
+// 把当前运行模式同步到「运行模式」说明文字、开关状态与顶栏徽标。
+function renderEngineModeUi() {
+    const tip = document.getElementById('engine-mode-tip');
+    if (tip) tip.innerText = isMockMode ? MOCK_MODE_TIP : PRODUCTION_MODE_TIP;
+
+    const toggle = document.getElementById('engine-mock-toggle');
+    if (toggle) toggle.checked = !!isMockMode;
+
+    if (isMockMode) testComfyConnection(true);
 }
 
 // Real Real-world ComfyUI Web API fetch logic

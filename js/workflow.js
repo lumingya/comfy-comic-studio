@@ -79,32 +79,45 @@ function updateActiveWorkflowConfig(key, value) {
     }
 }
 
-function renameWorkflow() {
+async function renameWorkflow() {
     if (!activeWorkflowId) {
-        alert("请先上传或选择一个工作流！");
+        notifyWarning('请先上传或选择一个工作流。');
         return;
     }
     const wf = comfyWorkflows.find(w => w.id === activeWorkflowId);
     if (!wf) return;
-    
-    const newName = prompt("请输入工作流的新名称：", wf.name);
-    if (newName && newName.trim()) {
-        wf.name = newName.trim();
-        saveWorkflowsToStorage();
-        renderWorkflowSelector();
-        initLucide();
-    }
+
+    const newName = await promptText({
+        title: '重命名工作流',
+        label: '工作流名称',
+        value: wf.name,
+        placeholder: '例如：SDXL 竖版出图',
+        validate: (value) => value ? '' : '名称不能为空'
+    });
+    if (newName === null) return;
+
+    wf.name = newName;
+    saveWorkflowsToStorage();
+    renderWorkflowSelector();
+    initLucide();
+    notify(`工作流已重命名为「${newName}」。`, { type: 'success' });
 }
 
-function deleteWorkflow() {
+async function deleteWorkflow() {
     if (!activeWorkflowId) {
-        alert("请先选择要删除的工作流！");
+        notifyWarning('请先选择要删除的工作流。');
         return;
     }
     const wf = comfyWorkflows.find(w => w.id === activeWorkflowId);
     if (!wf) return;
-    
-    if (confirm(`确定要删除工作流「${wf.name}」吗？`)) {
+
+    const confirmed = await confirmAction({
+        title: '删除这个工作流？',
+        message: `「${wf.name}」的节点映射配置会一并删除。`,
+        confirmText: '删除工作流',
+        danger: true
+    });
+    if (confirmed) {
         comfyWorkflows = comfyWorkflows.filter(w => w.id !== activeWorkflowId);
         if (comfyWorkflows.length > 0) {
             activeWorkflowId = comfyWorkflows[0].id;
@@ -146,9 +159,14 @@ function handleWorkflowUpload(e) {
             selectWorkflow(newId, true);
             initLucide();
             
-            alert("ComfyUI 工作流成功导入！已添加到列表并自动切换为当前活动配置。🎉");
+            notify(`工作流「${wfName}」已导入，共 ${Object.keys(parsed).length} 个节点，已切换为当前活动配置。`, {
+                type: 'success',
+                title: '导入成功'
+            });
         } catch (err) {
-            alert("解析工作流 JSON 失败，请确保格式正确且不为常规网页工作流。错误: " + err.message);
+            notifyError(`解析工作流 JSON 失败：${err.message}\n请确认导出的是 ComfyUI「API 格式」工作流，而不是普通的网页工作流。`, {
+                title: '导入失败'
+            });
         }
         e.target.value = '';
     };

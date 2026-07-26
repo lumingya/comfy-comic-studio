@@ -41,7 +41,7 @@ async function testLlmConnection() {
     saveLlmConfigFromDom();
     const config = getLlmConfigFromDom();
     if (!config.apiKey) {
-        alert("请先填写 LLM API Key。");
+        notifyWarning("请先填写 LLM API Key。");
         return;
     }
 
@@ -71,9 +71,9 @@ async function testLlmConnection() {
             } catch (e) {}
             throw new Error(message);
         }
-        alert("LLM 服务连接成功，配置已落盘。");
+        notify("LLM 服务连接成功，配置已落盘。", { type: "success" });
     } catch (err) {
-        alert(`LLM 服务连接失败：${err.message}`);
+        notifyError(`LLM 服务连接失败：${err.message}`);
     }
 }
 
@@ -117,11 +117,11 @@ async function generateXmlTemplateWithLlm() {
     const idea = xmlConfig.templatePrompt.trim();
     const panelCount = xmlConfig.panelCount || 30;
     if (!idea) {
-        alert("请先填写题材大纲要求描述。");
+        notifyWarning("请先填写题材大纲要求描述。");
         return;
     }
     if (!apiConfig.apiKey) {
-        alert("请先配置可用的 API Key。");
+        notifyWarning("请先配置可用的 API Key。");
         return;
     }
 
@@ -148,7 +148,7 @@ async function generateXmlTemplateWithLlm() {
         if (outputBlock) outputBlock.classList.remove('hidden');
         saveXmlConfigFromDom();
     } catch (err) {
-        alert(`XML 模板生成失败：${err.message}`);
+        notifyError(`XML 模板生成失败：${err.message}`);
     } finally {
         if (btn) {
             btn.disabled = false;
@@ -201,7 +201,7 @@ function parseXmlTemplateText(xmlText) {
 function saveXmlAsSystemTemplate() {
     const xmlText = getElementValue('xml-output-textarea', '').trim();
     if (!xmlText) {
-        alert("还没有可保存的 XML 内容。");
+        notifyWarning("还没有可保存的 XML 内容。");
         return;
     }
 
@@ -212,9 +212,9 @@ function saveXmlAsSystemTemplate() {
         saveTemplatesToStorage();
         renderTemplatesList();
         populateTemplateDropdowns();
-        alert(`已保存模板「${tpl.title}」，共 ${tpl.steps.length} 幕。`);
+        notify(`已保存模板「${tpl.title}」，共 ${tpl.steps.length} 幕。`, { type: "success" });
     } catch (err) {
-        alert(`保存 XML 模板失败：${err.message}`);
+        notifyError(`保存 XML 模板失败：${err.message}`);
     }
 }
 
@@ -308,7 +308,7 @@ function createNewLlmStoryVersion(copyCurrent = false) {
     const tpl = templates.find(t => t.id === tplId);
 
     if (!row || !tpl) {
-        alert("请先选择角色和模板。");
+        notifyWarning("请先选择角色和模板。");
         return;
     }
 
@@ -429,7 +429,7 @@ async function generateLlmStorylinesBatch() {
     const tplId = document.getElementById('llm-template-selector').value;
     
     if (!rowId || !tplId) {
-        alert("请先选择要生成剧情的角色和模板！");
+        notifyWarning("请先选择要生成剧情的角色和模板。");
         return;
     }
     
@@ -440,7 +440,7 @@ async function generateLlmStorylinesBatch() {
     
     const apiKey = document.getElementById('llm-api-key').value.trim();
     if (!apiKey) {
-        alert("请先配置您的 LLM API Key！");
+        notifyWarning("请先配置 LLM API Key。");
         return;
     }
     
@@ -465,7 +465,12 @@ async function generateLlmStorylinesBatch() {
     addLlmLog(`🧠 [LLM 剧本分批生成] 任务开启。角色: 《${row.bookTitle}》，模板: ${tpl.title}`, "text-purple-400 font-bold");
     
     const totalSteps = tpl.steps.length;
-    
+    const globalOutline = resolveGlobalStoryOutline(tpl);
+    addLlmLog(globalOutline
+        ? `已带上主线大纲（${globalOutline.length} 字）参与生成。`
+        : '未填写主线大纲，模板简介也是空的：本次生成缺少全局上下文，剧情连贯性会变差。',
+        globalOutline ? 'text-slate-400' : 'text-amber-400');
+
     // Substitute prompt variables
     const preparedPanels = tpl.steps.map((step, idx) => {
         const pText = replaceTemplatePlaceholders(step.prompt, row);
@@ -508,7 +513,7 @@ async function generateLlmStorylinesBatch() {
         
         try {
             const results = await requestLlmChunkCaptions(
-                "", 
+                globalOutline,
                 chunk,
                 row.bookTitle,
                 currentIdx,
@@ -550,7 +555,7 @@ async function generateLlmStorylinesBatch() {
     
     if (!llmCancelRequested) {
         addLlmLog(`🎉 剧本批量生成已全部结束。`, "text-emerald-400 font-bold");
-        alert("剧情生成完毕！");
+        notify("剧情已全部生成完毕。", { type: "success" });
     }
 }
 
@@ -567,7 +572,7 @@ async function generateSingleStoryline(stepIdx, triggerButton = null) {
     
     const apiKey = document.getElementById('llm-api-key').value.trim();
     if (!apiKey) {
-        alert("请先配置您的 LLM API Key！");
+        notifyWarning("请先配置 LLM API Key。");
         return;
     }
     
@@ -605,7 +610,7 @@ async function generateSingleStoryline(stepIdx, triggerButton = null) {
     
     try {
         const result = await requestLlmContinuity(
-            "", 
+            resolveGlobalStoryOutline(tpl),
             resolvedPrompt,
             previousContext,
             stepIdx + 1,
@@ -627,7 +632,7 @@ async function generateSingleStoryline(stepIdx, triggerButton = null) {
             populateLlmStorySelector(storyVersion?.id || '');
         }
     } catch (err) {
-        alert(`生成失败: ${err.message}`);
+        notifyError(`生成失败：${err.message}`);
     } finally {
         if (btn) {
             btn.disabled = false;

@@ -35,13 +35,13 @@ async function startBatchGeneration() {
     const tplId = document.getElementById('matrix-template-selector').value;
     const tpl = templates.find(t => t.id === tplId);
     if (!tpl) {
-        alert("所选模板不存在！");
+        notifyError("所选模板已不存在，请重新选择。");
         return;
     }
 
     const activeRows = batchMatrix.rows.filter(r => r.active);
     if (activeRows.length === 0) {
-        alert("当前没有勾选启用的角色。请在表格左侧勾选至少一行。");
+        notifyWarning("当前没有勾选启用的角色，请在表格左侧勾选至少一行。");
         return;
     }
 
@@ -49,11 +49,11 @@ async function startBatchGeneration() {
         const posNodeId = document.getElementById('node-id-positive').value.trim();
         const outNodeId = document.getElementById('node-id-output').value.trim();
         if (!posNodeId || !outNodeId) {
-            alert("生产模式下，必须指定积极提示词节点和图像输出节点ID！请前往【工作流设置】进行配置。");
+            notifyWarning("生产模式下必须指定积极提示词节点和图像输出节点 ID，请先在「ComfyUI 工作流」里配置。");
             return;
         }
         if (!comfyWorkflowRaw) {
-            alert("生产模式下，必须上传 ComfyUI 导出的 API JSON 工作流文件！");
+            notifyWarning("生产模式下必须先上传 ComfyUI 导出的 API 格式 JSON 工作流。");
             return;
         }
     }
@@ -114,7 +114,7 @@ async function startBatchGeneration() {
                 templateTitle: tpl.title,
                 storyVersionId: activeStoryVersion?.id || '',
                 storyTitle,
-                synopsis: (document.getElementById('global-story-prompt') ? document.getElementById('global-story-prompt').value : null) || `利用公式《${tpl.title}》创作而成的精美组图。`,
+                synopsis: resolveGlobalStoryOutline(tpl) || `利用公式《${tpl.title}》创作而成的精美组图。`,
                 tags: ["AI连连看", "ComfyUI", "批量绘图"],
                 totalSteps: tpl.steps.length,
                 generatedSteps: 0,
@@ -221,7 +221,7 @@ async function startBatchGeneration() {
             progressPct: 100,
             progressLabel: '全部画册生成完成'
         }, true);
-        alert("批量图片绘制成功！");
+        notify(`批量绘制完成，共产出 ${totalBooks} 本画册。`, { type: "success", title: "全部完成" });
         switchTab('gallery');
 
     } catch (err) {
@@ -255,7 +255,7 @@ async function startBatchGeneration() {
                 activeBookId: currentBook?.id || null,
                 currentBookTitle: currentBook?.title || ''
             }, true);
-            alert(`批量绘制失败: ${err.message}`);
+            notifyError(`批量绘制中断：${err.message}`, { title: "任务失败" });
         }
     } finally {
         // 使用 finally 确保所有锁与 UI 控件百分之百在任何退出情况下正确解锁，防止重入卡死

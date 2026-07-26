@@ -214,6 +214,15 @@ function renderMatrixTableHeader() {
     `;
 }
 
+// 全局主线大纲：显式填写的优先，否则退回模板自身的简介（模板编辑器里那一栏
+// 的提示语就是“在这里描述这个连环画的主线思路”，本来就是干这个用的）。
+// 在此之前 story.js 每次都硬编码传空字符串，大模型拿到的主线永远是空的。
+function resolveGlobalStoryOutline(tpl = null) {
+    const explicit = String(getElementValue('global-story-prompt', '') || '').trim();
+    if (explicit) return explicit;
+    return String(tpl?.desc || '').trim();
+}
+
 function replaceTemplatePlaceholders(text, row) {
     let result = text === null || text === undefined ? '' : String(text);
     const sourceRow = row || {};
@@ -1107,6 +1116,7 @@ window.addEventListener('DOMContentLoaded', () => {
     initChatFloatingWindow();
     initChatSystemPromptPanel();
     initChatInputEnhancements();
+    initGlobalShortcuts();
     
     // Check comfy status periodically
     testComfyConnection(true);
@@ -1220,6 +1230,7 @@ async function loadLocalStorageData() {
     applyLlmConfig();
     applyXmlConfig();
     applyComfyConfig();
+    renderEngineModeUi();
     applyUiConfig();
     bindPersistentConfigInputs();
     populateLlmStorySelector();

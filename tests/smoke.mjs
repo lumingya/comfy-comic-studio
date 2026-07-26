@@ -156,7 +156,66 @@ try {
     await page.click('#tab-btn-llm');
     check('LLM 剧情卡片已渲染', await page.locator('#llm-vertical-captions-list .llm-story-card').count() > 0);
 
-    // 关键路径 9：服务端静态资源边界
+    // 关键路径 9：交互层 —— toast、Esc 关闭浮层、命令面板、确认框
+    await page.evaluate(() => notify('冒烟测试提示', { type: 'success' }));
+    check('toast 提示会出现', await page.locator('#ccs-toast-container .ccs-toast').count() > 0);
+
+    await page.click('#tab-btn-gallery');
+    await page.locator('#gallery-container > div').first().click();
+    check('Esc 之前画册弹窗是打开的', await page.locator('#pixiv-modal').isVisible());
+    await page.keyboard.press('Escape');
+    check('Esc 能关闭画册弹窗', !(await page.locator('#pixiv-modal').isVisible()));
+
+    await page.keyboard.press('Control+k');
+    check('Ctrl+K 唤起命令面板', await page.locator('#ccs-palette-host').count() > 0);
+    await page.fill('#ccs-palette-input', '画廊');
+    check('命令面板能搜到条目', await page.locator('.ccs-palette-item').count() > 0);
+    await page.keyboard.press('Escape');
+    check('Esc 能关闭命令面板', await page.locator('#ccs-palette-host').count() === 0);
+
+    // 确认框取消时不能真的删数据
+    const galleriesBefore = await page.evaluate(() => savedGalleries.length);
+    await page.evaluate(() => { deleteGallery(savedGalleries[0].id); });
+    await page.waitForSelector('#ccs-dialog-host', { timeout: 5000 });
+    check('删除操作会弹出确认框', await page.locator('#ccs-dialog-host').count() > 0);
+    await page.click('.ccs-dialog-cancel');
+    await page.waitForTimeout(200);
+    check('取消确认后画册没有被删除', await page.evaluate(() => savedGalleries.length) === galleriesBefore);
+
+    // 关键路径 10：模拟模式在界面上真的可达，并能跑完一整轮批量出图
+    await page.click('#tab-btn-workflow');
+    check('运行模式开关存在于页面上', await page.locator('#engine-mock-toggle').count() === 1);
+    await page.locator('#engine-mock-toggle').check({ force: true });  // 开关是 sr-only input，被样式化的 span 覆盖
+    check('打开开关后进入模拟模式', await page.evaluate(() => isMockMode) === true);
+
+    const expectedPanels = await page.evaluate(() => {
+        templates[0].steps = templates[0].steps.slice(0, 2);
+        batchMatrix.rows.forEach((row, i) => { row.active = i === 0; });
+        // 先把内存改动刷回编辑器 DOM，再保存 —— saveCurrentTemplate() 是从 DOM 读分镜的
+        populateActiveTemplateSteps();
+        saveCurrentTemplate();
+        return templates[0].steps.length;
+    });
+    await page.click('#tab-btn-variables');
+    const booksBefore = await page.evaluate(() => savedGalleries.length);
+    await page.evaluate(() => startBatchGeneration());
+    await page.waitForFunction(() => runningBatch === false && batchRunState.status === 'completed', null, { timeout: 60000 });
+    check('模拟模式能跑完一整轮批量出图', await page.evaluate(() => savedGalleries.length) === booksBefore + 1);
+    const newBook = await page.evaluate(() => savedGalleries[0]);
+    check('生成的画册标记为完成', newBook.status === 'complete', JSON.stringify(newBook.status));
+    check('生成的分镜数量与模板一致', (newBook.steps || []).length === expectedPanels, `${(newBook.steps || []).length} vs ${expectedPanels}`);
+    check('模拟出图不引用外网地址', (newBook.steps || []).every(s => String(s.image).startsWith('data:')));
+
+    // 关键路径 11：全局主线大纲控件存在，且能回落到模板简介
+    await page.click('#tab-btn-llm');
+    check('全局主线大纲输入框存在', await page.locator('#global-story-prompt').count() === 1);
+    const outlineFallback = await page.evaluate(() => {
+        document.getElementById('global-story-prompt').value = '';
+        return resolveGlobalStoryOutline(templates[0]);
+    });
+    check('留空时回落到模板简介', outlineFallback === (await page.evaluate(() => templates[0].desc)), outlineFallback);
+
+    // 关键路径 12：服务端静态资源边界
     for (const [p, expected] of [['/data/llm.json', 404], ['/server.py', 404], ['/index.html', 200], ['/js/core.js', 200], ['/vendor/lucide.min.js', 200], ['/js/../server.py', 404]]) {
         const res = await fetch(`${BASE}${p}`);
         check(`静态边界 ${p} -> ${expected}`, res.status === expected, `got ${res.status}`);

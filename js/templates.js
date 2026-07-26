@@ -98,30 +98,43 @@ function createNewTemplate() {
     populateTemplateDropdowns();
 }
 
-function restoreDefaultTemplates() {
+async function restoreDefaultTemplates() {
     flushTemplateAutosave();
-    if (confirm("确定要恢复默认模板吗？这将覆盖您现有的模板。")) {
-        templates = JSON.parse(JSON.stringify(defaultTemplates));
-        activeTemplateId = templates[0].id;
-        saveTemplatesToStorage(true);
-        renderTemplatesList();
-        populateTemplateDropdowns();
-    }
+    const confirmed = await confirmAction({
+        title: '恢复出厂默认模板？',
+        message: `当前的 ${templates.length} 个模板会被两个默认模板整体替换，你自己写的分镜将全部丢失。`,
+        confirmText: '恢复默认',
+        danger: true
+    });
+    if (!confirmed) return;
+    templates = JSON.parse(JSON.stringify(defaultTemplates));
+    activeTemplateId = templates[0].id;
+    saveTemplatesToStorage(true);
+    renderTemplatesList();
+    populateTemplateDropdowns();
+    notify('已恢复为默认模板。', { type: 'success' });
 }
 
-function deleteCurrentTemplate() {
+async function deleteCurrentTemplate() {
     flushTemplateAutosave();
     if (templates.length <= 1) {
-        alert("抱歉，您至少要保留一个画册模板。");
+        notifyWarning('至少要保留一个画册模板。');
         return;
     }
-    if (confirm("确定要删除当前模板吗？此操作不可逆。")) {
-        templates = templates.filter(t => t.id !== activeTemplateId);
-        activeTemplateId = templates[0].id;
-        saveTemplatesToStorage(true);
-        renderTemplatesList();
-        populateTemplateDropdowns();
-    }
+    const current = templates.find(t => t.id === activeTemplateId);
+    const confirmed = await confirmAction({
+        title: '删除当前模板？',
+        message: `「${current?.title || '未命名模板'}」及其 ${current?.steps?.length || 0} 幕分镜会被删除，此操作不可逆。`,
+        confirmText: '删除模板',
+        danger: true
+    });
+    if (!confirmed) return;
+    templates = templates.filter(t => t.id !== activeTemplateId);
+    activeTemplateId = templates[0].id;
+    saveTemplatesToStorage(true);
+    renderTemplatesList();
+    populateTemplateDropdowns();
+    notify(`已删除模板「${current?.title || ''}」。`, { type: 'success' });
 }
 
 function saveCurrentTemplate() {
@@ -151,7 +164,7 @@ function saveCurrentTemplate() {
     saveTemplatesToStorage();
     renderTemplatesList();
     populateTemplateDropdowns();
-    alert("模板保存成功！🎉");
+    notify(`模板「${t.title || '未命名模板'}」已保存（${t.steps.length} 幕）。`, { type: 'success' });
 }
 
 function populateActiveTemplateSteps() {
@@ -243,7 +256,7 @@ function removeStepFromActive(idx) {
     if (!t) return;
 
     if (t.steps.length <= 1) {
-        alert("您至少必须保留一个故事分镜！");
+        notifyWarning('至少要保留一幕分镜。');
         return;
     }
 

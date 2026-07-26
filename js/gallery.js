@@ -207,14 +207,21 @@ function renderGallery() {
 }
 
 // 删除指定画册
-function deleteGallery(bookId) {
+async function deleteGallery(bookId) {
     const book = savedGalleries.find(b => b.id === bookId);
     if (!book) return;
-    if (!confirm(`确定要删除「${book.title}」吗？\n此操作不可撤销。`)) return;
+    const confirmed = await confirmAction({
+        title: '删除这本画册？',
+        message: `「${book.title}」及其 ${Array.isArray(book.steps) ? book.steps.length : 0} 张已生成的分镜记录会被移除，且无法撤销。`,
+        confirmText: '删除画册',
+        danger: true
+    });
+    if (!confirmed) return;
     savedGalleries = savedGalleries.filter(b => b.id !== bookId);
     saveGalleriesToStorage(false, true);
     renderGallery();
     addLog(`已删除画册：${book.title}`);
+    notify(`已删除画册「${book.title}」。`, { type: 'success' });
 }
 
 // Immersive modal viewer
@@ -344,6 +351,7 @@ function openPixivModal(bookId) {
     const modal = document.getElementById('pixiv-modal');
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+    syncLegacyOverlayState('pixiv-modal', true, closePixivModal);
     resetPixivModalScroll();
     requestAnimationFrame(resetPixivModalScroll);
     initLucide();
@@ -353,6 +361,7 @@ function closePixivModal() {
     const modal = document.getElementById('pixiv-modal');
     modal.classList.remove('flex');
     modal.classList.add('hidden');
+    syncLegacyOverlayState('pixiv-modal', false, closePixivModal);
 }
 
 let activeBookId = null;
@@ -386,11 +395,11 @@ async function shareCurrentBook() {
         }
         if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable');
         await navigator.clipboard.writeText(shareText);
-        alert('画册信息已复制到剪贴板。');
+        notify('画册信息已复制到剪贴板。', { type: 'success' });
     } catch (err) {
         if (err?.name === 'AbortError') return;
         console.warn('[Gallery] 分享失败:', err.message);
-        alert('无法调用系统分享或剪贴板，请稍后重试。');
+        notifyError('无法调用系统分享或剪贴板，请稍后重试。');
     }
 }
 
@@ -528,7 +537,7 @@ async function exportMangaHTML() {
         link.click();
         setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
     } catch (err) {
-        alert(`打包下载失败：${err.message}`);
+        notifyError(`打包下载失败：${err.message}`);
     } finally {
         if (exportBtn) {
             exportBtn.disabled = false;
@@ -539,18 +548,24 @@ async function exportMangaHTML() {
 }
 
 // Delete book directly from modal
-function deleteCurrentBook() {
+async function deleteCurrentBook() {
     if (!activeBookId) return;
     const book = savedGalleries.find(b => b.id === activeBookId);
     if (!book) return;
 
-    if (confirm(`确定要彻底删除画册「${book.title}」吗？\n该操作不可逆，将永久移除本地数据。`)) {
-        savedGalleries = savedGalleries.filter(b => b.id !== activeBookId);
-        saveGalleriesToStorage(false, true);
-        closePixivModal();
-        renderGallery();
-        alert("画册已彻底删除！");
-    }
+    const confirmed = await confirmAction({
+        title: '彻底删除这本画册？',
+        message: `「${book.title}」会被永久移除，本地数据不可恢复。`,
+        confirmText: '彻底删除',
+        danger: true
+    });
+    if (!confirmed) return;
+
+    savedGalleries = savedGalleries.filter(b => b.id !== activeBookId);
+    saveGalleriesToStorage(false, true);
+    closePixivModal();
+    renderGallery();
+    notify(`已彻底删除画册「${book.title}」。`, { type: 'success' });
 }
 
 // Single step / single page panel redraw controllers with viewport alignment optimization
@@ -579,9 +594,10 @@ async function executeSingleRedraw(bookId, stepIdx) {
     const book = savedGalleries.find(b => b.id === bookId);
     if (!book) return;
 
-    const promptText = document.getElementById(`redraw-prompt-${bookId}-${stepIdx}`).value.trim();
-    if (!promptText) {
-        alert("提示词不能为空！");
+    // 变量名避开全局的 promptText() 对话框函数
+    const redrawPrompt = document.getElementById(`redraw-prompt-${bookId}-${stepIdx}`).value.trim();
+    if (!redrawPrompt) {
+        notifyWarning('提示词不能为空。');
         return;
     }
 
@@ -595,16 +611,16 @@ async function executeSingleRedraw(bookId, stepIdx) {
         let newImgUrl = "";
         if (!isMockMode) {
             // Submit single prompt queue to ComfyUI
-            newImgUrl = await submitToRealComfy(promptText);
+            newImgUrl = await submitToRealComfy(redrawPrompt);
         } else {
             // Mock single step image redraw delay
             await sleep(1500);
-            newImgUrl = getMockVisual(promptText, stepIdx + 8, book.steps[stepIdx]?.name || "");
+            newImgUrl = getMockVisual(redrawPrompt, stepIdx + 8, book.steps[stepIdx]?.name || "");
         }
 
         // Apply new render states
         book.steps[stepIdx].image = newImgUrl;
-        book.steps[stepIdx].prompt = promptText;
+        book.steps[stepIdx].prompt = redrawPrompt;
         
         saveGalleriesToStorage();
         renderGallery();
@@ -612,7 +628,7 @@ async function executeSingleRedraw(bookId, stepIdx) {
         // Hot refresh modal viewer
         openPixivModal(bookId);
     } catch (err) {
-        alert("重新绘制失败: " + err.message);
+        notifyError(`重新绘制失败：${err.message}`);
     } finally {
         btn.innerHTML = origText;
         btn.disabled = false;

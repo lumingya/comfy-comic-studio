@@ -434,6 +434,19 @@
                             </div>
                         </div>
 
+                        <!-- Engine mode: mock vs production -->
+                        <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <h4 class="text-xs font-bold text-slate-400">运行模式</h4>
+                                <label class="relative inline-flex items-center cursor-pointer text-xs text-slate-600 dark:text-slate-300 shrink-0">
+                                    <input type="checkbox" id="engine-mock-toggle" class="sr-only peer" onchange="toggleEngineMode()">
+                                    <span aria-hidden="true" class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-amber-500"></span>
+                                    <span class="ml-2 font-semibold">模拟模式（免部署试跑）</span>
+                                </label>
+                            </div>
+                            <p id="engine-mode-tip" class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-xl p-3"></p>
+                        </div>
+
                         <!-- Server connection settings -->
                         <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
                             <h4 class="text-xs font-bold text-slate-400">ComfyUI 实例连接配置</h4>
@@ -539,6 +552,12 @@
                     </div>
 
                     <div id="llm-generate-section" class="space-y-6">
+                        <div class="space-y-1.5">
+                            <label for="global-story-prompt" class="block text-xs font-bold text-slate-400">全局故事主线大纲（可选）</label>
+                            <textarea id="global-story-prompt" rows="3" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs focus:outline-none focus:border-purple-500 transition leading-relaxed text-slate-800 dark:text-slate-200" placeholder="例如：一位修女在深林迷路，从反抗到沉沦，最终成为暗夜魔女。全篇基调神秘幽暗，越到后段越失控。"></textarea>
+                            <p class="text-[10px] text-slate-500 dark:text-slate-400">这段大纲会随每一次请求发给大模型，用来保持整本剧情的连贯性。留空时自动改用所选模板的简介。</p>
+                        </div>
+
                         <div class="grid md:grid-cols-3 gap-4">
                             <div class="space-y-1.5">
                                 <label class="block text-xs font-bold text-slate-400">选择要创作剧情的角色：</label>
@@ -955,6 +974,7 @@
     <!-- 应用逻辑：按职责拆分为多个经典脚本，共享同一个全局词法作用域。
          加载顺序有意义：core.js 声明其余模块共用的顶层状态，必须排在最前。 -->
     <script src="js/core.js?v=2026_v2.3"></script>
+    <script src="js/ui.js?v=2026_v2.3"></script>
     <script src="js/sync.js?v=2026_v2.3"></script>
     <script src="js/llm.js?v=2026_v2.3"></script>
     <script src="js/comfy.js?v=2026_v2.3"></script>

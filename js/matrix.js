@@ -78,29 +78,49 @@ function addMatrixRow() {
     renderMatrixTable();
 }
 
-function deleteMatrixRow(rIdx) {
+async function deleteMatrixRow(rIdx) {
+    const row = batchMatrix.rows[rIdx];
+    if (!row) return;
+
+    // 一行角色带着它全部的剧情版本，误删代价很高，必须显式确认。
+    const storyCount = Object.values(row.storyVersions || {})
+        .reduce((total, versions) => total + (Array.isArray(versions) ? versions.length : 0), 0);
+    const confirmed = await confirmAction({
+        title: '删除这一行角色？',
+        message: storyCount > 0
+            ? `「${row.bookTitle || '未命名角色'}」以及它保存的 ${storyCount} 份剧情版本会一并删除，无法撤销。`
+            : `「${row.bookTitle || '未命名角色'}」会被删除，无法撤销。`,
+        confirmText: '删除该行',
+        danger: true
+    });
+    if (!confirmed) return;
+
     batchMatrix.rows.splice(rIdx, 1);
     saveMatrixToStorage();
     renderMatrixTable();
+    populateLlmRowSelector();
 }
 
-function addCustomVariableColumn() {
-    const varName = prompt("请输入自定义占位符名称（不需要写花括号）：\n例如 character1、character2、outfit。若输入 {character1}，系统也会自动识别。");
-    if (!varName) return;
-
-    const sanitized = sanitizeMatrixVariableName(varName);
-    if (!sanitized) {
-        alert("无效的变量名称。请使用字母、数字或下划线。");
-        return;
-    }
-
+async function addCustomVariableColumn() {
     normalizeBatchMatrixState();
 
-    if (batchMatrix.columns.includes(sanitized) || MATRIX_RESERVED_FIELDS.has(sanitized)) {
-        alert("该字段名称已存在或属于保留字段。");
-        return;
-    }
+    const varName = await promptText({
+        title: '新增变量字段',
+        message: '模板分镜里写 {字段名}，批量生成时会替换成这一列填的内容。',
+        label: '占位符名称（不用写花括号）',
+        placeholder: '例如 character2、background、mood',
+        confirmText: '添加字段',
+        validate: (value) => {
+            const sanitized = sanitizeMatrixVariableName(value);
+            if (!sanitized) return '无效的变量名称，请只使用字母、数字或下划线。';
+            if (MATRIX_RESERVED_FIELDS.has(sanitized)) return `“${sanitized}” 是系统保留字段，请换一个名称。`;
+            if (batchMatrix.columns.includes(sanitized)) return `“${sanitized}” 这一列已经存在了。`;
+            return '';
+        }
+    });
+    if (varName === null) return;
 
+    const sanitized = sanitizeMatrixVariableName(varName);
     batchMatrix.columns.push(sanitized);
     batchMatrix.rows.forEach(row => {
         row[sanitized] = row[sanitized] || '';
@@ -108,6 +128,7 @@ function addCustomVariableColumn() {
 
     saveMatrixToStorage();
     renderMatrixTable();
+    notify(`已新增变量字段 {${sanitized}}，现在可以在分镜提示词里使用它了。`, { type: 'success' });
 }
 
 function populateTemplateDropdowns() {
@@ -158,20 +179,20 @@ function addLog(msg, colorClass = "text-slate-400") {
 async function generateAllSelectedScripts() {
     const activeRows = batchMatrix.rows.filter(r => r.active);
     if (activeRows.length === 0) {
-        alert("请在角色矩阵表格中勾选并启用至少一行角色。");
+        notifyWarning("请先在角色矩阵中勾选至少一行角色。");
         return;
     }
     
     const tplId = document.getElementById('matrix-template-selector').value;
     const tpl = templates.find(t => t.id === tplId);
     if (!tpl) {
-        alert("所选模板不存在！");
+        notifyError("所选模板已不存在，请重新选择。");
         return;
     }
     
     const llmKey = document.getElementById('llm-api-key').value.trim();
     if (!llmKey && !isMockMode) {
-        alert("请先在【设置】面板配置大模型 API Key！或者在右侧勾选“模拟模式”体验离线流程。");
+        notifyWarning("请先在「LLM 剧情与模板」里配置 API Key，或打开模拟模式体验离线流程。");
         return;
     }
     
@@ -210,9 +231,7 @@ async function generateAllSelectedScripts() {
                 
                 let chunkCaptions = [];
                 if (!isMockMode) {
-                    const globalOutlineEl = document.getElementById('global-story-prompt');
-                    const globalOutline = globalOutlineEl ? globalOutlineEl.value.trim() : '';
-                    chunkCaptions = await requestLlmChunkCaptions(globalOutline, chunk, row.bookTitle, chunkIdx, captions);
+                    chunkCaptions = await requestLlmChunkCaptions(resolveGlobalStoryOutline(tpl), chunk, row.bookTitle, chunkIdx, captions);
                 } else {
                     await sleep(600);
                     chunkCaptions = chunk.map((p, idx) => simulateLlmStoryline(row.bookTitle, p.name, chunkIdx + idx));
@@ -239,7 +258,7 @@ async function generateAllSelectedScripts() {
         addLog(`🛑 剧本生成队列已被手动中止。`, "text-red-500 font-bold");
     } else {
         addLog(`🎉 恭喜，所选角色的剧本已全部生成入库！点击列表里的“📜”图标可进行人工编辑和精修。`, "text-emerald-400 font-bold");
-        alert("剧本旁白批量生成成功！");
+        notify("所选角色的剧本旁白已全部生成入库。", { type: "success" });
     }
     cancelRequested = false;
 }
@@ -256,7 +275,7 @@ function openScriptModal(rowId) {
     const tplId = document.getElementById('matrix-template-selector').value;
     const tpl = templates.find(t => t.id === tplId);
     if (!tpl) {
-        alert("请先选择一个连环画模板。");
+        notifyWarning("请先选择一个连环画模板。");
         return;
     }
 
@@ -291,6 +310,7 @@ function openScriptModal(rowId) {
     const modal = document.getElementById('script-modal');
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+    syncLegacyOverlayState('script-modal', true, closeScriptModal);
     initLucide();
 }
 
@@ -298,6 +318,7 @@ function closeScriptModal() {
     const modal = document.getElementById('script-modal');
     modal.classList.remove('flex');
     modal.classList.add('hidden');
+    syncLegacyOverlayState('script-modal', false, closeScriptModal);
     editingRowId = null;
     editingStoryVersionId = null;
 }
@@ -326,7 +347,7 @@ function saveAndCloseScriptModal() {
     });
     saveMatrixToStorage();
     closeScriptModal();
-    alert("剧本旁白已保存！");
+    notify("剧本旁白已保存。", { type: "success" });
 }
 
 async function generateScriptForCurrentRow() {
@@ -340,7 +361,7 @@ async function generateScriptForCurrentRow() {
 
     const llmKey = document.getElementById('llm-api-key').value.trim();
     if (!llmKey && !isMockMode) {
-        alert("请配置大模型 API Key 密钥再继续！");
+        notifyWarning("请先配置大模型 API Key。");
         return;
     }
 
@@ -363,9 +384,7 @@ async function generateScriptForCurrentRow() {
 
         let captions = [];
         if (!isMockMode) {
-            const globalOutlineEl = document.getElementById('global-story-prompt');
-            const globalOutline = globalOutlineEl ? globalOutlineEl.value.trim() : '';
-            captions = await requestLlmAllCaptions(globalOutline, preparedPanels, row.bookTitle);
+            captions = await requestLlmAllCaptions(resolveGlobalStoryOutline(tpl), preparedPanels, row.bookTitle);
         } else {
             await sleep(1000);
             captions = preparedPanels.map((p, idx) => simulateLlmStoryline(row.bookTitle, p.name, idx));
@@ -385,9 +404,9 @@ async function generateScriptForCurrentRow() {
         });
         document.getElementById('script-modal-title').innerText = `${row.bookTitle} (${tpl.title} / ${storyVersion?.title || '新剧情'})`;
 
-        alert("AI 剧本已生成，并作为新剧情版本保存！");
+        notify("AI 剧本已生成，并保存为新的剧情版本。", { type: "success" });
     } catch(err) {
-        alert("剧本生成出错: " + err.message);
+        notifyError(`剧本生成出错：${err.message}`);
     } finally {
         btn.innerHTML = origText;
         btn.disabled = false;
