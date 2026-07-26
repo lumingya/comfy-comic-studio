@@ -27,6 +27,61 @@ let batchRunState = createEmptyBatchRunState();
 // 100% 离线安全、高度容错的纯本地 SVG 矢量降级占位图（替代外网 Unsplash 地址）
 const OFFLINE_PLACEHOLDER_IMAGE = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"><rect width="100%" height="100%" fill="%230f172a"/><g transform="translate(300, 200)" text-anchor="middle" fill="%2364748b"><rect x="-80" y="-80" width="160" height="160" rx="16" fill="%231e293b" stroke="%23334155" stroke-width="2"/><circle cx="0" cy="-15" r="24" fill="none" stroke="%2364748b" stroke-width="4"/><path d="M-40,40 L40,40 L25,15 L5,25 L-20,0 Z" fill="%2364748b"/><text y="120" font-size="15" font-family="system-ui, sans-serif" font-weight="bold" fill="%2394a3b8">图片绘制失败 (已安全降级)</text><text y="145" font-size="11" font-family="system-ui, sans-serif" fill="%23475569">本地服务离线或 ComfyUI 轮询超时</text></g></svg>`;
 
+// 演示/占位画面一律本地生成，绝不引用外网图床：断网、内网、CDN 被墙时首屏都不会出现破图。
+const PLACEHOLDER_PALETTES = [
+    ['%23312e81', '%230ea5e9'],
+    ['%237c2d12', '%23f59e0b'],
+    ['%23134e4a', '%2334d399'],
+    ['%234c1d95', '%23f472b6'],
+    ['%23172554', '%2360a5fa'],
+    ['%233f1d38', '%23c084fc']
+];
+
+function stableStringHash(seed) {
+    const text = String(seed ?? '');
+    let hash = 0;
+    for (let idx = 0; idx < text.length; idx++) {
+        hash = ((hash * 31) + text.charCodeAt(idx)) >>> 0;
+    }
+    return hash;
+}
+
+// 生成一张确定性的本地矢量占位画面。同一个 seed 永远得到同一张图，
+// 因此模拟模式重复运行的结果是可复现的。
+function makeLocalArtPlaceholder(seed, label = '') {
+    const hash = stableStringHash(seed);
+    const [from, to] = PLACEHOLDER_PALETTES[hash % PLACEHOLDER_PALETTES.length];
+    const gradientId = `g${hash % 100000}`;
+    const angle = hash % 360;
+    const blobs = [0, 1, 2].map(i => {
+        const h = stableStringHash(`${seed}:${i}`);
+        return `<circle cx="${80 + (h % 440)}" cy="${60 + ((h >> 7) % 280)}" r="${40 + ((h >> 3) % 90)}" fill="%23ffffff" opacity="0.07"/>`;
+    }).join('');
+    const caption = escapeXmlAttribute(String(label || '').slice(0, 22));
+    return `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">`
+        + `<defs><linearGradient id="${gradientId}" gradientTransform="rotate(${angle})"><stop offset="0%" stop-color="${from}"/><stop offset="100%" stop-color="${to}"/></linearGradient></defs>`
+        + `<rect width="100%" height="100%" fill="url(%23${gradientId})"/>${blobs}`
+        + `<g text-anchor="middle" font-family="system-ui, sans-serif" fill="%23ffffff">`
+        + `<text x="300" y="205" font-size="13" opacity="0.55" letter-spacing="3">MOCK RENDER</text>`
+        + (caption ? `<text x="300" y="235" font-size="16" font-weight="bold" opacity="0.9">${caption}</text>` : '')
+        + `</g></svg>`;
+}
+
+// data URL 里的 SVG 不经过 HTML 解析器，需要按 XML 规则转义，并回避会截断 URL 的字符。
+function escapeXmlAttribute(text) {
+    return String(text ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;')
+        .replace(/#/g, '%23')
+        .replace(/\s+/g, ' ');
+}
+
+window.makeLocalArtPlaceholder = makeLocalArtPlaceholder;
+window.OFFLINE_PLACEHOLDER_IMAGE = OFFLINE_PLACEHOLDER_IMAGE;
+
 
 // Helper to escape HTML to prevent DOM-based XSS
 function escapeHtml(text) {
@@ -971,25 +1026,25 @@ const seedGalleries = [
                 name: "一幕：街头邂逅",
                 prompt: "A beautiful raw photo of a gorgeous 20-year-old girl with vibrant long red hair and green eyes, anime illustration style, digital painting, vibrant colors, standing at a sunny busy city street corner, looking directly at the camera, wearing a classic white jacket and denim shorts, perfect anatomy, highly detailed, 8k resolution",
                 caption: "在一个充满生机的清晨，红发少女悄然出现在繁华都市的街角，开启新的一天。",
-                image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=600"
+                image: makeLocalArtPlaceholder("seed:一幕：街头邂逅")
             },
             {
                 name: "二幕：街头起舞",
                 prompt: "Action shot, a gorgeous 20-year-old girl with vibrant long red hair and green eyes, anime illustration style, digital painting, vibrant colors, dancing passionately, wind blowing hair, neon signs and glowing lights in the background, high dynamic action, emotion in eyes, wearing a classic white jacket and denim shorts",
                 caption: "路旁音响飘扬起熟悉的旋律，伴着节奏，她情不自禁地随风起舞，吸引了路人的目光。",
-                image: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&q=80&w=600"
+                image: makeLocalArtPlaceholder("seed:二幕：街头起舞")
             },
             {
                 name: "三幕：华服晚宴",
                 prompt: "Cinematic portrait, a gorgeous 20-year-old girl with vibrant long red hair and green eyes, anime illustration style, digital painting, vibrant colors, wearing an elegant sparkling formal evening dress, performing an elegant classical dance under luxurious chandeliers, magical atmosphere, depth of field",
                 caption: "夜幕降临，她换上了一身璀璨的晚礼服，在华丽的霓虹灯影中尽情倾诉。",
-                image: "https://images.unsplash.com/photo-1496440737103-cd596325d314?auto=format&fit=crop&q=80&w=600"
+                image: makeLocalArtPlaceholder("seed:三幕：华服晚宴")
             },
             {
                 name: "四幕：温馨晚安",
                 prompt: "Cozy close-up shot, a gorgeous 20-year-old girl with vibrant long red hair and green eyes sleeping soundly in a warm cozy bedroom bed, covered in a soft blanket, gentle moonlight through the window, peaceful, hyper-detailed, soft shadows",
                 caption: "繁盛喧嚣散尽，带着满足的心绪和闪闪发光的梦境，进入甜蜜安宁的梦乡。",
-                image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600"
+                image: makeLocalArtPlaceholder("seed:四幕：温馨晚安")
             }
         ]
     },
@@ -1005,25 +1060,25 @@ const seedGalleries = [
                 name: "一幕：街头邂逅",
                 prompt: "A beautiful raw photo of a cool mechanical-cybernetic detective with glowing blue neon eyes, white hair, gritty cyberpunk style, futuristic, rain-slicked city streets, moody volumetric lighting, standing at a sunny busy city street corner, looking directly at the camera, wearing a dark leather trenchcoat with yellow holographic patches, perfect anatomy, highly detailed, 8k resolution",
                 caption: "酸雨洗刷过的赛博重城，冷漠的探员正站在终端塔边缘，检索着整座霓虹森林的异常波动。",
-                image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600"
+                image: makeLocalArtPlaceholder("seed:一幕：街头邂逅")
             },
             {
                 name: "二幕：街头起舞",
                 prompt: "Action shot, a cool mechanical-cybernetic detective with glowing blue neon eyes, white hair, gritty cyberpunk style, futuristic, rain-slicked city streets, moody volumetric lighting, dancing passionately, wind blowing hair, neon signs and glowing lights in the background, high dynamic action, emotion in eyes, wearing a dark leather trenchcoat with yellow holographic patches",
                 caption: "为了对抗过载的心智，他在全息虚拟舞厅的节奏脉冲中释放重金属般的狂热重组。",
-                image: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&q=80&w=600"
+                image: makeLocalArtPlaceholder("seed:二幕：街头起舞")
             },
             {
                 name: "三幕：华服晚宴",
                 prompt: "Cinematic portrait, a cool mechanical-cybernetic detective with glowing blue neon eyes, white hair, gritty cyberpunk style, futuristic, rain-slicked city streets, moody volumetric lighting, wearing an elegant sparkling formal evening dress, performing an elegant classical dance under luxurious chandeliers, magical atmosphere, depth of field",
                 caption: "换上一身剪裁得体、极具未来主义的西装，他游走在巨头晚宴与致命迷雾的核心交界点。",
-                image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=600"
+                image: makeLocalArtPlaceholder("seed:三幕：华服晚宴")
             },
             {
                 name: "四幕：温馨晚安",
                 prompt: "Cozy close-up shot, a cool mechanical-cybernetic detective with glowing blue neon eyes, white hair sleeping soundly in a warm cozy bedroom bed, covered in a soft blanket, gentle moonlight through the window, peaceful, hyper-detailed, soft shadows",
                 caption: "拔掉神经缆线，让超负荷的数据内核陷入纯粹的死循环冷却中。晚安，钢铁城市。",
-                image: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&q=80&w=600"
+                image: makeLocalArtPlaceholder("seed:四幕：温馨晚安")
             }
         ]
     }
@@ -1080,11 +1135,25 @@ window.addEventListener('beforeunload', (event) => {
     event.returnValue = '';
 });
 
+// 图标库是纯装饰性依赖：即便 vendor/lucide.min.js 缺失或加载失败，
+// 也绝不允许它把整个渲染管线（renderGallery / renderMatrixTable / DOMContentLoaded）打断。
+let hasWarnedAboutMissingLucide = false;
 function initLucide(rootElement = null) {
-    if (rootElement) {
-        lucide.createIcons({ root: rootElement });
-    } else {
-        lucide.createIcons();
+    if (typeof lucide === 'undefined' || typeof lucide.createIcons !== 'function') {
+        if (!hasWarnedAboutMissingLucide) {
+            hasWarnedAboutMissingLucide = true;
+            console.warn('[UI] 图标库未加载，界面将以无图标模式继续运行。');
+        }
+        return;
+    }
+    try {
+        if (rootElement) {
+            lucide.createIcons({ root: rootElement });
+        } else {
+            lucide.createIcons();
+        }
+    } catch (err) {
+        console.warn('[UI] 图标渲染失败，已跳过：', err.message);
     }
 }
 
@@ -1492,7 +1561,7 @@ function openPixivModal(bookId) {
 
     const orderedStepEntries = getOrderedBookStepEntries(book);
     orderedStepEntries.forEach(({ step, originalIndex }, idx) => {
-        const stepImage = step.image || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600";
+        const stepImage = step.image || OFFLINE_PLACEHOLDER_IMAGE;
         
         // Parse and clean step image url to prevent Windows local path backslash encoding issues
         let cleanImageSrc = stepImage.trim();
@@ -1505,7 +1574,7 @@ function openPixivModal(bookId) {
             <div class="pixiv-manga-card relative">
                 <!-- Pure image view -->
                 <div class="pixiv-image-frame">
-                    <img src="${escapeHtml(cleanImageSrc)}" alt="${escapeHtml(step.name)}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600';">
+                    <img src="${escapeHtml(cleanImageSrc)}" alt="${escapeHtml(step.name)}" onerror="this.onerror=null; this.src=window.OFFLINE_PLACEHOLDER_IMAGE;">
                     
                     <!-- Top Float Index Badge -->
                     <div class="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-white text-xs font-mono font-bold border border-white/10 shadow-lg select-none">
@@ -1645,9 +1714,13 @@ function normalizeImageSourceForExport(src) {
     return raw;
 }
 
+// 页面由本地服务提供时一律走同源相对路径，端口改成什么都不用动代码；
+// 只有直接双击 index.html（file:// 兜底）时才需要写死一个默认端口。
+const FILE_PROTOCOL_FALLBACK_ORIGIN = 'http://127.0.0.1:8777';
 function getLocalBackendUrl(path) {
-    return window.location.protocol.startsWith('http') ? path : `http://127.0.0.1:8777${path}`;
+    return window.location.protocol.startsWith('http') ? path : `${FILE_PROTOCOL_FALLBACK_ORIGIN}${path}`;
 }
+window.getLocalBackendUrl = getLocalBackendUrl;
 
 async function ensureBase64DataUrl(dataUrl) {
     if (/^data:[^,]+;base64,/i.test(dataUrl)) return dataUrl;
@@ -1770,8 +1843,11 @@ async function exportMangaHTML() {
 
 
 // --- TAB 2: TEMPLATE EDITOR ---
-function renderTemplatesList() {
+// 只重画左侧模板库列表，不碰右侧编辑器 —— 自动保存过程中调用它才不会
+// 在用户打字时重建 textarea、丢掉焦点和光标位置。
+function renderTemplatesSidebar() {
     const container = document.getElementById('templates-list-container');
+    if (!container) return;
     container.innerHTML = '';
 
     templates.forEach(t => {
@@ -1788,17 +1864,63 @@ function renderTemplatesList() {
         `;
         container.insertAdjacentHTML('beforeend', tplCard);
     });
-    initLucide();
+    initLucide(container);
+}
+
+function renderTemplatesList() {
+    renderTemplatesSidebar();
     populateActiveTemplateSteps();
+    bindTemplateEditorAutosave();
 }
 
 function selectTemplate(tplId) {
+    if (!tplId || tplId === activeTemplateId) return;
+    // 先把当前模板在 DOM 里的未保存编辑收回内存：否则 renderTemplatesList() 会用
+    // 旧的内存状态重建编辑器，用户刚敲进去的分镜内容被静默丢弃且无法找回。
+    syncDomToActiveTemplate();
+    flushTemplateAutosave();
     activeTemplateId = tplId;
-    saveConfigToComfyServer();
+    saveTemplatesToStorage();
     renderTemplatesList();
+    populateTemplateDropdowns();
+}
+
+// 模板编辑器改为“边改边存”：输入即回写内存并延迟落盘，
+// 用户不必记得点“保存模板”也不会丢内容。
+let templateAutosaveTimer = null;
+function scheduleTemplateAutosave() {
+    syncDomToActiveTemplate();
+    if (templateAutosaveTimer) clearTimeout(templateAutosaveTimer);
+    templateAutosaveTimer = setTimeout(() => {
+        templateAutosaveTimer = null;
+        saveTemplatesToStorage();
+        renderTemplatesSidebar();
+        populateTemplateDropdowns();
+    }, 600);
+}
+
+function flushTemplateAutosave() {
+    if (!templateAutosaveTimer) return;
+    clearTimeout(templateAutosaveTimer);
+    templateAutosaveTimer = null;
+    saveTemplatesToStorage();
+}
+
+function bindTemplateEditorAutosave() {
+    [
+        document.getElementById('steps-editor-container'),
+        document.getElementById('tpl-title-input'),
+        document.getElementById('tpl-desc-input')
+    ].forEach(el => {
+        if (!el || el.dataset.autosaveBound) return;
+        el.dataset.autosaveBound = 'true';
+        el.addEventListener('input', scheduleTemplateAutosave);
+    });
 }
 
 function createNewTemplate() {
+    syncDomToActiveTemplate();
+    flushTemplateAutosave();
     const newTpl = {
         id: "tpl_" + Date.now(),
         title: "未命名新连环画模板",
@@ -1819,6 +1941,7 @@ function createNewTemplate() {
 }
 
 function restoreDefaultTemplates() {
+    flushTemplateAutosave();
     if (confirm("确定要恢复默认模板吗？这将覆盖您现有的模板。")) {
         templates = JSON.parse(JSON.stringify(defaultTemplates));
         activeTemplateId = templates[0].id;
@@ -1829,6 +1952,7 @@ function restoreDefaultTemplates() {
 }
 
 function deleteCurrentTemplate() {
+    flushTemplateAutosave();
     if (templates.length <= 1) {
         alert("抱歉，您至少要保留一个画册模板。");
         return;
@@ -1843,6 +1967,10 @@ function deleteCurrentTemplate() {
 }
 
 function saveCurrentTemplate() {
+    if (templateAutosaveTimer) {
+        clearTimeout(templateAutosaveTimer);
+        templateAutosaveTimer = null;
+    }
     const t = templates.find(temp => temp.id === activeTemplateId);
     if (!t) return;
 
@@ -2755,7 +2883,7 @@ async function startBatchGeneration() {
                     if (cancelRequested) {
                         throw new BatchCancelError("User requested cancellation.");
                     }
-                    renderedImgUrl = getMockVisual(row.style, j);
+                    renderedImgUrl = getMockVisual(row.style, j, panelData.name);
                     addLog(`✅ [模拟成功] 图像已接收！`, "text-emerald-500");
                 }
 
@@ -2920,7 +3048,7 @@ async function executeSingleRedraw(bookId, stepIdx) {
         } else {
             // Mock single step image redraw delay
             await sleep(1500);
-            newImgUrl = getMockVisual(book.steps[stepIdx].prompt || "anime", stepIdx + 8);
+            newImgUrl = getMockVisual(promptText, stepIdx + 8, book.steps[stepIdx]?.name || "");
         }
 
         // Apply new render states
@@ -2995,9 +3123,7 @@ function updateLastActiveTime() {
 }
 
 function getBackendConfigUrl() {
-    return window.location.protocol.startsWith('http')
-        ? '/api/config'
-        : 'http://127.0.0.1:8777/api/config';
+    return getLocalBackendUrl('/api/config');
 }
 
 function buildAppStatePayload(forceWrite = false) {
@@ -3260,16 +3386,23 @@ async function loadConfigFromComfyServer() {
                     console.warn(`[Sync] Restored ${recovered.restoredCount} in-progress gallery book(s) from LocalStorage.`);
                     shouldSaveAfterInitialization = true;
                 }
-                // Auto hot-migration for broken unsplash images
+                // 历史遗留：把所有指向外网图床的分镜图迁移成本地矢量占位图
+                let migratedRemoteImages = 0;
                 savedGalleries.forEach(book => {
                     if (book.steps) {
                         book.steps.forEach(step => {
-                            if (step.image && step.image.includes('photo-1511295742364')) {
-                                step.image = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600';
+                            // 历史数据里残留的外网图床地址一律迁移为本地占位图，避免断网时破图。
+                            if (typeof step.image === 'string' && /^https?:\/\/images\.unsplash\.com\//i.test(step.image)) {
+                                step.image = makeLocalArtPlaceholder(`${book.id}:${step.name || ''}`, step.name || '');
+                                migratedRemoteImages++;
                             }
                         });
                     }
                 });
+                if (migratedRemoteImages > 0) {
+                    console.warn(`[Sync] 已把 ${migratedRemoteImages} 张外网图床分镜图迁移为本地占位图。`);
+                    shouldSaveAfterInitialization = true;
+                }
                 localStorage.setItem('comfy_comic_galleries', JSON.stringify(savedGalleries));
             }
             if (appState.comfyWorkflows) {
@@ -3700,7 +3833,7 @@ function renderLlmCaptionsList() {
                     <span class="text-xs font-bold text-slate-800 dark:text-slate-300">
                         【第 ${idx + 1} 幕 · ${escapeHtml(step.name)}】
                     </span>
-                    <button onclick="generateSingleStoryline(${idx})" class="px-2.5 py-1 text-[10px] bg-slate-100 dark:bg-slate-800 hover:bg-purple-600 dark:hover:bg-purple-600 hover:text-white dark:hover:text-white rounded border border-slate-200 dark:border-slate-700 transition flex items-center gap-1">
+                    <button data-single-story-btn="${idx}" onclick="generateSingleStoryline(${idx}, this)" class="px-2.5 py-1 text-[10px] bg-slate-100 dark:bg-slate-800 hover:bg-purple-600 dark:hover:bg-purple-600 hover:text-white dark:hover:text-white rounded border border-slate-200 dark:border-slate-700 transition flex items-center gap-1">
                         <i data-lucide="refresh-cw" class="w-3 h-3 text-purple-500"></i>
                         <span>单独生成/补发该幕</span>
                     </button>
@@ -3891,7 +4024,7 @@ async function generateLlmStorylinesBatch() {
 }
 
 // Single step redraw / regenerate storyline with preceding contexts
-async function generateSingleStoryline(stepIdx) {
+async function generateSingleStoryline(stepIdx, triggerButton = null) {
     const rowId = document.getElementById('llm-row-selector').value;
     const tplId = document.getElementById('llm-template-selector').value;
     
@@ -3913,10 +4046,13 @@ async function generateSingleStoryline(stepIdx) {
     localStorage.setItem('llm_model_name', document.getElementById('llm-model-name').value.trim());
     saveLlmConfigFromDom();
     
-    const btn = event.currentTarget;
-    const originalHtml = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = `<i class="w-3 h-3 animate-spin"></i> <span>正在生成...</span>`;
+    const btn = triggerButton || document.querySelector(`[data-single-story-btn="${stepIdx}"]`);
+    const originalHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader" class="w-3 h-3 animate-spin"></i> <span>正在生成...</span>`;
+        initLucide(btn);
+    }
     
     // Grab all real-time text up to stepIdx
     const storyVersion = ensureEditableStoryVersion(row, tplId, tpl, {
@@ -3962,8 +4098,11 @@ async function generateSingleStoryline(stepIdx) {
     } catch (err) {
         alert(`生成失败: ${err.message}`);
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalHtml;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+            initLucide(btn);
+        }
     }
 }
 

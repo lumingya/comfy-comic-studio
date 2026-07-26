@@ -9,7 +9,22 @@ import urllib.request
 import urllib.parse
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
-PORT = 8777
+def _read_port_from_env(default=8777):
+    raw = os.environ.get("COMFY_COMIC_PORT", "").strip()
+    if not raw:
+        return default
+    try:
+        port = int(raw)
+    except ValueError:
+        print(f"[Config] Ignoring invalid COMFY_COMIC_PORT={raw!r}; falling back to {default}.", flush=True)
+        return default
+    if not (1 <= port <= 65535):
+        print(f"[Config] COMFY_COMIC_PORT={port} is out of range; falling back to {default}.", flush=True)
+        return default
+    return port
+
+
+PORT = _read_port_from_env()
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LEGACY_DATA_FILE = os.path.join(BASE_DIR, "comfy_comic_data.json")
 DATA_DIR = os.path.join(BASE_DIR, "data")
@@ -33,6 +48,11 @@ PUBLIC_FILES = {
     "/styles.css",
     "/favicon.svg",
 }
+# Whole directories of front-end assets. Serving these by prefix (instead of
+# listing every file) keeps server.py from needing an edit each time a module
+# or a vendored library is added.
+PUBLIC_ASSET_DIRS = ("/js/", "/vendor/")
+PUBLIC_ASSET_SUFFIXES = (".js", ".css", ".svg", ".woff2", ".woff", ".map")
 REQUIRED_CONFIG_FIELDS = {
     "templates": list,
     "batchMatrix": dict,
@@ -63,26 +83,36 @@ class ConfigReadError(ValueError):
     pass
 
 
+def _is_file_inside(candidate_path, root_dir):
+    candidate = os.path.realpath(os.path.join(BASE_DIR, candidate_path.lstrip("/")))
+    root = os.path.realpath(root_dir)
+    try:
+        inside = (
+            os.path.commonpath([os.path.normcase(candidate), os.path.normcase(root)])
+            == os.path.normcase(root)
+        )
+    except ValueError:
+        return False
+    return inside and os.path.isfile(candidate)
+
+
 def is_public_static_path(request_path):
-    """Only expose the application shell and generated images over HTTP."""
+    """Only expose the application shell, front-end assets and generated images."""
     decoded_path = urllib.parse.unquote(request_path or "/")
     if decoded_path == "/":
         return True
     if decoded_path in PUBLIC_FILES:
         return True
+
+    for asset_dir in PUBLIC_ASSET_DIRS:
+        if decoded_path.startswith(asset_dir):
+            if not decoded_path.lower().endswith(PUBLIC_ASSET_SUFFIXES):
+                return False
+            return _is_file_inside(decoded_path, os.path.join(BASE_DIR, asset_dir.strip("/")))
+
     if not decoded_path.startswith("/images/"):
         return False
-
-    candidate = os.path.realpath(os.path.join(BASE_DIR, decoded_path.lstrip("/")))
-    images_root = os.path.realpath(IMAGES_DIR)
-    try:
-        return (
-            os.path.commonpath([os.path.normcase(candidate), os.path.normcase(images_root)])
-            == os.path.normcase(images_root)
-            and os.path.isfile(candidate)
-        )
-    except ValueError:
-        return False
+    return _is_file_inside(decoded_path, IMAGES_DIR)
 
 
 def validate_config_payload(data):
@@ -412,7 +442,7 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Headers', 'Content-Type')
 
         request_path = urllib.parse.urlparse(self.path).path
-        if request_path.startswith('/images/'):
+        if request_path.startswith('/images/') or request_path.startswith('/vendor/'):
             self.send_header('Cache-Control', 'public, max-age=31536000, immutable')
         else:
             self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')

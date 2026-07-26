@@ -1,5 +1,7 @@
 body {
-    font-family: 'Plus Jakarta Sans', 'Noto Sans SC', sans-serif;
+    /* 不依赖网络字体：先用系统 UI 字体族兜底，保证离线时排版依然正常。 */
+    font-family: 'Plus Jakarta Sans', 'Noto Sans SC', system-ui, -apple-system, 'Segoe UI',
+        'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', Roboto, 'Helvetica Neue', Arial, sans-serif;
     transition: background-color 0.3s, color 0.3s;
 }
 /* Custom scrollbar */

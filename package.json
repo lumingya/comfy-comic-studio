@@ -1,0 +1,22 @@
+{
+  "name": "comfy-comic-studio",
+  "version": "2.3.0",
+  "private": true,
+  "description": "本地运行的连环画批量制作工作台（ComfyUI + LLM）。前端为原生 HTML/CSS/JS，后端为 Python 标准库服务。",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "npm run lint && npm run test:py && npm run test:smoke",
+    "test:py": "python -m unittest discover -s tests -v",
+    "test:smoke": "node tests/smoke.mjs",
+    "lint": "npm run lint:js && npm run lint:html",
+    "lint:js": "eslint app.js comfy.js llm.js js/*.js",
+    "lint:html": "html-validate index.html",
+    "start": "python server.py"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "html-validate": "^8.24.2",
+    "playwright": "^1.49.0"
+  }
+}

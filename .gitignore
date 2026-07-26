@@ -16,3 +16,8 @@ node_modules/
 dist/
 build/
 *.bak
+
+# overhaul housekeeping
+_to_delete/
+test-results/
+.pytest_cache/

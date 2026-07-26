@@ -390,7 +390,7 @@ async function submitToRealComfy(positivePromptText) {
 
     // 持久化图片到本地 images/ 目录，防止 ComfyUI 重启后 temp 文件失效
     try {
-        const saveRes = await fetchWithTimeout('http://127.0.0.1:8777/api/save-image', {
+        const saveRes = await fetchWithTimeout(getLocalBackendUrl('/api/save-image'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: outImgUrl }),
@@ -410,26 +410,14 @@ async function submitToRealComfy(positivePromptText) {
     return outImgUrl;
 }
 
-// Mock prompt-based aesthetic image selector
-function getMockVisual(styleString, stepIndex) {
-    // High quality concept/illustration graphics
-    const nature = [
-        "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&q=80&w=600"
-    ];
-    const anime = [
-        "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1578632767115-351597cf2477?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1614036417651-efe5912149d8?auto=format&fit=crop&q=80&w=600",
-        "https://images.unsplash.com/photo-1560942485-b2a11cc13456?auto=format&fit=crop&q=80&w=600"
-    ];
-    
-    if (styleString.toLowerCase().includes('anime') || styleString.toLowerCase().includes('cartoon')) {
-        return anime[stepIndex % anime.length];
+// 模拟模式的占位画面：完全在本地用 SVG 生成，不请求任何外网图床。
+// 同样的 (风格, 幕序号, 标签) 组合永远产出同一张图，便于复现调试。
+function getMockVisual(styleString, stepIndex, label = '') {
+    const seed = `${String(styleString || 'default')}#${stepIndex}`;
+    if (typeof window.makeLocalArtPlaceholder === 'function') {
+        return window.makeLocalArtPlaceholder(seed, label || `第 ${stepIndex + 1} 幕`);
     }
-    return nature[stepIndex % nature.length];
+    return window.OFFLINE_PLACEHOLDER_IMAGE || '';
 }
 
 // Physically send interrupt command to ComfyUI backend server (instantly stops KSampler and clears queue)

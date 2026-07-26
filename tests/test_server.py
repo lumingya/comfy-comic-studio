@@ -137,6 +137,41 @@ class ServerBoundaryTests(unittest.TestCase):
                 self.assertFalse(server.is_public_static_path("/server.py"))
                 self.assertFalse(server.is_public_static_path("/images/../server.py"))
 
+    def test_front_end_asset_dirs_are_served_but_stay_sandboxed(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for sub in ("vendor", "js"):
+                os.makedirs(os.path.join(temp_dir, sub))
+            for rel in ("vendor/lucide.min.js", "vendor/tailwind-browser.js", "js/gallery.js"):
+                with open(os.path.join(temp_dir, rel), "w", encoding="utf-8") as asset:
+                    asset.write("// asset")
+            with open(os.path.join(temp_dir, "vendor", "notes.txt"), "w", encoding="utf-8") as secret:
+                secret.write("secret")
+            with open(os.path.join(temp_dir, "secret.js"), "w", encoding="utf-8") as outside:
+                outside.write("// outside")
+
+            images_dir = os.path.join(temp_dir, "images")
+            os.makedirs(images_dir)
+
+            with patch.object(server, "BASE_DIR", temp_dir), patch.object(
+                server, "IMAGES_DIR", images_dir
+            ):
+                self.assertTrue(server.is_public_static_path("/vendor/lucide.min.js"))
+                self.assertTrue(server.is_public_static_path("/vendor/tailwind-browser.js"))
+                self.assertTrue(server.is_public_static_path("/js/gallery.js"))
+                # Only front-end asset extensions, never arbitrary files dropped in there.
+                self.assertFalse(server.is_public_static_path("/vendor/notes.txt"))
+                self.assertFalse(server.is_public_static_path("/vendor/missing.js"))
+                # Traversal out of the asset dir must not leak sibling files.
+                self.assertFalse(server.is_public_static_path("/js/../secret.js"))
+                self.assertFalse(server.is_public_static_path("/vendor/../../etc/passwd"))
+
+    def test_port_comes_from_env_and_rejects_bad_values(self):
+        with patch.dict(os.environ, {"COMFY_COMIC_PORT": "9123"}, clear=False):
+            self.assertEqual(server._read_port_from_env(), 9123)
+        for bad in ("", "abc", "0", "70000", "-1"):
+            with patch.dict(os.environ, {"COMFY_COMIC_PORT": bad}, clear=False):
+                self.assertEqual(server._read_port_from_env(8777), 8777)
+
     def test_config_payload_requires_complete_typed_state(self):
         valid = {
             "templates": [],

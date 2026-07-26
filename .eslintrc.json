@@ -8,6 +8,7 @@
     "addLog": "readonly",
     "cancelRequested": "readonly",
     "comfyWorkflowRaw": "readonly",
+    "getLocalBackendUrl": "readonly",
     "getMockVisual": "readonly",
     "interruptComfy": "readonly",
     "isMockMode": "writable",
