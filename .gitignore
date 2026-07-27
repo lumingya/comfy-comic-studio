@@ -21,3 +21,7 @@ build/
 _to_delete/
 test-results/
 .pytest_cache/
+
+# Git 提交脚本（不需要提交）
+git提交.py
+git提交.py
