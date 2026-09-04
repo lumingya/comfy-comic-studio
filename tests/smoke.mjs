@@ -85,6 +85,18 @@ try {
     // 关键路径 2：标签切换
     await page.click('#tab-btn-templates');
     check('切到模板页后模板面板可见', await page.locator('#tab-templates').isVisible());
+    check('模板页提供配置导入与导出入口',
+        await page.getByRole('button', { name: '导出配置', exact: true }).count() === 1
+        && await page.getByRole('button', { name: '导入配置', exact: true }).count() === 1);
+    const backupShape = await page.evaluate(() => {
+        const backup = buildBackupPayload();
+        return backup.format === 'comfy-comic-studio-backup'
+            && Number.isInteger(backup.version)
+            && backup.state
+            && Array.isArray(backup.state.templates)
+            && Array.isArray(backup.state.comfyWorkflows);
+    });
+    check('配置备份包包含版本信息和核心状态', backupShape);
 
     // 关键路径 3：编辑分镜 -> 切换模板 -> 切回来，编辑不能丢
     const editedPrompt = 'A smoke-test prompt for {character}, {style}';

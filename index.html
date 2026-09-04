@@ -172,7 +172,7 @@
                     </p>
                 </div>
 
-                <div class="flex gap-2">
+                <div class="flex flex-wrap gap-2">
                     <button type='button' onclick="createNewTemplate()" class="px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1.5">
                         <i data-lucide="plus" class="w-3.5 h-3.5 text-emerald-500"></i>
                         创建全新模板
@@ -180,6 +180,15 @@
                     <button type='button' onclick="restoreDefaultTemplates()" class="px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-semibold rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition flex items-center gap-1.5">
                         <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-blue-500"></i>
                         恢复默认模板
+                    </button>
+                    <span class="hidden sm:block w-px self-stretch bg-slate-200 dark:bg-slate-800" aria-hidden="true"></span>
+                    <button type='button' onclick="exportConfigBackup()" class="px-3.5 py-2 border border-indigo-200 dark:border-indigo-900/70 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 text-xs font-semibold rounded-xl hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition flex items-center gap-1.5" title="导出全部模板、矩阵、画廊和工作流配置">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        导出配置
+                    </button>
+                    <button type='button' onclick="importConfigBackup()" class="px-3.5 py-2 border border-emerald-200 dark:border-emerald-900/70 bg-emerald-50/60 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 text-xs font-semibold rounded-xl hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition flex items-center gap-1.5" title="从 JSON 备份文件恢复全部配置">
+                        <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                        导入配置
                     </button>
                 </div>
             </div>
