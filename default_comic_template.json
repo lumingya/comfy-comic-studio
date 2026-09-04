@@ -1,0 +1,67 @@
+{
+  "id": "tpl_fantasy_adventure_12_steps",
+  "title": "奇幻冒险：遗迹圣印之光（12幕典藏分镜）",
+  "desc": "一套起承转合严密、镜头语言丰富的经典冒险连环画分镜模板。涵盖启程、探秘、解密、遭遇强敌、施法交锋、圣物共鸣到破晓凯旋。全年龄安全，支持 {character}、{style}、{outfit} 动态插值。",
+  "steps": [
+    {
+      "name": "第1幕：晨光启程",
+      "prompt": "{character}, {style}, standing on a grassy hillside at sunrise, looking towards the distant mountains, wind blowing cloak, wearing {outfit}, dawn golden hour, detailed scenery, cinematic lighting, masterpiece",
+      "caption": "晨曦破开晓雾，金辉洒在山脊上。{character} 整装待发，迎着朝阳眺望远方的遗迹古峰，开启崭新的冒险。"
+    },
+    {
+      "name": "第2幕：踏入迷雾密林",
+      "prompt": "{character}, {style}, walking cautiously through a dense ancient mystical forest, holding a glowing magical lantern, bioluminescent moss, swirling fog, wearing {outfit}, atmospheric lighting, mysterious mood",
+      "caption": "深入古老低语的迷雾密林，四周回荡着未知的虫鸣与风声。提灯微光驱散暗影，指引着通往禁地的窄径。"
+    },
+    {
+      "name": "第3幕：失落圣堂现身",
+      "prompt": "{character}, {style}, wide angle view, discovering a colossal ancient stone temple ruins hidden behind cascading waterfalls, overgrown with vines, wearing {outfit}, epic scale, sunbeams piercing through canopies",
+      "caption": "拨开层叠的藤蔓与瀑布水雾，一座被尘封千年的远古巨石圣堂赫然耸立在眼前，气势宏伟庄严。"
+    },
+    {
+      "name": "第4幕：破译先祖符文",
+      "prompt": "{character}, {style}, close-up shot, gently touching glowing mystical ancient glyphs carved on a massive stone door, focused serious expression, sparks of blue magic, wearing {outfit}, detailed eyes, dramatic shadows",
+      "caption": "指尖抚过石门上斑驳的古老刻痕，微弱的魔力在石板间流动。{character} 凝神默念，唤醒了封印的符文之锁。"
+    },
+    {
+      "name": "第5幕：殿堂深处的异动",
+      "prompt": "{character}, {style}, standing inside a vast dimly lit temple hall, giant stone pillars, ancient mechanism grinding, dust falling from ceiling, alert battle stance, wearing {outfit}, tension, dynamic lighting",
+      "caption": "厚重的石门伴着轰鸣缓缓抬起。殿堂深处的机械机枢悄然咬合，一阵令人屏息的古老脉动在大殿中回荡。"
+    },
+    {
+      "name": "第6幕：石像守护者苏醒",
+      "prompt": "{character}, {style}, fighting stance, looking up at a gigantic ancient stone golem knight awakening from throne, glowing red runes on monster, debris rising, wearing {outfit}, sense of scale, intense atmosphere",
+      "caption": "沉睡万年的遗迹守护石像感应到入侵者，胸前的守护魔印骤然亮起，迈出撼动大地的沉重步伐！"
+    },
+    {
+      "name": "第7幕：敏捷闪避与穿梭",
+      "prompt": "{character}, {style}, dynamic mid-air action pose, dodging a massive crushing stone fist, stone shards flying, motion blur, acrobatic leap, wearing {outfit}, high dynamic range, intense combat",
+      "caption": "呼啸的巨拳砸碎地面，石屑崩飞！{character} 凌空跃起，借助敏捷的步伐在残垣断壁间灵巧闪避。"
+    },
+    {
+      "name": "第8幕：魔力升腾与蓄势",
+      "prompt": "{character}, {style}, upper body focus, eyes glowing with magical aura, concentrating a brilliant radiant energy sphere between hands, hair floating, determined gaze, wearing {outfit}, high energy FX, vivid colors",
+      "caption": "面对顽强的守卫，不再犹豫。周身澎湃的魔力如烈焰般升腾，在掌心汇聚为破除黑暗的炽热光芒。"
+    },
+    {
+      "name": "第9幕：破魔圣裁一击",
+      "prompt": "{character}, {style}, full body action climax shot, thrusting forward a brilliant blade of light striking the core of the golem, shockwaves rippling, glowing cracks spreading on the guardian, wearing {outfit}, epic battle climax",
+      "caption": "光芒如惊雷贯穿大殿，精准击碎核心法阵！守护者化作耀眼的魔力碎屑，在震撼的共鸣中轰然倒塌。"
+    },
+    {
+      "name": "第10幕：圣印宝匣开启",
+      "prompt": "{character}, {style}, standing before an illuminated crystal altar, opening an ornate golden ancient chest, golden rays radiating outwards illuminating face, soft relieved smile, wearing {outfit}, warm divine glow",
+      "caption": "战斗平息，尘埃落定。祭坛正中央的宝匣感应到胜利者的到来，缓缓绽开，散发出温暖圣洁的金辉。"
+    },
+    {
+      "name": "第11幕：圣物共鸣与觉醒",
+      "prompt": "{character}, {style}, close-up shot, holding a hovering glowing celestial star prism, sacred runes revolving around, eyes reflecting wonder and magic, wearing {outfit}, breathtaking, soft rim light, masterpiece",
+      "caption": "静静托起悬浮的星之圣印，古老的智慧与纯净力量化作暖流注入心田，洗去了一路上的疲惫与创伤。"
+    },
+    {
+      "name": "第12幕：破晓凯旋归途",
+      "prompt": "{character}, {style}, walking out of the ruins archway into bright daylight, smiling warmly looking at the horizon, carrying a backpack, wearing {outfit}, lush green nature, blue sky with fluffy clouds, triumphant peaceful ending",
+      "caption": "走出昏暗的古殿，重见明媚灿烂的天空。微风拂面，{character} 迈着轻快的步伐，带着无价的勇气与收获踏上归途。"
+    }
+  ]
+}

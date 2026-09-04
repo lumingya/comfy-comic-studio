@@ -22,6 +22,17 @@ _to_delete/
 test-results/
 .pytest_cache/
 
-# Git 提交脚本（不需要提交）
+# 辅助与提交脚本
 git提交.py
-git提交.py
+
+# 本地私有模板与配置
+novelai_80_steps_template.json
+*.env
+.env
+.env.*
+*.pem
+*.key
+
+# IDE与编辑器配置
+.vscode/
+.idea/
