@@ -178,3 +178,17 @@ html[data-queue-view=true] .assistant-launch{background:var(--panel2);color:var(
 .provider-key-row{display:flex;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid var(--border,#374039)}
 .provider-key-row strong{overflow-wrap:anywhere}.provider-key-row .help{margin:5px 0 0}
 .provider-auth .row{align-items:center;flex-wrap:wrap}.provider-optional input:disabled{opacity:.45}
+
+/* Market: one native scroll surface, no full-screen live blur, skip offscreen cards. */
+#modal.market-dialog[open]{display:flex;flex-direction:column;overflow:hidden}
+#modal.market-dialog::backdrop{backdrop-filter:none;-webkit-backdrop-filter:none;background:#080d11c9}
+#modal.market-dialog .modal-head{flex-shrink:0}
+#modal.market-dialog #modal-body{min-height:0;overflow:auto;overscroll-behavior:contain;scroll-behavior:auto;isolation:isolate}
+#market-content .market-item{content-visibility:auto;contain-intrinsic-size:auto 215px;contain:layout style paint}
+#market-content .market-item-export{contain-intrinsic-size:auto 340px}
+#market-content .market-preview-strip .mini-page{box-shadow:0 2px 5px #0002}
+#market-content .market-subtabs{overscroll-behavior-x:contain}
+#market-content .market-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+#market-content .market-item{min-width:0;overflow-wrap:anywhere}
+#market-content .market-item .grow{min-width:0}
+@media(max-width:760px){#market-content .market-grid{grid-template-columns:minmax(0,1fr)}}

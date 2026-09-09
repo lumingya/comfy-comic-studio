@@ -22,7 +22,7 @@ Mio 是单用户、本地优先的创作工具，不是多租户 SaaS。
 | NOVELAI_API_KEY | NovelAI 服务端后备密钥 | 无 |
 | OPENAI_API_KEY | OpenAI 兼容服务端后备密钥 | 无 |
 
-MIO_HOST/PORT/ORIGINS 优先于同用途的旧 COMFY_COMIC_* 变量。不要在公开部署允许不可信 Origin。旧文件打开兼容路径允许 `Origin: null`；这进一步说明私有服务只能放在可信本地边界内。
+使用 MIO_HOST、MIO_PORT 和 MIO_ORIGINS 配置监听地址、端口与允许来源。不要在公开部署允许不可信 Origin。部分本地文件访问路径允许 `Origin: null`；这进一步说明私有服务只能放在可信本地边界内。
 
 ### 密钥与数据
 
@@ -38,9 +38,9 @@ MIO_HOST/PORT/ORIGINS 优先于同用途的旧 COMFY_COMIC_* 变量。不要在�
 
 ## English
 
-Mio is a single-user local workspace, not a multi-tenant service. The external Bearer token protects **only `/api/v1`**, not private config endpoints, pages or legacy image URLs. Keep loopback binding; use an SSH tunnel or an authenticated HTTPS reverse proxy protecting all routes for remote access. A public-API-only proxy must block private routes.
+Mio is a single-user local workspace, not a multi-tenant service. The external Bearer token protects **only `/api/v1`**, not private config endpoints, pages or image URLs. Keep loopback binding; use an SSH tunnel or an authenticated HTTPS reverse proxy protecting all routes for remote access. A public-API-only proxy must block private routes.
 
-Use a random token of at least 32 characters. `MIO_HOST`, `MIO_PORT` and `MIO_ORIGINS` override legacy `COMFY_COMIC_*` equivalents. Cloud provider keys are separate. Image keys persist in the local, endpoint-bound `data/secrets/provider-keys.json` store. This is permissions-restricted, not encrypted. Plaintext is not returned by management APIs; normal exports contain references only. Full physical data-directory backups include the secret file and must be protected; old exports and other model settings may still contain secrets. Never publish an unreviewed data directory.
+Use a random token of at least 32 characters. Use `MIO_HOST`, `MIO_PORT` and `MIO_ORIGINS` to configure the local server. Cloud provider keys are separate. Image keys persist in the local, endpoint-bound `data/secrets/provider-keys.json` store. This is permissions-restricted, not encrypted. Plaintext is not returned by management APIs; normal exports contain references only. Full physical data-directory backups include the secret file and must be protected; exports and other model settings may still contain secrets. Never publish an unreviewed data directory.
 
 API clients are trusted: they can read creative content and spend provider credits. Custom endpoints are an integration feature, not a safe untrusted-user proxy. Only send server-side provider credentials to trusted destinations. Generation does not follow credential-bearing redirects, enforces size/concurrency limits and does not automatically retry paid calls. Cancellation does not guarantee upstream cancellation.
 

@@ -187,7 +187,7 @@ function installWorkspaceUpgrade(){
 }
 
 function dataLayoutHTML(){
-  return `<section class="settings-section"><h2>数据目录与迁移</h2><p>所有路径相对于程序目录。修改标题不会移动图片，画册 ID 保持稳定。</p><pre class="backend-code">data/
+  return `<section class="settings-section"><h2>数据目录与备份</h2><p>所有路径相对于程序目录。修改标题不会移动图片，画册 ID 保持稳定。</p><pre class="backend-code">data/
   workflows/library.json       工作流与映射库
   storyboards/templates.json   分镜模板
   storyboards/plans.json       画册计划与单幕覆盖
@@ -199,5 +199,5 @@ function dataLayoutHTML(){
   settings/                   服务连接与模型配置
   conversations/              对话记录
   assets/images/albums/       按画册 ID 保存的原图
-  cache/                      可重新获取的缓存</pre><details class="quiet-advanced"><summary>按画册名称查找图片目录</summary>${state.books.map(b=>`<div style="margin:14px 0"><strong>${esc(b.title)}</strong><br><code style="overflow-wrap:anywhere">data/assets/images/albums/${esc(b.id)}/</code></div>`).join('')}<p class="help">仅真实生成的 PNG/JPEG/WebP/GIF 自动拆分到此目录；内置 SVG 演示与历史内嵌图片仍保留在画册索引中。旧 images/ 继续兼容。</p></details><p class="help">第一次读取时自动迁移旧版 data/*.json，原文件留存。发现缺失或损坏时停止迁移，不用空数据覆盖。服务运行时请通过界面编辑，不要同时手改文件。</p><div class="row wrap">${btn('导出完整图片目录 ZIP','download','disk-archive')}${btn('载入已解压目录','upload','disk-import-folder')}${btn('导出工程 JSON','disk','backup-export')}</div><p class="help">跨电脑迁移优先使用 ZIP（包含图片）。JSON 中的本地图片链接需要连同 data/assets/images/ 一起备份。直接复制 data/ 可能包含 API 密钥，请勿公开分享。完整说明见 docs/DATA_LAYOUT.md。</p></section>`;
+  cache/                      可重新获取的缓存</pre><details class="quiet-advanced"><summary>按画册名称查找图片目录</summary>${state.books.map(b=>`<div style="margin:14px 0"><strong>${esc(b.title)}</strong><br><code style="overflow-wrap:anywhere">data/assets/images/albums/${esc(b.id)}/</code></div>`).join('')}<p class="help">仅真实生成的 PNG/JPEG/WebP/GIF 自动拆分到此目录；内嵌图片保存在画册索引中。</p></details><p class="help">发现缺失或损坏时停止读取，不用空数据覆盖。服务运行时请通过界面编辑，不要同时手改文件。</p><div class="row wrap">${btn('导出完整图片目录 ZIP','download','disk-archive')}${btn('载入已解压目录','upload','disk-import-folder')}${btn('导出工程 JSON','disk','backup-export')}</div><p class="help">跨电脑迁移优先使用 ZIP（包含图片）。JSON 中的本地图片链接需要连同 data/assets/images/ 一起备份。直接复制 data/ 可能包含 API 密钥，请勿公开分享。完整说明见 docs/DATA_LAYOUT.md。</p></section>`;
 }

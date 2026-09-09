@@ -1,4 +1,4 @@
-/* ComfyComic development module: engine. */
+/* Mio development module: engine. */
 'use strict';
 
 async function request(url,options={},timeout=15000){const ctrl=new AbortController(),signal=options.signal,abort=()=>ctrl.abort();signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)ctrl.abort();const t=setTimeout(()=>ctrl.abort(),timeout);try{const r=await fetch(url,{...options,signal:ctrl.signal});if(!r.ok){const text=await r.text();throw Error('HTTP '+r.status+': '+text.slice(0,220))}if(r.status===204||r.status===205)return r;const body=await r.arrayBuffer();return new Response(body,{status:r.status,statusText:r.statusText,headers:r.headers})}finally{clearTimeout(t);signal?.removeEventListener('abort',abort)}}

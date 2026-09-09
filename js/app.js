@@ -1,4 +1,4 @@
-/* ComfyComic development module: app. */
+/* Mio development module: app. */
 'use strict';
 
 'use strict';
@@ -72,7 +72,7 @@ function diagnostics(){const tests=[];const test=(name,fn)=>{try{if(fn()===false
 document.addEventListener('click',async e=>{if(e.target.closest('.cover-check'))return;const el=e.target.closest('[data-act]');if(!el)return;e.preventDefault();try{await handleAction(el.dataset.act,el.dataset,el)}catch(x){toast(x.message||'操作未完成。','error');log(x.message||String(x),'error')}});
 
 
-document.addEventListener('input',e=>{const el=e.target;if(el.id==='gallery-search'){ui.search=el.value;refreshGallery()}if(el.id==='command-input'){rt.commandIndex=0;indexCommands(el.value)}if(el.id==='market-search'){ui.marketSearch=el.value;const pos=el.selectionStart;renderMarket();$('#market-search').focus();$('#market-search').setSelectionRange(pos,pos)}if(el.dataset.setting)storeSetting(el);if(el.dataset.frameField||el.dataset.templateField)flushEditor();if(el.dataset.rowField){const r=rowBy(el.dataset.row);if(r)r[el.dataset.rowField]=el.value;save()}if(el.dataset.storyCaption){const r=rowBy(ui.storyRowId),t=templateBy(ui.storyTemplateId);if(r&&t&&!rt.lockedRows.has(r.id)){const v=ensureManual(r,t);v.captions[Number(el.dataset.storyCaption)]=el.value;v.updatedAt=Date.now();save()}}if(el.id==='story-outline'){const r=rowBy(ui.storyRowId);if(r)r.storyOutline=el.value;save()}if(el.id==='story-tone'){const r=rowBy(ui.storyRowId);if(r)r.tone=el.value;save()}if(el.id==='xml-output')ui.xmlOutput=el.value;if(el.id?.startsWith('denoise-')&&!el.id.startsWith('denoise-value-')){const n=$('#denoise-value-'+el.id.split('-')[1]);if(n)n.textContent=Number(el.value).toFixed(2)}});
+document.addEventListener('input',e=>{const el=e.target;if(el.id==='gallery-search'){ui.search=el.value;refreshGallery()}if(el.id==='command-input'){rt.commandIndex=0;indexCommands(el.value)}if(el.id==='market-search'){ui.marketSearch=el.value;scheduleMarketSearch()}if(el.dataset.setting)storeSetting(el);if(el.dataset.frameField||el.dataset.templateField)flushEditor();if(el.dataset.rowField){const r=rowBy(el.dataset.row);if(r)r[el.dataset.rowField]=el.value;save()}if(el.dataset.storyCaption){const r=rowBy(ui.storyRowId),t=templateBy(ui.storyTemplateId);if(r&&t&&!rt.lockedRows.has(r.id)){const v=ensureManual(r,t);v.captions[Number(el.dataset.storyCaption)]=el.value;v.updatedAt=Date.now();save()}}if(el.id==='story-outline'){const r=rowBy(ui.storyRowId);if(r)r.storyOutline=el.value;save()}if(el.id==='story-tone'){const r=rowBy(ui.storyRowId);if(r)r.tone=el.value;save()}if(el.id==='xml-output')ui.xmlOutput=el.value;if(el.id?.startsWith('denoise-')&&!el.id.startsWith('denoise-value-')){const n=$('#denoise-value-'+el.id.split('-')[1]);if(n)n.textContent=Number(el.value).toFixed(2)}});
 
 
 document.addEventListener('change',async e=>{const el=e.target;try{if(el.dataset.setting){storeSetting(el);if(el.dataset.setting==='comfy.mode'){resetWS();renderShell();if(ui.workspace===3)render()}}if(el.id==='project-select')changeProject(el.value);if(el.id==='gallery-filter'){ui.filter=el.value;refreshGallery()}if(el.id==='gallery-sort'){ui.sort=el.value;refreshGallery()}if(el.dataset.selectBook){el.checked?ui.selected.add(el.dataset.selectBook):ui.selected.delete(el.dataset.selectBook);refreshGallery()}if(el.dataset.rowActive){rowBy(el.dataset.rowActive).active=el.checked;save()}if(el.id==='matrix-all'){projectRows().forEach(r=>r.active=el.checked);save();render()}if(['template-select','batch-template'].includes(el.id)){flushEditor();ui.templateId=el.value;ui.frameIndex=0;render()}if(el.id==='story-row'){ui.storyRowId=el.value;render()}if(el.id==='story-template'){ui.storyTemplateId=el.value;render()}if(el.id==='story-version'){rowBy(ui.storyRowId).activeStoryVersionIds[ui.storyTemplateId]=el.value;save();render()}if(el.id==='reader-version')openReader(el.value);if(el.id==='chat-select'){if(rt.chatBusy)throw Error('当前对话尚未结束。');state.activeChatId=el.value;save();renderAssistant()}if(el.id==='workflow-preset'&&el.value!==''){const p=state.settings.comfy.presets[Number(el.value)];state.settings.comfy.workflow=clone(p.workflow);state.settings.comfy.mapping=clone(p.mapping);state.settings.comfy.workflowTitle=p.title;save();render()}if(el.id==='llm-provider'){const c=state.settings.llm,p={openai:['https://api.openai.com/v1','gpt-4o'],deepseek:['https://api.deepseek.com','deepseek-chat'],ollama:['http://localhost:11434/v1','llama3.2'],custom:['https://your-gateway.example/v1','your-model']}[el.value];c.provider=el.value;c.baseUrl=p[0];c.model=p[1];save();llmSettings()}}catch(x){toast(x.message,'error')}});
@@ -517,7 +517,7 @@ document.addEventListener('focusin',e=>{const el=e.target.closest('[data-tip],[d
 document.addEventListener('focusout',()=>hideTip());
 
 
-document.addEventListener('scroll',()=>hideTip(),true);
+document.addEventListener('scroll',()=>{if(detailUI.tooltipTarget||detailUI.tooltipTimer)hideTip()},{capture:true,passive:true});
 
 
 document.addEventListener('pointerdown',()=>hideTip());
@@ -727,7 +727,7 @@ handleAction=async function(act,d={},el){
   if(Object.hasOwn(releaseActions,act)){hideTip();await releaseActions[act](d,el);return}
   const result=await releaseCore.handleAction(act,d,el);
   if(act==='assistant-full'||act==='assistant')scheduleAssistantFit();
-  if(act==='diagnostics'&&$('#modal-body'))$('#modal-body').insertAdjacentHTML('beforeend','<div class="modal-footer">'+btn('检查 v2.5 修复与模板兼容性','shield','release-diagnostics','','primary')+'</div>');
+  if(act==='diagnostics'&&$('#modal-body'))$('#modal-body').insertAdjacentHTML('beforeend','<div class="modal-footer">'+btn('检查模板与导出功能','shield','release-diagnostics','','primary')+'</div>');
   if(act==='et-open-library')updateTemplatePreview();
   if(act==='book-menu'){const box=$('#modal-body');if(box&&!$('[data-act="critic-settings"]',box))box.insertAdjacentHTML('beforeend','<div class="row" style="padding-top:15px">'+btn('视觉审校 API 设置','shield','critic-settings','','small ghost')+'</div>')}
   return result;
@@ -889,7 +889,7 @@ validateState=function(s){
 activeJobs=function(){return v3Core.activeJobs()||createUI.backendBusy||backendRuntime.saving||!!createUI.dryController};
 
 
-backupModal=function(){modal('工程备份与迁移',`<div class="service-context"><strong>${esc(workspaceName())}</strong><br>${esc(backendStatusText())}</div><p class="help" style="margin:18px 0">日常保存交给现有 Python 后端。便携备份包含创作计划、复用变量、所有分镜、画册与通用节点映射。</p><div class="stack">${btn('下载工程 JSON','download','backup-export','','primary')}${btn('从 JSON 恢复','upload','import-project')}${btn('下载兼容目录 ZIP','folder','disk-archive')}${btn('配置 Python 保存服务','disk','v3-settings-tab','data-tab="connections"')}</div><label class="row small soft" style="margin-top:18px"><input id="backup-secrets" type="checkbox">此次 JSON 备份包含其他服务密钥（敏感，不含图像密钥库）</label><div class="modal-footer">${btn('关闭','','close-modal')}</div>`,'仅在服务明确确认后，状态栏才会显示已保存。')};
+backupModal=function(){modal('工程备份与恢复',`<div class="service-context"><strong>${esc(workspaceName())}</strong><br>${esc(backendStatusText())}</div><p class="help" style="margin:18px 0">日常保存交给现有 Python 后端。便携备份包含创作计划、复用变量、所有分镜、画册与通用节点映射。</p><div class="stack">${btn('下载工程 JSON','download','backup-export','','primary')}${btn('从 JSON 恢复','upload','import-project')}${btn('下载便携目录 ZIP','folder','disk-archive')}${btn('配置 Python 保存服务','disk','v3-settings-tab','data-tab="connections"')}</div><label class="row small soft" style="margin-top:18px"><input id="backup-secrets" type="checkbox">此次 JSON 备份包含其他服务密钥（敏感，不含图像密钥库）</label><div class="modal-footer">${btn('关闭','','close-modal')}</div>`,'仅在服务明确确认后，状态栏才会显示已保存。')};
 
 
 const v3Actions={
@@ -1283,9 +1283,9 @@ function installCollectionDisplay(){
     if(Object.hasOwn(shelfActions,action)){if($('#welcome-dialog').open)return;return shelfActions[action](data,element)}
     const result=await collectionDisplayCore.handleAction(action,data,element);
     if(['diagnostics','v3-diagnostics','release-diagnostics','art-prompt-checks'].includes(action)&&$('#modal-body'))$('#modal-body').insertAdjacentHTML('beforeend','<div class="modal-footer">'+btn(localeString('显示与语言')+' · '+localeString('系统自检'),'shield','display-diagnostics','','small')+'</div>');
-    localizeWorkspace();return result;
+    localizeWorkspace($('#modal[open]')||document.body);return result;
   };
-  if(window.MutationObserver){displayUI.observer=new MutationObserver(records=>{if(displayUI.localizing)return;if(records.some(r=>r.type!=='attributes'||['title','placeholder','aria-label'].includes(r.attributeName)))queueLocalization()});displayUI.observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['title','placeholder','aria-label']})}
+  if(window.MutationObserver){displayUI.observer=new MutationObserver(records=>{if(displayUI.localizing)return;if(records.some(r=>r.type!=='attributes'||['title','placeholder','aria-label'].includes(r.attributeName)))queueLocalization(records)});displayUI.observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['title','placeholder','aria-label']})}
   ComfyComic.locale=displayUI.locale;ComfyComic.collectionDisplay=displayModel;
   loadCollectionFonts();
   window.addEventListener('resize',scheduleSidebarWordmarkFit);
@@ -1349,6 +1349,8 @@ installWorkspaceUpgrade();
 installOrganizationTools();
 
 installImageProviders();
+
+installMarketPerformance();
 
 globalThis.Mio = globalThis.ComfyComic;
 

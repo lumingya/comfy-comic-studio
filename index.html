@@ -186,6 +186,20 @@ html[data-queue-view=true] .assistant-launch{background:var(--panel2);color:var(
 .provider-key-row strong{overflow-wrap:anywhere}.provider-key-row .help{margin:5px 0 0}
 .provider-auth .row{align-items:center;flex-wrap:wrap}.provider-optional input:disabled{opacity:.45}
 
+/* Market: one native scroll surface, no full-screen live blur, skip offscreen cards. */
+#modal.market-dialog[open]{display:flex;flex-direction:column;overflow:hidden}
+#modal.market-dialog::backdrop{backdrop-filter:none;-webkit-backdrop-filter:none;background:#080d11c9}
+#modal.market-dialog .modal-head{flex-shrink:0}
+#modal.market-dialog #modal-body{min-height:0;overflow:auto;overscroll-behavior:contain;scroll-behavior:auto;isolation:isolate}
+#market-content .market-item{content-visibility:auto;contain-intrinsic-size:auto 215px;contain:layout style paint}
+#market-content .market-item-export{contain-intrinsic-size:auto 340px}
+#market-content .market-preview-strip .mini-page{box-shadow:0 2px 5px #0002}
+#market-content .market-subtabs{overscroll-behavior-x:contain}
+#market-content .market-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+#market-content .market-item{min-width:0;overflow-wrap:anywhere}
+#market-content .market-item .grow{min-width:0}
+@media(max-width:760px){#market-content .market-grid{grid-template-columns:minmax(0,1fr)}}
+
 </style>
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMTI4IDEyOCI+PHRpdGxlPk1pbzwvdGl0bGU+PGltYWdlIHdpZHRoPSIxMjgiIGhlaWdodD0iMTI4IiB4bGluazpocmVmPSJkYXRhOmltYWdlL3dlYnA7YmFzZTY0LFVrbEdSam9GQUFCWFJVSlFWbEE0SUM0RkFBQndIQUNkQVNxQUFJQUFQakVZaTBRaUlhRVJDZ1VBSUFNRXNvQkRKYkl2aHQ4MGtrT3BLd0h2NTlSZjIzYjU3ekFmcUovcFA3bDd4UG96LzhIcUFmczcxcGZvQWVXeDdMSDdxK2tOcXdMRWY3ZHl2bnREa3UvMVhrcnZDWDhsL3YyK0daRC95bHVZeDNmNmI3VmZrQS8yLzhCNTYvb2Yvdys0SC9LdjZ4L3FPeHA2T1A3YmpURElUOGRsUnlPbFVyOUthY3l5TVdpOElBNm5zZFBObjFGVHpoYTZNNysveHhuRU5mODdONUVpWHBFbm52ekdKdEVmc2xxSUZ4b2pjV3JRT3pPZHdyVTdHaTd0dlJXWWtiL2VnTXhoQlRmaFdBaHd0L3F0REdoQzZROFIycDhISTZWdUdRbmdnQUQrL1k0a2JxY2U1bjR4bE5BcndaSHpDTGoxUlBHM1RYc1hacHUxWDVNOUt2eE13cC9sUmFHN25Lakh4WkwzSnFLZm1ZemkvZVNzRkpTeTFycEpjZm9ITGRSRXVrZi9xa2pCV25ISzdPOGJTVml2Z1JBdVZoT1UvMXB2Zm03VkRvRVpDRThkQXlQamdad1dWek9LMCtSbkc2bS9qa0xFK2tGZ0xQL3l1aENRMWNvcFpOdGFxYTMzR3Y0WHhiVFppRkxPVkxtQTYvMWIxd2ZTdzEvV0dKUFNSYStleEtRUWVxVmZOQlkzRnpFOUdTTUpETUFEc3JTNmpZbHhrdk1vaGxvdW1ZTjcwZDVDS2tORVk2Z1Jpdnk0RFoyVm9vSFBHeUlEK25wQ3N4eVNvMFpWbWlhQ1dsc0FPMTNod29OdFFnWWU2NGlPMm0vODZWT0hpMHZ5UDU0Q1lwcGwyeC96b0lFbnN1QzVDdFVRZkRJNjZTZWZsWVdXL1hVb2NsZmZjd0NhOXk4NFdzYkF5bHlMQkUvM2lHZVhieEMvQUVVRVlXcitTbGhtUTg3NWV1ZnI3STJJR21CcUlrK3BOSXd0L2Y5b0tQS2hqSUUvamdlaW5WVEpML0hMcnJkVFhXRlcvbTVnRTBDSzRiekx4ZFJSeFJqOS90Z1IyRGNPeE1IODJvdFAvREJhOFV4NzlRaW1Lak96K1d2dGY2cnNadzBzWTFEQndZK29WV2Q0Ky80RHg4SmYxRjJXK3ZhL1M2WU5VcDRwNmd5QTFsMzdZYm0xMC8vZXRtaFBEckg2NDdtQnB3NHpNNnRxTStzNHBSLzk5TWNjSFo4Z1JiMmI3QWpsRG1UYjhYT3REQkIwdGQxbE56SnNwaUxuRlNrbkdlMElodDBKcS9zMzg0L3c1U0M4b3UzQlhnc2xkTlVIOEdPSzcxb0RtWW4vZUdWcmpUR0xNNUg4VlJuTCtOZWNFQkRIMmtRMVg4eHVWQ3FTb0F6RmMwUy80b3Y3a1JhTVZXSVlUSno5WDlGNnovNlo4VVJZVTg5S0NwL2M1K285SFVTc2NUSlAydnZ1NEQ1RjkzTzB1cFJmaEJEc2lBUGFETVBZUG81OEYwWXB2Mi8xSHUxcmJnMlB3VFlOUTI0WTdkeHY3ZEtKakwxZDBMWXJMOS9YK3N6bitqejluMDEzYmpkUFlmYjNTSEZ4Rnhac3lSQkJ4MkRJcVMyVk9jNThKMnNmU0NkeEV5c21UQk4wVi9tUitVamVuamVFR083MzNqT0VLNllPMVZuRnQ3K0ZZazJLdFZyZVpFRkVrSjlpOCtXNWJoajlULzZ1NG9EL24vMnZWbzQzby9JdzhzUlJxNElyYnVEM2lFMlRnUHVhdUo4Uk4vNEFyejcyQmxZNzNZb3E0M1NxZ3plZkdCMjl0bnJVQlAwWSszL09BVUMwSGZlTTduQXcrelRDR2M0SENGTE04Mk92a0RZUDVuMWtGK053YWwramMrTFNNWWdsTm5MaFBZWHF3ei9hK24xWHpoTkNDNEZVR3JyQ0FTdzBnbHd1NjNGZFBXdkl0MXNjVGtlbUZjZnY3d29uaWhIcHNmLzQvcDVWOHdMVXEvUzh5YUVsNFlTa0NvWjllTWV1ZkJ1T0wwb09INFEvS2NaaGNnV3ZwTjN6WXAzZDR5RVNreWNIUC8wb2ZWazFqSS9aQWVrKzNHRlA3ZjQ5QUxlcHdDdDI1MkxCemlJckxWR2I0YU1VaEpvWWk1cnh3NmdtYTh5dzZEdjlmZjBYd1lIYWsvajQxS0pPa1AyQm1CR2RFazdEZ1B3V1EzZFJ2MWtTT1JvNHZQOFZzNWFVQXJmYkdJSEtyd0VGMTNPZ3NGZnJoVW9TQnIweWovMkwrSi8zVW83bFIxN0pFTUVSaitxaEdyTFRvNVJVSGhDQUJrMEFBQUE9Ii8+PC9zdmc+">
 </head>
@@ -205,7 +219,7 @@ html[data-queue-view=true] .assistant-launch{background:var(--panel2);color:var(
 <input id="directory-import" type="file" webkitdirectory multiple hidden>
 <script id="studio-runtime">
 // Source: /js/state.js
-/* ComfyComic development module: state. */
+/* Mio development module: state. */
 'use strict';
 
 function hash(s){let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
@@ -514,7 +528,7 @@ function restoreCuratedCover(studio){
 }
 
 // Source: /js/sync.js
-/* ComfyComic development module: sync. */
+/* Mio development module: sync. */
 'use strict';
 
 function openDB(){return new Promise((resolve,reject)=>{if(!window.indexedDB)return reject(Error('IndexedDB unavailable'));const q=indexedDB.open('comfycomic-studio',1);q.onupgradeneeded=()=>q.result.createObjectStore('snapshots');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error)})}
@@ -963,7 +977,7 @@ function convertApiConfigToStudioState(config,defaults=state){return globalThis.
 function convertStudioStateToApiPayload(studio=state,previous,forceWrite=false){return globalThis.ComfyComic.converters.toApi(studio,previous??globalThis.ComfyComic.sync.runtime.previous,forceWrite)}
 
 // Source: /js/engine.js
-/* ComfyComic development module: engine. */
+/* Mio development module: engine. */
 'use strict';
 
 async function request(url,options={},timeout=15000){const ctrl=new AbortController(),signal=options.signal,abort=()=>ctrl.abort();signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)ctrl.abort();const t=setTimeout(()=>ctrl.abort(),timeout);try{const r=await fetch(url,{...options,signal:ctrl.signal});if(!r.ok){const text=await r.text();throw Error('HTTP '+r.status+': '+text.slice(0,220))}if(r.status===204||r.status===205)return r;const body=await r.arrayBuffer();return new Response(body,{status:r.status,statusText:r.statusText,headers:r.headers})}finally{clearTimeout(t);signal?.removeEventListener('abort',abort)}}
@@ -1229,7 +1243,7 @@ function installImageProviders(){
 }
 
 // Source: /js/creation.js
-/* ComfyComic development module: creation. */
+/* Mio development module: creation. */
 'use strict';
 
 function flushEditor(){const t=currentTemplate();if(!t)return;const f=t.frames[ui.frameIndex];let changed=false;$$('[data-frame-field]').forEach(e=>{if(!f)return;let v=e.type==='number'?Number(e.value):e.value;if(e.type==='number'&&!Number.isFinite(v))return;if(f[e.dataset.frameField]!==v){f[e.dataset.frameField]=v;changed=true}});$$('[data-template-field]').forEach(e=>{if(t[e.dataset.templateField]!==e.value){t[e.dataset.templateField]=e.value;changed=true}});if(changed){t.updatedAt=Date.now();save()}}
@@ -1548,7 +1562,7 @@ function ensureFrameCapacity(frames,additional=1){const limit=globalThis.ComfyCo
 function installNativeCreationModule(){const ns=globalThis.ComfyComic,enqueuePrevious=enqueuePlanSnapshot;enqueuePlanSnapshot=function(plan,existing=null,selectedIndices=null){const t=templateBy(plan?.templateId);if(!t)throw Error('Select a storyboard before generating.');ns.stateContract.assertFrameCount(t.frames);if(t.frames.length===0)throw Error('空分镜模板可以保存，生成前请先添加一幕。');return enqueuePrevious(plan,existing,selectedIndices)};const assistantPrevious=assistantToolDraft;assistantToolDraft=function(t,name,args={}){t.frames??=[];if(name==='add_new_frame')ensureFrameCapacity(t.frames);if(name==='batch_update_prompts_and_captions')ns.stateContract.assertFrameCount(args.frames||[]);return assistantPrevious(t,name,args)};const packagePrevious=selectedPublishPackage;selectedPublishPackage=function(id){const value=packagePrevious(id);if(value.value?.frames)ns.stateContract.assertFrameCount(value.value.frames);return value};ns.modules.creation=true}
 
 // Source: /js/ui.js
-/* ComfyComic development module: ui. */
+/* Mio development module: ui. */
 'use strict';
 
 function makeFrame(i=0){return{id:uid('f'),name:frameNames[i%8],camera:['Full Shot','Medium Shot','Close-up','Low Angle'][i%4],prompt:'masterpiece, anime illustration, {character}, {style}, {outfit}, {scene}, cinematic lighting, '+['summer railway station, ocean in distance','holding a letter, soft backlighting','expressive eyes, wind in hair','golden hour, seaside'][i%4],caption:captions[i%8],negative:'',width:768,height:1024,steps:24,cfg:7,denoise:1,seed:-1,status:'pending'}}
@@ -1570,7 +1584,7 @@ function download(n,c,type='application/json'){const u=URL.createObjectURL(c ins
 function pickFile(accept,fn,multiple=false){const e=$('#file-input');e.accept=accept;e.multiple=multiple;e.value='';e.onchange=async()=>{try{if(e.files.length)await fn(multiple?[...e.files]:e.files[0])}catch(x){toast(x.message,'error')}};e.click()}
 
 
-function modal(title,body,sub='',wide=false){$('#modal').classList.toggle('modal-wide',wide);$('#modal-title').textContent=title;$('#modal-subtitle').textContent=sub;$('#modal-body').innerHTML=body;if(!$('#modal').open)$('#modal').showModal()}
+function modal(title,body,sub='',wide=false){$('#modal').classList.remove('market-dialog');$('#modal').classList.toggle('modal-wide',wide);$('#modal-title').textContent=title;$('#modal-subtitle').textContent=sub;$('#modal-body').innerHTML=body;if(!$('#modal').open)$('#modal').showModal()}
 
 function closeModal(){$('#modal').close()}
 
@@ -1899,7 +1913,7 @@ default:log('未识别的操作：'+act,'warn');}}
 function standardBookLoop(){return `{{#books}}
 <article class="cc-book" data-cc-book>
   <header class="cc-cover">
-    <p class="cc-eyebrow">COMFYCOMIC / {{layoutName}}</p>
+    <p class="cc-eyebrow">MIO / {{layoutName}}</p>
     <h1>{{title}}</h1>
     <p class="cc-synopsis">{{synopsis}}</p>
     <span class="cc-byline">{{characterName}} · {{panelCount}} 幕</span>
@@ -2452,12 +2466,14 @@ async function undoAssistantEdit(){
 function marketTemplate(packageId){const c=exportMarketCatalog.find(c=>c.id===packageId);if(!c)throw Error('画册模板包不存在。');return {...makeExportTemplate(uid('export'),c.title,c.layout,c.options,c.desc,'market'),version:c.version,packageId:c.id};}
 
 
+function marketCardHTML(c,installed){
+  return `<article class="market-item ${c.type==='exports'?'market-item-export':''}" data-market-id="${esc(c.id)}">${c.type==='exports'?`<button class="market-preview-strip" style="width:100%;background:${c.options.background};--mini-accent:${c.options.accent}" data-act="et-market-preview" data-id="${c.id}" aria-label="预览 ${esc(c.title)}"><span class="mini-page"><i></i><span></span></span><span class="mini-page"><i></i><span></span></span></button>`:`<div class="row accent">${icon(c.icon)}<span class="spacer"></span><span class="tiny">v${esc(c.version)}</span></div>`}<div class="row"><h3 data-user-content class="grow" style="margin:0 0 7px">${esc(c.title)}</h3>${c.type==='exports'?'<span class="utility-caption">HTML / CSS</span>':''}</div><p data-user-content>${esc(c.desc)}</p><div data-user-content class="tiny muted" style="margin-bottom:13px">${esc(c.author)} · v${esc(c.version)}</div><div class="row">${c.type==='exports'?btn('预览','eye','et-market-preview',`data-id="${c.id}"`,'small')+btn('下载模板','download','et-market-download',`data-id="${c.id}"`,'small'):''}<span class="spacer"></span>${btn(installed?'卸载':'安装',installed?'check':'plus','market-install',`data-id="${c.id}"`,'small '+(installed?'':'primary'))}</div></article>`;
+}
+
 function renderStudioMarket(){
   const q=ui.marketSearch.toLowerCase(),items=catalog.filter(c=>(ui.marketTab==='all'||ui.marketTab===c.type)&&[c.title,c.desc,c.tags,c.author].join(' ').toLowerCase().includes(q));
-  $('#market-content').innerHTML=`<div class="tabbar market-subtabs" style="gap:20px">${[['all','全部'],['exports','画册 HTML 模板'],['templates','分镜剧本'],['characters','角色资产'],['workflows','工作流'],['rules','审校规则']].map(([v,l])=>`<button class="tab ${ui.marketTab===v?'active':''}" data-act="market-tab" data-tab="${v}">${l}</button>`).join('')}</div><div class="row" style="margin-top:18px"><div class="search-field" style="max-width:none">${icon('search')}<input id="market-search" value="${esc(ui.marketSearch)}" placeholder="搜索画册模板、作者或标签..." aria-label="搜索市场资源"></div>${studioUI.returnToExport?btn('返回画册导出','arrow','et-return-export','','small'):''}</div><div class="row wrap" style="margin-top:12px">${['画册','治愈','赛博','极简'].map(t=>btn(t,'','market-tag',`data-tag="${t}"`,'small ghost')).join('')}<span class="spacer"></span><span class="tiny muted">内置精选 · 可离线安装与下载</span></div><div class="market-grid">${items.map(c=>{
-    const installed=state.installedPackages.some(p=>p.id===c.id);
-    return `<article class="market-item">${c.type==='exports'?`<button class="market-preview-strip" style="width:100%;background:${c.options.background};--mini-accent:${c.options.accent}" data-act="et-market-preview" data-id="${c.id}" aria-label="预览 ${esc(c.title)}"><span class="mini-page"><i></i><span></span></span><span class="mini-page"><i></i><span></span></span></button>`:`<div class="row accent">${icon(c.icon)}<span class="spacer"></span><span class="tiny">v${esc(c.version)}</span></div>`}<div class="row"><h3 class="grow" style="margin:0 0 7px">${esc(c.title)}</h3>${c.type==='exports'?'<span class="utility-caption">HTML / CSS</span>':''}</div><p>${esc(c.desc)}</p><div class="tiny muted" style="margin-bottom:13px">${esc(c.author)} · v${esc(c.version)}</div><div class="row">${c.type==='exports'?btn('预览','eye','et-market-preview',`data-id="${c.id}"`,'small')+btn('下载模板','download','et-market-download',`data-id="${c.id}"`,'small'):''}<span class="spacer"></span>${btn(installed?'卸载':'安装',installed?'check':'plus','market-install',`data-id="${c.id}"`,'small '+(installed?'':'primary'))}</div></article>`;
-  }).join('')||'<div class="empty">没有匹配的组件，试试其他标签。</div>'}</div><div class="divider"></div><h3 class="panel-title">从 GitHub / Gitee / 自有仓库导入</h3><div class="row"><input id="raw-url" placeholder="粘贴 Raw JSON 或 HTML 模板链接" aria-label="外部组件地址">${btn('解析并导入','download','import-raw')}</div><div class="help">支持画册 HTML 模板包与原有分镜、工作流 JSON。GitHub /blob/ 链接自动转换为 Raw，外部模板须通过离线安全校验。</div>`;
+  const installedIds=new Set(state.installedPackages.map(p=>p.id));
+  $('#market-content').innerHTML=`<div class="tabbar market-subtabs" style="gap:20px">${[['all','全部'],['exports','画册 HTML 模板'],['templates','分镜剧本'],['characters','角色资产'],['workflows','工作流'],['rules','审校规则']].map(([v,l])=>`<button class="tab ${ui.marketTab===v?'active':''}" data-act="market-tab" data-tab="${v}">${l}</button>`).join('')}</div><div class="row" style="margin-top:18px"><div class="search-field" style="max-width:none">${icon('search')}<input id="market-search" value="${esc(ui.marketSearch)}" placeholder="搜索画册模板、作者或标签..." aria-label="搜索市场资源"></div>${studioUI.returnToExport?btn('返回画册导出','arrow','et-return-export','','small'):''}</div><div class="row wrap" style="margin-top:12px">${['画册','治愈','赛博','极简'].map(t=>btn(t,'','market-tag',`data-tag="${t}"`,'small ghost')).join('')}<span class="spacer"></span><span class="tiny muted">内置精选 · 可离线安装与下载</span></div><div class="market-grid">${items.map(c=>marketCardHTML(c,installedIds.has(c.id))).join('')||'<div class="empty">没有匹配的组件，试试其他标签。</div>'}</div><div class="divider"></div><h3 class="panel-title">从 GitHub / Gitee / 自有仓库导入</h3><div class="row"><input id="raw-url" placeholder="粘贴 Raw JSON 或 HTML 模板链接" aria-label="外部组件地址">${btn('解析并导入','download','import-raw')}</div><div class="help">支持画册 HTML 模板包与分镜、工作流 JSON。GitHub /blob/ 链接自动转换为 Raw，外部模板须通过离线安全校验。</div>`;
 }
 
 
@@ -2517,7 +2533,7 @@ function workspaceName(){return state.settings.identity?.workspaceName||'未命�
 function tooltipText(el){return el.dataset.tip||actionHelp[el.dataset.act]||el.getAttribute('title')||''}
 
 
-function hideTip(){clearTimeout(detailUI.tooltipTimer);const tip=$('#ui-tooltip');if(tip)tip.hidden=true;detailUI.tooltipTarget?.removeAttribute('aria-describedby');detailUI.tooltipTarget=null}
+function hideTip(){clearTimeout(detailUI.tooltipTimer);const tip=$('#ui-tooltip');if(tip&&!tip.hidden)tip.hidden=true;detailUI.tooltipTarget?.removeAttribute('aria-describedby');detailUI.tooltipTarget=null}
 
 
 function revealTip(el){
@@ -2576,7 +2592,7 @@ function saveIdentityFromForm(){
 
 function showWorkspaceWelcome(){
   const identity=state.settings.identity,named=!!identity.workspaceName;
-  $('#welcome-dialog').innerHTML=`<div class="welcome-content"><div class="welcome-brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Mio <span class="spacer"></span><span class="utility-caption">YOUR STORIES LIVE HERE</span></div><h1 id="welcome-title">${named?'欢迎回到，<br>'+esc(identity.workspaceName)+'。':'先给你的工作室，<br>起一个名字。'}</h1><p class="welcome-description">一个属于你的创作空间。企划、画册和原始图片，都可以保存在你选择的本地文件夹中。</p><div class="welcome-step">01 / 工作室身份</div>${field('工作室名称',input('name',identity.workspaceName||'','text','id="welcome-name" maxlength="40" placeholder="例如：纸间漫画工作室" autocomplete="organization"'))}${field('创作者署名（可选）',input('creator',identity.creatorName||'','text','id="welcome-creator" maxlength="60" placeholder="你的名字或笔名"'))}<div class="welcome-step">02 / 作品保存位置</div><div class="welcome-folder">${icon('folder')}<div class="grow"><strong>${disk.remembered?'重新连接 '+esc(disk.remembered.name):'选择工作室根目录'}</strong><p>自动建立「企划 / 画册 / 图片」目录。<br>已有工作室目录会先读取，不会被示例工程覆盖。</p></div>${btn(disk.remembered?'重新授权':'选择文件夹','folder',disk.remembered?'welcome-reconnect':'welcome-connect','','small')}</div><div class="welcome-limit">${diskSupported()?'目录读写需浏览器授权。只有状态栏显示“已写入磁盘”才表示保存完成。':'当前浏览器或嵌入环境可能不支持直接写入目录。推荐在桌面 Chrome / Edge 的安全页面中打开；也可下载 ZIP 目录包后手动管理。'}${disk.legacy?'<br>检测到旧版浏览器工程，连接新目录后可一并迁移。':''}</div><div class="welcome-foot">${btn('打开已有目录（只读）','upload','welcome-import','','ghost small')}${btn('命名并进入临时会话','arrow','welcome-temporary','','primary')}</div><p class="help" style="margin:12px 0 0">临时会话不会自动保存作品。工作室名称之后可在设置中修改。</p></div>`;
+  $('#welcome-dialog').innerHTML=`<div class="welcome-content"><div class="welcome-brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>Mio <span class="spacer"></span><span class="utility-caption">YOUR STORIES LIVE HERE</span></div><h1 id="welcome-title">${named?'欢迎回到，<br>'+esc(identity.workspaceName)+'。':'先给你的工作室，<br>起一个名字。'}</h1><p class="welcome-description">一个属于你的创作空间。企划、画册和原始图片，都可以保存在你选择的本地文件夹中。</p><div class="welcome-step">01 / 工作室身份</div>${field('工作室名称',input('name',identity.workspaceName||'','text','id="welcome-name" maxlength="40" placeholder="例如：纸间漫画工作室" autocomplete="organization"'))}${field('创作者署名（可选）',input('creator',identity.creatorName||'','text','id="welcome-creator" maxlength="60" placeholder="你的名字或笔名"'))}<div class="welcome-step">02 / 作品保存位置</div><div class="welcome-folder">${icon('folder')}<div class="grow"><strong>${disk.remembered?'重新连接 '+esc(disk.remembered.name):'选择工作室根目录'}</strong><p>自动建立「企划 / 画册 / 图片」目录。<br>已有工作室目录会先读取，不会被示例工程覆盖。</p></div>${btn(disk.remembered?'重新授权':'选择文件夹','folder',disk.remembered?'welcome-reconnect':'welcome-connect','','small')}</div><div class="welcome-limit">${diskSupported()?'目录读写需浏览器授权。只有状态栏显示“已写入磁盘”才表示保存完成。':'当前浏览器或嵌入环境可能不支持直接写入目录。推荐在桌面 Chrome / Edge 的安全页面中打开；也可下载 ZIP 目录包后手动管理。'}${disk.legacy?'<br>检测到浏览器缓存工程，连接新目录后可一并迁移。':''}</div><div class="welcome-foot">${btn('打开已有目录（只读）','upload','welcome-import','','ghost small')}${btn('命名并进入临时会话','arrow','welcome-temporary','','primary')}</div><p class="help" style="margin:12px 0 0">临时会话不会自动保存作品。工作室名称之后可在设置中修改。</p></div>`;
   const connect=$('[data-act="welcome-connect"],[data-act="welcome-reconnect"]',$('#welcome-dialog'));if(connect)connect.classList.add('primary');if(diskSupported()){$('[data-act="welcome-temporary"]',$('#welcome-dialog')).classList.remove('primary');$('[data-act="welcome-temporary"]',$('#welcome-dialog')).textContent='稍后连接，先进入临时会话'}
   $('#welcome-name').setAttribute('aria-label','工作室名称');$('#welcome-creator').setAttribute('aria-label','创作者署名');
   if(!$('#welcome-dialog').open)$('#welcome-dialog').showModal();setTimeout(()=>$('#welcome-name')?.focus(),50);
@@ -2617,7 +2633,7 @@ function decorateAssistantContext(){
 
 function designedExportHTML(kind){
   const covers={
-    paper:`<header class="edition-cover cover-letter"><img src="{{coverImage}}" alt="{{title}} 的封面" class="cover-art"><div class="cover-shade"></div><div class="cover-topline"><span>COMFYCOMIC / A VISUAL STORY</span><span>{{date}}</span></div><div class="cover-letter-title"><span class="edition-kicker">A LETTER IN FRAMES</span><h1>{{title}}</h1><p>{{synopsis}}</p><div class="cover-byline"><span>{{characterName}}</span><span>{{panelCount}} 个瞬间 · {{signature}}</span></div></div></header><div class="edition-opening"><span class="opening-number">01</span><div><span class="edition-kicker">THE STORY BEGINS</span><h2>让故事，慢慢展开。</h2><p>{{synopsis}}</p></div><span class="vertical-note">PRIVATE EDITION / {{signature}}</span></div>`,
+    paper:`<header class="edition-cover cover-letter"><img src="{{coverImage}}" alt="{{title}} 的封面" class="cover-art"><div class="cover-shade"></div><div class="cover-topline"><span>MIO / A VISUAL STORY</span><span>{{date}}</span></div><div class="cover-letter-title"><span class="edition-kicker">A LETTER IN FRAMES</span><h1>{{title}}</h1><p>{{synopsis}}</p><div class="cover-byline"><span>{{characterName}}</span><span>{{panelCount}} 个瞬间 · {{signature}}</span></div></div></header><div class="edition-opening"><span class="opening-number">01</span><div><span class="edition-kicker">THE STORY BEGINS</span><h2>让故事，慢慢展开。</h2><p>{{synopsis}}</p></div><span class="vertical-note">PRIVATE EDITION / {{signature}}</span></div>`,
     ink:`<header class="edition-cover cover-ink"><div class="ink-masthead"><span>COMFYCOMIC</span><span>漫画作品集 / VOL. 01</span></div><div class="ink-cover-grid"><div class="ink-copy"><span class="edition-kicker">A STORY IN {{panelCount}} SCENES</span><h1>{{title}}</h1><p>{{synopsis}}</p><div class="ink-seal">壱</div><span class="ink-author">STORY &amp; ART<br>{{signature}}</span></div><img src="{{coverImage}}" alt="{{title}} 的封面" class="ink-portrait"></div><div class="ink-bottom"><span>{{characterName}}</span><span>THE COLLECTED FRAMES</span><span>{{date}}</span></div></header><div class="edition-chapter"><span>第一章</span><div class="chapter-rule"></div><span>CHAPTER 01 / {{storyTitle}}</span></div>`,
     gallery:`<header class="edition-cover cover-gallery"><div class="gallery-top"><span>COMFYCOMIC<br>PRIVATE COLLECTION</span><span>{{signature}}<br>{{date}}</span></div><div class="gallery-title"><span class="edition-kicker">AN EXHIBITION IN FRAMES</span><h1>{{title}}</h1><p>{{synopsis}}</p></div><figure class="gallery-cover-art"><img src="{{coverImage}}" alt="{{title}} 的封面"><figcaption><span>PLATE 001</span><span>{{characterName}} / {{panelCount}} 幕</span></figcaption></figure><div class="gallery-opening"><span>CURATOR'S NOTE</span><p>每一个被留下的瞬间，<br>都是故事的一部分。</p></div></header>`,
     night:`<header class="edition-cover cover-night"><img src="{{coverImage}}" alt="{{title}} 的封面" class="cover-art"><div class="cover-shade"></div><div class="night-top"><span>COMFYCOMIC PICTURES</span><span>PRIVATE SCREENING</span></div><div class="night-copy"><span class="edition-kicker">A STORY BY {{signature}}</span><h1>{{title}}</h1><div class="night-rule"></div><p>{{synopsis}}</p><div class="night-credits"><span>STARRING<br><b>{{characterName}}</b></span><span>SCENES<br><b>{{panelCount}}</b></span><span>EDITION<br><b>{{date}}</b></span></div></div></header><div class="edition-chapter"><span>LIGHTS DOWN. STORY ON.</span><div class="chapter-rule"></div><span>使用左右键翻页</span></div>`
@@ -2684,7 +2700,7 @@ function renderDiskStatus(){
 
 function storageSettingsHTML(){
   const supported=diskSupported(),connected=!!disk.root;
-  return `<section class="settings-section"><h2>普通文件，真正属于你</h2><p>不再把浏览器数据库作为作品主存储。每个企划、每本画册都有自己的文件夹，图片单独保存。</p><div class="disk-info"><div class="disk-info-header">${icon('folder')}<div class="grow"><h3>${esc(connected?disk.root.name:disk.remembered?'待连接：'+disk.remembered.name:'尚未选择工作室根目录')}</h3><p id="disk-settings-status">${esc(diskStatusText())}</p></div><span class="chip ${connected?'green':''}">${connected?'磁盘目录':'临时会话'}</span></div><div class="row wrap">${btn(connected?'切换工作室目录':'选择本地根目录','folder','disk-connect','','primary')}${disk.remembered&&!connected||disk.phase==='permission'?btn('重新授权','refresh','disk-reconnect'):''}${btn('立即保存','disk','disk-save',connected&&!disk.busy?'':'disabled')}${connected?btn('重新读取磁盘','refresh','disk-reload',disk.busy?'disabled':''):''}</div><div class="disk-progress-caption" id="disk-save-progress">${esc(disk.progress||'只在所选目录范围内读写；不会访问其他文件夹。')}</div>${disk.lastError?`<div class="disk-warning">${esc(disk.lastError)}</div>`:''}${disk.phase==='recovery'?`<div class="disk-warning">当前索引未完整读取，已从 workspace.previous.json 恢复上一次完整记录。请检查画册后确认恢复，再继续保存。${btn('确认恢复并继续保存','check','disk-accept-recovery','style="margin-top:12px"','small')}</div>`:''}</div>${!supported?'<div class="disk-warning">当前浏览器或嵌入页面未开放本地目录写入。请在桌面 Chrome / Edge 的 HTTPS 或 localhost 页面直接打开；当前仍可下载 ZIP 目录包、只读载入已解压目录。</div>':''}<div class="settings-note">${icon('shield')}<span>浏览器仅记住目录授权、工作室名称和主题偏好。图片、剧情、模板与队列保存为磁盘文件。旧版浏览器工程只用于迁移，不再自动写回缓存。</span></div></section><section class="settings-section"><h2>清晰的目录层级</h2><p>名称便于辨认，短 ID 避免同名冲突。重命名只改变显示名称，已建立的目录路径保持稳定。</p><pre class="folder-tree">${esc(disk.root?.name||workspaceName())}/
+  return `<section class="settings-section"><h2>普通文件，真正属于你</h2><p>作品使用本地文件保存。每个企划、每本画册都有自己的文件夹，图片单独保存。</p><div class="disk-info"><div class="disk-info-header">${icon('folder')}<div class="grow"><h3>${esc(connected?disk.root.name:disk.remembered?'待连接：'+disk.remembered.name:'尚未选择工作室根目录')}</h3><p id="disk-settings-status">${esc(diskStatusText())}</p></div><span class="chip ${connected?'green':''}">${connected?'磁盘目录':'临时会话'}</span></div><div class="row wrap">${btn(connected?'切换工作室目录':'选择本地根目录','folder','disk-connect','','primary')}${disk.remembered&&!connected||disk.phase==='permission'?btn('重新授权','refresh','disk-reconnect'):''}${btn('立即保存','disk','disk-save',connected&&!disk.busy?'':'disabled')}${connected?btn('重新读取磁盘','refresh','disk-reload',disk.busy?'disabled':''):''}</div><div class="disk-progress-caption" id="disk-save-progress">${esc(disk.progress||'只在所选目录范围内读写；不会访问其他文件夹。')}</div>${disk.lastError?`<div class="disk-warning">${esc(disk.lastError)}</div>`:''}${disk.phase==='recovery'?`<div class="disk-warning">当前索引未完整读取，已从 workspace.previous.json 恢复上一次完整记录。请检查画册后确认恢复，再继续保存。${btn('确认恢复并继续保存','check','disk-accept-recovery','style="margin-top:12px"','small')}</div>`:''}</div>${!supported?'<div class="disk-warning">当前浏览器或嵌入页面未开放本地目录写入。请在桌面 Chrome / Edge 的 HTTPS 或 localhost 页面直接打开；当前仍可下载 ZIP 目录包、只读载入已解压目录。</div>':''}<div class="settings-note">${icon('shield')}<span>浏览器仅记住目录授权、工作室名称和主题偏好。图片、剧情、模板与队列保存为磁盘文件。浏览器缓存工程只用于迁移，不再自动写回缓存。</span></div></section><section class="settings-section"><h2>清晰的目录层级</h2><p>名称便于辨认，短 ID 避免同名冲突。重命名只改变显示名称，已建立的目录路径保持稳定。</p><pre class="folder-tree">${esc(disk.root?.name||workspaceName())}/
   workspace.json <span class="muted">工作室入口，最后提交</span>
   workspace.previous.json <span class="muted">上次完整索引</span>
   企划/
@@ -2706,7 +2722,7 @@ function storageSettingsHTML(){
   引擎/workflow.json
   对话记录/对话名称__ID/session.json
   工作室/settings.json
-  .history/ <span class="muted">完整索引和版本记录</span></pre></section><section class="settings-section"><h2>安全与迁移</h2>${settingsRow('把 API 密钥也写入本地目录','适用于 LLM 等旧服务设置。开启后 settings.json 可能含明文密钥；图像渠道密钥由独立本地文件管理，不受此开关控制。',`<label class="switch"><input role="switch" type="checkbox" data-disk-key="includeKeys" ${state.settings.disk.includeKeys?'checked':''} aria-label="将 API 密钥写入磁盘"><span class="switch-track"></span></label>`,'shield')}<div class="row wrap" style="padding:20px 0">${btn('下载完整目录 ZIP','download','disk-archive')}${btn('载入已解压目录','upload','disk-import-folder')}${btn('下载工程 JSON','disk','backup-export')}</div><p class="help">ZIP 保留相同目录层级，可解压后用“选择本地根目录”继续创作。浏览器不支持写入时，只读载入不会冒充自动保存。</p>${disk.legacy?`<div class="divider"></div><p class="small soft">检测到旧版浏览器工程。请确认已将需要的作品迁移至磁盘后，再清理旧缓存。</p>${btn('清理旧版浏览器工程缓存','trash','disk-clear-legacy',!connected||!rt.saved?'disabled':'','small danger')}`:''}</section>`;
+  .history/ <span class="muted">完整索引和版本记录</span></pre></section><section class="settings-section"><h2>安全与备份</h2>${settingsRow('把 API 密钥也写入本地目录','适用于 LLM 等服务设置。开启后 settings.json 可能含明文密钥；图像渠道密钥由独立本地文件管理，不受此开关控制。',`<label class="switch"><input role="switch" type="checkbox" data-disk-key="includeKeys" ${state.settings.disk.includeKeys?'checked':''} aria-label="将 API 密钥写入磁盘"><span class="switch-track"></span></label>`,'shield')}<div class="row wrap" style="padding:20px 0">${btn('下载完整目录 ZIP','download','disk-archive')}${btn('载入已解压目录','upload','disk-import-folder')}${btn('下载工程 JSON','disk','backup-export')}</div><p class="help">ZIP 保留相同目录层级，可解压后用“选择本地根目录”继续创作。浏览器不支持写入时，只读载入不会冒充自动保存。</p></section>`;
 }
 
 
@@ -2747,11 +2763,11 @@ function bookDiskPathModal(id){const b=bookBy(id),path=disk.paths.books[id];if(!
 
 async function clearLegacyCache(){
   if(!disk.root||!rt.saved)throw Error('请先将当前工程完整写入磁盘。');
-  if(disk.legacy?.books.some(b=>!state.books.some(x=>x.id===b.id)))throw Error('当前磁盘工程未包含所有旧版画册。为避免误删，请先迁移或备份旧工程。');
-  if(!await confirmAction('清理旧版浏览器工程缓存？','只移除旧 IndexedDB/localStorage 中的工程副本。目录授权与磁盘原文件会保留。','清理旧缓存'))return;
+  if(disk.legacy?.books.some(b=>!state.books.some(x=>x.id===b.id)))throw Error('当前磁盘工程未包含所有缓存画册。为避免误删，请先备份工程。');
+  if(!await confirmAction('清理浏览器缓存工程缓存？','只移除IndexedDB/localStorage 中的工程副本。目录授权与磁盘原文件会保留。','清理缓存'))return;
   try{localStorage.removeItem('cc-project');sessionStorage.removeItem('cc-template-draft')}catch(e){}
   if(rt.db)await new Promise((resolve,reject)=>{const tx=rt.db.transaction('snapshots','readwrite');tx.objectStore('snapshots').delete('current');tx.objectStore('snapshots').delete('previous');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});
-  disk.legacy=null;render();toast('旧版浏览器工程缓存已清理，磁盘文件不受影响。');
+  disk.legacy=null;render();toast('浏览器缓存工程缓存已清理，磁盘文件不受影响。');
 }
 
 
@@ -3243,7 +3259,7 @@ function renderAssistantOrb(){
 function renderV3Modules(){const p=state.settings.studio;return `<section class="settings-section"><h2>只留下你需要的功能</h2><p>画册与创作是核心功能，始终保留。其他模块可以按需开启，隐藏不会删除历史作品。</p>${settingsRow('我的画册','阅读、精修和导出已生成的画册。','<span class="tiny muted">核心功能</span>','book')}${settingsRow('创作画册','画册计划、分镜、变量素材和生成队列收纳在一个工作区。','<span class="tiny muted">核心功能</span>','story')}${settingsRow('运行日志','独立查看生成、连接、保存与审校的运行过程。',switchControl('visibility.logs','显示运行日志',p.visibility.logs),'terminal')}${settingsRow('AI 写故事','可选功能：把想法写成剧情台词或分镜初稿。默认关闭，不影响普通生成。',switchControl('visibility.llm','启用 AI 写故事',p.visibility.llm),'spark')}</section><section class="settings-section"><h2>辅助工具</h2>${settingsRow('悬浮精修助手','可拖动的小悬浮球；悬停展开说明，点击对话。只修改源分镜模板。',switchControl('features.assistant','显示悬浮助手',p.features.assistant),'spark')}${settingsRow('视觉审校','连接支持图片输入的模型，检查真实画面并给出修改建议。',switchControl('features.visualCritic','启用视觉审校',p.features.visualCritic),'shield')}${settingsRow('模板与扩展市场','从设置中的“工具与资源”进入，不再占用主侧栏。',switchControl('features.marketplace','启用模板市场',p.features.marketplace),'box')}</section>`}
 
 
-function renderResourceHub(){const items=[['book','画册导出模板','设计 HTML/CSS 阅读版式，不改变源画面与台词。','et-open-library'],['box','模板与插件市场','安装或导入分镜、画册版式与工作流。','market'],['upload','GitHub 托管','上传或安装可复用模板，不上传私有工程。','github-open'],['help','快速开始教程','从创作计划到生成画册，含本地三幕练习。','guide-open'],['disk','工程备份与恢复','下载工程 JSON 或兼容目录包。','backup'],['shield','系统自检','检查变量、通用映射、模板和页面边界。','v3-diagnostics']];return `<section class="settings-section"><h2>工具与资源</h2><p>低频工具集中在这里，主侧栏只保留日常创作入口。</p><div class="resources-list">${items.filter(x=>x[3]!=='market'||featureEnabled('marketplace')).map(([ic,title,text,a])=>`<button class="resource-link" data-act="${a}">${icon(ic)}<span class="grow"><strong>${title}</strong><small>${text}</small></span>${icon('arrow','sm')}</button>`).join('')}</div></section>`}
+function renderResourceHub(){const items=[['book','画册导出模板','设计 HTML/CSS 阅读版式，不改变源画面与台词。','et-open-library'],['box','模板与插件市场','安装或导入分镜、画册版式与工作流。','market'],['upload','GitHub 托管','上传或安装可复用模板，不上传私有工程。','github-open'],['help','快速开始教程','从创作计划到生成画册，含本地三幕练习。','guide-open'],['disk','工程备份与恢复','下载工程 JSON 或便携目录包。','backup'],['shield','系统自检','检查变量、通用映射、模板和页面边界。','v3-diagnostics']];return `<section class="settings-section"><h2>工具与资源</h2><p>低频工具集中在这里，主侧栏只保留日常创作入口。</p><div class="resources-list">${items.filter(x=>x[3]!=='market'||featureEnabled('marketplace')).map(([ic,title,text,a])=>`<button class="resource-link" data-act="${a}">${icon(ic)}<span class="grow"><strong>${title}</strong><small>${text}</small></span>${icon('arrow','sm')}</button>`).join('')}</div></section>`}
 
 
 function renderCurrentIdentity(){const identity=state.settings.identity;return `<section class="settings-section"><h2>你的工作室</h2><p>名称显示在工作室侧栏。随时可以修改，不改变已有企划、画册或变量素材。</p>${field('工作室名称',input('workspaceName',identity.workspaceName,'text','id="identity-workspace" maxlength="40"'))}${field('创作者署名',input('creatorName',identity.creatorName||'','text','id="identity-creator" maxlength="60"'))}<label class="row small soft" style="margin-bottom:19px"><input id="identity-sync-signature" type="checkbox" checked>同时更新默认画册签名</label>${btn('保存名称与署名','check','identity-save','','primary')}</section><section class="settings-section"><h2>当前保存方式</h2><p>使用已有 Python 后端时，由服务负责保存与文件夹管理，不需要浏览器目录授权。</p><div class="service-context">${esc(backendStatusText())}</div><div class="row" style="margin-top:17px">${btn('配置服务与保存','disk','v3-settings-tab','data-tab="connections"')}${btn('导出备份','download','backup-export')}</div></section>`}
@@ -3375,7 +3391,7 @@ function attachPromptEditors(){
 }
 
 
-function renderCollectionGallery(){const books=filteredBooks();return `<section class="art-fade"><div class="collection-heading"><div class="grow"><div class="overline">COMFYCOMIC / PRIVATE COLLECTION</div><h1 data-user-content>${esc(project().title)}</h1><p>把故事留在画面里，把时间留给创作。</p></div>${btn('创作新画册','plus','new-book','','primary')}</div><div class="collection-toolbar"><div class="search-field">${icon('search')}<input id="gallery-search" value="${esc(ui.search)}" placeholder="寻找一本画册..." aria-label="搜索画册"></div><span class="spacer"></span><button class="filter-link ${ui.filter==='starred'?'active':''}" data-act="art-star-filter">${icon('star','sm')}星标</button><select id="gallery-filter" aria-label="画册状态">${[['all','所有画册'],['complete','已完成'],['generating','生成中'],['failed','待补齐'],['starred','星标收藏']].map(x=>opt(...x,ui.filter)).join('')}</select><select id="gallery-sort" aria-label="画册排序">${[['manual','手动排序'],['createdAt','最近创建'],['updatedAt','最近修改'],['totalSteps','分镜数量']].map(x=>opt(...x,ui.sort)).join('')}</select>${ibtn('check','toggle-bulk','批量选择与管理')}</div><div id="gallery-results">${artGalleryResults()}</div><p class="collection-note">每一帧，都值得被好好收藏。</p></section>`}
+function renderCollectionGallery(){const books=filteredBooks();return `<section class="art-fade"><div class="collection-heading"><div class="grow"><div class="overline">MIO / PRIVATE COLLECTION</div><h1 data-user-content>${esc(project().title)}</h1><p>把故事留在画面里，把时间留给创作。</p></div>${btn('创作新画册','plus','new-book','','primary')}</div><div class="collection-toolbar"><div class="search-field">${icon('search')}<input id="gallery-search" value="${esc(ui.search)}" placeholder="寻找一本画册..." aria-label="搜索画册"></div><span class="spacer"></span><button class="filter-link ${ui.filter==='starred'?'active':''}" data-act="art-star-filter">${icon('star','sm')}星标</button><select id="gallery-filter" aria-label="画册状态">${[['all','所有画册'],['complete','已完成'],['generating','生成中'],['failed','待补齐'],['starred','星标收藏']].map(x=>opt(...x,ui.filter)).join('')}</select><select id="gallery-sort" aria-label="画册排序">${[['manual','手动排序'],['createdAt','最近创建'],['updatedAt','最近修改'],['totalSteps','分镜数量']].map(x=>opt(...x,ui.sort)).join('')}</select>${ibtn('check','toggle-bulk','批量选择与管理')}</div><div id="gallery-results">${artGalleryResults()}</div><p class="collection-note">每一帧，都值得被好好收藏。</p></section>`}
 
 
 function artGalleryResults(){const books=filteredBooks(),selected=ui.selected.size;const bulk=selected?`<div class="bulk-bar"><span>选中 ${selected} 本</span>${btn('星标','star','bulk-star','','small')}${btn('导出','download','bulk-export','','small')}${btn('删除','trash','bulk-delete','','small danger')}<span class="spacer"></span>${ibtn('close','clear-selection','退出选择')}</div>`:'';const index=`<div class="collection-index"><span>${pad(books.length)} BOOK${books.length===1?'':'S'} / 画册集</span><span>LOCAL FIRST · YOUR WORK, YOUR SPACE</span></div>`;if(!books.length)return bulk+index+`<div class="empty">${icon('book')}<h3>留一点空白，给新的故事。</h3><p>${ui.search?'没有找到匹配的画册，试试其他名字。':'这里还没有画册。可以开始创作，或载入一份十二幕示范。'}</p>${btn('开始创作','plus','new-book','','primary')}${!ui.search?btn('载入精选示范','image','art-import-demo','style="margin-left:10px"'):''}</div>`;
@@ -3606,7 +3622,7 @@ function extendStudioLocaleCatalog(catalog){Object.assign(catalog.messages,{
   '使用已有 Python 后端时，由服务负责保存与文件夹管理，不需要浏览器目录授权。':'Your Python service manages saves and folders, without browser directory permissions.',
   '创作流程由你定义，工具保持安静。':'Define your creative process. Let the tools stay out of the way.',
   '从画册创作到生成画册，含本地三幕练习。':'Learn the creative workflow with a local three-scene exercise.',
-  '下载工程 JSON 或兼容目录包。':'Download a project JSON backup or portable directory archive.',
+  '下载工程 JSON 或便携目录包。':'Download a project JSON backup or portable directory archive.',
   '给自己的创作空间取个名字。后端连接和使用教程都可以稍后在设置里处理，不会挡住你开始创作。':'Name your creative space. Connections and tutorials can wait until later in Settings.',
   '默认名称为“我的工作室”。之后可以随时在设置中修改。教程不会在命名之前自动弹出。':'You can use the default name and change it later. Tutorials never interrupt the naming step.',
   '当前为离线矢量演示，不会调用 GPU。真实精修需连接 ComfyUI。':'Offline vector demonstration. Connect ComfyUI for real image refinement.',
@@ -3644,17 +3660,24 @@ function localeExcludedElement(element){return !element||!!element.closest('scri
 
 
 function localizeWorkspace(root=document.body){
-  if(!displayUI.locale||displayUI.localizing||!root)return;displayUI.localizing=true;displayUI.observer?.disconnect();
+  if(!displayUI.locale||displayUI.localizing||!root)return;displayUI.localizing=true;const pending=displayUI.observer?.takeRecords();if(pending?.length)queueLocalization(pending);displayUI.observer?.disconnect();
   try{
-    const values=new Set();for(const item of [...state.projects,...state.books,...state.templates,...state.rows,...(state.creation?.plans||[]),...(state.creation?.variableSets||[])]){for(const key of ['title','character','characterName','synopsis','outline'])if(typeof item[key]==='string')values.add(item[key]);const frames=Array.isArray(item.frames)?item.frames:Array.isArray(item.steps)?item.steps:[];for(const f of frames)for(const key of ['name','prompt','caption'])if(typeof f?.[key]==='string')values.add(f[key])}values.add(workspaceName());
+    const interfaceOnly=root.closest?.('#market-content,#ui-tooltip,#statusbar');
+    const values=new Set();for(const item of interfaceOnly?[]:[...state.projects,...state.books,...state.templates,...state.rows,...(state.creation?.plans||[]),...(state.creation?.variableSets||[])]){for(const key of ['title','character','characterName','synopsis','outline'])if(typeof item[key]==='string')values.add(item[key]);const frames=Array.isArray(item.frames)?item.frames:Array.isArray(item.steps)?item.steps:[];for(const f of frames)for(const key of ['name','prompt','caption'])if(typeof f?.[key]==='string')values.add(f[key])}values.add(workspaceName());
     const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let node;
     while((node=walker.nextNode())){const element=node.parentElement;if(localeExcludedElement(element)||!node.nodeValue?.trim())continue;const current=node.nodeValue,stored=displayUI.originalText.get(node);if(values.has(current.trim())&&!stored)continue;const source=stored&&current===stored.output?stored.source:current;const output=displayUI.locale.translate(textualInterfaceCopy(source));if(current!==output)node.nodeValue=output;displayUI.originalText.set(node,{source,output})}
-    for(const el of root.querySelectorAll('[title],[placeholder],[aria-label]')){if(el.closest('script,style,pre,code,[data-user-content],[data-no-translate],.publish-link'))continue;let records=displayUI.originalAttrs.get(el)||{};for(const attr of ['title','placeholder','aria-label']){if(!el.hasAttribute(attr))continue;const current=el.getAttribute(attr),old=records[attr],source=old&&current===old.output?old.source:current,output=displayUI.locale.translate(textualInterfaceCopy(source));if(output!==current)el.setAttribute(attr,output);records[attr]={source,output}}displayUI.originalAttrs.set(el,records)}
+    for(const el of [...(root.matches?.('[title],[placeholder],[aria-label]')?[root]:[]),...root.querySelectorAll('[title],[placeholder],[aria-label]')]){if(el.closest('script,style,pre,code,[data-user-content],[data-no-translate],.publish-link'))continue;let records=displayUI.originalAttrs.get(el)||{};for(const attr of ['title','placeholder','aria-label']){if(!el.hasAttribute(attr))continue;const current=el.getAttribute(attr),old=records[attr],source=old&&current===old.output?old.source:current,output=displayUI.locale.translate(textualInterfaceCopy(source));if(output!==current)el.setAttribute(attr,output);records[attr]={source,output}}displayUI.originalAttrs.set(el,records)}
   }finally{displayUI.localizing=false;displayUI.observer?.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['title','placeholder','aria-label']})}
 }
 
 
-function queueLocalization(){cancelAnimationFrame(displayUI.frame);displayUI.frame=requestAnimationFrame(()=>localizeWorkspace())}
+function queueLocalization(records){
+  displayUI.pendingLocaleRoots??=new Set();
+  const add=node=>{const el=node?.nodeType===Node.ELEMENT_NODE?node:node?.parentElement;if(!el?.isConnected||el.closest('script,style,pre,code,[data-user-content],[data-no-translate]'))return;for(const current of displayUI.pendingLocaleRoots){if(current.contains(el))return;if(el.contains(current))displayUI.pendingLocaleRoots.delete(current)}displayUI.pendingLocaleRoots.add(el)};
+  if(!records)add(document.body);else for(const record of records){if(record.type==='childList')record.addedNodes.forEach(add);else add(record.target)}
+  if(displayUI.localeFramePending||!displayUI.pendingLocaleRoots.size)return;
+  displayUI.localeFramePending=true;displayUI.frame=requestAnimationFrame(()=>{displayUI.localeFramePending=false;const roots=[...displayUI.pendingLocaleRoots];displayUI.pendingLocaleRoots.clear();for(const root of roots)if(root.isConnected)localizeWorkspace(root)});
+}
 
 
 function shelfButton(iconName,action,label,attributes='',classes=''){return btn(localeString(label),iconName,action,attributes,classes)}
@@ -3672,7 +3695,7 @@ function shelfBookCount(count){return localeString('{count} 本画册',{count})}
 function shelfViewSwitch(){const current=state.settings.presentation.homeLayout;return `<div class="shelf-view-switch" role="group" aria-label="${esc(localeString('首页展示方式'))}">${[['showcase','image','精选展示'],['grid','grid','紧凑网格']].map(([mode,ic,label])=>`<button data-act="shelf-layout" data-layout="${mode}" class="${current===mode?'active':''}" aria-pressed="${current===mode}" title="${esc(localeString(label))}">${icon(ic)}<span>${localeString(label)}</span></button>`).join('')}</div>`}
 
 
-function renderResponsiveCollection(){return `<section class="art-fade" id="collection-home"><div class="collection-heading"><div class="grow"><div class="overline">COMFYCOMIC / PRIVATE COLLECTION</div><h1 data-user-content>${esc(project().title)}</h1><p>${localeString('把故事留在画面里，把时间留给创作。')}</p></div>${shelfButton('plus','new-book','创作新画册','','primary')}</div><div class="collection-toolbar shelf-toolbar"><div class="search-field">${icon('search')}<input id="gallery-search" value="${esc(ui.search)}" placeholder="${esc(localeString('寻找一本画册...'))}" aria-label="${esc(localeString('搜索画册'))}"></div><span class="spacer"></span><button class="filter-link ${ui.filter==='starred'?'active':''}" data-act="art-star-filter">${icon('star','sm')}${localeString('星标')}</button><select id="gallery-filter" aria-label="${esc(localeString('画册状态'))}">${[['all','所有画册'],['complete','已完成'],['generating','生成中'],['failed','待补齐'],['starred','星标收藏']].map(([id,label])=>opt(id,localeString(label),ui.filter)).join('')}</select><select id="gallery-sort" aria-label="${esc(localeString('画册排序'))}">${[['manual','手动排序'],['createdAt','最近创建'],['updatedAt','最近修改'],['totalSteps','分镜数量']].map(([id,label])=>opt(id,localeString(label),ui.sort)).join('')}</select>${shelfViewSwitch()}${shelfIcon('check','toggle-bulk','批量选择与管理')}</div><div id="gallery-results">${responsiveCollectionResults()}</div><p class="collection-note">${localeString('每一帧，都值得被好好收藏。')}</p></section>`}
+function renderResponsiveCollection(){return `<section class="art-fade" id="collection-home"><div class="collection-heading"><div class="grow"><div class="overline">MIO / PRIVATE COLLECTION</div><h1 data-user-content>${esc(project().title)}</h1><p>${localeString('把故事留在画面里，把时间留给创作。')}</p></div>${shelfButton('plus','new-book','创作新画册','','primary')}</div><div class="collection-toolbar shelf-toolbar"><div class="search-field">${icon('search')}<input id="gallery-search" value="${esc(ui.search)}" placeholder="${esc(localeString('寻找一本画册...'))}" aria-label="${esc(localeString('搜索画册'))}"></div><span class="spacer"></span><button class="filter-link ${ui.filter==='starred'?'active':''}" data-act="art-star-filter">${icon('star','sm')}${localeString('星标')}</button><select id="gallery-filter" aria-label="${esc(localeString('画册状态'))}">${[['all','所有画册'],['complete','已完成'],['generating','生成中'],['failed','待补齐'],['starred','星标收藏']].map(([id,label])=>opt(id,localeString(label),ui.filter)).join('')}</select><select id="gallery-sort" aria-label="${esc(localeString('画册排序'))}">${[['manual','手动排序'],['createdAt','最近创建'],['updatedAt','最近修改'],['totalSteps','分镜数量']].map(([id,label])=>opt(id,localeString(label),ui.sort)).join('')}</select>${shelfViewSwitch()}${shelfIcon('check','toggle-bulk','批量选择与管理')}</div><div id="gallery-results">${responsiveCollectionResults()}</div><p class="collection-note">${localeString('每一帧，都值得被好好收藏。')}</p></section>`}
 
 
 function shelfSelectionBar(books){if(!ui.bulk&&!ui.selected.size)return'';const selected=ui.selected.size,all=books.length>0&&books.every(b=>ui.selected.has(b.id));return `<div class="shelf-bulk"><label><input type="checkbox" id="shelf-select-all" ${all?'checked':''} aria-label="${esc(localeString('全部选择'))}">${localeString('全部选择')}</label><span class="grow">${localeString('已选 {count} 本',{count:selected})}</span>${shelfButton('star','bulk-star','星标',selected?'':'disabled','small')}${shelfButton('download','bulk-export','导出',selected?'':'disabled','small')}${shelfButton('trash','bulk-delete','删除',selected?'':'disabled','small danger')}${shelfIcon('close','clear-selection','退出选择')}</div>`}
@@ -3784,6 +3807,23 @@ function highlightedPromptHTML(value, definitions, values = {}) {
   return createFreePromptPolicy().tokens(value, definitions).map(token => token.type === 'variable'
     ? '<mark class="' + (!Object.hasOwn(values, token.key) || values[token.key] === '' ? 'empty-token' : '') + '" data-prompt-variable="' + escape(token.key) + '">' + escape(token.value) + '</mark>'
     : escape(token.value)).join('');
+}
+
+
+// Market scrolling has no render loop. Only search results are replaced, after typing settles.
+const marketPerformance={searchTimer:null};
+function scheduleMarketSearch(){
+  clearTimeout(marketPerformance.searchTimer);const root=$('#market-content');
+  marketPerformance.searchTimer=setTimeout(()=>{
+    if(!root?.isConnected||!$('#modal').open||root!==$('#market-content'))return;
+    const query=ui.marketSearch.toLowerCase(),items=catalog.filter(c=>(ui.marketTab==='all'||ui.marketTab===c.type)&&[c.title,c.desc,c.tags,c.author].join(' ').toLowerCase().includes(query)),installed=new Set(state.installedPackages.map(p=>p.id)),grid=$('.market-grid',root);
+    if(grid){grid.innerHTML=items.map(c=>marketCardHTML(c,installed.has(c.id))).join('')||'<div class="empty">没有匹配的组件，试试其他标签。</div>';localizeWorkspace(grid)}
+  },120);
+}
+function installMarketPerformance(){
+  const previous=renderMarket;
+  renderMarket=function(){const dialog=$('#modal'),body=$('#modal-body'),position=body?.scrollTop||0,raw=$('#raw-url')?.value;clearTimeout(marketPerformance.searchTimer);previous();dialog.classList.add('market-dialog');if(raw!==undefined&&$('#raw-url'))$('#raw-url').value=raw;if(body)body.scrollTop=position;localizeWorkspace($('#market-content'))};
+  $('#modal').addEventListener('close',()=>{clearTimeout(marketPerformance.searchTimer);$('#modal').classList.remove('market-dialog')});
 }
 
 // Source: /js/workspace.js
@@ -3976,7 +4016,7 @@ function installWorkspaceUpgrade(){
 }
 
 function dataLayoutHTML(){
-  return `<section class="settings-section"><h2>数据目录与迁移</h2><p>所有路径相对于程序目录。修改标题不会移动图片，画册 ID 保持稳定。</p><pre class="backend-code">data/
+  return `<section class="settings-section"><h2>数据目录与备份</h2><p>所有路径相对于程序目录。修改标题不会移动图片，画册 ID 保持稳定。</p><pre class="backend-code">data/
   workflows/library.json       工作流与映射库
   storyboards/templates.json   分镜模板
   storyboards/plans.json       画册计划与单幕覆盖
@@ -3988,7 +4028,7 @@ function dataLayoutHTML(){
   settings/                   服务连接与模型配置
   conversations/              对话记录
   assets/images/albums/       按画册 ID 保存的原图
-  cache/                      可重新获取的缓存</pre><details class="quiet-advanced"><summary>按画册名称查找图片目录</summary>${state.books.map(b=>`<div style="margin:14px 0"><strong>${esc(b.title)}</strong><br><code style="overflow-wrap:anywhere">data/assets/images/albums/${esc(b.id)}/</code></div>`).join('')}<p class="help">仅真实生成的 PNG/JPEG/WebP/GIF 自动拆分到此目录；内置 SVG 演示与历史内嵌图片仍保留在画册索引中。旧 images/ 继续兼容。</p></details><p class="help">第一次读取时自动迁移旧版 data/*.json，原文件留存。发现缺失或损坏时停止迁移，不用空数据覆盖。服务运行时请通过界面编辑，不要同时手改文件。</p><div class="row wrap">${btn('导出完整图片目录 ZIP','download','disk-archive')}${btn('载入已解压目录','upload','disk-import-folder')}${btn('导出工程 JSON','disk','backup-export')}</div><p class="help">跨电脑迁移优先使用 ZIP（包含图片）。JSON 中的本地图片链接需要连同 data/assets/images/ 一起备份。直接复制 data/ 可能包含 API 密钥，请勿公开分享。完整说明见 docs/DATA_LAYOUT.md。</p></section>`;
+  cache/                      可重新获取的缓存</pre><details class="quiet-advanced"><summary>按画册名称查找图片目录</summary>${state.books.map(b=>`<div style="margin:14px 0"><strong>${esc(b.title)}</strong><br><code style="overflow-wrap:anywhere">data/assets/images/albums/${esc(b.id)}/</code></div>`).join('')}<p class="help">仅真实生成的 PNG/JPEG/WebP/GIF 自动拆分到此目录；内嵌图片保存在画册索引中。</p></details><p class="help">发现缺失或损坏时停止读取，不用空数据覆盖。服务运行时请通过界面编辑，不要同时手改文件。</p><div class="row wrap">${btn('导出完整图片目录 ZIP','download','disk-archive')}${btn('载入已解压目录','upload','disk-import-folder')}${btn('导出工程 JSON','disk','backup-export')}</div><p class="help">跨电脑迁移优先使用 ZIP（包含图片）。JSON 中的本地图片链接需要连同 data/assets/images/ 一起备份。直接复制 data/ 可能包含 API 密钥，请勿公开分享。完整说明见 docs/DATA_LAYOUT.md。</p></section>`;
 }
 
 // Source: /js/organize.js
@@ -4178,7 +4218,7 @@ function missingArtworkDataURL(){
 }
 
 // Source: /js/app.js
-/* ComfyComic development module: app. */
+/* Mio development module: app. */
 'use strict';
 
 'use strict';
@@ -4252,7 +4292,7 @@ function diagnostics(){const tests=[];const test=(name,fn)=>{try{if(fn()===false
 document.addEventListener('click',async e=>{if(e.target.closest('.cover-check'))return;const el=e.target.closest('[data-act]');if(!el)return;e.preventDefault();try{await handleAction(el.dataset.act,el.dataset,el)}catch(x){toast(x.message||'操作未完成。','error');log(x.message||String(x),'error')}});
 
 
-document.addEventListener('input',e=>{const el=e.target;if(el.id==='gallery-search'){ui.search=el.value;refreshGallery()}if(el.id==='command-input'){rt.commandIndex=0;indexCommands(el.value)}if(el.id==='market-search'){ui.marketSearch=el.value;const pos=el.selectionStart;renderMarket();$('#market-search').focus();$('#market-search').setSelectionRange(pos,pos)}if(el.dataset.setting)storeSetting(el);if(el.dataset.frameField||el.dataset.templateField)flushEditor();if(el.dataset.rowField){const r=rowBy(el.dataset.row);if(r)r[el.dataset.rowField]=el.value;save()}if(el.dataset.storyCaption){const r=rowBy(ui.storyRowId),t=templateBy(ui.storyTemplateId);if(r&&t&&!rt.lockedRows.has(r.id)){const v=ensureManual(r,t);v.captions[Number(el.dataset.storyCaption)]=el.value;v.updatedAt=Date.now();save()}}if(el.id==='story-outline'){const r=rowBy(ui.storyRowId);if(r)r.storyOutline=el.value;save()}if(el.id==='story-tone'){const r=rowBy(ui.storyRowId);if(r)r.tone=el.value;save()}if(el.id==='xml-output')ui.xmlOutput=el.value;if(el.id?.startsWith('denoise-')&&!el.id.startsWith('denoise-value-')){const n=$('#denoise-value-'+el.id.split('-')[1]);if(n)n.textContent=Number(el.value).toFixed(2)}});
+document.addEventListener('input',e=>{const el=e.target;if(el.id==='gallery-search'){ui.search=el.value;refreshGallery()}if(el.id==='command-input'){rt.commandIndex=0;indexCommands(el.value)}if(el.id==='market-search'){ui.marketSearch=el.value;scheduleMarketSearch()}if(el.dataset.setting)storeSetting(el);if(el.dataset.frameField||el.dataset.templateField)flushEditor();if(el.dataset.rowField){const r=rowBy(el.dataset.row);if(r)r[el.dataset.rowField]=el.value;save()}if(el.dataset.storyCaption){const r=rowBy(ui.storyRowId),t=templateBy(ui.storyTemplateId);if(r&&t&&!rt.lockedRows.has(r.id)){const v=ensureManual(r,t);v.captions[Number(el.dataset.storyCaption)]=el.value;v.updatedAt=Date.now();save()}}if(el.id==='story-outline'){const r=rowBy(ui.storyRowId);if(r)r.storyOutline=el.value;save()}if(el.id==='story-tone'){const r=rowBy(ui.storyRowId);if(r)r.tone=el.value;save()}if(el.id==='xml-output')ui.xmlOutput=el.value;if(el.id?.startsWith('denoise-')&&!el.id.startsWith('denoise-value-')){const n=$('#denoise-value-'+el.id.split('-')[1]);if(n)n.textContent=Number(el.value).toFixed(2)}});
 
 
 document.addEventListener('change',async e=>{const el=e.target;try{if(el.dataset.setting){storeSetting(el);if(el.dataset.setting==='comfy.mode'){resetWS();renderShell();if(ui.workspace===3)render()}}if(el.id==='project-select')changeProject(el.value);if(el.id==='gallery-filter'){ui.filter=el.value;refreshGallery()}if(el.id==='gallery-sort'){ui.sort=el.value;refreshGallery()}if(el.dataset.selectBook){el.checked?ui.selected.add(el.dataset.selectBook):ui.selected.delete(el.dataset.selectBook);refreshGallery()}if(el.dataset.rowActive){rowBy(el.dataset.rowActive).active=el.checked;save()}if(el.id==='matrix-all'){projectRows().forEach(r=>r.active=el.checked);save();render()}if(['template-select','batch-template'].includes(el.id)){flushEditor();ui.templateId=el.value;ui.frameIndex=0;render()}if(el.id==='story-row'){ui.storyRowId=el.value;render()}if(el.id==='story-template'){ui.storyTemplateId=el.value;render()}if(el.id==='story-version'){rowBy(ui.storyRowId).activeStoryVersionIds[ui.storyTemplateId]=el.value;save();render()}if(el.id==='reader-version')openReader(el.value);if(el.id==='chat-select'){if(rt.chatBusy)throw Error('当前对话尚未结束。');state.activeChatId=el.value;save();renderAssistant()}if(el.id==='workflow-preset'&&el.value!==''){const p=state.settings.comfy.presets[Number(el.value)];state.settings.comfy.workflow=clone(p.workflow);state.settings.comfy.mapping=clone(p.mapping);state.settings.comfy.workflowTitle=p.title;save();render()}if(el.id==='llm-provider'){const c=state.settings.llm,p={openai:['https://api.openai.com/v1','gpt-4o'],deepseek:['https://api.deepseek.com','deepseek-chat'],ollama:['http://localhost:11434/v1','llama3.2'],custom:['https://your-gateway.example/v1','your-model']}[el.value];c.provider=el.value;c.baseUrl=p[0];c.model=p[1];save();llmSettings()}}catch(x){toast(x.message,'error')}});
@@ -4697,7 +4737,7 @@ document.addEventListener('focusin',e=>{const el=e.target.closest('[data-tip],[d
 document.addEventListener('focusout',()=>hideTip());
 
 
-document.addEventListener('scroll',()=>hideTip(),true);
+document.addEventListener('scroll',()=>{if(detailUI.tooltipTarget||detailUI.tooltipTimer)hideTip()},{capture:true,passive:true});
 
 
 document.addEventListener('pointerdown',()=>hideTip());
@@ -4907,7 +4947,7 @@ handleAction=async function(act,d={},el){
   if(Object.hasOwn(releaseActions,act)){hideTip();await releaseActions[act](d,el);return}
   const result=await releaseCore.handleAction(act,d,el);
   if(act==='assistant-full'||act==='assistant')scheduleAssistantFit();
-  if(act==='diagnostics'&&$('#modal-body'))$('#modal-body').insertAdjacentHTML('beforeend','<div class="modal-footer">'+btn('检查 v2.5 修复与模板兼容性','shield','release-diagnostics','','primary')+'</div>');
+  if(act==='diagnostics'&&$('#modal-body'))$('#modal-body').insertAdjacentHTML('beforeend','<div class="modal-footer">'+btn('检查模板与导出功能','shield','release-diagnostics','','primary')+'</div>');
   if(act==='et-open-library')updateTemplatePreview();
   if(act==='book-menu'){const box=$('#modal-body');if(box&&!$('[data-act="critic-settings"]',box))box.insertAdjacentHTML('beforeend','<div class="row" style="padding-top:15px">'+btn('视觉审校 API 设置','shield','critic-settings','','small ghost')+'</div>')}
   return result;
@@ -5069,7 +5109,7 @@ validateState=function(s){
 activeJobs=function(){return v3Core.activeJobs()||createUI.backendBusy||backendRuntime.saving||!!createUI.dryController};
 
 
-backupModal=function(){modal('工程备份与迁移',`<div class="service-context"><strong>${esc(workspaceName())}</strong><br>${esc(backendStatusText())}</div><p class="help" style="margin:18px 0">日常保存交给现有 Python 后端。便携备份包含创作计划、复用变量、所有分镜、画册与通用节点映射。</p><div class="stack">${btn('下载工程 JSON','download','backup-export','','primary')}${btn('从 JSON 恢复','upload','import-project')}${btn('下载兼容目录 ZIP','folder','disk-archive')}${btn('配置 Python 保存服务','disk','v3-settings-tab','data-tab="connections"')}</div><label class="row small soft" style="margin-top:18px"><input id="backup-secrets" type="checkbox">此次 JSON 备份包含其他服务密钥（敏感，不含图像密钥库）</label><div class="modal-footer">${btn('关闭','','close-modal')}</div>`,'仅在服务明确确认后，状态栏才会显示已保存。')};
+backupModal=function(){modal('工程备份与恢复',`<div class="service-context"><strong>${esc(workspaceName())}</strong><br>${esc(backendStatusText())}</div><p class="help" style="margin:18px 0">日常保存交给现有 Python 后端。便携备份包含创作计划、复用变量、所有分镜、画册与通用节点映射。</p><div class="stack">${btn('下载工程 JSON','download','backup-export','','primary')}${btn('从 JSON 恢复','upload','import-project')}${btn('下载便携目录 ZIP','folder','disk-archive')}${btn('配置 Python 保存服务','disk','v3-settings-tab','data-tab="connections"')}</div><label class="row small soft" style="margin-top:18px"><input id="backup-secrets" type="checkbox">此次 JSON 备份包含其他服务密钥（敏感，不含图像密钥库）</label><div class="modal-footer">${btn('关闭','','close-modal')}</div>`,'仅在服务明确确认后，状态栏才会显示已保存。')};
 
 
 const v3Actions={
@@ -5463,9 +5503,9 @@ function installCollectionDisplay(){
     if(Object.hasOwn(shelfActions,action)){if($('#welcome-dialog').open)return;return shelfActions[action](data,element)}
     const result=await collectionDisplayCore.handleAction(action,data,element);
     if(['diagnostics','v3-diagnostics','release-diagnostics','art-prompt-checks'].includes(action)&&$('#modal-body'))$('#modal-body').insertAdjacentHTML('beforeend','<div class="modal-footer">'+btn(localeString('显示与语言')+' · '+localeString('系统自检'),'shield','display-diagnostics','','small')+'</div>');
-    localizeWorkspace();return result;
+    localizeWorkspace($('#modal[open]')||document.body);return result;
   };
-  if(window.MutationObserver){displayUI.observer=new MutationObserver(records=>{if(displayUI.localizing)return;if(records.some(r=>r.type!=='attributes'||['title','placeholder','aria-label'].includes(r.attributeName)))queueLocalization()});displayUI.observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['title','placeholder','aria-label']})}
+  if(window.MutationObserver){displayUI.observer=new MutationObserver(records=>{if(displayUI.localizing)return;if(records.some(r=>r.type!=='attributes'||['title','placeholder','aria-label'].includes(r.attributeName)))queueLocalization(records)});displayUI.observer.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['title','placeholder','aria-label']})}
   ComfyComic.locale=displayUI.locale;ComfyComic.collectionDisplay=displayModel;
   loadCollectionFonts();
   window.addEventListener('resize',scheduleSidebarWordmarkFit);
@@ -5529,6 +5569,8 @@ installWorkspaceUpgrade();
 installOrganizationTools();
 
 installImageProviders();
+
+installMarketPerformance();
 
 globalThis.Mio = globalThis.ComfyComic;
 

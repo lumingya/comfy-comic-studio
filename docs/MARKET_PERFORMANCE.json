@@ -1,0 +1,25 @@
+{
+  "before": {
+    "fixture": "240 added market cards; 500 books x 32 frames; Chromium 4x CPU slowdown; 120 scroll frames; 12 local text updates",
+    "fullScans": 12,
+    "localScans": 0,
+    "localizationMs": 452.8,
+    "marketRenders": 0,
+    "p95FrameMs": 58.9,
+    "cardPreserved": true,
+    "inputPreserved": true,
+    "backdropFilter": "blur(6px)"
+  },
+  "after": {
+    "fixture": "240 added market cards; 500 books x 32 frames; Chromium 4x CPU slowdown; 120 scroll frames; 12 local text updates",
+    "fullScans": 0,
+    "localScans": 12,
+    "localizationMs": 2.8,
+    "marketRenders": 0,
+    "p95FrameMs": 25.7,
+    "cardPreserved": true,
+    "inputPreserved": true,
+    "backdropFilter": "none"
+  },
+  "note": "Single synthetic comparison, not a guarantee of user-device frame rates. npm test includes separate marketplace interaction regressions."
+}

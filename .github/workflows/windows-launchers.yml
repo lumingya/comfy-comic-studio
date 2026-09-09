@@ -1,0 +1,17 @@
+name: Windows launcher regression
+on:
+  push:
+    paths: ['*.bat', '.gitattributes', 'tools/build_release.py', 'tests/test_windows_launchers.py', '.github/workflows/windows-launchers.yml']
+  pull_request:
+    paths: ['*.bat', '.gitattributes', 'tools/build_release.py', 'tests/test_windows_launchers.py', '.github/workflows/windows-launchers.yml']
+  workflow_dispatch:
+jobs:
+  launchers:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Test launcher bytes and real CMD execution
+        run: python -m unittest discover -s tests -p test_windows_launchers.py -v

@@ -78,7 +78,7 @@ function extract() {
     cursor = node.end;
   }
   chunks.app.push(source.slice(cursor));
-  const outputs = moduleOrder.map(name => ({ name, text: '/* ComfyComic development module: ' + name + '. */\n\'use strict\';\n' + chunks[name].join('\n\n') + '\n' }));
+  const outputs = moduleOrder.map(name => ({ name, text: '/* Mio development module: ' + name + '. */\n\'use strict\';\n' + chunks[name].join('\n\n') + '\n' }));
   outputs.forEach(file => syntaxCheck(file.text, 'js/' + file.name + '.js'));
   syntaxCheck(outputs.map(file => file.text).join('\n'), 'assembled-modules.js');
   if (ast.body.map(node => source.slice(node.start, node.end)).join('').length === 0) throw new Error('Refusing to replace sources from an empty bundle.');

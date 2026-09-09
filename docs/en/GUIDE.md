@@ -58,15 +58,14 @@ References prefer the refinement source, then the character's front reference. U
 
 Missing pages show a question mark. The original girl's demo cover is retained only for the built-in sample. Export fails honestly when an original image cannot be read.
 
-## Migration and backup
+## Backup and restore
 
-The rename preserves old data formats, storage identifiers and the `ComfyComic` internal namespace. A `Mio` alias exists, but neither is a stable public plugin API. Product and internal schema versions are separate.
 
-Stop the old server and close its browser before copying data. Back up the complete old project. Extract Mio into a new folder, copy `data/` and any legacy `images/`, and preserve an existing `comfy_comic_data.json` filename for migration. Start Mio and verify album counts, original images, presets, workflows and save status before removing any backup.
+Stop Mio and close its browser before copying data. Back up the complete `data/` folder. On a trusted target machine, restore it into the Mio project folder while the server is stopped. Start Mio and verify albums, images, presets, workflows and save status before removing any backup.
 
 A JSON export may only contain image paths. Back up image assets too. An HTML album is for presentation, not complete editing-state recovery. Review exports for private content and old keys before sharing.
 
-`MIO_HOST`, `MIO_PORT` and `MIO_ORIGINS` override legacy `COMFY_COMIC_*` equivalents. Default port is 8777; default host is 127.0.0.1.
+Use `MIO_HOST`, `MIO_PORT` and `MIO_ORIGINS` to configure the server. Default port is 8777; default host is 127.0.0.1.
 
 ## Troubleshooting
 

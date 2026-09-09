@@ -4,6 +4,7 @@
 
 | 问题 | 检查与处理 |
 | --- | --- |
+| start.bat 报 syntax incorrect 或版本号不是命令 | 更新根目录 start.bat；脚本使用 UTF-8 无 BOM + CRLF，先执行 chcp 65001，再按 .venv、venv、python、py 顺序启动。也可在项目目录直接运行 `python server.py`，或 `py server.py` |
 | 页面打不开 | 确认 Python 3.10+、终端未退出、端口未占用，使用启动日志中的地址 |
 | 缺少 mio_api 模块 | 必须复制完整项目（含 mio_api.py 和 mio_credentials.py）；仅替换 server.py 不够 |
 | 打开 HTML 后云生成失败 | 云渠道通过同源 Python 转发，使用服务器地址，不要只双击 HTML |

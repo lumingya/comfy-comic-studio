@@ -74,6 +74,6 @@ No automatic retries or Idempotency-Key support exist. Repeated requests can inc
 
 Tokens grant trusted-client access to private creative data and paid providers. The API excludes full config and execution snapshots, not private prose inside prompts. Only trust configured endpoints, especially with server-side provider keys.
 
-`MIO_API_TOKEN` protects `/api/v1` only. Keep the entire local service behind loopback or an authenticated HTTPS proxy; legacy private routes and image URLs are not protected by this token. Browser clients need explicitly allowed Origins via `MIO_ORIGINS`, never wildcard access.
+`MIO_API_TOKEN` protects `/api/v1` only. Keep the entire local service behind loopback or an authenticated HTTPS proxy; private application routes and image URLs are not protected by this token. Browser clients need explicitly allowed Origins via `MIO_ORIGINS`, never wildcard access.
 
 New optional response fields may be added to v1; ignore unknown response fields. Breaking semantics require a new major API namespace. Do not rely on browser global objects as stable integration APIs. See [Security](../../SECURITY.md) and [Development](../DEVELOPMENT.md).

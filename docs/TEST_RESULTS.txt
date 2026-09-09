@@ -92,74 +92,74 @@ test_none_auth_does_not_fall_back_to_environment (test_credentials.CredentialTes
 test_purge_includes_prior_endpoints_but_not_other_channels (test_credentials.CredentialTests.test_purge_includes_prior_endpoints_but_not_other_channels) ... ok
 test_trailing_slash_and_default_port_normalize (test_credentials.CredentialTests.test_trailing_slash_and_default_port_normalize) ... ok
 test_generated_documents_are_current (test_docs_server.DocumentationServingTests.test_generated_documents_are_current) ... ok
-test_head_matches_get (test_docs_server.DocumentationServingTests.test_head_matches_get) ... 127.0.0.1 - - [09/Sep/2026 13:59:56] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
-127.0.0.1 - - [09/Sep/2026 13:59:56] "HEAD /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
+test_head_matches_get (test_docs_server.DocumentationServingTests.test_head_matches_get) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "HEAD /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
 ok
-test_legacy_markdown_url_serves_utf8_reader (test_docs_server.DocumentationServingTests.test_legacy_markdown_url_serves_utf8_reader) ... 127.0.0.1 - - [09/Sep/2026 13:59:56] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
+test_legacy_markdown_url_serves_utf8_reader (test_docs_server.DocumentationServingTests.test_legacy_markdown_url_serves_utf8_reader) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
 ok
-test_prebuilt_guide_is_served_with_charset (test_docs_server.DocumentationServingTests.test_prebuilt_guide_is_served_with_charset) ... 127.0.0.1 - - [09/Sep/2026 13:59:56] "GET /docs/guide/CHANNELS_AND_KEYS.html HTTP/1.1" 200 -
+test_prebuilt_guide_is_served_with_charset (test_docs_server.DocumentationServingTests.test_prebuilt_guide_is_served_with_charset) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /docs/guide/CHANNELS_AND_KEYS.html HTTP/1.1" 200 -
 ok
-test_private_and_traversal_paths_remain_denied (test_docs_server.DocumentationServingTests.test_private_and_traversal_paths_remain_denied) ... 127.0.0.1 - - [09/Sep/2026 13:59:56] "GET /docs/../server.py HTTP/1.1" 404 -
-127.0.0.1 - - [09/Sep/2026 13:59:56] "GET /docs/../data/secrets/provider-keys.json HTTP/1.1" 404 -
-127.0.0.1 - - [09/Sep/2026 13:59:56] "GET /mio_docs.py HTTP/1.1" 404 -
+test_private_and_traversal_paths_remain_denied (test_docs_server.DocumentationServingTests.test_private_and_traversal_paths_remain_denied) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /docs/../server.py HTTP/1.1" 404 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /docs/../data/secrets/provider-keys.json HTTP/1.1" 404 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /mio_docs.py HTTP/1.1" 404 -
 ok
-test_raw_markdown_is_explicit_utf8_without_modifying_source (test_docs_server.DocumentationServingTests.test_raw_markdown_is_explicit_utf8_without_modifying_source) ... 127.0.0.1 - - [09/Sep/2026 13:59:56] "GET /docs/WORKFLOW_UPDATE.md?raw=1 HTTP/1.1" 200 -
+test_raw_markdown_is_explicit_utf8_without_modifying_source (test_docs_server.DocumentationServingTests.test_raw_markdown_is_explicit_utf8_without_modifying_source) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /docs/WORKFLOW_UPDATE.md?raw=1 HTTP/1.1" 200 -
 ok
 test_readme_banner_is_vector_not_font_dependent_block_text (test_docs_server.DocumentationServingTests.test_readme_banner_is_vector_not_font_dependent_block_text) ... ok
 test_renderer_does_not_allow_source_to_break_out_of_json (test_docs_server.DocumentationServingTests.test_renderer_does_not_allow_source_to_break_out_of_json) ... ok
-test_text_asset_charsets_are_explicit (test_docs_server.DocumentationServingTests.test_text_asset_charsets_are_explicit) ... 127.0.0.1 - - [09/Sep/2026 13:59:56] "GET /README.md?raw=1 HTTP/1.1" 200 -
-127.0.0.1 - - [09/Sep/2026 13:59:56] "GET /docs/api/openapi.json HTTP/1.1" 200 -
-127.0.0.1 - - [09/Sep/2026 13:59:56] "GET /styles.css HTTP/1.1" 200 -
+test_text_asset_charsets_are_explicit (test_docs_server.DocumentationServingTests.test_text_asset_charsets_are_explicit) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /README.md?raw=1 HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /docs/api/openapi.json HTTP/1.1" 200 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /styles.css HTTP/1.1" 200 -
 ok
 test_new_documentation_links_resolve_locally (test_documentation.DocumentationTests.test_new_documentation_links_resolve_locally) ... ok
 test_product_metadata_and_portable_spec (test_documentation.DocumentationTests.test_product_metadata_and_portable_spec) ... ok
 test_release_readme_is_the_maintained_readme (test_documentation.DocumentationTests.test_release_readme_is_the_maintained_readme) ... ok
-test_album_dto_removes_source_snapshots (test_external_api.ExternalApiTests.test_album_dto_removes_source_snapshots) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/albums HTTP/1.1" 200 -
+test_album_dto_removes_source_snapshots (test_external_api.ExternalApiTests.test_album_dto_removes_source_snapshots) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/albums HTTP/1.1" 200 -
 ok
-test_asset_path_is_local_and_traversal_safe (test_external_api.ExternalApiTests.test_asset_path_is_local_and_traversal_safe) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/assets?path=https%3A%2F%2Fevil.example%2Fa.png HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/assets?path=%2Fimages%2F..%2Fserver.py HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/assets?path=%2Fetc%2Fpasswd HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/assets?path=%2Fimages%2Fa.png HTTP/1.1" 200 -
+test_asset_path_is_local_and_traversal_safe (test_external_api.ExternalApiTests.test_asset_path_is_local_and_traversal_safe) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/assets?path=https%3A%2F%2Fevil.example%2Fa.png HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/assets?path=%2Fimages%2F..%2Fserver.py HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/assets?path=%2Fetc%2Fpasswd HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/assets?path=%2Fimages%2Fa.png HTTP/1.1" 200 -
 ok
-test_busy_returns_429 (test_external_api.ExternalApiTests.test_busy_returns_429) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "POST /api/v1/images/generations HTTP/1.1" 429 -
+test_busy_returns_429 (test_external_api.ExternalApiTests.test_busy_returns_429) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "POST /api/v1/images/generations HTTP/1.1" 429 -
 ok
-test_capabilities_are_honest (test_external_api.ExternalApiTests.test_capabilities_are_honest) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/capabilities HTTP/1.1" 200 -
+test_capabilities_are_honest (test_external_api.ExternalApiTests.test_capabilities_are_honest) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/capabilities HTTP/1.1" 200 -
 ok
-test_disabled_without_strong_token (test_external_api.ExternalApiTests.test_disabled_without_strong_token) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/health HTTP/1.1" 503 -
+test_disabled_without_strong_token (test_external_api.ExternalApiTests.test_disabled_without_strong_token) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/health HTTP/1.1" 503 -
 ok
-test_generates_once_without_mutating_browser_queue (test_external_api.ExternalApiTests.test_generates_once_without_mutating_browser_queue) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "POST /api/v1/images/generations HTTP/1.1" 200 -
+test_generates_once_without_mutating_browser_queue (test_external_api.ExternalApiTests.test_generates_once_without_mutating_browser_queue) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "POST /api/v1/images/generations HTTP/1.1" 200 -
 ok
-test_health (test_external_api.ExternalApiTests.test_health) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/health HTTP/1.1" 200 -
+test_health (test_external_api.ExternalApiTests.test_health) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/health HTTP/1.1" 200 -
 ok
-test_invalid_pagination (test_external_api.ExternalApiTests.test_invalid_pagination) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/albums?limit=101 HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/albums?offset=-1 HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/albums?limit=no HTTP/1.1" 400 -
+test_invalid_pagination (test_external_api.ExternalApiTests.test_invalid_pagination) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/albums?limit=101 HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/albums?offset=-1 HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/albums?limit=no HTTP/1.1" 400 -
 ok
 test_mio_environment_takes_precedence_with_legacy_fallback (test_external_api.ExternalApiTests.test_mio_environment_takes_precedence_with_legacy_fallback) ... ok
 test_openapi_file_matches_runtime (test_external_api.ExternalApiTests.test_openapi_file_matches_runtime) ... ok
-test_origin_rejected_on_external_and_private_reads (test_external_api.ExternalApiTests.test_origin_rejected_on_external_and_private_reads) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/health HTTP/1.1" 403 -
-127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/config HTTP/1.1" 403 -
+test_origin_rejected_on_external_and_private_reads (test_external_api.ExternalApiTests.test_origin_rejected_on_external_and_private_reads) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/health HTTP/1.1" 403 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/config HTTP/1.1" 403 -
 ok
-test_preflight_allows_authorization_only_for_known_origins (test_external_api.ExternalApiTests.test_preflight_allows_authorization_only_for_known_origins) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "OPTIONS /api/v1/health HTTP/1.1" 204 -
+test_preflight_allows_authorization_only_for_known_origins (test_external_api.ExternalApiTests.test_preflight_allows_authorization_only_for_known_origins) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "OPTIONS /api/v1/health HTTP/1.1" 204 -
 ok
-test_provider_dto_does_not_leak_secrets_or_urls (test_external_api.ExternalApiTests.test_provider_dto_does_not_leak_secrets_or_urls) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/providers HTTP/1.1" 200 -
+test_provider_dto_does_not_leak_secrets_or_urls (test_external_api.ExternalApiTests.test_provider_dto_does_not_leak_secrets_or_urls) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/providers HTTP/1.1" 200 -
 ok
-test_rejects_ambiguous_or_unsupported_requests (test_external_api.ExternalApiTests.test_rejects_ambiguous_or_unsupported_requests) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 13:59:57] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 13:59:57] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 13:59:57] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 13:59:57] "POST /api/v1/images/generations HTTP/1.1" 400 -
+test_rejects_ambiguous_or_unsupported_requests (test_external_api.ExternalApiTests.test_rejects_ambiguous_or_unsupported_requests) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "POST /api/v1/images/generations HTTP/1.1" 400 -
 ok
-test_schema_is_raw_and_secured (test_external_api.ExternalApiTests.test_schema_is_raw_and_secured) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/openapi.json HTTP/1.1" 200 -
+test_schema_is_raw_and_secured (test_external_api.ExternalApiTests.test_schema_is_raw_and_secured) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/openapi.json HTTP/1.1" 200 -
 ok
-test_storyboard_dto_removes_execution_snapshots (test_external_api.ExternalApiTests.test_storyboard_dto_removes_execution_snapshots) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/storyboards?limit=1&offset=0 HTTP/1.1" 200 -
+test_storyboard_dto_removes_execution_snapshots (test_external_api.ExternalApiTests.test_storyboard_dto_removes_execution_snapshots) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/storyboards?limit=1&offset=0 HTTP/1.1" 200 -
 ok
-test_token_required (test_external_api.ExternalApiTests.test_token_required) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/health HTTP/1.1" 401 -
+test_token_required (test_external_api.ExternalApiTests.test_token_required) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/health HTTP/1.1" 401 -
 ok
-test_unknown_route_and_method (test_external_api.ExternalApiTests.test_unknown_route_and_method) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "GET /api/v1/nope HTTP/1.1" 404 -
-127.0.0.1 - - [09/Sep/2026 13:59:57] "DELETE /api/v1/albums HTTP/1.1" 405 -
+test_unknown_route_and_method (test_external_api.ExternalApiTests.test_unknown_route_and_method) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "GET /api/v1/nope HTTP/1.1" 404 -
+127.0.0.1 - - [09/Sep/2026 14:41:01] "DELETE /api/v1/albums HTTP/1.1" 405 -
 ok
-test_upstream_error_is_sanitized_and_slot_released (test_external_api.ExternalApiTests.test_upstream_error_is_sanitized_and_slot_released) ... 127.0.0.1 - - [09/Sep/2026 13:59:57] "POST /api/v1/images/generations HTTP/1.1" 502 -
+test_upstream_error_is_sanitized_and_slot_released (test_external_api.ExternalApiTests.test_upstream_error_is_sanitized_and_slot_released) ... 127.0.0.1 - - [09/Sep/2026 14:41:01] "POST /api/v1/images/generations HTTP/1.1" 502 -
 ok
 test_blank_optional_values_are_not_replaced_with_defaults (test_providers.ProviderTests.test_blank_optional_values_are_not_replaced_with_defaults) ... ok
 test_chat_image_and_reference (test_providers.ProviderTests.test_chat_image_and_reference) ... ok
@@ -209,18 +209,40 @@ test_legacy_six_file_migration_retains_originals (test_storage.StructuredStorage
 ok
 test_nested_plans_presets_and_unknown_metadata_round_trip (test_storage.StructuredStorageTests.test_nested_plans_presets_and_unknown_metadata_round_trip) ... ok
 test_old_image_links_continue_to_resolve (test_storage.StructuredStorageTests.test_old_image_links_continue_to_resolve) ... ok
+test_all_jump_targets_exist (test_windows_launchers.LauncherFormatTests.test_all_jump_targets_exist) ... ok
+test_git_preserves_crlf (test_windows_launchers.LauncherFormatTests.test_git_preserves_crlf) ... ok
+test_release_launcher_is_byte_identical (test_windows_launchers.LauncherFormatTests.test_release_launcher_is_byte_identical) ... ok
+test_release_rejects_accidental_lf_only_source (test_windows_launchers.LauncherFormatTests.test_release_rejects_accidental_lf_only_source) ... ok
+test_release_rejects_bom (test_windows_launchers.LauncherFormatTests.test_release_rejects_bom) ... ok
+test_requested_runtime_order_and_pause (test_windows_launchers.LauncherFormatTests.test_requested_runtime_order_and_pause) ... ok
+test_utf8_without_bom_and_canonical_crlf (test_windows_launchers.LauncherFormatTests.test_utf8_without_bom_and_canonical_crlf) ... ok
+test_build_launcher (test_windows_launchers.WindowsLauncherExecutionTests.test_build_launcher) ... skipped 'Requires real Windows cmd.exe'
+test_dot_venv_has_priority_over_venv (test_windows_launchers.WindowsLauncherExecutionTests.test_dot_venv_has_priority_over_venv) ... skipped 'Requires real Windows cmd.exe'
+test_start_in_unicode_space_and_metacharacter_path (test_windows_launchers.WindowsLauncherExecutionTests.test_start_in_unicode_space_and_metacharacter_path) ... skipped 'Requires real Windows cmd.exe'
+test_venv_used_when_dot_venv_absent (test_windows_launchers.WindowsLauncherExecutionTests.test_venv_used_when_dot_venv_absent) ... skipped 'Requires real Windows cmd.exe'
 
 ----------------------------------------------------------------------
-Ran 88 tests in 1.127s
+Ran 99 tests in 1.117s
 
-OK
+OK (skipped=4)
 
 > mio-studio@1.0.0 test:smoke
 > node tests/smoke.mjs
 
-PASS Mio brand is visible while the legacy namespace remains compatible
+PASS Mio workspace identity and runtime are available
 PASS offline documentation hub is served
 PASS fresh installation accepts the native backend contract
+PASS market uses a single scroll surface without live backdrop blur
+PASS scrolling preserves card and input DOM nodes
+PASS market search renders empty results without replacing controls
+PASS market tabs filter cards and retain import drafts
+PASS market installation still works after result-only rendering
+PASS market uninstall retains its confirmation flow
+PASS mutation localization translates interface text but not authored content
+PASS scoped localization includes attributes on the changed input itself
+PASS language switching restores interface copy
+PASS template preview retains its sandbox and clears market-only styling
+PASS market fits a narrow viewport without horizontal overflow
 PASS all services default to real mode without fallback
 PASS original girl cover is embedded and survives offline loading
 PASS restoring the demo cover never fills other missing pages or replaces custom artwork
@@ -295,7 +317,7 @@ PASS channels in pending tasks cannot be deleted
 PASS channel deletion requires confirmation
 PASS channel deletion also removes its saved local keys
 PASS new API channels can be created after deletion with optional parameters off
-PASS legacy Markdown URLs render readable Chinese headings with explicit UTF-8
+PASS Markdown URLs render readable Chinese headings with explicit UTF-8
 PASS reader creates a working table of contents
 PASS reader rewrites relative Markdown links to offline HTML pages
 PASS linked guide navigation keeps Chinese text intact
@@ -308,4 +330,4 @@ PASS new homepage fits mobile without horizontal overflow
 PASS reader keeps code and tables inside the mobile viewport
 PASS prebuilt handbook works from file URLs without a Python server
 PASS no uncaught browser errors
-90 browser checks passed.
+101 browser checks passed.

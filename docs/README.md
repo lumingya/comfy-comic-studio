@@ -8,7 +8,7 @@
 2. [分镜与创作流程](guide/WORKFLOW.md)：变量优先级、参考图、任务冻结、暂停和补齐。
 3. [渠道、模型列表与本地密钥](guide/CHANNELS_AND_KEYS.md)：新增/删除、可选参数、模型发现、多密钥管理。
 4. [图像渠道](IMAGE_PROVIDERS.md)：NovelAI、OpenAI Images/Chat、协议限制与费用。
-5. [备份与迁移](guide/MIGRATION.md)：改名升级、素材路径、密钥、恢复检查。
+5. [备份与恢复](guide/BACKUP.md)：完整备份、素材路径、密钥与恢复检查。
 6. [故障排查](guide/TROUBLESHOOTING.md)：连接、401、400、缺图与保存。
 
 ## 自动化与开发
@@ -27,8 +27,7 @@
 - [最新变更](CHANGELOG.md)
 - [自动化验证记录](TEST_RESULTS.txt)
 
-旧说明中的 ComfyComic Studio 指 Mio 的前身；存储协议里的旧标识是兼容性保留，不是遗漏的界面品牌。
 
 ## 阅读方式
 
-教程首页和生成的 HTML 文档均可离线打开；服务器访问旧 `.md` 链接时也会显示排版阅读页。使用文档底部“查看 Markdown 源码”可读取 UTF-8 原文。若升级后仍看到旧页面，请重启 Python 服务并刷新页面。
+教程首页和生成的 HTML 文档均可离线打开；服务器访问`.md` 链接时也会显示排版阅读页。使用文档底部“查看 Markdown 源码”可读取 UTF-8 原文。若更新文档后仍看到缓存页面，请重启 Python 服务并刷新页面。

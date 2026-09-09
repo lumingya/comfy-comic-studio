@@ -18,14 +18,14 @@ Linux 若缺浏览器系统库，可在合适权限环境执行 `npx playwright 
 ## 模块图
 
 ```text
-js/state.js                    state normalization, legacy migration
+js/state.js                    state definitions and normalization
 js/sync.js                     native configuration and file synchronization
 js/engine.js                   ComfyUI mapping + provider snapshot/dispatch
 js/creation.js                 storyboards, plans, FIFO execution, refinement
 js/ui.js                       views, reader, dialogs
 js/workspace.js                 workflow library, scene overrides, queue composer
 js/organize.js                  task order, album order and batch actions
-js/app.js                      initialization and compatibility installers
+js/app.js                      initialization and module installation
 server.py                      local storage, private API, provider transports
 mio_api.py                     opt-in /api/v1 contract, auth, DTOs, OpenAPI
 mio_credentials.py             local endpoint-bound credential store (not encrypted)
@@ -35,9 +35,8 @@ tools/build_docs.py            builds HTML siblings from maintained Markdown
 examples/mio_client.py          stdlib integration example
 ```
 
-运行时 JS 顺序见 `js/build.js`。部分安装器通过包装现有函数兼容旧架构，因此要检查调用顺序与重复包装，不应只添加一个同名声明。`js/shell.js` 提供 HTML 外壳，`styles.css` 是样式源。
+运行时 JS 顺序见 `js/build.js`。部分安装器通过包装现有函数组合功能，因此要检查调用顺序与重复包装，不应只添加一个同名声明。`js/shell.js` 提供 HTML 外壳，`styles.css` 是样式源。
 
-`ComfyComic` 内部命名空间与序列化标识保留；`Mio` 是兼容别名。内部对象不是公共 API。不要为了品牌替换存储键或重写用户原始内容。
 
 ## 添加一种图像协议
 
@@ -63,7 +62,7 @@ python -c "import json,mio_api; from pathlib import Path; Path('docs/api/openapi
 
 ## 测试与发布
 
-- `js/tests.js`：前端契约；`tests/test_storage.py`：数据布局与迁移。
+- `js/tests.js`：前端契约；`tests/test_storage.py`：数据布局与恢复。
 - `tests/test_providers.py`：上游 wire format、ZIP、base64、multipart 与错误。
 - `tests/test_external_api.py`：真实本地 HTTP 服务器、鉴权、DTO、错误、并发锁与 OpenAPI 一致性。
 - `tests/smoke.mjs`：独立数据目录、Playwright 操作与外部网络拦截。
@@ -74,7 +73,7 @@ Windows 便携包由 `python tools/build_release.py` 构建；需要工具提示
 
 ## English summary
 
-Build from JS modules, not from generated index.html. Runtime is Python stdlib + vanilla browser JS. Public integrations use `mio_api.py`, not the private browser state. Keep legacy storage names for migration; Mio is the user-facing brand. Add adapters with explicit capabilities, immutable execution snapshots, bounded image decoding, sanitized errors and no paid retries. Update the API schema, documentation and transport/browser tests together. Future queue integrations require a durable coordinated worker, not direct writes into browser state. Windows and paid-provider verification must be reported separately from automated fixture tests.
+Build from JS modules, not from generated index.html. Runtime is Python stdlib + vanilla browser JS. Public integrations use `mio_api.py`, not the private browser state. Add adapters with explicit capabilities, immutable execution snapshots, bounded image decoding, sanitized errors and no paid retries. Update the API schema, documentation and transport/browser tests together. Future queue integrations require a durable coordinated worker, not direct writes into browser state. Windows and paid-provider verification must be reported separately from automated fixture tests.
 
 
 ## 文档构建与编码

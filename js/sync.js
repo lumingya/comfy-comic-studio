@@ -1,4 +1,4 @@
-/* ComfyComic development module: sync. */
+/* Mio development module: sync. */
 'use strict';
 
 function openDB(){return new Promise((resolve,reject)=>{if(!window.indexedDB)return reject(Error('IndexedDB unavailable'));const q=indexedDB.open('comfycomic-studio',1);q.onupgradeneeded=()=>q.result.createObjectStore('snapshots');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error)})}

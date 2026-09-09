@@ -1,0 +1,5 @@
+# Keep Windows launchers usable after Git checkout on any platform.
+*.bat text eol=crlf
+*.py text eol=lf
+*.js text eol=lf
+*.md text eol=lf

@@ -32,7 +32,7 @@ API 请求通过 Python 同源端点 `POST /api/image/generate` 转发，避免�
 
 ## 验证
 
-本阶段渠道适配验证：54 JS、37 Python、60 浏览器检查。最新 Mio 品牌/API 回归结果见 [变更记录](CHANGELOG.md) 和 [测试日志](TEST_RESULTS.txt)。
+本阶段渠道适配验证：54 JS、37 Python、60 浏览器检查。最新 Mio 功能/API 回归结果见 [变更记录](CHANGELOG.md) 和 [测试日志](TEST_RESULTS.txt)。
 
 新增覆盖：NovelAI ZIP/V4 请求、OpenAI base64/URL/multipart 编辑、Chat 图片与参考图、缺图/缺密钥/非法尺寸失败；无需工作流预检、冻结渠道隔离、独立渠道复制、配置落盘、密钥不落盘、移动端布局。
 

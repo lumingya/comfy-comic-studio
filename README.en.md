@@ -12,7 +12,6 @@
 
 Mio connects **storyboards → reusable character settings → image providers → execution → albums**. It does not train or host image models. It organizes existing services into a traceable creative workflow; character consistency still depends on prompts, references and the model.
 
-Previously named **ComfyComic Studio**, Mio now treats ComfyUI as one provider, not a prerequisite. Internal storage identifiers and legacy formats remain compatible.
 
 ## Features
 
@@ -23,7 +22,7 @@ Previously named **ComfyComic Studio**, Mio now treats ComfyUI as one provider, 
 | Image production | ComfyUI, NovelAI, OpenAI-compatible Images and image-returning Chat APIs |
 | Queue | FIFO, pause, pending-task sorting/deletion, execution snapshots and missing-page recovery |
 | Albums | Reader, page refinement, manual order, context-menu batch actions and HTML export |
-| Storage | Local files, original images, structured folders and migration |
+| Storage | Local files, original images, structured folders and backups |
 | Integration | Opt-in Bearer-authenticated `/api/v1`, read-only resources, single-image generation and OpenAPI |
 | Optional tools | Separately configured LLM writing and visual review |
 
@@ -58,12 +57,12 @@ Image-provider keys can be saved locally per channel and persist across reloads.
 | First album, providers, queue and export | [English handbook](docs/en/GUIDE.md) |
 | External software integration | [API guide](docs/en/API.md), [OpenAPI](docs/api/openapi.json), [Python example](examples/mio_client.py) |
 | Full Chinese tutorial directory | [Documentation index](docs/README.md) |
-| Migration and backup | [Handbook: migration](docs/en/GUIDE.md#migration-and-backup) |
+| Backup and restore | [Handbook: backups](docs/en/GUIDE.md#backup-and-restore) |
 | Security and deployment | [Security policy, bilingual](SECURITY.md) |
 | Architecture and adapter development | [Development guide](docs/DEVELOPMENT.md) |
 | Release changes and verification | [Changelog](docs/CHANGELOG.md), [test log](docs/TEST_RESULTS.txt) |
 
-The redesigned [handbook homepage](docs/index.html) includes search, language switching and offline HTML chapters. Legacy `.md` URLs render a readable page; append `?raw=1` for UTF-8 Markdown source.
+The redesigned [handbook homepage](docs/index.html) includes search, language switching and offline HTML chapters. Markdown URLs render a readable page; append `?raw=1` for UTF-8 Markdown source.
 
 ## External API
 
@@ -97,6 +96,6 @@ npm test
 
 Use Node.js 18+. Linux may require additional Playwright system dependencies. Tests cover source contracts, storage, provider transports, actual HTTP API behavior and browser flows. Real paid-provider generation and Windows executable compilation have not been verified in this environment.
 
-## License and attribution
+## License
 
-Code: [MIT](LICENSE). The Mio name and newly generated logo are a project identity, not a claim of trademark registration or clearance. Third-party services, libraries, models and sample artwork retain their own terms. The original demo cover remains owned by its rightsholder.
+[MIT License](LICENSE)

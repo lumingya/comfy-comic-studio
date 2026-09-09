@@ -325,51 +325,19 @@ def get_v9_pure_default_data():
     return content_data, ui_data, chat_data, comfy_data, llm_data, xml_data
 
 def create_start_bat(dst_path):
-    content = """@echo off
-chcp 65001 >nul
-title Mio v1.0.0
-echo =======================================================
-echo   Mio v1.0.0 (Windows 发行版)
-echo   本地服务与故事分镜工作台启动中...
-echo =======================================================
-echo.
+    # Share the byte-exact, tested launcher with source releases. Never regenerate
+    # it through text newline translation (which can create CRCRLF on Windows).
+    source = Path(ROOT_DIR, "start.bat").read_bytes()
+    if b"\r\n" not in source or b"\r\r\n" in source or b"\n" in source.replace(b"\r\n", b""):
+        raise ValueError("start.bat must use canonical Windows CRLF line endings")
+    source.decode("utf-8")
+    if source.startswith(b"\xef\xbb\xbf"):
+        raise ValueError("start.bat must use UTF-8 without BOM")
+    Path(dst_path).write_bytes(source)
 
-cd /d "%~dp0"
-
-:: 1. 优先使用随包编译的独立可执行文件（免装 Python 环境）
-if exist "mio.exe" (
-    echo [启动模式] 使用独立可执行程序启动...
-    "mio.exe"
-    goto end
-)
-
-:: 2. 回退使用系统 Python 运行 server.py
-where python >nul 2>nul
-if %errorlevel% equ 0 (
-    echo [启动模式] 使用系统 Python 启动...
-    python server.py
-    goto end
-)
-
-where py >nul 2>nul
-if %errorlevel% equ 0 (
-    echo [启动模式] 使用 Python Launcher (py) 启动...
-    py server.py
-    goto end
-)
-
-echo [错误] 未检测到 Python 运行时或 mio.exe。
-echo 请安装 Python 3.10+ (https://www.python.org/) 并勾选 "Add Python to PATH"。
-echo.
-
-:end
-pause
-"""
-    with open(dst_path, "w", encoding="utf-8") as f:
-        f.write(content.replace("\r\n", "\n").replace("\n", "\r\n"))
 
 def create_readme(dst_path):
-    # Use the maintained bilingual entry point, not a stale ComfyUI-only synopsis.
+    # Include the maintained bilingual entry point.
     shutil.copy2(os.path.join(ROOT_DIR, "README.md"), dst_path)
 
 

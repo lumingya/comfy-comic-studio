@@ -1,4 +1,4 @@
-/* ComfyComic development module: creation. */
+/* Mio development module: creation. */
 'use strict';
 
 function flushEditor(){const t=currentTemplate();if(!t)return;const f=t.frames[ui.frameIndex];let changed=false;$$('[data-frame-field]').forEach(e=>{if(!f)return;let v=e.type==='number'?Number(e.value):e.value;if(e.type==='number'&&!Number.isFinite(v))return;if(f[e.dataset.frameField]!==v){f[e.dataset.frameField]=v;changed=true}});$$('[data-template-field]').forEach(e=>{if(t[e.dataset.templateField]!==e.value){t[e.dataset.templateField]=e.value;changed=true}});if(changed){t.updatedAt=Date.now();save()}}

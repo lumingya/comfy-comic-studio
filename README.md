@@ -12,7 +12,6 @@
 
 Mio 将 **故事分镜 → 角色与画面设定 → 图像渠道 → 执行队列 → 画册** 串成一条创作流程。它不训练模型、不捆绑推理引擎，也不保证跨页角色一致性；它负责把已有图像服务变成可编排、可追溯的创作工具。
 
-项目原名 **ComfyComic Studio**。现在 ComfyUI 是支持的渠道之一，而不是整个产品的前提。旧数据格式与内部兼容标识保留，改名不会清空工程。
 
 ## 能力一览
 
@@ -23,11 +22,11 @@ Mio 将 **故事分镜 → 角色与画面设定 → 图像渠道 → 执行队�
 | 图像生产 | ComfyUI 工作流；NovelAI；OpenAI 兼容 Images / Chat 图像接口 |
 | 生产队列 | FIFO、暂停、待执行任务拖动与删除、配置快照、缺页补齐 |
 | 画册管理 | 阅读、单页精修、手动排序、右键批量管理与 HTML 导出 |
-| 本地存储 | Python 文件落盘、分目录数据、原图保存与旧工程迁移 |
+| 本地存储 | Python 文件落盘、分目录数据、原图保存与备份恢复 |
 | 外部接入 | Bearer 鉴权的 `/api/v1`、能力发现、只读资源、单图生成、OpenAPI |
 | 可选辅助 | LLM 写作与视觉审校；需要分别配置兼容服务 |
 
-未生成或失败的页面显示问号，不用示范图片伪装成功。原有美少女图片只保留为内置示范画册封面。
+未生成或失败的页面显示问号，不用示范图片伪装成功。美少女示范图片只保留为内置示范画册封面。
 
 ## 支持哪些图像服务
 
@@ -38,7 +37,7 @@ Mio 将 **故事分镜 → 角色与画面设定 → 图像渠道 → 执行队�
 | OpenAI 兼容 Images | 不需要 | `/images/edits` | `b64_json` / URL 响应，尺寸和质量按渠道配置 |
 | OpenAI 兼容 Chat | 不需要 | image_url | 必须返回支持格式的图片，而非纯文字 |
 
-**GPT Image、Nano Banana 等是模型或服务名称，不等于一种统一协议。** 请使用供应商实际支持的模型 ID 和协议。当前不包含原生 Gemini、Responses、异步轮询、NovelAI Vibe Transfer 或多角色坐标控制。[详细兼容说明](docs/IMAGE_PROVIDERS.md)
+**GPT Image、Nano Banana 等是模型或服务名称，不等于一种统一协议。** 请使用供应商实际支持的模型 ID 和协议。当前不包含原生 Gemini、Responses、异步轮询、NovelAI Vibe Transfer 或多角色坐标控制。[详细配置说明](docs/IMAGE_PROVIDERS.md)
 
 ## 快速开始
 
@@ -80,12 +79,12 @@ Windows 也可双击 `start.bat`。打开 **http://127.0.0.1:8777**。
 | 接入 NovelAI / GPT Image / 兼容渠道 | [图像渠道详细配置](docs/IMAGE_PROVIDERS.md) |
 | 使用 ComfyUI 工作流库与批量操作 | [工作流库](docs/WORKFLOW_UPDATE.md) · [队列与画册](docs/QUEUE_AND_COLLECTION_UPDATE.md) |
 | 用外部程序接入 | [API 教程](docs/api/README.md) · [OpenAPI](docs/api/openapi.json) · [Python 客户端](examples/mio_client.py) |
-| 升级、备份、移动作品 | [迁移与备份](docs/guide/MIGRATION.md) · [数据布局](docs/DATA_LAYOUT.md) |
+| 备份、恢复、移动作品 | [备份与恢复](docs/guide/BACKUP.md) · [数据布局](docs/DATA_LAYOUT.md) |
 | 排查问题、安全部署 | [常见问题](docs/guide/TROUBLESHOOTING.md) · [安全边界](SECURITY.md) |
 | 修改源码、增加适配器 | [开发与扩展指南](docs/DEVELOPMENT.md) |
 | English tutorials | [English handbook](docs/en/GUIDE.md) · [Integration API](docs/en/API.md) |
 
-也可打开全新 [教程首页](docs/index.html)：支持搜索、中英文切换与逐篇离线阅读。旧 `.md` 网址会自动展示阅读页；需要源码时添加 `?raw=1`。
+也可打开全新 [教程首页](docs/index.html)：支持搜索、中英文切换与逐篇离线阅读。`.md` 网址会自动展示阅读页；需要源码时添加 `?raw=1`。
 
 ## 外部程序接入
 
@@ -108,7 +107,7 @@ curl -H "Authorization: Bearer $MIO_API_TOKEN" http://127.0.0.1:8777/api/v1/capa
 ## 数据、安全与费用
 
 - 配置和生成素材默认存于本地 `data/`；调用云模型时，提示词、参考图会发往所选供应商，并非“全部离线”。
-- 图像渠道密钥不进入新任务快照；其他旧版配置或导出可能含敏感值，分享前务必检查。
+- 图像渠道密钥不进入新任务快照；其他服务配置或导出可能含敏感值，分享前务必检查。
 - 默认只监听回环地址。`MIO_API_TOKEN` **只保护 `/api/v1`**，不把整个本地应用变成安全的公网服务。
 - 已提交的云任务可能无法取消；停止本地等待不等于退款。没有自动付费重试。
 - 备份整个工程数据和素材，不要只复制含 `/images/` 引用的 JSON。
@@ -127,6 +126,6 @@ Node.js 18+ 仅用于构建和测试。浏览器测试需要 Playwright Chromium
 
 测试覆盖前端契约、文件存储、渠道协议、真实 HTTP API 鉴权与错误响应、浏览器操作。记录见 [测试结果](docs/TEST_RESULTS.txt) 与 [变更说明](docs/CHANGELOG.md)。真实付费供应商出图及 Windows exe 编译未在本环境验证。
 
-## 许可与品牌
+## 许可
 
-代码采用 [MIT License](LICENSE)。Mio 名称与本次生成的折页 Logo 是新的项目视觉标识，不代表完成商标检索或注册。第三方模型、服务、库与示范图片遵循各自条款；原有示范封面权利归原权利人，不因代码采用 MIT 而改变。
+[MIT License](LICENSE)
