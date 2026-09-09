@@ -1,14 +1,14 @@
 // Current studio UI regression suite. Runs against an isolated data directory.
 import {chromium} from 'playwright';
 import {spawn} from 'node:child_process';
-import {mkdtempSync,rmSync,cpSync,readFileSync,existsSync} from 'node:fs';
+import {mkdtempSync,rmSync,cpSync,readFileSync,writeFileSync,existsSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const temp=mkdtempSync(path.join(tmpdir(),'ccs-studio-'));
-for(const name of ['server.py','mio_api.py','mio_credentials.py','index.html','styles.css','favicon.svg','vendor','js','docs','examples','README.md','README.en.md','SECURITY.md'])cpSync(path.join(ROOT,name),path.join(temp,name),{recursive:true});
+for(const name of ['server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs','examples','README.md','README.en.md','SECURITY.md'])cpSync(path.join(ROOT,name),path.join(temp,name),{recursive:true});
 const port=Number(process.env.SMOKE_PORT||8791),base=`http://127.0.0.1:${port}`;
 const server=spawn('python3',['-u','server.py'],{cwd:temp,env:{...process.env,COMFY_COMIC_PORT:String(port)},stdio:['ignore','pipe','pipe']});
 let browser,checks=0;const check=(name,value)=>{assert.ok(value,name);console.log('PASS '+name);checks++};
@@ -223,6 +223,35 @@ try{
   await page.locator('[data-act="image-provider-new"]').click();await page.locator('#image-new-title').fill('New channel');await page.locator('[data-act="image-provider-create"]').click();
   check('new API channels can be created after deletion with optional parameters off',await page.evaluate(()=>activeImageProfile().title==='New channel'&&activeImageProfile().sendSize===false&&activeImageProfile().sendQuality===false&&activeImageProfile().keyMode==='none'));
 
+  // Documentation must render correctly, not merely return HTTP 200.
+  const docsPage=await context.newPage();docsPage.on('pageerror',e=>errors.push(e.message));
+  await docsPage.setViewportSize({width:1440,height:1000});
+  const docResponse=await docsPage.goto(base+'/docs/WORKFLOW_UPDATE.md');await docsPage.waitForSelector('#document h1');
+  check('legacy Markdown URLs render readable Chinese headings with explicit UTF-8',docResponse.headers()['content-type']==='text/html; charset=utf-8'&&(await docsPage.locator('#document h1').innerText()).includes('第一阶段'));
+  check('reader creates a working table of contents',await docsPage.locator('#toc a').count()>0);
+  check('reader rewrites relative Markdown links to offline HTML pages',(await docsPage.locator('#document a').first().getAttribute('href')).endsWith('.html'));
+  await docsPage.locator('#document a').first().click();await docsPage.waitForSelector('#document h1');
+  check('linked guide navigation keeps Chinese text intact',(await docsPage.locator('#document').innerText()).includes('队列')&&docsPage.url().endsWith('QUEUE_AND_COLLECTION_UPDATE.html'));
+  await docsPage.goto(base+'/docs/guide/QUICKSTART.html');await docsPage.waitForSelector('.copy-code');
+  await docsPage.evaluate(()=>{Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.copiedDocCode=text}}})});
+  await docsPage.locator('.copy-code').first().click();
+  check('reader code-copy button copies the code without UI labels',await docsPage.evaluate(()=>window.copiedDocCode.includes('{character}')&&!window.copiedDocCode.includes('复制代码')));
+  writeFileSync(path.join(temp,'docs','security-probe.md'),'# 安全测试\n\n<script>window.docsInjected=true</script>\n<img src="bad" onerror="window.docsInjected=true">\n[unsafe](javascript:alert(1))');
+  await docsPage.goto(base+'/docs/security-probe.md');await docsPage.waitForSelector('#document h1');
+  check('reader sanitizes embedded script handlers and javascript links',await docsPage.evaluate(()=>!window.docsInjected&&!document.querySelector('#document script')&&!document.querySelector('#document [onerror]')&&![...document.querySelectorAll('#document a')].some(a=>a.href.startsWith('javascript:'))));
+  await docsPage.goto(base+'/docs/index.html');await docsPage.waitForSelector('.hero h1');
+  check('new homepage renders its illustration without external requests',await docsPage.evaluate(()=>[...document.querySelectorAll('.art-img')].every(img=>img.src.startsWith('data:image/webp;'))));
+  await docsPage.locator('#guide-search').fill('密钥');
+  check('homepage search filters tutorial entries',await docsPage.locator('.guide-link:visible').count()===1);
+  await docsPage.locator('#guide-search').fill('');await docsPage.locator('#language').click();
+  check('homepage language switch updates copy and tutorial destinations',await docsPage.locator('html').getAttribute('lang')==='en'&&(await docsPage.locator('.hero-actions .pill').getAttribute('href')).includes('en/GUIDE.html'));
+  await docsPage.setViewportSize({width:390,height:844});
+  check('new homepage fits mobile without horizontal overflow',await docsPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));
+  await docsPage.goto(base+'/docs/en/API.html');await docsPage.waitForSelector('#document h1');
+  check('reader keeps code and tables inside the mobile viewport',await docsPage.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));
+  await docsPage.goto('file://'+path.join(temp,'docs','guide','CHANNELS_AND_KEYS.html'));await docsPage.waitForSelector('#document h1');
+  check('prebuilt handbook works from file URLs without a Python server',(await docsPage.locator('#document h1').innerText()).includes('本地密钥'));
+  await docsPage.close();
   check('no uncaught browser errors',errors.length===0);
   console.log(`${checks} browser checks passed.`);
 }catch(e){console.error(e);process.exitCode=1}finally{await browser?.close();server.kill();await new Promise(resolve=>server.once('exit',resolve));rmSync(temp,{recursive:true,force:true})}

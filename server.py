@@ -11,6 +11,9 @@ import mimetypes
 import threading
 import mio_api
 import mio_credentials
+import mio_docs
+import io
+from pathlib import Path
 from datetime import datetime
 import urllib.request
 import urllib.parse
@@ -64,8 +67,9 @@ CONFIG_LOCK = threading.RLock()
 PUBLIC_FILES = {
     "/index.html",
     "/styles.css",
-    "/favicon.svg",
-    "/README.md", "/README.en.md", "/SECURITY.md", "/examples/mio_client.py",
+    "/favicon.svg", "/LICENSE",
+    "/README.md", "/README.en.md", "/SECURITY.md",
+    "/README.html", "/README.en.html", "/SECURITY.html", "/examples/mio_client.py",
 }
 # Whole directories of front-end assets. Serving these by prefix (instead of
 # listing every file) keeps server.py from needing an edit each time a module
@@ -125,7 +129,7 @@ def is_public_static_path(request_path):
         return True
 
     if decoded_path.startswith('/docs/'):
-        return decoded_path.lower().endswith(('.md', '.html', '.json', '.png')) and _is_file_inside(decoded_path, os.path.join(BASE_DIR, 'docs'))
+        return decoded_path.lower().endswith(('.md', '.html', '.json', '.png', '.svg', '.txt')) and _is_file_inside(decoded_path, os.path.join(BASE_DIR, 'docs'))
 
     for asset_dir in PUBLIC_ASSET_DIRS:
         if decoded_path.startswith(asset_dir):
@@ -979,6 +983,38 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
 
     def external_api(self):
         return mio_api.handle(self, sys.modules[__name__])
+
+    def guess_type(self, path):
+        if Path(urllib.parse.urlparse(path).path).name == 'LICENSE':
+            return 'text/plain; charset=utf-8'
+        mime = super().guess_type(path)
+        suffix = Path(urllib.parse.urlparse(path).path).suffix.lower()
+        text_types = {'.md': 'text/plain', '.html': 'text/html', '.txt': 'text/plain',
+                      '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json', '.py': 'text/plain'}
+        if suffix in text_types:
+            return text_types[suffix] + '; charset=utf-8'
+        return mime
+
+    def send_head(self):
+        parsed = urllib.parse.urlparse(self.path)
+        decoded = urllib.parse.unquote(parsed.path)
+        if decoded.endswith('.md') and is_public_static_path(parsed.path) and urllib.parse.parse_qs(parsed.query).get('raw') != ['1']:
+            try:
+                relative = Path(decoded.lstrip('/'))
+                body = mio_docs.render_document(BASE_DIR, relative).encode('utf-8')
+            except FileNotFoundError:
+                self.send_error(404, 'Document not found')
+                return None
+            except UnicodeError:
+                self.send_error(422, 'Document must be UTF-8')
+                return None
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.send_header('Content-Length', str(len(body)))
+            self.send_header('X-Content-Type-Options', 'nosniff')
+            self.end_headers()
+            return io.BytesIO(body)
+        return super().send_head()
 
     def translate_path(self, path):
         request_path = urllib.parse.unquote(urllib.parse.urlparse(path).path)

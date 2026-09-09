@@ -20,6 +20,8 @@ import subprocess
 import time
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
 VERSION = "1.0.0"
 RELEASE_NAME = f"mio-v{VERSION}-windows"
 DIST_DIR = os.path.join(ROOT_DIR, "dist")
@@ -421,9 +423,12 @@ def build():
     else:
         print("  [注意] 未生成 exe 文件，用户仍可使用 start.bat + 系统 Python 启动。")
 
+    import mio_docs
+    mio_docs.build(ROOT_DIR)
+
     # 3. Copy frontend assets
     print("\n[3/5] 同步前端核心产物与静态资源...")
-    for f in ["index.html", "styles.css", "favicon.svg", "server.py", "mio_api.py", "mio_credentials.py", "README.md", "README.en.md", "LICENSE", "default_comic_template.json"]:
+    for f in ["index.html", "styles.css", "favicon.svg", "server.py", "mio_api.py", "mio_credentials.py", "mio_docs.py", "README.html", "README.en.html", "SECURITY.html", "SECURITY.md", "README.md", "README.en.md", "LICENSE", "default_comic_template.json"]:
         src = os.path.join(ROOT_DIR, f)
         if os.path.exists(src):
             shutil.copy2(src, os.path.join(RELEASE_DIR, f))

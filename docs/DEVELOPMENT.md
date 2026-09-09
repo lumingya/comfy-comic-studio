@@ -29,6 +29,9 @@ js/app.js                      initialization and compatibility installers
 server.py                      local storage, private API, provider transports
 mio_api.py                     opt-in /api/v1 contract, auth, DTOs, OpenAPI
 mio_credentials.py             local endpoint-bound credential store (not encrypted)
+mio_docs.py                    UTF-8 Markdown reader and offline HTML generation
+docs/reader-template.html      self-contained reader template
+tools/build_docs.py            builds HTML siblings from maintained Markdown
 examples/mio_client.py          stdlib integration example
 ```
 
@@ -67,8 +70,17 @@ python -c "import json,mio_api; from pathlib import Path; Path('docs/api/openapi
 
 付费服务只使用替身；不要把协议通过宣称为真实供应商连通。未测试的系统环境和编译步骤必须在发行说明中注明。
 
-Windows 便携包由 `python tools/build_release.py` 构建；需要工具提示的 PyInstaller 环境。`mio.spec` 使用相对入口。必须包含 `mio_api.py`、`mio_credentials.py`、所有运行模块、vendor、docs 和示例。打包不得携带用户 `data/`、密钥或调试素材。
+Windows 便携包由 `python tools/build_release.py` 构建；需要工具提示的 PyInstaller 环境。`mio.spec` 使用相对入口。必须包含 `mio_api.py`、`mio_credentials.py`、`mio_docs.py`、所有运行模块、vendor、docs 和示例。打包不得携带用户 `data/`、密钥或调试素材。
 
 ## English summary
 
 Build from JS modules, not from generated index.html. Runtime is Python stdlib + vanilla browser JS. Public integrations use `mio_api.py`, not the private browser state. Keep legacy storage names for migration; Mio is the user-facing brand. Add adapters with explicit capabilities, immutable execution snapshots, bounded image decoding, sanitized errors and no paid retries. Update the API schema, documentation and transport/browser tests together. Future queue integrations require a durable coordinated worker, not direct writes into browser state. Windows and paid-provider verification must be reported separately from automated fixture tests.
+
+
+## 文档构建与编码
+
+`npm run build` 包含 `python tools/build_docs.py`；仅改教程时也可运行 `npm run build:docs`。编辑 Markdown 源文件或 `docs/reader-template.html` 后必须重建，不要手改生成的 HTML 副本。教程首页 `docs/index.html` 单独维护，不会被此步骤覆盖。
+
+HTTP 下 `.md` 默认返回 UTF-8 HTML 阅读器，添加 `?raw=1` 返回 UTF-8 原文；`.html` 为预构建离线页。阅读器将文档内部的相对 `.md` 链接转换为 `.html`，以支持离线文件跳转。README 源文件仍保留 Markdown 链接供 GitHub 等平台使用。
+
+前端文档渲染依赖随包提供的 `vendor/marked.min.js`（15.0.12）和 `vendor/purify.min.js`（DOMPurify 3.2.6），不需要 pip 或运行时 CDN。对应许可证同目录分发。原始文档只作为转义 JSON 嵌入，HTML 经过净化后才放入页面；禁止取消这一步。新增覆盖见 `tests/test_docs_server.py` 和 `tests/smoke.mjs` 的文档浏览器检查。

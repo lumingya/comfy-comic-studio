@@ -1,20 +1,12 @@
 <div align="center">
-  <img src="docs/assets/mio-logo.png" alt="Mio — 折页与画面组成的标志" width="132">
+  <img src="docs/assets/mio-banner.svg" alt="Mio — Stories in frames" width="900">
   <h1>Mio · 绘页</h1>
   <p><strong>从一个故事，到一本画册。</strong><br>本地优先的分镜编排、多渠道图像生产与画册工作台。</p>
   <p><b>简体中文</b> · <a href="README.en.md">English</a></p>
   <p><a href="#快速开始">快速开始</a> · <a href="docs/README.md">教程中心</a> · <a href="docs/api/README.md">外部 API</a> · <a href="docs/api/openapi.json">OpenAPI</a> · <a href="docs/DEVELOPMENT.md">开发指南</a></p>
 </div>
 
-```text
-                         ███╗   ███╗██╗ ██████╗
-                         ████╗ ████║██║██╔═══██╗
-                         ██╔████╔██║██║██║   ██║
-                         ██║╚██╔╝██║██║██║   ██║
-                         ██║ ╚═╝ ██║██║╚██████╔╝
-                         ╚═╝     ╚═╝╚═╝ ╚═════╝
-                          S T O R I E S  I N  F R A M E S
-```
+
 
 ## 定位
 
@@ -93,7 +85,7 @@ Windows 也可双击 `start.bat`。打开 **http://127.0.0.1:8777**。
 | 修改源码、增加适配器 | [开发与扩展指南](docs/DEVELOPMENT.md) |
 | English tutorials | [English handbook](docs/en/GUIDE.md) · [Integration API](docs/en/API.md) |
 
-也可打开离线的 [教程导航页](docs/index.html)。
+也可打开全新 [教程首页](docs/index.html)：支持搜索、中英文切换与逐篇离线阅读。旧 `.md` 网址会自动展示阅读页；需要源码时添加 `?raw=1`。
 
 ## 外部程序接入
 
@@ -131,7 +123,7 @@ npm run build
 npm test
 ```
 
-Node.js 18+ 仅用于构建和测试。浏览器测试需要 Playwright Chromium：`npx playwright install chromium`；Linux 可能还需安装系统依赖。构建后的 `index.html` 随包提供。
+Node.js 18+ 仅用于构建和测试。浏览器测试需要 Playwright Chromium：`npx playwright install chromium`；Linux 可能还需安装系统依赖。构建后的 `index.html` 与教程 HTML 副本随包提供；`npm run build` 会同时更新应用与文档。
 
 测试覆盖前端契约、文件存储、渠道协议、真实 HTTP API 鉴权与错误响应、浏览器操作。记录见 [测试结果](docs/TEST_RESULTS.txt) 与 [变更说明](docs/CHANGELOG.md)。真实付费供应商出图及 Windows exe 编译未在本环境验证。
 

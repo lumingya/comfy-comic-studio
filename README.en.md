@@ -1,20 +1,12 @@
 <div align="center">
-  <img src="docs/assets/mio-logo.png" alt="Mio folded-page mark" width="132">
+  <img src="docs/assets/mio-banner.svg" alt="Mio — Stories in frames" width="900">
   <h1>Mio</h1>
   <p><strong>One story. Many frames. Your own book.</strong><br>A local-first workspace for storyboards, image providers and illustrated albums.</p>
   <p><a href="README.md">简体中文</a> · <b>English</b></p>
   <p><a href="#quick-start">Quick start</a> · <a href="docs/en/GUIDE.md">Handbook</a> · <a href="docs/en/API.md">External API</a> · <a href="docs/api/openapi.json">OpenAPI</a></p>
 </div>
 
-```text
-                         ███╗   ███╗██╗ ██████╗
-                         ████╗ ████║██║██╔═══██╗
-                         ██╔████╔██║██║██║   ██║
-                         ██║╚██╔╝██║██║██║   ██║
-                         ██║ ╚═╝ ██║██║╚██████╔╝
-                         ╚═╝     ╚═╝╚═╝ ╚═════╝
-                          S T O R I E S  I N  F R A M E S
-```
+
 
 ## What Mio does
 
@@ -71,7 +63,7 @@ Image-provider keys can be saved locally per channel and persist across reloads.
 | Architecture and adapter development | [Development guide](docs/DEVELOPMENT.md) |
 | Release changes and verification | [Changelog](docs/CHANGELOG.md), [test log](docs/TEST_RESULTS.txt) |
 
-An [offline navigation page](docs/index.html) is included.
+The redesigned [handbook homepage](docs/index.html) includes search, language switching and offline HTML chapters. Legacy `.md` URLs render a readable page; append `?raw=1` for UTF-8 Markdown source.
 
 ## External API
 

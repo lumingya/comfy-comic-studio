@@ -13,8 +13,9 @@
     "lint:js": "eslint js/state.js js/sync.js js/engine.js js/creation.js js/ui.js js/workspace.js js/organize.js js/app.js js/build.js js/tests.js",
     "lint:html": "html-validate index.html",
     "start": "python server.py",
-    "build": "node js/build.js bundle",
-    "test:contracts": "node js/tests.js"
+    "build": "node js/build.js bundle && python tools/build_docs.py",
+    "test:contracts": "node js/tests.js",
+    "build:docs": "python tools/build_docs.py"
   },
   "devDependencies": {
     "eslint": "^8.57.1",
