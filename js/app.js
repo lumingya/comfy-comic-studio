@@ -563,7 +563,7 @@ for(const dialog of $$('dialog'))dialog.addEventListener('close',()=>{hideTip();
 window.addEventListener('beforeunload',e=>{if(!rt.booting&&(disk.busy||disk.revision>disk.savedRevision||studioUI.editorDirty)){e.preventDefault();e.returnValue=''}});
 
 
-const releaseUI={composerSize:220,composerExpanded:false,composerObserver:null,composerRAF:null,criticDraft:null,criticTesting:false,criticTest:null,criticController:null,criticBatch:null,criticFingerprint:'',criticCache:new Map(),githubToken:'',githubDraft:null,githubBusy:false,githubResult:null,githubController:null,githubTab:'publish',githubCheck:null,guideStep:0,practiceBusy:false,practiceController:null,regressionBusy:false};
+const releaseUI={composerSize:176,composerExpanded:false,composerObserver:null,composerRAF:null,criticDraft:null,criticTesting:false,criticTest:null,criticController:null,criticBatch:null,criticFingerprint:'',criticCache:new Map(),githubToken:'',githubDraft:null,githubBusy:false,githubResult:null,githubController:null,githubTab:'publish',githubCheck:null,guideStep:0,practiceBusy:false,practiceController:null,regressionBusy:false};
 
 
 const criticDefaults={mode:'real',connection:'independent',provider:'openai',baseUrl:'https://api.openai.com/v1',model:'gpt-4o',key:'',timeout:60,includeReference:true,includePrevious:true,focus:'优先检查手部、面部结构、角色服装一致性、镜头构图与叙事可读性。',verification:null};
@@ -670,7 +670,7 @@ const releaseActions={
   'template-check':()=>templateValidationHub(),
   'template-fix-open':async d=>{if($('#template-studio').open&&studioUI.editorDirty&&!await canLeaveTemplate())return;closeModal();openTemplateStudio(d.id)},
   'template-reset-builtins':async()=>{if(!await confirmAction('恢复四套内置模板？','只恢复内置模板原版，不删除或覆盖你的独立自定义副本。','恢复内置模板'))return;const defaults=designedTemplates();state.exportTemplates=state.exportTemplates.map(t=>t.builtin&&defaults.some(x=>x.id===t.id)?defaults.find(x=>x.id===t.id):t);save();templateValidationHub();toast('内置模板已恢复，CSS 校验已修复。')},
-  'assistant-input-expand':()=>{releaseUI.composerExpanded=!releaseUI.composerExpanded;releaseUI.composerSize=releaseUI.composerExpanded?420:205;const panel=$('#assistant');if(releaseUI.composerExpanded&&!panel.classList.contains('fullscreen'))panel.style.height=Math.min(800,innerHeight-24)+'px';fitAssistantWindow();$('#chat-input')?.focus()},
+  'assistant-input-expand':()=>{releaseUI.composerExpanded=!releaseUI.composerExpanded;releaseUI.composerSize=releaseUI.composerExpanded?360:176;const panel=$('#assistant');if(releaseUI.composerExpanded&&!panel.classList.contains('fullscreen'))panel.style.height=Math.min(800,innerHeight-24)+'px';fitAssistantWindow();$('#chat-input')?.focus()},
   'critic-settings':()=>openCriticSettings(),
   'critic-close':()=>{if(releaseUI.criticTesting)releaseUI.criticController?.abort();save();closeServiceDialog('critic-dialog');renderCriticEntry();if(ui.workspace===5)render()},
   'critic-key-toggle':()=>{const input=$('[data-critic-field="key"]');if(input)input.type=input.type==='password'?'text':'password'},

@@ -1,0 +1,1336 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>夜航手记 · 星海画册与声音标本室</title>
+  <style>
+    /* ============================================================
+       01. 设计系统变量 (Design Tokens)
+       ============================================================ */
+    :root {
+      /* 黑曜石暗夜模式 (Obsidian Night - 默认) */
+      --bg-base: #0c100e;
+      --bg-surface: #131916;
+      --bg-elevated: #1a231e;
+      --bg-book-cover: #1b2620;
+      --bg-polaroid: #161e18;
+      --text-main: #edf2eb;
+      --text-sub: #c2cfc1;
+      --text-muted: #798b7d;
+      --text-dim: #445447;
+      --border-subtle: rgba(210, 230, 215, 0.08);
+      --border-strong: rgba(210, 230, 215, 0.18);
+      --accent: #7ecba1;
+      --accent-rgb: 126, 203, 161;
+      --accent-soft: rgba(126, 203, 161, 0.12);
+      --accent-glow: rgba(126, 203, 161, 0.25);
+      --highlight: #e5b98f;
+      
+      /* 书本物理阴影 */
+      --book-spine: linear-gradient(90deg, rgba(0,0,0,0.55), transparent);
+      --book-edge: #151d18;
+      --shadow-book: 0 32px 64px -16px rgba(0, 0, 0, 0.8),
+                     10px 8px 0 -4px #151d18,
+                     18px 14px 0 -8px #0f1511,
+                     0 0 0 1px rgba(255, 255, 255, 0.06);
+      --shadow-polaroid: 0 20px 40px -10px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.06);
+
+      --serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", Georgia, "Times New Roman", serif;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --transition-base: 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* 纸本浅色模式 (Warm Ivory Paper) */
+    body.light-mode {
+      --bg-base: #f6f5ee;
+      --bg-surface: #ece9dc;
+      --bg-elevated: #fffef8;
+      --bg-book-cover: #fcfbf5;
+      --bg-polaroid: #ffffff;
+      --text-main: #1e3526;
+      --text-sub: #3c5244;
+      --text-muted: #6e7e70;
+      --text-dim: #9daea0;
+      --border-subtle: #dbe2d1;
+      --border-strong: #c2cdb6;
+      --accent: #26593a;
+      --accent-rgb: 38, 89, 58;
+      --accent-soft: rgba(38, 89, 58, 0.09);
+      --accent-glow: rgba(38, 89, 58, 0.16);
+      --highlight: #b06f47;
+      
+      --book-spine: linear-gradient(90deg, rgba(160,170,150,0.35), transparent);
+      --book-edge: #e6e5d6;
+      --shadow-book: 0 28px 50px -12px rgba(35, 60, 42, 0.18),
+                     9px 6px 0 -3px #e3e4d4,
+                     16px 11px 0 -6px #d5d8c5,
+                     0 0 0 1px #d6dccb;
+      --shadow-polaroid: 0 18px 36px -8px rgba(35, 60, 42, 0.14), 0 0 0 1px #dee4d4;
+    }
+
+    /* ============================================================
+       02. 重置与基础排版
+       ============================================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      min-height: 100vh;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.75;
+      transition: background-color var(--transition-base), color var(--transition-base);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a, button {
+      color: inherit;
+      text-decoration: none;
+      touch-action: manipulation;
+    }
+    button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    /* 纸面环境微粒子 / 噪点底纹 */
+    .ambient-grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.035;
+      background-image: radial-gradient(var(--text-main) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* 空间容器 */
+    .app-viewport {
+      position: relative;
+      z-index: 2;
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 0 44px 50px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ============================================================
+       03. 顶栏：工作室与状态标定 (Top Bar)
+       ============================================================ */
+    .topbar {
+      height: 96px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-subtle);
+      transition: border-color var(--transition-base);
+    }
+
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-emblem {
+      width: 32px;
+      height: 32px;
+      color: var(--accent);
+      transition: color var(--transition-base), transform 0.3s ease;
+    }
+    .brand-cluster:hover .brand-emblem {
+      transform: rotate(-10deg) scale(1.06);
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .brand-title {
+      font-family: var(--serif);
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .brand-title em {
+      font-style: normal;
+      color: var(--accent);
+      font-size: 26px;
+      line-height: 0;
+    }
+    .brand-sub {
+      font-size: 9px;
+      letter-spacing: 2.2px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      text-transform: uppercase;
+    }
+
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* 音频标本室微控件 */
+    .soundscape-capsule {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 15px;
+      border-radius: 40px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .soundscape-capsule:hover {
+      border-color: var(--border-strong);
+      color: var(--text-main);
+    }
+    .soundscape-capsule.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .wave-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 2.5px;
+      height: 12px;
+    }
+    .wave-bar {
+      width: 2px;
+      height: 4px;
+      border-radius: 1px;
+      background-color: currentColor;
+      transition: height 0.2s ease;
+    }
+    .soundscape-capsule.active .wave-bar:nth-child(1) { animation: wave 1.1s ease-in-out infinite alternate; }
+    .soundscape-capsule.active .wave-bar:nth-child(2) { animation: wave 0.8s ease-in-out 0.2s infinite alternate; }
+    .soundscape-capsule.active .wave-bar:nth-child(3) { animation: wave 1.3s ease-in-out 0.4s infinite alternate; }
+    .soundscape-capsule.active .wave-bar:nth-child(4) { animation: wave 0.9s ease-in-out 0.1s infinite alternate; }
+
+    @keyframes wave {
+      0% { height: 3px; }
+      100% { height: 12px; }
+    }
+
+    /* 昼夜切换按钮 */
+    .theme-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+      transition: all 0.25s ease;
+    }
+    .theme-toggle-btn:hover {
+      border-color: var(--border-strong);
+      color: var(--text-main);
+      transform: translateY(-1px);
+    }
+    .theme-toggle-btn svg {
+      width: 17px;
+      height: 17px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* ============================================================
+       04. 主展区：画册实体与诗意文本对冲 (Stage Grid)
+       ============================================================ */
+    .stage {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 70px;
+      align-items: center;
+      padding: 60px 0 40px;
+      position: relative;
+    }
+
+    /* 左侧：物理书本与插画展台 */
+    .book-showcase {
+      position: relative;
+      height: 560px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 1400px;
+    }
+
+    /* 背景星轨圆环 */
+    .star-orbit {
+      position: absolute;
+      width: 480px;
+      height: 480px;
+      border-radius: 50%;
+      border: 1px dashed var(--border-strong);
+      opacity: 0.6;
+      pointer-events: none;
+      animation: spin-slow 120s linear infinite;
+    }
+    .star-orbit::before {
+      content: "";
+      position: absolute;
+      inset: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--border-subtle);
+    }
+    .star-orbit::after {
+      content: "✦";
+      position: absolute;
+      top: 15px;
+      left: 30%;
+      color: var(--accent);
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    @keyframes spin-slow {
+      to { transform: rotate(360deg); }
+    }
+
+    /* 画册实体封套 */
+    .physical-book {
+      position: relative;
+      width: 330px;
+      height: 440px;
+      background: var(--bg-book-cover);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px 12px 12px 6px;
+      padding: 22px 22px 24px 28px;
+      box-shadow: var(--shadow-book);
+      transform: rotate(-5deg);
+      transition: transform 0.6s cubic-bezier(0.2, 0.9, 0.3, 1), box-shadow 0.6s ease;
+      cursor: pointer;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .book-showcase:hover .physical-book {
+      transform: rotate(-2deg) translateY(-8px);
+    }
+
+    /* 书脊压痕与左侧折页微光 */
+    .physical-book::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 14px;
+      background: var(--book-spine);
+      z-index: 5;
+      pointer-events: none;
+    }
+    .physical-book::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 14px;
+      width: 1px;
+      background: var(--border-subtle);
+      z-index: 5;
+    }
+
+    .book-meta-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8px;
+      letter-spacing: 2.2px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      text-transform: uppercase;
+    }
+
+    /* 画册插画窗口 (SVG 纯内嵌原创意境画作) */
+    .book-artwork-window {
+      position: relative;
+      width: 100%;
+      height: 250px;
+      border-radius: 4px;
+      overflow: hidden;
+      background: #0f1612;
+      border: 1px solid var(--border-subtle);
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.35);
+    }
+    .artwork-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      transition: transform 0.7s ease;
+    }
+    .book-showcase:hover .artwork-svg {
+      transform: scale(1.03);
+    }
+
+    .book-caption-block {
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+    }
+    .book-display-title {
+      font-family: var(--serif);
+      font-size: 23px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      color: var(--text-main);
+      line-height: 1.25;
+      transition: color var(--transition-base);
+    }
+    .book-display-author {
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .book-display-author::before {
+      content: "";
+      width: 16px;
+      height: 1px;
+      background: var(--accent);
+      display: inline-block;
+    }
+
+    /* 附随拍立得卡片 (Polaroid) */
+    .polaroid-card {
+      position: absolute;
+      right: 8%;
+      bottom: 24px;
+      width: 200px;
+      background: var(--bg-polaroid);
+      padding: 10px 10px 14px;
+      border-radius: 3px;
+      box-shadow: var(--shadow-polaroid);
+      transform: rotate(8deg);
+      transition: transform 0.5s ease, box-shadow 0.5s ease;
+      cursor: pointer;
+      z-index: 6;
+    }
+    .polaroid-card:hover {
+      transform: rotate(4deg) translateY(-6px) scale(1.03);
+    }
+    .polaroid-thumb {
+      width: 100%;
+      height: 118px;
+      border-radius: 2px;
+      overflow: hidden;
+      background: #000;
+      border: 1px solid var(--border-subtle);
+    }
+    .polaroid-caption {
+      font-family: var(--serif);
+      font-size: 12px;
+      color: var(--text-main);
+      margin-top: 9px;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
+    /* 悬浮微徽标 */
+    .art-stamp {
+      position: absolute;
+      top: 36px;
+      left: 12%;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-strong);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 9px;
+      letter-spacing: 1.8px;
+      color: var(--accent);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      z-index: 7;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* 右侧：文学排版与沉浸交互 (Editorial Column) */
+    .editorial-column {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding-left: 10px;
+    }
+
+    .chapter-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      letter-spacing: 2.8px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 20px;
+    }
+    .chapter-eyebrow .index-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .editorial-headline {
+      font-family: var(--serif);
+      font-size: clamp(42px, 4.4vw, 64px);
+      font-weight: 500;
+      line-height: 1.22;
+      letter-spacing: -1.5px;
+      color: var(--text-main);
+      margin-bottom: 26px;
+      transition: color var(--transition-base);
+    }
+    .editorial-headline em {
+      font-style: normal;
+      color: var(--accent);
+      position: relative;
+      display: inline-block;
+    }
+    .editorial-headline em::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -6px;
+      height: 6px;
+      border-bottom: 2px solid var(--accent);
+      border-radius: 50%;
+      transform: rotate(-1.5deg);
+      opacity: 0.85;
+    }
+
+    .editorial-prose {
+      color: var(--text-sub);
+      font-size: 15px;
+      line-height: 2.05;
+      max-width: 480px;
+      margin-bottom: 38px;
+      position: relative;
+    }
+
+    /* 章节切换胶囊与快捷键 */
+    .action-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .primary-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 18px;
+      background: var(--accent);
+      color: #0c140e;
+      padding: 13px 28px;
+      border-radius: 36px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 8px 24px var(--accent-soft);
+    }
+    body.light-mode .primary-pill-btn {
+      color: #f5f5ec;
+    }
+    .primary-pill-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px var(--accent-glow);
+    }
+    .primary-pill-btn svg {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      fill: none;
+      transition: transform 0.2s ease;
+    }
+    .primary-pill-btn:hover svg {
+      transform: translateX(3px);
+    }
+
+    .pagination-dock {
+      display: inline-flex;
+      align-items: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 30px;
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .page-nav-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+    .page-nav-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--text-main);
+    }
+    .page-nav-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: currentColor;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .page-indicator-text {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      padding: 0 8px;
+    }
+    .page-indicator-text b {
+      color: var(--text-main);
+      font-weight: 500;
+    }
+
+    /* 快捷键提示条 */
+    .keyboard-hint {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 10px;
+      letter-spacing: 1.2px;
+      color: var(--text-dim);
+      margin-top: 26px;
+      text-transform: uppercase;
+    }
+    kbd {
+      font-family: var(--mono);
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+       05. 底栏与时间空间标定 (Footer & Status Coordinates)
+       ============================================================ */
+    .bottom-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 26px;
+      font-size: 10px;
+      letter-spacing: 1.8px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .coordinates {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .coordinates span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .live-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+    }
+
+    .poetic-whisper {
+      font-family: var(--serif);
+      font-size: 12px;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      text-transform: none;
+      transition: color 0.3s ease;
+    }
+    .poetic-whisper:hover {
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+       06. 响应式布局自适应 (Responsive Media Queries)
+       ============================================================ */
+    @media (max-width: 1080px) {
+      .stage {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        padding: 40px 0 20px;
+      }
+      .book-showcase {
+        height: 480px;
+      }
+      .editorial-column {
+        padding-left: 0;
+        text-align: center;
+        align-items: center;
+      }
+      .editorial-headline em::after {
+        left: 10%;
+        right: 10%;
+      }
+      .action-row {
+        justify-content: center;
+      }
+      .keyboard-hint {
+        justify-content: center;
+      }
+      .bottom-strip {
+        justify-content: center;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .app-viewport {
+        padding: 0 20px 30px;
+      }
+      .topbar {
+        height: 76px;
+      }
+      .brand-title {
+        font-size: 18px;
+      }
+      .brand-sub {
+        display: none;
+      }
+      .soundscape-capsule span {
+        display: none;
+      }
+      .book-showcase {
+        height: 400px;
+      }
+      .star-orbit {
+        width: 320px;
+        height: 320px;
+      }
+      .physical-book {
+        width: 250px;
+        height: 340px;
+        padding: 16px 16px 18px 20px;
+      }
+      .book-artwork-window {
+        height: 180px;
+      }
+      .polaroid-card {
+        width: 140px;
+        right: 0;
+        bottom: 10px;
+      }
+      .polaroid-thumb {
+        height: 80px;
+      }
+      .art-stamp {
+        left: 2%;
+        top: 10px;
+      }
+      .editorial-headline {
+        font-size: 34px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-grain"></div>
+
+  <div class="app-viewport">
+    <!-- 顶栏：工作室徽标与控制 -->
+    <header class="topbar">
+      <div class="brand-cluster">
+        <svg class="brand-emblem" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <path d="M16 8C11 3 5 5 3 6v20c5-2 9-1 13 2 4-3 8-4 13-2V6c-3-2-9-2-13 2Zm0 0v20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="10" cy="13" r="2.2" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M22 13h-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <div class="brand-text">
+          <div class="brand-title">Mio · 夜航手记<em>.</em></div>
+          <div class="brand-sub">NOCTURNE ARCHIVE & SOUNDSPEC</div>
+        </div>
+      </div>
+
+      <div class="top-controls">
+        <!-- 原生 Web Audio 氛围音效胶囊 -->
+        <button type="button" class="soundscape-capsule" id="soundscapeBtn" aria-label="切换深夜细雨环境白噪音">
+          <div class="wave-bars">
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+          </div>
+          <span id="soundscapeLabel">开启深夜细雨</span>
+        </button>
+
+        <!-- 昼夜平滑切换 -->
+        <button type="button" class="theme-toggle-btn" id="themeToggleBtn" aria-label="切换纸本与夜色模态">
+          <svg viewBox="0 0 24 24" id="themeIcon">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 核心展台：物理画册与诗意排版 -->
+    <main class="stage">
+      <!-- 左侧：立体画册与拍立得实体 -->
+      <div class="book-showcase" aria-label="画册封面立体展示">
+        <div class="star-orbit"></div>
+        <div class="art-stamp" id="stampTag">✦ VOL. 01 · 初夏辑</div>
+
+        <div class="physical-book" id="bookEntity">
+          <div class="book-meta-head">
+            <span id="bookSerial">MIO NOCTURNE / 001</span>
+            <span id="bookFormat">12 FRAMES</span>
+          </div>
+          
+          <div class="book-artwork-window">
+            <svg class="artwork-svg" id="artworkSvg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">
+              <!-- 动态插画内容由 JavaScript 渲染 -->
+            </svg>
+          </div>
+
+          <div class="book-caption-block">
+            <div class="book-display-title" id="bookTitle">海风与未寄出的信</div>
+            <div class="book-display-author" id="bookAuthor">七海 · 夏日记事集</div>
+          </div>
+        </div>
+
+        <!-- 倾斜拍立得副卡 -->
+        <div class="polaroid-card" id="polaroidCard">
+          <div class="polaroid-thumb">
+            <svg id="polaroidSvg" viewBox="0 0 200 120" preserveAspectRatio="xMidYMid slice" style="width:100%;height:100%;">
+              <!-- 拍立得细节裁切插画 -->
+            </svg>
+          </div>
+          <div class="polaroid-caption" id="polaroidText">风，把故事带了回来。</div>
+        </div>
+      </div>
+
+      <!-- 右侧：文学排版与翻页控制 -->
+      <section class="editorial-column">
+        <div class="chapter-eyebrow">
+          <i class="index-dot"></i>
+          <span id="chapterNumber">CHAPTER 01 · 编排与回响</span>
+        </div>
+
+        <h1 class="editorial-headline" id="mainHeadline">
+          让灵感，<br><em id="headlineHighlight">有页可循。</em>
+        </h1>
+
+        <p class="editorial-prose" id="proseParagraph">
+          那些没说出口的话，都藏在夏日的海风里。<br>
+          把脑海里的故事，编成分镜、绘成画面、装订成册。<br>
+          从第一幕到最后一页，Mio 陪你慢慢完成。
+        </p>
+
+        <div class="action-row">
+          <button type="button" class="primary-pill-btn" id="openBookBtn">
+            <span>翻开这本画册</span>
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+
+          <!-- 分页切页按键坞 -->
+          <div class="pagination-dock">
+            <button type="button" class="page-nav-btn" id="prevBtn" aria-label="上一章节">
+              <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <span class="page-indicator-text" id="pageIndicator"><b>01</b> / 03</span>
+            <button type="button" class="page-nav-btn" id="nextBtn" aria-label="下一章节">
+              <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="keyboard-hint">
+          <span>切页导航</span>
+          <kbd>←</kbd>
+          <kbd>→</kbd>
+          <span style="margin-left:8px;">昼夜切换</span>
+          <kbd>T</kbd>
+          <span style="margin-left:8px;">环境音</span>
+          <kbd>M</kbd>
+        </div>
+      </section>
+    </main>
+
+    <!-- 底部状态条与文学微语录 -->
+    <footer class="bottom-strip">
+      <div class="coordinates">
+        <span><i class="live-dot"></i> LOCAL-FIRST WORKSPACE</span>
+        <span>LAT 34°18'N · LON 132°30'E</span>
+        <span id="clockDisplay">22:45:00 UTC+8</span>
+      </div>
+
+      <div class="poetic-whisper">
+        “每一帧，都值得被好好收藏。”
+      </div>
+
+      <div>
+        MIO STUDIO · THE ARCHIVE OF STORIES
+      </div>
+    </footer>
+  </div>
+
+  <!-- ============================================================
+       07. 交互与音频引擎脚本 (Pure Native JavaScript)
+       ============================================================ -->
+  <script>
+    (() => {
+      'use strict';
+
+      // ------------------------------------------------------------
+      // 1. 三部故事章节数据 (Data Schema)
+      // ------------------------------------------------------------
+      const chapters = [
+        {
+          stamp: "✦ VOL. 01 · 初夏辑",
+          serial: "MIO NOCTURNE / 001",
+          format: "12 FRAMES",
+          title: "海风与未寄出的信",
+          author: "七海 · 夏日记事集",
+          chapterLabel: "CHAPTER 01 · 编排与回响",
+          headlinePrefix: "让灵感，",
+          headlineHighlight: "有页可循。",
+          prose: "那些没说出口的话，都藏在夏日的海风里。<br>把脑海里的故事，编成分镜、绘成画面、装订成册。<br>从第一幕到最后一页，Mio 陪你慢慢完成。",
+          polaroidText: "风，把故事带了回来。",
+          artworkSvgContent: `
+            <defs>
+              <linearGradient id="sky1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#2a4d43"/>
+                <stop offset="60%" stop-color="#4e7c6f"/>
+                <stop offset="100%" stop-color="#8bb7a8"/>
+              </linearGradient>
+              <linearGradient id="sea1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#1b3830"/>
+                <stop offset="100%" stop-color="#0f221d"/>
+              </linearGradient>
+            </defs>
+            <rect width="400" height="300" fill="url(#sky1)"/>
+            <path d="M-20 120 Q50 90 120 110 T260 100 T420 115 L420 180 L-20 180 Z" fill="#ffffff" opacity="0.25"/>
+            <rect y="145" width="400" height="155" fill="url(#sea1)"/>
+            <ellipse cx="280" cy="185" rx="90" ry="8" fill="#3a685c" opacity="0.4"/>
+            <ellipse cx="140" cy="215" rx="120" ry="10" fill="#1f3f37" opacity="0.5"/>
+            <path d="M80 300 Q150 170 270 175 Q340 180 400 230 L400 300 Z" fill="#2d493a"/>
+            <path d="M120 300 Q180 195 280 200 L400 260 L400 300 Z" fill="#22392d"/>
+            <rect x="295" y="140" width="10" height="36" fill="#f8faf5"/>
+            <polygon points="293,140 307,140 300,132" fill="#c05c46"/>
+            <rect x="294" y="148" width="12" height="4" fill="#c05c46"/>
+            <circle cx="300" cy="144" r="2" fill="#ffeaa7"/>
+            <rect x="180" y="215" width="22" height="18" fill="#d9cfbf"/>
+            <polygon points="178,215 204,215 191,204" fill="#bd644d"/>
+            <rect x="210" y="222" width="26" height="20" fill="#ece4d8"/>
+            <polygon points="208,222 238,222 223,210" fill="#a4523d"/>
+            <rect x="245" y="218" width="20" height="16" fill="#cfc6b5"/>
+            <polygon points="243,218 267,218 255,209" fill="#c26c57"/>
+            <path d="M160 300 Q210 260 250 250 T300 176" fill="none" stroke="#cfc5b0" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="1 3"/>
+            <path d="M100 80 Q105 75 110 80 Q115 75 120 80" fill="none" stroke="#fff" stroke-width="1.2" opacity="0.6"/>
+            <path d="M130 92 Q134 88 138 92 Q142 88 146 92" fill="none" stroke="#fff" stroke-width="1.2" opacity="0.5"/>
+          `,
+          polaroidSvgContent: `
+            <rect width="200" height="120" fill="#2a4d43"/>
+            <path d="M0 70 Q60 50 120 75 T200 65 L200 120 L0 120 Z" fill="#22392d"/>
+            <rect x="135" y="46" width="8" height="26" fill="#f8faf5"/>
+            <polygon points="133,46 145,46 139,40" fill="#c05c46"/>
+            <circle cx="139" cy="49" r="1.5" fill="#ffeaa7"/>
+          `
+        },
+        {
+          stamp: "✦ VOL. 02 · 霜夜辑",
+          serial: "MIO NOCTURNE / 002",
+          format: "04 SCROLLS",
+          title: "夜行列车与第零秒",
+          author: "槐安 · 编年轮轨录",
+          chapterLabel: "CHAPTER 02 · 轨道与锚点",
+          headlinePrefix: "穿行雪原，",
+          headlineHighlight: "驶向破晓。",
+          prose: "车窗倒映着旧书店昏黄的灯火，秒针停在交错的一瞬。<br>不必等待所有条件完备，先为故事铺设第一段轨道。<br>时间的刻度，因你的记录而有了重量。",
+          polaroidText: "秒针停顿处的微光。",
+          artworkSvgContent: `
+            <defs>
+              <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#141c2b"/>
+                <stop offset="60%" stop-color="#24344d"/>
+                <stop offset="100%" stop-color="#465b75"/>
+              </linearGradient>
+            </defs>
+            <rect width="400" height="300" fill="url(#sky2)"/>
+            <polygon points="-20,220 80,110 180,220" fill="#2d3d54"/>
+            <polygon points="60,132 80,110 105,135" fill="#dce6f2"/>
+            <polygon points="120,230 240,80 360,230" fill="#1f2c3d"/>
+            <polygon points="210,118 240,80 270,118" fill="#edf4fc"/>
+            <polygon points="290,230 380,130 440,230" fill="#26364a"/>
+            <circle cx="50" cy="40" r="1.5" fill="#fff" opacity="0.6"/>
+            <circle cx="120" cy="70" r="1.2" fill="#fff" opacity="0.7"/>
+            <circle cx="210" cy="30" r="2" fill="#fff" opacity="0.8"/>
+            <circle cx="320" cy="60" r="1.5" fill="#fff" opacity="0.5"/>
+            <circle cx="280" cy="110" r="1.2" fill="#fff" opacity="0.6"/>
+            <circle cx="170" cy="150" r="1.8" fill="#fff" opacity="0.7"/>
+            <rect y="210" width="400" height="12" fill="#121822"/>
+            <line x1="0" y1="210" x2="400" y2="210" stroke="#71869e" stroke-width="2"/>
+            <rect x="90" y="196" width="220" height="14" rx="3" fill="#e8ba6b" opacity="0.85"/>
+            <rect x="100" y="199" width="16" height="7" fill="#fffef0"/>
+            <rect x="124" y="199" width="16" height="7" fill="#fffef0"/>
+            <rect x="148" y="199" width="16" height="7" fill="#fffef0"/>
+            <rect x="172" y="199" width="16" height="7" fill="#fffef0"/>
+            <rect x="196" y="199" width="16" height="7" fill="#fffef0"/>
+            <rect x="220" y="199" width="16" height="7" fill="#fffef0"/>
+            <polygon points="310,203 400,165 400,240" fill="#fff" opacity="0.18"/>
+          `,
+          polaroidSvgContent: `
+            <rect width="200" height="120" fill="#1f2c3d"/>
+            <rect x="20" y="50" width="160" height="12" rx="2" fill="#e8ba6b" opacity="0.9"/>
+            <polygon points="175,56 200,30 200,80" fill="#fff" opacity="0.25"/>
+          `
+        },
+        {
+          stamp: "✦ VOL. 03 · 浮生辑",
+          serial: "MIO NOCTURNE / 003",
+          format: "08 CANVASES",
+          title: "浮岛、雨季与钟表匠",
+          author: "诺亚 · 机械星云记",
+          chapterLabel: "CHAPTER 03 · 齿轮与微雨",
+          headlinePrefix: "云海之上，",
+          headlineHighlight: "发条不息。",
+          prose: "悬浮的铜铸群岛在雾气里缓缓回转，雨丝拨动着古老簧片。<br>创作就像打磨一枚精巧的齿轮，让每一帧严丝合缝。<br>哪怕世界庞大，你也有属于自己的方寸之间。",
+          polaroidText: "发条与云端的低语。",
+          artworkSvgContent: `
+            <defs>
+              <linearGradient id="sky3" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#213028"/>
+                <stop offset="50%" stop-color="#3d5042"/>
+                <stop offset="100%" stop-color="#697e68"/>
+              </linearGradient>
+            </defs>
+            <rect width="400" height="300" fill="url(#sky3)"/>
+            <circle cx="310" cy="90" r="45" fill="#edd9b4" opacity="0.4"/>
+            <ellipse cx="310" cy="90" rx="65" ry="14" fill="none" stroke="#d5be94" stroke-width="1.5" opacity="0.5" transform="rotate(-15 310 90)"/>
+            <path d="M120 180 Q200 160 290 185 Q250 250 190 260 Q150 240 120 180 Z" fill="#1e2920"/>
+            <ellipse cx="205" cy="180" rx="85" ry="18" fill="#445e47"/>
+            <rect x="190" y="125" width="28" height="50" fill="#ab8758"/>
+            <polygon points="186,125 222,125 204,95" fill="#784e31"/>
+            <circle cx="204" cy="142" r="7" fill="#f7f3e8"/>
+            <line x1="204" y1="142" x2="204" y2="138" stroke="#333" stroke-width="1.5"/>
+            <line x1="204" y1="142" x2="207" y2="142" stroke="#333" stroke-width="1.5"/>
+            <path d="M-20 250 Q60 220 140 245 T300 230 T420 260 L420 300 L-20 300 Z" fill="#9db09e" opacity="0.7"/>
+          `,
+          polaroidSvgContent: `
+            <rect width="200" height="120" fill="#3d5042"/>
+            <circle cx="150" cy="40" r="25" fill="#edd9b4" opacity="0.5"/>
+            <ellipse cx="100" cy="85" rx="60" ry="14" fill="#1e2920"/>
+            <rect x="90" y="55" width="18" height="30" fill="#ab8758"/>
+          `
+        }
+      ];
+
+      let currentIndex = 0;
+      let chapterTimer = null;
+
+      // ------------------------------------------------------------
+      // 2. DOM 节点引用
+      // ------------------------------------------------------------
+      const stampTag = document.getElementById('stampTag');
+      const bookSerial = document.getElementById('bookSerial');
+      const bookFormat = document.getElementById('bookFormat');
+      const artworkSvg = document.getElementById('artworkSvg');
+      const bookTitle = document.getElementById('bookTitle');
+      const bookAuthor = document.getElementById('bookAuthor');
+      const polaroidSvg = document.getElementById('polaroidSvg');
+      const polaroidText = document.getElementById('polaroidText');
+      const chapterNumber = document.getElementById('chapterNumber');
+      const mainHeadline = document.getElementById('mainHeadline');
+      const proseParagraph = document.getElementById('proseParagraph');
+      const pageIndicator = document.getElementById('pageIndicator');
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const bookEntity = document.getElementById('bookEntity');
+      const openBookBtn = document.getElementById('openBookBtn');
+
+      // ------------------------------------------------------------
+      // 3. 丝滑渲染章节 (带防抖与平滑过渡)
+      // ------------------------------------------------------------
+      function renderChapter(index, animate = true) {
+        const item = chapters[index];
+        if (!item) return;
+
+        if (chapterTimer) {
+          clearTimeout(chapterTimer);
+          chapterTimer = null;
+        }
+
+        if (animate) {
+          bookEntity.style.transform = 'rotate(-8deg) scale(0.96)';
+          bookEntity.style.opacity = '0.7';
+          chapterTimer = setTimeout(() => {
+            applyData(item, index);
+            bookEntity.style.transform = '';
+            bookEntity.style.opacity = '';
+            chapterTimer = null;
+          }, 180);
+        } else {
+          applyData(item, index);
+        }
+      }
+
+      function applyData(item, index) {
+        stampTag.textContent = item.stamp;
+        bookSerial.textContent = item.serial;
+        bookFormat.textContent = item.format;
+        artworkSvg.innerHTML = item.artworkSvgContent;
+        bookTitle.textContent = item.title;
+        bookAuthor.textContent = item.author;
+        polaroidSvg.innerHTML = item.polaroidSvgContent;
+        polaroidText.textContent = item.polaroidText;
+        chapterNumber.textContent = item.chapterLabel;
+        
+        mainHeadline.innerHTML = `${item.headlinePrefix}<br><em id="headlineHighlight">${item.headlineHighlight}</em>`;
+        proseParagraph.innerHTML = item.prose;
+        pageIndicator.innerHTML = `<b>0${index + 1}</b> / 0${chapters.length}`;
+      }
+
+      renderChapter(0, false);
+
+      function goToPrev() {
+        currentIndex = (currentIndex - 1 + chapters.length) % chapters.length;
+        renderChapter(currentIndex);
+      }
+      function goToNext() {
+        currentIndex = (currentIndex + 1) % chapters.length;
+        renderChapter(currentIndex);
+      }
+
+      prevBtn.addEventListener('click', goToPrev);
+      nextBtn.addEventListener('click', goToNext);
+      
+      // 主按钮绑定翻页交互与轻微触碰回弹
+      if (openBookBtn) {
+        openBookBtn.addEventListener('click', () => {
+          goToNext();
+        });
+      }
+
+      // ------------------------------------------------------------
+      // 4. 昼夜模式切换 (Theme Engine)
+      // ------------------------------------------------------------
+      const themeToggleBtn = document.getElementById('themeToggleBtn');
+      const themeIcon = document.getElementById('themeIcon');
+      
+      const sunIconPath = `
+        <circle cx="12" cy="12" r="5"></circle>
+        <line x1="12" y1="1" x2="12" y2="3"></line>
+        <line x1="12" y1="21" x2="12" y2="23"></line>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+        <line x1="1" y1="12" x2="3" y2="12"></line>
+        <line x1="21" y1="12" x2="23" y2="12"></line>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+      `;
+      const moonIconPath = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>`;
+
+      function toggleTheme() {
+        const isLight = document.body.classList.toggle('light-mode');
+        themeIcon.innerHTML = isLight ? sunIconPath : moonIconPath;
+        try {
+          localStorage.setItem('mio-showcase-theme', isLight ? 'light' : 'dark');
+        } catch (_) {}
+      }
+
+      themeToggleBtn.addEventListener('click', toggleTheme);
+
+      try {
+        if (localStorage.getItem('mio-showcase-theme') === 'light') {
+          document.body.classList.add('light-mode');
+          themeIcon.innerHTML = sunIconPath;
+        }
+      } catch (_) {}
+
+      // ------------------------------------------------------------
+      // 5. 纯原生 Web Audio 细雨白噪音合成引擎 (健壮状态机与淡入淡出防抖)
+      // ------------------------------------------------------------
+      let audioCtx = null;
+      let noiseNode = null;
+      let filterNode = null;
+      let gainNode = null;
+      let isPlayingSound = false;
+      let soundFadeTimer = null;
+
+      const soundscapeBtn = document.getElementById('soundscapeBtn');
+      const soundscapeLabel = document.getElementById('soundscapeLabel');
+
+      function initWebAudio() {
+        if (audioCtx) return;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContext();
+
+        const bufferSize = audioCtx.sampleRate * 5;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        
+        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          b0 = 0.99886 * b0 + white * 0.0555179;
+          b1 = 0.99332 * b1 + white * 0.0750759;
+          b2 = 0.96900 * b2 + white * 0.1538520;
+          b3 = 0.86650 * b3 + white * 0.3104856;
+          b4 = 0.55000 * b4 + white * 0.5329522;
+          b5 = -0.7616 * b5 - white * 0.0168980;
+          output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.04;
+          b6 = white * 0.115926;
+        }
+
+        noiseNode = audioCtx.createBufferSource();
+        noiseNode.buffer = noiseBuffer;
+        noiseNode.loop = true;
+
+        filterNode = audioCtx.createBiquadFilter();
+        filterNode.type = 'lowpass';
+        filterNode.frequency.value = 850;
+
+        gainNode = audioCtx.createGain();
+        gainNode.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+
+        noiseNode.connect(filterNode);
+        filterNode.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        noiseNode.start();
+      }
+
+      function toggleSoundscape() {
+        if (soundFadeTimer) {
+          clearTimeout(soundFadeTimer);
+          soundFadeTimer = null;
+        }
+
+        if (!isPlayingSound) {
+          initWebAudio();
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+          const now = audioCtx.currentTime;
+          gainNode.gain.cancelScheduledValues(now);
+          gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+          gainNode.gain.linearRampToValueAtTime(0.35, now + 1.0);
+          
+          soundscapeBtn.classList.add('active');
+          soundscapeLabel.textContent = '深夜细雨播放中';
+          isPlayingSound = true;
+        } else {
+          const now = audioCtx.currentTime;
+          gainNode.gain.cancelScheduledValues(now);
+          gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+          gainNode.gain.linearRampToValueAtTime(0.0001, now + 0.6);
+          
+          soundscapeBtn.classList.remove('active');
+          soundscapeLabel.textContent = '开启深夜细雨';
+          isPlayingSound = false;
+
+          soundFadeTimer = setTimeout(() => {
+            if (!isPlayingSound && audioCtx && audioCtx.state === 'running') {
+              audioCtx.suspend().catch(() => {});
+            }
+            soundFadeTimer = null;
+          }, 650);
+        }
+      }
+
+      soundscapeBtn.addEventListener('click', toggleSoundscape);
+
+      // ------------------------------------------------------------
+      // 6. 全局键盘快捷键 (严格过滤修饰键与输入状态)
+      // ------------------------------------------------------------
+      window.addEventListener('keydown', (e) => {
+        // 过滤修饰键（防止拦截 Ctrl+T、Cmd+T、Alt 组合键等系统行为）
+        if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+        
+        // 避开输入框焦点
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+
+        if (e.key === 'ArrowLeft') {
+          goToPrev();
+        } else if (e.key === 'ArrowRight') {
+          goToNext();
+        } else if (e.key === 't' || e.key === 'T') {
+          toggleTheme();
+        } else if (e.key === 'm' || e.key === 'M') {
+          toggleSoundscape();
+        }
+      });
+
+      // ------------------------------------------------------------
+      // 7. 真实 UTC+8 时区时间戳时钟
+      // ------------------------------------------------------------
+      const clockDisplay = document.getElementById('clockDisplay');
+      const timeFormatter = new Intl.DateTimeFormat('zh-CN', {
+        timeZone: 'Asia/Shanghai',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+
+      function updateClock() {
+        clockDisplay.textContent = `${timeFormatter.format(new Date())} UTC+8`;
+      }
+      setInterval(updateClock, 1000);
+      updateClock();
+
+    })();
+  </script>
+</body>
+</html>
