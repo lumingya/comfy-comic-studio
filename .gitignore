@@ -18,6 +18,7 @@ build/
 *.bak
 
 # overhaul housekeeping
+_backups/
 _to_delete/
 test-results/
 .pytest_cache/
