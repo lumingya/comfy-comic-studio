@@ -509,7 +509,7 @@ async function shareCurrentBook() {
 
     try {
         if (navigator.share) {
-            await navigator.share({ title: book.title || 'ComfyComic Studio 画册', text: shareText });
+            await navigator.share({ title: book.title || 'Mio 画册', text: shareText });
             return;
         }
         if (!navigator.clipboard?.writeText) throw new Error('Clipboard API unavailable');

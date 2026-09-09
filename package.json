@@ -1,22 +1,25 @@
 {
-  "name": "comfy-comic-studio",
-  "version": "0.0.1",
+  "name": "mio-studio",
+  "version": "1.0.0",
   "private": true,
-  "description": "本地运行的连环画批量制作工作台（ComfyUI + LLM）。前端为原生 HTML/CSS/JS，后端为 Python 标准库服务。",
+  "description": "Mio — local-first storyboard, multi-provider image production and illustrated albums.",
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && npm run test:py && npm run test:smoke",
+    "test": "npm run lint && npm run test:contracts && npm run test:py && npm run test:smoke",
     "test:py": "python -m unittest discover -s tests -v",
     "test:smoke": "node tests/smoke.mjs",
     "lint": "npm run lint:js && npm run lint:html",
-    "lint:js": "eslint app.js comfy.js llm.js js/*.js",
+    "lint:js": "eslint js/state.js js/sync.js js/engine.js js/creation.js js/ui.js js/workspace.js js/organize.js js/app.js js/build.js js/tests.js",
     "lint:html": "html-validate index.html",
-    "start": "python server.py"
+    "start": "python server.py",
+    "build": "node js/build.js bundle",
+    "test:contracts": "node js/tests.js"
   },
   "devDependencies": {
     "eslint": "^8.57.1",
     "html-validate": "^8.24.2",
-    "playwright": "^1.49.0"
+    "playwright": "^1.49.0",
+    "acorn": "^8.15.0"
   }
 }

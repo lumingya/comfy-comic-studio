@@ -1,0 +1,12 @@
+{
+  "chatConfig": {
+    "sessions": [
+      {
+        "id": "chat_default",
+        "title": "新对话",
+        "messages": []
+      }
+    ],
+    "activeChatId": "chat_default"
+  }
+}

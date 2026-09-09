@@ -130,7 +130,7 @@ const ComicTemplateGenerators = {
         </header>
         ${panelsHtml}
         <footer class="webtoon-footer">
-            <p>Generated with ComfyComic Studio · 全屏离线阅读本</p>
+            <p>Generated with Mio · 全屏离线阅读本</p>
         </footer>
     </main>
     <script>

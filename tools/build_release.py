@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-ComfyComic Studio - Windows Release Packaging Script
+Mio - Windows Release Packaging Script
 Version: 0.0.1
 ===================================================
 此脚本完全独立生成纯净的 v9 原生初始配置（1 个画册集、1 本画册、1 张图片、1 个十二幕模板、1 组七海标准设定），
@@ -10,6 +10,8 @@ Version: 0.0.1
 """
 
 import os
+import base64
+from pathlib import Path
 import sys
 import shutil
 import json
@@ -18,8 +20,8 @@ import subprocess
 import time
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-VERSION = "0.0.1"
-RELEASE_NAME = f"comfy-comic-studio-v{VERSION}-windows"
+VERSION = "1.0.0"
+RELEASE_NAME = f"mio-v{VERSION}-windows"
 DIST_DIR = os.path.join(ROOT_DIR, "dist")
 RELEASE_DIR = os.path.join(DIST_DIR, RELEASE_NAME)
 ZIP_FILE = os.path.join(DIST_DIR, f"{RELEASE_NAME}.zip")
@@ -148,7 +150,7 @@ def get_v9_pure_default_data():
         "name": frames[0]["name"],
         "prompt": "nanami, white shirt, navy skirt, small canvas bag, cinematic anime illustration, delicate cel shading, soft film texture, a quiet coastal town in summer, a quiet seaside town, distant train tracks, calm summer morning",
         "caption": "夏日的风经过窗边，故事还没有名字。",
-        "image": "https://images.alphacoders.com/819/thumbbig-819506.webp"
+        "image": "data:image/webp;base64," + base64.b64encode(Path(ROOT_DIR, "vendor", "default-cover.webp").read_bytes()).decode("ascii")
     }
 
     book = {
@@ -233,7 +235,7 @@ def get_v9_pure_default_data():
                 "drafts": {},
                 "settings": {
                     "comfy": {
-                        "mode": "mock",
+                        "mode": "real",
                         "workflow": {
                             "6": {
                                 "class_type": "CLIPTextEncode",
@@ -247,9 +249,9 @@ def get_v9_pure_default_data():
                         },
                         "presets": []
                     },
-                    "llm": {"mode": "mock", "key": "", "baseUrl": ""},
-                    "xml": {"key": ""},
-                    "critic": {"key": ""},
+                    "llm": {"mode": "real", "key": "", "baseUrl": "https://api.openai.com/v1", "model": "gpt-4o"},
+                    "xml": {"mode": "real", "key": ""},
+                    "critic": {"mode": "real", "key": ""},
                     "studio": {
                         "visibility": {"logs": False},
                         "shell": {"collapsed": False},
@@ -267,11 +269,12 @@ def get_v9_pure_default_data():
         }
     }
 
-    chat_data = {"sessions": [], "activeChatId": ""}
+    chat_data = {"chatConfig": {"sessions": [], "activeChatId": ""}}
+    ui_data["batchRunState"] = {"queue": []}
     comfy_data = {
         "comfyWorkflows": [],
         "comfyConfig": {
-            "mode": "mock",
+            "mode": "real", "baseUrl": "http://127.0.0.1:8188", "autoFallback": False,
             "workflow": {
                 "6": {
                     "class_type": "CLIPTextEncode",
@@ -286,17 +289,45 @@ def get_v9_pure_default_data():
         "nodeNegative": "",
         "nodeOutput": "9"
     }
-    llm_data = {"llmConfig": {}}
-    xml_data = {"xmlConfig": {}}
+    llm_data = {"llmConfig": {"mode": "real", "baseUrl": "https://api.openai.com/v1", "model": "gpt-4o", "key": ""}}
+    xml_data = {"xmlConfig": {"mode": "real", "separate": False}}
+
+    # Real API graph: replace the checkpoint filename with an installed model.
+    workflow = {   '3': {   'class_type': 'KSampler',
+                 'inputs': {   'cfg': 7,
+                               'denoise': 1,
+                               'latent_image': ['5', 0],
+                               'model': ['4', 0],
+                               'negative': ['7', 0],
+                               'positive': ['6', 0],
+                               'sampler_name': 'euler',
+                               'scheduler': 'normal',
+                               'seed': 42,
+                               'steps': 24}},
+        '4': {   'class_type': 'CheckpointLoaderSimple',
+                 'inputs': {'ckpt_name': 'your-anime-model.safetensors'}},
+        '5': {   'class_type': 'EmptyLatentImage',
+                 'inputs': {'batch_size': 1, 'height': 1024, 'width': 768}},
+        '6': {   'class_type': 'CLIPTextEncode',
+                 'inputs': {'clip': ['4', 1], 'text': '{character}, anime illustration'}},
+        '7': {   'class_type': 'CLIPTextEncode',
+                 'inputs': {'clip': ['4', 1], 'text': 'low quality, bad anatomy'}},
+        '8': {'class_type': 'VAEDecode', 'inputs': {'samples': ['3', 0], 'vae': ['4', 2]}},
+        '9': {   'class_type': 'SaveImage',
+                 'inputs': {'filename_prefix': 'Mio', 'images': ['8', 0]}}}
+    comfy_data['comfyConfig']['workflow'] = workflow
+    comfy_data['comfyConfig']['mapping'] = {'positive': '6', 'negative': '7', 'output': '9'}
+    comfy_data['nodeNegative'] = '7'
+    ui_data['uiConfig']['comfyStudio']['settings']['comfy'].update(comfy_data['comfyConfig'])
 
     return content_data, ui_data, chat_data, comfy_data, llm_data, xml_data
 
 def create_start_bat(dst_path):
     content = """@echo off
 chcp 65001 >nul
-title ComfyComic Studio v0.0.1
+title Mio v1.0.0
 echo =======================================================
-echo   ComfyComic Studio v0.0.1 (Windows 发行版)
+echo   Mio v1.0.0 (Windows 发行版)
 echo   本地服务与故事分镜工作台启动中...
 echo =======================================================
 echo.
@@ -304,9 +335,9 @@ echo.
 cd /d "%~dp0"
 
 :: 1. 优先使用随包编译的独立可执行文件（免装 Python 环境）
-if exist "comfy-comic-studio.exe" (
+if exist "mio.exe" (
     echo [启动模式] 使用独立可执行程序启动...
-    "comfy-comic-studio.exe"
+    "mio.exe"
     goto end
 )
 
@@ -325,7 +356,7 @@ if %errorlevel% equ 0 (
     goto end
 )
 
-echo [错误] 未检测到 Python 运行时或 comfy-comic-studio.exe。
+echo [错误] 未检测到 Python 运行时或 mio.exe。
 echo 请安装 Python 3.10+ (https://www.python.org/) 并勾选 "Add Python to PATH"。
 echo.
 
@@ -336,48 +367,18 @@ pause
         f.write(content.replace("\r\n", "\n").replace("\n", "\r\n"))
 
 def create_readme(dst_path):
-    content = f"""# 🎨 ComfyComic Studio v{VERSION} (Windows 便携发行版)
+    # Use the maintained bilingual entry point, not a stale ComfyUI-only synopsis.
+    shutil.copy2(os.path.join(ROOT_DIR, "README.md"), dst_path)
 
-> **专为 AI 连环画 / 多格漫画 / 绘本创作者打造的本地批量生产工作台**  
-> 支持角色名与字幕显示名独立设定、自由语法提示词与一键自动批量排版。100% 本地运行，隐私安全。
-
----
-
-## 🚀 极速启动
-
-### 方式一：独立程序启动（推荐，免装 Python）
-直接双击根目录下的 **`comfy-comic-studio.exe`**。  
-服务启动后将自动在系统默认浏览器中打开工作台。
-
-### 方式二：脚本启动（有 Python 环境）
-直接双击根目录下的 **`start.bat`**。
-
----
-
-## 🌐 访问地址
-浏览器访问：**http://127.0.0.1:8777/index.html**
-
-## 💡 默认示范说明
-- **原生预置**：1 个典藏画册集《夏日叙事集》、1 部示范画册《海风与未寄出的信》、1 套通用 12 幕分镜模板《远行与归来》。
-- **角色名区分**：
-  - `{{character}}`：英文绘图提示词专用（生图标签，如 `nanami` 或 `nahida`）；
-  - `{{character_display_name}}`：字幕旁白与台词专用（如 `七海` 或 `纳西妲`）。
-- **ComfyUI 连接**：默认连接 `127.0.0.1:8188`。若未开启 ComfyUI，可在工作流页面切换为「模拟模式」进行离线剧本排版与浏览。
-
----
-*版本: v{VERSION} · 发布日期: 2026-09*
-"""
-    with open(dst_path, "w", encoding="utf-8") as f:
-        f.write(content)
 
 def build():
     print(f"============================================================")
-    print(f"  [ComfyComic Studio] 开始打包 Windows 便携发行版 v{VERSION}")
+    print(f"  [Mio] 开始打包 Windows 便携发行版 v{VERSION}")
     print(f"============================================================")
 
     # 1. Prepare clean directories
     try:
-        subprocess.run(["taskkill", "/f", "/im", "comfy-comic-studio.exe"], capture_output=True)
+        subprocess.run(["taskkill", "/f", "/im", "mio.exe"], capture_output=True)
         time.sleep(0.5)
     except Exception:
         pass
@@ -404,7 +405,7 @@ def build():
         "--clean",
         "--onefile",
         "--console",
-        "--name", "comfy-comic-studio",
+        "--name", "mio",
         "--distpath", RELEASE_DIR,
         "--workpath", BUILD_TEMP_DIR,
         os.path.join(ROOT_DIR, "server.py")
@@ -414,7 +415,7 @@ def build():
     if result.returncode != 0:
         print("  [提示] PyInstaller 编译返回非 0，继续检查可执行文件是否存在...")
     
-    exe_path = os.path.join(RELEASE_DIR, "comfy-comic-studio.exe")
+    exe_path = os.path.join(RELEASE_DIR, "mio.exe")
     if os.path.exists(exe_path):
         print(f"  PyInstaller 编译成功: {exe_path} ({os.path.getsize(exe_path)/(1024*1024):.2f} MB)")
     else:
@@ -422,11 +423,14 @@ def build():
 
     # 3. Copy frontend assets
     print("\n[3/5] 同步前端核心产物与静态资源...")
-    for f in ["index.html", "styles.css", "favicon.svg", "server.py", "LICENSE", "default_comic_template.json"]:
+    for f in ["index.html", "styles.css", "favicon.svg", "server.py", "mio_api.py", "mio_credentials.py", "README.md", "README.en.md", "LICENSE", "default_comic_template.json"]:
         src = os.path.join(ROOT_DIR, f)
         if os.path.exists(src):
             shutil.copy2(src, os.path.join(RELEASE_DIR, f))
             print(f"  已复制: {f}")
+
+    for folder in ("docs", "examples"):
+        shutil.copytree(os.path.join(ROOT_DIR, folder), os.path.join(RELEASE_DIR, folder), dirs_exist_ok=True)
 
     # Copy vendor
     vendor_src = os.path.join(ROOT_DIR, "vendor")
@@ -439,7 +443,7 @@ def build():
     js_src = os.path.join(ROOT_DIR, "js")
     js_dst = os.path.join(RELEASE_DIR, "js")
     os.makedirs(js_dst, exist_ok=True)
-    for js_file in ["state.js", "sync.js", "engine.js", "creation.js", "ui.js", "app.js", "README.js"]:
+    for js_file in ["state.js", "sync.js", "engine.js", "creation.js", "ui.js", "workspace.js", "organize.js", "app.js", "README.js"]:
         src = os.path.join(js_src, js_file)
         if os.path.exists(src):
             shutil.copy2(src, os.path.join(js_dst, js_file))

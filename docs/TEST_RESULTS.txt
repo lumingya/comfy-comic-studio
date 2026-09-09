@@ -1,0 +1,279 @@
+
+> mio-studio@1.0.0 test
+> npm run lint && npm run test:contracts && npm run test:py && npm run test:smoke
+
+
+> mio-studio@1.0.0 lint
+> npm run lint:js && npm run lint:html
+
+
+> mio-studio@1.0.0 lint:js
+> eslint js/state.js js/sync.js js/engine.js js/creation.js js/ui.js js/workspace.js js/organize.js js/app.js js/build.js js/tests.js
+
+
+> mio-studio@1.0.0 lint:html
+> html-validate index.html
+
+
+> mio-studio@1.0.0 test:contracts
+> node js/tests.js
+
+PASS all 10 native fields are flat and present
+PASS empty collections stay empty instead of restoring demo assets
+PASS undefined frames normalize to an empty list
+PASS 65 and 512 frames are allowed, 513 is rejected
+PASS an empty book has zero frames and can be normalized
+PASS forceWrite is explicit and does not leak from a previous save
+PASS API credentials are not silently added to normal config backups
+PASS wrapped abstract REST payload is rejected on read
+PASS an incomplete API object is rejected instead of clearing work
+PASS legacy workflow selection and node IDs are mapped without a text assumption
+PASS WeiLinPromptUI #1832 selects its actual positive input
+PASS SDXL text_g/text_l follow deterministic actual-string priority
+PASS negative binding picks the negative field when the node has both
+PASS a link-only node cannot be overwritten even with allowLink
+PASS reads GET then writes POST /api/config, never PUT or {state}
+PASS a new edit clears errors and retries a failed save with forceWrite intact
+PASS an uninitialized client cannot flush demo data over the backend
+PASS initial network failure can recover without silently replacing existing work
+PASS irregular braces and empty weights never block prompt text
+PASS NovelAI weights and unknown braces stay byte-for-byte unchanged
+PASS only known, isolated placeholders become highlight tokens
+PASS empty declared variables collapse duplicate commas and edge commas
+PASS declared but absent values are omitted, unknown names stay literal
+PASS comma cleanup does not rewrite weight groups or JSON strings
+PASS zero and false remain meaningful prompt values
+PASS brace suggestions are informational only
+PASS prompt highlights escape HTML without changing the author text
+PASS odd-page spreads use a blank right leaf without array overflow
+PASS empty reader remains valid and has no out-of-range pages
+PASS collection layouts are explicitly selected rather than inferred from book count
+PASS grid pagination handles large collections and clamps stale page indices
+PASS mixed aspect-ratio covers fit without cropping or distortion
+PASS reading opens in the scroll view by default
+PASS native Chinese and English UI labels use an in-memory catalog
+PASS UI localization does not translate unknown authored content
+PASS demo cleanup removes only untouched extra pages and preserves the first image
+PASS modified and non-demo books are never erased by demo cleanup
+PASS the log switch controls the final sidebar navigation
+PASS display preferences have a single owner, not workspace identity
+PASS wide artistic brand fonts shrink to the available sidebar width
+PASS renamed workflow and extension labels have English translations
+PASS deleting a collection removes its scoped records without mutating the source
+PASS assets referenced from another collection are retained and reassigned
+PASS deleting the last collection creates an empty replacement without demo data
+PASS collection deletion remains a flat config write with explicit forceWrite
+PASS default narration and image prompts use different character names
+PASS changing a display name does not change image prompts
+PASS changing a model character tag does not change narration
+PASS legacy names remain compatible and explicitly empty display names remain empty
+PASS only the unchanged built-in source preset is upgraded, exactly once
+PASS edited templates and custom character settings are not migrated
+PASS pending rendering protects default character data and snapshots from migration
+PASS display and prompt names survive the flat native API round trip independently
+PASS name-setting labels and help describe their different purposes
+54/54 tests passed.
+
+> mio-studio@1.0.0 test:py
+> python -m unittest discover -s tests -v
+
+test_corrupt_store_is_not_silently_overwritten (test_credentials.CredentialTests.test_corrupt_store_is_not_silently_overwritten) ... ok
+test_delete_one_key_retains_other_keys (test_credentials.CredentialTests.test_delete_one_key_retains_other_keys) ... ok
+test_empty_key_not_saved_and_header_injection_rejected (test_credentials.CredentialTests.test_empty_key_not_saved_and_header_injection_rejected) ... ok
+test_external_profile_preserves_key_reference_and_optional_flags (test_credentials.CredentialTests.test_external_profile_preserves_key_reference_and_optional_flags) ... ok
+test_key_is_bound_to_channel_and_endpoint (test_credentials.CredentialTests.test_key_is_bound_to_channel_and_endpoint) ... ok
+test_local_file_permissions_and_private_static_path (test_credentials.CredentialTests.test_local_file_permissions_and_private_static_path) ... ok
+test_metadata_does_not_reveal_secret_even_after_reopening (test_credentials.CredentialTests.test_metadata_does_not_reveal_secret_even_after_reopening) ... ok
+test_missing_saved_key_fails_without_fallback (test_credentials.CredentialTests.test_missing_saved_key_fails_without_fallback) ... ok
+test_models_failure_is_sanitized (test_credentials.CredentialTests.test_models_failure_is_sanitized) ... ok
+test_models_request_uses_selected_key_and_no_model_required (test_credentials.CredentialTests.test_models_request_uses_selected_key_and_no_model_required) ... ok
+test_multiple_keys_select_without_rotation (test_credentials.CredentialTests.test_multiple_keys_select_without_rotation) ... ok
+test_none_auth_does_not_fall_back_to_environment (test_credentials.CredentialTests.test_none_auth_does_not_fall_back_to_environment) ... ok
+test_purge_includes_prior_endpoints_but_not_other_channels (test_credentials.CredentialTests.test_purge_includes_prior_endpoints_but_not_other_channels) ... ok
+test_trailing_slash_and_default_port_normalize (test_credentials.CredentialTests.test_trailing_slash_and_default_port_normalize) ... ok
+test_new_documentation_links_resolve_locally (test_documentation.DocumentationTests.test_new_documentation_links_resolve_locally) ... ok
+test_product_metadata_and_portable_spec (test_documentation.DocumentationTests.test_product_metadata_and_portable_spec) ... ok
+test_release_readme_is_the_maintained_readme (test_documentation.DocumentationTests.test_release_readme_is_the_maintained_readme) ... ok
+test_album_dto_removes_source_snapshots (test_external_api.ExternalApiTests.test_album_dto_removes_source_snapshots) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/albums HTTP/1.1" 200 -
+ok
+test_asset_path_is_local_and_traversal_safe (test_external_api.ExternalApiTests.test_asset_path_is_local_and_traversal_safe) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/assets?path=https%3A%2F%2Fevil.example%2Fa.png HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/assets?path=%2Fimages%2F..%2Fserver.py HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/assets?path=%2Fetc%2Fpasswd HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/assets?path=%2Fimages%2Fa.png HTTP/1.1" 200 -
+ok
+test_busy_returns_429 (test_external_api.ExternalApiTests.test_busy_returns_429) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "POST /api/v1/images/generations HTTP/1.1" 429 -
+ok
+test_capabilities_are_honest (test_external_api.ExternalApiTests.test_capabilities_are_honest) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/capabilities HTTP/1.1" 200 -
+ok
+test_disabled_without_strong_token (test_external_api.ExternalApiTests.test_disabled_without_strong_token) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/health HTTP/1.1" 503 -
+ok
+test_generates_once_without_mutating_browser_queue (test_external_api.ExternalApiTests.test_generates_once_without_mutating_browser_queue) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "POST /api/v1/images/generations HTTP/1.1" 200 -
+ok
+test_health (test_external_api.ExternalApiTests.test_health) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/health HTTP/1.1" 200 -
+ok
+test_invalid_pagination (test_external_api.ExternalApiTests.test_invalid_pagination) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/albums?limit=101 HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/albums?offset=-1 HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/albums?limit=no HTTP/1.1" 400 -
+ok
+test_mio_environment_takes_precedence_with_legacy_fallback (test_external_api.ExternalApiTests.test_mio_environment_takes_precedence_with_legacy_fallback) ... ok
+test_openapi_file_matches_runtime (test_external_api.ExternalApiTests.test_openapi_file_matches_runtime) ... ok
+test_origin_rejected_on_external_and_private_reads (test_external_api.ExternalApiTests.test_origin_rejected_on_external_and_private_reads) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/health HTTP/1.1" 403 -
+127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/config HTTP/1.1" 403 -
+ok
+test_preflight_allows_authorization_only_for_known_origins (test_external_api.ExternalApiTests.test_preflight_allows_authorization_only_for_known_origins) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "OPTIONS /api/v1/health HTTP/1.1" 204 -
+ok
+test_provider_dto_does_not_leak_secrets_or_urls (test_external_api.ExternalApiTests.test_provider_dto_does_not_leak_secrets_or_urls) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/providers HTTP/1.1" 200 -
+ok
+test_rejects_ambiguous_or_unsupported_requests (test_external_api.ExternalApiTests.test_rejects_ambiguous_or_unsupported_requests) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 13:02:37] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 13:02:37] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 13:02:37] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [09/Sep/2026 13:02:37] "POST /api/v1/images/generations HTTP/1.1" 400 -
+ok
+test_schema_is_raw_and_secured (test_external_api.ExternalApiTests.test_schema_is_raw_and_secured) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/openapi.json HTTP/1.1" 200 -
+ok
+test_storyboard_dto_removes_execution_snapshots (test_external_api.ExternalApiTests.test_storyboard_dto_removes_execution_snapshots) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/storyboards?limit=1&offset=0 HTTP/1.1" 200 -
+ok
+test_token_required (test_external_api.ExternalApiTests.test_token_required) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/health HTTP/1.1" 401 -
+ok
+test_unknown_route_and_method (test_external_api.ExternalApiTests.test_unknown_route_and_method) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "GET /api/v1/nope HTTP/1.1" 404 -
+127.0.0.1 - - [09/Sep/2026 13:02:37] "DELETE /api/v1/albums HTTP/1.1" 405 -
+ok
+test_upstream_error_is_sanitized_and_slot_released (test_external_api.ExternalApiTests.test_upstream_error_is_sanitized_and_slot_released) ... 127.0.0.1 - - [09/Sep/2026 13:02:37] "POST /api/v1/images/generations HTTP/1.1" 502 -
+ok
+test_blank_optional_values_are_not_replaced_with_defaults (test_providers.ProviderTests.test_blank_optional_values_are_not_replaced_with_defaults) ... ok
+test_chat_image_and_reference (test_providers.ProviderTests.test_chat_image_and_reference) ... ok
+test_disabled_size_and_quality_are_omitted_even_with_saved_values (test_providers.ProviderTests.test_disabled_size_and_quality_are_omitted_even_with_saved_values) ... ok
+test_edit_multipart (test_providers.ProviderTests.test_edit_multipart) ... ok
+test_edit_multipart_omits_disabled_optional_fields (test_providers.ProviderTests.test_edit_multipart_omits_disabled_optional_fields) ... ok
+test_empty_key_is_allowed_and_https_still_required (test_providers.ProviderTests.test_empty_key_is_allowed_and_https_still_required) ... ok
+test_empty_text_response_is_failure (test_providers.ProviderTests.test_empty_text_response_is_failure) ... ok
+test_enabled_optional_fields_are_sent (test_providers.ProviderTests.test_enabled_optional_fields_are_sent) ... ok
+test_images_base64 (test_providers.ProviderTests.test_images_base64) ... ok
+test_invalid_novelai_size_rejected_before_network (test_providers.ProviderTests.test_invalid_novelai_size_rejected_before_network) ... ok
+test_novelai_zip_and_v4 (test_providers.ProviderTests.test_novelai_zip_and_v4) ... ok
+test_returned_url_is_downloaded_without_api_key (test_providers.ProviderTests.test_returned_url_is_downloaded_without_api_key) ... ok
+test_spoofed_reference_mime_is_rejected (test_providers.ProviderTests.test_spoofed_reference_mime_is_rejected) ... ok
+test_svg_from_provider_is_not_accepted_as_generated_artwork (test_providers.ProviderTests.test_svg_from_provider_is_not_accepted_as_generated_artwork) ... ok
+test_actual_image_bytes_override_incorrect_extension_mime (test_server.ImageSafetyTests.test_actual_image_bytes_override_incorrect_extension_mime) ... ok
+test_declared_oversized_image_is_rejected_before_reading (test_server.ImageSafetyTests.test_declared_oversized_image_is_rejected_before_reading) ... ok
+test_image_data_url_is_normalized (test_server.ImageSafetyTests.test_image_data_url_is_normalized) ... ok
+test_local_files_must_be_inside_images_directory (test_server.ImageSafetyTests.test_local_files_must_be_inside_images_directory) ... ok
+test_non_image_and_invalid_base64_data_urls_are_rejected (test_server.ImageSafetyTests.test_non_image_and_invalid_base64_data_urls_are_rejected) ... ok
+test_fetch_remote_json_handles_utf8_bom (test_server.MarketplaceAndVisionTests.test_fetch_remote_json_handles_utf8_bom) ... ok
+test_fetch_remote_json_rejects_unsafe_protocols (test_server.MarketplaceAndVisionTests.test_fetch_remote_json_rejects_unsafe_protocols) ... ok
+test_marketplace_catalog_returns_default_structure (test_server.MarketplaceAndVisionTests.test_marketplace_catalog_returns_default_structure) ... ok
+test_vision_audit_extracts_json_from_conversational_output (test_server.MarketplaceAndVisionTests.test_vision_audit_extracts_json_from_conversational_output) ... ok
+test_vision_audit_extracts_json_with_trailing_placeholders (test_server.MarketplaceAndVisionTests.test_vision_audit_extracts_json_with_trailing_placeholders) ... ok
+test_vision_audit_safe_fallback_on_invalid_json (test_server.MarketplaceAndVisionTests.test_vision_audit_safe_fallback_on_invalid_json) ... ok
+test_vision_audit_safe_fallback_on_refusal_or_none_content (test_server.MarketplaceAndVisionTests.test_vision_audit_safe_fallback_on_refusal_or_none_content) ... ok
+test_vision_audit_validates_required_fields (test_server.MarketplaceAndVisionTests.test_vision_audit_validates_required_fields) ... ok
+test_config_payload_requires_complete_typed_state (test_server.ServerBoundaryTests.test_config_payload_requires_complete_typed_state) ... ok
+test_front_end_asset_dirs_are_served_but_stay_sandboxed (test_server.ServerBoundaryTests.test_front_end_asset_dirs_are_served_but_stay_sandboxed) ... ok
+test_only_public_app_assets_and_images_are_served (test_server.ServerBoundaryTests.test_only_public_app_assets_and_images_are_served) ... ok
+test_port_comes_from_env_and_rejects_bad_values (test_server.ServerBoundaryTests.test_port_comes_from_env_and_rejects_bad_values) ... [Config] Ignoring invalid COMFY_COMIC_PORT='abc'; falling back to 8777.
+[Config] COMFY_COMIC_PORT=0 is out of range; falling back to 8777.
+[Config] COMFY_COMIC_PORT=70000 is out of range; falling back to 8777.
+[Config] COMFY_COMIC_PORT=-1 is out of range; falling back to 8777.
+ok
+test_incomplete_or_corrupt_split_config_is_not_merged (test_server.SplitConfigTests.test_incomplete_or_corrupt_split_config_is_not_merged) ... ok
+test_split_config_round_trip_preserves_core_state (test_server.SplitConfigTests.test_split_config_round_trip_preserves_core_state) ... ok
+test_unchanged_config_files_are_not_rewritten (test_server.SplitConfigTests.test_unchanged_config_files_are_not_rewritten) ... ok
+test_release_defaults_use_real_services_and_complete_api_graph (test_storage.ReleaseDefaultsTests.test_release_defaults_use_real_services_and_complete_api_graph) ... ok
+test_album_assets_deduplicate_and_use_portable_relative_urls (test_storage.StructuredStorageTests.test_album_assets_deduplicate_and_use_portable_relative_urls) ... ok
+test_asset_traversal_and_svg_are_rejected (test_storage.StructuredStorageTests.test_asset_traversal_and_svg_are_rejected) ... ok
+test_empty_installation_returns_complete_explicit_contract (test_storage.StructuredStorageTests.test_empty_installation_returns_complete_explicit_contract) ... ok
+test_incomplete_legacy_migration_refuses_to_erase_data (test_storage.StructuredStorageTests.test_incomplete_legacy_migration_refuses_to_erase_data) ... ok
+test_interrupted_multi_file_save_recovers_whole_transaction (test_storage.StructuredStorageTests.test_interrupted_multi_file_save_recovers_whole_transaction) ... ok
+test_legacy_six_file_migration_retains_originals (test_storage.StructuredStorageTests.test_legacy_six_file_migration_retains_originals) ... [Migration] Structured data layout created; legacy JSON files retained as backup.
+ok
+test_nested_plans_presets_and_unknown_metadata_round_trip (test_storage.StructuredStorageTests.test_nested_plans_presets_and_unknown_metadata_round_trip) ... ok
+test_old_image_links_continue_to_resolve (test_storage.StructuredStorageTests.test_old_image_links_continue_to_resolve) ... ok
+
+----------------------------------------------------------------------
+Ran 79 tests in 0.602s
+
+OK
+
+> mio-studio@1.0.0 test:smoke
+> node tests/smoke.mjs
+
+PASS Mio brand is visible while the legacy namespace remains compatible
+PASS offline documentation hub is served
+PASS fresh installation accepts the native backend contract
+PASS all services default to real mode without fallback
+PASS original girl cover is embedded and survives offline loading
+PASS restoring the demo cover never fills other missing pages or replaces custom artwork
+PASS showcase is the default gallery
+PASS extensions are hidden by default
+PASS activity log is last when enabled
+PASS workflow has an independent module
+PASS batch import reports invalid files without losing valid imports
+PASS workflow switching retains unsaved-looking field edits
+PASS storyboard provides preset and workflow selectors before preview
+PASS blank preset starts empty without clearing existing presets
+PASS new preset can be saved directly
+PASS scene preset overrides full-book values
+PASS scene custom override has highest priority
+PASS queue can add a task and choose a workflow in-place
+PASS a second scene can queue while the first runs
+PASS A and B tasks keep separate workflow snapshots
+PASS both mock tasks finish successfully
+PASS single-scene task does not claim the entire album is complete
+PASS pending task workflow can be adjusted inline
+PASS changing pending task does not mutate another task
+PASS GPU protocol path persists raster output under the album directory
+PASS stored relative image URL is served by the same Python backend
+PASS state validator accepts portable local image URLs
+PASS real GPU failures never create sample artwork even with legacy fallback enabled
+PASS native POST save is confirmed
+PASS API preserves per-scene workflow and preset assignments
+PASS structured workflow and queue files exist
+PASS dragging a pending task updates actual execution order
+PASS queue rows use the same forward order as stored tasks
+PASS deleting a queued task keeps its album
+PASS only Generate album has primary emphasis on the queue page
+PASS unfinished queue thumbnails contain no fabricated image
+PASS running task cannot be dragged or deleted
+PASS enqueue while paused does not implicitly resume an active queue
+PASS scheduler executes the reordered queue FIFO including new tasks
+PASS image errors do not rewrite stored URLs to sample artwork
+PASS missing reader pages stay empty even with an old offline preview
+PASS missing API keys do not silently enable mock mode
+PASS dragging an album persists manual collection order
+PASS right-click retains multiple selected albums
+PASS context batch editing affects exactly the selected albums
+PASS context batch export opens the multi-book export dialog
+PASS batch export downloads an HTML album with neutral missing-page notes
+PASS context menu supports Escape and returns focus
+PASS organized state saves successfully
+PASS manual album order survives a backend reload
+PASS context batch delete requires confirmation
+PASS context batch delete removes only chosen albums
+PASS workflow library survives reload
+PASS mobile workflow view has no document overflow
+PASS NovelAI hides workflow library and exposes native model configuration
+PASS key entry does not request a generated login password
+PASS saved key is hidden and only a reference enters configuration
+PASS provider snapshots freeze configuration without secrets or workflow
+PASS API frame preflight does not require a valid ComfyUI workflow
+PASS generation uses frozen provider even after switching active channel
+PASS multiple OpenAI-compatible channels can be configured independently
+PASS provider layout fits mobile
+PASS provider settings and key references persist without plaintext
+PASS copied channels do not share saved credentials
+PASS size and quality can be disabled while their draft values remain
+PASS model discovery populates a safe picker and updates editable model ID
+PASS unsupported model discovery preserves manual configuration
+PASS multiple keys are listed as metadata without secret values
+PASS user can select a saved key explicitly
+PASS local key metadata survives page reload
+PASS deleting the selected key clears authentication instead of switching keys
+PASS remaining key can still be selected
+PASS empty authentication is explicit and persists
+PASS channels in pending tasks cannot be deleted
+PASS channel deletion requires confirmation
+PASS channel deletion also removes its saved local keys
+PASS new API channels can be created after deletion with optional parameters off
+PASS no uncaught browser errors
+78 browser checks passed.

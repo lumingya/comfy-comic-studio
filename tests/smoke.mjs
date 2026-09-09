@@ -1,337 +1,228 @@
-// tests/smoke.mjs - 端到端冒烟测试：覆盖启动、渲染、编辑、持久化、离线降级等关键路径。
-// 用法： node tests/smoke.mjs          （自动拉起 server.py，使用临时 data/ 目录）
-import { chromium } from 'playwright';
-import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync, cpSync, existsSync, mkdirSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+// Current studio UI regression suite. Runs against an isolated data directory.
+import {chromium} from 'playwright';
+import {spawn} from 'node:child_process';
+import {mkdtempSync,rmSync,cpSync,readFileSync,existsSync} from 'node:fs';
+import {tmpdir} from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import {fileURLToPath} from 'node:url';
+import assert from 'node:assert/strict';
+const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+const temp=mkdtempSync(path.join(tmpdir(),'ccs-studio-'));
+for(const name of ['server.py','mio_api.py','mio_credentials.py','index.html','styles.css','favicon.svg','vendor','js','docs','examples','README.md','README.en.md','SECURITY.md'])cpSync(path.join(ROOT,name),path.join(temp,name),{recursive:true});
+const port=Number(process.env.SMOKE_PORT||8791),base=`http://127.0.0.1:${port}`;
+const server=spawn('python3',['-u','server.py'],{cwd:temp,env:{...process.env,COMFY_COMIC_PORT:String(port)},stdio:['ignore','pipe','pipe']});
+let browser,checks=0;const check=(name,value)=>{assert.ok(value,name);console.log('PASS '+name);checks++};
+try{
+  await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(Error('Server startup timeout')),15000);server.stdout.on('data',d=>{if(d.toString().includes('物理落盘')){clearTimeout(timeout);resolve()}});server.on('error',reject)});
+  browser=await chromium.launch({args:['--no-sandbox'],...(process.env.CCS_CHROMIUM?{executablePath:process.env.CCS_CHROMIUM}:{})});
+  const context=await browser.newContext({viewport:{width:1440,height:1000}}),page=await context.newPage(),errors=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  await context.route(/^https:\/\//,route=>route.abort());
+  await page.goto(base,{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);
+  check('Mio brand is visible while the legacy namespace remains compatible',await page.evaluate(()=>document.title.includes('Mio')&&document.querySelector('.brand-name').textContent==='Mio'&&globalThis.Mio===globalThis.ComfyComic));
+  check('offline documentation hub is served', (await page.request.get(base+'/docs/index.html')).status()===200);
+  check('fresh installation accepts the native backend contract',await page.evaluate(()=>ComfyComic.sync.runtime.loaded));
+  if(await page.locator('[data-act="v3-welcome-default"]').isVisible())await page.locator('[data-act="v3-welcome-default"]').click();
+  await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close())});
+  check('all services default to real mode without fallback',await page.evaluate(()=>state.settings.comfy.mode==='real'&&state.settings.llm.mode==='real'&&state.settings.critic.mode==='real'&&state.settings.comfy.autoFallback===false&&!llmMock()));
+  check('original girl cover is embedded and survives offline loading',await page.evaluate(()=>{const b=state.books.find(b=>b.id==='edition_letter');return b.steps[0].image===defaultCuratedCover()&&b.steps[0].image.startsWith('data:image/webp;base64,')&&readerSequence(b)[0].pending===false}));
+  check('restoring the demo cover never fills other missing pages or replaces custom artwork',await page.evaluate(()=>{const sample={books:[{id:'edition_letter',curatedDemo:true,steps:[{stepIndex:0,image:'https://images.alphacoders.com/819/thumbbig-819506.webp'},{stepIndex:1,image:''}]},{id:'edition_letter_demo_custom',curatedDemo:true,steps:[{stepIndex:0,image:'my-custom-image'}]},{id:'new-book',steps:[{stepIndex:0,image:''}]}]};return restoreCuratedCover(sample)===1&&sample.books[0].steps[0].image===defaultCuratedCover()&&sample.books[0].steps[1].image===''&&sample.books[1].steps[0].image==='my-custom-image'&&sample.books[2].steps[0].image===''}));
+  check('showcase is the default gallery',await page.evaluate(()=>state.settings.presentation.homeLayout==='showcase'));
+  check('extensions are hidden by default',await page.locator('[data-act="art-nav"][data-route="7"]').count()===0);
+  check('activity log is last when enabled',await page.evaluate(()=>{const n=createWorkspaceChromePolicy().navigation({logs:true});return n.at(-1)[0]===6}));
+  await page.locator('[data-act="art-nav"][data-route="3"]').click();
+  check('workflow has an independent module',await page.locator('.workflow-library').count()===1&&await page.evaluate(()=>ui.workspace===3));
+  // Real multi-file file picker, with one invalid import to exercise partial success.
+  const wf=await page.evaluate(()=>clone(state.settings.comfy.workflow));
+  const chooser=page.waitForEvent('filechooser');await page.locator('[data-act="ws-import"]').click();
+  await (await chooser).setFiles([
+    {name:'A.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({title:'A workflow',workflow:wf}))},
+    {name:'B.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({title:'B workflow',workflow:wf}))},
+    {name:'invalid.json',mimeType:'application/json',buffer:Buffer.from('{broken')}
+  ]);
+  await page.waitForSelector('#modal[open]');check('batch import reports invalid files without losing valid imports',(await page.locator('#modal-body').innerText()).includes('成功导入 2'));
+  await page.locator('#modal [data-act="close-modal"]').first().click();
+  const ids=await page.evaluate(()=>state.settings.comfy.presets.filter(p=>/^[AB] workflow/.test(p.title)).map(p=>p.id));
+  await page.locator('[data-setting="comfy.workflowTitle"]').fill('A edited');await page.locator('#ws-library-select').selectOption(ids[1]);await page.locator('#ws-library-select').selectOption(ids[0]);
+  check('workflow switching retains unsaved-looking field edits',await page.locator('[data-setting="comfy.workflowTitle"]').inputValue()==='A edited');
+  await page.locator('[data-act="art-nav"][data-route="1"]').click();
+  check('storyboard provides preset and workflow selectors before preview',await page.locator('#ws-scene-preset').count()===1&&await page.locator('#ws-scene-workflow').count()===1);
+  await page.locator('[data-act="art-create-tab"][data-tab="settings"]').click();
+  const old=await page.evaluate(()=>JSON.stringify(state.creation.variableSets));
+  await page.locator('[data-act="ws-new-preset"]').click();
+  await page.locator('#modal input').first().fill('New preset');
+  await page.locator('#modal .modal-footer .primary').click();
+  check('blank preset starts empty without clearing existing presets',await page.evaluate(old=>{const prior=JSON.parse(old);return prior.every(p=>JSON.stringify(setBy(p.id))===JSON.stringify(p))&&mergedSettingEntries(selectedPlan()).every(e=>e.value==='')},old));
+  await page.locator('[data-art-setting="character"]').fill('new_character');await page.locator('[data-act="ws-update-preset"]').click();
+  check('new preset can be saved directly',await page.evaluate(()=>setBy(selectedPlan().editingPresetId).entries.some(e=>e.key==='character'&&e.value==='new_character')));
+  // Stable fixture: full scope priority and per-frame workflow choices.
+  await page.evaluate(ids=>{
+    const p=selectedPlan(),t=templateBy(p.templateId),set={id:uid('set'),projectId:state.activeProjectId,title:'Scene preset',entries:[variableEntry('character','scene_character')]};state.creation.variableSets.push(set);
+    p.variables=[variableEntry('character','book_character')];p.sceneOverrides[t.frames[0].id]={variableSetIds:[set.id],workflowId:ids[0]};p.sceneOverrides[t.frames[1].id]={workflowId:ids[1]};p.workflowId=ids[0];state.settings.comfy.mode='mock';createUI.tab='story';render();
+  },ids);
+  check('scene preset overrides full-book values',await page.evaluate(()=>effectivePlanFrame(selectedPlan(),currentTemplate().frames[0])._scope.character==='scene_character'));
+  await page.evaluate(()=>{const p=selectedPlan(),f=currentTemplate().frames[0];p.sceneOverrides[f.id].variables=[variableEntry('character','frame_character')]});
+  check('scene custom override has highest priority',await page.evaluate(()=>effectivePlanFrame(selectedPlan(),currentTemplate().frames[0])._scope.character==='frame_character'));
+  await page.locator('[data-act="art-create-tab"][data-tab="queue"]').click();
+  check('queue can add a task and choose a workflow in-place',await page.locator('#ws-plan-workflow').count()===1&&await page.locator('#ws-queue-range').count()===1);
+  await page.locator('#ws-queue-range').selectOption('0');await page.locator('[data-act="ws-enqueue-range"]').click();
+  await page.waitForFunction(()=>rt.running);
+  await page.locator('#ws-queue-range').selectOption('1');await page.locator('[data-act="ws-enqueue-range"]').click();
+  check('a second scene can queue while the first runs',await page.evaluate(()=>state.queue.length>=2));
+  check('A and B tasks keep separate workflow snapshots',await page.evaluate(ids=>{const [a,b]=state.queue.slice(-2);return a.frames[0]._execution.workflowId===ids[0]&&b.frames[1]._execution.workflowId===ids[1]},ids));
+  await page.waitForFunction(()=>!rt.running,null,{timeout:20000});
+  check('both mock tasks finish successfully',await page.evaluate(()=>state.queue.slice(-2).every(q=>q.status==='complete')));
+  check('single-scene task does not claim the entire album is complete',await page.evaluate(()=>state.books.slice(-2).every(b=>b.status==='partial'&&b.generatedSteps===1)));
+  // In-place edits are allowed only for a pending scene, not a running one.
+  await page.evaluate(()=>{rt.paused=true;return enqueueWorkspaceRange([0,1])});
+  const qid=await page.evaluate(()=>state.queue.at(-1).id);
+  await page.locator('.queue-workflow-detail').last().locator('summary').click();
+  await page.locator(`[data-ws-task="${qid}"][data-ws-index="1"]`).selectOption(ids[0]);
+  check('pending task workflow can be adjusted inline',await page.evaluate(id=>state.queue.at(-1).frames[1]._execution.workflowId===id,ids[0]));
+  check('changing pending task does not mutate another task',await page.evaluate(id=>state.queue.at(-2).frames[1]._execution.workflowId===id,ids[1]));
+  // Exercise the actual /prompt -> /history -> /view client against a stub GPU,
+  // then the real Python image endpoint. No real GPU is claimed by this test.
+  const pixel='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a1x8AAAAASUVORK5CYII=';
+  const submissions=[];
+  await context.route('http://127.0.0.1:8188/**',async route=>{
+    const req=route.request(),url=new URL(req.url());let json={};
+    if(url.pathname==='/prompt'){submissions.push(req.postDataJSON());json={prompt_id:'stub-prompt'}}
+    if(url.pathname.startsWith('/history/'))json={'stub-prompt':{status:{completed:true},outputs:{'9':{images:[{filename:'pixel.png',type:'output'}]}}}};
+    await route.fulfill({status:200,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'*'},contentType:url.pathname==='/view'?'image/png':'application/json',body:url.pathname==='/view'?Buffer.from(pixel,'base64'):JSON.stringify(json)});
+  });
+  const asset=await page.evaluate(async()=>{const p=selectedPlan(),f=effectivePlanFrame(p,currentTemplate().frames[0]);f._execution.mode='real';f._execution.autoFallback=false;f._assetBookId='integration-album';return (await generateMappedFrame(f,planRuntimeRow(p),new AbortController().signal)).image});
+  check('GPU protocol path persists raster output under the album directory',asset.startsWith('/images/albums/integration-album/')&&submissions.length===1);
+  const image=await fetch(base+asset);check('stored relative image URL is served by the same Python backend',image.ok&&(await image.arrayBuffer()).byteLength>0);
+  const preview=await page.evaluate(()=>{const copyState=clone(state);copyState.books[0].steps[0].image='/images/albums/integration-album/example.png';validateState(copyState);return true});
+  check('state validator accepts portable local image URLs',preview);
+  await context.route('http://127.0.0.1:8188/prompt',route=>route.fulfill({status:400,headers:{'Access-Control-Allow-Origin':'*'},contentType:'application/json',body:JSON.stringify({error:'test GPU rejection'})}));
+  check('real GPU failures never create sample artwork even with legacy fallback enabled',await page.evaluate(async()=>{const p=selectedPlan(),f=effectivePlanFrame(p,currentTemplate().frames[0]);f._execution.mode='real';f._execution.autoFallback=true;try{await generateMappedFrame(f,planRuntimeRow(p),new AbortController().signal);return false}catch(e){return e.message.includes('400')}}));
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const PORT = Number(process.env.SMOKE_PORT || 8791);
-const BASE = `http://127.0.0.1:${PORT}`;
+  const saved=await page.evaluate(()=>ComfyComic.sync.save());if(!saved)console.log('SYNC ERROR',await page.evaluate(()=>ComfyComic.sync.runtime.error));check('native POST save is confirmed',saved);
+  const persisted=await (await fetch(base+'/api/config')).json();
+  check('API preserves per-scene workflow and preset assignments',persisted.uiConfig.comfyStudio.creation.plans.some(p=>Object.values(p.sceneOverrides).some(o=>o.workflowId===ids[0])));
+  check('structured workflow and queue files exist',existsSync(path.join(temp,'data/workflows/library.json'))&&existsSync(path.join(temp,'data/queue/tasks.json')));
+  // Queue organization: queue is explicitly paused while arranging pending work.
+  await page.evaluate(async()=>{rt.paused=true;await enqueueWorkspaceRange([1]);await enqueueWorkspaceRange([2])});
+  const pendingBefore=await page.evaluate(()=>state.queue.filter(q=>q.status==='pending').map(q=>q.id));
+  const firstPending=pendingBefore[0],lastPending=pendingBefore.at(-1);
+  await page.locator(`[data-sort-task="${lastPending}"] .task-drag-handle`).dragTo(page.locator(`[data-sort-task="${firstPending}"]`),{targetPosition:{x:40,y:4}});
+  check('dragging a pending task updates actual execution order',await page.evaluate(id=>state.queue.filter(q=>q.status==='pending')[0].id===id,lastPending));
+  check('queue rows use the same forward order as stored tasks',await page.evaluate(()=>[...document.querySelectorAll('[data-sort-task]')].map(e=>e.dataset.sortTask).join('|')===state.queue.filter(q=>bookBy(q.bookId)).map(q=>q.id).join('|')));
+  const removed=await page.evaluate(()=>{const q=state.queue.filter(q=>q.status==='pending')[1];return {id:q.id,book:q.bookId}});
+  await page.locator(`[data-act="org-task-delete"][data-id="${removed.id}"]`).click();await page.locator('#confirm-yes').click();
+  await page.waitForFunction(id=>!state.queue.some(q=>q.id===id),removed.id);
+  check('deleting a queued task keeps its album',await page.evaluate(id=>!!bookBy(id),removed.book));
+  check('only Generate album has primary emphasis on the queue page',await page.evaluate(()=>[...document.querySelectorAll('#main .primary')].every(e=>e.dataset.act==='v3-generate-plan')&&document.querySelectorAll('#main .primary').length===1));
+  check('unfinished queue thumbnails contain no fabricated image',await page.evaluate(()=>[...document.querySelectorAll('[data-sort-task]')].filter(e=>state.queue.find(q=>q.id===e.dataset.sortTask)?.status==='pending').every(e=>e.querySelector('.ordered-queue-thumb .artwork-missing')&&!e.querySelector('.ordered-queue-thumb img'))));
+  await page.evaluate(()=>{window.startedBooks=[];window.originalTestGenerator=generateFrame;generateFrame=async function(f,...rest){window.startedBooks.push(f._assetBookId);return window.originalTestGenerator(f,...rest)}});
+  const expectedBooks=await page.evaluate(()=>state.queue.filter(q=>q.status==='pending').map(q=>q.bookId));
+  await page.locator('[data-act="org-queue-pause"]').click();await page.waitForFunction(()=>rt.running);
+  check('running task cannot be dragged or deleted',await page.evaluate(()=>{const q=state.queue.find(q=>q.status==='running'),el=document.querySelector(`[data-sort-task="${q.id}"]`);return el.draggable===false&&el.querySelector('[data-act="org-task-delete"]').disabled}));
+  check('enqueue while paused does not implicitly resume an active queue',await page.evaluate(async()=>{rt.paused=true;await enqueueWorkspaceRange([3]);return rt.paused===true}));
+  const appended=await page.evaluate(()=>state.queue.at(-1).bookId);expectedBooks.push(appended);
+  await page.locator('[data-act="org-queue-pause"]').click();await page.waitForFunction(()=>!rt.running,null,{timeout:25000});
+  const started=await page.evaluate(()=>[...new Set(window.startedBooks)]);
+  check('scheduler executes the reordered queue FIFO including new tasks',JSON.stringify(started)===JSON.stringify(expectedBooks));
+  await page.evaluate(()=>{generateFrame=window.originalTestGenerator});
+  // Errors must preserve the source URL and show a neutral placeholder.
+  const failureSafe=await page.evaluate(()=>{const b=state.books[0],before=b.steps[0].image,img=document.createElement('img');img.dataset.book=b.id;img.dataset.step='0';img.alt='unavailable';document.body.append(img);img.dispatchEvent(new Event('error'));const placeholder=document.querySelector('.artwork-missing[aria-label="unavailable · 暂无画面"]');const ok=!!placeholder&&b.steps[0].image===before;placeholder?.remove();return ok});
+  check('image errors do not rewrite stored URLs to sample artwork',failureSafe);
+  check('missing reader pages stay empty even with an old offline preview',await page.evaluate(()=>{const seq=readerSequence({theme:0,totalSteps:2,steps:[{stepIndex:0,image:'',offlineImage:'data:image/png;base64,AAAA'}]});return seq.every(s=>s.image===''&&s.pending)}));
+  // Existing explicit real configs without keys must not invoke mock language generation.
+  check('missing API keys do not silently enable mock mode',await page.evaluate(()=>llmMock({mode:'real',key:'',baseUrl:'https://example.invalid'})===false));
+  // Collection drag sorting and right-click multi-selection.
+  await page.evaluate(()=>{navigate(0);setShelfLayout('grid');ui.filter='all';ui.search='';ui.selected.clear();ui.bulk=false;render()});
+  const books=await page.evaluate(()=>getShelfBooks().map(b=>b.id));
+  await page.locator(`.shelf-item[data-sort-book="${books.at(-1)}"]`).dragTo(page.locator(`.shelf-item[data-sort-book="${books[0]}"]`),{targetPosition:{x:30,y:4}});
+  check('dragging an album persists manual collection order',await page.evaluate(id=>ui.sort==='manual'&&getShelfBooks()[0].id===id,books.at(-1)));
+  const chosen=await page.evaluate(()=>getShelfBooks().filter(b=>!b.curatedDemo).slice(0,2).map(b=>b.id));
+  await page.locator(`.shelf-item[data-sort-book="${chosen[0]}"] .shelf-cover`).click({modifiers:['Control']});
+  await page.locator(`.shelf-item[data-sort-book="${chosen[1]}"] .shelf-cover`).click({modifiers:['Control']});
+  await page.locator(`.shelf-item[data-sort-book="${chosen[1]}"]`).click({button:'right'});
+  check('right-click retains multiple selected albums',await page.locator('#book-context-menu').isVisible()&&await page.evaluate(()=>ui.selected.size===2));
+  await page.locator('[data-act="org-context-edit"]').click();await page.locator('#org-book-prefix').fill('Edited · ');await page.locator('#org-book-tags').fill('test-tag');await page.locator('[data-act="org-book-edit-confirm"]').click();
+  check('context batch editing affects exactly the selected albums',await page.evaluate(ids=>state.books.filter(b=>b.title.startsWith('Edited · ')).length===ids.length&&ids.every(id=>bookBy(id).tags.includes('test-tag')),chosen));
+  await page.locator(`.shelf-item[data-sort-book="${chosen[0]}"]`).click({button:'right'});await page.locator('[data-act="org-context-export"]').click();
+  check('context batch export opens the multi-book export dialog',await page.locator('#modal[open]').count()===1);
+  await page.evaluate(()=>document.addEventListener('click',e=>{if(e.target.tagName==='A')window.testDownloadName=e.target.download},true));
+  const exportDownload=page.waitForEvent('download');await page.locator('[data-act="compile-export"]').click();const exported=await exportDownload;const exportedHTML=readFileSync(await exported.path(),'utf8');check('batch export downloads an HTML album with neutral missing-page notes',exportedHTML.startsWith('<!DOCTYPE html>')&&exportedHTML.includes('尚未生成')&&await page.evaluate(()=>window.testDownloadName.endsWith('.html')));
 
-const results = [];
-let failures = 0;
+  await page.locator('#modal [data-act="close-modal"]').first().click();
+  await page.locator(`.shelf-item[data-sort-book="${chosen[0]}"]`).click({button:'right'});await page.keyboard.press('Escape');
+  check('context menu supports Escape and returns focus',await page.locator('#book-context-menu').count()===0&&await page.evaluate(()=>document.activeElement.hasAttribute('data-sort-book')));
+  const orderSaved=await page.evaluate(()=>manualBookIds());check('organized state saves successfully',await page.evaluate(()=>ComfyComic.sync.save()));
+  await page.reload();await page.waitForFunction(()=>!rt.booting);await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());navigate(0)});
+  check('manual album order survives a backend reload',JSON.stringify(await page.evaluate(()=>manualBookIds()))===JSON.stringify(orderSaved));
+  await page.evaluate(ids=>{ui.selected=new Set(ids);ui.bulk=true;render()},chosen);
+  await page.locator(`.shelf-item[data-sort-book="${chosen[0]}"]`).click({button:'right'});await page.locator('[data-act="org-context-delete"]').click();
+  check('context batch delete requires confirmation',await page.locator('#confirm-dialog[open]').count()===1&&await page.evaluate(ids=>ids.every(id=>!!bookBy(id)),chosen));
+  await page.locator('#confirm-yes').click();await page.waitForFunction(ids=>ids.every(id=>!bookBy(id)),chosen);
+  check('context batch delete removes only chosen albums',await page.evaluate(count=>state.books.length===count,books.length-chosen.length));
+  await page.reload();await page.waitForFunction(()=>!rt.booting);check('workflow library survives reload',await page.evaluate(id=>state.settings.comfy.presets.some(p=>p.id===id&&p.title==='A edited'),ids[0]));
+  await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());navigate(3)});await page.waitForTimeout(500);
+  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(300);
+  check('mobile workflow view has no document overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));
+  await page.locator('#image-provider-select').selectOption('novelai');
+  check('NovelAI hides workflow library and exposes native model configuration',await page.locator('.workflow-library').count()===0&&await page.locator('[data-image-config="model"]').inputValue()==='nai-diffusion-4-5-full');
+  await page.locator('[data-act="image-provider-keys"]').click();await page.waitForSelector('#modal[open]');
+  await page.locator('#image-key-label').fill('Primary');await page.locator('#image-provider-key').fill('local-test-secret');
+  check('key entry does not request a generated login password',await page.locator('#image-provider-key').getAttribute('autocomplete')==='off');
+  await page.locator('[data-act="image-key-save"]').click();await page.waitForFunction(()=>!document.querySelector('#modal').open);
+  check('saved key is hidden and only a reference enters configuration',await page.evaluate(()=>activeImageProfile().keyMode==='stored'&&!!activeImageProfile().keyId&&(!document.querySelector('#image-provider-key')||document.querySelector('#image-provider-key').value==='')&&!JSON.stringify(state).includes('local-test-secret')));
+  check('provider snapshots freeze configuration without secrets or workflow',await page.evaluate(()=>{const ex=workflowExecutionFor(selectedPlan(),currentTemplate().frames[0]);window.providerTestSnapshot=ex;activeImageProfile().model='changed-model';return ex.config.model==='nai-diffusion-4-5-full'&&!ex.workflow&&!JSON.stringify(ex).includes('local-test-secret')&&ex.config.keyMode==='stored'&&!!ex.config.keyId}));
+  check('API frame preflight does not require a valid ComfyUI workflow',await page.evaluate(()=>{const f=effectivePlanFrame(selectedPlan(),currentTemplate().frames[0]),old=state.settings.comfy.workflow;state.settings.comfy.workflow={};try{return Object.keys(buildMappedWorkflow(f,planRuntimeRow(selectedPlan()),{preview:true}).workflow).length===0}finally{state.settings.comfy.workflow=old}}));
+  await page.route('**/api/image/generate',async route=>{const p=route.request().postDataJSON();await route.fulfill({json:{image:'/images/provider-contract.png',offlineFallback:false,seenModel:p.config.model}})});
+  check('generation uses frozen provider even after switching active channel',await page.evaluate(async()=>{const f=effectivePlanFrame(selectedPlan(),currentTemplate().frames[0]);f._execution=window.providerTestSnapshot;ensureImageProviders().active='comfyui';const r=await generateFrame(f,planRuntimeRow(selectedPlan()),new AbortController().signal);return r.image==='/images/provider-contract.png'&&r.seenModel==='nai-diffusion-4-5-full'}));
+  await page.unroute('**/api/image/generate');
+  await page.evaluate(()=>{ensureImageProviders().active='openai';render()});
+  await page.locator('[data-act="image-provider-copy"]').click();
+  check('multiple OpenAI-compatible channels can be configured independently',await page.evaluate(()=>ensureImageProviders().profiles.length===4&&activeImageProfile().id!=='openai'&&activeImageProfile().protocol==='images'));
+  check('provider layout fits mobile',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));
+  const providerId=await page.evaluate(()=>activeImageProfile().id);
+  await page.evaluate(()=>ComfyComic.sync.save());await page.reload();await page.waitForFunction(()=>!rt.booting);
+  check('provider settings and key references persist without plaintext',await page.evaluate(id=>activeImageProfile().id===id&&ensureImageProviders().profiles.find(p=>p.id==='novelai').keyMode==='stored'&&!JSON.stringify(ComfyComic.convertStudioStateToApiPayload()).includes('local-test-secret'),providerId));
+  await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());navigate(3)});
+  check('copied channels do not share saved credentials',await page.evaluate(()=>activeImageProfile().keyMode==='none'&&!activeImageProfile().keyId));
+  await page.locator('[data-image-config="sendSize"]').check();await page.locator('[data-image-config="size"]').fill('1024x1536');await page.locator('[data-image-config="sendQuality"]').check();
+  await page.locator('[data-image-config="sendSize"]').uncheck();await page.locator('[data-image-config="sendQuality"]').uncheck();
+  check('size and quality can be disabled while their draft values remain',await page.locator('[data-image-config="size"]').isDisabled()&&await page.locator('[data-image-config="quality"]').isDisabled()&&await page.evaluate(()=>activeImageProfile().sendSize===false&&activeImageProfile().size==='1024x1536'));
+  await page.route('**/api/image/models',route=>route.fulfill({json:{models:['model-a','model-b','<unsafe>']}}));
+  await page.locator('[data-act="image-provider-models"]').click();await page.waitForFunction(()=>document.querySelector('#image-provider-model-select').options.length===4);
+  await page.locator('#image-provider-model-select').selectOption('model-b');
+  check('model discovery populates a safe picker and updates editable model ID',await page.locator('[data-image-config="model"]').inputValue()==='model-b'&&await page.locator('unsafe').count()===0);
+  await page.unroute('**/api/image/models');await page.route('**/api/image/models',route=>route.fulfill({status:404,json:{error:'Models not supported'}}));
+  await page.locator('[data-act="image-provider-models"]').click();await page.waitForFunction(()=>document.querySelector('#provider-model-status').textContent.includes('获取失败'));
+  await page.locator('[data-image-config="model"]').fill('manual-model');await page.locator('[data-image-config="title"]').click();
+  check('unsupported model discovery preserves manual configuration',await page.evaluate(()=>activeImageProfile().model==='manual-model'));
+  await page.unroute('**/api/image/models');
+  for(const [label,key] of [['Account A','secret-a'],['Account B','secret-b']]){
+    await page.locator('[data-act="image-provider-keys"]').click();await page.waitForSelector('#modal[open]');await page.locator('#image-key-label').fill(label);await page.locator('#image-provider-key').fill(key);await page.locator('[data-act="image-key-save"]').click();await page.waitForFunction(()=>!document.querySelector('#modal').open);
+  }
+  const savedKey=await page.evaluate(()=>activeImageProfile().keyId);
+  await page.locator('[data-act="image-provider-keys"]').click();await page.waitForSelector('#modal[open]');
+  check('multiple keys are listed as metadata without secret values',await page.locator('.provider-key-row').count()===2&&!(await page.locator('#modal-body').innerText()).includes('secret-a'));
+  await page.locator('[data-act="image-key-use"]').first().click();
+  check('user can select a saved key explicitly',await page.evaluate(()=>activeImageProfile().keyLabel==='Account A'));
+  await page.evaluate(()=>ComfyComic.sync.save());await page.reload();await page.waitForFunction(()=>!rt.booting);await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());navigate(3)});
+  await page.locator('[data-act="image-provider-keys"]').click();await page.waitForSelector('#modal[open]');
+  check('local key metadata survives page reload',await page.locator('.provider-key-row').count()===2&&await page.evaluate(()=>activeImageProfile().keyLabel==='Account A'));
+  await page.locator('[data-act="image-key-delete"]').first().click();await page.locator('#confirm-yes').click();await page.waitForFunction(()=>document.querySelectorAll('.provider-key-row').length===1);
+  check('deleting the selected key clears authentication instead of switching keys',await page.evaluate(()=>activeImageProfile().keyMode==='none'&&!activeImageProfile().keyId));
+  await page.locator('[data-act="image-key-use"]').click();
+  check('remaining key can still be selected',await page.evaluate(id=>activeImageProfile().keyId===id,savedKey));
+  await page.locator('#image-provider-auth').selectOption('none');
+  check('empty authentication is explicit and persists',await page.evaluate(()=>activeImageProfile().keyMode==='none'));
+  check('channels in pending tasks cannot be deleted',await page.evaluate(async()=>{const p=activeImageProfile(),q={id:'provider-delete-guard',status:'pending',execution:{profileId:p.id}};state.queue.push(q);try{await handleImageProviderAction('image-provider-delete');return false}catch(e){return e.message.includes('未完成任务')}finally{state.queue=state.queue.filter(x=>x.id!==q.id)}}));
+  await page.locator('[data-act="image-provider-delete"]').click();await page.locator('#confirm-no').click();
+  check('channel deletion requires confirmation',await page.evaluate(id=>!!ensureImageProviders().profiles.find(p=>p.id===id),providerId));
+  const removedProfile=await page.evaluate(()=>imageConfigSnapshot());
+  await page.locator('[data-act="image-provider-delete"]').click();await page.locator('#confirm-yes').click();await page.waitForFunction(id=>!ensureImageProviders().profiles.some(p=>p.id===id),providerId);
+  const emptyKeys=await page.request.post(base+'/api/image/credentials',{data:{action:'list',config:removedProfile}});
+  check('channel deletion also removes its saved local keys',(await emptyKeys.json()).keys.length===0);
+  await page.locator('[data-act="image-provider-new"]').click();await page.locator('#image-new-title').fill('New channel');await page.locator('[data-act="image-provider-create"]').click();
+  check('new API channels can be created after deletion with optional parameters off',await page.evaluate(()=>activeImageProfile().title==='New channel'&&activeImageProfile().sendSize===false&&activeImageProfile().sendQuality===false&&activeImageProfile().keyMode==='none'));
 
-function check(name, condition, detail = '') {
-    const ok = !!condition;
-    if (!ok) failures++;
-    results.push(`${ok ? '  ok  ' : ' FAIL '} ${name}${ok || !detail ? '' : ` -> ${detail}`}`);
-    return ok;
-}
-
-async function waitForServer(timeoutMs = 20000) {
-    const deadline = Date.now() + timeoutMs;
-    while (Date.now() < deadline) {
-        try {
-            const res = await fetch(`${BASE}/api/config`);
-            if (res.ok) return true;
-        } catch { /* not up yet */ }
-        await new Promise(r => setTimeout(r, 200));
-    }
-    return false;
-}
-
-const sandbox = mkdtempSync(path.join(tmpdir(), 'ccs-smoke-'));
-for (const name of ['index.html', 'server.py', 'styles.css', 'favicon.svg']) {
-    cpSync(path.join(ROOT, name), path.join(sandbox, name));
-}
-for (const dir of ['vendor', 'js']) {
-    cpSync(path.join(ROOT, dir), path.join(sandbox, dir), { recursive: true });
-}
-mkdirSync(path.join(sandbox, 'images'), { recursive: true });
-
-const server = spawn('python3', ['server.py'], {
-    cwd: sandbox,
-    env: { ...process.env, COMFY_COMIC_PORT: String(PORT) },
-    stdio: ['ignore', 'pipe', 'pipe'],
-});
-let serverErr = '';
-server.stderr.on('data', d => { serverErr += d.toString(); });
-
-let browser;
-try {
-    if (!await waitForServer()) throw new Error(`server did not start on ${PORT}\n${serverErr}`);
-
-    const launchOptions = { args: ['--no-sandbox'] };
-    // 允许用 CCS_CHROMIUM 指定浏览器可执行文件（CI / 沙箱里通常已预装 Chromium）。
-    const overrideBrowser = process.env.CCS_CHROMIUM || (existsSync('/opt/pw-browsers/chromium') ? '/opt/pw-browsers/chromium' : '');
-    if (overrideBrowser) launchOptions.executablePath = overrideBrowser;
-    browser = await chromium.launch(launchOptions);
-    const context = await browser.newContext();
-    const page = await context.newPage();
-
-    const pageErrors = [];
-    page.on('pageerror', err => pageErrors.push(err.message));
-
-    // 关键路径 1：完全断网（CDN 不可达）时应用仍然可用
-    await context.route('**://*.jsdelivr.net/**', route => route.abort());
-    await context.route('**://*.unpkg.com/**', route => route.abort());
-    await context.route('**://fonts.googleapis.com/**', route => route.abort());
-    await context.route('**://fonts.gstatic.com/**', route => route.abort());
-    await context.route('**://images.unsplash.com/**', route => route.abort());
-
-    await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => window.isAppInitializing === false, null, { timeout: 20000 });
-
-    check('离线加载后没有未捕获的 JS 异常', pageErrors.length === 0, pageErrors.join(' | '));
-    check('模板库渲染出条目', await page.locator('#templates-list-container > div').count() > 0);
-    check('分镜编辑器渲染出卡片', await page.locator('.step-editor-card').count() > 0);
-    check('矩阵表格渲染出行', await page.locator('#matrix-tbody tr').count() > 0);
-    check('画廊渲染出卡片', await page.locator('#gallery-container > div').count() > 0);
-    check('图标已渲染为 svg（本地 lucide 生效）', await page.locator('header svg').count() > 0);
-
-    // 关键路径 2：标签切换
-    await page.click('#tab-btn-templates');
-    check('切到模板页后模板面板可见', await page.locator('#tab-templates').isVisible());
-    check('模板页提供配置导入与导出入口',
-        await page.getByRole('button', { name: '导出配置', exact: true }).count() === 1
-        && await page.getByRole('button', { name: '导入配置', exact: true }).count() === 1);
-    const backupShape = await page.evaluate(() => {
-        const backup = buildBackupPayload();
-        return backup.format === 'comfy-comic-studio-backup'
-            && Number.isInteger(backup.version)
-            && backup.state
-            && Array.isArray(backup.state.templates)
-            && Array.isArray(backup.state.comfyWorkflows);
-    });
-    check('配置备份包包含版本信息和核心状态', backupShape);
-
-    // 关键路径 3：编辑分镜 -> 切换模板 -> 切回来，编辑不能丢
-    const editedPrompt = 'A smoke-test prompt for {character}, {style}';
-    await page.locator('.step-editor-card .step-prompt').first().fill(editedPrompt);
-    const secondTemplate = page.locator('#templates-list-container > div').nth(1);
-    if (await secondTemplate.count() > 0) {
-        await secondTemplate.click();
-        await page.locator('#templates-list-container > div').first().click();
-        const back = await page.locator('.step-editor-card .step-prompt').first().inputValue();
-        check('切换模板后未保存的分镜编辑不丢失', back === editedPrompt, `got: ${back.slice(0, 60)}`);
-    }
-
-    // 关键路径 4：保存模板 -> 数据真正落盘到 data/content.json
-    await page.evaluate(() => window.saveCurrentTemplate && window.saveCurrentTemplate());
-    await page.waitForTimeout(1500);
-    const persisted = await (await fetch(`${BASE}/api/config`)).json();
-    const savedPrompt = persisted.templates?.[0]?.steps?.[0]?.prompt || '';
-    check('保存后的提示词已落盘到 data/', savedPrompt === editedPrompt, `got: ${savedPrompt.slice(0, 60)}`);
-
-    // 关键路径 5：重新加载后状态从磁盘恢复
-    const page2 = await context.newPage();
-    await page2.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
-    await page2.waitForFunction(() => window.isAppInitializing === false, null, { timeout: 20000 });
-    const reloaded = await page2.evaluate(() => templates?.[0]?.steps?.[0]?.prompt || '');
-    check('重载后从磁盘恢复出刚才的编辑', reloaded === editedPrompt, `got: ${reloaded.slice(0, 60)}`);
-    await page2.close();
-
-    // 关键路径 6：画廊图片不依赖任何外网地址
-    const remoteImages = await page.evaluate(() => {
-        const bad = [];
-        document.querySelectorAll('#gallery-container img').forEach(img => {
-            if (/^https?:\/\//i.test(img.getAttribute('src') || '') && !img.src.startsWith(location.origin)) {
-                bad.push(img.getAttribute('src'));
-            }
-        });
-        return bad;
-    });
-    check('画廊封面不引用外网图片地址', remoteImages.length === 0, remoteImages.join(', '));
-
-    // 关键路径 7：五个主标签页都能切换且不报错
-    for (const tab of ['gallery', 'templates', 'variables', 'workflow', 'llm']) {
-        await page.click(`#tab-btn-${tab}`);
-        check(`标签页 ${tab} 可切换并可见`, await page.locator(`#tab-${tab}`).isVisible());
-    }
-
-    // 关键路径 8：各个弹窗都能打开、渲染内容并关闭
-    await page.click('#tab-btn-gallery');
-    await page.locator('#gallery-container > div').first().click();
-    check('画册详情弹窗可打开', await page.locator('#pixiv-modal').isVisible());
-    check('详情弹窗渲染出分镜', await page.locator('#modal-comic-strip .pixiv-manga-card').count() > 0);
-    await page.evaluate(() => closePixivModal());
-    check('画册详情弹窗可关闭', !(await page.locator('#pixiv-modal').isVisible()));
-
-    await page.click('#tab-btn-templates');
-    await page.evaluate(() => openChatRefinementModal());
-    check('AI 精修聊天窗可打开', await page.locator('#chat-refinement-modal').isVisible());
-    check('聊天会话列表非空', await page.locator('#chat-sessions-list > div').count() > 0);
-    await page.evaluate(() => closeChatRefinementModal());
-
-    await page.click('#tab-btn-variables');
-    const rowsBefore = await page.locator('#matrix-tbody tr').count();
-    await page.evaluate(() => addMatrixRow());
-    check('矩阵可新增一行', await page.locator('#matrix-tbody tr').count() === rowsBefore + 1);
-    await page.evaluate(() => openScriptModal(batchMatrix.rows[0].id));
-    check('剧本编辑弹窗可打开', await page.locator('#script-modal').isVisible());
-    check('剧本编辑弹窗渲染出输入框', await page.locator('#script-modal .script-textarea').count() > 0);
-    await page.evaluate(() => closeScriptModal());
-
-    await page.click('#tab-btn-llm');
-    check('LLM 剧情卡片已渲染', await page.locator('#llm-vertical-captions-list .llm-story-card').count() > 0);
-
-    // 关键路径 9：交互层 —— toast、Esc 关闭浮层、命令面板、确认框
-    await page.evaluate(() => notify('冒烟测试提示', { type: 'success' }));
-    check('toast 提示会出现', await page.locator('#ccs-toast-container .ccs-toast').count() > 0);
-
-    await page.click('#tab-btn-gallery');
-    await page.locator('#gallery-container > div').first().click();
-    check('Esc 之前画册弹窗是打开的', await page.locator('#pixiv-modal').isVisible());
-    await page.keyboard.press('Escape');
-    check('Esc 能关闭画册弹窗', !(await page.locator('#pixiv-modal').isVisible()));
-
-    await page.keyboard.press('Control+k');
-    check('Ctrl+K 唤起命令面板', await page.locator('#ccs-palette-host').count() > 0);
-    await page.fill('#ccs-palette-input', '画廊');
-    check('命令面板能搜到条目', await page.locator('.ccs-palette-item').count() > 0);
-    await page.keyboard.press('Escape');
-    check('Esc 能关闭命令面板', await page.locator('#ccs-palette-host').count() === 0);
-
-    // 确认框取消时不能真的删数据
-    const galleriesBefore = await page.evaluate(() => savedGalleries.length);
-    await page.evaluate(() => { deleteGallery(savedGalleries[0].id); });
-    await page.waitForSelector('#ccs-dialog-host', { timeout: 5000 });
-    check('删除操作会弹出确认框', await page.locator('#ccs-dialog-host').count() > 0);
-    await page.click('.ccs-dialog-cancel');
-    await page.waitForTimeout(200);
-    check('取消确认后画册没有被删除', await page.evaluate(() => savedGalleries.length) === galleriesBefore);
-
-    // 关键路径 10：模拟模式在界面上真的可达，并能跑完一整轮批量出图
-    await page.click('#tab-btn-workflow');
-    check('运行模式开关存在于页面上', await page.locator('#engine-mock-toggle').count() === 1);
-    await page.locator('#engine-mock-toggle').check({ force: true });  // 开关是 sr-only input，被样式化的 span 覆盖
-    check('打开开关后进入模拟模式', await page.evaluate(() => isMockMode) === true);
-
-    const expectedPanels = await page.evaluate(() => {
-        templates[0].steps = templates[0].steps.slice(0, 2);
-        batchMatrix.rows.forEach((row, i) => { row.active = i === 0; });
-        // 先把内存改动刷回编辑器 DOM，再保存 —— saveCurrentTemplate() 是从 DOM 读分镜的
-        populateActiveTemplateSteps();
-        saveCurrentTemplate();
-        return templates[0].steps.length;
-    });
-    await page.click('#tab-btn-variables');
-    const booksBefore = await page.evaluate(() => savedGalleries.length);
-    await page.evaluate(() => startBatchGeneration());
-    await page.waitForFunction(() => runningBatch === false && batchRunState.status === 'completed', null, { timeout: 60000 });
-    check('模拟模式能跑完一整轮批量出图', await page.evaluate(() => savedGalleries.length) === booksBefore + 1);
-    const newBook = await page.evaluate(() => savedGalleries[0]);
-    check('生成的画册标记为完成', newBook.status === 'complete', JSON.stringify(newBook.status));
-    check('生成的分镜数量与模板一致', (newBook.steps || []).length === expectedPanels, `${(newBook.steps || []).length} vs ${expectedPanels}`);
-    check('模拟出图不引用外网地址', (newBook.steps || []).every(s => String(s.image).startsWith('data:')));
-
-    // 关键路径 11：全局主线大纲控件存在，且能回落到模板简介
-    await page.click('#tab-btn-llm');
-    check('全局主线大纲输入框存在', await page.locator('#global-story-prompt').count() === 1);
-    const outlineFallback = await page.evaluate(() => {
-        document.getElementById('global-story-prompt').value = '';
-        return resolveGlobalStoryOutline(templates[0]);
-    });
-    check('留空时回落到模板简介', outlineFallback === (await page.evaluate(() => templates[0].desc)), outlineFallback);
-
-    // 关键路径 12：编辑体验 —— 分镜排序 / 复制、变量列增删改、画廊检索
-    await page.click('#tab-btn-templates');
-    const stepNamesBefore = await page.evaluate(() => templates.find(t => t.id === activeTemplateId).steps.map(s => s.name));
-    if (stepNamesBefore.length >= 2) {
-        await page.evaluate(() => moveStepInActive(0, 1));
-        const after = await page.evaluate(() => templates.find(t => t.id === activeTemplateId).steps.map(s => s.name));
-        check('分镜可以下移一位', after[0] === stepNamesBefore[1] && after[1] === stepNamesBefore[0], after.join(' | '));
-    }
-    const countBeforeDup = await page.evaluate(() => templates.find(t => t.id === activeTemplateId).steps.length);
-    await page.evaluate(() => duplicateStepInActive(0));
-    check('分镜可以就地复制', await page.evaluate(() => templates.find(t => t.id === activeTemplateId).steps.length) === countBeforeDup + 1);
-
-    await page.click('#tab-btn-variables');
-    await page.evaluate(() => {
-        batchMatrix.columns.push('smoketestvar');
-        batchMatrix.rows.forEach(row => { row.smoketestvar = 'v'; });
-        templates[0].steps[0].prompt += ' {smoketestvar}';
-        renderMatrixTable();
-    });
-    check('自定义变量列出现在表头上', await page.locator('#matrix-header-row th:has-text("smoketestvar")').count() === 1);
-
-    // 重命名必须同步改写模板里的占位符，否则模板会静默失效
-    const renamePromise = page.evaluate(() => renameMatrixColumn('smoketestvar'));
-    await page.waitForSelector('#ccs-dialog-input', { timeout: 5000 });
-    await page.fill('#ccs-dialog-input', 'renamedvar');
-    await page.click('.ccs-dialog-confirm');
-    await renamePromise;
-    check('重命名后矩阵列名已更新', await page.evaluate(() => batchMatrix.columns.includes('renamedvar')));
-    check('重命名同步改写了模板占位符', await page.evaluate(() => templates[0].steps[0].prompt.includes('{renamedvar}')));
-    check('旧占位符已从模板中消失', await page.evaluate(() => !templates[0].steps[0].prompt.includes('{smoketestvar}')));
-
-    // 删除必须把行上的同名 key 一起清掉，否则规范化时这一列会被重新收集回来
-    const deletePromise = page.evaluate(() => deleteMatrixColumn('renamedvar'));
-    await page.waitForSelector('#ccs-dialog-host', { timeout: 5000 });
-    await page.click('.ccs-dialog-confirm');
-    await deletePromise;
-    await page.evaluate(() => normalizeBatchMatrixState());
-    check('删除的变量列不会被规范化重新拉回来', await page.evaluate(() => !batchMatrix.columns.includes('renamedvar')));
-    check('删除的变量列已从每一行上移除', await page.evaluate(() => batchMatrix.rows.every(r => r.renamedvar === undefined)));
-    check('内置变量列不提供删除按钮', await page.evaluate(() => {
-        const headers = Array.from(document.querySelectorAll('#matrix-header-row th'));
-        const styleHeader = headers.find(th => th.textContent.includes('{style}'));
-        return styleHeader ? styleHeader.querySelectorAll('.is-danger').length === 0 : false;
-    }));
-
-    await page.click('#tab-btn-gallery');
-    const totalBooks = await page.evaluate(() => savedGalleries.length);
-    await page.fill('#gallery-search-input', 'zzz-definitely-no-such-book');
-    check('搜不到时显示空结果态', await page.locator('#gallery-container > div').count() === 1);
-    await page.fill('#gallery-search-input', '');
-    check('清空搜索后画册全部回来', await page.locator('#gallery-container > div').count() === totalBooks);
-    await page.selectOption('#gallery-sort-select', 'title');
-    const sortedTitles = await page.evaluate(() => getVisibleGalleryBooks().map(b => b.title));
-    check('按标题排序生效', JSON.stringify(sortedTitles) === JSON.stringify([...sortedTitles].sort((a, b) => String(a).localeCompare(String(b), 'zh-CN'))));
-    await page.selectOption('#gallery-sort-select', 'newest');
-
-    // 关键路径 13：断点续画 —— 只重跑缺失/降级的分镜
-    await page.click('#tab-btn-gallery');
-    const resumeTarget = await page.evaluate(() => {
-        const book = savedGalleries.find(b => b.status === 'complete' && (b.steps || []).length >= 2);
-        // 制造一本“断在中途”的画册：删掉最后一幕，再把第一幕打成降级占位图
-        book.steps = book.steps.slice(0, book.steps.length - 1);
-        book.steps[0].image = OFFLINE_PLACEHOLDER_IMAGE;
-        book.status = 'canceled';
-        book.inProgress = false;
-        renderGallery();
-        return { id: book.id, total: book.totalSteps, remaining: book.steps.length };
-    });
-    const missing = await page.evaluate((id) =>
-        getMissingPanelIndices(savedGalleries.find(b => b.id === id)), resumeTarget.id);
-    check('能识别出缺失与降级的分镜', missing.length === 2, JSON.stringify(missing));
-    check('未完成的卡片上出现补齐按钮',
-        await page.locator(`[data-book-id="${resumeTarget.id}"] button:has-text("补齐")`).count() === 1);
-
-    const resumePromise = page.evaluate((id) => resumeBookGeneration(id), resumeTarget.id);
-    await page.waitForSelector('#ccs-dialog-host', { timeout: 5000 });
-    await page.click('.ccs-dialog-confirm');
-    await resumePromise;
-    const resumed = await page.evaluate((id) => savedGalleries.find(b => b.id === id), resumeTarget.id);
-    check('补齐后画册恢复完整', resumed.status === 'complete', resumed.status);
-    check('补齐后分镜数量回到模板总幕数', (resumed.steps || []).length === resumeTarget.total,
-        `${(resumed.steps || []).length} vs ${resumeTarget.total}`);
-    check('补齐后不再有缺失分镜',
-        (await page.evaluate((id) => getMissingPanelIndices(savedGalleries.find(b => b.id === id)), resumeTarget.id)).length === 0);
-    check('补齐后分镜顺序仍然正确', await page.evaluate((id) => {
-        const b = savedGalleries.find(x => x.id === id);
-        return getOrderedBookSteps(b).every((s, i) => (s.stepIndex ?? i) === i);
-    }, resumeTarget.id));
-
-    // 关键路径 14：服务端静态资源边界
-    for (const [p, expected] of [['/data/llm.json', 404], ['/server.py', 404], ['/index.html', 200], ['/js/core.js', 200], ['/vendor/lucide.min.js', 200], ['/js/../server.py', 404]]) {
-        const res = await fetch(`${BASE}${p}`);
-        check(`静态边界 ${p} -> ${expected}`, res.status === expected, `got ${res.status}`);
-    }
-
-    check('全流程结束时仍无 JS 异常', pageErrors.length === 0, pageErrors.join(' | '));
-} catch (err) {
-    failures++;
-    results.push(` FAIL  测试执行本身抛出异常 -> ${err.message}`);
-} finally {
-    if (browser) await browser.close();
-    server.kill('SIGTERM');
-    try { rmSync(sandbox, { recursive: true, force: true }); } catch { /* ignore */ }
-}
-
-console.log(results.join('\n'));
-console.log(failures === 0 ? `\n全部 ${results.length} 项冒烟检查通过。` : `\n${failures}/${results.length} 项冒烟检查失败。`);
-process.exit(failures ? 1 : 0);
+  check('no uncaught browser errors',errors.length===0);
+  console.log(`${checks} browser checks passed.`);
+}catch(e){console.error(e);process.exitCode=1}finally{await browser?.close();server.kill();await new Promise(resolve=>server.once('exit',resolve));rmSync(temp,{recursive:true,force:true})}

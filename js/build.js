@@ -28,7 +28,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const crypto = require('node:crypto');
 const root = path.resolve(__dirname, '..');
-const moduleOrder = ['state', 'sync', 'engine', 'creation', 'ui', 'app'];
+const moduleOrder = ['state', 'sync', 'engine', 'creation', 'ui', 'workspace', 'organize', 'app'];
 const runtimePattern = /<script\s+id="studio-runtime"[^>]*>([\s\S]*?)<\/script>/;
 const stylePattern = /<style\s+id="studio-styles"[^>]*>([\s\S]*?)<\/style>/;
 
@@ -96,7 +96,7 @@ function readSources() {
   if (!fs.existsSync(path.join(root, 'js', 'shell.js'))) throw new Error('Run node js/build.js extract first.');
   const shellPath = path.join(root, 'js', 'shell.js');
   delete require.cache[require.resolve(shellPath)];
-  return { shell: require(shellPath), css: fs.readFileSync(path.join(root, 'styles.css'), 'utf8'), scripts: moduleOrder.map(name => ({ name, source: fs.readFileSync(path.join(root, 'js', name + '.js'), 'utf8') })) };
+  return { shell: JSON.parse(fs.readFileSync(shellPath, 'utf8').split('module.exports = ')[1].trim().replace(/;$/, '')), css: fs.readFileSync(path.join(root, 'styles.css'), 'utf8'), scripts: moduleOrder.map(name => ({ name, source: fs.readFileSync(path.join(root, 'js', name + '.js'), 'utf8') })) };
 }
 
 function check() {

@@ -1,8 +1,8 @@
 @echo off
 chcp 65001 >nul
-title ComfyComic Studio v0.0.1
+title Mio v1.0.0
 echo =======================================================
-echo   ComfyComic Studio v0.0.1 (Windows 工作台)
+echo   Mio v1.0.0 (Windows 工作台)
 echo   本地服务与故事分镜系统启动中...
 echo =======================================================
 echo.

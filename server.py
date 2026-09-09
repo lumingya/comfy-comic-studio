@@ -5,14 +5,19 @@ import json
 import uuid
 import base64
 import binascii
+import hashlib
+import copy
 import mimetypes
 import threading
+import mio_api
+import mio_credentials
+from datetime import datetime
 import urllib.request
 import urllib.parse
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 def _read_port_from_env(default=8777):
-    raw = os.environ.get("COMFY_COMIC_PORT", "").strip()
+    raw = os.environ.get("MIO_PORT", os.environ.get("COMFY_COMIC_PORT", "")).strip()
     if not raw:
         return default
     try:
@@ -33,15 +38,26 @@ else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LEGACY_DATA_FILE = os.path.join(BASE_DIR, "comfy_comic_data.json")
 DATA_DIR = os.path.join(BASE_DIR, "data")
+LEGACY_CONFIG_FILES = {key: os.path.join(DATA_DIR, key + ".json") for key in
+                       ("content", "comfy", "llm", "xml_template", "chat", "ui")}
 CONFIG_FILES = {
-    "content": os.path.join(DATA_DIR, "content.json"),
-    "comfy": os.path.join(DATA_DIR, "comfy.json"),
-    "llm": os.path.join(DATA_DIR, "llm.json"),
-    "xml_template": os.path.join(DATA_DIR, "xml_template.json"),
-    "chat": os.path.join(DATA_DIR, "chat.json"),
-    "ui": os.path.join(DATA_DIR, "ui.json"),
+    "content": os.path.join(DATA_DIR, "storyboards", "templates.json"),
+    "galleries": os.path.join(DATA_DIR, "albums", "index.json"),
+    "matrix": os.path.join(DATA_DIR, "presets", "characters.json"),
+    "workflows": os.path.join(DATA_DIR, "workflows", "library.json"),
+    "comfy": os.path.join(DATA_DIR, "settings", "comfy.json"),
+    "llm": os.path.join(DATA_DIR, "settings", "llm.json"),
+    "xml_template": os.path.join(DATA_DIR, "settings", "xml_template.json"),
+    "chat": os.path.join(DATA_DIR, "conversations", "sessions.json"),
+    "ui": os.path.join(DATA_DIR, "workspace", "state.json"),
+    "queue": os.path.join(DATA_DIR, "queue", "tasks.json"),
+    "projects": os.path.join(DATA_DIR, "workspace", "collections.json"),
+    "plans": os.path.join(DATA_DIR, "storyboards", "plans.json"),
+    "presets": os.path.join(DATA_DIR, "presets", "scene-presets.json"),
 }
-IMAGES_DIR = os.path.join(BASE_DIR, "images")
+# Keep /images URLs stable. New images are grouped by date under data/assets/images.
+LEGACY_IMAGES_DIR = os.path.join(BASE_DIR, "images")
+IMAGES_DIR = os.path.join(DATA_DIR, "assets", "images")
 MAX_JSON_BODY_BYTES = 10 * 1024 * 1024
 MAX_IMAGE_BYTES = 50 * 1024 * 1024
 CONFIG_LOCK = threading.RLock()
@@ -49,6 +65,7 @@ PUBLIC_FILES = {
     "/index.html",
     "/styles.css",
     "/favicon.svg",
+    "/README.md", "/README.en.md", "/SECURITY.md", "/examples/mio_client.py",
 }
 # Whole directories of front-end assets. Serving these by prefix (instead of
 # listing every file) keeps server.py from needing an edit each time a module
@@ -73,6 +90,7 @@ ALLOWED_ORIGINS = {
     f"http://127.0.0.1:{PORT}",
     f"http://localhost:{PORT}",
 }
+ALLOWED_ORIGINS.update(filter(None, (x.strip() for x in os.environ.get("MIO_ORIGINS", os.environ.get("COMFY_COMIC_ORIGINS", "")).split(","))))
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(IMAGES_DIR, exist_ok=True)
 
@@ -106,6 +124,9 @@ def is_public_static_path(request_path):
     if decoded_path in PUBLIC_FILES:
         return True
 
+    if decoded_path.startswith('/docs/'):
+        return decoded_path.lower().endswith(('.md', '.html', '.json', '.png')) and _is_file_inside(decoded_path, os.path.join(BASE_DIR, 'docs'))
+
     for asset_dir in PUBLIC_ASSET_DIRS:
         if decoded_path.startswith(asset_dir):
             if not decoded_path.lower().endswith(PUBLIC_ASSET_SUFFIXES):
@@ -114,7 +135,12 @@ def is_public_static_path(request_path):
 
     if not decoded_path.startswith("/images/"):
         return False
-    return _is_file_inside(decoded_path, IMAGES_DIR)
+    relative = decoded_path[len("/images/"):]
+    for root in (IMAGES_DIR, LEGACY_IMAGES_DIR):
+        candidate = os.path.realpath(os.path.join(root, relative))
+        if os.path.commonpath([candidate, os.path.realpath(root)]) == os.path.realpath(root) and os.path.isfile(candidate):
+            return True
+    return False
 
 
 def validate_config_payload(data):
@@ -184,9 +210,9 @@ def data_url_to_base64_data_url(data_url):
 
 def ensure_path_within_images(path):
     candidate = os.path.realpath(os.path.abspath(path))
-    images_root = os.path.realpath(os.path.abspath(IMAGES_DIR))
+    roots = [os.path.realpath(os.path.abspath(root)) for root in (IMAGES_DIR, LEGACY_IMAGES_DIR)]
     try:
-        is_allowed = os.path.commonpath([os.path.normcase(candidate), os.path.normcase(images_root)]) == os.path.normcase(images_root)
+        is_allowed = any(os.path.commonpath([os.path.normcase(candidate), os.path.normcase(root)]) == os.path.normcase(root) for root in roots)
     except ValueError:
         is_allowed = False
     if not is_allowed:
@@ -197,6 +223,14 @@ def ensure_path_within_images(path):
 
 def local_path_from_url(raw_url):
     parsed = urllib.parse.urlparse(raw_url)
+    if (not parsed.scheme or (parsed.hostname in ("localhost", "127.0.0.1") and parsed.port == PORT)) and parsed.path.startswith("/images/"):
+        relative = urllib.parse.unquote(parsed.path)[len("/images/"):]
+        for root in (IMAGES_DIR, LEGACY_IMAGES_DIR):
+            try:
+                return ensure_path_within_images(os.path.join(root, relative))
+            except FileNotFoundError:
+                continue
+        raise FileNotFoundError("Local image file does not exist")
     if parsed.scheme == "file":
         path = urllib.parse.unquote(parsed.path)
         if os.name == "nt" and path.startswith("/") and len(path) > 3 and path[2] == ":":
@@ -282,7 +316,7 @@ def image_url_to_data_url(raw_url):
     raw, mime_type = fetch_remote_image(raw_url)
     return bytes_to_data_url(raw, mime_type)
 
-MARKETPLACE_FILE = os.path.join(DATA_DIR, "marketplace_cache.json")
+MARKETPLACE_FILE = os.path.join(DATA_DIR, "cache", "marketplace.json")
 
 DEFAULT_MARKETPLACE_CATALOG = {
     "version": "1.0.0",
@@ -467,6 +501,160 @@ def fetch_remote_json(url, max_bytes=5 * 1024 * 1024):
             raise PayloadTooLargeError("远程模板大小超出 5MB 限制")
         return json.loads(content.decode("utf-8-sig"))
 
+# Provider transport: same-origin browser requests, no SDK dependency.
+def list_provider_models(payload):
+    config = payload.get('config') or {}
+    provider, base = mio_credentials.endpoint(config)
+    if provider != 'openai':
+        raise ValueError('Model discovery is available for OpenAI-compatible channels only')
+    key = mio_credentials.resolve(DATA_DIR, payload)
+    headers = {'Accept': 'application/json', 'User-Agent': 'Mio/1.0'}
+    if key:
+        headers['Authorization'] = 'Bearer ' + key
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+    try:
+        with urllib.request.build_opener(NoRedirect).open(urllib.request.Request(base + '/models', headers=headers), timeout=25) as response:
+            raw = read_limited_response(response, 5 * 1024 * 1024)
+        data = json.loads(raw)
+        items = data.get('data', data.get('models', [])) if isinstance(data, dict) else []
+        if not isinstance(items, list):
+            raise ValueError()
+        ids = sorted(set(item.get('id') if isinstance(item, dict) else item for item in items
+                         if isinstance(item.get('id') if isinstance(item, dict) else item, str)
+                         and 0 < len(item.get('id') if isinstance(item, dict) else item) <= 500))[:2000]
+        if not ids:
+            raise ValueError()
+        return {'models': ids}
+    except urllib.error.HTTPError as exc:
+        raise ValueError('Models API HTTP ' + str(exc.code) + '; check endpoint/authentication or enter the model ID manually') from None
+    except Exception:
+        raise ValueError('Could not read a supported model list; manual model IDs remain available') from None
+
+
+def generate_provider_image(payload):
+    import io
+    import zipfile
+    import secrets
+    config = payload.get('config') or {}
+    provider = config.get('provider')
+    if provider not in ('novelai', 'openai'):
+        raise ValueError('Unsupported image provider')
+    _, base = mio_credentials.endpoint(config)
+    key = mio_credentials.resolve(DATA_DIR, payload)
+    model = str(config.get('model', '')).strip()
+    prompt = str(payload.get('prompt', '')).strip()
+    if not model or not prompt:
+        raise ValueError('Model and prompt are required')
+    source = payload.get('source')
+    source_raw = None
+    if source:
+        if not isinstance(source, str) or not re.match(r'^data:image/(png|jpeg|webp);base64,', source):
+            raise ValueError('Reference must be a PNG/JPEG/WebP data URL')
+        source_raw = base64.b64decode(source.split(',', 1)[1], validate=True)
+        if detect_image_mime_type(source_raw, '') not in ('image/png', 'image/jpeg', 'image/webp'):
+            raise ValueError('Reference bytes must be PNG, JPEG or WebP')
+    frame = payload.get('frame') or {}
+    def number(name, default, low, high):
+        value = float(frame.get(name, default))
+        if not low <= value <= high:
+            raise ValueError('Invalid parameter: ' + name)
+        return value
+    negative = str(payload.get('negative', ''))
+    headers = {'Content-Type': 'application/json', 'User-Agent': 'Mio/1.0'}
+    if key:
+        headers['Authorization'] = 'Bearer ' + key
+    if provider == 'novelai':
+        width, height = int(number('width', 768, 64, 2048)), int(number('height', 1024, 64, 2048))
+        if width % 64 or height % 64:
+            raise ValueError('NovelAI width and height must be multiples of 64')
+        seed = int(number('seed', -1, -1, 4294967295))
+        params = {'params_version': 3, 'width': width, 'height': height, 'scale': number('cfg', 5, 0, 10),
+                  'steps': int(number('steps', 28, 1, 50)), 'seed': seed if seed >= 0 else secrets.randbelow(4294967296),
+                  'n_samples': 1, 'sampler': config.get('sampler', 'k_euler_ancestral'), 'noise_schedule': 'karras',
+                  'negative_prompt': negative, 'ucPreset': 0, 'qualityToggle': False, 'sm': False, 'sm_dyn': False,
+                  'dynamic_thresholding': False, 'controlnet_strength': 1, 'legacy': False, 'add_original_image': True}
+        if 'diffusion-4' in model or 'diffusion-5' in model:
+            params.update({'v4_prompt': {'caption': {'base_caption': prompt, 'char_captions': []}, 'use_coords': False, 'use_order': True},
+                           'v4_negative_prompt': {'caption': {'base_caption': negative, 'char_captions': []}}, 'characterPrompts': []})
+        if source_raw:
+            params.update(image=base64.b64encode(source_raw).decode(), strength=number('denoise', .45, 0, 1), noise=0)
+        body = {'input': prompt, 'model': model, 'action': 'img2img' if source_raw else 'generate', 'parameters': params}
+        path = '/ai/generate-image'
+    elif config.get('protocol') == 'chat':
+        content = [{'type': 'text', 'text': prompt + ('\nAvoid: ' + negative if negative else '')}]
+        if source:
+            content.append({'type': 'image_url', 'image_url': {'url': source}})
+        body = {'model': model, 'messages': [{'role': 'user', 'content': content}], 'stream': False}
+        path = '/chat/completions'
+    else:
+        body = {'model': model, 'prompt': prompt + ('\nAvoid: ' + negative if negative else ''), 'n': 1}
+        if config.get('sendSize', True) and config.get('size'):
+            body['size'] = config['size']
+        if config.get('sendQuality', True) and config.get('quality'):
+            body['quality'] = config['quality']
+        path = '/images/edits' if source_raw else '/images/generations'
+    if provider == 'openai' and source_raw and config.get('protocol') != 'chat':
+        boundary = 'ComicStudio' + uuid.uuid4().hex
+        parts = []
+        for name, value in body.items():
+            parts.append(('----' + boundary + '\r\nContent-Disposition: form-data; name="' + name + '"\r\n\r\n' + str(value) + '\r\n').encode())
+        mime = detect_image_mime_type(source_raw, '')
+        ext = {'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp'}[mime]
+        parts.append(('----' + boundary + '\r\nContent-Disposition: form-data; name="image"; filename="reference.' + ext + '"\r\nContent-Type: ' + mime + '\r\n\r\n').encode() + source_raw + b'\r\n')
+        parts.append(('----' + boundary + '--\r\n').encode())
+        data = b''.join(parts)
+        headers['Content-Type'] = 'multipart/form-data; boundary=--' + boundary
+    else:
+        data = json.dumps(body).encode()
+    # Never forward Authorization to a redirect target or retry a paid generation.
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+    opener = urllib.request.build_opener(NoRedirect)
+    try:
+        with opener.open(urllib.request.Request(base + path, data=data, headers=headers), timeout=300) as response:
+            raw = read_limited_response(response)
+    except urllib.error.HTTPError as exc:
+        raise ValueError('Image provider HTTP ' + str(exc.code) + ' (check key, balance, model and parameters)') from None
+    if provider == 'novelai':
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            entries = [entry for entry in archive.infolist() if entry.filename.lower().endswith(('.png', '.jpg', '.webp'))]
+            if not entries or entries[0].file_size > MAX_IMAGE_BYTES:
+                raise ValueError('NovelAI returned no usable image or an oversized image')
+            raw = archive.read(entries[0])
+    else:
+        result = json.loads(raw)
+        item = (result.get('data') or [{}])[0]
+        if config.get('protocol') == 'chat':
+            message = ((result.get('choices') or [{}])[0].get('message') or {})
+            images = message.get('images') or []
+            content = message.get('content') or []
+            if images:
+                item = {'url': images[0].get('image_url', {}).get('url')}
+            elif isinstance(content, list):
+                item = next(({'url': c.get('image_url', {}).get('url')} for c in content if c.get('type') == 'image_url'), {})
+            elif isinstance(content, str):
+                match = re.search(r'data:image/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+', content)
+                item = {'url': match.group(0)} if match else {}
+        if item.get('b64_json'):
+            raw = base64.b64decode(item['b64_json'], validate=True)
+        elif str(item.get('url', '')).startswith('data:image/'):
+            raw = base64.b64decode(item['url'].split(',', 1)[1], validate=True)
+        elif item.get('url'):
+            raw, _ = fetch_remote_image(item['url'])
+        else:
+            raise ValueError('Provider returned no image; text-only responses are not successful generations')
+    if len(raw) > MAX_IMAGE_BYTES:
+        raise ValueError('Generated image too large')
+    mime = detect_image_mime_type(raw, '')
+    if mime not in ('image/png', 'image/jpeg', 'image/webp'):
+        raise ValueError('Provider must return PNG, JPEG or WebP, not active SVG or other content')
+    data_url = 'data:' + mime + ';base64,' + base64.b64encode(raw).decode()
+    return {'image': store_image_data(data_url, payload.get('albumId', 'unassigned')), 'offlineFallback': False, 'provider': provider}
+
+
 def handle_vision_audit(payload):
     base_url = (payload.get("baseUrl") or "").strip().rstrip("/")
     if not base_url:
@@ -619,6 +807,18 @@ def normalize_merged_config(data):
 
 def read_merged_config():
     with CONFIG_LOCK:
+        recover_config_transaction()
+        if not any(os.path.exists(path) for path in CONFIG_FILES.values()) and any(os.path.exists(path) for path in LEGACY_CONFIG_FILES.values()):
+            if not all(os.path.exists(path) for path in LEGACY_CONFIG_FILES.values()):
+                raise ConfigReadError("Legacy configuration is incomplete; restore the missing files before migration.")
+            legacy = {}
+            for path in LEGACY_CONFIG_FILES.values():
+                chunk = read_json_file(path, {})
+                if not isinstance(chunk, dict):
+                    raise ConfigReadError("Invalid legacy configuration: " + path)
+                legacy.update(chunk)
+            write_split_config(legacy)
+            print("[Migration] Structured data layout created; legacy JSON files retained as backup.", flush=True)
         split_exists = any(os.path.exists(path) for path in CONFIG_FILES.values())
         merged = {}
 
@@ -649,9 +849,27 @@ def read_merged_config():
             except Exception as e:
                 print(f"[Config Migration Warning] {e}", flush=True)
 
+    if not merged:
+        return {**{key: kind() for key, kind in REQUIRED_CONFIG_FIELDS.items()}, "_emptyWorkspace": True}
+    has_studio_metadata = merged.pop("_hasStudioMetadata", False)
+    if "_studioProjects" in merged:
+        meta = merged.setdefault("uiConfig", {}).setdefault("comfyStudio", {})
+        meta["projects"] = merged.pop("_studioProjects")
+        creation = merged.pop("_studioCreation", {})
+        creation["plans"] = merged.pop("_studioPlans", [])
+        creation["variableSets"] = merged.pop("_studioPresets", [])
+        meta["creation"] = creation
+        if not has_studio_metadata:
+            merged["uiConfig"].pop("comfyStudio", None)
     return normalize_merged_config(merged)
 
 def split_config_payload(data):
+    ui_config = copy.deepcopy(data.get("uiConfig", {}))
+    meta = ui_config.get("comfyStudio", {})
+    projects = meta.pop("projects", [])
+    creation = meta.pop("creation", {})
+    plans = creation.pop("plans", [])
+    presets = creation.pop("variableSets", [])
     comfy_config = data.get("comfyConfig") if isinstance(data.get("comfyConfig"), dict) else {}
     comfy_config = {
         **comfy_config,
@@ -670,12 +888,15 @@ def split_config_payload(data):
         "content": {
             "templates": data.get("templates", []),
             "activeTemplateId": data.get("activeTemplateId"),
-            "batchMatrix": data.get("batchMatrix", {}),
-            "savedGalleries": data.get("savedGalleries", []),
         },
+        "matrix": {"batchMatrix": data.get("batchMatrix", {})},
+        "galleries": {"savedGalleries": data.get("savedGalleries", [])},
+        "workflows": {"comfyWorkflows": data.get("comfyWorkflows", []), "activeWorkflowId": data.get("activeWorkflowId")},
+        "queue": {"batchRunState": data.get("batchRunState", {})},
+        "projects": {"_studioProjects": projects, "_hasStudioMetadata": "comfyStudio" in ui_config},
+        "plans": {"_studioPlans": plans, "_studioCreation": creation},
+        "presets": {"_studioPresets": presets},
         "comfy": {
-            "comfyWorkflows": data.get("comfyWorkflows", []),
-            "activeWorkflowId": data.get("activeWorkflowId"),
             "comfyConfig": comfy_config,
             "nodePositive": comfy_config.get("nodePositive", "6"),
             "nodeNegative": comfy_config.get("nodeNegative", ""),
@@ -692,22 +913,84 @@ def split_config_payload(data):
             "chatConfig": data.get("chatConfig", {}),
         },
         "ui": {
-            "uiConfig": data.get("uiConfig", {}),
-            "batchRunState": data.get("batchRunState", {}),
+            "uiConfig": ui_config,
             "updatedAt": data.get("updatedAt"),
         },
     }
+
+def transaction_path():
+    root = os.path.commonpath([os.path.dirname(path) for path in CONFIG_FILES.values()])
+    return os.path.join(root, ".config-transaction.json")
+
+
+def recover_config_transaction():
+    journal = transaction_path()
+    if not os.path.exists(journal):
+        return
+    payloads = read_json_file(journal, {})
+    if set(payloads) != set(CONFIG_FILES):
+        raise ConfigReadError("Invalid config transaction; keep files and restore a backup.")
+    for key, payload in payloads.items():
+        write_json_file(CONFIG_FILES[key], payload)
+    os.remove(journal)
+
 
 def write_split_config(data):
     payloads = split_config_payload(data)
     written = []
     with CONFIG_LOCK:
+        recover_config_transaction()
+        # Durable roll-forward journal: readers never observe half an API save,
+        # including after an interrupted process or a disk write failure.
+        write_json_file(transaction_path(), payloads)
         for key, payload in payloads.items():
             if write_json_file(CONFIG_FILES[key], payload):
                 written.append(key)
+        os.remove(transaction_path())
     return written
 
+def store_image_data(data_url, album_id="unassigned"):
+    if not isinstance(album_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,150}", album_id):
+        raise ValueError("Invalid album ID")
+    normalized = data_url_to_base64_data_url(data_url)
+    raw = base64.b64decode(normalized.split(",", 1)[1], validate=True)
+    mime = detect_image_mime_type(raw)
+    ext = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp", "image/gif": ".gif"}.get(mime)
+    if not ext:
+        raise ValueError("Only PNG, JPEG, WebP and GIF assets are accepted")
+    relative = "albums/" + album_id + "/" + hashlib.sha256(raw).hexdigest() + ext
+    destination = os.path.join(IMAGES_DIR, relative)
+    with CONFIG_LOCK:
+        if not os.path.exists(destination):
+            os.makedirs(os.path.dirname(destination), exist_ok=True)
+            temporary = destination + ".tmp"
+            try:
+                with open(temporary, "wb") as handle:
+                    handle.write(raw)
+                os.replace(temporary, destination)
+            finally:
+                if os.path.exists(temporary):
+                    os.remove(temporary)
+    return "/images/" + relative
+
+
 class ComicRequestHandler(SimpleHTTPRequestHandler):
+    server_version = "Mio/1.0"
+
+    def external_api(self):
+        return mio_api.handle(self, sys.modules[__name__])
+
+    def translate_path(self, path):
+        request_path = urllib.parse.unquote(urllib.parse.urlparse(path).path)
+        if request_path.startswith('/images/'):
+            relative = request_path[len('/images/'):]
+            for root in (IMAGES_DIR, LEGACY_IMAGES_DIR):
+                candidate = os.path.realpath(os.path.join(root, relative))
+                if os.path.commonpath([candidate, os.path.realpath(root)]) == os.path.realpath(root) and os.path.isfile(candidate):
+                    return candidate
+            return os.path.join(IMAGES_DIR, '__not_found__')
+        return super().translate_path(path)
+
     def is_origin_allowed(self):
         origin = self.headers.get('Origin')
         return not origin or origin in ALLOWED_ORIGINS
@@ -749,7 +1032,7 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Origin', origin)
             self.send_header('Vary', 'Origin')
             self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-            self.send_header('Access-Control-Allow-Headers', 'Content-Type')
+            self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
 
         request_path = urllib.parse.urlparse(self.path).path
         if request_path.startswith('/images/') or request_path.startswith('/vendor/'):
@@ -760,6 +1043,13 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
             self.send_header('Expires', '0')
         super().end_headers()
 
+    def do_PUT(self):
+        if not self.external_api():
+            self.send_error(405)
+
+    do_DELETE = do_PUT
+    do_PATCH = do_PUT
+
     def do_OPTIONS(self):
         if not self.is_origin_allowed():
             self.send_json(403, {"error": "Origin is not allowed"})
@@ -768,6 +1058,11 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        if self.external_api():
+            return
+        if not self.is_origin_allowed():
+            self.send_json(403, {'error': 'Origin is not allowed'})
+            return
         request_path = urllib.parse.urlparse(self.path).path
         if request_path == '/api/config':
             try:
@@ -792,6 +1087,9 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_HEAD(self):
+        if self.path.startswith("/api/v1"):
+            self.send_error(405, "Use GET")
+            return
         request_path = urllib.parse.urlparse(self.path).path
         if request_path.startswith('/api/') or not is_public_static_path(request_path):
             self.send_error(404, "Not found")
@@ -801,9 +1099,34 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
         super().do_HEAD()
 
     def do_POST(self):
+        if self.external_api():
+            return
         request_path = urllib.parse.urlparse(self.path).path
         if not self.is_origin_allowed():
             self.send_json(403, {"error": "Origin is not allowed"})
+            return
+
+        if request_path in ('/api/image/credentials', '/api/image/models'):
+            if self.headers.get('Origin') == 'null':
+                self.send_json(403, {'error': 'Open the local server URL to manage credentials'})
+                return
+            try:
+                payload = self.read_json_body(max_bytes=65536)
+                result = mio_credentials.manage(DATA_DIR, payload) if request_path.endswith('/credentials') else list_provider_models(payload)
+                self.send_json(200, result)
+            except PayloadTooLargeError:
+                self.send_json(413, {'error': 'Request too large'})
+            except ValueError as exc:
+                self.send_json(400, {'error': str(exc)[:240]})
+            except Exception:
+                self.send_json(500, {'error': 'Local credential/model operation failed'})
+            return
+
+        if request_path == '/api/image/generate':
+            try:
+                self.send_json(200, generate_provider_image(self.read_json_body(max_bytes=MAX_IMAGE_BYTES * 4 // 3 + 65536)))
+            except Exception as exc:
+                self.send_json(400, {"error": str(exc)[:300]})
             return
 
         if request_path == '/api/config':
@@ -811,28 +1134,40 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
                 data = validate_config_payload(self.read_json_body())
                 
                 # 安全红线拦截校验：防止客户端空缓存反向冲刷抹除已有配置与画册
-                current_data = read_merged_config()
-                force_write = data.get("forceWrite", False)
-                shrunken_fields = [
-                    field for field in PROTECTED_COLLECTION_FIELDS
-                    if len(data.get(field, [])) < len(current_data.get(field, []))
-                ]
-                if not force_write and shrunken_fields:
-                    field_list = ", ".join(shrunken_fields)
-                    print(f"[Sync Blocked] Prevented shrinking protected fields: {field_list}.", flush=True)
-                    self.send_json(409, {
-                        "error": f"Sync blocked: protected collections would shrink ({field_list})."
-                    })
-                    return
+                with CONFIG_LOCK:
+                    current_data = read_merged_config()
+                    force_write = data.get("forceWrite", False)
+                    shrunken_fields = [
+                        field for field in PROTECTED_COLLECTION_FIELDS
+                        if len(data.get(field, [])) < len(current_data.get(field, []))
+                    ]
+                    if not force_write and shrunken_fields:
+                        field_list = ", ".join(shrunken_fields)
+                        print(f"[Sync Blocked] Prevented shrinking protected fields: {field_list}.", flush=True)
+                        self.send_json(409, {
+                            "error": f"Sync blocked: protected collections would shrink ({field_list})."
+                        })
+                        return
 
-                written = write_split_config(data)
-
+                    written = write_split_config(data)
                 self.send_json(200, {"ok": True, "status": "success", "files": written})
             except PayloadTooLargeError as e:
                 self.send_json(413, {"error": str(e)})
             except Exception as e:
                 print(f"[POST Error] {e}", flush=True)
                 self.send_json(400, {"error": str(e)})
+
+        elif request_path == '/api/store-image':
+            try:
+                payload = self.read_json_body(max_bytes=MAX_IMAGE_BYTES * 4 // 3 + 4096)
+                local_url = store_image_data(payload.get('dataUrl', ''), payload.get('albumId', 'unassigned'))
+                self.send_json(200, {"ok": True, "localUrl": local_url})
+            except PayloadTooLargeError as e:
+                self.send_json(413, {"error": str(e)})
+            except (ValueError, TypeError) as e:
+                self.send_json(400, {"error": str(e)})
+            except Exception as e:
+                self.send_json(500, {"error": str(e)})
 
         elif request_path == '/api/save-image':
             # Download a ComfyUI image URL and persist it locally under /images/
@@ -850,8 +1185,10 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
                     'image/gif': '.gif',
                 }.get(mime_type, mimetypes.guess_extension(mime_type) or '.img')
 
-                filename = f"comfy_{uuid.uuid4().hex[:12]}{ext}"
+                folder = datetime.now().strftime("%Y/%m/%d")
+                filename = f"{folder}/comfy_{uuid.uuid4().hex}{ext}"
                 dest_path = os.path.join(IMAGES_DIR, filename)
+                os.makedirs(os.path.dirname(dest_path), exist_ok=True)
                 tmp_path = f"{dest_path}.tmp"
 
                 try:
@@ -862,7 +1199,7 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
                     if os.path.exists(tmp_path):
                         os.remove(tmp_path)
 
-                local_url = f"http://127.0.0.1:{PORT}/images/{filename}"
+                local_url = f"/images/{filename}"
                 self.send_json(200, {"status": "ok", "localUrl": local_url})
             except PayloadTooLargeError as e:
                 self.send_json(413, {"error": str(e)})
@@ -908,11 +1245,11 @@ if __name__ == '__main__':
     # Change working dir to server.py directory
     os.chdir(BASE_DIR)
     print(f"=========================================================")
-    print(f" ComfyComic Studio 本地服务已成功启动！")
+    print(f" Mio 本地服务已成功启动！")
     print(f" 网页访问地址: http://127.0.0.1:{PORT}/index.html")
     print(f" 物理落盘配置目录: data/")
     print(f"=========================================================")
-    server = ThreadingHTTPServer(('127.0.0.1', PORT), ComicRequestHandler)
+    server = ThreadingHTTPServer((os.environ.get('MIO_HOST', os.environ.get('COMFY_COMIC_HOST', '127.0.0.1')), PORT), ComicRequestHandler)
     try:
         import webbrowser
         import time
