@@ -1,0 +1,952 @@
+{
+  "uiConfig": {
+    "workspace": 1,
+    "templateId": "tpl_summer",
+    "frameIndex": 0,
+    "filter": "all",
+    "search": "",
+    "sort": "createdAt",
+    "layout": "grid",
+    "selected": {},
+    "bookId": null,
+    "mode": "focus",
+    "step": 0,
+    "storyRowId": "row_0",
+    "storyTemplateId": "tpl_summer",
+    "llmTab": "story",
+    "marketTab": "all",
+    "marketSearch": "",
+    "exportFormat": "webtoon",
+    "exportIds": [],
+    "logFilter": "all",
+    "creation": {
+      "version": 1,
+      "variableSets": [
+        {
+          "id": "set_1cc4a9c3-185f-42d3-9bde-e88cf7820f74",
+          "projectId": "p_summer",
+          "title": "七海 Nanami · 素材",
+          "entries": [
+            {
+              "id": "var_95774606-c63b-4560-9166-6cf5bf701455",
+              "key": "character",
+              "type": "text",
+              "value": "七海 Nanami"
+            },
+            {
+              "id": "var_ac169321-334d-4078-a5af-515c64bbb2c7",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_3537c13a-a7f0-4091-bf9a-8c0423a6c927",
+              "key": "outfit",
+              "type": "text",
+              "value": "white shirt, navy school uniform"
+            },
+            {
+              "id": "var_a8017a14-eac9-4aa0-ba72-9a8cfd6504ca",
+              "key": "scene",
+              "type": "text",
+              "value": "seaside train station"
+            },
+            {
+              "id": "var_6003e91c-5495-44ee-bf9f-1bcd656ef6f3",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_0d25cf15-646b-4a5e-8fa5-e9f2b89e0770",
+          "projectId": "p_summer",
+          "title": "凛 Rin · 素材",
+          "entries": [
+            {
+              "id": "var_6d5fe10f-0e19-41c4-bf13-4a6de8f07993",
+              "key": "character",
+              "type": "text",
+              "value": "凛 Rin"
+            },
+            {
+              "id": "var_2179311e-7b9c-4777-a927-5b44628aeb08",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_da559c2e-d4c2-4b0c-8e50-4076883ccb65",
+              "key": "outfit",
+              "type": "text",
+              "value": "dark jacket, silver accessories"
+            },
+            {
+              "id": "var_e9f8643f-b782-4529-ab2c-5b02ed41f70f",
+              "key": "scene",
+              "type": "text",
+              "value": "neon city at night"
+            },
+            {
+              "id": "var_fa9a1cc5-8484-4a82-9f25-b2e54943efc8",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_409cd1aa-131a-45d9-8b45-b1d75123a37c",
+          "projectId": "p_summer",
+          "title": "千夏 Chinatsu · 素材",
+          "entries": [
+            {
+              "id": "var_37f7d0e1-3398-41a1-8091-bf41d1d0f385",
+              "key": "character",
+              "type": "text",
+              "value": "千夏 Chinatsu"
+            },
+            {
+              "id": "var_5152766c-d080-4d01-8108-3a7b231c7b62",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_97022702-c17f-4f20-8e4e-58ca3ade618a",
+              "key": "outfit",
+              "type": "text",
+              "value": "white shirt, navy school uniform"
+            },
+            {
+              "id": "var_e831d1be-fd1f-4482-b982-3ea8da4b794f",
+              "key": "scene",
+              "type": "text",
+              "value": "summer flower field"
+            },
+            {
+              "id": "var_4d8abc05-b098-41e5-a86a-dd214c9dc166",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_5734cdec-afe1-4e71-b992-1d309e53d2e1",
+          "projectId": "p_summer",
+          "title": "月 Tsuki · 素材",
+          "entries": [
+            {
+              "id": "var_e3337231-c2a2-4633-b4b1-3a4a26cd9b39",
+              "key": "character",
+              "type": "text",
+              "value": "月 Tsuki"
+            },
+            {
+              "id": "var_739737b1-a4d0-4a36-ad81-7e4d97a78cff",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_0523108e-8a46-4d9f-93ed-0a2f21196678",
+              "key": "outfit",
+              "type": "text",
+              "value": "dark jacket, silver accessories"
+            },
+            {
+              "id": "var_babfb635-a094-4878-8ad4-02e1614dc7c7",
+              "key": "scene",
+              "type": "text",
+              "value": "moonlit garden"
+            },
+            {
+              "id": "var_d82e92d7-7df2-4014-bd03-ce59a057e69d",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_c01ee530-fbc2-47f6-afb5-5f0c9750b97c",
+          "projectId": "p_summer",
+          "title": "森 Mori · 素材",
+          "entries": [
+            {
+              "id": "var_a388ad49-fb78-4b59-a4dd-74d9f80b5827",
+              "key": "character",
+              "type": "text",
+              "value": "森 Mori"
+            },
+            {
+              "id": "var_f490f7ef-88a9-4008-abfa-de09e3a9ec32",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_99be9acc-0ac8-4694-86e2-0c883a22ed07",
+              "key": "outfit",
+              "type": "text",
+              "value": "white shirt, navy school uniform"
+            },
+            {
+              "id": "var_cc7ffbcb-dba6-4512-b456-fe0bebfb8741",
+              "key": "scene",
+              "type": "text",
+              "value": "seaside train station"
+            },
+            {
+              "id": "var_69511f03-1d68-441b-bc1f-19edce0635ab",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_652c12f7-2fdc-425c-81c7-2194d7d32194",
+          "projectId": "p_summer",
+          "title": "星野 Hoshino · 素材",
+          "entries": [
+            {
+              "id": "var_85339d74-0631-4519-8d26-c85775bb0a6e",
+              "key": "character",
+              "type": "text",
+              "value": "星野 Hoshino"
+            },
+            {
+              "id": "var_b58d765a-8b7c-477e-a8eb-67319f649fd4",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_160bbe02-c565-4aa6-9411-434026636ff0",
+              "key": "outfit",
+              "type": "text",
+              "value": "dark jacket, silver accessories"
+            },
+            {
+              "id": "var_c52ce459-52b5-40c6-b8c9-96e211d71bd1",
+              "key": "scene",
+              "type": "text",
+              "value": "neon city at night"
+            },
+            {
+              "id": "var_d3c0a3a7-70f1-408c-b37e-57f3c5f96f94",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_908b4e89-c29b-433b-8349-a53aa6c2786f",
+          "projectId": "p_summer",
+          "title": "绫 Aya · 素材",
+          "entries": [
+            {
+              "id": "var_78591d45-1add-4805-b65f-47d99d4e2752",
+              "key": "character",
+              "type": "text",
+              "value": "绫 Aya"
+            },
+            {
+              "id": "var_eaca4634-5e08-42d8-aa9b-ec69cd5755cb",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_11dd328a-b586-484e-8a81-27384cc956e1",
+              "key": "outfit",
+              "type": "text",
+              "value": "white shirt, navy school uniform"
+            },
+            {
+              "id": "var_18223f29-de68-4238-9983-ab51d6436241",
+              "key": "scene",
+              "type": "text",
+              "value": "summer flower field"
+            },
+            {
+              "id": "var_29beae00-dac5-426c-bb16-24c347c95d6b",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_c5356f70-5976-4ad4-bc15-bfdc6c9a8faf",
+          "projectId": "p_summer",
+          "title": "七海 Nanami · 素材",
+          "entries": [
+            {
+              "id": "var_78189667-1f7f-433d-bb50-648f90f9726a",
+              "key": "character",
+              "type": "text",
+              "value": "七海 Nanami"
+            },
+            {
+              "id": "var_490f7ebf-eee7-4a36-8bc2-0731600f8626",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_060ec4e8-ef0b-43cb-8411-364d4628c316",
+              "key": "outfit",
+              "type": "text",
+              "value": "dark jacket, silver accessories"
+            },
+            {
+              "id": "var_64ead20f-04d8-4237-a421-337913cd0694",
+              "key": "scene",
+              "type": "text",
+              "value": "moonlit garden"
+            },
+            {
+              "id": "var_877aa89a-b00e-4541-8ae4-181aa473dbcd",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_2ec48d27-212a-427f-a0e4-55f0c59368ce",
+          "projectId": "p_summer",
+          "title": "七海 Nanami · 素材",
+          "entries": [
+            {
+              "id": "var_98067b5f-e40b-4020-b85c-509a401f1728",
+              "key": "character",
+              "type": "text",
+              "value": "七海 Nanami"
+            },
+            {
+              "id": "var_aa589088-218d-4da1-92e1-4db43ac2094a",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_f013f4b2-3c22-429a-88a2-352c9315c13b",
+              "key": "outfit",
+              "type": "text",
+              "value": "white shirt, navy school uniform"
+            },
+            {
+              "id": "var_a72b49d4-2439-4a55-a9e0-ae58ce60ee9a",
+              "key": "scene",
+              "type": "text",
+              "value": "seaside train station"
+            },
+            {
+              "id": "var_21271661-270e-47d8-8e25-75d72c506b61",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_ee08452a-073a-49b8-b09b-6ea31527d11f",
+          "projectId": "p_summer",
+          "title": "凛 Rin · 素材",
+          "entries": [
+            {
+              "id": "var_4be0fb34-00d7-4494-98a3-557d70aa359a",
+              "key": "character",
+              "type": "text",
+              "value": "凛 Rin"
+            },
+            {
+              "id": "var_886876e6-da67-4c13-b684-78fe5a5381b4",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_5e441023-afc1-4939-ac4e-583876f610a7",
+              "key": "outfit",
+              "type": "text",
+              "value": "dark jacket, silver accessories"
+            },
+            {
+              "id": "var_662717e9-d86f-41a7-8f50-6dbb8d4877bd",
+              "key": "scene",
+              "type": "text",
+              "value": "neon city at night"
+            },
+            {
+              "id": "var_edea26c4-9057-45cc-8ad2-ad1d6f049e67",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_c8e14fdf-ab70-4c0e-8a5c-9396c6db6e7a",
+          "projectId": "p_summer",
+          "title": "千夏 Chinatsu · 素材",
+          "entries": [
+            {
+              "id": "var_7c79f16d-4ffc-40a5-a199-e0c550981a85",
+              "key": "character",
+              "type": "text",
+              "value": "千夏 Chinatsu"
+            },
+            {
+              "id": "var_89a2227b-79ce-4a95-b5af-a21f19fd4f58",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_fbca833f-494c-4fab-95ce-0e5332af39f8",
+              "key": "outfit",
+              "type": "text",
+              "value": "white shirt, navy school uniform"
+            },
+            {
+              "id": "var_268b99a6-d72d-48cf-90fe-1630708bcd83",
+              "key": "scene",
+              "type": "text",
+              "value": "summer flower field"
+            },
+            {
+              "id": "var_513ed5d6-f3c9-4fb9-844d-6db1978980f4",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_25e16b54-fd9d-4e64-9b3f-19586f60dbff",
+          "projectId": "p_summer",
+          "title": "月 Tsuki · 素材",
+          "entries": [
+            {
+              "id": "var_fe11250e-637c-493a-abf4-28119f4b4a60",
+              "key": "character",
+              "type": "text",
+              "value": "月 Tsuki"
+            },
+            {
+              "id": "var_f00baa94-439b-4f06-817d-4703e5bbe598",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_6fd8d704-417c-4fca-af78-3566c768e3aa",
+              "key": "outfit",
+              "type": "text",
+              "value": "dark jacket, silver accessories"
+            },
+            {
+              "id": "var_727b67c6-fdfc-4f8b-9811-346dec559470",
+              "key": "scene",
+              "type": "text",
+              "value": "moonlit garden"
+            },
+            {
+              "id": "var_b317f166-059d-45b2-b732-3693c18d49d1",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_387f51ca-db74-433b-864f-35fd0a757dda",
+          "projectId": "p_summer",
+          "title": "森 Mori · 素材",
+          "entries": [
+            {
+              "id": "var_63dad7e1-c319-4649-9b82-dba46bf84048",
+              "key": "character",
+              "type": "text",
+              "value": "森 Mori"
+            },
+            {
+              "id": "var_25e31c0b-57ea-4752-bb63-44c0f198e8f7",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_7bde5919-594a-4767-bb3d-a1fbd2dea94e",
+              "key": "outfit",
+              "type": "text",
+              "value": "white shirt, navy school uniform"
+            },
+            {
+              "id": "var_46239e2f-9714-4aab-842b-4daf46b19f16",
+              "key": "scene",
+              "type": "text",
+              "value": "seaside train station"
+            },
+            {
+              "id": "var_6deaaf18-71a2-4619-a876-0e89b6ab4836",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_421e6813-b6f8-4f76-8e28-9f2e7812a707",
+          "projectId": "p_summer",
+          "title": "星野 Hoshino · 素材",
+          "entries": [
+            {
+              "id": "var_1d33786c-8b13-47a5-a658-9a180d888111",
+              "key": "character",
+              "type": "text",
+              "value": "星野 Hoshino"
+            },
+            {
+              "id": "var_8f35035a-1417-40a2-8560-b0dedc08f532",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_d0bfb629-1104-4fec-be62-07a7d1b0b569",
+              "key": "outfit",
+              "type": "text",
+              "value": "dark jacket, silver accessories"
+            },
+            {
+              "id": "var_0982f951-62cc-430b-8e5a-af6cf662034b",
+              "key": "scene",
+              "type": "text",
+              "value": "neon city at night"
+            },
+            {
+              "id": "var_63bd720e-e02d-497c-93ce-1eded1a6898c",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_f35d81f5-8122-446b-b633-3a1fc6a1fd78",
+          "projectId": "p_summer",
+          "title": "绫 Aya · 素材",
+          "entries": [
+            {
+              "id": "var_346ba127-c970-483f-8b82-61abbc3642df",
+              "key": "character",
+              "type": "text",
+              "value": "绫 Aya"
+            },
+            {
+              "id": "var_5c54b436-d51f-449b-a11d-1c63e5e93690",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_d6690dbc-72c1-4cf3-b4d8-9b9b578c3ece",
+              "key": "outfit",
+              "type": "text",
+              "value": "white shirt, navy school uniform"
+            },
+            {
+              "id": "var_cfa36c86-9cea-45d4-8461-fb996f42e307",
+              "key": "scene",
+              "type": "text",
+              "value": "summer flower field"
+            },
+            {
+              "id": "var_3c151a62-8731-4bcc-b851-79a75964ce93",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_d55f4ba5-375e-4f3a-9714-8f8357ce4226",
+          "projectId": "p_summer",
+          "title": "七海 Nanami · 素材",
+          "entries": [
+            {
+              "id": "var_96d16717-a5ba-40b9-a9c8-a0d01570f4ce",
+              "key": "character",
+              "type": "text",
+              "value": "七海 Nanami"
+            },
+            {
+              "id": "var_9df017ca-f484-4f3d-9dc1-0996fb3f3a45",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_d4b2e38b-de5b-47db-a857-2126cb78b0f2",
+              "key": "outfit",
+              "type": "text",
+              "value": "dark jacket, silver accessories"
+            },
+            {
+              "id": "var_3fd4623e-f145-4940-8f78-1e53aa178a54",
+              "key": "scene",
+              "type": "text",
+              "value": "moonlit garden"
+            },
+            {
+              "id": "var_e8945e54-3ba3-4cd8-8bbc-33810d99818f",
+              "key": "trigger",
+              "type": "text",
+              "value": "consistent face, delicate features"
+            }
+          ]
+        },
+        {
+          "id": "set_78234677-d33d-417b-b144-8af6abc59624",
+          "projectId": "p_draft",
+          "title": "新角色 · 素材",
+          "entries": [
+            {
+              "id": "var_0b5df0de-fcdb-4d3f-b365-c6efc508fdd2",
+              "key": "character",
+              "type": "text",
+              "value": "新角色"
+            },
+            {
+              "id": "var_d76e1057-59d0-46aa-b51a-ba060e6a2d98",
+              "key": "style",
+              "type": "text",
+              "value": "cinematic anime, cel shading"
+            },
+            {
+              "id": "var_3822e6ca-bfbc-43cc-a147-e0e45c89ee6c",
+              "key": "outfit",
+              "type": "text",
+              "value": "white shirt, navy school uniform"
+            },
+            {
+              "id": "var_01cee0c2-fd47-422c-931c-5c318281048a",
+              "key": "scene",
+              "type": "text",
+              "value": "seaside train station"
+            },
+            {
+              "id": "var_e9a01cb9-f867-4886-ae49-1a98975fde88",
+              "key": "trigger",
+              "type": "text",
+              "value": "girl,long hair,silver hari"
+            }
+          ]
+        }
+      ],
+      "plans": [
+        {
+          "id": "plan_2c35c7f2-9f78-4337-b11a-f953f633366b",
+          "projectId": "p_summer",
+          "title": "海风与未寄出的信",
+          "templateId": "tpl_summer",
+          "rowId": "row_0",
+          "enabled": true,
+          "variableSetIds": [
+            "set_1cc4a9c3-185f-42d3-9bde-e88cf7820f74",
+            "set_0d25cf15-646b-4a5e-8fa5-e9f2b89e0770"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561336,
+          "updatedAt": 1788739561336
+        },
+        {
+          "id": "plan_5f2a5529-55a5-4e91-83b2-ec9584587f03",
+          "projectId": "p_summer",
+          "title": "霓虹尽头",
+          "templateId": "tpl_neon",
+          "rowId": "row_1",
+          "enabled": true,
+          "variableSetIds": [
+            "set_0d25cf15-646b-4a5e-8fa5-e9f2b89e0770"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561336,
+          "updatedAt": 1788739561336
+        },
+        {
+          "id": "plan_c4d2c45a-839b-44af-adc6-65297052aa7e",
+          "projectId": "p_summer",
+          "title": "花开时，遇见你",
+          "templateId": "tpl_summer",
+          "rowId": "row_2",
+          "enabled": false,
+          "variableSetIds": [
+            "set_409cd1aa-131a-45d9-8b45-b1d75123a37c"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561336,
+          "updatedAt": 1788739561336
+        },
+        {
+          "id": "plan_675d7c09-5ca3-4d8d-803f-a5dadef7b8b7",
+          "projectId": "p_summer",
+          "title": "月下的第七封信",
+          "templateId": "tpl_moon",
+          "rowId": "row_3",
+          "enabled": false,
+          "variableSetIds": [
+            "set_5734cdec-afe1-4e71-b992-1d309e53d2e1"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561336,
+          "updatedAt": 1788739561336
+        },
+        {
+          "id": "plan_c6c6b4f2-ce8b-4f76-a6dd-325645d37aba",
+          "projectId": "p_summer",
+          "title": "森之回响",
+          "templateId": "tpl_summer",
+          "rowId": "row_4",
+          "enabled": false,
+          "variableSetIds": [
+            "set_c01ee530-fbc2-47f6-afb5-5f0c9750b97c"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561336,
+          "updatedAt": 1788739561336
+        },
+        {
+          "id": "plan_7ead1b80-b497-4558-8504-22fd59471781",
+          "projectId": "p_summer",
+          "title": "坠入星河",
+          "templateId": "tpl_summer",
+          "rowId": "row_5",
+          "enabled": false,
+          "variableSetIds": [
+            "set_652c12f7-2fdc-425c-81c7-2194d7d32194"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561336,
+          "updatedAt": 1788739561336
+        },
+        {
+          "id": "plan_7f9e3ad9-cbd3-4d6c-a311-68cd3b6020fb",
+          "projectId": "p_summer",
+          "title": "夏日祭的约定",
+          "templateId": "tpl_summer",
+          "rowId": "row_6",
+          "enabled": false,
+          "variableSetIds": [
+            "set_908b4e89-c29b-433b-8349-a53aa6c2786f"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561336,
+          "updatedAt": 1788739561336
+        },
+        {
+          "id": "plan_06f99aa5-d588-4d4d-9fb5-80c62b23e5b1",
+          "projectId": "p_summer",
+          "title": "最后一班电车",
+          "templateId": "tpl_summer",
+          "rowId": "row_7",
+          "enabled": false,
+          "variableSetIds": [
+            "set_c5356f70-5976-4ad4-bc15-bfdc6c9a8faf"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561336,
+          "updatedAt": 1788739561336
+        },
+        {
+          "id": "plan_f1bd1532-7c50-451a-8491-1f74ab545be7",
+          "projectId": "p_summer",
+          "title": "海风与未寄出的信",
+          "templateId": "tpl_summer",
+          "rowId": "row_0",
+          "enabled": true,
+          "variableSetIds": [
+            "set_2ec48d27-212a-427f-a0e4-55f0c59368ce"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561479,
+          "updatedAt": 1788739561479
+        },
+        {
+          "id": "plan_7bb18cf2-aef3-4782-9e2d-86755d479022",
+          "projectId": "p_summer",
+          "title": "霓虹尽头",
+          "templateId": "tpl_neon",
+          "rowId": "row_1",
+          "enabled": true,
+          "variableSetIds": [
+            "set_ee08452a-073a-49b8-b09b-6ea31527d11f"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561479,
+          "updatedAt": 1788739561479
+        },
+        {
+          "id": "plan_21c59097-390e-4486-a993-934d395fea15",
+          "projectId": "p_summer",
+          "title": "花开时，遇见你",
+          "templateId": "tpl_summer",
+          "rowId": "row_2",
+          "enabled": false,
+          "variableSetIds": [
+            "set_c8e14fdf-ab70-4c0e-8a5c-9396c6db6e7a"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561479,
+          "updatedAt": 1788739561479
+        },
+        {
+          "id": "plan_40744f36-558b-4da5-b6a3-149fbf10386f",
+          "projectId": "p_summer",
+          "title": "月下的第七封信",
+          "templateId": "tpl_moon",
+          "rowId": "row_3",
+          "enabled": false,
+          "variableSetIds": [
+            "set_25e16b54-fd9d-4e64-9b3f-19586f60dbff"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561479,
+          "updatedAt": 1788739561479
+        },
+        {
+          "id": "plan_12c4cadb-17fb-404f-96ff-ea4d7484ab3b",
+          "projectId": "p_summer",
+          "title": "森之回响",
+          "templateId": "tpl_summer",
+          "rowId": "row_4",
+          "enabled": false,
+          "variableSetIds": [
+            "set_387f51ca-db74-433b-864f-35fd0a757dda"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561479,
+          "updatedAt": 1788739561479
+        },
+        {
+          "id": "plan_988e63e0-26a5-4a2b-af07-57f49f808e24",
+          "projectId": "p_summer",
+          "title": "坠入星河",
+          "templateId": "tpl_summer",
+          "rowId": "row_5",
+          "enabled": false,
+          "variableSetIds": [
+            "set_421e6813-b6f8-4f76-8e28-9f2e7812a707"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561479,
+          "updatedAt": 1788739561479
+        },
+        {
+          "id": "plan_03fdb2c2-8b05-4997-a79e-751862703372",
+          "projectId": "p_summer",
+          "title": "夏日祭的约定",
+          "templateId": "tpl_summer",
+          "rowId": "row_6",
+          "enabled": false,
+          "variableSetIds": [
+            "set_f35d81f5-8122-446b-b633-3a1fc6a1fd78"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561479,
+          "updatedAt": 1788739561479
+        },
+        {
+          "id": "plan_b5e342aa-4bcc-45c9-980d-e96f4e2f4c17",
+          "projectId": "p_summer",
+          "title": "最后一班电车",
+          "templateId": "tpl_summer",
+          "rowId": "row_7",
+          "enabled": false,
+          "variableSetIds": [
+            "set_d55f4ba5-375e-4f3a-9714-8f8357ce4226"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561479,
+          "updatedAt": 1788739561479
+        },
+        {
+          "id": "plan_c3a89b65-6adf-4b00-aecd-d71403673d79",
+          "projectId": "p_draft",
+          "title": "未命名企划",
+          "templateId": "tpl_7e398d9e-a2a8-4867-8428-ff5f8c25f920",
+          "rowId": "row_da078939-e2c4-42ea-9a01-74d2d4c20d34",
+          "enabled": true,
+          "variableSetIds": [
+            "set_78234677-d33d-417b-b144-8af6abc59624"
+          ],
+          "variables": [],
+          "sceneOverrides": {},
+          "createdAt": 1788739561479,
+          "updatedAt": 1788739561479
+        }
+      ],
+      "migratedAt": 1788739561337
+    },
+    "projects": [
+      {
+        "id": "p_summer",
+        "title": "夏日叙事集",
+        "createdAt": 1788739561293
+      },
+      {
+        "id": "p_draft",
+        "title": "未命名企划",
+        "createdAt": 1788739561293
+      }
+    ],
+    "activeProjectId": "p_summer",
+    "identity": {
+      "workspaceName": "我的工作室",
+      "creatorName": "",
+      "onboarded": true
+    }
+  },
+  "batchRunState": {
+    "queue": [
+      {
+        "id": "task_sample",
+        "bookId": "book_5",
+        "rowId": "row_5",
+        "templateId": "tpl_summer",
+        "indices": [
+          4,
+          5
+        ],
+        "done": 0,
+        "status": "pending",
+        "createdAt": 1788852509816
+      }
+    ]
+  },
+  "updatedAt": 1788708359265
+}

@@ -1,5 +1,6 @@
 import base64
 import io
+import json
 import os
 import tempfile
 import unittest
@@ -224,5 +225,140 @@ class ServerBoundaryTests(unittest.TestCase):
             server.validate_config_payload({**valid, "forceWrite": "false"})
 
 
+class MarketplaceAndVisionTests(unittest.TestCase):
+    def test_marketplace_catalog_returns_default_structure(self):
+        catalog = server.get_marketplace_catalog()
+        self.assertIn("storyboards", catalog)
+        self.assertIn("exportPresets", catalog)
+        self.assertTrue(len(catalog["storyboards"]) >= 2)
+        self.assertTrue(len(catalog["exportPresets"]) >= 4)
+
+    def test_fetch_remote_json_rejects_unsafe_protocols(self):
+        with self.assertRaises(ValueError):
+            server.fetch_remote_json("ftp://example.com/template.json")
+        with self.assertRaises(ValueError):
+            server.fetch_remote_json("file:///etc/passwd")
+
+    def test_vision_audit_validates_required_fields(self):
+        with self.assertRaises(ValueError):
+            server.handle_vision_audit({"baseUrl": "", "imageDataUrl": "data:image/png;base64,123"})
+        with self.assertRaises(ValueError):
+            server.handle_vision_audit({"baseUrl": "http://localhost:11434", "imageDataUrl": ""})
+
+    @patch("urllib.request.urlopen")
+    def test_fetch_remote_json_handles_utf8_bom(self, mock_urlopen):
+        raw_with_bom = b'\xef\xbb\xbf{"title": "BOM Template", "steps": []}'
+        mock_resp = unittest.mock.MagicMock()
+        mock_resp.read.return_value = raw_with_bom
+        mock_resp.__enter__.return_value = mock_resp
+        mock_urlopen.return_value = mock_resp
+
+        result = server.fetch_remote_json("https://raw.githubusercontent.com/test/tpl.json")
+        self.assertEqual(result["title"], "BOM Template")
+
+    @patch("urllib.request.urlopen")
+    def test_vision_audit_extracts_json_from_conversational_output(self, mock_urlopen):
+        mock_resp = unittest.mock.MagicMock()
+        mock_body = {
+            "choices": [{
+                "message": {
+                    "content": "以下是审校结果：\n```json\n{\n  \"score\": 9.0,\n  \"passed\": true,\n  \"summary\": \"构图极佳\",\n  \"anatomy\": \"正常\",\n  \"scene\": \"符合\",\n  \"suggestions\": \"无\"\n}\n```\n祝创作愉快！"
+                }
+            }]
+        }
+        mock_resp.read.return_value = json.dumps(mock_body).encode("utf-8")
+        mock_resp.__enter__.return_value = mock_resp
+        mock_urlopen.return_value = mock_resp
+
+        critique = server.handle_vision_audit({
+            "baseUrl": "https://api.openai.com/v1",
+            "apiKey": "test",
+            "model": "gpt-4o",
+            "promptText": "check",
+            "imageDataUrl": "data:image/png;base64,abc"
+        })
+        self.assertEqual(critique["score"], 9.0)
+        self.assertTrue(critique["passed"])
+        self.assertEqual(critique["summary"], "构图极佳")
+
+    @patch("urllib.request.urlopen")
+    def test_vision_audit_safe_fallback_on_invalid_json(self, mock_urlopen):
+        mock_resp = unittest.mock.MagicMock()
+        mock_body = {
+            "choices": [{
+                "message": {
+                    "content": "抱歉，由于画面过于模糊无法识别结构，请重新上传清晰图片。"
+                }
+            }]
+        }
+        mock_resp.read.return_value = json.dumps(mock_body).encode("utf-8")
+        mock_resp.__enter__.return_value = mock_resp
+        mock_urlopen.return_value = mock_resp
+
+        critique = server.handle_vision_audit({
+            "baseUrl": "https://api.openai.com/v1",
+            "apiKey": "test",
+            "model": "gpt-4o",
+            "promptText": "check",
+            "imageDataUrl": "data:image/png;base64,abc"
+        })
+        # 必须标记为不通过并提醒人工复核，严禁误报为满分通过
+        self.assertFalse(critique["passed"])
+        self.assertLess(critique["score"], 7.0)
+        self.assertIn("人工复核", critique["summary"])
+
+    @patch("urllib.request.urlopen")
+    def test_vision_audit_safe_fallback_on_refusal_or_none_content(self, mock_urlopen):
+        mock_resp = unittest.mock.MagicMock()
+        mock_body = {
+            "choices": [{
+                "message": {
+                    "content": None,
+                    "refusal": "I cannot fulfill this request due to safety policies."
+                }
+            }]
+        }
+        mock_resp.read.return_value = json.dumps(mock_body).encode("utf-8")
+        mock_resp.__enter__.return_value = mock_resp
+        mock_urlopen.return_value = mock_resp
+
+        critique = server.handle_vision_audit({
+            "baseUrl": "https://api.openai.com/v1",
+            "apiKey": "test",
+            "model": "gpt-4o",
+            "promptText": "check",
+            "imageDataUrl": "data:image/png;base64,abc"
+        })
+        self.assertFalse(critique["passed"])
+        self.assertLess(critique["score"], 7.0)
+        self.assertIn("人工复核", critique["summary"])
+
+    @patch("urllib.request.urlopen")
+    def test_vision_audit_extracts_json_with_trailing_placeholders(self, mock_urlopen):
+        mock_resp = unittest.mock.MagicMock()
+        mock_body = {
+            "choices": [{
+                "message": {
+                    "content": "审校结果如下：\n```json\n{\n  \"score\": 9.5,\n  \"passed\": true,\n  \"summary\": \"完美的一致性与画质\",\n  \"anatomy\": \"正常\",\n  \"scene\": \"契合\",\n  \"suggestions\": \"无\"\n}\n```\n提示：后续生成请注意保持 {character_tag} 与 {background_prompt} 的风格一致！"
+                }
+            }]
+        }
+        mock_resp.read.return_value = json.dumps(mock_body).encode("utf-8")
+        mock_resp.__enter__.return_value = mock_resp
+        mock_urlopen.return_value = mock_resp
+
+        critique = server.handle_vision_audit({
+            "baseUrl": "https://api.openai.com/v1",
+            "apiKey": "test",
+            "model": "gpt-4o",
+            "promptText": "check",
+            "imageDataUrl": "data:image/png;base64,abc"
+        })
+        self.assertEqual(critique["score"], 9.5)
+        self.assertTrue(critique["passed"])
+        self.assertEqual(critique["summary"], "完美的一致性与画质")
+
+
 if __name__ == "__main__":
     unittest.main()
+

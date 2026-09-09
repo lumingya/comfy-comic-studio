@@ -27,6 +27,14 @@ const BATCH_SESSION_ID = `session_${Date.now()}_${Math.random().toString(36).sli
 let appReadyPromise = Promise.resolve();
 let batchRunState = createEmptyBatchRunState();
 
+// 页面由本地服务提供时一律走同源相对路径，端口改成什么都不用动代码；
+// 只有直接双击 index.html（file:// 兜底）时才需要写死一个默认端口。
+const FILE_PROTOCOL_FALLBACK_ORIGIN = 'http://127.0.0.1:8777';
+function getLocalBackendUrl(path) {
+    return window.location.protocol.startsWith('http') ? path : `${FILE_PROTOCOL_FALLBACK_ORIGIN}${path}`;
+}
+window.getLocalBackendUrl = getLocalBackendUrl;
+
 // 100% 离线安全、高度容错的纯本地 SVG 矢量降级占位图（替代外网 Unsplash 地址）
 const OFFLINE_PLACEHOLDER_IMAGE = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400"><rect width="100%" height="100%" fill="%230f172a"/><g transform="translate(300, 200)" text-anchor="middle" fill="%2364748b"><rect x="-80" y="-80" width="160" height="160" rx="16" fill="%231e293b" stroke="%23334155" stroke-width="2"/><circle cx="0" cy="-15" r="24" fill="none" stroke="%2364748b" stroke-width="4"/><path d="M-40,40 L40,40 L25,15 L5,25 L-20,0 Z" fill="%2364748b"/><text y="120" font-size="15" font-family="system-ui, sans-serif" font-weight="bold" fill="%2394a3b8">图片绘制失败 (已安全降级)</text><text y="145" font-size="11" font-family="system-ui, sans-serif" fill="%23475569">本地服务离线或 ComfyUI 轮询超时</text></g></svg>`;
 

@@ -1,0 +1,418 @@
+diff --git a/server.py b/server.py
+index 334482a..ea1e053 100644
+--- a/server.py
++++ b/server.py
+@@ -1,4 +1,5 @@
+ import os
++import re
+ import json
+ import uuid
+ import base64
+@@ -81,7 +82,7 @@ class ConfigReadError(ValueError):
+ 
+ 
+ def _is_file_inside(candidate_path, root_dir):
+-    candidate = os.path.realpath(os.path.join(BASE_DIR, candidate_path.lstrip("/")))
++    candidate = os.path.realpath(os.path.join(BASE_DIR, candidate_path.lstrip("/\\")))
+     root = os.path.realpath(root_dir)
+     try:
+         inside = (
+@@ -200,7 +201,7 @@ def local_path_from_url(raw_url):
+     if parsed.scheme in ("http", "https"):
+         host = (parsed.hostname or "").lower()
+         if host in ("127.0.0.1", "localhost") and parsed.port == PORT:
+-            local_rel_path = urllib.parse.unquote(parsed.path).lstrip("/")
++            local_rel_path = urllib.parse.unquote(parsed.path).lstrip("/\\")
+             return ensure_path_within_images(os.path.join(BASE_DIR, local_rel_path))
+         return None
+     if raw_url and (os.path.isabs(raw_url) or (os.name == "nt" and len(raw_url) > 2 and raw_url[1] == ":")):
+@@ -277,12 +278,300 @@ def image_url_to_data_url(raw_url):
+     raw, mime_type = fetch_remote_image(raw_url)
+     return bytes_to_data_url(raw, mime_type)
+ 
++MARKETPLACE_FILE = os.path.join(DATA_DIR, "marketplace_cache.json")
++
++DEFAULT_MARKETPLACE_CATALOG = {
++    "version": "1.0.0",
++    "updatedAt": "2026-09-04",
++    "storyboards": [
++        {
++            "id": "tpl_cyberpunk_noir",
++            "title": "赛博朋克：霓虹雨夜追逐 (6幕)",
++            "author": "ComfyComic 社区",
++            "desc": "以未来赛博朋克都市为背景的动作分镜，包含天台对峙、雨夜追车与全息投影交火等高戏剧张力场景。",
++            "category": "action",
++            "tags": ["cyberpunk", "action", "sci-fi"],
++            "stepsCount": 6,
++            "data": {
++                "title": "赛博朋克：霓虹雨夜追逐",
++                "desc": "以未来赛博朋克都市为背景的动作分镜",
++                "steps": [
++                    {
++                        "name": "第一幕：雨夜天台",
++                        "prompt": "A cinematic wide shot of {character}, {style}, standing on the edge of a rainy cyberpunk skyscraper rooftop, neon lights reflecting on wet concrete, wearing {outfit}, fog and flying cars in background",
++                        "caption": "雨水打湿了霓虹灯的倒影，{character} 站在摩天大楼的边缘，俯瞰这座不夜城。"
++                    },
++                    {
++                        "name": "第二幕：锁定目标",
++                        "prompt": "Close-up shot of {character}, {style}, eye glowing with cybernetic optical interface displaying target HUD, intense expression, dynamic dramatic lighting",
++                        "caption": "义眼微光闪烁，目标数据在视网膜上迅速流转——猎物出现了。"
++                    },
++                    {
++                        "name": "第三幕：飞跃深渊",
++                        "prompt": "Dynamic mid-air action shot of {character}, {style}, leaping across the gap between two towering skyscrapers, coat billowing, sparks flying, high adrenaline",
++                        "caption": "没有任何迟疑，{character} 纵身跃入数百米高空的虚空之中。"
++                    },
++                    {
++                        "name": "第四幕：暗巷突袭",
++                        "prompt": "Low angle combat scene, {character}, {style}, landing in a steam-filled narrow alleyway, drawn energy weapon reflecting glowing signs, ready to strike",
++                        "caption": "轻盈落地，蒸汽在管道周围嘶嘶作响，枪口已对准了黑暗深处。"
++                    },
++                    {
++                        "name": "第五幕：全息交火",
++                        "prompt": "Intense firefight scene, {character}, {style}, sliding behind cover while laser blasts shatter holographic billboards, neon debris flying everywhere",
++                        "caption": "全息广告牌在激光的扫射下崩碎成漫天光屑，交火瞬间白热化。"
++                    },
++                    {
++                        "name": "第六幕：收枪回眸",
++                        "prompt": "Medium shot of {character}, {style}, holstering the glowing weapon, turning away as distant sirens approach, calm expression, rain droplets on face",
++                        "caption": "警笛声自远处呼啸而来，{character} 悄然隐入夜色，只留下雨中的一抹残影。"
++                    }
++                ]
++            }
++        },
++        {
++            "id": "tpl_manga_4koma_battle",
++            "title": "热血决斗：四格高燃反转 (4幕)",
++            "author": "MangaStudio",
++            "desc": "经典日漫四格热血分镜，起承转合鲜明，适合做战斗对决、必杀技释放与反转桥段。",
++            "category": "manga",
++            "tags": ["manga", "4koma", "battle"],
++            "stepsCount": 4,
++            "data": {
++                "title": "热血决斗：四格高燃反转",
++                "desc": "经典日漫四格热血分镜",
++                "steps": [
++                    {
++                        "name": "起：对峙拔刀",
++                        "prompt": "Manga style dramatic face-off, {character}, {style}, hand on sword hilt, wind blowing dust across battlefield, extreme tension, high contrast ink lines",
++                        "caption": "狂风卷过荒原，{character} 的手按在刀柄上，空气仿佛在这一刻凝固。"
++                    },
++                    {
++                        "name": "承：瞬身斩击",
++                        "prompt": "Extreme speed dynamic slash, {character}, {style}, rushing forward with afterimages, sword drawing lightning arc, dynamic foreshortening",
++                        "caption": "脚步踏碎大地的刹那，雷霆般的残影已撕裂了十步的距离！"
++                    },
++                    {
++                        "name": "转：意料之外的招架",
++                        "prompt": "Shocked expression close-up of {character}, {style}, eyes wide, sword blocked by unexpected obstacle, dynamic manga speedlines",
++                        "caption": "然而，刀刃却在距离目标一寸处骤然停滞——这不可能！"
++                    },
++                    {
++                        "name": "合：帅气收招",
++                        "prompt": "Masterful pose of {character}, {style}, smirking with sword half-sheathed, clicked into scabbard, wind settling, epic victory silhouette",
++                        "caption": "“结束了。”随着刀谭归鞘的清脆声响，胜负已分。"
++                    }
++                ]
++            }
++        },
++        {
++            "id": "tpl_fashion_lookbook",
++            "title": "高级定制：时尚穿搭 Lookbook (6幕)",
++            "author": "StyleLab",
++            "desc": "专为角色换装与摄影画册设计的 6 幕 Lookbook 模板，包含全身、七分身、饰品微距与情绪大片。",
++            "category": "lookbook",
++            "tags": ["fashion", "lookbook", "photography"],
++            "stepsCount": 6,
++            "data": {
++                "title": "高级定制：时尚穿搭 Lookbook",
++                "desc": "专为角色换装与摄影画册设计",
++                "steps": [
++                    {
++                        "name": "Look 1：全身廓形",
++                        "prompt": "Full body fashion editorial photography of {character}, {style}, wearing {outfit}, minimalist studio background, elegant silhouette, natural softbox lighting",
++                        "caption": "经典廓形与面料垂坠感的极致表达，展现从容干练的现代姿态。"
++                    },
++                    {
++                        "name": "Look 2：回眸半身",
++                        "prompt": "Three-quarter portrait of {character}, {style}, looking back over shoulder, wearing {outfit}, Vogue magazine style, subtle film grain",
++                        "caption": "不经意的侧颜回眸，捕捉光影与衣领线条的微妙呼应。"
++                    },
++                    {
++                        "name": "Look 3：妆造特写",
++                        "prompt": "Extreme close-up beauty shot of {character}, {style}, focus on delicate facial features and jewelry accessories, flawless skin texture, catchlight in eyes",
++                        "caption": "精细至极的细节雕琢，微光流转于眉眼与配饰之间。"
++                    },
++                    {
++                        "name": "Look 4：动态随行",
++                        "prompt": "Walking street style shot of {character}, {style}, in motion, hair and fabric swaying gracefully, city architecture background, candid natural lighting",
++                        "caption": "步履间的灵动生机，行走在城市光影交织的街道。"
++                    },
++                    {
++                        "name": "Look 5：坐姿情绪",
++                        "prompt": "Moody seated pose of {character}, {style}, resting chin in hand on modern designer chair, thoughtful gaze, high fashion editorial composition",
++                        "caption": "静谧的片刻凝视，在克制中流淌出高级的艺术氛围。"
++                    },
++                    {
++                        "name": "Look 6：光影谢幕",
++                        "prompt": "Golden hour cinematic shot of {character}, {style}, backlit by warm sunset rays, rim lighting on hair and outfit, poetic farewell",
++                        "caption": "余晖倾洒的谢幕瞬间，定格关于风格与美的永恒印象。"
++                    }
++                ]
++            }
++        }
++    ],
++    "exportPresets": [
++        {
++            "id": "webtoon",
++            "name": "沉浸条漫 (Webtoon)",
++            "author": "ComfyComic Official",
++            "badge": "移动端优先",
++            "desc": "垂直无限流长条漫，自适应手机与桌面端，带有阅读进度、平滑间距与悬浮半透明旁白对白层。"
++        },
++        {
++            "id": "manga_grid",
++            "name": "经典日漫分镜 (Manga Grid)",
++            "author": "ComfyComic Official",
++            "badge": "分镜版式",
++            "desc": "经典漫画多格交错布局，模拟黑白/彩色实体漫画书的分格张力，配合复古网点框与漫画对白标签。"
++        },
++        {
++            "id": "artbook_lookbook",
++            "name": "典雅画集 (Artbook Lookbook)",
++            "author": "ComfyComic Official",
++            "badge": "艺术画册",
++            "desc": "高端时尚画册与摄影集风格，大比例留白、极简排版、色块底纹，并附带提示词参数水印。"
++        },
++        {
++            "id": "flipbook_3d",
++            "name": "拟真 3D 翻页书 (3D Flipbook)",
++            "author": "ComfyComic Official",
++            "badge": "沉浸拟物",
++            "desc": "纯前端 CSS3 3D 拟真翻页书，支持键盘左右键及点击翻页，带书脊阴影、翻页转动弧度与封面封底。"
++        }
++    ]
++}
++
++def get_marketplace_catalog():
++    if os.path.exists(MARKETPLACE_FILE):
++        try:
++            cached = read_json_file(MARKETPLACE_FILE, {})
++            if isinstance(cached, dict) and cached.get("storyboards"):
++                return cached
++        except Exception:
++            pass
++    return DEFAULT_MARKETPLACE_CATALOG
++
++def fetch_remote_json(url, max_bytes=5 * 1024 * 1024):
++    parsed = urllib.parse.urlparse(url)
++    if parsed.scheme not in ("http", "https") or not parsed.hostname:
++        raise ValueError("仅支持 HTTP/HTTPS 协议的网络链接")
++    req = urllib.request.Request(url, headers={"User-Agent": "ComfyComicStudio/2.3"})
++    with urllib.request.urlopen(req, timeout=15) as resp:
++        content = resp.read(max_bytes + 1)
++        if len(content) > max_bytes:
++            raise PayloadTooLargeError("远程模板大小超出 5MB 限制")
++        return json.loads(content.decode("utf-8-sig"))
++
++def handle_vision_audit(payload):
++    base_url = (payload.get("baseUrl") or "").strip().rstrip("/")
++    if not base_url:
++        raise ValueError("未配置视觉模型 API 地址")
++    
++    api_key = (payload.get("apiKey") or "").strip()
++    model = (payload.get("model") or "").strip() or "gpt-4o"
++    prompt_text = payload.get("promptText") or "请审查该漫画分镜的画质、一致性与肢体结构"
++    image_data_url = payload.get("imageDataUrl") or ""
++
++    if not image_data_url:
++        raise ValueError("缺少待审查的图像数据")
++
++    if not base_url.endswith("/chat/completions"):
++        endpoint = f"{base_url}/chat/completions"
++    else:
++        endpoint = base_url
++
++    system_instruction = (
++        "你是一个专业的 AI 漫画分镜视觉审校专家（Visual Critic）。"
++        "请对画面进行专业且严苛的视觉评估，重点检查：角色一致性（发色、服饰特征）、解剖与肢体结构（尤其手指、五官是否畸变崩坏）、分镜镜头与剧本匹配度。"
++        "必须以纯 JSON 格式输出，不要包含任何 markdown 代码块或包裹文字，JSON 字段包括："
++        "{"
++        "  \"score\": 8.5,"
++        "  \"passed\": true,"
++        "  \"summary\": \"一句话综合评审意见\","
++        "  \"consistency\": \"角色特征一致性评价\","
++        "  \"anatomy\": \"手部、面部与肢体解剖结构检查\","
++        "  \"scene\": \"镜头景别与故事氛围符合度\","
++        "  \"suggestions\": \"针对该画面的重绘或局部修补建议\""
++        "}"
++    )
++
++    request_body = {
++        "model": model,
++        "messages": [
++            {
++                "role": "system",
++                "content": system_instruction
++            },
++            {
++                "role": "user",
++                "content": [
++                    {
++                        "type": "text",
++                        "text": prompt_text
++                    },
++                    {
++                        "type": "image_url",
++                        "image_url": {
++                            "url": image_data_url
++                        }
++                    }
++                ]
++            }
++        ],
++        "temperature": 0.2,
++        "max_tokens": 1200
++    }
++
++    req_data = json.dumps(request_body).encode("utf-8")
++    headers = {
++        "Content-Type": "application/json",
++        "User-Agent": "ComfyComicStudio/2.3"
++    }
++    if api_key:
++        headers["Authorization"] = f"Bearer {api_key}"
++
++    req = urllib.request.Request(endpoint, data=req_data, headers=headers, method="POST")
++    with urllib.request.urlopen(req, timeout=60) as resp:
++        res_text = resp.read().decode("utf-8")
++        data = json.loads(res_text)
++        try:
++            choices = data.get("choices") or []
++            first_choice = choices[0] if choices else {}
++            message = first_choice.get("message") or {}
++            content = message.get("content") or ""
++            if not isinstance(content, str):
++                content = ""
++            # 优先提取 ```json ... ``` 代码块，若无则尝试匹配最外层完整 JSON 对象，规避尾部花括号引发贪婪跨越
++            code_match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', content)
++            if code_match:
++                json_str = code_match.group(1)
++            else:
++                match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', content)
++                if not match:
++                    match = re.search(r'\{[\s\S]*\}', content)
++                json_str = match.group(0) if match else content.strip()
++            critique = json.loads(json_str)
++            if not isinstance(critique, dict):
++                raise ValueError("Parsed JSON is not an object")
++        except Exception:
++            critique = {
++                "score": 5.0,
++                "passed": False,
++                "summary": "模型未返回规范 JSON 审校结构，请人工复核",
++                "consistency": "待人工复核",
++                "anatomy": "待人工复核",
++                "scene": "待人工复核",
++                "suggestions": "请检查大模型返回内容及提示词设置"
++            }
++        return critique
++
+ def read_json_file(path, default=None):
+     if default is None:
+         default = {}
+     if not os.path.exists(path):
+         return default
+-    with open(path, 'r', encoding='utf-8') as f:
++    with open(path, 'r', encoding='utf-8-sig') as f:
+         return json.load(f)
+ 
+ def write_json_file(path, data):
+@@ -427,7 +716,7 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
+         self.end_headers()
+         self.wfile.write(encoded)
+ 
+-    def read_json_body(self):
++    def read_json_body(self, max_bytes=MAX_JSON_BODY_BYTES):
+         content_type = self.headers.get('Content-Type', '').split(';', 1)[0].strip().lower()
+         if content_type != 'application/json':
+             raise ValueError('Content-Type must be application/json')
+@@ -437,8 +726,9 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
+         content_length = int(raw_length)
+         if content_length < 0:
+             raise ValueError('Invalid Content-Length header')
+-        if content_length > MAX_JSON_BODY_BYTES:
+-            raise PayloadTooLargeError('JSON request exceeds the 10 MB size limit')
++        if content_length > max_bytes:
++            limit_mb = max_bytes // (1024 * 1024)
++            raise PayloadTooLargeError(f'JSON request exceeds the {limit_mb} MB size limit')
+         raw = self.rfile.read(content_length)
+         if len(raw) != content_length:
+             raise ValueError('Incomplete request body')
+@@ -482,6 +772,13 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
+                 self.send_json(500, {"error": str(e)})
+             return
+ 
++        if request_path == '/api/marketplace/index':
++            try:
++                self.send_json(200, get_marketplace_catalog())
++            except Exception as e:
++                self.send_json(500, {"error": str(e)})
++            return
++
+         if not is_public_static_path(request_path):
+             self.send_json(404, {"error": "Not found"})
+             return
+@@ -526,7 +823,7 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
+ 
+                 written = write_split_config(data)
+ 
+-                self.send_json(200, {"status": "success", "files": written})
++                self.send_json(200, {"ok": True, "status": "success", "files": written})
+             except PayloadTooLargeError as e:
+                 self.send_json(413, {"error": str(e)})
+             except Exception as e:
+@@ -579,9 +876,30 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
+                 self.send_json(413, {"error": str(e)})
+             except Exception as e:
+                 self.send_json(422, {"error": str(e)})
++        elif request_path == '/api/marketplace/fetch-remote':
++            try:
++                payload = self.read_json_body()
++                url = (payload.get('url') or '').strip()
++                data = fetch_remote_json(url)
++                self.send_json(200, {"status": "ok", "data": data})
++            except PayloadTooLargeError as e:
++                self.send_json(413, {"error": str(e)})
++            except Exception as e:
++                self.send_json(400, {"error": str(e)})
++        elif request_path == '/api/vision/audit':
++            try:
++                # 视觉图片 Base64 审校放宽上限至 68MB（支持 50MB 原始图片膨胀）
++                payload = self.read_json_body(max_bytes=MAX_IMAGE_BYTES * 4 // 3 + 2 * 1024 * 1024)
++                critique = handle_vision_audit(payload)
++                self.send_json(200, {"status": "ok", "critique": critique})
++            except PayloadTooLargeError as e:
++                self.send_json(413, {"error": str(e)})
++            except Exception as e:
++                self.send_json(500, {"error": str(e)})
+         else:
+             self.send_json(404, {"error": "Not found"})
+ 
++
+ if __name__ == '__main__':
+     # Change working dir to server.py directory
+     os.chdir(BASE_DIR)
+@@ -592,6 +910,12 @@ if __name__ == '__main__':
+     print(f"=========================================================")
+     server = ThreadingHTTPServer(('127.0.0.1', PORT), ComicRequestHandler)
+     try:
++        import webbrowser
++        import time
++        def _open_browser():
++            time.sleep(0.3)
++            webbrowser.open(f"http://127.0.0.1:{PORT}/index.html")
++        threading.Thread(target=_open_browser, daemon=True).start()
+         server.serve_forever()
+     except KeyboardInterrupt:
+         print("\n服务已停止。")

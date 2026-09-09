@@ -1,12 +1,12 @@
 {
   "id": "tpl_fantasy_adventure_12_steps",
   "title": "奇幻冒险：遗迹圣印之光（12幕典藏分镜）",
-  "desc": "一套起承转合严密、镜头语言丰富的经典冒险连环画分镜模板。涵盖启程、探秘、解密、遭遇强敌、施法交锋、圣物共鸣到破晓凯旋。全年龄安全，支持 {character}、{style}、{outfit} 动态插值。",
+  "desc": "一套起承转合严密、镜头语言丰富的经典冒险连环画分镜模板。涵盖启程、探秘、解密、遭遇强敌、施法交锋、圣物共鸣到破晓凯旋。全年龄安全，支持 {character}（生图提示词）、{character_display_name}（字幕显示名）、{style}、{outfit} 动态插值。",
   "steps": [
     {
       "name": "第1幕：晨光启程",
       "prompt": "{character}, {style}, standing on a grassy hillside at sunrise, looking towards the distant mountains, wind blowing cloak, wearing {outfit}, dawn golden hour, detailed scenery, cinematic lighting, masterpiece",
-      "caption": "晨曦破开晓雾，金辉洒在山脊上。{character} 整装待发，迎着朝阳眺望远方的遗迹古峰，开启崭新的冒险。"
+      "caption": "晨曦破开晓雾，金辉洒在山脊上。{character_display_name} 整装待发，迎着朝阳眺望远方的遗迹古峰，开启崭新的冒险。"
     },
     {
       "name": "第2幕：踏入迷雾密林",
@@ -21,7 +21,7 @@
     {
       "name": "第4幕：破译先祖符文",
       "prompt": "{character}, {style}, close-up shot, gently touching glowing mystical ancient glyphs carved on a massive stone door, focused serious expression, sparks of blue magic, wearing {outfit}, detailed eyes, dramatic shadows",
-      "caption": "指尖抚过石门上斑驳的古老刻痕，微弱的魔力在石板间流动。{character} 凝神默念，唤醒了封印的符文之锁。"
+      "caption": "指尖抚过石门上斑驳的古老刻痕，微弱的魔力在石板间流动。{character_display_name} 凝神默念，唤醒了封印的符文之锁。"
     },
     {
       "name": "第5幕：殿堂深处的异动",
@@ -36,7 +36,7 @@
     {
       "name": "第7幕：敏捷闪避与穿梭",
       "prompt": "{character}, {style}, dynamic mid-air action pose, dodging a massive crushing stone fist, stone shards flying, motion blur, acrobatic leap, wearing {outfit}, high dynamic range, intense combat",
-      "caption": "呼啸的巨拳砸碎地面，石屑崩飞！{character} 凌空跃起，借助敏捷的步伐在残垣断壁间灵巧闪避。"
+      "caption": "呼啸的巨拳砸碎地面，石屑崩飞！{character_display_name} 凌空跃起，借助敏捷的步伐在残垣断壁间灵巧闪避。"
     },
     {
       "name": "第8幕：魔力升腾与蓄势",
@@ -61,7 +61,7 @@
     {
       "name": "第12幕：破晓凯旋归途",
       "prompt": "{character}, {style}, walking out of the ruins archway into bright daylight, smiling warmly looking at the horizon, carrying a backpack, wearing {outfit}, lush green nature, blue sky with fluffy clouds, triumphant peaceful ending",
-      "caption": "走出昏暗的古殿，重见明媚灿烂的天空。微风拂面，{character} 迈着轻快的步伐，带着无价的勇气与收获踏上归途。"
+      "caption": "走出昏暗的古殿，重见明媚灿烂的天空。微风拂面，{character_display_name} 迈着轻快的步伐，带着无价的勇气与收获踏上归途。"
     }
   ]
 }

@@ -149,6 +149,8 @@ function getOrderedBookStepEntries(book) {
 function getOrderedBookSteps(book) {
     return getOrderedBookStepEntries(book).map(item => item.step);
 }
+window.getOrderedBookSteps = getOrderedBookSteps;
+window.getOrderedBookStepEntries = getOrderedBookStepEntries;
 
 function resetPixivModalScroll() {
     const modal = document.getElementById('pixiv-modal');
@@ -378,7 +380,7 @@ function openPixivModal(bookId) {
         
         // Parse and clean step image url to prevent Windows local path backslash encoding issues
         let cleanImageSrc = stepImage.trim();
-        if (cleanImageSrc.startsWith("C:") || cleanImageSrc.startsWith("c:")) {
+        if (/^[a-zA-Z]:[\\/]/.test(cleanImageSrc)) {
             cleanImageSrc = "file:///" + cleanImageSrc.replace(/\\/g, "/");
         }
 
@@ -432,11 +434,19 @@ function openPixivModal(bookId) {
                         <p class="text-[10px] font-mono bg-slate-950 text-slate-400 p-3 rounded-lg border border-slate-800 break-all select-text leading-normal">${escapeHtml(step.prompt)}</p>
                     </div>
 
-                    <!-- Single page redraw control trigger -->
-                    <div class="flex justify-end pt-1">
-                        <button onclick="toggleSingleRedrawPanel(${inlineJsString(book.id)}, ${originalIndex})" class="py-1 px-3 rounded-lg bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 text-blue-500 dark:text-blue-400 text-[10px] font-bold flex items-center gap-1.5 transition">
+                    <!-- Actions: AI 视觉审校与单页重绘 -->
+                    <div class="flex justify-end pt-1 gap-2">
+                        <button onclick="auditStepFromAccordion(${inlineJsString(book.id)}, ${originalIndex})" id="btn-audit-${escapeHtml(book.id)}-${originalIndex}" class="py-1 px-2.5 rounded-lg bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-[10px] font-bold flex items-center gap-1 transition">
+                            <i data-lucide="scan-eye" class="w-3 h-3"></i> AI 视觉审校
+                        </button>
+                        <button onclick="toggleSingleRedrawPanel(${inlineJsString(book.id)}, ${originalIndex})" class="py-1 px-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 text-blue-500 dark:text-blue-400 text-[10px] font-bold flex items-center gap-1 transition">
                             <i data-lucide="edit-3" class="w-3 h-3"></i> 单页精修重绘
                         </button>
+                    </div>
+
+                    <!-- AI 视觉审校结果展示区 -->
+                    <div id="critique-panel-${escapeHtml(book.id)}-${originalIndex}" class="${step.critique ? '' : 'hidden'}">
+                        ${renderCritiqueSnippet(book.id, originalIndex, step.critique)}
                     </div>
 
                     <!-- Redraw form subpanel -->
@@ -529,13 +539,7 @@ function normalizeImageSourceForExport(src) {
     return raw;
 }
 
-// 页面由本地服务提供时一律走同源相对路径，端口改成什么都不用动代码；
-// 只有直接双击 index.html（file:// 兜底）时才需要写死一个默认端口。
-const FILE_PROTOCOL_FALLBACK_ORIGIN = 'http://127.0.0.1:8777';
-function getLocalBackendUrl(path) {
-    return window.location.protocol.startsWith('http') ? path : `${FILE_PROTOCOL_FALLBACK_ORIGIN}${path}`;
-}
-window.getLocalBackendUrl = getLocalBackendUrl;
+// getLocalBackendUrl 已由前置加载的 core.js 统一声明与挂载
 
 async function ensureBase64DataUrl(dataUrl) {
     if (/^data:[^,]+;base64,/i.test(dataUrl)) return dataUrl;
@@ -575,86 +579,156 @@ async function imageSourceToBase64DataUrl(src) {
     }
 }
 
-// Export Manga as simple single page html file
-async function exportMangaHTML() {
-    const book = savedGalleries.find(b => b.id === activeBookId);
-    if (!book) return;
+// --- 多维度画册模板导出系统 (Multi-Dimensional Comic Export) ---
+let activeExportPresetId = 'webtoon';
 
-    const exportBtn = document.querySelector("button[onclick='exportMangaHTML()']");
-    const originalBtnHtml = exportBtn?.innerHTML || '';
-    if (exportBtn) {
-        exportBtn.disabled = true;
-        exportBtn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> 正在打包图片...`;
-        initLucide(exportBtn);
+function openExportMangaModal() {
+    const book = savedGalleries.find(b => b.id === activeBookId);
+    if (!book) {
+        notifyError("请先选择一本画册");
+        return;
     }
 
-    let stepsHTML = '';
-    try {
-        const steps = Array.isArray(book.steps) ? book.steps : [];
-        const embeddedImages = await Promise.all(steps.map(step => imageSourceToBase64DataUrl(step.image)));
+    const modal = document.getElementById('export-manga-modal');
+    if (!modal) {
+        // 降级兼容：如果模态框未挂载，直接导出默认条漫
+        confirmExportMangaDirect(book, 'webtoon');
+        return;
+    }
 
-        steps.forEach((step, idx) => {
-            stepsHTML += `
-                <div class="step-card">
-                    <div class="image-wrap">
-                        <img src="${escapeHtml(embeddedImages[idx])}" alt="${escapeHtml(step.name || `第 ${idx + 1} 幕`)}">
-                        <div class="badge">第 ${idx + 1} 幕 · ${escapeHtml(step.name || '')}</div>
-                    </div>
-                    <div class="caption">${escapeHtml(step.caption || '')}</div>
-                </div>
-            `;
-        });
+    const titleEl = document.getElementById('export-modal-book-title');
+    if (titleEl) titleEl.textContent = book.title || '画册导出';
 
-        const templateContent = `
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${escapeHtml(book.title)} - ComfyComic 离线漫画本</title>
-    <style>
-        * { box-sizing: border-box; }
-        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #0b0f19; color: #f1f5f9; text-align: center; margin: 0; padding: 40px 20px; }
-        .manga-container { width: min(920px, 100%); margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
-        .header { margin-bottom: 20px; border-bottom: 1px solid #1e293b; padding-bottom: 20px; }
-        h1 { font-size: 28px; margin: 0 0 10px; color: #3b82f6; }
-        p { color: #94a3b8; font-size: 14px; }
-        .step-card { background: #111827; border: 1px solid #1e293b; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3); }
-        .image-wrap { position: relative; background: #020617; display: flex; align-items: center; justify-content: center; }
-        img { width: 100%; height: auto; display: block; object-fit: contain; }
-        .badge { position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.7); padding: 5px 12px; font-size: 12px; border-radius: 6px; font-weight: bold; }
-        .caption { padding: 20px; font-size: 16px; line-height: 1.6; font-weight: 500; text-align: left; }
-        @media (max-width: 640px) { body { padding: 24px 12px; } h1 { font-size: 22px; } .caption { font-size: 14px; } }
-    </style>
-</head>
-<body>
-    <div class="manga-container">
-        <div class="header">
-            <h1>${escapeHtml(book.title)}</h1>
-            <p>${escapeHtml(book.synopsis || '')}</p>
-        </div>
-        ${stepsHTML}
-    </div>
-</body>
-</html>`;
+    renderExportPresetOptions();
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    if (typeof syncLegacyOverlayState === 'function') {
+        syncLegacyOverlayState('export-manga-modal', true, closeExportMangaModal);
+    }
+    initLucide(modal);
+}
 
-        const blob = new Blob([templateContent], { type: 'text/html;charset=utf-8' });
-        const link = document.createElement('a');
-        const objectUrl = URL.createObjectURL(blob);
-        link.href = objectUrl;
-        link.download = `${book.title}_离线漫画分享.html`;
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-    } catch (err) {
-        notifyError(`打包下载失败：${err.message}`);
-    } finally {
-        if (exportBtn) {
-            exportBtn.disabled = false;
-            exportBtn.innerHTML = originalBtnHtml;
-            initLucide(exportBtn);
+function closeExportMangaModal() {
+    const modal = document.getElementById('export-manga-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        if (typeof syncLegacyOverlayState === 'function') {
+            syncLegacyOverlayState('export-manga-modal', false, closeExportMangaModal);
         }
     }
 }
+
+function renderExportPresetOptions() {
+    const container = document.getElementById('export-presets-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const presets = window.COMIC_EXPORT_PRESETS || [];
+    presets.forEach(p => {
+        const isSelected = p.id === activeExportPresetId;
+        const selectedClasses = isSelected
+            ? "border-blue-500 bg-blue-50/50 dark:bg-blue-950/30 ring-2 ring-blue-500/20"
+            : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900";
+
+        const card = `
+            <div onclick="selectExportPreset(${inlineJsString(p.id)})" class="p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3.5 ${selectedClasses}">
+                <div class="p-2.5 rounded-xl ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'} shrink-0">
+                    <i data-lucide="${p.icon || 'layout'}" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-grow min-w-0">
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                        <span class="text-sm font-bold text-slate-800 dark:text-slate-100">${escapeHtml(p.name)}</span>
+                        <span class="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${escapeHtml(p.badge || '')}</span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">${escapeHtml(p.desc)}</p>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', card);
+    });
+    initLucide(container);
+}
+
+function selectExportPreset(presetId) {
+    activeExportPresetId = presetId;
+    renderExportPresetOptions();
+}
+
+async function confirmExportManga() {
+    const book = savedGalleries.find(b => b.id === activeBookId);
+    if (!book) return;
+
+    const confirmBtn = document.getElementById('btn-confirm-export-manga');
+    const originalText = confirmBtn ? confirmBtn.innerHTML : '';
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.innerHTML = `<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> 正在打包单文件...`;
+        initLucide(confirmBtn);
+    }
+
+    try {
+        const showPrompts = document.getElementById('export-opt-prompts')?.checked || false;
+        const themeColor = document.getElementById('export-opt-color')?.value || '#6366f1';
+
+        const htmlContent = await generateComicHTML(book, activeExportPresetId, {
+            showPrompts,
+            themeColor
+        });
+
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        const link = document.createElement('a');
+        const objectUrl = URL.createObjectURL(blob);
+        link.href = objectUrl;
+        const safeTitle = (book.title || 'comic').replace(/[\\/:*?"<>|]/g, '_');
+        link.download = `${safeTitle}_${activeExportPresetId}_离线画册.html`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+
+        closeExportMangaModal();
+        notifySuccess("画册导出成功！独立 HTML 已保存至下载目录。");
+    } catch (err) {
+        notifyError(`导出画册失败：${err.message}`);
+    } finally {
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = originalText;
+            initLucide(confirmBtn);
+        }
+    }
+}
+
+async function confirmExportMangaDirect(book, presetId, options = {}) {
+    try {
+        const htmlContent = await generateComicHTML(book, presetId, options);
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        const link = document.createElement('a');
+        const objectUrl = URL.createObjectURL(blob);
+        link.href = objectUrl;
+        const safeTitle = (book.title || 'comic').replace(/[\\/:*?"<>|]/g, '_');
+        link.download = `${safeTitle}_${presetId}_离线画册.html`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+        notifySuccess("画册导出成功！");
+    } catch (err) {
+        notifyError(`导出失败：${err.message}`);
+    }
+}
+
+// 供外部与按钮调用的统一导出入口（兼容旧直接导出契约与新弹窗选择）
+function exportMangaHTML(presetId, options = {}) {
+    if (typeof presetId === 'string' && presetId) {
+        const book = savedGalleries.find(b => b.id === activeBookId);
+        if (!book) return;
+        return confirmExportMangaDirect(book, presetId, options);
+    }
+    openExportMangaModal();
+}
+
 
 // Delete book directly from modal
 async function deleteCurrentBook() {
@@ -671,6 +745,7 @@ async function deleteCurrentBook() {
     if (!confirmed) return;
 
     savedGalleries = savedGalleries.filter(b => b.id !== activeBookId);
+    activeBookId = null;
     saveGalleriesToStorage(false, true);
     closePixivModal();
     renderGallery();
@@ -710,11 +785,14 @@ async function executeSingleRedraw(bookId, stepIdx) {
         return;
     }
 
-    const btn = document.querySelector(`#redraw-panel-${bookId}-${stepIdx} button[onclick*='executeSingleRedraw']`);
-    const origText = btn.innerHTML;
-    btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i> 绘制中...`;
-    initLucide();
-    btn.disabled = true;
+    const redrawContainer = document.getElementById(`redraw-panel-${bookId}-${stepIdx}`);
+    const btn = redrawContainer?.querySelector("button[onclick*='executeSingleRedraw']") || document.getElementById(`btn-redraw-${bookId}-${stepIdx}`);
+    const origText = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i> 绘制中...`;
+        initLucide(btn);
+        btn.disabled = true;
+    }
 
     try {
         let newImgUrl = "";
@@ -730,6 +808,7 @@ async function executeSingleRedraw(bookId, stepIdx) {
         // Apply new render states
         book.steps[stepIdx].image = newImgUrl;
         book.steps[stepIdx].prompt = redrawPrompt;
+        delete book.steps[stepIdx].critique; // 重绘成功后清除旧画面的审校报告
         
         saveGalleriesToStorage();
         renderGallery();
@@ -739,9 +818,11 @@ async function executeSingleRedraw(bookId, stepIdx) {
     } catch (err) {
         notifyError(`重新绘制失败：${err.message}`);
     } finally {
-        btn.innerHTML = origText;
-        btn.disabled = false;
-        initLucide();
+        if (btn) {
+            btn.innerHTML = origText;
+            btn.disabled = false;
+            initLucide(btn);
+        }
     }
 }
 
@@ -754,8 +835,9 @@ function toggleSidebarAccordion(bookId, idx) {
     const isHidden = pane.classList.contains('hidden');
     
     // Close other panes first to keep sidebar compact
-    const allPanes = document.querySelectorAll(`[id^="accordion-pane-${bookId}-"]`);
-    const allArrows = document.querySelectorAll(`[id^="accordion-arrow-${bookId}-"]`);
+    const escapedBookId = (window.CSS && CSS.escape) ? CSS.escape(bookId) : String(bookId).replace(/([ #;&,.+*~':"!^$[\]()=>|/@])/g, '\\$1');
+    const allPanes = document.querySelectorAll(`[id^="accordion-pane-${escapedBookId}-"]`);
+    const allArrows = document.querySelectorAll(`[id^="accordion-arrow-${escapedBookId}-"]`);
     allPanes.forEach(p => p.classList.add('hidden'));
     allArrows.forEach(a => a.style.transform = 'rotate(0deg)');
 
@@ -777,3 +859,135 @@ function toggleSidebarAccordion(bookId, idx) {
         }, 100);
     }
 }
+
+// --- AI 视觉审校与画廊折叠卡片绑定辅助逻辑 ---
+function renderCritiqueSnippet(bookId, originalIndex, critique) {
+    if (!critique) return '';
+    const score = (typeof critique.score === 'number' && !isNaN(critique.score))
+        ? critique.score
+        : (!isNaN(Number(critique.score)) && critique.score !== null && critique.score !== '' ? Number(critique.score) : 7);
+    const isPassed = (String(critique.passed).toLowerCase() === 'true' || critique.passed === true) && score >= 7;
+    const badgeBg = isPassed 
+        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30'
+        : 'bg-amber-500/10 text-amber-500 border-amber-500/30';
+
+    return `
+        <div class="p-3 bg-purple-50/40 dark:bg-purple-950/20 border border-purple-500/20 rounded-xl space-y-2 text-left mt-2">
+            <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> AI 视觉审校诊断
+                </span>
+                <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${badgeBg}">
+                    ${score}/10 · ${isPassed ? '通过' : '建议微调'}
+                </span>
+            </div>
+            <p class="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed bg-white/70 dark:bg-slate-900/60 p-2 rounded-lg border border-slate-200/50 dark:border-slate-800">
+                “${escapeHtml(critique.summary || '画面基本符合剧本设定。')}”
+            </p>
+            <div class="grid grid-cols-2 gap-1.5 text-[10px]">
+                <div class="p-1.5 bg-slate-100 dark:bg-slate-900 rounded">
+                    <span class="text-slate-400 font-bold block mb-0.5">肢体解剖</span>
+                    <span class="text-slate-600 dark:text-slate-300">${escapeHtml(critique.anatomy || '正常')}</span>
+                </div>
+                <div class="p-1.5 bg-slate-100 dark:bg-slate-900 rounded">
+                    <span class="text-slate-400 font-bold block mb-0.5">特征一致性</span>
+                    <span class="text-slate-600 dark:text-slate-300">${escapeHtml(critique.consistency || '符合')}</span>
+                </div>
+            </div>
+            ${critique.suggestions && critique.suggestions !== '无' ? `
+                <div class="p-2 bg-amber-500/10 rounded-lg text-[10px] text-amber-700 dark:text-amber-300 flex items-start justify-between gap-1.5">
+                    <div><strong>优化建议：</strong>${escapeHtml(critique.suggestions)}</div>
+                    <button type="button" onclick="applyCritiqueSuggestionToRedraw(${inlineJsString(bookId)}, ${originalIndex})" class="shrink-0 text-blue-500 hover:underline font-bold">
+                        填入重绘框
+                    </button>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+async function auditStepFromAccordion(bookId, originalIndex) {
+    const book = savedGalleries.find(b => b.id === bookId);
+    if (!book || !Array.isArray(book.steps) || !book.steps[originalIndex]) return;
+
+    const btn = document.getElementById(`btn-audit-${bookId}-${originalIndex}`);
+    const origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader" class="w-3 h-3 animate-spin"></i> 审校中...`;
+        initLucide(btn);
+    }
+
+    const panel = document.getElementById(`critique-panel-${bookId}-${originalIndex}`);
+    if (panel) {
+        panel.classList.remove('hidden');
+        panel.innerHTML = `
+            <div class="p-3 bg-purple-50/50 dark:bg-purple-950/30 rounded-xl border border-purple-500/20 text-center text-purple-600 dark:text-purple-400 mt-2">
+                <i data-lucide="loader" class="w-4 h-4 animate-spin mx-auto mb-1"></i>
+                <span class="text-xs">多模态 Agent 正在分析分镜画面...</span>
+            </div>
+        `;
+        initLucide(panel);
+    }
+
+    try {
+        notifyInfo("正在调用多模态视觉 Agent 审查分镜画面...", 2500);
+        const critique = await VisualCritic.auditPanel(book, originalIndex);
+        if (critique === null) {
+            // 已被重绘取消或任务取消，不渲染旧报告
+            if (panel) panel.classList.add('hidden');
+            return;
+        }
+        if (panel) {
+            panel.innerHTML = renderCritiqueSnippet(bookId, originalIndex, critique);
+            initLucide(panel);
+        }
+        const displayScore = (typeof critique.score === 'number') ? critique.score : 8;
+        notifySuccess(`分镜 ${originalIndex + 1} 审校完成！综合评分：${displayScore}/10`);
+    } catch (err) {
+        if (panel) {
+            panel.innerHTML = `
+                <div class="p-2.5 bg-red-50 dark:bg-red-950/40 rounded-xl border border-red-500/20 text-red-500 text-xs mt-2">
+                    审校失败：${escapeHtml(err.message)}
+                </div>
+            `;
+        }
+        notifyError(`审校失败：${err.message}`);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+            initLucide(btn);
+        }
+    }
+}
+
+function applyCritiqueSuggestionToRedraw(bookId, originalIndex) {
+    const book = savedGalleries.find(b => b.id === bookId);
+    if (!book || !book.steps || !book.steps[originalIndex]) return;
+    const critique = book.steps[originalIndex].critique;
+    if (!critique || !critique.suggestions) return;
+
+    const redrawPane = document.getElementById(`redraw-panel-${bookId}-${originalIndex}`);
+    const textarea = document.getElementById(`redraw-prompt-${bookId}-${originalIndex}`);
+    if (redrawPane && textarea) {
+        redrawPane.classList.remove('hidden');
+        const currentPrompt = textarea.value.trim();
+        textarea.value = currentPrompt ? `${currentPrompt}, ${critique.suggestions}` : critique.suggestions;
+        notifyInfo("已将 AI 建议追加到重绘提示词框中");
+    }
+}
+
+// 显式挂载基础工具与画廊功能，消除跨文件隐式依赖
+window.imageSourceToBase64DataUrl = imageSourceToBase64DataUrl;
+window.normalizeImageSourceForExport = normalizeImageSourceForExport;
+window.ensureBase64DataUrl = ensureBase64DataUrl;
+window.auditStepFromAccordion = auditStepFromAccordion;
+window.applyCritiqueSuggestionToRedraw = applyCritiqueSuggestionToRedraw;
+window.renderCritiqueSnippet = renderCritiqueSnippet;
+window.exportMangaHTML = exportMangaHTML;
+window.openExportMangaModal = openExportMangaModal;
+window.closeExportMangaModal = closeExportMangaModal;
+window.selectExportPreset = selectExportPreset;
+window.confirmExportManga = confirmExportManga;
+

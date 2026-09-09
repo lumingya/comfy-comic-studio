@@ -36,3 +36,6 @@ novelai_80_steps_template.json
 # IDE与编辑器配置
 .vscode/
 .idea/
+
+# 外部参考项目
+references/

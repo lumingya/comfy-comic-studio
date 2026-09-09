@@ -1,486 +1,249 @@
-// js/sync.js - 本地 Python 服务磁盘持久化：保存队列、防抖、断点恢复合并。
+/* Python contract adapter: same-origin GET/POST /api/config, flat payload only. */
+'use strict';
 
-// ============================================================================
-// 💾 LOCAL DISK BACKEND STORAGE & MULTI-BROWSER BACKUP SYNC LOGIC (100% PERSISTENT)
-// ============================================================================
+function createConfigConverters(contract) {
+  const { object, copy, collection, replaceCollection, requiredFields } = contract;
 
-// Push state payload to local Python backend server to write to disk comfy_comic_data.json
-// Global Write Queue and Debounce control
-let saveQueuePromise = Promise.resolve();
-let saveDebounceTimeout = null;
-let saveDebouncePromise = null;
-let resolveDebouncedSave = null;
-let destructiveSaveRevision = 0;
-let persistedDestructiveSaveRevision = 0;
+  function fromApi(config, defaults) {
+    if (!contract.plain(config)) throw new Error('/api/config must return a flat JSON object.');
+    if (Object.hasOwn(config, 'state') && !requiredFields.some(key => Object.hasOwn(config, key))) throw new Error('Wrapped {state: ...} responses are not the /api/config contract.');
+    const missing = requiredFields.filter(key => !Object.hasOwn(config, key));
+    if (missing.length) throw new Error('Incomplete /api/config response: ' + missing.join(', ') + '. Existing local state was retained.');
+    const result = copy(defaults);
+    const uiConfig = object(config.uiConfig);
+    const meta = object(uiConfig.comfyStudio);
+    const priorSettings = object(meta.settings);
+    result.templates = collection(config.templates, ['templates', 'items']);
+    result.books = collection(config.savedGalleries, ['books', 'galleries', 'items']);
+    result.rows = collection(config.batchMatrix, ['rows', 'items']);
+    result.projects = copy(meta.projects ?? uiConfig.projects ?? result.projects);
+    result.activeProjectId = meta.activeProjectId ?? uiConfig.activeProjectId ?? result.projects?.[0]?.id;
+    result.creation = copy(meta.creation);
+    result.exportTemplates = copy(meta.exportTemplates ?? result.exportTemplates);
+    result.installedPackages = copy(meta.installedPackages ?? []);
+    result.customColumns = copy(meta.customColumns ?? object(config.batchMatrix).customColumns ?? []);
+    result.drafts = copy(meta.drafts ?? {});
+    result.workspaceId = meta.workspaceId ?? result.workspaceId;
+    result.settings = { ...result.settings, ...priorSettings };
+    result.settings.comfy = { ...defaults.settings.comfy, ...object(config.comfyConfig) };
+    const workflows = collection(config.comfyWorkflows, ['workflows', 'presets', 'items']);
+    result.settings.comfy.presets = copy(workflows);
+    const comfyConfig = object(config.comfyConfig);
+    const selected = workflows.find(item => item.id === comfyConfig.activeWorkflowId || item.id === comfyConfig.workflowId) || workflows[0];
+    const workflow = comfyConfig.workflow ?? meta.workflow ?? selected?.workflow ?? selected?.prompt;
+    if (workflow && Object.keys(workflow).length) result.settings.comfy.workflow = copy(workflow);
+    else result.settings.comfy.workflow = copy(defaults.settings.comfy.workflow);
+    const mapping = { ...defaults.settings.comfy.mapping, ...object(comfyConfig.mapping) };
+    for (const kind of ['positive', 'negative', 'output']) {
+      if (comfyConfig[kind + 'NodeId'] !== undefined) mapping[kind] = String(comfyConfig[kind + 'NodeId']);
+    }
+    result.settings.comfy.mapping = mapping;
+    if (!Array.isArray(comfyConfig.bindings)) delete result.settings.comfy.bindings;
+    result.settings.llm = { ...defaults.settings.llm, ...object(config.llmConfig) };
+    result.settings.xml = { ...defaults.settings.xml, ...object(config.xmlConfig) };
+    result.settings.studio = copy(meta.studio ?? priorSettings.studio ?? uiConfig.studio ?? defaults.settings.studio);
+    const chat = object(config.chatConfig);
+    result.chats = copy(chat.sessions ?? chat.chats ?? meta.chats ?? []);
+    result.activeChatId = chat.activeChatId ?? meta.activeChatId;
+    const run = object(config.batchRunState);
+    result.queue = copy(Array.isArray(config.batchRunState) ? config.batchRunState : run.queue ?? run.tasks ?? []);
+    result.updatedAt = Number(config.updatedAt) || Date.now();
+    result.settings.backend = { enabled: true, baseUrl: '', loadPath: '/api/config', savePath: '/api/config', method: 'POST', payloadField: '', responseField: '' };
+    return contract.normalize(result);
+  }
 
-// Helper to update local updated timestamp
-function updateLastActiveTime() {
-    const now = Date.now();
-    localStorage.setItem('comfy_comic_updated_at', now.toString());
-    return now;
-}
-
-function getBackendConfigUrl() {
-    return getLocalBackendUrl('/api/config');
-}
-
-function buildAppStatePayload(forceWrite = false) {
-    return {
-        templates: templates,
-        activeTemplateId: activeTemplateId,
-        batchMatrix: batchMatrix,
-        savedGalleries: savedGalleries,
-        comfyWorkflows: comfyWorkflows,
-        activeWorkflowId: activeWorkflowId,
-        comfyConfig: getComfyConfigFromDom(),
-        llmConfig: getLlmConfigFromDom(),
-        xmlConfig: getXmlConfigFromDom(),
-        chatConfig: getChatConfigFromState(),
-        uiConfig: getUiConfigFromDom(),
-        batchRunState: batchRunState,
-        xmlSystemPrompt: document.getElementById('xml-system-prompt')?.value || '',
-        nodePositive: document.getElementById('node-id-positive')?.value || '6',
-        nodeNegative: document.getElementById('node-id-negative')?.value || '',
-        nodeOutput: document.getElementById('node-id-output')?.value || '9',
-        updatedAt: Date.now(),
-        forceWrite
+  function toApi(studio, previous = {}, forceWrite = false) {
+    const settings = copy(studio.settings);
+    if (!settings.disk?.includeKeys) {
+      for (const key of ['llm', 'xml', 'critic']) if (settings[key]) settings[key].key = '';
+    }
+    if (settings.github) { delete settings.github.token; delete settings.github.key; }
+    const comfy = { ...object(previous.comfyConfig), ...settings.comfy };
+    delete comfy.presets;
+    const payload = {
+      ...copy(previous),
+      templates: replaceCollection(previous.templates, studio.templates || [], ['templates', 'items'], 'templates'),
+      savedGalleries: replaceCollection(previous.savedGalleries, studio.books || [], ['books', 'galleries', 'items'], 'books'),
+      batchMatrix: replaceCollection(previous.batchMatrix, studio.rows || [], ['rows', 'items'], 'rows'),
+      comfyWorkflows: replaceCollection(previous.comfyWorkflows, settings.comfy.presets || [], ['workflows', 'presets', 'items'], 'workflows'),
+      comfyConfig: comfy,
+      llmConfig: { ...object(previous.llmConfig), ...settings.llm },
+      xmlConfig: { ...object(previous.xmlConfig), ...settings.xml },
+      chatConfig: { ...object(previous.chatConfig), sessions: copy(studio.chats || []), activeChatId: studio.activeChatId },
+      uiConfig: {
+        ...object(previous.uiConfig),
+        comfyStudio: {
+          ...object(object(previous.uiConfig).comfyStudio),
+          projects: copy(studio.projects), activeProjectId: studio.activeProjectId,
+          workspaceId: studio.workspaceId, creation: copy(studio.creation),
+          exportTemplates: copy(studio.exportTemplates), customColumns: copy(studio.customColumns),
+          installedPackages: copy(studio.installedPackages), drafts: copy(studio.drafts),
+          settings, studio: copy(settings.studio)
+        }
+      },
+      batchRunState: { ...object(previous.batchRunState), queue: copy(studio.queue || []) },
+      updatedAt: Date.now()
     };
+    delete payload.state;
+    delete payload.forceWrite;
+    if (forceWrite) payload.forceWrite = true;
+    for (const key of requiredFields) if (!Object.hasOwn(payload, key)) throw new Error('Missing required API field: ' + key);
+    return payload;
+  }
+
+  return { fromApi, toApi };
 }
 
-function saveConfigBeforePageExit() {
-    const backendUrl = getBackendConfigUrl();
-    const forceWrite = destructiveSaveRevision > persistedDestructiveSaveRevision;
-    const payload = JSON.stringify(buildAppStatePayload(forceWrite));
+function createNativeConfigSync(options) {
+  const runtime = { loading: false, saving: false, loaded: false, error: '', dirty: false, previous: {}, serial: 0, committed: 0, forceSerial: 0, savedAt: null, timer: null, tail: Promise.resolve() };
+  const notify = () => options.onStatus?.(runtime);
+  const getFetch = () => options.fetch || globalThis.fetch.bind(globalThis);
 
+  async function read() {
+    runtime.loading = true;
+    runtime.error = '';
+    notify();
     try {
-        if (navigator.sendBeacon) {
-            const blob = new Blob([payload], { type: 'application/json' });
-            if (navigator.sendBeacon(backendUrl, blob)) return true;
-        }
-    } catch (err) {
-        console.warn('[Sync] sendBeacon save failed:', err.message);
-    }
+      const response = await getFetch()('/api/config', { method: 'GET', credentials: 'same-origin', cache: 'no-store', headers: { Accept: 'application/json' } });
+      if (!response.ok) throw new Error('GET /api/config: HTTP ' + response.status);
+      const config = await response.json();
+      const converted = options.convert.fromApi(config, options.defaults());
+      runtime.previous = options.contract.copy(config);
+      runtime.loaded = true;
+      runtime.savedAt = Number(config.updatedAt) || null;
+      return converted;
+    } catch (error) { runtime.error = error.message; throw error; }
+    finally { runtime.loading = false; notify(); }
+  }
 
-    try {
-        fetch(backendUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: payload,
-            keepalive: true
-        }).catch(err => console.warn('[Sync] keepalive save failed:', err.message));
-        return true;
-    } catch (err) {
-        console.warn('[Sync] keepalive save setup failed:', err.message);
-        return false;
-    }
-}
+  function markDirty(force = false) {
+    runtime.serial++;
+    runtime.dirty = true;
+    runtime.error = ''; // New edits must re-arm saving after a network failure.
+    if (force) runtime.forceSerial = runtime.serial;
+    clearTimeout(runtime.timer);
+    if (options.enabled()) runtime.timer = setTimeout(() => save(), options.debounce ?? 700);
+    notify();
+  }
 
-// Push state payload to local Python backend server to write to disk comfy_comic_data.json
-function saveConfigToComfyServer(forceWrite = false) {
-    if (window.isAppInitializing) {
-        console.debug('[Sync] Deferred save request during app initialization.');
-        return Promise.resolve();
-    }
-    if (forceWrite) destructiveSaveRevision += 1;
-    // 每次开始调用，确保本地时间戳已同步更新
-    updateLastActiveTime();
-
-    if (saveDebounceTimeout) {
-        clearTimeout(saveDebounceTimeout);
-    }
-
-    if (!saveDebouncePromise) {
-        saveDebouncePromise = new Promise((resolve) => {
-            resolveDebouncedSave = resolve;
-        });
-    }
-
-    const pendingPromise = saveDebouncePromise;
-    saveDebounceTimeout = setTimeout(async () => {
-        const resolveCurrentSave = resolveDebouncedSave;
-        saveDebounceTimeout = null;
-        saveDebouncePromise = null;
-        resolveDebouncedSave = null;
-        await enqueueSaveTask();
-        if (resolveCurrentSave) resolveCurrentSave();
-    }, 500); // 500ms Debounce
-    return pendingPromise;
-}
-
-// Queue actual network saves to prevent multi-request packet out-of-order execution
-async function enqueueSaveTask(forceWrite = false) {
-    if (forceWrite) destructiveSaveRevision += 1;
-    saveQueuePromise = saveQueuePromise.then(async () => {
-        await executeServerSave();
-    }).catch(err => {
-        console.error('[Sync] Queue execution encountered error: ', err);
-    });
-    return saveQueuePromise;
-}
-
-// Internal server saving executor
-async function executeServerSave() {
-    const backendUrl = getBackendConfigUrl();
-
-    const syncStatusEl = document.getElementById('cloud-sync-status');
-    if (syncStatusEl) {
-        syncStatusEl.innerHTML = `<i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin text-blue-500"></i> <span class="text-xs text-slate-400">正在保存到本地...</span>`;
-        initLucide(syncStatusEl);
-    }
-
-    const capturedDestructiveRevision = destructiveSaveRevision;
-    const forceWrite = capturedDestructiveRevision > persistedDestructiveSaveRevision;
-    const appState = buildAppStatePayload(forceWrite);
-
-    try {
-        const response = await fetch(backendUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(appState)
-        });
-
-        if (response.ok) {
-            if (forceWrite) {
-                persistedDestructiveSaveRevision = Math.max(
-                    persistedDestructiveSaveRevision,
-                    capturedDestructiveRevision
-                );
-            }
-            console.log('[Sync] Disk backup persistent success.');
-            if (syncStatusEl) {
-                syncStatusEl.innerHTML = `<i data-lucide="hard-drive-download" class="w-3.5 h-3.5 text-emerald-500"></i> <span class="text-xs text-slate-400">已保存到本地</span>`;
-                initLucide(syncStatusEl);
-                setTimeout(() => { syncStatusEl.innerHTML = ''; }, 2000);
-            }
-        } else {
-            console.warn('[Sync] Server rejected save: ', response.statusText);
-            if (syncStatusEl) {
-                syncStatusEl.innerHTML = `<i data-lucide="cloud-off" class="w-3.5 h-3.5 text-red-500"></i> <span class="text-xs text-slate-400">保存受阻</span>`;
-                initLucide(syncStatusEl);
-            }
-        }
-    } catch (err) {
-        console.warn('[Sync] Local server offline. Fallback to LocalStorage.', err.message);
-        if (syncStatusEl) {
-            syncStatusEl.innerHTML = `<i data-lucide="cloud-off" class="w-3.5 h-3.5 text-slate-400"></i> <span class="text-xs text-slate-400">本地离线运行</span>`;
-            initLucide(syncStatusEl);
-            setTimeout(() => { syncStatusEl.innerHTML = ''; }, 2000);
-        }
-    }
-}
-
-function isRecoverableLocalGalleryBook(book, activeBookId = null) {
-    if (!book || typeof book !== 'object') return false;
-    return !!(
-        book.inProgress ||
-        book.status === 'generating' ||
-        (activeBookId && book.id === activeBookId)
-    );
-}
-
-function getBookGeneratedStepCount(book) {
-    return Array.isArray(book?.steps) ? book.steps.length : 0;
-}
-
-function shouldPreferLocalRecoverableBook(localBook, serverBook) {
-    if (!serverBook) return true;
-    if (!isRecoverableLocalGalleryBook(localBook)) return false;
-
-    const localUpdatedAt = Number(localBook.updatedAt || localBook.createdAt || 0);
-    const serverUpdatedAt = Number(serverBook.updatedAt || serverBook.createdAt || 0);
-    if (localUpdatedAt > serverUpdatedAt) return true;
-
-    return getBookGeneratedStepCount(localBook) > getBookGeneratedStepCount(serverBook);
-}
-
-function mergeRecoverableLocalGalleries(serverGalleries, localGalleries, localBatchState) {
-    const merged = Array.isArray(serverGalleries) ? serverGalleries.slice() : [];
-    const localList = Array.isArray(localGalleries) ? localGalleries : [];
-    const activeBookId = localBatchState?.activeBookId || null;
-    let restoredCount = 0;
-
-    localList.slice().reverse().forEach(localBook => {
-        if (!isRecoverableLocalGalleryBook(localBook, activeBookId)) return;
-
-        const existingIndex = merged.findIndex(book => book?.id === localBook.id);
-        if (existingIndex === -1) {
-            merged.unshift(localBook);
-            restoredCount++;
-            return;
-        }
-
-        if (shouldPreferLocalRecoverableBook(localBook, merged[existingIndex])) {
-            merged[existingIndex] = localBook;
-            restoredCount++;
-        }
-    });
-
-    return { galleries: merged, restoredCount };
-}
-
-function chooseBatchRunState(serverState, localState) {
-    const normalizedServer = normalizeBatchRunState(serverState);
-    const normalizedLocal = normalizeBatchRunState(localState);
-    const localIsRecoverable = normalizedLocal.status === 'active' || normalizedLocal.status === 'stale';
-    const localIsNewer = Number(normalizedLocal.updatedAt || 0) > Number(normalizedServer.updatedAt || 0);
-
-    if (localIsRecoverable && localIsNewer) {
-        return normalizedLocal;
-    }
-
-    return normalizedServer;
-}
-
-// Pull config state from local Python backend server data JSON file and synchronize
-async function loadConfigFromComfyServer() {
-    const backendUrl = getBackendConfigUrl();
-    const localSavedGalleries = parseLocalStorageJson('comfy_comic_galleries', []);
-    const localBatchRunState = parseLocalStorageJson(BATCH_STATE_KEY, null);
-    
-    const syncStatusEl = document.getElementById('cloud-sync-status');
-    if (syncStatusEl) {
-        syncStatusEl.innerHTML = `<i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin text-blue-500"></i> <span class="text-xs text-slate-400">正在读取本地配置...</span>`;
-        initLucide(syncStatusEl);
-    }
-
-    try {
-        const response = await fetch(backendUrl);
-        if (!response.ok) {
-            throw new Error(`Config file not found on local backend: ${response.status}`);
-        }
-        
-        const appState = await response.json();
-        if (!appState || Object.keys(appState).length === 0) {
-            if (syncStatusEl) syncStatusEl.innerHTML = '';
-            return false;
-        }
-
-        const serverUpdatedAt = parseInt(appState.updatedAt || '0');
-
-        if (appState) {
-            if (appState.templates) {
-                templates = appState.templates;
-                localStorage.setItem('comfy_comic_templates', JSON.stringify(templates));
-            }
-            if (appState.activeTemplateId) {
-                activeTemplateId = appState.activeTemplateId;
-            } else if (!activeTemplateId && templates.length > 0) {
-                activeTemplateId = templates[0].id;
-            }
-            if (appState.batchMatrix) {
-                batchMatrix = appState.batchMatrix;
-                localStorage.setItem('comfy_comic_matrix', JSON.stringify(batchMatrix));
-            }
-            if (appState.savedGalleries) {
-                const recovered = mergeRecoverableLocalGalleries(
-                    appState.savedGalleries,
-                    localSavedGalleries,
-                    localBatchRunState
-                );
-                savedGalleries = recovered.galleries;
-                if (recovered.restoredCount > 0) {
-                    console.warn(`[Sync] Restored ${recovered.restoredCount} in-progress gallery book(s) from LocalStorage.`);
-                    shouldSaveAfterInitialization = true;
-                }
-                // 历史遗留：把所有指向外网图床的分镜图迁移成本地矢量占位图
-                let migratedRemoteImages = 0;
-                savedGalleries.forEach(book => {
-                    if (book.steps) {
-                        book.steps.forEach(step => {
-                            // 历史数据里残留的外网图床地址一律迁移为本地占位图，避免断网时破图。
-                            if (typeof step.image === 'string' && /^https?:\/\/images\.unsplash\.com\//i.test(step.image)) {
-                                step.image = makeLocalArtPlaceholder(`${book.id}:${step.name || ''}`, step.name || '');
-                                migratedRemoteImages++;
-                            }
-                        });
-                    }
-                });
-                if (migratedRemoteImages > 0) {
-                    console.warn(`[Sync] 已把 ${migratedRemoteImages} 张外网图床分镜图迁移为本地占位图。`);
-                    shouldSaveAfterInitialization = true;
-                }
-                localStorage.setItem('comfy_comic_galleries', JSON.stringify(savedGalleries));
-            }
-            if (appState.comfyWorkflows) {
-                comfyWorkflows = appState.comfyWorkflows;
-                localStorage.setItem('comfy_workflows', JSON.stringify(comfyWorkflows));
-            }
-            if (appState.activeWorkflowId) {
-                activeWorkflowId = appState.activeWorkflowId;
-                localStorage.setItem('comfy_active_workflow_id', activeWorkflowId);
-            }
-            if (appState.batchRunState) {
-                const serverBatchRunState = normalizeBatchRunState(appState.batchRunState);
-                batchRunState = chooseBatchRunState(serverBatchRunState, localBatchRunState);
-                if (batchRunState !== serverBatchRunState) {
-                    shouldSaveAfterInitialization = true;
-                }
-                localStorage.setItem(BATCH_STATE_KEY, JSON.stringify(batchRunState));
-            } else if (localBatchRunState) {
-                batchRunState = normalizeBatchRunState(localBatchRunState);
-                localStorage.setItem(BATCH_STATE_KEY, JSON.stringify(batchRunState));
-            }
-            if (appState.comfyConfig) {
-                syncComfyConfigToLocalStorage(appState.comfyConfig);
-            }
-            if (appState.llmConfig) {
-                syncLlmConfigToLocalStorage(appState.llmConfig);
-            }
-            if (appState.xmlConfig) {
-                syncXmlConfigToLocalStorage(appState.xmlConfig);
-            }
-            if (appState.chatConfig) {
-                applyChatConfig(appState.chatConfig);
-            }
-            if (appState.uiConfig) {
-                syncUiConfigToLocalStorage(appState.uiConfig);
-            }
-            if (Object.prototype.hasOwnProperty.call(appState, 'xmlSystemPrompt')) {
-                localStorage.setItem('xml_system_prompt', appState.xmlSystemPrompt || '');
-                const xmlSystemPromptInput = document.getElementById('xml-system-prompt');
-                if (xmlSystemPromptInput) {
-                    xmlSystemPromptInput.value = appState.xmlSystemPrompt || (window.DEFAULT_XML_TEMPLATE_SYSTEM_PROMPT || '');
-                }
-            }
-            if (appState.nodePositive) localStorage.setItem('comfy_node_positive', appState.nodePositive);
-            if (Object.prototype.hasOwnProperty.call(appState, 'nodeNegative')) localStorage.setItem('comfy_node_negative', appState.nodeNegative || '');
-            if (appState.nodeOutput) localStorage.setItem('comfy_node_output', appState.nodeOutput);
-            
-            // 将服务器拉取来的最新时间戳写入本地作为同步基线
-            localStorage.setItem('comfy_comic_updated_at', serverUpdatedAt.toString());
-
-            console.log('[LocalServer] Master state configuration loaded from local disk successfully!');
-            
-            if (syncStatusEl) {
-                syncStatusEl.innerHTML = `<i data-lucide="hard-drive-download" class="w-3.5 h-3.5 text-emerald-500"></i> <span class="text-xs text-slate-400">已加载本地配置</span>`;
-                initLucide(syncStatusEl);
-                setTimeout(() => { syncStatusEl.innerHTML = ''; }, 2000);
-            }
-            return true;
-        }
-    } catch (err) {
-        console.log('[LocalServer] Could not load state from local disk. Using LocalStorage.', err.message);
-        if (syncStatusEl) syncStatusEl.innerHTML = '';
-    }
-    return false;
-}
-
-// ============================================================================
-// 💼 配置备份与恢复
-// ----------------------------------------------------------------------------
-// data/ 与 images/ 都在 .gitignore 里，用户换机器或重装时没有任何一键搬迁的
-// 办法，只能手工拷目录。这里提供导出/导入单个 JSON 备份包。
-// 注意：备份包含 LLM API Key，导出时会提示用户妥善保管。
-// ============================================================================
-
-const BACKUP_FORMAT_VERSION = 1;
-
-function buildBackupPayload() {
-    const state = buildAppStatePayload(false);
-    delete state.forceWrite;
-    return {
-        format: 'comfy-comic-studio-backup',
-        version: BACKUP_FORMAT_VERSION,
-        exportedAt: new Date().toISOString(),
-        state
-    };
-}
-
-function exportConfigBackup() {
-    try {
-        const payload = JSON.stringify(buildBackupPayload(), null, 2);
-        const blob = new Blob([payload], { type: 'application/json;charset=utf-8' });
-        const objectUrl = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
-        link.href = objectUrl;
-        link.download = `comfy-comic-backup-${stamp}.json`;
-        link.click();
-        setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-        notify('备份已导出。文件内含 LLM API Key，请勿分享给他人。', {
-            type: 'success',
-            title: '配置备份完成',
-            duration: 7000
-        });
-    } catch (err) {
-        notifyError(`导出备份失败：${err.message}`);
-    }
-}
-
-// 备份里不含 images/ 下的图片文件，只含引用它们的路径；
-// 换机器时仍需要把 images/ 一起拷过去，这一点在确认框里明确告知用户。
-function importConfigBackup() {
-    const picker = document.createElement('input');
-    picker.type = 'file';
-    picker.accept = 'application/json,.json';
-    picker.addEventListener('change', async () => {
-        const file = picker.files && picker.files[0];
-        if (!file) return;
+  function save(force = false) {
+    clearTimeout(runtime.timer);
+    if (force) { runtime.serial++; runtime.forceSerial = runtime.serial; runtime.dirty = true; }
+    runtime.tail = runtime.tail.catch(() => false).then(async () => {
+      if (!options.enabled()) return false;
+      if (!runtime.loaded) {
         try {
-            const parsed = JSON.parse(await file.text());
-            const state = parsed && parsed.format === 'comfy-comic-studio-backup' ? parsed.state : parsed;
-            if (!state || typeof state !== 'object' || !Array.isArray(state.templates)) {
-                throw new Error('文件不是有效的 ComfyComic Studio 备份包');
-            }
-
-            const confirmed = await confirmAction({
-                title: '用备份覆盖当前全部数据？',
-                message: `备份导出于 ${parsed.exportedAt || '未知时间'}\n`
-                    + `包含 ${state.templates.length} 个模板、`
-                    + `${(state.savedGalleries || []).length} 本画册、`
-                    + `${(state.comfyWorkflows || []).length} 个工作流。\n\n`
-                    + '当前的模板、画册、角色矩阵和工作流会被整体替换，此操作不可撤销。\n'
-                    + '（备份不含 images/ 目录下的图片文件，换机器时请一并拷贝。）',
-                confirmText: '覆盖并恢复',
-                danger: true
-            });
-            if (!confirmed) return;
-
-            await applyImportedBackupState(state);
-            notify('配置已从备份恢复。', { type: 'success', title: '恢复完成' });
-        } catch (err) {
-            notifyError(`导入备份失败：${err.message}`);
+          const recovered = await read();
+          if (recovered.templates.length || recovered.books.length || recovered.rows.length) {
+            runtime.loaded = false;
+            runtime.error = 'Connection recovered, but the backend contains existing work. Reload it explicitly before saving local edits.';
+            notify();
+            return false;
+          }
+        } catch (error) { notify(); return false; }
+      }
+      const serial = runtime.serial;
+      const forceSerial = runtime.forceSerial;
+      runtime.saving = true;
+      runtime.error = '';
+      notify();
+      try {
+        const studio = options.getState();
+        options.validate(studio);
+        const payload = options.convert.toApi(studio, runtime.previous, forceSerial > 0);
+        const response = await getFetch()('/api/config', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(payload) });
+        if (!response.ok) throw new Error('POST /api/config: HTTP ' + response.status);
+        if (response.status !== 204) {
+          const text = await response.text();
+          if (text.trim()) {
+            let data;
+            try { data = JSON.parse(text); } catch (error) { throw new Error('The config endpoint returned non-JSON content.'); }
+            if (data.ok === false || data.status === 'error' || data.success === false) throw new Error(data.message || data.error || 'The backend rejected the save.');
+          }
         }
+        runtime.previous = payload;
+        runtime.committed = serial;
+        if (runtime.forceSerial === forceSerial) runtime.forceSerial = 0;
+        runtime.dirty = runtime.serial !== serial;
+        runtime.savedAt = payload.updatedAt;
+        return true;
+      } catch (error) {
+        runtime.error = error.message;
+        runtime.dirty = true;
+        options.onError?.(error);
+        return false;
+      } finally {
+        runtime.saving = false;
+        notify();
+      }
     });
-    picker.click();
+    return runtime.tail;
+  }
+
+  return { runtime, read, save, markDirty };
 }
 
-async function applyImportedBackupState(state) {
-    templates = Array.isArray(state.templates) ? state.templates : [];
-    activeTemplateId = state.activeTemplateId || templates[0]?.id || null;
-    batchMatrix = state.batchMatrix && typeof state.batchMatrix === 'object'
-        ? state.batchMatrix
-        : { columns: DEFAULT_MATRIX_COLUMNS.slice(), rows: [] };
-    savedGalleries = Array.isArray(state.savedGalleries) ? state.savedGalleries : [];
-    comfyWorkflows = Array.isArray(state.comfyWorkflows) ? state.comfyWorkflows : [];
-    activeWorkflowId = state.activeWorkflowId || comfyWorkflows[0]?.id || null;
-    batchRunState = normalizeBatchRunState(state.batchRunState);
+function installNativeSyncModule() {
+  const ns = globalThis.ComfyComic;
+  ns.converters = createConfigConverters(ns.stateContract);
+  ns.sync = createNativeConfigSync({
+    contract: ns.stateContract,
+    convert: ns.converters,
+    defaults: () => state,
+    getState: () => state,
+    validate: value => validateState(value),
+    enabled: () => /http/.test(location.protocol),
+    onStatus: runtime => {
+      backendRuntime.connected = runtime.loaded;
+      backendRuntime.loading = runtime.loading;
+      backendRuntime.saving = runtime.saving;
+      backendRuntime.dirty = runtime.dirty;
+      backendRuntime.error = runtime.error;
+      backendRuntime.savedAt = runtime.savedAt;
+      rt.saved = runtime.loaded && !runtime.dirty && !runtime.error;
+      if (document.getElementById('statusbar')) renderStatus();
+    },
+    onError: error => { log(error.message, 'error'); }
+  });
+  save = function(force = false) { if (!rt.booting) ns.sync.markDirty(force); };
+  flushDiskSave = async function() { flushEditor(); return ns.sync.save(); };
+  readPythonWorkspace = async function() { return { state: await ns.sync.read(), revision: null, etag: null }; };
+  savePythonWorkspace = force => ns.sync.save(force);
+  connectPythonBackend = async function() {
+    if (activeJobs()) throw new Error('Finish active jobs before reloading the config.');
+    if (ns.sync.runtime.dirty && !await confirmAction('Reload backend config?', 'Unsaved in-memory edits will be replaced.', 'Reload')) return;
+    state = await ns.sync.read();
+    ensureStudioState();
+    ns.sync.runtime.dirty = false;
+    backendRuntime.dirty = false;
+    rt.saved = true;
+    ui.selected.clear(); ui.templateId = projectTemplates()[0]?.id; ui.frameIndex = 0;
+    createUI.planId = projectPlans()[0]?.id || null;
+    render(); toast('GET /api/config loaded. Saving uses POST /api/config.');
+  };
+  loadState = async function() {
+    ensureStudioState();
+    if (/http/.test(location.protocol)) {
+      try { state = await ns.sync.read(); }
+      catch (error) { log('Config load failed: ' + error.message, 'error'); }
+    }
+    ensureStudioState();
+    rt.booting = false;
+    ui.templateId = projectTemplates()[0]?.id;
+    ui.storyTemplateId = ui.templateId;
+    ui.storyRowId = projectRows()[0]?.id;
+    ui.frameIndex = 0;
+    createUI.planId = projectPlans()[0]?.id || null;
+    render();
+    if (!state.settings.identity.workspaceName || !state.settings.identity.onboarded) showWorkspaceWelcome();
+  };
+  ns.modules.sync = true;
+}
 
-    normalizeBatchMatrixState();
+function convertApiConfigToStudioState(config, defaults = state) {
+  return globalThis.ComfyComic.converters.fromApi(config, defaults);
+}
 
-    if (state.comfyConfig) syncComfyConfigToLocalStorage(state.comfyConfig);
-    if (state.llmConfig) syncLlmConfigToLocalStorage(state.llmConfig);
-    if (state.xmlConfig) syncXmlConfigToLocalStorage(state.xmlConfig);
-    if (state.chatConfig) applyChatConfig(state.chatConfig);
-    if (state.uiConfig) syncUiConfigToLocalStorage(state.uiConfig);
-
-    applyLlmConfig();
-    applyXmlConfig();
-    applyComfyConfig();
-    applyUiConfig();
-
-    renderTemplatesList();
-    renderMatrixTable();
-    populateTemplateDropdowns();
-    renderGallery();
-    renderWorkflowSelector();
-    if (activeWorkflowId) selectWorkflow(activeWorkflowId, false);
-    populateLlmStorySelector();
-    renderLlmCaptionsList();
-    renderBatchConsoleFromState();
-
-    // 恢复是刻意的“缩小写入”，必须带 forceWrite 才能穿过服务端的防冲刷红线。
-    await enqueueSaveTask(true);
+function convertStudioStateToApiPayload(studio = state, previous, forceWrite = false) {
+  return globalThis.ComfyComic.converters.toApi(studio, previous ?? globalThis.ComfyComic.sync.runtime.previous, forceWrite);
 }

@@ -196,11 +196,16 @@ async function resumeBookGeneration(bookId) {
 }
 
 // --- TAB 3: DECOUPLED IMAGE DRAWING PIPELINE ---
+let activeBatchAuditAbortController = null;
+
 async function cancelBatchGeneration() {
     const canControlPersistedRun = batchRunState.status === 'active' || batchRunState.status === 'stale';
     if (!runningBatch && !canControlPersistedRun) return;
 
     cancelRequested = true;
+    if (activeBatchAuditAbortController) {
+        try { activeBatchAuditAbortController.abort("用户终止批量任务"); } catch (e) {}
+    }
     const cancelBtn = document.getElementById('btn-cancel-batch');
     if (cancelBtn) cancelBtn.disabled = true;
 
@@ -281,6 +286,7 @@ async function startBatchGeneration() {
     const grandTotalSubmissions = totalBooks * totalStepsInTpl;
     let currentFinishedSubmission = 0;
     let currentBook = null;
+    let consecutiveAuditFailures = 0;
 
     try {
         for (let i = 0; i < activeRows.length; i++) {
@@ -395,6 +401,47 @@ async function startBatchGeneration() {
                 newBook.updatedAt = Date.now();
                 saveGalleriesToStorage();
                 refreshGalleryCard(newBook.id);
+
+                // 可选的自动化多模态视觉审校
+                const autoAuditEl = document.getElementById('matrix-auto-audit-toggle');
+                if (autoAuditEl && autoAuditEl.checked && window.VisualCritic && renderedImgUrl && renderedImgUrl !== OFFLINE_PLACEHOLDER_IMAGE) {
+                    if (cancelRequested) {
+                        throw new BatchCancelError("User requested cancellation.");
+                    }
+                    addLog(`🔍 [AI 审校] 正在自动分析分镜画面解剖与一致性...`, "text-purple-400");
+                    activeBatchAuditAbortController = new AbortController();
+                    try {
+                        const critique = await VisualCritic.auditPanel(
+                            newBook,
+                            newBook.steps.length - 1,
+                            activeBatchAuditAbortController.signal
+                        );
+                        if (cancelRequested) {
+                            throw new BatchCancelError("User requested cancellation.");
+                        }
+                        if (critique) {
+                            consecutiveAuditFailures = 0;
+                            const rawScore = critique.score;
+                            const scoreVal = (typeof rawScore === 'number' && !isNaN(rawScore))
+                                ? rawScore
+                                : (!isNaN(Number(rawScore)) && rawScore !== null && rawScore !== '' ? Number(rawScore) : 8);
+                            const isAuditPassed = (String(critique.passed).toLowerCase() === 'true' || critique.passed === true) && scoreVal >= 7;
+                            addLog(`✨ [审校结果] 得分 ${scoreVal}/10: ${critique.summary || '合格'}`, isAuditPassed ? "text-emerald-400" : "text-amber-400");
+                        }
+                    } catch (auditErr) {
+                        if (auditErr instanceof BatchCancelError || auditErr.name === 'BatchCancelError' || cancelRequested) {
+                            throw new BatchCancelError("User requested cancellation.");
+                        }
+                        consecutiveAuditFailures = (typeof consecutiveAuditFailures === 'number' ? consecutiveAuditFailures : 0) + 1;
+                        addLog(`⚠️ [审校提示] ${auditErr.message}`, "text-slate-500");
+                        if (consecutiveAuditFailures >= 3) {
+                            addLog(`⚠️ [审校熔断] 视觉审校已连续失败 3 次，为避免阻塞绘图进度，本轮自动审校已熔断挂起。`, "text-amber-400");
+                            if (autoAuditEl) autoAuditEl.checked = false;
+                        }
+                    } finally {
+                        activeBatchAuditAbortController = null;
+                    }
+                }
 
                 currentFinishedSubmission++;
                 const percent = Math.floor((currentFinishedSubmission / grandTotalSubmissions) * 100);
