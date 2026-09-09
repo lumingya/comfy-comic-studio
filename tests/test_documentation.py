@@ -14,7 +14,8 @@ class DocumentationTests(unittest.TestCase):
         for folder in ('guide', 'en', 'api'):
             files.extend((ROOT / 'docs' / folder).glob('*.md'))
         for file in files:
-            for link in re.findall(r'\]\(([^)]+)\)|(?:href|src)="([^"]+)"', file.read_text()):
+            prose = re.sub(r'^```[^\n]*\n.*?^```\s*$', '', file.read_text(), flags=re.M | re.S)
+            for link in re.findall(r'\]\(([^)]+)\)|(?:href|src)="([^"]+)"', prose):
                 target = next(value for value in link if value)
                 if target.startswith(('http:', 'https:', 'data:', '#')):
                     continue

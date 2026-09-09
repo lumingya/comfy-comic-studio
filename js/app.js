@@ -1352,6 +1352,8 @@ installImageProviders();
 
 installMarketPerformance();
 
+installPresentationStudio();
+
 globalThis.Mio = globalThis.ComfyComic;
 
 

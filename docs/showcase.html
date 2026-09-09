@@ -733,6 +733,7 @@
     @media (max-width: 680px) {
       .app-viewport {
         padding: 0 20px 30px;
+        overflow-x: clip;
       }
       .topbar {
         height: 76px;
@@ -747,31 +748,37 @@
         display: none;
       }
       .book-showcase {
-        height: 400px;
+        height: 420px;
+        overflow: hidden;
       }
       .star-orbit {
-        width: 320px;
-        height: 320px;
+        width: 280px;
+        height: 280px;
       }
       .physical-book {
         width: 250px;
-        height: 340px;
+        height: 350px;
         padding: 16px 16px 18px 20px;
       }
       .book-artwork-window {
         height: 180px;
       }
       .polaroid-card {
-        width: 140px;
-        right: 0;
-        bottom: 10px;
+        width: 110px;
+        right: 8px;
+        bottom: 2px;
+        padding: 6px 6px 10px;
       }
       .polaroid-thumb {
-        height: 80px;
+        height: 64px;
+      }
+      .polaroid-caption {
+        font-size: 10px;
+        margin-top: 5px;
       }
       .art-stamp {
-        left: 2%;
-        top: 10px;
+        left: 4%;
+        top: 8px;
       }
       .editorial-headline {
         font-size: 34px;
@@ -1101,8 +1108,10 @@
       const openBookBtn = document.getElementById('openBookBtn');
 
       // ------------------------------------------------------------
-      // 3. 丝滑渲染章节 (带防抖与平滑过渡)
+      // 3. 丝滑渲染章节 (带防抖与无障碍平滑过渡)
       // ------------------------------------------------------------
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
       function renderChapter(index, animate = true) {
         const item = chapters[index];
         if (!item) return;
@@ -1112,7 +1121,8 @@
           chapterTimer = null;
         }
 
-        if (animate) {
+        // 若用户开启减弱动态，跳过 CSS 旋转与 180ms 延时
+        if (animate && !prefersReducedMotion.matches) {
           bookEntity.style.transform = 'rotate(-8deg) scale(0.96)';
           bookEntity.style.opacity = '0.7';
           chapterTimer = setTimeout(() => {
@@ -1156,7 +1166,7 @@
       prevBtn.addEventListener('click', goToPrev);
       nextBtn.addEventListener('click', goToNext);
       
-      // 主按钮绑定翻页交互与轻微触碰回弹
+      // 主按钮绑定翻页交互
       if (openBookBtn) {
         openBookBtn.addEventListener('click', () => {
           goToNext();
@@ -1200,7 +1210,7 @@
       } catch (_) {}
 
       // ------------------------------------------------------------
-      // 5. 纯原生 Web Audio 细雨白噪音合成引擎 (健壮状态机与淡入淡出防抖)
+      // 5. 纯原生 Web Audio 细雨白噪音合成引擎 (健壮生命周期与异常防御)
       // ------------------------------------------------------------
       let audioCtx = null;
       let noiseNode = null;
@@ -1213,7 +1223,9 @@
       const soundscapeLabel = document.getElementById('soundscapeLabel');
 
       function initWebAudio() {
-        if (audioCtx) return;
+        if (audioCtx && audioCtx.state !== 'closed') return;
+        audioCtx = null;
+
         const AudioContext = window.AudioContext || window.webkitAudioContext;
         audioCtx = new AudioContext();
 
@@ -1259,8 +1271,8 @@
 
         if (!isPlayingSound) {
           initWebAudio();
-          if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
+          if (audioCtx.state !== 'running') {
+            audioCtx.resume().catch(() => {});
           }
           const now = audioCtx.currentTime;
           gainNode.gain.cancelScheduledValues(now);
@@ -1292,18 +1304,20 @@
       soundscapeBtn.addEventListener('click', toggleSoundscape);
 
       // ------------------------------------------------------------
-      // 6. 全局键盘快捷键 (严格过滤修饰键与输入状态)
+      // 6. 全局键盘快捷键 (过滤修饰键、Shift及原生文本选择保护)
       // ------------------------------------------------------------
       window.addEventListener('keydown', (e) => {
-        // 过滤修饰键（防止拦截 Ctrl+T、Cmd+T、Alt 组合键等系统行为）
-        if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+        // 过滤所有修饰键（避免阻断系统组合键、新建标签与 Shift 选区）
+        if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey || e.repeat) return;
         
-        // 避开输入框焦点
+        // 避开输入控件焦点
         if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
 
         if (e.key === 'ArrowLeft') {
+          e.preventDefault();
           goToPrev();
         } else if (e.key === 'ArrowRight') {
+          e.preventDefault();
           goToNext();
         } else if (e.key === 't' || e.key === 'T') {
           toggleTheme();

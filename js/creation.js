@@ -315,3 +315,24 @@ function ensureFrameCapacity(frames,additional=1){const limit=globalThis.ComfyCo
 
 
 function installNativeCreationModule(){const ns=globalThis.ComfyComic,enqueuePrevious=enqueuePlanSnapshot;enqueuePlanSnapshot=function(plan,existing=null,selectedIndices=null){const t=templateBy(plan?.templateId);if(!t)throw Error('Select a storyboard before generating.');ns.stateContract.assertFrameCount(t.frames);if(t.frames.length===0)throw Error('空分镜模板可以保存，生成前请先添加一幕。');return enqueuePrevious(plan,existing,selectedIndices)};const assistantPrevious=assistantToolDraft;assistantToolDraft=function(t,name,args={}){t.frames??=[];if(name==='add_new_frame')ensureFrameCapacity(t.frames);if(name==='batch_update_prompts_and_captions')ns.stateContract.assertFrameCount(args.frames||[]);return assistantPrevious(t,name,args)};const packagePrevious=selectedPublishPackage;selectedPublishPackage=function(id){const value=packagePrevious(id);if(value.value?.frames)ns.stateContract.assertFrameCount(value.value.frames);return value};ns.modules.creation=true}
+
+
+async function deleteStoryboardTemplate(id){
+  flushEditor();const template=templateBy(id);if(!template)throw Error('分镜模板已不存在。');
+  const checkBusy=()=>{
+    if(rt.chatBusy)throw Error('助手正在处理分镜，请等待完成或停止后再删除模板。');
+    if(state.queue.some(q=>(q.templateId===id||bookBy(q.bookId)?.templateId===id)&&['pending','running','paused'].includes(q.status))||state.books.some(b=>b.templateId===id&&(b.inProgress||[...rt.redraw].some(k=>k.startsWith(b.id+':')))))throw Error('此模板仍有关联的待执行或生成中任务，请先完成或中止并移除任务。');
+  };
+  checkBusy();const count=state.creation.plans.filter(p=>p.templateId===id).length;
+  if(!await confirmAction('删除分镜模板「'+template.title+'」？',`将删除整套 ${template.frames.length} 幕分镜，而不是当前一幕。
+${count} 份画册计划会解除模板关联并清空单幕覆盖，之后需重新选择模板。
+已生成画册、原图与对话记录保留；依赖此源模板的补齐和精修将不可用。建议先导出分镜备份。`,'删除模板'))return;
+  checkBusy();if(!templateBy(id))return;
+  state.templates=state.templates.filter(t=>t.id!==id);
+  for(const plan of state.creation.plans)if(plan.templateId===id){plan.templateId='';plan.storyVersionId='';plan.sceneOverrides={};plan.updatedAt=Date.now()}
+  for(const pkg of state.installedPackages)if(pkg.type==='templates')pkg.assetIds=(pkg.assetIds||[]).filter(assetId=>assetId!==id);
+  state.installedPackages=state.installedPackages.filter(pkg=>pkg.type!=='templates'||pkg.assetIds.length);
+  if(ui.templateId===id)ui.templateId='';if(ui.storyTemplateId===id)ui.storyTemplateId='';ui.frameIndex=0;
+  if(studioUI.assistantUndo?.templateId===id)studioUI.assistantUndo=null;
+  save(true);render();if(!$('#assistant').hidden)renderAssistant();toast('分镜模板已删除，画册与原图已保留。');
+}

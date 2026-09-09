@@ -6,7 +6,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && npm run test:contracts && npm run test:py && npm run test:smoke && npm run test:assistant",
+    "test": "npm run lint && npm run test:contracts && npm run test:py && npm run test:smoke && npm run test:assistant && npm run test:templates && npm run test:presentation",
     "test:py": "python -m unittest discover -s tests -v",
     "test:smoke": "node tests/smoke.mjs",
     "lint": "npm run lint:js && npm run lint:html",
@@ -16,7 +16,9 @@
     "build": "node js/build.js bundle && python tools/build_docs.py",
     "test:contracts": "node js/tests.js",
     "build:docs": "python tools/build_docs.py",
-    "test:assistant": "node tests/assistant_layout.mjs"
+    "test:assistant": "node tests/assistant_layout.mjs",
+    "test:templates": "node tests/template_controls.mjs",
+    "test:presentation": "node tests/presentation.mjs"
   },
   "devDependencies": {
     "eslint": "^8.57.1",

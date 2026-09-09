@@ -12,6 +12,14 @@ for(const name of ['server.py','mio_api.py','mio_credentials.py','mio_docs.py','
 const port=Number(process.env.SMOKE_PORT||8791),base=`http://127.0.0.1:${port}`;
 const server=spawn('python3',['-u','server.py'],{cwd:temp,env:{...process.env,COMFY_COMIC_PORT:String(port)},stdio:['ignore','pipe','pipe']});
 let browser,checks=0;const check=(name,value)=>{assert.ok(value,name);console.log('PASS '+name);checks++};
+// Two target moves reliably deliver native dragover before mouseup in Chromium.
+async function dragBefore(page,source,target){
+  await source.hover();const box=await source.boundingBox();
+  await page.mouse.down();await page.mouse.move(box.x+box.width/2+12,box.y+box.height/2,{steps:4});
+  await target.hover({position:{x:32,y:12},force:true});
+  await target.hover({position:{x:36,y:14},force:true});
+  await page.mouse.up();
+}
 try{
   await new Promise((resolve,reject)=>{const timeout=setTimeout(()=>reject(Error('Server startup timeout')),15000);server.stdout.on('data',d=>{if(d.toString().includes('物理落盘')){clearTimeout(timeout);resolve()}});server.on('error',reject)});
   browser=await chromium.launch({args:['--no-sandbox'],...(process.env.CCS_CHROMIUM?{executablePath:process.env.CCS_CHROMIUM}:{})});
@@ -137,7 +145,7 @@ try{
   await page.evaluate(async()=>{rt.paused=true;await enqueueWorkspaceRange([1]);await enqueueWorkspaceRange([2])});
   const pendingBefore=await page.evaluate(()=>state.queue.filter(q=>q.status==='pending').map(q=>q.id));
   const firstPending=pendingBefore[0],lastPending=pendingBefore.at(-1);
-  await page.locator(`[data-sort-task="${lastPending}"] .task-drag-handle`).dragTo(page.locator(`[data-sort-task="${firstPending}"]`),{targetPosition:{x:40,y:4}});
+  await dragBefore(page,page.locator(`[data-sort-task="${lastPending}"] .task-drag-handle`),page.locator(`[data-sort-task="${firstPending}"]`));
   check('dragging a pending task updates actual execution order',await page.evaluate(id=>state.queue.filter(q=>q.status==='pending')[0].id===id,lastPending));
   check('queue rows use the same forward order as stored tasks',await page.evaluate(()=>[...document.querySelectorAll('[data-sort-task]')].map(e=>e.dataset.sortTask).join('|')===state.queue.filter(q=>bookBy(q.bookId)).map(q=>q.id).join('|')));
   const removed=await page.evaluate(()=>{const q=state.queue.filter(q=>q.status==='pending')[1];return {id:q.id,book:q.bookId}});
@@ -165,7 +173,7 @@ try{
   // Collection drag sorting and right-click multi-selection.
   await page.evaluate(()=>{navigate(0);setShelfLayout('grid');ui.filter='all';ui.search='';ui.selected.clear();ui.bulk=false;render()});
   const books=await page.evaluate(()=>getShelfBooks().map(b=>b.id));
-  await page.locator(`.shelf-item[data-sort-book="${books.at(-1)}"]`).dragTo(page.locator(`.shelf-item[data-sort-book="${books[0]}"]`),{targetPosition:{x:30,y:4}});
+  await dragBefore(page,page.locator(`.shelf-item[data-sort-book="${books.at(-1)}"]`),page.locator(`.shelf-item[data-sort-book="${books[0]}"]`));
   check('dragging an album persists manual collection order',await page.evaluate(id=>ui.sort==='manual'&&getShelfBooks()[0].id===id,books.at(-1)));
   const chosen=await page.evaluate(()=>getShelfBooks().filter(b=>!b.curatedDemo).slice(0,2).map(b=>b.id));
   await page.locator(`.shelf-item[data-sort-book="${chosen[0]}"] .shelf-cover`).click({modifiers:['Control']});

@@ -83,14 +83,21 @@ function renderWorkflowLibrary(){
     `<div class="workflow-library"><aside class="panel workflow-library-list"><div class="row between"><h3>工作流库</h3><span class="chip">${c.presets.length}</span></div><label class="label" for="ws-library-select">快捷切换</label><select id="ws-library-select">${c.presets.map(p=>opt(p.id,p.title,c.activeWorkflowId)).join('')}</select><div class="workflow-items">${c.presets.map(p=>`<button class="workflow-library-item ${p.id===c.activeWorkflowId?'active':''}" data-act="ws-select" data-id="${esc(p.id)}"><strong>${esc(p.title)}</strong><span>${Object.keys(p.workflow||{}).length} 个节点 · ${(p.bindings||[]).length} 项映射</span></button>`).join('')}</div><div class="row wrap">${btn('复制','copy','ws-copy','','small')}${btn('删除','trash','ws-delete','','small danger')}</div><p class="help">支持多选 JSON 文件、JSON 数组和 workflows 工作流包。原始未知节点与连接都会保留。</p></aside><div class="panel workflow-library-editor">${renderSmartMapper()}</div></div>`;
 }
 
+// Render protocol applicability at the source, including partial view refreshes.
+function workflowControlHTML(id,value,inherit,label){
+  const profile=activeImageProfile();
+  if(profile.provider!=='comfyui')return `<div id="${id}" class="workflow-not-applicable" role="note" aria-label="${esc(label)}：无需工作流">${icon('check','sm')}<span>无需工作流 · ${esc(profile.title)}</span></div>`;
+  return `<select id="${id}" aria-label="${esc(label)}">${workflowOptions(value,inherit)}</select>`;
+}
+
 function sceneAssignmentHTML(p,f){
   const o=planFrameOverrides(p,f),sets=o.variableSetIds||[],current=sets[0]||'';
-  return `<section class="scene-assignment"><div class="scene-assignment-grid">${field('本幕设定预设',`<select id="ws-scene-preset" aria-label="本幕设定预设">${opt('','继承全册设定',current)}${projectVariableSets().map(s=>opt(s.id,s.title,current)).join('')}</select>`)}${field('本幕工作流',`<select id="ws-scene-workflow" aria-label="本幕工作流">${workflowOptions(o.workflowId,'全册默认 · '+(state.settings.comfy.presets.find(w=>w.id===p.workflowId)?.title||state.settings.comfy.workflowTitle))}</select>`)}</div><p class="help">应用顺序：全册设定 → 本幕预设 → 本幕自定义属性。只影响本册这一幕，不修改共享模板。下方预览使用同一组设定。</p><div class="row wrap">${btn('仅此幕加入队列','plus','ws-enqueue-scene','','small')}${btn('调整此工作流','nodes','ws-edit-scene-workflow','','small ghost')}</div></section>`;
+  return `<section class="scene-assignment"><div class="scene-assignment-grid">${field('本幕设定预设',`<select id="ws-scene-preset" aria-label="本幕设定预设">${opt('','继承全册设定',current)}${projectVariableSets().map(s=>opt(s.id,s.title,current)).join('')}</select>`)}${field('本幕工作流',workflowControlHTML('ws-scene-workflow',o.workflowId,'全册默认 · '+(state.settings.comfy.presets.find(w=>w.id===p.workflowId)?.title||state.settings.comfy.workflowTitle),'本幕工作流'))}</div><p class="help">应用顺序：全册设定 → 本幕预设 → 本幕自定义属性。只影响本册这一幕，不修改共享模板。下方预览使用同一组设定。</p><div class="row wrap">${btn('仅此幕加入队列','plus','ws-enqueue-scene','','small')}${activeImageProfile().provider==='comfyui'?btn('调整此工作流','nodes','ws-edit-scene-workflow','','small ghost'):''}</div></section>`;
 }
 
 function queueComposerHTML(){
   const p=selectedPlan(),t=p&&templateBy(p.templateId);if(!p)return '';
-  return `<div class="queue-compose-inline" aria-label="添加生成任务"><div class="queue-compose-field"><label for="ws-plan-workflow">工作流</label><select id="ws-plan-workflow" aria-label="全册默认工作流">${workflowOptions(p.workflowId,'当前工作流 · '+state.settings.comfy.workflowTitle)}</select></div><div class="queue-compose-field"><label for="ws-queue-range">生成范围</label><select id="ws-queue-range" aria-label="生成范围"><option value="all">整本画册 · 保留单幕配置</option>${(t?.frames||[]).map((f,i)=>opt(i,'第 '+(i+1)+' 幕 · '+f.name,'all')).join('')}</select></div>${btn('加入队列','plus','ws-enqueue-range','','small')}<span class="queue-compose-note">按顺序自动执行 · 每次创建独立版本</span></div>`;
+  return `<div class="queue-compose-inline" aria-label="添加生成任务"><div class="queue-compose-field"><span class="workflow-control-label">工作流</span>${workflowControlHTML('ws-plan-workflow',p.workflowId,'当前工作流 · '+state.settings.comfy.workflowTitle,'全册默认工作流')}</div><div class="queue-compose-field"><label for="ws-queue-range">生成范围</label><select id="ws-queue-range" aria-label="生成范围"><option value="all">整本画册 · 保留单幕配置</option>${(t?.frames||[]).map((f,i)=>opt(i,'第 '+(i+1)+' 幕 · '+f.name,'all')).join('')}</select></div>${btn('加入队列','plus','ws-enqueue-range','','small')}<span class="queue-compose-note">按顺序自动执行 · 每次创建独立版本</span></div>`;
 }
 
 

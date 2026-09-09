@@ -97,3 +97,11 @@ The local secret file is `data/secrets/provider-keys.json`. It uses atomic write
 Tasks freeze credential references, never plaintext. Deleting a referenced key makes old tasks fail explicitly, without switching to another credential. Selecting No authentication suppresses Authorization even when server environment variables are set. Empty key entries are not saved. Cloning a channel resets authentication to none.
 
 Normal project JSON/ZIP and album exports do not include the secret file. A full physical copy of data/ **does** include it and must be protected. To migrate saved keys, stop the server and copy the credential file with matching channel configuration to a trusted machine; importing only a normal project requires saving keys again. The key input no longer requests a browser-generated new login password, though password-manager extensions may still apply their own heuristics.
+
+## Presentation studio
+
+Albums open with a neutral, contain-fit image view. The searchable template drawer and single-book export share one workspace. Custom HTML/CSS templates support local PNG/JPEG/WebP/GIF and MP4/WebM assets through `{{asset:ID}}` placeholders. Optional `runtimeScript` JavaScript requires `scriptEnabled` and explicit session consent; it runs inside an opaque-origin iframe, without access to workspace state or provider keys.
+
+Default reading renders only the current image and does not compile HTML on page turns. Custom previews render at most three actual frames from the current page; export includes the entire album. Media are embedded, limited to 24 assets and 6 MiB of Base64 per template; scripts are limited to 64 KB. The whole workspace configuration limit still applies. Large external video libraries are not implemented. Sandboxing does not provide CPU quotas or guarantee that arbitrary scripts cannot cause jank.
+
+`MioTemplate.version`, `MioTemplate.getFrames()` and `MioTemplate.onReady(callback)` expose only the template's own rendered DOM. JSON and metadata-bearing HTML packages preserve assets and script settings.
