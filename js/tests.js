@@ -14,7 +14,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 const context = vm.createContext({ console, setTimeout, clearTimeout, structuredClone });
-for (const file of ['state.js', 'sync.js', 'engine.js', 'ui.js']) {
+for (const file of ['state.js', 'sync.js', 'engine.js', 'ui-presentation.js', 'ui-reader.js', 'ui-templates.js', 'ui-export.js', 'ui-editors.js', 'ui-locale.js', 'ui-assistant.js', 'ui-storyboard.js', 'ui-gallery.js', 'ui-settings.js', 'ui.js']) {
   const source = fs.readFileSync(path.join(__dirname, file), 'utf8');
   new vm.Script(source, { filename: file }).runInContext(context);
 }

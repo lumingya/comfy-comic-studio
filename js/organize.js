@@ -13,29 +13,31 @@ function missingArtworkElement(img){
 }
 
 function queueControlsHTML(){
-  const waiting=state.queue.some(q=>q.status==='pending'),running=rt.running;
+  const waiting=state.queue.some(q=>q.status==='pending'||q.serverAwaitingRelease),running=rt.running;
   return `${btn(rt.paused?'继续执行':running?'暂停调度':'暂停队列',rt.paused?'play':'pause','org-queue-pause','','small')}${!running&&waiting&&!rt.paused?btn('执行待办','play','org-queue-run','','small'):''}${btn('中止','stop','interrupt',!running&&!waiting?'disabled':'','small')}`;
 }
 
 function renderCompactQueue(){
-  return `<section class="compact-production">${queueComposerHTML()}<div class="queue-section-heading"><div><h2>生成队列</h2><p>从上往下执行。拖动待执行任务排序，展开查看分镜配置。</p></div><div class="row" id="queue-controls">${queueControlsHTML()}</div></div><div class="ordered-queue" id="queue-list">${renderOrderedQueue()}</div><div class="queue-footer">${btn('查找缺失分镜','refresh','scan-resume','','small')}${btn('查看运行日志','terminal','v3-nav','data-route="logs"','small ghost')}<span>删除任务不会删除画册或已生成图片</span></div></section>`;
+  return `<section class="compact-production">${queueComposerHTML()}<div class="queue-section-heading"><div><h2>生成队列</h2><p>按顺序生成 · 拖动待办排序 · 每任务独立并发</p></div><div class="row" id="queue-controls">${queueControlsHTML()}</div></div>${queueRuntimeHTML()}${queuePolicyHTML()}<div class="ordered-queue" id="queue-list">${renderOrderedQueue()}</div><div class="queue-footer">${btn('检查当前队列','refresh','scan-resume','','small')}${btn('服务端任务','list','foundation-jobs','','small ghost')}${btn('查看运行日志','terminal','v3-nav','data-route="logs"','small ghost')}<span>删除会移除任务及对应画册；磁盘素材不立即永久删除</span></div></section>`;
 }
 
 function taskWorkflowHTML(q){
-  if(!q.frames?.length)return '';
-  return `<details class="quiet-advanced queue-workflow-detail" data-task-detail="${esc(q.id)}"><summary>分镜与工作流 · ${q.indices.length} 幕</summary>${q.indices.map((i,pos)=>{
-    const f=q.frames[i],ex=f?._execution||q.execution,locked=q.status!=='pending'&&(!['running','paused'].includes(q.status)||pos<=q.done);
+  if(!q.frames?.length||q.serverInput||q.serverId)return '';
+  const editable=q.indices.filter((i,pos)=>{const ex=q.frames[i]?._execution||q.execution;return (!ex?.provider||ex.provider==='comfyui')&&(q.status==='pending'||['running','paused'].includes(q.status)&&pos>q.done)});if(!editable.length)return '';
+  return `<details class="quiet-advanced queue-workflow-detail" data-task-detail="${esc(q.id)}"><summary>待发送工作流调整</summary>${editable.map((i,pos)=>{
+    const f=q.frames[i],ex=f?._execution||q.execution,locked=!!q.serverInput||!!q.serverId||q.status!=='pending'&&(!['running','paused'].includes(q.status)||pos<=q.done);
+    if(ex?.provider&&ex.provider!=='comfyui')return `<div class="queue-workflow-row"><span>${i+1}. ${esc(f?.name||'分镜')}</span><span class="tiny muted">${esc(ex.provider)} · ${esc(ex.config?.model||'渠道快照')}</span><span class="tiny muted">初始值 · 非当前配置</span></div>`;
     return `<div class="queue-workflow-row"><span>${i+1}. ${esc(f?.name||'分镜')}</span><span class="tiny muted">${esc(ex?.workflowTitle||'默认工作流')}</span><select data-ws-task="${esc(q.id)}" data-ws-index="${i}" aria-label="第 ${i+1} 幕任务工作流" ${locked?'disabled':''}>${opt('','保留当前快照','')}${state.settings.comfy.presets.map(p=>opt(p.id,p.title,'')).join('')}</select></div>`;
   }).join('')}</details>`;
 }
 
 function renderOrderedQueue(){
-  const tasks=state.queue.filter(q=>bookBy(q.bookId)),pending=tasks.filter(q=>q.status==='pending');
-  if(!tasks.length)return `<div class="queue-empty"><span class="queue-empty-symbol">≡</span><strong>还没有生成任务</strong><p>选择工作流与范围，加入后会自动按顺序执行。</p></div>`;
+  const tasks=state.queue.filter(q=>bookBy(q.bookId)),pending=tasks.filter(q=>q.status==='pending'&&(q.done||0)===0&&!q.serverAttempts);
+  if(!tasks.length)return `<div class="queue-empty"><span class="queue-empty-symbol">≡</span><strong>还没有生成任务</strong><p>选择范围加入队列，按顺序开始。</p></div>`;
   return tasks.map((q,i)=>{
-    const b=bookBy(q.bookId),active=['running','paused'].includes(q.status),movable=q.status==='pending',pos=pending.indexOf(q),pct=q.indices.length?Math.round(q.done/q.indices.length*100):100;
-    const statuses={pending:rt.paused?'等待 · 调度暂停':'等待执行',running:'正在生成',paused:'已暂停',complete:'已完成',canceled:'已中止',failed:'生成失败'};
-    return `<article class="ordered-task ${active?'is-running':''}" data-sort-task="${esc(q.id)}" draggable="${movable}" aria-label="任务 ${i+1}：${esc(b.title)}"><div class="ordered-task-main"><span class="task-drag-handle" title="${movable?'拖动调整待执行顺序':'已开始的任务不能移动'}">${movable?'⠿':'·'}</span><span class="task-position">${pad(i+1)}</span><div class="ordered-queue-thumb">${imgTag(coverImage(b),b.title,`data-book="${esc(b.id)}"`)}</div><div class="task-title"><strong>${esc(b.title)}</strong><span>${q.indices.length===1?'第 '+(q.indices[0]+1)+' 幕 · ':''}${q.done} / ${q.indices.length} 幕 · ${esc(statuses[q.status]||q.status)}</span></div><div class="task-mini-progress" aria-label="进度 ${pct}%"><i style="width:${pct}%"></i></div><div class="task-actions">${ibtn('up','org-task-up','任务上移',`data-id="${esc(q.id)}" ${!movable||pos===0?'disabled':''}`)}${ibtn('down','org-task-down','任务下移',`data-id="${esc(q.id)}" ${!movable||pos===pending.length-1?'disabled':''}`)}${ibtn('book','read','查看画册',`data-id="${esc(b.id)}"`)}${ibtn('trash','org-task-delete',active?'执行中的任务请先中止':'删除此任务，保留画册',`data-id="${esc(q.id)}" ${active?'disabled':''}`)}</div></div>${taskWorkflowHTML(q)}</article>`;
+    const b=bookBy(q.bookId),active=q.status==='running',movable=q.status==='pending'&&(q.done||0)===0&&!q.serverAttempts,pos=pending.indexOf(q),pct=q.indices.length?Math.round(q.done/q.indices.length*100):100;
+    const statuses={pending:rt.paused?'等待恢复':'排队中',running:'生成中',paused:'已暂存',complete:'已完成',canceled:'已停止',failed:'需要处理'};
+    return `<article class="ordered-task queue-card ${active?'is-running':q.serverReadyAt&&['pending','paused'].includes(q.status)?'is-retrying':''}" data-sort-task="${esc(q.id)}" draggable="${movable}" aria-label="任务 ${i+1}：${esc(b.title)}"><div class="ordered-task-main"><span class="task-drag-handle" title="${movable?'拖动排序':'执行顺序已固定'}">${movable?'⠿':'·'}</span><span class="task-position">${pad(i+1)}</span><div class="ordered-queue-thumb">${imgTag(coverImage(b),b.title,`data-book="${esc(b.id)}"`)}</div><div class="task-title"><strong>${esc(b.title)}</strong><div class="queue-card-meta"><span>${q.done} / ${q.indices.length} 幕</span><span class="queue-state">${esc(q.serverState==='unknown'?'结果未确认':statuses[q.status]||q.status)}</span>${active?`<span class="task-live-badge" role="status"><i></i>${queuePoolLabel(q)}</span>`:''}</div></div><div class="task-actions">${ibtn('up','org-task-up','任务上移',`data-id="${esc(q.id)}" ${!movable||pos===0?'disabled':''}`)}${ibtn('down','org-task-down','任务下移',`data-id="${esc(q.id)}" ${!movable||pos===pending.length-1?'disabled':''}`)}${ibtn('book','read','查看画册',`data-id="${esc(b.id)}"`)}${ibtn('trash','org-task-delete','删除任务及对应画册',`data-id="${esc(q.id)}" ${active?'disabled':''}`)}</div></div><div class="queue-card-body"><div class="task-mini-progress" aria-label="进度 ${pct}%"><i style="width:${pct}%"></i></div><div class="queue-channel-line"><span>下次请求</span><strong>${esc(queueChannelLabel(q))}</strong></div>${q.error?`<p class="task-error-summary">${esc(queueErrorSummary(q).slice(0,220))}</p>`:''}${q.serverReadyAt?`<p class="task-retry-badge">额外重试 ${q.serverRetries} · ${rt.paused||q.status==='paused'?'已暂停':new Date(q.serverReadyAt*1000).toLocaleTimeString()+' 后执行'}</p>`:''}<div class="task-recovery-actions">${q.serverId&&['pending','paused'].includes(q.serverState)&&!q.serverEnabled&&!q.serverReadyAt?btn('并行启动','play','queue-start-parallel',`data-id="${esc(q.id)}"`,'small'):''}${active&&q.serverId?btn('立即停止','stop','queue-stop-task',`data-id="${esc(q.id)}"`,'small'):''}${queueCanContinue(q)?btn('继续未完成分镜','refresh','queue-retry',`data-id="${esc(q.id)}"`,'small'):''}${q.serverId?btn('请求记录','list','foundation-job-detail',`data-job="${esc(q.serverId)}"`,'small ghost'):''}</div></div><details class="queue-card-details"><summary>任务详情 <span>逐幕状态与原始响应</span></summary>${q.error?`<details class="queue-error-detail"><summary>错误详情（原始响应）</summary><pre>${esc(q.error)}</pre></details>`:''}${queueFrameStatesHTML(q)}${taskWorkflowHTML(q)}</details></article>`;
   }).join('');
 }
 
@@ -45,22 +47,17 @@ function moveOrderedId(order,source,target,after=false){
 }
 
 function reorderPendingTask(source,target,after=false){
-  const pending=state.queue.filter(q=>q.status==='pending'),ids=pending.map(q=>q.id);
+  const pending=state.queue.filter(q=>q.status==='pending'&&(q.done||0)===0&&!q.serverAttempts),ids=pending.map(q=>q.id);
   if(!ids.includes(source)||!ids.includes(target))throw Error('只能调整尚未开始的任务；运行中的任务位置已锁定。');
   const next=moveOrderedId(ids,source,target,after).map(id=>pending.find(q=>q.id===id));let index=0;
   // Preserve the actual running task object, including its loop cursor.
-  state.queue=state.queue.map(q=>q.status==='pending'?next[index++]:q);save();updateQueueUI();
+  state.queue=state.queue.map(q=>q.status==='pending'&&(q.done||0)===0&&!q.serverAttempts?next[index++]:q);syncFoundationOrder();save();updateQueueUI();
 }
 
 async function deleteQueuedTask(id){
-  let q=state.queue.find(x=>x.id===id);if(!q)return;
-  if(['running','paused'].includes(q.status))throw Error('此任务正在执行，请先中止后再删除。');
-  if(!await confirmAction('删除这个生成任务？','仅移除任务记录；画册、已生成图片、分镜和预设都会保留。','删除任务'))return;
-  q=state.queue.find(x=>x.id===id);if(!q)return;
-  if(['running','paused'].includes(q.status))throw Error('确认期间任务已开始，未删除。请先中止。');
-  state.queue=state.queue.filter(x=>x.id!==id);
-  const b=bookBy(q.bookId);if(b&&!state.queue.some(x=>x.bookId===b.id&&['pending','running','paused'].includes(x.status)))b.status=missingIndices(b).length?(b.generatedSteps?'partial':'canceled'):'complete';
-  save(true);updateQueueUI();toast('任务已移除，画册和图片已保留。');
+  const q=state.queue.find(q=>q.id===id);if(!q)return;
+  if(q.status==='running')throw Error('请先停止本任务，等待当前请求结束后再删除画册。');
+  return deleteBooks([q.bookId]);
 }
 
 function manualBookIds(projectId=state.activeProjectId){
@@ -102,8 +99,8 @@ function openBookContext(id,x,y,extend=false){
   const ids=[...ui.selected],busy=ids.some(key=>bookBy(key)?.inProgress||[...rt.redraw].some(k=>k.startsWith(key+':'))),menu=document.createElement('div');
   menu.id='book-context-menu';menu.className='book-context-menu';menu.setAttribute('role','menu');menu.setAttribute('aria-label','画册右键菜单');menu.dataset.focusId=id;menu.dataset.ids=JSON.stringify(ids);
   const item=(action,label,iconName,disabled=false)=>`<button type="button" role="menuitem" data-act="${action}" ${disabled?'disabled':''}>${icon(iconName,'sm')}<span>${label}</span></button>`;
-  menu.innerHTML=`<div class="context-menu-title">已选择 ${ids.length} 本画册</div>${item('org-context-export','批量导出…','download')}${item('org-context-edit','批量编辑名称 / 标签…','edit',busy)}${item('org-context-star','批量星标','star')}<div class="context-menu-separator"></div>${item('org-context-select-all','选择当前筛选结果','check')}${item('org-context-clear','取消选择','close')}<div class="context-menu-separator"></div>${item('org-context-delete',busy?'生成中 · 暂不可删除':'批量删除…','trash',busy)}<div class="context-menu-hint">Ctrl / ⌘ 点击多选 · Shift 连选<br>拖动画册可调整顺序</div>`;
-  document.body.append(menu);const rect=menu.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(x,innerWidth-rect.width-8))+'px';menu.style.top=Math.max(8,Math.min(y,innerHeight-rect.height-8))+'px';menu.querySelector('button')?.focus();
+  menu.innerHTML=`<div class="context-menu-title">已选择 ${ids.length} 本画册</div>${item('org-context-export','批量导出…','download')}${item('org-context-edit','批量编辑名称 / 标签…','edit',busy)}${item('org-context-star','批量星标','star')}<div class="context-menu-separator"></div>${ids.length===1?item('org-context-up','向前移动画册','up',getShelfBooks()[0]?.id===id)+item('org-context-down','向后移动画册','down',getShelfBooks().at(-1)?.id===id):''}${item('org-context-select-all','选择当前筛选结果','check')}${item('org-context-clear','取消选择','close')}<div class="context-menu-separator"></div>${item('org-context-delete',busy?'生成中 · 暂不可删除':'批量删除…','trash',busy)}<div class="context-menu-hint">手机：点选画册复选框进行多选<br>电脑：Ctrl / ⌘ 多选，拖动调整顺序</div>`;
+  document.body.append(menu);const rect=menu.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(x,innerWidth-rect.width-8))+'px';menu.style.top=Math.max(8,Math.min(y,innerHeight-rect.height-8))+'px';menu.querySelector('button')?.focus({preventScroll:true});
 }
 
 function batchEditBookMetadata(ids){
@@ -124,9 +121,12 @@ function installOrganizationTools(){
   };
   const oldSettings=renderPythonSettings;renderPythonSettings=()=>oldSettings()+`<section class="settings-section"><h2>真实服务默认值</h2><p>新安装默认使用真实 ComfyUI、文本模型和视觉模型。请填写实际地址、模型和密钥；连接失败不再回退到示例图。</p>${btn('将当前服务切换为真实模式','settings','org-enable-real','','small')}<p class="help">保留已有地址和密钥。只影响后续任务，已入队快照不会被改写。</p></section>`;
   const oldAction=handleAction;handleAction=async function(action,d={},element){
+    if(action==='resume'){const q=state.queue.find(q=>q.bookId===d.id&&queueCanContinue(q));if(q)return retryQueueTask(q.id)}
+    if(action==='scan-resume')return inspectQueueGaps();
     if(action==='org-enable-real'){for(const key of ['comfy','llm','xml','critic'])if(state.settings[key])state.settings[key].mode='real';state.settings.comfy.autoFallback=false;save();render();toast('服务已切换为真实模式，请核对连接设置。');return}
+    if(action==='org-queue-pause'&&!foundationIsMock()){await foundationRequest('jobs/scheduler',{action:rt.paused?'resume':'pause'});rt.paused=!rt.paused;if(!rt.paused)await runQueue();updateQueueUI();return}
     if(action==='org-queue-pause'){rt.paused=!rt.paused;if(!rt.paused&&!rt.running)void runQueue();updateQueueUI();toast(rt.paused?'已暂停后续调度，当前帧会保留。':'队列继续按顺序执行。');return}
-    if(action==='org-queue-run'){rt.paused=false;void runQueue();updateQueueUI();return}
+    if(action==='org-queue-run'){if(!foundationIsMock())await foundationRequest('jobs/scheduler',{action:'resume'});rt.paused=false;void runQueue();updateQueueUI();return}
     if(action==='org-task-delete')return deleteQueuedTask(d.id);
     if(action==='org-task-up'||action==='org-task-down'){const ids=state.queue.filter(q=>q.status==='pending').map(q=>q.id),i=ids.indexOf(d.id),down=action==='org-task-down',other=ids[i+(down?1:-1)];if(other)reorderPendingTask(d.id,other,down);return}
     if(action==='org-book-up'||action==='org-book-down'){const ids=getShelfBooks().map(b=>b.id),i=ids.indexOf(d.id),down=action==='org-book-down',other=ids[i+(down?1:-1)];if(other)reorderCollectionBook(d.id,other,down);return}
@@ -135,6 +135,7 @@ function installOrganizationTools(){
       if(action==='org-context-select-all'){ui.selected=new Set(getShelfBooks().map(b=>b.id));ui.bulk=true;refreshGallery();return}
       if(action==='org-context-clear'){ui.selected.clear();ui.bulk=false;refreshGallery();return}
       if(!ids.length)return;
+      if((action==='org-context-up'||action==='org-context-down')&&ids.length===1){const order=getShelfBooks().map(b=>b.id),i=order.indexOf(ids[0]),down=action==='org-context-down',other=order[i+(down?1:-1)];if(other)reorderCollectionBook(ids[0],other,down);return}
       if(action==='org-context-export')return exportModal(ids);
       if(action==='org-context-delete')return deleteBooks(ids);
       if(action==='org-context-edit')return batchEditBookMetadata(ids);
@@ -175,10 +176,51 @@ function installOrganizationTools(){
   document.addEventListener('drop',e=>{if(!drag)return;const target=e.target.closest(drag.type==='task'?'[data-sort-task]':'[data-sort-book]');if(!target)return;e.preventDefault();try{const rect=target.getBoundingClientRect(),after=e.clientY>rect.top+rect.height/2;if(drag.type==='task')reorderPendingTask(drag.id,target.dataset.sortTask,after);else reorderCollectionBook(drag.id,target.dataset.sortBook,after)}catch(error){toast(error.message,'error')}finally{drag=null;document.querySelectorAll('.is-drop-target,.is-dragging').forEach(x=>x.classList.remove('is-drop-target','is-dragging'))}});
   document.addEventListener('dragend',()=>{drag=null;document.querySelectorAll('.is-drop-target,.is-dragging').forEach(x=>x.classList.remove('is-drop-target','is-dragging'))});
   window.addEventListener('resize',()=>closeBookContext());
-  document.addEventListener('scroll',e=>{if(!e.target.closest?.('#book-context-menu'))closeBookContext()},true);
+  for(const type of ['wheel','touchmove'])document.addEventListener(type,e=>{if(!e.target.closest?.('#book-context-menu'))closeBookContext()},{passive:true});
 }
 
 // Standalone exports need an image URL; use only a neutral question mark, not artwork.
 function missingArtworkDataURL(){
   return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="768" height="1024" viewBox="0 0 768 1024"><rect width="768" height="1024" fill="#ececea"/><text x="384" y="530" text-anchor="middle" font-size="64" fill="#999a96" font-family="sans-serif">?</text></svg>');
+}
+
+// Paint selection follows the pointer path, not a rectangular marquee.
+function selectionPathHits(x1,y1,x2,y2,r){
+  let lo=0,hi=1;const dx=x2-x1,dy=y2-y1;
+  for(const [p,q] of [[-dx,x1-r.left],[dx,r.right-x1],[-dy,y1-r.top],[dy,r.bottom-y1]]){
+    if(p===0){if(q<0)return false;continue}const t=q/p;if(p<0)lo=Math.max(lo,t);else hi=Math.min(hi,t);if(lo>hi)return false;
+  }return true;
+}
+function installBrushSelection(){
+  let stroke=null,suppressClick=false,raf=0;
+  function paint(x,y){
+    if(!stroke)return;const top=$('#topbar')?.getBoundingClientRect().bottom||0,bottom=$('.statusbar')?.getBoundingClientRect().top||innerHeight;
+    for(const card of document.querySelectorAll('#gallery-results .shelf-item,#gallery-results .shelf-exhibit')){
+      const r=card.getBoundingClientRect(),clip={left:r.left,right:r.right,top:Math.max(top,r.top),bottom:Math.min(bottom,r.bottom)};
+      if(clip.top>=clip.bottom||stroke.seen.has(card.dataset.sortBook)||!selectionPathHits(stroke.x,stroke.y,x,y,clip))continue;
+      const id=card.dataset.sortBook;stroke.seen.add(id);stroke.add?ui.selected.add(id):ui.selected.delete(id);card.classList.toggle('is-selected',stroke.add);
+      const checkbox=card.querySelector('[data-select-book]');if(checkbox)checkbox.checked=stroke.add;
+    }
+    stroke.x=x;stroke.y=y;
+    const count=$('.shelf-bulk>.grow');if(count)count.textContent=localeString('已选 {count} 本',{count:ui.selected.size});
+    const all=$('#shelf-select-all');if(all)all.checked=getShelfBooks().length>0&&getShelfBooks().every(b=>ui.selected.has(b.id));
+  }
+  function tick(){
+    if(!stroke)return;if(ui.workspace!==0||!ui.bulk){stop(false);return}const top=($('#topbar')?.getBoundingClientRect().bottom||0)+42,bottom=innerHeight-65,y=stroke.y,dy=y<top?-Math.min(16,(top-y)/3):y>bottom?Math.min(16,(y-bottom)/3):0;
+    if(dy){window.scrollBy({top:dy,behavior:'instant'});paint(stroke.x,stroke.y)}raf=requestAnimationFrame(tick);
+  }
+  function stop(redraw=true){if(!stroke)return;stroke=null;cancelAnimationFrame(raf);document.body.classList.remove('selection-painting');if(redraw){refreshGallery();refreshCollectionSelection()}}
+  window.addEventListener('pointerdown',e=>{
+    suppressClick=false;if(e.button!==0||e.pointerType==='touch'||e.ctrlKey||e.metaKey||e.shiftKey||ui.workspace!==0||!ui.bulk||document.querySelector('dialog[open]'))return;
+    const card=e.target.closest('.shelf-item[data-sort-book],.shelf-exhibit[data-sort-book]');if(!card&&!e.target.closest('.shelf-grid'))return;
+    const control=e.target.closest('[data-act],input,textarea,select');if(control&&control.dataset.act!=='read'&&!control.hasAttribute('data-select-book'))return;
+    e.preventDefault();e.stopImmediatePropagation();closeBookContext();suppressClick=true;
+    stroke={id:e.pointerId,x:e.clientX,y:e.clientY,add:!card||!ui.selected.has(card.dataset.sortBook),seen:new Set()};document.body.classList.add('selection-painting');paint(e.clientX,e.clientY);raf=requestAnimationFrame(tick);
+  },true);
+  window.addEventListener('pointermove',e=>{if(!stroke||e.pointerId!==stroke.id)return;if(!(e.buttons&1)){stop();return}e.preventDefault();paint(e.clientX,e.clientY)},true);
+  window.addEventListener('pointerup',e=>{if(stroke&&e.pointerId===stroke.id){paint(e.clientX,e.clientY);stop()}},true);
+  window.addEventListener('pointercancel',()=>stop(),true);window.addEventListener('blur',()=>stop());
+  window.addEventListener('click',e=>{if(suppressClick){suppressClick=false;e.preventDefault();e.stopImmediatePropagation()}},true);
+  window.addEventListener('dragstart',e=>{if(stroke||ui.bulk&&e.target.closest('[data-sort-book]')){e.preventDefault();e.stopImmediatePropagation()}},true);
+  window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!e.isComposing&&ui.workspace===0&&(ui.bulk||ui.selected.size)&&!document.querySelector('dialog[open]')&&!e.target.closest('#assistant')){e.preventDefault();e.stopImmediatePropagation();stop(false);suppressClick=false;ui.bulk=false;ui.selected.clear();closeBookContext();refreshGallery();$('[data-act="toggle-bulk"]')?.focus({preventScroll:true})}},true);
 }

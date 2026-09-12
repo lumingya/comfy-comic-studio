@@ -9,6 +9,7 @@ import hashlib
 import copy
 import mimetypes
 import threading
+import mio_foundation
 import mio_api
 import mio_credentials
 import mio_docs
@@ -262,7 +263,7 @@ def read_limited_response(response, limit=MAX_IMAGE_BYTES):
         except ValueError as exc:
             raise ValueError("Invalid upstream Content-Length header") from exc
         if declared_length > limit:
-            raise PayloadTooLargeError("Image exceeds the 50 MB size limit")
+            raise PayloadTooLargeError(f"Upstream response exceeds the {limit // (1024 * 1024)} MB size limit")
 
     chunks = []
     total = 0
@@ -272,7 +273,7 @@ def read_limited_response(response, limit=MAX_IMAGE_BYTES):
             break
         total += len(chunk)
         if total > limit:
-            raise PayloadTooLargeError("Image exceeds the 50 MB size limit")
+            raise PayloadTooLargeError(f"Upstream response exceeds the {limit // (1024 * 1024)} MB size limit")
         chunks.append(chunk)
     return b"".join(chunks)
 
@@ -290,15 +291,18 @@ def get_image_mime_type(response, raw_url):
     raise ValueError("The requested resource is not an image")
 
 
-def fetch_remote_image(raw_url):
+def fetch_remote_image(raw_url, timeout=30, on_socket=None):
     parsed = urllib.parse.urlparse(raw_url)
     if parsed.scheme not in ("http", "https") or not parsed.hostname:
         raise ValueError("Only HTTP(S) image URLs are supported")
     req = urllib.request.Request(raw_url, headers={"User-Agent": "ComfyComicStudio/1.0"})
-    with urllib.request.urlopen(req, timeout=30) as response:
-        mime_type = get_image_mime_type(response, raw_url)
+    from providers.transport import opener as cancelable_opener
+    open_request=cancelable_opener({'_onSocket':on_socket}).open if on_socket else urllib.request.urlopen
+    with open_request(req, timeout=timeout) as response:
+        # Signed image URLs may have neither an extension nor an image MIME.
+        # Validate actual bytes instead of rejecting them from HTTP metadata.
         raw = read_limited_response(response)
-    return raw, detect_image_mime_type(raw, mime_type)
+    return raw, detect_image_mime_type(raw)
 
 def image_url_to_data_url(raw_url):
     if not raw_url:
@@ -537,126 +541,34 @@ def list_provider_models(payload):
         raise ValueError('Could not read a supported model list; manual model IDs remain available') from None
 
 
+class ProviderHTTPError(Exception):
+    """Keep the upstream status and response; redact only the request credential."""
+    def __init__(self, status, body, key=''):
+        self.status = status
+        self.body = body
+        if key:
+            for secret in (key.encode(), json.dumps(key)[1:-1].encode(), urllib.parse.quote(key, safe='').encode()):
+                self.body = self.body.replace(secret, b'[REDACTED]')
+        super().__init__('HTTP ' + str(status) + ': ' + self.body.decode('utf-8', errors='replace'))
+
+
+def provider_image_input(value):
+    if not isinstance(value, str):
+        raise ValueError('Each image input must be a local /images/ reference or image data URL')
+    if value.startswith('/images/'):
+        value = image_url_to_data_url(value)
+    if not re.fullmatch(r'data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+', value):
+        raise ValueError('Image inputs require PNG, JPEG or WebP')
+    normalized = data_url_to_base64_data_url(value)
+    raw = base64.b64decode(normalized.split(',', 1)[1], validate=True)
+    if detect_image_mime_type(raw) not in ('image/png', 'image/jpeg', 'image/webp'):
+        raise ValueError('Reference bytes must be PNG, JPEG or WebP')
+    return normalized, raw
+
+
 def generate_provider_image(payload):
-    import io
-    import zipfile
-    import secrets
-    config = payload.get('config') or {}
-    provider = config.get('provider')
-    if provider not in ('novelai', 'openai'):
-        raise ValueError('Unsupported image provider')
-    _, base = mio_credentials.endpoint(config)
-    key = mio_credentials.resolve(DATA_DIR, payload)
-    model = str(config.get('model', '')).strip()
-    prompt = str(payload.get('prompt', '')).strip()
-    if not model or not prompt:
-        raise ValueError('Model and prompt are required')
-    source = payload.get('source')
-    source_raw = None
-    if source:
-        if not isinstance(source, str) or not re.match(r'^data:image/(png|jpeg|webp);base64,', source):
-            raise ValueError('Reference must be a PNG/JPEG/WebP data URL')
-        source_raw = base64.b64decode(source.split(',', 1)[1], validate=True)
-        if detect_image_mime_type(source_raw, '') not in ('image/png', 'image/jpeg', 'image/webp'):
-            raise ValueError('Reference bytes must be PNG, JPEG or WebP')
-    frame = payload.get('frame') or {}
-    def number(name, default, low, high):
-        value = float(frame.get(name, default))
-        if not low <= value <= high:
-            raise ValueError('Invalid parameter: ' + name)
-        return value
-    negative = str(payload.get('negative', ''))
-    headers = {'Content-Type': 'application/json', 'User-Agent': 'Mio/1.0'}
-    if key:
-        headers['Authorization'] = 'Bearer ' + key
-    if provider == 'novelai':
-        width, height = int(number('width', 768, 64, 2048)), int(number('height', 1024, 64, 2048))
-        if width % 64 or height % 64:
-            raise ValueError('NovelAI width and height must be multiples of 64')
-        seed = int(number('seed', -1, -1, 4294967295))
-        params = {'params_version': 3, 'width': width, 'height': height, 'scale': number('cfg', 5, 0, 10),
-                  'steps': int(number('steps', 28, 1, 50)), 'seed': seed if seed >= 0 else secrets.randbelow(4294967296),
-                  'n_samples': 1, 'sampler': config.get('sampler', 'k_euler_ancestral'), 'noise_schedule': 'karras',
-                  'negative_prompt': negative, 'ucPreset': 0, 'qualityToggle': False, 'sm': False, 'sm_dyn': False,
-                  'dynamic_thresholding': False, 'controlnet_strength': 1, 'legacy': False, 'add_original_image': True}
-        if 'diffusion-4' in model or 'diffusion-5' in model:
-            params.update({'v4_prompt': {'caption': {'base_caption': prompt, 'char_captions': []}, 'use_coords': False, 'use_order': True},
-                           'v4_negative_prompt': {'caption': {'base_caption': negative, 'char_captions': []}}, 'characterPrompts': []})
-        if source_raw:
-            params.update(image=base64.b64encode(source_raw).decode(), strength=number('denoise', .45, 0, 1), noise=0)
-        body = {'input': prompt, 'model': model, 'action': 'img2img' if source_raw else 'generate', 'parameters': params}
-        path = '/ai/generate-image'
-    elif config.get('protocol') == 'chat':
-        content = [{'type': 'text', 'text': prompt + ('\nAvoid: ' + negative if negative else '')}]
-        if source:
-            content.append({'type': 'image_url', 'image_url': {'url': source}})
-        body = {'model': model, 'messages': [{'role': 'user', 'content': content}], 'stream': False}
-        path = '/chat/completions'
-    else:
-        body = {'model': model, 'prompt': prompt + ('\nAvoid: ' + negative if negative else ''), 'n': 1}
-        if config.get('sendSize', True) and config.get('size'):
-            body['size'] = config['size']
-        if config.get('sendQuality', True) and config.get('quality'):
-            body['quality'] = config['quality']
-        path = '/images/edits' if source_raw else '/images/generations'
-    if provider == 'openai' and source_raw and config.get('protocol') != 'chat':
-        boundary = 'ComicStudio' + uuid.uuid4().hex
-        parts = []
-        for name, value in body.items():
-            parts.append(('----' + boundary + '\r\nContent-Disposition: form-data; name="' + name + '"\r\n\r\n' + str(value) + '\r\n').encode())
-        mime = detect_image_mime_type(source_raw, '')
-        ext = {'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp'}[mime]
-        parts.append(('----' + boundary + '\r\nContent-Disposition: form-data; name="image"; filename="reference.' + ext + '"\r\nContent-Type: ' + mime + '\r\n\r\n').encode() + source_raw + b'\r\n')
-        parts.append(('----' + boundary + '--\r\n').encode())
-        data = b''.join(parts)
-        headers['Content-Type'] = 'multipart/form-data; boundary=--' + boundary
-    else:
-        data = json.dumps(body).encode()
-    # Never forward Authorization to a redirect target or retry a paid generation.
-    class NoRedirect(urllib.request.HTTPRedirectHandler):
-        def redirect_request(self, req, fp, code, msg, headers, newurl):
-            return None
-    opener = urllib.request.build_opener(NoRedirect)
-    try:
-        with opener.open(urllib.request.Request(base + path, data=data, headers=headers), timeout=300) as response:
-            raw = read_limited_response(response)
-    except urllib.error.HTTPError as exc:
-        raise ValueError('Image provider HTTP ' + str(exc.code) + ' (check key, balance, model and parameters)') from None
-    if provider == 'novelai':
-        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
-            entries = [entry for entry in archive.infolist() if entry.filename.lower().endswith(('.png', '.jpg', '.webp'))]
-            if not entries or entries[0].file_size > MAX_IMAGE_BYTES:
-                raise ValueError('NovelAI returned no usable image or an oversized image')
-            raw = archive.read(entries[0])
-    else:
-        result = json.loads(raw)
-        item = (result.get('data') or [{}])[0]
-        if config.get('protocol') == 'chat':
-            message = ((result.get('choices') or [{}])[0].get('message') or {})
-            images = message.get('images') or []
-            content = message.get('content') or []
-            if images:
-                item = {'url': images[0].get('image_url', {}).get('url')}
-            elif isinstance(content, list):
-                item = next(({'url': c.get('image_url', {}).get('url')} for c in content if c.get('type') == 'image_url'), {})
-            elif isinstance(content, str):
-                match = re.search(r'data:image/(?:png|jpeg|webp);base64,[A-Za-z0-9+/=]+', content)
-                item = {'url': match.group(0)} if match else {}
-        if item.get('b64_json'):
-            raw = base64.b64decode(item['b64_json'], validate=True)
-        elif str(item.get('url', '')).startswith('data:image/'):
-            raw = base64.b64decode(item['url'].split(',', 1)[1], validate=True)
-        elif item.get('url'):
-            raw, _ = fetch_remote_image(item['url'])
-        else:
-            raise ValueError('Provider returned no image; text-only responses are not successful generations')
-    if len(raw) > MAX_IMAGE_BYTES:
-        raise ValueError('Generated image too large')
-    mime = detect_image_mime_type(raw, '')
-    if mime not in ('image/png', 'image/jpeg', 'image/webp'):
-        raise ValueError('Provider must return PNG, JPEG or WebP, not active SVG or other content')
-    data_url = 'data:' + mime + ';base64,' + base64.b64encode(raw).decode()
-    return {'image': store_image_data(data_url, payload.get('albumId', 'unassigned')), 'offlineFallback': False, 'provider': provider}
+    from providers import generate
+    return generate(payload, sys.modules[__name__])
 
 
 def handle_vision_audit(payload):
@@ -809,7 +721,7 @@ def normalize_merged_config(data):
 
     return data
 
-def read_merged_config():
+def read_merged_config_raw():
     with CONFIG_LOCK:
         recover_config_transaction()
         if not any(os.path.exists(path) for path in CONFIG_FILES.values()) and any(os.path.exists(path) for path in LEGACY_CONFIG_FILES.values()):
@@ -866,6 +778,10 @@ def read_merged_config():
         if not has_studio_metadata:
             merged["uiConfig"].pop("comfyStudio", None)
     return normalize_merged_config(merged)
+
+def read_merged_config():
+    return mio_foundation.project_execution(sys.modules[__name__], read_merged_config_raw())
+
 
 def split_config_payload(data):
     ui_config = copy.deepcopy(data.get("uiConfig", {}))
@@ -1100,6 +1016,9 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
             self.send_json(403, {'error': 'Origin is not allowed'})
             return
         request_path = urllib.parse.urlparse(self.path).path
+        if request_path.startswith('/api/foundation/') and mio_foundation.dispatch(self, sys.modules[__name__], request_path[len('/api/foundation/'):], urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)):
+            return
+
         if request_path == '/api/config':
             try:
                 self.send_json(200, read_merged_config())
@@ -1161,8 +1080,17 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
         if request_path == '/api/image/generate':
             try:
                 self.send_json(200, generate_provider_image(self.read_json_body(max_bytes=MAX_IMAGE_BYTES * 4 // 3 + 65536)))
+            except ProviderHTTPError as exc:
+                self.send_response(exc.status)
+                self.send_header('Content-Type', 'text/plain; charset=utf-8')
+                self.send_header('Content-Length', str(len(exc.body)))
+                self.end_headers()
+                self.wfile.write(exc.body)
             except Exception as exc:
-                self.send_json(400, {"error": str(exc)[:300]})
+                self.send_json(400, {"error": str(exc)})
+            return
+
+        if request_path.startswith('/api/foundation/') and mio_foundation.dispatch(self, sys.modules[__name__], request_path[len('/api/foundation/'):], urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)):
             return
 
         if request_path == '/api/config':
@@ -1172,6 +1100,9 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
                 # 安全红线拦截校验：防止客户端空缓存反向冲刷抹除已有配置与画册
                 with CONFIG_LOCK:
                     current_data = read_merged_config()
+                    if 'expectedRevision' in data and data['expectedRevision'] != current_data.get('updatedAt'):
+                        self.send_json(409, {'error':'Workspace changed in another client; reload before saving.'})
+                        return
                     force_write = data.get("forceWrite", False)
                     shrunken_fields = [
                         field for field in PROTECTED_COLLECTION_FIELDS
@@ -1197,6 +1128,7 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
             try:
                 payload = self.read_json_body(max_bytes=MAX_IMAGE_BYTES * 4 // 3 + 4096)
                 local_url = store_image_data(payload.get('dataUrl', ''), payload.get('albumId', 'unassigned'))
+                if payload.get('name'):mio_foundation.record_asset_origin(sys.modules[__name__],local_url,{'kind':'upload','name':str(payload['name'])[:250]})
                 self.send_json(200, {"ok": True, "localUrl": local_url})
             except PayloadTooLargeError as e:
                 self.send_json(413, {"error": str(e)})
@@ -1285,6 +1217,7 @@ if __name__ == '__main__':
     print(f" 网页访问地址: http://127.0.0.1:{PORT}/index.html")
     print(f" 物理落盘配置目录: data/")
     print(f"=========================================================")
+    mio_foundation.jobs(sys.modules[__name__])
     server = ThreadingHTTPServer((os.environ.get('MIO_HOST', os.environ.get('COMFY_COMIC_HOST', '127.0.0.1')), PORT), ComicRequestHandler)
     try:
         import webbrowser

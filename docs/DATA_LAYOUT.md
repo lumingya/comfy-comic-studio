@@ -70,3 +70,12 @@ data/
 ## 本地凭证
 
 `data/secrets/provider-keys.json` 单独存储图像渠道密钥，不属于 native config 或普通工程导出。文件未加密，完整物理目录备份需妥善保管；详情见 [渠道与密钥](guide/CHANNELS_AND_KEYS.md)。
+
+## 生产基座新增目录
+
+- `data/execution/jobs.sqlite3`：WAL 持久任务、幂等键、每幕结果、事件；`worker.lock` 防止重复工作进程。
+- `data/assets/catalog.json`：可重建的文件摘要和尺寸索引。
+- `data/assets/origins.json`：已记录的上传文件名与生成来源，不存密钥。
+- `data/trash/`：用户确认回收的未引用素材，默认不永久删除。
+
+任务中断不自动重试。请在服务停止后备份整个 data/，而非单独拷贝在线 SQLite 主文件。

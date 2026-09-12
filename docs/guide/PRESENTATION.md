@@ -13,7 +13,7 @@ Mio 的画册阅读与单册 HTML 导出共用一个工作台。打开画册后�
 ## 预览与导出的区别
 
 - 默认完整画面使用原生轻量阅读器，不创建模板 iframe，不在每次翻页时编译 HTML。
-- 自定义模板使用隔离 iframe，按当前页起最多 **3 幕**预览。翻页可查看后续内容；**导出包含整册**，不受三幕限制。
+- 自定义模板使用隔离 iframe。阅读时从当前幕起预览最多 **3 幕**；打开导出面板时，样张优先显示前 3 张已生成图片，避免当前幕未生成导致空白。预览使用缓存的轻量图（长边最多 1440 px），**导出仍使用原图并包含整册**，不受三幕限制。
 - HTML/CSS、媒体占位符、外观设置和已授权脚本使用同一套模板编译器。
 - 当前实际图片或缺失标记用于预览；不会用示范图冒充尚未生成的页面。
 - 开始编辑模板、切回默认模板或关闭阅读器时，移除正在运行的自定义预览文档。
@@ -97,3 +97,34 @@ MioTemplate.onReady(() => {
 `npm run test:presentation` 使用独立临时工程测试完整图片、模板搜索、真实 WebM 媒体、脚本授权与父页面隔离、单册统一导出、模板包往返和手机布局。
 
 512 幕合成负载中，默认路径翻页只挂载一张图片，HTML 模板编译次数为 0。测试记录的同步渲染耗时不包含所有设备上的图片解码和 GPU 绘制，不应解读为用户设备帧率保证。
+
+
+全屏使用文档根节点，进入后把阅读器重新置于模态顶层，避免画册集压在阅读器上方。关闭阅读器会退出网页全屏、移除模板 iframe/抽屉并释放预览缓存，可正常重新打开。F11 仍是浏览器自己的独立功能。
+
+## 旁白不必放在图片下方
+
+现有自定义 HTML/CSS 已支持任意位置：`{{caption}}` 只是文本占位符，没有强制“图下说明”容器。可以放在图片上方、左右栏、图片内部或气泡里；使用 `position: relative/absolute`、Grid/Flex 和媒体查询自行排版。默认模板放在下方只是默认样式，不是框架限制；没有新增拖拽旁白编辑器。
+
+例如在原模板的 `{{#frames}} … {{/frames}}` 内使用：
+
+```html
+<article class="scene" data-cc-frame>
+  <img src="{{image}}" alt="{{name}}">
+  <aside class="narration" data-cc-caption>{{caption}}</aside>
+</article>
+```
+
+配套样式可放到模板原有 `<style>` 内：
+
+```css
+.scene { position: relative; }
+.scene img { display: block; width: 100%; height: auto; }
+.narration {
+  position: absolute; top: 8%; left: 6%; width: 34%;
+  padding: 1em; border-radius: 1em; color: #222;
+  background: rgb(255 255 255 / .9); white-space: pre-line;
+}
+@media (max-width: 600px) { .narration { width: 55%; padding: .6em; } }
+```
+
+这只是原模板帧循环的片段，不是完整模板文件。保留文档结构和循环标记，再在同一个阅读/导出工作台预览。`data-cc-caption` 使旁白显示选项识别该区域。自由布局仍受原有沙箱、离线资源及脚本授权规则约束。浏览器回归已验证图内旁白在预览和下载的离线 HTML 中保持同一定位。

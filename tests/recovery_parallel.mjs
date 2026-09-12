@@ -1,0 +1,72 @@
+// Real browser -> durable service -> mock HTTP provider; no paid generation.
+import {chromium} from 'playwright';
+import {spawn} from 'node:child_process';
+import {createServer} from 'node:http';
+import {mkdtempSync,cpSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),temp=mkdtempSync(path.join(tmpdir(),'mio-recovery-'));
+for(const name of ['providers','mio_jobs.py','mio_frame_jobs.py','mio_channels.py','mio_contracts.py','mio_foundation.py','server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true});
+const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=',calls=[],closedSockets=[];let active=0,peak=0,fail=true,failSubset=true;
+const upstream=createServer(async(req,res)=>{let raw='';for await(const c of req)raw+=c;const body=JSON.parse(raw);res.on('close',()=>{if(body.prompt.startsWith('stop-')&&!res.writableFinished)closedSockets.push(body.prompt)});calls.push(body.prompt.split('\n')[0]);if(body.prompt.startsWith('recover-1\n')&&fail){fail=false;res.destroy();return}if(body.prompt.startsWith('subset-3\n')&&failSubset){failSubset=false;res.destroy();return}if(body.prompt.startsWith('policy-1\n')){res.statusCode=422;res.setHeader('Content-Type','application/json');res.end(JSON.stringify({error:{message:'[422] Request rejected: Content violates our terms'}}));return}active++;peak=Math.max(peak,active);await new Promise(r=>setTimeout(r,body.prompt.startsWith('stop-')?3000:250));active--;res.setHeader('Content-Type','application/json');res.end(JSON.stringify({data:[{b64_json:png}]}))});
+await new Promise(resolve=>upstream.listen(0,'127.0.0.1',resolve));const upstreamUrl='http://127.0.0.1:'+upstream.address().port+'/v1';
+const base='http://127.0.0.1:8794',token='r'.repeat(40),server=spawn('python',['-u','server.py'],{cwd:temp,env:{...process.env,MIO_PORT:'8794',MIO_API_TOKEN:token},stdio:['ignore','pipe','pipe']});let browser,checks=0;const check=(n,v)=>{assert.ok(v,n);console.log('PASS '+n);checks++};
+async function api(url,body){const r=await fetch(base+'/api/v1/'+url,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:body?JSON.stringify(body):undefined});return{status:r.status,body:await r.json()}}
+async function waitJob(id,state){for(let i=0;i<150;i++){const j=(await api('jobs/'+id)).body.data;if(j.state===state)return j;await new Promise(r=>setTimeout(r,100))}throw Error('Job did not reach '+state+' '+JSON.stringify((await api('jobs/'+id)).body)+' calls='+JSON.stringify(calls))}
+try{
+ await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('startup timeout')),10000);server.stdout.on('data',d=>{if(d.toString().includes('物理落盘')){clearTimeout(t);resolve()}})});
+ browser=await chromium.launch({args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1280,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route(/^https:\/\//,r=>r.abort());await page.goto(base);await page.waitForFunction(()=>!rt.booting);
+ await api('jobs/scheduler',{action:'policy',policy:{mode:'pause'}});
+ const snapshot=await page.evaluate(async url=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());state.settings.identity.onboarded=true;state.settings.comfy.mode='real';state.queue=[];state.books=[];const p=selectedPlan(),t=templateBy(p.templateId);p.storyVersionId='';t.frames=t.frames.slice(0,3);t.frames.forEach((f,i)=>{f.prompt='recover-'+i;f.negative=''});const g=ensureImageProviders();g.profiles.push({id:'recovery_test',title:'Recovery test',provider:'openai',protocol:'images',model:'test',baseUrl:url,keyMode:'none',sendSize:false,sendQuality:false});g.active='recovery_test';save();await savePythonWorkspace(true);enqueuePlanSnapshot(p);await runQueue();createUI.tab='queue';navigate(1);const q=state.queue[0];return{id:q.serverId,input:q.serverInput,book:q.bookId,qid:q.id}},upstreamUrl);
+ const old=await waitJob(snapshot.id,'unknown');check('HTTP disconnect leaves confirmed first frame and unknown second',old.cursor===1&&calls.join(',')==='recover-0,recover-1');
+ check('unknown continuation requires explicit billing acknowledgement',(await api('jobs/'+old.id,{action:'continue',recovery:{expectedCursor:old.cursor,expectedUpdated:old.updated}})).status===409);
+ check('stale progress cannot authorize continuation',(await api('jobs/'+old.id,{action:'continue',recovery:{expectedCursor:0,expectedUpdated:old.updated,acknowledgeUnconfirmed:true}})).status===409);
+ await page.reload();await page.waitForFunction(()=>!rt.booting);await page.evaluate(async()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());await pollFoundationJobs();createUI.tab='queue';navigate(1)});
+ check('reload retains visible continuation from original scene two',(await page.locator('[data-act="queue-retry"]').innerText()).includes('未完成分镜'));
+ await page.locator('[data-act="queue-retry"]').click();await page.locator('#confirm-dialog[open]').waitFor();check('consent explains same album and unconfirmed billing risk',(await page.locator('#confirm-dialog').innerText()).includes('可能重复扣费'));
+ await page.locator('#confirm-no').click();check('canceling consent sends no extra provider request',calls.length===2);
+ await page.locator('[data-act="queue-retry"]').click();await page.locator('#confirm-yes').click();const completed=await waitJob(old.id,'complete');
+ check('wire order resumes second frame without repeating first',calls.join(',')==='recover-0,recover-1,recover-1,recover-2');
+ check('same job, frozen input and first result survive continuation',completed.id===old.id&&completed.results[0].image===old.results[0].image&&completed.frameIndices.join(',')==='0,1,2');
+ await page.evaluate(async()=>{await pollFoundationJobs();render()});await page.waitForFunction(()=>state.books[0]?.generatedSteps===3);check('original album completes without replacement',await page.evaluate(s=>state.books.length===1&&state.books[0].id===s.book&&state.books[0].generatedSteps===3&&state.queue[0].id===s.qid,snapshot));
+ await page.locator('#queue-concurrency').fill('4');await page.locator('#queue-timeout').fill('45');await page.locator('[data-act="queue-runtime-save"]').click();await page.waitForFunction(()=>document.querySelector('#queue-runtime-feedback')?.textContent.includes('已保存'));
+ check('queue controls persist parallelism and timeout',(await api('jobs')).body.data.runtime.concurrency===4&&(await api('jobs')).body.data.runtime.requestTimeoutSeconds===45);
+ peak=0;
+ // Deliberately project paused held jobs between each submission to reproduce the polling race.
+ const parallel=await page.evaluate(async()=>{const p=selectedPlan(),t=templateBy(p.templateId);t.frames=t.frames.slice(0,2);for(let j=0;j<4;j++){t.frames.forEach((f,i)=>f.prompt='parallel-'+j+'-'+i);enqueuePlanSnapshot(p)}const nativeSave=savePythonWorkspace;savePythonWorkspace=async(...args)=>{const ok=await nativeSave(...args);await pollFoundationJobs();return ok};try{await runQueue()}finally{savePythonWorkspace=nativeSave}return state.queue.slice(1).map(q=>q.serverId)});
+ check('all four new albums have durable identities',parallel.length===4&&parallel.every(Boolean));
+ const done=await Promise.all(parallel.map(id=>waitJob(id,'complete')));check('two-scene tasks overlap their own two frames, not other queued albums',peak===2);
+ check('held-status polling cannot strand newly submitted albums',done.every(j=>j.cursor===2));
+ check('configured timeout reaches every claimed attempt',done.every(j=>j.active_timeout===45));
+ check('each frame is sent exactly once within its task',[0,1,2,3].every(i=>calls.filter(p=>p.startsWith('parallel-'+i+'-')).sort().join(',')===`parallel-${i}-0,parallel-${i}-1`));
+ await page.reload();await page.waitForFunction(()=>!rt.booting);await page.evaluate(async()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());await pollFoundationJobs();createUI.tab='queue';navigate(1)});check('runtime settings survive browser reload',await page.locator('#queue-concurrency').inputValue()==='4'&&await page.locator('#queue-timeout').inputValue()==='45');
+ const subset=await page.evaluate(async()=>{const p=selectedPlan(),t=templateBy(p.templateId),f=clone(t.frames[0]);t.frames=Array.from({length:6},(_,i)=>({...clone(f),id:uid('frame'),prompt:'subset-'+i}));const b=enqueuePlanSnapshot(p,null,[1,3,5]);await runQueue();const q=state.queue.find(q=>q.bookId===b.id);return{id:q.serverId,book:b.id,qid:q.id,count:state.queue.length}});
+ await waitJob(subset.id,'unknown');await page.waitForFunction(id=>state.queue.find(q=>q.serverId===id)?.serverState==='unknown',subset.id);
+ check('subset task labels the original fourth scene, not local cursor two',await page.evaluate(id=>queueNextFrame(state.queue.find(q=>q.id===id))===3,subset.qid));
+ await page.evaluate(s=>{state.queue.find(q=>q.id===s.qid).serverCursor=0;void handleAction('resume',{id:s.book})},subset);await page.locator('#confirm-dialog[open]').waitFor();check('gallery resume refreshes stale progress before consent',(await page.locator('#confirm-dialog').innerText()).includes('第 4 幕'));
+ await page.locator('#confirm-yes').click();await waitJob(subset.id,'complete');await page.waitForFunction(id=>bookBy(id)?.generatedSteps===3,subset.book);
+ check('gallery continuation reuses job and album for a subset',await page.evaluate(s=>state.queue.length===s.count&&state.queue.find(q=>q.id===s.qid).serverId===s.id&&bookBy(s.book).steps.map(f=>f.stepIndex).join(',')==='1,3,5',subset));
+ check('subset wire order never repeats its confirmed first image',calls.filter(p=>p.startsWith('subset-')).sort().join(',')==='subset-1,subset-3,subset-3,subset-5');
+ await api('jobs/scheduler',{action:'policy',policy:{mode:'retry'}});
+ const policy=await page.evaluate(async()=>{const p=selectedPlan(),t=templateBy(p.templateId);t.frames=t.frames.slice(0,2);t.frames.forEach((f,i)=>f.prompt='policy-'+i);const b=enqueuePlanSnapshot(p);await runQueue();const q=state.queue.find(q=>q.bookId===b.id);return{id:q.serverId,qid:q.id,book:b.id}});
+ const rejection=await waitJob(policy.id,'failed');check('HTTP 422 is durably skipped without automatic retry',rejection.cursor===1&&rejection.ready_at===0&&rejection.retry_count===0&&rejection.frameStates[1].state==='skipped');
+ check('request history includes final wire prompt and actual model',rejection.requestHistory.find(x=>x.index===1).requestParameters.prompt.startsWith('policy-1')&&rejection.requestHistory.find(x=>x.index===1).requestParameters.model==='test');
+ await page.waitForFunction(id=>state.queue.find(q=>q.serverId===id)?.serverState==='failed',policy.id);
+ await page.evaluate(()=>{createUI.tab='story';ui.frameIndex=1;render()});await page.locator('[data-v3-frame="prompt"]').fill('policy-safe-1');await page.evaluate(async()=>{flushEditor();if(!await savePythonWorkspace())throw Error('save failed')});
+ check('revised missing-frame source survives future album recovery',await page.evaluate(id=>bookBy(id).sourceSnapshot.frames[1].prompt==='policy-safe-1',policy.book));
+ check('original editor preserves task identity and confirmed result',(await api('jobs/'+policy.id)).body.data.id===policy.id&&(await api('jobs/'+policy.id)).body.data.cursor===1);
+ await page.evaluate(()=>{createUI.tab='queue';render()});
+ await page.locator(`[data-act="queue-retry"][data-id="${policy.qid}"]`).click();await page.locator('#confirm-yes').click();await waitJob(policy.id,'complete');check('revised unfinished prompt reaches provider without repeating first',calls.filter(p=>p.startsWith('policy-')).sort().join(',')==='policy-0,policy-1,policy-safe-1');
+ const stop=await page.evaluate(async()=>{const p=selectedPlan(),t=templateBy(p.templateId);t.frames=t.frames.slice(0,1);t.frames[0].prompt='stop-first';const b=enqueuePlanSnapshot(p);await runQueue();const q=state.queue.find(q=>q.bookId===b.id);return{id:q.serverId,qid:q.id}});
+ await waitJob(stop.id,'running');const stopTime=Date.now();await page.locator(`[data-act="queue-stop-task"][data-id="${stop.qid}"]`).click();const stopped=await waitJob(stop.id,'canceled');check('stop acknowledges without waiting for provider response',Date.now()-stopTime<1800&&stopped.cursor===0);
+ await new Promise(r=>setTimeout(r,200));check('stop closes the local HTTP socket before upstream responds',closedSockets.length===1);await new Promise(r=>setTimeout(r,3000));check('late response never becomes a saved task result',(await api('jobs/'+stop.id)).body.data.results.length===0);
+ peak=0;
+ const held=await page.evaluate(async()=>{const p=selectedPlan(),t=templateBy(p.templateId);for(let i=0;i<4;i++){t.frames[0].prompt='held-'+i;enqueuePlanSnapshot(p)}const request=foundationRequest;foundationRequest=async(path,body)=>body?.action==='resume'&&path!=='jobs/scheduler'?request(path):request(path,body);try{await runQueue()}finally{foundationRequest=request}return state.queue.slice(-4).map(q=>q.serverId)});
+ check('diagnostics distinguish held albums from concurrency capacity',held.length===4&&(await api('jobs')).body.data.jobs.filter(j=>held.includes(j.id)).every(j=>j.state==='paused'));
+ await page.locator('[data-act="queue-release-held"]').click();await page.locator('#confirm-yes').click();await Promise.all(held.map(id=>waitJob(id,'complete')));check('releasing held tasks queues them sequentially unless manually started',peak===1);
+ await page.reload();await page.waitForFunction(()=>!rt.booting);await page.evaluate(async()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());await pollFoundationJobs();navigateV3(6)});await page.waitForFunction(()=>document.querySelector('#log-body')?.innerText.includes('请求参数已确定'));
+ check('logs after reload include persisted rejection, request input and stop',(await page.locator('#log-body').innerText()).includes('Content violates')&&(await page.locator('#log-body').innerText()).includes('立即停止'));
+ check('no browser runtime errors',errors.length===0);console.log(`Recovery and parallel acceptance: ${checks} checks passed`);
+}finally{await browser?.close();server.kill();await new Promise(resolve=>server.once('exit',resolve));await new Promise(resolve=>upstream.close(resolve));rmSync(temp,{recursive:true,force:true})}

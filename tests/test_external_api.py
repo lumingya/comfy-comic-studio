@@ -67,8 +67,8 @@ class ExternalApiTests(unittest.TestCase):
 
     def test_capabilities_are_honest(self):
         _, data, _ = self.request('/api/v1/capabilities')
-        self.assertFalse(data['data']['browserQueueIntegration'])
-        self.assertNotIn('comfyui', data['data']['generationProviders'])
+        self.assertTrue(data['data']['browserQueueIntegration'])
+        self.assertIn('comfyui', data['data']['generationProviders'])
 
     def test_schema_is_raw_and_secured(self):
         status, data, _ = self.request('/api/v1/openapi.json')
@@ -159,3 +159,26 @@ class ExternalApiTests(unittest.TestCase):
         from pathlib import Path
         spec = json.loads((Path(__file__).resolve().parents[1] / 'docs/api/openapi.json').read_text())
         self.assertEqual(spec, mio_api.openapi())
+
+    def test_ordered_images_reach_generation_adapter(self):
+        images = ['/images/albums/variable-assets/one.png', '/images/albums/variable-assets/two.png']
+        with patch.object(server, 'generate_provider_image', return_value={'image': '/images/result.png'}) as generate:
+            status, _, _ = self.request('/api/v1/images/generations', 'POST', {'providerId': 'p1', 'prompt': '@image_1 @image_2', 'images': images})
+        self.assertEqual(status, 200)
+        self.assertEqual(generate.call_args.args[0]['images'], images)
+
+    def test_private_generation_preserves_status_and_error_body(self):
+        raw = json.dumps({'error': {'code': 'unsupported_images', 'message': '参数错误 ' + 'detail ' * 100 + 'SECRET'}}, ensure_ascii=False).encode()
+        error = server.ProviderHTTPError(422, raw, 'SECRET')
+        with patch.object(server, 'generate_provider_image', side_effect=error) as generate:
+            status, body, _ = self.request('/api/image/generate', 'POST', {})
+        self.assertEqual(status, 422)
+        self.assertEqual(body, json.loads(raw.replace(b'SECRET', b'[REDACTED]')))
+        self.assertEqual(generate.call_count, 1)
+
+    def test_external_upstream_status_and_details_are_preserved(self):
+        with patch.object(server, 'generate_provider_image', side_effect=server.ProviderHTTPError(429, b'{"error":"quota SECRET"}', 'SECRET')):
+            status, body, _ = self.request('/api/v1/images/generations', 'POST', {'providerId': 'p1', 'prompt': 'x'})
+        self.assertEqual(status, 429)
+        self.assertIn('quota [REDACTED]', body['error']['message'])
+        self.assertNotIn('SECRET', json.dumps(body))

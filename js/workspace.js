@@ -97,7 +97,7 @@ function sceneAssignmentHTML(p,f){
 
 function queueComposerHTML(){
   const p=selectedPlan(),t=p&&templateBy(p.templateId);if(!p)return '';
-  return `<div class="queue-compose-inline" aria-label="添加生成任务"><div class="queue-compose-field"><span class="workflow-control-label">工作流</span>${workflowControlHTML('ws-plan-workflow',p.workflowId,'当前工作流 · '+state.settings.comfy.workflowTitle,'全册默认工作流')}</div><div class="queue-compose-field"><label for="ws-queue-range">生成范围</label><select id="ws-queue-range" aria-label="生成范围"><option value="all">整本画册 · 保留单幕配置</option>${(t?.frames||[]).map((f,i)=>opt(i,'第 '+(i+1)+' 幕 · '+f.name,'all')).join('')}</select></div>${btn('加入队列','plus','ws-enqueue-range','','small')}<span class="queue-compose-note">按顺序自动执行 · 每次创建独立版本</span></div>`;
+  return `<div class="queue-compose-inline" aria-label="添加生成任务">${activeImageProfile().provider==='comfyui'?`<div class="queue-compose-field"><span class="workflow-control-label">工作流</span>${workflowControlHTML('ws-plan-workflow',p.workflowId,'当前工作流 · '+state.settings.comfy.workflowTitle,'全册默认工作流')}</div>`:''}<div class="queue-compose-field"><label for="ws-queue-range">生成范围</label><select id="ws-queue-range" aria-label="生成范围"><option value="all">整本画册 · 保留单幕配置</option>${(t?.frames||[]).map((f,i)=>opt(i,'第 '+(i+1)+' 幕 · '+f.name,'all')).join('')}</select></div>${btn(rt.paused?'加入待办':'加入并执行','plus','ws-enqueue-range','','small')}<span class="queue-compose-note">新建独立画册版本 · 暂停时只加入待办</span></div>`;
 }
 
 
@@ -114,7 +114,7 @@ function queueWorkflowDetails(){
 async function enqueueWorkspaceRange(indices,start=false){
   flushEditor();const p=selectedPlan();if(!p)throw Error('先创建画册。');
   const book=enqueuePlanSnapshot(p,null,indices);createUI.tab='queue';navigate(1);
-  if(!rt.running&&!rt.paused)void runQueue();toast(rt.paused?'任务已加入，队列暂停中。':'任务已加入，将按队列顺序执行。');return book;
+  if(!rt.paused&&(!rt.running||!foundationIsMock()))void runQueue();toast(rt.paused?'任务已加入，队列暂停中。':'任务已加入，将按队列顺序执行。');return book;
 }
 
 function createBlankPreset(){
@@ -145,9 +145,10 @@ function installWorkspaceUpgrade(){
   const oldPythonSettings=renderPythonSettings;renderPythonSettings=()=>oldPythonSettings()+dataLayoutHTML();
   renderCreationQueue=renderCompactQueue;
   const oldUpdate=updateQueueUI;updateQueueUI=function(){
-    const open=new Set([...document.querySelectorAll('.queue-workflow-detail[open]')].map(x=>x.dataset.taskDetail));
+    const detailKey=x=>(x.closest('[data-sort-task]')?.dataset.sortTask||x.dataset.taskDetail||'')+'/'+x.className;
+    const open=new Set([...document.querySelectorAll('#queue-list details[open]')].map(detailKey));
     oldUpdate();
-    document.querySelectorAll('.queue-workflow-detail').forEach(x=>x.open=open.has(x.dataset.taskDetail));
+    document.querySelectorAll('#queue-list details').forEach(x=>x.open=open.has(detailKey(x)));
     if($('#queue-controls'))$('#queue-controls').innerHTML=queueControlsHTML();
   };
   const oldAction=handleAction;handleAction=async function(action,d={},el){

@@ -11,6 +11,18 @@
 5. [备份与恢复](guide/BACKUP.md)：完整备份、素材路径、密钥与恢复检查。
 6. [故障排查](guide/TROUBLESHOOTING.md)：连接、401、400、缺图与保存。
 
+## 手机端
+
+[手机显示、触控操作、同一 Wi-Fi 连接与安全注意](guide/MOBILE.md) · [English](en/MOBILE.md)
+
+## 图片作为变量
+
+[图片上传、中文变量、顺序编号、快照及备份](guide/IMAGE_VARIABLES.md)
+
+## 服务端生产基座
+
+[关页继续、持久任务、幂等提交、素材索引、安全清理与受控 API](guide/FOUNDATION.md) · [English](en/FOUNDATION.md)
+
 ## 自动化与开发
 
 - [外部 API 完整教程](api/README.md) / [English API guide](en/API.md)
@@ -23,7 +35,7 @@
 
 - [数据目录](DATA_LAYOUT.md)
 - [ComfyUI 工作流库](WORKFLOW_UPDATE.md)：历史界面称「工作流配置」，当前入口为「图像引擎」。
-- [队列、画册批量操作](QUEUE_AND_COLLECTION_UPDATE.md)
+- [队列、并发超时、断点继续与画册批量操作](QUEUE_AND_COLLECTION_UPDATE.md)
 - [最新变更](CHANGELOG.md)
 - [自动化验证记录](TEST_RESULTS.txt)
 
@@ -35,3 +47,5 @@
 ## 展示模板与画册预览
 
 [统一预览与导出、媒体背景、沙盒脚本及性能边界](guide/PRESENTATION.md)
+
+- [配置何时生效：渠道、分镜与请求](guide/CONFIGURATION.md) — 改模型、地址和密钥后哪些任务使用新配置，以及紧凑队列界面的操作。

@@ -30,7 +30,7 @@ Mio 是单用户、本地优先的创作工具，不是多租户 SaaS。
 
 公共 API Token 的持有者可读取私人分镜、调用付费服务，属于完全可信客户端。允许自定义供应商地址，是有意提供的本地集成功能，不是安全的任意用户网络代理。若使用服务端供应商密钥，客户端指定的目的地必须可信。
 
-生成请求不跟随 Authorization 重定向；返回图片下载不发送供应商密钥。外部 API 错误脱敏，限制请求体/图像大小和外部生成并发。没有完善的多用户审计、每用户配额或幂等账单保护。
+生成请求不跟随 Authorization 重定向；返回图片下载不发送供应商密钥。外部 API 错误脱敏，限制请求体/图像大小和外部生成并发。持久任务支持相同幂等键去重，但不是供应商账单事务或 exactly-once 保证；旧同步调用不具备此语义。没有多用户权限隔离、每用户配额或完整多用户审计。
 
 ### 报告问题
 
@@ -45,3 +45,7 @@ Use a random token of at least 32 characters. Use `MIO_HOST`, `MIO_PORT` and `MI
 API clients are trusted: they can read creative content and spend provider credits. Custom endpoints are an integration feature, not a safe untrusted-user proxy. Only send server-side provider credentials to trusted destinations. Generation does not follow credential-bearing redirects, enforces size/concurrency limits and does not automatically retry paid calls. Cancellation does not guarantee upstream cancellation.
 
 Report vulnerabilities privately through an actual maintainer contact if available; no dedicated security mailbox is currently configured. Do not disclose real credentials or private artwork in public reports.
+
+## Durable execution boundary
+
+The SQLite worker has one process lease, transactional snapshots and idempotency-key conflicts, not an exactly-once guarantee at a third-party billing system. Unknown attempts are not automatically retried. The public token authorizes all local job/resource/asset operations; owner IDs are correlation identifiers, not authorization boundaries. Asset recycling requires a current reference preview, a 24-hour grace period and no active/unconfirmed jobs. Recycled files remain in data/trash. Protect the entire data directory and stop the service for physical backups. Advanced JSON parameters must never contain credentials.

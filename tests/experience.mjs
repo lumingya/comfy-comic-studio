@@ -1,0 +1,60 @@
+// Isolated layout and interaction checks; never sends a model request.
+import {chromium} from 'playwright';
+import {spawn} from 'node:child_process';
+import {mkdtempSync,cpSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),temp=mkdtempSync(path.join(tmpdir(),'mio-experience-'));
+for(const name of ['providers','mio_jobs.py','mio_frame_jobs.py','mio_channels.py','mio_contracts.py','mio_foundation.py','server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true});
+const server=spawn('python',['-u','server.py'],{cwd:temp,env:{...process.env,MIO_PORT:'8793'},stdio:['ignore','pipe','pipe']});let browser,checks=0;const check=(name,ok)=>{assert.ok(ok,name);checks++;console.log('PASS '+name)};
+try{
+ await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('server timeout')),10000);server.stdout.on('data',d=>{if(d.toString().includes('物理落盘')){clearTimeout(t);resolve()}});server.on('error',reject)});
+ browser=await chromium.launch({args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:2200,height:1300}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route(/^https:\/\//,r=>r.abort());await page.goto('http://127.0.0.1:8793');await page.waitForFunction(()=>!rt.booting);
+
+
+ await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());state.settings.identity.onboarded=true;const b=clone(state.books[0]);state.books=Array.from({length:10},(_,i)=>({...clone(b),id:'brush_'+i,title:'画册 '+i,curatedDemo:false}));state.queue=[];navigate(0);setShelfLayout('grid');ui.bulk=false;ui.selected.clear();render()});
+ check('home prominently links to the complete tutorial center',await page.locator('.home-learning').isVisible()&&(await page.locator('.home-learning').getAttribute('href'))==='/docs/index.html');
+ await page.locator('[data-act="toggle-bulk"]').click();
+ const cards=page.locator('.shelf-item');await cards.first().scrollIntoViewIfNeeded();
+ const points=await cards.evaluateAll(items=>items.slice(0,3).map(el=>{const r=el.querySelector('.shelf-cover').getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2,id:el.dataset.sortBook}}));
+ const beforeOrder=await page.evaluate(()=>getShelfBooks().map(b=>b.id));
+ await page.mouse.move(points[0].x,points[0].y);await page.mouse.down();await page.mouse.move(points[2].x,points[2].y,{steps:1});await page.mouse.up();
+ check('one fast drag selects all albums along the path',await page.evaluate(ids=>ids.every(id=>ui.selected.has(id)),points.map(p=>p.id)));
+ check('path painting does not select unrelated albums',await page.evaluate(()=>ui.selected.size===3));
+ check('multi-select dragging does not reorder or open albums',JSON.stringify(await page.evaluate(()=>getShelfBooks().map(b=>b.id)))===JSON.stringify(beforeOrder)&&await page.locator('#reader[open]').count()===0);
+ const deselect=await cards.evaluateAll(items=>items.slice(0,2).map(el=>{const r=el.querySelector('.shelf-cover').getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2,id:el.dataset.sortBook}}));
+ await page.mouse.move(deselect[0].x,deselect[0].y);await page.mouse.down();await page.mouse.move(deselect[1].x,deselect[1].y,{steps:6});await page.mouse.up();
+ check('dragging from a selected album removes selection along the path',await page.evaluate(ids=>ids.every(id=>!ui.selected.has(id))&&ui.selected.size===1,deselect.map(p=>p.id)));
+ await page.keyboard.press('Escape');check('Escape clears selections and exits multi-select',await page.evaluate(()=>!ui.bulk&&!ui.selected.size&&!document.body.classList.contains('selection-painting')));
+ await page.locator('[data-act="toggle-bulk"]').click();await cards.first().scrollIntoViewIfNeeded();const start=await cards.first().locator('.shelf-cover').boundingBox();await page.mouse.move(start.x+20,start.y+20);await page.mouse.down();await page.keyboard.press('Escape');await page.mouse.up();
+ check('Escape also cancels an in-progress paint gesture',await page.evaluate(()=>!ui.bulk&&!ui.selected.size&&!document.body.classList.contains('selection-painting')));
+ await page.evaluate(()=>{state.queue=[];const p=selectedPlan();enqueuePlanSnapshot(p,null,[0]);enqueuePlanSnapshot(p,null,[1]);const q=state.queue[0],b=bookBy(q.bookId);b.steps=[{stepIndex:0,image:defaultCuratedCover(),name:'已生成'}];b.generatedSteps=1;q.status='complete';q.done=1;navigate(1);createUI.tab='queue';render()});
+ const counts=await page.evaluate(()=>[state.queue.length,state.books.length]);
+ await page.locator('[data-act="scan-resume"]').click();
+ check('inspection does not enqueue work or create albums',JSON.stringify(await page.evaluate(()=>[state.queue.length,state.books.length]))===JSON.stringify(counts));
+ check('inspection only covers current task ranges, not other album pages',await page.locator('.queue-inspection section').count()===2&&(await page.locator('.queue-inspection section').first().innerText()).includes('此任务范围内已齐全'));
+ await page.locator('[data-act="close-modal"]').first().click();
+ const doomed=await page.evaluate(()=>{const q=state.queue[1];state.queue.push({...clone(q),id:'linked-task'});render();return q.bookId});
+ await page.locator('.ordered-task').nth(1).locator('[data-act="org-task-delete"]').click();
+ check('delete confirmation states album and linked queue scope',(await page.locator('#confirm-dialog').innerText()).includes('全部关联队列'));
+ await page.locator('#confirm-no').click();check('cancel preserves album and tasks',await page.evaluate(id=>!!bookBy(id)&&state.queue.filter(q=>q.bookId===id).length===2,doomed));
+ await page.locator('.ordered-task').nth(1).locator('[data-act="org-task-delete"]').click();await page.locator('#confirm-yes').click();
+ await page.waitForFunction(id=>!bookBy(id),doomed);
+ check('confirmed deletion removes the album and all linked tasks only',await page.evaluate(id=>!bookBy(id)&&!state.queue.some(q=>q.bookId===id)&&state.queue.length===1,doomed));
+ await page.locator('#queue-policy summary').click();await page.locator('#queue-policy-mode').selectOption('retry');await page.locator('#queue-policy-count').fill('3');await page.locator('[data-act="queue-policy-save"]').click();
+ check('automatic retry requires an explicit billing confirmation',(await page.locator('#confirm-dialog').innerText()).includes('计费'));
+ await page.locator('#confirm-no').click();check('declining preserves the previously saved automatic retry budget',await page.evaluate(async()=>(await foundationRequest('jobs')).failurePolicy.maxRetries===5));
+ await page.locator('[data-act="queue-policy-save"]').click();await page.locator('#confirm-yes').click();await page.waitForFunction(()=>document.querySelector('#queue-policy-feedback')?.textContent.includes('已保存'));
+ check('policy controls save real durable service settings',await page.evaluate(async()=>(await foundationRequest('jobs')).failurePolicy.mode==='retry'));
+ await page.locator('#queue-policy-mode').selectOption('pause');await page.locator('[data-act="queue-policy-save"]').click();
+ await page.evaluate(()=>{const q=state.queue[0];q.status='running';q.serverState='running';q.serverId='layout-only';q.done=0;state.queue.push({...clone(q),id:'paused-layout',status:'paused',serverState:'paused'});render()});
+ check('running work is highlighted while held work is not',await page.locator('.ordered-task.is-running').count()===1&&await page.locator('.task-live-badge').count()===1);
+ await page.setViewportSize({width:1440,height:1000});await page.evaluate(()=>document.querySelector('#queue-policy').open=false);await page.screenshot({path:path.join(root,'docs/queue-desktop.png'),animations:'disabled'});
+ await page.evaluate(()=>{state.queue=[];navigate(0);ui.bulk=false;ui.selected.clear();render();handleAction('read',{id:state.books[0].id});window.fullscreenTarget='';document.documentElement.requestFullscreen=async()=>{window.fullscreenTarget='root'};document.querySelector('#reader').requestFullscreen=async()=>{throw Error('must not request fullscreen on dialog')};Object.defineProperty(document,'fullscreenEnabled',{value:true,configurable:true})});
+ await page.locator('[data-act="room-fullscreen"]').click();check('fullscreen targets the root element, not a forbidden dialog',await page.evaluate(()=>window.fullscreenTarget==='root'));
+ await page.evaluate(()=>Object.defineProperty(document,'fullscreenEnabled',{value:false,configurable:true}));await page.locator('[data-act="room-fullscreen"]').click();await page.locator('[data-act="room-fullscreen"]').click();
+ check('unsupported fullscreen shows one inline explanation of F11',await page.locator('#reader-fullscreen-hint').count()===1&&(await page.locator('#reader-fullscreen-hint').innerText()).includes('独立功能'));
+ check('no uncaught browser errors',!errors.length);console.log(checks+' experience checks passed.');
+}finally{await browser?.close();server.kill();await new Promise(resolve=>server.once('exit',resolve));rmSync(temp,{recursive:true,force:true})}

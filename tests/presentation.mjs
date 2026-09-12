@@ -7,7 +7,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),temp=mkdtempSync(path.join(tmpdir(),'mio-presentation-'));
-for(const name of ['server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true});
+for(const name of ['providers','mio_jobs.py','mio_frame_jobs.py','mio_channels.py','mio_contracts.py','mio_foundation.py','server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true});
 const server=spawn('python',['-u','server.py'],{cwd:temp,env:{...process.env,MIO_PORT:'8798'},stdio:['ignore','pipe','pipe']});let browser,checks=0;const check=(name,ok)=>{assert.ok(ok,name);checks++;console.log('PASS '+name)};
 try{
  await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('server timeout')),10000);server.stdout.on('data',d=>{if(d.toString().includes('物理落盘')){clearTimeout(t);resolve()}});server.on('error',reject)});
@@ -35,12 +35,16 @@ try{
  await page.locator('[data-act="presentation-select"][data-id="custom-media"]').click();check('custom scripts require consent',await page.locator('#confirm-dialog').isVisible());await page.locator('#confirm-no').click();check('declining consent keeps the lightweight default',await page.evaluate(()=>presentationUI.templateId==='mio-fit'));
  await page.locator('[data-act="presentation-select"][data-id="custom-media"]').click();await page.locator('#confirm-yes').click();await page.waitForFunction(()=>document.querySelector('#presentation-preview')?.srcdoc.includes('customRan'));
  const preview=page.frameLocator('#presentation-preview');await preview.locator('body[data-custom-ran="yes"]').waitFor();check('script runs inside an opaque-origin sandbox',await preview.locator('body').getAttribute('data-isolated')==='yes'&&await page.locator('#presentation-preview').getAttribute('sandbox')==='allow-scripts'&&!await page.locator('body').getAttribute('data-escaped'));
- check('preview is bounded to three actual frames',await preview.locator('[data-cc-frame]').count()===3);
+ check('reader contains the whole five-frame book',await preview.locator('[data-cc-frame]').count()===5);
  check('local media placeholder resolves without external URLs',(await preview.locator('.custom-bg').getAttribute('src')).startsWith('data:image/'));
- check('template SDK exposes only presentation DOM',await preview.locator('body').evaluate(()=>window.MioTemplate.version===1&&window.MioTemplate.getFrames().length===3));
+ check('template SDK exposes only presentation DOM',await preview.locator('body').evaluate(()=>window.MioTemplate.version===1&&window.MioTemplate.getFrames().length===5));
  check('compiled CSP blocks network connections and external media',await preview.locator('meta[http-equiv="Content-Security-Policy"]').getAttribute('content').then(s=>s.includes("connect-src 'none'")&&s.includes('media-src data:')));
 
  check('video media loads as real embedded WebM',await preview.locator('video').evaluate(async v=>{if(v.readyState<1)await new Promise((resolve,reject)=>{v.onloadedmetadata=resolve;v.onerror=()=>reject(Error('video decode failed'));setTimeout(()=>reject(Error('video metadata timeout')),5000)});return v.videoWidth===64&&v.muted}));
+ check('whole-book reader hides conflicting outer controls',!await page.locator('.room-pagination').isVisible());
+ await page.evaluate(()=>{beginExportPreview();renderArtCanvas(false)});await page.waitForFunction(()=>document.querySelector('#presentation-preview')?.srcdoc.includes('customRan'));
+ await page.frameLocator('#presentation-preview').locator('body[data-custom-ran="yes"]').waitFor();
+ check('only explicit export samples are bounded to three frames',await page.frameLocator('#presentation-preview').locator('[data-cc-frame]').count()===3);
  const downloadPromise=page.waitForEvent('download');await page.locator('#presentation-drawer [data-act="presentation-export"]').click();const download=await downloadPromise,html=readFileSync(await download.path(),'utf8');
  check('unified export includes all five frames, media and approved script',html.includes('data:video/webm;base64,')&&html.includes('customRan')&&(html.match(/<figure data-cc-frame/g)||[]).length===5);
  writeFileSync(path.join(temp,'exported.html'),html);const offline=await browser.newPage();await offline.goto('file://'+path.join(temp,'exported.html'));await offline.locator('body[data-custom-ran="yes"]').waitFor();check('downloaded HTML works offline with the same media and all frames',await offline.locator('[data-cc-frame]').count()===5&&await offline.locator('video').count()===1);await offline.close();
@@ -49,5 +53,35 @@ try{
  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(350);check('mobile drawer fits the viewport',await page.evaluate(()=>$('#presentation-drawer').getBoundingClientRect().right<=innerWidth+1));await page.locator('#presentation-drawer [data-act="presentation-panel"]').click();check('mobile image remains fully within the canvas',await page.evaluate(()=>{const a=$('#reader-canvas img').getBoundingClientRect(),b=$('#reader-canvas').getBoundingClientRect();return a.top>=b.top&&a.bottom<=b.bottom+1}));
  check('invalid remote media and oversized scripts are rejected',await page.evaluate(()=>{let n=0;for(const extra of [{assets:{bad:{data:'https://example.com/x.mp4'}}},{runtimeScript:'x'.repeat(64001)}])try{validateExportTemplate({...fitPresentationTemplate(),...extra})}catch(e){n++}return n===2}));
  await page.evaluate(()=>closeReader());await page.evaluate(()=>exportModal([state.books[0].id]));check('single-book export entry opens the same reader studio',await page.locator('#reader').isVisible()&&await page.locator('#presentation-drawer').isVisible()&&!await page.locator('#modal').isVisible());
+ await page.setViewportSize({width:1280,height:900});
+ await page.evaluate(()=>{const b=bookBy(ui.bookId);b.totalSteps=8;b.steps=b.steps.slice(0,2);b.generatedSteps=2;ui.step=6;presentationUI.templateId='custom-media';studioUI.exportDraft.templateId='custom-media';presentationUI.panel=true;presentationUI.exportPreview=true;renderArtReader()});
+ await page.waitForFunction(()=>document.querySelector('#presentation-preview')?.srcdoc.includes('data:image/'));
+ const partial=page.frameLocator('#presentation-preview');await partial.locator('[data-cc-frame]').first().waitFor();
+ check('export from a missing scene previews confirmed images instead of blank future frames',await partial.locator('[data-cc-frame]').count()===2&&await page.evaluate(()=>ui.step===6));
+ check('preview images decode successfully',await partial.locator('[data-cc-frame] img').first().evaluate(async img=>{await img.decode();return img.naturalWidth>0}));
+ await page.locator('[data-act="room-fullscreen"]').click();await page.waitForFunction(()=>document.fullscreenElement===document.documentElement);
+ check('real fullscreen re-promotes reader above the fullscreen root',await page.evaluate(()=>$('#reader').matches(':modal')&&!!document.elementFromPoint(80,30)?.closest('#reader')));
+ await page.locator('[data-act="close-reader"]').click();await page.waitForFunction(()=>!document.fullscreenElement);
+ check('closing fullscreen removes drawer and restores a usable gallery',!await page.locator('#reader').isVisible()&&await page.locator('#presentation-drawer').count()===0);
+ await page.evaluate(()=>openReader(state.books[0].id));check('reader can reopen after fullscreen close',await page.locator('#reader').isVisible());await page.evaluate(()=>closeReader());
+ await page.evaluate(()=>{openReader(state.books[0].id);const t=fitPresentationTemplate();t.id='caption-overlay-proof';t.title='Caption overlay proof';t.html=t.html.replace('</style>','[data-cc-frame]{position:relative}[data-cc-caption]{position:absolute;top:28px;right:28px;left:auto;width:35%;background:#fff;color:#222;text-align:left;opacity:1;z-index:2}</style>');validateExportTemplate(t);state.exportTemplates.push(t);presentationUI.templateId=t.id;studioUI.exportDraft.templateId=t.id;presentationUI.panel=true;presentationUI.exportPreview=true;renderArtReader()});
+ await page.waitForFunction(()=>document.querySelector('#presentation-preview')?.srcdoc.includes('position:absolute'));
+ const captionPreview=page.frameLocator('#presentation-preview');await captionPreview.locator('[data-cc-caption]').first().waitFor();
+ check('custom template may position narration inside the image instead of beneath it',await captionPreview.locator('[data-cc-caption]').first().evaluate(el=>{const a=el.getBoundingClientRect(),b=el.parentElement.querySelector('img').getBoundingClientRect();return getComputedStyle(el).position==='absolute'&&a.top>=b.top&&a.top<b.bottom&&a.right<=b.right&&a.left>b.left}));
+ const overlayDownload=page.waitForEvent('download');await page.locator('#presentation-drawer [data-act="presentation-export"]').click();const overlayFile=await overlayDownload,overlayHTML=readFileSync(await overlayFile.path(),'utf8');writeFileSync(path.join(temp,'overlay.html'),overlayHTML);
+ const overlayOffline=await browser.newPage();await overlayOffline.goto('file://'+path.join(temp,'overlay.html'));await overlayOffline.locator('[data-cc-caption]').first().waitFor();check('offline export preserves the same custom narration positioning',await overlayOffline.locator('[data-cc-caption]').first().evaluate(el=>getComputedStyle(el).position==='absolute'&&el.getBoundingClientRect().top<el.parentElement.querySelector('img').getBoundingClientRect().bottom));await overlayOffline.close();await page.evaluate(()=>closeReader());
+ await page.setViewportSize({width:1440,height:980});
+ await page.evaluate(()=>{const b=state.books[0];b.totalSteps=24;b.steps=Array.from({length:24},(_,i)=>({stepIndex:i,name:'验证分镜 '+(i+1),caption:'第 '+(i+1)+' 幕',prompt:'test '+i,image:defaultCuratedCover()}));const t=exportTemplateCopy(fitPresentationTemplate());t.id='test-full-flip';t.layout='flip';t.html=designedExportHTML('night');state.exportTemplates.push(t);b.presentationTemplateId=t.id;openReader(b.id)});
+ const full=page.frameLocator('#presentation-preview');await full.locator('.cc-controls').waitFor();
+ check('24-scene custom reader compiles all scenes once',await full.locator('[data-cc-frame]').count()===24);
+ const documentBefore=await page.locator('#presentation-preview').getAttribute('srcdoc');
+ check('ending is hidden before the last spread',!await full.locator('.edition-end').isVisible());
+ const seen=[];for(let i=0;i<12;i++){seen.push(...await full.locator('[data-cc-frame]:not([hidden]) .cc-image').evaluateAll(xs=>xs.map(x=>x.alt)));if(i<11)await full.getByRole('button',{name:'下一跨页'}).click()}
+ check('all 24 scenes appear exactly once in original order',JSON.stringify(seen)===JSON.stringify(Array.from({length:24},(_,i)=>'验证分镜 '+(i+1))));
+ check('last spread alone displays the ending',await full.locator('.edition-end').isVisible()&&await full.getByRole('button',{name:'下一跨页'}).isDisabled());
+ check('turning pages never replaces the template document',documentBefore===await page.locator('#presentation-preview').getAttribute('srcdoc'));
+ await full.locator('[data-cc-frame]').evaluateAll(xs=>Promise.all(xs.flatMap(x=>x.getAnimations().map(a=>a.finished))));await page.mouse.move(0,0);await page.screenshot({path:path.join(root,'docs/reader-desktop.png')});
+ await page.setViewportSize({width:390,height:844});await full.getByRole('button',{name:'下一幕'}).waitFor();check('mobile flip reader shows one complete scene, not two narrow columns',await full.locator('[data-cc-frame]:not([hidden])').count()===1);await full.getByRole('button',{name:'下一幕'}).click();await full.locator('[data-cc-frame]').evaluateAll(xs=>Promise.all(xs.flatMap(x=>x.getAnimations().map(a=>a.finished))));await page.mouse.move(0,0);await page.screenshot({path:path.join(root,'docs/reader-mobile.png')});
+ await page.evaluate(()=>closeReader());
  check('no uncaught browser errors',!errors.length);console.log(checks+' presentation checks passed.');
 }finally{await browser?.close();server.kill();await new Promise(resolve=>server.once('exit',resolve));rmSync(temp,{recursive:true,force:true})}

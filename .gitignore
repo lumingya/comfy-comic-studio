@@ -40,3 +40,36 @@ novelai_80_steps_template.json
 
 # 外部参考项目
 references/
+
+# 临时草稿与工作文件（根目录精准匹配）
+/scratch/
+/scratch_*
+/scratch.*
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Python 虚拟环境与测试覆盖率（根目录锚定，兼容软链接）
+/.venv
+/venv
+/env
+/ENV
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# 密钥与凭据兜底防护
+secrets/
+provider-keys.json
+.keys-*
+*.token
+
+# 浏览器测试报告与系统文件
+playwright-report/
+blob-report/
+[Dd]esktop.ini
+ehthumbs.db

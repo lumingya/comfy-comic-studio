@@ -24,11 +24,12 @@ class ApiError(Exception):
 def capabilities():
     return {'name': 'Mio', 'version': VERSION, 'apiVersion': 'v1',
             'providers': ['comfyui', 'novelai', 'openai'],
-            'operations': ['read_storyboards', 'read_albums', 'read_providers', 'generate_image', 'read_asset'],
-            'generationProviders': ['novelai', 'openai'],
-            'generationMode': 'synchronous', 'maxConcurrentExternalGenerations': 1,
-            'browserQueueIntegration': False, 'webhooks': False,
-            'notes': 'ComfyUI execution and album/queue mutations currently belong to the browser workspace.'}
+            'operations': ['read_storyboards', 'read_albums', 'read_providers', 'generate_image', 'read_asset','submit_job','read_job','control_job','job_events','upload_asset','asset_catalog','recycle_assets','write_resources'],
+            'generationProviders': ['novelai', 'openai', 'comfyui'],
+            'generationMode': 'durable_jobs_and_synchronous_compatibility', 'maxConcurrentExternalGenerations': 1,
+            'jobChannelConfig': 'latest_saved_by_reference', 'jobConcurrencyScope': 'frames_per_task', 'jobProgressVersion': 2, 'manualTaskPools': True,
+            'browserQueueIntegration': True, 'webhooks': False,
+            'notes': 'Durable jobs unify browser and external task execution. Inline credentials use the legacy synchronous endpoint.'}
 
 
 def provider_list(config):
@@ -61,7 +62,7 @@ def list_resources(config, kind, query):
 
 
 def generation_payload(body, config):
-    allowed = {'providerId', 'config', 'apiKey', 'prompt', 'negative', 'frame', 'source'}
+    allowed = {'providerId', 'config', 'apiKey', 'prompt', 'negative', 'frame', 'source', 'images'}
     if set(body) - allowed:
         raise ApiError(400, 'unknown_field', 'Unknown generation field')
     if ('providerId' in body) == ('config' in body):
@@ -75,11 +76,11 @@ def generation_payload(body, config):
         profile = body['config']
     if not isinstance(profile, dict) or profile.get('provider') not in ('novelai', 'openai'):
         raise ApiError(400, 'unsupported_provider', 'v1 generation supports novelai and openai; ComfyUI uses the browser queue')
-    allowed_config = {'provider', 'baseUrl', 'model', 'protocol', 'size', 'quality', 'sampler', 'id', 'title', 'sendSize', 'sendQuality', 'keyMode', 'keyId'}
+    allowed_config = {'provider', 'baseUrl', 'model', 'protocol', 'size', 'quality', 'sampler', 'id', 'title', 'sendSize', 'sendQuality', 'keyMode', 'keyId', 'extraParams'}
     if 'config' in body and set(profile) - allowed_config:
         raise ApiError(400, 'unknown_field', 'Unknown config field')
     profile = {k: copy.deepcopy(v) for k, v in profile.items() if k in allowed_config}
-    if any(not isinstance(v, bool) if k in ('sendSize', 'sendQuality') else not isinstance(v, str) for k, v in profile.items()):
+    if any(not isinstance(v, dict) if k == 'extraParams' else not isinstance(v, bool) if k in ('sendSize', 'sendQuality') else not isinstance(v, str) for k, v in profile.items()):
         raise ApiError(400, 'invalid_config', 'Config values must be strings; sendSize/sendQuality must be booleans')
     if profile.get('keyMode', 'environment') not in ('none', 'stored', 'environment'):
         raise ApiError(400, 'invalid_config', 'Unsupported authentication mode')
@@ -91,6 +92,9 @@ def generation_payload(body, config):
     for key in ('negative', 'apiKey', 'source'):
         if key in body and not isinstance(body[key], str):
             raise ApiError(400, 'invalid_field', key + ' must be a string')
+    images = body.get('images', [])
+    if not isinstance(images, list) or len(images) > 32 or any(not isinstance(image, str) for image in images):
+        raise ApiError(400, 'invalid_images', 'images must be an ordered array of at most 32 local /images/ references or image data URLs')
     frame = body.get('frame', {})
     if not isinstance(frame, dict) or set(frame) - {'width', 'height', 'steps', 'cfg', 'seed', 'denoise'}:
         raise ApiError(400, 'invalid_frame', 'Unknown frame parameter')
@@ -99,7 +103,7 @@ def generation_payload(body, config):
     if 'apiKey' in body and not body['apiKey']:
         profile['keyMode'] = 'none'
     return {'config': profile, 'key': body.get('apiKey', ''), 'prompt': prompt,
-            'negative': body.get('negative', ''), 'frame': frame, 'source': body.get('source'),
+            'negative': body.get('negative', ''), 'frame': frame, 'source': body.get('source'), 'images': images,
             'albumId': 'external'}
 
 
@@ -123,7 +127,7 @@ def openapi():
                     'oneOf': [{'required': ['providerId'], 'not': {'required': ['config']}}, {'required': ['config'], 'not': {'required': ['providerId']}}],
                     'properties': {'providerId': {'type': 'string'}, 'config': {'$ref': '#/components/schemas/ProviderConfig'},
                         'apiKey': {'type': 'string', 'writeOnly': True}, 'prompt': {'type': 'string', 'minLength': 1, 'maxLength': 100000},
-                        'negative': {'type': 'string'}, 'source': {'type': 'string', 'description': 'PNG, JPEG or WebP base64 data URL'},
+                        'negative': {'type': 'string'}, 'images': {'type': 'array', 'maxItems': 32, 'items': {'type': 'string'}, 'description': 'Ordered local /images/ references or PNG/JPEG/WebP base64 data URLs'}, 'source': {'type': 'string', 'description': 'PNG, JPEG or WebP base64 data URL'},
                         'frame': {'type': 'object', 'additionalProperties': False, 'properties': {key: {'type': 'number'} for key in ('width', 'height', 'steps', 'cfg', 'seed', 'denoise')}}}},
                 'ProviderConfig': {'type': 'object', 'additionalProperties': False, 'required': ['provider', 'baseUrl', 'model'],
                     'properties': {**{key: {'type': 'string'} for key in ('baseUrl', 'model', 'size', 'quality', 'sampler', 'id', 'title')},
@@ -170,7 +174,8 @@ def openapi():
             operation['responses'] = {str(code): {'description': 'Success' if code == 200 else 'API error',
                 'content': {'application/json': {'schema': success_schema if code == 200 else ref('ErrorEnvelope')}}}
                 for code in ((200, 400, 401, 403, 404, 413, 429, 500, 502, 503) if method == 'post' else (200, 400, 401, 403, 404, 500, 503))}
-    return spec
+    from mio_contracts import extend
+    return extend(spec)
 
 
 def handle(handler, backend):
@@ -192,6 +197,9 @@ def handle(handler, backend):
             raise ApiError(403, 'origin_denied', 'Origin is not allowed')
         query = urllib.parse.parse_qs(parsed.query)
         route = parsed.path[len('/api/v1/'):]
+        import mio_foundation
+        if mio_foundation.dispatch(handler, backend, route, query, request_id):
+            return True
         if handler.command == 'GET':
             if route == 'health':
                 data = {'status': 'ok', 'name': 'Mio', 'version': VERSION}
@@ -223,6 +231,8 @@ def handle(handler, backend):
             try:
                 try:
                     data = backend.generate_provider_image(payload)
+                except backend.ProviderHTTPError as exc:
+                    raise ApiError(exc.status, 'upstream_error', str(exc)) from None
                 except ValueError as exc:
                     # Never echo provider content, credentials or reference images.
                     raise ApiError(400, 'generation_rejected', 'Generation rejected; check provider, model, key, balance and parameters') from exc

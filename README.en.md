@@ -20,10 +20,10 @@ Mio connects **storyboards → reusable character settings → image providers �
 | Storyboards | Per-scene prompts, captions, variables and overrides |
 | Reusable settings | Character presets, blank preset creation and reference images |
 | Image production | ComfyUI, NovelAI, OpenAI-compatible Images and image-returning Chat APIs |
-| Queue | FIFO, pause, pending-task sorting/deletion, execution snapshots and missing-page recovery |
+| Queue | Per-task frame pools, configurable timeouts, durable snapshots, same-job continuation and queue ordering |
 | Albums | Reader, page refinement, manual order, context-menu batch actions and HTML export |
 | Storage | Local files, original images, structured folders and backups |
-| Integration | Opt-in Bearer-authenticated `/api/v1`, read-only resources, single-image generation and OpenAPI |
+| Integration | Bearer-authenticated uploads, durable jobs/SSE, revision-checked resource edits and OpenAPI |
 | Optional tools | Separately configured LLM writing and visual review |
 
 Missing or failed frames stay missing; no demonstration image is substituted. The original sample girl's cover remains only on the built-in demo album.
@@ -31,11 +31,11 @@ Missing or failed frames stay missing; no demonstration image is substituted. Th
 ## Provider support
 
 - **ComfyUI:** API-format workflows, node mapping, workflow library and scene overrides. Reference support depends on the workflow.
-- **NovelAI:** no workflow required; configurable model ID, V4/V4.5 prompt structure, ZIP image responses and img2img.
+- **NovelAI:** no workflow required; configurable model ID, V4/V4.5 prompt structure, ZIP image responses and ordered reference arrays (model-dependent).
 - **OpenAI-compatible Images:** generations, multipart edits, base64 or URL image output.
 - **OpenAI-compatible Chat:** multimodal references and supported image response formats. Text-only output is a failure.
 
-GPT Image and Nano Banana are model/service names, not interchangeable protocols. Use the model ID and protocol documented by your provider. Native Gemini, OpenAI Responses, asynchronous polling and NovelAI Vibe Transfer are not implemented. See the [provider chapter](docs/en/GUIDE.md#image-providers).
+GPT Image and Nano Banana are model/service names, not interchangeable protocols. Use the model ID and protocol documented by your provider. Native Gemini, OpenAI Responses, asynchronous polling and automatic NovelAI V4+ Vibe encoding are not implemented. See the [provider chapter](docs/en/GUIDE.md#image-providers).
 
 ## Quick start
 
@@ -77,7 +77,7 @@ curl -H "Authorization: Bearer $MIO_API_TOKEN" http://127.0.0.1:8777/api/v1/capa
 
 On PowerShell use `$env:MIO_API_TOKEN = "your-generated-token"`.
 
-v1 offers capability discovery, storyboard/album metadata reads, provider identifiers, synchronous NovelAI/OpenAI image generation and local asset reads. **It does not write the browser queue, generate whole albums in a background worker, execute ComfyUI externally or emit webhooks.** Do not use the internal config endpoint as a substitute. See the [integration contract](docs/en/API.md).
+v1 provides capabilities, metadata, uploads/assets, durable album jobs including ComfyUI, SSE and controlled resource writes. It does not offer webhooks or arbitrary browser-state replacement. Do not use the internal config endpoint as a substitute. See the [integration contract](docs/en/API.md).
 
 ## Privacy and deployment
 
@@ -99,3 +99,48 @@ Use Node.js 18+. Linux may require additional Playwright system dependencies. Te
 ## License
 
 [MIT License](LICENSE)
+
+## Image variables
+
+Upload images through ordinary image-typed variables. Referenced variables become `@image_1`, `@image_2` in first-occurrence order, with attachments in the same order. Repeated variables reuse an attachment; unused images are not sent. Files persist locally, queued prompts and references are frozen, and portable backups include the assets. [Details and protocol limits](docs/en/GUIDE.md#image-variables).
+
+
+## Durable production foundation
+
+Real album jobs execute in Python and continue after the page closes. SQLite/WAL stores snapshots, per-frame results and upstream IDs. Idempotent submissions do not repeat generation; interrupted attempts become unconfirmed rather than automatically retrying. ComfyUI reconciliation only reads existing history.
+
+Built-in adapters are modular. Advanced JSON parameters cannot overwrite bound fields or credentials, and results retain full artifact lists. The asset catalog tracks metadata, provenance and references; stale/conflicting edits are rejected, and explicitly confirmed cleanup only recycles old unreferenced files. New external integrations use the same job scheduler as the UI.
+
+[Foundation handbook and limits](docs/en/FOUNDATION.md) · [Standard-library jobs client](examples/jobs_client.py)
+
+Legacy synchronous/refinement endpoints remain compatible but are not durable jobs. LLM sessions, multi-tenant hosting, arbitrary Python plugins and video generation are outside this release. Stop the service before copying the entire data directory, including its task database and credential vault.
+
+### Image responses and searchable models
+
+Chat image channels accept structured images, Base64, Markdown image syntax and ordinary HTTP(S) image URLs, including extensionless and signed downloads. Actual image bytes are still validated. After fetching models, type directly in the model ID field to show matching suggestions. Click a result or use arrow keys and Enter: the full ID replaces the same input and is saved. Manual IDs remain supported. Downloads do not forward provider credentials.
+
+### Mobile workspace
+
+Phones use labeled bottom navigation, single-column editing, larger controls and touch-friendly model suggestions, queue ordering and album menus. Complete-image reading and HTML export are retained. Trusted-LAN access requires explicit listening/origin configuration; Internet access is not enabled automatically. See [Mobile access](docs/en/MOBILE.md).
+
+### Predictable queue and selection controls
+
+Queue inspection reports only existing task ranges without creating work. Confirmed queue deletion removes the associated album and linked tasks, not the underlying files immediately. Failed frames do not block remaining scenes by default; task-local pause or explicitly authorized bounded retry can be configured. Unknown outcomes are never automatically replayed. In multi-select mode, drag across albums to select along the path, start on a selected album to deselect, and press Escape to clear and exit. Normal browsing still supports drag-to-reorder. Tutorials are prominently linked from the homepage.
+
+
+### Parallel albums and same-job continuation
+
+The queue page saves a **per-task frame limit** (1–16, default 1) and network wait timeout (30–7200 seconds, default 600). A 20-frame task at 4 starts frames 1–4 and refills on any completion, without a batch barrier. Tasks normally run FIFO. Explicitly starting a second task grants its own four slots: up to eight requests, not a shared four. Continue a failed, canceled or unconfirmed attempt in the original job and album without regenerating any confirmed results, including out-of-order completions. Unknown outcomes require explicit acknowledgement that resubmitting the current frame may incur duplicate charges. Network wait limits are not hard album deadlines. [Execution and recovery details](docs/en/FOUNDATION.md).
+
+
+### Direct controls and diagnosis
+
+Stop immediately ends local tracking and discards late output while retaining confirmed images; upstream cancellation/billing is not guaranteed. Queue diagnostics distinguish held/failed work from available concurrency. Edit task-local scenes in the original Story editor; the service reads their latest saved input before each request. In-flight input and completed images stay unchanged, and actual attempt inputs are recorded. No separate prompt-editing dialog is needed. Persisted execution logs survive reload. Export samples prioritize generated images, with lightweight preview caching and full-resolution exports. Fullscreen reader layering and cleanup are covered by browser regressions.
+
+## Live channel configuration and a quieter queue
+
+Tasks reference a saved channel ID. Before each request, the service resolves its latest saved model, endpoint, protocol, options and credential binding. Changing a channel affects all linked tasks’ unsent requests, not in-flight calls or completed images. Missing/invalid channel configuration blocks further dispatch without old-config fallback. Cards show the server-saved next-request model; compact runtime controls replace large settings panels and diagnostics are folded into details.
+
+## Reader and queue update
+
+The default release uses a roughly 7 KB HTML shell plus separately cached, feature-organized JS/CSS. Custom readers now contain the whole book, with one scene per page on phones; only explicit export samples are capped at three images. Fresh installations automatically retry all HTTP 5xx up to five extra times (configurable 1–100). No HTTP 4xx is auto-retried; 422 scenes are marked skipped without blocking later scenes. Manual retries have no lifetime cap and refresh the automatic budget. Existing saved policies are preserved. Uncertain outcomes still require reconciliation or explicit billing acknowledgment. Per-attempt logs expose prepared prompts, model and safe parameters without attaching old errors to new requests. Failed/held tasks yield naturally to later albums. This is source/cache separation, not a claim of lazy loading or lower total execution cost.

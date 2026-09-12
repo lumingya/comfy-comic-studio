@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const temp=mkdtempSync(path.join(tmpdir(),'ccs-studio-'));
-for(const name of ['server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs','examples','README.md','README.en.md','SECURITY.md'])cpSync(path.join(ROOT,name),path.join(temp,name),{recursive:true});
+for(const name of ['providers','mio_jobs.py','mio_frame_jobs.py','mio_channels.py','mio_contracts.py','mio_foundation.py','server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs','examples','README.md','README.en.md','SECURITY.md'])cpSync(path.join(ROOT,name),path.join(temp,name),{recursive:true});
 const port=Number(process.env.SMOKE_PORT||8791),base=`http://127.0.0.1:${port}`;
 const server=spawn('python3',['-u','server.py'],{cwd:temp,env:{...process.env,COMFY_COMIC_PORT:String(port)},stdio:['ignore','pipe','pipe']});
 let browser,checks=0;const check=(name,value)=>{assert.ok(value,name);console.log('PASS '+name);checks++};
@@ -97,7 +97,7 @@ try{
   // Stable fixture: full scope priority and per-frame workflow choices.
   await page.evaluate(ids=>{
     const p=selectedPlan(),t=templateBy(p.templateId),set={id:uid('set'),projectId:state.activeProjectId,title:'Scene preset',entries:[variableEntry('character','scene_character')]};state.creation.variableSets.push(set);
-    p.variables=[variableEntry('character','book_character')];p.sceneOverrides[t.frames[0].id]={variableSetIds:[set.id],workflowId:ids[0]};p.sceneOverrides[t.frames[1].id]={workflowId:ids[1]};p.workflowId=ids[0];state.settings.comfy.mode='mock';createUI.tab='story';render();
+    p.variables=[variableEntry('character','book_character'),...['outfit','style','scene','weapon'].map(key=>variableEntry(key,''))];p.sceneOverrides[t.frames[0].id]={variableSetIds:[set.id],workflowId:ids[0]};p.sceneOverrides[t.frames[1].id]={workflowId:ids[1]};p.workflowId=ids[0];state.settings.comfy.mode='mock';createUI.tab='story';render();
   },ids);
   check('scene preset overrides full-book values',await page.evaluate(()=>effectivePlanFrame(selectedPlan(),currentTemplate().frames[0])._scope.character==='scene_character'));
   await page.evaluate(()=>{const p=selectedPlan(),f=currentTemplate().frames[0];p.sceneOverrides[f.id].variables=[variableEntry('character','frame_character')]});
@@ -115,6 +115,7 @@ try{
   // In-place edits are allowed only for a pending scene, not a running one.
   await page.evaluate(()=>{rt.paused=true;return enqueueWorkspaceRange([0,1])});
   const qid=await page.evaluate(()=>state.queue.at(-1).id);
+  await page.locator('.queue-card-details').last().locator(':scope > summary').click();
   await page.locator('.queue-workflow-detail').last().locator('summary').click();
   await page.locator(`[data-ws-task="${qid}"][data-ws-index="1"]`).selectOption(ids[0]);
   check('pending task workflow can be adjusted inline',await page.evaluate(id=>state.queue.at(-1).frames[1]._execution.workflowId===id,ids[0]));
@@ -151,7 +152,7 @@ try{
   const removed=await page.evaluate(()=>{const q=state.queue.filter(q=>q.status==='pending')[1];return {id:q.id,book:q.bookId}});
   await page.locator(`[data-act="org-task-delete"][data-id="${removed.id}"]`).click();await page.locator('#confirm-yes').click();
   await page.waitForFunction(id=>!state.queue.some(q=>q.id===id),removed.id);
-  check('deleting a queued task keeps its album',await page.evaluate(id=>!!bookBy(id),removed.book));
+  check('deleting a queued task deletes its corresponding album',await page.evaluate(id=>!bookBy(id),removed.book));
   check('only Generate album has primary emphasis on the queue page',await page.evaluate(()=>[...document.querySelectorAll('#main .primary')].every(e=>e.dataset.act==='v3-generate-plan')&&document.querySelectorAll('#main .primary').length===1));
   check('unfinished queue thumbnails contain no fabricated image',await page.evaluate(()=>[...document.querySelectorAll('[data-sort-task]')].filter(e=>state.queue.find(q=>q.id===e.dataset.sortTask)?.status==='pending').every(e=>e.querySelector('.ordered-queue-thumb .artwork-missing')&&!e.querySelector('.ordered-queue-thumb img'))));
   await page.evaluate(()=>{window.startedBooks=[];window.originalTestGenerator=generateFrame;generateFrame=async function(f,...rest){window.startedBooks.push(f._assetBookId);return window.originalTestGenerator(f,...rest)}});
@@ -189,7 +190,7 @@ try{
 
   await page.locator('#modal [data-act="close-modal"]').first().click();
   await page.locator(`.shelf-item[data-sort-book="${chosen[0]}"]`).click({button:'right'});await page.keyboard.press('Escape');
-  check('context menu supports Escape and returns focus',await page.locator('#book-context-menu').count()===0&&await page.evaluate(()=>document.activeElement.hasAttribute('data-sort-book')));
+  check('Escape closes context menu and exits multi-selection',await page.locator('#book-context-menu').count()===0&&await page.evaluate(()=>!ui.bulk&&ui.selected.size===0&&document.activeElement.dataset.act==='toggle-bulk'));
   const orderSaved=await page.evaluate(()=>manualBookIds());check('organized state saves successfully',await page.evaluate(()=>ComfyComic.sync.save()));
   await page.reload();await page.waitForFunction(()=>!rt.booting);await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());navigate(0)});
   check('manual album order survives a backend reload',JSON.stringify(await page.evaluate(()=>manualBookIds()))===JSON.stringify(orderSaved));
@@ -227,8 +228,8 @@ try{
   await page.locator('[data-image-config="sendSize"]').uncheck();await page.locator('[data-image-config="sendQuality"]').uncheck();
   check('size and quality can be disabled while their draft values remain',await page.locator('[data-image-config="size"]').isDisabled()&&await page.locator('[data-image-config="quality"]').isDisabled()&&await page.evaluate(()=>activeImageProfile().sendSize===false&&activeImageProfile().size==='1024x1536'));
   await page.route('**/api/image/models',route=>route.fulfill({json:{models:['model-a','model-b','<unsafe>']}}));
-  await page.locator('[data-act="image-provider-models"]').click();await page.waitForFunction(()=>document.querySelector('#image-provider-model-select').options.length===4);
-  await page.locator('#image-provider-model-select').selectOption('model-b');
+  await page.locator('[data-act="image-provider-models"]').click();await page.waitForFunction(()=>imageProviderUI.models.get(imageModelsCacheKey(activeImageProfile()))?.length===3);await page.locator('#image-provider-model-input').fill('');
+  await page.locator('#image-provider-model-results [data-model="model-b"]').click();
   check('model discovery populates a safe picker and updates editable model ID',await page.locator('[data-image-config="model"]').inputValue()==='model-b'&&await page.locator('unsafe').count()===0);
   await page.unroute('**/api/image/models');await page.route('**/api/image/models',route=>route.fulfill({status:404,json:{error:'Models not supported'}}));
   await page.locator('[data-act="image-provider-models"]').click();await page.waitForFunction(()=>document.querySelector('#provider-model-status').textContent.includes('获取失败'));

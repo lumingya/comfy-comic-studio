@@ -12,7 +12,7 @@
  * `extract` losslessly distributes the existing standalone application's
  * declarations by responsibility. Runtime initialization retains its original
  * order in app.js, so aliases and compatibility adapters are not reordered.
- * `bundle` produces a complete standalone index.html. `dev` writes the same
+ * Default/dev publishes external resources. Explicit `bundle` is diagnostic. `dev` writes the same
  * shell with /styles.css and /js/*.js for the Python static allowlist.
  */
 
@@ -28,7 +28,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const crypto = require('node:crypto');
 const root = path.resolve(__dirname, '..');
-const moduleOrder = ['state', 'sync', 'engine', 'creation', 'ui', 'workspace', 'organize', 'app'];
+const moduleOrder = ["state","sync","engine","creation","ui-presentation","ui-reader","ui-templates","ui-export","ui-editors","ui-locale","ui-assistant","ui-storyboard","ui-gallery","ui-settings","ui","workspace","organize","foundation","app"];
 const runtimePattern = /<script\s+id="studio-runtime"[^>]*>([\s\S]*?)<\/script>/;
 const stylePattern = /<style\s+id="studio-styles"[^>]*>([\s\S]*?)<\/style>/;
 
@@ -89,7 +89,7 @@ function extract() {
   for (const file of outputs) fs.writeFileSync(path.join(root, 'js', file.name + '.js'), file.text);
   const checksum = crypto.createHash('sha256').update(source).digest('hex');
   fs.writeFileSync(path.join(root, 'js', 'source-manifest.js'), "'use strict';\nmodule.exports = " + JSON.stringify({ sourceSHA256: checksum, order: moduleOrder, functionCount: ast.body.filter(node => node.type === 'FunctionDeclaration').length, statementCount: ast.body.length }, null, 2) + ';\n');
-  console.log('Extracted styles.css and six development modules. No original statements were dropped.');
+  console.log('Extracted styles.css and development modules. No original statements were dropped.');
 }
 
 function readSources() {
@@ -111,8 +111,8 @@ function build(mode) {
   const { shell, css, scripts } = check();
   let styles, runtime;
   if (mode === 'dev') {
-    styles = '<link rel="stylesheet" href="/styles.css">';
-    runtime = scripts.map(item => '<script src="/js/' + item.name + '.js"></script>').join('\n');
+    styles = '<link rel="stylesheet" href="/styles.css?v=' + crypto.createHash('sha256').update(css).digest('hex').slice(0,12) + '">';
+    runtime = scripts.map(item => '<script src="/js/' + item.name + '.js?v=' + crypto.createHash('sha256').update(item.source).digest('hex').slice(0,12) + '"></script>').join('\n');
   } else {
     styles = '<style id="studio-styles" data-source="/styles.css">\n' + css + '\n</style>';
     const code = scripts.map(item => '// Source: /js/' + item.name + '.js\n' + item.source).join('\n');
@@ -126,7 +126,7 @@ function build(mode) {
 }
 
 async function main() {
-  const command = process.argv[2] || 'bundle';
+  const command = process.argv[2] || 'dev';
   if (command === 'extract') extract();
   else if (command === 'check') check();
   else if (command === 'dev' || command === 'bundle') {

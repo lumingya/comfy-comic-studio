@@ -878,6 +878,936 @@
         },
         "operationId": "post_images_generations"
       }
+    },
+    "/api/v1/jobs": {
+      "get": {
+        "summary": "List active jobs and recent history (up to 2000)",
+        "operationId": "get_foundation_jobs",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "requestId"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error"
+          },
+          "401": {
+            "description": "Error"
+          },
+          "403": {
+            "description": "Error"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "409": {
+            "description": "Error"
+          },
+          "413": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          },
+          "503": {
+            "description": "Error"
+          }
+        },
+        "description": "Lightweight active/recent task summaries (up to 2000). Results are empty in this list; use GET /api/v1/jobs/{id} for complete artifact lists and original sanitized errors."
+      },
+      "post": {
+        "summary": "Persist an immutable job with idempotent submission",
+        "operationId": "post_foundation_jobs",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "requestId"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error"
+          },
+          "401": {
+            "description": "Error"
+          },
+          "403": {
+            "description": "Error"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "409": {
+            "description": "Error"
+          },
+          "413": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          },
+          "503": {
+            "description": "Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitJob"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{id}": {
+      "get": {
+        "summary": "Read durable status, upstream ID and artifacts",
+        "operationId": "get_foundation_jobs_id",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "requestId"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Job"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error"
+          },
+          "401": {
+            "description": "Error"
+          },
+          "403": {
+            "description": "Error"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "409": {
+            "description": "Error"
+          },
+          "413": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          },
+          "503": {
+            "description": "Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Job ID, or scheduler for global pause/resume, failure policy or runtime settings"
+          }
+        ]
+      },
+      "post": {
+        "summary": "Control one job or scheduler",
+        "operationId": "post_foundation_jobs_id",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "requestId"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error"
+          },
+          "401": {
+            "description": "Error"
+          },
+          "403": {
+            "description": "Error"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "409": {
+            "description": "Error"
+          },
+          "413": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          },
+          "503": {
+            "description": "Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "action"
+                ],
+                "properties": {
+                  "action": {
+                    "enum": [
+                      "pause",
+                      "resume",
+                      "cancel",
+                      "remove",
+                      "reconcile",
+                      "abandon",
+                      "archive",
+                      "retry",
+                      "policy",
+                      "continue",
+                      "runtime",
+                      "hold",
+                      "amend",
+                      "start",
+                      "defer"
+                    ]
+                  },
+                  "policy": {
+                    "$ref": "#/components/schemas/FailurePolicy"
+                  },
+                  "runtime": {
+                    "$ref": "#/components/schemas/Runtime"
+                  },
+                  "recovery": {
+                    "$ref": "#/components/schemas/Recovery"
+                  },
+                  "edits": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "index"
+                      ],
+                      "additionalProperties": false,
+                      "properties": {
+                        "index": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "prompt": {
+                          "type": "string",
+                          "maxLength": 100000
+                        },
+                        "negative": {
+                          "type": "string",
+                          "maxLength": 100000
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Job ID, or scheduler for global pause/resume, failure policy or runtime settings"
+          }
+        ]
+      }
+    },
+    "/api/v1/jobs/reorder": {
+      "post": {
+        "summary": "Reorder not-yet-started waiting jobs",
+        "operationId": "post_foundation_jobs_reorder",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "requestId"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error"
+          },
+          "401": {
+            "description": "Error"
+          },
+          "403": {
+            "description": "Error"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "409": {
+            "description": "Error"
+          },
+          "413": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          },
+          "503": {
+            "description": "Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ids"
+                ],
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/activity": {
+      "get": {
+        "summary": "Read the latest 200 persisted execution records after an optional event ID",
+        "operationId": "get_foundation_jobs_activity",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error"
+          },
+          "401": {
+            "description": "Error"
+          },
+          "403": {
+            "description": "Error"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "409": {
+            "description": "Error"
+          },
+          "413": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          },
+          "503": {
+            "description": "Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/jobs/events": {
+      "get": {
+        "summary": "Replay SSE events; reconnect using Last-Event-ID or after",
+        "operationId": "get_foundation_jobs_events",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error"
+          },
+          "401": {
+            "description": "Error"
+          },
+          "403": {
+            "description": "Error"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "409": {
+            "description": "Error"
+          },
+          "413": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          },
+          "503": {
+            "description": "Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/assets/upload": {
+      "post": {
+        "summary": "Upload an immutable local input asset",
+        "operationId": "post_foundation_assets_upload",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "requestId"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error"
+          },
+          "401": {
+            "description": "Error"
+          },
+          "403": {
+            "description": "Error"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "409": {
+            "description": "Error"
+          },
+          "413": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          },
+          "503": {
+            "description": "Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "dataUrl"
+                ],
+                "properties": {
+                  "dataUrl": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/catalog": {
+      "get": {
+        "summary": "Asset metadata, provenance, references, missing files and cleanup preview",
+        "operationId": "get_foundation_assets_catalog",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "requestId"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error"
+          },
+          "401": {
+            "description": "Error"
+          },
+          "403": {
+            "description": "Error"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "409": {
+            "description": "Error"
+          },
+          "413": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          },
+          "503": {
+            "description": "Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "verify",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "0",
+                "1"
+              ]
+            },
+            "description": "Recompute all content hashes when 1"
+          }
+        ]
+      }
+    },
+    "/api/v1/assets/cleanup": {
+      "post": {
+        "summary": "Explicitly recycle previewed orphan files older than 24 hours",
+        "operationId": "post_foundation_assets_cleanup",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "requestId"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error"
+          },
+          "401": {
+            "description": "Error"
+          },
+          "403": {
+            "description": "Error"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "409": {
+            "description": "Error"
+          },
+          "413": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          },
+          "503": {
+            "description": "Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token",
+                  "paths"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string"
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/resources/{kind}": {
+      "get": {
+        "summary": "Read editable storyboard/plan DTOs and a workspace revision",
+        "operationId": "get_foundation_resources_kind",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "requestId"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error"
+          },
+          "401": {
+            "description": "Error"
+          },
+          "403": {
+            "description": "Error"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "409": {
+            "description": "Error"
+          },
+          "413": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          },
+          "503": {
+            "description": "Error"
+          }
+        },
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "storyboards",
+                "plans"
+              ]
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Revision-checked storyboard/plan upsert; no full-state overwrite",
+        "operationId": "post_foundation_resources_kind",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "requestId"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "object"
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error"
+          },
+          "401": {
+            "description": "Error"
+          },
+          "403": {
+            "description": "Error"
+          },
+          "404": {
+            "description": "Error"
+          },
+          "409": {
+            "description": "Error"
+          },
+          "413": {
+            "description": "Error"
+          },
+          "500": {
+            "description": "Error"
+          },
+          "503": {
+            "description": "Error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "expectedRevision",
+                  "item"
+                ],
+                "properties": {
+                  "expectedRevision": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "item": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "storyboards",
+                "plans"
+              ]
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -934,6 +1864,14 @@
           },
           "negative": {
             "type": "string"
+          },
+          "images": {
+            "type": "array",
+            "maxItems": 32,
+            "items": {
+              "type": "string"
+            },
+            "description": "Ordered local /images/ references or PNG/JPEG/WebP base64 data URLs"
           },
           "source": {
             "type": "string",
@@ -1022,6 +1960,11 @@
               "stored",
               "environment"
             ]
+          },
+          "extraParams": {
+            "type": "object",
+            "maxProperties": 100,
+            "description": "Additional protocol parameters; bound fields and credentials cannot be overridden."
           }
         }
       },
@@ -1179,6 +2122,21 @@
           },
           "assetEndpoint": {
             "type": "string"
+          },
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Artifact"
+            }
+          },
+          "contractVersion": {
+            "const": 1
+          },
+          "appliedExtraParams": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -1226,6 +2184,366 @@
           },
           "maxConcurrentExternalGenerations": {
             "type": "integer"
+          }
+        }
+      },
+      "Artifact": {
+        "type": "object",
+        "required": [
+          "kind",
+          "url"
+        ],
+        "properties": {
+          "kind": {
+            "const": "image"
+          },
+          "url": {
+            "type": "string"
+          },
+          "mime": {
+            "type": "string"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "JobFrame": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "config"
+        ],
+        "properties": {
+          "channelId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150,
+            "description": "Stable saved channel reference. Latest saved model, endpoint, protocol, parameters and credential binding are resolved before each request; missing channel fails without snapshot fallback."
+          },
+          "config": {
+            "type": "object",
+            "description": "Cloud ProviderConfig or {provider:comfyui,baseUrl,outputNodeId}. Stored/environment credentials only."
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "negative": {
+            "type": "string"
+          },
+          "images": {
+            "type": "array",
+            "maxItems": 32,
+            "items": {
+              "type": "string",
+              "pattern": "^/images/"
+            }
+          },
+          "frameIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9999,
+            "description": "Original zero-based storyboard index, including subset jobs."
+          },
+          "source": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "albumId": {
+            "type": "string"
+          },
+          "frame": {
+            "type": "object"
+          },
+          "workflow": {
+            "type": "object",
+            "description": "ComfyUI API graph; mio-image://N strings are replaced with uploaded image filenames."
+          }
+        }
+      },
+      "JobInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "frames"
+        ],
+        "properties": {
+          "frames": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {
+              "$ref": "#/components/schemas/JobFrame"
+            }
+          },
+          "hold": {
+            "type": "boolean"
+          },
+          "label": {
+            "type": "string"
+          },
+          "albumId": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "string",
+            "description": "Opaque integration correlation ID; not a user permission boundary."
+          }
+        }
+      },
+      "SubmitJob": {
+        "type": "object",
+        "required": [
+          "idempotencyKey",
+          "input"
+        ],
+        "properties": {
+          "idempotencyKey": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "input": {
+            "$ref": "#/components/schemas/JobInput"
+          }
+        }
+      },
+      "Job": {
+        "type": "object",
+        "required": [
+          "id",
+          "state",
+          "cursor",
+          "total",
+          "results"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "state": {
+            "enum": [
+              "pending",
+              "paused",
+              "running",
+              "complete",
+              "failed",
+              "unknown",
+              "canceled",
+              "archived"
+            ]
+          },
+          "cursor": {
+            "type": "integer",
+            "description": "Confirmed result count, NOT a contiguous prefix or next frame index."
+          },
+          "total": {
+            "type": "integer"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "error": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "upstream": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "provider": {
+            "type": "string"
+          },
+          "retry_count": {
+            "type": "integer"
+          },
+          "ready_at": {
+            "type": "number"
+          },
+          "attempts": {
+            "type": "integer"
+          },
+          "errors": {
+            "type": "array",
+            "description": "Last 30 attempt errors; detail endpoint only",
+            "items": {
+              "type": "object"
+            }
+          },
+          "editableFrames": {
+            "type": "array",
+            "description": "Unfinished resolved cloud prompts; modify only through the audited amend operation.",
+            "items": {
+              "type": "object"
+            }
+          },
+          "revisions": {
+            "type": "array",
+            "description": "Explicit before/after prompt revision history.",
+            "items": {
+              "type": "object"
+            }
+          },
+          "updated": {
+            "type": "number"
+          },
+          "active_timeout": {
+            "type": "integer"
+          },
+          "frameIndices": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "nextFrameIndex": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "currentChannels": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Safe server-saved configuration preview for subsequent requests; not the model of an already-running attempt."
+          },
+          "channelRefs": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "requestHistory": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Latest 100 prepared attempt inputs: local index, attempt, timestamp, hash, prompt, negative, images, config and frame parameters. Not proof the upstream accepted a request."
+          },
+          "executionModel": {
+            "const": "per-task-frame-pools"
+          },
+          "progressVersion": {
+            "const": 2
+          },
+          "nextIndex": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "running_count": {
+            "type": "integer"
+          },
+          "enabled": {
+            "type": "integer"
+          },
+          "blocked": {
+            "type": "integer"
+          },
+          "completedIndices": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "runningIndices": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "frameStates": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Independent states by task-local frame index, including skipped (HTTP 422), sparse completion, attempt counts, retry deadlines and upstream IDs."
+          }
+        }
+      },
+      "FailurePolicy": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "enum": [
+              "pause",
+              "retry",
+              "continue"
+            ],
+            "default": "retry",
+            "description": "Failure behavior within one task; never pauses other manually started tasks."
+          },
+          "maxRetries": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 5
+          },
+          "delaySeconds": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 300,
+            "default": 15
+          },
+          "onExhausted": {
+            "enum": [
+              "pause",
+              "continue"
+            ],
+            "default": "continue"
+          }
+        }
+      },
+      "Runtime": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "concurrency": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 16,
+            "default": 1,
+            "description": "Independent in-flight frame limit PER TASK. Default tasks run FIFO; explicit start adds another pool."
+          },
+          "requestTimeoutSeconds": {
+            "type": "integer",
+            "minimum": 30,
+            "maximum": 7200,
+            "default": 600
+          }
+        }
+      },
+      "Recovery": {
+        "type": "object",
+        "required": [
+          "expectedCursor",
+          "expectedUpdated"
+        ],
+        "properties": {
+          "expectedCursor": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expectedUpdated": {
+            "type": "number"
+          },
+          "acknowledgeUnconfirmed": {
+            "type": "boolean",
+            "description": "Must be true for unknown results; caller accepts possible duplicate billing for this frame."
           }
         }
       }

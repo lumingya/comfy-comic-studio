@@ -396,14 +396,14 @@ def build():
 
     # 3. Copy frontend assets
     print("\n[3/5] 同步前端核心产物与静态资源...")
-    for f in ["index.html", "styles.css", "favicon.svg", "server.py", "mio_api.py", "mio_credentials.py", "mio_docs.py", "README.html", "README.en.html", "SECURITY.html", "SECURITY.md", "README.md", "README.en.md", "LICENSE", "default_comic_template.json"]:
+    for f in ["index.html", "styles.css", "favicon.svg", "server.py", "mio_foundation.py", "mio_contracts.py", "mio_jobs.py", "mio_frame_jobs.py", "mio_channels.py", "mio_api.py", "mio_credentials.py", "mio_docs.py", "README.html", "README.en.html", "SECURITY.html", "SECURITY.md", "README.md", "README.en.md", "LICENSE", "default_comic_template.json"]:
         src = os.path.join(ROOT_DIR, f)
         if os.path.exists(src):
             shutil.copy2(src, os.path.join(RELEASE_DIR, f))
             print(f"  已复制: {f}")
 
-    for folder in ("docs", "examples"):
-        shutil.copytree(os.path.join(ROOT_DIR, folder), os.path.join(RELEASE_DIR, folder), dirs_exist_ok=True)
+    for folder in ("docs", "examples", "providers"):
+        shutil.copytree(os.path.join(ROOT_DIR, folder), os.path.join(RELEASE_DIR, folder), dirs_exist_ok=True, ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo"))
 
     # Copy vendor
     vendor_src = os.path.join(ROOT_DIR, "vendor")
@@ -416,7 +416,7 @@ def build():
     js_src = os.path.join(ROOT_DIR, "js")
     js_dst = os.path.join(RELEASE_DIR, "js")
     os.makedirs(js_dst, exist_ok=True)
-    for js_file in ["state.js", "sync.js", "engine.js", "creation.js", "ui.js", "workspace.js", "organize.js", "app.js", "README.js"]:
+    for js_file in ["state.js", "sync.js", "engine.js", "creation.js", "ui-presentation.js", "ui-reader.js", "ui-templates.js", "ui-export.js", "ui-editors.js", "ui-locale.js", "ui-assistant.js", "ui-storyboard.js", "ui-gallery.js", "ui-settings.js", "ui.js", "workspace.js", "organize.js", "foundation.js", "app.js", "README.js"]:
         src = os.path.join(js_src, js_file)
         if os.path.exists(src):
             shutil.copy2(src, os.path.join(js_dst, js_file))

@@ -99,10 +99,10 @@ function ensureReleaseSettings(s=state){
 }
 
 
-function checkVariableKey(key){if(typeof key!=='string'||!/^[a-zA-Z0-9_]+$/.test(key)||systemVariableKeys.has(key))throw Error('变量标识符只能包含字母、数字和下划线，不可使用危险系统属性。');return key}
+function checkVariableKey(key){if(typeof key!=='string'||!/^[\p{L}\p{N}_]+$/u.test(key)||systemVariableKeys.has(key))throw Error('变量标识符只能包含中英文字母、数字和下划线，不可使用危险系统属性。');return key}
 
 
-function typedVariableValue(entry){if(entry.value===undefined||entry.value===null||typeof entry.value==='string'&&!entry.value.trim())return'';switch(entry.type){case'text':return String(entry.value);case'number':if(!Number.isFinite(Number(entry.value)))throw Error('属性 '+entry.key+' 需要有效数字，或留空使用默认值。');return Number(entry.value);case'boolean':if(typeof entry.value==='boolean')return entry.value;if(['true','false'].includes(entry.value))return entry.value==='true';throw Error('属性 '+entry.key+' 需要 true 或 false。');case'json':if(typeof entry.value==='string'){try{return JSON.parse(entry.value)}catch(e){throw Error('属性 '+entry.key+' 的 JSON 格式不合法。')}}return clone(entry.value);default:throw Error('不支持的属性类型。')}}
+function typedVariableValue(entry){if(entry.type==='image'){const value=entry.value;if(value&&typeof value==='object'&&value.kind==='mio-image')return clone(value);return{kind:'mio-image',src:typeof value==='string'?value:'',name:entry.key}}if(entry.value===undefined||entry.value===null||typeof entry.value==='string'&&!entry.value.trim())return'';switch(entry.type){case'text':return String(entry.value);case'number':if(!Number.isFinite(Number(entry.value)))throw Error('属性 '+entry.key+' 需要有效数字，或留空使用默认值。');return Number(entry.value);case'boolean':if(typeof entry.value==='boolean')return entry.value;if(['true','false'].includes(entry.value))return entry.value==='true';throw Error('属性 '+entry.key+' 需要 true 或 false。');case'json':if(typeof entry.value==='string'){try{return JSON.parse(entry.value)}catch(e){throw Error('属性 '+entry.key+' 的 JSON 格式不合法。')}}return clone(entry.value);default:throw Error('不支持的属性类型。')}}
 
 
 function variableEntry(key,value){const type=typeof value==='number'?'number':typeof value==='boolean'?'boolean':value&&typeof value==='object'?'json':'text';return{id:uid('var'),key,type,value:type==='json'?JSON.stringify(value,null,2):value??''}}
@@ -129,10 +129,10 @@ function ensureCreationModel(s=state){
 }
 
 
-function scopeText(text,scope){const policy=globalThis.ComfyComic?.promptPolicy;return policy?policy.interpolate(text,scope||{},definedPromptNames(scope)):String(text??'')}
+function scopeText(text,scope){const policy=globalThis.ComfyComic?.promptPolicy;return policy?resolveImageVariables(text,scope||{}).prompt:String(text??'')}
 
 
-function missingScopeKeys(text,scope){return [...new Set((String(text).match(/\{[a-zA-Z0-9_]+\}/g)||[]).map(x=>x.slice(1,-1)).filter(key=>!Object.hasOwn(scope,key)))]}
+function missingScopeKeys(text,scope){return [...new Set((String(text).match(/\{[\p{L}\p{N}_]+\}/gu)||[]).map(x=>x.slice(1,-1)).filter(key=>!Object.hasOwn(scope,key)))]}
 
 
 /* Source: /js/state.js. The build tool keeps this standalone delivery in sync. */
@@ -163,7 +163,7 @@ function installNativeStateModule(){const ns=globalThis.ComfyComic=globalThis.Co
 /* Domain source: js/state.js. This copy keeps the delivered document standalone. */
 function createFreePromptPolicy(){
   const own=(object,key)=>Object.prototype.hasOwnProperty.call(object||{},key);
-  function tokens(value,definitions=[]){const text=String(value??''),known=definitions instanceof Set?definitions:new Set(definitions),parts=[];let cursor=0;for(const match of text.matchAll(/\{([a-zA-Z0-9_]+)\}/g)){const start=match.index,end=start+match[0].length;if(!known.has(match[1])||text[start-1]==='{'||text[end]==='}'||text[start-1]==='\\')continue;if(start>cursor)parts.push({type:'text',value:text.slice(cursor,start)});parts.push({type:'variable',key:match[1],value:match[0],start,end});cursor=end}if(cursor<text.length)parts.push({type:'text',value:text.slice(cursor)});return parts}
+  function tokens(value,definitions=[]){const text=String(value??''),known=definitions instanceof Set?definitions:new Set(definitions),parts=[];let cursor=0;for(const match of text.matchAll(/\{([\p{L}\p{N}_]+)\}/gu)){const start=match.index,end=start+match[0].length;if(!known.has(match[1])||text[start-1]==='{'||text[end]==='}'||text[start-1]==='\\')continue;if(start>cursor)parts.push({type:'text',value:text.slice(cursor,start)});parts.push({type:'variable',key:match[1],value:match[0],start,end});cursor=end}if(cursor<text.length)parts.push({type:'text',value:text.slice(cursor)});return parts}
   function collapseEmptyPunctuation(text){let output='',ordinary='',quote='';const stack=[],close={'{':'}','[':']','(':')'},flush=last=>{let value=ordinary.replace(/[,，](?:[ \t]*[,，])+/g,',').replace(/[,，][ \t]+/g,', ').replace(/[ \t]{2,}/g,' ');if(!output)value=value.replace(/^[ \t,，]+/,'');if(last)value=value.replace(/[ \t,，]+$/,'');output+=value;ordinary=''};for(let i=0;i<text.length;i++){const char=text[i];if(quote){output+=char;if(char==='\\'&&i+1<text.length)output+=text[++i];else if(char===quote)quote='';continue}if(char==='"'||char==="'"){flush(false);quote=char;output+=char;continue}if(close[char]){flush(false);stack.push(close[char]);output+=char;continue}if(stack.length){output+=char;if(char===stack[stack.length-1])stack.pop();continue}ordinary+=char}flush(true);return output}
   function interpolate(value,values={},definitions=Object.keys(values||{})){const known=new Set([...(definitions||[]),...Object.keys(values||{})]);let removedEmpty=false;const output=tokens(value,known).map(part=>{if(part.type!=='variable')return part.value;const item=own(values,part.key)?values[part.key]:'';if(item===undefined||item===null||item===''){removedEmpty=true;return''}if(typeof item==='object'){try{return JSON.stringify(item)}catch(e){return String(item)}}return String(item)}).join('');return removedEmpty?collapseEmptyPunctuation(output):output}
   function hasUnclosedBrace(value){let open=0;for(const char of String(value??'')){if(char==='{')open++;else if(char==='}'&&open>0)open--}return open>0}
@@ -171,7 +171,7 @@ function createFreePromptPolicy(){
 }
 
 
-function definedPromptNames(scope={}){const names=new Set(Object.keys(scope||{}));const collectionId=state.activeProjectId;for(const set of state.creation?.variableSets||[])if(set.projectId===collectionId)for(const entry of set.entries||[])names.add(entry.key);for(const plan of state.creation?.plans||[])if(plan.projectId===collectionId){for(const entry of plan.variables||[])names.add(entry.key);for(const override of Object.values(plan.sceneOverrides||{}))for(const entry of override.variables||[])names.add(entry.key)}return names}
+function definedPromptNames(scope={}){const names=new Set([...Object.keys(scope||{}),...(state.creation?.removedImageKeys?.[state.activeProjectId]||[])]);const collectionId=state.activeProjectId;for(const set of state.creation?.variableSets||[])if(set.projectId===collectionId)for(const entry of set.entries||[])names.add(entry.key);for(const plan of state.creation?.plans||[])if(plan.projectId===collectionId){for(const entry of plan.variables||[])names.add(entry.key);for(const override of Object.values(plan.sceneOverrides||{}))for(const entry of override.variables||[])names.add(entry.key)}return names}
 
 
 function ensureArtSettings(s=state){
@@ -305,3 +305,19 @@ function restoreCuratedCover(studio){
   }
   return restored;
 }
+
+
+function isImageVariable(value){return !!value&&typeof value==='object'&&value.kind==='mio-image'}
+function resolveImageVariables(text,scope={},strict=false,negative=''){
+  const policy=globalThis.ComfyComic.promptPolicy,definitions=definedPromptNames(scope),values={...scope},images=[],byKey=new Map();
+  for(const part of policy.tokens(String(text??'')+'\n'+negative,definitions)){
+    if(part.type!=='variable')continue;const value=scope[part.key];if(strict&&!Object.hasOwn(scope,part.key))throw Error('变量 {'+part.key+'} 在当前作用域中缺失。');
+    if(!isImageVariable(value))continue;
+    if(byKey.has(part.key))continue;
+    if(strict&&!value.src)throw Error('图片变量 {'+part.key+'} 尚未上传图片。');
+    const index=images.length+1;byKey.set(part.key,index);values[part.key]='@image_'+index;images.push({...clone(value),key:part.key,index});
+  }
+  return{prompt:policy.interpolate(text,values,definitions),negative:policy.interpolate(negative,values,definitions),images};
+}
+
+function rememberRemovedImageVariable(entry,projectId=state.activeProjectId){if(entry?.type!=='image')return;state.creation.removedImageKeys??={};state.creation.removedImageKeys[projectId]=[...new Set([...(state.creation.removedImageKeys[projectId]||[]),entry.key])];}

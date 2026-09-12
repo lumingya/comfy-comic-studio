@@ -6,9 +6,9 @@
 
 公共入口为 `/api/v1`，与浏览器私有 `/api/config`、`/api/image/generate` 分离。目标是让脚本、桌面工具和未来适配器通过稳定 DTO 接入，而不依赖整个内部状态树。
 
-当前能力：服务健康、能力发现、渠道标识、分镜内容、画册元数据、NovelAI/OpenAI 单图生成、本地素材读取。
+当前能力：服务健康、能力发现、渠道标识、分镜与计划资源、画册元数据、持久图像任务、素材管理，以及旧同步单图生成兼容接口。
 
-当前不提供：外部 ComfyUI 生成、画册/分镜写入、浏览器队列增删、整册异步任务、进度推送、Webhook、幂等生成或事务性批处理。不要假设存在这些接口；先查询 `capabilities`。
+新增服务端 `/jobs`：外部 ComfyUI/云渠道任务、整册异步执行、幂等提交、控制、SSE 事件；另有素材上传/索引/回收和版本校验的分镜/计划写入。完整端点与限制见 [生产基座教程](../guide/FOUNDATION.md)。不提供 Webhook、多租户权限隔离或任意内部状态覆写。
 
 ## 2. 启用与鉴权
 
@@ -58,7 +58,7 @@ Token 缺失或短于 32 字符时服务返回 `503 api_disabled`；错误令牌
 
 `GET /api/v1/openapi.json` 是唯一成功响应例外：直接返回原始 OpenAPI 对象，方便导入工具。错误仍使用错误信封。
 
-请求体使用 JSON 对象和 `Content-Type: application/json`；不接受任意表单、未知生成字段或两个冲突的渠道选择。错误响应不回显上游正文、密钥或图片。
+请求体使用 JSON 对象和 `Content-Type: application/json`；不接受任意表单、未知生成字段或两个冲突的渠道选择。供应商 HTTP 错误保留状态与脱敏后的原始正文（最多读取 2 MiB）；其他内部错误不暴露实现细节。任务 DTO 不返回密钥或完整执行载荷。
 
 ## 4. 端点清单
 
@@ -119,6 +119,8 @@ NovelAI 示例：
 }
 ```
 
+可选 `images` 是有序字符串数组（最多 32 项），每项为本地 `/images/` 引用或 PNG/JPEG/WebP data URL；原始图像合计上限 50 MiB。顺序保留到 Images multipart / Chat image_url / NovelAI reference_image_multiple；不会解析浏览器变量。服务商 HTTP 错误保留状态与密钥脱敏后的详情（正文最多读取 2 MiB），通过 `upstream_error` 返回，不自动重试。
+
 可选 `source` 为 PNG/JPEG/WebP 的 base64 data URL。用于 NovelAI img2img、OpenAI edits 或 Chat reference。`frame.denoise` 对 NovelAI 是图生图 strength；OpenAI 不发送 steps/cfg/seed 等不兼容采样参数。提示词在 API 层按原文发送；不会展开浏览器变量。需要模板变量的外部程序自行解析并传最终文本。
 
 ### 返回
@@ -139,7 +141,7 @@ NovelAI 示例：
 
 ## 6. 限额、重试与错误
 
-外部 API 单图并发上限为 1。执行槽占用时返回 429；这是并发限制，不是每分钟限流。界面生成不受这个槽控制，预算仍需调用者协调。
+本节的**直接同步单图端点**并发上限为 1（不是异步 `/jobs` 的限额）。执行槽占用时返回 429；这是并发限制，不是每分钟限流。界面生成不受这个槽控制，预算仍需调用者协调。
 
 请求体上限约 66.7 MiB（50 MiB 图片的 base64 加少量字段），上游读取与 ZIP 单图解压上限为 50 MiB。实际可用大小还受供应商限制。
 
@@ -166,3 +168,28 @@ NovelAI 示例：
 - 不在自动化中依赖 `globalThis.Mio` 内部对象；它们是浏览器实现细节。
 
 [安全说明](../../SECURITY.md) · [Python 客户端用法](../../examples/mio_client.py)
+
+## 持久任务、素材与资源写入
+
+新增接口及状态机见 [生产基座教程](../guide/FOUNDATION.md)，对应路径已纳入 [OpenAPI](openapi.json)。新客户端优先完成“上传素材 → 幂等提交任务 → 查询/订阅状态 → 读取 artifacts”，不把同步 HTTP 等待当作可靠队列。示例：[jobs_client.py](../../examples/jobs_client.py)。
+
+### 任务列表与详情
+
+`GET /api/v1/jobs` 返回轻量状态摘要，列表的 `results` 为空，错误只作详情提示。需要完整产物列表和脱敏原始错误时，请读取 `GET /api/v1/jobs/{id}`；不要把列表中的空数组当成没有生成结果。
+
+### 失败策略与人工重试
+
+`POST /api/v1/jobs/scheduler` 支持 `{"action":"policy","policy":{"mode":"retry","maxRetries":2,"delaySeconds":15,"onExhausted":"pause"}}`。默认 `mode=continue` / `onExhausted=continue`；可选 pause/retry。配置在服务端共享，但仅影响发生错误的任务；pause 不暂停其他任务。默认保留失败/未知幕并继续同任务其他幕，未知幕本身永不自动重发。有限重试需明确授权，可能再次计费；仅适用 HTTP 429/502/503/504，明确内容拒绝除外。`POST jobs/{id}` 的 `retry` 只允许 failed，也要求 recovery 中最新 expectedCursor/expectedUpdated，保留已有结果和原输入，不自动解除全局暂停；客户端需另行确认 resume。详情新增 retry_count/ready_at/attempts/errors。完整语义见 [队列操作说明](../QUEUE_AND_COLLECTION_UPDATE.md)。
+
+
+### 任务并发、超时与原任务恢复
+
+异步 `/jobs` 的 `runtime.concurrency` 是**每任务分镜请求上限**，任意完成立即补位。默认任务 FIFO，`start` 携带最新 recovery 确認后另启独立池；两任务各 4 可合计 8 路。`defer` 在无在途时释放暂留任务的 FIFO 占位，不重发。`continue` 需最新已确认数量/时间戳和未知费用确认。`cursor` 只是已确认数量，不表示前缀；按 `results[].index` / `frameStates` / `nextIndex` 处理空洞。GET 任务给出 progressVersion=2 / executionModel=per-task-frame-pools；capabilities 给出 jobConcurrencyScope=frames_per_task / jobProgressVersion=2。它们不改变直接同步端点的执行限额或默认超时。请见 [完整契约与 JSON 示例](../guide/FOUNDATION.md#运行配置与人工续生成-api) 和 [OpenAPI](openapi.json)。
+
+### 每次请求的输入记录
+
+任务详情新增 `requestHistory`（最近 100 条）。含 index、attempt、time、inputHash、prompt、negative、images、config、frame；config 只含渠道类型、模型等安全字段，不返回端点 URL、密钥引用或任意配置扩展；代表已准备的请求版本，不代表上游已接受或扣费。浏览器任务每次执行前读取已保存的画册局部输入，不读取公共模板；无画册关联的外部任务继续使用提交输入或显式 amend 版本。原幂等键不变。
+
+### 动态渠道引用
+
+JobFrame 可设置 channelId，config 至少给出 provider 类型。每次新请求按该 ID 读取最新保存的渠道配置；不可用时明确失败并暂停该任务后续派发。currentChannels 返回安全的下次请求配置预览，不返回端点或密钥。未设置引用的显式外部任务不猜测当前活动渠道。ComfyUI 历史核对使用原请求配置。[完整示例](../guide/CONFIGURATION.md)。

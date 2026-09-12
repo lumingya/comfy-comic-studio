@@ -78,7 +78,7 @@ document.addEventListener('input',e=>{const el=e.target;if(el.id==='gallery-sear
 document.addEventListener('change',async e=>{const el=e.target;try{if(el.dataset.setting){storeSetting(el);if(el.dataset.setting==='comfy.mode'){resetWS();renderShell();if(ui.workspace===3)render()}}if(el.id==='project-select')changeProject(el.value);if(el.id==='gallery-filter'){ui.filter=el.value;refreshGallery()}if(el.id==='gallery-sort'){ui.sort=el.value;refreshGallery()}if(el.dataset.selectBook){el.checked?ui.selected.add(el.dataset.selectBook):ui.selected.delete(el.dataset.selectBook);refreshGallery()}if(el.dataset.rowActive){rowBy(el.dataset.rowActive).active=el.checked;save()}if(el.id==='matrix-all'){projectRows().forEach(r=>r.active=el.checked);save();render()}if(['template-select','batch-template'].includes(el.id)){flushEditor();ui.templateId=el.value;ui.frameIndex=0;render()}if(el.id==='story-row'){ui.storyRowId=el.value;render()}if(el.id==='story-template'){ui.storyTemplateId=el.value;render()}if(el.id==='story-version'){rowBy(ui.storyRowId).activeStoryVersionIds[ui.storyTemplateId]=el.value;save();render()}if(el.id==='reader-version')openReader(el.value);if(el.id==='chat-select'){if(rt.chatBusy)throw Error('当前对话尚未结束。');state.activeChatId=el.value;save();renderAssistant()}if(el.id==='workflow-preset'&&el.value!==''){const p=state.settings.comfy.presets[Number(el.value)];state.settings.comfy.workflow=clone(p.workflow);state.settings.comfy.mapping=clone(p.mapping);state.settings.comfy.workflowTitle=p.title;save();render()}if(el.id==='llm-provider'){const c=state.settings.llm,p={openai:['https://api.openai.com/v1','gpt-4o'],deepseek:['https://api.deepseek.com','deepseek-chat'],ollama:['http://localhost:11434/v1','llama3.2'],custom:['https://your-gateway.example/v1','your-model']}[el.value];c.provider=el.value;c.baseUrl=p[0];c.model=p[1];save();llmSettings()}}catch(x){toast(x.message,'error')}});
 
 
-document.addEventListener('keydown',async e=>{try{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();if($('#command-dialog').open)$('#command-dialog').close();else openCommand();return}if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='j'){e.preventDefault();if($('#assistant').hidden)showAssistant();else $('#assistant').hidden=true;return}if($('#command-dialog').open){if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();rt.commandIndex=clamp(rt.commandIndex+(e.key==='ArrowDown'?1:-1),0,rt.commandItems.length-1);indexCommands($('#command-input').value);$('.command-item.active')?.scrollIntoView({block:'nearest'})}if(e.key==='Enter'){e.preventDefault();await handleAction('run-command',{index:rt.commandIndex})}return}if(e.target.id==='chat-input'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();await sendChat();return}if(e.target.closest('input,textarea,select,[contenteditable]'))return;if(e.target.matches('[role="button"]')&&['Enter',' '].includes(e.key)){e.preventDefault();e.target.click();return}if($('#reader').open&&!$('#modal').open){if(e.key==='ArrowRight'){e.preventDefault();await handleAction('page-next',{})}if(e.key==='ArrowLeft'){e.preventDefault();await handleAction('page-prev',{})}return}if(!document.querySelector('dialog[open]')&&!e.ctrlKey&&!e.metaKey&&/^[1-5]$/.test(e.key)){e.preventDefault();navigate(Number(e.key)-1)}}catch(x){toast(x.message,'error')}});
+document.addEventListener('keydown',async e=>{try{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();if($('#command-dialog').open)$('#command-dialog').close();else openCommand();return}if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='j'){e.preventDefault();if($('#assistant').hidden)showAssistant();else $('#assistant').hidden=true;return}if($('#command-dialog').open){if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();rt.commandIndex=clamp(rt.commandIndex+(e.key==='ArrowDown'?1:-1),0,rt.commandItems.length-1);indexCommands($('#command-input').value);$('.command-item.active')?.scrollIntoView({block:'nearest'})}if(e.key==='Enter'){e.preventDefault();await handleAction('run-command',{index:rt.commandIndex})}return}if(e.target.id==='chat-input'&&e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&!matchMedia('(pointer:coarse)').matches){e.preventDefault();await sendChat();return}if(e.target.closest('input,textarea,select,[contenteditable]'))return;if(e.target.matches('[role="button"]')&&['Enter',' '].includes(e.key)){e.preventDefault();e.target.click();return}if($('#reader').open&&!$('#modal').open){if(e.key==='ArrowRight'){e.preventDefault();await handleAction('page-next',{})}if(e.key==='ArrowLeft'){e.preventDefault();await handleAction('page-prev',{})}return}if(!document.querySelector('dialog[open]')&&!e.ctrlKey&&!e.metaKey&&/^[1-5]$/.test(e.key)){e.preventDefault();navigate(Number(e.key)-1)}}catch(x){toast(x.message,'error')}});
 
 
 document.addEventListener('submit',e=>{e.preventDefault();if(e.target.id==='text-form')handleAction('text-submit',{}).catch(x=>toast(x.message,'error'))});
@@ -87,7 +87,7 @@ document.addEventListener('submit',e=>{e.preventDefault();if(e.target.id==='text
 document.addEventListener('error',e=>{if(!(e.target instanceof HTMLImageElement))return;const el=e.target;if(el.dataset.fallbackApplied)return;el.dataset.fallbackApplied='1';el.replaceWith(missingArtworkElement(el));},true);
 
 
-$('#reader').addEventListener('cancel',e=>{e.preventDefault();if(!$('#assistant').hidden)$('#assistant').hidden=true;else closeReader()});
+$('#reader').addEventListener('cancel',e=>{e.preventDefault();if(document.fullscreenElement){void document.exitFullscreen();return}if(!$('#assistant').hidden)$('#assistant').hidden=true;else closeReader()});
 
 
 for(const d of $$('dialog'))d.addEventListener('click',e=>{if(e.target!==d)return;const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){if(d.id==='reader')closeReader();else if(d.id==='confirm-dialog')$('#confirm-no').click();else d.close()}});
@@ -772,7 +772,7 @@ window.addEventListener('resize',scheduleAssistantFit);
 document.addEventListener('keydown',e=>{const service=$('#github-dialog').open||$('#critic-dialog').open||$('#guide-dialog').open;if(service&&(e.metaKey||e.ctrlKey)&&['k','j',','].includes(e.key.toLowerCase())){e.preventDefault();e.stopImmediatePropagation();toast('请先关闭当前服务窗口，再切换工作区。')}if(service&&['ArrowLeft','ArrowRight'].includes(e.key)&&!e.target.closest('input,textarea,select'))e.stopImmediatePropagation()},true);
 
 
-/** @typedef {{id:string,key:string,type:'text'|'number'|'boolean'|'json',value:any}} StudioVariable */
+/** @typedef {{id:string,key:string,type:'text'|'number'|'boolean'|'json'|'image',value:any}} StudioVariable */
 /** @typedef {{id:string,projectId:string,title:string,entries:StudioVariable[]}} VariableSet */
 /** @typedef {{id:string,projectId:string,title:string,templateId:string,rowId:string,enabled:boolean,variableSetIds:string[],variables:StudioVariable[],sceneOverrides:Object}} BookPlan */
 const createUI={tab:'plans',planId:null,setId:null,sceneScope:'shared',nodeSearch:'',nodeWarnings:[],previewOpen:false,logsSearch:'',logLevel:'all',route:0,orbDragging:false,orbIgnoreClick:false,welcomePending:false,backendBusy:false};
@@ -781,7 +781,7 @@ const createUI={tab:'plans',planId:null,setId:null,sceneScope:'shared',nodeSearc
 const backendRuntime={connected:false,dirty:false,revision:null,savedAt:null,error:'',timer:null,tail:Promise.resolve(),allowReduction:false,count:0,loading:false,loaded:false,schema:null,saveSerial:0,committedSerial:0};
 
 
-const variableTypes={text:'文本',number:'数字',boolean:'开关',json:'JSON'};
+const variableTypes={text:'文本',number:'数字',boolean:'开关',json:'JSON',image:'图片'};
 
 
 const systemVariableKeys=new Set(['__proto__','constructor','prototype']);
@@ -858,7 +858,7 @@ generateFrame=generateMappedFrame;
 
 enqueueBook=enqueueCompatibleBook;
 
-runQueue=runFlexibleQueue;
+runQueue=runFoundationQueue;
 
 dryRun=mappedDryRun;
 
@@ -866,7 +866,7 @@ dryRun=mappedDryRun;
 autoBindWorkflow=function(){const c=state.settings.comfy;for(const b of c.bindings||[])if(b.autoField&&['positive','negative'].includes(b.source)){const inf=inferTextInput(b.nodeId);b.path=inf.field;b.warning=inf.warning}c.outputNodeId||=Object.entries(c.workflow).find(([,n])=>/SaveImage|PreviewImage/.test(n.class_type))?.[0]||''};
 
 
-renderLogs=function(){const el=$('#log-body');if(!el)return;const search=createUI.logsSearch.toLowerCase(),entries=rt.logs.filter(l=>(createUI.logLevel==='all'||l.level===createUI.logLevel)&&l.message.toLowerCase().includes(search));el.innerHTML=entries.map(l=>`<div class="log-${l.level}"><span class="log-time">${new Date(l.time).toLocaleTimeString('en-GB')}</span><span>${esc(l.message)}</span></div>`).join('')||'<p class="muted">当前筛选没有日志。</p>';el.scrollTop=el.scrollHeight;const count=$('#v3-log-count');if(count)count.textContent=entries.length+' 条'};
+renderLogs=function(){const el=$('#log-body');if(!el)return;const opened=new Set([...el.querySelectorAll('details[open]')].map(x=>x.dataset.logEvent));const search=createUI.logsSearch.toLowerCase(),entries=rt.logs.filter(l=>(createUI.logLevel==='all'||l.level===createUI.logLevel)&&(l.message+' '+JSON.stringify(l.request||{})).toLowerCase().includes(search));el.innerHTML=entries.map(l=>`<div class="log-${l.level}"><span class="log-time">${new Date(l.time).toLocaleTimeString('en-GB')}</span><span style="white-space:pre-wrap">${esc(l.message)}${l.request?`<details class="log-request" data-log-event="${l.eventId}"><summary>提示词、模型与参数</summary><pre>${esc(JSON.stringify(l.request,null,2))}</pre></details>`:''}</span></div>`).join('')||'<p class="muted">当前筛选没有日志。</p>';el.querySelectorAll('[data-log-event]').forEach(x=>x.open=opened.has(x.dataset.logEvent));if(!opened.size)el.scrollTop=el.scrollHeight;const count=$('#v3-log-count');if(count)count.textContent=entries.length+' 条'};
 
 
 workspaceVisible=function(index){if([0,1,2,3,5].includes(index))return true;if(index===6)return state.settings.studio.visibility.logs;if(index===4)return state.settings.studio.visibility.llm;return false};
@@ -874,7 +874,7 @@ workspaceVisible=function(index){if([0,1,2,3,5].includes(index))return true;if(i
 
 validateState=function(s){
   v3Core.validateState(s);const safeId=value=>typeof value==='string'&&/^[a-zA-Z0-9_-]{1,150}$/.test(value)&&!systemVariableKeys.has(value);
-  const entriesOK=entries=>{if(!Array.isArray(entries)||entries.length>500)throw Error('变量列表结构不合法。');const ids=new Set(),keys=new Set();for(const e of entries){if(!safeId(e.id)||ids.has(e.id)||keys.has(e.key))throw Error('变量 ID 或名称重复、不合法。');checkVariableKey(e.key);if(!Object.hasOwn(variableTypes,e.type))throw Error('变量类型不合法。');ids.add(e.id);keys.add(e.key)}};
+  const entriesOK=entries=>{if(!Array.isArray(entries)||entries.length>500)throw Error('变量列表结构不合法。');const ids=new Set(),keys=new Set();for(const e of entries){if(!safeId(e.id)||ids.has(e.id)||keys.has(e.key))throw Error('变量 ID 或名称重复、不合法。');checkVariableKey(e.key);if(!Object.hasOwn(variableTypes,e.type))throw Error('变量类型不合法。');if(e.type==='image'&&e.value!==''&&e.value!==null&&e.value!==undefined&&(!isImageVariable(e.value)||typeof e.value.src!=='string'||e.value.src&&!/^\/images\/[A-Za-z0-9_./-]+$/.test(e.value.src)||e.value.src?.split('/').includes('..')))throw Error('图片变量须先上传，配置仅保存 /images/ 本地资产引用。');ids.add(e.id);keys.add(e.key)}};
   for(const t of s.templates)for(const f of t.frames)if(f.id!==undefined&&!safeId(f.id))throw Error('分镜 ID 不合法。');
   if(s.creation){if(!Array.isArray(s.creation.plans)||!Array.isArray(s.creation.variableSets))throw Error('创作模型结构不完整。');for(const list of [s.creation.plans,s.creation.variableSets]){const ids=new Set();for(const item of list){if(!safeId(item.id)||ids.has(item.id)||typeof item.title!=='string'||!s.projects.some(p=>p.id===item.projectId))throw Error('创作资产 ID、名称或企划归属不合法。');ids.add(item.id)}}
     for(const set of s.creation.variableSets)entriesOK(set.entries);
@@ -912,7 +912,7 @@ const v3Actions={
   'v3-set-new':()=>newVariableSet(),
   'v3-set-select':d=>{createUI.setId=d.id;createUI.tab='variables';render()},
   'v3-set-clone':()=>{const s=clone(setBy(createUI.setId));s.id=uid('set');s.title+=' · 副本';s.entries.forEach(e=>e.id=uid('var'));state.creation.variableSets.push(s);createUI.setId=s.id;save();render()},
-  'v3-set-delete':async()=>{const s=setBy(createUI.setId),count=state.creation.plans.filter(p=>p.variableSetIds.includes(s.id)).length;if(!await confirmAction('删除变量素材「'+s.title+'」？','有 '+count+' 份计划引用它。引用将被移除，缺少的变量会在生成前报错。现有图片不变。','删除素材'))return;state.creation.variableSets=state.creation.variableSets.filter(x=>x.id!==s.id);for(const p of state.creation.plans)p.variableSetIds=p.variableSetIds.filter(id=>id!==s.id);createUI.setId=null;save(true);render()},
+  'v3-set-delete':async()=>{const s=setBy(createUI.setId),count=state.creation.plans.filter(p=>p.variableSetIds.includes(s.id)).length;if(!await confirmAction('删除变量素材「'+s.title+'」？','有 '+count+' 份计划引用它。引用将被移除，缺少的变量会在生成前报错。现有图片不变。','删除素材'))return;for(const entry of s.entries)rememberRemovedImageVariable(entry,s.projectId);state.creation.variableSets=state.creation.variableSets.filter(x=>x.id!==s.id);for(const p of state.creation.plans)p.variableSetIds=p.variableSetIds.filter(id=>id!==s.id);createUI.setId=null;save(true);render()},
   'v3-variable-add':d=>addVariable(d.group,d.id),
   'v3-variable-delete':d=>removeVariable(d.group,d.id,d.entry),
   'v3-variable-rename':d=>renameScopedVariable(d.group,d.id,d.entry),
@@ -986,10 +986,10 @@ document.addEventListener('change',async e=>{const el=e.target;try{
   if(el.id==='v3-story-source'){selectedPlan().storyVersionId=el.value;save();refreshCreationPreviews()}
   if(el.dataset.v3PlanEnabled){planBy(el.dataset.v3PlanEnabled).enabled=el.checked;save()}
   if(el.dataset.v3ChooseSet){const p=selectedPlan();if(el.checked&&!p.variableSetIds.includes(el.dataset.v3ChooseSet))p.variableSetIds.push(el.dataset.v3ChooseSet);else if(!el.checked)p.variableSetIds=p.variableSetIds.filter(id=>id!==el.dataset.v3ChooseSet);save()}
-  if(el.dataset.v3Var==='type'){const entry=variableOwner(el.dataset.group,el.dataset.owner)?.find(x=>x.id===el.dataset.entry);if(entry){entry.type=el.value;entry.value=el.value==='number'?0:el.value==='boolean'?false:el.value==='json'?'{}':String(entry.value??'');save();render()}}
+  if(el.dataset.v3Var==='type'){const entry=variableOwner(el.dataset.group,el.dataset.owner)?.find(x=>x.id===el.dataset.entry);if(entry){entry.type=el.value;entry.value=el.value==='number'?0:el.value==='boolean'?false:el.value==='json'?'{}':el.value==='image'?'':String(entry.value??'');save();render()}}
   if(el.id==='v3-scene-template'){flushEditor();ui.templateId=el.value;ui.frameIndex=0;createUI.sceneScope='shared';render()}
-  if(el.id==='v3-scene-scope'){flushEditor();createUI.sceneScope=el.value;render()}
-  if(el.id==='v3-render-override'){const p=selectedPlan(),f=currentTemplate().frames[ui.frameIndex],own=createUI.sceneScope==='plan'&&p?.templateId===ui.templateId;if(own){p.sceneOverrides[f.id]??={};p.sceneOverrides[f.id].renderOverride=el.checked}else f.renderOverride=el.checked;save();render();$$('.advanced-details').find(d=>d.querySelector('summary')?.textContent.includes('高级选项'))?.setAttribute('open','')}
+  if(el.id==='v3-scene-scope'){flushEditor();if(el.value.startsWith('task:')){createUI.liveTaskId=el.value.slice(5);createUI.sceneScope='plan'}else createUI.sceneScope=el.value;render()}
+  if(el.id==='v3-render-override'){const p=selectedPlan(),f=(createUI.sceneScope==='plan'?liveStoryboardTask(p)?.frames[ui.frameIndex]:null)||currentTemplate().frames[ui.frameIndex],own=createUI.sceneScope==='plan'&&p?.templateId===ui.templateId;if(own){const live=liveStoryboardFrame(p,f);if(live){live.renderOverride=el.checked;saveLiveStoryboardFrame(p,live)}else{p.sceneOverrides[f.id]??={};p.sceneOverrides[f.id].renderOverride=el.checked}}else f.renderOverride=el.checked;save();render();$$('.advanced-details').find(d=>d.querySelector('summary')?.textContent.includes('高级选项'))?.setAttribute('open','')}
   if(el.dataset.v3Binding){const b=state.settings.comfy.bindings.find(b=>b.id===el.dataset.id),key=el.dataset.v3Binding;if(!b)return;if(key==='allowLink'&&el.checked){if(!await confirmAction('允许覆盖此字段原有的节点连线？','这会改变数据流向，可能导致工作流执行错误。请先预览完整 JSON。','明确允许')){b.allowLink=false;el.checked=false}}if((key==='nodeId'&&b.autoField)||key==='source'&&['positive','negative'].includes(b.source)){const info=inferTextInput(b.nodeId);b.path=info.field;b.warning=info.warning;b.autoField=true}save();if(key!=='value'&&key!=='label')render()}
   if(el.id==='v3-randomize-seeds'){state.settings.comfy.randomizeSeeds=el.checked;save()}
   if(el.id==='v3-log-level'){createUI.logLevel=el.value;renderLogs()}
@@ -1128,7 +1128,7 @@ function installArtStudio(){
   interpolate=(text,row={},frame={})=>scopeText(text,frame._scope||row._scope||row);
   interpolateBoundValue=function(text,scope={}){if(typeof text!=='string')return text;const tokens=ns.promptPolicy.tokens(text,definedPromptNames(scope));if(tokens.length===1&&tokens[0].type==='variable'&&Object.hasOwn(scope,tokens[0].key))return scope[tokens[0].key]??'';return scopeText(text,scope)};
   missingScopeKeys=()=>[];
-  effectivePlanScope=function(plan,frame=null,resolveSet=setBy){const resolved=artCore.effectivePlanScope(plan,frame,resolveSet);for(const key of plan?.excludedSettingKeys||[])if(!(planFrameOverrides(plan,frame||{}).variables||[]).some(e=>e.key===key)&&!(planFrameOverrides(plan,frame||{}).variableSetIds||[]).some(id=>resolveSet(id)?.entries?.some(e=>e.key===key))){resolved.values[key]='';resolved.sources[key]='此属性已停用'}return resolved};
+  effectivePlanScope=function(plan,frame=null,resolveSet=setBy){const resolved=artCore.effectivePlanScope(plan,frame,resolveSet);for(const key of plan?.excludedSettingKeys||[])if(!(planFrameOverrides(plan,frame||{}).variables||[]).some(e=>e.key===key)&&!(planFrameOverrides(plan,frame||{}).variableSetIds||[]).some(id=>resolveSet(id)?.entries?.some(e=>e.key===key))){if(isImageVariable(resolved.values[key])||(state.creation.removedImageKeys?.[plan.projectId]||[]).includes(key))resolved.values[key]={kind:'mio-image',src:'',name:key};else resolved.values[key]='';resolved.sources[key]='此属性已停用'}return resolved};
   primaryNavItems=function(){return createWorkspaceChromePolicy().navigation(state.settings.studio.visibility)};
   renderShell=function(){
     artCore.renderShell();const nav=$('#sidebar nav');if(nav)nav.innerHTML=primaryNavItems().map(([id,ic,label,key])=>`<button class="nav-item ${ui.workspace===id?'active':''} ${id===5?'nav-settings':''}" data-act="art-nav" data-route="${id}" aria-label="${label}" title="${label}" ${ui.workspace===id?'aria-current="page"':''}>${icon(ic)}<span>${label}</span><b class="nav-key">${key}</b></button>`).join('');
@@ -1166,7 +1166,7 @@ function installArtStudio(){
     'art-create-tab':d=>{flushEditor();createUI.tab=d.tab==='settings'?'settings':d.tab==='queue'?'queue':'scenes';render()},
     'art-setting-add':()=>addUnifiedSetting(),
     'art-setting-confirm':()=>addSettingFromDialog(),
-    'art-setting-remove':async d=>{const p=selectedPlan();if(!await confirmAction('移除此画面属性？','只从本画册移除 {'+d.key+'}。原设定预设保留，生成时这项会按空值略过。','移除属性'))return;p.variables=p.variables.filter(e=>e.key!==d.key);p.excludedSettingKeys=[...new Set([...(p.excludedSettingKeys||[]),d.key])];save(true);render()},
+    'art-setting-remove':async d=>{const p=selectedPlan();if(!await confirmAction('移除此画面属性？','只从本画册移除 {'+d.key+'}。原设定预设保留；若提示词仍引用被移除的图片变量，生成时会明确报错。','移除属性'))return;rememberRemovedImageVariable(mergedSettingEntries(p).find(e=>e.key===d.key),p.projectId);p.variables=p.variables.filter(e=>e.key!==d.key);p.excludedSettingKeys=[...new Set([...(p.excludedSettingKeys||[]),d.key])];save(true);render()},
     'art-apply-preset':async()=>{const id=$('#art-setting-preset')?.value,p=selectedPlan();if(!id)throw Error('先选择一组设定预设。');if(!await confirmAction('应用这组角色与画面设定？','会替换当前画册的设定，不改动分镜或已生成图片。','应用设定'))return;p.variableSetIds=[id];p.variables=[];p.excludedSettingKeys=[];save();render()},
     'art-save-preset':()=>{const p=selectedPlan();textModal('保存角色与画面设定','预设名称',p.title+' · 设定',value=>{const set={id:uid('set'),projectId:state.activeProjectId,title:value,entries:mergedSettingEntries(p).map(e=>({...clone(e),id:uid('var')}))};state.creation.variableSets.push(set);save();closeModal();render();toast('设定预设已保存。')})},
     'art-import-demo':()=>importCuratedDemo(),
@@ -1174,7 +1174,8 @@ function installArtStudio(){
     'room-thumbnails':()=>{artUI.filmstrip=!artUI.filmstrip;const strip=$('#room-filmstrip');if(strip)strip.hidden=!artUI.filmstrip;syncArtReader()},
     'room-info':()=>{artUI.showInfo=!artUI.showInfo;renderRoomInfo()},
     'room-copy-prompt':()=>copyText(readerSequence(bookBy(ui.bookId))[ui.step].prompt||''),
-    'room-fullscreen':async()=>{if(document.fullscreenElement){await document.exitFullscreen();return}if(!$('#reader').requestFullscreen)throw Error('当前浏览器不支持全屏 API。阅读器已使用完整页面视口。');try{await $('#reader').requestFullscreen()}catch(e){throw Error('当前页面未获全屏权限，仍可在完整阅读视口欣赏。')}},
+    'room-fullscreen':()=>toggleReaderFullscreen(),
+    'reader-fullscreen-hint-close':()=>$('#reader-fullscreen-hint')?.remove(),
     'room-laboratory':()=>readerLabNavigation(),
     'art-lab-critique':()=>critiqueStep(artUI.labBookId,artUI.labIndex),
     'art-lab-redraw':async()=>{const b=selectedLabBook();if(!b)throw Error('请先选择画册。');ui.bookId=b.id;ui.step=artUI.labIndex;await redrawStep(artUI.labIndex)},
@@ -1347,12 +1348,16 @@ installCollectionDisplay();
 installWorkspaceUpgrade();
 
 installOrganizationTools();
+installBrushSelection();
 
 installImageProviders();
 
 installMarketPerformance();
 
 installPresentationStudio();
+
+installImageVariables();
+installFoundation();
 
 globalThis.Mio = globalThis.ComfyComic;
 
@@ -1364,3 +1369,32 @@ boot().catch(e=>{rt.booting=false;render();toast('启动未完成：'+e.message+
 
 
 
+
+// Viewport-only adjustments: never rerender editors on keyboard/rotation events.
+function installMobileLayout(){
+  const media=matchMedia('(max-width:760px), (max-width:950px) and (hover:none) and (pointer:coarse)');let raf=0;
+  function fit(){
+    raf=0;const view=window.visualViewport,root=document.documentElement;
+    if(view&&Math.abs(view.scale-1)>.05)return;
+    const height=view?.height||innerHeight,top=view?.offsetTop||0;
+    root.style.setProperty('--mobile-vh',height+'px');root.style.setProperty('--mobile-vtop',top+'px');
+    document.body.classList.toggle('mobile-keyboard-open',media.matches&&innerHeight-height>140);
+    const head=$('#reader .room-head'),foot=$('#reader .room-footer');
+    if(head)root.style.setProperty('--mobile-reader-head',head.offsetHeight+'px');
+    if(foot)root.style.setProperty('--mobile-reader-foot',foot.offsetHeight+'px');
+    fitImageModelResults();if(media.matches&&!$('#assistant')?.hidden)scheduleAssistantFit();
+  }
+  const schedule=()=>{if(!raf)raf=requestAnimationFrame(fit)};
+  window.addEventListener('resize',schedule);window.visualViewport?.addEventListener('resize',schedule);window.visualViewport?.addEventListener('scroll',schedule);
+  document.addEventListener('focusin',schedule);document.addEventListener('focusout',schedule);
+  document.addEventListener('click',schedule);document.addEventListener('scroll',schedule,true);
+  media.addEventListener('change',schedule);schedule();
+}
+installMobileLayout();
+
+async function toggleReaderFullscreen(){
+  if(document.fullscreenElement){try{await document.exitFullscreen()}catch(e){}return}
+  try{if(!document.fullscreenEnabled||!document.documentElement.requestFullscreen)throw Error('Unavailable');await document.documentElement.requestFullscreen();const reader=$('#reader');if(reader.open){reader.close();reader.showModal()}$('#reader-fullscreen-hint')?.remove()}
+  catch(e){if(!$('#reader-fullscreen-hint'))$('#reader .room-footer')?.insertAdjacentHTML('beforebegin',`<div id="reader-fullscreen-hint" class="reader-fullscreen-hint" role="status"><span>阅读器已铺满页面。此环境未提供网页全屏；电脑可使用浏览器 F11（部分设备需 Fn）。F11 与网页全屏按钮是两套独立功能。</span>${btn('知道了','','reader-fullscreen-hint-close','','small')}</div>`)}
+}
+document.addEventListener('fullscreenchange',()=>{const button=$('[data-act="room-fullscreen"]');if(button)button.setAttribute('aria-label',document.fullscreenElement?'退出网页全屏':'网页全屏 · 电脑也可使用 F11');if(document.fullscreenElement)$('#reader-fullscreen-hint')?.remove()});

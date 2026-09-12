@@ -1,14 +1,25 @@
 'use strict';
 module.exports = {
-  "sourceSHA256": "3ce7efa6c16a3318863bf12cdd50b87a91ff9bfb2ba0e5c9a9e55df1f58e6b09",
   "order": [
     "state",
     "sync",
     "engine",
     "creation",
+    "ui-presentation",
+    "ui-reader",
+    "ui-templates",
+    "ui-export",
+    "ui-editors",
+    "ui-locale",
+    "ui-assistant",
+    "ui-storyboard",
+    "ui-gallery",
+    "ui-settings",
     "ui",
+    "workspace",
+    "organize",
+    "foundation",
     "app"
   ],
-  "functionCount": 533,
-  "statementCount": 769
+  "architecture": "Classic scripts in dependency order; feature declarations precede shared UI state; app installs at the end."
 };

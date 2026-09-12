@@ -1,7 +1,7 @@
 /* Mio development module: engine. */
 'use strict';
 
-async function request(url,options={},timeout=15000){const ctrl=new AbortController(),signal=options.signal,abort=()=>ctrl.abort();signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)ctrl.abort();const t=setTimeout(()=>ctrl.abort(),timeout);try{const r=await fetch(url,{...options,signal:ctrl.signal});if(!r.ok){const text=await r.text();throw Error('HTTP '+r.status+': '+text.slice(0,220))}if(r.status===204||r.status===205)return r;const body=await r.arrayBuffer();return new Response(body,{status:r.status,statusText:r.statusText,headers:r.headers})}finally{clearTimeout(t);signal?.removeEventListener('abort',abort)}}
+async function request(url,options={},timeout=15000){const ctrl=new AbortController(),signal=options.signal,abort=()=>ctrl.abort();signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)ctrl.abort();const t=setTimeout(()=>ctrl.abort(),timeout);try{const r=await fetch(url,{...options,signal:ctrl.signal});if(!r.ok){const text=await r.text();throw Error('HTTP '+r.status+': '+text)}if(r.status===204||r.status===205)return r;const body=await r.arrayBuffer();return new Response(body,{status:r.status,statusText:r.statusText,headers:r.headers})}finally{clearTimeout(t);signal?.removeEventListener('abort',abort)}}
 
 
 async function testEngine(silent=false){if(state.settings.comfy.mode==='mock'){rt.connected=false;rt.latency=null;rt.vram=null;if(!silent)toast('离线 SVG 引擎已就绪，无需 GPU。');return true}const start=performance.now();try{const data=await(await request(baseURL()+'/system_stats',{},5000)).json();rt.latency=Math.round(performance.now()-start);const gpu=data.devices?.[0];rt.vram=gpu?.vram_total?Math.round((1-gpu.vram_free/gpu.vram_total)*100):null;rt.connected=true;connectWS();renderShell();if($('#connection-result'))$('#connection-result').textContent='已连接 · '+rt.latency+' ms'+(rt.vram!==null?' · VRAM '+rt.vram+'%':'');if(!silent)toast('ComfyUI 连接成功，延迟 '+rt.latency+' ms');return true}catch(e){rt.connected=false;renderShell();if(!silent)toast('连接失败：确认服务地址与 --enable-cors-header。','error');return false}}
@@ -86,12 +86,12 @@ function buildMappedWorkflow(frame,row,options={}){
     if(info.exists&&isWorkflowLink(info.value,workflow)&&!binding.allowLink)throw Error('映射「'+binding.label+'」目标是节点连线；请保留它，或明确开启连线覆盖。');
     let value;
     switch(binding.source){
-      case'positive':value=scopeText(frame.prompt,scope,true);break;
-      case'negative':value=scopeText(frame.negative||(execution.globalNegative??state.settings.negative),scope,true);break;
+      case'positive':value=frame._resolvedImagePrompt??scopeText(frame.prompt,scope,true);break;
+      case'negative':value=frame._resolvedImageNegative??resolveImageVariables(frame.prompt,scope,false,frame.negative||(execution.globalNegative??state.settings.negative)).negative;break;
       case'caption':value=scopeText(frame.caption,scope,true);break;
       case'bookTitle':value=row.bookTitle;break;
       case'sceneName':value=scopeText(frame.name,scope,true);break;
-      case'variable':{const key=String(binding.value||'').replace(/^\{|\}$/g,'');checkVariableKey(key);if(!Object.hasOwn(scope,key)||scope[key]===undefined||scope[key]===null||scope[key]==='')continue;value=scope[key];break}
+      case'variable':{const key=String(binding.value||'').replace(/^\{|\}$/g,'');checkVariableKey(key);if(!Object.hasOwn(scope,key)||scope[key]===undefined||scope[key]===null||scope[key]==='')continue;value=scope[key];if(isImageVariable(value)){value=options.uploadedImages?.[key];if(!value){if(options.preview)value='[图片变量 '+key+' 待上传]';else throw Error('图片变量 {'+key+'} 未在提示词中引用或尚未上传。')}}break}
       case'literal':value=interpolateBoundValue(binding.value,scope);break;
       case'random':value=options.preview?123456789:Math.floor(Math.random()*Number.MAX_SAFE_INTEGER);break;
       case'sceneParameter':value=frame[binding.value];if(value===undefined)throw Error('分镜参数 '+binding.value+' 不存在。');if(binding.value==='seed'&&Number(value)<0)value=options.preview?123456789:Math.floor(Math.random()*Number.MAX_SAFE_INTEGER);break;
@@ -121,10 +121,12 @@ function mappedExecutionSnapshot(){const c=state.settings.comfy,classes=[...new 
 
 async function executeMappedGPU(frame,row,signal,sourceImage=null){
   const snapshot=frame._execution||mappedExecutionSnapshot(),endpoint=String(snapshot.baseUrl||baseURL()).replace(/\/+$/,''),needsImage=snapshot.bindings.some(b=>b.enabled&&b.source==='image');let uploadedImage=null;
-  if(needsImage&&(sourceImage||row.references?.front)){const data=await imageData(sourceImage||row.references.front),blob=await(await fetch(data)).blob(),form=new FormData();form.append('image',blob,uid('input')+(blob.type==='image/jpeg'?'.jpg':'.png'));form.append('overwrite','true');const response=await(await request(endpoint+'/upload/image',{method:'POST',body:form,signal})).json();if(!response.name)throw Error('ComfyUI 未返回上传的图像文件名。');uploadedImage=(response.subfolder?response.subfolder+'/':'')+response.name}
-  const compiled=buildMappedWorkflow(frame,row,{execution:snapshot,uploadedImage});
-  const submitted=await(await request(endpoint+'/prompt',post({prompt:compiled.workflow,client_id:rt.clientId},signal))).json();if(!submitted.prompt_id)throw Error('ComfyUI 拒绝蓝图：'+JSON.stringify(submitted.node_errors||submitted.error||submitted).slice(0,450));log('提交工作流 '+snapshot.workflowTitle+' · '+submitted.prompt_id.slice(0,12));
-  const limit=Date.now()+600000;while(Date.now()<limit){await delay(900,signal);const result=await(await request(endpoint+'/history/'+encodeURIComponent(submitted.prompt_id),{signal})).json(),history=result[submitted.prompt_id];if(!history)continue;if(history.status?.status_str==='error')throw Error('工作流执行失败：'+JSON.stringify(history.status.messages).slice(0,500));const outputs=history.outputs||{},images=snapshot.outputNodeId?outputs[snapshot.outputNodeId]?.images:Object.values(outputs).flatMap(x=>x.images||[]);if(images?.length){const image=images[0],query=new URLSearchParams({filename:image.filename,subfolder:image.subfolder||'',type:image.type||'output'});return {image:await persistRasterAsset(await blobData(await(await request(endpoint+'/view?'+query,{signal})).blob()),frame._assetBookId,signal),offlineFallback:false,promptId:submitted.prompt_id}}if(history.status?.completed)throw Error('工作流结束但指定节点没有图片，请检查“结果图片节点”。')}
+  if(needsImage&&sourceImage){const data=await imageData(sourceImage),blob=await(await fetch(data)).blob(),form=new FormData();form.append('image',blob,uid('input')+(blob.type==='image/jpeg'?'.jpg':'.png'));form.append('overwrite','true');const response=await(await request(endpoint+'/upload/image',{method:'POST',body:form,signal})).json();if(!response.name)throw Error('ComfyUI 未返回上传的图像文件名。');uploadedImage=(response.subfolder?response.subfolder+'/':'')+response.name}
+  const resolved=Array.isArray(frame._imageInputs)?{images:frame._imageInputs}:resolveImageVariables(frame.prompt,frame._scope||row._scope||row,true,frame.negative||snapshot.globalNegative||''),references=frame._imageInputs||resolved.images,uploadedImages=Object.create(null);
+  for(const image of references){if(!snapshot.bindings.some(b=>b.enabled&&b.source==='variable'&&String(b.value).replace(/^\{|\}$/g,'')===image.key))throw Error('工作流尚未将图片变量 {'+image.key+'} 绑定到图片加载节点的 image 字段。');const data=await imageData(image.src),blob=await(await fetch(data)).blob(),form=new FormData();form.append('image',blob,uid('variable')+(blob.type==='image/jpeg'?'.jpg':blob.type==='image/webp'?'.webp':'.png'));form.append('overwrite','false');const response=await(await request(endpoint+'/upload/image',{method:'POST',body:form,signal})).json();if(!response.name)throw Error(JSON.stringify(response));uploadedImages[image.key]=(response.subfolder?response.subfolder+'/':'')+response.name}
+  const compiled=buildMappedWorkflow(frame,row,{execution:snapshot,uploadedImage,uploadedImages});
+  const submitted=await(await request(endpoint+'/prompt',post({prompt:compiled.workflow,client_id:rt.clientId},signal))).json();if(!submitted.prompt_id)throw Error('ComfyUI 拒绝蓝图：'+JSON.stringify(submitted.node_errors||submitted.error||submitted));log('提交工作流 '+snapshot.workflowTitle+' · '+submitted.prompt_id.slice(0,12));
+  const limit=Date.now()+600000;while(Date.now()<limit){await delay(900,signal);const result=await(await request(endpoint+'/history/'+encodeURIComponent(submitted.prompt_id),{signal})).json(),history=result[submitted.prompt_id];if(!history)continue;if(history.status?.status_str==='error')throw Error('工作流执行失败：'+JSON.stringify(history.status.messages));const outputs=history.outputs||{},images=snapshot.outputNodeId?outputs[snapshot.outputNodeId]?.images:Object.values(outputs).flatMap(x=>x.images||[]);if(images?.length){const image=images[0],query=new URLSearchParams({filename:image.filename,subfolder:image.subfolder||'',type:image.type||'output'});return {image:await persistRasterAsset(await blobData(await(await request(endpoint+'/view?'+query,{signal})).blob()),frame._assetBookId,signal),offlineFallback:false,promptId:submitted.prompt_id}}if(history.status?.completed)throw Error('工作流结束但指定节点没有图片，请检查“结果图片节点”。')}
   throw Error('生成等待超时，请查看 ComfyUI 服务日志。');
 }
 
@@ -171,7 +173,7 @@ async function persistRasterAsset(dataUrl,albumId='unassigned',signal){
 }
 
 // Provider configs contain references, never secret values. Keys live in the local server vault.
-const imageProviderUI={models:new Map(),busy:new Set()};
+const imageProviderUI={models:new Map(),busy:new Set(),modelIndex:-1};
 function ensureImageProviders(s=state){
   s.settings.imageGeneration??={active:'comfyui',profiles:[
     {id:'comfyui',title:'ComfyUI',provider:'comfyui'},
@@ -186,14 +188,14 @@ function ensureImageProviders(s=state){
 }
 function activeImageProfile(){const g=ensureImageProviders();return g.profiles.find(p=>p.id===g.active)||g.profiles[0]}
 function imageConfigSnapshot(p=activeImageProfile()){
-  return Object.fromEntries(['id','title','provider','baseUrl','model','protocol','sampler','size','quality','sendSize','sendQuality','keyMode','keyId'].filter(k=>p[k]!==undefined).map(k=>[k,clone(p[k])]));
+  return Object.fromEntries(['id','title','provider','baseUrl','model','protocol','sampler','size','quality','sendSize','sendQuality','keyMode','keyId','extraParams'].filter(k=>p[k]!==undefined).map(k=>[k,clone(p[k])]));
 }
 function imageProviderSnapshot(){const p=activeImageProfile();return {provider:p.provider,profileId:p.id,config:imageConfigSnapshot(p),mode:'real',workflowTitle:p.title+' / '+(p.model||''),globalNegative:state.settings.negative}}
 function imageProviderSelect(){const g=ensureImageProviders();return `<label class="label" for="image-provider-select">图像生产渠道</label><select id="image-provider-select">${g.profiles.map(p=>opt(p.id,p.title,g.active)).join('')}</select>`}
 function imageModelsCacheKey(p){return JSON.stringify([p.id,p.baseUrl,p.keyMode,p.keyId])}
 function imageProviderPanel(){
   const p=activeImageProfile(),input=(label,key)=>field(label,`<input type="text" data-image-config="${key}" value="${esc(p[key]||'')}" autocomplete="off">`),models=imageProviderUI.models.get(imageModelsCacheKey(p))||[],images=p.protocol!=='chat',optional=(label,key,flag,placeholder)=>`<div class="provider-optional"><label class="row"><input type="checkbox" data-image-config="${flag}" ${p[flag]?'checked':''} ${!images?'disabled':''}><span>${label}<small class="muted"> · 可选</small></span></label><input type="text" data-image-config="${key}" value="${esc(p[key]||'')}" placeholder="${placeholder}" ${!p[flag]||!images?'disabled':''}><p class="help">${images?'关闭或留空：不向接口发送 '+key:'Chat 协议不发送此参数'}</p></div>`;
-  return `<section class="panel image-provider-panel"><div class="row between wrap"><h2>图像引擎</h2><div class="row wrap"><a class="btn small" href="/docs/index.html" target="_blank" rel="noopener">教程 / Docs ↗</a>${btn('新增渠道','plus','image-provider-new','','small')}${p.provider!=='comfyui'?btn('复制','copy','image-provider-copy','','small')+btn('删除渠道','trash','image-provider-delete','','small danger'):''}</div></div><p class="help">共用分镜与队列；入队冻结渠道、模型和参数。密钥单独保存在本地后端，任务与普通工程导出仅包含引用。</p>${imageProviderSelect()}${p.provider==='comfyui'?'<p class="help">ComfyUI 是内置工作流入口；工作流库可独立管理，API 渠道可新增、复制与删除。</p>':`<div class="grid2">${input('渠道名称','title')}${input('API Base URL（OpenAI 通常含 /v1）','baseUrl')}<div class="provider-model-field">${input('模型 ID（可手动填写）','model')}${p.provider==='openai'?`<div class="row">${btn(imageProviderUI.busy.has(p.id)?'正在获取…':'获取模型列表','refresh','image-provider-models',imageProviderUI.busy.has(p.id)?'disabled':'','small')}<select id="image-provider-model-select" aria-label="可用模型" ${models.length?'':'disabled'}>${opt('','选择模型 · '+models.length+' 个','')}${models.map(id=>opt(id,id,'')).join('')}</select></div><p class="help" id="provider-model-status">调用基础 URL 下的 GET /models；列表不保证全部支持图像生成，获取失败仍可手填。</p>`:''}</div><div class="provider-auth">${field('API 鉴权（允许为空）',`<select id="image-provider-auth">${opt('none','无密钥 · 不发送 Authorization',p.keyMode)}${opt('environment','使用服务端环境变量',p.keyMode)}${p.keyId?opt('stored','已保存 · '+(p.keyLabel||'本地密钥'),p.keyMode):''}</select>`)}<div class="row">${btn('管理密钥','key','image-provider-keys','','small')}<span class="help">${p.keyMode==='stored'?'已保存到本地 · 原文不回显':p.keyMode==='environment'?'使用对应的服务端 API_KEY':'可连接不需要鉴权的本地或兼容服务'}</span></div></div>${p.provider==='openai'?field('接口协议',`<select data-image-config="protocol">${opt('images','Images API · GPT Image / 兼容渠道',p.protocol)}${opt('chat','Chat Completions · 返回图片的兼容渠道',p.protocol)}</select>`):input('采样器','sampler')}</div>${p.provider==='openai'?`<section class="provider-options"><h3>可选请求参数</h3><div class="grid2">${optional('输出尺寸','size','sendSize','如 1024x1024 / auto')}${optional('质量','quality','sendQuality','如 auto / high')}</div></section>`:''}<p class="help">密钥按渠道与基础 URL 绑定，换地址后需重新选择或保存。复制渠道不复制密钥。仅在本机可信环境使用；本地密钥文件不是加密保险库。生成不自动重试，停止等待不保证上游停止计费。</p>`}</section>`;
+  return `<section class="panel image-provider-panel"><div class="row between wrap"><h2>图像引擎</h2><div class="row wrap"><a class="btn small" href="/docs/index.html" target="_blank" rel="noopener">教程 / Docs ↗</a>${btn('新增渠道','plus','image-provider-new','','small')}${p.provider!=='comfyui'?btn('复制','copy','image-provider-copy','','small')+btn('删除渠道','trash','image-provider-delete','','small danger'):''}</div></div><p class="help">共用分镜与队列；任务关联渠道；保存后的模型、地址和参数从下一次请求生效，在途请求不变。密钥单独保存在本地后端，任务与普通工程导出仅包含引用。</p>${imageProviderSelect()}${p.provider==='comfyui'?'<p class="help">ComfyUI 是内置工作流入口；工作流库可独立管理，API 渠道可新增、复制与删除。</p>':`<div class="grid2">${input('渠道名称','title')}${input('API Base URL（OpenAI 通常含 /v1）','baseUrl')}<div class="provider-model-field">${p.provider==='openai'?`${field('模型 ID（输入搜索，也可手动填写）',`<div class="provider-model-combobox"><input id="image-provider-model-input" type="text" data-image-config="model" value="${esc(p.model||'')}" role="combobox" aria-label="模型 ID，输入搜索或手动填写" aria-autocomplete="list" aria-expanded="false" aria-controls="image-provider-model-results" autocomplete="off" spellcheck="false" placeholder="输入模型名称，如 gpt / flux"><div id="image-provider-model-results" class="provider-model-results" role="listbox" aria-label="匹配模型" hidden></div></div>`)}<div class="row">${btn(imageProviderUI.busy.has(p.id)?'正在获取…':'获取模型列表','refresh','image-provider-models',imageProviderUI.busy.has(p.id)?'disabled':'','small')}<span class="help">${models.length?'已载入 '+models.length+' 个模型 · 输入即可搜索':'获取后可搜索，也可直接填写模型 ID'}</span></div><p class="help" id="provider-model-status">调用基础 URL 下的 GET /models；列表不保证全部支持图像生成，获取失败仍可手填。</p>`:input('模型 ID（可手动填写）','model')}</div><div class="provider-auth">${field('API 鉴权（允许为空）',`<select id="image-provider-auth">${opt('none','无密钥 · 不发送 Authorization',p.keyMode)}${opt('environment','使用服务端环境变量',p.keyMode)}${p.keyId?opt('stored','已保存 · '+(p.keyLabel||'本地密钥'),p.keyMode):''}</select>`)}<div class="row">${btn('管理密钥','key','image-provider-keys','','small')}<span class="help">${p.keyMode==='stored'?'已保存到本地 · 原文不回显':p.keyMode==='environment'?'使用对应的服务端 API_KEY':'可连接不需要鉴权的本地或兼容服务'}</span></div></div>${p.provider==='openai'?field('接口协议',`<select data-image-config="protocol">${opt('images','Images API · GPT Image / 兼容渠道',p.protocol)}${opt('chat','Chat Completions · 返回图片的兼容渠道',p.protocol)}</select>`):input('采样器','sampler')}</div>${p.provider==='openai'?`<section class="provider-options"><h3>可选请求参数</h3><div class="grid2">${optional('输出尺寸','size','sendSize','如 1024x1024 / auto')}${optional('质量','quality','sendQuality','如 auto / high')}</div></section>`:''}<details class="quiet-advanced"><summary>高级请求参数 · JSON</summary><textarea id="provider-extra-params" spellcheck="false" aria-label="高级请求参数">${esc(JSON.stringify(p.extraParams||{},null,2))}</textarea><p class="help">只扩展额外协议字段，不能覆盖已绑定的提示词、图片、标准参数或鉴权；保存后从下一次请求生效。不兼容时保留接口错误。</p></details><p class="help">密钥按渠道与基础 URL 绑定，换地址后需重新选择或保存。复制渠道不复制密钥。仅在本机可信环境使用；本地密钥文件不是加密保险库。生成不自动重试，停止等待不保证上游停止计费。</p>`}</section>`;
 }
 async function imageCredentialRequest(action,p,extra={}){return(await request('/api/image/credentials',post({action,config:imageConfigSnapshot(p),...extra}),15000)).json()}
 async function openImageKeyManager(p){
@@ -204,6 +206,7 @@ async function openImageKeyManager(p){
 function providerHasPendingTasks(id){return state.queue.some(q=>['pending','running','paused'].includes(q.status)&&[q.execution,...(q.frames||[]).map(f=>f?._execution)].some(ex=>ex?.profileId===id||ex?.config?.id===id))}
 async function handleImageProviderAction(action,d={},el){
   const p=activeImageProfile(),g=ensureImageProviders();
+  if(action==='image-provider-pick-model'){chooseImageModel(d.model);return true}
   if(action==='image-provider-settings'){navigate(3);return true}
   if(action==='image-provider-new'){modal('新增图像渠道',field('接口类型',`<select id="image-new-type"><option value="openai">OpenAI 兼容</option><option value="novelai">NovelAI</option></select>`)+field('渠道名称','<input id="image-new-title" autocomplete="off" placeholder="自定义渠道">')+'<div class="modal-footer">'+btn('取消','','close-modal')+btn('创建','plus','image-provider-create','','primary')+'</div>');return true}
   if(action==='image-provider-create'){const type=$('#image-new-type').value,newProfile={id:uid('provider'),title:$('#image-new-title').value.trim()||(type==='novelai'?'NovelAI':'OpenAI 兼容'),provider:type,keyMode:'none',...(type==='novelai'?{baseUrl:'https://image.novelai.net',model:'nai-diffusion-4-5-full',sampler:'k_euler_ancestral'}:{baseUrl:'https://api.openai.com/v1',model:'gpt-image-1',protocol:'images',sendSize:false,sendQuality:false,size:'1024x1024',quality:'auto'})};g.profiles.push(newProfile);g.active=newProfile.id;closeModal();save();render();return true}
@@ -217,7 +220,7 @@ async function handleImageProviderAction(action,d={},el){
   }
   if(action==='image-provider-models'){
     if(imageProviderUI.busy.has(p.id))return true;const binding=imageModelsCacheKey(p);imageProviderUI.busy.add(p.id);if(el){el.disabled=true;el.textContent='正在获取…'}
-    try{const result=await(await request('/api/image/models',post({config:imageConfigSnapshot(p)}),30000)).json();imageProviderUI.models.set(binding,result.models);if(activeImageProfile()===p&&binding===imageModelsCacheKey(p)){imageProviderUI.busy.delete(p.id);render();toast('获取到 '+result.models.length+' 个模型，请选择适合图像生成的模型。')}}catch(e){if(activeImageProfile()===p&&binding===imageModelsCacheKey(p)){const status=$('#provider-model-status');if(status)status.textContent='获取失败，可继续手动填写。'+e.message}throw e}finally{imageProviderUI.busy.delete(p.id);if(el?.isConnected){el.disabled=false;el.textContent='获取模型列表'}}return true;
+    try{const result=await(await request('/api/image/models',post({config:imageConfigSnapshot(p)}),30000)).json();imageProviderUI.models.set(binding,result.models);if(activeImageProfile()===p&&binding===imageModelsCacheKey(p)){imageProviderUI.busy.delete(p.id);render();$('#image-provider-model-input')?.focus();toast('获取到 '+result.models.length+' 个模型，请选择适合图像生成的模型。')}}catch(e){if(activeImageProfile()===p&&binding===imageModelsCacheKey(p)){const status=$('#provider-model-status');if(status)status.textContent='获取失败，可继续手动填写。'+e.message}throw e}finally{imageProviderUI.busy.delete(p.id);if(el?.isConnected){el.disabled=false;el.textContent='获取模型列表'}}return true;
   }
   if(action==='image-provider-keys'){await openImageKeyManager(p);return true}
   if(action.startsWith('image-key-')){
@@ -235,9 +238,10 @@ async function handleImageProviderAction(action,d={},el){
 async function generateProviderFrame(frame,row,signal,source=null){
   const ex=frame._execution||imageProviderSnapshot(),p=ex.config;
   if(!p||!['novelai','openai'].includes(ex.provider))throw Error('图像渠道快照无效，请重新入队。');
-  const scope=frame._scope||row._scope||row,prompt=scopeText(frame.prompt,scope,true);validatePrompt(prompt);
-  const reference=source||row.references?.front;
-  const response=await request('/api/image/generate',post({config:p,prompt,negative:scopeText(frame.negative||ex.globalNegative||'',scope,true),frame:{width:frame.width,height:frame.height,steps:frame.steps,cfg:frame.cfg,seed:frame.seed,denoise:frame.denoise},source:reference?await imageData(reference):null,albumId:frame._assetBookId||'unassigned'},signal),330000);
+  const scope=frame._scope||row._scope||row,resolved=Array.isArray(frame._imageInputs)&&typeof frame._resolvedImagePrompt==='string'?{prompt:frame._resolvedImagePrompt,negative:frame._resolvedImageNegative||'',images:frame._imageInputs}:resolveImageVariables(frame.prompt,scope,true,frame.negative||ex.globalNegative||''),prompt=frame._resolvedImagePrompt||resolved.prompt;validatePrompt(prompt);
+  const images=(frame._imageInputs||resolved.images).map(image=>{if(!image.src)throw Error('图片变量 {'+image.key+'} 尚未上传图片。');return image.src});
+  const reference=source;
+  const response=await request('/api/image/generate',post({config:p,prompt,negative:frame._resolvedImageNegative??resolved.negative,frame:{width:frame.width,height:frame.height,steps:frame.steps,cfg:frame.cfg,seed:frame.seed,denoise:frame.denoise},source:reference?await imageData(reference):null,images,albumId:frame._assetBookId||'unassigned'},signal),330000);
   const result=await response.json();if(!result.image)throw Error('渠道未返回图片。');return result;
 }
 function installImageProviders(){
@@ -253,12 +257,54 @@ function installImageProviders(){
   const oldRender=render;render=function(){oldRender();const nonComfy=activeImageProfile().provider!=='comfyui';document.querySelectorAll('[data-act="ws-edit-scene-workflow"]').forEach(el=>el.hidden=nonComfy);if(ui.workspace===3){const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent='图像引擎'}};
   const oldAction=handleAction;handleAction=async function(action,d={},el){if(action.startsWith('image-provider-')||action.startsWith('image-key-')){if(await handleImageProviderAction(action,d,el))return}return oldAction(action,d,el)};
   $('#modal').addEventListener('close',()=>{const key=$('#image-provider-key');if(key)key.value=''});
-  document.addEventListener('input',e=>{const el=e.target;if(el.dataset.imageConfig&&el.type!=='checkbox'&&el.tagName==='INPUT'){activeImageProfile()[el.dataset.imageConfig]=el.value.trim();save()}});
+  document.addEventListener('input',e=>{const el=e.target;if(el.dataset.imageConfig&&el.type!=='checkbox'&&el.tagName==='INPUT'){activeImageProfile()[el.dataset.imageConfig]=el.value.trim();save();if(el.id==='image-provider-model-input')showImageModelResults()}});
+  document.addEventListener('focusin',e=>{if(e.target.id==='image-provider-model-input')showImageModelResults()});
+  document.addEventListener('focusout',e=>{if(e.target.id==='image-provider-model-input')closeImageModelResults()});
+  let modelTouch=null;
+  document.addEventListener('pointerdown',e=>{const option=e.target.closest('[data-act="image-provider-pick-model"]');if(option){e.preventDefault();if(e.pointerType!=='mouse')modelTouch={id:e.pointerId,x:e.clientX,y:e.clientY,model:option.dataset.model}}else if(!e.target.closest('.provider-model-combobox'))closeImageModelResults()});
+  document.addEventListener('pointermove',e=>{if(modelTouch&&modelTouch.id===e.pointerId&&Math.hypot(e.clientX-modelTouch.x,e.clientY-modelTouch.y)>10)modelTouch=null});
+  document.addEventListener('pointercancel',()=>{modelTouch=null});
+  document.addEventListener('pointerup',e=>{if(modelTouch&&modelTouch.id===e.pointerId){const picked=modelTouch;modelTouch=null;if(Math.hypot(e.clientX-picked.x,e.clientY-picked.y)<=10)chooseImageModel(picked.model)}});
+
+  document.addEventListener('keydown',e=>{
+    if(e.target.id!=='image-provider-model-input'||e.isComposing)return;
+    const list=$('#image-provider-model-results');if(!list)return;
+    if(e.key==='Escape'){closeImageModelResults();e.preventDefault();e.stopImmediatePropagation();return}
+    if(!['ArrowDown','ArrowUp','Enter'].includes(e.key))return;
+    if(e.key==='Enter'&&list.hidden)return;
+    e.preventDefault();e.stopImmediatePropagation();
+    if(list.hidden)showImageModelResults();
+    const options=[...list.querySelectorAll('[role="option"]')];if(!options.length)return;
+    if(e.key==='Enter'){chooseImageModel(options[Math.max(0,imageProviderUI.modelIndex)].dataset.model);return}
+    imageProviderUI.modelIndex=(imageProviderUI.modelIndex+(e.key==='ArrowDown'?1:imageProviderUI.modelIndex<0?0:-1)+options.length)%options.length;
+    options.forEach((option,i)=>option.setAttribute('aria-selected',String(i===imageProviderUI.modelIndex)));
+    const active=options[imageProviderUI.modelIndex];e.target.setAttribute('aria-activedescendant',active.id);active.scrollIntoView({block:'nearest'});
+  },true);
   document.addEventListener('change',e=>{
     const el=e.target,p=activeImageProfile();
     if(el.id==='image-provider-select'){ensureImageProviders().active=el.value;save();render();return}
     if(el.id==='image-provider-auth'){p.keyMode=el.value;save();render();return}
-    if(el.id==='image-provider-model-select'&&el.value){p.model=el.value;save();render();return}
     if(el.dataset.imageConfig){p[el.dataset.imageConfig]=el.type==='checkbox'?el.checked:el.value.trim();save();if(['sendSize','sendQuality','protocol','baseUrl'].includes(el.dataset.imageConfig))render()}
   });
+}
+
+function filterImageModels(models,query){const words=query.trim().toLowerCase().split(/\s+/).filter(Boolean);return models.filter(id=>words.every(word=>id.toLowerCase().includes(word)))}
+function closeImageModelResults(){const input=$('#image-provider-model-input'),list=$('#image-provider-model-results');if(list)list.hidden=true;if(input){input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant')}imageProviderUI.modelIndex=-1}
+function showImageModelResults(){
+  const input=$('#image-provider-model-input'),list=$('#image-provider-model-results');if(!input||!list)return;
+  const models=imageProviderUI.models.get(imageModelsCacheKey(activeImageProfile()))||[],matches=filterImageModels(models,input.value);
+  imageProviderUI.modelIndex=-1;input.removeAttribute('aria-activedescendant');input.setAttribute('aria-expanded','true');list.hidden=false;
+  list.innerHTML=`<div class="provider-model-hint">${models.length?(matches.length?'匹配 '+matches.length+' / '+models.length+' 个 · ↑↓ 选择，Enter 确认':'无匹配模型，仍可使用手动填写的 ID'):'尚未获取模型列表，可直接填写 ID 或点击获取'}</div>`+matches.map((id,i)=>`<button type="button" role="option" tabindex="-1" aria-selected="false" id="provider-model-option-${i}" data-act="image-provider-pick-model" data-model="${esc(id)}">${esc(id)}</button>`).join('');fitImageModelResults();
+}
+function chooseImageModel(model){
+  const input=$('#image-provider-model-input'),models=imageProviderUI.models.get(imageModelsCacheKey(activeImageProfile()))||[];
+  if(!input||!models.includes(model))return;
+  activeImageProfile().model=model;input.value=model;save();input.focus();closeImageModelResults();
+}
+function fitImageModelResults(){
+  const input=$('#image-provider-model-input'),list=$('#image-provider-model-results');if(!input||!list||list.hidden)return;
+  if(!matchMedia('(max-width:760px), (max-width:950px) and (hover:none) and (pointer:coarse)').matches){list.style.top='';list.style.bottom='';list.style.maxHeight='';return}
+  const view=window.visualViewport,top=view?.offsetTop||0,height=view?.height||innerHeight,rect=input.getBoundingClientRect(),keyboard=innerHeight-height>140;
+  const below=top+height-rect.bottom-(keyboard?12:100),above=rect.top-top-12,up=below<160&&above>below;
+  list.style.top=up?'auto':'calc(100% + 6px)';list.style.bottom=up?'calc(100% + 6px)':'auto';list.style.maxHeight=Math.max(70,Math.min(280,up?above:below))+'px';
 }

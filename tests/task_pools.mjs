@@ -1,0 +1,56 @@
+// Browser -> real Python dispatcher -> controlled HTTP requests. No paid generation.
+import {chromium} from 'playwright';
+import {spawn} from 'node:child_process';
+import {createServer} from 'node:http';
+import {mkdtempSync,cpSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {fileURLToPath} from 'node:url';
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),temp=mkdtempSync(path.join(tmpdir(),'mio-pools-'));
+for(const name of ['providers','mio_jobs.py','mio_frame_jobs.py','mio_channels.py','mio_contracts.py','mio_foundation.py','server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true});
+const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=',pending=new Map(),calls=[],wire=[],active=new Set();let peak=0;
+const upstream=createServer(async(req,res)=>{let raw='';for await(const chunk of req)raw+=chunk;const body=JSON.parse(raw),prompt=body.prompt.split('\n')[0];wire.push({prompt,model:body.model,url:req.url,quality:body.quality});calls.push(prompt);active.add(prompt);peak=Math.max(peak,active.size);let release;const held=new Promise(resolve=>release=resolve);pending.set(prompt,release);res.on('close',()=>{active.delete(prompt);if(pending.get(prompt)===release)pending.delete(prompt);release()});await held;if(!res.destroyed){active.delete(prompt);pending.delete(prompt);res.setHeader('Content-Type','application/json');res.end(JSON.stringify({data:[{b64_json:Buffer.concat([Buffer.from(png,'base64'),Buffer.from(prompt)]).toString('base64')}]}))}});
+await new Promise(resolve=>upstream.listen(0,'127.0.0.1',resolve));const url='http://127.0.0.1:'+upstream.address().port+'/v1',base='http://127.0.0.1:8797',token='p'.repeat(40);
+const server=spawn('python',['-u','server.py'],{cwd:temp,env:{...process.env,MIO_PORT:'8797',MIO_API_TOKEN:token},stdio:['ignore','pipe','pipe']});let browser,checks=0;const check=(n,v)=>{assert.ok(v,n);checks++;console.log('PASS '+n)};
+async function api(route,body){const r=await fetch(base+'/api/v1/'+route,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});const data=await r.json();if(!r.ok)throw Error(JSON.stringify(data));return data.data}
+async function until(fn){for(let i=0;i<150;i++){if(await fn())return;await new Promise(r=>setTimeout(r,50))}throw Error('condition timeout; active='+[...active].join(','))}
+try{
+ await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('startup')),10000);server.stdout.on('data',d=>{if(d.toString().includes('物理落盘')){clearTimeout(t);resolve()}})});
+ browser=await chromium.launch({args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1400,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route(/^https:\/\//,r=>r.abort());await page.goto(base);await page.waitForFunction(()=>!rt.booting);
+ await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());createUI.tab='queue';navigate(1)});await page.waitForFunction(()=>foundationRuntime.runtimeLoaded);await page.locator('#queue-concurrency').fill('4');await page.locator('[data-act="queue-runtime-save"]').click();await page.waitForFunction(()=>foundationRuntime.runtime.concurrency===4);
+ const jobs=await page.evaluate(async url=>{state.settings.identity.onboarded=true;state.settings.comfy.mode='real';state.queue=[];state.books=[];const p=selectedPlan(),t=templateBy(p.templateId);p.storyVersionId='';const frame=clone(t.frames[0]);const g=ensureImageProviders();g.profiles.push({id:'pools',title:'Pool acceptance',provider:'openai',protocol:'images',model:'test',baseUrl:url,keyMode:'none',sendSize:false,sendQuality:false});g.active='pools';for(const name of ['a','b','c']){t.frames=Array.from({length:name==='c'?2:8},(_,i)=>({...clone(frame),id:uid('frame'),prompt:'pool-'+name+'-'+i,negative:''}));const b=enqueuePlanSnapshot(p);b.title='Pool '+name.toUpperCase()}save();await savePythonWorkspace(true);await runQueue();return state.queue.map(q=>({id:q.serverId,qid:q.id,book:q.bookId}))},url);
+ await until(()=>active.size===4);check('one task starts frames 1–4 simultaneously',[...active].sort().join(',')==='pool-a-0,pool-a-1,pool-a-2,pool-a-3');check('queued tasks do not start themselves',(await api('jobs/'+jobs[1].id)).attempts===0&&(await api('jobs/'+jobs[2].id)).attempts===0);
+ await page.evaluate(()=>modal('渠道设置',imageProviderPanel()));await page.locator('#image-provider-model-input').fill('updated-model');await page.locator('[data-image-config="baseUrl"]').fill(url+'/changed');await page.evaluate(async()=>{if(!await savePythonWorkspace())throw Error('channel save failed');closeModal();await pollFoundationJobs()});
+ check('queue shows server-saved next-request model',await page.locator('.queue-channel-line').first().innerText().then(t=>t.includes('updated-model')));
+ pending.get('pool-a-1')();await until(()=>active.has('pool-a-4'));
+ check('finishing frame 2 immediately refills frame 5 while frame 1 is still waiting',active.has('pool-a-0')&&active.size===4);
+ const first=await api('jobs/'+jobs[0].id);check('sparse results retain original index and do not pretend the first frame completed',first.cursor===1&&first.completedIndices.join(',')==='1'&&first.results[0].index===1&&first.results[0].prompt==='pool-a-1');
+ await page.waitForFunction(id=>bookBy(id)?.generatedSteps===1,jobs[0].book);check('browser stores out-of-order image under the correct scene',await page.evaluate(id=>bookBy(id).steps.length===1&&bookBy(id).steps[0].stepIndex===1,jobs[0].book));
+ await page.locator(`[data-act="queue-start-parallel"][data-id="${jobs[1].qid}"]`).click();await page.locator('#confirm-dialog[open]').waitFor();check('manual start explains independent additive concurrency',(await page.locator('#confirm-dialog').innerText()).includes('8 个请求'));await page.locator('#confirm-yes').click();await until(()=>active.size===8);
+ check('two tasks really hold four HTTP requests each',active.size===8&&[...active].filter(x=>x.startsWith('pool-a')).length===4&&[...active].filter(x=>x.startsWith('pool-b')).length===4);
+ pending.get('pool-b-2')();await until(()=>active.has('pool-b-4'));check('second task refills independently of every pending first-task request',active.has('pool-a-0')&&active.has('pool-b-4')&&active.size===8);
+ check('changed model and address reach later requests in both linked tasks',wire.find(r=>r.prompt==='pool-a-4').model==='updated-model'&&wire.find(r=>r.prompt==='pool-b-0').model==='updated-model'&&wire.find(r=>r.prompt==='pool-a-4').url.startsWith('/v1/changed/'));
+ check('already-sent requests keep original model',wire.filter(r=>/^pool-a-[0-3]$/.test(r.prompt)).every(r=>r.model==='test'));
+ await page.evaluate(()=>window.scrollTo(0,0));await page.screenshot({path:'/home/user/queue-review.png'});
+ await page.locator('.queue-card-details').first().locator(':scope > summary').click();await page.evaluate(()=>updateQueueUI());check('task details stay open through status refresh',await page.locator('.queue-card-details').first().evaluate(el=>el.open));
+ check('third queued task remains waiting during both pools',(await api('jobs/'+jobs[2].id)).attempts===0);
+ await page.evaluate(()=>{createUI.tab='story';ui.frameIndex=0;render()});await page.locator('#v3-scene-scope').selectOption('task:'+jobs[0].qid);
+ check('existing editor selects an exact album version with its own eight scenes',await page.locator('.quiet-scene').count()===8&&(await page.locator('[data-v3-frame="prompt"]').inputValue())==='pool-a-0');
+ await page.locator('[data-v3-frame="prompt"]').fill('pool-a-edited-inflight');await page.evaluate(async()=>{flushEditor();if(!await savePythonWorkspace())throw Error('save failed')});
+ await page.locator('#v3-scene-scope').selectOption('task:'+jobs[2].qid);await page.locator('[data-v3-frame="prompt"]').fill('pool-c-updated');await page.evaluate(async()=>{flushEditor();if(!await savePythonWorkspace())throw Error('save failed')});
+ check('original storyboard editor saves task-local text without changing shared template',await page.evaluate(()=>templateBy(selectedPlan().templateId).frames[0].prompt==='pool-c-0'&&bookBy(liveStoryboardTask(selectedPlan()).bookId).sourceSnapshot.liveInputs[0].input.prompt==='pool-c-updated'));
+ check('independent prompt editing entry has been removed',await page.locator('[data-act="queue-edit"]').count()===0);await page.goto('about:blank');
+ await api('jobs/scheduler',{action:'pause'});for(const release of [...pending.values()])release();await until(async()=>!(await api('jobs')).jobs.some(j=>j.running_count));
+ check('global pause stops refills but preserves all returned indexed results',(await api('jobs/'+jobs[0].id)).completedIndices.join(',')==='0,1,2,3,4'&&(await api('jobs/'+jobs[1].id)).completedIndices.join(',')==='0,1,2,3,4');
+ await api('jobs/'+jobs[0].id,{action:'cancel'});await api('jobs/scheduler',{action:'resume'});await until(()=>active.size===3);
+ check('near the end a task only sends the three remaining frames',[...active].sort().join(',')==='pool-b-5,pool-b-6,pool-b-7');for(const release of [...pending.values()])release();await until(()=>active.has('pool-c-updated')&&active.has('pool-c-1'));
+ check('next FIFO task starts after earlier active work finishes',(await api('jobs/'+jobs[1].id)).state==='complete');for(const release of [...pending.values()])release();await until(async()=>(await api('jobs/'+jobs[2].id)).state==='complete');
+ check('no successful frame was requested twice',new Set(calls).size===calls.length);check('observed combined maximum is eight, not a shared four-slot cap',peak===8);
+ check('editing an in-flight scene does not replace the request already sent',(await api('jobs/'+jobs[0].id)).results.find(r=>r.index===0).prompt==='pool-a-0');
+ check('service reads latest saved scene after the browser leaves',calls.includes('pool-c-updated')&&!calls.includes('pool-c-0')&&(await api('jobs/'+jobs[2].id)).requestHistory.some(a=>a.prompt==='pool-c-updated'));
+ await page.goto(base);await page.waitForFunction(()=>!rt.booting);await page.evaluate(async()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());await pollFoundationJobs()});
+ check('reload restores sparse/complete results to their original albums',await page.evaluate(j=>bookBy(j[0].book).generatedSteps===5&&bookBy(j[1].book).generatedSteps===8&&bookBy(j[1].book).steps.every((f,i)=>f.stepIndex===i),jobs));
+ check('attempt history records resolved model rather than initial model',(await api('jobs/'+jobs[1].id)).requestHistory.every(a=>a.config.model==='updated-model'));
+ check('no browser runtime errors',errors.length===0);console.log(`Task-pool acceptance: ${checks} checks passed`);
+}finally{for(const release of pending.values())release();await browser?.close();server.kill();await new Promise(resolve=>server.once('exit',resolve));await new Promise(resolve=>upstream.close(resolve));rmSync(temp,{recursive:true,force:true})}

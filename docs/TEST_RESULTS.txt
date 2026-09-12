@@ -1,6 +1,31 @@
+Mio validation — 2026-09-12
+Latest release: external frontend / whole-book reader / HTTP retry rules / request evidence
+
+667 passed; 4 Windows-native cases skipped.
+Build and lint passed; 25 offline documentation pages generated.
+JS contracts: 54 passed
+Python: 185 passed
+Browser smoke: 101 passed
+Assistant: 17 passed
+Templates/providers: 32 passed
+Presentation: 42 passed
+Image variables: 30 passed
+Foundation: 21 passed
+Mobile Chromium: 54 passed
+Experience: 19 passed
+Recovery: 32 passed
+Task pools: 26 passed
+Mobile WebKit: 54 passed
+
+Validation used controlled local HTTP providers and browser automation. No paid cloud generation, real GPU, physical phone or Windows executable build was performed.
+Reader screenshots use repeated existing demo art strictly as test fixtures; they are not generated production results.
+The default 512-frame reader remains single-image; whole-book custom templates intentionally prepare the whole book and still incur loading/memory cost. External source separation is not lazy loading.
+
+Commands: npm run build; npm test; npm run test:mobile:webkit
+
 
 > mio-studio@1.0.0 test
-> npm run lint && npm run test:contracts && npm run test:py && npm run test:smoke && npm run test:assistant && npm run test:templates && npm run test:presentation
+> npm run lint && npm run test:contracts && npm run test:py && npm run test:smoke && npm run test:assistant && npm run test:templates && npm run test:presentation && npm run test:images && npm run test:foundation && npm run test:mobile && npm run test:experience && npm run test:recovery && npm run test:pools
 
 
 > mio-studio@1.0.0 lint
@@ -8,7 +33,7 @@
 
 
 > mio-studio@1.0.0 lint:js
-> eslint js/state.js js/sync.js js/engine.js js/creation.js js/ui.js js/workspace.js js/organize.js js/app.js js/build.js js/tests.js
+> eslint js/state.js js/sync.js js/engine.js js/creation.js js/ui-presentation.js js/ui-reader.js js/ui-templates.js js/ui-export.js js/ui-editors.js js/ui-locale.js js/ui-assistant.js js/ui-storyboard.js js/ui-gallery.js js/ui-settings.js js/ui.js js/workspace.js js/organize.js js/foundation.js js/app.js js/build.js js/tests.js
 
 
 > mio-studio@1.0.0 lint:html
@@ -92,89 +117,182 @@ test_none_auth_does_not_fall_back_to_environment (test_credentials.CredentialTes
 test_purge_includes_prior_endpoints_but_not_other_channels (test_credentials.CredentialTests.test_purge_includes_prior_endpoints_but_not_other_channels) ... ok
 test_trailing_slash_and_default_port_normalize (test_credentials.CredentialTests.test_trailing_slash_and_default_port_normalize) ... ok
 test_generated_documents_are_current (test_docs_server.DocumentationServingTests.test_generated_documents_are_current) ... ok
-test_head_matches_get (test_docs_server.DocumentationServingTests.test_head_matches_get) ... 127.0.0.1 - - [09/Sep/2026 15:49:13] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
-127.0.0.1 - - [09/Sep/2026 15:49:13] "HEAD /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
+test_head_matches_get (test_docs_server.DocumentationServingTests.test_head_matches_get) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
+127.0.0.1 - - [12/Sep/2026 05:26:28] "HEAD /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
 ok
-test_legacy_markdown_url_serves_utf8_reader (test_docs_server.DocumentationServingTests.test_legacy_markdown_url_serves_utf8_reader) ... 127.0.0.1 - - [09/Sep/2026 15:49:13] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
+test_legacy_markdown_url_serves_utf8_reader (test_docs_server.DocumentationServingTests.test_legacy_markdown_url_serves_utf8_reader) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
 ok
-test_prebuilt_guide_is_served_with_charset (test_docs_server.DocumentationServingTests.test_prebuilt_guide_is_served_with_charset) ... 127.0.0.1 - - [09/Sep/2026 15:49:13] "GET /docs/guide/CHANNELS_AND_KEYS.html HTTP/1.1" 200 -
+test_prebuilt_guide_is_served_with_charset (test_docs_server.DocumentationServingTests.test_prebuilt_guide_is_served_with_charset) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /docs/guide/CHANNELS_AND_KEYS.html HTTP/1.1" 200 -
 ok
-test_private_and_traversal_paths_remain_denied (test_docs_server.DocumentationServingTests.test_private_and_traversal_paths_remain_denied) ... 127.0.0.1 - - [09/Sep/2026 15:49:13] "GET /docs/../server.py HTTP/1.1" 404 -
-127.0.0.1 - - [09/Sep/2026 15:49:13] "GET /docs/../data/secrets/provider-keys.json HTTP/1.1" 404 -
-127.0.0.1 - - [09/Sep/2026 15:49:13] "GET /mio_docs.py HTTP/1.1" 404 -
+test_private_and_traversal_paths_remain_denied (test_docs_server.DocumentationServingTests.test_private_and_traversal_paths_remain_denied) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /docs/../server.py HTTP/1.1" 404 -
+127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /docs/../data/secrets/provider-keys.json HTTP/1.1" 404 -
+127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /mio_docs.py HTTP/1.1" 404 -
 ok
-test_raw_markdown_is_explicit_utf8_without_modifying_source (test_docs_server.DocumentationServingTests.test_raw_markdown_is_explicit_utf8_without_modifying_source) ... 127.0.0.1 - - [09/Sep/2026 15:49:13] "GET /docs/WORKFLOW_UPDATE.md?raw=1 HTTP/1.1" 200 -
+test_raw_markdown_is_explicit_utf8_without_modifying_source (test_docs_server.DocumentationServingTests.test_raw_markdown_is_explicit_utf8_without_modifying_source) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /docs/WORKFLOW_UPDATE.md?raw=1 HTTP/1.1" 200 -
 ok
 test_readme_banner_is_vector_not_font_dependent_block_text (test_docs_server.DocumentationServingTests.test_readme_banner_is_vector_not_font_dependent_block_text) ... ok
 test_renderer_does_not_allow_source_to_break_out_of_json (test_docs_server.DocumentationServingTests.test_renderer_does_not_allow_source_to_break_out_of_json) ... ok
-test_text_asset_charsets_are_explicit (test_docs_server.DocumentationServingTests.test_text_asset_charsets_are_explicit) ... 127.0.0.1 - - [09/Sep/2026 15:49:13] "GET /README.md?raw=1 HTTP/1.1" 200 -
-127.0.0.1 - - [09/Sep/2026 15:49:13] "GET /docs/api/openapi.json HTTP/1.1" 200 -
-127.0.0.1 - - [09/Sep/2026 15:49:13] "GET /styles.css HTTP/1.1" 200 -
+test_text_asset_charsets_are_explicit (test_docs_server.DocumentationServingTests.test_text_asset_charsets_are_explicit) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /README.md?raw=1 HTTP/1.1" 200 -
+127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /docs/api/openapi.json HTTP/1.1" 200 -
+127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /styles.css HTTP/1.1" 200 -
 ok
 test_new_documentation_links_resolve_locally (test_documentation.DocumentationTests.test_new_documentation_links_resolve_locally) ... ok
 test_product_metadata_and_portable_spec (test_documentation.DocumentationTests.test_product_metadata_and_portable_spec) ... ok
 test_release_readme_is_the_maintained_readme (test_documentation.DocumentationTests.test_release_readme_is_the_maintained_readme) ... ok
-test_album_dto_removes_source_snapshots (test_external_api.ExternalApiTests.test_album_dto_removes_source_snapshots) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/albums HTTP/1.1" 200 -
+test_album_dto_removes_source_snapshots (test_external_api.ExternalApiTests.test_album_dto_removes_source_snapshots) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /api/v1/albums HTTP/1.1" 200 -
 ok
-test_asset_path_is_local_and_traversal_safe (test_external_api.ExternalApiTests.test_asset_path_is_local_and_traversal_safe) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/assets?path=https%3A%2F%2Fevil.example%2Fa.png HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/assets?path=%2Fimages%2F..%2Fserver.py HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/assets?path=%2Fetc%2Fpasswd HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/assets?path=%2Fimages%2Fa.png HTTP/1.1" 200 -
+test_asset_path_is_local_and_traversal_safe (test_external_api.ExternalApiTests.test_asset_path_is_local_and_traversal_safe) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /api/v1/assets?path=https%3A%2F%2Fevil.example%2Fa.png HTTP/1.1" 400 -
+127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /api/v1/assets?path=%2Fimages%2F..%2Fserver.py HTTP/1.1" 400 -
+127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /api/v1/assets?path=%2Fetc%2Fpasswd HTTP/1.1" 400 -
+127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /api/v1/assets?path=%2Fimages%2Fa.png HTTP/1.1" 200 -
 ok
-test_busy_returns_429 (test_external_api.ExternalApiTests.test_busy_returns_429) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "POST /api/v1/images/generations HTTP/1.1" 429 -
+test_busy_returns_429 (test_external_api.ExternalApiTests.test_busy_returns_429) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "POST /api/v1/images/generations HTTP/1.1" 429 -
 ok
-test_capabilities_are_honest (test_external_api.ExternalApiTests.test_capabilities_are_honest) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/capabilities HTTP/1.1" 200 -
+test_capabilities_are_honest (test_external_api.ExternalApiTests.test_capabilities_are_honest) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /api/v1/capabilities HTTP/1.1" 200 -
 ok
-test_disabled_without_strong_token (test_external_api.ExternalApiTests.test_disabled_without_strong_token) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/health HTTP/1.1" 503 -
+test_disabled_without_strong_token (test_external_api.ExternalApiTests.test_disabled_without_strong_token) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /api/v1/health HTTP/1.1" 503 -
 ok
-test_generates_once_without_mutating_browser_queue (test_external_api.ExternalApiTests.test_generates_once_without_mutating_browser_queue) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "POST /api/v1/images/generations HTTP/1.1" 200 -
+test_external_upstream_status_and_details_are_preserved (test_external_api.ExternalApiTests.test_external_upstream_status_and_details_are_preserved) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "POST /api/v1/images/generations HTTP/1.1" 429 -
 ok
-test_health (test_external_api.ExternalApiTests.test_health) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/health HTTP/1.1" 200 -
+test_generates_once_without_mutating_browser_queue (test_external_api.ExternalApiTests.test_generates_once_without_mutating_browser_queue) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "POST /api/v1/images/generations HTTP/1.1" 200 -
 ok
-test_invalid_pagination (test_external_api.ExternalApiTests.test_invalid_pagination) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/albums?limit=101 HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/albums?offset=-1 HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/albums?limit=no HTTP/1.1" 400 -
+test_health (test_external_api.ExternalApiTests.test_health) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /api/v1/health HTTP/1.1" 200 -
+ok
+test_invalid_pagination (test_external_api.ExternalApiTests.test_invalid_pagination) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /api/v1/albums?limit=101 HTTP/1.1" 400 -
+127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /api/v1/albums?offset=-1 HTTP/1.1" 400 -
+127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /api/v1/albums?limit=no HTTP/1.1" 400 -
 ok
 test_mio_environment_takes_precedence_with_legacy_fallback (test_external_api.ExternalApiTests.test_mio_environment_takes_precedence_with_legacy_fallback) ... ok
 test_openapi_file_matches_runtime (test_external_api.ExternalApiTests.test_openapi_file_matches_runtime) ... ok
-test_origin_rejected_on_external_and_private_reads (test_external_api.ExternalApiTests.test_origin_rejected_on_external_and_private_reads) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/health HTTP/1.1" 403 -
-127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/config HTTP/1.1" 403 -
+test_ordered_images_reach_generation_adapter (test_external_api.ExternalApiTests.test_ordered_images_reach_generation_adapter) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "POST /api/v1/images/generations HTTP/1.1" 200 -
 ok
-test_preflight_allows_authorization_only_for_known_origins (test_external_api.ExternalApiTests.test_preflight_allows_authorization_only_for_known_origins) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "OPTIONS /api/v1/health HTTP/1.1" 204 -
+test_origin_rejected_on_external_and_private_reads (test_external_api.ExternalApiTests.test_origin_rejected_on_external_and_private_reads) ... 127.0.0.1 - - [12/Sep/2026 05:26:28] "GET /api/v1/health HTTP/1.1" 403 -
+127.0.0.1 - - [12/Sep/2026 05:26:29] "GET /api/config HTTP/1.1" 403 -
 ok
-test_provider_dto_does_not_leak_secrets_or_urls (test_external_api.ExternalApiTests.test_provider_dto_does_not_leak_secrets_or_urls) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/providers HTTP/1.1" 200 -
+test_preflight_allows_authorization_only_for_known_origins (test_external_api.ExternalApiTests.test_preflight_allows_authorization_only_for_known_origins) ... 127.0.0.1 - - [12/Sep/2026 05:26:29] "OPTIONS /api/v1/health HTTP/1.1" 204 -
 ok
-test_rejects_ambiguous_or_unsupported_requests (test_external_api.ExternalApiTests.test_rejects_ambiguous_or_unsupported_requests) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 15:49:14] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 15:49:14] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 15:49:14] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [09/Sep/2026 15:49:14] "POST /api/v1/images/generations HTTP/1.1" 400 -
+test_private_generation_preserves_status_and_error_body (test_external_api.ExternalApiTests.test_private_generation_preserves_status_and_error_body) ... 127.0.0.1 - - [12/Sep/2026 05:26:29] "POST /api/image/generate HTTP/1.1" 422 -
 ok
-test_schema_is_raw_and_secured (test_external_api.ExternalApiTests.test_schema_is_raw_and_secured) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/openapi.json HTTP/1.1" 200 -
+test_provider_dto_does_not_leak_secrets_or_urls (test_external_api.ExternalApiTests.test_provider_dto_does_not_leak_secrets_or_urls) ... 127.0.0.1 - - [12/Sep/2026 05:26:29] "GET /api/v1/providers HTTP/1.1" 200 -
 ok
-test_storyboard_dto_removes_execution_snapshots (test_external_api.ExternalApiTests.test_storyboard_dto_removes_execution_snapshots) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/storyboards?limit=1&offset=0 HTTP/1.1" 200 -
+test_rejects_ambiguous_or_unsupported_requests (test_external_api.ExternalApiTests.test_rejects_ambiguous_or_unsupported_requests) ... 127.0.0.1 - - [12/Sep/2026 05:26:29] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [12/Sep/2026 05:26:29] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [12/Sep/2026 05:26:29] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [12/Sep/2026 05:26:29] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [12/Sep/2026 05:26:29] "POST /api/v1/images/generations HTTP/1.1" 400 -
 ok
-test_token_required (test_external_api.ExternalApiTests.test_token_required) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/health HTTP/1.1" 401 -
+test_schema_is_raw_and_secured (test_external_api.ExternalApiTests.test_schema_is_raw_and_secured) ... 127.0.0.1 - - [12/Sep/2026 05:26:29] "GET /api/v1/openapi.json HTTP/1.1" 200 -
 ok
-test_unknown_route_and_method (test_external_api.ExternalApiTests.test_unknown_route_and_method) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "GET /api/v1/nope HTTP/1.1" 404 -
-127.0.0.1 - - [09/Sep/2026 15:49:14] "DELETE /api/v1/albums HTTP/1.1" 405 -
+test_storyboard_dto_removes_execution_snapshots (test_external_api.ExternalApiTests.test_storyboard_dto_removes_execution_snapshots) ... 127.0.0.1 - - [12/Sep/2026 05:26:29] "GET /api/v1/storyboards?limit=1&offset=0 HTTP/1.1" 200 -
 ok
-test_upstream_error_is_sanitized_and_slot_released (test_external_api.ExternalApiTests.test_upstream_error_is_sanitized_and_slot_released) ... 127.0.0.1 - - [09/Sep/2026 15:49:14] "POST /api/v1/images/generations HTTP/1.1" 502 -
+test_token_required (test_external_api.ExternalApiTests.test_token_required) ... 127.0.0.1 - - [12/Sep/2026 05:26:29] "GET /api/v1/health HTTP/1.1" 401 -
 ok
+test_unknown_route_and_method (test_external_api.ExternalApiTests.test_unknown_route_and_method) ... 127.0.0.1 - - [12/Sep/2026 05:26:29] "GET /api/v1/nope HTTP/1.1" 404 -
+127.0.0.1 - - [12/Sep/2026 05:26:29] "DELETE /api/v1/albums HTTP/1.1" 405 -
+ok
+test_upstream_error_is_sanitized_and_slot_released (test_external_api.ExternalApiTests.test_upstream_error_is_sanitized_and_slot_released) ... 127.0.0.1 - - [12/Sep/2026 05:26:29] "POST /api/v1/images/generations HTTP/1.1" 502 -
+ok
+test_channel_reference_replaces_model_endpoint_and_credential_binding (test_foundation.FoundationSafetyTests.test_channel_reference_replaces_model_endpoint_and_credential_binding) ... ok
+test_cleanup_is_preview_confirmed_and_recoverable (test_foundation.FoundationSafetyTests.test_cleanup_is_preview_confirmed_and_recoverable) ... ok
+test_comfy_reconcile_only_reads_history_without_resubmit (test_foundation.FoundationSafetyTests.test_comfy_reconcile_only_reads_history_without_resubmit) ... ok
+test_extra_params_cannot_override_bound_fields (test_foundation.FoundationSafetyTests.test_extra_params_cannot_override_bound_fields) ... ok
+test_invalid_saved_draft_is_not_silently_ignored (test_foundation.FoundationSafetyTests.test_invalid_saved_draft_is_not_silently_ignored) ... ok
+test_job_snapshot_protects_old_image (test_foundation.FoundationSafetyTests.test_job_snapshot_protects_old_image) ... ok
+test_legacy_browser_profile_id_resolves_without_resubmission (test_foundation.FoundationSafetyTests.test_legacy_browser_profile_id_resolves_without_resubmission) ... ok
+test_metadata_and_current_reference_lookup (test_foundation.FoundationSafetyTests.test_metadata_and_current_reference_lookup) ... ok
+test_missing_and_modified_assets_are_reported (test_foundation.FoundationSafetyTests.test_missing_and_modified_assets_are_reported) ... ok
+test_missing_empty_or_type_changed_channel_never_uses_snapshot (test_foundation.FoundationSafetyTests.test_missing_empty_or_type_changed_channel_never_uses_snapshot) ... ok
+test_new_reference_invalidates_cleanup_preview (test_foundation.FoundationSafetyTests.test_new_reference_invalidates_cleanup_preview) ... ok
+test_saved_scene_lookup_is_album_local_and_binding_checked (test_foundation.FoundationSafetyTests.test_saved_scene_lookup_is_album_local_and_binding_checked) ... ok
+test_unknown_job_blocks_cleanup (test_foundation.FoundationSafetyTests.test_unknown_job_blocks_cleanup) ... ok
+test_422_skips_scene_even_with_pause_policy_and_keeps_sparse_results (test_jobs.DurableJobsTests.test_422_skips_scene_even_with_pause_policy_and_keeps_sparse_results) ... ok
+test_abandoning_unknown_does_not_bypass_continuation_consent (test_jobs.DurableJobsTests.test_abandoning_unknown_does_not_bypass_continuation_consent) ... ok
+test_acknowledged_unknown_continues_at_saved_cursor (test_jobs.DurableJobsTests.test_acknowledged_unknown_continues_at_saved_cursor) ... ok
+test_actual_5xx_status_retries_even_when_body_mentions_422 (test_jobs.DurableJobsTests.test_actual_5xx_status_retries_even_when_body_mentions_422) ... ok
+test_all_http_status_classes_and_skipped_422 (test_jobs.DurableJobsTests.test_all_http_status_classes_and_skipped_422) ... ok
+test_amend_hole_before_completed_count_and_reject_finished_index (test_jobs.DurableJobsTests.test_amend_hole_before_completed_count_and_reject_finished_index) ... ok
+test_amend_keeps_completed_prefix_and_original_idempotency (test_jobs.DurableJobsTests.test_amend_keeps_completed_prefix_and_original_idempotency) ... ok
+test_auth_error_does_not_auto_retry (test_jobs.DurableJobsTests.test_auth_error_does_not_auto_retry) ... ok
+test_bounded_retry_preserves_fifo_and_exhausts (test_jobs.DurableJobsTests.test_bounded_retry_preserves_fifo_and_exhausts) ... ok
+test_cancel_before_dispatch (test_jobs.DurableJobsTests.test_cancel_before_dispatch) ... ok
+test_cancel_immediately_discards_current_and_stops_next_frame (test_jobs.DurableJobsTests.test_cancel_immediately_discards_current_and_stops_next_frame) ... ok
+test_cancel_retry_wait_prevents_future_attempts (test_jobs.DurableJobsTests.test_cancel_retry_wait_prevents_future_attempts) ... ok
+test_changed_content_does_not_mutate_inflight_request (test_jobs.DurableJobsTests.test_changed_content_does_not_mutate_inflight_request) ... ok
+test_changing_policy_disarms_waiting_retry (test_jobs.DurableJobsTests.test_changing_policy_disarms_waiting_retry) ... ok
+test_channel_configuration_error_blocks_dispatch_without_provider_calls (test_jobs.DurableJobsTests.test_channel_configuration_error_blocks_dispatch_without_provider_calls) ... ok
+test_conflicting_key_rejected (test_jobs.DurableJobsTests.test_conflicting_key_rejected) ... ok
+test_continue_completes_other_frames_before_next_task (test_jobs.DurableJobsTests.test_continue_completes_other_frames_before_next_task) ... ok
+test_default_unknown_frame_does_not_block_later_frames (test_jobs.DurableJobsTests.test_default_unknown_frame_does_not_block_later_frames) ... ok
+test_events_have_monotonic_replay_ids (test_jobs.DurableJobsTests.test_events_have_monotonic_replay_ids) ... ok
+test_executes_all_frames_without_a_browser (test_jobs.DurableJobsTests.test_executes_all_frames_without_a_browser) ... ok
+test_failed_head_yields_without_defer_or_replaying_frames (test_jobs.DurableJobsTests.test_failed_head_yields_without_defer_or_replaying_frames) ... ok
+test_final_request_parameters_are_separate_and_safe (test_jobs.DurableJobsTests.test_final_request_parameters_are_separate_and_safe) ... ok
+test_four_frame_window_refills_without_waiting_for_slowest (test_jobs.DurableJobsTests.test_four_frame_window_refills_without_waiting_for_slowest) ... ok
+test_hold_disarms_retry_and_activity_survives_reload (test_jobs.DurableJobsTests.test_hold_disarms_retry_and_activity_survives_reload) ... ok
+test_idempotent_submit_never_reexecutes (test_jobs.DurableJobsTests.test_idempotent_submit_never_reexecutes) ... ok
+test_inline_credentials_and_inline_images_are_rejected (test_jobs.DurableJobsTests.test_inline_credentials_and_inline_images_are_rejected) ... ok
+test_interrupted_attempt_becomes_unknown_without_retry (test_jobs.DurableJobsTests.test_interrupted_attempt_becomes_unknown_without_retry) ... ok
+test_invalid_live_input_never_falls_back_to_old_paid_request (test_jobs.DurableJobsTests.test_invalid_live_input_never_falls_back_to_old_paid_request) ... ok
+test_lower_concurrency_and_pause_do_not_interrupt_current_attempt (test_jobs.DurableJobsTests.test_lower_concurrency_and_pause_do_not_interrupt_current_attempt) ... ok
+test_malformed_job_configuration_is_rejected_before_execution (test_jobs.DurableJobsTests.test_malformed_job_configuration_is_rejected_before_execution) ... ok
+test_manual_retry_keeps_original_job_and_completed_frames (test_jobs.DurableJobsTests.test_manual_retry_keeps_original_job_and_completed_frames) ... ok
+test_manual_retry_refreshes_auto_budget_and_logs_are_scene_specific (test_jobs.DurableJobsTests.test_manual_retry_refreshes_auto_budget_and_logs_are_scene_specific) ... ok
+test_migrate_existing_prefix_without_resubmission (test_jobs.DurableJobsTests.test_migrate_existing_prefix_without_resubmission) ... ok
+test_migration_failure_never_dispatches_and_releases_lease (test_jobs.DurableJobsTests.test_migration_failure_never_dispatches_and_releases_lease) ... ok
+test_only_one_worker_can_own_a_directory (test_jobs.DurableJobsTests.test_only_one_worker_can_own_a_directory) ... ok
+test_out_of_order_restart_keeps_every_completed_index (test_jobs.DurableJobsTests.test_out_of_order_restart_keeps_every_completed_index) ... ok
+test_parallel_claim_does_not_run_two_jobs_for_same_album (test_jobs.DurableJobsTests.test_parallel_claim_does_not_run_two_jobs_for_same_album) ... ok
+test_parallel_frames_and_default_sequential_albums (test_jobs.DurableJobsTests.test_parallel_frames_and_default_sequential_albums) ... ok
+test_pause_one_task_does_not_block_another_pool (test_jobs.DurableJobsTests.test_pause_one_task_does_not_block_another_pool) ... ok
+test_pending_survives_restart (test_jobs.DurableJobsTests.test_pending_survives_restart) ... ok
+test_persistence_error_after_upstream_success_stays_unknown (test_jobs.DurableJobsTests.test_persistence_error_after_upstream_success_stays_unknown) ... ok
+test_reads_latest_input_after_claim_and_records_actual_attempt (test_jobs.DurableJobsTests.test_reads_latest_input_after_claim_and_records_actual_attempt) ... ok
+test_real_dispatcher_has_no_shared_thirty_two_worker_cap (test_jobs.DurableJobsTests.test_real_dispatcher_has_no_shared_thirty_two_worker_cap) ... ok
+test_reconcile_uses_original_attempt_not_new_saved_prompt (test_jobs.DurableJobsTests.test_reconcile_uses_original_attempt_not_new_saved_prompt) ... ok
+test_reorder_and_global_pause (test_jobs.DurableJobsTests.test_reorder_and_global_pause) ... ok
+test_reorder_does_not_jump_ahead_of_started_book (test_jobs.DurableJobsTests.test_reorder_does_not_jump_ahead_of_started_book) ... ok
+test_retry_does_not_resubmit_successful_frames_after_a_hole (test_jobs.DurableJobsTests.test_retry_does_not_resubmit_successful_frames_after_a_hole) ... ok
+test_retry_policy_validation_and_persistence (test_jobs.DurableJobsTests.test_retry_policy_validation_and_persistence) ... ok
+test_retry_rejects_missing_or_stale_confirmation (test_jobs.DurableJobsTests.test_retry_rejects_missing_or_stale_confirmation) ... ok
+test_runtime_validation_persists_and_reaches_attempt (test_jobs.DurableJobsTests.test_runtime_validation_persists_and_reaches_attempt) ... ok
+test_stale_or_inconsistent_recovery_is_rejected (test_jobs.DurableJobsTests.test_stale_or_inconsistent_recovery_is_rejected) ... ok
+test_stop_closes_all_task_sockets_but_not_other_task (test_jobs.DurableJobsTests.test_stop_closes_all_task_sockets_but_not_other_task) ... ok
+test_stopped_attempt_cannot_overwrite_immediate_continuation (test_jobs.DurableJobsTests.test_stopped_attempt_cannot_overwrite_immediate_continuation) ... ok
+test_task_pause_does_not_pause_other_manual_tasks (test_jobs.DurableJobsTests.test_task_pause_does_not_pause_other_manual_tasks) ... ok
+test_two_manually_started_tasks_each_get_four_slots (test_jobs.DurableJobsTests.test_two_manually_started_tasks_each_get_four_slots) ... ok
+test_unknown_network_result_is_not_retried (test_jobs.DurableJobsTests.test_unknown_network_result_is_not_retried) ... ok
+test_unknown_never_retries_even_when_policy_enabled (test_jobs.DurableJobsTests.test_unknown_never_retries_even_when_policy_enabled) ... ok
+test_worker_lease_is_held_until_inflight_request_finishes (test_jobs.DurableJobsTests.test_worker_lease_is_held_until_inflight_request_finishes) ... ok
 test_blank_optional_values_are_not_replaced_with_defaults (test_providers.ProviderTests.test_blank_optional_values_are_not_replaced_with_defaults) ... ok
+test_chat_base64_text_and_pure_text (test_providers.ProviderTests.test_chat_base64_text_and_pure_text) ... ok
+test_chat_content_blocks_order_and_deduplication (test_providers.ProviderTests.test_chat_content_blocks_order_and_deduplication) ... ok
+test_chat_explicit_images_ignore_incidental_site_links (test_providers.ProviderTests.test_chat_explicit_images_ignore_incidental_site_links) ... ok
 test_chat_image_and_reference (test_providers.ProviderTests.test_chat_image_and_reference) ... ok
+test_chat_markdown_and_plain_urls_download (test_providers.ProviderTests.test_chat_markdown_and_plain_urls_download) ... ok
+test_configured_timeout_reaches_http_and_remote_download (test_providers.ProviderTests.test_configured_timeout_reaches_http_and_remote_download) ... ok
 test_disabled_size_and_quality_are_omitted_even_with_saved_values (test_providers.ProviderTests.test_disabled_size_and_quality_are_omitted_even_with_saved_values) ... ok
 test_edit_multipart (test_providers.ProviderTests.test_edit_multipart) ... ok
 test_edit_multipart_omits_disabled_optional_fields (test_providers.ProviderTests.test_edit_multipart_omits_disabled_optional_fields) ... ok
 test_empty_key_is_allowed_and_https_still_required (test_providers.ProviderTests.test_empty_key_is_allowed_and_https_still_required) ... ok
 test_empty_text_response_is_failure (test_providers.ProviderTests.test_empty_text_response_is_failure) ... ok
 test_enabled_optional_fields_are_sent (test_providers.ProviderTests.test_enabled_optional_fields_are_sent) ... ok
+test_extensionless_download_validates_bytes_not_headers (test_providers.ProviderTests.test_extensionless_download_validates_bytes_not_headers) ... ok
+test_html_download_is_not_an_image (test_providers.ProviderTests.test_html_download_is_not_an_image) ... ok
+test_http_error_body_and_status_preserved_without_retry_or_key (test_providers.ProviderTests.test_http_error_body_and_status_preserved_without_retry_or_key) ... ok
 test_images_base64 (test_providers.ProviderTests.test_images_base64) ... ok
 test_invalid_novelai_size_rejected_before_network (test_providers.ProviderTests.test_invalid_novelai_size_rejected_before_network) ... ok
+test_missing_image_fails_before_paid_request (test_providers.ProviderTests.test_missing_image_fails_before_paid_request) ... ok
+test_multi_output_preserves_all_artifacts (test_providers.ProviderTests.test_multi_output_preserves_all_artifacts) ... ok
+test_novelai_ordered_reference_array_without_img2img (test_providers.ProviderTests.test_novelai_ordered_reference_array_without_img2img) ... ok
 test_novelai_zip_and_v4 (test_providers.ProviderTests.test_novelai_zip_and_v4) ... ok
+test_ordered_array_type_and_count_are_checked (test_providers.ProviderTests.test_ordered_array_type_and_count_are_checked) ... ok
+test_ordered_multi_image_chat (test_providers.ProviderTests.test_ordered_multi_image_chat) ... ok
+test_ordered_multi_image_multipart (test_providers.ProviderTests.test_ordered_multi_image_multipart) ... ok
+test_remote_image_reference_is_not_fetched (test_providers.ProviderTests.test_remote_image_reference_is_not_fetched) ... ok
 test_returned_url_is_downloaded_without_api_key (test_providers.ProviderTests.test_returned_url_is_downloaded_without_api_key) ... ok
 test_spoofed_reference_mime_is_rejected (test_providers.ProviderTests.test_spoofed_reference_mime_is_rejected) ... ok
 test_svg_from_provider_is_not_accepted_as_generated_artwork (test_providers.ProviderTests.test_svg_from_provider_is_not_accepted_as_generated_artwork) ... ok
+test_variable_asset_content_addressed_and_readable_after_reload (test_providers.ProviderTests.test_variable_asset_content_addressed_and_readable_after_reload) ... ok
 test_actual_image_bytes_override_incorrect_extension_mime (test_server.ImageSafetyTests.test_actual_image_bytes_override_incorrect_extension_mime) ... ok
 test_declared_oversized_image_is_rejected_before_reading (test_server.ImageSafetyTests.test_declared_oversized_image_is_rejected_before_reading) ... ok
 test_image_data_url_is_normalized (test_server.ImageSafetyTests.test_image_data_url_is_normalized) ... ok
@@ -222,7 +340,7 @@ test_start_in_unicode_space_and_metacharacter_path (test_windows_launchers.Windo
 test_venv_used_when_dot_venv_absent (test_windows_launchers.WindowsLauncherExecutionTests.test_venv_used_when_dot_venv_absent) ... skipped 'Requires real Windows cmd.exe'
 
 ----------------------------------------------------------------------
-Ran 99 tests in 1.125s
+Ran 189 tests in 4.478s
 
 OK (skipped=4)
 
@@ -273,7 +391,7 @@ PASS API preserves per-scene workflow and preset assignments
 PASS structured workflow and queue files exist
 PASS dragging a pending task updates actual execution order
 PASS queue rows use the same forward order as stored tasks
-PASS deleting a queued task keeps its album
+PASS deleting a queued task deletes its corresponding album
 PASS only Generate album has primary emphasis on the queue page
 PASS unfinished queue thumbnails contain no fabricated image
 PASS running task cannot be dragged or deleted
@@ -287,7 +405,7 @@ PASS right-click retains multiple selected albums
 PASS context batch editing affects exactly the selected albums
 PASS context batch export opens the multi-book export dialog
 PASS batch export downloads an HTML album with neutral missing-page notes
-PASS context menu supports Escape and returns focus
+PASS Escape closes context menu and exits multi-selection
 PASS organized state saves successfully
 PASS manual album order survives a backend reload
 PASS context batch delete requires confirmation
@@ -360,10 +478,10 @@ PASS no uncaught browser errors
 PASS template toolbar fits the mobile viewport
 PASS template deletion is directly beside the template picker
 PASS novelai scene workflow is noninteractive explanatory text
-PASS novelai queue workflow has no select or dropdown decoration
+PASS novelai queue omits irrelevant workflow controls
 PASS novelai partial storyboard render stays noninteractive
 PASS openai scene workflow is noninteractive explanatory text
-PASS openai queue workflow has no select or dropdown decoration
+PASS openai queue omits irrelevant workflow controls
 PASS openai partial storyboard render stays noninteractive
 PASS switching back to ComfyUI restores scene selection
 PASS ComfyUI queue workflow is selectable
@@ -375,8 +493,21 @@ PASS dependent plan is unbound and does not silently show another template
 PASS existing albums and original image references are unchanged
 PASS the final template can be deleted into a usable empty state
 PASS deletion persists after reload without recreating templates
+PASS one model input replaces the separate search and select
+PASS typing shows case-insensitive multi-word results automatically
+PASS typing keeps input focus
+PASS click replaces the same input and saves the exact model
+PASS selection closes suggestions and retains input focus
+PASS keyboard selection commits a complete model ID
+PASS Escape dismisses suggestions without auto-selecting
+PASS arrow key reopens dismissed results
+PASS unmatched manual IDs remain usable with an explicit empty state
+PASS empty input shows all cached models
+PASS Tab dismisses results without trapping focus
+PASS combobox and visible suggestions fit mobile
+PASS selected model survives reload
 PASS no uncaught browser errors
-19 template/provider checks passed.
+32 template/provider checks passed.
 
 > mio-studio@1.0.0 test:presentation
 > node tests/presentation.mjs
@@ -391,15 +522,17 @@ PASS complete image fit for 800 x 800
 PASS template library opens without replacing the image
 PASS template search filters locally
 PASS 512-frame default album never compiles HTML while turning pages
-Default-path synchronous render P95 ms: 1.40
+Default-path synchronous render P95 ms: 2.50
 PASS custom scripts require consent
 PASS declining consent keeps the lightweight default
 PASS script runs inside an opaque-origin sandbox
-PASS preview is bounded to three actual frames
+PASS reader contains the whole five-frame book
 PASS local media placeholder resolves without external URLs
 PASS template SDK exposes only presentation DOM
 PASS compiled CSP blocks network connections and external media
 PASS video media loads as real embedded WebM
+PASS whole-book reader hides conflicting outer controls
+PASS only explicit export samples are bounded to three frames
 PASS unified export includes all five frames, media and approved script
 PASS downloaded HTML works offline with the same media and all frames
 PASS template media and script survive HTML-package roundtrip
@@ -408,5 +541,290 @@ PASS mobile drawer fits the viewport
 PASS mobile image remains fully within the canvas
 PASS invalid remote media and oversized scripts are rejected
 PASS single-book export entry opens the same reader studio
+PASS export from a missing scene previews confirmed images instead of blank future frames
+PASS preview images decode successfully
+PASS real fullscreen re-promotes reader above the fullscreen root
+PASS closing fullscreen removes drawer and restores a usable gallery
+PASS reader can reopen after fullscreen close
+PASS custom template may position narration inside the image instead of beneath it
+PASS offline export preserves the same custom narration positioning
+PASS 24-scene custom reader compiles all scenes once
+PASS ending is hidden before the last spread
+PASS all 24 scenes appear exactly once in original order
+PASS last spread alone displays the ending
+PASS turning pages never replaces the template document
+PASS mobile flip reader shows one complete scene, not two narrow columns
 PASS no uncaught browser errors
-27 presentation checks passed.
+42 presentation checks passed.
+
+> mio-studio@1.0.0 test:images
+> node tests/image_variables.mjs
+
+PASS Chinese image variables can be created in the normal settings UI
+PASS uploads physically exist on disk and match their original bytes
+PASS configuration rejects inline image-variable data
+PASS configuration stores local asset references, not base64
+PASS prompt resolves in first-occurrence order and deduplicates by variable name
+PASS unused empty images do not block resolution
+PASS Chinese variable identifiers retain weights and escaped braces
+PASS positive and negative references share one ordered attachment list
+PASS scene overrides retain image typing and precedence
+PASS resolved preview shows numbered image thumbnails
+PASS replacement does not mutate the queued prompt or ordered references
+PASS old queued image remains on disk after replacement
+PASS restart/read retains image variables and original queue snapshots
+PASS adapter sends only ordered snapshot images, not unused or replacement assets
+PASS generation failure has no paid retry or text-only fallback
+PASS full upstream status and body are retained on the task
+PASS queue exposes the original error in expandable details
+PASS no referenced images means no attachments or implicit character reference
+PASS a missing local image fails explicitly before any provider request
+PASS portable package includes physical variable assets and no inline base64
+PASS portable restore recreates local files without needing the original folder
+PASS restored queue and source snapshots reference immutable local assets
+PASS removing a still-referenced image is an explicit error, not silent omission
+PASS known variables outside the current scope cannot silently disappear
+PASS ComfyUI uploads both images in prompt order
+PASS ComfyUI binds uploaded names to corresponding variables and resolved prompt
+PASS missing ComfyUI variable bindings fail rather than drop images
+PASS no request submitted after missing-binding error
+PASS image settings fit the mobile viewport
+PASS no uncaught browser errors
+30 image-variable checks passed.
+
+> mio-studio@1.0.0 test:foundation
+> node tests/foundation.mjs
+
+PASS UI submits an immutable held snapshot to the durable service
+PASS all frames complete after the browser page closes
+PASS album metadata reflects durable results before any browser reopens
+PASS advanced parameters reach the real wire format
+PASS all results expose the versioned artifact-list contract
+PASS external duplicate returns same job without extra generation
+PASS same key with a different snapshot returns conflict
+PASS reopening reconciles server results into the original album
+PASS real queue uses an explicit service entry rather than an added run wrapper
+PASS public task API requires authentication
+PASS SSE exposes replayable job events
+PASS external clients can upload durable inputs
+PASS asset index includes hashes and task references
+PASS recent unreferenced uploads are protected by the grace period
+PASS portable export externalizes secondary artifact references
+PASS portable restore re-materializes primary and artifact images locally
+PASS cleanup refuses noneligible assets
+PASS controlled storyboard write succeeds with current revision
+PASS stale resource writers cannot overwrite new data
+PASS stale browser saves are rejected rather than overwriting external edits
+PASS no uncaught browser errors
+21 foundation checks passed.
+
+> mio-studio@1.0.0 test:mobile
+> node tests/mobile.mjs
+
+PASS 320 x 740 gallery fits with bottom navigation
+PASS 320 x 740 story fits with bottom navigation
+PASS 320 x 740 queue fits with bottom navigation
+PASS 320 x 740 variables fits with bottom navigation
+PASS 320 x 740 engine fits with bottom navigation
+PASS 320 x 740 settings fits with bottom navigation
+PASS 320 x 740 storage fits with bottom navigation
+PASS 320 x 740 appearance fits with bottom navigation
+PASS 390 x 844 gallery fits with bottom navigation
+PASS 390 x 844 story fits with bottom navigation
+PASS 390 x 844 queue fits with bottom navigation
+PASS 390 x 844 variables fits with bottom navigation
+PASS 390 x 844 engine fits with bottom navigation
+PASS 390 x 844 settings fits with bottom navigation
+PASS 390 x 844 storage fits with bottom navigation
+PASS 390 x 844 appearance fits with bottom navigation
+PASS 430 x 932 gallery fits with bottom navigation
+PASS 430 x 932 story fits with bottom navigation
+PASS 430 x 932 queue fits with bottom navigation
+PASS 430 x 932 variables fits with bottom navigation
+PASS 430 x 932 engine fits with bottom navigation
+PASS 430 x 932 settings fits with bottom navigation
+PASS 430 x 932 storage fits with bottom navigation
+PASS 430 x 932 appearance fits with bottom navigation
+PASS 844 x 390 gallery fits with bottom navigation
+PASS 844 x 390 story fits with bottom navigation
+PASS 844 x 390 queue fits with bottom navigation
+PASS 844 x 390 variables fits with bottom navigation
+PASS 844 x 390 engine fits with bottom navigation
+PASS 844 x 390 settings fits with bottom navigation
+PASS 844 x 390 storage fits with bottom navigation
+PASS 844 x 390 appearance fits with bottom navigation
+PASS touch navigation opens creation with a horizontal title
+PASS primary controls are comfortable touch targets
+PASS rotation keeps the current prompt draft
+PASS variable modal and inputs fit the phone
+PASS phone image upload produces a durable local asset
+PASS touch model suggestions stay in the visible viewport
+PASS scroll-like touch movement does not pick a model
+PASS touch selection replaces the model input without a second tap
+PASS touch buttons reorder waiting jobs without drag gestures
+PASS populated queue cards fit the phone
+PASS canceling deletion retains the queued work
+PASS album management opens by touch and stays above navigation
+PASS album order changes via touch menu
+PASS reader fits and preserves complete-image mode
+PASS phone reader displays the entire image within its canvas
+PASS reader template drawer is scrollable and within viewport
+PASS phone export produces an HTML download
+PASS mobile Enter inserts a newline instead of sending
+PASS short viewport keeps assistant input and send button accessible
+PASS draft remains after viewport resizing
+PASS collection switcher fits and remains usable on touch
+PASS no uncaught browser errors
+54 mobile checks passed (chromium).
+
+> mio-studio@1.0.0 test:experience
+> node tests/experience.mjs
+
+PASS home prominently links to the complete tutorial center
+PASS one fast drag selects all albums along the path
+PASS path painting does not select unrelated albums
+PASS multi-select dragging does not reorder or open albums
+PASS dragging from a selected album removes selection along the path
+PASS Escape clears selections and exits multi-select
+PASS Escape also cancels an in-progress paint gesture
+PASS inspection does not enqueue work or create albums
+PASS inspection only covers current task ranges, not other album pages
+PASS delete confirmation states album and linked queue scope
+PASS cancel preserves album and tasks
+PASS confirmed deletion removes the album and all linked tasks only
+PASS automatic retry requires an explicit billing confirmation
+PASS declining preserves the previously saved automatic retry budget
+PASS policy controls save real durable service settings
+PASS running work is highlighted while held work is not
+PASS fullscreen targets the root element, not a forbidden dialog
+PASS unsupported fullscreen shows one inline explanation of F11
+PASS no uncaught browser errors
+19 experience checks passed.
+
+> mio-studio@1.0.0 test:recovery
+> node tests/recovery_parallel.mjs
+
+PASS HTTP disconnect leaves confirmed first frame and unknown second
+PASS unknown continuation requires explicit billing acknowledgement
+PASS stale progress cannot authorize continuation
+PASS reload retains visible continuation from original scene two
+PASS consent explains same album and unconfirmed billing risk
+PASS canceling consent sends no extra provider request
+PASS wire order resumes second frame without repeating first
+PASS same job, frozen input and first result survive continuation
+PASS original album completes without replacement
+PASS queue controls persist parallelism and timeout
+PASS all four new albums have durable identities
+PASS two-scene tasks overlap their own two frames, not other queued albums
+PASS held-status polling cannot strand newly submitted albums
+PASS configured timeout reaches every claimed attempt
+PASS each frame is sent exactly once within its task
+PASS runtime settings survive browser reload
+PASS subset task labels the original fourth scene, not local cursor two
+PASS gallery resume refreshes stale progress before consent
+PASS gallery continuation reuses job and album for a subset
+PASS subset wire order never repeats its confirmed first image
+PASS HTTP 422 is durably skipped without automatic retry
+PASS request history includes final wire prompt and actual model
+PASS revised missing-frame source survives future album recovery
+PASS original editor preserves task identity and confirmed result
+PASS revised unfinished prompt reaches provider without repeating first
+PASS stop acknowledges without waiting for provider response
+PASS stop closes the local HTTP socket before upstream responds
+PASS late response never becomes a saved task result
+PASS diagnostics distinguish held albums from concurrency capacity
+PASS releasing held tasks queues them sequentially unless manually started
+PASS logs after reload include persisted rejection, request input and stop
+PASS no browser runtime errors
+Recovery and parallel acceptance: 32 checks passed
+
+> mio-studio@1.0.0 test:pools
+> node tests/task_pools.mjs
+
+PASS one task starts frames 1–4 simultaneously
+PASS queued tasks do not start themselves
+PASS queue shows server-saved next-request model
+PASS finishing frame 2 immediately refills frame 5 while frame 1 is still waiting
+PASS sparse results retain original index and do not pretend the first frame completed
+PASS browser stores out-of-order image under the correct scene
+PASS manual start explains independent additive concurrency
+PASS two tasks really hold four HTTP requests each
+PASS second task refills independently of every pending first-task request
+PASS changed model and address reach later requests in both linked tasks
+PASS already-sent requests keep original model
+PASS task details stay open through status refresh
+PASS third queued task remains waiting during both pools
+PASS existing editor selects an exact album version with its own eight scenes
+PASS original storyboard editor saves task-local text without changing shared template
+PASS independent prompt editing entry has been removed
+PASS global pause stops refills but preserves all returned indexed results
+PASS near the end a task only sends the three remaining frames
+PASS next FIFO task starts after earlier active work finishes
+PASS no successful frame was requested twice
+PASS observed combined maximum is eight, not a shared four-slot cap
+PASS editing an in-flight scene does not replace the request already sent
+PASS service reads latest saved scene after the browser leaves
+PASS reload restores sparse/complete results to their original albums
+PASS attempt history records resolved model rather than initial model
+PASS no browser runtime errors
+Task-pool acceptance: 26 checks passed
+
+
+> mio-studio@1.0.0 test:mobile:webkit
+> node tests/mobile.mjs webkit
+
+PASS 320 x 740 gallery fits with bottom navigation
+PASS 320 x 740 story fits with bottom navigation
+PASS 320 x 740 queue fits with bottom navigation
+PASS 320 x 740 variables fits with bottom navigation
+PASS 320 x 740 engine fits with bottom navigation
+PASS 320 x 740 settings fits with bottom navigation
+PASS 320 x 740 storage fits with bottom navigation
+PASS 320 x 740 appearance fits with bottom navigation
+PASS 390 x 844 gallery fits with bottom navigation
+PASS 390 x 844 story fits with bottom navigation
+PASS 390 x 844 queue fits with bottom navigation
+PASS 390 x 844 variables fits with bottom navigation
+PASS 390 x 844 engine fits with bottom navigation
+PASS 390 x 844 settings fits with bottom navigation
+PASS 390 x 844 storage fits with bottom navigation
+PASS 390 x 844 appearance fits with bottom navigation
+PASS 430 x 932 gallery fits with bottom navigation
+PASS 430 x 932 story fits with bottom navigation
+PASS 430 x 932 queue fits with bottom navigation
+PASS 430 x 932 variables fits with bottom navigation
+PASS 430 x 932 engine fits with bottom navigation
+PASS 430 x 932 settings fits with bottom navigation
+PASS 430 x 932 storage fits with bottom navigation
+PASS 430 x 932 appearance fits with bottom navigation
+PASS 844 x 390 gallery fits with bottom navigation
+PASS 844 x 390 story fits with bottom navigation
+PASS 844 x 390 queue fits with bottom navigation
+PASS 844 x 390 variables fits with bottom navigation
+PASS 844 x 390 engine fits with bottom navigation
+PASS 844 x 390 settings fits with bottom navigation
+PASS 844 x 390 storage fits with bottom navigation
+PASS 844 x 390 appearance fits with bottom navigation
+PASS touch navigation opens creation with a horizontal title
+PASS primary controls are comfortable touch targets
+PASS rotation keeps the current prompt draft
+PASS variable modal and inputs fit the phone
+PASS phone image upload produces a durable local asset
+PASS touch model suggestions stay in the visible viewport
+PASS scroll-like touch movement does not pick a model
+PASS touch selection replaces the model input without a second tap
+PASS touch buttons reorder waiting jobs without drag gestures
+PASS populated queue cards fit the phone
+PASS canceling deletion retains the queued work
+PASS album management opens by touch and stays above navigation
+PASS album order changes via touch menu
+PASS reader fits and preserves complete-image mode
+PASS phone reader displays the entire image within its canvas
+PASS reader template drawer is scrollable and within viewport
+PASS phone export produces an HTML download
+PASS mobile Enter inserts a newline instead of sending
+PASS short viewport keeps assistant input and send button accessible
+PASS draft remains after viewport resizing
+PASS collection switcher fits and remains usable on touch
+PASS no uncaught browser errors
+54 mobile checks passed (webkit).
