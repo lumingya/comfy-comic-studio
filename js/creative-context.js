@@ -69,7 +69,7 @@ function generationContextPlan(plan){
 }
 function presetLibraryHTML(){
   const selected=settingPresetSelection(),draft=selected?settingPresetDraft(selected):null;
-  return `<div id="preset-library"><header class="preset-library-heading"><div><span class="context-kicker">公共预设库</span><p>这里管理可复用的设定。编辑草稿不会自动改变任何画册。</p></div>${btn('新建预设','plus','ws-new-preset','','small')}</header><div class="preset-library-layout"><aside class="preset-library-index"><label for="art-setting-preset">选择公共预设</label><select id="art-setting-preset" aria-label="选择公共预设"><option value="">选择预设…</option>${projectVariableSets().map(s=>opt(s.id,s.title,selected)).join('')}</select><div class="preset-library-list">${projectVariableSets().map(s=>`<button type="button" class="preset-library-item ${s.id===selected?'active':''}" data-act="preset-library-select" data-id="${esc(s.id)}"><span>${esc(s.title)}</span><small>公共预设${state.drafts?.presetEdits?.[s.id]?.dirty?' · 草稿待更新':''}</small></button>`).join('')}</div>${btn('导入','upload','native-import','data-kind="variables"','small ghost')}${btn('删除预设','trash','ws-delete-preset',selected?'':'disabled','small ghost')}</aside><section class="preset-library-editor">${draft?`<div class="preset-editor-heading"><div><span class="context-kicker">预设草稿 · 不直接生效</span><h3>${esc(draft.title)}</h3></div>${btn('新增属性','plus','art-setting-add','','small')}</div><div class="character-settings-grid">${renderSettingCards(draft)}</div><div class="preset-library-actions">${btn('更新此预设','disk','ws-update-preset','','small')}${btn('另存为','copy','art-save-preset','','small ghost')}${btn('导出','download','native-export-settings','','small ghost')}</div>`:'<div class="empty"><h3>选择一份预设</h3><p>查看或编辑公共库，不改变当前画册。</p></div>'}</section></div><footer class="preset-library-footer"><span>应用目标：<strong>${esc(currentSettingsLabel()||'当前画册')}</strong></span>${btn('应用到当前画册','check','art-apply-preset',draft?'':'disabled','primary')}</footer></div>`;
+  return `<div id="preset-library"><header class="preset-library-heading"><div><span class="context-kicker">公共预设库</span><p>这里管理可复用的设定。编辑草稿不会自动改变任何画册。</p></div>${btn('新建预设','plus','ws-new-preset','','small')}</header><div class="preset-library-layout"><aside class="preset-library-index"><label for="art-setting-preset">选择公共预设</label><select id="art-setting-preset" aria-label="选择公共预设"><option value="">选择预设…</option>${projectVariableSets().map(s=>opt(s.id,s.title,selected)).join('')}</select><label class="preset-search-label" for="preset-search">搜索预设</label><input id="preset-search" type="search" placeholder="输入预设名称…" autocomplete="off"><div class="preset-library-list">${projectVariableSets().map(s=>`<button type="button" class="preset-library-item ${s.id===selected?'active':''}" data-act="preset-library-select" data-id="${esc(s.id)}"><span>${esc(s.title)}</span><small>${(s.entries||[]).length} 个属性${state.drafts?.presetEdits?.[s.id]?.dirty?' · 草稿待更新':''}</small></button>`).join('')}</div>${btn('导入','upload','native-import','data-kind="variables"','small ghost')}${btn('删除预设','trash','ws-delete-preset',selected?'':'disabled','small ghost')}</aside><section class="preset-library-editor">${draft?`<div class="preset-editor-heading"><div><span class="context-kicker">预设草稿 · 不直接生效</span><h3>${esc(draft.title)}</h3></div>${btn('新增属性','plus','art-setting-add','','small')}</div><div class="preset-edit-notice">${icon('shield')} 正在编辑公共预设草稿，不会改变本册。更新预设与应用到画册是两个独立操作。</div>${renderSettingsGroups(draft)}<div class="preset-library-actions">${btn('更新此预设','disk','ws-update-preset','','small')}${btn('另存为','copy','art-save-preset','','small ghost')}${btn('导出','download','native-export-settings','','small ghost')}</div>`:'<div class="empty"><h3>选择一份预设</h3><p>查看或编辑公共库，不改变当前画册。</p></div>'}</section></div><footer class="preset-library-footer"><span><small class="apply-kicker">复制预设到</small><strong>${esc(currentSettingsLabel()||'当前画册')}</strong></span>${btn('应用到当前画册','check','art-apply-preset',draft?'':'disabled','primary')}</footer></div>`;
 }
 function openPresetLibrary(id){
   if(id)selectSettingPreset(id);
@@ -77,6 +77,15 @@ function openPresetLibrary(id){
 }
 function refreshPresetLibrary(){if(presetLibraryIsOpen())$('#modal-body').innerHTML=presetLibraryHTML()}
 function installCreativeContext(){
+  document.addEventListener('input',event=>{
+    if(event.target.id!=='preset-search')return;
+    const query=event.target.value.trim().toLocaleLowerCase();
+    for(const item of document.querySelectorAll('.preset-library-item'))item.hidden=!item.textContent.toLocaleLowerCase().includes(query);
+    const list=document.querySelector('.preset-library-list');
+    let empty=list.querySelector('.preset-search-empty');
+    if(!empty){empty=document.createElement('p');empty.className='help preset-search-empty';empty.textContent='没有匹配的预设，试试其他关键词。';list.append(empty)}
+    empty.hidden=!!list.querySelector('.preset-library-item:not([hidden])');
+  });
   const oldModal=modal;modal=function(title,body,...args){if(presetLibraryIsOpen()&&!body.includes('id="preset-library"'))rt.presetReturn={id:settingPresetSelection(),projectId:state.activeProjectId};return oldModal(title,body,...args)};
   const oldClose=closeModal;closeModal=function(){const back=rt.presetReturn;rt.presetReturn=null;oldClose();if(back)queueMicrotask(()=>{if(!$('#modal').open&&back.projectId===state.activeProjectId&&setBy(back.id))openPresetLibrary(back.id)})};
   const oldTarget=settingsTargetById;settingsTargetById=function(id){if(id?.startsWith('book-settings:')){const b=bookBy(id.slice(14));return b?.projectId===state.activeProjectId?b.sourceSnapshot?.settingsContext:null}return oldTarget(id)};
@@ -109,6 +118,7 @@ function installCreativeContext(){
   storyboardScopeHTML=function(p,t,own){return `<div class="storyboard-context"><span class="context-kicker">${own?'当前画册分镜':'公共分镜模板'}</span>${liveStoryboardNotice(p)}<details><summary>编辑公共模板</summary><select id="v3-scene-scope">${opt('plan','返回当前画册',own?'plan':'shared')}${opt('shared','编辑公共分镜模板（不改变制作中的画册）',own?'plan':'shared')}</select></details></div>`};
   const oldAction=handleAction;handleAction=async function(action,d={},el){
     if(action==='preset-library-open')return openPresetLibrary();
+    if(action==='preset-library-preview')return openPresetLibrary(d.id);
     if(action==='preset-library-select'){selectSettingPreset(d.id);return refreshPresetLibrary()}
     return oldAction(action,d,el);
   };

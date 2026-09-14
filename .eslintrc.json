@@ -822,7 +822,8 @@
     "readingStageRuntime": "writable",
     "installReadingStage": "writable",
     "renderSettingCards": "writable",
-    "selectSettingPreset": "writable"
+    "selectSettingPreset": "writable",
+    "renderSettingsGroups": "writable"
   },
   "parserOptions": {
     "ecmaVersion": 2021,
