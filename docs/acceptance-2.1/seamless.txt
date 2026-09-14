@@ -1,0 +1,21 @@
+PASS actual 2.0.0 archive supplies all six original presets and a custom copy
+PASS new built-in appears once and validates
+PASS upgrade preserves every old template, custom copy, default and album choice
+PASS registration does not replace user-owned data with the same identity
+PASS out-of-order source frames compile in storyboard order
+PASS real reader has four images, no visible text and zero vertical gaps
+PASS reader retains complete ratios and does not enlarge small originals
+PASS there is no cover duplicate, caption slot, title block or ending
+PASS opaque preview sandbox and offline CSP stay intact
+PASS selecting a style leaves original captions, prompts and images untouched
+PASS caption/prompt/signature/border options cannot reintroduce text or frame gaps
+PASS 1440px light offline view is seamless, uncropped and inside the viewport
+PASS 390px light offline view is seamless, uncropped and inside the viewport
+PASS 390px dark offline view is seamless, uncropped and inside the viewport
+PASS 320px dark offline view is seamless, uncropped and inside the viewport
+PASS zero-gap layout works with JavaScript disabled
+PASS small edited raster stays 240px wide and its bytes are unchanged
+PASS actual UI download includes every original image at native resolution
+PASS chosen style and original text survive native save/reload
+PASS there were no provider submissions or browser errors
+20 seamless checks passed. No model calls.

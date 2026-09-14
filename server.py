@@ -1,4 +1,5 @@
 import os
+import time
 import sys
 import re
 import json
@@ -9,10 +10,14 @@ import hashlib
 import copy
 import mimetypes
 import threading
+import mio_pictures
+import mio_lifecycle
 import mio_foundation
 import mio_api
 import mio_credentials
 import mio_docs
+from mio_native_store import NativeStore
+from mio_library import LibraryError
 import io
 from pathlib import Path
 from datetime import datetime
@@ -41,7 +46,7 @@ if getattr(sys, "frozen", False):
 else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LEGACY_DATA_FILE = os.path.join(BASE_DIR, "comfy_comic_data.json")
-DATA_DIR = os.path.join(BASE_DIR, "data")
+DATA_DIR = os.path.abspath(os.environ.get("MIO_DATA_DIR", os.path.join(BASE_DIR, "data")))
 LEGACY_CONFIG_FILES = {key: os.path.join(DATA_DIR, key + ".json") for key in
                        ("content", "comfy", "llm", "xml_template", "chat", "ui")}
 CONFIG_FILES = {
@@ -61,7 +66,7 @@ CONFIG_FILES = {
 }
 # Keep /images URLs stable. New images are grouped by date under data/assets/images.
 LEGACY_IMAGES_DIR = os.path.join(BASE_DIR, "images")
-IMAGES_DIR = os.path.join(DATA_DIR, "assets", "images")
+IMAGES_DIR = os.path.join(DATA_DIR, "runtime", "staging", "images")
 MAX_JSON_BODY_BYTES = 10 * 1024 * 1024
 MAX_IMAGE_BYTES = 50 * 1024 * 1024
 CONFIG_LOCK = threading.RLock()
@@ -96,8 +101,23 @@ ALLOWED_ORIGINS = {
     f"http://localhost:{PORT}",
 }
 ALLOWED_ORIGINS.update(filter(None, (x.strip() for x in os.environ.get("MIO_ORIGINS", os.environ.get("COMFY_COMIC_ORIGINS", "")).split(","))))
-os.makedirs(DATA_DIR, exist_ok=True)
-os.makedirs(IMAGES_DIR, exist_ok=True)
+_NATIVE_STORES = {}
+
+def native_store():
+    key = os.path.abspath(DATA_DIR)
+    with CONFIG_LOCK:
+        if key not in _NATIVE_STORES:
+            _NATIVE_STORES[key] = NativeStore(key, BASE_DIR)
+        return _NATIVE_STORES[key]
+
+
+def content_store():
+    store=native_store()
+    with CONFIG_LOCK:
+        if not hasattr(store,'fresh_content'):
+            from mio_content import initialize
+            store.fresh_content=initialize(store,BASE_DIR)
+    return store
 
 
 class PayloadTooLargeError(ValueError):
@@ -138,13 +158,11 @@ def is_public_static_path(request_path):
                 return False
             return _is_file_inside(decoded_path, os.path.join(BASE_DIR, asset_dir.strip("/")))
 
-    if not decoded_path.startswith("/images/"):
-        return False
-    relative = decoded_path[len("/images/"):]
-    for root in (IMAGES_DIR, LEGACY_IMAGES_DIR):
-        candidate = os.path.realpath(os.path.join(root, relative))
-        if os.path.commonpath([candidate, os.path.realpath(root)]) == os.path.realpath(root) and os.path.isfile(candidate):
-            return True
+    if decoded_path.startswith('/images/'):
+        try:
+            return native_store().image_path(decoded_path).is_file()
+        except (LibraryError, OSError, ValueError):
+            return False
     return False
 
 
@@ -214,44 +232,18 @@ def data_url_to_base64_data_url(data_url):
 
 
 def ensure_path_within_images(path):
-    candidate = os.path.realpath(os.path.abspath(path))
-    roots = [os.path.realpath(os.path.abspath(root)) for root in (IMAGES_DIR, LEGACY_IMAGES_DIR)]
-    try:
-        is_allowed = any(os.path.commonpath([os.path.normcase(candidate), os.path.normcase(root)]) == os.path.normcase(root) for root in roots)
-    except ValueError:
-        is_allowed = False
-    if not is_allowed:
-        raise PermissionError("Local image paths must stay inside the images directory")
-    if not os.path.isfile(candidate):
-        raise FileNotFoundError("Local image file does not exist")
-    return candidate
+    path = Path(path).absolute()
+    root = Path(DATA_DIR).absolute()
+    if not path.is_relative_to(root) or path.is_symlink() or not path.is_file():
+        raise PermissionError('Local image must be an owned workspace asset')
+    from mio_library import image_type
+    image_type(path.read_bytes())
+    return str(path)
 
 def local_path_from_url(raw_url):
-    parsed = urllib.parse.urlparse(raw_url)
-    if (not parsed.scheme or (parsed.hostname in ("localhost", "127.0.0.1") and parsed.port == PORT)) and parsed.path.startswith("/images/"):
-        relative = urllib.parse.unquote(parsed.path)[len("/images/"):]
-        for root in (IMAGES_DIR, LEGACY_IMAGES_DIR):
-            try:
-                return ensure_path_within_images(os.path.join(root, relative))
-            except FileNotFoundError:
-                continue
-        raise FileNotFoundError("Local image file does not exist")
-    if parsed.scheme == "file":
-        path = urllib.parse.unquote(parsed.path)
-        if os.name == "nt" and path.startswith("/") and len(path) > 3 and path[2] == ":":
-            path = path[1:]
-        return ensure_path_within_images(path)
-    if parsed.scheme in ("http", "https"):
-        host = (parsed.hostname or "").lower()
-        if host in ("127.0.0.1", "localhost") and parsed.port == PORT:
-            local_rel_path = urllib.parse.unquote(parsed.path).lstrip("/\\")
-            return ensure_path_within_images(os.path.join(BASE_DIR, local_rel_path))
-        return None
-    if raw_url and (os.path.isabs(raw_url) or (os.name == "nt" and len(raw_url) > 2 and raw_url[1] == ":")):
-        return ensure_path_within_images(raw_url)
-    if not parsed.scheme and not parsed.netloc:
-        local_rel_path = urllib.parse.unquote(parsed.path).lstrip("/\\")
-        return ensure_path_within_images(os.path.join(BASE_DIR, local_rel_path))
+    parsed = urllib.parse.urlsplit(raw_url)
+    if not parsed.scheme or parsed.hostname in ('localhost','127.0.0.1','::1') and parsed.port == PORT:
+        return str(native_store().image_path(parsed.path))
     return None
 
 
@@ -721,63 +713,52 @@ def normalize_merged_config(data):
 
     return data
 
+def manage_native_credentials(payload):
+    with native_store().library.writer():
+        return mio_credentials.manage(DATA_DIR, payload)
+
+
+def chat_proxy(payload):
+    scope = payload.get('scope', 'llm')
+    store = native_store()
+    if scope in ('llm','xml'):
+        cfg = store.settings.resolve(scope)
+    elif scope == 'critic':
+        cfg = store.settings.resolve('workspace').get('ui',{}).get('comfyStudio',{}).get('settings',{}).get('critic',{})
+    else:
+        raise ValueError('Unknown saved connection scope')
+    base = str(payload.get('baseUrl', '')).rstrip('/')
+    if base != str(cfg.get('baseUrl', '')).rstrip('/'):
+        raise ValueError('The endpoint differs from the saved connection. Save or reload it before sending.')
+    parsed = urllib.parse.urlsplit(base)
+    if parsed.scheme not in ('https','http') or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
+        raise ValueError('Invalid model endpoint')
+    if parsed.scheme == 'http' and parsed.hostname not in ('localhost','127.0.0.1','::1'):
+        raise ValueError('Remote model endpoints require HTTPS')
+    key = payload.get('key') or cfg.get('key','')
+    if '\r' in key or '\n' in key:
+        raise ValueError('Invalid credential')
+    headers = {'Content-Type':'application/json'}
+    if key: headers['Authorization'] = 'Bearer ' + key
+    body = payload.get('body')
+    if not isinstance(body, dict) or not isinstance(body.get('messages'), list):
+        raise ValueError('Messages must be a list')
+    endpoint = base if base.endswith('/chat/completions') else base+'/chat/completions'
+    # No redirects with Authorization, no automatic retry after uncertain billing.
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+    request = urllib.request.Request(endpoint, data=json.dumps(body).encode(), headers=headers, method='POST')
+    with urllib.request.build_opener(NoRedirect).open(request, timeout=180) as response:
+        raw = response.read(12*1024*1024+1)
+        if len(raw)>12*1024*1024: raise ValueError('Model response exceeds size limit')
+        return json.loads(raw)
+
+
 def read_merged_config_raw():
     with CONFIG_LOCK:
-        recover_config_transaction()
-        if not any(os.path.exists(path) for path in CONFIG_FILES.values()) and any(os.path.exists(path) for path in LEGACY_CONFIG_FILES.values()):
-            if not all(os.path.exists(path) for path in LEGACY_CONFIG_FILES.values()):
-                raise ConfigReadError("Legacy configuration is incomplete; restore the missing files before migration.")
-            legacy = {}
-            for path in LEGACY_CONFIG_FILES.values():
-                chunk = read_json_file(path, {})
-                if not isinstance(chunk, dict):
-                    raise ConfigReadError("Invalid legacy configuration: " + path)
-                legacy.update(chunk)
-            write_split_config(legacy)
-            print("[Migration] Structured data layout created; legacy JSON files retained as backup.", flush=True)
-        split_exists = any(os.path.exists(path) for path in CONFIG_FILES.values())
-        merged = {}
-
-        if split_exists:
-            missing_files = [path for path in CONFIG_FILES.values() if not os.path.exists(path)]
-            if missing_files:
-                missing_names = ", ".join(os.path.basename(path) for path in missing_files)
-                raise ConfigReadError(f"Configuration set is incomplete; missing: {missing_names}")
-
-            read_errors = []
-            for path in CONFIG_FILES.values():
-                try:
-                    chunk = read_json_file(path, {})
-                    if isinstance(chunk, dict):
-                        merged.update(chunk)
-                    else:
-                        read_errors.append(f"{os.path.basename(path)} is not a JSON object")
-                except Exception as e:
-                    read_errors.append(f"{os.path.basename(path)}: {e}")
-            if read_errors:
-                details = "; ".join(read_errors)
-                raise ConfigReadError(f"Unable to read configuration safely: {details}")
-        elif os.path.exists(LEGACY_DATA_FILE):
-            merged = read_json_file(LEGACY_DATA_FILE, {})
-            try:
-                write_split_config(merged)
-                print("[Config Migration] Legacy comfy_comic_data.json has been split into data/*.json.", flush=True)
-            except Exception as e:
-                print(f"[Config Migration Warning] {e}", flush=True)
-
-    if not merged:
-        return {**{key: kind() for key, kind in REQUIRED_CONFIG_FIELDS.items()}, "_emptyWorkspace": True}
-    has_studio_metadata = merged.pop("_hasStudioMetadata", False)
-    if "_studioProjects" in merged:
-        meta = merged.setdefault("uiConfig", {}).setdefault("comfyStudio", {})
-        meta["projects"] = merged.pop("_studioProjects")
-        creation = merged.pop("_studioCreation", {})
-        creation["plans"] = merged.pop("_studioPlans", [])
-        creation["variableSets"] = merged.pop("_studioPresets", [])
-        meta["creation"] = creation
-        if not has_studio_metadata:
-            merged["uiConfig"].pop("comfyStudio", None)
-    return normalize_merged_config(merged)
+        value = native_store().read()
+        return mio_pictures.project(mio_lifecycle.filter_deleted(value, DATA_DIR), DATA_DIR)
 
 def read_merged_config():
     return mio_foundation.project_execution(sys.modules[__name__], read_merged_config_raw())
@@ -856,42 +837,11 @@ def recover_config_transaction():
 
 
 def write_split_config(data):
-    payloads = split_config_payload(data)
-    written = []
     with CONFIG_LOCK:
-        recover_config_transaction()
-        # Durable roll-forward journal: readers never observe half an API save,
-        # including after an interrupted process or a disk write failure.
-        write_json_file(transaction_path(), payloads)
-        for key, payload in payloads.items():
-            if write_json_file(CONFIG_FILES[key], payload):
-                written.append(key)
-        os.remove(transaction_path())
-    return written
+        return native_store().write(mio_pictures.project(mio_lifecycle.filter_deleted(copy.deepcopy(data), DATA_DIR), DATA_DIR))
 
 def store_image_data(data_url, album_id="unassigned"):
-    if not isinstance(album_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,150}", album_id):
-        raise ValueError("Invalid album ID")
-    normalized = data_url_to_base64_data_url(data_url)
-    raw = base64.b64decode(normalized.split(",", 1)[1], validate=True)
-    mime = detect_image_mime_type(raw)
-    ext = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp", "image/gif": ".gif"}.get(mime)
-    if not ext:
-        raise ValueError("Only PNG, JPEG, WebP and GIF assets are accepted")
-    relative = "albums/" + album_id + "/" + hashlib.sha256(raw).hexdigest() + ext
-    destination = os.path.join(IMAGES_DIR, relative)
-    with CONFIG_LOCK:
-        if not os.path.exists(destination):
-            os.makedirs(os.path.dirname(destination), exist_ok=True)
-            temporary = destination + ".tmp"
-            try:
-                with open(temporary, "wb") as handle:
-                    handle.write(raw)
-                os.replace(temporary, destination)
-            finally:
-                if os.path.exists(temporary):
-                    os.remove(temporary)
-    return "/images/" + relative
+    return native_store().upload(data_url)
 
 
 class ComicRequestHandler(SimpleHTTPRequestHandler):
@@ -935,12 +885,10 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
     def translate_path(self, path):
         request_path = urllib.parse.unquote(urllib.parse.urlparse(path).path)
         if request_path.startswith('/images/'):
-            relative = request_path[len('/images/'):]
-            for root in (IMAGES_DIR, LEGACY_IMAGES_DIR):
-                candidate = os.path.realpath(os.path.join(root, relative))
-                if os.path.commonpath([candidate, os.path.realpath(root)]) == os.path.realpath(root) and os.path.isfile(candidate):
-                    return candidate
-            return os.path.join(IMAGES_DIR, '__not_found__')
+            try:
+                return str(native_store().image_path(request_path))
+            except (LibraryError, OSError, ValueError):
+                return os.path.join(DATA_DIR, '__not_found__')
         return super().translate_path(path)
 
     def is_origin_allowed(self):
@@ -1019,11 +967,48 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
         if request_path.startswith('/api/foundation/') and mio_foundation.dispatch(self, sys.modules[__name__], request_path[len('/api/foundation/'):], urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)):
             return
 
+        if request_path == '/api/content':
+            try:
+                from mio_content import bootstrap
+                value=bootstrap(content_store())
+                value['config']=mio_lifecycle.filter_deleted(value['config'],DATA_DIR)
+                self.send_json(200, value)
+            except Exception as e:self.send_json(500, {'error': str(e)})
+            return
+
         if request_path == '/api/config':
             try:
-                self.send_json(200, read_merged_config())
+                content_store().library.scan()
+                self.send_json(200, mio_lifecycle.filter_deleted(native_store().read(album_summaries='summaries=1' in self.path,include_baseline=False), DATA_DIR) if 'summaries=1' in self.path else read_merged_config())
             except Exception as e:
                 self.send_json(500, {"error": str(e)})
+            return
+
+        if request_path.startswith('/api/library/export/'):
+            try:
+                kind, id = request_path[len('/api/library/export/'):].split('/',1)
+                if kind == 'albums':mio_foundation.materialize_album(sys.modules[__name__],id)
+                raw=native_store().library.export_bundle(kind,id)
+                self.send_response(200)
+                self.send_header('Content-Type','application/zip')
+                self.send_header('Content-Disposition','attachment; filename="'+id+'.mio.zip"')
+                self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
+            except LibraryError as e:self.send_json(e.status,{'error':str(e)})
+            return
+
+        if request_path.startswith('/api/library/entity/'):
+            try:
+                kind, id = request_path[len('/api/library/entity/'):].split('/', 1)
+                if kind == 'albums':
+                    mio_foundation.materialize_album(sys.modules[__name__],id)
+                value = native_store().entity(kind, id)
+                self.send_json(200, value)
+            except LibraryError as e:
+                self.send_json(e.status, {'error': str(e)})
+            return
+        if request_path == '/api/library/rescan':
+            native_store().library.scan()
+            self.send_json(200, {'ok':True,'problems':native_store().library.problems()})
             return
 
         if request_path == '/api/marketplace/index':
@@ -1067,7 +1052,7 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
                 return
             try:
                 payload = self.read_json_body(max_bytes=65536)
-                result = mio_credentials.manage(DATA_DIR, payload) if request_path.endswith('/credentials') else list_provider_models(payload)
+                result = manage_native_credentials(payload) if request_path.endswith('/credentials') else list_provider_models(payload)
                 self.send_json(200, result)
             except PayloadTooLargeError:
                 self.send_json(413, {'error': 'Request too large'})
@@ -1093,36 +1078,69 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
         if request_path.startswith('/api/foundation/') and mio_foundation.dispatch(self, sys.modules[__name__], request_path[len('/api/foundation/'):], urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)):
             return
 
+        if request_path in ('/api/library/import', '/api/library/inspect', '/api/library/export-document'):
+            try:
+                import mio_resource_sharing as sharing
+                body = self.read_json_body(max_bytes=260*1024*1024)
+                store = native_store()
+                if 'html' in body:
+                    import mio_album_html
+                    if body.get('expectedKind')!='albums':raise LibraryError('请在画册页面导入 HTML 画册。')
+                    self.send_json(200,mio_album_html.inspect(store,body) if request_path.endswith('/inspect') else mio_album_html.import_html(store,body))
+                elif request_path.endswith('/export-document'):
+                    raw = sharing.export_document(store, body.get('kind'), body.get('document'))
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/zip')
+                    self.send_header('Content-Length', str(len(raw)))
+                    self.end_headers();self.wfile.write(raw)
+                elif request_path.endswith('/inspect'):
+                    kind, doc, assets = sharing.inspect_resource(store, body)
+                    self.send_json(200, {'ok': True, 'kind': kind, 'title': doc['title'],
+                                        'count': len(doc.get('steps', doc.get('frames', doc.get('entries', [])))),
+                                        'images': len(assets),'storyboards': int(bool(doc.get('sharedSources',{}).get('storyboard'))),
+                                        'variables': int(bool(doc.get('sharedSources',{}).get('variables')))})
+                else:
+                    self.send_json(200, sharing.import_resource(store, body))
+            except LibraryError as e:self.send_json(e.status, {'error': str(e)})
+            except Exception as e:self.send_json(400, {'error': str(e)})
+            return
+        if request_path == '/api/library/forget-key':
+            try:
+                scope=self.read_json_body().get('scope')
+                if scope not in ('llm','xml','critic'):raise ValueError('Unknown key scope')
+                name='workspace' if scope=='critic' else scope
+                pointer='/ui/comfyStudio/settings/critic/key' if scope=='critic' else '/key'
+                store=native_store();current=store.settings.get(name)
+                self.send_json(200,store.apply([],settings_changes=[{'name':name,'document':current['document'],'expected':current['etag'],'clearSecrets':[pointer]}]))
+            except Exception as e:self.send_json(400,{'error':str(e)})
+            return
+
+        if request_path == '/api/chat':
+            try:
+                self.send_json(200, chat_proxy(self.read_json_body(max_bytes=20*1024*1024)))
+            except Exception:
+                self.send_json(502, {'error':'模型请求未完成；未自动重试。请检查连接、模型和保存的密钥。'})
+            return
+
         if request_path == '/api/config':
             try:
-                data = validate_config_payload(self.read_json_body())
-                
-                # 安全红线拦截校验：防止客户端空缓存反向冲刷抹除已有配置与画册
-                with CONFIG_LOCK:
-                    current_data = read_merged_config()
-                    if 'expectedRevision' in data and data['expectedRevision'] != current_data.get('updatedAt'):
-                        self.send_json(409, {'error':'Workspace changed in another client; reload before saving.'})
-                        return
-                    force_write = data.get("forceWrite", False)
-                    shrunken_fields = [
-                        field for field in PROTECTED_COLLECTION_FIELDS
-                        if len(data.get(field, [])) < len(current_data.get(field, []))
-                    ]
-                    if not force_write and shrunken_fields:
-                        field_list = ", ".join(shrunken_fields)
-                        print(f"[Sync Blocked] Prevented shrinking protected fields: {field_list}.", flush=True)
-                        self.send_json(409, {
-                            "error": f"Sync blocked: protected collections would shrink ({field_list})."
-                        })
-                        return
-
-                    written = write_split_config(data)
-                self.send_json(200, {"ok": True, "status": "success", "files": written})
-            except PayloadTooLargeError as e:
-                self.send_json(413, {"error": str(e)})
+                payload = self.read_json_body(max_bytes=20*1024*1024)
+                if payload.get('format') != 'mio.delta.v2':
+                    raise LibraryError('Only per-entity v2 delta saves are accepted. Reload the application.', 409)
+                service=mio_foundation.jobs(sys.modules[__name__])
+                with service.lock, CONFIG_LOCK:
+                    removed = payload.get('removals', [])
+                    deleted = mio_lifecycle.deleted_album_ids(DATA_DIR)
+                    changes = [op for op in payload.get('changes', []) if not (op.get('kind')=='albums' and op.get('id') in deleted)]
+                    for op in changes:
+                        if op.get('kind')=='albums':
+                            op['document']=mio_pictures.project({'savedGalleries':[op['document']]},DATA_DIR)['savedGalleries'][0]
+                    album_ids=[op['id'] for op in removed if op.get('kind')=='albums']
+                    self.send_json(200, native_store().apply(changes, removed, payload.get('settings', []),before_commit=(lambda:service.delete_albums(album_ids)) if album_ids else None))
+            except LibraryError as e:
+                self.send_json(e.status, {'error':str(e), 'code':e.code})
             except Exception as e:
-                print(f"[POST Error] {e}", flush=True)
-                self.send_json(400, {"error": str(e)})
+                self.send_json(400, {'error':str(e)})
 
         elif request_path == '/api/store-image':
             try:
@@ -1146,28 +1164,7 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
                     raise ValueError('Missing url field')
 
                 raw, mime_type = fetch_remote_image(img_url)
-                ext = {
-                    'image/jpeg': '.jpg',
-                    'image/png': '.png',
-                    'image/webp': '.webp',
-                    'image/gif': '.gif',
-                }.get(mime_type, mimetypes.guess_extension(mime_type) or '.img')
-
-                folder = datetime.now().strftime("%Y/%m/%d")
-                filename = f"{folder}/comfy_{uuid.uuid4().hex}{ext}"
-                dest_path = os.path.join(IMAGES_DIR, filename)
-                os.makedirs(os.path.dirname(dest_path), exist_ok=True)
-                tmp_path = f"{dest_path}.tmp"
-
-                try:
-                    with open(tmp_path, 'wb') as out:
-                        out.write(raw)
-                    os.replace(tmp_path, dest_path)
-                finally:
-                    if os.path.exists(tmp_path):
-                        os.remove(tmp_path)
-
-                local_url = f"/images/{filename}"
+                local_url = store_image_data(bytes_to_data_url(raw, mime_type), payload.get('albumId', 'unassigned'))
                 self.send_json(200, {"status": "ok", "localUrl": local_url})
             except PayloadTooLargeError as e:
                 self.send_json(413, {"error": str(e)})
@@ -1212,13 +1209,19 @@ class ComicRequestHandler(SimpleHTTPRequestHandler):
 if __name__ == '__main__':
     # Change working dir to server.py directory
     os.chdir(BASE_DIR)
-    print(f"=========================================================")
-    print(f" Mio 本地服务已成功启动！")
-    print(f" 网页访问地址: http://127.0.0.1:{PORT}/index.html")
-    print(f" 物理落盘配置目录: data/")
-    print(f"=========================================================")
-    mio_foundation.jobs(sys.modules[__name__])
-    server = ThreadingHTTPServer((os.environ.get('MIO_HOST', os.environ.get('COMFY_COMIC_HOST', '127.0.0.1')), PORT), ComicRequestHandler)
+    try:
+        native_store().wait_index()
+        mio_foundation.jobs(sys.modules[__name__])
+        server = ThreadingHTTPServer((os.environ.get('MIO_HOST', os.environ.get('COMFY_COMIC_HOST', '127.0.0.1')), PORT), ComicRequestHandler)
+    except (LibraryError, OSError) as error:
+        print('启动已停止，未使用默认数据覆盖现有文件：'+str(error),flush=True)
+        print('旧格式请先离线转换到新目录；用 MIO_DATA_DIR 指向转换结果。参阅 docs/guide/FILE_LIBRARY.html。',flush=True)
+        raise SystemExit(2)
+    print('=========================================================')
+    print(' Mio 独立文件服务已成功启动！')
+    print(f' 网页访问地址: http://127.0.0.1:{PORT}/index.html')
+    print(' 物理落盘配置目录: '+DATA_DIR)
+    print('=========================================================',flush=True)
     try:
         import webbrowser
         import time

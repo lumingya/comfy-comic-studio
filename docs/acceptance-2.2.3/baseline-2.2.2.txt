@@ -1,0 +1,4 @@
+PASS 2.2.2 reproduced: existing name cannot be edited, only blank prefix and tag fields are offered
+Original title: 海风与未寄出的信
+Policy: {"mode":"retry","maxRetries":5,"delaySeconds":15,"onExhausted":"continue"}
+PASS 2.2.2 actual dispatcher reproduction: six consistently failing scenes receive twelve attempts with one retry per scene; no cross-scene guard. Controlled 503s and advanced wait deadlines only, no provider calls.

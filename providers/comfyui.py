@@ -26,7 +26,9 @@ def generate(payload, host):
         if remaining<=0:raise TimeoutError('ComfyUI configured timeout reached; result unconfirmed')
         try:
             with opener.open(urllib.request.Request(base+path, data=data, headers={'Content-Type':content_type}), timeout=min(remaining,payload.get('_requestTimeout',300))) as response:
-                return host.read_limited_response(response)
+                raw=host.read_limited_response(response)
+                if path=='/prompt' and payload.get('_onResponse'):payload['_onResponse'](getattr(response,'status',200))
+                return raw
         except urllib.error.HTTPError as exc:
             raise host.ProviderHTTPError(exc.code, host.read_limited_response(exc, 2*1024*1024)) from None
     prompt_id=payload.get('_resumePromptId')

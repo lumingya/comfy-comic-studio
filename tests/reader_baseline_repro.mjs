@@ -1,0 +1,10 @@
+// Usage: node tests/reader_baseline_repro.mjs /path/to/mio-1.1.0-source.zip
+import {chromium} from 'playwright';
+import {spawn,execFileSync} from 'node:child_process';
+import {mkdtempSync,readdirSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import path from 'node:path';
+const temp=mkdtempSync(path.join(tmpdir(),'mio-old-preview-'));let server,browser;
+try{execFileSync('python',['-m','zipfile','-e',path.resolve(process.argv[2]),temp]);const root=path.join(temp,readdirSync(temp)[0]);server=spawn('python',['-u','server.py'],{cwd:root,env:{...process.env,MIO_PORT:'8806'},stdio:'ignore'});for(let i=0;i<200;i++){try{if((await fetch('http://127.0.0.1:8806/api/config')).ok)break}catch{}await new Promise(r=>setTimeout(r,50))}
+browser=await chromium.launch({args:['--no-sandbox']});const p=await browser.newPage();await p.goto('http://127.0.0.1:8806');await p.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);await p.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());openReader(state.books[0].id)});console.log('BASELINE default mode:',await p.evaluate(()=>artUI.readerMode));await p.locator('.presentation-trigger').click();await p.locator('[data-act="presentation-select"][data-id="export-paper"]').click();await p.frameLocator('#presentation-preview').locator('[data-cc-frame]').first().waitFor();await p.evaluate(()=>{window.oldIframe=$('#presentation-preview');window.oldRevision=presentationUI.revision;window.reads=0;const read=presentationImage;presentationImage=function(...a){window.reads++;return read(...a)}});await p.locator('#presentation-drawer [data-act="presentation-panel"]').click();console.log('BASELINE toggle without selecting any template:',await p.evaluate(()=>({iframeReplaced:window.oldIframe!==$('#presentation-preview'),revisionChanged:window.oldRevision!==presentationUI.revision,imagePreparationCalls:window.reads})));
+}finally{await browser?.close();if(server?.exitCode===null){const done=new Promise(r=>server.once('exit',r));server.kill();await done}rmSync(temp,{recursive:true,force:true})}

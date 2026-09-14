@@ -22,7 +22,7 @@ function randomSeeds(value){if(!value||typeof value!=='object')return;for(const 
 async function blobData(blob){return new Promise((resolve,reject)=>{const f=new FileReader();f.onload=()=>resolve(f.result);f.onerror=()=>reject(f.error);f.readAsDataURL(blob)})}
 
 
-async function imageData(src){if(src.startsWith('data:')&&src.includes(';base64,'))return src;return blobData(await(await request(src,{},15000)).blob())}
+async function imageData(src,signal){if(signal?.aborted)throw new DOMException('已取消','AbortError');if(src.startsWith('data:')&&src.includes(';base64,'))return src;return blobData(await(await request(src,{signal},15000)).blob())}
 
 
 async function realFrame(frame,row,signal,sourceImage=null){const c=state.settings.comfy,m=c.mapping,w=clone(validateWorkflow(c.workflow));randomSeeds(w);const bindText=(id,key,value)=>{if(!id||!w[id])throw Error('提示词节点未正确绑定。');const n=w[id],k=key||['text','opt_text','text_g'].find(k=>k in n.inputs);if(!k||!(k in n.inputs))throw Error('节点 #'+id+' 不存在文本字段 '+k);n.inputs[k]=value};bindText(m.positive,m.positiveField,interpolate(frame.prompt,row,frame)+(row.trigger?', '+row.trigger:''));bindText(m.negative,m.negativeField,interpolate(frame.negative||state.settings.negative,row,frame));if(m.sampler&&w[m.sampler])for(const k of ['steps','cfg','denoise'])w[m.sampler].inputs[k]=Number(frame[k]);if(m.sampler&&frame.seed>=0)w[m.sampler].inputs.seed=Number(frame.seed);if(m.size&&w[m.size]){w[m.size].inputs.width=Number(frame.width);w[m.size].inputs.height=Number(frame.height)}for(const node of Object.values(w))if(/LoraLoader/i.test(node.class_type)&&row.lora)node.inputs.lora_name=row.lora;

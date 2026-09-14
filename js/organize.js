@@ -37,7 +37,7 @@ function renderOrderedQueue(){
   return tasks.map((q,i)=>{
     const b=bookBy(q.bookId),active=q.status==='running',movable=q.status==='pending'&&(q.done||0)===0&&!q.serverAttempts,pos=pending.indexOf(q),pct=q.indices.length?Math.round(q.done/q.indices.length*100):100;
     const statuses={pending:rt.paused?'等待恢复':'排队中',running:'生成中',paused:'已暂存',complete:'已完成',canceled:'已停止',failed:'需要处理'};
-    return `<article class="ordered-task queue-card ${active?'is-running':q.serverReadyAt&&['pending','paused'].includes(q.status)?'is-retrying':''}" data-sort-task="${esc(q.id)}" draggable="${movable}" aria-label="任务 ${i+1}：${esc(b.title)}"><div class="ordered-task-main"><span class="task-drag-handle" title="${movable?'拖动排序':'执行顺序已固定'}">${movable?'⠿':'·'}</span><span class="task-position">${pad(i+1)}</span><div class="ordered-queue-thumb">${imgTag(coverImage(b),b.title,`data-book="${esc(b.id)}"`)}</div><div class="task-title"><strong>${esc(b.title)}</strong><div class="queue-card-meta"><span>${q.done} / ${q.indices.length} 幕</span><span class="queue-state">${esc(q.serverState==='unknown'?'结果未确认':statuses[q.status]||q.status)}</span>${active?`<span class="task-live-badge" role="status"><i></i>${queuePoolLabel(q)}</span>`:''}</div></div><div class="task-actions">${ibtn('up','org-task-up','任务上移',`data-id="${esc(q.id)}" ${!movable||pos===0?'disabled':''}`)}${ibtn('down','org-task-down','任务下移',`data-id="${esc(q.id)}" ${!movable||pos===pending.length-1?'disabled':''}`)}${ibtn('book','read','查看画册',`data-id="${esc(b.id)}"`)}${ibtn('trash','org-task-delete','删除任务及对应画册',`data-id="${esc(q.id)}" ${active?'disabled':''}`)}</div></div><div class="queue-card-body"><div class="task-mini-progress" aria-label="进度 ${pct}%"><i style="width:${pct}%"></i></div><div class="queue-channel-line"><span>下次请求</span><strong>${esc(queueChannelLabel(q))}</strong></div>${q.error?`<p class="task-error-summary">${esc(queueErrorSummary(q).slice(0,220))}</p>`:''}${q.serverReadyAt?`<p class="task-retry-badge">额外重试 ${q.serverRetries} · ${rt.paused||q.status==='paused'?'已暂停':new Date(q.serverReadyAt*1000).toLocaleTimeString()+' 后执行'}</p>`:''}<div class="task-recovery-actions">${q.serverId&&['pending','paused'].includes(q.serverState)&&!q.serverEnabled&&!q.serverReadyAt?btn('并行启动','play','queue-start-parallel',`data-id="${esc(q.id)}"`,'small'):''}${active&&q.serverId?btn('立即停止','stop','queue-stop-task',`data-id="${esc(q.id)}"`,'small'):''}${queueCanContinue(q)?btn('继续未完成分镜','refresh','queue-retry',`data-id="${esc(q.id)}"`,'small'):''}${q.serverId?btn('请求记录','list','foundation-job-detail',`data-job="${esc(q.serverId)}"`,'small ghost'):''}</div></div><details class="queue-card-details"><summary>任务详情 <span>逐幕状态与原始响应</span></summary>${q.error?`<details class="queue-error-detail"><summary>错误详情（原始响应）</summary><pre>${esc(q.error)}</pre></details>`:''}${queueFrameStatesHTML(q)}${taskWorkflowHTML(q)}</details></article>`;
+    return `<article class="ordered-task queue-card ${active?'is-running':q.serverReadyAt&&['pending','paused'].includes(q.status)?'is-retrying':''}" data-sort-task="${esc(q.id)}" draggable="${movable}" aria-label="任务 ${i+1}：${esc(b.title)}"><div class="ordered-task-main"><span class="task-drag-handle" title="${movable?'拖动排序':'执行顺序已固定'}">${movable?'⠿':'·'}</span><span class="task-position">${pad(i+1)}</span><div class="ordered-queue-thumb">${imgTag(coverImage(b),b.title,`data-book="${esc(b.id)}"`)}</div><div class="task-title"><strong>${esc(b.title)}</strong><div class="queue-card-meta"><span>${q.done} / ${q.indices.length} 幕</span><span class="queue-state">${esc(q.serverState==='unknown'?'结果未确认':statuses[q.status]||q.status)}</span>${active?`<span class="task-live-badge" role="status"><i></i>${queuePoolLabel(q)}</span>`:''}</div></div><div class="task-actions">${ibtn('up','org-task-up','任务上移',`data-id="${esc(q.id)}" ${!movable||pos===0?'disabled':''}`)}${ibtn('down','org-task-down','任务下移',`data-id="${esc(q.id)}" ${!movable||pos===pending.length-1?'disabled':''}`)}${ibtn('book','read','查看画册',`data-id="${esc(b.id)}"`)}${btn(active?'停止并删除':'删除','trash','org-task-delete',`data-id="${esc(q.id)}"`,'small ghost danger')}</div></div><div class="queue-card-body"><div class="task-mini-progress" aria-label="进度 ${pct}%"><i style="width:${pct}%"></i></div><div class="queue-channel-line"><span>下次请求</span><strong>${esc(queueChannelLabel(q))}</strong></div>${q.error||q.serverFailureLimit?`<p class="task-error-summary">${esc(queueErrorSummary(q).slice(0,220))}</p>`:''}${q.serverReadyAt?`<p class="task-retry-badge">额外重试 ${q.serverRetries} · ${rt.paused||q.status==='paused'?'已暂停':new Date(q.serverReadyAt*1000).toLocaleTimeString()+' 后执行'}</p>`:''}<div class="task-recovery-actions">${q.serverId&&(q.serverActions?q.serverActions.includes('start'):['pending','paused'].includes(q.serverState)&&!q.serverEnabled&&!q.serverReadyAt)?btn('并行启动','play','queue-start-parallel',`data-id="${esc(q.id)}"`,'small'):''}${active&&q.serverId?btn('立即停止','stop','queue-stop-task',`data-id="${esc(q.id)}"`,'small'):''}${queueCanContinue(q)?btn('继续未完成分镜','refresh','queue-retry',`data-id="${esc(q.id)}"`,'small'):''}${q.serverId?btn('请求记录','list','foundation-job-detail',`data-job="${esc(q.serverId)}"`,'small ghost'):''}</div></div><details class="queue-card-details"><summary>任务详情 <span>逐幕状态与原始响应</span></summary>${q.error?`<details class="queue-error-detail"><summary>错误详情（原始响应）</summary><pre>${esc(q.error)}</pre></details>`:''}${queueFrameStatesHTML(q)}${taskWorkflowHTML(q)}</details></article>`;
   }).join('');
 }
 
@@ -56,7 +56,6 @@ function reorderPendingTask(source,target,after=false){
 
 async function deleteQueuedTask(id){
   const q=state.queue.find(q=>q.id===id);if(!q)return;
-  if(q.status==='running')throw Error('请先停止本任务，等待当前请求结束后再删除画册。');
   return deleteBooks([q.bookId]);
 }
 
@@ -99,13 +98,36 @@ function openBookContext(id,x,y,extend=false){
   const ids=[...ui.selected],busy=ids.some(key=>bookBy(key)?.inProgress||[...rt.redraw].some(k=>k.startsWith(key+':'))),menu=document.createElement('div');
   menu.id='book-context-menu';menu.className='book-context-menu';menu.setAttribute('role','menu');menu.setAttribute('aria-label','画册右键菜单');menu.dataset.focusId=id;menu.dataset.ids=JSON.stringify(ids);
   const item=(action,label,iconName,disabled=false)=>`<button type="button" role="menuitem" data-act="${action}" ${disabled?'disabled':''}>${icon(iconName,'sm')}<span>${label}</span></button>`;
-  menu.innerHTML=`<div class="context-menu-title">已选择 ${ids.length} 本画册</div>${item('org-context-export','批量导出…','download')}${item('org-context-edit','批量编辑名称 / 标签…','edit',busy)}${item('org-context-star','批量星标','star')}<div class="context-menu-separator"></div>${ids.length===1?item('org-context-up','向前移动画册','up',getShelfBooks()[0]?.id===id)+item('org-context-down','向后移动画册','down',getShelfBooks().at(-1)?.id===id):''}${item('org-context-select-all','选择当前筛选结果','check')}${item('org-context-clear','取消选择','close')}<div class="context-menu-separator"></div>${item('org-context-delete',busy?'生成中 · 暂不可删除':'批量删除…','trash',busy)}<div class="context-menu-hint">手机：点选画册复选框进行多选<br>电脑：Ctrl / ⌘ 多选，拖动调整顺序</div>`;
+  menu.innerHTML=`<div class="context-menu-title">已选择 ${ids.length} 本画册</div>${item('org-context-export','导出离线画册…','download')}${ids.length===1?`<button type="button" role="menuitem" data-act="native-export" data-kind="albums" data-id="${esc(id)}">${icon('download','sm')}<span>分享画册源文件…</span></button>`:''}${item('org-context-edit','重命名…','edit',busy)}${item('org-context-star','批量星标','star')}<div class="context-menu-separator"></div>${ids.length===1?item('org-context-up','向前移动画册','up',getShelfBooks()[0]?.id===id)+item('org-context-down','向后移动画册','down',getShelfBooks().at(-1)?.id===id):''}${item('org-context-select-all','选择当前筛选结果','check')}${item('org-context-clear','取消选择','close')}<div class="context-menu-separator"></div>${item('org-context-delete',busy?'停止并批量删除…':'批量删除…','trash')}<div class="context-menu-hint">手机：点选画册复选框进行多选<br>电脑：Ctrl / ⌘ 多选，拖动调整顺序</div>`;
   document.body.append(menu);const rect=menu.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(x,innerWidth-rect.width-8))+'px';menu.style.top=Math.max(8,Math.min(y,innerHeight-rect.height-8))+'px';menu.querySelector('button')?.focus({preventScroll:true});
 }
 
-function batchEditBookMetadata(ids){
-  modal('批量编辑 '+ids.length+' 本画册',`${field('标题前缀（留空不改）',input('prefix','','text','id="org-book-prefix" maxlength="60" placeholder="例如：第一辑 · "'))}${field('追加标签（逗号分隔，留空不改）',input('tags','','text','id="org-book-tags" maxlength="300" placeholder="例如：旅行, 青春"'))}<p class="help">仅修改选中画册的展示信息，不改变源计划、图片文件名或工作流快照。</p><div class="modal-footer">${btn('取消','','close-modal')}${btn('应用修改','check','org-book-edit-confirm')}</div>`);
-  $('#modal-body').dataset.bookIds=JSON.stringify(ids);
+async function batchEditBookMetadata(ids){
+  const projectId=state.activeProjectId,unique=[...new Set(ids)];
+  if(!unique.length)return;
+  for(let i=0;i<unique.length;i+=8){if(projectId!==state.activeProjectId)throw Error('画册集已变化，请重新选择。');await Promise.all(unique.slice(i,i+8).map(id=>globalThis.Mio.fileLibrary.hydrate(id)))}
+  if(projectId!==state.activeProjectId)throw Error('画册集已变化，请重新选择。');
+  const rows=unique.map(id=>{const b=bookBy(id);if(!b||b.projectId!==projectId)throw Error('选中的画册已变化，请重新选择。');if(b.inProgress||[...rt.redraw].some(k=>k.startsWith(id+':')))throw Error('选中的画册正在生成或重绘，请稍后修改。');return {id,title:b.title}});
+  rt.bookRenameDraft={projectId,rows};
+  modal('重命名',`<div class="book-rename-list">${rows.map((b,i)=>field(rows.length===1?'画册名称':'画册 '+(i+1),input('title',b.title,'text',`data-book-rename="${esc(b.id)}" maxlength="150" aria-label="${esc('画册 '+(i+1)+' 名称')}"`))).join('')}</div><p class="help">直接修改现有名称。仅修改选中的画册，不更改图片、文件身份、原标签或生成任务。</p><div class="modal-footer">${btn('取消','','close-modal')}${btn('保存名称','check','org-book-edit-confirm','','primary')}</div>`);
+  $('[data-book-rename]')?.focus();
+}
+
+async function saveBookNames(){
+  const draft=rt.bookRenameDraft;if(!draft||draft.projectId!==state.activeProjectId)throw Error('画册集已变化，请重新打开重命名。');
+  const changes=draft.rows.map(row=>{
+    const b=bookBy(row.id),el=$(`[data-book-rename="${CSS.escape(row.id)}"]`),title=el?.value.trim();
+    if(!el||!b||b.projectId!==draft.projectId||b._lazy)throw Error('画册已变化，请重新打开重命名。');
+    if(b.inProgress||[...rt.redraw].some(k=>k.startsWith(b.id+':')))throw Error('选中的画册正在生成或重绘，请稍后修改。');
+    if(!title||title.length>150)throw Error('每本画册都需要填写 1–150 字的名称。');
+    if(b.title!==row.title)throw Error('画册名称已在其他操作中改变，未覆盖；请重新打开重命名。');
+    return {b,title};
+  }).filter(({b,title})=>b.title!==title);
+  if(!changes.length){closeModal();return}
+  for(const {b,title} of changes){b.title=title;b.updatedAt=Date.now()}
+  rt.bookRenameDraft=null;save();closeModal();render();
+  if(!await savePythonWorkspace())throw Error('重命名尚未确认。本页保留待保存名称，请检查保存错误后重新保存。');
+  toast('已重命名 '+changes.length+' 本画册。');
 }
 
 function installOrganizationTools(){
@@ -141,12 +163,7 @@ function installOrganizationTools(){
       if(action==='org-context-edit')return batchEditBookMetadata(ids);
       if(action==='org-context-star'){ids.forEach(id=>{bookBy(id).liked=true});save();refreshGallery();return}
     }
-    if(action==='org-book-edit-confirm'){
-      const ids=JSON.parse($('#modal-body').dataset.bookIds||'[]'),prefix=$('#org-book-prefix').value,tags=$('#org-book-tags').value.split(/[,，]/).map(s=>s.trim()).filter(Boolean);
-      for(const id of ids){const b=bookBy(id);if(b&&b.projectId===state.activeProjectId){if(b.inProgress)throw Error('选中的画册正在生成，请稍后修改。')}}
-      for(const id of ids){const b=bookBy(id);if(b&&b.projectId===state.activeProjectId){if(prefix)b.title=prefix+b.title;b.tags=[...new Set([...b.tags,...tags])];b.updatedAt=Date.now()}}
-      save();closeModal();render();toast('画册展示信息已更新。');return;
-    }
+    if(action==='org-book-edit-confirm')return saveBookNames();
     if(action==='book-menu'&&ui.workspace===0){const rect=element?.getBoundingClientRect();openBookContext(d.id,rect?.left||innerWidth/2,rect?.bottom||innerHeight/2);return}
     return oldAction(action,d,element);
   };

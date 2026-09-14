@@ -1,0 +1,7 @@
+
+> mio-studio@1.2.1 build
+> node js/build.js dev && python tools/build_docs.py
+
+All development modules and assembled script passed JavaScript syntax checks.
+Wrote dev index.html. Static resources use only /styles.css and /js/*.js.
+Built 36 offline documentation pages.

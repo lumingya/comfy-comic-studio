@@ -1,0 +1,140 @@
+/* File-native transport. Summaries are never writable album bodies. */
+'use strict';
+function nativeSplitDTO(value){
+  const c=clone(value),uiConfig=c.uiConfig||{},meta=uiConfig.comfyStudio||{},creation=meta.creation||{},matrix=c.batchMatrix||{},chats=c.chatConfig||{},queue=c.batchRunState||{};
+  const groups={storyboards:c.templates||[],albums:c.savedGalleries||[],workflows:c.comfyWorkflows||[],rows:matrix.rows||[],collections:meta.projects||[],plans:creation.plans||[],layouts:meta.exportTemplates||[],conversations:chats.sessions||[],tasks:queue.queue||[],characters:[],scenes:[]};
+  const presets=creation.variableSets||[];for(const item of presets)groups[item.category==='scenes'?'scenes':'characters'].push(item);
+  delete matrix.rows;delete chats.sessions;delete queue.queue;delete meta.projects;delete creation.plans;delete creation.variableSets;delete meta.exportTemplates;
+  const settings={comfy:c.comfyConfig||{},llm:c.llmConfig||{},xml:c.xmlConfig||{}},ordering={},fieldKinds={templates:'storyboards',savedGalleries:'albums',rows:'rows',projects:'collections',plans:'plans',characters:'characters',scenes:'scenes',exportTemplates:'layouts',comfyWorkflows:'workflows',sessions:'conversations',queue:'tasks'};
+  for(const[field,kind]of Object.entries(fieldKinds))ordering[field]=groups[kind].map(x=>x.id);ordering.variableSets=presets.map(x=>x.id);
+  const excluded=new Set(['uiConfig','templates','savedGalleries','comfyWorkflows','batchMatrix','chatConfig','batchRunState','comfyConfig','llmConfig','xmlConfig','expectedRevision','forceWrite','updatedAt']);
+  settings.workspace={globals:Object.fromEntries(Object.entries(c).filter(([k])=>!k.startsWith('_')&&!excluded.has(k))),ui:uiConfig,matrix,chats,queue,ordering,aliases:[],executionStartPolicy:'manual'};
+  return{groups,settings};
+}
+function nativeDelta(studio,payload,previous){
+  // This transport is private/local. General backup converters still strip keys.
+  for(const name of ['llm','xml'])if(studio.settings[name]?.key)payload[name+'Config'].key=studio.settings[name].key;
+  if(studio.settings.critic?.key)payload.uiConfig.comfyStudio.settings.critic.key=studio.settings.critic.key;
+  const next=nativeSplitDTO(payload),old=nativeSplitDTO(previous),revisions=previous._fileRevisions||{},changes=[],removals=[],settings=[];
+  for(const[kind,items]of Object.entries(next.groups)){
+    const prior=new Map((old.groups[kind]||[]).map(x=>[x.id,x])),ids=new Set(items.map(x=>x.id));
+    for(const item of items)if(!item._lazy&&JSON.stringify(item)!==JSON.stringify(prior.get(item.id)))changes.push({kind,id:item.id,document:item,baseline:prior.get(item.id),expected:revisions[kind+':'+item.id]||null});
+    for(const item of old.groups[kind]||[])if(!ids.has(item.id))removals.push({kind,id:item.id,expected:revisions[kind+':'+item.id]||null});
+  }
+  for(const[name,document]of Object.entries(next.settings))if(JSON.stringify(document)!==JSON.stringify(old.settings[name]))settings.push({name,document,baseline:old.settings[name],expected:revisions['settings:'+name]||null});
+  return{format:'mio.delta.v2',changes,removals,settings};
+}
+function installFileLibrary(){
+  const ns=globalThis.ComfyComic,inflight=new Map();
+  async function hydrate(id){
+    const book=bookBy(id);if(!book?._lazy)return book;
+    if(inflight.has(id))return inflight.get(id);
+    const operation=(async()=>{
+      const response=await request('/api/library/entity/albums/'+encodeURIComponent(id));const record=await response.json();
+      if(!record.document||record.document.id!==id)throw Error('画册正文返回不完整，未替换现有内容。');
+      const current=bookBy(id);if(!current)return null;
+      const pending=Object.values(current.pictureEdits||{});
+      Object.keys(current).forEach(k=>delete current[k]);Object.assign(current,record.document);
+      const prior=ns.sync.runtime.previous.savedGalleries?.find(x=>x.id===id);if(prior){Object.keys(prior).forEach(k=>delete prior[k]);Object.assign(prior,clone(record.document))}
+      ns.sync.runtime.previous._fileRevisions??={};ns.sync.runtime.previous._fileRevisions['albums:'+id]=record.etag;
+      for(const edit of pending)ns.pictures?.apply(edit);
+      return current;
+    })();inflight.set(id,operation);try{return await operation}finally{inflight.delete(id)}
+  }
+  async function hydrateAll(){for(const book of [...state.books])await hydrate(book.id)}
+  ns.fileLibrary={hydrate,hydrateAll};
+  const oldPackage=buildDiskPackage;buildDiskPackage=async function(source,...args){if(source.books?.some(b=>b._lazy)){const copy=clone(source);for(let i=0;i<copy.books.length;i++)if(copy.books[i]._lazy){const book=await hydrate(copy.books[i].id);if(!book)throw Error('备份所需画册已被删除，未导出残缺摘要。');copy.books[i]=clone(book)}source=copy}return oldPackage(source,...args)};
+  const oldBackup=backupObject;backupObject=function(...args){if(state.books.some(b=>b._lazy))throw Error('请通过备份入口完整读取画册后再导出。');return oldBackup(...args)};
+  const oldRemote=syncRemote;syncRemote=async function(...args){await hydrateAll();return oldRemote(...args)};
+  const action=handleAction;
+  handleAction=async function(act,data={},element){
+    const id=data.id||data.book||ui.bookId;
+    if(id&&bookBy(id)?._lazy)await hydrate(id);
+    if(/bulk|compare-book|backup|disk-archive|directory|import-project|restore|collection-delete/.test(act))await hydrateAll();
+    if(act.startsWith('et-')&&state.books[0]?._lazy)await hydrate(state.books[0].id);
+    return action(act,data,element);
+  };
+  const reader=openArtReader;openArtReader=function(id){return bookBy(id)?._lazy?hydrate(id).then(()=>reader(id)):reader(id)};
+  const oldExport=exportModal;exportModal=function(ids){return ids.some(id=>bookBy(id)?._lazy)?Promise.all(ids.map(hydrate)).then(()=>oldExport(ids)):oldExport(ids)};
+  const olderReader=openReader;openReader=function(id){return bookBy(id)?._lazy?hydrate(id).then(()=>olderReader(id)):olderReader(id)};
+  const oldMissing=missingIndices;missingIndices=function(book){return book?._lazy?(book._missingIndices||[]):oldMissing(book)};
+  const oldScore=score;score=function(book){return book?._lazy?book._score||0:oldScore(book)};
+  const previousRender=render;render=function(){previousRender();
+    for(const input of document.querySelectorAll('input[type="password"]'))if(!input.value)input.placeholder='留空保留已存密钥';
+    if(ui.workspace===0&&ns.sync.runtime.previous._libraryProblems?.length){const node=document.createElement('div');node.className='notice';node.textContent='部分独立文件存在格式或重复 ID 问题，未自动修复或覆盖。请查看设置中的文件库诊断。';document.querySelector('#gallery-results')?.prepend(node)}
+  };
+  const oldVision=visionRequest;visionRequest=async function(messages,cfg,signal){if(!/^http/.test(location.protocol))return oldVision(messages,cfg,signal);if(cfg.mode!=='real')throw Error('请先启用真实视觉 API。');const message=await chatCompletion(messages,null,signal,{...cfg,_credentialScope:cfg.connection==='shared'?'llm':'critic'});if(typeof message.content!=='string'||!message.content.trim())throw Error('视觉模型未返回文本结果。');return message.content};
+  const priorChat=chatCompletion;
+  chatCompletion=async function(messages,tools,signal,cfg=state.settings.llm){
+    if(!/^http/.test(location.protocol))return priorChat(messages,tools,signal,cfg);
+    if(!await ns.sync.save())throw Error('连接设置尚未保存，未发送模型请求。');
+    const scope=cfg===state.settings.xml?'xml':cfg._credentialScope||'llm',body={model:cfg.model,messages,temperature:.75};if(tools){body.tools=tools;body.tool_choice='auto'}
+    const response=await request('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope,baseUrl:cfg.baseUrl,key:cfg.key||'',body}),signal},90000);
+    const json=await response.json(),message=json.choices?.[0]?.message;
+    if(!message||message.role!=='assistant')throw Error('模型未返回合法的 assistant 消息。');if(message.tool_calls&&(!Array.isArray(message.tool_calls)||message.tool_calls.some(c=>typeof c.id!=='string'||!c.function||typeof c.function.name!=='string'||typeof c.function.arguments!=='string')))throw Error('模型工具调用结构不完整，未写入会话。');return message;
+  };
+}
+function nativeAck(studio,payload,data){
+  const before=nativeSplitDTO(payload).groups,live=nativeSplitDTO(globalThis.ComfyComic.converters.toApi(studio,payload)).groups;
+  for(const [identity,confirmed]of Object.entries(data.entities||{})){
+    const split=identity.indexOf(':'),kind=identity.slice(0,split),id=identity.slice(split+1),submitted=before[kind]?.find(x=>x.id===id),current=live[kind]?.find(x=>x.id===id);
+    if(!submitted||!current)continue;
+    const patched=nativeReconcile(current,submitted,confirmed),target=kind==='albums'?studio.books:kind==='storyboards'?studio.templates:kind==='plans'?studio.creation.plans:kind==='characters'||kind==='scenes'?studio.creation.variableSets:kind==='rows'?studio.rows:kind==='collections'?studio.projects:kind==='tasks'?studio.queue:kind==='layouts'?studio.exportTemplates:kind==='workflows'?studio.settings.comfy.presets:studio.chats;
+    const item=target?.find(x=>x.id===id);if(item)nativePatch(item,patched)
+    const confirmedTarget=kind==='albums'?payload.savedGalleries:kind==='storyboards'?payload.templates:kind==='plans'?payload.uiConfig.comfyStudio.creation.plans:kind==='characters'||kind==='scenes'?payload.uiConfig.comfyStudio.creation.variableSets:kind==='rows'?payload.batchMatrix.rows:kind==='collections'?payload.uiConfig.comfyStudio.projects:kind==='tasks'?payload.batchRunState.queue:kind==='layouts'?payload.uiConfig.comfyStudio.exportTemplates:kind==='workflows'?payload.comfyWorkflows:payload.chatConfig.sessions;
+    const index=confirmedTarget?.findIndex(x=>x.id===id);if(index>=0)confirmedTarget[index]=clone(confirmed);
+  }
+  nativeAckSettings(studio,payload,data.settingsDocuments||{});
+  for(const name of ['llm','xml']){
+    const doc=payload[name+'Config'];if(!doc)continue;
+    if(studio.settings[name]?.key===doc.key)studio.settings[name].key='';doc.key='';
+    if(data.secretRefs?.[name])doc._secretRefs=data.secretRefs[name];
+  }
+  const doc=payload.uiConfig?.comfyStudio?.settings?.critic;
+  if(doc){if(studio.settings.critic?.key===doc.key)studio.settings.critic.key='';doc.key=''}
+}
+
+function nativeReconcile(current,submitted,confirmed){
+  if(JSON.stringify(current)===JSON.stringify(submitted))return clone(confirmed);
+  if(current&&submitted&&confirmed&&[current,submitted,confirmed].every(v=>typeof v==='object'&&!Array.isArray(v))){const result=clone(current);for(const k of new Set([...Object.keys(submitted),...Object.keys(confirmed)])){if(Object.hasOwn(confirmed,k))result[k]=nativeReconcile(current[k],submitted[k],confirmed[k]);else if(JSON.stringify(current[k])===JSON.stringify(submitted[k]))delete result[k]}return result}
+  if([current,submitted,confirmed].every(Array.isArray)){const items=[...current,...submitted,...confirmed],key=items.every(x=>x&&typeof x==='object'&&'id'in x)?'id':'stepIndex';if(items.every(x=>x&&typeof x==='object'&&key in x)){const ids=[...new Set([...current,...confirmed].map(x=>x[key]))];return ids.map(id=>{const a=current.find(x=>x[key]===id),b=submitted.find(x=>x[key]===id),c=confirmed.find(x=>x[key]===id);if(!a)return c&&!b?clone(c):undefined;if(!c)return b&&JSON.stringify(a)===JSON.stringify(b)?undefined:a;return nativeReconcile(a,b,c)}).filter(Boolean)}}
+  return current;
+}
+function nativeLibrarySettings(){
+  const problems=ComfyComic.sync.runtime.previous._libraryProblems||[];
+  return '<section class="settings-section"><h2>独立文件库</h2><p>每个分镜、设定、企划都是独立 JSON。每本画册拥有自己的 album.json 和 images/。复制新文件后，重新读取即可发现；相同 ID 不会悄悄覆盖。</p><div class="service-context"><code>data/settings/ · storyboards/ · presets/ · collections/ · albums/</code></div><p>画册、分镜和变量的导入导出位于各自页面。分享不包含服务密钥或执行记录，导入始终创建新 ID。</p><div class="row wrap" style="margin:15px 0">'+btn('扫描并重新读取','refresh','v3-connect-backend')+'</div><p class="help">'+(problems.length?esc(JSON.stringify(problems)):'文件库未报告冲突。修改同一字段发生版本冲突时，保留本页草稿，不强制覆盖。')+'</p><a href="/docs/guide/FILE_LIBRARY.html" target="_blank" rel="noopener">文件复制、分享、备份与密钥教程 ↗</a><h3>已保存密钥</h3><p>密码框留空会保留已绑定密钥；修改地址时需要明确重新填写或忘记原密钥。密钥只保存在 settings/secrets.json，不在普通分享包中。</p>'+['llm','xml','critic'].map(scope=>btn('忘记 '+scope.toUpperCase()+' 密钥','trash','native-forget','data-scope="'+scope+'"','small')).join(' ')+'</section>';
+}
+function installNativeLibraryPanel(){
+  const prior=renderPythonSettings;renderPythonSettings=function(){return nativeLibrarySettings()+prior()};
+  installContextualSharing();
+  v3Actions['native-forget']=async({scope})=>{if(!await confirmAction('忘记已保存的 '+scope.toUpperCase()+' 密钥？','仅清除这项连接的密钥绑定，不会删除画册或提交模型请求。','忘记密钥'))return;if(!await ComfyComic.sync.save())throw Error('请先保存当前编辑。');await request('/api/library/forget-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope})});await connectPythonBackend()};
+}
+
+function nativeAckSettings(studio,payload,documents){
+  const submitted=nativeSplitDTO(payload).settings;
+  for(const[name,doc]of Object.entries(documents)){
+    if(name!=='workspace'){
+      studio.settings[name]=nativePatch(studio.settings[name],nativeReconcile(studio.settings[name],submitted[name],doc));
+      payload[name+'Config']=clone(doc);continue;
+    }
+    const before=submitted.workspace,oldMeta=before.ui?.comfyStudio||{},meta=doc.ui?.comfyStudio||{};
+    for(const key of ['workspaceId','activeProjectId','customColumns','installedPackages','drafts'])if(Object.hasOwn(meta,key))studio[key]=nativeReconcile(studio[key],oldMeta[key],meta[key]);
+    for(const[key,value]of Object.entries(meta.settings||{}))studio.settings[key]=nativePatch(studio.settings[key],nativeReconcile(studio.settings[key],oldMeta.settings?.[key],value));
+    for(const[key,value]of Object.entries(meta.creation||{}))studio.creation[key]=nativeReconcile(studio.creation[key],oldMeta.creation?.[key],value);
+    const groups=payload.uiConfig.comfyStudio,plans=groups.creation.plans,presets=groups.creation.variableSets;
+    payload.uiConfig=clone(doc.ui||{});payload.uiConfig.comfyStudio??={};const next=payload.uiConfig.comfyStudio;
+    next.projects=groups.projects;next.exportTemplates=groups.exportTemplates;next.creation={...(next.creation||{}),plans,variableSets:presets};
+    payload.batchMatrix={...doc.matrix,rows:payload.batchMatrix.rows};payload.chatConfig={...doc.chats,sessions:payload.chatConfig.sessions};payload.batchRunState={...doc.queue,queue:payload.batchRunState.queue};Object.assign(payload,doc.globals||{});
+  }
+}
+
+function nativePatch(target,value){
+  if(Array.isArray(target)&&Array.isArray(value)){
+    const old=[...target],byId=new Map(old.filter(x=>x&&typeof x==='object'&&x.id).map(x=>[x.id,x]));
+    const next=value.map((v,i)=>nativePatch(v?.id?byId.get(v.id):old[i],v));target.splice(0,target.length,...next);return target;
+  }
+  if(target&&value&&typeof target==='object'&&typeof value==='object'&&!Array.isArray(target)&&!Array.isArray(value)){
+    for(const k of Object.keys(target))if(!Object.hasOwn(value,k))delete target[k];for(const[k,v]of Object.entries(value))target[k]=nativePatch(target[k],v);return target;
+  }
+  return value;
+}

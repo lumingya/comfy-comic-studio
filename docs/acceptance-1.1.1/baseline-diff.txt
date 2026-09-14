@@ -1,0 +1,9 @@
+Compared delivered mio-1.1.0-source.zip (SHA256 662dc6440a659de2b6ad5ae1d1fbfaecfebcf12f91c944a52462adada9fe0773) with current runtime.
+CHANGED index.html
+CHANGED js/app.js
+CHANGED js/ui-presentation.js
+CHANGED js/ui-reader.js
+CHANGED js/ui.js
+CHANGED package.json
+CHANGED start.bat
+CHANGED styles.css

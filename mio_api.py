@@ -12,7 +12,7 @@ import threading
 import urllib.parse
 import uuid
 
-VERSION = '1.0.0'
+VERSION = '1.0.1'
 GENERATION_SLOT = threading.BoundedSemaphore(1)
 
 
@@ -24,7 +24,7 @@ class ApiError(Exception):
 def capabilities():
     return {'name': 'Mio', 'version': VERSION, 'apiVersion': 'v1',
             'providers': ['comfyui', 'novelai', 'openai'],
-            'operations': ['read_storyboards', 'read_albums', 'read_providers', 'generate_image', 'read_asset','submit_job','read_job','control_job','job_events','upload_asset','asset_catalog','recycle_assets','write_resources'],
+            'operations': ['read_storyboards', 'read_albums', 'read_providers', 'generate_image', 'read_asset','submit_job','read_job','control_job','job_events','upload_asset','asset_catalog','recycle_assets','write_resources','delete_albums'],
             'generationProviders': ['novelai', 'openai', 'comfyui'],
             'generationMode': 'durable_jobs_and_synchronous_compatibility', 'maxConcurrentExternalGenerations': 1,
             'jobChannelConfig': 'latest_saved_by_reference', 'jobConcurrencyScope': 'frames_per_task', 'jobProgressVersion': 2, 'manualTaskPools': True,

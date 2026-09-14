@@ -1,3 +1,9 @@
+> **2.3.0** adds complete-frame adaptive desktop reading, latest-saved album references for unsent frames, and a separate public preset library. [Release notes](docs/RELEASE_2_3_0.md).
+
+> **Mio 2.3.0 (2026-09-14)** — complete Python source runtime with populated, independently editable `data/`. Python 3.10+; no Node.js needed to run. See [content, sharing and safe upgrades](docs/en/CONTENT_AND_SHARING.md). Personal credentials, jobs and caches are excluded.
+
+> **For 1.x legacy workspaces only: stop the old service and explicitly convert to a new directory; never overwrite the only source copy. Existing 2.x workspaces can retain their original MIO_DATA_DIR.** [Workspace guide](docs/en/FILE_LIBRARY.md)
+
 <div align="center">
   <img src="docs/assets/mio-banner.svg" alt="Mio — Stories in frames" width="900">
   <h1>Mio</h1>
@@ -102,7 +108,7 @@ Use Node.js 18+. Linux may require additional Playwright system dependencies. Te
 
 ## Image variables
 
-Upload images through ordinary image-typed variables. Referenced variables become `@image_1`, `@image_2` in first-occurrence order, with attachments in the same order. Repeated variables reuse an attachment; unused images are not sent. Files persist locally, queued prompts and references are frozen, and portable backups include the assets. [Details and protocol limits](docs/en/GUIDE.md#image-variables).
+Upload images through ordinary image-typed variables. Referenced variables become `@image_1`, `@image_2` in first-occurrence order, with attachments in the same order. Repeated variables reuse an attachment; unused images are not sent. Files persist locally; unsent frames read the selected album’s latest saved prompts and references. Submitted requests remain immutable. Portable backups include the assets. [Details and protocol limits](docs/en/GUIDE.md#image-variables).
 
 
 ## Durable production foundation

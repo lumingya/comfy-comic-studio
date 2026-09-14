@@ -178,7 +178,7 @@ class ProviderTests(unittest.TestCase):
         payload = self.payload()
         payload['images'] = ['/images/variable-assets/missing.png']
         with patch.object(server.urllib.request, 'build_opener') as opener:
-            with self.assertRaises(FileNotFoundError):
+            with self.assertRaises(ValueError):
                 server.generate_provider_image(payload)
         opener.assert_not_called()
 
@@ -214,14 +214,14 @@ class ProviderTests(unittest.TestCase):
     def test_variable_asset_content_addressed_and_readable_after_reload(self):
         import tempfile
         import os
-        with tempfile.TemporaryDirectory() as root, patch.object(server, 'IMAGES_DIR', root):
+        with tempfile.TemporaryDirectory() as root, patch.object(server, 'DATA_DIR', root):
             first = server.store_image_data('data:image/png;base64,' + base64.b64encode(PNG).decode(), 'variable-assets')
             second = server.store_image_data('data:image/png;base64,' + base64.b64encode(PNG + b'new').decode(), 'variable-assets')
             self.assertNotEqual(first, second)
             self.assertEqual(server.store_image_data('data:image/png;base64,' + base64.b64encode(PNG).decode(), 'variable-assets'), first)
             self.assertEqual(server.provider_image_input(first)[1], PNG)
             self.assertEqual(server.provider_image_input(second)[1], PNG + b'new')
-            self.assertTrue(os.path.isfile(os.path.join(root, first.removeprefix('/images/'))))
+            self.assertTrue(os.path.isfile(server.local_path_from_url(first)))
 
     def test_multi_output_preserves_all_artifacts(self):
         from unittest.mock import MagicMock, patch

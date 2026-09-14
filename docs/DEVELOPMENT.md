@@ -26,7 +26,7 @@ js/ui.js                       shared UI state, common views and routing
 js/ui-reader.js                 native image reader
 js/ui-presentation.js           whole-book reader and explicit export samples
 js/ui-templates.js              template compiler, sandbox and page runtime
-js/ui-export.js                 export formats and built-in designs
+js/ui-export.js                 export formats; authored content lives in data/
 js/ui-editors.js                editor dialogs
 js/ui-{locale,assistant,storyboard,gallery,settings}.js  feature-specific views
 js/workspace.js                 workflow library, scene overrides, queue composer
@@ -75,7 +75,9 @@ python -c "import json,mio_api; from pathlib import Path; Path('docs/api/openapi
 
 付费服务只使用替身；不要把协议通过宣称为真实供应商连通。未测试的系统环境和编译步骤必须在发行说明中注明。
 
-Windows 便携包由 `python tools/build_release.py` 构建；需要工具提示的 PyInstaller 环境。`mio.spec` 使用相对入口。必须包含 `mio_api.py`、`mio_credentials.py`、`mio_docs.py`、所有运行模块、vendor、docs 和示例。打包不得携带用户 `data/`、密钥或调试素材。
+完整源码 ZIP 由 `python tools/package_project.py --output releases` 或 `python tools/build_release.py` 构建。无需 PyInstaller，不假装生成未经验证的 EXE。运行模块、vendor、docs、示例与 `data/distribution.json` 明确批准的内容随包携带。禁止自动把整个运行工作区打包；密钥、任务、缓存不分发。
+
+`python tools/check_distribution.py` 验证内容清单。内容变更须审核具体文件后更新该文件哈希，不自动发现个人数据。`npm run test:complete` 覆盖实际导出/导入；设置 `MIO_UPGRADE_BASELINE` 可指定原始 2.1 交付 ZIP，未提供基线时明确跳过该一项升级对照。
 
 ## English summary
 

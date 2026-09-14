@@ -27,11 +27,13 @@ class DocumentationTests(unittest.TestCase):
             create_readme(dest)
             self.assertEqual(dest.read_text(), (ROOT / 'README.md').read_text())
 
-    def test_product_metadata_and_portable_spec(self):
+    def test_product_metadata_and_complete_source_packager(self):
         package = json.loads((ROOT / 'package.json').read_text())
         self.assertEqual(package['name'], 'mio-studio')
-        self.assertEqual(package['version'], '1.0.0')
-        spec = (ROOT / 'mio.spec').read_text()
-        self.assertNotIn('C:\\Users', spec)
-        self.assertIn('mio_api', spec)
+        self.assertEqual(package['version'], '2.3.0')
+        self.assertIn("MIO_VERSION='"+package['version']+"'",(ROOT/'js/app.js').read_text())
+        self.assertTrue((ROOT/'docs/RELEASE_2_1_0.html').exists())
+        builder=(ROOT/'tools/package_project.py').read_text()
+        self.assertIn('distribution',builder)
+        self.assertIn('includesShippedData',builder)
         self.assertTrue((ROOT / 'docs/assets/mio-logo.png').exists())

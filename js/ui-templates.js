@@ -7,12 +7,7 @@ function makeExportTemplate(id,title,layout,options={},description='',source='bu
   return {id,kind:templateKind,formatVersion:1,title,description,author:'Mio',version:'1.0.0',layout,html:defaultExportHTML(),options:{...exportOptionDefaults,...options},source,builtin:source==='builtin',createdAt:Date.now(),updatedAt:Date.now()};
 }
 
-function builtinExportTemplates(){return [
-  makeExportTemplate('export-paper','纸间 · 温柔长卷','webtoon',{},'暖白纸张与安静的留白，让画面自然延续。'),
-  makeExportTemplate('export-ink','墨序 · 经典双页','manga',{accent:'#353535',background:'#e7e7e2',paper:'#ffffff',text:'#232323',width:1120,gap:4,radius:0,font:'sans'},'克制的黑白双页排版，保留分镜的叙事张力。'),
-  makeExportTemplate('export-gallery','留白 · 私人艺术册','artbook',{accent:'#887050',background:'#eae6db',paper:'#fcfaf4',text:'#39352c',width:1000,gap:36,radius:0},'展台式留白、画面色卡与签名，为作品落款。'),
-  makeExportTemplate('export-flip','夜读 · 交互翻页','flip',{accent:'#9fafb1',background:'#151c22',paper:'#222d35',text:'#e0e7e7',width:1120,gap:3,radius:1,font:'sans'},'暗室双页与轻盈的纸张转场，适合沉浸式阅读。')
-];}
+function builtinExportTemplates(){return clone(MioContent.layouts)}
 
 function exportTemplateCopy(t){return {...clone(t),id:uid('export'),title:t.title.slice(0,100)+' · 我的副本',builtin:false,source:'local',createdAt:Date.now(),updatedAt:Date.now()};}
 
@@ -57,6 +52,8 @@ function compileTemplateDocument(t,books,options={}){
   }).join(''));
   html=fillExportVariables(html,globals);
   const doc=new DOMParser().parseFromString(html,'text/html');
+  const sections=[...doc.querySelectorAll('[data-cc-book]')];sections.forEach((section,i)=>{const steps=[...books[i].steps].sort((a,b)=>a.stepIndex-b.stepIndex);section.querySelectorAll('[data-cc-frame]').forEach((frame,j)=>{const image=frame.querySelector('img'),step=steps[j];if(image&&step?.width>0&&step?.height>0){image.setAttribute('width',step.width);image.setAttribute('height',step.height);image.style.setProperty('--mio-native-width',step.width+'px')}})});
+  if(MioContent.sizing[t.id]){const sizing=doc.createElement('style');sizing.textContent=MioContent.sizing[t.id];doc.head.append(sizing)}
   doc.body.dataset.layout=t.layout;if(options.sample)doc.querySelectorAll('.edition-end').forEach(el=>el.remove());
   const nonce=uid('cc').replace(/[^a-zA-Z0-9]/g,'');
   const csp=doc.createElement('meta');csp.httpEquiv='Content-Security-Policy';csp.content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; font-src data:; script-src 'nonce-"+nonce+"'; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none';";
@@ -168,7 +165,7 @@ async function importExportTemplate(file){
   if(state.exportTemplates.length>=100)throw Error('模板库已达上限。');state.exportTemplates.push(t);save();openTemplateStudio(t.id);toast('画册模板已导入，可以继续自定义。');
 }
 
-function marketTemplate(packageId){const c=exportMarketCatalog.find(c=>c.id===packageId);if(!c)throw Error('画册模板包不存在。');return {...makeExportTemplate(uid('export'),c.title,c.layout,c.options,c.desc,'market'),version:c.version,packageId:c.id};}
+function marketTemplate(packageId){const t=MioContent.marketLayouts.find(t=>t.id===packageId);if(!t)throw Error('data/ 中没有此模板包。');return {...clone(t),id:uid('export'),packageId,source:'market',builtin:false}}
 
 function previewMarketTemplate(id){
   const c=exportMarketCatalog.find(c=>c.id===id),t=marketTemplate(id),installed=state.installedPackages.some(p=>p.id===id);
@@ -186,12 +183,7 @@ function bindChatToTemplate(id,newBranch=false){
   state.activeChatId=chat.id;studioUI.assistantDraft=chat.draft||'';if($('#chat-input'))$('#chat-input').value=studioUI.assistantDraft;save();return chat;
 }
 
-function designedTemplates(){return[
-  {...makeExportTemplate('export-paper','海风来信 · 电影长卷','webtoon',{accent:'#55756e',background:'#eae7df',paper:'#fffcf4',text:'#293e38',width:860,gap:32,radius:0},'整幅封面、开篇题记与温柔的纸张留白，让每个画面像一封长信。'),html:designedExportHTML('paper'),version:'2.0.0',designRevision:2},
-  {...makeExportTemplate('export-ink','墨与叙事 · 漫画精装','manga',{accent:'#9b453c',background:'#e4e2d9',paper:'#fffdf6',text:'#262624',width:1200,gap:8,radius:0,font:'sans'},'复古漫画刊物封面、朱红卷号与经典对开排版，完整保留分镜节奏。'),html:designedExportHTML('ink'),version:'2.0.0',designRevision:2},
-  {...makeExportTemplate('export-gallery','白昼美术馆 · 典藏展册','artbook',{accent:'#786b4e',background:'#eae7de',paper:'#fcfaf4',text:'#3a3931',width:1100,gap:30,radius:0},'美术馆式标题页、交错展台、作品说明与色卡，为每一幅画留出呼吸。'),html:designedExportHTML('gallery'),version:'2.0.0',designRevision:2},
-  {...makeExportTemplate('export-flip','深夜放映室 · 交互画册','flip',{accent:'#c9b98d',background:'#10191f',paper:'#ece7d9',text:'#333b38',width:1220,gap:3,radius:0,font:'serif'},'电影海报封面、演职署名、暖纸双页与纸张翻动，像一场私人放映。'),html:designedExportHTML('night'),version:'2.0.0',designRevision:2}
-]}
+function designedTemplates(){return clone(MioContent.layouts.filter(t=>MioContent.registry.classicLayouts.includes(t.id)))}
 
 function templateValidationHub(){
   const results=state.exportTemplates.map(t=>{try{validateExportTemplate(t);compileTemplateDocument(t,exportPreviewBooks());return {t,ok:true,message:'结构、CSS 与示例编译通过'}}catch(e){return {t,ok:false,message:e.message}}});

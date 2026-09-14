@@ -1,0 +1,55 @@
+PASS 320 x 740 gallery fits with bottom navigation
+PASS 320 x 740 story fits with bottom navigation
+PASS 320 x 740 queue fits with bottom navigation
+PASS 320 x 740 variables fits with bottom navigation
+PASS 320 x 740 engine fits with bottom navigation
+PASS 320 x 740 settings fits with bottom navigation
+PASS 320 x 740 storage fits with bottom navigation
+PASS 320 x 740 appearance fits with bottom navigation
+PASS 390 x 844 gallery fits with bottom navigation
+PASS 390 x 844 story fits with bottom navigation
+PASS 390 x 844 queue fits with bottom navigation
+PASS 390 x 844 variables fits with bottom navigation
+PASS 390 x 844 engine fits with bottom navigation
+PASS 390 x 844 settings fits with bottom navigation
+PASS 390 x 844 storage fits with bottom navigation
+PASS 390 x 844 appearance fits with bottom navigation
+PASS 430 x 932 gallery fits with bottom navigation
+PASS 430 x 932 story fits with bottom navigation
+PASS 430 x 932 queue fits with bottom navigation
+PASS 430 x 932 variables fits with bottom navigation
+PASS 430 x 932 engine fits with bottom navigation
+PASS 430 x 932 settings fits with bottom navigation
+PASS 430 x 932 storage fits with bottom navigation
+PASS 430 x 932 appearance fits with bottom navigation
+PASS 844 x 390 gallery fits with bottom navigation
+PASS 844 x 390 story fits with bottom navigation
+PASS 844 x 390 queue fits with bottom navigation
+PASS 844 x 390 variables fits with bottom navigation
+PASS 844 x 390 engine fits with bottom navigation
+PASS 844 x 390 settings fits with bottom navigation
+PASS 844 x 390 storage fits with bottom navigation
+PASS 844 x 390 appearance fits with bottom navigation
+PASS touch navigation opens creation with a horizontal title
+PASS primary controls are comfortable touch targets
+PASS rotation keeps the current prompt draft
+PASS variable modal and inputs fit the phone
+PASS phone image upload produces a durable local asset
+PASS touch model suggestions stay in the visible viewport
+PASS scroll-like touch movement does not pick a model
+PASS touch selection replaces the model input without a second tap
+PASS touch buttons reorder waiting jobs without drag gestures
+PASS populated queue cards fit the phone
+PASS canceling deletion retains the queued work
+PASS album management opens by touch and stays above navigation
+PASS album order changes via touch menu
+PASS reader fits and defaults to continuous complete images
+PASS phone continuous reader preserves complete aspect and native-size ceiling
+PASS reader template drawer is scrollable and within viewport
+PASS phone export produces an HTML download
+PASS mobile Enter inserts a newline instead of sending
+PASS short viewport keeps assistant input and send button accessible
+PASS draft remains after viewport resizing
+PASS collection switcher fits and remains usable on touch
+PASS no uncaught browser errors
+54 mobile checks passed (chromium).

@@ -1,0 +1,3 @@
+Baseline 0b63298: claim -> cancel -> remove
+visible state: canceled
+Reproduced HTTP 409 source: Stop and resolve unconfirmed frames before removing or archiving

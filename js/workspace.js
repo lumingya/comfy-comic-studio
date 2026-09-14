@@ -101,11 +101,17 @@ function queueComposerHTML(){
 }
 
 
+function taskWorkflowLocked(q,index){
+  const position=q?.indices.indexOf(index),execution=q?.frames?.[index]?._execution||q?.execution;
+  if(!q||position<0||(execution?.provider&&execution.provider!=='comfyui'))return true;
+  if(q.serverFrameStates?.length){const local=(q.serverIndices||q.indices).indexOf(index),frame=q.serverFrameStates.find(f=>f.index===local);return !frame||!['pending','failed','skipped'].includes(frame.state)}
+  return position<q.done||(['running','paused'].includes(q.status)&&position===q.done);
+}
 function queueWorkflowDetails(){
   return state.queue.filter(q=>['pending','running','paused','failed'].includes(q.status)).map(q=>{
     const b=bookBy(q.bookId);if(!b)return '';
-    return `<details class="quiet-advanced queue-workflow-detail" data-task-detail="${esc(q.id)}"><summary>${esc(b.title)} · 查看 / 调整待执行工作流</summary><p class="help">已开始的分镜被锁定；调整未开始的分镜仅更改此任务的快照，不影响其他任务。</p>${q.indices.map((i,pos)=>{
-      const f=q.frames?.[i],ex=f?._execution||q.execution,locked=(ex?.provider&&ex.provider!=='comfyui')||pos<q.done||(['running','paused'].includes(q.status)&&pos===q.done);
+    return `<details class="quiet-advanced queue-workflow-detail" data-task-detail="${esc(q.id)}"><summary>${esc(b.title)} · 查看 / 调整待执行工作流</summary><p class="help">已开始的分镜被锁定；调整未开始的分镜仅更改此任务的快照，不影响其他任务。</p>${q.indices.map(i=>{
+      const f=q.frames?.[i],ex=f?._execution||q.execution,locked=taskWorkflowLocked(q,i);
       return `<div class="queue-workflow-row"><span>${i+1}. ${esc(f?.name||'分镜')}</span><span class="tiny muted">快照：${esc(ex?.workflowTitle||'默认')}</span><select data-ws-task="${esc(q.id)}" data-ws-index="${i}" aria-label="第 ${i+1} 幕任务工作流" ${locked?'disabled':''}>${opt('','保留当前快照','')}${state.settings.comfy.presets.map(p=>opt(p.id,p.title,'')).join('')}</select></div>`;
     }).join('')}</details>`;
   }).join('');
@@ -113,18 +119,147 @@ function queueWorkflowDetails(){
 
 async function enqueueWorkspaceRange(indices,start=false){
   flushEditor();const p=selectedPlan();if(!p)throw Error('先创建画册。');
-  const book=enqueuePlanSnapshot(p,null,indices);createUI.tab='queue';navigate(1);
+  const book=enqueuePlanSnapshot(generationContextPlan(p),null,indices);createUI.tab='queue';navigate(1);
   if(!rt.paused&&(!rt.running||!foundationIsMock()))void runQueue();toast(rt.paused?'任务已加入，队列暂停中。':'任务已加入，将按队列顺序执行。');return book;
 }
 
-function createBlankPreset(){
-  textModal('新建空白预设','预设名称','新角色设定',name=>{
+// A preset draft is not a creation plan: generation always reads selectedPlan().
+// Drafts live in private workspace metadata, so switching/reloading does not discard edits.
+function settingPresetSelection(p=selectedPlan()){
+  const id=createUI.presetOwner===p?.id?createUI.presetSelection:state.drafts?.settingSelections?.[p?.id];
+  return projectVariableSets().some(s=>s.id===id)?id:'';
+}
+
+function selectSettingPreset(id,p=selectedPlan()){
+  if(!p)return;
+  if(id&&!projectVariableSets().some(s=>s.id===id))throw Error('预设已不存在。');
+  state.drafts??={};state.drafts.settingSelections??={};state.drafts.settingSelections[p.id]=id;
+  createUI.presetOwner=p.id;createUI.presetSelection=id;
+  if(id)settingPresetDraft(id);
+  save();
+}
+
+function presetContentSignature(set){
+  function canonical(value){
+    if(typeof value==='string'&&value.startsWith('/images/'))return value.split('/').at(-1);
+    if(Array.isArray(value))return value.map(canonical);
+    if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonical(value[k])]));
+    return value;
+  }
+  return JSON.stringify(canonical({title:set.title,entries:set.entries,frames:set.frames||{}}));
+}
+
+function settingPresetDraft(id,create=true){
+  const set=setBy(id);if(!set||set.projectId!==state.activeProjectId)return null;
+  state.drafts??={};state.drafts.presetEdits??={};
+  if(create&&(!state.drafts.presetEdits[id]||(!state.drafts.presetEdits[id].dirty&&state.drafts.presetEdits[id].base!==presetContentSignature(set))))state.drafts.presetEdits[id]={id:'preset-editor-'+id,_presetEditorId:id,projectId:set.projectId,title:set.title,variableSetIds:[],variables:clone(set.entries),frames:clone(set.frames||{}),excludedSettingKeys:[],base:presetContentSignature(set)};
+  return state.drafts.presetEdits[id]||null;
+}
+
+function settingsEditorTarget(){const p=selectedPlan(),id=settingPresetSelection(p);return id?settingPresetDraft(id):p}
+function settingsTargetById(id){
+  if(id?.startsWith('preset-editor-'))return settingPresetDraft(id.slice('preset-editor-'.length),false);
+  const p=planBy(id);return p?.projectId===state.activeProjectId?p:null;
+}
+
+async function updateSelectedSettingPreset(){
+  flushEditor();const draft=settingsEditorTarget(),id=draft?._presetEditorId,set=setBy(id),projectId=state.activeProjectId;
+  if(!set)throw Error('请先选择要更新的预设。');
+  if(draft.base!==presetContentSignature(set))throw Error('原预设已有其他修改，未覆盖。你的草稿仍保留，可使用“另存为”保存新副本。');
+  // Materialize legacy live references before changing this shared resource.
+  await Promise.all(state.books.filter(b=>(b.importedVariableSetIds||[]).includes(id)).map(b=>globalThis.Mio.fileLibrary.hydrate(b.id)));
+  if(projectId!==state.activeProjectId||settingPresetDraft(id,false)!==draft||setBy(id)!==set||draft.base!==presetContentSignature(set))throw Error('工作区或预设已变化，未更新。');
+  const change=preparePresetRemoval(state,id);
+  for(const {original,document} of [...change.plans,...change.books]){for(const k of Object.keys(original))delete original[k];Object.assign(original,document)}
+  set.entries=clone(mergedSettingEntries(draft));
+  draft.variables=clone(set.entries);draft.excludedSettingKeys=[];draft.base=presetContentSignature(set);draft.dirty=false;
+  save();render();
+  if(!await savePythonWorkspace())throw Error('更新尚未确认。草稿仍保留，请检查保存错误后重新保存；未声称预设文件已更新。');
+  toast('已更新「'+set.title+'」；本册、其他预设和已入队任务不变。');
+}
+
+async function applySelectedSettingPreset(){
+  flushEditor();const p=currentBookSettings(),draft=settingsEditorTarget(),id=draft?._presetEditorId,projectId=state.activeProjectId;
+  if(!p||!id)throw Error('请先选择要应用的预设。');
+  if(!await confirmAction('应用「'+draft.title+'」到本册？','将当前显示的预设草稿复制到本册，替换本册全局设定；不修改预设文件或单幕覆盖；保存后影响本册尚未发送的分镜，在途请求不变。','应用'))return;
+  if(projectId!==state.activeProjectId||settingsTargetById(p.id)!==p||currentBookSettings()!==p||settingPresetDraft(id,false)!==draft)throw Error('工作区或预设已变化，未应用。');
+  p.variables=mergedSettingEntries(draft).map(e=>({...clone(e),id:uid('var')}));p.variableSetIds=[];p.excludedSettingKeys=[];delete p.editingPresetId;
+  save();closeModal();render();if(!await savePythonWorkspace())throw Error('应用尚未保存成功，未声称已生效。请检查保存错误。');toast('已复制并保存到本册；之后编辑公共预设不会同步修改本册。');
+}
+
+function saveSettingsAsPreset(){
+  flushEditor();const target=settingsEditorTarget(),p=selectedPlan(),projectId=state.activeProjectId;
+  if(!target||!p)throw Error('请先选择画册计划。');
+  const entries=clone(mergedSettingEntries(target)),frames=clone(target.frames||{}),inLibrary=presetLibraryIsOpen();
+  textModal('另存为','预设名称',target.title+' · 副本',async name=>{
     if(!name.trim())throw Error('请输入预设名称。');
-    const p=selectedPlan(),set={id:uid('set'),title:name.trim(),projectId:state.activeProjectId,entries:['character_display_name','character','outfit','style','scene'].map(k=>variableEntry(k,''))};
-    state.creation.variableSets.push(set);
-    if(p){p.variableSetIds=[set.id];p.variables=[];p.excludedSettingKeys=[];p.editingPresetId=set.id}
-    createUI.tab='settings';save();closeModal();render();toast('已创建空白预设，可直接填写；原预设不受影响。');
-  },'新预设从空白开始。填写后点击“更新当前预设”，或将设定另存为预设。');
+    if(state.activeProjectId!==projectId||!planBy(p.id))throw Error('工作区已变化，请重新另存为。');
+    const set={id:uid('set'),projectId,title:name.trim(),entries:entries.map(e=>({...e,id:uid('var')}))};
+    if(Object.keys(frames).length)set.frames=frames;
+    state.creation.variableSets.push(set);selectSettingPreset(set.id,p);save();closeModal();render();if(inLibrary)openPresetLibrary(set.id);
+    if(!await savePythonWorkspace())throw Error('另存尚未确认。新副本草稿仍保留，请检查保存错误后重新保存，不必再次创建副本。');
+    toast('已创建独立预设副本；当前画册不变。');
+  },'保存当前显示的内容为新预设，不覆盖原预设，也不改变本册设定。');
+}
+
+function preparePresetRemoval(source,id){
+  const set=source.creation.variableSets.find(s=>s.id===id);if(!set)throw Error('预设已不存在，请重新读取。');
+  const plans=[],books=[],resolve=key=>source.creation.variableSets.find(s=>s.id===key);
+  function detach(owner){
+    const ids=owner.variableSetIds||[],index=ids.lastIndexOf(id);if(index<0)return;
+    const keep=new Map(set.entries.map(e=>[e.key,e]));
+    for(const later of ids.slice(index+1))for(const e of resolve(later)?.entries||[])keep.delete(e.key);
+    for(const e of owner.variables||[])keep.delete(e.key);
+    owner.variables=[...[...keep.values()].map(e=>({...clone(e),id:uid('var')})),...(owner.variables||[])];
+    owner.variableSetIds=ids.filter(key=>key!==id);
+  }
+  for(const plan of source.creation.plans){
+    if(!(plan.variableSetIds||[]).includes(id)&&!Object.values(plan.sceneOverrides||{}).some(o=>(o.variableSetIds||[]).includes(id))&&plan.editingPresetId!==id)continue;
+    const document=clone(plan);detach(document);for(const o of Object.values(document.sceneOverrides||{}))detach(o);
+    if(document.editingPresetId===id)delete document.editingPresetId;
+    plans.push({original:plan,document});
+  }
+  for(const book of source.books){
+    if(!(book.importedVariableSetIds||[]).includes(id))continue;
+    if(book._lazy)throw Error('需要先读取引用此预设的画册，删除尚未提交。');
+    const document=clone(book);document.importedVariableSetIds=document.importedVariableSetIds.filter(key=>key!==id);
+    document.importedVariableSnapshots=[...(document.importedVariableSnapshots||[]),{title:set.title,entries:clone(set.entries),frames:clone(set.frames||{})}];
+    books.push({original:book,document});
+  }
+  return {set,plans,books};
+}
+
+async function deleteSettingPreset(id=settingPresetSelection()){
+  if(!id)throw Error('请先选择要删除的预设。');
+  const set=setBy(id),projectId=state.activeProjectId;if(!set||set.projectId!==projectId)throw Error('请从当前画册集选择预设。');
+  flushEditor();const count=state.creation.plans.filter(p=>(p.variableSetIds||[]).includes(id)||Object.values(p.sceneOverrides||{}).some(o=>(o.variableSetIds||[]).includes(id))).length;
+  if(!await confirmAction('删除预设「'+set.title+'」？','从预设库移除这份文件。有 '+count+' 份画册计划引用它；正在使用的值和参考图会保留为画册或单幕自己的设定。已生成图片、台词和已入队快照不变。','删除预设'))return;
+  if(state.activeProjectId!==projectId||!setBy(id))throw Error('工作区或预设已变化，请重新选择。');
+  await Promise.all(state.books.filter(b=>(b.importedVariableSetIds||[]).includes(id)).map(b=>globalThis.Mio.fileLibrary.hydrate(b.id)));
+  if(state.activeProjectId!==projectId)throw Error('工作区已变化，未删除预设。');
+  flushEditor();const change=preparePresetRemoval(state,id);
+  for(const {original,document} of [...change.plans,...change.books]){for(const k of Object.keys(original))delete original[k];Object.assign(original,document)}
+  state.creation.variableSets=state.creation.variableSets.filter(s=>s.id!==id);
+  if(createUI.setId===id)createUI.setId=null;
+  if(createUI.presetSelection===id)createUI.presetSelection='';
+  if(state.drafts?.presetEdits)delete state.drafts.presetEdits[id];
+  for(const key of Object.keys(state.drafts?.settingSelections||{}))if(state.drafts.settingSelections[key]===id)state.drafts.settingSelections[key]='';
+  save(true);render();
+  if(!await savePythonWorkspace())throw Error('删除尚未确认。本页保留待保存更改，请检查保存错误后重新保存或读取，未声称磁盘已删除。');
+  toast('预设已删除；正在使用的设定、原图和任务快照已保留。');
+}
+
+function createBlankPreset(){
+  const p=selectedPlan(),projectId=state.activeProjectId;
+  textModal('新建空白预设','预设名称','新角色设定',async name=>{
+    if(!name.trim())throw Error('请输入预设名称。');
+    if(state.activeProjectId!==projectId||!planBy(p?.id))throw Error('工作区已变化，请重新新建。');
+    const set={id:uid('set'),title:name.trim(),projectId,entries:['character_display_name','character','outfit','style','scene'].map(k=>variableEntry(k,''))};
+    state.creation.variableSets.push(set);selectSettingPreset(set.id,p);
+    createUI.tab='settings';save();closeModal();render();openPresetLibrary(set.id);
+    if(!await savePythonWorkspace())throw Error('新建尚未确认。预设草稿仍保留，请检查保存错误后重新保存。');
+    toast('已创建空白预设；本册与原预设不变。');
+  },'填写内容会暂存为这份预设自己的草稿；点击“更新当前预设”保存，点击“应用”才复制到本册。');
 }
 
 function installWorkspaceUpgrade(){
@@ -140,7 +275,7 @@ function installWorkspaceUpgrade(){
     if(ui.workspace===3){ensureStudioState();renderShell();$('#main').innerHTML='<div class="view">'+renderWorkflowLibrary()+'</div>';const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent='工作流配置';applyStudioPreferences();return}
     oldRender();
     if(ui.workspace===5&&studioUI.settingsTab==='modules')$('#studio-settings-content')?.insertAdjacentHTML('afterbegin','<section class="settings-section"><h2>扩展功能模块</h2><label class="row"><input type="checkbox" id="ws-extensions" '+(state.settings.studio.visibility.extensions?'checked':'')+'>显示扩展功能（默认关闭，不影响已有作品）</label></section>');
-    const p=selectedPlan();if(ui.workspace===1&&createUI.tab==='settings'&&p?.editingPresetId) $('.settings-preset-line')?.insertAdjacentHTML('beforeend',btn('更新当前预设','disk','ws-update-preset','','small'));
+    const p=selectedPlan();if(ui.workspace===1&&createUI.tab==='settings'&&settingPresetSelection(p)) $('.settings-preset-line')?.insertAdjacentHTML('beforeend',btn('更新当前预设','disk','ws-update-preset','','small'));
   };
   const oldPythonSettings=renderPythonSettings;renderPythonSettings=()=>oldPythonSettings()+dataLayoutHTML();
   renderCreationQueue=renderCompactQueue;
@@ -166,15 +301,17 @@ function installWorkspaceUpgrade(){
       c.presets=c.presets.filter(p=>p.id!==id);selectLibraryWorkflow(c.presets[0].id);save(true);return;
     }
     if(action==='ws-export-all'){storeActiveWorkflow();const blob=new Blob([JSON.stringify({version:1,workflows:state.settings.comfy.presets},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='工作流库.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return}
+    if(action==='ws-delete-preset'||action==='v3-set-delete')return deleteSettingPreset(action==='v3-set-delete'?createUI.setId:settingPresetSelection());
     if(action==='ws-new-preset')return createBlankPreset();
-    if(action==='ws-update-preset'){const p=selectedPlan(),set=setBy(p.editingPresetId);if(!set)throw Error('原预设已不存在。');set.entries=mergedSettingEntries(p).map(e=>({...clone(e),id:uid('var')}));set.updatedAt=Date.now();p.variables=[];save();render();toast('预设已更新。');return}
+    if(action==='ws-update-preset')return updateSelectedSettingPreset();
     if(action==='ws-enqueue-scene')return enqueueWorkspaceRange([ui.frameIndex]);
     if(action==='ws-enqueue-range'||action==='ws-generate-range'){const value=$('#ws-queue-range')?.value||'all';return enqueueWorkspaceRange(value==='all'?null:[Number(value)],action==='ws-generate-range')}
     if(action==='ws-edit-scene-workflow'){const p=selectedPlan(),f=currentTemplate()?.frames[ui.frameIndex],id=planFrameOverrides(p,f||{}).workflowId||p.workflowId||state.settings.comfy.activeWorkflowId;selectLibraryWorkflow(id);return navigate(3)}
-    if(action==='art-apply-preset'){const p=selectedPlan(),id=$('#art-setting-preset')?.value;const result=await oldAction(action,d,el);if(p?.variableSetIds?.[0]===id){p.editingPresetId=id;save();render()}return result}
+    if(action==='art-apply-preset')return applySelectedSettingPreset();
     return oldAction(action,d,el);
   };
-  document.addEventListener('change',event=>{const el=event.target;try{
+  document.addEventListener('change',async event=>{const el=event.target;try{
+    if(el.id==='art-setting-preset'){flushEditor();selectSettingPreset(el.value);render()}
     if(el.id==='ws-library-select')selectLibraryWorkflow(el.value);
     if(el.id==='ws-extensions'){state.settings.studio.visibility.extensions=el.checked;save();render()}
     if(el.id==='ws-plan-workflow'){selectedPlan().workflowId=el.value;save()}
@@ -184,28 +321,30 @@ function installWorkspaceUpgrade(){
       save();render();
     }
     if(el.dataset.wsTask&&el.value){
-      const q=state.queue.find(x=>x.id===el.dataset.wsTask),i=Number(el.dataset.wsIndex),pos=q?.indices.indexOf(i);
-      if(!q||pos<q.done||pos<0||(['running','paused'].includes(q.status)&&pos===q.done))throw Error('此幕已经开始，不能修改正在执行的快照。');
+      const q=state.queue.find(x=>x.id===el.dataset.wsTask),i=Number(el.dataset.wsIndex);
+      if(q&&bookBy(q.bookId)?._lazy)await globalThis.Mio.fileLibrary.hydrate(q.bookId);
+      if(!state.queue.includes(q)||taskWorkflowLocked(q,i))throw Error('此幕已经开始，不能修改正在执行的快照。');
       const execution=workflowExecutionFor({workflowId:el.value},{}),f=q.frames[i];
       buildMappedWorkflow(f,q.rowSnapshot,{execution,preview:true});f._execution=clone(execution);
-      const b=bookBy(q.bookId);if(b?.sourceSnapshot?.frames[i])b.sourceSnapshot.frames[i]._execution=clone(execution);
-      save();toast('待执行分镜的工作流快照已更新。');
+      const b=bookBy(q.bookId);if(b)bookSettingsContext(q);if(b?.sourceSnapshot?.frames[i])b.sourceSnapshot.frames[i]._execution=clone(execution);
+      syncBookSettingsInputs(q);save();toast('待执行分镜的工作流快照已更新。');
     }
   }catch(e){toast(e.message,'error')}});
 }
 
 function dataLayoutHTML(){
-  return `<section class="settings-section"><h2>数据目录与备份</h2><p>所有路径相对于程序目录。修改标题不会移动图片，画册 ID 保持稳定。</p><pre class="backend-code">data/
-  workflows/library.json       工作流与映射库
-  storyboards/templates.json   分镜模板
-  storyboards/plans.json       画册计划与单幕覆盖
-  presets/scene-presets.json   角色与画面预设
-  presets/characters.json      角色矩阵
-  albums/index.json            画册索引与历史快照
-  queue/tasks.json             生成任务快照
-  workspace/                  画册集与界面偏好
-  settings/                   服务连接与模型配置
-  conversations/              对话记录
-  assets/images/albums/       按画册 ID 保存的原图
-  cache/                      可重新获取的缓存</pre><details class="quiet-advanced"><summary>按画册名称查找图片目录</summary>${state.books.map(b=>`<div style="margin:14px 0"><strong>${esc(b.title)}</strong><br><code style="overflow-wrap:anywhere">data/assets/images/albums/${esc(b.id)}/</code></div>`).join('')}<p class="help">仅真实生成的 PNG/JPEG/WebP/GIF 自动拆分到此目录；内嵌图片保存在画册索引中。</p></details><p class="help">发现缺失或损坏时停止读取，不用空数据覆盖。服务运行时请通过界面编辑，不要同时手改文件。</p><div class="row wrap">${btn('导出完整图片目录 ZIP','download','disk-archive')}${btn('载入已解压目录','upload','disk-import-folder')}${btn('导出工程 JSON','disk','backup-export')}</div><p class="help">跨电脑迁移优先使用 ZIP（包含图片）。JSON 中的本地图片链接需要连同 data/assets/images/ 一起备份。直接复制 data/ 可能包含 API 密钥，请勿公开分享。完整说明见 docs/DATA_LAYOUT.md。</p></section>`;
+  return `<section class="settings-section"><h2>数据目录与完整备份</h2><p>默认使用程序旁的 data/，也可通过 MIO_DATA_DIR 指定独立工作区。标题与文件 ID 分离；不因改名移动或覆盖原图。</p><pre class="backend-code">data/
+  workspace.json                  v2 工作区标记
+  settings/{comfy,llm,xml}.json    服务连接
+  settings/workspace.json         界面、顺序等小型元数据
+  settings/secrets.json           私密凭据库，禁止公开分享
+  storyboards/中文标题--ID.json    独立分镜
+  presets/{characters,scenes}/    独立角色 / 场景设定
+  collections/                   独立企划
+  plans/                         独立创作计划
+  albums/标题--ID/album.json            画册、对白、提示词及编辑快照
+  albums/标题--ID/images/               本册原图、参考图与编辑图
+  workflows/ · layouts/           独立工作流与版式
+  records/ · runtime/             对话、队列与执行记录
+  .cache/                        可重建的目录索引</pre><p class="help">含图资源的 JSON 同时携带同名 .assets/；画册请复制整个 ID 目录。单文件复制遇到相同 ID 时拒绝覆盖，界面导入分享包会分配新 ID。</p><div class="row wrap">${btn('导出完整图片目录 ZIP','download','disk-archive')}${btn('载入已解压目录','upload','disk-import-folder')}${btn('导出本机配置 JSON','disk','backup-export')}</div><p class="help">跨电脑使用含图片 ZIP。单独配置 JSON 不含原图，只能配合本机图片使用。停止服务后复制整个 data/ 可保留全部执行记录和密钥；这是私密备份，不是分享包。</p></section>`;
 }

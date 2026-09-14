@@ -1,0 +1,18 @@
+
+> mio-studio@1.2.2 test:storyboard-import
+> node tests/storyboard_import.mjs
+
+PASS twelve nonempty frames, only one Chinese image variable, Chinese positive and negative prompts
+PASS normal UI file import creates a new template ID and twelve distinct frame IDs
+PASS all twelve imported names, prompts, captions and negatives exactly match the file
+PASS existing templates and generated albums remain byte-for-byte unchanged in state
+PASS only the new blank plan selects the imported template; old plan choices and queue remain unchanged
+PASS the single reference is uploaded as a real local image asset
+PASS every frame resolves exactly one ordered image input without relying on previous-frame memory
+PASS actual storyboard preview displays the numbered uploaded reference
+PASS imported template and reference remain after saving and reloading
+PASS reimport creates another independent copy, while flushing the old unblurred draft to its correct owner
+PASS invalid input leaves all existing templates and selection intact
+PASS no generation job or paid image request was submitted
+PASS no uncaught browser errors
+13 checks passed. Linux Chromium; isolated temporary workspace only. No model generation tested.

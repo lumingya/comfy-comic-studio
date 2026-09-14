@@ -1,0 +1,33 @@
+{
+  "id": "character_campus_pair",
+  "projectId": "collection_summer",
+  "active": true,
+  "bookTitle": "冰山校花每天都在看我的系统弹幕",
+  "character_display_name": "陆川 & 苏清念",
+  "character": "Lu Chuan & Su Qingnian",
+  "male_lead": "Lu Chuan, 1boy, high school student, messy black hair, dark eyes, expressive face, school uniform",
+  "female_lead": "Su Qingnian, 1girl, top student, long black hair in high ponytail, cool fair skin, delicate features, school uniform",
+  "style": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting",
+  "outfit": "Chinese high school sports uniform, blue and white track jacket",
+  "scene": "high school classroom, cafeteria, library",
+  "weapon": "",
+  "lora": "",
+  "references": {
+    "male_lead": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+    "female_lead": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+    "front": ""
+  },
+  "storyVersions": {},
+  "activeStoryVersionIds": {},
+  "_planMapped": true,
+  "title": "冰山校花每天都在看我的系统弹幕",
+  "_sourceFormat": {
+    "replaced": {},
+    "added": [
+      "title"
+    ]
+  },
+  "schema": "mio.resource.v2",
+  "kind": "rows",
+  "_position": 0
+}

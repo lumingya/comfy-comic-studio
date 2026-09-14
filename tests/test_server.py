@@ -36,20 +36,11 @@ class ImageSafetyTests(unittest.TestCase):
         jpeg_bytes = b"\xff\xd8\xff\xe0fake-jpeg"
         self.assertEqual(server.detect_image_mime_type(jpeg_bytes, "image/png"), "image/jpeg")
 
-    def test_local_files_must_be_inside_images_directory(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            images_dir = os.path.join(temp_dir, "images")
-            os.makedirs(images_dir)
-            allowed_path = os.path.join(images_dir, "panel.png")
-            outside_path = os.path.join(temp_dir, "secret.png")
-            for path in (allowed_path, outside_path):
-                with open(path, "wb"):
-                    pass
-
-            with patch.object(server, "IMAGES_DIR", images_dir):
-                self.assertEqual(server.local_path_from_url(allowed_path), os.path.realpath(allowed_path))
-                with self.assertRaises(PermissionError):
-                    server.local_path_from_url(outside_path)
+    def test_local_files_require_native_owned_urls_not_arbitrary_paths(self):
+        with tempfile.TemporaryDirectory() as root, patch.object(server,'DATA_DIR',root):
+            url=server.store_image_data('data:image/png;base64,'+base64.b64encode(b'\x89PNG\r\n\x1a\n').decode())
+            self.assertTrue(os.path.isfile(server.local_path_from_url(url)))
+            with self.assertRaises(ValueError):server.local_path_from_url(root+'/settings/secrets.json')
 
     def test_declared_oversized_image_is_rejected_before_reading(self):
         response = FakeResponse(b"small", content_length=server.MAX_IMAGE_BYTES + 1)
@@ -57,120 +48,38 @@ class ImageSafetyTests(unittest.TestCase):
             server.read_limited_response(response)
 
 
-class SplitConfigTests(unittest.TestCase):
-    def test_split_config_round_trip_preserves_core_state(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            config_files = {
-                key: os.path.join(temp_dir, f"{key}.json")
-                for key in server.CONFIG_FILES
-            }
-            payload = {
-                "templates": [{"id": "tpl-1", "title": "Example", "steps": []}],
-                "activeTemplateId": "tpl-1",
-                "batchMatrix": {"columns": ["character"], "rows": []},
-                "savedGalleries": [{"id": "book-1", "steps": []}],
-                "comfyWorkflows": [{"id": "wf-1", "workflow": {}}],
-                "activeWorkflowId": "wf-1",
-                "comfyConfig": {"baseUrl": "http://127.0.0.1:8188"},
-                "llmConfig": {"model": "test-model"},
-                "xmlConfig": {"systemPrompt": "prompt"},
-                "chatConfig": {"sessions": []},
-                "uiConfig": {"theme": "dark"},
-                "batchRunState": {"status": "idle"},
-                "updatedAt": 123,
-            }
-
-            with patch.object(server, "CONFIG_FILES", config_files), patch.object(
-                server, "LEGACY_DATA_FILE", os.path.join(temp_dir, "legacy.json")
-            ):
-                server.write_split_config(payload)
-                restored = server.read_merged_config()
-
-            self.assertEqual(restored["templates"], payload["templates"])
-            self.assertEqual(restored["savedGalleries"], payload["savedGalleries"])
-            self.assertEqual(restored["activeWorkflowId"], "wf-1")
-            self.assertEqual(restored["llmConfig"]["model"], "test-model")
-            self.assertEqual(restored["xmlSystemPrompt"], "prompt")
-
-    def test_unchanged_config_files_are_not_rewritten(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            config_files = {
-                key: os.path.join(temp_dir, f"{key}.json") for key in server.CONFIG_FILES
-            }
-            payload = {
-                "templates": [{"id": "tpl-1", "steps": []}],
-                "batchMatrix": {"columns": [], "rows": []},
-                "savedGalleries": [],
-                "comfyWorkflows": [],
-                "comfyConfig": {},
-                "llmConfig": {},
-                "xmlConfig": {},
-                "chatConfig": {},
-                "uiConfig": {},
-                "batchRunState": {"status": "idle"},
-            }
-            with patch.object(server, "CONFIG_FILES", config_files):
-                first = server.write_split_config(payload)
-                self.assertEqual(sorted(first), sorted(server.CONFIG_FILES))
-
-                # 同一份数据再写一次：一个文件都不应该被重写
-                self.assertEqual(server.write_split_config(payload), [])
-
-                # 只动 llmConfig，就只有 llm.json 被重写
-                payload["llmConfig"] = {"model": "changed"}
-                self.assertEqual(server.write_split_config(payload), ["llm"])
-
-    def test_incomplete_or_corrupt_split_config_is_not_merged(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            config_files = {
-                key: os.path.join(temp_dir, f"{key}.json")
-                for key in server.CONFIG_FILES
-            }
-            with open(config_files["content"], "w", encoding="utf-8") as config_file:
-                config_file.write("{}")
-
-            with patch.object(server, "CONFIG_FILES", config_files), patch.object(
-                server, "LEGACY_DATA_FILE", os.path.join(temp_dir, "legacy.json")
-            ):
-                with self.assertRaises(server.ConfigReadError):
-                    server.read_merged_config()
-
-                for path in config_files.values():
-                    with open(path, "w", encoding="utf-8") as config_file:
-                        config_file.write("{}")
-                with open(config_files["llm"], "w", encoding="utf-8") as config_file:
-                    config_file.write("{not-json")
-
-                with self.assertRaises(server.ConfigReadError):
-                    server.read_merged_config()
+class NativeServerPersistenceTests(unittest.TestCase):
+    def test_write_read_uses_independent_entities(self):
+        with tempfile.TemporaryDirectory() as root, patch.object(server,'DATA_DIR',root):
+            cfg=server.read_merged_config();cfg['templates']=[{'id':'one','title':'中文分镜','frames':[]}]
+            server.write_split_config(cfg);loaded=server.read_merged_config();self.assertEqual(loaded['templates'],cfg['templates'])
+            self.assertEqual(len(list(__import__('pathlib').Path(root,'storyboards').glob('*.json'))),1)
+            self.assertFalse(os.path.exists(os.path.join(root,'storyboards/templates.json')))
+    def test_unchanged_files_are_not_rewritten(self):
+        with tempfile.TemporaryDirectory() as root, patch.object(server,'DATA_DIR',root):
+            server.write_split_config(server.read_merged_config());cfg=server.read_merged_config()
+            files=list(__import__('pathlib').Path(root).rglob('*.json'));before={p:p.stat().st_mtime_ns for p in files}
+            server.write_split_config(cfg);self.assertEqual(before,{p:p.stat().st_mtime_ns for p in files})
+    def test_bad_existing_data_is_never_seeded_or_merged(self):
+        with tempfile.TemporaryDirectory() as root, patch.object(server,'DATA_DIR',root):
+            file=__import__('pathlib').Path(root,'content.json');file.write_text('{broken')
+            with self.assertRaises(ValueError):server.read_merged_config()
+            self.assertEqual(file.read_text(),'{broken')
 
 
 class ServerBoundaryTests(unittest.TestCase):
-    def test_only_public_app_assets_and_images_are_served(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            images_dir = os.path.join(temp_dir, "images")
-            os.makedirs(images_dir)
-            image_path = os.path.join(images_dir, "panel.png")
-            with open(image_path, "wb") as image_file:
-                image_file.write(b"\x89PNG\r\n\x1a\n")
-
-            with patch.object(server, "BASE_DIR", temp_dir), patch.object(
-                server, "IMAGES_DIR", images_dir
-            ):
-                self.assertTrue(server.is_public_static_path("/"))
-                self.assertTrue(server.is_public_static_path("/index.html"))
-                self.assertTrue(server.is_public_static_path("/images/panel.png"))
-                self.assertFalse(server.is_public_static_path("/images/"))
-                self.assertFalse(server.is_public_static_path("/data/llm.json"))
-                self.assertFalse(server.is_public_static_path("/.git/config"))
-                self.assertFalse(server.is_public_static_path("/server.py"))
-                self.assertFalse(server.is_public_static_path("/images/../server.py"))
+    def test_only_public_app_assets_and_owned_images_are_served(self):
+        with tempfile.TemporaryDirectory() as root, patch.object(server,'DATA_DIR',root):
+            url=server.store_image_data('data:image/png;base64,'+base64.b64encode(b'\x89PNG\r\n\x1a\n').decode())
+            for value in ['/', '/index.html',url]:self.assertTrue(server.is_public_static_path(value))
+            for value in ['/images/','/data/settings/secrets.json','/.git/config','/server.py','/images/../server.py']:
+                self.assertFalse(server.is_public_static_path(value))
 
     def test_front_end_asset_dirs_are_served_but_stay_sandboxed(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             for sub in ("vendor", "js"):
                 os.makedirs(os.path.join(temp_dir, sub))
-            for rel in ("vendor/lucide.min.js", "vendor/tailwind-browser.js", "js/gallery.js"):
+            for rel in ("vendor/lucide.min.js", "vendor/tailwind-browser.js", "js/ui-gallery.js"):
                 with open(os.path.join(temp_dir, rel), "w", encoding="utf-8") as asset:
                     asset.write("// asset")
             with open(os.path.join(temp_dir, "vendor", "notes.txt"), "w", encoding="utf-8") as secret:
@@ -186,7 +95,7 @@ class ServerBoundaryTests(unittest.TestCase):
             ):
                 self.assertTrue(server.is_public_static_path("/vendor/lucide.min.js"))
                 self.assertTrue(server.is_public_static_path("/vendor/tailwind-browser.js"))
-                self.assertTrue(server.is_public_static_path("/js/gallery.js"))
+                self.assertTrue(server.is_public_static_path("/js/ui-gallery.js"))
                 # Only front-end asset extensions, never arbitrary files dropped in there.
                 self.assertFalse(server.is_public_static_path("/vendor/notes.txt"))
                 self.assertFalse(server.is_public_static_path("/vendor/missing.js"))

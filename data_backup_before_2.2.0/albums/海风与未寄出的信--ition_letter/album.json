@@ -1,0 +1,43 @@
+{
+  "id": "edition_letter",
+  "projectId": "collection_summer",
+  "title": "海风与未寄出的信",
+  "characterName": "七海",
+  "rowId": "character_nanami",
+  "templateId": "story_journey12",
+  "templateTitle": "远行与归来 · 十二幕",
+  "synopsis": "那些没说出口的话，都藏在夏日的海风里。一封未寄出的信，带她走向久别后的重逢。",
+  "tags": [
+    "典藏示范",
+    "青春",
+    "治愈"
+  ],
+  "totalSteps": 1,
+  "generatedSteps": 1,
+  "status": "complete",
+  "inProgress": false,
+  "liked": false,
+  "likes": 0,
+  "createdAt": 1789002935345,
+  "updatedAt": 1789002935345,
+  "completedAt": 1789002935345,
+  "theme": 0,
+  "steps": [
+    {
+      "stepIndex": 0,
+      "name": "风起的日常",
+      "prompt": "nanami, white shirt, navy skirt, small canvas bag, cinematic anime illustration, delicate cel shading, soft film texture, a quiet coastal town in summer, a quiet seaside town, distant train tracks, calm summer morning",
+      "caption": "夏日的风经过窗边，故事还没有名字。",
+      "image": "images/6b1a8c08b8e086b41c2af5af03d0e09528cf685390370456d7aa8ea0b27e0916.webp"
+    }
+  ],
+  "curatedDemo": true,
+  "demoContentRevision": 2,
+  "_sourceFormat": {
+    "replaced": {},
+    "added": []
+  },
+  "schema": "mio.resource.v2",
+  "kind": "albums",
+  "_position": 0
+}

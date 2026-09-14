@@ -1,0 +1,33 @@
+{
+  "platform": "Linux / Python 3.13 / sandbox Chromium",
+  "authoritativeAlbumJsonBytes": 183302780,
+  "results": [
+    {
+      "cache": "cold",
+      "albums": 5000,
+      "framesPerAlbum": 12,
+      "imageCount": 0,
+      "serverReadyMs": 3336.3,
+      "bootstrapHttpMs": 669.3,
+      "bootstrapBytes": 2717282,
+      "guiBootMs": 1244,
+      "visibleCards": 1,
+      "albumDetailRequestsAtBoot": 0,
+      "firstDetailMs": 12.4
+    },
+    {
+      "cache": "warm",
+      "albums": 5000,
+      "framesPerAlbum": 12,
+      "imageCount": 0,
+      "serverReadyMs": 275.7,
+      "bootstrapHttpMs": 642.9,
+      "bootstrapBytes": 2717282,
+      "guiBootMs": 1264,
+      "visibleCards": 1,
+      "albumDetailRequestsAtBoot": 0,
+      "firstDetailMs": 10
+    }
+  ],
+  "scope": "Measured synthetic 5000-album GUI path. No image decoding workload or physical-device/network benchmark."
+}

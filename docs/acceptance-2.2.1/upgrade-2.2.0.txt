@@ -1,0 +1,5 @@
+Baseline SHA256 48f45e0a7d0e1d81c1753643dc18187a80adb7aba4d6de00a9029d6a53dcfc79
+PASS 2.2.0 to 2.2.1 preserves every saved native entity and settings file byte-for-byte
+PASS existing edited preset and album remain visible after upgrade
+PASS upgraded workspace gains the contextual preset delete control without reinstalling data
+3 upgrade checks PASS; no generation submitted

@@ -67,6 +67,7 @@ def generate(payload):
     try:
         with opener.open(urllib.request.Request(base + path, data=data, headers=headers), timeout=payload.get('_requestTimeout',300)) as response:
             raw = read_limited_response(response)
+            if payload.get('_onResponse'):payload['_onResponse'](getattr(response,'status',200))
     except urllib.error.HTTPError as exc:
         raise ProviderHTTPError(exc.code, read_limited_response(exc, limit=2 * 1024 * 1024), key) from None
     if payload.get('_isCanceled',lambda:False)():raise InterruptedError('Stopped locally; output discarded')

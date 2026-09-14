@@ -1,0 +1,7 @@
+{
+  "portraitWidth": 439,
+  "squareWidth": 768,
+  "scaleRatio": 1.7494305239179955,
+  "portraitCaptionIsBesideImage": true
+}
+PASS reproduced the reported structural reading problem in actual delivered 1.2.0 HTML

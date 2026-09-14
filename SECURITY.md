@@ -26,7 +26,7 @@ Mio 是单用户、本地优先的创作工具，不是多租户 SaaS。
 
 ### 密钥与数据
 
-图像渠道密钥保存到 `data/secrets/provider-keys.json`，按渠道和基础 URL 绑定；管理接口只返回名称/时间/ID，不返回原文。文件原子写入，POSIX 文件权限 0600。它不是加密保险库，Windows 需妥善设置用户目录 ACL。普通工程导出不包含此文件，但物理 data 目录完整备份会包含它，需作为敏感资料保护。新任务快照只包含凭证引用。服务端环境变量不会出现在公共资源 DTO 中；请求体不写入普通访问日志。但其他模型设置、旧导出、旧工作流或用户自定义内容可能包含密钥，不能承诺全工程自动脱敏。
+图像、剧情及独立视觉连接密钥保存到 `data/settings/secrets.json`，按渠道和基础 URL 绑定；管理接口只返回名称/时间/ID，不返回原文。文件原子写入，POSIX 文件权限 0600。它不是加密保险库，Windows 需妥善设置用户目录 ACL。普通工程导出不包含此文件，但物理 data 目录完整备份会包含它，需作为敏感资料保护。新任务快照只包含凭证引用。服务端环境变量不会出现在公共资源 DTO 中；请求体不写入普通访问日志。但其他模型设置、旧导出、旧工作流或用户自定义内容可能包含密钥，不能承诺全工程自动脱敏。
 
 公共 API Token 的持有者可读取私人分镜、调用付费服务，属于完全可信客户端。允许自定义供应商地址，是有意提供的本地集成功能，不是安全的任意用户网络代理。若使用服务端供应商密钥，客户端指定的目的地必须可信。
 
@@ -40,7 +40,7 @@ Mio 是单用户、本地优先的创作工具，不是多租户 SaaS。
 
 Mio is a single-user local workspace, not a multi-tenant service. The external Bearer token protects **only `/api/v1`**, not private config endpoints, pages or image URLs. Keep loopback binding; use an SSH tunnel or an authenticated HTTPS reverse proxy protecting all routes for remote access. A public-API-only proxy must block private routes.
 
-Use a random token of at least 32 characters. Use `MIO_HOST`, `MIO_PORT` and `MIO_ORIGINS` to configure the local server. Cloud provider keys are separate. Image keys persist in the local, endpoint-bound `data/secrets/provider-keys.json` store. This is permissions-restricted, not encrypted. Plaintext is not returned by management APIs; normal exports contain references only. Full physical data-directory backups include the secret file and must be protected; exports and other model settings may still contain secrets. Never publish an unreviewed data directory.
+Use a random token of at least 32 characters. Use `MIO_HOST`, `MIO_PORT` and `MIO_ORIGINS` to configure the local server. Cloud provider keys are separate. Image, text and independent vision keys persist in the local, endpoint-bound `data/settings/secrets.json` store. This is permissions-restricted, not encrypted. Plaintext is not returned by management APIs; normal exports contain references only. Full physical data-directory backups include the secret file and must be protected; exports and other model settings may still contain secrets. Never publish an unreviewed data directory.
 
 API clients are trusted: they can read creative content and spend provider credits. Custom endpoints are an integration feature, not a safe untrusted-user proxy. Only send server-side provider credentials to trusted destinations. Generation does not follow credential-bearing redirects, enforces size/concurrency limits and does not automatically retry paid calls. Cancellation does not guarantee upstream cancellation.
 
@@ -49,3 +49,14 @@ Report vulnerabilities privately through an actual maintainer contact if availab
 ## Durable execution boundary
 
 The SQLite worker has one process lease, transactional snapshots and idempotency-key conflicts, not an exactly-once guarantee at a third-party billing system. Unknown attempts are not automatically retried. The public token authorizes all local job/resource/asset operations; owner IDs are correlation identifiers, not authorization boundaries. Asset recycling requires a current reference preview, a 24-hour grace period and no active/unconfirmed jobs. Recycled files remain in data/trash. Protect the entire data directory and stop the service for physical backups. Advanced JSON parameters must never contain credentials.
+
+## 2.0 独立文件边界 / File-native boundaries
+
+工作区文件批次使用提交意图日志恢复，执行与图片编辑使用私有 SQLite。两者不是跨存储的单一原子事务；执行结果、删除墓碑和待整理记录用于恢复独立文件，不重新发起模型请求。目录摘要可以删除重建，不能把运行中的 `runtime/` 当作缓存删除。服务拒绝自动打开旧版聚合格式；显式转换不替换源目录。
+
+Known credential fields are vaulted and omitted from ordinary resource bundles. Free-form prompts, custom workflow strings and historical artifacts still require human review. Complete physical backups include plaintext credentials. File commit journals and the execution database are separate stores, not a cross-store atomic transaction or a provider exactly-once guarantee.
+
+
+## 2.2 分享内容与发行白名单
+
+公开源码包只带 `data/distribution.json` 列明并验证哈希的初始内容，不带 `settings/secrets.json`、执行记录或缓存。HTML 导入只解析数据，不执行原脚本；原生 ZIP 验证路径、大小、类型与校验和。源分镜与变量的导出、导入均独立选择，默认不选；取消和检查不落盘。请仍人工审查提示词、台词、变量和参考图中的私人内容。HTML 不是任务恢复备份；带可编辑原图/图层的画册分享使用原生 ZIP。

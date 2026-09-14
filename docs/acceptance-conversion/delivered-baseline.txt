@@ -1,0 +1,11 @@
+BASELINE_SHA256 cfbc21fe58e13f6253ff83efe4c707b0220f42e2eb229d91950e167c16017742
+PASS archive hash matches the actual delivered 1.2.1 package
+PASS baseline package really identifies itself as 1.2.1
+PASS real old UI saves an uploaded image variable and a separate plan
+PASS old workspace contains generated demo artwork and all five original layouts
+PASS no generation request or uncaught browser exception occurred
+PASS actual saved 1.2.1 data converts and publishes as new files
+PASS all old data files, including SQLite state, are byte-for-byte unchanged
+PASS all source storyboards, albums, characters, plans, conversations and original layouts retain exact domain content
+PASS every embedded/uploaded image retains identical bytes in its new owner
+9 checks passed. Actual delivered 1.2.1, Chromium, isolated old/new directories. No paid generation; current GUI v2 integration not claimed.

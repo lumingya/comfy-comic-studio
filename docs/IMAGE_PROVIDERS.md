@@ -26,7 +26,7 @@ OpenAI 不发送 ComfyUI 的采样器、steps、cfg、seed，负向提示词合�
 
 真实画册通过同源持久任务服务提交，Python 执行供应商协议；原 `POST /api/image/generate` 保留独立同步操作兼容。需要启动 `server.py`，不能只双击独立 HTML 使用云图像渠道。
 
-密钥可按渠道保存多条到本地，刷新/重启后仍可使用；只展示名称与保存时间，可明确选择和删除。鉴权可选“无密钥”“已保存”“服务端环境变量”。无密钥时不发送 Authorization，也不会使用环境后备。存储为权限受限但未加密的 `data/secrets/provider-keys.json`，按渠道和基础 URL 绑定。普通工程导出仅包含 keyId 引用，物理目录备份需保护密钥文件。[完整管理教程](guide/CHANNELS_AND_KEYS.md)
+密钥可按渠道保存多条到本地，刷新/重启后仍可使用；只展示名称与保存时间，可明确选择和删除。鉴权可选“无密钥”“已保存”“服务端环境变量”。无密钥时不发送 Authorization，也不会使用环境后备。存储为权限受限但未加密的 `data/settings/secrets.json`，按渠道和基础 URL 绑定。普通工程导出仅包含 keyId 引用，物理目录备份需保护密钥文件。[完整管理教程](guide/CHANNELS_AND_KEYS.md)
 
 远端 API 地址要求 HTTPS；允许 localhost/127.0.0.1/::1 HTTP 用于本地兼容服务。不跟随带 Authorization 的生成请求重定向。返回的图像 URL 下载不携带 API Key。沿用后端 Origin 限制，**这是本地工作台，不是多租户公共代理，不应无鉴权暴露到互联网**。
 

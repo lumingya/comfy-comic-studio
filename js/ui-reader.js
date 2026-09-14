@@ -19,7 +19,7 @@ function readerSpreadIndices(index,total){const start=Math.floor(Math.max(0,inde
 
 function openArtReader(id){
   flushEditor();const book=bookBy(id);if(!book)throw Error('这本画册已经不存在。');if(!readerSequence(book).length){modal(book.title,'<div class="empty"><h3>这本画册还没有分镜。</h3><p>先生成或上传画面，再来翻阅。</p></div><div class="modal-footer">'+btn('关闭','','close-modal','','primary')+'</div>');return}
-  preserveFloating();$('#assistant').hidden=true;ui.bookId=id;ui.step=0;artUI.showInfo=false;artUI.readerMode=state.settings.presentation.readerModeExplicit?(state.settings.presentation.defaultReaderMode||'gallery'):'gallery';artUI.filmstrip=false;ui.mode=artUI.readerMode==='spread'?'manga':artUI.readerMode==='webtoon'?'webtoon':'focus';
+  preserveFloating();$('#assistant').hidden=true;ui.bookId=id;ui.step=0;artUI.showInfo=false;artUI.readerMode=book.nativeReaderMode||(state.settings.presentation.readerModeExplicit?(state.settings.presentation.defaultReaderMode||'webtoon'):'webtoon');artUI.filmstrip=false;ui.mode=artUI.readerMode==='spread'?'manga':artUI.readerMode==='webtoon'?'webtoon':'focus';
   const dialog=$('#reader');dialog.classList.add('art-reader');dialog.classList.remove('inspect-open');renderArtReader();if(!dialog.open)dialog.showModal();
 }
 

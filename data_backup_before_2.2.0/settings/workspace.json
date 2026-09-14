@@ -1,0 +1,269 @@
+{
+  "globals": {
+    "activeTemplateId": null,
+    "activeWorkflowId": null,
+    "nodePositive": "6",
+    "nodeNegative": "",
+    "nodeOutput": "9",
+    "xmlSystemPrompt": ""
+  },
+  "ui": {
+    "comfyStudio": {
+      "activeProjectId": "collection_summer",
+      "workspaceId": "workspace_570bf07c-4fb3-4092-a276-45604352de15",
+      "customColumns": [
+        "character_display_name",
+        "scene",
+        "weapon"
+      ],
+      "installedPackages": [],
+      "drafts": {},
+      "settings": {
+        "negative": "low quality, bad anatomy, extra fingers, text, watermark",
+        "syncUrl": "",
+        "autoCritique": false,
+        "signature": "Mio",
+        "presentation": {
+          "version": 1,
+          "lab": {
+            "refine": false,
+            "mask": false
+          },
+          "fonts": true,
+          "readerMode": "spread",
+          "homeLayout": "grid",
+          "defaultReaderMode": "webtoon",
+          "language": "zh-CN",
+          "lettering": "editorial",
+          "demoCleanupVersion": 2,
+          "bookOrder": {
+            "collection_summer": [
+              "book_967fcf4b-248a-46c8-b83f-405e281a42ac",
+              "book_d10bcec5-c243-4e99-b573-c901c1c992e4",
+              "edition_letter"
+            ]
+          },
+          "collectionSort": "manual"
+        },
+        "studio": {
+          "visibility": {
+            "gallery": true,
+            "storyboard": true,
+            "matrix": true,
+            "engine": true,
+            "llm": false,
+            "logs": true,
+            "extensions": false
+          },
+          "features": {
+            "assistant": true,
+            "marketplace": true,
+            "visualCritic": true,
+            "executionLogs": true
+          },
+          "appearance": {
+            "theme": "dark",
+            "density": "comfortable",
+            "reduceMotion": false,
+            "showMetrics": false
+          },
+          "reader": {
+            "defaultMode": "focus"
+          },
+          "export": {
+            "templateId": "export-paper",
+            "showCaptions": true,
+            "showPrompts": false,
+            "border": 0
+          },
+          "assistant": {
+            "confirmChanges": true
+          },
+          "shell": {
+            "collapsed": false
+          },
+          "creationMigration": 1
+        },
+        "identity": {
+          "workspaceName": "我的工作室",
+          "creatorName": "",
+          "onboarded": true
+        },
+        "disk": {
+          "includeKeys": false
+        },
+        "critic": {
+          "mode": "real",
+          "connection": "independent",
+          "provider": "openai",
+          "baseUrl": "https://api.openai.com/v1",
+          "model": "gpt-4o",
+          "key": "",
+          "timeout": 60,
+          "includeReference": true,
+          "includePrevious": true,
+          "focus": "优先检查手部、面部结构、角色服装一致性、镜头构图与叙事可读性。",
+          "verification": null
+        },
+        "github": {
+          "repository": "",
+          "branch": "",
+          "path": ""
+        },
+        "tutorial": {
+          "seen": false,
+          "completed": false,
+          "readSteps": [],
+          "lastStep": 0
+        },
+        "backend": {
+          "enabled": true,
+          "baseUrl": "",
+          "loadPath": "/api/config",
+          "savePath": "/api/config",
+          "method": "POST",
+          "payloadField": "",
+          "responseField": ""
+        },
+        "imageGeneration": {
+          "active": "openai",
+          "profiles": [
+            {
+              "id": "comfyui",
+              "title": "ComfyUI",
+              "provider": "comfyui",
+              "keyMode": "none"
+            },
+            {
+              "id": "novelai",
+              "title": "NovelAI",
+              "provider": "novelai",
+              "baseUrl": "https://image.novelai.net",
+              "model": "nai-diffusion-4-5-full",
+              "sampler": "k_euler_ancestral",
+              "keyMode": "none"
+            },
+            {
+              "id": "openai",
+              "title": "OpenAI 兼容",
+              "provider": "openai",
+              "baseUrl": "http://127.0.0.1:5104/v1",
+              "model": "gpt-image-2",
+              "protocol": "chat",
+              "size": "1024x1024",
+              "quality": "auto",
+              "sendSize": false,
+              "sendQuality": false,
+              "keyMode": "none"
+            }
+          ]
+        }
+      },
+      "studio": {
+        "visibility": {
+          "gallery": true,
+          "storyboard": true,
+          "matrix": true,
+          "engine": true,
+          "llm": false,
+          "logs": true,
+          "extensions": false
+        },
+        "features": {
+          "assistant": true,
+          "marketplace": true,
+          "visualCritic": true,
+          "executionLogs": true
+        },
+        "appearance": {
+          "theme": "dark",
+          "density": "comfortable",
+          "reduceMotion": false,
+          "showMetrics": false
+        },
+        "reader": {
+          "defaultMode": "focus"
+        },
+        "export": {
+          "templateId": "export-paper",
+          "showCaptions": true,
+          "showPrompts": false,
+          "border": 0
+        },
+        "assistant": {
+          "confirmChanges": true
+        },
+        "shell": {
+          "collapsed": false
+        },
+        "creationMigration": 1
+      },
+      "creation": {
+        "version": 1,
+        "migratedAt": 1789002935345,
+        "removedImageKeys": {
+          "collection_summer": [
+            "1"
+          ]
+        }
+      }
+    }
+  },
+  "matrix": {},
+  "chats": {
+    "activeChatId": "chat_eb546791-8a79-4418-853d-9d9e79efed03"
+  },
+  "queue": {},
+  "ordering": {
+    "templates": [
+      "tpl_campus_system_24",
+      "story_journey12"
+    ],
+    "savedGalleries": [
+      "book_967fcf4b-248a-46c8-b83f-405e281a42ac",
+      "book_d10bcec5-c243-4e99-b573-c901c1c992e4",
+      "edition_letter"
+    ],
+    "rows": [
+      "character_campus_pair",
+      "character_nanami"
+    ],
+    "projects": [
+      "collection_summer"
+    ],
+    "plans": [
+      "plan_campus_system_24",
+      "draft_letter"
+    ],
+    "characters": [
+      "setting_campus_pair",
+      "setting_nanami"
+    ],
+    "scenes": [],
+    "exportTemplates": [
+      "mio-fit",
+      "export-afterglow",
+      "export-paper",
+      "export-ink",
+      "export-gallery",
+      "export-flip"
+    ],
+    "comfyWorkflows": [
+      "wf_cd634804-bc38-4e41-99a1-f787c2182db8"
+    ],
+    "sessions": [
+      "chat_letter",
+      "chat_eb546791-8a79-4418-853d-9d9e79efed03"
+    ],
+    "queue": [
+      "task_7c374f3b-057a-4272-83b8-8a8e58d80619",
+      "task_978477da-49ef-437b-9599-7ab4f1a59ad7"
+    ],
+    "variableSets": [
+      "setting_campus_pair",
+      "setting_nanami"
+    ]
+  },
+  "aliases": [],
+  "executionStartPolicy": "manual"
+}

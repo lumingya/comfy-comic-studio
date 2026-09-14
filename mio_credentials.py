@@ -43,7 +43,7 @@ def scope(config):
 
 
 def path_for(data_dir):
-    return os.path.join(data_dir, 'secrets', 'provider-keys.json')
+    return os.path.join(data_dir, 'settings', 'secrets.json')
 
 
 def read(data_dir):

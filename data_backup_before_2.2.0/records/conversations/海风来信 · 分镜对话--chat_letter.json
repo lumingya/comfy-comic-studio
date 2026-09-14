@@ -1,0 +1,14 @@
+{
+  "id": "chat_letter",
+  "title": "海风来信 · 分镜对话",
+  "templateId": "story_journey12",
+  "projectId": "collection_summer",
+  "messages": [],
+  "_sourceFormat": {
+    "replaced": {},
+    "added": []
+  },
+  "schema": "mio.resource.v2",
+  "kind": "conversations",
+  "_position": 0
+}

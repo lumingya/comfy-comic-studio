@@ -1,0 +1,32 @@
+PASS fixture opens with lazy native album summaries
+PASS single rename is prefilled with the existing full title
+PASS rename dialog has no prefix or appended-tag controls
+PASS cancel leaves every native album unchanged
+PASS rename replaces rather than prefixes the original name
+PASS rename preserves all content, tags, image ownership and unselected albums
+PASS batch rename gives each selected album its own existing-name input
+PASS one invalid name blocks the entire batch without partial edits
+PASS distinct batch names persist after a normal reload
+PASS existing album tags have a real search use and remain searchable
+PASS a changed rename target is rejected before editing the other selected album
+PASS 409 rename is explicitly unconfirmed and does not change the disk name
+PASS 409 ordinary save retry persists the replacement, not a repeated prefix
+PASS 500 rename is explicitly unconfirmed and does not change the disk name
+PASS 500 ordinary save retry persists the replacement, not a repeated prefix
+PASS lost rename acknowledgement retains an unconfirmed local name even after server commit
+PASS retry after a lost rename acknowledgement is idempotent
+PASS mobile rename fields and actions fit the viewport
+PASS consecutive failure limit is configurable alongside per-frame retries
+PASS invalid failure limit never reaches the server
+PASS canceling policy confirmation preserves the service limit
+PASS failed policy save retains the old service limit and does not display saved
+PASS billing confirmation discloses both per-frame retry and consecutive-failure limits
+PASS configured failure guard is persisted in the real service
+PASS real HTTP failures stop the album after two attempts, before all six scenes
+PASS the queue card explains the automatic stop and manual continuation
+PASS no retry leaks after the original retry deadline
+PASS another album still executes while the failing album stays stopped
+PASS refresh retains policy and does not resume the stopped task
+PASS desktop failure policy fits without horizontal overflow
+PASS no uncaught browser exceptions
+31 rename / failure-limit browser checks PASS

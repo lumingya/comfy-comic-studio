@@ -1,0 +1,35 @@
+{
+  "environment": {
+    "python": "3.13.14",
+    "platform": "Linux-6.1.158+-x86_64-with-glibc2.41",
+    "note": "Sandbox filesystem/OS cache; not physical disk cold boot or native Windows performance"
+  },
+  "fixture": {
+    "albums": 5000,
+    "scenesPerAlbum": 12,
+    "sourceJsonBytes": 203793890,
+    "imageFiles": 0
+  },
+  "resultMs": {
+    "rebuildMissingCache": 3235.497,
+    "openValidCache": 3.263,
+    "catalogPage60Median": 3.51,
+    "catalogPage60Max": 3.768,
+    "unchangedShallowMetadataScan": 170.649,
+    "singleChangedFileScan": 169.291
+  },
+  "checks": {
+    "warmPageSourceJsonReads": 0,
+    "warmScanSourceJsonReads": 0,
+    "singleChangedFileReads": 1,
+    "decodedImages": 0,
+    "pageBytes": 20312
+  },
+  "limits": [
+    "This is the storage layer, NOT end-to-end app startup.",
+    "A missing cache requires a background read of all entity JSON once.",
+    "Warm discovery still stats each metadata file, O(number of entities).",
+    "Exact total and duplicate exclusion use SQL index scans; no O(1) claim.",
+    "No real image corpus, mobile device, Windows or network filesystem was benchmarked."
+  ]
+}

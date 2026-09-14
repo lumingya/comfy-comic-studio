@@ -1,0 +1,15 @@
+PASS actual ZIP passes CRC, every manifest hash and private-directory exclusion
+PASS extracted server starts from a different cwd and Chinese/space/metacharacter path
+PASS fresh packaged GUI completes the real naming controls
+PASS delivered shell uses external JS/CSS
+PASS first GUI save creates an independent native workspace
+PASS reload preserves cover counts while keeping album body unloaded
+PASS actual archive reader decodes owned original image
+PASS native controls and guide are present in the delivered UI
+PASS delivered mobile light settings fit viewport
+PASS delivered mobile dark settings fit viewport
+PASS delivered Chinese native guide renders offline with no external assets
+PASS delivered English guide renders offline
+PASS pack includes optional storyboard and no generated aggregate index
+PASS delivered application has no uncaught browser errors
+14 actual-package checks passed. Extracted ZIP only; no provider calls.

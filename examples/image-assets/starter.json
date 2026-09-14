@@ -1,0 +1,17 @@
+{
+  "schema": "mio.image-assets.v1",
+  "items": [
+    {
+      "title": "手绘对白框（另加文字图层）",
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"640\" height=\"360\" viewBox=\"0 0 640 360\"><path d=\"M46 18 Q318 0 590 22 Q629 25 622 72 L612 248 Q612 282 563 283 L210 282 122 343 138 281 54 276 Q17 274 21 231 L17 65 Q17 23 46 18Z\" fill=\"#ffffff\" stroke=\"#252b28\" stroke-width=\"7\"/></svg>"
+    },
+    {
+      "title": "强调标记",
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"240\" height=\"240\"><path d=\"M42 42 104 118 79 11M176 25 137 116 222 70M38 181 104 149 81 228\" fill=\"none\" stroke=\"#e7aa49\" stroke-width=\"16\" stroke-linecap=\"round\"/></svg>"
+    },
+    {
+      "title": "章节旁白底板（另加文字图层）",
+      "svg": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"640\" height=\"240\"><rect x=\"12\" y=\"12\" width=\"616\" height=\"216\" rx=\"12\" fill=\"#fff4d5\" stroke=\"#3a473d\" stroke-width=\"6\"/><path d=\"M36 34H604M36 206H604\" stroke=\"#bea35f\" stroke-width=\"2\"/></svg>"
+    }
+  ]
+}

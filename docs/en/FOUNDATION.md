@@ -6,7 +6,7 @@
 
 Real album generation runs in the Python service, not a browser loop. The UI freezes resolved prompts, ordered local image references, channel/workflow configuration and metadata, saves the snapshot, then submits a held durable job and releases it. Closing a page does not stop an accepted album. Reopening projects durable results back into the original album; a manual image replacement takes precedence over an older result.
 
-`data/execution/jobs.sqlite3` stores transactional state, per-frame results, upstream IDs and replayable events using SQLite WAL. One process lease per directory prevents duplicate workers. Browser and external jobs share FIFO task admission with an independent sliding request window for every explicitly enabled task. Synchronous image endpoints are outside that concurrency limit and do not acquire durable/idempotent semantics; use jobs for managed production. Provider adapters use isolated request contexts without a global generation mutex.
+`data/runtime/execution/jobs.sqlite3` stores transactional state, per-frame results, upstream IDs and replayable events using SQLite WAL. One process lease per directory prevents duplicate workers. Browser and external jobs share FIFO task admission with an independent sliding request window for every explicitly enabled task. Synchronous image endpoints are outside that concurrency limit and do not acquire durable/idempotent semantics; use jobs for managed production. Provider adapters use isolated request contexts without a global generation mutex.
 
 The explicit frontend boundary is `foundationFrameInput → submitFoundationQueue`. Built-in request builders live under `providers/`; arbitrary third-party Python plugin loading is not supported. Existing UI composition has not been entirely rewritten. LLM chat/story-writing sessions are not background image jobs.
 
@@ -16,7 +16,7 @@ States: `pending`, `paused`, `running`, `complete`, `failed`, `unknown`, `cancel
 
 Stop immediately cancels the local task, closes established transport sockets and discards late unconfirmed output. Previously confirmed results remain. The provider may still process or charge the submitted operation. Network uncertainty or service interruption produces `unknown`, never automatic paid retry. Restarting after an interrupted attempt pauses dispatch. A global pause does not discard any in-flight frames.
 
-For unknown ComfyUI jobs with a recorded prompt ID, **Reconcile** only reads history and downloads output; it does not upload or submit another prompt. Read-only reconciliation is allowed while scheduling is paused. Synchronous OpenAI/NovelAI operations generally cannot be queried by Mio: check provider records before explicitly continuing the same job with acknowledged billing risk, or abandoning tracking. Unknown album jobs block ordinary missing-page resubmission until acknowledged.
+For unknown ComfyUI jobs with a recorded prompt ID, **Reconcile** only reads history and downloads output; it does not upload or submit another prompt. Read-only reconciliation is allowed while scheduling is paused. Synchronous OpenAI/NovelAI operations generally cannot be queried by Mio: check provider records before explicitly continuing the same job with acknowledged billing risk. Deleting the local album never requires this acknowledgement. Unknown album jobs block ordinary missing-page resubmission until acknowledged.
 
 Archiving a finished job retains its idempotency record but releases that job's asset references. Albums, variables and other snapshots continue protecting the same files independently.
 
@@ -42,7 +42,7 @@ Enable `MIO_API_TOKEN` and send `Authorization: Bearer ...` on every public rout
 4. `GET /api/v1/jobs/events?after=0` returns SSE events. Reconnect with the last event ID; each short response contains at most 200 events. This is not a webhook. Native EventSource cannot add Authorization headers, so use an appropriate HTTP client.
 5. `POST /api/v1/jobs/{id}` with `{action}` controls execution.
 
-The same idempotency key and snapshot return the same job. A different snapshot with that key returns 409. `hold: true` persists without executing; `resume` releases the held job. `/jobs/scheduler` accepts global `pause` / `resume`. Individual actions include `cancel`, `pause`, `resume`, `start`, `defer`, `reconcile`, `abandon`, `archive`, and safe removal. `start` requires fresh recovery confirmation and enables an independent pool; `defer` releases a held/failed task from the FIFO lane without replay, after its in-flight attempts have ended. `/jobs/reorder` accepts `{ids}` for not-yet-started waiting jobs.
+The same idempotency key and snapshot return the same job. A different snapshot with that key returns 409. `hold: true` persists without executing; `resume` releases the held job. `/jobs/scheduler` accepts global `pause` / `resume`. Individual actions include `cancel`, `pause`, `resume`, `start`, `defer`, `reconcile`, `archive`, and atomic album removal. The old `abandon` endpoint is compatibility-only, never a deletion prerequisite. `start` requires fresh recovery confirmation and enables an independent pool; `defer` releases a held/failed task from the FIFO lane without replay, after its in-flight attempts have ended. `/jobs/reorder` accepts `{ids}` for not-yet-started waiting jobs.
 
 Limits: 32 enabled task pools (not a shared 32-request cap); a held enabled pool still counts until completed, deferred or canceled. 1,000 frames / 10 MiB per job, 1,000 unfinished/unconfirmed jobs. The list includes active jobs and recent history, up to 2,000; older records remain readable by ID. Cloud inputs and supported outputs each have a 32-image / 50 MiB combined cap. Provider error bodies are bounded at 2 MiB and redact echoed request credentials.
 
@@ -56,7 +56,7 @@ Open **Settings → Storage → Asset index / references / safe cleanup**. Metad
 
 `GET assets/catalog?verify=1` recomputes hashes and reports missing paths or mismatches against content-addressed names. This verifies file identity, not visual quality or full decoding. Only unreferenced files older than 24 hours are eligible for recycling. Cleanup requires a fresh preview token plus explicitly selected paths; changed references return 409. Active or unknown jobs block cleanup.
 
-Files move to `data/trash/`, never automatic permanent deletion. To recover, stop the service and restore original relative paths under `data/assets/images/`. Asset indexes can be rebuilt.
+Files move to `data/trash/`, never automatic permanent deletion. To recover, stop the service and restore original relative paths under `data/runtime/staging/images/`. Asset indexes can be rebuilt.
 
 ## Controlled resource writing
 
@@ -94,7 +94,7 @@ There is no separate task-prompt editor. Use the original **Story** editor and i
 
 Save scene text, negative prompts, captions and per-frame rendering fields, then wait for Python’s save acknowledgement. Before each request, the service reads the latest saved input belonging to that album, not the shared template. Leaving the browser does not stop this. Pending frames adopt the edit without another apply action. In-flight requests retain their captured input; successful images are not redrawn. Editing does not pause scheduling or retry timers. Failed/stopped/unknown outcomes still need the normal continuation and billing acknowledgement.
 
-Channel identity stays tied to the task, but its latest saved model, endpoint, protocol, options and credential binding are resolved before every new request. Graph structure and variable bindings stay tied to the album version; edited placeholders resolve using its saved scope. ComfyUI uses the existing graph compiler and mappings rather than replacing a running public workflow. Invalid saved input fails visibly instead of quietly submitting an old prompt. Scene count/order are not edited within a submitted version.
+Channel identity stays tied to the task, but its latest saved model, endpoint, protocol, options and credential binding are resolved before every new request. Graph structure stays tied to the album version; prompts, text variables and reference images resolve together from its latest saved owned settings, with per-scene overrides. ComfyUI uses the existing graph compiler and mappings rather than replacing a running public workflow. Invalid saved input fails visibly instead of quietly submitting an old prompt. Scene count/order are not edited within a submitted version.
 
 `GET jobs/{id}` exposes the latest 100 `requestHistory` records: index, attempt, timestamp, input hash, prompt, negative, images, safe config fields and frame parameters. Endpoint URLs, key references and arbitrary profile metadata are excluded from this public history. The database retains the full prepared input. Preparation is not proof of upstream acceptance or billing. Read-only ComfyUI reconciliation uses the original upstream attempt’s input, not a newly edited draft.
 

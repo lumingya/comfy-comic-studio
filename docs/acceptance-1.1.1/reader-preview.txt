@@ -1,0 +1,26 @@
+PASS default mounts the entire album in a native continuous reader
+PASS lazy images retain full aspect ratios without eager template compilation
+PASS native panel open/close preserves image nodes, no compile or preparation
+PASS native ending has one quiet poem and the real project URL
+PASS toggling during preparation neither replaces iframe nor aborts controller
+PASS drawer toggles/search/current selection never remount loaded iframe
+PASS drawer interactions do not compile or reread any image
+PASS iframe script state and reading position survive drawer interactions
+PASS drawer trigger reports expanded state accessibly
+PASS mio-fit compiled preview/export has one small colophon
+PASS mio-fit reopened offline keeps poem and project address
+PASS export-paper compiled preview/export has one small colophon
+PASS export-paper reopened offline keeps poem and project address
+PASS export-ink compiled preview/export has one small colophon
+PASS export-ink reopened offline keeps poem and project address
+PASS export-gallery compiled preview/export has one small colophon
+PASS export-gallery reopened offline keeps poem and project address
+PASS export-flip compiled preview/export has one small colophon
+PASS flip poem is hidden until final spread
+PASS export-flip reopened offline keeps poem and project address
+PASS user-created template copies are not branded or rewritten
+PASS actual downloaded album contains all eight scenes and footer
+PASS preview project link opens without loosening iframe sandbox
+PASS mobile default scroll footer fits without horizontal overflow
+PASS no uncaught browser errors
+25 reader preview checks passed

@@ -1,0 +1,11 @@
+PASS ZIP is a complete independent-JS/CSS project without user data
+PASS every ZIP entry matches its SHA-256 manifest
+PASS packaged launcher starts from a Unicode-and-space path
+PASS existing user album and legacy originals survive migration
+PASS packaged UI runs with all local JS/CSS/vendor assets
+PASS retained original image decodes in packaged reader
+PASS packaged upgrade documentation is served locally
+PASS private data is not publicly served
+PASS packaged deletion persists through refresh and never generates
+PASS unrelated user file remains byte-for-byte intact
+Packaged project acceptance passed (Linux launcher and Chromium). Windows cmd.exe not executed.

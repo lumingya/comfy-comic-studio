@@ -7,11 +7,11 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),temp=mkdtempSync(path.join(tmpdir(),'mio-template-'));
-for(const name of ['providers','mio_jobs.py','mio_frame_jobs.py','mio_channels.py','mio_contracts.py','mio_foundation.py','server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true});
+for(const name of ['data','mio_content.py','mio_album_html.py','mio_resource_sharing.py','providers','mio_library.py','mio_library_settings.py','mio_library_workspace.py','mio_native_store.py','mio_safe_svg.py','mio_pictures.py','mio_lifecycle.py','mio_jobs.py','mio_frame_jobs.py','mio_channels.py','mio_contracts.py','mio_foundation.py','server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true,filter:src=>!['runtime','.cache','.write.lock','secrets.json'].includes(path.basename(src))});
 const server=spawn('python',['-u','server.py'],{cwd:temp,env:{...process.env,MIO_PORT:'8797'},stdio:['ignore','pipe','pipe']});let browser,checks=0;const check=(name,ok)=>{assert.ok(ok,name);checks++;console.log('PASS '+name)};
 try{
  await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('server timeout')),10000);server.stdout.on('data',d=>{if(d.toString().includes('物理落盘')){clearTimeout(t);resolve()}});server.on('error',reject)});
- browser=await chromium.launch({args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1568,height:1004}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route(/^https:\/\//,r=>r.abort());await page.goto('http://127.0.0.1:8797');await page.waitForFunction(()=>!rt.booting);
+ browser=await chromium.launch({args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1568,height:1004}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route(/^https:\/\//,r=>r.abort());await page.goto('http://127.0.0.1:8797');await page.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);
 
  await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());navigate(1);createUI.tab='story';render()});
  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(350);check('template toolbar fits the mobile viewport',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));await page.setViewportSize({width:1568,height:1004});
@@ -40,7 +40,7 @@ try{
  check('existing albums and original image references are unchanged',await page.evaluate(before=>JSON.stringify(state.books)===before,booksBefore));
  await page.locator('select[data-v3-plan="templateId"]').selectOption('other-template');await page.locator('[data-act="delete-storyboard-template"]').click();await page.locator('#confirm-yes').click();
  check('the final template can be deleted into a usable empty state',await page.evaluate(()=>state.templates.length===0&&!$('#frame-prompt')&&!!$('[data-act="new-template"]')));
- await page.evaluate(async()=>{await savePythonWorkspace(true)});await page.reload();await page.waitForFunction(()=>!rt.booting);check('deletion persists after reload without recreating templates',await page.evaluate(()=>state.templates.length===0&&state.creation.plans.every(p=>p.templateId==='')));
+ await page.evaluate(async()=>{await savePythonWorkspace(true)});await page.reload();await page.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);check('deletion persists after reload without recreating templates',await page.evaluate(()=>state.templates.length===0&&state.creation.plans.every(p=>p.templateId==='')));
 
  await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());const g=ensureImageProviders();g.active=g.profiles.find(p=>p.provider==='openai').id;navigate(3);render()});
  await page.route('**/api/image/models',r=>r.fulfill({json:{models:['gpt-image-1','gpt-image-2.5-sunburst','FLUX.1-dev',...Array.from({length:229},(_,i)=>'other-model-'+i)]}}));
@@ -70,7 +70,7 @@ try{
  await page.setViewportSize({width:390,height:844});await model.fill('gpt');
  check('combobox and visible suggestions fit mobile',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2&&document.querySelector('#image-provider-model-results').getBoundingClientRect().right<=innerWidth));
  await results.locator('[data-model="gpt-image-2.5-sunburst"]').click();
- await page.evaluate(async()=>{await savePythonWorkspace(true)});await page.reload();await page.waitForFunction(()=>!rt.booting);
+ await page.evaluate(async()=>{await savePythonWorkspace(true)});await page.reload();await page.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);
  await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());navigate(3);render()});
  check('selected model survives reload',await page.locator('#image-provider-model-input').inputValue()==='gpt-image-2.5-sunburst');
  check('no uncaught browser errors',!errors.length);console.log(checks+' template/provider checks passed.');

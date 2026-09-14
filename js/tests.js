@@ -13,7 +13,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-const context = vm.createContext({ console, setTimeout, clearTimeout, structuredClone });
+const context = vm.createContext({ console, setTimeout, clearTimeout, structuredClone, clone:x=>JSON.parse(JSON.stringify(x)), MioContent:{demoSpec:JSON.parse(fs.readFileSync(path.join(__dirname,'../data/catalog/demo-spec.json'),'utf8'))} });
 for (const file of ['state.js', 'sync.js', 'engine.js', 'ui-presentation.js', 'ui-reader.js', 'ui-templates.js', 'ui-export.js', 'ui-editors.js', 'ui-locale.js', 'ui-assistant.js', 'ui-storyboard.js', 'ui-gallery.js', 'ui-settings.js', 'ui.js']) {
   const source = fs.readFileSync(path.join(__dirname, file), 'utf8');
   new vm.Script(source, { filename: file }).runInContext(context);
@@ -59,6 +59,12 @@ add('all 10 native fields are flat and present', () => {
   assert.equal(payload.uiConfig.vendorExtension, 123);
   assert.equal(payload.batchMatrix.columns[0], 'weapon');
   assert.equal(payload.savedGalleries.title, 'Gallery metadata');
+});
+
+add('read-only summaries retain generated counts without fabricated steps', () => {
+  const api=apiConfig();api.savedGalleries={books:[{id:'summary',title:'Read only',_lazy:true,totalSteps:12,generatedSteps:9,steps:[]}]};
+  const book=converters.fromApi(api,defaults()).books[0];assert.equal(book.generatedSteps,9);assert.equal(book.steps.length,0);assert.equal(book._lazy,true);
+  api.savedGalleries.books[0].generatedSteps=13;assert.throws(()=>converters.fromApi(api,defaults()),/summary/);
 });
 
 add('empty collections stay empty instead of restoring demo assets', () => {
@@ -484,17 +490,16 @@ function legacyCharacterDemoFixture() {
   return studio;
 }
 
-add('only the unchanged built-in source preset is upgraded, exactly once', () => {
-  const studio = legacyCharacterDemoFixture(), historical = JSON.stringify(studio.books);
-  assert.equal(context.upgradeCuratedCharacterIdentity(studio, () => 'display_name'), 1);
-  assert.equal(studio.rows[0].character, 'nanami');
-  assert.equal(studio.rows[0].character_display_name, '七海');
-  assert.equal(studio.creation.variableSets[0].entries[0].key, 'character_display_name');
-  assert.ok(studio.templates[0].frames[1].caption.startsWith('{character_display_name}'));
-  assert.ok(studio.templates[0].frames[1].prompt.startsWith('{character}'));
-  assert.equal(JSON.stringify(studio.books), historical);
+add('native normalization never manufactures presets or plans from independent rows', () => {
+  const s={rows:[{id:'imported',character:'七海',bookTitle:'导入画册'}],templates:[],books:[],creation:{version:1,variableSets:[],plans:[]},settings:{studio:{visibility:{},creationMigration:1},comfy:{bindings:[]}}};
+  context.ensureCreationModel(s);
+  assert.equal(s.creation.variableSets.length,0);assert.equal(s.creation.plans.length,0);
+});
+
+add('normalization never rewrites old built-in content or historical images', () => {
+  const studio = legacyCharacterDemoFixture(), before=JSON.stringify(studio);
   assert.equal(context.upgradeCuratedCharacterIdentity(studio), 0);
-  assert.equal(studio.creation.variableSets[0].entries.length, 2);
+  assert.equal(JSON.stringify(studio),before);
 });
 
 add('edited templates and custom character settings are not migrated', () => {
@@ -521,7 +526,8 @@ add('pending rendering protects default character data and snapshots from migrat
 
 add('display and prompt names survive the flat native API round trip independently', () => {
   const studio = legacyCharacterDemoFixture();
-  context.upgradeCuratedCharacterIdentity(studio);
+  studio.rows[0].character='nanami';studio.rows[0].character_display_name='七海';
+  studio.creation.variableSets[0].entries=[{id:'prompt',key:'character',type:'text',value:'nanami'},{id:'display',key:'character_display_name',type:'text',value:'七海'}];
   studio.books = [];
   const payload = converters.toApi(studio, apiConfig());
   assert.equal(Object.hasOwn(payload, 'state'), false);

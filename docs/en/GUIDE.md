@@ -2,6 +2,10 @@
 
 [Home](../../README.en.md) · [简体中文](../guide/QUICKSTART.md) · [API guide](API.md)
 
+## File-native architecture
+
+Read the [independent workspace guide](FILE_LIBRARY.md) before upgrading from 1.x. There is no implicit old-format migration. Use the explicit converter and a new data directory.
+
 ## Installation
 
 Install Python 3.10+ and extract the complete project. Keep `server.py`, `mio_api.py`, `mio_credentials.py`, `index.html`, `vendor/` and their relative paths intact. Run `python server.py`, or `start.bat` on Windows. Visit http://127.0.0.1:8777 and name your workspace. Check the bottom bar for successful backend saving.
@@ -76,12 +80,12 @@ Use `MIO_HOST`, `MIO_PORT` and `MIO_ORIGINS` to configure the server. Default po
 | Provider 401 | Selected local key, deletion status and binding to the current base URL |
 | Provider 400 | Model ID, balance, size, quality and protocol |
 | No ComfyUI output | API workflow, checkpoint and output mapping |
-| Old task ignores new model | Expected snapshot behavior; enqueue again |
+| Pending frame uses older inputs | Check the selected album version and acknowledged save; submitted requests remain immutable |
 | Queue stays idle | Paused state or explicit restart needed after reload |
 | Charge after cancellation | Provider may already have accepted the request |
 | API 503 / 401 / 429 | External token disabled / incorrect / generation slot busy |
 | Save conflict | Back up first; do not force-write empty config |
-| Missing image | Check generation logs and data/assets/images |
+| Missing image | Check generation logs and data/albums/<ID>/images/ |
 
 See [security boundaries](../../SECURITY.md) before remote deployment. Report bugs with steps, environment and sanitized logs—not real keys or a private data directory.
 
@@ -92,9 +96,9 @@ Add new OpenAI/NovelAI channels, clone non-secret settings, or delete a channel 
 
 Fetch models calls the configured base URL plus `/models`, using the current authentication choice. Choose an ID from the returned list or keep typing manually; discovery failure does not erase the current model, and a listed model is not guaranteed to support images. Results are only cached in page memory and scoped to the channel, URL and credential choice.
 
-The local secret file is `data/secrets/provider-keys.json`. It uses atomic writes and POSIX 0600 file permissions, but **is not encrypted**. Protect your OS account, disk and Windows ACLs. The management API returns only labels, timestamps and IDs. Keys are bound to the channel ID, provider and normalized base URL. Changing the endpoint will not forward an old saved key to the new address.
+The local secret file is `data/settings/secrets.json`. It uses atomic writes and POSIX 0600 file permissions, but **is not encrypted**. Protect your OS account, disk and Windows ACLs. The management API returns only labels, timestamps and IDs. Keys are bound to the channel ID, provider and normalized base URL. Changing the endpoint will not forward an old saved key to the new address.
 
-Tasks freeze credential references, never plaintext. Deleting a referenced key makes old tasks fail explicitly, without switching to another credential. Selecting No authentication suppresses Authorization even when server environment variables are set. Empty key entries are not saved. Cloning a channel resets authentication to none.
+Submitted requests retain credential references, never plaintext in public history. Unsent frames read the associated channel’s latest saved credential binding. Deleting its selected key fails explicitly unless that channel is deliberately configured again. Selecting No authentication suppresses Authorization even when server environment variables are set. Empty key entries are not saved. Cloning a channel resets authentication to none.
 
 Normal project JSON/ZIP and album exports do not include the secret file. A full physical copy of data/ **does** include it and must be protected. To migrate saved keys, stop the server and copy the credential file with matching channel configuration to a trusted machine; importing only a normal project requires saving keys again. The key input no longer requests a browser-generated new login password, though password-manager extensions may still apply their own heuristics.
 
@@ -113,7 +117,7 @@ In **Create → Character and visual settings**, add an attribute of type **Imag
 
 First occurrence assigns a number; repeating the same variable reuses its attachment. Unreferenced images are not sent. Positive then negative prompts share numbering. No separate img2img switch or image-purpose selector is added. Names do not imply image roles, and `@image_N` is an application convention, not a guarantee of model understanding.
 
-Files are content-addressed under `data/assets/images/albums/variable-assets/`. Configuration stores local references, never inline image-variable base64. Enqueueing freezes resolved prompts and ordered references; replacement does not overwrite files used by old tasks. Known missing variables and referenced-but-empty images fail explicitly. Explicitly empty text variables remain optional; undefined weight syntax and escaped braces remain unchanged.
+Files are content-addressed under `data/runtime/staging/images/albums/variable-assets/`. Configuration stores local references, never inline image-variable base64. Unsent frames resolve the album’s latest saved prompts and ordered references. Submitted requests retain their original inputs, and replacement does not overwrite referenced files. Known missing variables and referenced-but-empty images fail explicitly. Explicitly empty text variables remain optional; undefined weight syntax and escaped braces remain unchanged.
 
 Chat receives ordered image_url blocks; Images uses multipart edits, with `image` for one input and repeated `image[]` fields for multiple inputs. ComfyUI uploads images in order and uses existing **variable** bindings for each LoadImage input; missing bindings fail rather than dropping an image.
 
@@ -148,3 +152,16 @@ The durable queue defaults to **retain failed frames and continue remaining scen
 In album multi-select mode, hold the mouse and paint across cards: only cards along the path are selected. Start on a selected card to remove selection. Revisiting a card in one gesture does not toggle it repeatedly. Near viewport edges, the current displayed page can auto-scroll; it does not automatically change pages. Escape clears the selection and exits, while open dialogs handle their own Escape. Touch scrolling remains scrolling; phones use checkboxes. Normal browsing retains drag-to-reorder.
 
 The homepage has a prominent tutorial link. Reader fullscreen targets the document root rather than the native dialog. Browser F11 and the web Fullscreen API are independent; unavailable web fullscreen produces one dismissible explanation instead of repeated permission errors.
+
+## Seamless image-only preset (2.1)
+
+Open an album, choose **Layout → 无缝 · 纯图阅读**. Images are stacked with zero vertical gap, with no caption slots, scene titles, visible numbering, repeated cover or closing text. Full aspect ratios and small-image native sizing are preserved. The preset does not crop white borders already inside an image or remove dialogue baked into the artwork.
+
+Original captions, prompts and editable artwork remain untouched; existing templates and defaults are preserved. The same layout is used in preview and offline HTML export, without a custom script. It retains the existing template preview image-preparation pool and 64 MiB limit. [Release details](../RELEASE_2_1_0.md) · [Offline example](../../examples/seamless/无缝_纯图阅读_演示画册.html).
+
+
+## 2.3 adaptive reading and album ownership
+
+The global album selector distinguishes drafts from specific produced versions. The main settings editor always belongs to that selection. Public preset drafts, Update, Apply, Save As and Delete live in a separate library dialog. Applying copies settings; future preset changes do not propagate implicitly. Ordinary autosave refreshes the album’s pending text/image inputs. Check the saved indicator: failed saves do not take effect.
+
+Default and seamless desktop readers pair suitable adjacent portraits, place landscape/small artwork alone, and keep a complete composition inside each viewport. Soft local backdrops avoid empty black sidebars. Auto / Single / Continuous controls are available; phones remain continuous, and seamless continuous mode retains zero gaps and no caption blocks. The preview and exported HTML share the exact layout runtime and CSS. Existing AFTERGLOW artwork layout is unchanged.

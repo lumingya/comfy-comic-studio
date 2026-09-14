@@ -9,23 +9,115 @@ import threading
 import time
 import urllib.parse
 from pathlib import Path
+import mio_pictures
 from mio_jobs import Jobs, Conflict
+from mio_lifecycle import task_operations, filter_deleted
 _STORES={};_LOCK=threading.RLock()
 
 def jobs(host):
-    root=os.path.join(host.DATA_DIR,'execution')
+    root=os.path.join(host.DATA_DIR,'runtime','execution')
     with _LOCK:
-        if root not in _STORES:_STORES[root]=Jobs(root,host.generate_provider_image,lambda row,frame:latest_frame_input(host,row,frame))
+        if root not in _STORES:
+            host.native_store()
+            _STORES[root]=Jobs(root,host.generate_provider_image,lambda row,frame:latest_frame_input(host,row,frame),manual_start=True)
+            _STORES[root].materialize=lambda row:finish_native_frame(host,row)
+            _STORES[root].prepare_frame=lambda row,frame:host.native_store().prepare_execution(row,frame)
+            recover_deletions(host)
+            recover_materializations(host)
         return _STORES[root]
+
+def recover_deletions(host, ids=None):
+    from mio_lifecycle import deleted_album_ids
+    from mio_library import LibraryError
+    import logging
+    ids=set(ids if ids is not None else deleted_album_ids(host.DATA_DIR))
+    if not ids:return False
+    failed=False
+    with host.CONFIG_LOCK:
+        native=host.native_store()
+        for kind,identities in [('albums',ids),('tasks',[r['id'] for r in native.records('tasks')])]:
+            for id in identities:
+                try:
+                    item=native.entity(kind,id)
+                    if kind=='tasks' and item['document'].get('bookId') not in ids:continue
+                    native.library.delete(kind,id,item['etag'])
+                except LibraryError as exc:
+                    if exc.status!=404:failed=True
+                except OSError:failed=True
+    if failed:logging.warning('Deleted albums remain hidden by durable tombstones; file cleanup is pending. Check disk/permissions and restart.')
+    return failed
+
+
+def projection_warning(receipt):
+    import logging
+    from mio_library import atomic_write,encode
+    logging.warning('Independent album projection pending: %s. Execution is retained; no provider retry.',receipt.name)
+    try:
+        value=json.loads(receipt.read_text());value['error']='projection_pending'
+        atomic_write(receipt,encode(value))
+    except (OSError,ValueError):
+        logging.warning('Cannot update projection receipt. Check workspace disk/permissions.')
+
+
+def recover_materializations(host):
+    for receipt in (Path(host.DATA_DIR)/'runtime/materialization').glob('*.json'):
+        try:
+            materialize_album(host,json.loads(receipt.read_text())['albumId']);receipt.unlink(missing_ok=True)
+        except Exception:projection_warning(receipt)
+
+
+def finish_native_frame(host,row):
+    receipt=Path(host.DATA_DIR)/'runtime/materialization'/(row['id']+'_'+str(row['idx'])+'_'+str(row['frame_attempt'])+'.json')
+    try:
+        materialize_album(host,json.loads(row['payload']).get('albumId'))
+        receipt.unlink(missing_ok=True)
+    except Exception:
+        projection_warning(receipt)
+        raise
+
+
+def materialize_album(host, album_id):
+    if not album_id:return
+    import sqlite3
+    db_path=Path(host.DATA_DIR)/'runtime/execution/jobs.sqlite3'
+    if not db_path.exists():return
+    from contextlib import closing
+    with closing(sqlite3.connect(db_path)) as db:
+        if not db.execute('SELECT 1 FROM jobs WHERE album_key=? LIMIT 1',(album_id,)).fetchone() and not db.execute('SELECT 1 FROM picture_edits WHERE album=? LIMIT 1',(album_id,)).fetchone():return
+    with host.CONFIG_LOCK:
+        store=host.native_store()
+        try:record=store.entity('albums',album_id)
+        except ValueError:
+            from mio_lifecycle import deleted_album_ids
+            if album_id in deleted_album_ids(host.DATA_DIR):return
+            raise
+        config=store.read(album_summaries=True)
+        original=copy.deepcopy(record['document'])
+        config['savedGalleries']=[record['document']]
+        projected=mio_pictures.project(project_execution(host,config),host.DATA_DIR)
+        books=projected.get('savedGalleries',[])
+        changes=[]
+        if books and books[0]!=original:
+            changes.append({'kind':'albums','id':album_id,'document':books[0],'expected':record['etag']})
+        for task in config.get('batchRunState',{}).get('queue',[]):
+            if task.get('bookId')!=album_id:continue
+            key='tasks:'+task['id']
+            from mio_library import digest,encode
+            if digest(encode(task))!=config.get('_fileBaseline',{}).get(key):
+                changes.append({'kind':'tasks','id':task['id'],'document':task,'expected':config['_fileRevisions'].get(key)})
+        if changes:store.apply(changes,internal=True)
+
 
 def latest_frame_input(host,row,original):
     """One saved-workspace snapshot supplies scene content AND current channel configuration."""
     payload=json.loads(row['payload']);channel_id=channel_reference(payload,original)
     if not channel_id and not (payload.get('owner') and payload.get('albumId')):return original
-    config=host.read_merged_config_raw() if hasattr(host,'read_merged_config_raw') else host.read_merged_config()
+    config=host.native_store().read(album_summaries=True) if hasattr(host,'native_store') else (host.read_merged_config_raw() if hasattr(host,'read_merged_config_raw') else host.read_merged_config())
     frame=copy.deepcopy(original)
     if payload.get('owner') and payload.get('albumId'):
         book=next((b for b in config.get('savedGalleries',[]) if b.get('id')==payload['albumId']),None)
+        if book and book.get('_lazy'):
+            book=host.native_store().entity('albums',book['id'])['document']
         entry=(book or {}).get('sourceSnapshot',{}).get('liveInputs',{}).get(str(original.get('frameIndex',row['idx'])))
         if entry and entry.get('savedAt',0)/1000>=row.get('last_amended',0):
             if entry.get('error'):raise ValueError('Saved scene cannot be submitted: '+str(entry['error']))
@@ -33,11 +125,17 @@ def latest_frame_input(host,row,original):
             if not isinstance(fresh,dict) or (fresh.get('config',{}).get('provider')!=original['config']['provider'] if channel_id else fresh.get('config')!=original.get('config')) or fresh.get('albumId')!=original.get('albumId') or fresh.get('frameIndex')!=original.get('frameIndex') or channel_reference(payload,fresh)!=channel_id:
                 raise ValueError('Saved scene binding changed; refusing to submit a different channel or album')
             frame=copy.deepcopy(fresh)
+            # A settings-only save must not silently revert a newer explicit API
+            # prompt amendment. References may change only with the same slot map.
+            if 'textSavedAt' in entry and entry['textSavedAt']/1000 < row.get('last_amended',0):
+                if fresh['config']['provider']=='comfyui' or entry.get('imageKeys')!=entry.get('initialImageKeys') or len(frame.get('images',[]))!=len(original.get('images',[])):
+                    raise ValueError('Saved references conflict with an amended request; confirm and save this scene prompt before submitting')
+                frame['prompt']=original.get('prompt','');frame['negative']=original.get('negative','')
     if channel_id:
         current=resolve_channel(config,channel_id,original['config']['provider'])
         if current['provider']=='comfyui':
             # Graph/output selection belongs to the task; the server address belongs to the channel.
-            current['outputNodeId']=original['config'].get('outputNodeId','')
+            current['outputNodeId']=frame['config'].get('outputNodeId','')
         frame['config']=current
     return frame
 
@@ -57,15 +155,15 @@ def inventory(host,verify=False):
     for id,payload,results in store.references():
         references(payload,'job/'+id,refs);references(results,'result/'+id,refs)
     records=[];root=Path(host.IMAGES_DIR)
-    index_file=Path(host.DATA_DIR)/'assets'/'catalog.json'
+    index_file=Path(host.DATA_DIR)/'runtime'/'assets'/'catalog.json'
     try:cache=json.loads(index_file.read_text())
     except (OSError,ValueError):cache={}
-    try:origins=json.loads((Path(host.DATA_DIR)/'assets'/'origins.json').read_text())
+    try:origins=json.loads((Path(host.DATA_DIR)/'runtime'/'assets'/'origins.json').read_text())
     except (OSError,ValueError):origins={}
     fresh={}
     for path in sorted(root.rglob('*')):
         if not path.is_file() or path.is_symlink() or path.name.endswith('.tmp'):continue
-        url='/images/'+path.relative_to(root).as_posix();stat=path.stat();stamp=[stat.st_mtime_ns,stat.st_size]
+        url='/images/runtime/images/'+path.relative_to(root).as_posix();stat=path.stat();stamp=[stat.st_mtime_ns,stat.st_size]
         item=cache.get(url)
         if verify or not item or item.get('stamp')!=stamp:
             raw=path.read_bytes()
@@ -151,13 +249,33 @@ def resources(host,kind,body=None):
 
 def dispatch(handler,host,route,query,request_id=None):
     """Returns False for other namespaces. Shared private/public semantics."""
-    if not (route in ('jobs','jobs/events','jobs/activity','jobs/reorder','assets/catalog','assets/upload','assets/cleanup') or route.startswith('jobs/') or route.startswith('resources/')):return False
+    if not (route in ('albums/page','albums/page-edits','albums/delete','jobs','jobs/events','jobs/activity','jobs/reorder','assets/catalog','assets/upload','assets/cleanup') or route.startswith('jobs/') or route.startswith('resources/')):return False
     def reply(status,payload):
         if request_id:payload['requestId']=request_id
         handler.send_json(status,payload)
     try:
         store=jobs(host);body=handler.read_json_body(max_bytes=host.MAX_IMAGE_BYTES*4//3+65536) if handler.command=='POST' else None
-        if route=='jobs' and body is not None:data=store.submit(body.get('input',{}),body.get('idempotencyKey'))
+        if route=='albums/page' and body is not None:
+            receipt=host.native_store().mark_materialization(body.get('albumId'))
+            data=mio_pictures.mutate(host,store,body)
+            try:
+                materialize_album(host,body.get('albumId'));receipt.unlink(missing_ok=True)
+            except Exception:
+                projection_warning(receipt)
+                data['warning']='图片记录已持久保存；独立画册文件等待恢复提交。'
+        elif route=='albums/page-edits' and handler.command=='GET':
+            edits=mio_pictures.records(host.DATA_DIR,max(0,int(query.get('after',['0'])[0])))
+            data={'edits':edits,'cursor':edits[-1]['seq'] if edits else int(query.get('after',['0'])[0])}
+        elif route=='albums/delete' and body is not None:
+            with store.lock,host.CONFIG_LOCK:
+                data=store.delete_albums(body.get('ids'))
+                # Tombstones are the authoritative commit. A failed JSON materialization
+                # must not report a partially failed deletion or require another confirmation.
+                try:
+                    pending=recover_deletions(host,data['deletedAlbumIds'])
+                except Exception:pending=True
+                if pending:data['warning']='画册已删除；独立文件整理失败，请检查磁盘权限/空间，重启后继续整理。不会重新生成。'
+        elif route=='jobs' and body is not None:data=store.submit(host.native_store().freeze(body.get('input',{})),body.get('idempotencyKey'))
         elif route=='jobs' and handler.command=='GET':data=store.list()
         elif route=='jobs/activity' and handler.command=='GET':data=store.activity(int(query.get('after',['0'])[0]))
         elif route=='jobs/events' and handler.command=='GET':
@@ -183,7 +301,7 @@ def dispatch(handler,host,route,query,request_id=None):
         if route.startswith('jobs') and isinstance(data,dict):
             records=data.get('jobs',[]) if 'jobs' in data else [data] if 'channelRefs' in data else []
             if records:
-                config=host.read_merged_config_raw() if hasattr(host,'read_merged_config_raw') else host.read_merged_config()
+                config=host.native_store().read(album_summaries=True) if hasattr(host,'native_store') else (host.read_merged_config_raw() if hasattr(host,'read_merged_config_raw') else host.read_merged_config())
                 for job in records:job['currentChannels']=[channel_preview(config,ref) for ref in job.get('channelRefs',[])]
         reply(200,{'data':data})
     except Conflict as exc:reply(409,{'error':{'code':'conflict','message':str(exc)}})
@@ -200,7 +318,8 @@ def project_execution(host,config):
     replacement wins over an older task result. Normal UI saves materialize the view.
     """
     import sqlite3
-    path=os.path.join(host.DATA_DIR,'execution','jobs.sqlite3')
+    config=filter_deleted(config,host.DATA_DIR)
+    path=os.path.join(host.DATA_DIR,'runtime','execution','jobs.sqlite3')
     if not os.path.isfile(path):return config
     queue=config.get('batchRunState',{}).get('queue',[]);books=config.get('savedGalleries',[])
     if not isinstance(queue,list) or not isinstance(books,list) or not queue:return config
@@ -217,7 +336,7 @@ def project_execution(host,config):
         db.execute('BEGIN')
         records=[dict(row) for row in db.execute("SELECT * FROM jobs WHERE state!='archived' AND ("+' OR '.join(clauses)+')',params)]
         if db.execute("SELECT 1 FROM sqlite_master WHERE name='job_frames'").fetchone():
-            for record in records:frame_map[record['id']]=[dict(f) for f in db.execute('SELECT idx AS "index",state,attempts,retry_count,ready_at,upstream,timeout FROM job_frames WHERE job=? ORDER BY idx',(record['id'],))]
+            for record in records:frame_map[record['id']]=[dict(f) for f in db.execute('SELECT idx AS "index",state,attempts,retry_count,ready_at,upstream,timeout,error FROM job_frames WHERE job=? ORDER BY idx',(record['id'],))]
     finally:db.close()
     for q in queue:
         record=next((r for r in records if r['id']==q.get('serverId')),None)
@@ -230,7 +349,9 @@ def project_execution(host,config):
         states=frame_map.get(record['id'],[]);q['serverFrameStates']=states;q['serverRunningCount']=sum(f['state']=='running' for f in states);q['serverEnabled']=record.get('enabled',0);q['serverBlocked']=record.get('blocked',0);q['serverNextIndex']=next((f['index'] for f in states if f['state']!='complete'),None) if states else record['cursor']
         for field,key in [('retry_count','serverRetries'),('ready_at','serverReadyAt'),('attempts','serverAttempts'),('cancel','serverCancel'),('cursor','serverCursor'),('active_timeout','serverTimeout')]:q[key]=record.get(field,0)
         inputs=json.loads(record['payload'])['frames'];
-        for f in states:f['provider']=inputs[f['index']]['config']['provider']
+        for f in states:
+            f['provider']=inputs[f['index']]['config']['provider'];f['error']=json.loads(f['error']) if f.get('error') else None
+        q['serverActions'],q['serverRequiresRecoveryConsent']=task_operations(record['state'],states,record.get('blocked'),record.get('enabled'),record.get('corrupt'))
         q['serverProvider']=inputs[q['serverNextIndex'] if q['serverNextIndex'] is not None else 0]['config']['provider']
         q['status']='failed' if record['state']=='unknown' else record['state']
         error=json.loads(record['error']) if record['error'] else None
@@ -239,7 +360,7 @@ def project_execution(host,config):
         for result in json.loads(record['results']):
             if result['index']>=len(indices):continue
             index=indices[result['index']];steps=book.setdefault('steps',[]);old=next((s for s in steps if s.get('stepIndex')==index),None)
-            if old and old.get('image'):continue
+            if old and old.get('image') or str(index) in book.get('pictureEdits',{}):continue
             meta=(q.get('serverMeta') or [{}]*len(indices))[result['index']]
             step={**meta,'prompt':result.get('prompt',meta.get('prompt','')),'stepIndex':index,'image':result['image'],'artifacts':result.get('artifacts',[]),'offlineFallback':False}
             if old:old.update(step)
@@ -283,7 +404,7 @@ def record_asset_origin(host,url,origin):
     try:host.local_path_from_url(url)
     except (OSError,ValueError):return
     with host.CONFIG_LOCK:
-        path=Path(host.DATA_DIR)/'assets'/'origins.json'
+        path=Path(host.DATA_DIR)/'runtime'/'assets'/'origins.json'
         try:data=json.loads(path.read_text())
         except FileNotFoundError:data={}
         except (OSError,ValueError):return

@@ -1,0 +1,12 @@
+{
+  "id": "collection_summer",
+  "title": "夏日叙事集",
+  "createdAt": 1789002935345,
+  "_sourceFormat": {
+    "replaced": {},
+    "added": []
+  },
+  "schema": "mio.resource.v2",
+  "kind": "collections",
+  "_position": 0
+}

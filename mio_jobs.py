@@ -6,12 +6,12 @@ import threading
 import time
 from contextlib import contextmanager
 
-DEFAULT_POLICY={'mode':'retry','maxRetries':5,'delaySeconds':15,'onExhausted':'continue'}
+DEFAULT_POLICY={'mode':'retry','maxRetries':5,'delaySeconds':15,'onExhausted':'continue','maxConsecutiveFailures':5}
 def validate_policy(value):
     if not isinstance(value,dict) or set(value)-set(DEFAULT_POLICY):raise ValueError('Invalid failure policy')
     p={**DEFAULT_POLICY,**value}
     if p['mode'] not in ('pause','retry','continue') or p['onExhausted'] not in ('pause','continue'):raise ValueError('Invalid failure policy mode')
-    for name,low,high in [('maxRetries',1,100),('delaySeconds',5,300)]:
+    for name,low,high in [('maxRetries',1,100),('delaySeconds',5,300),('maxConsecutiveFailures',0,100)]:
         if type(p[name]) is not int or not low<=p[name]<=high:raise ValueError('Invalid '+name)
     return p
 DEFAULT_RUNTIME={'concurrency':1,'requestTimeoutSeconds':600}
@@ -40,12 +40,15 @@ class Jobs:
             CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY, token TEXT UNIQUE NOT NULL, digest TEXT NOT NULL, payload TEXT NOT NULL, state TEXT NOT NULL, position INTEGER NOT NULL, cursor INTEGER NOT NULL DEFAULT 0, results TEXT NOT NULL DEFAULT '[]', error TEXT, upstream TEXT, cancel INTEGER NOT NULL DEFAULT 0, created REAL NOT NULL, updated REAL NOT NULL);
             CREATE TABLE IF NOT EXISTS revisions(id INTEGER PRIMARY KEY AUTOINCREMENT,job TEXT,created REAL,changes TEXT);
             CREATE TABLE IF NOT EXISTS events(id INTEGER PRIMARY KEY AUTOINCREMENT, job TEXT, data TEXT NOT NULL);
+            CREATE TABLE IF NOT EXISTS deleted_albums(id TEXT PRIMARY KEY,deleted REAL NOT NULL);
+            CREATE TABLE IF NOT EXISTS picture_edits(seq INTEGER PRIMARY KEY AUTOINCREMENT,album TEXT NOT NULL,idx INTEGER NOT NULL,revision INTEGER NOT NULL,record TEXT NOT NULL,UNIQUE(album,idx));
             CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT);
             INSERT OR IGNORE INTO settings VALUES('paused','false');''')
-            for column,definition in [('retry_count','INTEGER NOT NULL DEFAULT 0'),('ready_at','REAL NOT NULL DEFAULT 0'),('attempts','INTEGER NOT NULL DEFAULT 0'),('errors',"TEXT NOT NULL DEFAULT '[]'"),('album_key',"TEXT NOT NULL DEFAULT ''"),('active_timeout','INTEGER NOT NULL DEFAULT 0'),('epoch','INTEGER NOT NULL DEFAULT 0')]:
+            for column,definition in [('consecutive_failures','INTEGER NOT NULL DEFAULT 0'),('failure_limit_reached','INTEGER NOT NULL DEFAULT 0'),('retry_count','INTEGER NOT NULL DEFAULT 0'),('ready_at','REAL NOT NULL DEFAULT 0'),('attempts','INTEGER NOT NULL DEFAULT 0'),('errors',"TEXT NOT NULL DEFAULT '[]'"),('album_key',"TEXT NOT NULL DEFAULT ''"),('active_timeout','INTEGER NOT NULL DEFAULT 0'),('epoch','INTEGER NOT NULL DEFAULT 0')]:
                 if column not in [r[1] for r in db.execute('PRAGMA table_info(jobs)')]:db.execute('ALTER TABLE jobs ADD COLUMN '+column+' '+definition)
             db.execute("INSERT OR IGNORE INTO settings VALUES('failurePolicy',?)",(json.dumps(DEFAULT_POLICY),))
             db.execute("INSERT OR IGNORE INTO settings VALUES('runtime',?)",(json.dumps(DEFAULT_RUNTIME),))
+            db.execute('CREATE INDEX IF NOT EXISTS jobs_album_key ON jobs(album_key)')
             for record in db.execute("SELECT id,payload FROM jobs WHERE album_key=''").fetchall():db.execute('UPDATE jobs SET album_key=? WHERE id=?',(json.loads(record['payload']).get('albumId') or record['id'],record['id']))
             if 'meta' not in [r[1] for r in db.execute('PRAGMA table_info(jobs)')]:db.execute('ALTER TABLE jobs ADD COLUMN meta TEXT')
             for row in db.execute('SELECT id,payload FROM jobs WHERE meta IS NULL').fetchall():db.execute('UPDATE jobs SET meta=? WHERE id=?',(job_meta(json.loads(row["payload"])),row["id"]))
@@ -72,9 +75,10 @@ class Jobs:
         db.execute('INSERT INTO events(job,data) VALUES(?,?)',(id,json.dumps(data)))
     def list(self):
         with self.connect() as db:ids=[r[0] for r in db.execute("SELECT id FROM jobs WHERE state!='archived' ORDER BY CASE WHEN state IN ('pending','paused','running','unknown') THEN 0 ELSE 1 END, CASE WHEN state IN ('pending','paused','running','unknown') THEN position END, created DESC LIMIT 2000")];paused=db.execute("SELECT value FROM settings WHERE key='paused'").fetchone()[0]=='true'
-        return {'jobs':[self.get(id,False) for id in ids],'paused':paused,'failurePolicy':self.policy(),'runtime':self.runtime()}
+        with self.connect() as db:deleted=[r[0] for r in db.execute('SELECT id FROM deleted_albums')]
+        return {'jobs':[self.get(id,False) for id in ids],'deletedAlbumIds':deleted,'paused':paused,'failurePolicy':self.policy(),'runtime':self.runtime()}
     def policy(self):
-        with self.connect() as db:return json.loads(db.execute("SELECT value FROM settings WHERE key='failurePolicy'").fetchone()[0])
+        with self.connect() as db:return validate_policy(json.loads(db.execute("SELECT value FROM settings WHERE key='failurePolicy'").fetchone()[0]))
     def runtime(self):
         with self.connect() as db:return json.loads(db.execute("SELECT value FROM settings WHERE key='runtime'").fetchone()[0])
     def reorder(self,ids):
@@ -92,6 +96,8 @@ class Jobs:
             items=[(r['id'],json.loads(r['payload']),json.loads(r['results'])) for r in db.execute('SELECT id,payload,results FROM jobs WHERE state!="archived"')]
             if db.execute("SELECT 1 FROM sqlite_master WHERE name='request_inputs'").fetchone():
                 items.extend((r['job']+':'+str(r['idx'])+':'+str(r['attempt']),json.loads(r['input']),[]) for r in db.execute("SELECT r.* FROM request_inputs r JOIN jobs j ON j.id=r.job WHERE j.state!='archived'"))
+            if db.execute("SELECT 1 FROM sqlite_master WHERE name='picture_edits'").fetchone():
+                items.extend(('picture-edit:'+r['album']+':'+str(r['idx']),json.loads(r['record']),[]) for r in db.execute('SELECT * FROM picture_edits WHERE album NOT IN (SELECT id FROM deleted_albums)'))
             return items
     def activity(self,after=0):
         with self.connect() as db:return [{'id':r['id'],**json.loads(r['data'])} for r in db.execute('SELECT * FROM (SELECT * FROM events WHERE id>? ORDER BY id DESC LIMIT 200) ORDER BY id',(after,))]

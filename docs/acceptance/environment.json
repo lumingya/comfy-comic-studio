@@ -1,0 +1,8 @@
+{
+  "os": "Linux-6.1.158+-x86_64-with-glibc2.41",
+  "python": "3.13.14",
+  "node": "v20.20.2",
+  "playwright": "1.63.0",
+  "baseline": "0b63298991e7c0863f4544e0120fcb1b9eebb425",
+  "date": "2026-09-12"
+}

@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const temp=mkdtempSync(path.join(tmpdir(),'ccs-studio-'));
-for(const name of ['providers','mio_jobs.py','mio_frame_jobs.py','mio_channels.py','mio_contracts.py','mio_foundation.py','server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs','examples','README.md','README.en.md','SECURITY.md'])cpSync(path.join(ROOT,name),path.join(temp,name),{recursive:true});
+for(const name of ['data','mio_content.py','mio_album_html.py','mio_resource_sharing.py','providers','mio_library.py','mio_library_settings.py','mio_library_workspace.py','mio_native_store.py','mio_safe_svg.py','mio_pictures.py','mio_lifecycle.py','mio_jobs.py','mio_frame_jobs.py','mio_channels.py','mio_contracts.py','mio_foundation.py','server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs','examples','README.md','README.en.md','SECURITY.md'])cpSync(path.join(ROOT,name),path.join(temp,name),{recursive:true,filter:src=>!['runtime','.cache','.write.lock','secrets.json'].includes(path.basename(src))});
 const port=Number(process.env.SMOKE_PORT||8791),base=`http://127.0.0.1:${port}`;
 const server=spawn('python3',['-u','server.py'],{cwd:temp,env:{...process.env,COMFY_COMIC_PORT:String(port)},stdio:['ignore','pipe','pipe']});
 let browser,checks=0;const check=(name,value)=>{assert.ok(value,name);console.log('PASS '+name);checks++};
@@ -64,8 +64,8 @@ try{
   check('market fits a narrow viewport without horizontal overflow',await page.evaluate(()=>$('#modal-body').scrollWidth<=$('#modal-body').clientWidth+2&&$('#modal').getBoundingClientRect().right<=innerWidth));
   await page.evaluate(()=>{$('#modal').close()});await page.setViewportSize({width:1440,height:1000});await page.waitForTimeout(100);
   check('all services default to real mode without fallback',await page.evaluate(()=>state.settings.comfy.mode==='real'&&state.settings.llm.mode==='real'&&state.settings.critic.mode==='real'&&state.settings.comfy.autoFallback===false&&!llmMock()));
-  check('original girl cover is embedded and survives offline loading',await page.evaluate(()=>{const b=state.books.find(b=>b.id==='edition_letter');return b.steps[0].image===defaultCuratedCover()&&b.steps[0].image.startsWith('data:image/webp;base64,')&&readerSequence(b)[0].pending===false}));
-  check('restoring the demo cover never fills other missing pages or replaces custom artwork',await page.evaluate(()=>{const sample={books:[{id:'edition_letter',curatedDemo:true,steps:[{stepIndex:0,image:'https://images.alphacoders.com/819/thumbbig-819506.webp'},{stepIndex:1,image:''}]},{id:'edition_letter_demo_custom',curatedDemo:true,steps:[{stepIndex:0,image:'my-custom-image'}]},{id:'new-book',steps:[{stepIndex:0,image:''}]}]};return restoreCuratedCover(sample)===1&&sample.books[0].steps[0].image===defaultCuratedCover()&&sample.books[0].steps[1].image===''&&sample.books[1].steps[0].image==='my-custom-image'&&sample.books[2].steps[0].image===''}));
+  check('original girl cover is embedded and survives offline loading',await page.evaluate(async()=>{const b=await Mio.fileLibrary.hydrate('edition_letter');return await imageData(b.steps[0].image)===defaultCuratedCover()&&readerSequence(b)[0].pending===false}));
+  check('normalization does not restore deleted or changed demo content from source',await page.evaluate(()=>{const sample={books:[{id:'edition_letter',curatedDemo:true,steps:[{stepIndex:0,image:'https://images.alphacoders.com/819/thumbbig-819506.webp'},{stepIndex:1,image:''}]},{id:'edition_letter_demo_custom',curatedDemo:true,steps:[{stepIndex:0,image:'my-custom-image'}]},{id:'new-book',steps:[{stepIndex:0,image:''}]}]};return restoreCuratedCover(sample)===0&&sample.books[0].steps[0].image==='https://images.alphacoders.com/819/thumbbig-819506.webp'&&sample.books[0].steps[1].image===''&&sample.books[1].steps[0].image==='my-custom-image'&&sample.books[2].steps[0].image===''}));
   check('showcase is the default gallery',await page.evaluate(()=>state.settings.presentation.homeLayout==='showcase'));
   check('extensions are hidden by default',await page.locator('[data-act="art-nav"][data-route="7"]').count()===0);
   check('activity log is last when enabled',await page.evaluate(()=>{const n=createWorkspaceChromePolicy().navigation({logs:true});return n.at(-1)[0]===6}));
@@ -88,12 +88,13 @@ try{
   check('storyboard provides preset and workflow selectors before preview',await page.locator('#ws-scene-preset').count()===1&&await page.locator('#ws-scene-workflow').count()===1);
   await page.locator('[data-act="art-create-tab"][data-tab="settings"]').click();
   const old=await page.evaluate(()=>JSON.stringify(state.creation.variableSets));
-  await page.locator('[data-act="ws-new-preset"]').click();
+  await page.locator('[data-act="preset-library-open"]').click();await page.locator('[data-act="ws-new-preset"]').click();
   await page.locator('#modal input').first().fill('New preset');
   await page.locator('#modal .modal-footer .primary').click();
-  check('blank preset starts empty without clearing existing presets',await page.evaluate(old=>{const prior=JSON.parse(old);return prior.every(p=>JSON.stringify(setBy(p.id))===JSON.stringify(p))&&mergedSettingEntries(selectedPlan()).every(e=>e.value==='')},old));
-  await page.locator('[data-art-setting="character"]').fill('new_character');await page.locator('[data-act="ws-update-preset"]').click();
-  check('new preset can be saved directly',await page.evaluate(()=>setBy(selectedPlan().editingPresetId).entries.some(e=>e.key==='character'&&e.value==='new_character')));
+  check('blank preset starts empty without clearing existing presets',await page.evaluate(old=>{const prior=JSON.parse(old);return prior.every(p=>JSON.stringify(setBy(p.id))===JSON.stringify(p))&&mergedSettingEntries(settingsEditorTarget()).every(e=>e.value==='')},old));
+  await page.locator('#preset-library [data-art-setting="character"]').fill('new_character');await page.locator('[data-act="ws-update-preset"]').click();
+  check('new preset can be saved directly',await page.evaluate(()=>setBy(settingPresetSelection()).entries.some(e=>e.key==='character'&&e.value==='new_character')));
+  await page.evaluate(()=>closeModal());
   // Stable fixture: full scope priority and per-frame workflow choices.
   await page.evaluate(ids=>{
     const p=selectedPlan(),t=templateBy(p.templateId),set={id:uid('set'),projectId:state.activeProjectId,title:'Scene preset',entries:[variableEntry('character','scene_character')]};state.creation.variableSets.push(set);
@@ -131,7 +132,7 @@ try{
     await route.fulfill({status:200,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'*'},contentType:url.pathname==='/view'?'image/png':'application/json',body:url.pathname==='/view'?Buffer.from(pixel,'base64'):JSON.stringify(json)});
   });
   const asset=await page.evaluate(async()=>{const p=selectedPlan(),f=effectivePlanFrame(p,currentTemplate().frames[0]);f._execution.mode='real';f._execution.autoFallback=false;f._assetBookId='integration-album';return (await generateMappedFrame(f,planRuntimeRow(p),new AbortController().signal)).image});
-  check('GPU protocol path persists raster output under the album directory',asset.startsWith('/images/albums/integration-album/')&&submissions.length===1);
+  check('GPU protocol path persists immutable raster output before album ownership',asset.startsWith('/images/runtime/images/')&&submissions.length===1);
   const image=await fetch(base+asset);check('stored relative image URL is served by the same Python backend',image.ok&&(await image.arrayBuffer()).byteLength>0);
   const preview=await page.evaluate(()=>{const copyState=clone(state);copyState.books[0].steps[0].image='/images/albums/integration-album/example.png';validateState(copyState);return true});
   check('state validator accepts portable local image URLs',preview);
@@ -141,7 +142,7 @@ try{
   const saved=await page.evaluate(()=>ComfyComic.sync.save());if(!saved)console.log('SYNC ERROR',await page.evaluate(()=>ComfyComic.sync.runtime.error));check('native POST save is confirmed',saved);
   const persisted=await (await fetch(base+'/api/config')).json();
   check('API preserves per-scene workflow and preset assignments',persisted.uiConfig.comfyStudio.creation.plans.some(p=>Object.values(p.sceneOverrides).some(o=>o.workflowId===ids[0])));
-  check('structured workflow and queue files exist',existsSync(path.join(temp,'data/workflows/library.json'))&&existsSync(path.join(temp,'data/queue/tasks.json')));
+  check('structured workflow and queue files exist',existsSync(path.join(temp,'data/workflows'))&&existsSync(path.join(temp,'data/runtime/queue')));
   // Queue organization: queue is explicitly paused while arranging pending work.
   await page.evaluate(async()=>{rt.paused=true;await enqueueWorkspaceRange([1]);await enqueueWorkspaceRange([2])});
   const pendingBefore=await page.evaluate(()=>state.queue.filter(q=>q.status==='pending').map(q=>q.id));
@@ -158,7 +159,7 @@ try{
   await page.evaluate(()=>{window.startedBooks=[];window.originalTestGenerator=generateFrame;generateFrame=async function(f,...rest){window.startedBooks.push(f._assetBookId);return window.originalTestGenerator(f,...rest)}});
   const expectedBooks=await page.evaluate(()=>state.queue.filter(q=>q.status==='pending').map(q=>q.bookId));
   await page.locator('[data-act="org-queue-pause"]').click();await page.waitForFunction(()=>rt.running);
-  check('running task cannot be dragged or deleted',await page.evaluate(()=>{const q=state.queue.find(q=>q.status==='running'),el=document.querySelector(`[data-sort-task="${q.id}"]`);return el.draggable===false&&el.querySelector('[data-act="org-task-delete"]').disabled}));
+  check('running task cannot be dragged but offers stop-and-delete',await page.evaluate(()=>{const q=state.queue.find(q=>q.status==='running'),el=document.querySelector(`[data-sort-task="${q.id}"]`);return el.draggable===false&&!el.querySelector('[data-act="org-task-delete"]').disabled}));
   check('enqueue while paused does not implicitly resume an active queue',await page.evaluate(async()=>{rt.paused=true;await enqueueWorkspaceRange([3]);return rt.paused===true}));
   const appended=await page.evaluate(()=>state.queue.at(-1).bookId);expectedBooks.push(appended);
   await page.locator('[data-act="org-queue-pause"]').click();await page.waitForFunction(()=>!rt.running,null,{timeout:25000});
@@ -181,8 +182,8 @@ try{
   await page.locator(`.shelf-item[data-sort-book="${chosen[1]}"] .shelf-cover`).click({modifiers:['Control']});
   await page.locator(`.shelf-item[data-sort-book="${chosen[1]}"]`).click({button:'right'});
   check('right-click retains multiple selected albums',await page.locator('#book-context-menu').isVisible()&&await page.evaluate(()=>ui.selected.size===2));
-  await page.locator('[data-act="org-context-edit"]').click();await page.locator('#org-book-prefix').fill('Edited · ');await page.locator('#org-book-tags').fill('test-tag');await page.locator('[data-act="org-book-edit-confirm"]').click();
-  check('context batch editing affects exactly the selected albums',await page.evaluate(ids=>state.books.filter(b=>b.title.startsWith('Edited · ')).length===ids.length&&ids.every(id=>bookBy(id).tags.includes('test-tag')),chosen));
+  await page.locator('[data-act="org-context-edit"]').click();for(let i=0;i<chosen.length;i++)await page.locator('[data-book-rename]').nth(i).fill('Renamed album '+(i+1));await page.locator('[data-act="org-book-edit-confirm"]').click();
+  check('context batch editing affects exactly the selected albums',await page.evaluate(ids=>state.books.filter(b=>b.title.startsWith('Renamed album ')).length===ids.length&&ids.every((id,i)=>bookBy(id).title==='Renamed album '+(i+1)),chosen));
   await page.locator(`.shelf-item[data-sort-book="${chosen[0]}"]`).click({button:'right'});await page.locator('[data-act="org-context-export"]').click();
   check('context batch export opens the multi-book export dialog',await page.locator('#modal[open]').count()===1);
   await page.evaluate(()=>document.addEventListener('click',e=>{if(e.target.tagName==='A')window.testDownloadName=e.target.download},true));
@@ -192,14 +193,14 @@ try{
   await page.locator(`.shelf-item[data-sort-book="${chosen[0]}"]`).click({button:'right'});await page.keyboard.press('Escape');
   check('Escape closes context menu and exits multi-selection',await page.locator('#book-context-menu').count()===0&&await page.evaluate(()=>!ui.bulk&&ui.selected.size===0&&document.activeElement.dataset.act==='toggle-bulk'));
   const orderSaved=await page.evaluate(()=>manualBookIds());check('organized state saves successfully',await page.evaluate(()=>ComfyComic.sync.save()));
-  await page.reload();await page.waitForFunction(()=>!rt.booting);await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());navigate(0)});
+  await page.reload();await page.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());navigate(0)});
   check('manual album order survives a backend reload',JSON.stringify(await page.evaluate(()=>manualBookIds()))===JSON.stringify(orderSaved));
   await page.evaluate(ids=>{ui.selected=new Set(ids);ui.bulk=true;render()},chosen);
   await page.locator(`.shelf-item[data-sort-book="${chosen[0]}"]`).click({button:'right'});await page.locator('[data-act="org-context-delete"]').click();
   check('context batch delete requires confirmation',await page.locator('#confirm-dialog[open]').count()===1&&await page.evaluate(ids=>ids.every(id=>!!bookBy(id)),chosen));
   await page.locator('#confirm-yes').click();await page.waitForFunction(ids=>ids.every(id=>!bookBy(id)),chosen);
   check('context batch delete removes only chosen albums',await page.evaluate(count=>state.books.length===count,books.length-chosen.length));
-  await page.reload();await page.waitForFunction(()=>!rt.booting);check('workflow library survives reload',await page.evaluate(id=>state.settings.comfy.presets.some(p=>p.id===id&&p.title==='A edited'),ids[0]));
+  await page.reload();await page.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);check('workflow library survives reload',await page.evaluate(id=>state.settings.comfy.presets.some(p=>p.id===id&&p.title==='A edited'),ids[0]));
   await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());navigate(3)});await page.waitForTimeout(500);
   await page.setViewportSize({width:390,height:844});await page.waitForTimeout(300);
   check('mobile workflow view has no document overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));
@@ -220,7 +221,7 @@ try{
   check('multiple OpenAI-compatible channels can be configured independently',await page.evaluate(()=>ensureImageProviders().profiles.length===4&&activeImageProfile().id!=='openai'&&activeImageProfile().protocol==='images'));
   check('provider layout fits mobile',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));
   const providerId=await page.evaluate(()=>activeImageProfile().id);
-  await page.evaluate(()=>ComfyComic.sync.save());await page.reload();await page.waitForFunction(()=>!rt.booting);
+  await page.evaluate(()=>ComfyComic.sync.save());await page.reload();await page.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);
   check('provider settings and key references persist without plaintext',await page.evaluate(id=>activeImageProfile().id===id&&ensureImageProviders().profiles.find(p=>p.id==='novelai').keyMode==='stored'&&!JSON.stringify(ComfyComic.convertStudioStateToApiPayload()).includes('local-test-secret'),providerId));
   await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());navigate(3)});
   check('copied channels do not share saved credentials',await page.evaluate(()=>activeImageProfile().keyMode==='none'&&!activeImageProfile().keyId));
@@ -244,7 +245,7 @@ try{
   check('multiple keys are listed as metadata without secret values',await page.locator('.provider-key-row').count()===2&&!(await page.locator('#modal-body').innerText()).includes('secret-a'));
   await page.locator('[data-act="image-key-use"]').first().click();
   check('user can select a saved key explicitly',await page.evaluate(()=>activeImageProfile().keyLabel==='Account A'));
-  await page.evaluate(()=>ComfyComic.sync.save());await page.reload();await page.waitForFunction(()=>!rt.booting);await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());navigate(3)});
+  await page.evaluate(()=>ComfyComic.sync.save());await page.reload();await page.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());navigate(3)});
   await page.locator('[data-act="image-provider-keys"]').click();await page.waitForSelector('#modal[open]');
   check('local key metadata survives page reload',await page.locator('.provider-key-row').count()===2&&await page.evaluate(()=>activeImageProfile().keyLabel==='Account A'));
   await page.locator('[data-act="image-key-delete"]').first().click();await page.locator('#confirm-yes').click();await page.waitForFunction(()=>document.querySelectorAll('.provider-key-row').length===1);
@@ -292,6 +293,7 @@ try{
   await docsPage.goto('file://'+path.join(temp,'docs','guide','CHANNELS_AND_KEYS.html'));await docsPage.waitForSelector('#document h1');
   check('prebuilt handbook works from file URLs without a Python server',(await docsPage.locator('#document h1').innerText()).includes('本地密钥'));
   await docsPage.close();
+  check('indexed workflow editing locks submitted/completed scenes, not an inferred completed prefix',await page.evaluate(()=>{const q={indices:[0,1,2,3],serverIndices:[0,1,2,3],frames:Array.from({length:4},()=>({_execution:{provider:'comfyui'}})),done:2,status:'running',serverFrameStates:[{index:0,state:'pending'},{index:1,state:'complete'},{index:2,state:'running'},{index:3,state:'complete'}]};return !taskWorkflowLocked(q,0)&&taskWorkflowLocked(q,1)&&taskWorkflowLocked(q,2)&&taskWorkflowLocked(q,3)}));
   check('no uncaught browser errors',errors.length===0);
   console.log(`${checks} browser checks passed.`);
 }catch(e){console.error(e);process.exitCode=1}finally{await browser?.close();server.kill();await new Promise(resolve=>server.once('exit',resolve));rmSync(temp,{recursive:true,force:true})}

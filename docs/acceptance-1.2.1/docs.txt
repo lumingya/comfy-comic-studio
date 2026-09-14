@@ -1,0 +1,28 @@
+test_generated_documents_are_current (test_docs_server.DocumentationServingTests.test_generated_documents_are_current) ... ok
+test_head_matches_get (test_docs_server.DocumentationServingTests.test_head_matches_get) ... 127.0.0.1 - - [12/Sep/2026 17:18:22] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
+127.0.0.1 - - [12/Sep/2026 17:18:22] "HEAD /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
+ok
+test_legacy_markdown_url_serves_utf8_reader (test_docs_server.DocumentationServingTests.test_legacy_markdown_url_serves_utf8_reader) ... 127.0.0.1 - - [12/Sep/2026 17:18:22] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
+ok
+test_prebuilt_guide_is_served_with_charset (test_docs_server.DocumentationServingTests.test_prebuilt_guide_is_served_with_charset) ... 127.0.0.1 - - [12/Sep/2026 17:18:22] "GET /docs/guide/CHANNELS_AND_KEYS.html HTTP/1.1" 200 -
+ok
+test_private_and_traversal_paths_remain_denied (test_docs_server.DocumentationServingTests.test_private_and_traversal_paths_remain_denied) ... 127.0.0.1 - - [12/Sep/2026 17:18:22] "GET /docs/../server.py HTTP/1.1" 404 -
+127.0.0.1 - - [12/Sep/2026 17:18:22] "GET /docs/../data/secrets/provider-keys.json HTTP/1.1" 404 -
+127.0.0.1 - - [12/Sep/2026 17:18:22] "GET /mio_docs.py HTTP/1.1" 404 -
+ok
+test_raw_markdown_is_explicit_utf8_without_modifying_source (test_docs_server.DocumentationServingTests.test_raw_markdown_is_explicit_utf8_without_modifying_source) ... 127.0.0.1 - - [12/Sep/2026 17:18:22] "GET /docs/WORKFLOW_UPDATE.md?raw=1 HTTP/1.1" 200 -
+ok
+test_readme_banner_is_vector_not_font_dependent_block_text (test_docs_server.DocumentationServingTests.test_readme_banner_is_vector_not_font_dependent_block_text) ... ok
+test_renderer_does_not_allow_source_to_break_out_of_json (test_docs_server.DocumentationServingTests.test_renderer_does_not_allow_source_to_break_out_of_json) ... ok
+test_text_asset_charsets_are_explicit (test_docs_server.DocumentationServingTests.test_text_asset_charsets_are_explicit) ... 127.0.0.1 - - [12/Sep/2026 17:18:22] "GET /README.md?raw=1 HTTP/1.1" 200 -
+127.0.0.1 - - [12/Sep/2026 17:18:22] "GET /docs/api/openapi.json HTTP/1.1" 200 -
+127.0.0.1 - - [12/Sep/2026 17:18:22] "GET /styles.css HTTP/1.1" 200 -
+ok
+test_new_documentation_links_resolve_locally (test_documentation.DocumentationTests.test_new_documentation_links_resolve_locally) ... ok
+test_product_metadata_and_portable_spec (test_documentation.DocumentationTests.test_product_metadata_and_portable_spec) ... ok
+test_release_readme_is_the_maintained_readme (test_documentation.DocumentationTests.test_release_readme_is_the_maintained_readme) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.545s
+
+OK

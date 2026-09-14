@@ -1,3 +1,4 @@
+import json
 """Byte-level launcher regressions and native Windows execution checks."""
 import os
 from pathlib import Path
@@ -30,7 +31,7 @@ class LauncherFormatTests(unittest.TestCase):
     def test_requested_runtime_order_and_pause(self):
         source = (ROOT / 'start.bat').read_text(encoding='utf-8')
         self.assertIn('chcp 65001 >nul', source)
-        self.assertIn('title Mio v1.0.0', source)
+        self.assertIn('title Mio v'+json.loads((ROOT / 'package.json').read_text())['version'], source)
         self.assertIn('cd /d "%~dp0"', source)
         ordered = ['goto use_venv1', 'goto use_venv2', 'where python >nul', 'where py >nul']
         self.assertEqual(sorted(source.index(x) for x in ordered), [source.index(x) for x in ordered])

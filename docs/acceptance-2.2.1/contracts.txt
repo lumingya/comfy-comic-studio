@@ -1,0 +1,61 @@
+
+> mio-studio@2.2.1 test:contracts
+> node js/tests.js
+
+PASS all 10 native fields are flat and present
+PASS read-only summaries retain generated counts without fabricated steps
+PASS empty collections stay empty instead of restoring demo assets
+PASS undefined frames normalize to an empty list
+PASS 65 and 512 frames are allowed, 513 is rejected
+PASS an empty book has zero frames and can be normalized
+PASS forceWrite is explicit and does not leak from a previous save
+PASS API credentials are not silently added to normal config backups
+PASS wrapped abstract REST payload is rejected on read
+PASS an incomplete API object is rejected instead of clearing work
+PASS legacy workflow selection and node IDs are mapped without a text assumption
+PASS WeiLinPromptUI #1832 selects its actual positive input
+PASS SDXL text_g/text_l follow deterministic actual-string priority
+PASS negative binding picks the negative field when the node has both
+PASS a link-only node cannot be overwritten even with allowLink
+PASS reads GET then writes POST /api/config, never PUT or {state}
+PASS a new edit clears errors and retries a failed save with forceWrite intact
+PASS an uninitialized client cannot flush demo data over the backend
+PASS initial network failure can recover without silently replacing existing work
+PASS irregular braces and empty weights never block prompt text
+PASS NovelAI weights and unknown braces stay byte-for-byte unchanged
+PASS only known, isolated placeholders become highlight tokens
+PASS empty declared variables collapse duplicate commas and edge commas
+PASS declared but absent values are omitted, unknown names stay literal
+PASS comma cleanup does not rewrite weight groups or JSON strings
+PASS zero and false remain meaningful prompt values
+PASS brace suggestions are informational only
+PASS prompt highlights escape HTML without changing the author text
+PASS odd-page spreads use a blank right leaf without array overflow
+PASS empty reader remains valid and has no out-of-range pages
+PASS collection layouts are explicitly selected rather than inferred from book count
+PASS grid pagination handles large collections and clamps stale page indices
+PASS mixed aspect-ratio covers fit without cropping or distortion
+PASS reading opens in the scroll view by default
+PASS native Chinese and English UI labels use an in-memory catalog
+PASS UI localization does not translate unknown authored content
+PASS demo cleanup removes only untouched extra pages and preserves the first image
+PASS modified and non-demo books are never erased by demo cleanup
+PASS the log switch controls the final sidebar navigation
+PASS display preferences have a single owner, not workspace identity
+PASS wide artistic brand fonts shrink to the available sidebar width
+PASS renamed workflow and extension labels have English translations
+PASS deleting a collection removes its scoped records without mutating the source
+PASS assets referenced from another collection are retained and reassigned
+PASS deleting the last collection creates an empty replacement without demo data
+PASS collection deletion remains a flat config write with explicit forceWrite
+PASS default narration and image prompts use different character names
+PASS changing a display name does not change image prompts
+PASS changing a model character tag does not change narration
+PASS legacy names remain compatible and explicitly empty display names remain empty
+PASS native normalization never manufactures presets or plans from independent rows
+PASS normalization never rewrites old built-in content or historical images
+PASS edited templates and custom character settings are not migrated
+PASS pending rendering protects default character data and snapshots from migration
+PASS display and prompt names survive the flat native API round trip independently
+PASS name-setting labels and help describe their different purposes
+56/56 tests passed.

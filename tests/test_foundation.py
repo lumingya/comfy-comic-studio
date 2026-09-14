@@ -17,9 +17,9 @@ PNG=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42m
 class FoundationSafetyTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
-        self.root=Path(self.temp.name);self.store=Jobs(str(self.root/'execution'),lambda _:None);self.addCleanup(self.store.close)
+        self.root=Path(self.temp.name);self.library=__import__('mio_library').FileLibrary(self.root);self.addCleanup(self.library.close);self.store=Jobs(str(self.root/'runtime'/'execution'),lambda _:None);self.addCleanup(self.store.close)
         self.config={}
-        for name,value in [('DATA_DIR',str(self.root)),('IMAGES_DIR',str(self.root/'assets/images')),('LEGACY_IMAGES_DIR',str(self.root/'legacy'))]:
+        for name,value in [('DATA_DIR',str(self.root)),('IMAGES_DIR',str(self.root/'runtime/staging/images')),('LEGACY_IMAGES_DIR',str(self.root/'legacy'))]:
             p=patch.object(server,name,value);p.start();self.addCleanup(p.stop)
         p=patch.object(server,'read_merged_config',side_effect=lambda:copy.deepcopy(self.config));p.start();self.addCleanup(p.stop)
         p=patch.object(mio_foundation,'jobs',return_value=self.store);p.start();self.addCleanup(p.stop)
@@ -36,7 +36,7 @@ class FoundationSafetyTests(unittest.TestCase):
     def test_cleanup_is_preview_confirmed_and_recoverable(self):
         url=self.asset(True);report=mio_foundation.inventory(server)
         result=mio_foundation.cleanup(server,{'token':report['cleanup']['token'],'paths':[url]});self.assertEqual(result['recycled'],[url]);self.assertTrue(list((self.root/'trash').rglob('*.png')))
-        with self.assertRaises(FileNotFoundError):server.local_path_from_url(url)
+        with self.assertRaises(ValueError):server.local_path_from_url(url)
     def test_new_reference_invalidates_cleanup_preview(self):
         url=self.asset(True);report=mio_foundation.inventory(server);self.config={'snapshot':{'image':url}}
         with self.assertRaises(Conflict):mio_foundation.cleanup(server,{'token':report['cleanup']['token'],'paths':[url]})

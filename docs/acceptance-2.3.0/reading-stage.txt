@@ -1,0 +1,27 @@
+PASS adjacent portraits pair automatically; landscape and small artwork remain independent
+PASS both portraits are complete, proportional and inside the viewport
+PASS the next composition does not peek into a settled desktop page
+PASS paired portraits use the widescreen substantially, without stretching originals
+PASS next-page navigation advances a whole spread, not the second half of the same spread
+PASS an unpaired portrait has a local soft backdrop instead of empty black sidebars
+PASS small artwork never exceeds its native pixel dimensions
+PASS single-page mode deliberately disables automatic pairing
+PASS continuous mode restores natural scrolling without replacing image nodes
+PASS phone reading remains continuous and does not overflow horizontally
+PASS rotation back to desktop restores pairing and original node identity
+PASS first paired composition keeps correct page numbering after resizing
+PASS mio-fit standalone export contains five successfully decoded embedded originals
+PASS mio-fit actual standalone HTML preserves pairing and complete image geometry
+PASS mio-fit sandbox preview and offline export use identical geometry at the same viewport
+PASS export-seamless standalone export contains five successfully decoded embedded originals
+PASS export-seamless actual standalone HTML preserves pairing and complete image geometry
+PASS export-seamless sandbox preview and offline export use identical geometry at the same viewport
+PASS seamless pages still contain only imagery, no caption blocks or page numbers
+PASS seamless phone mode retains genuine zero-gap original-ratio images
+PASS serialized reading preferences cannot close the script element
+PASS changing mode in the real sandbox reader persists to the album and subsequent export
+PASS 1366×768 shows exact 2:3 and 3:4 portraits completely, with balanced pairing and no next-frame edge
+PASS 1280×720 shows exact 2:3 and 3:4 portraits completely, with balanced pairing and no next-frame edge
+PASS 1920×1080 shows exact 2:3 and 3:4 portraits completely, with balanced pairing and no next-frame edge
+PASS no browser script errors
+26 adaptive reading checks PASS

@@ -1,5 +1,6 @@
 """Per-task sliding-window execution. Results are indexed, never a completed prefix."""
 from mio_channels import channel_reference, ChannelConfigurationError
+from mio_lifecycle import task_operations
 import copy
 import hashlib
 import json
@@ -7,13 +8,20 @@ import threading
 import time
 import uuid
 from providers.transport import close_socket
+from providers.request_evidence import safe_error_text
 
+
+class FailureLimitHold(Exception):
+    """Internal pre-submit stop: not an upstream failure or consent to retry."""
+
+class SavedInputChanged(FailureLimitHold):
+    """Discard preparation, not a paid request; resolve again on the next claim."""
 
 def make_jobs(Base):
     from mio_jobs import Conflict, job_meta, validate_runtime, validate_policy, validate_progress
 
     class FrameJobs(Base):
-        def __init__(self,root,execute,resolve_frame=None):
+        def __init__(self,root,execute,resolve_frame=None,manual_start=False):
             self.resolve_frame=resolve_frame
             self.prepared=threading.Event()
             super().__init__(root,execute)
@@ -31,6 +39,9 @@ def make_jobs(Base):
                     for name in ('frame_migrated','enabled','blocked','corrupt'):
                         if name not in existing:db.execute('ALTER TABLE jobs ADD COLUMN '+name+' INTEGER NOT NULL DEFAULT 0')
                     for row in db.execute('SELECT * FROM jobs WHERE frame_migrated=0').fetchall():self.migrate(db,row)
+                    if manual_start and db.execute('SELECT COUNT(*) FROM jobs').fetchone()[0]:
+                        db.execute("UPDATE settings SET value='true' WHERE key='paused'")
+                        db.execute('UPDATE jobs SET enabled=0')
                     interrupted=db.execute("SELECT DISTINCT job FROM job_frames WHERE state='running'").fetchall()
                     for r in interrupted:
                         error=json.dumps({'kind':'result_unconfirmed','message':'Service interrupted. Check each unconfirmed frame before resubmitting.'})
@@ -88,7 +99,11 @@ def make_jobs(Base):
         def submit(self,payload,token):
             payload,encoded,digest=validate_submission(payload,token)
             with self.lock,self.connect() as db:
-                db.execute('BEGIN IMMEDIATE');old=db.execute('SELECT id,digest FROM jobs WHERE token=?',(token,)).fetchone()
+                db.execute('BEGIN IMMEDIATE')
+                album_ids={payload.get('albumId')} | {f.get('albumId') for f in payload['frames']}
+                if any(a and db.execute('SELECT 1 FROM deleted_albums WHERE id=?',(a,)).fetchone() for a in album_ids):
+                    raise Conflict('画册已删除，不能再次提交该画册的生成请求。')
+                old=db.execute('SELECT id,digest FROM jobs WHERE token=?',(token,)).fetchone()
                 if old:
                     if old['digest']!=digest:raise Conflict('Idempotency key already used with a different input')
                     id=old['id']
@@ -100,6 +115,36 @@ def make_jobs(Base):
                     db.executemany("INSERT INTO job_frames(job,idx,state,updated) VALUES(?,?,'pending',?)",[(id,i,now) for i in range(len(payload['frames']))]);self.event(db,id,'pending')
             self.wake.set();return self.get(id)
 
+        def delete_albums(self,ids):
+            if not isinstance(ids,list) or not 1<=len(ids)<=10000 or any(not isinstance(id,str) or not 1<=len(id)<=250 for id in ids):
+                raise ValueError('请选择 1–10000 本有效画册。')
+            ids=list(dict.fromkeys(ids));abort=[];removed=[]
+            with self.lock,self.connect() as db:
+                db.execute('BEGIN IMMEDIATE')
+                now=time.time()
+                db.executemany('INSERT OR IGNORE INTO deleted_albums VALUES(?,?)',[(id,now) for id in ids])
+                # Do not depend on a browser's possibly missing serverId mapping.
+                records=db.execute("SELECT * FROM jobs WHERE state!='archived'").fetchall()
+                for row in records:
+                    payload=json.loads(row['payload'])
+                    if row['album_key'] not in ids and not any(f.get('albumId') in ids for f in payload['frames']):continue
+                    self.stop_frames(db,row['id'],abort)
+                    db.execute("UPDATE jobs SET state='archived',enabled=0,blocked=0,cancel=1,reconcile=0 WHERE id=?",(row['id'],))
+                    self.aggregate(db,row['id']);self.event(db,row['id'],'album_deleted');removed.append(row['id'])
+            # The durable transaction is already committed; socket shutdown is best effort.
+            for sock in abort:close_socket(sock)
+            self.wake.set()
+            return {'deletedAlbumIds':ids,'removedJobIds':removed}
+
+        def stop_frames(self,db,id,abort):
+            for f in db.execute('SELECT * FROM job_frames WHERE job=?',(id,)).fetchall():
+                if f['state']=='complete':continue
+                error=f['error']
+                if f['state']=='running':error=json.dumps({'kind':'result_unconfirmed','message':'已在本地停止；迟到结果不再采用，上游可能仍执行或计费。'})
+                sock=self.sockets.get((id,f['idx'],f['epoch']))
+                if sock:abort.append(sock)
+                db.execute("UPDATE job_frames SET state='canceled',epoch=epoch+1,ready_at=0,reconcile=0,error=?,updated=? WHERE job=? AND idx=?",(error,time.time(),id,f['idx']))
+
         def get(self,id,full=True):
             with self.connect() as db:
                 db.execute('BEGIN')
@@ -108,12 +153,14 @@ def make_jobs(Base):
                 frames=[dict(f) for f in db.execute('SELECT * FROM job_frames WHERE job=? ORDER BY idx',(id,))]
                 revisions=[{'id':r['id'],'time':r['created'],'changes':json.loads(r['changes'])} for r in db.execute('SELECT * FROM revisions WHERE job=? ORDER BY id',(id,))] if full else []
             meta=json.loads(row['meta']);providers=meta.pop('providers');indices=meta.pop('frameIndices',list(range(meta['total'])))
-            obj={k:row[k] for k in ('id','state','position','cursor','cancel','created','updated','ready_at','retry_count','attempts','active_timeout','enabled','blocked','upstream')}
+            obj={k:row[k] for k in ('id','state','position','cursor','cancel','created','updated','ready_at','retry_count','attempts','active_timeout','enabled','blocked','upstream','consecutive_failures','failure_limit_reached')}
             initial=json.loads(row['payload']);obj['channelRefs']=list({(channel_reference(initial,f),f['config']['provider']):{'id':channel_reference(initial,f),'provider':f['config']['provider'],'snapshotModel':f['config'].get('model','')} for f in initial['frames']}.values())
             obj.update(executionModel='per-task-frame-pools',progressVersion=2);obj.update(meta);obj['frameIndices']=indices;obj['completedIndices']=[f['idx'] for f in frames if f['state']=='complete'];obj['runningIndices']=[f['idx'] for f in frames if f['state']=='running']
             obj['nextIndex']=next((f['idx'] for f in frames if f['state']!='complete'),None);obj['nextFrameIndex']=indices[obj['nextIndex']] if obj['nextIndex'] is not None else None
             obj['provider']=providers[obj['nextIndex'] or 0];obj['running_count']=len(obj['runningIndices']);obj['reconcile']=int(any(f['reconcile'] and f['state'] in ('pending','running') for f in frames))
             obj['frameStates']=[{**{k:f[k] for k in ('state','attempts','retry_count','ready_at','upstream','timeout')},'index':f['idx'],'provider':providers[f['idx']],'error':json.loads(f['error']) if full and f['error'] else bool(f['error'])} for f in frames]
+            operation_frames=[{**dict(f),'error':json.loads(f['error']) if f['error'] else None,'provider':providers[f['idx']]} for f in frames]
+            obj['allowedActions'],obj['requiresRecoveryConsent']=task_operations(row['state'],operation_frames,row['blocked'],row['enabled'],row['corrupt'])
             obj['results']=json.loads(row['results']) if full else [];obj['error']=json.loads(row['error']) if row['error'] else None
             if obj['error'] and not full:obj['error']={'kind':obj['error']['kind'],'message':'Open details for the original response'}
             if full:
@@ -127,6 +174,9 @@ def make_jobs(Base):
 
         def event(self,db,id,state,index=None):
             super().event(db,id,state)
+            limit=db.execute('SELECT consecutive_failures,failure_limit_reached FROM jobs WHERE id=?',(id,)).fetchone()
+            if limit:
+                last=db.execute('SELECT id,data FROM events ORDER BY id DESC LIMIT 1').fetchone();data=json.loads(last['data']);data.update(dict(limit));db.execute('UPDATE events SET data=? WHERE id=?',(json.dumps(data),last['id']))
             if index is not None:
                 last=db.execute('SELECT id,data FROM events ORDER BY id DESC LIMIT 1').fetchone();data=json.loads(last['data']);data['index']=index
                 meta=json.loads(db.execute('SELECT meta FROM jobs WHERE id=?',(id,)).fetchone()[0]);data['provider']=meta['providers'][index];data['frameIndex']=meta.get('frameIndices',list(range(meta['total'])))[index]
@@ -135,6 +185,8 @@ def make_jobs(Base):
                 if f:
                     data.update(frameAttempt=f['attempts'],retryCount=f['retry_count'],retryAt=f['ready_at'],timeout=f['timeout'])
                     if state in ('failed','unknown','retry_wait','skipped') and f['error']:data['error']=json.loads(f['error']);data['error']['message']=data['error'].get('message','')[:8000]
+                evidence=db.execute('SELECT input FROM request_inputs WHERE job=? AND idx=? AND attempt=?',(id,index,f['attempts'])).fetchone() if f else None
+                if evidence:data['model']=json.loads(evidence['input']).get('config',{}).get('model','')
                 if state in ('input_read','request_ready'):
                     attempt=db.execute('SELECT input FROM request_inputs WHERE job=? AND idx=? ORDER BY attempt DESC LIMIT 1',(id,index)).fetchone()
                     if attempt:data['request']=public_request_input(json.loads(attempt['input']))
@@ -167,6 +219,14 @@ def make_jobs(Base):
             if not row['enabled'] and db.execute('SELECT COUNT(*) FROM jobs WHERE enabled=1').fetchone()[0]>=32:raise Conflict('At most 32 active task pools; stop or finish another task')
             db.execute('UPDATE jobs SET enabled=1,blocked=0,cancel=0 WHERE id=?',(row['id'],))
 
+        def trip_failure_limit(self,db,id,limit):
+            row=db.execute('SELECT failure_limit_reached FROM jobs WHERE id=?',(id,)).fetchone()
+            if row['failure_limit_reached']:return False
+            db.execute('UPDATE jobs SET blocked=1,enabled=0,failure_limit_reached=? WHERE id=?',(limit,id))
+            db.execute("UPDATE job_frames SET state='failed',ready_at=0 WHERE job=? AND state='pending' AND ready_at>0 AND reconcile=0",(id,))
+            self.aggregate(db,id);self.event(db,id,'failure_limit_reached')
+            return True
+
         def claim(self):
             with self.lock,self.connect() as db:
                 db.execute('BEGIN IMMEDIATE');runtime=json.loads(db.execute("SELECT value FROM settings WHERE key='runtime'").fetchone()[0]);paused=db.execute("SELECT value FROM settings WHERE key='paused'").fetchone()[0]=='true'
@@ -196,15 +256,38 @@ def make_jobs(Base):
                     return {**dict(task),'last_amended':amended,'idx':f['idx'],'frame_epoch':epoch,'frame_attempt':f['attempts']+1,'frame_retries':f['retry_count'],'frame_upstream':f['upstream'],'frame_reconcile':f['reconcile'],'active_timeout':runtime['requestTimeoutSeconds']}
             return None
 
+        def check_failure_limit(self,db,row):
+            if not row['frame_reconcile'] and db.execute('SELECT failure_limit_reached FROM jobs WHERE id=?',(row['id'],)).fetchone()['failure_limit_reached']:
+                raise FailureLimitHold()
+
         def record_request_parameters(self,row,parameters):
+            # File IO stays outside the dispatcher lock. The provider calls this AFTER
+            # image preparation and immediately BEFORE the one generation submission.
+            if self.resolve_frame and not row['frame_reconcile'] and not row.get('_submitted'):
+                with self.lock,self.connect() as db:
+                    if not self.valid(db,row):raise InterruptedError('Stopped before request submission')
+                    self.check_failure_limit(db,row)
+                original=json.loads(row['payload'])['frames'][row['idx']]
+                latest=self.resolve_frame(row,original)
+                if latest!=row.get('_resolved_input',latest):raise SavedInputChanged()
             with self.lock,self.connect() as db:
                 if not self.valid(db,row):raise InterruptedError('Stopped before request submission')
+                self.check_failure_limit(db,row)
                 db.execute('INSERT OR REPLACE INTO request_parameters VALUES(?,?,?,?)',(row['id'],row['idx'],row['frame_attempt'],json.dumps(parameters)))
                 self.event(db,row['id'],'request_ready',row['idx'])
+                row['_submitted']=True
+
+        def response_received(self,row,status):
+            with self.lock,self.connect() as db:
+                if self.valid(db,row):
+                    self.event(db,row['id'],'response_received',row['idx'])
+                    last=db.execute('SELECT id,data FROM events ORDER BY id DESC LIMIT 1').fetchone()
+                    data=json.loads(last['data']);data['httpStatus']=status
+                    db.execute('UPDATE events SET data=? WHERE id=?',(json.dumps(data),last['id']))
 
         def execute_row(self,row):
             id=row['id'];idx=row['idx'];frame=json.loads(row['payload'])['frames'][idx]
-            frame.update(_onRequest=lambda parameters:self.record_request_parameters(row,parameters),_requestTimeout=row['active_timeout'],_checkpoint=lambda upstream:self.checkpoint_frame(row,upstream),_isCanceled=lambda:not self.attempt_valid(row),_onSocket=lambda sock:self.register_socket(row,sock))
+            frame.update(_onResponse=lambda status:self.response_received(row,status),_onRequest=lambda parameters:self.record_request_parameters(row,parameters),_requestTimeout=row['active_timeout'],_checkpoint=lambda upstream:self.checkpoint_frame(row,upstream),_isCanceled=lambda:not self.attempt_valid(row),_onSocket=lambda sock:self.register_socket(row,sock))
             if row['frame_reconcile']:frame['_resumePromptId']=row['frame_upstream']
             generated=False
             try:
@@ -216,34 +299,55 @@ def make_jobs(Base):
                     with self.connect() as db:previous=db.execute('SELECT input FROM request_inputs WHERE job=? AND idx=? ORDER BY attempt DESC LIMIT 1',(id,idx)).fetchone()
                     if previous:snapshot=json.loads(previous['input'])
                 elif self.resolve_frame:snapshot=self.resolve_frame(row,snapshot)
+                row['_resolved_input']=copy.deepcopy(snapshot)
+                if getattr(self,'prepare_frame',None):snapshot=self.prepare_frame(row,snapshot)
                 validate_submission({'frames':[snapshot]},'attempt-validation')
                 with self.lock,self.connect() as db:
                     if not self.valid(db,row):return False
                     db.execute('INSERT INTO request_inputs VALUES(?,?,?,?,?)',(id,idx,row['frame_attempt'],time.time(),json.dumps(snapshot)));self.event(db,id,'input_read',idx)
                 frame={**snapshot,**{k:v for k,v in frame.items() if k.startswith('_')}}
                 if not self.attempt_valid(row):return False
+                with self.lock,self.connect() as db:self.check_failure_limit(db,row)
                 result=self.execute(frame);generated=True
                 if not isinstance(result,dict) or not result.get('image'):raise ValueError('Provider did not return an image result')
                 result={**result,'index':idx,'prompt':frame.get('prompt',''),'negative':frame.get('negative','')}
                 with self.lock,self.connect() as db:
                     db.execute('BEGIN IMMEDIATE')
                     if not self.valid(db,row):self.event(db,id,'late_result_discarded',idx);return False
+                    if not row['frame_reconcile']:db.execute('UPDATE jobs SET consecutive_failures=0 WHERE id=?',(id,))
                     db.execute("UPDATE job_frames SET state='complete',result=?,error=NULL,upstream=NULL,reconcile=0,retry_count=0,ready_at=0,updated=? WHERE job=? AND idx=?",(json.dumps(result),time.time(),id,idx));self.aggregate(db,id);self.event(db,id,'frame_complete',idx)
+            except FailureLimitHold as hold:
+                with self.lock,self.connect() as db:
+                    db.execute('BEGIN IMMEDIATE')
+                    if not self.valid(db,row):return False
+                    # A claimed/prepared frame that never crossed the submit boundary is not a request.
+                    db.execute("UPDATE job_frames SET state='pending',attempts=attempts-1,ready_at=0,updated=? WHERE job=? AND idx=?",(time.time(),id,idx))
+                    db.execute('UPDATE jobs SET attempts=attempts-1 WHERE id=?',(id,))
+                    db.execute('DELETE FROM request_inputs WHERE job=? AND idx=? AND attempt=?',(id,idx,row['frame_attempt']))
+                    db.execute('DELETE FROM request_parameters WHERE job=? AND idx=? AND attempt=?',(id,idx,row['frame_attempt']))
+                    self.aggregate(db,id);self.event(db,id,'input_refresh' if isinstance(hold,SavedInputChanged) else 'dispatch_held',idx)
             except Exception as exc:
                 status=getattr(exc,'status',None);state='failed' if not generated and (status or isinstance(exc,(ValueError,FileNotFoundError,PermissionError))) else 'unknown'
-                error={'kind':'channel_configuration' if isinstance(exc,ChannelConfigurationError) else 'upstream_http' if status else 'validation' if state=='failed' else 'result_unconfirmed','status':status,'message':str(exc)}
+                error={'kind':'channel_configuration' if isinstance(exc,ChannelConfigurationError) else 'upstream_http' if status else 'validation' if state=='failed' else 'result_unconfirmed','status':status,'message':safe_error_text(str(exc))}
                 with self.lock,self.connect() as db:
                     db.execute('BEGIN IMMEDIATE')
                     if not self.valid(db,row):self.event(db,id,'late_result_discarded',idx);return False
-                    policy=json.loads(db.execute("SELECT value FROM settings WHERE key='failurePolicy'").fetchone()[0]);count=row['frame_retries'];ready=0
-                    if status==422:state='skipped';error['kind']='prompt_rejected';error['message']='HTTP 422：此幕已跳过，请修改内容后再继续。\n'+str(exc)
-                    if state=='failed' and policy['mode']=='retry' and isinstance(status,int) and 500<=status<=599 and not row['frame_reconcile'] and count<policy['maxRetries']:
+                    policy=validate_policy(json.loads(db.execute("SELECT value FROM settings WHERE key='failurePolicy'").fetchone()[0]));count=row['frame_retries'];ready=0
+                    if not row['frame_reconcile']:db.execute('UPDATE jobs SET consecutive_failures=consecutive_failures+1 WHERE id=?',(id,))
+                    failure=db.execute('SELECT consecutive_failures,failure_limit_reached FROM jobs WHERE id=?',(id,)).fetchone()
+                    reached=bool(failure['failure_limit_reached'] or policy['maxConsecutiveFailures'] and failure['consecutive_failures']>=policy['maxConsecutiveFailures'])
+                    if status==422:state='skipped';error['kind']='prompt_rejected';error['message']='HTTP 422：此幕已跳过，请修改内容后再继续。\n'+safe_error_text(str(exc))
+                    if not reached and state=='failed' and policy['mode']=='retry' and isinstance(status,int) and 500<=status<=599 and not row['frame_reconcile'] and count<policy['maxRetries']:
                         count+=1;ready=time.time()+policy['delaySeconds'];state='pending'
-                    stop=isinstance(exc,ChannelConfigurationError) or state!='skipped' and not ready and (policy['mode']=='pause' or policy['mode']=='retry' and policy['onExhausted']=='pause')
+                    stop=reached or isinstance(exc,ChannelConfigurationError) or state!='skipped' and not ready and (policy['mode']=='pause' or policy['mode']=='retry' and policy['onExhausted']=='pause')
                     if stop:db.execute('UPDATE jobs SET blocked=1 WHERE id=?',(id,))
                     history=json.loads(db.execute('SELECT errors FROM jobs WHERE id=?',(id,)).fetchone()[0]);history.append({'index':idx,'attempt':row['frame_attempt'],'time':time.time(),**error,'message':error['message'][:16384],'truncated':len(error['message'])>16384})
                     db.execute('UPDATE jobs SET errors=? WHERE id=?',(json.dumps(history[-30:]),id))
                     db.execute('UPDATE job_frames SET state=?,error=?,retry_count=?,ready_at=?,updated=? WHERE job=? AND idx=?',(state,json.dumps(error),count,ready,time.time(),id,idx));self.aggregate(db,id);self.event(db,id,'retry_wait' if ready else state,idx)
+                    if reached:self.trip_failure_limit(db,id,policy['maxConsecutiveFailures'])
+            if getattr(self,'materialize',None):
+                try:self.materialize(row)
+                except Exception:pass  # Durable execution result is preserved; startup/reads recover projection.
             self.wake.set();return True
 
         def run_claimed(self,row):
@@ -275,6 +379,11 @@ def make_jobs(Base):
             if not isinstance(recovery,dict) or type(recovery.get('expectedCursor')) is not int or recovery.get('expectedCursor')!=row['cursor'] or recovery.get('expectedUpdated')!=row['updated']:raise Conflict('Progress changed; refresh before confirming')
 
         def control(self,id,action,policy=None,runtime=None,recovery=None,edits=None):
+            if action=='remove' and id!='scheduler':
+                with self.connect() as db:
+                    record=db.execute('SELECT album_key FROM jobs WHERE id=?',(id,)).fetchone()
+                    if not record:raise KeyError(id)
+                self.delete_albums([record['album_key']]);return self.get(id)
             abort=[]
             with self.lock,self.connect() as db:
                 db.execute('BEGIN IMMEDIATE')
@@ -287,6 +396,8 @@ def make_jobs(Base):
                                 db.execute("UPDATE job_frames SET state='failed',ready_at=0 WHERE job=? AND idx=?",(f['job'],f['idx']))
                                 if revised['mode']=='pause' or revised['mode']=='retry' and revised['onExhausted']=='pause':db.execute('UPDATE jobs SET blocked=1 WHERE id=?',(f['job'],))
                                 self.aggregate(db,f['job']);self.event(db,f['job'],'retry_disarmed',f['idx'])
+                        if revised['maxConsecutiveFailures']:
+                            for task in db.execute("SELECT id FROM jobs WHERE state NOT IN ('complete','archived','canceled') AND failure_limit_reached=0 AND consecutive_failures>=?",(revised['maxConsecutiveFailures'],)).fetchall():self.trip_failure_limit(db,task['id'],revised['maxConsecutiveFailures'])
                     elif action in ('pause','resume'):db.execute("UPDATE settings SET value=? WHERE key='paused'",('true' if action=='pause' else 'false',))
                     else:raise ValueError('Invalid scheduler action')
                     self.event(db,id,action)
@@ -295,13 +406,21 @@ def make_jobs(Base):
                     if not row:raise KeyError(id)
                     frames=db.execute('SELECT * FROM job_frames WHERE job=? ORDER BY idx',(id,)).fetchall();state=row['state'];active=any(f['state']=='running' for f in frames)
                     uncertain=any(f['state']=='unknown' or json.loads(f['error'] or '{}').get('kind') in ('result_unconfirmed','persistence_unconfirmed') for f in frames if f['state']!='complete')
+                    if state=='archived':
+                        if action=='archive':return self.get(id)
+                        raise Conflict('任务已移除，不能继续或重新提交。')
+                    operation_frames=[{**dict(f),'error':json.loads(f['error']) if f['error'] else None,'provider':json.loads(row['payload'])['frames'][f['idx']]['config']['provider']} for f in frames]
+                    allowed,_=task_operations(state,operation_frames,row['blocked'],row['enabled'],row['corrupt'])
+                    if action in ('start','continue','resume','reconcile') and action not in allowed:raise Conflict('任务状态已变化，请刷新后操作。')
                     if action in ('hold','pause'):
                         if state in ('complete','archived'):raise Conflict('Task already ended')
                         db.execute('UPDATE jobs SET blocked=1 WHERE id=?',(id,));db.execute('UPDATE job_frames SET ready_at=0 WHERE job=?',(id,))
                     elif action=='resume':
+                        if row['failure_limit_reached']:raise Conflict('连续失败上限已触发，请确认后继续未完成分镜。')
                         if state!='paused' or uncertain:raise Conflict('Only held tasks can resume without recovery consent')
                         db.execute('UPDATE jobs SET blocked=0 WHERE id=?',(id,))
                     elif action=='start':
+                        if row['failure_limit_reached']:raise Conflict('连续失败上限已触发，请确认后继续未完成分镜。')
                         self.check_recovery(row,recovery)
                         if uncertain or any(f['state'] in ('failed','canceled') for f in frames):raise Conflict('Stopped or failed frames require explicit continuation')
                         if state not in ('pending','paused'):raise Conflict('Only waiting tasks can be manually started')
@@ -313,6 +432,7 @@ def make_jobs(Base):
                         if action=='retry' and (state!='failed' or uncertain):raise Conflict('Only confirmed failed frames can retry without unconfirmed consent')
                         if uncertain and (not recovery or recovery.get('acknowledgeUnconfirmed') is not True):raise Conflict('Explicit acknowledgement of possible duplicate upstream billing is required')
                         if all(f['state']=='complete' for f in frames):raise Conflict('All frames already complete')
+                        db.execute('UPDATE jobs SET consecutive_failures=0,failure_limit_reached=0 WHERE id=?',(id,))
                         self.activate(db,row)
                         db.execute("UPDATE job_frames SET state='pending',error=NULL,retry_count=0,ready_at=0,upstream=NULL,reconcile=0 WHERE job=? AND state IN ('failed','unknown','canceled','skipped')",(id,))
                         db.execute("UPDATE job_frames SET ready_at=0,error=NULL,retry_count=0 WHERE job=? AND state='pending'",(id,))
@@ -357,8 +477,7 @@ def make_jobs(Base):
                         if active:raise Conflict('Stop active requests first')
                         db.execute("UPDATE job_frames SET state='canceled' WHERE job=? AND state!='complete'",(id,));db.execute('UPDATE jobs SET cancel=1,enabled=0,blocked=0 WHERE id=?',(id,))
                     elif action in ('archive','remove'):
-                        if active or uncertain:raise Conflict('Stop and resolve unconfirmed frames before removing or archiving')
-                        if action=='archive' and state not in ('complete','failed','canceled'):raise Conflict('Only ended tasks can archive')
+                        if active:raise Conflict('请先停止当前请求后再隐藏任务记录。')
                         db.execute("UPDATE jobs SET state='archived',enabled=0,blocked=0 WHERE id=?",(id,))
                     else:raise Conflict('Invalid task action')
                     self.aggregate(db,id);self.event(db,id,action)

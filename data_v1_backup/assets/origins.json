@@ -1,0 +1,462 @@
+{
+  "/images/albums/book_61f5d40b-0efb-41df-8f1f-68d923742108/c2e3337a9456c90d282254c25f69b5cddc24f165fe585ebd3432cd67ca212d5f.png": {
+    "created": 1789116027.2707827,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_157ba9b6-9d02-4c55-98c4-56e09552bda4/39efbbb39b0d340144aba13da7b3288021db9c3990be0579a68beac81407f89b.png": {
+    "created": 1789125166.0197234,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_157ba9b6-9d02-4c55-98c4-56e09552bda4/3506c09a61eb32cf2b64e7aa7847b11fbf9c1bc63f5c361d14ef2fcd87566b09.png": {
+    "created": 1789134582.8392906,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_157ba9b6-9d02-4c55-98c4-56e09552bda4/d39833e21f514723f145a6e75bc176ccc39ab482f267a8db0216b6ee278e56cf.png": {
+    "created": 1789134865.867794,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_157ba9b6-9d02-4c55-98c4-56e09552bda4/0c1bd3cadad209bf47e32399b47c8d3b3363b146eccc0967a9e40b2a32f9c869.png": {
+    "created": 1789135012.409033,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_157ba9b6-9d02-4c55-98c4-56e09552bda4/d89db46d9cc39c0b79b7bc4dc0d9bc0ec96bd8d0437b45a02170925c9a4f946c.png": {
+    "created": 1789141139.0591831,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_0487f2b4-c810-481e-b97f-254633f44b9c/0d7a0e7a5648536f68ccdcf96a597ca3f87d3c898b601693fa26039bd01ac37c.jpg": {
+    "created": 1789146001.7351682,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_0487f2b4-c810-481e-b97f-254633f44b9c/07bae2ad7977a02ed520614a0bde9b81310340263e90c4ebb274288dcbba72e2.jpg": {
+    "created": 1789146003.6591885,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_0487f2b4-c810-481e-b97f-254633f44b9c/9aeb7c02d52184518c7f00bd5b65a6917580fe00ec914bcafad702c22ccb8a1b.png": {
+    "created": 1789146042.4840462,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_0487f2b4-c810-481e-b97f-254633f44b9c/1019f49431175991dd51e8260cb50dccb65fe2b4d4f0c8512f1c9c05e3ce9b79.png": {
+    "created": 1789146053.5678215,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_0487f2b4-c810-481e-b97f-254633f44b9c/c8ea1be74ec89c53b21d946d957ef58e5bad708d0b59e1f670feaa4daa4b4b7c.png": {
+    "created": 1789146066.5123324,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_d10bcec5-c243-4e99-b573-c901c1c992e4/16a74bcd56fe4bedc06a3f3ea027a9d83d3e4b7f827127fec1dd9b6acdb5705e.jpg": {
+    "created": 1789148545.6191633,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_d10bcec5-c243-4e99-b573-c901c1c992e4/a367439f531d5c4a9f7b4db741a06855268c6996e9f61576357d794f061212be.png": {
+    "created": 1789148561.1964133,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_d10bcec5-c243-4e99-b573-c901c1c992e4/488573a4197c8f406c93c5432977b44bc807659d81fdc55c71093a915f6eb576.png": {
+    "created": 1789148605.5486534,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_d10bcec5-c243-4e99-b573-c901c1c992e4/f1715424a687c32e5b8941a8c8ebc247de6303efa9126e5d00a9984934c82a62.jpg": {
+    "created": 1789148609.1280534,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_d10bcec5-c243-4e99-b573-c901c1c992e4/4b3dcdd7e475d7e5122d6dd8e58d7594e528edd55159310b80d9463a7f5b6bbb.png": {
+    "created": 1789148674.756427,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_d10bcec5-c243-4e99-b573-c901c1c992e4/5e34b60f13552b96c3185ad1b75c6fa4b834598490de0a13e29ce5706fcb60d4.jpg": {
+    "created": 1789148719.3046129,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_d10bcec5-c243-4e99-b573-c901c1c992e4/7923da4840dd7aaae838b98c95e15796f8d1cac336be87a6c2198f0b28095d8a.jpg": {
+    "created": 1789148754.6286876,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_d10bcec5-c243-4e99-b573-c901c1c992e4/132aa86d4f5b36fb949a16270823c3abfd4399e122c22c07a963a8fd636fcfd0.jpg": {
+    "created": 1789148841.5764232,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_d10bcec5-c243-4e99-b573-c901c1c992e4/821a0aec9dcf1ac57c954485b170b28bbb0c1590f5d7ce13a30834d96daf5054.png": {
+    "created": 1789148934.0615337,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_d10bcec5-c243-4e99-b573-c901c1c992e4/5c84157f92dbaac7c93af09bdf83352a2658aa3aef960b04857221f55818aa97.png": {
+    "created": 1789149021.1721246,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_d10bcec5-c243-4e99-b573-c901c1c992e4/e9a3849985e3742bc59b130fbe178796324c06ff2a756b6f0fddcbf7a6e9ecde.png": {
+    "created": 1789149104.3839977,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2.5-sunburst"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/306ef66166f745b51fbf96733db195930437a590e8f7e5812953dab8b9fd4738.png": {
+    "created": 1789180862.1124067,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/bff7ff225ec81e92c506702607a602f37da352bfa5c9f1de20c3d315c03653c6.png": {
+    "created": 1789180865.5678332,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/f8d8fbedfc79e969444fc0d4cc376297c9f759224018ebef330d3655c8c37e95.png": {
+    "created": 1789180914.073928,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/459e60954b805efb77292c490c4ef34835fc2432c5a08e6c9bedebbdcaee3f92.png": {
+    "created": 1789180934.704202,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/daa565fd25e67f3a8a95a513c6bca344064bde153c9751e90aa1dd8ca5036853.png": {
+    "created": 1789180962.9402654,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/ba314e79d531862d1793a80e06711d0bb6cc3bbac63fb897b7c466b27b7b3a6d.png": {
+    "created": 1789181033.0424879,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/2182ac57deba9f6f0d9c236deb1d891d84bb051f51249d9401e5db03bdce79d3.png": {
+    "created": 1789181059.728916,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/a85e6eada8e3794f604255775a608004a7fc0ce0215199b7d4a2d44d9d236b59.jpg": {
+    "created": 1789181191.8516154,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/735aeace88efa4ca15cd7af84feaf8756333f9622beb4b7c045e0d806f5a2ebc.png": {
+    "created": 1789185979.5019867,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/7333e6f6e132b95f88cc33b7c7a2a17a4b5667be25e257891b48007442585ca9.jpg": {
+    "created": 1789185995.9615242,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/7b12ac6d8e5d0185e3d485550c07640d7192673fd9d8ee7507821d0035e921fa.jpg": {
+    "created": 1789186011.433504,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/89ea5740bcc0abc172a6fc9338410ce460cfd65919be461af2296bbdd4d1c031.png": {
+    "created": 1789186078.1500914,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/cf07cd0d41dd08858f91b11179866dfa3d8220a8acf10302561eafd63fd21405.jpg": {
+    "created": 1789187352.1121557,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/289faccd679a230a627aa51fda8679331cb73bb3e5f8a1ad2c3d892ba5ebf1af.png": {
+    "created": 1789187362.8259072,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/9ba93aa12e2949db319023ae0a7aa33665ae3189635f790c0aa5094fa0f0913b.jpg": {
+    "created": 1789188028.6941397,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/c1edaf399954b2aa4ef63bdfc0011cb6c2585d367dc4890f6bc0cabcc7dfb23b.jpg": {
+    "created": 1789188050.1796794,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/93fab4538e95455c9e3702e7a5c21351cbd63bbe3c9c0937b57572eb96aab535.jpg": {
+    "created": 1789188072.7746236,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/6c95d693fffa77bb96a842afad5fa2f3ecc15572f0d16afd9c3912b0b121fe2e.jpg": {
+    "created": 1789188095.4631393,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/e61f49687a20b6cf4a4f71e00db90761909b26f841d2074c0bf0ea4396e6cc0b.jpg": {
+    "created": 1789188120.6942043,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/917103776da24ccc9b221f004c04b2fad430cb1e509eb57473a11b02df08735a.jpg": {
+    "created": 1789188146.8031838,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/ea216198fff5cf60a43c0580b07be65d7483dc4be48be87352ccba8a4a2d8ebf.jpg": {
+    "created": 1789188209.4862294,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/8e45ff529c90365ad223741fa29065a2f0e2371e41d46206181d0e03bfca2615.jpg": {
+    "created": 1789188219.141186,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/62b4eca7f15baa392ba562b262425191c12d236273c0bc7d1d8f6c357a80973a.jpg": {
+    "created": 1789188276.2471328,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  },
+  "/images/albums/book_967fcf4b-248a-46c8-b83f-405e281a42ac/6f970d0638dc1c9fd382f5684b5381bbc6c881330f92aee67d612c2a4988bc1a.jpg": {
+    "created": 1789188277.748157,
+    "sources": [
+      {
+        "kind": "generation",
+        "provider": "openai",
+        "model": "gpt-image-2"
+      }
+    ]
+  }
+}

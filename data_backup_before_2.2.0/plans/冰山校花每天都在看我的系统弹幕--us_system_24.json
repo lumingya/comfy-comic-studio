@@ -1,0 +1,33 @@
+{
+  "id": "plan_campus_system_24",
+  "projectId": "collection_summer",
+  "title": "冰山校花每天都在看我的系统弹幕",
+  "templateId": "tpl_campus_system_24",
+  "rowId": "character_campus_pair",
+  "enabled": true,
+  "variableSetIds": [
+    "setting_campus_pair"
+  ],
+  "variables": [],
+  "sceneOverrides": {
+    "f_campus_1": {},
+    "f_campus_2": {},
+    "frame_1": {},
+    "frame_2": {},
+    "frame_3": {},
+    "frame_4": {},
+    "frame_14": {},
+    "frame_15": {}
+  },
+  "createdAt": 1789002935345,
+  "updatedAt": 1789187978309,
+  "excludedSettingKeys": [],
+  "storyVersionId": "",
+  "_sourceFormat": {
+    "replaced": {},
+    "added": []
+  },
+  "schema": "mio.resource.v2",
+  "kind": "plans",
+  "_position": 0
+}

@@ -16,16 +16,16 @@ const paths={grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y
 const icon=(n,c='')=>`<svg class="icon ${c}" viewBox="0 0 24 24" aria-hidden="true">${paths[n]||paths.grid}</svg>`,btn=(l,i,a,x='',c='')=>`<button type="button" class="btn ${c}" data-act="${a}" ${x}>${i?icon(i):''}${l}</button>`,ibtn=(i,a,l,x='')=>`<button type="button" class="ibtn" data-act="${a}" title="${esc(l)}" aria-label="${esc(l)}" ${x}>${icon(i)}</button>`,opt=(v,l,c)=>`<option value="${esc(v)}" ${String(v)===String(c)?'selected':''}>${esc(l)}</option>`,input=(n,v,t='text',a='')=>`<input name="${n}" type="${t}" value="${esc(v)}" ${a}>`,field=(l,c,h='')=>`<div class="field"><label class="label">${l}</label>${c}${h?`<div class="help">${h}</div>`:''}</div>`;
 
 
-const palettes=[['#90bed5','#f4d6be','#6b9f9f','#233b52'],['#322e58','#e598ba','#595387','#19253f'],['#c5d9c5','#ffe4bb','#6c9887','#354b4d'],['#1c344e','#ddbaca','#486887','#282a42'],['#8fbbb0','#f1d3a3','#548780','#203e3d'],['#58628d','#f0bc9e','#738e9e','#252d43']];
+const palettes=clone(MioContent.palettes);
 
 
-const artUrls=['https://images.alphacoders.com/819/thumbbig-819506.webp','https://images2.alphacoders.com/103/thumbbig-1033287.webp','https://images3.alphacoders.com/131/thumbbig-1313942.webp','https://images7.alphacoders.com/725/thumbbig-725912.webp','https://images3.alphacoders.com/645/thumbbig-645549.webp','https://images3.alphacoders.com/132/thumbbig-1322308.webp','https://images4.alphacoders.com/781/thumbbig-781724.webp','https://images.alphacoders.com/132/thumbbig-1322321.webp'];
+const artUrls=[];
 
 
-const defaultWorkflow={'3':{class_type:'KSampler',inputs:{seed:42,steps:24,cfg:7,sampler_name:'euler',scheduler:'normal',denoise:1,model:['4',0],positive:['6',0],negative:['7',0],latent_image:['5',0]}},'4':{class_type:'CheckpointLoaderSimple',inputs:{ckpt_name:'your-anime-model.safetensors'}},'5':{class_type:'EmptyLatentImage',inputs:{width:768,height:1024,batch_size:1}},'6':{class_type:'CLIPTextEncode',inputs:{text:'{character}, anime illustration',clip:['4',1]}},'7':{class_type:'CLIPTextEncode',inputs:{text:'low quality, bad anatomy',clip:['4',1]}},'8':{class_type:'VAEDecode',inputs:{samples:['3',0],vae:['4',2]}},'9':{class_type:'SaveImage',inputs:{filename_prefix:'Mio',images:['8',0]}}};
+const defaultWorkflow=clone(MioContent.config.comfyConfig.workflow||{});
 
 
-const frameNames=['风起的站台','未寄出的信','穿过那片海','黄昏的约定','再次相遇','下一站，夏天','藏在风里的话','故事仍在继续'],captions=['夏日的风穿过站台，{character}握紧了那封没有寄出的信。','远处传来列车的声音。有些告别，原来从未说出口。','{character}沿着海岸奔跑，想在日落之前找到那个答案。','天空染上了温柔的橘色。我们说好，要在这里再见。','熟悉的身影站在光里，一如那个盛夏的午后。','下一站的名字，叫作重新开始。','那些没有说出口的话，都被风轻轻收藏。','而我们的故事，才刚刚开始。'];
+const frameNames=clone(MioContent.frameNames),captions=clone(MioContent.captions);
 
 
 let state=seedState();
@@ -39,7 +39,7 @@ const rt={logs:[],running:false,paused:false,controller:null,llmController:null,
 const workspaces=[['画廊展厅','grid','GALLERY'],['分镜剧本配置','story','STORYBOARD'],['批量角色矩阵','users','CHARACTER MATRIX'],['ComfyUI 引擎管线','nodes','WORKFLOW ENGINE'],['LLM 剧情策划台','spark','STORY STUDIO']],project=()=>state.projects.find(p=>p.id===state.activeProjectId)||state.projects[0],projectBooks=()=>state.books.filter(b=>b.projectId===state.activeProjectId),projectRows=()=>state.rows.filter(r=>r.projectId===state.activeProjectId),projectTemplates=()=>state.templates.filter(t=>t.projectId===state.activeProjectId),currentTemplate=()=>state.templates.find(t=>t.id===ui.templateId)||projectTemplates()[0],bookBy=id=>state.books.find(b=>b.id===id),rowBy=id=>state.rows.find(r=>r.id===id),templateBy=id=>state.templates.find(t=>t.id===id);
 
 
-const dateFmt=t=>new Date(t).toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'}).replace('/','.'),coverImage=b=>b.steps.find(s=>s.image&&!s.offlineFallback&&!isFallbackImage(s.image))?.image||'',imgTag=(s,a,x='')=>s?`<img src="${esc(s)}" alt="${esc(a)}" ${x}>`:missingArtworkHTML(a,x);
+const dateFmt=t=>new Date(t).toLocaleDateString('zh-CN',{month:'2-digit',day:'2-digit'}).replace('/','.'),coverImage=b=>b._lazy?b._cover||'':b.steps.find(s=>s.image&&!s.offlineFallback&&!isFallbackImage(s.image))?.image||'',imgTag=(s,a,x='')=>s?`<img src="${esc(s)}" alt="${esc(a)}" ${x}>`:missingArtworkHTML(a,x);
 
 
 const heading=(t,d,a='',e='')=>`<div class="page-heading"><div>${e?`<div class="eyebrow">${e}</div>`:''}<h1>${t}</h1><p>${d}</p></div><div class="actions">${a}</div></div>`;
@@ -63,7 +63,7 @@ const toolDefs=[['get_current_template_details','读取当前模板完整内容'
 const assistantTools=toolDefs.map(([name,description,properties,required])=>({type:'function',function:{name,description,parameters:{type:'object',properties,required,additionalProperties:false}}}));
 
 
-const catalog=[{id:'summer-pack',title:'海边来信 · 叙事分镜包',type:'templates',icon:'story',desc:'6 幕起承转合，海风、来信与重逢的电影式叙事。',author:'Mio Originals',version:'1.2',score:'4.9',tags:'青春 治愈 分镜'}, {id:'noir-pack',title:'霓虹漫游 · 都市电影包',type:'templates',icon:'story',desc:'8 幕雨夜叙事，适合悬疑、科幻与都市短篇。',author:'Nightlight Studio',version:'1.0',score:'4.8',tags:'赛博 都市 分镜'}, {id:'character-pack',title:'夏日少女 · 角色资产',type:'characters',icon:'users',desc:'平铺变量、服装与特征描述，快速建立角色生产矩阵。',author:'Mio Originals',version:'2.0',score:'4.9',tags:'角色 青春 一致性'}, {id:'anime-workflow',title:'Anime Basic · 标准图像管线',type:'workflows',icon:'nodes',desc:'标准 KSampler 工作流与明确的节点映射，可自由替换模型。',author:'Comfy Pipeline Lab',version:'1.1',score:'4.7',tags:'工作流 SDXL 动漫'}, {id:'critic-pack',title:'视觉审校 · 连贯性规则',type:'rules',icon:'shield',desc:'自动伴随审校，关注角色服装、解剖与光影连贯性。',author:'Mio Originals',version:'1.0',score:'4.8',tags:'审校 一致性'}];
+const catalog=clone(MioContent.market);
 
 
 function diagnostics(){const tests=[];const test=(name,fn)=>{try{if(fn()===false)throw Error('验证失败');tests.push([name,true,'通过'])}catch(e){tests.push([name,false,e.message])}};test('工程核心数据契约',()=>validateState(state));test('平铺宏变量插值',()=>interpolate('{character}/{character2}',{character:'A',character2:'B'})==='A/B');test('宏变量全字边界防碰撞',()=>'{character}/{character2}'.replace(new RegExp('\\{character\\}','g'),'{hero}')==='{hero}/{character2}');test('缺帧并集判定',()=>JSON.stringify(missingIndices({totalSteps:4,steps:[{stepIndex:0,image:'ready'},{stepIndex:1,image:''},{stepIndex:2,image:'svg',offlineFallback:true}]}))==='[1,2,3]');test('旧宏变量防删除',()=>{try{validatePrompt('character','{character}');return false}catch(e){return true}});test('八个标准工具 Schema',()=>assistantTools.length===8&&new Set(assistantTools.map(t=>t.function.name)).size===8);test('奇数页空白补齐边界',()=>{const n=5,last=Math.floor((n-1)/2)*2;return last===4&&last+1>=n});test('API 工作流扁平结构',()=>!!validateWorkflow(defaultWorkflow));test('确定性 SVG 输出',()=>svgArt(1,42)===svgArt(1,42));test('XML 中文 Schema 校验',()=>parseTemplateXML('<模板><标题>测试</标题><简介>测试</简介><分镜列表><分镜1><名称>一</名称><提示词>{character}</提示词><剧情>测试</剧情></分镜1></分镜列表></模板>').frames.length===1);modal('本地系统自检',`<div class="notice">这些检查在当前浏览器内真实执行，覆盖数据与边界逻辑；不代表远端 GPU 或 LLM 集成已验证。</div>${tests.map(([n,ok,d])=>`<div class="row" style="padding:14px 0;border-bottom:1px solid var(--line)"><span class="${ok?'accent':'danger'}">${icon(ok?'check':'close')}</span><span class="grow small">${n}</span><span class="tiny muted">${esc(d)}</span></div>`).join('')}`);return tests}
@@ -109,7 +109,7 @@ async function boot(){rt.booting=true;$('#launch-icon').innerHTML=icon('spark');
 
 
 const STUDIO_VERSION='3.2.0';
-const MIO_VERSION='1.0.0';
+const MIO_VERSION='2.3.0';
 
 
 const moduleKeys=['gallery','storyboard','matrix','engine','llm'];
@@ -122,17 +122,10 @@ const templateKind='comfycomic.export-template';
 
 
 /** @typedef {{id:string,kind:string,formatVersion:number,title:string,description:string,author:string,version:string,layout:'webtoon'|'manga'|'artbook'|'flip',html:string,options:Object,builtin:boolean,source:string,createdAt:number,updatedAt:number}} ExportTemplate */
-const exportOptionDefaults={accent:'#43634b',background:'#f3f0e7',paper:'#fffdf6',text:'#29382d',width:800,gap:24,radius:2,font:'serif'};
+const exportOptionDefaults=clone(MioContent.exportOptionDefaults);
 
 
-const studioDefaults={
-  visibility:{gallery:true,storyboard:true,matrix:true,engine:true,llm:true},
-  features:{assistant:true,marketplace:true,visualCritic:true,executionLogs:true},
-  appearance:{theme:document.documentElement.dataset.theme||'dark',density:'comfortable',reduceMotion:false,showMetrics:true},
-  reader:{defaultMode:'focus'},
-  export:{templateId:'export-paper',showCaptions:true,showPrompts:false,border:0},
-  assistant:{confirmChanges:true}
-};
+const studioDefaults=clone(MioContent.studioDefaults);
 
 
 const studioUI={settingsTab:'general',editor:null,editorTab:'design',previewDevice:'desktop',previewBookId:null,previewTimer:null,editorDirty:false,exportDraft:null,exportBusy:false,assistantDraft:'',assistantUndo:null,assistantTargetId:null};
@@ -147,11 +140,7 @@ const exportVariableNames=new Set(['collectionTitle','title','synopsis','charact
 const toolLabels={get_current_template_details:'读取模板内容',update_template_title:'修改模板标题',update_template_outline:'调整故事大纲',update_frame_prompt_and_caption:'修改分镜',add_new_frame:'新增分镜',delete_frame:'删除分镜',swap_frames:'交换分镜顺序',batch_update_prompts_and_captions:'批量修改分镜'};
 
 
-const exportMarketCatalog=[
-  {id:'export-spring-package',title:'花信 · 春日手札',type:'exports',icon:'book',desc:'奶油纸张、柔和粉色与轻巧边距。适合青春与治愈系长卷。',author:'Mio',version:'1.0.0',tags:'画册 HTML 导出 春日 治愈',layout:'webtoon',options:{accent:'#ab727b',background:'#f4e9e5',paper:'#fffcf5',text:'#594447',width:760,gap:28,radius:5,font:'serif'}},
-  {id:'export-cinema-package',title:'银幕 · 电影双页',type:'exports',icon:'compare',desc:'深色底幕与清晰的对开构图，让都市和悬疑故事更有电影感。',author:'Mio',version:'1.1.0',tags:'画册 HTML 导出 赛博 电影 都市',layout:'manga',options:{accent:'#bdad83',background:'#191b20',paper:'#262831',text:'#e9e4d6',width:1200,gap:6,radius:0,font:'sans'}},
-  {id:'export-archive-package',title:'档案 · 精装作品集',type:'exports',icon:'image',desc:'鼠尾草绿与展览式留白，保留画面色卡和创作者签名。',author:'Mio',version:'1.0.0',tags:'画册 HTML 导出 艺术册 极简 展览',layout:'artbook',options:{accent:'#64745d',background:'#e9ece3',paper:'#f9faf3',text:'#354333',width:1000,gap:40,radius:0,font:'serif'}}
-];
+const exportMarketCatalog=MioContent.marketLayouts.map(t=>({...clone(t),desc:t.description,type:'exports',icon:'book',tags:t.title}));
 
 
 catalog.push(...exportMarketCatalog);
@@ -396,7 +385,7 @@ const zipCRC=crcTable();
 const detailCore={ensureStudioState,renderShell,render,handleAction,modal,toast,backupModal,assistantScope,renderAssistant,showAssistant,sendChat,validateState,diagnostics,storedTemplateDraft,saveEditedTemplate,flushEditor};
 
 
-builtinExportTemplates=designedTemplates;
+
 
 
 ensureStudioState=function(s=state){detailCore.ensureStudioState(s);ensureWorkspaceIdentity(s);upgradeExportDesigns(s);return s};
@@ -566,7 +555,7 @@ window.addEventListener('beforeunload',e=>{if(!rt.booting&&(disk.busy||disk.revi
 const releaseUI={composerSize:176,composerExpanded:false,composerObserver:null,composerRAF:null,criticDraft:null,criticTesting:false,criticTest:null,criticController:null,criticBatch:null,criticFingerprint:'',criticCache:new Map(),githubToken:'',githubDraft:null,githubBusy:false,githubResult:null,githubController:null,githubTab:'publish',githubCheck:null,guideStep:0,practiceBusy:false,practiceController:null,regressionBusy:false};
 
 
-const criticDefaults={mode:'real',connection:'independent',provider:'openai',baseUrl:'https://api.openai.com/v1',model:'gpt-4o',key:'',timeout:60,includeReference:true,includePrevious:true,focus:'优先检查手部、面部结构、角色服装一致性、镜头构图与叙事可读性。',verification:null};
+const criticDefaults=clone(MioContent.criticDefaults);
 
 
 const visionJobs=new Map();
@@ -866,7 +855,7 @@ dryRun=mappedDryRun;
 autoBindWorkflow=function(){const c=state.settings.comfy;for(const b of c.bindings||[])if(b.autoField&&['positive','negative'].includes(b.source)){const inf=inferTextInput(b.nodeId);b.path=inf.field;b.warning=inf.warning}c.outputNodeId||=Object.entries(c.workflow).find(([,n])=>/SaveImage|PreviewImage/.test(n.class_type))?.[0]||''};
 
 
-renderLogs=function(){const el=$('#log-body');if(!el)return;const opened=new Set([...el.querySelectorAll('details[open]')].map(x=>x.dataset.logEvent));const search=createUI.logsSearch.toLowerCase(),entries=rt.logs.filter(l=>(createUI.logLevel==='all'||l.level===createUI.logLevel)&&(l.message+' '+JSON.stringify(l.request||{})).toLowerCase().includes(search));el.innerHTML=entries.map(l=>`<div class="log-${l.level}"><span class="log-time">${new Date(l.time).toLocaleTimeString('en-GB')}</span><span style="white-space:pre-wrap">${esc(l.message)}${l.request?`<details class="log-request" data-log-event="${l.eventId}"><summary>提示词、模型与参数</summary><pre>${esc(JSON.stringify(l.request,null,2))}</pre></details>`:''}</span></div>`).join('')||'<p class="muted">当前筛选没有日志。</p>';el.querySelectorAll('[data-log-event]').forEach(x=>x.open=opened.has(x.dataset.logEvent));if(!opened.size)el.scrollTop=el.scrollHeight;const count=$('#v3-log-count');if(count)count.textContent=entries.length+' 条'};
+renderLogs=function(){const el=$('#log-body');if(!el)return;const top=el.scrollTop,follow=el.scrollHeight-el.clientHeight-top<32;const opened=new Set([...el.querySelectorAll('details[open]')].map(x=>x.dataset.logEvent));const search=createUI.logsSearch.toLowerCase(),entries=rt.logs.filter(l=>(createUI.logLevel==='all'||l.level===createUI.logLevel)&&(l.message+' '+JSON.stringify(l.request||{})).toLowerCase().includes(search));el.innerHTML=entries.map(l=>`<div class="log-${l.level}"><span class="log-time">${new Date(l.time).toLocaleTimeString('en-GB')}</span><span style="white-space:pre-wrap">${esc(l.message)}${l.request?`<details class="log-request" data-log-event="${esc(l.attemptKey||String(l.eventId))}"><summary>提示词、模型与参数</summary><pre>${esc(JSON.stringify(l.request,null,2))}</pre></details>`:''}</span></div>`).join('')||'<p class="muted">当前筛选没有日志。</p>';el.querySelectorAll('[data-log-event]').forEach(x=>x.open=opened.has(x.dataset.logEvent));el.scrollTop=follow&&!opened.size?el.scrollHeight:top;const count=$('#v3-log-count');if(count)count.textContent=entries.length+' 条'};
 
 
 workspaceVisible=function(index){if([0,1,2,3,5].includes(index))return true;if(index===6)return state.settings.studio.visibility.logs;if(index===4)return state.settings.studio.visibility.llm;return false};
@@ -889,7 +878,7 @@ validateState=function(s){
 activeJobs=function(){return v3Core.activeJobs()||createUI.backendBusy||backendRuntime.saving||!!createUI.dryController};
 
 
-backupModal=function(){modal('工程备份与恢复',`<div class="service-context"><strong>${esc(workspaceName())}</strong><br>${esc(backendStatusText())}</div><p class="help" style="margin:18px 0">日常保存交给现有 Python 后端。便携备份包含创作计划、复用变量、所有分镜、画册与通用节点映射。</p><div class="stack">${btn('下载工程 JSON','download','backup-export','','primary')}${btn('从 JSON 恢复','upload','import-project')}${btn('下载便携目录 ZIP','folder','disk-archive')}${btn('配置 Python 保存服务','disk','v3-settings-tab','data-tab="connections"')}</div><label class="row small soft" style="margin-top:18px"><input id="backup-secrets" type="checkbox">此次 JSON 备份包含其他服务密钥（敏感，不含图像密钥库）</label><div class="modal-footer">${btn('关闭','','close-modal')}</div>`,'仅在服务明确确认后，状态栏才会显示已保存。')};
+backupModal=function(){modal('工程备份与恢复',`<div class="service-context"><strong>${esc(workspaceName())}</strong><br>${esc(backendStatusText())}</div><p class="help" style="margin:18px 0">日常保存交给现有 Python 后端。便携备份包含创作计划、复用变量、所有分镜、画册与通用节点映射。</p><div class="stack">${btn('下载本机配置 JSON','download','backup-export','','primary')}${btn('从 JSON 恢复','upload','import-project')}${btn('下载便携目录 ZIP','folder','disk-archive')}${btn('配置 Python 保存服务','disk','v3-settings-tab','data-tab="connections"')}</div><label class="row small soft" style="margin-top:18px"><input id="backup-secrets" type="checkbox">此次本机 JSON 包含尚未清空的会话密钥（敏感；不包含服务器密钥库）</label><div class="modal-footer">${btn('关闭','','close-modal')}</div>`,'仅在服务明确确认后，状态栏才会显示已保存。')};
 
 
 const v3Actions={
@@ -912,7 +901,7 @@ const v3Actions={
   'v3-set-new':()=>newVariableSet(),
   'v3-set-select':d=>{createUI.setId=d.id;createUI.tab='variables';render()},
   'v3-set-clone':()=>{const s=clone(setBy(createUI.setId));s.id=uid('set');s.title+=' · 副本';s.entries.forEach(e=>e.id=uid('var'));state.creation.variableSets.push(s);createUI.setId=s.id;save();render()},
-  'v3-set-delete':async()=>{const s=setBy(createUI.setId),count=state.creation.plans.filter(p=>p.variableSetIds.includes(s.id)).length;if(!await confirmAction('删除变量素材「'+s.title+'」？','有 '+count+' 份计划引用它。引用将被移除，缺少的变量会在生成前报错。现有图片不变。','删除素材'))return;for(const entry of s.entries)rememberRemovedImageVariable(entry,s.projectId);state.creation.variableSets=state.creation.variableSets.filter(x=>x.id!==s.id);for(const p of state.creation.plans)p.variableSetIds=p.variableSetIds.filter(id=>id!==s.id);createUI.setId=null;save(true);render()},
+  'v3-set-delete':()=>deleteSettingPreset(createUI.setId),
   'v3-variable-add':d=>addVariable(d.group,d.id),
   'v3-variable-delete':d=>removeVariable(d.group,d.id,d.entry),
   'v3-variable-rename':d=>renameScopedVariable(d.group,d.id,d.entry),
@@ -1018,7 +1007,7 @@ window.addEventListener('beforeunload',e=>{if(!rt.booting&&(backendRuntime.dirty
 window.addEventListener('keydown',e=>{if(e.key==='Enter'&&$('#welcome-dialog').open&&e.target.id==='welcome-name'){e.preventDefault();e.stopImmediatePropagation();try{finishNameFirst(!e.target.value.trim())}catch(error){toast(error.message,'error')}}},true);
 
 
-Object.assign(actionHelp,{'v3-plan-new':'新建独立的画册计划，再选择分镜与可复用素材。','v3-generate-plan':'检查每一幕的变量与节点映射，冻结当前配置后开始生成。','v3-choose-sets':'一份计划可以组合多套素材，同名值按顺序覆盖。','v3-add-binding':'手动添加任意节点输入，支持文本、数字、开关和嵌套 JSON。','v3-auto-bind':'根据实际蓝图寻找文本节点。无法确定字段时回退 text 并告警，需人工核对。','v3-preview-workflow':'预览实际提交的节点字典，所有未映射字段保持原值。','v3-connect-backend':'只调用你填写的读取接口，确认数据后连接保存服务。','v3-resources':'教程、画册 HTML 模板、市场与 GitHub 托管都收纳在这里。','v3-variable-delete':'删除此作用域的变量，不擅自移除分镜中的占位符。生成前会检测缺失。'});
+Object.assign(actionHelp,{'v3-plan-new':'新建独立的画册计划，再选择分镜与可复用素材。','v3-generate-plan':'检查每幕变量与节点映射，绑定本册与工作流；未发送分镜读取最新保存输入。','v3-choose-sets':'一份计划可以组合多套素材，同名值按顺序覆盖。','v3-add-binding':'手动添加任意节点输入，支持文本、数字、开关和嵌套 JSON。','v3-auto-bind':'根据实际蓝图寻找文本节点。无法确定字段时回退 text 并告警，需人工核对。','v3-preview-workflow':'预览实际提交的节点字典，所有未映射字段保持原值。','v3-connect-backend':'只调用你填写的读取接口，确认数据后连接保存服务。','v3-resources':'教程、画册 HTML 模板、市场与 GitHub 托管都收纳在这里。','v3-variable-delete':'删除此作用域的变量，不擅自移除分镜中的占位符。生成前会检测缺失。'});
 
 
 redrawStep=redrawMappedBookStep;
@@ -1120,10 +1109,8 @@ let artCore;
 function installArtStudio(){
   const ns=globalThis.ComfyComic;ns.promptPolicy=createFreePromptPolicy();
   artCore={render,renderShell,renderCreationWorkspace,renderSceneComposer,renderGallery,renderReader,openReader,closeReader,handleAction,ensureStudioState,effectivePlanScope,refreshCreationPreviews,modal,toast,seedState,renderSettingsWorkspace,importTemplateObject};
-  seedState=function(){return createCuratedDemo(artCore.seedState())};
-  if(state.books?.some(b=>b.id==='book_0')&&state.projects?.some(p=>p.id==='p_summer'))state=createCuratedDemo(state);
   ensureStudioState=function(s=state){artCore.ensureStudioState(s);ensureArtSettings(s);return s};
-  importTemplateObject=function(data){const template=artCore.importTemplateObject(data),p=selectedPlan();if(p){p.templateId=template.id;p.storyVersionId='';ui.templateId=template.id;ui.frameIndex=0;save()}return template};
+  importTemplateObject=function(data){flushEditor();const template=artCore.importTemplateObject(data),p=selectedPlan();if(p){p.templateId=template.id;p.storyVersionId='';ui.templateId=template.id;ui.frameIndex=0;save()}render();return template};
   validatePrompt=value=>String(value??'');
   interpolate=(text,row={},frame={})=>scopeText(text,frame._scope||row._scope||row);
   interpolateBoundValue=function(text,scope={}){if(typeof text!=='string')return text;const tokens=ns.promptPolicy.tokens(text,definedPromptNames(scope));if(tokens.length===1&&tokens[0].type==='variable'&&Object.hasOwn(scope,tokens[0].key))return scope[tokens[0].key]??'';return scopeText(text,scope)};
@@ -1166,9 +1153,9 @@ function installArtStudio(){
     'art-create-tab':d=>{flushEditor();createUI.tab=d.tab==='settings'?'settings':d.tab==='queue'?'queue':'scenes';render()},
     'art-setting-add':()=>addUnifiedSetting(),
     'art-setting-confirm':()=>addSettingFromDialog(),
-    'art-setting-remove':async d=>{const p=selectedPlan();if(!await confirmAction('移除此画面属性？','只从本画册移除 {'+d.key+'}。原设定预设保留；若提示词仍引用被移除的图片变量，生成时会明确报错。','移除属性'))return;rememberRemovedImageVariable(mergedSettingEntries(p).find(e=>e.key===d.key),p.projectId);p.variables=p.variables.filter(e=>e.key!==d.key);p.excludedSettingKeys=[...new Set([...(p.excludedSettingKeys||[]),d.key])];save(true);render()},
-    'art-apply-preset':async()=>{const id=$('#art-setting-preset')?.value,p=selectedPlan();if(!id)throw Error('先选择一组设定预设。');if(!await confirmAction('应用这组角色与画面设定？','会替换当前画册的设定，不改动分镜或已生成图片。','应用设定'))return;p.variableSetIds=[id];p.variables=[];p.excludedSettingKeys=[];save();render()},
-    'art-save-preset':()=>{const p=selectedPlan();textModal('保存角色与画面设定','预设名称',p.title+' · 设定',value=>{const set={id:uid('set'),projectId:state.activeProjectId,title:value,entries:mergedSettingEntries(p).map(e=>({...clone(e),id:uid('var')}))};state.creation.variableSets.push(set);save();closeModal();render();toast('设定预设已保存。')})},
+    'art-setting-remove':async d=>{const p=settingsTargetById(d.owner);if(!p)return;if(!await confirmAction('移除此画面属性？',p._presetEditorId?'仅从这份预设草稿移除 {'+d.key+'}，本册和其他预设不变。':'只从本画册移除 {'+d.key+'}。原设定预设保留；若提示词仍引用被移除的图片变量，生成时会明确报错。','移除属性'))return;if(settingsTargetById(p.id)!==p)throw Error('编辑对象已变化，未移除。');if(!p._presetEditorId)rememberRemovedImageVariable(mergedSettingEntries(p).find(e=>e.key===d.key),p.projectId);p.variables=p.variables.filter(e=>e.key!==d.key);p.excludedSettingKeys=[...new Set([...(p.excludedSettingKeys||[]),d.key])];if(p._presetEditorId)p.dirty=true;save(true);render()},
+    'art-apply-preset':()=>applySelectedSettingPreset(),
+    'art-save-preset':()=>saveSettingsAsPreset(),
     'art-import-demo':()=>importCuratedDemo(),
     'room-mode':d=>{if(!['spread','webtoon','gallery'].includes(d.mode))return;artUI.readerMode=d.mode;artUI.filmstrip=d.mode==='gallery';ui.mode=d.mode==='spread'?'manga':d.mode==='webtoon'?'webtoon':'focus';state.settings.presentation.readerMode=d.mode;save();renderArtReader()},
     'room-thumbnails':()=>{artUI.filmstrip=!artUI.filmstrip;const strip=$('#room-filmstrip');if(strip)strip.hidden=!artUI.filmstrip;syncArtReader()},
@@ -1211,16 +1198,16 @@ function installArtStudio(){
 }
 
 
-document.addEventListener('input',event=>{const el=event.target;if(!globalThis.ComfyComic?.promptPolicy)return;if(el.dataset.artSetting){const p=selectedPlan();if(p){updateUnifiedSetting(p,el.dataset.artSetting,el.value);refreshCreationPreviews()}}});
+document.addEventListener('input',event=>{const el=event.target;if(!globalThis.ComfyComic?.promptPolicy)return;if(el.dataset.artSetting){const p=settingsTargetById(el.dataset.settingsOwner);if(p){updateUnifiedSetting(p,el.dataset.artSetting,el.value);refreshCreationPreviews()}}});
 
 
-document.addEventListener('change',async event=>{const el=event.target;try{if(el.id==='art-book-draft'){flushEditor();createUI.planId=el.value;const p=selectedPlan();ui.templateId=p?.templateId;ui.frameIndex=0;render()}if(el.dataset.artExtension){await setLaboratoryExtension(el.dataset.artExtension,el.checked)}if(el.id==='lab-book-select'){artUI.labBookId=el.value;artUI.labIndex=0;render()}if(el.id==='lab-frame-select'){artUI.labIndex=Number(el.value);render()}if(el.dataset.studioPref==='reader.defaultMode'){state.settings.presentation.readerMode=({manga:'spread',flip:'spread',focus:'gallery',webtoon:'webtoon'})[el.value]||'spread';save()}}catch(error){toast(error.message,'error');if(el.dataset.artExtension)render()}});
+document.addEventListener('change',async event=>{const el=event.target;try{if(el.id==='art-book-draft')selectCreationContext(el.value);if(el.dataset.artExtension){await setLaboratoryExtension(el.dataset.artExtension,el.checked)}if(el.id==='lab-book-select'){artUI.labBookId=el.value;artUI.labIndex=0;render()}if(el.id==='lab-frame-select'){artUI.labIndex=Number(el.value);render()}if(el.dataset.studioPref==='reader.defaultMode'){state.settings.presentation.readerMode=({manga:'spread',flip:'spread',focus:'gallery',webtoon:'webtoon'})[el.value]||'spread';save()}}catch(error){toast(error.message,'error');if(el.dataset.artExtension)render()}});
 
 
 document.addEventListener('error',artworkImageFallback,true);
 
 
-window.addEventListener('keydown',event=>{if($('#reader').open&&$('#reader').classList.contains('art-reader')&&event.target===document.body&&['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();event.stopImmediatePropagation();setArtStep(ui.step+(event.key==='ArrowRight'?1:-1)*(artUI.readerMode==='spread'?2:1))}},true);
+window.addEventListener('keydown',event=>{if($('#reader').open&&$('#reader').classList.contains('art-reader')&&event.target===document.body&&['ArrowLeft','ArrowRight'].includes(event.key)){event.preventDefault();event.stopImmediatePropagation();handleAction(event.key==='ArrowRight'?'page-next':'page-prev',{})}},true);
 
 
 function artPromptDiagnostics(){const policy=ComfyComic.promptPolicy,results=[],test=(name,fn)=>{try{if(!fn())throw Error('断言未通过');results.push({name,pass:true})}catch(e){results.push({name,pass:false,detail:e.message})}};
@@ -1358,6 +1345,13 @@ installPresentationStudio();
 
 installImageVariables();
 installFoundation();
+installImageStudio();
+installAfterglowTemplate();
+installSeamlessTemplate();
+installFileLibrary();
+installNativeLibraryPanel();
+installCreativeContext();
+installReadingStage();
 
 globalThis.Mio = globalThis.ComfyComic;
 

@@ -21,7 +21,7 @@
 | 外部 API 429 | 已有外部生成占用执行槽；不要自动重试可能已付费的失败请求 |
 | API 403 Origin | 浏览器 Origin 不在 MIO_ORIGINS；命令行客户端一般不发送 Origin |
 | 保存显示未连接/冲突 | 检查 Python 进程与日志；先备份，不要直接覆盖 data 或强制写空配置 |
-| 图像显示问号 | 尚未生成、服务失败或源文件丢失；查看日志和 data/assets/images |
+| 图像显示问号 | 尚未生成、服务失败或源文件丢失；查看日志和 data/albums/<ID>/images/ |
 | 中文下载文件名变成 download | 某些 Chromium 环境行为；内容仍可用，手工改文件名 |
 
 外部 API 返回 `requestId` 方便调用方记录。服务日志不记录请求体和 Bearer Token；请勿自行将密钥放入 URL 查询参数（URL 会进入普通访问日志）。

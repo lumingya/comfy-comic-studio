@@ -1,0 +1,22 @@
+PASS album import appears beside creation on the gallery page
+PASS settings keeps maintenance but no single-resource picker/import/export
+PASS storyboard import and export are beside the selected template
+PASS storyboard exports a native self-contained ZIP
+PASS import inspection does not write before confirmation
+PASS cancel leaves existing storyboards alone
+PASS storyboard import selects a fresh copy without replacing the old one
+PASS current variable page offers import and export
+PASS variables and Chinese-named image references export with actual owned image bytes
+PASS variable import creates a preset without applying or overwriting current values
+PASS album share export lives in that album’s menu
+PASS album import is usable from the gallery and allocates a fresh ID
+PASS wrong resource kinds are rejected before import
+PASS 1440 dark storyboard actions fit the viewport
+PASS 1440 dark variable controls fit the viewport
+PASS 390 dark storyboard actions fit the viewport
+PASS 390 dark variable controls fit the viewport
+PASS 390 light storyboard actions fit the viewport
+PASS 390 light variable controls fit the viewport
+PASS no uncaught browser errors
+
+20 contextual sharing checks PASS

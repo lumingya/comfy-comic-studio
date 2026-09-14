@@ -8,11 +8,11 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),temp=mkdtempSync(path.join(tmpdir(),'mio-mobile-'));
-for(const name of ['providers','mio_jobs.py','mio_frame_jobs.py','mio_channels.py','mio_contracts.py','mio_foundation.py','server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true});
+for(const name of ['data','mio_content.py','mio_album_html.py','mio_resource_sharing.py','providers','mio_library.py','mio_library_settings.py','mio_library_workspace.py','mio_native_store.py','mio_safe_svg.py','mio_pictures.py','mio_lifecycle.py','mio_jobs.py','mio_frame_jobs.py','mio_channels.py','mio_contracts.py','mio_foundation.py','server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true,filter:src=>!['runtime','.cache','.write.lock','secrets.json'].includes(path.basename(src))});
 const server=spawn('python',['-u','server.py'],{cwd:temp,env:{...process.env,MIO_PORT:'8799'},stdio:['ignore','pipe','pipe']});let browser,checks=0;const check=(name,ok)=>{assert.ok(ok,name);checks++;console.log('PASS '+name)};
 try{
  await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('server timeout')),10000);server.stdout.on('data',d=>{if(d.toString().includes('物理落盘')){clearTimeout(t);resolve()}});server.on('error',reject)});
- browser=await ({chromium,webkit})[engine].launch({args:engine==='chromium'?['--no-sandbox']:[],...(process.platform==='linux'?{env:{...process.env,LANG:'C.UTF-8',LC_ALL:'C.UTF-8'}}:{})});const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:1}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route(/^https:\/\//,r=>r.abort());await page.goto('http://127.0.0.1:8799');await page.waitForFunction(()=>!rt.booting);
+ browser=await ({chromium,webkit})[engine].launch({args:engine==='chromium'?['--no-sandbox']:[],...(process.platform==='linux'?{env:{...process.env,LANG:'C.UTF-8',LC_ALL:'C.UTF-8'}}:{})});const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:1}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.route(/^https:\/\//,r=>r.abort());await page.goto('http://127.0.0.1:8799');await page.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);
 
 
  await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());state.settings.identity.onboarded=true});
@@ -55,15 +55,16 @@ try{
  check('canceling deletion retains the queued work',await page.evaluate(()=>state.queue.length===2));
  await page.locator('#sidebar [data-route="0"]').tap();
  await page.locator('[data-act="book-menu"]').first().tap();
+ await page.locator('#book-context-menu').waitFor();
  check('album management opens by touch and stays above navigation',await page.evaluate(()=>{const r=$('#book-context-menu').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<$('#sidebar').getBoundingClientRect().top}));
  const albumOrder=await page.evaluate(()=>getShelfBooks().map(b=>b.id));
  await page.locator('[data-act="org-context-down"]').tap();
  check('album order changes via touch menu',await page.evaluate(ids=>getShelfBooks()[1].id===ids[0],albumOrder));
  await page.evaluate(()=>{const b=state.books.find(b=>b.steps.some(s=>s.image));b.steps=b.steps.filter(s=>s.image).slice(0,1);b.totalSteps=1;b.generatedSteps=1;b.status='complete';const first=getShelfBooks()[0];if(b.id!==first.id)reorderCollectionBook(b.id,first.id);ui.bulk=false;ui.selected.clear();navigate(0);render()});
  await page.locator('[data-act="read"]').first().tap();
- check('reader fits and preserves complete-image mode',await page.evaluate(()=>{const r=$('#reader').getBoundingClientRect();return r.width<=innerWidth+1&&r.height<=innerHeight+1&&artUI.readerMode==='gallery'}));
+ check('reader fits and defaults to continuous complete images',await page.evaluate(()=>{const r=$('#reader').getBoundingClientRect();return r.width<=innerWidth+1&&r.height<=innerHeight+1&&artUI.readerMode==='webtoon'}));
  await page.locator('#reader-canvas img').evaluate(img=>img.decode());
- check('phone reader displays the entire image within its canvas',await page.evaluate(()=>{const img=$('#reader-canvas img'),a=img.getBoundingClientRect(),b=$('#reader-canvas').getBoundingClientRect();return getComputedStyle(img).objectFit==='contain'&&a.left>=b.left-1&&a.right<=b.right+1&&a.top>=b.top-1&&a.bottom<=b.bottom+1}));
+ check('phone continuous reader preserves complete aspect and native-size ceiling',await page.evaluate(()=>{const img=$('#reader-canvas img'),a=img.getBoundingClientRect(),b=$('#reader-canvas').getBoundingClientRect();return getComputedStyle(img).objectFit==='contain'&&a.left>=b.left-1&&a.right<=b.right+1&&a.width<=img.naturalWidth+1&&a.height<=img.naturalHeight+1}));
  await page.locator('.presentation-trigger').tap();await page.locator('#presentation-search').fill('完整');
  check('reader template drawer is scrollable and within viewport',await page.evaluate(()=>{const r=$('#presentation-drawer').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>0&&r.bottom<=innerHeight}));
  const downloading=page.waitForEvent('download');await page.locator('[data-act="presentation-export"]').tap();const download=await downloading;

@@ -1,0 +1,20 @@
+PASS the top selector and main editor identify the same actual album version
+PASS the main album editor has no competing preset selector or Apply/Update action
+PASS editing the public library never changes the current book settings
+PASS the first real request has already submitted its original reference
+PASS a rejected save is explicitly not acknowledged
+PASS save failure retains the old disk inputs, rather than pretending new references took effect
+PASS one acknowledged save resolves text and image inputs together for pending scenes
+PASS single-scene reference overrides survive global reference replacement
+PASS updating one version leaves the other album document byte-equivalent
+PASS ordinary debounced autosave refreshes pending inputs without a separate Apply or Save button
+PASS optional source sharing uses this album’s latest values and explicit scene overrides
+PASS closed-browser execution reads the newly saved reference for subsequent frames
+PASS in-flight input remains original and the single-scene override remains independent
+PASS completed requests were not replayed and the immutable request evidence retains distinct references
+PASS a real service restart restores this album’s own edited values
+PASS switching global album changes the editor owner and restores the other album values
+PASS delayed scene image upload stays with its original album and scene after switching
+PASS restart and browsing cause no paid replay
+PASS no uncaught browser errors
+19 live settings UI checks PASS

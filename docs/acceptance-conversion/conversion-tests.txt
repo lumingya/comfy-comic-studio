@@ -1,0 +1,22 @@
+test_cli_requires_explicit_stopped_source_and_dry_run_is_usable (test_library_conversion.ConversionTests.test_cli_requires_explicit_stopped_source_and_dry_run_is_usable) ... ok
+test_config_journal_is_applied_only_to_the_new_directory (test_library_conversion.ConversionTests.test_config_journal_is_applied_only_to_the_new_directory) ... ok
+test_dry_run_verifies_but_publishes_no_directory (test_library_conversion.ConversionTests.test_dry_run_verifies_but_publishes_no_directory) ... ok
+test_duplicate_source_ids_do_not_replace_the_first_resource (test_library_conversion.ConversionTests.test_duplicate_source_ids_do_not_replace_the_first_resource) ... ok
+test_durable_results_picture_removal_originals_and_tombstones_survive (test_library_conversion.ConversionTests.test_durable_results_picture_removal_originals_and_tombstones_survive) ... ok
+test_existing_output_even_when_empty_is_never_replaced (test_library_conversion.ConversionTests.test_existing_output_even_when_empty_is_never_replaced) ... ok
+test_missing_reference_aborts_all_output_and_leaves_source_intact (test_library_conversion.ConversionTests.test_missing_reference_aborts_all_output_and_leaves_source_intact) ... ok
+test_output_race_uses_atomic_no_replace (test_library_conversion.ConversionTests.test_output_race_uses_atomic_no_replace) ... ok
+test_preset_identity_cannot_collide_across_categories (test_library_conversion.ConversionTests.test_preset_identity_cannot_collide_across_categories) ... ok
+test_real_split_files_become_independent_resources_without_source_writes (test_library_conversion.ConversionTests.test_real_split_files_become_independent_resources_without_source_writes) ... ok
+test_remote_reference_never_fetches_or_falls_back_to_text (test_library_conversion.ConversionTests.test_remote_reference_never_fetches_or_falls_back_to_text) ... ok
+test_running_worker_lease_blocks_conversion_without_output (test_library_conversion.ConversionTests.test_running_worker_lease_blocks_conversion_without_output) ... ok
+test_source_change_during_conversion_aborts_publication (test_library_conversion.ConversionTests.test_source_change_during_conversion_aborts_publication) ... ok
+test_uncheckpointed_wal_is_read_from_a_private_copy (test_library_conversion.ConversionTests.test_uncheckpointed_wal_is_read_from_a_private_copy) ... ok
+test_unsafe_source_id_cannot_escape_the_staging_directory (test_library_conversion.ConversionTests.test_unsafe_source_id_cannot_escape_the_staging_directory) ... ok
+test_active_external_and_entity_svg_rejected (test_library_conversion.PassiveSvgTests.test_active_external_and_entity_svg_rejected) ... ok
+test_vector_originals_are_kept_byte_for_byte (test_library_conversion.PassiveSvgTests.test_vector_originals_are_kept_byte_for_byte) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 1.017s
+
+OK

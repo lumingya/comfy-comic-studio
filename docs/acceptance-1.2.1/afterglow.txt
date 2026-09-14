@@ -1,0 +1,43 @@
+PASS exactly one new built-in is registered; continuous default remains
+PASS upgrading revision one only replaces the built-in, not copies or album choices
+PASS fixed enhancement initializes without arbitrary-script consent
+PASS preview keeps the original opaque sandbox and network CSP
+PASS new preset uses copper rather than inheriting the untouched previous preset accent
+PASS default small text and scene labels meet 4.5:1 contrast on paper
+PASS selected cover is used without reordering story frames
+PASS mixed source sizes receive specific uncropped layouts
+PASS offline export embeds all four original full-resolution images
+PASS body is one centered image-first column with closely attached captions
+PASS portrait and square sources no longer switch between tiny and oversized plates
+PASS body removes decorative ghost numbers, detached plate labels and generic prologue
+PASS small image stays at or below natural dimensions
+PASS contents list is complete and does not duplicate content scenes
+PASS contents navigation closes dialog and seeks selected scene
+PASS detail view opens with same original image
+PASS actual-size view uses native pixel size
+PASS detail navigation respects boundaries and correct source
+PASS Escape closes detail viewer and restores usable page
+PASS dialog has a readable name and returns focus to its trigger
+PASS night mode is local and changes presentation palette
+PASS reduced-motion preference cancels active animation and parallax
+PASS mobile content has no horizontal overflow
+PASS mobile detail image fits visible stage
+PASS project poem and link remain once at the end
+PASS offline document made no external requests
+PASS JavaScript-disabled export remains fully readable
+PASS long titles, escaped captions and multiple books remain safe
+PASS missing scenes retain explicit placeholders, not fake success
+PASS narrow 320px layout also wraps long metadata
+PASS detail navigation skips ungenerated scenes instead of treating them as images
+PASS unsupported dialog/observer hides nonfunctional controls but retains reading
+PASS printing from night mode uses light paper and hides floating controls
+PASS edited copy may remove decorative nodes without breaking compilation
+PASS template package roundtrip retains fixed enhancement without custom script permission
+PASS new template preserves prior no-reload drawer guarantee
+PASS 24 mixed-ratio comic pages maintain equal readable widths and original proportions
+PASS dense comic captions stay under their own image with compact next-page spacing
+PASS mobile dense pages use the available width without cropping or sideways scrolling
+PASS narrow dense comic view also remains inside the page
+PASS equal-width comic layout also works without JavaScript
+PASS no uncaught browser errors
+42 afterglow checks passed
