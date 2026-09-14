@@ -1,0 +1,11 @@
+{
+  "id": "critic-pack",
+  "title": "视觉审校 · 连贯性规则",
+  "type": "rules",
+  "icon": "shield",
+  "desc": "自动伴随审校，关注角色服装、解剖与光影连贯性。",
+  "author": "Mio Originals",
+  "version": "1.0",
+  "score": "4.8",
+  "tags": "审校 一致性"
+}

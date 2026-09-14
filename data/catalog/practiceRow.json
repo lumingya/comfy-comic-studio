@@ -1,0 +1,16 @@
+{
+  "id": "row_8f11410c-9f34-4ccf-a221-afe37738c6b5",
+  "projectId": "p_summer",
+  "active": false,
+  "bookTitle": "第一封海风来信",
+  "character": "nanami",
+  "style": "cinematic anime, cel shading",
+  "outfit": "white shirt, navy school uniform",
+  "scene": "seaside train station",
+  "trigger": "consistent face, delicate features",
+  "lora": "",
+  "references": {},
+  "storyVersions": {},
+  "activeStoryVersionIds": {},
+  "character_display_name": "七海"
+}

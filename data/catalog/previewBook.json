@@ -1,0 +1,29 @@
+{
+  "title": "画册预览",
+  "synopsis": "",
+  "characterName": "",
+  "templateTitle": "",
+  "steps": [
+    {
+      "stepIndex": 0,
+      "name": "风起的站台",
+      "caption": "夏日的风穿过站台，{character_display_name}握紧了那封没有寄出的信。",
+      "prompt": "masterpiece, anime illustration, {character}, {style}, {outfit}, {scene}, cinematic lighting, summer railway station, ocean in distance",
+      "image": ""
+    },
+    {
+      "stepIndex": 1,
+      "name": "未寄出的信",
+      "caption": "远处传来列车的声音。有些告别，原来从未说出口。",
+      "prompt": "masterpiece, anime illustration, {character}, {style}, {outfit}, {scene}, cinematic lighting, holding a letter, soft backlighting",
+      "image": ""
+    },
+    {
+      "stepIndex": 2,
+      "name": "穿过那片海",
+      "caption": "{character_display_name}沿着海岸奔跑，想在日落之前找到那个答案。",
+      "prompt": "masterpiece, anime illustration, {character}, {style}, {outfit}, {scene}, cinematic lighting, expressive eyes, wind in hair",
+      "image": ""
+    }
+  ]
+}

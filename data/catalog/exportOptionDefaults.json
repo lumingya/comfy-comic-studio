@@ -1,0 +1,10 @@
+{
+  "accent": "#43634b",
+  "background": "#f3f0e7",
+  "paper": "#fffdf6",
+  "text": "#29382d",
+  "width": 800,
+  "gap": 24,
+  "radius": 2,
+  "font": "serif"
+}

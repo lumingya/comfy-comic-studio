@@ -1,0 +1,2047 @@
+{
+  "globals": {},
+  "ui": {
+    "comfyStudio": {
+      "creation": {
+        "version": 1,
+        "migratedAt": 1789289075315
+      },
+      "activeProjectId": "collection_summer",
+      "workspaceId": "workspace_d826da03-879f-4d9a-89b1-c5436a1f56cb",
+      "customColumns": [
+        "character_display_name",
+        "scene",
+        "weapon"
+      ],
+      "installedPackages": [],
+      "drafts": {
+        "settingSelections": {
+          "draft_letter": "setting_nanami"
+        },
+        "presetEdits": {
+          "setting_nanami": {
+            "id": "preset-editor-setting_nanami",
+            "_presetEditorId": "setting_nanami",
+            "projectId": "collection_summer",
+            "title": "七海 · 标准角色设定",
+            "variableSetIds": [],
+            "variables": [
+              {
+                "id": "var_b74fb73f-0e7f-48b5-854c-5ea7ac7b0715",
+                "key": "character_display_name",
+                "type": "text",
+                "value": "七海"
+              },
+              {
+                "id": "var_67c9455e-9221-4924-95b2-666b0efd3fd2",
+                "key": "character",
+                "type": "text",
+                "value": "nanami"
+              },
+              {
+                "id": "var_a876f6ac-6ada-4ab2-b78d-0a2278622af4",
+                "key": "outfit",
+                "type": "text",
+                "value": "white shirt, navy skirt, small canvas bag"
+              },
+              {
+                "id": "var_620a05c2-e8cb-4519-ab74-dcec8592b1f6",
+                "key": "style",
+                "type": "text",
+                "value": "cinematic anime illustration, delicate cel shading, soft film texture"
+              },
+              {
+                "id": "var_e841eb9d-45df-44ca-9bc7-fbb8fb77dc11",
+                "key": "scene",
+                "type": "text",
+                "value": "a quiet coastal town in summer"
+              },
+              {
+                "id": "var_0f29e264-f4a8-4600-94f6-1997cd760167",
+                "key": "weapon",
+                "type": "text",
+                "value": ""
+              },
+              {
+                "id": "var_56bbbd26-0e83-4449-94c4-c122cc9de8e0",
+                "key": "lora",
+                "type": "text",
+                "value": ""
+              }
+            ],
+            "frames": {},
+            "excludedSettingKeys": [],
+            "base": "{\"entries\":[{\"id\":\"var_b74fb73f-0e7f-48b5-854c-5ea7ac7b0715\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"七海\"},{\"id\":\"var_67c9455e-9221-4924-95b2-666b0efd3fd2\",\"key\":\"character\",\"type\":\"text\",\"value\":\"nanami\"},{\"id\":\"var_a876f6ac-6ada-4ab2-b78d-0a2278622af4\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"white shirt, navy skirt, small canvas bag\"},{\"id\":\"var_620a05c2-e8cb-4519-ab74-dcec8592b1f6\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, delicate cel shading, soft film texture\"},{\"id\":\"var_e841eb9d-45df-44ca-9bc7-fbb8fb77dc11\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"a quiet coastal town in summer\"},{\"id\":\"var_0f29e264-f4a8-4600-94f6-1997cd760167\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"var_56bbbd26-0e83-4449-94c4-c122cc9de8e0\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"frames\":{},\"title\":\"七海 · 标准角色设定\"}"
+          },
+          "characters_b7ea26e8986846219c773c6ba80d6d5a": {
+            "id": "preset-editor-characters_b7ea26e8986846219c773c6ba80d6d5a",
+            "_presetEditorId": "characters_b7ea26e8986846219c773c6ba80d6d5a",
+            "projectId": "collection_summer",
+            "title": "冰山校花每天都在看我的系统弹幕 · 设定",
+            "variableSetIds": [],
+            "variables": [
+              {
+                "id": "item_b852411c0e154e0bb7916dc3a06ddf61",
+                "key": "character_display_name",
+                "type": "text",
+                "value": "陆川 & 苏清念"
+              },
+              {
+                "id": "item_938c9ffaf34a45ef80468231cba6b038",
+                "key": "character",
+                "type": "text",
+                "value": "Lu Chuan & Su Qingnian"
+              },
+              {
+                "id": "item_e91da9b27b4c47ab8a3b7f46e72031b3",
+                "key": "male_lead",
+                "type": "text",
+                "value": "Lu Chuan, 1boy, high school student, messy black hair, dark eyes, expressive face, school uniform"
+              },
+              {
+                "id": "item_ec874f666dd9455ebaaf59e957a80db7",
+                "key": "female_lead",
+                "type": "text",
+                "value": "Su Qingnian, 1girl, top student, long black hair in high ponytail, cool fair skin, delicate features, school uniform"
+              },
+              {
+                "id": "item_5a4b07d69d084dd5804547ef8fc95f21",
+                "key": "style",
+                "type": "text",
+                "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+              },
+              {
+                "id": "item_7d27ba97c1b34a32be86caa252d32ab7",
+                "key": "outfit",
+                "type": "text",
+                "value": "Chinese high school sports uniform, blue and white track jacket"
+              },
+              {
+                "id": "item_ed187e05eb194d7eab70d2f2e069c6dc",
+                "key": "scene",
+                "type": "text",
+                "value": "high school classroom, cafeteria, library"
+              },
+              {
+                "id": "item_23589d7d9ca24dc19a1f8d8510e932fe",
+                "key": "weapon",
+                "type": "text",
+                "value": ""
+              },
+              {
+                "id": "item_f9ce2a8b3f964e4782ebedba8f8a40bf",
+                "key": "lora",
+                "type": "text",
+                "value": ""
+              }
+            ],
+            "frames": {
+              "0": [
+                {
+                  "id": "item_17f614731434409095cea233d5fed755",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_5f99a45c9a2f45cebb2332be46e1f8c1",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_ff58d6cdd55b49b48f580881b5293a8a",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_13a846ece02346c1ab6f5a2149bb9f71",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_fdb36b1ecc4c43d6b591a5995542a849",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_5b08288ffcf2491b8ffdfffebc9d1e69",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_3b2882ab7dff4579a6bfd5c61b0c2884",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_09ec8e3e4757474e8634490b92849f74",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_9f10c2f0042d445ea0f947951e42d364",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "1": [
+                {
+                  "id": "item_4520f804720a4d36ab435a5d7a2e018e",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_347da5b0c44e4cb0986ccd1a90ade723",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_3f428f7061d647838069a5189c439d3c",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_eaad0f422cb347389eee9127cd5751bf",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_4d3442ca244844efb6b6e12e6a909b06",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_11f9bcdfdf02425b9253761af30a63cd",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_9146e79e93c04cfe9ad7777b2ab37c9e",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_218168f18eeb499b8f43a6f9754f7dbb",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_17406997220047b1b75f7696825fb49c",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "2": [
+                {
+                  "id": "item_4484e1dfa56a401885282b4dcfe3c23c",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_9d97487ef66a4698bcfe1568b799a795",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_ab2f202a0fb245e0921d9c97d38a6590",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_518752f8c8104a828e149619b0a51021",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_3826332104314fd1a3b414c225f26e43",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_f19792dca40e4ac89e5321254c022b15",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_8454a8c3b4ed4307b0b22a4468a1bec8",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_5a66b5f741564988b2077427d34ff7c1",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_2247ceff7d0e48048d49db6924ccbb59",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "3": [
+                {
+                  "id": "item_e26a4be273ad415c96248d8c1d5eca0c",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_12c4d6eff5864eb098a0de6442fd43e5",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_74338545d1f34903ae58ce7309817af3",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_df6a62ada23c42f1a19c2cdfc8ca14ab",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_adaa2331f13147a7b4bacab85a16e8e1",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_4160af150f204fe680489af0c5a40cfb",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_4bc7ade5d85644eb9d478017c6eb72c4",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_58b7e92cf6ea49c692c68592fc0ac52e",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_f24e1b0fca014cdda8d96d173dc9b6da",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "4": [
+                {
+                  "id": "item_23994fb14cac47c294d14bae2b44b152",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_763ff9fe195b4bf0a53824c162f2a8d6",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_b5e319721ae14fc49c27a896571d5160",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_bf4b7dac943f4d4dab26c67812d5490f",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_0331f4c359174a10b4b971f03b155312",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_4586e0b020174917a8404b95d676db5a",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_e933e44763d14e069ffbf77bfa46903c",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_cb09290e12a24a01ad4ae858f90ebc7a",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_ac31c31c96f84514aeb6d02ad460d186",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "5": [
+                {
+                  "id": "item_a73424e25815437c8b090ff516613eae",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_fa7e5f24bb784fd7ac7bd7515233bd20",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_821fbf3efc8c492ba3af2fb68373a9f6",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_d798355368a448868d933ecb3431264e",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_707985ae3993419e82311a49796fce7c",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_a06eb82577f84a49bdba7e7a55742c7c",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_0785be3522dd400bb7976aa436c1cb0d",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_39830329df684c7c9babb8fbdcb5779f",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_f96e306d32834305be4787b324ed9c09",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "6": [
+                {
+                  "id": "item_ef17fad960704a3d853389f057845168",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_8c352571b4a54d259cac21f51d76a8e4",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_5362d98567f2462a8aabfdf2ff61e81c",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_62edfc9173644350ad19c8cebfa2ef38",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_372380de9eb44fa49e32a9bc81938622",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_606af4051dd143d6809e5faf77fcad54",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_ac9ef48131fd4899a5732f59302b8ee6",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_e3dc470111c7456fb165529a261ac2ad",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_2b45cc418a24473faefd6c28d00a8d93",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "7": [
+                {
+                  "id": "item_8ee6feff0f974e01a6d4a88f4f09368b",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_f462cad10ebd46bd90960fb78c96fc90",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_4d3203ac783c4d35b6a66eea3da73ae5",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_2e6043288e1e4c48b795f876de628b38",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_0f3cd576892741b0a0b1b96586bfee19",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_0bec004792c44536abc3639a6fb3ab4e",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_f0c5e0edc7fb4fc2bee4449da3a9f181",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_66b8debf209a4cf78da0321a32ee5ac5",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_7951036c54a84037874fb5c4edcad962",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "8": [
+                {
+                  "id": "item_41c43a1e107843819f0bfe04ab0c6e18",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_57282bb01f0b40f2af19c74f5e2cb4d3",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_bfb9ce7dda3f4bcba674f15e2f62cf9d",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_3d3e077ccdf84877a36f98d6ad3e6431",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_8f313d70ce854affb8af08e01cd734e4",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_1dfd67c516d640e689fc59630a316abb",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_156ee2162c9f4c0b928af9bf73664a18",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_08004958e2224c11ab2cdeb743dd4c00",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_795303fb5ebe4562a569e7aaa751d857",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "9": [
+                {
+                  "id": "item_c5acfa03c2a64d5db7e8930c5b6bb28d",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_e2f37d4a896745c9ae11680a80e6b5b7",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_6908d86e709e4e4bb6d313f0f03abda9",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_c2a1f442043445b881de889dbd8c4743",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_ea9e62555c004529b602443d963f9ebe",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_fc4e1fba9f7f4c8ba4eb391e0f1c2954",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_7fcccfb3c91146fb992a8d0b7f3ba1fa",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_4a708f48ad914e529c0cf3d95d9ca4e5",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_5650ed66921946da902eeee871978150",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "10": [
+                {
+                  "id": "item_321177c0b8c84f6d87f588cc978b1cec",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_de8535aafbf44db79b7c88ccc8975853",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_240fc167df944296afe2a09f14311caf",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_aa8eae637d264abe878fd0d60d85932b",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_562c0b2df8df411d8fccc25d7e83f4e2",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_44d44c43c924428b963d1dbffc612f51",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_db8495a4e5014b58882ebc6e61086f85",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_d3e6cd0bcacc471bb41fbabab051d089",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_3cf20a378699420cbc6bf22a86d37b50",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "11": [
+                {
+                  "id": "item_6daad18ad4d640a5a566e31c33cc3623",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_0470232cf61b41ecb79b9fba4e4b4b84",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_28cfa9f44fdd434ea9b7b46c6ac92833",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_788bcf99572d474a96fb0df1d752fb78",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_f790c21087554c4a952a75b332567717",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_0a0d7838dd5c46c3a6a85fd2f5828d35",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_5a22ebd1e6c547f68f3090a4644259db",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_cc02da0dbfee4675ad0e639e0b0a4283",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_869ffffcc6ce41299cd0e4d625ea8e08",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "12": [
+                {
+                  "id": "item_bd702c85ca7546c892f3d7dfeea9931c",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_64859878ceda44f28d8ecfa4e7987d34",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_bf1fdb9ada454863a355624c57804296",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_4122ffc6ffb144e0a10895fb1be73033",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_e7260e9338c945ae902545040cd7df4b",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_1efac2206ba64599b5f12bd921b17de4",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_61d4acc73f074b33825ce01d50c40eb8",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_c4cedf3b11d2464180cfa7f8881c3bbe",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_5a33295d11914636a47e3edebc920cb7",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "13": [
+                {
+                  "id": "item_5f61e70548024a3aa9f35f0a03fa638d",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_83cb27eb35ca4b00b033d1fa316b6d94",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_f5ebe6b60fbc487894bbf70744c4e5a9",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_614ce7fbe36948368708274ff5cce90f",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_7056464b2ef24411bb21fe9740fddcef",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_a57e7e806cc1426797ae03d06794c4f1",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_86faca2d4a934c58b0b8a85348fded00",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_49339f8eff0c4353a3b41dba5a083904",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_d43f5df0cc5946afa36aac2198c5f84f",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "14": [
+                {
+                  "id": "item_048a9a168a3146e7a2fd20361cf32ad6",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_45b83c2cc2bb44bf8825003a30ef3a23",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_022fed62a6f94a44b5ad7cdba653d848",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_9303daa17c934636bfa66bf08ce0c93e",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_302919acb4c6481f8934b09193baaacd",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_405284ed0c284654af7c0932b27d87d4",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_ada5f580b3454cb29d1167de72e9e915",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_996a2694fe6d4861b2340ee529e3a1b1",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_d1176fad3a8240779ef53d88ae110269",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "15": [
+                {
+                  "id": "item_e7d1c62cbd71444bb2adeb33a04600db",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_6df715484b344ccfbdda652ee4ff07b5",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_4033c800b2984fd5bb40d4720264f272",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_ca8f378cfbf34ce08033d8b83e6665e6",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_0cb722f09fa44be4b23b22b001f747bc",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_1e3a3df8ab174a08be0312b0941d1b0c",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_6ef0f2ba3f054eeca2cde601578878fc",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_307fca72745540d7a60c31318299aaff",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_e60dfbf9f003414fb5cc002a5e455429",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "16": [
+                {
+                  "id": "item_461d02592957441ca4672500854ed139",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_bd3799485d284937ba11a42e4214bccf",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_06b10d2960944bbfbc0b80d313c60b8b",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_29bf421d5a424bfab29c5218cf66c5f5",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_ec6db795453d49efac4d05979731e2e8",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_b3ed3a08e9d44f1eb4bf84144d3eae9d",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_d578659502df485496d2f37733dcf179",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_29d42eefd69c439d8cfdde3076cc2913",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_51b9c5dca56a4cdf96d1b4dc9d4c451a",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "17": [
+                {
+                  "id": "item_05ad8ae972bd43fe83bb6248b80e6587",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_cb3bb5e8fbf34c03be65c7054f757d9e",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_0becd5bc25a64bafb30d74f0abf21ead",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_265f7bd420e645e2bdbfc8b967621dce",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_2a40ca599605483e9814b1ba8b6534a8",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_6214257e59b64a5dbf21c679a6704660",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_2eb11b5474574b93adc242153164af03",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_a0febc409c01418aaa022dec9a42a31d",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_8e610bac2c7d4a4ca8e966180eb508d3",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "18": [
+                {
+                  "id": "item_243696abdd7e49479c9b222c9fb7e276",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_9d0da7f69d8146acb2d73f01701390af",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_90bb1d3acbfa47fb8a157c4ea4498496",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_45b5e58750e84a5d92d453ecdcae738a",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_f38afebe4b7941769d6edd63ac325bd6",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_52e8a3f045f74fb49d8ef64dc5bbdca5",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_a9b9371bf9cc4f5d8b9b60e65dc6fffa",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_4463ad29b7a54cb9b54406201f89c446",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_7146380452f345e982afd8672de1b46d",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "19": [
+                {
+                  "id": "item_7b439f6d2aca4cabb519273d0dbafd95",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_e68900458cdc4883a5b9861b8c931a45",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_4939dfc776c941aa9d7ea2a53672d691",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_ba1dc03eeafa4ed393c1226da300c4e6",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_9613227aef024238811132baca87bef0",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_3393559e7e584b1b8503d67eab53c96e",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_5adac66bd0ef4b6b927f67d9b3be54fe",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_479bc11601bc454bb49d799119984ebd",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_fd53ab4300db477b9b5b6c118408bc8c",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "20": [
+                {
+                  "id": "item_355809a8ae784e1d94a2b671d08098ae",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_7bf9cfeece5a401aaca464718587f37f",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_dcce0eced66a49ab8fc8c99781986b4f",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_e4d5c7c4ea954266be3349afc77d195a",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_49e88e3fdcf941ca84150a5efb152186",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_5a0dd3ff8e6e405eaeea63726bd2541d",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_030149b67d93483aac0838b7c474b36b",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_1d4fcecd61974a4d9ee882d17f8836b3",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_4db950fd510040f1ba0f57cc8c5ab403",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "21": [
+                {
+                  "id": "item_e790ffa29ca647d4991bd73cc7488593",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_d9b260a39f71446fac9c867bc59dca8c",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_618ba5f56f304251ab5dd1579fac1710",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_4f71ae2ac4954baca3ec573535b40813",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_980e586e122a40ac9a2bc2347d20072c",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_fb59da1bde194300be199875fd0240cd",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_45b8dc9284e94a208f2d43ddd307210e",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_78bb61f7d50248b798de806a9a34717e",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_a438b79df6ee42b2bef13ef0325e4aac",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "22": [
+                {
+                  "id": "item_b992e7500f374d0fb4700c9701e7e1c3",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_66a37fe4e9b746a980810b158b63f704",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_77fdbd1eefcb49fcb85147bfc2f7d692",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_255353c486754da987d63be88d8c2390",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_6030dbbfae9d4ab186296d2ce885e956",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_23bbec9006ee43899cad08815b964480",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_78dd5583ef1f4164b0042fb2d3145132",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_3c906ce6e8b94281851bc4dfe81b16c9",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_2659a84fdc9242d2b84ba59158c77af3",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ],
+              "23": [
+                {
+                  "id": "item_faa9bcd324d744adb20a5d7a36023ba2",
+                  "key": "character_display_name",
+                  "type": "text",
+                  "value": "陆川 & 苏清念"
+                },
+                {
+                  "id": "item_d2310c572fc4496bb47bb8faae27a318",
+                  "key": "character",
+                  "type": "text",
+                  "value": "Lu Chuan & Su Qingnian"
+                },
+                {
+                  "id": "item_479a53917ed142d6a5f68f9a8cf8275b",
+                  "key": "male_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                    "name": "male_lead"
+                  }
+                },
+                {
+                  "id": "item_d9a6bfa3924a44d38a814a42a46deb58",
+                  "key": "female_lead",
+                  "type": "image",
+                  "value": {
+                    "kind": "mio-image",
+                    "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                    "name": "female_lead"
+                  }
+                },
+                {
+                  "id": "item_a7c2d4cafc84472b91b84a454cf03f5d",
+                  "key": "outfit",
+                  "type": "text",
+                  "value": "Chinese high school sports uniform, blue and white track jacket"
+                },
+                {
+                  "id": "item_28462f921df6421cadebc704d6e8a160",
+                  "key": "style",
+                  "type": "text",
+                  "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+                },
+                {
+                  "id": "item_f815bebea1ef487da6ffafd4e27a734a",
+                  "key": "scene",
+                  "type": "text",
+                  "value": "high school classroom, cafeteria, library"
+                },
+                {
+                  "id": "item_641715eb9ca34adbad64a41d4a1f5b7e",
+                  "key": "weapon",
+                  "type": "text",
+                  "value": ""
+                },
+                {
+                  "id": "item_c8403a1f7b4a4cd78b580342654f91ee",
+                  "key": "lora",
+                  "type": "text",
+                  "value": ""
+                }
+              ]
+            },
+            "excludedSettingKeys": [],
+            "base": "{\"entries\":[{\"id\":\"item_b852411c0e154e0bb7916dc3a06ddf61\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_938c9ffaf34a45ef80468231cba6b038\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_e91da9b27b4c47ab8a3b7f46e72031b3\",\"key\":\"male_lead\",\"type\":\"text\",\"value\":\"Lu Chuan, 1boy, high school student, messy black hair, dark eyes, expressive face, school uniform\"},{\"id\":\"item_ec874f666dd9455ebaaf59e957a80db7\",\"key\":\"female_lead\",\"type\":\"text\",\"value\":\"Su Qingnian, 1girl, top student, long black hair in high ponytail, cool fair skin, delicate features, school uniform\"},{\"id\":\"item_5a4b07d69d084dd5804547ef8fc95f21\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_7d27ba97c1b34a32be86caa252d32ab7\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_ed187e05eb194d7eab70d2f2e069c6dc\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_23589d7d9ca24dc19a1f8d8510e932fe\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_f9ce2a8b3f964e4782ebedba8f8a40bf\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"frames\":{\"0\":[{\"id\":\"item_17f614731434409095cea233d5fed755\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_5f99a45c9a2f45cebb2332be46e1f8c1\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_ff58d6cdd55b49b48f580881b5293a8a\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_13a846ece02346c1ab6f5a2149bb9f71\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_fdb36b1ecc4c43d6b591a5995542a849\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_5b08288ffcf2491b8ffdfffebc9d1e69\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_3b2882ab7dff4579a6bfd5c61b0c2884\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_09ec8e3e4757474e8634490b92849f74\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_9f10c2f0042d445ea0f947951e42d364\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"1\":[{\"id\":\"item_4520f804720a4d36ab435a5d7a2e018e\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_347da5b0c44e4cb0986ccd1a90ade723\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_3f428f7061d647838069a5189c439d3c\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_eaad0f422cb347389eee9127cd5751bf\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_4d3442ca244844efb6b6e12e6a909b06\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_11f9bcdfdf02425b9253761af30a63cd\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_9146e79e93c04cfe9ad7777b2ab37c9e\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_218168f18eeb499b8f43a6f9754f7dbb\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_17406997220047b1b75f7696825fb49c\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"2\":[{\"id\":\"item_4484e1dfa56a401885282b4dcfe3c23c\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_9d97487ef66a4698bcfe1568b799a795\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_ab2f202a0fb245e0921d9c97d38a6590\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_518752f8c8104a828e149619b0a51021\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_3826332104314fd1a3b414c225f26e43\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_f19792dca40e4ac89e5321254c022b15\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_8454a8c3b4ed4307b0b22a4468a1bec8\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_5a66b5f741564988b2077427d34ff7c1\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_2247ceff7d0e48048d49db6924ccbb59\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"3\":[{\"id\":\"item_e26a4be273ad415c96248d8c1d5eca0c\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_12c4d6eff5864eb098a0de6442fd43e5\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_74338545d1f34903ae58ce7309817af3\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_df6a62ada23c42f1a19c2cdfc8ca14ab\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_adaa2331f13147a7b4bacab85a16e8e1\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_4160af150f204fe680489af0c5a40cfb\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_4bc7ade5d85644eb9d478017c6eb72c4\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_58b7e92cf6ea49c692c68592fc0ac52e\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_f24e1b0fca014cdda8d96d173dc9b6da\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"4\":[{\"id\":\"item_23994fb14cac47c294d14bae2b44b152\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_763ff9fe195b4bf0a53824c162f2a8d6\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_b5e319721ae14fc49c27a896571d5160\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_bf4b7dac943f4d4dab26c67812d5490f\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_0331f4c359174a10b4b971f03b155312\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_4586e0b020174917a8404b95d676db5a\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_e933e44763d14e069ffbf77bfa46903c\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_cb09290e12a24a01ad4ae858f90ebc7a\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_ac31c31c96f84514aeb6d02ad460d186\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"5\":[{\"id\":\"item_a73424e25815437c8b090ff516613eae\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_fa7e5f24bb784fd7ac7bd7515233bd20\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_821fbf3efc8c492ba3af2fb68373a9f6\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_d798355368a448868d933ecb3431264e\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_707985ae3993419e82311a49796fce7c\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_a06eb82577f84a49bdba7e7a55742c7c\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_0785be3522dd400bb7976aa436c1cb0d\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_39830329df684c7c9babb8fbdcb5779f\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_f96e306d32834305be4787b324ed9c09\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"6\":[{\"id\":\"item_ef17fad960704a3d853389f057845168\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_8c352571b4a54d259cac21f51d76a8e4\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_5362d98567f2462a8aabfdf2ff61e81c\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_62edfc9173644350ad19c8cebfa2ef38\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_372380de9eb44fa49e32a9bc81938622\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_606af4051dd143d6809e5faf77fcad54\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_ac9ef48131fd4899a5732f59302b8ee6\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_e3dc470111c7456fb165529a261ac2ad\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_2b45cc418a24473faefd6c28d00a8d93\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"7\":[{\"id\":\"item_8ee6feff0f974e01a6d4a88f4f09368b\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_f462cad10ebd46bd90960fb78c96fc90\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_4d3203ac783c4d35b6a66eea3da73ae5\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_2e6043288e1e4c48b795f876de628b38\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_0f3cd576892741b0a0b1b96586bfee19\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_0bec004792c44536abc3639a6fb3ab4e\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_f0c5e0edc7fb4fc2bee4449da3a9f181\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_66b8debf209a4cf78da0321a32ee5ac5\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_7951036c54a84037874fb5c4edcad962\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"8\":[{\"id\":\"item_41c43a1e107843819f0bfe04ab0c6e18\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_57282bb01f0b40f2af19c74f5e2cb4d3\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_bfb9ce7dda3f4bcba674f15e2f62cf9d\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_3d3e077ccdf84877a36f98d6ad3e6431\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_8f313d70ce854affb8af08e01cd734e4\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_1dfd67c516d640e689fc59630a316abb\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_156ee2162c9f4c0b928af9bf73664a18\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_08004958e2224c11ab2cdeb743dd4c00\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_795303fb5ebe4562a569e7aaa751d857\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"9\":[{\"id\":\"item_c5acfa03c2a64d5db7e8930c5b6bb28d\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_e2f37d4a896745c9ae11680a80e6b5b7\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_6908d86e709e4e4bb6d313f0f03abda9\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_c2a1f442043445b881de889dbd8c4743\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_ea9e62555c004529b602443d963f9ebe\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_fc4e1fba9f7f4c8ba4eb391e0f1c2954\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_7fcccfb3c91146fb992a8d0b7f3ba1fa\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_4a708f48ad914e529c0cf3d95d9ca4e5\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_5650ed66921946da902eeee871978150\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"10\":[{\"id\":\"item_321177c0b8c84f6d87f588cc978b1cec\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_de8535aafbf44db79b7c88ccc8975853\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_240fc167df944296afe2a09f14311caf\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_aa8eae637d264abe878fd0d60d85932b\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_562c0b2df8df411d8fccc25d7e83f4e2\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_44d44c43c924428b963d1dbffc612f51\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_db8495a4e5014b58882ebc6e61086f85\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_d3e6cd0bcacc471bb41fbabab051d089\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_3cf20a378699420cbc6bf22a86d37b50\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"11\":[{\"id\":\"item_6daad18ad4d640a5a566e31c33cc3623\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_0470232cf61b41ecb79b9fba4e4b4b84\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_28cfa9f44fdd434ea9b7b46c6ac92833\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_788bcf99572d474a96fb0df1d752fb78\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_f790c21087554c4a952a75b332567717\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_0a0d7838dd5c46c3a6a85fd2f5828d35\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_5a22ebd1e6c547f68f3090a4644259db\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_cc02da0dbfee4675ad0e639e0b0a4283\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_869ffffcc6ce41299cd0e4d625ea8e08\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"12\":[{\"id\":\"item_bd702c85ca7546c892f3d7dfeea9931c\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_64859878ceda44f28d8ecfa4e7987d34\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_bf1fdb9ada454863a355624c57804296\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_4122ffc6ffb144e0a10895fb1be73033\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_e7260e9338c945ae902545040cd7df4b\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_1efac2206ba64599b5f12bd921b17de4\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_61d4acc73f074b33825ce01d50c40eb8\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_c4cedf3b11d2464180cfa7f8881c3bbe\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_5a33295d11914636a47e3edebc920cb7\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"13\":[{\"id\":\"item_5f61e70548024a3aa9f35f0a03fa638d\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_83cb27eb35ca4b00b033d1fa316b6d94\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_f5ebe6b60fbc487894bbf70744c4e5a9\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_614ce7fbe36948368708274ff5cce90f\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_7056464b2ef24411bb21fe9740fddcef\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_a57e7e806cc1426797ae03d06794c4f1\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_86faca2d4a934c58b0b8a85348fded00\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_49339f8eff0c4353a3b41dba5a083904\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_d43f5df0cc5946afa36aac2198c5f84f\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"14\":[{\"id\":\"item_048a9a168a3146e7a2fd20361cf32ad6\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_45b83c2cc2bb44bf8825003a30ef3a23\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_022fed62a6f94a44b5ad7cdba653d848\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_9303daa17c934636bfa66bf08ce0c93e\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_302919acb4c6481f8934b09193baaacd\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_405284ed0c284654af7c0932b27d87d4\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_ada5f580b3454cb29d1167de72e9e915\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_996a2694fe6d4861b2340ee529e3a1b1\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_d1176fad3a8240779ef53d88ae110269\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"15\":[{\"id\":\"item_e7d1c62cbd71444bb2adeb33a04600db\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_6df715484b344ccfbdda652ee4ff07b5\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_4033c800b2984fd5bb40d4720264f272\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_ca8f378cfbf34ce08033d8b83e6665e6\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_0cb722f09fa44be4b23b22b001f747bc\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_1e3a3df8ab174a08be0312b0941d1b0c\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_6ef0f2ba3f054eeca2cde601578878fc\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_307fca72745540d7a60c31318299aaff\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_e60dfbf9f003414fb5cc002a5e455429\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"16\":[{\"id\":\"item_461d02592957441ca4672500854ed139\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_bd3799485d284937ba11a42e4214bccf\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_06b10d2960944bbfbc0b80d313c60b8b\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_29bf421d5a424bfab29c5218cf66c5f5\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_ec6db795453d49efac4d05979731e2e8\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_b3ed3a08e9d44f1eb4bf84144d3eae9d\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_d578659502df485496d2f37733dcf179\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_29d42eefd69c439d8cfdde3076cc2913\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_51b9c5dca56a4cdf96d1b4dc9d4c451a\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"17\":[{\"id\":\"item_05ad8ae972bd43fe83bb6248b80e6587\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_cb3bb5e8fbf34c03be65c7054f757d9e\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_0becd5bc25a64bafb30d74f0abf21ead\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_265f7bd420e645e2bdbfc8b967621dce\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_2a40ca599605483e9814b1ba8b6534a8\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_6214257e59b64a5dbf21c679a6704660\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_2eb11b5474574b93adc242153164af03\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_a0febc409c01418aaa022dec9a42a31d\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_8e610bac2c7d4a4ca8e966180eb508d3\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"18\":[{\"id\":\"item_243696abdd7e49479c9b222c9fb7e276\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_9d0da7f69d8146acb2d73f01701390af\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_90bb1d3acbfa47fb8a157c4ea4498496\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_45b5e58750e84a5d92d453ecdcae738a\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_f38afebe4b7941769d6edd63ac325bd6\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_52e8a3f045f74fb49d8ef64dc5bbdca5\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_a9b9371bf9cc4f5d8b9b60e65dc6fffa\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_4463ad29b7a54cb9b54406201f89c446\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_7146380452f345e982afd8672de1b46d\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"19\":[{\"id\":\"item_7b439f6d2aca4cabb519273d0dbafd95\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_e68900458cdc4883a5b9861b8c931a45\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_4939dfc776c941aa9d7ea2a53672d691\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_ba1dc03eeafa4ed393c1226da300c4e6\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_9613227aef024238811132baca87bef0\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_3393559e7e584b1b8503d67eab53c96e\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_5adac66bd0ef4b6b927f67d9b3be54fe\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_479bc11601bc454bb49d799119984ebd\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_fd53ab4300db477b9b5b6c118408bc8c\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"20\":[{\"id\":\"item_355809a8ae784e1d94a2b671d08098ae\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_7bf9cfeece5a401aaca464718587f37f\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_dcce0eced66a49ab8fc8c99781986b4f\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_e4d5c7c4ea954266be3349afc77d195a\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_49e88e3fdcf941ca84150a5efb152186\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_5a0dd3ff8e6e405eaeea63726bd2541d\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_030149b67d93483aac0838b7c474b36b\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_1d4fcecd61974a4d9ee882d17f8836b3\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_4db950fd510040f1ba0f57cc8c5ab403\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"21\":[{\"id\":\"item_e790ffa29ca647d4991bd73cc7488593\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_d9b260a39f71446fac9c867bc59dca8c\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_618ba5f56f304251ab5dd1579fac1710\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_4f71ae2ac4954baca3ec573535b40813\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_980e586e122a40ac9a2bc2347d20072c\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_fb59da1bde194300be199875fd0240cd\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_45b8dc9284e94a208f2d43ddd307210e\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_78bb61f7d50248b798de806a9a34717e\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_a438b79df6ee42b2bef13ef0325e4aac\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"22\":[{\"id\":\"item_b992e7500f374d0fb4700c9701e7e1c3\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_66a37fe4e9b746a980810b158b63f704\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_77fdbd1eefcb49fcb85147bfc2f7d692\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_255353c486754da987d63be88d8c2390\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_6030dbbfae9d4ab186296d2ce885e956\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_23bbec9006ee43899cad08815b964480\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_78dd5583ef1f4164b0042fb2d3145132\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_3c906ce6e8b94281851bc4dfe81b16c9\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_2659a84fdc9242d2b84ba59158c77af3\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"23\":[{\"id\":\"item_faa9bcd324d744adb20a5d7a36023ba2\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"item_d2310c572fc4496bb47bb8faae27a318\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"item_479a53917ed142d6a5f68f9a8cf8275b\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"item_d9a6bfa3924a44d38a814a42a46deb58\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"item_a7c2d4cafc84472b91b84a454cf03f5d\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"item_28462f921df6421cadebc704d6e8a160\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"item_f815bebea1ef487da6ffafd4e27a734a\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"item_641715eb9ca34adbad64a41d4a1f5b7e\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"item_c8403a1f7b4a4cd78b580342654f91ee\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}]},\"title\":\"冰山校花每天都在看我的系统弹幕 · 设定\"}"
+          },
+          "set_467e2546-30ed-41d8-9f70-07096a8f2d82": {
+            "id": "preset-editor-set_467e2546-30ed-41d8-9f70-07096a8f2d82",
+            "_presetEditorId": "set_467e2546-30ed-41d8-9f70-07096a8f2d82",
+            "projectId": "collection_summer",
+            "title": "设定",
+            "variableSetIds": [],
+            "variables": [
+              {
+                "id": "var_f3f82cff-4090-4056-8cab-b8601a6c2200",
+                "key": "character_display_name",
+                "type": "text",
+                "value": ""
+              },
+              {
+                "id": "var_ea82f4cd-1603-4eae-9f2d-0783c946e467",
+                "key": "character",
+                "type": "text",
+                "value": ""
+              },
+              {
+                "id": "var_9112c6cc-8937-48e2-8d3d-484b82e53aea",
+                "key": "outfit",
+                "type": "text",
+                "value": ""
+              },
+              {
+                "id": "var_3359ed8e-cf73-4f51-8972-93c147feeb2b",
+                "key": "style",
+                "type": "text",
+                "value": ""
+              },
+              {
+                "id": "var_920f012a-7224-4b4d-8dab-2329ae01395b",
+                "key": "scene",
+                "type": "text",
+                "value": ""
+              },
+              {
+                "id": "var_88bd1d3f-5d71-40ff-8653-be559ddcce24",
+                "key": "主角参考图",
+                "label": "主角参考图",
+                "type": "text",
+                "value": ""
+              }
+            ],
+            "frames": {},
+            "excludedSettingKeys": [],
+            "base": "{\"entries\":[{\"id\":\"var_f3f82cff-4090-4056-8cab-b8601a6c2200\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"var_ea82f4cd-1603-4eae-9f2d-0783c946e467\",\"key\":\"character\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"var_9112c6cc-8937-48e2-8d3d-484b82e53aea\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"var_3359ed8e-cf73-4f51-8972-93c147feeb2b\",\"key\":\"style\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"var_920f012a-7224-4b4d-8dab-2329ae01395b\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"var_88bd1d3f-5d71-40ff-8653-be559ddcce24\",\"key\":\"主角参考图\",\"label\":\"主角参考图\",\"type\":\"text\",\"value\":\"\"}],\"frames\":{},\"title\":\"设定\"}"
+          },
+          "setting_campus_pair": {
+            "id": "preset-editor-setting_campus_pair",
+            "_presetEditorId": "setting_campus_pair",
+            "projectId": "collection_summer",
+            "title": "冰山校花每天都在看我的系统弹幕 · 设定",
+            "variableSetIds": [],
+            "variables": [
+              {
+                "id": "var_char_disp",
+                "key": "character_display_name",
+                "type": "text",
+                "value": "陆川 & 苏清念"
+              },
+              {
+                "id": "var_char",
+                "key": "character",
+                "type": "text",
+                "value": "Lu Chuan & Su Qingnian"
+              },
+              {
+                "id": "var_male_lead",
+                "key": "male_lead",
+                "type": "image",
+                "value": {
+                  "kind": "mio-image",
+                  "src": "images/bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png",
+                  "name": "male_lead"
+                }
+              },
+              {
+                "id": "var_female_lead",
+                "key": "female_lead",
+                "type": "image",
+                "value": {
+                  "kind": "mio-image",
+                  "src": "images/d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png",
+                  "name": "female_lead"
+                }
+              },
+              {
+                "id": "var_outfit",
+                "key": "outfit",
+                "type": "text",
+                "value": "Chinese high school sports uniform, blue and white track jacket"
+              },
+              {
+                "id": "var_style",
+                "key": "style",
+                "type": "text",
+                "value": "cinematic anime illustration, crisp lineart, bright daylight, modern high school setting"
+              },
+              {
+                "id": "var_scene",
+                "key": "scene",
+                "type": "text",
+                "value": "high school classroom, cafeteria, library"
+              },
+              {
+                "id": "var_weapon",
+                "key": "weapon",
+                "type": "text",
+                "value": ""
+              },
+              {
+                "id": "var_lora",
+                "key": "lora",
+                "type": "text",
+                "value": ""
+              }
+            ],
+            "frames": {},
+            "excludedSettingKeys": [],
+            "base": "{\"entries\":[{\"id\":\"var_char_disp\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"陆川 & 苏清念\"},{\"id\":\"var_char\",\"key\":\"character\",\"type\":\"text\",\"value\":\"Lu Chuan & Su Qingnian\"},{\"id\":\"var_male_lead\",\"key\":\"male_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"male_lead\",\"src\":\"bc4043f8461e4a870a215549ff9f6f6e7cd7903e0707d2d4a56c39d28da65d20.png\"}},{\"id\":\"var_female_lead\",\"key\":\"female_lead\",\"type\":\"image\",\"value\":{\"kind\":\"mio-image\",\"name\":\"female_lead\",\"src\":\"d286d07e2688103670a43d8283de191e3d8852dc65e76e03fef455b187dbc57a.png\"}},{\"id\":\"var_outfit\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"Chinese high school sports uniform, blue and white track jacket\"},{\"id\":\"var_style\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, crisp lineart, bright daylight, modern high school setting\"},{\"id\":\"var_scene\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"high school classroom, cafeteria, library\"},{\"id\":\"var_weapon\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"id\":\"var_lora\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"frames\":{},\"title\":\"冰山校花每天都在看我的系统弹幕 · 设定\"}"
+          }
+        },
+        "creationTargets": {
+          "plan_campus_system_24": ""
+        }
+      },
+      "settings": {
+        "negative": "low quality, bad anatomy, extra fingers, text, watermark",
+        "syncUrl": "",
+        "autoCritique": false,
+        "signature": "我的工作室",
+        "presentation": {
+          "version": 1,
+          "lab": {
+            "refine": false,
+            "mask": false
+          },
+          "fonts": true,
+          "readerMode": "spread",
+          "homeLayout": "showcase",
+          "defaultReaderMode": "webtoon",
+          "language": "zh-CN",
+          "lettering": "editorial",
+          "demoCleanupVersion": 2,
+          "bookOrder": {},
+          "collectionSort": "manual"
+        },
+        "studio": {
+          "visibility": {
+            "gallery": true,
+            "storyboard": true,
+            "matrix": true,
+            "engine": true,
+            "llm": false,
+            "logs": true,
+            "extensions": false
+          },
+          "features": {
+            "assistant": true,
+            "marketplace": true,
+            "visualCritic": true,
+            "executionLogs": true
+          },
+          "appearance": {
+            "theme": "dark",
+            "density": "comfortable",
+            "reduceMotion": false,
+            "showMetrics": false
+          },
+          "reader": {
+            "defaultMode": "focus"
+          },
+          "export": {
+            "templateId": "export-paper",
+            "showCaptions": true,
+            "showPrompts": false,
+            "border": 0
+          },
+          "assistant": {
+            "confirmChanges": true
+          },
+          "shell": {
+            "collapsed": false
+          },
+          "creationMigration": 1
+        },
+        "identity": {
+          "workspaceName": "我的工作室",
+          "creatorName": "",
+          "onboarded": true
+        },
+        "disk": {
+          "includeKeys": false
+        },
+        "critic": {
+          "mode": "real",
+          "connection": "independent",
+          "provider": "openai",
+          "baseUrl": "https://api.openai.com/v1",
+          "model": "gpt-4o",
+          "key": "",
+          "timeout": 60,
+          "includeReference": true,
+          "includePrevious": true,
+          "focus": "优先检查手部、面部结构、角色服装一致性、镜头构图与叙事可读性。",
+          "verification": null
+        },
+        "github": {
+          "repository": "",
+          "branch": "",
+          "path": ""
+        },
+        "tutorial": {
+          "seen": false,
+          "completed": false,
+          "readSteps": [],
+          "lastStep": 0
+        },
+        "backend": {
+          "enabled": true,
+          "baseUrl": "",
+          "loadPath": "/api/config",
+          "savePath": "/api/config",
+          "method": "POST",
+          "payloadField": "",
+          "responseField": ""
+        },
+        "imageGeneration": {
+          "active": "comfyui",
+          "profiles": [
+            {
+              "id": "comfyui",
+              "title": "ComfyUI",
+              "provider": "comfyui",
+              "keyMode": "none"
+            },
+            {
+              "id": "novelai",
+              "title": "NovelAI",
+              "provider": "novelai",
+              "baseUrl": "https://image.novelai.net",
+              "model": "nai-diffusion-4-5-full",
+              "sampler": "k_euler_ancestral",
+              "keyMode": "none"
+            },
+            {
+              "id": "openai",
+              "title": "OpenAI 兼容",
+              "provider": "openai",
+              "baseUrl": "https://api.openai.com/v1",
+              "model": "gpt-image-1",
+              "protocol": "images",
+              "size": "1024x1024",
+              "quality": "auto",
+              "sendSize": false,
+              "sendQuality": false,
+              "keyMode": "none"
+            }
+          ]
+        }
+      },
+      "studio": {
+        "visibility": {
+          "gallery": true,
+          "storyboard": true,
+          "matrix": true,
+          "engine": true,
+          "llm": false,
+          "logs": true,
+          "extensions": false
+        },
+        "features": {
+          "assistant": true,
+          "marketplace": true,
+          "visualCritic": true,
+          "executionLogs": true
+        },
+        "appearance": {
+          "theme": "dark",
+          "density": "comfortable",
+          "reduceMotion": false,
+          "showMetrics": false
+        },
+        "reader": {
+          "defaultMode": "focus"
+        },
+        "export": {
+          "templateId": "export-paper",
+          "showCaptions": true,
+          "showPrompts": false,
+          "border": 0
+        },
+        "assistant": {
+          "confirmChanges": true
+        },
+        "shell": {
+          "collapsed": false
+        },
+        "creationMigration": 1
+      }
+    }
+  },
+  "matrix": {},
+  "chats": {
+    "activeChatId": "chat_letter"
+  },
+  "queue": {},
+  "ordering": {
+    "templates": [
+      "story_journey12",
+      "storyboard_5fa900a6056d4118901eb4202e648675",
+      "storyboards_50565bedcf5d46d892848fad25d1bf01"
+    ],
+    "savedGalleries": [
+      "book_1b07b003-041a-404a-87d3-327c18985ff3",
+      "edition_letter"
+    ],
+    "rows": [
+      "character_nanami",
+      "character_campus_pair",
+      "rows_d68d91eb18f64d829818080f68440059"
+    ],
+    "projects": [
+      "collection_summer"
+    ],
+    "plans": [
+      "draft_letter",
+      "plan_campus_system_24",
+      "plans_0bfaaa70c2f44e878069cd06a39cd828"
+    ],
+    "characters": [
+      "setting_nanami",
+      "characters_b7ea26e8986846219c773c6ba80d6d5a",
+      "set_467e2546-30ed-41d8-9f70-07096a8f2d82",
+      "setting_campus_pair"
+    ],
+    "scenes": [],
+    "exportTemplates": [
+      "mio-fit",
+      "export-seamless",
+      "export-afterglow",
+      "export-paper",
+      "export-ink",
+      "export-gallery",
+      "export-flip"
+    ],
+    "comfyWorkflows": [
+      "wf_3aa839c7-6c93-4f93-a0c3-9399e1242916",
+      "wf_cd634804-bc38-4e41-99a1-f787c2182db8"
+    ],
+    "sessions": [
+      "chat_letter",
+      "chat_eb546791-8a79-4418-853d-9d9e79efed03"
+    ],
+    "queue": [
+      "task_2a3ae55c-739f-4d30-9dfe-85d989724f61"
+    ],
+    "variableSets": [
+      "setting_nanami",
+      "characters_b7ea26e8986846219c773c6ba80d6d5a",
+      "set_467e2546-30ed-41d8-9f70-07096a8f2d82",
+      "setting_campus_pair"
+    ]
+  },
+  "aliases": [],
+  "executionStartPolicy": "manual"
+}

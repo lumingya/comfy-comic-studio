@@ -1,0 +1,230 @@
+{
+  "schemaVersion": "2.2",
+  "updatedAt": 1789289075231,
+  "projects": [],
+  "activeProjectId": "collection_summer",
+  "templates": [],
+  "rows": [],
+  "books": [],
+  "customColumns": [
+    "character_display_name",
+    "scene",
+    "weapon"
+  ],
+  "queue": [],
+  "settings": {
+    "negative": "low quality, bad anatomy, extra fingers, text, watermark",
+    "comfy": {
+      "mode": "real",
+      "baseUrl": "http://127.0.0.1:8188",
+      "autoFallback": false,
+      "workflow": {},
+      "workflowTitle": "Anime · 基础图像管线",
+      "mapping": {
+        "positive": "6",
+        "positiveField": "text",
+        "negative": "7",
+        "negativeField": "text",
+        "output": "9",
+        "sampler": "3",
+        "size": "5",
+        "image": ""
+      },
+      "presets": [],
+      "bindings": [
+        {
+          "id": "binding_8fad5737-d3f0-4451-87c8-e1c954cf6ced",
+          "nodeId": "6",
+          "path": "text",
+          "label": "positive",
+          "source": "positive",
+          "type": "text",
+          "value": "",
+          "enabled": true,
+          "autoField": true,
+          "warning": "",
+          "allowCreate": false,
+          "allowLink": false
+        },
+        {
+          "id": "binding_faab2ad9-35d2-4af9-a567-f0f000d65b8d",
+          "nodeId": "7",
+          "path": "text",
+          "label": "negative",
+          "source": "negative",
+          "type": "text",
+          "value": "",
+          "enabled": true,
+          "autoField": true,
+          "warning": "",
+          "allowCreate": false,
+          "allowLink": false
+        }
+      ],
+      "bindingVersion": 1,
+      "outputNodeId": "9",
+      "randomizeSeeds": false,
+      "objectInfo": {},
+      "activeWorkflowId": "wf_3aa839c7-6c93-4f93-a0c3-9399e1242916"
+    },
+    "llm": {
+      "mode": "real",
+      "provider": "openai",
+      "baseUrl": "https://api.openai.com/v1",
+      "key": "",
+      "model": "gpt-4o",
+      "chunkSize": 3
+    },
+    "xml": {
+      "mode": "real",
+      "separate": false,
+      "baseUrl": "https://api.openai.com/v1",
+      "key": "",
+      "model": "gpt-4o"
+    },
+    "syncUrl": "",
+    "autoCritique": false,
+    "signature": "Mio",
+    "presentation": {
+      "version": 1,
+      "lab": {
+        "refine": false,
+        "mask": false
+      },
+      "fonts": true,
+      "readerMode": "spread",
+      "homeLayout": "showcase",
+      "defaultReaderMode": "webtoon",
+      "language": "zh-CN",
+      "lettering": "editorial",
+      "demoCleanupVersion": 2,
+      "bookOrder": {},
+      "collectionSort": "manual"
+    },
+    "studio": {
+      "visibility": {
+        "gallery": true,
+        "storyboard": true,
+        "matrix": true,
+        "engine": true,
+        "llm": false,
+        "logs": true,
+        "extensions": false
+      },
+      "features": {
+        "assistant": true,
+        "marketplace": true,
+        "visualCritic": true,
+        "executionLogs": true
+      },
+      "appearance": {
+        "theme": "dark",
+        "density": "comfortable",
+        "reduceMotion": false,
+        "showMetrics": false
+      },
+      "reader": {
+        "defaultMode": "focus"
+      },
+      "export": {
+        "templateId": "export-paper",
+        "showCaptions": true,
+        "showPrompts": false,
+        "border": 0
+      },
+      "assistant": {
+        "confirmChanges": true
+      },
+      "shell": {
+        "collapsed": false
+      },
+      "creationMigration": 1
+    },
+    "identity": {
+      "workspaceName": "",
+      "creatorName": "",
+      "onboarded": false
+    },
+    "disk": {
+      "includeKeys": false
+    },
+    "critic": {
+      "mode": "real",
+      "connection": "independent",
+      "provider": "openai",
+      "baseUrl": "https://api.openai.com/v1",
+      "model": "gpt-4o",
+      "key": "",
+      "timeout": 60,
+      "includeReference": true,
+      "includePrevious": true,
+      "focus": "优先检查手部、面部结构、角色服装一致性、镜头构图与叙事可读性。",
+      "verification": null
+    },
+    "github": {
+      "repository": "",
+      "branch": "",
+      "path": ""
+    },
+    "tutorial": {
+      "seen": false,
+      "completed": false,
+      "readSteps": [],
+      "lastStep": 0
+    },
+    "backend": {
+      "enabled": true,
+      "baseUrl": "",
+      "loadPath": "/api/config",
+      "savePath": "/api/config",
+      "method": "POST",
+      "payloadField": "",
+      "responseField": ""
+    },
+    "imageGeneration": {
+      "active": "comfyui",
+      "profiles": [
+        {
+          "id": "comfyui",
+          "title": "ComfyUI",
+          "provider": "comfyui",
+          "keyMode": "none"
+        },
+        {
+          "id": "novelai",
+          "title": "NovelAI",
+          "provider": "novelai",
+          "baseUrl": "https://image.novelai.net",
+          "model": "nai-diffusion-4-5-full",
+          "sampler": "k_euler_ancestral",
+          "keyMode": "none"
+        },
+        {
+          "id": "openai",
+          "title": "OpenAI 兼容",
+          "provider": "openai",
+          "baseUrl": "https://api.openai.com/v1",
+          "model": "gpt-image-1",
+          "protocol": "images",
+          "size": "1024x1024",
+          "quality": "auto",
+          "sendSize": false,
+          "sendQuality": false,
+          "keyMode": "none"
+        }
+      ]
+    }
+  },
+  "installedPackages": [],
+  "chats": [],
+  "activeChatId": "chat_letter",
+  "creation": {
+    "version": 1,
+    "plans": [],
+    "variableSets": []
+  },
+  "drafts": {},
+  "exportTemplates": [],
+  "appVersion": "3.2.0",
+  "workspaceId": "workspace_d826da03-879f-4d9a-89b1-c5436a1f56cb"
+}

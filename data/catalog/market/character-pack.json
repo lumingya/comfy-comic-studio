@@ -1,0 +1,26 @@
+{
+  "id": "character-pack",
+  "title": "夏日少女 · 角色资产",
+  "type": "characters",
+  "icon": "users",
+  "desc": "平铺变量、服装与特征描述，快速建立角色生产矩阵。",
+  "author": "Mio Originals",
+  "version": "2.0",
+  "score": "4.9",
+  "tags": "角色 青春 一致性",
+  "resource": {
+    "id": "row_8f11410c-9f34-4ccf-a221-afe37738c6b5",
+    "projectId": "p_summer",
+    "active": true,
+    "bookTitle": "海风与未寄出的信",
+    "character": "七海 Nanami",
+    "style": "cinematic anime, cel shading",
+    "outfit": "white shirt, navy school uniform",
+    "scene": "seaside train station",
+    "trigger": "consistent face, delicate features",
+    "lora": "",
+    "references": {},
+    "storyVersions": {},
+    "activeStoryVersionIds": {}
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "mode": "real",
+  "connection": "independent",
+  "provider": "openai",
+  "baseUrl": "https://api.openai.com/v1",
+  "model": "gpt-4o",
+  "key": "",
+  "timeout": 60,
+  "includeReference": true,
+  "includePrevious": true,
+  "focus": "优先检查手部、面部结构、角色服装一致性、镜头构图与叙事可读性。",
+  "verification": null
+}

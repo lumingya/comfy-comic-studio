@@ -1,0 +1,38 @@
+{
+  "visibility": {
+    "gallery": true,
+    "storyboard": true,
+    "matrix": true,
+    "engine": true,
+    "llm": false,
+    "logs": true,
+    "extensions": false
+  },
+  "features": {
+    "assistant": true,
+    "marketplace": true,
+    "visualCritic": true,
+    "executionLogs": true
+  },
+  "appearance": {
+    "theme": "dark",
+    "density": "comfortable",
+    "reduceMotion": false,
+    "showMetrics": true
+  },
+  "reader": {
+    "defaultMode": "focus"
+  },
+  "export": {
+    "templateId": "export-paper",
+    "showCaptions": true,
+    "showPrompts": false,
+    "border": 0
+  },
+  "assistant": {
+    "confirmChanges": true
+  },
+  "shell": {
+    "collapsed": false
+  }
+}

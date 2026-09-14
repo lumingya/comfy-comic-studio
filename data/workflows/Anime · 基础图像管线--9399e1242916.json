@@ -1,0 +1,139 @@
+{
+  "id": "wf_3aa839c7-6c93-4f93-a0c3-9399e1242916",
+  "title": "Anime · 基础图像管线",
+  "workflow": {
+    "3": {
+      "class_type": "KSampler",
+      "inputs": {
+        "seed": 42,
+        "steps": 24,
+        "cfg": 7,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 1,
+        "model": [
+          "4",
+          0
+        ],
+        "positive": [
+          "6",
+          0
+        ],
+        "negative": [
+          "7",
+          0
+        ],
+        "latent_image": [
+          "5",
+          0
+        ]
+      }
+    },
+    "4": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "your-anime-model.safetensors"
+      }
+    },
+    "5": {
+      "class_type": "EmptyLatentImage",
+      "inputs": {
+        "width": 768,
+        "height": 1024,
+        "batch_size": 1
+      }
+    },
+    "6": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "{character}, anime illustration",
+        "clip": [
+          "4",
+          1
+        ]
+      }
+    },
+    "7": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "low quality, bad anatomy",
+        "clip": [
+          "4",
+          1
+        ]
+      }
+    },
+    "8": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "3",
+          0
+        ],
+        "vae": [
+          "4",
+          2
+        ]
+      }
+    },
+    "9": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "filename_prefix": "Mio",
+        "images": [
+          "8",
+          0
+        ]
+      }
+    }
+  },
+  "mapping": {
+    "positive": "6",
+    "positiveField": "text",
+    "negative": "7",
+    "negativeField": "text",
+    "output": "9",
+    "sampler": "3",
+    "size": "5",
+    "image": ""
+  },
+  "bindings": [
+    {
+      "id": "binding_8fad5737-d3f0-4451-87c8-e1c954cf6ced",
+      "nodeId": "6",
+      "path": "text",
+      "label": "positive",
+      "source": "positive",
+      "type": "text",
+      "value": "",
+      "enabled": true,
+      "autoField": true,
+      "warning": "",
+      "allowCreate": false,
+      "allowLink": false
+    },
+    {
+      "id": "binding_faab2ad9-35d2-4af9-a567-f0f000d65b8d",
+      "nodeId": "7",
+      "path": "text",
+      "label": "negative",
+      "source": "negative",
+      "type": "text",
+      "value": "",
+      "enabled": true,
+      "autoField": true,
+      "warning": "",
+      "allowCreate": false,
+      "allowLink": false
+    }
+  ],
+  "outputNodeId": "9",
+  "randomizeSeeds": false,
+  "updatedAt": 1789370205535,
+  "_sourceFormat": {
+    "replaced": {},
+    "added": []
+  },
+  "schema": "mio.resource.v2",
+  "kind": "workflows"
+}

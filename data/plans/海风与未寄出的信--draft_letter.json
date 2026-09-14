@@ -1,0 +1,21 @@
+{
+  "id": "draft_letter",
+  "projectId": "collection_summer",
+  "title": "海风与未寄出的信",
+  "templateId": "story_journey12",
+  "rowId": "character_nanami",
+  "enabled": false,
+  "variableSetIds": [
+    "setting_nanami"
+  ],
+  "variables": [],
+  "sceneOverrides": {},
+  "createdAt": 1789289075315,
+  "updatedAt": 1789289075315,
+  "_sourceFormat": {
+    "replaced": {},
+    "added": []
+  },
+  "schema": "mio.resource.v2",
+  "kind": "plans"
+}

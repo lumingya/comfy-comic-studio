@@ -1,0 +1,26 @@
+{
+  "id": "character_nanami",
+  "projectId": "collection_summer",
+  "active": false,
+  "bookTitle": "海风与未寄出的信",
+  "character_display_name": "七海",
+  "character": "nanami",
+  "outfit": "white shirt, navy skirt, small canvas bag",
+  "style": "cinematic anime illustration, delicate cel shading, soft film texture",
+  "scene": "a quiet coastal town in summer",
+  "weapon": "",
+  "lora": "",
+  "references": {},
+  "storyVersions": {},
+  "activeStoryVersionIds": {},
+  "_planMapped": true,
+  "title": "海风与未寄出的信",
+  "_sourceFormat": {
+    "replaced": {},
+    "added": [
+      "title"
+    ]
+  },
+  "schema": "mio.resource.v2",
+  "kind": "rows"
+}

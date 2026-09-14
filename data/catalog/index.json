@@ -1,0 +1,84 @@
+{
+  "schema": "mio.content.v1",
+  "entries": {
+    "palettes": "catalog/palettes.json",
+    "frameNames": "catalog/frameNames.json",
+    "captions": "catalog/captions.json",
+    "exportOptionDefaults": "catalog/exportOptionDefaults.json",
+    "studioDefaults": "catalog/studioDefaults.json",
+    "frames": "catalog/frames.json",
+    "rows": "catalog/rows.json",
+    "initial": "catalog/application.json",
+    "baseHTML": "catalog/base-layout.json",
+    "bookLoop": "catalog/book-loop.json",
+    "criticDefaults": "catalog/critic-defaults.json",
+    "demoSpec": "catalog/demo-spec.json",
+    "market": [
+      "catalog/market/summer-pack.json",
+      "catalog/market/noir-pack.json",
+      "catalog/market/character-pack.json",
+      "catalog/market/anime-workflow.json",
+      "catalog/market/critic-pack.json"
+    ],
+    "marketLayouts": [
+      "catalog/market-layouts/export-spring-package.json",
+      "catalog/market-layouts/export-cinema-package.json",
+      "catalog/market-layouts/export-archive-package.json"
+    ],
+    "svg": [
+      "catalog/art/svg-0.svg",
+      "catalog/art/svg-1.svg",
+      "catalog/art/svg-2.svg",
+      "catalog/art/svg-3.svg",
+      "catalog/art/svg-4.svg",
+      "catalog/art/svg-5.svg"
+    ],
+    "fallback": [
+      "catalog/art/fallback-0.svg",
+      "catalog/art/fallback-1.svg",
+      "catalog/art/fallback-2.svg",
+      "catalog/art/fallback-3.svg",
+      "catalog/art/fallback-4.svg",
+      "catalog/art/fallback-5.svg"
+    ],
+    "sizing": "catalog/reader-sizing.json",
+    "practiceStory": "catalog/practiceStory.json",
+    "practiceRow": "catalog/practiceRow.json",
+    "practiceLabels": "catalog/practiceLabels.json",
+    "previewBook": "catalog/previewBook.json"
+  },
+  "demo": {
+    "projects": [
+      "collection_summer"
+    ],
+    "books": [
+      "edition_letter"
+    ],
+    "templates": [
+      "story_journey12"
+    ],
+    "rows": [
+      "character_nanami"
+    ],
+    "plans": [
+      "draft_letter"
+    ],
+    "variableSets": [
+      "setting_nanami"
+    ],
+    "chats": [
+      "chat_letter"
+    ]
+  },
+  "classicLayouts": [
+    "export-paper",
+    "export-ink",
+    "export-gallery",
+    "export-flip"
+  ],
+  "cover": [
+    "albums",
+    "edition_letter",
+    "images/6b1a8c08b8e086b41c2af5af03d0e09528cf685390370456d7aa8ea0b27e0916.webp"
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "mio-fit": "figure{background:transparent;border-radius:0}figure img{display:block;margin:auto;width:var(--mio-native-width,auto);max-width:100%;height:auto;max-height:none;object-fit:contain}",
+  "export-seamless": ".sf-image{width:var(--mio-native-width,auto);max-width:100%;height:auto}"
+}

@@ -1,0 +1,55 @@
+{
+  "id": "setting_nanami",
+  "projectId": "collection_summer",
+  "title": "七海 · 标准角色设定",
+  "entries": [
+    {
+      "id": "var_b74fb73f-0e7f-48b5-854c-5ea7ac7b0715",
+      "key": "character_display_name",
+      "type": "text",
+      "value": "七海"
+    },
+    {
+      "id": "var_67c9455e-9221-4924-95b2-666b0efd3fd2",
+      "key": "character",
+      "type": "text",
+      "value": "nanami"
+    },
+    {
+      "id": "var_a876f6ac-6ada-4ab2-b78d-0a2278622af4",
+      "key": "outfit",
+      "type": "text",
+      "value": "white shirt, navy skirt, small canvas bag"
+    },
+    {
+      "id": "var_620a05c2-e8cb-4519-ab74-dcec8592b1f6",
+      "key": "style",
+      "type": "text",
+      "value": "cinematic anime illustration, delicate cel shading, soft film texture"
+    },
+    {
+      "id": "var_e841eb9d-45df-44ca-9bc7-fbb8fb77dc11",
+      "key": "scene",
+      "type": "text",
+      "value": "a quiet coastal town in summer"
+    },
+    {
+      "id": "var_0f29e264-f4a8-4600-94f6-1997cd760167",
+      "key": "weapon",
+      "type": "text",
+      "value": ""
+    },
+    {
+      "id": "var_56bbbd26-0e83-4449-94c4-c122cc9de8e0",
+      "key": "lora",
+      "type": "text",
+      "value": ""
+    }
+  ],
+  "_sourceFormat": {
+    "replaced": {},
+    "added": []
+  },
+  "schema": "mio.resource.v2",
+  "kind": "characters"
+}
