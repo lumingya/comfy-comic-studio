@@ -68,4 +68,4 @@ In addition to controlled file/SQLite tests, a real browser test starts the **ac
 
 A real worker opened the converted durable database and remained held, without executing the provider callback.
 
-Tests ran in a Linux sandbox with Chromium. Native Windows/macOS publication branches and paid providers have not been verified. These are converter-specific checks. See the [2.0 acceptance record](../RELEASE_2_0_0.md) for full runtime and delivered-baseline verification.
+Tests ran in a Linux sandbox with Chromium. Native Windows/macOS publication branches and paid providers have not been verified. These are converter-specific checks. See the [2.0 acceptance record](../RELEASE_CURRENT.md) for full runtime and delivered-baseline verification.

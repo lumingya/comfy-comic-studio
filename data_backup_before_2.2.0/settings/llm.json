@@ -1,8 +1,0 @@
-{
-  "mode": "real",
-  "provider": "openai",
-  "baseUrl": "https://api.openai.com/v1",
-  "key": "",
-  "model": "gpt-4o",
-  "chunkSize": 3
-}

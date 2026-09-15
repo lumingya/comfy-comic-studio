@@ -5,9 +5,9 @@ import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
-import mio_credentials as vault
-import mio_api
-import server
+from backend import mio_credentials as vault
+from backend import mio_api
+from backend import server
 
 
 class CredentialTests(unittest.TestCase):

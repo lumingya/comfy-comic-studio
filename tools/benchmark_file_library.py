@@ -13,7 +13,7 @@ import tempfile
 import time
 from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from mio_library import FileLibrary, encode
+from backend.mio_library import FileLibrary, encode
 
 
 def measure(fn):

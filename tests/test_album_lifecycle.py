@@ -7,17 +7,17 @@ from pathlib import Path
 from unittest.mock import patch
 from types import SimpleNamespace
 
-from mio_jobs import Jobs, Conflict
-from mio_lifecycle import filter_deleted
-import mio_foundation
-import server
+from backend.mio_jobs import Jobs, Conflict
+from backend.mio_lifecycle import filter_deleted
+from backend import mio_foundation
+from backend import server
 
 
 class AlbumDeletionTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
-        library=__import__('mio_library').FileLibrary(self.temp.name);self.addCleanup(library.close)
+        library=__import__('backend.mio_library',fromlist=['*']).FileLibrary(self.temp.name);self.addCleanup(library.close)
         self.calls = []
         self.store = Jobs(str(Path(self.temp.name) / 'runtime' / 'execution'), self.execute)
         self.store.close()  # deterministic explicit claim/execute, no sleeps
@@ -166,7 +166,7 @@ class AlbumDeletionTests(unittest.TestCase):
         self.assertEqual(self.store.get(job['id'])['allowedActions'], [])
 
     def test_diagnostics_keep_error_not_echoed_auth_or_image_binary(self):
-        from providers.request_evidence import safe_error_text
+        from backend.providers.request_evidence import safe_error_text
         encoded='A'*4000
         text='HTTP 503: '+json.dumps({'error':{'message':'upstream unavailable'},'Authorization':'Bearer private-token','api_key':'private-key','b64_json':encoded})
         clean=safe_error_text(text)

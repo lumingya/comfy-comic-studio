@@ -5,8 +5,8 @@ import threading
 import unittest
 from http.server import ThreadingHTTPServer
 
-import mio_docs
-import server
+from backend import mio_docs
+from backend import server
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -79,7 +79,7 @@ class DocumentationServingTests(unittest.TestCase):
             self.assertEqual(self.request(path)[0], 404)
 
     def test_readme_banner_is_vector_not_font_dependent_block_text(self):
-        for name in ('README.md', 'README.en.md'):
+        for name in ('README.md', 'docs/README.en.md'):
             text = (ROOT / name).read_text()
             self.assertIn('mio-banner.svg', text)
             self.assertNotIn('███', text)

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-import server
+from backend import server
 
 
 class FakeResponse(io.BytesIO):

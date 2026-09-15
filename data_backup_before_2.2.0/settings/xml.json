@@ -1,8 +1,0 @@
-{
-  "mode": "real",
-  "separate": false,
-  "baseUrl": "https://api.openai.com/v1",
-  "key": "",
-  "model": "gpt-4o",
-  "systemPrompt": ""
-}

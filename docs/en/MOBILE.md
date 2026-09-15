@@ -1,6 +1,6 @@
 # Mobile access and touch controls
 
-[Handbook](GUIDE.md) · [简体中文](../guide/MOBILE.md) · [Security](../../SECURITY.md)
+[Handbook](GUIDE.md) · [简体中文](../guide/MOBILE.md) · [Security](../SECURITY.md)
 
 Open the running Mio server in your phone browser. No mobile app is required: the computer still owns storage and executes accepted image jobs.
 

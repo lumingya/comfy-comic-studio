@@ -11,9 +11,9 @@ sys.path.insert(0,ROOT_DIR)
 
 def get_v9_pure_default_data():
     """Conversion-test adapter only; read actual data files, never construct sample content."""
-    from mio_content import distribution
-    from mio_native_store import NativeStore
-    from mio_library import image_type
+    from backend.mio_content import distribution
+    from backend.mio_native_store import NativeStore
+    from backend.mio_library import image_type
     distribution(Path(ROOT_DIR)/'data')
     store=NativeStore(Path(ROOT_DIR)/'data',ROOT_DIR)
     try:

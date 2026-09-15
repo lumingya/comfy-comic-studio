@@ -3,7 +3,7 @@ import json
 import tempfile
 import threading
 import unittest
-from mio_jobs import Jobs, Conflict, validate_policy
+from backend.mio_jobs import Jobs, Conflict, validate_policy
 
 class Unavailable(Exception):
     status=503

@@ -1,32 +1,34 @@
+> 当前工作区：**3.1.0-dev.2 向导与连线画布开发版**。功能、测试与尚未完成的边界以 [最新发布说明](RELEASE_CURRENT.md) 和 [验收记录](ASSEMBLY_ACCEPTANCE.md) 为准。下文保留通用安装与既有模块说明。
+
 # Mio 教程中心
 
 [项目首页](../README.md) · [English handbook](en/GUIDE.md) · [离线导航页](index.html)
 
 ## 2.3.0 完整画面与明确归属
 
-[自适应阅读、实时本册设定与独立预设库](RELEASE_2_3_0.md) · [验收记录](acceptance-2.3.0/README.md)
+[自适应阅读、实时本册设定与独立预设库](RELEASE_CURRENT.md) · [最新验收](ASSEMBLY_ACCEPTANCE.md)
 
 ## 2.2.3 重命名与连续失败保护
 
-[现有名称编辑、标签用途及连续失败暂停](RELEASE_2_2_3.md) · [验收记录](acceptance-2.2.3/README.md)
+[现有名称编辑、标签用途及连续失败暂停](RELEASE_CURRENT.md) · [最新验收](ASSEMBLY_ACCEPTANCE.md)
 
 ## 2.2.2 预设编辑隔离
 
-[切换、独立草稿、应用与另存为](RELEASE_2_2_2.md) · [验收记录](acceptance-2.2.2/README.md)
+[切换、独立草稿、应用与另存为](RELEASE_CURRENT.md) · [最新验收](ASSEMBLY_ACCEPTANCE.md)
 
 ## 2.2.1 预设管理补齐
 
-[删除预设、复制追加与覆盖的区别](RELEASE_2_2_1.md)
+[删除预设、复制追加与覆盖的区别](RELEASE_CURRENT.md)
 
 ## 2.2 完整内容与分享
 
-[随包 data、升级、HTML/ZIP 分享及独立导入选择](guide/CONTENT_AND_SHARING.md) · [2.2 发布与验收](RELEASE_2_2_0.md)
+[随包 data、升级、HTML/ZIP 分享及独立导入选择](guide/CONTENT_AND_SHARING.md) · [2.2 发布与验收](RELEASE_CURRENT.md)
 
 ## 独立文件架构
 
 [保存、复制、分享、按需加载与密钥](guide/FILE_LIBRARY.md) · [English](en/FILE_LIBRARY.md)
 
-[旧数据显式转换到新目录](guide/FILE_LIBRARY_CONVERSION.md) · [2.0 发布与完整验收](RELEASE_2_0_0.md)。主程序只读取 v2；旧原件保留，不自动迁移或覆盖。
+[旧数据显式转换到新目录](guide/FILE_LIBRARY_CONVERSION.md) · [2.0 发布与完整验收](RELEASE_CURRENT.md)。主程序只读取 v2；旧原件保留，不自动迁移或覆盖。
 
 ## 新用户学习路线
 
@@ -39,11 +41,11 @@
 
 ## 画册展示与图片编辑
 
-[1.2.2 分镜导入首幕保护](RELEASE_1_2_2.md)
+[1.2.2 分镜导入首幕保护](RELEASE_CURRENT.md)
 
-[1.2.1 余光 · 画面优先的连续阅读](RELEASE_1_2_1.md)
+[1.2.1 余光 · 画面优先的连续阅读](RELEASE_CURRENT.md)
 
-[横竖小图阅读、封面取景、气泡图层、替换/删除/恢复、安全素材扩展](guide/IMAGE_STUDIO.md) · [1.1.1 连续阅读与无重载面板](RELEASE_1_1_1.md)
+[横竖小图阅读、封面取景、气泡图层、替换/删除/恢复、安全素材扩展](guide/IMAGE_STUDIO.md) · [1.1.1 连续阅读与无重载面板](RELEASE_CURRENT.md)
 
 ## 手机端
 
@@ -63,12 +65,12 @@
 - [OpenAPI 3.1 JSON](api/openapi.json)
 - [Python 标准库客户端](../examples/mio_client.py)
 - [开发、模块边界与新增渠道](DEVELOPMENT.md)
-- [安全与部署](../SECURITY.md)
+- [安全与部署](SECURITY.md)
 
 ## 参考与历史
 
 - [数据目录](DATA_LAYOUT.md)
-- [ComfyUI 工作流库](WORKFLOW_UPDATE.md)：历史界面称「工作流配置」，当前入口为「图像引擎」。
+- [ComfyUI 工作流库](WORKFLOW_UPDATE.md)：历史界面称「工作流配置」，当前入口为「工作流与 API 配置」。
 - [队列、并发超时、断点继续与画册批量操作](QUEUE_AND_COLLECTION_UPDATE.md)
 - [最新变更](CHANGELOG.md)
 - [自动化验证记录](TEST_RESULTS.txt)
@@ -80,7 +82,7 @@
 
 ## 展示模板与画册预览
 
-新增：[无缝 · 纯图阅读（2.1）](RELEASE_2_1_0.md)，没有配文区，画面零间距连续排列。
+新增：[无缝 · 纯图阅读（2.1）](RELEASE_CURRENT.md)，没有配文区，画面零间距连续排列。
 
 [统一预览与导出、媒体背景、沙盒脚本及性能边界](guide/PRESENTATION.md)
 

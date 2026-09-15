@@ -7,6 +7,9 @@ data/.transactions/
 data/.trash/
 data/.write.lock
 data/runtime/
+data/production/
+data/ecosystem/.store.lock
+data/ecosystem/.cache/
 data/settings/secrets.json
 data/settings/workspace.assets/
 data/**/images/*
@@ -18,15 +21,18 @@ data/plans/*
 !data/plans/海风与未寄出的信--draft_letter.json
 data/presets/characters/*
 !data/presets/characters/七海 · 标准角色设定--tting_nanami.json
+!data/presets/characters/设定--07096a8f2d82.json
 data/records/characters/*
 !data/records/characters/海风与未寄出的信--acter_nanami.json
 data/records/conversations/*
 !data/records/conversations/海风来信 · 分镜对话--chat_letter.json
 data/storyboards/*
 !data/storyboards/远行与归来 · 十二幕--ry_journey12.json
+!data/storyboards/晴天借阅室｜十二幕中文分镜--b4202e648675.json
 data/workflows/*
 !data/workflows/Anime · 基础图像管线--9399e1242916.json
 /images/
+generated_images/
 *.log
 .gemini/
 .agents/
@@ -99,3 +105,9 @@ playwright-report/
 blob-report/
 [Dd]esktop.ini
 ehthumbs.db
+
+# Preserved local user data; never ship with source releases.
+/local-data/
+
+# Clean live-preview data, separate from preserved user data.
+/preview-data/

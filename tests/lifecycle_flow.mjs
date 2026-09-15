@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const temp=mkdtempSync(path.join(tmpdir(),'mio-lifecycle-'));
 const evidence=process.env.MIO_TEST_EVIDENCE||path.join(root,'test-results');mkdirSync(evidence,{recursive:true});
-for(const name of [...readdirSync(root).filter(n=>n.endsWith('.py')),'data','mio_content.py','mio_album_html.py','mio_resource_sharing.py','providers','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true,filter:src=>!['runtime','.cache','.write.lock','secrets.json'].includes(path.basename(src))});
+for(const name of [...readdirSync(root).filter(n=>n.endsWith('.py')),'data','backend','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true,filter:src=>!['runtime','.cache','.write.lock','secrets.json'].includes(path.basename(src))});
 const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=';
 const wire=[],held=new Map(),counts=new Map();
 const upstream=createServer(async(req,res)=>{
@@ -43,8 +43,8 @@ try{
  await until(async()=>{const r=await api('jobs');return r.data.jobs.some(j=>j.state==='failed'&&j.cursor===3)});
  await page.evaluate(()=>pollFoundationJobs());const journey=await page.evaluate(()=>({book:state.queue[0].bookId,id:state.queue[0].serverId,qid:state.queue[0].id}));
  check('422 skips one frame; 503 retries; later scenes complete in the same album',(await api('jobs/'+journey.id)).data.completedIndices.join(',')==='0,2,3'&&counts.get('journey-2')===2&&counts.get('journey-1')===1);
- await page.evaluate(()=>{createUI.tab='story';navigate(1)});await page.locator('#art-book-draft').selectOption('task:'+journey.qid);
- await page.evaluate(()=>{ui.frameIndex=1;render()});await page.locator('[data-v3-frame="prompt"]').fill('journey-1-edited');await page.evaluate(async()=>{flushEditor();if(!await savePythonWorkspace())throw Error('edit save failed: '+Mio.sync.runtime.error)});
+ // Correct a failed execution input explicitly at dispatcher level; source selectors no longer edit generated history.
+ await page.evaluate(async qid=>{const q=state.queue.find(q=>q.id===qid),b=bookBy(q.bookId),f=clone(q.frames[1]);f.prompt='journey-1-edited';q.frames[1]=clone(f);b.sourceSnapshot.frames[1]=clone(f);delete f._resolvedImagePrompt;delete f._resolvedImageNegative;delete f._imageInputs;b.sourceSnapshot.liveInputs??={};b.sourceSnapshot.liveInputs[1]={input:foundationFrameInput(f,q.rowSnapshot,b.id,1),savedAt:Date.now()};if(!await savePythonWorkspace())throw Error('edit save failed')},journey.qid);
  await page.evaluate(id=>{void retryQueueTask(id)},journey.qid);await page.locator('#confirm-dialog[open]').waitFor();await page.locator('#confirm-yes').click();
  await until(async()=>(await api('jobs/'+journey.id)).data.state==='complete');await page.evaluate(()=>pollFoundationJobs());
  check('manual continuation preserves completed frames and uses saved scene edit',counts.get('journey-0')===1&&counts.get('journey-2')===2&&counts.get('journey-3')===1&&counts.get('journey-1-edited')===1);

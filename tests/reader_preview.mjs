@@ -6,7 +6,7 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 const root=process.cwd(),temp=mkdtempSync(path.join(tmpdir(),'mio-preview-')),evidence=process.env.MIO_PREVIEW_EVIDENCE||path.join(root,'docs/acceptance-2.2/reader'),base='http://127.0.0.1:8805';mkdirSync(evidence,{recursive:true});
-for(const n of [...readdirSync(root).filter(n=>n.endsWith('.py')),'data','mio_content.py','mio_album_html.py','mio_resource_sharing.py','providers','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,n),path.join(temp,n),{recursive:true,filter:src=>!['runtime','.cache','.write.lock','secrets.json'].includes(path.basename(src))});
+for(const n of [...readdirSync(root).filter(n=>n.endsWith('.py')),'data','backend','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,n),path.join(temp,n),{recursive:true,filter:src=>!['runtime','.cache','.write.lock','secrets.json'].includes(path.basename(src))});
 let server,browser,checks=0;const errors=[],check=(name,ok)=>{assert.ok(ok,name);checks++;console.log('PASS '+name)};
 async function until(fn){for(let i=0;i<200;i++){if(await fn())return;await new Promise(r=>setTimeout(r,50))}throw Error('condition timeout')}
 try{

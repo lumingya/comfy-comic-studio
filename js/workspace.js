@@ -10,7 +10,7 @@ function workflowLibraryEnsure(s=state){
     const p={id:uid('wf'),title:c.workflowTitle||'默认工作流',workflow:clone(c.workflow),mapping:clone(c.mapping||{}),bindings:clone(c.bindings||[]),outputNodeId:c.outputNodeId||'',randomizeSeeds:!!c.randomizeSeeds};
     c.presets.push(p);c.activeWorkflowId=p.id;
   }
-  s.settings.studio.visibility.extensions??=false;
+  s.settings.studio.visibility.extensions??=true;
 }
 
 function storeActiveWorkflow(){
@@ -119,7 +119,7 @@ function queueWorkflowDetails(){
 
 async function enqueueWorkspaceRange(indices,start=false){
   flushEditor();const p=selectedPlan();if(!p)throw Error('先创建画册。');
-  const book=enqueuePlanSnapshot(generationContextPlan(p),null,indices);createUI.tab='queue';navigate(1);
+  const prepared=await prepareComputedPlan(generationContextPlan(p));const book=enqueuePlanSnapshot(prepared,null,indices);createUI.tab='queue';navigate(1);
   if(!rt.paused&&(!rt.running||!foundationIsMock()))void runQueue();toast(rt.paused?'任务已加入，队列暂停中。':'任务已加入，将按队列顺序执行。');return book;
 }
 
@@ -146,13 +146,13 @@ function presetContentSignature(set){
     if(value&&typeof value==='object')return Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonical(value[k])]));
     return value;
   }
-  return JSON.stringify(canonical({title:set.title,entries:set.entries,frames:set.frames||{}}));
+  return JSON.stringify(canonical({title:set.title,entries:set.entries,settingsGroups:set.settingsGroups||[],frames:set.frames||{}}));
 }
 
 function settingPresetDraft(id,create=true){
   const set=setBy(id);if(!set||set.projectId!==state.activeProjectId)return null;
   state.drafts??={};state.drafts.presetEdits??={};
-  if(create&&(!state.drafts.presetEdits[id]||(!state.drafts.presetEdits[id].dirty&&state.drafts.presetEdits[id].base!==presetContentSignature(set))))state.drafts.presetEdits[id]={id:'preset-editor-'+id,_presetEditorId:id,projectId:set.projectId,title:set.title,variableSetIds:[],variables:clone(set.entries),frames:clone(set.frames||{}),excludedSettingKeys:[],base:presetContentSignature(set)};
+  if(create&&(!state.drafts.presetEdits[id]||(!state.drafts.presetEdits[id].dirty&&state.drafts.presetEdits[id].base!==presetContentSignature(set))))state.drafts.presetEdits[id]={id:'preset-editor-'+id,_presetEditorId:id,projectId:set.projectId,title:set.title,variableSetIds:[],variables:clone(set.entries),settingsGroups:clone(set.settingsGroups||[]),frames:clone(set.frames||{}),excludedSettingKeys:[],base:presetContentSignature(set)};
   return state.drafts.presetEdits[id]||null;
 }
 
@@ -163,7 +163,7 @@ function settingsTargetById(id){
 }
 
 async function updateSelectedSettingPreset(){
-  flushEditor();const draft=settingsEditorTarget(),id=draft?._presetEditorId,set=setBy(id),projectId=state.activeProjectId;
+  commitSettingsGroupNames(settingsEditorTarget());flushEditor();const draft=settingsEditorTarget(),id=draft?._presetEditorId,set=setBy(id),projectId=state.activeProjectId;
   if(!set)throw Error('请先选择要更新的预设。');
   if(draft.base!==presetContentSignature(set))throw Error('原预设已有其他修改，未覆盖。你的草稿仍保留，可使用“另存为”保存新副本。');
   // Materialize legacy live references before changing this shared resource.
@@ -171,7 +171,7 @@ async function updateSelectedSettingPreset(){
   if(projectId!==state.activeProjectId||settingPresetDraft(id,false)!==draft||setBy(id)!==set||draft.base!==presetContentSignature(set))throw Error('工作区或预设已变化，未更新。');
   const change=preparePresetRemoval(state,id);
   for(const {original,document} of [...change.plans,...change.books]){for(const k of Object.keys(original))delete original[k];Object.assign(original,document)}
-  set.entries=clone(mergedSettingEntries(draft));
+  set.entries=clone(mergedSettingEntries(draft));set.settingsGroups=clone(settingsGroups(draft));
   draft.variables=clone(set.entries);draft.excludedSettingKeys=[];draft.base=presetContentSignature(set);draft.dirty=false;
   save();render();
   if(!await savePythonWorkspace())throw Error('更新尚未确认。草稿仍保留，请检查保存错误后重新保存；未声称预设文件已更新。');
@@ -179,22 +179,22 @@ async function updateSelectedSettingPreset(){
 }
 
 async function applySelectedSettingPreset(){
-  flushEditor();const p=currentBookSettings(),draft=settingsEditorTarget(),id=draft?._presetEditorId,projectId=state.activeProjectId;
+  commitSettingsGroupNames(settingsEditorTarget());flushEditor();const p=currentBookSettings(),draft=settingsEditorTarget(),id=draft?._presetEditorId,projectId=state.activeProjectId;
   if(!p||!id)throw Error('请先选择要应用的预设。');
   if(!await confirmAction('应用「'+draft.title+'」到本册？','将当前显示的预设草稿复制到本册，替换本册全局设定；不修改预设文件或单幕覆盖；保存后影响本册尚未发送的分镜，在途请求不变。','应用'))return;
   if(projectId!==state.activeProjectId||settingsTargetById(p.id)!==p||currentBookSettings()!==p||settingPresetDraft(id,false)!==draft)throw Error('工作区或预设已变化，未应用。');
-  p.variables=mergedSettingEntries(draft).map(e=>({...clone(e),id:uid('var')}));p.variableSetIds=[];p.excludedSettingKeys=[];delete p.editingPresetId;
+  p.settingsGroups=clone(settingsGroups(draft));p.variables=mergedSettingEntries(draft).map(e=>({...clone(e),id:uid('var')}));p.variableSetIds=[];p.excludedSettingKeys=[];delete p.editingPresetId;
   save();closeModal();render();if(!await savePythonWorkspace())throw Error('应用尚未保存成功，未声称已生效。请检查保存错误。');toast('已复制并保存到本册；之后编辑公共预设不会同步修改本册。');
 }
 
 function saveSettingsAsPreset(){
-  flushEditor();const target=settingsEditorTarget(),p=selectedPlan(),projectId=state.activeProjectId;
+  commitSettingsGroupNames(settingsEditorTarget());flushEditor();const target=settingsEditorTarget(),p=selectedPlan(),projectId=state.activeProjectId;
   if(!target||!p)throw Error('请先选择画册计划。');
-  const entries=clone(mergedSettingEntries(target)),frames=clone(target.frames||{}),inLibrary=presetLibraryIsOpen();
+  const groups=clone(settingsGroups(target)),entries=clone(mergedSettingEntries(target)),frames=clone(target.frames||{}),inLibrary=presetLibraryIsOpen();
   textModal('另存为','预设名称',target.title+' · 副本',async name=>{
     if(!name.trim())throw Error('请输入预设名称。');
     if(state.activeProjectId!==projectId||!planBy(p.id))throw Error('工作区已变化，请重新另存为。');
-    const set={id:uid('set'),projectId,title:name.trim(),entries:entries.map(e=>({...e,id:uid('var')}))};
+    const set={id:uid('set'),projectId,title:name.trim(),settingsGroups:groups,entries:entries.map(e=>({...e,id:uid('var')}))};
     if(Object.keys(frames).length)set.frames=frames;
     state.creation.variableSets.push(set);selectSettingPreset(set.id,p);save();closeModal();render();if(inLibrary)openPresetLibrary(set.id);
     if(!await savePythonWorkspace())throw Error('另存尚未确认。新副本草稿仍保留，请检查保存错误后重新保存，不必再次创建副本。');
@@ -264,7 +264,7 @@ function createBlankPreset(){
 
 function installWorkspaceUpgrade(){
   const oldEnsure=ensureStudioState;ensureStudioState=function(s=state){oldEnsure(s);workflowLibraryEnsure(s);return s};
-  studioDefaults.visibility.extensions=false;
+  studioDefaults.visibility.extensions??=true;
   window.matchMedia('(max-width: 759px)').addEventListener('change',()=>renderShell());
   const oldSave=save;save=function(...args){storeActiveWorkflow();return oldSave(...args)};
   const oldNavigate=navigate;navigate=function(index){
@@ -274,7 +274,6 @@ function installWorkspaceUpgrade(){
   const oldRender=render;render=function(){
     if(ui.workspace===3){ensureStudioState();renderShell();$('#main').innerHTML='<div class="view">'+renderWorkflowLibrary()+'</div>';const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent='工作流配置';applyStudioPreferences();return}
     oldRender();
-    if(ui.workspace===5&&studioUI.settingsTab==='modules')$('#studio-settings-content')?.insertAdjacentHTML('afterbegin','<section class="settings-section"><h2>扩展功能模块</h2><label class="row"><input type="checkbox" id="ws-extensions" '+(state.settings.studio.visibility.extensions?'checked':'')+'>显示扩展功能（默认关闭，不影响已有作品）</label></section>');
     const p=selectedPlan();if(ui.workspace===1&&createUI.tab==='settings'&&settingPresetSelection(p)) $('.settings-preset-line')?.insertAdjacentHTML('beforeend',btn('更新当前预设','disk','ws-update-preset','','small'));
   };
   const oldPythonSettings=renderPythonSettings;renderPythonSettings=()=>oldPythonSettings()+dataLayoutHTML();

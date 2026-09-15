@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class DocumentationTests(unittest.TestCase):
     def test_new_documentation_links_resolve_locally(self):
-        files = [ROOT / 'README.md', ROOT / 'README.en.md', ROOT / 'SECURITY.md', ROOT / 'docs/README.md', ROOT / 'docs/DEVELOPMENT.md']
+        files = [ROOT / 'README.md', ROOT / 'docs/README.en.md', ROOT / 'docs/SECURITY.md', ROOT / 'docs/README.md', ROOT / 'docs/DEVELOPMENT.md']
         for folder in ('guide', 'en', 'api'):
             files.extend((ROOT / 'docs' / folder).glob('*.md'))
         for file in files:
@@ -30,9 +30,9 @@ class DocumentationTests(unittest.TestCase):
     def test_product_metadata_and_complete_source_packager(self):
         package = json.loads((ROOT / 'package.json').read_text())
         self.assertEqual(package['name'], 'mio-studio')
-        self.assertEqual(package['version'], '2.3.0')
+        self.assertEqual(package['version'], '3.1.0-dev.2')
         self.assertIn("MIO_VERSION='"+package['version']+"'",(ROOT/'js/app.js').read_text())
-        self.assertTrue((ROOT/'docs/RELEASE_2_1_0.html').exists())
+        self.assertTrue((ROOT/'docs/RELEASE_CURRENT.html').exists())
         builder=(ROOT/'tools/package_project.py').read_text()
         self.assertIn('distribution',builder)
         self.assertIn('includesShippedData',builder)

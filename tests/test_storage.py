@@ -5,9 +5,9 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-import server
-from mio_library import LibraryError
-from mio_native_store import NativeStore
+from backend import server
+from backend.mio_library import LibraryError
+from backend.mio_native_store import NativeStore
 
 class StructuredStorageTests(unittest.TestCase):
     def setUp(self):

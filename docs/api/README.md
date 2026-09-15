@@ -167,7 +167,7 @@ NovelAI 示例：
 - 只在本机或可信网络运行。Token 不保护私有 `/api/config`、静态页面和 `/images` 路径；公网部署需代理隔离并保护**所有路径**。
 - 不在自动化中依赖 `globalThis.Mio` 内部对象；它们是浏览器实现细节。
 
-[安全说明](../../SECURITY.md) · [Python 客户端用法](../../examples/mio_client.py)
+[安全说明](../SECURITY.md) · [Python 客户端用法](../../examples/mio_client.py)
 
 ## 持久任务、素材与资源写入
 

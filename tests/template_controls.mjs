@@ -7,7 +7,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),temp=mkdtempSync(path.join(tmpdir(),'mio-template-'));
-for(const name of ['data','mio_content.py','mio_album_html.py','mio_resource_sharing.py','providers','mio_library.py','mio_library_settings.py','mio_library_workspace.py','mio_native_store.py','mio_safe_svg.py','mio_pictures.py','mio_lifecycle.py','mio_jobs.py','mio_frame_jobs.py','mio_channels.py','mio_contracts.py','mio_foundation.py','server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true,filter:src=>!['runtime','.cache','.write.lock','secrets.json'].includes(path.basename(src))});
+for(const name of ['data','backend','server.py','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true,filter:src=>!['runtime','.cache','.write.lock','secrets.json'].includes(path.basename(src))});
 const server=spawn('python',['-u','server.py'],{cwd:temp,env:{...process.env,MIO_PORT:'8797'},stdio:['ignore','pipe','pipe']});let browser,checks=0;const check=(name,ok)=>{assert.ok(ok,name);checks++;console.log('PASS '+name)};
 try{
  await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('server timeout')),10000);server.stdout.on('data',d=>{if(d.toString().includes('物理落盘')){clearTimeout(t);resolve()}});server.on('error',reject)});
@@ -15,8 +15,8 @@ try{
 
  await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());navigate(1);createUI.tab='story';render()});
  await page.setViewportSize({width:390,height:844});await page.waitForTimeout(350);check('template toolbar fits the mobile viewport',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));await page.setViewportSize({width:1568,height:1004});
- const sourceId=await page.evaluate(()=>selectedPlan().templateId),booksBefore=await page.evaluate(()=>JSON.stringify(state.books));
- check('template deletion is directly beside the template picker',await page.locator('[data-act="delete-storyboard-template"]').isVisible());
+ const sourceId=await page.evaluate(()=>selectedPlan().templateId),booksBefore=await page.evaluate(()=>JSON.stringify(state.books.map(b=>({id:b.id,title:b.title}))));
+ check('source toolbar replaces shared template picker',await page.locator('.source-story-actions [data-act="eco-export-story"]').isVisible()&&await page.locator('select[data-v3-plan="templateId"]').count()===0);
  for(const provider of ['novelai','openai']){
   await page.evaluate(provider=>{const g=ensureImageProviders();let p=g.profiles.find(p=>p.provider===provider);if(!p){p={id:'test-'+provider,provider,title:provider,baseUrl:'https://example.invalid',model:'test',keyMode:'none'};g.profiles.push(p)}g.active=p.id;render()},provider);
   check(provider+' scene workflow is noninteractive explanatory text',await page.evaluate(()=>$('#ws-scene-workflow').tagName==='DIV'&&$('#ws-scene-workflow').getAttribute('role')==='note'&&$('#ws-scene-workflow').tabIndex===-1&&!$('[data-act="ws-edit-scene-workflow"]')));
@@ -28,20 +28,11 @@ try{
  await page.evaluate(()=>{ensureImageProviders().active=ensureImageProviders().profiles.find(p=>p.provider==='comfyui').id;render()});
  check('switching back to ComfyUI restores scene selection',await page.evaluate(()=>$('#ws-scene-workflow').tagName==='SELECT'&&!$('#ws-scene-workflow').disabled&&!!$('[data-act="ws-edit-scene-workflow"]')));
  await page.locator('[data-act="art-create-tab"][data-tab="queue"]').click();check('ComfyUI queue workflow is selectable',await page.evaluate(()=>$('#ws-plan-workflow').tagName==='SELECT'&&!$('#ws-plan-workflow').disabled));await page.locator('[data-act="art-create-tab"][data-tab="story"]').click();
- await page.locator('[data-act="delete-storyboard-template"]').click();check('confirmation distinguishes a whole template from one frame',(await page.locator('#confirm-dialog').innerText()).includes('整套'));
- await page.evaluate(()=>$('#confirm-no').click());check('cancel preserves the source template',await page.evaluate(id=>!!templateBy(id),sourceId));
- await page.evaluate(id=>{state.queue.push({id:'guard-test',templateId:id,status:'pending'});},sourceId);
- const blocked=await page.evaluate(async id=>{try{await deleteStoryboardTemplate(id);return false}catch(e){return e.message.includes('待执行')}},sourceId);check('pending tasks block deletion',blocked);await page.evaluate(()=>{state.queue=state.queue.filter(q=>q.id!=='guard-test')});
- // A second source proves deleting one template never silently switches plans to another.
- await page.evaluate(()=>{const t=clone(currentTemplate());t.id='other-template';t.title='保留的分镜';state.templates.push(t);render()});
- await page.locator('[data-act="delete-storyboard-template"]').click();await page.locator('#confirm-yes').click();
- check('confirmed deletion removes only the selected source',await page.evaluate(id=>!templateBy(id)&&!!templateBy('other-template'),sourceId));
- check('dependent plan is unbound and does not silently show another template',await page.evaluate(()=>selectedPlan().templateId===''&&!$('#frame-prompt')&&!!$('.quiet-story-header')));
- check('existing albums and original image references are unchanged',await page.evaluate(before=>JSON.stringify(state.books)===before,booksBefore));
- await page.locator('select[data-v3-plan="templateId"]').selectOption('other-template');await page.locator('[data-act="delete-storyboard-template"]').click();await page.locator('#confirm-yes').click();
- check('the final template can be deleted into a usable empty state',await page.evaluate(()=>state.templates.length===0&&!$('#frame-prompt')&&!!$('[data-act="new-template"]')));
- await page.evaluate(async()=>{await savePythonWorkspace(true)});await page.reload();await page.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);check('deletion persists after reload without recreating templates',await page.evaluate(()=>state.templates.length===0&&state.creation.plans.every(p=>p.templateId==='')));
-
+ check('source has exactly one draft selector',await page.locator('#art-book-draft').count()===1);
+ check('source storyboard is independently owned',await page.evaluate(()=>templateBy(selectedPlan().templateId).ownerPlanId===selectedPlan().id));
+ await page.evaluate(async()=>{if(!await savePythonWorkspace())throw Error('save failed')});await page.reload();await page.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);await page.evaluate(()=>{createUI.tab='story';navigate(1)});
+ check('source ownership survives reload without duplicate stories',await page.evaluate(id=>selectedPlan().templateId===id,sourceId));
+ check('existing generated albums remain unchanged',await page.evaluate(before=>JSON.stringify(state.books.map(b=>({id:b.id,title:b.title})))===before,booksBefore));
  await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());const g=ensureImageProviders();g.active=g.profiles.find(p=>p.provider==='openai').id;navigate(3);render()});
  await page.route('**/api/image/models',r=>r.fulfill({json:{models:['gpt-image-1','gpt-image-2.5-sunburst','FLUX.1-dev',...Array.from({length:229},(_,i)=>'other-model-'+i)]}}));
  await page.locator('[data-act="image-provider-models"]').click();

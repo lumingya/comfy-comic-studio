@@ -13,7 +13,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
-FOLDERS = {'js', 'vendor', 'providers', 'docs', 'examples', 'tests', 'tools'}
+FOLDERS = {'js', 'vendor', 'backend', 'packaging', 'docs', 'examples', 'tests', 'tools'}
 ROOT_NAMES = {'package.json', 'package-lock.json', 'start.bat', 'start.sh',
               'build_release.bat', '.eslintrc.json', '.htmlvalidate.json',
               '.gitignore', '.gitattributes', 'LICENSE', 'favicon.svg',
@@ -23,13 +23,13 @@ EXCLUDED = {'__pycache__', 'node_modules', '.git', '.cache', 'data', 'images',
 
 
 def source_files():
-    from mio_content import distribution
+    from backend.mio_content import distribution
     manifest=distribution(ROOT/'data')
     for rel in sorted(manifest['files']):yield ROOT/'data'/rel,'data/'+rel
     yield ROOT/'data/distribution.json','data/distribution.json'
     for path in sorted(ROOT.rglob('*')):
         rel = path.relative_to(ROOT)
-        if any(part in EXCLUDED for part in rel.parts) or path.is_symlink() or not path.is_file():
+        if any(part in EXCLUDED or part.startswith('acceptance') for part in rel.parts) or path.is_symlink() or not path.is_file():
             continue
         if len(rel.parts) == 1:
             if path.name not in ROOT_NAMES and path.suffix not in {'.py', '.md', '.html', '.spec'}:
@@ -48,15 +48,15 @@ def build(output):
     target = output / (name + '.zip')
     files = list(source_files())
     paths = {rel for _, rel in files}
-    required = {'docs/RELEASE_'+version.replace('.','_')+'.md','tests/preset_isolation.mjs','data/distribution.json','data/catalog/index.json','data/catalog/reader-sizing.json','mio_content.py','mio_album_html.py','mio_resource_sharing.py','js/content-loader.js','js/album-metadata.js','js/contextual-sharing.js','docs/guide/CONTENT_AND_SHARING.html','docs/en/CONTENT_AND_SHARING.html','docs/RELEASE_2_2_0.md','server.py', 'mio_lifecycle.py', 'mio_frame_jobs.py', 'js/foundation.js',
-                'start.bat', 'start.sh', 'index.html', 'styles.css', 'mio_pictures.py', 'js/ui-image-studio.js', 'docs/RELEASE_2_1_0.md','js/ui-template-seamless.js','mio_native_store.py','mio_library_conversion.py','tools/convert_file_library.py','mio_pictures.py','mio_library.py','mio_library_settings.py','mio_library_workspace.py','mio_safe_svg.py','js/file-library.js','docs/guide/FILE_LIBRARY.html','docs/en/FILE_LIBRARY.html', 'js/ui-template-afterglow.js', 'examples/afterglow/余光_AFTERGLOW_演示画册.html', 'examples/image-assets/starter.json'}
+    required = {'js/architecture.js','tests/architecture.mjs','docs/ARCHITECTURE_ACCEPTANCE.md','backend/production/store.py','backend/production/queue.py','backend/production/api.py','js/assembly-workshop.js','js/preferences-workbench.js','backend/ecosystem/acorn.cjs','backend/ecosystem/ACORN_LICENSE','backend/ecosystem/macro_worker.mjs','backend/ecosystem/macro_analyze.mjs','backend/ecosystem/api.py','js/ecosystem.js','js/safe-mode.js','docs/ECOSYSTEM_GUIDE.html','docs/COMPUTED_VARIABLES.html','examples/extensions/scene-notebook/index.js','examples/macros/prerequisite-variables.json','docs/RELEASE_CURRENT.md','tests/preset_isolation.mjs','data/distribution.json','data/catalog/index.json','data/catalog/reader-sizing.json','backend/mio_content.py','backend/mio_album_html.py','backend/mio_resource_sharing.py','js/content-loader.js','js/album-metadata.js','js/contextual-sharing.js','docs/guide/CONTENT_AND_SHARING.html','docs/en/CONTENT_AND_SHARING.html','server.py', 'backend/mio_lifecycle.py', 'backend/mio_frame_jobs.py', 'js/foundation.js',
+                'start.bat', 'start.sh', 'index.html', 'styles.css', 'backend/mio_pictures.py', 'js/ui-image-studio.js', 'js/ui-template-seamless.js','backend/mio_native_store.py','backend/mio_library_conversion.py','tools/convert_file_library.py','backend/mio_pictures.py','backend/mio_library.py','backend/mio_library_settings.py','backend/mio_library_workspace.py','backend/mio_safe_svg.py','js/file-library.js','docs/guide/FILE_LIBRARY.html','docs/en/FILE_LIBRARY.html', 'js/ui-template-afterglow.js', 'examples/afterglow/余光_AFTERGLOW_演示画册.html', 'examples/image-assets/starter.json'}
     if not required <= paths:
         raise RuntimeError('Missing required files: ' + ', '.join(sorted(required - paths)))
     html = (ROOT / 'index.html').read_text()
     if 'studio-runtime' in html or len(html) > 50000:
         raise RuntimeError('Expected the external-JS/CSS shell, not an inline bundle')
     manifest = {'name': 'Mio', 'version': version, 'kind': 'complete-source-runtime',
-                'upstreamBaseline': '0b63298', 'runtime': 'Python >= 3.10 (standard library)',
+                'upstreamBaseline': '9ee1a0b', 'runtime': 'Python >= 3.10; computed variables: Node.js >= 20; Git installs: Git',
                 'includesUserData': False, 'includesShippedData': True,
                 'files': {rel: hashlib.sha256(path.read_bytes()).hexdigest() for path, rel in files}}
     with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as archive:

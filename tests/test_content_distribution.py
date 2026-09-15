@@ -4,9 +4,9 @@ from pathlib import Path
 import shutil
 import tempfile
 import unittest
-from mio_native_store import NativeStore
-from mio_library import FileLibrary
-from mio_content import initialize, bootstrap
+from backend.mio_native_store import NativeStore
+from backend.mio_library import FileLibrary
+from backend.mio_content import initialize, bootstrap
 ROOT=Path(__file__).resolve().parents[1]
 
 class ContentDistributionTests(unittest.TestCase):

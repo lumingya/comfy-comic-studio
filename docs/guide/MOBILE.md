@@ -1,6 +1,6 @@
 # 手机访问与触控操作
 
-[教程中心](../README.md) · [English](../en/MOBILE.md) · [安全说明](../../SECURITY.md)
+[教程中心](../README.md) · [English](../en/MOBILE.md) · [安全说明](../SECURITY.md)
 
 ## 手机界面
 

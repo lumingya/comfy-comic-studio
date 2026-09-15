@@ -56,8 +56,8 @@ try{
  const after=python("import sys,json,pathlib,hashlib\nr=pathlib.Path(sys.argv[1])\nprint(json.dumps({p.relative_to(r).as_posix():hashlib.sha256(p.read_bytes()).hexdigest() for p in r.rglob('*') if p.is_file()},sort_keys=True))",[path.join(old,'data')]);
  check('all old data files, including SQLite state, are byte-for-byte unchanged',before===after);
  const verified=python(`import sys,json,pathlib,hashlib,base64,urllib.parse
-from mio_library import FileLibrary,image_refs
-from mio_library_workspace import WorkspaceRepository
+from backend.mio_library import FileLibrary,image_refs
+from backend.mio_library_workspace import WorkspaceRepository
 old=pathlib.Path(sys.argv[1]);expected=json.loads(pathlib.Path(sys.argv[2]).read_bytes())
 store=FileLibrary(sys.argv[3]);got=WorkspaceRepository(store).read()
 def normalize(v,new=False):

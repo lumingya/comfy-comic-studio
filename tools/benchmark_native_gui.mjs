@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 const root=process.cwd(),data=mkdtempSync(path.join(tmpdir(),'mio-native-benchmark-')),count=Number(process.argv[2]||5000),base='http://127.0.0.1:8851';
 const setup=spawnSync('python',['-c',`import sys,json
 from pathlib import Path
-from mio_library import FileLibrary,atomic_write,encode
+from backend.mio_library import FileLibrary,atomic_write,encode
 r=Path(sys.argv[1]);n=int(sys.argv[2]);s=FileLibrary(r)
 for i in range(n):
  doc={'schema':'mio.resource.v2','kind':'albums','id':'bench_'+str(i),'title':'效率验收画册 '+str(i),'totalSteps':12,'generatedSteps':0,'status':'partial','createdAt':1,'steps':[{'stepIndex':j,'prompt':'仅用于容量测试的分镜文字。'*75,'caption':'保留分镜文字','image':''} for j in range(12)]}

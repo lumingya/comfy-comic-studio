@@ -6,9 +6,9 @@ from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
-import server
-from mio_library import FileLibrary, LibraryError, atomic_write, encode
-from mio_native_store import NativeStore, split_dto
+from backend import server
+from backend.mio_library import FileLibrary, LibraryError, atomic_write, encode
+from backend.mio_native_store import NativeStore, split_dto
 
 PNG=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=')
 class NativeRuntimeTests(unittest.TestCase):
@@ -110,8 +110,8 @@ class NativeRuntimeTests(unittest.TestCase):
     def test_startup_recovers_committed_picture_without_a_provider_request(self):
         import threading
         from types import SimpleNamespace
-        import mio_foundation as foundation
-        from mio_jobs import Jobs
+        from backend import mio_foundation as foundation
+        from backend.mio_jobs import Jobs
         url=self.store.upload('data:image/png;base64,'+base64.b64encode(PNG).decode())
         self.create('albums','book',steps=[{'stepIndex':0,'image':url}],totalSteps=1)
         jobs=Jobs(str(self.root/'runtime/execution'),lambda _:self.fail('must not call provider'));self.addCleanup(jobs.close)
@@ -128,7 +128,7 @@ class NativeRuntimeTests(unittest.TestCase):
         self.assertFalse(receipt.exists());self.assertFalse(self.store.read()['_libraryProblems'])
         self.assertEqual(self.store.entity('albums','book')['document']['steps'][0]['image'],'')
     def test_native_restart_pauses_pending_and_second_owner_cannot_change_state(self):
-        from mio_jobs import Jobs
+        from backend.mio_jobs import Jobs
         path=str(self.root/'runtime/execution')
         calls=[];jobs=Jobs(path,lambda f:calls.append(f),manual_start=True);self.addCleanup(jobs.close)
         job=jobs.submit({'hold':True,'frames':[{'config':{'provider':'openai','keyMode':'none'},'prompt':'hold','images':[]}]},'hold')
@@ -145,8 +145,8 @@ class NativeRuntimeTests(unittest.TestCase):
     def test_tombstone_recovers_failed_file_deletion_without_resubmission(self):
         import threading
         from types import SimpleNamespace
-        import mio_foundation as foundation
-        from mio_jobs import Jobs
+        from backend import mio_foundation as foundation
+        from backend.mio_jobs import Jobs
         album=self.create('albums','deleted_book');self.create('tasks','deleted_task',bookId='deleted_book')
         jobs=Jobs(str(self.root/'runtime/execution'),lambda _:self.fail('must not generate'));self.addCleanup(jobs.close)
         jobs.delete_albums(['deleted_book'])

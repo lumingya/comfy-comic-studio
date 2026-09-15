@@ -7,8 +7,8 @@ import unittest
 from unittest.mock import patch
 from http.server import ThreadingHTTPServer
 
-import server
-import mio_api
+from backend import server
+from backend import mio_api
 
 TOKEN = 't' * 40
 CONFIG = {

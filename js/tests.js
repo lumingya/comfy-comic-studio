@@ -360,8 +360,8 @@ add('wide artistic brand fonts shrink to the available sidebar width', () => {
 add('renamed workflow and extension labels have English translations', () => {
   const locale = context.extendStudioLocaleCatalog(context.createStudioLocaleCatalog('en'));
   assert.equal(locale.text('工作流配置'), 'Workflow configuration');
-  assert.equal(locale.text('扩展功能'), 'Extensions');
-  assert.equal(chromePolicy.navigation({ logs: true, extensions: true }).find(item => item[0] === 7)[2], '扩展功能');
+  assert.equal(locale.text('可选功能'), 'Optional tools');
+  assert.equal(chromePolicy.navigation({ logs: true, extensions: true }).find(item => item[0] === 7)[2], '可选功能');
   locale.setLanguage('zh-CN');
   assert.equal(locale.text('工作流配置'), '工作流配置');
 });

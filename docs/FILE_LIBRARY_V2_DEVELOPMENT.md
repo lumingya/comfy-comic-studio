@@ -7,6 +7,6 @@
 - 逐幕执行、图片编辑、单确认删除、迟到结果防护与独立画册整理相衔接。
 - 新程序拒绝旧磁盘格式。显式转换始终输出新目录，源数据保留。
 
-[完整使用教程](guide/FILE_LIBRARY.md) · [转换说明](guide/FILE_LIBRARY_CONVERSION.md) · [2.0 发布与验收](RELEASE_2_0_0.md)
+[完整使用教程](guide/FILE_LIBRARY.md) · [转换说明](guide/FILE_LIBRARY_CONVERSION.md) · [2.0 发布与验收](RELEASE_CURRENT.md)
 
 早期纯存储/转换的历史验收日志保留在 `acceptance-file-library/` 和 `acceptance-conversion/`。它们不是当前整应用验收的替代品；当前回归记录见 `acceptance-2.0/`。

@@ -41,7 +41,7 @@ function extendStudioLocaleCatalog(catalog){Object.assign(catalog.messages,{
   '画册集已删除，正在等待后端保存确认。':'Collection deleted locally; waiting for the backend to confirm the save.',
   '画册集已删除；当前尚未连接后端，请保存或导出备份。':'Collection deleted locally. Connect to the backend or export a backup to retain this change.',
   '图像引擎':'Image engines','工作流配置':'Workflow configuration','智能节点映射':'Workflow configuration','智能节点映射器':'Workflow configuration',
-  '扩展功能':'Extensions','实验室':'Extensions','扩展功能使用说明':'Extension guide','扩展功能的目标画册':'Target book for extensions','到扩展功能使用精修扩展':'Open refinement extensions','显示运行日志':'Show activity log',
+  '可选功能':'Optional tools','实验室':'Optional tools','可选功能使用说明':'Extension guide','可选功能的目标画册':'Target book for extensions','到可选功能使用精修扩展':'Open refinement extensions','显示运行日志':'Show activity log',
   '画册与创作是核心功能，始终保留。其他模块可以按需开启，隐藏不会删除历史作品。':'Books and creation are always available. Optional modules can be hidden without deleting your work.',
   '阅读、精修和导出已生成的画册。':'Read, refine and export generated books.',
   '画册、分镜、设定预设和生成队列收纳在一个工作区。':'Book drafts, storyboards, setting presets and rendering share one workspace.',

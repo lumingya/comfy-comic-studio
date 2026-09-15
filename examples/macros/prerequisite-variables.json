@@ -1,0 +1,56 @@
+{
+  "id": "prerequisite-examples",
+  "kind": "characters",
+  "title": "前置变量示例 · 含付费模型调用",
+  "entries": [
+    {
+      "id": "character",
+      "key": "character",
+      "type": "text",
+      "value": "short silver hair, green eyes, blue coat"
+    },
+    {
+      "id": "mood",
+      "key": "story_mood",
+      "type": "text",
+      "value": "重逢，温暖，雨后的小镇"
+    },
+    {
+      "id": "portrait",
+      "key": "portrait",
+      "type": "image",
+      "value": "",
+      "compute": {
+        "script": "return await ctx.image.generate('portrait, plain background, '+ctx.get('character'), {seed:ctx.seed,width:768,height:768,name:'角色参考'});",
+        "dependsOn": [
+          "character"
+        ],
+        "timeout": 120
+      }
+    },
+    {
+      "id": "environment",
+      "key": "environment",
+      "type": "text",
+      "value": "",
+      "compute": {
+        "script": "return await ctx.llm.chat('请根据以下情绪给出一行英文场景提示词：'+ctx.get('story_mood'), {temperature:0.6,max_tokens:180});",
+        "dependsOn": [
+          "story_mood"
+        ],
+        "timeout": 120
+      }
+    },
+    {
+      "id": "deck",
+      "key": "deck",
+      "type": "json",
+      "value": [],
+      "compute": {
+        "script": "const deck=['月亮','星星','太阳','隐者','力量','世界'];for(let i=deck.length-1;i>0;i--){const j=Math.floor(ctx.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}return deck.slice(0,3);",
+        "dependsOn": [],
+        "timeout": 120
+      }
+    }
+  ]
+}

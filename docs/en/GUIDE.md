@@ -1,6 +1,6 @@
 # Mio handbook
 
-[Home](../../README.en.md) · [简体中文](../guide/QUICKSTART.md) · [API guide](API.md)
+[Home](../README.en.md) · [简体中文](../guide/QUICKSTART.md) · [API guide](API.md)
 
 ## File-native architecture
 
@@ -87,7 +87,7 @@ Use `MIO_HOST`, `MIO_PORT` and `MIO_ORIGINS` to configure the server. Default po
 | Save conflict | Back up first; do not force-write empty config |
 | Missing image | Check generation logs and data/albums/<ID>/images/ |
 
-See [security boundaries](../../SECURITY.md) before remote deployment. Report bugs with steps, environment and sanitized logs—not real keys or a private data directory.
+See [security boundaries](../SECURITY.md) before remote deployment. Report bugs with steps, environment and sanitized logs—not real keys or a private data directory.
 
 
 ## Channel and key management
@@ -157,7 +157,7 @@ The homepage has a prominent tutorial link. Reader fullscreen targets the docume
 
 Open an album, choose **Layout → 无缝 · 纯图阅读**. Images are stacked with zero vertical gap, with no caption slots, scene titles, visible numbering, repeated cover or closing text. Full aspect ratios and small-image native sizing are preserved. The preset does not crop white borders already inside an image or remove dialogue baked into the artwork.
 
-Original captions, prompts and editable artwork remain untouched; existing templates and defaults are preserved. The same layout is used in preview and offline HTML export, without a custom script. It retains the existing template preview image-preparation pool and 64 MiB limit. [Release details](../RELEASE_2_1_0.md) · [Offline example](../../examples/seamless/无缝_纯图阅读_演示画册.html).
+Original captions, prompts and editable artwork remain untouched; existing templates and defaults are preserved. The same layout is used in preview and offline HTML export, without a custom script. It retains the existing template preview image-preparation pool and 64 MiB limit. [Release details](../RELEASE_CURRENT.md) · [Offline example](../../examples/seamless/无缝_纯图阅读_演示画册.html).
 
 
 ## 2.3 adaptive reading and album ownership

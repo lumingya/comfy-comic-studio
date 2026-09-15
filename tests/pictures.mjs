@@ -6,7 +6,7 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 const root=process.cwd(),temp=mkdtempSync(path.join(tmpdir(),'mio-pictures-')),evidence=process.env.MIO_PICTURE_EVIDENCE||path.join(root,'docs/acceptance-2.2/pictures');mkdirSync(evidence,{recursive:true});
-for(const name of [...readdirSync(root).filter(n=>n.endsWith('.py')),'data','mio_content.py','mio_album_html.py','mio_resource_sharing.py','providers','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true,filter:src=>!['runtime','.cache','.write.lock','secrets.json'].includes(path.basename(src))});
+for(const name of [...readdirSync(root).filter(n=>n.endsWith('.py')),'data','backend','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true,filter:src=>!['runtime','.cache','.write.lock','secrets.json'].includes(path.basename(src))});
 const base='http://127.0.0.1:8804';let server,browser,checks=0;const errors=[];const check=(name,value)=>{assert.ok(value,name);console.log('PASS '+name);checks++};
 async function until(fn){for(let i=0;i<200;i++){if(await fn())return;await new Promise(r=>setTimeout(r,50))}throw Error('wait timeout')}
 async function boot(){server=spawn('python',['-u','server.py'],{cwd:temp,env:{...process.env,MIO_PORT:'8804'},stdio:['ignore','pipe','pipe']});server.stderr.on('data',d=>writeFileSync(path.join(evidence,'pictures-server.log'),d,{flag:'a'}));await until(async()=>{try{return (await fetch(base+'/api/config')).ok}catch{return false}})}

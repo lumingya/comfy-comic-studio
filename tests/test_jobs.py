@@ -2,7 +2,7 @@ import tempfile
 import time
 import threading
 import unittest
-from mio_jobs import Jobs, Conflict
+from backend.mio_jobs import Jobs, Conflict
 
 class DurableJobsTests(unittest.TestCase):
     def setUp(self):
@@ -215,7 +215,7 @@ class DurableJobsTests(unittest.TestCase):
         s.control('scheduler','pause');s.execute_row(rows[0]);s.execute_row(rows[1]);self.assertIsNone(s.claim());self.assertEqual(s.get(jobs[2]['id'])['state'],'pending')
 
     def test_worker_lease_is_held_until_inflight_request_finishes(self):
-        from mio_jobs import acquire_lease
+        from backend.mio_jobs import acquire_lease
         started=threading.Event();release=threading.Event()
         def run(_):started.set();release.wait(5);return {'image':'/images/end.png'}
         self.store.execute=run;a=self.store.submit(self.payload(),'lease-inflight');self.assertTrue(started.wait(2));self.store.close()
@@ -341,7 +341,7 @@ class DurableJobsTests(unittest.TestCase):
 
     def test_final_request_parameters_are_separate_and_safe(self):
         import json
-        from providers.request_evidence import safe_request
+        from backend.providers.request_evidence import safe_request
         s=self.manual_store()
         def execute(frame):
             frame['_onRequest'](safe_request({'model':'actual','seed':123,'apiKey':'private','nested':{'Authorization':'private'},'image':'base64','prompt':'hello private'},'private'))
@@ -446,6 +446,6 @@ class DurableJobsTests(unittest.TestCase):
         seen=[];s.execute=lambda f:(seen.append(f['prompt']) or {'image':'/images/reconciled.png'});s.control(a['id'],'reconcile');s.step();self.assertEqual(seen,['original sent'])
 
     def test_channel_configuration_error_blocks_dispatch_without_provider_calls(self):
-        from mio_channels import ChannelConfigurationError
+        from backend.mio_channels import ChannelConfigurationError
         s=self.manual_store();s.resolve_frame=lambda row,f:(_ for _ in ()).throw(ChannelConfigurationError('missing model'))
         a=s.submit(self.payload(count=5),'bad-channel');s.step();self.assertIsNone(s.claim());self.assertFalse(self.calls);self.assertEqual(s.get(a['id'])['error']['kind'],'channel_configuration')

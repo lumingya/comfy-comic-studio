@@ -6,7 +6,7 @@ import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),temp=mkdtempSync(path.join(tmpdir(),'mio-market-'));
-for(const name of ['data','mio_content.py','mio_album_html.py','mio_resource_sharing.py','providers','mio_library.py','mio_library_settings.py','mio_library_workspace.py','mio_native_store.py','mio_safe_svg.py','mio_pictures.py','mio_lifecycle.py','mio_jobs.py','mio_frame_jobs.py','mio_channels.py','mio_contracts.py','mio_foundation.py','server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true,filter:src=>!['runtime','.cache','.write.lock','secrets.json'].includes(path.basename(src))});
+for(const name of ['data','backend','server.py','index.html','styles.css','favicon.svg','vendor','js','docs'])cpSync(path.join(root,name),path.join(temp,name),{recursive:true,filter:src=>!['runtime','.cache','.write.lock','secrets.json'].includes(path.basename(src))});
 if(process.env.MIO_BENCH_HTML)cpSync(process.env.MIO_BENCH_HTML,path.join(temp,'index.html'));
 const port=8795,server=spawn('python',['-u','server.py'],{cwd:temp,env:{...process.env,MIO_PORT:String(port)},stdio:['ignore','pipe','pipe']});
 let browser;

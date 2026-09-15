@@ -1,21 +1,25 @@
+Mio 3.1.0-dev.2 — current-core and actual-package verification
+Date: 2026-09-15
+Controlled model fixtures only; not a real paid-provider test.
 
-> mio-studio@2.3.0 test
-> npm run lint && npm run test:contracts && npm run test:py && npm run test:smoke && npm run test:assistant && npm run test:templates && npm run test:presentation && npm run test:images && npm run test:foundation && npm run test:mobile && npm run test:experience && npm run test:recovery && npm run test:pools && npm run test:lifecycle && npm run test:pictures && npm run test:reader-preview && npm run test:afterglow && npm run test:storyboard-import && npm run test:native && npm run test:seamless && npm run test:contextual-sharing && npm run test:complete && npm run test:preset-delete && npm run test:preset-isolation && npm run test:rename-retry && npm run test:live-settings && npm run test:reading-stage
+
+> mio-studio@3.1.0-dev.2 test:current
+> npm run lint && npm run test:contracts && npm run test:py && npm run test:assembly && npm run test:architecture && npm run test:reading-stage && npm run test:presentation && npm run test:pictures
 
 
-> mio-studio@2.3.0 lint
+> mio-studio@3.1.0-dev.2 lint
 > npm run lint:js && npm run lint:html
 
 
-> mio-studio@2.3.0 lint:js
-> eslint js/state.js js/sync.js js/engine.js js/creation.js js/ui-presentation.js js/ui-reader.js js/ui-templates.js js/ui-export.js js/ui-editors.js js/ui-locale.js js/ui-assistant.js js/ui-storyboard.js js/ui-gallery.js js/ui-settings.js js/ui.js js/workspace.js js/organize.js js/foundation.js js/ui-image-studio.js js/ui-template-afterglow.js js/ui-template-seamless.js js/file-library.js js/contextual-sharing.js js/album-metadata.js js/creative-context.js js/reading-stage.js js/content-loader.js js/app.js js/build.js js/tests.js
+> mio-studio@3.1.0-dev.2 lint:js
+> eslint js/state.js js/sync.js js/engine.js js/creation.js js/ui-presentation.js js/ui-reader.js js/ui-templates.js js/ui-export.js js/ui-editors.js js/ui-locale.js js/ui-assistant.js js/ui-storyboard.js js/ui-gallery.js js/ui-settings.js js/ui.js js/workspace.js js/organize.js js/foundation.js js/ui-image-studio.js js/ui-template-afterglow.js js/ui-template-seamless.js js/file-library.js js/contextual-sharing.js js/album-metadata.js js/creative-context.js js/settings-workbench.js js/reading-stage.js js/content-loader.js js/app.js js/build.js js/tests.js js/ecosystem.js js/safe-mode.js js/preferences-workbench.js js/assembly-workshop.js js/architecture.js
 
 
-> mio-studio@2.3.0 lint:html
+> mio-studio@3.1.0-dev.2 lint:html
 > html-validate index.html
 
 
-> mio-studio@2.3.0 test:contracts
+> mio-studio@3.1.0-dev.2 test:contracts
 > node js/tests.js
 
 PASS all 10 native fields are flat and present
@@ -76,7 +80,7 @@ PASS display and prompt names survive the flat native API round trip independent
 PASS name-setting labels and help describe their different purposes
 56/56 tests passed.
 
-> mio-studio@2.3.0 test:py
+> mio-studio@3.1.0-dev.2 test:py
 > python -m unittest discover -s tests -v
 
 test_batch_mixed_states_is_one_commit_and_includes_unmapped_jobs (test_album_lifecycle.AlbumDeletionTests.test_batch_mixed_states_is_one_commit_and_includes_unmapped_jobs) ... ok
@@ -106,80 +110,99 @@ test_none_auth_does_not_fall_back_to_environment (test_credentials.CredentialTes
 test_purge_includes_prior_endpoints_but_not_other_channels (test_credentials.CredentialTests.test_purge_includes_prior_endpoints_but_not_other_channels) ... ok
 test_trailing_slash_and_default_port_normalize (test_credentials.CredentialTests.test_trailing_slash_and_default_port_normalize) ... ok
 test_generated_documents_are_current (test_docs_server.DocumentationServingTests.test_generated_documents_are_current) ... ok
-test_head_matches_get (test_docs_server.DocumentationServingTests.test_head_matches_get) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "HEAD /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
+test_head_matches_get (test_docs_server.DocumentationServingTests.test_head_matches_get) ... 127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
+127.0.0.1 - - [15/Sep/2026 05:55:14] "HEAD /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
 ok
-test_legacy_markdown_url_serves_utf8_reader (test_docs_server.DocumentationServingTests.test_legacy_markdown_url_serves_utf8_reader) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
+test_legacy_markdown_url_serves_utf8_reader (test_docs_server.DocumentationServingTests.test_legacy_markdown_url_serves_utf8_reader) ... 127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
 ok
-test_prebuilt_guide_is_served_with_charset (test_docs_server.DocumentationServingTests.test_prebuilt_guide_is_served_with_charset) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /docs/guide/CHANNELS_AND_KEYS.html HTTP/1.1" 200 -
+test_prebuilt_guide_is_served_with_charset (test_docs_server.DocumentationServingTests.test_prebuilt_guide_is_served_with_charset) ... 127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /docs/guide/CHANNELS_AND_KEYS.html HTTP/1.1" 200 -
 ok
-test_private_and_traversal_paths_remain_denied (test_docs_server.DocumentationServingTests.test_private_and_traversal_paths_remain_denied) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /docs/../server.py HTTP/1.1" 404 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /docs/../data/secrets/provider-keys.json HTTP/1.1" 404 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /mio_docs.py HTTP/1.1" 404 -
+test_private_and_traversal_paths_remain_denied (test_docs_server.DocumentationServingTests.test_private_and_traversal_paths_remain_denied) ... 127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /docs/../server.py HTTP/1.1" 404 -
+127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /docs/../data/secrets/provider-keys.json HTTP/1.1" 404 -
+127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /mio_docs.py HTTP/1.1" 404 -
 ok
-test_raw_markdown_is_explicit_utf8_without_modifying_source (test_docs_server.DocumentationServingTests.test_raw_markdown_is_explicit_utf8_without_modifying_source) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /docs/WORKFLOW_UPDATE.md?raw=1 HTTP/1.1" 200 -
+test_raw_markdown_is_explicit_utf8_without_modifying_source (test_docs_server.DocumentationServingTests.test_raw_markdown_is_explicit_utf8_without_modifying_source) ... 127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /docs/WORKFLOW_UPDATE.md?raw=1 HTTP/1.1" 200 -
 ok
 test_readme_banner_is_vector_not_font_dependent_block_text (test_docs_server.DocumentationServingTests.test_readme_banner_is_vector_not_font_dependent_block_text) ... ok
 test_renderer_does_not_allow_source_to_break_out_of_json (test_docs_server.DocumentationServingTests.test_renderer_does_not_allow_source_to_break_out_of_json) ... ok
-test_text_asset_charsets_are_explicit (test_docs_server.DocumentationServingTests.test_text_asset_charsets_are_explicit) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /README.md?raw=1 HTTP/1.1" 200 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /docs/api/openapi.json HTTP/1.1" 200 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /styles.css HTTP/1.1" 200 -
+test_text_asset_charsets_are_explicit (test_docs_server.DocumentationServingTests.test_text_asset_charsets_are_explicit) ... 127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /README.md?raw=1 HTTP/1.1" 200 -
+127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /docs/api/openapi.json HTTP/1.1" 200 -
+127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /styles.css HTTP/1.1" 200 -
 ok
 test_new_documentation_links_resolve_locally (test_documentation.DocumentationTests.test_new_documentation_links_resolve_locally) ... ok
 test_product_metadata_and_complete_source_packager (test_documentation.DocumentationTests.test_product_metadata_and_complete_source_packager) ... ok
 test_release_readme_is_the_maintained_readme (test_documentation.DocumentationTests.test_release_readme_is_the_maintained_readme) ... ok
-test_album_dto_removes_source_snapshots (test_external_api.ExternalApiTests.test_album_dto_removes_source_snapshots) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/albums HTTP/1.1" 200 -
+test_cache_clear_requires_trust_and_rejects_running_job (test_ecosystem.EcosystemTests.test_cache_clear_requires_trust_and_rejects_running_job) ... ok
+test_cancel_does_not_commit_or_start_dependents (test_ecosystem.EcosystemTests.test_cancel_does_not_commit_or_start_dependents) ... ok
+test_dag_api_parallel_cache_and_restart (test_ecosystem.EcosystemTests.test_dag_api_parallel_cache_and_restart) ... ok
+test_disk_failure_remains_visible_and_blocks_phase_one (test_ecosystem.EcosystemTests.test_disk_failure_remains_visible_and_blocks_phase_one) ... ok
+test_extension_revision_assets_and_conflicts (test_ecosystem.EcosystemTests.test_extension_revision_assets_and_conflicts) ... ok
+test_git_transport_is_argument_only_and_bounded (test_ecosystem.EcosystemTests.test_git_transport_is_argument_only_and_bounded) ... ok
+test_git_update_keeps_data_and_rolls_back_invalid_revision (test_ecosystem.EcosystemTests.test_git_update_keeps_data_and_rolls_back_invalid_revision) ... ok
+test_macro_ast_dependencies_cycles_syntax (test_ecosystem.EcosystemTests.test_macro_ast_dependencies_cycles_syntax) ... ok
+test_macro_random_timeout_and_runtime_dependency_guard (test_ecosystem.EcosystemTests.test_macro_random_timeout_and_runtime_dependency_guard) ... ok
+test_plugin_real_worker_storage_disable_and_uninstall (test_ecosystem.EcosystemTests.test_plugin_real_worker_storage_disable_and_uninstall) ... ok
+test_provider_bridge_resolves_saved_channels_and_persists_assets (test_ecosystem.EcosystemTests.test_provider_bridge_resolves_saved_channels_and_persists_assets) ... ok
+test_sdk_rejects_symlink_root_and_file (test_ecosystem.EcosystemTests.test_sdk_rejects_symlink_root_and_file) ... ok
+test_storage_isolation_and_roundtrip (test_ecosystem.EcosystemTests.test_storage_isolation_and_roundtrip) ... ok
+test_storage_overwrite_counts_replaced_value_once (test_ecosystem.EcosystemTests.test_storage_overwrite_counts_replaced_value_once) ... ok
+test_theme_concurrent_installs_do_not_lose_registry_records (test_ecosystem.EcosystemTests.test_theme_concurrent_installs_do_not_lose_registry_records) ... ok
+test_theme_hot_selection_assets_and_uninstall (test_ecosystem.EcosystemTests.test_theme_hot_selection_assets_and_uninstall) ... ok
+test_theme_rejects_remote_css_and_untrusted_install (test_ecosystem.EcosystemTests.test_theme_rejects_remote_css_and_untrusted_install) ... ok
+test_workflow_mapping_nested_types_and_link_guard (test_ecosystem.EcosystemTests.test_workflow_mapping_nested_types_and_link_guard) ... ok
+test_zip_rejects_traversal_and_duplicate (test_ecosystem.EcosystemTests.test_zip_rejects_traversal_and_duplicate) ... ok
+test_album_dto_removes_source_snapshots (test_external_api.ExternalApiTests.test_album_dto_removes_source_snapshots) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/albums HTTP/1.1" 200 -
 ok
-test_asset_path_is_local_and_traversal_safe (test_external_api.ExternalApiTests.test_asset_path_is_local_and_traversal_safe) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/assets?path=https%3A%2F%2Fevil.example%2Fa.png HTTP/1.1" 400 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/assets?path=%2Fimages%2F..%2Fserver.py HTTP/1.1" 400 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/assets?path=%2Fetc%2Fpasswd HTTP/1.1" 400 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/assets?path=%2Fimages%2Fa.png HTTP/1.1" 200 -
+test_asset_path_is_local_and_traversal_safe (test_external_api.ExternalApiTests.test_asset_path_is_local_and_traversal_safe) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/assets?path=https%3A%2F%2Fevil.example%2Fa.png HTTP/1.1" 400 -
+127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/assets?path=%2Fimages%2F..%2Fserver.py HTTP/1.1" 400 -
+127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/assets?path=%2Fetc%2Fpasswd HTTP/1.1" 400 -
+127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/assets?path=%2Fimages%2Fa.png HTTP/1.1" 200 -
 ok
-test_busy_returns_429 (test_external_api.ExternalApiTests.test_busy_returns_429) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "POST /api/v1/images/generations HTTP/1.1" 429 -
+test_busy_returns_429 (test_external_api.ExternalApiTests.test_busy_returns_429) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 429 -
 ok
-test_capabilities_are_honest (test_external_api.ExternalApiTests.test_capabilities_are_honest) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/capabilities HTTP/1.1" 200 -
+test_capabilities_are_honest (test_external_api.ExternalApiTests.test_capabilities_are_honest) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/capabilities HTTP/1.1" 200 -
 ok
-test_disabled_without_strong_token (test_external_api.ExternalApiTests.test_disabled_without_strong_token) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/health HTTP/1.1" 503 -
+test_disabled_without_strong_token (test_external_api.ExternalApiTests.test_disabled_without_strong_token) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/health HTTP/1.1" 503 -
 ok
-test_external_upstream_status_and_details_are_preserved (test_external_api.ExternalApiTests.test_external_upstream_status_and_details_are_preserved) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "POST /api/v1/images/generations HTTP/1.1" 429 -
+test_external_upstream_status_and_details_are_preserved (test_external_api.ExternalApiTests.test_external_upstream_status_and_details_are_preserved) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 429 -
 ok
-test_generates_once_without_mutating_browser_queue (test_external_api.ExternalApiTests.test_generates_once_without_mutating_browser_queue) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "POST /api/v1/images/generations HTTP/1.1" 200 -
+test_generates_once_without_mutating_browser_queue (test_external_api.ExternalApiTests.test_generates_once_without_mutating_browser_queue) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 200 -
 ok
-test_health (test_external_api.ExternalApiTests.test_health) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/health HTTP/1.1" 200 -
+test_health (test_external_api.ExternalApiTests.test_health) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/health HTTP/1.1" 200 -
 ok
-test_invalid_pagination (test_external_api.ExternalApiTests.test_invalid_pagination) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/albums?limit=101 HTTP/1.1" 400 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/albums?offset=-1 HTTP/1.1" 400 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/albums?limit=no HTTP/1.1" 400 -
+test_invalid_pagination (test_external_api.ExternalApiTests.test_invalid_pagination) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/albums?limit=101 HTTP/1.1" 400 -
+127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/albums?offset=-1 HTTP/1.1" 400 -
+127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/albums?limit=no HTTP/1.1" 400 -
 ok
 test_mio_environment_takes_precedence_with_legacy_fallback (test_external_api.ExternalApiTests.test_mio_environment_takes_precedence_with_legacy_fallback) ... ok
 test_openapi_file_matches_runtime (test_external_api.ExternalApiTests.test_openapi_file_matches_runtime) ... ok
-test_ordered_images_reach_generation_adapter (test_external_api.ExternalApiTests.test_ordered_images_reach_generation_adapter) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "POST /api/v1/images/generations HTTP/1.1" 200 -
+test_ordered_images_reach_generation_adapter (test_external_api.ExternalApiTests.test_ordered_images_reach_generation_adapter) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 200 -
 ok
-test_origin_rejected_on_external_and_private_reads (test_external_api.ExternalApiTests.test_origin_rejected_on_external_and_private_reads) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/health HTTP/1.1" 403 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/config HTTP/1.1" 403 -
+test_origin_rejected_on_external_and_private_reads (test_external_api.ExternalApiTests.test_origin_rejected_on_external_and_private_reads) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/health HTTP/1.1" 403 -
+127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/config HTTP/1.1" 403 -
 ok
-test_preflight_allows_authorization_only_for_known_origins (test_external_api.ExternalApiTests.test_preflight_allows_authorization_only_for_known_origins) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "OPTIONS /api/v1/health HTTP/1.1" 204 -
+test_preflight_allows_authorization_only_for_known_origins (test_external_api.ExternalApiTests.test_preflight_allows_authorization_only_for_known_origins) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "OPTIONS /api/v1/health HTTP/1.1" 204 -
 ok
-test_private_generation_preserves_status_and_error_body (test_external_api.ExternalApiTests.test_private_generation_preserves_status_and_error_body) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "POST /api/image/generate HTTP/1.1" 422 -
+test_private_generation_preserves_status_and_error_body (test_external_api.ExternalApiTests.test_private_generation_preserves_status_and_error_body) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/image/generate HTTP/1.1" 422 -
 ok
-test_provider_dto_does_not_leak_secrets_or_urls (test_external_api.ExternalApiTests.test_provider_dto_does_not_leak_secrets_or_urls) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/providers HTTP/1.1" 200 -
+test_provider_dto_does_not_leak_secrets_or_urls (test_external_api.ExternalApiTests.test_provider_dto_does_not_leak_secrets_or_urls) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/providers HTTP/1.1" 200 -
 ok
-test_rejects_ambiguous_or_unsupported_requests (test_external_api.ExternalApiTests.test_rejects_ambiguous_or_unsupported_requests) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "POST /api/v1/images/generations HTTP/1.1" 400 -
+test_rejects_ambiguous_or_unsupported_requests (test_external_api.ExternalApiTests.test_rejects_ambiguous_or_unsupported_requests) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 400 -
 ok
-test_schema_is_raw_and_secured (test_external_api.ExternalApiTests.test_schema_is_raw_and_secured) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/openapi.json HTTP/1.1" 200 -
+test_schema_is_raw_and_secured (test_external_api.ExternalApiTests.test_schema_is_raw_and_secured) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/openapi.json HTTP/1.1" 200 -
 ok
-test_storyboard_dto_removes_execution_snapshots (test_external_api.ExternalApiTests.test_storyboard_dto_removes_execution_snapshots) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/storyboards?limit=1&offset=0 HTTP/1.1" 200 -
+test_storyboard_dto_removes_execution_snapshots (test_external_api.ExternalApiTests.test_storyboard_dto_removes_execution_snapshots) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/storyboards?limit=1&offset=0 HTTP/1.1" 200 -
 ok
-test_token_required (test_external_api.ExternalApiTests.test_token_required) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/health HTTP/1.1" 401 -
+test_token_required (test_external_api.ExternalApiTests.test_token_required) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/health HTTP/1.1" 401 -
 ok
-test_unknown_route_and_method (test_external_api.ExternalApiTests.test_unknown_route_and_method) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "GET /api/v1/nope HTTP/1.1" 404 -
-127.0.0.1 - - [14/Sep/2026 04:30:22] "DELETE /api/v1/albums HTTP/1.1" 405 -
+test_unknown_route_and_method (test_external_api.ExternalApiTests.test_unknown_route_and_method) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/nope HTTP/1.1" 404 -
+127.0.0.1 - - [15/Sep/2026 05:55:18] "DELETE /api/v1/albums HTTP/1.1" 405 -
 ok
-test_upstream_error_is_sanitized_and_slot_released (test_external_api.ExternalApiTests.test_upstream_error_is_sanitized_and_slot_released) ... 127.0.0.1 - - [14/Sep/2026 04:30:22] "POST /api/v1/images/generations HTTP/1.1" 502 -
+test_upstream_error_is_sanitized_and_slot_released (test_external_api.ExternalApiTests.test_upstream_error_is_sanitized_and_slot_released) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 502 -
 ok
 test_claimed_but_unsubmitted_frame_is_held_without_inventing_a_request (test_failure_streak.FailureStreakTests.test_claimed_but_unsubmitted_frame_is_held_without_inventing_a_request) ... ok
 test_concurrent_failures_are_serialized_and_never_arm_late_retries (test_failure_streak.FailureStreakTests.test_concurrent_failures_are_serialized_and_never_arm_late_retries) ... ok
@@ -354,7 +377,7 @@ test_owned_album_copies_all_originals_and_snapshots (test_native_runtime.NativeR
 test_saved_snapshot_survives_source_preset_deletion (test_native_runtime.NativeRuntimeTests.test_saved_snapshot_survives_source_preset_deletion) ... ok
 test_scene_kind_is_authoritative_and_cross_category_ids_do_not_overwrite (test_native_runtime.NativeRuntimeTests.test_scene_kind_is_authoritative_and_cross_category_ids_do_not_overwrite) ... ok
 test_settings_two_writers_merge_and_ack_canonical_values (test_native_runtime.NativeRuntimeTests.test_settings_two_writers_merge_and_ack_canonical_values) ... ok
-test_startup_recovers_committed_picture_without_a_provider_request (test_native_runtime.NativeRuntimeTests.test_startup_recovers_committed_picture_without_a_provider_request) ... WARNING:root:Independent album projection pending: c289adaa50704f40bf02fb9186c522f8.json. Execution is retained; no provider retry.
+test_startup_recovers_committed_picture_without_a_provider_request (test_native_runtime.NativeRuntimeTests.test_startup_recovers_committed_picture_without_a_provider_request) ... WARNING:root:Independent album projection pending: f1e5c99e5c9a4e0885f1d7cccf5aeda1.json. Execution is retained; no provider retry.
 ok
 test_summary_can_never_overwrite_a_body (test_native_runtime.NativeRuntimeTests.test_summary_can_never_overwrite_a_body) ... ok
 test_tombstone_recovers_failed_file_deletion_without_resubmission (test_native_runtime.NativeRuntimeTests.test_tombstone_recovers_failed_file_deletion_without_resubmission) ... WARNING:root:Deleted albums remain hidden by durable tombstones; file cleanup is pending. Check disk/permissions and restart.
@@ -372,6 +395,38 @@ test_remove_restore_and_storyboard_retention (test_pictures.PictureTests.test_re
 test_slow_late_generation_result_never_replaces_removed_image (test_pictures.PictureTests.test_slow_late_generation_result_never_replaces_removed_image) ... ok
 test_stale_split_writer_cannot_resurrect_or_drop_layers (test_pictures.PictureTests.test_stale_split_writer_cannot_resurrect_or_drop_layers) ... ok
 test_visual_commit_does_not_increment_workspace_revision (test_pictures.PictureTests.test_visual_commit_does_not_increment_workspace_revision) ... ok
+test_bad_caption_is_validated_before_paid_render (test_production_adapter.ProductionAdapterTests.test_bad_caption_is_validated_before_paid_render) ... ok
+test_computed_variables_run_only_on_explicit_start (test_production_adapter.ProductionAdapterTests.test_computed_variables_run_only_on_explicit_start) ... ok
+test_inline_images_keep_stable_input_order (test_production_adapter.ProductionAdapterTests.test_inline_images_keep_stable_input_order) ... ok
+test_lora_bindings_compile_before_provider (test_production_adapter.ProductionAdapterTests.test_lora_bindings_compile_before_provider) ... ok
+test_negative_prompt_uses_only_explicit_variables (test_production_adapter.ProductionAdapterTests.test_negative_prompt_uses_only_explicit_variables) ... ok
+test_publication_failure_recovery_does_not_pay_twice (test_production_adapter.ProductionAdapterTests.test_publication_failure_recovery_does_not_pay_twice) ... ok
+test_reference_freeze_survives_original_file_removal (test_production_adapter.ProductionAdapterTests.test_reference_freeze_survives_original_file_removal) ... ok
+test_rerun_only_one_page_and_same_native_album (test_production_adapter.ProductionAdapterTests.test_rerun_only_one_page_and_same_native_album) ... ok
+test_saved_workflow_is_frozen_and_disabled_seed_preserves_literal (test_production_adapter.ProductionAdapterTests.test_saved_workflow_is_frozen_and_disabled_seed_preserves_literal) ... ok
+test_seed_gate_rejects_missing_node_and_accepts_numeric_input (test_production_adapter.ProductionAdapterTests.test_seed_gate_rejects_missing_node_and_accepts_numeric_input) ... ok
+test_source_and_channel_snapshots_survive_edits (test_production_adapter.ProductionAdapterTests.test_source_and_channel_snapshots_survive_edits) ... ok
+test_standalone_preview_does_not_create_or_change_an_album (test_production_adapter.ProductionAdapterTests.test_standalone_preview_does_not_create_or_change_an_album) ... ok
+test_standby_then_real_native_publication (test_production_adapter.ProductionAdapterTests.test_standby_then_real_native_publication) ... ok
+test_unknown_variables_fail_before_provider (test_production_adapter.ProductionAdapterTests.test_unknown_variables_fail_before_provider) ... ok
+test_assembly_has_no_execution_and_snapshots_do_not_share_identity (test_production_queue.ProductionQueueTests.test_assembly_has_no_execution_and_snapshots_do_not_share_identity) ... ok
+test_batch_assembly_publishes_only_a_complete_set (test_production_queue.ProductionQueueTests.test_batch_assembly_publishes_only_a_complete_set) ... ok
+test_cancel_discards_late_result_and_does_not_start_next_book (test_production_queue.ProductionQueueTests.test_cancel_discards_late_result_and_does_not_start_next_book) ... ok
+test_duplicate_submit_is_idempotent_but_conflicting_retry_is_not (test_production_queue.ProductionQueueTests.test_duplicate_submit_is_idempotent_but_conflicting_retry_is_not) ... ok
+test_failed_replay_keeps_previous_image_and_stops_batch (test_production_queue.ProductionQueueTests.test_failed_replay_keeps_previous_image_and_stops_batch) ... ok
+test_failed_start_control_commit_never_dispatches_a_model (test_production_queue.ProductionQueueTests.test_failed_start_control_commit_never_dispatches_a_model) ... ok
+test_force_prepare_permission_is_one_start_not_sticky (test_production_queue.ProductionQueueTests.test_force_prepare_permission_is_one_start_not_sticky) ... ok
+test_pause_drains_only_current_request (test_production_queue.ProductionQueueTests.test_pause_drains_only_current_request) ... ok
+test_replay_one_page_preserves_other_pages (test_production_queue.ProductionQueueTests.test_replay_one_page_preserves_other_pages) ... ok
+test_restart_leaves_interrupted_work_stopped (test_production_queue.ProductionQueueTests.test_restart_leaves_interrupted_work_stopped) ... ok
+test_second_writer_cannot_claim_the_same_directory (test_production_queue.ProductionQueueTests.test_second_writer_cannot_claim_the_same_directory) ... ok
+test_sequential_start_skips_before_and_uses_fixed_order (test_production_queue.ProductionQueueTests.test_sequential_start_skips_before_and_uses_fixed_order) ... ok
+test_single_start_never_releases_other_tasks (test_production_queue.ProductionQueueTests.test_single_start_never_releases_other_tasks) ... ok
+test_start_requires_explicit_trust_and_valid_indices (test_production_queue.ProductionQueueTests.test_start_requires_explicit_trust_and_valid_indices) ... ok
+test_suffix_replay_uses_original_indices (test_production_queue.ProductionQueueTests.test_suffix_replay_uses_original_indices) ... ok
+test_failed_manifest_write_keeps_previous_complete_revision (test_production_store.ProductionStoreTests.test_failed_manifest_write_keeps_previous_complete_revision) ... ok
+test_large_history_split_and_light_summary (test_production_store.ProductionStoreTests.test_large_history_split_and_light_summary) ... ok
+test_unchanged_records_are_deduplicated (test_production_store.ProductionStoreTests.test_unchanged_records_are_deduplicated) ... ok
 test_blank_optional_values_are_not_replaced_with_defaults (test_providers.ProviderTests.test_blank_optional_values_are_not_replaced_with_defaults) ... ok
 test_chat_base64_text_and_pure_text (test_providers.ProviderTests.test_chat_base64_text_and_pure_text) ... ok
 test_chat_content_blocks_order_and_deduplication (test_providers.ProviderTests.test_chat_content_blocks_order_and_deduplication) ... ok
@@ -439,6 +494,10 @@ test_port_comes_from_env_and_rejects_bad_values (test_server.ServerBoundaryTests
 [Config] COMFY_COMIC_PORT=70000 is out of range; falling back to 8777.
 [Config] COMFY_COMIC_PORT=-1 is out of range; falling back to 8777.
 ok
+test_empty_and_ungrouped_are_valid (test_settings_groups.SettingsGroupsTests.test_empty_and_ungrouped_are_valid) ... ok
+test_rejects_invalid_definitions (test_settings_groups.SettingsGroupsTests.test_rejects_invalid_definitions) ... ok
+test_share_keeps_groups_and_membership (test_settings_groups.SettingsGroupsTests.test_share_keeps_groups_and_membership) ... ok
+test_valid_groups_do_not_change_values (test_settings_groups.SettingsGroupsTests.test_valid_groups_do_not_change_values) ... ok
 test_release_defaults_use_real_services_and_complete_api_graph (test_storage.ReleaseDefaultsTests.test_release_defaults_use_real_services_and_complete_api_graph) ... ok
 test_active_svg_is_rejected_before_it_can_enter_any_album (test_storage.StructuredStorageTests.test_active_svg_is_rejected_before_it_can_enter_any_album) ... ok
 test_empty_installation_returns_complete_explicit_contract (test_storage.StructuredStorageTests.test_empty_installation_returns_complete_explicit_contract) ... ok
@@ -457,192 +516,143 @@ test_start_in_unicode_space_and_metacharacter_path (test_windows_launchers.Windo
 test_venv_used_when_dot_venv_absent (test_windows_launchers.WindowsLauncherExecutionTests.test_venv_used_when_dot_venv_absent) ... skipped 'Requires real Windows cmd.exe'
 
 ----------------------------------------------------------------------
-Ran 326 tests in 7.632s
+Ran 381 tests in 12.914s
 
 OK (skipped=4)
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f704df5f6a0>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f704dd1f5b0>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f704dd1f010>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f704dd1fe20>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f704dd1e890>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f704dd1f790>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f704d4187c0>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f704d419210>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f704dc19b70>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f704def73d0>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f704dc1a890>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f704dc1bc40>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f704df5d4e0>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f704dc1be20>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f704dc1b880>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a6f9120>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a439120>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a79d6c0>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a439a80>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a4396c0>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a4385e0>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a43a2f0>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a43ad40>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a33af20>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a512c50>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a3bd300>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a3be5c0>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a636f20>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a3be3e0>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a3be110>
 
-> mio-studio@2.3.0 test:smoke
-> node tests/smoke.mjs
+> mio-studio@3.1.0-dev.2 test:assembly
+> node tests/assembly_workshop.mjs
 
-PASS Mio workspace identity and runtime are available
-PASS offline documentation hub is served
-PASS fresh installation accepts the native backend contract
-PASS market uses a single scroll surface without live backdrop blur
-PASS scrolling preserves card and input DOM nodes
-PASS market search renders empty results without replacing controls
-PASS market tabs filter cards and retain import drafts
-PASS market installation still works after result-only rendering
-PASS market uninstall retains its confirmation flow
-PASS mutation localization translates interface text but not authored content
-PASS scoped localization includes attributes on the changed input itself
-PASS language switching restores interface copy
-PASS template preview retains its sandbox and clears market-only styling
-PASS market fits a narrow viewport without horizontal overflow
-PASS all services default to real mode without fallback
-PASS original girl cover is embedded and survives offline loading
-PASS normalization does not restore deleted or changed demo content from source
-PASS showcase is the default gallery
-PASS extensions are hidden by default
-PASS activity log is last when enabled
-PASS workflow has an independent module
-PASS batch import reports invalid files without losing valid imports
-PASS workflow switching retains unsaved-looking field edits
-PASS storyboard provides preset and workflow selectors before preview
-PASS blank preset starts empty without clearing existing presets
-PASS new preset can be saved directly
-PASS scene preset overrides full-book values
-PASS scene custom override has highest priority
-PASS queue can add a task and choose a workflow in-place
-PASS a second scene can queue while the first runs
-PASS A and B tasks keep separate workflow snapshots
-PASS both mock tasks finish successfully
-PASS single-scene task does not claim the entire album is complete
-PASS pending task workflow can be adjusted inline
-PASS changing pending task does not mutate another task
-PASS GPU protocol path persists immutable raster output before album ownership
-PASS stored relative image URL is served by the same Python backend
-PASS state validator accepts portable local image URLs
-PASS real GPU failures never create sample artwork even with legacy fallback enabled
-PASS native POST save is confirmed
-PASS API preserves per-scene workflow and preset assignments
-PASS structured workflow and queue files exist
-PASS dragging a pending task updates actual execution order
-PASS queue rows use the same forward order as stored tasks
-PASS deleting a queued task deletes its corresponding album
-PASS only Generate album has primary emphasis on the queue page
-PASS unfinished queue thumbnails contain no fabricated image
-PASS running task cannot be dragged but offers stop-and-delete
-PASS enqueue while paused does not implicitly resume an active queue
-PASS scheduler executes the reordered queue FIFO including new tasks
-PASS image errors do not rewrite stored URLs to sample artwork
-PASS missing reader pages stay empty even with an old offline preview
-PASS missing API keys do not silently enable mock mode
-PASS dragging an album persists manual collection order
-PASS right-click retains multiple selected albums
-PASS context batch editing affects exactly the selected albums
-PASS context batch export opens the multi-book export dialog
-PASS batch export downloads an HTML album with neutral missing-page notes
-PASS Escape closes context menu and exits multi-selection
-PASS organized state saves successfully
-PASS manual album order survives a backend reload
-PASS context batch delete requires confirmation
-PASS context batch delete removes only chosen albums
-PASS workflow library survives reload
-PASS mobile workflow view has no document overflow
-PASS NovelAI hides workflow library and exposes native model configuration
-PASS key entry does not request a generated login password
-PASS saved key is hidden and only a reference enters configuration
-PASS provider snapshots freeze configuration without secrets or workflow
-PASS API frame preflight does not require a valid ComfyUI workflow
-PASS generation uses frozen provider even after switching active channel
-PASS multiple OpenAI-compatible channels can be configured independently
-PASS provider layout fits mobile
-PASS provider settings and key references persist without plaintext
-PASS copied channels do not share saved credentials
-PASS size and quality can be disabled while their draft values remain
-PASS model discovery populates a safe picker and updates editable model ID
-PASS unsupported model discovery preserves manual configuration
-PASS multiple keys are listed as metadata without secret values
-PASS user can select a saved key explicitly
-PASS local key metadata survives page reload
-PASS deleting the selected key clears authentication instead of switching keys
-PASS remaining key can still be selected
-PASS empty authentication is explicit and persists
-PASS channels in pending tasks cannot be deleted
-PASS channel deletion requires confirmation
-PASS channel deletion also removes its saved local keys
-PASS new API channels can be created after deletion with optional parameters off
-PASS Markdown URLs render readable Chinese headings with explicit UTF-8
-PASS reader creates a working table of contents
-PASS reader rewrites relative Markdown links to offline HTML pages
-PASS linked guide navigation keeps Chinese text intact
-PASS reader code-copy button copies the code without UI labels
-PASS reader sanitizes embedded script handlers and javascript links
-PASS new homepage renders its illustration without external requests
-PASS homepage search filters tutorial entries
-PASS homepage language switch updates copy and tutorial destinations
-PASS new homepage fits mobile without horizontal overflow
-PASS reader keeps code and tables inside the mobile viewport
-PASS prebuilt handbook works from file URLs without a Python server
-PASS indexed workflow editing locks submitted/completed scenes, not an inferred completed prefix
-PASS no uncaught browser errors
-102 browser checks passed.
+PASS independent story workshop
+PASS no source-owned generate action
+PASS preset groups collapsed
+PASS preset creation and save never modify album plans
+PASS multi-preset selection remains a checkbox
+PASS standby assembly calls no provider
+PASS standby assembly executes no Phase 0
+PASS single start leaves both neighbours standby
+PASS single card generates exactly its twelve scenes
+PASS one scene rerun costs exactly one provider call
+PASS suffix replay preserves every earlier scene
+PASS batch starting later does not wake preceding task
+PASS native generated album opens in the real reader
+PASS general preferences in three groups
+PASS artistic font retained under display
+PASS reader interaction retained
+PASS language retained under general
+PASS master optional feature is a switch
+PASS image engine and optional tools have distinct icons
+PASS all module enable controls use switches
+PASS custom themes contains no base language/font controls
+PASS custom theme heading
+PASS import inward/export outward without changing network icons
+PASS mobile queue has no horizontal overflow
+PASS mobile assembly dialog has no horizontal overflow
+PASS tasks survive browser reload
+PASS no browser runtime errors: 
+PASS generic negative variables survive native save and reload
+PASS LoRA form stores typed numeric binding
+PASS independent preset exports as a real ZIP
+PASS shared preset round trip preserves LoRA bindings
+PASS preview is standby without model call
+PASS standalone preview calls provider exactly once
+PASS standalone preview opens as image, not album
+PASS preview never creates an album
+PASS gallery refresh discovers production albums
+PASS old global start redirects to explicit queue
+PASS old global start dispatches no model request
+PASS extended flow has no browser errors
+ASSEMBLY ACCEPTANCE: 39 checks passed
 
-> mio-studio@2.3.0 test:assistant
-> node tests/assistant_layout.mjs
+> mio-studio@3.1.0-dev.2 test:architecture
+> node tests/architecture.mjs
 
-PASS desktop reserves over half the panel for conversation
-PASS desktop context is a single compact row
-PASS desktop composer remains usable without overflow
-PASS one target selector replaces duplicated scope text
-PASS suggestion inserts a draft without sending
-PASS floating mode keeps input and actions visible
-PASS resizing does not clear the draft
-PASS expanded composer retains send controls
-PASS mobile panel has no horizontal overflow and retains send controls
-PASS short windows retain scrolling conversation and a usable input
-PASS conversation replaces the welcome state
-PASS draft survives message rerender
-PASS new conversation retains its bound target
-PASS target selector explicitly binds the selected template
-PASS busy state locks target and history while keeping stop available
-PASS new welcome copy is available in English
-PASS no uncaught browser errors
-17 assistant layout checks passed.
+PASS renamed primary workflow navigation
+PASS optional tools master enabled by default
+PASS optional synopsis collapsed by default
+PASS negative prompt is a first-class editor
+PASS positive prompt has standard naming
+PASS negative sync changes every source frame
+PASS preset has no special negative field or raw JSON box
+PASS master default is on
+PASS floating assistant default is on
+PASS isolated master section removed
+PASS master off collapses all children
+PASS master off hides tools workspace
+PASS master off disables child feature policy
+PASS studio preferences persist in one canonical location
+PASS critic has no top-level settings tab
+PASS market opens as a full workspace, not a modal
+PASS market search retains full workspace
+PASS market search filters actual cards outside a modal
+PASS exactly one local critic API entry
+PASS API settings sits in the critic card
+PASS no duplicate critic configuration on workbench
+PASS local API panel opens
+PASS cloud channels never show reproducible seed
+PASS seed toggle disabled without mapping
+PASS valid mapping allows opt-in but seed starts disabled
+PASS mapped seed can be explicitly enabled
+PASS wizard confirmation makes zero model calls
+PASS assembly remembers previous channel
+PASS mouse dragging creates A→1/2 and B→2/3 edges
+PASS node cards can be dragged independently
+PASS N-to-N bulk creates only standby cards
+PASS one task per story merges its two connected presets
+PASS canvas batch calls no model
+PASS server freezes the actual N-to-N combinations
+PASS mobile wizard fits viewport
+PASS mobile canvas scrolls internally without modal overflow
+PASS no browser exceptions: 
+ARCHITECTURE: 37 checks PASS
 
-> mio-studio@2.3.0 test:templates
-> node tests/template_controls.mjs
+> mio-studio@3.1.0-dev.2 test:reading-stage
+> node tests/reading_stage.mjs
 
-PASS template toolbar fits the mobile viewport
-PASS template deletion is directly beside the template picker
-PASS novelai scene workflow is noninteractive explanatory text
-PASS novelai queue omits irrelevant workflow controls
-PASS novelai partial storyboard render stays noninteractive
-PASS openai scene workflow is noninteractive explanatory text
-PASS openai queue omits irrelevant workflow controls
-PASS openai partial storyboard render stays noninteractive
-PASS switching back to ComfyUI restores scene selection
-PASS ComfyUI queue workflow is selectable
-PASS confirmation distinguishes a whole template from one frame
-PASS cancel preserves the source template
-PASS pending tasks block deletion
-PASS confirmed deletion removes only the selected source
-PASS dependent plan is unbound and does not silently show another template
-PASS existing albums and original image references are unchanged
-PASS the final template can be deleted into a usable empty state
-PASS deletion persists after reload without recreating templates
-PASS one model input replaces the separate search and select
-PASS typing shows case-insensitive multi-word results automatically
-PASS typing keeps input focus
-PASS click replaces the same input and saves the exact model
-PASS selection closes suggestions and retains input focus
-PASS keyboard selection commits a complete model ID
-PASS Escape dismisses suggestions without auto-selecting
-PASS arrow key reopens dismissed results
-PASS unmatched manual IDs remain usable with an explicit empty state
-PASS empty input shows all cached models
-PASS Tab dismisses results without trapping focus
-PASS combobox and visible suggestions fit mobile
-PASS selected model survives reload
-PASS no uncaught browser errors
-32 template/provider checks passed.
+PASS adjacent portraits pair automatically; landscape and small artwork remain independent
+PASS both portraits are complete, proportional and inside the viewport
+PASS the next composition does not peek into a settled desktop page
+PASS paired portraits use the widescreen substantially, without stretching originals
+PASS next-page navigation advances a whole spread, not the second half of the same spread
+PASS an unpaired portrait has a local soft backdrop instead of empty black sidebars
+PASS small artwork never exceeds its native pixel dimensions
+PASS single-page mode deliberately disables automatic pairing
+PASS continuous mode restores natural scrolling without replacing image nodes
+PASS phone reading remains continuous and does not overflow horizontally
+PASS rotation back to desktop restores pairing and original node identity
+PASS first paired composition keeps correct page numbering after resizing
+PASS mio-fit standalone export contains five successfully decoded embedded originals
+PASS mio-fit actual standalone HTML preserves pairing and complete image geometry
+PASS mio-fit sandbox preview and offline export use identical geometry at the same viewport
+PASS export-seamless standalone export contains five successfully decoded embedded originals
+PASS export-seamless actual standalone HTML preserves pairing and complete image geometry
+PASS export-seamless sandbox preview and offline export use identical geometry at the same viewport
+PASS seamless pages still contain only imagery, no caption blocks or page numbers
+PASS seamless phone mode retains genuine zero-gap original-ratio images
+PASS serialized reading preferences cannot close the script element
+PASS changing mode in the real sandbox reader persists to the album and subsequent export
+PASS 1366×768 shows exact 2:3 and 3:4 portraits completely, with balanced pairing and no next-frame edge
+PASS 1280×720 shows exact 2:3 and 3:4 portraits completely, with balanced pairing and no next-frame edge
+PASS 1920×1080 shows exact 2:3 and 3:4 portraits completely, with balanced pairing and no next-frame edge
+PASS no browser script errors
+26 adaptive reading checks PASS
 
-> mio-studio@2.3.0 test:presentation
+> mio-studio@3.1.0-dev.2 test:presentation
 > node tests/presentation.mjs
 
 PASS default opens in continuous complete-image mode, without a template iframe
@@ -655,7 +665,7 @@ PASS complete image fit for 800 x 800
 PASS template library opens without replacing the image
 PASS template search filters locally
 PASS 512-frame default album never compiles HTML while turning pages
-Default-path synchronous render P95 ms: 1.30
+Default-path synchronous render P95 ms: 1.20
 PASS custom scripts require consent
 PASS declining consent keeps the lightweight default
 PASS script runs inside an opaque-origin sandbox
@@ -690,253 +700,7 @@ PASS mobile flip reader shows one complete scene, not two narrow columns
 PASS no uncaught browser errors
 42 presentation checks passed.
 
-> mio-studio@2.3.0 test:images
-> node tests/image_variables.mjs
-
-PASS Chinese image variables can be created in the normal settings UI
-PASS uploads physically exist on disk and match their original bytes
-PASS configuration rejects inline image-variable data
-PASS configuration stores local asset references, not base64
-PASS prompt resolves in first-occurrence order and deduplicates by variable name
-PASS unused empty images do not block resolution
-PASS Chinese variable identifiers retain weights and escaped braces
-PASS positive and negative references share one ordered attachment list
-PASS scene overrides retain image typing and precedence
-PASS resolved preview shows numbered image thumbnails
-PASS replacement does not mutate the queued prompt or ordered references
-PASS old queued image remains on disk after replacement
-PASS restart/read retains image variables and original queue snapshots
-PASS original enqueue evidence stays immutable while the provider sends latest saved ordered references
-PASS generation failure has no paid retry or text-only fallback
-PASS full upstream status and body are retained on the task
-PASS queue exposes the original error in expandable details
-PASS no referenced images means no attachments or implicit character reference
-PASS a missing local image fails explicitly before any provider request
-PASS portable package includes physical variable assets and no inline base64
-PASS portable restore recreates local files without needing the original folder
-PASS restored queue and source snapshots reference immutable local assets
-PASS removing a still-referenced image is an explicit error, not silent omission
-PASS known variables outside the current scope cannot silently disappear
-PASS ComfyUI uploads both images in prompt order
-PASS ComfyUI binds uploaded names to corresponding variables and resolved prompt
-PASS missing ComfyUI variable bindings fail rather than drop images
-PASS no request submitted after missing-binding error
-PASS image settings fit the mobile viewport
-PASS no uncaught browser errors
-30 image-variable checks passed.
-
-> mio-studio@2.3.0 test:foundation
-> node tests/foundation.mjs
-
-PASS UI submits an immutable held snapshot to the durable service
-PASS all frames complete after the browser page closes
-PASS album metadata reflects durable results before any browser reopens
-PASS advanced parameters reach the real wire format
-PASS all results expose the versioned artifact-list contract
-PASS external duplicate returns same job without extra generation
-PASS same key with a different snapshot returns conflict
-PASS a completed queue does not turn an unloaded album into an empty body
-PASS reopening reconciles server results into the original album
-PASS real queue uses an explicit service entry rather than an added run wrapper
-PASS public task API requires authentication
-PASS SSE exposes replayable job events
-PASS external clients can upload durable inputs
-PASS asset index includes hashes and task references
-PASS recent unreferenced uploads are protected by the grace period
-PASS portable export externalizes secondary artifact references
-PASS portable restore re-materializes primary and artifact images locally
-PASS cleanup refuses noneligible assets
-PASS controlled storyboard write succeeds with current revision
-PASS stale resource writers cannot overwrite new data
-PASS a browser can edit a different plan without overwriting the external storyboard
-PASS no uncaught browser errors
-22 foundation checks passed.
-
-> mio-studio@2.3.0 test:mobile
-> node tests/mobile.mjs
-
-PASS 320 x 740 gallery fits with bottom navigation
-PASS 320 x 740 story fits with bottom navigation
-PASS 320 x 740 queue fits with bottom navigation
-PASS 320 x 740 variables fits with bottom navigation
-PASS 320 x 740 engine fits with bottom navigation
-PASS 320 x 740 settings fits with bottom navigation
-PASS 320 x 740 storage fits with bottom navigation
-PASS 320 x 740 appearance fits with bottom navigation
-PASS 390 x 844 gallery fits with bottom navigation
-PASS 390 x 844 story fits with bottom navigation
-PASS 390 x 844 queue fits with bottom navigation
-PASS 390 x 844 variables fits with bottom navigation
-PASS 390 x 844 engine fits with bottom navigation
-PASS 390 x 844 settings fits with bottom navigation
-PASS 390 x 844 storage fits with bottom navigation
-PASS 390 x 844 appearance fits with bottom navigation
-PASS 430 x 932 gallery fits with bottom navigation
-PASS 430 x 932 story fits with bottom navigation
-PASS 430 x 932 queue fits with bottom navigation
-PASS 430 x 932 variables fits with bottom navigation
-PASS 430 x 932 engine fits with bottom navigation
-PASS 430 x 932 settings fits with bottom navigation
-PASS 430 x 932 storage fits with bottom navigation
-PASS 430 x 932 appearance fits with bottom navigation
-PASS 844 x 390 gallery fits with bottom navigation
-PASS 844 x 390 story fits with bottom navigation
-PASS 844 x 390 queue fits with bottom navigation
-PASS 844 x 390 variables fits with bottom navigation
-PASS 844 x 390 engine fits with bottom navigation
-PASS 844 x 390 settings fits with bottom navigation
-PASS 844 x 390 storage fits with bottom navigation
-PASS 844 x 390 appearance fits with bottom navigation
-PASS touch navigation opens creation with a horizontal title
-PASS primary controls are comfortable touch targets
-PASS rotation keeps the current prompt draft
-PASS variable modal and inputs fit the phone
-PASS phone image upload produces a durable local asset
-PASS touch model suggestions stay in the visible viewport
-PASS scroll-like touch movement does not pick a model
-PASS touch selection replaces the model input without a second tap
-PASS touch buttons reorder waiting jobs without drag gestures
-PASS populated queue cards fit the phone
-PASS canceling deletion retains the queued work
-PASS album management opens by touch and stays above navigation
-PASS album order changes via touch menu
-PASS reader fits and defaults to continuous complete images
-PASS phone continuous reader preserves complete aspect and native-size ceiling
-PASS reader template drawer is scrollable and within viewport
-PASS phone export produces an HTML download
-PASS mobile Enter inserts a newline instead of sending
-PASS short viewport keeps assistant input and send button accessible
-PASS draft remains after viewport resizing
-PASS collection switcher fits and remains usable on touch
-PASS no uncaught browser errors
-54 mobile checks passed (chromium).
-
-> mio-studio@2.3.0 test:experience
-> node tests/experience.mjs
-
-PASS home prominently links to the complete tutorial center
-PASS one fast drag selects all albums along the path
-PASS path painting does not select unrelated albums
-PASS multi-select dragging does not reorder or open albums
-PASS dragging from a selected album removes selection along the path
-PASS Escape clears selections and exits multi-select
-PASS Escape also cancels an in-progress paint gesture
-PASS inspection does not enqueue work or create albums
-PASS inspection only covers current task ranges, not other album pages
-PASS delete confirmation states album and linked queue scope
-PASS cancel preserves album and tasks
-PASS confirmed deletion removes the album and all linked tasks only
-PASS automatic retry requires an explicit billing confirmation
-PASS declining preserves the previously saved automatic retry budget
-PASS policy controls save real durable service settings
-PASS running work is highlighted while held work is not
-PASS fullscreen targets the root element, not a forbidden dialog
-PASS unsupported fullscreen shows one inline explanation of F11
-PASS no uncaught browser errors
-19 experience checks passed.
-
-> mio-studio@2.3.0 test:recovery
-> node tests/recovery_parallel.mjs
-
-PASS HTTP disconnect leaves confirmed first frame and unknown second
-PASS unknown continuation requires explicit billing acknowledgement
-PASS stale progress cannot authorize continuation
-PASS reload retains visible continuation from original scene two
-PASS consent explains same album and unconfirmed billing risk
-PASS canceling consent sends no extra provider request
-PASS wire order resumes second frame without repeating first
-PASS same job, frozen input and first result survive continuation
-PASS original album completes without replacement
-PASS queue controls persist parallelism and timeout
-PASS all four new albums have durable identities
-PASS two-scene tasks overlap their own two frames, not other queued albums
-PASS held-status polling cannot strand newly submitted albums
-PASS configured timeout reaches every claimed attempt
-PASS each frame is sent exactly once within its task
-PASS runtime settings survive browser reload
-PASS subset task labels the original fourth scene, not local cursor two
-PASS gallery resume refreshes stale progress before consent
-PASS gallery continuation reuses job and album for a subset
-PASS subset wire order never repeats its confirmed first image
-PASS HTTP 422 is durably skipped without automatic retry
-PASS request history includes final wire prompt and actual model
-PASS revised missing-frame source survives future album recovery
-PASS original editor preserves task identity and confirmed result
-PASS revised unfinished prompt reaches provider without repeating first
-PASS stop acknowledges without waiting for provider response
-PASS stop closes the local HTTP socket before upstream responds
-PASS late response never becomes a saved task result
-PASS diagnostics distinguish held albums from concurrency capacity
-PASS releasing held tasks queues them sequentially unless manually started
-PASS logs after reload include persisted rejection, request input and stop
-PASS no browser runtime errors
-Recovery and parallel acceptance: 32 checks passed
-
-> mio-studio@2.3.0 test:pools
-> node tests/task_pools.mjs
-
-PASS one task starts frames 1–4 simultaneously
-PASS queued tasks do not start themselves
-PASS queue shows server-saved next-request model
-PASS finishing frame 2 immediately refills frame 5 while frame 1 is still waiting
-PASS sparse results retain original index and do not pretend the first frame completed
-PASS task-only ACK cannot hide the out-of-order image from album polling
-PASS manual start explains independent additive concurrency
-PASS two tasks really hold four HTTP requests each
-PASS second task refills independently of every pending first-task request
-PASS changed model and address reach later requests in both linked tasks
-PASS already-sent requests keep original model
-PASS task details stay open through status refresh
-PASS third queued task remains waiting during both pools
-PASS existing editor selects an exact album version with its own eight scenes
-PASS original storyboard editor saves task-local text without changing shared template
-PASS independent prompt editing entry has been removed
-PASS global pause stops refills but preserves all returned indexed results
-PASS near the end a task only sends the three remaining frames
-PASS next FIFO task starts after earlier active work finishes
-PASS no successful frame was requested twice
-PASS observed combined maximum is eight, not a shared four-slot cap
-PASS editing an in-flight scene does not replace the request already sent
-PASS service reads latest saved scene after the browser leaves
-PASS reload restores sparse/complete results to their original albums
-PASS attempt history records resolved model rather than initial model
-PASS no browser runtime errors
-Task-pool acceptance: 26 checks passed
-
-> mio-studio@2.3.0 test:lifecycle
-> node tests/lifecycle_flow.mjs
-
-PASS deleting an unsaved first-run demo cannot recreate it on refresh
-PASS 422 skips one frame; 503 retries; later scenes complete in the same album
-PASS manual continuation preserves completed frames and uses saved scene edit
-PASS refresh opens original complete four-scene album
-PASS actual downloaded file opens offline with all four images
-PASS switching current channel to demo cannot replay a durable real task locally
-PASS service task list uses the same deletion instead of exposing archive or abandon
-PASS running album offers one stop-and-delete confirmation
-PASS running deletion removes all queue mappings without another request
-PASS stale-tab full-config save cannot resurrect the deleted album
-PASS other open tab learns deletion through normal polling
-PASS mixed completed and stopped-unknown batch deletes with one confirmation
-PASS hard service restart does not restore deleted albums or repeat submissions
-PASS canceling slow original-image export releases busy state and downloads nothing
-PASS downloaded full-resolution images decode at original 2048 × 3072
-PASS whole-book loading has a working cancellation control
-PASS retry wait wording follows actual HTTP policy, not nested error text
-PASS new logs do not steal history-reading scroll position
-PASS resolved-parameter update keeps same attempt details open
-PASS connection loss is visible without opening logs
-PASS connection recovery clears the warning without replaying requests
-PASS desktop light has no horizontal page overflow
-PASS desktop dark has no horizontal page overflow
-PASS mobile light has no horizontal page overflow
-PASS mobile dark has no horizontal page overflow
-PASS server revision advances even if client timestamp is unchanged
-PASS a second stale write cannot overwrite the newer revision
-PASS no uncaught browser errors
-Lifecycle flow: 28 checks passed
-
-> mio-studio@2.3.0 test:pictures
+> mio-studio@3.1.0-dev.2 test:pictures
 > node tests/pictures.mjs
 
 PASS square cover grid is independent of source ratio
@@ -971,377 +735,23 @@ PASS directory export hydrates untouched albums and includes editable originals 
 PASS no uncaught browser errors
 30 picture checks passed
 
-> mio-studio@2.3.0 test:reader-preview
-> node tests/reader_preview.mjs
-
-PASS default mounts the entire album in a native continuous reader
-PASS lazy images retain full aspect ratios without eager template compilation
-PASS native panel open/close preserves image nodes, no compile or preparation
-PASS native ending has one quiet poem and the real project URL
-PASS toggling during preparation neither replaces iframe nor aborts controller
-PASS drawer toggles/search/current selection never remount loaded iframe
-PASS drawer interactions do not compile or reread any image
-PASS iframe script state and reading position survive drawer interactions
-PASS drawer trigger reports expanded state accessibly
-PASS mio-fit compiled preview/export has one small colophon
-PASS mio-fit reopened offline keeps poem and project address
-PASS export-paper compiled preview/export has one small colophon
-PASS export-paper reopened offline keeps poem and project address
-PASS export-ink compiled preview/export has one small colophon
-PASS export-ink reopened offline keeps poem and project address
-PASS export-gallery compiled preview/export has one small colophon
-PASS export-gallery reopened offline keeps poem and project address
-PASS export-flip compiled preview/export has one small colophon
-PASS flip poem is hidden until final spread
-PASS export-flip reopened offline keeps poem and project address
-PASS user-created template copies are not branded or rewritten
-PASS actual downloaded album contains all eight scenes and footer
-PASS preview project link opens without loosening iframe sandbox
-PASS mobile default scroll footer fits without horizontal overflow
-PASS no uncaught browser errors
-25 reader preview checks passed
-
-> mio-studio@2.3.0 test:afterglow
-> node tests/afterglow.mjs
-
-PASS exactly one AFTERGLOW is registered and the original presets remain
-PASS normalization keeps file-owned older layouts, copies and album choices untouched
-PASS fixed enhancement initializes without arbitrary-script consent
-PASS preview keeps the original opaque sandbox and network CSP
-PASS new preset uses copper rather than inheriting the untouched previous preset accent
-PASS default small text and scene labels meet 4.5:1 contrast on paper
-PASS selected cover is used without reordering story frames
-PASS mixed source sizes receive specific uncropped layouts
-PASS offline export embeds all four original full-resolution images
-PASS body is one centered image-first column with closely attached captions
-PASS portrait and square sources no longer switch between tiny and oversized plates
-PASS body removes decorative ghost numbers, detached plate labels and generic prologue
-PASS small image stays at or below natural dimensions
-PASS contents list is complete and does not duplicate content scenes
-PASS contents navigation closes dialog and seeks selected scene
-PASS detail view opens with same original image
-PASS actual-size view uses native pixel size
-PASS detail navigation respects boundaries and correct source
-PASS Escape closes detail viewer and restores usable page
-PASS dialog has a readable name and returns focus to its trigger
-PASS night mode is local and changes presentation palette
-PASS reduced-motion preference cancels active animation and parallax
-PASS mobile content has no horizontal overflow
-PASS mobile detail image fits visible stage
-PASS project poem and link remain once at the end
-PASS offline document made no external requests
-PASS JavaScript-disabled export remains fully readable
-PASS long titles, escaped captions and multiple books remain safe
-PASS missing scenes retain explicit placeholders, not fake success
-PASS narrow 320px layout also wraps long metadata
-PASS detail navigation skips ungenerated scenes instead of treating them as images
-PASS unsupported dialog/observer hides nonfunctional controls but retains reading
-PASS printing from night mode uses light paper and hides floating controls
-PASS edited copy may remove decorative nodes without breaking compilation
-PASS template package roundtrip retains fixed enhancement without custom script permission
-PASS new template preserves prior no-reload drawer guarantee
-PASS 24 mixed-ratio comic pages maintain equal readable widths and original proportions
-PASS dense comic captions stay under their own image with compact next-page spacing
-PASS mobile dense pages use the available width without cropping or sideways scrolling
-PASS narrow dense comic view also remains inside the page
-PASS equal-width comic layout also works without JavaScript
-PASS no uncaught browser errors
-42 afterglow checks passed
-
-> mio-studio@2.3.0 test:storyboard-import
-> node tests/storyboard_import.mjs
-
-PASS twelve nonempty frames, only one Chinese image variable, Chinese positive and negative prompts
-PASS normal UI file import creates a new template ID and twelve distinct frame IDs
-PASS all twelve imported names, prompts, captions and negatives exactly match the file
-PASS existing templates and generated albums remain byte-for-byte unchanged in state
-PASS only the new blank plan selects the imported template; old plan choices and queue remain unchanged
-PASS the single reference is uploaded as a real local image asset
-PASS every frame resolves exactly one ordered image input without relying on previous-frame memory
-PASS actual storyboard preview displays the numbered uploaded reference
-PASS imported template and reference remain after saving and reloading
-PASS reimport creates another independent copy, while flushing the old unblurred draft to its correct owner
-PASS invalid input leaves all existing templates and selection intact
-PASS no generation job or paid image request was submitted
-PASS no uncaught browser errors
-13 checks passed. Linux Chromium; isolated temporary workspace only. No model generation tested.
-
-> mio-studio@2.3.0 test:native
-> node tests/native_runtime.mjs
-
-PASS first save initializes independent files without aggregate indexes
-PASS bootstrap carries summaries, not album bodies
-PASS a second tab changes a different field without reverting the first tab
-PASS canonical ACK also prevents a later save from reverting merged fields
-PASS overlapping field edits conflict and retain the unsaved local draft
-PASS settings merge returns all canonical fields to the browser
-PASS text key is vaulted, not returned in public config or kept in browser state
-PASS text request after reload resolves the saved endpoint-bound key
-PASS independent vision connection resolves its own key, not the text key
-PASS changing endpoint cannot leak a previously saved key
-PASS failed binding validation sends no model request
-PASS settings retains maintenance without a single-resource picker
-PASS album menu exports a standard ZIP
-PASS normal UI import creates a different album identity and preserves originals
-PASS imported shared album is immediately readable from its own images directory
-PASS copying a valid independent file is discovered on reload without generation
-PASS lost save response leaves the draft explicitly unconfirmed
-PASS manual save recovery is idempotent and creates no duplicate file
-PASS picture polling keeps lazy album bodies unmaterialized
-PASS a slower detail response preserves the newer picture edit and full caption
-PASS explicit forget control removes only the chosen saved key
-PASS settings/secrets.json is never served as a static file
-PASS no browser exceptions or paid provider requests occurred
-23 native runtime UI checks passed. Controlled local text/vision only.
-
-> mio-studio@2.3.0 test:seamless
-> node tests/seamless.mjs
-
-PASS new built-in appears once and validates
-PASS registration does not replace user-owned data with the same identity
-PASS out-of-order source frames compile in storyboard order
-PASS real reader has four images, no visible text and zero vertical gaps
-PASS reader retains complete ratios and does not enlarge small originals
-PASS there is no cover duplicate, caption slot, title block or ending
-PASS opaque preview sandbox and offline CSP stay intact
-PASS selecting a style leaves original captions, prompts and images untouched
-PASS caption/prompt/signature/border options cannot reintroduce text or frame gaps
-PASS 1440px light offline view is seamless, uncropped and inside the viewport
-PASS 390px light offline view is seamless, uncropped and inside the viewport
-PASS 390px dark offline view is seamless, uncropped and inside the viewport
-PASS 320px dark offline view is seamless, uncropped and inside the viewport
-PASS zero-gap layout works with JavaScript disabled
-PASS small edited raster stays 240px wide and its bytes are unchanged
-PASS actual UI download includes every original image at native resolution
-PASS chosen style and original text survive native save/reload
-PASS there were no provider submissions or browser errors
-18 seamless checks passed. No model calls.
-
-> mio-studio@2.3.0 test:contextual-sharing
-> node tests/contextual_sharing.mjs
-
-PASS album import appears beside creation on the gallery page
-PASS settings keeps maintenance but no single-resource picker/import/export
-PASS storyboard import and export are beside the selected template
-PASS storyboard exports a native self-contained ZIP
-PASS import inspection does not write before confirmation
-PASS cancel leaves existing storyboards alone
-PASS storyboard import selects a fresh copy without replacing the old one
-PASS album settings export locally and the separate preset library provides import
-PASS variables and Chinese-named image references export with actual owned image bytes
-PASS variable import creates a preset without applying or overwriting current values
-PASS album share export lives in that album’s menu
-PASS album import is usable from the gallery and allocates a fresh ID
-PASS wrong resource kinds are rejected before import
-PASS 1440 dark storyboard actions fit the viewport
-PASS 1440 dark variable controls fit the viewport
-PASS 390 dark storyboard actions fit the viewport
-PASS 390 dark variable controls fit the viewport
-PASS 390 light storyboard actions fit the viewport
-PASS 390 light variable controls fit the viewport
-PASS no uncaught browser errors
-
-20 contextual sharing checks PASS
-
-> mio-studio@2.3.0 test:complete
-> node tests/content_complete.mjs
-
-SKIP actual 2.1 upgrade: set MIO_UPGRADE_BASELINE to the original delivered ZIP
-PASS existing workspaces receive data catalogs, not replacement albums
-PASS edited disk template is loaded and deleted built-in is not resurrected
-PASS fresh installation has real native album, storyboard, preset and seven layouts
-PASS fresh gallery displays the shipped owned cover
-PASS actual UI export includes inert metadata and explicit optional assets
-PASS preview and offline original export match at the exact same viewport
-PASS export retains actual original dimensions, not requested render dimensions
-PASS adaptive export keeps each complete original ratio inside its viewport without enlarging small art
-PASS explicit continuous mode keeps the shared column and the small-image size ceiling
-PASS actual native export independently includes storyboard=false variables=false
-PASS actual native export independently includes storyboard=true variables=false
-PASS actual native export independently includes storyboard=false variables=true
-PASS actual native export independently includes storyboard=true variables=true
-PASS recipient detects storyboard and variables without executing HTML
-PASS independent consent storyboards=false variables=false
-PASS imported image belongs to its fresh album albums_f4d2deb5fd6c4b83b2cc745317bc5353
-PASS independent consent storyboards=true variables=false
-PASS imported image belongs to its fresh album albums_8ba5bb35491b4ca4b01347933488619c
-PASS new plan references imported source and selected presets
-PASS independent consent storyboards=false variables=true
-PASS imported image belongs to its fresh album albums_9fdaf190b4fe436e8c4de00cd2f5961f
-PASS independent consent storyboards=true variables=true
-PASS imported image belongs to its fresh album albums_6ad5bc6d81b04397b8c7c4a0e7ae016a
-PASS new plan references imported source and selected presets
-PASS native ZIP import independently accepts storyboard=false variables=false
-PASS native ZIP import independently accepts storyboard=true variables=false
-PASS native ZIP import independently accepts storyboard=false variables=true
-PASS native ZIP import independently accepts storyboard=true variables=true
-PASS variables-only import can re-export its reference values without a storyboard
-PASS one real import dialog offers two independent default-off choices
-PASS cancelling confirmation writes no resource
-PASS unsupported metadata is rejected before writes
-PASS no uncaught browser errors
-33 complete-content checks PASS
-
-> mio-studio@2.3.0 test:preset-delete
-> node tests/preset_delete.mjs
-
-PASS preset delete is beside the selector and disabled without a selection
-PASS new blank preset is selected and can immediately be deleted
-PASS cancel retains the preset draft and leaves the album plan unchanged
-PASS one confirmation deletes the file while keeping applied blank values
-PASS deleted preset stays deleted after reload
-PASS lazy album summary exposes only preset IDs needed for safe deletion
-PASS 1440 light selector actions fit the viewport
-PASS 390 dark selector actions fit the viewport
-PASS 320 light selector actions fit the viewport
-PASS confirmation discloses references and retains used values, not a second abandonment prompt
-PASS global and per-scene precedence remains identical after detaching the deleted preset
-PASS other presets, queued snapshots and unrelated album summaries remain unchanged
-PASS used reference images belong to surviving owners, not the deleted preset
-PASS retained reference image bytes are readable
-PASS retained reference image bytes are readable
-PASS reload keeps the preset deleted and variables-only album exportable
-PASS 409 leaves original disk resource and an explicit unconfirmed local draft
-PASS 500 never claims a completed deletion or discards the local draft
-PASS lost acknowledgement is shown as unconfirmed even if the server committed deletion
-PASS normal save retry is idempotent and retains the copied reference
-PASS a distinct native file and ID append a preset without overwriting the original
-PASS same ID under another filename is diagnosed, not silently merged or treated as a new preset
-PASS no browser exceptions or generation submissions
-23 preset deletion checks PASS
-
-> mio-studio@2.3.0 test:preset-isolation
-> node tests/preset_isolation.mjs
-
-PASS exact reported flow returns to the original preset content, not the new blank editor
-PASS original preset, current album plan, books and queued snapshots remain unchanged
-PASS new preset B retains its own draft across switching
-PASS Save As creates a separate C draft and owns the subsequently added variable
-PASS Update saves only the preset named in the selector
-PASS a delayed image upload stays with C after switching to B
-PASS C shows its own uploaded image and text draft
-PASS per-preset drafts survive a normal saved reload
-PASS canceling Apply leaves the album plan alone
-PASS Apply copies the visible draft into this album without changing the preset or other albums
-PASS later preset updates do not mutate already applied album values
-PASS closing the library returns to actual album settings, without a preset update target
-PASS editing the album does not write back into C
-PASS Save As rebinds Update to D, never the source C
-PASS all original preset files remain byte-identical after the entire reproduced edit/switch/save sequence
-PASS 409 leaves the preset file unchanged, retains its draft and never reports confirmed success
-PASS 409 ordinary Update retry saves the same selected preset only
-PASS 500 leaves the preset file unchanged, retains its draft and never reports confirmed success
-PASS 500 ordinary Update retry saves the same selected preset only
-PASS a committed save with lost acknowledgement stays explicitly unconfirmed
-PASS ordinary Update retry after lost acknowledgement is idempotent
-PASS reopening preserves both the disk edit and the independent pending draft
-PASS stale draft is rejected before overwriting a newer preset
-PASS Save As recovers the stale draft without replacing either original
-PASS late upload cannot bind to a removed-and-recreated property with the same key
-PASS removing a draft field leaves the same field in C intact
-PASS boolean, number and JSON fields stay with the selected preset draft
-PASS actual draft export ZIP passes inspection and carries its owned image bytes
-PASS export takes the visible preset draft rather than the album or source preset
-PASS updating a legacy referenced preset preserves the album’s effective values and local precedence
-PASS canceling Save As neither creates a file nor changes the selected target
-PASS 另存 failure retains an independent unconfirmed copy without changing the album
-PASS 另存 retry persists the same ID without creating duplicates
-PASS 新建 failure retains an independent unconfirmed copy without changing the album
-PASS 新建 retry persists the same ID without creating duplicates
-PASS deleting a preset during upload does not resurrect it or attach its image to another editor
-PASS the requested concise Save As label is used
-PASS editor ownership and controls fit 1440px light
-PASS editor ownership and controls fit 390px dark
-PASS no browser exceptions or paid generation submissions
-40 preset isolation checks PASS
-
-> mio-studio@2.3.0 test:rename-retry
-> node tests/rename_retry.mjs
-
-PASS fixture opens with lazy native album summaries
-PASS single rename is prefilled with the existing full title
-PASS rename dialog has no prefix or appended-tag controls
-PASS cancel leaves every native album unchanged
-PASS rename replaces rather than prefixes the original name
-PASS rename preserves all content, tags, image ownership and unselected albums
-PASS batch rename gives each selected album its own existing-name input
-PASS one invalid name blocks the entire batch without partial edits
-PASS distinct batch names persist after a normal reload
-PASS existing album tags have a real search use and remain searchable
-PASS a changed rename target is rejected before editing the other selected album
-PASS 409 rename is explicitly unconfirmed and does not change the disk name
-PASS 409 ordinary save retry persists the replacement, not a repeated prefix
-PASS 500 rename is explicitly unconfirmed and does not change the disk name
-PASS 500 ordinary save retry persists the replacement, not a repeated prefix
-PASS lost rename acknowledgement retains an unconfirmed local name even after server commit
-PASS retry after a lost rename acknowledgement is idempotent
-PASS mobile rename fields and actions fit the viewport
-PASS consecutive failure limit is configurable alongside per-frame retries
-PASS invalid failure limit never reaches the server
-PASS canceling policy confirmation preserves the service limit
-PASS failed policy save retains the old service limit and does not display saved
-PASS billing confirmation discloses both per-frame retry and consecutive-failure limits
-PASS configured failure guard is persisted in the real service
-PASS real HTTP failures stop the album after two attempts, before all six scenes
-PASS the queue card explains the automatic stop and manual continuation
-PASS no retry leaks after the original retry deadline
-PASS another album still executes while the failing album stays stopped
-PASS refresh retains policy and does not resume the stopped task
-PASS desktop failure policy fits without horizontal overflow
-PASS no uncaught browser exceptions
-31 rename / failure-limit browser checks PASS
-
-> mio-studio@2.3.0 test:live-settings
-> node tests/live_settings.mjs
-
-PASS the top selector and main editor identify the same actual album version
-PASS the main album editor has no competing preset selector or Apply/Update action
-PASS editing the public library never changes the current book settings
-PASS the first real request has already submitted its original reference
-PASS a rejected save is explicitly not acknowledged
-PASS save failure retains the old disk inputs, rather than pretending new references took effect
-PASS one acknowledged save resolves text and image inputs together for pending scenes
-PASS single-scene reference overrides survive global reference replacement
-PASS updating one version leaves the other album document byte-equivalent
-PASS ordinary debounced autosave refreshes pending inputs without a separate Apply or Save button
-PASS optional source sharing uses this album’s latest values and explicit scene overrides
-PASS closed-browser execution reads the newly saved reference for subsequent frames
-PASS in-flight input remains original and the single-scene override remains independent
-PASS completed requests were not replayed and the immutable request evidence retains distinct references
-PASS a real service restart restores this album’s own edited values
-PASS switching global album changes the editor owner and restores the other album values
-PASS delayed scene image upload stays with its original album and scene after switching
-PASS restart and browsing cause no paid replay
-PASS no uncaught browser errors
-19 live settings UI checks PASS
-
-> mio-studio@2.3.0 test:reading-stage
-> node tests/reading_stage.mjs
-
-PASS adjacent portraits pair automatically; landscape and small artwork remain independent
-PASS both portraits are complete, proportional and inside the viewport
-PASS the next composition does not peek into a settled desktop page
-PASS paired portraits use the widescreen substantially, without stretching originals
-PASS next-page navigation advances a whole spread, not the second half of the same spread
-PASS an unpaired portrait has a local soft backdrop instead of empty black sidebars
-PASS small artwork never exceeds its native pixel dimensions
-PASS single-page mode deliberately disables automatic pairing
-PASS continuous mode restores natural scrolling without replacing image nodes
-PASS phone reading remains continuous and does not overflow horizontally
-PASS rotation back to desktop restores pairing and original node identity
-PASS first paired composition keeps correct page numbering after resizing
-PASS mio-fit standalone export contains five successfully decoded embedded originals
-PASS mio-fit actual standalone HTML preserves pairing and complete image geometry
-PASS mio-fit sandbox preview and offline export use identical geometry at the same viewport
-PASS export-seamless standalone export contains five successfully decoded embedded originals
-PASS export-seamless actual standalone HTML preserves pairing and complete image geometry
-PASS export-seamless sandbox preview and offline export use identical geometry at the same viewport
-PASS seamless pages still contain only imagery, no caption blocks or page numbers
-PASS seamless phone mode retains genuine zero-gap original-ratio images
-PASS serialized reading preferences cannot close the script element
-PASS changing mode in the real sandbox reader persists to the album and subsequent export
-PASS 1366×768 shows exact 2:3 and 3:4 portraits completely, with balanced pairing and no next-frame edge
-PASS 1280×720 shows exact 2:3 and 3:4 portraits completely, with balanced pairing and no next-frame edge
-PASS 1920×1080 shows exact 2:3 and 3:4 portraits completely, with balanced pairing and no next-frame edge
-PASS no browser script errors
-26 adaptive reading checks PASS
+ACTUAL UNPACKED PACKAGE
+PASS actual ZIP CRC, every manifest hash and all 59 content files match; no private/runtime paths
+PASS unpacked package starts with Python and its own included data, no source-tree fallback
+PASS shipped native album, 12-frame storyboard, preset and seven layouts are visible
+PASS real cover is served from this unpacked album’s owned assets
+PASS packaged gallery 1440 light has no horizontal overflow
+PASS packaged gallery 390 dark has no horizontal overflow
+PASS actual touch-sized gallery menu opens source sharing with independent default-off choices
+PASS actual packaged UI downloads a valid ZIP
+PASS recipient sees one default-off confirmation and no pre-confirmation import
+PASS confirmed import creates fresh album, storyboard and preset without replacing originals
+PASS imported image immediately reads from the new album’s own folder
+PASS editing a shipped JSON affects the unpacked application on reload
+PASS deleting all layouts does not resurrect them or prevent gallery startup
+PASS empty layout library offers an explicit import rather than a broken dialog
+PASS unpacked package runs its own Node worker and vendored AST parser
+PASS unpacked theme example inlines its actual texture
+PASS unpacked extension executes backend and separates code from persisted notes
+PASS no browser exceptions, provider calls or server tracebacks
+18 actual-package checks PASS

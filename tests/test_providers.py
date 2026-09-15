@@ -5,7 +5,7 @@ import json
 import unittest
 import zipfile
 from unittest.mock import patch, MagicMock
-import server
+from backend import server
 
 PNG = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=')
 
@@ -245,7 +245,7 @@ class ProviderTests(unittest.TestCase):
                 fetch.assert_called_once_with(url)
 
     def test_chat_content_blocks_order_and_deduplication(self):
-        from providers.openai_chat import extract_images
+        from backend.providers.openai_chat import extract_images
         message = {'images': [{'image_url': 'https://cdn.example/one'}], 'content': [
             {'type': 'text', 'text': '![same](https://cdn.example/one)![next](https://cdn.example/two)'},
             {'type': 'image_url', 'image_url': {'url': 'https://cdn.example/three'}},
@@ -254,7 +254,7 @@ class ProviderTests(unittest.TestCase):
         self.assertEqual([i['url'] for i in extract_images(message)], ['https://cdn.example/one', 'https://cdn.example/two', 'https://cdn.example/three'])
 
     def test_chat_base64_text_and_pure_text(self):
-        from providers.openai_chat import extract_images
+        from backend.providers.openai_chat import extract_images
         data = 'data:image/png;base64,' + base64.b64encode(PNG).decode()
         self.assertEqual(extract_images({'content': '![image]('+data+')'}), [{'url': data}])
         self.assertEqual(extract_images({'content': 'Sorry, no image.'}), [])
@@ -275,7 +275,7 @@ class ProviderTests(unittest.TestCase):
             server.fetch_remote_image('https://cdn.example/fake.png')
 
     def test_chat_explicit_images_ignore_incidental_site_links(self):
-        from providers.openai_chat import extract_images
+        from backend.providers.openai_chat import extract_images
         self.assertEqual(extract_images({'content':'![https://example.com](https://cdn.example/image) See https://example.com/docs'}), [{'url':'https://cdn.example/image'}])
         self.assertEqual(extract_images({'images':[{'image_url':{'url':'https://cdn.example/image'}}], 'content':'Made with https://example.com'}), [{'url':'https://cdn.example/image'}])
         self.assertEqual(extract_images({'content':'https://cdn.example/one https://cdn.example/two'}), [{'url':'https://cdn.example/one'}, {'url':'https://cdn.example/two'}])

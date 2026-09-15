@@ -14,11 +14,11 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-import mio_library_conversion as conversion
-from mio_library import FileLibrary, LibraryError, digest, encode, image_refs, image_type
-from mio_library_settings import FileSettings
-from mio_library_workspace import WorkspaceRepository
-from mio_jobs import Jobs
+from backend import mio_library_conversion as conversion
+from backend.mio_library import FileLibrary, LibraryError, digest, encode, image_refs, image_type
+from backend.mio_library_settings import FileSettings
+from backend.mio_library_workspace import WorkspaceRepository
+from backend.mio_jobs import Jobs
 
 ROOT = Path(__file__).resolve().parents[1]
 PNG = bytes.fromhex('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000b49444154789c636000020000050001a5f645400000000049454e44ae426082')

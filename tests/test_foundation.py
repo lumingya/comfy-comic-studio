@@ -7,17 +7,17 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
-import server
-import mio_foundation
-from mio_jobs import Jobs, Conflict
-from providers import extras
-from providers.comfyui import generate as comfy_generate
+from backend import server
+from backend import mio_foundation
+from backend.mio_jobs import Jobs, Conflict
+from backend.providers import extras
+from backend.providers.comfyui import generate as comfy_generate
 PNG=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=')
 
 class FoundationSafetyTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
-        self.root=Path(self.temp.name);self.library=__import__('mio_library').FileLibrary(self.root);self.addCleanup(self.library.close);self.store=Jobs(str(self.root/'runtime'/'execution'),lambda _:None);self.addCleanup(self.store.close)
+        self.root=Path(self.temp.name);self.library=__import__('backend.mio_library',fromlist=['*']).FileLibrary(self.root);self.addCleanup(self.library.close);self.store=Jobs(str(self.root/'runtime'/'execution'),lambda _:None);self.addCleanup(self.store.close)
         self.config={}
         for name,value in [('DATA_DIR',str(self.root)),('IMAGES_DIR',str(self.root/'runtime/staging/images')),('LEGACY_IMAGES_DIR',str(self.root/'legacy'))]:
             p=patch.object(server,name,value);p.start();self.addCleanup(p.stop)
@@ -58,7 +58,7 @@ class FoundationSafetyTests(unittest.TestCase):
         for content in [json.dumps({'known-id':{'status':{'completed':True},'outputs':{'9':{'images':[{'filename':'result.png','type':'output'}]}}}}).encode(),PNG]:
             r=MagicMock();r.headers={};r.read.side_effect=[content,b''];r.__enter__.return_value=r;responses.append(r)
         opener=MagicMock();opener.open.side_effect=responses
-        with patch('providers.comfyui.urllib.request.build_opener',return_value=opener):
+        with patch('backend.providers.comfyui.urllib.request.build_opener',return_value=opener):
             result=comfy_generate({'config':{'baseUrl':'http://localhost:8188','provider':'comfyui'},'workflow':{'9':{'class_type':'SaveImage','inputs':{}}},'_resumePromptId':'known-id','_requestTimeout':45},server)
         self.assertEqual(len(result['artifacts']),1)
         self.assertTrue(all(call.args[0].data is None for call in opener.open.call_args_list));self.assertEqual(opener.open.call_count,2)
@@ -92,7 +92,7 @@ class FoundationSafetyTests(unittest.TestCase):
 
     def test_missing_empty_or_type_changed_channel_never_uses_snapshot(self):
         import json
-        from mio_channels import ChannelConfigurationError
+        from backend.mio_channels import ChannelConfigurationError
         original={'channelId':'missing','config':{'provider':'openai','model':'old'},'prompt':'same'};profiles=[]
         host=SimpleNamespace(read_merged_config_raw=lambda:{'uiConfig':{'comfyStudio':{'settings':{'imageGeneration':{'profiles':profiles}}}}});row={'payload':json.dumps({'frames':[original]}),'idx':0}
         with self.assertRaises(ChannelConfigurationError):mio_foundation.latest_frame_input(host,row,original)

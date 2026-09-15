@@ -1,14 +1,16 @@
-> **2.3.0**：桌面完整画面自适应阅读；未发送分镜使用本册最新保存的变量和参考图；主编辑器与公共预设库分离。[更新说明](docs/RELEASE_2_3_0.md)
+> 当前工作区：**3.1.0-dev.2 向导与连线画布开发版**。功能、测试与尚未完成的边界以 [最新发布说明](docs/RELEASE_CURRENT.md) 和 [验收记录](docs/ASSEMBLY_ACCEPTANCE.md) 为准。下文保留通用安装与既有模块说明。
 
-> 本地改进版 **2.3.0（2026-09-14）**：完整源码运行包，包含真实、可编辑的随包 `data/`。只需 Python 3.10+。请阅读 [安全升级与分享](docs/guide/CONTENT_AND_SHARING.md) 和 [发布与验收](docs/RELEASE_2_3_0.md)。不包含个人密钥、任务数据库或开发缓存。
+> **3.0.0 · 可编程创作引擎（2026-09-14）**：可执行变量 DAG、两阶段生成、全局 CSS 主题与可信 Git/ZIP 扩展。源画册是唯一创作入口，生成快照留在历史/队列，不与源稿联动。见 [发布说明](docs/RELEASE_CURRENT.md)。
 
-> **独立文件架构已用于主程序。1.x 旧格式请先停止服务，显式转换到新目录；不要覆盖唯一原件。** [使用与迁移教程](docs/guide/FILE_LIBRARY.md)
+> 完整源码包包含可编辑的官方 `data/`，不含个人密钥、任务数据库或开发缓存。主程序需要 Python 3.10+；可执行变量需要 **Node.js 20+**，Git 安装需要 Git。普通使用不需要安装 npm 依赖。
+
+> [主题与扩展 SDK](docs/ECOSYSTEM_GUIDE.html) · [可执行变量与示例](docs/COMPUTED_VARIABLES.html) · [文件与分享](docs/guide/CONTENT_AND_SHARING.html)。扩展和脚本是完全受信任代码机制，**不是恶意代码沙箱**。安全恢复：`?safe_mode=1`；后端恢复：`MIO_SAFE_MODE=1`。
 
 <div align="center">
   <img src="docs/assets/mio-banner.svg" alt="Mio — Stories in frames" width="900">
   <h1>Mio · 绘页</h1>
   <p><strong>从一个故事，到一本画册。</strong><br>本地优先的分镜编排、多渠道图像生产与画册工作台。</p>
-  <p><b>简体中文</b> · <a href="README.en.md">English</a></p>
+  <p><b>简体中文</b> · <a href="docs/README.en.md">English</a></p>
   <p><a href="#快速开始">快速开始</a> · <a href="docs/README.md">教程中心</a> · <a href="docs/api/README.md">外部 API</a> · <a href="docs/api/openapi.json">OpenAPI</a> · <a href="docs/DEVELOPMENT.md">开发指南</a></p>
 </div>
 
@@ -88,7 +90,7 @@ Windows 也可双击 `start.bat`。打开 **http://127.0.0.1:8777**。
 | 使用 ComfyUI 工作流库与批量操作 | [工作流库](docs/WORKFLOW_UPDATE.md) · [队列与画册](docs/QUEUE_AND_COLLECTION_UPDATE.md) |
 | 用外部程序接入 | [API 教程](docs/api/README.md) · [OpenAPI](docs/api/openapi.json) · [Python 客户端](examples/mio_client.py) |
 | 备份、恢复、移动作品 | [备份与恢复](docs/guide/BACKUP.md) · [数据布局](docs/DATA_LAYOUT.md) |
-| 排查问题、安全部署 | [常见问题](docs/guide/TROUBLESHOOTING.md) · [安全边界](SECURITY.md) |
+| 排查问题、安全部署 | [常见问题](docs/guide/TROUBLESHOOTING.md) · [安全边界](docs/SECURITY.md) |
 | 修改源码、增加适配器 | [开发与扩展指南](docs/DEVELOPMENT.md) |
 | English tutorials | [English handbook](docs/en/GUIDE.md) · [Integration API](docs/en/API.md) |
 
@@ -126,7 +128,7 @@ curl -H "Authorization: Bearer $MIO_API_TOKEN" http://127.0.0.1:8777/api/v1/capa
 - 已提交的云任务可能无法取消；停止本地等待不等于退款。默认不自动付费重试；可在队列中明确启用有限重试，结果不明仍禁止自动重发。
 - 备份整个工程数据和素材，不要只复制含 `/images/` 引用的 JSON。
 
-环境变量及可信部署方式见 [安全说明](SECURITY.md)。
+环境变量及可信部署方式见 [安全说明](docs/SECURITY.md)。
 
 ## 开发与验证
 

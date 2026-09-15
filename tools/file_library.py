@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from mio_library import FileLibrary, KINDS, LibraryError, MAX_BUNDLE, MAX_DOCUMENT, decode, image_refs, owned_path
+from backend.mio_library import FileLibrary, KINDS, LibraryError, MAX_BUNDLE, MAX_DOCUMENT, decode, image_refs, owned_path
 
 
 def main(argv=None):

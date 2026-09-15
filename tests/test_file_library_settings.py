@@ -4,8 +4,8 @@ import os
 import tempfile
 import unittest
 from unittest.mock import patch
-import mio_library as lib
-from mio_library_settings import FileSettings
+from backend import mio_library as lib
+from backend.mio_library_settings import FileSettings
 
 
 class FileSettingsTests(unittest.TestCase):

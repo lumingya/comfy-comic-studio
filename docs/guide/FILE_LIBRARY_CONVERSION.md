@@ -117,4 +117,4 @@ python tools/file_library.py --data "/path/to/Mio-data-v2" get albums <实际ID>
 
 另有真正的 worker 启动测试：打开转换后的执行数据库后，保持暂停，未调用生成函数。
 
-执行环境是 Linux 沙箱、Chromium。Windows/macOS 的发布分支尚未进行原生设备测试；没有真实收费供应商验证。下面保留转换工具的专项验证范围；整应用、实际旧包转新界面及性能验收请见 [2.0 验收记录](../RELEASE_2_0_0.md)。
+执行环境是 Linux 沙箱、Chromium。Windows/macOS 的发布分支尚未进行原生设备测试；没有真实收费供应商验证。下面保留转换工具的专项验证范围；整应用、实际旧包转新界面及性能验收请见 [2.0 验收记录](../RELEASE_CURRENT.md)。

@@ -1,24 +1,12 @@
 /* One visible album owns the editor. Public presets are edited only in their library. */
 'use strict';
-function creationTask(plan=selectedPlan()){
-  if(!plan)return null;
-  const saved=state.drafts?.creationTargets;
-  const explicit=saved&&Object.hasOwn(saved,plan.id)?saved[plan.id]:undefined;
-  const id=explicit!==undefined?explicit:createUI.liveTaskId;
-  const valid=q=>q.planId===plan.id&&bookBy(q.bookId)&&q.status!=='archived';
-  if(explicit!==undefined)return explicit?state.queue.find(q=>q.id===explicit&&valid(q))||null:null;
-  return state.queue.find(q=>q.id===id&&valid(q))||state.queue.filter(q=>valid(q)&&q.done<q.indices.length).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0]||null;
-}
+function creationTask(){return null} // Source editor never binds itself to a generated version.
 function selectCreationContext(value){
-  const task=value.startsWith('task:')?state.queue.find(q=>q.id===value.slice(5)):null;
-  const plan=planBy(task?.planId||value);if(!plan||plan.projectId!==state.activeProjectId)throw Error('画册已不在当前画册集。');
-  flushEditor();createUI.planId=plan.id;createUI.liveTaskId=task?.id||null;createUI.sceneScope='plan';ui.templateId=plan.templateId;ui.frameIndex=0;
-  state.drafts??={};state.drafts.creationTargets??={};state.drafts.creationTargets[plan.id]=task?.id||'';save();render();
+  const plan=planBy(value);if(!plan||plan.projectId!==state.activeProjectId)throw Error('请选择当前作品，不是历史生成快照。');
+  commitSettingsGroupNames(currentBookSettings());flushEditor();createUI.planId=plan.id;createUI.liveTaskId=null;createUI.sceneScope='plan';ui.templateId=plan.templateId;ui.frameIndex=0;save();render();
 }
-function creationContextSelector(plan){
-  const q=creationTask(plan),value=q?'task:'+q.id:plan.id;
-  const tasks=state.queue.filter(x=>planBy(x.planId)?.projectId===state.activeProjectId&&bookBy(x.bookId));
-  return `<label class="creation-owner-select"><span>当前画册</span><select id="art-book-draft" aria-label="当前画册">${projectPlans().map(p=>opt(p.id,p.title+' · 草稿',value)).join('')}${tasks.length?'<optgroup label="画册版本">'+tasks.map(x=>opt('task:'+x.id,bookBy(x.bookId).title+' · '+(x.done>=x.indices.length?'已完成':['pending','running'].includes(x.status)?'制作中':'待继续')+' · '+new Date(x.createdAt).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}),value)).join('')+'</optgroup>':''}</select></label>`;
+function creationContextSelector(plan,titleLevel=false){
+  return `<label class="creation-owner-select ${titleLevel?'title-owner-select':''}"><span class="${titleLevel?'visually-hidden':''}">当前画册</span><select id="art-book-draft" aria-label="当前画册">${projectPlans().map(p=>opt(p.id,p.title,plan.id)).join('')}</select></label>`;
 }
 function sameSettingValue(a,b){return JSON.stringify(a,(k,v)=>typeof v==='string'&&v.startsWith('/images/')?v.split('/').at(-1):v)===JSON.stringify(b,(k,v)=>typeof v==='string'&&v.startsWith('/images/')?v.split('/').at(-1):v)}
 function entriesFromScope(values){return Object.entries(values||{}).map(([key,value])=>({id:uid('var'),key,type:isImageVariable(value)?'image':typeof value==='number'?'number':typeof value==='boolean'?'boolean':value&&typeof value==='object'?'json':'text',value:clone(value)}))}
@@ -33,7 +21,7 @@ function bookSettingsContext(q,plan=planBy(q?.planId)){
       const prior=plan?.sceneOverrides?.[f.id];for(const e of [...(prior?.variableSetIds||[]).flatMap(id=>setBy(id)?.entries||[]),...(prior?.variables||[])])if(sameSettingValue(typedVariableValue(e),f._scope?.[e.key])&&!own.some(x=>x.key===e.key))own.push(clone(e));
       if(own.length)sceneOverrides[f.id]={variables:own,variableSetIds:[]};
     }
-    source.settingsContext={id:'book-settings:'+book.id,_bookSettingsOwner:book.id,taskId:q.id,projectId:book.projectId,title:book.title,variables,variableSetIds:[],excludedSettingKeys:[],sceneOverrides};
+    source.settingsContext={id:'book-settings:'+book.id,_bookSettingsOwner:book.id,taskId:q.id,projectId:book.projectId,title:book.title,variables,settingsGroups:clone(plan?.settingsGroups||[]),variableSetIds:[],excludedSettingKeys:[],sceneOverrides};
   }
   source.settingsContext.title=book.title;return source.settingsContext;
 }
@@ -65,11 +53,11 @@ function syncBookSettingsInputs(forceTask=null){
 function generationContextPlan(plan){
   const q=plan?.id===selectedPlan()?.id?creationTask(plan):null,ctx=q&&bookSettingsContext(q,plan);
   if(!ctx)return plan;
-  return {...clone(plan),variables:clone(ctx.variables),variableSetIds:[],excludedSettingKeys:clone(ctx.excludedSettingKeys),sceneOverrides:clone(ctx.sceneOverrides),storyVersionId:'',title:bookBy(q.bookId).title,_creationTemplate:{...clone(templateBy(plan.templateId)),frames:clone(q.frames)}};
+  return {...clone(plan),variables:clone(ctx.variables),settingsGroups:clone(settingsGroups(ctx)),variableSetIds:[],excludedSettingKeys:clone(ctx.excludedSettingKeys),sceneOverrides:clone(ctx.sceneOverrides),storyVersionId:'',title:bookBy(q.bookId).title,_creationTemplate:{...clone(templateBy(plan.templateId)),frames:clone(q.frames)}};
 }
 function presetLibraryHTML(){
   const selected=settingPresetSelection(),draft=selected?settingPresetDraft(selected):null;
-  return `<div id="preset-library"><header class="preset-library-heading"><div><span class="context-kicker">公共预设库</span><p>这里管理可复用的设定。编辑草稿不会自动改变任何画册。</p></div>${btn('新建预设','plus','ws-new-preset','','small')}</header><div class="preset-library-layout"><aside class="preset-library-index"><label for="art-setting-preset">选择公共预设</label><select id="art-setting-preset" aria-label="选择公共预设"><option value="">选择预设…</option>${projectVariableSets().map(s=>opt(s.id,s.title,selected)).join('')}</select><label class="preset-search-label" for="preset-search">搜索预设</label><input id="preset-search" type="search" placeholder="输入预设名称…" autocomplete="off"><div class="preset-library-list">${projectVariableSets().map(s=>`<button type="button" class="preset-library-item ${s.id===selected?'active':''}" data-act="preset-library-select" data-id="${esc(s.id)}"><span>${esc(s.title)}</span><small>${(s.entries||[]).length} 个属性${state.drafts?.presetEdits?.[s.id]?.dirty?' · 草稿待更新':''}</small></button>`).join('')}</div>${btn('导入','upload','native-import','data-kind="variables"','small ghost')}${btn('删除预设','trash','ws-delete-preset',selected?'':'disabled','small ghost')}</aside><section class="preset-library-editor">${draft?`<div class="preset-editor-heading"><div><span class="context-kicker">预设草稿 · 不直接生效</span><h3>${esc(draft.title)}</h3></div>${btn('新增属性','plus','art-setting-add','','small')}</div><div class="preset-edit-notice">${icon('shield')} 正在编辑公共预设草稿，不会改变本册。更新预设与应用到画册是两个独立操作。</div>${renderSettingsGroups(draft)}<div class="preset-library-actions">${btn('更新此预设','disk','ws-update-preset','','small')}${btn('另存为','copy','art-save-preset','','small ghost')}${btn('导出','download','native-export-settings','','small ghost')}</div>`:'<div class="empty"><h3>选择一份预设</h3><p>查看或编辑公共库，不改变当前画册。</p></div>'}</section></div><footer class="preset-library-footer"><span><small class="apply-kicker">复制预设到</small><strong>${esc(currentSettingsLabel()||'当前画册')}</strong></span>${btn('应用到当前画册','check','art-apply-preset',draft?'':'disabled','primary')}</footer></div>`;
+  return `<div id="preset-library"><header class="preset-library-heading"><div><span class="context-kicker">公共预设库</span><p>这里管理可复用的设定。编辑草稿不会自动改变任何画册。</p></div>${btn('新建预设','plus','ws-new-preset','','small')}</header><div class="preset-library-layout"><aside class="preset-library-index"><label for="art-setting-preset">选择公共预设</label><select id="art-setting-preset" aria-label="选择公共预设"><option value="">选择预设…</option>${projectVariableSets().map(s=>opt(s.id,s.title,selected)).join('')}</select><label class="preset-search-label" for="preset-search">搜索预设</label><input id="preset-search" type="search" placeholder="输入预设名称…" autocomplete="off"><div class="preset-library-list">${projectVariableSets().map(s=>`<button type="button" class="preset-library-item ${s.id===selected?'active':''}" data-act="preset-library-select" data-id="${esc(s.id)}"><span>${esc(s.title)}</span><small>${(s.entries||[]).length} 个属性${state.drafts?.presetEdits?.[s.id]?.dirty?' · 草稿待更新':''}</small></button>`).join('')}</div>${btn('导入','upload','native-import','data-kind="variables"','small ghost')}${btn('删除预设','trash','ws-delete-preset',selected?'':'disabled','small ghost')}</aside><section class="preset-library-editor">${draft?`<div class="preset-editor-heading"><div><span class="context-kicker">预设草稿 · 不直接生效</span><h3>${esc(draft.title)}</h3></div></div>${settingsToolbar(draft)}<div class="preset-edit-notice">${icon('shield')} 正在编辑公共预设草稿，不会改变本册。更新预设与应用到画册是两个独立操作。</div>${renderSettingsGroups(draft)}`:'<div class="empty"><h3>选择一份预设</h3><p>查看或编辑公共库，不改变当前画册。</p></div>'}</section></div><footer class="preset-library-footer"><span><small class="apply-kicker">复制预设到</small><strong>${esc(currentSettingsLabel()||'当前画册')}</strong></span>${btn('应用到当前画册','check','art-apply-preset',draft?'':'disabled','primary')}</footer></div>`;
 }
 function openPresetLibrary(id){
   if(id)selectSettingPreset(id);
@@ -103,7 +91,7 @@ function installCreativeContext(){
     const effective=plan,book=oldEnqueue(effective,existing,indices),q=state.queue.filter(x=>x.bookId===book.id).at(-1);
     if(q&&!book.sourceSnapshot.settingsContext){
       const scenes={};for(const f of q.frames){const o=effective.sceneOverrides?.[f.id];if(o)scenes[f.id]={variables:clone([...new Map([...(o.variableSetIds||[]).flatMap(id=>setBy(id)?.entries||[]),...(o.variables||[])].map(e=>[e.key,e])).values()]),variableSetIds:[]}}
-      book.sourceSnapshot.settingsContext={id:'book-settings:'+book.id,_bookSettingsOwner:book.id,taskId:q.id,projectId:book.projectId,title:book.title,variables:clone(mergedSettingEntries(effective)),variableSetIds:[],excludedSettingKeys:clone(effective.excludedSettingKeys||[]),sceneOverrides:scenes};
+      book.sourceSnapshot.settingsContext={id:'book-settings:'+book.id,_bookSettingsOwner:book.id,taskId:q.id,projectId:book.projectId,title:book.title,variables:clone(mergedSettingEntries(effective)),settingsGroups:clone(settingsGroups(effective)),variableSetIds:[],excludedSettingKeys:clone(effective.excludedSettingKeys||[]),sceneOverrides:scenes};
     }
     if(q&&book.sourceSnapshot.settingsContext)book.sourceSnapshot.settingsContext.taskId=q.id;
     state.drafts??={};state.drafts.creationTargets??={};state.drafts.creationTargets[plan.id]=q?.id||'';syncBookSettingsInputs(q);save();return book;
@@ -115,7 +103,7 @@ function installCreativeContext(){
     catch(e){source.liveInputs[i]={error:e.message,savedAt:now,textSavedAt:now}}
   };
   liveStoryboardNotice=function(plan){const q=creationTask(plan);return q?'<p class="help">提示词、文字变量和参考图统一在保存后供尚未发送的分镜读取。已经发出的请求与已完成图片不变。</p>':''};
-  storyboardScopeHTML=function(p,t,own){return `<div class="storyboard-context"><span class="context-kicker">${own?'当前画册分镜':'公共分镜模板'}</span>${liveStoryboardNotice(p)}<details><summary>编辑公共模板</summary><select id="v3-scene-scope">${opt('plan','返回当前画册',own?'plan':'shared')}${opt('shared','编辑公共分镜模板（不改变制作中的画册）',own?'plan':'shared')}</select></details></div>`};
+  storyboardScopeHTML=function(){return ''};
   const oldAction=handleAction;handleAction=async function(action,d={},el){
     if(action==='preset-library-open')return openPresetLibrary();
     if(action==='preset-library-preview')return openPresetLibrary(d.id);

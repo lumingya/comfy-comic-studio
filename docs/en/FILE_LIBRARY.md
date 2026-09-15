@@ -2,7 +2,7 @@
 
 # File-native workspaces
 
-[Handbook](GUIDE.md) · [中文](../guide/FILE_LIBRARY.md) · [Release and acceptance](../RELEASE_2_0_0.md)
+[Handbook](GUIDE.md) · [中文](../guide/FILE_LIBRARY.md) · [Release and acceptance](../RELEASE_CURRENT.md)
 
 Mio 2.x uses independent resources throughout the GUI, save transport, image routes and execution adapters. It does **not** read or automatically migrate the old aggregate format.
 

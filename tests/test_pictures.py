@@ -7,17 +7,17 @@ import unittest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
-from mio_jobs import Jobs, Conflict
-import mio_pictures as pictures
-import mio_foundation
-import server
+from backend.mio_jobs import Jobs, Conflict
+from backend import mio_pictures as pictures
+from backend import mio_foundation
+from backend import server
 
 PNG=bytes.fromhex('89504e470d0a1a0a0000000d494844520000006400000050')
 RECIPE={'version':1,'crop':{'x':0,'y':0,'w':1,'h':1},'rotation':0,'flipX':False,'flipY':False,'brightness':1,'contrast':1,'saturation':1,'layers':[]}
 class PictureTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=self.tmp.name
-        library=__import__('mio_library').FileLibrary(self.root);self.addCleanup(library.close)
+        library=__import__('backend.mio_library',fromlist=['*']).FileLibrary(self.root);self.addCleanup(library.close)
         self.calls=[];self.store=Jobs(str(Path(self.root)/'runtime'/'execution'),lambda f:self.calls.append(f) or {'image':'/images/late.png'});self.store.close();self.addCleanup(self.store.close)
         self.config={'savedGalleries':[{'id':'album','totalSteps':2,'generatedSteps':2,'status':'complete','steps':[{'stepIndex':i,'name':'scene','caption':'keep caption','prompt':'keep prompt','image':'/images/original.png'} for i in range(2)]}],'batchRunState':{'queue':[]}}
         for name in ['original.png','edited.png','late.png']:Path(self.root,name).write_bytes(PNG)

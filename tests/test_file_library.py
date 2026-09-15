@@ -14,7 +14,7 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-import mio_library as lib
+from backend import mio_library as lib
 
 PNG = bytes.fromhex('89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000b49444154789c636000020000050001a5f645400000000049454e44ae426082')
 
@@ -296,7 +296,7 @@ class FileLibraryTests(unittest.TestCase):
     def test_abrupt_process_exit_recovers_durable_intent(self):
         code = """
 import os, sys
-import mio_library as lib
+from backend import mio_library as lib
 store = lib.FileLibrary(sys.argv[1])
 real = lib.atomic_write
 def abrupt(path, raw, private=False):
@@ -306,7 +306,7 @@ def abrupt(path, raw, private=False):
 lib.atomic_write = abrupt
 store.put('albums', {'title': '进程退出恢复', 'steps': []}, create=True)
 """
-        child = subprocess.run([sys.executable, '-c', code, str(self.root)], cwd=Path(lib.__file__).parent, capture_output=True, timeout=10)
+        child = subprocess.run([sys.executable, '-c', code, str(self.root)], cwd=Path(lib.__file__).resolve().parents[1], capture_output=True, timeout=10)
         self.assertEqual(child.returncode, 73, child.stderr.decode())
         self.store.close(); self.store = lib.FileLibrary(self.root); self.store.scan()
         self.assertEqual(self.store.catalog('albums')['items'][0]['title'], '进程退出恢复')
@@ -316,7 +316,7 @@ store.put('albums', {'title': '进程退出恢复', 'steps': []}, create=True)
         a = self.story()
         code = """
 import sys
-from mio_library import FileLibrary, LibraryError
+from backend.mio_library import FileLibrary, LibraryError
 store = FileLibrary(sys.argv[1])
 doc = store.get('storyboards', sys.argv[2])['document']
 print('ready', flush=True)
@@ -329,7 +329,7 @@ except LibraryError as e:
     print(e.code, flush=True)
 store.close()
 """
-        children = [subprocess.Popen([sys.executable, '-c', code, str(self.root), a['document']['id'], a['etag'], str(n)], cwd=Path(lib.__file__).parent, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) for n in range(2)]
+        children = [subprocess.Popen([sys.executable, '-c', code, str(self.root), a['document']['id'], a['etag'], str(n)], cwd=Path(lib.__file__).resolve().parents[1], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) for n in range(2)]
         try:
             for child in children:
                 self.assertEqual(child.stdout.readline().strip(), 'ready')

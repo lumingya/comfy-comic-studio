@@ -6,11 +6,11 @@
     "engine": true,
     "llm": false,
     "logs": true,
-    "extensions": false
+    "extensions": true,
+    "marketplace": false
   },
   "features": {
     "assistant": true,
-    "marketplace": true,
     "visualCritic": true,
     "executionLogs": true
   },

@@ -1,3 +1,4 @@
+import {settingsField} from './helpers/settings.mjs';
 // Current studio UI regression suite. Runs against an isolated data directory.
 import {chromium} from 'playwright';
 import {spawn} from 'node:child_process';
@@ -8,7 +9,7 @@ import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const temp=mkdtempSync(path.join(tmpdir(),'ccs-studio-'));
-for(const name of ['data','mio_content.py','mio_album_html.py','mio_resource_sharing.py','providers','mio_library.py','mio_library_settings.py','mio_library_workspace.py','mio_native_store.py','mio_safe_svg.py','mio_pictures.py','mio_lifecycle.py','mio_jobs.py','mio_frame_jobs.py','mio_channels.py','mio_contracts.py','mio_foundation.py','server.py','mio_api.py','mio_credentials.py','mio_docs.py','index.html','styles.css','favicon.svg','vendor','js','docs','examples','README.md','README.en.md','SECURITY.md'])cpSync(path.join(ROOT,name),path.join(temp,name),{recursive:true,filter:src=>!['runtime','.cache','.write.lock','secrets.json'].includes(path.basename(src))});
+for(const name of ['data','backend','server.py','index.html','styles.css','favicon.svg','vendor','js','docs','examples','README.md'])cpSync(path.join(ROOT,name),path.join(temp,name),{recursive:true,filter:src=>!['runtime','.cache','.write.lock','secrets.json'].includes(path.basename(src))});
 const port=Number(process.env.SMOKE_PORT||8791),base=`http://127.0.0.1:${port}`;
 const server=spawn('python3',['-u','server.py'],{cwd:temp,env:{...process.env,COMFY_COMIC_PORT:String(port)},stdio:['ignore','pipe','pipe']});
 let browser,checks=0;const check=(name,value)=>{assert.ok(value,name);console.log('PASS '+name);checks++};
@@ -92,7 +93,7 @@ try{
   await page.locator('#modal input').first().fill('New preset');
   await page.locator('#modal .modal-footer .primary').click();
   check('blank preset starts empty without clearing existing presets',await page.evaluate(old=>{const prior=JSON.parse(old);return prior.every(p=>JSON.stringify(setBy(p.id))===JSON.stringify(p))&&mergedSettingEntries(settingsEditorTarget()).every(e=>e.value==='')},old));
-  await page.locator('#preset-library [data-art-setting="character"]').fill('new_character');await page.locator('[data-act="ws-update-preset"]').click();
+  await (await settingsField(page,'#preset-library [data-art-setting="character"]')).fill('new_character');await page.locator('[data-act="ws-update-preset"]').click();
   check('new preset can be saved directly',await page.evaluate(()=>setBy(settingPresetSelection()).entries.some(e=>e.key==='character'&&e.value==='new_character')));
   await page.evaluate(()=>closeModal());
   // Stable fixture: full scope priority and per-frame workflow choices.

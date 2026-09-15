@@ -23,8 +23,8 @@ async function exportContextResource(kind,id){
 function installContextualSharing(){
   v3Actions['native-export']=async d=>exportContextResource(d.kind||'albums',d.id);
   v3Actions['native-export-settings']=async()=>{
-    flushEditor();const plan=settingsEditorTarget();if(!plan)throw Error('请先选择画册计划。');
-    const document={id:uid('share'),title:plan.title+' · 角色与画面设定',entries:clone(mergedSettingEntries(plan)),...(plan._presetEditorId?{frames:clone(plan.frames||{})}:{})};
+    commitSettingsGroupNames(settingsEditorTarget());flushEditor();const plan=settingsEditorTarget();if(!plan)throw Error('请先选择画册计划。');
+    const document={id:uid('share'),title:plan.title+' · 角色与画面设定',entries:clone(mergedSettingEntries(plan)),settingsGroups:clone(settingsGroups(plan)),...(plan._presetEditorId?{frames:clone(plan.frames||{})}:{})};
     if(!document.entries.length)throw Error('当前没有可导出的变量设定。');
     if(!await ComfyComic.sync.save())throw Error('编辑尚未保存，未导出旧内容。');
     const response=await request('/api/library/export-document',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'characters',document})},90000);
@@ -52,7 +52,7 @@ function installContextualSharing(){
       if(result.kind==='storyboards'){
         ui.templateId=result.id;ui.storyTemplateId=result.id;ui.frameIndex=0;
         // Match the existing storyboard importer: select the new copy in this plan.
-        const plan=selectedPlan();if(plan){plan.templateId=result.id;plan.storyVersionId='';save()}
+        const plan=selectedPlan();if(plan){const previous=templateBy(plan.templateId);if(previous?.ownerPlanId===plan.id)for(const f of previous.frames){const own=plan.sceneOverrides[f.id]||{};for(const key of ['name','prompt','caption','negative','renderOverride','width','height','steps','cfg','denoise','seed'])if(Object.hasOwn(own,key)){f[key]=clone(own[key]);delete own[key]}}plan.templateId=result.id;plan.storyVersionId='';save()}
         ui.workspace=1;render();
       }else if(['characters','scenes'].includes(result.kind)){
         createUI.setId=result.id;createUI.tab='settings';ui.workspace=1;render();

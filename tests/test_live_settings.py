@@ -5,8 +5,8 @@ import tempfile
 import threading
 import unittest
 from types import SimpleNamespace
-from mio_jobs import Jobs
-from mio_foundation import latest_frame_input
+from backend.mio_jobs import Jobs
+from backend.mio_foundation import latest_frame_input
 
 class LiveSettingsTests(unittest.TestCase):
     def setUp(self):
@@ -86,7 +86,8 @@ class SavedAlbumTests(unittest.TestCase):
         self.fresh['config']={'provider':'comfyui','outputNodeId':'new-output'}
         self.fresh['workflow']={'new-output':{'class_type':'SaveImage','inputs':{}}}
         self.entry['textSavedAt']=3000
-        self.config['uiConfig']={'comfyStudio':{'settings':{'imageGeneration':{'profiles':[{'id':'comfyui','provider':'comfyui'}]},'comfy':{'baseUrl':'http://127.0.0.1:8188'}}}}
+        self.config['uiConfig']={'comfyStudio':{'settings':{'imageGeneration':{'profiles':[{'id':'comfyui','provider':'comfyui'}]}}}}
+        self.config['comfyConfig']={'baseUrl':'http://127.0.0.1:8188'}
         frame=latest_frame_input(self.host,self.row,self.original)
         self.assertEqual(frame['config']['outputNodeId'],'new-output')
         self.assertEqual(frame['config']['baseUrl'],'http://127.0.0.1:8188')

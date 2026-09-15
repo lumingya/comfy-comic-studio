@@ -7,8 +7,8 @@ import json
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from mio_library import LibraryError
-from mio_library_conversion import convert
+from backend.mio_library import LibraryError
+from backend.mio_library_conversion import convert
 
 
 def main(argv=None):

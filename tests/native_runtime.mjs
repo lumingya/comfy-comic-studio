@@ -12,7 +12,7 @@ await new Promise(r=>upstream.listen(0,'127.0.0.1',r));const endpoint='http://12
 let server,browser,count=0;const errors=[];const check=(name,value)=>{assert.ok(value,name);console.log('PASS '+name);count++};
 async function load(page){await page.goto(base);await page.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);await page.evaluate(()=>document.querySelectorAll('dialog[open]').forEach(d=>d.close()))}
 try{
- server=spawn('python',['-u','server.py'],{cwd:root,env:{...process.env,MIO_DATA_DIR:data,MIO_PORT:'8850'},stdio:['ignore','pipe','pipe']});let ready=false;for(let i=0;i<200;i++){try{if((await fetch(base+'/api/config')).ok){ready=true;break}}catch{}await new Promise(r=>setTimeout(r,50))}assert.ok(ready);
+ server=spawn('python',['-u','server.py'],{cwd:root,env:{...process.env,MIO_DATA_DIR:data,MIO_PORT:'8850'},stdio:['ignore','pipe','pipe']});server.stdout.on('data',()=>{});server.stderr.on('data',()=>{});let ready=false;for(let i=0;i<200;i++){try{if((await fetch(base+'/api/config')).ok){ready=true;break}}catch{}await new Promise(r=>setTimeout(r,50))}assert.ok(ready);
  browser=await chromium.launch({args:['--no-sandbox']});const a=await browser.newPage(),b=await browser.newPage();for(const p of [a,b])p.on('pageerror',e=>errors.push(e.message));await load(a);
  check('first save initializes independent files without aggregate indexes',await a.evaluate(()=>savePythonWorkspace(true))&&!readdirSync(path.join(data,'albums')).includes('index.json')&&!readdirSync(path.join(data,'storyboards')).includes('templates.json'));
  const id=await a.evaluate(()=>state.books[0].id);await load(b);check('bootstrap carries summaries, not album bodies',await b.evaluate(()=>state.books.every(b=>b._lazy&&b.steps.length===0)));

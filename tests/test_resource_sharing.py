@@ -7,9 +7,9 @@ from pathlib import Path
 import tempfile
 import unittest
 import zipfile
-from mio_native_store import NativeStore
-from mio_library import LibraryError
-from mio_resource_sharing import export_document, inspect_resource, import_resource
+from backend.mio_native_store import NativeStore
+from backend.mio_library import LibraryError
+from backend.mio_resource_sharing import export_document, inspect_resource, import_resource
 
 ROOT=Path(__file__).resolve().parents[1]
 
@@ -122,7 +122,7 @@ class ResourceSharingTests(unittest.TestCase):
         self.assertEqual(before,self.snapshot())
 
     def test_html_import_rejects_malformed_source_frames_without_writes(self):
-        from mio_album_html import import_html
+        from backend.mio_album_html import import_html
         for bad in ([None],[{'prompt':7}],[{'prompt':'文本','renderOverride':{}}]):
             payload={'schema':'mio.album-html.v1','books':[{'album':{'title':'画册','steps':[{'stepIndex':0,'image':''}]},'storyboard':{'title':'坏分镜','frames':bad}}]}
             body={'projectId':'project','html':'<script type="application/json" id="mio-album-data">'+json.dumps(payload)+'</script>','include':{'storyboards':True}}
@@ -130,7 +130,7 @@ class ResourceSharingTests(unittest.TestCase):
             with self.assertRaises(LibraryError):import_html(self.store,body)
             self.assertEqual(before,self.snapshot())
     def test_html_import_ignores_scripts_and_rejects_external_assets(self):
-        from mio_album_html import import_html,inspect
+        from backend.mio_album_html import import_html,inspect
         payload={'schema':'mio.album-html.v1','books':[{'album':{'title':'只读数据','steps':[{'stepIndex':0,'image':{'$mioImage':'a'}}]}}]}
         html='<script>location="https://never-fetch.invalid"</script><script type="application/json" id="mio-album-data">'+json.dumps(payload)+'</script><img data-mio-asset="a" src="'+self.uri+'">'
         body={'html':html,'projectId':'project'};before=self.snapshot();self.assertEqual(inspect(self.store,body)['images'],1);self.assertEqual(before,self.snapshot())
