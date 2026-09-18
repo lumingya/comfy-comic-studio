@@ -14,83 +14,7 @@
         "weapon"
       ],
       "installedPackages": [],
-      "drafts": {
-        "presetEdits": {
-          "setting_nanami": {
-            "id": "preset-editor-setting_nanami",
-            "_presetEditorId": "setting_nanami",
-            "projectId": "collection_summer",
-            "title": "七海 · 标准角色设定",
-            "variableSetIds": [],
-            "variables": [
-              {
-                "id": "var_b74fb73f-0e7f-48b5-854c-5ea7ac7b0715",
-                "key": "character_display_name",
-                "type": "text",
-                "value": "七海",
-                "groupId": "group-character"
-              },
-              {
-                "id": "var_67c9455e-9221-4924-95b2-666b0efd3fd2",
-                "key": "character",
-                "type": "text",
-                "value": "nanami",
-                "groupId": "group-character"
-              },
-              {
-                "id": "var_a876f6ac-6ada-4ab2-b78d-0a2278622af4",
-                "key": "outfit",
-                "type": "text",
-                "value": "white shirt, navy skirt, small canvas bag",
-                "groupId": "group-character"
-              },
-              {
-                "id": "var_620a05c2-e8cb-4519-ab74-dcec8592b1f6",
-                "key": "style",
-                "type": "text",
-                "value": "cinematic anime illustration, delicate cel shading, soft film texture",
-                "groupId": "group-visual"
-              },
-              {
-                "id": "var_e841eb9d-45df-44ca-9bc7-fbb8fb77dc11",
-                "key": "scene",
-                "type": "text",
-                "value": "a quiet coastal town in summer",
-                "groupId": "group-visual"
-              },
-              {
-                "id": "var_0f29e264-f4a8-4600-94f6-1997cd760167",
-                "key": "weapon",
-                "type": "text",
-                "value": "",
-                "groupId": "group-visual"
-              },
-              {
-                "id": "var_56bbbd26-0e83-4449-94c4-c122cc9de8e0",
-                "key": "lora",
-                "type": "text",
-                "value": "",
-                "groupId": "group-visual"
-              }
-            ],
-            "settingsGroups": [
-              {
-                "id": "group-character",
-                "title": "主角与服装"
-              },
-              {
-                "id": "group-visual",
-                "title": "画风与场景"
-              }
-            ],
-            "frames": {},
-            "excludedSettingKeys": [],
-            "base": "{\"entries\":[{\"groupId\":\"group-character\",\"id\":\"var_b74fb73f-0e7f-48b5-854c-5ea7ac7b0715\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"七海\"},{\"groupId\":\"group-character\",\"id\":\"var_67c9455e-9221-4924-95b2-666b0efd3fd2\",\"key\":\"character\",\"type\":\"text\",\"value\":\"nanami\"},{\"groupId\":\"group-character\",\"id\":\"var_a876f6ac-6ada-4ab2-b78d-0a2278622af4\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"white shirt, navy skirt, small canvas bag\"},{\"groupId\":\"group-visual\",\"id\":\"var_620a05c2-e8cb-4519-ab74-dcec8592b1f6\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, delicate cel shading, soft film texture\"},{\"groupId\":\"group-visual\",\"id\":\"var_e841eb9d-45df-44ca-9bc7-fbb8fb77dc11\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"a quiet coastal town in summer\"},{\"groupId\":\"group-visual\",\"id\":\"var_0f29e264-f4a8-4600-94f6-1997cd760167\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"groupId\":\"group-visual\",\"id\":\"var_56bbbd26-0e83-4449-94c4-c122cc9de8e0\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"frames\":{},\"settingsGroups\":[{\"id\":\"group-character\",\"title\":\"主角与服装\"},{\"id\":\"group-visual\",\"title\":\"画风与场景\"}],\"title\":\"七海 · 标准角色设定\"}",
-            "bindings": [],
-            "dirty": false
-          }
-        }
-      },
+      "drafts": {},
       "settings": {
         "negative": "low quality, bad anatomy, extra fingers, text, watermark",
         "syncUrl": "",
@@ -104,18 +28,12 @@
           },
           "fonts": true,
           "readerMode": "spread",
-          "homeLayout": "grid",
+          "homeLayout": "showcase",
           "defaultReaderMode": "webtoon",
           "language": "zh-CN",
           "lettering": "editorial",
           "demoCleanupVersion": 2,
-          "bookOrder": {
-            "collection_summer": [
-              "edition_letter",
-              "book_1b07b003-041a-404a-87d3-327c18985ff3",
-              "book_5213ff35-ba03-416b-ab66-17a40177853c"
-            ]
-          },
+          "bookOrder": {},
           "collectionSort": "manual"
         },
         "identity": {
@@ -145,11 +63,9 @@
           "path": ""
         },
         "tutorial": {
-          "seen": true,
+          "seen": false,
           "completed": false,
-          "readSteps": [
-            0
-          ],
+          "readSteps": [],
           "lastStep": 0
         },
         "backend": {
@@ -162,7 +78,7 @@
           "responseField": ""
         },
         "imageGeneration": {
-          "active": "novelai",
+          "active": "comfyui",
           "profiles": [
             {
               "id": "comfyui",
@@ -193,10 +109,6 @@
               "keyMode": "none"
             }
           ]
-        },
-        "productionAssembly": {
-          "channelId": "openai",
-          "workflowId": "wf_3aa839c7-6c93-4f93-a0c3-9399e1242916"
         }
       },
       "studio": {
@@ -207,8 +119,8 @@
           "engine": true,
           "llm": false,
           "logs": true,
-          "extensions": false,
-          "marketplace": true
+          "extensions": true,
+          "marketplace": false
         },
         "features": {
           "assistant": true,
@@ -249,21 +161,16 @@
     "templates": [
       "story_journey12",
       "storyboard_5fa900a6056d4118901eb4202e648675",
-      "storyboards_50565bedcf5d46d892848fad25d1bf01",
-      "story_3dfe5619-28ff-4a69-b881-ceed190610be",
-      "story_f45195ae-5f6f-4fe7-8e4a-1488de8c1a0d",
-      "storyboard_6a8ae57bd4df43539690eac3b7a71b4a"
+      "storyboards_50565bedcf5d46d892848fad25d1bf01"
     ],
     "savedGalleries": [
       "book_1b07b003-041a-404a-87d3-327c18985ff3",
-      "book_5213ff35-ba03-416b-ab66-17a40177853c",
       "edition_letter"
     ],
     "rows": [
       "character_nanami",
       "character_campus_pair",
-      "rows_d68d91eb18f64d829818080f68440059",
-      "character_hello_another_me"
+      "rows_d68d91eb18f64d829818080f68440059"
     ],
     "projects": [
       "collection_summer"
@@ -271,15 +178,13 @@
     "plans": [
       "draft_letter",
       "plan_campus_system_24",
-      "plans_0bfaaa70c2f44e878069cd06a39cd828",
-      "plan_hello_another_me"
+      "plans_0bfaaa70c2f44e878069cd06a39cd828"
     ],
     "characters": [
       "setting_nanami",
       "characters_b7ea26e8986846219c773c6ba80d6d5a",
       "set_467e2546-30ed-41d8-9f70-07096a8f2d82",
-      "setting_campus_pair",
-      "setting_hello_another_me"
+      "setting_campus_pair"
     ],
     "scenes": [],
     "exportTemplates": [
@@ -300,15 +205,13 @@
       "chat_eb546791-8a79-4418-853d-9d9e79efed03"
     ],
     "queue": [
-      "task_2a3ae55c-739f-4d30-9dfe-85d989724f61",
-      "task_45d08489-c962-48e3-8cd1-8572e21ae759"
+      "task_2a3ae55c-739f-4d30-9dfe-85d989724f61"
     ],
     "variableSets": [
       "setting_nanami",
       "characters_b7ea26e8986846219c773c6ba80d6d5a",
       "set_467e2546-30ed-41d8-9f70-07096a8f2d82",
-      "setting_campus_pair",
-      "setting_hello_another_me"
+      "setting_campus_pair"
     ]
   },
   "aliases": [],

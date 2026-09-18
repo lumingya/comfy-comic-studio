@@ -12,6 +12,7 @@ from pathlib import Path
 from backend import mio_pictures
 from backend.mio_jobs import Jobs, Conflict
 from backend.mio_lifecycle import task_operations, filter_deleted
+from backend.mio_library import LibraryError
 _STORES={};_LOCK=threading.RLock()
 
 def jobs(host):
@@ -53,7 +54,7 @@ def projection_warning(receipt):
     from backend.mio_library import atomic_write,encode
     logging.warning('Independent album projection pending: %s. Execution is retained; no provider retry.',receipt.name)
     try:
-        value=json.loads(receipt.read_text());value['error']='projection_pending'
+        value=json.loads(receipt.read_text(encoding="utf-8"));value['error']='projection_pending'
         atomic_write(receipt,encode(value))
     except (OSError,ValueError):
         logging.warning('Cannot update projection receipt. Check workspace disk/permissions.')
@@ -62,7 +63,7 @@ def projection_warning(receipt):
 def recover_materializations(host):
     for receipt in (Path(host.DATA_DIR)/'runtime/materialization').glob('*.json'):
         try:
-            materialize_album(host,json.loads(receipt.read_text())['albumId']);receipt.unlink(missing_ok=True)
+            materialize_album(host,json.loads(receipt.read_text(encoding="utf-8"))['albumId']);receipt.unlink(missing_ok=True)
         except Exception:projection_warning(receipt)
 
 
@@ -86,10 +87,12 @@ def materialize_album(host, album_id):
         if not db.execute('SELECT 1 FROM jobs WHERE album_key=? LIMIT 1',(album_id,)).fetchone() and not db.execute('SELECT 1 FROM picture_edits WHERE album=? LIMIT 1',(album_id,)).fetchone():return
     with host.CONFIG_LOCK:
         store=host.native_store()
-        try:record=store.entity('albums',album_id)
-        except ValueError:
+        try:
+            record=store.entity('albums',album_id)
+        except (ValueError, getattr(host, 'LibraryError', LibraryError)) as exc:
             from backend.mio_lifecycle import deleted_album_ids
-            if album_id in deleted_album_ids(host.DATA_DIR):return
+            if album_id in deleted_album_ids(host.DATA_DIR) or getattr(exc, 'status', None) == 404:
+                return
             raise
         config=store.read(album_summaries=True)
         original=copy.deepcopy(record['document'])

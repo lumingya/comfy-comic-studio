@@ -4,7 +4,7 @@
 
 ## 环境与命令
 
-Python 3.10+ 运行标准库后端；Node.js 18+ 用于前端构建、lint 和测试。
+Python 3.10+ 与 Pillow 11.3–12.x 运行后端；先执行 `python -m pip install -r packaging/requirements.txt`。Node.js 20+ 用于可执行变量、前端构建、lint 和测试。
 
 ```bash
 npm ci

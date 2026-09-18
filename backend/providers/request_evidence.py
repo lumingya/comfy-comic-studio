@@ -28,3 +28,21 @@ def safe_error_text(text):
     cleaned=re.sub(r'(?i)(authorization\s*[=:]\s*)(?:bearer\s+|basic\s+)?[^\s,;"}]+',r'\1[redacted]',cleaned)
     cleaned=re.sub(r'[A-Za-z0-9+/]{512,}={0,2}','[encoded payload omitted]',cleaned)
     return prefix+cleaned[:16384]+('… [diagnostic truncated]' if len(cleaned)>16384 else '')
+
+
+def sanitize_url(url):
+    """Strip query string and credentials from URL to protect presigned tokens."""
+    if not isinstance(url, str):
+        return ""
+    import urllib.parse
+    try:
+        parts = urllib.parse.urlsplit(url)
+        if parts.scheme and parts.netloc:
+            netloc = parts.hostname or ""
+            if parts.port:
+                netloc = f"{netloc}:{parts.port}"
+            return urllib.parse.urlunsplit((parts.scheme, netloc, parts.path, "", ""))
+        return url.split("?")[0].split("#")[0]
+    except Exception:
+        return url.split("?")[0].split("#")[0]
+

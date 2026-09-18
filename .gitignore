@@ -6,6 +6,7 @@ data/.cache/
 data/.transactions/
 data/.trash/
 data/.write.lock
+data/**/*.lock
 data/runtime/
 data/production/
 data/ecosystem/.store.lock
@@ -33,6 +34,7 @@ data/workflows/*
 !data/workflows/Anime · 基础图像管线--9399e1242916.json
 /images/
 generated_images/
+releases/
 *.log
 .gemini/
 .agents/

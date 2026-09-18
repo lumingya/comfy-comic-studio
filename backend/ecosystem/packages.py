@@ -37,7 +37,7 @@ def manifest(folder,kind):
     p=Path(folder)/('mio.'+kind+'.json')
     if not p.is_file():raise LibraryError('Missing '+p.name)
     if p.stat().st_size>65536:raise LibraryError('Manifest too large')
-    d=json.loads(p.read_text());identifier(d.get('id'))
+    d=json.loads(p.read_text(encoding="utf-8"));identifier(d.get('id'))
     if d.get('apiVersion')!=1 or not isinstance(d.get('name'),str) or not d['name'].strip():raise LibraryError('Unsupported package manifest')
     if not isinstance(d.get('version'),str):raise LibraryError('Manifest requires version')
     entry='index.js' if kind=='extension' else d.get('css','theme.css')

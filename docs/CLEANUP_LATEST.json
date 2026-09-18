@@ -29,15 +29,18 @@
   "runtime_unique_files": 5,
   "runtime_identical_files": 59,
   "git_and_uploads": "preserved",
-  "latest_version": "3.1.0-dev.2",
+  "latest_version": "3.1.0-dev.3",
   "retained_artifacts": [
-    "mio-3.1.0-dev.2-source.zip",
-    "mio-3.1.0-dev.2-source.zip.sha256"
+    "mio-3.1.0-dev.3-source.zip",
+    "mio-3.1.0-dev.3-source.zip.sha256"
   ],
   "obsolete_release_notes": "removed; current notes are RELEASE_CURRENT.md",
   "latest_evidence": [
-    "docs/acceptance-architecture",
-    "docs/acceptance-assembly"
+    "docs/acceptance-review"
   ],
-  "preview_data": "preview-data (clean shipped-content demo; excluded from package)"
+  "preview_data": "preview-data (clean shipped-content demo; excluded from package)",
+  "removed_artifacts": [
+    "mio-packages/mio-3.1.0-dev.2-source.zip",
+    "mio-packages/mio-3.1.0-dev.2-source.zip.sha256"
+  ]
 }

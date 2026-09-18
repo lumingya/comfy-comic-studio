@@ -8,7 +8,7 @@ Read the [independent workspace guide](FILE_LIBRARY.md) before upgrading from 1.
 
 ## Installation
 
-Install Python 3.10+ and extract the complete project. Keep `server.py`, `mio_api.py`, `mio_credentials.py`, `index.html`, `vendor/` and their relative paths intact. Run `python server.py`, or `start.bat` on Windows. Visit http://127.0.0.1:8777 and name your workspace. Check the bottom bar for successful backend saving.
+Install Python 3.10+ and extract the complete project. Keep `server.py`, `backend/`, `index.html`, `vendor/` and their relative paths intact. Install Pillow with `python -m pip install -r packaging/requirements.txt`, then run `python server.py`, or `start.bat` on Windows. Visit http://127.0.0.1:8777 and name your workspace. Check the bottom bar for successful backend saving.
 
 Mio binds to loopback by default. To use another port, set `MIO_PORT` before starting. Node.js and Python packages are not needed for ordinary use. Cloud generation requires the server URL, not just a double-clicked HTML file.
 

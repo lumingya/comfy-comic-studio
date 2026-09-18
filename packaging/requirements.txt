@@ -1,0 +1,2 @@
+# Raster thumbnails and page-at-a-time PDF export.
+Pillow>=11.3,<13

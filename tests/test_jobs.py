@@ -359,8 +359,8 @@ class DurableJobsTests(unittest.TestCase):
                 error=HTTPError('controlled failure');error.status=status
                 s.execute=lambda _,error=error:(_ for _ in ()).throw(error)
                 a=s.submit(self.payload(),str(status));s.step();j=s.get(a['id'])
-                self.assertEqual(j['frameStates'][0]['state'],'pending' if status>=500 else 'skipped' if status==422 else 'failed')
-                self.assertEqual(j['retry_count'],int(status>=500));s.control(a['id'],'cancel')
+                self.assertEqual(j['frameStates'][0]['state'],'pending' if status>=500 or status==429 else 'skipped' if status==422 else 'failed')
+                self.assertEqual(j['retry_count'],int(status>=500 or status==429));s.control(a['id'],'cancel')
 
     def test_manual_retry_refreshes_auto_budget_and_logs_are_scene_specific(self):
         s=self.manual_store();s.control('scheduler','policy',{'mode':'retry','maxRetries':1})

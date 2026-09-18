@@ -1,25 +1,36 @@
-Mio 3.1.0-dev.2 — current-core and actual-package verification
-Date: 2026-09-15
-Controlled model fixtures only; not a real paid-provider test.
+Mio 3.1.0-dev.3 — review, current-core and source package verification
+Date: 2026-09-16
+Controlled local fixtures only; no paid-provider calls or real GPU interruption tests.
+
+Summary:
+- Build / ESLint / HTML validation PASS.
+- Frontend contracts: 56 PASS.
+- Python: 396 run, 392 PASS, 4 skipped (real Windows cmd.exe required).
+- Browser: assembly 39, architecture 37, reading 26, presentation 42, pictures 30, review 20 PASS.
+- Review reliability: 15 tests included in Python total.
+- Independent pypdf parse: 2 pages / 2 embedded images PASS.
+- 135 MiB resource ZIP CRC and exact original bytes verified in reliability suite.
+- Actual CJK keyboard, Windows execution, EXE and paid/GPU providers are not verified.
+
+FULL CURRENT-CORE LOG
+
+> mio-studio@3.1.0-dev.3 test:current
+> npm run lint && npm run test:contracts && npm run test:py && npm run test:assembly && npm run test:architecture && npm run test:reading-stage && npm run test:presentation && npm run test:pictures && npm run test:review
 
 
-> mio-studio@3.1.0-dev.2 test:current
-> npm run lint && npm run test:contracts && npm run test:py && npm run test:assembly && npm run test:architecture && npm run test:reading-stage && npm run test:presentation && npm run test:pictures
-
-
-> mio-studio@3.1.0-dev.2 lint
+> mio-studio@3.1.0-dev.3 lint
 > npm run lint:js && npm run lint:html
 
 
-> mio-studio@3.1.0-dev.2 lint:js
-> eslint js/state.js js/sync.js js/engine.js js/creation.js js/ui-presentation.js js/ui-reader.js js/ui-templates.js js/ui-export.js js/ui-editors.js js/ui-locale.js js/ui-assistant.js js/ui-storyboard.js js/ui-gallery.js js/ui-settings.js js/ui.js js/workspace.js js/organize.js js/foundation.js js/ui-image-studio.js js/ui-template-afterglow.js js/ui-template-seamless.js js/file-library.js js/contextual-sharing.js js/album-metadata.js js/creative-context.js js/settings-workbench.js js/reading-stage.js js/content-loader.js js/app.js js/build.js js/tests.js js/ecosystem.js js/safe-mode.js js/preferences-workbench.js js/assembly-workshop.js js/architecture.js
+> mio-studio@3.1.0-dev.3 lint:js
+> eslint js/state.js js/sync.js js/engine.js js/creation.js js/ui-presentation.js js/ui-reader.js js/ui-templates.js js/ui-export.js js/ui-editors.js js/ui-locale.js js/ui-assistant.js js/ui-storyboard.js js/ui-gallery.js js/ui-settings.js js/ui.js js/workspace.js js/organize.js js/foundation.js js/ui-image-studio.js js/ui-template-afterglow.js js/ui-template-seamless.js js/file-library.js js/contextual-sharing.js js/album-metadata.js js/creative-context.js js/settings-workbench.js js/reading-stage.js js/content-loader.js js/app.js js/build.js js/tests.js js/ecosystem.js js/safe-mode.js js/preferences-workbench.js js/assembly-workshop.js js/architecture.js js/dom-updates.js
 
 
-> mio-studio@3.1.0-dev.2 lint:html
+> mio-studio@3.1.0-dev.3 lint:html
 > html-validate index.html
 
 
-> mio-studio@3.1.0-dev.2 test:contracts
+> mio-studio@3.1.0-dev.3 test:contracts
 > node js/tests.js
 
 PASS all 10 native fields are flat and present
@@ -80,7 +91,7 @@ PASS display and prompt names survive the flat native API round trip independent
 PASS name-setting labels and help describe their different purposes
 56/56 tests passed.
 
-> mio-studio@3.1.0-dev.2 test:py
+> mio-studio@3.1.0-dev.3 test:py
 > python -m unittest discover -s tests -v
 
 test_batch_mixed_states_is_one_commit_and_includes_unmapped_jobs (test_album_lifecycle.AlbumDeletionTests.test_batch_mixed_states_is_one_commit_and_includes_unmapped_jobs) ... ok
@@ -110,24 +121,24 @@ test_none_auth_does_not_fall_back_to_environment (test_credentials.CredentialTes
 test_purge_includes_prior_endpoints_but_not_other_channels (test_credentials.CredentialTests.test_purge_includes_prior_endpoints_but_not_other_channels) ... ok
 test_trailing_slash_and_default_port_normalize (test_credentials.CredentialTests.test_trailing_slash_and_default_port_normalize) ... ok
 test_generated_documents_are_current (test_docs_server.DocumentationServingTests.test_generated_documents_are_current) ... ok
-test_head_matches_get (test_docs_server.DocumentationServingTests.test_head_matches_get) ... 127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
-127.0.0.1 - - [15/Sep/2026 05:55:14] "HEAD /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
+test_head_matches_get (test_docs_server.DocumentationServingTests.test_head_matches_get) ... 127.0.0.1 - - [16/Sep/2026 09:01:05] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
+127.0.0.1 - - [16/Sep/2026 09:01:05] "HEAD /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
 ok
-test_legacy_markdown_url_serves_utf8_reader (test_docs_server.DocumentationServingTests.test_legacy_markdown_url_serves_utf8_reader) ... 127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
+test_legacy_markdown_url_serves_utf8_reader (test_docs_server.DocumentationServingTests.test_legacy_markdown_url_serves_utf8_reader) ... 127.0.0.1 - - [16/Sep/2026 09:01:05] "GET /docs/WORKFLOW_UPDATE.md HTTP/1.1" 200 -
 ok
-test_prebuilt_guide_is_served_with_charset (test_docs_server.DocumentationServingTests.test_prebuilt_guide_is_served_with_charset) ... 127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /docs/guide/CHANNELS_AND_KEYS.html HTTP/1.1" 200 -
+test_prebuilt_guide_is_served_with_charset (test_docs_server.DocumentationServingTests.test_prebuilt_guide_is_served_with_charset) ... 127.0.0.1 - - [16/Sep/2026 09:01:05] "GET /docs/guide/CHANNELS_AND_KEYS.html HTTP/1.1" 200 -
 ok
-test_private_and_traversal_paths_remain_denied (test_docs_server.DocumentationServingTests.test_private_and_traversal_paths_remain_denied) ... 127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /docs/../server.py HTTP/1.1" 404 -
-127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /docs/../data/secrets/provider-keys.json HTTP/1.1" 404 -
-127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /mio_docs.py HTTP/1.1" 404 -
+test_private_and_traversal_paths_remain_denied (test_docs_server.DocumentationServingTests.test_private_and_traversal_paths_remain_denied) ... 127.0.0.1 - - [16/Sep/2026 09:01:05] "GET /docs/../server.py HTTP/1.1" 404 -
+127.0.0.1 - - [16/Sep/2026 09:01:05] "GET /docs/../data/secrets/provider-keys.json HTTP/1.1" 404 -
+127.0.0.1 - - [16/Sep/2026 09:01:05] "GET /mio_docs.py HTTP/1.1" 404 -
 ok
-test_raw_markdown_is_explicit_utf8_without_modifying_source (test_docs_server.DocumentationServingTests.test_raw_markdown_is_explicit_utf8_without_modifying_source) ... 127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /docs/WORKFLOW_UPDATE.md?raw=1 HTTP/1.1" 200 -
+test_raw_markdown_is_explicit_utf8_without_modifying_source (test_docs_server.DocumentationServingTests.test_raw_markdown_is_explicit_utf8_without_modifying_source) ... 127.0.0.1 - - [16/Sep/2026 09:01:05] "GET /docs/WORKFLOW_UPDATE.md?raw=1 HTTP/1.1" 200 -
 ok
 test_readme_banner_is_vector_not_font_dependent_block_text (test_docs_server.DocumentationServingTests.test_readme_banner_is_vector_not_font_dependent_block_text) ... ok
 test_renderer_does_not_allow_source_to_break_out_of_json (test_docs_server.DocumentationServingTests.test_renderer_does_not_allow_source_to_break_out_of_json) ... ok
-test_text_asset_charsets_are_explicit (test_docs_server.DocumentationServingTests.test_text_asset_charsets_are_explicit) ... 127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /README.md?raw=1 HTTP/1.1" 200 -
-127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /docs/api/openapi.json HTTP/1.1" 200 -
-127.0.0.1 - - [15/Sep/2026 05:55:14] "GET /styles.css HTTP/1.1" 200 -
+test_text_asset_charsets_are_explicit (test_docs_server.DocumentationServingTests.test_text_asset_charsets_are_explicit) ... 127.0.0.1 - - [16/Sep/2026 09:01:05] "GET /README.md?raw=1 HTTP/1.1" 200 -
+127.0.0.1 - - [16/Sep/2026 09:01:05] "GET /docs/api/openapi.json HTTP/1.1" 200 -
+127.0.0.1 - - [16/Sep/2026 09:01:05] "GET /styles.css HTTP/1.1" 200 -
 ok
 test_new_documentation_links_resolve_locally (test_documentation.DocumentationTests.test_new_documentation_links_resolve_locally) ... ok
 test_product_metadata_and_complete_source_packager (test_documentation.DocumentationTests.test_product_metadata_and_complete_source_packager) ... ok
@@ -151,58 +162,58 @@ test_theme_hot_selection_assets_and_uninstall (test_ecosystem.EcosystemTests.tes
 test_theme_rejects_remote_css_and_untrusted_install (test_ecosystem.EcosystemTests.test_theme_rejects_remote_css_and_untrusted_install) ... ok
 test_workflow_mapping_nested_types_and_link_guard (test_ecosystem.EcosystemTests.test_workflow_mapping_nested_types_and_link_guard) ... ok
 test_zip_rejects_traversal_and_duplicate (test_ecosystem.EcosystemTests.test_zip_rejects_traversal_and_duplicate) ... ok
-test_album_dto_removes_source_snapshots (test_external_api.ExternalApiTests.test_album_dto_removes_source_snapshots) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/albums HTTP/1.1" 200 -
+test_album_dto_removes_source_snapshots (test_external_api.ExternalApiTests.test_album_dto_removes_source_snapshots) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/albums HTTP/1.1" 200 -
 ok
-test_asset_path_is_local_and_traversal_safe (test_external_api.ExternalApiTests.test_asset_path_is_local_and_traversal_safe) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/assets?path=https%3A%2F%2Fevil.example%2Fa.png HTTP/1.1" 400 -
-127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/assets?path=%2Fimages%2F..%2Fserver.py HTTP/1.1" 400 -
-127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/assets?path=%2Fetc%2Fpasswd HTTP/1.1" 400 -
-127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/assets?path=%2Fimages%2Fa.png HTTP/1.1" 200 -
+test_asset_path_is_local_and_traversal_safe (test_external_api.ExternalApiTests.test_asset_path_is_local_and_traversal_safe) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/assets?path=https%3A%2F%2Fevil.example%2Fa.png HTTP/1.1" 400 -
+127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/assets?path=%2Fimages%2F..%2Fserver.py HTTP/1.1" 400 -
+127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/assets?path=%2Fetc%2Fpasswd HTTP/1.1" 400 -
+127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/assets?path=%2Fimages%2Fa.png HTTP/1.1" 200 -
 ok
-test_busy_returns_429 (test_external_api.ExternalApiTests.test_busy_returns_429) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 429 -
+test_busy_returns_429 (test_external_api.ExternalApiTests.test_busy_returns_429) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "POST /api/v1/images/generations HTTP/1.1" 429 -
 ok
-test_capabilities_are_honest (test_external_api.ExternalApiTests.test_capabilities_are_honest) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/capabilities HTTP/1.1" 200 -
+test_capabilities_are_honest (test_external_api.ExternalApiTests.test_capabilities_are_honest) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/capabilities HTTP/1.1" 200 -
 ok
-test_disabled_without_strong_token (test_external_api.ExternalApiTests.test_disabled_without_strong_token) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/health HTTP/1.1" 503 -
+test_disabled_without_strong_token (test_external_api.ExternalApiTests.test_disabled_without_strong_token) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/health HTTP/1.1" 503 -
 ok
-test_external_upstream_status_and_details_are_preserved (test_external_api.ExternalApiTests.test_external_upstream_status_and_details_are_preserved) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 429 -
+test_external_upstream_status_and_details_are_preserved (test_external_api.ExternalApiTests.test_external_upstream_status_and_details_are_preserved) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "POST /api/v1/images/generations HTTP/1.1" 429 -
 ok
-test_generates_once_without_mutating_browser_queue (test_external_api.ExternalApiTests.test_generates_once_without_mutating_browser_queue) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 200 -
+test_generates_once_without_mutating_browser_queue (test_external_api.ExternalApiTests.test_generates_once_without_mutating_browser_queue) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "POST /api/v1/images/generations HTTP/1.1" 200 -
 ok
-test_health (test_external_api.ExternalApiTests.test_health) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/health HTTP/1.1" 200 -
+test_health (test_external_api.ExternalApiTests.test_health) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/health HTTP/1.1" 200 -
 ok
-test_invalid_pagination (test_external_api.ExternalApiTests.test_invalid_pagination) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/albums?limit=101 HTTP/1.1" 400 -
-127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/albums?offset=-1 HTTP/1.1" 400 -
-127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/albums?limit=no HTTP/1.1" 400 -
+test_invalid_pagination (test_external_api.ExternalApiTests.test_invalid_pagination) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/albums?limit=101 HTTP/1.1" 400 -
+127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/albums?offset=-1 HTTP/1.1" 400 -
+127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/albums?limit=no HTTP/1.1" 400 -
 ok
 test_mio_environment_takes_precedence_with_legacy_fallback (test_external_api.ExternalApiTests.test_mio_environment_takes_precedence_with_legacy_fallback) ... ok
 test_openapi_file_matches_runtime (test_external_api.ExternalApiTests.test_openapi_file_matches_runtime) ... ok
-test_ordered_images_reach_generation_adapter (test_external_api.ExternalApiTests.test_ordered_images_reach_generation_adapter) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 200 -
+test_ordered_images_reach_generation_adapter (test_external_api.ExternalApiTests.test_ordered_images_reach_generation_adapter) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "POST /api/v1/images/generations HTTP/1.1" 200 -
 ok
-test_origin_rejected_on_external_and_private_reads (test_external_api.ExternalApiTests.test_origin_rejected_on_external_and_private_reads) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/health HTTP/1.1" 403 -
-127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/config HTTP/1.1" 403 -
+test_origin_rejected_on_external_and_private_reads (test_external_api.ExternalApiTests.test_origin_rejected_on_external_and_private_reads) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/health HTTP/1.1" 403 -
+127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/config HTTP/1.1" 403 -
 ok
-test_preflight_allows_authorization_only_for_known_origins (test_external_api.ExternalApiTests.test_preflight_allows_authorization_only_for_known_origins) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "OPTIONS /api/v1/health HTTP/1.1" 204 -
+test_preflight_allows_authorization_only_for_known_origins (test_external_api.ExternalApiTests.test_preflight_allows_authorization_only_for_known_origins) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "OPTIONS /api/v1/health HTTP/1.1" 204 -
 ok
-test_private_generation_preserves_status_and_error_body (test_external_api.ExternalApiTests.test_private_generation_preserves_status_and_error_body) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/image/generate HTTP/1.1" 422 -
+test_private_generation_preserves_status_and_error_body (test_external_api.ExternalApiTests.test_private_generation_preserves_status_and_error_body) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "POST /api/image/generate HTTP/1.1" 422 -
 ok
-test_provider_dto_does_not_leak_secrets_or_urls (test_external_api.ExternalApiTests.test_provider_dto_does_not_leak_secrets_or_urls) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/providers HTTP/1.1" 200 -
+test_provider_dto_does_not_leak_secrets_or_urls (test_external_api.ExternalApiTests.test_provider_dto_does_not_leak_secrets_or_urls) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/providers HTTP/1.1" 200 -
 ok
-test_rejects_ambiguous_or_unsupported_requests (test_external_api.ExternalApiTests.test_rejects_ambiguous_or_unsupported_requests) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 400 -
-127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 400 -
+test_rejects_ambiguous_or_unsupported_requests (test_external_api.ExternalApiTests.test_rejects_ambiguous_or_unsupported_requests) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [16/Sep/2026 09:01:09] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [16/Sep/2026 09:01:09] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [16/Sep/2026 09:01:09] "POST /api/v1/images/generations HTTP/1.1" 400 -
+127.0.0.1 - - [16/Sep/2026 09:01:09] "POST /api/v1/images/generations HTTP/1.1" 400 -
 ok
-test_schema_is_raw_and_secured (test_external_api.ExternalApiTests.test_schema_is_raw_and_secured) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/openapi.json HTTP/1.1" 200 -
+test_schema_is_raw_and_secured (test_external_api.ExternalApiTests.test_schema_is_raw_and_secured) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/openapi.json HTTP/1.1" 200 -
 ok
-test_storyboard_dto_removes_execution_snapshots (test_external_api.ExternalApiTests.test_storyboard_dto_removes_execution_snapshots) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/storyboards?limit=1&offset=0 HTTP/1.1" 200 -
+test_storyboard_dto_removes_execution_snapshots (test_external_api.ExternalApiTests.test_storyboard_dto_removes_execution_snapshots) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/storyboards?limit=1&offset=0 HTTP/1.1" 200 -
 ok
-test_token_required (test_external_api.ExternalApiTests.test_token_required) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/health HTTP/1.1" 401 -
+test_token_required (test_external_api.ExternalApiTests.test_token_required) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/health HTTP/1.1" 401 -
 ok
-test_unknown_route_and_method (test_external_api.ExternalApiTests.test_unknown_route_and_method) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "GET /api/v1/nope HTTP/1.1" 404 -
-127.0.0.1 - - [15/Sep/2026 05:55:18] "DELETE /api/v1/albums HTTP/1.1" 405 -
+test_unknown_route_and_method (test_external_api.ExternalApiTests.test_unknown_route_and_method) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "GET /api/v1/nope HTTP/1.1" 404 -
+127.0.0.1 - - [16/Sep/2026 09:01:09] "DELETE /api/v1/albums HTTP/1.1" 405 -
 ok
-test_upstream_error_is_sanitized_and_slot_released (test_external_api.ExternalApiTests.test_upstream_error_is_sanitized_and_slot_released) ... 127.0.0.1 - - [15/Sep/2026 05:55:18] "POST /api/v1/images/generations HTTP/1.1" 502 -
+test_upstream_error_is_sanitized_and_slot_released (test_external_api.ExternalApiTests.test_upstream_error_is_sanitized_and_slot_released) ... 127.0.0.1 - - [16/Sep/2026 09:01:09] "POST /api/v1/images/generations HTTP/1.1" 502 -
 ok
 test_claimed_but_unsubmitted_frame_is_held_without_inventing_a_request (test_failure_streak.FailureStreakTests.test_claimed_but_unsubmitted_frame_is_held_without_inventing_a_request) ... ok
 test_concurrent_failures_are_serialized_and_never_arm_late_retries (test_failure_streak.FailureStreakTests.test_concurrent_failures_are_serialized_and_never_arm_late_retries) ... ok
@@ -377,7 +388,7 @@ test_owned_album_copies_all_originals_and_snapshots (test_native_runtime.NativeR
 test_saved_snapshot_survives_source_preset_deletion (test_native_runtime.NativeRuntimeTests.test_saved_snapshot_survives_source_preset_deletion) ... ok
 test_scene_kind_is_authoritative_and_cross_category_ids_do_not_overwrite (test_native_runtime.NativeRuntimeTests.test_scene_kind_is_authoritative_and_cross_category_ids_do_not_overwrite) ... ok
 test_settings_two_writers_merge_and_ack_canonical_values (test_native_runtime.NativeRuntimeTests.test_settings_two_writers_merge_and_ack_canonical_values) ... ok
-test_startup_recovers_committed_picture_without_a_provider_request (test_native_runtime.NativeRuntimeTests.test_startup_recovers_committed_picture_without_a_provider_request) ... WARNING:root:Independent album projection pending: f1e5c99e5c9a4e0885f1d7cccf5aeda1.json. Execution is retained; no provider retry.
+test_startup_recovers_committed_picture_without_a_provider_request (test_native_runtime.NativeRuntimeTests.test_startup_recovers_committed_picture_without_a_provider_request) ... WARNING:root:Independent album projection pending: 762cdc82954c4611b0818900f8dd02b1.json. Execution is retained; no provider retry.
 ok
 test_summary_can_never_overwrite_a_body (test_native_runtime.NativeRuntimeTests.test_summary_can_never_overwrite_a_body) ... ok
 test_tombstone_recovers_failed_file_deletion_without_resubmission (test_native_runtime.NativeRuntimeTests.test_tombstone_recovers_failed_file_deletion_without_resubmission) ... WARNING:root:Deleted albums remain hidden by durable tombstones; file cleanup is pending. Check disk/permissions and restart.
@@ -470,6 +481,21 @@ test_plain_storyboard_gets_new_frame_id (test_resource_sharing.ResourceSharingTe
 test_reserved_nested_keys_rejected (test_resource_sharing.ResourceSharingTests.test_reserved_nested_keys_rejected) ... ok
 test_services_tasks_and_settings_cannot_be_imported_here (test_resource_sharing.ResourceSharingTests.test_services_tasks_and_settings_cannot_be_imported_here) ... ok
 test_wrong_page_rejected_before_writes (test_resource_sharing.ResourceSharingTests.test_wrong_page_rejected_before_writes) ... ok
+test_429_waits_without_failure_streak_even_in_continue_mode (test_review_reliability.ReviewReliabilityTests.test_429_waits_without_failure_streak_even_in_continue_mode) ... ok
+test_comfy_cancel_closes_blocked_local_read_after_scoped_interrupt (test_review_reliability.ReviewReliabilityTests.test_comfy_cancel_closes_blocked_local_read_after_scoped_interrupt) ... ok
+test_comfy_cancel_is_scoped_and_reaches_remote_server (test_review_reliability.ReviewReliabilityTests.test_comfy_cancel_is_scoped_and_reaches_remote_server) ... ok
+test_comfy_poll_and_view_429_never_resubmit_and_stream_original (test_review_reliability.ReviewReliabilityTests.test_comfy_poll_and_view_429_never_resubmit_and_stream_original) ... ok
+test_error_summaries_distinguish_oom_and_missing_models (test_review_reliability.ReviewReliabilityTests.test_error_summaries_distinguish_oom_and_missing_models) ... ok
+test_exhausted_comfy_poll_is_uncertain_not_new_generation (test_review_reliability.ReviewReliabilityTests.test_exhausted_comfy_poll_is_uncertain_not_new_generation) ... ok
+test_export_disconnect_never_appends_json_and_releases_slot (test_review_reliability.ReviewReliabilityTests.test_export_disconnect_never_appends_json_and_releases_slot) ... ok
+test_pdf_is_multipage_with_valid_cross_reference_offsets (test_review_reliability.ReviewReliabilityTests.test_pdf_is_multipage_with_valid_cross_reference_offsets) ... ok
+test_production_checkpoint_and_sanitized_details_survive_final_commit (test_review_reliability.ReviewReliabilityTests.test_production_checkpoint_and_sanitized_details_survive_final_commit) ... ok
+test_restart_preserves_safe_batch_but_excludes_inflight (test_review_reliability.ReviewReliabilityTests.test_restart_preserves_safe_batch_but_excludes_inflight) ... ok
+test_retry_after_numeric_date_and_backoff (test_review_reliability.ReviewReliabilityTests.test_retry_after_numeric_date_and_backoff) ... ok
+test_stream_ingest_deduplicates_and_links_without_second_write (test_review_reliability.ReviewReliabilityTests.test_stream_ingest_deduplicates_and_links_without_second_write) ... ok
+test_thumbnail_disk_budget_evicts_old_cache_not_originals (test_review_reliability.ReviewReliabilityTests.test_thumbnail_disk_budget_evicts_old_cache_not_originals) ... ok
+test_webp_thumbnail_dimensions_cache_and_invalid_requests (test_review_reliability.ReviewReliabilityTests.test_webp_thumbnail_dimensions_cache_and_invalid_requests) ... ok
+test_zip_above_inline_budget_keeps_binary_originals (test_review_reliability.ReviewReliabilityTests.test_zip_above_inline_budget_keeps_binary_originals) ... ok
 test_actual_image_bytes_override_incorrect_extension_mime (test_server.ImageSafetyTests.test_actual_image_bytes_override_incorrect_extension_mime) ... ok
 test_declared_oversized_image_is_rejected_before_reading (test_server.ImageSafetyTests.test_declared_oversized_image_is_rejected_before_reading) ... ok
 test_image_data_url_is_normalized (test_server.ImageSafetyTests.test_image_data_url_is_normalized) ... ok
@@ -516,26 +542,25 @@ test_start_in_unicode_space_and_metacharacter_path (test_windows_launchers.Windo
 test_venv_used_when_dot_venv_absent (test_windows_launchers.WindowsLauncherExecutionTests.test_venv_used_when_dot_venv_absent) ... skipped 'Requires real Windows cmd.exe'
 
 ----------------------------------------------------------------------
-Ran 381 tests in 12.914s
+Ran 396 tests in 18.205s
 
 OK (skipped=4)
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a6f9120>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a439120>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a79d6c0>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a439a80>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a4396c0>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a4385e0>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a43a2f0>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a43ad40>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a33af20>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a512c50>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a3bd300>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a3be5c0>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a636f20>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a3be3e0>
-<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f1f3a3be110>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f824be2bc40>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f824b40c6d0>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f824b40d030>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f824b5273d0>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f824b40cc70>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f824b40d990>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f824b40e3e0>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f824b4f6a70>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f824a3367a0>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f824a336c50>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f8249f74130>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f8249f74040>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f8249f747c0>
+<sys>:0: ResourceWarning: unclosed database in <sqlite3.Connection object at 0x7f8249f74a90>
 
-> mio-studio@3.1.0-dev.2 test:assembly
+> mio-studio@3.1.0-dev.3 test:assembly
 > node tests/assembly_workshop.mjs
 
 PASS independent story workshop
@@ -579,7 +604,7 @@ PASS old global start dispatches no model request
 PASS extended flow has no browser errors
 ASSEMBLY ACCEPTANCE: 39 checks passed
 
-> mio-studio@3.1.0-dev.2 test:architecture
+> mio-studio@3.1.0-dev.3 test:architecture
 > node tests/architecture.mjs
 
 PASS renamed primary workflow navigation
@@ -621,7 +646,7 @@ PASS mobile canvas scrolls internally without modal overflow
 PASS no browser exceptions: 
 ARCHITECTURE: 37 checks PASS
 
-> mio-studio@3.1.0-dev.2 test:reading-stage
+> mio-studio@3.1.0-dev.3 test:reading-stage
 > node tests/reading_stage.mjs
 
 PASS adjacent portraits pair automatically; landscape and small artwork remain independent
@@ -652,7 +677,7 @@ PASS 1920×1080 shows exact 2:3 and 3:4 portraits completely, with balanced pair
 PASS no browser script errors
 26 adaptive reading checks PASS
 
-> mio-studio@3.1.0-dev.2 test:presentation
+> mio-studio@3.1.0-dev.3 test:presentation
 > node tests/presentation.mjs
 
 PASS default opens in continuous complete-image mode, without a template iframe
@@ -665,7 +690,7 @@ PASS complete image fit for 800 x 800
 PASS template library opens without replacing the image
 PASS template search filters locally
 PASS 512-frame default album never compiles HTML while turning pages
-Default-path synchronous render P95 ms: 1.20
+Default-path synchronous render P95 ms: 1.10
 PASS custom scripts require consent
 PASS declining consent keeps the lightweight default
 PASS script runs inside an opaque-origin sandbox
@@ -700,7 +725,7 @@ PASS mobile flip reader shows one complete scene, not two narrow columns
 PASS no uncaught browser errors
 42 presentation checks passed.
 
-> mio-studio@3.1.0-dev.2 test:pictures
+> mio-studio@3.1.0-dev.3 test:pictures
 > node tests/pictures.mjs
 
 PASS square cover grid is independent of source ratio
@@ -735,7 +760,32 @@ PASS directory export hydrates untouched albums and includes editable originals 
 PASS no uncaught browser errors
 30 picture checks passed
 
-ACTUAL UNPACKED PACKAGE
+> mio-studio@3.1.0-dev.3 test:review
+> node tests/review.mjs
+
+PASS caption IDs survive reorder/delete and preserve intentionally blank overrides
+PASS background renders preserve the exact active textarea, IME session and selection
+PASS title editing survives synchronization without detachment
+PASS inserting an unkeyed background notice does not reuse and destroy the focused editor container
+PASS duplicate imported frame IDs are rejected instead of aliasing caption dictionaries
+PASS explicit scene switches replace the scoped editor rather than retaining a stale focused value
+PASS toast follows actual dialog opening order rather than hard-coded IDs or DOM order
+PASS errors remain visible in the image studio top layer
+PASS vertical right-to-left writing mode is in the saved layer recipe
+PASS canvas redraws during drag before pointer release
+PASS undo keeps the original selected layer and its properties
+PASS double-click edits the bubble text in place
+PASS tail handle drags independently toward a character
+PASS new layer properties persist through the real backend validator
+PASS thumbnail HTTP route returns WebP, not the original raster
+PASS thumbnail response stays small
+PASS reader filmstrip requests thumbnail URLs
+PASS ZIP downloads from the real export UI
+PASS PDF downloads from the real export UI
+PASS no uncaught browser exceptions: 
+REVIEW: 20 checks PASS
+
+ACTUAL UNPACKED SOURCE PACKAGE
 PASS actual ZIP CRC, every manifest hash and all 59 content files match; no private/runtime paths
 PASS unpacked package starts with Python and its own included data, no source-tree fallback
 PASS shipped native album, 12-frame storyboard, preset and seven layouts are visible

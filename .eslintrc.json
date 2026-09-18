@@ -887,7 +887,13 @@
     "validateDesignerEnvironment": "writable",
     "submitAssemblyDesigner": "writable",
     "optionalModulesHTML": "writable",
-    "installArchitecture": "writable"
+    "installArchitecture": "writable",
+    "patchMain": "readonly",
+    "topDialog": "readonly",
+    "thumbnailURL": "readonly",
+    "exportPortable": "readonly",
+    "patchDOM": "readonly",
+    "portableExportButtons": "readonly"
   },
   "parserOptions": {
     "ecmaVersion": 2021,

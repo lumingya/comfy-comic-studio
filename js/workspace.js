@@ -272,7 +272,7 @@ function installWorkspaceUpgrade(){
     return oldNavigate(index);
   };
   const oldRender=render;render=function(){
-    if(ui.workspace===3){ensureStudioState();renderShell();$('#main').innerHTML='<div class="view">'+renderWorkflowLibrary()+'</div>';const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent='工作流配置';applyStudioPreferences();return}
+    if(ui.workspace===3){ensureStudioState();renderShell();patchMain('<div class="view">'+renderWorkflowLibrary()+'</div>');const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent='工作流配置';applyStudioPreferences();return}
     oldRender();
     const p=selectedPlan();if(ui.workspace===1&&createUI.tab==='settings'&&settingPresetSelection(p)) $('.settings-preset-line')?.insertAdjacentHTML('beforeend',btn('更新当前预设','disk','ws-update-preset','','small'));
   };

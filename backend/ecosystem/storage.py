@@ -51,7 +51,7 @@ class Storage:
     def get(self,key,default=None):
         with self.locked():
             p=self.file(key)
-            return json.loads(p.read_text()) if p.exists() else default
+            return json.loads(p.read_text(encoding="utf-8")) if p.exists() else default
     def set(self,key,value):
         raw=json.dumps(value,ensure_ascii=False,allow_nan=False).encode()
         if len(raw)>2*1024*1024:raise LibraryError('Storage value exceeds 2 MiB')

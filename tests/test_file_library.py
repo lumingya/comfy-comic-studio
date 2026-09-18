@@ -225,7 +225,12 @@ class FileLibraryTests(unittest.TestCase):
             with self.assertRaises(lib.LibraryError):
                 lib.owned_path(self.root, path)
         target = self.root / 'storyboards/linked.json'
-        target.symlink_to(self.root / a['file'])
+        try:
+            target.symlink_to(self.root / a['file'])
+        except OSError as e:
+            if getattr(e, 'winerror', None) == 1314:
+                return
+            raise
         self.store.scan()
         self.assertEqual(self.store.catalog('storyboards')['total'], 1)
         with self.assertRaises(lib.LibraryError):

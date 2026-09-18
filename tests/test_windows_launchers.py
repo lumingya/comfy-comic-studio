@@ -35,8 +35,9 @@ class LauncherFormatTests(unittest.TestCase):
         self.assertIn('cd /d "%~dp0"', source)
         ordered = ['goto use_venv1', 'goto use_venv2', 'where python >nul', 'where py >nul']
         self.assertEqual(sorted(source.index(x) for x in ordered), [source.index(x) for x in ordered])
-        for cmd in ['".venv\\Scripts\\python.exe" server.py', '"venv\\Scripts\\python.exe" server.py', 'python server.py', 'py server.py']:
+        for cmd in ['set "MIO_PY=.venv\\Scripts\\python.exe"', 'set "MIO_PY=venv\\Scripts\\python.exe"', 'set "MIO_PY=python"', 'set "MIO_PY=py"', '"%MIO_PY%" server.py', 'packaging/requirements.txt']:
             self.assertIn(cmd, source)
+        self.assertIn('from PIL import Image', source)
         self.assertTrue(source.rstrip().endswith(':end\npause'))
         for omitted in ['py -3', 'MIO_NO_PAUSE', 'sys.version_info', 'mio.exe']:
             self.assertNotIn(omitted, source)

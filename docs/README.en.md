@@ -49,7 +49,7 @@ GPT Image and Nano Banana are model/service names, not interchangeable protocols
 
 Requirements: **Python 3.10+** and a modern browser. Runtime uses the Python standard library; Node.js is only needed for development.
 
-1. Download and extract the project. Run `python server.py` from its root, or double-click `start.bat` on Windows.
+1. Download and extract the project. Install Pillow with `python -m pip install -r packaging/requirements.txt`, then run `python server.py` from its root, or double-click `start.bat` on Windows.
 2. Open **http://127.0.0.1:8777**. In **Image engines**, configure one real provider. Cloud providers need a key; ComfyUI needs an installed checkpoint and valid API workflow.
 3. In **Create album**, select your storyboard and settings, edit prompts, choose a provider in the queue area and test one scene before generating the entire album.
 4. Open **Albums** to read, refine and export.

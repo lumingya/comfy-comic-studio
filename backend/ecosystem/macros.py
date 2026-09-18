@@ -120,7 +120,7 @@ class Macros:
         # Interrupted records are visible, never automatically replayed on restart.
         if self.store.root.exists():
             for file in self.store.root.glob('*.json'):
-                job=json.loads(file.read_text())
+                job=json.loads(file.read_text(encoding="utf-8"))
                 if job.get('status') in ('running','pending'):
                     job['status']='interrupted';job['error']='Service restarted; provider result may be unconfirmed. Explicit retry required.';self.store.set(job['id'],job)
     def start(self,body):

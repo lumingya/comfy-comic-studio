@@ -3,6 +3,7 @@ import base64
 import copy
 import json
 from pathlib import Path
+import time
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -135,13 +136,17 @@ class NativeRuntimeTests(unittest.TestCase):
         jobs.close()
         with jobs.connect() as db:
             db.execute("UPDATE settings SET value='false' WHERE key='paused'")
-            db.execute("UPDATE jobs SET enabled=1,state='pending' WHERE id=?",(job['id'],))
+            db.execute("UPDATE jobs SET enabled=1,blocked=0,state='pending' WHERE id=?",(job['id'],))
             db.execute("UPDATE job_frames SET state='pending' WHERE job=?",(job['id'],))
         restarted=Jobs(path,lambda f:calls.append(f),manual_start=True);self.addCleanup(restarted.close)
-        self.assertTrue(restarted.list()['paused']);self.assertEqual(restarted.get(job['id'])['enabled'],0)
-        with restarted.connect() as db:db.execute("UPDATE settings SET value='false' WHERE key='paused'")
+        self.assertTrue(restarted.list()['paused']);self.assertEqual(restarted.get(job['id'])['enabled'],1)
         with self.assertRaises(OSError):Jobs(path,lambda _:None,manual_start=True)
-        self.assertFalse(restarted.list()['paused']);self.assertEqual(calls,[])
+        self.assertTrue(restarted.list()['paused']);self.assertEqual(calls,[])
+        restarted.control('scheduler','resume')
+        for _ in range(100):
+            if calls:break
+            time.sleep(.01)
+        self.assertEqual(len(calls),1)
     def test_tombstone_recovers_failed_file_deletion_without_resubmission(self):
         import threading
         from types import SimpleNamespace

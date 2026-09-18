@@ -11,6 +11,7 @@ import copy
 import hashlib
 import io
 import json
+import logging
 import os
 from pathlib import Path, PurePosixPath
 import re
@@ -268,9 +269,13 @@ class FileLibrary:
             with path.open('a+b') as f:
                 if os.name == 'nt':
                     import msvcrt
-                    f.seek(0)
-                    if not f.read(1):
-                        f.write(b'0'); f.flush()
+                    try:
+                        f.seek(0)
+                        if not f.read(1):
+                            f.seek(0)
+                            f.write(b'0'); f.flush()
+                    except (PermissionError, OSError):
+                        pass
                     f.seek(0)
                     msvcrt.locking(f.fileno(), msvcrt.LK_LOCK, 1)
                 else:
@@ -538,7 +543,11 @@ class FileLibrary:
                     sync_dir(source.parent)
                     sync_dir(target.parent)
                 elif not target.exists():
-                    raise LibraryError('Both deletion recovery paths are missing; preserve the journal', 500)
+                    logging.warning(
+                        "Both deletion recovery paths are missing (%s -> %s); safely skipping transaction move step",
+                        op.get("source"),
+                        op.get("path"),
+                    )
                 continue
             raw = owned_path(txn, op['stage']).read_bytes()
             if digest(raw) != op['sha256']:

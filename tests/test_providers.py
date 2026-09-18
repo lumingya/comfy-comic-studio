@@ -20,11 +20,11 @@ class ProviderTests(unittest.TestCase):
         response.__enter__.return_value = response
         opener = MagicMock()
         opener.open.return_value = response
-        with patch.object(server.urllib.request, 'build_opener', return_value=opener), patch.object(server, 'store_image_data', return_value='/images/test.png') as store:
+        with patch.object(server.urllib.request, 'build_opener', return_value=opener), patch.object(server, 'store_image_bytes', return_value='/images/test.png') as store:
             result = server.generate_provider_image(payload)
         self.assertEqual(result['image'], '/images/test.png')
         self.assertFalse(result['offlineFallback'])
-        self.assertTrue(store.call_args.args[0].startswith('data:image/png;base64,'))
+        self.assertTrue(store.call_args.args[0].startswith(b'\x89PNG\r\n\x1a\n'))
         self.assertEqual(opener.open.call_count, 1)
         return opener.open.call_args.args[0]
 
@@ -215,19 +215,22 @@ class ProviderTests(unittest.TestCase):
         import tempfile
         import os
         with tempfile.TemporaryDirectory() as root, patch.object(server, 'DATA_DIR', root):
-            first = server.store_image_data('data:image/png;base64,' + base64.b64encode(PNG).decode(), 'variable-assets')
-            second = server.store_image_data('data:image/png;base64,' + base64.b64encode(PNG + b'new').decode(), 'variable-assets')
-            self.assertNotEqual(first, second)
-            self.assertEqual(server.store_image_data('data:image/png;base64,' + base64.b64encode(PNG).decode(), 'variable-assets'), first)
-            self.assertEqual(server.provider_image_input(first)[1], PNG)
-            self.assertEqual(server.provider_image_input(second)[1], PNG + b'new')
-            self.assertTrue(os.path.isfile(server.local_path_from_url(first)))
+            try:
+                first = server.store_image_data('data:image/png;base64,' + base64.b64encode(PNG).decode(), 'variable-assets')
+                second = server.store_image_data('data:image/png;base64,' + base64.b64encode(PNG + b'new').decode(), 'variable-assets')
+                self.assertNotEqual(first, second)
+                self.assertEqual(server.store_image_data('data:image/png;base64,' + base64.b64encode(PNG).decode(), 'variable-assets'), first)
+                self.assertEqual(server.provider_image_input(first)[1], PNG)
+                self.assertEqual(server.provider_image_input(second)[1], PNG + b'new')
+                self.assertTrue(os.path.isfile(server.local_path_from_url(first)))
+            finally:
+                server.reset_native_stores()
 
     def test_multi_output_preserves_all_artifacts(self):
         from unittest.mock import MagicMock, patch
         response=MagicMock();response.headers={};response.read.side_effect=[json.dumps({'data':[{'b64_json':base64.b64encode(PNG).decode()},{'b64_json':base64.b64encode(PNG+b'2').decode()}]}).encode(),b''];response.__enter__.return_value=response
         opener=MagicMock();opener.open.return_value=response
-        with patch.object(server.urllib.request,'build_opener',return_value=opener),patch.object(server,'store_image_data',side_effect=['/images/1.png','/images/2.png']):result=server.generate_provider_image(self.payload())
+        with patch.object(server.urllib.request,'build_opener',return_value=opener),patch.object(server,'store_image_bytes',side_effect=['/images/1.png','/images/2.png']):result=server.generate_provider_image(self.payload())
         self.assertEqual([a['url'] for a in result['artifacts']],['/images/1.png','/images/2.png']);self.assertEqual(result['image'],'/images/1.png');self.assertEqual(result['contractVersion'],1)
 
     def test_chat_markdown_and_plain_urls_download(self):
@@ -284,7 +287,7 @@ class ProviderTests(unittest.TestCase):
         payload=self.payload();payload['_requestTimeout']=75
         response=MagicMock();response.headers={};response.read.side_effect=[b'{"data":[{"url":"https://example.com/result.png"}]}',b''];response.__enter__.return_value=response
         opener=MagicMock();opener.open.return_value=response
-        with patch.object(server.urllib.request,'build_opener',return_value=opener),patch.object(server,'fetch_remote_image',return_value=(PNG,'image/png')) as fetch,patch.object(server,'store_image_data',return_value='/images/test.png'):
+        with patch.object(server.urllib.request,'build_opener',return_value=opener),patch.object(server,'fetch_remote_image',return_value=(PNG,'image/png')) as fetch,patch.object(server,'store_image_bytes',return_value='/images/test.png'):
             server.generate_provider_image(payload)
         self.assertEqual(opener.open.call_args.kwargs['timeout'],75);self.assertEqual(fetch.call_args.kwargs['timeout'],75)
         self.assertNotIn('_requestTimeout',json.loads(opener.open.call_args.args[0].data))

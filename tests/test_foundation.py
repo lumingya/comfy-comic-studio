@@ -17,7 +17,7 @@ PNG=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42m
 class FoundationSafetyTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
-        self.root=Path(self.temp.name);self.library=__import__('backend.mio_library',fromlist=['*']).FileLibrary(self.root);self.addCleanup(self.library.close);self.store=Jobs(str(self.root/'runtime'/'execution'),lambda _:None);self.addCleanup(self.store.close)
+        self.root=Path(self.temp.name);self.library=__import__('backend.mio_library',fromlist=['*']).FileLibrary(self.root);self.addCleanup(self.library.close);self.store=Jobs(str(self.root/'runtime'/'execution'),lambda _:None);self.addCleanup(self.store.close);self.addCleanup(server.reset_native_stores)
         self.config={}
         for name,value in [('DATA_DIR',str(self.root)),('IMAGES_DIR',str(self.root/'runtime/staging/images')),('LEGACY_IMAGES_DIR',str(self.root/'legacy'))]:
             p=patch.object(server,name,value);p.start();self.addCleanup(p.stop)

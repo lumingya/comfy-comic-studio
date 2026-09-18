@@ -38,9 +38,12 @@ class ImageSafetyTests(unittest.TestCase):
 
     def test_local_files_require_native_owned_urls_not_arbitrary_paths(self):
         with tempfile.TemporaryDirectory() as root, patch.object(server,'DATA_DIR',root):
-            url=server.store_image_data('data:image/png;base64,'+base64.b64encode(b'\x89PNG\r\n\x1a\n').decode())
-            self.assertTrue(os.path.isfile(server.local_path_from_url(url)))
-            with self.assertRaises(ValueError):server.local_path_from_url(root+'/settings/secrets.json')
+            try:
+                url=server.store_image_data('data:image/png;base64,'+base64.b64encode(b'\x89PNG\r\n\x1a\n').decode())
+                self.assertTrue(os.path.isfile(server.local_path_from_url(url)))
+                with self.assertRaises(ValueError):server.local_path_from_url(root+'/settings/secrets.json')
+            finally:
+                server.reset_native_stores()
 
     def test_declared_oversized_image_is_rejected_before_reading(self):
         response = FakeResponse(b"small", content_length=server.MAX_IMAGE_BYTES + 1)
@@ -51,15 +54,21 @@ class ImageSafetyTests(unittest.TestCase):
 class NativeServerPersistenceTests(unittest.TestCase):
     def test_write_read_uses_independent_entities(self):
         with tempfile.TemporaryDirectory() as root, patch.object(server,'DATA_DIR',root):
-            cfg=server.read_merged_config();cfg['templates']=[{'id':'one','title':'中文分镜','frames':[]}]
-            server.write_split_config(cfg);loaded=server.read_merged_config();self.assertEqual(loaded['templates'],cfg['templates'])
-            self.assertEqual(len(list(__import__('pathlib').Path(root,'storyboards').glob('*.json'))),1)
-            self.assertFalse(os.path.exists(os.path.join(root,'storyboards/templates.json')))
+            try:
+                cfg=server.read_merged_config();cfg['templates']=[{'id':'one','title':'中文分镜','frames':[]}]
+                server.write_split_config(cfg);loaded=server.read_merged_config();self.assertEqual(loaded['templates'],cfg['templates'])
+                self.assertEqual(len(list(__import__('pathlib').Path(root,'storyboards').glob('*.json'))),1)
+                self.assertFalse(os.path.exists(os.path.join(root,'storyboards/templates.json')))
+            finally:
+                server.reset_native_stores()
     def test_unchanged_files_are_not_rewritten(self):
         with tempfile.TemporaryDirectory() as root, patch.object(server,'DATA_DIR',root):
-            server.write_split_config(server.read_merged_config());cfg=server.read_merged_config()
-            files=list(__import__('pathlib').Path(root).rglob('*.json'));before={p:p.stat().st_mtime_ns for p in files}
-            server.write_split_config(cfg);self.assertEqual(before,{p:p.stat().st_mtime_ns for p in files})
+            try:
+                server.write_split_config(server.read_merged_config());cfg=server.read_merged_config()
+                files=list(__import__('pathlib').Path(root).rglob('*.json'));before={p:p.stat().st_mtime_ns for p in files}
+                server.write_split_config(cfg);self.assertEqual(before,{p:p.stat().st_mtime_ns for p in files})
+            finally:
+                server.reset_native_stores()
     def test_bad_existing_data_is_never_seeded_or_merged(self):
         with tempfile.TemporaryDirectory() as root, patch.object(server,'DATA_DIR',root):
             file=__import__('pathlib').Path(root,'content.json');file.write_text('{broken')
@@ -70,10 +79,13 @@ class NativeServerPersistenceTests(unittest.TestCase):
 class ServerBoundaryTests(unittest.TestCase):
     def test_only_public_app_assets_and_owned_images_are_served(self):
         with tempfile.TemporaryDirectory() as root, patch.object(server,'DATA_DIR',root):
-            url=server.store_image_data('data:image/png;base64,'+base64.b64encode(b'\x89PNG\r\n\x1a\n').decode())
-            for value in ['/', '/index.html',url]:self.assertTrue(server.is_public_static_path(value))
-            for value in ['/images/','/data/settings/secrets.json','/.git/config','/server.py','/images/../server.py']:
-                self.assertFalse(server.is_public_static_path(value))
+            try:
+                url=server.store_image_data('data:image/png;base64,'+base64.b64encode(b'\x89PNG\r\n\x1a\n').decode())
+                for value in ['/', '/index.html',url]:self.assertTrue(server.is_public_static_path(value))
+                for value in ['/images/','/data/settings/secrets.json','/.git/config','/server.py','/images/../server.py']:
+                    self.assertFalse(server.is_public_static_path(value))
+            finally:
+                server.reset_native_stores()
 
     def test_front_end_asset_dirs_are_served_but_stay_sandboxed(self):
         with tempfile.TemporaryDirectory() as temp_dir:

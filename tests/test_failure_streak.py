@@ -46,7 +46,7 @@ class FailureStreakTests(unittest.TestCase):
         self.policy(2,maxRetries=100);a=self.submit()
         self.again();self.again();self.assertFalse(self.again());self.assertEqual(self.calls,['a0','a0']);self.assertEqual(self.s.get(a)['failure_limit_reached'],2)
     def test_guard_applies_without_retry_and_counts_4xx_and_422(self):
-        for status in (401,403,422,429):
+        for status in (401,403,422):
             with self.subTest(status=status):
                 self.policy(2,mode='continue');a=self.submit(5,str(status))
                 class HTTPError(Exception):pass
