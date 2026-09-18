@@ -6,11 +6,11 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "test": "npm run lint && npm run test:contracts && npm run test:py && npm run test:smoke && npm run test:assistant && npm run test:templates && npm run test:presentation && npm run test:images && npm run test:foundation && npm run test:mobile && npm run test:experience && npm run test:recovery && npm run test:pools && npm run test:lifecycle && npm run test:pictures && npm run test:reader-preview && npm run test:afterglow && npm run test:storyboard-import && npm run test:native && npm run test:seamless && npm run test:contextual-sharing && npm run test:complete && npm run test:preset-delete && npm run test:preset-isolation && npm run test:rename-retry && npm run test:live-settings && npm run test:reading-stage && npm run test:workbench && npm run test:ecosystem",
+    "test": "npm run test:current",
     "test:py": "python -m unittest discover -s tests -v",
     "test:smoke": "node tests/smoke.mjs",
     "lint": "npm run lint:js && npm run lint:html",
-    "lint:js": "eslint js/state.js js/sync.js js/engine.js js/creation.js js/ui-presentation.js js/ui-reader.js js/ui-templates.js js/ui-export.js js/ui-editors.js js/ui-locale.js js/ui-assistant.js js/ui-storyboard.js js/ui-gallery.js js/ui-settings.js js/ui.js js/workspace.js js/organize.js js/foundation.js js/ui-image-studio.js js/ui-template-afterglow.js js/ui-template-seamless.js js/file-library.js js/contextual-sharing.js js/album-metadata.js js/creative-context.js js/settings-workbench.js js/reading-stage.js js/content-loader.js js/app.js js/build.js js/tests.js js/ecosystem.js js/safe-mode.js js/preferences-workbench.js js/assembly-workshop.js js/architecture.js js/dom-updates.js",
+    "lint:js": "eslint js/state.js js/sync.js js/engine.js js/creation.js js/ui-presentation.js js/ui-reader.js js/ui-templates.js js/ui-export.js js/ui-editors.js js/ui-locale.js js/ui-assistant.js js/ui-storyboard.js js/ui-gallery.js js/ui-settings.js js/ui.js js/workspace.js js/organize.js js/foundation.js js/ui-image-studio.js js/ui-template-afterglow.js js/ui-template-seamless.js js/file-library.js js/contextual-sharing.js js/album-metadata.js js/creative-context.js js/settings-workbench.js js/reading-stage.js js/content-loader.js js/app.js js/build.js js/tests.js js/ecosystem.js js/safe-mode.js js/preferences-workbench.js js/assembly-workshop.js js/architecture.js js/dom-updates.js js/first-run.js js/home.js",
     "lint:html": "html-validate index.html",
     "start": "python server.py",
     "build": "node js/build.js dev && python tools/build_docs.py",
@@ -47,8 +47,15 @@
     "test:ecosystem": "python -m unittest tests.test_ecosystem -q && node tests/ecosystem.mjs",
     "test:assembly": "node tests/assembly_workshop.mjs",
     "test:review": "node tests/review.mjs",
-    "test:current": "npm run lint && npm run test:contracts && npm run test:py && npm run test:assembly && npm run test:architecture && npm run test:reading-stage && npm run test:presentation && npm run test:pictures && npm run test:review",
-    "test:architecture": "node tests/architecture.mjs"
+    "test:current": "npm run lint && npm run test:contracts && npm run test:py && npm run test:assembly && npm run test:architecture && npm run test:reading-stage && npm run test:presentation && npm run test:pictures && npm run test:review && npm run test:smoke && npm run test:mobile && npm run test:audit-round2 && npm run test:first-use && npm run test:locale && npm run test:inline-keys && npm run test:home",
+    "test:architecture": "node tests/architecture.mjs",
+    "test:legacy": "npm run lint && npm run test:contracts && npm run test:py && npm run test:smoke && npm run test:assistant && npm run test:templates && npm run test:presentation && npm run test:images && npm run test:foundation && npm run test:mobile && npm run test:experience && npm run test:recovery && npm run test:pools && npm run test:lifecycle && npm run test:pictures && npm run test:reader-preview && npm run test:afterglow && npm run test:storyboard-import && npm run test:native && npm run test:seamless && npm run test:contextual-sharing && npm run test:complete && npm run test:preset-delete && npm run test:preset-isolation && npm run test:rename-retry && npm run test:live-settings && npm run test:reading-stage && npm run test:workbench && npm run test:ecosystem",
+    "test:distribution": "python tools/check_distribution.py",
+    "test:audit-round2": "node tests/audit_round2.mjs",
+    "test:first-use": "node tests/first_use_journeys.mjs",
+    "test:locale": "node tests/locale_audit.mjs",
+    "test:inline-keys": "node tests/inline_credentials.mjs",
+    "test:home": "node tests/home_workspace.mjs"
   },
   "devDependencies": {
     "eslint": "^8.57.1",

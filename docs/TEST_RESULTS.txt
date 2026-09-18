@@ -1,3 +1,5 @@
+HISTORICAL RECORD — 2026-09-16. Current audit results: AUDIT_TEST_RESULTS.txt
+
 Mio 3.1.0-dev.3 — review, current-core and source package verification
 Date: 2026-09-16
 Controlled local fixtures only; no paid-provider calls or real GPU interruption tests.

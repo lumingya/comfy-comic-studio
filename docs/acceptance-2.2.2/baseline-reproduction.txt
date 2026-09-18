@@ -1,8 +1,0 @@
-REPRODUCED {
-  selected: 'setting_nanami',
-  updateTarget: 'set_be98b694-f18c-4615-9b55-2c1a8b58cce2',
-  displayedCharacter: '',
-  storedSelected: 'nanami'
-}
-PASS reproduced blank fields after switching to a populated preset in 2.2.1
-PASS reproduced actual wrong-target write: Update writes B while the selector names the original preset

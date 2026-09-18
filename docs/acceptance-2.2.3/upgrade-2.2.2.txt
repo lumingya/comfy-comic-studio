@@ -1,7 +1,0 @@
-Baseline SHA256 691734cadce44683099cf881fedbcd009a2d24ae59a0931e49070f644a8fb14a
-PASS 2.2.2 to 2.2.3 preserves every saved native entity and settings file byte-for-byte
-PASS existing edited preset and album remain visible after upgrade
-PASS upgraded workspace shows the selected existing preset and Save As/Delete controls without reinstalling data
-PASS existing album opens directly in the new rename editor
-PASS actual 2.2.2 task database gains guard columns without replaying the held job or replacing prior retry settings
-5 upgrade checks PASS; no generation submitted

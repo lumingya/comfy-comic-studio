@@ -31,7 +31,7 @@ function installContextualSharing(){
     download(document.title+'.mio.zip',await response.blob(),'application/zip');toast('当前显示的设定已导出，参考图片随包携带。');
   };
   v3Actions['native-import']=async d=>{
-    if(activeJobs())throw Error('请等当前生成任务结束后再导入；不会停止任务或重新请求模型。');
+    if(activeJobs())throw Error('请在当前生成任务结束后导入。');
     const kind=d.kind;if(!kind)throw Error('请从画册、分镜或设定页面选择导入。');
     const destination=state.activeProjectId,targetPlanId=selectedPlan()?.id;
     flushEditor();

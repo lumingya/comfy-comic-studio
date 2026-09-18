@@ -91,7 +91,7 @@
         "refine": false,
         "mask": false
       },
-      "fonts": true,
+      "fonts": false,
       "readerMode": "spread",
       "homeLayout": "showcase",
       "defaultReaderMode": "webtoon",

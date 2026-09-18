@@ -1,7 +1,7 @@
 /* Mio development module: engine. */
 'use strict';
 
-async function request(url,options={},timeout=15000){const ctrl=new AbortController(),signal=options.signal,abort=()=>ctrl.abort();signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)ctrl.abort();const t=setTimeout(()=>ctrl.abort(),timeout);try{const r=await fetch(url,{...options,signal:ctrl.signal});if(!r.ok){const text=await r.text();throw Error('HTTP '+r.status+': '+text)}if(r.status===204||r.status===205)return r;const body=await r.arrayBuffer();return new Response(body,{status:r.status,statusText:r.statusText,headers:r.headers})}finally{clearTimeout(t);signal?.removeEventListener('abort',abort)}}
+async function request(url,options={},timeout=15000){const ctrl=new AbortController(),signal=options.signal,abort=()=>ctrl.abort();signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted)ctrl.abort();const t=setTimeout(()=>ctrl.abort(),timeout);try{const r=await fetch(url,{...options,signal:ctrl.signal});if(r.status===304)return r;if(!r.ok){const text=await r.text();let detail=text;try{const data=JSON.parse(text);if(typeof data.error==='string')detail=data.error}catch{}throw Error('HTTP '+r.status+': '+detail)}if(r.status===204||r.status===205)return r;const body=await r.arrayBuffer();return new Response(body,{status:r.status,statusText:r.statusText,headers:r.headers})}finally{clearTimeout(t);signal?.removeEventListener('abort',abort)}}
 
 
 async function testEngine(silent=false){if(state.settings.comfy.mode==='mock'){rt.connected=false;rt.latency=null;rt.vram=null;if(!silent)toast('离线 SVG 引擎已就绪，无需 GPU。');return true}const start=performance.now();try{const data=await(await request(baseURL()+'/system_stats',{},5000)).json();rt.latency=Math.round(performance.now()-start);const gpu=data.devices?.[0];rt.vram=gpu?.vram_total?Math.round((1-gpu.vram_free/gpu.vram_total)*100):null;rt.connected=true;connectWS();renderShell();if($('#connection-result'))$('#connection-result').textContent='已连接 · '+rt.latency+' ms'+(rt.vram!==null?' · VRAM '+rt.vram+'%':'');if(!silent)toast('ComfyUI 连接成功，延迟 '+rt.latency+' ms');return true}catch(e){rt.connected=false;renderShell();if(!silent)toast('连接失败：确认服务地址与 --enable-cors-header。','error');return false}}
@@ -173,7 +173,7 @@ async function persistRasterAsset(dataUrl,albumId='unassigned',signal){
 }
 
 // Provider configs contain references, never secret values. Keys live in the local server vault.
-const imageProviderUI={models:new Map(),busy:new Set(),modelIndex:-1};
+const imageProviderUI={models:new Map(),busy:new Set(),savingKeys:new Set(),keyWrites:new Map(),modelIndex:-1};
 function ensureImageProviders(s=state){
   s.settings.imageGeneration??={active:'comfyui',profiles:[
     {id:'comfyui',title:'ComfyUI',provider:'comfyui'},
@@ -182,56 +182,85 @@ function ensureImageProviders(s=state){
   const g=s.settings.imageGeneration;
   if(!Array.isArray(g.profiles))g.profiles=[];
   if(!g.profiles.some(p=>p.provider==='comfyui'))g.profiles.unshift({id:'comfyui',title:'ComfyUI',provider:'comfyui'});
-  for(const p of g.profiles){p.keyMode??='none';if(p.provider==='openai'){p.sendSize??=!!p.size;p.sendQuality??=!!p.quality}}
+  for(const p of g.profiles){p.keyMode??='none';if(p.keyMode==='environment')p.keyMode='none';if(p.provider==='openai'){p.sendSize??=!!p.size;p.sendQuality??=!!p.quality}}
   if(!g.profiles.some(p=>p.id===g.active))g.active=g.profiles[0]?.id||'comfyui';
   return g;
 }
 function activeImageProfile(){const g=ensureImageProviders();return g.profiles.find(p=>p.id===g.active)||g.profiles[0]}
 function imageConfigSnapshot(p=activeImageProfile()){
-  return Object.fromEntries(['id','title','provider','baseUrl','model','protocol','sampler','size','quality','sendSize','sendQuality','keyMode','keyId','extraParams'].filter(k=>p[k]!==undefined).map(k=>[k,clone(p[k])]));
+  return Object.fromEntries(['id','title','provider','baseUrl','model','protocol','sampler','size','quality','sendSize','sendQuality','keyMode','keyId','keyIds','extraParams'].filter(k=>p[k]!==undefined).map(k=>[k,clone(p[k])]));
 }
 function imageProviderSnapshot(){const p=activeImageProfile();return {provider:p.provider,profileId:p.id,config:imageConfigSnapshot(p),mode:'real',workflowTitle:p.title+' / '+(p.model||''),globalNegative:state.settings.negative}}
 function imageProviderSelect(){const g=ensureImageProviders();return `<label class="label" for="image-provider-select">图像生产渠道</label><select id="image-provider-select">${g.profiles.map(p=>opt(p.id,p.title,g.active)).join('')}</select>`}
-function imageModelsCacheKey(p){return JSON.stringify([p.id,p.baseUrl,p.keyMode,p.keyId])}
+function imageModelsCacheKey(p){return JSON.stringify([p.id,p.baseUrl,p.keyMode,p.keyIds||p.keyId])}
 function imageProviderPanel(){
-  const p=activeImageProfile(),input=(label,key)=>field(label,`<input type="text" data-image-config="${key}" value="${esc(p[key]||'')}" autocomplete="off">`),models=imageProviderUI.models.get(imageModelsCacheKey(p))||[],images=p.protocol!=='chat',optional=(label,key,flag,placeholder)=>`<div class="provider-optional"><label class="row"><input type="checkbox" data-image-config="${flag}" ${p[flag]?'checked':''} ${!images?'disabled':''}><span>${label}<small class="muted"> · 可选</small></span></label><input type="text" data-image-config="${key}" value="${esc(p[key]||'')}" placeholder="${placeholder}" ${!p[flag]||!images?'disabled':''}><p class="help">${images?'关闭或留空：不向接口发送 '+key:'Chat 协议不发送此参数'}</p></div>`;
-  return `<section class="panel image-provider-panel"><div class="row between wrap"><h2>图像引擎</h2><div class="row wrap"><a class="btn small" href="/docs/index.html" target="_blank" rel="noopener">教程 / Docs ↗</a>${btn('新增渠道','plus','image-provider-new','','small')}${p.provider!=='comfyui'?btn('复制','copy','image-provider-copy','','small')+btn('删除渠道','trash','image-provider-delete','','small danger'):''}</div></div><p class="help">共用分镜与队列；任务关联渠道；保存后的模型、地址和参数从下一次请求生效，在途请求不变。密钥单独保存在本地后端，任务与普通工程导出仅包含引用。</p>${imageProviderSelect()}${p.provider==='comfyui'?'<p class="help">ComfyUI 是内置工作流入口；工作流库可独立管理，API 渠道可新增、复制与删除。</p>':`<div class="grid2">${input('渠道名称','title')}${input('API Base URL（OpenAI 通常含 /v1）','baseUrl')}<div class="provider-model-field">${p.provider==='openai'?`${field('模型 ID（输入搜索，也可手动填写）',`<div class="provider-model-combobox"><input id="image-provider-model-input" type="text" data-image-config="model" value="${esc(p.model||'')}" role="combobox" aria-label="模型 ID，输入搜索或手动填写" aria-autocomplete="list" aria-expanded="false" aria-controls="image-provider-model-results" autocomplete="off" spellcheck="false" placeholder="输入模型名称，如 gpt / flux"><div id="image-provider-model-results" class="provider-model-results" role="listbox" aria-label="匹配模型" hidden></div></div>`)}<div class="row">${btn(imageProviderUI.busy.has(p.id)?'正在获取…':'获取模型列表','refresh','image-provider-models',imageProviderUI.busy.has(p.id)?'disabled':'','small')}<span class="help">${models.length?'已载入 '+models.length+' 个模型 · 输入即可搜索':'获取后可搜索，也可直接填写模型 ID'}</span></div><p class="help" id="provider-model-status">调用基础 URL 下的 GET /models；列表不保证全部支持图像生成，获取失败仍可手填。</p>`:input('模型 ID（可手动填写）','model')}</div><div class="provider-auth">${field('API 鉴权（允许为空）',`<select id="image-provider-auth">${opt('none','无密钥 · 不发送 Authorization',p.keyMode)}${opt('environment','使用服务端环境变量',p.keyMode)}${p.keyId?opt('stored','已保存 · '+(p.keyLabel||'本地密钥'),p.keyMode):''}</select>`)}<div class="row">${btn('管理密钥','key','image-provider-keys','','small')}<span class="help">${p.keyMode==='stored'?'已保存到本地 · 原文不回显':p.keyMode==='environment'?'使用对应的服务端 API_KEY':'可连接不需要鉴权的本地或兼容服务'}</span></div></div>${p.provider==='openai'?field('接口协议',`<select data-image-config="protocol">${opt('images','Images API · GPT Image / 兼容渠道',p.protocol)}${opt('chat','Chat Completions · 返回图片的兼容渠道',p.protocol)}</select>`):input('采样器','sampler')}</div>${p.provider==='openai'?`<section class="provider-options"><h3>可选请求参数</h3><div class="grid2">${optional('输出尺寸','size','sendSize','如 1024x1024 / auto')}${optional('质量','quality','sendQuality','如 auto / high')}</div></section>`:''}<details class="quiet-advanced"><summary>高级请求参数 · JSON</summary><textarea id="provider-extra-params" spellcheck="false" aria-label="高级请求参数">${esc(JSON.stringify(p.extraParams||{},null,2))}</textarea><p class="help">只扩展额外协议字段，不能覆盖已绑定的提示词、图片、标准参数或鉴权；保存后从下一次请求生效。不兼容时保留接口错误。</p></details><p class="help">密钥按渠道与基础 URL 绑定，换地址后需重新选择或保存。复制渠道不复制密钥。仅在本机可信环境使用；本地密钥文件不是加密保险库。生成不自动重试，停止等待不保证上游停止计费。</p>`}</section>`;
+  const p=activeImageProfile(),input=(label,key)=>field(label,`<input type="text" data-image-config="${key}" value="${esc(p[key]||'')}" autocomplete="off">`),images=p.protocol!=='chat',optional=(label,key,flag,placeholder)=>`<div class="provider-optional"><label class="row"><input type="checkbox" data-image-config="${flag}" ${p[flag]?'checked':''} ${!images?'disabled':''}><span>${label}</span></label><input type="text" data-image-config="${key}" value="${esc(p[key]||'')}" placeholder="${placeholder}" ${!p[flag]||!images?'disabled':''}></div>`;
+  return `<section class="panel image-provider-panel"><div class="row between wrap"><h2>图像引擎</h2><div class="row wrap"><a class="btn small" href="/docs/index.html" target="_blank" rel="noopener">教程 / Docs ↗</a>${btn('新增渠道','plus','image-provider-new','','small')}${p.provider!=='comfyui'?btn('复制','copy','image-provider-copy','','small')+btn('删除渠道','trash','image-provider-delete','','small danger'):''}</div></div>${imageProviderSelect()}${providerSetupHTML(p)}${p.provider==='comfyui'?'':`<div class="grid2 provider-fields">${input('渠道名称','title')}${input(p.provider==='novelai'?'NovelAI 图像服务地址':'API 基础地址','baseUrl')}<div class="provider-model-field">${p.provider==='openai'?`<label class="label" for="image-provider-model-input">模型 ID</label><div class="provider-model-line"><div class="provider-model-combobox"><input id="image-provider-model-input" type="text" data-image-config="model" value="${esc(p.model||'')}" role="combobox" aria-label="模型 ID" aria-autocomplete="list" aria-expanded="false" aria-controls="image-provider-model-results" autocomplete="off" spellcheck="false"><div id="image-provider-model-results" class="provider-model-results" role="listbox" aria-label="匹配模型" hidden></div></div>${btn(imageProviderUI.busy.has(p.id)?'正在获取…':'获取模型','refresh','image-provider-models',imageProviderUI.busy.has(p.id)?'disabled':'','small')}</div><p class="help" id="provider-model-status" role="status"></p>`:input('模型 ID','model')}</div>${imageProviderKeyFields(p)}${p.provider==='openai'?field('接口协议',`<select data-image-config="protocol">${opt('images','Images API',p.protocol)}${opt('chat','Chat Completions',p.protocol)}</select>`):input('采样器','sampler')}</div>${p.provider==='openai'?`<section class="provider-options"><h3>请求参数</h3><div class="grid2">${optional('输出尺寸','size','sendSize','1024x1024 / auto')}${optional('质量','quality','sendQuality','auto / high')}</div></section>`:''}<details class="quiet-advanced"><summary>高级请求参数 · JSON</summary><textarea id="provider-extra-params" spellcheck="false" aria-label="高级请求参数">${esc(JSON.stringify(p.extraParams||{},null,2))}</textarea></details>`}${providerSetupFooter()}</section>`;
+}
+function imageKeyRow(id='',first=false){return `<div class="provider-key-row-inline"><input ${first?'id="image-provider-key-inline"':''} type="password" aria-label="API Key" data-image-key data-key-ref="${esc(id)}" value="${id?'••••••••':''}" autocomplete="off" spellcheck="false" autocapitalize="none" data-lpignore="true" data-1p-ignore="true">${ibtn('close','image-key-remove-row','移除密钥')}</div>`}
+function imageProviderKeyFields(p){
+ const ids=p.keyMode==='stored'?(p.keyIds||[p.keyId]).filter(Boolean):[];
+ return `<div class="provider-auth"><label class="label" for="image-provider-key-inline">API Key</label><div id="image-provider-key-rows">${(ids.length?ids:['']).map((id,i)=>imageKeyRow(id,i===0)).join('')}</div><div class="provider-key-tools">${btn('添加密钥','plus','image-key-add-row','','small ghost')}${btn('保存','disk','image-key-save-inline',`data-id="${esc(p.id)}"`,'small')}${btn('管理密钥','key','image-provider-keys','','small ghost')}</div></div>`;
+}
+function imageKeyDraftChanged(){return !!document.querySelector('[data-image-key][data-key-edited]')||$('#image-provider-key-rows')?.dataset.dirty==='true'}
+async function saveImageKeyDrafts(p=activeImageProfile()){
+ if(imageProviderUI.keyWrites.has(p.id))return imageProviderUI.keyWrites.get(p.id);
+ if(!imageKeyDraftChanged())return;
+ const root=$('#image-provider-key-rows');if(!root)return;
+ const fields=[...root.querySelectorAll('[data-image-key]')],entries=[],used=[];
+ for(const field of fields){if(field.dataset.keyRef&&!field.dataset.keyEdited){entries.push({id:field.dataset.keyRef});used.push(field)}else if(field.value.trim()){entries.push({key:field.value.trim()});used.push(field)}}
+ const endpoint=p.baseUrl,profile=imageConfigSnapshot(p),buttons=[...root.parentElement.querySelectorAll('button')];
+ fields.forEach(e=>e.readOnly=true);buttons.forEach(e=>e.disabled=true);
+ const promise=(async()=>{try{
+   const result=entries.length?await imageCredentialRequest('apply',profile,{entries}):{keys:[]};
+   const target=ensureImageProviders().profiles.find(x=>x.id===p.id);
+   if(!target||target.baseUrl!==endpoint)throw Error('地址已改变，请重新填写密钥。');
+   target.keyIds=[...new Set(result.keys.map(k=>k.id))];target.keyMode=target.keyIds.length?'stored':'none';delete target.keyId;delete target.keyLabel;
+   save();if(!await savePythonWorkspace())throw Error('保存失败，请重试。');
+   if(root.isConnected){used.forEach((e,i)=>{e.value='••••••••';e.dataset.keyRef=result.keys[i].id});fields.forEach(e=>delete e.dataset.keyEdited);delete root.dataset.dirty;}
+   toast('已保存');
+ }finally{imageProviderUI.keyWrites.delete(p.id);fields.forEach(e=>e.readOnly=false);buttons.forEach(e=>e.disabled=false)}})();
+ imageProviderUI.keyWrites.set(p.id,promise);return promise;
 }
 async function imageCredentialRequest(action,p,extra={}){return(await request('/api/image/credentials',post({action,config:imageConfigSnapshot(p),...extra}),15000)).json()}
 async function openImageKeyManager(p){
   const binding=imageModelsCacheKey(p),result=await imageCredentialRequest('list',p);
   if(!ensureImageProviders().profiles.includes(p)||p.id!==activeImageProfile().id||binding!==imageModelsCacheKey(p))return;
-  modal('本地密钥 · '+p.title,`<p class="help">可保存多条并手动选择。保存后原文不再返回浏览器；无需鉴权时在渠道中选择“无密钥”。删除不可撤销，引用它的旧任务需要重新选择配置。</p><div class="provider-key-list">${result.keys.length?result.keys.map(k=>`<div class="provider-key-row"><div class="grow"><strong>${esc(k.label)}</strong><p class="help">密钥已保存 · ${esc(new Date(k.createdAt).toLocaleString())}${p.keyId===k.id&&p.keyMode==='stored'?' · 当前使用':''}</p></div>${btn('使用','check','image-key-use',`data-id="${esc(p.id)}" data-key="${esc(k.id)}" data-label="${esc(k.label)}"`,'small')}${btn('删除','trash','image-key-delete',`data-id="${esc(p.id)}" data-key="${esc(k.id)}"`,'small danger')}</div>`).join(''):'<p class="help">此渠道与地址尚未保存密钥。</p>'}</div><div class="divider"></div>${field('密钥名称（可选）','<input id="image-key-label" type="text" maxlength="80" autocomplete="off" placeholder="例如：主账号 / 备用账号">')}${field('新增 API Key','<input id="image-provider-key" type="password" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellcheck="false" autocapitalize="none" placeholder="粘贴密钥，保存后输入框会清空" aria-label="新增 API Key">')}<p class="help">只用于 API 认证，不是网站登录密码。留空无需保存，直接选择“无密钥”。</p><div class="modal-footer">${btn('关闭','','close-modal')}${btn('保存并使用','disk','image-key-save',`data-id="${esc(p.id)}"`,'primary')}</div>`);
+  modal('本地密钥 · '+p.title,`<div class="provider-key-list">${result.keys.length?result.keys.map(k=>`<div class="provider-key-row"><div class="grow"><strong>${esc(k.label)}</strong><p class="help">密钥已保存 · ${esc(new Date(k.createdAt).toLocaleString())}${(p.keyIds||[p.keyId]).includes(k.id)&&p.keyMode==='stored'?' · 当前使用':''}</p></div>${btn('使用','check','image-key-use',`data-id="${esc(p.id)}" data-key="${esc(k.id)}" data-label="${esc(k.label)}"`,'small')}${btn('删除','trash','image-key-delete',`data-id="${esc(p.id)}" data-key="${esc(k.id)}"`,'small danger')}</div>`).join(''):'<p class="help">此渠道与地址尚未保存密钥。</p>'}</div><div class="divider"></div>${field('密钥名称（可选）','<input id="image-key-label" type="text" maxlength="80" autocomplete="off" placeholder="例如：主账号 / 备用账号">')}${field('新增 API Key','<input id="image-provider-key" type="password" autocomplete="off" data-lpignore="true" data-1p-ignore="true" data-form-type="other" spellcheck="false" autocapitalize="none" placeholder="粘贴密钥，保存后输入框会清空" aria-label="新增 API Key">')}<div class="modal-footer">${btn('关闭','','close-modal')}${btn('保存并使用','disk','image-key-save',`data-id="${esc(p.id)}"`,'primary')}</div>`);
 }
 function providerHasPendingTasks(id){return state.queue.some(q=>['pending','running','paused'].includes(q.status)&&[q.execution,...(q.frames||[]).map(f=>f?._execution)].some(ex=>ex?.profileId===id||ex?.config?.id===id))}
 async function handleImageProviderAction(action,d={},el){
   const p=activeImageProfile(),g=ensureImageProviders();
+  if(action==='image-key-add-row'){const rows=$('#image-provider-key-rows');if(rows.children.length>=32)throw Error('最多添加 32 条密钥。');rows.insertAdjacentHTML('beforeend',imageKeyRow());rows.lastElementChild.querySelector('input').focus();return true}
+  if(action==='image-key-remove-row'){const rows=$('#image-provider-key-rows');el.closest('.provider-key-row-inline').remove();if(!rows.children.length)rows.innerHTML=imageKeyRow('',true);rows.querySelector('input').id='image-provider-key-inline';rows.dataset.dirty='true';await saveImageKeyDrafts(p);return true}
+  if(action==='image-key-save-inline'){await saveImageKeyDrafts(p);return true}
   if(action==='image-provider-pick-model'){chooseImageModel(d.model);return true}
   if(action==='image-provider-settings'){navigate(3);return true}
   if(action==='image-provider-new'){modal('新增图像渠道',field('接口类型',`<select id="image-new-type"><option value="openai">OpenAI 兼容</option><option value="novelai">NovelAI</option></select>`)+field('渠道名称','<input id="image-new-title" autocomplete="off" placeholder="自定义渠道">')+'<div class="modal-footer">'+btn('取消','','close-modal')+btn('创建','plus','image-provider-create','','primary')+'</div>');return true}
   if(action==='image-provider-create'){const type=$('#image-new-type').value,newProfile={id:uid('provider'),title:$('#image-new-title').value.trim()||(type==='novelai'?'NovelAI':'OpenAI 兼容'),provider:type,keyMode:'none',...(type==='novelai'?{baseUrl:'https://image.novelai.net',model:'nai-diffusion-4-5-full',sampler:'k_euler_ancestral'}:{baseUrl:'https://api.openai.com/v1',model:'gpt-image-1',protocol:'images',sendSize:false,sendQuality:false,size:'1024x1024',quality:'auto'})};g.profiles.push(newProfile);g.active=newProfile.id;closeModal();save();render();return true}
-  if(action==='image-provider-copy'){if(p.provider==='comfyui')throw Error('ComfyUI 请在工作流库复制。');const copy={...clone(p),id:uid('provider'),title:p.title+' 副本',keyMode:'none'};delete copy.keyId;delete copy.keyLabel;delete copy.key;g.profiles.push(copy);g.active=copy.id;save();render();return true}
+  if(action==='image-provider-copy'){if(p.provider==='comfyui')throw Error('ComfyUI 请在工作流库复制。');const copy={...clone(p),id:uid('provider'),title:p.title+' 副本',keyMode:'none'};delete copy.keyIds;delete copy.keyId;delete copy.keyLabel;delete copy.key;g.profiles.push(copy);g.active=copy.id;save();render();return true}
   if(action==='image-provider-delete'){
     if(p.provider==='comfyui')throw Error('内置 ComfyUI 入口无需删除；可以切换到其他渠道。');
     if(providerHasPendingTasks(p.id))throw Error('有未完成任务引用此渠道，请先停止并移除相关队列任务。');
-    if(!await confirmAction('删除渠道「'+p.title+'」？','将删除渠道及其本地密钥；已生成画册和图片保留。旧画册的精修快照若引用这些密钥会失效。','删除渠道'))return true;
+    if(!await confirmAction('删除渠道「'+p.title+'」？','删除渠道及其密钥。','删除渠道'))return true;
     if(providerHasPendingTasks(p.id))throw Error('渠道已被新的任务引用，未删除。');
     await imageCredentialRequest('purge',p);g.profiles=g.profiles.filter(x=>x.id!==p.id);g.active=g.profiles[0].id;save();render();return true;
   }
   if(action==='image-provider-models'){
+    await saveImageKeyDrafts(p);
     if(imageProviderUI.busy.has(p.id))return true;const binding=imageModelsCacheKey(p);imageProviderUI.busy.add(p.id);if(el){el.disabled=true;el.textContent='正在获取…'}
-    try{const result=await(await request('/api/image/models',post({config:imageConfigSnapshot(p)}),30000)).json();imageProviderUI.models.set(binding,result.models);if(activeImageProfile()===p&&binding===imageModelsCacheKey(p)){imageProviderUI.busy.delete(p.id);render();$('#image-provider-model-input')?.focus();toast('获取到 '+result.models.length+' 个模型，请选择适合图像生成的模型。')}}catch(e){if(activeImageProfile()===p&&binding===imageModelsCacheKey(p)){const status=$('#provider-model-status');if(status)status.textContent='获取失败，可继续手动填写。'+e.message}throw e}finally{imageProviderUI.busy.delete(p.id);if(el?.isConnected){el.disabled=false;el.textContent='获取模型列表'}}return true;
+    try{const result=await(await request('/api/image/models',post({config:imageConfigSnapshot(p)}),30000)).json();imageProviderUI.models.set(binding,result.models);if(activeImageProfile()===p&&binding===imageModelsCacheKey(p)){imageProviderUI.busy.delete(p.id);render();$('#image-provider-model-input')?.focus();showImageModelResults(true);toast('已获取 '+result.models.length+' 个模型')}}catch(e){if(activeImageProfile()===p&&binding===imageModelsCacheKey(p)){const status=$('#provider-model-status');if(status)status.textContent='获取失败：'+e.message}throw e}finally{imageProviderUI.busy.delete(p.id);if(el?.isConnected){el.disabled=false;el.textContent='获取模型'}}return true;
   }
   if(action==='image-provider-keys'){await openImageKeyManager(p);return true}
   if(action.startsWith('image-key-')){
     const target=g.profiles.find(x=>x.id===d.id);if(!target)throw Error('渠道已删除。');
-    if(action==='image-key-save'){
-      const input=$('#image-provider-key'),key=input.value.trim(),label=$('#image-key-label').value.trim();if(!key){toast('未填写密钥。需要空密钥时请选择“无密钥”。');return true}
-      if(el?.disabled)return true;if(el)el.disabled=true;
-      try{const result=await imageCredentialRequest('add',target,{key,label});input.value='';target.keyMode='stored';target.keyId=result.key.id;target.keyLabel=result.key.label;save();closeModal();render();toast('密钥已保存到本地，下次打开无需重填。')}finally{if(el?.isConnected)el.disabled=false}return true;
+    if(action==='image-key-save'||action==='image-key-save-inline'){
+      const inline=action==='image-key-save-inline',input=$(inline?'#image-provider-key-inline':'#image-provider-key'),key=input.value.trim(),label=inline?'':$('#image-key-label').value.trim(),endpoint=target.baseUrl;if(!key){toast('请输入密钥。');return true}
+      if(imageProviderUI.savingKeys.has(target.id))throw Error('密钥正在保存，请稍候。');imageProviderUI.savingKeys.add(target.id);if(el)el.disabled=true;
+      try{const result=await imageCredentialRequest('add',target,{key,label});input.value='';if(target.baseUrl!==endpoint||!g.profiles.includes(target)){throw Error('密钥已保存到原地址，请在该地址的密钥管理中选择。')}target.keyMode='stored';target.keyId=result.key.id;target.keyIds=[result.key.id];target.keyLabel=result.key.label;firstRunUI.keyNotices.delete(target.id);save();if(!await savePythonWorkspace())throw Error('密钥已保存，但渠道引用尚未确认写入；请检查服务后重新选择密钥。');if(!inline&&$('#modal').contains(input))closeModal();toast('已保存')}finally{imageProviderUI.savingKeys.delete(target.id);if(el?.isConnected)el.disabled=false;if(input.isConnected&&!input.value)render()}return true;
     }
-    if(action==='image-key-use'){target.keyMode='stored';target.keyId=d.key;target.keyLabel=d.label;save();closeModal();render();return true}
-    if(action==='image-key-delete'){if(!await confirmAction('删除这条本地密钥？','不可撤销。使用它的任务将报错，不会自动换用其他密钥。','删除密钥'))return true;await imageCredentialRequest('delete',target,{keyId:d.key});if(target.keyId===d.key){delete target.keyId;delete target.keyLabel;target.keyMode='none'}save();render();await openImageKeyManager(target);return true}
+    if(action==='image-key-use'){target.keyMode='stored';target.keyId=d.key;target.keyIds=[d.key];target.keyLabel=d.label;firstRunUI.keyNotices.delete(target.id);save();if(!await savePythonWorkspace())throw Error('渠道密钥引用尚未保存，请检查服务后重试。');closeModal();render();return true}
+    if(action==='image-key-delete'){if(!await confirmAction('删除这条本地密钥？','删除所选密钥。','删除密钥'))return true;await imageCredentialRequest('delete',target,{keyId:d.key});target.keyIds=(target.keyIds||[target.keyId]).filter(id=>id&&id!==d.key);delete target.keyId;delete target.keyLabel;target.keyMode=target.keyIds.length?'stored':'none';save();render();await openImageKeyManager(target);return true}
   }
   return false;
 }
@@ -245,19 +274,20 @@ async function generateProviderFrame(frame,row,signal,source=null){
   const result=await response.json();if(!result.image)throw Error('渠道未返回图片。');return result;
 }
 function installImageProviders(){
+  document.addEventListener('input',e=>{if(e.target.matches('[data-image-key]'))e.target.dataset.keyEdited='true'});
   paths.key='<circle cx="15" cy="8" r="5"/><path d="m11.5 11.5-8.5 8.5v-4h4v-4h4"/>';
   const oldEnsure=ensureStudioState;ensureStudioState=function(s=state){oldEnsure(s);ensureImageProviders(s);return s};
   const oldSnapshot=mappedExecutionSnapshot;mappedExecutionSnapshot=function(){return activeImageProfile().provider==='comfyui'?{...oldSnapshot(),provider:'comfyui'}:imageProviderSnapshot()};
   const oldExecution=workflowExecutionFor;workflowExecutionFor=function(plan,frame){return activeImageProfile().provider==='comfyui'?{...oldExecution(plan,frame),provider:'comfyui'}:imageProviderSnapshot()};
   const oldBuild=buildMappedWorkflow;buildMappedWorkflow=function(frame,row,options={}){const ex=options.execution||frame._execution;if(ex?.provider&&ex.provider!=='comfyui'){validatePrompt(scopeText(frame.prompt,frame._scope||row._scope||row,true));if(!ex.config?.model||!ex.config?.baseUrl)throw Error('请先填写图像渠道地址和模型。');return {workflow:{},changes:[]}}return oldBuild(frame,row,options)};
   const oldGenerate=generateFrame;generateFrame=async function(frame,row,signal,theme=0,source=null){const ex=frame._execution,provider=ex?(ex.provider||'comfyui'):activeImageProfile().provider;return provider==='comfyui'?oldGenerate(frame,row,signal,theme,source):generateProviderFrame(frame,row,signal,source)};
-  const oldShell=renderShell;renderShell=function(){oldShell();const p=activeImageProfile(),status=$('#topbar > .tiny.muted');if(status&&p.provider!=='comfyui'){status.textContent=p.title+' · API';status.title='按需调用；未声称已验证连接'}};
+  const oldShell=renderShell;renderShell=function(){oldShell();const p=activeImageProfile(),status=$('#topbar > .tiny.muted');if(status){status.textContent=p.provider==='comfyui'?'ComfyUI · 后端按需连接':p.title+' · API';status.title=''}};
   const oldLibrary=renderWorkflowLibrary;renderWorkflowLibrary=()=>imageProviderPanel()+(activeImageProfile().provider==='comfyui'?oldLibrary():'');
   const oldComposer=queueComposerHTML;queueComposerHTML=function(){const html=oldComposer();return '<div class="queue-provider-picker">'+imageProviderSelect()+btn('配置渠道','settings','image-provider-settings','','small')+'</div>'+html};
   const oldRender=render;render=function(){oldRender();const nonComfy=activeImageProfile().provider!=='comfyui';document.querySelectorAll('[data-act="ws-edit-scene-workflow"]').forEach(el=>el.hidden=nonComfy);if(ui.workspace===3){const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent='图像引擎'}};
   const oldAction=handleAction;handleAction=async function(action,d={},el){if(action.startsWith('image-provider-')||action.startsWith('image-key-')){if(await handleImageProviderAction(action,d,el))return}return oldAction(action,d,el)};
   $('#modal').addEventListener('close',()=>{const key=$('#image-provider-key');if(key)key.value=''});
-  document.addEventListener('input',e=>{const el=e.target;if(el.dataset.imageConfig&&el.type!=='checkbox'&&el.tagName==='INPUT'){activeImageProfile()[el.dataset.imageConfig]=el.value.trim();save();if(el.id==='image-provider-model-input')showImageModelResults()}});
+  document.addEventListener('input',e=>{const el=e.target;if(el.dataset.imageConfig&&el.type!=='checkbox'&&el.tagName==='INPUT'){const p=activeImageProfile();if(el.dataset.imageConfig==='baseUrl'&&p.baseUrl!==el.value.trim()){const key=$('#image-provider-key-inline');if(key)key.value=''}if(el.dataset.imageConfig==='baseUrl'&&p.baseUrl!==el.value.trim()&&p.keyMode==='stored'){p.keyMode='none';delete p.keyId;delete p.keyIds;delete p.keyLabel;firstRunUI.keyNotices.add(p.id)}p[el.dataset.imageConfig]=el.value.trim();save();if(el.id==='image-provider-model-input')showImageModelResults()}});
   document.addEventListener('focusin',e=>{if(e.target.id==='image-provider-model-input')showImageModelResults()});
   document.addEventListener('focusout',e=>{if(e.target.id==='image-provider-model-input')closeImageModelResults()});
   let modelTouch=null;
@@ -282,17 +312,18 @@ function installImageProviders(){
   },true);
   document.addEventListener('change',e=>{
     const el=e.target,p=activeImageProfile();
-    if(el.id==='image-provider-select'){ensureImageProviders().active=el.value;save();render();return}
-    if(el.id==='image-provider-auth'){p.keyMode=el.value;save();render();return}
+    if(el.matches('[data-image-key]')){void saveImageKeyDrafts(p).catch(error=>toast(error.message,'error'));return}
+    if(el.id==='image-provider-select'){document.querySelectorAll('[data-image-key]').forEach(e=>{e.value='';delete e.dataset.keyRef;delete e.dataset.keyEdited});ensureImageProviders().active=el.value;save();render();return}
     if(el.dataset.imageConfig){p[el.dataset.imageConfig]=el.type==='checkbox'?el.checked:el.value.trim();save();if(['sendSize','sendQuality','protocol','baseUrl'].includes(el.dataset.imageConfig))render()}
   });
 }
 
 function filterImageModels(models,query){const words=query.trim().toLowerCase().split(/\s+/).filter(Boolean);return models.filter(id=>words.every(word=>id.toLowerCase().includes(word)))}
 function closeImageModelResults(){const input=$('#image-provider-model-input'),list=$('#image-provider-model-results');if(list)list.hidden=true;if(input){input.setAttribute('aria-expanded','false');input.removeAttribute('aria-activedescendant')}imageProviderUI.modelIndex=-1}
-function showImageModelResults(){
+function showImageModelResults(all=false){
   const input=$('#image-provider-model-input'),list=$('#image-provider-model-results');if(!input||!list)return;
-  const models=imageProviderUI.models.get(imageModelsCacheKey(activeImageProfile()))||[],matches=filterImageModels(models,input.value);
+  const models=imageProviderUI.models.get(imageModelsCacheKey(activeImageProfile()))||[],matches=filterImageModels(models,all?'':input.value);
+  if(!models.length||!matches.length){closeImageModelResults();return}
   imageProviderUI.modelIndex=-1;input.removeAttribute('aria-activedescendant');input.setAttribute('aria-expanded','true');list.hidden=false;
   list.innerHTML=`<div class="provider-model-hint">${models.length?(matches.length?'匹配 '+matches.length+' / '+models.length+' 个 · ↑↓ 选择，Enter 确认':'无匹配模型，仍可使用手动填写的 ID'):'尚未获取模型列表，可直接填写 ID 或点击获取'}</div>`+matches.map((id,i)=>`<button type="button" role="option" tabindex="-1" aria-selected="false" id="provider-model-option-${i}" data-act="image-provider-pick-model" data-model="${esc(id)}">${esc(id)}</button>`).join('');fitImageModelResults();
 }

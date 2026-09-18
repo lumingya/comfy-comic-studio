@@ -1572,6 +1572,7 @@ def validate_submission(payload, token):
             "protocol",
             "keyMode",
             "keyId",
+            "keyIds",
             "id",
             "title",
             "sendQuality",

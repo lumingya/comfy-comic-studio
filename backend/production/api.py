@@ -45,10 +45,12 @@ def typed(entry):
     return value
 
 
-def interpolate(text, values, images=None):
+def interpolate(text, values, images=None, *, literal_unknown=False):
     def replace(match):
         key = match[1]
         if key not in values:
+            if literal_unknown:
+                return match[0]
             raise LibraryError("缺少变量：" + key)
         value = values[key]
         if isinstance(value, dict) and value.get("kind") == "mio-image":
@@ -232,15 +234,20 @@ class ProductionAdapter:
         frame = snap["story"]["frames"][index]
         values = task["prepared"]["values"]
         images = []
-        prompt = interpolate(frame.get("prompt", ""), values, images)
+        # NovelAI uses braces for emphasis. Known preset variables still bind;
+        # unknown image-prompt tokens stay literal, never affect caption validation.
+        novelai_weights = snap["channel"].get("provider") == "novelai"
+        prompt = interpolate(frame.get("prompt", ""), values, images, literal_unknown=novelai_weights)
         caption = interpolate(frame.get("caption", ""), values)
-        negative = interpolate(frame.get("negative", ""), values, images)
+        negative = interpolate(frame.get("negative", ""), values, images, literal_unknown=novelai_weights)
         config = self.host.native_store().read(include_baseline=False)
         live = resolve_channel(
             config, snap["channel"]["id"], snap["channel"]["provider"]
         )
         channel = copy.deepcopy(snap["channel"])
-        channel.update({k: live[k] for k in ("keyId", "keyMode") if k in live})
+        for key in ("keyId", "keyIds", "keyMode"):
+            channel.pop(key, None)
+        channel.update({k: live[k] for k in ("keyId", "keyIds", "keyMode") if k in live})
         if channel["provider"] == "comfyui":
             channel["baseUrl"] = channel.get("baseUrl") or live["baseUrl"]
         params = {
@@ -334,6 +341,7 @@ class ProductionAdapter:
                     {
                         "rateLimit": {
                             "until": time.time() + delay,
+                            "untilEpochMs": round((time.time() + delay) * 1000),
                             "attempt": attempt + 1,
                         }
                     },
@@ -439,6 +447,23 @@ def dispatch(handler, host, path):
         route = path[len("/api/production/") :]
         if handler.command == "GET" and route == "tasks":
             result = queue.list()
+            import hashlib, json
+            etag = '"' + hashlib.sha256(json.dumps(result, sort_keys=True, ensure_ascii=False).encode()).hexdigest() + '"'
+            if handler.headers.get("If-None-Match") == etag:
+                handler.send_response(304)
+                handler.send_header("ETag", etag)
+                handler.send_header("Content-Length", "0")
+                handler.end_headers()
+                return True
+            result["serverEpochMs"] = round(time.time() * 1000)
+            handler.send_response(200)
+            encoded = json.dumps({"data": result}, ensure_ascii=False).encode()
+            handler.send_header("ETag", etag)
+            handler.send_header("Content-Type", "application/json; charset=utf-8")
+            handler.send_header("Content-Length", str(len(encoded)))
+            handler.end_headers()
+            handler.wfile.write(encoded)
+            return True
         elif handler.command == "GET" and route.startswith("tasks/"):
             task = queue.get(route[len("tasks/") :])
             result = {
@@ -482,6 +507,7 @@ def dispatch(handler, host, path):
                     body.get("indices"),
                     body.get("trusted") is True,
                     body.get("forcePrepare") is True,
+                    body.get("confirmUncertain") is True,
                 )
             elif route == "recover-publication":
                 result = queue.recover_publication(body["id"], body["index"])

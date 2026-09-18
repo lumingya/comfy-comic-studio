@@ -11,6 +11,12 @@ function nativeSplitDTO(value){
   settings.workspace={globals:Object.fromEntries(Object.entries(c).filter(([k])=>!k.startsWith('_')&&!excluded.has(k))),ui:uiConfig,matrix,chats,queue,ordering,aliases:[],executionStartPolicy:'manual'};
   return{groups,settings};
 }
+function nativeEqual(a,b){
+  if(a===b)return true;
+  if(!a||!b||typeof a!=='object'||typeof b!=='object'||Array.isArray(a)!==Array.isArray(b))return false;
+  const ak=Object.keys(a),bk=Object.keys(b);
+  return ak.length===bk.length&&ak.every(k=>Object.hasOwn(b,k)&&nativeEqual(a[k],b[k]));
+}
 function nativeDelta(studio,payload,previous){
   // This transport is private/local. General backup converters still strip keys.
   for(const name of ['llm','xml'])if(studio.settings[name]?.key)payload[name+'Config'].key=studio.settings[name].key;
@@ -18,10 +24,10 @@ function nativeDelta(studio,payload,previous){
   const next=nativeSplitDTO(payload),old=nativeSplitDTO(previous),revisions=previous._fileRevisions||{},changes=[],removals=[],settings=[];
   for(const[kind,items]of Object.entries(next.groups)){
     const prior=new Map((old.groups[kind]||[]).map(x=>[x.id,x])),ids=new Set(items.map(x=>x.id));
-    for(const item of items)if(!item._lazy&&JSON.stringify(item)!==JSON.stringify(prior.get(item.id)))changes.push({kind,id:item.id,document:item,baseline:prior.get(item.id),expected:revisions[kind+':'+item.id]||null});
+    for(const item of items)if(!item._lazy&&!nativeEqual(item,prior.get(item.id)))changes.push({kind,id:item.id,document:item,baseline:prior.get(item.id),expected:revisions[kind+':'+item.id]||null});
     for(const item of old.groups[kind]||[])if(!ids.has(item.id))removals.push({kind,id:item.id,expected:revisions[kind+':'+item.id]||null});
   }
-  for(const[name,document]of Object.entries(next.settings))if(JSON.stringify(document)!==JSON.stringify(old.settings[name]))settings.push({name,document,baseline:old.settings[name],expected:revisions['settings:'+name]||null});
+  for(const[name,document]of Object.entries(next.settings))if(!nativeEqual(document,old.settings[name]))settings.push({name,document,baseline:old.settings[name],expected:revisions['settings:'+name]||null});
   return{format:'mio.delta.v2',changes,removals,settings};
 }
 function installFileLibrary(){
@@ -60,7 +66,7 @@ function installFileLibrary(){
   const oldMissing=missingIndices;missingIndices=function(book){return book?._lazy?(book._missingIndices||[]):oldMissing(book)};
   const oldScore=score;score=function(book){return book?._lazy?book._score||0:oldScore(book)};
   const previousRender=render;render=function(){previousRender();
-    for(const input of document.querySelectorAll('input[type="password"]'))if(!input.value)input.placeholder='留空保留已存密钥';
+    for(const input of document.querySelectorAll('input[type="password"]'))if(!input.value&&!input.hasAttribute('placeholder'))input.placeholder='留空保留已存密钥';
     if(ui.workspace===0&&ns.sync.runtime.previous._libraryProblems?.length){const node=document.createElement('div');node.className='notice';node.textContent='部分独立文件存在格式或重复 ID 问题，未自动修复或覆盖。请查看设置中的文件库诊断。';document.querySelector('#gallery-results')?.prepend(node)}
   };
   const oldVision=visionRequest;visionRequest=async function(messages,cfg,signal){if(!/^http/.test(location.protocol))return oldVision(messages,cfg,signal);if(cfg.mode!=='real')throw Error('请先启用真实视觉 API。');const message=await chatCompletion(messages,null,signal,{...cfg,_credentialScope:cfg.connection==='shared'?'llm':'critic'});if(typeof message.content!=='string'||!message.content.trim())throw Error('视觉模型未返回文本结果。');return message.content};
@@ -95,19 +101,19 @@ function nativeAck(studio,payload,data){
 }
 
 function nativeReconcile(current,submitted,confirmed){
-  if(JSON.stringify(current)===JSON.stringify(submitted))return clone(confirmed);
-  if(current&&submitted&&confirmed&&[current,submitted,confirmed].every(v=>typeof v==='object'&&!Array.isArray(v))){const result=clone(current);for(const k of new Set([...Object.keys(submitted),...Object.keys(confirmed)])){if(Object.hasOwn(confirmed,k))result[k]=nativeReconcile(current[k],submitted[k],confirmed[k]);else if(JSON.stringify(current[k])===JSON.stringify(submitted[k]))delete result[k]}return result}
-  if([current,submitted,confirmed].every(Array.isArray)){const items=[...current,...submitted,...confirmed],key=items.every(x=>x&&typeof x==='object'&&'id'in x)?'id':'stepIndex';if(items.every(x=>x&&typeof x==='object'&&key in x)){const ids=[...new Set([...current,...confirmed].map(x=>x[key]))];return ids.map(id=>{const a=current.find(x=>x[key]===id),b=submitted.find(x=>x[key]===id),c=confirmed.find(x=>x[key]===id);if(!a)return c&&!b?clone(c):undefined;if(!c)return b&&JSON.stringify(a)===JSON.stringify(b)?undefined:a;return nativeReconcile(a,b,c)}).filter(Boolean)}}
+  if(nativeEqual(current,submitted))return clone(confirmed);
+  if(current&&submitted&&confirmed&&[current,submitted,confirmed].every(v=>typeof v==='object'&&!Array.isArray(v))){const result=clone(current);for(const k of new Set([...Object.keys(submitted),...Object.keys(confirmed)])){if(Object.hasOwn(confirmed,k))result[k]=nativeReconcile(current[k],submitted[k],confirmed[k]);else if(nativeEqual(current[k],submitted[k]))delete result[k]}return result}
+  if([current,submitted,confirmed].every(Array.isArray)){const items=[...current,...submitted,...confirmed],key=items.every(x=>x&&typeof x==='object'&&'id'in x)?'id':'stepIndex';if(items.every(x=>x&&typeof x==='object'&&key in x)){const ids=[...new Set([...current,...confirmed].map(x=>x[key]))];return ids.map(id=>{const a=current.find(x=>x[key]===id),b=submitted.find(x=>x[key]===id),c=confirmed.find(x=>x[key]===id);if(!a)return c&&!b?clone(c):undefined;if(!c)return b&&nativeEqual(a,b)?undefined:a;return nativeReconcile(a,b,c)}).filter(Boolean)}}
   return current;
 }
 function nativeLibrarySettings(){
   const problems=ComfyComic.sync.runtime.previous._libraryProblems||[];
-  return '<section class="settings-section"><h2>独立文件库</h2><p>每个分镜、设定、企划都是独立 JSON。每本画册拥有自己的 album.json 和 images/。复制新文件后，重新读取即可发现；相同 ID 不会悄悄覆盖。</p><div class="service-context"><code>data/settings/ · storyboards/ · presets/ · collections/ · albums/</code></div><p>画册、分镜和变量的导入导出位于各自页面。分享不包含服务密钥或执行记录，导入始终创建新 ID。</p><div class="row wrap" style="margin:15px 0">'+btn('扫描并重新读取','refresh','v3-connect-backend')+'</div><p class="help">'+(problems.length?esc(JSON.stringify(problems)):'文件库未报告冲突。修改同一字段发生版本冲突时，保留本页草稿，不强制覆盖。')+'</p><a href="/docs/guide/FILE_LIBRARY.html" target="_blank" rel="noopener">文件复制、分享、备份与密钥教程 ↗</a><h3>已保存密钥</h3><p>密码框留空会保留已绑定密钥；修改地址时需要明确重新填写或忘记原密钥。密钥只保存在 settings/secrets.json，不在普通分享包中。</p>'+['llm','xml','critic'].map(scope=>btn('忘记 '+scope.toUpperCase()+' 密钥','trash','native-forget','data-scope="'+scope+'"','small')).join(' ')+'</section>';
+  return '<section class="settings-section"><h2>独立文件库</h2><div class="service-context"><code>data/settings/ · storyboards/ · presets/ · collections/ · albums/</code></div><div class="row wrap" style="margin:15px 0">'+btn('扫描并重新读取','refresh','v3-connect-backend')+'</div><p class="help">'+(problems.length?esc(JSON.stringify(problems)):'文件库未报告冲突。修改同一字段发生版本冲突时，保留本页草稿，不强制覆盖。')+'</p><a href="/docs/guide/FILE_LIBRARY.html" target="_blank" rel="noopener">文件复制、分享、备份与密钥教程 ↗</a><h3>已保存密钥</h3><p>密码框留空会保留已绑定密钥；修改地址时需要明确重新填写或忘记原密钥。密钥只保存在 settings/secrets.json，不在普通分享包中。</p>'+['llm','xml','critic'].map(scope=>btn('忘记 '+scope.toUpperCase()+' 密钥','trash','native-forget','data-scope="'+scope+'"','small')).join(' ')+'</section>';
 }
 function installNativeLibraryPanel(){
   const prior=renderPythonSettings;renderPythonSettings=function(){return nativeLibrarySettings()+prior()};
   installContextualSharing();
-  v3Actions['native-forget']=async({scope})=>{if(!await confirmAction('忘记已保存的 '+scope.toUpperCase()+' 密钥？','仅清除这项连接的密钥绑定，不会删除画册或提交模型请求。','忘记密钥'))return;if(!await ComfyComic.sync.save())throw Error('请先保存当前编辑。');await request('/api/library/forget-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope})});await connectPythonBackend()};
+  v3Actions['native-forget']=async({scope})=>{if(!await confirmAction('忘记已保存的 '+scope.toUpperCase()+' 密钥？','清除此连接的密钥绑定。','忘记密钥'))return;if(!await ComfyComic.sync.save())throw Error('请先保存当前编辑。');await request('/api/library/forget-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope})});await connectPythonBackend()};
 }
 
 function nativeAckSettings(studio,payload,documents){

@@ -22,7 +22,7 @@ function groupGeneralPreferences(root){
     section.innerHTML=`<header><h2>${title}</h2><p>${description}</p></header><div class="preferences-category-body"></div>`;groups.set(id,section);root.append(section);
   }
   function category(item,parent){
-    if(item.matches('#art-font-status,.font-sample,.font-status-note')||item.querySelector('#studio-theme,#display-lettering,#default-shelf-view,[data-studio-pref^="appearance."]'))return 'display';
+    if(item.matches('#art-font-status,.font-sample,.font-status-note')||item.querySelector('#studio-theme,#display-lettering,#default-shelf-view,#allow-external-fonts,[data-studio-pref^="appearance."]'))return 'display';
     if(item.querySelector('#interface-language,[data-studio-pref^="assistant."]'))return 'general';
     if(item.querySelector('#default-room-view,[data-studio-pref^="reader."]')||item.matches('[data-reader-preferences]'))return 'reader';
     if(parent?.querySelector('#art-font-status')||parent?.id==='display-preferences')return 'display';
@@ -37,6 +37,11 @@ function groupGeneralPreferences(root){
   }
 }
 function installPreferencesWorkbench(){
+  document.addEventListener('change',e=>{if(e.target.id==='allow-external-fonts'){
+    state.settings.presentation.fonts=e.target.checked;
+    if(e.target.checked){loadCollectionFonts();loadArtTypography()}else{document.querySelectorAll('#collection-font-stylesheet,#art-font-stylesheet').forEach(el=>el.remove());displayUI.fontStatus='fallback';artUI.fontStatus='fallback'}
+    save();render();
+  }});
   paths['file-import']=paths.download;paths['file-export']=paths.upload;
   paths.toolbox='<path d="M8 7V4h8v3M3 7h18v14H3zM3 12h18M10 10v4h4v-4"/>';
   const previous=render;render=function(...args){const result=previous(...args);if(ui.workspace===5){const root=$('#studio-settings-content');if(root){if(studioUI.settingsTab==='appearance')groupGeneralPreferences(root);normalizeSettingsSwitches(root)}}

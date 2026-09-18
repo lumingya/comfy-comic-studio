@@ -1,2 +1,0 @@
-All development modules and assembled script passed JavaScript syntax checks.
-Wrote dev index.html. Static resources use only /styles.css and /js/*.js.

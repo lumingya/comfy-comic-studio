@@ -69,7 +69,7 @@ async function importWorkflowFiles(files){
   storeActiveWorkflow();state.settings.comfy.presets.push(...accepted);
   if(accepted.length)selectLibraryWorkflow(accepted[0].id);
   save();render();
-  modal('批量导入结果',`<p>成功导入 ${accepted.length} 份工作流。每份独立保存节点与映射，同名文件不会覆盖已有工作流。</p>${errors.length?'<div class="notice amber">'+errors.map(esc).join('<br>')+'</div>':'<p class="help">自动识别仅作为初始映射，请核对正负提示词及输出节点。</p>'}<div class="modal-footer">${btn('完成','check','close-modal','','primary')}</div>`);
+  modal('批量导入结果',`<p>成功导入 ${accepted.length} 份工作流。</p>${errors.length?'<div class="notice amber">'+errors.map(esc).join('<br>')+'</div>':'<p class="help">自动识别仅作为初始映射，请核对正负提示词及输出节点。</p>'}<div class="modal-footer">${btn('完成','check','close-modal','','primary')}</div>`);
   return {accepted,errors};
 }
 
@@ -92,7 +92,7 @@ function workflowControlHTML(id,value,inherit,label){
 
 function sceneAssignmentHTML(p,f){
   const o=planFrameOverrides(p,f),sets=o.variableSetIds||[],current=sets[0]||'';
-  return `<section class="scene-assignment"><div class="scene-assignment-grid">${field('本幕设定预设',`<select id="ws-scene-preset" aria-label="本幕设定预设">${opt('','继承全册设定',current)}${projectVariableSets().map(s=>opt(s.id,s.title,current)).join('')}</select>`)}${field('本幕工作流',workflowControlHTML('ws-scene-workflow',o.workflowId,'全册默认 · '+(state.settings.comfy.presets.find(w=>w.id===p.workflowId)?.title||state.settings.comfy.workflowTitle),'本幕工作流'))}</div><p class="help">应用顺序：全册设定 → 本幕预设 → 本幕自定义属性。只影响本册这一幕，不修改共享模板。下方预览使用同一组设定。</p><div class="row wrap">${btn('仅此幕加入队列','plus','ws-enqueue-scene','','small')}${activeImageProfile().provider==='comfyui'?btn('调整此工作流','nodes','ws-edit-scene-workflow','','small ghost'):''}</div></section>`;
+  return `<section class="scene-assignment"><div class="scene-assignment-grid">${field('本幕设定预设',`<select id="ws-scene-preset" aria-label="本幕设定预设">${opt('','继承全册设定',current)}${projectVariableSets().map(s=>opt(s.id,s.title,current)).join('')}</select>`)}${field('本幕工作流',workflowControlHTML('ws-scene-workflow',o.workflowId,'全册默认 · '+(state.settings.comfy.presets.find(w=>w.id===p.workflowId)?.title||state.settings.comfy.workflowTitle),'本幕工作流'))}</div><div class="row wrap">${btn('仅此幕加入队列','plus','ws-enqueue-scene','','small')}${activeImageProfile().provider==='comfyui'?btn('调整此工作流','nodes','ws-edit-scene-workflow','','small ghost'):''}</div></section>`;
 }
 
 function queueComposerHTML(){
@@ -184,7 +184,7 @@ async function applySelectedSettingPreset(){
   if(!await confirmAction('应用「'+draft.title+'」到本册？','将当前显示的预设草稿复制到本册，替换本册全局设定；不修改预设文件或单幕覆盖；保存后影响本册尚未发送的分镜，在途请求不变。','应用'))return;
   if(projectId!==state.activeProjectId||settingsTargetById(p.id)!==p||currentBookSettings()!==p||settingPresetDraft(id,false)!==draft)throw Error('工作区或预设已变化，未应用。');
   p.settingsGroups=clone(settingsGroups(draft));p.variables=mergedSettingEntries(draft).map(e=>({...clone(e),id:uid('var')}));p.variableSetIds=[];p.excludedSettingKeys=[];delete p.editingPresetId;
-  save();closeModal();render();if(!await savePythonWorkspace())throw Error('应用尚未保存成功，未声称已生效。请检查保存错误。');toast('已复制并保存到本册；之后编辑公共预设不会同步修改本册。');
+  save();closeModal();render();if(!await savePythonWorkspace())throw Error('应用尚未保存成功，未声称已生效。请检查保存错误。');toast('已应用到本册。');
 }
 
 function saveSettingsAsPreset(){
@@ -345,5 +345,5 @@ function dataLayoutHTML(){
   albums/标题--ID/images/               本册原图、参考图与编辑图
   workflows/ · layouts/           独立工作流与版式
   records/ · runtime/             对话、队列与执行记录
-  .cache/                        可重建的目录索引</pre><p class="help">含图资源的 JSON 同时携带同名 .assets/；画册请复制整个 ID 目录。单文件复制遇到相同 ID 时拒绝覆盖，界面导入分享包会分配新 ID。</p><div class="row wrap">${btn('导出完整图片目录 ZIP','download','disk-archive')}${btn('载入已解压目录','upload','disk-import-folder')}${btn('导出本机配置 JSON','disk','backup-export')}</div><p class="help">跨电脑使用含图片 ZIP。单独配置 JSON 不含原图，只能配合本机图片使用。停止服务后复制整个 data/ 可保留全部执行记录和密钥；这是私密备份，不是分享包。</p></section>`;
+  .cache/                        可重建的目录索引</pre><p class="help">含图资源的 JSON 同时携带同名 .assets/；画册请复制整个 ID 目录。单文件复制遇到相同 ID 时拒绝覆盖，界面导入分享包会分配新 ID。</p><div class="row wrap">${btn('导出完整图片目录 ZIP','download','disk-archive')}${btn('载入已解压目录','upload','disk-import-folder')}${btn('导出本机配置 JSON','disk','backup-export')}</div></section>`;
 }

@@ -13,7 +13,7 @@ const uid=p=>p+'_'+(globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+M
 const paths={grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',story:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M10 10v10"/>',users:'<circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 5"/>',nodes:'<rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="15" width="6" height="6" rx="1"/><path d="M6 9v9h9M15 6h6M18 3v6"/>',spark:'<path d="m12 3 2.6 6.4L21 12l-6.4 2.6L12 21l-2.6-6.4L3 12l6.4-2.6L12 3ZM20 2v4M18 4h4"/>',search:'<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/>',plus:'<path d="M12 5v14M5 12h14"/>',down:'<path d="m6 9 6 6 6-6"/>',up:'<path d="m6 15 6-6 6 6"/>',star:'<path d="m12 3 2.8 5.7 6.3.9-4.6 4.5 1.1 6.3L12 17.4l-5.6 3 1.1-6.3L3 9.6l6.2-.9L12 3Z"/>',folder:'<path d="M3 7V5a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/>',book:'<path d="M12 5c-3-2-7-2-10-1v15c4-1 7-1 10 1 3-2 6-2 10-1V4c-3-1-7-1-10 1ZM12 5v15"/>',image:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1.5"/><path d="m21 15-5-5L6 21"/>',check:'<path d="m5 12 4 4L19 6"/>',shield:'<path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z"/><path d="m8 12 3 3 5-5"/>',download:'<path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/>',upload:'<path d="M12 16V4m-5 5 5-5 5 5M4 16v5h16v-5"/>',box:'<path d="m12 3 9 5v9l-9 5-9-5V8l9-5ZM3 8l9 5 9-5M12 13v9M7.5 5.5l9 5"/>',settings:'<path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="var(--bg)"/><circle cx="16" cy="17" r="3" fill="var(--bg)"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1 1M18 18l1 1M5 19l1-1M18 6l1-1"/>',play:'<path d="m7 4 14 8-14 8V4Z"/>',pause:'<path d="M8 4v16M16 4v16"/>',stop:'<rect x="5" y="5" width="14" height="14" rx="2"/>',refresh:'<path d="M20 8a8 8 0 1 0 0 8M20 3v6h-6"/>',more:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',list:'<path d="M8 5h13M8 12h13M8 19h13M3 5h.1M3 12h.1M3 19h.1"/>',copy:'<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V3H3v13h5"/>',trash:'<path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/>',edit:'<path d="m14 5 5 5M4 15 16 3a2 2 0 0 1 5 5L9 20l-6 1 1-6Z"/>',arrow:'<path d="M5 12h14m-5-5 5 5-5 5"/>',close:'<path d="m6 6 12 12M6 18 18 6"/>',terminal:'<path d="m4 6 6 6-6 6M13 18h7"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',disk:'<path d="M3 3h15l3 3v15H3V3ZM7 3v6h10V3M7 21v-8h10v8"/>',expand:'<path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/>',attach:'<path d="m8 13 7-7a3 3 0 0 1 4 4L9 20a5 5 0 0 1-7-7L13 2"/>',send:'<path d="m22 2-7 20-4-9-9-4 20-7ZM11 13 22 2"/>',eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',compare:'<rect x="3" y="4" width="7" height="16" rx="1"/><rect x="14" y="4" width="7" height="16" rx="1"/>',help:'<circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 1 1 5 2c-2 1-2 2-2 3M12 17h.1"/>',brush:'<path d="m14 6 4 4M8 14 18 3a2 2 0 0 1 3 3L11 17M10 15c-7-3-3 6-8 6 7 1 10-2 8-6Z"/>'};
 
 
-const icon=(n,c='')=>`<svg class="icon ${c}" viewBox="0 0 24 24" aria-hidden="true">${paths[n]||paths.grid}</svg>`,btn=(l,i,a,x='',c='')=>`<button type="button" class="btn ${c}" data-act="${a}" ${x}>${i?icon(fileOperationIcon(a,i)):''}${l}</button>`,ibtn=(i,a,l,x='')=>`<button type="button" class="ibtn" data-act="${a}" title="${esc(l)}" aria-label="${esc(l)}" ${x}>${icon(fileOperationIcon(a,i))}</button>`,opt=(v,l,c)=>`<option value="${esc(v)}" ${String(v)===String(c)?'selected':''}>${esc(l)}</option>`,input=(n,v,t='text',a='')=>`<input name="${n}" type="${t}" value="${esc(v)}" ${a}>`,field=(l,c,h='')=>`<div class="field"><label class="label">${l}</label>${c}${h?`<div class="help">${h}</div>`:''}</div>`;
+const icon=(n,c='')=>`<svg class="icon ${c}" viewBox="0 0 24 24" aria-hidden="true">${paths[n]||paths.grid}</svg>`,btn=(l,i,a,x='',c='')=>`<button type="button" class="btn ${c}" data-act="${a}" ${x}>${i?icon(fileOperationIcon(a,i)):''}${l}</button>`,ibtn=(i,a,l,x='')=>`<button type="button" class="ibtn" data-act="${a}" title="${esc(l)}" aria-label="${esc(l)}" ${x}>${icon(fileOperationIcon(a,i))}</button>`,opt=(v,l,c)=>`<option value="${esc(v)}" ${String(v)===String(c)?'selected':''}>${esc(l)}</option>`,input=(n,v,t='text',a='')=>`<input name="${n}" type="${t}" value="${esc(v)}" ${a}>`,field=(l,c,h='')=>`<div class="field"><label class="label">${l}</label>${c.replace(/<(input|textarea|select)\b([^>]*)>/g,(tag,name,attrs)=>/\b(?:aria-label|aria-labelledby)=/.test(attrs)?tag:`<${name} aria-label="${esc(String(l).replace(/<[^>]*>/g,''))}"${attrs}>`)}${h?`<div class="help">${h}</div>`:''}</div>`;
 
 
 const palettes=clone(MioContent.palettes);
@@ -30,7 +30,7 @@ const frameNames=clone(MioContent.frameNames),captions=clone(MioContent.captions
 
 let state=seedState();
 
-const ui={workspace:0,templateId:'tpl_summer',frameIndex:0,filter:'all',search:'',sort:'createdAt',layout:'grid',selected:new Set(),bookId:null,mode:'focus',step:0,storyRowId:'row_0',storyTemplateId:'tpl_summer',llmTab:'story',marketTab:'all',marketSearch:'',exportFormat:'webtoon',exportIds:[],logFilter:'all'};
+const ui={workspace:9,templateId:'tpl_summer',frameIndex:0,filter:'all',search:'',sort:'createdAt',layout:'grid',selected:new Set(),bookId:null,mode:'focus',step:0,storyRowId:'row_0',storyTemplateId:'tpl_summer',llmTab:'story',marketTab:'all',marketSearch:'',exportFormat:'webtoon',exportIds:[],logFilter:'all'};
 
 
 const rt={logs:[],running:false,paused:false,controller:null,llmController:null,llmBusy:false,lockedRows:new Set(),criticFailures:0,ws:null,reconnect:null,latency:null,vram:null,connected:false,clientId:uid('client'),saved:true,saving:false,db:null,observer:null,commandItems:[],commandIndex:0,chatBusy:false,attachments:[],redraw:new Set(),critiqueBusy:new Set(),mask:null};
@@ -66,7 +66,7 @@ const assistantTools=toolDefs.map(([name,description,properties,required])=>({ty
 const catalog=clone(MioContent.market);
 
 
-function diagnostics(){const tests=[];const test=(name,fn)=>{try{if(fn()===false)throw Error('验证失败');tests.push([name,true,'通过'])}catch(e){tests.push([name,false,e.message])}};test('工程核心数据契约',()=>validateState(state));test('平铺宏变量插值',()=>interpolate('{character}/{character2}',{character:'A',character2:'B'})==='A/B');test('宏变量全字边界防碰撞',()=>'{character}/{character2}'.replace(new RegExp('\\{character\\}','g'),'{hero}')==='{hero}/{character2}');test('缺帧并集判定',()=>JSON.stringify(missingIndices({totalSteps:4,steps:[{stepIndex:0,image:'ready'},{stepIndex:1,image:''},{stepIndex:2,image:'svg',offlineFallback:true}]}))==='[1,2,3]');test('旧宏变量防删除',()=>{try{validatePrompt('character','{character}');return false}catch(e){return true}});test('八个标准工具 Schema',()=>assistantTools.length===8&&new Set(assistantTools.map(t=>t.function.name)).size===8);test('奇数页空白补齐边界',()=>{const n=5,last=Math.floor((n-1)/2)*2;return last===4&&last+1>=n});test('API 工作流扁平结构',()=>!!validateWorkflow(defaultWorkflow));test('确定性 SVG 输出',()=>svgArt(1,42)===svgArt(1,42));test('XML 中文 Schema 校验',()=>parseTemplateXML('<模板><标题>测试</标题><简介>测试</简介><分镜列表><分镜1><名称>一</名称><提示词>{character}</提示词><剧情>测试</剧情></分镜1></分镜列表></模板>').frames.length===1);modal('本地系统自检',`<div class="notice">这些检查在当前浏览器内真实执行，覆盖数据与边界逻辑；不代表远端 GPU 或 LLM 集成已验证。</div>${tests.map(([n,ok,d])=>`<div class="row" style="padding:14px 0;border-bottom:1px solid var(--line)"><span class="${ok?'accent':'danger'}">${icon(ok?'check':'close')}</span><span class="grow small">${n}</span><span class="tiny muted">${esc(d)}</span></div>`).join('')}`);return tests}
+function diagnostics(){const tests=[];const test=(name,fn)=>{try{if(fn()===false)throw Error('验证失败');tests.push([name,true,'通过'])}catch(e){tests.push([name,false,e.message])}};test('工程核心数据契约',()=>validateState(state));test('平铺宏变量插值',()=>interpolate('{character}/{character2}',{character:'A',character2:'B'})==='A/B');test('宏变量全字边界防碰撞',()=>'{character}/{character2}'.replace(new RegExp('\\{character\\}','g'),'{hero}')==='{hero}/{character2}');test('缺帧并集判定',()=>JSON.stringify(missingIndices({totalSteps:4,steps:[{stepIndex:0,image:'ready'},{stepIndex:1,image:''},{stepIndex:2,image:'svg',offlineFallback:true}]}))==='[1,2,3]');test('旧宏变量防删除',()=>{try{validatePrompt('character','{character}');return false}catch(e){return true}});test('八个标准工具 Schema',()=>assistantTools.length===8&&new Set(assistantTools.map(t=>t.function.name)).size===8);test('奇数页空白补齐边界',()=>{const n=5,last=Math.floor((n-1)/2)*2;return last===4&&last+1>=n});test('API 工作流扁平结构',()=>!!validateWorkflow(defaultWorkflow));test('确定性 SVG 输出',()=>svgArt(1,42)===svgArt(1,42));test('XML 中文 Schema 校验',()=>parseTemplateXML('<模板><标题>测试</标题><简介>测试</简介><分镜列表><分镜1><名称>一</名称><提示词>{character}</提示词><剧情>测试</剧情></分镜1></分镜列表></模板>').frames.length===1);modal('本地系统自检',`${tests.map(([n,ok,d])=>`<div class="row" style="padding:14px 0;border-bottom:1px solid var(--line)"><span class="${ok?'accent':'danger'}">${icon(ok?'check':'close')}</span><span class="grow small">${n}</span><span class="tiny muted">${esc(d)}</span></div>`).join('')}`);return tests}
 
 
 document.addEventListener('click',async e=>{if(e.target.closest('.cover-check'))return;const el=e.target.closest('[data-act]');if(!el)return;e.preventDefault();try{await handleAction(el.dataset.act,el.dataset,el)}catch(x){toast(x.message||'操作未完成。','error');log(x.message||String(x),'error')}});
@@ -277,7 +277,7 @@ diagnostics=function(){
   test('迁移不覆盖用户隐藏模块设置',()=>{const s={settings:{studio:{visibility:{llm:false},features:{assistant:false}}}};ensureStudioState(s);return s.settings.studio.visibility.llm===false&&s.settings.studio.features.assistant===false&&s.exportTemplates.length===4});
   test('编辑副本与保存模板引用隔离',()=>{const t=builtinExportTemplates()[0],copy=exportTemplateCopy(t);copy.options.accent='#ffffff';return t.options.accent!==copy.options.accent});
   test('助手工具草稿不会提前修改源模板',()=>{const t={id:'test-scope',title:'原始标题',frames:[makeFrame(0)]},draft=clone(t);assistantToolDraft(draft,'update_template_title',{title:'新标题'});return t.title==='原始标题'&&draft.title==='新标题'});
-  $('#modal-body').insertAdjacentHTML('beforeend','<div class="divider"></div><h3 class="panel-title">v2.3 模板与模块回归检查</h3>'+extra.map(([n,ok,d])=>`<div class="row" style="padding:13px 0;border-bottom:1px solid var(--line)"><span class="${ok?'accent':'danger'}">${icon(ok?'check':'close')}</span><span class="grow small">${esc(n)}</span><span class="tiny muted">${esc(d)}</span></div>`).join('')+'<p class="help">上述结果仅在点击此按钮的浏览器内执行，不代表真实 ComfyUI 或 LLM 已完成联调。</p>');
+  $('#modal-body').insertAdjacentHTML('beforeend','<div class="divider"></div><h3 class="panel-title">v2.3 模板与模块回归检查</h3>'+extra.map(([n,ok,d])=>`<div class="row" style="padding:13px 0;border-bottom:1px solid var(--line)"><span class="${ok?'accent':'danger'}">${icon(ok?'check':'close')}</span><span class="grow small">${esc(n)}</span><span class="tiny muted">${esc(d)}</span></div>`).join('')+'');
   return [...tests,...extra];
 };
 
@@ -333,11 +333,11 @@ const detailUI={projectOpen:false,tooltipTimer:null,tooltipTarget:null,assistant
 const actionHelp={
   'book-menu':'管理这本画册：阅读、星标、剧情版本对比、补齐缺帧或导出。',
   read:'打开阅读器，逐页查看画面与台词，可切换双页、长卷和翻页模式。',
-  star:'仅添加或取消本地星标，便于筛选收藏。不会公开发布。',
-  'copy-book':'复制标题、角色、模板、概要和标签，不会复制图片。',
+  star:'添加或取消星标。',
+  'copy-book':'复制画册信息。',
   'compare-book':'对照同一角色与模板派生出的不同剧情画册，需要至少两个版本。',
   'export-book':'把画册排版为可离线打开的 HTML，可选模板、台词和提示词水印。',
-  resume:'只补齐缺失或离线降级的分镜，已完成的画面不会重新生成。',
+  resume:'补齐缺失分镜。',
   'delete-book':'从当前工程索引移除画册。已落盘的旧文件保留，避免误删原图。',
   'bulk-delete':'移除选中画册的工程记录。操作前需要二次确认。',
   'market-install':'把资源安装进本地资产库。安装的 HTML 模板可再复制、自定义或卸载。',
@@ -347,7 +347,7 @@ const actionHelp={
   'et-export-html':'下载模板 HTML 源文件，可在外部编辑器修改后重新导入。',
   'et-save':'保存当前排版模板。内置模板的修改会另存为个人副本。',
   'et-default':'之后打开导出窗口时优先使用此模板。',
-  'et-market-download':'下载画册模板包，不会自动安装；也可直接保留给其他工作室使用。',
+  'et-market-download':'下载模板包。',
   'project-toggle':'切换当前企划，或在同一个菜单中创建新企划。',
   'new-project':'创建独立企划。连接目录后会自动建立对应企划文件夹。',
   'project-rename':'修改企划显示名称。已有文件夹保持稳定，避免破坏图片引用。',
@@ -361,7 +361,7 @@ const actionHelp={
   'assistant-input-expand':'展开输入区域，适合编辑较长的分镜指令；再次点击还原。',
   'assistant-open-target':'定位到当前对话绑定的源分镜模板，而不是正在阅读的画册图片。',
   'assistant-undo':'安全撤销上次助手修改；模板有后续手工编辑时会阻止覆盖。',
-  'assistant-stop':'停止当前助手请求。已确认的修改保留，未确认的不会应用。',
+  'assistant-stop':'停止当前请求。',
   'settings':'管理工作室名称、文件保存目录、模块开关和生成默认值。',
   'profile-settings':'修改工作室名称与创作者署名。',
   'critique':'审校本页的解剖、构图和角色一致性；离线模式提供规则模拟报告。',
@@ -490,7 +490,7 @@ handleAction=async function(act,d={},el){
   await detailCore.handleAction(act,d,el);
   if(act==='book-menu'&&disk.root){const b=bookBy(d.id);if(b&&disk.paths.books[b.id])$('#modal-body').insertAdjacentHTML('beforeend','<div class="row" style="margin-top:14px">'+btn('查看图片目录','folder','disk-book-path',`data-id="${b.id}"`,'small ghost')+'</div>')}
   if(act==='et-revert'&&!studioUI.editorDirty){delete state.drafts.exportTemplate;save()}
-  if(act==='llm-settings'){const note=$('#modal-body .notice');if(note)note.textContent='真实调用会把指定文本和图片发送给你配置的服务商。API 密钥默认仅用于本次会话；是否写入工作室目录可在“文件与保存”中控制。'}
+  if(act==='llm-settings'){const note=$('#modal-body .notice');if(note)note.textContent=''}
 };
 
 
@@ -569,7 +569,7 @@ const encodedPath=path=>path.split('/').map(encodeURIComponent).join('/');
 
 const guideSteps=[
   {id:'save',title:'保存工作室',headline:'先给作品一个真实的家。',description:'推荐先连接本地目录。自动保存会按企划、画册和图片分层写入，只有底栏显示“已写入磁盘”才代表保存完成。',checks:['点击“选择本地根目录”并允许浏览器读写。','桌面 Chrome / Edge 的安全页面支持目录授权；受限环境可以下载 ZIP 目录包。','浏览器数据库不作为作品主存储，临时会话关闭前要备份。'],action:'guide-storage',label:'打开文件与保存',icon:'folder'},
-  {id:'project',title:'建立企划',headline:'不同的故事，分开管理。',description:'顶栏企划名称既是切换器，也是新建入口。每个企划拥有独立的画册、角色与分镜模板，不会混在一起。',checks:['点击顶栏企划菜单，选择“新建企划”。','不想先配置？可以在后面创建独立的三幕练习工程。','隐藏工作区不会删除数据，设置中可随时重新打开。'],action:'guide-project',label:'新建一个企划',icon:'plus'},
+  {id:'project',title:'建立企划',headline:'不同的故事，分开管理。',description:'顶栏企划名称既是切换器，也是新建入口。每个企划拥有独立的画册、角色与分镜模板，不会混在一起。',checks:['点击顶栏企划菜单，选择“新建企划”。','不想先配置？可以在后面创建独立的三幕练习工程。','在设置中选择要显示的工作区。'],action:'guide-project',label:'新建一个企划',icon:'plus'},
   {id:'story',title:'角色与分镜',headline:'先写镜头，再填入角色。',description:'分镜模板定义镜头、提示词和台词；角色矩阵填入姓名、服装与场景。{character}、{outfit} 等变量会在出图时替换。',checks:['在“分镜剧本配置”添加、移动或复制镜头。','在“批量角色矩阵”填写角色变量，并勾选要生成的行。','LLM 剧情是可选环节；没有模型也能使用默认旁白出图。'],action:'guide-storyboard',label:'打开分镜工作区',icon:'story'},
   {id:'generate',title:'生成第一册',headline:'用三幕，走完一次创作。',description:'下面的练习只使用本地 SVG 引擎，不调用 GPU、不发送 API 请求，也不会修改现有企划。生成后会出现一套完整的角色、模板和画册。',checks:['真实创作时：勾选角色 → 加入队列 → 开始批量渲染。','需要 GPU 时，在“ComfyUI 引擎管线”配置地址和工作流。','中止后图片保留；“断点补齐”只处理缺失或降级帧。'],action:'guide-practice',label:'创建并生成三幕练习',icon:'play'},
   {id:'review',title:'阅读与审校',headline:'把看见的问题，变成修改。',description:'打开画册，在右侧分镜检查器选择“配置 API”。支持图片输入的视觉模型才能生成真实诊断，离线报告仅用于演示操作。',checks:['填写 Base URL、API Key 和视觉模型名称，先做“带图测试”。','点击“审校本页”或“审校整本画册”，查看具体问题区域。','把建议填入重绘框，确认提示词后精修；助手只改源模板，不直接改已生成图片。'],action:'guide-reader',label:'打开画册体验阅读',icon:'book'},
@@ -580,7 +580,7 @@ const guideSteps=[
 
 async function releaseDiagnostics(){
   if(releaseUI.regressionBusy)return;releaseUI.regressionBusy=true;
-  modal('v2.5 功能回归检查','<div class="notice">本检查在当前浏览器运行，不会访问 GitHub、不发送 API 请求，也不会修改工程。</div><div id="release-test-results" class="template-check-list" style="margin-top:16px"></div>','校验模板、发布请求、审校报告与输入区域保护。',true);
+  modal('v2.5 功能回归检查','<div id="release-test-results" class="template-check-list" style="margin-top:16px"></div>','校验模板、发布请求、审校报告与输入区域保护。',true);
   const tests=[],test=async(name,fn)=>{try{if(await fn()===false)throw Error('断言不成立');tests.push({name,ok:true,message:'通过'})}catch(e){tests.push({name,ok:false,message:e.message})}};
   try{
     await test('合法的 scroll-behavior 不再触发误报',()=>validateOfflineCSS('html { scroll-behavior: smooth; } @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }'));
@@ -669,7 +669,7 @@ const releaseActions={
   'critic-batch-stop':()=>{releaseUI.criticBatch?.controller.abort();toast('已请求停止整册审校，已完成报告保留。')},
   'critic-page-stop':d=>visionJobs.get(d.id+':'+d.index)?.abort(),
   'critic-copy-report':d=>{const report=bookBy(ui.bookId)?.steps.find(s=>s.stepIndex===Number(d.index))?.critique;if(!report)throw Error('没有可复制的报告。');return copyText(JSON.stringify(report,null,2))},
-  'critic-apply-issue':d=>{const c=bookBy(ui.bookId)?.steps.find(s=>s.stepIndex===Number(d.index))?.critique,field=$('#refine-'+d.index);if(!c||!field)throw Error('目标重绘框不存在。');const issue=c.issues?.[Number(d.issue)],prompt=issue?.fixPrompt||c.suggestions;if(!prompt)throw Error('本条没有可填入的提示词。');if(!field.value.includes(prompt)){const next=field.value+(field.value?', ':'')+prompt;validatePrompt(next,field.value);field.value=next}field.focus();field.scrollIntoView({block:'nearest',behavior:'smooth'});toast('建议已填入。本页不会自动重绘，请检查后再执行。')},
+  'critic-apply-issue':d=>{const c=bookBy(ui.bookId)?.steps.find(s=>s.stepIndex===Number(d.index))?.critique,field=$('#refine-'+d.index);if(!c||!field)throw Error('目标重绘框不存在。');const issue=c.issues?.[Number(d.issue)],prompt=issue?.fixPrompt||c.suggestions;if(!prompt)throw Error('本条没有可填入的提示词。');if(!field.value.includes(prompt)){const next=field.value+(field.value?', ':'')+prompt;validatePrompt(next,field.value);field.value=next}field.focus();field.scrollIntoView({block:'nearest',behavior:'smooth'});toast('建议已填入。')},
   'github-open':()=>openGithubPublisher(),
   'github-publish-draft':()=>openGithubPublisher('draft'),
   'github-manual':()=>openGithubPublisher(null,'manual'),
@@ -719,7 +719,7 @@ handleAction=async function(act,d={},el){
 };
 
 
-Object.assign(actionHelp,{'github-open':'选择一个模板包，检查 GitHub 仓库并确认提交。不会上传整个工作室。','github-publish-draft':'将当前经过校验的 HTML 模板草稿打包，发布到你有权限的 GitHub 仓库。','github-manual':'不填写 Token：下载模板包，在 GitHub 网页上传，然后复制 Raw 安装链接。','critic-batch':'逐页审校整本画册，真实模式可能产生 API 费用；连续三次失败停止。','guide-open':'内置七步教程，含可执行的本地三幕练习，不需要 GPU 或 API。','template-check':'检查所有 HTML 模板与 CSS。只检查，不删除或覆盖自定义内容。','assistant-input-expand':'扩大或还原输入区域。发送按钮与说明始终保留在浮窗内部。'});
+Object.assign(actionHelp,{'github-open':'选择模板包，检查仓库并提交。','github-publish-draft':'将当前经过校验的 HTML 模板草稿打包，发布到你有权限的 GitHub 仓库。','github-manual':'不填写 Token：下载模板包，在 GitHub 网页上传，然后复制 Raw 安装链接。','critic-batch':'逐页审校整本画册，真实模式可能产生 API 费用；连续三次失败停止。','guide-open':'内置七步教程，含可执行的本地三幕练习，不需要 GPU 或 API。','template-check':'检查所有 HTML 模板与 CSS。只检查，不删除或覆盖自定义内容。','assistant-input-expand':'扩大或还原输入区域。发送按钮与说明始终保留在浮窗内部。'});
 
 
 
@@ -990,7 +990,7 @@ window.addEventListener('cancel',e=>{if(e.target instanceof HTMLDialogElement){e
 window.addEventListener('close',e=>{if(e.target===$('#welcome-dialog')){e.stopImmediatePropagation();if($('#welcome-dialog').contains($('#toasts')))document.body.append($('#toasts'))}},true);
 
 
-window.addEventListener('keydown',e=>{if(e.key==='Escape'&&(document.querySelector('dialog[open]')||detailUI.projectOpen)){e.preventDefault();e.stopImmediatePropagation();return}if(e.target.closest('input,textarea,select,[contenteditable]')||document.querySelector('dialog[open]'))return;if(e.altKey&&!e.ctrlKey&&!e.metaKey&&/^[1-5]$/.test(e.key)){e.preventDefault();e.stopImmediatePropagation();navigate(({1:0,2:1,3:6,4:4,5:5})[e.key])}},true);
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&(document.querySelector('dialog[open]')||detailUI.projectOpen)){e.preventDefault();e.stopImmediatePropagation();return}if(e.target.closest('input,textarea,select,[contenteditable]')||document.querySelector('dialog[open]'))return;if(e.altKey&&!e.ctrlKey&&!e.metaKey&&/^[0-5]$/.test(e.key)){e.preventDefault();e.stopImmediatePropagation();navigate(({0:9,1:0,2:1,3:3,4:4,5:5})[e.key])}},true);
 
 
 window.addEventListener('resize',()=>{const orb=$('.assistant-orb');if(orb){orb.style.right=clamp(parseFloat(orb.style.right)||27,12,Math.max(12,innerWidth-58))+'px';orb.style.bottom=clamp(parseFloat(orb.style.bottom)||49,40,Math.max(40,innerHeight-58))+'px'}});
@@ -1087,7 +1087,7 @@ async function v3Diagnostics(){
   test('工作流映射导入包结构校验',()=>validateBindings(state.settings.comfy.bindings));
   test('AI 写故事为可选模块',()=>Object.hasOwn(state.settings.studio.visibility,'llm')&&typeof state.settings.studio.visibility.llm==='boolean');
   test('主导航不再包含我的企划或独立引擎',()=>!primaryNavItems().some(x=>x[0]===2||x[0]===3));
-  modal('创作架构与节点映射自检',`<div class="notice">这些检查在当前浏览器运行，不调用 Python 保存接口，也不会提交 ComfyUI GPU 任务。</div><div style="margin-top:17px">${results.map(r=>`<div class="template-check-row"><span class="${r.ok?'accent':'danger'}">${icon(r.ok?'check':'close')}</span><div class="grow">${esc(r.name)}${r.message?'<small>'+esc(r.message)+'</small>':''}</div><span class="tiny muted">${r.ok?'通过':'未通过'}</span></div>`).join('')}</div><div class="modal-footer"><span class="tiny muted grow">${results.filter(r=>r.ok).length} / ${results.length} 项通过；真实后端与插件仍需实际联调。</span>${btn('关闭','','close-modal','','primary')}</div>`,'以通用输入映射替代固定节点表单。',true);return results;
+  modal('创作架构与节点映射自检',`<div style="margin-top:17px">${results.map(r=>`<div class="template-check-row"><span class="${r.ok?'accent':'danger'}">${icon(r.ok?'check':'close')}</span><div class="grow">${esc(r.name)}${r.message?'<small>'+esc(r.message)+'</small>':''}</div><span class="tiny muted">${r.ok?'通过':'未通过'}</span></div>`).join('')}</div><div class="modal-footer"><span class="tiny muted grow">${results.filter(r=>r.ok).length} / ${results.length} 项通过；真实后端与插件仍需实际联调。</span>${btn('关闭','','close-modal','','primary')}</div>`,'以通用输入映射替代固定节点表单。',true);return results;
 }
 
 
@@ -1114,7 +1114,7 @@ function installArtStudio(){
   primaryNavItems=function(){return createWorkspaceChromePolicy().navigation(state.settings.studio.visibility)};
   renderShell=function(){
     artCore.renderShell();const nav=$('#sidebar nav');if(nav)nav.innerHTML=primaryNavItems().map(([id,ic,label,key])=>`<button class="nav-item ${ui.workspace===id?'active':''} ${id===5?'nav-settings':''}" data-act="art-nav" data-route="${id}" aria-label="${label}" title="${label}" ${ui.workspace===id?'aria-current="page"':''}>${icon(ic)}<span>${label}</span><b class="nav-key">${key}</b></button>`).join('');
-    const version=$('.brand-sub span');if(version)version.textContent='v3.1';const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent=ui.workspace===0?'画册集':ui.workspace===7?'可选功能':ui.workspace===1?'创作画册':ui.workspace===6?'运行日志':ui.workspace===5?'设置':crumb.textContent;
+    const version=$('.brand-sub span');if(version)version.textContent='v3.1';const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent=ui.workspace===9?'首页':ui.workspace===0?'画册集':ui.workspace===7?'可选功能':ui.workspace===1?'创作画册':ui.workspace===6?'运行日志':ui.workspace===5?'设置':crumb.textContent;
     $('#project-switch-button')?.setAttribute('aria-label','切换画册集');refreshInterfaceCopy($('#sidebar'));refreshInterfaceCopy($('#topbar'));
   };
   renderProjectPopover=renderCollectionSwitcher;
@@ -1223,7 +1223,7 @@ function artPromptDiagnostics(){const policy=ComfyComic.promptPolicy,results=[],
   test('精选示范通过完整工程数据契约',()=>validateState(createCuratedDemo(state)));
   test('不规则提示词可进入非标准节点提交字典',()=>{const raw='{{{{, {mouth mask}, {{knees up}}, }}}}',execution={workflow:{'1832':{class_type:'WeiLinPromptUI',inputs:{positive:''}}},bindings:[{id:'free_test',enabled:true,label:'作者提示词',nodeId:'1832',path:'text',source:'positive',type:'text',allowCreate:false,allowLink:false}],objectInfo:{},randomizeSeeds:false};return buildMappedWorkflow({prompt:raw,_scope:{},renderOverride:false},{},{execution,preview:true}).workflow['1832'].inputs.positive===raw});
   test('后端仍为平铺10字段且删除携带 forceWrite',()=>{const payload=convertStudioStateToApiPayload(state,{},true);return !Object.hasOwn(payload,'state')&&payload.forceWrite===true&&ComfyComic.stateContract.requiredFields.every(key=>Object.hasOwn(payload,key))});
-  modal('自由提示词与展示层自检','<div class="notice">检查在本地内存中执行，不发送 API 请求，也不会修改工程。</div>'+results.map(r=>`<div class="template-check-row"><span class="${r.pass?'accent':'danger'}">${icon(r.pass?'check':'close')}</span><span class="grow">${esc(r.name)}${r.detail?'<small>'+esc(r.detail)+'</small>':''}</span><span class="tiny muted">${r.pass?'通过':'未通过'}</span></div>`).join('')+'<div class="modal-footer">'+btn('检查原生 API 契约','shield','native-diagnostics')+btn('关闭','','close-modal','','primary')+'</div>','提示词自由与节点连线安全是两件独立的事。',true);return results;
+  modal('自由提示词与展示层自检',''+results.map(r=>`<div class="template-check-row"><span class="${r.pass?'accent':'danger'}">${icon(r.pass?'check':'close')}</span><span class="grow">${esc(r.name)}${r.detail?'<small>'+esc(r.detail)+'</small>':''}</span><span class="tiny muted">${r.pass?'通过':'未通过'}</span></div>`).join('')+'<div class="modal-footer">'+btn('检查原生 API 契约','shield','native-diagnostics')+btn('关闭','','close-modal','','primary')+'</div>','提示词自由与节点连线安全是两件独立的事。',true);return results;
 }
 
 
@@ -1309,7 +1309,7 @@ function displayRegressionChecks(){const results=[],test=(name,run)=>{try{if(run
   test('The actual sidebar reflects the saved log visibility switch',()=>Boolean($('#sidebar [data-act="art-nav"][data-route="6"]'))===(state.settings.studio.visibility.logs===true));
   test('Language and display settings exist only in Appearance & reading',()=>{const policy=createWorkspaceChromePolicy();return policy.ownsDisplayPreferences('appearance')&&!policy.ownsDisplayPreferences('general')});
   test('Artistic wordmarks are sized within the available sidebar width',()=>{const policy=createWorkspaceChromePolicy(),size=policy.brandFontSize(22,116,160);return size>0&&size<22&&160*size/22<116&&policy.brandFontSize(24,0,150)===0});
-  test('Workflow configuration and Extensions use the updated localized labels',()=>{const locale=extendStudioLocaleCatalog(createStudioLocaleCatalog('en'));return locale.text('工作流配置')==='Workflow configuration'&&locale.text('可选功能')==='Extensions'});
+  test('Workflow configuration and Extensions use the updated localized labels',()=>{const locale=extendStudioLocaleCatalog(createStudioLocaleCatalog('en'));return locale.text('工作流配置')==='Workflow configuration'&&locale.text('可选功能')==='Optional tools'});
   test('Collection deletion retains unrelated books and shared assets',()=>{const sample={projects:[{id:'a',title:'A'},{id:'b',title:'B'}],activeProjectId:'a',books:[{id:'one',projectId:'a',templateId:'shared'},{id:'two',projectId:'b',templateId:'shared'}],templates:[{id:'shared',projectId:'a'}],rows:[],queue:[{id:'pending',bookId:'one'}],chats:[{id:'chat_b',projectId:'b',messages:[]}],activeChatId:'chat_b',creation:{plans:[],variableSets:[]},settings:{}},result=planCollectionRemoval(sample,'a');return result.next.books.length===1&&result.next.books[0].id==='two'&&result.next.templates[0].projectId==='b'&&result.next.queue.length===0&&sample.books.length===2});
   test('Deleting the last collection leaves a safe empty workspace',()=>{const sample={projects:[{id:'last',title:'Last'}],activeProjectId:'last',books:[],rows:[],templates:[],queue:[],chats:[],creation:{plans:[],variableSets:[]},settings:{}},result=planCollectionRemoval(sample,'last',{id:'empty',title:'Empty'});return result.next.projects.length===1&&result.next.activeProjectId==='empty'&&result.next.books.length===0&&result.next.chats.length===1});
   modal(localeString('显示与语言')+' / '+localeString('系统自检'),'<p class="service-note">These checks run locally in your browser. They do not access the backend or download images.</p>'+results.map(r=>`<div class="template-check-row"><span class="${r.passed?'accent':'danger'}">${icon(r.passed?'check':'close')}</span><span class="grow">${esc(r.name)}${r.message?'<small>'+esc(r.message)+'</small>':''}</span><span class="tiny muted">${localeString(r.passed?'通过':'未通过')}</span></div>`).join('')+'<div class="modal-footer">'+shelfButton('check','close-modal','关闭','','primary')+'</div>');return results;
@@ -1352,6 +1352,8 @@ installReadingStage();
 installPreferencesWorkbench();
 installAssemblyWorkshop();
 installArchitecture();
+installFirstRun();
+installHome();
 
 globalThis.Mio = globalThis.ComfyComic;
 

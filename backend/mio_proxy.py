@@ -1,20 +1,9 @@
 """External vision and chat proxies with explicit application dependencies."""
 
-import os, time, sys, re, json, uuid, base64, binascii, hashlib, copy, mimetypes, threading, io
-from pathlib import Path
-from datetime import datetime
-import urllib.request, urllib.parse
-from http.server import SimpleHTTPRequestHandler
-from backend import (
-    mio_pictures,
-    mio_lifecycle,
-    mio_foundation,
-    mio_api,
-    mio_credentials,
-    mio_docs,
-)
-from backend.ecosystem import api as ecosystem_api
-from backend.production import api as production_api
+import json
+import re
+import urllib.request
+import urllib.parse
 
 
 def handle_vision_audit(payload, services):

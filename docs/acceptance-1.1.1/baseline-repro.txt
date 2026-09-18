@@ -1,6 +1,0 @@
-BASELINE default mode: gallery
-BASELINE toggle without selecting any template: {
-  iframeReplaced: true,
-  revisionChanged: true,
-  imagePreparationCalls: 1
-}

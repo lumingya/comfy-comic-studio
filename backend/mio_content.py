@@ -9,7 +9,8 @@ def distribution(source):
     if manifest.get('schema')!='mio.distribution.v1':raise LibraryError('Invalid distribution manifest')
     for relative,checksum in manifest['files'].items():
         path=owned_path(source,relative)
-        if not path.is_file() or digest(path.read_bytes())!=checksum:raise LibraryError('Shipped data changed: '+relative)
+        if not path.is_file() or digest(path.read_bytes())!=checksum:
+            raise LibraryError('MIO-DATA-001: Shipped data changed: '+relative+'。请重新下载完整程序包，并运行 python tools/check_distribution.py；未导入未通过校验的内容。',500)
     return manifest
 
 
@@ -24,7 +25,11 @@ def initialize(store, project):
         if marker.exists():return False
         manifest=decode((source/'distribution.json').read_bytes()) if same else distribution(source)
         for relative in (() if same else manifest['files']):
-            if relative=='workspace.json' or not fresh and not relative.startswith('catalog/'):continue
+            # Never overwrite workspace identity or resurrect deleted entities.
+            if relative == 'workspace.json':
+                continue
+            if not fresh and not relative.startswith('catalog/'):
+                continue
             target=owned_path(store.root,relative)
             if target.exists():continue
             atomic_write(target,owned_path(source,relative).read_bytes())

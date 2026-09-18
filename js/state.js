@@ -167,8 +167,8 @@ function definedPromptNames(scope={}){const names=new Set([...Object.keys(scope|
 
 
 function ensureArtSettings(s=state){
-  if(!s.settings.presentation){s.settings.presentation={version:1,lab:{refine:false,mask:false},fonts:true,readerMode:'spread'};if(s.settings.studio){s.settings.studio.features.visualCritic=false;s.settings.studio.features.assistant=false;s.settings.studio.visibility.logs=false}s.settings.autoCritique=false}
-  s.settings.presentation.lab??={refine:false,mask:false};s.settings.presentation.fonts??=true;if(!['spread','webtoon','gallery'].includes(s.settings.presentation.readerMode))s.settings.presentation.readerMode='spread';if(s.settings.studio)s.settings.studio.appearance.showMetrics=false;
+  if(!s.settings.presentation){s.settings.presentation={version:1,lab:{refine:false,mask:false},fonts:false,readerMode:'spread'};if(s.settings.studio){s.settings.studio.features.visualCritic=false;s.settings.studio.features.assistant=false;s.settings.studio.visibility.logs=false}s.settings.autoCritique=false}
+  s.settings.presentation.lab??={refine:false,mask:false};s.settings.presentation.fonts??=false;if(!['spread','webtoon','gallery'].includes(s.settings.presentation.readerMode))s.settings.presentation.readerMode='spread';if(s.settings.studio)s.settings.studio.appearance.showMetrics=false;
   upgradeCuratedCharacterIdentity(s,()=>uid('var'));
   restoreCuratedCover(s);
   return s;

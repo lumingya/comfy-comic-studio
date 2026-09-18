@@ -2029,6 +2029,15 @@
               "chat"
             ]
           },
+          "keyIds": {
+            "type": "array",
+            "maxItems": 32,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150
+            }
+          },
           "sendSize": {
             "type": "boolean"
           },
@@ -2478,6 +2487,16 @@
               "type": "object"
             }
           },
+          "consecutive_failures": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Consecutive failed generation attempts for this task, in persisted completion order; success resets the count."
+          },
+          "failure_limit_reached": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Zero means unlatched; otherwise the threshold that paused this task. A late success resets the streak but not this latch. Explicit continuation is required."
+          },
           "updated": {
             "type": "number"
           },
@@ -2565,16 +2584,6 @@
           },
           "requiresRecoveryConsent": {
             "type": "boolean"
-          },
-          "consecutive_failures": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Consecutive failed generation attempts for this task, in persisted completion order; success resets the count."
-          },
-          "failure_limit_reached": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Zero means unlatched; otherwise the threshold that paused this task. A late success resets the streak but not this latch. Explicit continuation is required."
           }
         }
       },

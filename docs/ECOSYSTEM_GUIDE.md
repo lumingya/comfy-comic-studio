@@ -1,20 +1,6 @@
-# 主题与扩展 SDK v1
+# 主题与扩展
 
-本版本把界面主题、可信扩展和可执行变量分为独立模块。它允许深度自定义，而不是把第三方能力塞进几项硬编码开关。
-
-## 先理解信任边界
-
-**JavaScript 与 Python 扩展具有完全代码执行能力。** 可以读写本机文件、联网、访问应用数据或发起有费用的请求。SDK 的目录命名空间、Node vm、独立 Python 进程用于减少误操作及故障传播，不构成恶意代码沙箱。
-
-只安装你审查过并信任的作者/版本。Git 安装、启用与更新都要求明确确认；更新后的代码保持停用，须再次确认启用。不要把本机服务无鉴权暴露到公网。
-
-## 画册是源作品，历史是生成产物
-
-创作区标题选择器只列当前工作区的源画册/草稿。分镜区直接提供“新增分镜、导入分镜、导出分镜、重命名、历史记录”，不再要求用户在共享模板和生成版本之间猜测编辑目标。
-
-每个源画册持有自己的分镜副本。生成快照不会混入源选择器；历史与准备记录从生成队列或历史弹窗查看。生成后再编辑源稿，不回写旧生成任务。
-
-导出分镜包含本册的有效分镜覆盖，而不是漏掉本册改动的公共模板。公共变量预设仍独立维护，应用时复制，后续互不联动。
+在设置中管理主题与扩展。
 
 ## 全局主题
 
@@ -39,9 +25,9 @@ textures/paper.png
 body { background-image: url('textures/paper.png'); }
 ```
 
-支持本地 PNG/JPEG/WebP、WOFF/WOFF2/TTF/OTF；安装时内联为 data URI。禁止远程 URL、@import、CSS 转义和 image-set/src 等非标准资产入口，避免隐式网络取资源；这不是对 CSS 界面欺骗的防护。包内路径不能越界或经过符号链接。
+资源支持包内 PNG/JPEG/WebP、WOFF/WOFF2/TTF/OTF，安装时内联为 data URI。使用相对路径；远程 URL、@import 和符号链接会被拒绝。
 
-随附示例：`examples/themes/orbital-night.css` 改成横向导航；`examples/themes/paper-atelier/` 演示材质包。将目录内容打包成 ZIP 后即可导入。不要把第三方字体随意再分发，请检查许可证。
+随附示例：`examples/themes/orbital-night.css` 改成横向导航；`examples/themes/paper-atelier/` 演示材质包。将目录内容打包成 ZIP 后即可导入。
 
 ## 界面坏了如何恢复
 
@@ -50,7 +36,7 @@ body { background-image: url('textures/paper.png'); }
 3. 安全页面不加载第三方 CSS 和前端扩展，显示独立恢复控件。点击“一键重置主题并停用扩展”，保留代码与用户数据。
 4. 回到设置可以分别卸载主题/扩展，移除参数后恢复正常启动。
 
-**URL 安全模式不会倒退撤销已经运行的 Python 代码。** 后端受影响时，关闭服务，使用环境变量 `MIO_SAFE_MODE=1` 启动；这将跳过 Python 扩展启动并禁止安装/启用。完成重置后可移除环境变量。运行中的恶意代码造成的操作无法由安全模式撤销。
+后端扩展异常时，关闭服务，以 `MIO_SAFE_MODE=1` 启动并停用扩展。处理完毕后移除环境变量。
 
 ## Git 与 ZIP 安装
 
@@ -117,7 +103,7 @@ SDK 会自动清理自己注册表中的工具栏、面板、自定义类型和�
 | `ctx.variables.registerType` | 自定义类型存为 `plugin:<id>:<name>`，normalize 必须返回可序列化的同步值 |
 | `ctx.on` | beforePrepare、afterPrepare、afterRender；同一扩展每个事件一个回调 |
 
-扩展 ID、action ID 和类型名使用小写字母开头，只允许小写字母、数字、短横线和下划线，最多 64 字符。重复注册直接报错，不覆盖其他包。未启用对应扩展时，自定义类型不能静默退化执行。
+扩展 ID、action ID 和类型名使用小写字母开头，只允许小写字母、数字、短横线和下划线，最多 64 字符。重复注册会报错；使用自定义类型前需启用对应扩展。
 
 ## 可选 Python 后端
 
@@ -146,19 +132,8 @@ def on_unload(ctx):
 
 `ctx.storage` 使用原子替换和命名空间锁（线程锁加 OS 文件锁）。单值最大 2 MiB，每扩展 32 MiB；禁止路径穿越和符号链接。单次 get/set 各自原子，**get 后 set 组合并非事务**：需要读改写事务时，应使用单一后端处理器串行写入，避免前端和后端同时修改同一个聚合键。
 
-独立进程包含崩溃，但不限制可信 Python 对操作系统、网络或其他目录的直接访问。
-
-## 可运行示例与验证
+## 示例
 
 `examples/extensions/scene-notebook/` 包括 manifest、前端面板、自定义配色词类型、后端笔记路由和独立保存。把其中三个源码文件放在 ZIP 根目录即可安装。
 
-可执行变量见 [可执行变量指南](COMPUTED_VARIABLES.html)。相关自动化入口：
-
-```text
-python -m unittest tests.test_ecosystem -v
-node tests/ecosystem.mjs
-npm run lint
-npm run test:contracts
-```
-
-自动化使用自有夹具/模拟提供商，不调用真实付费模型。Git 参数校验和安装更新路径可离线测试；实际公共仓库网络连接仍取决于本机网络、证书和远端可用性。
+可执行变量见 [可执行变量指南](COMPUTED_VARIABLES.md)。

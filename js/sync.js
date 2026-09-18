@@ -1,21 +1,22 @@
 /* Mio development module: sync. */
 'use strict';
 
-function openDB(){return new Promise((resolve,reject)=>{if(!window.indexedDB)return reject(Error('IndexedDB unavailable'));const q=indexedDB.open('comfycomic-studio',1);q.onupgradeneeded=()=>q.result.createObjectStore('snapshots');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error)})}
+function nativeHTTPMode(){return typeof location!=='undefined'&&/^https?:$/.test(location.protocol)}
+function openDB(){if(nativeHTTPMode())return Promise.reject(Error('HTTP 模式仅使用后端文件库；旧快照只可离线导出迁移'));return new Promise((resolve,reject)=>{if(!window.indexedDB)return reject(Error('IndexedDB unavailable'));const q=indexedDB.open('comfycomic-studio',1);q.onupgradeneeded=()=>q.result.createObjectStore('snapshots');q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error)})}
 
 
 function dbRead(key){return new Promise((resolve,reject)=>{const q=rt.db.transaction('snapshots').objectStore('snapshots').get(key);q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error)})}
 
 
-function dbWrite(s,allow=false){return new Promise((resolve,reject)=>{const tx=rt.db.transaction('snapshots','readwrite'),store=tx.objectStore('snapshots');let protectionError;const q=store.get('current');q.onsuccess=()=>{if(q.result&&!allow&&assetCount(s)<assetCount(q.result)*.6){protectionError=Error('防冲刷保护：持久化资产多于当前客户端，拒绝覆盖。');tx.abort();return}if(q.result)store.put(q.result,'previous');store.put(s,'current')};tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(protectionError||tx.error)})}
+function dbWrite(s,allow=false){if(nativeHTTPMode())return Promise.reject(Error("HTTP 模式禁止写入旧版快照"));return new Promise((resolve,reject)=>{const tx=rt.db.transaction('snapshots','readwrite'),store=tx.objectStore('snapshots');let protectionError;const q=store.get('current');q.onsuccess=()=>{if(q.result&&!allow&&assetCount(s)<assetCount(q.result)*.6){protectionError=Error('防冲刷保护：持久化资产多于当前客户端，拒绝覆盖。');tx.abort();return}if(q.result)store.put(q.result,'previous');store.put(s,'current')};tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(protectionError||tx.error)})}
 
 
-async function loadState(){let candidates=[];try{const s=JSON.parse(localStorage.getItem('cc-project'));if(s){validateState(s);candidates.push(s)}}catch(e){}try{rt.db=await openDB();const s=await dbRead('current');if(s){validateState(s);candidates.push(s)}}catch(e){}if(candidates.length)state=candidates.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))[0];state.customColumns??=[];state.installedPackages??=[];state.settings.xml??={separate:false,baseUrl:'https://api.openai.com/v1',key:'',model:'gpt-4o'};state.settings.comfy.presets??=[];state.queue.forEach(q=>{if(q.status==='running'||q.status==='paused')q.status='pending'});state.books.forEach(b=>b.inProgress=false);rt.lastCount=assetCount(state);rt.booting=false;ui.templateId=projectTemplates()[0]?.id;ui.storyTemplateId=ui.templateId;ui.storyRowId=projectRows()[0]?.id;render();save()}
+async function loadState(){if(nativeHTTPMode())return;let candidates=[];try{const s=JSON.parse(localStorage.getItem('cc-project'));if(s){validateState(s);candidates.push(s)}}catch(e){}try{rt.db=await openDB();const s=await dbRead('current');if(s){validateState(s);candidates.push(s)}}catch(e){}if(candidates.length)state=candidates.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))[0];state.customColumns??=[];state.installedPackages??=[];state.settings.xml??={separate:false,baseUrl:'https://api.openai.com/v1',key:'',model:'gpt-4o'};state.settings.comfy.presets??=[];state.queue.forEach(q=>{if(q.status==='running'||q.status==='paused')q.status='pending'});state.books.forEach(b=>b.inProgress=false);rt.lastCount=assetCount(state);rt.booting=false;ui.templateId=projectTemplates()[0]?.id;ui.storyTemplateId=ui.templateId;ui.storyRowId=projectRows()[0]?.id;render();save()}
 
 function save(allow=false){if(rt.booting)return;saveAllow=saveAllow||allow;rt.saved=false;rt.saving=true;clearTimeout(saveTimer);renderStatus();saveTimer=setTimeout(()=>{const allowed=saveAllow;saveAllow=false;saveTail=saveTail.catch(()=>{}).then(()=>persist(allowed))},250)}
 
 
-async function persist(allow){try{validateState(state);const n=assetCount(state);if(!allow&&rt.lastCount>10&&n<rt.lastCount*.6)throw Error('防冲刷保护：工程资产异常减少，已阻止覆盖。请导出当前工程检查。');state.updatedAt=Date.now();const snapshot=clone(state);let ok=false;if(rt.db){try{await dbWrite(snapshot,allow);ok=true}catch(e){if(e?.message?.includes('防冲刷'))throw e}}try{const previous=JSON.parse(localStorage.getItem('cc-project')||'null');if(previous&&!allow&&n<assetCount(previous)*.6)throw Error('防冲刷保护：本地缓存包含更多资产。');localStorage.setItem('cc-project',JSON.stringify(snapshot));ok=true}catch(e){if(e?.message?.includes('防冲刷'))throw e}if(!ok)throw Error('浏览器存储不可用或空间不足，请立即导出工程。');rt.lastCount=n;rt.saved=true;rt.saving=false;renderStatus()}catch(e){rt.saved=false;rt.saving=false;renderStatus();toast(e.message,'error')}}
+async function persist(allow){if(nativeHTTPMode())return globalThis.ComfyComic?.sync?.save(allow);try{validateState(state);const n=assetCount(state);if(!allow&&rt.lastCount>10&&n<rt.lastCount*.6)throw Error('防冲刷保护：工程资产异常减少，已阻止覆盖。请导出当前工程检查。');state.updatedAt=Date.now();const snapshot=clone(state);let ok=false;if(rt.db){try{await dbWrite(snapshot,allow);ok=true}catch(e){if(e?.message?.includes('防冲刷'))throw e}}try{const previous=JSON.parse(localStorage.getItem('cc-project')||'null');if(previous&&!allow&&n<assetCount(previous)*.6)throw Error('防冲刷保护：本地缓存包含更多资产。');localStorage.setItem('cc-project',JSON.stringify(snapshot));ok=true}catch(e){if(e?.message?.includes('防冲刷'))throw e}if(!ok)throw Error('浏览器存储不可用或空间不足，请立即导出工程。');rt.lastCount=n;rt.saved=true;rt.saving=false;renderStatus()}catch(e){rt.saved=false;rt.saving=false;renderStatus();toast(e.message,'error')}}
 
 
 async function restoreObject(data){if(rt.running||rt.llmBusy||rt.chatBusy)throw Error('请先停止正在执行的渲染、剧本或助手任务。');validateState(data);if(!await confirmAction('恢复并覆盖当前工程？',`将载入 ${data.projects.length} 个企划、${data.books.length} 本画册、${data.templates.length} 个模板。建议先导出当前备份。`,'恢复工程'))return;state=clone(data);state.customColumns??=[];state.installedPackages??=[];state.settings.comfy.presets??=[];state.settings.xml??={separate:false,baseUrl:'https://api.openai.com/v1',key:'',model:'gpt-4o'};state.queue.forEach(q=>{if(['running','paused'].includes(q.status))q.status='pending'});state.books.forEach(b=>b.inProgress=false);ui.workspace=0;ui.selected.clear();ui.templateId=projectTemplates()[0]?.id;ui.storyTemplateId=ui.templateId;ui.storyRowId=projectRows()[0]?.id;resetWS();save(true);closeModal();if($('#reader').open)closeReader();render();toast('工程已恢复，待执行任务已安全暂停。')}
@@ -55,6 +56,7 @@ async function recalledDirectory(){try{const db=await openDirectoryLinks();retur
 
 
 async function findLegacyProject(){
+  if(nativeHTTPMode())return null;
   const candidates=[];try{const s=JSON.parse(localStorage.getItem('cc-project')||'null');if(s){validateState(s);candidates.push(s)}}catch(e){}
   try{rt.db=await openDB();const s=await dbRead('current');if(s){validateState(s);candidates.push(s)}}catch(e){}
   return candidates.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))[0]||null;
@@ -331,7 +333,7 @@ async function diskFormatDiagnostics(){
   }
   await test('ZIP CRC32 校验值',()=>crc32(new TextEncoder().encode('123456789'))===0xcbf43926);
   await test('模拟写入失败不会提交新内容',async()=>{let data='上一次完整记录',aborted=false;const root={getDirectoryHandle:async()=>root,getFileHandle:async()=>({createWritable:async()=>({write:async()=>{},close:async()=>{throw Error('模拟中断')},abort:async()=>{aborted=true}})})};try{await writeDiskFile(root,'测试/book.json','新内容')}catch(e){}return data==='上一次完整记录'&&aborted});
-  const area=$('#disk-test-results');if(area)area.innerHTML=tests.map(t=>`<div class="row" style="padding:12px 0;border-bottom:1px solid var(--line)"><span class="${t.ok?'accent':'danger'}">${icon(t.ok?'check':'close')}</span><span class="grow small">${esc(t.name)}</span><span class="tiny muted">${esc(t.message)}</span></div>`).join('')+'<p class="help">实际目录访问需要你在当前浏览器中授权并测试。自检不会冒充原生文件系统权限。</p>';
+  const area=$('#disk-test-results');if(area)area.innerHTML=tests.map(t=>`<div class="row" style="padding:12px 0;border-bottom:1px solid var(--line)"><span class="${t.ok?'accent':'danger'}">${icon(t.ok?'check':'close')}</span><span class="grow small">${esc(t.name)}</span><span class="tiny muted">${esc(t.message)}</span></div>`).join('')+'';
   return tests;
 }
 

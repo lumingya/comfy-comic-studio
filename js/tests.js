@@ -547,6 +547,33 @@ add('name-setting labels and help describe their different purposes', () => {
   assert.ok(context.characterSettingHelp('character').includes('提示词'));
 });
 
+add('current provider and onboarding controls have English copy',()=>{const l=context.extendStudioLocaleCatalog(context.createStudioLocaleCatalog('en'));for(const key of ['创作工坊','工作流与 API 配置','保存并使用','初光映格，微墨生花','使用服务端环境变量'])assert.ok(!/[\u3400-\u9fff]/.test(l.text(key)));});
+add('dynamic queue and credential labels are translated without changing asset names',()=>{const l=context.extendStudioLocaleCatalog(context.createStudioLocaleCatalog('en'));assert.equal(l.translate('本地密钥 · 我的服务'),'Local keys · 我的服务');assert.equal(l.translate('分镜：我的故事'),'Storyboard: 我的故事');assert.equal(l.translate('第 3 幕正向提示词缺少变量：主角'),'Scene 3 positive prompt is missing variables: 主角');});
+add('locale changes keep unknown authored text intact and Chinese source reusable',()=>{const l=context.extendStudioLocaleCatalog(context.createStudioLocaleCatalog('en'));assert.equal(l.translate('我的原创故事 {主角}'),'我的原创故事 {主角}');l.setLanguage('zh-CN');assert.equal(l.text('保存并使用'),'保存并使用');});
+
+add('home is a distinct first-level route without renumbering existing workspaces',()=>{const nav=chromePolicy.navigation({});assert.deepEqual(plain(nav[0]),[9,'home','首页','0']);assert.ok(nav.some(n=>n[0]===0&&n[2]==='画册集'));assert.equal(new Set(nav.map(n=>n[0])).size,nav.length);});
+add('home stays available with optional modules disabled',()=>{const nav=chromePolicy.navigation({logs:false,llm:false,marketplace:false,extensions:false});assert.deepEqual(plain(nav.map(n=>n[0])),[9,0,1,3,5]);});
+add('home hero and optional-feature labels have English equivalents',()=>{const l=context.extendStudioLocaleCatalog(context.createStudioLocaleCatalog('en'));for(const key of ['首页','让故事成帧，','让灵感成册。','前往设置启用 ↗','创作预设'])assert.ok(!/[\u3400-\u9fff]/.test(l.text(key)));});
+add('decorateDisplayPreferences does not duplicate into grouped settings categories', () => {
+  const fakeContent = {
+    dataset: { preferencesGrouped: 'true' },
+    querySelector: () => true,
+    insertAdjacentHTML: () => { throw new Error('should not insert into grouped content'); }
+  };
+  const prevUI = context.ui, prevStudioUI = context.studioUI;
+  const prevSelector = context.$;
+  try {
+    context.ui = { workspace: 5 };
+    context.studioUI = { settingsTab: 'appearance' };
+    context.$ = (sel) => sel === '#studio-settings-content' ? fakeContent : null;
+    assert.doesNotThrow(() => context.decorateDisplayPreferences());
+  } finally {
+    context.ui = prevUI;
+    context.studioUI = prevStudioUI;
+    context.$ = prevSelector;
+  }
+});
+
 async function main() {
   let failed = 0;
   for (const test of tests) {

@@ -71,7 +71,11 @@ class WindowsLauncherExecutionTests(unittest.TestCase):
             folder.mkdir()
             (folder / name).write_bytes((ROOT / name).read_bytes())
             for environment in environments:
-                venv.EnvBuilder(with_pip=False).create(folder / environment)
+                env_path = folder / environment
+                venv.EnvBuilder(with_pip=False).create(env_path)
+                pil_dir = env_path / 'Lib' / 'site-packages' / 'PIL'
+                pil_dir.mkdir(parents=True, exist_ok=True)
+                (pil_dir / '__init__.py').write_text('class Image:\n    __version__ = "11.3.0"\n', encoding='utf-8')
             script = folder / ('server.py' if name == 'start.bat' else 'tools/build_release.py')
             script.parent.mkdir(exist_ok=True)
             script.write_text('from pathlib import Path\nimport sys\nPath("launcher-ok.txt").write_text(sys.prefix, encoding="utf-8")\n', encoding='utf-8')

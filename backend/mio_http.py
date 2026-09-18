@@ -1,6 +1,8 @@
 """HTTP routing and static/media responses. Services are constructor-injected."""
 
 import os, time, sys, re, json, uuid, base64, binascii, hashlib, copy, mimetypes, threading, io
+import secrets
+import hmac
 from pathlib import Path
 from datetime import datetime
 import urllib.request, urllib.parse
@@ -18,6 +20,68 @@ from backend.production import api as production_api
 
 
 class HTTPRoutes(SimpleHTTPRequestHandler):
+    # Process-scoped browser capability; never persisted in config or exposed by APIs.
+    csrf_token = secrets.token_urlsafe(32)
+
+    def parse_request(self):
+        if not super().parse_request():
+            return False
+        # Origin/CSRF alone do not stop DNS rebinding: an attacker-selected
+        # Host can otherwise read the shell capability as its own origin.
+        values = self.headers.get_all("Host", [])
+        allowed = {"localhost", "127.0.0.1", "::1"}
+        bound = str(self.server.server_address[0]).lower().rstrip(".")
+        if bound not in ("0.0.0.0", "::", ""):
+            allowed.add(bound)
+        for origin in self.services.ALLOWED_ORIGINS:
+            try:
+                parsed = urllib.parse.urlsplit(origin)
+                if parsed.scheme in ("http", "https") and parsed.hostname:
+                    allowed.add(parsed.hostname.lower().rstrip("."))
+            except ValueError:
+                pass
+        valid = False
+        if len(values) == 1:
+            value = values[0]
+            try:
+                parsed = urllib.parse.urlsplit("//" + value)
+                valid = (value == value.strip() and not any(c in value for c in "/\\?#")
+                         and not parsed.username and not parsed.password
+                         and (parsed.port is None or 0 < parsed.port <= 65535)
+                         and (parsed.hostname or "").lower().rstrip(".") in allowed)
+            except ValueError:
+                pass
+        if not valid:
+            self.close_connection = True
+            self.send_json(403, {"error": "MIO-HOST-001: 不可信的 Host；请使用回环地址，或通过 MIO_ORIGINS 明确配置可信入口"})
+            return False
+        return True
+
+    def authorize_private(self):
+        if not self.is_origin_allowed():
+            self.send_json(403, {"error": "MIO-ORIGIN-001: Origin is not allowed"})
+            return False
+        path = urllib.parse.urlparse(self.path).path
+        browser = self.headers.get("Origin") is not None or self.headers.get("Sec-Fetch-Site") is not None
+        supplied = self.headers.get("X-Mio-CSRF", "")
+        # Native streamed downloads use a form, which cannot set custom headers.
+        # Validate its hidden capability before any export work, then rewind for the parser.
+        if browser and path == "/api/export/portable" and self.command == "POST" and self.headers.get("Content-Type", "").split(";")[0] == "application/x-www-form-urlencoded":
+            try:
+                size = int(self.headers.get("Content-Length", "0"))
+                if not 0 < size <= 16384:
+                    raise ValueError("invalid form size")
+                raw = self.rfile.read(size)
+                fields = urllib.parse.parse_qs(raw.decode("utf-8"), max_num_fields=4)
+                supplied = fields.get("_csrf", [""])[0]
+                self.rfile = io.BytesIO(raw)
+            except (ValueError, UnicodeError):
+                supplied = ""
+        if path.startswith("/api/") and browser and not (supplied.isascii() and hmac.compare_digest(supplied, self.csrf_token)):
+            self.send_json(403, {"error": "MIO-CSRF-001: 请从本服务首页重新打开工作室"})
+            return False
+        return True
+
     def send_response(self, code, message=None):
         self.response_status = code
         return super().send_response(code, message)
@@ -52,6 +116,14 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
     def send_head(self):
         parsed = urllib.parse.urlparse(self.path)
         decoded = urllib.parse.unquote(parsed.path)
+        if decoded in ("/", "/index.html"):
+            body = (Path(self.services.BASE_DIR) / "index.html").read_text(encoding="utf-8")
+            body = body.replace("<head>", '<head><meta name="mio-csrf" content="' + self.csrf_token + '">', 1).encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            return io.BytesIO(body)
         thumb = urllib.parse.parse_qs(parsed.query).get("thumb", [None])[0]
         if decoded.startswith("/images/") and thumb:
             try:
@@ -77,13 +149,18 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
             except (self.services.LibraryError, OSError) as exc:
                 self.send_error(getattr(exc, "status", 404), str(exc))
                 return None
+        document_path = decoded
+        if decoded.endswith(".html") and (decoded.startswith("/docs/") or decoded == "/README.html"):
+            candidate = Path(self.services.BASE_DIR) / decoded.lstrip("/")
+            if candidate.with_suffix(".md").is_file():
+                document_path = str(Path(decoded).with_suffix(".md"))
         if (
-            decoded.endswith(".md")
+            document_path.endswith(".md")
             and self.services.is_public_static_path(parsed.path)
             and urllib.parse.parse_qs(parsed.query).get("raw") != ["1"]
         ):
             try:
-                relative = Path(decoded.lstrip("/"))
+                relative = Path(document_path.lstrip("/"))
                 body = mio_docs.render_document(
                     self.services.BASE_DIR, relative
                 ).encode("utf-8")
@@ -112,7 +189,7 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
 
     def is_origin_allowed(self):
         origin = self.headers.get("Origin")
-        return not origin or origin in self.services.ALLOWED_ORIGINS
+        return origin != "null" and (not origin or origin in self.services.ALLOWED_ORIGINS)
 
     def send_json(self, status, payload):
         encoded = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -150,15 +227,16 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
         return data
 
     def end_headers(self):
-        # Keep file:// fallback support without granting arbitrary websites access
-        # to the local configuration and image APIs.
+        # Opaque/file origins are never a trusted private API boundary.
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Cross-Origin-Resource-Policy", "same-origin")
         origin = self.headers.get("Origin")
-        if origin in self.services.ALLOWED_ORIGINS:
+        if origin and origin != "null" and origin in self.services.ALLOWED_ORIGINS:
             self.send_header("Access-Control-Allow-Origin", origin)
             self.send_header("Vary", "Origin")
             self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
             self.send_header(
-                "Access-Control-Allow-Headers", "Content-Type, Authorization"
+                "Access-Control-Allow-Headers", "Content-Type, Authorization, X-Mio-CSRF, If-None-Match"
             )
 
         request_path = urllib.parse.urlparse(self.path).path
@@ -169,7 +247,7 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
                 request_path.rsplit("/", 1)[-1],
             )
         ) and getattr(self, "response_status", 200) in (200, 304):
-            self.send_header("Cache-Control", "public, max-age=31536000, immutable")
+            self.send_header("Cache-Control", "private, max-age=31536000, immutable")
         else:
             self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
             self.send_header("Pragma", "no-cache")
@@ -193,8 +271,7 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.external_api():
             return
-        if not self.is_origin_allowed():
-            self.send_json(403, {"error": "Origin is not allowed"})
+        if not self.authorize_private():
             return
         request_path = urllib.parse.urlparse(self.path).path
         if production_api.dispatch(self, self.services.application, request_path):
@@ -315,13 +392,22 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
         if self.external_api():
             return
         request_path = urllib.parse.urlparse(self.path).path
-        if not self.is_origin_allowed():
-            self.send_json(403, {"error": "Origin is not allowed"})
+        if not self.authorize_private():
             return
 
         if production_api.dispatch(self, self.services.application, request_path):
             return
         if ecosystem_api.dispatch(self, self.services.application, request_path):
+            return
+
+        if request_path == "/api/image/comfy-check":
+            try:
+                from backend.mio_connection_check import check_comfy
+                self.send_json(200, check_comfy(self.read_json_body(max_bytes=4096)))
+            except self.services.PayloadTooLargeError:
+                self.send_json(413, {"error": "Connection-check request exceeds 4 KiB"})
+            except ValueError as exc:
+                self.send_json(400, {"error": str(exc)})
             return
 
         if request_path in ("/api/image/credentials", "/api/image/models"):

@@ -198,7 +198,7 @@ async function sendScopedChat(){
       await delay(500,rt.assistantController.signal);
       const call=scopedMockCall(value,scope);
       if(call){const c={id:uid('call'),type:'function',function:{name:call.name,arguments:JSON.stringify(call.args)}};const outputs=await applyScopedToolBatch([c],scope?.id);chat.messages.push({role:'assistant',content:null,tool_calls:[c]},{role:'tool',tool_call_id:c.id,content:JSON.stringify(outputs[0])});const result=outputs[0];chat.messages.push({role:'assistant',content:result.error?'本次未修改模板：'+result.error:call.name==='get_current_template_details'?'当前模板「'+result.title+'」包含 '+result.frames.length+' 幕：\n'+result.frames.map((f,i)=>(i+1)+'. '+f.name).join('\n'):'已在「'+scope.title+'」中完成修改。\n已有画册保持不变；需要新画面时，请继续使用渲染队列。可通过顶部撤销按钮还原本次修改。'})}
-      else chat.messages.push({role:'assistant',content:'这里是分镜模板编辑助手，不会直接生成图片，也不编辑导出画册的 HTML。\n\n离线模式支持明确指令，如「把第 1 幕改成雨夜车站」「把第 2 幕台词改成...」「新增一幕...」「删除第 2 幕」和「查看当前模板」。\n\n若要调整导出 HTML，请打开侧栏「画册导出模板」；复杂创作讨论与附件理解请先连接真实模型。'});
+      else chat.messages.push({role:'assistant',content:'我可以帮你编辑分镜。\n\n离线模式支持明确指令，如「把第 1 幕改成雨夜车站」「把第 2 幕台词改成...」「新增一幕...」「删除第 2 幕」和「查看当前模板」。\n\n若要调整导出 HTML，请打开侧栏「画册导出模板」；复杂创作讨论与附件理解请先连接真实模型。'});
     }else{
       const system={role:'system',content:'你是 Mio 的分镜精修助手，不是图像生成器，也不是导出HTML模板编辑器。只通过提供的8个工具修改本次锁定的源分镜模板。frameIndex从0开始。提示词格式由作者自由决定；普通括号、NovelAI 权重、不规则符号均合法。不要擅自纠正或拒绝这些语法，按用户指示修改文本。用户取消或工具返回error时不得声称已经修改。不要执行未请求的删除。最多5轮连续工具调用。锁定模板：'+JSON.stringify(scope||null)};
       let needsFinal=false;
@@ -211,7 +211,7 @@ async function sendScopedChat(){
       }
       if(needsFinal){const m=await chatCompletion([system,...chat.messages,{role:'user',content:'已达到5轮安全上限。停止调用工具，准确总结已经执行和未执行的修改。'}],null,rt.assistantController.signal);chat.messages.push({role:'assistant',content:m.content||'已达到工具调用安全上限。请检查上方操作记录。'})}
     }
-  }catch(e){chat.messages.push({role:'assistant',content:rt.assistantController?.signal.aborted?'本次请求已停止。已确认的修改保留，未确认的修改不会应用。':'本次请求未完成：'+e.message});log(e.message,'warn')}
+  }catch(e){chat.messages.push({role:'assistant',content:rt.assistantController?.signal.aborted?'本次请求已停止。':'本次请求未完成：'+e.message});log(e.message,'warn')}
   finally{rt.chatBusy=false;rt.assistantController=null;save();renderAssistant()}
 }
 

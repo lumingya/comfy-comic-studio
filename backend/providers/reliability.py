@@ -46,3 +46,22 @@ def failure_summary(text):
 
 class ExecutionError(RuntimeError):
     """Known execution failure, rather than input validation or unknown submission."""
+
+
+def result_unconfirmed(error, upstream=None):
+    """Conservative transport classification; known execution rejection is final.
+
+    A timeout/disconnect/truncated response cannot establish whether a paid
+    submission was accepted. A saved upstream id is evidence of acceptance.
+    HTTP rejections are handled separately, not treated as transport breaks.
+    """
+    from http.client import HTTPException
+    from urllib.error import URLError, HTTPError
+    if isinstance(error, InterruptedError):
+        return True
+    if isinstance(error, ExecutionError):
+        return False
+    if upstream:
+        return True
+    return (isinstance(error, (TimeoutError, ConnectionError, HTTPException))
+            or isinstance(error, URLError) and not isinstance(error, HTTPError))

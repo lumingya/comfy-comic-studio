@@ -59,7 +59,7 @@ class DocumentationServingTests(unittest.TestCase):
         status, headers, body = self.request('/docs/guide/CHANNELS_AND_KEYS.html')
         self.assertEqual(status, 200)
         self.assertEqual(headers['content-type'], 'text/html; charset=utf-8')
-        self.assertIn('本地密钥', body.decode('utf-8'))
+        self.assertIn('API Key', body.decode('utf-8'))
 
     def test_text_asset_charsets_are_explicit(self):
         for path, mime in [('/README.md?raw=1','text/plain'),('/docs/api/openapi.json','application/json'),('/styles.css','text/css')]:
@@ -84,6 +84,8 @@ class DocumentationServingTests(unittest.TestCase):
             self.assertIn('mio-banner.svg', text)
             self.assertNotIn('███', text)
 
-    def test_generated_documents_are_current(self):
+    def test_rendered_documents_match_maintained_sources(self):
         for path in mio_docs.source_documents(ROOT):
-            self.assertEqual(path.with_suffix('.html').read_text(), mio_docs.render_document(ROOT, path.relative_to(ROOT)), str(path))
+            status, _, body = self.request('/' + path.relative_to(ROOT).with_suffix('.html').as_posix())
+            self.assertEqual(status, 200, str(path))
+            self.assertEqual(body.decode('utf-8'), mio_docs.render_document(ROOT, path.relative_to(ROOT)), str(path))

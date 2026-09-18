@@ -115,7 +115,6 @@ REQUIRED_CONFIG_FIELDS = {
 }
 PROTECTED_COLLECTION_FIELDS = ("templates", "savedGalleries", "comfyWorkflows")
 ALLOWED_ORIGINS = {
-    "null",  # Support opening index.html directly from file:// as a fallback.
     f"http://127.0.0.1:{PORT}",
     f"http://localhost:{PORT}",
 }
@@ -190,6 +189,9 @@ def is_public_static_path(request_path):
         return True
 
     if decoded_path.startswith("/docs/"):
+        # Legacy offline URLs also work in a source checkout without generated HTML.
+        if decoded_path.endswith(".html") and _is_file_inside(decoded_path[:-5] + ".md", os.path.join(BASE_DIR, "docs")):
+            return True
         return decoded_path.lower().endswith(
             (".md", ".html", ".json", ".png", ".svg", ".txt")
         ) and _is_file_inside(decoded_path, os.path.join(BASE_DIR, "docs"))
@@ -617,13 +619,13 @@ def list_provider_models(payload):
         return {"models": ids}
     except urllib.error.HTTPError as exc:
         raise ValueError(
-            "Models API HTTP "
-            + str(exc.code)
-            + "; check endpoint/authentication or enter the model ID manually"
+            "模型列表接口返回 HTTP " + str(exc.code)
+            + ("；该服务可能不提供 /models，可手填模型 ID，不必切换生成协议。" if exc.code == 404
+               else "；请检查基础地址、密钥与权限，也可按服务商说明手填模型 ID。")
         ) from None
     except Exception:
         raise ValueError(
-            "Could not read a supported model list; manual model IDs remain available"
+            "未读取到受支持的模型列表；请检查地址或网络，仍可手动填写模型 ID"
         ) from None
 
 

@@ -26,15 +26,23 @@
             "refine": false,
             "mask": false
           },
-          "fonts": true,
+          "fonts": false,
           "readerMode": "spread",
           "homeLayout": "showcase",
           "defaultReaderMode": "webtoon",
           "language": "zh-CN",
-          "lettering": "editorial",
+          "lettering": "calligraphy",
           "demoCleanupVersion": 2,
-          "bookOrder": {},
-          "collectionSort": "manual"
+          "bookOrder": {
+            "collection_summer": [
+              "edition_letter",
+              "book_1b07b003-041a-404a-87d3-327c18985ff3",
+              "book_5213ff35-ba03-416b-ab66-17a40177853c"
+            ]
+          },
+          "collectionSort": "manual",
+          "hideFirstRun": false,
+          "theme": "light"
         },
         "identity": {
           "workspaceName": "我的工作室",
@@ -124,7 +132,7 @@
         },
         "features": {
           "assistant": true,
-          "visualCritic": true,
+          "visualCritic": false,
           "executionLogs": true
         },
         "appearance": {
@@ -161,16 +169,21 @@
     "templates": [
       "story_journey12",
       "storyboard_5fa900a6056d4118901eb4202e648675",
-      "storyboards_50565bedcf5d46d892848fad25d1bf01"
+      "storyboards_50565bedcf5d46d892848fad25d1bf01",
+      "story_3dfe5619-28ff-4a69-b881-ceed190610be",
+      "story_f45195ae-5f6f-4fe7-8e4a-1488de8c1a0d",
+      "storyboard_6a8ae57bd4df43539690eac3b7a71b4a"
     ],
     "savedGalleries": [
       "book_1b07b003-041a-404a-87d3-327c18985ff3",
+      "book_5213ff35-ba03-416b-ab66-17a40177853c",
       "edition_letter"
     ],
     "rows": [
       "character_nanami",
       "character_campus_pair",
-      "rows_d68d91eb18f64d829818080f68440059"
+      "rows_d68d91eb18f64d829818080f68440059",
+      "character_hello_another_me"
     ],
     "projects": [
       "collection_summer"
@@ -178,13 +191,15 @@
     "plans": [
       "draft_letter",
       "plan_campus_system_24",
-      "plans_0bfaaa70c2f44e878069cd06a39cd828"
+      "plans_0bfaaa70c2f44e878069cd06a39cd828",
+      "plan_hello_another_me"
     ],
     "characters": [
       "setting_nanami",
       "characters_b7ea26e8986846219c773c6ba80d6d5a",
       "set_467e2546-30ed-41d8-9f70-07096a8f2d82",
-      "setting_campus_pair"
+      "setting_campus_pair",
+      "setting_hello_another_me"
     ],
     "scenes": [],
     "exportTemplates": [
@@ -205,13 +220,15 @@
       "chat_eb546791-8a79-4418-853d-9d9e79efed03"
     ],
     "queue": [
-      "task_2a3ae55c-739f-4d30-9dfe-85d989724f61"
+      "task_2a3ae55c-739f-4d30-9dfe-85d989724f61",
+      "task_45d08489-c962-48e3-8cd1-8572e21ae759"
     ],
     "variableSets": [
       "setting_nanami",
       "characters_b7ea26e8986846219c773c6ba80d6d5a",
       "set_467e2546-30ed-41d8-9f70-07096a8f2d82",
-      "setting_campus_pair"
+      "setting_campus_pair",
+      "setting_hello_another_me"
     ]
   },
   "aliases": [],

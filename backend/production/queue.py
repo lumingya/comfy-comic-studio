@@ -15,7 +15,7 @@ import time
 import uuid
 from backend.ecosystem.storage import Storage, owned
 from backend.mio_jobs import acquire_lease
-from backend.providers.reliability import failure_summary
+from backend.providers.reliability import failure_summary, result_unconfirmed
 from backend.providers.request_evidence import safe_error_text
 from .store import TaskStore
 from backend.mio_library import LibraryError
@@ -37,6 +37,7 @@ class ProductionQueue:
         self.active = None
         self.active_task = None
         self.fault = None
+        self.unclean_shutdown = False
         folder = owned(Path(root), "production")
         folder.mkdir(parents=True, exist_ok=True)
         try:
@@ -167,6 +168,7 @@ class ProductionQueue:
                 "paused": self.control["paused"],
                 "active": self.active,
                 "fault": self.fault,
+                "uncleanShutdown": self.unclean_shutdown,
             }
 
     def assemble(self, snapshot, title, request_id, commit=True):
@@ -186,6 +188,8 @@ class ProductionQueue:
             raise LibraryError("装配快照超过 1 MiB")
         fingerprint = hashlib.sha256((title + encoded).encode()).hexdigest()
         with self.lock:
+            if self.closed:
+                raise LibraryError("调度器正在关闭，不再接受新任务", 503)
             for id in self.control["order"]:
                 prior = self.tasks.get(id)
                 if prior and prior["requestId"] == request_id:
@@ -242,11 +246,13 @@ class ProductionQueue:
                 raise
 
     def start(
-        self, id, sequential=False, indices=None, trusted=False, force_prepare=False
+        self, id, sequential=False, indices=None, trusted=False, force_prepare=False, confirm_uncertain=False
     ):
         if trusted is not True:
             raise LibraryError("请确认启动生成与可能产生的费用", 403)
         with self.lock:
+            if self.closed:
+                raise LibraryError("调度器正在关闭，不再接受新任务", 503)
             if self.active or self.control["batch"]:
                 raise LibraryError("请先暂停并取消当前批次，再启动新的运行范围", 409)
             if self.fault:
@@ -273,6 +279,12 @@ class ProductionQueue:
                     or len(set(indices)) != len(indices)
                 ):
                     raise LibraryError("重跑范围无效")
+            # Validate the entire batch before mutating any task.
+            for selected in ids:
+                item = self.get(selected)
+                selection = indices if indices is not None else [p["index"] for p in item["pages"] if p["state"] != "complete"]
+                if any(item["pages"][i]["state"] in ("running", "uncertain") for i in selection) and confirm_uncertain is not True:
+                    raise LibraryError("MIO-PROD-UNCERTAIN: 存在未确认结果，请先核对上游，并明确确认可能重复计费后再重跑", 409)
             for selected in ids:
                 item = self.get(selected)
                 selection = (
@@ -300,12 +312,16 @@ class ProductionQueue:
 
     def pause(self):
         with self.lock:
+            if self.closed:
+                raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
             self.control["paused"] = True
             self._save_control()
             return self.list()
 
     def resume(self):
         with self.lock:
+            if self.closed:
+                raise LibraryError("调度器正在关闭，不再接受新任务", 503)
             if self.fault:
                 raise LibraryError("存储故障，请检查磁盘后重启服务", 503)
             self.control["paused"] = False
@@ -315,6 +331,8 @@ class ProductionQueue:
 
     def cancel(self):
         with self.lock:
+            if self.closed:
+                raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
             self.cancel_event.set()
             for id in self.control["batch"]:
                 if id == self.active:
@@ -330,6 +348,8 @@ class ProductionQueue:
 
     def remove(self, id):
         with self.lock:
+            if self.closed:
+                raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
             if id == self.active or id in self.control["batch"]:
                 raise LibraryError("请先取消任务所在批次", 409)
             self.control["order"] = [i for i in self.control["order"] if i != id]
@@ -340,6 +360,8 @@ class ProductionQueue:
     def recover_publication(self, id, index):
         """Retry a durable result without another provider call. Publisher is idempotent."""
         with self.lock:
+            if self.closed:
+                raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
             if self.active or self.control["batch"] or self.fault:
                 raise LibraryError("请先停止当前批次并处理存储故障", 409)
             task = self.get(id)
@@ -486,10 +508,14 @@ class ProductionQueue:
                     attempt["status"] = "complete"
                     self._save(task)
                 except Exception as exc:
+                    uncertain = cancel.is_set() or isinstance(exc, InterruptedError) or (
+                        attempt.get("phase") != "publish"
+                        and result_unconfirmed(exc, attempt.get("upstream"))
+                    )
                     attempt.update(
                         status=(
                             "uncertain"
-                            if isinstance(exc, InterruptedError) or cancel.is_set()
+                            if uncertain
                             else "failed"
                         ),
                         error=failure_summary(safe_error_text(str(exc))),
@@ -498,7 +524,7 @@ class ProductionQueue:
                     )
                     page["state"] = (
                         "uncertain"
-                        if isinstance(exc, InterruptedError) or cancel.is_set()
+                        if uncertain
                         else "failed"
                     )
                     raise
@@ -529,21 +555,18 @@ class ProductionQueue:
             finally:
                 self.active_task = None
 
-    def close(self):
-        try:
+    def close(self, timeout=30):
+        """Stop dispatch, cancel cooperatively, and wait without unlocking a live worker.
+
+        False means shutdown is still draining; the worker owns and releases the
+        lease in _loop's finally block. Repeated close calls can wait again.
+        """
+        with self.lock:
             self.closed = True
             self.cancel_event.set()
+            self.control["paused"] = True
             self.wake.set()
-            self.worker.join(timeout=2)
-        finally:
-            if hasattr(self, "lease") and self.lease and not self.lease.closed:
-                try:
-                    if os.name == "nt":
-                        import msvcrt
-
-                        self.lease.seek(0)
-                        msvcrt.locking(self.lease.fileno(), msvcrt.LK_UNLCK, 1)
-                except Exception:
-                    pass
-                finally:
-                    self.lease.close()
+        if threading.current_thread() is not self.worker:
+            self.worker.join(timeout=timeout)
+        self.unclean_shutdown = self.worker.is_alive()
+        return not self.unclean_shutdown

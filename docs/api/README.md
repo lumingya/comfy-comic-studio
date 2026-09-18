@@ -188,7 +188,7 @@ NovelAI 示例：
 
 ### 每次请求的输入记录
 
-任务详情新增 `requestHistory`（最近 100 条）。含 index、attempt、time、inputHash、prompt、negative、images、config、frame；config 只含渠道类型、模型等安全字段，不返回端点 URL、密钥引用或任意配置扩展；代表已准备的请求版本，不代表上游已接受或扣费。浏览器任务每次执行前读取已保存的画册局部输入，不读取公共模板；无画册关联的外部任务继续使用提交输入或显式 amend 版本。原幂等键不变。
+任务详情包含 `requestHistory`（最近 100 条）。含 index、attempt、time、inputHash、prompt、negative、images、config、frame；config 只含渠道类型、模型等安全字段，不返回端点 URL、密钥引用或任意配置扩展；代表已准备的请求版本，不代表上游已接受或扣费。浏览器任务每次执行前读取已保存的画册局部输入，不读取公共模板；无画册关联的外部任务继续使用提交输入或显式 amend 版本。原幂等键不变。
 
 ### 动态渠道引用
 

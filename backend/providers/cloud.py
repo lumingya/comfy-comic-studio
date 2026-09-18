@@ -31,11 +31,6 @@ def generate(payload, services):
     if provider not in ("novelai", "openai"):
         raise ValueError("Unsupported image provider")
     _, base = mio_credentials.endpoint(config)
-    key = mio_credentials.resolve(DATA_DIR, payload)
-    if key and any(ord(char) < 33 or ord(char) > 126 for char in key):
-        raise ValueError(
-            "Credential contains invalid characters; use an ASCII token without whitespace"
-        )
     model = str(config.get("model", "")).strip()
     prompt = str(payload.get("prompt", ""))
     if not model or not prompt.strip():
@@ -62,8 +57,6 @@ def generate(payload, services):
 
     negative = str(payload.get("negative", ""))
     headers = {"Content-Type": "application/json", "User-Agent": "Mio/1.0"}
-    if key:
-        headers["Authorization"] = "Bearer " + key
     from backend.providers import build_request
 
     path, body = build_request(
@@ -126,6 +119,14 @@ def generate(payload, services):
         headers["Content-Type"] = "multipart/form-data; boundary=--" + boundary
     else:
         data = json.dumps(body).encode()
+
+    key = mio_credentials.resolve(DATA_DIR, payload)
+    if key and any(ord(char) < 33 or ord(char) > 126 for char in key):
+        raise ValueError(
+            "Credential contains invalid characters; use an ASCII token without whitespace"
+        )
+    if key:
+        headers["Authorization"] = "Bearer " + key
 
     # Never forward Authorization to a redirect target or retry a paid generation.
     class NoRedirect(urllib.request.HTTPRedirectHandler):

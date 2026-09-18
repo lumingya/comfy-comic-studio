@@ -141,7 +141,7 @@ function installOrganizationTools(){
   const oldHotReplace=hotReplace;hotReplace=function(id,index,src){
     document.querySelectorAll('.artwork-missing[data-page-img]').forEach(el=>{if(el.dataset.pageImg!==id+':'+index)return;const img=document.createElement('img');for(const a of el.attributes)if(a.name.startsWith('data-')||a.name==='id')img.setAttribute(a.name,a.value);img.alt=bookBy(id)?.steps.find(s=>s.stepIndex===index)?.name||'分镜';img.src=el.closest('.room-filmstrip,.reader-inspector,.queue-item,.shelf-cover')?thumbnailURL(src):src;el.replaceWith(img)});oldHotReplace(id,index,src);
   };
-  const oldSettings=renderPythonSettings;renderPythonSettings=()=>oldSettings()+`<section class="settings-section"><h2>真实服务默认值</h2><p>新安装默认使用真实 ComfyUI、文本模型和视觉模型。请填写实际地址、模型和密钥；连接失败不再回退到示例图。</p>${btn('将当前服务切换为真实模式','settings','org-enable-real','','small')}<p class="help">保留已有地址和密钥。只影响后续任务，已入队快照不会被改写。</p></section>`;
+  const oldSettings=renderPythonSettings;renderPythonSettings=()=>oldSettings()+`<section class="settings-section"><h2>真实服务默认值</h2><p>新安装默认使用真实 ComfyUI、文本模型和视觉模型。请填写实际地址、模型和密钥；连接失败不再回退到示例图。</p>${btn('将当前服务切换为真实模式','settings','org-enable-real','','small')}</section>`;
   const oldAction=handleAction;handleAction=async function(action,d={},element){
     if(action==='resume'){const q=state.queue.find(q=>q.bookId===d.id&&queueCanContinue(q));if(q)return retryQueueTask(q.id)}
     if(action==='scan-resume')return inspectQueueGaps();

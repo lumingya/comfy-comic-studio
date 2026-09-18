@@ -2,6 +2,27 @@
 
 [教程中心](README.md)
 
+## 第二轮主动排查（2026-09-18）
+
+`test:current` 追加 `test:audit-round2`，Python 自动发现 `test_audit_round2.py`。第二轮覆盖重复 key/200 次确定性 DOM 变换、弹窗延后刷新、画册补齐确认、批量补齐不部分启动、传输结果未确认、关闭后句柄、Host 与畸形 CSRF 边界。
+
+- 新增 Host 白名单：默认 localhost / 127.0.0.1 / ::1 与实际绑定地址。使用自定义域名、反向代理或 `0.0.0.0` 下的局域网 IP 时，通过 `MIO_ORIGINS` 指定完整可信 origin，例如 `https://studio.example`。不要信任任意 Host、不要用通配域名代替显式入口。跨站能力令牌不等于公网身份认证。
+- 画册“补齐”复用任务卡的费用确认与未确认结果额外确认。没有关联任务时转到装配队列，不再回落到旧执行器。
+- 旧“批量补齐”不是原子批次，会出现第一本已开始而第二本报错。现改为转入任务卡逐本确认，**不再承诺该入口一键批量执行**；也不会以顺次启动所有队列任务代替所选范围。
+- 传输超时、断连、截断与上游已有 ID 但结果不可读，进入 page.state=uncertain，禁止无额外同意重发。明确的 ExecutionError 仍是 failed；保存结果后的发布错误保留无付费恢复路径。
+
+## 2026-09-18 审计修复后的验收入口
+
+以 `npm test` / `npm run test:current` 为当前受维护的合并门禁：lint → 56 项前端契约 → Python unittest → assembly / architecture / reading-stage / presentation / pictures / review → 桌面 smoke → 手机 Chromium 回归。清单校验另运行 `npm run test:distribution`。Linux CI 执行这套门禁并校验源码 ZIP；Windows launcher CI 独立保留。
+
+- `tests/audit_browser.mjs` 驱动目前的画册集、创作工坊、可选功能与设置；使用空的隔离数据目录，拦截外部浏览器网络，不调用付费模型。覆盖 DOM 类型、注释、焦点/IME、插入与重排、HTTP 存储边界、CSRF、304、服务器时钟、字体隐私、核对清单下载和启动恢复。
+- 原 smoke/mobile 脚本保存在 `tests/legacy_smoke.mjs`、`tests/legacy_mobile.mjs`，仍包含旧编辑器/队列的功能案例，但其选择器不代表当前工坊，**不计入本轮通过数**。其余历史专项入口也不因本次默认门禁通过而自动视为通过；`test:legacy` 保留旧的广泛串行入口供逐项迁移。
+- review 仍执行真实 ZIP/PDF 下载与图片/图层/编辑回归；并非仅用 DOM 存在性替换所有旧覆盖。模型选择器、历史队列策略、真机系统键盘/相册等仍需对应专项迁移或人工验收。
+- WebKit 可选入口保留，须单独安装该浏览器；本轮 Linux Chromium 通过不代表 WebKit 或真实 iOS/Android 验收。
+- 当前主队列实现是 `backend/production/{queue,store,api}.py`，UI 是 `js/assembly-workshop.js`；下文部分 foundation/task-pool 段落记录的是仍保留的兼容子系统，不应误认为同一套状态机。
+
+安全约定：默认只绑定回环地址；私有浏览器 API（包括读取）要求服务首页注入的进程级能力令牌。`Origin: null` 无条件拒绝。此机制防跨站浏览器访问，**不是公网身份认证**：无浏览器来源头的 CLI 仍兼容，`/api/v1` 维持独立 bearer 规则。不要直接公开本地服务。文件 HTTP 模式不会导入/写回旧浏览器工程快照。重启后未确认的付费结果必须核对并再次明确确认，不会自动重发。
+
 ## 环境与命令
 
 Python 3.10+ 与 Pillow 11.3–12.x 运行后端；先执行 `python -m pip install -r packaging/requirements.txt`。Node.js 20+ 用于可执行变量、前端构建、lint 和测试。
@@ -88,9 +109,9 @@ Build from JS modules, not from generated index.html. Runtime is Python stdlib +
 
 `npm run build` 包含 `python tools/build_docs.py`；仅改教程时也可运行 `npm run build:docs`。编辑 Markdown 源文件或 `docs/reader-template.html` 后必须重建，不要手改生成的 HTML 副本。教程首页 `docs/index.html` 单独维护，不会被此步骤覆盖。
 
-HTTP 下 `.md` 默认返回 UTF-8 HTML 阅读器，添加 `?raw=1` 返回 UTF-8 原文；`.html` 为预构建离线页。阅读器将文档内部的相对 `.md` 链接转换为 `.html`，以支持离线文件跳转。README 源文件仍保留 Markdown 链接供 GitHub 等平台使用。
+HTTP 下 `.md` 默认返回 UTF-8 HTML 阅读器，添加 `?raw=1` 返回 UTF-8 原文；已有 `.html` 教程链接在 HTTP 下从对应 Markdown 动态渲染；源码树不再跟踪这些生成副本。源码 ZIP 打包时直接生成离线 HTML 并验证哈希，`build:docs` 仍可按需生成本地副本。阅读器将文档内部的相对 `.md` 链接转换为 `.html`，以支持离线文件跳转。README 源文件仍保留 Markdown 链接供 GitHub 等平台使用。
 
-前端文档渲染依赖随包提供的 `vendor/marked.min.js`（15.0.12）和 `vendor/purify.min.js`（DOMPurify 3.4.15），不需要 pip 或运行时 CDN。对应许可证同目录分发。原始文档只作为转义 JSON 嵌入，HTML 经过净化后才放入页面；禁止取消这一步。新增覆盖见 `tests/test_docs_server.py` 和 `tests/smoke.mjs` 的文档浏览器检查。
+前端文档渲染依赖随包提供的 `vendor/marked.min.js`（15.0.12）和 `vendor/purify.min.js`（DOMPurify 3.4.15），不需要 pip 或运行时 CDN。对应许可证同目录分发。原始文档只作为转义 JSON 嵌入，HTML 经过净化后才放入页面；禁止取消这一步。文档 HTTP/渲染覆盖见 `tests/test_docs_server.py`；旧文档浏览器操作案例保存在 `tests/legacy_smoke.mjs`，本轮未计入通过数。
 
 ## Production foundation modules
 

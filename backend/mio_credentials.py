@@ -3,6 +3,7 @@
 This is a permissions-restricted local file, NOT encrypted storage. It is kept
 outside the native workspace config and its normal export/restore contract.
 """
+import hashlib
 import json
 import os
 import tempfile
@@ -81,6 +82,13 @@ def metadata(item):
     return {k: item[k] for k in ('id', 'label', 'createdAt')}
 
 
+def reference_ids(config):
+    ids = config.get('keyIds', [config['keyId']] if config.get('keyId') else [])
+    if not isinstance(ids, list) or len(ids) > 32 or any(not isinstance(i, str) or not i or len(i) > 150 for i in ids):
+        raise ValueError('Invalid credential list')
+    return list(dict.fromkeys(ids))
+
+
 def manage(data_dir, payload):
     config = payload.get('config') or {}
     action = payload.get('action', 'list')
@@ -96,6 +104,34 @@ def manage(data_dir, payload):
         matches = [item for item in value['keys'] if item.get('scope') == binding]
         if action == 'list':
             return {'keys': [metadata(item) for item in matches]}
+        if action == 'apply':
+            entries = payload.get('entries')
+            if not isinstance(entries, list) or len(entries) > 32:
+                raise ValueError('At most 32 API keys are supported')
+            selected = []
+            # Validate the complete request before publishing any changes.
+            for entry in entries:
+                if not isinstance(entry, dict) or set(entry) not in ({'id'}, {'key'}):
+                    raise ValueError('Invalid credential entry')
+                if 'id' in entry:
+                    item = next((k for k in matches if k['id'] == entry['id']), None)
+                    if item is None:
+                        raise ValueError('Key not found for this channel and endpoint')
+                else:
+                    key = entry['key']
+                    if not isinstance(key, str) or not key.strip() or len(key) > 16384 or any(ord(c)<33 or ord(c)>126 for c in key.strip()):
+                        raise ValueError('Invalid API key')
+                    key = key.strip()
+                    item = next((k for k in matches if k['secret'] == key), None)
+                    if item is None:
+                        item = {'id':'key_'+uuid.uuid4().hex, 'label':'API Key', 'createdAt':int(time.time()*1000), 'scope':binding, 'secret':key}
+                        matches.append(item)
+                        value['keys'].append(item)
+                selected.append(metadata(item))
+            if len(value['keys']) > 1000:
+                raise ValueError('Credential store limit reached')
+            write(data_dir, value)
+            return {'keys':selected}
         if action == 'add':
             key = payload.get('key', '')
             if not isinstance(key, str) or not key.strip() or len(key) > 16384 or '\n' in key or '\r' in key:
@@ -135,11 +171,23 @@ def resolve(data_dir, payload):
             key = os.environ.get('NOVELAI_API_KEY' if provider == 'novelai' else 'OPENAI_API_KEY', '')
         elif mode == 'stored':
             binding = scope(config)
+            ids = reference_ids(config)
+            if not ids:
+                return ''
             with LOCK:
-                item = next((k for k in read(data_dir)['keys'] if k['id'] == config.get('keyId') and k.get('scope') == binding), None)
-            if item is None:
-                raise ValueError('Saved key is missing or belongs to a different endpoint; select or save a key for this channel')
-            key = item['secret']
+                value = read(data_dir)
+                items = [next((k for k in value['keys'] if k['id']==id and k.get('scope')==binding), None) for id in ids]
+                if any(item is None for item in items):
+                    raise ValueError('Saved key is missing or belongs to a different endpoint')
+                pool = hashlib.sha256(json.dumps([binding, ids], sort_keys=True).encode()).hexdigest()
+                rotations = value.setdefault('rotations', {})
+                index = int(rotations.get(pool, 0)) % len(items)
+                key = items[index]['secret']
+                if len(items) > 1:
+                    if pool not in rotations and len(rotations) >= 1000:
+                        rotations.pop(next(iter(rotations)))
+                    rotations[pool] = (index + 1) % len(items)
+                    write(data_dir, value)
         else:
             raise ValueError('Unsupported authentication mode')
     if not isinstance(key, str) or '\r' in key or '\n' in key:

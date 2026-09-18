@@ -89,18 +89,25 @@ function patchDOM(root,html){
   function children(old,next){let cursor=old.firstChild;for(const incoming of [...next.childNodes]){
     let node=cursor;
     if(!node||!same(node,incoming)){
-      if(key(incoming)){
-        node=[...old.childNodes].find(n=>n!==cursor&&key(incoming)&&same(n,incoming));
-      }else{
-        let cur=cursor?.nextSibling;
-        while(cur){
-          if(!key(cur)&&same(cur,incoming)){node=cur;break}
-          cur=cur.nextSibling;
-        }
+      node=null; // A failed match must never reuse the incompatible cursor.
+      // Only search the unconsumed suffix. Inferred keys (e.g. data-act)
+      // may repeat; already matched or newly inserted nodes cannot be reused.
+      let cur=cursor?.nextSibling;
+      while(cur){
+        if(same(cur,incoming)){node=cur;break}
+        cur=cur.nextSibling;
       }
-      if(node)old.insertBefore(node,cursor);else{node=incoming.cloneNode(true);old.insertBefore(node,cursor)}
+      if(node){
+        // Never detach the active editor (including IME) to reorder siblings.
+        // Move intervening siblings around it instead; moveBefore() crashes
+        // Chromium on some repeated select/settings subtree reconciliations.
+        if(node===focused||node.contains?.(focused)){
+          const after=node.nextSibling;let before=cursor;
+          while(before&&before!==node){const nextBefore=before.nextSibling;old.insertBefore(before,after);before=nextBefore}
+        }else old.insertBefore(node,cursor);
+      }else{node=incoming.cloneNode(true);old.insertBefore(node,cursor)}
     }
-    if(node.nodeType===1){
+    if(node.nodeType===1&&incoming.nodeType===1){
       for(const attr of [...node.attributes])if(!incoming.hasAttribute(attr.name)&&!(node===focused&&['value','checked'].includes(attr.name)))node.removeAttribute(attr.name);
       for(const attr of [...incoming.attributes])if(node.getAttribute(attr.name)!==attr.value&&!(node===focused&&['value','checked'].includes(attr.name)))node.setAttribute(attr.name,attr.value);
       if(node!==focused&&!node.contains(focused)){

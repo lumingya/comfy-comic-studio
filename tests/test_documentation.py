@@ -19,7 +19,8 @@ class DocumentationTests(unittest.TestCase):
                 target = next(value for value in link if value)
                 if target.startswith(('http:', 'https:', 'data:', '#')):
                     continue
-                self.assertTrue((file.parent / target.split('#')[0]).exists(), f'{file.name}: {target}')
+                resolved = file.parent / target.split('#')[0]
+                self.assertTrue(resolved.exists() or (resolved.suffix == '.html' and resolved.with_suffix('.md').exists()), f'{file.name}: {target}')
 
     def test_release_readme_is_the_maintained_readme(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -32,7 +33,7 @@ class DocumentationTests(unittest.TestCase):
         self.assertEqual(package['name'], 'mio-studio')
         self.assertEqual(package['version'], '3.1.0-dev.3')
         self.assertIn("MIO_VERSION='"+package['version']+"'",(ROOT/'js/app.js').read_text())
-        self.assertTrue((ROOT/'docs/RELEASE_CURRENT.html').exists())
+        self.assertTrue((ROOT/'docs/RELEASE_CURRENT.md').exists())
         builder=(ROOT/'tools/package_project.py').read_text()
         self.assertIn('distribution',builder)
         self.assertIn('includesShippedData',builder)

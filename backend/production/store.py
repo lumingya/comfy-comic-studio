@@ -54,6 +54,17 @@ class TaskStore:
             raise LibraryError("生产记录校验失败；未使用损坏的输入")
         return json.loads(raw)
 
+    @staticmethod
+    def page_summary(page):
+        result = page.get("result")
+        return {
+            "index": page["index"], "state": page["state"],
+            "result": {k: v for k, v in result.items() if k in ("image", "name")} if result else None,
+            "attemptCount": len(page["attempts"]),
+            "attempts": [{k: v for k, v in a.items() if k in ("status", "phase", "error", "upstream")}
+                         for a in page["attempts"][-3:]],
+        }
+
     def set(self, key, value):
         with self.lock:
             manifest = {
@@ -82,6 +93,7 @@ class TaskStore:
                 record["attemptRefs"] = [self._put(a) for a in page["attempts"]]
                 refs.append(self._put(record))
             manifest["pageRefs"] = refs
+            manifest["pageSummaries"] = [self.page_summary(p) for p in value["pages"]]
             atomic_write(
                 self.file(key),
                 json.dumps(manifest, ensure_ascii=False, allow_nan=False).encode(),
@@ -106,6 +118,7 @@ class TaskStore:
                     "snapshotRef",
                     "preparedRef",
                     "pageRefs",
+                    "pageSummaries",
                     "sourceSummary",
                 )
             }
@@ -117,6 +130,9 @@ class TaskStore:
             result["prepared"] = (
                 None if summary else self._read(manifest["preparedRef"])
             )
+            if summary and "pageSummaries" in manifest:
+                result["pages"] = manifest["pageSummaries"]
+                return result
             result["pages"] = []
             for ref in manifest["pageRefs"]:
                 page = self._read(ref)
@@ -141,6 +157,13 @@ class TaskStore:
                                 if k in ("image", "name")
                             }
                 result["pages"].append(page)
+            if summary:
+                # One-time, atomic cache upgrade for existing tasks, never re-run providers.
+                manifest["pageSummaries"] = [self.page_summary(p) for p in result["pages"]]
+                for cached, page in zip(manifest["pageSummaries"], result["pages"]):
+                    cached["attemptCount"] = page.get("attemptCount", cached["attemptCount"])
+                atomic_write(file, json.dumps(manifest, ensure_ascii=False, allow_nan=False).encode())
+                result["pages"] = manifest["pageSummaries"]
             return result
 
     def delete(self, key):
