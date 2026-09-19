@@ -29,6 +29,7 @@ from .registry import SimpleRegistry
 from .storage import Storage, identifier
 from .plugins import Plugins, TIERS
 from .themes import Themes
+from .styles import Styles
 from .macros import Macros, signature
 
 SERVICES = {}
@@ -36,6 +37,8 @@ LOCK = threading.RLock()
 ALBUM_PATCH_KEYS = ("title", "synopsis", "tags", "steps", "liked")
 STEP_PATCH_KEYS = ("caption", "prompt", "name", "image")
 SETTINGS_PUBLIC = ("workspace", "comfy", "llm", "xml")
+LIBRARY_KINDS = ("albums", "storyboards", "characters", "scenes", "collections", "layouts", "plans", "workflows", "rows", "conversations")
+SDK_VERSION = 3
 
 
 def safe_mode():
@@ -53,6 +56,7 @@ class Ecosystem:
         self.notices = deque(maxlen=100)
         self.plugins = Plugins(host.BASE_DIR, host.DATA_DIR, platform=self)
         self.themes = Themes(host.DATA_DIR)
+        self.styles = Styles(host.DATA_DIR)
         self.macros = Macros(host.DATA_DIR, self.invoke, self.configuration_signature, self.asset_exists)
         self._install_core_capabilities()
         if not safe_mode():
@@ -63,7 +67,7 @@ class Ecosystem:
         hooks_dict = self.hooks.describe()
         events_dict = self.events.describe()
         return {
-            "sdk": 2,
+            "sdk": SDK_VERSION,
             "providers": self.providers.manifest(),
             "exporters": self.exporters.manifest(),
             "importers": self.importers.manifest(),
@@ -185,13 +189,53 @@ class Ecosystem:
             return next((p for p in document.get("steps", []) if p.get("stepIndex") == index), None)
         if name == "albums.update":
             return self.update_album(str(args.get("id")), args.get("patch") or {}, source="ext:" + extension_id)
+        if name == "library.kinds":
+            return list(LIBRARY_KINDS)
         if name == "library.list":
             kind = str(args.get("kind"))
-            if kind not in ("albums", "storyboards", "characters", "scenes", "collections", "layouts", "plans", "workflows"):
+            if kind not in LIBRARY_KINDS:
                 raise LibraryError("Unknown library kind: " + kind)
             return [{k: v for k, v in r.items() if k not in ("file",)} for r in store.records(kind)]
         if name == "library.get":
             return store.entity(str(args.get("kind")), str(args.get("id")))["document"]
+        if name == "library.put":
+            kind = str(args.get("kind"))
+            if kind not in LIBRARY_KINDS:
+                raise LibraryError("Unknown library kind: " + kind)
+            document = args.get("document")
+            if not isinstance(document, dict):
+                raise LibraryError("document must be an object")
+            create = bool(args.get("create")) or not document.get("id")
+            expected = args.get("expected")
+            if not create and not expected:
+                expected = store.entity(kind, str(document["id"]))["etag"]
+            stored = store.put(kind, document, expected=expected, create=create)
+            self.events.emit("library.saved", {"kind": kind, "id": stored["id"], "source": "ext:" + extension_id}, source=extension_id)
+            return stored
+        if name == "library.delete":
+            kind = str(args.get("kind"))
+            if kind not in LIBRARY_KINDS:
+                raise LibraryError("Unknown library kind: " + kind)
+            id = str(args.get("id"))
+            expected = args.get("expected") or store.entity(kind, id)["etag"]
+            result = store.delete(kind, id, expected)
+            self.events.emit("library.deleted", {"kind": kind, "id": id, "source": "ext:" + extension_id}, source=extension_id)
+            return result
+        if name == "images.generate":
+            return self.invoke("image.generate", {"prompt": str(args.get("prompt", "")), "options": args.get("options") or {}})
+        if name == "channels.list":
+            config = store.read(include_baseline=False)
+            generation = config.get("uiConfig", {}).get("comfyStudio", {}).get("settings", {}).get("imageGeneration", {})
+            return {"active": generation.get("active"), "profiles": [_strip_secrets({k: v for k, v in p.items() if k not in ("keyId", "keyIds")}) for p in generation.get("profiles", [])]}
+        if name == "workspace.path":
+            return {"path": str(self.host.DATA_DIR)}
+        if name == "extensions.list":
+            return [{k: r.get(k) for k in ("id", "name", "version", "enabled", "apiVersion", "backend", "entry", "contributes")} for r in self.plugins.list()]
+        if name == "extensions.call":
+            target = str(args.get("id"))
+            if not self.plugins.records().get(target, {}).get("enabled"):
+                raise LibraryError("Target extension is not enabled: " + target, 403)
+            return self.plugins.call(target, str(args.get("method", "POST")).upper(), str(args.get("path", "/")), args.get("body") or {})
         if name == "images.read":
             raw, mime = store.image_bytes(str(args.get("url")))
             return {"b64": base64.b64encode(raw).decode(), "mime": mime}
@@ -206,17 +250,15 @@ class Ecosystem:
             return self._chat(str(args.get("prompt", "")), args.get("options") or {})
         if name == "settings.get":
             key = str(args.get("name"))
-            if key not in SETTINGS_PUBLIC:
-                raise LibraryError("Setting not exposed: " + key)
             document = copy.deepcopy(store.settings.get(key).get("document") or {})
             return _strip_secrets(document)
         if name == "queue.list":
             production = getattr(self, "production", None)
             return production.list() if production else {"items": []}
         if name == "events.emit":
-            event = str(args.get("name", ""))
-            if not event.startswith("ext:" + extension_id + ":"):
-                raise LibraryError("Extensions may only emit ext:" + extension_id + ":<name>")
+            event = str(args.get("name", ""))[:120]
+            if not event or event.startswith("app."):
+                raise LibraryError("Extensions may emit any event except the app.* lifecycle names")
             return self.events.emit(event, args.get("payload") or {}, source=extension_id)
         if name == "ui.notify":
             return self.notify(args.get("message", ""), args.get("level", "info"), source=extension_id)
@@ -402,8 +444,29 @@ def _send_file(handler, result):
     handler.wfile.write(raw)
 
 
+ASSET_MIME = {".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".json": "application/json; charset=utf-8",
+              ".svg": "image/svg+xml", ".woff2": "font/woff2", ".woff": "font/woff", ".ttf": "font/ttf", ".otf": "font/otf", ".webp": "image/webp", ".avif": "image/avif",
+              ".html": "text/html; charset=utf-8", ".md": "text/plain; charset=utf-8", ".txt": "text/plain; charset=utf-8", ".wasm": "application/wasm", ".mp4": "video/mp4", ".webm": "video/webm", ".mp3": "audio/mpeg", ".ogg": "audio/ogg"}
+
+
+def _send_static(handler, p, cache=True):
+    size = p.stat().st_size
+    if size > 512 * 1024 * 1024:
+        raise LibraryError("Asset too large")
+    mime = ASSET_MIME.get(p.suffix.lower()) or mimetypes.guess_type(p.name)[0] or "application/octet-stream"
+    handler.send_response(200)
+    handler.send_header("Content-Type", mime)
+    handler.send_header("X-Content-Type-Options", "nosniff")
+    handler.send_header("Content-Length", str(size))
+    if cache:
+        handler.send_header("Cache-Control", "private, max-age=31536000, immutable")
+    handler.end_headers()
+    with p.open("rb") as stream:
+        shutil.copyfileobj(stream, handler.wfile)
+
+
 def dispatch(handler, host, path):
-    if not path.startswith(("/api/ecosystem/", "/api/extensions/", "/extension-assets/")):
+    if not path.startswith(("/api/ecosystem/", "/api/extensions/", "/extension-assets/", "/theme-assets/", "/style-assets/")):
         return False
     try:
         svc = service(host)
@@ -411,20 +474,21 @@ def dispatch(handler, host, path):
         query = urllib.parse.parse_qs(urllib.parse.urlsplit(handler.path).query)
         if path.startswith("/extension-assets/"):
             id, relative = path[len("/extension-assets/"):].split("/", 1)
-            p = svc.plugins.asset(id, urllib.parse.unquote(relative))
-            raw = p.read_bytes()
-            if len(raw) > 16 * 1024 * 1024:
-                raise LibraryError("Asset too large")
-            handler.send_response(200)
-            handler.send_header("Content-Type", mimetypes.guess_type(p)[0] or "application/octet-stream")
-            handler.send_header("X-Content-Type-Options", "nosniff")
-            handler.send_header("Content-Length", str(len(raw)))
-            handler.end_headers()
-            handler.wfile.write(raw)
+            _send_static(handler, svc.plugins.asset(id, urllib.parse.unquote(relative)))
             return True
-        body = handler.read_json_body(max_bytes=48 * 1024 * 1024) if method == "POST" else {}
+        if path.startswith("/theme-assets/"):
+            id, revision, relative = path[len("/theme-assets/"):].split("/", 2)
+            _send_static(handler, svc.themes.asset(id, revision, urllib.parse.unquote(relative)))
+            return True
+        if path.startswith("/style-assets/"):
+            _send_static(handler, svc.styles.asset_path(urllib.parse.unquote(path[len("/style-assets/"):])), cache=False)
+            return True
+        body = handler.read_json_body(max_bytes=320 * 1024 * 1024) if method == "POST" else {}
         if path.startswith("/api/extensions/"):
             result = _extension_route(svc, host, path, method, body, query)
+            if isinstance(result, dict) and result.get("__mio_response__"):
+                _send_raw(handler, result)
+                return True
         else:
             result = _ecosystem_route(svc, handler, path[len("/api/ecosystem/"):], method, body, query)
             if result is _SENT:
@@ -438,6 +502,23 @@ def dispatch(handler, host, path):
 
 
 _SENT = object()
+
+
+def _send_raw(handler, result):
+    raw = base64.b64decode(result.get("b64", ""), validate=True)
+    if len(raw) > 256 * 1024 * 1024:
+        raise LibraryError("Extension response exceeds 256 MiB", 413)
+    handler.send_response(int(result.get("status") or 200))
+    handler.send_header("Content-Type", result.get("mime") or "application/octet-stream")
+    handler.send_header("X-Content-Type-Options", "nosniff")
+    handler.send_header("Content-Length", str(len(raw)))
+    if result.get("filename"):
+        handler.send_header("Content-Disposition", "attachment; filename*=UTF-8''" + urllib.parse.quote(result["filename"]))
+    for key, value in (result.get("headers") or {}).items():
+        if key.lower() not in ("content-length", "content-type", "transfer-encoding", "set-cookie"):
+            handler.send_header(key, value)
+    handler.end_headers()
+    handler.wfile.write(raw)
 
 
 def _extension_route(svc, host, path, method, body, query):
@@ -469,7 +550,13 @@ def _extension_route(svc, host, path, method, body, query):
         return {"schema": list(schema.values()), "values": values}
     if tail == "capabilities":
         return svc.plugins.capabilities(id)
-    return svc.plugins.call(id, method, "/" + tail, body if method == "POST" else query)
+    if tail == "tasks":
+        if method == "GET":
+            task_id = query.get("id", [""])[0]
+            return svc.plugins.task(id, "get" if task_id else "list", task_id or None)
+        return svc.plugins.task(id, "cancel" if body.get("cancel") else "get", body.get("id"))
+    flat = {k: v[0] if len(v) == 1 else v for k, v in query.items()}
+    return svc.plugins.call(id, method, "/" + tail, body if method == "POST" else flat, flat)
 
 
 def _ecosystem_route(svc, handler, route, method, body, query):
@@ -478,18 +565,30 @@ def _ecosystem_route(svc, handler, route, method, body, query):
         return {
             "extensions": svc.plugins.list(),
             "themes": svc.themes.list(),
+            "styles": {"snippets": len(svc.styles.snippets()), "tokens": sum(len(v) for v in svc.styles.tokens().values() if isinstance(v, dict))},
             "node": bool(shutil.which("node")),
             "git": bool(shutil.which("git")),
             "safeMode": safe_mode(),
-            "sdkVersion": 2,
+            "sdkVersion": SDK_VERSION,
             "platform": svc.manifest(),
+            "dataDir": str(host.DATA_DIR),
+            "watching": any(r.get("source") == "link" for r in svc.plugins.records().values()) or any(r.get("source") == "link" for r in svc.themes.records().values()),
         }
     if method == "GET" and route == "platform":
         return svc.manifest()
     if method == "GET" and route == "activity":
         return svc.activity(float(query.get("since", ["0"])[0] or 0))
+    if method == "GET" and route == "watch":
+        return {"themes": svc.themes.watch(), "extensions": svc.plugins.watch(),
+                "revisions": {"themes": {k: v.get("revision") for k, v in svc.themes.records().items()}, "extensions": {k: v.get("revision") for k, v in svc.plugins.records().items()}}}
     if method == "GET" and route.startswith("themes/css/"):
         return svc.themes.compile(route.split("/")[-1])
+    if method == "GET" and route == "themes/compiled":
+        return {"stack": svc.themes.compile_stack(), "user": svc.styles.compile(), "tokens": svc.styles.compile_tokens(), "snippets": svc.styles.compile_snippets(), "fingerprint": svc.themes.fingerprint()}
+    if method == "GET" and route == "styles":
+        return svc.styles.state()
+    if method == "GET" and route == "styles/css":
+        return {"css": svc.styles.compile()}
     if method == "GET" and route == "preparations":
         return svc.macros.list()
     if method == "GET" and route.startswith("preparations/"):
@@ -503,10 +602,10 @@ def _ecosystem_route(svc, handler, route, method, body, query):
     if route == "preparations/cancel":
         return svc.macros.cancel(body["id"])
     if route == "events/emit":
-        name = str(body.get("name", ""))
-        if not name.startswith(("album.", "frame.", "theme.")) and not name.startswith("ext:"):
-            raise LibraryError("The UI may only relay album/frame/theme/ext events")
-        return svc.events.emit(name, body.get("payload") or {}, source="ui")
+        name = str(body.get("name", ""))[:120]
+        if not name or name.startswith("app."):
+            raise LibraryError("The UI may relay any event except app.* lifecycle names")
+        return svc.events.emit(name, body.get("payload") or {}, source=str(body.get("source") or "ui")[:80])
     if route == "export":
         result = svc.export(str(body.get("exporter", "")), str(body.get("albumId", "")), body.get("options"))
         _send_file(handler, result)
@@ -518,9 +617,9 @@ def _ecosystem_route(svc, handler, route, method, body, query):
     if route == "extensions/install":
         if safe_mode():
             raise LibraryError("Installation disabled in backend safe mode", 403)
-        return svc.plugins.install(url=body.get("url"), branch=body.get("branch", ""),
+        return svc.plugins.install(url=body.get("url"), branch=body.get("branch", ""), path=body.get("path"),
                                    raw=base64.b64decode(body["zip"], validate=True) if body.get("zip") else None,
-                                   trusted=body.get("trusted") is True)
+                                   trusted=body.get("trusted") is True, enable=body.get("enable", True) is not False)
     if route == "extensions/enable":
         if body.get("enabled") and body.get("trusted") is not True:
             raise LibraryError("Confirm trusted code execution", 403)
@@ -538,17 +637,56 @@ def _ecosystem_route(svc, handler, route, method, body, query):
     if route == "extensions/purge":
         return svc.plugins.purge(body["id"], body.get("level", "cache"))
     if route == "themes/install":
-        return svc.themes.install(base64.b64decode(body["data"], validate=True), body["filename"], body.get("trusted") is True)
+        return svc.themes.install(base64.b64decode(body["data"], validate=True), body["filename"], body.get("trusted") is True, enable=body.get("enable") is True)
+    if route == "themes/link":
+        return svc.themes.link(body.get("path", ""), body.get("trusted") is True, enable=body.get("enable", True) is not False)
+    if route == "themes/reload":
+        return svc.themes.reload(body["id"])
     if route == "themes/select":
         result = svc.themes.select(body.get("id", ""))
-        svc.events.emit("theme.changed", {"id": result})
+        svc.events.emit("theme.changed", {"id": result, "stack": svc.themes.stack()})
         return result
+    if route == "themes/enable":
+        stack = svc.themes.enable(body["id"], bool(body.get("enabled", True)))
+        svc.events.emit("theme.changed", {"id": stack[-1] if stack else "", "stack": stack})
+        return stack
+    if route == "themes/order":
+        stack = svc.themes.order(body.get("ids") or [])
+        svc.events.emit("theme.changed", {"id": stack[-1] if stack else "", "stack": stack})
+        return stack
+    if route == "themes/settings":
+        return svc.themes.set_settings(body["id"], body.get("values") or {})
     if route == "themes/uninstall":
         svc.themes.uninstall(body["id"])
         return svc.themes.list()
+    if route == "styles/snippet":
+        return svc.styles.save_snippet(body.get("snippet") or body)
+    if route == "styles/snippets":
+        return svc.styles.replace_snippets(body.get("snippets") or [])
+    if route == "styles/snippet/delete":
+        return svc.styles.delete_snippet(str(body.get("id", "")))
+    if route == "styles/tokens":
+        return svc.styles.set_tokens(body.get("tokens") or {})
+    if route == "styles/assets/upload":
+        return svc.styles.put_asset(body.get("name", ""), base64.b64decode(body.get("data", ""), validate=True))
+    if route == "styles/assets/delete":
+        return svc.styles.delete_asset(body.get("name", ""))
+    if route == "styles/export":
+        _send_file(handler, svc.styles.export_theme(body.get("name") or "我的主题", body.get("assets", True) is not False))
+        return _SENT
+    if route == "extensions/link":
+        if safe_mode():
+            raise LibraryError("Installation disabled in backend safe mode", 403)
+        return svc.plugins.link(body.get("path", ""), trusted=body.get("trusted") is True, enable=body.get("enable", True) is not False)
+    if route == "extensions/reload":
+        return svc.plugins.reload(body["id"])
+    if route == "extensions/deps":
+        return svc.plugins.install_deps(body["id"])
     if route == "reset":
         svc.themes.select("")
         for id in list(svc.plugins.records()):
             svc.plugins.enable(id, False)
+        if body.get("styles"):
+            svc.styles.replace_snippets([{**s, "enabled": False} for s in svc.styles.snippets()])
         return {"reset": True}
     raise LibraryError("Unknown ecosystem route", 404)

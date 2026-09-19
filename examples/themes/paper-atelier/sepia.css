@@ -1,0 +1,6 @@
+/* Custom look "sepia": compiled under [data-theme-variant=sepia]. The host keeps its own
+   dark/light toggle; the studio picks this look from the theme's settings panel. */
+body{background-image:linear-gradient(rgb(120 90 40/.08),rgb(120 90 40/.08)),url('paper.png');filter:saturate(.9)}
+.sidebar{border-right:1px solid var(--line)}
+.btn.primary{box-shadow:inset 0 0 0 1px rgb(255 240 200/.35)}
+img{filter:sepia(.25)}

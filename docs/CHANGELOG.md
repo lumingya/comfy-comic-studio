@@ -1,3 +1,15 @@
+# Mio 3.2.0-dev.1 · 2026-09-19
+
+扩展 SDK v3 开放平台 + 样式工坊：主题与自定义 CSS 不再受限，扩展可以触达界面与核心的任何位置。
+
+- **样式工坊**（原"自定义主题"）：主题可叠加与排序；快速样式实时预览、⌘/Ctrl+S 保存、元素拾取器、模板片段；设计令牌页自动发现全部 CSS 变量并按通用/浅色/深色覆盖；资源上传（字体、图片）与 @font-face 生成；一键导出为主题包。CSS 不再做任何过滤。
+- **主题包 v3**：`css` 多文件、任意名字的外观（variant）、可调设置项（color/range/font/toggle…实时写入 CSS 变量）、`theme.js` 脚本、包内资源经 `/theme-assets/<id>/<rev>/` 提供、链接本地文件夹热重载。
+- **扩展 SDK v3**：开放插槽、9 个核心锚点、`mount` 任意元素挂载、`patch` 核心函数补丁链、`filters`（prompt.compose / command.items / frame.render …）、`keys` 快捷键、`styles` 注入、`slots.settings` 设置页、`core` 核心直达、`expose/extensions` 跨扩展 API、任意事件名、`manifest.styles`、`contributes`。
+- **Python 后端**：`ctx.tasks.spawn` 后台任务（进度/取消）、`ctx.response`/`ctx.file` 原始响应、路由级 `timeout`（最长 1 小时，默认 30 秒）、`(body, query)` 查询参数、`requirements` 自动 pip 安装到私有 site-packages、`host.library.put/delete`、`host.images.generate`、`host.extensions.call`、存储上限 32 MiB / 1 GiB、取消 32 个扩展的数量上限。
+- 开发体验：链接本地文件夹（扩展与主题）+ 2.5 秒热重载；扩展中心的实时平台能力总览；`Mio.extensions.context(id)` 控制台调试。
+- 修复：扩展导航页点击落到首页；`.nav-item` 图标包未生效的验收断言；示例扩展的存储键名。
+- [扩展 SDK v3 指南](ECOSYSTEM_GUIDE.md) · [样式工坊与主题包](STYLE_STUDIO.md)。
+
 # 2.3.0 · 2026-09-14
 
 完整画面的桌面自适应阅读；本册提示词、变量、参考图统一在发送前读取；独立公共预设库与明确的全局画册版本归属。[完整说明](RELEASE_CURRENT.md)。

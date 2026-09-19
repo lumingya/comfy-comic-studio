@@ -1,0 +1,10 @@
+/* Manifest "styles" are linked automatically while the extension is enabled and removed on disable.
+   Unrestricted CSS: this file may use any selector, @import, fonts, animations. */
+.sk-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font:600 10px/1 var(--mono);letter-spacing:.12em;color:var(--sk-accent,#e8a33d);border:1px solid color-mix(in srgb,var(--sk-accent,#e8a33d) 55%,transparent);background:color-mix(in srgb,var(--sk-accent,#e8a33d) 12%,transparent);cursor:pointer}
+.sk-badge:hover{background:color-mix(in srgb,var(--sk-accent,#e8a33d) 22%,transparent)}
+.sk-status{color:var(--muted);font-size:11px;margin-left:10px}
+.sk-frame-tip{display:block;margin-top:6px;font-size:10.5px;color:var(--accent2)}
+.sk-lab .settings-section{margin-bottom:16px}
+.sk-task{display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:12px}
+.sk-task progress{flex:1;height:6px;accent-color:var(--accent)}
+.sk-task code{font-size:10.5px;color:var(--muted)}

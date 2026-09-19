@@ -25,9 +25,12 @@ def owned(root, relative):
     if not path.resolve().is_relative_to(root):raise LibraryError('Path outside package',400)
     return path
 
+VALUE_LIMIT=32*1024*1024
+QUOTA=1024*1024*1024
+
 class Storage:
     """Atomic owner-scoped JSON. This SDK is not an OS sandbox for trusted Python."""
-    def __init__(self,root):self.root=Path(root)
+    def __init__(self,root,value_limit=VALUE_LIMIT,quota=QUOTA):self.root=Path(root);self.value_limit=value_limit;self.quota=quota
     def file(self,key):
         if not isinstance(key,str) or not re.fullmatch(r'[a-zA-Z0-9_-]{1,100}',key):raise LibraryError('Invalid storage key')
         return owned(self.root,key+'.json')
@@ -54,11 +57,14 @@ class Storage:
             return json.loads(p.read_text(encoding="utf-8")) if p.exists() else default
     def set(self,key,value):
         raw=json.dumps(value,ensure_ascii=False,allow_nan=False).encode()
-        if len(raw)>2*1024*1024:raise LibraryError('Storage value exceeds 2 MiB')
+        if len(raw)>self.value_limit:raise LibraryError('Storage value exceeds '+str(self.value_limit//(1024*1024))+' MiB')
         with self.locked():
             target=self.file(key)
-            if sum(p.stat().st_size for p in self.root.glob('*.json') if p!=target)+len(raw)>32*1024*1024:raise LibraryError('Storage quota exceeded')
+            if sum(p.stat().st_size for p in self.root.glob('*.json') if p!=target)+len(raw)>self.quota:raise LibraryError('Storage quota exceeded')
             atomic_write(self.file(key),raw);os.chmod(self.file(key),0o600)
         return value
     def delete(self,key):
         with self.locked():self.file(key).unlink(missing_ok=True)
+    def keys(self):
+        with self.locked():
+            return sorted(p.stem for p in self.root.glob('*.json')) if self.root.is_dir() else []

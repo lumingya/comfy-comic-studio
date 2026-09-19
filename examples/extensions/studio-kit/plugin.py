@@ -1,4 +1,4 @@
-"""Studio Kit — reference backend for the Mio extension SDK v2.
+"""Studio Kit — reference backend for the Mio extension SDK v3.
 
 One file shows every backend capability an extension can register:
 
@@ -7,11 +7,16 @@ One file shows every backend capability an extension can register:
   ctx.on(...)         album / page / queue event listeners
   ctx.exporter(...)   CBZ export with ComicInfo.xml
   ctx.importer(...)   "zip of images" -> album
-  ctx.route(...)      JSON endpoints the front-end half (index.js) calls
+  ctx.route(...)      JSON endpoints the front-end half (index.js) calls; `timeout=` for slow work
+  ctx.tasks.spawn     background jobs with progress + cooperative cancel (v3)
+  ctx.response / ctx.file   raw HTML / SVG / file responses instead of JSON (v3)
+  ctx.query()         query-string of the request being served (v3)
   ctx.data.*          config / workspace / cache / tmp tiers
-  ctx.host.*          albums, images, llm, notify — calls back into Mio
+  ctx.host.*          albums, library (read+write), images (read/store/generate), llm, settings, notify
 
 Nothing here needs third-party packages; Pillow is used only if present.
+Declare `"requirements": ["pillow"]` in mio.extension.json to have the host pip-install it
+into a private site-packages for this extension.
 """
 
 import base64
@@ -180,6 +185,46 @@ def setup(ctx):
     def clear_log(body):
         log.set("events", [])
         return {"ok": True}
+
+    @ctx.route("/log/note")
+    def add_note(body):
+        remember("note", {"text": str(body.get("text", ""))[:500]})
+        return {"ok": True, "count": len(log.get("events", []) or [])}
+
+    # --------------------------------------------------------- v3: tasks
+    @ctx.route("/tasks/start")
+    def start_task(body):
+        """Long work belongs in a task: the route returns at once, the UI polls ctx.tasks."""
+        steps = max(1, min(500, int(body.get("steps") or 20)))
+
+        def work(task, count):
+            for index in range(count):
+                if task.cancelled():
+                    return None
+                task.report((index + 1) / count, "第 %d / %d 步" % (index + 1, count))
+                time.sleep(0.15)
+            remember("task.finished", {"steps": count})
+            return {"steps": count, "finishedAt": time.time()}
+
+        task = ctx.tasks.spawn(work, steps, name="演示任务")
+        return {"id": task.id}
+
+    # ------------------------------------------------- v3: raw responses
+    @ctx.route("/report", "GET")
+    def report(body, query):
+        rows = "".join("<tr><td>%s</td><td>%s</td><td><code>%s</code></td></tr>" % (_xml(str(e.get("at", ""))[:19]), _xml(e.get("kind", "")), _xml(json.dumps(e.get("payload", {}), ensure_ascii=False)[:120])) for e in (log.get("events", []) or [])[-100:])
+        html = "<!doctype html><meta charset='utf-8'><title>Studio Kit 报告</title><style>body{font:14px system-ui;padding:32px;max-width:900px;margin:auto}table{border-collapse:collapse;width:100%%}td{padding:6px 10px;border-bottom:1px solid #ddd;vertical-align:top}</style><h1>Studio Kit · 事件报告</h1><p>由 Python 路由通过 ctx.response() 直接返回 HTML。查询参数：%s</p><table>%s</table>" % (_xml(json.dumps(query, ensure_ascii=False)), rows or "<tr><td>（暂无事件）</td></tr>")
+        return ctx.response(html, "text/html; charset=utf-8")
+
+    @ctx.route("/badge.svg", "GET")
+    def badge(body):
+        text = str(ctx.query().get("text") or "studio-kit")[:40]
+        svg = "<svg xmlns='http://www.w3.org/2000/svg' width='%d' height='32'><rect rx='16' width='100%%' height='32' fill='#e8a33d'/><text x='50%%' y='21' text-anchor='middle' font-family='monospace' font-size='13' fill='#1c1207'>%s</text></svg>" % (24 + 8 * len(text), _xml(text))
+        return ctx.response(svg, "image/svg+xml", headers={"Cache-Control": "no-store"})
+
+    @ctx.route("/manifest-file", "GET")
+    def manifest_file(body):
+        return ctx.file(ctx.plugin_dir / "mio.extension.json", download=True)
 
     @ctx.route("/summarize")
     def summarize(body):

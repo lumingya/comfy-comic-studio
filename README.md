@@ -40,7 +40,7 @@ python server.py
 
 ## 扩展与开发
 
-[主题与扩展](docs/ECOSYSTEM_GUIDE.md) · [可执行变量](docs/COMPUTED_VARIABLES.md) · [外部 API](docs/api/README.md) · [OpenAPI](docs/api/openapi.json)
+[扩展 SDK v3](docs/ECOSYSTEM_GUIDE.md) · [样式工坊与主题包](docs/STYLE_STUDIO.md) · [可执行变量](docs/COMPUTED_VARIABLES.md) · [外部 API](docs/api/README.md) · [OpenAPI](docs/api/openapi.json)
 
 ```bash
 npm ci

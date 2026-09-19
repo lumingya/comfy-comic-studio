@@ -109,7 +109,7 @@ async function boot(){rt.booting=true;$('#launch-icon').innerHTML=icon('spark');
 
 
 const STUDIO_VERSION='3.2.0';
-const MIO_VERSION='3.1.0-dev.3';
+const MIO_VERSION='3.2.0-dev.1';
 
 
 const moduleKeys=['gallery','storyboard','matrix','engine','llm'];
@@ -1354,6 +1354,7 @@ installNativeLibraryPanel();
 installCreativeContext();
 installSettingsWorkbench();
 installEcosystem();
+installStyleStudio();
 installReadingStage();
 installPreferencesWorkbench();
 installAssemblyWorkshop();

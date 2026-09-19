@@ -1,11 +1,15 @@
 /* Shared rules: materials, type and shape. Colors come from the tokens in mio.theme.json,
-   so this file never needs to know whether the host is in dark or light mode. */
+   so this file never needs to know whether the host is in dark or light mode.
+   Relative url() references are rewritten to /theme-assets/<id>/<rev>/... by the host. */
 body{background-image:url('paper.png');background-blend-mode:multiply}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;background:var(--bg);opacity:calc(1 - var(--paper-opacity,1))}
 .brand-name,.quiet-create-head h1,.eco-heading h2,.source-story-head select,.mio-ext-head h1{font-family:var(--art-serif);letter-spacing:.08em}
-.btn{border-radius:2px}.setting-group,.eco-package,.home-module,.mio-dock{border-radius:3px;box-shadow:3px 3px 0 rgb(var(--shadow-rgb)/.06)}
+.btn{border-radius:2px}.setting-group,.eco-package,.home-module,.mio-dock,.studio-card{border-radius:var(--paper-radius,3px);box-shadow:3px 3px 0 rgb(var(--shadow-rgb)/.06)}
 .settings-preset-rail{border-radius:3px;background:var(--panel2);border:1px solid var(--line)}
 .quiet-tabs .active:after{height:3px;background:var(--accent)}
 textarea,.prompt-surface{background:color-mix(in srgb,var(--panel) 85%,var(--paper))}
 .topbar{background:color-mix(in srgb,var(--bg) 92%,transparent)}
 .btn.primary{background:var(--accent);color:var(--on-accent)}
 .room-page,.page-art img{box-shadow:0 1px 0 rgb(var(--shadow-rgb)/.3),0 12px 30px rgb(var(--shadow-rgb)/.35)}
+.paper-stamp{position:fixed;right:18px;bottom:18px;width:44px;height:44px;border:2px solid #b0362b;border-radius:6px;color:#b0362b;font:700 12px/1 var(--art-serif);display:grid;place-items:center;letter-spacing:.1em;transform:rotate(-8deg);opacity:.75;pointer-events:none;z-index:40;mix-blend-mode:multiply}
+[data-theme=dark] .paper-stamp{mix-blend-mode:screen;opacity:.6}

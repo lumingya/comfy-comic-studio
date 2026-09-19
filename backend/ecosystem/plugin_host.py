@@ -1,11 +1,11 @@
-"""Trusted Python extension process — SDK v2.
+"""Trusted Python extension process — SDK v3.
 
 One process per enabled extension. Isolation contains crashes and hangs, not
 malicious OS access: everything in ``plugin.py`` runs with the user's rights.
 
 Wire protocol (one JSON object per line, both directions):
 
-  host -> worker  {"seq", "op": route|hook|event|provider|exporter|importer|cancel|reply|stop, ...}
+  host -> worker  {"seq", "op": route|hook|event|provider|exporter|importer|task|cancel|reply|stop, ...}
   worker -> host  {"seq", "ok": true, "result"} | {"seq", "ok": false, "error"}
   worker -> host  {"call": "<host api>", "args": {...}, "seq"}   (answered by op=reply)
 
@@ -13,15 +13,24 @@ Requests run on a small thread pool so a long provider call never blocks a
 cheap hook, and ``op=cancel`` can flip the token a running provider polls.
 """
 
+import base64
 import importlib.util
 import json
+import mimetypes
+import os
 import queue
 import sys
 import threading
+import time
 import traceback
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from types import SimpleNamespace
+
+if os.environ.get("MIO_EXT_SITE"):
+    # Per-extension pip --target directory (manifest "requirements"); it shadows nothing in the host.
+    sys.path.insert(0, os.environ["MIO_EXT_SITE"])
 
 from backend.ecosystem.storage import Storage, owned
 
@@ -99,17 +108,26 @@ class HostAPI:
             update=lambda id, patch: self.call("albums.update", id=id, patch=patch),
             page=lambda id, index: self.call("albums.page", id=id, index=index),
         )
+        self.albums.create = lambda document: self.call("library.put", kind="albums", document=document, create=True)
         self.library = SimpleNamespace(
             list=lambda kind: self.call("library.list", kind=kind),
             get=lambda kind, id: self.call("library.get", kind=kind, id=id),
+            put=lambda kind, document, expected=None, create=False: self.call("library.put", kind=kind, document=document, expected=expected, create=create),
+            create=lambda kind, document: self.call("library.put", kind=kind, document=document, create=True),
+            delete=lambda kind, id, expected=None: self.call("library.delete", kind=kind, id=id, expected=expected),
+            kinds=lambda: self.call("library.kinds"),
         )
         self.images = SimpleNamespace(
-            read=lambda url: __import__("base64").b64decode(self.call("images.read", url=url)["b64"]),
-            store=lambda raw, name="": self.call("images.store", b64=__import__("base64").b64encode(raw).decode(), name=name)["url"],
+            read=lambda url: base64.b64decode(self.call("images.read", url=url)["b64"]),
+            store=lambda raw, name="": self.call("images.store", b64=base64.b64encode(raw).decode(), name=name)["url"],
             path=lambda url: self.call("images.path", url=url)["path"],
+            generate=lambda prompt, **options: self.call("images.generate", timeout=int(options.get("timeout", 180)) + 30, prompt=prompt, options=options),
         )
         self.llm = SimpleNamespace(chat=lambda prompt, **options: self.call("llm.chat", timeout=190, prompt=prompt, options=options))
         self.settings = SimpleNamespace(get=lambda name: self.call("settings.get", name=name))
+        self.channels = SimpleNamespace(list=lambda: self.call("channels.list"))
+        self.workspace = SimpleNamespace(path=lambda: self.call("workspace.path")["path"])
+        self.extensions = SimpleNamespace(list=lambda: self.call("extensions.list"), call=lambda id, method, path, body=None: self.call("extensions.call", timeout=120, id=id, method=method, path=path, body=body or {}))
         self.queue = SimpleNamespace(list=lambda: self.call("queue.list"))
         self.events = SimpleNamespace(emit=lambda name, payload=None: self.call("events.emit", name=name, payload=payload or {}))
         self.notify = lambda message, level="info": self.call("ui.notify", message=str(message), level=level)
@@ -133,6 +151,94 @@ class DataTiers:
         return owned(self.root / tier, relative)
 
 
+class Task:
+    """A background job inside the extension process. Poll it from the UI with ctx.tasks."""
+
+    def __init__(self, name):
+        self.id = uuid.uuid4().hex[:12]
+        self.name = str(name or "task")[:80]
+        self.status = "running"
+        self.progress = 0.0
+        self.message = ""
+        self.result = None
+        self.error = ""
+        self.startedAt = time.time()
+        self.endedAt = None
+        self.cancel = Cancel()
+
+    def report(self, progress=None, message=None):
+        if progress is not None:
+            self.progress = max(0.0, min(1.0, float(progress)))
+        if message is not None:
+            self.message = str(message)[:500]
+
+    def cancelled(self):
+        return self.cancel.is_set()
+
+    def snapshot(self, include_result=True):
+        data = {"id": self.id, "name": self.name, "status": self.status, "progress": self.progress, "message": self.message,
+                "error": self.error, "startedAt": self.startedAt, "endedAt": self.endedAt}
+        if include_result:
+            data["result"] = self.result
+        return data
+
+
+class Tasks:
+    def __init__(self):
+        self.items = {}
+        self.lock = threading.Lock()
+
+    def spawn(self, fn, *args, name="", **kwargs):
+        task = Task(name or getattr(fn, "__name__", "task"))
+
+        def run():
+            try:
+                task.result = fn(task, *args, **kwargs)
+                task.status = "cancelled" if task.cancelled() and task.result is None else "complete"
+            except Exception as exc:
+                task.status = "failed"
+                task.error = str(exc)[:800]
+            finally:
+                task.endedAt = time.time()
+
+        with self.lock:
+            self.items[task.id] = task
+            if len(self.items) > 500:
+                for stale in sorted((t for t in self.items.values() if t.endedAt), key=lambda t: t.endedAt)[:100]:
+                    self.items.pop(stale.id, None)
+        threading.Thread(target=run, daemon=True, name="mio-ext-task").start()
+        return task
+
+    def get(self, id):
+        return self.items.get(id)
+
+    def list(self):
+        return [t.snapshot(include_result=False) for t in sorted(self.items.values(), key=lambda t: t.startedAt, reverse=True)]
+
+    def cancel(self, id):
+        task = self.items.get(id)
+        if task:
+            task.cancel.event.set()
+        return task.snapshot() if task else None
+
+
+def response(body, mime="text/plain; charset=utf-8", status=200, headers=None, filename=None):
+    """Return raw bytes/text from a route instead of JSON (HTML pages, files, SVG, CSV, ...)."""
+    if isinstance(body, str):
+        body = body.encode("utf-8")
+    if not isinstance(body, (bytes, bytearray)):
+        body = json.dumps(body, ensure_ascii=False).encode("utf-8")
+        mime = "application/json; charset=utf-8"
+    return {"__mio_response__": True, "b64": base64.b64encode(bytes(body)).decode(), "mime": str(mime)[:120], "status": int(status),
+            "headers": {str(k)[:80]: str(v)[:500] for k, v in (headers or {}).items()}, "filename": str(filename)[:200] if filename else ""}
+
+
+def file_response(path, mime=None, filename=None, download=False):
+    path = Path(path)
+    raw = path.read_bytes()
+    return response(raw, mime or mimetypes.guess_type(path.name)[0] or "application/octet-stream", filename=filename or (path.name if download else None))
+
+
 class Context:
     def __init__(self, folder, data, manifest, link):
         self.id = manifest["id"]
@@ -149,6 +255,10 @@ class Context:
         self.exporters = {}
         self.importers = {}
         self._local = threading.local()
+        self.tasks = Tasks()
+        self.response = response
+        self.file = file_response
+        self.sdk = 3
 
     # ------------------------------------------------------------------ helpers
     def log(self, *values):
@@ -165,7 +275,9 @@ class Context:
         return {**defaults, **stored}
 
     # ---------------------------------------------------------------- decorators
-    def route(self, path, method="POST"):
+    def route(self, path, method="POST", timeout=None):
+        """Register a JSON route. ``timeout`` (seconds, up to 3600) raises the host budget for slow work;
+        anything longer belongs in ``ctx.tasks.spawn``. Handlers may take (body) or (body, query)."""
         if not isinstance(path, str) or not path.startswith("/") or ".." in path:
             raise ValueError("Use a package-relative route")
         key = (method.upper(), path)
@@ -173,10 +285,14 @@ class Context:
         def register(fn):
             if key in self.routes:
                 raise ValueError("Duplicate extension route")
-            self.routes[key] = fn
+            self.routes[key] = {"fn": fn, "timeout": int(timeout) if timeout else None}
             return fn
 
         return register
+
+    def query(self):
+        """Query-string values of the request currently being served (GET routes)."""
+        return getattr(self._local, "query", {}) or {}
 
     def provider(self, spec, *, models=None, check=None):
         if not isinstance(spec, dict) or not spec.get("id"):
@@ -223,12 +339,13 @@ class Context:
     def capabilities(self):
         return {
             "sdk": 2,
-            "routes": [{"method": m, "path": p} for m, p in self.routes],
+            "routes": [{"method": m, "path": p, "timeout": v["timeout"]} for (m, p), v in self.routes.items()],
             "providers": [{"spec": v["spec"], "models": v["models"] is not None, "check": v["check"] is not None} for v in self.providers.values()],
             "events": [{"event": l["event"], "priority": l["priority"]} for l in self.listeners],
             "hooks": [{"hook": f["hook"], "priority": f["priority"], "critical": f["critical"], "timeout": f["timeout"]} for f in self.filters],
             "exporters": [v["spec"] for v in self.exporters.values()],
             "importers": [v["spec"] for v in self.importers.values()],
+            "tasks": True,
         }
 
 
@@ -248,10 +365,27 @@ def serve(ctx, module, request, cancel):
     op = request.get("op", "route")
     ctx._local.cancel = cancel
     if op == "route":
-        fn = ctx.routes.get((request["method"], request["path"]))
-        if not fn:
+        entry = ctx.routes.get((request["method"], request["path"]))
+        if not entry:
             raise ValueError("Extension route not registered")
-        return fn(request.get("body", {}))
+        ctx._local.query = request.get("query") or {}
+        fn = entry["fn"]
+        try:
+            code = fn.__code__
+            arity = code.co_argcount - (1 if getattr(fn, "__self__", None) is not None else 0)
+        except AttributeError:
+            arity = 1
+        return fn(request.get("body", {}), ctx._local.query) if arity >= 2 else fn(request.get("body", {}))
+    if op == "task":
+        action = request.get("action")
+        if action == "list":
+            return ctx.tasks.list()
+        if action == "get":
+            task = ctx.tasks.get(request.get("id"))
+            return task.snapshot() if task else None
+        if action == "cancel":
+            return ctx.tasks.cancel(request.get("id"))
+        raise ValueError("Unknown task action")
     if op == "hook":
         hooks = [f for f in ctx.filters if f["hook"] == request["name"]]
         value = request.get("value")

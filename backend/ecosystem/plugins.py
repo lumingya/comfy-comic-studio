@@ -9,6 +9,7 @@ has to know an extension exists.
 """
 
 import base64
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -24,13 +25,15 @@ import uuid
 
 from backend.mio_library import LibraryError
 from .storage import Storage, identifier, owned
-from .packages import unpack, manifest, package_root, clone
+from .packages import unpack, manifest, package_root, clone, scan_revision
 
 TIERS = ("config", "workspace", "cache", "tmp")
 PURGE_LEVELS = ("none", "cache", "all")
-ROUTE_TIMEOUT = 15
+ROUTE_TIMEOUT = 30
+MAX_ROUTE_TIMEOUT = 3600
 EXPORT_TIMEOUT = 180
-STARTUP_TIMEOUT = 20
+STARTUP_TIMEOUT = 30
+DEPS_TIMEOUT = 1200
 
 
 class WorkerDead(LibraryError):
@@ -40,8 +43,12 @@ class WorkerDead(LibraryError):
 class Worker:
     """One extension process. Calls are multiplexed by sequence number."""
 
-    def __init__(self, code, data, project, host_call, timeout=STARTUP_TIMEOUT):
+    def __init__(self, code, data, project, host_call, timeout=STARTUP_TIMEOUT, site=None):
         self.host_call = host_call
+        env = dict(os.environ)
+        env["MIO_EXT_SITE"] = str(site or "")
+        env["MIO_EXT_DATA"] = str(data)
+        env["PYTHONIOENCODING"] = "utf-8"
         self.lock = threading.Lock()
         self.write_lock = threading.Lock()
         self.seq = 0
@@ -52,7 +59,7 @@ class Worker:
         self.proc = subprocess.Popen(
             [sys.executable, "-m", "backend.ecosystem.plugin_host", str(code), str(data)],
             cwd=project, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-            text=True, encoding="utf-8", bufsize=1, start_new_session=os.name == "posix",
+            text=True, encoding="utf-8", bufsize=1, start_new_session=os.name == "posix", env=env,
         )
         self.reader = threading.Thread(target=self._read, daemon=True, name="mio-ext-reader")
         self.reader.start()
@@ -204,6 +211,18 @@ class Plugins:
         self.workers = {}
         self.lock = threading.RLock()
         self.errors = {}
+        self.deps = {}
+
+    # ------------------------------------------------------------------ paths
+    def code_dir(self, id):
+        """Installed packages live under packages/extensions; linked ones stay where they are."""
+        record = self.records().get(id) or {}
+        if record.get("source") == "link":
+            return Path(record["path"])
+        return self.code / id
+
+    def site_dir(self, id):
+        return self.data / id / "site-packages"
 
     # ------------------------------------------------------------------ records
     def records(self):
@@ -216,12 +235,15 @@ class Plugins:
         items = []
         for id, record in self.records().items():
             worker = self.workers.get(id)
+            code = self.code_dir(id)
             items.append({
                 **record,
                 "error": self.errors.get(id, ""),
-                "backend": (self.code / id / "plugin.py").exists(),
-                "capabilities": worker.capabilities if worker else {},
+                "backend": (code / "plugin.py").exists(),
+                "missing": not code.is_dir(),
+                "capabilities": self._capability_summary(worker.capabilities) if worker else {},
                 "data": self.usage(id),
+                "deps": self.deps.get(id) or self._deps_state(id),
             })
         return items
 
@@ -248,10 +270,12 @@ class Plugins:
         return root
 
     # ------------------------------------------------------------------ install
-    def install(self, *, raw=None, url=None, branch="", trusted=False):
+    def install(self, *, raw=None, url=None, branch="", path=None, trusted=False, enable=True):
         if not trusted:
             raise LibraryError("Explicit trusted-code confirmation is required", 403)
         self.code.mkdir(parents=True, exist_ok=True)
+        if path:
+            return self.link(path, trusted=trusted, enable=enable)
         with tempfile.TemporaryDirectory(prefix=".install-", dir=self.code) as tmp:
             stage = Path(tmp) / "package"
             if url:
@@ -263,8 +287,6 @@ class Plugins:
             meta = manifest(stage, "extension")
             id = meta["id"]
             with self.lock:
-                if len(self.records()) >= 32:
-                    raise LibraryError("Extension limit reached (32)")
                 target = owned(self.code, id)
                 if target.exists() or id in self.records():
                     raise LibraryError("Extension ID already installed", 409)
@@ -276,8 +298,69 @@ class Plugins:
                 except Exception:
                     shutil.rmtree(target)
                     raise
-            self.enable(id, True)
+            if enable:
+                self.enable(id, True)
             return self.records()[id]
+
+    def link(self, path, *, trusted=False, enable=True):
+        """Develop in place: register a folder on this machine; edits are picked up by watch()."""
+        if not trusted:
+            raise LibraryError("Explicit trusted-code confirmation is required", 403)
+        folder = Path(str(path or "")).expanduser()
+        if not folder.is_absolute() or not folder.is_dir():
+            raise LibraryError("Provide an absolute path to an existing extension folder")
+        folder = folder.resolve()
+        meta = manifest(folder, "extension", strict=False)
+        id = meta["id"]
+        with self.lock:
+            items = self.records()
+            if id in items or (self.code / id).exists():
+                raise LibraryError("Extension ID already installed", 409)
+            items[id] = meta | {"enabled": False, "source": "link", "path": str(folder), "branch": "", "revision": scan_revision(folder), "installedAt": time.time()}
+            self.save(items)
+        if enable:
+            self.enable(id, True)
+        return self.records()[id]
+
+    def reload(self, id):
+        """Restart the extension on its current files (new revision → the front end re-imports)."""
+        identifier(id)
+        with self.lock:
+            record = self.records().get(id)
+            if not record:
+                raise LibraryError("Extension not found", 404)
+            was_enabled = record.get("enabled")
+            if was_enabled:
+                self.enable(id, False)
+            items = self.records()
+            code = self.code_dir(id)
+            items[id]["revision"] = scan_revision(code) if record.get("source") == "link" else uuid.uuid4().hex
+            try:
+                items[id].update(manifest(code, "extension", strict=record.get("source") != "link"))
+            except Exception as exc:
+                self.errors[id] = str(exc)[:500]
+            self.save(items)
+            if was_enabled:
+                self.enable(id, True)
+            return self.records()[id]
+
+    def watch(self):
+        """Poll linked extension folders and hot-reload the ones whose files changed."""
+        changed = {}
+        for id, record in list(self.records().items()):
+            if record.get("source") != "link":
+                continue
+            folder = Path(record.get("path", ""))
+            if not folder.is_dir():
+                continue
+            revision = scan_revision(folder)
+            if revision != record.get("revision"):
+                try:
+                    self.reload(id)
+                except Exception as exc:
+                    self.errors[id] = str(exc)[:500]
+                changed[id] = self.records().get(id, {}).get("revision", revision)
+        return changed
 
     def enable(self, id, on):
         identifier(id)
@@ -298,12 +381,23 @@ class Plugins:
                     self.platform.events.emit("extension.disabled", {"id": id})
                 return
             try:
-                meta = manifest(self.code / id, "extension")
-                items[id].update({k: meta[k] for k in ("name", "version", "settings", "description") if k in meta})
+                code = self.code_dir(id)
+                meta = manifest(code, "extension", strict=items[id].get("source") != "link")
+                items[id].update({k: meta[k] for k in ("name", "version", "settings", "description", "entry", "styles", "requirements", "contributes", "backend") if k in meta})
+                for key in ("styles", "requirements", "contributes"):
+                    if key not in meta:
+                        items[id].pop(key, None)
                 data = self.data_dir(id)
                 self._clear_tmp(id)
-                if (self.code / id / "plugin.py").exists() and id not in self.workers:
-                    self.workers[id] = Worker(self.code / id, data, self.project, self._host_call(id))
+                if meta.get("requirements") and not self._deps_ready(id, meta):
+                    self._install_deps_async(id)
+                    items[id]["enabled"] = True
+                    self.errors.pop(id, None)
+                    self.save(items)
+                    return
+                if (code / "plugin.py").exists() and id not in self.workers:
+                    site = self.site_dir(id) if meta.get("requirements") else None
+                    self.workers[id] = Worker(code, data, self.project, self._host_call(id), site=site)
                     self._register(id, self.workers[id])
                 items[id]["enabled"] = True
                 self.errors.pop(id, None)
@@ -322,6 +416,76 @@ class Plugins:
         for id, meta in self.records().items():
             if meta.get("enabled"):
                 self.enable(id, True)
+
+    # ------------------------------------------------------------ dependencies
+    def _requirements_text(self, id, meta=None):
+        meta = meta or self.records().get(id) or {}
+        req = meta.get("requirements")
+        if not req:
+            return ""
+        if isinstance(req, list):
+            return "\n".join(req) + "\n"
+        path = owned(self.code_dir(id), req)
+        return path.read_text(encoding="utf-8-sig") if path.is_file() else ""
+
+    def _deps_state(self, id):
+        meta = self.records().get(id) or {}
+        if not meta.get("requirements"):
+            return {"status": "none"}
+        return {"status": "ready" if self._deps_ready(id, meta) else "pending", "site": str(self.site_dir(id))}
+
+    def _deps_ready(self, id, meta):
+        text = self._requirements_text(id, meta)
+        if not text.strip():
+            return True
+        marker = self.site_dir(id) / ".mio-requirements"
+        return marker.is_file() and marker.read_text(encoding="utf-8") == hashlib.sha256(text.encode()).hexdigest()
+
+    def _install_deps_async(self, id):
+        current = self.deps.get(id)
+        if current and current.get("status") == "installing":
+            return
+        self.deps[id] = {"status": "installing", "log": "", "startedAt": time.time()}
+        threading.Thread(target=self._install_deps, args=(id,), daemon=True, name="mio-ext-deps").start()
+
+    def _install_deps(self, id):
+        try:
+            text = self._requirements_text(id)
+            site = self.site_dir(id)
+            site.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as handle:
+                handle.write(text)
+                req_file = handle.name
+            try:
+                result = subprocess.run([sys.executable, "-m", "pip", "install", "--disable-pip-version-check", "--upgrade", "--target", str(site), "-r", req_file],
+                                        capture_output=True, text=True, timeout=DEPS_TIMEOUT, stdin=subprocess.DEVNULL)
+            finally:
+                try:
+                    os.unlink(req_file)
+                except OSError:
+                    pass
+            log = (result.stdout + "\n" + result.stderr)[-8000:]
+            if result.returncode:
+                self.deps[id] = {"status": "failed", "log": log, "endedAt": time.time()}
+                self.errors[id] = "Dependency install failed; see deps log"
+                return
+            (site / ".mio-requirements").write_text(hashlib.sha256(text.encode()).hexdigest(), encoding="utf-8")
+            self.deps[id] = {"status": "ready", "log": log, "endedAt": time.time(), "site": str(site)}
+            if self.platform:
+                self.platform.notify("扩展依赖已安装：" + id, "success", source=id)
+            with self.lock:
+                if self.records().get(id, {}).get("enabled") and id not in self.workers:
+                    self.enable(id, True)
+        except Exception as exc:
+            self.deps[id] = {"status": "failed", "log": str(exc)[:2000], "endedAt": time.time()}
+            self.errors[id] = "Dependency install failed: " + str(exc)[:200]
+
+    def install_deps(self, id):
+        identifier(id)
+        if id not in self.records():
+            raise LibraryError("Extension not found", 404)
+        self._install_deps_async(id)
+        return self.deps.get(id)
 
     def _clear_tmp(self, id):
         tmp = self.data / id / "tmp"
@@ -537,12 +701,39 @@ class Plugins:
         }
 
     # -------------------------------------------------------------------- routes
-    def call(self, id, method, path, body):
-        return self._guarded(id, {"op": "route", "method": method, "path": path, "body": body}, ROUTE_TIMEOUT)
+    def route_timeout(self, id, method, path):
+        worker = self.workers.get(id)
+        for route in (worker.capabilities.get("routes") if worker else None) or []:
+            if route.get("method") == method and route.get("path") == path:
+                try:
+                    return max(1, min(MAX_ROUTE_TIMEOUT, int(route.get("timeout") or ROUTE_TIMEOUT)))
+                except (TypeError, ValueError):
+                    return ROUTE_TIMEOUT
+        return ROUTE_TIMEOUT
+
+    def call(self, id, method, path, body, query=None):
+        return self._guarded(id, {"op": "route", "method": method, "path": path, "body": body, "query": query or {}}, self.route_timeout(id, method, path))
+
+    def task(self, id, action, task_id=None):
+        """Background tasks live inside the extension process; list/get/cancel through the wire."""
+        return self._guarded(id, {"op": "task", "action": action, "id": task_id}, 10)
 
     def capabilities(self, id):
         worker = self.workers.get(id)
         return dict(worker.capabilities) if worker else {}
+
+    @staticmethod
+    def _capability_summary(caps):
+        caps = caps or {}
+        return {
+            "providers": [(item.get("spec") or {}).get("id") for item in caps.get("providers", [])],
+            "hooks": [item.get("hook") for item in caps.get("hooks", [])],
+            "events": [item.get("event") for item in caps.get("events", [])],
+            "exporters": [item.get("id") for item in caps.get("exporters", [])],
+            "importers": [item.get("id") for item in caps.get("importers", [])],
+            "routes": caps.get("routes", []),
+            "tasks": bool(caps.get("tasks")),
+        }
 
     # --------------------------------------------------------------- maintenance
     def update(self, id, trusted):
@@ -557,6 +748,8 @@ class Plugins:
                 raise LibraryError("Disable extension before updating", 409)
             if record["source"] == "zip":
                 raise LibraryError("ZIP extension: uninstall code only, then install new ZIP; data stays intact")
+            if record["source"] == "link":
+                return self.reload(id)
             with tempfile.TemporaryDirectory(dir=self.code, prefix=".update-") as tmp:
                 staged = Path(tmp) / "code"
                 clone(record["source"], record["branch"], staged)
@@ -583,12 +776,14 @@ class Plugins:
         if purge not in PURGE_LEVELS:
             raise LibraryError("purge must be one of none, cache, all")
         with self.lock:
+            record = self.records().get(id) or {}
             if id in self.records():
                 self.enable(id, False)
             target = owned(self.code, id)
-            if target.exists():
+            if record.get("source") != "link" and target.exists():
                 shutil.rmtree(target)
             self.purge(id, purge)
+            self.deps.pop(id, None)
             items = self.records()
             items.pop(id, None)
             self.save(items)
@@ -612,9 +807,12 @@ class Plugins:
         revision, sep, relative = relative.partition("/")
         if not sep or revision != self.records()[id]["revision"]:
             raise LibraryError("Extension revision unavailable", 404)
-        if ".git" in Path(relative).parts or Path(relative).suffix.lower() not in (".js", ".css", ".json", ".png", ".jpg", ".webp", ".svg", ".woff", ".woff2", ".mjs"):
+        if ".git" in Path(relative).parts or Path(relative).suffix.lower() in (".py", ".pyc", ".pyo") or Path(relative).name.startswith("."):
             raise LibraryError("Asset not public", 403)
-        return owned(self.code / id, relative)
+        path = owned(self.code_dir(id), relative)
+        if not path.is_file():
+            raise LibraryError("Asset not found", 404)
+        return path
 
     def close(self):
         for id, worker in list(self.workers.items()):

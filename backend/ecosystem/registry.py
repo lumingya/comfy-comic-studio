@@ -13,7 +13,7 @@ import threading
 from backend.mio_library import LibraryError
 from .storage import identifier
 
-FIELD_TYPES = ("text", "password", "number", "select", "toggle", "json", "textarea", "url")
+FIELD_TYPES = ("text", "password", "number", "select", "toggle", "json", "textarea", "url", "color", "range", "font", "image", "code")
 # Channel keys every provider shares; provider specs add their own on top.
 BASE_CHANNEL_FIELDS = ("id", "title", "provider", "baseUrl", "model", "keyMode", "keyId", "keyIds", "extraParams")
 CAPABILITY_DEFAULTS = {
@@ -48,7 +48,7 @@ def _field(item):
         "required": item.get("required") is True,
         "secret": kind == "password",
     }
-    for key in ("default", "placeholder", "help", "min", "max", "step"):
+    for key in ("default", "placeholder", "help", "min", "max", "step", "language"):
         if key in item:
             field[key] = item[key]
     if kind == "select":

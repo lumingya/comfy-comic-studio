@@ -1,3 +1,11 @@
+# 3.2.0-dev.1 · SDK v3 开放平台与样式工坊验收
+
+验证环境：Linux、Python 3.13、Node.js 20.20、Chromium/Playwright；日期 2026-09-19。
+
+- `python -m unittest tests.test_ecosystem`：25 项通过。新增：主题叠加/排序/设置/外观、无过滤 CSS 与资源改写、链接文件夹热重载、用户样式（片段/令牌/资源/导出）、Python v3（查询参数、路由超时、原始响应、后台任务、链接与热重载、清单 v3 字段）、宿主开放事件名与库写入。
+- `node tests/ecosystem.mjs`：66 项浏览器断言通过，截图在 `docs/acceptance-ecosystem/`（01 主题浅色、02 主题设置、03 快速样式、04 设计令牌、05 扩展中心、06 扩展设置页、07 扩展页面、08 移动端）。覆盖：样式层顺序、主题栈、图标包、主题脚本、外观切换、实时设置、单文件 CSS 主题、快速样式实时预览与 ⌘S、元素拾取、令牌覆盖持久化、资源上传与后台导出、安全模式、链接扩展、锚点/挂载/补丁/过滤器/快捷键/设置页、全部 v2 插槽、后台任务与取消、原始 HTML/SVG/文件响应、跨扩展 API、事件中继、数据分层、热重载、停用清理、ZIP 安装路径、移动端无横向溢出。
+- Python 全量 463 项（4 跳过）通过；`npm run lint`、`node js/tests.js`（63/63）、`node js/build.js dev` 通过。
+
 # 3.0 架构验收记录
 
 验证环境：Linux、Python 3.13、Node.js 20.20、Chromium/Playwright；日期 2026-09-14。

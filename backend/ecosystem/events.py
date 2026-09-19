@@ -16,6 +16,7 @@ manager so the kernel never knows about processes.
 """
 
 import copy
+import re
 import threading
 import time
 import traceback
@@ -23,9 +24,9 @@ from collections import deque
 
 from backend.mio_library import LibraryError
 
-# Lifecycle names the core emits. Extensions may emit their own names under
-# ``ext:<id>:...``; anything else is rejected so a typo never silently
-# creates a private channel.
+# Lifecycle names the core emits. SDK v3 lets extensions emit and listen to any
+# well-formed name (``ext:<id>:…`` is still the recommended namespace); the core
+# list is kept for documentation and for the platform manifest.
 CORE_EVENTS = (
     "app.ready",
     "extension.enabled",
@@ -54,6 +55,9 @@ CORE_EVENTS = (
     "export.started",
     "export.finished",
     "import.finished",
+    "library.saved",
+    "library.deleted",
+    "styles.changed",
 )
 
 # Filter pipelines the core runs. Value shapes are documented in
@@ -72,14 +76,15 @@ CORE_HOOKS = (
 HOOK_ERROR_STATUS = 502
 
 
+NAME_PATTERN = re.compile(r"^[A-Za-z][A-Za-z0-9_.:-]{0,119}$")
+
+
 def valid_name(name, known, owner="core"):
     if not isinstance(name, str) or not name:
         raise LibraryError("Event or hook name required")
-    if name in known:
+    if name in known or NAME_PATTERN.fullmatch(name):
         return name
-    if name.startswith("ext:") and len(name) <= 120:
-        return name
-    raise LibraryError("Unknown event or hook: " + name + " (extensions may use ext:<id>:<name>)")
+    raise LibraryError("Invalid event or hook name: " + str(name)[:60])
 
 
 class Subscription:

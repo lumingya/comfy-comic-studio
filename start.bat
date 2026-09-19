@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title Mio v3.1.0-dev.3
+title Mio v3.2.0-dev.1
 cd /d "%~dp0"
 
 if exist ".venv\Scripts\python.exe" goto use_venv1

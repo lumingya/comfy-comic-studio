@@ -31,7 +31,7 @@ class DocumentationTests(unittest.TestCase):
     def test_product_metadata_and_complete_source_packager(self):
         package = json.loads((ROOT / 'package.json').read_text())
         self.assertEqual(package['name'], 'mio-studio')
-        self.assertEqual(package['version'], '3.1.0-dev.3')
+        self.assertEqual(package['version'], '3.2.0-dev.1')
         self.assertIn("MIO_VERSION='"+package['version']+"'",(ROOT/'js/app.js').read_text())
         self.assertTrue((ROOT/'docs/RELEASE_CURRENT.md').exists())
         builder=(ROOT/'tools/package_project.py').read_text()
