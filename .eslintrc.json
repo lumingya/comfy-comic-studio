@@ -910,7 +910,15 @@
     "installHome": "writable",
     "imageKeyRow": "writable",
     "imageKeyDraftChanged": "writable",
-    "saveImageKeyDrafts": "writable"
+    "saveImageKeyDrafts": "writable",
+    "mapperUI": "writable",
+    "mapperSelectedBinding": "writable",
+    "mapperBindingIssues": "writable",
+    "mapperSourceLabel": "writable",
+    "renderMapperRows": "writable",
+    "renderMapperInspector": "writable",
+    "validateMappingTargets": "writable",
+    "WorkflowMapping": "readonly"
   },
   "parserOptions": {
     "ecmaVersion": 2021,

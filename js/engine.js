@@ -42,22 +42,25 @@ async function rasterJPEG(src,max=1280){const img=new Image();img.crossOrigin='a
 function autoBindWorkflow(){const c=state.settings.comfy,entries=Object.entries(c.workflow),find=pattern=>entries.find(([,n])=>pattern.test(n.class_type))?.[0]||'',texts=entries.filter(([,n])=>Object.keys(n.inputs).some(k=>['text','opt_text','text_g'].includes(k)));c.mapping={...c.mapping,positive:texts[0]?.[0]||'',negative:texts[1]?.[0]||texts[0]?.[0]||'',positiveField:texts[0]?Object.keys(texts[0][1].inputs).find(k=>['text','opt_text','text_g'].includes(k)):'text',negativeField:texts[1]?Object.keys(texts[1][1].inputs).find(k=>['text','opt_text','text_g'].includes(k)):'text',sampler:find(/KSampler/),size:find(/EmptyLatent/),output:find(/SaveImage|PreviewImage/),image:find(/^LoadImage$/)}}
 
 
-function isWorkflowLink(value,workflow){return Array.isArray(value)&&value.length===2&&['string','number'].includes(typeof value[0])&&Number.isInteger(value[1])&&Object.hasOwn(workflow,String(value[0]))}
+function isWorkflowLink(value,workflow){return WorkflowMapping.isWorkflowLink(value,workflow)}
 
 
-function inputPathParts(path){if(typeof path!=='string'||!path.trim())throw Error('请填写节点输入字段。');const parts=path.startsWith('/')?path.slice(1).split('/').map(x=>x.replace(/~1/g,'/').replace(/~0/g,'~')):path.split('.');if(parts.some(p=>!p||systemVariableKeys.has(p)))throw Error('输入路径含非法属性。');return parts}
+function inputPathParts(path){return WorkflowMapping.inputPathParts(path)}
 
 
-function inputAt(node,path){let value=node.inputs;for(const p of inputPathParts(path)){if(value===null||typeof value!=='object'||!Object.hasOwn(value,p))return {exists:false};value=value[p]}return {exists:true,value}}
+function inputAt(node,path,workflow){return WorkflowMapping.inputAt(node,path,workflow)}
 
 
-function writeInputAt(node,path,value,allowCreate=false){const parts=inputPathParts(path);let obj=node.inputs;for(const key of parts.slice(0,-1)){if(!obj[key]||typeof obj[key]!=='object'){if(!allowCreate)throw Error('输入路径不存在：'+path);obj[key]={}}obj=obj[key]}const key=parts.at(-1);if(!Object.hasOwn(obj,key)&&!allowCreate)throw Error('输入字段不存在：'+path);obj[key]=value}
+function writeInputAt(node,path,value,allowCreate=false,workflow){return WorkflowMapping.writeInputAt(node,path,value,allowCreate,workflow)}
+
+// Pure target validation shared by the inspector and compiler. No state mutation.
+function validateMappingTargets(workflow,bindings){return WorkflowMapping.validateMappingTargets(workflow,bindings)}
 
 
-function guessValueType(value){return typeof value==='number'?'number':typeof value==='boolean'?'boolean':value&&typeof value==='object'?'json':'text'}
+function guessValueType(value){return WorkflowMapping.guessValueType(value)}
 
 
-function workflowInputEntries(node,workflow,prefix='',value=node.inputs,depth=0){if(depth>12)return[];const list=[];for(const [key,v]of Object.entries(value||{})){const path=prefix+'/'+key.replace(/~/g,'~0').replace(/\//g,'~1');const link=isWorkflowLink(v,workflow);list.push({path,label:path.slice(1).replaceAll('/','.'),value:v,type:guessValueType(v),link});if(v&&typeof v==='object'&&!link)list.push(...workflowInputEntries(node,workflow,path,v,depth+1))}if(depth===0){const info=state.settings.comfy.objectInfo?.[node.class_type],declared={...(info?.input?.required||{}),...(info?.input?.optional||{})};for(const[key,schema]of Object.entries(declared)){if(Object.hasOwn(node.inputs,key)||!Array.isArray(schema))continue;const declaredType=schema[0],defaultValue=schema[1]?.default??(Array.isArray(declaredType)?declaredType[0]:declaredType==='BOOLEAN'?false:['INT','FLOAT'].includes(declaredType)?0:'');list.push({path:'/'+key.replace(/~/g,'~0').replace(/\//g,'~1'),label:key+' · 可选输入',value:defaultValue,type:guessValueType(defaultValue),link:false,optional:true})}}return list}
+function workflowInputEntries(node,workflow,prefix='',value=node.inputs,depth=0){if(depth>12)return[];const list=[];for(const [key,v]of Object.entries(value||{})){const path=prefix+'/'+key.replace(/~/g,'~0').replace(/\//g,'~1');const link=isWorkflowLink(v,workflow);list.push({path,label:path.slice(1).replaceAll('/','.'),value:v,type:guessValueType(v),link});if(v&&typeof v==='object'&&!link)list.push(...workflowInputEntries(node,workflow,path,v,depth+1))}if(depth===0){const info=state.settings.comfy.objectInfo?.[node.class_type],declared={...(info?.input?.required||{}),...(info?.input?.optional||{})};for(const[key,schema]of Object.entries(declared)){if(Object.hasOwn(node.inputs,key)||!Array.isArray(schema))continue;const declaredType=schema[0],defaultValue=schema[1]?.default??(Array.isArray(declaredType)?declaredType[0]:declaredType==='BOOLEAN'?false:['INT','FLOAT'].includes(declaredType)?0:'');list.push({path:'/'+key.replace(/~/g,'~0').replace(/\//g,'~1'),label:key+' · 可选输入',value:defaultValue,type:guessValueType(defaultValue),link:false,optional:Object.hasOwn(info?.input?.optional||{},key)})}}return list}
 
 
 function nodeInputSchema(nodeId){const node=state.settings.comfy.workflow[nodeId],schema=state.settings.comfy.objectInfo?.[node?.class_type];return {...(schema?.input?.required||{}),...(schema?.input?.optional||{})}}
@@ -69,21 +72,28 @@ function inferTextInput(nodeId,comfy=state.settings.comfy){const node=comfy.work
 function initialWorkflowBindings(comfy){const m=comfy.mapping||{},rules=[];for(const [source,label,id]of[['positive','正向提示词',m.positive],['negative','负向提示词',m.negative]])if(id){const inferred=inferTextInput(String(id),comfy);rules.push({id:uid('bind'),label,nodeId:String(id),path:inferred.field,type:'text',source,value:'',enabled:true,allowCreate:false,allowLink:false,autoField:true,warning:inferred.warning})}return rules}
 
 
-function bindingRowValidity(binding){const w=state.settings.comfy.workflow,node=Object.hasOwn(w,binding.nodeId)?w[binding.nodeId]:null;if(!node)return {ok:false,text:'蓝图中不存在节点 #'+binding.nodeId+'。'};let found;try{found=inputAt(node,binding.path)}catch(e){return{ok:false,text:e.message}}if(!found.exists&&!binding.allowCreate)return{ok:false,text:'字段 '+binding.path+' 不存在；请手动更正或明确允许创建可选字段。'};if(found.exists&&isWorkflowLink(found.value,w)&&!binding.allowLink)return{ok:false,text:'这是节点连线，不是普通控件。默认不覆盖；如确需修改请在高级项明确允许。'};return {ok:true,text:'已定位 '+node.class_type+' → '+binding.path,original:found.value}}
+function bindingRowValidity(binding){
+ const w=state.settings.comfy.workflow,node=Object.hasOwn(w,binding.nodeId)?w[binding.nodeId]:null;
+ const issue=validateMappingTargets(w,[{...binding,enabled:true,source:binding.source==='inherit'?'literal':binding.source}])[0];
+ if(issue)return {ok:false,text:issue.message};
+ const found=node?inputAt(node,binding.path,w):{};return {ok:true,text:'已定位 '+node.class_type+' → '+binding.path,original:found.value};
+}
 
 
-function castBoundValue(value,type,original){let target=type==='auto'?guessValueType(original):type;if(target==='text')return value!==null&&typeof value==='object'?JSON.stringify(value):String(value??'');if(target==='number'){if(value===''||!Number.isFinite(Number(value)))throw Error('映射值不是有效数字。');return Number(value)}if(target==='boolean'){if(typeof value==='boolean')return value;if(value==='true'||value==='1'||value===1)return true;if(value==='false'||value==='0'||value===0)return false;throw Error('开关映射只接受 true / false 或 1 / 0。')}if(target==='json'){if(typeof value==='string'){try{return JSON.parse(value)}catch(e){throw Error('映射值不是有效 JSON。')}}return clone(value)}throw Error('映射类型不受支持。')}
+function castBoundValue(value,type,original){return WorkflowMapping.castBoundValue(value,type,original)}
 
 
 function interpolateBoundValue(text,scope={}){if(typeof text!=='string')return text;return scopeText(text,scope)}
 
 
 function buildMappedWorkflow(frame,row,options={}){
-  const execution=options.execution||frame._execution||{},comfy=state.settings.comfy,workflow=clone(execution.workflow||comfy.workflow),bindings=execution.bindings||comfy.bindings,scope=frame._scope||row._scope||row,changes=[],seen=new Set();validateWorkflow(workflow);
-  if(execution.randomizeSeeds??comfy.randomizeSeeds)randomSeeds(workflow);
-  for(const binding of bindings){if(!binding.enabled||binding.source==='inherit'||binding.source==='sceneParameter'&&!frame.renderOverride)continue;const node=Object.hasOwn(workflow,String(binding.nodeId))?workflow[String(binding.nodeId)]:null;if(!node)throw Error('映射「'+binding.label+'」的节点 #'+binding.nodeId+' 不存在。');const info=inputAt(node,binding.path),target=String(binding.nodeId)+':'+inputPathParts(binding.path).join('/');if(seen.has(target))throw Error('同一输入存在重复启用映射：'+target);seen.add(target);
-    if(!info.exists&&!binding.allowCreate)throw Error('映射「'+binding.label+'」的字段 '+binding.path+' 不存在。');
-    if(info.exists&&isWorkflowLink(info.value,workflow)&&!binding.allowLink)throw Error('映射「'+binding.label+'」目标是节点连线；请保留它，或明确开启连线覆盖。');
+ const execution=options.execution||frame._execution||{},comfy=state.settings.comfy,
+  workflow=clone(execution.workflow||comfy.workflow),
+  bindings=(execution.bindings||comfy.bindings).filter(b=>b.source!=='sceneParameter'||frame.renderOverride),
+  scope=frame._scope||row._scope||row;
+ validateWorkflow(workflow);
+ if(execution.randomizeSeeds??comfy.randomizeSeeds)randomSeeds(workflow);
+ return WorkflowMapping.compile(workflow,bindings,{outputNodeId:execution.outputNodeId??comfy.outputNodeId,objectInfo:execution.objectInfo||comfy.objectInfo||{},resolve(binding){
     let value;
     switch(binding.source){
       case'positive':value=frame._resolvedImagePrompt??scopeText(frame.prompt,scope,true);break;
@@ -91,29 +101,28 @@ function buildMappedWorkflow(frame,row,options={}){
       case'caption':value=scopeText(frame.caption,scope,true);break;
       case'bookTitle':value=row.bookTitle;break;
       case'sceneName':value=scopeText(frame.name,scope,true);break;
-      case'variable':{const key=String(binding.value||'').replace(/^\{|\}$/g,'');checkVariableKey(key);if(!Object.hasOwn(scope,key)||scope[key]===undefined||scope[key]===null||scope[key]==='')continue;value=scope[key];if(isImageVariable(value)){value=options.uploadedImages?.[key];if(!value){if(options.preview)value='[图片变量 '+key+' 待上传]';else throw Error('图片变量 {'+key+'} 未在提示词中引用或尚未上传。')}}break}
+      case'variable':{const key=String(binding.value||'').replace(/^\{|\}$/g,'');checkVariableKey(key);if(!Object.hasOwn(scope,key)||scope[key]===undefined||scope[key]===null||scope[key]==='')return WorkflowMapping.SKIP;value=scope[key];if(isImageVariable(value)){value=options.uploadedImages?.[key];if(!value){if(options.preview)value='[图片变量 '+key+' 待上传]';else throw Error('图片变量 {'+key+'} 未在提示词中引用或尚未上传。')}}break}
       case'literal':value=interpolateBoundValue(binding.value,scope);break;
       case'random':value=options.preview?123456789:Math.floor(Math.random()*Number.MAX_SAFE_INTEGER);break;
       case'sceneParameter':value=frame[binding.value];if(value===undefined)throw Error('分镜参数 '+binding.value+' 不存在。');if(binding.value==='seed'&&Number(value)<0)value=options.preview?123456789:Math.floor(Math.random()*Number.MAX_SAFE_INTEGER);break;
-      case'image':if(!options.uploadedImage){if(options.preview)value='[待上传的图像文件]';else continue}else value=options.uploadedImage;break;
+      case'image':if(!options.uploadedImage){if(options.preview)value='[待上传的图像文件]';else return WorkflowMapping.SKIP}else value=options.uploadedImage;break;
       default:throw Error('未知映射来源 '+binding.source);
     }
     if(frame.nodeOverrides&&Object.hasOwn(frame.nodeOverrides,binding.id))value=frame.nodeOverrides[binding.id];
-    value=castBoundValue(value,binding.type,info.exists?info.value:undefined);if(inputPathParts(binding.path).length===1){const schema=(execution.objectInfo||comfy.objectInfo)?.[node.class_type],rule={...(schema?.input?.required||{}),...(schema?.input?.optional||{})}[inputPathParts(binding.path)[0]];if(Array.isArray(rule)){if(rule[0]==='INT'&&!Number.isInteger(value))throw Error(binding.label+' 需要整数。');if(typeof value==='number'&&((Number.isFinite(rule[1]?.min)&&value<rule[1].min)||(Number.isFinite(rule[1]?.max)&&value>rule[1].max)))throw Error(binding.label+' 超出节点声明的数值范围。');if(Array.isArray(rule[0])&&!rule[0].includes(value))throw Error(binding.label+' 不在节点的可选值列表中。')}}writeInputAt(node,binding.path,value,binding.allowCreate);changes.push({label:binding.label,nodeId:binding.nodeId,path:binding.path,from:info.value,to:value});
-  }
-  return {workflow,changes};
+    return value;
+ }});
 }
 
 
 function addInputBinding(nodeId='',path='',source='literal'){
-  const c=state.settings.comfy,node=Object.hasOwn(c.workflow,nodeId)?c.workflow[nodeId]:null,info=node&&path?inputAt(node,path):null;const existing=c.bindings.find(b=>b.nodeId===nodeId&&b.path===path&&path);if(existing){toast('该字段已有映射，可直接编辑。');return existing}
+  const c=state.settings.comfy,node=Object.hasOwn(c.workflow,nodeId)?c.workflow[nodeId]:null,info=node&&path?inputAt(node,path):null;const existing=c.bindings.find(b=>b.nodeId===String(nodeId)&&path&&b.path&&WorkflowMapping.samePath(b.path,path));if(existing){toast('该字段已有映射，可直接编辑。');return existing}
   let warning='',autoField=false;if(['positive','negative'].includes(source)){const inferred=inferTextInput(nodeId);path=inferred.field;warning=inferred.warning;autoField=true}
   const optional=node&&path?workflowInputEntries(node,c.workflow).find(e=>e.path===path&&e.optional):null;
   const initial=info?.exists?info.value:optional?.value;const rule={id:uid('bind'),label:source==='positive'?'正向提示词':source==='negative'?'负向提示词':node?node.class_type+' · '+(path||'输入'):'自定义输入',nodeId:String(nodeId),path:path||'',type:initial!==undefined?guessValueType(initial):'auto',source,value:initial!==undefined?(typeof initial==='object'?JSON.stringify(initial,null,2):String(initial)):'',enabled:true,autoField,warning,allowCreate:!!optional,allowLink:false};c.bindings.push(rule);save();return rule;
 }
 
 
-async function readComfyObjectInfo(){const json=await(await request(baseURL()+'/object_info',{},15000)).json();if(!json||typeof json!=='object'||Array.isArray(json))throw Error('ComfyUI 未返回合法节点定义。');state.settings.comfy.objectInfo=json;for(const b of state.settings.comfy.bindings)if(b.autoField&&['positive','negative'].includes(b.source)){const inf=inferTextInput(b.nodeId);b.path=inf.field;b.warning=inf.warning}save();render();toast('节点定义已读取，文本字段与插件输入已更新。')}
+async function readComfyObjectInfo(){const json=await(await request(baseURL()+'/object_info',{},15000)).json();if(!json||typeof json!=='object'||Array.isArray(json))throw Error('ComfyUI 未返回合法节点定义。');state.settings.comfy.objectInfo=json;save();render();toast('节点定义已读取，文本字段与插件输入已更新。')}
 
 
 function mappedExecutionSnapshot(){const c=state.settings.comfy,classes=[...new Set(Object.values(c.workflow).map(n=>n.class_type))],objectInfo={};for(const key of classes)if(c.objectInfo?.[key])objectInfo[key]=clone(c.objectInfo[key]);return {baseUrl:c.baseUrl,mode:c.mode,autoFallback:c.autoFallback,workflow:clone(c.workflow),bindings:clone(c.bindings),outputNodeId:c.outputNodeId||'',randomizeSeeds:!!c.randomizeSeeds,workflowTitle:c.workflowTitle,globalNegative:state.settings.negative,objectInfo}}
@@ -153,17 +162,14 @@ function createTextNodeContract(){
   const fields=Object.freeze(['positive','positive_prompt','negative','negative_prompt','prompt','text','opt_text','text_g','text_l']),own=(o,k)=>Object.prototype.hasOwnProperty.call(o||{},k);
   function isLink(v){return Array.isArray(v)&&v.length===2&&['string','number'].includes(typeof v[0])&&Number.isInteger(v[1])}
   function detect(node,role='positive'){const inputs=node?.inputs||{},ordered=role==='negative'?['negative','negative_prompt',...fields.filter(k=>!['negative','negative_prompt'].includes(k))]:fields,field=ordered.find(k=>own(inputs,k)&&typeof inputs[k]==='string');if(field)return{field,resolved:true,warning:'',candidates:ordered.filter(k=>typeof inputs[k]==='string')};const strings=Object.keys(inputs).filter(k=>typeof inputs[k]==='string'&&!['ckpt_name','lora_name','filename_prefix','image','sampler_name','scheduler'].includes(k));if(strings.length===1)return{field:strings[0],resolved:true,warning:'Using the only actual string input: '+strings[0],candidates:strings};return{field:'text',resolved:false,warning:'未找到可确定的实际字符串输入。text 仅为候选，原连线不会被覆盖。',candidates:strings}}
-  function pathParts(path){if(typeof path!=='string'||!path)throw Error('A node input path is required.');const parts=path.startsWith('/')?path.slice(1).split('/').map(p=>p.replace(/~1/g,'/').replace(/~0/g,'~')):path.split('.');if(parts.some(p=>!p||['__proto__','constructor','prototype'].includes(p)))throw Error('Unsafe node input path.');return parts}
-  function inspectPath(node,path){let value=node?.inputs;for(const part of pathParts(path)){if(isLink(value))return{linked:true,exists:true,value};if(value===null||typeof value!=='object'||!own(value,part))return{linked:false,exists:false};value=value[part]}return{linked:isLink(value),exists:true,value}}
-  function healBinding(binding,workflow){const next={...binding};if(!next.enabled||next.source==='inherit')return next;const node=own(workflow,next.nodeId)?workflow[next.nodeId]:null;if(!node)throw Error('Node #'+next.nodeId+' does not exist.');const textSource=next.source==='positive'||next.source==='negative';let target;try{target=inspectPath(node,next.path)}catch(e){target={exists:false,linked:false}}if(textSource&&(target.linked||!target.exists||typeof target.value!=='string')){const inferred=detect(node,next.source);if(!inferred.resolved)throw Error('Node #'+next.nodeId+' has no safe string input. Its upstream connections are preserved.');next.path=inferred.field;next.warning='Self-healed node #'+next.nodeId+': '+binding.path+' -> '+inferred.field+'. Upstream links were preserved.';target=inspectPath(node,next.path)}if(target.linked)throw Error('Refusing to overwrite a topology link at #'+next.nodeId+'/'+next.path+'. Bind the upstream text node instead.');next.allowLink=false;return next}
-  return Object.freeze({fields,isLink,detect,inspectPath,healBinding});
+  return Object.freeze({fields,isLink,detect});
 }
 
 
 function detectTextField(nodeOrInputs,role='positive'){const node=nodeOrInputs?.inputs?nodeOrInputs:{inputs:nodeOrInputs||{}};return globalThis.ComfyComic.textNodes.detect(node,role).field}
 
 
-function installNativeEngineModule(){const ns=globalThis.ComfyComic;ns.textNodes=createTextNodeContract();const previous=buildMappedWorkflow;inferTextInput=function(nodeId,config=state.settings.comfy,role='positive'){return ns.textNodes.detect(config.workflow?.[String(nodeId)],role)};initialWorkflowBindings=function(config){const mapping=config.mapping||{},rules=[];for(const source of ['positive','negative']){const id=mapping[source];if(id===undefined||id===null||id==='')continue;const inferred=inferTextInput(String(id),config,source);rules.push({id:uid('binding'),nodeId:String(id),path:inferred.field,label:source,source,type:'text',value:'',enabled:true,autoField:true,warning:inferred.warning,allowCreate:false,allowLink:false})}return rules};buildMappedWorkflow=function(frame,row,options={}){const execution=options.execution||frame._execution||{},workflow=execution.workflow||state.settings.comfy.workflow,original=execution.bindings||state.settings.comfy.bindings||[],bindings=original.map(b=>b.source==='sceneParameter'&&!frame.renderOverride?{...b,enabled:false}:ns.textNodes.healBinding(b,workflow));const result=previous(frame,row,{...options,execution:{...execution,workflow,bindings}});result.healedBindings=bindings.filter((b,i)=>b.path!==original[i]?.path);return result};ns.modules.engine=true}
+function installNativeEngineModule(){const ns=globalThis.ComfyComic;ns.textNodes=createTextNodeContract();ns.workflowMapping=WorkflowMapping;inferTextInput=function(nodeId,config=state.settings.comfy,role='positive'){return ns.textNodes.detect(config.workflow?.[String(nodeId)],role)};initialWorkflowBindings=function(config){const mapping=config.mapping||{},rules=[];for(const source of ['positive','negative']){const id=mapping[source];if(id===undefined||id===null||id==='')continue;const inferred=inferTextInput(String(id),config,source);rules.push({id:uid('binding'),nodeId:String(id),path:inferred.field,label:source,source,type:'text',value:'',enabled:true,autoField:true,warning:inferred.warning,allowCreate:false,allowLink:false})}return rules};ns.modules.engine=true}
 
 async function persistRasterAsset(dataUrl,albumId='unassigned',signal){
   if(!/^https?:$/.test(location.protocol)||!/^data:image\/(png|jpeg|webp|gif);base64,/i.test(dataUrl))return dataUrl;
@@ -282,7 +288,7 @@ function installImageProviders(){
   const oldBuild=buildMappedWorkflow;buildMappedWorkflow=function(frame,row,options={}){const ex=options.execution||frame._execution;if(ex?.provider&&ex.provider!=='comfyui'){validatePrompt(scopeText(frame.prompt,frame._scope||row._scope||row,true));if(!ex.config?.model||!ex.config?.baseUrl)throw Error('请先填写图像渠道地址和模型。');return {workflow:{},changes:[]}}return oldBuild(frame,row,options)};
   const oldGenerate=generateFrame;generateFrame=async function(frame,row,signal,theme=0,source=null){const ex=frame._execution,provider=ex?(ex.provider||'comfyui'):activeImageProfile().provider;return provider==='comfyui'?oldGenerate(frame,row,signal,theme,source):generateProviderFrame(frame,row,signal,source)};
   const oldShell=renderShell;renderShell=function(){oldShell();const p=activeImageProfile(),status=$('#topbar > .tiny.muted');if(status){status.textContent=p.provider==='comfyui'?'ComfyUI · 后端按需连接':p.title+' · API';status.title=''}};
-  const oldLibrary=renderWorkflowLibrary;renderWorkflowLibrary=()=>imageProviderPanel()+(activeImageProfile().provider==='comfyui'?oldLibrary():'');
+  const oldLibrary=renderWorkflowLibrary;renderWorkflowLibrary=()=>activeImageProfile().provider==='comfyui'?'<details class="wm-connection"><summary>'+icon('nodes','sm')+'<strong>ComfyUI</strong><span>图像引擎与连接设置</span><span class="wm-connection-mode">'+(state.settings.comfy.mode==='mock'?'离线演示':'真实服务')+'</span></summary>'+imageProviderPanel()+'</details>'+oldLibrary():imageProviderPanel();
   const oldComposer=queueComposerHTML;queueComposerHTML=function(){const html=oldComposer();return '<div class="queue-provider-picker">'+imageProviderSelect()+btn('配置渠道','settings','image-provider-settings','','small')+'</div>'+html};
   const oldRender=render;render=function(){oldRender();const nonComfy=activeImageProfile().provider!=='comfyui';document.querySelectorAll('[data-act="ws-edit-scene-workflow"]').forEach(el=>el.hidden=nonComfy);if(ui.workspace===3){const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent='图像引擎'}};
   const oldAction=handleAction;handleAction=async function(action,d={},el){if(action.startsWith('image-provider-')||action.startsWith('image-key-')){if(await handleImageProviderAction(action,d,el))return}return oldAction(action,d,el)};

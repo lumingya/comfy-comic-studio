@@ -907,8 +907,12 @@ const v3Actions={
   'v3-generate-selected':()=>generateChosenPlans(false,false),
   'v3-run-queue':()=>{if(!state.queue.some(q=>q.status==='pending'))throw Error('队列为空，请先在画册计划中加入任务。');void runQueue()},
   'v3-clear-logs':async()=>{if(await confirmAction('清空当前日志显示？','不影响画册、队列或后端保存。','清空日志')){rt.logs=[];renderLogs()}},
-  'v3-add-binding':()=>{addInputBinding();save();render()},
-  'v3-expose-input':d=>{const b=addInputBinding(d.node,d.path);if(isWorkflowLink(inputAt(state.settings.comfy.workflow[d.node],d.path).value,state.settings.comfy.workflow))b.enabled=false;save();render()},
+  'wm-select':d=>{mapperUI.selected=d.id;mapperUI.tab='bindings';mapperUI.nodes=false;render();if(innerWidth<=700)document.querySelector('.wm-inspector')?.scrollIntoView({block:'start',behavior:'smooth'})},
+  'wm-tab':d=>{mapperUI.tab=d.tab;render()},
+  'wm-filter':d=>{mapperUI.filter=d.filter;render()},
+  'wm-nodes':()=>{mapperUI.nodes=!mapperUI.nodes;mapperUI.tab='bindings';render();if(mapperUI.nodes)$('#v3-node-search')?.focus()},
+  'v3-add-binding':()=>{mapperUI.selected=addInputBinding().id;mapperUI.nodes=false;mapperUI.tab='bindings';save();render()},
+  'v3-expose-input':d=>{const b=addInputBinding(d.node,d.path);mapperUI.selected=b.id;mapperUI.nodes=false;mapperUI.tab='bindings';if(isWorkflowLink(inputAt(state.settings.comfy.workflow[d.node],d.path).value,state.settings.comfy.workflow))b.enabled=false;save();render()},
   'v3-remove-binding':async d=>{if(!await confirmAction('删除此输入映射？','原始工作流节点不被删除，下次生成将保留该字段原值。','删除映射'))return;state.settings.comfy.bindings=state.settings.comfy.bindings.filter(b=>b.id!==d.id);save();render()},
   'v3-infer-field':d=>{const b=state.settings.comfy.bindings.find(b=>b.id===d.id),inf=inferTextInput(b.nodeId);b.path=inf.field;b.warning=inf.warning;b.autoField=true;save();render();toast(inf.warning||'已读取实际文本字段：'+inf.field)},
   'v3-auto-bind':()=>autoIdentifyBindings(),
@@ -956,8 +960,10 @@ document.addEventListener('input',e=>{const el=e.target;try{
   if(el.dataset.v3SetTitle){const s=setBy(createUI.setId);if(s){s.title=el.value;save()}}
   if(el.dataset.v3Frame||el.dataset.v3Template){flushEditor();refreshCreationPreviews()}
   if(el.dataset.v3Var==='value'){const entries=variableOwner(el.dataset.group,el.dataset.owner),entry=entries?.find(e=>e.id===el.dataset.entry);if(entry){entry.value=entry.type==='boolean'?el.value==='true':el.value;save();refreshCreationPreviews()}}
-  if(el.dataset.v3Binding){const b=state.settings.comfy.bindings.find(b=>b.id===el.dataset.id);if(b){const k=el.dataset.v3Binding;b[k]=el.type==='checkbox'?el.checked:el.value;if(k==='path'){b.autoField=false;b.warning=''}save()}}
+  if(el.dataset.v3Binding){const b=state.settings.comfy.bindings.find(b=>b.id===el.dataset.id);if(b){const k=el.dataset.v3Binding;b[k]=el.type==='checkbox'?el.checked:el.value;if(k==='path'){b.autoField=false;b.warning=''}save();if($('#wm-binding-rows'))$('#wm-binding-rows').innerHTML=renderMapperRows()}}
   if(el.dataset.v3Output){state.settings.comfy.outputNodeId=el.value;save()}
+  if(el.id==='wm-binding-search'){mapperUI.search=el.value;$('#wm-binding-rows').innerHTML=renderMapperRows()}
+  if(el.id==='wm-library-search'){const query=el.value.toLowerCase();$$('.workflow-library-item').forEach(item=>item.hidden=!item.textContent.toLowerCase().includes(query))}
   if(el.id==='v3-node-search'){createUI.nodeSearch=el.value;$('#v3-node-results').innerHTML=nodeBrowserItems(state.settings.comfy.workflow,el.value.toLowerCase())}
   if(el.dataset.v3Backend){state.settings.backend[el.dataset.v3Backend]=el.value;backendRuntime.connected=false;backendRuntime.error='';state.settings.backend.enabled=false;persistBackendLocation();save()}
   if(el.id==='v3-backend-token')createUI.backendToken=el.value;
@@ -974,7 +980,7 @@ document.addEventListener('change',async e=>{const el=e.target;try{
   if(el.id==='v3-scene-template'){flushEditor();ui.templateId=el.value;ui.frameIndex=0;createUI.sceneScope='shared';render()}
   if(el.id==='v3-scene-scope'){flushEditor();if(el.value.startsWith('task:')){createUI.liveTaskId=el.value.slice(5);createUI.sceneScope='plan'}else createUI.sceneScope=el.value;render()}
   if(el.id==='v3-render-override'){const p=selectedPlan(),f=(createUI.sceneScope==='plan'?liveStoryboardTask(p)?.frames[ui.frameIndex]:null)||currentTemplate().frames[ui.frameIndex],own=createUI.sceneScope==='plan'&&p?.templateId===ui.templateId;if(own){const live=liveStoryboardFrame(p,f);if(live){live.renderOverride=el.checked;saveLiveStoryboardFrame(p,live)}else{p.sceneOverrides[f.id]??={};p.sceneOverrides[f.id].renderOverride=el.checked}}else f.renderOverride=el.checked;save();render();$$('.advanced-details').find(d=>d.querySelector('summary')?.textContent.includes('高级选项'))?.setAttribute('open','')}
-  if(el.dataset.v3Binding){const b=state.settings.comfy.bindings.find(b=>b.id===el.dataset.id),key=el.dataset.v3Binding;if(!b)return;if(key==='allowLink'&&el.checked){if(!await confirmAction('允许覆盖此字段原有的节点连线？','这会改变数据流向，可能导致工作流执行错误。请先预览完整 JSON。','明确允许')){b.allowLink=false;el.checked=false}}if((key==='nodeId'&&b.autoField)||key==='source'&&['positive','negative'].includes(b.source)){const info=inferTextInput(b.nodeId);b.path=info.field;b.warning=info.warning;b.autoField=true}save();if(key!=='value'&&key!=='label')render()}
+  if(el.dataset.v3Binding){const b=state.settings.comfy.bindings.find(b=>b.id===el.dataset.id),key=el.dataset.v3Binding;if(!b)return;if(key==='allowLink'&&el.checked){if(!await confirmAction('允许覆盖此字段原有的节点连线？','这会改变数据流向，可能导致工作流执行错误。请先预览完整 JSON。','明确允许')){b.allowLink=false;el.checked=false}}save();if(key!=='value'&&key!=='label')render()}
   if(el.id==='v3-randomize-seeds'){state.settings.comfy.randomizeSeeds=el.checked;save()}
   if(el.id==='v3-log-level'){createUI.logLevel=el.value;renderLogs()}
   if(el.dataset.studioPref==='visibility.llm'||el.dataset.studioPref==='visibility.logs'){render()}

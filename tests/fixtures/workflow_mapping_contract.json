@@ -1,0 +1,2983 @@
+[
+  {
+    "name": "text",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/text",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "text": "updated"
+    }
+  },
+  {
+    "name": "nested-lora",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/loras/0/strength",
+        "label": "Test",
+        "source": "literal",
+        "type": "number",
+        "enabled": true,
+        "value": "0.85"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "loras": [
+        {
+          "name": "x.safetensors",
+          "strength": 0.85
+        }
+      ]
+    }
+  },
+  {
+    "name": "numeric-tuple-not-link",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/xy/0",
+        "label": "Test",
+        "source": "literal",
+        "type": "number",
+        "enabled": true,
+        "value": "768"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "xy": [
+        768,
+        1024
+      ]
+    }
+  },
+  {
+    "name": "escaped-pointer",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/a~1b/x~0y",
+        "label": "Test",
+        "source": "literal",
+        "type": "number",
+        "enabled": true,
+        "value": "7"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "a/b": {
+        "x~y": 7
+      }
+    }
+  },
+  {
+    "name": "dotted-key",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/a.b",
+        "label": "Test",
+        "source": "literal",
+        "type": "number",
+        "enabled": true,
+        "value": "8"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "a.b": 8,
+      "a": {
+        "b": 3
+      }
+    }
+  },
+  {
+    "name": "legacy-dotted-path",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "a.b",
+        "label": "Test",
+        "source": "literal",
+        "type": "number",
+        "enabled": true,
+        "value": "8"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "a": {
+        "b": 8
+      },
+      "a.b": 2
+    }
+  },
+  {
+    "name": "empty-key-pointer",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/",
+        "label": "Test",
+        "source": "literal",
+        "type": "number",
+        "enabled": true,
+        "value": "9"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "": 9
+    }
+  },
+  {
+    "name": "canonical-duplicate",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "text",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated"
+      },
+      {
+        "id": "b2",
+        "nodeId": "n",
+        "path": "/text",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated"
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "parent-child-overlap",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/config",
+        "label": "Test",
+        "source": "literal",
+        "type": "json",
+        "enabled": true,
+        "value": "{}"
+      },
+      {
+        "id": "b2",
+        "nodeId": "n",
+        "path": "/config/nested",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated"
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "escaped-paths-not-duplicate",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/a.b",
+        "label": "Test",
+        "source": "literal",
+        "type": "number",
+        "enabled": true,
+        "value": "8"
+      },
+      {
+        "id": "b2",
+        "nodeId": "n",
+        "path": "/a/b",
+        "label": "Test",
+        "source": "literal",
+        "type": "number",
+        "enabled": true,
+        "value": "9"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "a.b": 8,
+      "a": {
+        "b": 9
+      }
+    }
+  },
+  {
+    "name": "disabled-ignored",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/text",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated"
+      },
+      {
+        "id": "b2",
+        "nodeId": "n",
+        "path": "/text",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": false,
+        "value": "updated"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "text": "updated"
+    }
+  },
+  {
+    "name": "inherit-ignored",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/text",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated"
+      },
+      {
+        "id": "b2",
+        "nodeId": "n",
+        "path": "/text",
+        "label": "Test",
+        "source": "inherit",
+        "type": "text",
+        "enabled": true,
+        "value": "updated"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "text": "updated"
+    }
+  },
+  {
+    "name": "missing-field",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/notFound",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated"
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "explicit-new-field",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/newName",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated",
+        "allowCreate": true
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "newName": "updated"
+    }
+  },
+  {
+    "name": "create-object",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/newConfig/key",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated",
+        "allowCreate": true
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "newConfig": {
+        "key": "updated"
+      }
+    }
+  },
+  {
+    "name": "never-clobber-scalar",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar/sub",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated",
+        "allowCreate": true
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "never-guess-array",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/newArray/0/value",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated",
+        "allowCreate": true
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "array-out-of-bounds",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/loras/8/strength",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated",
+        "allowCreate": true
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "negative-index",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/loras/-1/strength",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated",
+        "allowCreate": true
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "noncanonical-index",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/loras/00/strength",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated",
+        "allowCreate": true
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "array-property",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/loras/name",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated",
+        "allowCreate": true
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "link-root",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/connection",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated",
+        "allowLink": true
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "link-child",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/connection/0",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated",
+        "allowLink": true
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "dangling-link",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/dangling",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated",
+        "allowLink": true
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "malformed-escape",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/a~2b",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated",
+        "allowCreate": true
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "unsafe-path",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/__proto__/polluted",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "updated",
+        "allowCreate": true
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "invalid-json",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/config",
+        "label": "Test",
+        "source": "literal",
+        "type": "json",
+        "enabled": true,
+        "value": "{"
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "whitespace-number",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar",
+        "label": "Test",
+        "source": "literal",
+        "type": "number",
+        "enabled": true,
+        "value": " "
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "null-number",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar",
+        "label": "Test",
+        "source": "literal",
+        "type": "number",
+        "enabled": true,
+        "value": null
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "nonfinite-number",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar",
+        "label": "Test",
+        "source": "literal",
+        "type": "number",
+        "enabled": true,
+        "value": "Infinity"
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "boolean",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/enabled",
+        "label": "Test",
+        "source": "literal",
+        "type": "boolean",
+        "enabled": true,
+        "value": "false"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "enabled": false
+    }
+  },
+  {
+    "name": "boolean-invalid",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/enabled",
+        "label": "Test",
+        "source": "literal",
+        "type": "boolean",
+        "enabled": true,
+        "value": "yes"
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "auto-number",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar",
+        "label": "Test",
+        "source": "literal",
+        "type": "auto",
+        "enabled": true,
+        "value": "2.5"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "scalar": 2.5
+    }
+  },
+  {
+    "name": "missing-variable-keeps-original",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar",
+        "label": "Test",
+        "source": "variable",
+        "type": "number",
+        "enabled": true,
+        "value": "missing"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "scalar": 1
+    }
+  },
+  {
+    "name": "variable-fanout",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar",
+        "label": "Test",
+        "source": "variable",
+        "type": "number",
+        "enabled": true,
+        "value": "strength"
+      },
+      {
+        "id": "b2",
+        "nodeId": "n",
+        "path": "/loras/0/strength",
+        "label": "Test",
+        "source": "variable",
+        "type": "number",
+        "enabled": true,
+        "value": "strength"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "scalar": 0.5,
+      "loras": [
+        {
+          "name": "x.safetensors",
+          "strength": 0.5
+        }
+      ]
+    },
+    "options": {
+      "variables": {
+        "strength": 0.5
+      }
+    }
+  },
+  {
+    "name": "frame-parameter-gated",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar",
+        "label": "Test",
+        "source": "sceneParameter",
+        "type": "number",
+        "enabled": true,
+        "value": "width"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "scalar": 1
+    },
+    "options": {
+      "width": 768
+    }
+  },
+  {
+    "name": "frame-parameter-active",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar",
+        "label": "Test",
+        "source": "sceneParameter",
+        "type": "number",
+        "enabled": true,
+        "value": "width"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "scalar": 768
+    },
+    "options": {
+      "width": 768,
+      "renderOverride": true
+    }
+  },
+  {
+    "name": "positive-does-not-retarget",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/no_such_field",
+        "label": "Test",
+        "source": "positive",
+        "type": "text",
+        "enabled": true,
+        "value": "updated",
+        "autoField": true
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "parent-link-container",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1,
+          "bundle": {
+            "nested": {
+              "link": [
+                "up",
+                0
+              ]
+            }
+          }
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/bundle",
+        "label": "Test",
+        "source": "literal",
+        "type": "json",
+        "enabled": true,
+        "value": "{}"
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "ancestor-of-link",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1,
+          "bundle": {
+            "nested": {
+              "link": [
+                "up",
+                0
+              ]
+            }
+          }
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/bundle/nested",
+        "label": "Test",
+        "source": "literal",
+        "type": "json",
+        "enabled": true,
+        "value": "{}"
+      }
+    ],
+    "error": true
+  },
+  {
+    "name": "integer-schema",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar",
+        "label": "Test",
+        "source": "literal",
+        "type": "number",
+        "enabled": true,
+        "value": 1.5
+      }
+    ],
+    "error": true,
+    "options": {
+      "objectInfo": {
+        "CustomNode": {
+          "input": {
+            "required": {
+              "scalar": [
+                "INT",
+                {
+                  "min": 1,
+                  "max": 5
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "enum-schema",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar",
+        "label": "Test",
+        "source": "literal",
+        "type": "number",
+        "enabled": true,
+        "value": 6
+      }
+    ],
+    "error": true,
+    "options": {
+      "objectInfo": {
+        "CustomNode": {
+          "input": {
+            "required": {
+              "scalar": [
+                [
+                  1,
+                  2,
+                  3
+                ]
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "boolean-schema",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar",
+        "label": "Test",
+        "source": "literal",
+        "type": "text",
+        "enabled": true,
+        "value": "true"
+      }
+    ],
+    "error": true,
+    "options": {
+      "objectInfo": {
+        "CustomNode": {
+          "input": {
+            "required": {
+              "scalar": [
+                "BOOLEAN"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  {
+    "name": "output-missing",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar",
+        "label": "Test",
+        "source": "literal",
+        "type": "number",
+        "enabled": true,
+        "value": 2
+      }
+    ],
+    "error": true,
+    "options": {
+      "outputNodeId": "missing"
+    }
+  },
+  {
+    "name": "missing-variable-does-not-create-parents",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/newConfig/child",
+        "label": "Test",
+        "source": "variable",
+        "type": "text",
+        "enabled": true,
+        "value": "missing",
+        "allowCreate": true
+      }
+    ],
+    "error": false,
+    "expectedInputs": {},
+    "unchangedWorkflow": true
+  }
+]

@@ -3,6 +3,7 @@ module.exports = {
   "order": [
     "state",
     "sync",
+    "workflow-mapping",
     "engine",
     "creation",
     "ui-presentation",
@@ -25,6 +26,7 @@ module.exports = {
     "file-library",
     "contextual-sharing",
     "album-metadata",
+    "workflow-workbench",
     "app"
   ],
   "architecture": "Classic scripts in dependency order; feature declarations precede shared UI state; app installs at the end."

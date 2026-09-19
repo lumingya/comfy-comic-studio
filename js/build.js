@@ -28,7 +28,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const crypto = require('node:crypto');
 const root = path.resolve(__dirname, '..');
-const moduleOrder = ["state","sync","engine","creation","ui-presentation","ui-reader","ui-templates","ui-export","ui-editors","ui-locale","ui-assistant","ui-storyboard","ui-gallery","ui-settings","ui","workspace","organize","foundation","ui-image-studio","ui-template-afterglow","ui-template-seamless","file-library","contextual-sharing","album-metadata","creative-context","settings-workbench","ecosystem","reading-stage","preferences-workbench","assembly-workshop","dom-updates","architecture","first-run","home","app"];
+const moduleOrder = ["state","sync","workflow-mapping","engine","creation","ui-presentation","ui-reader","ui-templates","ui-export","ui-editors","ui-locale","ui-assistant","ui-storyboard","ui-gallery","ui-settings","ui","workspace","organize","foundation","ui-image-studio","ui-template-afterglow","ui-template-seamless","file-library","contextual-sharing","album-metadata","creative-context","settings-workbench","ecosystem","reading-stage","preferences-workbench","assembly-workshop","dom-updates","architecture","first-run","home","workflow-workbench","app"];
 const runtimePattern = /<script\s+id="studio-runtime"[^>]*>([\s\S]*?)<\/script>/;
 const stylePattern = /<style\s+id="studio-styles"[^>]*>([\s\S]*?)<\/style>/;
 
@@ -96,7 +96,7 @@ function readSources() {
   if (!fs.existsSync(path.join(root, 'js', 'shell.js'))) throw new Error('Run node js/build.js extract first.');
   const shellPath = path.join(root, 'js', 'shell.js');
   delete require.cache[require.resolve(shellPath)];
-  return { shell: JSON.parse(fs.readFileSync(shellPath, 'utf8').split('module.exports = ')[1].trim().replace(/;$/, '')), css: fs.readFileSync(path.join(root, 'styles.css'), 'utf8'), scripts: moduleOrder.map(name => ({ name, source: fs.readFileSync(path.join(root, 'js', name + '.js'), 'utf8') })) };
+  return { workflowCSS: fs.readFileSync(path.join(root, 'js/workflow-workbench.css'), 'utf8'), shell: JSON.parse(fs.readFileSync(shellPath, 'utf8').split('module.exports = ')[1].trim().replace(/;$/, '')), css: fs.readFileSync(path.join(root, 'styles.css'), 'utf8'), scripts: moduleOrder.map(name => ({ name, source: fs.readFileSync(path.join(root, 'js', name + '.js'), 'utf8') })) };
 }
 
 function check() {
@@ -108,13 +108,13 @@ function check() {
 }
 
 function build(mode) {
-  const { shell, css, scripts } = check();
+  const { shell, css, scripts, workflowCSS } = check();
   let styles, runtime;
   if (mode === 'dev') {
-    styles = '<link rel="stylesheet" href="/styles.css?v=' + crypto.createHash('sha256').update(css).digest('hex').slice(0,12) + '"><link rel="stylesheet" href="/js/reading-stage.css">';
+    styles = '<link rel="stylesheet" href="/styles.css?v=' + crypto.createHash('sha256').update(css).digest('hex').slice(0,12) + '"><link rel="stylesheet" href="/js/reading-stage.css"><link rel="stylesheet" href="/js/workflow-workbench.css?v=' + crypto.createHash('sha256').update(workflowCSS).digest('hex').slice(0,12) + '">';
     runtime = scripts.map(item => {const url='/js/'+item.name+'.js?v='+crypto.createHash('sha256').update(item.source).digest('hex').slice(0,12);return item.name==='app'?'<script src="/js/content-loader.js" data-app="'+url+'"></script>':'<script src="'+url+'"></script>'}).join('\n');
   } else {
-    styles = '<style id="studio-styles" data-source="/styles.css">\n' + css + '\n</style>';
+    styles = '<style id="studio-styles" data-source="/styles.css">\n' + css + '\n' + workflowCSS + '\n</style>';
     const code = scripts.map(item => '// Source: /js/' + item.name + '.js\n' + item.source).join('\n');
     if (/<\/script\s*>/i.test(code)) throw new Error('A literal closing script tag would terminate the inline bundle. Escape it in the source.');
     runtime = '<script id="studio-runtime">\n' + code + '\n</script>';

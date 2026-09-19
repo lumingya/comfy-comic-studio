@@ -14,7 +14,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 const context = vm.createContext({ console, setTimeout, clearTimeout, structuredClone, clone:x=>JSON.parse(JSON.stringify(x)), MioContent:{demoSpec:JSON.parse(fs.readFileSync(path.join(__dirname,'../data/catalog/demo-spec.json'),'utf8'))} });
-for (const file of ['state.js', 'sync.js', 'engine.js', 'ui-presentation.js', 'ui-reader.js', 'ui-templates.js', 'ui-export.js', 'ui-editors.js', 'ui-locale.js', 'ui-assistant.js', 'ui-storyboard.js', 'ui-gallery.js', 'ui-settings.js', 'ui.js']) {
+for (const file of ['state.js', 'sync.js', 'workflow-mapping.js', 'engine.js', 'ui-presentation.js', 'ui-reader.js', 'ui-templates.js', 'ui-export.js', 'ui-editors.js', 'ui-locale.js', 'ui-assistant.js', 'ui-storyboard.js', 'ui-gallery.js', 'ui-settings.js', 'ui.js']) {
   const source = fs.readFileSync(path.join(__dirname, file), 'utf8');
   new vm.Script(source, { filename: file }).runInContext(context);
 }
@@ -127,8 +127,8 @@ add('legacy workflow selection and node IDs are mapped without a text assumption
 add('WeiLinPromptUI #1832 selects its actual positive input', () => {
   const node = { class_type: 'WeiLinPromptUI', inputs: { positive: 'hero', text: ['6', 0] } };
   assert.equal(nodes.detect(node).field, 'positive');
-  const healed = nodes.healBinding({ enabled: true, source: 'positive', nodeId: '1832', path: 'text', allowLink: true }, { '1832': node });
-  assert.equal(healed.path, 'positive');
+  assert.equal(nodes.detect(node).field, 'positive');
+  assert.equal(context.validateMappingTargets({'1832': node}, [{id:'x',enabled:true,source:'positive',nodeId:'1832',path:'text'}]).length, 1);
   assert.deepEqual(plain(node.inputs.text), ['6', 0]);
 });
 
@@ -143,8 +143,8 @@ add('negative binding picks the negative field when the node has both', () => {
 
 add('a link-only node cannot be overwritten even with allowLink', () => {
   const workflow = { '1832': { inputs: { text: ['6', 0] } } };
-  assert.throws(() => nodes.healBinding({ enabled: true, source: 'positive', nodeId: '1832', path: 'text', allowLink: true }, workflow));
-  assert.throws(() => nodes.healBinding({ enabled: true, source: 'literal', nodeId: '1832', path: '/text/0', allowLink: true }, workflow));
+  assert.equal(context.validateMappingTargets(workflow, [{id:'a',enabled:true,source:'positive',nodeId:'1832',path:'text',allowLink:true}]).length, 1);
+  assert.equal(context.validateMappingTargets(workflow, [{id:'b',enabled:true,source:'literal',nodeId:'1832',path:'/text/0',allowLink:true}]).length, 1);
   assert.deepEqual(plain(workflow['1832'].inputs.text), ['6', 0]);
 });
 

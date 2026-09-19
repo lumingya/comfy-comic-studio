@@ -32,7 +32,7 @@ function selectLibraryWorkflow(id){
   if(!p)throw Error('工作流不存在。');
   c.activeWorkflowId=id;c.workflow=clone(p.workflow);c.workflowTitle=p.title;c.mapping=clone(p.mapping||{});
   c.bindings=clone(p.bindings||initialWorkflowBindings({...c,...p}));c.outputNodeId=p.outputNodeId||'';c.randomizeSeeds=!!p.randomizeSeeds;
-  createUI.nodeSearch='';save();render();
+  createUI.nodeSearch='';mapperUI.selected='';mapperUI.search='';mapperUI.filter='all';mapperUI.nodes=false;save();render();
 }
 
 function parseLibraryWorkflow(data,title){
@@ -75,12 +75,6 @@ async function importWorkflowFiles(files){
 
 function workflowOptions(value,inherit='跟随全册默认'){
   return opt('',inherit,value||'')+state.settings.comfy.presets.map(p=>opt(p.id,p.title,value||'')).join('');
-}
-
-function renderWorkflowLibrary(){
-  const c=state.settings.comfy;
-  return heading('工作流配置','独立管理蓝图与映射。编辑自动保存；已入队任务不受影响。',btn('批量导入','upload','ws-import','','primary')+btn('导出全部','download','ws-export-all'),'WORKFLOW / LIBRARY')+
-    `<div class="workflow-library"><aside class="panel workflow-library-list"><div class="row between"><h3>工作流库</h3><span class="chip">${c.presets.length}</span></div><label class="label" for="ws-library-select">快捷切换</label><select id="ws-library-select">${c.presets.map(p=>opt(p.id,p.title,c.activeWorkflowId)).join('')}</select><div class="workflow-items">${c.presets.map(p=>`<button class="workflow-library-item ${p.id===c.activeWorkflowId?'active':''}" data-act="ws-select" data-id="${esc(p.id)}"><strong>${esc(p.title)}</strong><span>${Object.keys(p.workflow||{}).length} 个节点 · ${(p.bindings||[]).length} 项映射</span></button>`).join('')}</div><div class="row wrap">${btn('复制','copy','ws-copy','','small')}${btn('删除','trash','ws-delete','','small danger')}</div><p class="help">支持多选 JSON 文件、JSON 数组和 workflows 工作流包。原始未知节点与连接都会保留。</p></aside><div class="panel workflow-library-editor">${renderSmartMapper()}</div></div>`;
 }
 
 // Render protocol applicability at the source, including partial view refreshes.

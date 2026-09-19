@@ -53,12 +53,6 @@
       "groupId": "group-visual"
     }
   ],
-  "_sourceFormat": {
-    "replaced": {},
-    "added": []
-  },
-  "schema": "mio.resource.v2",
-  "kind": "characters",
   "settingsGroups": [
     {
       "id": "group-character",
@@ -68,5 +62,13 @@
       "id": "group-visual",
       "title": "画风与场景"
     }
-  ]
+  ],
+  "category": "characters",
+  "bindings": [],
+  "_sourceFormat": {
+    "replaced": {},
+    "added": []
+  },
+  "schema": "mio.resource.v2",
+  "kind": "characters"
 }

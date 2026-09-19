@@ -284,6 +284,8 @@ class ProductionAdapter:
                     "negative": negative,
                     "variables": values,
                     "renderOverride": frame.get("renderOverride", False),
+                    "objectInfo": wf.get("objectInfo", {}),
+                    "outputNodeId": wf.get("outputNodeId", ""),
                     "title": task["title"],
                     "sceneName": frame.get("name", ""),
                     "caption": caption,
