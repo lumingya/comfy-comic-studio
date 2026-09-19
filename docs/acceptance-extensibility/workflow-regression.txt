@@ -1,0 +1,94 @@
+
+> mio-studio@3.1.0-dev.3 test:workflow
+> node tests/workflow_mapping_contract.mjs && python -m unittest tests.test_workflow_mapping -v && node tests/workflow_workbench.mjs
+
+PASS text
+PASS nested-lora
+PASS numeric-tuple-not-link
+PASS escaped-pointer
+PASS dotted-key
+PASS legacy-dotted-path
+PASS empty-key-pointer
+PASS canonical-duplicate
+PASS parent-child-overlap
+PASS escaped-paths-not-duplicate
+PASS disabled-ignored
+PASS inherit-ignored
+PASS missing-field
+PASS explicit-new-field
+PASS create-object
+PASS never-clobber-scalar
+PASS never-guess-array
+PASS array-out-of-bounds
+PASS negative-index
+PASS noncanonical-index
+PASS array-property
+PASS link-root
+PASS link-child
+PASS dangling-link
+PASS malformed-escape
+PASS unsafe-path
+PASS invalid-json
+PASS whitespace-number
+PASS null-number
+PASS nonfinite-number
+PASS boolean
+PASS boolean-invalid
+PASS auto-number
+PASS missing-variable-keeps-original
+PASS variable-fanout
+PASS frame-parameter-gated
+PASS frame-parameter-active
+PASS positive-does-not-retarget
+PASS parent-link-container
+PASS ancestor-of-link
+PASS integer-schema
+PASS enum-schema
+PASS boolean-schema
+PASS output-missing
+PASS missing-variable-does-not-create-parents
+PASS frame-seed-not-gated
+PASS frame-seed-with-override
+PASS frame-seed-missing-keeps-original
+48 shared mapping fixtures + schema checks PASS
+test_image_upload_staging_is_atomic (tests.test_workflow_mapping.WorkflowMappingTests.test_image_upload_staging_is_atomic) ... ok
+test_shared_contract (tests.test_workflow_mapping.WorkflowMappingTests.test_shared_contract) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.011s
+
+OK
+PASS all eight mappings visible in compact list
+PASS one editor rather than eight expanded forms
+PASS connection settings are visible for first-use configuration
+PASS connection settings can be folded
+PASS mapping search empty state
+PASS mapping search matches input paths
+PASS select row edits the right target
+PASS typing updates canonical workflow state
+PASS list updates while editing without losing input focus
+PASS enabled filter respects toggles
+PASS node browser searches actual inputs
+PASS add field produces a new mapping
+PASS new mapping selected immediately
+PASS preflight detects missing field
+PASS fixing target clears preflight error
+PASS execution snapshots remain detached
+PASS backend acknowledges save
+PASS edits persist through reload
+PASS delete removes mapping only
+PASS delete preserves original nodes
+PASS export downloads a real mapping package
+PASS imported package round trips all mappings
+PASS application source resolver uses new pure compiler
+PASS copy creates independently editable workflow
+PASS switch returns to untouched original workflow title
+PASS library search filters workflows
+PASS submission preview opens
+PASS mobile has no horizontal overflow
+PASS mobile workflow switch works
+PASS mobile selection exposes inspector
+PASS laptop layout fits viewport
+PASS light theme remains applied
+PASS no uncaught browser exceptions:
+WORKFLOW WORKBENCH: 33 assertions PASS

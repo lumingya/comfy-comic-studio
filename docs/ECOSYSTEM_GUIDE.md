@@ -2,6 +2,8 @@
 
 在设置中管理主题与扩展。
 
+**当前版本新增样式工作台与 SDK 2。** 完整 CSS、内置编辑器、历史恢复、命令、快捷键、工作区与插槽请先看 [自由定制指南](EXTENSIBILITY_V2.md)。本文保留主题 local 策略、安装和 Python 后端说明。
+
 ## 全局主题
 
 设置 → 外观与主题，支持点击选择或拖入 `.css` / `.zip`，确认后安装，点击“使用主题”立即生效，不需要重启。可以覆盖全局选择器、网格、排版、字体、动效、侧栏与布局。
@@ -25,7 +27,7 @@ textures/paper.png
 body { background-image: url('textures/paper.png'); }
 ```
 
-资源支持包内 PNG/JPEG/WebP、WOFF/WOFF2/TTF/OTF，安装时内联为 data URI。使用相对路径；远程 URL、@import 和符号链接会被拒绝。
+资源支持包内 PNG/JPEG/WebP、WOFF/WOFF2/TTF/OTF，安装时内联为 data URI。在默认 `cssPolicy: "local"` 策略中使用相对路径；远程 URL、@import 和符号链接会被拒绝。需要完整 CSS 时声明 `cssPolicy: "trusted"`（见自由定制指南），或直接使用样式工作台。
 
 随附示例：`examples/themes/orbital-night.css` 改成横向导航；`examples/themes/paper-atelier/` 演示材质包。将目录内容打包成 ZIP 后即可导入。
 
@@ -89,7 +91,7 @@ export default async function setup(ctx) {
 }
 ```
 
-SDK 会自动清理自己注册表中的工具栏、面板、自定义类型和钩子；扩展自己添加的 DOM/全局事件/定时器须由 disposer 清理。前端 JS 与应用同线程，死循环无法由宿主超时抢占；此时使用 URL 安全恢复。
+SDK 2 会自动清理注册的工具栏、面板、工作区、插槽、自定义类型、钩子和通过 SDK 添加的样式、事件、定时器；绕过 SDK 自己添加的资源须由 disposer 清理。前端 JS 与应用同线程，死循环无法由宿主超时抢占；此时使用 URL 安全恢复。
 
 | 能力 | 约定 |
 | --- | --- |
@@ -101,7 +103,7 @@ SDK 会自动清理自己注册表中的工具栏、面板、自定义类型和�
 | `ctx.toolbar.register` | 工具栏动作；本地 action ID 自动加扩展前缀 |
 | `ctx.panels.register` | 面板容器，由 render(root) 自行构造 DOM |
 | `ctx.variables.registerType` | 自定义类型存为 `plugin:<id>:<name>`，normalize 必须返回可序列化的同步值 |
-| `ctx.on` | beforePrepare、afterPrepare、afterRender；同一扩展每个事件一个回调 |
+| `ctx.on` | beforePrepare、afterPrepare、afterRender；支持多个回调及 priority，返回注销函数 |
 
 扩展 ID、action ID 和类型名使用小写字母开头，只允许小写字母、数字、短横线和下划线，最多 64 字符。重复注册会报错；使用自定义类型前需启用对应扩展。
 

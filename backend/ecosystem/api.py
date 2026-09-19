@@ -13,6 +13,7 @@ from backend.mio_library import LibraryError,atomic_write,image_type
 from .storage import Storage,identifier,owned
 from .plugins import Plugins
 from .themes import Themes
+from .customization import Customization
 from .macros import Macros,signature
 
 SERVICES={};LOCK=threading.RLock()
@@ -20,6 +21,7 @@ SERVICES={};LOCK=threading.RLock()
 class Ecosystem:
     def __init__(self,host):
         self.host=host;self.plugins=Plugins(host.BASE_DIR,host.DATA_DIR);self.themes=Themes(host.DATA_DIR)
+        self.customization=Customization(Path(host.DATA_DIR))
         self.macros=Macros(host.DATA_DIR,self.invoke,self.configuration_signature,self.asset_exists)
         if os.environ.get('MIO_SAFE_MODE')!='1':self.plugins.boot()
     def configuration_signature(self):
@@ -73,10 +75,19 @@ def service(host):
         return SERVICES[key]
 
 def dispatch(handler,host,path):
-    if not path.startswith(('/api/ecosystem/','/api/extensions/','/extension-assets/')):return False
+    if not path.startswith(('/api/ecosystem/','/api/extensions/','/extension-assets/','/theme-assets/')):return False
     try:
         svc=service(host);method=handler.command
+        if path.startswith('/theme-assets/'):
+            if method!='GET':raise LibraryError('Method not allowed',405)
+            id,relative=path[len('/theme-assets/'):].split('/',1)
+            p=svc.themes.asset(id,urllib.parse.unquote(relative));raw=p.read_bytes()
+            handler.send_response(200);handler.send_header('Content-Type',mimetypes.guess_type(p)[0] or 'application/octet-stream')
+            handler.send_header('X-Content-Type-Options','nosniff');handler.send_header('Cache-Control','no-cache')
+            handler.send_header('Content-Security-Policy',"sandbox; default-src 'none'; style-src * 'unsafe-inline'; img-src * data:; font-src * data:")
+            handler.send_header('Content-Length',str(len(raw)));handler.end_headers();handler.wfile.write(raw);return True
         if path.startswith('/extension-assets/'):
+
             id,relative=path[len('/extension-assets/'):].split('/',1);p=svc.plugins.asset(id,urllib.parse.unquote(relative));raw=p.read_bytes()
             if len(raw)>16*1024*1024:raise LibraryError('Asset too large')
             handler.send_response(200);handler.send_header('Content-Type',mimetypes.guess_type(p)[0] or 'application/octet-stream');handler.send_header('X-Content-Type-Options','nosniff');handler.send_header('Content-Length',str(len(raw)));handler.end_headers();handler.wfile.write(raw);return True
@@ -92,8 +103,12 @@ def dispatch(handler,host,path):
             else:result=svc.plugins.call(id,method,'/'+tail,body if method=='POST' else urllib.parse.parse_qs(urllib.parse.urlsplit(handler.path).query))
         else:
             route=path[len('/api/ecosystem/'):]
-            if method=='GET' and route=='status':result={'extensions':svc.plugins.list(),'themes':svc.themes.list(),'node':bool(shutil.which('node')),'git':bool(shutil.which('git')),'safeMode':os.environ.get('MIO_SAFE_MODE')=='1','sdkVersion':1}
+            if method=='GET' and route=='status':result={'extensions':svc.plugins.list(),'themes':svc.themes.list(),'node':bool(shutil.which('node')),'git':bool(shutil.which('git')),'safeMode':os.environ.get('MIO_SAFE_MODE')=='1','sdkVersion':2}
+            elif method=='GET' and route=='customization':result=svc.customization.read()
+            elif method=='POST' and route=='customization/validate':result=svc.customization.validate(body.get('document'))
+            elif method=='POST' and route=='customization':result=svc.customization.save(body.get('document'),body.get('revision'),body.get('trusted'))
             elif method=='GET' and route.startswith('themes/css/'):
+
                 result={'css':svc.themes.css(route.split('/')[-1])}
             elif method=='GET' and route=='preparations':result=svc.macros.list()
             elif method=='GET' and route.startswith('preparations/'):
@@ -115,6 +130,7 @@ def dispatch(handler,host,path):
             elif method=='POST' and route=='themes/uninstall':svc.themes.uninstall(body['id']);result=svc.themes.list()
             elif method=='POST' and route=='reset':
                 svc.themes.select('')
+                svc.customization.reset()
                 for id in list(svc.plugins.records()):svc.plugins.enable(id,False)
                 result={'reset':True}
             else:raise LibraryError('Unknown ecosystem route',404)

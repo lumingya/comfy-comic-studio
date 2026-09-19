@@ -26,8 +26,21 @@ module.exports = {
     "file-library",
     "contextual-sharing",
     "album-metadata",
+    "creative-context",
+    "settings-workbench",
+    "ecosystem",
+    "extension-runtime",
+    "extension-host",
+    "customization",
+    "reading-stage",
+    "preferences-workbench",
+    "assembly-workshop",
+    "dom-updates",
+    "architecture",
+    "first-run",
+    "home",
     "workflow-workbench",
     "app"
   ],
-  "architecture": "Classic scripts in dependency order; feature declarations precede shared UI state; app installs at the end."
+  "architecture": "Classic scripts in dependency order. SDK 2 kernel and explicit host bridge; app installs the bridge last."
 };

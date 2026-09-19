@@ -1,0 +1,9 @@
+/* Local @import resolves relative to the theme package. Remote imports are also
+   supported in trusted mode but this example makes no external requests. */
+@import url("palette.css");
+[data-mio-part="workspace"] { background:var(--bg); }
+[data-mio-part="sidebar"] .brand-name::after { content:" \2727"; }
+@media (prefers-reduced-motion:no-preference) {
+  [data-mio-part="workspace"] { animation:atelier-arrive .25s ease-out; }
+}
+@keyframes atelier-arrive { from { opacity:.7; } to { opacity:1; } }

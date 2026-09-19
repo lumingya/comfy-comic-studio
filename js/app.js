@@ -996,7 +996,7 @@ window.addEventListener('cancel',e=>{if(e.target instanceof HTMLDialogElement){e
 window.addEventListener('close',e=>{if(e.target===$('#welcome-dialog')){e.stopImmediatePropagation();if($('#welcome-dialog').contains($('#toasts')))document.body.append($('#toasts'))}},true);
 
 
-window.addEventListener('keydown',e=>{if(e.key==='Escape'&&(document.querySelector('dialog[open]')||detailUI.projectOpen)){e.preventDefault();e.stopImmediatePropagation();return}if(e.target.closest('input,textarea,select,[contenteditable]')||document.querySelector('dialog[open]'))return;if(e.altKey&&!e.ctrlKey&&!e.metaKey&&/^[0-5]$/.test(e.key)){e.preventDefault();e.stopImmediatePropagation();navigate(({0:9,1:0,2:1,3:3,4:4,5:5})[e.key])}},true);
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&customization.preview){e.preventDefault();e.stopImmediatePropagation();customizationStopPreview();return}if(e.key==='Escape'&&(document.querySelector('dialog[open]')||detailUI.projectOpen)){e.preventDefault();e.stopImmediatePropagation();return}if(e.target.closest('input,textarea,select,[contenteditable]')||document.querySelector('dialog[open]'))return;if(e.altKey&&!e.ctrlKey&&!e.metaKey&&/^[0-5]$/.test(e.key)){e.preventDefault();e.stopImmediatePropagation();navigate(({0:9,1:0,2:1,3:3,4:4,5:5})[e.key])}},true);
 
 
 window.addEventListener('resize',()=>{const orb=$('.assistant-orb');if(orb){orb.style.right=clamp(parseFloat(orb.style.right)||27,12,Math.max(12,innerWidth-58))+'px';orb.style.bottom=clamp(parseFloat(orb.style.bottom)||49,40,Math.max(40,innerHeight-58))+'px'}});
@@ -1360,6 +1360,8 @@ installAssemblyWorkshop();
 installArchitecture();
 installFirstRun();
 installHome();
+installCustomization();
+installExtensionHost();
 
 globalThis.Mio = globalThis.ComfyComic;
 

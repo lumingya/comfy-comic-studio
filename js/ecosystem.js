@@ -12,45 +12,51 @@ function ensureSourceStory(p){
   state.templates.push(story);p.templateId=story.id;ui.templateId=story.id;createUI.sceneScope='plan';save();return story;
 }
 function ecoToolbarHTML(){return [...ecoState.actions.values()].map(a=>btn(a.label,a.icon||'box','eco-plugin-action',`data-id="${esc(a.key)}"`,'small ghost')).join('')+[...ecoState.panels.values()].map(p=>btn(p.title,'box','eco-plugin-panel',`data-id="${esc(p.key)}"`,'small ghost')).join('')}
-function ecoContext(id){
-  const key=name=>{if(!/^[a-z][a-z0-9_-]{0,63}$/.test(name))throw Error('SDK registration requires a local identifier');return id+':'+name};
-  async function api(path,body){if(!path.startsWith('/')||path.includes('..'))throw Error('Use a plugin-local route');const response=await fetch('/api/extensions/'+encodeURIComponent(id)+path,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await response.json();if(!response.ok)throw Error(data.error||'Extension API failed');return data.data}
-  return Object.freeze({id,apiVersion:1,api,storage:Object.freeze({get:k=>api('/storage?key='+encodeURIComponent(k)),set:(k,value)=>api('/storage',{key:k,value}),delete:k=>api('/storage',{key:k,delete:true})}),
-    toolbar:{register:action=>{const k=key(action.id);if(ecoState.actions.has(k))throw Error('Duplicate toolbar action');if(typeof action.run!=='function')throw Error('Action requires run');ecoState.actions.set(k,{...action,key:k,owner:id})}},
-    panels:{register:panel=>{const k=key(panel.id);if(ecoState.panels.has(k))throw Error('Duplicate panel');if(typeof panel.render!=='function')throw Error('Panel requires render');ecoState.panels.set(k,{...panel,key:k,owner:id})}},
-    variables:{registerType:(name,definition)=>{const k='plugin:'+key(name);if(ecoState.types.has(k))throw Error('Duplicate variable type');if(typeof definition.normalize!=='function')throw Error('Type requires normalize');ecoState.types.set(k,{...definition,owner:id});variableTypes[k]=definition.label||name;}},
-    on:(event,handler)=>{if(!['beforePrepare','afterPrepare','afterRender'].includes(event)||typeof handler!=='function')throw Error('Unknown hook');const k=id+':'+event;if(ecoState.hooks.has(k))throw Error('Duplicate hook');ecoState.hooks.set(k,{event,handler,owner:id})},
-    toast:message=>toast('['+id+'] '+message),getAlbum:()=>clone(selectedPlan()),assetURL:relative=>'/extension-assets/'+id+'/'+ecoState.status.extensions.find(p=>p.id===id).revision+'/'+relative
-  });
-}
-async function ecoHook(name,value){for(const h of ecoState.hooks.values())if(h.event===name)await h.handler(value)}
+function ecoContext(id){return extensionContext(id)}
+async function ecoHook(name,value){return extensionRuntime().emit(name,value,{strict:name==='beforePrepare'})}
 function dropExtension(id){
-  const loaded=ecoState.loaded.get(id);if(loaded?.dispose)try{loaded.dispose()}catch(e){ecoState.errors.push(id+': '+e.message)}
+  const loaded=ecoState.loaded.get(id);if(loaded?.dispose)try{Promise.resolve(loaded.dispose()).catch(e=>extensionRuntime().report(id,'dispose',e))}catch(e){extensionRuntime().report(id,'dispose',e)}
+  extensionRuntime().dispose(id);
   for(const map of [ecoState.actions,ecoState.panels,ecoState.types,ecoState.hooks])for(const [key,value] of map)if(value.owner===id){map.delete(key);if(key.startsWith('plugin:'))delete variableTypes[key]}
   ecoState.loaded.delete(id);
+  if(extensionHost.activeWorkspace.startsWith(id+':'))extensionHost.activeWorkspace='';
 }
-async function syncExtensions(){
-  const enabled=window.MioSafeMode||ecoState.status.safeMode?[]:ecoState.status.extensions.filter(p=>p.enabled);
-  for(const id of ecoState.loaded.keys())if(!enabled.some(p=>p.id===id))dropExtension(id);
-  for(const plugin of enabled){
-    if(ecoState.loaded.has(plugin.id))continue;
-    try{const module=await import('/extension-assets/'+plugin.id+'/'+encodeURIComponent(plugin.revision)+'/index.js');if(typeof module.default!=='function')throw Error('index.js must export default setup(ctx)');const dispose=await module.default(ecoContext(plugin.id));ecoState.loaded.set(plugin.id,{dispose:typeof dispose==='function'?dispose:null})}
-    catch(e){dropExtension(plugin.id);ecoState.loaded.set(plugin.id,{failed:true});ecoState.errors.push(plugin.name+': '+e.message)}
-  }
+function syncExtensions(){
+  // Serialize refreshes: async setup must never activate twice or survive disable.
+  const task=async()=>{
+    const enabled=window.MioSafeMode||ecoState.status.safeMode?[]:ecoState.status.extensions.filter(p=>p.enabled);
+    for(const [id,loaded] of ecoState.loaded)if(!enabled.some(p=>p.id===id&&p.revision===loaded.revision))dropExtension(id);
+    for(const plugin of enabled){
+      if(ecoState.loaded.has(plugin.id))continue;
+      try{
+        const ctx=ecoContext(plugin.id);let timer,expired=false;
+        const setup=(async()=>{
+          const module=await import('/extension-assets/'+plugin.id+'/'+encodeURIComponent(plugin.revision)+'/index.js');
+          if(expired)return null;
+          if(typeof module.default!=='function')throw Error('index.js must export default setup(ctx)');
+          return module.default(ctx);
+        })().then(dispose=>{if(expired){if(typeof dispose==='function')return Promise.resolve(dispose()).then(()=>null);return null}return dispose});
+        let dispose;try{dispose=await Promise.race([setup,new Promise((_,reject)=>{timer=setTimeout(()=>{expired=true;reject(Error('Extension import/setup timed out (15s)'))},15000)})])}finally{clearTimeout(timer)}
+        ecoState.loaded.set(plugin.id,{revision:plugin.revision,dispose:typeof dispose==='function'?dispose:null});
+        if(!ecoState.status.extensions.some(p=>p.id===plugin.id&&p.enabled&&p.revision===plugin.revision))dropExtension(plugin.id);
+      }catch(e){dropExtension(plugin.id);ecoState.loaded.set(plugin.id,{failed:true,revision:plugin.revision});extensionRuntime().report(plugin.id,'setup',e)}
+    }
+  };
+  extensionHost.sync=extensionHost.sync.then(task,task);return extensionHost.sync;
 }
 async function applyEcosystemTheme(){
   const serial=++ecoState.themeSerial,id=window.MioSafeMode||ecoState.status.safeMode?'':ecoState.status.themes.active;
   document.getElementById('mio-user-theme')?.remove();ecoState.activeTheme='';if(!id)return;
-  try{const result=await ecoRequest('themes/css/'+id);if(serial!==ecoState.themeSerial)return;const style=document.createElement('style');style.id='mio-user-theme';style.textContent=result.css;document.head.append(style);ecoState.activeTheme=id}catch(e){ecoState.errors.push('主题未加载：'+e.message)}
+  try{const meta=ecoState.status.themes.items.find(t=>t.id===id);if(meta?.cssPolicy==='trusted'){const link=document.createElement('link');link.id='mio-user-theme';link.rel='stylesheet';link.href='/theme-assets/'+encodeURIComponent(id)+'/'+meta.css;document.head.append(link);ecoState.activeTheme=id;return}const result=await ecoRequest('themes/css/'+id);if(serial!==ecoState.themeSerial)return;const style=document.createElement('style');style.id='mio-user-theme';style.textContent=result.css;document.head.append(style);ecoState.activeTheme=id}catch(e){ecoState.errors.push('主题未加载：'+e.message)}
 }
-async function refreshEcosystem(){ecoState.status=await ecoRequest('status');await applyEcosystemTheme();await syncExtensions();}
+async function refreshEcosystem(){ecoState.status=await ecoRequest('status');await applyEcosystemTheme();await syncExtensions();await loadCustomization();}
 function renderEcosystemSettings(tab){
   const theme=tab==='themes',status=ecoState.status;
-  return `<section class="eco-settings"><header class="eco-heading"><span class="context-kicker">${theme?'自定义主题':'扩展中心'} · 本地优先</span><h2>${theme?'让工作室，长成你的样子。':'为创作，接入更多可能。'}</h2><p>${theme?'不止配色。布局、材质、字体与动效，都可以重新定义。':'一个 Git 地址，或一份本地 ZIP。每个扩展拥有独立的代码、数据与开关。'}</p></header><div class="eco-management-actions">${theme?btn('导入主题','upload','eco-theme-import','','primary')+btn('使用官方主题','refresh','eco-theme-off','','ghost'):btn('通过 Git 安装','plus','eco-extension-install','','primary')+btn('导入扩展 ZIP','upload','eco-extension-zip','','ghost')}${btn('刷新列表','refresh','eco-refresh','','ghost')}<a class="btn ghost" href="?safe_mode=1">进入安全模式 ↗</a></div><div class="eco-dropzone" data-eco-drop="${theme?'theme':'extension'}" tabindex="0" role="button" data-act="${theme?'eco-theme-import':'eco-extension-zip'}" aria-label="${theme?'导入主题文件':'导入扩展 ZIP'}">${icon('upload')}<strong>拖放${theme?' .css / .zip 主题包':' .zip 扩展包'}到这里</strong></div><div class="eco-package-grid">${theme?`<article class="eco-package official"><div class="theme-swatch"></div><h3>原生 · 安静的工作室</h3><p>官方基线，随时可以回来。</p>${btn(!status.themes.active?'正在使用':'切换到官方','check','eco-theme-off','','small')}</article>`:''}${(theme?status.themes.items:status.extensions).map(p=>`<article class="eco-package"><div class="eco-package-label">${icon(theme?'sun':'box')}<span>${theme?(status.themes.active===p.id?'正在使用':'本地主题'):(p.enabled?'已启用':'已停用')}</span><small>v${esc(p.version)}</small></div><h3>${esc(p.name)}</h3><code>${esc(p.id)}</code>${p.error?`<p class="danger">${esc(p.error)}</p>`:''}<div class="eco-package-actions">${theme?btn('使用主题','check','eco-theme-use',`data-id="${esc(p.id)}"`,'small'):btn(p.enabled?'停用':'启用',p.enabled?'pause':'play','eco-extension-toggle',`data-id="${esc(p.id)}" data-enabled="${p.enabled?'0':'1'}"`,'small')}${!theme?btn('更新代码','refresh','eco-extension-update',`data-id="${esc(p.id)}" ${p.enabled?'disabled title="请先停用扩展"':''}`,'small ghost'):''}${btn('卸载','trash',theme?'eco-theme-remove':'eco-extension-remove',`data-id="${esc(p.id)}"`,'small ghost')}</div></article>`).join('')}</div>${!theme&&!status.extensions.length?'<div class="eco-empty"><h3>扩展库还是一张白纸</h3><p>试试 examples/extensions 中的示例。</p></div>':''}<details class="quiet-advanced"><summary>运行环境与开发文档</summary><p>Node.js ${status.node?'已就绪':'未检测到（可执行变量需要 Node.js 20+）'} · Git ${status.git?'已就绪':'未检测到'}</p><a href="/docs/ECOSYSTEM_GUIDE.html" target="_blank" rel="noopener">主题与扩展 SDK 指南 ↗</a></details>${ecoState.errors.length?`<details class="quiet-advanced" open><summary>加载诊断</summary>${ecoState.errors.map(e=>`<p class="danger">${esc(e)}</p>`).join('')}</details>`:''}</section>`;
+  return `<section class="eco-settings"><header class="eco-heading"><span class="context-kicker">${theme?'自定义主题':'扩展中心'} · 本地优先</span><h2>${theme?'让工作室，长成你的样子。':'为创作，接入更多可能。'}</h2><p>${theme?'不止配色。布局、材质、字体与动效，都可以重新定义。':'一个 Git 地址，或一份本地 ZIP。每个扩展拥有独立的代码、数据与开关。'}</p></header><div class="eco-management-actions">${theme?btn('样式工作台','edit','custom-open','','primary')+btn('导入主题','upload','eco-theme-import','','primary')+btn('使用官方主题','refresh','eco-theme-off','','ghost'):btn('通过 Git 安装','plus','eco-extension-install','','primary')+btn('导入扩展 ZIP','upload','eco-extension-zip','','ghost')}${btn('刷新列表','refresh','eco-refresh','','ghost')}${!theme?btn('运行诊断','help','ext-diagnostics','','ghost'):''}<a class="btn ghost" href="?safe_mode=1">进入安全模式 ↗</a></div><div class="eco-dropzone" data-eco-drop="${theme?'theme':'extension'}" tabindex="0" role="button" data-act="${theme?'eco-theme-import':'eco-extension-zip'}" aria-label="${theme?'导入主题文件':'导入扩展 ZIP'}">${icon('upload')}<strong>拖放${theme?' .css / .zip 主题包':' .zip 扩展包'}到这里</strong></div><div class="eco-package-grid">${theme?`<article class="eco-package official"><div class="theme-swatch"></div><h3>原生 · 安静的工作室</h3><p>官方基线，随时可以回来。</p>${btn(!status.themes.active?'正在使用':'切换到官方','check','eco-theme-off','','small')}</article>`:''}${(theme?status.themes.items:status.extensions).map(p=>`<article class="eco-package"><div class="eco-package-label">${icon(theme?'sun':'box')}<span>${theme?(status.themes.active===p.id?'正在使用':'本地主题'):(p.enabled?'已启用':'已停用')}</span><small>v${esc(p.version)}</small></div><h3>${esc(p.name)}</h3><code>${esc(p.id)}</code>${p.error?`<p class="danger">${esc(p.error)}</p>`:''}<div class="eco-package-actions">${theme?btn('使用主题','check','eco-theme-use',`data-id="${esc(p.id)}"`,'small'):btn(p.enabled?'停用':'启用',p.enabled?'pause':'play','eco-extension-toggle',`data-id="${esc(p.id)}" data-enabled="${p.enabled?'0':'1'}"`,'small')}${!theme?btn('重新加载','refresh','ext-reload',`data-id="${esc(p.id)}" ${p.enabled?'':'disabled'}`,'small ghost')+btn('更新代码','refresh','eco-extension-update',`data-id="${esc(p.id)}" ${p.enabled?'disabled title="请先停用扩展"':''}`,'small ghost'):''}${btn('卸载','trash',theme?'eco-theme-remove':'eco-extension-remove',`data-id="${esc(p.id)}"`,'small ghost')}</div></article>`).join('')}</div>${!theme&&!status.extensions.length?'<div class="eco-empty"><h3>扩展库还是一张白纸</h3><p>试试 examples/extensions 中的示例。</p></div>':''}<details class="quiet-advanced"><summary>运行环境与开发文档</summary><p>Node.js ${status.node?'已就绪':'未检测到（可执行变量需要 Node.js 20+）'} · Git ${status.git?'已就绪':'未检测到'}</p><a href="/docs/ECOSYSTEM_GUIDE.html" target="_blank" rel="noopener">主题与扩展 SDK 指南 ↗</a></details>${ecoState.errors.length?`<details class="quiet-advanced" open><summary>加载诊断</summary>${ecoState.errors.map(e=>`<p class="danger">${esc(e)}</p>`).join('')}</details>`:''}</section>`;
 }
 async function importEcosystemFile(file,kind){
   if(!file)return;if(file.size>32*1024*1024)throw Error('安装包最大 32 MiB。');
-  const trusted=await confirmAction(kind==='theme'?'信任这个全局主题？':'信任并执行这个扩展？',kind==='theme'?'全局样式可隐藏或仿冒界面控件。出错可用 ?safe_mode=1 恢复。':'JavaScript / Python 扩展具备完全执行能力，可以访问本机与网络。只安装可信作者的包。','我信任并安装');if(!trusted)return;
+  const trusted=await confirmAction(kind==='theme'?'信任这个全局主题？':'信任并执行这个扩展？',kind==='theme'?'全局样式可隐藏或仿冒控件。完整 CSS 主题还可加载远程字体、图片和 @import，可能向外部服务器发送信息。仅安装可信来源；可用 ?safe_mode=1 恢复。':'JavaScript / Python 扩展具备完全执行能力，可以访问本机与网络。只安装可信作者的包。','我信任并安装');if(!trusted)return;
   const data=(await blobData(file)).split(',')[1];
   await ecoRequest(kind==='theme'?'themes/install':'extensions/install',kind==='theme'?{data,filename:file.name,trusted:true}:{zip:data,trusted:true});await refreshEcosystem();render();toast('安装完成。');
 }
@@ -127,7 +133,7 @@ function installEcosystem(){
   document.addEventListener('keydown',e=>{if(e.target.matches('[data-eco-drop]')&&['Enter',' '].includes(e.key)){e.preventDefault();e.target.click()}});
 }
 async function bootEcosystem(){
-  globalThis.Mio.extensions=Object.freeze({apiVersion:1});
+  globalThis.Mio.extensions=Object.freeze({apiVersion:2,commands:Object.freeze({list:()=>extensionRuntime().list('commands').map(({key,label})=>({key,label})),execute:(key,...args)=>extensionRuntime().execute(key,...args)}),getDiagnostics:()=>clone(extensionRuntime().errors)});
   try{await refreshEcosystem()}catch(e){ecoState.errors.push(e.message)}
   if(window.MioSafeMode){
     const host=document.createElement('aside');host.style.cssText='position:fixed!important;inset:auto 16px 40px auto!important;z-index:2147483647!important;display:block!important';

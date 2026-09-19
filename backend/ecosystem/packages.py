@@ -38,13 +38,15 @@ def manifest(folder,kind):
     if not p.is_file():raise LibraryError('Missing '+p.name)
     if p.stat().st_size>65536:raise LibraryError('Manifest too large')
     d=json.loads(p.read_text(encoding="utf-8"));identifier(d.get('id'))
-    if d.get('apiVersion')!=1 or not isinstance(d.get('name'),str) or not d['name'].strip():raise LibraryError('Unsupported package manifest')
+    if d.get('apiVersion') not in (1,2) or not isinstance(d.get('name'),str) or not d['name'].strip():raise LibraryError('Unsupported package manifest')
     if not isinstance(d.get('version'),str):raise LibraryError('Manifest requires version')
     entry='index.js' if kind=='extension' else d.get('css','theme.css')
     if not owned(folder,entry).is_file():raise LibraryError('Missing package entry: '+entry)
     for p in Path(folder).rglob('*'):
         if p.is_symlink():raise LibraryError('Package symlinks forbidden')
-    return {k:d[k] for k in ('id','name','version','apiVersion')}|({'css':entry} if kind=='theme' else {})
+    policy=d.get('cssPolicy','local')
+    if policy not in ('local','trusted'):raise LibraryError('cssPolicy must be local or trusted')
+    return {k:d[k] for k in ('id','name','version','apiVersion')}|({'css':entry,'cssPolicy':policy} if kind=='theme' else {})
 
 def package_root(folder,kind):
     if (Path(folder)/('mio.'+kind+'.json')).exists():return Path(folder)

@@ -55,9 +55,11 @@ try {
     "one editor rather than eight expanded forms",
   );
   check(
-    (await p.locator(".wm-connection").getAttribute("open")) === null,
-    "connection settings start folded",
+    (await p.locator(".wm-connection").getAttribute("open")) !== null,
+    "connection settings are visible for first-use configuration",
   );
+  await p.locator(".wm-connection > summary").click();
+  check((await p.locator(".wm-connection").getAttribute("open")) === null, "connection settings can be folded");
   await p.screenshot({ path: artifacts + "/desktop.png", fullPage: true });
   await p.locator("#wm-binding-search").fill("not-a-field");
   check(
@@ -192,7 +194,7 @@ try {
   check(
     await p.evaluate(() => {
       const r = buildMappedWorkflow(
-        { prompt: "test", negative: "", renderOverride: false },
+        { prompt: "test", negative: "", seed: 42, renderOverride: false },
         { bookTitle: "test" },
         { preview: true },
       );

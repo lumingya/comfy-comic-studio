@@ -27,6 +27,7 @@ class Themes:
         if not meta:raise LibraryError('Theme not found',404)
         root=self.root/id;css=owned(root,meta['css']).read_text(encoding='utf-8-sig')
         if len(css)>2*1024*1024:raise LibraryError('CSS exceeds 2 MiB')
+        if meta.get('cssPolicy')=='trusted':return css
         # No escapes/import chains: prevents obfuscated external fetches in theme styles.
         clean=re.sub(r'/\*.*?\*/','',css,flags=re.S)
         if '\\' in clean or re.search(r'@import\b|expression\s*\(',clean,re.I):raise LibraryError('Theme CSS cannot use escapes, @import or expression')
@@ -80,3 +81,13 @@ class Themes:
         if (self.root/id).exists():shutil.rmtree(owned(self.root,id))
     @synchronized
     def list(self):return {'items':list(self.records().values()),'active':self.state.get('active-theme','')}
+
+    @synchronized
+    def asset(self,id,relative):
+        meta=self.records().get(identifier(id))
+        if not meta or meta.get('cssPolicy')!='trusted':raise LibraryError('Theme asset unavailable',404)
+        path=owned(self.root/id,relative)
+        if path.suffix.lower() not in ('.css','.png','.jpg','.jpeg','.webp','.gif','.svg','.woff','.woff2','.ttf','.otf'):
+            raise LibraryError('Asset type not public',403)
+        if not path.is_file() or path.stat().st_size>8*1024*1024:raise LibraryError('Missing or oversized theme asset',404)
+        return path

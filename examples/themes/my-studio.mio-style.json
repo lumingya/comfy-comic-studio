@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "enabled": true,
+  "tokens": {
+    "--accent": "#a7d6c2",
+    "--accent2": "#77af98",
+    "--mio-control-radius": "10px"
+  },
+  "snippets": [
+    {
+      "id": "comfortable-storyboard",
+      "name": "宽松分镜编辑区",
+      "enabled": true,
+      "scope": "workspace:creation",
+      "css": ".workshop-prompt { min-height: 260px; font-size: 15px; }\n.workshop-negative { min-height: 110px; }\n[data-mio-part=\"workspace\"] .workshop-page { border-radius: 16px; }\n"
+    },
+    {
+      "id": "gentle-motion",
+      "name": "轻柔按钮过渡",
+      "enabled": true,
+      "scope": "global",
+      "css": "@media (prefers-reduced-motion: no-preference) {\n  .btn { transition: background .2s, border-color .2s, transform .2s; }\n  .btn:hover:not(:disabled) { transform: translateY(-1px); }\n}\n"
+    }
+  ]
+}

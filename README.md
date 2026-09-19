@@ -8,6 +8,12 @@ Mio 是用于分镜创作、图像生成、画册阅读与编辑的本地工作�
 
 [教程中心](docs/index.html) · [快速开始](docs/guide/QUICKSTART.md) · [English](docs/README.en.md)
 
+## 自由定制版
+
+新增 **样式工作台 + 扩展 SDK 2**：可视化设计变量、多段 CSS、工作区范围、30 秒试用回退、历史恢复；扩展支持命令、快捷键、界面插槽、独立工作区与生产流程拦截。
+
+[零基础使用与 SDK 文档](docs/EXTENSIBILITY_V2.md) · [主题与扩展安装](docs/ECOSYSTEM_GUIDE.md)
+
 ## 启动
 
 需要 Python 3.10+、Pillow 11.3–12.x 和现代浏览器。可执行变量另需 Node.js 20+，Git 扩展安装另需 Git。
