@@ -188,6 +188,7 @@ function localizeWorkspace(root=document.body){
 
 // Current workspaces: keep authored data and API values separate from interface copy.
 function extendCurrentLocaleCatalog(catalog){Object.assign(catalog.messages,{
+  "初光映格，微墨生花": "Light fills the frame, ink brings the bloom.",
   "第一步，连接你的图像服务。": "Step one: connect your image service.",
   "绘页": "STUDIO",
   "创作工坊": "Creative workshop",
