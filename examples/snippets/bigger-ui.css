@@ -1,0 +1,4 @@
+/* 整体放大 12%：适合高分屏或触屏。html 的字号是全局基准，绝大多数尺寸跟着变。 */
+html { font-size: 112%; }
+.btn, select, input, textarea { min-height: 36px; }
+.nav-item { padding-block: 12px; }

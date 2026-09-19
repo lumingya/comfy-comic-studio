@@ -144,9 +144,11 @@ class DataTiers:
         self.workspace = Storage(self.root / "workspace")
         self.cache = Storage(self.root / "cache")
         self.tmp = self.root / "tmp"
+        self.files = self.root / "files"
+        self.files.mkdir(parents=True, exist_ok=True)
 
     def path(self, tier, relative):
-        if tier not in TIERS:
+        if tier not in TIERS and tier != "files":
             raise ValueError("Unknown data tier: " + str(tier))
         return owned(self.root / tier, relative)
 
@@ -247,8 +249,10 @@ class Context:
         self.data_dir = data
         self.data = DataTiers(data)
         self.storage = self.data.workspace  # workspace tier is the default store
+        self.files = self.data.files        # arbitrary binaries, also served at /api/ecosystem/extensions/<id>/files/<path>
         self.host = HostAPI(link)
         self.routes = {}
+        self.jobs = {}
         self.providers = {}
         self.listeners = []
         self.filters = []
@@ -273,6 +277,47 @@ class Context:
         stored = self.data.config.get("settings", {}) or {}
         defaults = {f["key"]: f.get("default") for f in self.manifest.get("settings", []) if isinstance(f, dict) and "key" in f}
         return {**defaults, **stored}
+
+    # ------------------------------------------------------------ v3 responses & files
+    def file_path(self, relative):
+        """A path inside ctx.files (created on demand); use it for anything binary or large."""
+        path = owned(self.files, relative)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return path
+
+    def file_url(self, relative):
+        return "/api/ecosystem/extensions/" + self.id + "/files/" + str(relative).lstrip("/")
+
+    def file_response(self, relative, filename=None, mime=None, headers=None):
+        """Return this from a route to stream a file from ctx.files as the HTTP body."""
+        return {"$file": "files/" + str(relative).lstrip("/"), "filename": filename or Path(relative).name, "mime": mime or mimetypes.guess_type(str(relative))[0], "headers": headers or {}}
+
+    def text_response(self, text, mime="text/plain; charset=utf-8", filename=None, headers=None):
+        return {"$text": str(text), "mime": mime, "filename": filename, "headers": headers or {}}
+
+    def bytes_response(self, raw, mime="application/octet-stream", filename=None, headers=None):
+        return {"$raw": base64.b64encode(bytes(raw)).decode(), "mime": mime, "filename": filename, "headers": headers or {}}
+
+    def background(self, fn, *args, name=None, **kwargs):
+        """Run fn in a daemon thread; returns a job id readable via ctx.jobs / ctx.job(id)."""
+        job_id = name or uuid.uuid4().hex[:10]
+        state = {"id": job_id, "status": "running", "result": None, "error": "", "progress": 0}
+        self.jobs[job_id] = state
+
+        def run():
+            try:
+                state["result"] = fn(*args, **kwargs)
+                state["status"] = "done"
+            except Exception as exc:
+                state["status"] = "failed"
+                state["error"] = str(exc)[:800]
+                self.log("background job failed:", job_id, exc)
+
+        threading.Thread(target=run, daemon=True, name="mio-ext-job-" + job_id).start()
+        return job_id
+
+    def job(self, job_id):
+        return self.jobs.get(job_id)
 
     # ---------------------------------------------------------------- decorators
     def route(self, path, method="POST", timeout=None):

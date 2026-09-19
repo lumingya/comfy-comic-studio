@@ -30,6 +30,7 @@ from .storage import Storage, identifier
 from .plugins import Plugins, TIERS
 from .themes import Themes
 from .styles import Styles
+from .user_scripts import UserScripts
 from .macros import Macros, signature
 
 SERVICES = {}
@@ -57,6 +58,7 @@ class Ecosystem:
         self.plugins = Plugins(host.BASE_DIR, host.DATA_DIR, platform=self)
         self.themes = Themes(host.DATA_DIR)
         self.styles = Styles(host.DATA_DIR)
+        self.user_scripts = UserScripts(host.DATA_DIR)
         self.macros = Macros(host.DATA_DIR, self.invoke, self.configuration_signature, self.asset_exists)
         self._install_core_capabilities()
         if not safe_mode():
@@ -449,24 +451,31 @@ ASSET_MIME = {".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript;
               ".html": "text/html; charset=utf-8", ".md": "text/plain; charset=utf-8", ".txt": "text/plain; charset=utf-8", ".wasm": "application/wasm", ".mp4": "video/mp4", ".webm": "video/webm", ".mp3": "audio/mpeg", ".ogg": "audio/ogg"}
 
 
-def _send_static(handler, p, cache=True):
+def _send_static(handler, p, cache=True, mime=None, disposition=None):
     size = p.stat().st_size
     if size > 512 * 1024 * 1024:
         raise LibraryError("Asset too large")
-    mime = ASSET_MIME.get(p.suffix.lower()) or mimetypes.guess_type(p.name)[0] or "application/octet-stream"
+    mime = mime or ASSET_MIME.get(p.suffix.lower()) or mimetypes.guess_type(p.name)[0] or "application/octet-stream"
     handler.send_response(200)
     handler.send_header("Content-Type", mime)
     handler.send_header("X-Content-Type-Options", "nosniff")
     handler.send_header("Content-Length", str(size))
+    if disposition:
+        handler.send_header("Content-Disposition", disposition + "; filename*=UTF-8''" + urllib.parse.quote(p.name))
     if cache:
         handler.send_header("Cache-Control", "private, max-age=31536000, immutable")
+    else:
+        handler.send_header("Cache-Control", "no-cache")
     handler.end_headers()
     with p.open("rb") as stream:
         shutil.copyfileobj(stream, handler.wfile)
 
 
+PUBLIC_PREFIXES = ("/api/ecosystem/", "/api/extensions/", "/extension-assets/", "/theme-assets/", "/style-assets/", "/user-scripts/", "/customize/scripts/")
+
+
 def dispatch(handler, host, path):
-    if not path.startswith(("/api/ecosystem/", "/api/extensions/", "/extension-assets/", "/theme-assets/", "/style-assets/")):
+    if not path.startswith(PUBLIC_PREFIXES):
         return False
     try:
         svc = service(host)
@@ -483,9 +492,19 @@ def dispatch(handler, host, path):
         if path.startswith("/style-assets/"):
             _send_static(handler, svc.styles.asset_path(urllib.parse.unquote(path[len("/style-assets/"):])), cache=False)
             return True
+        if path.startswith(("/user-scripts/", "/customize/scripts/")):
+            prefix = "/user-scripts/" if path.startswith("/user-scripts/") else "/customize/scripts/"
+            name = urllib.parse.unquote(path[len(prefix):].split("?")[0])
+            p = svc.user_scripts.script_path(name)
+            _send_static(handler, p, cache=False, mime="text/javascript; charset=utf-8")
+            return True
         body = handler.read_json_body(max_bytes=320 * 1024 * 1024) if method == "POST" else {}
         if path.startswith("/api/extensions/"):
             result = _extension_route(svc, host, path, method, body, query)
+            raw = svc.plugins.raw_response(path[len("/api/extensions/"):].partition("/")[0], result)
+            if raw:
+                _send_raw(handler, {"b64": base64.b64encode(raw["bytes"]).decode(), "mime": raw["mime"], "filename": raw.get("filename"), "headers": raw.get("headers", {}), "status": raw.get("status", 200)})
+                return True
             if isinstance(result, dict) and result.get("__mio_response__"):
                 _send_raw(handler, result)
                 return True
@@ -502,6 +521,35 @@ def dispatch(handler, host, path):
 
 
 _SENT = object()
+
+
+def _files_route(svc, handler, id, relative, method, body, query):
+    identifier(id)
+    if id not in svc.plugins.records():
+        raise LibraryError("Extension not found", 404)
+    if method in ("GET", "HEAD"):
+        if not relative or relative.endswith("/"):
+            return svc.plugins.file_list(id, relative.rstrip("/"))
+        path = svc.plugins.file_path(id, relative)
+        if not path.is_file():
+            raise LibraryError("File not found", 404)
+        _send_static(handler, path, cache=False, disposition="attachment" if query.get("download") else None)
+        return _SENT
+    if method == "DELETE":
+        return svc.plugins.file_delete(id, relative)
+    if isinstance(body, dict) and "$raw" in body:
+        raw = body["$raw"]
+        if isinstance(raw, str):
+            raw = base64.b64decode(raw, validate=True)
+    elif isinstance(body, dict) and "b64" in body:
+        raw = base64.b64decode(body["b64"], validate=True)
+    elif isinstance(body, dict) and isinstance(body.get("text"), str):
+        raw = body["text"].encode("utf-8")
+    elif isinstance(body, (bytes, bytearray)):
+        raw = bytes(body)
+    else:
+        raise LibraryError("Send the file as {b64} or {text} JSON, or binary data")
+    return svc.plugins.file_write(id, relative, raw)
 
 
 def _send_raw(handler, result):
@@ -566,6 +614,7 @@ def _ecosystem_route(svc, handler, route, method, body, query):
             "extensions": svc.plugins.list(),
             "themes": svc.themes.list(),
             "styles": {"snippets": len(svc.styles.snippets()), "tokens": sum(len(v) for v in svc.styles.tokens().values() if isinstance(v, dict))},
+            "scripts": svc.user_scripts.list(with_source=False),
             "node": bool(shutil.which("node")),
             "git": bool(shutil.which("git")),
             "safeMode": safe_mode(),
@@ -574,6 +623,9 @@ def _ecosystem_route(svc, handler, route, method, body, query):
             "dataDir": str(host.DATA_DIR),
             "watching": any(r.get("source") == "link" for r in svc.plugins.records().values()) or any(r.get("source") == "link" for r in svc.themes.records().values()),
         }
+    if route.startswith("extensions/") and "/files" in route:
+        id, _, rest = route[len("extensions/"):].partition("/files")
+        return _files_route(svc, handler, id, urllib.parse.unquote(rest.lstrip("/")), method, body, query)
     if method == "GET" and route == "platform":
         return svc.manifest()
     if method == "GET" and route == "activity":
@@ -589,6 +641,16 @@ def _ecosystem_route(svc, handler, route, method, body, query):
         return svc.styles.state()
     if method == "GET" and route == "styles/css":
         return {"css": svc.styles.compile()}
+    if method == "GET" and route == "scripts":
+        return svc.user_scripts.list(with_source=True)
+    if method == "GET" and route.startswith("scripts/"):
+        return svc.user_scripts.get(route[len("scripts/"):])
+    if method == "GET" and route == "customize":
+        return {"snippets": svc.styles.snippets(), "scripts": svc.user_scripts.list(with_source=True)}
+    if method == "GET" and route.startswith("customize/"):
+        kind, _, item_id = route[len("customize/"):].partition("/")
+        if kind == "scripts":
+            return svc.user_scripts.get(item_id) if item_id else svc.user_scripts.list(with_source=True)
     if method == "GET" and route == "preparations":
         return svc.macros.list()
     if method == "GET" and route.startswith("preparations/"):
@@ -682,10 +744,19 @@ def _ecosystem_route(svc, handler, route, method, body, query):
         return svc.plugins.reload(body["id"])
     if route == "extensions/deps":
         return svc.plugins.install_deps(body["id"])
+    if route in ("scripts/save", "customize/scripts/save"):
+        return svc.user_scripts.save(body)
+    if route in ("scripts/delete", "customize/scripts/delete"):
+        return svc.user_scripts.delete(body.get("id", ""))
+    if route in ("scripts/order", "customize/scripts/order"):
+        return svc.user_scripts.reorder(body.get("ids") or [])
+    if route in ("scripts/toggle", "customize/scripts/toggle"):
+        return svc.user_scripts.save({"id": body.get("id"), "enabled": body.get("enabled") is True})
     if route == "reset":
         svc.themes.select("")
         for id in list(svc.plugins.records()):
             svc.plugins.enable(id, False)
+        svc.user_scripts.disable_all()
         if body.get("styles"):
             svc.styles.replace_snippets([{**s, "enabled": False} for s in svc.styles.snippets()])
         return {"reset": True}

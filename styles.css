@@ -716,3 +716,34 @@ html[lang=en] #mio-home h1{font-family:var(--art-latin),Georgia,serif;font-size:
 .mio-picking,.mio-picking *{cursor:crosshair!important}#mio-pick-box{position:fixed;z-index:2147483000;pointer-events:none;border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border-radius:4px;transition:all .06s ease-out;box-shadow:0 0 0 9999px color-mix(in srgb,var(--bg) 18%,transparent)}#mio-pick-box span{position:absolute;left:-2px;bottom:100%;margin-bottom:4px;background:var(--text);color:var(--bg);font:11px/1.4 var(--mono);padding:3px 8px;border-radius:5px;white-space:nowrap;max-width:60vw;overflow:hidden;text-overflow:ellipsis}
 .mio-settings-page .settings-section{margin-bottom:16px}
 @media (max-width:900px){.ss-split{grid-template-columns:1fr}.ss-token-grid{grid-template-columns:1fr}}
+
+/* ---- SDK v3: user scripts editor, file list and slot mounts ---- */
+.eco-subtabs{margin:4px 0 26px}.eco-subtabs button{white-space:nowrap}
+.eco-editor-list{display:grid;gap:14px}
+.eco-editor{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:12px 14px 14px;min-width:0}
+.eco-editor.is-active{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.eco-editor-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.eco-editor-name{flex:1 1 160px;min-width:0;background:transparent!important;border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;padding:4px 2px!important;height:auto!important;font:500 14px var(--art-serif)!important}
+.eco-editor-id{font:10px var(--mono);color:var(--muted)}
+.eco-editor-status{font-size:10px;color:var(--muted);white-space:nowrap}
+.eco-editor-status.danger{color:var(--red)}
+.eco-editor .eco-code{width:100%;min-height:160px!important;max-height:60vh;resize:vertical;white-space:pre;overflow:auto}
+.eco-editor.is-active .eco-code{border-color:color-mix(in srgb,var(--accent) 30%,var(--line))}
+.eco-switch{position:relative;display:inline-flex;width:34px;height:20px;flex:none;cursor:pointer}
+.eco-switch input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.eco-switch span{position:absolute;inset:0;border-radius:999px;background:var(--panel2);border:1px solid var(--line);transition:background .15s}
+.eco-switch span:after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--muted);transition:transform .15s,background .15s}
+.eco-switch input:checked+span{background:color-mix(in srgb,var(--accent) 35%,var(--panel2));border-color:var(--accent2)}
+.eco-switch input:checked+span:after{transform:translateX(14px);background:var(--accent)}
+.eco-switch input:focus-visible+span{outline:2px solid var(--accent2);outline-offset:2px}
+.eco-file-list{display:grid;gap:4px;max-height:50vh;overflow:auto}
+.eco-file-row{display:flex;justify-content:space-between;gap:12px;padding:8px 10px;border-radius:8px;border:1px solid var(--line);color:var(--text);text-decoration:none;font-size:12px}
+.eco-file-row:hover{background:var(--hover)}
+.eco-file-row small{color:var(--muted)}
+.mio-mount:empty{display:none}
+.mio-statusbar-item{display:inline-flex;align-items:center;gap:6px;margin-left:14px;font-size:inherit;color:inherit}
+.mio-statusbar-item .btn{min-height:0;padding:2px 8px;font-size:inherit}
+.mio-topbar-item{display:inline-flex;align-items:center;gap:6px;margin-left:8px}
+.mio-sidebar-item{padding:4px 0}
+.mio-reader-item{display:inline-flex;align-items:center;gap:6px}
+.mio-home-section{margin-top:28px}

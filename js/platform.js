@@ -15,7 +15,7 @@ const MioIcons={
 
 /* ------------------------------------------------------------ kernel */
 const MioPlatform=(()=>{
-  const SLOTS=['nav','inspector','dock','frame-card','album-card','context-menu','commands','toolbar','settings'];
+  const SLOTS=['nav','topbar','sidebar','statusbar','reader','home','inspector','dock','frame-card','album-card','context-menu','commands','toolbar','settings'];
   const LAYERS=['themes','theme-settings','extensions','user-tokens','user-snippets'];
   const ID=/^[a-z][a-z0-9_.:-]{0,79}$/i;
   const listeners=new Map(),slots=new Map(),exporters=new Map(),importers=new Map();
@@ -72,9 +72,11 @@ const MioPlatform=(()=>{
   }
   /* ---- mounts: put UI next to any element the core renders, re-applied after every render */
   function mount(spec,owner='core'){
-    if(!spec||typeof spec!=='object'||typeof spec.selector!=='string')throw Error('mount({selector, position, render|html}) needs a CSS selector');
+    if(!spec||typeof spec!=='object')throw Error('mount spec must be an object');
+    const selector=spec.selector||spec.target;
+    if(typeof selector!=='string')throw Error('mount({selector, position, render|html}) needs a CSS selector');
     if(typeof spec.render!=='function'&&typeof spec.html!=='string'&&typeof spec.html!=='function')throw Error('mount needs render(container, target, context) or html');
-    const k=key(owner,spec.id),entry={...spec,key:k,owner,position:spec.position||'append',nodes:new Set()};mounts.set(k,entry);scheduleDecorate();return ()=>unmount(k);
+    const k=key(owner,spec.id),entry={...spec,selector,key:k,owner,position:spec.position||'append',nodes:new Set()};mounts.set(k,entry);scheduleDecorate();return ()=>unmount(k);
   }
   function unmount(k){const entry=mounts.get(k);if(!entry)return;for(const node of entry.nodes)node.remove();mounts.delete(k)}
   function applyMounts(root=document){
@@ -86,7 +88,7 @@ const MioPlatform=(()=>{
         if(entry.max&&entry.nodes.size>=entry.max)break;
         context=context||anchorContext();if(typeof entry.when==='function'){try{if(entry.when({...context,target})===false)continue}catch(e){fail(entry.owner,'mount when',e);continue}}
         const container=document.createElement(entry.tag||'span');container.className='mio-mount'+(entry.cls?' '+entry.cls:'');container.dataset.mioMount=entry.key;container.dataset.owner=entry.owner;container.__mioTarget=target;
-        const pos=entry.position;if(pos==='before')target.before(container);else if(pos==='after')target.after(container);else if(pos==='prepend')target.prepend(container);else if(pos==='replace'){target.replaceWith(container);container.__mioTarget=container}else target.append(container);
+        const pos=entry.position;if(pos==='before'||pos==='beforebegin')target.before(container);else if(pos==='after'||pos==='afterend')target.after(container);else if(pos==='prepend'||pos==='afterbegin')target.prepend(container);else if(pos==='replace'){target.replaceWith(container);container.__mioTarget=container}else target.append(container);
         entry.nodes.add(container);
         if(typeof entry.render==='function')run(entry.owner,'mount '+entry.key,entry.render,container,target,context);else{try{container.innerHTML=typeof entry.html==='function'?String(entry.html(target,context)??''):entry.html}catch(e){fail(entry.owner,'mount '+entry.key,e)}}
       }
@@ -103,10 +105,10 @@ const MioPlatform=(()=>{
     let entry=patches.get(id);
     if(!entry){entry={obj,prop,original:obj[prop],layers:[]};patches.set(id,entry);const layers=entry.layers,original=entry.original;
       const composite=function(...args){let fn=(...a)=>original.apply(this,a);for(const layer of layers)fn=((next)=>(...a)=>layer.wrapper.call(this,next,...a))(fn);return fn(...args)};
-      composite.__mioPatched=id;Object.defineProperty(composite,'name',{value:original.name});obj[prop]=composite;}
-    else if(obj[prop].__mioPatched!==id){entry.original=obj[prop];const layers=entry.layers;const original=entry.original;const composite=function(...args){let fn=(...a)=>original.apply(this,a);for(const layer of layers)fn=((next)=>(...a)=>layer.wrapper.call(this,next,...a))(fn);return fn(...args)};composite.__mioPatched=id;obj[prop]=composite}
+      composite.__mioPatched=id;composite.mioOriginal=original;Object.defineProperty(composite,'name',{value:original.name});obj[prop]=composite;}
+    else if(obj[prop].__mioPatched!==id){entry.original=obj[prop];const layers=entry.layers;const original=entry.original;const composite=function(...args){let fn=(...a)=>original.apply(this,a);for(const layer of layers)fn=((next)=>(...a)=>layer.wrapper.call(this,next,...a))(fn);return fn(...args)};composite.__mioPatched=id;composite.mioOriginal=original;obj[prop]=composite}
     const layer={owner,wrapper,priority:Number(options?.priority)||100,serial:++serial};entry.layers.push(layer);entry.layers.sort((a,b)=>a.priority-b.priority||a.serial-b.serial);
-    return ()=>{const current=patches.get(id);if(!current)return;current.layers=current.layers.filter(x=>x!==layer);entry.layers=current.layers;if(!current.layers.length){if(current.obj[current.prop]?.__mioPatched===id)current.obj[current.prop]=current.original;patches.delete(id)}else{const layers=current.layers,original=current.original;const composite=function(...args){let fn=(...a)=>original.apply(this,a);for(const l of layers)fn=((next)=>(...a)=>l.wrapper.call(this,next,...a))(fn);return fn(...args)};composite.__mioPatched=id;current.obj[current.prop]=composite}};
+    return ()=>{const current=patches.get(id);if(!current)return;current.layers=current.layers.filter(x=>x!==layer);entry.layers=current.layers;if(!current.layers.length){if(current.obj[current.prop]?.__mioPatched===id)current.obj[current.prop]=current.original;patches.delete(id)}else{const layers=current.layers,original=current.original;const composite=function(...args){let fn=(...a)=>original.apply(this,a);for(const l of layers)fn=((next)=>(...a)=>l.wrapper.call(this,next,...a))(fn);return fn(...args)};composite.__mioPatched=id;composite.mioOriginal=original;current.obj[current.prop]=composite}};
   }
   function unpatchOwner(owner){for(const [id,entry] of [...patches]){const remaining=entry.layers.filter(l=>l.owner!==owner);if(remaining.length===entry.layers.length)continue;entry.layers.length=0;entry.layers.push(...remaining);if(!remaining.length){if(entry.obj[entry.prop]?.__mioPatched===id)entry.obj[entry.prop]=entry.original;patches.delete(id)}}}
   /* ---- filters: value pipelines at named core points */
@@ -117,12 +119,13 @@ const MioPlatform=(()=>{
   /* ---- key bindings: 'mod+shift+k', 'alt+1', 'escape' */
   function comboOf(e){const parts=[];if(e.ctrlKey||e.metaKey)parts.push('mod');if(e.altKey)parts.push('alt');if(e.shiftKey)parts.push('shift');let k=String(e.key||'').toLowerCase();if(k===' ')k='space';if(k.length===1)k=k;parts.push(k);return parts.join('+')}
   function normalizeCombo(combo){const parts=String(combo).toLowerCase().split('+').map(s=>s.trim()).filter(Boolean);const mods=[];let main='';for(const p of parts){if(['mod','cmd','meta','ctrl','control'].includes(p))mods.push('mod');else if(p==='alt'||p==='option')mods.push('alt');else if(p==='shift')mods.push('shift');else main=p==='esc'?'escape':p}return [...['mod','alt','shift'].filter(m=>mods.includes(m)),main].join('+')}
-  function bindKey(combo,run,{owner='core',when=null,global:isGlobal=false,description=''}={}){if(typeof run!=='function')throw Error('keys.register(combo, run)');const norm=normalizeCombo(combo);const entry={owner,run,when,global:isGlobal,description,combo:norm,serial:++serial};const list=keys.get(norm)||[];list.unshift(entry);keys.set(norm,list);return ()=>keys.set(norm,(keys.get(norm)||[]).filter(x=>x!==entry))}
+  function bindKey(combo,run,{owner='core',when=null,global:isGlobal=false,description='',id=''}={}){if(typeof run!=='function')throw Error('keys.register(combo, run)');const norm=normalizeCombo(combo);const entry={id:id?(id.includes(':')?id:owner+':'+id):(owner+':'+norm),owner,run,when,global:isGlobal,description,combo:norm,serial:++serial};const list=keys.get(norm)||[];list.unshift(entry);keys.set(norm,list);return ()=>keys.set(norm,(keys.get(norm)||[]).filter(x=>x!==entry))}
   function handleKey(e){
     if(window.MioSafeMode||!keys.size)return;const list=keys.get(comboOf(e));if(!list?.length)return;const typing=e.target.closest?.('input,textarea,select,[contenteditable="true"],[contenteditable=""]');
     for(const entry of list){if(typing&&!entry.global)continue;if(typeof entry.when==='function'){try{if(entry.when(e)===false)continue}catch(err){fail(entry.owner,'key when',err);continue}}let result;try{result=entry.run(e)}catch(err){fail(entry.owner,'key '+entry.combo,err)}if(result!==false){e.preventDefault();e.stopPropagation()}return}
   }
   function keyList(){return [...keys.values()].flat().map(k=>({combo:k.combo,owner:k.owner,description:k.description}))}
+  function bindings(){return [...keys.values()].flat().map(k=>({id:k.id||(k.owner+':'+k.combo),owner:k.owner,keys:k.combo,label:k.description||''}))}
   /* ---- style layers + owner-scoped style elements */
   function layer(name){let el=document.head.querySelector('style[data-mio-layer="'+name+'"]');if(el)return el;for(const n of LAYERS){if(!document.head.querySelector('style[data-mio-layer="'+n+'"]')){const s=document.createElement('style');s.dataset.mioLayer=n;document.head.append(s)}}return document.head.querySelector('style[data-mio-layer="'+name+'"]')}
   function styleKey(owner,id){return owner+':'+(id||'default')}
@@ -149,7 +152,7 @@ const MioPlatform=(()=>{
   async function run(owner,label,fn,...args){try{return await fn(...args)}catch(e){fail(owner,label,e);toast('['+owner+'] '+e.message,'error');return undefined}}
   function describe(){return {slots:Object.fromEntries([...slots].map(([n,m])=>[n,m.size])),mounts:mounts.size,patches:[...patches].map(([id,e])=>({target:id,layers:e.layers.map(l=>l.owner)})),filters:Object.fromEntries([...filters].filter(([,l])=>l.length).map(([n,l])=>[n,l.map(x=>x.owner)])),keys:keyList(),styles:styleList(),exposed:[...exposed.keys()],listeners:Object.fromEntries([...listeners].map(([n,l])=>[n,l.length]))}}
   window.addEventListener('keydown',handleKey,true);
-  return Object.freeze({apiVersion:3,SLOTS,LAYERS,on,off,emit,register,items,find,slotNames,renderAnchors,mount,unmount,applyMounts,decorate,scheduleDecorate,patch,unpatchOwner,addFilter,applyFilter,applyFilterAsync,filterNames,bindKey,keyList,layer,setStyle,linkStyle,removeStyle,clearStyles,styleList,expose,extension,whenReady,unregisterOwner,registerExporter,registerImporter,exporters,importers,recent,failures,fail,run,listeners,describe});
+  return Object.freeze({apiVersion:3,SLOTS,LAYERS,on,off,emit,register,items,find,slotNames,renderAnchors,mount,unmount,mounts,applyMounts,decorate,scheduleDecorate,patch,around:(name,wrapper,opts)=>patch(name,wrapper,opts),unpatchOwner,addFilter,applyFilter,applyFilterAsync,filterNames,bindKey,keymap:(spec,owner='core')=>bindKey(spec.keys||spec.key,spec.run,{id:spec.id,label:spec.label,description:spec.label,owner}),keyList,bindings,layer,setStyle,linkStyle,removeStyle,clearStyles,styleList,expose,extension,whenReady,unregisterOwner,registerExporter,registerImporter,exporters,importers,recent,failures,fail,run,listeners,describe});
 })();
 
 /* ------------------------------------------------------- album facade */

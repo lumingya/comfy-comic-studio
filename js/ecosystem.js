@@ -4,7 +4,9 @@
    macro ("可执行变量") UI. Slots/anchors/mounts/patches/filters/keys live in platform.js; the
    样式工坊 (Style Studio) UI lives in style-studio.js. */
 'use strict';
-const ecoState={status:{extensions:[],themes:{items:[],stack:[],active:''},styles:{},node:false,git:false,safeMode:false,platform:{},watching:false,sdkVersion:3},loaded:new Map(),types:new Map(),errors:[],forceNext:false,themeSerial:0,activeTheme:'',themeScripts:new Map(),themeCompiled:null,settingsCache:new Map(),watchTimer:null,watchBusy:false,preparing:new Set()};
+const ecoState={status:{extensions:[],themes:{items:[],stack:[],active:''},styles:{},scripts:[],node:false,git:false,safeMode:false,platform:{},watching:false,sdkVersion:3},customize:{snippets:[],scripts:[],assets:[]},view:{extensions:'installed',themes:'themes'},scripts:[],scriptsDirty:new Set(),loaded:new Map(),types:new Map(),errors:[],forceNext:false,themeSerial:0,activeTheme:'',activeThemes:[],themeScripts:new Map(),themeCompiled:null,settingsCache:new Map(),watchTimer:null,watchBusy:false,preparing:new Set(),booted:false};
+const ECO_SLOT_MOUNTS={statusbar:{target:'#statusbar',position:'beforeend',tag:'span',className:'mio-statusbar-item'},topbar:{target:'#topbar',position:'beforeend',tag:'span',className:'mio-topbar-item'},sidebar:{target:'#sidebar nav',position:'beforeend',tag:'div',className:'mio-sidebar-item'},reader:{target:'#reader .room-footer',position:'beforeend',tag:'span',className:'mio-reader-item'},home:{target:'.home-steps',position:'afterend',tag:'section',className:'home-section mio-home-section'}};
+function ecoBytes(n){return n>=1048576?(n/1048576).toFixed(1)+' MiB':n>=1024?Math.round(n/1024)+' KiB':n+' B'}
 async function ecoRequest(path,body,timeout=125000){
   const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
   try{const response=await fetch('/api/ecosystem/'+path,{credentials:'same-origin',signal:controller.signal,...(body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})});const type=response.headers.get('Content-Type')||'';if(!type.includes('json')){if(!response.ok)throw Error('HTTP '+response.status);return response}const result=await response.json();if(!response.ok)throw Error(result.error||'HTTP '+response.status);return result.data}finally{clearTimeout(timer)}
@@ -29,8 +31,8 @@ function ecoCoreFacade(){
 }
 function ecoAssetURL(plugin,relative){return '/extension-assets/'+plugin.id+'/'+encodeURIComponent(plugin.revision||'0')+'/'+String(relative).replace(/^\/+/,'')}
 /* ---- the extension context. Everything is owner-scoped so dropExtension() can undo it. */
-function ecoContext(id){
-  const plugin=ecoState.status.extensions.find(p=>p.id===id)||{id},owner=id;
+function ecoContext(id,options={}){
+  const plugin=options.manifest||ecoState.status.extensions.find(p=>p.id===id)||{id},owner=options.owner||id;
   async function api(path,body,{tier,raw=false,method,timeout=600000,headers}={}){
     if(typeof path!=='string'||!path.startsWith('/')||path.includes('..'))throw Error('Use a plugin-local route such as /notes');
     const url='/api/extensions/'+id+path+(tier?(path.includes('?')?'&':'?')+'tier='+tier:'');const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeout);
@@ -41,13 +43,48 @@ function ecoContext(id){
   }
   api.url=path=>'/api/extensions/'+id+String(path||'/');
   const store=tier=>Object.freeze({get:k=>api('/storage?key='+encodeURIComponent(k),undefined,{tier}),set:(k,value)=>api('/storage',{key:k,value,tier}),delete:k=>api('/storage',{key:k,delete:true,tier})});
-  const slot=name=>Object.freeze({name,register:item=>MioPlatform.register(name,item,owner),items:context=>MioPlatform.items(name,context),find:k=>MioPlatform.find(name,k)});
+  const filesBase='/api/ecosystem/extensions/'+id+'/files/';
+  const files=Object.freeze({
+    url:path=>filesBase+String(path).replace(/^\/+/,'').split('/').map(encodeURIComponent).join('/'),
+    list:(prefix='')=>ecoRequest('extensions/'+id+'/files/'+String(prefix).replace(/^\/+/,'')+(prefix&&!String(prefix).endsWith('/')?'/':'')),
+    read:path=>fetch(files.url(path),{credentials:'same-origin'}).then(r=>{if(!r.ok)throw Error('HTTP '+r.status);return r}),
+    text:path=>files.read(path).then(r=>r.text()),json:path=>files.read(path).then(r=>r.json()),blob:path=>files.read(path).then(r=>r.blob()),
+    write:async(path,data)=>{const body=typeof data==='string'?new Blob([data],{type:'text/plain'}):data instanceof Blob?data:new Blob([data]);const r=await fetch(files.url(path),{method:'PUT',credentials:'same-origin',headers:{'Content-Type':body.type||'application/octet-stream'},body});const json=await r.json().catch(()=>({}));if(!r.ok)throw Error(json.error||'HTTP '+r.status);return json.data},
+    delete:async path=>{const r=await fetch(files.url(path),{method:'DELETE',credentials:'same-origin'});const json=await r.json().catch(()=>({}));if(!r.ok)throw Error(json.error||'HTTP '+r.status);return json.data}
+  });
+  const slot=name=>{
+    const mountSpec=ECO_SLOT_MOUNTS[name];
+    return Object.freeze({
+      name,
+      register:item=>{
+        const off1=MioPlatform.register(name,item,owner);
+        let off2=()=>{};
+        if(mountSpec&&item?.id){
+          off2=MioPlatform.mount({
+            id:name+'-'+item.id,
+            selector:item.target||mountSpec.target,
+            position:item.position||mountSpec.position,
+            tag:item.tag||mountSpec.tag,
+            cls:mountSpec.className+' '+(item.className||''),
+            when:item.when,
+            live:item.live,
+            render:typeof item.render==='function'?(container,target,context)=>item.render(container,{target,...context}):undefined,
+            html:typeof item.html==='string'||typeof item.html==='function'?item.html:undefined
+          },owner);
+        }
+        return ()=>{off1();off2()};
+      },
+      items:context=>MioPlatform.items(name,context),
+      find:k=>MioPlatform.find(name,k)
+    });
+  };
   const slotAlias={frameCard:'frame-card',albumCard:'album-card',contextMenu:'context-menu'};
   const slots=new Proxy({},{get:(_,name)=>typeof name==='string'?slot(slotAlias[name]||name.replace(/[A-Z]/g,m=>'-'+m.toLowerCase())):undefined,has:()=>true,ownKeys:()=>MioPlatform.slotNames(),getOwnPropertyDescriptor:()=>({enumerable:true,configurable:true})});
   const disposers=()=>{const entry=ecoState.loaded.get(id);if(entry&&!entry.failed)return entry.disposers||(entry.disposers=[]);const pending=ecoState.pendingDisposers||(ecoState.pendingDisposers=new Map());if(!pending.has(id))pending.set(id,[]);return pending.get(id)};
   const settingsEvent='ext:'+id+':settings.changed';
   return Object.freeze({
     id,apiVersion:3,manifest:clone(plugin),dev:plugin.source==='link',revision:plugin.revision||'0',api,request:api,
+    files,
     storage:store('workspace'),data:Object.freeze({config:store('config'),workspace:store('workspace'),cache:store('cache'),tmp:store('tmp')}),
     settings:Object.freeze({get:async()=>(await api('/settings')).values,schema:()=>clone(plugin.settings||[]),set:values=>api('/settings',{values}).then(r=>{MioPlatform.emit(settingsEvent,values,{source:owner,relay:false});return r}),onChange:handler=>MioPlatform.on(settingsEvent,handler,{owner})}),
     tasks:Object.freeze({list:()=>api('/tasks'),get:taskId=>api('/tasks?id='+encodeURIComponent(taskId)),cancel:taskId=>api('/tasks',{id:taskId,cancel:true}),
@@ -55,10 +92,13 @@ function ecoContext(id){
     events:Object.freeze({on:(event,handler,options={})=>MioPlatform.on(event,handler,{...options,owner}),once:(event,handler,options={})=>MioPlatform.on(event,handler,{...options,owner,once:true}),emit:(name,payload,options={})=>MioPlatform.emit(name,payload,{...options,source:owner}),recent:()=>MioPlatform.recent.slice(-80)}),
     slots,anchors:Object.freeze({register:(anchor,item)=>MioPlatform.register('anchor:'+anchor,item,owner),list:()=>[...new Set([...document.querySelectorAll('[data-mio-anchor]')].map(n=>n.dataset.mioAnchor))],refresh:()=>MioPlatform.decorate()}),
     mount:spec=>MioPlatform.mount(spec,owner),
+    mounts:Object.freeze({add:spec=>MioPlatform.mount(spec,owner),remove:localId=>MioPlatform.unmount(owner+':'+localId),apply:()=>MioPlatform.applyMounts()}),
     styles:Object.freeze({add:(css,key='default')=>MioPlatform.setStyle(owner,key,css),link:(href,key)=>MioPlatform.linkStyle(owner,key||href,/^(\/|https?:|data:|blob:)/.test(href)?href:ecoAssetURL(plugin,href)),vars:(map,selector=':root')=>MioPlatform.setStyle(owner,'vars:'+selector,selector+'{'+Object.entries(map||{}).map(([k,v])=>k+':'+v).join(';')+'}'),remove:(key='default')=>MioPlatform.removeStyle(owner,key),clear:()=>MioPlatform.clearStyles(owner)}),
     patch:(...args)=>{if(typeof args[0]==='string'){const [name,wrapper,options]=args;return MioPlatform.patch(name,wrapper,{...(options||{}),owner})}const [target,name,wrapper,options]=args;return MioPlatform.patch(target,name,wrapper,{...(options||{}),owner})},
+    around:(name,wrapper,options)=>MioPlatform.patch(name,wrapper,{...(options||{}),owner}),
     filters:Object.freeze({add:(name,fn,options={})=>MioPlatform.addFilter(name,fn,{...options,owner}),apply:(name,value,context)=>MioPlatform.applyFilter(name,value,context),applyAsync:(name,value,context)=>MioPlatform.applyFilterAsync(name,value,context),names:()=>MioPlatform.filterNames()}),
     keys:Object.freeze({register:(combo,run,options={})=>MioPlatform.bindKey(combo,run,{...options,owner}),list:()=>MioPlatform.keyList()}),
+    keymap:Object.freeze({add:spec=>MioPlatform.bindKey(spec.keys||spec.key,spec.run,{id:spec.id,label:spec.label,owner}),list:()=>MioPlatform.keyList()}),
     exporters:Object.freeze({register:spec=>MioPlatform.registerExporter(spec,owner),list:()=>mioExporterList()}),
     importers:Object.freeze({register:spec=>MioPlatform.registerImporter(spec,owner),list:()=>mioImporterList()}),
     albums:MioAlbums,
@@ -99,9 +139,43 @@ async function loadExtension(plugin){
 }
 async function syncExtensions(){
   const enabled=window.MioSafeMode||ecoState.status.safeMode?[]:ecoState.status.extensions.filter(p=>p.enabled&&(p.entry||p.styles?.length));
-  for(const id of [...ecoState.loaded.keys()])if(!enabled.some(p=>p.id===id))dropExtension(id);
+  for(const id of [...ecoState.loaded.keys()]){
+    if(id.startsWith('theme:')||id.startsWith('script:'))continue;
+    if(!enabled.some(p=>p.id===id))dropExtension(id);
+  }
   for(const plugin of enabled){const current=ecoState.loaded.get(plugin.id);if(current&&current.revision===plugin.revision)continue;if(current)dropExtension(plugin.id);await loadExtension(plugin)}
   await MioPlatform.emit('extensions.synced',{loaded:[...ecoState.loaded.keys()]},{relay:false});
+}
+async function syncUserScripts(){
+  const off=window.MioSafeMode||ecoState.status.safeMode;
+  const list=(ecoState.customize?.scripts||ecoState.status?.scripts||[]);
+  const enabled=off?[]:list.filter(s=>s.enabled);
+  for(const owner of [...ecoState.loaded.keys()]){
+    if(!owner.startsWith('script:'))continue;
+    const current=enabled.find(s=>'script:'+s.id===owner);
+    const entry=ecoState.loaded.get(owner);
+    if(!current||(current.url&&entry?.revision!==current.url))dropExtension(owner);
+  }
+  for(const script of enabled){
+    const owner='script:'+script.id;
+    if(ecoState.loaded.has(owner))continue;
+    const entry={revision:script.url||'0',dispose:null,disposers:[],failed:false,loadedAt:Date.now()};
+    ecoState.loaded.set(owner,entry);
+    try{
+      const module=await import(script.url);
+      if(typeof module.default!=='function')throw Error('User script must export default function(ctx)');
+      const ctx=ecoContext(script.id,{kind:'script',owner,manifest:{id:script.id,name:script.name,version:'',apiVersion:3},base:'/customize/assets/'});
+      const result=await module.default(ctx);
+      if(typeof result==='function')entry.dispose=result;
+      else if(result&&typeof result==='object'&&typeof result.dispose==='function')entry.dispose=result.dispose;
+      await MioPlatform.emit('script.loaded',{id:script.id},{relay:false});
+    }catch(e){
+      dropExtension(owner);
+      ecoState.loaded.set(owner,{failed:true,revision:script.url||'0',error:e.message});
+      ecoState.errors.push('用户脚本 '+(script.name||script.id)+'：'+e.message);
+      MioPlatform.fail(owner,'script',e);
+    }
+  }
 }
 async function ecoReloadExtension(id){await ecoRequest('extensions/reload',{id});await refreshEcosystem();render();toast('已重新加载：'+id)}
 /* ---- theme stack ------------------------------------------------------------------------ */
@@ -147,7 +221,7 @@ function ecoClearThemes(){
   MioPlatform.layer('themes').textContent='';MioPlatform.layer('theme-settings').textContent='';MioPlatform.layer('user-tokens').textContent='';MioPlatform.layer('user-snippets').textContent='';
   for(const id of [...MioIcons.order])if(id.startsWith('theme:'))MioIcons.unmount(id);
   for(const [id,entry] of [...ecoState.themeScripts]){try{entry.dispose?.()}catch{}MioPlatform.unregisterOwner('theme:'+id);ecoState.themeScripts.delete(id)}
-  delete document.documentElement.dataset.themeVariant;mioTheme.lock=null;ecoState.activeTheme='';ecoState.themeCompiled=null;
+  delete document.documentElement.dataset.themeVariant;mioTheme.lock=null;ecoState.activeTheme='';ecoState.activeThemes=[];ecoState.themeCompiled=null;
 }
 async function applyEcosystemTheme(){
   const serial=++ecoState.themeSerial;
@@ -162,6 +236,7 @@ async function applyEcosystemTheme(){
   for(const t of stack)if(t.icons&&Object.keys(t.icons).length)MioIcons.mount('theme:'+t.id,t.icons);
   const lock=[...stack].reverse().find(t=>t.colorScheme==='dark'||t.colorScheme==='light');mioTheme.lock=lock?lock.colorScheme:null;if(mioTheme.lock)document.documentElement.dataset.theme=mioTheme.lock;
   ecoState.activeTheme=stack.length?stack[stack.length-1].id:'';
+  ecoState.activeThemes=stack.map(t=>t.id);
   for(const t of stack)if(t.error)ecoState.errors.push('主题 '+t.id+'：'+t.error);
   await ecoSyncThemeScripts(stack);
   renderShell();
@@ -174,7 +249,14 @@ async function ecoWatchTick(){
   catch(e){/* server restarting: quiet */}
   finally{ecoState.watchBusy=false}
 }
-async function refreshEcosystem(){ecoState.status=await ecoRequest('status');await applyEcosystemTheme();await syncExtensions();ecoStartWatch()}
+async function refreshEcosystem(){
+  ecoState.status=await ecoRequest('status');
+  try{ecoState.customize=await ecoRequest('customize')}catch(e){ecoState.customize={snippets:[],scripts:[],assets:[]}}
+  await applyEcosystemTheme();
+  await syncExtensions();
+  await syncUserScripts();
+  ecoStartWatch();
+}
 async function ecoLoadSettings(id){const data=await ecoContext(id).api('/settings');ecoState.settingsCache.set(id,data);return data}
 function ecoSettingsField(f,value){
   const v=value??f.default??'',attrs=`data-eco-setting="${esc(f.key)}"`;
@@ -190,14 +272,54 @@ function ecoUsageLabel(usage){const kb=n=>n>=1048576?(n/1048576).toFixed(1)+' Mi
 function ecoCapabilitySummary(p){const c=p.capabilities||{},parts=[];for(const [k,label] of [['providers','生成后端'],['hooks','管线钩子'],['events','事件'],['exporters','导出器'],['importers','导入器'],['routes','接口']]){const n=Array.isArray(c[k])?c[k].length:0;if(n)parts.push(label+' '+n)}if(c.tasks)parts.push('后台任务');if(p.entry)parts.push('前端界面');if(p.styles?.length)parts.push('样式 '+p.styles.length);if(p.requirements)parts.push('pip 依赖');return parts.join(' · ')||'仅清单'}
 function ecoSourceLabel(p){if(p.source==='link')return '本地文件夹 · 热重载';if(p.source==='zip'||p.source==='css')return '导入的包';if(/^https?:/.test(p.source||''))return 'Git · '+p.source.replace(/^https?:\/\//,'').slice(0,48)+(p.branch?' @'+p.branch:'');return p.source||'—'}
 function ecoDepsBadge(p){const d=p.deps||{};if(d.status==='installing')return '<span class="eco-badge is-busy">正在安装依赖…</span>';if(d.status==='failed')return `<span class="eco-badge is-danger">依赖安装失败</span> ${btn('查看日志','terminal','eco-extension-deps-log',`data-id="${esc(p.id)}"`,'small ghost')}${btn('重试','refresh','eco-extension-deps',`data-id="${esc(p.id)}"`,'small ghost')}`;if(d.status==='pending')return `<span class="eco-badge">依赖待安装</span> ${btn('安装依赖','download','eco-extension-deps',`data-id="${esc(p.id)}"`,'small ghost')}`;if(d.status==='ready')return '<span class="eco-badge is-ok">依赖已就绪</span>';return ''}
+function ecoSubtabs(group,tabs){
+  return `<nav class="quiet-tabs eco-subtabs" aria-label="子分类">${tabs.map(([id,label])=>`<button type="button" class="${(ecoState.view[group]||'installed')===id?'active':''}" data-act="eco-view" data-group="${group}" data-view="${id}">${label}</button>`).join('')}</nav>`;
+}
+function renderUserScriptEditor(){
+  const scripts=ecoState.customize?.scripts||ecoState.status?.scripts||[];
+  const card=r=>{
+    const owner='script:'+r.id;
+    const entry=ecoState.loaded.get(owner);
+    const status=!r.enabled?'已停用':entry?.failed?'加载失败':entry?'运行中':'等待加载';
+    return `<article class="eco-editor ${r.enabled?'is-active':''}" data-script-id="${esc(r.id)}"><header class="eco-editor-head"><label class="eco-switch" title="${r.enabled?'停用':'启用'}"><input type="checkbox" data-script-enabled ${r.enabled?'checked':''}><span></span></label><input class="eco-editor-name" value="${esc(r.name)}" data-script-name aria-label="脚本名称" maxlength="80"><code class="eco-editor-id">${esc(r.id)}</code><span class="spacer"></span><small class="eco-editor-status ${entry?.failed?'danger':''}" data-script-status>${ecoState.scriptsDirty.has(r.id)?'未保存':status}</small>${btn('保存并重载','check','eco-script-save',`data-id="${esc(r.id)}"`,'small primary')}${ibtn('trash','eco-script-delete','删除脚本',`data-id="${esc(r.id)}"`)}</header>${entry?.failed?`<p class="danger small" style="margin:0 0 8px">${esc(entry.error||'')}</p>`:''}<textarea class="eco-code eco-script-code" data-script-source spellcheck="false" aria-label="${esc(r.name)} 的代码">${esc(r.source||'')}</textarea></article>`;
+  };
+  return `<div class="eco-management-actions">${btn('新建脚本','plus','eco-script-new','','primary')}${btn('导入 .js','upload','eco-script-import')}<a class="btn ghost" href="/docs/ECOSYSTEM_GUIDE.html" target="_blank" rel="noopener">${icon('book','sm')}<span>扩展指南 ↗</span></a></div><p class="help">用户脚本是单文件轻量扩展：编写 ES 模块，<code>export default function (ctx) {…}</code>，拿到的 <code>ctx</code> 与扩展完全相同（<code>ctx.core</code> 直达全部状态与函数，<code>ctx.mounts</code> 往任何位置挂载界面，<code>ctx.around</code> 包装任何函数，<code>ctx.keymap</code> 绑定快捷键，<code>ctx.slots</code> 注册插槽）。返回清理函数即可在停用时自动卸载。</p>${scripts.length?`<div class="eco-editor-list">${scripts.map(card).join('')}</div>`:`<div class="eco-empty"><h3>还没有用户脚本</h3><p>示例在 <code>examples/user-scripts/</code>：字数统计状态栏、快捷键翻页、自动备份提醒。</p></div>`}`;
+}
+async function saveScript(id){
+  const box=$(`[data-script-id="${CSS.escape(id)}"]`);
+  const scripts=ecoState.customize?.scripts||ecoState.status?.scripts||[];
+  const row=scripts.find(s=>s.id===id);
+  if(!row&&!box)return;
+  const body={
+    id,
+    name:box?.querySelector('[data-script-name]')?.value.trim()||row?.name||id,
+    source:box?.querySelector('[data-script-source]')?.value??row?.source??'',
+    enabled:box?box.querySelector('[data-script-enabled]').checked:!!row?.enabled
+  };
+  await ecoRequest('customize/scripts/save',body);
+  ecoState.scriptsDirty.delete(id);
+  dropExtension('script:'+id);
+  await refreshEcosystem();
+  render();
+  toast('脚本已保存并重新加载。');
+}
 function renderEcosystemSettings(tab){
   if(tab==='themes')return typeof renderStyleStudio==='function'?renderStyleStudio():'<p class="danger">样式工坊未加载。</p>';
   const status=ecoState.status,platform=status.platform||{},describe=MioPlatform.describe();
-  const extCard=p=>{const loaded=ecoState.loaded.get(p.id);return `<article class="eco-package ${p.enabled?'is-active':''} ${p.source==='link'?'is-linked':''}"><div class="eco-package-label">${icon(p.source==='link'?'folder':'box')}<span>${p.enabled?(loaded?.failed?'启用但加载失败':'已启用'):'已停用'}</span><small>v${esc(p.version)} · SDK ${p.apiVersion}</small></div><h3>${esc(p.name)}</h3><code>${esc(p.id)}</code>${p.description?`<p>${esc(p.description)}</p>`:''}<p class="soft small">${ecoCapabilitySummary(p)}</p><p class="soft small">来源：${esc(ecoSourceLabel(p))}${p.source==='link'?`<br><code class="eco-path">${esc(p.path||'')}</code>`:''}</p><p class="soft small">数据：${ecoUsageLabel(p.data)}</p>${ecoDepsBadge(p)?`<p>${ecoDepsBadge(p)}</p>`:''}${p.missing?'<p class="danger">链接的文件夹不存在。</p>':''}${p.error?`<p class="danger">${esc(p.error)}</p>`:''}${loaded?.failed?`<p class="danger">前端加载失败：${esc(loaded.error||'')}</p>`:''}<div class="eco-package-actions">${btn(p.enabled?'停用':'启用',p.enabled?'pause':'play','eco-extension-toggle',`data-id="${esc(p.id)}" data-enabled="${p.enabled?'0':'1'}"`,'small')}${p.settings?.length?btn('设置','settings','eco-extension-settings',`data-id="${esc(p.id)}" ${p.enabled?'':'disabled title="请先启用扩展"'}`,'small ghost'):''}${btn('重新加载','refresh','eco-extension-reload',`data-id="${esc(p.id)}" title="重读清单并重启前后端代码"`,'small ghost')}${/^https?:/.test(p.source||'')?btn('更新代码','download','eco-extension-update',`data-id="${esc(p.id)}" ${p.enabled?'disabled title="请先停用扩展"':''}`,'small ghost'):''}${btn('清理缓存','trash','eco-extension-purge',`data-id="${esc(p.id)}"`,'small ghost')}${btn(p.source==='link'?'取消链接':'卸载','trash','eco-extension-remove',`data-id="${esc(p.id)}"`,'small ghost')}</div></article>`};
+  const view=ecoState.view?.extensions||'installed';
+  const extCard=p=>{const loaded=ecoState.loaded.get(p.id);return `<article class="eco-package ${p.enabled?'is-active':''} ${p.source==='link'?'is-linked':''}"><div class="eco-package-label">${icon(p.source==='link'?'folder':'box')}<span>${p.enabled?(loaded?.failed?'启用但加载失败':'已启用'):'已停用'}</span><small>v${esc(p.version)} · SDK ${p.apiVersion}</small></div><h3>${esc(p.name)}</h3><code>${esc(p.id)}</code>${p.description?`<p>${esc(p.description)}</p>`:''}<p class="soft small">${ecoCapabilitySummary(p)}</p><p class="soft small">来源：${esc(ecoSourceLabel(p))}${p.source==='link'?`<br><code class="eco-path">${esc(p.path||'')}</code>`:''}</p><p class="soft small">数据：${ecoUsageLabel(p.data)}</p>${ecoDepsBadge(p)?`<p>${ecoDepsBadge(p)}</p>`:''}${p.missing?'<p class="danger">链接的文件夹不存在。</p>':''}${p.error?`<p class="danger">${esc(p.error)}</p>`:''}${loaded?.failed?`<p class="danger">前端加载失败：${esc(loaded.error||'')}</p>`:''}<div class="eco-package-actions">${btn(p.enabled?'停用':'启用',p.enabled?'pause':'play','eco-extension-toggle',`data-id="${esc(p.id)}" data-enabled="${p.enabled?'0':'1'}"`,'small')}${p.settings?.length?btn('设置','settings','eco-extension-settings',`data-id="${esc(p.id)}" ${p.enabled?'':'disabled title="请先启用扩展"'}`,'small ghost'):''}${btn('重新加载','refresh','eco-extension-reload',`data-id="${esc(p.id)}" title="重读清单并重启前后端代码"`,'small ghost')}${btn('文件','folder','eco-extension-files',`data-id="${esc(p.id)}"`,'small ghost')}${/^https?:/.test(p.source||'')?btn('更新代码','download','eco-extension-update',`data-id="${esc(p.id)}" ${p.enabled?'disabled title="请先停用扩展"':''}`,'small ghost'):''}${btn('清理缓存','trash','eco-extension-purge',`data-id="${esc(p.id)}"`,'small ghost')}${btn(p.source==='link'?'取消链接':'卸载','trash','eco-extension-remove',`data-id="${esc(p.id)}"`,'small ghost')}</div></article>`};
   const hooksList=Array.isArray(platform.hooks)?platform.hooks:Object.entries(platform.hooks||{}).map(([name,handlers])=>({name,handlers}));
   const eventsList=Array.isArray(platform.events)?platform.events:Object.entries(platform.events||{}).map(([name,items])=>({name,listeners:(items||[]).length}));
   const platformPanel=`<details class="quiet-advanced"><summary>平台能力总览（实时）</summary><div class="eco-platform-grid"><div><h4>生成后端 ${(platform.providers||[]).length}</h4>${(platform.providers||[]).map(p=>`<p><code>${esc(p.id)}</code> ${esc(p.label)} <small>${esc(p.owner||'core')}</small></p>`).join('')}</div><div><h4>导出器 ${mioExporterList().length}</h4>${mioExporterList().map(e=>`<p><code>${esc(e.id)}</code> ${esc(e.label)} <small>${esc(e.runtime)}</small></p>`).join('')}</div><div><h4>导入器 ${mioImporterList().length}</h4>${mioImporterList().map(e=>`<p><code>${esc(e.id)}</code> ${esc(e.label)} ${btn('导入','upload','mio-import',`data-importer="${esc(e.id)}"`,'small ghost')}</p>`).join('')}</div><div><h4>管线钩子</h4>${hooksList.map(h=>`<p><code>${esc(h.name)}</code> <small>${(h.handlers||[]).map(x=>esc(x.owner||x)).join(', ')||'无扩展'}</small></p>`).join('')}</div><div><h4>后端事件</h4>${eventsList.map(e=>`<p><code>${esc(e.name)}</code> <small>${e.listeners||0} 监听</small></p>`).join('')}</div><div><h4>界面插槽与锚点</h4>${Object.entries(describe.slots).map(([s,n])=>`<p><code>${esc(s)}</code> <small>${n} 项</small></p>`).join('')}<p><code>mount</code> <small>${describe.mounts} 处</small></p></div><div><h4>补丁 / 过滤器 / 快捷键</h4>${describe.patches.map(p=>`<p><code>${esc(p.target)}</code> <small>${p.layers.map(esc).join(' → ')}</small></p>`).join('')||'<p class="soft small">没有扩展改写核心函数</p>'}${Object.entries(describe.filters).map(([n,o])=>`<p><code>${esc(n)}</code> <small>${o.map(esc).join(', ')}</small></p>`).join('')}${describe.keys.map(k=>`<p><kbd class="kbd">${esc(k.combo)}</kbd> <small>${esc(k.owner)} ${esc(k.description||'')}</small></p>`).join('')}</div><div><h4>样式注入</h4>${describe.styles.map(s=>`<p><code>${esc(s.key)}</code> <small>${s.kind}${s.size?' · '+s.size+' 字符':''}</small></p>`).join('')||'<p class="soft small">无</p>'}</div></div></details>`;
-  return `<section class="eco-settings"><header class="eco-heading"><span class="context-kicker">扩展中心 · SDK v3 开放平台</span><h2>为创作，接入更多可能。</h2><p>扩展可以新增页面、面板、按钮与快捷键，改写任意核心函数，注入样式，运行后台任务，提供生成后端与导出器；链接本地文件夹即可边改边看。</p></header><div class="eco-management-actions">${btn('通过 Git 安装','plus','eco-extension-install','','primary')}${btn('导入扩展 ZIP','upload','eco-extension-zip','','ghost')}${btn('链接本地文件夹','folder','eco-extension-link','','ghost')}${btn('刷新列表','refresh','eco-refresh','','ghost')}<a class="btn ghost" href="?safe_mode=1">进入安全模式 ↗</a></div><div class="eco-dropzone" data-eco-drop="extension" tabindex="0" role="button" data-act="eco-extension-zip" aria-label="导入扩展 ZIP">${icon('upload')}<strong>拖放 .zip 扩展包到这里</strong><span class="soft small">或点击选择文件</span></div><div class="eco-package-grid">${status.extensions.map(extCard).join('')}</div>${!status.extensions.length?'<div class="eco-empty"><h3>扩展库还是一张白纸</h3><p>试试链接 examples/extensions/studio-kit：一个扩展同时演示生成后端、钩子、后台任务、锚点、补丁与快捷键。</p></div>':''}${platformPanel}<details class="quiet-advanced"><summary>运行环境与开发文档</summary><p>Node.js ${status.node?'已就绪':'未检测到（可执行变量需要 Node.js 20+）'} · Git ${status.git?'已就绪':'未检测到'} · 平台 SDK ${status.sdkVersion||3} · 数据目录 <code>${esc(status.dataDir||'')}</code>${status.watching?' · 正在监视链接的文件夹':''}</p><p><a href="/docs/ECOSYSTEM_GUIDE.html" target="_blank" rel="noopener">扩展 SDK v3 指南 ↗</a> · <a href="/docs/STYLE_STUDIO.html" target="_blank" rel="noopener">样式工坊与主题包 ↗</a></p></details>${ecoState.errors.length||MioPlatform.failures.length?`<details class="quiet-advanced" open><summary>加载诊断</summary>${ecoState.errors.map(e=>`<p class="danger">${esc(e)}</p>`).join('')}${MioPlatform.failures.slice(-10).map(f=>`<p class="danger">${esc(f.owner)} · ${esc(f.where)} · ${esc(f.error)}</p>`).join('')}${btn('清空诊断','trash','eco-clear-errors','','small ghost')}</details>`:''}</section>`;
+  const scriptsCount=(ecoState.customize?.scripts||ecoState.status.scripts||[]).length;
+  const tabs=ecoSubtabs('extensions',[['installed','已安装 '+status.extensions.length],['scripts','用户脚本 '+scriptsCount]]);
+  let bodyHtml='';
+  if(view==='scripts'){
+    bodyHtml=renderUserScriptEditor();
+  }else{
+    bodyHtml=`<div class="eco-management-actions">${btn('通过 Git 安装','plus','eco-extension-install','','primary')}${btn('导入扩展 ZIP','upload','eco-extension-zip','','ghost')}${btn('链接本地文件夹','folder','eco-extension-link','','ghost')}${btn('刷新列表','refresh','eco-refresh','','ghost')}<a class="btn ghost" href="?safe_mode=1">进入安全模式 ↗</a></div><div class="eco-dropzone" data-eco-drop="extension" tabindex="0" role="button" data-act="eco-extension-zip" aria-label="导入扩展 ZIP">${icon('upload')}<strong>拖放 .zip 扩展包到这里</strong><span class="soft small">或点击选择文件</span></div><div class="eco-package-grid">${status.extensions.map(extCard).join('')}</div>${!status.extensions.length?'<div class="eco-empty"><h3>扩展库还是一张白纸</h3><p>试试链接 examples/extensions/studio-kit：一个扩展同时演示生成后端、钩子、后台任务、锚点、补丁与快捷键。</p></div>':''}`;
+  }
+  return `<section class="eco-settings"><header class="eco-heading"><span class="context-kicker">扩展中心 · SDK v3 开放平台</span><h2>为创作，接入更多可能。</h2><p>扩展可以新增页面、面板、按钮与快捷键，改写任意核心函数，注入样式，运行后台任务，提供生成后端与导出器；链接本地文件夹即可边改边看。</p>${tabs}</header>${bodyHtml}${platformPanel}<details class="quiet-advanced"><summary>运行环境与开发文档</summary><p>Node.js ${status.node?'已就绪':'未检测到（可执行变量需要 Node.js 20+）'} · Git ${status.git?'已就绪':'未检测到'} · 平台 SDK ${status.sdkVersion||3} · 数据目录 <code>${esc(status.dataDir||'')}</code>${status.watching?' · 正在监视链接的文件夹':''}</p><p><a href="/docs/ECOSYSTEM_GUIDE.html" target="_blank" rel="noopener">扩展 SDK v3 指南 ↗</a> · <a href="/docs/STYLE_STUDIO.html" target="_blank" rel="noopener">样式工坊与主题包 ↗</a></p></details>${ecoState.errors.length||MioPlatform.failures.length?`<details class="quiet-advanced" open><summary>加载诊断</summary>${ecoState.errors.map(e=>`<p class="danger">${esc(e)}</p>`).join('')}${MioPlatform.failures.slice(-10).map(f=>`<p class="danger">${esc(f.owner)} · ${esc(f.where)} · ${esc(f.error)}</p>`).join('')}${btn('清空诊断','trash','eco-clear-errors','','small ghost')}</details>`:''}</section>`;
 }
 async function importEcosystemFile(file,kind){
   if(!file)return;if(file.size>256*1024*1024)throw Error('安装包最大 256 MiB。');
@@ -252,6 +374,11 @@ function installEcosystem(){
   if(typeof generateFrame==='function'){const previousGenerate=generateFrame;generateFrame=async function(frame,...rest){const next=MioPlatform.applyFilter('frame.render',frame,{args:rest});return previousGenerate(next&&typeof next==='object'?next:frame,...rest)}}
   Object.assign(v3Actions,{
     'eco-refresh':async()=>{await refreshEcosystem();render()},
+    'eco-view':d=>{ecoState.view[d.group]=d.view;render()},
+    'eco-extension-files':async d=>{
+      const rows=await ecoRequest('extensions/'+d.id+'/files/');
+      modal(d.id+' · 文件区',`<p class="help">扩展通过 <code>ctx.files</code> 读写的文件，也可以在这里下载。位于 <code>data/extensions/${esc(d.id)}/files/</code>。</p>${rows.length?`<div class="eco-file-list">${rows.map(r=>`<a class="eco-file-row" href="/api/ecosystem/extensions/${esc(d.id)}/files/${r.path.split('/').map(encodeURIComponent).join('/')}?download=1" download><code>${esc(r.path)}</code><small>${ecoBytes(r.size)}</small></a>`).join('')}</div>`:'<p class="soft small">还没有文件。</p>'}<div class="modal-footer">${btn('关闭','','close-modal')}</div>`);
+    },
     'eco-clear-errors':()=>{ecoState.errors=[];MioPlatform.failures.length=0;render()},
     'eco-theme-import':()=>pickFile('.css,.zip',file=>importEcosystemFile(file,'theme')),
     'eco-extension-zip':()=>pickFile('.zip',file=>importEcosystemFile(file,'extension')),
@@ -270,6 +397,30 @@ function installEcosystem(){
     'eco-extension-purge':async d=>{if(await confirmAction('清理扩展缓存？','删除 cache 与 tmp 两层数据；配置和工作区数据保留。','清理')){const usage=await ecoRequest('extensions/purge',{id:d.id,level:'cache'});toast('已清理：'+ecoUsageLabel(usage));await refreshEcosystem();render()}},
     'eco-extension-settings':async d=>{const data=await ecoLoadSettings(d.id);const p=ecoState.status.extensions.find(x=>x.id===d.id);modal((p?.name||d.id)+' · 设置',`<form id="eco-settings-form" data-id="${esc(d.id)}">${data.schema.map(f=>ecoSettingsField(f,data.values[f.key])).join('')}<div class="modal-footer">${btn('取消','','close-modal','','ghost')}${btn('保存','check','eco-extension-settings-save',`data-id="${esc(d.id)}"`,'primary')}</div></form>`)},
     'eco-extension-settings-save':async d=>{const data=ecoState.settingsCache.get(d.id);if(!data)return;const values=ecoReadSettingsForm(data.schema);await ecoContext(d.id).api('/settings',{values});closeModal();toast('设置已保存。');MioPlatform.emit('ext:'+d.id+':settings.changed',values,{source:'core',relay:false})},
+    'eco-script-new':async()=>{
+      const scripts=ecoState.customize?.scripts||ecoState.status?.scripts||[];
+      const saved=await ecoRequest('customize/scripts/save',{name:'新用户脚本 '+(scripts.length+1),source:"export default function(ctx){\n  // 在此编写脚本逻辑\n}\n",enabled:false});
+      await refreshEcosystem();
+      render();
+      requestAnimationFrame(()=>$(`[data-script-id="${CSS.escape(saved.id)}"] textarea`)?.focus());
+    },
+    'eco-script-save':d=>saveScript(d.id),
+    'eco-script-delete':async d=>{
+      if(!await confirmAction('删除用户脚本？','脚本文件会被删除，无法恢复。','删除'))return;
+      await ecoRequest('customize/scripts/delete',{id:d.id});
+      ecoState.scriptsDirty.delete(d.id);
+      dropExtension('script:'+d.id);
+      await refreshEcosystem();
+      render();
+    },
+    'eco-script-import':()=>pickFile('.js,.mjs',async files=>{
+      for(const file of files){
+        await ecoRequest('customize/scripts/save',{name:file.name.replace(/\.m?js$/i,''),source:await file.text(),enabled:false});
+      }
+      await refreshEcosystem();
+      render();
+      toast('已导入 '+files.length+' 个脚本（默认停用，检查后再启用）。');
+    },true),
     'eco-macro-edit':d=>macroEditor(d.owner,d.key),
     'eco-macro-save':()=>{
       const m=rt.ecoMacro,p=settingsTargetById(m.owner),entries=p&&mergedSettingEntries(p),e=entries?.find(x=>x.key===m.key&&x.id===m.id);if(!e)throw Error('属性已变化。');
@@ -289,15 +440,26 @@ function installEcosystem(){
   document.addEventListener('drop',e=>{const box=e.target.closest('[data-eco-drop]');if(!box)return;e.preventDefault();importEcosystemFile(e.dataTransfer.files[0],box.dataset.ecoDrop).catch(err=>toast(err.message,'error'))});
   document.addEventListener('keydown',e=>{if(e.target.matches('[data-eco-drop]')&&['Enter',' '].includes(e.key)){e.preventDefault();e.target.click()}});
   document.addEventListener('input',e=>{
+    if(e.target.matches('[data-script-source],[data-script-name]')){const id=e.target.closest('[data-script-id]')?.dataset.scriptId;if(id){ecoState.scriptsDirty.add(id);const status=e.target.closest('article')?.querySelector('[data-script-status]');if(status)status.textContent='未保存'}return}
     const color=e.target.closest('input[data-eco-color]');if(color){const text=color.parentElement.querySelector('input[type="text"]');if(text){text.value=color.value;text.dispatchEvent(new Event('input',{bubbles:true}))}return}
     const pairText=e.target.closest('.eco-color-pair input[type="text"]');if(pairText&&/^#[0-9a-f]{6}$/i.test(pairText.value.trim())){const swatch=pairText.parentElement.querySelector('input[type="color"]');if(swatch)swatch.value=pairText.value.trim().toLowerCase()}
     const range=e.target.closest('.eco-range-pair input[type="range"]');if(range){const out=range.parentElement.querySelector('output');if(out)out.textContent=range.value+(out.textContent.replace(/^-?[\d.]+/,''))}
   });
+  document.addEventListener('change',e=>{
+    if(e.target.matches('[data-script-enabled]')){const id=e.target.closest('[data-script-id]')?.dataset.scriptId;if(id)saveScript(id).catch(err=>toast(err.message,'error'))}
+  });
+  window.addEventListener('keydown',e=>{
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='s'){
+      const script=e.target.closest?.('[data-script-id]');
+      if(script){e.preventDefault();e.stopImmediatePropagation();saveScript(script.dataset.scriptId).catch(err=>toast(err.message,'error'));return}
+    }
+  },true);
   if(!document.getElementById('mio-font-list')){const list=document.createElement('datalist');list.id='mio-font-list';list.innerHTML=['Inter','"Noto Sans SC"','"Noto Serif SC"','"PingFang SC"','"Microsoft YaHei"','"Songti SC"','"Source Han Sans SC"','"LXGW WenKai"','Georgia','"Cormorant Garamond"','system-ui','monospace'].map(f=>`<option value='${f}'>`).join('');document.body.append(list)}
 }
 async function bootEcosystem(){
   globalThis.Mio.extensions=Object.freeze({apiVersion:3,platform:MioPlatform,albums:MioAlbums,icons:MioIcons,context:id=>ecoContext(id),core:ecoCoreFacade(),state:ecoState,refresh:()=>refreshEcosystem()});
   try{await refreshEcosystem()}catch(e){ecoState.errors.push(e.message)}
+  ecoState.booted=true;
   if(window.MioSafeMode){
     const host=document.createElement('aside');host.style.cssText='position:fixed!important;inset:auto 16px 40px auto!important;z-index:2147483647!important;display:block!important';
     host.id='mio-safe-recovery';const shadow=host.attachShadow({mode:'closed'});shadow.innerHTML='<style>:host{all:initial}section{font:13px system-ui;background:#fff;color:#15271a;border:2px solid #4a7952;border-radius:12px;padding:18px;max-width:320px;box-shadow:0 6px 30px #0003}button{padding:9px;border-radius:6px;border:1px solid #9abfa2;background:#e6f2e6;color:#15271a;cursor:pointer;margin-top:10px}</style><section><b>安全模式 · 官方界面</b><p>第三方主题、用户样式与前端扩展未加载。点击下方可停用所有扩展并恢复官方外观；代码与数据均保留。</p><button>一键重置主题并停用扩展</button></section>';

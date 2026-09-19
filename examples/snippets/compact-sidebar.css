@@ -1,0 +1,5 @@
+/* 紧凑侧栏：只显示图标，鼠标悬停时展开。宽度用主题令牌 --nav-width 控制。 */
+:root { --nav-width: 66px; }
+.sidebar .nav-item span, .sidebar .brand-sub, .sidebar .search-bar span { display: none; }
+.sidebar:hover { --nav-width: 196px; }
+.sidebar:hover .nav-item span { display: inline; }

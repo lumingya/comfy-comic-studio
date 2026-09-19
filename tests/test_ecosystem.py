@@ -306,4 +306,51 @@ def setup(ctx):
         with self.assertRaises(LibraryError):eco.host_call('probe','events.emit',{'name':'app.ready'})
         self.assertIn('rows',eco.host_call('probe','library.kinds',{}));self.assertEqual(eco.host_call('probe','workspace.path',{})['path'],str(self.root))
         self.assertEqual(eco.styles.compile(),'');self.assertEqual(eco.manifest()['sdk'],3)
+    def test_user_scripts_crud_and_safety(self):
+        from backend.ecosystem.user_scripts import UserScripts
+        store = UserScripts(self.root / "scripts-data")
+        script = store.save({"name": "Word Counter", "source": "export default function(ctx){}"})
+        self.assertEqual(script["id"], "word-counter")
+        self.assertTrue(script["enabled"])
+        self.assertTrue(store.script_path("word-counter.js").is_file())
+        with self.assertRaises(LibraryError):
+            store.script_path("../escape.js")
+        with self.assertRaises(LibraryError):
+            store.script_path("not-exist.js")
+        second = store.save({"name": "Word Counter"})
+        self.assertEqual(second["id"], "word-counter-2")
+        store.reorder([second["id"], script["id"]])
+        self.assertEqual([r["id"] for r in store.list(False)], [second["id"], script["id"]])
+        store.save({"id": second["id"], "enabled": False})
+        self.assertEqual([r["id"] for r in store.enabled()], [script["id"]])
+        store.disable_all()
+        self.assertEqual(store.enabled(), [])
+        store.delete(script["id"])
+        self.assertEqual([r["id"] for r in store.list(False)], [second["id"]])
+    def test_extension_files_api_and_raw_responses(self):
+        manager = Plugins(ROOT, self.root / "data")
+        manager.code = self.root / "code"
+        self.addCleanup(manager.close)
+        record = manager.file_write("probe-ext", "out/data.bin", b"\x01\x02\x03")
+        self.assertEqual(record["path"], "out/data.bin")
+        self.assertEqual(record["size"], 3)
+        self.assertTrue(manager.file_path("probe-ext", "out/data.bin").is_file())
+        files = manager.file_list("probe-ext")
+        self.assertEqual(len(files), 1)
+        self.assertEqual(files[0]["path"], "out/data.bin")
+        with self.assertRaises(LibraryError):
+            manager.file_path("probe-ext", "../escape.txt")
+        # raw response handling
+        raw_text = manager.raw_response("probe-ext", {"$text": "hello text"})
+        self.assertEqual(raw_text["bytes"], b"hello text")
+        self.assertEqual(raw_text["mime"], "text/plain; charset=utf-8")
+        import base64
+        raw_b64 = manager.raw_response("probe-ext", {"$raw": base64.b64encode(b"raw-bin").decode()})
+        self.assertEqual(raw_b64["bytes"], b"raw-bin")
+        mio_resp = manager.raw_response("probe-ext", {"__mio_response__": True, "b64": base64.b64encode(b"custom").decode(), "mime": "application/json", "status": 201})
+        self.assertEqual(mio_resp["bytes"], b"custom")
+        self.assertEqual(mio_resp["status"], 201)
+        manager.file_delete("probe-ext", "out")
+        self.assertEqual(manager.file_list("probe-ext"), [])
+
 

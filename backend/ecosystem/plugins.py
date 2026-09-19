@@ -11,6 +11,7 @@ has to know an extension exists.
 import base64
 import hashlib
 import json
+import mimetypes
 import os
 from pathlib import Path
 import queue
@@ -23,7 +24,7 @@ import threading
 import time
 import uuid
 
-from backend.mio_library import LibraryError
+from backend.mio_library import LibraryError, atomic_write
 from .storage import Storage, identifier, owned
 from .packages import unpack, manifest, package_root, clone, scan_revision
 
@@ -34,6 +35,8 @@ MAX_ROUTE_TIMEOUT = 3600
 EXPORT_TIMEOUT = 180
 STARTUP_TIMEOUT = 30
 DEPS_TIMEOUT = 1200
+MAX_FILE = 512 * 1024 * 1024
+FILE_ROOT = "files"
 
 
 class WorkerDead(LibraryError):
@@ -43,11 +46,12 @@ class WorkerDead(LibraryError):
 class Worker:
     """One extension process. Calls are multiplexed by sequence number."""
 
-    def __init__(self, code, data, project, host_call, timeout=STARTUP_TIMEOUT, site=None):
+    def __init__(self, code, data, project, host_call, timeout=STARTUP_TIMEOUT, site=None, files=None):
         self.host_call = host_call
         env = dict(os.environ)
         env["MIO_EXT_SITE"] = str(site or "")
         env["MIO_EXT_DATA"] = str(data)
+        env["MIO_EXT_FILES"] = str(files or "")
         env["PYTHONIOENCODING"] = "utf-8"
         self.lock = threading.Lock()
         self.write_lock = threading.Lock()
@@ -397,7 +401,7 @@ class Plugins:
                     return
                 if (code / "plugin.py").exists() and id not in self.workers:
                     site = self.site_dir(id) if meta.get("requirements") else None
-                    self.workers[id] = Worker(code, data, self.project, self._host_call(id), site=site)
+                    self.workers[id] = Worker(code, data, self.project, self._host_call(id), site=site, files=self.files_dir(id))
                     self._register(id, self.workers[id])
                 items[id]["enabled"] = True
                 self.errors.pop(id, None)
@@ -585,11 +589,11 @@ class Plugins:
         return run
 
     def _materialize_file(self, id, result):
-        """Exporter results: {'filename','mime','b64'} or {'filename','mime','path'} (inside the extension data dir)."""
+        """File-like results: {'filename','mime','b64'|'text'|'path'} (path inside the extension data dir)."""
         if not isinstance(result, dict):
             raise LibraryError("Exporter must return an object")
         filename = str(result.get("filename") or "export.bin")[:120].replace("/", "_").replace("\\", "_")
-        mime = str(result.get("mime") or "application/octet-stream")[:100]
+        mime = str(result.get("mime") or mimetypes.guess_type(filename)[0] or "application/octet-stream")[:100]
         if result.get("path"):
             path = owned(self.data / id, str(result["path"]))
             if not path.is_file():
@@ -597,11 +601,33 @@ class Plugins:
             raw = path.read_bytes()
         elif result.get("b64"):
             raw = base64.b64decode(result["b64"], validate=True)
+        elif isinstance(result.get("text"), str):
+            raw = result["text"].encode("utf-8")
         else:
-            raise LibraryError("Exporter returned neither b64 nor path")
-        if len(raw) > 256 * 1024 * 1024:
-            raise LibraryError("Export exceeds 256 MiB", 413)
-        return {"filename": filename, "mime": mime, "bytes": raw}
+            raise LibraryError("Exporter returned neither b64, text nor path")
+        if len(raw) > MAX_FILE:
+            raise LibraryError("Export exceeds %d MiB" % (MAX_FILE // 1048576), 413)
+        return {"filename": filename, "mime": mime, "bytes": raw, "headers": result.get("headers") if isinstance(result.get("headers"), dict) else {}}
+
+    def raw_response(self, id, result):
+        """Routes may answer with a raw body instead of JSON: __mio_response__ or {'$file':...}|{'$text':...}|{'$raw': b64}."""
+        if not isinstance(result, dict):
+            return None
+        if result.get("__mio_response__"):
+            return {
+                "filename": result.get("filename"),
+                "mime": result.get("mime") or "application/octet-stream",
+                "bytes": base64.b64decode(result.get("b64", ""), validate=True),
+                "status": int(result.get("status") or 200),
+                "headers": result.get("headers") if isinstance(result.get("headers"), dict) else {},
+            }
+        if "$file" in result:
+            return self._materialize_file(id, {"path": result["$file"], "filename": result.get("filename"), "mime": result.get("mime"), "headers": result.get("headers")})
+        if "$text" in result:
+            return self._materialize_file(id, {"text": str(result["$text"]), "filename": result.get("filename") or "response.txt", "mime": result.get("mime") or "text/plain; charset=utf-8", "headers": result.get("headers")})
+        if "$raw" in result:
+            return self._materialize_file(id, {"b64": result["$raw"], "filename": result.get("filename") or "response.bin", "mime": result.get("mime"), "headers": result.get("headers")})
+        return None
 
     def _provider_action(self, id, provider_id, action):
         def run(payload, host):
@@ -734,6 +760,47 @@ class Plugins:
             "routes": caps.get("routes", []),
             "tasks": bool(caps.get("tasks")),
         }
+
+    # ------------------------------------------------------------------ files API
+    def files_dir(self, id):
+        folder = owned(self.data, identifier(id)) / FILE_ROOT
+        folder.mkdir(parents=True, exist_ok=True)
+        return folder
+
+    def file_path(self, id, relative):
+        return owned(self.files_dir(id), relative)
+
+    def file_list(self, id, prefix=""):
+        root = self.files_dir(id)
+        base = owned(root, prefix) if prefix else root
+        rows = []
+        if base.is_dir():
+            for path in sorted(base.rglob("*")):
+                if path.is_file():
+                    rel = path.relative_to(root).as_posix()
+                    rows.append({
+                        "path": rel,
+                        "size": path.stat().st_size,
+                        "updatedAt": path.stat().st_mtime,
+                        "url": "/api/ecosystem/extensions/" + id + "/files/" + rel,
+                    })
+        return rows
+
+    def file_write(self, id, relative, raw):
+        if len(raw) > MAX_FILE:
+            raise LibraryError("File exceeds %d MiB" % (MAX_FILE // 1048576), 413)
+        path = self.file_path(id, relative)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write(path, raw)
+        return {"path": relative, "size": len(raw), "url": "/api/ecosystem/extensions/" + id + "/files/" + relative}
+
+    def file_delete(self, id, relative):
+        path = self.file_path(id, relative)
+        if path.is_dir():
+            shutil.rmtree(path)
+        elif path.is_file():
+            path.unlink()
+        return self.file_list(id)
 
     # --------------------------------------------------------------- maintenance
     def update(self, id, trusted):
