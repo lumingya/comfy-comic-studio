@@ -27,7 +27,7 @@ from backend.providers.registry import PROVIDERS
 from .events import EventBus, Hooks
 from .registry import SimpleRegistry
 from .storage import Storage, identifier
-from .plugins import Plugins, TIERS
+from .plugins import Plugins, TIERS, MAX_FILE
 from .themes import Themes
 from .styles import Styles
 from .user_scripts import UserScripts
@@ -474,6 +474,31 @@ def _send_static(handler, p, cache=True, mime=None, disposition=None):
 PUBLIC_PREFIXES = ("/api/ecosystem/", "/api/extensions/", "/extension-assets/", "/theme-assets/", "/style-assets/", "/user-scripts/", "/customize/scripts/")
 
 
+def _read_body(handler, max_bytes=MAX_FILE):
+    raw_length = handler.headers.get("Content-Length")
+    if not raw_length:
+        return {}
+    try:
+        content_length = int(raw_length)
+    except (ValueError, TypeError):
+        raise LibraryError("Invalid Content-Length header", 400)
+    if content_length < 0:
+        raise LibraryError("Invalid Content-Length header", 400)
+    if content_length > max_bytes:
+        limit_mb = max_bytes // (1024 * 1024)
+        raise LibraryError(f"Request payload exceeds {limit_mb} MiB limit", 413)
+    raw = handler.rfile.read(content_length)
+    if len(raw) != content_length:
+        raise LibraryError("Incomplete request body", 400)
+    content_type = handler.headers.get("Content-Type", "").split(";", 1)[0].strip().lower()
+    if content_type == "application/json":
+        try:
+            return json.loads(raw.decode("utf-8"))
+        except Exception:
+            raise LibraryError("Invalid JSON body", 400)
+    return raw
+
+
 def dispatch(handler, host, path):
     if not path.startswith(PUBLIC_PREFIXES):
         return False
@@ -498,7 +523,7 @@ def dispatch(handler, host, path):
             p = svc.user_scripts.script_path(name)
             _send_static(handler, p, cache=False, mime="text/javascript; charset=utf-8")
             return True
-        body = handler.read_json_body(max_bytes=320 * 1024 * 1024) if method == "POST" else {}
+        body = _read_body(handler, max_bytes=MAX_FILE) if method in ("POST", "PUT") else {}
         if path.startswith("/api/extensions/"):
             result = _extension_route(svc, host, path, method, body, query)
             raw = svc.plugins.raw_response(path[len("/api/extensions/"):].partition("/")[0], result)

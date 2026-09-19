@@ -151,8 +151,12 @@ class UserScripts:
             return self.get(item["id"])
 
     def delete(self, script_id):
+        if not isinstance(script_id, str) or not SCRIPT_ID.fullmatch(script_id):
+            raise LibraryError("Invalid script id", 400)
         with self.lock:
             rows = self.registry()
+            if not any(x["id"] == script_id for x in rows):
+                raise LibraryError("User script not found: " + str(script_id), 404)
             rows = [x for x in rows if x["id"] != script_id]
             self._save_registry(rows)
             path = self._file(script_id)
@@ -161,6 +165,8 @@ class UserScripts:
             return self.list(with_source=False)
 
     def reorder(self, ids):
+        if not isinstance(ids, (list, tuple)):
+            raise LibraryError("ids must be a list", 400)
         with self.lock:
             rows = self.registry()
             by_id = {x["id"]: x for x in rows}

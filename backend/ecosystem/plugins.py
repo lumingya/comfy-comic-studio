@@ -874,7 +874,15 @@ class Plugins:
         revision, sep, relative = relative.partition("/")
         if not sep or revision != self.records()[id]["revision"]:
             raise LibraryError("Extension revision unavailable", 404)
-        if ".git" in Path(relative).parts or Path(relative).suffix.lower() in (".py", ".pyc", ".pyo") or Path(relative).name.startswith("."):
+        rel_path = Path(relative)
+        if (
+            ":" in relative
+            or "\\" in relative
+            or any(part.startswith(".") or part.endswith((".", " ")) for part in rel_path.parts)
+            or ".git" in rel_path.parts
+            or rel_path.suffix.lower() in (".py", ".pyc", ".pyo")
+            or any(p.rstrip(". ").lower().endswith((".py", ".pyc", ".pyo")) for p in rel_path.parts)
+        ):
             raise LibraryError("Asset not public", 403)
         path = owned(self.code_dir(id), relative)
         if not path.is_file():

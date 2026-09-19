@@ -255,10 +255,25 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
         super().end_headers()
 
     def do_PUT(self):
-        if not self.external_api():
-            self.send_error(405)
+        if self.external_api():
+            return
+        if not self.authorize_private():
+            return
+        request_path = urllib.parse.urlparse(self.path).path
+        if ecosystem_api.dispatch(self, self.services.application, request_path):
+            return
+        self.send_error(405)
 
-    do_DELETE = do_PUT
+    def do_DELETE(self):
+        if self.external_api():
+            return
+        if not self.authorize_private():
+            return
+        request_path = urllib.parse.urlparse(self.path).path
+        if ecosystem_api.dispatch(self, self.services.application, request_path):
+            return
+        self.send_error(405)
+
     do_PATCH = do_PUT
 
     def do_OPTIONS(self):

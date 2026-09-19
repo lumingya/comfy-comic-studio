@@ -60,17 +60,34 @@ function ecoContext(id,options={}){
         const off1=MioPlatform.register(name,item,owner);
         let off2=()=>{};
         if(mountSpec&&item?.id){
-          off2=MioPlatform.mount({
-            id:name+'-'+item.id,
-            selector:item.target||mountSpec.target,
-            position:item.position||mountSpec.position,
-            tag:item.tag||mountSpec.tag,
-            cls:mountSpec.className+' '+(item.className||''),
-            when:item.when,
-            live:item.live,
-            render:typeof item.render==='function'?(container,target,context)=>item.render(container,{target,...context}):undefined,
-            html:typeof item.html==='string'||typeof item.html==='function'?item.html:undefined
-          },owner);
+          const hasRender=typeof item.render==='function';
+          const hasHtml=typeof item.html==='string'||typeof item.html==='function';
+          const hasAction=Boolean(item.label||item.icon||item.run);
+          if(hasRender||hasHtml){
+            off2=MioPlatform.mount({
+              id:name+'-'+item.id,
+              selector:item.target||mountSpec.target,
+              position:item.position||mountSpec.position,
+              tag:item.tag||mountSpec.tag,
+              cls:mountSpec.className+' '+(item.className||''),
+              when:item.when,
+              live:item.live,
+              render:hasRender?(container,target,context)=>item.render(container,{target,...context}):undefined,
+              html:hasHtml?item.html:undefined
+            },owner);
+          }else if(hasAction){
+            const itemKey=owner+':'+item.id;
+            off2=MioPlatform.mount({
+              id:name+'-'+item.id,
+              selector:item.target||mountSpec.target,
+              position:item.position||mountSpec.position,
+              tag:item.tag||mountSpec.tag,
+              cls:mountSpec.className+' '+(item.className||''),
+              when:item.when,
+              live:item.live,
+              html:`<button type="button" class="${item.cls||(item.label?'btn small ghost':'ibtn')} mio-slot-btn" data-act="mio-slot" data-slot="${esc(name)}" data-key="${esc(itemKey)}" title="${esc(item.title||item.label||'')}">${item.icon?icon(item.icon,item.label?'sm':''):''}${item.label?`<span>${esc(item.label)}</span>`:''}</button>`
+            },owner);
+          }
         }
         return ()=>{off1();off2()};
       },
@@ -80,7 +97,8 @@ function ecoContext(id,options={}){
   };
   const slotAlias={frameCard:'frame-card',albumCard:'album-card',contextMenu:'context-menu'};
   const slots=new Proxy({},{get:(_,name)=>typeof name==='string'?slot(slotAlias[name]||name.replace(/[A-Z]/g,m=>'-'+m.toLowerCase())):undefined,has:()=>true,ownKeys:()=>MioPlatform.slotNames(),getOwnPropertyDescriptor:()=>({enumerable:true,configurable:true})});
-  const disposers=()=>{const entry=ecoState.loaded.get(id);if(entry&&!entry.failed)return entry.disposers||(entry.disposers=[]);const pending=ecoState.pendingDisposers||(ecoState.pendingDisposers=new Map());if(!pending.has(id))pending.set(id,[]);return pending.get(id)};
+  const disposersKey=owner||id;
+  const disposers=()=>{const entry=ecoState.loaded.get(disposersKey);if(entry&&!entry.failed)return entry.disposers||(entry.disposers=[]);const pending=ecoState.pendingDisposers||(ecoState.pendingDisposers=new Map());if(!pending.has(disposersKey))pending.set(disposersKey,[]);return pending.get(disposersKey)};
   const settingsEvent='ext:'+id+':settings.changed';
   return Object.freeze({
     id,apiVersion:3,manifest:clone(plugin),dev:plugin.source==='link',revision:plugin.revision||'0',api,request:api,
@@ -95,7 +113,7 @@ function ecoContext(id,options={}){
     mounts:Object.freeze({add:spec=>MioPlatform.mount(spec,owner),remove:localId=>MioPlatform.unmount(owner+':'+localId),apply:()=>MioPlatform.applyMounts()}),
     styles:Object.freeze({add:(css,key='default')=>MioPlatform.setStyle(owner,key,css),link:(href,key)=>MioPlatform.linkStyle(owner,key||href,/^(\/|https?:|data:|blob:)/.test(href)?href:ecoAssetURL(plugin,href)),vars:(map,selector=':root')=>MioPlatform.setStyle(owner,'vars:'+selector,selector+'{'+Object.entries(map||{}).map(([k,v])=>k+':'+v).join(';')+'}'),remove:(key='default')=>MioPlatform.removeStyle(owner,key),clear:()=>MioPlatform.clearStyles(owner)}),
     patch:(...args)=>{if(typeof args[0]==='string'){const [name,wrapper,options]=args;return MioPlatform.patch(name,wrapper,{...(options||{}),owner})}const [target,name,wrapper,options]=args;return MioPlatform.patch(target,name,wrapper,{...(options||{}),owner})},
-    around:(name,wrapper,options)=>MioPlatform.patch(name,wrapper,{...(options||{}),owner}),
+    around:(...args)=>{if(typeof args[0]==='string'){const [name,wrapper,options]=args;return MioPlatform.patch(name,wrapper,{...(options||{}),owner})}const [target,name,wrapper,options]=args;return MioPlatform.patch(target,name,wrapper,{...(options||{}),owner})},
     filters:Object.freeze({add:(name,fn,options={})=>MioPlatform.addFilter(name,fn,{...options,owner}),apply:(name,value,context)=>MioPlatform.applyFilter(name,value,context),applyAsync:(name,value,context)=>MioPlatform.applyFilterAsync(name,value,context),names:()=>MioPlatform.filterNames()}),
     keys:Object.freeze({register:(combo,run,options={})=>MioPlatform.bindKey(combo,run,{...options,owner}),list:()=>MioPlatform.keyList()}),
     keymap:Object.freeze({add:spec=>MioPlatform.bindKey(spec.keys||spec.key,spec.run,{id:spec.id,label:spec.label,owner}),list:()=>MioPlatform.keyList()}),
@@ -161,6 +179,8 @@ async function syncUserScripts(){
     if(ecoState.loaded.has(owner))continue;
     const entry={revision:script.url||'0',dispose:null,disposers:[],failed:false,loadedAt:Date.now()};
     ecoState.loaded.set(owner,entry);
+    const pending=ecoState.pendingDisposers?.get(owner);
+    if(pending){entry.disposers.push(...pending);ecoState.pendingDisposers.delete(owner)}
     try{
       const module=await import(script.url);
       if(typeof module.default!=='function')throw Error('User script must export default function(ctx)');

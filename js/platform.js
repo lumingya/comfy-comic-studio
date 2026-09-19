@@ -28,7 +28,7 @@ const MioPlatform=(()=>{
   /* ---- events (any well-formed name) */
   function on(event,handler,{owner='core',priority=100,once=false}={}){
     if(typeof event!=='string'||!event||typeof handler!=='function')throw Error('on(event, handler) requires a name and a function');
-    const entry={owner,handler,priority:Number(priority)||100,serial:++serial,once};const list=listeners.get(event)||[];list.push(entry);list.sort((a,b)=>a.priority-b.priority||a.serial-b.serial);listeners.set(event,list);
+    const entry={event,owner,handler,priority:Number(priority)||100,serial:++serial,once};const list=listeners.get(event)||[];list.push(entry);list.sort((a,b)=>a.priority-b.priority||a.serial-b.serial);listeners.set(event,list);
     return ()=>{const current=listeners.get(event)||[];listeners.set(event,current.filter(x=>x!==entry))};
   }
   function off(owner){for(const [event,list] of listeners)listeners.set(event,list.filter(x=>x.owner!==owner))}
@@ -39,7 +39,7 @@ const MioPlatform=(()=>{
   }
   async function emit(event,payload={},{source='core',relay:doRelay=true}={}){
     const record={event,source,at:Date.now(),listeners:0,errors:0};
-    for(const entry of [...(listeners.get(event)||[]),...(listeners.get('*')||[])]){record.listeners++;try{if(entry.once)listeners.set(event,(listeners.get(event)||[]).filter(x=>x!==entry));await entry.handler(payload,{event,source,at:record.at})}catch(e){record.errors++;fail(entry.owner,'event '+event,e)}}
+    for(const entry of [...(listeners.get(event)||[]),...(listeners.get('*')||[])]){record.listeners++;try{if(entry.once){const k=entry.event||(listeners.get('*')?.includes(entry)?'*':event);listeners.set(k,(listeners.get(k)||[]).filter(x=>x!==entry))}await entry.handler(payload,{event,source,at:record.at})}catch(e){record.errors++;fail(entry.owner,'event '+event,e)}}
     recent.push(record);if(recent.length>300)recent.shift();if(doRelay&&source!=='backend')relay(event,payload);return record;
   }
   /* ---- slots (open set: unknown names are created on first registration) */

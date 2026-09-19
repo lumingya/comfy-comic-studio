@@ -353,4 +353,44 @@ def setup(ctx):
         manager.file_delete("probe-ext", "out")
         self.assertEqual(manager.file_list("probe-ext"), [])
 
+    def test_asset_security_path_traversal_and_trailing_characters(self):
+        manager = Plugins(ROOT, self.root / "data")
+        self.addCleanup(manager.close)
+        code_dir = manager.code / "test-pkg"
+        code_dir.mkdir(parents=True, exist_ok=True)
+        (code_dir / "plugin.py").write_text("# secret", encoding="utf-8")
+        (code_dir / "asset.png").write_text("image", encoding="utf-8")
+        manager.save({"test-pkg": {"id": "test-pkg", "enabled": True, "revision": "rev1", "name": "Test"}})
+        
+        # Public asset allowed
+        self.assertTrue(manager.asset("test-pkg", "rev1/asset.png").is_file())
+        
+        # Disallowed files
+        for bad in [
+            "rev1/plugin.py",
+            "rev1/plugin.py.",
+            "rev1/plugin.py ",
+            "rev1/plugin.py::$DATA",
+            "rev1/plugin.pyo",
+            "rev1/plugin.pyc",
+            "rev1/.git/config",
+            "rev1/.env",
+            "rev1/sub/plugin.py.",
+            "rev1/test:stream",
+        ]:
+            with self.subTest(bad=bad):
+                with self.assertRaises(LibraryError):
+                    manager.asset("test-pkg", bad)
+
+    def test_user_scripts_validation_and_reorder_safety(self):
+        from backend.ecosystem.user_scripts import UserScripts
+        store = UserScripts(self.root / "data")
+        with self.assertRaises(LibraryError):
+            store.delete("invalid..id")
+        with self.assertRaises(LibraryError):
+            store.delete("non-existent-script")
+        with self.assertRaises(LibraryError):
+            store.reorder("not-a-list")
+
+
 
