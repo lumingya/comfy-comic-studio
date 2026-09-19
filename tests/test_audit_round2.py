@@ -130,3 +130,42 @@ class QueueBoundaryTests(unittest.TestCase):
             self.assertIsNotNone(successor.get(self.task['id']))
         finally:
             successor.close()
+
+
+class ExportStatusTests(unittest.TestCase):
+    """C7: the exclusive export slot answers 409, and the HTTP layer must not flatten it to 400."""
+
+    def setUp(self):
+        self.httpd = ThreadingHTTPServer(('127.0.0.1', 0), server.ComicRequestHandler)
+        self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True)
+        self.thread.start()
+        self.addCleanup(self.stop)
+        self.origin = f'http://127.0.0.1:{self.httpd.server_port}'
+        for name, value in [('ALLOWED_ORIGINS', {self.origin}), ('read_merged_config', lambda **_: {'private': 'fixture'})]:
+            p = patch.object(server, name, value); p.start(); self.addCleanup(p.stop)
+
+    def stop(self):
+        self.httpd.shutdown(); self.httpd.server_close(); self.thread.join()
+
+    def post(self, body):
+        c = http.client.HTTPConnection('127.0.0.1', self.httpd.server_port, timeout=5)
+        try:
+            c.request('POST', '/api/export/portable', body=body, headers={'Content-Type': 'application/json', 'X-Mio-CSRF': server.ComicRequestHandler.csrf_token})
+            r = c.getresponse()
+            return r.status, r.read()
+        finally:
+            c.close()
+
+    def test_busy_export_slot_is_reported_as_409_not_400(self):
+        from backend import mio_export
+        self.assertTrue(mio_export._export_slot.acquire(blocking=False))
+        try:
+            status, body = self.post(b'{"format":"zip","albumIds":[],"validateOnly":true}')
+        finally:
+            mio_export._export_slot.release()
+        self.assertEqual(status, 409)
+        self.assertIn('另一份导出'.encode('utf-8'), body)
+        # Genuine input problems keep answering 400.
+        status, body = self.post(b'{"format":"docx","albumIds":[]}')
+        self.assertEqual(status, 400)
+        self.assertIn('ZIP'.encode('utf-8'), body)

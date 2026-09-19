@@ -468,6 +468,12 @@ class ProductionQueue:
                     attempt[key] = copy.deepcopy(fields[key])
                     if key != "upstream":
                         task[key] = copy.deepcopy(fields[key])
+            # Non-fatal, page-local advisories (e.g. reference images a
+            # text-to-image workflow cannot consume) stay with the attempt.
+            if isinstance(fields.get("notice"), str) and fields["notice"].strip():
+                notices = attempt.setdefault("notices", [])
+                if fields["notice"] not in notices:
+                    notices.append(fields["notice"][:500])
             self._save(task)
 
     def _execute(self, id, cancel):

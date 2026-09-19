@@ -141,6 +141,34 @@ class ProductionAdapterTests(unittest.TestCase):
         from backend.production.api import seed_binding_ready
         wf={'workflow':{'9':{'inputs':{'seed':42}}},'bindings':[{'enabled':True,'source':'random','nodeId':'9','path':'seed'}]}
         self.assertTrue(seed_binding_ready(wf));wf['bindings'][0]['nodeId']='missing';self.assertFalse(seed_binding_ready(wf))
+
+    def test_seed_gate_accepts_scene_parameter_seed_mapping(self):
+        # C1: the mapping wizard and the built-in workflows write the seed as a
+        # scene parameter binding; the gate (and the compiler) must honour it.
+        from backend.production.api import seed_binding_ready
+        from backend.ecosystem.workflow import compile_workflow
+        wf={'workflow':{'9':{'inputs':{'seed':42,'steps':20}}},'bindings':[{'enabled':True,'source':'sceneParameter','value':'seed','nodeId':'9','path':'seed'},{'enabled':True,'source':'sceneParameter','value':'steps','nodeId':'9','path':'steps'}]}
+        self.assertTrue(seed_binding_ready(wf))
+        # The seed flows even when the scene does not override render settings; other scene parameters stay gated.
+        out=compile_workflow(wf['workflow'],wf['bindings'],'p',{'seed':777,'steps':30,'renderOverride':False},[])
+        self.assertEqual(out['9']['inputs']['seed'],777);self.assertEqual(out['9']['inputs']['steps'],20)
+        out=compile_workflow(wf['workflow'],wf['bindings'],'p',{'seed':778,'steps':30,'renderOverride':True},[])
+        self.assertEqual((out['9']['inputs']['seed'],out['9']['inputs']['steps']),(778,30))
+        wf['bindings'][0]['value']='width';self.assertFalse(seed_binding_ready(wf))
+        wf['bindings']=[];self.assertFalse(seed_binding_ready(wf))
+
+    def test_unbound_reference_images_are_dropped_instead_of_failing(self):
+        # C2: a text-to-image graph has no LoadImage binding for prompt-referenced portraits.
+        from backend.production.api import prune_unbound_images
+        graph={'1':{'inputs':{'text':'hero'}},'2':{'inputs':{'image':'mio-image://2'}}}
+        images=['/images/a.png','/images/b.png','/images/c.png']
+        out,kept,dropped=prune_unbound_images(graph,images)
+        self.assertEqual(kept,['/images/b.png']);self.assertEqual(dropped,['/images/a.png','/images/c.png'])
+        self.assertEqual(out['2']['inputs']['image'],'mio-image://1')
+        self.assertEqual(prune_unbound_images({'1':{'inputs':{'text':'hero'}}},images)[1:],([],images))
+        same,kept,dropped=prune_unbound_images({'2':{'inputs':{'image':'mio-image://1'}}},['/images/a.png'])
+        self.assertEqual((kept,dropped),(['/images/a.png'],[]))
+
     def test_inline_images_keep_stable_input_order(self):
         values={'hero':{'kind':'mio-image','src':'/images/one.png'}};images=[]
         self.assertEqual(interpolate('{hero} then {hero}',values,images),'@image_1 then @image_1');self.assertEqual(images,['/images/one.png'])

@@ -212,7 +212,7 @@
           "executionLogs": true
         },
         "appearance": {
-          "theme": "light",
+          "theme": "dark",
           "density": "comfortable",
           "reduceMotion": false,
           "showMetrics": false

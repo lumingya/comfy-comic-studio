@@ -330,8 +330,54 @@ class ProviderTests(unittest.TestCase):
         raw = json.dumps({'choices': [{'message': {'images': [{'image_url': {'url': 'data:image/png;base64,' + base64.b64encode(PNG).decode()}}]}}]}).encode()
         body = json.loads(self.run_provider(payload, raw).data)
         self.assertEqual(body['modalities'], ['image', 'text']); self.assertIn('portrait image with aspect ratio 13:19', body['messages'][0]['content'][0]['text'])
+        # C5: the Images-API `sendSize` switch (disabled in the UI for Chat) must not silence the hint.
         payload['config']['sendSize'] = False
+        body = json.loads(self.run_provider(payload, raw).data); self.assertIn('aspect ratio 13:19', body['messages'][0]['content'][0]['text'])
+        payload['config']['sendAspectHint'] = False
         body = json.loads(self.run_provider(payload, raw).data); self.assertNotIn('aspect ratio', body['messages'][0]['content'][0]['text'])
+
+    def test_chat_square_frames_get_an_aspect_hint_too(self):
+        from backend.providers.openai_chat import aspect_hint
+        self.assertEqual(aspect_hint({'width': 1024, 'height': 1024}), 'Output a single square image with aspect ratio 1:1 (1024x1024).')
+        self.assertEqual(aspect_hint({'width': 1216, 'height': 832}), 'Output a single landscape image with aspect ratio 19:13 (1216x832).')
+        self.assertEqual(aspect_hint({}), ''); self.assertEqual(aspect_hint({'width': 'x', 'height': 5}), '')
+
+    def test_chat_refusal_text_surfaces_instead_of_download_error(self):
+        # C4: a refusal with a documentation link used to become "invalid image" from fetch_remote_image.
+        from backend.providers.openai_chat import extract_images, message_text, ModelTextResponse
+        from backend.providers.reliability import failure_summary
+        refusal = "I can't generate this image because it violates the usage policy. See https://openai.com/policies/ for details."
+        self.assertEqual(extract_images({'content': refusal}), [])
+        self.assertEqual(extract_images({'content': 'Read https://example.com/guide.html first'}), [])
+        self.assertEqual(extract_images({'content': 'https://cdn.example/render?id=7'}), [{'url': 'https://cdn.example/render?id=7'}])
+        self.assertEqual(message_text({'content': [{'type': 'text', 'text': 'a'}, {'type': 'text', 'text': 'b'}], 'refusal': 'nope'}), 'nope\na\nb')
+        payload = self.payload(); payload['config']['protocol'] = 'chat'
+        raw = json.dumps({'choices': [{'message': {'content': refusal}}]}).encode()
+        response = MagicMock(); response.headers = {}; response.read.side_effect = [raw, b'']; response.__enter__.return_value = response
+        opener = MagicMock(); opener.open.return_value = response
+        with patch.object(server.urllib.request, 'build_opener', return_value=opener), patch.object(server, 'fetch_remote_image') as fetch, self.assertRaises(ModelTextResponse) as caught:
+            server.generate_provider_image(payload)
+        fetch.assert_not_called()
+        self.assertIn('模型没有返回图片，而是回复了文字', str(caught.exception)); self.assertIn('usage policy', str(caught.exception))
+        self.assertIn('usage policy', failure_summary(str(caught.exception)))
+        # A model that answers with prose plus a link that is not an image keeps its words in the error.
+        raw = json.dumps({'choices': [{'message': {'content': 'Here you go: https://cdn.example/result'}}]}).encode()
+        response.read.side_effect = [raw, b'']
+        with patch.object(server.urllib.request, 'build_opener', return_value=opener), patch.object(server, 'fetch_remote_image', side_effect=ValueError('invalid image')), self.assertRaises(ModelTextResponse) as caught:
+            server.generate_provider_image(payload)
+        self.assertIn('invalid image', str(caught.exception)); self.assertIn('Here you go', str(caught.exception))
+
+    def test_novelai_accepts_the_editor_cfg_range(self):
+        # C3: the storyboard slider goes to 30; the backend used to clamp NovelAI at 10 and reject the frame.
+        data = io.BytesIO()
+        with zipfile.ZipFile(data, 'w') as archive:
+            archive.writestr('image.png', PNG)
+        payload = self.payload('novelai'); payload['frame'] = {'width': 832, 'height': 1216, 'cfg': 12}
+        body = json.loads(self.run_provider(payload, data.getvalue()).data)['parameters']
+        self.assertEqual(body['scale'], 12)
+        payload['frame']['cfg'] = 31
+        with self.assertRaisesRegex(ValueError, 'cfg'):
+            self.run_provider(payload, data.getvalue())
 
     def test_configured_timeout_reaches_http_and_remote_download(self):
         payload=self.payload();payload['_requestTimeout']=75

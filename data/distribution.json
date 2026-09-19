@@ -56,10 +56,10 @@
     "records/conversations/海风来信 · 分镜对话--chat_letter.json": "ff705899dc6ffcaaad7a195b2a9331dbd0ab4faa9d10f0478d6b0702cc2f53c7",
     "settings/comfy.json": "b3fdfe8fddb51fbd47607d14324bb11a11dbebfdfbad1847a5bfa4918810dac0",
     "settings/llm.json": "86da8328506b2e34383e959cd9b952a4d601840c1e39e33bd934ce3b6c0faae0",
-    "settings/workspace.json": "a9a37eb80ef79648e2779aff5c6ea9e16fbe205510579b636bfac83cf6a928b8",
+    "settings/workspace.json": "a1e7122056ca442bce3322052267a9e1f984b33a648c44621f7f3d8cccd39017",
     "settings/xml.json": "221b26cab5a1388f62a9ae61c0971a7ca419839d29a8d1589d4a51f3cb7d3d30",
     "storyboards/远行与归来 · 十二幕--ry_journey12.json": "c0568b1f13dd32fb29df41cf6a2bb308bbb7a03f5c750f605797b1179f33e594",
-    "workflows/Anime · 基础图像管线--9399e1242916.json": "de3561b0933c9085c93eb006be769d070c8fb13bc55e59ddad9db42fcfb51cf5",
+    "workflows/Anime · 基础图像管线--9399e1242916.json": "dc9827e25314e98884954d31a9076f365fc394efe9449fd723ae95381a3092cc",
     "workspace.json": "e98cce4234fc36df8fe6fc7a8030b2ce43f335baa6f489b234a376fad267e677"
   }
 }

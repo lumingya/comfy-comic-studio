@@ -38,6 +38,11 @@ def failure_summary(text, terminal=False):
     """
     raw = str(text)
     lower = raw.lower()
+    # C4: the model's own words are the most useful diagnosis there is. Keep
+    # them verbatim instead of collapsing them into a generic category, even
+    # when the text happens to mention "safety" or "quota".
+    if raw.startswith(("模型没有返回图片，而是回复了文字", "模型回复中的链接无法作为图片下载")):
+        return raw[:700]
     if any(x in lower for x in ("out of memory", "outofmemory", "cuda error: memory")):
         return "GPU 显存不足：请减小分辨率或批量数，或释放显存后重试。"
     if any(
