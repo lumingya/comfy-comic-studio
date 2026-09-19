@@ -212,7 +212,7 @@
           "executionLogs": true
         },
         "appearance": {
-          "theme": "dark",
+          "theme": "light",
           "density": "comfortable",
           "reduceMotion": false,
           "showMetrics": false
@@ -244,7 +244,6 @@
   "ordering": {
     "templates": [
       "story_journey12",
-      "storyboard_5fa900a6056d4118901eb4202e648675",
       "storyboards_50565bedcf5d46d892848fad25d1bf01",
       "story_3dfe5619-28ff-4a69-b881-ceed190610be",
       "story_f45195ae-5f6f-4fe7-8e4a-1488de8c1a0d",
@@ -273,7 +272,6 @@
     "characters": [
       "setting_nanami",
       "characters_b7ea26e8986846219c773c6ba80d6d5a",
-      "set_467e2546-30ed-41d8-9f70-07096a8f2d82",
       "setting_campus_pair",
       "setting_hello_another_me"
     ],
@@ -302,7 +300,6 @@
     "variableSets": [
       "setting_nanami",
       "characters_b7ea26e8986846219c773c6ba80d6d5a",
-      "set_467e2546-30ed-41d8-9f70-07096a8f2d82",
       "setting_campus_pair",
       "setting_hello_another_me"
     ]
