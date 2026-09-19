@@ -1,13 +1,14 @@
 {
   "id": "paper-atelier",
   "name": "纸间 · 手作工坊",
-  "version": "2.0.0",
-  "apiVersion": 2,
-  "description": "SDK v2 参考主题：一份主题包同时定义深色/浅色两套令牌、共享的纸纹材质、阅读室与终端配色，以及一组手绘风图标。跟随宿主的明暗切换。",
+  "version": "3.0.0",
+  "apiVersion": 3,
+  "description": "SDK v3 参考主题：一份主题包同时定义深色/浅色两套令牌、共享纸纹材质、可选的\"泛黄旧稿\"外观（自定义 variant）、可在样式工坊里实时调节的设置项，以及一段随主题加载的脚本。可与其他主题叠加。",
   "css": "theme.css",
   "variants": {
     "dark": "dark.css",
-    "light": "light.css"
+    "light": "light.css",
+    "sepia": "sepia.css"
   },
   "tokens": {
     "shared": {
@@ -73,8 +74,73 @@
       "--reader-soft": "#c4b89f",
       "--reader-muted": "#8f8267",
       "--cover-bg": "#3a3024"
+    },
+    "sepia": {
+      "--bg": "#efe1c4",
+      "--side": "#e4d3b1",
+      "--panel": "#f6ead0",
+      "--panel2": "#e8d8b5",
+      "--hover": "#dfcda7",
+      "--line": "#c8b48b",
+      "--text": "#4a3a22",
+      "--soft": "#6f5d40",
+      "--muted": "#8d7a58",
+      "--accent": "#9a5a2a",
+      "--accent2": "#b0713b",
+      "--on-accent": "#fff6e3",
+      "--tint": "#dcc9a3",
+      "--shadow-rgb": "70 45 10"
     }
   },
   "icons": "icons.json",
-  "colorScheme": "auto"
+  "colorScheme": "auto",
+  "variantLabels": {
+    "sepia": "泛黄旧稿"
+  },
+  "settings": [
+    {
+      "key": "accent",
+      "label": "强调色",
+      "type": "color",
+      "var": "--accent",
+      "default": "",
+      "help": "留空时使用主题自带的深浅色配色"
+    },
+    {
+      "key": "paperOpacity",
+      "label": "纸纹强度",
+      "type": "range",
+      "var": "--paper-opacity",
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "default": 1
+    },
+    {
+      "key": "radius",
+      "label": "卡片圆角",
+      "type": "range",
+      "var": "--paper-radius",
+      "min": 0,
+      "max": 16,
+      "step": 1,
+      "unit": "px",
+      "default": 3
+    },
+    {
+      "key": "headingFont",
+      "label": "标题字体",
+      "type": "font",
+      "var": "--art-serif",
+      "default": "'Songti SC','Noto Serif SC',Georgia,serif"
+    },
+    {
+      "key": "stamp",
+      "label": "角落印章",
+      "type": "toggle",
+      "default": true,
+      "help": "由 theme.js 在页面右下角盖一枚朱印"
+    }
+  ],
+  "script": "theme.js"
 }

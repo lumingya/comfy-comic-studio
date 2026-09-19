@@ -1,7 +1,10 @@
-/* 场记本 — the smallest useful SDK v2 extension.
-   Front end: a toolbar button, a dock panel and a custom variable type.
-   Back end (plugin.py): two JSON routes storing notes in the extension's workspace tier. */
+/* 场记本 — the smallest useful SDK v3 extension.
+   Front end: a toolbar button, a dock panel, a topbar anchor button and a custom variable type.
+   Back end (plugin.py): two JSON routes storing notes in the extension's workspace tier.
+   Tip: link this folder in 设置 → 扩展中心 → 链接本地文件夹; edits hot-reload. */
 export default async function setup(ctx) {
+  ctx.anchors.register('topbar', { id: 'quick-note', icon: 'edit', title: '场记本 · 记一笔', run: () => ctx.slots.toolbar.find('scene-notebook:note')?.run({ plan: ctx.albums.current().plan }) });
+
   ctx.variables.registerType('palette', { label: '场记本 · 配色词', normalize: value => String(value || '').split(',').map(s => s.trim()).filter(Boolean).join(', ') });
 
   ctx.slots.toolbar.register({

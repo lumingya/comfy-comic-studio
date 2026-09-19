@@ -1,6 +1,6 @@
 {
   "name": "Mio",
-  "version": "3.1.0-dev.3",
+  "version": "3.2.0-dev.1",
   "kind": "complete-source-runtime",
   "upstreamBaseline": "4c1618276154fccd28e991130dfef0a09edb6c5a",
   "runtime": "Python >= 3.10 + Pillow >= 11.3,<13; computed variables: Node.js >= 20; Git installs: Git",

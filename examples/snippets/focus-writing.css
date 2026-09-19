@@ -1,0 +1,6 @@
+/* 专注写作：在“创作工坊”的分镜页里隐藏顶栏辅助信息与队列按钮，只留下正文。
+   [data-mio-themes] / [data-mio-snippets] 属性由 v3 自动写在 <html> 上，可用于按状态切换。 */
+.quiet-editor .quiet-scene-rail { opacity: .35; transition: opacity .2s; }
+.quiet-editor .quiet-scene-rail:hover { opacity: 1; }
+.eco-queue-actions, .prompt-hint, .prompt-foot { display: none; }
+.quiet-scene-content .caption-editor { min-height: 160px; font-size: 15px; line-height: 2; }

@@ -1,8 +1,8 @@
 {
   "id": "scene-notebook",
   "name": "场记本",
-  "version": "2.0.0",
-  "apiVersion": 2,
-  "description": "最小的 SDK v2 扩展：一个 Python 路由 + 一个 Dock 面板 + 一个工具栏按钮 + 一种自定义变量类型。适合作为新扩展的起点。",
+  "version": "3.0.0",
+  "apiVersion": 3,
+  "description": "最小的 SDK v3 扩展：一个 Python 路由 + 一个 Dock 面板 + 一个工具栏按钮 + 一种自定义变量类型 + 一个顶栏锚点按钮。适合作为新扩展的起点：把这个文件夹“链接”进扩展中心，改一行就能看到效果。",
   "entry": "index.js"
 }

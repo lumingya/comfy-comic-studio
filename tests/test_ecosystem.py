@@ -59,14 +59,56 @@ class EcosystemTests(unittest.TestCase):
             with self.assertRaises(LibraryError):clone(url,'',self.root/'x')
     def test_theme_hot_selection_assets_and_uninstall(self):
         manager=Themes(self.root);meta=manager.install(zipped(ROOT/'examples/themes/paper-atelier'),'paper.zip',True)
-        css=manager.css(meta['id']);self.assertIn('data:image/png;base64,',css);manager.select(meta['id']);self.assertEqual(manager.list()['active'],meta['id'])
+        css=manager.css(meta['id']);self.assertIn('/theme-assets/paper-atelier/'+meta['revision']+'/paper.png',css);self.assertNotIn('data:image/png;base64,',css)
+        self.assertTrue(manager.asset(meta['id'],meta['revision'],'paper.png').is_file())
+        with self.assertRaises(LibraryError):manager.asset(meta['id'],'stale','paper.png')
+        manager.select(meta['id']);self.assertEqual(manager.list()['active'],meta['id']);self.assertEqual(manager.list()['stack'],[meta['id']])
         manager.uninstall(meta['id']);self.assertEqual(manager.list()['active'],'');self.assertFalse((manager.root/meta['id']).exists())
-    def test_theme_rejects_remote_css_and_untrusted_install(self):
+    def test_theme_css_is_unrestricted_but_install_requires_trust(self):
         manager=Themes(self.root)
         with self.assertRaises(LibraryError):manager.install(b'body{}','a.css')
-        for text in ('@import "https://evil/x";','body{background:url(https://evil/x)}','@im\\port "x";'):
-            with self.assertRaises(LibraryError):manager.install(text.encode(),'a.css',True)
-            self.assertEqual(manager.records(),{})
+        text='@import url("https://fonts.googleapis.com/css2?family=Inter");@import "local.css";body{background:url(https://example/x.png) , url(paper/tex.png);content:"\\2014"}'
+        meta=manager.install(text.encode(),'Orbital Night.css',True);self.assertEqual(meta['id'],'orbital-night')
+        css=manager.css(meta['id']);self.assertIn('fonts.googleapis.com',css);self.assertIn('https://example/x.png',css)
+        self.assertIn('/theme-assets/orbital-night/'+meta['revision']+'/local.css',css);self.assertIn('/theme-assets/orbital-night/'+meta['revision']+'/paper/tex.png',css)
+        second=manager.install(b'body{}','orbital-night.css',True);self.assertNotEqual(second['id'],meta['id'])
+    def test_theme_stack_order_settings_and_variants(self):
+        manager=Themes(self.root)
+        a=manager.install(b':root{--accent:#111}','a.css',True);b=manager.install(zipped(ROOT/'examples/themes/paper-atelier'),'paper.zip',True)
+        manager.enable(a['id'],True);manager.enable(b['id'],True);self.assertEqual(manager.stack(),[a['id'],b['id']])
+        manager.order([b['id'],a['id'],'missing']);self.assertEqual(manager.stack(),[b['id'],a['id']])
+        compiled=manager.compile_stack();self.assertEqual([c['id'] for c in compiled],[b['id'],a['id']]);self.assertIn('sepia',compiled[0]['variants']);self.assertIn('[data-theme-variant~=sepia]',compiled[0]['css'])
+        values=manager.set_settings(b['id'],{'accent':'#ff0000','radius':12,'__variant':'sepia'});self.assertEqual(values['accent'],'#ff0000')
+        with self.assertRaises(LibraryError):manager.set_settings(b['id'],{'unknown':1})
+        self.assertEqual(manager.list()['items'][1]['values']['radius'],12)
+        manager.enable(b['id'],False);self.assertEqual(manager.stack(),[a['id']]);manager.select('');self.assertEqual(manager.stack(),[])
+    def test_theme_linked_folder_hot_reloads(self):
+        folder=self.root/'dev-theme';shutil.copytree(ROOT/'examples/themes/paper-atelier',folder);manager=Themes(self.root)
+        with self.assertRaises(LibraryError):manager.link(str(folder))
+        meta=manager.link(str(folder),True);self.assertEqual(meta['source'],'link');self.assertEqual(manager.stack(),[meta['id']]);self.assertFalse((manager.root/meta['id']).exists())
+        self.assertEqual(manager.watch(),{});time.sleep(.02)
+        (folder/'theme.css').write_text('body{--changed:1}',encoding='utf-8');import os;os.utime(folder/'theme.css',(time.time()+2,time.time()+2))
+        changed=manager.watch();self.assertIn(meta['id'],changed);self.assertIn('--changed:1',manager.css(meta['id']));self.assertEqual(manager.records()[meta['id']]['revision'],changed[meta['id']])
+        manager.uninstall(meta['id']);self.assertTrue(folder.exists())
+    def test_user_styles_snippets_tokens_assets_and_export(self):
+        from backend.ecosystem.styles import Styles
+        styles=Styles(self.root)
+        one=styles.save_snippet({'name':'圆角','css':'.btn{border-radius:14px}'});two=styles.save_snippet({'name':'隐藏','css':'.statusbar{display:none}','enabled':False})
+        self.assertEqual([s['id'] for s in styles.snippets()],[one['id'],two['id']]);self.assertIn('.btn{border-radius:14px}',styles.compile());self.assertNotIn('.statusbar',styles.compile())
+        styles.replace_snippets([{'id':two['id'],'enabled':True},{'id':one['id']}]);self.assertEqual([s['id'] for s in styles.snippets()],[two['id'],one['id']]);self.assertLess(styles.compile().index('.statusbar'),styles.compile().index('.btn{'))
+        tokens=styles.set_tokens({'shared':{'--accent':'#ff8800','--sans':'"Noto Sans SC",sans-serif'},'light':{'--bg':'#fff'},'dark':{'--bg':''}})
+        self.assertEqual(tokens['dark'],{});css=styles.compile();self.assertTrue(css.startswith('/* == 设计令牌覆盖 == */\n:root,:root[data-theme]{--accent:#ff8800'));self.assertIn(':root[data-theme=light]{--bg:#fff}',css)
+        for bad in ({'shared':{'accent':'#fff'}},{'shared':{'--x':'a;b'}},{'shared':{'--x':'}'}},{'weird mode':{'--x':'1'}}):
+            with self.assertRaises(LibraryError):styles.set_tokens(bad)
+        asset=styles.put_asset('paper.png',(ROOT/'examples/themes/paper-atelier/paper.png').read_bytes());self.assertEqual(asset['url'],'/style-assets/paper.png');self.assertTrue(styles.asset_path('paper.png').is_file())
+        with self.assertRaises(LibraryError):styles.put_asset('../escape.png',b'x')
+        with self.assertRaises(LibraryError):styles.put_asset('.hidden',b'x')
+        styles.save_snippet({'id':one['id'],'css':'body{background:url(/style-assets/paper.png)}'})
+        bundle=styles.export_theme('我的桌面');self.assertTrue(bundle['filename'].endswith('.mio-theme.zip'))
+        with zipfile.ZipFile(io.BytesIO(bundle['bytes'])) as z:
+            manifest=json.loads(z.read('mio.theme.json'));self.assertEqual(manifest['apiVersion'],3);self.assertEqual(manifest['tokens']['shared']['--accent'],'#ff8800');self.assertIn('assets/paper.png',z.namelist());self.assertIn('url(assets/paper.png)',z.read('theme.css').decode())
+        Themes(self.root).install(bundle['bytes'],bundle['filename'],True)
+        styles.delete_snippet(one['id']);styles.delete_asset('paper.png');self.assertEqual(len(styles.snippets()),1);self.assertEqual(styles.list_assets(),[])
     def test_plugin_real_worker_storage_disable_and_uninstall(self):
         # Worker imports core from the real project; installed fixture code is kept in a temp code root.
         manager=Plugins(ROOT,self.root/'data');manager.code=self.root/'extensions';self.addCleanup(manager.close)
@@ -192,3 +234,180 @@ class EcosystemTests(unittest.TestCase):
                 if id not in engine.running:break
                 time.sleep(.02)
             self.assertEqual(engine.get(id)['status'],'failed');self.assertEqual(engine.get(id)['values'],{});self.assertIn('persisted',engine.get(id)['error']);self.assertNotIn('book',engine.owners)
+    def _write_v3_extension(self,folder):
+        folder.mkdir(parents=True,exist_ok=True)
+        (folder/'mio.extension.json').write_text(json.dumps({'id':'v3-probe','name':'V3 Probe','version':'1.0.0','apiVersion':3,'entry':'index.js','styles':['style.css'],'contributes':{'anchors':['topbar']}}),encoding='utf-8')
+        (folder/'index.js').write_text('export default function(ctx){return ()=>{}}',encoding='utf-8')
+        (folder/'style.css').write_text('.probe{color:red}',encoding='utf-8')
+        (folder/'plugin.py').write_text('''import time
+def setup(ctx):
+    @ctx.route('/echo',method='GET')
+    def echo(body,query):
+        return {'query':query,'sdk':ctx.sdk}
+    @ctx.route('/slow',timeout=2)
+    def slow(body):
+        time.sleep(float(body.get('seconds',0)));return {'ok':True}
+    @ctx.route('/page',method='GET')
+    def page(body):
+        return ctx.response('<h1>hi</h1>','text/html; charset=utf-8',headers={'X-Probe':'1'})
+    @ctx.route('/file',method='GET')
+    def file(body):
+        return ctx.file(ctx.plugin_dir/'style.css',download=True)
+    @ctx.route('/start')
+    def start(body):
+        def work(task,n):
+            for i in range(n):
+                if task.cancelled():return None
+                task.report((i+1)/n,'step %d'%(i+1));time.sleep(.05)
+            return {'done':n}
+        return {'id':ctx.tasks.spawn(work,int(body.get('n',3)),name='count').id}
+''',encoding='utf-8')
+        return folder
+    def test_plugin_v3_routes_tasks_raw_responses_and_link_reload(self):
+        manager=Plugins(ROOT,self.root/'data');manager.code=self.root/'code';self.addCleanup(manager.close)
+        folder=self._write_v3_extension(self.root/'dev-ext')
+        with self.assertRaises(LibraryError):manager.link(str(folder))
+        meta=manager.link(str(folder),trusted=True);self.assertEqual(meta['source'],'link');self.assertEqual(meta['styles'],['style.css']);self.assertTrue(manager.records()['v3-probe']['enabled'])
+        self.assertEqual(manager.call('v3-probe','GET','/echo',{},{'q':'1'})['query'],{'q':'1'});self.assertEqual(manager.call('v3-probe','GET','/echo',{})['sdk'],3)
+        self.assertEqual(manager.route_timeout('v3-probe','POST','/slow'),2);self.assertEqual(manager.route_timeout('v3-probe','GET','/echo'),30)
+        page=manager.call('v3-probe','GET','/page',{});self.assertTrue(page.get('__mio_response__'));self.assertEqual(page['mime'],'text/html; charset=utf-8');self.assertEqual(page['headers']['X-Probe'],'1')
+        import base64;self.assertEqual(base64.b64decode(page['b64']),b'<h1>hi</h1>');self.assertEqual(manager.call('v3-probe','GET','/file',{})['filename'],'style.css')
+        started=manager.call('v3-probe','POST','/start',{'n':4});tid=started['id'];self.assertTrue(any(t['id']==tid for t in manager.task('v3-probe','list')))
+        deadline=time.monotonic()+5
+        while time.monotonic()<deadline and manager.task('v3-probe','get',tid)['status']=='running':time.sleep(.05)
+        task=manager.task('v3-probe','get',tid);self.assertEqual(task['status'],'complete');self.assertEqual(task['result'],{'done':4});self.assertEqual(task['progress'],1.0)
+        cancelled=manager.call('v3-probe','POST','/start',{'n':40})['id'];manager.task('v3-probe','cancel',cancelled);time.sleep(.3);self.assertEqual(manager.task('v3-probe','get',cancelled)['status'],'cancelled')
+        self.assertTrue(manager.asset('v3-probe',manager.records()['v3-probe']['revision']+'/style.css').is_file())
+        with self.assertRaises(LibraryError):manager.asset('v3-probe',manager.records()['v3-probe']['revision']+'/plugin.py')
+        before=manager.records()['v3-probe']['revision'];time.sleep(.02)
+        (folder/'plugin.py').write_text((folder/'plugin.py').read_text(encoding='utf-8').replace("'sdk':ctx.sdk","'sdk':99"),encoding='utf-8');import os;os.utime(folder/'plugin.py',(time.time()+2,time.time()+2))
+        changed=manager.watch();self.assertIn('v3-probe',changed);self.assertNotEqual(manager.records()['v3-probe']['revision'],before);self.assertEqual(manager.call('v3-probe','GET','/echo',{})['sdk'],99)
+        with self.assertRaises(LibraryError):manager.call('v3-probe','POST','/slow',{'seconds':3})
+        self.assertFalse(manager.records()['v3-probe']['enabled'])
+        manager.enable('v3-probe',True);self.assertTrue(manager.records()['v3-probe']['enabled']);manager.uninstall('v3-probe','all');self.assertTrue(folder.exists());self.assertEqual(manager.records(),{})
+    def test_manifest_v3_extension_and_theme_fields(self):
+        from backend.ecosystem.packages import manifest
+        folder=self._write_v3_extension(self.root/'m');meta=manifest(folder,'extension');self.assertEqual(meta['contributes'],{'anchors':['topbar']});self.assertEqual(meta['styles'],['style.css'])
+        (folder/'mio.extension.json').write_text(json.dumps({'id':'v3-probe','name':'x','version':'1','apiVersion':3,'requirements':['requests>=2']}),encoding='utf-8');self.assertEqual(manifest(folder,'extension')['requirements'],['requests>=2'])
+        (folder/'mio.extension.json').write_text(json.dumps({'id':'v3-probe','name':'x','version':'1','apiVersion':3,'styles':['nope.css']}),encoding='utf-8')
+        with self.assertRaises(LibraryError):manifest(folder,'extension')
+        theme=self.root/'t';theme.mkdir();(theme/'a.css').write_text('a{}');(theme/'b.css').write_text('b{}');(theme/'sepia.css').write_text('body{}');(theme/'theme.js').write_text('export default function(){}')
+        (theme/'mio.theme.json').write_text(json.dumps({'id':'multi','name':'M','version':'1','apiVersion':3,'css':['a.css','b.css'],'variants':{'sepia':'sepia.css'},'script':'theme.js','settings':[{'key':'accent','type':'color','var':'--accent','default':'#fff'},{'key':'radius','type':'range','var':'--radius','min':0,'max':20,'unit':'px'}]}),encoding='utf-8')
+        meta=manifest(theme,'theme');self.assertEqual(meta['css'],['a.css','b.css']);self.assertEqual(meta['script'],'theme.js');self.assertEqual(meta['settings'][1]['unit'],'px');self.assertEqual(meta['settings'][0]['var'],'--accent')
+        (theme/'mio.theme.json').write_text(json.dumps({'id':'multi','name':'M','version':'1','apiVersion':3,'css':'a.css','settings':[{'key':'accent','type':'color','var':'accent'}]}),encoding='utf-8')
+        with self.assertRaises(LibraryError):manifest(theme,'theme')
+    def test_host_api_accepts_open_event_names_and_library_kinds(self):
+        from types import SimpleNamespace
+        from backend.ecosystem.api import Ecosystem
+        native=SimpleNamespace(read=lambda **kw:{},settings=SimpleNamespace(resolve=lambda _:{}),image_bytes=lambda _:(b'',''),image_path=lambda src:self.root/src)
+        host=SimpleNamespace(BASE_DIR=ROOT,DATA_DIR=self.root,native_store=lambda:native,generate_provider_image=lambda payload:None,chat_proxy=lambda payload:None)
+        eco=Ecosystem(host);self.addCleanup(eco.close)
+        record=eco.host_call('probe','events.emit',{'name':'studio.custom-signal','payload':{'x':1}});self.assertEqual(record['source'],'probe')
+        with self.assertRaises(LibraryError):eco.host_call('probe','events.emit',{'name':'app.ready'})
+        self.assertIn('rows',eco.host_call('probe','library.kinds',{}));self.assertEqual(eco.host_call('probe','workspace.path',{})['path'],str(self.root))
+        self.assertEqual(eco.styles.compile(),'');self.assertEqual(eco.manifest()['sdk'],3)
+    def test_user_scripts_crud_and_safety(self):
+        from backend.ecosystem.user_scripts import UserScripts
+        store = UserScripts(self.root / "scripts-data")
+        script = store.save({"name": "Word Counter", "source": "export default function(ctx){}"})
+        self.assertEqual(script["id"], "word-counter")
+        self.assertTrue(script["enabled"])
+        self.assertTrue(store.script_path("word-counter.js").is_file())
+        with self.assertRaises(LibraryError):
+            store.script_path("../escape.js")
+        with self.assertRaises(LibraryError):
+            store.script_path("not-exist.js")
+        second = store.save({"name": "Word Counter"})
+        self.assertEqual(second["id"], "word-counter-2")
+        store.reorder([second["id"], script["id"]])
+        self.assertEqual([r["id"] for r in store.list(False)], [second["id"], script["id"]])
+        store.save({"id": second["id"], "enabled": False})
+        self.assertEqual([r["id"] for r in store.enabled()], [script["id"]])
+        store.disable_all()
+        self.assertEqual(store.enabled(), [])
+        store.delete(script["id"])
+        self.assertEqual([r["id"] for r in store.list(False)], [second["id"]])
+    def test_extension_files_api_and_raw_responses(self):
+        manager = Plugins(ROOT, self.root / "data")
+        manager.code = self.root / "code"
+        self.addCleanup(manager.close)
+        record = manager.file_write("probe-ext", "out/data.bin", b"\x01\x02\x03")
+        self.assertEqual(record["path"], "out/data.bin")
+        self.assertEqual(record["size"], 3)
+        self.assertTrue(manager.file_path("probe-ext", "out/data.bin").is_file())
+        files = manager.file_list("probe-ext")
+        self.assertEqual(len(files), 1)
+        self.assertEqual(files[0]["path"], "out/data.bin")
+        with self.assertRaises(LibraryError):
+            manager.file_path("probe-ext", "../escape.txt")
+        # raw response handling
+        raw_text = manager.raw_response("probe-ext", {"$text": "hello text"})
+        self.assertEqual(raw_text["bytes"], b"hello text")
+        self.assertEqual(raw_text["mime"], "text/plain; charset=utf-8")
+        import base64
+        raw_b64 = manager.raw_response("probe-ext", {"$raw": base64.b64encode(b"raw-bin").decode()})
+        self.assertEqual(raw_b64["bytes"], b"raw-bin")
+        mio_resp = manager.raw_response("probe-ext", {"__mio_response__": True, "b64": base64.b64encode(b"custom").decode(), "mime": "application/json", "status": 201})
+        self.assertEqual(mio_resp["bytes"], b"custom")
+        self.assertEqual(mio_resp["status"], 201)
+        manager.file_delete("probe-ext", "out")
+        self.assertEqual(manager.file_list("probe-ext"), [])
+
+    def test_asset_security_path_traversal_and_trailing_characters(self):
+        manager = Plugins(ROOT, self.root / "data")
+        self.addCleanup(manager.close)
+        code_dir = manager.code / "test-pkg"
+        code_dir.mkdir(parents=True, exist_ok=True)
+        (code_dir / "plugin.py").write_text("# secret", encoding="utf-8")
+        (code_dir / "asset.png").write_text("image", encoding="utf-8")
+        manager.save({"test-pkg": {"id": "test-pkg", "enabled": True, "revision": "rev1", "name": "Test"}})
+        
+        # Public asset allowed
+        self.assertTrue(manager.asset("test-pkg", "rev1/asset.png").is_file())
+        
+        # Disallowed files
+        for bad in [
+            "rev1/plugin.py",
+            "rev1/plugin.py.",
+            "rev1/plugin.py ",
+            "rev1/plugin.py::$DATA",
+            "rev1/plugin.pyo",
+            "rev1/plugin.pyc",
+            "rev1/.git/config",
+            "rev1/.env",
+            "rev1/sub/plugin.py.",
+            "rev1/test:stream",
+        ]:
+            with self.subTest(bad=bad):
+                with self.assertRaises(LibraryError):
+                    manager.asset("test-pkg", bad)
+
+    def test_user_scripts_validation_and_reorder_safety(self):
+        from backend.ecosystem.user_scripts import UserScripts
+        store = UserScripts(self.root / "data")
+        with self.assertRaises(LibraryError):
+            store.delete("invalid..id")
+        with self.assertRaises(LibraryError):
+            store.delete("non-existent-script")
+        with self.assertRaises(LibraryError):
+            store.reorder("not-a-list")
+        
+        # Test reorder deduplication
+        s1 = store.save({"name": "Script 1"})
+        s2 = store.save({"name": "Script 2"})
+        store.reorder([s2["id"], s2["id"], s1["id"], s1["id"]])
+        listed = store.list(False)
+        self.assertEqual(len(listed), 2)
+        self.assertEqual([r["id"] for r in listed], [s2["id"], s1["id"]])
+
+    def test_extension_route_put_and_patch_body_forwarding(self):
+        from backend.ecosystem.api import _extension_route
+        from unittest.mock import MagicMock
+        svc = MagicMock()
+        svc.plugins.records.return_value = {"ext-1": {"enabled": True}}
+        _extension_route(svc, MagicMock(), "/api/extensions/ext-1/custom-resource", "PUT", {"title": "new"}, {})
+        svc.plugins.call.assert_called_once_with("ext-1", "PUT", "/custom-resource", {"title": "new"}, {})
+
+
+
+

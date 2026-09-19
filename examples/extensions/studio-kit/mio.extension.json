@@ -1,13 +1,24 @@
 {
   "id": "studio-kit",
   "name": "Studio Kit · 平台能力示例",
-  "version": "2.0.0",
-  "apiVersion": 2,
-  "description": "SDK v2 参考扩展：本地占位渲染渠道、渲染前后钩子、事件监听、CBZ 导出、图片 ZIP 导入、侧栏工作区、Inspector/Dock 面板、卡片与右键菜单动作。",
+  "version": "3.0.0",
+  "apiVersion": 3,
+  "description": "SDK v3 参考扩展：本地占位渲染渠道、渲染前后钩子、事件、CBZ 导出、图片 ZIP 导入、侧栏工作区、Inspector/Dock 面板、卡片与右键菜单动作；以及 v3 新增的锚点按钮、任意位置挂载、核心函数补丁、提示词过滤器、快捷键、样式注入、后台任务、原始文件响应、设置页与跨扩展 API。",
   "entry": "index.js",
+  "styles": ["studio-kit.css"],
+  "keywords": ["example", "sdk", "reference"],
+  "contributes": {
+    "anchors": ["topbar", "sidebar-nav", "statusbar", "creation-tabs"],
+    "keys": ["mod+shift+k"],
+    "filters": ["prompt.compose", "command.items"],
+    "patches": ["renderShell"],
+    "settingsPage": "studio-kit:lab"
+  },
   "settings": [
     {"key": "suffix", "label": "自动追加提示词后缀", "type": "text", "default": "", "placeholder": "例如 masterpiece, best quality"},
     {"key": "stamp", "label": "渲染后加角标（需 Pillow）", "type": "toggle", "default": false},
-    {"key": "dockOnStart", "label": "启动时展开 Dock 面板", "type": "toggle", "default": false}
+    {"key": "dockOnStart", "label": "启动时展开 Dock 面板", "type": "toggle", "default": false},
+    {"key": "badge", "label": "顶栏徽标文字", "type": "text", "default": "KIT"},
+    {"key": "accent", "label": "徽标颜色", "type": "color", "default": "#e8a33d"}
   ]
 }

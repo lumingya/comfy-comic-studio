@@ -1,0 +1,8 @@
+/* 自定义字体：先在“资源文件”面板上传 MyFont.woff2，然后引用 /customize/assets/MyFont.woff2。
+   导出为主题包时，用到的资源会被自动打包并改写为相对路径。 */
+@font-face {
+  font-family: "MyFont";
+  src: url(/customize/assets/MyFont.woff2) format("woff2");
+  font-display: swap;
+}
+:root { --sans: "MyFont", "PingFang SC", "Microsoft YaHei", sans-serif; --art-serif: "MyFont", "Noto Serif SC", serif; }
