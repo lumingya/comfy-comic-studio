@@ -2,13 +2,35 @@
 import base64
 import secrets
 
+def aspect_hint(frame):
+    """Describe the frame's aspect ratio in words for chat models without a size field."""
+    try:
+        width, height = int(float(frame.get('width') or 0)), int(float(frame.get('height') or 0))
+    except (TypeError, ValueError):
+        return ''
+    if width <= 0 or height <= 0 or width == height:
+        return ''
+    from math import gcd
+    g = gcd(width, height)
+    ratio = str(width // g) + ':' + str(height // g)
+    orientation = 'portrait' if height > width else 'landscape'
+    return 'Output a single ' + orientation + ' image with aspect ratio ' + ratio + ' (' + str(width) + 'x' + str(height) + ').'
+
+
 def build(context):
     config=context['config'];model=context['model'];prompt=context['prompt'];negative=context['negative']
     number=context['number'];source_raw=context['source_raw'];ordered_images=context['ordered_images'];image_values=context['image_values']
-    content = [{'type': 'text', 'text': prompt + ('\nAvoid: ' + negative if negative else '')}]
+    text = prompt + ('\nAvoid: ' + negative if negative else '')
+    hint = aspect_hint(context.get('frame') or {}) if config.get('sendSize', True) else ''
+    if hint:
+        text += '\n' + hint
+    content = [{'type': 'text', 'text': text}]
     for image_url, _ in ordered_images:
         content.append({'type': 'image_url', 'image_url': {'url': image_url}})
-    body = {'model': model, 'messages': [{'role': 'user', 'content': content}], 'stream': False}
+    # Gateways (OpenRouter, one-api, new-api) route Gemini/GPT image models
+    # through chat/completions and answer text-only unless image output is
+    # requested explicitly.
+    body = {'model': model, 'messages': [{'role': 'user', 'content': content}], 'stream': False, 'modalities': ['image', 'text']}
     path = '/chat/completions'
     return path, body
 

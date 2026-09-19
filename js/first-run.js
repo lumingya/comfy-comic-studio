@@ -5,11 +5,21 @@ function firstRunHome(){
  if(state.settings.presentation.hideFirstRun)return `<div class="first-run-reopen">${btn('首次使用指引','help','first-run-show','','ghost small')}</div>`;
  return `<section class="first-run" aria-labelledby="first-run-title"><header><div><h2 id="first-run-title">初光映格，微墨生花</h2></div>${btn('收起指引','close','first-run-hide','','ghost small')}</header><div class="first-run-paths">${[['comfyui','ComfyUI','连接已运行的服务，导入 API 工作流。','nodes'],['novelai','NovelAI','保存图像 API 密钥，无需工作流。','image'],['openai','OpenAI 兼容','填写基础地址，选模型与接口协议。','link']].map(([id,title,text,ic])=>`<button class="first-run-path" data-act="first-run-provider" data-provider="${id}">${icon(ic)}<span><strong>我使用 ${title}</strong><small>${text}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></section>`;
 }
+/* Mirrors backend/mio_credentials.is_private_host: loopback, RFC 1918 / link-local / ULA and LAN-style names may use plain HTTP. */
+function isPrivateHost(hostname){
+ const host=String(hostname||'').trim().toLowerCase().replace(/\.$/,'').replace(/^\[|\]$/g,'');
+ if(!host)return false;
+ if(host==='localhost'||host==='localhost.localdomain')return true;
+ const v4=host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+ if(v4){const[a,b]=[Number(v4[1]),Number(v4[2])];return a===10||a===127||(a===172&&b>=16&&b<=31)||(a===192&&b===168)||(a===169&&b===254)}
+ if(host.includes(':'))return host==='::1'||/^f[cd]/.test(host)||/^fe[89ab]/.test(host);
+ return !host.includes('.')||['.local','.lan','.internal','.home','.home.arpa','.localdomain','.localhost'].some(suffix=>host.endsWith(suffix));
+}
 function providerSetupIssues(p=activeImageProfile()){
  const issues=[],base=p.provider==='comfyui'?state.settings.comfy.baseUrl:p.baseUrl;let url;
  try{url=new URL(base);if(!['http:','https:'].includes(url.protocol)||url.username||url.password||url.search||url.hash)throw Error()}catch{issues.push('填写有效的 HTTP(S) 服务基础地址，不要包含密钥、查询参数或片段。')}
  if(url&&p.provider!=='comfyui'){
-  if(url.protocol==='http:'&&!['localhost','127.0.0.1','[::1]'].includes(url.hostname))issues.push('远程云渠道需要 HTTPS；HTTP 仅支持本机回环服务。');
+  if(url.protocol==='http:'&&!isPrivateHost(url.hostname))issues.push('公网云渠道需要 HTTPS；HTTP 仅允许本机或局域网（192.168.x.x、10.x.x.x、*.local 等）服务。');
   if(/\/(?:images\/(?:generations|edits)|chat\/completions|models)\/?$/.test(url.pathname))issues.push('这里只填基础地址（通常到 /v1），不要包含 /images/generations、/chat/completions 或 /models。');
   if(!p.model?.trim())issues.push('填写模型 ID；可获取模型列表，也可按服务商说明手动填写。');
  }

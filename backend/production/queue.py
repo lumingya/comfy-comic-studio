@@ -158,6 +158,9 @@ class ProductionQueue:
                             "channel": t["snapshot"]
                             .get("channel", {})
                             .get("title", ""),
+                            "provider": t["snapshot"]
+                            .get("channel", {})
+                            .get("provider", ""),
                         },
                         "pages": [
                             {

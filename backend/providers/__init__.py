@@ -47,11 +47,12 @@ def extras(config, body):
 
     if len(json.dumps(extra)) > 65536:
         raise ValueError("extraParams exceeds 64 KiB")
+    tunable = set(novelai.TUNABLE) if config.get("provider") == "novelai" else set()
     if any(
         not isinstance(k, str)
         or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.-]{0,95}", k)
         or k.lower() in RESERVED
-        or k in body
+        or (k in body and k not in tunable)
         or k.startswith("_")
         for k in extra
     ):

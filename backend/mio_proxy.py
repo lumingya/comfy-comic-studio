@@ -130,12 +130,10 @@ def chat_proxy(payload, services):
         or parsed.fragment
     ):
         raise ValueError("Invalid model endpoint")
-    if parsed.scheme == "http" and parsed.hostname not in (
-        "localhost",
-        "127.0.0.1",
-        "::1",
-    ):
-        raise ValueError("Remote model endpoints require HTTPS")
+    from backend.mio_credentials import is_private_host
+
+    if parsed.scheme == "http" and not is_private_host(parsed.hostname):
+        raise ValueError("Remote model endpoints require HTTPS; plain HTTP is only allowed for loopback and private-network hosts")
     key = payload.get("key") or cfg.get("key", "")
     if "\r" in key or "\n" in key:
         raise ValueError("Invalid credential")

@@ -175,6 +175,31 @@ def pdf(books, target):
         )
 
 
+def export_filename(books, mode):
+    """<画册名 | 画册合集>_<HTML-style 时间戳>.<zip|pdf>, matching the HTML export naming."""
+    import time
+    from backend.mio_library import safe_name
+
+    if len(books) == 1:
+        title = safe_name(books[0][0].get("title") or "画册")
+    else:
+        title = "画册合集_" + str(len(books)) + "本"
+    return title + "_" + str(int(time.time() * 1000)) + "." + mode
+
+
+def content_disposition(filename):
+    """ASCII fallback plus RFC 5987 UTF-8 name so browsers keep the Chinese title."""
+    from urllib.parse import quote
+
+    import re
+
+    fallback = re.sub(r"_+", "_", "".join(ch if 32 < ord(ch) < 127 and ch not in '"\\;' else "_" for ch in filename)).strip("_")
+    stem, suffix = Path(fallback).stem, Path(fallback).suffix
+    if not re.search(r"[A-Za-z]", stem):
+        fallback = "album_" + stem.strip("_") + suffix if stem.strip("_") else "album" + suffix
+    return 'attachment; filename="' + fallback + "\"; filename*=UTF-8''" + quote(filename, safe="")
+
+
 def stream_export(handler, store, body):
     if not _export_slot.acquire(blocking=False):
         raise LibraryError("正在准备或传输另一份导出，请完成后再试。", 409)
@@ -215,9 +240,7 @@ def _stream_export(handler, store, body):
                 "application/zip" if mode == "zip" else "application/pdf",
             )
             handler.send_header("Content-Length", str(target.stat().st_size))
-            handler.send_header(
-                "Content-Disposition", 'attachment; filename="album.' + mode + '"'
-            )
+            handler.send_header("Content-Disposition", content_disposition(export_filename(books, mode)))
             handler.end_headers()
             with target.open("rb") as source:
                 shutil.copyfileobj(source, handler.wfile, 256 * 1024)

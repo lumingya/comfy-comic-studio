@@ -283,6 +283,56 @@ class ProviderTests(unittest.TestCase):
         self.assertEqual(extract_images({'images':[{'image_url':{'url':'https://cdn.example/image'}}], 'content':'Made with https://example.com'}), [{'url':'https://cdn.example/image'}])
         self.assertEqual(extract_images({'content':'https://cdn.example/one https://cdn.example/two'}), [{'url':'https://cdn.example/one'}, {'url':'https://cdn.example/two'}])
 
+    def test_novelai_v4_reference_images_are_vibe_encoded_and_cached(self):
+        import tempfile
+        payload = self.payload('novelai')
+        payload['config'].update(baseUrl='https://image.novelai.net', model='nai-diffusion-4-5-full')
+        payload['prompt'] = '@image_1, test, @image_2'
+        payload['images'] = ['data:image/png;base64,' + base64.b64encode(raw).decode() for raw in (PNG, PNG + b'second')]
+        data = io.BytesIO()
+        with zipfile.ZipFile(data, 'w') as archive:
+            archive.writestr('image.png', PNG)
+        def responder(request, timeout=None):
+            response = MagicMock(); response.headers = {}; response.__enter__.return_value = response
+            if request.full_url.endswith('/ai/encode-vibe'):
+                body = json.loads(request.data)
+                self.assertEqual(body['model'], 'nai-diffusion-4-5-full'); self.assertEqual(body['information_extracted'], 1.0)
+                self.assertEqual(request.get_header('Authorization'), 'Bearer secret')
+                response.read.side_effect = [b'vibe-' + base64.b64decode(body['image'])[-6:], b'']
+            else:
+                response.read.side_effect = [data.getvalue(), b'']
+            return response
+        opener = MagicMock(); opener.open.side_effect = responder
+        with tempfile.TemporaryDirectory() as tmp, patch.object(server, 'DATA_DIR', tmp), patch.object(server.urllib.request, 'build_opener', return_value=opener), patch.object(server, 'store_image_bytes', return_value='/images/test.png'):
+            server.generate_provider_image(payload)
+            urls = [call.args[0].full_url for call in opener.open.call_args_list]
+            self.assertEqual(urls, ['https://image.novelai.net/ai/encode-vibe'] * 2 + ['https://image.novelai.net/ai/generate-image'])
+            body = json.loads(opener.open.call_args_list[-1].args[0].data)
+            self.assertEqual(body['input'], 'test'); self.assertEqual(body['parameters']['v4_prompt']['caption']['base_caption'], 'test')
+            self.assertEqual(body['parameters']['reference_image_multiple'], [base64.b64encode(b'vibe-' + raw[-6:]).decode() for raw in (PNG, PNG + b'second')])
+            self.assertNotIn('reference_information_extracted_multiple', body['parameters']); self.assertEqual(body['parameters']['reference_strength_multiple'], [0.6, 0.6])
+            server.generate_provider_image(payload)
+            self.assertEqual([call.args[0].full_url for call in opener.open.call_args_list][3:], ['https://image.novelai.net/ai/generate-image'])
+
+    def test_novelai_quality_flags_can_be_tuned_through_extra_params(self):
+        data = io.BytesIO()
+        with zipfile.ZipFile(data, 'w') as archive:
+            archive.writestr('image.png', PNG)
+        payload = self.payload('novelai'); payload['config']['extraParams'] = {'qualityToggle': True, 'ucPreset': 2, 'cfg_rescale': 0.2}
+        body = json.loads(self.run_provider(payload, data.getvalue()).data)['parameters']
+        self.assertTrue(body['qualityToggle']); self.assertEqual(body['ucPreset'], 2); self.assertEqual(body['cfg_rescale'], 0.2)
+        payload['config']['extraParams'] = {'seed': 5}
+        with self.assertRaises(ValueError):
+            self.run_provider(payload, data.getvalue())
+
+    def test_chat_requests_image_modality_and_describes_aspect_ratio(self):
+        payload = self.payload(); payload['config']['protocol'] = 'chat'; payload['frame'] = {'width': 832, 'height': 1216}
+        raw = json.dumps({'choices': [{'message': {'images': [{'image_url': {'url': 'data:image/png;base64,' + base64.b64encode(PNG).decode()}}]}}]}).encode()
+        body = json.loads(self.run_provider(payload, raw).data)
+        self.assertEqual(body['modalities'], ['image', 'text']); self.assertIn('portrait image with aspect ratio 13:19', body['messages'][0]['content'][0]['text'])
+        payload['config']['sendSize'] = False
+        body = json.loads(self.run_provider(payload, raw).data); self.assertNotIn('aspect ratio', body['messages'][0]['content'][0]['text'])
+
     def test_configured_timeout_reaches_http_and_remote_download(self):
         payload=self.payload();payload['_requestTimeout']=75
         response=MagicMock();response.headers={};response.read.side_effect=[b'{"data":[{"url":"https://example.com/result.png"}]}',b''];response.__enter__.return_value=response
