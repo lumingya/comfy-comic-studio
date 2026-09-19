@@ -5,6 +5,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import secrets
 import threading
 import time
 from backend.mio_library import LibraryError, atomic_write, image_type
@@ -46,6 +47,8 @@ def typed(entry):
 
 
 def interpolate(text, values, images=None, *, literal_unknown=False):
+    blanks = []
+
     def replace(match):
         key = match[1]
         if key not in values:
@@ -55,19 +58,48 @@ def interpolate(text, values, images=None, *, literal_unknown=False):
         value = values[key]
         if isinstance(value, dict) and value.get("kind") == "mio-image":
             if images is None:
+                blanks.append(key)
                 return ""
             if not value.get("src"):
                 raise LibraryError("图片变量为空：" + key)
             if value["src"] not in images:
                 images.append(value["src"])
             return "@image_" + str(images.index(value["src"]) + 1)
-        return (
+        rendered = (
             json.dumps(value, ensure_ascii=False)
             if isinstance(value, (dict, list))
             else str(value if value is not None else "")
         )
+        if not rendered.strip():
+            blanks.append(key)
+        return rendered
 
-    return re.sub(r"\{([\w]+)\}", replace, str(text or ""))
+    result = re.sub(r"\{([\w]+)\}", replace, str(text or ""))
+    # Only texts that actually lost a variable get tidied, so prompts without
+    # blanks stay byte-identical to what the author wrote.
+    return tidy_separators(result) if blanks else result
+
+
+def tidy_separators(text):
+    """Collapse the ", ," and leading/trailing commas that blank variables leave."""
+    if not text:
+        return text
+    cleaned = re.sub(r"[ \t]*,(?:[ \t]*,)+", ",", text)
+    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
+    return re.sub(r"^[ \t,]+|[ \t,]+$", "", cleaned, flags=re.M)
+
+
+def frame_seed(snapshot, index, explicit=-1):
+    """Seed for one frame: explicit > reproducible base+index > fresh random.
+
+    Without the reproducible switch every frame (and every rerun) gets its own
+    seed, so a book never collapses into near-identical pages.
+    """
+    if isinstance(explicit, (int, float)) and explicit >= 0:
+        return int(explicit) % 2**32
+    if snapshot.get("seedEnabled"):
+        return (int(snapshot.get("seed", 1)) + index) % 2**32
+    return secrets.randbelow(2**32)
 
 
 def seed_binding_ready(workflow):
@@ -175,6 +207,12 @@ class ProductionAdapter:
         )
         if seed_enabled and not seed_binding_ready(workflow):
             raise LibraryError("请先配置所选工作流中的有效种子节点映射")
+        global_negative = (
+            config.get("uiConfig", {})
+            .get("comfyStudio", {})
+            .get("settings", {})
+            .get("negative", "")
+        )
         seed = body.get("seed", 1)
         if type(seed) is not int or not 0 <= seed < 2**32:
             raise LibraryError("种子必须为 uint32 整数")
@@ -187,6 +225,7 @@ class ProductionAdapter:
                     k: copy.deepcopy(profile[k]) for k in CONFIG_FIELDS if k in profile
                 },
                 "workflow": workflow,
+                "globalNegative": global_negative if isinstance(global_negative, str) else "",
                 "seedEnabled": seed_enabled,
                 "projectId": body.get("projectId") or story.get("projectId"),
                 "seed": seed,
@@ -221,13 +260,30 @@ class ProductionAdapter:
                 raise InterruptedError("前置准备已取消")
             record = self.eco.macros.get(id)
             if record["status"] == "complete":
-                return {
-                    "values": durable_assets(self.host, record["values"]),
-                    "preparationId": id,
-                }
+                values = durable_assets(self.host, record["values"])
+                self.validate_frames(task, values)
+                return {"values": values, "preparationId": id}
             if record["status"] in ("failed", "cancelled", "interrupted"):
                 raise LibraryError(record.get("error", "前置准备未完成"))
             cancel.wait(0.1)
+
+    def validate_frames(self, task, values):
+        """Reject unresolved variables in any frame before the first paid call."""
+        snap = task["snapshot"]
+        literal = snap["channel"].get("provider") == "novelai"
+        for index, frame in enumerate(snap["story"]["frames"]):
+            try:
+                interpolate(frame.get("prompt", ""), values, [], literal_unknown=literal)
+                interpolate(frame.get("caption", ""), values)
+                negative = frame.get("negative", "")
+                if not str(negative or "").strip():
+                    negative = snap.get("globalNegative", "")
+                interpolate(negative, values, [], literal_unknown=literal)
+            except LibraryError as exc:
+                raise LibraryError(
+                    "第 " + str(index + 1) + " 幕「" + str(frame.get("name", "")) + "」：" + str(exc),
+                    exc.status,
+                ) from None
 
     def render(self, task, index, cancel):
         snap = task["snapshot"]
@@ -239,7 +295,12 @@ class ProductionAdapter:
         novelai_weights = snap["channel"].get("provider") == "novelai"
         prompt = interpolate(frame.get("prompt", ""), values, images, literal_unknown=novelai_weights)
         caption = interpolate(frame.get("caption", ""), values)
-        negative = interpolate(frame.get("negative", ""), values, images, literal_unknown=novelai_weights)
+        negative_source = frame.get("negative", "")
+        if not str(negative_source or "").strip():
+            # Scenes without their own negative inherit the studio-wide one,
+            # matching the legacy browser path and the reader's expectation.
+            negative_source = snap.get("globalNegative", "")
+        negative = interpolate(negative_source, values, images, literal_unknown=novelai_weights)
         config = self.host.native_store().read(include_baseline=False)
         live = resolve_channel(
             config, snap["channel"]["id"], snap["channel"]["provider"]
@@ -255,26 +316,23 @@ class ProductionAdapter:
             for k in ("width", "height", "steps", "cfg", "denoise", "seed")
             if k in frame
         }
-        params["seed"] = (
-            (snap["seed"] + index) % 2**32
-            if params.get("seed", -1) < 0
-            else params.get("seed", (snap["seed"] + index) % 2**32)
-        )
+        params["seed"] = frame_seed(snap, index, params.get("seed", -1))
         payload = {
             "config": channel,
             "prompt": prompt,
             "negative": negative,
             "images": images,
             "frame": params,
-            "_requestTimeout": 180,
+            "_requestTimeout": self.request_timeout(channel["provider"]),
         }
         if channel["provider"] == "comfyui":
             wf = snap["workflow"]
             rules = copy.deepcopy(wf.get("bindings", []))
             for p in snap["presets"]:
                 rules.extend(p.get("bindings", []))
-            if not snap.get("seedEnabled"):
-                rules = [b for b in rules if b.get("source") != "random"]
+            # A mapped seed node always receives this frame's seed: reproducible
+            # (base + index) when enabled, fresh per attempt otherwise. Only a
+            # workflow without a seed mapping keeps its literal value.
             payload["workflow"] = compile_workflow(
                 wf.get("workflow", {}),
                 rules,
@@ -358,6 +416,56 @@ class ProductionAdapter:
             "name": frame.get("name", "第 " + str(index + 1) + " 幕"),
         }
 
+    def request_timeout(self, provider):
+        """Per-request timeout from the shared queue runtime settings (30–7200 s)."""
+        default = 600 if provider == "comfyui" else 300
+        try:
+            from backend import mio_foundation
+
+            value = mio_foundation.jobs(self.host).runtime().get("requestTimeoutSeconds")
+            if type(value) is int:
+                return max(30, min(7200, value))
+        except Exception:
+            pass
+        return default
+
+    def finalize(self, task):
+        """Settle album status once a book stops: complete, partial or failed.
+
+        No render happens here; a book whose pages were skipped or rejected must
+        not stay 'generating' forever in the reader.
+        """
+        if task["snapshot"].get("preview") or task.get("status") not in (
+            "complete", "partial", "failed", "cancelled", "interrupted"
+        ):
+            return
+        store = self.host.native_store()
+        try:
+            record = store.entity("albums", task["albumId"])
+        except LibraryError as exc:
+            if exc.status == 404:
+                return
+            raise
+        album = record["document"]
+        total = album.get("totalSteps") or len(task["pages"])
+        done = len([p for p in album.get("steps", []) if p.get("image")])
+        status = "complete" if done >= total else ("partial" if done else "failed")
+        if task.get("status") in ("cancelled", "interrupted") and done < total:
+            status = "partial" if done else "failed"
+        if album.get("status") == status and not task.get("error"):
+            return
+        album["status"] = status
+        album["generatedSteps"] = done
+        if task.get("error"):
+            album["lastError"] = str(task["error"])[:500]
+        else:
+            album.pop("lastError", None)
+        album["updatedAt"] = int(time.time() * 1000)
+        store.apply(
+            [{"kind": "albums", "id": album["id"], "document": album, "expected": record["etag"]}],
+            internal=True,
+        )
+
     def publish(self, task, index, result):
         if task["snapshot"].get("preview"):
             return
@@ -374,6 +482,8 @@ class ProductionAdapter:
             if exc.status != 404:
                 raise
             revision = None
+            # The browser album contract requires rowId/templateId; assembled books
+            # have no legacy character row or template, so use the stable sentinels.
             album = {
                 "id": task["albumId"],
                 "projectId": task["snapshot"]["projectId"],
@@ -383,11 +493,17 @@ class ProductionAdapter:
                 "steps": [],
                 "status": "generating",
                 "createdAt": int(task["createdAt"] * 1000),
+                "updatedAt": int(task["createdAt"] * 1000),
                 "assemblyId": task["id"],
+                "rowId": "unassigned",
+                "templateId": "unassigned",
                 "synopsis": task["snapshot"]["story"].get("outline", ""),
                 "tags": ["装配作品"],
-                "characterName": "",
+                "characterName": ", ".join(
+                    p.get("title", "") for p in task["snapshot"].get("presets", []) if p.get("title")
+                ),
                 "templateTitle": task["snapshot"]["story"].get("title", ""),
+                "storyTitle": task["snapshot"]["story"].get("title", ""),
             }
         old = next((p for p in album["steps"] if p.get("stepIndex") == index), None)
         if (
@@ -433,7 +549,11 @@ def service(host):
         if not hasattr(eco, "production"):
             adapter = ProductionAdapter(host, eco)
             eco.production = ProductionQueue(
-                host.DATA_DIR, adapter.prepare, adapter.render, adapter.publish
+                host.DATA_DIR,
+                adapter.prepare,
+                adapter.render,
+                adapter.publish,
+                adapter.finalize,
             )
             adapter.report = eco.production.report_attempt
             eco.production_adapter = adapter

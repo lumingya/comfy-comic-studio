@@ -40,8 +40,14 @@ function installFileLibrary(){
       if(!record.document||record.document.id!==id)throw Error('画册正文返回不完整，未替换现有内容。');
       const current=bookBy(id);if(!current)return null;
       const pending=Object.values(current.pictureEdits||{});
-      Object.keys(current).forEach(k=>delete current[k]);Object.assign(current,record.document);
-      const prior=ns.sync.runtime.previous.savedGalleries?.find(x=>x.id===id);if(prior){Object.keys(prior).forEach(k=>delete prior[k]);Object.assign(prior,clone(record.document))}
+      // A raw album.json (e.g. published by the production queue) may lack contract
+      // fields such as rowId/templateId. Normalize it exactly like initial load does,
+      // keeping the identifiers the summary already carried, so validateState keeps
+      // accepting the workspace and saves/exports are not blocked after reading.
+      const index=Math.max(0,state.books.indexOf(current)),projectId=v=>state.projects.some(p=>p.id===v)?v:state.activeProjectId;
+      const document=ns.stateContract.normalizeBook({...record.document,rowId:record.document.rowId??current.rowId,templateId:record.document.templateId??current.templateId,projectId:record.document.projectId??current.projectId},index,Date.now(),projectId);
+      Object.keys(current).forEach(k=>delete current[k]);Object.assign(current,document);
+      const prior=ns.sync.runtime.previous.savedGalleries?.find(x=>x.id===id);if(prior){Object.keys(prior).forEach(k=>delete prior[k]);Object.assign(prior,clone(document))}
       ns.sync.runtime.previous._fileRevisions??={};ns.sync.runtime.previous._fileRevisions['albums:'+id]=record.etag;
       for(const edit of pending)ns.pictures?.apply(edit);
       return current;

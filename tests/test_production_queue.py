@@ -70,10 +70,41 @@ class ProductionQueueTests(unittest.TestCase):
         self.assertEqual(self.calls,[('A',0),('A',1),('A',2),('A',1)]);self.assertEqual(before['pages'][0],after['pages'][0]);self.assertEqual(before['pages'][2],after['pages'][2]);self.assertEqual(len(after['pages'][1]['attempts']),2)
     def test_suffix_replay_uses_original_indices(self):
         a=self.make();self.q.start(a['id'],trusted=True);self.wait(a['id'],'complete');self.q.start(a['id'],indices=[1,2],trusted=True);self.wait(a['id'],'complete');self.assertEqual(self.calls[-2:],[('A',1),('A',2)])
-    def test_failed_replay_keeps_previous_image_and_stops_batch(self):
+    def test_failed_replay_keeps_previous_image_and_marks_book_partial(self):
         a=self.make();self.q.start(a['id'],trusted=True);before=self.wait(a['id'],'complete')
         def fail(*args):raise ValueError('provider rejected')
-        self.q.render=fail;self.q.start(a['id'],indices=[1],trusted=True);after=self.wait(a['id'],'failed');self.assertEqual(after['pages'][1]['result'],before['pages'][1]['result']);self.assertEqual(len(self.calls),3)
+        self.q.render=fail;self.q.start(a['id'],indices=[1],trusted=True);after=self.wait(a['id'],'partial');self.assertEqual(after['pages'][1]['result'],before['pages'][1]['result']);self.assertEqual(len(self.calls),3)
+        self.assertEqual(after['pages'][1]['state'],'failed');self.assertIn('1/1 幕失败',after['error']);self.assertIn('provider rejected',after['error'])
+    def test_one_rejected_page_does_not_stop_the_rest_of_the_book(self):
+        def render(task,index,cancel):
+            if index==1:raise ValueError('HTTP 400: {"error":{"message":"rejected by the safety system","code":"content_policy_violation"}}')
+            return self.render(task,index,cancel)
+        self.q.render=render;a,b=self.make('A'),self.make('B');self.q.start(a['id'],sequential=True,trusted=True);self.wait(b['id'],'partial');after=self.q.get(a['id'])
+        self.assertEqual(after['status'],'partial');self.assertEqual([p['state'] for p in after['pages']],['complete','failed','complete'])
+        self.assertIn('1/3 幕失败',after['error']);self.assertIn('内容安全审核',after['error']);self.assertEqual(self.calls,[('A',0),('A',2),('B',0),('B',2)])
+        self.assertFalse(self.q.list()['paused'] and self.q.list()['batch'])
+        self.q.start(a['id'],trusted=True)
+        for _ in range(250):
+            if len(self.q.get(a['id'])['pages'][1]['attempts'])==2 and self.q.active is None:break
+            time.sleep(.01)
+        self.assertEqual(self.q.get(a['id'])['pages'][1]['attempts'][-1]['status'],'failed');self.assertEqual(len(self.calls),4);self.assertEqual(self.q.get(a['id'])['status'],'partial')
+    def test_credential_failure_stops_the_book_and_the_batch(self):
+        class Denied(Exception):status=401
+        def render(task,index,cancel):raise Denied('HTTP 401: invalid_api_key')
+        self.q.render=render;a,b=self.make('A'),self.make('B');self.q.start(a['id'],sequential=True,trusted=True);after=self.wait(a['id'],'failed')
+        self.assertEqual([p['state'] for p in after['pages']],['failed','standby','standby']);self.assertIn('拒绝了密钥',after['error']);self.assertIn('已停止剩余 2 幕',after['error'])
+        self.assertEqual(self.q.get(b['id'])['status'],'standby');self.assertTrue(self.q.list()['paused']);self.assertEqual(self.q.list()['batch'],[])
+    def test_consecutive_failures_trip_the_streak_guard(self):
+        def render(task,index,cancel):raise ValueError('boom '+str(index))
+        self.q.render=render;a=self.make('A',count=5);self.q.start(a['id'],trusted=True);after=self.wait(a['id'],'failed')
+        self.assertEqual([p['state'] for p in after['pages']],['failed']*3+['standby']*2);self.assertIn('3/5 幕失败：boom 0',after['error']);self.assertTrue(self.q.list()['paused'])
+    def test_finalize_hook_receives_every_terminal_task(self):
+        seen=[];self.q.finalize=lambda task:seen.append((task['title'],task['status']))
+        def render(task,index,cancel):
+            if task['title']=='B':raise ValueError('nope')
+            return self.render(task,index,cancel)
+        self.q.render=render;a,b=self.make('A'),self.make('B');self.q.start(a['id'],sequential=True,trusted=True);self.wait(b['id'],'failed')
+        self.assertEqual(seen,[('A','complete'),('B','failed')])
     def test_pause_drains_only_current_request(self):
         began=threading.Event();release=threading.Event()
         def held(task,index,cancel):
