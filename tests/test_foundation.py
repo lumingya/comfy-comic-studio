@@ -19,7 +19,7 @@ class FoundationSafetyTests(unittest.TestCase):
         self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
         self.root=Path(self.temp.name);self.library=__import__('backend.mio_library',fromlist=['*']).FileLibrary(self.root);self.addCleanup(self.library.close);self.store=Jobs(str(self.root/'runtime'/'execution'),lambda _:None);self.addCleanup(self.store.close);self.addCleanup(server.reset_native_stores)
         self.config={}
-        for name,value in [('DATA_DIR',str(self.root)),('IMAGES_DIR',str(self.root/'runtime/staging/images')),('LEGACY_IMAGES_DIR',str(self.root/'legacy'))]:
+        for name,value in [('DATA_DIR',str(self.root)),('IMAGES_DIR',str(self.root/'assets/images')),('LEGACY_IMAGES_DIR',str(self.root/'legacy'))]:
             p=patch.object(server,name,value);p.start();self.addCleanup(p.stop)
         p=patch.object(server,'read_merged_config',side_effect=lambda:copy.deepcopy(self.config));p.start();self.addCleanup(p.stop)
         p=patch.object(mio_foundation,'jobs',return_value=self.store);p.start();self.addCleanup(p.stop)

@@ -42,8 +42,9 @@ def is_private_host(hostname):
 
 def endpoint(config):
     provider = config.get('provider')
-    if provider not in ('openai', 'novelai'):
-        raise ValueError('Unsupported provider')
+    from backend.providers.registry import PROVIDERS
+    if not PROVIDERS.has(provider) or PROVIDERS.spec(provider)['capabilities'].get('credentials') != 'bearer':
+        raise ValueError('Provider does not use bearer credentials')
     base = str(config.get('baseUrl', '')).strip().rstrip('/')
     p = urllib.parse.urlsplit(base)
     if p.scheme not in ('https', 'http') or not p.hostname or p.username or p.password or p.query or p.fragment:

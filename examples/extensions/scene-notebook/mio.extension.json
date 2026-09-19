@@ -1,1 +1,8 @@
-{"id":"scene-notebook","name":"场记本","version":"1.0.0","apiVersion":1}
+{
+  "id": "scene-notebook",
+  "name": "场记本",
+  "version": "2.0.0",
+  "apiVersion": 2,
+  "description": "最小的 SDK v2 扩展：一个 Python 路由 + 一个 Dock 面板 + 一个工具栏按钮 + 一种自定义变量类型。适合作为新扩展的起点。",
+  "entry": "index.js"
+}

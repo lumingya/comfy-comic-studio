@@ -133,7 +133,7 @@ try{
     await route.fulfill({status:200,headers:{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'*'},contentType:url.pathname==='/view'?'image/png':'application/json',body:url.pathname==='/view'?Buffer.from(pixel,'base64'):JSON.stringify(json)});
   });
   const asset=await page.evaluate(async()=>{const p=selectedPlan(),f=effectivePlanFrame(p,currentTemplate().frames[0]);f._execution.mode='real';f._execution.autoFallback=false;f._assetBookId='integration-album';return (await generateMappedFrame(f,planRuntimeRow(p),new AbortController().signal)).image});
-  check('GPU protocol path persists immutable raster output before album ownership',asset.startsWith('/images/runtime/images/')&&submissions.length===1);
+  check('GPU protocol path persists immutable raster output before album ownership',asset.startsWith('/images/assets/')&&submissions.length===1);
   const image=await fetch(base+asset);check('stored relative image URL is served by the same Python backend',image.ok&&(await image.arrayBuffer()).byteLength>0);
   const preview=await page.evaluate(()=>{const copyState=clone(state);copyState.books[0].steps[0].image='/images/albums/integration-album/example.png';validateState(copyState);return true});
   check('state validator accepts portable local image URLs',preview);

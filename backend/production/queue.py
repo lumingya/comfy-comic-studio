@@ -30,12 +30,18 @@ FAILURE_STREAK_LIMIT = 3
 
 
 class ProductionQueue:
-    def __init__(self, root, prepare, render, publish=lambda *_: None, finalize=lambda *_: None):
+    def __init__(self, root, prepare, render, publish=lambda *_: None, finalize=lambda *_: None,
+                 emit=lambda *_: None, retry_policy=lambda *_: None):
         self.tasks = TaskStore(Path(root) / "production/tasks")
         self.state = Storage(Path(root) / "production/control")
         self.prepare = prepare
         self.render = render
         self.publish = publish
+        # Platform notifications (queue.*, task.*, page.failed). Never raises.
+        self.emit = emit
+        # Page-failure intervention: returns {"retry": True, "delay": s} to re-run
+        # the same page (bounded), or None to record the failure.
+        self.retry_policy = retry_policy
         # Called once with the finished task (any terminal status) so the
         # adapter can settle album status without another render.
         self.finalize = finalize
@@ -239,7 +245,14 @@ class ProductionQueue:
                 self.control["order"].remove(id)
                 self.tasks.delete(id)
                 raise
+            self._notify("task.assembled", {"id": id, "title": task["title"], "albumId": task["albumId"], "pages": len(frames), "preview": task["purpose"] == "preview"})
             return copy.deepcopy(task)
+
+    def _notify(self, name, payload):
+        try:
+            self.emit(name, payload)
+        except Exception:
+            pass
 
     def assemble_many(self, items):
         if not isinstance(items, list) or not 1 <= len(items) <= 100:
@@ -320,6 +333,7 @@ class ProductionQueue:
             self.cancel_event = threading.Event()
             self._save_control()
             self.wake.set()
+            self._notify("queue.started", {"batch": list(ids), "sequential": sequential, "indices": indices})
             return self.list()
 
     def pause(self):
@@ -328,6 +342,7 @@ class ProductionQueue:
                 raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
             self.control["paused"] = True
             self._save_control()
+            self._notify("queue.paused", {"active": self.active})
             return self.list()
 
     def resume(self):
@@ -339,6 +354,7 @@ class ProductionQueue:
             self.control["paused"] = False
             self._save_control()
             self.wake.set()
+            self._notify("queue.resumed", {"batch": list(self.control["batch"])})
             return self.list()
 
     def cancel(self):
@@ -356,6 +372,7 @@ class ProductionQueue:
             self.control.update(batch=[], paused=True)
             self._save_control()
             self.wake.set()
+            self._notify("queue.cancelled", {"active": self.active})
             return self.list()
 
     def remove(self, id):
@@ -444,6 +461,7 @@ class ProductionQueue:
                     # Disk errors are not converted into implicit retries.
                     self.fault = str(exc)[:500]
                     self.control.update(paused=True, batch=[])
+                self._notify("queue.fault", {"error": self.fault})
             finally:
                 with self.lock:
                     self.active = None
@@ -494,7 +512,11 @@ class ProductionQueue:
             task["status"] = "running"
             task.pop("error", None)
             self._save(task)
-            for index in list(task["selection"]):
+            self._notify("task.started", {"id": id, "title": task["title"], "albumId": task["albumId"], "selection": list(task["selection"])})
+            pending = list(task["selection"])
+            retries = {}
+            while pending:
+                index = pending.pop(0)
                 if not self._await_dispatch(cancel):
                     raise InterruptedError("已取消后续分幕，原有图片保留")
                 page = task["pages"][index]
@@ -555,9 +577,18 @@ class ProductionQueue:
                     # One rejected page (moderation, bad parameters, exhausted
                     # rate limit) is page-local: record it and keep going so the
                     # rest of the book still gets rendered.
+                    self._save(task)
+                    decision = self._retry_decision(task, index, attempt, retries.get(index, 0), fatal_page_failure(exc) or attempt.get("phase") == "publish")
+                    if decision:
+                        retries[index] = retries.get(index, 0) + 1
+                        page["state"] = "standby"
+                        self._save(task)
+                        if cancel.wait(decision["delay"]):
+                            raise InterruptedError("重试等待期间已取消")
+                        pending.insert(0, index)
+                        continue
                     failures.append((index, attempt["error"]))
                     streak += 1
-                    self._save(task)
                     # Publication failures are local storage problems: rendering
                     # more pages that cannot be saved would only pay twice.
                     if (
@@ -596,8 +627,25 @@ class ProductionQueue:
                     self.finalize(copy.deepcopy(task))
                 except Exception:
                     pass
+                self._notify("task.finished", {"id": id, "title": task["title"], "albumId": task["albumId"], "status": task["status"], "error": task.get("error")})
             finally:
                 self.active_task = None
+
+    def _retry_decision(self, task, index, attempt, done, fatal):
+        """Ask the platform whether a page-local failure should be retried (max 3)."""
+        payload = {"task": {"id": task["id"], "title": task["title"], "albumId": task["albumId"]}, "index": index,
+                   "error": attempt.get("error"), "attempt": done + 1, "fatal": bool(fatal)}
+        self._notify("page.failed", payload)
+        if done >= 3 or fatal:
+            return None
+        try:
+            decision = self.retry_policy(payload)
+        except Exception:
+            return None
+        if not isinstance(decision, dict) or decision.get("retry") is not True:
+            return None
+        delay = decision.get("delay", 0)
+        return {"delay": max(0.0, min(600.0, float(delay if isinstance(delay, (int, float)) else 0)))}
 
     def _halt_batch(self, id):
         with self.lock:

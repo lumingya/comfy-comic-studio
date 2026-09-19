@@ -79,7 +79,7 @@ CONFIG_FILES = {
 }
 # Keep /images URLs stable. New images are grouped by date under data/assets/images.
 LEGACY_IMAGES_DIR = os.path.join(BASE_DIR, "images")
-IMAGES_DIR = os.path.join(DATA_DIR, "runtime", "staging", "images")
+IMAGES_DIR = os.path.join(DATA_DIR, "assets", "images")
 MAX_JSON_BODY_BYTES = 10 * 1024 * 1024
 MAX_IMAGE_BYTES = 50 * 1024 * 1024
 CONFIG_LOCK = threading.RLock()
@@ -579,13 +579,30 @@ def fetch_remote_json(url, max_bytes=5 * 1024 * 1024):
 
 
 # Provider transport: same-origin browser requests, no SDK dependency.
+def provider_operation(op, payload):
+    """Registry-dispatched channel operations: ``models`` and ``check``."""
+    from backend.providers.registry import PROVIDERS
+
+    config = payload.get("config") or {}
+    provider = config.get("provider")
+    if not PROVIDERS.has(provider):
+        raise ValueError("Unknown image provider: " + str(provider))
+    entry = PROVIDERS.get(provider)
+    if op == "models":
+        if entry.models is None:
+            raise ValueError("该渠道不提供模型列表；请手动填写模型 ID")
+        return entry.models(payload, application_services())
+    if op == "check":
+        if entry.check is None:
+            raise ValueError("该渠道不支持连接检查")
+        return entry.check(payload, application_services())
+    raise ValueError("Unsupported provider operation")
+
+
 def list_provider_models(payload):
+    """OpenAI-compatible /models discovery (registered as the openai provider's ``models`` op)."""
     config = payload.get("config") or {}
     provider, base = mio_credentials.endpoint(config)
-    if provider != "openai":
-        raise ValueError(
-            "Model discovery is available for OpenAI-compatible channels only"
-        )
     key = mio_credentials.resolve(DATA_DIR, payload)
     headers = {"Accept": "application/json", "User-Agent": "Mio/1.0"}
     if key:
@@ -896,6 +913,8 @@ def application_services():
         read_merged_config=read_merged_config,
         read_merged_config_raw=read_merged_config_raw,
         store_image_bytes=store_image_bytes,
+        provider_operation=provider_operation,
+        list_provider_models=list_provider_models,
         store_image_data=store_image_data,
         store_image_stream=store_image_stream,
         validate_config_payload=validate_config_payload,
@@ -929,6 +948,7 @@ def http_services():
         list_provider_models=list_provider_models,
         manage_native_credentials=manage_native_credentials,
         native_store=native_store,
+        provider_operation=provider_operation,
         read_merged_config=read_merged_config,
         store_image_bytes=store_image_bytes,
         store_image_data=store_image_data,

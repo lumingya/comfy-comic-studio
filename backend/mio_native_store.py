@@ -130,6 +130,23 @@ def split_dto(value):
     return groups, settings
 
 
+# Canonical content-addressed pool first; legacy pools are read-only aliases.
+POOLS = (
+    "assets/images",
+    "runtime/staging/images",
+    "runtime/execution/images",
+    "runtime/unassigned/images",
+    "production/assets",
+    "macro-assets",
+)
+POOL_PREFIXES = (
+    "/images/assets/",
+    "/images/runtime/images/",
+    "/images/production/assets/",
+    "/images/ecosystem/macros/",
+)
+
+
 class NativeStore(WorkspaceRepository):
     def __init__(self, root, project):
         self.was_empty_at_open = not (Path(root) / "workspace.json").exists()
@@ -137,7 +154,7 @@ class NativeStore(WorkspaceRepository):
         super().__init__(library)
         self.root = library.root
         self.project = Path(project)
-        self.root.joinpath("runtime/staging/images").mkdir(parents=True, exist_ok=True)
+        self.root.joinpath("assets/images").mkdir(parents=True, exist_ok=True)
         # A warm cache serves immediately. Cold rebuilding is explicit to the client;
         # empty cached results must never trigger default-data seeding during rebuild.
         self.ready = False
@@ -284,16 +301,11 @@ class NativeStore(WorkspaceRepository):
         ):
             raise LibraryError("Only local immutable images are accepted", 422)
         p = urllib.parse.unquote(parsed.path)
-        if p.startswith("/images/production/assets/"):
+        if p.startswith(POOL_PREFIXES):
+            # Content-addressed pools: the canonical assets/images plus the
+            # legacy folders older workspaces still carry. Any alias resolves.
             name = p.rsplit("/", 1)[-1]
-            if not re.fullmatch(r"[a-f0-9]{64}\.(png|jpg|jpeg|webp|svg)", name):
-                raise LibraryError("Invalid production image path")
-            return owned_path(self.root / "production/assets", name)
-        if p.startswith("/images/ecosystem/macros/"):
-            name = p.rsplit("/", 1)[-1]
-            if not re.fullmatch(r"[a-f0-9]{64}\.(png|jpg|jpeg|webp|svg)", name):
-                raise LibraryError("Invalid computed image path")
-            return owned_path(self.root / "macro-assets", name)
+            return self.pool_path(name)
         if p.startswith("/images/library/"):
             parts = p[len("/images/library/") :].split("/", 2)
             if len(parts) != 3:
@@ -324,21 +336,19 @@ class NativeStore(WorkspaceRepository):
             # Snapshots may outlive their source preset. Content-addressed staging
             # remains immutable; every accepted native image is mirrored here.
             name = Path(relative).name
-        elif p.startswith("/images/runtime/images/"):
-            name = p[len("/images/runtime/images/") :]
         elif p.startswith(("/vendor/", "/examples/")):
             path = owned_path(self.project, p.lstrip("/"))
             image_type(path.read_bytes())
             return path
         else:
             raise LibraryError("Unknown native image path", 404)
+        return self.pool_path(Path(relative).name)
+
+    def pool_path(self, name):
+        """Locate an immutable image by content-addressed name across every pool."""
         if not re.fullmatch(r"[a-f0-9]{64}\.(png|jpg|jpeg|webp|svg)", name):
             raise LibraryError("Invalid immutable image identity", 404)
-        for folder in (
-            "runtime/staging/images",
-            "runtime/execution/images",
-            "runtime/unassigned/images",
-        ):
+        for folder in POOLS:
             path = owned_path(self.root, folder + "/" + name)
             if path.is_file():
                 return path
@@ -361,10 +371,10 @@ class NativeStore(WorkspaceRepository):
 
     def upload(self, value):
         raw, name = self.image_bytes(value)
-        path = self.root / "runtime/staging/images" / name
+        path = self.root / "assets/images" / name
         if not path.exists():
             atomic_write(path, raw)
-        return "/images/runtime/images/" + name
+        return "/images/assets/" + name
 
     def localize(self, value, base):
         if isinstance(value, str) and value.startswith(

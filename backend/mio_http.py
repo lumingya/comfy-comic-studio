@@ -348,6 +348,16 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
             except self.services.LibraryError as e:
                 self.send_json(e.status, {"error": str(e)})
             return
+        if request_path == "/api/library/maintenance/assets":
+            from backend import mio_assets
+
+            try:
+                query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                hours = float(query.get("graceHours", [str(mio_assets.GRACE_HOURS)])[0])
+                self.send_json(200, mio_assets.inventory(self.services.DATA_DIR, max(0.0, min(24 * 365, hours))))
+            except (ValueError, OSError) as e:
+                self.send_json(400, {"error": str(e)[:300]})
+            return
         if request_path == "/api/library/rescan":
             self.services.native_store().library.scan()
             self.send_json(
@@ -400,14 +410,19 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
         if ecosystem_api.dispatch(self, self.services.application, request_path):
             return
 
-        if request_path == "/api/image/comfy-check":
+        if request_path in ("/api/image/comfy-check", "/api/image/check"):
             try:
-                from backend.mio_connection_check import check_comfy
-                self.send_json(200, check_comfy(self.read_json_body(max_bytes=4096)))
+                legacy = request_path.endswith("comfy-check")
+                body = self.read_json_body(max_bytes=4096 if legacy else 65536)
+                if legacy:
+                    body = {"config": {"provider": "comfyui", **body}}
+                self.send_json(200, self.services.provider_operation("check", body))
             except self.services.PayloadTooLargeError:
-                self.send_json(413, {"error": "Connection-check request exceeds 4 KiB"})
+                self.send_json(413, {"error": "Connection-check request too large"})
             except ValueError as exc:
-                self.send_json(400, {"error": str(exc)})
+                self.send_json(400, {"error": str(exc)[:400]})
+            except Exception as exc:
+                self.send_json(502, {"error": str(exc)[:400]})
             return
 
         if request_path in ("/api/image/credentials", "/api/image/models"):
@@ -421,7 +436,7 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
                 result = (
                     self.services.manage_native_credentials(payload)
                     if request_path.endswith("/credentials")
-                    else self.services.list_provider_models(payload)
+                    else self.services.provider_operation("models", payload)
                 )
                 self.send_json(200, result)
             except self.services.PayloadTooLargeError:
@@ -541,6 +556,36 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
             except Exception as e:
                 self.send_json(400, {"error": str(e)})
             return
+        if request_path.startswith("/api/library/maintenance/"):
+            from backend import mio_assets
+
+            try:
+                body = self.read_json_body(max_bytes=65536)
+                action = request_path.rsplit("/", 1)[-1]
+                if action == "gc":
+                    eco = production_api.service(self.services.application)
+                    hours = body.get("graceHours", mio_assets.GRACE_HOURS)
+                    if not isinstance(hours, (int, float)) or hours < 0:
+                        raise self.services.LibraryError("graceHours must be a non-negative number")
+                    busy = lambda: bool(eco.production.active or eco.production.control.get("batch"))
+                    result = mio_assets.collect(self.services.DATA_DIR, body.get("token"), float(hours), busy) if body.get("apply") is True else mio_assets.inventory(self.services.DATA_DIR, float(hours))
+                elif action == "restore":
+                    result = mio_assets.restore(self.services.DATA_DIR, body.get("batch"))
+                elif action == "purge-trash":
+                    if body.get("trusted") is not True:
+                        raise self.services.LibraryError("Confirm permanent deletion", 403)
+                    result = mio_assets.purge_trash(self.services.DATA_DIR, int(body.get("olderThanDays", 30)))
+                else:
+                    raise self.services.LibraryError("Unknown maintenance action", 404)
+                self.send_json(200, result)
+            except self.services.PayloadTooLargeError:
+                self.send_json(413, {"error": "Request too large"})
+            except self.services.LibraryError as e:
+                self.send_json(e.status, {"error": str(e)[:400]})
+            except (ValueError, OSError) as e:
+                self.send_json(400, {"error": str(e)[:300]})
+            return
+
         if request_path == "/api/library/forget-key":
             try:
                 scope = self.read_json_body().get("scope")

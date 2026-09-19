@@ -11,7 +11,15 @@ import time
 from backend.mio_library import LibraryError, atomic_write, image_type
 from backend.ecosystem import api as ecosystem_api
 from backend.ecosystem.workflow import compile_workflow
-from backend.mio_channels import resolve_channel, CONFIG_FIELDS
+from backend.mio_channels import resolve_channel, config_fields, workflow_provider
+from backend.providers.registry import PROVIDERS
+
+
+def capability(provider, name):
+    try:
+        return PROVIDERS.spec(provider)["capabilities"].get(name)
+    except LibraryError:
+        return False
 from .queue import ProductionQueue
 
 LOCK = threading.RLock()
@@ -23,8 +31,8 @@ def durable_assets(host, value):
 
         source = host.native_store().image_path(value)
         name = immutable_name(source)
-        link_asset(source, Path(host.DATA_DIR) / "production/assets" / name)
-        return "/images/production/assets/" + name
+        link_asset(source, Path(host.DATA_DIR) / "assets/images" / name)
+        return "/images/assets/" + name
     if isinstance(value, dict):
         return {k: durable_assets(host, v) for k, v in value.items()}
     if isinstance(value, list):
@@ -235,10 +243,13 @@ class ProductionAdapter:
         if not profile:
             raise LibraryError("请选择并保存有效图像渠道")
         profile = copy.deepcopy(profile)
-        if profile.get("provider") == "comfyui":
+        if not PROVIDERS.has(profile.get("provider")):
+            raise LibraryError("渠道使用的图像提供方「" + str(profile.get("provider")) + "」未注册；请启用对应扩展或更换渠道")
+        uses_workflow = workflow_provider(profile.get("provider"))
+        if uses_workflow:
             profile["baseUrl"] = config.get("comfyConfig", {}).get("baseUrl", "")
         workflow = copy.deepcopy(config.get("comfyConfig", {}))
-        if profile.get("provider") == "comfyui" and body.get("workflowId"):
+        if uses_workflow and body.get("workflowId"):
             selected = next(
                 (
                     w
@@ -263,9 +274,7 @@ class ProductionAdapter:
                     "outputNodeId": selected.get("outputNodeId", ""),
                 }
             )
-        seed_enabled = (
-            body.get("seedEnabled") is True and profile.get("provider") == "comfyui"
-        )
+        seed_enabled = body.get("seedEnabled") is True and uses_workflow
         if seed_enabled and not seed_binding_ready(workflow):
             raise LibraryError("请先配置所选工作流中的有效种子节点映射")
         global_negative = (
@@ -277,13 +286,13 @@ class ProductionAdapter:
         seed = body.get("seed", 1)
         if type(seed) is not int or not 0 <= seed < 2**32:
             raise LibraryError("种子必须为 uint32 整数")
-        return durable_assets(
+        snapshot = durable_assets(
             self.host,
             {
                 "story": story,
                 "presets": presets,
                 "channel": {
-                    k: copy.deepcopy(profile[k]) for k in CONFIG_FIELDS if k in profile
+                    k: copy.deepcopy(profile[k]) for k in config_fields(profile["provider"]) if k in profile
                 },
                 "workflow": workflow,
                 "globalNegative": global_negative if isinstance(global_negative, str) else "",
@@ -295,6 +304,11 @@ class ProductionAdapter:
                     presets[0]["id"] if preview and len(presets) == 1 else None
                 ),
             },
+        )
+        # Extensions may rewrite the whole book before it enters the queue
+        # (translate prompts, inject style presets, pick another channel).
+        return self.eco.hooks.apply(
+            "assemble.before", snapshot, {"title": body.get("title"), "preview": preview}
         )
 
     def prepare(self, task, cancel):
@@ -322,7 +336,9 @@ class ProductionAdapter:
             record = self.eco.macros.get(id)
             if record["status"] == "complete":
                 values = durable_assets(self.host, record["values"])
+                values = self.eco.hooks.apply("prepare.after", values, {"task": task_context(task)})
                 self.validate_frames(task, values)
+                self.eco.events.emit("task.prepared", task_context(task))
                 return {"values": values, "preparationId": id}
             if record["status"] in ("failed", "cancelled", "interrupted"):
                 raise LibraryError(record.get("error", "前置准备未完成"))
@@ -331,7 +347,7 @@ class ProductionAdapter:
     def validate_frames(self, task, values):
         """Reject unresolved variables in any frame before the first paid call."""
         snap = task["snapshot"]
-        literal = snap["channel"].get("provider") == "novelai"
+        literal = bool(capability(snap["channel"].get("provider"), "braceWeights"))
         for index, frame in enumerate(snap["story"]["frames"]):
             try:
                 interpolate(frame.get("prompt", ""), values, [], literal_unknown=literal)
@@ -353,7 +369,7 @@ class ProductionAdapter:
         images = []
         # NovelAI uses braces for emphasis. Known preset variables still bind;
         # unknown image-prompt tokens stay literal, never affect caption validation.
-        novelai_weights = snap["channel"].get("provider") == "novelai"
+        novelai_weights = bool(capability(snap["channel"].get("provider"), "braceWeights"))
         prompt = interpolate(frame.get("prompt", ""), values, images, literal_unknown=novelai_weights)
         caption = interpolate(frame.get("caption", ""), values)
         negative_source = frame.get("negative", "")
@@ -370,7 +386,8 @@ class ProductionAdapter:
         for key in ("keyId", "keyIds", "keyMode"):
             channel.pop(key, None)
         channel.update({k: live[k] for k in ("keyId", "keyIds", "keyMode") if k in live})
-        if channel["provider"] == "comfyui":
+        uses_workflow = workflow_provider(channel["provider"])
+        if uses_workflow:
             channel["baseUrl"] = channel.get("baseUrl") or live["baseUrl"]
         params = {
             k: frame[k]
@@ -390,7 +407,7 @@ class ProductionAdapter:
             "frame": params,
             "_requestTimeout": self.request_timeout(channel["provider"]),
         }
-        if channel["provider"] == "comfyui":
+        if uses_workflow:
             wf = snap["workflow"]
             rules = copy.deepcopy(wf.get("bindings", []))
             for p in snap["presets"]:
@@ -450,6 +467,13 @@ class ProductionAdapter:
                 raise
         if cancel.is_set():
             raise InterruptedError("分幕提交前已取消")
+        # render.before: extensions may rewrite prompt/negative/frame/images/config
+        # (prompt translation, LoRA injection, size policy ...) for this page.
+        context = {"task": task_context(task), "index": index, "frame": {"name": frame.get("name", ""), "caption": caption}}
+        payload = self.eco.hooks.apply("render.before", payload, context)
+        prompt, negative = payload.get("prompt", prompt), payload.get("negative", negative)
+        self.eco.events.emit("page.started", {**context, "provider": channel["provider"]})
+        payload["_task"] = {"id": task["id"], "index": index, "title": task["title"]}
         payload["_isCanceled"] = lambda: cancel.is_set()
         payload["_checkpoint"] = lambda prompt_id: self.report(
             task["id"], index, {"upstream": str(prompt_id)}
@@ -490,8 +514,21 @@ class ProductionAdapter:
                 )
                 if cancel.wait(delay):
                     raise InterruptedError("限流等待期间已取消")
+        # render.after: post-processing (upscale, face restore, watermark,
+        # mirroring to an image host). Handlers return a result with a new image.
+        result = self.eco.hooks.apply(
+            "render.after",
+            {"image": result["image"], "artifacts": result.get("artifacts", []), "provider": channel["provider"], "meta": result.get("meta")},
+            {**context, "prompt": prompt, "negative": negative, "frame": params},
+        )
+        image = result.get("image")
+        if isinstance(image, dict):
+            image = image.get("localUrl") or image.get("url")
+        if not isinstance(image, str) or not image.startswith("/images/"):
+            raise LibraryError("render.after 必须返回本地 /images/ 地址")
+        self.eco.events.emit("page.rendered", {**context, "image": image, "provider": channel["provider"]})
         return {
-            "image": durable_assets(self.host, result["image"]),
+            "image": durable_assets(self.host, image),
             "prompt": prompt,
             "caption": caption,
             "previousImage": previous,
@@ -500,7 +537,7 @@ class ProductionAdapter:
 
     def request_timeout(self, provider):
         """Per-request timeout from the shared queue runtime settings (30–7200 s)."""
-        default = 600 if provider == "comfyui" else 300
+        default = 600 if workflow_provider(provider) else 300
         try:
             from backend import mio_foundation
 
@@ -547,6 +584,7 @@ class ProductionAdapter:
             [{"kind": "albums", "id": album["id"], "document": album, "expected": record["etag"]}],
             internal=True,
         )
+        self.eco.events.emit("album.saved", {"id": album["id"], "status": status, "source": "production"})
 
     def publish(self, task, index, result):
         if task["snapshot"].get("preview"):
@@ -603,6 +641,9 @@ class ProductionAdapter:
             "stepIndex": index,
             **{k: result[k] for k in ("image", "prompt", "caption", "name")},
         }
+        page = self.eco.hooks.apply("publish.before", page, {"task": task_context(task), "index": index, "albumId": album["id"]})
+        if not str(page.get("image", "")).startswith("/images/"):
+            raise LibraryError("publish.before 必须保留本地 /images/ 页面地址")
         album["steps"] = [p for p in album["steps"] if p.get("stepIndex") != index] + [
             page
         ]
@@ -623,6 +664,15 @@ class ProductionAdapter:
             ],
             internal=True,
         )
+        if revision is None:
+            self.eco.events.emit("album.created", {"id": album["id"], "title": album["title"], "source": "production"})
+        self.eco.events.emit("page.published", {"task": task_context(task), "index": index, "albumId": album["id"], "image": page["image"], "complete": album["status"] == "complete"})
+        if album["status"] == "complete":
+            self.eco.events.emit("album.published", {"id": album["id"], "title": album["title"], "pages": len(album["steps"])})
+
+
+def task_context(task):
+    return {"id": task["id"], "title": task.get("title", ""), "albumId": task.get("albumId"), "preview": bool(task["snapshot"].get("preview"))}
 
 
 def service(host):
@@ -636,6 +686,8 @@ def service(host):
                 adapter.render,
                 adapter.publish,
                 adapter.finalize,
+                emit=lambda name, payload: eco.events.emit(name, payload, source="production"),
+                retry_policy=lambda payload: eco.hooks.apply("page.retry", None, payload, expect=dict),
             )
             adapter.report = eco.production.report_attempt
             eco.production_adapter = adapter

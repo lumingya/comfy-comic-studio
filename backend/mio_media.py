@@ -85,7 +85,7 @@ class MediaStore:
         self.root = Path(root)
 
     def ingest(self, stream):
-        folder = self.root / "runtime/staging/images"
+        folder = self.root / "assets/images"
         folder.mkdir(parents=True, exist_ok=True)
         fd, name = tempfile.mkstemp(dir=folder, prefix=".ingest-")
         total = 0
@@ -117,7 +117,7 @@ class MediaStore:
             target = folder / identity
             link_asset(name, target)
             return {
-                "url": "/images/runtime/images/" + identity,
+                "url": "/images/assets/" + identity,
                 "mime": mime,
                 "bytes": total,
             }

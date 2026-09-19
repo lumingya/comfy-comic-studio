@@ -322,7 +322,7 @@ class Builder:
                 atomic_write(path, raw)
             self.image_references += 1
             self.image_files.add(path.relative_to(self.root).as_posix())
-            return '/images/runtime/' + relative if runtime else relative
+            return '/images/assets/' + Path(relative).name if runtime else relative
         if isinstance(value, dict):
             return {key: self.images(child, base, context + '/' + key, runtime,
                 force=key in IMAGE_FIELDS and ('stepIndex' in value or value.get('kind') == 'mio-image' or key in ('offlineImage', 'originalImage')))
@@ -483,7 +483,7 @@ class Builder:
                             value = decode(text)
                         except LibraryError:
                             raise ConversionError('Invalid runtime JSON in ' + table + '/' + column) from None
-                        value = self.images(value, self.root / 'runtime/execution', 'execution/' + table + '/' + str(rowid) + '/' + column, runtime=True)
+                        value = self.images(value, self.root / 'assets', 'execution/' + table + '/' + str(rowid) + '/' + column, runtime=True)
                         value = self.secretize(value, 'execution:' + table + ':' + identity + ':' + column)
                         db.execute('UPDATE "' + table + '" SET "' + column + '"=? WHERE rowid=?', (json.dumps(value, ensure_ascii=False), rowid))
             if 'settings' not in tables:
@@ -516,8 +516,11 @@ class Builder:
             db.execute('PRAGMA journal_mode=DELETE')
         finally:
             db.close()
-        with self.db_path.open('rb') as f:
-            os.fsync(f.fileno())
+        try:
+            with self.db_path.open('r+b') as f:
+                os.fsync(f.fileno())
+        except OSError:
+            pass
 
     def unassigned_images(self):
         preserved = []
@@ -535,7 +538,7 @@ class Builder:
                     raw = self.source.read(path, MAX_ASSET)
                     try:
                         _, suffix = image_type(raw)
-                        relative = 'runtime/unassigned/images/' + digest(raw) + suffix
+                        relative = 'assets/images/' + digest(raw) + suffix
                     except LibraryError:
                         relative = 'runtime/quarantine/' + digest(raw) + '.bin'
                     destination = self.root / relative

@@ -271,7 +271,7 @@ class ConversionTests(unittest.TestCase):
             self.assertEqual(db.execute('SELECT COUNT(*) FROM request_inputs').fetchone()[0], 1)
             request = json.loads(db.execute('SELECT input FROM request_inputs').fetchone()[0])
             self.assertEqual(request['prompt'], '历史原始提示词'); self.assertEqual(request['config']['key'], '')
-            self.assertTrue(request['images'][0].startswith('/images/runtime/images/'))
+            self.assertTrue(request['images'][0].startswith('/images/assets/'))
             self.assertEqual(db.execute('SELECT id FROM deleted_albums').fetchone()[0], 'book_deleted')
         self.assertNotIn(b'HISTORY_KEY_FOR_TEST', dbpath.read_bytes())
         # Real worker startup against the converted durable DB stays held and makes no request.

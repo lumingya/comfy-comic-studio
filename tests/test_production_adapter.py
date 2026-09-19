@@ -5,6 +5,7 @@ import tempfile
 import threading
 import time
 from types import SimpleNamespace
+import json
 import unittest
 from backend.ecosystem.macros import Macros
 from backend.mio_native_store import NativeStore
@@ -15,7 +16,7 @@ from backend.production.queue import ProductionQueue
 PNG=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jfX8AAAAASUVORK5CYII=')
 class ProductionAdapterTests(unittest.TestCase):
     def setUp(self):
-        self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=Path(self.tmp.name)
+        self.tmp=tempfile.TemporaryDirectory(ignore_cleanup_errors=True);self.addCleanup(self.tmp.cleanup);self.root=Path(self.tmp.name)
         self.store=NativeStore(self.root,Path(__file__).resolve().parents[1]);self.addCleanup(self.store.library.close)
         self.profile={'id':'channel-one','provider':'openai','model':'fixed-model','baseUrl':'https://example.invalid/v1','keyMode':'none','title':'受控渠道'}
         config={'uiConfig':{'comfyStudio':{'settings':{'imageGeneration':{'profiles':[self.profile]}}}}}
@@ -23,7 +24,9 @@ class ProductionAdapterTests(unittest.TestCase):
         self.calls=[];image=self.store.upload('data:image/png;base64,'+base64.b64encode(PNG).decode())
         self.host=SimpleNamespace(DATA_DIR=str(self.root),native_store=lambda:self.store,generate_provider_image=lambda p:(self.calls.append(copy.deepcopy(p)) or {'image':image}))
         self.macros=Macros(self.root,lambda *_:self.fail('Unexpected model macro call'))
-        self.adapter=ProductionAdapter(self.host,SimpleNamespace(macros=self.macros))
+        from backend.ecosystem.events import EventBus,Hooks
+        self.hooks=Hooks();self.events=EventBus()
+        self.adapter=ProductionAdapter(self.host,SimpleNamespace(macros=self.macros,hooks=self.hooks,events=self.events))
         self.q=ProductionQueue(self.root,self.adapter.prepare,self.adapter.render,self.adapter.publish);self.addCleanup(self.q.close)
         for kind,doc in [('storyboards',{'id':'story-one','projectId':'project-one','title':'故事','outline':'独立主线','frames':[{'name':'一','prompt':'{hero} at sea','caption':'{hero}'},{'name':'二','prompt':'{hero} returns','caption':'归来'}]}),('characters',{'id':'preset-one','projectId':'project-one','title':'人物','negative':'blur','bindings':[],'settingsGroups':[],'entries':[{'key':'hero','type':'text','value':'Ada'}]})]:
             self.store.apply([{'kind':kind,'id':doc['id'],'document':doc,'expected':None}])
@@ -59,9 +62,21 @@ class ProductionAdapterTests(unittest.TestCase):
     def test_bad_caption_is_validated_before_paid_render(self):
         task=self.assemble();task['snapshot']['story']['frames'][0]['caption']='{missing}';self.q.tasks.set(task['id'],task)
         self.q.start(task['id'],trusted=True);done=self.wait(task['id']);self.assertEqual(done['status'],'failed');self.assertFalse(self.calls)
-    def test_reference_freeze_survives_original_file_removal(self):
-        url=self.store.upload('data:image/png;base64,'+base64.b64encode(PNG).decode());from backend.production.api import durable_assets
-        frozen=durable_assets(self.host,{'image':url});self.store.image_path(url).unlink();self.assertEqual(self.store.image_bytes(frozen['image'])[0],PNG)
+    def test_referenced_assets_are_pinned_and_orphans_collected_from_the_unified_pool(self):
+        import os,time
+        from backend import mio_assets
+        from backend.production.api import durable_assets
+        url=self.store.upload('data:image/png;base64,'+base64.b64encode(PNG).decode())
+        frozen=durable_assets(self.host,{'image':url});self.assertTrue(frozen['image'].startswith('/images/assets/'))
+        self.assertEqual(self.store.image_bytes(frozen['image'])[0],PNG)
+        # An image mentioned by a production task stays; an unreferenced one older than the grace period goes to trash.
+        (self.root/'production/tasks').mkdir(parents=True,exist_ok=True);(self.root/'production/tasks/t.json').write_text(json.dumps({'snapshot':frozen}))
+        stray=self.root/'assets/images'/('f'*64+'.png');stray.write_bytes(PNG);old=time.time()-3*86400;os.utime(stray,(old,old));os.utime(self.store.image_path(url),(old,old))
+        report=mio_assets.inventory(self.root);self.assertEqual([o['name'] for o in report['orphans']],[stray.name]);self.assertEqual(report['referenced'],1)
+        result=mio_assets.collect(self.root,report['token']);self.assertEqual(result['moved'],['/images/assets/'+stray.name]);self.assertFalse(stray.exists())
+        self.assertEqual(self.store.image_bytes(frozen['image'])[0],PNG)
+        with self.assertRaises(LibraryError):mio_assets.collect(self.root,'stale-token')
+        restored=mio_assets.restore(self.root,result['batch']);self.assertEqual(restored['restored'],['/images/assets/'+stray.name]);self.assertTrue(stray.exists())
     def test_computed_variables_run_only_on_explicit_start(self):
         p=self.store.entity('characters','preset-one');p['document']['entries'][0]['compute']={'script':'return "Computed";', 'dependsOn':[], 'timeout':10}
         self.store.apply([{'kind':'characters','id':'preset-one','document':p['document'],'expected':p['etag']}])

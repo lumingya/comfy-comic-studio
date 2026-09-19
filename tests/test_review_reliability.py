@@ -147,7 +147,7 @@ class ReviewReliabilityTests(unittest.TestCase):
         one = media.ingest(Bounded(raw))
         two = media.put(raw)
         self.assertEqual(one, two)
-        source = self.root / "runtime/staging/images" / Path(one["url"]).name
+        source = self.root / "assets/images" / Path(one["url"]).name
         target = self.root / "album/images" / source.name
         link_asset(source, target)
         self.assertEqual(
@@ -162,7 +162,7 @@ class ReviewReliabilityTests(unittest.TestCase):
         Image.new("RGB", (2000, 1000), "blue").save(raw, "PNG")
         media = MediaStore(self.root)
         stored = media.put(raw.getvalue())
-        source = self.root / "runtime/staging/images" / Path(stored["url"]).name
+        source = self.root / "assets/images" / Path(stored["url"]).name
         thumb = media.thumbnail(source, "300x200")
         mtime = thumb.stat().st_mtime_ns
         with Image.open(thumb) as image:
@@ -364,7 +364,7 @@ class ReviewReliabilityTests(unittest.TestCase):
         self.assertEqual(calls["/history/owned"], 2)
         self.assertEqual(calls["/view"], 2)
         self.assertEqual(
-            len(list((self.root / "runtime/staging/images").glob("*.png"))), 1
+            len(list((self.root / "assets/images").glob("*.png"))), 1
         )
 
     def test_exhausted_comfy_poll_is_uncertain_not_new_generation(self):

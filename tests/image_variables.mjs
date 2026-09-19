@@ -26,7 +26,7 @@ try{
   await page.waitForFunction(key=>selectedPlan().variables.find(e=>e.key===key)?.value?.src?.startsWith('/images/'),key);
  }
  const refs=await page.evaluate(()=>selectedPlan().variables.filter(e=>e.type==='image').map(e=>e.value.src));
- check('uploads physically exist on disk and match their original bytes',refs.every((ref,i)=>readFileSync(path.join(temp,'data/runtime/staging/images',ref.slice('/images/runtime/images/'.length))).equals(Buffer.from(pngs[i].split(',')[1],'base64'))));
+ check('uploads physically exist on disk and match their original bytes',refs.every((ref,i)=>readFileSync(path.join(temp,'data/assets/images',ref.slice('/images/assets/'.length))).equals(Buffer.from(pngs[i].split(',')[1],'base64'))));
  check('configuration rejects inline image-variable data',await page.evaluate(png=>{const s=clone(state);s.creation.plans[0].variables.push({id:'bad_inline',key:'bad_inline',type:'image',value:{kind:'mio-image',src:png}});try{validateState(s);return false}catch(e){return e.message.includes('本地资产')}},pngs[0]));
  check('configuration stores local asset references, not base64',await page.evaluate(()=>selectedPlan().variables.filter(e=>e.type==='image').every(e=>e.value.kind==='mio-image'&&!JSON.stringify(e).includes('base64'))));
  await page.evaluate(()=>{selectedPlan().variables.push({id:'unused_img',key:'未使用',type:'image',value:''});save();});
@@ -40,7 +40,7 @@ try{
  await page.evaluate(()=>{enqueuePlanSnapshot(selectedPlan());window.__imageQueue=clone(state.queue[0])});
  await page.locator('[data-act="art-create-tab"][data-tab="settings"]').click();await page.locator('[data-image-key="charcter_image1"] input').setInputFiles({name:'replacement.png',mimeType:'image/png',buffer:Buffer.from(pngs[2].split(',')[1],'base64')});await page.waitForFunction(()=>currentBookSettings().variables.find(e=>e.key==='charcter_image1').value.name==='replacement.png');
  check('replacement does not mutate the queued prompt or ordered references',await page.evaluate(({expected,refs})=>state.queue[0].frames[0]._resolvedImagePrompt===expected&&state.queue[0].frames[0]._imageInputs.map(i=>i.src.split('/').at(-1)).join('|')===refs.map(s=>s.split('/').at(-1)).join('|'),{expected,refs}));
- check('old queued image remains on disk after replacement',readFileSync(path.join(temp,'data/runtime/staging/images',refs[0].slice('/images/runtime/images/'.length))).equals(Buffer.from(pngs[0].split(',')[1],'base64')));
+ check('old queued image remains on disk after replacement',readFileSync(path.join(temp,'data/assets/images',refs[0].slice('/images/assets/'.length))).equals(Buffer.from(pngs[0].split(',')[1],'base64')));
  await page.evaluate(async()=>{await savePythonWorkspace(true)});await page.reload();await page.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);
  check('restart/read retains image variables and original queue snapshots',await page.evaluate(({refs,expected})=>selectedPlan().variables.find(e=>e.key==='图片').value.src.split('/').at(-1)===refs[1].split('/').at(-1)&&state.queue[0].frames[0]._imageInputs[0].src.split('/').at(-1)===refs[0].split('/').at(-1)&&state.queue[0].frames[0]._resolvedImagePrompt===expected,{refs,expected}));
  const sent=[],rawError=JSON.stringify({error:{code:'unsupported_images',message:'图片不兼容。'+('保留详细响应。'.repeat(100))}});
@@ -58,9 +58,9 @@ try{
  // Export all plans and both queued/original images, then restore without the original asset folder.
  await page.evaluate(async()=>{window.__imagePackage=await buildDiskPackage(state)});
  check('portable package includes physical variable assets and no inline base64',await page.evaluate(async()=>{const pkg=window.__imagePackage,assets=[...pkg.files.keys()].filter(k=>k.includes('variable_')&&k.endsWith('.png'));return assets.length>=3&&!(await pkg.files.get('workspace.json').text()).includes('base64')}));
- renameSync(path.join(temp,'data/runtime/staging/images'),path.join(temp,'saved-original-images'));
+ renameSync(path.join(temp,'data/assets/images'),path.join(temp,'saved-original-images'));
  await page.evaluate(async()=>{const pkg=window.__imagePackage;window.__imageRestored=await loadDiskManifest(async name=>{const blob=pkg.files.get(name);if(!blob)throw Error('Missing '+name);return blob},await pkg.files.get('workspace.json').text())});
- check('portable restore recreates local files without needing the original folder',refs.every(ref=>readFileSync(path.join(temp,'data/runtime/staging/images',ref.slice('/images/runtime/images/'.length))).length>0));
+ check('portable restore recreates local files without needing the original folder',refs.every(ref=>readFileSync(path.join(temp,'data/assets/images',ref.slice('/images/assets/'.length))).length>0));
  check('restored queue and source snapshots reference immutable local assets',await page.evaluate(refs=>{const restored=window.__imageRestored.state;return restored.queue[0].frames[0]._imageInputs[0].src.split('/').at(-1)===refs[0].split('/').at(-1)&&restored.books.find(b=>b.id===restored.queue[0].bookId).sourceSnapshot.frames[0]._imageInputs[1].src.split('/').at(-1)===refs[1].split('/').at(-1)&&!JSON.stringify(restored.creation).includes('base64')},refs));
  await page.evaluate(()=>{navigate(1);createUI.tab='settings';render()});
  while(await page.locator('#main .group-toggle[aria-expanded="false"]').count())await page.locator('#main .group-toggle[aria-expanded="false"]').first().click();await page.locator('[data-act="art-setting-remove"][data-key="图片"]').click();await page.locator('#confirm-yes').click();

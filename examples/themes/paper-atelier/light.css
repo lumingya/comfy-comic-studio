@@ -1,0 +1,3 @@
+/* Light variant only: compiled under [data-theme=light]. Daylight paper, crisp rules. */
+.sidebar{border-right:1px solid #bfae8c00;box-shadow:inset -1px 0 0 var(--line)}
+.eco-package,.setting-group{background:color-mix(in srgb,var(--panel) 96%,var(--paper))}

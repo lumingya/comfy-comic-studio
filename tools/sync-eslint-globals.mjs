@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import {parse} from 'acorn';
-const files=["state","sync","engine","creation","ui-presentation","ui-reader","ui-templates","ui-export","ui-editors","ui-locale","ui-assistant","ui-storyboard","ui-gallery","ui-settings","ui","workspace","organize","foundation","app"];
-const globals={ComfyComic:'writable'};
+const files=["state", "sync", "workflow-mapping", "engine", "creation", "ui-presentation", "ui-reader", "ui-templates", "ui-export", "ui-editors", "ui-locale", "ui-assistant", "ui-storyboard", "ui-gallery", "ui-settings", "ui", "workspace", "organize", "foundation", "ui-image-studio", "ui-template-afterglow", "ui-template-seamless", "file-library", "contextual-sharing", "album-metadata", "creative-context", "settings-workbench", "platform", "ecosystem", "reading-stage", "preferences-workbench", "assembly-workshop", "dom-updates", "architecture", "first-run", "home", "workflow-workbench", "app"];
+const globals={ComfyComic:'writable',MioContent:'readonly'};
 for(const f of files){for(const n of parse(fs.readFileSync(`js/${f}.js`,'utf8'),{ecmaVersion:'latest'}).body){if(n.type==='FunctionDeclaration')globals[n.id.name]='writable';if(n.type==='VariableDeclaration')for(const d of n.declarations)if(d.id.type==='Identifier')globals[d.id.name]='writable';}}
 const config=JSON.parse(fs.readFileSync('.eslintrc.json','utf8'));config.globals=globals;config.overrides=[{files:['js/build.js','js/tests.js','tools/*.mjs','tests/*.mjs'],env:{node:true},parserOptions:{sourceType:'module'}}];fs.writeFileSync('.eslintrc.json',JSON.stringify(config,null,2)+'\n');

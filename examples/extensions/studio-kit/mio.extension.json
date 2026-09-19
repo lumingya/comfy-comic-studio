@@ -1,0 +1,13 @@
+{
+  "id": "studio-kit",
+  "name": "Studio Kit · 平台能力示例",
+  "version": "2.0.0",
+  "apiVersion": 2,
+  "description": "SDK v2 参考扩展：本地占位渲染渠道、渲染前后钩子、事件监听、CBZ 导出、图片 ZIP 导入、侧栏工作区、Inspector/Dock 面板、卡片与右键菜单动作。",
+  "entry": "index.js",
+  "settings": [
+    {"key": "suffix", "label": "自动追加提示词后缀", "type": "text", "default": "", "placeholder": "例如 masterpiece, best quality"},
+    {"key": "stamp", "label": "渲染后加角标（需 Pillow）", "type": "toggle", "default": false},
+    {"key": "dockOnStart", "label": "启动时展开 Dock 面板", "type": "toggle", "default": false}
+  ]
+}

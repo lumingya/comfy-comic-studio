@@ -1,2 +1,11 @@
-:root{color-scheme:light;--bg:#f4eee2;--side:#e9e1d0;--panel:#fbf6ea;--panel2:#e8dfcb;--line:#d0c2a7;--text:#3a3327;--soft:#635d4d;--muted:#857a65;--accent:#876241;--accent2:#916c43;--tint:#e2d6bc;--sans:Georgia,'Songti SC',serif}
-body{background-image:url('paper.png')}.sidebar{border-right:1px solid #bfae8c;background:var(--side)}.brand-name,.quiet-create-head h1,.eco-heading h2,.source-story-head select{font-family:Georgia,'Songti SC',serif;letter-spacing:.08em}.btn{border-radius:2px}.setting-group,.eco-package{border-radius:3px;box-shadow:3px 3px 0 #00000009}.settings-preset-rail{border-radius:3px;background:#eadfc8;border:1px solid #d4c3a6}.quiet-tabs .active:after{height:3px;background:var(--accent)}textarea{background:#fffaf0}.topbar{background:#f4eee2eb}.btn.primary{background:#876241;color:#fff8e6}
+/* Shared rules: materials, type and shape. Colors come from the tokens in mio.theme.json,
+   so this file never needs to know whether the host is in dark or light mode. */
+body{background-image:url('paper.png');background-blend-mode:multiply}
+.brand-name,.quiet-create-head h1,.eco-heading h2,.source-story-head select,.mio-ext-head h1{font-family:var(--art-serif);letter-spacing:.08em}
+.btn{border-radius:2px}.setting-group,.eco-package,.home-module,.mio-dock{border-radius:3px;box-shadow:3px 3px 0 rgb(var(--shadow-rgb)/.06)}
+.settings-preset-rail{border-radius:3px;background:var(--panel2);border:1px solid var(--line)}
+.quiet-tabs .active:after{height:3px;background:var(--accent)}
+textarea,.prompt-surface{background:color-mix(in srgb,var(--panel) 85%,var(--paper))}
+.topbar{background:color-mix(in srgb,var(--bg) 92%,transparent)}
+.btn.primary{background:var(--accent);color:var(--on-accent)}
+.room-page,.page-art img{box-shadow:0 1px 0 rgb(var(--shadow-rgb)/.3),0 12px 30px rgb(var(--shadow-rgb)/.35)}

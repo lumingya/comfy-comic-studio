@@ -33,18 +33,56 @@ def unpack(raw,destination):
                 if item.file_size>32*1024*1024:raise LibraryError('Package file too large')
                 p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(z.read(item))
 
+OPTIONAL_KEYS=('description','author','homepage','license')
+
 def manifest(folder,kind):
+    """Validate mio.<kind>.json. Extensions: apiVersion 1 (legacy toolbar SDK) or 2 (platform SDK).
+
+    Themes: apiVersion 1 (single css) or 2 (variants / tokens / icons)."""
     p=Path(folder)/('mio.'+kind+'.json')
     if not p.is_file():raise LibraryError('Missing '+p.name)
     if p.stat().st_size>65536:raise LibraryError('Manifest too large')
-    d=json.loads(p.read_text(encoding="utf-8"));identifier(d.get('id'))
-    if d.get('apiVersion')!=1 or not isinstance(d.get('name'),str) or not d['name'].strip():raise LibraryError('Unsupported package manifest')
+    d=json.loads(p.read_text(encoding="utf-8-sig"));identifier(d.get('id'))
+    if d.get('apiVersion') not in (1,2) or not isinstance(d.get('name'),str) or not d['name'].strip():raise LibraryError('Unsupported package manifest')
     if not isinstance(d.get('version'),str):raise LibraryError('Manifest requires version')
-    entry='index.js' if kind=='extension' else d.get('css','theme.css')
-    if not owned(folder,entry).is_file():raise LibraryError('Missing package entry: '+entry)
+    result={k:d[k] for k in ('id','name','version','apiVersion')}
+    for key in OPTIONAL_KEYS:
+        if isinstance(d.get(key),str):result[key]=d[key][:300]
+    if kind=='extension':
+        entry=d.get('entry','index.js')
+        if not isinstance(entry,str) or not entry.endswith(('.js','.mjs')):raise LibraryError('Extension entry must be a JS module')
+        has_js=owned(folder,entry).is_file();has_py=owned(folder,'plugin.py').is_file()
+        if not has_js and not has_py:raise LibraryError('Extension needs index.js and/or plugin.py')
+        result['entry']=entry if has_js else '';result['backend']=has_py
+        settings=d.get('settings',[])
+        if settings:
+            from .registry import _field
+            if not isinstance(settings,list) or len(settings)>64:raise LibraryError('settings must be a list of at most 64 fields')
+            result['settings']=[_field(f) for f in settings]
+        slots=d.get('permissions',[])
+        if slots and (not isinstance(slots,list) or not all(isinstance(x,str) for x in slots)):raise LibraryError('permissions must be a string list')
+        if slots:result['permissions']=slots[:32]
+    else:
+        entry=d.get('css','theme.css')
+        if not owned(folder,entry).is_file():raise LibraryError('Missing package entry: '+entry)
+        result['css']=entry
+        if d.get('apiVersion')==2:
+            variants=d.get('variants',{})
+            if not isinstance(variants,dict) or any(k not in ('dark','light') or not isinstance(v,str) for k,v in variants.items()):raise LibraryError('variants must map dark/light to CSS files')
+            for v in variants.values():
+                if not owned(folder,v).is_file():raise LibraryError('Missing variant CSS: '+v)
+            result['variants']=variants
+            tokens=d.get('tokens',{})
+            if not isinstance(tokens,dict) or any(k not in ('dark','light','shared') or not isinstance(v,dict) for k,v in tokens.items()):raise LibraryError('tokens must be {dark|light|shared: {--name: value}}')
+            result['tokens']=tokens
+            icons=d.get('icons','')
+            if icons:
+                if not isinstance(icons,str) or not owned(folder,icons).is_file():raise LibraryError('icons must point to a JSON file inside the package')
+                result['icons']=icons
+            result['colorScheme']=d.get('colorScheme','auto') if d.get('colorScheme') in ('auto','dark','light') else 'auto'
     for p in Path(folder).rglob('*'):
         if p.is_symlink():raise LibraryError('Package symlinks forbidden')
-    return {k:d[k] for k in ('id','name','version','apiVersion')}|({'css':entry} if kind=='theme' else {})
+    return result
 
 def package_root(folder,kind):
     if (Path(folder)/('mio.'+kind+'.json')).exists():return Path(folder)

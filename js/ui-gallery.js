@@ -80,7 +80,7 @@ async function deleteCollection(collectionId=state.activeProjectId){
   if(state!==original||activeJobs()||backendRuntime.loading||disk.busy||disk.connecting)throw Error(localeString('工程在确认期间发生变化，请重新检查后删除。'));
   const deletion=planCollectionRemoval(state,collectionId,replacement);if(JSON.stringify(deletion.summary)!==JSON.stringify(s))throw Error(localeString('工程在确认期间发生变化，请重新检查后删除。'));
   validateState(deletion.next);
-  await foundationCancelForBooks(state.books.filter(b=>b.projectId===collectionId).map(b=>b.id));
+  const bookIds=state.books.filter(b=>b.projectId===collectionId).map(b=>b.id);if(bookIds.length&&ComfyComic.sync?.runtime.loaded){const result=await foundationRequest('albums/delete',{ids:bookIds});applyDeletedAlbums(result.deletedAlbumIds)}
   if($('#reader').open)closeReader();if($('#modal').open)closeModal();$('#assistant').hidden=true;
   state=deletion.next;ensureStudioState();ui.workspace=0;ui.selected.clear();ui.bulk=false;ui.search='';ui.filter='all';ui.bookId=null;ui.step=0;ui.frameIndex=0;ui.templateId=projectTemplates()[0]?.id;ui.storyTemplateId=ui.templateId;ui.storyRowId=projectRows()[0]?.id;ui.exportIds=[];
   createUI.planId=projectPlans()[0]?.id||null;createUI.setId=projectVariableSets()[0]?.id||null;artUI.labBookId=null;artUI.labIndex=0;studioUI.assistantUndo=null;studioUI.assistantTargetId=null;studioUI.exportDraft=null;displayUI.featuredIndex=0;displayUI.page=0;

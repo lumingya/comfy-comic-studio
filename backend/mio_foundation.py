@@ -166,7 +166,7 @@ def inventory(host,verify=False):
     fresh={}
     for path in sorted(root.rglob('*')):
         if not path.is_file() or path.is_symlink() or path.name.endswith('.tmp'):continue
-        url='/images/runtime/images/'+path.relative_to(root).as_posix();stat=path.stat();stamp=[stat.st_mtime_ns,stat.st_size]
+        url='/images/assets/'+path.relative_to(root).as_posix();stat=path.stat();stamp=[stat.st_mtime_ns,stat.st_size]
         item=cache.get(url)
         if verify or not item or item.get('stamp')!=stamp:
             raw=path.read_bytes()

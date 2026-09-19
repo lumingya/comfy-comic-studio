@@ -1,0 +1,4 @@
+/* Dark variant only: compiled under [data-theme=dark]. Lamp-lit desk, warmer highlights. */
+body{background-image:linear-gradient(rgb(var(--shadow-rgb)/.55),rgb(var(--shadow-rgb)/.55)),url('paper.png')}
+.sidebar{border-right:1px solid var(--line)}
+.cover{box-shadow:0 10px 30px rgb(var(--shadow-rgb)/.6)}

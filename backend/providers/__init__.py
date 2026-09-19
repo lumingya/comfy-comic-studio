@@ -1,4 +1,5 @@
-"""Versioned, built-in adapter registry; no arbitrary plugin execution."""
+"""Provider dispatch. Channels live in backend.providers.registry (built-ins) and
+are extended at runtime by trusted extensions; see docs/ECOSYSTEM_GUIDE.md."""
 
 import re
 from . import cloud, comfyui, openai_images, openai_chat, novelai
@@ -64,19 +65,16 @@ def extras(config, body):
 
 
 def generate(payload, host):
-    return _generate(payload, host)
+    """Dispatch through the open provider registry and record asset origins."""
+    from .registry import PROVIDERS
 
-
-def _generate(payload, host):
     provider = (payload.get("config") or {}).get("provider")
-    if provider == "comfyui":
-        result = comfyui.generate(payload, host)
-    else:
-        from .transport import cancellation_scope
-
-        with cancellation_scope(payload) as cancellable:
-            result = cloud.generate(cancellable, host)
+    entry = PROVIDERS.get(provider)
+    result = entry.generate(payload, host)
+    if not isinstance(result, dict) or not isinstance(result.get("image"), str):
+        raise ValueError("Provider returned no image")
     result.setdefault("artifacts", [{"kind": "image", "url": result["image"]}])
+    result.setdefault("provider", provider)
     if hasattr(host, "mio_foundation"):
         for artifact in result["artifacts"]:
             host.mio_foundation.record_asset_origin(

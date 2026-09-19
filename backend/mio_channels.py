@@ -4,7 +4,28 @@ import copy
 class ChannelConfigurationError(ValueError):
     """Fix the shared saved configuration before dispatching more frames."""
 
-CONFIG_FIELDS=('id','title','provider','baseUrl','model','protocol','sampler','size','quality','sendSize','sendQuality','sendAspectHint','keyMode','keyId','keyIds','extraParams')
+BASE_FIELDS=('id','title','provider','baseUrl','model','keyMode','keyId','keyIds','extraParams')
+
+def config_fields(provider=None):
+    """Channel keys a snapshot may carry: shared keys plus the provider's declared form fields."""
+    from backend.providers.registry import PROVIDERS
+    if provider and PROVIDERS.has(provider):return tuple(dict.fromkeys(BASE_FIELDS+tuple(PROVIDERS.config_fields(provider))))
+    keys=list(BASE_FIELDS)
+    for spec in PROVIDERS.manifest():
+        keys.extend(k for k in spec['configFields'] if k not in keys)
+    return tuple(keys)
+
+class _Fields(tuple):
+    """Live view so legacy call sites reading CONFIG_FIELDS see extension providers."""
+    def __iter__(self):return iter(config_fields())
+    def __contains__(self,key):return key in config_fields()
+    def __len__(self):return len(config_fields())
+
+CONFIG_FIELDS=_Fields()
+
+def workflow_provider(provider):
+    from backend.providers.registry import PROVIDERS
+    return PROVIDERS.has(provider) and PROVIDERS.spec(provider)['capabilities'].get('workflow') is True
 
 def channel_reference(payload,frame):
     if frame.get('channelId'):return frame['channelId']
@@ -19,8 +40,8 @@ def resolve_channel(config,channel_id,provider):
     profile=next((p for p in profiles if p.get('id')==channel_id),None)
     if not profile:raise ChannelConfigurationError('渠道已删除或不存在：'+str(channel_id)+'。请恢复渠道；不会使用旧配置。')
     if profile.get('provider')!=provider:raise ChannelConfigurationError('渠道类型已改变，不能将已有任务静默切换到另一种协议引擎。')
-    value={k:copy.deepcopy(profile[k]) for k in CONFIG_FIELDS if k in profile}
-    if provider=='comfyui':
+    value={k:copy.deepcopy(profile[k]) for k in config_fields(provider) if k in profile}
+    if workflow_provider(provider):
         value['baseUrl']=config.get('comfyConfig',{}).get('baseUrl','')
     else:
         if not isinstance(value.get('model'),str) or not value['model'].strip():raise ChannelConfigurationError('渠道模型为空，请保存有效模型后继续。')

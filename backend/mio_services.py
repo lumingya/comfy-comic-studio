@@ -22,6 +22,8 @@ class ApplicationServices:
     mio_foundation: Any
     native_store: Any
     provider_image_input: Any
+    provider_operation: Any
+    list_provider_models: Any
     read_limited_response: Any
     read_merged_config: Any
     read_merged_config_raw: Any
@@ -58,6 +60,7 @@ class HTTPServices:
     list_provider_models: Any
     manage_native_credentials: Any
     native_store: Any
+    provider_operation: Any
     read_merged_config: Any
     store_image_bytes: Any
     store_image_data: Any

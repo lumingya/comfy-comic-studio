@@ -26,16 +26,24 @@ def zipped(folder):
     return buffer.getvalue()
 
 class EcosystemTests(unittest.TestCase):
-    def setUp(self):self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
+    def setUp(self):self.temp=tempfile.TemporaryDirectory(ignore_cleanup_errors=True);self.addCleanup(self.temp.cleanup);self.root=Path(self.temp.name)
     def test_storage_isolation_and_roundtrip(self):
         a,b=Storage(self.root/'a'),Storage(self.root/'b');a.set('prefs',{'font':'serif'})
         self.assertEqual(a.get('prefs'),{'font':'serif'});self.assertIsNone(b.get('prefs'));a.delete('prefs');self.assertIsNone(a.get('prefs'))
         for key in ('../b/prefs','/tmp/x','a/b'):
             with self.assertRaises(LibraryError):a.set(key,1)
     def test_sdk_rejects_symlink_root_and_file(self):
-        other=self.root/'outside';other.mkdir();linked=self.root/'linked';linked.symlink_to(other,target_is_directory=True)
+        other=self.root/'outside';other.mkdir();linked=self.root/'linked'
+        try:linked.symlink_to(other,target_is_directory=True)
+        except OSError as e:
+            if getattr(e,'winerror',None)==1314:self.skipTest('Windows non-admin lacks symlink privilege')
+            raise
         with self.assertRaises(LibraryError):Storage(linked).set('x',1)
-        a=Storage(self.root/'a');a.set('x',1);(a.root/'leak.json').symlink_to(other/'secret.json')
+        a=Storage(self.root/'a');a.set('x',1)
+        try:(a.root/'leak.json').symlink_to(other/'secret.json')
+        except OSError as e:
+            if getattr(e,'winerror',None)==1314:self.skipTest('Windows non-admin lacks symlink privilege')
+            raise
         with self.assertRaises(LibraryError):a.get('leak')
     def test_zip_rejects_traversal_and_duplicate(self):
         for names in (['../escape'],['/absolute'],['.git/config'],['a','A']):
@@ -69,7 +77,7 @@ class EcosystemTests(unittest.TestCase):
         self.assertEqual(manager.call(meta['id'],'GET','/notes',{})[0]['text'],'kept')
         manager.enable(meta['id'],False)
         with self.assertRaises(LibraryError):manager.call(meta['id'],'GET','/notes',{})
-        manager.uninstall(meta['id'],False);self.assertTrue((self.root/'data/extensions/scene-notebook/notes.json').exists())
+        manager.uninstall(meta['id'],False);self.assertTrue((self.root/'data/extensions/scene-notebook/workspace/notes.json').exists())
         manager.install(raw=raw,trusted=True);self.assertEqual(manager.call(meta['id'],'GET','/notes',{})[0]['text'],'kept')
         manager.uninstall(meta['id'],True);self.assertFalse((self.root/'data/extensions/scene-notebook').exists());self.assertFalse((manager.code/meta['id']).exists())
     def test_extension_revision_assets_and_conflicts(self):
@@ -136,7 +144,7 @@ class EcosystemTests(unittest.TestCase):
         from backend.ecosystem.api import Ecosystem
         raw=(ROOT/'examples/themes/paper-atelier/paper.png').read_bytes();calls=[]
         config={'uiConfig':{'comfyStudio':{'settings':{'imageGeneration':{'active':'cloud','profiles':[{'id':'cloud','provider':'openai','model':'saved-image'},{'id':'comfy','provider':'comfyui'}]}}}},'comfyConfig':{'baseUrl':'http://comfy.test:8188','workflow':{'1':{'class_type':'Text','inputs':{'text':'old'}}},'bindings':[{'enabled':True,'nodeId':'1','path':'text','source':'positive','type':'text'}]}}
-        native=SimpleNamespace(read=lambda **kw:config,settings=SimpleNamespace(resolve=lambda _: {'baseUrl':'https://llm.test','model':'saved-llm'}),image_bytes=lambda _:(raw,'image/png'),image_path=lambda src:self.root/'macro-assets'/src.rsplit('/',1)[-1])
+        native=SimpleNamespace(read=lambda **kw:config,settings=SimpleNamespace(resolve=lambda _: {'baseUrl':'https://llm.test','model':'saved-llm'}),image_bytes=lambda _:(raw,'image/png'),image_path=lambda src:self.root/'assets'/'images'/src.rsplit('/',1)[-1])
         host=SimpleNamespace(BASE_DIR=ROOT,DATA_DIR=self.root,native_store=lambda:native,generate_provider_image=lambda payload:calls.append(payload) or {'image':'/images/provider.png'},chat_proxy=lambda payload:calls.append(payload) or {'choices':[{'message':{'content':'rainy street'}}]})
         eco=Ecosystem(host);self.addCleanup(eco.close)
         asset=eco.invoke('image.generate',{'prompt':'portrait','options':{'seed':5}});self.assertTrue(eco.asset_exists(asset));self.assertEqual(calls[0]['config']['model'],'saved-image');self.assertEqual(calls[0]['frame']['seed'],5)
