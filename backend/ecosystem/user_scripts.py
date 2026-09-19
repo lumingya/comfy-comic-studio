@@ -170,7 +170,9 @@ class UserScripts:
         with self.lock:
             rows = self.registry()
             by_id = {x["id"]: x for x in rows}
-            ordered = [by_id[i] for i in ids if isinstance(i, str) and i in by_id]
+            seen = set()
+            unique_ids = [x for x in ids if isinstance(x, str) and not (x in seen or seen.add(x))]
+            ordered = [by_id[i] for i in unique_ids if i in by_id]
             ordered += [x for x in rows if x not in ordered]
             for index, item in enumerate(ordered):
                 item["order"] = index

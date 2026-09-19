@@ -391,6 +391,23 @@ def setup(ctx):
             store.delete("non-existent-script")
         with self.assertRaises(LibraryError):
             store.reorder("not-a-list")
+        
+        # Test reorder deduplication
+        s1 = store.save({"name": "Script 1"})
+        s2 = store.save({"name": "Script 2"})
+        store.reorder([s2["id"], s2["id"], s1["id"], s1["id"]])
+        listed = store.list(False)
+        self.assertEqual(len(listed), 2)
+        self.assertEqual([r["id"] for r in listed], [s2["id"], s1["id"]])
+
+    def test_extension_route_put_and_patch_body_forwarding(self):
+        from backend.ecosystem.api import _extension_route
+        from unittest.mock import MagicMock
+        svc = MagicMock()
+        svc.plugins.records.return_value = {"ext-1": {"enabled": True}}
+        _extension_route(svc, MagicMock(), "/api/extensions/ext-1/custom-resource", "PUT", {"title": "new"}, {})
+        svc.plugins.call.assert_called_once_with("ext-1", "PUT", "/custom-resource", {"title": "new"}, {})
+
 
 
 

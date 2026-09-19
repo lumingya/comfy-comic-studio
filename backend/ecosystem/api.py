@@ -629,7 +629,7 @@ def _extension_route(svc, host, path, method, body, query):
             return svc.plugins.task(id, "get" if task_id else "list", task_id or None)
         return svc.plugins.task(id, "cancel" if body.get("cancel") else "get", body.get("id"))
     flat = {k: v[0] if len(v) == 1 else v for k, v in query.items()}
-    return svc.plugins.call(id, method, "/" + tail, body if method == "POST" else flat, flat)
+    return svc.plugins.call(id, method, "/" + tail, body if method in ("POST", "PUT", "PATCH") else flat, flat)
 
 
 def _ecosystem_route(svc, handler, route, method, body, query):

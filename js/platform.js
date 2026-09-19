@@ -39,7 +39,8 @@ const MioPlatform=(()=>{
   }
   async function emit(event,payload={},{source='core',relay:doRelay=true}={}){
     const record={event,source,at:Date.now(),listeners:0,errors:0};
-    for(const entry of [...(listeners.get(event)||[]),...(listeners.get('*')||[])]){record.listeners++;try{if(entry.once){const k=entry.event||(listeners.get('*')?.includes(entry)?'*':event);listeners.set(k,(listeners.get(k)||[]).filter(x=>x!==entry))}await entry.handler(payload,{event,source,at:record.at})}catch(e){record.errors++;fail(entry.owner,'event '+event,e)}}
+    const list=event==='*'?(listeners.get('*')||[]):[...(listeners.get(event)||[]),...(listeners.get('*')||[])];
+    for(const entry of list){record.listeners++;try{if(entry.once){const k=entry.event||(listeners.get('*')?.includes(entry)?'*':event);listeners.set(k,(listeners.get(k)||[]).filter(x=>x!==entry))}await entry.handler(payload,{event,source,at:record.at})}catch(e){record.errors++;fail(entry.owner,'event '+event,e)}}
     recent.push(record);if(recent.length>300)recent.shift();if(doRelay&&source!=='backend')relay(event,payload);return record;
   }
   /* ---- slots (open set: unknown names are created on first registration) */
