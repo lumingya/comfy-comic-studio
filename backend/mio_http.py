@@ -151,16 +151,16 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
                 return None
         document_path = decoded
         if decoded.endswith(".html") and (decoded.startswith("/docs/") or decoded == "/README.html"):
-            candidate = Path(self.services.BASE_DIR) / decoded.lstrip("/")
+            candidate = Path(self.services.BASE_DIR) / decoded.lstrip("/\\")
             if candidate.with_suffix(".md").is_file():
-                document_path = str(Path(decoded).with_suffix(".md"))
+                document_path = candidate.with_suffix(".md").relative_to(self.services.BASE_DIR).as_posix()
         if (
             document_path.endswith(".md")
             and self.services.is_public_static_path(parsed.path)
             and urllib.parse.parse_qs(parsed.query).get("raw") != ["1"]
         ):
             try:
-                relative = Path(document_path.lstrip("/"))
+                relative = Path(document_path.lstrip("/\\"))
                 body = mio_docs.render_document(
                     self.services.BASE_DIR, relative
                 ).encode("utf-8")

@@ -16,7 +16,7 @@ PNG=bytes.fromhex('89504e470d0a1a0a0000000d494844520000006400000050')
 RECIPE={'version':1,'crop':{'x':0,'y':0,'w':1,'h':1},'rotation':0,'flipX':False,'flipY':False,'brightness':1,'contrast':1,'saturation':1,'layers':[]}
 class PictureTests(unittest.TestCase):
     def setUp(self):
-        self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=self.tmp.name
+        self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.addCleanup(server.reset_native_stores);self.root=self.tmp.name
         library=__import__('backend.mio_library',fromlist=['*']).FileLibrary(self.root);self.addCleanup(library.close)
         self.calls=[];self.store=Jobs(str(Path(self.root)/'runtime'/'execution'),lambda f:self.calls.append(f) or {'image':'/images/late.png'});self.store.close();self.addCleanup(self.store.close)
         self.config={'savedGalleries':[{'id':'album','totalSteps':2,'generatedSteps':2,'status':'complete','steps':[{'stepIndex':i,'name':'scene','caption':'keep caption','prompt':'keep prompt','image':'/images/original.png'} for i in range(2)]}],'batchRunState':{'queue':[]}}

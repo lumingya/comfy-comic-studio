@@ -17,6 +17,7 @@ class AlbumDeletionTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
+        self.addCleanup(server.reset_native_stores)
         library=__import__('backend.mio_library',fromlist=['*']).FileLibrary(self.temp.name);self.addCleanup(library.close)
         self.calls = []
         self.store = Jobs(str(Path(self.temp.name) / 'runtime' / 'execution'), self.execute)

@@ -76,7 +76,7 @@ class FileSettingsTests(unittest.TestCase):
     def test_secret_journal_is_private_and_recovers_both_files(self):
         real = lib.atomic_write
         def fault(path, raw, private=False):
-            if str(path).endswith('settings/llm.json'):
+            if Path(path).as_posix().endswith('settings/llm.json'):
                 raise OSError('controlled interruption after writing vault')
             return real(path, raw, private)
         with patch.object(lib, 'atomic_write', side_effect=fault), self.assertRaises(OSError):
