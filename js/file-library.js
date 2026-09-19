@@ -40,8 +40,14 @@ function installFileLibrary(){
       if(!record.document||record.document.id!==id)throw Error('画册正文返回不完整，未替换现有内容。');
       const current=bookBy(id);if(!current)return null;
       const pending=Object.values(current.pictureEdits||{});
-      Object.keys(current).forEach(k=>delete current[k]);Object.assign(current,record.document);
-      const prior=ns.sync.runtime.previous.savedGalleries?.find(x=>x.id===id);if(prior){Object.keys(prior).forEach(k=>delete prior[k]);Object.assign(prior,clone(record.document))}
+      // A raw album.json (e.g. published by the production queue) may lack contract
+      // fields such as rowId/templateId. Normalize it exactly like initial load does,
+      // keeping the identifiers the summary already carried, so validateState keeps
+      // accepting the workspace and saves/exports are not blocked after reading.
+      const index=Math.max(0,state.books.indexOf(current)),projectId=v=>state.projects.some(p=>p.id===v)?v:state.activeProjectId;
+      const document=ns.stateContract.normalizeBook({...record.document,rowId:record.document.rowId??current.rowId,templateId:record.document.templateId??current.templateId,projectId:record.document.projectId??current.projectId},index,Date.now(),projectId);
+      Object.keys(current).forEach(k=>delete current[k]);Object.assign(current,document);
+      const prior=ns.sync.runtime.previous.savedGalleries?.find(x=>x.id===id);if(prior){Object.keys(prior).forEach(k=>delete prior[k]);Object.assign(prior,clone(document))}
       ns.sync.runtime.previous._fileRevisions??={};ns.sync.runtime.previous._fileRevisions['albums:'+id]=record.etag;
       for(const edit of pending)ns.pictures?.apply(edit);
       return current;
@@ -68,6 +74,8 @@ function installFileLibrary(){
   const previousRender=render;render=function(){previousRender();
     for(const input of document.querySelectorAll('input[type="password"]'))if(!input.value&&!input.hasAttribute('placeholder'))input.placeholder='留空保留已存密钥';
     if(ui.workspace===0&&ns.sync.runtime.previous._libraryProblems?.length){const node=document.createElement('div');node.className='notice';node.textContent='部分独立文件存在格式或重复 ID 问题，未自动修复或覆盖。请查看设置中的文件库诊断。';document.querySelector('#gallery-results')?.prepend(node)}
+    /* B1: a stale bundled-content checksum degrades to a notice instead of a boot failure; the affected files are simply not installed. */
+    if(ui.workspace===0&&Array.isArray(globalThis.MioContent?.contentProblems)&&MioContent.contentProblems.length&&!document.querySelector('#gallery-results .content-problem-notice')){const node=document.createElement('div');node.className='notice amber content-problem-notice';const count=MioContent.contentProblems.length;node.textContent=count+' 个随附示例文件校验失败，已跳过安装；你的作品不受影响。重新下载完整程序包可补齐，详见设置 → 文件库诊断。';document.querySelector('#gallery-results')?.prepend(node)}
   };
   const oldVision=visionRequest;visionRequest=async function(messages,cfg,signal){if(!/^http/.test(location.protocol))return oldVision(messages,cfg,signal);if(cfg.mode!=='real')throw Error('请先启用真实视觉 API。');const message=await chatCompletion(messages,null,signal,{...cfg,_credentialScope:cfg.connection==='shared'?'llm':'critic'});if(typeof message.content!=='string'||!message.content.trim())throw Error('视觉模型未返回文本结果。');return message.content};
   const priorChat=chatCompletion;
@@ -107,8 +115,8 @@ function nativeReconcile(current,submitted,confirmed){
   return current;
 }
 function nativeLibrarySettings(){
-  const problems=ComfyComic.sync.runtime.previous._libraryProblems||[];
-  return '<section class="settings-section"><h2>独立文件库</h2><div class="service-context"><code>data/settings/ · storyboards/ · presets/ · collections/ · albums/</code></div><div class="row wrap" style="margin:15px 0">'+btn('扫描并重新读取','refresh','v3-connect-backend')+'</div><p class="help">'+(problems.length?esc(JSON.stringify(problems)):'文件库未报告冲突。修改同一字段发生版本冲突时，保留本页草稿，不强制覆盖。')+'</p><a href="/docs/guide/FILE_LIBRARY.html" target="_blank" rel="noopener">文件复制、分享、备份与密钥教程 ↗</a><h3>已保存密钥</h3><p>密码框留空会保留已绑定密钥；修改地址时需要明确重新填写或忘记原密钥。密钥只保存在 settings/secrets.json，不在普通分享包中。</p>'+['llm','xml','critic'].map(scope=>btn('忘记 '+scope.toUpperCase()+' 密钥','trash','native-forget','data-scope="'+scope+'"','small')).join(' ')+'</section>';
+  const problems=ComfyComic.sync.runtime.previous._libraryProblems||[],content=Array.isArray(globalThis.MioContent?.contentProblems)?MioContent.contentProblems:[];
+  return '<section class="settings-section"><h2>独立文件库</h2><div class="service-context"><code>data/settings/ · storyboards/ · presets/ · collections/ · albums/</code></div><div class="row wrap" style="margin:15px 0">'+btn('扫描并重新读取','refresh','v3-connect-backend')+'</div><p class="help">'+(problems.length?esc(JSON.stringify(problems)):'文件库未报告冲突。修改同一字段发生版本冲突时，保留本页草稿，不强制覆盖。')+'</p>'+(content.length?'<div class="notice amber"><strong>随附示例内容校验失败（已跳过安装）</strong><ul class="content-problem-list">'+content.map(p=>'<li><code>'+esc(p.file||'')+'</code> · '+esc(p.reason||'')+'</li>').join('')+'</ul><p class="help">这些是程序包内的示例文件，不是你的作品。重新下载完整程序包即可补齐。</p></div>':'')+'<a href="/docs/guide/FILE_LIBRARY.html" target="_blank" rel="noopener">文件复制、分享、备份与密钥教程 ↗</a><h3>已保存密钥</h3><p>密码框留空会保留已绑定密钥；修改地址时需要明确重新填写或忘记原密钥。密钥只保存在 settings/secrets.json，不在普通分享包中。</p>'+['llm','xml','critic'].map(scope=>btn('忘记 '+scope.toUpperCase()+' 密钥','trash','native-forget','data-scope="'+scope+'"','small')).join(' ')+'</section>';
 }
 function installNativeLibraryPanel(){
   const prior=renderPythonSettings;renderPythonSettings=function(){return nativeLibrarySettings()+prior()};

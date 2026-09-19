@@ -15,6 +15,31 @@ import uuid
 LOCK = threading.RLock()
 
 
+PRIVATE_SUFFIXES = ('.local', '.lan', '.internal', '.home', '.home.arpa', '.localdomain', '.localhost')
+
+
+def is_private_host(hostname):
+    """Loopback, RFC 1918 / link-local / ULA addresses and LAN-style names.
+
+    Plain HTTP is acceptable there: NAS boxes, one-api/new-api relays and LM
+    Studio on the same network rarely terminate TLS.
+    """
+    import ipaddress
+
+    host = str(hostname or '').strip().lower().rstrip('.')
+    if not host:
+        return False
+    if host in ('localhost', 'localhost.localdomain'):
+        return True
+    try:
+        address = ipaddress.ip_address(host.strip('[]'))
+    except ValueError:
+        # Single-label names (nas, gpu-box) and LAN suffixes never resolve on
+        # the public internet.
+        return '.' not in host or host.endswith(PRIVATE_SUFFIXES)
+    return address.is_private or address.is_loopback or address.is_link_local
+
+
 def endpoint(config):
     provider = config.get('provider')
     if provider not in ('openai', 'novelai'):
@@ -23,8 +48,8 @@ def endpoint(config):
     p = urllib.parse.urlsplit(base)
     if p.scheme not in ('https', 'http') or not p.hostname or p.username or p.password or p.query or p.fragment:
         raise ValueError('Invalid provider base URL')
-    if p.scheme == 'http' and p.hostname not in ('localhost', '127.0.0.1', '::1'):
-        raise ValueError('Remote providers require HTTPS')
+    if p.scheme == 'http' and not is_private_host(p.hostname):
+        raise ValueError('Remote providers require HTTPS; plain HTTP is only allowed for loopback and private-network hosts')
     # Normalize host/scheme without changing case-sensitive API paths.
     host = p.hostname.lower()
     if ':' in host:

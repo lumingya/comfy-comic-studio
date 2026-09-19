@@ -41,7 +41,13 @@ def _generate(payload, host):
     from backend.providers.transport import opener as cancelable_opener
 
     opener = cancelable_opener(payload, NoRedirect)
-    deadline = time.monotonic() + payload.get("_requestTimeout", 600)
+    timeout = payload.get("_requestTimeout", 600)
+    deadline = time.monotonic() + timeout
+    # Queue time is not render time: while ComfyUI still lists the prompt as
+    # pending, the deadline keeps sliding (bounded by hard_deadline) so a busy
+    # GPU does not turn a finished render into a "timeout" we then redo.
+    hard_deadline = time.monotonic() + max(timeout * 4, 3600)
+    queue_checked_at = 0.0
 
     def request_once(path, data=None, content_type="application/json", persist=False):
         if payload.get("_isCanceled", lambda: False)():
@@ -162,11 +168,32 @@ def _generate(payload, host):
             raise ValueError("ComfyUI rejected workflow: " + json.dumps(submitted))
         if payload.get("_checkpoint"):
             payload["_checkpoint"](prompt_id)
+    def still_queued():
+        """True when ComfyUI reports the prompt as waiting behind other jobs."""
+        try:
+            queue = json.loads(request("/queue"))
+        except (ValueError, TypeError, host.ProviderHTTPError, InterruptedError):
+            return False
+        pending = queue.get("queue_pending") if isinstance(queue, dict) else None
+        return any(
+            isinstance(entry, list) and len(entry) > 1 and entry[1] == prompt_id
+            for entry in (pending or [])
+        )
+
     while time.monotonic() < deadline:
         history = json.loads(
             request("/history/" + urllib.parse.quote(prompt_id, safe=""))
         ).get(prompt_id)
         if not history:
+            now = time.monotonic()
+            if (
+                deadline - now < timeout * 0.5
+                and now - queue_checked_at >= 5
+                and now < hard_deadline
+            ):
+                queue_checked_at = now
+                if still_queued():
+                    deadline = min(hard_deadline, now + timeout)
             time.sleep(1)
             continue
         if history.get("status", {}).get("status_str") == "error":

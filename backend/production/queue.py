@@ -15,21 +15,30 @@ import time
 import uuid
 from backend.ecosystem.storage import Storage, owned
 from backend.mio_jobs import acquire_lease
-from backend.providers.reliability import failure_summary, result_unconfirmed
+from backend.providers.reliability import (
+    failure_summary,
+    fatal_page_failure,
+    result_unconfirmed,
+)
 from backend.providers.request_evidence import safe_error_text
 from .store import TaskStore
 from backend.mio_library import LibraryError
 
 TERMINAL = {"complete", "failed", "cancelled", "interrupted"}
+# Consecutive page failures that turn a page-local problem into a stopped book.
+FAILURE_STREAK_LIMIT = 3
 
 
 class ProductionQueue:
-    def __init__(self, root, prepare, render, publish=lambda *_: None):
+    def __init__(self, root, prepare, render, publish=lambda *_: None, finalize=lambda *_: None):
         self.tasks = TaskStore(Path(root) / "production/tasks")
         self.state = Storage(Path(root) / "production/control")
         self.prepare = prepare
         self.render = render
         self.publish = publish
+        # Called once with the finished task (any terminal status) so the
+        # adapter can settle album status without another render.
+        self.finalize = finalize
         self.lock = threading.RLock()
         self.wake = threading.Event()
         self.closed = False
@@ -149,6 +158,9 @@ class ProductionQueue:
                             "channel": t["snapshot"]
                             .get("channel", {})
                             .get("title", ""),
+                            "provider": t["snapshot"]
+                            .get("channel", {})
+                            .get("provider", ""),
                         },
                         "pages": [
                             {
@@ -461,6 +473,9 @@ class ProductionQueue:
     def _execute(self, id, cancel):
         task = self.get(id)
         self.active_task = task
+        failures = []
+        streak = 0
+        fatal = None
         try:
             if task["prepared"] is None:
                 task["status"] = "preparing"
@@ -471,6 +486,7 @@ class ProductionQueue:
                 task["prepared"] = prepared
                 self._save(task)
             task["status"] = "running"
+            task.pop("error", None)
             self._save(task)
             for index in list(task["selection"]):
                 if not self._await_dispatch(cancel):
@@ -506,6 +522,7 @@ class ProductionQueue:
                     page["result"] = result
                     page["state"] = "complete"
                     attempt["status"] = "complete"
+                    streak = 0
                     self._save(task)
                 except Exception as exc:
                     uncertain = cancel.is_set() or isinstance(exc, InterruptedError) or (
@@ -518,7 +535,7 @@ class ProductionQueue:
                             if uncertain
                             else "failed"
                         ),
-                        error=failure_summary(safe_error_text(str(exc))),
+                        error=failure_summary(safe_error_text(str(exc)), terminal=True),
                         rawError=safe_error_text(str(exc))[:16384],
                         finishedAt=time.time(),
                     )
@@ -527,33 +544,77 @@ class ProductionQueue:
                         if uncertain
                         else "failed"
                     )
-                    raise
+                    if cancel.is_set() or isinstance(exc, InterruptedError):
+                        raise
+                    # One rejected page (moderation, bad parameters, exhausted
+                    # rate limit) is page-local: record it and keep going so the
+                    # rest of the book still gets rendered.
+                    failures.append((index, attempt["error"]))
+                    streak += 1
+                    self._save(task)
+                    # Publication failures are local storage problems: rendering
+                    # more pages that cannot be saved would only pay twice.
+                    if (
+                        attempt.get("phase") == "publish"
+                        or fatal_page_failure(exc)
+                        or streak >= FAILURE_STREAK_LIMIT
+                    ):
+                        fatal = exc
+                        break
             task["status"] = (
                 "complete"
                 if all(p["state"] == "complete" for p in task["pages"])
                 else "partial"
             )
+            if failures:
+                if not any(p["state"] == "complete" for p in task["pages"]):
+                    task["status"] = "failed"
+                task["error"] = self._failure_report(task, failures, fatal)
+            if fatal is not None:
+                # A systemic failure stops a sequential batch rather than
+                # skipping into another paid book with the same broken setup.
+                self._halt_batch(id)
         except Exception as exc:
             task["status"] = (
                 "cancelled"
                 if cancel.is_set()
                 else ("interrupted" if isinstance(exc, InterruptedError) else "failed")
             )
-            task["error"] = failure_summary(safe_error_text(str(exc)))
+            task["error"] = failure_summary(safe_error_text(str(exc)), terminal=True)
             # Failure stops a sequential batch rather than skipping into another paid book.
-            with self.lock:
-                for other in self.control["batch"]:
-                    if other != id:
-                        waiting = self.get(other)
-                        waiting["status"] = "standby"
-                        waiting["selection"] = []
-                        self._save(waiting)
-                self.control.update(batch=[], paused=True)
+            self._halt_batch(id)
         finally:
             try:
                 self._save(task)
+                try:
+                    self.finalize(copy.deepcopy(task))
+                except Exception:
+                    pass
             finally:
                 self.active_task = None
+
+    def _halt_batch(self, id):
+        with self.lock:
+            for other in self.control["batch"]:
+                if other != id:
+                    waiting = self.get(other)
+                    waiting["status"] = "standby"
+                    waiting["selection"] = []
+                    self._save(waiting)
+            self.control.update(batch=[], paused=True)
+
+    @staticmethod
+    def _failure_report(task, failures, fatal):
+        total = len(task["selection"])
+        remaining = [
+            i for i in task["selection"]
+            if task["pages"][i]["state"] not in ("complete", "failed", "uncertain")
+        ]
+        first = failures[0][1]
+        text = str(len(failures)) + "/" + str(total) + " 幕失败：" + first
+        if fatal is not None and remaining:
+            text += "；连续失败或凭据错误，已停止剩余 " + str(len(remaining)) + " 幕"
+        return text
 
     def close(self, timeout=30):
         """Stop dispatch, cancel cooperatively, and wait without unlocking a live worker.

@@ -87,17 +87,55 @@ class ProductionAdapterTests(unittest.TestCase):
         task['snapshot']['story']['frames'][0]['negative']='low quality, {画风负向}'
         self.q.tasks.set(task['id'],task);self.q.start(task['id'],trusted=True);done=self.wait(task['id'])
         self.assertEqual(done['status'],'complete');self.assertEqual(self.calls[0]['negative'],'low quality, bad anatomy');self.assertNotIn('blur',self.calls[0]['negative'])
-    def test_saved_workflow_is_frozen_and_disabled_seed_preserves_literal(self):
+    def test_saved_workflow_is_frozen_and_seed_mapping_varies_per_frame(self):
         workflow={'9':{'class_type':'TestSeed','inputs':{'seed':731}}}
         config={'comfyConfig':{'mode':'real','baseUrl':'http://127.0.0.1:8188','workflow':{'wrong':{'inputs':{}}}},'comfyWorkflows':[{'id':'saved-workflow','title':'Chosen','workflow':workflow,'bindings':[{'enabled':True,'nodeId':'9','path':'seed','source':'random','type':'number'}]}]}
         config['uiConfig']={'comfyStudio':{'settings':{'imageGeneration':{'profiles':[{'id':'comfyui','provider':'comfyui','title':'Test'}]}}}}
         self.store.read=lambda **_:copy.deepcopy(config)
-        for enabled,seed in [(False,731),(True,8)]:
+        for enabled in (False,True):
             snap=self.adapter.snapshot({'storyId':'story-one','presets':[{'kind':'characters','id':'preset-one'}],'channelId':'comfyui','workflowId':'saved-workflow','seedEnabled':enabled,'seed':8})
             self.assertIn('9',snap['workflow']['workflow']);self.assertNotIn('wrong',snap['workflow']['workflow'])
             task=self.q.assemble(snap,'Workflow '+str(enabled),'workflow-'+str(enabled));self.q.start(task['id'],trusted=True)
-            self.assertEqual(self.wait(task['id'])['status'],'complete',self.q.get(task['id']));self.assertEqual(self.calls[-2]['workflow']['9']['inputs']['seed'],seed)
+            self.assertEqual(self.wait(task['id'])['status'],'complete',self.q.get(task['id']))
+            seeds=[c['workflow']['9']['inputs']['seed'] for c in self.calls[-2:]]
+            if enabled:self.assertEqual(seeds,[8,9])
+            else:
+                # Disabled reproducibility means fresh seeds, never the literal 731 on every page.
+                self.assertNotEqual(seeds[0],seeds[1]);self.assertTrue(all(isinstance(x,int) and 0<=x<2**32 for x in seeds))
         self.assertEqual(workflow['9']['inputs']['seed'],731)
+    def test_workflow_without_seed_mapping_keeps_its_literal_seed(self):
+        workflow={'9':{'class_type':'TestSeed','inputs':{'seed':731}}}
+        config={'comfyConfig':{'mode':'real','baseUrl':'http://127.0.0.1:8188'},'comfyWorkflows':[{'id':'saved-workflow','title':'Chosen','workflow':workflow,'bindings':[]}]}
+        config['uiConfig']={'comfyStudio':{'settings':{'imageGeneration':{'profiles':[{'id':'comfyui','provider':'comfyui','title':'Test'}]}}}}
+        self.store.read=lambda **_:copy.deepcopy(config)
+        snap=self.adapter.snapshot({'storyId':'story-one','presets':[{'kind':'characters','id':'preset-one'}],'channelId':'comfyui','workflowId':'saved-workflow','seedEnabled':False,'seed':8})
+        task=self.q.assemble(snap,'Literal','literal');self.q.start(task['id'],trusted=True);self.assertEqual(self.wait(task['id'])['status'],'complete')
+        self.assertEqual([c['workflow']['9']['inputs']['seed'] for c in self.calls[-2:]],[731,731])
+    def test_cloud_frames_get_distinct_seeds_and_reruns_change_them(self):
+        task=self.assemble();self.q.start(task['id'],trusted=True);self.assertEqual(self.wait(task['id'])['status'],'complete')
+        first=[c['frame']['seed'] for c in self.calls];self.assertNotEqual(first[0],first[1])
+        self.q.start(task['id'],indices=[0],trusted=True);self.wait(task['id']);self.assertNotEqual(self.calls[-1]['frame']['seed'],first[0])
+    def test_blank_scene_negative_inherits_the_studio_negative(self):
+        config={'uiConfig':{'comfyStudio':{'settings':{'negative':'lowres, watermark','imageGeneration':{'profiles':[self.profile]}}}}}
+        self.store.read=lambda **_:copy.deepcopy(config)
+        task=self.assemble();task['snapshot']['story']['frames'][1]['negative']='own negative';self.q.tasks.set(task['id'],task)
+        self.assertEqual(task['snapshot']['globalNegative'],'lowres, watermark')
+        self.q.start(task['id'],trusted=True);self.assertEqual(self.wait(task['id'])['status'],'complete')
+        self.assertEqual([c['negative'] for c in self.calls],['lowres, watermark','own negative'])
+    def test_blank_variables_do_not_leave_dangling_commas(self):
+        values={'a':'','b':'cat'}
+        self.assertEqual(interpolate('{a}, {b}, {a}',values),'cat');self.assertEqual(interpolate('{a} {b} , , sunny, {a}',values),'cat, sunny')
+        self.assertEqual(interpolate('1,000 {b},{b}',values),'1,000 cat,cat');self.assertEqual(interpolate('  raw {b}',values),'  raw cat')
+    def test_image_variable_bound_to_a_node_reuses_the_prompt_slot(self):
+        from backend.ecosystem.workflow import compile_workflow
+        wf={'1':{'class_type':'LoadImage','inputs':{'image':'x.png'}},'2':{'class_type':'CLIPTextEncode','inputs':{'text':'orig'}},'3':{'class_type':'CLIPTextEncode','inputs':{'text':'lowres, bad hands'}}}
+        bindings=[{'enabled':True,'nodeId':'1','path':'image','source':'variable','value':'{ref}'},{'enabled':True,'nodeId':'2','path':'text','source':'positive'},{'enabled':True,'nodeId':'3','path':'text','source':'negative'}]
+        images=['/images/ref.png']
+        out=compile_workflow(wf,bindings,'@image_1 hero at sea',{'variables':{'ref':{'kind':'mio-image','src':'/images/ref.png'}},'negative':''},images)
+        self.assertEqual(images,['/images/ref.png']);self.assertEqual(out['1']['inputs']['image'],'mio-image://1')
+        self.assertEqual(out['2']['inputs']['text'],'hero at sea');self.assertEqual(out['3']['inputs']['text'],'lowres, bad hands')
+        out=compile_workflow(wf,bindings,'hero',{'variables':{'ref':{'kind':'mio-image','src':'/images/ref.png'}},'negative':'blur'},[])
+        self.assertEqual(out['3']['inputs']['text'],'blur');self.assertEqual(out['1']['inputs']['image'],'mio-image://1')
 
     def test_seed_gate_rejects_missing_node_and_accepts_numeric_input(self):
         from backend.production.api import seed_binding_ready

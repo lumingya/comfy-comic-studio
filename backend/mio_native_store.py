@@ -157,10 +157,40 @@ class NativeStore(WorkspaceRepository):
             )
         self.ready = True
 
+    @staticmethod
+    def album_defaults(item):
+        """Fill the browser album contract (rowId/templateId/...) without touching stored files.
+
+        Albums published by the production queue or hand-written on disk may omit
+        legacy fields; summaries and full bodies must agree so hydrating a book in
+        the reader never breaks the workspace save contract.
+        """
+        item.setdefault("steps", [])
+        for key in (
+            "characterName",
+            "rowId",
+            "templateId",
+            "templateTitle",
+            "synopsis",
+            "storyTitle",
+        ):
+            item.setdefault(
+                key, "" if key not in ("rowId", "templateId") else "unassigned"
+            )
+        item.setdefault("tags", [])
+        item.setdefault("totalSteps", max(len(item["steps"]), 0))
+        item.setdefault("generatedSteps", sum(1 for s in item["steps"] if isinstance(s, dict) and s.get("image")))
+        item.setdefault("createdAt", 0)
+        item.setdefault("updatedAt", item["createdAt"])
+        item.setdefault("status", "partial")
+        return item
+
     def entity(self, kind, id, urls=True):
         result = super().entity(kind, id, urls)
         if kind in ("characters", "scenes"):
             result["document"]["category"] = kind
+        if kind == "albums" and isinstance(result.get("document"), dict):
+            self.album_defaults(result["document"])
         return result
 
     def summary(self, kind, row):
@@ -169,23 +199,9 @@ class NativeStore(WorkspaceRepository):
         item.pop("file", None)
         if kind == "albums":
             item.setdefault("steps", [])
-            for key in (
-                "characterName",
-                "rowId",
-                "templateId",
-                "templateTitle",
-                "synopsis",
-                "storyTitle",
-            ):
-                item.setdefault(
-                    key, "" if key not in ("rowId", "templateId") else "unassigned"
-                )
-            item.setdefault("tags", [])
             item.setdefault("totalSteps", 0)
             item.setdefault("generatedSteps", 0)
-            item.setdefault("createdAt", 0)
-            item.setdefault("updatedAt", item["createdAt"])
-            item.setdefault("status", "partial")
+            self.album_defaults(item)
             item["inProgress"] = False
             item["_cover"] = (
                 "/images/library/albums/" + row["id"] + "/" + row["cover"]

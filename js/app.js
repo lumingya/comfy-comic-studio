@@ -105,7 +105,7 @@ document.addEventListener('drop',e=>{const target=e.target.closest('[data-drag-i
 window.addEventListener('beforeunload',()=>{flushEditor()});
 
 
-async function boot(){rt.booting=true;$('#launch-icon').innerHTML=icon('spark');$('#command-icon').innerHTML=icon('search');render();await loadState();log('Mio v'+MIO_VERSION+' 已就绪。所有创作默认保存在本地。');log('已载入 '+state.books.length+' 本画册、'+state.exportTemplates.length+' 个画册导出模板。');if(state.queue.some(q=>q.status==='pending'))log('有待执行的渲染任务，已安全保留，等待手动启动。');if(state.settings.comfy.mode==='real')void testEngine(true);setInterval(()=>{if(state.settings.comfy.mode==='real')void testEngine(true)},20000)}
+async function boot(){rt.booting=true;$('#launch-icon').innerHTML=icon('spark');$('#command-icon').innerHTML=icon('search');render();await loadState();log('Mio v'+MIO_VERSION+' 已就绪。所有创作默认保存在本地。');log('已载入 '+state.books.length+' 本画册、'+state.exportTemplates.length+' 个画册导出模板。');if(state.queue.some(q=>q.status==='pending'))log('有待执行的渲染任务，已安全保留，等待手动启动。');if(state.settings.comfy.mode==='real')void testEngine(true);setInterval(()=>{if(state.settings.comfy.mode==='real'&&!document.hidden)void testEngine(true)},30000)}
 
 
 const STUDIO_VERSION='3.2.0';
@@ -926,7 +926,7 @@ const v3Actions={
   'v3-mapping-dry':()=>mappedDryRun(),
   'v3-read-openapi':()=>discoverBackendSchema(),
   'v3-connect-backend':()=>connectPythonBackend(),
-  'v3-save-backend':async()=>{flushEditor();if(!backendRuntime.connected)throw Error('请先读取并连接 Python 后端。');if(await savePythonWorkspace())toast('Python 服务已确认保存。')},
+  'v3-save-backend':async()=>{flushEditor();if(!backendRuntime.connected)throw Error('保存服务尚未连接，请先在设置中打开工作室。');if(await savePythonWorkspace())toast('已保存。')},
   'v3-disconnect-backend':()=>{clearTimeout(backendRuntime.timer);backendRuntime.connected=false;state.settings.backend.enabled=false;persistBackendLocation();render();toast('已断开自动保存。当前修改保留在内存中。')},
   'v3-browser-storage':()=>{modal('备用：浏览器目录保存',storageSettingsHTML(),'只有不使用 Python 保存时才需要此方式。',true)},
   'v3-welcome-enter':()=>finishNameFirst(false),

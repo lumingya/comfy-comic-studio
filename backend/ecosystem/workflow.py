@@ -111,6 +111,17 @@ def validate_schema(node, parts, value, object_info):
             raise LibraryError('Workflow value exceeds its maximum')
 
 
+def strip_image_tokens(value):
+    """Remove @image_N markers and the punctuation they leave behind."""
+    if not isinstance(value, str) or '@image_' not in value:
+        return value
+    cleaned = re.sub(r'@image_\d+', '', value)
+    cleaned = re.sub(r'[ \t]*,(?:[ \t]*,)+', ',', cleaned)
+    cleaned = re.sub(r',[ \t]+', ', ', cleaned)
+    cleaned = re.sub(r'[ \t]{2,}', ' ', cleaned)
+    return re.sub(r'^[ \t,]+|[ \t,]+$', '', cleaned, flags=re.M)
+
+
 def compile_workflow(workflow, bindings, prompt, options, images):
     workflow = copy.deepcopy(workflow)
     output_id = options.get('outputNodeId', '')
@@ -118,6 +129,10 @@ def compile_workflow(workflow, bindings, prompt, options, images):
         raise LibraryError('Workflow output node missing')
     staged_images = list(images)
     variables = options.get('variables', {})
+    # CLIPTextEncode has no use for the @image_N placeholders that the cloud
+    # builders rely on; the images reach ComfyUI through LoadImage bindings.
+    prompt = strip_image_tokens(prompt)
+    options = {**options, 'negative': strip_image_tokens(options.get('negative', ''))}
     active = [b for b in bindings if b.get('enabled') and b.get('source') != 'inherit'
               and (b.get('source') != 'sceneParameter' or options.get('renderOverride'))]
     # Validate all targets against the immutable blueprint before any assignment.
@@ -142,8 +157,13 @@ def compile_workflow(workflow, bindings, prompt, options, images):
                 continue
             value = variables[name]
             if isinstance(value, dict) and value.get('kind') == 'mio-image':
-                staged_images.append(value['src'])
-                value = 'mio-image://' + str(len(staged_images))
+                if not value.get('src'):
+                    continue
+                # An image referenced from the prompt is already staged; reuse its
+                # slot instead of appending a duplicate that leaves slot 1 unbound.
+                if value['src'] not in staged_images:
+                    staged_images.append(value['src'])
+                value = 'mio-image://' + str(staged_images.index(value['src']) + 1)
         elif source == 'image':
             if not staged_images:
                 continue
@@ -154,6 +174,10 @@ def compile_workflow(workflow, bindings, prompt, options, images):
             if b.get('value') not in options:
                 raise LibraryError('Missing mapped frame parameter')
             value = options[b['value']]
+        elif source == 'negative' and not str(values['negative'] or '').strip():
+            # An empty scene negative never blanks the curated negative already in
+            # the blueprint; the node keeps its original text.
+            continue
         elif source in values:
             value = values[source]
         else:

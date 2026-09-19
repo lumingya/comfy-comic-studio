@@ -59,6 +59,73 @@ def generate(payload, services):
     headers = {"Content-Type": "application/json", "User-Agent": "Mio/1.0"}
     from backend.providers import build_request
 
+    key = mio_credentials.resolve(DATA_DIR, payload)
+    if key and any(ord(char) < 33 or ord(char) > 126 for char in key):
+        raise ValueError(
+            "Credential contains invalid characters; use an ASCII token without whitespace"
+        )
+    if key:
+        headers["Authorization"] = "Bearer " + key
+
+    # Never forward Authorization to a redirect target or retry a paid generation.
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+
+    from backend.providers.transport import opener as cancelable_opener
+
+    opener = cancelable_opener(payload, NoRedirect)
+
+    def encode_vibe(raw, information_extracted):
+        """NovelAI V4 vibe token for one reference image, cached on disk.
+
+        Each new encoding costs Anlas, so identical (image, level, model)
+        triples reuse the stored token across frames and reruns.
+        """
+        import hashlib
+        from pathlib import Path
+
+        digest = hashlib.sha256(
+            raw + b"\0" + str(float(information_extracted)).encode() + b"\0" + model.encode()
+        ).hexdigest()
+        cache = Path(DATA_DIR) / "runtime" / "novelai-vibes" / (digest + ".b64")
+        if cache.exists():
+            token = cache.read_text("utf-8").strip()
+            if token:
+                return token
+        if payload.get("_isCanceled", lambda: False)():
+            raise InterruptedError("Stopped locally; output discarded")
+        request = urllib.request.Request(
+            base + "/ai/encode-vibe",
+            data=json.dumps(
+                {
+                    "image": base64.b64encode(raw).decode(),
+                    "information_extracted": float(information_extracted),
+                    "model": model,
+                }
+            ).encode(),
+            headers=headers,
+        )
+        try:
+            with opener.open(request, timeout=min(180, payload.get("_requestTimeout", 300))) as response:
+                token_raw = read_limited_response(response)
+        except urllib.error.HTTPError as exc:
+            raise ProviderHTTPError(
+                exc.code,
+                read_limited_response(exc, limit=2 * 1024 * 1024),
+                key,
+                headers=exc.headers,
+            ) from None
+        if not token_raw:
+            raise ValueError("NovelAI encode-vibe returned an empty token")
+        token = base64.b64encode(token_raw).decode()
+        try:
+            cache.parent.mkdir(parents=True, exist_ok=True)
+            cache.write_text(token, "utf-8")
+        except OSError:
+            pass
+        return token
+
     path, body = build_request(
         dict(
             config=config,
@@ -69,6 +136,8 @@ def generate(payload, services):
             source_raw=source_raw,
             ordered_images=ordered_images,
             image_values=image_values,
+            frame=frame,
+            encode_vibe=encode_vibe,
         )
     )
     applied = apply_provider_extras(
@@ -120,22 +189,6 @@ def generate(payload, services):
     else:
         data = json.dumps(body).encode()
 
-    key = mio_credentials.resolve(DATA_DIR, payload)
-    if key and any(ord(char) < 33 or ord(char) > 126 for char in key):
-        raise ValueError(
-            "Credential contains invalid characters; use an ASCII token without whitespace"
-        )
-    if key:
-        headers["Authorization"] = "Bearer " + key
-
-    # Never forward Authorization to a redirect target or retry a paid generation.
-    class NoRedirect(urllib.request.HTTPRedirectHandler):
-        def redirect_request(self, req, fp, code, msg, headers, newurl):
-            return None
-
-    from backend.providers.transport import opener as cancelable_opener
-
-    opener = cancelable_opener(payload, NoRedirect)
     if payload.get("_onRequest"):
         from backend.providers.request_evidence import safe_request
 
