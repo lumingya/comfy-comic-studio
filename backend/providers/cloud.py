@@ -211,6 +211,11 @@ def generate(payload, services):
     if payload.get("_isCanceled", lambda: False)():
         raise InterruptedError("Stopped locally; output discarded")
     decoded = []
+    chat_text = ""
+
+    def with_model_text(exc):
+        return exc
+
     if provider == "novelai":
         with zipfile.ZipFile(io.BytesIO(raw)) as archive:
             entries = [
@@ -232,14 +237,25 @@ def generate(payload, services):
         items = result.get("data") or []
         if config.get("protocol") == "chat":
             message = (result.get("choices") or [{}])[0].get("message") or {}
-            from backend.providers.openai_chat import extract_images
+            from backend.providers.openai_chat import extract_images, message_text, ModelTextResponse
 
             items = extract_images(message)
+            chat_text = message_text(message)
+            # C4: a refusal ("I can't generate this…") must surface verbatim.
+            # Prose links were already filtered by extract_images; if nothing
+            # image-like is left, the model's words are the diagnosis.
+            if not items and chat_text:
+                raise ModelTextResponse(chat_text)
         if not items or len(items) > 32:
             raise ValueError(
                 "Provider returned no image or too many outputs; text-only responses are not successful generations"
             )
         total = 0
+        if chat_text:
+            def with_model_text(exc):  # noqa: F811 - chat responses carry the model's words
+                """Re-raise a download failure together with what the model said (C4)."""
+                return ModelTextResponse(chat_text, str(exc))
+
         for item in items:
             if item.get("b64_json"):
                 image_raw = base64.b64decode(item["b64_json"], validate=True)
@@ -264,6 +280,8 @@ def generate(payload, services):
                     try:
                         image_raw, _ = fetch_remote_image(url, **fetch_kwargs)
                         break
+                    except InterruptedError:
+                        raise
                     except Exception as exc:
                         status = getattr(exc, "status", getattr(exc, "code", None))
                         if status != 429 or attempt == 5:
@@ -272,7 +290,7 @@ def generate(payload, services):
                                 raise ResultUnconfirmed(
                                     f"云端生成已完成，但下载图片遇到 HTTP 429 限流；已就地重试耗尽，不会重新计费生成。URL: {safe_url}"
                                 ) from exc
-                            raise
+                            raise with_model_text(exc) from exc
                         headers = getattr(exc, "headers", {})
                         delay = retry_delay(headers, attempt + 1)
                         if payload.get("_onRateLimit"):
@@ -302,9 +320,10 @@ def generate(payload, services):
             raise InterruptedError("Stopped locally; output discarded")
         mime = detect_image_mime_type(image_raw, "")
         if mime not in ("image/png", "image/jpeg", "image/webp"):
-            raise ValueError(
+            error = ValueError(
                 "Provider must return PNG, JPEG or WebP, not active SVG or other content"
             )
+            raise with_model_text(error) if chat_text else error
         validated.append((image_raw, mime))
     artifacts = []
     for image_raw, mime in validated:

@@ -442,7 +442,14 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
                     self, self.services.native_store(), read_export_body(self)
                 )
             except (self.services.LibraryError, ValueError, OSError) as exc:
-                self.send_json(400, {"error": str(exc)})
+                # C7: keep the library's own status (409 while another export
+                # is streaming) so clients can back off and retry instead of
+                # treating a busy slot as a malformed request.
+                status = getattr(exc, "status", 400)
+                self.send_json(
+                    status if isinstance(status, int) and 400 <= status < 600 else 400,
+                    {"error": str(exc), **({"code": exc.code} if hasattr(exc, "code") else {})},
+                )
             return
 
         if request_path == "/api/image/generate":

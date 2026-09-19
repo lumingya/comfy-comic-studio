@@ -122,6 +122,21 @@ def strip_image_tokens(value):
     return re.sub(r'^[ \t,]+|[ \t,]+$', '', cleaned, flags=re.M)
 
 
+def is_seed_binding(binding):
+    """A binding that feeds the sampler seed, however the author expressed it.
+
+    Both the explicit ``random`` source and a scene-parameter mapping of ``seed``
+    (what "添加分镜参数映射" and the shipped workflow create) count. Treating
+    them differently split the contract between wizard, API and compiler (C1).
+    """
+    if not isinstance(binding, dict) or not binding.get('enabled', True):
+        return False
+    source = binding.get('source')
+    return source == 'random' or (
+        source == 'sceneParameter' and str(binding.get('value', '')).strip() == 'seed'
+    )
+
+
 def compile_workflow(workflow, bindings, prompt, options, images):
     workflow = copy.deepcopy(workflow)
     output_id = options.get('outputNodeId', '')
@@ -133,8 +148,13 @@ def compile_workflow(workflow, bindings, prompt, options, images):
     # builders rely on; the images reach ComfyUI through LoadImage bindings.
     prompt = strip_image_tokens(prompt)
     options = {**options, 'negative': strip_image_tokens(options.get('negative', ''))}
+    # Scene parameters (size, steps, cfg, denoise) only apply when the scene
+    # opted into a render override. The seed is the exception: every frame must
+    # receive its own seed, otherwise a whole book renders from the blueprint's
+    # literal value and every page comes out the same.
     active = [b for b in bindings if b.get('enabled') and b.get('source') != 'inherit'
-              and (b.get('source') != 'sceneParameter' or options.get('renderOverride'))]
+              and (b.get('source') != 'sceneParameter' or options.get('renderOverride')
+                   or (is_seed_binding(b) and 'seed' in options))]
     # Validate all targets against the immutable blueprint before any assignment.
     validate_targets(workflow, active)
 

@@ -2979,5 +2979,205 @@
     "error": false,
     "expectedInputs": {},
     "unchangedWorkflow": true
+  },
+  {
+    "name": "frame-seed-not-gated",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar",
+        "label": "Test",
+        "source": "sceneParameter",
+        "type": "number",
+        "enabled": true,
+        "value": "seed"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "scalar": 4242
+    },
+    "options": {
+      "seed": 4242
+    }
+  },
+  {
+    "name": "frame-seed-with-override",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar",
+        "label": "Test",
+        "source": "sceneParameter",
+        "type": "number",
+        "enabled": true,
+        "value": "seed"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "scalar": 7
+    },
+    "options": {
+      "seed": 7,
+      "renderOverride": true
+    }
+  },
+  {
+    "name": "frame-seed-missing-keeps-original",
+    "workflow": {
+      "n": {
+        "class_type": "CustomNode",
+        "inputs": {
+          "text": "original",
+          "loras": [
+            {
+              "name": "x.safetensors",
+              "strength": 0.7
+            }
+          ],
+          "xy": [
+            512,
+            1024
+          ],
+          "a/b": {
+            "x~y": 1
+          },
+          "a.b": 2,
+          "a": {
+            "b": 3
+          },
+          "": 4,
+          "enabled": true,
+          "connection": [
+            "up",
+            0
+          ],
+          "dangling": [
+            "missing",
+            0
+          ],
+          "config": {
+            "nested": 10
+          },
+          "scalar": 1
+        }
+      },
+      "up": {
+        "class_type": "UnknownPlugin",
+        "inputs": {
+          "keep": "unchanged"
+        }
+      }
+    },
+    "bindings": [
+      {
+        "id": "b1",
+        "nodeId": "n",
+        "path": "/scalar",
+        "label": "Test",
+        "source": "sceneParameter",
+        "type": "number",
+        "enabled": true,
+        "value": "seed"
+      }
+    ],
+    "error": false,
+    "expectedInputs": {
+      "scalar": 1
+    },
+    "options": {}
   }
 ]

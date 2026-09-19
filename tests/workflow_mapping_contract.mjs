@@ -19,7 +19,10 @@ for (const f of fixtures) {
     core.compile(
       f.workflow,
       f.bindings.filter(
-        (b) => b.source !== "sceneParameter" || options.renderOverride,
+        (b) =>
+          b.source !== "sceneParameter" ||
+          options.renderOverride ||
+          (String(b.value || "").trim() === "seed" && "seed" in options),
       ),
       {
         objectInfo: options.objectInfo || {},

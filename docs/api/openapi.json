@@ -2058,6 +2058,10 @@
             "type": "object",
             "maxProperties": 100,
             "description": "Additional protocol parameters; bound fields and credentials cannot be overridden."
+          },
+          "sendAspectHint": {
+            "type": "boolean",
+            "description": "Chat protocol only: append the frame aspect ratio to the prompt (default true)"
           }
         }
       },

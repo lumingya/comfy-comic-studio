@@ -1577,6 +1577,7 @@ def validate_submission(payload, token):
             "title",
             "sendQuality",
             "sendSize",
+            "sendAspectHint",
             "size",
             "quality",
             "sampler",
@@ -1628,6 +1629,7 @@ def public_request_input(value):
             "quality",
             "sendSize",
             "sendQuality",
+            "sendAspectHint",
             "sampler",
         )
     }

@@ -3,17 +3,21 @@ import base64
 import secrets
 
 def aspect_hint(frame):
-    """Describe the frame's aspect ratio in words for chat models without a size field."""
+    """Describe the frame's aspect ratio in words for chat models without a size field.
+
+    Square frames get a hint too (C6): several multimodal models default to a
+    landscape canvas when the prompt is silent about shape.
+    """
     try:
         width, height = int(float(frame.get('width') or 0)), int(float(frame.get('height') or 0))
     except (TypeError, ValueError):
         return ''
-    if width <= 0 or height <= 0 or width == height:
+    if width <= 0 or height <= 0:
         return ''
     from math import gcd
     g = gcd(width, height)
     ratio = str(width // g) + ':' + str(height // g)
-    orientation = 'portrait' if height > width else 'landscape'
+    orientation = 'square' if width == height else 'portrait' if height > width else 'landscape'
     return 'Output a single ' + orientation + ' image with aspect ratio ' + ratio + ' (' + str(width) + 'x' + str(height) + ').'
 
 
@@ -21,7 +25,11 @@ def build(context):
     config=context['config'];model=context['model'];prompt=context['prompt'];negative=context['negative']
     number=context['number'];source_raw=context['source_raw'];ordered_images=context['ordered_images'];image_values=context['image_values']
     text = prompt + ('\nAvoid: ' + negative if negative else '')
-    hint = aspect_hint(context.get('frame') or {}) if config.get('sendSize', True) else ''
+    # C5: the Chat protocol has no size field, so the aspect ratio travels as a
+    # sentence in the prompt. It has its own switch (sendAspectHint, default
+    # on) instead of borrowing the Images-API `sendSize` flag that the settings
+    # UI disables for Chat.
+    hint = aspect_hint(context.get('frame') or {}) if config.get('sendAspectHint', True) else ''
     if hint:
         text += '\n' + hint
     content = [{'type': 'text', 'text': text}]
@@ -65,6 +73,49 @@ def text_image_urls(text):
     return urls
 
 
+# Links that a model drops into prose while declining are documentation, not
+# renders: a bare site root or an HTML page can never be the generated image.
+_PAGE_SUFFIXES = ('.html', '.htm', '.php', '.asp', '.aspx', '.md', '.pdf')
+
+
+def looks_like_page(url):
+    """True for URLs that cannot plausibly be an image download (C4)."""
+    from urllib.parse import urlsplit
+    try:
+        parts = urlsplit(url)
+    except ValueError:
+        return False
+    path = parts.path or ''
+    if not parts.query and (path in ('', '/') or path.endswith('/')):
+        # Site roots and directory indexes ("/policies/") are pages, never files.
+        return True
+    return path.lower().endswith(_PAGE_SUFFIXES)
+
+
+def message_text(message):
+    """The model's own words, so a refusal can be shown instead of a download error."""
+    chunks = []
+    if not isinstance(message, dict):
+        return ''
+    refusal = message.get('refusal')
+    if isinstance(refusal, str) and refusal.strip():
+        chunks.append(refusal.strip())
+    content = message.get('content')
+    if isinstance(content, str):
+        chunks.append(content)
+    elif isinstance(content, list):
+        for block in content:
+            if isinstance(block, dict) and isinstance(block.get('text'), str):
+                chunks.append(block['text'])
+            elif isinstance(block, dict) and isinstance(block.get('refusal'), str):
+                chunks.append(block['refusal'])
+    import re
+    text = '\n'.join(c for c in chunks if c and c.strip())
+    # Drop inline data URLs so a base64 blob never masquerades as prose.
+    text = re.sub(r'data:image/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+', '[image]', text)
+    return re.sub(r'\n{3,}', '\n\n', text).strip()
+
+
 def extract_images(message):
     """Normalize common Chat response variants without losing text blocks."""
     import re
@@ -76,7 +127,7 @@ def extract_images(message):
             markdown.extend(text_image_urls(match.group(1)))
         for url in text_image_urls(text):
             if url in markdown or url.startswith("data:image/"):add(url)
-            elif url not in fallback:fallback.append(url)
+            elif url not in fallback and not looks_like_page(url):fallback.append(url)
     def add(value):
         if isinstance(value, dict):value = value.get('url')
         if isinstance(value, str) and value and value not in urls:urls.append(value)
@@ -93,3 +144,24 @@ def extract_images(message):
             elif isinstance(block.get('text'), str):
                 add_text(block['text'])
     return [{'url': url} for url in (urls or fallback)]
+
+
+class ModelTextResponse(ValueError):
+    """The chat model answered with words instead of an image (C4).
+
+    Carries the model's own reply so the task card can show the real reason
+    (moderation, unsupported model, quota…) instead of a generic download error.
+    """
+
+    PREFIX = '模型没有返回图片，而是回复了文字'
+    DOWNLOAD_PREFIX = '模型回复中的链接无法作为图片下载'
+
+    def __init__(self, text, download_error=''):
+        self.model_text = (text or '').strip()
+        self.download_error = str(download_error or '')
+        excerpt = self.model_text[:400] + ('…' if len(self.model_text) > 400 else '')
+        if self.download_error:
+            message = self.DOWNLOAD_PREFIX + '（' + self.download_error[:160] + '）。模型原文：' + (excerpt or '（空）')
+        else:
+            message = self.PREFIX + '：' + (excerpt or '（空回复）')
+        super().__init__(message)

@@ -102,9 +102,70 @@ def frame_seed(snapshot, index, explicit=-1):
     return secrets.randbelow(2**32)
 
 
+IMAGE_TOKEN = re.compile(r"^mio-image://(\d+)$")
+
+
+def _image_slots(workflow):
+    """1-based slots referenced by mio-image:// tokens anywhere in a compiled graph."""
+    found = set()
+
+    def walk(value):
+        if isinstance(value, dict):
+            for item in value.values():
+                walk(item)
+        elif isinstance(value, list):
+            for item in value:
+                walk(item)
+        elif isinstance(value, str):
+            match = IMAGE_TOKEN.match(value)
+            if match:
+                found.add(int(match[1]))
+
+    walk(workflow)
+    return found
+
+
+def prune_unbound_images(workflow, images):
+    """Keep only the staged images some node actually consumes (C2).
+
+    Image variables referenced from a prompt are staged for cloud providers,
+    but a text-to-image ComfyUI graph has no LoadImage binding for them. Rather
+    than failing the frame with "Unbound image N", drop those images and
+    renumber the remaining tokens so slot numbers stay contiguous.
+
+    Returns (workflow, images, dropped).
+    """
+    used = _image_slots(workflow)
+    keep = [slot for slot in range(1, len(images) + 1) if slot in used]
+    if len(keep) == len(images):
+        return workflow, list(images), []
+    remap = {old: new for new, old in enumerate(keep, start=1)}
+
+    def walk(value):
+        if isinstance(value, dict):
+            return {k: walk(v) for k, v in value.items()}
+        if isinstance(value, list):
+            return [walk(v) for v in value]
+        if isinstance(value, str):
+            match = IMAGE_TOKEN.match(value)
+            if match and int(match[1]) in remap:
+                return "mio-image://" + str(remap[int(match[1])])
+        return value
+
+    dropped = [images[slot - 1] for slot in range(1, len(images) + 1) if slot not in used]
+    return walk(workflow), [images[slot - 1] for slot in keep], dropped
+
+
 def seed_binding_ready(workflow):
+    """True when an enabled binding writes this frame's seed into a numeric input.
+
+    Mirrors ``designerSeedReady`` in js/architecture.js: a ``random`` source or
+    a scene-parameter mapping of ``seed`` both qualify (C1).
+    """
+    from backend.ecosystem.workflow import is_seed_binding
+
     for binding in workflow.get("bindings", []):
-        if not binding.get("enabled") or binding.get("source") != "random":
+        if not binding.get("enabled") or not is_seed_binding(binding):
             continue
         try:
             graph = workflow.get("workflow", {})
@@ -316,7 +377,11 @@ class ProductionAdapter:
             for k in ("width", "height", "steps", "cfg", "denoise", "seed")
             if k in frame
         }
-        params["seed"] = frame_seed(snap, index, params.get("seed", -1))
+        # A scene's own seed is a render override like its size or steps; a
+        # scene that never opted in gets the book seed (base + index) or a
+        # fresh random one, never a stale value left in the editor.
+        explicit = params.get("seed", -1) if frame.get("renderOverride") else -1
+        params["seed"] = frame_seed(snap, index, explicit)
         payload = {
             "config": channel,
             "prompt": prompt,
@@ -351,6 +416,23 @@ class ProductionAdapter:
                 images,
             )
             channel["outputNodeId"] = wf.get("outputNodeId", "")
+            # C2: a text-to-image workflow has no LoadImage binding, so image
+            # variables referenced from the prompt never reach a node. Drop them
+            # here instead of letting the provider fail with "Unbound image N";
+            # the prompt text already lost its @image_N tokens.
+            payload["workflow"], payload["images"], dropped = prune_unbound_images(
+                payload["workflow"], images
+            )
+            if dropped:
+                self.report(
+                    task["id"],
+                    index,
+                    {
+                        "notice": "当前工作流没有可接收参考图的节点映射，已忽略 "
+                        + str(len(dropped))
+                        + " 张立绘参考图；提示词中的其它内容照常生成。需要参考图时，请在工作流映射中为 LoadImage 节点绑定图片变量。"
+                    },
+                )
         previous = None
         try:
             previous = next(

@@ -155,8 +155,9 @@ async function exportPortable(format){
  if(studioUI.exportBusy)return;
  studioUI.exportBusy=true;const status=$('#export-status');
  try{if(status)status.textContent='正在准备 '+format.toUpperCase()+'；原图资源包不受 HTML 内联预算限制。';if(!await savePythonWorkspace())throw Error('请先完成保存，再导出。');
- const response=await fetch('/api/export/portable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({format,albumIds:ui.exportIds,validateOnly:true})});
- if(!response.ok){const error=await response.json();throw Error(error.error||'导出失败')}
+ /* C7: the export slot is exclusive; a 409 means another export is still streaming, so back off and retry instead of surfacing it as a failure. */
+ let response;for(let attempt=0;attempt<4;attempt++){response=await fetch('/api/export/portable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({format,albumIds:ui.exportIds,validateOnly:true})});if(response.status!==409||attempt===3)break;if(status)status.textContent='另一份导出仍在传输，'+(1.5*(attempt+1))+' 秒后自动重试…';await new Promise(r=>setTimeout(r,1500*(attempt+1)))}
+ if(!response.ok){const error=await response.json().catch(()=>({}));throw Error(error.error||'导出失败')}
  const frame=document.createElement('iframe');frame.name=uid('export');frame.hidden=true;frame.onload=()=>{try{const text=frame.contentDocument.body.textContent;if(text.trim().startsWith('{')){const result=JSON.parse(text);if(result.error){toast(result.error,'error');if(status)status.textContent=result.error}}}catch{}};document.body.append(frame);
  const form=document.createElement('form');form.method='POST';form.action='/api/export/portable';form.target=frame.name;form.hidden=true;for(const [name,value] of Object.entries({format,albumIds:JSON.stringify(ui.exportIds),_csrf:document.querySelector('meta[name="mio-csrf"]')?.content||''})){const input=document.createElement('input');input.name=name;input.value=value;form.append(input)}document.body.append(form);form.submit();form.remove();setTimeout(()=>frame.remove(),600000);
  if(status)status.textContent=format==='zip'?'已交给浏览器下载管理器，准备完成后开始下载。请解压整个资源包，打开 index.html。':'已交给浏览器下载管理器。PDF 为逐页图片，非 JPEG 原图以高质量 JPEG 嵌入。';

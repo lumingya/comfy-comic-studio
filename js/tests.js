@@ -547,7 +547,7 @@ add('name-setting labels and help describe their different purposes', () => {
   assert.ok(context.characterSettingHelp('character').includes('提示词'));
 });
 
-add('current provider and onboarding controls have English copy',()=>{const l=context.extendStudioLocaleCatalog(context.createStudioLocaleCatalog('en'));for(const key of ['创作工坊','工作流与 API 配置','保存并使用','初光映格，微墨生花','使用服务端环境变量'])assert.ok(!/[\u3400-\u9fff]/.test(l.text(key)));});
+add('current provider and onboarding controls have English copy',()=>{const l=context.extendStudioLocaleCatalog(context.createStudioLocaleCatalog('en'));for(const key of ['创作工坊','工作流与 API 配置','保存并使用','第一步，连接你的图像服务。','写分镜','连服务','出画册','使用服务端环境变量'])assert.ok(!/[\u3400-\u9fff]/.test(l.text(key)));});
 add('dynamic queue and credential labels are translated without changing asset names',()=>{const l=context.extendStudioLocaleCatalog(context.createStudioLocaleCatalog('en'));assert.equal(l.translate('本地密钥 · 我的服务'),'Local keys · 我的服务');assert.equal(l.translate('分镜：我的故事'),'Storyboard: 我的故事');assert.equal(l.translate('第 3 幕正向提示词缺少变量：主角'),'Scene 3 positive prompt is missing variables: 主角');});
 add('locale changes keep unknown authored text intact and Chinese source reusable',()=>{const l=context.extendStudioLocaleCatalog(context.createStudioLocaleCatalog('en'));assert.equal(l.translate('我的原创故事 {主角}'),'我的原创故事 {主角}');l.setLanguage('zh-CN');assert.equal(l.text('保存并使用'),'保存并使用');});
 

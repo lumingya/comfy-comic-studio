@@ -35,7 +35,10 @@ def build(context):
     if width % 64 or height % 64:
         raise ValueError('NovelAI width and height must be multiples of 64')
     seed = int(number('seed', -1, -1, 4294967295))
-    params = {'params_version': 3, 'width': width, 'height': height, 'scale': number('cfg', 5, 0, 10),
+    # C3: the storyboard editor offers CFG 0–30 for every channel. NovelAI's own
+    # UI stops at 10 but the API accepts higher guidance, so mirror the editor
+    # instead of failing a paid book mid-run with "Invalid parameter: cfg".
+    params = {'params_version': 3, 'width': width, 'height': height, 'scale': number('cfg', 5, 0, 30),
               'steps': int(number('steps', 28, 1, 50)), 'seed': seed if seed >= 0 else secrets.randbelow(4294967296),
               'n_samples': 1, 'sampler': config.get('sampler', 'k_euler_ancestral'), 'noise_schedule': 'karras',
               'negative_prompt': negative, 'ucPreset': 0, 'qualityToggle': False, 'sm': False, 'sm_dyn': False,

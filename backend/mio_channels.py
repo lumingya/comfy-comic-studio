@@ -4,7 +4,7 @@ import copy
 class ChannelConfigurationError(ValueError):
     """Fix the shared saved configuration before dispatching more frames."""
 
-CONFIG_FIELDS=('id','title','provider','baseUrl','model','protocol','sampler','size','quality','sendSize','sendQuality','keyMode','keyId','keyIds','extraParams')
+CONFIG_FIELDS=('id','title','provider','baseUrl','model','protocol','sampler','size','quality','sendSize','sendQuality','sendAspectHint','keyMode','keyId','keyIds','extraParams')
 
 def channel_reference(payload,frame):
     if frame.get('channelId'):return frame['channelId']

@@ -76,12 +76,12 @@ def generation_payload(body, config):
         profile = body['config']
     if not isinstance(profile, dict) or profile.get('provider') not in ('novelai', 'openai'):
         raise ApiError(400, 'unsupported_provider', 'v1 generation supports novelai and openai; ComfyUI uses the browser queue')
-    allowed_config = {'provider', 'baseUrl', 'model', 'protocol', 'size', 'quality', 'sampler', 'id', 'title', 'sendSize', 'sendQuality', 'keyMode', 'keyId', 'keyIds', 'extraParams'}
+    allowed_config = {'provider', 'baseUrl', 'model', 'protocol', 'size', 'quality', 'sampler', 'id', 'title', 'sendSize', 'sendQuality', 'sendAspectHint', 'keyMode', 'keyId', 'keyIds', 'extraParams'}
     if 'config' in body and set(profile) - allowed_config:
         raise ApiError(400, 'unknown_field', 'Unknown config field')
     profile = {k: copy.deepcopy(v) for k, v in profile.items() if k in allowed_config}
-    if any((not isinstance(v,list) or len(v)>32 or any(not isinstance(x,str) or not x or len(x)>150 for x in v)) if k == 'keyIds' else not isinstance(v, dict) if k == 'extraParams' else not isinstance(v, bool) if k in ('sendSize', 'sendQuality') else not isinstance(v, str) for k, v in profile.items()):
-        raise ApiError(400, 'invalid_config', 'Config values must be strings; sendSize/sendQuality must be booleans')
+    if any((not isinstance(v,list) or len(v)>32 or any(not isinstance(x,str) or not x or len(x)>150 for x in v)) if k == 'keyIds' else not isinstance(v, dict) if k == 'extraParams' else not isinstance(v, bool) if k in ('sendSize', 'sendQuality', 'sendAspectHint') else not isinstance(v, str) for k, v in profile.items()):
+        raise ApiError(400, 'invalid_config', 'Config values must be strings; sendSize/sendQuality/sendAspectHint must be booleans')
     if profile.get('keyMode', 'environment') not in ('none', 'stored', 'environment'):
         raise ApiError(400, 'invalid_config', 'Unsupported authentication mode')
     if profile.get('protocol', 'images') not in ('images', 'chat'):
@@ -136,7 +136,7 @@ def openapi():
     schemas = spec['components']['schemas']
     props = schemas['ProviderConfig']['properties']
     props['keyIds']={'type':'array','maxItems':32,'items':{'type':'string','minLength':1,'maxLength':150}}
-    props.update(sendSize={'type': 'boolean'}, sendQuality={'type': 'boolean'}, keyId={'type': 'string'}, keyMode={'enum': ['none', 'stored', 'environment']})
+    props.update(sendSize={'type': 'boolean'}, sendQuality={'type': 'boolean'}, sendAspectHint={'type': 'boolean', 'description': 'Chat protocol only: append the frame aspect ratio to the prompt (default true)'}, keyId={'type': 'string'}, keyMode={'enum': ['none', 'stored', 'environment']})
     schemas['ErrorEnvelope'] = {'type': 'object', 'required': ['error', 'requestId'], 'properties': {
         'requestId': {'type': 'string'}, 'error': {'type': 'object', 'required': ['code', 'message'],
         'properties': {'code': {'type': 'string'}, 'message': {'type': 'string'}}}}}
