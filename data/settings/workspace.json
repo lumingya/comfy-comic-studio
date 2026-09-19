@@ -190,7 +190,8 @@
               "quality": "auto",
               "sendSize": false,
               "sendQuality": false,
-              "keyMode": "none"
+              "keyMode": "none",
+              "sendAspectHint": true
             }
           ]
         }
@@ -202,8 +203,8 @@
           "matrix": true,
           "engine": true,
           "llm": false,
-          "logs": true,
-          "extensions": true,
+          "logs": false,
+          "extensions": false,
           "marketplace": false
         },
         "features": {
