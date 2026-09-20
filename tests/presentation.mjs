@@ -57,7 +57,7 @@ try{
  await page.evaluate(()=>closeReader());await page.evaluate(()=>exportModal([state.books[0].id]));check('single-book export entry opens the same reader studio',await page.locator('#reader').isVisible()&&await page.locator('#presentation-drawer').isVisible()&&!await page.locator('#modal').isVisible());
  await page.setViewportSize({width:1280,height:900});
  await page.evaluate(()=>{const b=bookBy(ui.bookId);b.totalSteps=8;b.steps=b.steps.slice(0,2);b.generatedSteps=2;ui.step=6;presentationUI.templateId='custom-media';studioUI.exportDraft.templateId='custom-media';presentationUI.panel=true;presentationUI.exportPreview=true;renderArtReader()});
- await page.waitForFunction(()=>document.querySelector('#presentation-preview')?.srcdoc.includes('data:image/'));
+ await page.waitForFunction(()=>document.querySelector('#presentation-preview')?.srcdoc.match(/src="(blob:|data:image\/)/));
  const partial=page.frameLocator('#presentation-preview');await partial.locator('[data-cc-frame]').first().waitFor();
  check('export from a missing scene previews confirmed images instead of blank future frames',await partial.locator('[data-cc-frame]').count()===2&&await page.evaluate(()=>ui.step===6));
  check('preview images decode successfully',await partial.locator('[data-cc-frame] img').first().evaluate(async img=>{await img.decode();return img.naturalWidth>0}));

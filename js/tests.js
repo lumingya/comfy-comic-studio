@@ -668,6 +668,66 @@ add('WebP cleaning drops EXIF/XMP chunks, clears VP8X flags and fixes the RIFF s
   assert.equal(context.webpChunks(upright)[0].data[0], 0, 'flags fully cleared when no orientation is needed');
 });
 
+add('whole-book preview keeps a same-origin blob: image source while single-file export CSP stays data: only', () => {
+  const templates = fs.readFileSync(path.join(__dirname, 'ui-templates.js'), 'utf8');
+  const presentation = fs.readFileSync(path.join(__dirname, 'ui-presentation.js'), 'utf8');
+  // The only img-src difference between preview and export is the opts.preview switch; nothing else widens the policy.
+  assert.match(templates, /img-src data:"\+\(opts\.preview\?" blob:":""\)\+"; style-src 'unsafe-inline'; font-src data:; script-src 'nonce-"\+nonce\+"'; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none';"/);
+  assert.match(presentation, /csp\.content\+=options\.preview\?' media-src data: blob:;':' media-src data:;';/);
+  assert.doesNotMatch(templates, /img-src[^"]*https?:/, 'no network image source may ever enter the sandbox policy');
+  // The reader preview is the only compile site that opts into blob:, and it does so through the preview channel.
+  assert.match(presentation, /presentationPreviewImage\(s\.image,controller\.signal\)/);
+  assert.match(presentation, /\{\.\.\.studioUI\.exportDraft,sample,preview:true\}/);
+  // Blobs reach the opaque-origin sandbox only through postMessage; the iframe never gains allow-same-origin.
+  assert.match(presentation, /sandbox="allow-scripts" referrerpolicy="no-referrer" title="整册画册阅读器"/);
+  assert.match(presentation, /event\.source!==window\.parent\|\|event\.data\?\.type!=='mio-frame-media'/);
+  // The export hub never sets preview and still uses the data URL channel.
+  const exporter = fs.readFileSync(path.join(__dirname, 'ui-export.js'), 'utf8');
+  assert.doesNotMatch(exporter, /preview:true/);
+  assert.doesNotMatch(exporter, /presentationPreviewImage/);
+});
+
+add('preview image cache is a 256-entry LRU that releases entries on eviction, replacement and clear', () => {
+  const revoked = [];
+  const cache = vm.runInContext('createPresentationPreviewCache', context)(3, entry => revoked.push(entry.url));
+  assert.equal(vm.runInContext('PRESENTATION_PREVIEW_CACHE_LIMIT', context), 256);
+  assert.equal(vm.runInContext('presentationPreviewCache.limit', context), 256);
+  cache.set('a', { url: 'blob:a' }); cache.set('b', { url: 'blob:b' }); cache.set('c', { url: 'blob:c' });
+  assert.equal(cache.get('a').url, 'blob:a', 'hit refreshes recency');
+  cache.set('d', { url: 'blob:d' });
+  assert.deepEqual(revoked, ['blob:b'], 'least recently used entry is evicted, not the oldest inserted');
+  assert.equal(cache.has('b'), false);
+  cache.set('a', { url: 'blob:a2' });
+  assert.deepEqual(revoked, ['blob:b', 'blob:a'], 'replacing an entry releases the previous one');
+  assert.equal(cache.size, 3);
+  cache.clear();
+  assert.deepEqual(revoked.slice(2).sort(), ['blob:a2', 'blob:c', 'blob:d']);
+  assert.equal(cache.size, 0);
+  // The legacy export channel is still present for compileExport and as the no-object-URL fallback.
+  assert.equal(typeof vm.runInContext('presentationImage', context), 'function');
+});
+
+add('preview channel reads dimensions from image headers instead of decoding pixels', () => {
+  const probe = vm.runInContext('imageHeaderSize', context), size = bytes => { const r = probe(bytes); return r && plain(r); };
+  const png = Uint8Array.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a, 0,0,0,13, 0x49,0x48,0x44,0x52, 0,0,0x03,0x20, 0,0,0x04,0xb0, 8,6,0,0,0]);
+  assert.deepEqual(size(png), { width: 800, height: 1200 });
+  const jpeg = Uint8Array.from([0xff,0xd8, 0xff,0xe0,0,16,0x4a,0x46,0x49,0x46,0,1,1,0,0,1,0,1,0,0, 0xff,0xc0,0,17,8, 0x02,0x00, 0x01,0x80, 3,1,0x22,0,2,0x11,1,3,0x11,1, 0xff,0xda]);
+  assert.deepEqual(size(jpeg), { width: 384, height: 512 });
+  const webp = Uint8Array.from([...'RIFF'].map(c=>c.charCodeAt(0)).concat([0,0,0,0], [...'WEBPVP8X'].map(c=>c.charCodeAt(0)), [10,0,0,0, 0,0,0,0, 0x3f,0x01,0x00, 0xdf,0x01,0x00], new Array(8).fill(0)));
+  assert.deepEqual(size(webp), { width: 320, height: 480 });
+  const gif = Uint8Array.from([...'GIF89a'].map(c=>c.charCodeAt(0)).concat([0x40,0x01, 0xf0,0x00, 0,0,0,0]));
+  assert.deepEqual(size(gif), { width: 320, height: 240 });
+  assert.equal(size(Uint8Array.from([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30])), null);
+});
+
+add('modal backdrops no longer run a full-viewport backdrop-filter blur', () => {
+  const css = fs.readFileSync(path.join(__dirname, '../styles.css'), 'utf8');
+  const rules = css.match(/[^{}]*::backdrop\{[^}]*\}/g) || [];
+  assert.ok(rules.length >= 2, 'dialog and image studio backdrop rules exist');
+  for (const rule of rules) assert.doesNotMatch(rule, /backdrop-filter:\s*(?!none)/, rule);
+  assert.doesNotMatch(css, /backdrop-filter:\s*blur/, 'no blur backdrop filters remain anywhere in the stylesheet');
+});
+
 async function main() {
   let failed = 0;
   for (const test of tests) {

@@ -44,6 +44,7 @@ function syncPresentationPanel(){const reader=$('#reader'),drawer=$('#presentati
 function presentationRuntime(){
   // No generic parent-state access. Only fixed reading preferences and project-link messages are accepted.
   Object.defineProperty(window,'MioTemplate',{value:Object.freeze({version:1,getFrames:()=>Object.freeze([...document.querySelectorAll('[data-cc-frame]')]),onReady:fn=>{if(typeof fn==='function')fn(document)}}),writable:false});
+  if(window.parent!==window)window.addEventListener('message',event=>{if(event.source!==window.parent||event.data?.type!=='mio-frame-media'||!Array.isArray(event.data.items))return;for(const item of event.data.items){if(typeof item?.key!=='string'||!(item.blob instanceof Blob)||!/^image\//.test(item.blob.type||'image/'))continue;const url=URL.createObjectURL(item.blob);for(const el of document.querySelectorAll('img,source'))if(el.getAttribute('src')===item.key){el.setAttribute('src',url)}for(const el of document.querySelectorAll('[style]'))if(el.getAttribute('style').includes(item.key))el.setAttribute('style',el.getAttribute('style').split(item.key).join(url))}});
   document.addEventListener('click',event=>{const link=event.target.closest('.mio-colophon a');if(link&&link.href==='https://github.com/lumingya/comfy-comic-studio'&&window.parent!==window){event.preventDefault();window.parent.postMessage({type:'mio-project-link'},'*')}});
   const videos=[...document.querySelectorAll('video')];for(const video of videos){video.muted=true;video.playsInline=true;video.preload='metadata';if(matchMedia('(prefers-reduced-motion: reduce)').matches){video.autoplay=false;video.pause();video.controls=true}}
   document.addEventListener('visibilitychange',()=>{for(const v of videos)if(document.hidden)v.pause();else if(v.autoplay&&!matchMedia('(prefers-reduced-motion: reduce)').matches)v.play().catch(()=>{})});
@@ -63,6 +64,8 @@ function beginExportPreview(){
   const book=bookBy(ui.bookId);if(book&&presentationUI.templateId==='mio-fit'&&readerFrame(book,ui.step)?.pending){const first=slots(book).findIndex(s=>!s.pending&&s.image);if(first>=0)ui.step=first}
 }
 
+/* Export channel (unchanged contract): fetch → downscale ≤1440 → data URL. Used by single-file HTML export and as the
+   fallback when object URLs are unavailable. It is deliberately NOT used for same-session preview any more. */
 async function presentationImage(src,signal){
   if(signal?.aborted)throw new DOMException('已取消','AbortError');
   if(presentationImageCache.has(src))return presentationImageCache.get(src);
@@ -73,6 +76,59 @@ async function presentationImage(src,signal){
   presentationImageCache.set(src,result);if(presentationImageCache.size>6)presentationImageCache.delete(presentationImageCache.keys().next().value);return result;
 }
 
+/* Preview channel: same-session whole-book reading. No decode-to-canvas, no re-encode, no base64. The bytes stay in
+   the browser as a Blob; dimensions are read from the image header. The sandboxed document keeps its opaque origin
+   (no allow-same-origin): blobs are streamed to it with postMessage and it mints its own blob: URLs, so nothing can
+   ever leave the browser. */
+const PRESENTATION_PREVIEW_CACHE_LIMIT=256;
+function createPresentationPreviewCache(limit=PRESENTATION_PREVIEW_CACHE_LIMIT,release=()=>{}){
+  const entries=new Map();
+  return {
+    limit,
+    get size(){return entries.size},
+    has:key=>entries.has(key),
+    get(key){if(!entries.has(key))return undefined;const value=entries.get(key);entries.delete(key);entries.set(key,value);return value},
+    set(key,value){if(entries.has(key)){const previous=entries.get(key);entries.delete(key);if(previous!==value)release(previous,key)}entries.set(key,value);while(entries.size>limit){const [oldest,dropped]=entries.entries().next().value;entries.delete(oldest);release(dropped,oldest)}return value},
+    delete(key){const value=entries.get(key);if(!value)return false;entries.delete(key);release(value,key);return true},
+    clear(){for(const [key,value] of entries)release(value,key);entries.clear()},
+    keys:()=>entries.keys()
+  };
+}
+const presentationPreviewCache=createPresentationPreviewCache(PRESENTATION_PREVIEW_CACHE_LIMIT,entry=>{if(entry?.url){try{URL.revokeObjectURL(entry.url)}catch(e){}}});
+
+/* Header-only dimension probe (PNG / JPEG / WebP / GIF). Returns null when unsure so the caller can fall back. */
+function imageHeaderSize(bytes){
+  const u8=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes),n=u8.length,be16=i=>(u8[i]<<8)|u8[i+1],be32=i=>((u8[i]<<24)>>>0)+(u8[i+1]<<16)+(u8[i+2]<<8)+u8[i+3],le16=i=>u8[i]|(u8[i+1]<<8),le24=i=>u8[i]|(u8[i+1]<<8)|(u8[i+2]<<16),tag=(i,t)=>[...t].every((c,k)=>u8[i+k]===c.charCodeAt(0));
+  const ok=(width,height)=>width>0&&height>0&&width<=65535&&height<=65535?{width,height}:null;
+  if(n>=24&&u8[0]===0x89&&tag(1,'PNG'))return ok(be32(16),be32(20));
+  if(n>=10&&tag(0,'GIF8'))return ok(le16(6),le16(8));
+  if(n>=30&&tag(0,'RIFF')&&tag(8,'WEBP')){const chunk=String.fromCharCode(u8[12],u8[13],u8[14],u8[15]);if(chunk==='VP8X')return ok(le24(24)+1,le24(27)+1);if(chunk==='VP8 ')return ok(le16(26)&0x3fff,le16(28)&0x3fff);if(chunk==='VP8L'&&u8[20]===0x2f){const bits=u8[21]|(u8[22]<<8)|(u8[23]<<16)|(u8[24]<<24);return ok((bits&0x3fff)+1,((bits>>>14)&0x3fff)+1)}return null}
+  if(n>=4&&u8[0]===0xff&&u8[1]===0xd8){let p=2;while(p+9<n){if(u8[p]!==0xff){p++;continue}const marker=u8[p+1];if(marker===0xff){p++;continue}if(marker===0xd8||marker===0x01||(marker>=0xd0&&marker<=0xd7)){p+=2;continue}const length=be16(p+2);if([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker))return ok(be16(p+7),be16(p+5));if(marker===0xda||length<2)break;p+=2+length}return null}
+  return null;
+}
+
+async function presentationPreviewImage(src,signal){
+  if(signal?.aborted)throw new DOMException('已取消','AbortError');
+  const cached=presentationPreviewCache.get(src);if(cached)return cached;
+  const blob=await(await request(src,{signal},15000)).blob();
+  if(signal?.aborted)throw new DOMException('已取消','AbortError');
+  let size=null;
+  try{size=imageHeaderSize(new Uint8Array(await blob.slice(0,65536).arrayBuffer()))}catch(e){size=null}
+  if(!size&&globalThis.createImageBitmap){const bitmap=await createImageBitmap(blob);size={width:bitmap.width,height:bitmap.height};bitmap.close()}
+  if(!size){const url=URL.createObjectURL(blob);try{size=await measureArtwork(url,signal)}finally{URL.revokeObjectURL(url)}}
+  if(signal?.aborted)throw new DOMException('已取消','AbortError');
+  return presentationPreviewCache.set(src,{blob,width:size.width,height:size.height,bytes:blob.size});
+}
+
+/* Placeholder that reserves the frame's box inside the compiled document until its blob arrives. Each key is unique per
+   frame so the runtime can swap exactly the right elements. */
+function presentationFrameToken(index,width,height){return 'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27'+(width||4)+'%27 height=%27'+(height||3)+'%27/%3E#mio-frame-'+index}
+
+function streamPresentationMedia(frame,items,revision){
+  const deliver=()=>{if(revision!==presentationUI.revision||!frame.isConnected||!frame.contentWindow)return;try{frame.contentWindow.postMessage({type:'mio-frame-media',items},'*')}catch(e){}};
+  frame.addEventListener('load',deliver,{once:true});
+}
+
 async function renderPresentationPreview(){
   const frame=$('#presentation-preview'),t=exportTemplateBy(presentationUI.templateId),book=bookBy(ui.bookId),revision=++presentationUI.revision;
   if(!frame||!t||!book)return;
@@ -80,20 +136,20 @@ async function renderPresentationPreview(){
   const cancel=$('[data-act="presentation-load-cancel"]');if(cancel)cancel.hidden=false;
   const status=$('#presentation-preview-status'),sample=presentationUI.panel&&presentationUI.exportPreview;
   try{
-    const sequence=slots(book),available=sequence.filter(s=>!s.pending&&s.image),selected=sample?available.slice(0,3):sequence,frames=new Array(selected.length);let done=0,bytes=0;
+    const sequence=slots(book),available=sequence.filter(s=>!s.pending&&s.image),selected=sample?available.slice(0,3):sequence,frames=new Array(selected.length),media=[];let done=0;
     const label=sample?'导出样张 · 前 '+selected.length+' 张已生成图片（导出包含全册）':'整册阅读 · 已生成 '+available.length+' / '+sequence.length+' 幕';
     if(status)status.textContent=label+' · 载入 0 / '+selected.length;
     if(!selected.length){if(status)status.textContent='暂无已生成图片，请先生成或上传。';return}
     // Bounded preparation pool; never serially rebuild overlapping three-frame windows.
     let cursor=0;
-    await Promise.all(Array.from({length:Math.min(4,selected.length)},async()=>{
+    await Promise.all(Array.from({length:Math.min(6,selected.length)},async()=>{
       while(cursor<selected.length){const i=cursor++,s=selected[i];if(revision!==presentationUI.revision||!frame.isConnected)return;
-        const image=s.pending?missingArtworkDataURL():await presentationImage(s.image,controller.signal);frames[i]={...s,...(presentationImage.geometry?.get(s.image)||await measureArtwork(image,controller.signal)),image};bytes+=frames[i].image.length;if(bytes>64*1024*1024)throw Error('整册模板载入超过 64 MiB，请切换默认完整画面阅读。');done++;
+        if(s.pending){const image=missingArtworkDataURL();frames[i]={...s,...await measureArtwork(image,controller.signal),image}}else if(/^data:/i.test(s.image)){frames[i]={...s,...(presentationPreviewCache.get(s.image)||presentationPreviewCache.set(s.image,await measureArtwork(s.image,controller.signal))),image:s.image}}else{const {blob,width,height}=await presentationPreviewImage(s.image,controller.signal);const key=presentationFrameToken(i,width,height);media.push({key,blob});frames[i]={...s,width,height,image:key}}done++;
         if(status&&revision===presentationUI.revision)status.textContent=label+' · 载入 '+done+' / '+selected.length;
       }
     }));
     if(controller.signal.aborted||revision!==presentationUI.revision||!frame.isConnected)return;
-    frame.srcdoc=compileTemplateDocument(t,[{...book,steps:frames}],{...studioUI.exportDraft,sample});
+    streamPresentationMedia(frame,media,revision);frame.srcdoc=compileTemplateDocument(t,[{...book,steps:frames}],{...studioUI.exportDraft,sample,preview:true});
     if(status)status.textContent=label+(presentationScriptKey(t)&&!presentationUI.approved.has(presentationScriptKey(t))?' · 自定义脚本未授权':'');
   }catch(e){const canceled=controller.signal.aborted;controller.abort();if(revision===presentationUI.revision&&frame.isConnected&&status)status.textContent=canceled?'已取消载入，可切换版式重新阅读。':'画册载入失败：'+e.message}
   finally{if(revision===presentationUI.revision&&cancel)cancel.hidden=true}
@@ -110,7 +166,7 @@ function installPresentationStudio(){
 
   const compile=compileTemplateDocument;compileTemplateDocument=function(t,books,options={}){
     let html=compile(t,books,options);html=html.replace(/\{\{asset:([a-zA-Z][a-zA-Z0-9_-]*)\}\}/g,(_,key)=>t.assets[key].data);
-    const doc=new DOMParser().parseFromString(html,'text/html'),csp=doc.querySelector('meta[http-equiv="Content-Security-Policy"]'),nonce=doc.querySelector('script[nonce]')?.getAttribute('nonce');csp.content+=' media-src data:;';
+    const doc=new DOMParser().parseFromString(html,'text/html'),csp=doc.querySelector('meta[http-equiv="Content-Security-Policy"]'),nonce=doc.querySelector('script[nonce]')?.getAttribute('nonce');csp.content+=options.preview?' media-src data: blob:;':' media-src data:;';
     if(presentationIsBuiltin(t)&&!doc.querySelector('[data-mio-colophon]')){const end=[...doc.querySelectorAll('.edition-end')].at(-1)||doc.body;end.insertAdjacentHTML('beforeend',presentationColophonHTML());const style=doc.createElement('style');style.textContent=presentationColophonCSS();doc.head.append(style)}
     const script=doc.createElement('script');script.setAttribute('nonce',nonce);script.textContent='('+presentationRuntime.toString()+')();'+(presentationUI.approved.has(presentationScriptKey(t))?'\n'+t.runtimeScript:'');doc.body.append(script);
     return '<!DOCTYPE html>\n'+doc.documentElement.outerHTML;
@@ -123,7 +179,7 @@ function installPresentationStudio(){
       if(scroll)scroll.insertAdjacentHTML('beforeend',presentationColophonHTML());else if(ui.step>=Math.floor((book.totalSteps-1)/(artUI.readerMode==='spread'?2:1))*(artUI.readerMode==='spread'?2:1)){if(focus)focus.insertAdjacentHTML('beforeend',presentationColophonHTML());else{native.classList.add('has-reader-colophon');native.insertAdjacentHTML('beforeend',presentationColophonHTML())}}return}$('#reader-canvas').classList.remove('has-reader-colophon');artUI.readerObserver?.disconnect();$('#reader-canvas').innerHTML='<div class="presentation-preview-wrap"><div id="presentation-preview-status" role="status">正在载入整册…</div><button class="btn small" data-act="presentation-load-cancel">取消载入</button><iframe id="presentation-preview" sandbox="allow-scripts" referrerpolicy="no-referrer" title="整册画册阅读器"></iframe></div>';syncArtReader();void renderPresentationPreview()};
   const close=closeArtReader;closeArtReader=function(){presentationUI.loadController?.abort();studioUI.exportController?.abort();presentationUI.revision++;clearTimeout(presentationUI.previewTimer);$('#presentation-preview')?.remove();close()};
   openReader=id=>openArtReader(id);closeReader=()=>closeArtReader();renderReader=()=>renderArtReader();renderReaderCanvas=animate=>renderArtCanvas(animate);
-  $('#reader').addEventListener('close',()=>{if($('#reader').open)return;presentationImageCache.clear();presentationUI.panel=false;$('#presentation-drawer')?.remove();presentationUI.revision++;$('#presentation-preview')?.remove();clearTimeout(presentationUI.previewTimer)});
+  $('#reader').addEventListener('close',()=>{if($('#reader').open)return;presentationImageCache.clear();presentationPreviewCache.clear();presentationUI.panel=false;$('#presentation-drawer')?.remove();presentationUI.revision++;$('#presentation-preview')?.remove();clearTimeout(presentationUI.previewTimer)});
   const exportHub=showExportHub;showExportHub=function(ids,preserve=false){if(ids.length===1){if(ui.bookId!==ids[0]||!$('#reader').open)openArtReader(ids[0]);beginExportPreview();renderArtReader();return}const result=exportHub(ids,preserve);if(!preserve){studioUI.exportDraft.templateId='mio-fit';renderExportHub()}return result};
   exportModal=(ids)=>showExportHub(ids);
   const exportAll=compileCustomExport;compileCustomExport=async function(){if(!await approvePresentationScript(exportTemplateBy(studioUI.exportDraft.templateId)))return;return exportAll()};compileExport=compileCustomExport;
