@@ -34,7 +34,11 @@ const stylePattern = /<style\s+id="studio-styles"[^>]*>([\s\S]*?)<\/style>/;
 
 function parser() {
   try { return require('acorn'); }
-  catch (error) { throw new Error('Install the build-only parser first: npm install --no-save --package-lock=false acorn@8.15.0'); }
+  catch (error) {
+    const local = path.join(root, 'backend', 'ecosystem', 'acorn.cjs');
+    if (fs.existsSync(local)) return require(local);
+    throw new Error('Install the build-only parser first: npm install --no-save --package-lock=false acorn@8.15.0');
+  }
 }
 
 function destination(name) {
@@ -53,8 +57,13 @@ function destination(name) {
 }
 
 function syntaxCheck(source, filename) {
-  new vm.Script(source, { filename });
-  return parser().parse(source, { ecmaVersion: 'latest', sourceType: 'script', allowHashBang: true });
+  try {
+    new vm.Script(source, { filename });
+    return parser().parse(source, { ecmaVersion: 'latest', sourceType: 'script', allowHashBang: true });
+  } catch (err) {
+    console.error('Error in ' + filename + ':', err);
+    throw err;
+  }
 }
 
 function extract() {

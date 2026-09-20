@@ -78,6 +78,7 @@ async function openFoundationAssets(){
   modal('素材索引与完整性',`<p class="help">${report.items.length} 个文件 · ${report.missing.length} 个缺失引用。未引用文件至少保留 24 小时；清理只移入回收目录。运行中或结果未确认的任务会阻止清理。</p><div style="max-height:55vh;overflow:auto">${report.missing.map(x=>`<p class="danger">缺失：${esc(x.url)}</p>`).join('')}${report.items.map(x=>`<details><summary>${esc(x.name)} · ${(x.bytes/1024).toFixed(1)} KiB · ${x.references.length} 处引用 ${x.integrity==='ok'?'':'· 校验不一致'}</summary><code>${esc(x.url)}</code><pre>${esc(x.references.join('\n')||'未被当前工程或任务引用')}</pre>${x.cleanupEligible?`<label><input type="checkbox" data-recycle-asset="${esc(x.url)}">移入回收目录</label>`:''}</details>`).join('')}</div><div class="modal-footer">${btn('关闭','','close-modal')}${btn('回收所选文件','trash','foundation-cleanup',`data-token="${report.cleanup.token}"`,'small')}</div>`);
 }
 async function runFoundationQueue(){if(foundationIsMock())return runFlexibleQueue();try{foundationRuntime.localAfterDurable=state.queue.some(q=>q.status==='pending'&&foundationTaskIsMock(q));return await submitFoundationQueue()}catch(e){toast(e.message,'error');log(e.message,'error')}}
+globalThis.runFoundationQueue=runFoundationQueue;
 async function interruptQueue(){
   if(foundationIsMock())return interruptLegacyQueue();
   await foundationRequest('jobs/scheduler',{action:'pause'});rt.paused=true;
@@ -104,11 +105,14 @@ async function foundationAction(action,d={}){
 function syncFoundationOrder(){const ids=state.queue.filter(q=>q.status==='pending'&&q.serverId&&(q.done||0)===0&&!q.serverAttempts).map(q=>q.serverId);if(ids.length)foundationRequest('jobs/reorder',{ids}).catch(e=>{toast('服务端排序未确认：'+e.message,'error');void pollFoundationJobs()})}
 function foundationSettingsHTML(){return `<section class="settings-section"><h2>生产服务与素材</h2>${btn('全部服务端任务','list','foundation-jobs','','small')}${btn('素材索引 / 引用 / 安全清理','image','foundation-assets','','small')}<a class="btn small" href="/docs/guide/FOUNDATION.html" target="_blank" rel="noopener">基座与 API 教程 ↗</a></section>`}
 function installFoundation(){
+  if(installFoundation._installed)return;
+  installFoundation._installed=true;
   for(const action of ['queue-start-parallel','queue-release-held','queue-runtime-save','queue-policy-save','queue-retry','queue-stop-task','foundation-assets','foundation-cleanup','foundation-reconcile','foundation-jobs','foundation-job-control','foundation-job-detail'])v3Actions[action]=data=>foundationAction(action,data);
   document.addEventListener('input',event=>{if(event.target.closest('#queue-policy')&&$('#queue-policy-feedback'))$('#queue-policy-feedback').textContent=' 尚未保存'});
   document.addEventListener('change',event=>{if(event.target.id==='queue-policy-mode'){for(const id of ['queue-policy-exhausted','queue-policy-count','queue-policy-delay'])if($('#'+id))$('#'+id).disabled=event.target.value!=='retry';return}if(event.target.id!=='provider-extra-params')return;try{const value=JSON.parse(event.target.value||'{}');if(!value||Array.isArray(value)||typeof value!=='object')throw Error('请输入 JSON 对象');activeImageProfile().extraParams=value;save()}catch(e){toast('高级参数未保存：'+e.message,'error')}});
   setInterval(()=>void pollFoundationJobs(),1500);
-  globalThis.ComfyComic.foundation={request:foundationRequest,submitQueue:submitFoundationQueue,poll:pollFoundationJobs};
+  if(typeof runQueue!=='undefined'&&typeof runFoundationQueue==='function')runQueue=runFoundationQueue;
+  if(globalThis.ComfyComic)globalThis.ComfyComic.foundation={request:foundationRequest,submitQueue:submitFoundationQueue,poll:pollFoundationJobs};
 }
 
 function applyDeletedAlbums(ids=[]){
@@ -260,3 +264,4 @@ function storyboardScopeHTML(p,t,own){const q=liveStoryboardTask(p),selected=own
 function liveStoryboardPreview(p,f){try{const q=liveStoryboardTask(p),live=liveStoryboardFrame(p,f);if(!live)return quietResolvedPrompt(p,f);const index=q.frames.indexOf(live),entry=bookBy(q.bookId).sourceSnapshot.liveInputs?.[index];return esc(entry?.error||entry?.input?.prompt||foundationFrameInput(live,q.rowSnapshot,q.bookId,index).prompt)}catch(e){return esc(e.message)}}
 
 function queueChannelLabel(q){const channels=q.serverChannels;if(!channels?.length)return '读取已保存渠道…';return channels.map(c=>c.available?`${c.title||c.provider} / ${c.model||'工作流'}`:'渠道配置需处理').join(' · ')}
+if(typeof globalThis.ComfyComic!=='undefined'&&typeof installFoundation==='function')installFoundation();

@@ -780,7 +780,7 @@ const bindingSources={positive:'本幕正向提示词',negative:'负向提示词
 const bindingTypes={auto:'自动类型',text:'文本',number:'数字',boolean:'开关',json:'JSON'};
 
 
-const v3Core={ensureStudioState,render,renderShell,renderGallery,renderSettingsWorkspace,renderStoryStudio,handleAction,validateState,flushEditor,makeFrame,save,renderStatus,loadState,realFrame,generateFrame,enqueueBook,runQueue,openQuickStart,diagnostics,showWorkspaceWelcome,activeJobs,selectedPublishPackage,importRaw,openCommand,guideDestination,installGithubFile};
+const v3Core={ensureStudioState,render,renderShell,renderGallery,renderSettingsWorkspace,renderStoryStudio,handleAction,validateState,flushEditor,makeFrame,save,renderStatus,loadState,realFrame,generateFrame,enqueueBook,runQueue,dryRun,openQuickStart,diagnostics,showWorkspaceWelcome,activeJobs,selectedPublishPackage,importRaw,openCommand,guideDestination,installGithubFile};
 
 
 studioDefaults.visibility.logs=true;
@@ -837,15 +837,15 @@ flushEditor=function(){if($$('[data-v3-frame],[data-v3-template]').length)flushC
 interpolate=function(text,row={},frame={}){return scopeText(text,frame._scope||row._scope||row,false)};
 
 
-realFrame=executeMappedGPU;
+realFrame=typeof executeMappedGPU==='function'?executeMappedGPU:(globalThis.executeMappedGPU||v3Core.realFrame);
 
-generateFrame=generateMappedFrame;
+generateFrame=typeof generateMappedFrame==='function'?generateMappedFrame:(globalThis.generateMappedFrame||v3Core.generateFrame);
 
-enqueueBook=enqueueCompatibleBook;
+enqueueBook=typeof enqueueCompatibleBook==='function'?enqueueCompatibleBook:(globalThis.enqueueCompatibleBook||v3Core.enqueueBook);
 
-runQueue=runFoundationQueue;
+runQueue=typeof runFoundationQueue==='function'?runFoundationQueue:(globalThis.runFoundationQueue||v3Core.runQueue);
 
-dryRun=mappedDryRun;
+dryRun=typeof mappedDryRun==='function'?mappedDryRun:(globalThis.mappedDryRun||v3Core.dryRun);
 
 
 autoBindWorkflow=function(){const c=state.settings.comfy;for(const b of c.bindings||[])if(b.autoField&&['positive','negative'].includes(b.source)){const inf=inferTextInput(b.nodeId);b.path=inf.field;b.warning=inf.warning}c.outputNodeId||=Object.entries(c.workflow).find(([,n])=>/SaveImage|PreviewImage/.test(n.class_type))?.[0]||''};
@@ -1346,7 +1346,7 @@ installMarketPerformance();
 installPresentationStudio();
 
 installImageVariables();
-installFoundation();
+if(typeof installFoundation==='function')installFoundation();
 installImageStudio();
 installAfterglowTemplate();
 installSeamlessTemplate();

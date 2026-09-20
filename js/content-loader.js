@@ -20,7 +20,7 @@
       if(!readingCSS.ok)throw Error('缺少阅读器样式，请使用完整程序包。');
       if(!response.ok)throw Error((await response.json()).error||'HTTP '+response.status);
       globalThis.MioContent=await response.json();globalThis.MioContent.readingCSS=await readingCSS.text();
-      const script=document.createElement('script');script.src=source;script.onerror=()=>{started=false;script.remove();failure('无法加载应用程序。')};
+      const script=document.createElement('script');script.src=source;script.async=false;script.onerror=()=>{started=false;script.remove();failure('无法加载应用程序。')};
       started=true;document.body.append(script);
     }catch(e){failure(e.message)}finally{loading=false}
   }
