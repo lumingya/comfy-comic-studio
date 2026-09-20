@@ -32,7 +32,7 @@ function selectLibraryWorkflow(id){
   if(!p)throw Error('工作流不存在。');
   c.activeWorkflowId=id;c.workflow=clone(p.workflow);c.workflowTitle=p.title;c.mapping=clone(p.mapping||{});
   c.bindings=clone(p.bindings||initialWorkflowBindings({...c,...p}));c.outputNodeId=p.outputNodeId||'';c.randomizeSeeds=!!p.randomizeSeeds;
-  createUI.nodeSearch='';mapperUI.selected='';mapperUI.search='';mapperUI.filter='all';mapperUI.nodes=false;save();render();
+  createUI.nodeSearch='';mapperUI.selected='';mapperUI.search='';mapperUI.filter='all';mapperUI.nodes=false;mapperUI.sel.clear();mapperUI.selMode=false;save();render();
 }
 
 function parseLibraryWorkflow(data,title){
@@ -280,9 +280,38 @@ function installWorkspaceUpgrade(){
     if($('#queue-controls'))$('#queue-controls').innerHTML=queueControlsHTML();
   };
   const oldAction=handleAction;handleAction=async function(action,d={},el){
-    if((action==='v3-settings-tab'&&d.tab==='mapping')||action==='import-workflow'||action==='v3-import-workflow'||action==='v3-import-mapping'||action==='ws-import'){
-      if(action==='v3-settings-tab')return navigate(3);
-      const input=document.createElement('input');input.type='file';input.accept='.json,application/json';input.multiple=true;input.onchange=()=>importWorkflowFiles([...input.files]).catch(e=>toast(e.message,'error'));input.click();return;
+    if(action==='wf-focus-library'||(action==='v3-settings-tab'&&d.tab==='mapping'))return navigate(3);
+    if(action==='ws-import'||action==='ws-open-unified-import'){
+      openUnifiedWorkflowImportModal();
+      return;
+    }
+    if(action==='ws-do-unified-import'){
+      const files=window._pendingImportFiles?.()||[];
+      if(!files.length)return;
+      const mode=document.querySelector('input[name="wf-import-mode"]:checked')?.value||'new';
+      closeModal();
+      if(mode==='replace'){
+        const file=files[0];
+        try{
+          const c=state.settings.comfy;
+          const data=JSON.parse(await file.text());
+          const newWf=data.workflow||data.prompt||data;
+          if(Array.isArray(newWf.nodes))throw Error('这是 ComfyUI 编辑器格式，请导出 API 格式后导入。');
+          validateWorkflow(newWf);
+          // 校验合法后再自动备份下载当前映射包
+          download(safeFolderName(c.workflowTitle)+'.backup.mappings.json',JSON.stringify({kind:'comfycomic.workflow-mappings',formatVersion:1,title:c.workflowTitle,workflow:c.workflow,bindings:c.bindings,outputNodeId:c.outputNodeId,randomizeSeeds:c.randomizeSeeds},null,2));
+          c.workflow=clone(newWf);
+          // 保留 bindings 真实状态，失效项如实由健康条与待检查捕获
+          if(c.outputNodeId&&!c.workflow[c.outputNodeId])c.outputNodeId='';
+          storeActiveWorkflow();
+          save();render();
+          toast('已更新蓝图底层节点图，原有映射包已自动备份并下载。');
+        }catch(err){
+          toast('替换蓝图失败：'+err.message,'error');
+        }
+        return;
+      }
+      return importWorkflowFiles(files).catch(e=>toast(e.message,'error'));
     }
     if(action==='ws-select')return selectLibraryWorkflow(d.id);
     if(action==='ws-copy'){storeActiveWorkflow();const c=state.settings.comfy,p=clone(c.presets.find(x=>x.id===c.activeWorkflowId));p.id=uid('wf');p.title+=' · 副本';c.presets.push(p);return selectLibraryWorkflow(p.id)}
@@ -292,6 +321,127 @@ function installWorkspaceUpgrade(){
       if(state.creation.plans.some(p=>p.workflowId===id||Object.values(p.sceneOverrides||{}).some(o=>o.workflowId===id)))throw Error('有画册或分镜正在引用此工作流，请先更换选择。');
       if(!await confirmAction('删除这份工作流？','已入队的工作流快照不会删除。建议先导出备份。','删除'))return;
       c.presets=c.presets.filter(p=>p.id!==id);selectLibraryWorkflow(c.presets[0].id);save(true);return;
+    }
+    /* 工作流库批量选择 */
+    if(action==='ws-lib-sel-toggle'){
+      mapperUI.libSelMode=!mapperUI.libSelMode;
+      if(!mapperUI.libSelMode)mapperUI.libSel.clear();
+      render();return;
+    }
+    if(action==='ws-lib-pick'){
+      if(mapperUI.libSel.has(d.id))mapperUI.libSel.delete(d.id);
+      else mapperUI.libSel.add(d.id);
+      render();return;
+    }
+    if(action==='ws-lib-pick-all'){
+      const c=state.settings.comfy;
+      const q=String(mapperUI.libSearch||'').trim().toLowerCase();
+      const visiblePresets=c.presets.filter(p=>!q||(p.title||'').toLowerCase().includes(q));
+      const allPicked=visiblePresets.length>0&&visiblePresets.every(p=>mapperUI.libSel.has(p.id));
+      if(allPicked)visiblePresets.forEach(p=>mapperUI.libSel.delete(p.id));
+      else visiblePresets.forEach(p=>mapperUI.libSel.add(p.id));
+      render();return;
+    }
+    if(action==='ws-lib-delete-bulk'){
+      const c=state.settings.comfy;
+      if(!mapperUI.libSel.size)return;
+      storeActiveWorkflow();
+      const originalPresets=clone(c.presets),originalActive=c.activeWorkflowId;
+      let deleted=0,skipped=0;
+      const keep=[];
+      for(const p of c.presets){
+        if(mapperUI.libSel.has(p.id)){
+          const isReferenced=state.creation.plans.some(pl=>pl.workflowId===p.id||Object.values(pl.sceneOverrides||{}).some(o=>o.workflowId===p.id));
+          if(isReferenced){keep.push(p);skipped++}
+          else{deleted++}
+        }else{
+          keep.push(p);
+        }
+      }
+      if(!keep.length){toast('不能删除全部工作流，至少保留一份','error');return}
+      if(!deleted){toast('所选工作流均被画册或分镜引用，无法删除','error');return}
+      c.presets=keep;
+      if(!c.presets.some(p=>p.id===c.activeWorkflowId))selectLibraryWorkflow(c.presets[0].id);
+      mapperUI.libSel.clear();mapperUI.libSelMode=false;
+      save(true);render();
+      const msg=skipped?`已删除 ${deleted} 份工作流，跳过 ${skipped} 份被引用的工作流`:`已删除 ${deleted} 份工作流`;
+      undoToast(msg,()=>{
+        c.presets=originalPresets;
+        selectLibraryWorkflow(originalActive);
+        save(true);render();
+      });
+      return;
+    }
+    /* 映射表批量选择与操作 */
+    if(action==='wm-sel-toggle'){
+      mapperUI.selMode=!mapperUI.selMode;
+      if(!mapperUI.selMode)mapperUI.sel.clear();
+      render();return;
+    }
+    if(action==='wm-pick'){
+      if(mapperUI.sel.has(d.id))mapperUI.sel.delete(d.id);
+      else mapperUI.sel.add(d.id);
+      render();return;
+    }
+    if(action==='wm-pick-all'){
+      const c=state.settings.comfy,issues=mapperBindingIssues(),q=mapperUI.search.trim().toLowerCase();
+      const visibleBindings=c.bindings.filter((b)=>{
+        if(mapperUI.filter==='enabled'&&!b.enabled)return false;
+        if(mapperUI.filter==='disabled'&&b.enabled)return false;
+        if(mapperUI.filter==='issues'&&!issues.some((i)=>i.id===b.id))return false;
+        if(!q)return true;
+        return [b.label,b.nodeId,b.path,b.value,c.workflow[b.nodeId]?.class_type].join(' ').toLowerCase().includes(q);
+      });
+      const allPicked=visibleBindings.length>0&&visibleBindings.every(b=>mapperUI.sel.has(b.id));
+      if(allPicked)visibleBindings.forEach(b=>mapperUI.sel.delete(b.id));
+      else visibleBindings.forEach(b=>mapperUI.sel.add(b.id));
+      render();return;
+    }
+    if(action==='wm-pick-noncore'){
+      const c=state.settings.comfy;
+      mapperUI.sel.clear();
+      c.bindings.forEach(b=>{
+        if(!['positive','negative','caption'].includes(b.source))mapperUI.sel.add(b.id);
+      });
+      render();return;
+    }
+    if(action==='wm-pick-disabled'){
+      const c=state.settings.comfy;
+      mapperUI.sel.clear();
+      c.bindings.forEach(b=>{if(!b.enabled)mapperUI.sel.add(b.id)});
+      render();return;
+    }
+    if(action==='wm-delete-bulk'){
+      const c=state.settings.comfy;
+      if(!mapperUI.sel.size)return;
+      const count=mapperUI.sel.size;
+      const originalBindings=clone(c.bindings);
+      c.bindings=c.bindings.filter(b=>!mapperUI.sel.has(b.id));
+      mapperUI.sel.clear();mapperUI.selMode=false;
+      if(!c.bindings.some(b=>b.id===mapperUI.selected))mapperUI.selected=c.bindings[0]?.id||'';
+      save();render();
+      undoToast(`已删除 ${count} 项映射`,()=>{
+        c.bindings=originalBindings;
+        save();render();
+      });
+      return;
+    }
+    if(action==='wm-health-toggle'){
+      mapperUI.healthOpen=!mapperUI.healthOpen;
+      render();return;
+    }
+    if(action==='wm-select-output'){
+      mapperUI.selected='__output__';
+      render();return;
+    }
+    if(action==='v3-copy-binding'){
+      const c=state.settings.comfy,b=c.bindings.find(x=>x.id===d.id);
+      if(b){
+        const nb=clone(b);nb.id=uid('b');nb.label+=' 副本';nb.enabled=false;
+        c.bindings.push(nb);mapperUI.selected=nb.id;save();render();
+        toast('已复制映射副本');
+      }
+      return;
     }
     if(action==='ws-export-all'){storeActiveWorkflow();const blob=new Blob([JSON.stringify({version:1,workflows:state.settings.comfy.presets},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='工作流库.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return}
     if(action==='ws-delete-preset'||action==='v3-set-delete')return deleteSettingPreset(action==='v3-set-delete'?createUI.setId:settingPresetSelection());
@@ -306,6 +456,11 @@ function installWorkspaceUpgrade(){
   document.addEventListener('change',async event=>{const el=event.target;try{
     if(el.id==='art-setting-preset'){flushEditor();selectSettingPreset(el.value);render()}
     if(el.id==='ws-library-select')selectLibraryWorkflow(el.value);
+    if(el.id==='v3-output-node-select'){
+      state.settings.comfy.outputNodeId=el.value;
+      save();render();
+      toast('已更新结果图片输出节点');
+    }
     if(el.id==='ws-extensions'){state.settings.studio.visibility.extensions=el.checked;save();render()}
     if(el.id==='ws-plan-workflow'){selectedPlan().workflowId=el.value;save()}
     if(el.id==='ws-scene-preset'||el.id==='ws-scene-workflow'){
@@ -323,6 +478,18 @@ function installWorkspaceUpgrade(){
       syncBookSettingsInputs(q);save();toast('待执行分镜的工作流快照已更新。');
     }
   }catch(e){toast(e.message,'error')}});
+  document.addEventListener('input',event=>{
+    const el=event.target;
+    if(el.id==='ws-library-search-input'){
+      mapperUI.libSearch=el.value;
+      render();
+      const input=$('#ws-library-search-input');
+      if(input){
+        input.focus();
+        input.setSelectionRange(input.value.length,input.value.length);
+      }
+    }
+  });
 }
 
 function dataLayoutHTML(){

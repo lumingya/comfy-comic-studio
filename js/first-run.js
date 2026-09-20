@@ -28,7 +28,7 @@ function providerSetupIssues(p=activeImageProfile()){
 function providerSetupHTML(p=activeImageProfile()){
  if(p.provider!=='comfyui')return '';
  const check=firstRunUI.checks.get(state.settings.comfy.baseUrl)||'';
- return `<div class="provider-comfy-connect">${field('ComfyUI 服务地址',`<input id="setup-comfy-url" type="url" value="${esc(state.settings.comfy.baseUrl||'')}" placeholder="http://127.0.0.1:8188" spellcheck="false">`)}<div class="row wrap">${btn(firstRunUI.checking?'检查中…':'检查连接','refresh','first-run-check-comfy',firstRunUI.checking?'disabled':'','small')}${btn('导入 API 工作流','file-import','ws-import','','small')}</div><p id="setup-comfy-status" class="help" role="status">${esc(check)}</p></div>`;
+ return `<div class="provider-comfy-connect">${field('ComfyUI 服务地址',`<input id="setup-comfy-url" type="url" value="${esc(state.settings.comfy.baseUrl||'')}" placeholder="http://127.0.0.1:8188" spellcheck="false">`)}<div class="row wrap">${btn(firstRunUI.checking?'检查中…':'检查连接','refresh','first-run-check-comfy',firstRunUI.checking?'disabled':'','small')}${btn('去工作流库配置','arrow','wf-focus-library','','small ghost')}</div><p id="setup-comfy-status" class="help" role="status">${esc(check)}</p></div>`;
 }
 function providerSetupFooter(){return `<div class="provider-next">${btn('编写分镜','arrow','first-run-continue','','primary')}</div>`}
 function assemblyInputIssues(storyId,presetIds,channel){

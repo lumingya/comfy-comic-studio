@@ -1008,3 +1008,82 @@ function imageBindingPreviewHTML(frame,scope){
   return `<div class="image-binding-preview" aria-label="按提示词顺序发送的图片">${resolved.images.map(image=>`<div>${image.src?`<img src="${esc(image.src)}" alt="${esc(image.key)}" loading="lazy">`:'<span class="muted">未上传</span>'}<code>@image_${image.index}</code><small>{${esc(image.key)}}</small></div>`).join('')}</div>`;
 }
 
+/* =========================================================================
+ * 统一批量管理套件: 选择条与可撤销 Toast (Opus5 + Fable51)
+ * ========================================================================= */
+function selectionBarHTML(o) {
+  return `<div class="sel-bar" role="toolbar" aria-label="批量操作">
+    <span class="sel-count"><b>${o.count}</b> ${esc(o.unit)}已选</span>
+    ${btn(o.allPicked ? '取消全选' : '全选', '', o.allAct, '', 'small')}
+    ${(o.smart || []).map(s =>
+      btn(s.label, s.icon || 'filter', s.act, s.data || '', 'small')).join('')}
+    <span class="spacer"></span>
+    ${(o.extra || []).join('')}
+    ${btn('删除', 'trash', o.deleteAct, o.count ? '' : 'disabled', 'small danger')}
+    ${btn('完成', 'check', o.exitAct, '', 'small')}
+  </div>`;
+}
+
+let undoTimer = null;
+let undoSnapshot = null;
+
+function undoToast(message, snapshot, ms = 7000) {
+  clearTimeout(undoTimer);
+  if (typeof document !== 'undefined') {
+    document.querySelectorAll('.toast.undoable').forEach(e => e.remove());
+  }
+  undoSnapshot = snapshot;
+
+  const host = topDialog();
+  let region = $('#toasts');
+  if (!region) {
+    region = document.createElement('div');
+    region.id = 'toasts';
+    region.className = 'toast-region';
+    region.setAttribute('role', 'status');
+    region.setAttribute('aria-live', 'polite');
+  }
+  host.append(region);
+
+  const el = document.createElement('div');
+  el.className = 'toast undoable show';
+  el.innerHTML = `${icon('check', 'sm')}<span>${esc(message)}</span>
+    <button class="undo-btn" data-act="undo-bulk">撤销</button>
+    <i class="undo-bar"></i>`;
+  region.append(el);
+
+  undoTimer = setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 250);
+    if (undoSnapshot === snapshot) undoSnapshot = null;
+  }, ms);
+}
+
+function runUndo() {
+  clearTimeout(undoTimer);
+  if (typeof undoSnapshot === 'function') {
+    try {
+      undoSnapshot();
+      toast('已撤销操作');
+    } catch (e) {
+      toast('撤销失败：' + e.message, 'error');
+    }
+  }
+  undoSnapshot = null;
+  if (typeof document !== 'undefined') {
+    document.querySelectorAll('.toast.undoable').forEach(e => {
+      e.classList.remove('show');
+      setTimeout(() => e.remove(), 200);
+    });
+  }
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', e => {
+    if (e.target.closest('[data-act="undo-bulk"]')) {
+      e.preventDefault();
+      e.stopPropagation();
+      runUndo();
+    }
+  });
+}

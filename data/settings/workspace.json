@@ -326,7 +326,8 @@
     ],
     "comfyWorkflows": [
       "wf_3aa839c7-6c93-4f93-a0c3-9399e1242916",
-      "wf_cd634804-bc38-4e41-99a1-f787c2182db8"
+      "wf_cd634804-bc38-4e41-99a1-f787c2182db8",
+      "wf_a56d1f8e-14b9-4752-826b-d277d0094d47"
     ],
     "sessions": [
       "chat_letter",

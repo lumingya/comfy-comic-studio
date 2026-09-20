@@ -1,6 +1,80 @@
 /* Creative assets and production are separate domains. No generated book edits a source. */
 'use strict';
-const workshop={renderPending:false,onlyUncertain:false,taskPage:0,syncedAlbums:new Map(),openTasks:new Set(),view:'stories',storyId:null,presetId:null,frame:0,queue:{tasks:[],batch:[],paused:true,active:null},loading:false,requestId:null,etag:null,serverEpochMs:null,receivedAt:null};
+const workshop={renderPending:false,onlyUncertain:false,taskPage:0,syncedAlbums:new Map(),openTasks:new Set(),view:'stories',storyId:null,presetId:null,frame:0,queue:{tasks:[],batch:[],paused:true,active:null},loading:false,requestId:null,etag:null,serverEpochMs:null,receivedAt:null,selMode:false,pickedFrames:new Set(),frameSearch:''};
+
+const LOCKED_VIEWS = new Set();
+
+function applyViewportLock() {
+  document.documentElement.dataset.viewport = 'flow';
+}
+
+const RAIL_SEL = '.workshop-frames-list';
+
+function captureRailScroll() {
+  return document.querySelector(RAIL_SEL)?.scrollTop ?? null;
+}
+
+function restoreRailScroll(top) {
+  if (top == null) return;
+  const rail = document.querySelector(RAIL_SEL);
+  if (rail) rail.scrollTop = top;
+}
+
+function selectWorkshopFrame(index) {
+  const railTop = captureRailScroll();
+  workshop.frame = Number(index);
+  render();
+  restoreRailScroll(railTop);
+  const editor = document.querySelector('.workshop-editor');
+  if (editor) {
+    const rect = editor.getBoundingClientRect();
+    if (rect.top < 0) {
+      editor.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+  }
+  document
+    .querySelector(`.workshop-frames [data-index="${CSS.escape(String(index))}"]`)
+    ?.scrollIntoView({ block: 'nearest' });
+}
+
+function installWorkshopKeys() {
+  document.addEventListener('keydown', event => {
+    if (ui.workspace !== 1 || workshop.view !== 'stories') return;
+    if (document.querySelector('dialog[open]')) return;
+
+    const mod = event.metaKey || event.ctrlKey;
+    const story = workshopStory();
+    if (!story) return;
+
+    if (mod && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+      event.preventDefault();
+      const next = clamp(
+        workshop.frame + (event.key === 'ArrowDown' ? 1 : -1),
+        0,
+        story.frames.length - 1,
+      );
+      if (next !== workshop.frame) selectWorkshopFrame(next);
+      return;
+    }
+
+    if (mod && event.key === 'Enter') {
+      event.preventDefault();
+      save();
+      if (workshop.frame < story.frames.length - 1) {
+        selectWorkshopFrame(workshop.frame + 1);
+        document.querySelector('[data-workshop-frame="prompt"]')?.focus();
+      }
+      return;
+    }
+
+    if (event.key === 'Escape' && workshop.selMode) {
+      workshop.selMode = false;
+      workshop.pickedFrames.clear();
+      render();
+    }
+  });
+}
+
 async function productionRequest(route,body){if(body!==undefined)workshop.etag=null;const response=await request('/api/production/'+route,body===undefined?{}:post(body));const result=await response.json();if(!response.ok||result.error)throw Error(typeof result.error==='string'?result.error:'生产操作失败');if(body!==undefined)scheduleProductionPoll(1000);if(route==='assemble'||route==='assemble-batch')workshop.taskPage=Infinity;return result.data}
 /* B15: poll quickly while anything runs and right after every queue action, so cards never lag 15 s behind the server. */
 function scheduleProductionPoll(delay){clearTimeout(workshop.pollTimer);workshop.pollTimer=setTimeout(()=>workshop.poll?.(),delay)}
@@ -56,7 +130,8 @@ function workshopFrameParameterNotice(frame){
 function renderStoryWorkshop(){
  const stories=projectTemplates(),story=workshopStory();if(!story)return '<div class="eco-empty"><h3>给故事留一张白纸。</h3><p>新建分镜资产，或导入可复用的故事。</p>'+btn('导入分镜','file-import','workshop-import')+'</div>';
  workshop.storyId=story.id;workshop.frame=clamp(workshop.frame,0,Math.max(0,story.frames.length-1));const frame=story.frames[workshop.frame];
- return `<div class="workshop-asset-head"><label>当前分镜资产<select id="workshop-story-select">${stories.map(t=>opt(t.id,t.title,story.id)).join('')}</select></label><div>${btn('重命名','edit','workshop-rename')}${btn('导入','file-import','workshop-import')}${btn('导出分镜','file-export','workshop-export')}${btn('保存分镜','disk','workshop-save','','ghost')}${btn('去装配此分镜','arrow','first-run-assemble-story','','primary')}</div></div><details class="story-synopsis"><summary>故事梗概 / 起手模板（可选）</summary>${field('作品简介',`<textarea data-workshop-story="outline" class="workshop-outline" placeholder="可选：为作品补充一段简介。">${esc(story.outline||'')}</textarea>`)}<div class="field"><label class="label" for="workshop-base-prompt">起手模板</label>${promptEditorHTML({attrs:'id="workshop-base-prompt" data-workshop-story="basePrompt" class="workshop-base-prompt"',value:storyBasePrompt(story),placeholder:'可选：新分幕的起手提示词，例如 {character}, {outfit}, {style}, {scene}, ',context:'workshop'})}<p class="help">批量新增的分幕以它开头；单击「新增分幕」仍是空白分幕，可随时一键插入。</p></div></details><div class="workshop-editor"><nav class="workshop-frames" aria-label="分幕列表">${story.frames.map((f,i)=>`<button data-act="workshop-frame" data-index="${i}" class="${i===workshop.frame?'active':''}"><small>${pad(i+1)}</small><span>${esc(f.name||'未命名分幕')}</span></button>`).join('')}${btn('新增分幕','plus','workshop-add-frame','','small')}${btn('批量新增…','copy','workshop-add-frames','','small')}</nav><section class="workshop-page" data-editor-key="${esc(frame?.id||story.id)}">${frame?`<div class="workshop-page-title"><input data-workshop-frame="name" value="${esc(frame.name)}" aria-label="分幕名称">${ibtn('up','workshop-move-frame','分幕前移','data-dir="-1"')}${ibtn('down','workshop-move-frame','分幕后移','data-dir="1"')}${ibtn('copy','workshop-copy-frame','复制分幕')}${ibtn('trash','workshop-delete-frame','删除分幕')}</div><div class="negative-heading prompt-heading"><label for="workshop-frame-prompt">正向提示词</label>${!frame.prompt.trim()&&storyBasePrompt(story)?btn('插入起手模板','plus','workshop-apply-base','','small ghost'):''}</div>${promptEditorHTML({attrs:'id="workshop-frame-prompt" data-workshop-frame="prompt" class="workshop-prompt"',value:frame.prompt,placeholder:'描述画面、镜头与人物动作；使用 {变量} 引用装配时的视觉设定。',context:'workshop'})}<div class="negative-heading"><label>负向提示词</label>${btn('应用到所有分幕','copy','workshop-negative-all','','small ghost')}</div>${promptEditorHTML({attrs:'aria-label="负向提示词" data-workshop-frame="negative" class="workshop-negative"',value:frame.negative||'',placeholder:'排除不需要的内容，也可引用 {画风负向} 或 {角色负向}。',context:'workshop'})}${field('台词 / 旁白',promptEditorHTML({attrs:'aria-label="分镜台词" data-workshop-frame="caption" class="workshop-caption"',value:frame.caption||'',context:'workshop',className:'prose'}))}<details class="quiet-advanced"><summary>此幕画面参数</summary>${workshopFrameParameterNotice(frame)}<div class="grid2">${['width','height','steps','cfg','seed'].map(k=>field(({width:'宽度',height:'高度',steps:'步数',cfg:'CFG',seed:'随机种子'})[k],input(k,frame[k],'number',`data-workshop-frame="${k}"`))).join('')}</div></details>`:'<div class="eco-empty"><h3>从第一个镜头开始。</h3></div>'}</section></div>`;
+ const allPicked=story.frames.length>0&&story.frames.every((_,i)=>workshop.pickedFrames.has(i));
+ return `<div class="workshop-asset-head"><label>当前分镜资产<select id="workshop-story-select">${stories.map(t=>opt(t.id,t.title,story.id)).join('')}</select></label><div>${btn('重命名','edit','workshop-rename')}${btn('导入','file-import','workshop-import')}${btn('导出分镜','file-export','workshop-export')}${btn('保存分镜','disk','workshop-save','','ghost')}${btn('去装配此分镜','arrow','first-run-assemble-story','','primary')}</div></div><details class="story-synopsis"><summary>故事梗概 / 起手模板（可选）</summary>${field('作品简介',`<textarea data-workshop-story="outline" class="workshop-outline" placeholder="可选：为作品补充一段简介。">${esc(story.outline||'')}</textarea>`)}<div class="field"><label class="label" for="workshop-base-prompt">起手模板</label>${promptEditorHTML({attrs:'id="workshop-base-prompt" data-workshop-story="basePrompt" class="workshop-base-prompt"',value:storyBasePrompt(story),placeholder:'可选：新分幕的起手提示词，例如 {character}, {outfit}, {style}, {scene}, ',context:'workshop'})}<p class="help">批量新增的分幕以它开头；单击「新增分幕」仍是空白分幕，可随时一键插入。</p></div></details><div class="workshop-editor ${workshop.selMode?'is-selmode':''}"><nav class="workshop-frames" aria-label="分幕列表">${workshop.selMode?`<div class="workshop-frames-selbar">${selectionBarHTML({count:workshop.pickedFrames.size,unit:'幕',allPicked,allAct:'workshop-frame-pick-all',smart:[{label:'选空幕',act:'workshop-frame-pick-empty'}],deleteAct:'workshop-frame-delete-bulk',exitAct:'workshop-frame-sel-toggle'})}</div>`:''}<div class="workshop-frames-list">${story.frames.map((f,i)=>{const picked=workshop.pickedFrames.has(i);return `<button data-act="${workshop.selMode?'workshop-frame-pick':'workshop-frame'}" data-index="${i}" class="${i===workshop.frame&&!workshop.selMode?'active':''} ${picked?'is-picked':''}">${workshop.selMode?`<input type="checkbox" class="sel-cbox" ${picked?'checked':''} aria-label="选择此幕" tabindex="-1">`:''}<small>${pad(i+1)}</small><span>${esc(f.name||'未命名分幕')}</span></button>`}).join('')}</div><div class="workshop-frames-actions">${btn('新增分幕','plus','workshop-add-frame','','small')}${btn('批量新增…','copy','workshop-add-frames','','small')}${btn(workshop.selMode?'退出管理':'批量管理','check','workshop-frame-sel-toggle','',workshop.selMode?'small active':'small ghost')}</div></nav><section class="workshop-page" data-editor-key="${esc(frame?.id||story.id)}">${frame?`<div class="workshop-page-title"><input data-workshop-frame="name" value="${esc(frame.name)}" aria-label="分幕名称">${ibtn('up','workshop-move-frame','分幕前移','data-dir="-1"')}${ibtn('down','workshop-move-frame','分幕后移','data-dir="1"')}${ibtn('copy','workshop-copy-frame','复制分幕')}${ibtn('trash','workshop-delete-frame','删除分幕')}</div><div class="negative-heading prompt-heading"><label for="workshop-frame-prompt">正向提示词</label>${!frame.prompt.trim()&&storyBasePrompt(story)?btn('插入起手模板','plus','workshop-apply-base','','small ghost'):''}</div>${promptEditorHTML({attrs:'id="workshop-frame-prompt" data-workshop-frame="prompt" class="workshop-prompt"',value:frame.prompt,placeholder:'描述画面、镜头与人物动作；使用 {变量} 引用装配时的视觉设定。',context:'workshop'})}<div class="negative-heading"><label>负向提示词</label>${btn('应用到所有分幕','copy','workshop-negative-all','','small ghost')}</div>${promptEditorHTML({attrs:'aria-label="负向提示词" data-workshop-frame="negative" class="workshop-negative"',value:frame.negative||'',placeholder:'排除不需要的内容，也可引用 {画风负向} 或 {角色负向}。',context:'workshop'})}${field('台词 / 旁白',promptEditorHTML({attrs:'aria-label="分镜台词" data-workshop-frame="caption" class="workshop-caption"',value:frame.caption||'',context:'workshop',className:'prose'}))}<details class="quiet-advanced"><summary>此幕画面参数</summary>${workshopFrameParameterNotice(frame)}<div class="grid2">${['width','height','steps','cfg','seed'].map(k=>field(({width:'宽度',height:'高度',steps:'步数',cfg:'CFG',seed:'随机种子'})[k],input(k,frame[k],'number',`data-workshop-frame="${k}"`))).join('')}</div></details>`:'<div class="eco-empty"><h3>从第一个镜头开始。</h3></div>'}</section></div>`;
 }
 function renderPresetWorkshop(){
  const sets=projectVariableSets(),p=workshopPreset(),draft=workshopDraft();if(!p)return '<div class="eco-empty"><h3>建立你的视觉资产库。</h3><p>人物、画风、场景，可以分别保存为预设。</p>'+btn('导入预设','file-import','workshop-import')+'</div>';
@@ -104,7 +179,8 @@ async function startProduction(id,options={}){const local=productionIsLocal(work
 function installAssemblyWorkshop(){
  renderQuietCreation=renderAssemblyWorkshop;renderCreationWorkspace=renderAssemblyWorkshop;
  const priorShell=renderShell;renderShell=function(...args){priorShell(...args);const queue=$('.top-queue');if(queue){queue.dataset.act='workshop-open-production';queue.removeAttribute('data-tab');queue.querySelector('b').textContent=workshop.queue.tasks.filter(t=>!['complete','cancelled'].includes(t.status)).length}if(ui.workspace===1){const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent=({stories:'分镜工坊',presets:'预设工坊',production:'装配与生成'})[workshop.view]}};
- const previousRender=render;render=function(...args){const result=previousRender(...args);if(ui.workspace===1){const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent=({stories:'分镜工坊',presets:'预设工坊',production:'装配与生成'})[workshop.view]}return result};
+ const previousRender=render;render=function(...args){const result=previousRender(...args);applyViewportLock();if(ui.workspace===1){const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent=({stories:'分镜工坊',presets:'预设工坊',production:'装配与生成'})[workshop.view]}return result};
+ installWorkshopKeys();
   const previousAction=handleAction;const retired=new Set(['v3-generate-plan','v3-generate-selected','v3-run-queue','start-batch','enqueue','create-book']);
   handleAction=async function(action,d={},element){
     if(action==='resume'){
@@ -118,8 +194,6 @@ function installAssemblyWorkshop(){
       toast('这本画册没有可恢复的生产任务。请用原分镜重新装配，并核对缺帧范围后明确开始。');return;
     }
     if(action==='bulk-resume'){
-      // A loop of start requests is not a batch transaction: the first book
-      // could incur cost before the second is rejected as busy. Never do that.
       closeModal();ui.workspace=1;workshop.view='production';await refreshProduction();render();
       toast('已添加补齐任务。');return;
     }
@@ -146,23 +220,64 @@ function installAssemblyWorkshop(){
   'production-preview':d=>{const t=workshop.queue.tasks.find(t=>t.albumId===d.id);if(t?.pages[0]?.result?.image)modal('预设试绘',imgTag(t.pages[0].result.image,t.title,'style="width:100%;max-height:70vh;object-fit:contain"'),'独立试绘结果；没有创建或修改画册。',true)},
   'workshop-new':()=>textModal(workshop.view==='stories'?'新建分镜资产':'新建视觉预设','资产名称','',async title=>{if(!title.trim())throw Error('名称不能为空');const asset={id:uid(workshop.view==='stories'?'story':'preset'),projectId:state.activeProjectId,title:title.trim(),createdAt:Date.now()};if(workshop.view==='stories'){Object.assign(asset,{outline:'',frames:[{...makeFrame(0),name:'第一幕',prompt:'',negative:'',caption:''}]});state.templates.push(asset);workshop.storyId=asset.id;workshop.frame=0}else{Object.assign(asset,{entries:[],settingsGroups:[],bindings:[]});state.creation.variableSets.push(asset);workshop.presetId=asset.id}save();closeModal();render();if(!await savePythonWorkspace())throw Error('新资产保存未确认，请勿重复创建')}),
   'workshop-rename':()=>{const asset=workshop.view==='stories'?workshopStory():workshopPreset();textModal('重命名资产','资产名称',asset.title,async title=>{if(!title.trim())throw Error('名称不能为空');asset.title=title.trim();if(workshop.view==='presets')workshopDraft().title=asset.title;save();closeModal();await saveWorkshop();render()})},
-  'workshop-frame':d=>{workshop.frame=Number(d.index);render()},
-  'workshop-add-frame':()=>{const s=workshopStory();if(s.frames.length>=512)throw Error('最多 512 幕');s.frames.push({...makeFrame(s.frames.length),name:'第 '+(s.frames.length+1)+' 幕',prompt:'',negative:'',caption:''});workshop.frame=s.frames.length-1;save();render()},
+  'workshop-frame':d=>selectWorkshopFrame(d.index),
+  'workshop-frame-sel-toggle':()=>{workshop.selMode=!workshop.selMode;if(!workshop.selMode)workshop.pickedFrames.clear();render()},
+  'workshop-frame-pick':d=>{const i=Number(d.index);if(workshop.pickedFrames.has(i))workshop.pickedFrames.delete(i);else workshop.pickedFrames.add(i);render()},
+  'workshop-frame-pick-all':()=>{
+    const s=workshopStory();if(!s)return;
+    const q=String(workshop.frameSearch||'').trim().toLowerCase();
+    const visibleIndices=s.frames.map((f,i)=>({f,i})).filter(({f,i})=>!q||(f.name||'').toLowerCase().includes(q)||String(i+1).includes(q)).map(x=>x.i);
+    const allPicked=visibleIndices.length>0&&visibleIndices.every(i=>workshop.pickedFrames.has(i));
+    if(allPicked)visibleIndices.forEach(i=>workshop.pickedFrames.delete(i));
+    else visibleIndices.forEach(i=>workshop.pickedFrames.add(i));
+    render();
+  },
+  'workshop-frame-pick-empty':()=>{
+    const s=workshopStory();if(!s)return;
+    workshop.pickedFrames.clear();
+    s.frames.forEach((f,i)=>{
+      if(!String(f.prompt||'').trim()&&!String(f.caption||'').trim())workshop.pickedFrames.add(i);
+    });
+    render();
+  },
+  'workshop-frame-delete-bulk':async()=>{
+    const s=workshopStory();if(!s||!workshop.pickedFrames.size)return;
+    const sortedIndices=[...workshop.pickedFrames].filter(idx=>Number.isInteger(idx)&&idx>=0&&idx<s.frames.length).sort((a,b)=>a-b);
+    if(!sortedIndices.length)return;
+    const count=sortedIndices.length;
+    if(s.frames.length<=count)throw Error('不能删除所有分幕，至少保留一幕');
+    const deletedEntries=sortedIndices.map(idx=>({idx,frame:clone(s.frames[idx])}));
+    const originalFrameIndex=workshop.frame;
+    for(const idx of [...sortedIndices].reverse())s.frames.splice(idx,1);
+    workshop.pickedFrames.clear();workshop.selMode=false;
+    workshop.frame=clamp(workshop.frame,0,s.frames.length-1);
+    delete s.ownerPlanId;s.updatedAt=Date.now();
+    save();render();
+    undoToast(localeString('已删除 {n} 幕分镜',{n:count}),()=>{
+      for(const entry of deletedEntries){
+        s.frames.splice(Math.min(entry.idx,s.frames.length),0,entry.frame);
+      }
+      workshop.frame=originalFrameIndex;
+      delete s.ownerPlanId;s.updatedAt=Date.now();
+      save();render();
+    });
+  },
+  'workshop-add-frame':()=>{const s=workshopStory();if(s.frames.length>=512)throw Error('最多 512 幕');s.frames.push({...makeFrame(s.frames.length),name:'第 '+(s.frames.length+1)+' 幕',prompt:'',negative:'',caption:''});workshop.frame=s.frames.length-1;workshop.pickedFrames.clear();delete s.ownerPlanId;s.updatedAt=Date.now();save();render()},
   'workshop-add-frames':()=>batchFramesModal(),
   'workshop-add-frames-confirm':()=>{
    const story=workshopStory();if(!story)return;const remaining=512-story.frames.length,count=Math.floor(Number($('#batch-frames-count')?.value));
    if(!(count>=1))throw Error('请输入 1 以上的数量');if(count>remaining)throw Error(localeString('最多还可新增 {n} 幕。',{n:remaining}));
    const base=$('#batch-frames-base')?.value||'',frames=createFramesBatch({count,start:story.frames.length,namePattern:$('#batch-frames-pattern')?.value||'第 {n} 幕',basePrompt:base});
    story.frames.push(...frames);if($('#batch-frames-remember')?.checked){if(base)story.basePrompt=base;else delete story.basePrompt}
-   delete story.ownerPlanId;story.updatedAt=Date.now();workshop.frame=story.frames.length-frames.length;closeModal();save();render();toast(localeString('已新增 {n} 个分幕',{n:frames.length}));
+   delete story.ownerPlanId;story.updatedAt=Date.now();workshop.frame=story.frames.length-frames.length;workshop.pickedFrames.clear();closeModal();save();render();toast(localeString('已新增 {n} 个分幕',{n:frames.length}));
   },
   'workshop-apply-base':()=>{
    const story=workshopStory(),frame=story?.frames[workshop.frame],base=storyBasePrompt(story);if(!frame||!base||frame.prompt.trim())return;
    frame.prompt=base;delete story.ownerPlanId;story.updatedAt=Date.now();save();render();const editor=$('[data-workshop-frame="prompt"]');if(editor){editor.focus();editor.setSelectionRange(editor.value.length,editor.value.length)}
   },
-  'workshop-copy-frame':()=>{const s=workshopStory(),sourceFrame=s.frames[workshop.frame],f=clone(sourceFrame);f.id=uid('frame');s.frames.splice(workshop.frame+1,0,f);workshop.frame++;for(const r of state.rows){for(const versions of Object.values(r.storyVersions||{})){for(const v of versions){if(v.captions&&sourceFrame?.id&&sourceFrame.id in v.captions)v.captions[f.id]=v.captions[sourceFrame.id]}}}save();render()},
-  'workshop-delete-frame':async()=>{if(await confirmAction('删除此幕？','只修改分镜资产，不影响已装配的任务。','删除')){workshopStory().frames.splice(workshop.frame,1);save();render()}},
-  'workshop-move-frame':d=>{const frames=workshopStory().frames,j=workshop.frame+Number(d.dir);if(j<0||j>=frames.length)return;[frames[j],frames[workshop.frame]]=[frames[workshop.frame],frames[j]];workshop.frame=j;save();render()},
+  'workshop-copy-frame':()=>{const s=workshopStory(),sourceFrame=s.frames[workshop.frame],f=clone(sourceFrame);f.id=uid('frame');s.frames.splice(workshop.frame+1,0,f);workshop.frame++;workshop.pickedFrames.clear();for(const r of state.rows){for(const versions of Object.values(r.storyVersions||{})){for(const v of versions){if(v.captions&&sourceFrame?.id&&sourceFrame.id in v.captions)v.captions[f.id]=v.captions[sourceFrame.id]}}}save();render()},
+  'workshop-delete-frame':async()=>{if(await confirmAction('删除此幕？','只修改分镜资产，不影响已装配的任务。','删除')){workshopStory().frames.splice(workshop.frame,1);workshop.pickedFrames.clear();save();render()}},
+  'workshop-move-frame':d=>{const frames=workshopStory().frames,j=workshop.frame+Number(d.dir);if(j<0||j>=frames.length)return;[frames[j],frames[workshop.frame]]=[frames[workshop.frame],frames[j]];workshop.frame=j;workshop.pickedFrames.clear();save();render()},
   'workshop-import':()=>pickFile('.json,.zip',importWorkshop),
   'workshop-export':async()=>{await saveWorkshop();const document=workshop.view==='stories'?clone(workshopStory()):{...clone(workshopPreset()),entries:clone(mergedSettingEntries(workshopDraft()))};const response=await request('/api/library/export-document',post({kind:workshop.view==='stories'?'storyboards':document.category==='scenes'?'scenes':'characters',document}));download(document.title+'.mio.zip',await response.blob(),'application/zip')},
   'assembly-new':showAssemblyDialog,
@@ -181,7 +296,7 @@ function installAssemblyWorkshop(){
  });
  document.addEventListener('toggle',e=>{if(e.target.matches('[data-task-details]')){if(e.target.open)workshop.openTasks.add(e.target.dataset.taskDetails);else workshop.openTasks.delete(e.target.dataset.taskDetails)}},true);
  document.addEventListener('input',e=>{const el=e.target;if(el.dataset.workshopFrame){const s=workshopStory(),f=s?.frames[workshop.frame];if(f){f[el.dataset.workshopFrame]=el.type==='checkbox'?el.checked:el.type==='number'?Number(el.value):el.value;delete s.ownerPlanId;s.updatedAt=Date.now();save();if(el.type==='checkbox')render()}}if(el.dataset.workshopStory){workshopStory()[el.dataset.workshopStory]=el.value;save()}if(el.dataset.workshopPreset){const d=workshopDraft();if(el.dataset.workshopPreset==='bindings'){try{const value=JSON.parse(el.value);if(!Array.isArray(value))throw Error();d.bindings=value;el.setCustomValidity('')}catch{el.setCustomValidity('请输入绑定数组 JSON');return}}else d[el.dataset.workshopPreset]=el.value;d.dirty=true;save()}});
- document.addEventListener('change',e=>{if(e.target.id==='workshop-story-select'){workshop.storyId=e.target.value;workshop.frame=0;render()}if(e.target.id==='workshop-preset-select'){workshop.presetId=e.target.value;render()}});
+ document.addEventListener('change',e=>{if(e.target.id==='workshop-story-select'){workshop.storyId=e.target.value;workshop.frame=0;workshop.pickedFrames.clear();workshop.selMode=false;render()}if(e.target.id==='workshop-preset-select'){workshop.presetId=e.target.value;render()}});
  async function poll(){try{if(!document.hidden&&(ui.workspace===0||ui.workspace===1))await refreshProduction()}catch(e){workshop.queue.fault=e.message}finally{clearTimeout(workshop.pollTimer);workshop.pollTimer=setTimeout(poll,workshop.queue.active||workshop.queue.batch.length?2000:15000)}}
  workshop.poll=poll;
  document.addEventListener('visibilitychange',()=>{if(!document.hidden){clearTimeout(workshop.pollTimer);void poll()}});
