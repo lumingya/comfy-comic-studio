@@ -1092,7 +1092,9 @@
     "storyBasePrompt": "writable",
     "suggestStoryBasePrompt": "writable",
     "createFramesBatch": "writable",
-    "batchFramesModal": "writable"
+    "batchFramesModal": "writable",
+    "renderWorkflowPageHeading": "writable",
+    "selectionBarHTML": "writable"
   },
   "parserOptions": {
     "ecmaVersion": 2021,

@@ -1362,7 +1362,7 @@ installAssemblyWorkshop();
 installArchitecture();
 installFirstRun();
 installHome();
-installWorkflowWorkbench();
+if (typeof installWorkflowWorkbench === 'function') installWorkflowWorkbench();
 installPlatformUI();
 
 globalThis.Mio = globalThis.ComfyComic;
