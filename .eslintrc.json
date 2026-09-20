@@ -1088,7 +1088,11 @@
     "openPromptCompletion": "writable",
     "acceptPromptCompletion": "writable",
     "movePromptCompletion": "writable",
-    "attachPromptCompletion": "writable"
+    "attachPromptCompletion": "writable",
+    "storyBasePrompt": "writable",
+    "suggestStoryBasePrompt": "writable",
+    "createFramesBatch": "writable",
+    "batchFramesModal": "writable"
   },
   "parserOptions": {
     "ecmaVersion": 2021,

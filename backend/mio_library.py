@@ -193,7 +193,7 @@ def share_document(kind, doc):
               'synopsis', 'characterName', 'steps', 'totalSteps', 'generatedSteps',
               'pictureEdits', 'variables', 'html', 'options', 'assets', 'layout',
               'runtimeScript', 'scriptEnabled', 'enhancement', 'version', 'workflow',
-              'bindings', 'outputNodeId', 'sharedSources', 'settingsGroups'}
+              'bindings', 'outputNodeId', 'sharedSources', 'settingsGroups', 'basePrompt'}
     result = scrub({k: copy.deepcopy(v) for k, v in doc.items() if k in fields})
     if kind == 'albums':
         result.pop('variables', None)

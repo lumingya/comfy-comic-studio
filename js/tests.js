@@ -13,8 +13,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 
-const context = vm.createContext({ console, setTimeout, clearTimeout, structuredClone, clone:x=>JSON.parse(JSON.stringify(x)), MioContent:{demoSpec:JSON.parse(fs.readFileSync(path.join(__dirname,'../data/catalog/demo-spec.json'),'utf8'))} });
-for (const file of ['state.js', 'sync.js', 'workflow-mapping.js', 'engine.js', 'ui-presentation.js', 'ui-reader.js', 'ui-templates.js', 'ui-export.js', 'ui-editors.js', 'ui-locale.js', 'ui-assistant.js', 'ui-storyboard.js', 'ui-gallery.js', 'ui-settings.js', 'ui.js']) {
+const context = vm.createContext({ console, setTimeout, clearTimeout, structuredClone, clone:x=>JSON.parse(JSON.stringify(x)), uid:prefix=>prefix+'_'+Math.random().toString(36).slice(2,10), projectTemplates:()=>[], projectVariableSets:()=>[], MioContent:{demoSpec:JSON.parse(fs.readFileSync(path.join(__dirname,'../data/catalog/demo-spec.json'),'utf8'))} });
+for (const file of ['state.js', 'sync.js', 'workflow-mapping.js', 'engine.js', 'ui-presentation.js', 'ui-reader.js', 'ui-templates.js', 'ui-export.js', 'ui-editors.js', 'ui-locale.js', 'ui-assistant.js', 'ui-storyboard.js', 'ui-gallery.js', 'ui-settings.js', 'ui.js', 'assembly-workshop.js']) {
   const source = fs.readFileSync(path.join(__dirname, file), 'utf8');
   new vm.Script(source, { filename: file }).runInContext(context);
 }
@@ -874,6 +874,57 @@ add('applyCompletion replaces the open token with {key}, reuses an existing clos
   assert.equal(context.applyCompletion(t, context.completionQueryAt(t.value, 4), 'character'), '{character} end', 'no doubled closing brace');
   t = fake('{', 1);
   assert.equal(context.applyCompletion(t, context.completionQueryAt(t.value, 1), 'weapon'), '{weapon}');
+});
+
+add('createFramesBatch builds N blank-or-templated frames with unique ids and numbered names', () => {
+  const template = index => ({ width: 1024, height: 1536, steps: 28, cfg: 5, seed: index, renderOverride: false, nodeOverrides: {} });
+  const frames = context.createFramesBatch({ count: 3, start: 12, namePattern: '第 {n} 幕', basePrompt: '{character}, {outfit}, ', template });
+  assert.equal(frames.length, 3);
+  assert.deepEqual(Array.from(frames.map(f => f.name)), ['第 13 幕', '第 14 幕', '第 15 幕']);
+  assert.ok(frames.every(f => f.prompt === '{character}, {outfit}, ' && f.negative === '' && f.caption === '' && f.renderOverride === false && typeof f.nodeOverrides === 'object'), 'frames keep the storyboard frame shape');
+  assert.equal(new Set(frames.map(f => f.id)).size, 3, 'ids are unique');
+  assert.equal(context.createFramesBatch({ count: 2, template })[0].prompt, '', 'without a template the frames are blank');
+  assert.equal(context.createFramesBatch({ count: 0, template }).length, 0);
+  assert.equal(context.createFramesBatch({ count: 999, template }).length, 512, 'never more than the storyboard limit');
+  assert.equal(context.createFramesBatch({ count: 1, namePattern: 'Scene {n}', template })[0].name, 'Scene 1');
+});
+
+add('suggestStoryBasePrompt returns the comma segments every scene starts with, or nothing', () => {
+  const story = { frames: [
+    { prompt: '{character}, {outfit}, {style}, {scene}, quiet morning' },
+    { prompt: '{character}, {outfit}, {style}, {scene}, a letter on the desk' },
+    { prompt: '{character}, {outfit}, {style}, {scene}, storm clouds' }
+  ] };
+  assert.equal(context.suggestStoryBasePrompt(story), '{character}, {outfit}, {style}, {scene}, ');
+  assert.equal(context.suggestStoryBasePrompt({ frames: [{ prompt: 'a, b' }, { prompt: 'c, d' }] }), '', 'no shared opening');
+  assert.equal(context.suggestStoryBasePrompt({ frames: [{ prompt: 'a, b, c' }] }), '', 'one scene is not a pattern');
+  assert.equal(context.suggestStoryBasePrompt({ frames: [{ prompt: 'a, b, c' }, { prompt: '' }, { prompt: 'a, bc' }] }), 'a, ', 'blank scenes are ignored, partial segments do not match');
+  assert.equal(context.storyBasePrompt({}), '', 'older stories have no template');
+  assert.equal(context.storyBasePrompt({ basePrompt: '{x}, ' }), '{x}, ');
+});
+
+add('workshopPromptContext unions the collection presets, keeps per-key sources in order and counts story usage', () => {
+  const previous = context.projectVariableSets;
+  context.projectVariableSets = () => [
+    { id: 'a', title: '七海', category: 'characters', entries: [{ key: 'character', type: 'text', value: 'nanami' }, { key: 'weapon', type: 'text', value: '' }, { key: 'portrait', type: 'image', value: {} }] },
+    { id: 'b', title: '雨夜', category: 'scenes', entries: [{ key: 'character', type: 'text', value: 'rain' }, { key: 'weather', type: 'text', value: 'rain' }, { key: 'mood', type: 'text', value: '', compute: { kind: 'llm' } }] }
+  ];
+  try {
+    const ctx = context.workshopPromptContext({ frames: [{ prompt: '{character} {mystery}', negative: '{weapon}', caption: '{character}' }] });
+    assert.deepEqual(Array.from(ctx.definitions).sort(), ['character', 'mood', 'portrait', 'weapon', 'weather']);
+    assert.deepEqual(Array.from(ctx.emptyKeys).sort(), ['portrait', 'weapon'], 'computed entries count as set; images without a source are empty');
+    assert.deepEqual(Array.from(ctx.sources.get('character').map(item => item.title)), ['七海', '雨夜'], 'sources keep collection order');
+    assert.deepEqual([ctx.used.get('character'), ctx.used.get('mystery'), ctx.used.get('weapon')], [2, 1, 1]);
+    assert.equal(ctx.kind, 'workshop');
+  } finally { context.projectVariableSets = previous; }
+});
+
+add('the workshop offers batch creation and the opening template without changing the single-click blank scene', () => {
+  const source = fs.readFileSync(path.join(__dirname, 'assembly-workshop.js'), 'utf8');
+  assert.ok(source.includes("'workshop-add-frame':()=>{const s=workshopStory();if(s.frames.length>=512)throw Error('最多 512 幕');s.frames.push({...makeFrame(s.frames.length),name:'第 '+(s.frames.length+1)+' 幕',prompt:'',negative:'',caption:''})"), 'single add stays blank');
+  for (const action of ['workshop-add-frames', 'workshop-add-frames-confirm', 'workshop-apply-base']) assert.ok(source.includes("'" + action + "':"), action + ' is registered');
+  assert.ok(source.includes('data-workshop-story="basePrompt"'), 'the template is edited on the story and saved through the existing story input path');
+  assert.ok(source.includes("btn('插入起手模板','plus','workshop-apply-base'"), 'blank scenes offer a one-click insert');
 });
 
 async function main() {

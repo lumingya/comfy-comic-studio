@@ -178,7 +178,16 @@ Object.assign(catalog.messages,{
   /* Variable completion listbox */
   '变量补全':'Variable completion','未定义':'Undefined','值为空':'Empty value','图片':'Image','本故事已使用 {n} 次':'used {n} times in this story','{n} 个预设':'{n} presets',
   '{n} 个预设都定义了它：{names}。装配时后加入的预设覆盖先加入的。':'{n} presets define it: {names}. The preset added later to the assembly wins.',
-  '↑↓ 选择 · Enter / Tab 补全 · Esc 关闭':'↑↓ choose · Enter / Tab completes · Esc closes'
+  '↑↓ 选择 · Enter / Tab 补全 · Esc 关闭':'↑↓ choose · Enter / Tab completes · Esc closes',
+  /* Story opening template and batch frames */
+  '故事梗概 / 起手模板（可选）':'Synopsis / opening template (optional)','起手模板':'Opening template','起手模板（可选）':'Opening template (optional)','批量新增…':'Add several…','批量新增分幕':'Add several scenes',
+  '数量':'Count','命名（{n} 为序号）':'Naming ({n} = number)','已按现有分幕的共同开头预填。':'Prefilled with the opening the existing scenes share. ',
+  '每个新分幕的正向提示词都以它开头；留空则新建空白分幕。':'Every new scene starts its positive prompt with it; leave empty to add blank scenes.',
+  '保存为本故事的起手模板，之后空白分幕可一键插入':'Save as this story’s opening template so blank scenes can insert it with one click',
+  '最多还可新增 {n} 幕。':'Up to {n} more scenes can be added.','插入起手模板':'Insert opening template','已新增 {n} 个分幕':'{n} scenes added','请输入 1 以上的数量':'Enter a count of 1 or more',
+  '批量新增的分幕以它开头；单击「新增分幕」仍是空白分幕，可随时一键插入。':'Scenes added in a batch start with it; a single “Add scene” still creates a blank scene, and the template can be inserted any time.',
+  '可选：新分幕的起手提示词，例如 {character}, {outfit}, {style}, {scene}, ':'Optional: the opening prompt for new scenes, e.g. {character}, {outfit}, {style}, {scene}, ',
+  '例如 {character}, {outfit}, {style}, {scene}, ':'e.g. {character}, {outfit}, {style}, {scene}, '
 });
 return extendCurrentLocaleCatalog(catalog)}
 
