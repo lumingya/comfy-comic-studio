@@ -8,7 +8,7 @@
       "id": "letter_frame_0",
       "name": "风起的日常",
       "camera": "Full Shot",
-      "prompt": "{character}, {outfit}, {style}, {scene}, {weapon}, a quiet seaside town, distant train tracks, calm summer morning {",
+      "prompt": "{character}, {outfit}, {style}, {scene}, {weapon}, a quiet seaside town, distant train tracks, calm summer morning ",
       "caption": "夏日的风经过窗边，故事还没有名字。",
       "negative": "",
       "width": 768,
@@ -211,7 +211,7 @@
   ],
   "characterIdentityVersion": 1,
   "createdAt": 1789289075315,
-  "updatedAt": 1789890507628,
+  "updatedAt": 1789891724383,
   "_sourceFormat": {
     "replaced": {},
     "added": []
