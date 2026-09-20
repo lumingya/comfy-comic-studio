@@ -6,9 +6,9 @@
 
 公共入口为 `/api/v1`，与浏览器私有 `/api/config`、`/api/image/generate` 分离。目标是让脚本、桌面工具和未来适配器通过稳定 DTO 接入，而不依赖整个内部状态树。
 
-当前能力：服务健康、能力发现、渠道标识、分镜与计划资源、画册元数据、持久图像任务、素材管理，以及旧同步单图生成兼容接口。
+当前能力：服务健康、能力发现、渠道标识、分镜与计划资源、画册元数据、持久图像任务、素材管理，以及同步单图生成接口。
 
-新增服务端 `/jobs`：外部 ComfyUI/云渠道任务、整册异步执行、幂等提交、控制、SSE 事件；另有素材上传/索引/回收和版本校验的分镜/计划写入。完整端点与限制见 [生产基座教程](../guide/FOUNDATION.md)。不提供 Webhook、多租户权限隔离或任意内部状态覆写。
+服务端 `/jobs` 提供外部 ComfyUI/云渠道任务、整册异步执行、幂等提交、控制、SSE 事件；另有素材上传/索引/回收和版本校验的分镜/计划写入。完整端点与限制见 [生产基座教程](../guide/FOUNDATION.md)。不提供 Webhook、多租户权限隔离或任意内部状态覆写。
 
 ## 2. 启用与鉴权
 
@@ -171,7 +171,7 @@ NovelAI 示例：
 
 ## 持久任务、素材与资源写入
 
-新增接口及状态机见 [生产基座教程](../guide/FOUNDATION.md)，对应路径已纳入 [OpenAPI](openapi.json)。新客户端优先完成“上传素材 → 幂等提交任务 → 查询/订阅状态 → 读取 artifacts”，不把同步 HTTP 等待当作可靠队列。示例：[jobs_client.py](../../examples/jobs_client.py)。
+接口及状态机见 [生产基座教程](../guide/FOUNDATION.md)，对应路径见 [OpenAPI](openapi.json)。客户端优先完成“上传素材 → 幂等提交任务 → 查询/订阅状态 → 读取 artifacts”，不把同步 HTTP 等待当作可靠队列。示例：[jobs_client.py](../../examples/jobs_client.py)。
 
 ### 任务列表与详情
 
@@ -179,7 +179,7 @@ NovelAI 示例：
 
 ### 失败策略与人工重试
 
-`POST /api/v1/jobs/scheduler` 支持 `{"action":"policy","policy":{"mode":"retry","maxRetries":2,"delaySeconds":15,"onExhausted":"pause"}}`。默认 `mode=continue` / `onExhausted=continue`；可选 pause/retry。配置在服务端共享，但仅影响发生错误的任务；pause 不暂停其他任务。默认保留失败/未知幕并继续同任务其他幕，未知幕本身永不自动重发。有限重试需明确授权，可能再次计费；仅适用 HTTP 429/502/503/504，明确内容拒绝除外。`POST jobs/{id}` 的 `retry` 只允许 failed，也要求 recovery 中最新 expectedCursor/expectedUpdated，保留已有结果和原输入，不自动解除全局暂停；客户端需另行确认 resume。详情新增 retry_count/ready_at/attempts/errors。完整语义见 [队列操作说明](../QUEUE_AND_COLLECTION_UPDATE.md)。
+`POST /api/v1/jobs/scheduler` 支持 `{"action":"policy","policy":{"mode":"retry","maxRetries":2,"delaySeconds":15,"onExhausted":"pause"}}`。默认 `mode=continue` / `onExhausted=continue`；可选 pause/retry。配置在服务端共享，但仅影响发生错误的任务；pause 不暂停其他任务。默认保留失败/未知幕并继续同任务其他幕，未知幕本身永不自动重发。有限重试需明确授权，可能再次计费；仅适用 HTTP 429/502/503/504，明确内容拒绝除外。`POST jobs/{id}` 的 `retry` 只允许 failed，也要求 recovery 中最新 expectedCursor/expectedUpdated，保留已有结果和原输入，不自动解除全局暂停；客户端需另行确认 resume。详情包含 retry_count/ready_at/attempts/errors。完整语义见 [队列操作说明](../QUEUE_AND_COLLECTION_UPDATE.md)。
 
 
 ### 任务并发、超时与原任务恢复

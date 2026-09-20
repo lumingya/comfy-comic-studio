@@ -2,26 +2,26 @@
 
 [教程中心](README.md)
 
-## 第二轮主动排查（2026-09-18）
+## 主动排查回归
 
-`test:current` 追加 `test:audit-round2`，Python 自动发现 `test_audit_round2.py`。第二轮覆盖重复 key/200 次确定性 DOM 变换、弹窗延后刷新、画册补齐确认、批量补齐不部分启动、传输结果未确认、关闭后句柄、Host 与畸形 CSRF 边界。
+`test:current` 包含 `test:audit-round2`，Python 自动发现 `test_audit_round2.py`，覆盖重复 key/200 次确定性 DOM 变换、弹窗延后刷新、画册补齐确认、批量补齐不部分启动、传输结果未确认、关闭后句柄、Host 与畸形 CSRF 边界。
 
-- 新增 Host 白名单：默认 localhost / 127.0.0.1 / ::1 与实际绑定地址。使用自定义域名、反向代理或 `0.0.0.0` 下的局域网 IP 时，通过 `MIO_ORIGINS` 指定完整可信 origin，例如 `https://studio.example`。不要信任任意 Host、不要用通配域名代替显式入口。跨站能力令牌不等于公网身份认证。
-- 画册“补齐”复用任务卡的费用确认与未确认结果额外确认。没有关联任务时转到装配队列，不再回落到旧执行器。
-- 旧“批量补齐”不是原子批次，会出现第一本已开始而第二本报错。现改为转入任务卡逐本确认，**不再承诺该入口一键批量执行**；也不会以顺次启动所有队列任务代替所选范围。
-- 传输超时、断连、截断与上游已有 ID 但结果不可读，进入 page.state=uncertain，禁止无额外同意重发。明确的 ExecutionError 仍是 failed；保存结果后的发布错误保留无付费恢复路径。
+- Host 白名单：默认 localhost / 127.0.0.1 / ::1 与实际绑定地址。使用自定义域名、反向代理或 `0.0.0.0` 下的局域网 IP 时，通过 `MIO_ORIGINS` 指定完整可信 origin，例如 `https://studio.example`。不要信任任意 Host、不要用通配域名代替显式入口。跨站能力令牌不等于公网身份认证。
+- 画册“补齐”复用任务卡的费用确认与未确认结果额外确认。没有关联任务时转到装配队列，不回落到其他执行器。
+- “批量补齐”转入任务卡逐本确认，不是原子批次，**该入口不承诺一键批量执行**；也不会以顺次启动所有队列任务代替所选范围。
+- 传输超时、断连、截断与上游已有 ID 但结果不可读，进入 page.state=uncertain，禁止无额外同意重发。明确的 ExecutionError 是 failed；保存结果后的发布错误保留无付费恢复路径。
 
-## 2026-09-18 审计修复后的验收入口
+## 验收入口与合并门禁
 
-以 `npm test` / `npm run test:current` 为当前受维护的合并门禁：lint → 56 项前端契约 → Python unittest → assembly / architecture / reading-stage / presentation / pictures / review → 桌面 smoke → 手机 Chromium 回归。清单校验另运行 `npm run test:distribution`。Linux CI 执行这套门禁并校验源码 ZIP；Windows launcher CI 独立保留。
+`npm test` / `npm run test:current` 是受维护的合并门禁：lint → 56 项前端契约 → Python unittest → assembly / architecture / reading-stage / presentation / pictures / review → 桌面 smoke → 手机 Chromium 回归。清单校验另运行 `npm run test:distribution`。Linux CI 执行这套门禁并校验源码 ZIP；Windows launcher CI 独立保留。
 
 - `tests/audit_browser.mjs` 驱动目前的画册集、创作工坊、可选功能与设置；使用空的隔离数据目录，拦截外部浏览器网络，不调用付费模型。覆盖 DOM 类型、注释、焦点/IME、插入与重排、HTTP 存储边界、CSRF、304、服务器时钟、字体隐私、核对清单下载和启动恢复。
-- 原 smoke/mobile 脚本保存在 `tests/legacy_smoke.mjs`、`tests/legacy_mobile.mjs`，仍包含旧编辑器/队列的功能案例，但其选择器不代表当前工坊，**不计入本轮通过数**。其余历史专项入口也不因本次默认门禁通过而自动视为通过；`test:legacy` 保留旧的广泛串行入口供逐项迁移。
-- review 仍执行真实 ZIP/PDF 下载与图片/图层/编辑回归；并非仅用 DOM 存在性替换所有旧覆盖。模型选择器、历史队列策略、真机系统键盘/相册等仍需对应专项迁移或人工验收。
-- WebKit 可选入口保留，须单独安装该浏览器；本轮 Linux Chromium 通过不代表 WebKit 或真实 iOS/Android 验收。
-- 当前主队列实现是 `backend/production/{queue,store,api}.py`，UI 是 `js/assembly-workshop.js`；下文部分 foundation/task-pool 段落记录的是仍保留的兼容子系统，不应误认为同一套状态机。
+- `tests/legacy_smoke.mjs`、`tests/legacy_mobile.mjs` 中的功能案例，其选择器不代表当前工坊，**不计入 `test:current` 的通过数**。其他专项入口也不因默认门禁通过而自动视为通过；`test:legacy` 是广泛的串行入口，供逐项迁移到当前门禁。
+- review 执行真实 ZIP/PDF 下载与图片/图层/编辑回归，不只检查 DOM 存在性。模型选择器、历史队列策略、真机系统键盘/相册等需要对应的专项入口或人工验收。
+- WebKit 是可选入口，须单独安装该浏览器；Linux Chromium 通过不代表 WebKit 或真实 iOS/Android 验收。
+- 主队列实现是 `backend/production/{queue,store,api}.py`，UI 是 `js/assembly-workshop.js`；下文的 foundation/task-pool 段落描述的是独立的兼容子系统，不应误认为同一套状态机。
 
-安全约定：默认只绑定回环地址；私有浏览器 API（包括读取）要求服务首页注入的进程级能力令牌。`Origin: null` 无条件拒绝。此机制防跨站浏览器访问，**不是公网身份认证**：无浏览器来源头的 CLI 仍兼容，`/api/v1` 维持独立 bearer 规则。不要直接公开本地服务。文件 HTTP 模式不会导入/写回旧浏览器工程快照。重启后未确认的付费结果必须核对并再次明确确认，不会自动重发。
+安全约定：默认只绑定回环地址；私有浏览器 API（包括读取）要求服务首页注入的进程级能力令牌。`Origin: null` 无条件拒绝。此机制防跨站浏览器访问，**不是公网身份认证**：无浏览器来源头的 CLI 可以正常调用，`/api/v1` 使用独立的 bearer 规则。不要直接公开本地服务。文件 HTTP 模式不会导入/写回浏览器端的工程快照。重启后未确认的付费结果必须核对并再次明确确认，不会自动重发。
 
 ## 环境与命令
 
@@ -75,12 +75,12 @@ examples/mio_client.py          stdlib integration example
 6. 若向公共 API 开放，更新 generation_payload、capabilities、OpenAPI schema、教程和契约测试。私有适配器实现不等于公共 API 已支持。
 7. 添加无真实付费的请求拦截测试、失败测试、参考图测试与浏览器配置持久化检查。
 
-供应商请求构建已拆入 providers/ 并通过显式注册表分派。它不是动态安装/任意执行第三方插件的平台。保持 DTO 和 v1 语义稳定；破坏性改变使用 v2。
+供应商请求构建位于 providers/ 并通过显式注册表分派。它不是动态安装/任意执行第三方插件的平台。保持 DTO 和 v1 语义稳定；破坏性改变使用 v2。
 
 ## 公共接口演进
 
 - 浏览器状态保存与外部只读 DTO 分离，避免 schema 泄露和全量覆写。
-- 新增 /jobs 持久任务 API，和界面共用服务端调度器。旧同步单图接口仅保留兼容；新集成使用不可变快照与幂等提交。owner 是可信本地关联标记，不是多租户权限隔离。
+- /jobs 持久任务 API 和界面共用服务端调度器。同步单图接口不提供幂等与恢复语义；集成使用 /jobs 的不可变快照与幂等提交。owner 是可信本地关联标记，不是多租户权限隔离。
 - 更新 schema 后运行：
 
 ```bash
@@ -109,9 +109,9 @@ Build from JS modules, not from generated index.html. Runtime is Python stdlib +
 
 `npm run build` 包含 `python tools/build_docs.py`；仅改教程时也可运行 `npm run build:docs`。编辑 Markdown 源文件或 `docs/reader-template.html` 后必须重建，不要手改生成的 HTML 副本。教程首页 `docs/index.html` 单独维护，不会被此步骤覆盖。
 
-HTTP 下 `.md` 默认返回 UTF-8 HTML 阅读器，添加 `?raw=1` 返回 UTF-8 原文；已有 `.html` 教程链接在 HTTP 下从对应 Markdown 动态渲染；源码树不再跟踪这些生成副本。源码 ZIP 打包时直接生成离线 HTML 并验证哈希，`build:docs` 仍可按需生成本地副本。阅读器将文档内部的相对 `.md` 链接转换为 `.html`，以支持离线文件跳转。README 源文件仍保留 Markdown 链接供 GitHub 等平台使用。
+HTTP 下 `.md` 默认返回 UTF-8 HTML 阅读器，添加 `?raw=1` 返回 UTF-8 原文；`.html` 教程链接在 HTTP 下从对应 Markdown 动态渲染，离线 `.html` 副本由 `build:docs` 生成。源码 ZIP 打包时直接生成离线 HTML 并验证哈希。阅读器将文档内部的相对 `.md` 链接转换为 `.html`，以支持离线文件跳转。README 源文件使用 Markdown 链接，供 GitHub 等平台直接阅读。
 
-前端文档渲染依赖随包提供的 `vendor/marked.min.js`（15.0.12）和 `vendor/purify.min.js`（DOMPurify 3.4.15），不需要 pip 或运行时 CDN。对应许可证同目录分发。原始文档只作为转义 JSON 嵌入，HTML 经过净化后才放入页面；禁止取消这一步。文档 HTTP/渲染覆盖见 `tests/test_docs_server.py`；旧文档浏览器操作案例保存在 `tests/legacy_smoke.mjs`，本轮未计入通过数。
+前端文档渲染依赖随包提供的 `vendor/marked.min.js`（15.0.12）和 `vendor/purify.min.js`（DOMPurify 3.4.15），不需要 pip 或运行时 CDN。对应许可证同目录分发。原始文档只作为转义 JSON 嵌入，HTML 经过净化后才放入页面；禁止取消这一步。文档 HTTP/渲染覆盖见 `tests/test_docs_server.py`；`tests/legacy_smoke.mjs` 中的文档浏览器操作案例不计入 `test:current` 的通过数。
 
 ## Production foundation modules
 
@@ -128,7 +128,7 @@ Regression entry points: `tests/test_jobs.py`, `tests/test_foundation.py`, `test
 
 ### 手机专项回归
 
-`npm test` 包含 Chromium 触控模拟；`npm run test:mobile` 可单独执行。安装 WebKit（`npx playwright install --with-deps webkit`）后执行 `npm run test:mobile:webkit`，覆盖另一套浏览器引擎。测试无真实付费请求；手机系统键盘和相册仍需真机验收。响应式 CSS 集中在 styles.css 的 Mobile workspace 区域，可视窗口事件只调整布局变量，不重新渲染编辑器。
+`npm test` 包含 Chromium 触控模拟；`npm run test:mobile` 可单独执行。安装 WebKit（`npx playwright install --with-deps webkit`）后执行 `npm run test:mobile:webkit`，覆盖另一套浏览器引擎。测试无真实付费请求；手机系统键盘和相册需要真机验收。响应式 CSS 集中在 styles.css 的 Mobile workspace 区域，可视窗口事件只调整布局变量，不重新渲染编辑器。
 
 体验专项：`npm run test:experience` 覆盖路径滑选、Esc、检查无副作用、关联删除、策略确认与全屏目标。服务端重试预算/暂停/继续/未知结果由 `tests/test_jobs.py` 覆盖。
 
@@ -150,28 +150,28 @@ Regression entry points: `tests/test_jobs.py`, `tests/test_foundation.py`, `test
 
 `mio_jobs.py` owns the shared schema/lease/dispatcher helpers; `mio_frame_jobs.py` owns per-frame scheduling and controls. The dispatcher has no shared 32-worker throttle: the explicit limit is 32 enabled task pools. Never use cursor as a prefix, iterate futures in submission order, or wait for a whole batch before refilling. Every read used for state projection must see one SQLite snapshot. Add new module files to all isolated browser fixtures and release packaging.
 
-Presentation tests also verify custom CSS positions narration over the image in both preview and the actual downloaded offline HTML; no new presentation framework was needed.
+Presentation tests also verify that custom CSS positions narration over the image in both the preview and the actual downloaded offline HTML.
 
 ### Read-before-request inputs
 
 `Jobs(..., resolve_frame=...)` resolves a saved album-local input outside the dispatcher/SQLite lock immediately before provider execution. `latest_frame_input` reads raw saved workspace data, never execution projection (avoiding a lock cycle), and checks fixed channel/album/index bindings. The browser’s ordinary storyboard editor saves compiled per-frame inputs in that album’s `sourceSnapshot.liveInputs`. Invalid drafts are explicit errors, not fallback prompts. Original submission digests remain unchanged. Each attempt captures durable `request_inputs`; canceled epochs cannot send/adopt stale work. Reconcile uses the original attempt snapshot. Historical request input image references remain protected until archive.
 
-The existing editor’s scope selector chooses an exact album version; it must not switch to an older unfinished job after completion. Version-specific scene lists may differ from current shared templates. Request records preserve sent prompt versions even if UI text changes during the request. API `amend` remains separately audited for external clients, with newer explicit amendments taking precedence over older saved drafts.
+The storyboard editor’s scope selector chooses an exact album version; it must not switch to an older unfinished job after completion. Version-specific scene lists may differ from current shared templates. Request records preserve sent prompt versions even if UI text changes during the request. API `amend` remains separately audited for external clients, with newer explicit amendments taking precedence over older saved drafts.
 
-New regressions: original-editor retry, eight-slot HTTP fixture with task-local edits after enqueue, version selection with differing scene lists, in-flight edit isolation, leaving the page before next dispatch, immutable shared templates, actual request history, invalid input refusal and original-input ComfyUI reconciliation.
+Regression coverage: original-editor retry, eight-slot HTTP fixture with task-local edits after enqueue, version selection with differing scene lists, in-flight edit isolation, leaving the page before next dispatch, immutable shared templates, actual request history, invalid input refusal and original-input ComfyUI reconciliation.
 
 ### Channel-reference architecture and queue UI
 
-`mio_channels.py` is the shared resolver for execution and safe configuration previews. New browser frames persist channelId + provider type; existing browser config.id is recognized for migration. `latest_frame_input` reads scene content and channel registry from ONE saved-workspace snapshot outside the scheduler lock. It replaces, rather than merges, current channel configuration. Request preparation records the resolved config; historical input is not a fallback for missing references. `ChannelConfigurationError` blocks only that task’s further dispatch, avoiding an error storm. Reconciliation deliberately bypasses current configuration.
+`mio_channels.py` is the shared resolver for execution and safe configuration previews. Browser frames persist channelId + provider type; frames that only carry a browser config.id are also resolved. `latest_frame_input` reads scene content and channel registry from ONE saved-workspace snapshot outside the scheduler lock. It replaces, rather than merges, current channel configuration. Request preparation records the resolved config; historical input is not a fallback for missing references. `ChannelConfigurationError` blocks only that task’s further dispatch, avoiding an error storm. Reconciliation deliberately bypasses current configuration.
 
-Task-pool HTTP tests change the actual model and endpoint fields, assert both linked tasks use the new values, retain old in-flight inputs and inspect request history. Unit tests cover key-reference replacement/removal, invalid/deleted channels, legacy ID resolution and no provider call on configuration failure. Queue refresh preserves open disclosures. Runtime settings are compact, per-task diagnostics are folded, irrelevant cloud workflow controls are omitted.
+Task-pool HTTP tests change the actual model and endpoint fields, assert both linked tasks use the new values, retain old in-flight inputs and inspect request history. Unit tests cover key-reference replacement/removal, invalid/deleted channels, config.id resolution and no provider call on configuration failure. Queue refresh preserves open disclosures. Runtime settings are compact, per-task diagnostics are folded, irrelevant cloud workflow controls are omitted.
 
 ## 默认发布结构 / External release
 
 `npm run build` 与 `node js/build.js` 默认产生外链 HTML：`styles.css` 与按顺序加载的 `/js/*.js`，资源附内容哈希查询串用于升级缓存失效。`index.html` 约 7 KB。使用 Python 服务打开工作台，不是双击 HTML。显式 `node js/build.js bundle` 仅供诊断内联输出，会覆盖 index；正式发布前再运行 `npm run build`。
 
-功能文件先声明，UI 共享数据随后初始化，最终 app.js 安装功能。此轮是可维护性及缓存拆分，不宣称已经按需懒加载或减少总执行量。全册自定义模板按最多四张并行准备图片；普通 512 幕阅读仍只渲染当前画面。整册模板对超大型画册仍有载入及内存开销。
+功能文件先声明，UI 共享数据随后初始化，最终 app.js 安装功能。这一拆分服务于可维护性与缓存失效，不是按需懒加载，也不减少总执行量。全册自定义模板按最多四张并行准备图片；普通 512 幕阅读只渲染当前画面。整册模板对超大型画册有载入及内存开销。
 
-`tests/presentation.mjs` 验证 24 幕完整顺序、无重复/换文档、最后页结尾、手机单幕，以及显式样张三张。`tests/test_jobs.py` 覆盖多种 4xx/5xx、422 稀疏完成、四轮手动续试的新自动额度、逐幕事件与旧错误隔离。
+`tests/presentation.mjs` 验证 24 幕完整顺序、无重复/换文档、最后页结尾、手机单幕，以及显式样张三张。`tests/test_jobs.py` 覆盖多种 4xx/5xx、422 稀疏完成、四轮手动续试各自重新获得的自动重试额度、逐幕事件与先前错误的隔离。
 
 最终请求体在适配器完成参数构造后单独记录为 `requestParameters`，包括实际模型、合成提示词及 NovelAI 已确定的随机种子；不修改初始输入哈希或 ComfyUI 核对快照。图片二进制、URL、密钥字段与鉴权头不会记录；图片顺序见输入引用。尚未进入适配器发送阶段的失败只有准备输入，没有伪造的最终请求体。最终参数记录仍不证明上游受理。

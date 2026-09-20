@@ -85,7 +85,7 @@ CSS **不做任何过滤**：`@import`、远程字体、`!important`、动画、
 | `settings` | 出现在主题卡片"调整这个主题"里。带 `var` 的项实时写成 CSS 变量（`unit` 会自动追加）；`selector` 可改写作用选择器；`toggle`/无 `var` 的项交给 `script` 处理。类型同扩展设置，另有 `color` `range` `font` `image` |
 | `colorScheme` | `auto`（默认）或强制 `dark` / `light` |
 
-一个单独的 `.css` 文件也是合法主题（拖进来即可）；apiVersion 1/2 的旧包照常加载。
+一个单独的 `.css` 文件也是合法主题（拖进来即可）；标注 apiVersion 1/2 的主题包同样可以加载。
 
 ### 叠加
 

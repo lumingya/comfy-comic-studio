@@ -1,8 +1,8 @@
-# 扩展 SDK v3 · 开放平台指南
+# 扩展 SDK · 开放平台指南
 
-Mio 的扩展系统在 v3 不再是"几个固定插槽"，而是一个开放平台：扩展可以出现在界面的任何地方、改写任何核心函数、注入任意样式、在 Python 里跑后台任务、直接返回文件，甚至互相调用。主题与自定义 CSS 的部分见 [样式工坊与主题包](STYLE_STUDIO.md)。
+Mio 的扩展系统是一个开放平台：扩展可以出现在界面的任何地方、改写任何核心函数、注入任意样式、在 Python 里跑后台任务、直接返回文件，甚至互相调用。主题与自定义 CSS 的部分见 [样式工坊与主题包](STYLE_STUDIO.md)。
 
-> 信任模型没有变：主题和扩展是**可信代码**，JavaScript 运行在页面里，Python 运行在独立子进程里，两者都拥有你本机用户的全部权限。只安装你信任的作者的包。出问题时访问 `?safe_mode=1`，那里有一键停用。
+> 信任模型：主题和扩展是**可信代码**，JavaScript 运行在页面里，Python 运行在独立子进程里，两者都拥有你本机用户的全部权限。只安装你信任的作者的包。出问题时访问 `?safe_mode=1`，那里有一键停用。
 
 ---
 
@@ -54,7 +54,7 @@ export default function (ctx) {
 | 字段 | 说明 |
 |---|---|
 | `id` | `[a-z][a-z0-9_-]{0,63}`，也是数据目录名与所有注册项的 owner |
-| `name` / `version` / `apiVersion` | `apiVersion` 写 `3`（1、2 仍可加载） |
+| `name` / `version` / `apiVersion` | `apiVersion` 写 `3`；标注 `1`、`2` 的清单同样可以加载 |
 | `entry` | 前端入口 ES module，默认 `index.js`；纯后端扩展可以省略文件 |
 | `styles` | 字符串或数组，启用时自动以 `<link>` 注入，停用时移除 |
 | `settings` | 设置项数组，类型：`text` `password` `number` `select` `toggle` `json` `textarea` `code` `url` `color` `range` `font` `image`；出现在扩展中心的"设置"按钮里 |
@@ -76,7 +76,7 @@ export default function (ctx) {
 
 ### 3.1 界面：插槽、锚点、挂载
 
-**插槽（slots）** —— 旧版的结构化位置，仍然可用：
+**插槽（slots）** —— 结构化的界面位置：
 
 ```js
 ctx.slots.nav.register({ id: 'page', label: '我的页面', icon: 'book', render(root, context) {...} });   // 侧栏整页
@@ -87,12 +87,12 @@ ctx.slots.albumCard.register({ id: 'act', icon: 'spark', run(c) {...} });       
 ctx.slots.contextMenu.register({ id: 'x', label: '…', kinds: ['album', 'frame'], run(c) {...} });   // 右键菜单
 ctx.slots.commands.register({ id: 'cmd', title: '…', run() {...} });                                // ⌘K 命令面板
 ctx.slots.toolbar.register({ id: 'tool', label: '…', run(c) {...} });                               // 分镜工具栏
-ctx.slots.settings.register({ id: 'lab', label: '我的设置页', icon: 'settings', render(root) {...} }); // 设置里的整页（v3）
+ctx.slots.settings.register({ id: 'lab', label: '我的设置页', icon: 'settings', render(root) {...} }); // 设置里的整页
 ```
 
 插槽名是开放的：`ctx.slots['anything'].register(...)` 会自动创建一个新插槽，别的扩展可以用 `ctx.slots.anything.items()` 读取——这是扩展之间约定"贡献点"的最简单方式。
 
-**锚点（anchors，v3）** —— 核心界面里的具名位置，由平台在每次渲染后自动填充：
+**锚点（anchors）** —— 核心界面里的具名位置，由平台在每次渲染后自动填充：
 
 | 锚点 | 位置 |
 |---|---|
@@ -114,7 +114,7 @@ ctx.anchors.register('main-top', { id: 'panel', render(el, context) { el.innerHT
 
 主题或其他扩展在自己的 HTML 里写 `<span data-mio-anchor="my-spot"></span>`，就得到一个新锚点 `my-spot`。
 
-**挂载（mount，v3）** —— 不依赖锚点，直接贴到任何元素旁：
+**挂载（mount）** —— 不依赖锚点，直接贴到任何元素旁：
 
 ```js
 ctx.mount({
@@ -304,7 +304,7 @@ def generate(request, cancel):
 
 - `examples/extensions/scene-notebook/` —— 最小可用扩展：一个路由、一个面板、一个工具栏按钮、一个顶栏锚点、一种变量类型。
 - `examples/extensions/studio-kit/` —— 平台能力总览：渠道、钩子、事件、导出/导入、全部插槽、锚点、挂载、补丁、过滤器、快捷键、样式变量、设置页、后台任务、原始响应、跨扩展 API。
-- `examples/themes/paper-atelier/` —— v3 主题包（见 [样式工坊与主题包](STYLE_STUDIO.md)）。
+- `examples/themes/paper-atelier/` —— 完整的主题包示例（见 [样式工坊与主题包](STYLE_STUDIO.md)）。
 
 把示例文件夹**链接**进来是最快的学习方式：改一行，看变化。
 

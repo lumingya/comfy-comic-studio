@@ -35,7 +35,7 @@ Lists return `{items,total,limit,offset}`. Limit is 1–100; offset is nonnegati
 
 Success responses are `{data: ..., requestId: "req_..."}`. Errors are `{error: {code, message}, requestId: "req_..."}`. The schema endpoint returns the raw schema on success for tooling compatibility. Provider HTTP errors preserve status and redacted upstream bodies, subject to a 2 MiB safety limit. Internal implementation details and raw credentials are not returned.
 
-The new `/jobs` API supports durable whole-album inputs, external ComfyUI execution, idempotent submission, controls and SSE. Use the [foundation API](FOUNDATION.md), not private configuration writes. Webhooks and multi-tenant permissions are not provided.
+The `/jobs` API supports durable whole-album inputs, external ComfyUI execution, idempotent submission, controls and SSE. Use the [foundation API](FOUNDATION.md), not private configuration writes. Webhooks and multi-tenant permissions are not provided.
 
 ## Generate an image
 
@@ -68,7 +68,7 @@ Set a client read timeout of at least 330 seconds. The Python example uses 360 s
 
 For the direct synchronous image endpoint, one external generation may run at a time. This does not cap durable `/jobs`, which use independent per-task frame pools. This is a concurrency limit, not a per-minute quota; browser generation is independent. Request bodies permit approximately 66.7 MiB for base64 input, and upstream image/ZIP-entry content is bounded to 50 MiB. Provider limits may be smaller.
 
-The legacy synchronous endpoint has no idempotency semantics and never automatically retries. For durable submissions use `/jobs` with an explicit JSON `idempotencyKey`; repeating synchronous requests or choosing new task keys can incur repeated charges. Disconnecting a client does not guarantee upstream cancellation. Check provider billing before retrying after a timeout.
+The synchronous endpoint has no idempotency semantics and never automatically retries. For durable submissions use `/jobs` with an explicit JSON `idempotencyKey`; repeating synchronous requests or choosing new task keys can incur repeated charges. Disconnecting a client does not guarantee upstream cancellation. Check provider billing before retrying after a timeout.
 
 ## Security and evolution
 
@@ -84,7 +84,7 @@ New optional response fields may be added to v1; ignore unknown response fields.
 
 ## Durable foundation API
 
-The new jobs, asset-management and revision-checked resource APIs are documented in [Production foundation](FOUNDATION.md) and included in OpenAPI. They support server-side ComfyUI and cloud execution, idempotency, control, short reconnectable SSE responses, uploads and safe recycling. Older synchronous-generation limitations apply only to that compatibility endpoint, not to `/jobs`.
+The jobs, asset-management and revision-checked resource APIs are documented in [Production foundation](FOUNDATION.md) and included in OpenAPI. They support server-side ComfyUI and cloud execution, idempotency, control, short reconnectable SSE responses, uploads and safe recycling. The synchronous-generation limitations above apply only to that endpoint, not to `/jobs`.
 
 ### Task summaries versus details
 
