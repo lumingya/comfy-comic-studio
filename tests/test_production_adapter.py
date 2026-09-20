@@ -56,9 +56,9 @@ class ProductionAdapterTests(unittest.TestCase):
         task=self.assemble();real=self.q.publish;self.q.publish=lambda *_:(_ for _ in ()).throw(OSError('test disk failure'))
         self.q.start(task['id'],trusted=True);failed=self.wait(task['id']);self.assertEqual(failed['status'],'failed');self.assertEqual(len(self.calls),1)
         self.q.publish=real;self.q.recover_publication(task['id'],0);self.assertEqual(len(self.calls),1);self.assertEqual(self.q.get(task['id'])['pages'][0]['state'],'complete')
-    def test_unknown_variables_fail_before_provider(self):
-        task=self.assemble();task['snapshot']['story']['frames'][0]['prompt']='{missing}';self.q.tasks.set(task['id'],task)
-        self.q.start(task['id'],trusted=True);done=self.wait(task['id']);self.assertEqual(done['status'],'failed');self.assertFalse(self.calls)
+    def test_undefined_prompt_brackets_stay_literal_and_render_without_failing(self):
+        task=self.assemble();task['snapshot']['story']['frames'][0]['prompt']='{missing}, {{on back}}';self.q.tasks.set(task['id'],task)
+        self.q.start(task['id'],trusted=True);done=self.wait(task['id']);self.assertEqual(done['status'],'complete');self.assertEqual(self.calls[0]['prompt'],'{missing}, {{on back}}')
     def test_bad_caption_is_validated_before_paid_render(self):
         task=self.assemble();task['snapshot']['story']['frames'][0]['caption']='{missing}';self.q.tasks.set(task['id'],task)
         self.q.start(task['id'],trusted=True);done=self.wait(task['id']);self.assertEqual(done['status'],'failed');self.assertFalse(self.calls)

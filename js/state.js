@@ -124,7 +124,17 @@ function ensureCreationModel(s=state){
 function scopeText(text,scope){const policy=globalThis.ComfyComic?.promptPolicy;return policy?resolveImageVariables(text,scope||{}).prompt:String(text??'')}
 
 
-function missingScopeKeys(text,scope){return [...new Set((String(text).match(/\{[\p{L}\p{N}_]+\}/gu)||[]).map(x=>x.slice(1,-1)).filter(key=>!Object.hasOwn(scope,key)))]}
+function missingScopeKeys(text,scope={}){
+  const raw=String(text??''),safeScope=scope||{};
+  const missing=[];
+  for(const match of raw.matchAll(/\{([\p{L}\p{N}_]+)\}/gu)){
+    const start=match.index,end=start+match[0].length;
+    if(raw[start-1]==='{'||raw[end]==='}'||raw[start-1]==='\\')continue;
+    const key=match[1];
+    if(!Object.hasOwn(safeScope,key))missing.push(key);
+  }
+  return [...new Set(missing)];
+}
 
 
 /* Source: /js/state.js. The build tool keeps this standalone delivery in sync. */

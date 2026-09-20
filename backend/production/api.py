@@ -54,14 +54,27 @@ def typed(entry):
     return value
 
 
-def interpolate(text, values, images=None, *, literal_unknown=False):
+def interpolate(text, values, images=None, *, literal_unknown=True):
     blanks = []
+    raw = str(text or "")
 
     def replace(match):
-        key = match[1]
+        start, end = match.span()
+        # Skip double/nested braces like {{...}}
+        if (start > 0 and raw[start - 1] == "{") or (end < len(raw) and raw[end] == "}"):
+            return match.group(0)
+        # Skip odd number of escaping backslashes like \{...\}
+        slashes = 0
+        k = start - 1
+        while k >= 0 and raw[k] == "\\":
+            slashes += 1
+            k -= 1
+        if slashes % 2 == 1:
+            return match.group(0)
+        key = match.group(1)
         if key not in values:
             if literal_unknown:
-                return match[0]
+                return match.group(0)
             raise LibraryError("缺少变量：" + key)
         value = values[key]
         if isinstance(value, dict) and value.get("kind") == "mio-image":
@@ -82,7 +95,7 @@ def interpolate(text, values, images=None, *, literal_unknown=False):
             blanks.append(key)
         return rendered
 
-    result = re.sub(r"\{([\w]+)\}", replace, str(text or ""))
+    result = re.sub(r"\{([\w]+)\}", replace, raw)
     # Only texts that actually lost a variable get tidied, so prompts without
     # blanks stay byte-identical to what the author wrote.
     return tidy_separators(result) if blanks else result
@@ -347,15 +360,14 @@ class ProductionAdapter:
     def validate_frames(self, task, values):
         """Reject unresolved variables in any frame before the first paid call."""
         snap = task["snapshot"]
-        literal = bool(capability(snap["channel"].get("provider"), "braceWeights"))
         for index, frame in enumerate(snap["story"]["frames"]):
             try:
-                interpolate(frame.get("prompt", ""), values, [], literal_unknown=literal)
-                interpolate(frame.get("caption", ""), values)
+                interpolate(frame.get("prompt", ""), values, [], literal_unknown=True)
+                interpolate(frame.get("caption", ""), values, literal_unknown=False)
                 negative = frame.get("negative", "")
                 if not str(negative or "").strip():
                     negative = snap.get("globalNegative", "")
-                interpolate(negative, values, [], literal_unknown=literal)
+                interpolate(negative, values, [], literal_unknown=True)
             except LibraryError as exc:
                 raise LibraryError(
                     "第 " + str(index + 1) + " 幕「" + str(frame.get("name", "")) + "」：" + str(exc),
@@ -367,17 +379,14 @@ class ProductionAdapter:
         frame = snap["story"]["frames"][index]
         values = task["prepared"]["values"]
         images = []
-        # NovelAI uses braces for emphasis. Known preset variables still bind;
-        # unknown image-prompt tokens stay literal, never affect caption validation.
-        novelai_weights = bool(capability(snap["channel"].get("provider"), "braceWeights"))
-        prompt = interpolate(frame.get("prompt", ""), values, images, literal_unknown=novelai_weights)
-        caption = interpolate(frame.get("caption", ""), values)
+        prompt = interpolate(frame.get("prompt", ""), values, images, literal_unknown=True)
+        caption = interpolate(frame.get("caption", ""), values, literal_unknown=False)
         negative_source = frame.get("negative", "")
         if not str(negative_source or "").strip():
             # Scenes without their own negative inherit the studio-wide one,
             # matching the legacy browser path and the reader's expectation.
             negative_source = snap.get("globalNegative", "")
-        negative = interpolate(negative_source, values, images, literal_unknown=novelai_weights)
+        negative = interpolate(negative_source, values, images, literal_unknown=True)
         config = self.host.native_store().read(include_baseline=False)
         live = resolve_channel(
             config, snap["channel"]["id"], snap["channel"]["provider"]

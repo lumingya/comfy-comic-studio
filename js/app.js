@@ -1362,6 +1362,7 @@ installAssemblyWorkshop();
 installArchitecture();
 installFirstRun();
 installHome();
+installWorkflowWorkbench();
 installPlatformUI();
 
 globalThis.Mio = globalThis.ComfyComic;

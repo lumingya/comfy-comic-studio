@@ -15,6 +15,7 @@ try{for(const [n,person] of people.entries()){
   context=await browser.newContext({viewport:person.mobile?{width:390,height:844}:{width:1440,height:1000},isMobile:!!person.mobile,hasTouch:!!person.mobile,reducedMotion:'reduce'});const p=await context.newPage(),errors=[];globalThis.journeyPage=p;p.on('pageerror',e=>errors.push(e.message));
   await p.route(/^https?:\/\//,r=>new URL(r.request().url()).origin===base?r.continue():r.abort());
   await p.goto(base);await p.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);
+  if(await p.locator('#welcome-dialog[open]').count()){await p.getByRole('button',{name:'先用默认名称',exact:true}).click();await p.waitForFunction(()=>!document.querySelector('#welcome-dialog').open)}
   check(await p.locator('.first-run-path').count()===3,person.id+': fresh home offers three explicit provider paths');
   check(await p.locator('.first-run-path').evaluateAll(es=>es.every(e=>{const r=e.getBoundingClientRect();return r.width>=44&&r.height>=44})),person.id+': first-use targets meet 44px minimum');
   if(person.id==='comfy'){await p.getByRole('button',{name:'收起指引',exact:true}).click();check(await p.locator('.first-run-path').count()===0,'home orientation can be dismissed');await p.getByRole('button',{name:'首次使用指引',exact:true}).click()}
@@ -25,7 +26,7 @@ try{for(const [n,person] of people.entries()){
    await p.getByLabel('ComfyUI 服务地址',{exact:true}).fill('http://127.0.0.1:1');await p.getByRole('button',{name:'检查连接',exact:true}).click();await p.locator('#setup-comfy-status').filter({hasText:'连接失败'}).waitFor();check(generations().length===0,'ComfyUI unavailable service gives an actionable read-only failure');
    await p.getByLabel('ComfyUI 服务地址',{exact:true}).fill(upstream);await p.getByRole('button',{name:'检查连接',exact:true}).click();await p.locator('#setup-comfy-status').filter({hasText:'服务可读'}).waitFor();check(wire().some(x=>x.path==='/system_stats')&&generations().length===0&&(await p.locator('#topbar').innerText()).includes('后端按需连接'),'ComfyUI check reaches backend-side system_stats, no prompt submission');
    for(const [filename,doc,bad] of [['canvas.json',{nodes:[],links:[]},true],['my-api-workflow.json',workflow,false]]){
-    const chooser=p.waitForEvent('filechooser');await p.getByRole('button',{name:'导入 API 工作流',exact:true}).click();await(await chooser).setFiles({name:filename,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(doc))});await p.getByRole('heading',{name:'批量导入结果',exact:true}).waitFor();
+    const chooser=p.waitForEvent('filechooser');await p.getByRole('button',{name:'添加工作流',exact:false}).first().click();await p.getByRole('button',{name:'选择或拖入工作流文件',exact:true}).click();await(await chooser).setFiles({name:filename,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(doc))});await p.locator('#wf-unified-submit-btn:not(.disabled)').click();await p.getByRole('heading',{name:'批量导入结果',exact:true}).waitFor();
     check((await p.locator('#modal').innerText()).includes(bad?'导出 API 格式':'成功导入 1 份'),bad?'ComfyUI canvas JSON is rejected with API export instructions':'ComfyUI API workflow imports via real file picker');await p.getByRole('button',{name:'完成',exact:true}).click();
    }
   }else{

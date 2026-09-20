@@ -35,10 +35,12 @@ function assemblyInputIssues(storyId,presetIds,channel){
  const story=templateBy(storyId),values=Object.fromEntries(presetIds.flatMap(id=>(setBy(id)?.entries||[]).map(e=>[e.key,true]))),issues=[];
  for(const [i,f] of (story?.frames||[]).entries()){
   if(!f.prompt?.trim())issues.push('第 '+(i+1)+' 幕尚未填写正向提示词。');
-  for(const key of ['prompt','negative','caption']){
-   if(channel?.provider==='novelai'&&key!=='caption')continue;
-   const missing=[...new Set([...String(f[key]||'').matchAll(/\{([\p{L}\p{N}_]+)\}/gu)].map(m=>m[1]).filter(k=>!Object.hasOwn(values,k)))];if(missing.length)issues.push('第 '+(i+1)+' 幕'+({prompt:'正向提示词',negative:'负向提示词',caption:'台词'})[key]+'缺少变量：'+missing.join('、'));
-  }
+  const captionRaw=String(f.caption||'');
+  const missing=[...new Set([...captionRaw.matchAll(/\{([\p{L}\p{N}_]+)\}/gu)].filter(m=>{
+   const start=m.index,end=start+m[0].length;
+   return !(captionRaw[start-1]==='{'||captionRaw[end]==='}'||captionRaw[start-1]==='\\')&&!Object.hasOwn(values,m[1]);
+  }).map(m=>m[1]))];
+  if(missing.length)issues.push('第 '+(i+1)+' 幕台词缺少变量：'+missing.join('、'));
   if(channel?.provider==='novelai'&&['width','height'].some(k=>!Number.isInteger(Number(f[k]))||Number(f[k])<64||Number(f[k])>2048||Number(f[k])%64))issues.push('第 '+(i+1)+' 幕 NovelAI 宽高需为 64–2048 内的 64 倍数。');
  }
  return issues;

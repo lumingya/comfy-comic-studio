@@ -266,7 +266,7 @@ function installWorkspaceUpgrade(){
     return oldNavigate(index);
   };
   const oldRender=render;render=function(){
-    if(ui.workspace===3){ensureStudioState();renderShell();patchMain('<div class="view">'+renderWorkflowLibrary()+'</div>');const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent='工作流配置';applyStudioPreferences();return}
+    if(ui.workspace===3){ensureStudioState();renderShell();patchMain('<div class="view">'+renderWorkflowLibrary()+'</div>');const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent='工作流与 API 配置';applyStudioPreferences();return}
     oldRender();
     const p=selectedPlan();if(ui.workspace===1&&createUI.tab==='settings'&&settingPresetSelection(p)) $('.settings-preset-line')?.insertAdjacentHTML('beforeend',btn('更新当前预设','disk','ws-update-preset','','small'));
   };
@@ -384,14 +384,7 @@ function installWorkspaceUpgrade(){
       render();return;
     }
     if(action==='wm-pick-all'){
-      const c=state.settings.comfy,issues=mapperBindingIssues(),q=mapperUI.search.trim().toLowerCase();
-      const visibleBindings=c.bindings.filter((b)=>{
-        if(mapperUI.filter==='enabled'&&!b.enabled)return false;
-        if(mapperUI.filter==='disabled'&&b.enabled)return false;
-        if(mapperUI.filter==='issues'&&!issues.some((i)=>i.id===b.id))return false;
-        if(!q)return true;
-        return [b.label,b.nodeId,b.path,b.value,c.workflow[b.nodeId]?.class_type].join(' ').toLowerCase().includes(q);
-      });
+      const visibleBindings=mapperVisibleBindings();
       const allPicked=visibleBindings.length>0&&visibleBindings.every(b=>mapperUI.sel.has(b.id));
       if(allPicked)visibleBindings.forEach(b=>mapperUI.sel.delete(b.id));
       else visibleBindings.forEach(b=>mapperUI.sel.add(b.id));
@@ -431,8 +424,10 @@ function installWorkspaceUpgrade(){
       render();return;
     }
     if(action==='wm-select-output'){
-      mapperUI.selected='__output__';
-      render();return;
+      mapperUI.selected='__output__';mapperUI.nodes=false;
+      render();
+      if(innerWidth<=1024)document.querySelector('.wm-inspector')?.scrollIntoView({block:'start',behavior:'smooth'});
+      return;
     }
     if(action==='v3-copy-binding'){
       const c=state.settings.comfy,b=c.bindings.find(x=>x.id===d.id);
@@ -478,18 +473,6 @@ function installWorkspaceUpgrade(){
       syncBookSettingsInputs(q);save();toast('待执行分镜的工作流快照已更新。');
     }
   }catch(e){toast(e.message,'error')}});
-  document.addEventListener('input',event=>{
-    const el=event.target;
-    if(el.id==='ws-library-search-input'){
-      mapperUI.libSearch=el.value;
-      render();
-      const input=$('#ws-library-search-input');
-      if(input){
-        input.focus();
-        input.setSelectionRange(input.value.length,input.value.length);
-      }
-    }
-  });
 }
 
 function dataLayoutHTML(){

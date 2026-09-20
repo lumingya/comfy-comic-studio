@@ -45,9 +45,8 @@ class NovelAIBraceTests(unittest.TestCase):
     def test_literal_weight_braces_and_known_variables_coexist(self):
         self.assertEqual(interpolate('{masterpiece}, {{soft_light}}, {hero}', {'hero': 'Ada'}, literal_unknown=True), '{masterpiece}, {{soft_light}}, Ada')
 
-    def test_other_channels_and_captions_remain_strict(self):
-        with self.assertRaisesRegex(LibraryError, '缺少变量'):
-            interpolate('{missing}', {})
+    def test_undefined_brackets_and_weights_stay_literal_without_error(self):
+        self.assertEqual(interpolate('{{on back}}, {missing}, {{soft_light}}', {}), '{{on back}}, {missing}, {{soft_light}}')
 
     def test_image_variables_still_bind_under_novelai_policy(self):
         images=[]
