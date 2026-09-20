@@ -54,7 +54,41 @@ function installFileLibrary(){
     })();inflight.set(id,operation);try{return await operation}finally{inflight.delete(id)}
   }
   async function hydrateAll(){for(const book of [...state.books])await hydrate(book.id)}
-  ns.fileLibrary={hydrate,hydrateAll};
+  /* Live album sync: pull one album document that another writer (the production queue)
+     changed on disk and fold it into the open workspace without a full reload.
+     Returns {status:'created'|'updated'|'unchanged'|'missing', book, changed:[stepIndex…], structure}. */
+  const pageSignature=book=>({total:book.totalSteps||book.steps?.length||0,pages:new Map((book.steps||[]).map((s,i)=>[s.stepIndex??i,[s.image,s.caption,s.name,s.prompt,s.offlineFallback].join('\u0001')]))});
+  function changedPages(before,after){if(!before)return{changed:[...after.pages.keys()],structure:true};const changed=[];for(const [i,sig] of after.pages)if(before.pages.get(i)!==sig)changed.push(i);for(const i of before.pages.keys())if(!after.pages.has(i))changed.push(i);return{changed:changed.sort((a,b)=>a-b),structure:before.total!==after.total}}
+  const refreshing=new Map();
+  async function refreshAlbum(id){
+    if(refreshing.has(id))return refreshing.get(id);
+    const operation=(async()=>{
+      let record;
+      try{const response=await request('/api/library/entity/albums/'+encodeURIComponent(id));record=await response.json()}
+      catch(error){if(/^HTTP 404\b/.test(error?.message||''))return{status:'missing',book:null,changed:[],structure:false};throw error}
+      if(!record.document||record.document.id!==id)throw Error('画册正文返回不完整，未替换现有内容。');
+      const previous=ns.sync.runtime.previous;previous.savedGalleries??=[];previous._fileRevisions??={};
+      const current=bookBy(id),projectId=v=>state.projects.some(p=>p.id===v)?v:state.activeProjectId;
+      const index=current?Math.max(0,state.books.indexOf(current)):state.books.length;
+      const document=ns.stateContract.normalizeBook({...record.document,rowId:record.document.rowId??current?.rowId,templateId:record.document.templateId??current?.templateId,projectId:record.document.projectId??current?.projectId},index,Date.now(),projectId);
+      if(!current){
+        state.books.push(document);previous.savedGalleries.push(clone(document));previous._fileRevisions['albums:'+id]=record.etag;
+        return{status:'created',book:document,changed:[...pageSignature(document).pages.keys()],structure:true};
+      }
+      const before=current._lazy?null:pageSignature(current),pending=Object.values(current.pictureEdits||{});
+      const baseline=previous.savedGalleries.find(x=>x.id===id);
+      // Three-way merge keeps unsaved local edits (title, likes, page fixes) while taking every page the queue wrote.
+      const merged=current._lazy||!baseline||baseline._lazy?document:nativeReconcile(current,baseline,document);
+      const unchanged=!current._lazy&&nativeEqual(merged,current)&&previous._fileRevisions['albums:'+id]===record.etag;
+      Object.keys(current).forEach(k=>delete current[k]);Object.assign(current,merged);
+      if(baseline){Object.keys(baseline).forEach(k=>delete baseline[k]);Object.assign(baseline,clone(document))}else previous.savedGalleries.push(clone(document));
+      previous._fileRevisions['albums:'+id]=record.etag;
+      for(const edit of pending)ns.pictures?.apply(edit);
+      if(unchanged)return{status:'unchanged',book:current,changed:[],structure:false};
+      return{status:'updated',book:current,...changedPages(before,pageSignature(current))};
+    })();refreshing.set(id,operation);try{return await operation}finally{refreshing.delete(id)}
+  }
+  ns.fileLibrary={hydrate,hydrateAll,refreshAlbum};
   const oldPackage=buildDiskPackage;buildDiskPackage=async function(source,...args){if(source.books?.some(b=>b._lazy)){const copy=clone(source);for(let i=0;i<copy.books.length;i++)if(copy.books[i]._lazy){const book=await hydrate(copy.books[i].id);if(!book)throw Error('备份所需画册已被删除，未导出残缺摘要。');copy.books[i]=clone(book)}source=copy}return oldPackage(source,...args)};
   const oldBackup=backupObject;backupObject=function(...args){if(state.books.some(b=>b._lazy))throw Error('请通过备份入口完整读取画册后再导出。');return oldBackup(...args)};
   const oldRemote=syncRemote;syncRemote=async function(...args){await hydrateAll();return oldRemote(...args)};

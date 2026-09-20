@@ -57,7 +57,8 @@
     "test:locale": "node tests/locale_audit.mjs",
     "test:inline-keys": "node tests/inline_credentials.mjs",
     "test:home": "node tests/home_workspace.mjs",
-    "test:workflow": "node tests/workflow_mapping_contract.mjs && python -m unittest tests.test_workflow_mapping -v && node tests/workflow_workbench.mjs"
+    "test:workflow": "node tests/workflow_mapping_contract.mjs && python -m unittest tests.test_workflow_mapping -v && node tests/workflow_workbench.mjs",
+    "test:album-live": "node tests/album_live_sync.mjs"
   },
   "devDependencies": {
     "eslint": "^8.57.1",

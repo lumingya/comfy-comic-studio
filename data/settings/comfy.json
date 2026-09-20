@@ -2655,7 +2655,7 @@
       "type": "auto",
       "source": "literal",
       "value": "",
-      "enabled": true,
+      "enabled": false,
       "autoField": false,
       "warning": "",
       "allowCreate": false,
