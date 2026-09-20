@@ -174,7 +174,11 @@ Object.assign(catalog.messages,{
   /* Shared search + choice primitives */
   '清除搜索':'Clear search','共 {total} 个工作流':'{total} workflows','匹配 {matched} / {total} 个工作流':'{matched} / {total} workflows match','没有匹配「{query}」的工作流':'No workflows match “{query}”','还没有保存的工作流':'No saved workflows yet','还没有保存的工作流；请先在「工作流与 API 配置」中保存。':'No saved workflows yet; save one under Workflow & API configuration first.','当前选择「{title}」不在筛选结果中，仍然有效。':'The current choice “{title}” is outside these results and still applies.','没有匹配「{query}」的模板。':'No templates match “{query}”.','搜索预设':'Search presets',
   /* Prompt editor variable summary */
-  '识别到 {n} 个变量':'{n} variables recognised','{n} 个未定义（{names}）':'{n} undefined ({names})','{n} 个值为空（{names}）':'{n} empty ({names})'
+  '识别到 {n} 个变量':'{n} variables recognised','{n} 个未定义（{names}）':'{n} undefined ({names})','{n} 个值为空（{names}）':'{n} empty ({names})',
+  /* Variable completion listbox */
+  '变量补全':'Variable completion','未定义':'Undefined','值为空':'Empty value','图片':'Image','本故事已使用 {n} 次':'used {n} times in this story','{n} 个预设':'{n} presets',
+  '{n} 个预设都定义了它：{names}。装配时后加入的预设覆盖先加入的。':'{n} presets define it: {names}. The preset added later to the assembly wins.',
+  '↑↓ 选择 · Enter / Tab 补全 · Esc 关闭':'↑↓ choose · Enter / Tab completes · Esc closes'
 });
 return extendCurrentLocaleCatalog(catalog)}
 

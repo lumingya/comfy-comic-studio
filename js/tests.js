@@ -812,6 +812,70 @@ add('the story workshop renders its prompt, negative and caption editors through
   assert.ok(workshopSource.includes('function workshopPromptContext('), 'the workshop supplies its own union-of-presets context');
 });
 
+add('completionQueryAt only opens inside an isolated {name token', () => {
+  const at = (text, caret) => context.completionQueryAt(text, caret);
+  assert.deepEqual({ ...at('a {cha', 6) }, { start: 2, end: 6, query: 'cha', closed: false });
+  assert.deepEqual({ ...at('{', 1) }, { start: 0, end: 1, query: '', closed: false }, 'a lone brace opens with an empty query');
+  assert.deepEqual({ ...at('{char}', 5) }, { start: 0, end: 5, query: 'char', closed: true }, 'an existing closing brace is reported');
+  assert.equal(at('{{gro', 5), null, 'double braces are weight groups, not variables');
+  assert.equal(at('\\{lit', 5), null, 'escaped braces stay literal');
+  assert.equal(at('plain', 5), null);
+  assert.equal(at('{ch}', 4), null, 'after the closing brace nothing is open');
+  assert.equal(at('{cha racter', 11), null, 'a space ends the token');
+  assert.equal(at('{character}', 3), null, 'the caret in the middle of a name does not pop, so no garbage is produced');
+  assert.deepEqual({ ...at('{角色', 3) }, { start: 0, end: 3, query: '角色', closed: false }, 'unicode names are supported');
+});
+
+add('promptCompletionCandidates lists defined keys with their source presets plus names used but undefined', () => {
+  const sources = new Map([
+    ['character', [{ presetId: 'a', title: '七海', type: 'text', value: 'nanami', empty: false }, { presetId: 'b', title: '雨夜', type: 'text', value: 'rain', empty: false }]],
+    ['weapon', [{ presetId: 'a', title: '七海', type: 'text', value: '', empty: true }]],
+    ['portrait', [{ presetId: 'a', title: '七海', type: 'image', value: { src: 'data:image/png;base64,AAAA' }, empty: false }]]
+  ]);
+  const ctx = { definitions: new Set(['character', 'weapon', 'portrait']), emptyKeys: new Set(['weapon']), sources, used: new Map([['mystery', 3], ['character', 1]]) };
+  const list = context.promptCompletionCandidates(ctx);
+  const by = key => list.find(item => item.key === key);
+  assert.deepEqual(Array.from(list.map(item => item.key)).sort(), ['character', 'mystery', 'portrait', 'weapon']);
+  assert.equal(by('character').conflict, true, 'two presets define character');
+  assert.deepEqual(Array.from(by('character').sources.map(item => item.title)), ['七海', '雨夜']);
+  assert.equal(by('character').preview, 'nanami');
+  assert.equal(by('weapon').state, 'empty');
+  assert.equal(by('portrait').preview, '图片');
+  assert.deepEqual([by('mystery').state, by('mystery').used, by('mystery').sources.length], ['unknown', 3, 0], 'used-but-undefined names are offered and flagged');
+});
+
+add('rankCompletions prefers prefixes, then word starts and substrings, and orders ties by state and usage', () => {
+  const items = [
+    { key: 'scene', state: 'defined', used: 0 }, { key: 'character', state: 'defined', used: 4 }, { key: 'character_display_name', state: 'defined', used: 1 },
+    { key: 'weapon', state: 'empty', used: 0 }, { key: 'char_typo', state: 'unknown', used: 2 }, { key: 'lora', state: 'empty', used: 0 }, { key: 'outfit', state: 'defined', used: 0 }
+  ];
+  assert.deepEqual(Array.from(context.rankCompletions(items, 'cha').map(item => item.key)), ['character', 'character_display_name', 'char_typo'], 'prefix matches, defined before unknown');
+  assert.deepEqual(Array.from(context.rankCompletions(items, 'display').map(item => item.key)), ['character_display_name'], 'word-boundary match');
+  assert.deepEqual(Array.from(context.rankCompletions(items, 'ene').map(item => item.key)), ['scene'], 'substring match');
+  assert.deepEqual(Array.from(context.rankCompletions(items, 'wpn')), [], 'no fuzzy subsequence noise');
+  assert.deepEqual(Array.from(context.rankCompletions(items, 'zzz')), []);
+  const all = Array.from(context.rankCompletions(items, '').map(item => item.key));
+  assert.deepEqual(all.slice(0, 2), ['character', 'character_display_name'], 'empty query lists everything, most used defined names first');
+  assert.equal(all.indexOf('char_typo'), all.length - 1, 'unknown names sink to the end');
+  assert.equal(context.rankCompletions(items, '', 3).length, 3, 'limit is honoured');
+});
+
+add('applyCompletion replaces the open token with {key}, reuses an existing closing brace and reports an input event', () => {
+  const fake = (value, caret) => {
+    const events = [];
+    return { value, selectionStart: caret, selectionEnd: caret, events,
+      setRangeText(text, start, end) { this.value = this.value.slice(0, start) + text + this.value.slice(end); this.selectionStart = this.selectionEnd = start + text.length; },
+      dispatchEvent(event) { events.push(event.type); return true; } };
+  };
+  let t = fake('a {cha holds', 6);
+  assert.equal(context.applyCompletion(t, context.completionQueryAt(t.value, 6), 'character'), 'a {character} holds');
+  assert.deepEqual([t.selectionStart, Array.from(t.events)], [13, ['input']]);
+  t = fake('{cha} end', 4);
+  assert.equal(context.applyCompletion(t, context.completionQueryAt(t.value, 4), 'character'), '{character} end', 'no doubled closing brace');
+  t = fake('{', 1);
+  assert.equal(context.applyCompletion(t, context.completionQueryAt(t.value, 1), 'weapon'), '{weapon}');
+});
+
 async function main() {
   let failed = 0;
   for (const test of tests) {

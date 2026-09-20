@@ -774,3 +774,18 @@ select.choice-list:focus-visible{border-color:var(--accent2);box-shadow:0 0 0 3p
 .prompt-surface.prose{min-height:120px}
 .prompt-editor-foot{margin-bottom:18px}
 .prompt-editor-foot:last-child{margin-bottom:0}
+
+/* Variable completion listbox: anchored to the caret, IDE style. Colours follow the paint marks: accent = defined, muted = empty, dotted = unknown. */
+#prompt-completion{position:fixed;z-index:1000;min-width:280px;max-width:min(440px,calc(100vw - 16px));max-height:min(340px,calc(100vh - 16px));overflow:auto;padding:6px;border:1px solid var(--line);border-radius:10px;background:var(--panel,var(--panel2));box-shadow:0 16px 55px rgb(var(--shadow-rgb)/.33);color:var(--text);font-size:12px;scrollbar-width:thin}
+#prompt-completion[hidden]{display:none}
+#prompt-completion [role="option"]{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:2px 12px;padding:7px 10px;border-radius:7px;cursor:pointer;color:var(--soft)}
+#prompt-completion [role="option"].active{background:var(--tint);color:var(--text)}
+#prompt-completion .key{font:12px/1.6 var(--mono);color:var(--accent);overflow-wrap:anywhere}
+#prompt-completion .state-empty .key{color:var(--muted)}
+#prompt-completion .state-unknown .key{color:var(--soft);text-decoration:underline dotted var(--muted);text-underline-offset:3px}
+#prompt-completion .source{font-size:10px;color:var(--muted);white-space:nowrap;text-align:right}
+#prompt-completion .preview,#prompt-completion .note{grid-column:1/-1;font-size:10px;line-height:1.6;color:var(--muted)}
+#prompt-completion .preview{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#prompt-completion .note.warn{color:var(--amber)}
+#prompt-completion .foot{margin-top:4px;padding:6px 10px 2px;border-top:1px solid var(--line);font-size:10px;color:var(--muted)}
+@media(max-width:760px){#prompt-completion{left:8px!important;right:8px;max-width:none;min-width:0}}

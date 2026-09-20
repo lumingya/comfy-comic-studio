@@ -91,6 +91,7 @@ function paintPromptEditor(textarea){
   pre.innerHTML=promptTokenMarkup(textarea.value,context)+'\n';pre.style.width=textarea.clientWidth+'px';pre.style.transform=`translate(${-textarea.scrollLeft}px,${-textarea.scrollTop}px)`;
   const foot=wrapper.nextElementSibling;const summary=foot?.querySelector('.prompt-summary');if(summary)summary.textContent=promptSummaryText(textarea.value,context);
   const hint=foot?.querySelector('.prompt-hint');if(hint){hint.hidden=!promptPolicyFor().hasUnclosedBrace(textarea.value);hint.textContent=promptText('变量花括号尚未闭合；提示词权重写法可忽略。')}
+  if(promptCompletion.textarea===textarea)syncPromptCompletionAria(textarea);
 }
 
 function attachPromptEditors(){
@@ -101,8 +102,152 @@ function attachPromptEditors(){
       wrapper=document.createElement('div');wrapper.className='prompt-surface';wrapper.dataset.promptContext='plan';const overlay=document.createElement('div');overlay.className='prompt-paint-viewport';overlay.setAttribute('aria-hidden','true');overlay.innerHTML='<pre class="prompt-paint"></pre>';textarea.before(wrapper);wrapper.append(overlay,textarea);
       const foot=document.createElement('div');foot.className='prompt-editor-foot';foot.innerHTML='<div class="prompt-foot"><i class="dot"></i><span class="prompt-summary"></span></div><p class="prompt-hint" hidden></p>';wrapper.after(foot);
     }
-    if(!promptEditorBound.has(textarea)){promptEditorBound.add(textarea);textarea.addEventListener('scroll',()=>paintPromptEditor(textarea),{passive:true});textarea.addEventListener('input',()=>paintPromptEditor(textarea));textarea.spellcheck=false}
+    if(!promptEditorBound.has(textarea)){promptEditorBound.add(textarea);textarea.addEventListener('scroll',()=>paintPromptEditor(textarea),{passive:true});textarea.addEventListener('input',()=>paintPromptEditor(textarea));textarea.spellcheck=false;attachPromptCompletion(textarea)}
     paintPromptEditor(textarea);observers.push(textarea);
   }
   if(window.ResizeObserver){artUI.editorObserver=new ResizeObserver(entries=>entries.forEach(e=>paintPromptEditor(e.target)));observers.forEach(e=>artUI.editorObserver.observe(e))}
+}
+
+/* ---- Variable completion --------------------------------------------------------------------------------------------------
+   Typing "{" in a prompt surface opens a listbox of candidates taken from the editor's context, the way an IDE completes
+   identifiers. Each candidate names its source preset and carries a priority note when several presets define the same key,
+   because production keeps the last preset in assembly order for a repeated key (backend/production/api.py prepare()).
+   Names already used in the story but defined nowhere are offered too, marked as undefined, so a typo is visible early.
+   Completion never rewrites text on its own: only an explicit Enter/Tab/click inserts "{name}" at the caret. */
+const promptCompletion={textarea:null,items:[],index:0,range:null,popover:null};
+const PROMPT_NAME_CHAR=/[\p{L}\p{N}_]/u;
+
+/* Where the caret sits inside an open "{name" token, or null. "{{" groups and "\{" escapes never trigger completion. */
+function completionQueryAt(text,caret){
+  const source=String(text??''),end=Math.max(0,Math.min(Number(caret)||0,source.length));
+  let i=end;while(i>0&&PROMPT_NAME_CHAR.test(source[i-1]))i--;
+  if(i===0||source[i-1]!=='{')return null;
+  const start=i-1;if(source[start-1]==='{'||source[start-1]==='\\')return null;
+  if(end<source.length&&PROMPT_NAME_CHAR.test(source[end]))return null;
+  return {start,end,query:source.slice(i,end),closed:source[end]==='}'};
+}
+
+function promptValuePreview(source){
+  if(!source)return '';const value=source.value;
+  if(source.type==='image')return value&&(typeof value==='string'||value.src)?promptText('图片'):'';
+  if(value===undefined||value===null)return '';const text=String(value).replace(/\s+/g,' ').trim();
+  return text.length>48?text.slice(0,47)+'…':text;
+}
+
+/* Candidates for a context: every defined key plus every key used in the story, with source presets and a state. */
+function promptCompletionCandidates(context={}){
+  const known=context.definitions instanceof Set?context.definitions:new Set(context.definitions||[]);
+  const empty=context.emptyKeys instanceof Set?context.emptyKeys:new Set(context.emptyKeys||[]);
+  const asMap=value=>value instanceof Map?value:new Map(value?(typeof value.entries==='function'?value.entries():Object.entries(value)):[]);
+  const sources=asMap(context.sources),used=asMap(context.used);
+  return [...new Set([...known,...used.keys()])].map(key=>{
+    const list=sources.get(key)||[],state=!known.has(key)?'unknown':empty.has(key)?'empty':'defined';
+    return {key,state,sources:list,used:used.get(key)||0,source:list[0]||null,conflict:list.length>1,preview:promptValuePreview(list.find(item=>!item.empty)||list[0])};
+  });
+}
+
+/* Prefix matches first, then word-boundary and substring matches; ties prefer defined names and names the story already uses.
+   No fuzzy subsequence matching: with a few dozen variables, predictable results beat clever ones. An empty query lists all. */
+function rankCompletions(candidates,query='',limit=8){
+  const needle=String(query??'').toLowerCase(),order={defined:0,empty:1,unknown:2};
+  const score=key=>{if(!needle)return 1;const hay=key.toLowerCase();if(hay===needle)return 5;if(hay.startsWith(needle))return 4;if(hay.split('_').some(part=>part.startsWith(needle)))return 3;return hay.includes(needle)?2:0};
+  return (candidates||[]).map(item=>({item,score:score(item.key)})).filter(entry=>entry.score>0)
+    .sort((a,b)=>b.score-a.score||order[a.item.state]-order[b.item.state]||b.item.used-a.item.used||a.item.key.localeCompare(b.item.key))
+    .slice(0,limit).map(entry=>entry.item);
+}
+
+/* Replaces the open "{name" token with "{key}", reusing a closing brace that is already there, and reports the edit as input. */
+function applyCompletion(textarea,range,key){
+  const value=String(textarea.value??''),end=range.closed?range.end+1:range.end,replacement='{'+key+'}';
+  if(typeof textarea.setRangeText==='function')textarea.setRangeText(replacement,range.start,end,'end');
+  else{textarea.value=value.slice(0,range.start)+replacement+value.slice(end);const caret=range.start+replacement.length;if(typeof textarea.setSelectionRange==='function')textarea.setSelectionRange(caret,caret)}
+  const event=typeof InputEvent==='function'?new InputEvent('input',{bubbles:true,inputType:'insertText',data:replacement}):typeof Event==='function'?new Event('input',{bubbles:true}):{type:'input'};
+  textarea.dispatchEvent(event);return textarea.value;
+}
+
+function promptCompletionElement(){
+  let element=promptCompletion.popover||document.getElementById('prompt-completion');
+  if(!element){
+    element=document.createElement('div');element.id='prompt-completion';element.setAttribute('role','listbox');element.hidden=true;
+    element.addEventListener('pointerdown',event=>{const option=event.target.closest('[role="option"]');event.preventDefault();if(option)acceptPromptCompletion(Number(option.dataset.index))});
+    element.addEventListener('pointermove',event=>{const option=event.target.closest('[role="option"]');if(option&&Number(option.dataset.index)!==promptCompletion.index){promptCompletion.index=Number(option.dataset.index);renderPromptCompletion()}});
+  }
+  promptCompletion.popover=element;return element;
+}
+function promptCompletionOptionHTML(item,index,active){
+  const notes=[];
+  if(item.state==='unknown')notes.push(`<span class="note warn">${promptEscape(promptText('未定义'))}${item.used?' · '+promptEscape(promptText('本故事已使用 {n} 次',{n:item.used})):''}</span>`);
+  else if(item.state==='empty')notes.push(`<span class="note">${promptEscape(promptText('值为空'))}</span>`);
+  if(item.conflict)notes.push(`<span class="note warn">${promptEscape(promptText('{n} 个预设都定义了它：{names}。装配时后加入的预设覆盖先加入的。',{n:item.sources.length,names:item.sources.map(source=>source.title).join('、')}))}</span>`);
+  const source=item.source?`<span class="source">${promptEscape(item.conflict?promptText('{n} 个预设',{n:item.sources.length}):item.source.title)}</span>`:'';
+  return `<div role="option" id="prompt-completion-${index}" data-index="${index}" aria-selected="${active?'true':'false'}" class="${active?'active':''} state-${item.state}"><span class="key">{${promptEscape(item.key)}}</span>${source}${item.preview?`<span class="preview">${promptEscape(item.preview)}</span>`:''}${notes.join('')}</div>`;
+}
+function renderPromptCompletion(){
+  const c=promptCompletion,element=promptCompletionElement();
+  element.setAttribute('aria-label',promptText('变量补全'));
+  element.innerHTML=c.items.map((item,index)=>promptCompletionOptionHTML(item,index,index===c.index)).join('')+`<div class="foot">${promptEscape(promptText('↑↓ 选择 · Enter / Tab 补全 · Esc 关闭'))}</div>`;
+  element.querySelector('.active')?.scrollIntoView?.({block:'nearest'});
+  syncPromptCompletionAria(c.textarea);
+}
+function syncPromptCompletionAria(textarea){
+  if(!textarea)return;const c=promptCompletion,open=c.textarea===textarea&&c.popover&&!c.popover.hidden;
+  if(open){textarea.setAttribute('aria-autocomplete','list');textarea.setAttribute('aria-controls','prompt-completion');textarea.setAttribute('aria-expanded','true');textarea.setAttribute('aria-activedescendant','prompt-completion-'+c.index)}
+  else{textarea.removeAttribute('aria-expanded');textarea.removeAttribute('aria-activedescendant')}
+}
+/* Viewport rectangle of a text index, measured on a hidden clone of the paint layer (same metrics, same scroll offset). */
+function promptCaretRect(textarea,index){
+  const pre=textarea.closest('.prompt-surface')?.querySelector('.prompt-paint');if(!pre)return textarea.getBoundingClientRect();
+  const mirror=pre.cloneNode(false);mirror.style.visibility='hidden';mirror.removeAttribute('id');
+  const marker=document.createElement('span');marker.textContent='\u200b';
+  mirror.append(document.createTextNode(textarea.value.slice(0,index)),marker,document.createTextNode(textarea.value.slice(index)+'\n'));
+  pre.parentNode.append(mirror);const rect=marker.getBoundingClientRect();mirror.remove();return rect;
+}
+function positionPromptCompletion(){
+  const c=promptCompletion,element=c.popover;if(!c.textarea||!element||element.hidden)return;
+  const anchor=promptCaretRect(c.textarea,c.range.start),box=c.textarea.getBoundingClientRect(),vw=window.innerWidth,vh=window.innerHeight;
+  const width=element.offsetWidth,height=element.offsetHeight,left=Math.max(8,Math.min(anchor.left,vw-width-8));
+  const lineBottom=Math.min(Math.max(anchor.bottom,box.top),box.bottom),lineTop=Math.min(Math.max(anchor.top,box.top),box.bottom);
+  let top=lineBottom+6;if(top+height>vh-8&&lineTop-6-height>=8)top=lineTop-6-height;
+  element.style.left=left+'px';element.style.top=Math.max(8,top)+'px';
+}
+function closePromptCompletion(){
+  const c=promptCompletion,textarea=c.textarea;if(c.popover){c.popover.hidden=true;c.popover.innerHTML=''}
+  c.textarea=null;c.items=[];c.index=0;c.range=null;if(textarea)syncPromptCompletionAria(textarea);
+}
+function openPromptCompletion(textarea){
+  const range=completionQueryAt(textarea.value,textarea.selectionStart);
+  if(!range||textarea.selectionStart!==textarea.selectionEnd)return closePromptCompletion();
+  const context=promptContextFor(textarea.closest('.prompt-surface')?.dataset.promptContext);
+  const items=rankCompletions(promptCompletionCandidates(context),range.query);
+  if(!items.length)return closePromptCompletion();
+  const c=promptCompletion,element=promptCompletionElement(),host=textarea.closest('dialog[open]')||document.body;
+  if(element.parentNode!==host)host.append(element);
+  const sameKey=c.textarea===textarea&&c.items[c.index]?.key;c.textarea=textarea;c.range=range;c.items=items;
+  c.index=Math.max(0,items.findIndex(item=>item.key===sameKey));if(range.query===''||!items.some(item=>item.key===sameKey))c.index=0;
+  element.hidden=false;renderPromptCompletion();positionPromptCompletion();
+}
+function acceptPromptCompletion(index=promptCompletion.index){
+  const c=promptCompletion,item=c.items[index],textarea=c.textarea;if(!item||!textarea)return closePromptCompletion();
+  const range=completionQueryAt(textarea.value,textarea.selectionStart)||c.range;closePromptCompletion();
+  applyCompletion(textarea,range,item.key);textarea.focus();
+}
+function movePromptCompletion(step){const c=promptCompletion;if(!c.items.length)return;c.index=(c.index+step+c.items.length)%c.items.length;renderPromptCompletion()}
+function attachPromptCompletion(textarea){
+  textarea.addEventListener('input',event=>{if(event.isComposing)return closePromptCompletion();openPromptCompletion(textarea)});
+  textarea.addEventListener('keyup',event=>{if(promptCompletion.textarea===textarea&&['ArrowLeft','ArrowRight','Home','End'].includes(event.key))openPromptCompletion(textarea)});
+  textarea.addEventListener('blur',()=>{if(promptCompletion.textarea===textarea)closePromptCompletion()});
+  textarea.addEventListener('scroll',()=>{if(promptCompletion.textarea===textarea)positionPromptCompletion()},{passive:true});
+}
+/* Registered at load, before app.js: while the listbox is open its keys belong to it and never reach the dialog/shortcut handlers. */
+if(typeof window!=='undefined'&&typeof window.addEventListener==='function'){
+  window.addEventListener('keydown',event=>{
+    const c=promptCompletion;if(!c.textarea||!c.popover||c.popover.hidden||event.target!==c.textarea||event.isComposing||event.keyCode===229)return;
+    if(event.key==='ArrowDown')movePromptCompletion(1);else if(event.key==='ArrowUp')movePromptCompletion(-1);
+    else if(event.key==='Enter'||event.key==='Tab')acceptPromptCompletion();else if(event.key==='Escape')closePromptCompletion();
+    else if(event.key==='PageDown')movePromptCompletion(Math.min(4,c.items.length-1));else if(event.key==='PageUp')movePromptCompletion(-Math.min(4,c.items.length-1));else return;
+    event.preventDefault();event.stopImmediatePropagation();
+  },true);
+  window.addEventListener('resize',()=>closePromptCompletion());
+  document.addEventListener('scroll',()=>{if(promptCompletion.textarea)positionPromptCompletion()},true);
+  document.addEventListener('pointerdown',event=>{if(promptCompletion.textarea&&event.target!==promptCompletion.textarea&&!event.target.closest?.('#prompt-completion'))closePromptCompletion()},true);
 }
