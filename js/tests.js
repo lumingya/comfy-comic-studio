@@ -768,6 +768,50 @@ add('filterChoices only returns matches and reports the selection as state inste
   assert.equal(context.filterChoices(null, 'x', 'a').total, 0);
 });
 
+add('prompt editor paint classifies defined, empty and unknown variables without touching escapes or weights', () => {
+  const ctx = { definitions: new Set(['character', 'weapon']), emptyKeys: new Set(['weapon']) };
+  const markup = context.promptTokenMarkup('{character} holds {weapon}, {mystery}, {{group}}, \\{literal}, (rain:1.2)', ctx);
+  assert.match(markup, /<mark class="" data-prompt-variable="character" data-state="defined">\{character\}<\/mark>/);
+  assert.match(markup, /<mark class="empty-token" data-prompt-variable="weapon" data-state="empty">\{weapon\}<\/mark>/);
+  assert.match(markup, /<mark class="unknown-token" data-prompt-variable="mystery" data-state="unknown">\{mystery\}<\/mark>/);
+  assert.ok(markup.includes('{{group}}') && !markup.includes('data-prompt-variable="group"'), 'double braces stay literal');
+  assert.ok(markup.includes('\\{literal}') && !markup.includes('data-prompt-variable="literal"'), 'escaped braces stay literal');
+  assert.ok(markup.includes('(rain:1.2)'), 'weights are untouched');
+  assert.equal(context.promptTokenMarkup('<b>&</b>', ctx), '&#60;b&#62;&amp;&#60;/b&#62;', 'text is escaped');
+  const report = context.promptVariableReport('{character} {character} {mystery}', ctx);
+  assert.deepEqual([report.defined, report.empty, report.unknown].map(list => Array.from(list)), [['character'], [], ['mystery']]);
+  assert.equal(context.promptVariableReport('{mystery}', { ...ctx, markUnknown: false }).unknown.length, 0, 'unknown marking can be disabled');
+});
+
+add('prompt editor summary says how many variables were recognised and which are undefined or empty', () => {
+  const ctx = { definitions: new Set(['character', 'weapon']), emptyKeys: new Set(['weapon']) };
+  assert.equal(context.promptSummaryText('plain words only', ctx), '只有已定义的 {变量名} 会高亮。其他括号、权重与符号原样保留。');
+  assert.equal(context.promptSummaryText('{character} {character}', ctx), '识别到 1 个变量');
+  assert.equal(context.promptSummaryText('{character} {weapon} {mystery}', ctx), '识别到 3 个变量 · 1 个未定义（mystery） · 1 个值为空（weapon）');
+});
+
+add('promptEditorHTML renders the surface, paint layer and foot as siblings so patchDOM keeps the textarea alive', () => {
+  const html = context.promptEditorHTML({ attrs: 'data-workshop-frame="prompt" class="workshop-prompt"', value: 'a "quoted" <tag> {x}', placeholder: 'p', context: 'plan' });
+  assert.match(html, /^<div class="prompt-surface" data-prompt-context="plan"><div class="prompt-paint-viewport" aria-hidden="true"><pre class="prompt-paint">/);
+  assert.match(html, /<textarea data-workshop-frame="prompt" class="workshop-prompt" placeholder="p" spellcheck="false">a &quot;quoted&quot; &#60;tag&#62; \{x\}<\/textarea><\/div><div class="prompt-editor-foot"><div class="prompt-foot"><i class="dot"><\/i><span class="prompt-summary">/);
+  assert.match(html, /<p class="prompt-hint" hidden><\/p><\/div>$/);
+  assert.match(html, /<pre class="prompt-paint">a &quot;quoted&quot; &#60;tag&#62; <mark class="unknown-token"/, 'the paint layer is pre-rendered');
+  const prose = context.promptEditorHTML({ value: '', context: 'workshop', className: 'prose' });
+  assert.match(prose, /^<div class="prompt-surface prose" data-prompt-context="workshop">/);
+});
+
+add('the story workshop renders its prompt, negative and caption editors through the shared prompt surface', () => {
+  const workshopSource = fs.readFileSync(path.join(__dirname, 'assembly-workshop.js'), 'utf8');
+  for (const frame of ['prompt', 'negative', 'caption']) {
+    const call = workshopSource.split('promptEditorHTML({').find(part => part.startsWith('attrs:\'') && part.slice(0, part.indexOf('\',')).includes('data-workshop-frame="' + frame + '"'));
+    assert.ok(call && call.slice(0, call.indexOf('})')).includes('context:\'workshop\''), frame + ' editor uses the workshop context');
+  }
+  assert.ok(!/<textarea[^>]*data-workshop-frame=/.test(workshopSource), 'no bare workshop textarea remains');
+  const editors = fs.readFileSync(path.join(__dirname, 'ui-editors.js'), 'utf8');
+  assert.ok(editors.includes('.prompt-surface>textarea'), 'attachPromptEditors binds every rendered surface, not only data-v3-frame editors');
+  assert.ok(workshopSource.includes('function workshopPromptContext('), 'the workshop supplies its own union-of-presets context');
+});
+
 async function main() {
   let failed = 0;
   for (const test of tests) {

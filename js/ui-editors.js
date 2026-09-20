@@ -30,12 +30,78 @@ function renderAssistantOrb(){
   }
 }
 
-function paintPromptEditor(textarea){const wrapper=textarea.closest('.prompt-surface');if(!wrapper)return;const pre=wrapper.querySelector('.prompt-paint'),values=currentPromptContext();pre.innerHTML=promptMarkup(textarea.value,values)+'\n';pre.style.width=textarea.clientWidth+'px';pre.style.transform=`translate(${-textarea.scrollLeft}px,${-textarea.scrollTop}px)`;const hint=wrapper.nextElementSibling?.querySelector('.prompt-hint');if(hint){hint.hidden=!ComfyComic.promptPolicy.hasUnclosedBrace(textarea.value);hint.textContent='变量花括号尚未闭合；提示词权重写法可忽略。'}}
+/* ---- Prompt editor surface -------------------------------------------------------------------------------------------
+   A textarea with a mirrored, pointer-transparent paint layer underneath it. Templates render the whole surface directly
+   (promptEditorHTML) so patchDOM keeps the textarea, its focus and IME session; only the paint layer is refreshed in place.
+   The paint context decides which {names} are variables: 'plan' is the legacy storyboard editor (bound plan values),
+   'workshop' is the story workshop, where a story is not bound to presets and the union of the collection's presets is used. */
+const promptEditorBound=typeof WeakSet==='function'?new WeakSet():{has(){return false},add(){}};
+function promptEscape(text){return String(text??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&#60;','>':'&#62;','"':'&quot;',"'":'&#39;'})[char])}
+function promptPolicyFor(){return (globalThis.ComfyComic&&globalThis.ComfyComic.promptPolicy)||(promptPolicyFor.fallback??=createFreePromptPolicy())}
+function promptText(source,values={}){return typeof displayUI==='object'&&displayUI?.locale?localeString(source,values):String(source).replace(/\{([a-zA-Z][a-zA-Z0-9_]*)\}/g,(whole,key)=>Object.hasOwn(values,key)?String(values[key]):whole)}
+const PROMPT_VARIABLE_PATTERN=/\{([\p{L}\p{N}_]+)\}/gu;
+
+/* Legacy plan context expressed in the shared shape {definitions, emptyKeys, sources, used}. */
+function planPromptContext(){
+  let values={},definitions;/* Outside the studio (tests, detached editors) there is no plan: no names are defined. */
+  try{values=currentPromptContext()||{};definitions=definedPromptNames(values)}catch(e){definitions=new Set(Object.keys(values))}
+  const emptyKeys=new Set([...definitions].filter(key=>!Object.hasOwn(values,key)||values[key]===''||values[key]===null||values[key]===undefined));
+  return {kind:'plan',definitions,emptyKeys,sources:new Map(),used:new Map(),values};
+}
+function promptContextFor(kind){
+  if(kind&&typeof kind==='object')return kind;
+  if(kind==='workshop'&&typeof workshopPromptContext==='function')return workshopPromptContext();
+  return planPromptContext();
+}
+
+/* Classifies every isolated {name}: declared (accent), declared-but-empty (muted), or unknown (dotted). Unknown names are only
+   marked, never rewritten: {{weight}} groups, \{ escapes and nested braces are skipped exactly as the replacement policy does. */
+function promptVariableReport(text,context={}){
+  const known=context.definitions instanceof Set?context.definitions:new Set(context.definitions||[]);
+  const empty=context.emptyKeys instanceof Set?context.emptyKeys:new Set(context.emptyKeys||[]);
+  const candidates=new Set(known);
+  if(context.markUnknown!==false)for(const match of String(text??'').matchAll(PROMPT_VARIABLE_PATTERN))candidates.add(match[1]);
+  const tokens=promptPolicyFor().tokens(text,candidates).map(part=>part.type!=='variable'?part:{...part,state:!known.has(part.key)?'unknown':empty.has(part.key)?'empty':'defined'});
+  const variables=tokens.filter(part=>part.type==='variable');
+  const unique=state=>[...new Set(variables.filter(part=>part.state===state).map(part=>part.key))];
+  return {tokens,variables,defined:unique('defined'),empty:unique('empty'),unknown:unique('unknown')};
+}
+function promptTokenMarkup(text,context={}){
+  return promptVariableReport(text,context).tokens.map(part=>part.type==='variable'
+    ?`<mark class="${part.state==='unknown'?'unknown-token':part.state==='empty'?'empty-token':''}" data-prompt-variable="${promptEscape(part.key)}" data-state="${part.state}">${promptEscape(part.value)}</mark>`
+    :promptEscape(part.value)).join('');
+}
+function promptSummaryText(text,context={}){
+  const report=promptVariableReport(text,context);
+  if(!report.variables.length)return promptText('只有已定义的 {变量名} 会高亮。其他括号、权重与符号原样保留。');
+  const parts=[promptText('识别到 {n} 个变量',{n:new Set(report.variables.map(part=>part.key)).size})];
+  if(report.unknown.length)parts.push(promptText('{n} 个未定义（{names}）',{n:report.unknown.length,names:report.unknown.join(', ')}));
+  if(report.empty.length)parts.push(promptText('{n} 个值为空（{names}）',{n:report.empty.length,names:report.empty.join(', ')}));
+  return parts.join(' · ');
+}
+
+function promptEditorHTML({attrs='',value='',placeholder='',context='plan',className=''}={}){
+  const text=String(value??''),resolved=promptContextFor(context),kind=typeof context==='string'?context:(resolved.kind||'plan');
+  return `<div class="prompt-surface${className?' '+className:''}" data-prompt-context="${promptEscape(kind)}"><div class="prompt-paint-viewport" aria-hidden="true"><pre class="prompt-paint">${promptTokenMarkup(text,resolved)}\n</pre></div><textarea ${attrs}${placeholder?` placeholder="${promptEscape(placeholder)}"`:''} spellcheck="false">${promptEscape(text)}</textarea></div><div class="prompt-editor-foot"><div class="prompt-foot"><i class="dot"></i><span class="prompt-summary">${promptEscape(promptSummaryText(text,resolved))}</span></div><p class="prompt-hint" hidden></p></div>`;
+}
+
+function paintPromptEditor(textarea){
+  const wrapper=textarea.closest('.prompt-surface');if(!wrapper)return;const pre=wrapper.querySelector('.prompt-paint');if(!pre)return;
+  const context=promptContextFor(wrapper.dataset.promptContext);
+  pre.innerHTML=promptTokenMarkup(textarea.value,context)+'\n';pre.style.width=textarea.clientWidth+'px';pre.style.transform=`translate(${-textarea.scrollLeft}px,${-textarea.scrollTop}px)`;
+  const foot=wrapper.nextElementSibling;const summary=foot?.querySelector('.prompt-summary');if(summary)summary.textContent=promptSummaryText(textarea.value,context);
+  const hint=foot?.querySelector('.prompt-hint');if(hint){hint.hidden=!promptPolicyFor().hasUnclosedBrace(textarea.value);hint.textContent=promptText('变量花括号尚未闭合；提示词权重写法可忽略。')}
+}
 
 function attachPromptEditors(){
   artUI.editorObserver?.disconnect();const observers=[];
-  for(const textarea of $$('textarea[data-v3-frame="prompt"],textarea[data-v3-frame="negative"]')){
-    let wrapper=textarea.closest('.prompt-surface');if(!wrapper){wrapper=document.createElement('div');wrapper.className='prompt-surface';const overlay=document.createElement('div');overlay.className='prompt-paint-viewport';overlay.setAttribute('aria-hidden','true');overlay.innerHTML='<pre class="prompt-paint"></pre>';textarea.before(wrapper);wrapper.append(overlay,textarea);const foot=document.createElement('div');foot.innerHTML='<div class="prompt-foot"><i class="dot"></i><span>只有已定义的 {变量名} 会高亮。其他括号、权重与符号原样保留。</span></div><p class="prompt-hint" hidden></p>';wrapper.after(foot);textarea.addEventListener('scroll',()=>paintPromptEditor(textarea),{passive:true});textarea.addEventListener('input',()=>paintPromptEditor(textarea));textarea.spellcheck=false}
+  for(const textarea of $$('textarea[data-v3-frame="prompt"],textarea[data-v3-frame="negative"],.prompt-surface>textarea')){
+    let wrapper=textarea.closest('.prompt-surface');
+    if(!wrapper){/* Legacy editors are not rendered with a surface; wrap them after render exactly as before. */
+      wrapper=document.createElement('div');wrapper.className='prompt-surface';wrapper.dataset.promptContext='plan';const overlay=document.createElement('div');overlay.className='prompt-paint-viewport';overlay.setAttribute('aria-hidden','true');overlay.innerHTML='<pre class="prompt-paint"></pre>';textarea.before(wrapper);wrapper.append(overlay,textarea);
+      const foot=document.createElement('div');foot.className='prompt-editor-foot';foot.innerHTML='<div class="prompt-foot"><i class="dot"></i><span class="prompt-summary"></span></div><p class="prompt-hint" hidden></p>';wrapper.after(foot);
+    }
+    if(!promptEditorBound.has(textarea)){promptEditorBound.add(textarea);textarea.addEventListener('scroll',()=>paintPromptEditor(textarea),{passive:true});textarea.addEventListener('input',()=>paintPromptEditor(textarea));textarea.spellcheck=false}
     paintPromptEditor(textarea);observers.push(textarea);
   }
   if(window.ResizeObserver){artUI.editorObserver=new ResizeObserver(entries=>entries.forEach(e=>paintPromptEditor(e.target)));observers.forEach(e=>artUI.editorObserver.observe(e))}

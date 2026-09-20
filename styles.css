@@ -342,7 +342,7 @@ html[data-queue-view=true] .assistant-launch{background:var(--panel2);color:var(
   input:not([type=checkbox]):not([type=range]):not([type=color]),select,textarea{font-size:16px!important}
   input:not([type=checkbox]):not([type=range]):not([type=color]),select{min-height:44px;height:44px;min-width:0;max-width:100%}
   textarea{line-height:1.7;scroll-margin:80px 0 120px}
-  .prompt-paint,.prompt-surface>textarea{font-size:16px!important;line-height:1.8!important;padding:14px!important}
+  .prompt-paint,.prompt-surface>textarea,.prompt-surface.prose .prompt-paint,.prompt-surface.prose>textarea{font-size:16px!important;line-height:1.8!important;padding:14px!important}
   .prompt-surface>textarea{min-height:200px}.prompt-surface{min-height:200px}
   input[type=checkbox]{width:20px;height:20px;flex:0 0 20px}label.row{min-height:44px}
   .panel{padding:16px;border-radius:12px}.panel.table-panel{padding:0}
@@ -764,3 +764,13 @@ select.choice-list option:disabled{color:var(--muted);font-style:italic}
 .link-button:focus-visible{outline:2px solid var(--accent2);outline-offset:2px}
 select.choice-list option:checked,select.choice-list:focus option:checked{background:var(--tint) linear-gradient(0deg,var(--tint),var(--tint));color:var(--accent)}
 select.choice-list:focus-visible{border-color:var(--accent2);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 6%,transparent)}
+
+/* Prompt editor surface in the story workshop. Unknown names get a quiet dotted underline: they are only marked, never rewritten. */
+.prompt-paint mark.unknown-token,.prompt-resolved mark.unknown-token{color:inherit;background:transparent;box-shadow:none;text-decoration:underline dotted var(--muted);text-decoration-thickness:1px;text-underline-offset:3px}
+.prompt-surface>textarea.workshop-prompt{height:270px}
+.prompt-surface>textarea.workshop-negative{min-height:135px;height:150px;margin-bottom:0!important}
+.prompt-surface>textarea.workshop-caption{min-height:120px;height:130px}
+.prompt-surface.prose .prompt-paint,.prompt-surface.prose>textarea{font:13px/1.9 var(--sans)!important}
+.prompt-surface.prose{min-height:120px}
+.prompt-editor-foot{margin-bottom:18px}
+.prompt-editor-foot:last-child{margin-bottom:0}

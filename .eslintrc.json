@@ -1057,7 +1057,20 @@
     "designerWorkflowOptionsHTML": "writable",
     "designerWorkflowStatusHTML": "writable",
     "designerWorkflowPickerHTML": "writable",
-    "refreshDesignerWorkflowPicker": "writable"
+    "refreshDesignerWorkflowPicker": "writable",
+    "promptEditorHTML": "writable",
+    "promptContextFor": "writable",
+    "planPromptContext": "writable",
+    "promptTokenMarkup": "writable",
+    "promptSummaryText": "writable",
+    "promptVariableReport": "writable",
+    "workshopPromptContext": "writable",
+    "workshopPromptEntryIsEmpty": "writable",
+    "promptEscape": "writable",
+    "promptText": "writable",
+    "promptPolicyFor": "writable",
+    "PROMPT_VARIABLE_PATTERN": "writable",
+    "promptEditorBound": "writable"
   },
   "parserOptions": {
     "ecmaVersion": 2021,

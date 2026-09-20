@@ -172,7 +172,9 @@ function extendStudioLocaleCatalog(catalog){Object.assign(catalog.messages,{
 });
 Object.assign(catalog.messages,{
   /* Shared search + choice primitives */
-  '清除搜索':'Clear search','共 {total} 个工作流':'{total} workflows','匹配 {matched} / {total} 个工作流':'{matched} / {total} workflows match','没有匹配「{query}」的工作流':'No workflows match “{query}”','还没有保存的工作流':'No saved workflows yet','还没有保存的工作流；请先在「工作流与 API 配置」中保存。':'No saved workflows yet; save one under Workflow & API configuration first.','当前选择「{title}」不在筛选结果中，仍然有效。':'The current choice “{title}” is outside these results and still applies.','没有匹配「{query}」的模板。':'No templates match “{query}”.','搜索预设':'Search presets'
+  '清除搜索':'Clear search','共 {total} 个工作流':'{total} workflows','匹配 {matched} / {total} 个工作流':'{matched} / {total} workflows match','没有匹配「{query}」的工作流':'No workflows match “{query}”','还没有保存的工作流':'No saved workflows yet','还没有保存的工作流；请先在「工作流与 API 配置」中保存。':'No saved workflows yet; save one under Workflow & API configuration first.','当前选择「{title}」不在筛选结果中，仍然有效。':'The current choice “{title}” is outside these results and still applies.','没有匹配「{query}」的模板。':'No templates match “{query}”.','搜索预设':'Search presets',
+  /* Prompt editor variable summary */
+  '识别到 {n} 个变量':'{n} variables recognised','{n} 个未定义（{names}）':'{n} undefined ({names})','{n} 个值为空（{names}）':'{n} empty ({names})'
 });
 return extendCurrentLocaleCatalog(catalog)}
 
