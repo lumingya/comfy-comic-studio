@@ -287,7 +287,7 @@ document.addEventListener('input',e=>{
   const el=e.target;
   if(el.dataset.etField&&studioUI.editor){studioUI.editor[el.dataset.etField]=el.value;stashTemplateDraft()}
   if(el.dataset.etOption&&studioUI.editor){studioUI.editor.options[el.dataset.etOption]=el.type==='number'?Number(el.value):el.value;const label=$(`[data-et-color-label="${el.dataset.etOption}"]`);if(label)label.textContent=el.value;stashTemplateDraft()}
-  if(['export-color','export-border','export-signature','export-captions','export-prompts'].includes(el.id)){readExportDraft();clearTimeout(studioUI.exportPreviewTimer);studioUI.exportPreviewTimer=setTimeout(updateExportPreview,200)}
+  if(['export-color','export-border','export-signature','export-captions','export-prompts','export-image-profile'].includes(el.id)){readExportDraft();clearTimeout(studioUI.exportPreviewTimer);studioUI.exportPreviewTimer=setTimeout(updateExportPreview,200)}
   if(el.id==='chat-input')studioUI.assistantDraft=el.value;
 });
 
@@ -784,6 +784,7 @@ const v3Core={ensureStudioState,render,renderShell,renderGallery,renderSettingsW
 
 
 studioDefaults.visibility.logs=true;
+studioDefaults.export.imageProfile??='auto';
 
 studioDefaults.visibility.llm=false;
 

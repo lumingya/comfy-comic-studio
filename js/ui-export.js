@@ -54,18 +54,99 @@ async function imagePalette(data){
   return [5,12,19].map((x,i)=>{const rgb=ctx.getImageData(x,8+i*4,1,1).data;return '#'+[...rgb].slice(0,3).map(n=>n.toString(16).padStart(2,'0')).join('')});
 }
 
-async function prepareExportBooks(ids,t,onProgress,signal){
-  const selected=ids.map(bookBy).filter(Boolean).map(clone),total=selected.reduce((n,b)=>n+b.totalSteps,0);let done=0,fallbacks=0,bytes=0;onProgress?.(0,total);
-  for(const b of selected){const frames=[];for(const s of slots(b).sort((a,b)=>a.stepIndex-b.stepIndex)){
-    if(signal?.aborted)throw new DOMException('已取消','AbortError');
-    let image,note=s.pending?'尚未生成':'';
-    if(s.pending)image=missingArtworkDataURL();else {try{image=await imageData(s.image,signal)}catch(e){if(signal?.aborted)throw new DOMException('已取消','AbortError');throw Error('第 '+(s.stepIndex+1)+' 幕原图无法读取，请修复图片后再导出。不会用示例图替代。')}}
-    bytes+=image.length;if(bytes>128*1024*1024)throw Error('完整原图超过 128 MiB 内联预算。请选择「ZIP 原图资源包」导出，不需要拆分画册；不会降低原图分辨率。');
-    if(!/^data:image\//i.test(image))throw Error('导出图片格式不合法。');
-    let palette;if(t.layout==='artbook'){try{palette=await imagePalette(image)}catch(e){palette=[t.options.accent,t.options.background,t.options.paper]}}
-    frames.push({...s,...await measureArtwork(image,signal),image,imageNote:note,palette});done++;onProgress?.(done,total);await new Promise(resolve=>setTimeout(resolve,0));
-  }b.steps=frames}
-  return {books:selected,fallbacks};
+/* ---- Export image profiles. Same vocabulary as backend/mio_export_images.py so HTML, ZIP and PDF behave alike. ---- */
+const EXPORT_INLINE_BUDGET=128*1024*1024;
+const EXPORT_PUBLISH={maxEdge:2560,webpQuality:.86,jpegQuality:.9};
+const exportImageProfiles={
+  auto:{label:'自动 · 优先无损，超预算时自动压缩',help:'先按「无损清洗」处理；整册内联超过 128 MiB 时自动改用「轻量发布」，完成后会说明。'},
+  clean:{label:'无损清洗 · 移除工作流与提示词元数据',help:'像素、分辨率与格式与原图一致，仅移除 PNG / JPEG / WebP 内嵌的工作流、提示词与 EXIF。'},
+  publish:{label:'轻量发布 · 高画质 WebP，适合分享',help:'移除元数据后重新编码为高画质 WebP（长边不超过 2560 px），体积通常缩小十倍以上；不会放大文件。'},
+  archive:{label:'无损归档 · 原样保留内嵌工作流',help:'原文件逐字节写入，包含 ComfyUI 工作流与提示词；只适合本地备份，不要直接分发。'}
+};
+function exportImageProfile(value){return Object.hasOwn(exportImageProfiles,value)?value:'auto'}
+function exportImageProfileControl(d=studioUI.exportDraft||{}){const current=exportImageProfile(d.imageProfile);return field('图片处理',`<select id="export-image-profile" aria-label="导出图片处理方式">${Object.entries(exportImageProfiles).map(([id,p])=>opt(id,p.label,current)).join('')}</select>`,`<span id="export-image-profile-help">${esc(exportImageProfiles[current].help)}</span>`)}
+function syncExportImageProfileHelp(){const help=$('#export-image-profile-help'),d=studioUI.exportDraft;if(help&&d)help.textContent=exportImageProfiles[exportImageProfile(d.imageProfile)].help}
+function exportBudgetMessage(profile){return profile==='publish'?'即使按「轻量发布」压缩，整册仍超过 128 MiB 单文件内联预算。请拆分画册分别导出，或改用 ZIP 资源包。':'完整原图超过 128 MiB 单文件内联预算。请将「图片处理」改为「轻量发布」（高画质 WebP，清洗元数据），或选择 ZIP 资源包；ZIP 不受预算限制，也不会降低原图分辨率。'}
+function exportSize(bytes){if(!(bytes>0))return '0 B';const units=['B','KB','MB','GB'];let size=bytes,i=0;while(size>=1024&&i<units.length-1){size/=1024;i++}return (i?size.toFixed(1):String(size))+' '+units[i]}
+function exportProgressText(done,total,s){const phase=!s||s.profile==='archive'?'正在读取完整原图 ':s.profile==='publish'?(s.autoCompressed?'原图超出单文件预算，正在按轻量发布重新处理 ':'正在压缩并内联图片 '):'正在清洗并内联原图 ';return phase+done+' / '+total}
+function exportImageSummary(s){if(!s)return '';if(s.profile==='archive')return '图片按无损归档原样内联，包含内嵌工作流与提示词元数据。';const parts=[];if(s.scrubbed)parts.push('已移除 '+s.scrubbed+' 张图片的工作流 / 提示词元数据');if(s.profile==='publish')parts.push((s.autoCompressed?'原图超出 128 MiB 单文件预算，已自动改用轻量发布：':'轻量发布：')+s.recompressed+' 张重新编码为 WebP，图片 '+exportSize(s.originalBytes)+' → '+exportSize(Math.round(s.inlineBytes*3/4)));else parts.push('原图分辨率与编码未改动');return parts.join('；')+'。'}
+
+/* Byte-level metadata scrubbing. Containers are rewritten, pixels are never decoded, so「无损清洗」is exactly lossless. */
+function asciiAt(bytes,start,length){let text='';for(let i=start;i<start+length&&i<bytes.length;i++)text+=String.fromCharCode(bytes[i]);return text}
+function asciiBytes(text){return new Uint8Array([...text].map(ch=>ch.charCodeAt(0)&255))}
+function concatBytes(parts){const out=new Uint8Array(parts.reduce((n,p)=>n+p.length,0));let offset=0;for(const part of parts){out.set(part,offset);offset+=part.length}return out}
+function readU32BE(b,i){return((b[i]<<24)>>>0)+(b[i+1]<<16)+(b[i+2]<<8)+b[i+3]}
+function readU32LE(b,i){return b[i]+(b[i+1]<<8)+(b[i+2]<<16)+((b[i+3]<<24)>>>0)}
+function u32BE(v){return new Uint8Array([(v>>>24)&255,(v>>>16)&255,(v>>>8)&255,v&255])}
+function u32LE(v){return new Uint8Array([v&255,(v>>>8)&255,(v>>>16)&255,(v>>>24)&255])}
+let pngCRCTable=null;
+function pngCRC(bytes){if(!pngCRCTable){pngCRCTable=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xedb88320^(c>>>1):c>>>1;pngCRCTable[n]=c>>>0}}let c=0xffffffff;for(const b of bytes)c=pngCRCTable[(c^b)&255]^(c>>>8);return(c^0xffffffff)>>>0}
+function imageBytesKind(bytes){if(bytes.length>=8&&bytes[0]===0x89&&asciiAt(bytes,1,3)==='PNG'&&bytes[4]===0x0d&&bytes[5]===0x0a&&bytes[6]===0x1a&&bytes[7]===0x0a)return 'png';if(bytes.length>=3&&bytes[0]===0xff&&bytes[1]===0xd8&&bytes[2]===0xff)return 'jpeg';if(bytes.length>=12&&asciiAt(bytes,0,4)==='RIFF'&&asciiAt(bytes,8,4)==='WEBP')return 'webp';return ''}
+function exifOrientation(tiff){try{const o=asciiAt(tiff,0,4)==='Exif'?6:0,le=asciiAt(tiff,o,2)==='II';if(!le&&asciiAt(tiff,o,2)!=='MM')return 1;const u16=i=>le?tiff[i]+(tiff[i+1]<<8):(tiff[i]<<8)+tiff[i+1],u32=i=>le?readU32LE(tiff,i):readU32BE(tiff,i);if(u16(o+2)!==42)return 1;const ifd=o+u32(o+4),count=u16(ifd);for(let n=0;n<count;n++){const e=ifd+2+n*12;if(u16(e)===0x0112&&u16(e+2)===3){const v=u16(e+8);return v>=1&&v<=8?v:1}}}catch(e){/* malformed EXIF: treat as upright */}return 1}
+function minimalExif(orientation){return new Uint8Array([0x4d,0x4d,0,0x2a,0,0,0,8,0,1,0x01,0x12,0,3,0,0,0,1,0,orientation,0,0,0,0,0,0])}
+function isMinimalExif(tiff){const o=asciiAt(tiff,0,4)==='Exif'?6:0;if(tiff.length-o!==26||tiff[o+19]<2||tiff[o+19]>8)return false;const m=minimalExif(tiff[o+19]);for(let i=0;i<26;i++)if(tiff[o+i]!==m[i])return false;return true}
+function pngChunks(bytes){const chunks=[];let p=8;while(p+8<=bytes.length){const length=readU32BE(bytes,p),type=asciiAt(bytes,p+4,4),end=p+12+length;if(end>bytes.length)break;chunks.push({type,data:bytes.subarray(p+8,p+8+length),raw:bytes.subarray(p,end)});p=end;if(type==='IEND')break}return chunks}
+function pngChunk(type,data){const name=asciiBytes(type);return concatBytes([u32BE(data.length),name,data,u32BE(pngCRC(concatBytes([name,data])))])}
+function pngMetadataKeys(bytes){const keys=[];for(const c of pngChunks(bytes)){if(c.type==='tEXt'||c.type==='zTXt'||c.type==='iTXt'){let end=0;while(end<c.data.length&&c.data[end]!==0)end++;keys.push(c.type+':'+asciiAt(c.data,0,end))}else if(c.type==='eXIf'&&!isMinimalExif(c.data))keys.push('eXIf')}return keys}
+function stripPNG(bytes){const removed=pngMetadataKeys(bytes);if(!removed.length)return{bytes,removed};const parts=[bytes.subarray(0,8)];let orientation=1,complete=false;for(const c of pngChunks(bytes)){if(c.type==='eXIf'){orientation=exifOrientation(c.data);continue}if(c.type==='tEXt'||c.type==='zTXt'||c.type==='iTXt')continue;if(c.type==='IDAT'&&orientation!==1){parts.push(pngChunk('eXIf',minimalExif(orientation)));orientation=1}parts.push(c.raw);if(c.type==='IEND')complete=true}if(!complete)parts.push(pngChunk('IEND',new Uint8Array(0)));return{bytes:concatBytes(parts),removed}}
+function jpegSegments(bytes){const segments=[],total=bytes.length;let p=2;while(p<total){if(bytes[p]!==0xff){let end=p;while(end<total&&bytes[end]!==0xff)end++;segments.push({marker:-1,raw:bytes.subarray(p,end)});p=end;continue}while(p<total&&bytes[p]===0xff)p++;if(p>=total)break;const marker=bytes[p],start=p-1;p++;if(marker===0xd8||marker===0x01||(marker>=0xd0&&marker<=0xd7)){segments.push({marker,raw:bytes.subarray(start,p)});continue}if(marker===0xd9){segments.push({marker,raw:bytes.subarray(start,p)});break}if(p+2>total){segments.push({marker,raw:bytes.subarray(start)});break}const length=(bytes[p]<<8)+bytes[p+1],end=Math.min(total,p+Math.max(length,2));if(marker===0xda){let cursor=end;while(cursor+1<total){if(bytes[cursor]===0xff&&bytes[cursor+1]!==0&&!(bytes[cursor+1]>=0xd0&&bytes[cursor+1]<=0xd7))break;cursor++}if(cursor+1>=total)cursor=total;segments.push({marker,raw:bytes.subarray(start,cursor)});p=cursor;continue}segments.push({marker,raw:bytes.subarray(start,end)});p=end}return segments}
+function jpegPayload(segment){return segment.raw.subarray(4)}
+function jpegKeep(segment){const m=segment.marker;if(m===0xe1||m===0xfe||(m>=0xe2&&m<=0xef)){const payload=jpegPayload(segment);if(m===0xe2&&asciiAt(payload,0,12)==='ICC_PROFILE\0')return true;if(m===0xee&&asciiAt(payload,0,5)==='Adobe')return true;if(m===0xe1&&asciiAt(payload,0,6)==='Exif\0\0'&&isMinimalExif(payload))return true;return false}return true}
+function jpegMetadataKeys(bytes){const keys=[];for(const segment of jpegSegments(bytes)){if(segment.marker<0||jpegKeep(segment))continue;const payload=jpegPayload(segment);if(segment.marker===0xfe)keys.push('COM');else if(segment.marker===0xe1&&asciiAt(payload,0,5)==='Exif\0')keys.push('EXIF');else if(segment.marker===0xe1&&asciiAt(payload,0,28)==='http://ns.adobe.com/xap/1.0/')keys.push('XMP');else keys.push('APP'+(segment.marker-0xe0))}return keys}
+function stripJPEG(bytes){const removed=jpegMetadataKeys(bytes);if(!removed.length)return{bytes,removed};const parts=[bytes.subarray(0,2)];let orientation=1,inserted=false;for(const segment of jpegSegments(bytes)){if(segment.marker<0)continue;if(!jpegKeep(segment)){const payload=jpegPayload(segment);if(segment.marker===0xe1&&asciiAt(payload,0,5)==='Exif\0')orientation=exifOrientation(payload);continue}if(segment.marker!==0xd8&&segment.marker!==0xe0&&orientation!==1&&!inserted){const payload=concatBytes([asciiBytes('Exif\0\0'),minimalExif(orientation)]),length=payload.length+2;parts.push(new Uint8Array([0xff,0xe1,(length>>8)&255,length&255]),payload);inserted=true}parts.push(segment.raw);if(segment.marker===0xd9)break}return{bytes:concatBytes(parts),removed}}
+const WEBP_KNOWN_CHUNKS=new Set(['VP8 ','VP8L','VP8X','ALPH','ANIM','ANMF','ICCP']);
+function webpChunks(bytes){const chunks=[];let p=12;while(p+8<=bytes.length){const fourcc=asciiAt(bytes,p,4),size=readU32LE(bytes,p+4),end=p+8+size;if(end>bytes.length)break;chunks.push({fourcc,data:bytes.subarray(p+8,end)});p=end+(size&1)}return chunks}
+function webpMetadataKeys(bytes){if(asciiAt(bytes,12,4)!=='VP8X')return[];const keys=[];for(const c of webpChunks(bytes)){if(c.fourcc==='EXIF'){if(!isMinimalExif(c.data))keys.push('EXIF')}else if(c.fourcc==='XMP ')keys.push('XMP');else if(!WEBP_KNOWN_CHUNKS.has(c.fourcc))keys.push(c.fourcc.trim())}return keys}
+function stripWebP(bytes){const removed=webpMetadataKeys(bytes);if(!removed.length)return{bytes,removed};const chunks=[];let orientation=1;for(const c of webpChunks(bytes)){if(c.fourcc==='EXIF'){orientation=exifOrientation(c.data);continue}if(!WEBP_KNOWN_CHUNKS.has(c.fourcc))continue;let data=c.data;if(c.fourcc==='VP8X'&&data.length){data=new Uint8Array(data);data[0]&=~0x0c}chunks.push({fourcc:c.fourcc,data})}if(orientation!==1){chunks.push({fourcc:'EXIF',data:minimalExif(orientation)});if(chunks[0]?.fourcc==='VP8X'&&chunks[0].data?.length)chunks[0].data[0]|=0x08}const body=concatBytes(chunks.flatMap(c=>{const head=concatBytes([asciiBytes(c.fourcc),u32LE(c.data.length)]);return c.data.length&1?[head,c.data,new Uint8Array(1)]:[head,c.data]}));return{bytes:concatBytes([asciiBytes('RIFF'),u32LE(body.length+4),asciiBytes('WEBP'),body]),removed}}
+function imageMetadataKeys(bytes){const kind=imageBytesKind(bytes);return kind==='png'?pngMetadataKeys(bytes):kind==='jpeg'?jpegMetadataKeys(bytes):kind==='webp'?webpMetadataKeys(bytes):[]}
+function stripImageMetadata(bytes){const kind=imageBytesKind(bytes);return kind==='png'?stripPNG(bytes):kind==='jpeg'?stripJPEG(bytes):kind==='webp'?stripWebP(bytes):{bytes,removed:[]}}
+function dataURLBytes(data){const comma=data.indexOf(',');if(!data.startsWith('data:')||comma<0)return{mime:'',bytes:null};const header=data.slice(5,comma),mime=header.split(';')[0].toLowerCase();if(!/;base64$/i.test(header))return{mime,bytes:null};const binary=atob(data.slice(comma+1)),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);return{mime,bytes}}
+
+async function compactExportImage(bytes,mime){
+  if(typeof createImageBitmap!=='function'||typeof document==='undefined')return null;
+  const bitmap=await createImageBitmap(new Blob([bytes],{type:mime}));
+  try{
+    const scale=Math.min(1,EXPORT_PUBLISH.maxEdge/Math.max(bitmap.width,bitmap.height)),canvas=document.createElement('canvas');
+    canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+    canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
+    const encode=(c,type,quality)=>new Promise(resolve=>c.toBlob(resolve,type,quality));
+    let blob=await encode(canvas,'image/webp',EXPORT_PUBLISH.webpQuality);
+    if(!blob||blob.type!=='image/webp'){/* No WebP encoder (e.g. Safari): high-quality JPEG on white. */const flat=document.createElement('canvas');flat.width=canvas.width;flat.height=canvas.height;const context=flat.getContext('2d');context.fillStyle='#ffffff';context.fillRect(0,0,flat.width,flat.height);context.drawImage(canvas,0,0);blob=await encode(flat,'image/jpeg',EXPORT_PUBLISH.jpegQuality)}
+    return blob?await blobData(blob):null;
+  }finally{bitmap.close()}
+}
+
+/* One frame through the chosen profile. Returns the Data URL to inline plus what happened to it. */
+async function exportFrameImage(src,profile,signal){
+  const original=await imageData(src,signal),result={image:original,originalBytes:0,removed:[],recompressed:false};
+  if(profile==='archive'||!/^data:image\//i.test(original))return result;
+  const {mime,bytes}=dataURLBytes(original);if(!bytes)return result;
+  result.originalBytes=bytes.length;
+  if(!imageBytesKind(bytes))return result;/* SVG and friends carry no binary metadata blocks */
+  const cleaned=stripImageMetadata(bytes);result.removed=cleaned.removed;
+  let image=cleaned.removed.length?await blobData(new Blob([cleaned.bytes],{type:mime})):original;
+  if(profile==='publish'){if(signal?.aborted)throw new DOMException('已取消','AbortError');const compact=await compactExportImage(cleaned.bytes,mime).catch(()=>null);if(compact&&compact.length<image.length){image=compact;result.recompressed=true}}
+  result.image=image;return result;
+}
+
+async function prepareExportBooks(ids,t,onProgress,signal,options={}){
+  const requested=exportImageProfile(options.imageProfile),budget=options.inlineBudget>0?options.inlineBudget:EXPORT_INLINE_BUDGET,total=ids.map(bookBy).filter(Boolean).reduce((n,b)=>n+b.totalSteps,0);
+  const attempt=async profile=>{
+    const selected=ids.map(bookBy).filter(Boolean).map(clone),stats={requested,profile,autoCompressed:requested==='auto'&&profile==='publish',frames:0,scrubbed:0,recompressed:0,originalBytes:0,inlineBytes:0};let done=0,fallbacks=0,bytes=0;onProgress?.(0,total,stats);
+    for(const b of selected){const frames=[];for(const s of slots(b).sort((a,b)=>a.stepIndex-b.stepIndex)){
+      if(signal?.aborted)throw new DOMException('已取消','AbortError');
+      let image,note=s.pending?'尚未生成':'';
+      if(s.pending)image=missingArtworkDataURL();else {let prepared;try{prepared=await exportFrameImage(s.image,profile,signal)}catch(e){if(signal?.aborted)throw new DOMException('已取消','AbortError');throw Error('第 '+(s.stepIndex+1)+' 幕原图无法读取，请修复图片后再导出。不会用示例图替代。')}image=prepared.image;stats.frames++;stats.originalBytes+=prepared.originalBytes;if(prepared.removed.length)stats.scrubbed++;if(prepared.recompressed)stats.recompressed++}
+      bytes+=image.length;stats.inlineBytes=bytes;
+      /* Reader-safety ceiling for one HTML file. 「自动」retries the whole book as「轻量发布」instead of failing. */
+      if(bytes>budget){if(requested==='auto'&&profile!=='publish')return null;throw Error(exportBudgetMessage(profile))}
+      if(!/^data:image\//i.test(image))throw Error('导出图片格式不合法。');
+      let palette;if(t.layout==='artbook'){try{palette=await imagePalette(image)}catch(e){palette=[t.options.accent,t.options.background,t.options.paper]}}
+      frames.push({...s,...await measureArtwork(image,signal),image,imageNote:note,palette});done++;onProgress?.(done,total,stats);await new Promise(resolve=>setTimeout(resolve,0));
+    }b.steps=frames}
+    return {books:selected,fallbacks,stats};
+  };
+  return await attempt(requested==='auto'?'clean':requested)||attempt('publish');
 }
 
 function readExportDraft(){
@@ -78,6 +159,7 @@ function readExportDraft(){
   if($('#export-prompts'))d.showPrompts=$('#export-prompts').checked;
   if($('#export-embed-storyboard'))d.embedStoryboard=$('#export-embed-storyboard').checked;
   if($('#export-embed-variables'))d.embedVariables=$('#export-embed-variables').checked;
+  if($('#export-image-profile')){d.imageProfile=exportImageProfile($('#export-image-profile').value);syncExportImageProfileHelp()}
 }
 
 function showExportHub(ids,preserve=false){
@@ -91,7 +173,7 @@ function renderExportHub(){
   if(!$('#export-hub-root'))return;
   let d=studioUI.exportDraft,t=exportTemplateBy(d.templateId)||state.exportTemplates[0];if(!t){$('#export-hub-root').innerHTML='<p class="help">没有展示模板，请导入独立模板后再导出。</p>'+btn('导入模板','upload','et-import')+portableExportButtons();return}d.templateId=t.id;
   const b=bookBy(ui.exportIds[0]);
-  $('#export-hub-root').innerHTML=`<div class="export-hub"><section><div class="export-identity">${imgTag(coverImage(b),b.title,`data-book="${b.id}" data-step="0"`)}<div class="grow"><strong>${ui.exportIds.length===1?esc(b.title):ui.exportIds.length+' 本画册合集'}</strong><p>${ui.exportIds.reduce((n,id)=>n+bookBy(id).totalSteps,0)} 幕分镜 · 全内联离线 HTML</p></div></div>${field('画册导出模板',`<select id="export-template-select" aria-label="选择画册导出 HTML 模板">${state.exportTemplates.map(x=>opt(x.id,x.title+(x.builtin?' · 内置':''),t.id)).join('')}</select>`)}<p class="export-template-description">${esc(t.description||'自定义画册 HTML 模板')}<br><span class="tiny">${exportLayouts[t.layout]} · ${esc(t.author)} · v${esc(t.version)}</span></p><div class="export-mobile-actions">${btn('自定义此模板','edit','et-open-selected','','small')}${btn('导入模板','upload','et-import','','small')}${featureEnabled('marketplace')?btn('从市场下载','box','et-export-market','','small'):''}</div><div class="divider"></div><div class="grid2">${field('本次主题色',`<input id="export-color" type="color" value="${esc(d.themeColor||t.options.accent)}" aria-label="导出主题色">`)}${field('分镜框线 / px',input('border',d.border,'number','id="export-border" min="0" max="8"'))}</div>${field('创作者签名',input('signature',d.signature,'text','id="export-signature"'))}<label class="row small soft" style="margin-bottom:12px"><input type="checkbox" id="export-captions" ${d.showCaptions?'checked':''}>显示剧情台词</label><label class="row small soft"><input type="checkbox" id="export-prompts" ${d.showPrompts?'checked':''}>附带提示词水印</label><div class="help" style="margin-top:14px">单文件 HTML 使用所选模板；ZIP 提供简洁阅读版与无损原图；PDF 为逐页图片画册。后两者不附带源素材或提示词，不改动原作品。</div>${albumEmbeddingControls()}</section><section class="export-hub-preview"><div class="preview-toolbar">${icon('eye','sm')}效果预览 · 首本画册前 3 幕<span class="spacer"></span>${icon('shield','sm')}</div><iframe id="export-preview" sandbox="allow-scripts" referrerpolicy="no-referrer" title="离线画册导出预览"></iframe><div class="preview-toolbar"><span>图片 / 样式 / 翻页脚本全部内联</span></div></section></div><div class="modal-footer"><span id="export-status" class="grow validation-result">按分镜顺序导出；未生成画面显示问号，原图读取失败时停止导出。</span>${portableExportButtons()}${btn('管理模板库','book','et-open-library','','small')}${btn('取消导出','close','export-cancel','hidden','small')}${btn('生成并下载画册','download','compile-export',studioUI.exportBusy?'disabled':'','primary')}</div>`;
+  $('#export-hub-root').innerHTML=`<div class="export-hub"><section><div class="export-identity">${imgTag(coverImage(b),b.title,`data-book="${b.id}" data-step="0"`)}<div class="grow"><strong>${ui.exportIds.length===1?esc(b.title):ui.exportIds.length+' 本画册合集'}</strong><p>${ui.exportIds.reduce((n,id)=>n+bookBy(id).totalSteps,0)} 幕分镜 · 全内联离线 HTML</p></div></div>${field('画册导出模板',`<select id="export-template-select" aria-label="选择画册导出 HTML 模板">${state.exportTemplates.map(x=>opt(x.id,x.title+(x.builtin?' · 内置':''),t.id)).join('')}</select>`)}<p class="export-template-description">${esc(t.description||'自定义画册 HTML 模板')}<br><span class="tiny">${exportLayouts[t.layout]} · ${esc(t.author)} · v${esc(t.version)}</span></p><div class="export-mobile-actions">${btn('自定义此模板','edit','et-open-selected','','small')}${btn('导入模板','upload','et-import','','small')}${featureEnabled('marketplace')?btn('从市场下载','box','et-export-market','','small'):''}</div><div class="divider"></div><div class="grid2">${field('本次主题色',`<input id="export-color" type="color" value="${esc(d.themeColor||t.options.accent)}" aria-label="导出主题色">`)}${field('分镜框线 / px',input('border',d.border,'number','id="export-border" min="0" max="8"'))}</div>${field('创作者签名',input('signature',d.signature,'text','id="export-signature"'))}<label class="row small soft" style="margin-bottom:12px"><input type="checkbox" id="export-captions" ${d.showCaptions?'checked':''}>显示剧情台词</label><label class="row small soft"><input type="checkbox" id="export-prompts" ${d.showPrompts?'checked':''}>附带提示词水印</label>${exportImageProfileControl(d)}<div class="help" style="margin-top:14px">单文件 HTML 使用所选模板；ZIP 提供简洁阅读版与图片文件；PDF 为逐页图片画册。三者都按「图片处理」输出图片；后两者不附带源素材或提示词，不改动原作品。</div>${albumEmbeddingControls()}</section><section class="export-hub-preview"><div class="preview-toolbar">${icon('eye','sm')}效果预览 · 首本画册前 3 幕<span class="spacer"></span>${icon('shield','sm')}</div><iframe id="export-preview" sandbox="allow-scripts" referrerpolicy="no-referrer" title="离线画册导出预览"></iframe><div class="preview-toolbar"><span>图片 / 样式 / 翻页脚本全部内联</span></div></section></div><div class="modal-footer"><span id="export-status" class="grow validation-result">按分镜顺序导出；未生成画面显示问号，原图读取失败时停止导出。</span>${portableExportButtons()}${btn('管理模板库','book','et-open-library','','small')}${btn('取消导出','close','export-cancel','hidden','small')}${btn('生成并下载画册','download','compile-export',studioUI.exportBusy?'disabled':'','primary')}</div>`;
   updateExportPreview();
 }
 
@@ -106,14 +188,15 @@ async function compileCustomExport(){
   const ids=[...ui.exportIds],controller=new AbortController();studioUI.exportController=controller;studioUI.exportBusy=true;
   const buttons=$$('[data-act="compile-export"],[data-act="presentation-export"]');buttons.forEach(b=>b.disabled=true);
   const cancel=$('[data-act="export-cancel"]');if(cancel)cancel.hidden=false;
-  try{const {books}=await prepareExportBooks(ids,t,(done,total)=>{const s=$('#export-status');if(s)s.textContent='正在读取完整原图 '+done+' / '+total;},controller.signal);
+  try{const {books,stats}=await prepareExportBooks(ids,t,(done,total,s)=>{const el=$('#export-status');if(el)el.textContent=exportProgressText(done,total,s);},controller.signal,{imageProfile:d.imageProfile});
     if(controller.signal.aborted)throw new DOMException('已取消','AbortError');
     if(ids.some(id=>!bookBy(id)))throw Error('画册已删除，导出已停止。');
+    d.effectiveImageProfile=stats.profile;/* shared reference images inside the metadata block follow the frames */
     const html=await attachAlbumMetadata(compileTemplateDocument(t,books,d),books,d,controller.signal);await new Promise(resolve=>setTimeout(resolve,0));
     if(controller.signal.aborted)throw new DOMException('已取消','AbortError');
     const destination=await deliverExportHTML(html,t,books);
-    const status=$('#export-status');if(status){status.className='grow validation-result ok';status.textContent=destination?'已保存到 '+destination:'完整画册已下载，可离线打开。'}
-    toast(destination?'离线画册已写入「画册 / 导出」文件夹。':'离线画册已下载，原图分辨率保留。');
+    const status=$('#export-status');if(status){status.className='grow validation-result ok';status.textContent=(destination?'已保存到 '+destination:'完整画册已下载，可离线打开。')+' '+exportImageSummary(stats)}
+    toast(destination?'离线画册已写入「画册 / 导出」文件夹。':stats.profile==='publish'?'离线画册已下载，图片已按轻量发布压缩并清洗元数据。':'离线画册已下载，原图分辨率保留。');
   }catch(error){const status=$('#export-status');if(status){status.className='grow validation-result'+(controller.signal.aborted?'':' error');status.textContent=controller.signal.aborted?'导出已取消，原画册未改变。':'导出失败：'+error.message}if(!controller.signal.aborted)throw error}
   finally{studioUI.exportBusy=false;studioUI.exportController=null;buttons.forEach(b=>{if(b.isConnected)b.disabled=false});if(cancel?.isConnected)cancel.hidden=true}
 }
@@ -154,15 +237,16 @@ async function measureArtwork(src,signal){if(signal?.aborted)throw new DOMExcept
 async function exportPortable(format){
  if(studioUI.exportBusy)return;
  studioUI.exportBusy=true;const status=$('#export-status');
- try{if(status)status.textContent='正在准备 '+format.toUpperCase()+'；原图资源包不受 HTML 内联预算限制。';if(!await savePythonWorkspace())throw Error('请先完成保存，再导出。');
+ try{readExportDraft();const imageProfile=exportImageProfile(studioUI.exportDraft?.imageProfile);if(status)status.textContent='正在准备 '+format.toUpperCase()+'；资源包不受 HTML 内联预算限制。';if(!await savePythonWorkspace())throw Error('请先完成保存，再导出。');
  /* C7: the export slot is exclusive; a 409 means another export is still streaming, so back off and retry instead of surfacing it as a failure. */
- let response;for(let attempt=0;attempt<4;attempt++){response=await fetch('/api/export/portable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({format,albumIds:ui.exportIds,validateOnly:true})});if(response.status!==409||attempt===3)break;if(status)status.textContent='另一份导出仍在传输，'+(1.5*(attempt+1))+' 秒后自动重试…';await new Promise(r=>setTimeout(r,1500*(attempt+1)))}
+ let response;for(let attempt=0;attempt<4;attempt++){response=await fetch('/api/export/portable',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({format,albumIds:ui.exportIds,imageProfile,validateOnly:true})});if(response.status!==409||attempt===3)break;if(status)status.textContent='另一份导出仍在传输，'+(1.5*(attempt+1))+' 秒后自动重试…';await new Promise(r=>setTimeout(r,1500*(attempt+1)))}
  if(!response.ok){const error=await response.json().catch(()=>({}));throw Error(error.error||'导出失败')}
  const frame=document.createElement('iframe');frame.name=uid('export');frame.hidden=true;frame.onload=()=>{try{const text=frame.contentDocument.body.textContent;if(text.trim().startsWith('{')){const result=JSON.parse(text);if(result.error){toast(result.error,'error');if(status)status.textContent=result.error}}}catch{}};document.body.append(frame);
- const form=document.createElement('form');form.method='POST';form.action='/api/export/portable';form.target=frame.name;form.hidden=true;for(const [name,value] of Object.entries({format,albumIds:JSON.stringify(ui.exportIds),_csrf:document.querySelector('meta[name="mio-csrf"]')?.content||''})){const input=document.createElement('input');input.name=name;input.value=value;form.append(input)}document.body.append(form);form.submit();form.remove();setTimeout(()=>frame.remove(),600000);
- if(status)status.textContent=format==='zip'?'已交给浏览器下载管理器，准备完成后开始下载。请解压整个资源包，打开 index.html。':'已交给浏览器下载管理器。PDF 为逐页图片，非 JPEG 原图以高质量 JPEG 嵌入。';
+ const form=document.createElement('form');form.method='POST';form.action='/api/export/portable';form.target=frame.name;form.hidden=true;for(const [name,value] of Object.entries({format,albumIds:JSON.stringify(ui.exportIds),imageProfile,_csrf:document.querySelector('meta[name="mio-csrf"]')?.content||''})){const input=document.createElement('input');input.name=name;input.value=value;form.append(input)}document.body.append(form);form.submit();form.remove();setTimeout(()=>frame.remove(),600000);
+ const treatment=imageProfile==='archive'?'图片原样写入，含内嵌工作流元数据。':imageProfile==='publish'?'图片已按轻量发布压缩并清洗元数据。':'图片保持原分辨率，已清洗工作流元数据。';
+ if(status)status.textContent=(format==='zip'?'已交给浏览器下载管理器，准备完成后开始下载。请解压整个资源包，打开 index.html。':'已交给浏览器下载管理器。PDF 为逐页图片，非 JPEG 图片以高质量 JPEG 嵌入。')+treatment;
  setTimeout(()=>{studioUI.exportBusy=false},3000)
  }catch(error){studioUI.exportBusy=false;toast(error.message,'error');if(status)status.textContent=error.message}
 }
 
-function portableExportButtons(){return `${btn('ZIP 原图资源包','download','portable-export','data-format="zip"','small')}${btn('PDF 图片画册','download','portable-export','data-format="pdf"','small')}<p class="help">ZIP：简洁阅读版＋无损原图；PDF：逐页图片。无需内联整册图片。</p>`}
+function portableExportButtons(){return `${btn('ZIP 图片资源包','download','portable-export','data-format="zip"','small')}${btn('PDF 图片画册','download','portable-export','data-format="pdf"','small')}<p class="help">ZIP：简洁阅读版＋图片文件；PDF：逐页图片。两者不受单文件内联预算限制，图片同样按「图片处理」输出。</p>`}

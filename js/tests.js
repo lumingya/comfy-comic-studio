@@ -574,6 +574,100 @@ add('decorateDisplayPreferences does not duplicate into grouped settings categor
   }
 });
 
+/* Export image profiles: lossless metadata scrubbing must match backend/mio_export_images.py byte for byte. */
+const bytesOf = (...parts) => context.concatBytes(parts.map(part => typeof part === 'string' ? context.asciiBytes(part) : part instanceof Uint8Array ? part : new Uint8Array(part)));
+function tiffWithOrientation(orientation) {
+  // Two IFD0 entries (Orientation + ResolutionUnit) so this is a "real" EXIF block, not the minimal one cleaning writes.
+  return bytesOf('MM', [0, 0x2a, 0, 0, 0, 8, 0, 2], [0x01, 0x12, 0, 3, 0, 0, 0, 1, 0, orientation, 0, 0], [0x01, 0x28, 0, 3, 0, 0, 0, 1, 0, 2, 0, 0], [0, 0, 0, 0]);
+}
+
+add('export image profiles normalise to the shared vocabulary and keep auto as the default', () => {
+  assert.deepEqual(Object.keys(vm.runInContext('exportImageProfiles', context)).sort(), ['archive', 'auto', 'clean', 'publish']);
+  assert.equal(context.exportImageProfile(undefined), 'auto');
+  assert.equal(context.exportImageProfile('lossy'), 'auto');
+  assert.equal(context.exportImageProfile('publish'), 'publish');
+  assert.equal(vm.runInContext('EXPORT_INLINE_BUDGET', context), 128 * 1024 * 1024);
+  assert.match(context.exportBudgetMessage('clean'), /轻量发布/);
+  assert.match(context.exportBudgetMessage('publish'), /ZIP/);
+  assert.match(context.exportImageSummary({ profile: 'publish', autoCompressed: true, scrubbed: 3, recompressed: 3, originalBytes: 300 * 1024 * 1024, inlineBytes: 20 * 1024 * 1024 }), /已自动改用轻量发布/);
+  assert.match(context.exportImageSummary({ profile: 'archive' }), /工作流/);
+  assert.equal(context.exportProgressText(2, 8, { profile: 'clean' }), '正在清洗并内联原图 2 / 8');
+});
+
+add('PNG cleaning drops ComfyUI workflow/prompt text chunks without touching image chunks', () => {
+  const iend = context.pngChunk('IEND', new Uint8Array(0));
+  assert.deepEqual([...iend.subarray(8)], [0xae, 0x42, 0x60, 0x82], 'PNG CRC-32 must match the well-known IEND checksum');
+  const ihdr = context.pngChunk('IHDR', new Uint8Array([0, 0, 0, 2, 0, 0, 0, 2, 8, 2, 0, 0, 0]));
+  const idat = context.pngChunk('IDAT', new Uint8Array([120, 156, 99, 96, 0, 0, 0, 2, 0, 1]));
+  const workflow = context.pngChunk('tEXt', bytesOf('workflow\0', '{"nodes":[{"type":"KSampler"}]}'));
+  const prompt = context.pngChunk('iTXt', bytesOf('prompt\0\0\0\0\0', 'secret positive prompt'));
+  const signature = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const dirty = bytesOf(signature, ihdr, workflow, idat, prompt, iend, 'trailing junk after IEND');
+  assert.deepEqual(plain(context.imageMetadataKeys(dirty)), ['tEXt:workflow', 'iTXt:prompt']);
+  const { bytes, removed } = context.stripImageMetadata(dirty);
+  assert.deepEqual(plain(removed), ['tEXt:workflow', 'iTXt:prompt']);
+  assert.deepEqual([...bytes], [...bytesOf(signature, ihdr, idat, iend)], 'only metadata chunks and the trailing junk disappear');
+  assert.equal(context.asciiAt(bytes, 0, bytes.length).includes('KSampler'), false);
+  const clean = bytesOf(signature, ihdr, idat, iend);
+  assert.equal(context.stripImageMetadata(clean).bytes, clean, 'already clean files are returned untouched, not rewritten');
+  const oriented = bytesOf(signature, ihdr, context.pngChunk('eXIf', tiffWithOrientation(6)), idat, iend);
+  const kept = context.stripImageMetadata(oriented).bytes;
+  assert.equal(context.pngChunks(kept).map(c => c.type).join(','), 'IHDR,eXIf,IDAT,IEND');
+  assert.equal(context.exifOrientation(context.pngChunks(kept)[1].data), 6, 'orientation survives through the minimal EXIF chunk');
+  assert.deepEqual(plain(context.imageMetadataKeys(kept)), [], 'the minimal orientation block is not reported as leaking metadata');
+});
+
+add('JPEG cleaning removes EXIF/XMP/COM segments but keeps scan data and colour segments intact', () => {
+  const segment = (marker, payload) => bytesOf([0xff, marker, (payload.length + 2) >> 8, (payload.length + 2) & 255], payload);
+  const app0 = segment(0xe0, bytesOf('JFIF\0', [1, 1, 0, 0, 1, 0, 1, 0, 0]));
+  const exif = segment(0xe1, bytesOf('Exif\0\0', tiffWithOrientation(6)));
+  const xmp = segment(0xe1, bytesOf('http://ns.adobe.com/xap/1.0/\0', '<x:xmpmeta>leak</x:xmpmeta>'));
+  const icc = segment(0xe2, bytesOf('ICC_PROFILE\0', [1, 1, 9, 9, 9]));
+  const adobe = segment(0xee, bytesOf('Adobe', [0, 100, 0, 0, 0, 0, 1]));
+  const comment = segment(0xfe, bytesOf('parameters: masterpiece, secret lora'));
+  const dqt = segment(0xdb, new Uint8Array(65));
+  const scan = bytesOf(segment(0xda, new Uint8Array([1, 1, 0, 0, 63, 0])), [0x12, 0xff, 0x00, 0x34, 0xff, 0xd0, 0x56]);
+  const eoi = new Uint8Array([0xff, 0xd9]);
+  const dirty = bytesOf([0xff, 0xd8], app0, exif, xmp, icc, comment, adobe, dqt, scan, eoi, 'appended payload');
+  assert.deepEqual(plain(context.imageMetadataKeys(dirty)), ['EXIF', 'XMP', 'COM']);
+  const { bytes, removed } = context.stripImageMetadata(dirty);
+  assert.deepEqual(plain(removed), ['EXIF', 'XMP', 'COM']);
+  const text = context.asciiAt(bytes, 0, bytes.length);
+  assert.equal(text.includes('secret lora') || text.includes('xmpmeta'), false);
+  assert.ok(text.includes('ICC_PROFILE') && text.includes('Adobe'), 'colour management segments are not metadata');
+  const minimal = bytesOf([0xff, 0xe1, 0, 34], 'Exif\0\0', context.minimalExif(6));
+  assert.deepEqual([...bytes], [...bytesOf([0xff, 0xd8], app0, minimal, icc, adobe, dqt, scan, eoi)], 'orientation is re-emitted right after APP0; trailing payload is gone');
+  assert.deepEqual(plain(context.imageMetadataKeys(bytes)), []);
+  assert.equal(context.stripImageMetadata(bytes).bytes, bytes, 'second pass is a no-op');
+  const bare = bytesOf([0xff, 0xd8], app0, dqt, scan, eoi);
+  assert.equal(context.stripImageMetadata(bare).bytes, bare);
+});
+
+add('WebP cleaning drops EXIF/XMP chunks, clears VP8X flags and fixes the RIFF size', () => {
+  const chunk = (fourcc, payload) => bytesOf(fourcc, context.u32LE(payload.length), payload, payload.length & 1 ? [0] : []);
+  const vp8x = chunk('VP8X', new Uint8Array([0x0c | 0x10, 0, 0, 0, 1, 0, 0, 1, 0, 0]));
+  const vp8l = chunk('VP8L', new Uint8Array([0x2f, 1, 0, 0, 0]));
+  const exif = chunk('EXIF', tiffWithOrientation(8));
+  const xmp = chunk('XMP ', bytesOf('<x:xmpmeta>leak</x:xmpmeta>'));
+  const riff = body => bytesOf('RIFF', context.u32LE(body.length + 4), 'WEBP', body);
+  const dirty = riff(bytesOf(vp8x, vp8l, exif, xmp));
+  assert.deepEqual(plain(context.imageMetadataKeys(dirty)), ['EXIF', 'XMP']);
+  const { bytes, removed } = context.stripImageMetadata(dirty);
+  assert.deepEqual(plain(removed), ['EXIF', 'XMP']);
+  const chunks = context.webpChunks(bytes);
+  assert.deepEqual(plain(chunks.map(c => c.fourcc)), ['VP8X', 'VP8L', 'EXIF']);
+  assert.equal(chunks[0].data[0], 0x10 | 0x08, 'XMP flag cleared, alpha kept, EXIF flag kept for the orientation-only block');
+  assert.equal(context.exifOrientation(chunks[2].data), 8);
+  assert.equal(context.readU32LE(bytes, 4), bytes.length - 8, 'RIFF size covers the rewritten body');
+  assert.deepEqual(plain(context.imageMetadataKeys(bytes)), []);
+  const simple = riff(chunk('VP8L', new Uint8Array([0x2f, 1, 0, 0, 0])));
+  assert.equal(context.stripImageMetadata(simple).bytes, simple, 'simple-format WebP has no metadata and is untouched');
+  const flat = riff(bytesOf(chunk('VP8X', new Uint8Array([0x0c, 0, 0, 0, 1, 0, 0, 1, 0, 0])), vp8l, chunk('EXIF', tiffWithOrientation(1)), xmp));
+  const upright = context.stripImageMetadata(flat).bytes;
+  assert.deepEqual(plain(context.webpChunks(upright).map(c => c.fourcc)), ['VP8X', 'VP8L'], 'an upright EXIF block is dropped entirely');
+  assert.equal(context.webpChunks(upright)[0].data[0], 0, 'flags fully cleared when no orientation is needed');
+});
+
 async function main() {
   let failed = 0;
   for (const test of tests) {

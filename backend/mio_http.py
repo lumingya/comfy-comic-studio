@@ -72,7 +72,7 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
                 if not 0 < size <= 16384:
                     raise ValueError("invalid form size")
                 raw = self.rfile.read(size)
-                fields = urllib.parse.parse_qs(raw.decode("utf-8"), max_num_fields=4)
+                fields = urllib.parse.parse_qs(raw.decode("utf-8"), max_num_fields=6)
                 supplied = fields.get("_csrf", [""])[0]
                 self.rfile = io.BytesIO(raw)
             except (ValueError, UnicodeError):
