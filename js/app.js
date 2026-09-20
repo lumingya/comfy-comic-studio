@@ -964,7 +964,7 @@ document.addEventListener('input',e=>{const el=e.target;try{
   if(el.dataset.v3Binding){const b=state.settings.comfy.bindings.find(b=>b.id===el.dataset.id);if(b){const k=el.dataset.v3Binding;b[k]=el.type==='checkbox'?el.checked:el.value;if(k==='path'){b.autoField=false;b.warning=''}save();if($('#wm-binding-rows'))$('#wm-binding-rows').innerHTML=renderMapperRows()}}
   if(el.dataset.v3Output){state.settings.comfy.outputNodeId=el.value;save()}
   if(el.id==='wm-binding-search'){mapperUI.search=el.value;$('#wm-binding-rows').innerHTML=renderMapperRows()}
-  if(el.id==='wm-library-search'){const query=el.value.toLowerCase();$$('.workflow-library-item').forEach(item=>item.hidden=!item.textContent.toLowerCase().includes(query))}
+  if(el.id==='wm-library-search'){const query=el.value.trim().toLowerCase();let shown=0;$$('.workflow-library-item').forEach(item=>{const hit=item.textContent.toLowerCase().includes(query);item.hidden=!hit;if(hit)shown++});const list=$('.workflow-items');if(list){let empty=list.querySelector('.choice-empty');if(!empty){empty=document.createElement('p');empty.className='help choice-empty';list.append(empty)}empty.hidden=shown>0;empty.textContent=localeString('没有匹配「{query}」的工作流',{query:el.value.trim()})}}
   if(el.id==='v3-node-search'){createUI.nodeSearch=el.value;$('#v3-node-results').innerHTML=nodeBrowserItems(state.settings.comfy.workflow,el.value.toLowerCase())}
   if(el.dataset.v3Backend){state.settings.backend[el.dataset.v3Backend]=el.value;backendRuntime.connected=false;backendRuntime.error='';state.settings.backend.enabled=false;persistBackendLocation();save()}
   if(el.id==='v3-backend-token')createUI.backendToken=el.value;

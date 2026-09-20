@@ -728,6 +728,46 @@ add('modal backdrops no longer run a full-viewport backdrop-filter blur', () => 
   assert.doesNotMatch(css, /backdrop-filter:\s*blur/, 'no blur backdrop filters remain anywhere in the stylesheet');
 });
 
+/* ---- Search boxes and honest choice filtering ---- */
+add('searchInput never carries a name and always opts out of browser autofill', () => {
+  const html = context.searchInput({ id: 'x-search', value: 'a"b', placeholder: '输入工作流名称', label: '搜索已保存的工作流', controls: 'x-list' });
+  assert.match(html, /^<input type="search"/);
+  assert.doesNotMatch(html, /\sname=/, 'name= would key the field into cross-site autocomplete history');
+  for (const attr of ['autocomplete="off"', 'autocorrect="off"', 'autocapitalize="off"', 'spellcheck="false"', 'aria-controls="x-list"', 'aria-label="搜索已保存的工作流"', 'value="a&quot;b"']) assert.ok(html.includes(attr), attr);
+  assert.ok(context.searchInput({ placeholder: 'p' }).includes('aria-label="p"'), 'placeholder doubles as the accessible name when no label is given');
+});
+
+add('every search box rendered by the UI is opted out of autofill', () => {
+  const sources = fs.readdirSync(__dirname).filter(name => name.endsWith('.js') && !['tests.js', 'build.js'].includes(name));
+  const offenders = [];
+  for (const name of sources) {
+    const source = fs.readFileSync(path.join(__dirname, name), 'utf8');
+    for (const tag of source.match(/<input\b[^>]*>/g) || []) {
+      const searchy = /type="search"/.test(tag) || /placeholder="[^"]*(?:搜索|查找|Search)/.test(tag) || /id="[^"]*search[^"]*"/.test(tag);
+      if (searchy && !/autocomplete="off"/.test(tag)) offenders.push(name + ': ' + tag.slice(0, 80));
+    }
+  }
+  assert.deepEqual(offenders, []);
+});
+
+add('filterChoices only returns matches and reports the selection as state instead of pinning it', () => {
+  const items = [{ id: 'a', title: 'Anime · 基础图像管线' }, { id: 'b', title: 'Realistic · 有效种子映射' }, { id: 'c', title: 'Sketch · 线稿' }];
+  const all = context.filterChoices(items, '', 'a');
+  assert.deepEqual(all.options.map(o => o.id), ['a', 'b', 'c']);
+  assert.equal(all.selectedVisible, true);
+  const narrowed = context.filterChoices(items, '  有效种子 ', 'a');
+  assert.deepEqual(narrowed.options.map(o => o.id), ['b'], 'the current selection is not injected into the results');
+  assert.equal(narrowed.selectedVisible, false);
+  assert.equal(narrowed.selectedLabel, 'Anime · 基础图像管线', 'the selection is still available for a status line');
+  assert.deepEqual([narrowed.matched, narrowed.total, narrowed.query], [1, 3, '有效种子']);
+  const none = context.filterChoices(items, 'zzz', 'a');
+  assert.equal(none.empty, true);
+  assert.deepEqual(none.options, []);
+  assert.equal(context.filterChoices(items, 'REALISTIC', '').matched, 1, 'matching is case-insensitive');
+  assert.equal(context.filterChoices(items, 'b', 'b', { match: item => item.id }).options[0].selected, true);
+  assert.equal(context.filterChoices(null, 'x', 'a').total, 0);
+});
+
 async function main() {
   let failed = 0;
   for (const test of tests) {

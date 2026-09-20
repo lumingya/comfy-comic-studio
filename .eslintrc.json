@@ -1049,7 +1049,15 @@
     "stripImageMetadata": "writable",
     "dataURLBytes": "writable",
     "compactExportImage": "writable",
-    "exportFrameImage": "writable"
+    "exportFrameImage": "writable",
+    "searchInput": "writable",
+    "filterChoices": "writable",
+    "designerWorkflowChoices": "writable",
+    "designerWorkflowListSize": "writable",
+    "designerWorkflowOptionsHTML": "writable",
+    "designerWorkflowStatusHTML": "writable",
+    "designerWorkflowPickerHTML": "writable",
+    "refreshDesignerWorkflowPicker": "writable"
   },
   "parserOptions": {
     "ecmaVersion": 2021,

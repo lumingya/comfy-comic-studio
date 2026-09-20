@@ -169,7 +169,12 @@ function extendStudioLocaleCatalog(catalog){Object.assign(catalog.messages,{
   '真实视觉 API · 尚未进行带图测试':'Vision API · image test not run','真实模式 · 尚未填写完整 API':'Vision API · configuration incomplete',
   '所有创作，只属于你。':'Your work belongs to you.',
   '原生中英文界面，无需联网翻译。':'Built-in Chinese and English. No translation service required.'
-});return extendCurrentLocaleCatalog(catalog)}
+});
+Object.assign(catalog.messages,{
+  /* Shared search + choice primitives */
+  '清除搜索':'Clear search','共 {total} 个工作流':'{total} workflows','匹配 {matched} / {total} 个工作流':'{matched} / {total} workflows match','没有匹配「{query}」的工作流':'No workflows match “{query}”','还没有保存的工作流':'No saved workflows yet','还没有保存的工作流；请先在「工作流与 API 配置」中保存。':'No saved workflows yet; save one under Workflow & API configuration first.','当前选择「{title}」不在筛选结果中，仍然有效。':'The current choice “{title}” is outside these results and still applies.','没有匹配「{query}」的模板。':'No templates match “{query}”.','搜索预设':'Search presets'
+});
+return extendCurrentLocaleCatalog(catalog)}
 
 function localeString(source,values={}){return displayUI.locale?displayUI.locale.text(source,values):String(source).replace(/\{([a-zA-Z][a-zA-Z0-9_]*)\}/g,(m,k)=>Object.hasOwn(values,k)?values[k]:m)}
 
