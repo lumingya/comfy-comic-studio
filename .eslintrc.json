@@ -1251,7 +1251,9 @@
     "insertTextAtCaret": "writable",
     "renderStoryWorkshopMobile": "writable",
     "workshopMobile": "writable",
-    "workshopFrameSummary": "writable"
+    "workshopFrameSummary": "writable",
+    "installDesktopSelection": "readonly",
+    "designerPresetsStatus": "readonly"
   },
   "parserOptions": {
     "ecmaVersion": 2021,

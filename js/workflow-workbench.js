@@ -478,7 +478,7 @@ function renderWorkflowRailItems(c = state.settings.comfy) {
         dup = dupes.has(String(p.title || "").trim().toLowerCase());
       return `<div class="workflow-library-item wf-item ${isCurrent ? "active" : ""} ${isPicked ? "is-picked" : ""}" role="listitem" data-workflow-id="${esc(p.id)}">
         <input type="checkbox" class="sel-cbox" ${isPicked ? "checked" : ""} data-act="ws-lib-pick" data-id="${esc(p.id)}" aria-labelledby="wf-sr-pick wf-item-title-${esc(p.id)}">
-        <button type="button" class="wf-item-body" data-act="${mapperUI.libSelMode ? "ws-lib-pick" : "ws-select"}" data-id="${esc(p.id)}" aria-current="${isCurrent ? "true" : "false"}" title="${esc(title)}">
+        <button type="button" class="wf-item-body" data-act="ws-select" data-id="${esc(p.id)}" aria-current="${isCurrent ? "true" : "false"}" title="${esc(title)}">
           <strong class="wf-item-title" id="wf-item-title-${esc(p.id)}" data-user-content>${esc(title)}</strong>
           <span class="wf-item-meta"><span>${nodes} 个节点 · ${bindings} 项映射</span>${referenced ? '<em class="wf-badge ref">画册在用</em>' : ""}${dup ? '<em class="wf-badge dup">重名</em>' : ""}</span>
         </button>
@@ -656,7 +656,7 @@ function renderMapperRow(b, c, issues, selected) {
       <input type="checkbox" class="sel-cbox" ${picked ? "checked" : ""} data-act="wm-pick" data-id="${esc(b.id)}" aria-labelledby="wf-sr-pick wm-name-${esc(b.id)}">
       ${glyph}
     </span>
-    <button type="button" class="wm-row-select wf-row-main" data-act="${mapperUI.selMode ? "wm-pick" : "wm-select"}" data-id="${esc(b.id)}" aria-pressed="${isSel}">
+    <button type="button" class="wm-row-select wf-row-main" data-act="wm-select" data-id="${esc(b.id)}" aria-pressed="${isSel}">
       <span class="wf-row-name" id="wm-name-${esc(b.id)}" ${b.label ? "data-user-content" : ""}>${esc(b.label || "未命名映射")}</span>
       <span class="wf-row-target mono">${b.nodeId ? `<b>#${esc(b.nodeId)}</b><span class="wf-node" data-user-content>${esc(node ? workflowNodeLabel(c.workflow, b.nodeId) : "节点不存在")}</span>` : "<b>未指定节点</b>"}<i>·</i><code>${esc(b.path || "未指定字段")}</code></span>
     </button>

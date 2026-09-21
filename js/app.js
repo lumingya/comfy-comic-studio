@@ -1338,7 +1338,7 @@ installCollectionDisplay();
 installWorkspaceUpgrade();
 
 installOrganizationTools();
-installBrushSelection();
+
 
 installImageProviders();
 

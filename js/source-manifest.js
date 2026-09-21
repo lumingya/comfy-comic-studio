@@ -27,6 +27,7 @@ module.exports = {
     "contextual-sharing",
     "album-metadata",
     "workflow-workbench",
+    "desktop-selection",
     "app"
   ],
   "architecture": "Classic scripts in dependency order; feature declarations precede shared UI state; app installs at the end."
