@@ -1192,3 +1192,7 @@ select.choice-list:focus-visible{border-color:var(--accent2);box-shadow:0 0 0 3p
 @media(max-width:980px){.designer-columns,.designer-naming,.canvas-environment .designer-columns{grid-template-columns:minmax(0,1fr)}.designer-side{position:static}}
 @media(max-width:760px){#modal.assembly-designer .modal-body{padding:16px 16px 0}.designer-head{gap:10px}.designer-modes{width:100%}.designer-modes .btn{flex:1}.designer-head-note{display:none}.assembly-stepper{margin:18px 0 20px}.assembly-stepper li{gap:7px;font-size:11px}.assembly-stepper li:not(:last-child)::after{margin:0 10px}.assembly-stepper b{width:24px;height:24px;font-size:10.5px}.designer-step{min-height:300px}.designer-step-head h3{font-size:19px}.designer-card{padding:16px 16px 4px}.designer-presets{grid-template-columns:1fr}.designer-footer{flex-wrap:wrap;gap:8px}.designer-footer-hint{flex-basis:100%;order:5}.preflight-badge{position:static}.preflight-pop{left:8px;right:8px;width:auto}}
 .production-meta .production-collection{color:var(--accent)}
+
+
+/* Direct scene preview remains available while generation is running. */
+.production-page-preview{display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;min-height:44px;padding:0;border:1px solid var(--line);border-radius:5px;background:var(--panel2);cursor:zoom-in}.production-page-preview:hover{border-color:var(--accent2)}.production-page-preview:focus-visible{outline:2px solid var(--accent2);outline-offset:3px}.production-page-full-image{display:block;width:100%;max-height:75vh;object-fit:contain}

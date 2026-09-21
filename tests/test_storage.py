@@ -45,8 +45,18 @@ class ReleaseDefaultsTests(unittest.TestCase):
         cfg = comfy['comfyConfig']
         self.assertEqual(cfg['mode'], 'real')
         self.assertFalse(cfg['autoFallback'])
-        self.assertEqual(cfg['workflow']['9']['class_type'], 'SaveImage')
-        self.assertEqual(cfg['workflow']['6']['inputs']['clip'], ['4', 1])
+        # Shipped workflows may use custom nodes and arbitrary IDs, not only
+        # the original 4/6/9-node sample. Check the configured output and graph.
+        workflow = cfg['workflow']
+        self.assertTrue(workflow)
+        output = str(cfg.get('outputNodeId') or cfg['mapping']['output'])
+        self.assertIn(output, workflow)
+        self.assertIn(workflow[output]['class_type'], ('SaveImage', 'SaveImagePlus', 'PreviewImage'))
+        for node in workflow.values():
+            for value in node['inputs'].values():
+                if isinstance(value, list) and len(value) == 2 and type(value[1]) is int:
+                    self.assertIn(str(value[0]), workflow)
+                    self.assertGreaterEqual(value[1], 0)
         self.assertEqual(llm['llmConfig']['mode'], 'real')
         self.assertEqual(xml['xmlConfig']['mode'], 'real')
         for key in ('comfy', 'llm', 'xml', 'critic'):

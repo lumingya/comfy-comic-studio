@@ -49,15 +49,7 @@ function exportPreviewBooks(id){
   return [{...b,steps:slots(b).slice(0,3).map(s=>({...s,image:s.pending?missingArtworkDataURL():s.image,imageNote:s.pending?'尚未生成':''}))}];
 }
 
-function validateExportTemplate(t){
-  if(!t||typeof t!=='object')throw Error('展示模板无效。');
-  if(!['webtoon','manga','artbook','flip'].includes(t.layout))throw Error('不支持此画册版型：'+t.layout);
-  const raw=t.html;
-  if(typeof raw!=='string'||raw.length>5000000)throw Error('模板 HTML 必须为文本，且不超过 5 MB。');
-  if(!raw.includes('<!-- MIO_PANELS -->')&&!raw.includes('<!-- MIO_STORYBOARD -->'))throw Error('模板缺少分镜注入锚点 <!-- MIO_PANELS -->。');
-  validatePresentationAssets(t);
-  return true;
-}
+/* Template validation is owned by ui-templates.js; do not shadow its structure and safety checks. */
 
 async function imagePalette(data){
   const jpg=await rasterJPEG(data,40),im=new Image();im.crossOrigin='anonymous';im.src=jpg;await im.decode();const c=document.createElement('canvas');c.width=c.height=24;const ctx=c.getContext('2d');ctx.drawImage(im,0,0,24,24);

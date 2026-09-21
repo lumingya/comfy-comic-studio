@@ -289,16 +289,6 @@ class ProductionQueue:
             task = self.get(id)
             if id not in self.control["order"]:
                 raise LibraryError("任务不在队列中", 404)
-            # A paused batch with nothing in flight is released by the new range: its
-            # unfinished books return to standby exactly as cancel() would leave them.
-            for stale in self.control["batch"]:
-                stale_task = self.tasks.get(stale)
-                if not stale_task:
-                    continue
-                stale_task["status"] = "standby"
-                stale_task["selection"] = []
-                self._save(stale_task)
-            self.control["batch"] = []
             ids = (
                 self.control["order"][self.control["order"].index(id) :]
                 if sequential
@@ -324,6 +314,16 @@ class ProductionQueue:
                 selection = indices if indices is not None else [p["index"] for p in item["pages"] if p["state"] != "complete"]
                 if any(item["pages"][i]["state"] in ("running", "uncertain") for i in selection) and confirm_uncertain is not True:
                     raise LibraryError("MIO-PROD-UNCERTAIN: 存在未确认结果，请先核对上游，并明确确认可能重复计费后再重跑", 409)
+            # A paused batch with nothing in flight is released by the new range: its
+            # unfinished books return to standby exactly as cancel() would leave them.
+            for stale in self.control["batch"]:
+                stale_task = self.tasks.get(stale)
+                if not stale_task:
+                    continue
+                stale_task["status"] = "standby"
+                stale_task["selection"] = []
+                self._save(stale_task)
+            self.control["batch"] = []
             for selected in ids:
                 item = self.get(selected)
                 selection = (

@@ -123,6 +123,38 @@ class ProductionQueueTests(unittest.TestCase):
         state=self.q.list();self.assertTrue(state['paused']);self.assertEqual(state['batch'],[b['id'],c['id']]);self.assertEqual(self.q.get(b['id'])['status'],'ready')
         self.q.start(c['id'],trusted=True);self.wait(c['id'],'complete')
         self.assertEqual(self.q.get(b['id'])['status'],'standby');self.assertEqual(self.q.get(b['id'])['selection'],[]);self.assertEqual(self.calls,[('A',0),('C',0)]);self.assertEqual(self.q.list()['batch'],[])
+    def test_rejected_start_preserves_paused_batch_and_persisted_tasks(self):
+        from copy import deepcopy
+        from pathlib import Path
+        a, b = self.make('A'), self.make('B')
+        with self.q.lock:
+            a['status'] = 'ready'
+            a['selection'] = [0, 1, 2]
+            b['pages'][0]['state'] = 'uncertain'
+            self.q._save(a)
+            self.q._save(b)
+            self.q.control.update(batch=[a['id']], paused=True)
+            self.q._save_control()
+            before_control = deepcopy(self.q.control)
+            before_tasks = [self.q.get(t['id']) for t in (a, b)]
+            def files():
+                return {str(p.relative_to(self.tmp.name)): p.read_bytes()
+                        for p in Path(self.tmp.name).rglob('*.json')}
+            before_files = files()
+            for options in ({'indices': []}, {'indices': [99]}, {'indices': [0, 0]},
+                            {'indices': [True]}, {'indices': [0], 'sequential': True},
+                            {'indices': [0]}, {'sequential': True}):
+                with self.subTest(options=options):
+                    with self.assertRaises(LibraryError):
+                        self.q.start(b['id'], trusted=True, **options)
+                    self.assertEqual(self.q.control, before_control)
+                    self.assertEqual([self.q.get(t['id']) for t in (a, b)], before_tasks)
+                    self.assertEqual(files(), before_files)
+            self.assertEqual(self.calls, [])
+        self.q.resume()
+        self.wait(a['id'], 'complete')
+        self.assertEqual(self.calls, [('A', 0), ('A', 1), ('A', 2)])
+
     def test_cancel_discards_late_result_and_does_not_start_next_book(self):
         began=threading.Event();release=threading.Event()
         def held(task,index,cancel):began.set();release.wait(2);return self.render(task,index,cancel)

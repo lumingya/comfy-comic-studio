@@ -204,7 +204,19 @@ function productionPaging(total){const pages=Math.max(1,Math.ceil(total/PRODUCTI
 function productionPageNumbers(index,pages){if(pages<=7)return Array.from({length:pages},(_,i)=>i);const wanted=new Set([0,pages-1,index-1,index,index+1]);if(index<3)[1,2,3].forEach(i=>wanted.add(i));if(index>pages-4)[pages-4,pages-3,pages-2].forEach(i=>wanted.add(i));const list=[...wanted].filter(i=>i>=0&&i<pages).sort((a,b)=>a-b);return list.flatMap((i,k)=>k&&i-list[k-1]>1?[null,i]:[i])}
 function renderProductionPager(paging,total){if(paging.pages<=1)return '';const label=localeString('第 {current} / {total} 页',{current:paging.index+1,total:paging.pages});return `<nav class="production-pager" aria-label="${esc(label)}">${btn('上一页','arrow-back','production-page',`data-page="${paging.index-1}" ${paging.index===0?'disabled':''}`,'ghost small')}<div class="production-pager-numbers">${productionPageNumbers(paging.index,paging.pages).map(i=>i===null?'<span class="production-pager-gap">…</span>':`<button type="button" class="production-pager-number${i===paging.index?' active':''}" data-act="production-page" data-page="${i}" ${i===paging.index?'aria-current="page"':''}>${i+1}</button>`).join('')}</div>${btn('下一页','arrow','production-page',`data-page="${paging.index+1}" ${paging.index===paging.pages-1?'disabled':''}`,'ghost small')}<span class="production-pager-summary">${esc(label)} · ${paging.end-paging.start>1?paging.start+1+'–'+paging.end:paging.end} / ${total}</span></nav>`}
 function productionStrip(t){return `<div class="production-strip${(t.pages||[]).length>48?' dense':''}" aria-hidden="true">${(t.pages||[]).map(p=>`<i class="seg-${esc(p.state)}"></i>`).join('')}</div>`}
-function renderProductionPage(t,p,a=productionTaskAccess(t)){const last=p.attempts.at(-1),lock=a.reason?`disabled title="${esc(a.reason)}"`:'';return `<div class="production-page" data-page-index="${p.index}"><div class="production-page-number">${pad(p.index+1)}</div>${p.result?.image?imgTag(thumbnailURL(p.result.image),'第 '+(p.index+1)+' 幕','loading="lazy"'):'<span class="production-page-blank"></span>'}<div class="grow"><strong class="page-${esc(p.state)}">${productionStatus(p.state)}</strong><small>${p.attemptCount} 次尝试${last?.upstream?' · 上游任务 '+esc(last.upstream):''}${p.result&&p.state!=='complete'?' · 原图已保留':''}</small>${last?.error?`<p>${esc(last.error)}</p>`:''}</div><div>${p.state!=='complete'&&p.attempts.at(-1)?.phase==='publish'?btn('恢复已生成结果','disk','production-recover',`data-id="${esc(t.id)}" data-index="${p.index}" ${a.canRecover?'':'disabled title="请先结束或取消当前批次。"'}`,'small'):''}${btn('单幕重跑','refresh','production-rerun',`data-id="${esc(t.id)}" data-index="${p.index}" ${a.canStart?'':lock}`,'small')}${btn('从此幕往后重跑','list','production-rerun-tail',`data-id="${esc(t.id)}" data-index="${p.index}" ${a.canStart?'':lock}`,'small ghost')}</div></div>`}
+/* Attempts/results survive retries and cancellation; state alone does not identify a first run. */
+function productionPageHasRun(p){return !!(p.result||p.attemptCount>0||p.attempts?.length||['running','complete','failed','uncertain'].includes(p.state))}
+function productionPageLabels(t,p){
+ const rerun=productionPageHasRun(p),tailRerun=(t.pages||[]).some(next=>next.index>=p.index&&productionPageHasRun(next));
+ return {single:rerun?'单幕重跑':'单幕生成',icon:rerun?'refresh':'play',tail:tailRerun?'从此幕往后重跑':'从此幕往后生成'};
+}
+function previewProductionPage(d){
+ const task=workshop.queue.tasks.find(t=>t.id===d.id),page=task?.pages?.find(p=>p.index===Number(d.index));
+ if(!page?.result?.image){toast('此幕暂无可查看的图片');return}
+ const title=localeString('第 {n} 幕',{n:page.index+1});
+ modal(task.title+' · '+title,imgTag(page.result.image,title,'class="production-page-full-image"'),'',true);
+}
+function renderProductionPage(t,p,a=productionTaskAccess(t)){const labels=productionPageLabels(t,p),last=p.attempts.at(-1),lock=a.reason?`disabled title="${esc(a.reason)}"`:'';return `<div class="production-page" data-page-index="${p.index}"><div class="production-page-number">${pad(p.index+1)}</div>${p.result?.image?`<button type="button" class="production-page-preview" data-act="production-page-preview" data-id="${esc(t.id)}" data-index="${p.index}" aria-label="${esc(localeString('查看第 {n} 幕图片',{n:p.index+1}))}" title="${esc(localeString('查看图片'))}">${imgTag(thumbnailURL(p.result.image),'第 '+(p.index+1)+' 幕','loading="lazy"')}</button>`:'<span class="production-page-blank"></span>'}<div class="grow"><strong class="page-${esc(p.state)}">${productionStatus(p.state)}</strong><small>${p.attemptCount} 次尝试${last?.upstream?' · 上游任务 '+esc(last.upstream):''}${p.result&&p.state!=='complete'?' · 原图已保留':''}</small>${last?.error?`<p>${esc(last.error)}</p>`:''}</div><div>${p.state!=='complete'&&p.attempts.at(-1)?.phase==='publish'?btn('恢复已生成结果','disk','production-recover',`data-id="${esc(t.id)}" data-index="${p.index}" ${a.canRecover?'':'disabled title="请先结束或取消当前批次。"'}`,'small'):''}${btn(labels.single,labels.icon,'production-rerun',`data-id="${esc(t.id)}" data-index="${p.index}" ${a.canStart?'':lock}`,'small')}${btn(labels.tail,'list','production-rerun-tail',`data-id="${esc(t.id)}" data-index="${p.index}" ${a.canStart?'':lock}`,'small ghost')}</div></div>`}
 function productionOverridesSummary(o){if(!o||typeof o!=='object')return '';const parts=[];if(typeof o.model==='string'&&o.model)parts.push(`<span title="${esc(o.model)}"><i>模型</i>${esc(WorkflowSlots.loraStem(o.model))}</span>`);if(Array.isArray(o.loras)){const valid=o.loras.filter(l=>l&&typeof l==='object'&&l.name);parts.push(valid.length?valid.map(l=>`<span title="${esc(l.name)}"><i>LoRA</i>${esc(WorkflowSlots.loraStem(l.name))}<b>×${esc(WorkflowSlots.numberText(l.strength??1))}</b></span>`).join(''):'<span><i>LoRA</i>不叠加</span>')}return parts.length?`<p class="production-overrides">${parts.join('')}</p>`:''}
 function productionTaskAccess(t,q=workshop.queue){
   const batch=q.batch||[],active=q.active===t.id,inBatch=active||batch.includes(t.id),paused=!!q.paused;
@@ -266,10 +278,10 @@ async function saveWorkshop(){
  save();if(!await savePythonWorkspace())throw Error('保存尚未确认，请检查冲突或服务状态');toast('独立资产已保存');
 }
 async function importWorkshop(file){if(!file)return;await saveWorkshop();const expected=workshop.view==='presets'?'variables':'storyboards',body={projectId:state.activeProjectId,expectedKind:expected};if(file.name.endsWith('.zip'))body.zip=(await blobData(file)).split(',')[1];else body.document=JSON.parse(await file.text());const info=await(await request('/api/library/inspect',post(body))).json();if(!await confirmAction('导入独立资产？',info.title+'','导入'))return;const result=await(await request('/api/library/import',post(body))).json();await connectPythonBackend();if(expected==='storyboards')workshop.storyId=result.id;else workshop.presetId=result.id;render()}
-async function startProduction(id,options={}){const local=productionIsLocal(workshop.queue.tasks.find(t=>t.id===id));
+async function startProduction(id,options={}){const current=workshop.queue.tasks.find(t=>t.id===id),local=productionIsLocal(current),rerun=options.indices&&current?.pages.some(p=>options.indices.includes(p.index)&&productionPageHasRun(p));
  /* B23: a local ComfyUI run costs GPU time, not money; only cloud channels get the billing warning. */
  const detail=options.forcePrepare?(local?'重新执行前置脚本，忽略缓存和未确认标记；本地 ComfyUI 不产生费用，但会重新占用显卡。':'重新执行前置脚本，忽略缓存和未确认标记，可能重复计费。'):options.indices?(local?'只处理指定幕次。成功后替换该页，失败保留原图；本地 ComfyUI 生成不产生费用。':'只处理指定幕次。成功后替换该页，失败保留原图；已经发出的请求可能计费。'):(local?'将通过本地 ComfyUI 开始生成，占用显卡但不产生费用。':'将开始生成，云端渠道可能产生费用。');
- if(!await confirmAction(options.indices?'确认局部重跑？':options.sequential?'从此任务开始顺次生成？':'开始生成这本画册？',detail,'确认开始'))return;const task=workshop.queue.tasks.find(t=>t.id===id),uncertain=options.sequential?workshop.queue.tasks.slice(workshop.queue.tasks.indexOf(task)).some(t=>t.pages.some(p=>p.state==='uncertain')):task?.pages.some(p=>p.state==='uncertain'&&(!options.indices||options.indices.includes(p.index)));if(uncertain&&!await confirmAction(local?'存在未确认的结果':'未确认结果可能已计费',local?'上一次的结果尚未确认，重跑会覆盖它；请先在 ComfyUI 历史中核对。':'重跑可能重复计费。','我已核对，仍要重跑'))return;workshop.queue=await productionRequest('start',{id,...options,trusted:true,confirmUncertain:!!uncertain});render()}
+ if(!await confirmAction(options.indices?(rerun?'确认局部重跑？':'确认局部生成？'):options.sequential?'从此任务开始顺次生成？':'开始生成这本画册？',detail,'确认开始'))return;const task=workshop.queue.tasks.find(t=>t.id===id),uncertain=options.sequential?workshop.queue.tasks.slice(workshop.queue.tasks.indexOf(task)).some(t=>t.pages.some(p=>p.state==='uncertain')):task?.pages.some(p=>p.state==='uncertain'&&(!options.indices||options.indices.includes(p.index)));if(uncertain&&!await confirmAction(local?'存在未确认的结果':'未确认结果可能已计费',local?'上一次的结果尚未确认，重跑会覆盖它；请先在 ComfyUI 历史中核对。':'重跑可能重复计费。','我已核对，仍要重跑'))return;workshop.queue=await productionRequest('start',{id,...options,trusted:true,confirmUncertain:!!uncertain});render()}
 function workshopFrameIndex(d){const index=Number(d?.index);return Number.isInteger(index)&&index>=0?index:workshop.frame}
 
 /* ------------------------------------------------------------ context menu
@@ -362,10 +374,11 @@ function productionTaskContextItems(task,a=productionTaskAccess(task)){
   ];
 }
 function productionPageContextItems(task,page,a=productionTaskAccess(task)){
-  const data={id:task.id,index:page.index},publishFailed=page.state!=='complete'&&page.attempts?.at(-1)?.phase==='publish';
+  const labels=productionPageLabels(task,page),data={id:task.id,index:page.index},publishFailed=page.state!=='complete'&&page.attempts?.at(-1)?.phase==='publish';
   return [
-    {label:'单幕重跑',icon:'refresh',act:'production-rerun',data,primary:true,disabled:!a.canStart,hint:a.reason},
-    {label:'从此幕往后重跑',icon:'list',act:'production-rerun-tail',data,disabled:!a.canStart,hint:a.reason},
+    page.result?.image?{label:'查看图片',icon:'eye',act:'production-page-preview',data}:null,
+    {label:labels.single,icon:labels.icon,act:'production-rerun',data,primary:true,disabled:!a.canStart,hint:a.reason},
+    {label:labels.tail,icon:'list',act:'production-rerun-tail',data,disabled:!a.canStart,hint:a.reason},
     publishFailed?{label:'恢复已生成结果',icon:'disk',act:'production-recover',data,disabled:!a.canRecover,hint:'只重试本地发布，不再请求模型'}:null,
     '-',
     {label:'整本任务',icon:'box',children:productionTaskContextItems(task,a)}
@@ -593,6 +606,7 @@ function installAssemblyWorkshop(){
   'production-recover':async d=>{if(await confirmAction('恢复已生成的结果？','仅重试本地发布，不再次请求模型。不覆盖生成期间被另外编辑的页面。','恢复发布')){workshop.queue=await productionRequest('recover-publication',{id:d.id,index:Number(d.index)});render()}},
   'production-batch':d=>startProduction(d.id,{sequential:true}),
   'production-reprepare':d=>startProduction(d.id,{forcePrepare:true}),
+  'production-page-preview':previewProductionPage,
   'production-rerun':d=>startProduction(d.id,{indices:[Number(d.index)]}),
   'production-rerun-tail':d=>startProduction(d.id,{indices:workshop.queue.tasks.find(t=>t.id===d.id).pages.filter(p=>p.index>=Number(d.index)).map(p=>p.index)}),
   'production-pause':async()=>{workshop.queue=await productionRequest('pause',{});render();toast('已暂停后续调度；已提交的分幕可能仍返回')},
