@@ -29,7 +29,9 @@ NOT_MODEL = re.compile(
     re.I
 )
 NOT_MODEL_FILE = re.compile(
-    r'ifrnet|ifunet|rife|vimeo|gopro|film_net|_vfi\b|esrgan|gfpgan|codeformer|depth_anything|openpose|dwpose|insightface',
+    r'\bamt[-_.]|[-_]amt[-_.]|\bamt.*?gopro|ifrnet|ifunet|rife|vimeo|film_net|_vfi\b|'
+    r'flavr|gmflow|\bm2m\b|cain|sepconv|stmfnet|flownet|raft_|spynet|'
+    r'esrgan|realesrgan|gfpgan|codeformer|depth_anything|openpose|dwpose|insightface',
     re.I
 )
 MODEL_CLASS = re.compile(r'checkpoint|unet|diffusion|model.?loader|dit.?loader', re.I)
@@ -112,18 +114,27 @@ def catalog_from_object_info(object_info):
     lists = {'checkpoints': set(), 'unets': set(), 'loras': set(), 'vaes': set()}
     kinds = {'ckpt_name': 'checkpoints', 'unet_name': 'unets', 'lora_name': 'loras', 'vae_name': 'vaes'}
     for class_type, definition in (object_info or {}).items():
-        inputs = definition.get('input', {}) if isinstance(definition, dict) else {}
+        if not isinstance(definition, dict):
+            continue
+        inputs = definition.get('input', {}) if isinstance(definition.get('input'), dict) else {}
+        outputs = definition.get('output')
+        # Semantic rule: Checkpoint/UNet loaders in ComfyUI MUST produce a MODEL output
+        has_model_output = isinstance(outputs, list) and any(str(o).upper() == 'MODEL' for o in outputs)
         for group in (inputs.get('required') or {}, inputs.get('optional') or {}):
             for field, rule in group.items():
                 kind = kinds.get(field)
                 if not kind or not isinstance(rule, list) or not rule or not isinstance(rule[0], list):
                     continue
-                if kind in ('checkpoints', 'unets') and NOT_MODEL.search(class_type):
-                    continue
+                if kind in ('checkpoints', 'unets'):
+                    if NOT_MODEL.search(class_type):
+                        continue
+                    if isinstance(outputs, list) and not has_model_output:
+                        continue
                 for option in rule[0]:
                     if isinstance(option, str) and option and option != 'None':
-                        if (kind in ('checkpoints', 'unets')) and NOT_MODEL_FILE.search(option):
-                            continue
+                        if kind in ('checkpoints', 'unets', 'loras'):
+                            if NOT_MODEL_FILE.search(option) or not MODEL_EXT.search(option):
+                                continue
                         lists[kind].add(option)
     return {k: sorted(v, key=lambda s: s.lower()) for k, v in lists.items()}
 
@@ -283,6 +294,8 @@ def ordered_chain(workflow, anchor):
 
 
 def _mirror_path_for(node, workflow):
+    if not isinstance(node, dict) or not isinstance(node.get('inputs'), dict):
+        return ''
     for key, value in node['inputs'].items():
         if _is_link(value, workflow):
             continue
@@ -441,7 +454,24 @@ def current_loras(workflow, slots):
         return []
     if mode == 'syntax':
         value = ((workflow or {}).get(lora.get('nodeId')) or {}).get('inputs', {}).get(lora.get('path'))
-        return parse_lora_syntax(value)['loras'] if isinstance(value, str) else []
+        parsed = parse_lora_syntax(value)['loras'] if isinstance(value, str) else []
+        node = (workflow or {}).get(lora.get('nodeId'))
+        if isinstance(node, dict):
+            mirror_path = _mirror_path_for(node, workflow)
+            if mirror_path:
+                container = node.get('inputs', {}).get(mirror_path)
+                entries = container.get('__value__') if isinstance(container, dict) else container
+                if isinstance(entries, list):
+                    active_map = {}
+                    for e in entries:
+                        if isinstance(e, dict):
+                            n = str(e.get('name') if e.get('name') is not None else e.get('lora') or '').strip()
+                            if n:
+                                key = lora_stem(n).lower()
+                                is_active = (e.get('active') is not False and e.get('on') is not False)
+                                active_map[key] = active_map.get(key, False) or is_active
+                    return [l for l in parsed if active_map.get(lora_stem(l['name']).lower()) is not False]
+        return parsed
     if mode == 'chain':
         out = []
         for d in ordered_chain(workflow, lora.get('nodeId')):

@@ -147,7 +147,12 @@ async function readComfyObjectInfo({quiet=false}={}){
   c.objectInfo=kept;c.modelCatalog={...WorkflowSlots.catalogFromObjectInfo(info),...(result.catalog||{}),fetchedAt:result.fetchedAt||Date.now(),nodeClasses:Object.keys(info).length};
   save();render();if(!quiet)toast(result.message||'节点定义已读取，文本字段与插件输入已更新。');return c.modelCatalog;
 }
-function comfyModelCatalog(){const m=state.settings.comfy.modelCatalog;return m&&typeof m==='object'?{checkpoints:m.checkpoints||[],unets:m.unets||[],loras:m.loras||[],vaes:m.vaes||[],fetchedAt:m.fetchedAt||0,nodeClasses:m.nodeClasses||0}:{checkpoints:[],unets:[],loras:[],vaes:[],fetchedAt:0,nodeClasses:0}}
+function comfyModelCatalog(){
+  const m=state.settings.comfy.modelCatalog;
+  if(!m||typeof m!=='object')return {checkpoints:[],unets:[],loras:[],vaes:[],fetchedAt:0,nodeClasses:0};
+  const filterList=(list)=>(list||[]).filter(x=>typeof x==='string'&&WorkflowSlots.MODEL_EXT.test(x)&&!WorkflowSlots.NOT_MODEL_FILE.test(x));
+  return {checkpoints:filterList(m.checkpoints),unets:filterList(m.unets),loras:filterList(m.loras),vaes:m.vaes||[],fetchedAt:m.fetchedAt||0,nodeClasses:m.nodeClasses||0};
+}
 /* The node/field that receives the positive prompt; the LoRA syntax fallback writes its tags there. */
 function comfyPositiveTarget(bindings){const b=(bindings||[]).find(x=>x.enabled&&x.source==='positive'&&x.nodeId);return b?{nodeId:String(b.nodeId),path:String(b.path||'text')}:null}
 function comfySlotsResolved(execution=state.settings.comfy){return WorkflowSlots.normalize(execution.slots||{},execution.workflow||{},{objectInfo:execution.objectInfo||state.settings.comfy.objectInfo||{},positive:comfyPositiveTarget(execution.bindings)})}

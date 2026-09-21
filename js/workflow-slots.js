@@ -17,7 +17,7 @@ const WorkflowSlots = (() => {
   const STRONG_MODEL_KEYS = /^(ckpt_name|unet_name)$/i;
   const WEAK_MODEL_KEYS = /^(checkpoint|ckpt|model_name|model|model_path|diffusion_model|base_model|unet|transformer)$/i;
   const NOT_MODEL = /lora|vae|clip|control|upscale|ipadapter|adapter|embedding|face|detect|bbox|segm|sam\b|encoder|tokenizer|scheduler|style|instantid|photomaker|pulid|insight|onnx|preprocessor|depth|pose|animatediff|motion|gligen|hypernet|audio|llm|florence|vision|refiner_|interpolation|vfi|rife|ifrnet|film|esrgan|realesrgan|gfpgan|codeformer|rembg|segmentation|matting|depthanything|midas|zoe|openpose|dwpose|lama|inpaint_model|facerestore/i;
-  const NOT_MODEL_FILE = /ifrnet|ifunet|rife|vimeo|gopro|film_net|_vfi\b|esrgan|gfpgan|codeformer|depth_anything|openpose|dwpose|insightface/i;
+  const NOT_MODEL_FILE = /\bamt[-_.]|[-_]amt[-_.]|\bamt.*?gopro|ifrnet|ifunet|rife|vimeo|film_net|_vfi\b|flavr|gmflow|\bm2m\b|cain|sepconv|stmfnet|flownet|raft_|spynet|esrgan|realesrgan|gfpgan|codeformer|depth_anything|openpose|dwpose|insightface/i;
   const MODEL_CLASS = /checkpoint|unet|diffusion|model.?loader|dit.?loader/i;
   const STACK_KEY = /^(lora|lora_name)_?(\d+)$/i;
   const CHAIN_NAME_KEYS = ["lora_name", "lora"];
@@ -81,15 +81,23 @@ const WorkflowSlots = (() => {
     const lists = { checkpoints: new Set(), unets: new Set(), loras: new Set(), vaes: new Set() };
     const fieldKinds = { ckpt_name: "checkpoints", unet_name: "unets", lora_name: "loras", vae_name: "vaes" };
     for (const [classType, definition] of Object.entries(objectInfo || {})) {
-      const input = definition?.input || {};
+      if (!definition || typeof definition !== "object") continue;
+      const input = definition.input || {};
+      const outputs = definition.output;
+      const hasModelOutput = Array.isArray(outputs) && outputs.some((o) => String(o).toUpperCase() === "MODEL");
       for (const group of [input.required || {}, input.optional || {}]) {
         for (const [field, rule] of Object.entries(group)) {
           const kind = fieldKinds[field];
           if (!kind || !Array.isArray(rule) || !Array.isArray(rule[0])) continue;
-          if ((kind === "checkpoints" || kind === "unets") && NOT_MODEL.test(classType)) continue;
+          if (kind === "checkpoints" || kind === "unets") {
+            if (NOT_MODEL.test(classType)) continue;
+            if (Array.isArray(outputs) && !hasModelOutput) continue;
+          }
           for (const option of rule[0]) {
             if (typeof option === "string" && option && option !== "None") {
-              if ((kind === "checkpoints" || kind === "unets") && NOT_MODEL_FILE.test(option)) continue;
+              if (kind === "checkpoints" || kind === "unets" || kind === "loras") {
+                if (NOT_MODEL_FILE.test(option) || !MODEL_EXT.test(option)) continue;
+              }
               lists[kind].add(option);
             }
           }
@@ -221,6 +229,7 @@ const WorkflowSlots = (() => {
     return found.sort((a, b) => b.score - a.score || compareIds(a.nodeId, b.nodeId));
   }
   function mirrorPathFor(node, workflow) {
+    if (!node?.inputs || typeof node.inputs !== "object") return "";
     for (const [key, value] of Object.entries(node.inputs)) {
       if (isLink(value, workflow)) continue;
       const list = Array.isArray(value) ? value : value && typeof value === "object" && Array.isArray(value.__value__) ? value.__value__ : null;
@@ -311,7 +320,30 @@ const WorkflowSlots = (() => {
     if (!lora || lora.mode === "off") return [];
     if (lora.mode === "syntax") {
       const value = workflow?.[lora.nodeId]?.inputs?.[lora.path];
-      return typeof value === "string" ? parseLoraSyntax(value).loras : [];
+      const parsed = typeof value === "string" ? parseLoraSyntax(value).loras : [];
+      const node = workflow?.[lora.nodeId];
+      if (node && typeof node === "object") {
+        const mirrorPath = mirrorPathFor(node, workflow);
+        if (mirrorPath) {
+          const container = node.inputs?.[mirrorPath];
+          const entries = Array.isArray(container) ? container : Array.isArray(container?.__value__) ? container.__value__ : null;
+          if (Array.isArray(entries)) {
+            const activeMap = new Map();
+            for (const e of entries) {
+              if (e && typeof e === "object") {
+                const n = String(e.name ?? e.lora ?? "").trim();
+                if (n) {
+                  const key = loraStem(n).toLowerCase();
+                  const isActive = e.active !== false && e.on !== false;
+                  activeMap.set(key, (activeMap.get(key) || false) || isActive);
+                }
+              }
+            }
+            return parsed.filter((l) => activeMap.get(loraStem(l.name).toLowerCase()) !== false);
+          }
+        }
+      }
+      return parsed;
     }
     if (lora.mode === "chain") {
       return orderedChain(workflow, lora.nodeId).filter((d) => !isEmptyName(d.value)).map((d) => ({ name: String(d.value), strength: typeof d.strength === "number" ? d.strength : 1, ...(typeof d.clip === "number" ? { clip: d.clip } : {}) }));
@@ -522,5 +554,5 @@ const WorkflowSlots = (() => {
     return parts.join(" · ");
   }
 
-  return { MAX_LORAS, catalogFromObjectInfo, modelCandidates, syntaxCandidates, stackCandidates, orderedChain, detect, normalize, parseLoraSyntax, formatTag, loraStem, loraDisplayName, currentModel, currentLoras, normalizeOverrides, apply, describe, numberText };
+  return { MAX_LORAS, MODEL_EXT, NOT_MODEL_FILE, catalogFromObjectInfo, modelCandidates, syntaxCandidates, stackCandidates, orderedChain, detect, normalize, parseLoraSyntax, formatTag, loraStem, loraDisplayName, currentModel, currentLoras, normalizeOverrides, apply, describe, numberText };
 })();
