@@ -31,6 +31,25 @@ export async function runAudit({mobile=false,engine='chromium'}={}){
    }
   }
   await p.evaluate(()=>{workshop.view='stories';navigate(1);render()});
+  if(mobile){
+   /* Phones show the scene-card stream; the editor is a full-screen focus layer that follows the visual viewport. */
+   await p.setViewportSize({width:390,height:844});await p.evaluate(()=>render());await p.waitForTimeout(200);
+   check(await p.evaluate(()=>document.querySelectorAll('.wm-card').length===workshopStory().frames.length&&!document.querySelector('.wm-focus')),'mobile storyboard renders one card per scene without an open editor');
+   await p.locator('.wm-card').first().click();await p.waitForSelector('.wm-focus [data-workshop-frame="prompt"]');await p.waitForTimeout(400);
+   check(await p.evaluate(()=>{const l=document.querySelector('.wm-focus'),r=l.getBoundingClientRect();return Math.abs(r.top)<1&&Math.abs(r.height-innerHeight)<2&&document.documentElement.classList.contains('wm-focus-open')}),'mobile focus editor covers the visual viewport');
+   check(await p.evaluate(()=>[...document.querySelectorAll('.wm-focus-head .ibtn,.wm-focus-actions .btn')].every(b=>b.getBoundingClientRect().height>=48)),'mobile focus editor controls are at least 48px tall');
+   check(await p.evaluate(()=>[...document.querySelectorAll('.wm-focus textarea,.wm-focus input[data-workshop-frame="name"]')].every(t=>parseFloat(getComputedStyle(t).fontSize)>=15)),'mobile editors use 15–16px text so iOS does not zoom');
+   check(await p.evaluate(()=>document.querySelector('.wm-focus-title strong').textContent.includes('1')&&document.querySelector('.wm-focus-title strong').textContent.includes(String(workshopStory().frames.length))),'mobile focus editor shows「第 N 幕 / 共 M 幕」');
+   await p.evaluate(()=>{const fake={height:innerHeight-360,offsetTop:0,scale:1,width:innerWidth,addEventListener(){},removeEventListener(){}};Object.defineProperty(window,'visualViewport',{configurable:true,get:()=>fake})});
+   await p.locator('.wm-focus [data-workshop-frame="caption"]').focus();await p.evaluate(()=>window.dispatchEvent(new Event('resize')));await p.waitForTimeout(900);
+   check(await p.evaluate(()=>{const l=document.querySelector('.wm-focus'),r=l.getBoundingClientRect(),chips=document.querySelector('.wm-chips'),c=chips.getBoundingClientRect(),ta=document.activeElement.getBoundingClientRect();return Math.abs(r.height-(innerHeight-360))<2&&getComputedStyle(chips).display!=='none'&&Math.abs(c.bottom-r.bottom)<2&&getComputedStyle(document.querySelector('.wm-focus-actions')).display==='none'&&ta.bottom<=c.top+1}),'with the keyboard open the editor shrinks to the visual viewport, chips sit above the keyboard and the focused field stays visible');
+   await p.locator('.wm-chips [data-wm-insert="{style}"]').dispatchEvent('pointerdown');
+   check(await p.evaluate(()=>document.activeElement?.dataset.workshopFrame==='caption'&&document.activeElement.value.includes('{style}')&&workshopStory().frames[workshop.frame].caption.includes('{style}')),'variable chips insert at the caret without closing the keyboard and the draft is saved');
+   await p.evaluate(()=>{delete window.visualViewport;window.dispatchEvent(new Event('resize'))});await p.waitForTimeout(300);
+   await p.locator('[data-act="workshop-mobile-step"][data-dir="1"]').click();await p.waitForTimeout(250);
+   check(await p.evaluate(()=>workshop.frame===1&&document.querySelector('.wm-focus-title strong').textContent.includes('2')),'next button moves to the second scene');
+   await p.evaluate(()=>openWorkshopMobileEditor(0));await p.waitForTimeout(250);
+  }
   const prompt=p.locator('[data-workshop-frame="prompt"]');await prompt.fill('跨工作区和轮询也应保留的草稿');await prompt.focus();
   check(await p.evaluate(()=>{const el=document.activeElement;el.setSelectionRange(2,6);el.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true,data:'输入'}));render();const ok=document.activeElement===el&&el.isConnected&&el.selectionStart===2&&el.selectionEnd===6;el.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true}));return ok}),'IME editor identity, draft and selection survive patch');
   for(const [before,after] of [['<div>旧</div>','<p>新</p>'],['<span>旧</span>','新文本'],['旧文本','<span>新</span>'],['<!--旧--><b>x</b>','<i>y</i><!--新-->'],['<i data-id="a">a</i><i data-id="b">b</i>','<i data-id="b">b</i><i data-id="a">a</i>']]){

@@ -11,6 +11,7 @@ import time
 from backend.mio_library import LibraryError, atomic_write, image_type
 from backend.ecosystem import api as ecosystem_api
 from backend.ecosystem.workflow import compile_workflow
+from backend.ecosystem import workflow_slots
 from backend.mio_channels import resolve_channel, config_fields, workflow_provider
 from backend.providers.registry import PROVIDERS
 
@@ -177,6 +178,38 @@ def prune_unbound_images(workflow, images):
     return walk(workflow), [images[slot - 1] for slot in keep], dropped
 
 
+def positive_binding_target(workflow):
+    """The node/field that receives the positive prompt; the LoRA syntax fallback writes there."""
+    for binding in workflow.get("bindings", []):
+        if binding.get("enabled") and binding.get("source") == "positive" and binding.get("nodeId"):
+            return {"nodeId": str(binding["nodeId"]), "path": str(binding.get("path") or "text")}
+    return None
+
+
+def slot_overrides(body, workflow, uses_workflow):
+    """Validate the task-level model / LoRA overrides against the frozen workflow's slots.
+
+    ``None`` means the assembly keeps the blueprint untouched. Anything else is normalised
+    (names, strengths, duplicates) and dry-run against the blueprint so an impossible request
+    (no model slot, stack overflow, linked field) fails at assembly time instead of in the queue.
+    """
+    raw = body.get("overrides")
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise LibraryError("模型 / LoRA 覆盖必须是对象")
+    if not uses_workflow:
+        if raw.get("model") or raw.get("loras"):
+            raise LibraryError("只有 ComfyUI 工作流渠道支持模型 / LoRA 覆盖")
+        return None
+    clean = workflow_slots.normalize_overrides(raw)
+    if not clean:
+        return None
+    graph = workflow.get("workflow") if isinstance(workflow.get("workflow"), dict) else {}
+    workflow_slots.apply(graph, workflow.get("slots"), clean, workflow.get("objectInfo"), positive_binding_target(workflow))
+    return clean
+
+
 def seed_binding_ready(workflow):
     """True when an enabled binding writes this frame's seed into a numeric input.
 
@@ -285,8 +318,17 @@ class ProductionAdapter:
                     "workflow": copy.deepcopy(selected["workflow"]),
                     "bindings": copy.deepcopy(selected.get("bindings", [])),
                     "outputNodeId": selected.get("outputNodeId", ""),
+                    "slots": copy.deepcopy(selected.get("slots") or {}),
                 }
             )
+        # Freeze only what rendering needs: node definitions for the classes in
+        # this graph (a full /object_info can run to tens of MiB) and no catalog.
+        graph = workflow.get("workflow") if isinstance(workflow.get("workflow"), dict) else {}
+        classes = {n.get("class_type") for n in graph.values() if isinstance(n, dict)}
+        info = workflow.get("objectInfo") if isinstance(workflow.get("objectInfo"), dict) else {}
+        workflow["objectInfo"] = {k: v for k, v in info.items() if k in classes}
+        workflow.pop("modelCatalog", None)
+        overrides = slot_overrides(body, workflow, uses_workflow)
         seed_enabled = body.get("seedEnabled") is True and uses_workflow
         if seed_enabled and not seed_binding_ready(workflow):
             raise LibraryError("请先配置所选工作流中的有效种子节点映射")
@@ -309,6 +351,7 @@ class ProductionAdapter:
                 },
                 "workflow": workflow,
                 "globalNegative": global_negative if isinstance(global_negative, str) else "",
+                "overrides": overrides,
                 "seedEnabled": seed_enabled,
                 "projectId": body.get("projectId") or story.get("projectId"),
                 "seed": seed,
@@ -442,6 +485,16 @@ class ProductionAdapter:
                 images,
             )
             channel["outputNodeId"] = wf.get("outputNodeId", "")
+            # Task-level model / LoRA overrides land after the bindings so a
+            # syntax-mode LoRA tag is appended to the prompt the binding just
+            # wrote, and the chosen checkpoint replaces the blueprint's default.
+            if snap.get("overrides"):
+                applied = workflow_slots.apply(
+                    payload["workflow"], wf.get("slots"), snap["overrides"], wf.get("objectInfo", {}), positive_binding_target(wf)
+                )
+                payload["workflow"] = applied["workflow"]
+                for notice in applied["notices"]:
+                    self.report(task["id"], index, {"notice": notice})
             # C2: a text-to-image workflow has no LoadImage binding, so image
             # variables referenced from the prompt never reach a node. Drop them
             # here instead of letting the provider fail with "Unbound image N";

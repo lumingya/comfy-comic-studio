@@ -167,6 +167,7 @@ class ProductionQueue:
                             "provider": t["snapshot"]
                             .get("channel", {})
                             .get("provider", ""),
+                            "overrides": t["snapshot"].get("overrides") or None,
                         },
                         "pages": [
                             {

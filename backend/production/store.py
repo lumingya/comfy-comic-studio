@@ -81,7 +81,8 @@ class TaskStore:
                 "presets": [
                     {"title": p.get("title", "")} for p in snapshot.get("presets", [])
                 ],
-                "channel": {"title": snapshot.get("channel", {}).get("title", "")},
+                "channel": {"title": snapshot.get("channel", {}).get("title", ""), "provider": snapshot.get("channel", {}).get("provider", "")},
+                "overrides": copy.deepcopy(snapshot.get("overrides")) or None,
             }
             refs = []
             for page in value["pages"]:

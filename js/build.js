@@ -28,7 +28,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const crypto = require('node:crypto');
 const root = path.resolve(__dirname, '..');
-const moduleOrder = ["state","sync","workflow-mapping","engine","creation","ui-presentation","ui-reader","ui-templates","ui-export","ui-editors","ui-locale","ui-assistant","ui-storyboard","ui-gallery","ui-settings","ui","workspace","context-menu","organize","foundation","ui-image-studio","ui-template-afterglow","ui-template-seamless","file-library","contextual-sharing","album-metadata","creative-context","settings-workbench","platform","ecosystem","style-studio","reading-stage","preferences-workbench","assembly-workshop","update-center","dom-updates","architecture","first-run","home","workflow-workbench","app"];
+const moduleOrder = ["state","sync","workflow-mapping","workflow-slots","engine","creation","ui-presentation","ui-reader","ui-templates","ui-export","ui-editors","ui-locale","ui-assistant","ui-storyboard","ui-gallery","ui-settings","ui","workspace","context-menu","organize","foundation","ui-image-studio","ui-template-afterglow","ui-template-seamless","file-library","contextual-sharing","album-metadata","creative-context","settings-workbench","platform","ecosystem","style-studio","reading-stage","preferences-workbench","assembly-workshop","update-center","dom-updates","architecture","first-run","home","workflow-workbench","app"];
 const runtimePattern = /<script\s+id="studio-runtime"[^>]*>([\s\S]*?)<\/script>/;
 const stylePattern = /<style\s+id="studio-styles"[^>]*>([\s\S]*?)<\/style>/;
 

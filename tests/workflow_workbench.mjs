@@ -367,6 +367,30 @@ try {
     await p.locator('[data-act="close-modal"]').first().click();
   } else console.log("SKIP submission preview (fixture workspace ships no storyboard)");
 
+  /* ---- semantic slots: detected from the blueprint, editable, persisted per workflow */
+  check((await p.locator("[data-slot-row]").count()) === 2, "model and LoRA slot rows are listed above the bindings");
+  await p.locator('[data-act="wm-select-slot"][data-id="model"]').click();
+  check(await p.locator("#v3-slot-model-target").isVisible(), "model slot inspector opens");
+  check(
+    await p.evaluate(() => comfySlotsResolved().model.enabled && !!comfySlotsResolved().model.nodeId),
+    "model slot is auto-detected without object_info",
+  );
+  await p.locator('[data-act="wm-select-slot"][data-id="lora"]').click();
+  await p.locator("#v3-slot-lora-target").selectOption("off");
+  check(
+    await p.evaluate(() => state.settings.comfy.slots.lora.mode === "off" && comfySlotsResolved().lora.mode === "off"),
+    "LoRA slot can be switched off and the choice is stored",
+  );
+  await p.locator("#v3-slot-lora-target").selectOption("auto");
+  check(await p.evaluate(() => state.settings.comfy.slots.lora.auto === true), "LoRA slot returns to auto detection");
+  check(
+    await p.evaluate(() => {
+      const preset = state.settings.comfy.presets.find((x) => x.id === state.settings.comfy.activeWorkflowId);
+      return !!preset && JSON.stringify(preset.slots) === JSON.stringify(state.settings.comfy.slots);
+    }),
+    "slot choices are mirrored into the saved workflow preset",
+  );
+
   /* ---- responsive */
   await p.setViewportSize({ width: 390, height: 844 });
   check(

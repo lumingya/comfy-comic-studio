@@ -19,7 +19,7 @@ COMFYUI_SPEC = {
     "fields": [
         {"key": "outputNodeId", "label": "输出节点", "type": "text"},
     ],
-    "capabilities": {"workflow": True, "check": True, "credentials": "none"},
+    "capabilities": {"workflow": True, "check": True, "models": True, "credentials": "none"},
     "docs": "docs/guide/WORKFLOW.md",
 }
 
@@ -81,8 +81,16 @@ def _comfy_check(payload, host):
     return check_comfy({k: v for k, v in config.items() if k != "provider"})
 
 
+def _comfy_models(payload, host):
+    """``models`` op for ComfyUI: /object_info proxied through the backend plus the derived catalog."""
+    from backend.mio_connection_check import comfy_object_info
+
+    config = payload.get("config") or payload
+    return comfy_object_info({k: v for k, v in config.items() if k != "provider"})
+
+
 def install_builtins(registry=PROVIDERS):
-    registry.register(COMFYUI_SPEC, _comfy_generate, owner="core", check=_comfy_check)
+    registry.register(COMFYUI_SPEC, _comfy_generate, owner="core", check=_comfy_check, models=_comfy_models)
     registry.register(NOVELAI_SPEC, _cloud_generate, owner="core")
     registry.register(OPENAI_SPEC, _cloud_generate, owner="core", models=_openai_models)
     return registry

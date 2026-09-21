@@ -118,6 +118,34 @@ class ProductionAdapterTests(unittest.TestCase):
                 # Disabled reproducibility means fresh seeds, never the literal 731 on every page.
                 self.assertNotEqual(seeds[0],seeds[1]);self.assertTrue(all(isinstance(x,int) and 0<=x<2**32 for x in seeds))
         self.assertEqual(workflow['9']['inputs']['seed'],731)
+    def test_model_and_lora_overrides_are_frozen_and_applied_after_bindings(self):
+        workflow={'4':{'class_type':'CheckpointLoaderSimple','inputs':{'ckpt_name':'blueprint.safetensors'}},
+                  '6':{'class_type':'CLIPTextEncode','inputs':{'text':'blueprint prompt','clip':['4',1]}},
+                  '3':{'class_type':'KSampler','inputs':{'model':['4',0],'positive':['6',0],'seed':1}}}
+        bindings=[{'id':'pos','enabled':True,'nodeId':'6','path':'text','source':'positive','type':'text'}]
+        huge={'CheckpointLoaderSimple':{'input':{'required':{'ckpt_name':[['blueprint.safetensors','chosen.safetensors']]}}},'Unused':{'input':{'required':{'x':['STRING']}}}}
+        config={'comfyConfig':{'mode':'real','baseUrl':'http://127.0.0.1:8188','objectInfo':huge,'modelCatalog':{'loras':['a.safetensors']}},
+                'comfyWorkflows':[{'id':'saved-workflow','title':'Chosen','workflow':workflow,'bindings':bindings,'slots':{}}]}
+        config['uiConfig']={'comfyStudio':{'settings':{'imageGeneration':{'profiles':[{'id':'comfyui','provider':'comfyui','title':'Test'}]}}}}
+        self.store.read=lambda **_:copy.deepcopy(config)
+        body={'storyId':'story-one','presets':[{'kind':'characters','id':'preset-one'}],'channelId':'comfyui','workflowId':'saved-workflow','seedEnabled':False,'seed':8}
+        snap=self.adapter.snapshot({**body,'overrides':{'model':'chosen.safetensors','loras':[{'name':'sub\\Style Boost.safetensors','strength':0.85},{'name':'sub\\Style Boost.safetensors','strength':0.2}]}})
+        self.assertEqual(snap['overrides'],{'model':'chosen.safetensors','loras':[{'name':'sub\\Style Boost.safetensors','strength':0.85}]})
+        # The frozen workflow keeps only the node definitions it uses and never the catalog.
+        self.assertEqual(set(snap['workflow']['objectInfo']),{'CheckpointLoaderSimple'});self.assertNotIn('modelCatalog',snap['workflow'])
+        task=self.q.assemble(snap,'Overrides','overrides');self.q.start(task['id'],trusted=True);self.assertEqual(self.wait(task['id'])['status'],'complete',self.q.get(task['id']))
+        sent=self.calls[-2]['workflow']
+        self.assertEqual([c['workflow']['4']['inputs']['ckpt_name'] for c in self.calls[-2:]],['chosen.safetensors']*2)
+        # Syntax fallback: the tag lands after the interpolated positive prompt written by the binding.
+        self.assertEqual(sent['6']['inputs']['text'],'Ada at sea <lora:Style Boost:0.85>')
+        self.assertEqual(workflow['4']['inputs']['ckpt_name'],'blueprint.safetensors')
+        listed=next(t for t in self.q.list()['tasks'] if t['id']==task['id']);self.assertEqual(listed['sources']['overrides']['model'],'chosen.safetensors')
+        # No overrides → nothing frozen; an impossible override fails at assembly, not in the queue.
+        self.assertIsNone(self.adapter.snapshot(body)['overrides'])
+        self.assertIsNone(self.adapter.snapshot({**body,'overrides':{'model':'','loras':None}})['overrides'])
+        config['comfyWorkflows'][0]['slots']={'model':{'enabled':False}}
+        with self.assertRaises(LibraryError):self.adapter.snapshot({**body,'overrides':{'model':'chosen.safetensors'}})
+        with self.assertRaises(LibraryError):self.adapter.snapshot({**body,'channelId':'channel-one','overrides':{'model':'chosen.safetensors'}})
     def test_workflow_without_seed_mapping_keeps_its_literal_seed(self):
         workflow={'9':{'class_type':'TestSeed','inputs':{'seed':731}}}
         config={'comfyConfig':{'mode':'real','baseUrl':'http://127.0.0.1:8188'},'comfyWorkflows':[{'id':'saved-workflow','title':'Chosen','workflow':workflow,'bindings':[]}]}

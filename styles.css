@@ -637,155 +637,13 @@ html[data-theme=light] .image-studio .btn,html[data-theme=light] .image-studio s
 @media(max-width:1000px){.workshop-asset-head{align-items:stretch;flex-direction:column}.workshop-asset-head>label{max-width:none}.assembly-dialog{grid-template-columns:1fr}.assembly-dialog aside{display:none}.production-controls{align-items:flex-start;flex-direction:column}.workshop-editor{grid-template-columns:170px minmax(0,1fr);gap:20px}}
 @media(max-width:760px){.workshop-heading{align-items:flex-start;flex-direction:column;gap:18px}.workshop-heading h1{font-size:28px}.workshop-tabs{gap:24px}.workshop-editor{grid-template-columns:1fr}.workshop-frames{flex-direction:row;overflow:auto;border-right:0;border-bottom:1px solid var(--line);padding:0 0 15px}.workshop-frames>button{flex-shrink:0}.workshop-frames .btn{justify-content:center;padding:0 9px}.workshop-asset-head .btn{font-size:11px;padding:9px}.production-card{padding:16px 16px 10px;border-radius:12px;gap:11px}.production-card h2{font-size:18px}.production-card>header{gap:12px}.production-meta{flex-direction:column;gap:2px}.production-meta span+span{margin-left:0;padding-left:0;border-left:0}.production-page{gap:10px;flex-wrap:wrap}.production-page>div:last-child{width:100%;justify-content:flex-end}.production-card-actions{gap:6px}.production-card-actions .btn{font-size:11px}.production-card-actions .production-remove{margin-left:0}.production-count b{font-size:22px}.production-page-list{max-height:none}.production-pager{gap:6px}.production-pager-number{min-width:40px;height:40px}.production-pager-summary{width:100%;margin:2px 0 0;text-align:center}.assembly-dialog{padding-top:0;gap:20px}.workshop-page-title{gap:3px}.workshop-page-title>input{font-size:17px}}
 
-/* =========================================================================
- * Viewport Lock & Scroll Isolation Engine (Opus5 + Fable51 Consolidated)
- * ========================================================================= */
+/* Layout metrics shared by sticky rails (the old viewport-lock engine was removed: the app always flows). */
 :root{
   --topbar-h:64px;
   --statusbar-h:29px;
 }
 @media(max-width:760px){
   :root{--topbar-h:57px}
-}
-
-html[data-viewport="locked"],
-html[data-viewport="locked"] body{
-  height:100%;
-  overflow:hidden;
-  overscroll-behavior:none;
-}
-html[data-viewport="locked"] .app{
-  height:100dvh;
-  min-height:0;
-  padding-bottom:var(--statusbar-h);
-  display:grid;
-  grid-template-rows:var(--topbar-h) minmax(0,1fr);
-}
-html[data-viewport="locked"] .main{
-  min-height:0;
-  overflow:hidden;
-  padding:0;
-  max-width:none;
-  margin:0;
-}
-html[data-viewport="locked"] .view,
-html[data-viewport="locked"] .art-fade{
-  height:100%;
-  min-height:0;
-}
-html[data-viewport="locked"] .assembly-workshop{
-  height:100%;
-  min-height:0;
-  max-width:none;
-  margin:0;
-  display:flex;
-  flex-direction:column;
-}
-html[data-viewport="locked"] .assembly-workshop > *{flex:none}
-html[data-viewport="locked"] .workshop-heading{margin:0;padding:12px 22px 10px}
-html[data-viewport="locked"] .workshop-tabs{margin:0;padding:0 22px 8px}
-html[data-viewport="locked"] .workshop-asset-head{
-  margin:0;padding:10px 22px;border-bottom:1px solid var(--line);
-}
-html[data-viewport="locked"] .story-synopsis{margin:0;padding:0 22px}
-
-html[data-viewport="locked"] .workshop-editor{
-  flex:1;
-  min-height:0;
-  margin:0;
-  gap:36px;
-  display:grid;
-  grid-template-columns:240px minmax(0,1fr);
-  align-items:start;
-}
-html[data-viewport="locked"] .workshop-frames{
-  max-height:100%;
-}
-html[data-viewport="locked"] .workshop-frames-list{
-  max-height:none;
-  flex:1;
-}
-
-html[data-viewport="locked"] .workshop-page{
-  min-width:0;
-  min-height:0;
-  display:flex;
-  flex-direction:column;
-}
-html[data-viewport="locked"] .workshop-page > *{flex:none}
-html[data-viewport="locked"] .workshop-page .page-head{
-  display:flex;align-items:center;gap:8px;
-  padding:12px 22px;
-  border-bottom:1px solid var(--line);
-  background:var(--bg);
-}
-html[data-viewport="locked"] .workshop-page .page-body{
-  flex:1;
-  min-height:0;
-  overflow-y:auto;
-  overscroll-behavior:contain;
-  scrollbar-gutter:stable;
-  padding:20px 22px 60px;
-}
-
-html[data-viewport="locked"] .frame-list::-webkit-scrollbar,
-html[data-viewport="locked"] .page-body::-webkit-scrollbar,
-html[data-viewport="locked"] .wm-rows::-webkit-scrollbar,
-html[data-viewport="locked"] .wm-inspector-body::-webkit-scrollbar{width:9px}
-html[data-viewport="locked"] .frame-list::-webkit-scrollbar-thumb,
-html[data-viewport="locked"] .page-body::-webkit-scrollbar-thumb,
-html[data-viewport="locked"] .wm-rows::-webkit-scrollbar-thumb,
-html[data-viewport="locked"] .wm-inspector-body::-webkit-scrollbar-thumb{
-  background:color-mix(in srgb,var(--muted) 30%,transparent);
-  border:2px solid transparent;
-  background-clip:padding-box;
-  border-radius:8px;
-}
-
-@media(max-width:1000px){
-  html[data-viewport="locked"] .workshop-editor{
-    grid-template-columns:220px minmax(0,1fr);
-  }
-}
-@media(max-width:760px){
-  html[data-viewport="locked"],
-  html[data-viewport="locked"] body{
-    height:auto;
-    overflow:visible;
-    overscroll-behavior:auto;
-  }
-  html[data-viewport="locked"] .app{
-    height:auto;
-    min-height:100dvh;
-    display:block;
-    padding-bottom:30px;
-  }
-  html[data-viewport="locked"] .main{overflow:visible;padding:24px 17px 45px}
-  html[data-viewport="locked"] .view,
-  html[data-viewport="locked"] .art-fade{height:auto}
-  html[data-viewport="locked"] .assembly-workshop{height:auto;display:block}
-  html[data-viewport="locked"] .workshop-editor{
-    display:flex;
-    flex-direction:column;
-    gap:20px;
-  }
-  html[data-viewport="locked"] .workshop-frames{
-    flex-direction:row;
-    overflow-x:auto;
-    overflow-y:visible;
-    border-right:0;
-    border-bottom:1px solid var(--line);
-    padding:0 0 15px;
-    background:none;
-  }
-  html[data-viewport="locked"] .workshop-frames .workshop-frames-list{
-    flex-direction:row;
-    overflow:visible;
-    padding:0;
-  }
-  html[data-viewport="locked"] .workshop-frames > button{flex-shrink:0}
-  html[data-viewport="locked"] .workshop-page{display:block}
-  html[data-viewport="locked"] .workshop-page .page-body{overflow:visible;padding:0}
 }
 
 /* 统一通用选择条样式与撤销 Toast */
@@ -960,6 +818,43 @@ input[type="search"]{-webkit-appearance:none;appearance:none}
 input[type="search"]::-webkit-search-decoration,input[type="search"]::-webkit-search-results-button,input[type="search"]::-webkit-search-results-decoration{display:none}
 input[type="search"]::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;width:14px;height:14px;margin-left:6px;flex-shrink:0;cursor:pointer;background:currentColor;opacity:.5;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 6l12 12M18 6L6 18'/%3E%3C/svg%3E") center/contain no-repeat}
 input[type="search"]::-webkit-search-cancel-button:hover{opacity:1}
+/* Assembly designer · task-level model / LoRA overrides. A frosted card under the workflow picker: the model list is a
+   filterable list box, LoRAs are chips with an inline strength slider above a searchable checklist. */
+.designer-slots{margin-top:22px;padding:18px 20px 8px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--panel2) 55%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.designer-slots.is-inert{padding-bottom:18px}
+.designer-slots>header{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;margin-bottom:14px}
+.designer-slots>header h4{margin:0;font-size:13px;font-weight:600;letter-spacing:.02em}
+.designer-slots>header .help{margin:0;flex:1 1 200px;font-size:11px}
+.designer-slots>header .btn{margin-left:auto}
+.designer-slot-field{margin-bottom:16px}
+.designer-slot-field .search-input,.designer-slot-field .search{margin-bottom:8px}
+.designer-slot-label{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;font-size:12px;font-weight:500;color:var(--text)}
+.designer-slot-label small{font-family:var(--mono);font-size:10.5px;font-weight:400;color:var(--muted)}
+.designer-slot-off{margin:0 0 14px;padding:10px 12px;border-radius:8px;background:var(--tint);font-size:11.5px;color:var(--muted)}
+#designer-model-list{width:100%}
+#designer-model-list option{font-family:var(--mono);font-size:11.5px}
+.designer-lora-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;min-height:38px}
+.designer-lora-none{margin:0;padding:9px 12px;border:1px dashed var(--line);border-radius:999px;font-size:11.5px;color:var(--muted)}
+.designer-lora-chip{display:inline-flex;align-items:center;gap:8px;max-width:100%;padding:4px 4px 4px 12px;border-radius:999px;background:color-mix(in srgb,var(--accent2) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent2) 30%,transparent);color:var(--text);font-size:12px}
+.designer-lora-chip .designer-lora-name{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.designer-lora-chip input[type=range]{width:96px;height:20px;margin:0;padding:0;accent-color:var(--accent);background:transparent;border:0;min-height:0}
+.designer-lora-chip output{min-width:32px;text-align:right;font-size:11px;color:var(--accent)}
+.designer-lora-chip .ibtn{width:28px;height:28px;min-width:28px}
+.designer-lora-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px;max-height:200px;overflow:auto;padding:6px;border:1px solid var(--line);border-radius:10px;background:var(--bg);scrollbar-width:thin}
+.designer-lora-option{display:flex;align-items:center;gap:9px;min-width:0;min-height:36px;padding:6px 10px;border-radius:7px;font-size:12px;cursor:pointer}
+.designer-lora-option:hover{background:var(--tint)}
+.designer-lora-option.is-on{background:color-mix(in srgb,var(--accent2) 12%,transparent);color:var(--accent)}
+.designer-lora-option input{margin:0;flex-shrink:0}
+.designer-lora-option span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.designer-lora-option small{max-width:40%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;color:var(--muted)}
+.designer-lora-free{grid-column:1/-1;display:flex;align-items:center;gap:8px;min-height:40px;padding:8px 12px;border:1px dashed var(--line);border-radius:8px;background:transparent;color:var(--accent);font:inherit;font-size:12px;cursor:pointer;text-align:left}
+.designer-lora-free:hover{background:var(--tint)}
+.designer-lora-empty{grid-column:1/-1;margin:0;padding:14px;text-align:center;font-size:11.5px;color:var(--muted)}
+.production-overrides{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.production-overrides span{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--accent2) 12%,transparent);font-size:11px;color:var(--accent)}
+.production-overrides span b{font-weight:600;font-family:var(--mono);font-size:10.5px}
+.production-overrides span i{font-style:normal;color:var(--muted)}
+@media(max-width:760px){.designer-slots{padding:14px 14px 4px}.designer-lora-results{grid-template-columns:1fr;max-height:240px}.designer-lora-chip{width:100%;justify-content:space-between}.designer-lora-chip input[type=range]{flex:1;width:auto;min-width:60px}.designer-lora-option{min-height:44px}}
 select.choice-list,select[size]:not([size="1"]){height:auto;min-height:0;padding:5px;overflow:auto;scrollbar-width:thin}
 select.choice-list option{padding:8px 10px;border-radius:5px;font:inherit;line-height:1.5;white-space:normal}
 select.choice-list option:disabled{color:var(--muted);font-style:italic}
@@ -1018,3 +913,103 @@ select.choice-list:focus-visible{border-color:var(--accent2);box-shadow:0 0 0 3p
 .update-section .notice ul{margin:8px 0 0 18px;padding:0}.update-section .notice li{margin:3px 0}
 .update-section .settings-row code,.service-context code{font:11px var(--mono);word-break:break-all}
 .nav-item.has-update::after{content:"";position:absolute;top:10px;left:22px;width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 0 2px var(--panel)}
+
+/* =====================================================================================================================
+   Mobile storyboard: scene-card stream + full-screen focus editor (js/assembly-workshop.js · renderStoryWorkshopMobile).
+   Graphite panels, sage accents, frosted header / action bars. The focus layer follows the visual viewport so the keyboard
+   never covers the field being edited; the chip strip rides on top of the keyboard.
+   ===================================================================================================================== */
+@media (max-width:760px), (max-width:950px) and (hover:none) and (pointer:coarse){
+  .wm-asset-head{gap:12px;margin-bottom:8px}
+  .wm-asset-head>label{display:grid;gap:8px;font-size:12px;color:var(--muted)}
+  .workshop-asset-head>.wm-asset-actions{display:flex;flex-wrap:nowrap;gap:8px;overflow-x:auto;padding:2px 16px 6px;margin:0 -16px;scrollbar-width:none;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+  .workshop-asset-head>.wm-asset-actions::-webkit-scrollbar{display:none}
+  .workshop-asset-head>.wm-asset-actions>.btn{flex:0 0 auto;white-space:nowrap;min-height:44px}
+  .workshop-heading{margin:0 0 14px;gap:12px}
+  .workshop-heading h1{font-size:24px;margin:4px 0}
+  .workshop-heading p{margin:0 0 4px}
+  .story-synopsis{margin:4px 0 18px}
+
+  .wm-stream{margin-top:6px}
+  .wm-stream-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+  .wm-stream-head strong{display:block;font:500 17px/1.4 var(--sans)}
+  .wm-stream-head small{display:block;margin-top:3px;font-size:11.5px;color:var(--muted)}
+  .wm-stream-tools{display:flex;gap:6px;flex-wrap:wrap}
+  .wm-stream-tools .btn{min-height:40px;font-size:12px;padding:0 12px}
+  .wm-stream .workshop-frames-selbar{margin:0 0 12px}
+  .wm-cards{display:flex;flex-direction:column;gap:10px}
+  .wm-card{position:relative;display:flex;align-items:flex-start;gap:12px;width:100%;padding:14px 14px 14px 16px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,color-mix(in srgb,var(--panel) 92%,var(--accent2) 8%) 0%,var(--panel) 100%);color:var(--text);text-align:left;cursor:pointer;transition:border-color .15s,transform .15s,background .15s;-webkit-tap-highlight-color:transparent}
+  .wm-card:active{transform:scale(.99)}
+  .wm-card.is-current{border-color:color-mix(in srgb,var(--accent2) 55%,var(--line))}
+  .wm-card.is-picked{border-color:var(--accent2);background:var(--tint)}
+  .wm-card>.icon{flex:0 0 16px;width:16px;height:16px;margin-top:4px;color:var(--muted)}
+  .wm-card .sel-cbox{margin:4px 0 0}
+  .wm-card-index{flex:0 0 auto;min-width:28px;padding-top:2px;font-size:12px;color:var(--accent2);letter-spacing:.04em}
+  .wm-card-body{flex:1;min-width:0;display:grid;gap:6px}
+  .wm-card-body header{display:flex;align-items:center;gap:8px;min-width:0}
+  .wm-card-body header strong{flex:1;min-width:0;font-size:15px;font-weight:500;line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wm-card-flag,.wm-card-vars{flex:0 0 auto;font-style:normal;font-size:10.5px;padding:2px 8px;border-radius:999px}
+  .wm-card-flag{color:var(--amber);background:color-mix(in srgb,var(--amber) 14%,transparent)}
+  .wm-card-vars{color:var(--accent);background:color-mix(in srgb,var(--accent2) 16%,transparent)}
+  .wm-card-prompt{margin:0;font-size:13px;line-height:1.65;color:var(--soft);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+  .wm-card-prompt.is-blank{color:var(--muted);font-style:italic}
+  .wm-card-caption{margin:0;font-size:12px;line-height:1.6;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wm-card-caption::before{content:"“";color:var(--accent2)}
+  .wm-card-caption::after{content:"”";color:var(--accent2)}
+  .wm-card.is-context{outline:2px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:-2px}
+
+  /* focus editor layer. The entry animation on .art-fade / .view keeps an identity transform applied (fill-mode both),
+     which would turn the fixed layer into an absolutely positioned one; drop it while the editor is open. */
+  html.wm-focus-open,html.wm-focus-open body{overflow:hidden;overscroll-behavior:none}
+  html.wm-focus-open .art-fade,html.wm-focus-open .view{animation:none!important;transform:none!important}
+  .wm-focus{position:fixed;left:0;right:0;top:var(--mobile-vtop,0px);height:var(--mobile-vh,100dvh);z-index:90;display:flex;flex-direction:column;background:var(--bg);color:var(--text);transition:height .2s ease,top .2s ease;animation:wm-focus-in .22s cubic-bezier(.2,.8,.2,1) both}
+  .wm-focus.is-step-next{animation-name:wm-focus-next}
+  .wm-focus.is-step-prev{animation-name:wm-focus-prev}
+  .wm-focus.is-leaving{animation:wm-focus-out .18s ease-in both;pointer-events:none}
+  @keyframes wm-focus-in{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+  @keyframes wm-focus-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(22px)}}
+  @keyframes wm-focus-next{from{opacity:.4;transform:translateX(36px)}to{opacity:1;transform:none}}
+  @keyframes wm-focus-prev{from{opacity:.4;transform:translateX(-36px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.wm-focus,.wm-focus.is-step-next,.wm-focus.is-step-prev,.wm-focus.is-leaving{animation:none;transition:none}}
+
+  .wm-focus-head{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:calc(6px + env(safe-area-inset-top,0px)) 8px 6px 6px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--panel) 82%,transparent);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2)}
+  .wm-focus-head .ibtn{width:48px;height:48px;min-width:48px;border-radius:12px}
+  .wm-focus-title{flex:1;min-width:0;display:grid;gap:1px;padding:0 4px}
+  .wm-focus-title strong{font-size:14px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+  .wm-focus-title small{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wm-focus-nav{display:flex;gap:4px}
+  .wm-focus-nav .ibtn{background:var(--panel2)}
+  .wm-focus-nav .ibtn:disabled{opacity:.35}
+
+  .wm-focus-body{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:18px 16px 12px;display:flex;flex-direction:column;gap:20px;touch-action:pan-y}
+  .wm-field{display:grid;gap:8px;min-width:0}
+  .wm-field-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:32px}
+  .wm-field-head .btn.small{min-height:36px;font-size:12px}
+  .wm-field-label{font-size:12px;font-weight:500;letter-spacing:.04em;color:var(--muted)}
+  .wm-field>input{height:48px;min-height:48px;font-size:16px!important;padding:0 14px;border-radius:12px;background:var(--panel)}
+  .wm-focus .prompt-surface{border-radius:14px}
+  .wm-focus .prompt-surface>textarea,.wm-focus .prompt-surface{min-height:172px}
+  .wm-focus .wm-negative,.wm-focus .prompt-surface:has(>.wm-negative),.wm-focus .prompt-surface:has(>.wm-caption){min-height:112px}
+  .wm-focus .prompt-surface:has(>.wm-negative)>textarea,.wm-focus .prompt-surface:has(>.wm-caption)>textarea{min-height:112px}
+  .wm-focus .prompt-paint,.wm-focus .prompt-surface>textarea{font-size:16px!important;line-height:1.75!important;padding:14px!important}
+  .wm-params{border:1px solid var(--line);border-radius:12px;padding:0 14px}
+  .wm-params>summary{min-height:48px;display:flex;align-items:center;font-size:13px;color:var(--soft)}
+  .wm-params .grid2{padding-bottom:10px}
+  .wm-focus-spacer{flex:0 0 12px}
+
+  .wm-chips{flex:0 0 auto;display:none;gap:8px;padding:8px 12px;overflow-x:auto;scrollbar-width:none;border-top:1px solid var(--line);background:color-mix(in srgb,var(--panel) 86%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch}
+  .wm-chips::-webkit-scrollbar{display:none}
+  .wm-focus.is-editing .wm-chips{display:flex;animation:wm-chips-in .16s ease-out both}
+  @keyframes wm-chips-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .wm-chip{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid color-mix(in srgb,var(--accent2) 30%,transparent);background:color-mix(in srgb,var(--accent2) 14%,transparent);color:var(--accent);font:500 13px/1 var(--mono);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  .wm-chip:active{background:color-mix(in srgb,var(--accent2) 30%,transparent)}
+  .wm-chip.is-punct{min-width:44px;background:var(--panel2);border-color:var(--line);color:var(--soft);font-family:var(--sans);font-size:15px}
+
+  .wm-focus-actions{flex:0 0 auto;display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:color-mix(in srgb,var(--panel) 84%,transparent);backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2)}
+  .wm-focus-actions .btn{min-height:52px;height:auto;border-radius:14px;font-size:14px;justify-content:center;white-space:nowrap;padding:0 14px}
+  .wm-focus-actions .btn.danger{color:var(--red);min-width:64px}
+  .wm-focus-actions .btn.danger .icon{color:var(--red)}
+  body.mobile-keyboard-open .wm-focus-actions{display:none}
+  body.mobile-keyboard-open .wm-focus.is-editing .wm-chips{padding-bottom:8px}
+  body.mobile-keyboard-open .wm-focus-head{padding-top:6px}
+}

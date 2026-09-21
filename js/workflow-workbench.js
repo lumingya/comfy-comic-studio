@@ -102,6 +102,7 @@ const WORKFLOW_ICONS = {
   power: '<path d="M12 3v9"/><path d="M6.3 7.3a8 8 0 1 0 11.4 0"/>',
   question: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7"/><path d="M12 17v.3"/>',
   rename: '<path d="M4 20h4l10-10-4-4L4 16v4Z"/><path d="M13 7l4 4"/>',
+  layers: '<path d="M12 4 3 9l9 5 9-5-9-5Z"/><path d="m3 14 9 5 9-5"/>',
 };
 
 /* ------------------------------------------------------------------ data helpers */
@@ -116,7 +117,191 @@ function mapperBindingIssues() {
     issues = validateMappingTargets(c.workflow, c.bindings);
   if (c.outputNodeId && !Object.hasOwn(c.workflow, c.outputNodeId))
     issues.push({ id: "", kind: "output", message: "指定的结果图片节点 #" + c.outputNodeId + " 不存在。" });
+  const slots = c.slots || {};
+  if (slots.model?.auto === false && slots.model.enabled !== false && !Object.hasOwn(c.workflow[slots.model.nodeId]?.inputs || {}, slots.model.path))
+    issues.push({ id: "", kind: "slot-model", message: "模型槽指定的字段 #" + slots.model.nodeId + " · " + slots.model.path + " 不在蓝图中。" });
+  if (slots.lora?.auto === false && slots.lora.mode && slots.lora.mode !== "off" && !Object.hasOwn(c.workflow, slots.lora.nodeId || ""))
+    issues.push({ id: "", kind: "slot-lora", message: "LoRA 槽指定的节点 #" + slots.lora.nodeId + " 不在蓝图中。" });
   return issues;
+}
+
+/* ------------------------------------------------------------------ semantic slots */
+
+const SLOT_MODE_LABEL = { syntax: "语法注入", chain: "节点链", stack: "堆栈节点", off: "关闭" };
+const SLOT_KIND_LABEL = { checkpoint: "Checkpoint", unet: "扩散模型 / UNet", model: "模型文件" };
+
+function slotKindLabel(kind) {
+  return SLOT_KIND_LABEL[kind] || SLOT_KIND_LABEL.model;
+}
+
+/* Detection + stored choice, resolved once per render. */
+function slotView(c = state.settings.comfy) {
+  const positive = comfyPositiveTarget(c.bindings),
+    detected = WorkflowSlots.detect(c.workflow, { objectInfo: c.objectInfo || {}, positive }),
+    resolved = WorkflowSlots.normalize(c.slots || {}, c.workflow, { objectInfo: c.objectInfo || {}, positive });
+  return { detected, resolved, positive, currentModel: WorkflowSlots.currentModel(c.workflow, resolved), currentLoras: WorkflowSlots.currentLoras(c.workflow, resolved) };
+}
+
+function renderSlotRows(c, issues) {
+  const view = slotView(c),
+    w = c.workflow,
+    node = (id) => (id && w[id] ? `<b>#${esc(id)}</b><span class="wf-node" data-user-content>${esc(workflowNodeLabel(w, id))}</span>` : "<b>未识别</b>"),
+    m = view.resolved.model,
+    l = view.resolved.lora,
+    mIssue = issues.find((i) => i.kind === "slot-model"),
+    lIssue = issues.find((i) => i.kind === "slot-lora"),
+    modelSel = mapperUI.selected === "__slot_model__",
+    loraSel = mapperUI.selected === "__slot_lora__",
+    glyph = (issue, on, title) =>
+      issue
+        ? `<span class="wf-row-glyph is-bad" title="${esc(issue.message)}">${icon("alert", "sm")}</span>`
+        : on
+          ? `<span class="wf-row-glyph is-slot" title="${esc(title)}">${icon("layers", "sm")}</span>`
+          : `<span class="wf-row-glyph is-off" title="已关闭">${icon("pause", "sm")}</span>`;
+  const modelDetail = m.enabled
+    ? `<span class="wm-value">${m.auto ? "自动识别" : "手动指定"} · ${esc(slotKindLabel(m.kind))}</span><span data-user-content title="${esc(view.currentModel || "")}">${esc(view.currentModel ? "蓝图默认 " + WorkflowSlots.loraStem(view.currentModel) : "蓝图未填模型")}</span>`
+    : `<span class="wm-value is-blank">${view.detected.model.candidates.length ? "已关闭" : "蓝图里没有模型加载字段"}</span>`;
+  const loraDetail =
+    l.mode === "off"
+      ? `<span class="wm-value is-blank">${view.detected.lora.syntax.length || view.detected.lora.chain.length || view.detected.lora.stack.length || view.positive ? "已关闭" : "蓝图里没有 LoRA 节点或正向提示词映射"}</span>`
+      : `<span class="wm-value">${esc(SLOT_MODE_LABEL[l.mode])}${l.assumed ? " · 写入正向提示词" : l.auto ? " · 自动识别" : " · 手动指定"}</span><span title="${esc(view.currentLoras.map((x) => x.name + " ×" + x.strength).join(", "))}">${view.currentLoras.length ? "蓝图自带 " + view.currentLoras.length + " 个 LoRA" : "蓝图未挂 LoRA"}</span>`;
+  const row = (key, sel, issue, on, name, target, tag, detail, title) => `<article class="wf-row wf-row-slot ${sel ? "selected" : ""} ${on ? "" : "is-off"} ${issue ? "has-issue" : ""}" data-slot-row="${key}">
+    <span class="wf-row-lead">${glyph(issue, on, title)}</span>
+    <button type="button" class="wm-row-select wf-row-main" data-act="wm-select-slot" data-id="${key}" aria-pressed="${sel}">
+      <span class="wf-row-name">${name}</span>
+      <span class="wf-row-target mono">${target}</span>
+    </button>
+    <span class="wf-row-source">
+      <span class="wf-tag tag-slot">${tag}</span>
+      <span class="wf-row-detail">${detail}</span>
+    </span>
+    <label class="switch wf-row-switch" title="${on ? "已启用，点击关闭" : "已关闭，点击启用"}">
+      <input type="checkbox" role="switch" data-v3-slot="${key}.enabled" ${on ? "checked" : ""} aria-label="${key === "model" ? "启用模型槽" : "启用 LoRA 槽"}">
+      <span class="switch-track"></span>
+    </label>
+    <span class="wf-row-menu-spacer" aria-hidden="true"></span>
+  </article>`;
+  return (
+    row("model", modelSel, mIssue, m.enabled, "模型槽 · 基础模型", m.enabled ? `${node(m.nodeId)}<i>·</i><code>${esc(m.path)}</code>` : "<b>装配时可换模型</b>", "模型", modelDetail, "装配时可切换基础模型") +
+    row("lora", loraSel, lIssue, l.mode !== "off", "LoRA 槽 · 风格叠加", l.mode !== "off" ? `${node(l.nodeId)}<i>·</i><code>${esc(l.path || SLOT_MODE_LABEL[l.mode])}</code>` : "<b>装配时可叠加 LoRA</b>", "LoRA", loraDetail, "装配时可叠加 LoRA")
+  );
+}
+
+function slotTargetOptions(kind, view, c) {
+  const w = c.workflow,
+    label = (id, path) => `#${id} · ${workflowNodeLabel(w, id)} · ${path}`;
+  if (kind === "model") {
+    const primary = view.detected.model.primary;
+    return [
+      { value: "auto", label: primary ? `自动识别 · ${label(primary.nodeId, primary.path)}` : "自动识别（未找到模型字段）" },
+      ...view.detected.model.candidates.map((cand) => ({ value: cand.nodeId + "\u0000" + cand.path, label: label(cand.nodeId, cand.path) + ` · ${slotKindLabel(cand.kind)}` })),
+    ];
+  }
+  const d = view.detected.lora,
+    rec = d.recommended,
+    options = [{ value: "auto", label: rec.mode === "off" ? "自动识别（未找到 LoRA 节点）" : `自动识别 · ${SLOT_MODE_LABEL[rec.mode]} · ${label(rec.nodeId, rec.path || "")}` }];
+  for (const cand of d.syntax) options.push({ value: "syntax\u0000" + cand.nodeId + "\u0000" + cand.path, label: `语法注入 · ${label(cand.nodeId, cand.path)}` });
+  if (view.positive && !d.syntax.some((x) => x.nodeId === view.positive.nodeId && x.path === view.positive.path))
+    options.push({ value: "syntax\u0000" + view.positive.nodeId + "\u0000" + view.positive.path, label: `语法注入 · 正向提示词 ${label(view.positive.nodeId, view.positive.path)}` });
+  const chainHeads = new Set();
+  for (const desc of d.chain) chainHeads.add(desc.nodeId);
+  for (const id of chainHeads) options.push({ value: "chain\u0000" + id + "\u0000lora_name", label: `节点链 · 从 #${id} ${workflowNodeLabel(w, id)} 起` });
+  for (const cand of d.stack) options.push({ value: "stack\u0000" + cand.nodeId + "\u0000" + cand.slots[0].namePath, label: `堆栈节点 · #${cand.nodeId} ${workflowNodeLabel(w, cand.nodeId)} · ${cand.slots.length} 个槽位` });
+  options.push({ value: "off", label: "关闭 LoRA 槽" });
+  return options;
+}
+
+function slotTargetValue(kind, c) {
+  const stored = c.slots?.[kind] || {};
+  if (kind === "model") return stored.auto === false && stored.nodeId ? stored.nodeId + "\u0000" + stored.path : "auto";
+  if (stored.mode === "off" && stored.auto !== false) return "off";
+  return stored.auto === false ? (stored.mode === "off" ? "off" : stored.mode + "\u0000" + stored.nodeId + "\u0000" + (stored.path || "")) : "auto";
+}
+
+function renderSlotInspector(kind, c) {
+  const view = slotView(c),
+    catalog = comfyModelCatalog(),
+    synced = catalog.fetchedAt ? new Date(catalog.fetchedAt).toLocaleString() : "",
+    options = slotTargetOptions(kind, view, c),
+    current = slotTargetValue(kind, c),
+    known = options.some((o) => o.value === current),
+    select = (id, label) => `<select id="${id}" data-v3-slot="${kind}.target" aria-label="${label}">${options.map((o) => opt(o.value, o.label, current)).join("")}${known ? "" : opt(current, "已指定的目标（不在蓝图中）", current)}</select>`;
+  if (kind === "model") {
+    const m = view.resolved.model;
+    return `<article class="mapping-rule wf-detail wf-detail-slot">
+      <header class="wf-detail-head"><span class="context-kicker">语义槽 · 模型</span><span class="spacer"></span></header>
+      <h3 class="wf-detail-static">模型槽 · 基础模型</h3>
+      <p class="wf-contract ${m.enabled ? "" : "is-inert"}">${
+        m.enabled
+          ? `<span>装配画册时，所选模型会写入</span> <code>#${esc(m.nodeId)} · ${esc(m.path)}</code> <small>${esc(workflowNodeLabel(c.workflow, m.nodeId))}</small><span>；不选择时保留蓝图默认</span> <code data-user-content>${esc(view.currentModel || "（空）")}</code><span>。</span>`
+          : "<span>模型槽已关闭：装配时不能切换基础模型，蓝图里的模型原样提交。</span>"
+      }</p>
+      ${field("写入位置", select("v3-slot-model-target", "模型槽写入位置"), "按字段名（ckpt_name / unet_name / model_name）、文件后缀与 model 连线自动识别，不依赖节点插件名称；识别错时在这里改。")}
+      <label class="wf-switch-row">
+        <span><strong>启用模型槽</strong><small>关闭后装配面板不再提供模型选择。</small></span>
+        <span class="switch"><input type="checkbox" role="switch" data-v3-slot="model.enabled" ${m.enabled || (view.detected.model.primary && c.slots?.model?.enabled !== false) ? "checked" : ""} ${view.detected.model.candidates.length || c.slots?.model?.auto === false ? "" : "disabled"} aria-label="启用模型槽"><span class="switch-track"></span></span>
+      </label>
+      <h4 class="wf-section"><span>可选模型</span></h4>
+      <p class="wf-slot-catalog">${
+        catalog.fetchedAt
+          ? `<strong>${catalog.checkpoints.length}</strong> 个 Checkpoint · <strong>${catalog.unets.length}</strong> 个扩散模型 · <strong>${catalog.loras.length}</strong> 个 LoRA<small>同步于 ${esc(synced)}</small>`
+          : "还没有同步过模型列表；同步后装配面板可以搜索选择已安装的模型与 LoRA，未同步时也可以手动输入文件名。"
+      }</p>
+      <div class="wf-detail-actions">${btn("同步模型列表", "refresh", "v3-read-object-info", 'title="从 ComfyUI 读取已安装的 Checkpoint / 扩散模型 / LoRA 与节点定义"', "small primary")}</div>
+    </article>`;
+  }
+  const l = view.resolved.lora,
+    stored = c.slots?.lora || {},
+    modeHelp = {
+      syntax: "把 <lora:名称:强度> 标签写进这个文本字段；蓝图里已有的标签会被替换。LoRA Manager、Prompt Control 等插件会解析这种语法。",
+      chain: "按顺序填写串联的 LoRA 加载节点（lora_name / strength_model…）；LoRA 多于节点时自动克隆末尾节点接到链上，少于节点时把多余节点从链上绕过。",
+      stack: "填写堆栈节点的编号槽位（lora_name_N / strength_N / switch_N 或 rgthree 的 lora_N 条目），空槽位自动关闭。",
+      off: "装配时不提供 LoRA 选择。",
+    };
+  return `<article class="mapping-rule wf-detail wf-detail-slot">
+    <header class="wf-detail-head"><span class="context-kicker">语义槽 · LoRA</span><span class="spacer"></span></header>
+    <h3 class="wf-detail-static">LoRA 槽 · 风格叠加</h3>
+    <p class="wf-contract ${l.mode === "off" ? "is-inert" : ""}">${
+      l.mode === "off"
+        ? "<span>LoRA 槽已关闭：装配时不能叠加 LoRA，蓝图里已有的 LoRA 原样提交。</span>"
+        : `<span>模式</span> <em>${SLOT_MODE_LABEL[l.mode]}</em><span>，目标</span> <code>#${esc(l.nodeId)}${l.path ? " · " + esc(l.path) : ""}</code> <small>${esc(workflowNodeLabel(c.workflow, l.nodeId))}</small><span>。不选择时保留蓝图自带的</span> <em>${view.currentLoras.length}</em> <span>个 LoRA。</span>`
+    }</p>
+    ${l.assumed && l.mode === "syntax" ? `<p class="wf-warning">${icon("alert", "sm")}<span>蓝图里没有解析 &lt;lora:&gt; 语法的节点，标签会写进正向提示词；需要 LoRA Manager、Prompt Control 之类的插件才会真正生效。想按节点加载，请在蓝图里加一个 LoraLoader 后重新导入。</span></p>` : ""}
+    ${field("模式与目标", select("v3-slot-lora-target", "LoRA 槽模式与目标"), modeHelp[l.mode])}
+    ${
+      l.mode === "syntax"
+        ? `<div class="wf-slot-grid">
+      ${field("标签位置", `<select data-v3-slot="lora.placement" aria-label="LoRA 标签位置">${opt("append", "写在文本末尾", stored.placement || "append")}${opt("prepend", "写在文本开头", stored.placement || "append")}</select>`)}
+      ${field("名称写法", `<select data-v3-slot="lora.nameFormat" aria-label="LoRA 名称写法">${opt("stem", "仅文件名（不含后缀）", stored.nameFormat || "stem")}${opt("path", "含子目录（不含后缀）", stored.nameFormat || "stem")}${opt("file", "完整文件名", stored.nameFormat || "stem")}</select>`)}
+    </div>`
+        : ""
+    }
+    ${view.currentLoras.length ? `<h4 class="wf-section"><span>蓝图自带</span></h4><ul class="wf-slot-loras">${view.currentLoras.map((x) => `<li><span data-user-content>${esc(WorkflowSlots.loraStem(x.name))}</span><b>×${esc(WorkflowSlots.numberText(x.strength))}</b></li>`).join("")}</ul>` : ""}
+    <div class="wf-detail-actions">${btn("同步模型列表", "refresh", "v3-read-object-info", 'title="从 ComfyUI 读取已安装的 LoRA 列表"', "small")}</div>
+  </article>`;
+}
+
+/* Writes one slot control back into settings.comfy.slots. */
+function applySlotControl(key, el) {
+  const c = state.settings.comfy,
+    slots = (c.slots = c.slots && typeof c.slots === "object" ? c.slots : {}),
+    [kind, prop] = key.split(".");
+  slots[kind] = slots[kind] && typeof slots[kind] === "object" ? slots[kind] : {};
+  if (prop === "enabled") {
+    if (kind === "model") slots.model.enabled = el.checked;
+    else if (el.checked) { delete slots.lora.mode; slots.lora.auto = slots.lora.nodeId ? false : true; if (slots.lora.auto) delete slots.lora.nodeId; }
+    else { slots.lora = { ...slots.lora, mode: "off", auto: true }; delete slots.lora.nodeId; delete slots.lora.path; }
+  } else if (prop === "target") {
+    const value = el.value;
+    if (kind === "model") {
+      if (value === "auto") slots.model = { ...slots.model, auto: true, enabled: slots.model.enabled !== false };
+      else { const [nodeId, path] = value.split("\u0000"); slots.model = { ...slots.model, auto: false, enabled: true, nodeId, path }; }
+    } else if (value === "auto") slots.lora = { placement: slots.lora.placement, nameFormat: slots.lora.nameFormat, auto: true };
+    else if (value === "off") slots.lora = { placement: slots.lora.placement, nameFormat: slots.lora.nameFormat, auto: true, mode: "off" };
+    else { const [mode, nodeId, path] = value.split("\u0000"); slots.lora = { placement: slots.lora.placement, nameFormat: slots.lora.nameFormat, auto: false, mode, nodeId, path }; }
+  } else if (prop === "placement" || prop === "nameFormat") slots.lora[prop] = el.value;
+  save();
+  render();
 }
 
 /* Bindings that survive the current filter + search. Shared with the bulk "全选" action. */
@@ -405,8 +590,8 @@ function renderMapperHealthList(issues) {
   return `<div class="wf-health-list" role="list">${issues
     .map((i) => {
       const b = c.bindings.find((x) => x.id === i.id);
-      const label = i.kind === "output" ? "结果图片节点" : b?.label || "未命名映射";
-      const act = i.kind === "output" ? 'data-act="wm-select-output"' : `data-act="wm-select" data-id="${esc(i.id)}"`;
+      const label = i.kind === "output" ? "结果图片节点" : i.kind === "slot-model" ? "模型槽" : i.kind === "slot-lora" ? "LoRA 槽" : b?.label || "未命名映射";
+      const act = i.kind === "output" ? 'data-act="wm-select-output"' : i.kind === "slot-model" || i.kind === "slot-lora" ? `data-act="wm-select-slot" data-id="${i.kind.slice(5)}"` : `data-act="wm-select" data-id="${esc(i.id)}"`;
       return `<button type="button" class="wm-issue" role="listitem" ${act}><strong ${b?.label ? "data-user-content" : ""}>${esc(label)}</strong><em>${esc(i.message)}</em>${icon("arrow", "xs")}</button>`;
     })
     .join("")}</div>`;
@@ -430,14 +615,14 @@ function renderMapperRows() {
       <strong>还没有映射</strong>
       <p>映射告诉 Mio 把分镜里的哪一项写到哪个节点。先让系统识别正负提示词节点，或者从节点里挑字段。</p>
       <div class="row">${btn("识别提示词", "spark", "v3-auto-bind", "", "small primary")}${btn("从节点中添加", "plus", "wm-nodes", "", "small")}</div>
-    </div>${renderOutputNodeRow(c)}`;
+    </div>${renderSlotRows(c, issues)}${renderOutputNodeRow(c)}`;
   if (!rows.length)
     return `<div class="wf-empty is-filter">
       <strong>没有匹配的映射</strong>
       <p>换个关键词，或清除筛选查看全部 <b>${c.bindings.length}</b> 项。</p>
       <div class="row">${btn("清除筛选", "close", "wf-clear-filter", "", "small")}</div>
     </div>`;
-  return rows.map((b) => renderMapperRow(b, c, issues, selected)).join("") + (filtered ? "" : renderOutputNodeRow(c));
+  return (filtered ? "" : renderSlotRows(c, issues)) + rows.map((b) => renderMapperRow(b, c, issues, selected)).join("") + (filtered ? "" : renderOutputNodeRow(c));
 }
 
 function renderMapperRow(b, c, issues, selected) {
@@ -523,6 +708,8 @@ function renderMapperInspector() {
   const c = state.settings.comfy;
   if (mapperUI.nodes) return renderNodeBrowser();
   if (mapperUI.selected === "__output__") return `<aside class="wf-inspector wm-inspector" aria-label="映射详情">${renderOutputInspector(c)}</aside>`;
+  if (mapperUI.selected === "__slot_model__" || mapperUI.selected === "__slot_lora__")
+    return `<aside class="wf-inspector wm-inspector" aria-label="语义槽详情">${renderSlotInspector(mapperUI.selected === "__slot_model__" ? "model" : "lora", c)}</aside>`;
   const b = mapperSelectedBinding();
   if (!b)
     return `<aside class="wf-inspector wm-inspector" aria-label="映射详情">
@@ -1079,6 +1266,13 @@ function installWorkflowWorkbench() {
       if (innerWidth <= 1024) document.querySelector(".wm-inspector")?.scrollIntoView({ block: "start", behavior: "smooth" });
       return;
     }
+    if (action === "wm-select-slot") {
+      mapperUI.selected = d.id === "lora" ? "__slot_lora__" : "__slot_model__";
+      mapperUI.nodes = false;
+      render();
+      if (innerWidth <= 1024) document.querySelector(".wm-inspector")?.scrollIntoView({ block: "start", behavior: "smooth" });
+      return;
+    }
     if (action === "wf-field-custom" || action === "wf-field-list") {
       mapperUI.customPath = action === "wf-field-custom" ? d.id : "";
       render();
@@ -1188,6 +1382,9 @@ function installWorkflowWorkbench() {
     if (el?.id === "wm-filter-select") {
       mapperUI.filter = el.value;
       render();
+    }
+    if (el?.dataset?.v3Slot) {
+      try { applySlotControl(el.dataset.v3Slot, el); } catch (error) { toast(error.message, "error"); }
     }
   });
 

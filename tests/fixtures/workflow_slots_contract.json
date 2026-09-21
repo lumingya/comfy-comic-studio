@@ -1,0 +1,3197 @@
+[
+ {
+  "name": "unet chain: detect, swap model, grow chain to four",
+  "workflow": {
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "30",
+      0
+     ]
+    }
+   },
+   "10": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "flux1-dev.safetensors",
+     "weight_dtype": "default"
+    },
+    "_meta": {
+     "title": "Load Diffusion Model"
+    }
+   },
+   "11": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+     "model_name": "4x-UltraSharp.pth"
+    }
+   },
+   "12": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "turbo.safetensors",
+     "strength_model": 1,
+     "model": [
+      "10",
+      0
+     ]
+    },
+    "_meta": {
+     "title": "LoraLoaderModelOnly"
+    }
+   },
+   "13": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "ghibsky.safetensors",
+     "strength_model": 0.8,
+     "model": [
+      "12",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "13",
+      0
+     ],
+     "seed": 1,
+     "positive": [
+      "6",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+     "clip_name1": "t5.safetensors",
+     "clip_name2": "clip_l.safetensors"
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "model": "flux1-schnell.safetensors",
+   "loras": [
+    {
+     "name": "a.safetensors",
+     "strength": 0.5
+    },
+    {
+     "name": "b.safetensors",
+     "strength": 0.6
+    },
+    {
+     "name": "c.safetensors",
+     "strength": 0.7
+    },
+    {
+     "name": "d.safetensors",
+     "strength": 0.8
+    }
+   ]
+  },
+  "positive": {
+   "nodeId": "6",
+   "path": "text"
+  },
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "10",
+    "path": "unet_name",
+    "kind": "unet"
+   },
+   "lora": {
+    "mode": "chain",
+    "nodeId": "12",
+    "path": "lora_name",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "30",
+      0
+     ]
+    }
+   },
+   "10": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "flux1-schnell.safetensors",
+     "weight_dtype": "default"
+    },
+    "_meta": {
+     "title": "Load Diffusion Model"
+    }
+   },
+   "11": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+     "model_name": "4x-UltraSharp.pth"
+    }
+   },
+   "12": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "a.safetensors",
+     "strength_model": 0.5,
+     "model": [
+      "10",
+      0
+     ]
+    },
+    "_meta": {
+     "title": "LoraLoaderModelOnly"
+    }
+   },
+   "13": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "b.safetensors",
+     "strength_model": 0.6,
+     "model": [
+      "12",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "13:lora2",
+      0
+     ],
+     "seed": 1,
+     "positive": [
+      "6",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+     "clip_name1": "t5.safetensors",
+     "clip_name2": "clip_l.safetensors"
+    }
+   },
+   "13:lora1": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "c.safetensors",
+     "strength_model": 0.7,
+     "model": [
+      "13",
+      0
+     ]
+    }
+   },
+   "13:lora2": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "d.safetensors",
+     "strength_model": 0.8,
+     "model": [
+      "13:lora1",
+      0
+     ]
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "flux1-dev.safetensors",
+   "loras": [
+    {
+     "name": "turbo.safetensors",
+     "strength": 1
+    },
+    {
+     "name": "ghibsky.safetensors",
+     "strength": 0.8
+    }
+   ]
+  }
+ },
+ {
+  "name": "unet chain: shrink to one bypasses tail",
+  "workflow": {
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "30",
+      0
+     ]
+    }
+   },
+   "10": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "flux1-dev.safetensors",
+     "weight_dtype": "default"
+    },
+    "_meta": {
+     "title": "Load Diffusion Model"
+    }
+   },
+   "11": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+     "model_name": "4x-UltraSharp.pth"
+    }
+   },
+   "12": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "turbo.safetensors",
+     "strength_model": 1,
+     "model": [
+      "10",
+      0
+     ]
+    },
+    "_meta": {
+     "title": "LoraLoaderModelOnly"
+    }
+   },
+   "13": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "ghibsky.safetensors",
+     "strength_model": 0.8,
+     "model": [
+      "12",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "13",
+      0
+     ],
+     "seed": 1,
+     "positive": [
+      "6",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+     "clip_name1": "t5.safetensors",
+     "clip_name2": "clip_l.safetensors"
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": [
+    {
+     "name": "only.safetensors",
+     "strength": 0.9
+    }
+   ]
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "10",
+    "path": "unet_name",
+    "kind": "unet"
+   },
+   "lora": {
+    "mode": "chain",
+    "nodeId": "12",
+    "path": "lora_name",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "30",
+      0
+     ]
+    }
+   },
+   "10": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "flux1-dev.safetensors",
+     "weight_dtype": "default"
+    },
+    "_meta": {
+     "title": "Load Diffusion Model"
+    }
+   },
+   "11": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+     "model_name": "4x-UltraSharp.pth"
+    }
+   },
+   "12": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "only.safetensors",
+     "strength_model": 0.9,
+     "model": [
+      "10",
+      0
+     ]
+    },
+    "_meta": {
+     "title": "LoraLoaderModelOnly"
+    }
+   },
+   "20": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "12",
+      0
+     ],
+     "seed": 1,
+     "positive": [
+      "6",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+     "clip_name1": "t5.safetensors",
+     "clip_name2": "clip_l.safetensors"
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "flux1-dev.safetensors",
+   "loras": [
+    {
+     "name": "turbo.safetensors",
+     "strength": 1
+    },
+    {
+     "name": "ghibsky.safetensors",
+     "strength": 0.8
+    }
+   ]
+  }
+ },
+ {
+  "name": "unet chain: empty list removes every loader",
+  "workflow": {
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "30",
+      0
+     ]
+    }
+   },
+   "10": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "flux1-dev.safetensors",
+     "weight_dtype": "default"
+    },
+    "_meta": {
+     "title": "Load Diffusion Model"
+    }
+   },
+   "11": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+     "model_name": "4x-UltraSharp.pth"
+    }
+   },
+   "12": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "turbo.safetensors",
+     "strength_model": 1,
+     "model": [
+      "10",
+      0
+     ]
+    },
+    "_meta": {
+     "title": "LoraLoaderModelOnly"
+    }
+   },
+   "13": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "ghibsky.safetensors",
+     "strength_model": 0.8,
+     "model": [
+      "12",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "13",
+      0
+     ],
+     "seed": 1,
+     "positive": [
+      "6",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+     "clip_name1": "t5.safetensors",
+     "clip_name2": "clip_l.safetensors"
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": []
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "10",
+    "path": "unet_name",
+    "kind": "unet"
+   },
+   "lora": {
+    "mode": "chain",
+    "nodeId": "12",
+    "path": "lora_name",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "30",
+      0
+     ]
+    }
+   },
+   "10": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "flux1-dev.safetensors",
+     "weight_dtype": "default"
+    },
+    "_meta": {
+     "title": "Load Diffusion Model"
+    }
+   },
+   "11": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+     "model_name": "4x-UltraSharp.pth"
+    }
+   },
+   "20": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "10",
+      0
+     ],
+     "seed": 1,
+     "positive": [
+      "6",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+     "clip_name1": "t5.safetensors",
+     "clip_name2": "clip_l.safetensors"
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "flux1-dev.safetensors",
+   "loras": [
+    {
+     "name": "turbo.safetensors",
+     "strength": 1
+    },
+    {
+     "name": "ghibsky.safetensors",
+     "strength": 0.8
+    }
+   ]
+  }
+ },
+ {
+  "name": "unet chain: model only keeps blueprint loras",
+  "workflow": {
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "30",
+      0
+     ]
+    }
+   },
+   "10": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "flux1-dev.safetensors",
+     "weight_dtype": "default"
+    },
+    "_meta": {
+     "title": "Load Diffusion Model"
+    }
+   },
+   "11": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+     "model_name": "4x-UltraSharp.pth"
+    }
+   },
+   "12": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "turbo.safetensors",
+     "strength_model": 1,
+     "model": [
+      "10",
+      0
+     ]
+    },
+    "_meta": {
+     "title": "LoraLoaderModelOnly"
+    }
+   },
+   "13": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "ghibsky.safetensors",
+     "strength_model": 0.8,
+     "model": [
+      "12",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "13",
+      0
+     ],
+     "seed": 1,
+     "positive": [
+      "6",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+     "clip_name1": "t5.safetensors",
+     "clip_name2": "clip_l.safetensors"
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "model": "flux1-krea.safetensors"
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "10",
+    "path": "unet_name",
+    "kind": "unet"
+   },
+   "lora": {
+    "mode": "chain",
+    "nodeId": "12",
+    "path": "lora_name",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "30",
+      0
+     ]
+    }
+   },
+   "10": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "flux1-krea.safetensors",
+     "weight_dtype": "default"
+    },
+    "_meta": {
+     "title": "Load Diffusion Model"
+    }
+   },
+   "11": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+     "model_name": "4x-UltraSharp.pth"
+    }
+   },
+   "12": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "turbo.safetensors",
+     "strength_model": 1,
+     "model": [
+      "10",
+      0
+     ]
+    },
+    "_meta": {
+     "title": "LoraLoaderModelOnly"
+    }
+   },
+   "13": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "ghibsky.safetensors",
+     "strength_model": 0.8,
+     "model": [
+      "12",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "13",
+      0
+     ],
+     "seed": 1,
+     "positive": [
+      "6",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+     "clip_name1": "t5.safetensors",
+     "clip_name2": "clip_l.safetensors"
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "flux1-dev.safetensors",
+   "loras": [
+    {
+     "name": "turbo.safetensors",
+     "strength": 1
+    },
+    {
+     "name": "ghibsky.safetensors",
+     "strength": 0.8
+    }
+   ]
+  }
+ },
+ {
+  "name": "unet chain: null overrides are a no-op",
+  "workflow": {
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "30",
+      0
+     ]
+    }
+   },
+   "10": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "flux1-dev.safetensors",
+     "weight_dtype": "default"
+    },
+    "_meta": {
+     "title": "Load Diffusion Model"
+    }
+   },
+   "11": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+     "model_name": "4x-UltraSharp.pth"
+    }
+   },
+   "12": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "turbo.safetensors",
+     "strength_model": 1,
+     "model": [
+      "10",
+      0
+     ]
+    },
+    "_meta": {
+     "title": "LoraLoaderModelOnly"
+    }
+   },
+   "13": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "ghibsky.safetensors",
+     "strength_model": 0.8,
+     "model": [
+      "12",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "13",
+      0
+     ],
+     "seed": 1,
+     "positive": [
+      "6",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+     "clip_name1": "t5.safetensors",
+     "clip_name2": "clip_l.safetensors"
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {},
+  "positive": null,
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "10",
+    "path": "unet_name",
+    "kind": "unet"
+   },
+   "lora": {
+    "mode": "chain",
+    "nodeId": "12",
+    "path": "lora_name",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "30",
+      0
+     ]
+    }
+   },
+   "10": {
+    "class_type": "UNETLoader",
+    "inputs": {
+     "unet_name": "flux1-dev.safetensors",
+     "weight_dtype": "default"
+    },
+    "_meta": {
+     "title": "Load Diffusion Model"
+    }
+   },
+   "11": {
+    "class_type": "UpscaleModelLoader",
+    "inputs": {
+     "model_name": "4x-UltraSharp.pth"
+    }
+   },
+   "12": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "turbo.safetensors",
+     "strength_model": 1,
+     "model": [
+      "10",
+      0
+     ]
+    },
+    "_meta": {
+     "title": "LoraLoaderModelOnly"
+    }
+   },
+   "13": {
+    "class_type": "LoraLoaderModelOnly",
+    "inputs": {
+     "lora_name": "ghibsky.safetensors",
+     "strength_model": 0.8,
+     "model": [
+      "12",
+      0
+     ]
+    }
+   },
+   "20": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "13",
+      0
+     ],
+     "seed": 1,
+     "positive": [
+      "6",
+      0
+     ]
+    }
+   },
+   "30": {
+    "class_type": "DualCLIPLoader",
+    "inputs": {
+     "clip_name1": "t5.safetensors",
+     "clip_name2": "clip_l.safetensors"
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "flux1-dev.safetensors",
+   "loras": [
+    {
+     "name": "turbo.safetensors",
+     "strength": 1
+    },
+    {
+     "name": "ghibsky.safetensors",
+     "strength": 0.8
+    }
+   ]
+  }
+ },
+ {
+  "name": "sdxl LoraLoader keeps clip strength and objectInfo kind",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "7",
+      0
+     ],
+     "positive": [
+      "6",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "anime.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "7",
+      1
+     ]
+    }
+   },
+   "7": {
+    "class_type": "LoraLoader",
+    "inputs": {
+     "lora_name": "detail.safetensors",
+     "strength_model": 0.6,
+     "strength_clip": 0.6,
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   },
+   "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "3",
+      0
+     ]
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": [
+    {
+     "name": "style.safetensors",
+     "strength": 0.7,
+     "clip": 0.4
+    },
+    {
+     "name": "detail.safetensors",
+     "strength": 1
+    }
+   ]
+  },
+  "positive": null,
+  "objectInfo": {
+   "CheckpointLoaderSimple": {
+    "input": {
+     "required": {
+      "ckpt_name": [
+       [
+        "anime.safetensors",
+        "real.safetensors"
+       ]
+      ]
+     }
+    }
+   },
+   "UNETLoader": {
+    "input": {
+     "required": {
+      "unet_name": [
+       [
+        "flux1-dev.safetensors"
+       ]
+      ],
+      "weight_dtype": [
+       [
+        "default"
+       ]
+      ]
+     }
+    }
+   },
+   "LoraLoader": {
+    "input": {
+     "required": {
+      "lora_name": [
+       [
+        "detail.safetensors",
+        "style.safetensors"
+       ]
+      ]
+     }
+    }
+   },
+   "UpscaleModelLoader": {
+    "input": {
+     "required": {
+      "model_name": [
+       [
+        "4x-UltraSharp.pth"
+       ]
+      ]
+     }
+    }
+   }
+  },
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "4",
+    "path": "ckpt_name",
+    "kind": "checkpoint"
+   },
+   "lora": {
+    "mode": "chain",
+    "nodeId": "7",
+    "path": "lora_name",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "7:lora1",
+      0
+     ],
+     "positive": [
+      "6",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "anime.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "7:lora1",
+      1
+     ]
+    }
+   },
+   "7": {
+    "class_type": "LoraLoader",
+    "inputs": {
+     "lora_name": "style.safetensors",
+     "strength_model": 0.7,
+     "strength_clip": 0.4,
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   },
+   "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "3",
+      0
+     ]
+    }
+   },
+   "7:lora1": {
+    "class_type": "LoraLoader",
+    "inputs": {
+     "lora_name": "detail.safetensors",
+     "strength_model": 1,
+     "strength_clip": 1,
+     "model": [
+      "7",
+      0
+     ],
+     "clip": [
+      "7",
+      1
+     ]
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "anime.safetensors",
+   "loras": [
+    {
+     "name": "detail.safetensors",
+     "strength": 0.6,
+     "clip": 0.6
+    }
+   ]
+  }
+ },
+ {
+  "name": "syntax: LoraManager text replaced and structured list mirrored",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "196",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "Checkpoint Loader with Name (Image Saver)",
+    "inputs": {
+     "ckpt_name": "Illustrious\\wai.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "196",
+      1
+     ]
+    }
+   },
+   "196": {
+    "class_type": "Lora Loader (LoraManager)",
+    "inputs": {
+     "text": "<lora:刀刃:0.20> trigger words here <lora:mikage:0.30>",
+     "loras": {
+      "__value__": [
+       {
+        "name": "刀刃",
+        "strength": 0.2,
+        "active": true,
+        "expanded": false,
+        "clipStrength": 0.2,
+        "locked": false
+       }
+      ]
+     },
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": [
+    {
+     "name": "Illustrious/foo bar.safetensors",
+     "strength": 0.75
+    },
+    {
+     "name": "baz.safetensors",
+     "strength": 1,
+     "clip": 0.5
+    }
+   ]
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "4",
+    "path": "ckpt_name",
+    "kind": "checkpoint"
+   },
+   "lora": {
+    "mode": "syntax",
+    "nodeId": "196",
+    "path": "text",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "196",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "Checkpoint Loader with Name (Image Saver)",
+    "inputs": {
+     "ckpt_name": "Illustrious\\wai.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "196",
+      1
+     ]
+    }
+   },
+   "196": {
+    "class_type": "Lora Loader (LoraManager)",
+    "inputs": {
+     "text": "trigger words here <lora:foo bar:0.75> <lora:baz:1:0.5>",
+     "loras": {
+      "__value__": [
+       {
+        "name": "foo bar",
+        "strength": 0.75,
+        "active": true,
+        "expanded": false,
+        "clipStrength": 0.75,
+        "locked": false
+       },
+       {
+        "name": "baz",
+        "strength": 1,
+        "active": true,
+        "expanded": false,
+        "clipStrength": 0.5,
+        "locked": false
+       }
+      ]
+     },
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "Illustrious\\wai.safetensors",
+   "loras": [
+    {
+     "name": "刀刃",
+     "strength": 0.2
+    },
+    {
+     "name": "mikage",
+     "strength": 0.3
+    }
+   ]
+  }
+ },
+ {
+  "name": "syntax: empty list strips every tag",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "196",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "Checkpoint Loader with Name (Image Saver)",
+    "inputs": {
+     "ckpt_name": "Illustrious\\wai.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "196",
+      1
+     ]
+    }
+   },
+   "196": {
+    "class_type": "Lora Loader (LoraManager)",
+    "inputs": {
+     "text": "<lora:刀刃:0.20> trigger words here <lora:mikage:0.30>",
+     "loras": {
+      "__value__": [
+       {
+        "name": "刀刃",
+        "strength": 0.2,
+        "active": true,
+        "expanded": false,
+        "clipStrength": 0.2,
+        "locked": false
+       }
+      ]
+     },
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": []
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "4",
+    "path": "ckpt_name",
+    "kind": "checkpoint"
+   },
+   "lora": {
+    "mode": "syntax",
+    "nodeId": "196",
+    "path": "text",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "196",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "Checkpoint Loader with Name (Image Saver)",
+    "inputs": {
+     "ckpt_name": "Illustrious\\wai.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "196",
+      1
+     ]
+    }
+   },
+   "196": {
+    "class_type": "Lora Loader (LoraManager)",
+    "inputs": {
+     "text": "trigger words here",
+     "loras": {
+      "__value__": []
+     },
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "Illustrious\\wai.safetensors",
+   "loras": [
+    {
+     "name": "刀刃",
+     "strength": 0.2
+    },
+    {
+     "name": "mikage",
+     "strength": 0.3
+    }
+   ]
+  }
+ },
+ {
+  "name": "syntax: prepend placement and path names",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "196",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "Checkpoint Loader with Name (Image Saver)",
+    "inputs": {
+     "ckpt_name": "Illustrious\\wai.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "196",
+      1
+     ]
+    }
+   },
+   "196": {
+    "class_type": "Lora Loader (LoraManager)",
+    "inputs": {
+     "text": "<lora:刀刃:0.20> trigger words here <lora:mikage:0.30>",
+     "loras": {
+      "__value__": [
+       {
+        "name": "刀刃",
+        "strength": 0.2,
+        "active": true,
+        "expanded": false,
+        "clipStrength": 0.2,
+        "locked": false
+       }
+      ]
+     },
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "slots": {
+   "lora": {
+    "placement": "prepend",
+    "nameFormat": "path"
+   }
+  },
+  "overrides": {
+   "loras": [
+    {
+     "name": "Illustrious/foo.safetensors",
+     "strength": 1
+    }
+   ]
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "4",
+    "path": "ckpt_name",
+    "kind": "checkpoint"
+   },
+   "lora": {
+    "mode": "syntax",
+    "nodeId": "196",
+    "path": "text",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "196",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "Checkpoint Loader with Name (Image Saver)",
+    "inputs": {
+     "ckpt_name": "Illustrious\\wai.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "196",
+      1
+     ]
+    }
+   },
+   "196": {
+    "class_type": "Lora Loader (LoraManager)",
+    "inputs": {
+     "text": "<lora:Illustrious/foo:1> trigger words here",
+     "loras": {
+      "__value__": [
+       {
+        "name": "Illustrious/foo",
+        "strength": 1,
+        "active": true,
+        "expanded": false,
+        "clipStrength": 1,
+        "locked": false
+       }
+      ]
+     },
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "Illustrious\\wai.safetensors",
+   "loras": [
+    {
+     "name": "刀刃",
+     "strength": 0.2
+    },
+    {
+     "name": "mikage",
+     "strength": 0.3
+    }
+   ]
+  }
+ },
+ {
+  "name": "syntax fallback: positive prompt receives tags with a notice",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat, sitting",
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": [
+    {
+     "name": "foo.safetensors",
+     "strength": 0.8
+    }
+   ]
+  },
+  "positive": {
+   "nodeId": "6",
+   "path": "/text"
+  },
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "4",
+    "path": "ckpt_name",
+    "kind": "checkpoint"
+   },
+   "lora": {
+    "mode": "syntax",
+    "nodeId": "6",
+    "path": "text",
+    "assumed": true
+   }
+  },
+  "expectedWorkflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat, sitting <lora:foo:0.8>",
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "expectedNotices": 1,
+  "expectedCurrent": {
+   "model": "x.safetensors",
+   "loras": []
+  }
+ },
+ {
+  "name": "syntax fallback: without positive binding the slot is off",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat, sitting",
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": [
+    {
+     "name": "foo.safetensors",
+     "strength": 0.8
+    }
+   ]
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": true,
+  "errorMessage": "当前工作流没有可写入的 LoRA 槽"
+ },
+ {
+  "name": "stack numbered: fills two slots and switches the third off",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "51",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "50": {
+    "class_type": "CR LoRA Stack",
+    "inputs": {
+     "switch_1": "On",
+     "lora_name_1": "a.safetensors",
+     "model_weight_1": 1,
+     "clip_weight_1": 1,
+     "switch_2": "Off",
+     "lora_name_2": "None",
+     "model_weight_2": 1,
+     "clip_weight_2": 1,
+     "switch_3": "Off",
+     "lora_name_3": "None",
+     "model_weight_3": 1,
+     "clip_weight_3": 1
+    }
+   },
+   "51": {
+    "class_type": "CR Apply LoRA Stack",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ],
+     "lora_stack": [
+      "50",
+      0
+     ]
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": [
+    {
+     "name": "p.safetensors",
+     "strength": 0.5
+    },
+    {
+     "name": "q.safetensors",
+     "strength": 0.6,
+     "clip": 0.3
+    }
+   ]
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "4",
+    "path": "ckpt_name",
+    "kind": "checkpoint"
+   },
+   "lora": {
+    "mode": "stack",
+    "nodeId": "50",
+    "path": "lora_name_1",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "51",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "50": {
+    "class_type": "CR LoRA Stack",
+    "inputs": {
+     "switch_1": "On",
+     "lora_name_1": "p.safetensors",
+     "model_weight_1": 0.5,
+     "clip_weight_1": 0.5,
+     "switch_2": "On",
+     "lora_name_2": "q.safetensors",
+     "model_weight_2": 0.6,
+     "clip_weight_2": 0.3,
+     "switch_3": "Off",
+     "lora_name_3": "None",
+     "model_weight_3": 1,
+     "clip_weight_3": 1
+    }
+   },
+   "51": {
+    "class_type": "CR Apply LoRA Stack",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ],
+     "lora_stack": [
+      "50",
+      0
+     ]
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "x.safetensors",
+   "loras": [
+    {
+     "name": "a.safetensors",
+     "strength": 1,
+     "clip": 1
+    }
+   ]
+  }
+ },
+ {
+  "name": "stack numbered: overflow is rejected",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "51",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "50": {
+    "class_type": "CR LoRA Stack",
+    "inputs": {
+     "switch_1": "On",
+     "lora_name_1": "a.safetensors",
+     "model_weight_1": 1,
+     "clip_weight_1": 1,
+     "switch_2": "Off",
+     "lora_name_2": "None",
+     "model_weight_2": 1,
+     "clip_weight_2": 1,
+     "switch_3": "Off",
+     "lora_name_3": "None",
+     "model_weight_3": 1,
+     "clip_weight_3": 1
+    }
+   },
+   "51": {
+    "class_type": "CR Apply LoRA Stack",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ],
+     "lora_stack": [
+      "50",
+      0
+     ]
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": [
+    {
+     "name": "1.safetensors",
+     "strength": 1
+    },
+    {
+     "name": "2.safetensors",
+     "strength": 1
+    },
+    {
+     "name": "3.safetensors",
+     "strength": 1
+    },
+    {
+     "name": "4.safetensors",
+     "strength": 1
+    }
+   ]
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": true,
+  "errorMessage": "LoRA 堆栈只有 3 个槽位，无法放下 4 个 LoRA"
+ },
+ {
+  "name": "stack object: rgthree grows dynamic keys",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "60",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "60": {
+    "class_type": "Power Lora Loader (rgthree)",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ],
+     "➕ Add Lora": "",
+     "lora_1": {
+      "on": true,
+      "lora": "a.safetensors",
+      "strength": 1,
+      "strengthTwo": null
+     }
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": [
+    {
+     "name": "p.safetensors",
+     "strength": 0.5
+    },
+    {
+     "name": "q.safetensors",
+     "strength": 0.6,
+     "clip": 0.3
+    },
+    {
+     "name": "r.safetensors",
+     "strength": 0.7
+    }
+   ]
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "4",
+    "path": "ckpt_name",
+    "kind": "checkpoint"
+   },
+   "lora": {
+    "mode": "stack",
+    "nodeId": "60",
+    "path": "lora_1",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "60",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "60": {
+    "class_type": "Power Lora Loader (rgthree)",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ],
+     "➕ Add Lora": "",
+     "lora_1": {
+      "on": true,
+      "lora": "p.safetensors",
+      "strength": 0.5,
+      "strengthTwo": null
+     },
+     "lora_2": {
+      "on": true,
+      "lora": "q.safetensors",
+      "strength": 0.6,
+      "strengthTwo": 0.3
+     },
+     "lora_3": {
+      "on": true,
+      "lora": "r.safetensors",
+      "strength": 0.7,
+      "strengthTwo": null
+     }
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "x.safetensors",
+   "loras": [
+    {
+     "name": "a.safetensors",
+     "strength": 1
+    }
+   ]
+  }
+ },
+ {
+  "name": "stack object: empty list removes entries",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "60",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "60": {
+    "class_type": "Power Lora Loader (rgthree)",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ],
+     "➕ Add Lora": "",
+     "lora_1": {
+      "on": true,
+      "lora": "a.safetensors",
+      "strength": 1,
+      "strengthTwo": null
+     }
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": []
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "4",
+    "path": "ckpt_name",
+    "kind": "checkpoint"
+   },
+   "lora": {
+    "mode": "stack",
+    "nodeId": "60",
+    "path": "lora_1",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "60",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "60": {
+    "class_type": "Power Lora Loader (rgthree)",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ],
+     "➕ Add Lora": ""
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "x.safetensors",
+   "loras": [
+    {
+     "name": "a.safetensors",
+     "strength": 1
+    }
+   ]
+  }
+ },
+ {
+  "name": "wan prev_lora chain: one lora bypasses tail",
+  "workflow": {
+   "1": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "wan2.1.safetensors",
+     "lora": [
+      "3",
+      0
+     ]
+    }
+   },
+   "2": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "a.safetensors",
+     "strength": 1
+    }
+   },
+   "3": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "b.safetensors",
+     "strength": 0.5,
+     "prev_lora": [
+      "2",
+      0
+     ]
+    }
+   },
+   "9": {
+    "class_type": "WanVideoSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ]
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": [
+    {
+     "name": "z.safetensors",
+     "strength": 0.9
+    }
+   ]
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "1",
+    "path": "model",
+    "kind": "model"
+   },
+   "lora": {
+    "mode": "chain",
+    "nodeId": "2",
+    "path": "lora",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "1": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "wan2.1.safetensors",
+     "lora": [
+      "2",
+      0
+     ]
+    }
+   },
+   "2": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "z.safetensors",
+     "strength": 0.9
+    }
+   },
+   "9": {
+    "class_type": "WanVideoSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ]
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "wan2.1.safetensors",
+   "loras": [
+    {
+     "name": "a.safetensors",
+     "strength": 1
+    },
+    {
+     "name": "b.safetensors",
+     "strength": 0.5
+    }
+   ]
+  }
+ },
+ {
+  "name": "wan prev_lora chain: head cannot be bypassed and is neutralised",
+  "workflow": {
+   "1": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "wan2.1.safetensors",
+     "lora": [
+      "3",
+      0
+     ]
+    }
+   },
+   "2": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "a.safetensors",
+     "strength": 1
+    }
+   },
+   "3": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "b.safetensors",
+     "strength": 0.5,
+     "prev_lora": [
+      "2",
+      0
+     ]
+    }
+   },
+   "9": {
+    "class_type": "WanVideoSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ]
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": []
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "1",
+    "path": "model",
+    "kind": "model"
+   },
+   "lora": {
+    "mode": "chain",
+    "nodeId": "2",
+    "path": "lora",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "1": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "wan2.1.safetensors",
+     "lora": [
+      "2",
+      0
+     ]
+    }
+   },
+   "2": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "a.safetensors",
+     "strength": 0
+    }
+   },
+   "9": {
+    "class_type": "WanVideoSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ]
+    }
+   }
+  },
+  "expectedNotices": 1,
+  "expectedCurrent": {
+   "model": "wan2.1.safetensors",
+   "loras": [
+    {
+     "name": "a.safetensors",
+     "strength": 1
+    },
+    {
+     "name": "b.safetensors",
+     "strength": 0.5
+    }
+   ]
+  }
+ },
+ {
+  "name": "wan prev_lora chain: grows through prev_lora",
+  "workflow": {
+   "1": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "wan2.1.safetensors",
+     "lora": [
+      "3",
+      0
+     ]
+    }
+   },
+   "2": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "a.safetensors",
+     "strength": 1
+    }
+   },
+   "3": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "b.safetensors",
+     "strength": 0.5,
+     "prev_lora": [
+      "2",
+      0
+     ]
+    }
+   },
+   "9": {
+    "class_type": "WanVideoSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ]
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": [
+    {
+     "name": "x.safetensors",
+     "strength": 1
+    },
+    {
+     "name": "y.safetensors",
+     "strength": 1
+    },
+    {
+     "name": "z.safetensors",
+     "strength": 1
+    }
+   ]
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "1",
+    "path": "model",
+    "kind": "model"
+   },
+   "lora": {
+    "mode": "chain",
+    "nodeId": "2",
+    "path": "lora",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "1": {
+    "class_type": "WanVideoModelLoader",
+    "inputs": {
+     "model": "wan2.1.safetensors",
+     "lora": [
+      "3:lora1",
+      0
+     ]
+    }
+   },
+   "2": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "x.safetensors",
+     "strength": 1
+    }
+   },
+   "3": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "y.safetensors",
+     "strength": 1,
+     "prev_lora": [
+      "2",
+      0
+     ]
+    }
+   },
+   "9": {
+    "class_type": "WanVideoSampler",
+    "inputs": {
+     "model": [
+      "1",
+      0
+     ]
+    }
+   },
+   "3:lora1": {
+    "class_type": "WanVideoLoraSelect",
+    "inputs": {
+     "lora": "z.safetensors",
+     "strength": 1,
+     "prev_lora": [
+      "3",
+      0
+     ]
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "wan2.1.safetensors",
+   "loras": [
+    {
+     "name": "a.safetensors",
+     "strength": 1
+    },
+    {
+     "name": "b.safetensors",
+     "strength": 0.5
+    }
+   ]
+  }
+ },
+ {
+  "name": "model slot disabled rejects model override",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat, sitting",
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "slots": {
+   "model": {
+    "enabled": false
+   }
+  },
+  "overrides": {
+   "model": "y.safetensors"
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": true,
+  "errorMessage": "当前工作流没有可写入的模型槽"
+ },
+ {
+  "name": "pinned model target with missing field is disabled",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat, sitting",
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "slots": {
+   "model": {
+    "auto": false,
+    "nodeId": "4",
+    "path": "nope"
+   }
+  },
+  "overrides": {
+   "model": "y.safetensors"
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": true,
+  "errorMessage": "当前工作流没有可写入的模型槽"
+ },
+ {
+  "name": "pinned lora mode off ignores empty list but rejects entries",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat, sitting",
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "slots": {
+   "lora": {
+    "mode": "off"
+   }
+  },
+  "overrides": {
+   "loras": [
+    {
+     "name": "foo.safetensors",
+     "strength": 1
+    }
+   ]
+  },
+  "positive": {
+   "nodeId": "6",
+   "path": "text"
+  },
+  "objectInfo": {},
+  "error": true,
+  "errorMessage": "当前工作流没有可写入的 LoRA 槽"
+ },
+ {
+  "name": "pinned lora mode off accepts empty list",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat, sitting",
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "slots": {
+   "lora": {
+    "mode": "off"
+   }
+  },
+  "overrides": {
+   "loras": []
+  },
+  "positive": {
+   "nodeId": "6",
+   "path": "text"
+  },
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "4",
+    "path": "ckpt_name",
+    "kind": "checkpoint"
+   },
+   "lora": {
+    "mode": "off",
+    "nodeId": "",
+    "path": "",
+    "assumed": true
+   }
+  },
+  "expectedWorkflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat, sitting",
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "x.safetensors",
+   "loras": []
+  }
+ },
+ {
+  "name": "objectInfo enum disambiguates weak model_name fields",
+  "workflow": {
+   "1": {
+    "class_type": "MysteryLoader",
+    "inputs": {
+     "model_name": "4x-UltraSharp.pth"
+    }
+   },
+   "2": {
+    "class_type": "OtherLoader",
+    "inputs": {
+     "model_name": "real.safetensors"
+    }
+   },
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "2",
+      0
+     ]
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "model": "anime.safetensors"
+  },
+  "positive": null,
+  "objectInfo": {
+   "MysteryLoader": {
+    "input": {
+     "required": {
+      "model_name": [
+       [
+        "4x-UltraSharp.pth"
+       ]
+      ]
+     }
+    }
+   },
+   "OtherLoader": {
+    "input": {
+     "required": {
+      "model_name": [
+       [
+        "anime.safetensors",
+        "real.safetensors"
+       ]
+      ]
+     }
+    }
+   },
+   "CheckpointLoaderSimple": {
+    "input": {
+     "required": {
+      "ckpt_name": [
+       [
+        "anime.safetensors",
+        "real.safetensors"
+       ]
+      ]
+     }
+    }
+   }
+  },
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "2",
+    "path": "model_name",
+    "kind": "checkpoint"
+   },
+   "lora": {
+    "mode": "off",
+    "nodeId": "",
+    "path": "",
+    "assumed": true
+   }
+  },
+  "expectedWorkflow": {
+   "1": {
+    "class_type": "MysteryLoader",
+    "inputs": {
+     "model_name": "4x-UltraSharp.pth"
+    }
+   },
+   "2": {
+    "class_type": "OtherLoader",
+    "inputs": {
+     "model_name": "anime.safetensors"
+    }
+   },
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "2",
+      0
+     ]
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "real.safetensors",
+   "loras": []
+  }
+ },
+ {
+  "name": "invalid lora strength is rejected",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat, sitting",
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": [
+    {
+     "name": "foo.safetensors",
+     "strength": "abc"
+    }
+   ]
+  },
+  "positive": {
+   "nodeId": "6",
+   "path": "text"
+  },
+  "objectInfo": {},
+  "error": true,
+  "errorMessage": "LoRA 强度必须是 -10 到 10 之间的数字"
+ },
+ {
+  "name": "invalid lora name is rejected",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "x.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat, sitting",
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": [
+    {
+     "name": "<script>",
+     "strength": 1
+    }
+   ]
+  },
+  "positive": {
+   "nodeId": "6",
+   "path": "text"
+  },
+  "objectInfo": {},
+  "error": true,
+  "errorMessage": "LoRA 名称无效"
+ },
+ {
+  "name": "duplicate lora names collapse to the first",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "7",
+      0
+     ],
+     "positive": [
+      "6",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "anime.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "7",
+      1
+     ]
+    }
+   },
+   "7": {
+    "class_type": "LoraLoader",
+    "inputs": {
+     "lora_name": "detail.safetensors",
+     "strength_model": 0.6,
+     "strength_clip": 0.6,
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   },
+   "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "3",
+      0
+     ]
+    }
+   }
+  },
+  "slots": {},
+  "overrides": {
+   "loras": [
+    {
+     "name": "a.safetensors",
+     "strength": 0.5
+    },
+    {
+     "name": "a.safetensors",
+     "strength": 0.9
+    }
+   ]
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": false,
+  "expectedSlots": {
+   "model": {
+    "enabled": true,
+    "nodeId": "4",
+    "path": "ckpt_name",
+    "kind": "checkpoint"
+   },
+   "lora": {
+    "mode": "chain",
+    "nodeId": "7",
+    "path": "lora_name",
+    "assumed": false
+   }
+  },
+  "expectedWorkflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "7",
+      0
+     ],
+     "positive": [
+      "6",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": "anime.safetensors"
+    }
+   },
+   "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+     "text": "a cat",
+     "clip": [
+      "7",
+      1
+     ]
+    }
+   },
+   "7": {
+    "class_type": "LoraLoader",
+    "inputs": {
+     "lora_name": "a.safetensors",
+     "strength_model": 0.5,
+     "strength_clip": 0.5,
+     "model": [
+      "4",
+      0
+     ],
+     "clip": [
+      "4",
+      1
+     ]
+    }
+   },
+   "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+     "images": [
+      "3",
+      0
+     ]
+    }
+   }
+  },
+  "expectedNotices": 0,
+  "expectedCurrent": {
+   "model": "anime.safetensors",
+   "loras": [
+    {
+     "name": "detail.safetensors",
+     "strength": 0.6,
+     "clip": 0.6
+    }
+   ]
+  }
+ },
+ {
+  "name": "linked model field cannot be written",
+  "workflow": {
+   "3": {
+    "class_type": "KSampler",
+    "inputs": {
+     "model": [
+      "4",
+      0
+     ]
+    }
+   },
+   "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+     "ckpt_name": [
+      "8",
+      0
+     ]
+    }
+   },
+   "8": {
+    "class_type": "PrimitiveNode",
+    "inputs": {
+     "value": "x"
+    }
+   }
+  },
+  "slots": {
+   "model": {
+    "auto": false,
+    "nodeId": "4",
+    "path": "ckpt_name"
+   }
+  },
+  "overrides": {
+   "model": "y.safetensors"
+  },
+  "positive": null,
+  "objectInfo": {},
+  "error": true,
+  "errorMessage": "节点 4 的 ckpt_name 已连线，不能写入"
+ }
+]

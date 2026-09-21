@@ -94,7 +94,7 @@ function buildMappedWorkflow(frame,row,options={}){
   scope=frame._scope||row._scope||row;
  validateWorkflow(workflow);
  if(execution.randomizeSeeds??comfy.randomizeSeeds)randomSeeds(workflow);
- return WorkflowMapping.compile(workflow,bindings,{outputNodeId:execution.outputNodeId??comfy.outputNodeId,objectInfo:execution.objectInfo||comfy.objectInfo||{},resolve(binding){
+ const compiled=WorkflowMapping.compile(workflow,bindings,{outputNodeId:execution.outputNodeId??comfy.outputNodeId,objectInfo:execution.objectInfo||comfy.objectInfo||{},resolve(binding){
     let value;
     switch(binding.source){
       case'positive':value=frame._resolvedImagePrompt??scopeText(frame.prompt,scope,true);break;
@@ -112,6 +112,13 @@ function buildMappedWorkflow(frame,row,options={}){
     if(frame.nodeOverrides&&Object.hasOwn(frame.nodeOverrides,binding.id))value=frame.nodeOverrides[binding.id];
     return value;
  }});
+ /* Task-level model / LoRA overrides land after the bindings, exactly as backend/production/api.py::render does. */
+ const overrides=options.overrides||execution.overrides||frame._overrides;
+ if(overrides&&(overrides.model||Array.isArray(overrides.loras))){
+  const applied=WorkflowSlots.apply(compiled.workflow,execution.slots||comfy.slots||{},overrides,{objectInfo:execution.objectInfo||comfy.objectInfo||{},positive:comfyPositiveTarget(execution.bindings||comfy.bindings)});
+  compiled.workflow=applied.workflow;compiled.notices=[...(compiled.notices||[]),...applied.notices];
+ }
+ return compiled;
 }
 
 
@@ -123,10 +130,30 @@ function addInputBinding(nodeId='',path='',source='literal'){
 }
 
 
-async function readComfyObjectInfo(){const json=await(await request(baseURL()+'/object_info',{},15000)).json();if(!json||typeof json!=='object'||Array.isArray(json))throw Error('ComfyUI 未返回合法节点定义。');state.settings.comfy.objectInfo=json;save();render();toast('节点定义已读取，文本字段与插件输入已更新。')}
+/* /object_info is read through the Python backend (no CORS flags on ComfyUI). The full definition set can run to
+   tens of MiB, so the studio keeps only the classes its saved workflows use, plus the compact model catalog that the
+   assembly designer's model / LoRA pickers are built from. */
+async function readComfyObjectInfo({quiet=false}={}){
+  const c=state.settings.comfy;let result;
+  try{result=await(await request('/api/image/models',post({config:{provider:'comfyui',baseUrl:c.baseUrl}}),45000)).json()}
+  catch(error){
+    let json;try{json=await(await request(baseURL()+'/object_info',{},20000)).json()}catch{throw error}
+    if(!json||typeof json!=='object'||Array.isArray(json))throw Error('ComfyUI 未返回合法节点定义。');
+    result={objectInfo:json,catalog:WorkflowSlots.catalogFromObjectInfo(json),fetchedAt:Date.now(),message:'节点定义已读取。'};
+  }
+  const info=result.objectInfo;if(!info||typeof info!=='object'||Array.isArray(info))throw Error('ComfyUI 未返回合法节点定义。');
+  const used=new Set(Object.values(c.workflow||{}).map(n=>n?.class_type));for(const p of c.presets||[])for(const n of Object.values(p.workflow||{}))used.add(n?.class_type);
+  const kept={};for(const key of Object.keys(info))if(used.has(key))kept[key]=info[key];
+  c.objectInfo=kept;c.modelCatalog={...WorkflowSlots.catalogFromObjectInfo(info),...(result.catalog||{}),fetchedAt:result.fetchedAt||Date.now(),nodeClasses:Object.keys(info).length};
+  save();render();if(!quiet)toast(result.message||'节点定义已读取，文本字段与插件输入已更新。');return c.modelCatalog;
+}
+function comfyModelCatalog(){const m=state.settings.comfy.modelCatalog;return m&&typeof m==='object'?{checkpoints:m.checkpoints||[],unets:m.unets||[],loras:m.loras||[],vaes:m.vaes||[],fetchedAt:m.fetchedAt||0,nodeClasses:m.nodeClasses||0}:{checkpoints:[],unets:[],loras:[],vaes:[],fetchedAt:0,nodeClasses:0}}
+/* The node/field that receives the positive prompt; the LoRA syntax fallback writes its tags there. */
+function comfyPositiveTarget(bindings){const b=(bindings||[]).find(x=>x.enabled&&x.source==='positive'&&x.nodeId);return b?{nodeId:String(b.nodeId),path:String(b.path||'text')}:null}
+function comfySlotsResolved(execution=state.settings.comfy){return WorkflowSlots.normalize(execution.slots||{},execution.workflow||{},{objectInfo:execution.objectInfo||state.settings.comfy.objectInfo||{},positive:comfyPositiveTarget(execution.bindings)})}
 
 
-function mappedExecutionSnapshot(){const c=state.settings.comfy,classes=[...new Set(Object.values(c.workflow).map(n=>n.class_type))],objectInfo={};for(const key of classes)if(c.objectInfo?.[key])objectInfo[key]=clone(c.objectInfo[key]);return {baseUrl:c.baseUrl,mode:c.mode,autoFallback:c.autoFallback,workflow:clone(c.workflow),bindings:clone(c.bindings),outputNodeId:c.outputNodeId||'',randomizeSeeds:!!c.randomizeSeeds,workflowTitle:c.workflowTitle,globalNegative:state.settings.negative,objectInfo}}
+function mappedExecutionSnapshot(){const c=state.settings.comfy,classes=[...new Set(Object.values(c.workflow).map(n=>n.class_type))],objectInfo={};for(const key of classes)if(c.objectInfo?.[key])objectInfo[key]=clone(c.objectInfo[key]);return {baseUrl:c.baseUrl,mode:c.mode,autoFallback:c.autoFallback,workflow:clone(c.workflow),bindings:clone(c.bindings),outputNodeId:c.outputNodeId||'',randomizeSeeds:!!c.randomizeSeeds,slots:clone(c.slots||{}),workflowTitle:c.workflowTitle,globalNegative:state.settings.negative,objectInfo}}
 
 
 async function executeMappedGPU(frame,row,signal,sourceImage=null){

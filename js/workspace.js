@@ -7,7 +7,7 @@ function workflowLibraryEnsure(s=state){
   const used=new Set();
   for(const p of c.presets){if(!p.id||used.has(p.id))p.id=uid('wf');used.add(p.id)}
   if(!c.activeWorkflowId||!c.presets.some(p=>p.id===c.activeWorkflowId)){
-    const p={id:uid('wf'),title:c.workflowTitle||'默认工作流',workflow:clone(c.workflow),mapping:clone(c.mapping||{}),bindings:clone(c.bindings||[]),outputNodeId:c.outputNodeId||'',randomizeSeeds:!!c.randomizeSeeds};
+    const p={id:uid('wf'),title:c.workflowTitle||'默认工作流',workflow:clone(c.workflow),mapping:clone(c.mapping||{}),bindings:clone(c.bindings||[]),outputNodeId:c.outputNodeId||'',randomizeSeeds:!!c.randomizeSeeds,slots:clone(c.slots||{})};
     c.presets.push(p);c.activeWorkflowId=p.id;
   }
   s.settings.studio.visibility.extensions??=true;
@@ -16,7 +16,7 @@ function workflowLibraryEnsure(s=state){
 function storeActiveWorkflow(){
   const c=state.settings.comfy,p=c.presets.find(x=>x.id===c.activeWorkflowId);
   if(!p)return;
-  Object.assign(p,{title:c.workflowTitle,workflow:clone(c.workflow),mapping:clone(c.mapping||{}),bindings:clone(c.bindings||[]),outputNodeId:c.outputNodeId||'',randomizeSeeds:!!c.randomizeSeeds,updatedAt:Date.now()});
+  Object.assign(p,{title:c.workflowTitle,workflow:clone(c.workflow),mapping:clone(c.mapping||{}),bindings:clone(c.bindings||[]),outputNodeId:c.outputNodeId||'',randomizeSeeds:!!c.randomizeSeeds,slots:clone(c.slots||{}),updatedAt:Date.now()});
 }
 
 function workflowExecutionFor(plan,frame){
@@ -24,14 +24,14 @@ function workflowExecutionFor(plan,frame){
   if(id===c.activeWorkflowId)return {...mappedExecutionSnapshot(),workflowId:id};
   const p=c.presets.find(w=>w.id===id);
   if(!p)throw Error('所选工作流已删除，请重新选择。');
-  return {workflowId:id,workflowTitle:p.title,workflow:clone(p.workflow),bindings:clone(p.bindings||initialWorkflowBindings({...c,...p})),outputNodeId:p.outputNodeId||'',randomizeSeeds:!!p.randomizeSeeds,globalNegative:state.settings.negative,baseUrl:c.baseUrl,mode:c.mode,autoFallback:c.autoFallback,objectInfo:clone(Object.fromEntries([...new Set(Object.values(p.workflow).map(n=>n.class_type))].filter(key=>c.objectInfo?.[key]).map(key=>[key,c.objectInfo[key]])))};
+  return {workflowId:id,workflowTitle:p.title,workflow:clone(p.workflow),bindings:clone(p.bindings||initialWorkflowBindings({...c,...p})),outputNodeId:p.outputNodeId||'',randomizeSeeds:!!p.randomizeSeeds,slots:clone(p.slots||{}),globalNegative:state.settings.negative,baseUrl:c.baseUrl,mode:c.mode,autoFallback:c.autoFallback,objectInfo:clone(Object.fromEntries([...new Set(Object.values(p.workflow).map(n=>n.class_type))].filter(key=>c.objectInfo?.[key]).map(key=>[key,c.objectInfo[key]])))};
 }
 
 function selectLibraryWorkflow(id){
   storeActiveWorkflow();const c=state.settings.comfy,p=c.presets.find(x=>x.id===id);
   if(!p)throw Error('工作流不存在。');
   c.activeWorkflowId=id;c.workflow=clone(p.workflow);c.workflowTitle=p.title;c.mapping=clone(p.mapping||{});
-  c.bindings=clone(p.bindings||initialWorkflowBindings({...c,...p}));c.outputNodeId=p.outputNodeId||'';c.randomizeSeeds=!!p.randomizeSeeds;
+  c.bindings=clone(p.bindings||initialWorkflowBindings({...c,...p}));c.outputNodeId=p.outputNodeId||'';c.randomizeSeeds=!!p.randomizeSeeds;c.slots=clone(p.slots||{});
   createUI.nodeSearch='';mapperUI.selected='';mapperUI.search='';mapperUI.filter='all';mapperUI.nodes=false;mapperUI.sel.clear();mapperUI.selMode=false;save();render();
 }
 
@@ -40,7 +40,7 @@ function parseLibraryWorkflow(data,title){
   const workflow=data.workflow||data.prompt||data;
   if(Array.isArray(workflow.nodes))throw Error('这是 ComfyUI 编辑器格式，请导出 API 格式后导入。');
   validateWorkflow(workflow);
-  const c=state.settings.comfy,p={id:uid('wf'),title:String(data.title||data.workflowTitle||title||'导入工作流'),workflow:clone(workflow),mapping:clone(data.mapping||{}),bindings:[],outputNodeId:String(data.outputNodeId||''),randomizeSeeds:!!data.randomizeSeeds};
+  const c=state.settings.comfy,p={id:uid('wf'),title:String(data.title||data.workflowTitle||title||'导入工作流'),workflow:clone(workflow),mapping:clone(data.mapping||{}),bindings:[],outputNodeId:String(data.outputNodeId||''),randomizeSeeds:!!data.randomizeSeeds,slots:data.slots&&typeof data.slots==='object'&&!Array.isArray(data.slots)?clone(data.slots):{}};
   if(Array.isArray(data.bindings)){validateBindings(data.bindings);p.bindings=clone(data.bindings)}
   else {
     const nodes=Object.entries(workflow),texts=nodes.filter(([,n])=>/TextEncode|Prompt/i.test(n.class_type)&&Object.values(n.inputs).some(v=>typeof v==='string'));

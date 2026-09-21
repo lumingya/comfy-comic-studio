@@ -221,6 +221,22 @@
 
 .wf-row-output{border-top:1px dashed color-mix(in srgb,var(--muted) 40%,transparent)!important;margin-top:4px}
 
+/* semantic slots: model + LoRA rows sit above the bindings, tinted sage so they read as a different kind of thing */
+.wf-row-slot{background:color-mix(in srgb,var(--accent2) 5%,transparent)}
+.wf-row-slot+.wf-row:not(.wf-row-slot){border-top:1px dashed color-mix(in srgb,var(--muted) 40%,transparent);margin-top:4px}
+.wf-row-glyph.is-slot{color:var(--accent);background:color-mix(in srgb,var(--accent2) 16%,transparent)}
+.wf-tag.tag-slot{background:color-mix(in srgb,var(--accent2) 18%,transparent);color:var(--accent)}
+.wf-row-menu-spacer{width:28px}
+.wf-slot-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.wf-slot-catalog{margin:0 0 12px;padding:12px 14px;border-radius:8px;background:var(--panel2);font-size:12px;line-height:1.8;color:var(--soft)}
+.wf-slot-catalog strong{color:var(--text);font-weight:600}
+.wf-slot-catalog small{display:block;font-size:11px;color:var(--muted)}
+.wf-slot-loras{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.wf-slot-loras li{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:4px 10px;border-radius:999px;background:var(--tint);font-size:11.5px;color:var(--soft)}
+.wf-slot-loras li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wf-slot-loras li b{font-weight:600;color:var(--accent);font-family:var(--mono);font-size:11px}
+@media (max-width:760px){.wf-slot-grid{grid-template-columns:1fr}}
+
 .wf-empty{padding:44px 24px;text-align:center;border-top:1px solid var(--line)}
 .wf-empty strong{display:block;font-size:14px;font-weight:500;margin-bottom:6px}
 .wf-empty p{margin:0 auto 16px;max-width:44ch;font-size:12px;line-height:1.8;color:var(--muted)}
