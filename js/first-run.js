@@ -109,11 +109,8 @@ function installFirstRun(){
    state.settings.productionAssembly={channelId:p.id,workflowId:state.settings.comfy.activeWorkflowId};save();workshop.view='stories';navigate(1);return;
   }
   if(action==='first-run-assemble-story'){await saveWorkshop();openAssemblyDesigner();return}
-  if(action==='first-run-check-comfy'){
-   if(firstRunUI.checking)return;const baseUrl=state.settings.comfy.baseUrl;firstRunUI.checking=true;render();
-   try{const result=await(await request('/api/image/comfy-check',post({baseUrl}),12000)).json();firstRunUI.checks.set(baseUrl,result.message)}catch(e){firstRunUI.checks.set(baseUrl,'连接失败：'+e.message)}finally{firstRunUI.checking=false;if(ui.workspace===3)render()}return;
-  }
+  if(action==='first-run-check-comfy'){await checkWorkflowConnection();if(ui.workspace!==3)render();return}
   return previous(action,d,el);
  };
- document.addEventListener('input',e=>{if(e.target.id==='setup-comfy-url'){state.settings.comfy.baseUrl=e.target.value.trim();const status=$('#setup-comfy-status');if(status)status.textContent='地址已更改';save()}});
+ document.addEventListener('input',e=>{if(e.target.id==='setup-comfy-url'){state.settings.comfy.baseUrl=e.target.value.trim();save()}});
 }

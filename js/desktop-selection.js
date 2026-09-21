@@ -43,7 +43,9 @@ function installDesktopSelection() {
   window.addEventListener('pointerdown',e=>{
     suppress=false;if(e.button!==0||e.pointerType==='touch'||editable(e.target))return;
     const c=locate(e.target);if(!c)return;
+    if(c.s.root==='#gallery-results'&&c.item&&!ui.bulk&&!c.s.get().size&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey)return;
     const control=e.target.closest('button,input,a,[data-act]');
+    if(control&&!c.item)return;
     if(control&&control!==c.item&&!control.matches('.wf-item-body,.wf-row-main,[data-act="read"],.sel-cbox,[data-select-book],[data-designer-preset]'))return;
     active=c;const scroll=scrollParent(c.root);
     gesture={c,startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY,scroll,scrollX:scroll.scrollLeft,scrollY:scroll.scrollTop,before:new Set(c.s.get()),add:e.ctrlKey||e.metaKey||e.shiftKey,toggle:e.ctrlKey||e.metaKey,drag:false};
@@ -61,6 +63,8 @@ function installDesktopSelection() {
     if(bypass)return;if(suppress){suppress=false;e.preventDefault();e.stopImmediatePropagation();return}
     const c=locate(e.target);if(!c||editable(e.target))return;
     const control=e.target.closest('button,input,a,[data-act]');
+    if(control&&!c.item)return;
+    if(c.s.root==='#gallery-results'&&control?.matches('[data-act="read"]')&&!ui.bulk&&!c.s.get().size&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey)return;
     if(control&&control!==c.item&&!control.matches('.wf-item-body,.wf-row-main,[data-act="read"],.sel-cbox,[data-select-book],[data-designer-preset]'))return;
     // Touch retains direct opening; visible checkboxes remain native touch targets.
     if(e.pointerType==='touch')return;
@@ -82,7 +86,11 @@ function installDesktopSelection() {
     const dialog=document.querySelector('dialog[open]');if(dialog&&!dialog.contains(c.root))return;
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='a'){e.preventDefault();e.stopImmediatePropagation();c.s.set(new Set(items(c).map(c.s.key)));commit(c)}
     if(e.key==='Escape'&&c.s.get().size){e.preventDefault();e.stopImmediatePropagation();stop(true);c.s.set(new Set());commit(c)}
-    if(e.key==='Enter'&&c.s.get().size===1&&c.s.open){const el=items(c).find(x=>c.s.get().has(c.s.key(x)));if(el){e.preventDefault();bypass=true;try{c.s.open(el)}finally{bypass=false}}}
+    if(e.key==='Enter'){
+      const focusedBtn=document.activeElement?.closest?.('button,[data-act]');
+      if(focusedBtn&&c.root.contains(focusedBtn))return;
+      if(c.s.get().size===1&&c.s.open){const el=items(c).find(x=>c.s.get().has(c.s.key(x)));if(el){e.preventDefault();bypass=true;try{c.s.open(el)}finally{bypass=false}}}
+    }
   },true);
 }
 

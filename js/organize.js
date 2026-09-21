@@ -120,9 +120,11 @@ function singleBookContextItems(book){
   ];
 }
 
-function multiBookContextItems(ids){
-  const busy=bookContextBusy(ids),data={ids:JSON.stringify(ids)};
+function multiBookContextItems(ids,focusId=''){
+  const busy=bookContextBusy(ids),data={ids:JSON.stringify(ids)},focus=bookBy(focusId);
   return [
+    focus?{label:'翻开这本画册',icon:'book',act:'read',data:{id:focus.id},primary:true,hint:focus.title,shortcut:'双击'}:null,
+    focus?'-':null,
     {label:'批量星标',icon:'star',act:'org-context-star',data},
     {label:'批量重命名…',icon:'edit',act:'org-context-edit',data,disabled:busy,title:busy?'有画册正在生成，稍后再改名。':''},
     {label:'导出离线画册…',icon:'download',act:'org-context-export',data,hint:'合并为一个离线 HTML'},
@@ -139,7 +141,7 @@ function multiBookContextItems(ids){
 function openBookContext(id,x,y,extend=false){
   const b=bookBy(id);if(!b||b.projectId!==state.activeProjectId)return;
   ui.selected=new Set([...ui.selected].filter(key=>bookBy(key)?.projectId===state.activeProjectId));
-  if(extend){ui.selected.add(id);ui.bulk=true;refreshCollectionSelection()}
+  if(extend){ui.selected.add(id);ui.bulk=true;syncSelectionView()}
   const multi=ui.selected.has(id)&&ui.selected.size>1,ids=multi?[...ui.selected]:[id];
   const card=document.querySelector(`[data-sort-book="${CSS.escape(id)}"]:not(.book-order-chip)`)||document.querySelector(`[data-sort-book="${CSS.escape(id)}"]`);
   card?.classList.add('is-context');
@@ -147,8 +149,136 @@ function openBookContext(id,x,y,extend=false){
   openContextMenu({x,y,label:'画册右键菜单',focusEl:card,
     title:multi?`已选择 ${ids.length} 本画册`:b.title,
     subtitle:multi?'Ctrl / ⌘ + 右键可继续加选，Esc 退出多选':[`${b.totalSteps} 幕`,b.characterName,missing?`${missing} 幕待补齐`:'已齐备'].filter(Boolean).join(' · '),
-    items:multi?multiBookContextItems(ids):singleBookContextItems(b),
+    items:multi?multiBookContextItems(ids,id):singleBookContextItems(b),
     onClose:()=>card?.classList.remove('is-context')});
+}
+
+/* ---- Selection model ---------------------------------------------------------------------------
+   Plain clicks always open an album. Multi-select starts only on explicit intent: the toolbar button,
+   Ctrl / ⌘ + click, Shift + click with an existing anchor, or the context menu. `ui.bulk` is the mode flag;
+   `ui.bulkPinned` marks the mode as explicitly requested (toolbar), so it survives an empty selection.
+   Implicit modes fall back to normal browsing as soon as the last album is deselected. */
+function bookSelectionActive(){return !!ui.bulk||ui.selected.size>0}
+
+function setBookSelected(id,on){
+  if(!bookBy(id))return;
+  if(on)ui.selected.add(id);else ui.selected.delete(id);
+}
+
+function toggleBookSelected(id){setBookSelected(id,!ui.selected.has(id))}
+
+/* Leave an implicit multi-select once nothing is selected; keep an explicitly pinned mode. */
+function settleSelectionMode(){
+  if(!ui.selected.size&&ui.bulk&&!ui.bulkPinned)ui.bulk=false;
+  if(!ui.bulk)ui.bulkPinned=false;
+}
+
+function exitBookSelection(){ui.selected.clear();ui.bulk=false;ui.bulkPinned=false}
+
+/* Keep the shelf in sync without rebuilding it: per-card classes and checkboxes plus the bulk bar counters
+   are patched in place, and the shelf is only re-rendered when the bulk bar has to appear or disappear
+   (that also swaps the toolbar button state and the per-card checkboxes). */
+function syncSelectionView(){
+  if(ui.workspace!==0)return;
+  const bar=$('.shelf-bulk'),shouldShow=bookSelectionActive();
+  if(!!bar!==shouldShow){refreshGallery();return}
+  syncBulkToggle();
+  const shelf=getShelfBooks(),all=shelf.length>0&&shelf.every(b=>ui.selected.has(b.id));
+  document.querySelectorAll('#gallery-results [data-sort-book]').forEach(card=>{
+    const on=ui.selected.has(card.dataset.sortBook);card.classList.toggle('is-selected',on);card.setAttribute('aria-selected',String(on));
+    const box=card.querySelector('[data-select-book]');if(box&&box.checked!==on)box.checked=on;
+  });
+  if(bar){
+    const count=bar.querySelector('.grow');if(count)count.textContent=localeString('已选 {count} 本',{count:ui.selected.size});
+    const allBox=bar.querySelector('#shelf-select-all');if(allBox)allBox.checked=all;
+    bar.querySelectorAll('[data-act="bulk-star"],[data-act="bulk-export"],[data-act="bulk-delete"]').forEach(btnEl=>{btnEl.disabled=!ui.selected.size});
+  }
+  refreshCollectionSelection();
+}
+
+/* The toolbar toggle lives outside #gallery-results, so it is patched separately whenever the shelf refreshes. */
+function syncBulkToggle(){
+  const toggle=$('.collection-toolbar [data-act="toggle-bulk"]');if(!toggle||typeof shelfBulkToggle!=='function')return;
+  const on=String(bookSelectionActive());if(toggle.getAttribute('aria-pressed')===on)return;
+  const holder=document.createElement('template');holder.innerHTML=shelfBulkToggle();const next=holder.content.firstElementChild;
+  if(next){toggle.replaceWith(next);if(typeof localizeWorkspace==='function')localizeWorkspace(next)}
+}
+
+/* Open an album regardless of the selection mode; errors surface as toasts like every other action. */
+function openBookFromShelf(id){
+  if(!bookBy(id))return;
+  Promise.resolve(handleAction('read',{id})).catch(error=>toast(error.message||'无法打开画册。','error'));
+}
+
+/* ---- Pointer drag to reorder --------------------------------------------------------------------
+   Native HTML drag-and-drop on the whole card swallowed every click that drifted a few pixels, which made
+   covers feel dead. Reordering now uses pointer events with an 8px activation distance: below that the
+   gesture is a click (and opens the album), above it the card lifts and can be dropped on another one. */
+function installShelfReorderDrag(){
+  const THRESHOLD=8;let gesture=null,ghost=null,raf=0,suppressClick=false;
+  const cards=()=>[...document.querySelectorAll('#gallery-results .shelf-item[data-sort-book],#gallery-results .shelf-exhibit[data-sort-book]')];
+  function clearTargets(){document.querySelectorAll('#gallery-results .is-drop-target,#gallery-results .is-drop-after').forEach(el=>el.classList.remove('is-drop-target','is-drop-after'))}
+  function finish(){
+    cancelAnimationFrame(raf);raf=0;ghost?.remove();ghost=null;clearTargets();
+    document.querySelectorAll('#gallery-results .is-dragging').forEach(el=>el.classList.remove('is-dragging'));
+    document.body.classList.remove('shelf-reordering');gesture=null;
+  }
+  function makeGhost(card,x,y){
+    const cover=card.querySelector('.shelf-cover')||card,rect=cover.getBoundingClientRect(),el=document.createElement('div');
+    el.className='shelf-drag-ghost';el.setAttribute('aria-hidden','true');
+    const art=cover.querySelector('img,.artwork-missing');if(art){const copy=art.cloneNode(true);copy.removeAttribute('id');copy.removeAttribute('loading');if(copy.tagName==='IMG')copy.draggable=false;el.append(copy)}
+    const scale=Math.min(1,150/Math.max(rect.width,1));
+    el.style.cssText=`position:fixed;left:0;top:0;width:${rect.width}px;height:${rect.height}px;margin:0;pointer-events:none;z-index:1000;opacity:.92;transform-origin:top left;transform:translate(${x-rect.width*scale/2}px,${y-rect.height*scale/2}px) scale(${scale});box-shadow:0 24px 60px rgb(var(--shadow-rgb)/.5);border-radius:6px;transition:none`;
+    document.body.append(el);return el;
+  }
+  function positionGhost(x,y){if(!ghost||!gesture)return;const w=parseFloat(ghost.style.width),h=parseFloat(ghost.style.height),scale=Math.min(1,150/Math.max(w,1));ghost.style.transform=`translate(${x-w*scale/2}px,${y-h*scale/2}px) scale(${scale})`}
+  function hitTest(x,y){
+    if(ghost)ghost.style.visibility='hidden';const el=document.elementFromPoint(x,y);if(ghost)ghost.style.visibility='';
+    const card=el?.closest?.('#gallery-results .shelf-item[data-sort-book],#gallery-results .shelf-exhibit[data-sort-book]');
+    if(!card||card.dataset.sortBook===gesture.id)return null;
+    const r=card.getBoundingClientRect(),horizontal=card.classList.contains('shelf-item');
+    return {card,after:horizontal?x>r.left+r.width/2:y>r.top+r.height/2};
+  }
+  function track(x,y){
+    gesture.x=x;gesture.y=y;positionGhost(x,y);const hit=hitTest(x,y);clearTargets();
+    gesture.target=hit?.card.dataset.sortBook||null;gesture.after=!!hit?.after;
+    if(hit){hit.card.classList.add('is-drop-target');hit.card.classList.toggle('is-drop-after',hit.after)}
+  }
+  function tick(){
+    if(!gesture?.active)return;const top=($('#topbar')?.getBoundingClientRect().bottom||0)+40,bottom=innerHeight-64,y=gesture.y;
+    const dy=y<top?-Math.min(18,(top-y)/3):y>bottom?Math.min(18,(y-bottom)/3):0;
+    if(dy){window.scrollBy({top:dy,behavior:'instant'});track(gesture.x,gesture.y)}raf=requestAnimationFrame(tick);
+  }
+  window.addEventListener('pointerdown',e=>{
+    suppressClick=false;if(gesture)finish();
+    if(e.button!==0||e.pointerType==='touch'||ui.workspace!==0||ui.bulk||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||document.querySelector('dialog[open]'))return;
+    const card=e.target.closest('#gallery-results .shelf-item[data-sort-book],#gallery-results .shelf-exhibit[data-sort-book]');if(!card)return;
+    const control=e.target.closest('[data-act],input,textarea,select,label,a');if(control&&control.dataset.act!=='read')return;
+    gesture={id:card.dataset.sortBook,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY,card,active:false,target:null,after:false};
+  },true);
+  window.addEventListener('pointermove',e=>{
+    if(!gesture||e.pointerId!==gesture.pointerId)return;
+    if(!(e.buttons&1)){finish();return}
+    if(!gesture.active){
+      if(Math.hypot(e.clientX-gesture.startX,e.clientY-gesture.startY)<THRESHOLD)return;
+      if(cards().length<2||ui.bulk){finish();return}
+      gesture.active=true;closeBookContext();document.getSelection?.()?.removeAllRanges();
+      ghost=makeGhost(gesture.card,e.clientX,e.clientY);gesture.card.classList.add('is-dragging');document.body.classList.add('shelf-reordering');
+      try{gesture.card.setPointerCapture?.(e.pointerId)}catch{/* capture is a nicety only */}
+      raf=requestAnimationFrame(tick);
+    }
+    e.preventDefault();track(e.clientX,e.clientY);
+  },true);
+  window.addEventListener('pointerup',e=>{
+    if(!gesture||e.pointerId!==gesture.pointerId)return;
+    if(!gesture.active){gesture=null;return}
+    const {id,target,after}=gesture;suppressClick=true;finish();
+    if(target&&target!==id){try{reorderCollectionBook(id,target,after);toast(localeString('画册顺序已更新'))}catch(error){toast(error.message,'error')}}
+  },true);
+  window.addEventListener('pointercancel',()=>{if(gesture?.active){suppressClick=true}finish()},true);
+  window.addEventListener('click',e=>{if(suppressClick){suppressClick=false;e.preventDefault();e.stopImmediatePropagation()}},true);
+  window.addEventListener('keydown',e=>{if(e.key==='Escape'&&gesture?.active){e.preventDefault();e.stopImmediatePropagation();suppressClick=true;finish()}},true);
+  window.addEventListener('blur',()=>finish());
 }
 
 async function batchEditBookMetadata(ids){
@@ -180,12 +310,12 @@ async function saveBookNames(){
 }
 
 function installOrganizationTools(){
-  let sortState=null,drag=null,lastSelected=null;
+  let sortState=null,drag=null;
   const oldEnsure=ensureStudioState;ensureStudioState=function(s=state){oldEnsure(s);const p=s.settings.presentation;p.bookOrder??={};p.collectionSort??='manual';if(sortState!==s){ui.sort=p.collectionSort;sortState=s}return s};
   const oldFiltered=filteredBooks;filteredBooks=function(){const books=oldFiltered();if(ui.sort!=='manual')return books;const rank=new Map(manualBookIds().map((id,i)=>[id,i]));return books.sort((a,b)=>(rank.get(a.id)??Infinity)-(rank.get(b.id)??Infinity))};
   queueHTML=renderOrderedQueue;
   const oldCollection=renderResponsiveCollection;renderResponsiveCollection=function(){return oldCollection().replace('<div id="gallery-results">',`<details class="book-order-drawer"><summary>调整画册顺序 <span>拖动排序 · 右键批量管理</span></summary><div class="book-order-list">${bookOrderListHTML()}</div></details><div id="gallery-results">`)};
-  const oldGalleryRefresh=refreshGallery;refreshGallery=function(){oldGalleryRefresh();refreshCollectionSelection()};
+  const oldGalleryRefresh=refreshGallery;refreshGallery=function(){oldGalleryRefresh();refreshCollectionSelection();syncBulkToggle()};
   const oldRender=render;render=function(){const orderOpen=$('.book-order-drawer')?.open;closeBookContext();oldRender();document.documentElement.dataset.queueView=String(ui.workspace===1&&createUI.tab==='queue');if(orderOpen&&$('.book-order-drawer'))$('.book-order-drawer').open=true;refreshCollectionSelection();if(ui.workspace===1){document.querySelectorAll('#main .primary').forEach(el=>{if(el.dataset.act!=='v3-generate-plan')el.classList.remove('primary')})}};
   const oldHotReplace=hotReplace;hotReplace=function(id,index,src){
     document.querySelectorAll('.artwork-missing[data-page-img]').forEach(el=>{if(el.dataset.pageImg!==id+':'+index)return;const img=document.createElement('img');for(const a of el.attributes)if(a.name.startsWith('data-')||a.name==='id')img.setAttribute(a.name,a.value);img.alt=bookBy(id)?.steps.find(s=>s.stepIndex===index)?.name||'分镜';img.src=el.closest('.room-filmstrip,.reader-inspector,.queue-item,.shelf-cover')?thumbnailURL(src):src;el.replaceWith(img)});oldHotReplace(id,index,src);
@@ -203,9 +333,9 @@ function installOrganizationTools(){
     if(action==='org-book-up'||action==='org-book-down'){const ids=getShelfBooks().map(b=>b.id),i=ids.indexOf(d.id),down=action==='org-book-down',other=ids[i+(down?1:-1)];if(other)reorderCollectionBook(d.id,other,down);return}
     if(action.startsWith('org-context-')){
       let ids=[];try{ids=JSON.parse(d.ids||'[]')}catch{ids=[]}ids=ids.filter(id=>bookBy(id)?.projectId===state.activeProjectId);closeBookContext();
-      if(action==='org-context-select-all'){ui.selected=new Set(getShelfBooks().map(b=>b.id));ui.bulk=true;refreshGallery();return}
-      if(action==='org-context-clear'){ui.selected.clear();ui.bulk=false;refreshGallery();return}
-      if(action==='org-context-pick'){if(bookBy(d.id))ui.selected.add(d.id);ui.bulk=true;refreshGallery();toast('已进入批量模式：点选复选框或 Ctrl / ⌘ + 点击继续加选。');return}
+      if(action==='org-context-select-all'){ui.selected=new Set(getShelfBooks().map(b=>b.id));ui.bulk=true;syncSelectionView();return}
+      if(action==='org-context-clear'){exitBookSelection();syncSelectionView();return}
+      if(action==='org-context-pick'){setBookSelected(d.id,true);ui.bulk=true;ui.selectionAnchor=d.id;syncSelectionView();toast('已进入多选：点击画册加选或取消，双击翻开，Esc 退出。');return}
       if(!ids.length)return;
       if((action==='org-context-up'||action==='org-context-down')&&ids.length===1){const order=getShelfBooks().map(b=>b.id),i=order.indexOf(ids[0]),down=action==='org-context-down',other=order[i+(down?1:-1)];if(other)reorderCollectionBook(ids[0],other,down);return}
       if(action==='org-context-export')return exportModal(ids);
@@ -217,25 +347,52 @@ function installOrganizationTools(){
     if(action==='book-menu'&&ui.workspace===0){const rect=element?.getBoundingClientRect();openBookContext(d.id,rect?.left||innerWidth/2,rect?.bottom||innerHeight/2);return}
     return oldAction(action,d,element);
   };
-  document.addEventListener('change',e=>{if(e.target.id==='gallery-sort'){state.settings.presentation.collectionSort=e.target.value;save()}if(e.target.dataset.selectBook)refreshCollectionSelection()});
+  document.addEventListener('change',e=>{
+    if(e.target.id==='gallery-sort'){state.settings.presentation.collectionSort=e.target.value;save()}
+    // Per-card checkboxes and the "select all" box are the touch-friendly path into the same selection model.
+    if(e.target.dataset.selectBook){setBookSelected(e.target.dataset.selectBook,e.target.checked);if(e.target.checked){ui.bulk=true;ui.selectionAnchor=e.target.dataset.selectBook}settleSelectionMode();syncSelectionView()}
+    if(e.target.id==='shelf-select-all'){for(const book of getShelfBooks())setBookSelected(book.id,e.target.checked);if(e.target.checked)ui.bulk=true;settleSelectionMode();syncSelectionView()}
+  });
   document.addEventListener('contextmenu',e=>{const card=e.target.closest('[data-sort-book]');if(ui.workspace!==0||!card||e.target.closest('input,textarea,[contenteditable="true"]'))return;e.preventDefault();openBookContext(card.dataset.sortBook,e.clientX,e.clientY,e.ctrlKey||e.metaKey)});
+  /* Selection clicks. A plain click is never a selection: it falls through to the normal `read` action.
+     Ctrl / ⌘ toggles one album, Shift extends from the last anchor (only once a selection exists), and inside
+     multi-select every click toggles. Keyboard activation (Enter on the cover, e.detail === 0) always opens. */
   document.addEventListener('click',e=>{
     const card=e.target.closest('[data-sort-book]');if(ui.workspace!==0||!card||card.classList.contains('book-order-chip'))return;
-    if(e.target.closest('input,select,textarea')||e.target.closest('[data-act]')?.dataset.act&&e.target.closest('[data-act]').dataset.act!=='read')return;
-    if(!(e.ctrlKey||e.metaKey||e.shiftKey||ui.bulk))return;
-    e.preventDefault();e.stopImmediatePropagation();const id=card.dataset.sortBook,ids=getShelfBooks().map(b=>b.id);
-    if(e.shiftKey&&lastSelected&&ids.includes(lastSelected)){const a=ids.indexOf(lastSelected),b=ids.indexOf(id);ids.slice(Math.min(a,b),Math.max(a,b)+1).forEach(x=>ui.selected.add(x))}
-    else ui.selected.has(id)?ui.selected.delete(id):ui.selected.add(id);
-    lastSelected=id;ui.bulk=true;refreshGallery();
+    if(e.target.closest('input,select,textarea,label'))return;
+    const act=e.target.closest('[data-act]')?.dataset.act;if(act&&act!=='read')return;
+    if(e.detail===0&&!e.ctrlKey&&!e.metaKey)return;
+    const id=card.dataset.sortBook,ids=getShelfBooks().map(b=>b.id),extend=e.ctrlKey||e.metaKey,range=e.shiftKey&&ui.selectionAnchor&&ids.includes(ui.selectionAnchor)&&bookSelectionActive();
+    if(!(extend||range||ui.bulk))return;
+    e.preventDefault();e.stopImmediatePropagation();
+    if(range){const a=ids.indexOf(ui.selectionAnchor),b=ids.indexOf(id);ids.slice(Math.min(a,b),Math.max(a,b)+1).forEach(x=>ui.selected.add(x))}
+    else toggleBookSelected(id);
+    ui.selectionAnchor=id;ui.bulk=true;settleSelectionMode();syncSelectionView();
+  },true);
+  /* Double-click always opens, even inside multi-select (the two toggles cancel out; the card ends up selected). */
+  document.addEventListener('dblclick',e=>{
+    const card=e.target.closest('[data-sort-book]');if(ui.workspace!==0||!card||card.classList.contains('book-order-chip')||!ui.bulk)return;
+    if(e.target.closest('input,select,textarea,label,button:not([data-act="read"])'))return;
+    e.preventDefault();e.stopImmediatePropagation();const id=card.dataset.sortBook;
+    setBookSelected(id,true);syncSelectionView();openBookFromShelf(id);
   },true);
   document.addEventListener('keydown',e=>{
     if(typeof contextMenuOpen==='function'&&contextMenuOpen())return;
-    const card=e.target.closest('[data-sort-book]');if(card&&ui.workspace===0&&(e.key==='ContextMenu'||e.shiftKey&&e.key==='F10')){e.preventDefault();const rect=card.getBoundingClientRect();openBookContext(card.dataset.sortBook,rect.left+20,rect.top+20)}
+    const card=e.target.closest('[data-sort-book]');if(!card||ui.workspace!==0)return;
+    if(e.key==='ContextMenu'||e.shiftKey&&e.key==='F10'){e.preventDefault();const rect=card.getBoundingClientRect();openBookContext(card.dataset.sortBook,rect.left+20,rect.top+20);return}
+    if(card.classList.contains('book-order-chip'))return;
+    const id=card.dataset.sortBook,onCard=e.target===card||e.target.closest('[data-act]')?.dataset.act==='read';
+    // Space toggles selection (file-manager convention); Enter on the card itself opens it.
+    if(e.key===' '&&onCard&&!e.altKey&&!e.ctrlKey&&!e.metaKey){e.preventDefault();e.stopImmediatePropagation();toggleBookSelected(id);ui.selectionAnchor=id;ui.bulk=true;settleSelectionMode();syncSelectionView();document.querySelector(`[data-sort-book="${CSS.escape(id)}"]`)?.focus({preventScroll:true});return}
+    if(e.key==='Enter'&&e.target===card){e.preventDefault();openBookFromShelf(id)}
   });
+  document.addEventListener('keyup',e=>{const card=e.target.closest('[data-sort-book]');if(e.key===' '&&card&&ui.workspace===0&&(e.target===card||e.target.closest('[data-act]')?.dataset.act==='read'))e.preventDefault()});
   document.addEventListener('dragstart',e=>{
     const target=e.target.closest('[data-sort-task],[data-sort-book]');if(!target||e.target.closest('input,select,textarea'))return;
     const type=target.dataset.sortTask?'task':'book',id=target.dataset.sortTask||target.dataset.sortBook;
     if(type==='task'&&state.queue.find(q=>q.id===id)?.status!=='pending'){e.preventDefault();return}
+    // Shelf cards reorder through pointer events (see installShelfReorderDrag); never let an image drag hijack them.
+    if(type==='book'&&!target.classList.contains('book-order-chip')){e.preventDefault();return}
     drag={type,id};closeBookContext();e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('application/x-comfy-order',JSON.stringify(drag));target.classList.add('is-dragging');
   });
   document.addEventListener('dragover',e=>{if(!drag)return;const target=e.target.closest(drag.type==='task'?'[data-sort-task]':'[data-sort-book]');if(!target)return;if(drag.type==='task'&&state.queue.find(q=>q.id===target.dataset.sortTask)?.status!=='pending')return;e.preventDefault();e.dataTransfer.dropEffect='move';document.querySelectorAll('.is-drop-target').forEach(x=>x.classList.remove('is-drop-target'));target.classList.add('is-drop-target')});
@@ -262,7 +419,7 @@ function installBrushSelection(){
     for(const card of document.querySelectorAll('#gallery-results .shelf-item,#gallery-results .shelf-exhibit')){
       const r=card.getBoundingClientRect(),clip={left:r.left,right:r.right,top:Math.max(top,r.top),bottom:Math.min(bottom,r.bottom)};
       if(clip.top>=clip.bottom||stroke.seen.has(card.dataset.sortBook)||!selectionPathHits(stroke.x,stroke.y,x,y,clip))continue;
-      const id=card.dataset.sortBook;stroke.seen.add(id);stroke.add?ui.selected.add(id):ui.selected.delete(id);card.classList.toggle('is-selected',stroke.add);
+      const id=card.dataset.sortBook;stroke.seen.add(id);setBookSelected(id,stroke.add);card.classList.toggle('is-selected',stroke.add);
       const checkbox=card.querySelector('[data-select-book]');if(checkbox)checkbox.checked=stroke.add;
     }
     stroke.x=x;stroke.y=y;
@@ -273,12 +430,14 @@ function installBrushSelection(){
     if(!stroke)return;if(ui.workspace!==0||!ui.bulk){stop(false);return}const top=($('#topbar')?.getBoundingClientRect().bottom||0)+42,bottom=innerHeight-65,y=stroke.y,dy=y<top?-Math.min(16,(top-y)/3):y>bottom?Math.min(16,(y-bottom)/3):0;
     if(dy){window.scrollBy({top:dy,behavior:'instant'});paint(stroke.x,stroke.y)}raf=requestAnimationFrame(tick);
   }
-  function stop(redraw=true){if(!stroke)return;stroke=null;cancelAnimationFrame(raf);document.body.classList.remove('selection-painting');if(redraw){refreshGallery();refreshCollectionSelection()}}
+  // Painting patches cards in place; the shelf is only rebuilt when the gesture ends the multi-select itself.
+  function stop(redraw=true){if(!stroke)return;stroke=null;cancelAnimationFrame(raf);document.body.classList.remove('selection-painting');if(redraw){settleSelectionMode();syncSelectionView()}}
   window.addEventListener('pointerdown',e=>{
     suppressClick=false;if(e.button!==0||e.pointerType==='touch'||e.ctrlKey||e.metaKey||e.shiftKey||ui.workspace!==0||!ui.bulk||document.querySelector('dialog[open]'))return;
     const card=e.target.closest('.shelf-item[data-sort-book],.shelf-exhibit[data-sort-book]');if(!card&&!e.target.closest('.shelf-grid'))return;
-    const control=e.target.closest('[data-act],input,textarea,select');if(control&&control.dataset.act!=='read'&&!control.hasAttribute('data-select-book'))return;
+    const control=e.target.closest('[data-act],input,textarea,select,label');if(control&&control.dataset.act!=='read'&&!control.hasAttribute('data-select-book')&&!control.querySelector?.('[data-select-book]'))return;
     e.preventDefault();e.stopImmediatePropagation();closeBookContext();suppressClick=true;
+    if(card)ui.selectionAnchor=card.dataset.sortBook;
     stroke={id:e.pointerId,x:e.clientX,y:e.clientY,add:!card||!ui.selected.has(card.dataset.sortBook),seen:new Set()};document.body.classList.add('selection-painting');paint(e.clientX,e.clientY);raf=requestAnimationFrame(tick);
   },true);
   window.addEventListener('pointermove',e=>{if(!stroke||e.pointerId!==stroke.id)return;if(!(e.buttons&1)){stop();return}e.preventDefault();paint(e.clientX,e.clientY)},true);
@@ -286,5 +445,5 @@ function installBrushSelection(){
   window.addEventListener('pointercancel',()=>stop(),true);window.addEventListener('blur',()=>stop());
   window.addEventListener('click',e=>{if(suppressClick){suppressClick=false;e.preventDefault();e.stopImmediatePropagation()}},true);
   window.addEventListener('dragstart',e=>{if(stroke||ui.bulk&&e.target.closest('[data-sort-book]')){e.preventDefault();e.stopImmediatePropagation()}},true);
-  window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!e.isComposing&&ui.workspace===0&&(ui.bulk||ui.selected.size)&&!document.querySelector('dialog[open]')&&!e.target.closest('#assistant')){e.preventDefault();e.stopImmediatePropagation();stop(false);suppressClick=false;ui.bulk=false;ui.selected.clear();closeBookContext();refreshGallery();$('[data-act="toggle-bulk"]')?.focus({preventScroll:true})}},true);
+  window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!e.isComposing&&ui.workspace===0&&bookSelectionActive()&&!document.querySelector('dialog[open]')&&!e.target.closest('#assistant')){e.preventDefault();e.stopImmediatePropagation();stop(false);suppressClick=false;exitBookSelection();closeBookContext();refreshGallery();$('[data-act="toggle-bulk"]')?.focus({preventScroll:true})}},true);
 }

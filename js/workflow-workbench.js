@@ -103,6 +103,11 @@ const WORKFLOW_ICONS = {
   question: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7"/><path d="M12 17v.3"/>',
   rename: '<path d="M4 20h4l10-10-4-4L4 16v4Z"/><path d="M13 7l4 4"/>',
   layers: '<path d="M12 4 3 9l9 5 9-5-9-5Z"/><path d="m3 14 9 5 9-5"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8v.3"/>',
+  cloud: '<path d="M7 18h10a4 4 0 0 0 .5-8 5.5 5.5 0 0 0-10.6 1.5A3.3 3.3 0 0 0 7 18Z"/>',
+  bolt: '<path d="M13 3 5 14h6l-1 7 8-11h-6l1-7Z"/>',
+  key: '<circle cx="8" cy="14" r="4"/><path d="M11 11 20 2"/><path d="m16 6 3 3M14 8l2 2"/>',
+  keyboard: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.3M11 10h.3M15 10h.3M7 14h10"/>',
 };
 
 /* ------------------------------------------------------------------ data helpers */
@@ -165,7 +170,9 @@ function renderSlotRows(c, issues) {
     l.mode === "off"
       ? `<span class="wm-value is-blank">${view.detected.lora.syntax.length || view.detected.lora.chain.length || view.detected.lora.stack.length || view.positive ? "已关闭" : "蓝图里没有 LoRA 节点或正向提示词映射"}</span>`
       : `<span class="wm-value">${esc(SLOT_MODE_LABEL[l.mode])}${l.assumed ? " · 写入正向提示词" : l.auto ? " · 自动识别" : " · 手动指定"}</span><span title="${esc(view.currentLoras.map((x) => x.name + " ×" + x.strength).join(", "))}">${view.currentLoras.length ? "蓝图自带 " + view.currentLoras.length + " 个 LoRA" : "蓝图未挂 LoRA"}</span>`;
-  const row = (key, sel, issue, on, name, target, tag, detail, title) => `<article class="wf-row wf-row-slot ${sel ? "selected" : ""} ${on ? "" : "is-off"} ${issue ? "has-issue" : ""}" data-slot-row="${key}">
+  const modelPossible = m.enabled || view.detected.model.candidates.length > 0,
+    loraPossible = l.mode !== "off" || !!(view.detected.lora.syntax.length || view.detected.lora.chain.length || view.detected.lora.stack.length || view.positive);
+  const row = (key, sel, issue, on, name, target, tag, detail, title, possible = true) => `<article class="wf-row wf-row-slot ${sel ? "selected" : ""} ${on ? "" : "is-off"} ${issue ? "has-issue" : ""}" data-slot-row="${key}">
     <span class="wf-row-lead">${glyph(issue, on, title)}</span>
     <button type="button" class="wm-row-select wf-row-main" data-act="wm-select-slot" data-id="${key}" aria-pressed="${sel}">
       <span class="wf-row-name">${name}</span>
@@ -175,15 +182,15 @@ function renderSlotRows(c, issues) {
       <span class="wf-tag tag-slot">${tag}</span>
       <span class="wf-row-detail">${detail}</span>
     </span>
-    <label class="switch wf-row-switch" title="${on ? "已启用，点击关闭" : "已关闭，点击启用"}">
-      <input type="checkbox" role="switch" data-v3-slot="${key}.enabled" ${on ? "checked" : ""} aria-label="${key === "model" ? "启用模型槽" : "启用 LoRA 槽"}">
+    <label class="switch wf-row-switch" title="${possible ? (on ? "已启用，点击关闭" : "已关闭，点击启用") : "蓝图里没有可用的节点"}">
+      <input type="checkbox" role="switch" data-v3-slot="${key}.enabled" ${on ? "checked" : ""} ${possible ? "" : "disabled"} aria-label="${key === "model" ? "启用模型槽" : "启用 LoRA 槽"}">
       <span class="switch-track"></span>
     </label>
     <span class="wf-row-menu-spacer" aria-hidden="true"></span>
   </article>`;
   return (
-    row("model", modelSel, mIssue, m.enabled, "模型槽 · 基础模型", m.enabled ? `${node(m.nodeId)}<i>·</i><code>${esc(m.path)}</code>` : "<b>装配时可换模型</b>", "模型", modelDetail, "装配时可切换基础模型") +
-    row("lora", loraSel, lIssue, l.mode !== "off", "LoRA 槽 · 风格叠加", l.mode !== "off" ? `${node(l.nodeId)}<i>·</i><code>${esc(l.path || SLOT_MODE_LABEL[l.mode])}</code>` : "<b>装配时可叠加 LoRA</b>", "LoRA", loraDetail, "装配时可叠加 LoRA")
+    row("model", modelSel, mIssue, m.enabled, "模型槽 · 基础模型", m.enabled ? `${node(m.nodeId)}<i>·</i><code>${esc(m.path)}</code>` : "<b>装配时可换模型</b>", "模型", modelDetail, "装配时可切换基础模型", modelPossible) +
+    row("lora", loraSel, lIssue, l.mode !== "off", "LoRA 槽 · 风格叠加", l.mode !== "off" ? `${node(l.nodeId)}<i>·</i><code>${esc(l.path || SLOT_MODE_LABEL[l.mode])}</code>` : "<b>装配时可叠加 LoRA</b>", "LoRA", loraDetail, "装配时可叠加 LoRA", loraPossible)
   );
 }
 
@@ -352,22 +359,113 @@ function workflowDuplicateTitles(presets) {
 
 /* Connection line: mock → offline demo, live socket → connected, otherwise the last
    explicit check for this address, otherwise "on demand" (never alarming before a check). */
+/* ------------------------------------------------------------------ connection & channels */
+
+/* Every explicit probe is remembered per address, so the bar and the panel can show latency, VRAM
+   and how long ago the service answered instead of re-parsing a message string. */
+const connectionUI = { checking: false, results: new Map() };
+
+const CHANNEL_META = {
+  comfyui: { icon: "nodes", label: "ComfyUI", hint: "本地或局域网的工作流引擎" },
+  novelai: { icon: "image", label: "NovelAI", hint: "图像 API，无需工作流" },
+  openai: { icon: "cloud", label: "OpenAI 兼容", hint: "Images / Chat Completions 接口" },
+};
+
+function connectionKey(url) {
+  return String(url || "").trim().replace(/\/+$/, "");
+}
+
+function connectionRecord(baseUrl = state.settings.comfy.baseUrl) {
+  return connectionUI.results.get(connectionKey(baseUrl)) || null;
+}
+
+function relativeTime(at) {
+  const diff = Math.max(0, Date.now() - Number(at || 0));
+  if (!at) return "";
+  if (diff < 45e3) return "刚刚";
+  if (diff < 3600e3) return Math.max(1, Math.round(diff / 60e3)) + " 分钟前";
+  if (diff < 86400e3) return Math.round(diff / 3600e3) + " 小时前";
+  return new Date(at).toLocaleDateString();
+}
+
+function connectionBits(rec) {
+  const bits = [];
+  if (Number.isFinite(rec?.latencyMs)) bits.push(rec.latencyMs + " ms");
+  if (Number.isFinite(rec?.vramPercent)) bits.push("VRAM " + rec.vramPercent + "%");
+  return bits;
+}
+
+/* What the bar says: the run mode first, then whatever the last probe or the live socket knows. */
 function workflowConnectionStatus() {
-  const c = state.settings.comfy;
-  if (c.mode === "mock") return { tone: "demo", label: "离线演示", detail: "不调用 GPU，用本地 SVG 出图" };
+  const c = state.settings.comfy,
+    rec = connectionRecord(c.baseUrl);
+  if (connectionUI.checking) return { tone: "idle", label: "检查中…", detail: "" };
+  if (c.mode === "mock")
+    return { tone: "demo", label: "离线演示", detail: "不调用 GPU，用本地 SVG 出图", full: rec ? (rec.ok ? "ComfyUI 可达，但当前是离线演示，不会调用它。" : "上次检查失败：" + rec.message) : "" };
   if (rt.connected) {
-    const bits = [];
-    if (rt.latency != null) bits.push(rt.latency + " ms");
-    if (rt.vram != null) bits.push("VRAM " + rt.vram + "%");
+    const bits = connectionBits({ latencyMs: rt.latency ?? rec?.latencyMs, vramPercent: rt.vram ?? rec?.vramPercent });
     return { tone: "ok", label: "已连接", detail: bits.join(" · ") };
   }
-  if (firstRunUI.checking) return { tone: "idle", label: "检查中…", detail: "" };
-  const last = firstRunUI.checks.get(c.baseUrl);
-  if (last) {
-    const failed = last.startsWith("连接失败");
-    return { tone: failed ? "bad" : "ok", label: failed ? "连接失败" : "服务可读", detail: last.replace(/^连接失败：/, ""), full: last };
+  if (rec) {
+    if (rec.ok) return { tone: "ok", label: "服务可读", detail: [...connectionBits(rec), relativeTime(rec.at)].filter(Boolean).join(" · "), full: rec.message };
+    return { tone: "bad", label: "连接失败", detail: rec.message, full: rec.message };
   }
   return { tone: "idle", label: "按需连接", detail: "尚未检查；开始生成时会自动连接" };
+}
+
+/* What the panel's status line says: only the probe result, independent of the run mode. */
+function workflowProbeStatus() {
+  const c = state.settings.comfy,
+    rec = connectionRecord(c.baseUrl);
+  if (connectionUI.checking) return { tone: "idle", label: "检查中…", detail: "正在通过 Mio 后端读取 /system_stats" };
+  if (!rec) return { tone: "idle", label: "尚未检查", detail: "点「检查连接」只读取服务状态，不会生成图片" };
+  if (rec.ok) return { tone: "ok", label: "服务可读", detail: [...connectionBits(rec), rec.device, relativeTime(rec.at)].filter(Boolean).join(" · ") };
+  return { tone: "bad", label: "连接失败", detail: rec.message };
+}
+
+/* Every probe lands here — boot, the 30 s poll in app.js and the 检查连接 button — so all views read one record. */
+function onEngineChecked(rec) {
+  if (!rec) return;
+  const key = connectionKey(rec.baseUrl);
+  connectionUI.results.set(key, rec);
+  if (key === connectionKey(state.settings.comfy.baseUrl)) firstRunUI.checks.set(state.settings.comfy.baseUrl, rec.ok ? rec.message : "连接失败：" + rec.message);
+  refreshConnectionViews();
+}
+
+async function checkWorkflowConnection() {
+  if (connectionUI.checking) return null;
+  const baseUrl = connectionKey(state.settings.comfy.baseUrl);
+  connectionUI.checking = true;
+  refreshConnectionViews();
+  let rec;
+  try {
+    rec = await probeComfy(baseUrl);
+  } finally {
+    connectionUI.checking = false;
+  }
+  if (typeof hideTip === "function") hideTip();
+  applyEngineProbe(rec);
+  if (!rec.ok) toast("连接失败：" + rec.message, "error");
+  return rec;
+}
+
+/* Patch the connection views in place: the 30 s poll must not steal focus from someone typing in the form. */
+function refreshConnectionViews() {
+  const strip = document.querySelector(".wf-bar .wf-connection");
+  if (!strip) return;
+  const focused = document.activeElement?.closest?.(".wf-bar .wf-connection [data-act]")?.dataset.act;
+  strip.outerHTML = renderConnectionStrip();
+  if (focused) document.querySelector(`.wf-bar .wf-connection [data-act="${focused}"]`)?.focus({ preventScroll: true });
+  const probe = document.getElementById("setup-comfy-status");
+  if (probe) probe.outerHTML = renderProbeLine();
+  const check = document.querySelector('#wf-connection-body [data-act="wf-check-connection"]');
+  if (check) {
+    const hadFocus = document.activeElement === check;
+    check.outerHTML = renderCheckButton();
+    if (hadFocus) document.querySelector('#wf-connection-body [data-act="wf-check-connection"]')?.focus({ preventScroll: true });
+  }
+  const card = document.querySelector("#wf-connection-body .wf-status-card");
+  if (card && activeImageProfile().provider === "comfyui") card.outerHTML = renderComfyStatusCard();
 }
 
 /* ------------------------------------------------------------------ page */
@@ -377,45 +475,58 @@ const WORKBENCH_HELP = {
   cloud: "当前使用云端图像渠道，不需要 ComfyUI 工作流。填好地址、模型与密钥，就可以去编写分镜。",
 };
 
-function renderWorkflowLibrary() {
-  const profile = activeImageProfile();
-  const comfy = profile.provider === "comfyui";
-  const title = `<div class="wf-bar-title">
+function renderWorkbenchTitle(comfy) {
+  return `<div class="wf-bar-title">
       <span class="context-kicker">图像生产</span>
       <h1>工作流与 API 配置</h1>
       <button type="button" class="wf-help" data-act="wf-help" aria-label="这个页面做什么？" title="${esc(comfy ? WORKBENCH_HELP.comfy : WORKBENCH_HELP.cloud)}">${icon("question", "sm")}</button>
     </div>`;
+}
 
-  if (!comfy) {
-    return `<section class="wf-page wf-page-cloud">
-      <header class="wf-bar">${title}</header>
-      <div class="wf-provider">${imageProviderPanel()}</div>
-    </section>`;
-  }
-
+function renderConnectionStrip() {
   const status = workflowConnectionStatus(),
     c = state.settings.comfy,
+    open = mapperUI.connectionOpen,
+    checking = connectionUI.checking;
+  return `<div class="wf-connection wm-connection tone-${status.tone}" data-wm-connection ${open ? "open" : ""}>
+        <button type="button" class="wf-connection-summary" data-act="wf-connection-toggle" aria-expanded="${open}" aria-controls="wf-connection-body" title="${esc(status.full || status.detail || "")}">
+          <i class="wf-dot" aria-hidden="true"></i>
+          <span class="wf-connection-main"><strong>ComfyUI</strong><span class="wf-connection-url mono">${esc(c.baseUrl || "未填写地址")}</span></span>
+          <span class="wf-connection-state"><b>${esc(status.label)}</b>${status.detail ? `<span class="wf-connection-detail">${esc(status.detail)}</span>` : ""}</span>
+          <span class="wf-connection-more">${icon(open ? "up" : "down", "sm")}</span>
+        </button>
+        <button type="button" class="ibtn wf-connection-check ${checking ? "is-busy" : ""}" data-act="wf-check-connection" aria-label="${checking ? "正在检查 ComfyUI 连接" : "重新检查 ComfyUI 连接"}" data-tip="${checking ? "正在检查…" : "重新检查连接"}" ${checking ? "disabled" : ""}>${icon("refresh", "sm")}</button>
+      </div>`;
+}
+
+function renderProbeLine() {
+  const probe = workflowProbeStatus();
+  return `<p id="setup-comfy-status" class="wf-probe tone-${probe.tone}" role="status" aria-live="polite"><i class="wf-dot" aria-hidden="true"></i><b>${esc(probe.label)}</b>${probe.detail ? `<span>${esc(probe.detail)}</span>` : ""}</p>`;
+}
+
+function renderCheckButton() {
+  const checking = connectionUI.checking;
+  return btn(checking ? "检查中…" : "检查连接", "refresh", "wf-check-connection", checking ? "disabled" : "", "small" + (checking ? " is-busy" : ""));
+}
+
+function renderWorkflowLibrary() {
+  const profile = activeImageProfile(),
+    comfy = profile.provider === "comfyui";
+  if (!comfy) return renderCloudPage(profile);
+
+  const c = state.settings.comfy,
     open = mapperUI.connectionOpen;
   return `<section class="wf-page">
     <header class="wf-bar">
-      ${title}
-      <div class="wf-connection wm-connection tone-${status.tone}" data-wm-connection ${open ? "open" : ""}>
-        <button type="button" class="wf-connection-summary" data-act="wf-connection-toggle" aria-expanded="${open}" aria-controls="wf-connection-body" title="${esc(status.full || status.detail || "")}">
-          <i class="wf-dot" aria-hidden="true"></i>
-          <strong>ComfyUI</strong>
-          <span class="wf-connection-url mono">${esc(c.baseUrl || "未填写地址")}</span>
-          <span class="wf-connection-state"><b>${esc(status.label)}</b>${status.detail ? `<span class="wf-connection-detail">${esc(status.detail)}</span>` : ""}</span>
-          <span class="wf-connection-more">连接设置 ${icon("down", "sm")}</span>
-        </button>
-        ${c.mode === "mock" ? "" : btn(firstRunUI.checking ? "检查中…" : "测试连接", "refresh", "first-run-check-comfy", firstRunUI.checking ? "disabled" : "", "small ghost")}
-      </div>
+      ${renderWorkbenchTitle(true)}
+      ${renderConnectionStrip()}
       <span class="spacer"></span>
       <div class="wf-bar-actions">${btn("添加工作流", "plus", "ws-open-unified-import", 'aria-label="添加工作流（导入 API 工作流或映射包）"', "primary small")}</div>
     </header>
-    <div class="wf-connection-body" id="wf-connection-body" ${open ? "" : "hidden"}>${imageProviderPanel()}</div>
-    <div class="workflow-library wf-body ${mapperUI.railPinned ? "rail-pinned" : "rail-floating"} ${mapperUI.railOpen && !mapperUI.railPinned ? "rail-open" : ""}">
-      <div class="wf-rail-dock" id="wf-rail-dock">
-        <button type="button" class="wf-rail-handle" data-act="wf-rail-toggle" aria-expanded="${mapperUI.railOpen || mapperUI.railPinned}" aria-controls="wf-rail" title="工作流库 · 点击图钉可固定显示">
+    <div class="wf-connection-body" id="wf-connection-body" ${open ? "" : "hidden"}>${renderConnectionPanel(profile)}</div>
+    <div class="workflow-library wf-body ${mapperUI.railPinned ? "rail-pinned" : "rail-floating"} ${mapperUI.railOpen && !mapperUI.railPinned ? "rail-open" : ""} ${mapperUI.railSticky && !mapperUI.railPinned ? "rail-sticky" : ""}">
+      <div class="wf-rail-dock" id="wf-rail-dock" data-no-tip>
+        <button type="button" class="wf-rail-handle" data-act="wf-rail-toggle" aria-expanded="${mapperUI.railOpen || mapperUI.railPinned}" aria-controls="wf-rail" aria-label="工作流库，${(c.presets || []).length} 份">
           ${icon("sidebar", "sm")}<span class="wf-rail-handle-label">工作流库</span><b class="mono">${(c.presets || []).length}</b>
         </button>
         ${renderWorkflowRail(c)}
@@ -423,6 +534,189 @@ function renderWorkflowLibrary() {
       <div class="wf-main">${renderSmartMapper()}</div>
     </div>
   </section>`;
+}
+
+/* Cloud channels have no blueprint: the page is the channel form plus a readiness card. */
+function renderCloudPage(profile) {
+  const issues = providerSetupIssues(profile),
+    meta = CHANNEL_META[profile.provider] || CHANNEL_META.openai;
+  let host = "";
+  try {
+    host = new URL(profile.baseUrl).host;
+  } catch {
+    host = profile.baseUrl ? "地址无效" : "未填写地址";
+  }
+  return `<section class="wf-page wf-page-cloud">
+    <header class="wf-bar">
+      ${renderWorkbenchTitle(false)}
+      <div class="wf-connection wm-connection tone-${issues.length ? "idle" : "ok"}" data-wm-connection>
+        <span class="wf-connection-summary is-static">
+          <i class="wf-dot" aria-hidden="true"></i>
+          <span class="wf-connection-main"><strong data-user-content>${esc(profile.title || meta.label)}</strong><span class="wf-connection-url mono">${esc(host)}</span></span>
+          <span class="wf-connection-state"><b>${issues.length ? "还差几步" : "渠道就绪"}</b><span class="wf-connection-detail">${esc(meta.label)} · ${issues.length ? issues.length + " 项待填写" : "可以开始生成"}</span></span>
+        </span>
+      </div>
+      <span class="spacer"></span>
+      <div class="wf-bar-actions">${btn("编写分镜", "arrow", "first-run-continue", "", issues.length ? "small" : "primary small")}</div>
+    </header>
+    <div class="wf-provider">${renderConnectionPanel(profile)}</div>
+  </section>`;
+}
+
+/* ------------------------------------------------------------------ connection panel */
+
+function renderConnectionPanel(profile = activeImageProfile()) {
+  const g = ensureImageProviders(),
+    comfy = profile.provider === "comfyui",
+    meta = CHANNEL_META[profile.provider] || CHANNEL_META.openai;
+  const optionLabel = (p) => {
+    const kind = CHANNEL_META[p.provider]?.label || p.provider;
+    return p.title === kind ? p.title : `${p.title} · ${kind}`;
+  };
+  return `<div class="wf-conn image-provider-panel ${comfy ? "is-comfy" : "is-cloud"}">
+    <div class="wf-conn-head">
+      <label class="wf-channel-picker" for="image-provider-select">
+        <span class="wf-channel-icon" aria-hidden="true">${icon(meta.icon, "sm")}</span>
+        <span class="wf-channel-text">
+          <span class="wf-section-label">图像渠道</span>
+          <select id="image-provider-select" aria-label="图像生产渠道">${g.profiles.map((p) => opt(p.id, optionLabel(p), g.active)).join("")}</select>
+        </span>
+        ${icon("down", "sm")}
+      </label>
+      <p class="wf-channel-hint">${esc(meta.hint)}</p>
+      <div class="wf-conn-head-actions">
+        ${btn("新增渠道", "plus", "image-provider-new", "", "small ghost")}
+        ${comfy ? "" : btn("复制", "copy", "image-provider-copy", "", "small ghost") + btn("删除", "trash", "image-provider-delete", "", "small ghost is-danger")}
+        <a class="btn small ghost" href="/docs/index.html" target="_blank" rel="noopener">${icon("book", "sm")}教程</a>
+      </div>
+    </div>
+    <div class="wf-conn-grid">
+      <div class="wf-conn-form">${comfy ? renderComfyChannelForm() : renderCloudChannelForm(profile)}</div>
+      <aside class="wf-conn-aside">${comfy ? renderComfyStatusCard() : renderCloudReadiness(profile)}</aside>
+    </div>
+  </div>`;
+}
+
+function renderComfyChannelForm() {
+  const c = state.settings.comfy;
+  const modeOption = (value, label, hint, ic) => `<label class="wf-mode-option ${c.mode === value ? "is-on" : ""}">
+      <input type="radio" name="wf-comfy-mode" value="${value}" data-setting="comfy.mode" ${c.mode === value ? "checked" : ""}>
+      <span class="wf-mode-icon" aria-hidden="true">${icon(ic, "sm")}</span>
+      <span class="wf-mode-text"><strong>${label}</strong><small>${hint}</small></span>
+    </label>`;
+  return `<fieldset class="wf-conn-field wf-conn-mode">
+      <legend class="wf-section-label">运行方式</legend>
+      <div class="wf-mode" role="radiogroup" aria-label="运行方式">
+        ${modeOption("real", "连接 ComfyUI 生成", "把映射后的工作流交给 ComfyUI 执行，进度通过 WebSocket 回传。", "bolt")}
+        ${modeOption("mock", "离线演示", "不调用 GPU，用本地 SVG 出图；适合先把分镜和映射排好。", "image")}
+      </div>
+    </fieldset>
+    <div class="wf-conn-field">
+      <label class="wf-section-label" for="setup-comfy-url">ComfyUI 服务地址</label>
+      <div class="wf-url-line">
+        <input id="setup-comfy-url" type="url" value="${esc(c.baseUrl || "")}" placeholder="http://127.0.0.1:8188" spellcheck="false" autocomplete="off" inputmode="url">
+        ${renderCheckButton()}
+      </div>
+      ${renderProbeLine()}
+      <p class="help">连通性由 Mio 后端检查，浏览器不会直接访问 ComfyUI，无需 <code>--enable-cors-header</code>。地址只填到端口，不含路径、密钥或查询参数。</p>
+    </div>`;
+}
+
+function renderComfyStatusCard() {
+  const c = state.settings.comfy,
+    status = workflowConnectionStatus(),
+    rec = connectionRecord(c.baseUrl),
+    catalog = comfyModelCatalog(),
+    synced = catalog.nodeClasses > 0,
+    fact = (label, value, cls = "") => `<div class="wf-fact ${cls}"><dt>${label}</dt><dd>${value}</dd></div>`;
+  return `<div class="wf-status-card">
+    <h3 class="wf-section-label">服务状态</h3>
+    <dl class="wf-facts">
+      ${fact("连接", `<span class="wf-probe tone-${status.tone}"><i class="wf-dot" aria-hidden="true"></i><b>${esc(status.label)}</b></span>${status.detail ? `<small>${esc(status.detail)}</small>` : ""}`)}
+      ${rec?.ok && rec.device ? fact("GPU", `<span data-user-content>${esc(rec.device)}</span>`) : ""}
+      ${rec?.ok && rec.version ? fact("ComfyUI 版本", `<span data-user-content>${esc(rec.version)}</span>`) : ""}
+      ${fact("节点定义", synced ? `${catalog.nodeClasses} 个<small>${esc(relativeTime(catalog.fetchedAt))}</small>` : `<span class="muted">尚未同步</span><small>同步后字段列表和类型更准确</small>`)}
+      ${fact("本机模型", synced ? `${catalog.checkpoints.length} Checkpoint · ${catalog.unets.length} 扩散模型 · ${catalog.loras.length} LoRA` : `<span class="muted">同步后显示</span>`)}
+    </dl>
+    <div class="wf-status-actions">
+      ${btn(synced ? "重新同步节点定义" : "同步节点定义", "refresh", "v3-read-object-info", 'title="读取 /object_info：字段列表、类型与本机模型目录"', "small")}
+      ${btn("编写分镜", "arrow", "first-run-continue", 'title="连接与映射就绪后，去创作工坊写分镜"', "small ghost")}
+    </div>
+  </div>`;
+}
+
+function renderCloudChannelForm(p) {
+  const openai = p.provider === "openai",
+    images = p.protocol !== "chat",
+    busy = imageProviderUI.busy.has(p.id);
+  const text = (label, key, extra = "") => `<div class="wf-conn-field">
+      <label class="wf-section-label" for="wf-pf-${key}">${label}</label>
+      <input id="wf-pf-${key}" type="text" data-image-config="${key}" value="${esc(p[key] || "")}" autocomplete="off" spellcheck="false" ${extra}>
+    </div>`;
+  const optional = (label, key, flag, placeholder) => `<div class="wf-optional ${p[flag] && images ? "is-on" : ""}">
+      <label class="wf-check"><input type="checkbox" data-image-config="${flag}" ${p[flag] ? "checked" : ""} ${!images ? "disabled" : ""}><span>${label}</span></label>
+      <input type="text" data-image-config="${key}" value="${esc(p[key] || "")}" placeholder="${placeholder}" aria-label="${label}" ${!p[flag] || !images ? "disabled" : ""}>
+    </div>`;
+  const model = openai
+    ? `<div class="wf-conn-field">
+      <label class="wf-section-label" for="image-provider-model-input">模型 ID</label>
+      <div class="wf-url-line">
+        <div class="provider-model-combobox">
+          <input id="image-provider-model-input" type="text" data-image-config="model" value="${esc(p.model || "")}" role="combobox" aria-label="模型 ID" aria-autocomplete="list" aria-expanded="false" aria-controls="image-provider-model-results" autocomplete="off" spellcheck="false">
+          <div id="image-provider-model-results" class="provider-model-results" role="listbox" aria-label="匹配模型" hidden></div>
+        </div>
+        ${btn(busy ? "正在获取…" : "获取模型", "refresh", "image-provider-models", busy ? "disabled" : "", "small")}
+      </div>
+      <p class="help" id="provider-model-status" role="status"></p>
+    </div>`
+    : text("模型 ID", "model");
+  return `<div class="wf-conn-two">
+      ${text("渠道名称", "title", 'data-user-content')}
+      ${text(p.provider === "novelai" ? "NovelAI 图像服务地址" : "API 基础地址", "baseUrl", 'inputmode="url" placeholder="https://…/v1"')}
+    </div>
+    <div class="wf-conn-two">
+      ${model}
+      ${openai ? `<div class="wf-conn-field"><label class="wf-section-label" for="wf-pf-protocol">接口协议</label><select id="wf-pf-protocol" data-image-config="protocol">${opt("images", "Images API", p.protocol)}${opt("chat", "Chat Completions", p.protocol)}</select></div>` : text("采样器", "sampler")}
+    </div>
+    <div class="wf-conn-field wf-conn-keys">${imageProviderKeyFields(p)}</div>
+    ${openai ? `<div class="wf-conn-field">
+      <span class="wf-section-label">请求参数</span>
+      ${images
+        ? `<div class="wf-conn-two">${optional("输出尺寸", "size", "sendSize", "1024x1024 / auto")}${optional("质量", "quality", "sendQuality", "auto / high")}</div>`
+        : `<label class="wf-check"><input type="checkbox" data-image-config="sendAspectHint" ${p.sendAspectHint !== false ? "checked" : ""}><span>把分镜画幅比写进提示词</span></label>
+           <p class="help">Chat 协议没有尺寸字段。开启后，每一幕会在提示词末尾追加一句画幅说明，例如 “Output a single portrait image with aspect ratio 13:19 (832x1216).”，让模型按分镜的宽高比出图。</p>`}
+    </div>` : ""}
+    <details class="quiet-advanced wf-advanced-json">
+      <summary>高级请求参数 · JSON</summary>
+      <textarea id="provider-extra-params" spellcheck="false" aria-label="高级请求参数">${esc(JSON.stringify(p.extraParams || {}, null, 2))}</textarea>
+      <p class="help">会原样合并进每次请求体，用于服务商特有字段。</p>
+    </details>`;
+}
+
+function renderCloudReadiness(p) {
+  const issues = providerSetupIssues(p),
+    keys = p.keyMode === "stored" ? (p.keyIds || [p.keyId]).filter(Boolean).length : 0,
+    ready = !issues.length;
+  let url = null;
+  try {
+    url = new URL(p.baseUrl);
+  } catch {
+    url = null;
+  }
+  const addressIssue = issues.find((i) => /地址|HTTPS/.test(i)),
+    items = [
+      { ok: !!url && !addressIssue, label: "服务地址", detail: addressIssue || (url ? url.host : "未填写") },
+      { ok: !!String(p.model || "").trim(), label: "模型", detail: String(p.model || "").trim() || "未填写模型 ID" },
+      { ok: keys > 0, soft: true, label: "API Key", detail: keys ? `已保存 ${keys} 个，请求时轮流使用` : "未保存；本机或局域网服务可留空" },
+    ];
+  return `<div class="wf-status-card">
+    <h3 class="wf-section-label">${ready ? "渠道就绪" : "还差几步"}</h3>
+    <ul class="wf-checklist">${items
+      .map((i) => `<li class="${i.ok ? "is-ok" : i.soft ? "is-soft" : "is-todo"}">${icon(i.ok ? "check" : i.soft ? "info" : "alert", "xs")}<span><strong>${i.label}</strong><small ${i.ok && i.label !== "API Key" ? "data-user-content" : ""}>${esc(i.detail)}</small></span></li>`)
+      .join("")}</ul>
+    <p class="help">${ready ? "配置只在你明确开始生成时才会被使用；费用由所选渠道决定。" : "填好后就可以去编写分镜；生成前 Mio 还会再核对一次。"}</p>
+    ${p.provider === "openai" ? `<div class="wf-status-actions">${btn("获取模型列表", "refresh", "image-provider-models", 'title="用当前地址和密钥请求 /models，也是最简单的连通性测试"', "small ghost")}</div>` : ""}
+  </div>`;
 }
 
 /* ------------------------------------------------------------------ library rail */
@@ -490,15 +784,34 @@ function renderWorkflowRailItems(c = state.settings.comfy) {
 
 /* ------------------------------------------------------------------ editor */
 
+/* Advisory findings: nothing is broken, but the workflow would behave in a way a first-time user
+   rarely wants. They sit under the blocking issues in the same list and never colour the chip amber. */
+function mapperAdvice(c = state.settings.comfy) {
+  const w = c.workflow || {},
+    tips = [];
+  if (!Object.keys(w).length) return tips;
+  const on = (c.bindings || []).filter((b) => b.enabled);
+  if (!on.some((b) => b.source === "positive"))
+    tips.push({ id: "advice-positive", act: "v3-auto-bind", label: "正向提示词", message: "还没有启用正向提示词映射，每一幕都会用蓝图里写死的提示词出图。", action: "识别提示词节点" });
+  const seedVaries = c.randomizeSeeds || on.some((b) => b.source === "random" || (b.source === "sceneParameter" && String(b.value || "").trim() === "seed"));
+  if (!seedVaries)
+    tips.push({ id: "advice-seed", act: "wm-select-output", label: "随机种子", message: "种子固定不变：同样的提示词每次都会得到同一张画面。可在蓝图选项里开启“每次任务随机化种子”。", action: "打开蓝图选项" });
+  const hasOutput = c.outputNodeId ? Object.hasOwn(w, c.outputNodeId) : Object.values(w).some((n) => /SaveImage|PreviewImage/.test(n?.class_type || ""));
+  if (!hasOutput)
+    tips.push({ id: "advice-output", act: "wm-select-output", label: "结果图片节点", message: "没有找到 SaveImage / PreviewImage 节点，生成结束后拿不到图片。", action: "指定结果节点" });
+  return tips;
+}
+
 function renderSmartMapper() {
   const c = state.settings.comfy,
     issues = mapperBindingIssues(),
+    advice = mapperAdvice(c),
     visible = mapperVisibleBindings(c, issues),
     total = c.bindings.length,
     enabled = c.bindings.filter((b) => b.enabled).length,
     flagged = c.bindings.filter((b) => issues.some((i) => i.id === b.id)).length,
     allPicked = visible.length > 0 && visible.every((b) => mapperUI.sel.has(b.id)),
-    nodeCount = Object.keys(c.workflow).length,
+    nodeCount = Object.keys(c.workflow || {}).length,
     filters = [
       ["all", "全部映射", total],
       ["enabled", "已启用", enabled],
@@ -506,23 +819,28 @@ function renderSmartMapper() {
       ["disabled", "已停用", total - enabled],
     ];
 
-  return `<section class="mapping-page wm-workbench wf-editor ${mapperUI.selMode ? "is-selmode" : ""}">
-    <header class="wf-editor-head">
+  const head = `<header class="wf-editor-head">
       <div class="wf-editor-title">
         <input class="wm-title" aria-label="工作流名称" data-setting="comfy.workflowTitle" value="${esc(c.workflowTitle)}" placeholder="未命名工作流" spellcheck="false" autocomplete="off">
         <p class="wf-editor-meta">
-          <span>${nodeCount} 个节点</span>
+          <span>${nodeCount ? nodeCount + " 个节点" : "空蓝图"}</span>
           <span>${enabled} / ${total} 项映射启用</span>
-          ${renderMapperHealthChip(issues)}
+          ${renderMapperHealthChip(issues, advice)}
         </p>
       </div>
       <div class="wf-editor-tools" role="toolbar" aria-label="工作流操作">
-        ${btn("<span>一帧试跑</span>", "play", "v3-mapping-dry", 'title="用当前分镜的第 1 幕试跑一次，验证映射是否正确"', "small primary")}
+        ${btn("<span>一帧试跑</span>", "play", "v3-mapping-dry", 'title="用当前分镜的第 1 幕试跑一次，验证映射是否正确"' + (nodeCount ? "" : " disabled"), "small primary")}
         ${ibtn("more", "wf-menu", "更多操作", 'id="wf-menu-button" aria-haspopup="menu" aria-expanded="false"')}
       </div>
-    </header>
+    </header>`;
 
-    ${issues.length && mapperUI.healthOpen ? renderMapperHealthList(issues) : ""}
+  if (!nodeCount)
+    return `<section class="mapping-page wm-workbench wf-editor is-blank">${head}${renderBlankBlueprint()}</section>`;
+
+  return `<section class="mapping-page wm-workbench wf-editor ${mapperUI.selMode ? "is-selmode" : ""}">
+    ${head}
+
+    ${(issues.length || advice.length) && mapperUI.healthOpen ? renderMapperHealthList(issues, advice) : ""}
 
     <div class="wf-toolbar">
       <div class="wf-toolbar-left">
@@ -551,7 +869,7 @@ function renderSmartMapper() {
     })}
 
     <div class="wf-split">
-      <section class="wf-table" aria-label="映射列表" aria-description="右键任意一行可编辑与管理">
+      <section class="wf-table" aria-label="映射列表" aria-description="右键任意一行可编辑与管理；↑↓ 在行间移动，Enter 打开">
         <div class="wf-columns" aria-hidden="true">
           <span></span>
           <span>映射 · 写入位置</span>
@@ -577,30 +895,49 @@ function renderSmartMapper() {
   </section>`;
 }
 
-/* Health lives inline in the meta line: a quiet "通过" chip, or an amber button that unfolds the list. */
-function renderMapperHealthChip(issues) {
+/* A workflow without a blueprint gets one calm call to action instead of an empty table. */
+function renderBlankBlueprint() {
+  return `<div class="wf-blank">
+    <div class="wf-blank-art" aria-hidden="true">${icon("nodes")}</div>
+    <h2>这份工作流还没有蓝图</h2>
+    <p>在 ComfyUI 里把工作流导出成 <strong>API 格式</strong> 的 JSON，再导入到这里。Mio 会自动识别正负提示词与结果图片节点，然后你只需要核对映射。</p>
+    <div class="wf-blank-actions">
+      ${btn("导入 API 工作流", "upload", "ws-open-unified-import", 'data-mode="replace"', "primary")}
+      ${btn("粘贴 JSON", "edit", "edit-workflow", "", "")}
+    </div>
+    <ol class="wf-blank-steps">
+      <li><b>1</b><span>ComfyUI 设置里开启「开发者模式」（Dev mode）。</span></li>
+      <li><b>2</b><span>菜单 → <em>导出 (API)</em>，得到一份 <code>*_api.json</code>；普通「保存」得到的编辑器格式无法使用。</span></li>
+      <li><b>3</b><span>导入后核对映射，用「一帧试跑」验证。</span></li>
+    </ol>
+  </div>`;
+}
+
+/* Health lives inline in the meta line: a quiet "通过" chip, an amber button when something blocks
+   generation, or a neutral one when there are only suggestions. */
+function renderMapperHealthChip(issues, advice = []) {
   const c = state.settings.comfy;
-  if (!c.bindings.length && !issues.length) return "";
-  if (!issues.length) return `<span class="wf-health-chip is-ok" title="路径、连线、重复与父子覆盖已核对">${icon("check", "xs")} 检查通过</span>`;
+  if (!c.bindings.length && !issues.length && !advice.length) return "";
   const open = mapperUI.healthOpen;
-  return `<button type="button" class="wf-health-chip is-bad" data-act="wm-health-toggle" aria-expanded="${open}">${icon("alert", "xs")} <b>${issues.length}</b> 项待检查 ${icon(open ? "up" : "down", "xs")}</button>`;
+  if (issues.length)
+    return `<button type="button" class="wf-health-chip is-bad" data-act="wm-health-toggle" aria-expanded="${open}">${icon("alert", "xs")} <b>${issues.length}</b> 项待检查 ${icon(open ? "up" : "down", "xs")}</button>`;
+  if (advice.length)
+    return `<button type="button" class="wf-health-chip is-advice" data-act="wm-health-toggle" aria-expanded="${open}">${icon("info", "xs")} <b>${advice.length}</b> 条建议 ${icon(open ? "up" : "down", "xs")}</button>`;
+  return `<span class="wf-health-chip is-ok" title="路径、连线、重复与父子覆盖已核对">${icon("check", "xs")} 检查通过</span>`;
 }
 
-function renderMapperHealthList(issues) {
+function renderMapperHealthList(issues, advice = []) {
   const c = state.settings.comfy;
-  return `<div class="wf-health-list" role="list">${issues
-    .map((i) => {
-      const b = c.bindings.find((x) => x.id === i.id);
-      const label = i.kind === "output" ? "结果图片节点" : i.kind === "slot-model" ? "模型槽" : i.kind === "slot-lora" ? "LoRA 槽" : b?.label || "未命名映射";
-      const act = i.kind === "output" ? 'data-act="wm-select-output"' : i.kind === "slot-model" || i.kind === "slot-lora" ? `data-act="wm-select-slot" data-id="${i.kind.slice(5)}"` : `data-act="wm-select" data-id="${esc(i.id)}"`;
-      return `<button type="button" class="wm-issue" role="listitem" ${act}><strong ${b?.label ? "data-user-content" : ""}>${esc(label)}</strong><em>${esc(i.message)}</em>${icon("arrow", "xs")}</button>`;
-    })
-    .join("")}</div>`;
-}
-
-/* Kept for callers outside this file; the banner is now the chip + list above. */
-function renderMapperHealth(issues) {
-  return renderMapperHealthChip(issues) + (issues.length && mapperUI.healthOpen ? renderMapperHealthList(issues) : "");
+  const blocking = issues.map((i) => {
+    const b = c.bindings.find((x) => x.id === i.id);
+    const label = i.kind === "output" ? "结果图片节点" : i.kind === "slot-model" ? "模型槽" : i.kind === "slot-lora" ? "LoRA 槽" : b?.label || "未命名映射";
+    const act = i.kind === "output" ? 'data-act="wm-select-output"' : i.kind === "slot-model" || i.kind === "slot-lora" ? `data-act="wm-select-slot" data-id="${i.kind.slice(5)}"` : `data-act="wm-select" data-id="${esc(i.id)}"`;
+    return `<button type="button" class="wm-issue" role="listitem" ${act}>${icon("alert", "xs")}<strong ${b?.label ? "data-user-content" : ""}>${esc(label)}</strong><em>${esc(i.message)}</em>${icon("arrow", "xs")}</button>`;
+  });
+  const soft = advice.map(
+    (a) => `<button type="button" class="wm-advice" role="listitem" data-act="${a.act}">${icon("info", "xs")}<strong>${esc(a.label)}</strong><em>${esc(a.message)}</em><span class="wm-advice-action">${esc(a.action)} ${icon("arrow", "xs")}</span></button>`
+  );
+  return `<div class="wf-health-list" role="list">${blocking.join("")}${soft.join("")}</div>`;
 }
 
 /* ------------------------------------------------------------------ rows */
@@ -748,14 +1085,18 @@ function mappingSourceOptions(current) {
 function mappingPreviewValue(binding, original, firstFrame, meta) {
   if (binding.source === "literal") return String(binding.value ?? "");
   if (binding.source === "variable") return `{${binding.value}}`;
-  if (binding.source === "random") return "128491028491";
+  if (binding.source === "random") return "随机整数（每次生成都不同）";
   if (binding.source === "inherit") return original;
   if (!firstFrame) return "（还没有分镜，无法预览）";
   if (binding.source === "positive") return firstFrame.prompt || "（本幕未填正向提示词）";
   if (binding.source === "negative") return firstFrame.negative || "（使用全局负向提示词）";
   if (binding.source === "caption") return firstFrame.caption || "（本幕未填台词）";
   if (binding.source === "sceneName") return firstFrame.name || "第 1 幕";
-  if (binding.source === "sceneParameter") return firstFrame[binding.value] !== undefined ? String(firstFrame[binding.value]) : "（保持蓝图原值）";
+  if (binding.source === "sceneParameter") {
+    // Mirrors buildMappedWorkflow: a seed is fresh for every scene unless that scene locks one via render override.
+    if (binding.value === "seed" && (!firstFrame.renderOverride || Number(firstFrame.seed) < 0)) return "随机整数（本幕未锁定种子）";
+    return firstFrame[binding.value] !== undefined ? String(firstFrame[binding.value]) : "（保持蓝图原值）";
+  }
   if (binding.source === "bookTitle") return state.creation.plans[0]?.title || "（装配时填写）";
   return meta.what;
 }
@@ -792,7 +1133,7 @@ function renderMappingRule(binding, index, total = state.settings.comfy.bindings
   const nodeOptions = Object.entries(w || {})
     .filter(([id, node]) => node && typeof node === "object")
     .sort(([a], [b]) => Number(a) - Number(b) || String(a).localeCompare(String(b)))
-    .map(([id, node]) => opt(id, `#${id} · ${node?._meta?.title || node?.class_type || id}`, binding.nodeId))
+    .map(([id, node]) => opt(id, `#${id} · ${node?._meta?.title || node?.class_type || id}`, binding.nodeId).replace("<option ", "<option data-user-content "))
     .join("");
   const nodeSelect = `<select ${attr("nodeId")} aria-label="节点" class="wf-node-select">
       ${opt("", "选择节点…", binding.nodeId)}
@@ -801,11 +1142,11 @@ function renderMappingRule(binding, index, total = state.settings.comfy.bindings
     </select>`;
   const fieldControl = typed
     ? input("path", binding.path, "text", attr("path") + ` list="field-${esc(binding.id)}" aria-label="输入字段" placeholder="例如 text、steps 或 /a/b" spellcheck="false" autocomplete="off"`) +
-      `<datalist id="field-${esc(binding.id)}">${writable.map((f) => `<option value="${esc(f.path)}">${esc(bindingTypes[f.type] || f.type)}</option>`).join("")}</datalist>`
+      `<datalist id="field-${esc(binding.id)}">${writable.map((f) => `<option value="${esc(f.path)}">${esc(localeString(bindingTypes[f.type] || f.type))}</option>`).join("")}</datalist>`
     : `<select ${attr("path")} aria-label="输入字段" class="wf-field-select">
         ${binding.path ? "" : opt("", "选择输入字段…", "")}
-        ${writable.map((f) => `<option value="${esc(f.path)}" ${known && known.path === f.path ? "selected" : ""}>${esc(f.label)} · ${esc(bindingTypes[f.type] || f.type)}${f.optional ? "（可选输入）" : ""}</option>`).join("")}
-        ${fields.filter((f) => f.link).length ? `<optgroup label="已连线，不能写入">${fields.filter((f) => f.link).map((f) => `<option value="${esc(f.path)}" ${known && known.path === f.path ? "selected" : ""} disabled>${esc(f.label)} · 已连线（只读）</option>`).join("")}</optgroup>` : ""}
+        ${writable.map((f) => `<option data-user-content value="${esc(f.path)}" ${known && known.path === f.path ? "selected" : ""}>${esc(f.label)} · ${esc(localeString(bindingTypes[f.type] || f.type))}${f.optional ? esc(localeString("（可选输入）")) : ""}</option>`).join("")}
+        ${fields.filter((f) => f.link).length ? `<optgroup label="已连线，不能写入">${fields.filter((f) => f.link).map((f) => `<option data-user-content value="${esc(f.path)}" ${known && known.path === f.path ? "selected" : ""} disabled>${esc(f.label)} · ${esc(localeString("已连线（只读）"))}</option>`).join("")}</optgroup>` : ""}
       </select>`;
   const fieldNote = !n
     ? binding.nodeId ? "蓝图里没有这个节点，请重新选择。" : "先选节点；找不到时用「在节点列表里找」浏览整张蓝图。"
@@ -1061,6 +1402,8 @@ function openWorkbenchMenu(items, { anchor = null, x = 0, y = 0, label = "操作
   menu.className = "wf-menu" + (anchor ? "" : " is-context");
   menu.setAttribute("role", "menu");
   menu.setAttribute("aria-label", label);
+  menu.dataset.noTip = ""; // items carry their own hint line; the global tooltip would cover the menu
+  if (typeof hideTip === "function") hideTip();
   menu.innerHTML = list
     .map((item) =>
       item === "sep"
@@ -1105,19 +1448,49 @@ function contextItemsFor(kind, id) {
 
 /* ------------------------------------------------------------------ import sheet */
 
+const IMPORT_FILE_LIMIT = 10 * 1024 * 1024;
+
+/* Reads one dropped file far enough to say what it is before anything touches the library. */
+async function inspectWorkflowFile(file) {
+  const base = { file, name: file.name, size: file.size, ok: false, kind: "", detail: "" };
+  if (file.size > IMPORT_FILE_LIMIT) return { ...base, detail: "超过 10 MB" };
+  if (!/\.json$/i.test(file.name) && !/json/.test(file.type || "")) return { ...base, detail: "不是 JSON 文件" };
+  let data;
+  try {
+    data = JSON.parse(await file.text());
+  } catch {
+    return { ...base, detail: "JSON 无法解析" };
+  }
+  if (!data || typeof data !== "object") return { ...base, detail: "不是工作流 JSON" };
+  if (data.kind === "comfycomic.workflow-mappings") {
+    const nodes = Object.values(data.workflow || {}).filter((n) => n && typeof n === "object").length;
+    return { ...base, ok: nodes > 0, kind: "映射包", detail: nodes ? `${nodes} 个节点 · ${(data.bindings || []).length} 项映射` : "映射包里没有节点" };
+  }
+  const list = Array.isArray(data) ? data : Array.isArray(data.workflows) ? data.workflows : null;
+  if (list) return { ...base, ok: list.length > 0 && list.length <= 200, kind: "工作流合集", detail: list.length ? `${list.length} 份工作流` : "合集为空" };
+  const wf = data.workflow || data.prompt || data;
+  if (Array.isArray(wf.nodes)) return { ...base, detail: "编辑器格式，请在 ComfyUI 里用「导出 API 格式」重新导出" };
+  const entries = Object.values(wf).filter((n) => n && typeof n === "object" && typeof n.class_type === "string"),
+    prompts = entries.filter((n) => /TextEncode|Prompt/i.test(n.class_type)).length,
+    saves = entries.filter((n) => /SaveImage|PreviewImage/.test(n.class_type)).length;
+  if (!entries.length) return { ...base, detail: "没有找到 ComfyUI 节点" };
+  return { ...base, ok: true, kind: "API 工作流", detail: `${entries.length} 个节点 · ${prompts} 个提示词节点${saves ? "" : " · 没有 SaveImage 节点"}` };
+}
+
 function openUnifiedWorkflowImportModal(mode = "new") {
-  const currentTitle = state.settings.comfy.workflowTitle || "当前工作流";
+  const c = state.settings.comfy,
+    currentTitle = c.workflowTitle || "当前工作流",
+    blank = !Object.keys(c.workflow || {}).length;
   modal(
     "添加工作流",
     `<div class="wf-import-sheet">
-      <p class="help" style="margin-top:0">支持 ComfyUI API 格式 JSON 与 Mio 映射包，可多选或拖入。</p>
       <div class="drop" id="wf-unified-dropzone" role="button" tabindex="0" aria-label="选择或拖入工作流文件">
         ${icon("upload")}
         <b>点击选择文件，或将 .json 拖到此处</b>
-        <span>支持多文件批量添加 · 单文件 ≤ 10 MB</span>
+        <span>ComfyUI API 格式工作流 · Mio 映射包 · 可多选 · 单文件 ≤ 10 MB</span>
       </div>
       <input type="file" id="wf-unified-file-input" accept=".json,application/json" multiple style="display:none">
-      <div id="wf-import-filelist" class="filelist" style="display:none"></div>
+      <div id="wf-import-filelist" class="filelist" hidden aria-live="polite"></div>
       <div class="radios">
         <label>
           <input type="radio" name="wf-import-mode" value="new" ${mode === "replace" ? "" : "checked"}>
@@ -1125,10 +1498,12 @@ function openUnifiedWorkflowImportModal(mode = "new") {
         </label>
         <label>
           <input type="radio" name="wf-import-mode" value="replace" ${mode === "replace" ? "checked" : ""}>
-          <div><b>替换「${esc(currentTitle)}」的蓝图</b><small>保留现有名称与映射，只更换底层节点图。指向已不存在节点 ID 的映射会进入“待检查”。</small><span class="risk">替换前会自动把当前映射包下载一份备份，方便回滚。</span></div>
+          <div><b>替换「<span data-user-content>${esc(currentTitle)}</span>」的蓝图</b><small>保留现有名称与映射，只更换底层节点图。指向已不存在节点 ID 的映射会进入“待检查”。</small>${blank ? "" : '<span class="risk">替换前会自动把当前映射包下载一份备份，方便回滚。</span>'}</div>
         </label>
       </div>
-      <div class="modal-footer" style="margin-top:20px">
+      <p class="help" id="wf-import-note"></p>
+      <p class="help wf-import-howto">${icon("info", "xs")} 在 ComfyUI 里开启开发者模式后，用「导出 (API)」得到的 JSON 才能导入；普通保存得到的编辑器格式（含 nodes / links）会被拒绝。</p>
+      <div class="modal-footer">
         ${btn("取消", "", "close-modal")}
         ${btn("确认导入", "check", "ws-do-unified-import", 'id="wf-unified-submit-btn" aria-disabled="true"', "primary disabled")}
       </div>
@@ -1136,36 +1511,61 @@ function openUnifiedWorkflowImportModal(mode = "new") {
     "统一工作流资产导入"
   );
 
-  let selectedFiles = [];
+  let inspected = [];
   const dropzone = $("#wf-unified-dropzone"),
     fileInput = $("#wf-unified-file-input"),
     submitBtn = $("#wf-unified-submit-btn"),
-    fileListEl = $("#wf-import-filelist");
+    fileListEl = $("#wf-import-filelist"),
+    noteEl = $("#wf-import-note");
 
-  function handleFiles(files) {
+  const valid = () => inspected.filter((x) => x.ok);
+  function refreshNote() {
+    const modeNow = document.querySelector('input[name="wf-import-mode"]:checked')?.value || "new",
+      good = valid().length,
+      bad = inspected.length - good;
+    const parts = [];
+    if (bad) parts.push(`${bad} 份无法导入，会被跳过`);
+    if (modeNow === "replace" && good > 1) parts.push("替换模式只使用第一份可导入的文件");
+    if (noteEl) noteEl.textContent = parts.join("；");
+  }
+  async function handleFiles(files) {
     if (!files || !files.length) return;
-    selectedFiles = [...files];
-    fileListEl.style.display = "block";
-    fileListEl.innerHTML = selectedFiles
+    inspected = await Promise.all([...files].map(inspectWorkflowFile));
+    fileListEl.hidden = false;
+    fileListEl.innerHTML = inspected
       .map(
-        (f, i) => `<div class="filerow"><span class="mono muted">${i + 1}</span><span class="nm">${esc(f.name)}</span><span class="kind mono muted">${(f.size / 1024).toFixed(1)} KB</span><span class="res">准备就绪</span></div>`
+        (f, i) => `<div class="filerow ${f.ok ? "is-ok" : "is-bad"}"><span class="mono muted">${i + 1}</span><span class="nm" data-user-content title="${esc(f.name)}">${esc(f.name)}</span><span class="kind mono muted">${(f.size / 1024).toFixed(1)} KB</span><span class="res">${f.ok ? `${icon("check", "xs")}${esc(f.kind)} · ${esc(f.detail)}` : `${icon("alert", "xs")}${esc(f.detail)}`}</span></div>`
       )
       .join("");
-    submitBtn.classList.remove("disabled");
-    submitBtn.removeAttribute("aria-disabled");
-    submitBtn.innerHTML = icon("check") + esc(localeString("导入 {n} 份", { n: selectedFiles.length }));
+    const good = valid().length;
+    submitBtn.classList.toggle("disabled", !good);
+    if (good) submitBtn.removeAttribute("aria-disabled");
+    else submitBtn.setAttribute("aria-disabled", "true");
+    submitBtn.innerHTML = icon("check") + esc(good ? localeString("导入 {n} 份", { n: good }) : "确认导入");
+    refreshNote();
   }
 
   dropzone.onclick = () => fileInput.click();
-  dropzone.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); } };
+  dropzone.onkeydown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      fileInput.click();
+    }
+  };
   fileInput.onchange = () => handleFiles(fileInput.files);
-  dropzone.ondragover = (e) => { e.preventDefault(); dropzone.classList.add("is-over"); };
+  dropzone.ondragover = (e) => {
+    e.preventDefault();
+    dropzone.classList.add("is-over");
+  };
   dropzone.ondragleave = () => dropzone.classList.remove("is-over");
-  dropzone.ondrop = (e) => { e.preventDefault(); dropzone.classList.remove("is-over"); handleFiles(e.dataTransfer.files); };
-  window._pendingImportFiles = () => selectedFiles;
+  dropzone.ondrop = (e) => {
+    e.preventDefault();
+    dropzone.classList.remove("is-over");
+    handleFiles(e.dataTransfer.files);
+  };
+  document.querySelectorAll('input[name="wf-import-mode"]').forEach((r) => (r.onchange = refreshNote));
+  window._pendingImportFiles = () => valid().map((x) => x.file);
 }
-
-/* ------------------------------------------------------------------ install */
 
 /* ------------------------------------------------------------------ rail drawer */
 
@@ -1175,23 +1575,48 @@ function applyRailState() {
   body.classList.toggle("rail-pinned", mapperUI.railPinned);
   body.classList.toggle("rail-floating", !mapperUI.railPinned);
   body.classList.toggle("rail-open", mapperUI.railOpen && !mapperUI.railPinned);
+  body.classList.toggle("rail-sticky", !!mapperUI.railSticky && !mapperUI.railPinned);
   body.querySelector(".wf-rail-handle")?.setAttribute("aria-expanded", String(mapperUI.railOpen || mapperUI.railPinned));
 }
 
-function setRailOpen(open) {
+/* Open / close the floating drawer. `sticky` marks an explicit request (click, keyboard, unpin) that must not be
+   undone by the pointer wandering off; a hover-open drawer never downgrades a sticky one. */
+function setRailOpen(open, { sticky = false } = {}) {
   clearTimeout(mapperUI.railTimer);
-  if (mapperUI.railPinned || mapperUI.railOpen === open) return;
+  clearTimeout(mapperUI.railHoverTimer);
+  mapperUI.railHoverTimer = 0;
+  if (mapperUI.railPinned) return;
+  mapperUI.railSticky = open ? mapperUI.railSticky || sticky : false;
   mapperUI.railOpen = open;
   applyRailState();
 }
 
+/* Hover-opened drawers close a moment after the pointer leaves, unless the pointer came back, keyboard focus
+   is inside the drawer, or one of its context menus is showing. Sticky and pinned drawers never auto-close. */
 function scheduleRailClose(delay = 320) {
   clearTimeout(mapperUI.railTimer);
+  if (mapperUI.railPinned || mapperUI.railSticky || !mapperUI.railOpen) return;
   mapperUI.railTimer = setTimeout(() => {
-    const dock = document.getElementById("wf-rail-dock");
-    if (dock && (dock.matches(":hover") || dock.contains(document.activeElement) || document.getElementById("wf-menu"))) return scheduleRailClose(delay);
+    const dock = document.getElementById("wf-rail-dock"),
+      rail = document.getElementById("wf-rail");
+    if (dock && (dock.matches(":hover") || (rail && rail.contains(document.activeElement)) || document.getElementById("wf-menu"))) return scheduleRailClose(delay);
     setRailOpen(false);
   }, delay);
+}
+
+/* Hover intent: only the visible handle opens the drawer, and only after the pointer rests on it briefly, so a
+   trip across the left edge (for instance towards the main navigation) never flashes the library open. */
+function armRailHover(handle) {
+  if (mapperUI.railPinned || mapperUI.railOpen || mapperUI.railHoverTimer) return;
+  mapperUI.railHoverTimer = setTimeout(() => {
+    mapperUI.railHoverTimer = 0;
+    if (handle.isConnected && handle.matches(":hover")) setRailOpen(true);
+  }, 170);
+}
+
+function disarmRailHover() {
+  clearTimeout(mapperUI.railHoverTimer);
+  mapperUI.railHoverTimer = 0;
 }
 
 /* ------------------------------------------------------------------ install */
@@ -1215,7 +1640,7 @@ function installWorkflowWorkbench() {
       modal(
         "这个页面做什么？",
         `<div class="prose wf-help-sheet"><p>${esc(comfy ? WORKBENCH_HELP.comfy : WORKBENCH_HELP.cloud)}</p>${comfy ? `<ul>
-          <li><strong>工作流库</strong>在左侧边缘：鼠标靠近即可展开，点图钉可以固定显示。</li>
+          <li><strong>工作流库</strong>在左侧边缘的「工作流库」标签里：点击展开（鼠标停留片刻也会展开），点图钉可以固定显示，再次点击或按 Esc 收起。</li>
           <li>每条<strong>映射</strong>分三步设置：① 写到哪里（节点与输入字段）② 填什么（取值来源）③ 效果预览。</li>
           <li><strong>右键</strong>任意映射或工作流，可以启用 / 停用、重命名、复制、导出或删除；行尾的 ⋯ 按钮是同一份菜单。</li>
           <li>映射与原始蓝图分开保存，节点连线受保护，改动自动保存且不影响已入队的任务。</li>
@@ -1225,28 +1650,34 @@ function installWorkflowWorkbench() {
     }
     if (action === "wf-connection-toggle") {
       mapperUI.connectionOpen = !mapperUI.connectionOpen;
-      const box = document.querySelector("[data-wm-connection]"),
-        body = document.getElementById("wf-connection-body");
-      if (box) box.toggleAttribute("open", mapperUI.connectionOpen);
-      if (body) body.hidden = !mapperUI.connectionOpen;
-      el?.setAttribute("aria-expanded", String(mapperUI.connectionOpen));
+      render();
+      if (mapperUI.connectionOpen) document.getElementById("wf-connection-body")?.querySelector("input:not([type=radio]):not([disabled]),select")?.focus({ preventScroll: true });
+      else document.querySelector('[data-act="wf-connection-toggle"]')?.focus({ preventScroll: true });
+      return;
+    }
+    if (action === "wf-check-connection") {
+      await checkWorkflowConnection();
       return;
     }
     if (action === "wf-rail-toggle") {
       if (mapperUI.railPinned) return;
-      mapperUI.railOpen = !mapperUI.railOpen;
-      applyRailState();
-      if (mapperUI.railOpen) document.querySelector("#wf-rail .wf-item.active .wf-item-body, #wf-rail .wf-item-body")?.focus();
+      // A click on the handle is an explicit request: it turns a hover-open drawer sticky instead of closing it,
+      // and only a second click (or Esc / clicking elsewhere) closes it again.
+      if (mapperUI.railOpen && mapperUI.railSticky) { setRailOpen(false); return; }
+      const keyboard = !!el?.matches?.(":focus-visible");
+      setRailOpen(true, { sticky: true });
+      if (keyboard) document.querySelector("#wf-rail .wf-item.active .wf-item-body, #wf-rail .wf-item-body")?.focus();
       return;
     }
     if (action === "wf-rail-pin") {
       mapperUI.railPinned = !mapperUI.railPinned;
-      // Unpinning keeps the drawer out until the pointer leaves it, so the click is not jarring.
+      // Unpinning keeps the drawer out (sticky) so the click is not jarring; it closes on the next outside click or Esc.
       mapperUI.railOpen = !mapperUI.railPinned;
+      mapperUI.railSticky = !mapperUI.railPinned;
+      disarmRailHover();
       setWorkbenchPref("railPinned", mapperUI.railPinned);
       render();
-      if (!mapperUI.railPinned) scheduleRailClose(900);
-      toast(mapperUI.railPinned ? "工作流库已固定显示" : "工作流库已收起，鼠标离开后自动隐藏，靠近左侧边缘即可再次展开");
+      toast(mapperUI.railPinned ? "工作流库已固定显示" : "工作流库已收起；点击左侧「工作流库」标签可再次展开");
       return;
     }
     if (action === "wf-clear-filter") {
@@ -1262,17 +1693,13 @@ function installWorkflowWorkbench() {
       $("#ws-library-search-input")?.focus();
       return;
     }
-    if (action === "wm-select") {
-      mapperUI.selected = d.id;
+    if (action === "wm-select" || action === "wm-select-slot") {
+      const fromRow = !!document.activeElement?.closest?.(".wf-row-main");
+      mapperUI.selected = action === "wm-select" ? d.id : d.id === "lora" ? "__slot_lora__" : "__slot_model__";
       mapperUI.nodes = false;
       render();
-      if (innerWidth <= 1024) document.querySelector(".wm-inspector")?.scrollIntoView({ block: "start", behavior: "smooth" });
-      return;
-    }
-    if (action === "wm-select-slot") {
-      mapperUI.selected = d.id === "lora" ? "__slot_lora__" : "__slot_model__";
-      mapperUI.nodes = false;
-      render();
+      // Keyboard users keep their place in the list; the inspector follows on the side.
+      if (fromRow) document.querySelector(".wf-row.selected .wf-row-main")?.focus({ preventScroll: true });
       if (innerWidth <= 1024) document.querySelector(".wm-inspector")?.scrollIntoView({ block: "start", behavior: "smooth" });
       return;
     }
@@ -1379,32 +1806,48 @@ function installWorkflowWorkbench() {
     return previous(action, d, el);
   };
 
-  /* Filter lives in a select now. */
+  /* Filter lives in a select now; a committed address change drops the old socket so the bar cannot claim 已连接 for the wrong server. */
   document.addEventListener("change", (e) => {
     const el = e.target;
     if (el?.id === "wm-filter-select") {
       mapperUI.filter = el.value;
       render();
     }
+    if (el?.id === "setup-comfy-url") {
+      state.settings.comfy.baseUrl = el.value.trim();
+      save();
+      if (typeof resetWS === "function") resetWS();
+      renderShell();
+      refreshConnectionViews();
+    }
     if (el?.dataset?.v3Slot) {
       try { applySlotControl(el.dataset.v3Slot, el); } catch (error) { toast(error.message, "error"); }
     }
   });
 
-  /* Rail drawer: open when the pointer nears the left edge, close a moment after it leaves.
-     Keyboard users get the same via the handle button and focus. */
+  /* Rail drawer. Click on the handle = open (sticky) / close. Resting the pointer on the handle also opens it,
+     and that hover-open drawer closes shortly after the pointer leaves; a sticky one waits for a click elsewhere,
+     the handle, or Esc. Keyboard focus inside the drawer keeps it open. */
   document.addEventListener("pointerover", (e) => {
     if (e.pointerType === "touch") return;
-    const dock = e.target.closest?.("#wf-rail-dock");
-    if (dock) setRailOpen(true);
+    const handle = e.target.closest?.(".wf-rail-handle");
+    if (handle) armRailHover(handle);
+    if (mapperUI.railOpen && e.target.closest?.("#wf-rail-dock")) clearTimeout(mapperUI.railTimer);
   });
   document.addEventListener("pointerout", (e) => {
     if (e.pointerType === "touch") return;
+    const handle = e.target.closest?.(".wf-rail-handle");
+    if (handle && !(e.relatedTarget && handle.contains(e.relatedTarget))) disarmRailHover();
     const dock = e.target.closest?.("#wf-rail-dock");
     if (dock && !(e.relatedTarget && dock.contains(e.relatedTarget))) scheduleRailClose();
   });
+  document.addEventListener("pointerdown", (e) => {
+    if (!mapperUI.railOpen || mapperUI.railPinned) return;
+    if (e.target.closest?.("#wf-rail-dock, #wf-menu, dialog, .ctx-menu")) return;
+    setRailOpen(false);
+  });
   document.addEventListener("focusin", (e) => {
-    if (e.target.closest?.("#wf-rail-dock")) setRailOpen(true);
+    if (e.target.closest?.("#wf-rail")) clearTimeout(mapperUI.railTimer);
   });
   document.addEventListener("focusout", (e) => {
     const dock = e.target.closest?.("#wf-rail-dock");
@@ -1432,6 +1875,17 @@ function installWorkflowWorkbench() {
   document.addEventListener("input", (e) => {
     const el = e.target;
     if (!el || !el.matches) return;
+    if (el.id === "setup-comfy-url") {
+      // first-run.js already stores the address; here the bar and the status line follow the typing.
+      const url = document.querySelector(".wf-connection-url");
+      if (url) url.textContent = el.value.trim() || "未填写地址";
+      const status = document.getElementById("setup-comfy-status");
+      if (status && !connectionRecord(el.value)) {
+        status.className = "wf-probe tone-idle";
+        status.innerHTML = '<i class="wf-dot" aria-hidden="true"></i><b>地址已更改</b><span>尚未检查</span>';
+      }
+      return;
+    }
     if (el.matches(".wm-title")) {
       const title = el.value.trim() || "未命名工作流";
       const item = document.querySelector(".wf-item.active .wf-item-title");
@@ -1464,7 +1918,22 @@ function installWorkflowWorkbench() {
   document.addEventListener("keydown", (e) => {
     const menu = document.getElementById("wf-menu");
     if (!menu) {
-      if (e.key === "Escape" && mapperUI.railOpen && !mapperUI.railPinned && document.activeElement?.closest?.("#wf-rail-dock")) { setRailOpen(false); document.querySelector(".wf-rail-handle")?.focus(); }
+      if (e.key === "Escape" && mapperUI.railOpen && !mapperUI.railPinned && !document.querySelector("dialog[open],.ctx-menu") && !(typeof contextMenuOpen === "function" && contextMenuOpen()) && !e.target.closest?.("#assistant")) {
+        const inside = !!document.activeElement?.closest?.("#wf-rail-dock");
+        setRailOpen(false);
+        if (inside) document.querySelector(".wf-rail-handle")?.focus();
+      }
+      /* Roving focus in the mapping list: ↑↓ Home End move between rows, Enter / Space open (native button). */
+      const rowButton = e.target.closest?.(".wf-rows .wf-row-main");
+      if (rowButton && ["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key) && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        const buttons = [...document.querySelectorAll(".wf-rows .wf-row-main")],
+          i = buttons.indexOf(rowButton);
+        if (i < 0) return;
+        e.preventDefault();
+        const next = e.key === "ArrowDown" ? Math.min(buttons.length - 1, i + 1) : e.key === "ArrowUp" ? Math.max(0, i - 1) : e.key === "Home" ? 0 : buttons.length - 1;
+        buttons[next]?.focus();
+        buttons[next]?.scrollIntoView({ block: "nearest" });
+      }
       return;
     }
     const items = [...menu.querySelectorAll('[role="menuitem"]:not([disabled])')];

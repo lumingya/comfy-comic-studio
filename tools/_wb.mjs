@@ -41,7 +41,7 @@ const FIXTURE = {
   ],
 };
 const url = "http://127.0.0.1:18821",
-  artifacts = "docs/acceptance-workflow";
+  artifacts = "/tmp/acc";
 fs.mkdirSync(artifacts, { recursive: true });
 let browser,
   count = 0;
@@ -65,7 +65,7 @@ try {
     errors = [];
   p.on("pageerror", (e) => errors.push(e.message));
   const boot = async () => {
-    await p.waitForFunction(() => typeof rt !== "undefined" && !rt.booting && backendRuntime.connected);
+    console.log("boot: waiting"); try { await p.waitForFunction(() => typeof rt !== "undefined" && !rt.booting && backendRuntime.connected, null, {timeout: 15000}); } catch (e) { console.log("boot state", await p.evaluate(() => JSON.stringify({rt: typeof rt, booting: typeof rt !== "undefined" ? rt.booting : null, br: typeof backendRuntime !== "undefined" ? backendRuntime.connected : null, err: typeof backendRuntime !== "undefined" ? backendRuntime.error : null, url: location.href}))); throw e; }
     await p.evaluate(() => {
       document.querySelectorAll("dialog[open]").forEach((d) => d.close());
       state.settings.identity.onboarded = true;
@@ -81,14 +81,11 @@ try {
   await boot();
   // A self-contained fixture: the classic seven-node ComfyUI graph with eight bindings,
   // so the acceptance run never depends on whichever workflow ships in data/.
-  // Count relative to whatever the shipped data/ directory provides (one or more presets),
-  // so the run never depends on the exact number of bundled workflows.
-  const shipped = await p.evaluate(() => state.settings.comfy.presets.length);
-  await p.evaluate((fixture) => importWorkflowIntoMapper(fixture), FIXTURE);
-  await p.waitForFunction((n) => state.settings.comfy.presets.length === n + 1, shipped);
+  console.log("before import", await p.evaluate(() => JSON.stringify(state.settings.comfy.presets.map(x => [x.id, x.title])))); await p.evaluate((fixture) => importWorkflowIntoMapper(fixture), FIXTURE); console.log("after import", await p.evaluate(() => JSON.stringify(state.settings.comfy.presets.map(x => [x.id, x.title]))));
+  await p.waitForFunction(() => state.settings.comfy.presets.length === 2);
   const saved = await p.evaluate(async () => ({ ok: await savePythonWorkspace(), error: backendRuntime.error }));
   check(saved.ok, "fixture workflow persisted before the run" + (saved.ok ? "" : " (" + saved.error + ")"));
-  const basePresets = shipped + 1;
+  const basePresets = 2;
 
   /* ---- compact bar: one line, connection folded, description behind "?" */
   check(

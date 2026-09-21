@@ -83,8 +83,12 @@ def check_comfy(payload):
                 vram = max(0, min(100, round((1 - float(gpu.get('vram_free', 0)) / float(gpu['vram_total'])) * 100)))
         except (TypeError, ValueError, ZeroDivisionError):
             vram = None
+        # Additive facts for the workbench status card: GPU name and ComfyUI version, when the server reports them.
+        device = str(gpu.get('name') or '')[:120].strip() if gpu else ''
+        system = data.get('system') if isinstance(data.get('system'), dict) else {}
+        version = str(system.get('comfyui_version') or '')[:40].strip()
         return {'ok': True, 'message': '服务可读 · 只检查了连接，未生成图片；请继续核对工作流、节点和本机模型。',
-                'latencyMs': latency, 'vramPercent': vram}
+                'latencyMs': latency, 'vramPercent': vram, 'device': device, 'version': version}
     except (urllib.error.URLError, OSError, TimeoutError):
         raise ValueError('无法读取 ComfyUI 状态；检查服务启动、端口与 Mio 后端到该地址的网络。不跟随重定向。') from None
     except (json.JSONDecodeError, UnicodeError):

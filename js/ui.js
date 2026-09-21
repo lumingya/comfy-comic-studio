@@ -143,9 +143,9 @@ case'run-command':{const item=rt.commandItems[Number(d.index)];$('#command-dialo
 case'gallery-tab':ui.filter=d.filter;render();break;
 case'recent':ui.sort='updatedAt';ui.filter='all';render();break;
 case'layout':ui.layout=d.layout;render();break;
-case'toggle-bulk':ui.bulk=!ui.bulk;if(!ui.bulk)ui.selected.clear();refreshGallery();break;
-case'select-all':filteredBooks().forEach(b=>ui.selected.add(b.id));refreshGallery();break;
-case'clear-selection':ui.selected.clear();ui.bulk=false;refreshGallery();break;
+case'toggle-bulk':{const on=!(ui.bulk||ui.selected.size);ui.bulk=on;ui.bulkPinned=on;if(!on)ui.selected.clear();refreshGallery();if(on)toast(localeString('多选已开启：点击画册加选或取消，双击翻开，Esc 退出。'));break}
+case'select-all':filteredBooks().forEach(b=>ui.selected.add(b.id));ui.bulk=true;refreshGallery();break;
+case'clear-selection':ui.selected.clear();ui.bulk=false;ui.bulkPinned=false;refreshGallery();break;
 case'star':{const b=bookBy(d.id);b.liked=!b.liked;b.likes=b.liked?1:0;b.updatedAt=Date.now();save();refreshGallery();if($('#modal').open&&$('#modal-title').textContent===b.title)bookMenu(b.id);break}
 case'bulk-star':ui.selected.forEach(id=>{const b=bookBy(id);if(b){b.liked=true;b.likes=1;b.updatedAt=Date.now()}});save();render();toast('所选画册已添加星标。');break;
 case'bulk-delete':await deleteBooks([...ui.selected]);break;
@@ -868,7 +868,7 @@ function createWorkspaceChromePolicy(){
 
 function rememberedInterfaceLanguage(){try{const lang=localStorage.getItem('cc-language');return lang==='en'?'en':'zh-CN'}catch(e){return'zh-CN'}}
 
-function responsiveCover(book,mode,index=0){const image=collectionCoverInfo(book),ratio=clamp(image.ratio,.4,2.4);return `<button class="shelf-cover" style="--cover-ratio:${ratio};--cover-fit:${book.coverPresentation?.fit==='contain'?'contain':'cover'};--cover-focus:${clamp(Number(book.coverPresentation?.x??50),0,100)}% ${clamp(Number(book.coverPresentation?.y??50),0,100)}%" data-act="read" data-id="${book.id}" data-cover-mode="${mode}" aria-label="${esc(localeString('阅读'))} ${esc(book.title)}">${imgTag(thumbnailURL(image.src,mode==='showcase'?'1024x1024':'512x512'),book.title,`data-book="${book.id}" data-step="${image.frame?.stepIndex||0}" data-responsive-cover="true" loading="${index<4?'eager':'lazy'}" decoding="async"`)}<span class="cover-paper" aria-hidden="true"></span><span class="pic-count">▧ ${book.generatedSteps||0}</span></button>`}
+function responsiveCover(book,mode,index=0){const image=collectionCoverInfo(book),ratio=clamp(image.ratio,.4,2.4);return `<button class="shelf-cover" style="--cover-ratio:${ratio};--cover-fit:${book.coverPresentation?.fit==='contain'?'contain':'cover'};--cover-focus:${clamp(Number(book.coverPresentation?.x??50),0,100)}% ${clamp(Number(book.coverPresentation?.y??50),0,100)}%" data-act="read" data-id="${book.id}" data-cover-mode="${mode}" aria-label="${esc(localeString('阅读'))} ${esc(book.title)}">${imgTag(thumbnailURL(image.src,mode==='showcase'?'1024x1024':'512x512'),book.title,`data-book="${book.id}" data-step="${image.frame?.stepIndex||0}" data-responsive-cover="true" draggable="false" loading="${index<4?'eager':'lazy'}" decoding="async"`)}<span class="cover-paper" aria-hidden="true"></span><span class="pic-count">▧ ${book.generatedSteps||0}</span></button>`}
 
 
 function updateCoverSizing(img){if(!img?.naturalWidth||!img.naturalHeight)return;const size={width:img.naturalWidth,height:img.naturalHeight};displayUI.dimensions.set(img.currentSrc||img.src,size);displayUI.dimensions.set(img.getAttribute('src'),size);const button=img.closest('.shelf-cover');if(!button)return;const ratio=size.width/size.height;button.dataset.orientation=ratio>1.2?'landscape':ratio<.75?'portrait':'square';if(button.dataset.coverMode==='showcase')button.style.setProperty('--cover-ratio',String(clamp(ratio,.4,2.4)))}
