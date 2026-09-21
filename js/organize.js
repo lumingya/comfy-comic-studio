@@ -85,21 +85,70 @@ function refreshCollectionSelection(){
   if($('.book-order-list'))$('.book-order-list').innerHTML=bookOrderListHTML();
 }
 
-function closeBookContext(restoreFocus=false){
-  const menu=$('#book-context-menu');if(!menu)return;const id=menu.dataset.focusId;menu.remove();
-  if(restoreFocus)document.querySelector(`[data-sort-book="${CSS.escape(id)}"]`)?.focus();
+function closeBookContext(restoreFocus=false){if(typeof closeContextMenu==='function')closeContextMenu(restoreFocus)}
+
+function bookContextBusy(ids){return ids.some(key=>bookBy(key)?.inProgress||[...rt.redraw].some(k=>k.startsWith(key+':')))}
+
+/* Menu for one album: primary actions first, export/organize folded into submenus, destructive action last. */
+function singleBookContextItems(book){
+  const id=book.id,shelf=getShelfBooks().map(b=>b.id),index=shelf.indexOf(id),busy=bookContextBusy([id]),missing=missingIndices(book).length,data={ids:JSON.stringify([id])};
+  const exporters=typeof mioExporterList==='function'?mioExporterList():[];
+  const extension=typeof contextMenuExtensionItems==='function'?contextMenuExtensionItems('album',{id}):[];
+  return [
+    {label:'翻开这本画册',icon:'book',act:'read',data:{id},primary:true,shortcut:'Enter'},
+    {label:book.liked?'取消星标':'星标收藏',icon:'star',act:'star',data:{id},checked:!!book.liked},
+    {label:'重命名…',icon:'edit',act:'org-context-edit',data,disabled:busy,title:busy?'画册正在生成，稍后再改名。':''},
+    {label:'补齐缺失分镜',icon:'refresh',act:'resume',data:{id},disabled:!missing,hint:missing?`${missing} 幕待补齐，已完成画面不重跑`:'所有分镜已齐备'},
+    '-',
+    {label:'导出与分享',icon:'download',children:[
+      {label:'导出离线画册…',icon:'download',act:'org-context-export',data,hint:'单文件 HTML，可选版式与水印'},
+      {label:'分享画册源文件…',icon:'upload',act:'native-export',data:{kind:'albums',id},hint:'可在另一间工作室导入，不含服务密钥'},
+      exporters.length?'-':null,
+      ...exporters.map(e=>({label:'导出 · '+e.label,icon:'box',act:'mio-export',data:{exporter:e.id,id},hint:e.runtime==='browser'?'浏览器生成':'后端打包'}))
+    ]},
+    {label:'整理',icon:'list',children:[
+      {label:'向前移动',icon:'up',act:'org-context-up',data,disabled:index<=0},
+      {label:'向后移动',icon:'down',act:'org-context-down',data,disabled:index<0||index===shelf.length-1},
+      '-',
+      {label:'加入多选',icon:'check',act:'org-context-pick',data:{id},hint:'进入批量模式并选中这本；Ctrl / ⌘ + 右键可直接加选'},
+      {label:'选择当前筛选结果',icon:'check',act:'org-context-select-all'}
+    ]},
+    extension.length?'-':null,
+    ...extension,
+    '-',
+    {label:busy?'停止并删除画册…':'删除画册…',icon:'trash',act:'org-context-delete',data,danger:true}
+  ];
 }
 
+function multiBookContextItems(ids){
+  const busy=bookContextBusy(ids),data={ids:JSON.stringify(ids)};
+  return [
+    {label:'批量星标',icon:'star',act:'org-context-star',data},
+    {label:'批量重命名…',icon:'edit',act:'org-context-edit',data,disabled:busy,title:busy?'有画册正在生成，稍后再改名。':''},
+    {label:'导出离线画册…',icon:'download',act:'org-context-export',data,hint:'合并为一个离线 HTML'},
+    '-',
+    {label:'选择当前筛选结果',icon:'check',act:'org-context-select-all'},
+    {label:'取消选择',icon:'close',act:'org-context-clear',shortcut:'Esc'},
+    '-',
+    {label:busy?'停止并批量删除…':'批量删除…',icon:'trash',act:'org-context-delete',data,danger:true}
+  ];
+}
+
+/* Right-click never re-renders the shelf: the card only gets a highlight class, so nothing shifts under the pointer.
+   With Ctrl / ⌘ the card joins the current selection; otherwise an existing multi-selection containing the card is kept. */
 function openBookContext(id,x,y,extend=false){
   const b=bookBy(id);if(!b||b.projectId!==state.activeProjectId)return;
   ui.selected=new Set([...ui.selected].filter(key=>bookBy(key)?.projectId===state.activeProjectId));
-  if(!ui.selected.has(id)){if(!extend)ui.selected.clear();ui.selected.add(id)}
-  ui.bulk=true;refreshGallery();closeBookContext();
-  const ids=[...ui.selected],busy=ids.some(key=>bookBy(key)?.inProgress||[...rt.redraw].some(k=>k.startsWith(key+':'))),menu=document.createElement('div');
-  menu.id='book-context-menu';menu.className='book-context-menu';menu.setAttribute('role','menu');menu.setAttribute('aria-label','画册右键菜单');menu.dataset.focusId=id;menu.dataset.ids=JSON.stringify(ids);
-  const item=(action,label,iconName,disabled=false)=>`<button type="button" role="menuitem" data-act="${action}" ${disabled?'disabled':''}>${icon(iconName,'sm')}<span>${label}</span></button>`;
-  menu.innerHTML=`<div class="context-menu-title">已选择 ${ids.length} 本画册</div>${item('org-context-export','导出离线画册…','download')}${ids.length===1?`<button type="button" role="menuitem" data-act="native-export" data-kind="albums" data-id="${esc(id)}">${icon('download','sm')}<span>分享画册源文件…</span></button>`:''}${item('org-context-edit','重命名…','edit',busy)}${item('org-context-star','批量星标','star')}<div class="context-menu-separator"></div>${ids.length===1?item('org-context-up','向前移动画册','up',getShelfBooks()[0]?.id===id)+item('org-context-down','向后移动画册','down',getShelfBooks().at(-1)?.id===id):''}${item('org-context-select-all','选择当前筛选结果','check')}${item('org-context-clear','取消选择','close')}<div class="context-menu-separator"></div>${item('org-context-delete',busy?'停止并批量删除…':'批量删除…','trash')}<div class="context-menu-hint">手机：点选画册复选框进行多选<br>电脑：Ctrl / ⌘ 多选，拖动调整顺序</div>`;
-  document.body.append(menu);const rect=menu.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(x,innerWidth-rect.width-8))+'px';menu.style.top=Math.max(8,Math.min(y,innerHeight-rect.height-8))+'px';menu.querySelector('button')?.focus({preventScroll:true});
+  if(extend){ui.selected.add(id);ui.bulk=true;refreshCollectionSelection()}
+  const multi=ui.selected.has(id)&&ui.selected.size>1,ids=multi?[...ui.selected]:[id];
+  const card=document.querySelector(`[data-sort-book="${CSS.escape(id)}"]:not(.book-order-chip)`)||document.querySelector(`[data-sort-book="${CSS.escape(id)}"]`);
+  card?.classList.add('is-context');
+  const missing=missingIndices(b).length;
+  openContextMenu({x,y,label:'画册右键菜单',focusEl:card,
+    title:multi?`已选择 ${ids.length} 本画册`:b.title,
+    subtitle:multi?'Ctrl / ⌘ + 右键可继续加选，Esc 退出多选':[`${b.totalSteps} 幕`,b.characterName,missing?`${missing} 幕待补齐`:'已齐备'].filter(Boolean).join(' · '),
+    items:multi?multiBookContextItems(ids):singleBookContextItems(b),
+    onClose:()=>card?.classList.remove('is-context')});
 }
 
 async function batchEditBookMetadata(ids){
@@ -153,9 +202,10 @@ function installOrganizationTools(){
     if(action==='org-task-up'||action==='org-task-down'){const ids=state.queue.filter(q=>q.status==='pending').map(q=>q.id),i=ids.indexOf(d.id),down=action==='org-task-down',other=ids[i+(down?1:-1)];if(other)reorderPendingTask(d.id,other,down);return}
     if(action==='org-book-up'||action==='org-book-down'){const ids=getShelfBooks().map(b=>b.id),i=ids.indexOf(d.id),down=action==='org-book-down',other=ids[i+(down?1:-1)];if(other)reorderCollectionBook(d.id,other,down);return}
     if(action.startsWith('org-context-')){
-      const ids=JSON.parse($('#book-context-menu')?.dataset.ids||'[]').filter(id=>bookBy(id)?.projectId===state.activeProjectId);closeBookContext();
+      let ids=[];try{ids=JSON.parse(d.ids||'[]')}catch{ids=[]}ids=ids.filter(id=>bookBy(id)?.projectId===state.activeProjectId);closeBookContext();
       if(action==='org-context-select-all'){ui.selected=new Set(getShelfBooks().map(b=>b.id));ui.bulk=true;refreshGallery();return}
       if(action==='org-context-clear'){ui.selected.clear();ui.bulk=false;refreshGallery();return}
+      if(action==='org-context-pick'){if(bookBy(d.id))ui.selected.add(d.id);ui.bulk=true;refreshGallery();toast('已进入批量模式：点选复选框或 Ctrl / ⌘ + 点击继续加选。');return}
       if(!ids.length)return;
       if((action==='org-context-up'||action==='org-context-down')&&ids.length===1){const order=getShelfBooks().map(b=>b.id),i=order.indexOf(ids[0]),down=action==='org-context-down',other=order[i+(down?1:-1)];if(other)reorderCollectionBook(ids[0],other,down);return}
       if(action==='org-context-export')return exportModal(ids);
@@ -170,7 +220,6 @@ function installOrganizationTools(){
   document.addEventListener('change',e=>{if(e.target.id==='gallery-sort'){state.settings.presentation.collectionSort=e.target.value;save()}if(e.target.dataset.selectBook)refreshCollectionSelection()});
   document.addEventListener('contextmenu',e=>{const card=e.target.closest('[data-sort-book]');if(ui.workspace!==0||!card||e.target.closest('input,textarea,[contenteditable="true"]'))return;e.preventDefault();openBookContext(card.dataset.sortBook,e.clientX,e.clientY,e.ctrlKey||e.metaKey)});
   document.addEventListener('click',e=>{
-    if($('#book-context-menu')&&!e.target.closest('#book-context-menu'))closeBookContext();
     const card=e.target.closest('[data-sort-book]');if(ui.workspace!==0||!card||card.classList.contains('book-order-chip'))return;
     if(e.target.closest('input,select,textarea')||e.target.closest('[data-act]')?.dataset.act&&e.target.closest('[data-act]').dataset.act!=='read')return;
     if(!(e.ctrlKey||e.metaKey||e.shiftKey||ui.bulk))return;
@@ -180,7 +229,7 @@ function installOrganizationTools(){
     lastSelected=id;ui.bulk=true;refreshGallery();
   },true);
   document.addEventListener('keydown',e=>{
-    const menu=$('#book-context-menu');if(menu){if(e.key==='Escape'){e.preventDefault();closeBookContext(true);return}if(['ArrowDown','ArrowUp','Home','End'].includes(e.key)){e.preventDefault();const items=[...menu.querySelectorAll('button:not(:disabled)')],index=items.indexOf(document.activeElement),next=e.key==='Home'?0:e.key==='End'?items.length-1:(index+(e.key==='ArrowDown'?1:-1)+items.length)%items.length;items[next]?.focus();return}}
+    if(typeof contextMenuOpen==='function'&&contextMenuOpen())return;
     const card=e.target.closest('[data-sort-book]');if(card&&ui.workspace===0&&(e.key==='ContextMenu'||e.shiftKey&&e.key==='F10')){e.preventDefault();const rect=card.getBoundingClientRect();openBookContext(card.dataset.sortBook,rect.left+20,rect.top+20)}
   });
   document.addEventListener('dragstart',e=>{
@@ -192,8 +241,6 @@ function installOrganizationTools(){
   document.addEventListener('dragover',e=>{if(!drag)return;const target=e.target.closest(drag.type==='task'?'[data-sort-task]':'[data-sort-book]');if(!target)return;if(drag.type==='task'&&state.queue.find(q=>q.id===target.dataset.sortTask)?.status!=='pending')return;e.preventDefault();e.dataTransfer.dropEffect='move';document.querySelectorAll('.is-drop-target').forEach(x=>x.classList.remove('is-drop-target'));target.classList.add('is-drop-target')});
   document.addEventListener('drop',e=>{if(!drag)return;const target=e.target.closest(drag.type==='task'?'[data-sort-task]':'[data-sort-book]');if(!target)return;e.preventDefault();try{const rect=target.getBoundingClientRect(),after=e.clientY>rect.top+rect.height/2;if(drag.type==='task')reorderPendingTask(drag.id,target.dataset.sortTask,after);else reorderCollectionBook(drag.id,target.dataset.sortBook,after)}catch(error){toast(error.message,'error')}finally{drag=null;document.querySelectorAll('.is-drop-target,.is-dragging').forEach(x=>x.classList.remove('is-drop-target','is-dragging'))}});
   document.addEventListener('dragend',()=>{drag=null;document.querySelectorAll('.is-drop-target,.is-dragging').forEach(x=>x.classList.remove('is-drop-target','is-dragging'))});
-  window.addEventListener('resize',()=>closeBookContext());
-  for(const type of ['wheel','touchmove'])document.addEventListener(type,e=>{if(!e.target.closest?.('#book-context-menu'))closeBookContext()},{passive:true});
 }
 
 // Standalone exports need an image URL; use only a neutral question mark, not artwork.

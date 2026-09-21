@@ -32,3 +32,24 @@ class ContentDistributionTests(unittest.TestCase):
             s=self.store(data,project);initialize(s,project)
             values=bootstrap(s);self.assertEqual(values['config']['savedGalleries'],[]);self.assertEqual(values['layouts'],[])
             self.assertFalse(any((data/'albums').rglob('album.json')));s.library.close()
+    def test_existing_external_workspace_receives_upgraded_catalog_text_only(self):
+        with tempfile.TemporaryDirectory() as temp:
+            project=Path(temp)/'program';shutil.copytree(ROOT/'data',project/'data',ignore=shutil.ignore_patterns('runtime','.cache','.write.lock','.transactions','.trash'))
+            workspace=Path(temp)/'workspace';s=self.store(workspace,project);self.assertTrue(initialize(s,project));s.library.close()
+            # Simulate a program upgrade: the shipped catalog changes and the manifest is rebuilt; the user meanwhile deleted the demo album.
+            captions=project/'data/catalog/captions.json';captions.write_text(json.dumps({'upgraded':True}),'utf-8')
+            manifest=json.loads((project/'data/distribution.json').read_text('utf-8'))
+            from backend.mio_library import digest
+            manifest['files']['catalog/captions.json']=digest(captions.read_bytes());manifest['version']='9.9.9'
+            (project/'data/distribution.json').write_text(json.dumps(manifest,ensure_ascii=False),'utf-8')
+            for album in (workspace/'albums').iterdir():shutil.rmtree(album)
+            s=self.store(workspace,project);self.assertFalse(initialize(s,project))
+            self.assertEqual(json.loads((workspace/'catalog/captions.json').read_text('utf-8')),{'upgraded':True})
+            self.assertFalse(any((workspace/'albums').rglob('album.json')),'upgrading never resurrects deleted entities')
+            self.assertEqual(s.content_problems,[]);s.library.close()
+            # A tampered shipped catalog file is skipped and reported instead of being installed.
+            captions.write_text(json.dumps({'tampered':True}),'utf-8');manifest['version']='9.9.10'
+            (project/'data/distribution.json').write_text(json.dumps(manifest,ensure_ascii=False),'utf-8')
+            s=self.store(workspace,project);initialize(s,project)
+            self.assertEqual(json.loads((workspace/'catalog/captions.json').read_text('utf-8')),{'upgraded':True})
+            self.assertEqual([p['file'] for p in s.content_problems],['catalog/captions.json']);s.library.close()

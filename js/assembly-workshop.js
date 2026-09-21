@@ -145,7 +145,7 @@ function productionPaging(total){const pages=Math.max(1,Math.ceil(total/PRODUCTI
 function productionPageNumbers(index,pages){if(pages<=7)return Array.from({length:pages},(_,i)=>i);const wanted=new Set([0,pages-1,index-1,index,index+1]);if(index<3)[1,2,3].forEach(i=>wanted.add(i));if(index>pages-4)[pages-4,pages-3,pages-2].forEach(i=>wanted.add(i));const list=[...wanted].filter(i=>i>=0&&i<pages).sort((a,b)=>a-b);return list.flatMap((i,k)=>k&&i-list[k-1]>1?[null,i]:[i])}
 function renderProductionPager(paging,total){if(paging.pages<=1)return '';const label=localeString('第 {current} / {total} 页',{current:paging.index+1,total:paging.pages});return `<nav class="production-pager" aria-label="${esc(label)}">${btn('上一页','arrow-back','production-page',`data-page="${paging.index-1}" ${paging.index===0?'disabled':''}`,'ghost small')}<div class="production-pager-numbers">${productionPageNumbers(paging.index,paging.pages).map(i=>i===null?'<span class="production-pager-gap">…</span>':`<button type="button" class="production-pager-number${i===paging.index?' active':''}" data-act="production-page" data-page="${i}" ${i===paging.index?'aria-current="page"':''}>${i+1}</button>`).join('')}</div>${btn('下一页','arrow','production-page',`data-page="${paging.index+1}" ${paging.index===paging.pages-1?'disabled':''}`,'ghost small')}<span class="production-pager-summary">${esc(label)} · ${paging.end-paging.start>1?paging.start+1+'–'+paging.end:paging.end} / ${total}</span></nav>`}
 function productionStrip(t){return `<div class="production-strip${(t.pages||[]).length>48?' dense':''}" aria-hidden="true">${(t.pages||[]).map(p=>`<i class="seg-${esc(p.state)}"></i>`).join('')}</div>`}
-function renderProductionPage(t,p,busy){const last=p.attempts.at(-1);return `<div class="production-page"><div class="production-page-number">${pad(p.index+1)}</div>${p.result?.image?imgTag(thumbnailURL(p.result.image),'第 '+(p.index+1)+' 幕','loading="lazy"'):'<span class="production-page-blank"></span>'}<div class="grow"><strong class="page-${esc(p.state)}">${productionStatus(p.state)}</strong><small>${p.attemptCount} 次尝试${last?.upstream?' · 上游任务 '+esc(last.upstream):''}${p.result&&p.state!=='complete'?' · 原图已保留':''}</small>${last?.error?`<p>${esc(last.error)}</p>`:''}</div><div>${p.state!=='complete'&&p.attempts.at(-1)?.phase==='publish'?btn('恢复已生成结果','disk','production-recover',`data-id="${esc(t.id)}" data-index="${p.index}" ${busy?'disabled':''}`,'small'):''}${btn('单幕重跑','refresh','production-rerun',`data-id="${esc(t.id)}" data-index="${p.index}" ${busy?'disabled':''}`,'small')}${btn('从此幕往后重跑','list','production-rerun-tail',`data-id="${esc(t.id)}" data-index="${p.index}" ${busy?'disabled':''}`,'small ghost')}</div></div>`}
+function renderProductionPage(t,p,busy){const last=p.attempts.at(-1);return `<div class="production-page" data-page-index="${p.index}"><div class="production-page-number">${pad(p.index+1)}</div>${p.result?.image?imgTag(thumbnailURL(p.result.image),'第 '+(p.index+1)+' 幕','loading="lazy"'):'<span class="production-page-blank"></span>'}<div class="grow"><strong class="page-${esc(p.state)}">${productionStatus(p.state)}</strong><small>${p.attemptCount} 次尝试${last?.upstream?' · 上游任务 '+esc(last.upstream):''}${p.result&&p.state!=='complete'?' · 原图已保留':''}</small>${last?.error?`<p>${esc(last.error)}</p>`:''}</div><div>${p.state!=='complete'&&p.attempts.at(-1)?.phase==='publish'?btn('恢复已生成结果','disk','production-recover',`data-id="${esc(t.id)}" data-index="${p.index}" ${busy?'disabled':''}`,'small'):''}${btn('单幕重跑','refresh','production-rerun',`data-id="${esc(t.id)}" data-index="${p.index}" ${busy?'disabled':''}`,'small')}${btn('从此幕往后重跑','list','production-rerun-tail',`data-id="${esc(t.id)}" data-index="${p.index}" ${busy?'disabled':''}`,'small ghost')}</div></div>`}
 function renderProductionCard(t,busy){const done=(t.pages||[]).filter(p=>p.state==='complete').length;return `<article class="production-card" data-production-task="${esc(t.id)}"><header><div class="production-card-title"><span class="production-state state-${esc(t.status)}">${productionStatus(t.status)}</span><h2>${esc(t.title)}</h2></div><div class="production-count"><b>${done}</b><span>/ ${(t.pages||[]).length} 幕</span></div></header><p class="production-meta"><span>分镜 · ${esc(t.sources.story)}</span><span>预设 · ${esc(t.sources.presets.join(' + ')||'未选预设')}</span><span>渠道 · ${esc(t.sources.channel)}</span></p>${productionStrip(t)}${t.rateLimit?`<p class="production-rate" role="status" data-rate-task="${esc(t.id)}">服务限流，等待 ${productionRetrySeconds(t.rateLimit)} 秒后重试；不计入连续故障。</p>`:''}${t.cancelReport?`<p class="production-error">${esc(t.cancelReport.message||(t.cancelReport.state==='cancel_dispatched'?'ComfyUI 已接受本任务的定向取消请求。':'ComfyUI 本任务已结束或不在队列中。'))}</p>`:''}${t.error?`<p class="production-error">${esc(t.error)}</p>`:''}<div class="production-card-actions">${btn('开始生成','play','production-start',`data-id="${esc(t.id)}" ${busy||t.status==='complete'?'disabled':''}`,'primary')}${btn('从此处顺次生成','list','production-batch',`data-id="${esc(t.id)}" ${busy?'disabled':''}`)}${btn('重算前置并继续','refresh','production-reprepare',`data-id="${esc(t.id)}" ${busy?'disabled':''}`,'ghost small')}${btn(t.purpose==='preview'?'查看试绘':'查看画册','book',t.purpose==='preview'?'production-preview':'production-read',`data-id="${esc(t.albumId)}" ${!(t.pages||[]).some(p=>p.result)?'disabled':''}`,'ghost small')}${btn('诊断详情','help','production-details',`data-id="${esc(t.id)}"`,'ghost small')}${btn('移除任务','trash','production-remove',`data-id="${esc(t.id)}" ${busy?'disabled':''}`,'ghost small production-remove')}</div><details class="production-pages" data-task-details="${esc(t.id)}" ${workshop.openTasks.has(t.id)?'open':''}><summary>展开分幕进度与局部重跑</summary><div class="production-page-list">${(t.pages||[]).map(p=>renderProductionPage(t,p,busy)).join('')}</div></details></article>`}
 function renderProductionWorkshop(){const q=workshop.queue,visible=productionVisibleTasks(),paging=productionPaging(visible.length),busy=!!q.active||q.batch.length>0;return `<div class="production-controls"><div><strong>${q.active?'正在运行一本画册':'等待你的安排'}</strong><small>${q.paused?'调度已暂停':'调度已就绪'} · ${q.batch.length} 本在当前批次中</small></div><div>${btn(workshop.onlyUncertain?'显示全部任务':'只看未确认结果','eye','production-uncertain-filter','','ghost')}${btn('导出核对清单','file-export','production-uncertain-export','','ghost')}${btn('全局暂停','pause','production-pause','','ghost')}${btn('恢复当前批次','play','production-resume',!q.batch.length?'disabled':'','ghost')}${btn('取消运行与批次','stop','production-cancel','','danger')}</div></div>${q.fault?`<div class="eco-safety danger">存储异常：${esc(q.fault)}。已阻止后续调度，请检查磁盘后重启。</div>`:''}<div class="production-cards">${visible.slice(paging.start,paging.end).map(t=>renderProductionCard(t,busy)).join('')||`<div class="eco-empty"><h3>${workshop.onlyUncertain&&q.tasks.length?'没有需要核对的结果。':'先装配，再生成。'}</h3></div>`}</div>${renderProductionPager(paging,visible.length)}`}
 function renderAssemblyWorkshop(){return `<div class="assembly-workshop">${workshopHeader()}${workshop.view==='stories'?renderStoryWorkshop():workshop.view==='presets'?renderPresetWorkshop():renderProductionWorkshop()}</div>`}
@@ -197,11 +197,170 @@ async function startProduction(id,options={}){const local=productionIsLocal(work
  /* B23: a local ComfyUI run costs GPU time, not money; only cloud channels get the billing warning. */
  const detail=options.forcePrepare?(local?'重新执行前置脚本，忽略缓存和未确认标记；本地 ComfyUI 不产生费用，但会重新占用显卡。':'重新执行前置脚本，忽略缓存和未确认标记，可能重复计费。'):options.indices?(local?'只处理指定幕次。成功后替换该页，失败保留原图；本地 ComfyUI 生成不产生费用。':'只处理指定幕次。成功后替换该页，失败保留原图；已经发出的请求可能计费。'):(local?'将通过本地 ComfyUI 开始生成，占用显卡但不产生费用。':'将开始生成，云端渠道可能产生费用。');
  if(!await confirmAction(options.indices?'确认局部重跑？':options.sequential?'从此任务开始顺次生成？':'开始生成这本画册？',detail,'确认开始'))return;const task=workshop.queue.tasks.find(t=>t.id===id),uncertain=options.sequential?workshop.queue.tasks.slice(workshop.queue.tasks.indexOf(task)).some(t=>t.pages.some(p=>p.state==='uncertain')):task?.pages.some(p=>p.state==='uncertain'&&(!options.indices||options.indices.includes(p.index)));if(uncertain&&!await confirmAction(local?'存在未确认的结果':'未确认结果可能已计费',local?'上一次的结果尚未确认，重跑会覆盖它；请先在 ComfyUI 历史中核对。':'重跑可能重复计费。','我已核对，仍要重跑'))return;workshop.queue=await productionRequest('start',{id,...options,trusted:true,confirmUncertain:!!uncertain});render()}
+function workshopFrameIndex(d){const index=Number(d?.index);return Number.isInteger(index)&&index>=0?index:workshop.frame}
+
+/* ------------------------------------------------------------ context menu
+   One right-click menu per workshop view, ordered the way a comic is made: write frames → shape presets → assemble → generate.
+   Everything is a data-act the toolbar already exposes, plus keyboard hints; extension entries (kind=frame) are merged in. */
+function workshopViewSwitchItems(){
+  return {label:'切换到',icon:'grid',children:[['stories','分镜工坊','story'],['presets','预设工坊','brush'],['production','装配与队列','play']].filter(([view])=>view!==workshop.view).map(([view,label,iconName])=>({label,icon:iconName,act:'workshop-tab',data:{view}}))};
+}
+function workshopFrameContextItems(story,index){
+  const frame=story.frames[index],last=story.frames.length-1,base=storyBasePrompt(story),extension=typeof contextMenuExtensionItems==='function'?contextMenuExtensionItems('frame',{index,story}):[];
+  const data={index};
+  const manage=workshop.selMode?[
+    {label:workshop.pickedFrames.has(index)?'取消选中这一幕':'选中这一幕',icon:'check',act:'workshop-frame-pick',data,checked:workshop.pickedFrames.has(index)},
+    {label:'全选 / 全不选',icon:'list',act:'workshop-frame-pick-all'},
+    {label:'只选空白分幕',icon:'search',act:'workshop-frame-pick-empty'},
+    {label:`删除选中的 ${workshop.pickedFrames.size} 幕…`,icon:'trash',act:'workshop-frame-delete-bulk',danger:true,disabled:!workshop.pickedFrames.size},
+    {label:'退出批量管理',icon:'close',act:'workshop-frame-sel-toggle',shortcut:'Esc'}
+  ]:[{label:'批量管理分幕…',icon:'check',act:'workshop-frame-sel-toggle',hint:'多选后可一次删除空白或多余分幕'}];
+  return [
+    {label:index===workshop.frame?'正在编辑这一幕':'编辑这一幕',icon:'edit',act:'workshop-frame',data,primary:true,disabled:index===workshop.frame,shortcut:'Ctrl/⌘ ↑↓'},
+    {label:'插入起手模板',icon:'spark',act:'workshop-apply-base',data,disabled:!base||!!frame.prompt.trim(),hint:!base?'先在「故事梗概 / 起手模板」里写好模板':frame.prompt.trim()?'这一幕已有提示词':'把起手模板填入空白提示词'},
+    '-',
+    {label:'在此后插入空白分幕',icon:'plus',act:'workshop-insert-frame',data},
+    {label:'复制这一幕',icon:'copy',act:'workshop-copy-frame',data,hint:'副本紧随其后，台词版本一并复制'},
+    {label:'前移',icon:'up',act:'workshop-move-frame',data:{index,dir:-1},disabled:index===0},
+    {label:'后移',icon:'down',act:'workshop-move-frame',data:{index,dir:1},disabled:index>=last},
+    '-',
+    ...manage,
+    extension.length?'-':null,
+    ...extension,
+    '-',
+    {label:'删除这一幕…',icon:'trash',act:'workshop-delete-frame',data,danger:true,disabled:story.frames.length<=1,title:story.frames.length<=1?'分镜至少保留一幕。':''}
+  ];
+}
+function workshopStoryContextItems(story){
+  return [
+    {label:'新增分幕',icon:'plus',act:'workshop-add-frame',primary:true,disabled:story.frames.length>=512},
+    {label:'批量新增分幕…',icon:'copy',act:'workshop-add-frames',hint:'按起手模板一次生成多幕'},
+    {label:workshop.selMode?'退出批量管理':'批量管理分幕',icon:'check',act:'workshop-frame-sel-toggle',checked:workshop.selMode},
+    '-',
+    {label:'保存分镜',icon:'disk',act:'workshop-save',shortcut:'Ctrl/⌘ ↵ 下一幕'},
+    {label:'去装配此分镜',icon:'arrow',act:'first-run-assemble-story',hint:'下一步：搭配预设，生成画册'},
+    '-',
+    {label:'分镜资产',icon:'story',children:[
+      {label:'重命名…',icon:'edit',act:'workshop-rename'},
+      {label:'新建分镜…',icon:'plus',act:'workshop-new'},
+      '-',
+      {label:'导入分镜 / 预设…',icon:'upload',act:'workshop-import'},
+      {label:'导出此分镜',icon:'download',act:'workshop-export'}
+    ]},
+    workshopViewSwitchItems()
+  ];
+}
+function workshopPresetContextItems(draft){
+  const owner={owner:draft.id};
+  return [
+    {label:'新增属性',icon:'plus',act:'art-setting-add',primary:true,hint:'人物、服装、画风……都能成为变量'},
+    {label:'新建分组',icon:'folder',act:'settings-group-new',data:owner},
+    {label:'编辑分组…',icon:'edit',act:'settings-group-edit',data:owner},
+    '-',
+    {label:'独立试绘',icon:'brush',act:'workshop-preview',hint:'只用这套预设画一张，检验效果'},
+    {label:'保存预设',icon:'disk',act:'workshop-save'},
+    {label:'新建生成任务…',icon:'play',act:'assembly-new',hint:'下一步：选择分镜与预设，装配任务'},
+    '-',
+    {label:'预设资产',icon:'brush',children:[
+      {label:'重命名…',icon:'edit',act:'workshop-rename'},
+      {label:'新建预设…',icon:'plus',act:'workshop-new'},
+      {label:'添加节点绑定…',icon:'nodes',act:'workshop-binding-new'},
+      '-',
+      {label:'导入分镜 / 预设…',icon:'upload',act:'workshop-import'},
+      {label:'导出此预设',icon:'download',act:'workshop-export'}
+    ]},
+    workshopViewSwitchItems()
+  ];
+}
+function productionTaskContextItems(task,busy){
+  const data={id:task.id},hasResult=(task.pages||[]).some(p=>p.result),open=workshop.openTasks.has(task.id);
+  return [
+    {label:'开始生成',icon:'play',act:'production-start',data,primary:true,disabled:busy||task.status==='complete',hint:task.status==='complete'?'已全部完成':busy?'有任务正在运行':'只生成缺失或失败的分幕'},
+    {label:'从此处顺次生成',icon:'list',act:'production-batch',data,disabled:busy},
+    {label:'重算前置并继续',icon:'refresh',act:'production-reprepare',data,disabled:busy},
+    '-',
+    {label:task.purpose==='preview'?'查看试绘':'查看画册',icon:'book',act:task.purpose==='preview'?'production-preview':'production-read',data:{id:task.albumId},disabled:!hasResult},
+    {label:open?'收起分幕进度':'展开分幕进度',icon:'expand',act:'production-toggle-pages',data,checked:open},
+    {label:'诊断详情',icon:'help',act:'production-details',data},
+    '-',
+    {label:'移除任务记录…',icon:'trash',act:'production-remove',data,danger:true,disabled:busy}
+  ];
+}
+function productionPageContextItems(task,page,busy){
+  const data={id:task.id,index:page.index},publishFailed=page.state!=='complete'&&page.attempts?.at(-1)?.phase==='publish';
+  return [
+    {label:'单幕重跑',icon:'refresh',act:'production-rerun',data,primary:true,disabled:busy},
+    {label:'从此幕往后重跑',icon:'list',act:'production-rerun-tail',data,disabled:busy},
+    publishFailed?{label:'恢复已生成结果',icon:'disk',act:'production-recover',data,disabled:busy,hint:'只重试本地发布，不再请求模型'}:null,
+    '-',
+    {label:'整本任务',icon:'box',children:productionTaskContextItems(task,busy)}
+  ];
+}
+function productionContextItems(){
+  const q=workshop.queue;
+  return [
+    {label:'新建生成任务…',icon:'plus',act:'assembly-new',primary:true,hint:'选择分镜与预设，装配后再明确开始'},
+    '-',
+    {label:'全局暂停',icon:'pause',act:'production-pause',disabled:q.paused&&!q.active},
+    {label:'恢复当前批次',icon:'play',act:'production-resume',disabled:!q.batch.length},
+    {label:'取消运行与批次…',icon:'stop',act:'production-cancel',danger:true,disabled:!q.active&&!q.batch.length},
+    '-',
+    {label:'只看未确认结果',icon:'eye',act:'production-uncertain-filter',checked:workshop.onlyUncertain},
+    {label:'导出核对清单',icon:'download',act:'production-uncertain-export'},
+    workshopViewSwitchItems()
+  ];
+}
+/* Resolve what was right-clicked into {el, title, subtitle, items}. Returns null when the browser menu should stay (text fields, dialogs). */
+function workshopContextSpec(target){
+  if(ui.workspace!==1||window.MioSafeMode||!(target instanceof Element))return null;
+  if(target.closest('input,textarea,select,[contenteditable="true"],a[href],.ctx-menu,dialog,#assistant,#sidebar,#topbar,.statusbar'))return null;
+  if(document.querySelector('dialog[open]')||!target.closest('#main'))return null;
+  if(workshop.view==='stories'){
+    const story=workshopStory();if(!story)return null;
+    const frameEl=target.closest('.workshop-frames [data-index]');
+    const index=frameEl?Number(frameEl.dataset.index):target.closest('.workshop-page')?workshop.frame:-1;
+    if(story.frames[index]){const frame=story.frames[index];return {el:frameEl||target.closest('.workshop-page'),label:'分幕右键菜单',title:`${pad(index+1)} · ${frame.name||'未命名分幕'}`,subtitle:frame.prompt.trim()?frame.prompt.trim().slice(0,60):'提示词为空',items:workshopFrameContextItems(story,index)}}
+    return {el:null,label:'分镜工坊右键菜单',title:story.title,subtitle:`${story.frames.length} 幕 · 分镜资产`,items:workshopStoryContextItems(story)};
+  }
+  if(workshop.view==='presets'){
+    const draft=workshopDraft();if(!draft)return null;
+    return {el:null,label:'预设工坊右键菜单',title:workshopPreset()?.title||'视觉预设',subtitle:`${draft.variables.length} 个视觉属性`,items:workshopPresetContextItems(draft)};
+  }
+  const busy=!!workshop.queue.active||workshop.queue.batch.length>0;
+  const card=target.closest('article.production-card[data-production-task]'),task=card&&workshop.queue.tasks.find(t=>t.id===card.dataset.productionTask);
+  if(task){
+    const pageEl=target.closest('.production-page[data-page-index]'),page=pageEl&&(task.pages||[]).find(p=>p.index===Number(pageEl.dataset.pageIndex));
+    if(page)return {el:pageEl,label:'分幕进度右键菜单',title:`${task.title} · 第 ${page.index+1} 幕`,subtitle:`${productionStatus(page.state)} · ${page.attemptCount} 次尝试`,items:productionPageContextItems(task,page,busy)};
+    const done=(task.pages||[]).filter(p=>p.state==='complete').length;
+    return {el:card,label:'生成任务右键菜单',title:task.title,subtitle:`${productionStatus(task.status)} · ${done} / ${(task.pages||[]).length} 幕`,items:productionTaskContextItems(task,busy)};
+  }
+  return {el:null,label:'装配与队列右键菜单',title:'装配与生成',subtitle:workshop.queue.active?'正在运行一本画册':workshop.queue.paused?'调度已暂停':'调度已就绪',items:productionContextItems()};
+}
+function openWorkshopContextMenu(spec,x,y){
+  if(!spec||typeof openContextMenu!=='function')return false;
+  spec.el?.classList.add('is-context');
+  return !!openContextMenu({x,y,label:spec.label,title:spec.title,subtitle:spec.subtitle,items:spec.items,focusEl:spec.el||document.activeElement,onClose:()=>spec.el?.classList.remove('is-context')});
+}
+function installWorkshopContextMenu(){
+  document.addEventListener('contextmenu',event=>{
+    const spec=workshopContextSpec(event.target);if(!spec)return;
+    if(openWorkshopContextMenu(spec,event.clientX,event.clientY))event.preventDefault();
+  });
+  document.addEventListener('keydown',event=>{
+    if(!(event.key==='ContextMenu'||event.shiftKey&&event.key==='F10'))return;
+    if(typeof contextMenuOpen==='function'&&contextMenuOpen())return;
+    const anchor=event.target.closest?.('.workshop-frames [data-index],.workshop-page,article.production-card,.production-page');
+    const spec=anchor?workshopContextSpec(anchor):null;if(!spec)return;
+    const rect=anchor.getBoundingClientRect();if(openWorkshopContextMenu(spec,rect.left+Math.min(24,rect.width/2),rect.top+Math.min(24,rect.height/2)))event.preventDefault();
+  });
+}
+
 function installAssemblyWorkshop(){
  renderQuietCreation=renderAssemblyWorkshop;renderCreationWorkspace=renderAssemblyWorkshop;
  const priorShell=renderShell;renderShell=function(...args){priorShell(...args);const queue=$('.top-queue');if(queue){queue.dataset.act='workshop-open-production';queue.removeAttribute('data-tab');queue.querySelector('b').textContent=workshop.queue.tasks.filter(t=>!['complete','cancelled'].includes(t.status)).length}if(ui.workspace===1){const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent=({stories:'分镜工坊',presets:'预设工坊',production:'装配与生成'})[workshop.view]}};
  const previousRender=render;render=function(...args){const result=previousRender(...args);applyViewportLock();if(ui.workspace===1){const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent=({stories:'分镜工坊',presets:'预设工坊',production:'装配与生成'})[workshop.view]}return result};
  installWorkshopKeys();
+ installWorkshopContextMenu();
   const previousAction=handleAction;const retired=new Set(['v3-generate-plan','v3-generate-selected','v3-run-queue','start-batch','enqueue','create-book']);
   handleAction=async function(action,d={},element){
     if(action==='resume'){
@@ -292,13 +451,16 @@ function installAssemblyWorkshop(){
    story.frames.push(...frames);if($('#batch-frames-remember')?.checked){if(base)story.basePrompt=base;else delete story.basePrompt}
    delete story.ownerPlanId;story.updatedAt=Date.now();workshop.frame=story.frames.length-frames.length;workshop.pickedFrames.clear();closeModal();save();render();toast(localeString('已新增 {n} 个分幕',{n:frames.length}));
   },
-  'workshop-apply-base':()=>{
-   const story=workshopStory(),frame=story?.frames[workshop.frame],base=storyBasePrompt(story);if(!frame||!base||frame.prompt.trim())return;
-   frame.prompt=base;delete story.ownerPlanId;story.updatedAt=Date.now();save();render();const editor=$('[data-workshop-frame="prompt"]');if(editor){editor.focus();editor.setSelectionRange(editor.value.length,editor.value.length)}
+  'workshop-apply-base':d=>{
+   const story=workshopStory(),index=workshopFrameIndex(d),frame=story?.frames[index],base=storyBasePrompt(story);if(!frame||!base||frame.prompt.trim())return;
+   frame.prompt=base;workshop.frame=index;delete story.ownerPlanId;story.updatedAt=Date.now();save();render();const editor=$('[data-workshop-frame="prompt"]');if(editor){editor.focus();editor.setSelectionRange(editor.value.length,editor.value.length)}
   },
-  'workshop-copy-frame':()=>{const s=workshopStory(),sourceFrame=s.frames[workshop.frame],f=clone(sourceFrame);f.id=uid('frame');s.frames.splice(workshop.frame+1,0,f);workshop.frame++;workshop.pickedFrames.clear();for(const r of state.rows){for(const versions of Object.values(r.storyVersions||{})){for(const v of versions){if(v.captions&&sourceFrame?.id&&sourceFrame.id in v.captions)v.captions[f.id]=v.captions[sourceFrame.id]}}}save();render()},
-  'workshop-delete-frame':async()=>{if(await confirmAction('删除此幕？','只修改分镜资产，不影响已装配的任务。','删除')){workshopStory().frames.splice(workshop.frame,1);workshop.pickedFrames.clear();save();render()}},
-  'workshop-move-frame':d=>{const frames=workshopStory().frames,j=workshop.frame+Number(d.dir);if(j<0||j>=frames.length)return;[frames[j],frames[workshop.frame]]=[frames[workshop.frame],frames[j]];workshop.frame=j;workshop.pickedFrames.clear();save();render()},
+  /* Frame actions accept an explicit data-index (context menu) and fall back to the frame open in the editor. */
+  'workshop-copy-frame':d=>{const s=workshopStory(),index=workshopFrameIndex(d),sourceFrame=s.frames[index];if(!sourceFrame)return;const f=clone(sourceFrame);f.id=uid('frame');s.frames.splice(index+1,0,f);workshop.frame=index+1;workshop.pickedFrames.clear();for(const r of state.rows){for(const versions of Object.values(r.storyVersions||{})){for(const v of versions){if(v.captions&&sourceFrame?.id&&sourceFrame.id in v.captions)v.captions[f.id]=v.captions[sourceFrame.id]}}}delete s.ownerPlanId;s.updatedAt=Date.now();save();render()},
+  'workshop-insert-frame':d=>{const s=workshopStory();if(!s)return;if(s.frames.length>=512)throw Error('最多 512 幕');const index=Math.min(workshopFrameIndex(d),s.frames.length-1),frame={...makeFrame(index+1),name:'第 '+(index+2)+' 幕',prompt:'',negative:'',caption:''};s.frames.splice(index+1,0,frame);workshop.frame=index+1;workshop.pickedFrames.clear();delete s.ownerPlanId;s.updatedAt=Date.now();save();render();$('[data-workshop-frame="name"]')?.focus()},
+  'workshop-delete-frame':async d=>{const s=workshopStory(),index=workshopFrameIndex(d),frame=s?.frames[index];if(!frame)return;if(await confirmAction('删除「'+(frame.name||'第 '+(index+1)+' 幕')+'」？','只修改分镜资产，不影响已装配的任务。','删除')){s.frames.splice(index,1);if(workshop.frame>index)workshop.frame--;workshop.pickedFrames.clear();delete s.ownerPlanId;s.updatedAt=Date.now();save();render()}},
+  'workshop-move-frame':d=>{const s=workshopStory(),frames=s.frames,i=workshopFrameIndex(d),j=i+Number(d.dir);if(!frames[i]||j<0||j>=frames.length)return;[frames[j],frames[i]]=[frames[i],frames[j]];workshop.frame=j;workshop.pickedFrames.clear();delete s.ownerPlanId;s.updatedAt=Date.now();save();render()},
+  'production-toggle-pages':d=>{if(workshop.openTasks.has(d.id))workshop.openTasks.delete(d.id);else workshop.openTasks.add(d.id);render();document.querySelector(`[data-task-details="${CSS.escape(d.id)}"]`)?.scrollIntoView({block:'nearest'})},
   'workshop-import':()=>pickFile('.json,.zip',importWorkshop),
   'workshop-export':async()=>{await saveWorkshop();const document=workshop.view==='stories'?clone(workshopStory()):{...clone(workshopPreset()),entries:clone(mergedSettingEntries(workshopDraft()))};const response=await request('/api/library/export-document',post({kind:workshop.view==='stories'?'storyboards':document.category==='scenes'?'scenes':'characters',document}));download(document.title+'.mio.zip',await response.blob(),'application/zip')},
   'assembly-new':showAssemblyDialog,

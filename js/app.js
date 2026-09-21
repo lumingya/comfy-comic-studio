@@ -1359,6 +1359,7 @@ installStyleStudio();
 installReadingStage();
 installPreferencesWorkbench();
 installAssemblyWorkshop();
+installUpdateCenter();
 installArchitecture();
 installFirstRun();
 installHome();

@@ -39,9 +39,10 @@ def initialize(store, project):
     store.content_problems=[]
     if marker.exists():
         try:
-            store.content_problems=list(decode(marker.read_bytes()).get('problems',[]))
+            installed=decode(marker.read_bytes());store.content_problems=list(installed.get('problems',[]))
         except (LibraryError,OSError,ValueError,AttributeError):
-            store.content_problems=[]
+            installed={};store.content_problems=[]
+        refresh_catalog(store,source,marker,installed)
         return False
     if not (source/'distribution.json').is_file():raise LibraryError('缺少随包 data/，请解压完整项目而不是只复制程序文件。',500)
     same=source.resolve()==store.root.resolve()
@@ -70,6 +71,38 @@ def initialize(store, project):
         atomic_write(marker,encode({'version':manifest['version'],'problems':problems}))
     store.library.scan()
     return fresh or same
+
+
+def refresh_catalog(store, source, marker, installed):
+    """After a program upgrade, an existing external workspace receives the new catalog text.
+
+    catalog/ holds UI copy, defaults and market packs that belong to the program, so
+    refreshing it never touches albums, presets, settings or any other user entity.
+    A shipped catalog file that fails its checksum is left alone and reported.
+    """
+    source=Path(source)
+    if not (source/'distribution.json').is_file() or source.resolve()==store.root.resolve():return []
+    try:
+        manifest=decode((source/'distribution.json').read_bytes())
+    except (LibraryError,OSError,ValueError):
+        return []
+    if manifest.get('schema')!='mio.distribution.v1':return []
+    refreshed=[];problems=[]
+    with store.library.writer():
+        for relative,checksum in manifest.get('files',{}).items():
+            if not relative.startswith('catalog/'):continue
+            shipped=owned_path(source,relative)
+            if not shipped.is_file():problems.append({'file':relative,'reason':'missing'});continue
+            raw=shipped.read_bytes()
+            if digest(raw)!=checksum:problems.append({'file':relative,'reason':'changed'});continue
+            target=owned_path(store.root,relative)
+            if target.is_file() and target.read_bytes()==raw:continue
+            atomic_write(target,raw);refreshed.append(relative)
+        kept=[p for p in installed.get('problems',[]) if not str(p.get('file','')).startswith('catalog/')]
+        store.content_problems=kept+problems
+        if refreshed or problems or store.content_problems!=list(installed.get('problems',[])) or manifest.get('version')!=installed.get('version'):
+            atomic_write(marker,encode({**installed,'version':manifest.get('version'),'problems':store.content_problems}))
+    return refreshed
 
 
 def bootstrap(store):

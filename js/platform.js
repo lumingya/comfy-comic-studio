@@ -203,14 +203,16 @@ function mioSlotContext(d){
 async function mioRunSlot(slot,keyName,d){const item=MioPlatform.find(slot,keyName);if(!item)return;const context=mioSlotContext(d);if(typeof item.run==='function')await MioPlatform.run(item.owner,slot+' '+item.key,item.run,context)}
 
 /* ------------------------------------------------------ context menu */
-function mioCloseContextMenu(){$('#mio-context-menu')?.remove()}
+/* Extension entries ride on the shared context menu (js/context-menu.js). Album menus are assembled in organize.js,
+   workshop menus in assembly-workshop.js; both merge `contextMenuExtensionItems(kind, context)`. This helper remains
+   for callers that only want the extension entries (returns false when there is nothing to show). */
+function mioCloseContextMenu(){if(typeof closeContextMenu==='function')closeContextMenu()}
 function mioOpenContextMenu(kind,context,x,y){
-  mioCloseContextMenu();const items=MioPlatform.items('context-menu',{kind,...context}).filter(i=>!i.kinds||i.kinds.includes(kind));
-  const exportItems=kind==='album'&&context.id?mioExporterList().map(e=>({key:'export:'+e.id,label:'导出 · '+e.label,icon:'download',exporter:e.id})):[];
+  const items=contextMenuExtensionItems(kind,context);
+  const exportItems=kind==='album'&&context.id?mioExporterList().map(e=>({label:'导出 · '+e.label,icon:'download',act:'mio-export',data:{exporter:e.id,id:context.id}})):[];
   if(!items.length&&!exportItems.length)return false;
-  const menu=document.createElement('div');menu.id='mio-context-menu';menu.className='book-context-menu mio-context-menu';menu.setAttribute('role','menu');
-  menu.innerHTML=`<div class="context-menu-title">${kind==='frame'?'分镜 · 扩展动作':'画册 · 扩展动作'}</div>${items.map(i=>`<button type="button" role="menuitem" data-act="mio-context-item" data-key="${esc(i.key)}" ${context.id?`data-id="${esc(context.id)}"`:''} ${Number.isInteger(context.index)?`data-index="${context.index}"`:''}>${icon(i.icon||'box','sm')}<span>${esc(i.label)}</span></button>`).join('')}${items.length&&exportItems.length?'<div class="context-menu-separator"></div>':''}${exportItems.map(e=>`<button type="button" role="menuitem" data-act="mio-export" data-exporter="${esc(e.exporter)}" data-id="${esc(context.id)}">${icon('download','sm')}<span>${esc(e.label)}</span></button>`).join('')}`;
-  document.body.append(menu);const rect=menu.getBoundingClientRect();menu.style.left=Math.max(8,Math.min(x,innerWidth-rect.width-8))+'px';menu.style.top=Math.max(8,Math.min(y,innerHeight-rect.height-8))+'px';menu.querySelector('button')?.focus({preventScroll:true});return true;
+  openContextMenu({x,y,label:kind==='frame'?'分镜扩展动作':'画册扩展动作',title:kind==='frame'?'分镜 · 扩展动作':'画册 · 扩展动作',items:[...items,items.length&&exportItems.length?'-':null,...exportItems]});
+  return true;
 }
 
 /* -------------------------------------------------- exporters/importers */
@@ -282,30 +284,21 @@ function installPlatformUI(){
   const previousNavigate=navigate;navigate=function(index){if(typeof index==='string'&&MioPlatform.find('nav',index)){flushEditor();ui.workspace=index;render();window.scrollTo({top:0,behavior:'instant'});return}if(typeof ui.workspace==='string')ui.workspace=0;return previousNavigate(index)};
   const previousVisible=workspaceVisible;workspaceVisible=index=>typeof index==='string'?!!MioPlatform.find('nav',index):previousVisible(index);
   const previousCommands=indexCommands;indexCommands=function(query){previousCommands(query);const extra=[...MioPlatform.items('commands').map(c=>({title:c.title,type:c.type||'扩展 · '+c.owner,icon:c.icon||'box',run:()=>MioPlatform.run(c.owner,'command '+c.key,c.run,mioSlotContext({}))})),...mioNavPages().map(p=>({title:p.label,type:'扩展工作区',icon:p.icon||'box',run:()=>navigate(p.key)}))].filter(x=>(x.title+' '+x.type).toLowerCase().includes(String(query||'').toLowerCase()));const filtered=MioPlatform.applyFilter('command.items',[...rt.commandItems,...extra],{query});if(!extra.length&&filtered===rt.commandItems)return;rt.commandItems=(Array.isArray(filtered)?filtered:[...rt.commandItems,...extra]).slice(0,80);const results=$('#command-results');if(results)results.innerHTML=rt.commandItems.map((x,i)=>`<button class="command-item ${i===rt.commandIndex?'active':''}" data-act="run-command" data-index="${i}">${icon(x.icon)}<span>${esc(x.title)}</span><small>${esc(x.type)}</small></button>`).join('')};
-  if(typeof openBookContext==='function'){const previousContext=openBookContext;openBookContext=function(id,x,y,extend){previousContext(id,x,y,extend);const menu=$('#book-context-menu');if(!menu)return;const items=MioPlatform.items('context-menu',{kind:'album',id}).filter(i=>!i.kinds||i.kinds.includes('album')),exporters=mioExporterList();const extra=items.map(i=>`<button type="button" role="menuitem" data-act="mio-context-item" data-key="${esc(i.key)}" data-id="${esc(id)}">${icon(i.icon||'box','sm')}<span>${esc(i.label)}</span></button>`).join('')+exporters.map(e=>`<button type="button" role="menuitem" data-act="mio-export" data-exporter="${esc(e.id)}" data-id="${esc(id)}">${icon('download','sm')}<span>导出 · ${esc(e.label)}</span></button>`).join('');if(extra)menu.querySelector('.context-menu-hint')?.insertAdjacentHTML('beforebegin','<div class="context-menu-separator"></div>'+extra)}}
   const previousRoomInfo=typeof renderRoomInfo==='function'?renderRoomInfo:null;if(previousRoomInfo)renderRoomInfo=function(){previousRoomInfo();const panel=$('#room-info');const book=bookBy(ui.bookId);if(!panel||!book)return;const sections=MioPlatform.items('inspector',{book,step:ui.step});if(!sections.length)return;panel.insertAdjacentHTML('beforeend',sections.map(s=>`<section class="mio-inspector-section" data-key="${esc(s.key)}"><h4>${esc(s.title)}</h4><div class="mio-inspector-body"></div></section>`).join(''));for(const s of sections){const body=panel.querySelector(`[data-key="${CSS.escape(s.key)}"] .mio-inspector-body`);if(body)MioPlatform.run(s.owner,'inspector '+s.key,s.render,body,{book:clone(book),step:ui.step,page:clone(book.steps.find(p=>p.stepIndex===ui.step)||null),albums:MioAlbums})}};
   Object.assign(v3Actions,{
     'mio-slot':d=>mioRunSlot(d.slot,d.key,d),
     'mio-anchor-run':d=>mioRunSlot(d.slot,d.key,d),
     'mio-nav':d=>navigate(d.route),
-    'mio-context-item':d=>{mioCloseContextMenu();closeBookContext?.();return mioRunSlot('context-menu',d.key,d)},
-    'mio-export':d=>{mioCloseContextMenu();closeBookContext?.();return mioExportAlbum(d.exporter,d.id)},
+    'mio-context-item':d=>{mioCloseContextMenu();return mioRunSlot('context-menu',d.key,d)},
+    'mio-export':d=>{mioCloseContextMenu();return mioExportAlbum(d.exporter,d.id)},
     'mio-import':d=>pickFile((mioImporterList().find(i=>i.id===d.importer)?.accepts||['.zip']).join(','),file=>mioImportFile(d.importer,file).catch(e=>toast(e.message,'error'))),
     'mio-dock-toggle':()=>{mioDock.open=!mioDock.open;mioDockRender()},
     'mio-dock-tab':d=>{mioDock.active=d.key;mioDock.open=true;mioDockRender()},
     'mio-export-menu':d=>{const list=mioExporterList();modal('导出画册',`<p class="soft small">内置与扩展导出器统一在这里；后端导出器在服务端打包，浏览器导出器直接在本页生成。</p><div class="mio-export-list">${list.map(e=>`<button type="button" class="btn ghost" data-act="mio-export" data-exporter="${esc(e.id)}" data-id="${esc(d.id)}">${icon('download','sm')}<span>${esc(e.label)}</span><small>${esc(e.runtime==='browser'?'浏览器':'后端')}${e.owner&&e.owner!=='core'?' · '+esc(e.owner):''}</small></button>`).join('')}</div>`)}
   });
-  document.addEventListener('contextmenu',e=>{
-    if(window.MioSafeMode)return;const scene=e.target.closest('.quiet-scene[data-index]');
-    if(scene&&ui.workspace===1){const index=Number(scene.dataset.index);if(mioOpenContextMenu('frame',{index,plan:selectedPlan()},e.clientX,e.clientY))e.preventDefault();return}
-    const workshopFrame=e.target.closest('.workshop-frames [data-act="workshop-frame"][data-index]');
-    if(workshopFrame){const index=Number(workshopFrame.dataset.index);if(mioOpenContextMenu('frame',{index,story:mioWorkshopStory()},e.clientX,e.clientY))e.preventDefault();return}
-  });
-  document.addEventListener('pointerdown',e=>{if(!e.target.closest('#mio-context-menu'))mioCloseContextMenu()});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape')mioCloseContextMenu()});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)mioPollActivity()});
   mioActivity.timer=setInterval(mioPollActivity,4000);
-  const observer=new MutationObserver(records=>{for(const r of records){const t=r.target.nodeType===1?r.target:r.target.parentElement;if(t&&t.closest('[data-mio-key],[data-mio-mount],#mio-dock,#mio-context-menu,#toast,.toast'))continue;MioPlatform.scheduleDecorate();return}});
+  const observer=new MutationObserver(records=>{for(const r of records){const t=r.target.nodeType===1?r.target:r.target.parentElement;if(t&&t.closest('[data-mio-key],[data-mio-mount],#mio-dock,.ctx-menu,#toast,.toast'))continue;MioPlatform.scheduleDecorate();return}});
   observer.observe(document.body,{childList:true,subtree:true});
   if(typeof openReader==='function'){const previousOpen=openReader;openReader=function(...args){const result=previousOpen(...args);mioEnsureAnchors();MioPlatform.scheduleDecorate();return result}}
 }

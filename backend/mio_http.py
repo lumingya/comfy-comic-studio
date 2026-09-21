@@ -17,6 +17,7 @@ from backend import (
 )
 from backend.ecosystem import api as ecosystem_api
 from backend.production import api as production_api
+from backend import mio_update
 
 
 class HTTPRoutes(SimpleHTTPRequestHandler):
@@ -293,6 +294,8 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
             return
         if ecosystem_api.dispatch(self, self.services.application, request_path):
             return
+        if mio_update.dispatch(self, self.services.application, request_path):
+            return
         if request_path.startswith("/api/foundation/") and mio_foundation.dispatch(
             self,
             self.services.application,
@@ -423,6 +426,8 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
         if production_api.dispatch(self, self.services.application, request_path):
             return
         if ecosystem_api.dispatch(self, self.services.application, request_path):
+            return
+        if mio_update.dispatch(self, self.services.application, request_path):
             return
 
         if request_path in ("/api/image/comfy-check", "/api/image/check"):

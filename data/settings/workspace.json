@@ -8,125 +8,14 @@
       },
       "activeProjectId": "collection_summer",
       "workspaceId": "workspace_d826da03-879f-4d9a-89b1-c5436a1f56cb",
-      "customColumns": [
-        "character_display_name",
-        "scene",
-        "weapon"
-      ],
+      "customColumns": [],
       "installedPackages": [],
-      "drafts": {
-        "presetEdits": {
-          "setting_nanami": {
-            "id": "preset-editor-setting_nanami",
-            "_presetEditorId": "setting_nanami",
-            "projectId": "collection_summer",
-            "title": "七海 · 标准角色设定",
-            "variableSetIds": [],
-            "variables": [
-              {
-                "id": "var_b74fb73f-0e7f-48b5-854c-5ea7ac7b0715",
-                "key": "character_display_name",
-                "type": "text",
-                "value": "七海",
-                "groupId": "group-character"
-              },
-              {
-                "id": "var_67c9455e-9221-4924-95b2-666b0efd3fd2",
-                "key": "character",
-                "type": "text",
-                "value": "nanami",
-                "groupId": "group-character"
-              },
-              {
-                "id": "var_a876f6ac-6ada-4ab2-b78d-0a2278622af4",
-                "key": "outfit",
-                "type": "text",
-                "value": "white shirt, navy skirt, small canvas bag",
-                "groupId": "group-character"
-              },
-              {
-                "id": "var_620a05c2-e8cb-4519-ab74-dcec8592b1f6",
-                "key": "style",
-                "type": "text",
-                "value": "cinematic anime illustration, delicate cel shading, soft film texture",
-                "groupId": "group-visual"
-              },
-              {
-                "id": "var_e841eb9d-45df-44ca-9bc7-fbb8fb77dc11",
-                "key": "scene",
-                "type": "text",
-                "value": "a quiet coastal town in summer",
-                "groupId": "group-visual"
-              },
-              {
-                "id": "var_0f29e264-f4a8-4600-94f6-1997cd760167",
-                "key": "weapon",
-                "type": "text",
-                "value": "",
-                "groupId": "group-visual"
-              },
-              {
-                "id": "var_56bbbd26-0e83-4449-94c4-c122cc9de8e0",
-                "key": "lora",
-                "type": "text",
-                "value": "",
-                "groupId": "group-visual"
-              }
-            ],
-            "settingsGroups": [
-              {
-                "id": "group-character",
-                "title": "主角与服装"
-              },
-              {
-                "id": "group-visual",
-                "title": "画风与场景"
-              }
-            ],
-            "frames": {},
-            "excludedSettingKeys": [],
-            "base": "{\"entries\":[{\"groupId\":\"group-character\",\"id\":\"var_b74fb73f-0e7f-48b5-854c-5ea7ac7b0715\",\"key\":\"character_display_name\",\"type\":\"text\",\"value\":\"七海\"},{\"groupId\":\"group-character\",\"id\":\"var_67c9455e-9221-4924-95b2-666b0efd3fd2\",\"key\":\"character\",\"type\":\"text\",\"value\":\"nanami\"},{\"groupId\":\"group-character\",\"id\":\"var_a876f6ac-6ada-4ab2-b78d-0a2278622af4\",\"key\":\"outfit\",\"type\":\"text\",\"value\":\"white shirt, navy skirt, small canvas bag\"},{\"groupId\":\"group-visual\",\"id\":\"var_620a05c2-e8cb-4519-ab74-dcec8592b1f6\",\"key\":\"style\",\"type\":\"text\",\"value\":\"cinematic anime illustration, delicate cel shading, soft film texture\"},{\"groupId\":\"group-visual\",\"id\":\"var_e841eb9d-45df-44ca-9bc7-fbb8fb77dc11\",\"key\":\"scene\",\"type\":\"text\",\"value\":\"a quiet coastal town in summer\"},{\"groupId\":\"group-visual\",\"id\":\"var_0f29e264-f4a8-4600-94f6-1997cd760167\",\"key\":\"weapon\",\"type\":\"text\",\"value\":\"\"},{\"groupId\":\"group-visual\",\"id\":\"var_56bbbd26-0e83-4449-94c4-c122cc9de8e0\",\"key\":\"lora\",\"type\":\"text\",\"value\":\"\"}],\"frames\":{},\"settingsGroups\":[{\"id\":\"group-character\",\"title\":\"主角与服装\"},{\"id\":\"group-visual\",\"title\":\"画风与场景\"}],\"title\":\"七海 · 标准角色设定\"}",
-            "bindings": [],
-            "dirty": false
-          },
-          "preset_22508eed-6dad-4734-a218-0d8c12d87ee2": {
-            "id": "preset-editor-preset_22508eed-6dad-4734-a218-0d8c12d87ee2",
-            "_presetEditorId": "preset_22508eed-6dad-4734-a218-0d8c12d87ee2",
-            "projectId": "collection_summer",
-            "title": "色色的预设",
-            "variableSetIds": [],
-            "variables": [
-              {
-                "id": "var_e00e1277-ff3d-40f9-bae9-b7eb010acf28",
-                "key": "display_name",
-                "label": "人物显示名",
-                "type": "text",
-                "groupId": "",
-                "value": "纳西妲"
-              },
-              {
-                "id": "var_fe35b2e9-5625-42d9-b6bd-32b47d1f4db6",
-                "key": "Name",
-                "label": "人物名",
-                "type": "text",
-                "groupId": "",
-                "value": "nahiada"
-              }
-            ],
-            "settingsGroups": [],
-            "frames": {},
-            "excludedSettingKeys": [],
-            "base": "{\"entries\":[{\"groupId\":\"\",\"id\":\"var_e00e1277-ff3d-40f9-bae9-b7eb010acf28\",\"key\":\"display_name\",\"label\":\"人物显示名\",\"type\":\"text\",\"value\":\"纳西妲\"},{\"groupId\":\"\",\"id\":\"var_fe35b2e9-5625-42d9-b6bd-32b47d1f4db6\",\"key\":\"Name\",\"label\":\"人物名\",\"type\":\"text\",\"value\":\"nahiada\"}],\"frames\":{},\"settingsGroups\":[],\"title\":\"色色的预设\"}",
-            "bindings": [],
-            "dirty": false
-          }
-        }
-      },
+      "drafts": {},
       "settings": {
         "negative": "low quality, bad anatomy, extra fingers, text, watermark",
         "syncUrl": "",
         "autoCritique": false,
-        "signature": "我的工作室",
+        "signature": "",
         "presentation": {
           "version": 1,
           "lab": {
@@ -142,19 +31,17 @@
           "demoCleanupVersion": 2,
           "bookOrder": {
             "collection_summer": [
-              "edition_letter",
-              "book_1b07b003-041a-404a-87d3-327c18985ff3",
-              "book_5213ff35-ba03-416b-ab66-17a40177853c"
+              "edition_letter"
             ]
           },
           "collectionSort": "manual",
           "hideFirstRun": false,
-          "theme": "light"
+          "theme": "dark"
         },
         "identity": {
-          "workspaceName": "我的工作室",
+          "workspaceName": "",
           "creatorName": "",
-          "onboarded": true
+          "onboarded": false
         },
         "disk": {
           "includeKeys": false
@@ -228,7 +115,7 @@
         },
         "productionAssembly": {
           "channelId": "comfyui",
-          "workflowId": "wf_a56d1f8e-14b9-4752-826b-d277d0094d47"
+          "workflowId": "wf_3aa839c7-6c93-4f93-a0c3-9399e1242916"
         }
       },
       "studio": {
@@ -280,40 +167,22 @@
   "queue": {},
   "ordering": {
     "templates": [
-      "story_journey12",
-      "storyboards_50565bedcf5d46d892848fad25d1bf01",
-      "story_3dfe5619-28ff-4a69-b881-ceed190610be",
-      "story_f45195ae-5f6f-4fe7-8e4a-1488de8c1a0d",
-      "storyboard_6a8ae57bd4df43539690eac3b7a71b4a",
-      "story_7dce2629-6fc2-474d-a026-6071a0c022d2"
+      "story_journey12"
     ],
     "savedGalleries": [
-      "album_585d7915b2eb4cf1bfbb4bd0d94ea555",
-      "book_1b07b003-041a-404a-87d3-327c18985ff3",
-      "book_5213ff35-ba03-416b-ab66-17a40177853c",
       "edition_letter"
     ],
     "rows": [
-      "character_nanami",
-      "character_campus_pair",
-      "rows_d68d91eb18f64d829818080f68440059",
-      "character_hello_another_me"
+      "character_nanami"
     ],
     "projects": [
       "collection_summer"
     ],
     "plans": [
-      "draft_letter",
-      "plan_campus_system_24",
-      "plans_0bfaaa70c2f44e878069cd06a39cd828",
-      "plan_hello_another_me"
+      "draft_letter"
     ],
     "characters": [
-      "setting_nanami",
-      "characters_b7ea26e8986846219c773c6ba80d6d5a",
-      "setting_campus_pair",
-      "setting_hello_another_me",
-      "preset_22508eed-6dad-4734-a218-0d8c12d87ee2"
+      "setting_nanami"
     ],
     "scenes": [],
     "exportTemplates": [
@@ -326,24 +195,14 @@
       "export-flip"
     ],
     "comfyWorkflows": [
-      "wf_3aa839c7-6c93-4f93-a0c3-9399e1242916",
-      "wf_cd634804-bc38-4e41-99a1-f787c2182db8",
-      "wf_a56d1f8e-14b9-4752-826b-d277d0094d47"
+      "wf_3aa839c7-6c93-4f93-a0c3-9399e1242916"
     ],
     "sessions": [
-      "chat_letter",
-      "chat_eb546791-8a79-4418-853d-9d9e79efed03"
+      "chat_letter"
     ],
-    "queue": [
-      "task_2a3ae55c-739f-4d30-9dfe-85d989724f61",
-      "task_45d08489-c962-48e3-8cd1-8572e21ae759"
-    ],
+    "queue": [],
     "variableSets": [
-      "setting_nanami",
-      "characters_b7ea26e8986846219c773c6ba80d6d5a",
-      "setting_campus_pair",
-      "setting_hello_another_me",
-      "preset_22508eed-6dad-4734-a218-0d8c12d87ee2"
+      "setting_nanami"
     ]
   },
   "aliases": [],

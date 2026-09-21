@@ -18,6 +18,7 @@ from backend import mio_credentials
 from backend import mio_docs
 from backend.ecosystem import api as ecosystem_api
 from backend.production import api as production_api
+from backend import mio_update
 from backend.mio_native_store import NativeStore
 from backend.mio_library import LibraryError
 import io
@@ -987,6 +988,8 @@ def main():
             ),
             ComicRequestHandler,
         )
+        # The update service shuts this server down before main() re-executes the process.
+        mio_update.service(application_services()).server = server
     except (LibraryError, OSError) as error:
         print("启动已停止，未使用默认数据覆盖现有文件：" + str(error), flush=True)
         print(
@@ -1014,6 +1017,9 @@ def main():
     finally:
         ecosystem_api.service(application_services()).close()
         server.server_close()
+    if mio_update.service(application_services()).restart_requested.is_set():
+        print("正在重新启动 Mio 以应用更新…", flush=True)
+        mio_update.reexec(BASE_DIR)
 
 
 if __name__ == "__main__":

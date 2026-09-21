@@ -11,6 +11,7 @@ accident. Unlisted files are only reported.
 """
 from pathlib import Path
 import argparse
+import json
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -56,6 +57,11 @@ def build(source, additions=(), check=False):
             stale.append(relative)
             files[relative] = checksum
     manifest['files'] = dict(sorted(files.items()))
+    # The manifest version follows the program version so upgrades are recognisable.
+    try:
+        manifest['version'] = json.loads((ROOT / 'package.json').read_text('utf-8'))['version']
+    except (OSError, ValueError, KeyError):
+        pass
     encoded = encode(manifest)
     changed = encoded != target.read_bytes()
     for relative in unlisted(source, manifest):
@@ -65,7 +71,9 @@ def build(source, additions=(), check=False):
     if check:
         for relative in stale:
             print('stale checksum:', relative)
-        if stale or missing:
+        if changed and not stale:
+            print('manifest metadata (version) differs from package.json')
+        if stale or missing or changed:
             print('data/distribution.json is out of date; run python tools/build_distribution.py')
             return 1
         print('data/distribution.json matches', len(files), 'shipped files')

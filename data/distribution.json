@@ -1,6 +1,6 @@
 {
   "schema": "mio.distribution.v1",
-  "version": "2.3.0",
+  "version": "3.2.0-dev.1",
   "files": {
     "albums/海风与未寄出的信--ition_letter/album.json": "15b0008375d7b0f3adafe62ee1fbd6fc3001d226382d8544a134e0d4badc046b",
     "albums/海风与未寄出的信--ition_letter/images/6b1a8c08b8e086b41c2af5af03d0e09528cf685390370456d7aa8ea0b27e0916.webp": "6b1a8c08b8e086b41c2af5af03d0e09528cf685390370456d7aa8ea0b27e0916",
@@ -56,7 +56,7 @@
     "records/conversations/海风来信 · 分镜对话--chat_letter.json": "ff705899dc6ffcaaad7a195b2a9331dbd0ab4faa9d10f0478d6b0702cc2f53c7",
     "settings/comfy.json": "b3fdfe8fddb51fbd47607d14324bb11a11dbebfdfbad1847a5bfa4918810dac0",
     "settings/llm.json": "86da8328506b2e34383e959cd9b952a4d601840c1e39e33bd934ce3b6c0faae0",
-    "settings/workspace.json": "4e3c172d83a779ad150ee040dccce1bf4dda78801edd52f88e97765fad44df73",
+    "settings/workspace.json": "b8d88595d69d7ceb7611bd460dc8a3a6143ceb737a30714c27ec66e65268c8a8",
     "settings/xml.json": "221b26cab5a1388f62a9ae61c0971a7ca419839d29a8d1589d4a51f3cb7d3d30",
     "storyboards/远行与归来 · 十二幕--ry_journey12.json": "c0568b1f13dd32fb29df41cf6a2bb308bbb7a03f5c750f605797b1179f33e594",
     "workflows/Anime · 基础图像管线--9399e1242916.json": "2ff00310eb332ca2998689a4d47638d7365a65a6884092ee947fabb5297f95c1",
