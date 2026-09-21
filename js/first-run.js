@@ -31,10 +31,14 @@ function providerSetupHTML(p=activeImageProfile()){
  return `<div class="provider-comfy-connect">${field('ComfyUI 服务地址',`<input id="setup-comfy-url" type="url" value="${esc(state.settings.comfy.baseUrl||'')}" placeholder="http://127.0.0.1:8188" spellcheck="false">`)}<div class="row wrap">${btn(firstRunUI.checking?'检查中…':'检查连接','refresh','first-run-check-comfy',firstRunUI.checking?'disabled':'','small')}${btn('去工作流库配置','arrow','wf-focus-library','','small ghost')}</div><p id="setup-comfy-status" class="help" role="status">${esc(check)}</p></div>`;
 }
 function providerSetupFooter(){return `<div class="provider-next">${btn('编写分镜','arrow','first-run-continue','','primary')}</div>`}
+/* Placeholder names a text really references: {{nested}} braces and \{escaped\} ones are skipped, matching the interpolator. */
+function promptPlaceholders(text){const raw=String(text||''),keys=[];for(const m of raw.matchAll(/\{([\p{L}\p{N}_]+)\}/gu)){const start=m.index,end=start+m[0].length;if(raw[start-1]==='{'||raw[end]==='}'||raw[start-1]==='\\')continue;if(!keys.includes(m[1]))keys.push(m[1])}return keys}
 function assemblyInputIssues(storyId,presetIds,channel){
- const story=templateBy(storyId),issues=[];
+ const story=templateBy(storyId),values=Object.fromEntries(presetIds.flatMap(id=>(setBy(id)?.entries||[]).map(e=>[e.key,true]))),issues=[];
  for(const [i,f] of (story?.frames||[]).entries()){
   if(!f.prompt?.trim())issues.push('第 '+(i+1)+' 幕尚未填写正向提示词。');
+  const missing=promptPlaceholders(f.caption).filter(k=>!Object.hasOwn(values,k));
+  if(missing.length)issues.push('第 '+(i+1)+' 幕台词缺少变量：'+missing.join('、'));
   if(channel?.provider==='novelai'&&['width','height'].some(k=>!Number.isInteger(Number(f[k]))||Number(f[k])<64||Number(f[k])>2048||Number(f[k])%64))issues.push('第 '+(i+1)+' 幕 NovelAI 宽高需为 64–2048 内的 64 倍数。');
  }
  return issues;
@@ -66,6 +70,12 @@ function assemblyPreflightNotices(storyId,presetIds,channel,workflow){
   if(used.length&&!bound)notes.push('所选工作流是纯文生图（没有映射 LoadImage 等图片输入），提示词里引用的立绘参考图 {'+used.join('}、{')+'} 会被忽略，文字描述照常生成。需要参考图时，请在「工作流与 API 配置 → 节点映射」中为 LoadImage 节点绑定图片变量。');
  }
  if(channel?.provider==='comfyui'&&workflow&&!(workflow.bindings||[]).some(b=>b.enabled!==false&&(b.source==='random'||(b.source==='sceneParameter'&&String(b.value||'').trim()==='seed'))))notes.push('所选工作流没有种子映射，每一幕都会沿用蓝图里的固定种子，整本画面可能雷同。建议在「工作流与 API 配置」中点击「添加分镜参数映射」。');
+ /* Prompt placeholders no selected preset defines stay in the prompt verbatim (NovelAI braces are weight syntax and are skipped). */
+ if(channel?.provider!=='novelai'){
+  const defined=new Set(sets.flatMap(s=>(s.entries||[]).map(e=>e.key))),unknown=[];
+  for(const f of story.frames)for(const key of [...promptPlaceholders(f.prompt),...promptPlaceholders(f.negative)])if(!defined.has(key)&&!unknown.includes(key))unknown.push(key);
+  if(unknown.length)notes.push('提示词里的变量 {'+unknown.join('}、{')+'} 在所选预设中没有定义，生成时会按原文保留在提示词里。需要替换时，请在预设中补充这些变量，或回到上一步勾选对应预设。');
+ }
  if(channel?.provider==='novelai'){
   /* C3: NovelAI's own UI stops at guidance 10; higher values are accepted by the API but tend to oversaturate. */
   const hot=story.frames.map((f,i)=>[i+1,Number(f.cfg)]).filter(([,c])=>Number.isFinite(c)&&c>10);
@@ -73,7 +83,14 @@ function assemblyPreflightNotices(storyId,presetIds,channel,workflow){
  }
  return notes;
 }
-function assemblyPreflightHTML(){const d=assemblyDesign,channel=designerChannel(),issues=assemblyInputIssues(d.storyId,[...d.presets],channel),missing=assemblyMissingVariableNotes(assemblyMissingVariables(d.storyId,[...d.presets]),templateBy(d.storyId)?.frames.length||0),notes=[...missing,...assemblyPreflightNotices(d.storyId,[...d.presets],channel,channel?.provider==='comfyui'?designerWorkflow():null)];return `<div class="assembly-preflight ${issues.length?'setup-warning':''}" role="status"><strong>${issues.length?'检查分镜':missing.length?'可以生成 · 有变量未定义':'输入检查通过'}</strong>${issues.length?'<ul>'+issues.slice(0,8).map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul>':''}${notes.length?'<ul class="preflight-notes">'+notes.slice(0,6).map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul>':''}<p>共 ${templateBy(d.storyId)?.frames.length||0} 幕。</p></div>`}
+/* One status line instead of a warning box. Blocking issues stay listed (they must be fixed before enqueueing); non-blocking
+   advisories collapse into a ⚠️ badge whose details open on hover / focus, so a ready book is not shouted at. */
+function assemblyPreflightHTML(){const d=assemblyDesign,channel=designerChannel(),issues=assemblyInputIssues(d.storyId,[...d.presets],channel),notes=assemblyPreflightNotices(d.storyId,[...d.presets],channel,channel?.provider==='comfyui'?designerWorkflow():null),frames=templateBy(d.storyId)?.frames.length||0;
+ const tone=issues.length?'is-blocked':notes.length?'is-advised':'is-ready',emoji=issues.length?'⛔':notes.length?'⚠️':'✅';
+ const headline=issues.length?'检查分镜':notes.length?'可以生成':'输入检查通过';
+ const blocked=issues.length?`<span class="preflight-pill is-blocked">${issues.length} 处需要修正</span>`:'';
+ const badge=notes.length?`<span class="preflight-badge" tabindex="0" role="button" aria-label="查看 ${notes.length} 项提示" aria-describedby="preflight-pop"><span class="preflight-pill is-advised">${issues.length?'⚠️ ':''}${notes.length} 项提示<small>悬停查看</small></span><span class="preflight-pop" id="preflight-pop" role="tooltip"><strong>⚠️ 可以生成，但请留意</strong><ul>${notes.slice(0,4).map(s=>'<li>'+esc(s)+'</li>').join('')}</ul></span></span>`:'';
+ return `<div class="assembly-preflight ${tone}" role="status"><div class="preflight-row"><span class="preflight-emoji" aria-hidden="true">${emoji}</span><strong>${headline}</strong><span class="preflight-count">共 ${frames} 幕</span><span class="grow"></span>${blocked}${badge}</div>${issues.length?'<ul class="preflight-issues">'+issues.slice(0,8).map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul>':''}</div>`}
 function installFirstRun(){
  [{"title": "选择图像渠道", "headline": "连接你的图像服务。", "description": "在渠道配置中选择 ComfyUI、NovelAI 或 OpenAI 兼容服务。", "checks": ["填写服务地址。", "选择模型并填写 API Key，或导入 ComfyUI API 工作流。"]}, {"title": "管理画册集", "headline": "为每个故事留一个位置。", "description": "使用顶部菜单新建或切换画册集。", "checks": ["新建画册集并填写名称。", "在画册集中整理和阅读作品。"]}, {"title": "编写分镜", "headline": "从一个镜头开始。", "description": "在创作工坊新建分镜，填写画面提示词与台词。", "checks": ["添加或调整分幕。", "选择角色、服装和画风预设。"]}, {"title": "装配与生成", "headline": "把分镜变成画面。", "description": "选择渠道、分镜和预设，添加生成任务。", "checks": ["在装配向导中确认配置。", "在任务卡点击开始，查看分幕进度。"]}, {"title": "阅读与编辑", "headline": "让每一帧更完整。", "description": "打开画册，调整图片、气泡和文字。", "checks": ["在阅读器中选择页面。", "点击编辑图片，保存修改。"]}, {"title": "导出画册", "headline": "把故事分享出去。", "description": "选择展示模板，导出 HTML、图片 ZIP 或 PDF。", "checks": ["选择版式与主题色。", "选择导出格式。"]}, {"title": "分享模板", "headline": "在 GitHub 上分享创作资源。", "description": "选择模板和目标仓库，上传或下载模板包。", "checks": ["填写仓库、分支和文件路径。", "检查文件后提交。"]}].forEach((copy,i)=>Object.assign(guideSteps[i],copy));
  Object.assign(guideSteps[0],{action:"first-run-config",label:"配置渠道",icon:"settings"});

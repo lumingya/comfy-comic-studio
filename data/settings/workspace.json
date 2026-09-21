@@ -151,11 +151,12 @@
           ]
         },
         "productionAssembly": {
-          "channelId": "comfyui",
+          "channelId": "channel_default",
           "workflowId": "wf_a56d1f8e-14b9-4752-826b-d277d0094d47",
+          "projectId": "collection_summer",
           "overrides": {
             "wf_a56d1f8e-14b9-4752-826b-d277d0094d47": {
-              "model": "",
+              "model": "anikawaxl_v4",
               "loras": [
                 {
                   "name": "QAQv2p2-150",

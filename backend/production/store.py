@@ -83,6 +83,7 @@ class TaskStore:
                 ],
                 "channel": {"title": snapshot.get("channel", {}).get("title", ""), "provider": snapshot.get("channel", {}).get("provider", "")},
                 "overrides": copy.deepcopy(snapshot.get("overrides")) or None,
+                "projectId": snapshot.get("projectId"),
             }
             refs = []
             for page in value["pages"]:
