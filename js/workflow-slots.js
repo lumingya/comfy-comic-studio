@@ -16,7 +16,8 @@ const WorkflowSlots = (() => {
   const MODEL_EXT = /\.(safetensors|ckpt|pt|pth|bin|gguf|sft|pkl)$/i;
   const STRONG_MODEL_KEYS = /^(ckpt_name|unet_name)$/i;
   const WEAK_MODEL_KEYS = /^(checkpoint|ckpt|model_name|model|model_path|diffusion_model|base_model|unet|transformer)$/i;
-  const NOT_MODEL = /lora|vae|clip|control|upscale|ipadapter|adapter|embedding|face|detect|bbox|segm|sam\b|encoder|tokenizer|scheduler|style|instantid|photomaker|pulid|insight|onnx|preprocessor|depth|pose|animatediff|motion|gligen|hypernet|audio|llm|florence|vision|refiner_/i;
+  const NOT_MODEL = /lora|vae|clip|control|upscale|ipadapter|adapter|embedding|face|detect|bbox|segm|sam\b|encoder|tokenizer|scheduler|style|instantid|photomaker|pulid|insight|onnx|preprocessor|depth|pose|animatediff|motion|gligen|hypernet|audio|llm|florence|vision|refiner_|interpolation|vfi|rife|ifrnet|film|esrgan|realesrgan|gfpgan|codeformer|rembg|segmentation|matting|depthanything|midas|zoe|openpose|dwpose|lama|inpaint_model|facerestore/i;
+  const NOT_MODEL_FILE = /ifrnet|ifunet|rife|vimeo|gopro|film_net|_vfi\b|esrgan|gfpgan|codeformer|depth_anything|openpose|dwpose|insightface/i;
   const MODEL_CLASS = /checkpoint|unet|diffusion|model.?loader|dit.?loader/i;
   const STACK_KEY = /^(lora|lora_name)_?(\d+)$/i;
   const CHAIN_NAME_KEYS = ["lora_name", "lora"];
@@ -79,13 +80,19 @@ const WorkflowSlots = (() => {
   function catalogFromObjectInfo(objectInfo) {
     const lists = { checkpoints: new Set(), unets: new Set(), loras: new Set(), vaes: new Set() };
     const fieldKinds = { ckpt_name: "checkpoints", unet_name: "unets", lora_name: "loras", vae_name: "vaes" };
-    for (const definition of Object.values(objectInfo || {})) {
+    for (const [classType, definition] of Object.entries(objectInfo || {})) {
       const input = definition?.input || {};
       for (const group of [input.required || {}, input.optional || {}]) {
         for (const [field, rule] of Object.entries(group)) {
           const kind = fieldKinds[field];
           if (!kind || !Array.isArray(rule) || !Array.isArray(rule[0])) continue;
-          for (const option of rule[0]) if (typeof option === "string" && option && option !== "None") lists[kind].add(option);
+          if ((kind === "checkpoints" || kind === "unets") && NOT_MODEL.test(classType)) continue;
+          for (const option of rule[0]) {
+            if (typeof option === "string" && option && option !== "None") {
+              if ((kind === "checkpoints" || kind === "unets") && NOT_MODEL_FILE.test(option)) continue;
+              lists[kind].add(option);
+            }
+          }
         }
       }
     }
@@ -199,9 +206,10 @@ const WorkflowSlots = (() => {
     return chain;
   }
   function syntaxCandidates(workflow) {
-    const found = [];
+    const consumers = consumerIndex(workflow), found = [];
     for (const id of nodeIds(workflow)) {
       const node = workflow[id], classType = String(node.class_type || "");
+      if (!consumers[id]?.length) continue;
       for (const [key, value] of Object.entries(node.inputs)) {
         if (typeof value !== "string") continue;
         let score = 0;
@@ -236,9 +244,9 @@ const WorkflowSlots = (() => {
     const model = modelCandidates(workflow, objectInfo);
     const syntax = syntaxCandidates(workflow), chain = orderedChain(workflow, ""), stack = stackCandidates(workflow);
     let recommended;
-    if (syntax.length && syntax[0].score >= 2) recommended = { mode: "syntax", nodeId: syntax[0].nodeId, path: syntax[0].path, assumed: false };
-    else if (chain.length) recommended = { mode: "chain", nodeId: chain[0].nodeId, path: chain[0].namePath, assumed: false };
+    if (chain.length) recommended = { mode: "chain", nodeId: chain[0].nodeId, path: chain[0].namePath, assumed: false };
     else if (stack.length) recommended = { mode: "stack", nodeId: stack[0].nodeId, path: stack[0].slots[0].namePath, assumed: false };
+    else if (syntax.length && syntax[0].score >= 2) recommended = { mode: "syntax", nodeId: syntax[0].nodeId, path: syntax[0].path, assumed: false };
     else if (positive && positive.nodeId && Object.hasOwn(workflow, String(positive.nodeId)) && !/\//.test(String(positive.path || "").slice(1))) recommended = { mode: "syntax", nodeId: String(positive.nodeId), path: String(positive.path || "text").replace(/^\//, ""), assumed: true };
     else recommended = { mode: "off", nodeId: "", path: "", assumed: true };
     return { model: { candidates: model, primary: model[0] || null }, lora: { syntax, chain, stack, recommended } };

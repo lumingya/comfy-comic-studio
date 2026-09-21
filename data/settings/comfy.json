@@ -216,6 +216,3713 @@
   "bindingVersion": 1,
   "outputNodeId": "9",
   "randomizeSeeds": false,
-  "objectInfo": {},
-  "activeWorkflowId": "wf_3aa839c7-6c93-4f93-a0c3-9399e1242916"
+  "objectInfo": {
+    "KSampler": {
+      "input": {
+        "required": {
+          "model": [
+            "MODEL",
+            {
+              "tooltip": "The model used for denoising the input latent."
+            }
+          ],
+          "seed": [
+            "INT",
+            {
+              "default": 0,
+              "min": 0,
+              "max": 18446744073709552000,
+              "control_after_generate": true,
+              "tooltip": "The random seed used for creating the noise."
+            }
+          ],
+          "steps": [
+            "INT",
+            {
+              "default": 20,
+              "min": 1,
+              "max": 10000,
+              "tooltip": "The number of steps used in the denoising process."
+            }
+          ],
+          "cfg": [
+            "FLOAT",
+            {
+              "default": 8,
+              "min": 0,
+              "max": 100,
+              "step": 0.1,
+              "round": 0.01,
+              "tooltip": "The Classifier-Free Guidance scale balances creativity and adherence to the prompt. Higher values result in images more closely matching the prompt however too high values will negatively impact quality."
+            }
+          ],
+          "sampler_name": [
+            [
+              "euler",
+              "euler_cfg_pp",
+              "euler_ancestral",
+              "euler_ancestral_cfg_pp",
+              "heun",
+              "heunpp2",
+              "exp_heun_2_x0",
+              "exp_heun_2_x0_sde",
+              "dpm_2",
+              "dpm_2_ancestral",
+              "lms",
+              "dpm_fast",
+              "dpm_adaptive",
+              "dpmpp_2s_ancestral",
+              "dpmpp_2s_ancestral_cfg_pp",
+              "dpmpp_sde",
+              "dpmpp_sde_gpu",
+              "dpmpp_2m",
+              "dpmpp_2m_cfg_pp",
+              "dpmpp_2m_sde",
+              "dpmpp_2m_sde_gpu",
+              "dpmpp_2m_sde_heun",
+              "dpmpp_2m_sde_heun_gpu",
+              "dpmpp_3m_sde",
+              "dpmpp_3m_sde_gpu",
+              "ddpm",
+              "lcm",
+              "ipndm",
+              "ipndm_v",
+              "deis",
+              "res_multistep",
+              "res_multistep_cfg_pp",
+              "res_multistep_ancestral",
+              "res_multistep_ancestral_cfg_pp",
+              "gradient_estimation",
+              "gradient_estimation_cfg_pp",
+              "er_sde",
+              "seeds_2",
+              "seeds_3",
+              "sa_solver",
+              "sa_solver_pece",
+              "ddim",
+              "uni_pc",
+              "uni_pc_bh2",
+              "er_sde_cns"
+            ],
+            {
+              "tooltip": "The algorithm used when sampling, this can affect the quality, speed, and style of the generated output."
+            }
+          ],
+          "scheduler": [
+            [
+              "simple",
+              "sgm_uniform",
+              "karras",
+              "exponential",
+              "ddim_uniform",
+              "beta",
+              "normal",
+              "linear_quadratic",
+              "kl_optimal"
+            ],
+            {
+              "tooltip": "The scheduler controls how noise is gradually removed to form the image."
+            }
+          ],
+          "positive": [
+            "CONDITIONING",
+            {
+              "tooltip": "The conditioning describing the attributes you want to include in the image."
+            }
+          ],
+          "negative": [
+            "CONDITIONING",
+            {
+              "tooltip": "The conditioning describing the attributes you want to exclude from the image."
+            }
+          ],
+          "latent_image": [
+            "LATENT",
+            {
+              "tooltip": "The latent image to denoise."
+            }
+          ],
+          "denoise": [
+            "FLOAT",
+            {
+              "default": 1,
+              "min": 0,
+              "max": 1,
+              "step": 0.01,
+              "tooltip": "The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling."
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "model",
+          "seed",
+          "steps",
+          "cfg",
+          "sampler_name",
+          "scheduler",
+          "positive",
+          "negative",
+          "latent_image",
+          "denoise"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "LATENT"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "LATENT"
+      ],
+      "name": "KSampler",
+      "display_name": "KSampler",
+      "description": "Uses the provided model, positive and negative conditioning to denoise the latent image.",
+      "python_module": "nodes",
+      "category": "sampling",
+      "output_node": false,
+      "output_tooltips": [
+        "The denoised latent."
+      ],
+      "search_aliases": [
+        "sampler",
+        "sample",
+        "generate",
+        "denoise",
+        "diffuse",
+        "txt2img",
+        "img2img"
+      ]
+    },
+    "CheckpointLoaderSimple": {
+      "input": {
+        "required": {
+          "ckpt_name": [
+            [
+              "anikawaxl_v4.safetensors",
+              "illustrijEVO_lvl2.safetensors",
+              "oneObsession_1424DNsfw.safetensors",
+              "oneObsession_v16Noobai.safetensors",
+              "waiIllustriousSDXL_v160.safetensors"
+            ],
+            {
+              "tooltip": "The name of the checkpoint (model) to load."
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "ckpt_name"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "MODEL",
+        "CLIP",
+        "VAE"
+      ],
+      "output_is_list": [
+        false,
+        false,
+        false
+      ],
+      "output_name": [
+        "MODEL",
+        "CLIP",
+        "VAE"
+      ],
+      "name": "CheckpointLoaderSimple",
+      "display_name": "Load Checkpoint",
+      "description": "Loads a diffusion model checkpoint, diffusion models are used to denoise latents.",
+      "python_module": "nodes",
+      "category": "loaders",
+      "output_node": false,
+      "output_tooltips": [
+        "The model used for denoising latents.",
+        "The CLIP model used for encoding text prompts.",
+        "The VAE model used for encoding and decoding images to and from latent space."
+      ],
+      "search_aliases": [
+        "load model",
+        "checkpoint",
+        "model loader",
+        "load checkpoint",
+        "ckpt",
+        "model"
+      ]
+    },
+    "CLIPTextEncode": {
+      "input": {
+        "required": {
+          "text": [
+            "STRING",
+            {
+              "multiline": true,
+              "dynamicPrompts": true,
+              "tooltip": "The text to be encoded."
+            }
+          ],
+          "clip": [
+            "CLIP",
+            {
+              "tooltip": "The CLIP model used for encoding the text."
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "text",
+          "clip"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "CONDITIONING"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "CONDITIONING"
+      ],
+      "name": "CLIPTextEncode",
+      "display_name": "CLIP Text Encode (Prompt)",
+      "description": "Encodes a text prompt using a CLIP model into an embedding that can be used to guide the diffusion model towards generating specific images.",
+      "python_module": "nodes",
+      "category": "conditioning",
+      "output_node": false,
+      "output_tooltips": [
+        "A conditioning containing the embedded text used to guide the diffusion model."
+      ],
+      "search_aliases": [
+        "text",
+        "prompt",
+        "text prompt",
+        "positive prompt",
+        "negative prompt",
+        "encode text",
+        "text encoder",
+        "encode prompt"
+      ]
+    },
+    "VAEDecode": {
+      "input": {
+        "required": {
+          "samples": [
+            "LATENT",
+            {
+              "tooltip": "The latent to be decoded."
+            }
+          ],
+          "vae": [
+            "VAE",
+            {
+              "tooltip": "The VAE model used for decoding the latent."
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "samples",
+          "vae"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "IMAGE"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "IMAGE"
+      ],
+      "name": "VAEDecode",
+      "display_name": "VAE Decode",
+      "description": "Decodes latent images back into pixel space images.",
+      "python_module": "nodes",
+      "category": "latent",
+      "output_node": false,
+      "output_tooltips": [
+        "The decoded image."
+      ],
+      "search_aliases": [
+        "decode",
+        "decode latent",
+        "latent to image",
+        "render latent"
+      ]
+    },
+    "EmptyLatentImage": {
+      "input": {
+        "required": {
+          "width": [
+            "INT",
+            {
+              "default": 512,
+              "min": 16,
+              "max": 16384,
+              "step": 8,
+              "tooltip": "The width of the latent images in pixels."
+            }
+          ],
+          "height": [
+            "INT",
+            {
+              "default": 512,
+              "min": 16,
+              "max": 16384,
+              "step": 8,
+              "tooltip": "The height of the latent images in pixels."
+            }
+          ],
+          "batch_size": [
+            "INT",
+            {
+              "default": 1,
+              "min": 1,
+              "max": 4096,
+              "tooltip": "The number of latent images in the batch."
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "width",
+          "height",
+          "batch_size"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "LATENT"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "LATENT"
+      ],
+      "name": "EmptyLatentImage",
+      "display_name": "Empty Latent Image",
+      "description": "Create a new batch of empty latent images to be denoised via sampling.",
+      "python_module": "nodes",
+      "category": "latent",
+      "output_node": false,
+      "output_tooltips": [
+        "The empty latent image batch."
+      ],
+      "search_aliases": [
+        "empty",
+        "empty latent",
+        "new latent",
+        "create latent",
+        "blank latent",
+        "blank"
+      ]
+    },
+    "SaveImage": {
+      "input": {
+        "required": {
+          "images": [
+            "IMAGE",
+            {
+              "tooltip": "The images to save."
+            }
+          ],
+          "filename_prefix": [
+            "STRING",
+            {
+              "default": "ComfyUI",
+              "tooltip": "The prefix for the file to save. This may include formatting information such as %date:yyyy-MM-dd% or %Empty Latent Image.width% to include values from nodes."
+            }
+          ]
+        },
+        "hidden": {
+          "prompt": "PROMPT",
+          "extra_pnginfo": "EXTRA_PNGINFO"
+        }
+      },
+      "input_order": {
+        "required": [
+          "images",
+          "filename_prefix"
+        ],
+        "hidden": [
+          "prompt",
+          "extra_pnginfo"
+        ]
+      },
+      "is_input_list": false,
+      "output": [],
+      "output_is_list": [],
+      "output_name": [],
+      "name": "SaveImage",
+      "display_name": "Save Image",
+      "description": "Saves the input images to your ComfyUI output directory.",
+      "python_module": "nodes",
+      "category": "image",
+      "output_node": true,
+      "search_aliases": [
+        "save",
+        "save image",
+        "export image",
+        "output image",
+        "write image",
+        "download"
+      ]
+    },
+    "PreviewImage": {
+      "input": {
+        "required": {
+          "images": [
+            "IMAGE"
+          ]
+        },
+        "hidden": {
+          "prompt": "PROMPT",
+          "extra_pnginfo": "EXTRA_PNGINFO"
+        }
+      },
+      "input_order": {
+        "required": [
+          "images"
+        ],
+        "hidden": [
+          "prompt",
+          "extra_pnginfo"
+        ]
+      },
+      "is_input_list": false,
+      "output": [],
+      "output_is_list": [],
+      "output_name": [],
+      "name": "PreviewImage",
+      "display_name": "Preview Image",
+      "description": "Saves the input images to your ComfyUI output directory.",
+      "python_module": "nodes",
+      "category": "image",
+      "output_node": true,
+      "search_aliases": [
+        "preview",
+        "preview image",
+        "show image",
+        "view image",
+        "display image",
+        "image viewer"
+      ]
+    },
+    "KSamplerAdvanced": {
+      "input": {
+        "required": {
+          "model": [
+            "MODEL"
+          ],
+          "add_noise": [
+            [
+              "enable",
+              "disable"
+            ]
+          ],
+          "noise_seed": [
+            "INT",
+            {
+              "default": 0,
+              "min": 0,
+              "max": 18446744073709552000,
+              "control_after_generate": true
+            }
+          ],
+          "steps": [
+            "INT",
+            {
+              "default": 20,
+              "min": 1,
+              "max": 10000
+            }
+          ],
+          "cfg": [
+            "FLOAT",
+            {
+              "default": 8,
+              "min": 0,
+              "max": 100,
+              "step": 0.1,
+              "round": 0.01
+            }
+          ],
+          "sampler_name": [
+            [
+              "euler",
+              "euler_cfg_pp",
+              "euler_ancestral",
+              "euler_ancestral_cfg_pp",
+              "heun",
+              "heunpp2",
+              "exp_heun_2_x0",
+              "exp_heun_2_x0_sde",
+              "dpm_2",
+              "dpm_2_ancestral",
+              "lms",
+              "dpm_fast",
+              "dpm_adaptive",
+              "dpmpp_2s_ancestral",
+              "dpmpp_2s_ancestral_cfg_pp",
+              "dpmpp_sde",
+              "dpmpp_sde_gpu",
+              "dpmpp_2m",
+              "dpmpp_2m_cfg_pp",
+              "dpmpp_2m_sde",
+              "dpmpp_2m_sde_gpu",
+              "dpmpp_2m_sde_heun",
+              "dpmpp_2m_sde_heun_gpu",
+              "dpmpp_3m_sde",
+              "dpmpp_3m_sde_gpu",
+              "ddpm",
+              "lcm",
+              "ipndm",
+              "ipndm_v",
+              "deis",
+              "res_multistep",
+              "res_multistep_cfg_pp",
+              "res_multistep_ancestral",
+              "res_multistep_ancestral_cfg_pp",
+              "gradient_estimation",
+              "gradient_estimation_cfg_pp",
+              "er_sde",
+              "seeds_2",
+              "seeds_3",
+              "sa_solver",
+              "sa_solver_pece",
+              "ddim",
+              "uni_pc",
+              "uni_pc_bh2",
+              "er_sde_cns"
+            ]
+          ],
+          "scheduler": [
+            [
+              "simple",
+              "sgm_uniform",
+              "karras",
+              "exponential",
+              "ddim_uniform",
+              "beta",
+              "normal",
+              "linear_quadratic",
+              "kl_optimal"
+            ]
+          ],
+          "positive": [
+            "CONDITIONING"
+          ],
+          "negative": [
+            "CONDITIONING"
+          ],
+          "latent_image": [
+            "LATENT"
+          ],
+          "start_at_step": [
+            "INT",
+            {
+              "default": 0,
+              "min": 0,
+              "max": 10000
+            }
+          ],
+          "end_at_step": [
+            "INT",
+            {
+              "default": 10000,
+              "min": 0,
+              "max": 10000
+            }
+          ],
+          "return_with_leftover_noise": [
+            [
+              "disable",
+              "enable"
+            ]
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "model",
+          "add_noise",
+          "noise_seed",
+          "steps",
+          "cfg",
+          "sampler_name",
+          "scheduler",
+          "positive",
+          "negative",
+          "latent_image",
+          "start_at_step",
+          "end_at_step",
+          "return_with_leftover_noise"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "LATENT"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "LATENT"
+      ],
+      "name": "KSamplerAdvanced",
+      "display_name": "KSampler (Advanced)",
+      "description": "",
+      "python_module": "nodes",
+      "category": "sampling",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "VAEEncodeTiled": {
+      "input": {
+        "required": {
+          "pixels": [
+            "IMAGE"
+          ],
+          "vae": [
+            "VAE"
+          ],
+          "tile_size": [
+            "INT",
+            {
+              "default": 512,
+              "min": 64,
+              "max": 4096,
+              "step": 64
+            }
+          ],
+          "overlap": [
+            "INT",
+            {
+              "default": 64,
+              "min": 0,
+              "max": 4096,
+              "step": 32
+            }
+          ],
+          "temporal_size": [
+            "INT",
+            {
+              "default": 64,
+              "min": 8,
+              "max": 4096,
+              "step": 4,
+              "tooltip": "Only used for video VAEs: Amount of frames to encode at a time."
+            }
+          ],
+          "temporal_overlap": [
+            "INT",
+            {
+              "default": 8,
+              "min": 4,
+              "max": 4096,
+              "step": 4,
+              "tooltip": "Only used for video VAEs: Amount of frames to overlap."
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "pixels",
+          "vae",
+          "tile_size",
+          "overlap",
+          "temporal_size",
+          "temporal_overlap"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "LATENT"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "LATENT"
+      ],
+      "name": "VAEEncodeTiled",
+      "display_name": "VAE Encode (Tiled)",
+      "description": "",
+      "python_module": "nodes",
+      "category": "_for_testing",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "ConditioningSetTimestepRange": {
+      "input": {
+        "required": {
+          "conditioning": [
+            "CONDITIONING"
+          ],
+          "start": [
+            "FLOAT",
+            {
+              "default": 0,
+              "min": 0,
+              "max": 1,
+              "step": 0.001
+            }
+          ],
+          "end": [
+            "FLOAT",
+            {
+              "default": 1,
+              "min": 0,
+              "max": 1,
+              "step": 0.001
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "conditioning",
+          "start",
+          "end"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "CONDITIONING"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "CONDITIONING"
+      ],
+      "name": "ConditioningSetTimestepRange",
+      "display_name": "ConditioningSetTimestepRange",
+      "description": "",
+      "python_module": "nodes",
+      "category": "advanced/conditioning",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "UpscaleModelLoader": {
+      "input": {
+        "required": {
+          "model_name": [
+            "COMBO",
+            {
+              "multiselect": false,
+              "options": [
+                "ESRGAN\\4x-AnimeSharp.pth",
+                "ESRGAN\\4xUltrasharp_4xUltrasharpV10.pt",
+                "ESRGAN\\BSRGAN.pth",
+                "ESRGAN\\ESRGAN_4x.pth",
+                "RealESRGAN\\RealESRGAN_x4plus.pth",
+                "RealESRGAN\\RealESRGAN_x4plus_anime_6B.pth",
+                "SwinIR\\SwinIR_4x.pth",
+                "remacri_original.safetensors",
+                "swin2srUpscalerX2And_customX2Safetensor.safetensors"
+              ]
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "model_name"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "UPSCALE_MODEL"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "UPSCALE_MODEL"
+      ],
+      "output_tooltips": [
+        null
+      ],
+      "output_matchtypes": null,
+      "name": "UpscaleModelLoader",
+      "display_name": "Load Upscale Model",
+      "description": "",
+      "python_module": "comfy_extras.nodes_upscale_model",
+      "category": "loaders",
+      "output_node": false,
+      "deprecated": false,
+      "experimental": false,
+      "dev_only": false,
+      "api_node": false,
+      "price_badge": null,
+      "search_aliases": null
+    },
+    "PatchModelAddDownscale": {
+      "input": {
+        "required": {
+          "model": [
+            "MODEL",
+            {}
+          ],
+          "block_number": [
+            "INT",
+            {
+              "default": 3,
+              "min": 1,
+              "max": 32,
+              "step": 1
+            }
+          ],
+          "downscale_factor": [
+            "FLOAT",
+            {
+              "default": 2,
+              "min": 0.1,
+              "max": 9,
+              "step": 0.001
+            }
+          ],
+          "start_percent": [
+            "FLOAT",
+            {
+              "default": 0,
+              "min": 0,
+              "max": 1,
+              "step": 0.001
+            }
+          ],
+          "end_percent": [
+            "FLOAT",
+            {
+              "default": 0.35,
+              "min": 0,
+              "max": 1,
+              "step": 0.001
+            }
+          ],
+          "downscale_after_skip": [
+            "BOOLEAN",
+            {
+              "default": true
+            }
+          ],
+          "downscale_method": [
+            "COMBO",
+            {
+              "multiselect": false,
+              "options": [
+                "bicubic",
+                "nearest-exact",
+                "bilinear",
+                "area",
+                "bislerp"
+              ]
+            }
+          ],
+          "upscale_method": [
+            "COMBO",
+            {
+              "multiselect": false,
+              "options": [
+                "bicubic",
+                "nearest-exact",
+                "bilinear",
+                "area",
+                "bislerp"
+              ]
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "model",
+          "block_number",
+          "downscale_factor",
+          "start_percent",
+          "end_percent",
+          "downscale_after_skip",
+          "downscale_method",
+          "upscale_method"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "MODEL"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "MODEL"
+      ],
+      "output_tooltips": [
+        null
+      ],
+      "output_matchtypes": null,
+      "name": "PatchModelAddDownscale",
+      "display_name": "PatchModelAddDownscale (Kohya Deep Shrink)",
+      "description": "",
+      "python_module": "comfy_extras.nodes_model_downscale",
+      "category": "model_patches/unet",
+      "output_node": false,
+      "deprecated": false,
+      "experimental": false,
+      "dev_only": false,
+      "api_node": false,
+      "price_badge": null,
+      "search_aliases": null
+    },
+    "PrimitiveString": {
+      "input": {
+        "required": {
+          "value": [
+            "STRING",
+            {
+              "multiline": false
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "value"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "STRING"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "STRING"
+      ],
+      "output_tooltips": [
+        null
+      ],
+      "output_matchtypes": null,
+      "name": "PrimitiveString",
+      "display_name": "String",
+      "description": "",
+      "python_module": "comfy_extras.nodes_primitive",
+      "category": "utils/primitive",
+      "output_node": false,
+      "deprecated": false,
+      "experimental": false,
+      "dev_only": false,
+      "api_node": false,
+      "price_badge": null,
+      "search_aliases": null
+    },
+    "StringLength": {
+      "input": {
+        "required": {
+          "string": [
+            "STRING",
+            {
+              "multiline": true
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "string"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "INT"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "length"
+      ],
+      "output_tooltips": [
+        null
+      ],
+      "output_matchtypes": null,
+      "name": "StringLength",
+      "display_name": "Length",
+      "description": "",
+      "python_module": "comfy_extras.nodes_string",
+      "category": "utils/string",
+      "output_node": false,
+      "deprecated": false,
+      "experimental": false,
+      "dev_only": false,
+      "api_node": false,
+      "price_badge": null,
+      "search_aliases": [
+        "character count",
+        "text size"
+      ]
+    },
+    "Image Filter": {
+      "input": {
+        "required": {
+          "images": [
+            "IMAGE"
+          ],
+          "timeout": [
+            "INT",
+            {
+              "default": 600,
+              "min": 1,
+              "max": 9999999,
+              "tooltip": "Timeout in seconds."
+            }
+          ],
+          "ontimeout": [
+            [
+              "send none",
+              "send all",
+              "send first",
+              "send last"
+            ],
+            {}
+          ]
+        },
+        "optional": {
+          "latents": [
+            "LATENT",
+            {
+              "tooltip": "Optional - if provided, will be output"
+            }
+          ],
+          "masks": [
+            "MASK",
+            {
+              "tooltip": "Optional - if provided, will be output"
+            }
+          ],
+          "tip": [
+            "STRING",
+            {
+              "default": "",
+              "tooltip": "Optional - if provided, will be displayed in popup window"
+            }
+          ],
+          "extra1": [
+            "STRING",
+            {
+              "default": ""
+            }
+          ],
+          "extra2": [
+            "STRING",
+            {
+              "default": ""
+            }
+          ],
+          "extra3": [
+            "STRING",
+            {
+              "default": ""
+            }
+          ],
+          "pick_list_start": [
+            "INT",
+            {
+              "default": 0,
+              "tooltip": "The number used in pick_list for the first image"
+            }
+          ],
+          "pick_list": [
+            "STRING",
+            {
+              "default": "",
+              "tooltip": "If a comma separated list of integers is provided, the images with these indices will be selected automatically."
+            }
+          ],
+          "video_frames": [
+            "INT",
+            {
+              "default": 1,
+              "min": 1,
+              "tooltip": "treat each block of n images as a video"
+            }
+          ],
+          "graph_id": [
+            "STRING",
+            {
+              "default": ""
+            }
+          ]
+        },
+        "hidden": {
+          "prompt": "PROMPT",
+          "extra_pnginfo": "EXTRA_PNGINFO",
+          "uid": "UNIQUE_ID"
+        }
+      },
+      "input_order": {
+        "required": [
+          "images",
+          "timeout",
+          "ontimeout"
+        ],
+        "optional": [
+          "latents",
+          "masks",
+          "tip",
+          "extra1",
+          "extra2",
+          "extra3",
+          "pick_list_start",
+          "pick_list",
+          "video_frames",
+          "graph_id"
+        ],
+        "hidden": [
+          "prompt",
+          "extra_pnginfo",
+          "uid"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "IMAGE",
+        "LATENT",
+        "MASK",
+        "STRING",
+        "STRING",
+        "STRING",
+        "STRING"
+      ],
+      "output_is_list": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "output_name": [
+        "images",
+        "latents",
+        "masks",
+        "extra1",
+        "extra2",
+        "extra3",
+        "indexes"
+      ],
+      "name": "Image Filter",
+      "display_name": "Image Filter",
+      "description": "Allows you to preview images and choose which, if any to proceed with",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "image_filter",
+      "output_node": false,
+      "search_aliases": [
+        "preview",
+        "preview image",
+        "show image",
+        "view image",
+        "display image",
+        "image viewer"
+      ]
+    },
+    "ApplyFBCacheOnModel": {
+      "input": {
+        "required": {
+          "model": [
+            "MODEL"
+          ],
+          "object_to_patch": [
+            "STRING",
+            {
+              "default": "diffusion_model"
+            }
+          ],
+          "residual_diff_threshold": [
+            "FLOAT",
+            {
+              "default": 0,
+              "min": 0,
+              "max": 1,
+              "step": 0.001,
+              "tooltip": "Controls the tolerance for caching with lower values being more strict. Setting this to 0 disables the FBCache effect."
+            }
+          ],
+          "start": [
+            "FLOAT",
+            {
+              "default": 0,
+              "step": 0.01,
+              "max": 1,
+              "min": 0,
+              "tooltip": "Start time as a percentage of sampling where the FBCache effect can apply. Example: 0.0 would signify 0% (the beginning of sampling), 0.5 would signify 50%."
+            }
+          ],
+          "end": [
+            "FLOAT",
+            {
+              "default": 1,
+              "step": 0.01,
+              "max": 1,
+              "min": 0,
+              "tooltip": "End time as a percentage of sampling where the FBCache effect can apply. Example: 1.0 would signify 100% (the end of sampling), 0.5 would signify 50%."
+            }
+          ],
+          "max_consecutive_cache_hits": [
+            "INT",
+            {
+              "default": -1,
+              "min": -1,
+              "tooltip": "Allows limiting how many cached results can be used in a row. For example, setting this to 1 will mean there will be at least one full model call after each cached result. Set to 0 to disable FBCache effect, or -1 to allow unlimited consecutive cache hits."
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "model",
+          "object_to_patch",
+          "residual_diff_threshold",
+          "start",
+          "end",
+          "max_consecutive_cache_hits"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "MODEL"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "MODEL"
+      ],
+      "name": "ApplyFBCacheOnModel",
+      "display_name": "Apply First Block Cache",
+      "description": "",
+      "python_module": "custom_nodes.wavespeed",
+      "category": "wavespeed",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "MathExpression|pysssss": {
+      "input": {
+        "required": {
+          "expression": [
+            "STRING",
+            {
+              "multiline": true,
+              "dynamicPrompts": false,
+              "pysssss.autocomplete": {
+                "words": [
+                  {
+                    "text": "round",
+                    "value": "round()",
+                    "showValue": false,
+                    "hint": "number, dp? = 0",
+                    "caretOffset": -1
+                  },
+                  {
+                    "text": "ceil",
+                    "value": "ceil()",
+                    "showValue": false,
+                    "hint": "number",
+                    "caretOffset": -1
+                  },
+                  {
+                    "text": "floor",
+                    "value": "floor()",
+                    "showValue": false,
+                    "hint": "number",
+                    "caretOffset": -1
+                  },
+                  {
+                    "text": "min",
+                    "value": "min()",
+                    "showValue": false,
+                    "hint": "...numbers",
+                    "caretOffset": -1
+                  },
+                  {
+                    "text": "max",
+                    "value": "max()",
+                    "showValue": false,
+                    "hint": "...numbers",
+                    "caretOffset": -1
+                  },
+                  {
+                    "text": "randomint",
+                    "value": "randomint()",
+                    "showValue": false,
+                    "hint": "min, max",
+                    "caretOffset": -1
+                  },
+                  {
+                    "text": "randomchoice",
+                    "value": "randomchoice()",
+                    "showValue": false,
+                    "hint": "...numbers",
+                    "caretOffset": -1
+                  },
+                  {
+                    "text": "sqrt",
+                    "value": "sqrt()",
+                    "showValue": false,
+                    "hint": "number",
+                    "caretOffset": -1
+                  },
+                  {
+                    "text": "int",
+                    "value": "int()",
+                    "showValue": false,
+                    "hint": "number",
+                    "caretOffset": -1
+                  },
+                  {
+                    "text": "iif",
+                    "value": "iif()",
+                    "showValue": false,
+                    "hint": "value, truepart, falsepart",
+                    "caretOffset": -1
+                  }
+                ],
+                "separator": ""
+              }
+            }
+          ]
+        },
+        "optional": {
+          "a": [
+            "*"
+          ],
+          "b": [
+            "*"
+          ],
+          "c": [
+            "*"
+          ]
+        },
+        "hidden": {
+          "extra_pnginfo": "EXTRA_PNGINFO",
+          "prompt": "PROMPT"
+        }
+      },
+      "input_order": {
+        "required": [
+          "expression"
+        ],
+        "optional": [
+          "a",
+          "b",
+          "c"
+        ],
+        "hidden": [
+          "extra_pnginfo",
+          "prompt"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "INT",
+        "FLOAT"
+      ],
+      "output_is_list": [
+        false,
+        false
+      ],
+      "output_name": [
+        "INT",
+        "FLOAT"
+      ],
+      "name": "MathExpression|pysssss",
+      "display_name": "Math Expression 🐍",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "utils",
+      "output_node": true,
+      "search_aliases": []
+    },
+    "ShowText|pysssss": {
+      "input": {
+        "required": {
+          "text": [
+            "STRING",
+            {
+              "forceInput": true
+            }
+          ]
+        },
+        "hidden": {
+          "unique_id": "UNIQUE_ID",
+          "extra_pnginfo": "EXTRA_PNGINFO"
+        }
+      },
+      "input_order": {
+        "required": [
+          "text"
+        ],
+        "hidden": [
+          "unique_id",
+          "extra_pnginfo"
+        ]
+      },
+      "is_input_list": true,
+      "output": [
+        "STRING"
+      ],
+      "output_is_list": [
+        true
+      ],
+      "output_name": [
+        "STRING"
+      ],
+      "name": "ShowText|pysssss",
+      "display_name": "Show Text 🐍",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "utils",
+      "output_node": true,
+      "search_aliases": []
+    },
+    "PromptSelector": {
+      "input": {
+        "required": {
+          "selected_prompts": [
+            "STRING",
+            {
+              "default": "",
+              "widget": "hidden"
+            }
+          ]
+        },
+        "optional": {
+          "prefix_prompt": [
+            "STRING",
+            {
+              "forceInput": true
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "selected_prompts"
+        ],
+        "optional": [
+          "prefix_prompt"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "STRING"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "prompt"
+      ],
+      "name": "PromptSelector",
+      "display_name": "提示词选择器 (Prompt Selector)",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "danbooru",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "ResolutionMasterSimplify": {
+      "input": {
+        "required": {
+          "width": [
+            "INT",
+            {
+              "default": 1024,
+              "min": 64,
+              "max": 8192,
+              "step": 64
+            }
+          ],
+          "height": [
+            "INT",
+            {
+              "default": 1024,
+              "min": 64,
+              "max": 8192,
+              "step": 64
+            }
+          ]
+        },
+        "hidden": {
+          "unique_id": "UNIQUE_ID"
+        }
+      },
+      "input_order": {
+        "required": [
+          "width",
+          "height"
+        ],
+        "hidden": [
+          "unique_id"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "INT",
+        "INT"
+      ],
+      "output_is_list": [
+        false,
+        false
+      ],
+      "output_name": [
+        "width",
+        "height"
+      ],
+      "name": "ResolutionMasterSimplify",
+      "display_name": "分辨率大师简化版 (Resolution Master Simplify)",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "utils/Resolution Master",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "PromptCleaningMaid": {
+      "input": {
+        "required": {
+          "string": [
+            "STRING",
+            {
+              "forceInput": true
+            }
+          ],
+          "清理逗号 (cleanup_commas)": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "tooltip": "清理多余的逗号（如果两个逗号之间没有标签）"
+            }
+          ],
+          "清理空白 (cleanup_whitespace)": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "tooltip": "清理首尾空白和多余的空白字符"
+            }
+          ],
+          "移除LoRA标签 (remove_lora_tags)": [
+            "BOOLEAN",
+            {
+              "default": false,
+              "tooltip": "完全移除字符串中的 LoRA 标签"
+            }
+          ],
+          "清理换行 (cleanup_newlines)": [
+            [
+              "否 (false)",
+              "空格 (space)",
+              "逗号 (comma)"
+            ],
+            {
+              "default": "否 (false)",
+              "tooltip": "将换行符 (\\n) 替换为空格或逗号"
+            }
+          ],
+          "修复括号 (fix_brackets)": [
+            [
+              "否 (false)",
+              "圆括号 (parenthesis)",
+              "方括号 (brackets)",
+              "两者 (both)"
+            ],
+            {
+              "default": "两者 (both)",
+              "tooltip": "移除不匹配的括号"
+            }
+          ],
+          "提示词格式化 (prompt_formatting)": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "tooltip": "启用完整的提示词格式化：下划线转空格、权重语法补全、智能括号转义、漏逗号检测等"
+            }
+          ],
+          "下划线转空格 (underscore_to_space)": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "tooltip": "将下划线转换为空格"
+            }
+          ],
+          "权重语法补全 (complete_weight_syntax)": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "tooltip": "为不合规的权重语法添加括号，如 tag:1.2 → (tag:1.2)"
+            }
+          ],
+          "智能括号转义 (smart_bracket_escaping)": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "tooltip": "智能转义括号，区分权重语法和角色系列名称，并检测漏逗号情况"
+            }
+          ],
+          "标准化逗号 (standardize_commas)": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "tooltip": "将逗号标准化为英文逗号+空格格式"
+            }
+          ],
+          "修复分区语法 (fix_region_syntax)": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "tooltip": "自动修复分区语法中的括号不匹配问题（如 MASK、COUPLE、FEATHER 等），防止解析器进入无限循环"
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "string",
+          "清理逗号 (cleanup_commas)",
+          "清理空白 (cleanup_whitespace)",
+          "移除LoRA标签 (remove_lora_tags)",
+          "清理换行 (cleanup_newlines)",
+          "修复括号 (fix_brackets)",
+          "提示词格式化 (prompt_formatting)",
+          "下划线转空格 (underscore_to_space)",
+          "权重语法补全 (complete_weight_syntax)",
+          "智能括号转义 (smart_bracket_escaping)",
+          "标准化逗号 (standardize_commas)",
+          "修复分区语法 (fix_region_syntax)"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "STRING"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "string"
+      ],
+      "name": "PromptCleaningMaid",
+      "display_name": "提示词清洁女仆 (Prompt Cleaning Maid)",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "danbooru",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "SimpleCheckpointLoaderWithName": {
+      "input": {
+        "required": {
+          "ckpt_name": [
+            [
+              "anikawaxl_v4.safetensors",
+              "illustrijEVO_lvl2.safetensors",
+              "oneObsession_1424DNsfw.safetensors",
+              "oneObsession_v16Noobai.safetensors",
+              "waiIllustriousSDXL_v160.safetensors"
+            ],
+            {
+              "tooltip": "要加载的checkpoint（模型）名称"
+            }
+          ],
+          "vae_name": [
+            [
+              "Baked VAE",
+              "ae.safetensors",
+              "qwen_image_vae.safetensors",
+              "sdxl\\liquid111vae_sdxl9745VAE.safetensors"
+            ],
+            {
+              "default": "Baked VAE",
+              "tooltip": "选择VAE模型，默认使用checkpoint内置的VAE"
+            }
+          ],
+          "clip_skip": [
+            "INT",
+            {
+              "default": -2,
+              "min": -24,
+              "max": -1,
+              "step": 1,
+              "tooltip": "CLIP跳过层数。-1=不跳过（使用最后一层），-2=跳过最后1层，以此类推"
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "ckpt_name",
+          "vae_name",
+          "clip_skip"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "MODEL",
+        "CLIP",
+        "VAE",
+        "STRING",
+        "STRING",
+        "INT"
+      ],
+      "output_is_list": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "output_name": [
+        "MODEL",
+        "CLIP",
+        "VAE",
+        "model_name",
+        "vae_name",
+        "clip_skip"
+      ],
+      "name": "SimpleCheckpointLoaderWithName",
+      "display_name": "简易Checkpoint加载器 (Simple Checkpoint Loader)",
+      "description": "简化版checkpoint加载器:轻量级、高效",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "danbooru",
+      "output_node": false,
+      "output_tooltips": [
+        "用于对latent去噪的模型",
+        "用于编码文本提示词的CLIP模型",
+        "用于在图像和latent空间之间编码和解码的VAE模型",
+        "模型名称，可用于Image Save节点保存模型名称",
+        "VAE名称，显示当前使用的VAE（Baked VAE或自定义VAE文件名）",
+        "CLIP跳过层数值"
+      ],
+      "search_aliases": []
+    },
+    "SimpleNotify": {
+      "input": {
+        "required": {
+          "any": [
+            "*",
+            {}
+          ],
+          "message": [
+            "STRING",
+            {
+              "default": "任务已完成",
+              "tooltip": "通知消息内容"
+            }
+          ],
+          "volume": [
+            "FLOAT",
+            {
+              "min": 0,
+              "max": 1,
+              "step": 0.1,
+              "default": 0.5,
+              "tooltip": "音效音量 (0-1)"
+            }
+          ],
+          "enable_notification": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "tooltip": "是否启用系统通知"
+            }
+          ],
+          "enable_sound": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "tooltip": "是否启用音效"
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "any",
+          "message",
+          "volume",
+          "enable_notification",
+          "enable_sound"
+        ]
+      },
+      "is_input_list": true,
+      "output": [
+        "*"
+      ],
+      "output_is_list": [
+        true
+      ],
+      "output_name": [
+        "any"
+      ],
+      "name": "SimpleNotify",
+      "display_name": "简易通知 (Simple Notify)",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "danbooru",
+      "output_node": true,
+      "search_aliases": []
+    },
+    "ParameterControlPanel": {
+      "input": {
+        "required": {},
+        "optional": {},
+        "hidden": {
+          "unique_id": "UNIQUE_ID"
+        }
+      },
+      "input_order": {
+        "required": [],
+        "optional": [],
+        "hidden": [
+          "unique_id"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "DICT"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "parameters"
+      ],
+      "name": "ParameterControlPanel",
+      "display_name": "参数控制面板 (Parameter Control Panel)",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "danbooru",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "ParameterBreak": {
+      "input": {
+        "required": {
+          "parameters": [
+            "DICT",
+            {
+              "tooltip": "来自参数控制面板的参数包"
+            }
+          ]
+        },
+        "hidden": {
+          "unique_id": "UNIQUE_ID"
+        }
+      },
+      "input_order": {
+        "required": [
+          "parameters"
+        ],
+        "hidden": [
+          "unique_id"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*",
+        "*"
+      ],
+      "output_is_list": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "output_name": [
+        "output_1",
+        "output_2",
+        "output_3",
+        "output_4",
+        "output_5",
+        "output_6",
+        "output_7",
+        "output_8",
+        "output_9",
+        "output_10",
+        "output_11",
+        "output_12",
+        "output_13",
+        "output_14",
+        "output_15",
+        "output_16",
+        "output_17",
+        "output_18",
+        "output_19",
+        "output_20",
+        "output_21",
+        "output_22",
+        "output_23",
+        "output_24",
+        "output_25",
+        "output_26",
+        "output_27",
+        "output_28",
+        "output_29",
+        "output_30",
+        "output_31",
+        "output_32"
+      ],
+      "name": "ParameterBreak",
+      "display_name": "参数展开 (Parameter Break)",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "danbooru",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "SaveImagePlus": {
+      "input": {
+        "required": {
+          "images": [
+            "IMAGE",
+            {
+              "tooltip": "要保存的图像"
+            }
+          ],
+          "enable": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "tooltip": "是否保存图像（关闭时节点不执行）"
+            }
+          ],
+          "filename_prefix": [
+            "STRING",
+            {
+              "default": "ComfyUI",
+              "tooltip": "文件名前缀"
+            }
+          ],
+          "file_format": [
+            [
+              "PNG",
+              "JPEG",
+              "WEBP"
+            ],
+            {
+              "default": "PNG",
+              "tooltip": "图像保存格式"
+            }
+          ],
+          "quality": [
+            "INT",
+            {
+              "default": 100,
+              "min": 1,
+              "max": 100,
+              "step": 1,
+              "tooltip": "JPEG/WebP 质量（1-100）"
+            }
+          ],
+          "embed_workflow": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "tooltip": "是否嵌入 ComfyUI 工作流数据（仅 PNG 格式支持）"
+            }
+          ],
+          "save_clean_copy": [
+            "BOOLEAN",
+            {
+              "default": false,
+              "tooltip": "额外保存无工作流和元数据的纯净副本"
+            }
+          ],
+          "enable_preview": [
+            "BOOLEAN",
+            {
+              "default": false,
+              "tooltip": "是否在界面显示预览（关闭后仅保存文件）"
+            }
+          ]
+        },
+        "optional": {
+          "positive_prompt": [
+            "STRING",
+            {
+              "forceInput": true,
+              "tooltip": "正面提示词（可选直接输入）"
+            }
+          ],
+          "negative_prompt": [
+            "STRING",
+            {
+              "forceInput": true,
+              "tooltip": "负面提示词（可选直接输入）"
+            }
+          ],
+          "lora_syntax": [
+            "STRING",
+            {
+              "forceInput": true,
+              "tooltip": "LoRA 语法字符串（可选直接输入）"
+            }
+          ],
+          "checkpoint_name": [
+            "STRING",
+            {
+              "forceInput": true,
+              "tooltip": "手动传入checkpoint模型名称（优先级最高）"
+            }
+          ]
+        },
+        "hidden": {
+          "prompt": "PROMPT",
+          "extra_pnginfo": "EXTRA_PNGINFO"
+        }
+      },
+      "input_order": {
+        "required": [
+          "images",
+          "enable",
+          "filename_prefix",
+          "file_format",
+          "quality",
+          "embed_workflow",
+          "save_clean_copy",
+          "enable_preview"
+        ],
+        "optional": [
+          "positive_prompt",
+          "negative_prompt",
+          "lora_syntax",
+          "checkpoint_name"
+        ],
+        "hidden": [
+          "prompt",
+          "extra_pnginfo"
+        ]
+      },
+      "is_input_list": false,
+      "output": [],
+      "output_is_list": [],
+      "output_name": [],
+      "name": "SaveImagePlus",
+      "display_name": "保存图像增强版 (Save Image Plus)",
+      "description": "保存图像并嵌入 A1111 格式元数据，支持直接传入提示词和 LoRA 语法",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "danbooru",
+      "output_node": true,
+      "search_aliases": []
+    },
+    "GroupMuteManager": {
+      "input": {
+        "required": {},
+        "optional": {},
+        "hidden": {
+          "unique_id": "UNIQUE_ID"
+        }
+      },
+      "input_order": {
+        "required": [],
+        "optional": [],
+        "hidden": [
+          "unique_id"
+        ]
+      },
+      "is_input_list": false,
+      "output": [],
+      "output_is_list": [],
+      "output_name": [],
+      "name": "GroupMuteManager",
+      "display_name": "组静音管理器 (Group Mute Manager)",
+      "description": "组静音管理器，用于可视化管理组的 mute 状态和配置组间联动规则",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "danbooru",
+      "output_node": true,
+      "search_aliases": []
+    },
+    "WorkflowDescription": {
+      "input": {
+        "required": {},
+        "optional": {},
+        "hidden": {
+          "unique_id": "UNIQUE_ID"
+        }
+      },
+      "input_order": {
+        "required": [],
+        "optional": [],
+        "hidden": [
+          "unique_id"
+        ]
+      },
+      "is_input_list": false,
+      "output": [],
+      "output_is_list": [],
+      "output_name": [],
+      "name": "WorkflowDescription",
+      "display_name": "工作流说明 (Workflow Description)",
+      "description": "工作流说明节点，支持Markdown渲染、基于版本号的首次打开提示等功能",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "danbooru",
+      "output_node": true,
+      "search_aliases": []
+    },
+    "easy controlnetNames": {
+      "input": {
+        "required": {
+          "controlnet_name": [
+            [
+              "noobaiXLControlnet_epsTile.safetensors"
+            ]
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "controlnet_name"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "*"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "controlnet_name"
+      ],
+      "name": "easy controlnetNames",
+      "display_name": "ControlNet Names",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "EasyUse/Util",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "easy globalSeed": {
+      "input": {
+        "required": {
+          "value": [
+            "INT",
+            {
+              "default": 0,
+              "min": 0,
+              "max": 1125899906842624
+            }
+          ],
+          "mode": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "label_on": "control_before_generate",
+              "label_off": "control_after_generate"
+            }
+          ],
+          "action": [
+            [
+              "fixed",
+              "increment",
+              "decrement",
+              "randomize",
+              "increment for each node",
+              "decrement for each node",
+              "randomize for each node"
+            ]
+          ],
+          "last_seed": [
+            "STRING",
+            {
+              "default": ""
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "value",
+          "mode",
+          "action",
+          "last_seed"
+        ]
+      },
+      "is_input_list": false,
+      "output": [],
+      "output_is_list": [],
+      "output_name": [],
+      "name": "easy globalSeed",
+      "display_name": "EasyGlobalSeed",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "EasyUse/Seed",
+      "output_node": true,
+      "search_aliases": []
+    },
+    "easy promptConcat": {
+      "input": {
+        "required": {},
+        "optional": {
+          "prompt1": [
+            "STRING",
+            {
+              "default": "",
+              "forceInput": true,
+              "multiline": false
+            }
+          ],
+          "prompt2": [
+            "STRING",
+            {
+              "default": "",
+              "forceInput": true,
+              "multiline": false
+            }
+          ],
+          "separator": [
+            "STRING",
+            {
+              "default": "",
+              "multiline": false
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [],
+        "optional": [
+          "prompt1",
+          "prompt2",
+          "separator"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "STRING"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "prompt"
+      ],
+      "output_tooltips": [
+        null
+      ],
+      "output_matchtypes": null,
+      "name": "easy promptConcat",
+      "display_name": null,
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "EasyUse/Prompt",
+      "output_node": false,
+      "deprecated": false,
+      "experimental": false,
+      "dev_only": false,
+      "api_node": false,
+      "price_badge": null,
+      "search_aliases": null
+    },
+    "easy boolean": {
+      "input": {
+        "required": {
+          "value": [
+            "BOOLEAN",
+            {
+              "default": false
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "value"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "BOOLEAN"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "boolean"
+      ],
+      "name": "easy boolean",
+      "display_name": "Boolean",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "EasyUse/Logic/Type",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "easy compare": {
+      "input": {
+        "optional": {
+          "a": [
+            "*",
+            {
+              "default": 0
+            }
+          ],
+          "b": [
+            "*",
+            {
+              "default": 0
+            }
+          ],
+          "comparison": [
+            [
+              "a == b",
+              "a != b",
+              "a < b",
+              "a > b",
+              "a <= b",
+              "a >= b",
+              "a > 0",
+              "a <= 0",
+              "b > 0",
+              "b <= 0"
+            ],
+            {
+              "default": "a == b"
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "optional": [
+          "a",
+          "b",
+          "comparison"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "BOOLEAN"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "boolean"
+      ],
+      "name": "easy compare",
+      "display_name": "Compare",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "EasyUse/Logic/Math",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "easy ab": {
+      "input": {
+        "required": {
+          "A or B": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "label_on": "A",
+              "label_off": "B"
+            }
+          ],
+          "in": [
+            "*"
+          ]
+        },
+        "hidden": {
+          "unique_id": "UNIQUE_ID"
+        }
+      },
+      "input_order": {
+        "required": [
+          "A or B",
+          "in"
+        ],
+        "hidden": [
+          "unique_id"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "*",
+        "*"
+      ],
+      "output_is_list": [
+        false,
+        false
+      ],
+      "output_name": [
+        "A",
+        "B"
+      ],
+      "name": "easy ab",
+      "display_name": "A or B",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "EasyUse/Logic",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "easy ifElse": {
+      "input": {
+        "required": {
+          "boolean": [
+            "BOOLEAN"
+          ],
+          "on_true": [
+            "*",
+            {
+              "lazy": true
+            }
+          ],
+          "on_false": [
+            "*",
+            {
+              "lazy": true
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "boolean",
+          "on_true",
+          "on_false"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "*"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "*"
+      ],
+      "name": "easy ifElse",
+      "display_name": "If else",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "EasyUse/Logic",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "easy cleanGpuUsed": {
+      "input": {
+        "required": {
+          "anything": [
+            "*",
+            {}
+          ]
+        },
+        "optional": {},
+        "hidden": {
+          "unique_id": "UNIQUE_ID",
+          "extra_pnginfo": "EXTRA_PNGINFO"
+        }
+      },
+      "input_order": {
+        "required": [
+          "anything"
+        ],
+        "optional": [],
+        "hidden": [
+          "unique_id",
+          "extra_pnginfo"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "*"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "output"
+      ],
+      "name": "easy cleanGpuUsed",
+      "display_name": "Clean VRAM Used",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "EasyUse/Logic",
+      "output_node": true,
+      "search_aliases": []
+    },
+    "FreeMemoryImage": {
+      "input": {
+        "required": {
+          "image": [
+            "IMAGE"
+          ],
+          "aggressive": [
+            "BOOLEAN",
+            {
+              "default": false
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "image",
+          "aggressive"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "IMAGE"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "IMAGE"
+      ],
+      "name": "FreeMemoryImage",
+      "display_name": "Free Memory (Image)",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "Memory Management",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "ImpactIfNone": {
+      "input": {
+        "required": {},
+        "optional": {
+          "signal": [
+            "*"
+          ],
+          "any_input": [
+            "*"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [],
+        "optional": [
+          "signal",
+          "any_input"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "*",
+        "BOOLEAN"
+      ],
+      "output_is_list": [
+        false,
+        false
+      ],
+      "output_name": [
+        "signal_opt",
+        "bool"
+      ],
+      "name": "ImpactIfNone",
+      "display_name": "ImpactIfNone",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "ImpactPack/Logic",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "ImpactLogicalOperators": {
+      "input": {
+        "required": {
+          "operator": [
+            [
+              "and",
+              "or",
+              "xor"
+            ]
+          ],
+          "bool_a": [
+            "BOOLEAN",
+            {
+              "forceInput": true
+            }
+          ],
+          "bool_b": [
+            "BOOLEAN",
+            {
+              "forceInput": true
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "operator",
+          "bool_a",
+          "bool_b"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "BOOLEAN"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "BOOLEAN"
+      ],
+      "name": "ImpactLogicalOperators",
+      "display_name": "ImpactLogicalOperators",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "ImpactPack/Logic",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "ImagePass": {
+      "input": {
+        "required": {},
+        "optional": {
+          "image": [
+            "IMAGE"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [],
+        "optional": [
+          "image"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "IMAGE"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "IMAGE"
+      ],
+      "name": "ImagePass",
+      "display_name": "ImagePass",
+      "description": "\nPasses the image through without modifying it.\n",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "KJNodes/image",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "ModelPassThrough": {
+      "input": {
+        "required": {},
+        "optional": {
+          "model": [
+            "MODEL"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [],
+        "optional": [
+          "model"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "MODEL"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "model"
+      ],
+      "name": "ModelPassThrough",
+      "display_name": "ModelPass",
+      "description": "\n    Simply passes through the model,\n    workaround for Set node not allowing bypassed inputs.\n",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "KJNodes/misc",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "Lora Loader (LoraManager)": {
+      "input": {
+        "required": {
+          "model": [
+            "MODEL"
+          ],
+          "text": [
+            "STRING",
+            {
+              "multiline": true,
+              "pysssss.autocomplete": false,
+              "dynamicPrompts": true,
+              "tooltip": "Format: <lora:lora_name:strength> separated by spaces or punctuation",
+              "placeholder": "LoRA syntax input: <lora:name:strength>"
+            }
+          ]
+        },
+        "optional": {}
+      },
+      "input_order": {
+        "required": [
+          "model",
+          "text"
+        ],
+        "optional": []
+      },
+      "is_input_list": false,
+      "output": [
+        "MODEL",
+        "CLIP",
+        "STRING",
+        "STRING"
+      ],
+      "output_is_list": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "output_name": [
+        "MODEL",
+        "CLIP",
+        "trigger_words",
+        "loaded_loras"
+      ],
+      "name": "Lora Loader (LoraManager)",
+      "display_name": "Lora Loader (LoraManager)",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "Lora Manager/loaders",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "LoRA Text Loader (LoraManager)": {
+      "input": {
+        "required": {
+          "model": [
+            "MODEL"
+          ],
+          "lora_syntax": [
+            "STRING",
+            {
+              "forceInput": true,
+              "tooltip": "Format: <lora:lora_name:strength> separated by spaces or punctuation"
+            }
+          ]
+        },
+        "optional": {
+          "clip": [
+            "CLIP"
+          ],
+          "lora_stack": [
+            "LORA_STACK"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "model",
+          "lora_syntax"
+        ],
+        "optional": [
+          "clip",
+          "lora_stack"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "MODEL",
+        "CLIP",
+        "STRING",
+        "STRING"
+      ],
+      "output_is_list": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "output_name": [
+        "MODEL",
+        "CLIP",
+        "trigger_words",
+        "loaded_loras"
+      ],
+      "name": "LoRA Text Loader (LoraManager)",
+      "display_name": "LoRA Text Loader (LoraManager)",
+      "description": "",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "Lora Manager/loaders",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "TriggerWord Toggle (LoraManager)": {
+      "input": {
+        "required": {
+          "group_mode": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "tooltip": "When enabled, treats each group of trigger words as a single toggleable unit."
+            }
+          ],
+          "default_active": [
+            "BOOLEAN",
+            {
+              "default": true,
+              "tooltip": "Sets the default initial state (active or inactive) when trigger words are added."
+            }
+          ],
+          "allow_strength_adjustment": [
+            "BOOLEAN",
+            {
+              "default": false,
+              "tooltip": "Enable mouse wheel adjustment of each trigger word's strength."
+            }
+          ]
+        },
+        "optional": {},
+        "hidden": {
+          "id": "UNIQUE_ID"
+        }
+      },
+      "input_order": {
+        "required": [
+          "group_mode",
+          "default_active",
+          "allow_strength_adjustment"
+        ],
+        "optional": [],
+        "hidden": [
+          "id"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "STRING"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "filtered_trigger_words"
+      ],
+      "name": "TriggerWord Toggle (LoraManager)",
+      "display_name": "TriggerWord Toggle (LoraManager)",
+      "description": "Toggle trigger words on/off",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "Lora Manager/utils",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "PCTextEncode": {
+      "input": {
+        "required": {
+          "clip": [
+            "CLIP"
+          ],
+          "text": [
+            "STRING",
+            {
+              "multiline": true
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "clip",
+          "text"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "CONDITIONING"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "CONDITIONING"
+      ],
+      "name": "PCTextEncode",
+      "display_name": "PC: Text Encode (no scheduling)",
+      "description": "Encodes a prompt with extra goodies from Prompt Control. This node does *not* support scheduling",
+      "python_module": "custom_nodes.comfyui_fearnworksnodes",
+      "category": "promptcontrol",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "LogicNot": {
+      "input": {
+        "required": {
+          "bool": [
+            "BOOLEAN",
+            {
+              "default": true
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "bool"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "BOOLEAN",
+        "STRING"
+      ],
+      "output_is_list": [
+        false,
+        false
+      ],
+      "output_name": [
+        "not_bool",
+        "result"
+      ],
+      "name": "LogicNot",
+      "display_name": "Not",
+      "description": "",
+      "python_module": "custom_nodes.ComfyUI_Mira",
+      "category": "Mira/Logic",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "Support empty uncond": {
+      "input": {
+        "required": {
+          "model": [
+            "MODEL"
+          ],
+          "method": [
+            [
+              "from cond",
+              "divide by CFG"
+            ]
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "model",
+          "method"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "MODEL"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "MODEL"
+      ],
+      "name": "Support empty uncond",
+      "display_name": "Support empty uncond",
+      "description": "",
+      "python_module": "custom_nodes.pre_cfg_comfy_nodes_for_comfyui",
+      "category": "model_patches/Pre CFG",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "Context (rgthree)": {
+      "input": {
+        "required": {},
+        "optional": {
+          "base_ctx": [
+            "RGTHREE_CONTEXT"
+          ],
+          "model": [
+            "MODEL"
+          ],
+          "clip": [
+            "CLIP"
+          ],
+          "vae": [
+            "VAE"
+          ],
+          "positive": [
+            "CONDITIONING"
+          ],
+          "negative": [
+            "CONDITIONING"
+          ],
+          "latent": [
+            "LATENT"
+          ],
+          "images": [
+            "IMAGE"
+          ],
+          "seed": [
+            "INT",
+            {
+              "forceInput": true
+            }
+          ]
+        },
+        "hidden": {
+          "version": "FLOAT"
+        }
+      },
+      "input_order": {
+        "required": [],
+        "optional": [
+          "base_ctx",
+          "model",
+          "clip",
+          "vae",
+          "positive",
+          "negative",
+          "latent",
+          "images",
+          "seed"
+        ],
+        "hidden": [
+          "version"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "RGTHREE_CONTEXT",
+        "MODEL",
+        "CLIP",
+        "VAE",
+        "CONDITIONING",
+        "CONDITIONING",
+        "LATENT",
+        "IMAGE",
+        "INT"
+      ],
+      "output_is_list": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "output_name": [
+        "CONTEXT",
+        "MODEL",
+        "CLIP",
+        "VAE",
+        "POSITIVE",
+        "NEGATIVE",
+        "LATENT",
+        "IMAGE",
+        "SEED"
+      ],
+      "name": "Context (rgthree)",
+      "display_name": "Context (rgthree)",
+      "description": "",
+      "python_module": "custom_nodes.rgthree-comfy",
+      "category": "rgthree",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "Context Switch (rgthree)": {
+      "input": {
+        "required": {},
+        "optional": {}
+      },
+      "input_order": {
+        "required": [],
+        "optional": []
+      },
+      "is_input_list": false,
+      "output": [
+        "RGTHREE_CONTEXT",
+        "MODEL",
+        "CLIP",
+        "VAE",
+        "CONDITIONING",
+        "CONDITIONING",
+        "LATENT",
+        "IMAGE",
+        "INT"
+      ],
+      "output_is_list": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "output_name": [
+        "CONTEXT",
+        "MODEL",
+        "CLIP",
+        "VAE",
+        "POSITIVE",
+        "NEGATIVE",
+        "LATENT",
+        "IMAGE",
+        "SEED"
+      ],
+      "name": "Context Switch (rgthree)",
+      "display_name": "Context Switch (rgthree)",
+      "description": "",
+      "python_module": "custom_nodes.rgthree-comfy",
+      "category": "rgthree",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "KSampler Config (rgthree)": {
+      "input": {
+        "required": {
+          "steps_total": [
+            "INT",
+            {
+              "default": 30,
+              "min": 1,
+              "max": 16384,
+              "step": 1
+            }
+          ],
+          "refiner_step": [
+            "INT",
+            {
+              "default": 24,
+              "min": 1,
+              "max": 16384,
+              "step": 1
+            }
+          ],
+          "cfg": [
+            "FLOAT",
+            {
+              "default": 8,
+              "min": 0,
+              "max": 100,
+              "step": 0.5
+            }
+          ],
+          "sampler_name": [
+            [
+              "euler",
+              "euler_cfg_pp",
+              "euler_ancestral",
+              "euler_ancestral_cfg_pp",
+              "heun",
+              "heunpp2",
+              "exp_heun_2_x0",
+              "exp_heun_2_x0_sde",
+              "dpm_2",
+              "dpm_2_ancestral",
+              "lms",
+              "dpm_fast",
+              "dpm_adaptive",
+              "dpmpp_2s_ancestral",
+              "dpmpp_2s_ancestral_cfg_pp",
+              "dpmpp_sde",
+              "dpmpp_sde_gpu",
+              "dpmpp_2m",
+              "dpmpp_2m_cfg_pp",
+              "dpmpp_2m_sde",
+              "dpmpp_2m_sde_gpu",
+              "dpmpp_2m_sde_heun",
+              "dpmpp_2m_sde_heun_gpu",
+              "dpmpp_3m_sde",
+              "dpmpp_3m_sde_gpu",
+              "ddpm",
+              "lcm",
+              "ipndm",
+              "ipndm_v",
+              "deis",
+              "res_multistep",
+              "res_multistep_cfg_pp",
+              "res_multistep_ancestral",
+              "res_multistep_ancestral_cfg_pp",
+              "gradient_estimation",
+              "gradient_estimation_cfg_pp",
+              "er_sde",
+              "seeds_2",
+              "seeds_3",
+              "sa_solver",
+              "sa_solver_pece",
+              "ddim",
+              "uni_pc",
+              "uni_pc_bh2",
+              "er_sde_cns"
+            ]
+          ],
+          "scheduler": [
+            [
+              "simple",
+              "sgm_uniform",
+              "karras",
+              "exponential",
+              "ddim_uniform",
+              "beta",
+              "normal",
+              "linear_quadratic",
+              "kl_optimal"
+            ]
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "steps_total",
+          "refiner_step",
+          "cfg",
+          "sampler_name",
+          "scheduler"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "INT",
+        "INT",
+        "FLOAT",
+        [
+          "euler",
+          "euler_cfg_pp",
+          "euler_ancestral",
+          "euler_ancestral_cfg_pp",
+          "heun",
+          "heunpp2",
+          "exp_heun_2_x0",
+          "exp_heun_2_x0_sde",
+          "dpm_2",
+          "dpm_2_ancestral",
+          "lms",
+          "dpm_fast",
+          "dpm_adaptive",
+          "dpmpp_2s_ancestral",
+          "dpmpp_2s_ancestral_cfg_pp",
+          "dpmpp_sde",
+          "dpmpp_sde_gpu",
+          "dpmpp_2m",
+          "dpmpp_2m_cfg_pp",
+          "dpmpp_2m_sde",
+          "dpmpp_2m_sde_gpu",
+          "dpmpp_2m_sde_heun",
+          "dpmpp_2m_sde_heun_gpu",
+          "dpmpp_3m_sde",
+          "dpmpp_3m_sde_gpu",
+          "ddpm",
+          "lcm",
+          "ipndm",
+          "ipndm_v",
+          "deis",
+          "res_multistep",
+          "res_multistep_cfg_pp",
+          "res_multistep_ancestral",
+          "res_multistep_ancestral_cfg_pp",
+          "gradient_estimation",
+          "gradient_estimation_cfg_pp",
+          "er_sde",
+          "seeds_2",
+          "seeds_3",
+          "sa_solver",
+          "sa_solver_pece",
+          "ddim",
+          "uni_pc",
+          "uni_pc_bh2",
+          "er_sde_cns"
+        ],
+        [
+          "simple",
+          "sgm_uniform",
+          "karras",
+          "exponential",
+          "ddim_uniform",
+          "beta",
+          "normal",
+          "linear_quadratic",
+          "kl_optimal"
+        ]
+      ],
+      "output_is_list": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "output_name": [
+        "STEPS",
+        "REFINER_STEP",
+        "CFG",
+        "SAMPLER",
+        "SCHEDULER"
+      ],
+      "name": "KSampler Config (rgthree)",
+      "display_name": "KSampler Config (rgthree)",
+      "description": "",
+      "python_module": "custom_nodes.rgthree-comfy",
+      "category": "rgthree",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "Skimmed CFG": {
+      "input": {
+        "required": {
+          "model": [
+            "MODEL"
+          ],
+          "Skimming_CFG": [
+            "FLOAT",
+            {
+              "default": 7,
+              "min": 0,
+              "max": 10,
+              "step": 0.5,
+              "round": 0.01,
+              "tooltip": "The fallback scale for the ''bad'' values."
+            }
+          ],
+          "full_skim_negative": [
+            "BOOLEAN",
+            {
+              "default": false
+            }
+          ],
+          "disable_flipping_filter": [
+            "BOOLEAN",
+            {
+              "default": false
+            }
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "model",
+          "Skimming_CFG",
+          "full_skim_negative",
+          "disable_flipping_filter"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "MODEL"
+      ],
+      "output_is_list": [
+        false
+      ],
+      "output_name": [
+        "MODEL"
+      ],
+      "name": "Skimmed CFG",
+      "display_name": "Skimmed CFG",
+      "description": "",
+      "python_module": "custom_nodes.Skimmed_CFG",
+      "category": "model_patches/Pre CFG",
+      "output_node": false,
+      "search_aliases": []
+    },
+    "WeiLinPromptUI": {
+      "input": {
+        "required": {
+          "positive": [
+            "STRING",
+            {
+              "multiline": true,
+              "default": "",
+              "placeholder": "输入提示词"
+            }
+          ],
+          "auto_random": [
+            "BOOLEAN",
+            {
+              "default": false
+            }
+          ]
+        },
+        "optional": {
+          "lora_str": [
+            "STRING",
+            {
+              "multiline": true,
+              "default": "",
+              "placeholder": "Lora信息框"
+            }
+          ],
+          "temp_str": [
+            "STRING",
+            {
+              "multiline": true,
+              "default": "",
+              "placeholder": "temp prompt words"
+            }
+          ],
+          "temp_lora_str": [
+            "STRING",
+            {
+              "multiline": true,
+              "default": "",
+              "placeholder": "temp prompt words"
+            }
+          ],
+          "random_template": [
+            "STRING",
+            {
+              "multiline": true,
+              "default": "",
+              "placeholder": "random template path name"
+            }
+          ],
+          "opt_text": [
+            "*",
+            {
+              "default": ""
+            }
+          ],
+          "opt_clip": [
+            "CLIP"
+          ],
+          "opt_model": [
+            "MODEL"
+          ]
+        }
+      },
+      "input_order": {
+        "required": [
+          "positive",
+          "auto_random"
+        ],
+        "optional": [
+          "lora_str",
+          "temp_str",
+          "temp_lora_str",
+          "random_template",
+          "opt_text",
+          "opt_clip",
+          "opt_model"
+        ]
+      },
+      "is_input_list": false,
+      "output": [
+        "STRING",
+        "CONDITIONING",
+        "CLIP",
+        "MODEL"
+      ],
+      "output_is_list": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "output_name": [
+        "STRING",
+        "CONDITIONING",
+        "CLIP",
+        "MODEL"
+      ],
+      "name": "WeiLinPromptUI",
+      "display_name": "WeiLin 全能提示词编辑器",
+      "description": "",
+      "python_module": "custom_nodes.weilin-comfyui-tools",
+      "category": "WeiLin-Tools-节点工具",
+      "output_node": true,
+      "search_aliases": []
+    }
+  },
+  "activeWorkflowId": "wf_3aa839c7-6c93-4f93-a0c3-9399e1242916",
+  "slots": {},
+  "modelCatalog": {
+    "checkpoints": [
+      "amt-g.pth",
+      "amt-l.pth",
+      "amt-s.pth",
+      "anikawaxl_v4.safetensors",
+      "depth_anything_v2_vitb.pth",
+      "depth_anything_v2_vitg.pth",
+      "depth_anything_v2_vitl.pth",
+      "depth_anything_v2_vits.pth",
+      "depth_anything_vitb14.pth",
+      "depth_anything_vitl14.pth",
+      "depth_anything_vits14.pth",
+      "film_net_fp32.pt",
+      "FLAVR_2x.pth",
+      "FLAVR_4x.pth",
+      "FLAVR_8x.pth",
+      "gmflow-scale1-mixdata.pth",
+      "gmflow-scale2-mixdata.pth",
+      "gmflow-scale2-regrefine6-mixdata.pth",
+      "GMFSS_fortuna",
+      "GMFSS_fortuna_union",
+      "gopro_amt-s.pth",
+      "IFRNet_L_GoPro.pth",
+      "IFRNet_L_Vimeo90K.pth",
+      "IFRNet_S_GoPro.pth",
+      "IFRNet_S_Vimeo90K.pth",
+      "IFUNet.pth",
+      "illustrijEVO_lvl2.safetensors",
+      "M2M.pth",
+      "oneObsession_1424DNsfw.safetensors",
+      "oneObsession_v16Noobai.safetensors",
+      "pretrained_cain.pth",
+      "rife40.pth",
+      "rife41.pth",
+      "rife42.pth",
+      "rife43.pth",
+      "rife44.pth",
+      "rife45.pth",
+      "rife46.pth",
+      "rife47.pth",
+      "rife48.pth",
+      "rife49.pth",
+      "sepconv.pth",
+      "stmfnet.pth",
+      "sudo_rife4_269.662_testV1_scale1.pth",
+      "waiIllustriousSDXL_v160.safetensors"
+    ],
+    "unets": [
+      "animaMixstyleSnow_v10.safetensors",
+      "miaomiaoAnimeReality_ani10.safetensors",
+      "zImageTurboQuantized_fp8ScaledE4m3fnKJ.safetensors"
+    ],
+    "loras": [
+      "748cmSDXL.safetensors",
+      "菲比 鸣潮.safetensors",
+      "海瑟音.safetensors",
+      "卡提西亚.safetensors",
+      "坎特蕾拉.safetensors",
+      "柯莱塔2.safetensors",
+      "珂莱塔.safetensors",
+      "刻律德菈.safetensors",
+      "捆绑.safetensors",
+      "离恨烟.safetensors",
+      "少司缘.safetensors",
+      "云缨.safetensors",
+      "粘土风格模拟.safetensors",
+      "Buttocks_Wall_r1.safetensors",
+      "chen-bin_V3.9.safetensors",
+      "cunny_animaV1.0-000009.safetensors",
+      "CunnyFunky_style_illu_v2.safetensors",
+      "cunnyfunkystyle2.safetensors",
+      "CunnystyleV8.4-000016.safetensors",
+      "CunnystyleV9.2-000022.safetensors",
+      "Eyes_for_Illustrious_Lora_Perfect_anime_eyes.safetensors",
+      "gpt-image-2_anima-base1_v1-1.safetensors",
+      "gtz-000015.safetensors",
+      "ill-xl-01-pvc_2-000030.safetensors",
+      "Illustrious\\character\\3D国漫风.safetensors",
+      "Illustrious\\concept\\反省板拘束.safetensors",
+      "Illustrious\\concept\\拘束椅子.safetensors",
+      "Illustrious\\concept\\框架拘束.safetensors",
+      "Illustrious\\concept\\手足拘束.safetensors",
+      "Illustrious\\concept\\束缚架拘束.safetensors",
+      "Illustrious\\concept\\束胸.safetensors",
+      "Illustrious\\concept\\性拘束.safetensors",
+      "Illustrious\\concept\\砧板鱼肉束缚.safetensors",
+      "Illustrious\\concept\\display 束缚.safetensors",
+      "Illustrious\\poses\\性爱机器.safetensors",
+      "Illustrious\\realistic\\可爱捏Th4llo_Jost4r_style.safetensors",
+      "Illustrious\\style\\特定素描画风.safetensors",
+      "intrinsic_lora_sd15_albedo.safetensors",
+      "intrinsic_lora_sd15_depth.safetensors",
+      "intrinsic_lora_sd15_normal.safetensors",
+      "intrinsic_lora_sd15_shading.safetensors",
+      "intrinsic_loras.txt",
+      "mix_of_ai_and_non_ai_styles_noob-vpred-1.0_v3.22-edm2-pass-dark.safetensors",
+      "mixed_styles_anima-base1_v5.safetensors",
+      "NoobAI\\concept\\开腿束缚.safetensors",
+      "NoobAI\\concept\\肉便器.safetensors",
+      "QAQv2p2-150.safetensors",
+      "QAQv4.safetensors",
+      "QAQv5p2_IL-40.safetensors",
+      "Robertlu1021_chen_qianyu_(arknights) _v2.1_epoch_11.safetensors",
+      "style_strength_controller_illus01_v1.safetensors",
+      "USNR_STYLE_NB_Vpred_V3-000019.safetensors"
+    ],
+    "vaes": [
+      "ae.safetensors",
+      "Baked VAE",
+      "pixel_space",
+      "qwen_image_vae.safetensors",
+      "sdxl\\liquid111vae_sdxl9745VAE.safetensors"
+    ],
+    "fetchedAt": 1789963376897,
+    "nodeClasses": 3499
+  }
 }

@@ -20,7 +20,18 @@ from backend.mio_library import LibraryError
 MODEL_EXT = re.compile(r'\.(safetensors|ckpt|pt|pth|bin|gguf|sft|pkl)$', re.I)
 STRONG_MODEL_KEYS = re.compile(r'^(ckpt_name|unet_name)$', re.I)
 WEAK_MODEL_KEYS = re.compile(r'^(checkpoint|ckpt|model_name|model|model_path|diffusion_model|base_model|unet|transformer)$', re.I)
-NOT_MODEL = re.compile(r'lora|vae|clip|control|upscale|ipadapter|adapter|embedding|face|detect|bbox|segm|sam\b|encoder|tokenizer|scheduler|style|instantid|photomaker|pulid|insight|onnx|preprocessor|depth|pose|animatediff|motion|gligen|hypernet|audio|llm|florence|vision|refiner_', re.I)
+NOT_MODEL = re.compile(
+    r'lora|vae|clip|control|upscale|ipadapter|adapter|embedding|face|detect|bbox|segm|sam\b|'
+    r'encoder|tokenizer|scheduler|style|instantid|photomaker|pulid|insight|onnx|preprocessor|'
+    r'depth|pose|animatediff|motion|gligen|hypernet|audio|llm|florence|vision|refiner_|'
+    r'interpolation|vfi|rife|ifrnet|film|esrgan|realesrgan|gfpgan|codeformer|rembg|segmentation|'
+    r'matting|depthanything|midas|zoe|openpose|dwpose|lama|inpaint_model|facerestore',
+    re.I
+)
+NOT_MODEL_FILE = re.compile(
+    r'ifrnet|ifunet|rife|vimeo|gopro|film_net|_vfi\b|esrgan|gfpgan|codeformer|depth_anything|openpose|dwpose|insightface',
+    re.I
+)
 MODEL_CLASS = re.compile(r'checkpoint|unet|diffusion|model.?loader|dit.?loader', re.I)
 STACK_KEY = re.compile(r'^(lora|lora_name)_?(\d+)$', re.I)
 CHAIN_NAME_KEYS = ['lora_name', 'lora']
@@ -100,15 +111,19 @@ def _consumer_index(workflow):
 def catalog_from_object_info(object_info):
     lists = {'checkpoints': set(), 'unets': set(), 'loras': set(), 'vaes': set()}
     kinds = {'ckpt_name': 'checkpoints', 'unet_name': 'unets', 'lora_name': 'loras', 'vae_name': 'vaes'}
-    for definition in (object_info or {}).values():
+    for class_type, definition in (object_info or {}).items():
         inputs = definition.get('input', {}) if isinstance(definition, dict) else {}
         for group in (inputs.get('required') or {}, inputs.get('optional') or {}):
             for field, rule in group.items():
                 kind = kinds.get(field)
                 if not kind or not isinstance(rule, list) or not rule or not isinstance(rule[0], list):
                     continue
+                if kind in ('checkpoints', 'unets') and NOT_MODEL.search(class_type):
+                    continue
                 for option in rule[0]:
                     if isinstance(option, str) and option and option != 'None':
+                        if (kind in ('checkpoints', 'unets')) and NOT_MODEL_FILE.search(option):
+                            continue
                         lists[kind].add(option)
     return {k: sorted(v, key=lambda s: s.lower()) for k, v in lists.items()}
 
@@ -286,9 +301,12 @@ def _mirror_path_for(node, workflow):
 
 def syntax_candidates(workflow):
     found = []
+    consumers = _consumer_index(workflow)
     for node_id in _node_ids(workflow):
         node = workflow[node_id]
         class_type = str(node.get('class_type') or '')
+        if not consumers.get(node_id):
+            continue
         for key, value in node['inputs'].items():
             if not isinstance(value, str):
                 continue
@@ -319,12 +337,12 @@ def detect(workflow, object_info=None, positive=None):
     model = model_candidates(workflow, object_info)
     syntax, chain, stack = syntax_candidates(workflow), ordered_chain(workflow, ''), stack_candidates(workflow)
     positive = positive if isinstance(positive, dict) else None
-    if syntax and syntax[0]['score'] >= 2:
-        recommended = {'mode': 'syntax', 'nodeId': syntax[0]['nodeId'], 'path': syntax[0]['path'], 'assumed': False}
-    elif chain:
+    if chain:
         recommended = {'mode': 'chain', 'nodeId': chain[0]['nodeId'], 'path': chain[0]['namePath'], 'assumed': False}
     elif stack:
         recommended = {'mode': 'stack', 'nodeId': stack[0]['nodeId'], 'path': stack[0]['slots'][0]['namePath'], 'assumed': False}
+    elif syntax and syntax[0]['score'] >= 2:
+        recommended = {'mode': 'syntax', 'nodeId': syntax[0]['nodeId'], 'path': syntax[0]['path'], 'assumed': False}
     elif (positive and positive.get('nodeId') and str(positive['nodeId']) in workflow
           and '/' not in str(positive.get('path') or '')[1:]):
         recommended = {'mode': 'syntax', 'nodeId': str(positive['nodeId']),
