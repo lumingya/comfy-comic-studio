@@ -11,9 +11,11 @@ async function attachAlbumMetadata(html,books,options={},signal){
   const doc=new DOMParser().parseFromString(html,'text/html'),payload={schema:'mio.album-html.v1',books:[]},assets=new Map();let bytes=html.length;
   const holder=doc.createElement('template');holder.id='mio-shared-assets';
   const requested=exportImageProfile(options.effectiveImageProfile||options.imageProfile),profile=requested==='auto'?'clean':requested;
+  const imgMap = new Map();
+  for(const im of doc.querySelectorAll('img')){const src=im.getAttribute('src');if(src&&!imgMap.has(src))imgMap.set(src,im)}
   /* Frames arrive already processed by prepareExportBooks; only shared reference images still need the same treatment. */
   async function asset(src,prepared=false){if(!src)return '';const data=prepared&&src.startsWith('data:image/')?src:(await exportFrameImage(src,profile,signal)).image;if(assets.has(data))return {$mioImage:assets.get(data)};const key='asset_'+assets.size;assets.set(data,key);
-    const existing=[...doc.querySelectorAll('img')].find(im=>im.getAttribute('src')===data),image=existing||doc.createElement('img');image.setAttribute('data-mio-asset',key);if(!existing){image.src=data;holder.content.append(image);bytes+=data.length}if(bytes>192*1024*1024)throw Error('画册与附带素材超过 192 MiB，请拆分导出。');return {$mioImage:key};
+    const existing=imgMap.get(data),image=existing||doc.createElement('img');image.setAttribute('data-mio-asset',key);if(!existing){image.src=data;imgMap.set(data,image);holder.content.append(image);bytes+=data.length}return {$mioImage:key};
   }
   async function references(value){if(typeof value==='string'&&/^(data:image\/|\/images\/)/.test(value))return asset(value);if(Array.isArray(value))return Promise.all(value.map(references));if(value&&typeof value==='object'){const result={};for(const [k,v]of Object.entries(value)){if(['__proto__','prototype','constructor'].includes(k)||k.startsWith('_'))continue;result[k]=await references(v)}return result}return value}
   for(const prepared of books){const source=bookBy(prepared.id)||prepared,item={album:sharedFields(prepared,['title','characterName','synopsis','tags','totalSteps','coverPresentation']),storyboard:null,variables:null};item.album.steps=[];
@@ -22,5 +24,6 @@ async function attachAlbumMetadata(html,books,options={},signal){
     payload.books.push(item);
   }
   if(holder.content.childNodes.length)doc.body.append(holder);
-  const metadata=doc.createElement('script');metadata.id='mio-album-data';metadata.type='application/json';metadata.textContent=JSON.stringify(payload).replace(/[<>&]/g,c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0'));if(metadata.textContent.length>16*1024*1024)throw Error('源分镜与变量描述超过 16 MiB。');doc.body.append(metadata);return '<!DOCTYPE html>\n'+doc.documentElement.outerHTML;
+  const metadata=doc.createElement('script');metadata.id='mio-album-data';metadata.type='application/json';metadata.textContent=JSON.stringify(payload).replace(/[<>&]/g,c=>'\\u'+c.charCodeAt(0).toString(16).padStart(4,'0'));if(metadata.textContent.length>64*1024*1024)throw Error('源分镜与变量描述超过 64 MiB。');doc.body.append(metadata);
+  try{return '<!DOCTYPE html>\n'+doc.documentElement.outerHTML;}catch(e){if(e instanceof RangeError||e?.message?.includes('string length'))throw Error('画册体积已超出浏览器单字符串 512 MiB 极限，请使用离线 ZIP 格式分发。');throw e;}
 }

@@ -36,16 +36,26 @@ function installContextualSharing(){
     const destination=state.activeProjectId,targetPlanId=selectedPlan()?.id;
     flushEditor();
     pickFile(kind==='albums'?'.html,.htm,.json,.zip':'.json,.zip',async file=>{
-      if(file.size>192*1024*1024)throw Error('分享包最大 192 MiB。');
+      if(file.size>600*1024*1024)throw Error('分享包最大 600 MiB。');
       const body={projectId:destination,expectedKind:kind};
-      if(/\.html?$/i.test(file.name))body.html=await file.text();
-      else if(file.name.toLowerCase().endsWith('.zip'))body.zip=(await blobData(file)).split(',')[1];
+      if(/\.html?$/i.test(file.name)){
+        if(file.size>480*1024*1024)throw Error('单文件 HTML 受浏览器单字符串与 JSON 传输限制，导入建议在 480 MiB 以内，超出请使用离线 ZIP 分发。');
+        body.html=await file.text();
+      }
+      else if(file.name.toLowerCase().endsWith('.zip')){
+        if(file.size>380*1024*1024)throw Error('ZIP 分享包经由浏览器 Base64 传输最大支持 380 MiB，超出请直接放置到数据目录或分包导入。');
+        body.zip=(await blobData(file)).split(',')[1];
+      }
       else body.document=JSON.parse(await file.text(),(key,value)=>{if(['__proto__','prototype','constructor'].includes(key))throw Error('文件含不安全的 JSON 字段。');return value});
-      const response=await request('/api/library/inspect',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)},90000),info=await response.json();
+      let inspectPayload;
+      try{inspectPayload=JSON.stringify(body)}catch(e){if(e instanceof RangeError||e?.message?.includes('string length'))throw Error('文件体积过大，经 JSON 传输超出浏览器单字符串 512 MiB 极限，请改用 ZIP 格式导入。');throw e}
+      const response=await request('/api/library/inspect',{method:'POST',headers:{'Content-Type':'application/json'},body:inspectPayload},90000),info=await response.json();
       const include=await confirmResourceImport(info);if(!include)return;body.include=include;
       if(state.activeProjectId!==destination||activeJobs())throw Error('工作区或任务状态已变化，请重新选择导入。');
       flushEditor();if(!await ComfyComic.sync.save())throw Error('请先解决当前编辑的保存冲突，文件尚未导入。');
-      const result=await(await request('/api/library/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)},90000)).json();
+      let importPayload;
+      try{importPayload=JSON.stringify(body)}catch(e){if(e instanceof RangeError||e?.message?.includes('string length'))throw Error('文件体积过大，经 JSON 传输超出浏览器单字符串 512 MiB 极限，请改用 ZIP 格式导入。');throw e}
+      const result=await(await request('/api/library/import',{method:'POST',headers:{'Content-Type':'application/json'},body:importPayload},90000)).json();
       if(!result.ok)throw Error('导入未确认，请先扫描并重新读取，不要重复提交。');
       await connectPythonBackend();
       if(state.creation.plans.some(p=>p.id===targetPlanId))createUI.planId=targetPlanId;

@@ -2,14 +2,176 @@
   "globals": {},
   "ui": {
     "comfyStudio": {
+      "installedPackages": [],
+      "workspaceId": "workspace_d826da03-879f-4d9a-89b1-c5436a1f56cb",
+      "studio": {
+        "visibility": {
+          "gallery": true,
+          "storyboard": true,
+          "matrix": true,
+          "engine": true,
+          "llm": false,
+          "logs": false,
+          "extensions": false,
+          "marketplace": false
+        },
+        "features": {
+          "assistant": true,
+          "visualCritic": false,
+          "executionLogs": true
+        },
+        "appearance": {
+          "theme": "dark",
+          "density": "comfortable",
+          "reduceMotion": false,
+          "showMetrics": false
+        },
+        "reader": {
+          "defaultMode": "focus"
+        },
+        "export": {
+          "templateId": "export-paper",
+          "showCaptions": true,
+          "showPrompts": false,
+          "border": 0,
+          "imageProfile": "auto"
+        },
+        "assistant": {
+          "confirmChanges": true
+        },
+        "shell": {
+          "collapsed": false
+        },
+        "creationMigration": 1
+      },
       "creation": {
         "version": 1,
         "migratedAt": 1789289075315
       },
+      "settings": {
+        "negative": "low quality, bad anatomy, extra fingers, text, watermark",
+        "syncUrl": "",
+        "autoCritique": false,
+        "signature": "我的工作室",
+        "presentation": {
+          "version": 1,
+          "lab": {
+            "refine": false,
+            "mask": false
+          },
+          "fonts": false,
+          "readerMode": "spread",
+          "homeLayout": "grid",
+          "defaultReaderMode": "webtoon",
+          "language": "zh-CN",
+          "lettering": "calligraphy",
+          "demoCleanupVersion": 2,
+          "bookOrder": {
+            "collection_summer": [
+              "edition_letter"
+            ]
+          },
+          "collectionSort": "manual",
+          "hideFirstRun": true,
+          "theme": "dark"
+        },
+        "identity": {
+          "workspaceName": "我的工作室",
+          "creatorName": "",
+          "onboarded": true
+        },
+        "disk": {
+          "includeKeys": false
+        },
+        "critic": {
+          "mode": "real",
+          "connection": "independent",
+          "provider": "openai",
+          "baseUrl": "https://api.openai.com/v1",
+          "model": "gpt-4o",
+          "key": "",
+          "timeout": 60,
+          "includeReference": true,
+          "includePrevious": true,
+          "focus": "优先检查手部、面部结构、角色服装一致性、镜头构图与叙事可读性。",
+          "verification": null
+        },
+        "github": {
+          "repository": "",
+          "branch": "",
+          "path": ""
+        },
+        "tutorial": {
+          "seen": false,
+          "completed": false,
+          "readSteps": [],
+          "lastStep": 0
+        },
+        "backend": {
+          "enabled": true,
+          "baseUrl": "",
+          "loadPath": "/api/config",
+          "savePath": "/api/config",
+          "method": "POST",
+          "payloadField": "",
+          "responseField": ""
+        },
+        "imageGeneration": {
+          "active": "comfyui",
+          "profiles": [
+            {
+              "id": "comfyui",
+              "title": "ComfyUI",
+              "provider": "comfyui",
+              "keyMode": "none"
+            },
+            {
+              "id": "novelai",
+              "title": "NovelAI",
+              "provider": "novelai",
+              "baseUrl": "https://image.novelai.net",
+              "model": "nai-diffusion-4-5-full",
+              "sampler": "k_euler_ancestral",
+              "keyMode": "none"
+            },
+            {
+              "id": "openai",
+              "title": "OpenAI 兼容",
+              "provider": "openai",
+              "baseUrl": "https://api.openai.com/v1",
+              "model": "gpt-image-1",
+              "protocol": "images",
+              "size": "1024x1024",
+              "quality": "auto",
+              "sendSize": false,
+              "sendQuality": false,
+              "keyMode": "none",
+              "sendAspectHint": true
+            }
+          ]
+        },
+        "productionAssembly": {
+          "channelId": "comfyui",
+          "workflowId": "wf_a56d1f8e-14b9-4752-826b-d277d0094d47",
+          "overrides": {
+            "wf_a56d1f8e-14b9-4752-826b-d277d0094d47": {
+              "model": "",
+              "loras": [
+                {
+                  "name": "QAQv2p2-150",
+                  "strength": 0.58
+                },
+                {
+                  "name": "QAQv5p2_IL-40",
+                  "strength": 0.75
+                }
+              ]
+            }
+          }
+        }
+      },
       "activeProjectId": "collection_summer",
-      "workspaceId": "workspace_d826da03-879f-4d9a-89b1-c5436a1f56cb",
       "customColumns": [],
-      "installedPackages": [],
       "drafts": {
         "presetEdits": {
           "setting_nanami": {
@@ -120,168 +282,6 @@
             "updatedAt": 1789965282529
           }
         }
-      },
-      "settings": {
-        "negative": "low quality, bad anatomy, extra fingers, text, watermark",
-        "syncUrl": "",
-        "autoCritique": false,
-        "signature": "我的工作室",
-        "presentation": {
-          "version": 1,
-          "lab": {
-            "refine": false,
-            "mask": false
-          },
-          "fonts": false,
-          "readerMode": "spread",
-          "homeLayout": "grid",
-          "defaultReaderMode": "webtoon",
-          "language": "zh-CN",
-          "lettering": "calligraphy",
-          "demoCleanupVersion": 2,
-          "bookOrder": {
-            "collection_summer": [
-              "edition_letter"
-            ]
-          },
-          "collectionSort": "manual",
-          "hideFirstRun": false,
-          "theme": "dark"
-        },
-        "identity": {
-          "workspaceName": "我的工作室",
-          "creatorName": "",
-          "onboarded": true
-        },
-        "disk": {
-          "includeKeys": false
-        },
-        "critic": {
-          "mode": "real",
-          "connection": "independent",
-          "provider": "openai",
-          "baseUrl": "https://api.openai.com/v1",
-          "model": "gpt-4o",
-          "key": "",
-          "timeout": 60,
-          "includeReference": true,
-          "includePrevious": true,
-          "focus": "优先检查手部、面部结构、角色服装一致性、镜头构图与叙事可读性。",
-          "verification": null
-        },
-        "github": {
-          "repository": "",
-          "branch": "",
-          "path": ""
-        },
-        "tutorial": {
-          "seen": false,
-          "completed": false,
-          "readSteps": [],
-          "lastStep": 0
-        },
-        "backend": {
-          "enabled": true,
-          "baseUrl": "",
-          "loadPath": "/api/config",
-          "savePath": "/api/config",
-          "method": "POST",
-          "payloadField": "",
-          "responseField": ""
-        },
-        "imageGeneration": {
-          "active": "comfyui",
-          "profiles": [
-            {
-              "id": "comfyui",
-              "title": "ComfyUI",
-              "provider": "comfyui",
-              "keyMode": "none"
-            },
-            {
-              "id": "novelai",
-              "title": "NovelAI",
-              "provider": "novelai",
-              "baseUrl": "https://image.novelai.net",
-              "model": "nai-diffusion-4-5-full",
-              "sampler": "k_euler_ancestral",
-              "keyMode": "none"
-            },
-            {
-              "id": "openai",
-              "title": "OpenAI 兼容",
-              "provider": "openai",
-              "baseUrl": "https://api.openai.com/v1",
-              "model": "gpt-image-1",
-              "protocol": "images",
-              "size": "1024x1024",
-              "quality": "auto",
-              "sendSize": false,
-              "sendQuality": false,
-              "keyMode": "none",
-              "sendAspectHint": true
-            }
-          ]
-        },
-        "productionAssembly": {
-          "channelId": "comfyui",
-          "workflowId": "wf_a56d1f8e-14b9-4752-826b-d277d0094d47",
-          "overrides": {
-            "wf_a56d1f8e-14b9-4752-826b-d277d0094d47": {
-              "model": "",
-              "loras": [
-                {
-                  "name": "QAQv2p2-150",
-                  "strength": 0.58
-                },
-                {
-                  "name": "QAQv5p2_IL-40",
-                  "strength": 0.75
-                }
-              ]
-            }
-          }
-        }
-      },
-      "studio": {
-        "visibility": {
-          "gallery": true,
-          "storyboard": true,
-          "matrix": true,
-          "engine": true,
-          "llm": false,
-          "logs": false,
-          "extensions": false,
-          "marketplace": false
-        },
-        "features": {
-          "assistant": true,
-          "visualCritic": false,
-          "executionLogs": true
-        },
-        "appearance": {
-          "theme": "dark",
-          "density": "comfortable",
-          "reduceMotion": false,
-          "showMetrics": false
-        },
-        "reader": {
-          "defaultMode": "focus"
-        },
-        "export": {
-          "templateId": "export-paper",
-          "showCaptions": true,
-          "showPrompts": false,
-          "border": 0,
-          "imageProfile": "auto"
-        },
-        "assistant": {
-          "confirmChanges": true
-        },
-        "shell": {
-          "collapsed": false
-        },
-        "creationMigration": 1
       }
     }
   },
@@ -301,10 +301,10 @@
     ],
     "savedGalleries": [
       "album_585d7915b2eb4cf1bfbb4bd0d94ea555",
+      "album_7210359cbebc47d7bc7df8a4fdedb32a",
       "book_1b07b003-041a-404a-87d3-327c18985ff3",
       "book_5213ff35-ba03-416b-ab66-17a40177853c",
-      "edition_letter",
-      "album_7210359cbebc47d7bc7df8a4fdedb32a"
+      "edition_letter"
     ],
     "rows": [
       "character_nanami",
@@ -342,8 +342,7 @@
     "comfyWorkflows": [
       "wf_3aa839c7-6c93-4f93-a0c3-9399e1242916",
       "wf_a56d1f8e-14b9-4752-826b-d277d0094d47",
-      "wf_cd634804-bc38-4e41-99a1-f787c2182db8",
-      "wf_05578529-4f00-4a62-abeb-e35c46d8544d"
+      "wf_cd634804-bc38-4e41-99a1-f787c2182db8"
     ],
     "sessions": [
       "chat_letter",

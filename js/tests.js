@@ -586,7 +586,7 @@ add('export image profiles normalise to the shared vocabulary and keep auto as t
   assert.equal(context.exportImageProfile(undefined), 'auto');
   assert.equal(context.exportImageProfile('lossy'), 'auto');
   assert.equal(context.exportImageProfile('publish'), 'publish');
-  assert.equal(vm.runInContext('EXPORT_INLINE_BUDGET', context), 128 * 1024 * 1024);
+  assert.equal(vm.runInContext('EXPORT_INLINE_BUDGET', context), 512 * 1024 * 1024);
   assert.match(context.exportBudgetMessage('clean'), /轻量发布/);
   assert.match(context.exportBudgetMessage('publish'), /ZIP/);
   assert.match(context.exportImageSummary({ profile: 'publish', autoCompressed: true, scrubbed: 3, recompressed: 3, originalBytes: 300 * 1024 * 1024, inlineBytes: 20 * 1024 * 1024 }), /已自动改用轻量发布/);

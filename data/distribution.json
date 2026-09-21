@@ -42,7 +42,7 @@
     "catalog/reader-sizing.json": "3dee178ef5bae2eb319f70796ba305aacb538171e49db955f81bc06c7a1e3b6d",
     "catalog/rows.json": "eff703d5d89a008ccb9c46be29e31e874bbe2f341cd6af326088d688cb63ba17",
     "catalog/studioDefaults.json": "88fa054809c917392347d16cede7076a215513e0f88fd4e04bfe68d0602636c6",
-    "collections/夏日叙事集--ction_summer.json": "c951674e11439d01718f12dbb4dfd8cf199ff3a8859878526a7a8e4363b821d0",
+    "collections/夏日叙事集--ction_summer.json": "5d1cf5baf97a97025324f41dcffebfdd382e5a8a01316da04649d781204a0510",
     "layouts/余光 · AFTERGLOW--rt-afterglow.json": "d4971ab74c65a361af039b9dae62fe7260dc867fcd6eb163a0a46dd15b470ea7",
     "layouts/墨与叙事 · 漫画精装--export-ink.json": "b062fa68d87bc88c27f558aaff4565de92c2c20d90ed926870c20b022253716a",
     "layouts/无缝 · 纯图阅读--ort-seamless.json": "c1be66dc125aa874a931ca31ec7d37b66b6806bc6e201638d0d545119174b76e",
@@ -54,12 +54,12 @@
     "presets/characters/七海 · 标准角色设定--tting_nanami.json": "f949f07ea5802cd3d419e425dcb540c374b1fc3423c2b1bdbcaf686689409ef8",
     "records/characters/海风与未寄出的信--acter_nanami.json": "027c6c8b33e22270ba70d40dc3b26e516e5d3ceac59414ce4bf6a994d14933f2",
     "records/conversations/海风来信 · 分镜对话--chat_letter.json": "ff705899dc6ffcaaad7a195b2a9331dbd0ab4faa9d10f0478d6b0702cc2f53c7",
-    "settings/comfy.json": "b3fdfe8fddb51fbd47607d14324bb11a11dbebfdfbad1847a5bfa4918810dac0",
+    "settings/comfy.json": "fc0cf98ac24e852fb2125e78e05006d7fff504461693757034f122d44f716a92",
     "settings/llm.json": "86da8328506b2e34383e959cd9b952a4d601840c1e39e33bd934ce3b6c0faae0",
-    "settings/workspace.json": "1ff85c95bb5cf34bf6d58b4c9c321e9bab272249a08d7c325a699fee286147f8",
+    "settings/workspace.json": "d038580b249fe93ef5d3517443b497996ef2f45e0b1421e6abbfdb6c7534be09",
     "settings/xml.json": "221b26cab5a1388f62a9ae61c0971a7ca419839d29a8d1589d4a51f3cb7d3d30",
     "storyboards/远行与归来 · 十二幕--ry_journey12.json": "c0568b1f13dd32fb29df41cf6a2bb308bbb7a03f5c750f605797b1179f33e594",
-    "workflows/Anime · 基础图像管线--9399e1242916.json": "cbac40a40c7e1a31d12300570ea54d870bafccecf939bf07990744bd2d4b9255",
+    "workflows/Anime · 基础图像管线--9399e1242916.json": "65edf9451826d71e252587dedf1baafc0f744bea1456bbd3a2d91dd8599a16aa",
     "workspace.json": "e98cce4234fc36df8fe6fc7a8030b2ce43f335baa6f489b234a376fad267e677"
   }
 }

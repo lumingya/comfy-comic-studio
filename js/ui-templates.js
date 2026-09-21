@@ -157,7 +157,7 @@ function saveEditedTemplate(){
 }
 
 async function importExportTemplate(file){
-  if(file.size>9*1024*1024)throw Error('模板包不能超过 9 MiB。');
+  if(file.size>100*1024*1024)throw Error('模板包不能超过 100 MiB。');
   const t=parseExportTemplateFile(await file.text(),file.name);
   let error;try{validateExportTemplate(t)}catch(e){error=e.message}
   if(error){if(!await confirmAction('在编辑器中修复这份 HTML？',error+'\n文件尚未安装，也不会执行任何脚本。可补全占位符后保存。','打开为草稿'))return;openTemplateStudio(null,t);return}

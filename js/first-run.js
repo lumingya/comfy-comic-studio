@@ -32,18 +32,27 @@ function providerSetupHTML(p=activeImageProfile()){
 }
 function providerSetupFooter(){return `<div class="provider-next">${btn('编写分镜','arrow','first-run-continue','','primary')}</div>`}
 function assemblyInputIssues(storyId,presetIds,channel){
- const story=templateBy(storyId),values=Object.fromEntries(presetIds.flatMap(id=>(setBy(id)?.entries||[]).map(e=>[e.key,true]))),issues=[];
+ const story=templateBy(storyId),issues=[];
  for(const [i,f] of (story?.frames||[]).entries()){
   if(!f.prompt?.trim())issues.push('第 '+(i+1)+' 幕尚未填写正向提示词。');
-  const captionRaw=String(f.caption||'');
-  const missing=[...new Set([...captionRaw.matchAll(/\{([\p{L}\p{N}_]+)\}/gu)].filter(m=>{
-   const start=m.index,end=start+m[0].length;
-   return !(captionRaw[start-1]==='{'||captionRaw[end]==='}'||captionRaw[start-1]==='\\')&&!Object.hasOwn(values,m[1]);
-  }).map(m=>m[1]))];
-  if(missing.length)issues.push('第 '+(i+1)+' 幕台词缺少变量：'+missing.join('、'));
   if(channel?.provider==='novelai'&&['width','height'].some(k=>!Number.isInteger(Number(f[k]))||Number(f[k])<64||Number(f[k])>2048||Number(f[k])%64))issues.push('第 '+(i+1)+' 幕 NovelAI 宽高需为 64–2048 内的 64 倍数。');
  }
  return issues;
+}
+/* Variables the selected presets do not provide are a warning, not a blocker: production renders them blank (backend knownVariables policy) and the creator is told which ones. Prompt tokens count only when the collection defines the name somewhere, so NovelAI weights and authored braces are left alone; captions have no weight syntax, so every {token} counts. */
+function assemblyMissingVariables(storyId,presetIds){
+ const story=templateBy(storyId),values=Object.fromEntries(presetIds.flatMap(id=>(setBy(id)?.entries||[]).map(e=>[e.key,true]))),known=definedPromptNames(values),policy=globalThis.ComfyComic?.promptPolicy,found=new Map();
+ const note=(key,i)=>{if(!found.has(key))found.set(key,[]);if(!found.get(key).includes(i+1))found.get(key).push(i+1)};
+ for(const [i,f] of (story?.frames||[]).entries()){
+  if(policy)for(const text of [f.prompt,f.negative])for(const part of policy.tokens(String(text||''),known))if(part.type==='variable'&&!Object.hasOwn(values,part.key))note(part.key,i);
+  const captionRaw=String(f.caption||'');
+  for(const m of captionRaw.matchAll(/\{([\p{L}\p{N}_]+)\}/gu)){const start=m.index,end=start+m[0].length;if(captionRaw[start-1]==='{'||captionRaw[end]==='}'||captionRaw[start-1]==='\\'||Object.hasOwn(values,m[1]))continue;note(m[1],i)}
+ }
+ return [...found].map(([key,frames])=>({key,frames}));
+}
+function assemblyMissingVariableNotes(missing,total=0){
+ if(missing.length>4)return [missingVariablesNotice(missing.map(m=>m.key))];
+ return missing.map(({key,frames})=>'变量 {'+key+'} 未定义（'+(total&&frames.length===total?'全部 '+total+' 幕':'第 '+frames.join('、')+' 幕')+'），生成时会被替换为空。');
 }
 /* Non-blocking advisories: the book can still be queued, but the creator should know what will silently differ from their intent. */
 function assemblyPreflightNotices(storyId,presetIds,channel,workflow){
@@ -64,7 +73,7 @@ function assemblyPreflightNotices(storyId,presetIds,channel,workflow){
  }
  return notes;
 }
-function assemblyPreflightHTML(){const d=assemblyDesign,channel=designerChannel(),issues=assemblyInputIssues(d.storyId,[...d.presets],channel),notes=assemblyPreflightNotices(d.storyId,[...d.presets],channel,channel?.provider==='comfyui'?designerWorkflow():null);return `<div class="assembly-preflight ${issues.length?'setup-warning':''}" role="status"><strong>${issues.length?'检查分镜':'输入检查通过'}</strong>${issues.length?'<ul>'+issues.slice(0,8).map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul>':''}${notes.length?'<ul class="preflight-notes">'+notes.slice(0,4).map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul>':''}<p>共 ${templateBy(d.storyId)?.frames.length||0} 幕。</p></div>`}
+function assemblyPreflightHTML(){const d=assemblyDesign,channel=designerChannel(),issues=assemblyInputIssues(d.storyId,[...d.presets],channel),missing=assemblyMissingVariableNotes(assemblyMissingVariables(d.storyId,[...d.presets]),templateBy(d.storyId)?.frames.length||0),notes=[...missing,...assemblyPreflightNotices(d.storyId,[...d.presets],channel,channel?.provider==='comfyui'?designerWorkflow():null)];return `<div class="assembly-preflight ${issues.length?'setup-warning':''}" role="status"><strong>${issues.length?'检查分镜':missing.length?'可以生成 · 有变量未定义':'输入检查通过'}</strong>${issues.length?'<ul>'+issues.slice(0,8).map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul>':''}${notes.length?'<ul class="preflight-notes">'+notes.slice(0,6).map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul>':''}<p>共 ${templateBy(d.storyId)?.frames.length||0} 幕。</p></div>`}
 function installFirstRun(){
  [{"title": "选择图像渠道", "headline": "连接你的图像服务。", "description": "在渠道配置中选择 ComfyUI、NovelAI 或 OpenAI 兼容服务。", "checks": ["填写服务地址。", "选择模型并填写 API Key，或导入 ComfyUI API 工作流。"]}, {"title": "管理画册集", "headline": "为每个故事留一个位置。", "description": "使用顶部菜单新建或切换画册集。", "checks": ["新建画册集并填写名称。", "在画册集中整理和阅读作品。"]}, {"title": "编写分镜", "headline": "从一个镜头开始。", "description": "在创作工坊新建分镜，填写画面提示词与台词。", "checks": ["添加或调整分幕。", "选择角色、服装和画风预设。"]}, {"title": "装配与生成", "headline": "把分镜变成画面。", "description": "选择渠道、分镜和预设，添加生成任务。", "checks": ["在装配向导中确认配置。", "在任务卡点击开始，查看分幕进度。"]}, {"title": "阅读与编辑", "headline": "让每一帧更完整。", "description": "打开画册，调整图片、气泡和文字。", "checks": ["在阅读器中选择页面。", "点击编辑图片，保存修改。"]}, {"title": "导出画册", "headline": "把故事分享出去。", "description": "选择展示模板，导出 HTML、图片 ZIP 或 PDF。", "checks": ["选择版式与主题色。", "选择导出格式。"]}, {"title": "分享模板", "headline": "在 GitHub 上分享创作资源。", "description": "选择模板和目标仓库，上传或下载模板包。", "checks": ["填写仓库、分支和文件路径。", "检查文件后提交。"]}].forEach((copy,i)=>Object.assign(guideSteps[i],copy));
  Object.assign(guideSteps[0],{action:"first-run-config",label:"配置渠道",icon:"settings"});

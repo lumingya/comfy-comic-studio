@@ -55,9 +55,15 @@ def typed(entry):
     return value
 
 
-def interpolate(text, values, images=None, *, literal_unknown=True):
+def interpolate(text, values, images=None, *, literal_unknown=True, known=None, missing=None):
     blanks = []
     raw = str(text or "")
+
+    def record(key):
+        blanks.append(key)
+        if missing is not None and key not in missing:
+            missing.append(key)
+        return ""
 
     def replace(match):
         start, end = match.span()
@@ -74,8 +80,14 @@ def interpolate(text, values, images=None, *, literal_unknown=True):
             return match.group(0)
         key = match.group(1)
         if key not in values:
+            if known is not None:
+                if key in known:
+                    return record(key)
+                return match.group(0)
             if literal_unknown:
                 return match.group(0)
+            if missing is not None:
+                return record(key)
             raise LibraryError("缺少变量：" + key)
         value = values[key]
         if isinstance(value, dict) and value.get("kind") == "mio-image":
@@ -341,11 +353,13 @@ class ProductionAdapter:
         seed = body.get("seed", 1)
         if type(seed) is not int or not 0 <= seed < 2**32:
             raise LibraryError("种子必须为 uint32 整数")
+        project_id = body.get("projectId") or story.get("projectId")
         snapshot = durable_assets(
             self.host,
             {
                 "story": story,
                 "presets": presets,
+                "knownVariables": self.collection_variable_names(store, config, project_id, presets),
                 "channel": {
                     k: copy.deepcopy(profile[k]) for k in config_fields(profile["provider"]) if k in profile
                 },
@@ -353,7 +367,7 @@ class ProductionAdapter:
                 "globalNegative": global_negative if isinstance(global_negative, str) else "",
                 "overrides": overrides,
                 "seedEnabled": seed_enabled,
-                "projectId": body.get("projectId") or story.get("projectId"),
+                "projectId": project_id,
                 "seed": seed,
                 "preview": preview,
                 "previewPresetId": (
@@ -366,6 +380,44 @@ class ProductionAdapter:
         return self.eco.hooks.apply(
             "assemble.before", snapshot, {"title": body.get("title"), "preview": preview}
         )
+
+    @staticmethod
+    def collection_variable_names(store, config, project_id, presets):
+        """Every variable key the collection defines (all presets, book settings and
+        scene overrides), so a {token} can be told apart from authored braces even
+        when the selected presets do not provide it."""
+        names = set()
+        for preset in presets:
+            for entry in preset.get("entries", []) or []:
+                if isinstance(entry, dict) and entry.get("key"):
+                    names.add(str(entry["key"]))
+        creation = config.get("uiConfig", {}).get("comfyStudio", {}).get("creation", {})
+        if not isinstance(creation, dict):
+            return sorted(names)
+        for item in creation.get("variableSets", []) or []:
+            if not isinstance(item, dict) or (project_id and item.get("projectId") not in (None, project_id)):
+                continue
+            entries = item.get("entries")
+            if item.get("_lazy") or entries is None:
+                try:
+                    kind = "scenes" if item.get("category") == "scenes" else "characters"
+                    entries = store.entity(kind, item.get("id"))["document"].get("entries", [])
+                except Exception:
+                    entries = []
+            for entry in entries or []:
+                if isinstance(entry, dict) and entry.get("key"):
+                    names.add(str(entry["key"]))
+        for plan in creation.get("plans", []) or []:
+            if not isinstance(plan, dict) or (project_id and plan.get("projectId") not in (None, project_id)):
+                continue
+            for entry in plan.get("variables", []) or []:
+                if isinstance(entry, dict) and entry.get("key"):
+                    names.add(str(entry["key"]))
+            for override in (plan.get("sceneOverrides") or {}).values():
+                for entry in (override or {}).get("variables", []) or []:
+                    if isinstance(entry, dict) and entry.get("key"):
+                        names.add(str(entry["key"]))
+        return sorted(names)
 
     def prepare(self, task, cancel):
         entries = {}
@@ -393,43 +445,59 @@ class ProductionAdapter:
             if record["status"] == "complete":
                 values = durable_assets(self.host, record["values"])
                 values = self.eco.hooks.apply("prepare.after", values, {"task": task_context(task)})
-                self.validate_frames(task, values)
+                notices = self.validate_frames(task, values)
                 self.eco.events.emit("task.prepared", task_context(task))
-                return {"values": values, "preparationId": id}
+                return {"values": values, "preparationId": id, "notices": notices}
             if record["status"] in ("failed", "cancelled", "interrupted"):
                 raise LibraryError(record.get("error", "前置准备未完成"))
             cancel.wait(0.1)
 
+    @staticmethod
+    def known_variables(snap, values):
+        """Variable names the collection defines; unknown braces outside this set are authored text."""
+        return set(snap.get("knownVariables") or []) | set(values or {})
+
     def validate_frames(self, task, values):
-        """Reject unresolved variables in any frame before the first paid call."""
+        """Report template variables no selected preset provides.
+
+        Missing variables no longer block the run: they are rendered blank and
+        the notice travels with the task so the creator sees it on the card.
+        """
         snap = task["snapshot"]
+        known = self.known_variables(snap, values)
+        by_key = {}
         for index, frame in enumerate(snap["story"]["frames"]):
-            try:
-                interpolate(frame.get("prompt", ""), values, [], literal_unknown=True)
-                interpolate(frame.get("caption", ""), values, literal_unknown=False)
-                negative = frame.get("negative", "")
-                if not str(negative or "").strip():
-                    negative = snap.get("globalNegative", "")
-                interpolate(negative, values, [], literal_unknown=True)
-            except LibraryError as exc:
-                raise LibraryError(
-                    "第 " + str(index + 1) + " 幕「" + str(frame.get("name", "")) + "」：" + str(exc),
-                    exc.status,
-                ) from None
+            missing = []
+            interpolate(frame.get("prompt", ""), values, [], literal_unknown=True, known=known, missing=missing)
+            interpolate(frame.get("caption", ""), values, literal_unknown=False, known=known, missing=missing)
+            negative = frame.get("negative", "")
+            if not str(negative or "").strip():
+                negative = snap.get("globalNegative", "")
+            interpolate(negative, values, [], literal_unknown=True, known=known, missing=missing)
+            for key in missing:
+                by_key.setdefault(key, []).append(index + 1)
+        if not by_key:
+            return []
+        keys = "、".join("{" + key + "}" for key in by_key)
+        scenes = sorted({index for indices in by_key.values() for index in indices})
+        return [
+            "存在变量 " + keys + " 未定义（第 " + "、".join(str(i) for i in scenes) + " 幕），已替换为空。"
+        ]
 
     def render(self, task, index, cancel):
         snap = task["snapshot"]
         frame = snap["story"]["frames"][index]
         values = task["prepared"]["values"]
+        known = self.known_variables(snap, values)
         images = []
-        prompt = interpolate(frame.get("prompt", ""), values, images, literal_unknown=True)
-        caption = interpolate(frame.get("caption", ""), values, literal_unknown=False)
+        prompt = interpolate(frame.get("prompt", ""), values, images, literal_unknown=True, known=known)
+        caption = interpolate(frame.get("caption", ""), values, literal_unknown=False, known=known, missing=[])
         negative_source = frame.get("negative", "")
         if not str(negative_source or "").strip():
             # Scenes without their own negative inherit the studio-wide one,
             # matching the legacy browser path and the reader's expectation.
             negative_source = snap.get("globalNegative", "")
-        negative = interpolate(negative_source, values, images, literal_unknown=True)
+        negative = interpolate(negative_source, values, images, literal_unknown=True, known=known)
         config = self.host.native_store().read(include_baseline=False)
         live = resolve_channel(
             config, snap["channel"]["id"], snap["channel"]["provider"]

@@ -36,9 +36,9 @@ KINDS = {'storyboards': ('storyboards', 'storyboard'),
          'rows': ('records/characters', 'row'),
          'conversations': ('records/conversations', 'conversation'),
          'tasks': ('runtime/queue', 'task')}
-MAX_DOCUMENT = 16 * 1024 * 1024
-MAX_ASSET = 50 * 1024 * 1024
-MAX_BUNDLE = 192 * 1024 * 1024
+MAX_DOCUMENT = 64 * 1024 * 1024
+MAX_ASSET = 200 * 1024 * 1024
+MAX_BUNDLE = 600 * 1024 * 1024
 ID = re.compile(r'^[A-Za-z0-9_-]{1,150}$')
 IMAGE_SUFFIXES = {'.png', '.jpg', '.jpeg', '.webp', '.svg'}
 PRIVATE_KEYS = {'apikey', 'api_key', 'secret', 'password', 'token',
@@ -329,7 +329,7 @@ class FileLibrary:
             raise LibraryError('Preset requires entries')
         assert_no_credentials(doc)
         if len(encode(doc)) > MAX_DOCUMENT:
-            raise LibraryError('Resource JSON exceeds 16 MiB', 413)
+            raise LibraryError(f'Resource JSON exceeds {MAX_DOCUMENT // (1024 * 1024)} MiB', 413)
         refs = set(image_refs(doc))
         if len({unicodedata.normalize('NFC', ref).casefold() for ref in refs}) != len(refs):
             raise LibraryError('Image paths differ only by case or Unicode normalization; not portable across systems')
@@ -594,7 +594,7 @@ class FileLibrary:
                 raw = (assets or {}).get(ref)
                 if raw is not None:
                     if len(raw) > MAX_ASSET:
-                        raise LibraryError('Image exceeds 50 MiB', 413)
+                        raise LibraryError(f'Image exceeds {MAX_ASSET // (1024 * 1024)} MiB', 413)
                     image_type(raw)
                     if target.exists() and target.read_bytes() != raw:
                         raise LibraryError('Owned images are immutable; use a new filename', 409)
@@ -657,7 +657,7 @@ class FileLibrary:
                 raw, _ = self.asset(kind, id, ref)
                 files[ref] = raw
             if sum(map(len, files.values())) > MAX_BUNDLE:
-                raise LibraryError('Share package exceeds 192 MiB', 413)
+                raise LibraryError(f'Share package exceeds {MAX_BUNDLE // (1024 * 1024)} MiB', 413)
             manifest = {'schema': 'mio.resource-package.v2', 'kind': kind,
                         'files': {name: digest(raw) for name, raw in files.items()}}
             stream = io.BytesIO()
@@ -701,7 +701,7 @@ class FileLibrary:
                     raise LibraryError('Share image entries must exactly match resource references')
                 self.validate(kind, document)
                 for value in files.values():
-                    if len(value) > MAX_ASSET:raise LibraryError('Image exceeds 50 MiB', 413)
+                    if len(value) > MAX_ASSET:raise LibraryError(f'Image exceeds {MAX_ASSET // (1024 * 1024)} MiB', 413)
                     image_type(value)
                 return kind, document, files
         except (zipfile.BadZipFile, KeyError, json.JSONDecodeError, OSError) as e:

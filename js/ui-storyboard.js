@@ -49,7 +49,7 @@ function installImageVariables(){
     input.disabled=true;
     try{
       if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('图片变量支持 PNG、JPEG、WebP。');
-      if(file.size>50*1024*1024)throw Error('单张图片不能超过 50 MB。');
+      if(file.size>200*1024*1024)throw Error('单张图片不能超过 200 MB。');
       const value=await storeVariableAsset(await blobData(file),file.name);if(uploads.get(uploadKey)!==revision)return;
       if(group==='unified'||group==='preset-draft'){const plan=group==='preset-draft'?settingPresetDraft(owner,false):settingsTargetById(owner);if(!plan||!mergedSettingEntries(plan).some(e=>e.key===key&&e.type==='image'&&e.id===id))throw Error('属性已被删除或更改，图片未绑定。');updateUnifiedSetting(plan,key,value)}
       else{const entries=group==='scene'?(sceneIdentity&&settingsTargetById(sceneIdentity.owner)?.sceneOverrides?.[sceneIdentity.frame]?.variables):variableOwner(group,owner),entry=entries?.find(e=>e.id===id);if(!entry||entry.type!=='image')throw Error('属性已被删除或更改，图片未绑定。');entry.value=value;save()}

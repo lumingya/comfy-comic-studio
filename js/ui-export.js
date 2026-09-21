@@ -8,7 +8,7 @@ async function compileExport(){const theme=$('#export-color').value,watermark=$(
 function defaultExportHTML(){return MioContent.baseHTML.html}
 
 function inspectExportHTML(raw){
-  if(typeof raw!=='string'||raw.length>600000)throw Error('模板 HTML 必须为文本，且不超过 600 KB。');
+  if(typeof raw!=='string'||raw.length>5000000)throw Error('模板 HTML 必须为文本，且不超过 5 MB。');
   if(!/<!doctype\s+html\s*>/i.test(raw)||!/<html[\s>]/i.test(raw)||!/<head[\s>]/i.test(raw)||!/<body[\s>]/i.test(raw))throw Error('请提供包含 DOCTYPE、html、head 和 body 的完整 HTML 文档。');
   for(const loop of ['books','frames']){
     if((raw.match(new RegExp('\\{\\{#'+loop+'\\}\\}','g'))||[]).length!==1||(raw.match(new RegExp('\\{\\{/'+loop+'\\}\\}','g'))||[]).length!==1)throw Error('需要且只能有一组 {{#'+loop+'}} 与 {{/'+loop+'}} 循环。');
@@ -49,16 +49,26 @@ function exportPreviewBooks(id){
   return [{...b,steps:slots(b).slice(0,3).map(s=>({...s,image:s.pending?missingArtworkDataURL():s.image,imageNote:s.pending?'尚未生成':''}))}];
 }
 
+function validateExportTemplate(t){
+  if(!t||typeof t!=='object')throw Error('展示模板无效。');
+  if(!['webtoon','manga','artbook','flip'].includes(t.layout))throw Error('不支持此画册版型：'+t.layout);
+  const raw=t.html;
+  if(typeof raw!=='string'||raw.length>5000000)throw Error('模板 HTML 必须为文本，且不超过 5 MB。');
+  if(!raw.includes('<!-- MIO_PANELS -->')&&!raw.includes('<!-- MIO_STORYBOARD -->'))throw Error('模板缺少分镜注入锚点 <!-- MIO_PANELS -->。');
+  validatePresentationAssets(t);
+  return true;
+}
+
 async function imagePalette(data){
   const jpg=await rasterJPEG(data,40),im=new Image();im.crossOrigin='anonymous';im.src=jpg;await im.decode();const c=document.createElement('canvas');c.width=c.height=24;const ctx=c.getContext('2d');ctx.drawImage(im,0,0,24,24);
   return [5,12,19].map((x,i)=>{const rgb=ctx.getImageData(x,8+i*4,1,1).data;return '#'+[...rgb].slice(0,3).map(n=>n.toString(16).padStart(2,'0')).join('')});
 }
 
 /* ---- Export image profiles. Same vocabulary as backend/mio_export_images.py so HTML, ZIP and PDF behave alike. ---- */
-const EXPORT_INLINE_BUDGET=128*1024*1024;
+const EXPORT_INLINE_BUDGET=512*1024*1024;
 const EXPORT_PUBLISH={maxEdge:2560,webpQuality:.86,jpegQuality:.9};
 const exportImageProfiles={
-  auto:{label:'自动 · 优先无损，超预算时自动压缩',help:'先按「无损清洗」处理；整册内联超过 128 MiB 时自动改用「轻量发布」，完成后会说明。'},
+  auto:{label:'自动 · 优先无损，超预算时自动压缩',help:'先按「无损清洗」处理；整册内联超过 512 MiB 时自动改用「轻量发布」，完成后会说明。'},
   clean:{label:'无损清洗 · 移除工作流与提示词元数据',help:'像素、分辨率与格式与原图一致，仅移除 PNG / JPEG / WebP 内嵌的工作流、提示词与 EXIF。'},
   publish:{label:'轻量发布 · 高画质 WebP，适合分享',help:'移除元数据后重新编码为高画质 WebP（长边不超过 2560 px），体积通常缩小十倍以上；不会放大文件。'},
   archive:{label:'无损归档 · 原样保留内嵌工作流',help:'原文件逐字节写入，包含 ComfyUI 工作流与提示词；只适合本地备份，不要直接分发。'}
@@ -66,10 +76,10 @@ const exportImageProfiles={
 function exportImageProfile(value){return Object.hasOwn(exportImageProfiles,value)?value:'auto'}
 function exportImageProfileControl(d=studioUI.exportDraft||{}){const current=exportImageProfile(d.imageProfile);return field('图片处理',`<select id="export-image-profile" aria-label="导出图片处理方式">${Object.entries(exportImageProfiles).map(([id,p])=>opt(id,p.label,current)).join('')}</select>`,`<span id="export-image-profile-help">${esc(exportImageProfiles[current].help)}</span>`)}
 function syncExportImageProfileHelp(){const help=$('#export-image-profile-help'),d=studioUI.exportDraft;if(help&&d)help.textContent=exportImageProfiles[exportImageProfile(d.imageProfile)].help}
-function exportBudgetMessage(profile){return profile==='publish'?'即使按「轻量发布」压缩，整册仍超过 128 MiB 单文件内联预算。请拆分画册分别导出，或改用 ZIP 资源包。':'完整原图超过 128 MiB 单文件内联预算。请将「图片处理」改为「轻量发布」（高画质 WebP，清洗元数据），或选择 ZIP 资源包；ZIP 不受预算限制，也不会降低原图分辨率。'}
+function exportBudgetMessage(profile){return profile==='publish'?'整册超出 512 MiB 单文件内联建议预算。单文件 HTML 体积过大可能导致低内存设备打开时较慢，建议拆分画册分别导出，或改用 ZIP 资源包。':'完整原图超出 512 MiB 单文件内联建议预算。建议将「图片处理」改为「轻量发布」（高画质 WebP，清洗元数据），或选择 ZIP 资源包；ZIP 不受预算限制，也不会降低原图分辨率。'}
 function exportSize(bytes){if(!(bytes>0))return '0 B';const units=['B','KB','MB','GB'];let size=bytes,i=0;while(size>=1024&&i<units.length-1){size/=1024;i++}return (i?size.toFixed(1):String(size))+' '+units[i]}
 function exportProgressText(done,total,s){const phase=!s||s.profile==='archive'?'正在读取完整原图 ':s.profile==='publish'?(s.autoCompressed?'原图超出单文件预算，正在按轻量发布重新处理 ':'正在压缩并内联图片 '):'正在清洗并内联原图 ';return phase+done+' / '+total}
-function exportImageSummary(s){if(!s)return '';if(s.profile==='archive')return '图片按无损归档原样内联，包含内嵌工作流与提示词元数据。';const parts=[];if(s.scrubbed)parts.push('已移除 '+s.scrubbed+' 张图片的工作流 / 提示词元数据');if(s.profile==='publish')parts.push((s.autoCompressed?'原图超出 128 MiB 单文件预算，已自动改用轻量发布：':'轻量发布：')+s.recompressed+' 张重新编码为 WebP，图片 '+exportSize(s.originalBytes)+' → '+exportSize(Math.round(s.inlineBytes*3/4)));else parts.push('原图分辨率与编码未改动');return parts.join('；')+'。'}
+function exportImageSummary(s){if(!s)return '';if(s.profile==='archive')return '图片按无损归档原样内联，包含内嵌工作流与提示词元数据。'+(s.overBudget?`（注意：整册内联体积 ${exportSize(s.inlineBytes)} 已超出 512 MiB 建议上限，部分设备打开可能较慢）`:'');const parts=[];if(s.scrubbed)parts.push('已移除 '+s.scrubbed+' 张图片的工作流 / 提示词元数据');if(s.profile==='publish')parts.push((s.autoCompressed?'原图超出 512 MiB 单文件预算，已自动改用轻量发布：':'轻量发布：')+s.recompressed+' 张重新编码为 WebP，图片 '+exportSize(s.originalBytes)+' → '+exportSize(Math.round(s.inlineBytes*3/4)));else parts.push('原图分辨率与编码未改动');if(s.overBudget)parts.push(`整册内联体积 ${exportSize(s.inlineBytes)} 已超出 512 MiB 建议上限，部分设备打开可能较慢`);return parts.join('；')+'。'}
 
 /* Byte-level metadata scrubbing. Containers are rewritten, pixels are never decoded, so「无损清洗」is exactly lossless. */
 function asciiAt(bytes,start,length){let text='';for(let i=start;i<start+length&&i<bytes.length;i++)text+=String.fromCharCode(bytes[i]);return text}
@@ -138,8 +148,12 @@ async function prepareExportBooks(ids,t,onProgress,signal,options={}){
       let image,note=s.pending?'尚未生成':'';
       if(s.pending)image=missingArtworkDataURL();else {let prepared;try{prepared=await exportFrameImage(s.image,profile,signal)}catch(e){if(signal?.aborted)throw new DOMException('已取消','AbortError');throw Error('第 '+(s.stepIndex+1)+' 幕原图无法读取，请修复图片后再导出。不会用示例图替代。')}image=prepared.image;stats.frames++;stats.originalBytes+=prepared.originalBytes;if(prepared.removed.length)stats.scrubbed++;if(prepared.recompressed)stats.recompressed++}
       bytes+=image.length;stats.inlineBytes=bytes;
-      /* Reader-safety ceiling for one HTML file. 「自动」retries the whole book as「轻量发布」instead of failing. */
-      if(bytes>budget){if(requested==='auto'&&profile!=='publish')return null;throw Error(exportBudgetMessage(profile))}
+      /* Reader-safety ceiling for one HTML file. 「自动」retries the whole book as「轻量发布」instead of failing. 超出不阻断，而是警告。 */
+      if(bytes>budget){
+        if(requested==='auto'&&profile!=='publish')return null;
+        stats.overBudget=true;
+        stats.budgetWarning=exportBudgetMessage(profile);
+      }
       if(!/^data:image\//i.test(image))throw Error('导出图片格式不合法。');
       let palette;if(t.layout==='artbook'){try{palette=await imagePalette(image)}catch(e){palette=[t.options.accent,t.options.background,t.options.paper]}}
       frames.push({...s,...await measureArtwork(image,signal),image,imageNote:note,palette});done++;onProgress?.(done,total,stats);await new Promise(resolve=>setTimeout(resolve,0));
@@ -192,11 +206,20 @@ async function compileCustomExport(){
     if(controller.signal.aborted)throw new DOMException('已取消','AbortError');
     if(ids.some(id=>!bookBy(id)))throw Error('画册已删除，导出已停止。');
     d.effectiveImageProfile=stats.profile;/* shared reference images inside the metadata block follow the frames */
-    const html=await attachAlbumMetadata(compileTemplateDocument(t,books,d),books,d,controller.signal);await new Promise(resolve=>setTimeout(resolve,0));
+    let html;
+    try{
+      html=await attachAlbumMetadata(compileTemplateDocument(t,books,d),books,d,controller.signal);
+    }catch(e){
+      if(e instanceof RangeError||e?.message?.includes('string length'))throw Error('画册体积已超出浏览器单字符串 512 MiB 极限，请使用离线 ZIP 格式分发。');
+      throw e;
+    }
+    await new Promise(resolve=>setTimeout(resolve,0));
     if(controller.signal.aborted)throw new DOMException('已取消','AbortError');
     const destination=await deliverExportHTML(html,t,books);
     const status=$('#export-status');if(status){status.className='grow validation-result ok';status.textContent=(destination?'已保存到 '+destination:'完整画册已下载，可离线打开。')+' '+exportImageSummary(stats)}
-    toast(destination?'离线画册已写入「画册 / 导出」文件夹。':stats.profile==='publish'?'离线画册已下载，图片已按轻量发布压缩并清洗元数据。':'离线画册已下载，原图分辨率保留。');
+    const baseToast=destination?'离线画册已写入「画册 / 导出」文件夹。':stats.profile==='publish'?'离线画册已下载，图片已按轻量发布压缩并清洗元数据。':'离线画册已下载，原图分辨率保留。';
+    if(stats.overBudget)toast(`${baseToast}（提示：画册内联体积超过 512 MiB，在部分低内存设备打开可能较慢）`,'warn');
+    else toast(baseToast);
   }catch(error){const status=$('#export-status');if(status){status.className='grow validation-result'+(controller.signal.aborted?'':' error');status.textContent=controller.signal.aborted?'导出已取消，原画册未改变。':'导出失败：'+error.message}if(!controller.signal.aborted)throw error}
   finally{studioUI.exportBusy=false;studioUI.exportController=null;buttons.forEach(b=>{if(b.isConnected)b.disabled=false});if(cancel?.isConnected)cancel.hidden=true}
 }

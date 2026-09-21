@@ -275,6 +275,7 @@ diagnostics=function(){
   test('拦截 body 内联事件处理器',()=>{const t=builtinExportTemplates()[0];t.html=t.html.replace('<body>','<body onload="alert(1)">');try{validateExportTemplate(t);return false}catch(e){return true}});
   test('离线预览含独立 CSP 与系统脚本 nonce',()=>{const t=builtinExportTemplates()[0],doc=new DOMParser().parseFromString(compileTemplateDocument(t,exportPreviewBooks()),'text/html'),csp=doc.querySelector('meta[http-equiv="Content-Security-Policy"]');return csp?.content.includes("connect-src 'none'")&&doc.querySelectorAll('script').length===1&&!!doc.querySelector('script').getAttribute('nonce')});
   test('迁移不覆盖用户隐藏模块设置',()=>{const s={settings:{studio:{visibility:{llm:false},features:{assistant:false}}}};ensureStudioState(s);return s.settings.studio.visibility.llm===false&&s.settings.studio.features.assistant===false&&s.exportTemplates.length===4});
+  test('迁移丢弃旧版功能开关，保存校验不再被阻断',()=>{const s={settings:{studio:{visibility:{llm:false},features:{assistant:true,marketplace:true}}}};ensureStudioState(s);validateStudioData(s);return !Object.hasOwn(s.settings.studio.features,'marketplace')&&s.settings.studio.features.assistant===true});
   test('编辑副本与保存模板引用隔离',()=>{const t=builtinExportTemplates()[0],copy=exportTemplateCopy(t);copy.options.accent='#ffffff';return t.options.accent!==copy.options.accent});
   test('助手工具草稿不会提前修改源模板',()=>{const t={id:'test-scope',title:'原始标题',frames:[makeFrame(0)]},draft=clone(t);assistantToolDraft(draft,'update_template_title',{title:'新标题'});return t.title==='原始标题'&&draft.title==='新标题'});
   $('#modal-body').insertAdjacentHTML('beforeend','<div class="divider"></div><h3 class="panel-title">v2.3 模板与模块回归检查</h3>'+extra.map(([n,ok,d])=>`<div class="row" style="padding:13px 0;border-bottom:1px solid var(--line)"><span class="${ok?'accent':'danger'}">${icon(ok?'check':'close')}</span><span class="grow small">${esc(n)}</span><span class="tiny muted">${esc(d)}</span></div>`).join('')+'');
@@ -919,7 +920,7 @@ const v3Actions={
   'v3-auto-bind':()=>autoIdentifyBindings(),
   'v3-add-render-mappings':()=>addRenderBindings(),
   'v3-read-object-info':()=>readComfyObjectInfo(),
-  'v3-import-workflow':()=>pickFile('.json',async f=>{if(f.size>12000000)throw Error('工作流超过12 MB。');importWorkflowIntoMapper(JSON.parse(await f.text()))}),
+  'v3-import-workflow':()=>pickFile('.json',async f=>{if(f.size>100000000)throw Error('工作流超过 100 MB。');importWorkflowIntoMapper(JSON.parse(await f.text()))}),
   'v3-export-mapping':()=>{const c=state.settings.comfy;download(safeFolderName(c.workflowTitle)+'.mappings.json',JSON.stringify({kind:'comfycomic.workflow-mappings',formatVersion:1,title:c.workflowTitle,workflow:c.workflow,bindings:c.bindings,outputNodeId:c.outputNodeId,randomizeSeeds:c.randomizeSeeds},null,2))},
   'v3-import-mapping':()=>pickFile('.json',async f=>{const data=JSON.parse(await f.text());if(data.kind!=='comfycomic.workflow-mappings'||data.formatVersion!==1)throw Error('不是通用工作流映射包。');validateBindings(data.bindings);if(!await confirmAction('导入工作流与节点映射？','将替换当前蓝图与映射，已有入队快照不变。建议先导出当前映射包。','导入映射包'))return;importWorkflowIntoMapper(data);state.settings.comfy.randomizeSeeds=!!data.randomizeSeeds;save()}),
   'v3-preview-workflow':()=>previewMappedSubmission(),
@@ -1055,7 +1056,7 @@ renameScopedVariable=async function(group,id,entryId){
 };
 
 
-selectedPublishPackage=function(id){if(id!=='workflow:active')return v3Core.selectedPublishPackage(id);const raw=v3Core.selectedPublishPackage(id),c=state.settings.comfy,value={kind:'comfycomic.workflow-mappings',formatVersion:1,title:c.workflowTitle,workflow:clone(c.workflow),bindings:clone(c.bindings),outputNodeId:c.outputNodeId,randomizeSeeds:c.randomizeSeeds};validateBindings(value.bindings);for(const b of value.bindings)if(b.source==='literal'&&b.value&&/(?:^|[/.])(?:api[_-]?key|token|authorization|password|secret)$/i.test(b.path))throw Error('映射包包含可能的凭据固定值，请先移除再上传。');const text=JSON.stringify(value,null,2),bytes=new TextEncoder().encode(text).length;if(bytes>1000000)throw Error('映射包超过 1 MB，请下载后通过 Git 客户端上传。');return{...raw,value,text,bytes,kind:'工作流与通用节点映射',filename:'workflows/'+safeFolderName(c.workflowTitle)+'.mappings.json'}};
+selectedPublishPackage=function(id){if(id!=='workflow:active')return v3Core.selectedPublishPackage(id);const raw=v3Core.selectedPublishPackage(id),c=state.settings.comfy,value={kind:'comfycomic.workflow-mappings',formatVersion:1,title:c.workflowTitle,workflow:clone(c.workflow),bindings:clone(c.bindings),outputNodeId:c.outputNodeId,randomizeSeeds:c.randomizeSeeds};validateBindings(value.bindings);for(const b of value.bindings)if(b.source==='literal'&&b.value&&/(?:^|[/.])(?:api[_-]?key|token|authorization|password|secret)$/i.test(b.path))throw Error('映射包包含可能的凭据固定值，请先移除再上传。');const text=JSON.stringify(value,null,2),bytes=new TextEncoder().encode(text).length;if(bytes>10000000)throw Error('映射包超过 10 MB，请下载后通过 Git 客户端上传。');return{...raw,value,text,bytes,kind:'工作流与通用节点映射',filename:'workflows/'+safeFolderName(c.workflowTitle)+'.mappings.json'}};
 
 
 importRaw=importGenericWorkflowLink;
@@ -1076,7 +1077,7 @@ async function v3Diagnostics(){
   test('同一素材可复用而不改变原始值',()=>{const p={...plan,variables:[variableEntry('strength',.1)],sceneOverrides:{}};return effectivePlanScope(p,null,id=>fixture[id]).values.strength===.1&&fixture.A.entries[1].value===.5});
   test('画册名称独立支持动态变量',()=>scopeText('{character} 的来信',{character:'七海'},true)==='七海 的来信');
   test('变量 character 不碰撞 character2',()=>scopeText('{character}/{character2}',{character:'A',character2:'B'},true)==='A/B');
-  test('缺少变量不会静默清空',()=>{try{scopeText('{weapon}',{},true);return false}catch(e){return true}});
+  test('缺少变量不阻断生成：按空值替换并如实报告',()=>{const report={missing:[]},out=resolveImageVariables('{character}, {strength}',{character:'七海'},true,'',report);const known=definedPromptNames({}).has('strength');return out.prompt===(known?'七海':'七海, {strength}')&&report.missing.length===(known?1:0)});
   test('所有变量可自行定义，无固定角色字段',()=>typedVariableValue(variableEntry('my_custom_strength',1.25))===1.25);
   const workflow={'42':{class_type:'CustomLoraManager',inputs:{loras:[{name:'a.safetensors',strength:.4,enabled:true}],unused:'keep'}},'9':{class_type:'TextNode',inputs:{opt_text:'old'}},'3':{class_type:'Sampler',inputs:{steps:26,cfg:7,model:['42',0]}},'8':{class_type:'Output',inputs:{images:['3',0]}}};
   const binding={id:'bind_test',nodeId:'42',path:'/loras/0/strength',label:'LoRA 强度',enabled:true,source:'variable',value:'strength',type:'number',allowCreate:false,allowLink:false},execution={workflow,bindings:[binding],randomizeSeeds:false};

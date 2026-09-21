@@ -203,8 +203,8 @@ class ProductionQueue:
         if not isinstance(request_id, str) or not 1 <= len(request_id) <= 120:
             raise LibraryError("缺少装配操作标识")
         encoded = json.dumps(snapshot, ensure_ascii=False, allow_nan=False)
-        if len(encoded.encode()) > 1024 * 1024:
-            raise LibraryError("装配快照超过 1 MiB")
+        if len(encoded.encode()) > 16 * 1024 * 1024:
+            raise LibraryError("装配快照超过 16 MiB")
         fingerprint = hashlib.sha256((title + encoded).encode()).hexdigest()
         with self.lock:
             if self.closed:
@@ -279,13 +279,25 @@ class ProductionQueue:
         with self.lock:
             if self.closed:
                 raise LibraryError("调度器正在关闭，不再接受新任务", 503)
-            if self.active or self.control["batch"]:
+            if self.active:
+                raise LibraryError("有画册正在运行或暂停在半途，请先继续或取消当前批次，再启动新的运行范围", 409)
+            if self.control["batch"] and not self.control["paused"]:
                 raise LibraryError("请先暂停并取消当前批次，再启动新的运行范围", 409)
             if self.fault:
                 raise LibraryError("存储故障未恢复，请检查磁盘后重启服务", 503)
             task = self.get(id)
             if id not in self.control["order"]:
                 raise LibraryError("任务不在队列中", 404)
+            # A paused batch with nothing in flight is released by the new range: its
+            # unfinished books return to standby exactly as cancel() would leave them.
+            for stale in self.control["batch"]:
+                stale_task = self.tasks.get(stale)
+                if not stale_task:
+                    continue
+                stale_task["status"] = "standby"
+                stale_task["selection"] = []
+                self._save(stale_task)
+            self.control["batch"] = []
             ids = (
                 self.control["order"][self.control["order"].index(id) :]
                 if sequential
@@ -509,6 +521,12 @@ class ProductionQueue:
                 if cancel.is_set():
                     raise InterruptedError("已取消；上游已收到的请求可能仍计费")
                 task["prepared"] = prepared
+                # Preparation notices (e.g. blanked variables) belong on the card, not only in the prepared blob.
+                notices = prepared.get("notices") if isinstance(prepared, dict) else None
+                if notices:
+                    task["notices"] = list(notices)
+                else:
+                    task.pop("notices", None)
                 self._save(task)
             task["status"] = "running"
             task.pop("error", None)

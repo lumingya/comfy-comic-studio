@@ -59,9 +59,28 @@ class ProductionAdapterTests(unittest.TestCase):
     def test_undefined_prompt_brackets_stay_literal_and_render_without_failing(self):
         task=self.assemble();task['snapshot']['story']['frames'][0]['prompt']='{missing}, {{on back}}';self.q.tasks.set(task['id'],task)
         self.q.start(task['id'],trusted=True);done=self.wait(task['id']);self.assertEqual(done['status'],'complete');self.assertEqual(self.calls[0]['prompt'],'{missing}, {{on back}}')
-    def test_bad_caption_is_validated_before_paid_render(self):
-        task=self.assemble();task['snapshot']['story']['frames'][0]['caption']='{missing}';self.q.tasks.set(task['id'],task)
-        self.q.start(task['id'],trusted=True);done=self.wait(task['id']);self.assertEqual(done['status'],'failed');self.assertFalse(self.calls)
+    def test_missing_caption_variable_warns_and_renders_blank_instead_of_blocking(self):
+        task=self.assemble();task['snapshot']['knownVariables'].append('missing');task['snapshot']['story']['frames'][0]['caption']='{missing}：出发';self.q.tasks.set(task['id'],task)
+        self.q.start(task['id'],trusted=True);done=self.wait(task['id']);self.assertEqual(done['status'],'complete',done.get('error'));self.assertEqual(len(self.calls),2)
+        self.assertEqual(done['notices'],['存在变量 {missing} 未定义（第 1 幕），已替换为空。']);self.assertEqual(self.q.list()['tasks'][0]['notices'],done['notices'])
+        self.assertEqual(self.store.entity('albums',task['albumId'])['document']['steps'][0]['caption'],'：出发')
+    def test_caption_authored_brackets_outside_known_variables_stay_literal(self):
+        task=self.assemble();task['snapshot']['story']['frames'][0]['caption']='{叹气}：出发';self.q.tasks.set(task['id'],task)
+        self.q.start(task['id'],trusted=True);done=self.wait(task['id']);self.assertEqual(done['status'],'complete')
+        self.assertNotIn('notices',done)
+        self.assertEqual(self.store.entity('albums',task['albumId'])['document']['steps'][0]['caption'],'{叹气}：出发')
+    def test_collection_variables_missing_from_the_selected_presets_blank_out_while_authored_braces_stay(self):
+        config={'uiConfig':{'comfyStudio':{'settings':{'imageGeneration':{'profiles':[self.profile]}},'creation':{'variableSets':[{'id':'preset-two','projectId':'project-one','entries':[{'key':'outfit','type':'text','value':'coat'}]}],'plans':[{'projectId':'project-one','variables':[{'key':'weapon','type':'text','value':'bow'}],'sceneOverrides':{}}]}}}}
+        self.store.read=lambda **_:copy.deepcopy(config)
+        task=self.assemble();self.assertEqual(task['snapshot']['knownVariables'],['hero','outfit','weapon'])
+        task['snapshot']['story']['frames'][0]['prompt']='{hero}, {outfit}, {weapon}, {masterpiece}, {{soft}}';task['snapshot']['story']['frames'][1]['caption']='{outfit}';self.q.tasks.set(task['id'],task)
+        self.q.start(task['id'],trusted=True);done=self.wait(task['id']);self.assertEqual(done['status'],'complete',done.get('error'))
+        self.assertEqual(self.calls[0]['prompt'],'Ada, {masterpiece}, {{soft}}');self.assertEqual(done['notices'],['存在变量 {outfit}、{weapon} 未定义（第 1、2 幕），已替换为空。'])
+        self.q.start(task['id'],indices=[0],trusted=True,force_prepare=True);self.assertEqual(self.wait(task['id'])['status'],'complete')
+    def test_interpolate_missing_policy(self):
+        missing=[];self.assertEqual(interpolate('{a}, {b}',{'a':'x'},literal_unknown=False,missing=missing),'x');self.assertEqual(missing,['b'])
+        with self.assertRaises(LibraryError):interpolate('{b}',{},literal_unknown=False)
+        missing=[];self.assertEqual(interpolate('{known}, {weight}',{},known={'known'},missing=missing),'{weight}');self.assertEqual(missing,['known'])
     def test_referenced_assets_are_pinned_and_orphans_collected_from_the_unified_pool(self):
         import os,time
         from backend import mio_assets

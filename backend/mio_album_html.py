@@ -43,10 +43,10 @@ class AlbumParser(HTMLParser):
 
 
 def parse(store,html):
-    if not isinstance(html,str) or len(html.encode('utf-8'))>MAX_BUNDLE:raise LibraryError('HTML 画册最大 192 MiB。',413)
+    if not isinstance(html,str) or len(html.encode('utf-8'))>MAX_BUNDLE:raise LibraryError('HTML 画册超过大小上限。',413)
     parser=AlbumParser();parser.feed(html);parser.close()
     if parser.metadata:
-        if len(parser.metadata[0].encode())>MAX_DOCUMENT:raise LibraryError('元数据超过 16 MiB。',413)
+        if len(parser.metadata[0].encode())>MAX_DOCUMENT:raise LibraryError('元数据超过大小上限。',413)
         payload=decode(parser.metadata[0].encode())
         if not isinstance(payload,dict) or payload.get('schema')!='mio.album-html.v1':raise LibraryError('不支持此画册元数据版本。')
     else:
@@ -64,7 +64,7 @@ def parse(store,html):
     for key,src in parser.assets.items():
         if not isinstance(src,str) or not src.startswith('data:image/'):raise LibraryError('HTML 图片必须完整内联；不会读取外部网址或本机文件。')
         raw,name=store.image_bytes(src);mime,_=image_type(raw);assets[key]=('images/'+name,'data:'+mime+';base64,'+base64.b64encode(raw).decode());size+=len(raw)
-        if size>MAX_BUNDLE:raise LibraryError('图片总量超过 192 MiB。',413)
+        if size>MAX_BUNDLE:raise LibraryError('图片总量超过大小上限。',413)
     def refs(value,inline=False):
         if isinstance(value,dict) and set(value)=={'$mioImage'}:
             key=value['$mioImage']

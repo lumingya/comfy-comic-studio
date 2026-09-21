@@ -25,7 +25,7 @@ def expected_kinds(value):
 
 def bundle_bytes(document, files):
     files = {'resource.json': encode(document), **files}
-    if sum(map(len, files.values())) > MAX_BUNDLE:raise LibraryError('分享包超过 192 MiB。', 413)
+    if sum(map(len, files.values())) > MAX_BUNDLE:raise LibraryError('分享包超过大小上限。', 413)
     manifest = {'schema': 'mio.resource-package.v2', 'kind': document['kind'],
                 'files': {name: digest(raw) for name, raw in files.items()}}
     result = io.BytesIO()

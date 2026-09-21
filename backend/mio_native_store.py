@@ -364,8 +364,8 @@ class NativeStore(WorkspaceRepository):
             )
         else:
             raw = self.image_path(value).read_bytes()
-        if len(raw) > 50 * 1024 * 1024:
-            raise LibraryError("Image exceeds 50 MiB", 413)
+        if len(raw) > 200 * 1024 * 1024:
+            raise LibraryError("Image exceeds 200 MiB", 413)
         _, extension = image_type(raw)
         return raw, digest(raw) + extension
 

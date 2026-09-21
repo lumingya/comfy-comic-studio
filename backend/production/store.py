@@ -33,8 +33,8 @@ class TaskStore:
         raw = json.dumps(
             value, ensure_ascii=False, allow_nan=False, separators=(",", ":")
         ).encode()
-        if len(raw) > 8 * 1024 * 1024:
-            raise LibraryError("单个生产记录超过 8 MiB；请缩短提示词或输出")
+        if len(raw) > 32 * 1024 * 1024:
+            raise LibraryError("单个生产记录超过 32 MiB；请缩短提示词或输出")
         key = hashlib.sha256(raw).hexdigest()
         path = owned_path(self.root, "objects/" + key + ".json")
         if not path.exists():

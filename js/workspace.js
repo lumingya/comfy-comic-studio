@@ -60,7 +60,7 @@ async function importWorkflowFiles(files){
   const accepted=[],errors=[];
   for(const file of files){
     try{
-      if(file.size>10*1024*1024)throw Error('文件超过 10 MB');
+      if(file.size>100*1024*1024)throw Error('文件超过 100 MB');
       const data=JSON.parse(await file.text()),items=Array.isArray(data)?data:Array.isArray(data.workflows)?data.workflows:[data];
       if(items.length>200)throw Error('每个文件最多包含 200 份工作流');
       for(let i=0;i<items.length;i++)try{accepted.push(parseLibraryWorkflow(items[i],file.name.replace(/\.json$/i,'')+(items.length>1?' · '+(i+1):'')))}catch(e){errors.push(file.name+' #'+(i+1)+'：'+e.message)}

@@ -7,7 +7,7 @@ function makeFrame(i=0){return {...clone(MioContent.frames[i%MioContent.frames.l
 function makeRow(i,p=state.activeProjectId){return {...clone(MioContent.rows[i%MioContent.rows.length]),id:uid('row'),projectId:p}}
 
 
-function toast(m,type='ok'){const host=topDialog();let region=$('#toasts');if(!region){region=document.createElement('div');region.id='toasts';region.className='toast-region';region.setAttribute('role','status');region.setAttribute('aria-live','polite')}host.append(region);const el=document.createElement('div');el.className='toast '+(type==='error'?'error':'');el.innerHTML=icon(type==='error'?'help':'check')+`<span>${esc(m)}</span>`;region.append(el);setTimeout(()=>el.remove(),4500)}
+function toast(m,type='ok'){const host=topDialog();let region=$('#toasts');if(!region){region=document.createElement('div');region.id='toasts';region.className='toast-region';region.setAttribute('role','status');region.setAttribute('aria-live','polite')}host.append(region);const el=document.createElement('div');el.className='toast '+(type==='error'?'error':type==='warn'?'warn':'');el.innerHTML=icon(type==='ok'?'check':'help')+`<span>${esc(m)}</span>`;region.append(el);setTimeout(()=>el.remove(),type==='ok'?4500:7000)}
 
 function log(m,level='info'){rt.logs.push({time:Date.now(),message:m,level});if(rt.logs.length>300)rt.logs.shift();renderLogs()}
 
@@ -234,7 +234,7 @@ case'chat-attach':pickFile('image/*,.txt,.docx',addAttachments,true);break;
 case'remove-attachment':rt.attachments.splice(Number(d.index),1);renderAssistant();break;
 case'backup':backupModal();break;
 case'backup-export':flushEditor();download('Mio_'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(backupObject($('#backup-secrets')?.checked),null,2));toast('全量工程备份已下载。');break;
-case'import-project':pickFile('.json,application/json',async f=>{if(f.size>80000000)throw Error('备份包超过 80 MB。');await restoreObject(JSON.parse(await f.text()))});break;
+case'import-project':pickFile('.json,application/json',async f=>{if(f.size>500000000)throw Error('备份包超过 500 MB。');await restoreObject(JSON.parse(await f.text()))});break;
 case'sync-push':await syncRemote('push');break;
 case'sync-pull':await syncRemote('pull');break;
 case'market':marketModal();break;
@@ -360,7 +360,7 @@ async function importStudioRaw(){
   if(!['https:','http:'].includes(url.protocol)||url.username||url.password)throw Error('请输入可信的 HTTP(S) Raw 地址。');
   if(url.hostname==='github.com'&&url.pathname.includes('/blob/'))url=new URL('https://raw.githubusercontent.com'+url.pathname.replace('/blob/','/'));
   if(url.hostname==='gitee.com')url.pathname=url.pathname.replace('/blob/','/raw/');
-  const text=await(await request(url.href,{},15000)).text();if(text.length>2000000)throw Error('外部资源超过 2 MB，已拒绝导入。');
+  const text=await(await request(url.href,{},15000)).text();if(text.length>10000000)throw Error('外部资源超过 10 MB，已拒绝导入。');
   let data;try{data=JSON.parse(text)}catch(e){}
   if(!data||data.kind===templateKind||data.template?.kind===templateKind){
     const t=parseExportTemplateFile(text,url.pathname.split('/').pop()||'外部模板');validateExportTemplate(t);
@@ -581,7 +581,7 @@ function selectedPublishPackage(id){
   }else if(id==='workflow:active'){value=clone(validateWorkflow(state.settings.comfy.workflow));title=state.settings.comfy.workflowTitle;kind='ComfyUI API 工作流';filename='workflows/'+safeFolderName(title)+'.json';}
   else throw Error('请选择要上传的资源。');
   const secrets=[];const scan=(node,path='')=>{if(!node||typeof node!=='object')return;for(const[k,v]of Object.entries(node)){if(/^(api[_-]?key|access[_-]?token|token|authorization|password|secret)$/i.test(k)&&typeof v==='string'&&v.trim())secrets.push(path+k);if(v&&typeof v==='object')scan(v,path+k+'.')}};scan(value);if(secrets.length)throw Error('所选资源包含疑似密钥字段：'+secrets.slice(0,3).join(', ')+'。请先移除再发布。');
-  const text=JSON.stringify(value,null,2),bytes=new TextEncoder().encode(text).length;if(bytes>1000000)throw Error('模板包超过 1 MB，建议导出后在 GitHub 网页或 Git 客户端上传。');return {value,text,title,kind,filename,bytes};
+  const text=JSON.stringify(value,null,2),bytes=new TextEncoder().encode(text).length;if(bytes>10000000)throw Error('模板包超过 10 MB，建议导出后在 GitHub 网页或 Git 客户端上传。');return {value,text,title,kind,filename,bytes};
 }
 
 

@@ -3,837 +3,1225 @@
   "baseUrl": "http://127.0.0.1:8188",
   "autoFallback": false,
   "workflow": {
-    "11": {
+    "365": {
       "inputs": {
-        "seed": [
-          "33",
+        "A or B": [
+          "366",
+          1
+        ],
+        "in": [
+          "366",
+          0
+        ]
+      },
+      "class_type": "easy ab",
+      "_meta": {
+        "title": "A 或 B"
+      }
+    },
+    "366": {
+      "inputs": {
+        "signal": [
+          "4407",
           0
         ],
-        "steps": [
-          "34",
+        "any_input": [
+          "4407",
           0
+        ]
+      },
+      "class_type": "ImpactIfNone",
+      "_meta": {
+        "title": "ImpactIfNone"
+      }
+    },
+    "397": {
+      "inputs": {
+        "value": 269842178196199,
+        "mode": true,
+        "action": "fixed",
+        "last_seed": 269842178196199
+      },
+      "class_type": "easy globalSeed",
+      "_meta": {
+        "title": "全局随机种"
+      }
+    },
+    "474": {
+      "inputs": {
+        "steps_total": [
+          "3839",
+          0
+        ],
+        "refiner_step": [
+          "3839",
+          1
         ],
         "cfg": [
-          "34",
+          "3839",
           2
         ],
         "sampler_name": [
-          "34",
+          "3839",
           3
         ],
         "scheduler": [
-          "34",
+          "3839",
           4
-        ],
-        "denoise": [
-          "422",
-          0
-        ],
-        "model": [
-          "50",
-          0
-        ],
-        "positive": [
-          "416",
-          0
-        ],
-        "negative": [
-          "417",
-          0
-        ],
-        "latent_image": [
-          "412",
-          0
         ]
-      },
-      "class_type": "KSampler",
-      "_meta": {
-        "title": "K采样器"
-      }
-    },
-    "22": {
-      "inputs": {
-        "samples": [
-          "11",
-          0
-        ],
-        "vae": [
-          "217:175",
-          0
-        ]
-      },
-      "class_type": "VAEDecode",
-      "_meta": {
-        "title": "VAE解码"
-      }
-    },
-    "33": {
-      "inputs": {
-        "seed": -1
-      },
-      "class_type": "Seed (rgthree)",
-      "_meta": {
-        "title": "Seed (rgthree)"
-      }
-    },
-    "34": {
-      "inputs": {
-        "steps_total": 30,
-        "refiner_step": 1,
-        "cfg": 7,
-        "sampler_name": "euler_ancestral",
-        "scheduler": "normal"
       },
       "class_type": "KSampler Config (rgthree)",
       "_meta": {
-        "title": "KSampler Config (rgthree)"
+        "title": "【底图】采样参数"
       }
     },
-    "50": {
+    "475": {
       "inputs": {
-        "block_number": 4,
-        "downscale_factor": 2,
-        "start_percent": 0,
-        "end_percent": 0.35,
-        "downscale_after_skip": true,
-        "downscale_method": "bicubic",
-        "upscale_method": "bicubic",
-        "model": [
-          "196",
+        "steps_total": [
+          "3845",
+          0
+        ],
+        "refiner_step": 30,
+        "cfg": [
+          "3845",
+          1
+        ],
+        "sampler_name": [
+          "3845",
+          2
+        ],
+        "scheduler": [
+          "3845",
+          3
+        ]
+      },
+      "class_type": "KSampler Config (rgthree)",
+      "_meta": {
+        "title": "【迭代放大】采样参数"
+      }
+    },
+    "477": {
+      "inputs": {
+        "steps_total": [
+          "3847",
+          0
+        ],
+        "refiner_step": 30,
+        "cfg": [
+          "3847",
+          1
+        ],
+        "sampler_name": [
+          "3847",
+          2
+        ],
+        "scheduler": [
+          "3847",
+          3
+        ]
+      },
+      "class_type": "KSampler Config (rgthree)",
+      "_meta": {
+        "title": "【通用放大】采样参数"
+      }
+    },
+    "478": {
+      "inputs": {
+        "steps_total": [
+          "4080",
+          0
+        ],
+        "refiner_step": 30,
+        "cfg": [
+          "4080",
+          1
+        ],
+        "sampler_name": [
+          "4080",
+          2
+        ],
+        "scheduler": [
+          "4080",
+          3
+        ]
+      },
+      "class_type": "KSampler Config (rgthree)",
+      "_meta": {
+        "title": "【部位细化】采样参数"
+      }
+    },
+    "482": {
+      "inputs": {
+        "model_name": [
+          "4599",
+          5
+        ]
+      },
+      "class_type": "UpscaleModelLoader",
+      "_meta": {
+        "title": "【全局】放大模型（必下）"
+      }
+    },
+    "1025": {
+      "inputs": {
+        "steps_total": [
+          "3849",
+          0
+        ],
+        "refiner_step": 30,
+        "cfg": [
+          "3849",
+          1
+        ],
+        "sampler_name": [
+          "3849",
+          2
+        ],
+        "scheduler": [
+          "3849",
+          3
+        ]
+      },
+      "class_type": "KSampler Config (rgthree)",
+      "_meta": {
+        "title": "【分块放大】采样参数"
+      }
+    },
+    "1065": {
+      "inputs": {
+        "anything": [
+          "365",
+          1
+        ]
+      },
+      "class_type": "easy cleanGpuUsed",
+      "_meta": {
+        "title": "清理显存占用"
+      }
+    },
+    "1350": {
+      "inputs": {
+        "text_0": "worst quality, worst aesthetic, bad quality, normal quality, average quality, oldest, old, early, very displeasing, displeasing, simple background, text, tooth, bad hands, bad anatomy,",
+        "text": [
+          "1834",
           0
         ]
       },
-      "class_type": "PatchModelAddDownscale",
+      "class_type": "ShowText|pysssss",
       "_meta": {
-        "title": "收缩模型UNET（Kohya Deep Shrink）"
+        "title": "最终负面"
       }
     },
-    "196": {
+    "1464": {
+      "inputs": {},
+      "class_type": "ImpactIfNone",
+      "_meta": {
+        "title": "ImpactIfNone"
+      }
+    },
+    "1571": {
       "inputs": {
-        "__lm_autocomplete_meta_text": {
-          "version": 1,
-          "textWidgetName": "text"
-        },
-        "text": "<lora:bbw_milf_mature_women_v2:1.00> <lora:gufeng_impasto_2:1.00> <lora:1_fengge:0.85> <lora:xian-nu_style_ill_v1.0-000004:0.90> <lora:Miaobola IL V4:1.00> <lora:Xanzi_llustriousXL-000002:1.00> <lora:SK_v1.5:1.00> <lora:Yokai_Miko:0.95> <lora:仙子:0.20> <lora:Artist_Style怅夜骨髓bbbs_Illustrious:1.20> <lora:00-000019:1.00> <lora:SK_v1.5:1.00> <lora:NTRXL_NBVP1_lokr_V6311PZ:0.95> <lora:Illustrious/style/style-laoyb:0.80> <lora:Illustrious/style/hhh-000008:0.20> <lora:manaifix4:0.60> <lora:NFLyb_epoch_10:0.50> <lora:NFL_epoch_5:0.50> <lora:manAIfix3:0.60> <lora:刀刃:0.20> <lora:IL_MaoD Style-000100:1.00> <lora:IL_Ditto Style-000090:0.70> <lora:laoyb2:1.00> <lora:style-laoyb:1.00> <lora:IL_qp style-000040:1.00> <lora:IL_radiopop201 style:0.90> <lora:IL_solomon10 style-000040:1.00> <lora:QOS:1.00> <lora:QOS_WAIILL:1.00>",
+        "text_0": "sailor uniform,girl,cowboy shot, very long hair, black hair, black eyes,pussy，oval face",
+        "text": [
+          "3150",
+          0
+        ]
+      },
+      "class_type": "ShowText|pysssss",
+      "_meta": {
+        "title": "主体正面提示词"
+      }
+    },
+    "1579": {
+      "inputs": {
+        "text_0": "spread legs, bound, bdsm, bondage, rope, arms behind back, frogtie, masterpiece, best quality, amazing quality, highres, absurdres, newest, very aesthetic, extreme aesthetic, sensitive, very awa, incredibly absurdres, 8K, ultra detailed, HDR, high contrast, high detail RAW color art, A shot with tension, supreme masterpiece, official art, best quality, cinematic, fashion photography style, dramatic, visual impact, ultra-high resolution, sharp focus, intricate details, high-end texture, dramatic lighting, colorful, emotional, sailor uniform, girl, cowboy shot, very long hair, black hair, black eyes, pussy, oval face, loli",
+        "text": [
+          "4512",
+          0
+        ]
+      },
+      "class_type": "ShowText|pysssss",
+      "_meta": {
+        "title": "最终正面"
+      }
+    },
+    "1832": {
+      "inputs": {
+        "positive": "sailor uniform,girl,cowboy shot, very long hair, black hair, black eyes,pussy，oval face",
+        "auto_random": false,
+        "lora_str": "",
+        "temp_str": "[{\"id\":\"token_1_1757669293769\",\"text\":\"blue archive\",\"translate\":\"蓝色 archive\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(0, 255, 255, .4)\",\"isLoraTag\":false},{\"id\":\"token_2_1757669293769\",\"text\":\"ibuki \\\\(blue archive\\\\)\",\"translate\":\"ibuki \\\\(blue archive\\\\)\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_2_1751467959550\",\"text\":\"1girl\",\"translate\":\"1女孩\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(255, 123, 2, .4)\",\"isLoraTag\":false},{\"id\":\"token_3_1757669293769\",\"text\":\"armband\",\"translate\":\"袖章(臂带)\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_4_1757669293769\",\"text\":\"asymmetrical hair\",\"translate\":\"asymmetrical hair\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_5_1757669293769\",\"text\":\"black coat\",\"translate\":\"黑色 外套\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(0, 255, 255, .4)\",\"isLoraTag\":false},{\"id\":\"token_6_1757669293769\",\"text\":\"black hat\",\"translate\":\"黑色 帽子\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_7_1757669293769\",\"text\":\"black ribbon\",\"translate\":\"黑色 丝带\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_6_1757475590670\",\"text\":\"blonde hair\",\"translate\":\"金色头发\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(255, 123, 2, .4)\",\"isLoraTag\":false},{\"id\":\"token_44_1757475590671\",\"text\":\"blue dress\",\"translate\":\"蓝色 连衣裙\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_4_1754035384923\",\"text\":\"blush\",\"translate\":\"脸红\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(255, 123, 2, .4)\",\"isLoraTag\":false},{\"id\":\"token_8_1757669293769\",\"text\":\"boots\",\"translate\":\"靴子\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_9_1757669293769\",\"text\":\"bow\",\"translate\":\"蝴蝶结\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_10_1757669293769\",\"text\":\"coat\",\"translate\":\"外套\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_11_1757669293769\",\"text\":\"collared shirt\",\"translate\":\"collared 衬衫\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_12_1757669293769\",\"text\":\"crime prevention buzzer\",\"translate\":\"crime prevention buzzer\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_13_1757669293769\",\"text\":\"demon girl\",\"translate\":\"恶魔 女孩\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(255, 123, 2, .4)\",\"isLoraTag\":false},{\"id\":\"token_14_1757669293769\",\"text\":\"demon tail\",\"translate\":\"恶魔 尾巴\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_15_1757669293769\",\"text\":\"demon wings\",\"translate\":\"恶魔 翅膀\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(255, 123, 2, .4)\",\"isLoraTag\":false},{\"id\":\"token_42_1757475590671\",\"text\":\"dress\",\"translate\":\"连衣裙\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_16_1757669293769\",\"text\":\"hair ribbon\",\"translate\":\"hair 丝带\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_17_1757669293769\",\"text\":\"hat\",\"translate\":\"帽子\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_18_1757669293769\",\"text\":\"hat bow\",\"translate\":\"帽子 蝴蝶结\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_19_1757669293769\",\"text\":\"highres\",\"translate\":\"高分辨率\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(0, 255, 255, .4)\",\"isLoraTag\":false},{\"id\":\"token_20_1757669293769\",\"text\":\"long sleeves\",\"translate\":\"long sleeves\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_21_1757669293769\",\"text\":\"military hat\",\"translate\":\"军装 帽子\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_22_1757669293769\",\"text\":\"neck ribbon\",\"translate\":\"脖子 丝带\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_23_1757669293769\",\"text\":\"notice lines\",\"translate\":\"notice lines\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_24_1757669293769\",\"text\":\"one eye closed\",\"translate\":\"one eye closed\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_25_1757669293769\",\"text\":\"open mouth\",\"translate\":\"张嘴\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(255, 123, 2, .4)\",\"isLoraTag\":false},{\"id\":\"token_26_1757669293769\",\"text\":\"outline\",\"translate\":\"轮廓线\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(0, 255, 255, .4)\",\"isLoraTag\":false},{\"id\":\"token_27_1757669293769\",\"text\":\"oversized clothes\",\"translate\":\"oversized 衣服\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_28_1757669293769\",\"text\":\"peaked cap\",\"translate\":\"peaked cap\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_29_1757669293769\",\"text\":\"pinafore dress\",\"translate\":\"pinafore 连衣裙\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_30_1757669293769\",\"text\":\"pink bow\",\"translate\":\"粉色 蝴蝶结\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(0, 255, 255, .4)\",\"isLoraTag\":false},{\"id\":\"token_31_1757669293769\",\"text\":\"pleated dress\",\"translate\":\"pleated 连衣裙\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_32_1757669293769\",\"text\":\"red armband\",\"translate\":\"红色 袖章(臂带)\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_33_1757669293769\",\"text\":\"ribbon\",\"translate\":\"丝带\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_34_1757669293769\",\"text\":\"shirt\",\"translate\":\"衬衫\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_35_1757669293769\",\"text\":\"side ponytail\",\"translate\":\"side 马尾辫\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(255, 123, 2, .4)\",\"isLoraTag\":false},{\"id\":\"token_36_1757669293769\",\"text\":\"signature\",\"translate\":\"签名\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_37_1757669293769\",\"text\":\"sleeveless\",\"translate\":\"无袖\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_38_1757669293769\",\"text\":\"sleeveless dress\",\"translate\":\"无袖 连衣裙\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_39_1757669293769\",\"text\":\"sleeves past fingers\",\"translate\":\"sleeves past fingers\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_40_1757669293769\",\"text\":\"sleeves past wrists\",\"translate\":\"sleeves past wrists\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_29_1757475590671\",\"text\":\"solo\",\"translate\":\"单人\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(255, 123, 2, .4)\",\"isLoraTag\":false},{\"id\":\"token_31_1757475590671\",\"text\":\"tail\",\"translate\":\"尾巴\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_41_1757669293769\",\"text\":\"white outline\",\"translate\":\"white 轮廓线\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(0, 255, 255, .4)\",\"isLoraTag\":false},{\"id\":\"token_42_1757669293769\",\"text\":\"white shirt\",\"translate\":\"white 衬衫\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_43_1757669293769\",\"text\":\"wings\",\"translate\":\"翅膀\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(255, 123, 2, .4)\",\"isLoraTag\":false},{\"id\":\"token_44_1757669293769\",\"text\":\"yellow boots\",\"translate\":\"黄色 靴子\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_45_1757669293769\",\"text\":\"yellow eyes\",\"translate\":\"黄色眼睛\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(255, 123, 2, .4)\",\"isLoraTag\":false}]",
+        "temp_lora_str": "",
+        "random_template": "20250509_182442",
+        "打开提示词编辑器": "",
+        "打开Lora堆": ""
+      },
+      "class_type": "WeiLinPromptUI",
+      "_meta": {
+        "title": "正面提示词编辑（不再推荐此节点的Lora堆功能 请改用左侧的Lora管理器）"
+      }
+    },
+    "1834": {
+      "inputs": {
+        "positive": "worst quality, worst aesthetic, bad quality, normal quality, average quality, oldest, old, early, very displeasing, displeasing, simple background, text, tooth, bad hands, bad anatomy,",
+        "auto_random": "",
+        "lora_str": "",
+        "temp_str": "",
+        "temp_lora_str": "",
+        "random_template": "",
+        "打开提示词编辑器": "",
+        "打开Lora堆": ""
+      },
+      "class_type": "WeiLinPromptUI",
+      "_meta": {
+        "title": "负面提示词编辑"
+      }
+    },
+    "2295": {
+      "inputs": {
+        "text": "<lora:珂莱塔:0.80>, <lora:粘土风格模拟:0.40>, <lora:砧板鱼肉束缚:1.00>, <lora:束胸:1.00>, <lora:柯莱塔2:0.80>, <lora:卡提西亚:0.75>, <lora:刻律德菈:0.80>, <lora:CunnystyleV9.2-000022:0.75>, <lora:display 束缚:0.80>, <lora:3D国漫风:0.20>, <lora:海瑟音:0.80>, <lora:和式便器拘束:1.00>, <lora:框架拘束:1.00>, <lora:菲比 鸣潮:0.80>, <lora:性爱机器:1.00>, <lora:性拘束:0.80>, <lora:特定素描画风:0.35>, <lora:可爱捏Th4llo_Jost4r_style:0.35>, <lora:反省板拘束:0.75>, <lora:束缚架拘束:0.80>, <lora:拘束椅子:0.80>, <lora:坎特蕾拉:0.80>, <lora:云缨:0.80>, <lora:离恨烟:0.80>, <lora:少司缘:0.82>, <lora:手足拘束:0.80>, <lora:小乔 时之巫女:0.70>, <lora:开腿束缚:0.80>, <lora:肉便器:0.85> <lora:CunnystyleV9.2-000022:0.75> <lora:CunnystyleV8.4-000016:0.80:0.80> <lora:748cmSDXL:0.35> <lora:mix_of_ai_and_non_ai_styles_noob-vpred-1.0_v3.22-edm2-pass-dark:0.35:0.35> <lora:USNR_STYLE_NB_Vpred_V3-000019:0.36> <lora:ill-xl-01-pvc_2-000030:0.43> <lora:QAQ1121-24:0.85> <lora:QAQv2p2-150:0.58> <lora:style_strength_controller_illus01_v1:0.35> <lora:illustrious_noobai_epsilon_pred_11_very_aesthetic_v1:0.35> <lora:QAQv4:0.80> <lora:QAQv5p2_IL-40:0.75> <lora:CunnyFunky_style_illu_v2:0.70> <lora:cunnyfunkystyle2:0.81:0.81> <lora:Eyes_for_Illustrious_Lora_Perfect_anime_eyes:1.00>",
         "loras": {
           "__value__": [
             {
-              "name": "bbw_milf_mature_women_v2",
-              "strength": "1.00",
+              "name": "CunnystyleV9.2-000022",
+              "strength": "0.75",
               "active": false,
               "expanded": false,
-              "clipStrength": "1.00",
-              "locked": false
+              "clipStrength": "0.75"
             },
             {
-              "name": "gufeng_impasto_2",
-              "strength": "1.00",
+              "name": "CunnystyleV8.4-000016",
+              "strength": "0.80",
               "active": false,
               "expanded": false,
-              "clipStrength": "1.00",
-              "locked": false
+              "clipStrength": "0.80"
             },
             {
-              "name": "1_fengge",
+              "name": "style_strength_controller_illus01_v1",
+              "strength": "0.35",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.35"
+            },
+            {
+              "name": "QAQv2p2-150",
+              "strength": "0.58",
+              "active": true,
+              "expanded": false,
+              "clipStrength": "0.58"
+            },
+            {
+              "name": "粘土风格模拟",
+              "strength": 0.4,
+              "active": false,
+              "expanded": false,
+              "clipStrength": 0.4
+            },
+            {
+              "name": "QAQv4",
+              "strength": "0.80",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.80"
+            },
+            {
+              "name": "illustrious_noobai_epsilon_pred_11_very_aesthetic_v1",
+              "strength": "0.35",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.35"
+            },
+            {
+              "name": "特定素描画风",
+              "strength": "0.35",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.35"
+            },
+            {
+              "name": "748cmSDXL",
+              "strength": "0.35",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.35"
+            },
+            {
+              "name": "ill-xl-01-pvc_2-000030",
+              "strength": "0.43",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.43"
+            },
+            {
+              "name": "mix_of_ai_and_non_ai_styles_noob-vpred-1.0_v3.22-edm2-pass-dark",
+              "strength": "0.35",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.35"
+            },
+            {
+              "name": "USNR_STYLE_NB_Vpred_V3-000019",
+              "strength": "0.36",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.36"
+            },
+            {
+              "name": "可爱捏Th4llo_Jost4r_style",
+              "strength": "0.35",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.35"
+            },
+            {
+              "name": "QAQ1121-24",
               "strength": "0.85",
               "active": false,
               "expanded": false,
-              "clipStrength": "0.85",
-              "locked": false
+              "clipStrength": "0.85"
             },
             {
-              "name": "xian-nu_style_ill_v1.0-000004",
-              "strength": "0.90",
-              "active": false,
-              "expanded": false,
-              "clipStrength": "0.90",
-              "locked": false
-            },
-            {
-              "name": "Miaobola IL V4",
-              "strength": "1.00",
-              "active": true,
-              "expanded": false,
-              "clipStrength": "1.00",
-              "locked": false
-            },
-            {
-              "name": "Xanzi_llustriousXL-000002",
-              "strength": 1,
-              "active": true,
-              "expanded": false,
-              "clipStrength": 1,
-              "locked": false
-            },
-            {
-              "name": "SK_v1.5",
-              "strength": 1,
-              "active": false,
-              "expanded": false,
-              "clipStrength": 1,
-              "locked": false
-            },
-            {
-              "name": "Yokai_Miko",
-              "strength": "0.95",
-              "active": false,
-              "expanded": false,
-              "clipStrength": "0.95",
-              "locked": false
-            },
-            {
-              "name": "仙子",
+              "name": "3D国漫风",
               "strength": "0.20",
               "active": false,
               "expanded": false,
-              "clipStrength": "0.20",
-              "locked": false
+              "clipStrength": "0.20"
             },
             {
-              "name": "Artist_Style怅夜骨髓bbbs_Illustrious",
-              "strength": "1.20",
+              "name": "卡提西亚",
+              "strength": 0.75,
               "active": false,
               "expanded": false,
-              "clipStrength": "1.20",
-              "locked": false
+              "clipStrength": 0.75
             },
             {
-              "name": "00-000019",
-              "strength": "1.00",
-              "active": false,
-              "expanded": false,
-              "clipStrength": "1.00",
-              "locked": false
-            },
-            {
-              "name": "NTRXL_NBVP1_lokr_V6311PZ",
-              "strength": "0.95",
-              "active": false,
-              "expanded": false,
-              "clipStrength": "0.95",
-              "locked": false
-            },
-            {
-              "name": "Illustrious/style/style-laoyb",
+              "name": "珂莱塔",
               "strength": 0.8,
               "active": false,
               "expanded": false,
-              "clipStrength": 0.8,
-              "locked": false
+              "clipStrength": 0.8
             },
             {
-              "name": "Illustrious/style/hhh-000008",
-              "strength": 0.2,
+              "name": "柯莱塔2",
+              "strength": "0.80",
               "active": false,
               "expanded": false,
-              "clipStrength": 0.2,
-              "locked": false
+              "clipStrength": "0.80"
             },
             {
-              "name": "manaifix4",
-              "strength": "0.60",
+              "name": "海瑟音",
+              "strength": "0.80",
               "active": false,
               "expanded": false,
-              "clipStrength": "0.60",
-              "locked": false
+              "clipStrength": "0.80"
             },
             {
-              "name": "NFLyb_epoch_10",
-              "strength": "0.50",
+              "name": "刻律德菈",
+              "strength": "0.80",
               "active": false,
               "expanded": false,
-              "clipStrength": "0.50",
-              "locked": false
+              "clipStrength": "0.80"
             },
             {
-              "name": "NFL_epoch_5",
-              "strength": "0.50",
+              "name": "少司缘",
+              "strength": "0.82",
               "active": false,
               "expanded": false,
-              "clipStrength": "0.50",
-              "locked": false
+              "clipStrength": "0.82"
             },
             {
-              "name": "manAIfix3",
-              "strength": "0.60",
-              "active": false,
-              "expanded": false,
-              "clipStrength": "0.60",
-              "locked": false
-            },
-            {
-              "name": "刀刃",
-              "strength": "0.20",
-              "active": false,
-              "expanded": false,
-              "clipStrength": "0.20",
-              "locked": false
-            },
-            {
-              "name": "IL_MaoD Style-000100",
-              "strength": "1.00",
-              "active": false,
-              "expanded": false,
-              "clipStrength": "1.00",
-              "locked": false
-            },
-            {
-              "name": "IL_Ditto Style-000090",
+              "name": "小乔 时之巫女",
               "strength": "0.70",
               "active": false,
               "expanded": false,
-              "clipStrength": "0.70",
-              "locked": false
+              "clipStrength": "0.70"
             },
             {
-              "name": "laoyb2",
+              "name": "离恨烟",
+              "strength": "0.80",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.80"
+            },
+            {
+              "name": "云缨",
+              "strength": "0.80",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.80"
+            },
+            {
+              "name": "坎特蕾拉",
+              "strength": "0.80",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.80"
+            },
+            {
+              "name": "菲比 鸣潮",
+              "strength": "0.80",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.80"
+            },
+            {
+              "name": "砧板鱼肉束缚",
               "strength": 1,
               "active": false,
               "expanded": false,
-              "clipStrength": 1,
-              "locked": false
+              "clipStrength": 1
             },
             {
-              "name": "style-laoyb",
+              "name": "束胸",
               "strength": 1,
               "active": false,
               "expanded": false,
-              "clipStrength": 1,
-              "locked": false
+              "clipStrength": 1
             },
             {
-              "name": "IL_qp style-000040",
+              "name": "display 束缚",
+              "strength": "0.80",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.80"
+            },
+            {
+              "name": "和式便器拘束",
               "strength": 1,
               "active": false,
               "expanded": false,
-              "clipStrength": 1,
-              "locked": false
+              "clipStrength": 1
             },
             {
-              "name": "IL_radiopop201 style",
-              "strength": "0.90",
-              "active": false,
-              "expanded": false,
-              "clipStrength": "0.90",
-              "locked": false
-            },
-            {
-              "name": "IL_solomon10 style-000040",
+              "name": "框架拘束",
               "strength": 1,
               "active": false,
               "expanded": false,
-              "clipStrength": 1,
-              "locked": false
+              "clipStrength": 1
             },
             {
-              "name": "QOS",
+              "name": "性爱机器",
               "strength": 1,
               "active": false,
               "expanded": false,
-              "clipStrength": 1,
-              "locked": false
+              "clipStrength": 1
             },
             {
-              "name": "QOS_WAIILL",
+              "name": "性拘束",
+              "strength": "0.80",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.80"
+            },
+            {
+              "name": "反省板拘束",
+              "strength": "0.75",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.75"
+            },
+            {
+              "name": "束缚架拘束",
+              "strength": "0.80",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.80"
+            },
+            {
+              "name": "拘束椅子",
+              "strength": "0.80",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.80"
+            },
+            {
+              "name": "手足拘束",
+              "strength": "0.80",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.80"
+            },
+            {
+              "name": "开腿束缚",
+              "strength": "0.80",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.80"
+            },
+            {
+              "name": "肉便器",
+              "strength": "0.85",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.85"
+            },
+            {
+              "name": "QAQv5p2_IL-40",
+              "strength": "0.75",
+              "active": true,
+              "expanded": false,
+              "clipStrength": "0.75"
+            },
+            {
+              "name": "CunnyFunky_style_illu_v2",
+              "strength": "0.70",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.70"
+            },
+            {
+              "name": "cunnyfunkystyle2",
+              "strength": "0.81",
+              "active": false,
+              "expanded": false,
+              "clipStrength": "0.81"
+            },
+            {
+              "name": "Eyes_for_Illustrious_Lora_Perfect_anime_eyes",
               "strength": "1.00",
               "active": false,
               "expanded": false,
-              "clipStrength": "1.00",
-              "locked": false
+              "clipStrength": "1.00"
             }
           ]
         },
         "model": [
-          "217:170",
+          "3699",
           0
         ],
         "clip": [
-          "217:169",
-          0
+          "3699",
+          1
         ]
       },
       "class_type": "Lora Loader (LoraManager)",
       "_meta": {
-        "title": "Lora Loader (LoraManager)"
+        "title": "Lora堆 / Lora加载器"
       }
     },
-    "197": {
+    "2522": {
       "inputs": {
-        "group_mode": true,
-        "default_active": true,
-        "allow_strength_adjustment": false,
-        "toggle_trigger_words": {
-          "__value__": [
-            {
-              "text": "miaobola, black hair, blue eyes, double bun, gradient eyeshadow, blue forehead mark, makeup, blue lips, eye of horus hair ornament, earrings, jewelry, blue chinese clothes, wide sleeves, hagoromo, veil headwear, hair flower, mouth veil",
-              "active": false,
-              "highlighted": false,
-              "strength": null,
-              "items": [
-                {
-                  "text": "miaobola",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "black hair",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "blue eyes",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "double bun",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "gradient eyeshadow",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "blue forehead mark",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "makeup",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "blue lips",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "eye of horus hair ornament",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "earrings",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "jewelry",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "blue chinese clothes",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "wide sleeves",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "hagoromo",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "veil headwear",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "hair flower",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "mouth veil",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                }
-              ]
-            },
-            {
-              "text": "miaobola, black hair, yellow eyes, head veil, pink forehead mark, pink eyeshadow, shiny eyeshadow, earrings, jewelry, necklace, midriff, navel piercing, pink chinese clothes, deep pink dudou, aqua lotus tassel, covered eyes, white blindfold",
-              "active": false,
-              "highlighted": false,
-              "strength": null,
-              "items": [
-                {
-                  "text": "miaobola",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "black hair",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "yellow eyes",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "head veil",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "pink forehead mark",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "pink eyeshadow",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "shiny eyeshadow",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "earrings",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "jewelry",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "necklace",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "midriff",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "navel piercing",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "pink chinese clothes",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "deep pink dudou",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "aqua lotus tassel",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "covered eyes",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "white blindfold",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                }
-              ]
-            },
-            {
-              "text": "miaobola",
-              "active": true,
-              "highlighted": false,
-              "strength": null,
-              "items": [
-                {
-                  "text": "miaobola",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                }
-              ]
-            },
-            {
-              "text": "1girl,shiny skin,curvy,mature female,flower,black hair,hair bun,long hair,eyeshadow,facial mark,makeup,cleavage,huge breasts,large areolae,colored nipples,lipstick,forehead mark,nail polish,wide hips,thick thighs",
-              "active": false,
-              "highlighted": false,
-              "strength": null,
-              "items": [
-                {
-                  "text": "1girl",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "shiny skin",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "curvy",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "mature female",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "flower",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "black hair",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "hair bun",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "long hair",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "eyeshadow",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "facial mark",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "makeup",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "cleavage",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "huge breasts",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "large areolae",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "colored nipples",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "lipstick",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "forehead mark",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "nail polish",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "wide hips",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                },
-                {
-                  "text": "thick thighs",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                }
-              ]
-            },
-            {
-              "text": "xianzi",
-              "active": true,
-              "highlighted": false,
-              "strength": null,
-              "items": [
-                {
-                  "text": "xianzi",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                }
-              ]
-            },
-            {
-              "text": "cloud bun",
-              "active": false,
-              "highlighted": false,
-              "strength": null,
-              "items": [
-                {
-                  "text": "cloud bun",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                }
-              ]
-            },
-            {
-              "text": "high bun",
-              "active": false,
-              "highlighted": false,
-              "strength": null,
-              "items": [
-                {
-                  "text": "high bun",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                }
-              ]
-            },
-            {
-              "text": "ornate hairpins",
-              "active": false,
-              "highlighted": false,
-              "strength": null,
-              "items": [
-                {
-                  "text": "ornate hairpins",
-                  "active": true,
-                  "highlighted": false,
-                  "strength": null
-                }
-              ]
-            }
-          ]
-        },
-        "orinalMessage": "miaobola, black hair, blue eyes, double bun, gradient eyeshadow, blue forehead mark, makeup, blue lips, eye of horus hair ornament, earrings, jewelry, blue chinese clothes, wide sleeves, hagoromo, veil headwear, hair flower, mouth veil,, miaobola, black hair, yellow eyes, head veil, pink forehead mark, pink eyeshadow, shiny eyeshadow, earrings, jewelry, necklace, midriff, navel piercing, pink chinese clothes, deep pink dudou, aqua lotus tassel, covered eyes, white blindfold,, miaobola,, 1girl,shiny skin,curvy,mature female,flower,black hair,hair bun,long hair,eyeshadow,facial mark,makeup,cleavage,huge breasts,large areolae,colored nipples,lipstick,forehead mark,nail polish,wide hips,thick thighs,, xianzi,, cloud bun,, high bun,, ornate hairpins",
-        "trigger_words": [
-          "196",
-          2
+        "timeout": 1,
+        "ontimeout": "send all",
+        "tip": "选择你满意的底图（可多选）",
+        "extra1": "1、如果图像未显示请点击Show按钮",
+        "extra2": "2、选择完毕后点击Send继续",
+        "extra3": "3、点击Cancel取消当前流程",
+        "pick_list_start": 0,
+        "pick_list": "",
+        "video_frames": 1,
+        "graph_id": "18f3e919-2743-48cc-a789-7104e79aeeff",
+        "images": [
+          "365",
+          0
         ]
       },
-      "class_type": "TriggerWord Toggle (LoraManager)",
+      "class_type": "Image Filter",
       "_meta": {
-        "title": "TriggerWord Toggle (LoraManager)"
+        "title": "图像选择器"
       }
     },
-    "198": {
+    "2528": {
       "inputs": {
         "images": [
-          "368",
+          "3827",
           0
         ]
       },
       "class_type": "PreviewImage",
       "_meta": {
-        "title": "放大预览"
+        "title": "选中底图预览"
       }
     },
-    "213": {
+    "2760": {
       "inputs": {
-        "enable": true,
-        "filename_prefix": "%date:yyyy-MM-dd%/%date:hh-mm-ss%-%seed%",
+        "controlnet_name": [
+          "4599",
+          6
+        ]
+      },
+      "class_type": "easy controlnetNames",
+      "_meta": {
+        "title": "ControlNet名称列表"
+      }
+    },
+    "2848": {
+      "inputs": {
+        "width": [
+          "3689",
+          0
+        ],
+        "height": [
+          "3689",
+          1
+        ],
+        "batch_size": 1
+      },
+      "class_type": "EmptyLatentImage",
+      "_meta": {
+        "title": "批次大小设置"
+      }
+    },
+    "2856": {
+      "inputs": {
+        "model": [
+          "3649:3209",
+          0
+        ],
+        "clip": [
+          "4542",
+          1
+        ],
+        "vae": [
+          "3699",
+          2
+        ],
+        "positive": [
+          "3626",
+          0
+        ],
+        "negative": [
+          "3649:2890",
+          0
+        ],
+        "latent": [
+          "2848",
+          0
+        ]
+      },
+      "class_type": "Context (rgthree)",
+      "_meta": {
+        "title": "Context (rgthree)"
+      }
+    },
+    "3029": {
+      "inputs": {
+        "base_ctx": [
+          "3260",
+          0
+        ],
+        "model": [
+          "3715:3714",
+          0
+        ],
+        "clip": [
+          "3260",
+          2
+        ],
+        "vae": [
+          "3260",
+          3
+        ],
+        "positive": [
+          "3260",
+          4
+        ],
+        "negative": [
+          "3260",
+          5
+        ],
+        "latent": [
+          "3652:3222",
+          0
+        ],
+        "images": [
+          "3652:3223",
+          0
+        ]
+      },
+      "class_type": "Context (rgthree)",
+      "_meta": {
+        "title": "默认上下文"
+      }
+    },
+    "3148": {
+      "inputs": {},
+      "class_type": "ImpactIfNone",
+      "_meta": {
+        "title": "ImpactIfNone"
+      }
+    },
+    "3149": {
+      "inputs": {
+        "boolean": [
+          "3148",
+          1
+        ],
+        "on_true": [
+          "3148",
+          0
+        ],
+        "on_false": [
+          "1832",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "画廊选图提示词判空"
+      }
+    },
+    "3150": {
+      "inputs": {
+        "boolean": [
+          "1464",
+          1
+        ],
+        "on_true": [
+          "1464",
+          0
+        ],
+        "on_false": [
+          "3149",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "反推提示词判空"
+      }
+    },
+    "3260": {
+      "inputs": {
+        "ctx_02": [
+          "2856",
+          0
+        ]
+      },
+      "class_type": "Context Switch (rgthree)",
+      "_meta": {
+        "title": "Context Switch (rgthree)"
+      }
+    },
+    "3476": {
+      "inputs": {
+        "selected_prompts": "loli,",
+        "prompt_selector": ""
+      },
+      "class_type": "PromptSelector",
+      "_meta": {
+        "title": "固定正面提示词【后缀】"
+      }
+    },
+    "3509": {
+      "inputs": {},
+      "class_type": "ImpactIfNone",
+      "_meta": {
+        "title": "ImpactIfNone"
+      }
+    },
+    "3510": {
+      "inputs": {
+        "boolean": [
+          "3509",
+          1
+        ],
+        "on_true": [
+          "3509",
+          0
+        ],
+        "on_false": [
+          "3150",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否判断"
+      }
+    },
+    "3542": {
+      "inputs": {
+        "steps_total": [
+          "4002",
+          0
+        ],
+        "refiner_step": 30,
+        "cfg": [
+          "4002",
+          1
+        ],
+        "sampler_name": [
+          "4002",
+          2
+        ],
+        "scheduler": [
+          "4002",
+          3
+        ]
+      },
+      "class_type": "KSampler Config (rgthree)",
+      "_meta": {
+        "title": "【潜空间放大】采样参数"
+      }
+    },
+    "3600": {
+      "inputs": {
+        "images": [
+          "4407",
+          0
+        ]
+      },
+      "class_type": "PreviewImage",
+      "_meta": {
+        "title": "预览图像"
+      }
+    },
+    "3622": {
+      "inputs": {},
+      "class_type": "ImpactIfNone",
+      "_meta": {
+        "title": "ImpactIfNone"
+      }
+    },
+    "3623": {
+      "inputs": {
+        "boolean": [
+          "3622",
+          1
+        ],
+        "on_true": [
+          "3622",
+          0
+        ],
+        "on_false": [
+          "3510",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否判断"
+      }
+    },
+    "3625": {
+      "inputs": {
+        "text": [
+          "1834",
+          0
+        ],
+        "clip": [
+          "4542",
+          1
+        ]
+      },
+      "class_type": "CLIPTextEncode",
+      "_meta": {
+        "title": "CLIP文本编码"
+      }
+    },
+    "3626": {
+      "inputs": {
+        "text": [
+          "4512",
+          0
+        ],
+        "clip": [
+          "4542",
+          1
+        ]
+      },
+      "class_type": "PCTextEncode",
+      "_meta": {
+        "title": "PC: Text Encode (no scheduling)"
+      }
+    },
+    "3689": {
+      "inputs": {
+        "width": 768,
+        "height": 1024
+      },
+      "class_type": "ResolutionMasterSimplify",
+      "_meta": {
+        "title": "分辨率大师简化版 (Resolution Master Simplify)"
+      }
+    },
+    "3690": {
+      "inputs": {
+        "清理逗号 (cleanup_commas)": true,
+        "清理空白 (cleanup_whitespace)": true,
+        "移除LoRA标签 (remove_lora_tags)": true,
+        "清理换行 (cleanup_newlines)": "逗号 (comma)",
+        "修复括号 (fix_brackets)": "两者 (both)",
+        "提示词格式化 (prompt_formatting)": true,
+        "下划线转空格 (underscore_to_space)": true,
+        "权重语法补全 (complete_weight_syntax)": true,
+        "智能括号转义 (smart_bracket_escaping)": true,
+        "标准化逗号 (standardize_commas)": true,
+        "修复分区语法 (fix_region_syntax)": true,
+        "string": [
+          "3277:3274",
+          0
+        ]
+      },
+      "class_type": "PromptCleaningMaid",
+      "_meta": {
+        "title": "提示词清洁女仆 (Prompt Cleaning Maid)"
+      }
+    },
+    "3691": {
+      "inputs": {
+        "gmm_ui": ""
+      },
+      "class_type": "GroupMuteManager",
+      "_meta": {
+        "title": "文生图组管理"
+      }
+    },
+    "3693": {
+      "inputs": {
+        "gmm_ui": ""
+      },
+      "class_type": "GroupMuteManager",
+      "_meta": {
+        "title": "文生图附加可选功能组管理"
+      }
+    },
+    "3694": {
+      "inputs": {
+        "gmm_ui": ""
+      },
+      "class_type": "GroupMuteManager",
+      "_meta": {
+        "title": "独立可选功能组管理"
+      }
+    },
+    "3699": {
+      "inputs": {
+        "ckpt_name": "anikawaxl_v4.safetensors",
+        "vae_name": "Baked VAE",
+        "clip_skip": -2
+      },
+      "class_type": "SimpleCheckpointLoaderWithName",
+      "_meta": {
+        "title": "默认底模"
+      }
+    },
+    "3704": {
+      "inputs": {
+        "selected_prompts": "masterpiece,best quality,amazing quality,highres,absurdres,newest,very aesthetic,extreme aesthetic,sensitive,very awa,incredibly absurdres,8K,ultra detailed,HDR,high contrast,high detail RAW color art, A shot with tension,supreme masterpiece,official art,best quality,cinematic,fashion photography style,dramatic,visual impact,ultra-high resolution,sharp focus,intricate details,high-end texture,dramatic lighting,colorful,emotional",
+        "prompt_selector": ""
+      },
+      "class_type": "PromptSelector",
+      "_meta": {
+        "title": "固定正面提示词【前缀】"
+      }
+    },
+    "3823": {
+      "inputs": {
+        "images": [
+          "3827",
+          0
+        ]
+      },
+      "class_type": "PreviewImage",
+      "_meta": {
+        "title": "预览图像"
+      }
+    },
+    "3827": {
+      "inputs": {
+        "boolean": [
+          "4020",
+          0
+        ],
+        "on_true": [
+          "2522",
+          0
+        ],
+        "on_false": [
+          "365",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否判断"
+      }
+    },
+    "3828": {
+      "inputs": {
+        "pcp_ui": ""
+      },
+      "class_type": "ParameterControlPanel",
+      "_meta": {
+        "title": "【全局】参数控制面板"
+      }
+    },
+    "3830": {
+      "inputs": {
+        "mnp_ui": ""
+      },
+      "class_type": "WorkflowDescription",
+      "_meta": {
+        "title": "工作流说明 (Workflow Description)"
+      }
+    },
+    "3837": {
+      "inputs": {
+        "pcp_ui": ""
+      },
+      "class_type": "ParameterControlPanel",
+      "_meta": {
+        "title": "【底图】参数控制面板"
+      }
+    },
+    "3839": {
+      "inputs": {
+        "parameters": [
+          "3837",
+          0
+        ]
+      },
+      "class_type": "ParameterBreak",
+      "_meta": {
+        "title": "参数展开 (Parameter Break)"
+      }
+    },
+    "3840": {
+      "inputs": {
+        "pcp_ui": ""
+      },
+      "class_type": "ParameterControlPanel",
+      "_meta": {
+        "title": "【潜空间放大】参数控制面板"
+      }
+    },
+    "3844": {
+      "inputs": {
+        "pcp_ui": ""
+      },
+      "class_type": "ParameterControlPanel",
+      "_meta": {
+        "title": "【迭代放大】参数控制面板"
+      }
+    },
+    "3845": {
+      "inputs": {
+        "parameters": [
+          "3844",
+          0
+        ]
+      },
+      "class_type": "ParameterBreak",
+      "_meta": {
+        "title": "参数展开 (Parameter Break)"
+      }
+    },
+    "3846": {
+      "inputs": {
+        "pcp_ui": ""
+      },
+      "class_type": "ParameterControlPanel",
+      "_meta": {
+        "title": "【通用放大】参数控制面板"
+      }
+    },
+    "3847": {
+      "inputs": {
+        "parameters": [
+          "3846",
+          0
+        ]
+      },
+      "class_type": "ParameterBreak",
+      "_meta": {
+        "title": "参数展开 (Parameter Break)"
+      }
+    },
+    "3848": {
+      "inputs": {
+        "pcp_ui": ""
+      },
+      "class_type": "ParameterControlPanel",
+      "_meta": {
+        "title": "【TTP分块放大】参数控制面板"
+      }
+    },
+    "3849": {
+      "inputs": {
+        "parameters": [
+          "3848",
+          0
+        ]
+      },
+      "class_type": "ParameterBreak",
+      "_meta": {
+        "title": "参数展开 (Parameter Break)"
+      }
+    },
+    "3850": {
+      "inputs": {
+        "pcp_ui": ""
+      },
+      "class_type": "ParameterControlPanel",
+      "_meta": {
+        "title": "【部位细化】参数控制面板"
+      }
+    },
+    "4002": {
+      "inputs": {
+        "parameters": [
+          "3840",
+          0
+        ]
+      },
+      "class_type": "ParameterBreak",
+      "_meta": {
+        "title": "参数展开 (Parameter Break)"
+      }
+    },
+    "4020": {
+      "inputs": {
+        "value": false
+      },
+      "class_type": "easy boolean",
+      "_meta": {
+        "title": "是否开启图像选择弹窗"
+      }
+    },
+    "4080": {
+      "inputs": {
+        "parameters": [
+          "3850",
+          0
+        ]
+      },
+      "class_type": "ParameterBreak",
+      "_meta": {
+        "title": "参数展开 (Parameter Break)"
+      }
+    },
+    "4277": {
+      "inputs": {
+        "enable": [
+          "3839",
+          7
+        ],
+        "filename_prefix": "%date:yyyy-MM-dd%/%date:hh-mm-ss%-%seed%_底图",
         "file_format": "PNG",
         "quality": 100,
         "embed_workflow": true,
         "save_clean_copy": false,
-        "enable_preview": true,
+        "enable_preview": false,
         "images": [
-          "338",
+          "4612:4611",
           0
         ],
         "positive_prompt": [
-          "343",
+          "4512",
           0
         ],
         "negative_prompt": [
-          "342",
+          "1834",
           0
         ],
         "lora_syntax": [
-          "196",
+          "2295",
           3
         ],
         "checkpoint_name": [
-          "217:170",
+          "3699",
           3
         ]
       },
@@ -842,483 +1230,1440 @@
         "title": "保存图像增强版 (Save Image Plus)"
       }
     },
-    "215": {
+    "4407": {
       "inputs": {
-        "delimiter": ",",
-        "string1": [
-          "197",
-          0
-        ]
-      },
-      "class_type": "JoinStrings",
-      "_meta": {
-        "title": "画廊与触发词合并"
-      }
-    },
-    "224": {
-      "inputs": {
-        "width": 1248,
-        "height": 1824
-      },
-      "class_type": "ResolutionMasterSimplify",
-      "_meta": {
-        "title": "分辨率设定"
-      }
-    },
-    "228": {
-      "inputs": {
-        "delimiter": ",",
-        "string2": [
-          "268",
-          0
-        ]
-      },
-      "class_type": "JoinStrings",
-      "_meta": {
-        "title": "前缀合并"
-      }
-    },
-    "229": {
-      "inputs": {
-        "delimiter": ",",
-        "string1": [
-          "228",
-          0
-        ]
-      },
-      "class_type": "JoinStrings",
-      "_meta": {
-        "title": "后缀合并"
-      }
-    },
-    "235": {
-      "inputs": {
-        "gmm_ui": ""
-      },
-      "class_type": "GroupMuteManager",
-      "_meta": {
-        "title": "功能启停中心"
-      }
-    },
-    "268": {
-      "inputs": {
-        "delimiter": ",",
-        "string1": [
-          "215",
-          0
-        ]
-      },
-      "class_type": "JoinStrings",
-      "_meta": {
-        "title": "反推合并"
-      }
-    },
-    "316": {
-      "inputs": {
-        "any_05": [
-          "22",
-          0
-        ]
-      },
-      "class_type": "Any Switch (rgthree)",
-      "_meta": {
-        "title": "放大判断"
-      }
-    },
-    "317": {
-      "inputs": {
-        "any_05": [
-          "368",
-          0
-        ]
-      },
-      "class_type": "Any Switch (rgthree)",
-      "_meta": {
-        "title": "修脸判断"
-      }
-    },
-    "318": {
-      "inputs": {
-        "any_05": [
-          "317",
-          0
-        ]
-      },
-      "class_type": "Any Switch (rgthree)",
-      "_meta": {
-        "title": "修眼判断"
-      }
-    },
-    "319": {
-      "inputs": {
-        "any_05": [
-          "318",
-          0
-        ]
-      },
-      "class_type": "Any Switch (rgthree)",
-      "_meta": {
-        "title": "修手判断"
-      }
-    },
-    "320": {
-      "inputs": {
-        "any_04": [
-          "319",
+        "samples": [
+          "4532",
           0
         ],
-        "any_05": [
-          "319",
+        "vae": [
+          "4591",
+          3
+        ]
+      },
+      "class_type": "VAEDecode",
+      "_meta": {
+        "title": "VAE解码"
+      }
+    },
+    "4509": {
+      "inputs": {
+        "string": [
+          "4752",
           0
         ]
       },
-      "class_type": "Any Switch (rgthree)",
+      "class_type": "StringLength",
       "_meta": {
-        "title": "图像水印判断"
+        "title": "长度"
       }
     },
-    "338": {
+    "4510": {
       "inputs": {
-        "any_05": [
-          "320",
+        "comparison": "a > 0",
+        "a": [
+          "4509",
           0
         ]
       },
-      "class_type": "Any Switch (rgthree)",
+      "class_type": "easy compare",
       "_meta": {
-        "title": "文字水印判断"
+        "title": "比较"
       }
     },
-    "342": {
+    "4511": {
       "inputs": {
-        "positive": "bad quality,worst quality,worst detail,sketch,censor,",
-        "auto_random": false,
-        "temp_str": "[{\"id\":\"token_1_1770208117277\",\"text\":\"anatomical nonsense\",\"translate\":\"anatomical nonsense\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_2_1770208117277\",\"text\":\"interlocked fingers\",\"translate\":\"interlocked fingers\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_3_1770208117277\",\"text\":\"extra fingers\",\"translate\":\"extra fingers\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_2_1772187607240\",\"text\":\"watermark\",\"translate\":\"水印\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_5_1770208117277\",\"text\":\"low quality\",\"translate\":\"low 质量\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_6_1770208117277\",\"text\":\"logo\",\"translate\":\"标志\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_3_1772187607240\",\"text\":\"(text:1.6)\",\"translate\":\"(text\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_8_1770208117277\",\"text\":\"signature\",\"translate\":\"签名\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_9_1770208117277\",\"text\":\"(worst quality\",\"translate\":\"(worst 质量\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_10_1770208117277\",\"text\":\"bad quality:1.2)\",\"translate\":\"bad 质量\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_11_1770208117277\",\"text\":\"jpeg artifacts\",\"translate\":\"jpeg artifacts\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_12_1770208117277\",\"text\":\"username\",\"translate\":\"username\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_13_1770208117277\",\"text\":\"extra digit\",\"translate\":\"extra digit\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_14_1770208117277\",\"text\":\"ugly\",\"translate\":\"ugly\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_15_1770208117277\",\"text\":\"bad_hands\",\"translate\":\"糟糕的手\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_16_1770208117277\",\"text\":\"bad_feet\",\"translate\":\"糟糕的脚\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_17_1770208117277\",\"text\":\"bad_anatomy\",\"translate\":\"糟糕的解剖\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_18_1770208117277\",\"text\":\"deformed anatomy\",\"translate\":\"变形 解剖学\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_19_1770208117277\",\"text\":\"bad proportions\",\"translate\":\"bad proportions\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_20_1770208117277\",\"text\":\"lowres\",\"translate\":\"低分辨率\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(0, 255, 255, .4)\",\"isLoraTag\":false},{\"id\":\"token_21_1770208117277\",\"text\":\"bad_quality\",\"translate\":\"bad_quality\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_22_1770208117277\",\"text\":\"low resolution\",\"translate\":\"low resolution\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_23_1770208117277\",\"text\":\"e621\",\"translate\":\"e621\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_24_1770208117277\",\"text\":\"Furry\",\"translate\":\"Furry\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_25_1770208117277\",\"text\":\"old\",\"translate\":\"老的\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(17, 63, 103, .4)\",\"isLoraTag\":false},{\"id\":\"token_1_1771927965080\",\"text\":\"white background\",\"translate\":\"white background\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":true,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"双击显示提示词\"},{\"id\":\"token_2_1772203546683\",\"text\":\"simple background\",\"translate\":\"简单的背景\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":true,\"color\":\"rgba(0, 255, 255, .4)\",\"isLoraTag\":false,\"hiddenHint\":\"双击显示提示词\"},{\"id\":\"token_1_1772356678744\",\"text\":\"\\n\",\"translate\":\"\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null},{\"id\":\"token_27_1770208117277\",\"text\":\"blank eyes\",\"translate\":\"blank 眼睛\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(17, 63, 103, .4)\",\"isLoraTag\":false},{\"id\":\"token_28_1770208117277\",\"text\":\"white pupils\",\"translate\":\"white 瞳孔\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(17, 63, 103, .4)\",\"isLoraTag\":false},{\"id\":\"token_29_1770208117277\",\"text\":\"empty eyes\",\"translate\":\"空洞眼神\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(241, 229, 140, .4)\",\"isLoraTag\":false},{\"id\":\"token_2_1772187470858\",\"text\":\"embedding:lazy\\\\lazyhand\",\"translate\":\"embedding:lazy\\\\lazyhand\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_3_1772187470858\",\"text\":\"embedding:lazy\\\\lazyneg\",\"translate\":\"embedding:lazy\\\\lazyneg\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_32_1770208117277\",\"text\":\"overexposure\",\"translate\":\"过曝\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(99, 201, 2, .4)\",\"isLoraTag\":false}]",
-        "random_template": "",
-        "打开提示词编辑器": "",
-        "opt_clip": [
-          "196",
-          1
-        ]
-      },
-      "class_type": "WeiLinPromptUIWithoutLora",
-      "_meta": {
-        "title": "负面提示词"
-      }
-    },
-    "343": {
-      "inputs": {
-        "positive": [
-          "429",
-          1
-        ],
-        "auto_random": false,
-        "temp_str": "[{\"id\":\"token_1_1772104953931\",\"text\":\"see-through\",\"translate\":\"透明\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(230, 84, 128, .4)\",\"isLoraTag\":false},{\"id\":\"token_2_1772104953931\",\"text\":\"fine fabric emphasis\",\"translate\":\"精致的面料重点\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_3_1772104953931\",\"text\":\"detailed fabric\",\"translate\":\"详细的面料\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_4_1772104953931\",\"text\":\"emphasis\",\"translate\":\"强调\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_5_1772104953931\",\"text\":\"skindentation\",\"translate\":\"皮肤压痕\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(17, 63, 103, .4)\",\"isLoraTag\":false},{\"id\":\"token_7_1772104953931\",\"text\":\"oiled\",\"translate\":\"涂油\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_1_1772113864527\",\"text\":\"pale skin\",\"translate\":\"苍白的皮肤\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"\"},{\"id\":\"token_1_1772276332742\",\"text\":\"fair skin\",\"translate\":\"白皙肌肤\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(17, 63, 103, .4)\",\"isLoraTag\":false},{\"id\":\"token_1_1772106513940\",\"text\":\"oilly skin\",\"translate\":\"油皮\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_4_1772202141450\",\"text\":\"shiny skin\",\"translate\":\"光泽肌肤\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(17, 63, 103, .4)\",\"isLoraTag\":false,\"hiddenHint\":\"\"},{\"id\":\"token_39_1772276332742\",\"text\":\"wet_skin_detail\",\"translate\":\"湿肤细节\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_27_1772276332742\",\"text\":\"glossy_wet_body\",\"translate\":\"glossy_wet_body\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_26_1772276332742\",\"text\":\"slippery_skin\",\"translate\":\"滑溜_皮肤\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_8_1772188327519\",\"text\":\"dynamic angle\",\"translate\":\"动态镜头(随机)\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":\"rgba(99, 201, 2, .4)\",\"isLoraTag\":false},{\"id\":\"token_2_1772351994757\",\"text\":\"3d\",\"translate\":\"3d\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"\"},{\"id\":\"token_1_1772360681788\",\"text\":\"semi-realistic\",\"translate\":\"semi-realistic\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"\"},{\"id\":\"token_1_1772311314759\",\"text\":\"wlop\",\"translate\":\"wlop\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":true,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"双击显示提示词\"},{\"id\":\"token_1_1772349815383\",\"text\":\"nixeu\",\"translate\":\"(nixeu:0.4)\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"\"},{\"id\":\"token_1_1772311765021\",\"text\":\"wanke\",\"translate\":\"wanke\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":true,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"双击显示提示词\"},{\"id\":\"token_1_1772311578346\",\"text\":\"(meion:0.6)\",\"translate\":\"(meion:0.8)\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"\"},{\"id\":\"token_1_1772310939217\",\"text\":\"(rhasta:0.6)\",\"translate\":\"拉哈斯塔\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":true,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"双击显示提示词\"},{\"id\":\"token_2_1772310939217\",\"text\":\"(omone_hokoma_agm:0.7)\",\"translate\":\"omone_hokoma_agm\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"\"},{\"id\":\"token_2_1772311314759\",\"text\":\"(dishwasher1910:0.7)\",\"translate\":\"洗碗机1910\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"\"},{\"id\":\"token_3_1772311314759\",\"text\":\"(binggong asylum:0.7)\",\"translate\":\"binggong asylum\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"\"},{\"id\":\"token_1_1772348905932\",\"text\":\"(kase_daiki:0.3)\",\"translate\":\"kase_daiki\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":true,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"双击显示提示词\"},{\"id\":\"token_1_1772350721930\",\"text\":\"(ask (askzy):0.8)\",\"translate\":\"ask (askzy)\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":true,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"双击显示提示词\"},{\"id\":\"token_2_1772352840560\",\"text\":\"milkychu\",\"translate\":\"milkychu\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"\"},{\"id\":\"token_1_1772374031258\",\"text\":\"yoneyama mai\",\"translate\":\"yoneyama mai\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":true,\"color\":null,\"isLoraTag\":false,\"hiddenHint\":\"双击显示提示词\"},{\"id\":\"token_3_1772310939217\",\"text\":\"2025\",\"translate\":\"2025\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null,\"isLoraTag\":false},{\"id\":\"token_1_1772378938680\",\"text\":\"\\n\",\"translate\":\"\",\"isPunctuation\":false,\"isEditing\":false,\"isHidden\":false,\"color\":null}]",
-        "random_template": "20260228_020114",
-        "打开提示词编辑器": "",
-        "opt_text": [
-          "229",
+        "separator": ", ",
+        "prompt1": [
+          "4752",
           0
         ],
-        "opt_clip": [
-          "196",
-          1
-        ]
-      },
-      "class_type": "WeiLinPromptUIWithoutLora",
-      "_meta": {
-        "title": "正面提示词"
-      }
-    },
-    "368": {
-      "inputs": {
-        "any_05": [
-          "316",
+        "prompt2": [
+          "3690",
           0
         ]
       },
-      "class_type": "Any Switch (rgthree)",
+      "class_type": "easy promptConcat",
       "_meta": {
-        "title": "分块重采判断"
+        "title": "提示词联结"
       }
     },
-    "400": {
-      "inputs": {},
-      "class_type": "Any Switch (rgthree)",
-      "_meta": {
-        "title": "CN图判断"
-      }
-    },
-    "412": {
+    "4512": {
       "inputs": {
-        "any_05": [
-          "217:168",
-          0
-        ]
-      },
-      "class_type": "Any Switch (rgthree)",
-      "_meta": {
-        "title": "垫图判断"
-      }
-    },
-    "416": {
-      "inputs": {
-        "any_04": [
-          "343",
-          1
-        ],
-        "any_05": [
-          "343",
-          1
-        ]
-      },
-      "class_type": "Any Switch (rgthree)",
-      "_meta": {
-        "title": "正面条件判断"
-      }
-    },
-    "417": {
-      "inputs": {
-        "any_04": [
-          "342",
-          1
-        ],
-        "any_05": [
-          "342",
-          1
-        ]
-      },
-      "class_type": "Any Switch (rgthree)",
-      "_meta": {
-        "title": "负面条件判断"
-      }
-    },
-    "420": {
-      "inputs": {
-        "value": 1
-      },
-      "class_type": "ImpactFloat",
-      "_meta": {
-        "title": "降噪"
-      }
-    },
-    "422": {
-      "inputs": {
-        "any_05": [
-          "420",
-          0
-        ]
-      },
-      "class_type": "Any Switch (rgthree)",
-      "_meta": {
-        "title": "降噪强度判断"
-      }
-    },
-    "429": {
-      "inputs": {
-        "text": "\n, __影自用通配符/服装18__, __nsfw/nai-nsfw_processed__",
-        "Select to add LoRA": "Select the LoRA to add to the text",
-        "Select to add Wildcard": "Select the Wildcard to add to the text",
-        "seed": 603930856218199,
-        "multiline_mode": false
-      },
-      "class_type": "easy wildcards",
-      "_meta": {
-        "title": "通配符提示词"
-      }
-    },
-    "431": {
-      "inputs": {
-        "preview": "\n, ninja,see-through,scarf,skindentation,latex gloves,(fishnet:1.4),(fishnet bodystocking:1.2),nude,completely nude,elbow gloves,pasties, looking at viewer,half-closed eyes,shy,embarrassed smile,blush,nipples,naked,side-tie dress,sweat,ass crack,cum in anus,sitting on round stool,leaning forward,hands between legs,",
-        "previewMode": null,
-        "source": [
-          "429",
-          1
-        ]
-      },
-      "class_type": "PreviewAny",
-      "_meta": {
-        "title": "预览任意"
-      }
-    },
-    "432": {
-      "inputs": {
-        "preview": "",
-        "previewMode": null
-      },
-      "class_type": "PreviewAny",
-      "_meta": {
-        "title": "预览任意"
-      }
-    },
-    "434": {
-      "inputs": {
-        "preview": "\n, __影自用通配符/服装18__, __nsfw/nai-nsfw_processed__",
-        "previewMode": null,
-        "source": [
-          "429",
-          0
-        ]
-      },
-      "class_type": "PreviewAny",
-      "_meta": {
-        "title": "预览任意"
-      }
-    },
-    "437": {
-      "inputs": {
-        "text": "1girl,hanfu, seductive smile, __xianxia/races__, __xianxia/poses__,\n__xianxia/makeup/eyes__, __xianxia/makeup/forehead__, __xianxia/makeup/hair__, __xianxia/makeup/eyebrows__,\n__xianxia/decorations/earrings__, __xianxia/decorations/necklaces__, __xianxia/decorations/bracelets__, __xianxia/decorations/anklets__, __xianxia/decorations/rings__,\n__xianxia/decorations/hairpins__, __xianxia/decorations/hair_combs__, __xianxia/decorations/hair_ornaments__, __xianxia/decorations/veils__,\n__xianxia/decorations/artifacts__, __xianxia/decorations/props__,\n__xianxia/primary_colors__, __xianxia/clothing/tops__, __xianxia/clothing/sleeves__, __xianxia/clothing/belts__,\n__xianxia/clothing/skirts__, __xianxia/clothing/skirt_details__, __xianxia/clothing/stockings__, __xianxia/clothing/shoes__,\nchinese ancient style, __xianxia/backgrounds__, __xianxia/environments__, __xianxia/lighting__,"
-      },
-      "class_type": "CLIPTextEncode",
-      "_meta": {
-        "title": "CLIP文本编码"
-      }
-    },
-    "438": {
-      "inputs": {
-        "text": "anatomical nonsense,interlocked fingers,extra  fingers,watermark,simple background,transparent,low quality,logo,text,signature,(worst quality, bad quality:1.2),jpeg artifacts,username,censored,extra digit,ugly,bad_hands,bad_feet,bad_anatomy,deformed anatomy,bad proportions,lowres,bad_quality,embedding:Illustrious\\style\\lazyhand, embedding:Illustrious\\style\\lazyneg, "
-      },
-      "class_type": "CLIPTextEncode",
-      "_meta": {
-        "title": "CLIP文本编码"
-      }
-    },
-    "439": {
-      "inputs": {
-        "text": "lowres, (bad quality,worst quality:1.2), worst detail, sketch, censor, transparent background, patreon logo, bad_anatomy, artist_name, twitter username, patreon username, signature, text\n\nworst quality, bad quality, jpeg, artifacts, (bad hands, bad finger, anatomy), (artist name, copyright name, watermark, text, english text), (bad feet, bad toes), (bad quality,worst quality:1.2), worst detail, sketch, censor, transparent background, patreon logo, bad_anatomy, artist_name, twitter username, patreon username, signature, text, (copyright name:1.2),(watermark:1.2)"
-      },
-      "class_type": "CLIPTextEncode",
-      "_meta": {
-        "title": "CLIP文本编码"
-      }
-    },
-    "440": {
-      "inputs": {
-        "text": "(worst quality, low quality:1.3),lowres,monochrome,bad anatomy,bad hands,missing fingers,extra digit,fat,extra arms,extra hands,fewer digits,blurry,artist name,signature,watermark,EasyNegative,"
-      },
-      "class_type": "CLIPTextEncode",
-      "_meta": {
-        "title": "CLIP文本编码"
-      }
-    },
-    "441": {
-      "inputs": {
-        "text": "furry, anthro,chibi, \njpeg artifacts, signature, watermark, multiple views, 2koma, (speech bubble:1.2), text,commentary request,\n(bad anatomy, bad hands:1.2), abstract, signature, worst quality, red theme, blue theme,ai-generated,bad hands,halo,animal_ears, fox_ears, \nbad feet,extra digits,fewer digits,extra hands,extra arms,extra legs,extra foots,extra faces,multiple heads,missing limb,amputee,severed limb,mutated hands,distorted,anatomy,bar_censor,censored,text,twitter_username,mosaic_censoring,black bar,black bar censor,text, abstract, glitch, deformed, mutated, ugly, disfigured, long body, lowres, bad anatomy, bad hands, missing fingers, extra digit, fewer digits, cropped, lowres, (worst quality, bad quality:1.2), bad anatomy, jpeg artifacts, signature, watermark, username, signature, simple background, conjoined,twitter_username, "
-      },
-      "class_type": "CLIPTextEncode",
-      "_meta": {
-        "title": "CLIP文本编码"
-      }
-    },
-    "217:169": {
-      "inputs": {
-        "stop_at_clip_layer": -2,
-        "clip": [
-          "217:170",
-          1
-        ]
-      },
-      "class_type": "CLIPSetLastLayer",
-      "_meta": {
-        "title": "设置CLIP最后一层"
-      }
-    },
-    "217:168": {
-      "inputs": {
-        "width": [
-          "224",
+        "boolean": [
+          "4510",
           0
         ],
-        "height": [
-          "224",
-          1
-        ],
-        "batch_size": 1
-      },
-      "class_type": "EmptyLatentImage",
-      "_meta": {
-        "title": "空Latent图像"
-      }
-    },
-    "217:170": {
-      "inputs": {
-        "ckpt_name": "Illustrious\\waiIllustriousSDXL_v80.safetensors"
-      },
-      "class_type": "Checkpoint Loader with Name (Image Saver)",
-      "_meta": {
-        "title": "Checkpoint Loader with Name (Image Saver)"
-      }
-    },
-    "217:172": {
-      "inputs": {
-        "vae_name": "xlVAEC_f2.safetensors"
-      },
-      "class_type": "VAELoader",
-      "_meta": {
-        "title": "加载VAE"
-      }
-    },
-    "217:175": {
-      "inputs": {
-        "boolean": false,
         "on_true": [
-          "217:172",
+          "4511",
           0
         ],
         "on_false": [
-          "217:170",
+          "3690",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否判断"
+      }
+    },
+    "4528": {
+      "inputs": {
+        "ckpt_name": "anikawaxl_v4.safetensors",
+        "vae_name": "Baked VAE",
+        "clip_skip": -2
+      },
+      "class_type": "SimpleCheckpointLoaderWithName",
+      "_meta": {
+        "title": "Refiner/放大底模（没需求或内存不够就选跟上面一样的）"
+      }
+    },
+    "4529": {
+      "inputs": {
+        "add_noise": "enable",
+        "noise_seed": 269842178196199,
+        "steps": [
+          "474",
+          0
+        ],
+        "cfg": [
+          "474",
+          2
+        ],
+        "sampler_name": [
+          "474",
+          3
+        ],
+        "scheduler": [
+          "474",
+          4
+        ],
+        "start_at_step": 0,
+        "end_at_step": [
+          "4535",
+          0
+        ],
+        "return_with_leftover_noise": "enable",
+        "model": [
+          "3029",
+          1
+        ],
+        "positive": [
+          "3029",
+          4
+        ],
+        "negative": [
+          "3029",
+          5
+        ],
+        "latent_image": [
+          "3029",
+          6
+        ]
+      },
+      "class_type": "KSamplerAdvanced",
+      "_meta": {
+        "title": "K采样器"
+      }
+    },
+    "4532": {
+      "inputs": {
+        "add_noise": "disable",
+        "noise_seed": 269842178196199,
+        "steps": [
+          "474",
+          0
+        ],
+        "cfg": [
+          "474",
+          2
+        ],
+        "sampler_name": [
+          "474",
+          3
+        ],
+        "scheduler": [
+          "474",
+          4
+        ],
+        "start_at_step": [
+          "4535",
+          0
+        ],
+        "end_at_step": 10000,
+        "return_with_leftover_noise": "disable",
+        "model": [
+          "4591",
+          1
+        ],
+        "positive": [
+          "3029",
+          4
+        ],
+        "negative": [
+          "3029",
+          5
+        ],
+        "latent_image": [
+          "4529",
+          0
+        ]
+      },
+      "class_type": "KSamplerAdvanced",
+      "_meta": {
+        "title": "K采样器 - Refiner"
+      }
+    },
+    "4535": {
+      "inputs": {
+        "expression": "a - b",
+        "a": [
+          "474",
+          0
+        ],
+        "b": [
+          "474",
+          1
+        ]
+      },
+      "class_type": "MathExpression|pysssss",
+      "_meta": {
+        "title": "计算中间步骤"
+      }
+    },
+    "4542": {
+      "inputs": {
+        "model": [
+          "3699",
+          0
+        ],
+        "lora_syntax": [
+          "2295",
+          3
+        ],
+        "clip": [
+          "3699",
+          1
+        ]
+      },
+      "class_type": "LoRA Text Loader (LoraManager)",
+      "_meta": {
+        "title": "LoRA Text Loader (LoraManager)"
+      }
+    },
+    "4565": {
+      "inputs": {
+        "model": [
+          "4528",
+          0
+        ],
+        "lora_syntax": [
+          "2295",
+          3
+        ],
+        "clip": [
+          "4528",
+          1
+        ]
+      },
+      "class_type": "LoRA Text Loader (LoraManager)",
+      "_meta": {
+        "title": "LoRA Text Loader (LoraManager)"
+      }
+    },
+    "4567": {
+      "inputs": {
+        "text": [
+          "1834",
+          0
+        ],
+        "clip": [
+          "4565",
+          1
+        ]
+      },
+      "class_type": "CLIPTextEncode",
+      "_meta": {
+        "title": "CLIP文本编码"
+      }
+    },
+    "4568": {
+      "inputs": {
+        "text": [
+          "4512",
+          0
+        ],
+        "clip": [
+          "4565",
+          1
+        ]
+      },
+      "class_type": "PCTextEncode",
+      "_meta": {
+        "title": "PC: Text Encode (no scheduling)"
+      }
+    },
+    "4571": {
+      "inputs": {
+        "model": [
+          "4566:4811",
+          0
+        ],
+        "clip": [
+          "4565",
+          1
+        ],
+        "vae": [
+          "4528",
+          2
+        ],
+        "positive": [
+          "4568",
+          0
+        ],
+        "negative": [
+          "4566:4815",
+          0
+        ],
+        "latent": [
+          "2848",
+          0
+        ]
+      },
+      "class_type": "Context (rgthree)",
+      "_meta": {
+        "title": "Context (rgthree)"
+      }
+    },
+    "4583": {
+      "inputs": {
+        "model": [
+          "4582:4818",
+          0
+        ],
+        "clip": [
+          "4586",
+          1
+        ],
+        "vae": [
+          "4528",
+          2
+        ],
+        "positive": [
+          "4588",
+          0
+        ],
+        "negative": [
+          "4582:4822",
+          0
+        ],
+        "latent": [
+          "2848",
+          0
+        ]
+      },
+      "class_type": "Context (rgthree)",
+      "_meta": {
+        "title": "Context (rgthree)"
+      }
+    },
+    "4585": {
+      "inputs": {
+        "text": [
+          "1834",
+          0
+        ],
+        "clip": [
+          "4586",
+          1
+        ]
+      },
+      "class_type": "CLIPTextEncode",
+      "_meta": {
+        "title": "CLIP文本编码"
+      }
+    },
+    "4586": {
+      "inputs": {
+        "model": [
+          "4528",
+          0
+        ],
+        "lora_syntax": [
+          "2295",
+          3
+        ],
+        "clip": [
+          "4528",
+          1
+        ]
+      },
+      "class_type": "LoRA Text Loader (LoraManager)",
+      "_meta": {
+        "title": "LoRA Text Loader (LoraManager)"
+      }
+    },
+    "4588": {
+      "inputs": {
+        "text": [
+          "4512",
+          0
+        ],
+        "clip": [
+          "4586",
+          1
+        ]
+      },
+      "class_type": "CLIPTextEncode",
+      "_meta": {
+        "title": "CLIP文本编码"
+      }
+    },
+    "4591": {
+      "inputs": {
+        "base_ctx": [
+          "4592",
+          0
+        ],
+        "model": [
+          "4594:4826",
+          0
+        ]
+      },
+      "class_type": "Context (rgthree)",
+      "_meta": {
+        "title": "Refiner上下文"
+      }
+    },
+    "4592": {
+      "inputs": {
+        "base_ctx": [
+          "4571",
+          0
+        ]
+      },
+      "class_type": "Context (rgthree)",
+      "_meta": {
+        "title": "Refiner上下文"
+      }
+    },
+    "4599": {
+      "inputs": {
+        "parameters": [
+          "3828",
+          0
+        ]
+      },
+      "class_type": "ParameterBreak",
+      "_meta": {
+        "title": "参数展开 (Parameter Break)"
+      }
+    },
+    "4600": {
+      "inputs": {
+        "message": "底图生成完毕",
+        "volume": 0.5,
+        "enable_notification": [
+          "4599",
+          7
+        ],
+        "enable_sound": [
+          "4599",
+          8
+        ],
+        "any": [
+          "4407",
+          0
+        ]
+      },
+      "class_type": "SimpleNotify",
+      "_meta": {
+        "title": "简易通知 (Simple Notify)"
+      }
+    },
+    "4752": {
+      "inputs": {
+        "group_mode": true,
+        "default_active": true,
+        "allow_strength_adjustment": true,
+        "toggle_trigger_words": {
+          "__value__": []
+        },
+        "orinalMessage": "",
+        "trigger_words": [
+          "2295",
           2
         ]
       },
-      "class_type": "Switch any [Crystools]",
+      "class_type": "TriggerWord Toggle (LoraManager)",
       "_meta": {
-        "title": "🪛 Switch any"
+        "title": "TriggerWord Toggle (LoraManager)"
+      }
+    },
+    "4612:4611": {
+      "inputs": {
+        "image": [
+          "4612:4610",
+          0
+        ]
+      },
+      "class_type": "ImagePass",
+      "_meta": {
+        "title": "ImagePass"
+      }
+    },
+    "4612:4835": {
+      "inputs": {
+        "image": [
+          "3827",
+          0
+        ]
+      },
+      "class_type": "ImagePass",
+      "_meta": {
+        "title": "ImagePass"
+      }
+    },
+    "4612:4607": {
+      "inputs": {
+        "aggressive": [
+          "4599",
+          3
+        ],
+        "image": [
+          "4612:4835",
+          0
+        ]
+      },
+      "class_type": "FreeMemoryImage",
+      "_meta": {
+        "title": "Free Memory (Image)"
+      }
+    },
+    "4612:4610": {
+      "inputs": {
+        "boolean": [
+          "4599",
+          2
+        ],
+        "on_true": [
+          "4612:4607",
+          0
+        ],
+        "on_false": [
+          "4612:4835",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否判断"
+      }
+    },
+    "3652:3215": {
+      "inputs": {
+        "base_ctx": [
+          "3260",
+          0
+        ]
+      },
+      "class_type": "Context (rgthree)",
+      "_meta": {
+        "title": "Context (rgthree)"
+      }
+    },
+    "3652:3221": {
+      "inputs": {
+        "tile_size": 1024,
+        "overlap": 64,
+        "temporal_size": 64,
+        "temporal_overlap": 8,
+        "pixels": [
+          "4599",
+          10
+        ],
+        "vae": [
+          "3652:3215",
+          3
+        ]
+      },
+      "class_type": "VAEEncodeTiled",
+      "_meta": {
+        "title": "VAE编码（分块）"
+      }
+    },
+    "3652:3222": {
+      "inputs": {
+        "boolean": [
+          "4599",
+          9
+        ],
+        "on_true": [
+          "3652:3221",
+          0
+        ],
+        "on_false": [
+          "3652:3215",
+          6
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否判断"
+      }
+    },
+    "3652:3223": {
+      "inputs": {
+        "boolean": [
+          "4599",
+          9
+        ],
+        "on_true": [
+          "4599",
+          10
+        ],
+        "on_false": [
+          "3652:3215",
+          7
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否判断"
+      }
+    },
+    "3713:3030": {
+      "inputs": {
+        "model": [
+          "3260",
+          1
+        ]
+      },
+      "class_type": "ModelPassThrough",
+      "_meta": {
+        "title": "ModelPass"
+      }
+    },
+    "3713:2009": {
+      "inputs": {
+        "block_number": 3,
+        "downscale_factor": 2,
+        "start_percent": 0,
+        "end_percent": 0.3500000000000001,
+        "downscale_after_skip": true,
+        "downscale_method": "bicubic",
+        "upscale_method": "bicubic",
+        "model": [
+          "3713:3030",
+          0
+        ]
+      },
+      "class_type": "PatchModelAddDownscale",
+      "_meta": {
+        "title": "收缩模型UNET（Kohya Deep Shrink）"
+      }
+    },
+    "3713:4763:2271": {
+      "inputs": {},
+      "class_type": "ImpactIfNone",
+      "_meta": {
+        "title": "ImpactIfNone"
+      }
+    },
+    "3713:4763:2943": {
+      "inputs": {
+        "operator": "and",
+        "bool_a": [
+          "3839",
+          5
+        ],
+        "bool_b": [
+          "3713:4763:2944",
+          0
+        ]
+      },
+      "class_type": "ImpactLogicalOperators",
+      "_meta": {
+        "title": "ImpactLogicalOperators"
+      }
+    },
+    "3713:4763:2944": {
+      "inputs": {
+        "bool": [
+          "3713:4763:2271",
+          1
+        ]
+      },
+      "class_type": "LogicNot",
+      "_meta": {
+        "title": "Not"
+      }
+    },
+    "3713:2014": {
+      "inputs": {
+        "boolean": [
+          "3713:4763:2943",
+          0
+        ],
+        "on_true": [
+          "3713:2009",
+          0
+        ],
+        "on_false": [
+          "3713:3030",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否启用大图直出模式"
+      }
+    },
+    "3713:4764": {
+      "inputs": {
+        "model": [
+          "3713:2014",
+          0
+        ]
+      },
+      "class_type": "ModelPassThrough",
+      "_meta": {
+        "title": "ModelPass"
+      }
+    },
+    "4595:4827": {
+      "inputs": {
+        "model": [
+          "4592",
+          1
+        ]
+      },
+      "class_type": "ModelPassThrough",
+      "_meta": {
+        "title": "ModelPass"
+      }
+    },
+    "4595:4828": {
+      "inputs": {
+        "block_number": 3,
+        "downscale_factor": 2,
+        "start_percent": 0,
+        "end_percent": 0.3500000000000001,
+        "downscale_after_skip": true,
+        "downscale_method": "bicubic",
+        "upscale_method": "bicubic",
+        "model": [
+          "4595:4827",
+          0
+        ]
+      },
+      "class_type": "PatchModelAddDownscale",
+      "_meta": {
+        "title": "收缩模型UNET（Kohya Deep Shrink）"
+      }
+    },
+    "4595:4829:4832": {
+      "inputs": {},
+      "class_type": "ImpactIfNone",
+      "_meta": {
+        "title": "ImpactIfNone"
+      }
+    },
+    "4595:4829:4833": {
+      "inputs": {
+        "operator": "and",
+        "bool_a": [
+          "3839",
+          5
+        ],
+        "bool_b": [
+          "4595:4829:4834",
+          0
+        ]
+      },
+      "class_type": "ImpactLogicalOperators",
+      "_meta": {
+        "title": "ImpactLogicalOperators"
+      }
+    },
+    "4595:4829:4834": {
+      "inputs": {
+        "bool": [
+          "4595:4829:4832",
+          1
+        ]
+      },
+      "class_type": "LogicNot",
+      "_meta": {
+        "title": "Not"
+      }
+    },
+    "4595:4830": {
+      "inputs": {
+        "boolean": [
+          "4595:4829:4833",
+          0
+        ],
+        "on_true": [
+          "4595:4828",
+          0
+        ],
+        "on_false": [
+          "4595:4827",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否启用大图直出模式"
+      }
+    },
+    "4595:4831": {
+      "inputs": {
+        "model": [
+          "4595:4830",
+          0
+        ]
+      },
+      "class_type": "ModelPassThrough",
+      "_meta": {
+        "title": "ModelPass"
+      }
+    },
+    "3715:1114": {
+      "inputs": {
+        "object_to_patch": "diffusion_model",
+        "residual_diff_threshold": 0.20000000000000004,
+        "start": 0.20000000000000004,
+        "end": 0.8000000000000002,
+        "max_consecutive_cache_hits": 5,
+        "model": [
+          "3715:3022",
+          0
+        ]
+      },
+      "class_type": "ApplyFBCacheOnModel",
+      "_meta": {
+        "title": "Apply First Block Cache"
+      }
+    },
+    "3715:1117": {
+      "inputs": {
+        "boolean": [
+          "3839",
+          6
+        ],
+        "on_true": [
+          "3715:1114",
+          0
+        ],
+        "on_false": [
+          "3715:3022",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否启用加速"
+      }
+    },
+    "3715:3022": {
+      "inputs": {
+        "model": [
+          "3713:4764",
+          0
+        ]
+      },
+      "class_type": "ModelPassThrough",
+      "_meta": {
+        "title": "ModelPass"
+      }
+    },
+    "3715:3714": {
+      "inputs": {
+        "model": [
+          "3715:1117",
+          0
+        ]
+      },
+      "class_type": "ModelPassThrough",
+      "_meta": {
+        "title": "ModelPass"
+      }
+    },
+    "3649:3206": {
+      "inputs": {
+        "Skimming_CFG": 5,
+        "full_skim_negative": false,
+        "disable_flipping_filter": false,
+        "model": [
+          "3649:2884",
+          0
+        ]
+      },
+      "class_type": "Skimmed CFG",
+      "_meta": {
+        "title": "Skimmed CFG"
+      }
+    },
+    "3649:3209": {
+      "inputs": {
+        "model": [
+          "3649:3207",
+          0
+        ]
+      },
+      "class_type": "ModelPassThrough",
+      "_meta": {
+        "title": "ModelPass"
+      }
+    },
+    "3649:2889": {
+      "inputs": {
+        "start": 0,
+        "end": [
+          "4599",
+          1
+        ],
+        "conditioning": [
+          "3625",
+          0
+        ]
+      },
+      "class_type": "ConditioningSetTimestepRange",
+      "_meta": {
+        "title": "设置条件时间"
+      }
+    },
+    "3649:2890": {
+      "inputs": {
+        "boolean": [
+          "4599",
+          0
+        ],
+        "on_true": [
+          "3649:2889",
+          0
+        ],
+        "on_false": [
+          "3625",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否启用负面条件加速"
+      }
+    },
+    "3649:3207": {
+      "inputs": {
+        "boolean": [
+          "4599",
+          4
+        ],
+        "on_true": [
+          "3649:3206",
+          0
+        ],
+        "on_false": [
+          "3649:2884",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否启用高CFG支持"
+      }
+    },
+    "3649:2884": {
+      "inputs": {
+        "boolean": [
+          "4599",
+          0
+        ],
+        "on_true": [
+          "3649:2883",
+          0
+        ],
+        "on_false": [
+          "4542",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否启用负面条件加速"
+      }
+    },
+    "3649:2883": {
+      "inputs": {
+        "method": "from cond",
+        "model": [
+          "4542",
+          0
+        ]
+      },
+      "class_type": "Support empty uncond",
+      "_meta": {
+        "title": "Support empty uncond"
+      }
+    },
+    "4566:4809": {
+      "inputs": {
+        "method": "from cond",
+        "model": [
+          "4565",
+          0
+        ]
+      },
+      "class_type": "Support empty uncond",
+      "_meta": {
+        "title": "Support empty uncond"
+      }
+    },
+    "4566:4810": {
+      "inputs": {
+        "Skimming_CFG": 5,
+        "full_skim_negative": false,
+        "disable_flipping_filter": false,
+        "model": [
+          "4566:4813",
+          0
+        ]
+      },
+      "class_type": "Skimmed CFG",
+      "_meta": {
+        "title": "Skimmed CFG"
+      }
+    },
+    "4566:4811": {
+      "inputs": {
+        "model": [
+          "4566:4814",
+          0
+        ]
+      },
+      "class_type": "ModelPassThrough",
+      "_meta": {
+        "title": "ModelPass"
+      }
+    },
+    "4566:4812": {
+      "inputs": {
+        "start": 0,
+        "end": [
+          "4599",
+          1
+        ],
+        "conditioning": [
+          "4567",
+          0
+        ]
+      },
+      "class_type": "ConditioningSetTimestepRange",
+      "_meta": {
+        "title": "设置条件时间"
+      }
+    },
+    "4566:4813": {
+      "inputs": {
+        "boolean": [
+          "4599",
+          0
+        ],
+        "on_true": [
+          "4566:4809",
+          0
+        ],
+        "on_false": [
+          "4565",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否启用负面条件加速"
+      }
+    },
+    "4566:4814": {
+      "inputs": {
+        "boolean": [
+          "4599",
+          4
+        ],
+        "on_true": [
+          "4566:4810",
+          0
+        ],
+        "on_false": [
+          "4566:4813",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否启用高CFG支持"
+      }
+    },
+    "4566:4815": {
+      "inputs": {
+        "boolean": [
+          "4599",
+          0
+        ],
+        "on_true": [
+          "4566:4812",
+          0
+        ],
+        "on_false": [
+          "4567",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否启用负面条件加速"
+      }
+    },
+    "4582:4816": {
+      "inputs": {
+        "method": "from cond",
+        "model": [
+          "4586",
+          0
+        ]
+      },
+      "class_type": "Support empty uncond",
+      "_meta": {
+        "title": "Support empty uncond"
+      }
+    },
+    "4582:4817": {
+      "inputs": {
+        "Skimming_CFG": 5,
+        "full_skim_negative": false,
+        "disable_flipping_filter": false,
+        "model": [
+          "4582:4820",
+          0
+        ]
+      },
+      "class_type": "Skimmed CFG",
+      "_meta": {
+        "title": "Skimmed CFG"
+      }
+    },
+    "4582:4818": {
+      "inputs": {
+        "model": [
+          "4582:4821",
+          0
+        ]
+      },
+      "class_type": "ModelPassThrough",
+      "_meta": {
+        "title": "ModelPass"
+      }
+    },
+    "4582:4819": {
+      "inputs": {
+        "start": 0,
+        "end": [
+          "4599",
+          1
+        ],
+        "conditioning": [
+          "4585",
+          0
+        ]
+      },
+      "class_type": "ConditioningSetTimestepRange",
+      "_meta": {
+        "title": "设置条件时间"
+      }
+    },
+    "4582:4820": {
+      "inputs": {
+        "boolean": [
+          "4599",
+          0
+        ],
+        "on_true": [
+          "4582:4816",
+          0
+        ],
+        "on_false": [
+          "4586",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否启用负面条件加速"
+      }
+    },
+    "4582:4821": {
+      "inputs": {
+        "boolean": [
+          "4599",
+          4
+        ],
+        "on_true": [
+          "4582:4817",
+          0
+        ],
+        "on_false": [
+          "4582:4820",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否启用高CFG支持"
+      }
+    },
+    "4582:4822": {
+      "inputs": {
+        "boolean": [
+          "4599",
+          0
+        ],
+        "on_true": [
+          "4582:4819",
+          0
+        ],
+        "on_false": [
+          "4585",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否启用负面条件加速"
+      }
+    },
+    "4594:4823": {
+      "inputs": {
+        "object_to_patch": "diffusion_model",
+        "residual_diff_threshold": 0.20000000000000004,
+        "start": 0.20000000000000004,
+        "end": 0.8000000000000002,
+        "max_consecutive_cache_hits": 5,
+        "model": [
+          "4594:4825",
+          0
+        ]
+      },
+      "class_type": "ApplyFBCacheOnModel",
+      "_meta": {
+        "title": "Apply First Block Cache"
+      }
+    },
+    "4594:4824": {
+      "inputs": {
+        "boolean": [
+          "3839",
+          6
+        ],
+        "on_true": [
+          "4594:4823",
+          0
+        ],
+        "on_false": [
+          "4594:4825",
+          0
+        ]
+      },
+      "class_type": "easy ifElse",
+      "_meta": {
+        "title": "是否启用加速"
+      }
+    },
+    "4594:4825": {
+      "inputs": {
+        "model": [
+          "4595:4831",
+          0
+        ]
+      },
+      "class_type": "ModelPassThrough",
+      "_meta": {
+        "title": "ModelPass"
+      }
+    },
+    "4594:4826": {
+      "inputs": {
+        "model": [
+          "4594:4824",
+          0
+        ]
+      },
+      "class_type": "ModelPassThrough",
+      "_meta": {
+        "title": "ModelPass"
+      }
+    },
+    "3277:3276": {
+      "inputs": {
+        "value": [
+          "3623",
+          0
+        ]
+      },
+      "class_type": "PrimitiveString",
+      "_meta": {
+        "title": "字符串"
+      }
+    },
+    "3277:3273": {
+      "inputs": {
+        "separator": ",",
+        "prompt1": [
+          "3704",
+          0
+        ],
+        "prompt2": [
+          "3277:3276",
+          0
+        ]
+      },
+      "class_type": "easy promptConcat",
+      "_meta": {
+        "title": "附加前缀"
+      }
+    },
+    "3277:3274": {
+      "inputs": {
+        "separator": ",",
+        "prompt1": [
+          "3277:3273",
+          0
+        ],
+        "prompt2": [
+          "3476",
+          0
+        ]
+      },
+      "class_type": "easy promptConcat",
+      "_meta": {
+        "title": "附加后缀"
       }
     }
   },
-  "workflowTitle": "40_喵波菈-bola 合欢宗宗主 xianzi WAI8",
+  "workflowTitle": "爱丽丝 (Copy)",
   "mapping": {
-    "positive": "343",
+    "positive": "1832",
     "positiveField": "text",
-    "negative": "342",
+    "negative": "1834",
     "negativeField": "text",
-    "output": "198",
+    "output": "2528",
     "sampler": "3",
     "size": "5",
     "image": ""
   },
   "bindings": [
     {
-      "id": "binding_35adbbb6-4854-483b-b5db-66a14e4322a9",
-      "nodeId": "343",
-      "path": "text",
+      "id": "binding_f98d7402-bb32-48c8-b248-ffd59652f618",
+      "nodeId": "1832",
+      "path": "positive",
       "label": "positive",
       "source": "positive",
       "type": "text",
       "value": "",
       "enabled": true,
-      "autoField": true,
-      "warning": "未找到可确定的实际字符串输入。text 仅为候选，原连线不会被覆盖。",
+      "autoField": false,
+      "warning": "",
       "allowCreate": false,
       "allowLink": false
     },
     {
-      "id": "binding_3e9e89cd-d104-4b84-a285-8bb317a130ee",
-      "nodeId": "342",
-      "path": "positive",
-      "label": "negative",
-      "source": "negative",
+      "id": "bind_b3a1d273-bc21-4a2c-935b-b9de311c227d",
+      "label": "画面宽度",
+      "nodeId": "2848",
+      "path": "width",
+      "type": "number",
+      "source": "sceneParameter",
+      "value": "width",
+      "enabled": false,
+      "autoField": false,
+      "warning": "",
+      "allowCreate": false,
+      "allowLink": false
+    },
+    {
+      "id": "bind_9dd9851a-bc52-471e-b7e5-9ae1f32eb088",
+      "label": "画面高度",
+      "nodeId": "2848",
+      "path": "height",
+      "type": "number",
+      "source": "sceneParameter",
+      "value": "height",
+      "enabled": false,
+      "autoField": false,
+      "warning": "",
+      "allowCreate": false,
+      "allowLink": false
+    },
+    {
+      "id": "bind_6a80d72b-0499-478e-a199-ed6390cfb90b",
+      "label": "采样步数",
+      "nodeId": "4529",
+      "path": "steps",
+      "type": "number",
+      "source": "sceneParameter",
+      "value": "steps",
+      "enabled": false,
+      "autoField": false,
+      "warning": "",
+      "allowCreate": false,
+      "allowLink": false
+    },
+    {
+      "id": "bind_21d373c8-5ea5-4d59-9b6a-270bb95bc66c",
+      "label": "CFG",
+      "nodeId": "474",
+      "path": "cfg",
+      "type": "number",
+      "source": "sceneParameter",
+      "value": "cfg",
+      "enabled": false,
+      "autoField": false,
+      "warning": "",
+      "allowCreate": false,
+      "allowLink": false
+    },
+    {
+      "id": "bind_3b2d57ef-0f97-494d-8808-9654e27ba269",
+      "label": "负向提示词",
+      "nodeId": "1571",
+      "path": "text_0",
       "type": "text",
-      "value": "",
-      "enabled": true,
+      "source": "negative",
+      "value": "sailor uniform,girl,cowboy shot, very long hair, black hair, black eyes,pussy，oval face",
+      "enabled": false,
       "autoField": true,
+      "warning": "Using the only actual string input: text_0",
+      "allowCreate": false,
+      "allowLink": false
+    },
+    {
+      "id": "bind_75735fe6-e09c-4595-9d0c-f93df1ede4fd",
+      "label": "自定义输入",
+      "nodeId": "",
+      "path": "",
+      "type": "auto",
+      "source": "literal",
+      "value": "",
+      "enabled": false,
+      "autoField": false,
       "warning": "",
       "allowCreate": false,
       "allowLink": false
     }
   ],
   "bindingVersion": 1,
-  "outputNodeId": "198",
+  "outputNodeId": "2528",
   "randomizeSeeds": false,
   "objectInfo": {
     "KSampler": {
@@ -4910,8 +6255,15 @@
       "search_aliases": []
     }
   },
-  "activeWorkflowId": "wf_05578529-4f00-4a62-abeb-e35c46d8544d",
-  "slots": {},
+  "activeWorkflowId": "wf_a56d1f8e-14b9-4752-826b-d277d0094d47",
+  "slots": {
+    "model": {
+      "enabled": true
+    },
+    "lora": {
+      "auto": true
+    }
+  },
   "modelCatalog": {
     "checkpoints": [
       "anikawaxl_v4.safetensors",

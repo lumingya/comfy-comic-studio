@@ -11,7 +11,7 @@ import threading
 import time
 from backend.mio_library import LibraryError, image_type, sync_dir
 
-LIMIT = 50 * 1024 * 1024
+LIMIT = 200 * 1024 * 1024
 _locks = [threading.Lock() for _ in range(32)]
 _decode_slot = threading.Semaphore(1)
 _cache_lock = threading.Lock()
@@ -99,7 +99,7 @@ class MediaStore:
                         break
                     total += len(chunk)
                     if total > LIMIT:
-                        raise LibraryError("图片超过 50 MiB", 413)
+                        raise LibraryError("图片超过大小上限", 413)
                     if len(header) < 4096:
                         header += chunk[: 4096 - len(header)]
                     sha.update(chunk)
@@ -189,7 +189,7 @@ class MediaStore:
 def immutable_name(source):
     source = Path(source)
     if source.stat().st_size > LIMIT:
-        raise LibraryError("图片超过 50 MiB 上限", 413)
+        raise LibraryError("图片超过大小上限", 413)
     # A user-supplied hex filename is not proof of content identity.
     sha = hashlib.sha256()
     with source.open("rb") as stream:

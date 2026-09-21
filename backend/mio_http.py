@@ -523,7 +523,7 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
             try:
                 from backend import mio_resource_sharing as sharing
 
-                body = self.read_json_body(max_bytes=260 * 1024 * 1024)
+                body = self.read_json_body(max_bytes=860 * 1024 * 1024)
                 store = self.services.native_store()
                 if "html" in body:
                     from backend import mio_album_html

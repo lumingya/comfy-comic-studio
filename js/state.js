@@ -55,6 +55,8 @@ function backupObject(includeSecrets=false){const data=clone(state);if(!includeS
 function ensureStudioState(s=state){
   if(!s.settings.studio||typeof s.settings.studio!=='object')s.settings.studio=clone(studioDefaults);
   for(const [group,defaults] of Object.entries(studioDefaults))s.settings.studio[group]={...defaults,...(s.settings.studio[group]||{})};
+  // Legacy switches (e.g. features.marketplace from older shipped defaults) would fail validateStudioData and block every save; the market lives under visibility.marketplace now.
+  for(const group of ['visibility','features'])for(const key of Object.keys(s.settings.studio[group]))if(!Object.hasOwn(studioDefaults[group],key))delete s.settings.studio[group][key];
   s.settings.studio.visibility.gallery=true;
   if(!Array.isArray(s.exportTemplates))s.exportTemplates=[];
   if(!s.exportTemplates.some(t=>t.id===s.settings.studio.export.templateId))s.settings.studio.export.templateId=s.exportTemplates[0]?.id||'';
@@ -245,10 +247,11 @@ function restoreCuratedCover(){return 0}
 
 
 function isImageVariable(value){return !!value&&typeof value==='object'&&value.kind==='mio-image'}
-function resolveImageVariables(text,scope={},strict=false,negative=''){
+/* Missing variables never block: a collection-known {token} that this scope does not provide renders blank and is reported through `report.missing`; braces the collection never defined stay literal (NovelAI weights, authored text). `strict` still guards image variables without an uploaded file. */
+function resolveImageVariables(text,scope={},strict=false,negative='',report=null){
   const policy=globalThis.ComfyComic.promptPolicy,definitions=definedPromptNames(scope),values={...scope},images=[],byKey=new Map();
   for(const part of policy.tokens(String(text??'')+'\n'+negative,definitions)){
-    if(part.type!=='variable')continue;const value=scope[part.key];if(strict&&!Object.hasOwn(scope,part.key))throw Error('变量 {'+part.key+'} 在当前作用域中缺失。');
+    if(part.type!=='variable')continue;const value=scope[part.key];if(!Object.hasOwn(scope,part.key)){if(report&&!report.missing.includes(part.key))report.missing.push(part.key);continue}
     if(!isImageVariable(value))continue;
     if(byKey.has(part.key))continue;
     if(strict&&!value.src)throw Error('图片变量 {'+part.key+'} 尚未上传图片。');
@@ -257,6 +260,8 @@ function resolveImageVariables(text,scope={},strict=false,negative=''){
   return{prompt:policy.interpolate(text,values,definitions),negative:policy.interpolate(negative,values,definitions),images};
 }
 
+function missingVariableNames(text,scope={}){const policy=globalThis.ComfyComic?.promptPolicy;if(!policy)return [];const names=[];for(const part of policy.tokens(String(text??''),definedPromptNames(scope)))if(part.type==='variable'&&!Object.hasOwn(scope||{},part.key)&&!names.includes(part.key))names.push(part.key);return names}
+function missingVariablesNotice(keys,replaced=false){return keys.length?'存在变量 {'+keys.join('}、{')+'} 未定义，'+(replaced?'已替换为空。':'生成时会被替换为空。'):''}
 function rememberRemovedImageVariable(entry,projectId=state.activeProjectId){if(entry?.type!=='image')return;state.creation.removedImageKeys??={};state.creation.removedImageKeys[projectId]=[...new Set([...(state.creation.removedImageKeys[projectId]||[]),entry.key])];}
 
 function fileLayout(id){const value=MioContent.layouts.find(t=>t.id===id);if(!value)throw Error('展示模板已从 data/ 移除，请导入模板或选择其他版式。');return clone(value)}

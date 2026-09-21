@@ -23,12 +23,12 @@ function createReaderPresentationModel(totalSteps = 0, mode = 'webtoon') {
 function fitPresentationTemplate(){return fileLayout('mio-fit')}
 
 function validatePresentationAssets(t){
-  if(t.runtimeScript!==undefined&&(typeof t.runtimeScript!=='string'||t.runtimeScript.length>64000||/<\/script/i.test(t.runtimeScript)))throw Error('模板脚本应为不超过 64 KB 的 JavaScript，不能包含 script 结束标签。');
+  if(t.runtimeScript!==undefined&&(typeof t.runtimeScript!=='string'||t.runtimeScript.length>500000||/<\/script/i.test(t.runtimeScript)))throw Error('模板脚本应为不超过 500 KB 的 JavaScript，不能包含 script 结束标签。');
   if(t.scriptEnabled!==undefined&&typeof t.scriptEnabled!=='boolean')throw Error('脚本开关必须为布尔值。');
   if(t.assets!==undefined&&(!t.assets||typeof t.assets!=='object'||Array.isArray(t.assets)))throw Error('媒体库必须为对象。');
-  let total=0;const entries=Object.entries(t.assets||{});if(entries.length>24)throw Error('每个模板最多 24 个媒体资源。');
+  let total=0;const entries=Object.entries(t.assets||{});if(entries.length>64)throw Error('每个模板最多 64 个媒体资源。');
   for(const [key,asset]of entries){if(!/^[a-zA-Z][a-zA-Z0-9_-]{0,47}$/.test(key)||!asset||typeof asset.data!=='string'||!/^data:(image\/(png|jpeg|webp|gif)|video\/(mp4|webm));base64,[a-zA-Z0-9+/]*={0,2}$/.test(asset.data))throw Error('媒体只支持内嵌 PNG/JPEG/WebP/GIF、MP4/WebM。');total+=asset.data.length}
-  if(total>6*1024*1024)throw Error('模板媒体总量上限为 6 MiB（Base64 后），请压缩图片或视频。');
+  if(total>100*1024*1024)throw Error('模板媒体总量上限为 100 MiB（Base64 后），请压缩图片或视频。');
   for(const m of (t.html||'').matchAll(/\{\{asset:([a-zA-Z][a-zA-Z0-9_-]*)\}\}/g))if(!Object.hasOwn(t.assets||{},m[1]))throw Error('缺少模板媒体：'+m[1]);
 }
 
@@ -195,7 +195,7 @@ function installPresentationStudio(){
     if(act==='presentation-open-export'){beginExportPreview();$('#presentation-drawer').hidden=false;$('#reader').classList.add('presentation-panel-open');renderArtCanvas(false);return}
     if(act==='presentation-export'){const t=exportTemplateBy(presentationUI.templateId);if(!await approvePresentationScript(t))return;ui.exportIds=[ui.bookId];studioUI.exportDraft.templateId=t.id;presentationUI.panel=true;$('#presentation-drawer').hidden=false;$('#reader').classList.add('presentation-panel-open');return compileCustomExport()}
     if(act==='room-thumbnails'){artUI.filmstrip=!artUI.filmstrip;renderArtReader();return}
-    if(act==='presentation-media-add'){pickFile('image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm',async file=>{if(file.size>4.4*1024*1024)throw Error('请将媒体压缩到 4.4 MiB 以内。');const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('媒体读取失败'));reader.readAsDataURL(file)}),t=currentEditorTemplate(),next=clone(t),id=uid('media');next.assets??={};next.assets[id]={name:file.name,data};validatePresentationAssets(next);t.assets=next.assets;studioUI.editorDirty=true;renderTemplateStudio()});return}
+    if(act==='presentation-media-add'){pickFile('image/png,image/jpeg,image/webp,image/gif,video/mp4,video/webm',async file=>{if(file.size>50*1024*1024)throw Error('请将媒体压缩到 50 MiB 以内。');const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('媒体读取失败'));reader.readAsDataURL(file)}),t=currentEditorTemplate(),next=clone(t),id=uid('media');next.assets??={};next.assets[id]={name:file.name,data};validatePresentationAssets(next);t.assets=next.assets;studioUI.editorDirty=true;renderTemplateStudio()});return}
     if(act==='presentation-media-background'){const t=currentEditorTemplate(),a=t.assets?.[d.id];if(!a)return;const media=a.data.startsWith('data:video/')?`<video autoplay muted loop playsinline preload="metadata"><source src="{{asset:${d.id}}}" type="${a.data.slice(5,a.data.indexOf(';'))}"></video>`:`<img src="{{asset:${d.id}}}" alt="">`;t.html=t.html.replace('</head>','<style>body{isolation:isolate}.mio-media-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.35}.mio-media-bg img,.mio-media-bg video{width:100%;height:100%;object-fit:cover}</style></head>').replace(/<body([^>]*)>/,`<body$1><div class="mio-media-bg">${media}</div>`);studioUI.editorDirty=true;renderTemplateStudio();return}
     if(act==='presentation-media-delete'){const t=currentEditorTemplate();if(t.html.includes('{{asset:'+d.id+'}}'))throw Error('请先从 HTML/CSS 移除此媒体的占位符，再删除资源。');delete t.assets[d.id];studioUI.editorDirty=true;renderTemplateStudio();return}
     const result=await action(act,d,el);if(['et-close','et-save','et-import'].includes(act)&&$('#presentation-template-list'))renderPresentationList();return result;

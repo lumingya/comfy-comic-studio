@@ -111,6 +111,18 @@ class ProductionQueueTests(unittest.TestCase):
             if index==0:began.set();release.wait(2)
             return self.render(task,index,cancel)
         self.q.render=held;a=self.make();self.q.start(a['id'],trusted=True);self.assertTrue(began.wait(2));self.q.pause();release.set();time.sleep(.15);self.assertEqual(self.calls,[('A',0)]);self.q.resume();self.wait(a['id'],'complete')
+    def test_paused_batch_with_nothing_in_flight_is_released_by_a_new_start(self):
+        began=threading.Event();release=threading.Event()
+        def held(task,index,cancel):
+            if task['title']=='A':began.set();release.wait(2)
+            return self.render(task,index,cancel)
+        self.q.render=held;a,b,c=self.make('A',1),self.make('B',1),self.make('C',1)
+        self.q.start(a['id'],sequential=True,trusted=True);self.assertTrue(began.wait(2));self.q.pause()
+        with self.assertRaises(LibraryError):self.q.start(c['id'],trusted=True)  # A is paused mid-book: nothing may replace it
+        release.set();self.wait(a['id'],'complete');time.sleep(.3)
+        state=self.q.list();self.assertTrue(state['paused']);self.assertEqual(state['batch'],[b['id'],c['id']]);self.assertEqual(self.q.get(b['id'])['status'],'ready')
+        self.q.start(c['id'],trusted=True);self.wait(c['id'],'complete')
+        self.assertEqual(self.q.get(b['id'])['status'],'standby');self.assertEqual(self.q.get(b['id'])['selection'],[]);self.assertEqual(self.calls,[('A',0),('C',0)]);self.assertEqual(self.q.list()['batch'],[])
     def test_cancel_discards_late_result_and_does_not_start_next_book(self):
         began=threading.Event();release=threading.Event()
         def held(task,index,cancel):began.set();release.wait(2);return self.render(task,index,cancel)
