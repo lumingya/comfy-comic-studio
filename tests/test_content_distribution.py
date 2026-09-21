@@ -27,14 +27,14 @@ class ContentDistributionTests(unittest.TestCase):
             self.assertTrue((Path(temp)/'catalog/index.json').exists());s.library.close()
     def test_removing_all_shipped_entities_before_first_launch_is_respected(self):
         with tempfile.TemporaryDirectory() as temp:
-            project=Path(temp);data=project/'data';shutil.copytree(ROOT/'data',data,ignore=shutil.ignore_patterns('runtime','.cache','.write.lock'))
+            project=Path(temp);data=project/'data';shutil.copytree(ROOT/'data',data,ignore=shutil.ignore_patterns('runtime','.cache','.write.lock','*.lock','worker.lock'))
             for name in ('albums','layouts','storyboards','presets','settings','collections','plans','records','workflows'):shutil.rmtree(data/name,ignore_errors=True)
             s=self.store(data,project);initialize(s,project)
             values=bootstrap(s);self.assertEqual(values['config']['savedGalleries'],[]);self.assertEqual(values['layouts'],[])
             self.assertFalse(any((data/'albums').rglob('album.json')));s.library.close()
     def test_existing_external_workspace_receives_upgraded_catalog_text_only(self):
         with tempfile.TemporaryDirectory() as temp:
-            project=Path(temp)/'program';shutil.copytree(ROOT/'data',project/'data',ignore=shutil.ignore_patterns('runtime','.cache','.write.lock','.transactions','.trash'))
+            project=Path(temp)/'program';shutil.copytree(ROOT/'data',project/'data',ignore=shutil.ignore_patterns('runtime','.cache','.write.lock','.transactions','.trash','*.lock','worker.lock'))
             workspace=Path(temp)/'workspace';s=self.store(workspace,project);self.assertTrue(initialize(s,project));s.library.close()
             # Simulate a program upgrade: the shipped catalog changes and the manifest is rebuilt; the user meanwhile deleted the demo album.
             captions=project/'data/catalog/captions.json';captions.write_text(json.dumps({'upgraded':True}),'utf-8')
@@ -47,9 +47,9 @@ class ContentDistributionTests(unittest.TestCase):
             self.assertEqual(json.loads((workspace/'catalog/captions.json').read_text('utf-8')),{'upgraded':True})
             self.assertFalse(any((workspace/'albums').rglob('album.json')),'upgrading never resurrects deleted entities')
             self.assertEqual(s.content_problems,[]);s.library.close()
-            # A tampered shipped catalog file is skipped and reported instead of being installed.
-            captions.write_text(json.dumps({'tampered':True}),'utf-8');manifest['version']='9.9.10'
+            # A local catalog edit is installed without rebuilding release checksums.
+            captions.write_text(json.dumps({'locallyEdited':True}),'utf-8');manifest['version']='9.9.10'
             (project/'data/distribution.json').write_text(json.dumps(manifest,ensure_ascii=False),'utf-8')
             s=self.store(workspace,project);initialize(s,project)
-            self.assertEqual(json.loads((workspace/'catalog/captions.json').read_text('utf-8')),{'upgraded':True})
-            self.assertEqual([p['file'] for p in s.content_problems],['catalog/captions.json']);s.library.close()
+            self.assertEqual(json.loads((workspace/'catalog/captions.json').read_text('utf-8')),{'locallyEdited':True})
+            self.assertEqual(s.content_problems,[]);s.library.close()

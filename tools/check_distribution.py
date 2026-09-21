@@ -1,18 +1,53 @@
-"""Verify the explicit shipped data list. Never auto-discover or include user content.
+"""Explicit release-integrity check, never a runtime or storage precondition.
 
-Exit code 1 lists every damaged or missing shipped file. To refresh checksums
-after intentionally editing shipped data, run python tools/build_distribution.py.
+Exit 1 for missing/changed release files. Intentional edits are fine during
+normal use. Before publishing, review the seed files for private data and run
+python tools/build_distribution.py to approve their new checksums.
 """
 from pathlib import Path
+import re
 import sys
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from backend.mio_content import verify
-if __name__=='__main__':
-    root=Path(__file__).resolve().parents[1]/'data'
-    manifest,problems=verify(root)
-    for problem in problems:
-        print('MIO-DATA-001:',problem['reason'],problem['file'])
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from backend.mio_content import distribution
+from backend.mio_library import LibraryError, digest, owned_path
+
+
+def verify(source):
+    """Return the manifest and every missing/changed release file."""
+    source = Path(source)
+    manifest = distribution(source)
+    problems = []
+    for relative, checksum in manifest['files'].items():
+        if not isinstance(checksum, str) or not re.fullmatch(r'[0-9a-f]{64}', checksum):
+            raise LibraryError('Invalid release checksum: ' + relative)
+        path = owned_path(source, relative)
+        if not path.is_file():
+            problems.append({'file': relative, 'reason': 'missing'})
+        elif digest(path.read_bytes()) != checksum:
+            problems.append({'file': relative, 'reason': 'changed'})
+    return manifest, problems
+
+
+def require_verified_distribution(source):
+    """Fail closed when producing a release, not when loading mutable data."""
+    manifest, problems = verify(source)
     if problems:
-        print('Shipped data does not match data/distribution.json. Re-download the package, or run python tools/build_distribution.py after an intentional edit.')
-        sys.exit(1)
-    print('Verified',len(manifest['files']),'independent data files')
+        detail = ', '.join(p['file'] + ' (' + p['reason'] + ')' for p in problems)
+        raise LibraryError('MIO-DATA-001: Release data differs: ' + detail
+                           + '。仅影响发布校验；正常编辑无需重新下载。发布前请审查内容并运行 python tools/build_distribution.py。')
+    return manifest
+
+
+def main():
+    try:
+        manifest = require_verified_distribution(Path(__file__).resolve().parents[1] / 'data')
+    except (LibraryError, OSError) as error:
+        print(str(error), file=sys.stderr)
+        return 1
+    print('Verified', len(manifest['files']), 'release data files (not a runtime requirement)')
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

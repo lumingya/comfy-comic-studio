@@ -23,8 +23,8 @@ EXCLUDED = {'__pycache__', 'node_modules', '.git', '.cache', 'data', 'images',
 
 
 def source_files():
-    from backend.mio_content import distribution
-    manifest=distribution(ROOT/'data')
+    from tools.check_distribution import require_verified_distribution
+    manifest=require_verified_distribution(ROOT/'data')
     for rel in sorted(manifest['files']):yield ROOT/'data'/rel,'data/'+rel
     yield ROOT/'data/distribution.json','data/distribution.json'
     for path in sorted(ROOT.rglob('*')):

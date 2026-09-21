@@ -1,107 +1,102 @@
-"""Data-only distribution and catalog loading. No authored resource bodies live here."""
+"""Runtime content loading. Release checksum verification lives in tools/."""
 import base64
 from pathlib import Path
-from backend.mio_library import LibraryError, atomic_write, decode, encode, digest, owned_path, image_type
-
-
-def verify(source):
-    """Return (manifest, problems). Never raises for a single damaged shipped file.
-
-    Each problem is {'file', 'reason'} where reason is 'missing' or 'changed'.
-    """
-    source=Path(source);manifest=decode(owned_path(source,'distribution.json').read_bytes())
-    if manifest.get('schema')!='mio.distribution.v1':raise LibraryError('Invalid distribution manifest')
-    problems=[]
-    for relative,checksum in manifest['files'].items():
-        path=owned_path(source,relative)
-        if not path.is_file():problems.append({'file':relative,'reason':'missing'})
-        elif digest(path.read_bytes())!=checksum:problems.append({'file':relative,'reason':'changed'})
-    return manifest,problems
+from backend.mio_library import LibraryError, atomic_write, decode, encode, owned_path, image_type
 
 
 def distribution(source):
-    """Strict verification used by tools/check_distribution.py and release builds."""
-    manifest,problems=verify(source)
-    if problems:
-        detail=', '.join(p['file']+' ('+p['reason']+')' for p in problems)
-        raise LibraryError('MIO-DATA-001: Shipped data changed: '+detail+'。请重新下载完整程序包，并运行 python tools/check_distribution.py；未导入未通过校验的内容。',500)
+    """Read the explicit seed list, not an integrity verdict on a mutable workspace.
+
+    Hashes are release metadata. Runtime still validates the manifest structure
+    and all paths before importing anything, but never compares file hashes.
+    """
+    source = Path(source)
+    try:
+        manifest = decode(owned_path(source, 'distribution.json').read_bytes())
+    except FileNotFoundError:
+        raise LibraryError('缺少 data/distribution.json 内容清单，请检查程序目录。', 500) from None
+    if (not isinstance(manifest, dict)
+            or manifest.get('schema') != 'mio.distribution.v1'
+            or not isinstance(manifest.get('version'), str)
+            or not isinstance(manifest.get('files'), dict)):
+        raise LibraryError('Invalid distribution manifest', 500)
+    for relative in manifest['files']:
+        owned_path(source, relative)
     return manifest
 
 
-def initialize(store, project):
-    """Only a genuinely empty workspace receives shipped entities. Existing IDs are never replaced.
+def _record_installation(marker, manifest):
+    # Diagnostics describe this startup, not historical checksum mismatches.
+    # Do not deserialize/replay old markers or reseed a workspace when damaged.
+    raw = encode({'version': manifest['version']})
+    if not marker.is_file() or marker.read_bytes() != raw:
+        atomic_write(marker, raw)
 
-    A damaged or edited shipped file never blocks startup: it is skipped, and the
-    problem is reported through store.content_problems (surfaced by /api/content)
-    so the user can re-download the package or re-run tools/build_distribution.py.
+
+def initialize(store, project):
+    """Seed only genuinely new workspaces; never overwrite or resurrect user data.
+
+    Locally edited seeds are valid runtime input. Missing seeds are skipped and
+    reported; invalid entity JSON is handled by the file library's diagnostics.
+    Unlisted drafts, secrets and runtime files are never discovered or copied.
     """
-    source=Path(project)/'data';marker=store.root/'runtime/content-installed.json'
-    store.content_problems=[]
+    source = Path(project) / 'data'
+    marker = owned_path(store.root, 'runtime/content-installed.json')
+    store.content_problems = []
     if marker.exists():
-        try:
-            installed=decode(marker.read_bytes());store.content_problems=list(installed.get('problems',[]))
-        except (LibraryError,OSError,ValueError,AttributeError):
-            installed={};store.content_problems=[]
-        refresh_catalog(store,source,marker,installed)
+        refresh_catalog(store, source, marker)
         return False
-    if not (source/'distribution.json').is_file():raise LibraryError('缺少随包 data/，请解压完整项目而不是只复制程序文件。',500)
-    same=source.resolve()==store.root.resolve()
-    fresh=store.read(album_summaries=True,include_baseline=False)['_emptyWorkspace'] and store.was_empty_at_open
+    manifest = distribution(source)
+    same = source.resolve() == store.root.resolve()
+    fresh = store.read(album_summaries=True, include_baseline=False)['_emptyWorkspace'] and store.was_empty_at_open
     with store.library.writer():
-        if marker.exists():return False
-        if same:
-            manifest=decode((source/'distribution.json').read_bytes());problems=[]
-        else:
-            manifest,problems=verify(source)
-        unverified={p['file'] for p in problems}
+        if marker.exists():
+            return False
         for relative in (() if same else manifest['files']):
-            # Never overwrite workspace identity or resurrect deleted entities.
             if relative == 'workspace.json':
                 continue
             if not fresh and not relative.startswith('catalog/'):
                 continue
-            # Unverified content is never imported; the catalog is UI text the app
-            # cannot boot without, so it is copied and flagged rather than dropped.
-            if relative in unverified and not (relative.startswith('catalog/') and owned_path(source,relative).is_file()):
+            target = owned_path(store.root, relative)
+            if target.exists():
                 continue
-            target=owned_path(store.root,relative)
-            if target.exists():continue
-            atomic_write(target,owned_path(source,relative).read_bytes())
-        store.content_problems=problems
-        atomic_write(marker,encode({'version':manifest['version'],'problems':problems}))
+            shipped = owned_path(source, relative)
+            if not shipped.is_file():
+                store.content_problems.append({'file': relative, 'reason': 'missing'})
+                continue
+            atomic_write(target, shipped.read_bytes())
+        _record_installation(marker, manifest)
     store.library.scan()
     return fresh or same
 
 
-def refresh_catalog(store, source, marker, installed):
-    """After a program upgrade, an existing external workspace receives the new catalog text.
+def refresh_catalog(store, source, marker):
+    """Refresh program-owned UI text, including local development edits.
 
-    catalog/ holds UI copy, defaults and market packs that belong to the program, so
-    refreshing it never touches albums, presets, settings or any other user entity.
-    A shipped catalog file that fails its checksum is left alone and reported.
+    Never refresh albums, presets, settings or other workspace entities. Do not
+    consult persisted checksum warnings: fixing a source file clears the warning
+    on the next startup, without replaying the first-install entity import.
     """
-    source=Path(source)
-    if not (source/'distribution.json').is_file() or source.resolve()==store.root.resolve():return []
-    try:
-        manifest=decode((source/'distribution.json').read_bytes())
-    except (LibraryError,OSError,ValueError):
+    source = Path(source)
+    if not (source / 'distribution.json').is_file() or source.resolve() == store.root.resolve():
         return []
-    if manifest.get('schema')!='mio.distribution.v1':return []
-    refreshed=[];problems=[]
+    manifest = distribution(source)
+    refreshed = []
     with store.library.writer():
-        for relative,checksum in manifest.get('files',{}).items():
-            if not relative.startswith('catalog/'):continue
-            shipped=owned_path(source,relative)
-            if not shipped.is_file():problems.append({'file':relative,'reason':'missing'});continue
-            raw=shipped.read_bytes()
-            if digest(raw)!=checksum:problems.append({'file':relative,'reason':'changed'});continue
-            target=owned_path(store.root,relative)
-            if target.is_file() and target.read_bytes()==raw:continue
-            atomic_write(target,raw);refreshed.append(relative)
-        kept=[p for p in installed.get('problems',[]) if not str(p.get('file','')).startswith('catalog/')]
-        store.content_problems=kept+problems
-        if refreshed or problems or store.content_problems!=list(installed.get('problems',[])) or manifest.get('version')!=installed.get('version'):
-            atomic_write(marker,encode({**installed,'version':manifest.get('version'),'problems':store.content_problems}))
+        for relative in manifest['files']:
+            if not relative.startswith('catalog/'):
+                continue
+            shipped = owned_path(source, relative)
+            if not shipped.is_file():
+                store.content_problems.append({'file': relative, 'reason': 'missing'})
+                continue
+            raw = shipped.read_bytes()
+            target = owned_path(store.root, relative)
+            if target.is_file() and target.read_bytes() == raw:
+                continue
+            atomic_write(target, raw)
+            refreshed.append(relative)
+        _record_installation(marker, manifest)
     return refreshed
 
 
