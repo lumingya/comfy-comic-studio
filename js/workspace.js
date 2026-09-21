@@ -43,12 +43,12 @@ function parseLibraryWorkflow(data,title){
   const c=state.settings.comfy,p={id:uid('wf'),title:String(data.title||data.workflowTitle||title||'导入工作流'),workflow:clone(workflow),mapping:clone(data.mapping||{}),bindings:[],outputNodeId:String(data.outputNodeId||''),randomizeSeeds:!!data.randomizeSeeds,slots:data.slots&&typeof data.slots==='object'&&!Array.isArray(data.slots)?clone(data.slots):{}};
   if(Array.isArray(data.bindings)){validateBindings(data.bindings);p.bindings=clone(data.bindings)}
   else {
-    const nodes=Object.entries(workflow),texts=nodes.filter(([,n])=>/TextEncode|Prompt/i.test(n.class_type)&&Object.values(n.inputs).some(v=>typeof v==='string'));
-    const neg=texts.find(([,n])=>/negative|负/i.test(n._meta?.title||''))||(texts.length>1?texts[1]:null),pos=texts.find(x=>x!==neg);
+    const nodes=Object.entries(workflow||{}).filter(([,n])=>n&&typeof n==='object'),texts=nodes.filter(([,n])=>n.inputs&&/TextEncode|Prompt/i.test(n.class_type||'')&&Object.values(n.inputs).some(v=>typeof v==='string'));
+    const neg=texts.find(([,n])=>/negative|负/i.test(n?._meta?.title||''))||(texts.length>1?texts[1]:null),pos=texts.find(x=>x!==neg);
     p.mapping.positive=pos?.[0]||'';p.mapping.negative=neg?.[0]||'';
     p.bindings=initialWorkflowBindings({...c,...p});
   }
-  p.outputNodeId||=Object.entries(workflow).find(([,n])=>/SaveImage|PreviewImage/.test(n.class_type))?.[0]||'';
+  p.outputNodeId||=Object.entries(workflow||{}).find(([,n])=>n&&/SaveImage|PreviewImage/.test(n.class_type||''))?.[0]||'';
   return p;
 }
 

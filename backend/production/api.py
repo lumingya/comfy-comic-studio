@@ -758,6 +758,7 @@ class ProductionAdapter:
         old = next((p for p in album["steps"] if p.get("stepIndex") == index), None)
         if (
             old
+            and old.get("image")
             and Path(old["image"]).name == Path(result["image"]).name
             and old.get("caption") == result.get("caption")
             and old.get("prompt") == result.get("prompt")

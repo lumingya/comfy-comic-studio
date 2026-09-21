@@ -7,6 +7,7 @@ async function scan(name){await p.evaluate(()=>new Promise(r=>requestAnimationFr
 await nav(5);await p.locator('[data-act="v3-settings-tab"][data-tab="appearance"]').click();await p.locator('#interface-language').selectOption('en');await p.waitForFunction(()=>document.documentElement.lang==='en');
 for(const tab of ['appearance','general','modules','themes','extensions','connections','resources']){await p.locator(`.settings-nav [data-act="v3-settings-tab"][data-tab="${tab}"]`).click();await scan('settings-'+tab)}
 await nav(9);await scan('home');await nav(0);await scan('albums');await nav(3);
+if(await p.locator('#wf-connection-body').isHidden()){await p.locator('[data-act="wf-connection-toggle"]').click();await p.locator('#wf-connection-body').waitFor({state:'visible'})}
 for(const provider of ['comfyui','novelai','openai']){await p.locator('#image-provider-select').selectOption(provider);await scan(provider);if(provider!=='comfyui'){await p.locator('[data-act="image-provider-keys"]').click();await p.waitForFunction(()=>document.querySelector('#modal').open);await scan(provider+'-keys');await p.locator('#modal [data-act="close-modal"]').first().click()}}
 await p.locator('[data-act="image-provider-new"]').click();await scan('new-channel');await p.locator('#modal [data-act="close-modal"]').first().click();await nav(1);
 for(const view of ['stories','presets','production']){await p.locator(`[data-act="workshop-tab"][data-view="${view}"]`).click();await scan(view)}

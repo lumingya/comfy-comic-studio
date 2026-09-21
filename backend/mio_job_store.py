@@ -3,6 +3,7 @@
 import json
 import os
 import sqlite3
+import sys
 import threading
 import time
 from contextlib import contextmanager
@@ -344,10 +345,16 @@ class JobStore:
                     if row:
                         continue
                 except Exception:
-                    print(
-                        "[Mio worker] Storage/worker failure: no replay. Check storage before resuming.",
-                        flush=True,
-                    )
+                    if self.closed:
+                        break
+                    try:
+                        if sys.stdout is not None and not getattr(sys.stdout, "closed", False):
+                            print(
+                                "[Mio worker] Storage/worker failure: no replay. Check storage before resuming.",
+                                flush=True,
+                            )
+                    except (ValueError, OSError, AttributeError):
+                        pass
                     try:
                         with self.connect() as db:
                             db.execute(

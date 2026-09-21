@@ -123,5 +123,6 @@ def bootstrap(store):
         raw,_=store.image_bytes('/images/library/'+kind+'/'+id+'/'+relative)
         mime,_=image_type(raw)
         values['cover']='data:'+mime+';base64,'+base64.b64encode(raw).decode()
-    except (LibraryError,OSError,KeyError):pass
+    except (LibraryError, OSError, KeyError, TypeError, ValueError):
+        pass
     return values

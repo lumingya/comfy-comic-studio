@@ -608,7 +608,12 @@ function installAssemblyWorkshop(){
   'production-reprepare':d=>startProduction(d.id,{forcePrepare:true}),
   'production-page-preview':previewProductionPage,
   'production-rerun':d=>startProduction(d.id,{indices:[Number(d.index)]}),
-  'production-rerun-tail':d=>startProduction(d.id,{indices:workshop.queue.tasks.find(t=>t.id===d.id).pages.filter(p=>p.index>=Number(d.index)).map(p=>p.index)}),
+  'production-rerun-tail': d => {
+    const task = workshop.queue.tasks.find(t => t.id === d.id);
+    if (!task) return;
+    const indices = (task.pages || []).filter(p => p.index >= Number(d.index)).map(p => p.index);
+    startProduction(d.id, { indices });
+  },
   'production-pause':async()=>{workshop.queue=await productionRequest('pause',{});render();toast('已暂停后续调度；已提交的分幕可能仍返回')},
   'production-resume':async()=>{workshop.queue=await productionRequest('resume',{});render()},
   'production-cancel':async()=>{const local=workshop.queue.active&&productionIsLocal(workshop.queue.tasks.find(t=>t.id===workshop.queue.active));if(await confirmAction('取消运行与当前批次？',local?'阻止后续请求，迟到结果不覆盖原图。ComfyUI 中已在执行的任务会收到取消请求。':'阻止后续请求，迟到结果不覆盖原图。已提交到提供商的请求可能仍计费。','取消运行')){workshop.queue=await productionRequest('cancel',{});render()}},

@@ -569,8 +569,9 @@ function renderSmartMapper() {
       ${renderMapperInspector()}
     </div>
 
-    <datalist id="v3-node-ids">${Object.entries(c.workflow)
-      .map(([id, n]) => `<option value="${esc(id)}">${esc(n._meta?.title || n.class_type)}</option>`)
+    <datalist id="v3-node-ids">${Object.entries(c.workflow || {})
+      .filter(([id, n]) => n && typeof n === "object")
+      .map(([id, n]) => `<option value="${esc(id)}">${esc(n?._meta?.title || n?.class_type || id)}</option>`)
       .join("")}</datalist>
     <datalist id="v3-render-parameters">${["width", "height", "steps", "cfg", "denoise", "seed"].map((k) => `<option value="${k}"></option>`).join("")}</datalist>
   </section>`;
@@ -788,9 +789,10 @@ function renderMappingRule(binding, index, total = state.settings.comfy.bindings
       ? `${target} <span>保持蓝图原值，不写入。</span>`
       : `<span>${binding.source === "literal" ? "每次生成都把" : "生成时把"}</span> ${what} <span>写入</span> ${target}`;
 
-  const nodeOptions = Object.entries(w)
+  const nodeOptions = Object.entries(w || {})
+    .filter(([id, node]) => node && typeof node === "object")
     .sort(([a], [b]) => Number(a) - Number(b) || String(a).localeCompare(String(b)))
-    .map(([id, node]) => opt(id, `#${id} · ${node._meta?.title || node.class_type}`, binding.nodeId))
+    .map(([id, node]) => opt(id, `#${id} · ${node?._meta?.title || node?.class_type || id}`, binding.nodeId))
     .join("");
   const nodeSelect = `<select ${attr("nodeId")} aria-label="节点" class="wf-node-select">
       ${opt("", "选择节点…", binding.nodeId)}
@@ -883,11 +885,11 @@ function renderMappingRule(binding, index, total = state.settings.comfy.bindings
 }
 
 function renderOutputInspector(c) {
-  const w = c.workflow,
-    candidates = Object.entries(w).filter(([, n]) => /SaveImage|PreviewImage|Save|Preview/.test(n.class_type || "")),
-    others = Object.entries(w).filter(([id]) => !candidates.some(([cid]) => cid === id)),
-    missing = c.outputNodeId && !Object.hasOwn(w, c.outputNodeId),
-    option = ([id, n]) => opt(id, `#${id} · ${n._meta?.title || n.class_type}`, c.outputNodeId);
+  const w = c.workflow || {},
+    candidates = Object.entries(w).filter(([, n]) => n && typeof n === "object" && /SaveImage|PreviewImage|Save|Preview/.test(n.class_type || "")),
+    others = Object.entries(w).filter(([id, n]) => n && typeof n === "object" && !candidates.some(([cid]) => cid === id)),
+    missing = c.outputNodeId && (!w[c.outputNodeId] || typeof w[c.outputNodeId] !== "object"),
+    option = ([id, n]) => opt(id, `#${id} · ${n?._meta?.title || n?.class_type || id}`, c.outputNodeId);
   return `<article class="mapping-rule wf-detail wf-detail-output">
     <header class="wf-detail-head">
       <span class="context-kicker">结果输出</span>
@@ -921,7 +923,7 @@ function renderOutputInspector(c) {
 /* ------------------------------------------------------------------ node picker */
 
 function renderNodeBrowser() {
-  const workflow = state.settings.comfy.workflow,
+  const workflow = state.settings.comfy.workflow || {},
     search = createUI.nodeSearch.toLowerCase();
   return `<aside class="wf-inspector wm-inspector is-picker" aria-label="添加映射">
     <header class="wf-detail-head">
@@ -940,9 +942,10 @@ function renderNodeBrowser() {
 function nodeBrowserItems(workflow, search) {
   const bindings = state.settings.comfy.bindings;
   return (
-    Object.entries(workflow)
+    Object.entries(workflow || {})
+      .filter(([id, n]) => n && typeof n === "object" && (n.inputs || state.settings.comfy.objectInfo?.[n.class_type]))
       .filter(([id, n]) =>
-        (id + " " + n.class_type + " " + (n._meta?.title || "") + " " + workflowInputEntries(n, workflow).map((e) => e.path).join(" "))
+        (id + " " + (n.class_type || "") + " " + (n?._meta?.title || "") + " " + workflowInputEntries(n, workflow).map((e) => e.path).join(" "))
           .toLowerCase()
           .includes(search)
       )
@@ -950,7 +953,7 @@ function nodeBrowserItems(workflow, search) {
         const entries = workflowInputEntries(n, workflow),
           mapped = entries.filter((e) => bindings.some((b) => b.nodeId === id && WorkflowMapping.samePath(b.path, e.path))).length;
         return `<details class="node-group" ${search ? "open" : ""}>
-          <summary><b>#${esc(id)}</b><span class="wf-node-title" data-user-content>${esc(n._meta?.title || n.class_type)}</span>${n._meta?.title && n._meta.title !== n.class_type ? `<small>${esc(n.class_type)}</small>` : ""}${mapped ? `<em class="wf-node-mapped" title="已映射字段数">${mapped}</em>` : ""}</summary>
+          <summary><b>#${esc(id)}</b><span class="wf-node-title" data-user-content>${esc(n?._meta?.title || n?.class_type || id)}</span>${n?._meta?.title && n._meta.title !== n.class_type ? `<small>${esc(n.class_type)}</small>` : ""}${mapped ? `<em class="wf-node-mapped" title="已映射字段数">${mapped}</em>` : ""}</summary>
           ${entries
             .map((entry) => {
               const existing = bindings.find((b) => b.nodeId === id && WorkflowMapping.samePath(b.path, entry.path));

@@ -426,6 +426,10 @@ class ProductionQueue:
             )
             task.pop("error", None)
             self._save(task)
+            try:
+                self.finalize(copy.deepcopy(task))
+            except Exception:
+                pass
             return self.list()
 
     def _await_dispatch(self, cancel):
@@ -539,15 +543,16 @@ class ProductionQueue:
                 index = pending.pop(0)
                 if not self._await_dispatch(cancel):
                     raise InterruptedError("已取消后续分幕，原有图片保留")
-                page = task["pages"][index]
-                attempt = {
-                    "id": uuid.uuid4().hex,
-                    "startedAt": time.time(),
-                    "status": "running",
-                }
-                page["attempts"].append(attempt)
-                page["state"] = "running"
-                self._save(task)
+                with self.lock:
+                    page = task["pages"][index]
+                    attempt = {
+                        "id": uuid.uuid4().hex,
+                        "startedAt": time.time(),
+                        "status": "running",
+                    }
+                    page["attempts"].append(attempt)
+                    page["state"] = "running"
+                    self._save(task)
                 try:
                     result = self.render(copy.deepcopy(task), index, cancel)
                     if cancel.is_set():
@@ -555,54 +560,59 @@ class ProductionQueue:
                             "结果返回前已取消；未替换原图，可能已计费"
                         )
                     # Preserve result before publishing; a failed publication is not a reason to re-render.
-                    attempt.update(
-                        status="rendered",
-                        phase="publish",
-                        result=result,
-                        finishedAt=time.time(),
-                    )
-                    self._save(task)
+                    with self.lock:
+                        attempt.update(
+                            status="rendered",
+                            phase="publish",
+                            result=result,
+                            finishedAt=time.time(),
+                        )
+                        self._save(task)
                     self.publish(copy.deepcopy(task), index, result)
                     if cancel.is_set():
                         raise InterruptedError(
                             "发布阶段收到取消，请核对画册；不会自动重发"
                         )
-                    page["result"] = result
-                    page["state"] = "complete"
-                    attempt["status"] = "complete"
-                    streak = 0
-                    self._save(task)
+                    with self.lock:
+                        page["result"] = result
+                        page["state"] = "complete"
+                        attempt["status"] = "complete"
+                        streak = 0
+                        self._save(task)
                 except Exception as exc:
                     uncertain = cancel.is_set() or isinstance(exc, InterruptedError) or (
                         attempt.get("phase") != "publish"
                         and result_unconfirmed(exc, attempt.get("upstream"))
                     )
-                    attempt.update(
-                        status=(
+                    with self.lock:
+                        attempt.update(
+                            status=(
+                                "uncertain"
+                                if uncertain
+                                else "failed"
+                            ),
+                            error=failure_summary(safe_error_text(str(exc)), terminal=True),
+                            rawError=safe_error_text(str(exc))[:16384],
+                            finishedAt=time.time(),
+                        )
+                        page["state"] = (
                             "uncertain"
                             if uncertain
                             else "failed"
-                        ),
-                        error=failure_summary(safe_error_text(str(exc)), terminal=True),
-                        rawError=safe_error_text(str(exc))[:16384],
-                        finishedAt=time.time(),
-                    )
-                    page["state"] = (
-                        "uncertain"
-                        if uncertain
-                        else "failed"
-                    )
+                        )
                     if cancel.is_set() or isinstance(exc, InterruptedError):
                         raise
                     # One rejected page (moderation, bad parameters, exhausted
                     # rate limit) is page-local: record it and keep going so the
                     # rest of the book still gets rendered.
-                    self._save(task)
+                    with self.lock:
+                        self._save(task)
                     decision = self._retry_decision(task, index, attempt, retries.get(index, 0), fatal_page_failure(exc) or attempt.get("phase") == "publish")
                     if decision:
                         retries[index] = retries.get(index, 0) + 1
-                        page["state"] = "standby"
-                        self._save(task)
+                        with self.lock:
+                            page["state"] = "standby"
+                            self._save(task)
                         if cancel.wait(decision["delay"]):
                             raise InterruptedError("重试等待期间已取消")
                         pending.insert(0, index)
@@ -618,31 +628,34 @@ class ProductionQueue:
                     ):
                         fatal = exc
                         break
-            task["status"] = (
-                "complete"
-                if all(p["state"] == "complete" for p in task["pages"])
-                else "partial"
-            )
-            if failures:
-                if not any(p["state"] == "complete" for p in task["pages"]):
-                    task["status"] = "failed"
-                task["error"] = self._failure_report(task, failures, fatal)
+            with self.lock:
+                task["status"] = (
+                    "complete"
+                    if all(p["state"] == "complete" for p in task["pages"])
+                    else "partial"
+                )
+                if failures:
+                    if not any(p["state"] == "complete" for p in task["pages"]):
+                        task["status"] = "failed"
+                    task["error"] = self._failure_report(task, failures, fatal)
             if fatal is not None:
                 # A systemic failure stops a sequential batch rather than
                 # skipping into another paid book with the same broken setup.
                 self._halt_batch(id)
         except Exception as exc:
-            task["status"] = (
-                "cancelled"
-                if cancel.is_set()
-                else ("interrupted" if isinstance(exc, InterruptedError) else "failed")
-            )
-            task["error"] = failure_summary(safe_error_text(str(exc)), terminal=True)
+            with self.lock:
+                task["status"] = (
+                    "cancelled"
+                    if cancel.is_set()
+                    else ("interrupted" if isinstance(exc, InterruptedError) else "failed")
+                )
+                task["error"] = failure_summary(safe_error_text(str(exc)), terminal=True)
             # Failure stops a sequential batch rather than skipping into another paid book.
             self._halt_batch(id)
         finally:
             try:
-                self._save(task)
+                with self.lock:
+                    self._save(task)
                 try:
                     self.finalize(copy.deepcopy(task))
                 except Exception:
