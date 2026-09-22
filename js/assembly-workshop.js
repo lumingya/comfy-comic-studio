@@ -67,7 +67,7 @@ function installWorkshopKeys() {
       return;
     }
 
-    if (event.key === 'Escape' && workshop.selMode) {
+    if (event.key === 'Escape' && (workshop.selMode || workshop.pickedFrames.size)) {
       workshop.selMode = false;
       workshop.pickedFrames.clear();
       render();
@@ -189,8 +189,7 @@ function renderStoryWorkshop(){
  workshop.storyId=story.id;workshop.frame=clamp(workshop.frame,0,Math.max(0,story.frames.length-1));const frame=story.frames[workshop.frame];
  if(workshopIsMobile()){if(!story.frames.length)workshop.mobileEditor=false;return renderStoryWorkshopMobile(stories,story)}
  workshop.mobileEditor=false;
- const allPicked=story.frames.length>0&&story.frames.every((_,i)=>workshop.pickedFrames.has(i));
- return `<div class="workshop-asset-head"><label>当前分镜资产<select id="workshop-story-select">${stories.map(t=>opt(t.id,t.title,story.id)).join('')}</select></label><div>${btn('重命名','edit','workshop-rename')}${btn('导入','file-import','workshop-import')}${btn('导出分镜','file-export','workshop-export')}${btn('保存分镜','disk','workshop-save','','ghost')}${btn('去装配此分镜','arrow','first-run-assemble-story','','primary')}</div></div><details class="story-synopsis"><summary>故事梗概 / 起手模板（可选）</summary>${field('作品简介',`<textarea data-workshop-story="outline" class="workshop-outline" placeholder="可选：为作品补充一段简介。">${esc(story.outline||'')}</textarea>`)}<div class="field"><label class="label" for="workshop-base-prompt">起手模板</label>${promptEditorHTML({attrs:'id="workshop-base-prompt" data-workshop-story="basePrompt" class="workshop-base-prompt"',value:storyBasePrompt(story),placeholder:'可选：新分幕的起手提示词，例如 {character}, {outfit}, {style}, {scene}, ',context:'workshop'})}<p class="help">批量新增的分幕以它开头；单击「新增分幕」仍是空白分幕，可随时一键插入。</p></div></details><div class="workshop-editor ${workshop.selMode?'is-selmode':''}"><nav class="workshop-frames" aria-label="分幕列表">${workshop.selMode?`<div class="workshop-frames-selbar">${selectionBarHTML({count:workshop.pickedFrames.size,unit:'幕',allPicked,allAct:'workshop-frame-pick-all',smart:[{label:'选空幕',act:'workshop-frame-pick-empty'}],deleteAct:'workshop-frame-delete-bulk',exitAct:'workshop-frame-sel-toggle'})}</div>`:''}<div class="workshop-frames-list">${story.frames.map((f,i)=>{const picked=workshop.pickedFrames.has(i);return `<button data-act="workshop-frame" data-index="${i}" class="${i===workshop.frame&&!workshop.selMode?'active':''} ${picked?'is-picked':''}">${workshop.selMode?`<input type="checkbox" class="sel-cbox" ${picked?'checked':''} aria-label="选择此幕" tabindex="-1">`:''}<small>${pad(i+1)}</small><span>${esc(f.name||'未命名分幕')}</span></button>`}).join('')}</div><div class="workshop-frames-actions">${btn('新增分幕','plus','workshop-add-frame','','small')}${btn('批量新增…','copy','workshop-add-frames','','small')}${btn(workshop.selMode?'退出管理':'批量管理','check','workshop-frame-sel-toggle','',workshop.selMode?'small active':'small ghost')}</div></nav><section class="workshop-page" data-editor-key="${esc(frame?.id||story.id)}">${frame?`<div class="workshop-page-title"><input data-workshop-frame="name" value="${esc(frame.name)}" aria-label="分幕名称">${ibtn('up','workshop-move-frame','分幕前移','data-dir="-1"')}${ibtn('down','workshop-move-frame','分幕后移','data-dir="1"')}${ibtn('copy','workshop-copy-frame','复制分幕')}${ibtn('trash','workshop-delete-frame','删除分幕')}</div><div class="negative-heading prompt-heading"><label for="workshop-frame-prompt">正向提示词</label>${!frame.prompt.trim()&&storyBasePrompt(story)?btn('插入起手模板','plus','workshop-apply-base','','small ghost'):''}</div>${promptEditorHTML({attrs:'id="workshop-frame-prompt" data-workshop-frame="prompt" class="workshop-prompt"',value:frame.prompt,placeholder:'描述画面、镜头与人物动作；使用 {变量} 引用装配时的视觉设定。',context:'workshop'})}<div class="negative-heading"><label>负向提示词</label>${btn('应用到所有分幕','copy','workshop-negative-all','','small ghost')}</div>${promptEditorHTML({attrs:'aria-label="负向提示词" data-workshop-frame="negative" class="workshop-negative"',value:frame.negative||'',placeholder:'排除不需要的内容，也可引用 {画风负向} 或 {角色负向}。',context:'workshop'})}${field('台词 / 旁白',promptEditorHTML({attrs:'aria-label="分镜台词" data-workshop-frame="caption" class="workshop-caption"',value:frame.caption||'',context:'workshop',className:'prose'}))}<details class="quiet-advanced"><summary>此幕画面参数</summary>${workshopFrameParameterNotice(frame)}<div class="grid2">${['width','height','steps','cfg','seed'].map(k=>field(({width:'宽度',height:'高度',steps:'步数',cfg:'CFG',seed:'随机种子'})[k],input(k,frame[k],'number',`data-workshop-frame="${k}"`))).join('')}</div></details>`:'<div class="eco-empty"><h3>从第一个镜头开始。</h3></div>'}</section></div>`;
+ return `<div class="workshop-asset-head"><label>当前分镜资产<select id="workshop-story-select">${stories.map(t=>opt(t.id,t.title,story.id)).join('')}</select></label><div>${btn('重命名','edit','workshop-rename')}${btn('导入','file-import','workshop-import')}${btn('导出分镜','file-export','workshop-export')}${btn('保存分镜','disk','workshop-save','','ghost')}${btn('去装配此分镜','arrow','first-run-assemble-story','','primary')}</div></div><details class="story-synopsis"><summary>故事梗概 / 起手模板（可选）</summary>${field('作品简介',`<textarea data-workshop-story="outline" class="workshop-outline" placeholder="可选：为作品补充一段简介。">${esc(story.outline||'')}</textarea>`)}<div class="field"><label class="label" for="workshop-base-prompt">起手模板</label>${promptEditorHTML({attrs:'id="workshop-base-prompt" data-workshop-story="basePrompt" class="workshop-base-prompt"',value:storyBasePrompt(story),placeholder:'可选：新分幕的起手提示词，例如 {character}, {outfit}, {style}, {scene}, ',context:'workshop'})}<p class="help">批量新增的分幕以它开头；单击「新增分幕」仍是空白分幕，可随时一键插入。</p></div></details><div class="workshop-editor ${workshop.selMode?'is-selmode':''}"><nav class="workshop-frames" aria-label="分幕列表"><div class="workshop-frames-list ${workshop.pickedFrames.size?'has-selection':''}" aria-multiselectable="true">${story.frames.map((f,i)=>{const picked=workshop.pickedFrames.has(i);return `<button data-act="workshop-frame" data-index="${i}" class="${i===workshop.frame?'active':''} ${picked?'is-picked desktop-selected':''}" aria-selected="${picked}"><small>${pad(i+1)}</small><span>${esc(f.name||'未命名分幕')}</span></button>`}).join('')}</div><p class="workshop-frames-status" role="status" aria-live="polite" ${workshop.pickedFrames.size?'':'hidden'}>${workshop.pickedFrames.size?localeString('已选 {n} 幕 · 右键操作',{n:workshop.pickedFrames.size}):''}</p><div class="workshop-frames-actions">${btn('新增分幕','plus','workshop-add-frame','','small')}${btn('批量新增…','copy','workshop-add-frames','','small')}</div></nav><section class="workshop-page" data-editor-key="${esc(frame?.id||story.id)}">${frame?`<div class="workshop-page-title"><input data-workshop-frame="name" value="${esc(frame.name)}" aria-label="分幕名称">${ibtn('up','workshop-move-frame','分幕前移','data-dir="-1"')}${ibtn('down','workshop-move-frame','分幕后移','data-dir="1"')}${ibtn('copy','workshop-copy-frame','复制分幕')}${ibtn('trash','workshop-delete-frame','删除分幕')}</div><div class="negative-heading prompt-heading"><label for="workshop-frame-prompt">正向提示词</label>${!frame.prompt.trim()&&storyBasePrompt(story)?btn('插入起手模板','plus','workshop-apply-base','','small ghost'):''}</div>${promptEditorHTML({attrs:'id="workshop-frame-prompt" data-workshop-frame="prompt" class="workshop-prompt"',value:frame.prompt,placeholder:'描述画面、镜头与人物动作；使用 {变量} 引用装配时的视觉设定。',context:'workshop'})}<div class="negative-heading"><label>负向提示词</label>${btn('应用到所有分幕','copy','workshop-negative-all','','small ghost')}</div>${promptEditorHTML({attrs:'aria-label="负向提示词" data-workshop-frame="negative" class="workshop-negative"',value:frame.negative||'',placeholder:'排除不需要的内容，也可引用 {画风负向} 或 {角色负向}。',context:'workshop'})}${field('台词 / 旁白',promptEditorHTML({attrs:'aria-label="分镜台词" data-workshop-frame="caption" class="workshop-caption"',value:frame.caption||'',context:'workshop',className:'prose'}))}<details class="quiet-advanced"><summary>此幕画面参数</summary>${workshopFrameParameterNotice(frame)}<div class="grid2">${['width','height','steps','cfg','seed'].map(k=>field(({width:'宽度',height:'高度',steps:'步数',cfg:'CFG',seed:'随机种子'})[k],input(k,frame[k],'number',`data-workshop-frame="${k}"`))).join('')}</div></details>`:'<div class="eco-empty"><h3>从第一个镜头开始。</h3></div>'}</section></div>`;
 }
 function renderPresetWorkshop(){
  const sets=projectVariableSets(),p=workshopPreset(),draft=workshopDraft();if(!p)return '<div class="eco-empty"><h3>建立你的视觉资产库。</h3><p>人物、画风、场景，可以分别保存为预设。</p>'+btn('导入预设','file-import','workshop-import')+'</div>';
@@ -292,14 +291,8 @@ function workshopViewSwitchItems(){
 }
 function workshopFrameContextItems(story,index){
   const frame=story.frames[index],last=story.frames.length-1,base=storyBasePrompt(story),extension=typeof contextMenuExtensionItems==='function'?contextMenuExtensionItems('frame',{index,story}):[];
-  const data={index};
-  const manage=workshop.selMode?[
-    {label:workshop.pickedFrames.has(index)?'取消选中这一幕':'选中这一幕',icon:'check',act:'workshop-frame-pick',data,checked:workshop.pickedFrames.has(index)},
-    {label:'全选 / 全不选',icon:'list',act:'workshop-frame-pick-all'},
-    {label:'只选空白分幕',icon:'search',act:'workshop-frame-pick-empty'},
-    {label:`删除选中的 ${workshop.pickedFrames.size} 幕…`,icon:'trash',act:'workshop-frame-delete-bulk',danger:true,disabled:!workshop.pickedFrames.size},
-    {label:'退出批量管理',icon:'close',act:'workshop-frame-sel-toggle',shortcut:'Esc'}
-  ]:[{label:'批量管理分幕…',icon:'check',act:'workshop-frame-sel-toggle',hint:'多选后可一次删除空白或多余分幕'}];
+  const data={index},picked=workshop.pickedFrames;
+  if(picked.has(index)&&picked.size>1)return workshopFramesSelectionContextItems(story,index);
   return [
     {label:index===workshop.frame?'正在编辑这一幕':'编辑这一幕',icon:'edit',act:'workshop-frame',data,primary:true,disabled:index===workshop.frame,shortcut:'Ctrl/⌘ ↑↓'},
     {label:'插入起手模板',icon:'spark',act:'workshop-apply-base',data,disabled:!base||!!frame.prompt.trim(),hint:!base?'先在「故事梗概 / 起手模板」里写好模板':frame.prompt.trim()?'这一幕已有提示词':'把起手模板填入空白提示词'},
@@ -309,18 +302,39 @@ function workshopFrameContextItems(story,index){
     {label:'前移',icon:'up',act:'workshop-move-frame',data:{index,dir:-1},disabled:index===0},
     {label:'后移',icon:'down',act:'workshop-move-frame',data:{index,dir:1},disabled:index>=last},
     '-',
-    ...manage,
+    {label:'选择',icon:'check',children:[
+      {label:'全选分幕',icon:'list',act:'workshop-frame-pick-all',shortcut:'Ctrl/⌘ A'},
+      {label:'只选空白分幕',icon:'search',act:'workshop-frame-pick-empty',hint:'没有提示词也没有台词的分幕'},
+      {type:'label',label:'拖动框选 · Ctrl / ⌘ 加选 · Shift 连选'}
+    ]},
     extension.length?'-':null,
     ...extension,
     '-',
     {label:'删除这一幕…',icon:'trash',act:'workshop-delete-frame',data,danger:true,disabled:story.frames.length<=1,title:story.frames.length<=1?'分镜至少保留一幕。':''}
   ];
 }
+/* Menu for a multi-selection of frames: only actions that make sense for the whole set. */
+function workshopFramesSelectionContextItems(story,index){
+  const picked=[...workshop.pickedFrames].filter(i=>story.frames[i]).sort((a,b)=>a-b),n=picked.length;
+  const blank=picked.filter(i=>!String(story.frames[i].prompt||'').trim()).length,base=storyBasePrompt(story);
+  return [
+    {type:'label',label:`对选中的 ${n} 幕`},
+    {label:'编辑这一幕',icon:'edit',act:'workshop-frame',data:{index},hint:story.frames[index]?.name||'',disabled:index===workshop.frame},
+    {label:blank?`为 ${blank} 幕空白提示词插入起手模板`:'插入起手模板',icon:'spark',act:'workshop-frames-apply-base',disabled:!base||!blank,hint:!base?'先写好起手模板':blank?'':'所选分幕都已有提示词'},
+    {label:'复制所选分幕',icon:'copy',act:'workshop-frames-copy',hint:'副本紧随最后一幕之后'},
+    '-',
+    {label:'全选分幕',icon:'list',act:'workshop-frame-pick-all',shortcut:'Ctrl/⌘ A'},
+    {label:'只选空白分幕',icon:'search',act:'workshop-frame-pick-empty'},
+    {label:'取消选择',icon:'close',act:'workshop-frame-pick-clear',shortcut:'Esc'},
+    '-',
+    {label:`删除选中的 ${n} 幕…`,icon:'trash',act:'workshop-frame-delete-bulk',danger:true,shortcut:'Delete',disabled:n>=story.frames.length,title:n>=story.frames.length?'分镜至少保留一幕。':''}
+  ];
+}
 function workshopStoryContextItems(story){
   return [
     {label:'新增分幕',icon:'plus',act:'workshop-add-frame',primary:true,disabled:story.frames.length>=512},
     {label:'批量新增分幕…',icon:'copy',act:'workshop-add-frames',hint:'按起手模板一次生成多幕'},
-    {label:workshop.selMode?'退出批量管理':'批量管理分幕',icon:'check',act:'workshop-frame-sel-toggle',checked:workshop.selMode},
+    {label:'全选分幕',icon:'list',act:'workshop-frame-pick-all',shortcut:'Ctrl/⌘ A',hint:'拖动框选或 Ctrl / ⌘ 点击也可多选'},
     '-',
     {label:'保存分镜',icon:'disk',act:'workshop-save',shortcut:'Ctrl/⌘ ↵ 下一幕'},
     {label:'去装配此分镜',icon:'arrow',act:'first-run-assemble-story',hint:'下一步：搭配预设，生成画册'},
@@ -540,6 +554,9 @@ function installAssemblyWorkshop(){
    if(keepTyping){const prompt=document.querySelector('.wm-focus [data-workshop-frame="prompt"]');if(prompt){prompt.focus();prompt.setSelectionRange(prompt.value.length,prompt.value.length)}}},
   'workshop-frame-sel-toggle':()=>{workshop.selMode=!workshop.selMode;if(!workshop.selMode)workshop.pickedFrames.clear();render()},
   'workshop-frame-pick':d=>{const i=Number(d.index);if(workshop.pickedFrames.has(i))workshop.pickedFrames.delete(i);else workshop.pickedFrames.add(i);render()},
+  'workshop-frame-pick-clear':()=>{workshop.pickedFrames.clear();render()},
+  'workshop-frames-apply-base':()=>{const s=workshopStory(),base=storyBasePrompt(s);if(!s||!base)return;let n=0;for(const i of workshop.pickedFrames){const f=s.frames[i];if(f&&!String(f.prompt||'').trim()){f.prompt=base;n++}}if(!n)return;delete s.ownerPlanId;s.updatedAt=Date.now();save();render();toast(localeString('已为 {n} 幕插入起手模板',{n}))},
+  'workshop-frames-copy':()=>{const s=workshopStory();if(!s)return;const picked=[...workshop.pickedFrames].filter(i=>s.frames[i]).sort((a,b)=>a-b);if(!picked.length)return;if(s.frames.length+picked.length>512)throw Error('最多 512 幕');const copies=picked.map(i=>{const f=clone(s.frames[i]);f.id=uid('frame');return f});const at=picked[picked.length-1]+1;s.frames.splice(at,0,...copies);workshop.pickedFrames=new Set(copies.map((_,k)=>at+k));workshop.frame=at;delete s.ownerPlanId;s.updatedAt=Date.now();save();render();toast(localeString('已复制 {n} 幕',{n:copies.length}))},
   'workshop-frame-pick-all':()=>{
     const s=workshopStory();if(!s)return;
     const q=String(workshop.frameSearch||'').trim().toLowerCase();
@@ -563,6 +580,7 @@ function installAssemblyWorkshop(){
     if(!sortedIndices.length)return;
     const count=sortedIndices.length;
     if(s.frames.length<=count)throw Error('不能删除所有分幕，至少保留一幕');
+    if(!await confirmAction(localeString('删除选中的 {n} 幕？',{n:count}),'只修改分镜资产，不影响已装配的任务；删除后可撤销。','删除'))return;
     const deletedEntries=sortedIndices.map(idx=>({idx,frame:clone(s.frames[idx])}));
     const originalFrameIndex=workshop.frame;
     for(const idx of [...sortedIndices].reverse())s.frames.splice(idx,1);

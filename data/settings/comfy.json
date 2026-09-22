@@ -2660,6 +2660,48 @@
       "warning": "",
       "allowCreate": false,
       "allowLink": false
+    },
+    {
+      "id": "bind_e8f0ae3d-565b-4d6d-88e2-0eb3e71b2c98",
+      "label": "种子 (K采样器)",
+      "nodeId": "4529",
+      "path": "noise_seed",
+      "type": "number",
+      "source": "sceneParameter",
+      "value": "seed",
+      "enabled": true,
+      "autoField": false,
+      "warning": "",
+      "allowCreate": false,
+      "allowLink": false
+    },
+    {
+      "id": "bind_c4f39cfd-93fc-475f-9967-d870a2af82b2",
+      "label": "全局随机种",
+      "nodeId": "397",
+      "path": "value",
+      "type": "number",
+      "source": "sceneParameter",
+      "value": "seed",
+      "enabled": true,
+      "autoField": false,
+      "warning": "",
+      "allowCreate": false,
+      "allowLink": false
+    },
+    {
+      "id": "bind_d3c53125-f9db-47d7-bf41-751c72b73885",
+      "label": "种子 (Refiner)",
+      "nodeId": "4532",
+      "path": "noise_seed",
+      "type": "number",
+      "source": "sceneParameter",
+      "value": "seed",
+      "enabled": true,
+      "autoField": false,
+      "warning": "",
+      "allowCreate": false,
+      "allowLink": false
     }
   ],
   "bindingVersion": 1,

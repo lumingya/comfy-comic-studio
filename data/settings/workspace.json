@@ -152,7 +152,23 @@
         },
         "productionAssembly": {
           "channelId": "comfyui",
-          "workflowId": "wf_a56d1f8e-14b9-4752-826b-d277d0094d47"
+          "workflowId": "wf_a56d1f8e-14b9-4752-826b-d277d0094d47",
+          "projectId": "collection_summer",
+          "overrides": {
+            "wf_a56d1f8e-14b9-4752-826b-d277d0094d47": {
+              "model": "oneObsession_1424DNsfw.safetensors",
+              "loras": [
+                {
+                  "name": "QAQv2p2-150",
+                  "strength": 0.58
+                },
+                {
+                  "name": "QAQv5p2_IL-40",
+                  "strength": 0.75
+                }
+              ]
+            }
+          }
         }
       },
       "activeProjectId": "collection_summer",
@@ -289,9 +305,11 @@
       "album_5782aa79c4494030a3c44a5b433a4999",
       "album_585d7915b2eb4cf1bfbb4bd0d94ea555",
       "album_7210359cbebc47d7bc7df8a4fdedb32a",
+      "album_fe74759911db4d4499ddeb139529dca9",
       "book_1b07b003-041a-404a-87d3-327c18985ff3",
       "book_5213ff35-ba03-416b-ab66-17a40177853c",
-      "edition_letter"
+      "edition_letter",
+      "album_c8f909d28dd0434888f4cc9000b053c1"
     ],
     "rows": [
       "character_nanami",

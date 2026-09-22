@@ -37,16 +37,18 @@ assert.equal(await page.evaluate(()=>assemblyDesign.presets.size),await cards.co
 await page.screenshot({path:path.join(artifacts,'task-presets.png'),fullPage:true});
 await page.evaluate(()=>{closeModal();navigate(1);workshop.view='stories';render()});
 let rows=page.locator('.workshop-frames-list button[data-index]');
-await rows.nth(0).click();
+await rows.nth(0).click({modifiers:['Control']});
 await rows.nth(3).click({modifiers:['Shift']});
 assert.equal(await page.evaluate(()=>workshop.pickedFrames.size),4);
 await page.keyboard.press('Escape');
 assert.equal(await page.evaluate(()=>workshop.pickedFrames.size),0);
-await rows.nth(2).click();await rows.nth(2).click();
+// Single click switches the frame and never starts a selection.
+await rows.nth(2).click();
 assert.equal(await page.evaluate(()=>workshop.frame),2);
+assert.equal(await page.evaluate(()=>workshop.pickedFrames.size),0);
 await page.evaluate(()=>{mapperUI.railPinned=true;navigate(3)});
 const flows=page.locator('#wf-rail-list [data-workflow-id]');
-await flows.nth(0).click();
+await flows.nth(0).click({modifiers:['Control']});
 assert.equal(await page.evaluate(()=>mapperUI.libSel.size),1);
 await page.keyboard.press('Control+a');
 assert.equal(await page.evaluate(()=>mapperUI.libSel.size),await flows.count());
@@ -54,7 +56,7 @@ await page.keyboard.press('Escape');
 assert.equal(await page.evaluate(()=>mapperUI.libSel.size),0);
 const mappings=page.locator('#wm-binding-rows [data-binding-row]');
 if(await mappings.count()){
-  await mappings.first().locator('.wf-row-main').click();
+  await mappings.first().locator('.wf-row-main').click({modifiers:['Control']});
   assert.equal(await page.evaluate(()=>mapperUI.sel.size),1);
   await page.keyboard.press('Control+a');
   assert.equal(await page.evaluate(()=>mapperUI.sel.size),await mappings.count());
@@ -63,15 +65,16 @@ if(await mappings.count()){
 }
 await page.evaluate(()=>{navigate(0)});
 const books=page.locator('#gallery-results [data-sort-book]');
-await books.first().click();
+await books.first().click({modifiers:['Control']});
 assert.equal(await page.evaluate(()=>ui.selected.size),1);
 await page.keyboard.press('Escape');
 assert.equal(await page.evaluate(()=>ui.selected.size),0);
-await books.first().click();await books.first().click();
+// A single click opens the album.
+await books.first().locator('.shelf-cover').click();
 await page.waitForFunction(()=>document.querySelector('#reader').open);
 await page.evaluate(()=>{document.querySelector('#reader').close();openAssemblyDesigner();assemblyDesign.step=1;renderAssemblyDesigner()});
 await page.setViewportSize({width:390,height:844});
 assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
 assert.deepEqual(errors,[]);
-console.log('PASS designer, presets, frames, workflows, bindings, gallery; click/Ctrl/Shift/Escape/marquee/Ctrl+A/double-open; mobile overflow; no runtime errors');
+console.log('PASS designer, presets, frames, workflows, bindings, gallery; single-click open/Ctrl/Shift/Escape/marquee/Ctrl+A; mobile overflow; no runtime errors');
 await browser.close();

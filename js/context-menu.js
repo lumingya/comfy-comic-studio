@@ -2,7 +2,7 @@
    Every entry is a real action: items dispatch through the normal data-act click path (or a `run` callback),
    so a menu never duplicates behaviour that lives elsewhere. Opening a menu never re-renders the page. */
 'use strict';
-const contextMenuUI={layers:[],registry:new Map(),focusEl:null,onClose:null,serial:0,hoverTimer:null,installed:false};
+const contextMenuUI={layers:[],registry:new Map(),focusEl:null,onClose:null,serial:0,hoverTimer:null,installed:false,openedAt:0};
 
 function contextMenuOpen(){return contextMenuUI.layers.length>0}
 
@@ -122,7 +122,8 @@ function contextMenuInstall(){
   window.addEventListener('resize',()=>closeContextMenu());
   window.addEventListener('blur',()=>closeContextMenu());
   for(const type of ['wheel','touchmove'])document.addEventListener(type,event=>{if(contextMenuOpen()&&!event.target.closest?.('.ctx-menu'))closeContextMenu()},{passive:true});
-  document.addEventListener('scroll',event=>{if(contextMenuOpen()&&!(event.target instanceof Element&&event.target.closest('.ctx-menu')))closeContextMenu()},true);
+  // Scroll events that were already queued when the menu opened (scroll-into-view, layout settling) must not close it.
+  document.addEventListener('scroll',event=>{if(contextMenuOpen()&&performance.now()-contextMenuUI.openedAt>250&&!(event.target instanceof Element&&event.target.closest('.ctx-menu')))closeContextMenu()},true);
 }
 
 /* openContextMenu({x, y, title, subtitle, label, items, focusEl, onClose})
@@ -135,6 +136,7 @@ function openContextMenu({x=0,y=0,title='',subtitle='',label='上下文菜单',i
   contextMenuUI.focusEl=focusEl||(document.activeElement instanceof HTMLElement?document.activeElement:null);
   contextMenuUI.onClose=onClose;
   document.documentElement.classList.add('has-context-menu');
+  contextMenuUI.openedAt=performance.now();
   const layer=contextMenuLayer(list,{depth:0,label,title,subtitle,x,y});
   layer.querySelector('.ctx-item:not(:disabled)')?.focus({preventScroll:true});
   return layer;

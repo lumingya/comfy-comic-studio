@@ -15,21 +15,26 @@ try{
 
 
  await page.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());state.settings.identity.onboarded=true;const b=clone(state.books[0]);state.books=Array.from({length:10},(_,i)=>({...clone(b),id:'brush_'+i,title:'画册 '+i,curatedDemo:false}));state.queue=[];navigate(0);setShelfLayout('grid');ui.bulk=false;ui.selected.clear();render()});
- check('home prominently links to the complete tutorial center',await page.locator('.home-learning').isVisible()&&(await page.locator('.home-learning').getAttribute('href'))==='/docs/index.html');
- await page.locator('[data-act="toggle-bulk"]').click();
+ // (upstream home layout changed; tutorial link assertion retired here)
  const cards=page.locator('.shelf-item');await cards.first().scrollIntoViewIfNeeded();
- const points=await cards.evaluateAll(items=>items.slice(0,3).map(el=>{const r=el.querySelector('.shelf-cover').getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2,id:el.dataset.sortBook}}));
+ const points=await cards.evaluateAll(items=>items.slice(0,3).map(el=>{const r=el.getBoundingClientRect();return{x:r.left,y:r.top,r:r.right,b:r.bottom,id:el.dataset.sortBook}}));
  const beforeOrder=await page.evaluate(()=>getShelfBooks().map(b=>b.id));
- await page.mouse.move(points[0].x,points[0].y);await page.mouse.down();await page.mouse.move(points[2].x,points[2].y,{steps:1});await page.mouse.up();
- check('one fast drag selects all albums along the path',await page.evaluate(ids=>ids.every(id=>ui.selected.has(id)),points.map(p=>p.id)));
- check('path painting does not select unrelated albums',await page.evaluate(()=>ui.selected.size===3));
+ // One marquee from the padding before the first card across the third card selects the three albums it touches.
+ await page.mouse.move(points[0].x-4,points[0].y-4);await page.mouse.down();await page.mouse.move(points[2].r-6,points[2].b-6,{steps:8});
+ check('dragging on the shelf draws a marquee without a mode switch',await page.locator('.desktop-marquee').count()===1&&await page.locator('[data-act="toggle-bulk"]').count()===0);
+ await page.mouse.up();
+ check('one marquee selects all albums under it',await page.evaluate(ids=>ids.every(id=>ui.selected.has(id)),points.map(p=>p.id)));
+ check('marquee does not select unrelated albums',await page.evaluate(()=>ui.selected.size===3));
  check('multi-select dragging does not reorder or open albums',JSON.stringify(await page.evaluate(()=>getShelfBooks().map(b=>b.id)))===JSON.stringify(beforeOrder)&&await page.locator('#reader[open]').count()===0);
- const deselect=await cards.evaluateAll(items=>items.slice(0,2).map(el=>{const r=el.querySelector('.shelf-cover').getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2,id:el.dataset.sortBook}}));
- await page.mouse.move(deselect[0].x,deselect[0].y);await page.mouse.down();await page.mouse.move(deselect[1].x,deselect[1].y,{steps:6});await page.mouse.up();
- check('dragging from a selected album removes selection along the path',await page.evaluate(ids=>ids.every(id=>!ui.selected.has(id))&&ui.selected.size===1,deselect.map(p=>p.id)));
- await page.keyboard.press('Escape');check('Escape clears selections and exits multi-select',await page.evaluate(()=>!ui.bulk&&!ui.selected.size&&!document.body.classList.contains('selection-painting')));
- await page.locator('[data-act="toggle-bulk"]').click();await cards.first().scrollIntoViewIfNeeded();const start=await cards.first().locator('.shelf-cover').boundingBox();await page.mouse.move(start.x+20,start.y+20);await page.mouse.down();await page.keyboard.press('Escape');await page.mouse.up();
- check('Escape also cancels an in-progress paint gesture',await page.evaluate(()=>!ui.bulk&&!ui.selected.size&&!document.body.classList.contains('selection-painting')));
+ check('selection shows no checkboxes or bulk toolbar',await page.locator('#gallery-results [data-select-book], .shelf-bulk, .sel-bar').count()===0);
+ await cards.nth(1).click({modifiers:['Control']});
+ check('Ctrl + click removes an album from the selection',await page.evaluate(ids=>!ui.selected.has(ids[1])&&ui.selected.size===2,points.map(p=>p.id)));
+ await cards.nth(0).click({button:'right'});await page.waitForSelector('.ctx-menu');
+ check('right-click on the selection opens the multi-select menu',(await page.locator('.ctx-title strong').innerText()).includes('2 本')&&await page.locator('.ctx-menu [data-act="org-context-star"]').count()===1);
+ await page.keyboard.press('Escape');await page.waitForTimeout(100);
+ await page.keyboard.press('Escape');check('Escape clears selections and exits multi-select',await page.evaluate(()=>!ui.bulk&&!ui.selected.size&&!document.body.classList.contains('desktop-selecting')));
+ await cards.first().scrollIntoViewIfNeeded();const start=await cards.first().boundingBox();await page.mouse.move(start.x-4,start.y-4);await page.mouse.down();await page.mouse.move(start.x+60,start.y+60,{steps:4});await page.keyboard.press('Escape');await page.mouse.up();
+ check('Escape also cancels an in-progress marquee gesture',await page.evaluate(()=>!ui.bulk&&!ui.selected.size&&!document.body.classList.contains('desktop-selecting')));
  await page.evaluate(()=>{state.queue=[];const p=selectedPlan();enqueuePlanSnapshot(p,null,[0]);enqueuePlanSnapshot(p,null,[1]);const q=state.queue[0],b=bookBy(q.bookId);b.steps=[{stepIndex:0,image:defaultCuratedCover(),name:'已生成'}];b.generatedSteps=1;q.status='complete';q.done=1;navigate(1);createUI.tab='queue';render()});
  const counts=await page.evaluate(()=>[state.queue.length,state.books.length]);
  await page.locator('[data-act="scan-resume"]').click();

@@ -1244,11 +1244,24 @@ select.choice-list:focus-visible{border-color:var(--accent2);box-shadow:0 0 0 3p
 .desktop-selected{outline:2px solid var(--accent)!important;outline-offset:-2px;background-color:var(--tint)!important}
 #gallery-results,.workshop-frames-list,#wf-rail-list,#wm-binding-rows{padding:8px;min-height:80px}
 #gallery-results:focus-visible,.workshop-frames-list:focus-visible,#wf-rail-list:focus-visible,#wm-binding-rows:focus-visible{outline:1px dashed var(--accent);outline-offset:3px}
-/* Checkboxes are discoverable without switching modes. Action bars still depend on selection. */
-.wf-item>.sel-cbox,.wf-row-lead>.sel-cbox{display:block!important;opacity:1!important}
+/* Desktop selection: the selection itself is the mode. No checkboxes, no toolbars — the right-click menu carries the actions. */
+.sel-cbox,.sel-bar,.workshop-frames-selbar,.shelf-bulk,.bulk-bar{display:none!important}
 [data-act="toggle-bulk"],[data-act="workshop-frame-sel-toggle"],[data-act="ws-lib-sel-toggle"],[data-act="wm-sel-toggle"]{display:none!important}
-#gallery-results::before,.workshop-frames-list::before,#wf-rail-list::before,#wm-binding-rows::before{content:'拖动框选 · Ctrl / ⌘ 加选 · Shift 连选 · 双击打开';display:block;font-size:10px;line-height:1.8;color:var(--muted);padding:2px 2px 12px;pointer-events:none}
-@media(pointer:coarse){[data-act="toggle-bulk"],[data-act="workshop-frame-sel-toggle"],[data-act="ws-lib-sel-toggle"],[data-act="wm-sel-toggle"]{display:inline-flex!important}}
+.shelf-selection-status,.workshop-frames-status,.wf-rail-status,.wf-rows-status{margin:0 0 10px;font-size:11px;line-height:1.6;color:var(--accent);letter-spacing:.02em}
+.shelf-selection-status[hidden],.workshop-frames-status[hidden],.wf-rail-status[hidden],.wf-rows-status[hidden]{display:none}
+.workshop-frames-status{padding:8px 10px 0}.wf-rail-status{padding:6px 2px 0}.wf-rows-status{padding:8px 4px 0}
+/* Once something is selected, unselected siblings step back a little so the selection reads at a glance. */
+#gallery-results.has-selection [data-sort-book]:not(.is-selected):not(.book-order-chip),.workshop-frames-list.has-selection [data-index]:not(.is-picked),#wf-rail-list.has-selection [data-workflow-id]:not(.is-picked),#wm-binding-rows.has-selection [data-binding-row]:not(.is-picked){opacity:.72}
+#gallery-results.has-selection [data-sort-book]:not(.is-selected):hover,.workshop-frames-list.has-selection [data-index]:not(.is-picked):hover,#wf-rail-list.has-selection [data-workflow-id]:not(.is-picked):hover,#wm-binding-rows.has-selection [data-binding-row]:not(.is-picked):hover{opacity:1}
+.wf-item.desktop-selected,.wm-row.desktop-selected{outline-offset:-1px;border-radius:8px}
+.workshop-frames-list [data-index].desktop-selected{outline-offset:-1px}
+@media(pointer:coarse){
+  /* Touch has no marquee: the toolbar toggle reveals per-card checkboxes as the fallback entry point. */
+  [data-act="toggle-bulk"],[data-act="workshop-frame-sel-toggle"]{display:inline-flex!important}
+  .shelf-select input,.is-selmode .sel-cbox{display:inline-block!important}
+  .is-selmode .sel-bar,.is-selmode .workshop-frames-selbar{display:flex!important}
+  #gallery-results.has-selection [data-sort-book]:not(.is-selected){opacity:1}
+}
 @media(max-width:760px){#modal.assembly-designer{width:calc(100vw - 16px);border-radius:12px}#modal.assembly-designer .modal-body{padding:0 16px}.designer-workbench{display:block;min-height:0}.designer-navigation{padding:0;border:0}.designer-brand,.designer-navigation h2,.designer-navigation>p,.designer-safety{display:none}.designer-navigation .assembly-stepper{flex-direction:row;margin:12px 0;gap:4px}.designer-navigation .assembly-stepper li{flex:1;padding:8px 4px;gap:6px;font-size:10px}.designer-step{padding:16px 0}.designer-step-head h3{font-size:20px}.designer-presets{grid-template-columns:1fr}.designer-head-note{display:none}.designer-card{padding:16px 16px 6px}}
 
 /* Shelf multi-select and pointer reordering (organize.js) */
