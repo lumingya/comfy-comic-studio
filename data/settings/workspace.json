@@ -151,24 +151,8 @@
           ]
         },
         "productionAssembly": {
-          "channelId": "channel_default",
-          "workflowId": "wf_a56d1f8e-14b9-4752-826b-d277d0094d47",
-          "projectId": "collection_summer",
-          "overrides": {
-            "wf_a56d1f8e-14b9-4752-826b-d277d0094d47": {
-              "model": "anikawaxl_v4",
-              "loras": [
-                {
-                  "name": "QAQv2p2-150",
-                  "strength": 0.58
-                },
-                {
-                  "name": "QAQv5p2_IL-40",
-                  "strength": 0.75
-                }
-              ]
-            }
-          }
+          "channelId": "comfyui",
+          "workflowId": "wf_a56d1f8e-14b9-4752-826b-d277d0094d47"
         }
       },
       "activeProjectId": "collection_summer",
@@ -301,6 +285,8 @@
       "storyboards_50565bedcf5d46d892848fad25d1bf01"
     ],
     "savedGalleries": [
+      "album_2ec4b2259ebe47d186457605578aeb09",
+      "album_5782aa79c4494030a3c44a5b433a4999",
       "album_585d7915b2eb4cf1bfbb4bd0d94ea555",
       "album_7210359cbebc47d7bc7df8a4fdedb32a",
       "book_1b07b003-041a-404a-87d3-327c18985ff3",

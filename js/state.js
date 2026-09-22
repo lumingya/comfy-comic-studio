@@ -53,6 +53,18 @@ function backupObject(includeSecrets=false){const data=clone(state);if(!includeS
 
 
 function ensureStudioState(s=state){
+  // Migrate old demo settings; never silently generate fallback art in production.
+  if(s.settings.comfy){s.settings.comfy.mode='real';s.settings.comfy.autoFallback=false;}
+  if(s.settings.llm)s.settings.llm.mode='real';
+  if(s.settings.critic)s.settings.critic.mode='real';
+  if(Array.isArray(s.queue)){
+    for(const item of s.queue){
+      if(item.execution?.mode==='mock')item.execution.mode='real';
+      for(const frame of [...(item.frames||[]), ...(item.steps||[])]){
+        if(frame._execution?.mode==='mock')frame._execution.mode='real';
+      }
+    }
+  }
   if(!s.settings.studio||typeof s.settings.studio!=='object')s.settings.studio=clone(studioDefaults);
   for(const [group,defaults] of Object.entries(studioDefaults))s.settings.studio[group]={...defaults,...(s.settings.studio[group]||{})};
   // Legacy switches (e.g. features.marketplace from older shipped defaults) would fail validateStudioData and block every save; the market lives under visibility.marketplace now.
@@ -91,7 +103,7 @@ function normalizeCriticReport(raw){
 
 
 function ensureReleaseSettings(s=state){
-  s.settings.critic={...clone(criticDefaults),...(s.settings.critic||{})};
+  s.settings.critic={...clone(criticDefaults),...(s.settings.critic||{}),mode:'real'};
   const gh=s.settings.github||{};s.settings.github={repository:String(gh.repository||''),branch:String(gh.branch||''),path:String(gh.path||'')};
   s.settings.tutorial={seen:false,completed:false,readSteps:[],lastStep:0,...(s.settings.tutorial||{})};
   if(!Array.isArray(s.settings.tutorial.readSteps))s.settings.tutorial.readSteps=[];
