@@ -118,7 +118,7 @@ async function deleteBooks(ids){
     const busy=ids.some(id=>bookBy(id)?.inProgress||state.queue.some(q=>q.bookId===id&&q.status==='running')||[...rt.redraw].some(k=>k.startsWith(id+':')));
     if(!await confirmAction((busy?'停止并删除 ':'删除 ')+ids.length+' 本画册？','删除画册及全部关联队列记录，保留模板、角色和设定。若正在生成，将立即停止本地跟踪；不能取消上游请求或退款。此操作不可撤销。',busy?'停止并删除':'删除画册'))return;
     const result=await foundationRequest('albums/delete',{ids});
-    applyDeletedAlbums(result.deletedAlbumIds);save(true);closeModal();render();
+    applyDeletedAlbums(result.deletedAlbumIds);ui.selected.clear();ui.bulk=false;ui.bulkPinned=false;save(true);closeModal();if(typeof refreshGallery==='function')refreshGallery();render();
     toast(result.warning||'画册及关联队列已删除。');
   }catch(error){throw Error('删除未获确认，可直接重试；不会重新生成。'+error.message)}
   finally{foundationRuntime.deleting=false}

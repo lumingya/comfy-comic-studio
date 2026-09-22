@@ -87,5 +87,5 @@ async function deleteCollection(collectionId=state.activeProjectId){
   if($('#reader').open)closeReader();if($('#modal').open)closeModal();$('#assistant').hidden=true;
   state=deletion.next;ensureStudioState();ui.workspace=0;ui.selected.clear();ui.bulk=false;ui.search='';ui.filter='all';ui.bookId=null;ui.step=0;ui.frameIndex=0;ui.templateId=projectTemplates()[0]?.id;ui.storyTemplateId=ui.templateId;ui.storyRowId=projectRows()[0]?.id;ui.exportIds=[];
   createUI.planId=projectPlans()[0]?.id||null;createUI.setId=projectVariableSets()[0]?.id||null;artUI.labBookId=null;artUI.labIndex=0;studioUI.assistantUndo=null;studioUI.assistantTargetId=null;studioUI.exportDraft=null;displayUI.featuredIndex=0;displayUI.page=0;
-  save(true);render();toast(localeString(ComfyComic.sync?.runtime.loaded?'画册集已删除，正在等待后端保存确认。':'画册集已删除；当前尚未连接后端，请保存或导出备份。'));
+  save(true);if(typeof refreshGallery==='function')refreshGallery();render();toast(localeString(ComfyComic.sync?.runtime.loaded?'画册集已删除，正在等待后端保存确认。':'画册集已删除；当前尚未连接后端，请保存或导出备份。'));
 }

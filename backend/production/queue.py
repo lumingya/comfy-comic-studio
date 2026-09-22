@@ -633,7 +633,7 @@ class ProductionQueue:
             self._notify("queue.cancelled", {"active": self.active, "targets": targets})
             return self.list()
 
-    def remove(self, id=None, ids=None):
+    def remove(self, id=None, ids=None, on_remove=None):
         with self.lock:
             if self.closed:
                 raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
@@ -645,11 +645,22 @@ class ProductionQueue:
             removable = [t for t in targets if t not in self.runners and t not in self.control["lane"]]
             if not removable:
                 raise LibraryError("所选任务都在运行或排队中，请先停止它们", 409)
+            removed_tasks = []
+            for target in removable:
+                t = self.tasks.get(target, summary=True)
+                if t:
+                    removed_tasks.append(t)
             self.control["order"] = [i for i in self.control["order"] if i not in removable]
             self._save_control()
             for target in removable:
                 self.tasks.delete(target)
-            return self.list()
+            result = self.list()
+            result["removedTaskIds"] = removable
+            if on_remove and removed_tasks:
+                extra = on_remove(removed_tasks)
+                if isinstance(extra, dict):
+                    result.update(extra)
+            return result
 
     def clear_finished(self):
         """Drop every fully completed task record; albums are untouched."""

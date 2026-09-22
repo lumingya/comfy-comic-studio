@@ -232,7 +232,11 @@ function productionOverridesSummary(o){
  const models=typeof o.model==='string'?[['',o.model]]:Object.entries(o.model||{});
  for(const [key,name] of models)if(name)parts.push(`<span title="${esc(key?key+' → '+name:name)}"><i>模型${key?' #'+esc(key):''}</i>${esc(WorkflowSlots.loraStem(name))}</span>`);
  if(Array.isArray(o.loras))parts.push(o.loras.length?o.loras.filter(l=>l?.name).map(l=>`<span title="${esc(l.name)}"><i>追加 LoRA</i>${esc(WorkflowSlots.loraStem(l.name))}<b>×${esc(WorkflowSlots.numberText(l.strength??1))}</b></span>`).join(''):'<span><i>LoRA</i>无用户追加</span>');
- if(o.unpin?.length)parts.push(`<span><i>解锁移除</i>${o.unpin.map(n=>esc(WorkflowSlots.loraStem(n))).join('、')}</span>`);
+  if(o.unpin?.length){
+    const loraKeys=new Set((o.loras||[]).filter(l=>l?.name).map(l=>WorkflowSlots.loraStem(l.name).toLowerCase()));
+    const unpinOnly=o.unpin.filter(n=>typeof n==='string'&&!loraKeys.has(WorkflowSlots.loraStem(n).toLowerCase()));
+    if(unpinOnly.length)parts.push(`<span><i>解锁移除</i>${unpinOnly.map(n=>esc(WorkflowSlots.loraStem(n))).join('、')}</span>`);
+  }
  return parts.length?`<p class="production-overrides">${parts.join('')}</p>`:'';
 }
 /* What one task card may do right now. Every book is independent: another book running never locks this one.
@@ -862,8 +866,41 @@ function installAssemblyWorkshop(){
       if(!await confirmAction(title,(local?'阻止后续分幕，迟到结果不覆盖原图。ComfyUI 中已在执行的任务会收到取消请求。':'阻止后续分幕，迟到结果不覆盖原图。已提交到提供商的请求可能仍计费。')+(scope.id?'':' 排队中的任务会退回待命。'),'停止'))return}
     adoptProductionQueue(await productionRequest('cancel',scope));render();if(!running.length&&targets.length)toast(targets.length>1?'已将所选任务移出顺次队列':'已移出顺次队列')},
   'production-remove':async d=>{const scope=productionScope(d),targets=productionScopeTasks(scope),removable=targets.filter(t=>productionTaskAccess(t).canRemove);if(!removable.length){toast('所选任务都在运行或排队中，请先停止它们');return}
-    if(!await confirmAction(removable.length>1?localeString('移除 {n} 条任务记录？',{n:removable.length}):'移除任务记录？','只移除装配记录，不删除已生成的画册。'+(removable.length<targets.length?' 运行或排队中的任务会被跳过。':''),'移除'))return;
-    adoptProductionQueue(await productionRequest('remove',removable.length===1&&!scope.ids?{id:removable[0].id}:{ids:removable.map(t=>t.id)}));render()},
+    const defaultMsg='只移除装配记录，不删除已生成的画册。'+(removable.length<targets.length?' 运行或排队中的任务会被跳过。':'');
+    const deleteMsg=(removable.length>1?localeString('将同时删除这 {n} 本对应的画册及其生成内容，此操作不可撤销。',{n:removable.length}):localeString('将同时删除对应的画册及其生成内容，此操作不可撤销。'))+(removable.length<targets.length?' 运行或排队中的任务会被跳过。':'');
+    const conf=await confirmAction(
+      removable.length>1?localeString('移除 {n} 条任务记录？',{n:removable.length}):'移除任务记录？',
+      defaultMsg,
+      '移除',
+      {
+        checkbox:{
+          label:localeString('同时删除对应的画册'),
+          checked:false,
+          onChange:checked=>{
+            const msgEl=$('#confirm-message');
+            if(msgEl)msgEl.textContent=checked?deleteMsg:defaultMsg;
+          }
+        }
+      }
+    );
+    if(!conf)return;
+    const deleteAlbums=typeof conf==='object'?!!conf.checked:false;
+    const removePayload=removable.length===1&&!scope.ids?{id:removable[0].id}:{ids:removable.map(t=>t.id)};
+    if(deleteAlbums)removePayload.delete_albums=true;
+    const result=await productionRequest('remove',removePayload);
+    adoptProductionQueue(result);
+    if(result?.deletedAlbumIds?.length){
+      applyDeletedAlbums(result.deletedAlbumIds);
+      save(true);
+      if(typeof refreshGallery==='function')refreshGallery();
+    }
+    render();
+    if(deleteAlbums&&result?.deletedAlbumIds?.length){
+      toast(removable.length>1?localeString('已移除 {n} 条任务记录及对应画册',{n:removable.length}):localeString('已移除任务记录及对应画册'));
+    }else{
+      toast(removable.length>1?localeString('已移除 {n} 条任务记录',{n:removable.length}):localeString('已移除任务记录'));
+    }
+  },
   'workshop-preview-remove':async d=>{if(await confirmAction('删除这张试绘？','会移除这条试绘任务记录及其缩略图；预设本身不受影响。','删除试绘')){adoptProductionQueue(await productionRequest('remove',{id:d.id}));render();toast('已删除试绘。')}},
 
   'production-read':async d=>{const report=await ComfyComic.fileLibrary?.refreshAlbum?.(d.id).catch(()=>null);if(!bookBy(d.id))throw Error(report?.status==='missing'?'这本画册还没有写入文件库，请等第一页生成完成后再看。':'画册不存在。');if(report?.status==='created'&&ui.workspace===0)refreshGallery();await openReader(d.id)}

@@ -313,5 +313,37 @@ class ProductionQueueTests(unittest.TestCase):
         state=self.q.list();self.assertEqual(state['lane'],[a['id']]);self.assertEqual(state['concurrency'],1);self.assertNotIn('batch',self.q.control)
         self.q.resume();self.wait(a['id'],'complete')
 
+    def test_remove_on_remove_hook_and_safety(self):
+        a = self.make('A', 1)
+        b = self.make('B', 1)
+        a['albumId'] = 'alb_a'
+        b['albumId'] = 'alb_b'
+        self.q.tasks.set(a['id'], a)
+        self.q.tasks.set(b['id'], b)
+        
+        callback_called = []
+        def on_rem(tasks):
+            callback_called.append([t['albumId'] for t in tasks])
+            return {'deletedAlbumIds': [t['albumId'] for t in tasks]}
+        
+        res = self.q.remove(a['id'], on_remove=on_rem)
+        self.assertEqual(callback_called, [['alb_a']])
+        self.assertEqual(res.get('deletedAlbumIds'), ['alb_a'])
+        self.assertEqual(res.get('removedTaskIds'), [a['id']])
+        
+        # Test running task rejects before on_remove
+        began, release = self.held_render(lambda task, index: True)
+        self.q.start(b['id'], trusted=True)
+        self.assertTrue(began.wait(2))
+        callback_called.clear()
+        with self.assertRaises(LibraryError):
+            self.q.remove(b['id'], on_remove=on_rem)
+        self.assertEqual(callback_called, [])  # on_remove must not be called when rejected
+        release.set()
+        self.wait(b['id'], 'complete')
+        self.q.remove(b['id'], on_remove=on_rem)
+        self.assertEqual(callback_called, [['alb_b']])
+
 if __name__=='__main__':
     unittest.main()
+

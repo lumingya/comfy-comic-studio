@@ -1045,7 +1045,37 @@ def dispatch(handler, host, path):
             elif route == "cancel":
                 result = queue.cancel(body.get("id"), body.get("ids"))
             elif route == "remove":
-                result = queue.remove(body.get("id"), body.get("ids"))
+                delete_albums = bool(body.get("delete_albums") or body.get("deleteAlbums"))
+
+                def cascade_albums(removed_tasks):
+                    album_ids = [
+                        t["albumId"]
+                        for t in removed_tasks
+                        if t.get("albumId") and t.get("purpose") != "preview"
+                    ]
+                    if not album_ids:
+                        return None
+                    album_ids = list(dict.fromkeys(album_ids))
+                    try:
+                        from backend import mio_foundation
+                        from backend.mio_foundation import recover_deletions
+
+                        f_store = mio_foundation.jobs(host)
+                        with f_store.lock, host.CONFIG_LOCK:
+                            f_store.delete_albums(album_ids)
+                            try:
+                                recover_deletions(host, album_ids)
+                            except Exception:
+                                pass
+                        return {"deletedAlbumIds": album_ids}
+                    except Exception:
+                        return None
+
+                result = queue.remove(
+                    body.get("id"),
+                    body.get("ids"),
+                    on_remove=cascade_albums if delete_albums else None,
+                )
             elif route == "clone":
                 task_id = body.get("id")
                 if not isinstance(task_id, str) or not task_id:

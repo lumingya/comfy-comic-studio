@@ -84,7 +84,7 @@ function patchMain(html){return patchDOM(document.querySelector('#main'),html)}
 function patchDOM(root,html){
   const fragment=document.createElement('template');fragment.innerHTML=html;
   const focused=document.activeElement;
-  function key(n){if(n.nodeType!==1)return '';return n.id||['data-id','data-index','name','data-key','data-layer-hit','data-editor-key','data-workshop-frame','data-workshop-preset','data-story-caption','data-script-caption','data-frame-field','data-setting','data-act','data-production-task','data-v3-frame','data-v3-template'].map(k=>n.hasAttribute(k)?k+':'+n.getAttribute(k)+':'+(n.dataset.id||''):'').filter(Boolean).join('|')}
+  function key(n){if(n.nodeType!==1)return '';return n.id||['data-id','data-index','name','data-key','data-layer-hit','data-editor-key','data-workshop-frame','data-workshop-preset','data-story-caption','data-script-caption','data-frame-field','data-setting','data-act','data-production-task','data-v3-frame','data-v3-template','data-sort-book','data-book'].map(k=>n.hasAttribute(k)?k+':'+n.getAttribute(k)+':'+(n.dataset.id||''):'').filter(Boolean).join('|')}
   function same(a,b){if(a.nodeType!==b.nodeType||a.nodeName!==b.nodeName||key(a)!==key(b))return false;if(a.nodeType===1&&!key(a)&&a!==focused&&a.contains(focused))return [...b.querySelectorAll('*')].some(n=>n.nodeName===focused.nodeName&&key(n)===key(focused));return true}
   function children(old,next){let cursor=old.firstChild;for(const incoming of [...next.childNodes]){
     let node=cursor;

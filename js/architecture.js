@@ -48,9 +48,32 @@ function designerRememberedOverrides(id){
   return {
     model:typeof remembered.model==='string'?remembered.model:'',
     models:remembered.models&&typeof remembered.models==='object'?clone(remembered.models):{},
-    loras:Array.isArray(remembered.loras)?remembered.loras.filter(l=>l&&typeof l.name==='string').map(l=>({name:l.name,strength:Number(l.strength)||1})):[],
-    unpin:Array.isArray(remembered.unpin)?remembered.unpin.filter(n=>typeof n==='string'):[]
+    loras:Array.isArray(remembered.loras)?remembered.loras.filter(l=>l&&typeof l.name==='string').map(l=>({name:l.name,strength:Number.isFinite(Number(l.strength))?Number(l.strength):1})):[],
+    unpin:Array.isArray(remembered.unpin)?remembered.unpin.filter(n=>typeof n==='string'):[],
+    loraStrengths:remembered.loraStrengths&&typeof remembered.loraStrengths==='object'?clone(remembered.loraStrengths):{}
   };
+}
+function designerInitialLoraStrength(name){
+  const d=assemblyDesign,key=designerLoraKey(name);
+  if(d.overrideMemory?.sessionModified?.[key]!==undefined&&Number.isFinite(Number(d.overrideMemory.sessionModified[key]))){
+    return Number(d.overrideMemory.sessionModified[key]);
+  }
+  const blueprintLora=d.overrideDefaults?.loras?.find(l=>designerLoraKey(l.name)===key);
+  if(blueprintLora&&Number.isFinite(Number(blueprintLora.strength))){
+    return Number(blueprintLora.strength);
+  }
+  const remembered=designerRememberedOverrides(d.workflowId);
+  const rememberedLora=remembered?.loras?.find(l=>designerLoraKey(l.name)===key);
+  if(rememberedLora&&Number.isFinite(Number(rememberedLora.strength))){
+    return Number(rememberedLora.strength);
+  }
+  if(remembered?.loraStrengths?.[key]!==undefined&&Number.isFinite(Number(remembered.loraStrengths[key]))){
+    return Number(remembered.loraStrengths[key]);
+  }
+  if(d.overrideMemory?.loraStrengths?.[key]!==undefined&&Number.isFinite(Number(d.overrideMemory.loraStrengths[key]))){
+    return Number(d.overrideMemory.loraStrengths[key]);
+  }
+  return 1;
 }
 function initDesignerOverrides(){
  const d=assemblyDesign,w=designerWorkflow(),slots=w?designerSlots():null;d.overrideUI={modelQuery:'',loraQuery:''};
@@ -62,6 +85,16 @@ function initDesignerOverrides(){
    loras:remembered?.loras?clone(remembered.loras):[],
    unpin:remembered?.unpin?clone(remembered.unpin):[]
  };
+ d.overrideMemory={
+   loraStrengths:remembered?.loraStrengths?clone(remembered.loraStrengths):{},
+   sessionModified:{}
+ };
+ for(const l of d.overrideDefaults.loras){
+   const key=designerLoraKey(l.name);
+   if(d.overrideMemory.loraStrengths[key]===undefined&&Number.isFinite(Number(l.strength))){
+     d.overrideMemory.loraStrengths[key]=Number(l.strength);
+   }
+ }
  if(slots?.plan?.model.paired)for(const t of slots.plan.model.targets.filter(t=>t.role==='primary'||t.pairedSelector)){
    if(!d.overrides.models[t.key])d.overrides.models[t.key]=t.current;
  }
@@ -75,7 +108,9 @@ function designerOverrides(){
    for(const t of slots.plan.model.targets.filter(t=>t.role==='same'&&t.enabled))out.model[t.key]=out.model[primary?.key]||t.current;
  }else{const model=String(d.overrides.model||'').trim();if(slots.model.enabled&&model&&model!==d.overrideDefaults.model)out.model=model;}
  if(d.overrides.loras.length)out.loras=d.overrides.loras.map(l=>({...l,strength:Math.round(l.strength*100)/100}));
- if(d.overrides.unpin.length){out.unpin=[...d.overrides.unpin];out.loras||=[];}
+ const activeLoraKeys=new Set(d.overrides.loras.map(l=>designerLoraKey(l.name)));
+ const realUnpin=d.overrides.unpin.filter(u=>!activeLoraKeys.has(designerLoraKey(u)));
+ if(realUnpin.length){out.unpin=[...realUnpin];out.loras||=[];}
  return Object.keys(out).length?out:undefined;
 }
 function designerStrengthRange(){const groups=designerSlots()?.plan?.lora.groups.filter(g=>g.enabled&&g.append)||[];return groups.length?{min:Math.max(...groups.map(g=>g.writer.range?.min??-5)),max:Math.min(...groups.map(g=>g.writer.range?.max??5))}:designerSlots()?.plan?.lora.synth?.range||{min:-5,max:5};}
@@ -94,7 +129,9 @@ function designerLoraResultsHTML(slots){const d=assemblyDesign,catalog=comfyMode
  return rows+free+empty}
 function designerLoraChipsHTML(){
  const d=assemblyDesign,bounds=designerStrengthRange();
- const pinned=d.overrideDefaults.loras.filter(l=>!d.overrides.unpin.includes(l.name)).map(l=>`<div class="designer-lora-chip is-pinned" title="蓝图钉住条目"><span aria-label="锁定">🔒</span><span class="designer-lora-name" data-user-content>${esc(WorkflowSlots.loraStem(l.name))}</span><output>×${esc(l.strength)}</output>${ibtn('close','designer-lora-unpin','解锁并移除此蓝图条目',`data-name="${esc(l.name)}"`)}</div>`).join('');
+ const activeKeys=new Set(d.overrides.loras.map(l=>designerLoraKey(l.name)));
+ const unpinKeys=new Set(d.overrides.unpin.map(u=>designerLoraKey(u)));
+ const pinned=d.overrideDefaults.loras.filter(l=>!unpinKeys.has(designerLoraKey(l.name))&&!activeKeys.has(designerLoraKey(l.name))).map(l=>`<div class="designer-lora-chip is-pinned" title="蓝图钉住条目"><span aria-label="锁定">🔒</span><span class="designer-lora-name" data-user-content>${esc(WorkflowSlots.loraStem(l.name))}</span><output>×${esc(l.strength)}</output>${ibtn('close','designer-lora-unpin','解锁并移除此蓝图条目',`data-name="${esc(l.name)}"`)}</div>`).join('');
  const added=d.overrides.loras.map((l,i)=>`<div class="designer-lora-chip" data-designer-lora-chip="${i}"><span class="designer-lora-name" data-user-content title="${esc(l.name)}">${esc(WorkflowSlots.loraStem(l.name))}</span><input type="number" min="${bounds.min}" max="${bounds.max}" step="0.05" value="${l.strength}" data-designer-lora-strength="${i}" aria-label="${esc(WorkflowSlots.loraStem(l.name))} 强度"><output class="mono" data-designer-lora-output="${i}">${WorkflowSlots.numberText(l.strength)}</output>${ibtn('close','designer-lora-remove','移除此 LoRA',`data-index="${i}"`)}</div>`).join('');
  return pinned+added||'<p class="designer-lora-none">不额外叠加 LoRA</p>';
 }
@@ -105,7 +142,14 @@ function designerOverridesPanel(){const d=assemblyDesign,w=designerWorkflow(),sl
  const loraBody=loraOn?`<div class="designer-slot-field"><label class="designer-slot-label" for="designer-lora-search">LoRA 叠加 <small>蓝图条目锁定保留，用户条目追加${d.overrideDefaults.loras.length?` · 蓝图自带 ${d.overrideDefaults.loras.length} 个（默认生效）`:''}</small></label><div class="designer-lora-chips" id="designer-lora-chips">${designerLoraChipsHTML()}</div>${searchInput({id:'designer-lora-search',value:d.overrideUI.loraQuery,placeholder:catalog.loras.length?`搜索 ${catalog.loras.length} 个 LoRA`:'未同步列表：输入 LoRA 文件名后添加',label:'搜索 LoRA',controls:'designer-lora-results'})}<div id="designer-lora-results" class="designer-lora-results" role="group" aria-label="可选 LoRA">${designerLoraResultsHTML(slots)}</div></div>`:`<p class="designer-slot-off">${esc(slots.plan?.lora.reason||'LoRA 槽未启用')}</p>`;
  return `<section class="designer-slots" aria-label="模型与 LoRA"><header><div class="designer-slots-title"><span class="designer-kicker">03 · 模型</span><h4>模型与 LoRA</h4></div>${btn('同步模型列表','refresh','designer-sync-catalog','','ghost small')}<p class="help">${esc(synced)} · 只影响本次任务，不改动蓝图</p></header>${modelBody}${loraBody}<p class="help" role="status">${esc(WorkflowSlots.describe(slots))}</p></section>`}
 function refreshDesignerOverrides(part){const slots=designerSlots();if(!slots)return;if(part!=='lora'){const results=$('#designer-model-results');if(results)results.innerHTML=designerModelResultsHTML(slots)}if(part!=='model'){const chips=$('#designer-lora-chips'),results=$('#designer-lora-results');if(chips)chips.innerHTML=designerLoraChipsHTML();if(results)results.innerHTML=designerLoraResultsHTML(slots)}}
-function designerAddLora(name){const d=assemblyDesign,key=designerLoraKey(name);if(!name||d.overrides.loras.some(l=>designerLoraKey(l.name)===key))return;if(d.overrides.loras.length>=WorkflowSlots.MAX_LORAS)throw Error('一次最多叠加 '+WorkflowSlots.MAX_LORAS+' 个 LoRA');d.overrides.loras.push({name,strength:1})}
+function designerAddLora(name){
+ const d=assemblyDesign,key=designerLoraKey(name);
+ if(!name||d.overrides.loras.some(l=>designerLoraKey(l.name)===key))return;
+ if(d.overrides.loras.length>=WorkflowSlots.MAX_LORAS)throw Error('一次最多叠加 '+WorkflowSlots.MAX_LORAS+' 个 LoRA');
+ d.overrides.unpin=d.overrides.unpin.filter(u=>designerLoraKey(u)!==key);
+ const strength=designerInitialLoraStrength(name);
+ d.overrides.loras.push({name,strength});
+}
 function openAssemblyDesigner(){
  const d=assemblyDesign,prefs=state.settings.productionAssembly||{},providers=ensureImageProviders(),lastUsed=providers.profiles.find(p=>p.id===prefs.channelId)?.id||'';
  /* B10: the wizard follows the channel enabled in Settings, never silently the last one billed; a differing history is only a notice. */
@@ -129,7 +173,7 @@ function designerSummaryHTML(){const d=assemblyDesign,story=templateBy(d.storyId
  const rows=[row('分镜',`<span data-user-content>${esc(story?.title||'—')}</span><small>${story?.frames.length||0} 幕</small>`),row('画册集',`<span data-user-content>${esc(designerProject()?.title||'—')}</span>${designerProjectId()!==state.activeProjectId?'<small>非当前画册集</small>':''}`),row('渠道',esc(channel?.title||'—'))];
  if(comfy){rows.push(row('工作流',`<span data-user-content>${esc(w?.title||'—')}</span>`));
   if(slots?.model.enabled){const m=String(d.overrides.model||'').trim();rows.push(row('基础模型',m?`<span data-user-content>${esc(WorkflowSlots.loraStem(m))}</span><small>本次覆写</small>`:`<span data-user-content>${esc(d.overrideDefaults.model?WorkflowSlots.loraStem(d.overrideDefaults.model):'未填模型')}</span><small>蓝图默认</small>`))}
-  if(slots&&slots.lora.mode!=='off')rows.push(row('LoRA',d.overrides.loras.length?d.overrides.loras.map(l=>chip(WorkflowSlots.loraStem(l.name),'×'+WorkflowSlots.numberText(l.strength),l.name)).join(''):`<small>${d.overrideDefaults.loras.filter(l=>!d.overrides.unpin.includes(l.name)).length?'保留蓝图 LoRA':'不叠加 LoRA'}</small>`,'is-chips'));
+   if(slots&&slots.lora.mode!=='off'){const unpinKeys=new Set(d.overrides.unpin.map(u=>designerLoraKey(u)));rows.push(row('LoRA',d.overrides.loras.length?d.overrides.loras.map(l=>chip(WorkflowSlots.loraStem(l.name),'×'+WorkflowSlots.numberText(l.strength),l.name)).join(''):`<small>${d.overrideDefaults.loras.filter(l=>!unpinKeys.has(designerLoraKey(l.name))).length?'保留蓝图 LoRA':'不叠加 LoRA'}</small>`,'is-chips'));}
   rows.push(row('种子',designerSeedReady()?(d.seedEnabled?`固定 ${Number(d.seed)||0}<small>按幕序号递增 · 可复现</small>`:'每幕随机<small>重跑时会变化</small>'):'沿用蓝图固定种子<small>未映射</small>'))}
  rows.push(row('视觉预设',presets.length?presets.map(p=>chip(p.title,p.entries.length+' 项')).join(''):'<small>不使用预设</small>','is-chips'));
  rows.push(row('分幕并发',d.concurrency?`${d.concurrency} 幕并行<small>本任务</small>`:`${workshop.queue.concurrency||1} 幕并行<small>跟随全局</small>`));
@@ -167,11 +211,13 @@ async function submitAssemblyDesigner(){const d=assemblyDesign;if(d.busy)return;
   try{
     const remembered={...(state.settings.productionAssembly?.overrides||{})};
     if(d.workflowId&&designerChannel()?.provider==='comfyui'){
+      const activeKeys=new Set(d.overrides.loras.map(l=>designerLoraKey(l.name)));
       remembered[d.workflowId]={
         model:String(d.overrides.model||''),
         models:d.overrides.models?clone(d.overrides.models):{},
         loras:d.overrides.loras.map(l=>({name:l.name,strength:l.strength})),
-        unpin:[...(d.overrides.unpin||[])]
+        unpin:d.overrides.unpin.filter(u=>!activeKeys.has(designerLoraKey(u))),
+        loraStrengths:d.overrideMemory?.loraStrengths?clone(d.overrideMemory.loraStrengths):{}
       };
       for(const key of Object.keys(remembered).slice(0,-24))delete remembered[key];
     }
@@ -203,13 +249,43 @@ function installArchitecture(){
   'designer-add-story':()=>{const id=$('#canvas-story-choice').value,t=templateBy(id);if(!t)return;const d=assemblyDesign;d.stories.push({id:uid('node'),assetId:id,title:t.title+' · 新画册',x:35,y:30+d.stories.length*180});renderAssemblyDesigner()},
   'designer-add-preset':()=>{const id=$('#canvas-preset-choice').value;if(!id)return;const d=assemblyDesign;if(d.visuals.some(p=>p.assetId===id))return;d.visuals.push({id:uid('node'),assetId:id,x:760,y:30+d.visuals.length*180});renderAssemblyDesigner()},
   'designer-remove-node':d=>{const a=assemblyDesign;a.stories=a.stories.filter(n=>n.id!==d.id);a.visuals=a.visuals.filter(n=>n.id!==d.id);a.edges=a.edges.filter(e=>e.story!==d.id&&e.preset!==d.id);renderAssemblyDesigner()},
-  'designer-lora-unpin':d=>{assemblyDesign.overrides.unpin.push(d.name);refreshDesignerOverrides('lora')},
-  'designer-lora-remove':d=>{assemblyDesign.overrides.loras.splice(Number(d.index),1);refreshDesignerOverrides('lora')},
-  'designer-lora-add-free':d=>{designerAddLora(String(d.name||'').trim());assemblyDesign.overrideUI.loraQuery='';const search=$('#designer-lora-search');if(search)search.value='';refreshDesignerOverrides('lora')},
-  'designer-sync-catalog':async()=>{await readComfyObjectInfo();const query=assemblyDesign.overrideUI;initDesignerOverrides();assemblyDesign.overrideUI=query;renderAssemblyDesigner()}
- });
- document.addEventListener('change',e=>{const el=e.target,d=assemblyDesign;if(el.id==='designer-story')d.storyId=el.value;if(el.id==='designer-project'){rememberDesignerProject(el.value);renderAssemblyDesigner();return}if(el.dataset.designerPreset){el.checked?d.presets.add(el.dataset.designerPreset):d.presets.delete(el.dataset.designerPreset);el.closest('label').classList.toggle('selected',el.checked);const status=$('#designer-presets-status');if(status)status.textContent=designerPresetsStatus()}if(el.id==='designer-channel'||el.id==='designer-workflow'){if(el.id==='designer-channel')d.channelId=el.value;else d.workflowId=el.value;d.seedEnabled=false;state.settings.productionAssembly={...(state.settings.productionAssembly||{}),channelId:d.channelId,workflowId:d.workflowId};save();initDesignerOverrides();renderAssemblyDesigner()}if(el.dataset.designerPairedModel)d.overrides.models[el.dataset.designerPairedModel]=el.value;if(el.id==='designer-model-list'){d.overrides.model=el.value;refreshDesignerOverrides('model')}if(el.dataset.designerLoraToggle!==undefined){try{if(el.checked)designerAddLora(el.dataset.designerLoraToggle);else{const key=designerLoraKey(el.dataset.designerLoraToggle);d.overrides.loras=d.overrides.loras.filter(l=>designerLoraKey(l.name)!==key)}}catch(error){el.checked=false;toast(error.message,'error')}refreshDesignerOverrides('lora')}if(el.id==='designer-seed-enable'){d.seedEnabled=el.checked;renderAssemblyDesigner()}if(el.dataset.edgeStory){const {edgeStory:story,edgePreset:preset}=el.dataset;if(el.checked)linkDesigner(story,preset);else{d.edges=d.edges.filter(e=>e.story!==story||e.preset!==preset);updateDesignerLines()}}if(el.dataset.studioPref==='visibility.marketplace')render()});
- document.addEventListener('input',e=>{const el=e.target,d=assemblyDesign;if(el.id==='designer-title')d.title=el.value;if(el.id==='designer-seed')d.seed=Number(el.value);if(el.id==='designer-concurrency'){const raw=el.value.trim();d.concurrency=raw===''?null:Number(raw)}if(el.dataset.nodeTitle){const n=d.stories.find(n=>n.id===el.dataset.nodeTitle);if(n)n.title=el.value}if(el.id==='designer-workflow-search'){d.workflowQuery=el.value;refreshDesignerWorkflowPicker()}if(el.id==='designer-model-search'){d.overrideUI.modelQuery=el.value;refreshDesignerOverrides('model')}if(el.id==='designer-lora-search'){d.overrideUI.loraQuery=el.value;const results=$('#designer-lora-results'),slots=designerSlots();if(results&&slots)results.innerHTML=designerLoraResultsHTML(slots)}if(el.dataset.designerLoraStrength!==undefined){const l=d.overrides.loras[Number(el.dataset.designerLoraStrength)];if(l){l.strength=Number(el.value);const out=$(`[data-designer-lora-output="${el.dataset.designerLoraStrength}"]`);if(out)out.textContent=WorkflowSlots.numberText(l.strength)}}});
+    'designer-lora-unpin':d=>{
+      const key=designerLoraKey(d.name);
+      const blueprintLora=assemblyDesign.overrideDefaults?.loras?.find(l=>designerLoraKey(l.name)===key);
+      if(blueprintLora&&Number.isFinite(Number(blueprintLora.strength))){
+        assemblyDesign.overrideMemory=assemblyDesign.overrideMemory||{loraStrengths:{},sessionModified:{}};
+        assemblyDesign.overrideMemory.loraStrengths=assemblyDesign.overrideMemory.loraStrengths||{};
+        if(assemblyDesign.overrideMemory.loraStrengths[key]===undefined){
+          assemblyDesign.overrideMemory.loraStrengths[key]=Number(blueprintLora.strength);
+        }
+      }
+      if(!assemblyDesign.overrides.unpin.some(u=>designerLoraKey(u)===key)){
+        assemblyDesign.overrides.unpin.push(d.name);
+      }
+      refreshDesignerOverrides('lora');
+    },
+    'designer-lora-remove':d=>{
+      const index=Number(d.index),l=assemblyDesign.overrides.loras[index];
+      if(l){
+        const key=designerLoraKey(l.name);
+        assemblyDesign.overrideMemory=assemblyDesign.overrideMemory||{loraStrengths:{},sessionModified:{}};
+        assemblyDesign.overrideMemory.loraStrengths=assemblyDesign.overrideMemory.loraStrengths||{};
+        assemblyDesign.overrideMemory.loraStrengths[key]=l.strength;
+        assemblyDesign.overrideMemory.sessionModified=assemblyDesign.overrideMemory.sessionModified||{};
+        assemblyDesign.overrideMemory.sessionModified[key]=l.strength;
+        assemblyDesign.overrides.loras.splice(index,1);
+        const defaultLora=assemblyDesign.overrideDefaults?.loras?.find(x=>designerLoraKey(x.name)===key);
+        if(defaultLora&&!assemblyDesign.overrides.unpin.some(u=>designerLoraKey(u)===key)){
+          assemblyDesign.overrides.unpin.push(defaultLora.name||l.name);
+        }
+        refreshDesignerOverrides('lora');
+      }
+    },
+    'designer-lora-add-free':d=>{designerAddLora(String(d.name||'').trim());assemblyDesign.overrideUI.loraQuery='';const search=$('#designer-lora-search');if(search)search.value='';refreshDesignerOverrides('lora')},
+    'designer-sync-catalog':async()=>{await readComfyObjectInfo();const query=assemblyDesign.overrideUI;initDesignerOverrides();assemblyDesign.overrideUI=query;renderAssemblyDesigner()}
+   });
+   document.addEventListener('change',e=>{const el=e.target,d=assemblyDesign;if(el.id==='designer-story')d.storyId=el.value;if(el.id==='designer-project'){rememberDesignerProject(el.value);renderAssemblyDesigner();return}if(el.dataset.designerPreset){el.checked?d.presets.add(el.dataset.designerPreset):d.presets.delete(el.dataset.designerPreset);el.closest('label').classList.toggle('selected',el.checked);const status=$('#designer-presets-status');if(status)status.textContent=designerPresetsStatus()}if(el.id==='designer-channel'||el.id==='designer-workflow'){if(el.id==='designer-channel')d.channelId=el.value;else d.workflowId=el.value;d.seedEnabled=false;state.settings.productionAssembly={...(state.settings.productionAssembly||{}),channelId:d.channelId,workflowId:d.workflowId};save();initDesignerOverrides();renderAssemblyDesigner()}if(el.dataset.designerPairedModel)d.overrides.models[el.dataset.designerPairedModel]=el.value;if(el.id==='designer-model-list'){d.overrides.model=el.value;refreshDesignerOverrides('model')}if(el.dataset.designerLoraToggle!==undefined){try{if(el.checked)designerAddLora(el.dataset.designerLoraToggle);else{const key=designerLoraKey(el.dataset.designerLoraToggle);const l=d.overrides.loras.find(x=>designerLoraKey(x.name)===key);if(l){d.overrideMemory=d.overrideMemory||{loraStrengths:{},sessionModified:{}};d.overrideMemory.loraStrengths=d.overrideMemory.loraStrengths||{};d.overrideMemory.loraStrengths[key]=l.strength;d.overrideMemory.sessionModified=d.overrideMemory.sessionModified||{};d.overrideMemory.sessionModified[key]=l.strength}d.overrides.loras=d.overrides.loras.filter(l=>designerLoraKey(l.name)!==key);const defaultLora=d.overrideDefaults?.loras?.find(x=>designerLoraKey(x.name)===key);if(defaultLora&&!d.overrides.unpin.some(u=>designerLoraKey(u)===key)){d.overrides.unpin.push(defaultLora.name||el.dataset.designerLoraToggle)}}}catch(error){el.checked=false;toast(error.message,'error')}refreshDesignerOverrides('lora')}if(el.id==='designer-seed-enable'){d.seedEnabled=el.checked;renderAssemblyDesigner()}if(el.dataset.edgeStory){const {edgeStory:story,edgePreset:preset}=el.dataset;if(el.checked)linkDesigner(story,preset);else{d.edges=d.edges.filter(e=>e.story!==story||e.preset!==preset);updateDesignerLines()}}if(el.dataset.studioPref==='visibility.marketplace')render()});
+   document.addEventListener('input',e=>{const el=e.target,d=assemblyDesign;if(el.id==='designer-title')d.title=el.value;if(el.id==='designer-seed')d.seed=Number(el.value);if(el.id==='designer-concurrency'){const raw=el.value.trim();d.concurrency=raw===''?null:Number(raw)}if(el.dataset.nodeTitle){const n=d.stories.find(n=>n.id===el.dataset.nodeTitle);if(n)n.title=el.value}if(el.id==='designer-workflow-search'){d.workflowQuery=el.value;refreshDesignerWorkflowPicker()}if(el.id==='designer-model-search'){d.overrideUI.modelQuery=el.value;refreshDesignerOverrides('model')}if(el.id==='designer-lora-search'){d.overrideUI.loraQuery=el.value;const results=$('#designer-lora-results'),slots=designerSlots();if(results&&slots)results.innerHTML=designerLoraResultsHTML(slots)}if(el.dataset.designerLoraStrength!==undefined){const l=d.overrides.loras[Number(el.dataset.designerLoraStrength)];if(l){l.strength=Number(el.value);const key=designerLoraKey(l.name);d.overrideMemory=d.overrideMemory||{loraStrengths:{},sessionModified:{}};d.overrideMemory.loraStrengths=d.overrideMemory.loraStrengths||{};d.overrideMemory.loraStrengths[key]=l.strength;d.overrideMemory.sessionModified=d.overrideMemory.sessionModified||{};d.overrideMemory.sessionModified[key]=l.strength;const out=$(`[data-designer-lora-output="${el.dataset.designerLoraStrength}"]`);if(out)out.textContent=WorkflowSlots.numberText(l.strength)}}});
  document.addEventListener('pointerdown',e=>{const d=assemblyDesign,port=e.target.closest('[data-port-story]'),header=e.target.closest('[data-drag-node]');if(port){d.drag={kind:'link',id:port.dataset.portStory};e.preventDefault()}else if(header&&!e.target.closest('button')){const n=[...d.stories,...d.visuals].find(n=>n.id===header.dataset.dragNode);d.drag={kind:'move',id:n.id,x:e.clientX,y:e.clientY,ox:n.x,oy:n.y};e.preventDefault()}});
  document.addEventListener('pointermove',e=>{const d=assemblyDesign;if(!d.drag)return;const world=$('.link-world');if(!world)return;const r=world.getBoundingClientRect();if(d.drag.kind==='link')updateDesignerLines({x:e.clientX-r.left,y:e.clientY-r.top});else{const n=[...d.stories,...d.visuals].find(n=>n.id===d.drag.id);if(!n)return;n.x=clamp(d.drag.ox+e.clientX-d.drag.x,12,920);n.y=clamp(d.drag.oy+e.clientY-d.drag.y,12,world.offsetHeight-165);const node=$(`[data-node="${n.id}"]`);node.style.left=n.x+'px';node.style.top=n.y+'px';updateDesignerLines()}});
  document.addEventListener('pointerup',e=>{const d=assemblyDesign;if(!d.drag)return;if(d.drag.kind==='link'){const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('[data-port-preset]');if(target)linkDesigner(d.drag.id,target.dataset.portPreset)}else d.drag=null});
