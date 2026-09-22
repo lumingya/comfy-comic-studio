@@ -8,7 +8,7 @@ import copy
 import re
 import uuid
 import urllib.parse
-from backend.mio_library import LibraryError, MAX_ASSET, decode, digest, encode, image_refs, image_type, owned_path
+from backend.mio_library import LibraryError, MAX_ASSET, decode, digest, encode, image_refs, image_type, owned_path, semantic_slot_identifier
 
 SETTING_NAMES = {'comfy', 'llm', 'xml', 'appearance', 'workspace'}
 SECRET_NAMES = {'key', 'apikey', 'authorization', 'password', 'secret', 'token',
@@ -30,7 +30,7 @@ def leaves(value, pointer=''):
                 continue
             path = pointer + '/' + escape(key)
             typed_key = key == 'key' and ((value.get('type') in ('image', 'text', 'number', 'boolean', 'json') or str(value.get('type','')).startswith('plugin:')) and 'value' in value or value.get('kind') == 'mio-image')
-            if secret_name(key) and not typed_key and isinstance(child, str):
+            if secret_name(key) and not typed_key and not (key == 'key' and semantic_slot_identifier(value, pointer)) and isinstance(child, str):
                 yield value, key, path
             else:
                 yield from leaves(child, path)

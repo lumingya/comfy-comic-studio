@@ -1232,6 +1232,7 @@
     "toggleReaderFullscreen": "writable",
     "WorkflowSlots": "writable",
     "comfySlotsResolved": "writable",
+    "ensureWorkflowSlotPlan": "writable",
     "comfyPositiveTarget": "writable",
     "syncComfyCatalog": "writable",
     "comfyModelCatalog": "writable",

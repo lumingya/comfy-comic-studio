@@ -61,7 +61,8 @@
     "test:workflow": "node tests/workflow_mapping_contract.mjs && node tests/workflow_slots_contract.mjs && python -m unittest tests.test_workflow_mapping tests.test_workflow_slots -v && node tests/workflow_workbench.mjs",
     "test:album-live": "node tests/album_live_sync.mjs",
     "test:production-scenes": "node tests/production_scene_ui.mjs",
-    "test:desktop-refresh": "node tests/desktop_refresh.mjs"
+    "test:desktop-refresh": "node tests/desktop_refresh.mjs",
+    "test:slots-v3": "python -m unittest tests.test_workflow_slots tests.test_workflow_slots_v3 -v && node tests/workflow_slots_contract.mjs && node tests/workflow_slots_v3_ui.mjs"
   },
   "devDependencies": {
     "eslint": "^8.57.1",

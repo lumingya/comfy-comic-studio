@@ -6299,11 +6299,109 @@
   },
   "activeWorkflowId": "wf_a56d1f8e-14b9-4752-826b-d277d0094d47",
   "slots": {
-    "model": {
-      "enabled": true
-    },
-    "lora": {
-      "auto": true
+    "plan": {
+      "version": 3,
+      "analyzedAt": "2026-09-22T08:24:11.521437+00:00",
+      "objectInfoHash": "e1e8e2030d345fb203609ff7743c372b50d801891923eda3d6c0d0614e8cfa89",
+      "workflowHash": "f3bd74086df529cc20e6caef930524db6e2cce10b3732a1c297bed4f255669e6",
+      "manual": [],
+      "model": {
+        "paired": false,
+        "targets": [
+          {
+            "nodeId": "3699",
+            "path": "ckpt_name",
+            "classType": "SimpleCheckpointLoaderWithName",
+            "title": "默认底模",
+            "value": "anikawaxl_v4.safetensors",
+            "kind": "checkpoint",
+            "score": 8,
+            "key": "3699:ckpt_name",
+            "current": "anikawaxl_v4.safetensors",
+            "role": "primary",
+            "enabled": true
+          },
+          {
+            "nodeId": "4528",
+            "path": "ckpt_name",
+            "classType": "SimpleCheckpointLoaderWithName",
+            "title": "Refiner/放大底模（没需求或内存不够就选跟上面一样的）",
+            "value": "anikawaxl_v4.safetensors",
+            "kind": "checkpoint",
+            "score": 8,
+            "key": "4528:ckpt_name",
+            "current": "anikawaxl_v4.safetensors",
+            "role": "same",
+            "enabled": true
+          }
+        ]
+      },
+      "lora": {
+        "enabled": true,
+        "reason": "",
+        "groups": [
+          {
+            "key": "origin:2295:loras",
+            "kind": "object",
+            "origin": {
+              "nodeId": "2295",
+              "path": "loras"
+            },
+            "writer": {
+              "nodeId": "2295",
+              "kind": "object",
+              "path": "loras",
+              "textPaths": [
+                "text"
+              ],
+              "range": {
+                "min": -5,
+                "max": 5
+              }
+            },
+            "sites": [
+              {
+                "nodeId": "4542",
+                "path": "lora_syntax",
+                "active": true,
+                "reason": ""
+              },
+              {
+                "nodeId": "4565",
+                "path": "lora_syntax",
+                "active": true,
+                "reason": ""
+              },
+              {
+                "nodeId": "4586",
+                "path": "lora_syntax",
+                "active": true,
+                "reason": ""
+              }
+            ],
+            "pinned": [
+              {
+                "name": "QAQv2p2-150",
+                "strength": 0.58,
+                "clip": 0.58
+              },
+              {
+                "name": "QAQv5p2_IL-40",
+                "strength": 0.75,
+                "clip": 0.75
+              }
+            ],
+            "active": true,
+            "warn": "",
+            "series": "S1",
+            "append": true,
+            "enabled": true,
+            "upstreamKeys": []
+          }
+        ],
+        "synth": null
+      },
+      "issues": []
     }
   },
   "modelCatalog": {

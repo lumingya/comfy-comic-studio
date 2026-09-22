@@ -191,7 +191,7 @@ def prune_unbound_images(workflow, images):
 
 
 def positive_binding_target(workflow):
-    """The node/field that receives the positive prompt; the LoRA syntax fallback writes there."""
+    """The node/field that receives the positive prompt (ordinary workflow bindings)."""
     for binding in workflow.get("bindings", []):
         if binding.get("enabled") and binding.get("source") == "positive" and binding.get("nodeId"):
             return {"nodeId": str(binding["nodeId"]), "path": str(binding.get("path") or "text")}
@@ -338,8 +338,10 @@ class ProductionAdapter:
         graph = workflow.get("workflow") if isinstance(workflow.get("workflow"), dict) else {}
         classes = {n.get("class_type") for n in graph.values() if isinstance(n, dict)}
         info = workflow.get("objectInfo") if isinstance(workflow.get("objectInfo"), dict) else {}
-        workflow["objectInfo"] = {k: v for k, v in info.items() if k in classes}
+        workflow["objectInfo"] = {k: v for k, v in info.items() if k in classes or k in ("LoraLoader", "LoraLoaderModelOnly")}
         workflow.pop("modelCatalog", None)
+        if uses_workflow:
+            workflow["slots"] = {"plan": workflow_slots.ensure_plan(graph, workflow.get("slots"), workflow["objectInfo"])}
         overrides = slot_overrides(body, workflow, uses_workflow)
         seed_enabled = body.get("seedEnabled") is True and uses_workflow
         if seed_enabled and not seed_binding_ready(workflow):
@@ -553,9 +555,8 @@ class ProductionAdapter:
                 images,
             )
             channel["outputNodeId"] = wf.get("outputNodeId", "")
-            # Task-level model / LoRA overrides land after the bindings so a
-            # syntax-mode LoRA tag is appended to the prompt the binding just
-            # wrote, and the chosen checkpoint replaces the blueprint's default.
+            # Execute the frozen v3 plan after ordinary bindings. LoRAs are applied
+            # only at proven parameter sites, never as prompt fallback tags.
             if snap.get("overrides"):
                 applied = workflow_slots.apply(
                     payload["workflow"], wf.get("slots"), snap["overrides"], wf.get("objectInfo", {}), positive_binding_target(wf)
@@ -866,8 +867,19 @@ def dispatch(handler, host, path):
                 )
             }
         elif handler.command == "POST":
-            body = handler.read_json_body(max_bytes=2 * 1024 * 1024)
-            if route == "assemble":
+            body = handler.read_json_body(max_bytes=(64 if route in ("analyze-slots", "apply-slots") else 2) * 1024 * 1024)
+            if route == "analyze-slots":
+                graph = body.get("workflow") or {}
+                if not isinstance(graph, dict) or any(not isinstance(n, dict) or not isinstance(n.get("inputs"), dict) for n in graph.values()):
+                    raise LibraryError("请提供 ComfyUI API 格式工作流")
+                result = {"plan": workflow_slots.analyze(graph, body.get("objectInfo"), body.get("manual"), body.get("slots"))}
+            elif route == "apply-slots":
+                graph = body.get("workflow") or {}
+                if not isinstance(graph, dict) or any(not isinstance(n, dict) or not isinstance(n.get("inputs"), dict) for n in graph.values()):
+                    raise LibraryError("请提供 ComfyUI API 格式工作流")
+                plan = workflow_slots.ensure_plan(graph, body.get("slots"), body.get("objectInfo"))
+                result = workflow_slots.apply(graph, plan, body.get("overrides") or {}, body.get("objectInfo"))
+            elif route == "assemble":
                 result = queue.assemble(
                     eco.production_adapter.snapshot(body),
                     body.get("title"),

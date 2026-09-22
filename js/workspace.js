@@ -32,6 +32,7 @@ function selectLibraryWorkflow(id){
   if(!p)throw Error('工作流不存在。');
   c.activeWorkflowId=id;c.workflow=clone(p.workflow);c.workflowTitle=p.title;c.mapping=clone(p.mapping||{});
   c.bindings=clone(p.bindings||initialWorkflowBindings({...c,...p}));c.outputNodeId=p.outputNodeId||'';c.randomizeSeeds=!!p.randomizeSeeds;c.slots=clone(p.slots||{});
+  ensureWorkflowSlotPlan(c).catch(error=>toast(error.message,'error'));
   createUI.nodeSearch='';mapperUI.selected='';mapperUI.search='';mapperUI.filter='all';mapperUI.nodes=false;mapperUI.sel.clear();mapperUI.selMode=false;save();render();
 }
 
@@ -66,6 +67,7 @@ async function importWorkflowFiles(files){
       for(let i=0;i<items.length;i++)try{accepted.push(parseLibraryWorkflow(items[i],file.name.replace(/\.json$/i,'')+(items.length>1?' · '+(i+1):'')))}catch(e){errors.push(file.name+' #'+(i+1)+'：'+e.message)}
     }catch(e){errors.push(file.name+'：'+e.message)}
   }
+  for(const p of accepted)await ensureWorkflowSlotPlan(p,{force:true}).catch(e=>errors.push(p.title+'：槽位分析失败，稍后可重新分析 · '+e.message));
   storeActiveWorkflow();state.settings.comfy.presets.push(...accepted);
   if(accepted.length)selectLibraryWorkflow(accepted[0].id);
   save();render();

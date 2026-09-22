@@ -6,33 +6,24 @@ from backend.ecosystem import workflow_slots as slots
 from backend.mio_library import LibraryError
 
 
-def pick(resolved):
-    return {'model': {k: resolved['model'][k] for k in ('enabled', 'nodeId', 'path', 'kind')},
-            'lora': {k: resolved['lora'][k] for k in ('mode', 'nodeId', 'path', 'assumed')}}
-
-
 class WorkflowSlotsTests(unittest.TestCase):
     def test_shared_contract(self):
-        fixtures = json.loads((Path(__file__).parent / 'fixtures/workflow_slots_contract.json').read_text())
-        for fixture in fixtures:
-            with self.subTest(fixture=fixture['name']):
-                before = copy.deepcopy(fixture['workflow'])
-
-                def run():
-                    return slots.apply(fixture['workflow'], fixture.get('slots') or {}, fixture['overrides'],
-                                       fixture.get('objectInfo') or {}, fixture.get('positive'))
-                if fixture['error']:
-                    with self.assertRaises(LibraryError):
-                        run()
+        fixtures = json.loads((Path(__file__).parent / 'fixtures/workflow_slots_contract.json').read_text())['cases']
+        for f in fixtures:
+            with self.subTest(fixture=f['name']):
+                before=copy.deepcopy(f['workflow'])
+                plan=slots.analyze(f['workflow'],f.get('objectInfo'),f.get('manual'),f.get('slots'))
+                for g in plan['lora']['groups']:
+                    if g['key'] in f.get('enable',[]):g['enabled']=True
+                plan.pop('analyzedAt')
+                self.assertEqual(plan,f['plan'])
+                if f['error']:
+                    with self.assertRaises(LibraryError) as caught:slots.apply(f['workflow'],plan,f['overrides'],f.get('objectInfo'))
+                    self.assertEqual(str(caught.exception),f['error'])
                 else:
-                    result = run()
-                    self.assertEqual(pick(result['slots']), fixture['expectedSlots'])
-                    self.assertEqual(result['workflow'], fixture['expectedWorkflow'])
-                    self.assertEqual(len(result['notices']), fixture['expectedNotices'])
-                    self.assertEqual({'model': slots.current_model(fixture['workflow'], result['slots']),
-                                      'loras': slots.current_loras(fixture['workflow'], result['slots'])},
-                                     fixture['expectedCurrent'])
-                self.assertEqual(fixture['workflow'], before)
+                    result=slots.apply(f['workflow'],plan,f['overrides'],f.get('objectInfo'))
+                    for k,value in f['apply'].items():self.assertEqual(result[k],value,k)
+                self.assertEqual(f['workflow'],before)
 
     def test_catalog_from_object_info(self):
         catalog = slots.catalog_from_object_info({
@@ -56,5 +47,5 @@ class WorkflowSlotsTests(unittest.TestCase):
     def test_describe_overrides(self):
         self.assertEqual(slots.describe_overrides({'model': 'Illustrious\\wai.safetensors', 'loras': [{'name': 'a.safetensors', 'strength': 0.8}]}),
                          'wai · LoRA · a ×0.8')
-        self.assertEqual(slots.describe_overrides({'loras': []}), 'LoRA · 无')
+        self.assertEqual(slots.describe_overrides({'loras': []}), 'LoRA · 无追加')
         self.assertEqual(slots.describe_overrides({}), '')

@@ -160,15 +160,33 @@ def image_refs(value):
             yield from image_refs(child)
 
 
-def scrub(value):
+def semantic_slot_identifier(value, pointer):
+    """Only structurally valid v3 plan IDs are public `key` fields, never API keys."""
+    key = value.get('key')
+    if not isinstance(key, str):
+        return False
+    if re.search(r'/slots/plan/model/targets/\d+$', pointer):
+        return (isinstance(value.get('nodeId'), str) and isinstance(value.get('path'), str)
+                and key == value['nodeId'] + ':' + value['path']
+                and value.get('role') in ('primary', 'same', 'other', 'linked-unwritable'))
+    if re.search(r'/slots/plan/lora/groups/\d+$', pointer):
+        origin = value.get('origin') or {}
+        return (value.get('kind') in ('chain', 'stack', 'object', 'syntax', 'embedded')
+                and isinstance(value.get('sites'), list) and isinstance(value.get('pinned'), list)
+                and (key == 'origin:' + str(origin.get('nodeId', '')) + ':' + str(origin.get('path', ''))
+                     or bool(re.fullmatch(r'direct:.+:\d+', key))))
+    return False
+
+
+def scrub(value, pointer=''):
     """Sharing is an allowlisted DTO; also strip sensitive nested extensions."""
     if isinstance(value, dict):
-        return {k: scrub(v) for k, v in value.items()
-                if (k != 'key' or (value.get('type') in ('image', 'text', 'number', 'boolean', 'json') or str(value.get('type','')).startswith('plugin:')) or value.get('kind') == 'mio-image')
+        return {k: scrub(v, pointer + '/' + k) for k, v in value.items()
+                if (k != 'key' or semantic_slot_identifier(value, pointer) or (value.get('type') in ('image', 'text', 'number', 'boolean', 'json') or str(value.get('type','')).startswith('plugin:')) or value.get('kind') == 'mio-image')
                 and not k.startswith('_') and k not in PRIVATE_KEYS
                 and k.lower() not in {x.lower() for x in PRIVATE_KEYS}}
     if isinstance(value, list):
-        return [scrub(x) for x in value]
+        return [scrub(x, pointer + '/' + str(i)) for i, x in enumerate(value)]
     return value
 
 
@@ -179,7 +197,7 @@ def assert_no_credentials(value, pointer=''):
         typed_variable = (value.get('type') in ('image', 'text', 'number', 'boolean', 'json') or str(value.get('type','')).startswith('plugin:')) and 'value' in value or value.get('kind') == 'mio-image'
         for key, child in value.items():
             normalized = re.sub('[^a-z0-9]', '', key.lower())
-            if isinstance(child, str) and child and (normalized in secret_names or key == 'key' and not typed_variable):
+            if isinstance(child, str) and child and (normalized in secret_names or key == 'key' and not typed_variable and not semantic_slot_identifier(value, pointer)):
                 raise LibraryError('Credentials belong in settings/secrets.json, not resource files: ' + pointer + '/' + key, 422, 'unprotected_secret')
             assert_no_credentials(child, pointer + '/' + key)
     elif isinstance(value, list):
@@ -193,7 +211,7 @@ def share_document(kind, doc):
               'synopsis', 'characterName', 'steps', 'totalSteps', 'generatedSteps',
               'pictureEdits', 'variables', 'html', 'options', 'assets', 'layout',
               'runtimeScript', 'scriptEnabled', 'enhancement', 'version', 'workflow',
-              'bindings', 'outputNodeId', 'sharedSources', 'settingsGroups', 'basePrompt'}
+              'bindings', 'slots', 'outputNodeId', 'sharedSources', 'settingsGroups', 'basePrompt'}
     result = scrub({k: copy.deepcopy(v) for k, v in doc.items() if k in fields})
     if kind == 'albums':
         result.pop('variables', None)

@@ -637,3 +637,12 @@ fieldset.wf-conn-field legend{padding:0}
   .wf-body,.wf-body.rail-floating{gap:16px}
 }
 .wf-edit-row{position:relative;z-index:1;justify-self:center}
+
+/* V3 plan inspection: stable, wrapping rows; blueprint pins are deliberately muted. */
+.wf-slot-plan-row{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);line-height:1.6}
+.wf-slot-plan-row>span{min-width:0;overflow-wrap:anywhere}
+.wf-inspector-card code,.wf-inspector-card li{overflow-wrap:anywhere}
+.designer-lora-chip.is-pinned{background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+.designer-lora-chip input[type=number]{width:78px;min-width:0}
+.production-slot-notices{margin-top:8px;font-size:12px;overflow-wrap:anywhere}
+.production-slot-notices summary{cursor:pointer;color:var(--soft)}

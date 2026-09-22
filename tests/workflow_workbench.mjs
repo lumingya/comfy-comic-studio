@@ -370,29 +370,18 @@ try {
     await p.locator('[data-act="close-modal"]').first().click();
   } else console.log("SKIP submission preview (fixture workspace ships no storyboard)");
 
-  /* ---- semantic slots: detected from the blueprint, editable, persisted per workflow */
-  check((await p.locator("[data-slot-row]").count()) === 2, "model and LoRA slot rows are listed above the bindings");
+  /* ---- v3 semantic slots: Python plan, checkbox selection, persisted per workflow */
+  await p.evaluate(async()=>{await ensureWorkflowSlotPlan(state.settings.comfy,{force:true});render();});
+  check((await p.locator("[data-slot-row]").count())===2,"model and LoRA slot rows are listed above the bindings");
   await p.locator('[data-act="wm-select-slot"][data-id="model"]').click();
-  check(await p.locator("#v3-slot-model-target").isVisible(), "model slot inspector opens");
-  check(
-    await p.evaluate(() => comfySlotsResolved().model.enabled && !!comfySlotsResolved().model.nodeId),
-    "model slot is auto-detected without object_info",
-  );
+  check(await p.locator('[data-slot-plan-kind="model"]').first().isVisible(),"v3 model target list opens");
+  check(await p.evaluate(()=>state.settings.comfy.slots.plan.version===3&&comfySlotsResolved().model.enabled),"Python analyzes the model without object_info");
+  await p.locator('[data-slot-plan-kind="model"]').first().uncheck();
+  check(await p.evaluate(()=>!comfySlotsResolved().model.enabled),"model target checkbox disables writing");
+  await p.locator('[data-slot-plan-kind="model"]').first().check();
   await p.locator('[data-act="wm-select-slot"][data-id="lora"]').click();
-  await p.locator("#v3-slot-lora-target").selectOption("off");
-  check(
-    await p.evaluate(() => state.settings.comfy.slots.lora.mode === "off" && comfySlotsResolved().lora.mode === "off"),
-    "LoRA slot can be switched off and the choice is stored",
-  );
-  await p.locator("#v3-slot-lora-target").selectOption("auto");
-  check(await p.evaluate(() => state.settings.comfy.slots.lora.auto === true), "LoRA slot returns to auto detection");
-  check(
-    await p.evaluate(() => {
-      const preset = state.settings.comfy.presets.find((x) => x.id === state.settings.comfy.activeWorkflowId);
-      return !!preset && JSON.stringify(preset.slots) === JSON.stringify(state.settings.comfy.slots);
-    }),
-    "slot choices are mirrored into the saved workflow preset",
-  );
+  check(await p.locator('[data-act="wf-slots-manual"]').isVisible(),"advanced manual fallback available");
+  check(await p.evaluate(()=>{const c=state.settings.comfy;return JSON.stringify(c.presets.find(x=>x.id===c.activeWorkflowId).slots)===JSON.stringify(c.slots);}),"plan choices persist in the workflow package");
 
   /* ---- responsive */
   await p.setViewportSize({ width: 390, height: 844 });
