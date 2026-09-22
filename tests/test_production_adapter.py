@@ -36,7 +36,7 @@ class ProductionAdapterTests(unittest.TestCase):
     def wait(self,id):
         for _ in range(300):
             t=self.q.get(id)
-            if t['status'] in ('complete','failed','partial','cancelled') and self.q.active is None:return t
+            if t['status'] in ('complete','failed','partial','cancelled') and not self.q.active:return t
             time.sleep(.01)
         self.fail('queue timed out')
     def test_standby_then_real_native_publication(self):

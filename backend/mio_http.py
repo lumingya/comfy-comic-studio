@@ -587,7 +587,7 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
                     hours = body.get("graceHours", mio_assets.GRACE_HOURS)
                     if not isinstance(hours, (int, float)) or hours < 0:
                         raise self.services.LibraryError("graceHours must be a non-negative number")
-                    busy = lambda: bool(eco.production.active or eco.production.control.get("batch"))
+                    busy = eco.production.busy
                     result = mio_assets.collect(self.services.DATA_DIR, body.get("token"), float(hours), busy) if body.get("apply") is True else mio_assets.inventory(self.services.DATA_DIR, float(hours))
                 elif action == "restore":
                     result = mio_assets.restore(self.services.DATA_DIR, body.get("batch"))

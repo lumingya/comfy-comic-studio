@@ -91,7 +91,7 @@ class LeaseShutdownTests(unittest.TestCase):
                 with self.assertRaisesRegex(LibraryError, 'UNCERTAIN'):
                     other.start(task['id'], trusted=True)
                 self.assertTrue(other.list()['paused'])
-                self.assertFalse(other.control['batch'])
+                self.assertFalse(other.control['lane'])
                 other.start(task['id'], trusted=True, confirm_uncertain=True)
             finally: other.close()
 

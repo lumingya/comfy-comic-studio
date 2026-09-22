@@ -15,9 +15,15 @@ from backend.mio_library import atomic_write, LibraryError, owned_path
 
 
 class TaskStore:
+    # Manifest keys that describe storage layout rather than the task itself.
+    LAYOUT_KEYS = ("format", "snapshotRef", "preparedRef", "pageRefs", "pageSummaries", "sourceSummary")
+
     def __init__(self, root):
         self.root = Path(root)
         self.lock = threading.RLock()
+        # Queue listings poll summaries continuously; serve them from memory and
+        # refresh the entry on every commit so the cache can never lag the disk.
+        self._summaries = {}
 
     def file(self, key):
         if (
@@ -101,29 +107,29 @@ class TaskStore:
                 json.dumps(manifest, ensure_ascii=False, allow_nan=False).encode(),
             )
             os.chmod(self.file(key), 0o600)
+            self._summaries[key] = self._summary(manifest)
         return value
+
+    def _summary(self, manifest):
+        result = {k: v for k, v in manifest.items() if k not in self.LAYOUT_KEYS}
+        result["snapshot"] = manifest["sourceSummary"]
+        result["prepared"] = None
+        result["pages"] = manifest["pageSummaries"]
+        return result
 
     def get(self, key, default=None, summary=False):
         with self.lock:
             file = self.file(key)
+            if summary and key in self._summaries:
+                if file.exists():
+                    return copy.deepcopy(self._summaries[key])
+                self._summaries.pop(key, None)
             if not file.exists():
                 return default
             manifest = json.loads(file.read_text(encoding="utf-8"))
             if manifest.get("format") != 1:
                 raise LibraryError("生产记录不是当前格式；请使用新的生产目录")
-            result = {
-                k: v
-                for k, v in manifest.items()
-                if k
-                not in (
-                    "format",
-                    "snapshotRef",
-                    "preparedRef",
-                    "pageRefs",
-                    "pageSummaries",
-                    "sourceSummary",
-                )
-            }
+            result = {k: v for k, v in manifest.items() if k not in self.LAYOUT_KEYS}
             result["snapshot"] = (
                 manifest["sourceSummary"]
                 if summary
@@ -133,8 +139,8 @@ class TaskStore:
                 None if summary else self._read(manifest["preparedRef"])
             )
             if summary and "pageSummaries" in manifest:
-                result["pages"] = manifest["pageSummaries"]
-                return result
+                self._summaries[key] = self._summary(manifest)
+                return copy.deepcopy(self._summaries[key])
             result["pages"] = []
             for ref in manifest["pageRefs"]:
                 page = self._read(ref)
@@ -165,9 +171,11 @@ class TaskStore:
                 for cached, page in zip(manifest["pageSummaries"], result["pages"]):
                     cached["attemptCount"] = page.get("attemptCount", cached["attemptCount"])
                 atomic_write(file, json.dumps(manifest, ensure_ascii=False, allow_nan=False).encode())
-                result["pages"] = manifest["pageSummaries"]
+                self._summaries[key] = self._summary(manifest)
+                return copy.deepcopy(self._summaries[key])
             return result
 
     def delete(self, key):
         with self.lock:
+            self._summaries.pop(key, None)
             self.file(key).unlink(missing_ok=True)

@@ -807,6 +807,115 @@ def task_context(task):
     return {"id": task["id"], "title": task.get("title", ""), "albumId": task.get("albumId"), "preview": bool(task["snapshot"].get("preview"))}
 
 
+def clone_source(task):
+    """Editable authoring fields only; never expose channel credentials or prepared values."""
+    snap = task["snapshot"]
+    return {
+        "frames": [{k: (f.get(k) or "") for k in ("name", "prompt", "negative", "caption")} for f in snap["story"]["frames"]],
+        "presets": [{"id": p.get("id"), "title": p.get("title", ""), "entries": [
+            {k: copy.deepcopy(e.get(k)) for k in ("key", "type", "value")}
+            for e in p.get("entries", []) if not e.get("compute") and e.get("type", "text") in ("text", "number", "boolean", "json")
+        ]} for p in snap.get("presets", [])],
+        "globalNegative": snap.get("globalNegative", "") or "",
+        "seed": snap.get("seed", 1), "seedEnabled": bool(snap.get("seedEnabled", False)),
+        "canSeed": seed_binding_ready(snap.get("workflow", {})),
+        "overrides": copy.deepcopy(snap.get("overrides")),
+        "canOverrides": bool(snap.get("workflow", {}).get("workflow")),
+    }
+
+
+def validate_variable_candidate(entry):
+    t = entry.get("type", "text")
+    val = entry.get("value")
+    if t == "text":
+        if val is not None and (not isinstance(val, str) or len(val) > 100000):
+            raise LibraryError("文本变量值无效或超过 100,000 字")
+    elif t == "number":
+        if isinstance(val, bool) or not isinstance(val, (int, float)):
+            raise LibraryError("数值变量需为数字")
+    elif t == "boolean":
+        if not isinstance(val, bool):
+            raise LibraryError("布尔变量需为布尔值")
+    elif t == "json":
+        if isinstance(val, str):
+            try:
+                json.loads(val)
+            except Exception:
+                raise LibraryError("JSON 变量格式无效")
+        elif not isinstance(val, (dict, list, int, float, bool)) and val is not None:
+            raise LibraryError("JSON 变量格式无效")
+
+
+def adjust_clone(snapshot, adjustments):
+    """Allowlisted changes to a COPY of the immutable source, validated before enqueue."""
+    if adjustments is None:
+        return snapshot
+    allowed = {"frames", "presets", "globalNegative", "seed", "seedEnabled", "overrides"}
+    if not isinstance(adjustments, dict) or set(adjustments) - allowed:
+        raise LibraryError("无效的副本调整字段")
+    def text(value):
+        if value is None:
+            return ""
+        if not isinstance(value, str) or len(value) > 100000:
+            raise LibraryError("副本提示词或文本格式无效")
+        return value
+    if "frames" in adjustments:
+        frames = adjustments["frames"]
+        original = snapshot["story"]["frames"]
+        if not isinstance(frames, list) or len(frames) != len(original):
+            raise LibraryError("副本分幕数量必须与原任务一致")
+        for i, (old, change) in enumerate(zip(original, frames)):
+            if not isinstance(change, dict) or set(change) - {"name", "prompt", "negative", "caption"}:
+                raise LibraryError("副本分幕字段无效")
+            for key, value in change.items():
+                if key == "name":
+                    cleaned = (value or "").strip() if isinstance(value, str) else ""
+                    old["name"] = cleaned or old.get("name") or f"第 {i + 1} 幕"
+                else:
+                    old[key] = text(value)
+    if "presets" in adjustments:
+        changes = adjustments["presets"]
+        if not isinstance(changes, list):
+            raise LibraryError("副本预设格式无效")
+        for change in changes:
+            if not isinstance(change, dict) or set(change) != {"id", "entries"} or not isinstance(change["entries"], list):
+                raise LibraryError("副本预设字段无效")
+            preset = next((p for p in snapshot.get("presets", []) if p.get("id") == change["id"]), None)
+            if preset is None:
+                raise LibraryError("副本不能引用其他预设")
+            for entry in change["entries"]:
+                if not isinstance(entry, dict) or set(entry) != {"key", "value"}:
+                    raise LibraryError("副本变量字段无效")
+                old = next((e for e in preset.get("entries", []) if e.get("key") == entry["key"]), None)
+                if old is None or old.get("compute") or old.get("type", "text") not in ("text", "number", "boolean", "json"):
+                    raise LibraryError("此预设变量不能直接修改")
+                candidate = {**old, "value": entry["value"]}
+                try:
+                    validate_variable_candidate(candidate)
+                except Exception as exc:
+                    raise LibraryError(f"副本变量「{old.get('key')}」无效: {exc}")
+                old["value"] = candidate["value"]
+    if "globalNegative" in adjustments:
+        snapshot["globalNegative"] = text(adjustments["globalNegative"])
+    if "seed" in adjustments or "seedEnabled" in adjustments:
+        wf = snapshot.get("workflow", {})
+        enabled = bool(adjustments.get("seedEnabled", snapshot.get("seedEnabled", False)))
+        if enabled:
+            if not seed_binding_ready(wf):
+                raise LibraryError("当前工作流未绑定随机种子输入")
+            seed = adjustments.get("seed")
+            if seed is None:
+                seed = snapshot.get("seed", 1)
+            if type(seed) is not int or not (0 <= seed <= 2**63 - 1):
+                raise LibraryError("随机种子需为 0–2^63-1 的整数")
+            snapshot["seed"] = seed
+        snapshot["seedEnabled"] = enabled
+    if "overrides" in adjustments:
+        wf = snapshot.get("workflow", {})
+        snapshot["overrides"] = slot_overrides(adjustments, wf, bool(wf.get("workflow")))
+    return snapshot
+
+
 def service(host):
     eco = ecosystem_api.service(host)
     with LOCK:
@@ -853,19 +962,23 @@ def dispatch(handler, host, path):
             handler.wfile.write(encoded)
             return True
         elif handler.command == "GET" and route.startswith("tasks/"):
-            task = queue.get(route[len("tasks/") :])
-            result = {
-                key: task.get(key)
-                for key in (
-                    "id",
-                    "title",
-                    "status",
-                    "error",
-                    "pages",
-                    "cancelReport",
-                    "rateLimit",
-                )
-            }
+            if route.endswith("/clone-source"):
+                task_id = route[len("tasks/") : -len("/clone-source")]
+                result = clone_source(queue.get(task_id))
+            else:
+                task = queue.get(route[len("tasks/") :])
+                result = {
+                    key: task.get(key)
+                    for key in (
+                        "id",
+                        "title",
+                        "status",
+                        "error",
+                        "pages",
+                        "cancelReport",
+                        "rateLimit",
+                    )
+                }
         elif handler.command == "POST":
             body = handler.read_json_body(max_bytes=(64 if route in ("analyze-slots", "apply-slots") else 2) * 1024 * 1024)
             if route == "analyze-slots":
@@ -884,17 +997,19 @@ def dispatch(handler, host, path):
                     eco.production_adapter.snapshot(body),
                     body.get("title"),
                     body.get("requestId"),
+                    concurrency=body.get("concurrency"),
                 )
             elif route == "assemble-batch":
                 items = body.get("items")
-                if not isinstance(items, list) or not 1 <= len(items) <= 100:
-                    raise LibraryError("批量装配需包含 1–100 项")
+                if not isinstance(items, list) or not items:
+                    raise LibraryError("批量装配需至少包含 1 项")
                 result = queue.assemble_many(
                     [
                         (
                             eco.production_adapter.snapshot(item),
                             item.get("title"),
                             item.get("requestId"),
+                            item.get("concurrency"),
                         )
                         for item in items
                     ]
@@ -907,17 +1022,48 @@ def dispatch(handler, host, path):
                     body.get("trusted") is True,
                     body.get("forcePrepare") is True,
                     body.get("confirmUncertain") is True,
+                    concurrency=body.get("concurrency"),
+                )
+            elif route == "start-many":
+                result = queue.start_many(
+                    body.get("ids"),
+                    trusted=body.get("trusted") is True,
+                    confirm_uncertain=body.get("confirmUncertain") is True,
+                )
+            elif route == "start-sequence":
+                result = queue.start_sequence(
+                    body.get("ids"),
+                    trusted=body.get("trusted") is True,
+                    confirm_uncertain=body.get("confirmUncertain") is True,
                 )
             elif route == "recover-publication":
                 result = queue.recover_publication(body["id"], body["index"])
             elif route == "pause":
-                result = queue.pause()
+                result = queue.pause(body.get("id"), body.get("ids"))
             elif route == "resume":
-                result = queue.resume()
+                result = queue.resume(body.get("id"), body.get("ids"))
             elif route == "cancel":
-                result = queue.cancel()
+                result = queue.cancel(body.get("id"), body.get("ids"))
             elif route == "remove":
-                result = queue.remove(body["id"])
+                result = queue.remove(body.get("id"), body.get("ids"))
+            elif route == "clone":
+                task_id = body.get("id")
+                if not isinstance(task_id, str) or not task_id:
+                    raise LibraryError("缺少克隆目标任务标识")
+                adjustments = body.get("adjustments")
+                transform = (lambda snap: adjust_clone(snap, adjustments)) if adjustments is not None else None
+                result = queue.clone(
+                    task_id,
+                    body.get("title"),
+                    concurrency=body.get("concurrency", "source"),
+                    transform=transform,
+                )
+            elif route == "reorder":
+                result = queue.reorder(body.get("order"))
+            elif route == "clear-finished":
+                result = queue.clear_finished()
+            elif route == "concurrency":
+                result = queue.set_concurrency(body.get("value"), body.get("id"))
             else:
                 raise LibraryError("未知生产操作", 404)
         else:

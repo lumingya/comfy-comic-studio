@@ -1,14 +1,20 @@
 """Explicit, durable assembly queue. No network operation occurs during assembly.
 
-One book and one page are dispatched at a time. A batch freezes its task IDs at
-start; new assemblies do not join it. A pause drains the current call, a cancel
-discards its late result. Neither operation pretends to undo provider billing.
+Every task the creator starts runs in its own runner, so several books can render
+at the same time; inside a book, up to ``concurrency`` pages are in flight at once
+(per task, defaulting to the queue-wide value, adjustable while the book runs).
+「按顺序开始生成」puts books into a *lane* that executes them one after another.
+
+A pause (global or per task) drains the calls already in flight and dispatches
+nothing new; a cancel discards late results. Neither operation pretends to undo
+provider billing. Restart never silently resumes provider calls.
 """
 
 import copy
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import threading
 import time
@@ -27,6 +33,22 @@ from backend.mio_library import LibraryError
 TERMINAL = {"complete", "failed", "cancelled", "interrupted"}
 # Consecutive page failures that turn a page-local problem into a stopped book.
 FAILURE_STREAK_LIMIT = 3
+# Technical guard rails only: the creator decides how much load the hardware
+# and the provider can take. One in-flight page costs one waiting thread.
+MAX_PAGE_CONCURRENCY = 128
+MAX_TASKS = 1000
+DEFAULT_CONTROL = {"order": [], "paused": True, "lane": [], "concurrency": 1}
+
+
+def clamp_concurrency(value, *, allow_none=False):
+    """Validate a page-concurrency value: 1..MAX, or None meaning「跟随全局」."""
+    if value is None and allow_none:
+        return None
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
+    if type(value) is not int or isinstance(value, bool) or not 1 <= value <= MAX_PAGE_CONCURRENCY:
+        raise LibraryError("分幕并发需为 1–" + str(MAX_PAGE_CONCURRENCY) + " 的整数")
+    return value
 
 
 class ProductionQueue:
@@ -46,11 +68,17 @@ class ProductionQueue:
         # adapter can settle album status without another render.
         self.finalize = finalize
         self.lock = threading.RLock()
+        # Runners and page workers sleep on this condition; every state change
+        # that may unblock a dispatch notifies it.
+        self.cond = threading.Condition(self.lock)
+        # Album publication reads and writes a revisioned document; concurrent
+        # pages of one book must not race on it.
+        self.publish_lock = threading.Lock()
         self.wake = threading.Event()
         self.closed = False
-        self.cancel_event = threading.Event()
-        self.active = None
-        self.active_task = None
+        # id -> {"thread", "cancel", "task", "lane"} for every running book.
+        self.runners = {}
+        self.lane_active = None
         self.fault = None
         self.unclean_shutdown = False
         folder = owned(Path(root), "production")
@@ -62,14 +90,13 @@ class ProductionQueue:
                 "此数据目录已有生产调度器，请关闭另一个实例", 409
             ) from exc
         try:
-            self.control = self.state.get(
-                "queue", {"order": [], "batch": [], "paused": True}
-            )
-            # Restart never silently resumes provider calls, even when a batch was saved.
-            saved_batch = list(self.control.get("batch", []))
-            safe_batch = []
+            self.control = self.state.get("queue", copy.deepcopy(DEFAULT_CONTROL))
+            self._migrate_control()
+            # Restart never silently resumes provider calls, even when a lane was saved.
+            saved_lane = list(self.control.get("lane", []))
+            safe_lane = []
             self.control["paused"] = True
-            for id in saved_batch:
+            for id in saved_lane:
                 if id in self.control["order"]:
                     task = self.tasks.get(id)
                     if (
@@ -79,17 +106,17 @@ class ProductionQueue:
                             p["state"] in ("running", "uncertain") for p in task["pages"]
                         )
                     ):
-                        if id not in safe_batch:
-                            safe_batch.append(id)
+                        if id not in safe_lane:
+                            safe_lane.append(id)
             for id in self.control["order"]:
-                if id in safe_batch:
+                if id in safe_lane:
                     continue
                 task = self.tasks.get(id)
                 if not task:
                     continue
                 if task["status"] in ("preparing", "running", "ready"):
                     if (
-                        id not in saved_batch
+                        id not in saved_lane
                         and task["status"] == "ready"
                         and not any(
                             p["state"] in ("running", "uncertain") for p in task["pages"]
@@ -105,7 +132,7 @@ class ProductionQueue:
                             if frame["state"] == "running":
                                 frame["state"] = "uncertain"
                         self.tasks.set(id, task)
-            self.control["batch"] = safe_batch
+            self.control["lane"] = safe_lane
             self._save_control()
             self.worker = threading.Thread(
                 target=self._loop, daemon=True, name="mio-production"
@@ -115,11 +142,29 @@ class ProductionQueue:
             self.lease.close()
             raise
 
+    # ------------------------------------------------------------------ state
+    def _migrate_control(self):
+        """Older control files carried a single sequential ``batch``; it becomes the lane."""
+        control = self.control
+        legacy = control.pop("batch", None) or []
+        control["lane"] = list(dict.fromkeys([*legacy, *control.get("lane", [])]))
+        control.setdefault("order", [])
+        control.setdefault("paused", True)
+        try:
+            control["concurrency"] = clamp_concurrency(control.get("concurrency", 1))
+        except LibraryError:
+            control["concurrency"] = 1
+
     def _storage_fault(self, exc):
         with self.lock:
             self.fault = str(exc)[:500]
-            self.control.update(paused=True, batch=[])
-            self.wake.set()
+            self.control.update(paused=True, lane=[])
+            self._wake()
+
+    def _wake(self):
+        self.wake.set()
+        with self.cond:
+            self.cond.notify_all()
 
     def _save_control(self):
         try:
@@ -136,6 +181,21 @@ class ProductionQueue:
             self._storage_fault(exc)
             raise
 
+    @property
+    def active(self):
+        """IDs of the books currently running (any runner, lane or direct)."""
+        with self.lock:
+            return [id for id in self.control["order"] if id in self.runners]
+
+    def busy(self):
+        with self.lock:
+            return bool(self.runners or self.control["lane"])
+
+    def _live(self, id):
+        """The in-memory copy a runner mutates, or the stored task when idle."""
+        runner = self.runners.get(id)
+        return runner["task"] if runner else None
+
     def get(self, id):
         with self.lock:
             task = self.tasks.get(id)
@@ -143,9 +203,16 @@ class ProductionQueue:
                 raise LibraryError("生成任务不存在", 404)
             return task
 
+    def effective_concurrency(self, task):
+        own = task.get("concurrency")
+        value = own if type(own) is int and 1 <= own <= MAX_PAGE_CONCURRENCY else self.control.get("concurrency", 1)
+        return max(1, min(MAX_PAGE_CONCURRENCY, int(value or 1)))
+
     def list(self):
         with self.lock:
             tasks = [self.tasks.get(id, summary=True) for id in self.control["order"]]
+            lane = list(self.control["lane"])
+            running = [id for id in self.control["order"] if id in self.runners]
             return {
                 "tasks": [
                     {
@@ -155,6 +222,12 @@ class ProductionQueue:
                             if k
                             not in ("snapshot", "prepared", "requestId", "fingerprint")
                         },
+                        "paused": bool(t.get("paused")),
+                        "concurrency": t.get("concurrency"),
+                        "effectiveConcurrency": self.effective_concurrency(t),
+                        "running": t["id"] in self.runners,
+                        "queued": t["id"] in lane,
+                        "queuePosition": lane.index(t["id"]) + 1 if t["id"] in lane else None,
                         "sources": {
                             "story": t["snapshot"]["story"].get("title", ""),
                             "presets": [
@@ -184,14 +257,19 @@ class ProductionQueue:
                     for t in tasks
                     if t
                 ],
-                "batch": list(self.control["batch"]),
+                "active": running,
+                "lane": lane,
+                # Compatibility with consumers of the former single-batch shape.
+                "batch": [id for id in running if self.runners[id]["lane"]] + lane,
                 "paused": self.control["paused"],
-                "active": self.active,
+                "concurrency": self.control.get("concurrency", 1),
+                "maxConcurrency": MAX_PAGE_CONCURRENCY,
                 "fault": self.fault,
                 "uncleanShutdown": self.unclean_shutdown,
             }
 
-    def assemble(self, snapshot, title, request_id, commit=True):
+    # --------------------------------------------------------------- assembly
+    def assemble(self, snapshot, title, request_id, commit=True, concurrency=None, after=None):
         if not isinstance(title, str) or not title.strip() or len(title) > 150:
             raise LibraryError("请填写 1–150 字的画册名称")
         if not isinstance(snapshot, dict) or not isinstance(
@@ -203,6 +281,7 @@ class ProductionQueue:
             raise LibraryError("分镜需包含 1–512 幕")
         if not isinstance(request_id, str) or not 1 <= len(request_id) <= 120:
             raise LibraryError("缺少装配操作标识")
+        concurrency = clamp_concurrency(concurrency, allow_none=True)
         encoded = json.dumps(snapshot, ensure_ascii=False, allow_nan=False)
         if len(encoded.encode()) > 16 * 1024 * 1024:
             raise LibraryError("装配快照超过 16 MiB")
@@ -211,13 +290,13 @@ class ProductionQueue:
             if self.closed:
                 raise LibraryError("调度器正在关闭，不再接受新任务", 503)
             for id in self.control["order"]:
-                prior = self.tasks.get(id)
-                if prior and prior["requestId"] == request_id:
-                    if prior["fingerprint"] != fingerprint:
+                prior = self.tasks.get(id, summary=True)
+                if prior and prior.get("requestId") == request_id:
+                    if prior.get("fingerprint") != fingerprint:
                         raise LibraryError("操作标识已用于不同装配，请刷新后重试", 409)
-                    return prior
-            if len(self.control["order"]) >= 200:
-                raise LibraryError("请先移除不再需要的任务记录（最多 200 项）")
+                    return self.tasks.get(id)
+            if len(self.control["order"]) >= MAX_TASKS:
+                raise LibraryError("请先移除不再需要的任务记录（最多 " + str(MAX_TASKS) + " 项）")
             id = "assembly-" + uuid.uuid4().hex
             task = {
                 "id": id,
@@ -229,6 +308,8 @@ class ProductionQueue:
                 "fingerprint": fingerprint,
                 "snapshot": copy.deepcopy(snapshot),
                 "status": "standby",
+                "paused": False,
+                "concurrency": concurrency,
                 "pages": [
                     {"index": i, "state": "standby", "result": None, "attempts": []}
                     for i in range(len(frames))
@@ -239,7 +320,10 @@ class ProductionQueue:
                 "updatedAt": time.time(),
             }
             self.tasks.set(id, task)
-            self.control["order"].append(id)
+            if after in self.control["order"]:
+                self.control["order"].insert(self.control["order"].index(after) + 1, id)
+            else:
+                self.control["order"].append(id)
             try:
                 if commit:
                     self._save_control()
@@ -257,147 +341,366 @@ class ProductionQueue:
             pass
 
     def assemble_many(self, items):
-        if not isinstance(items, list) or not 1 <= len(items) <= 100:
-            raise LibraryError("一次装配最多 100 项")
+        if not isinstance(items, list) or not 1 <= len(items) <= MAX_TASKS:
+            raise LibraryError("一次装配最多 " + str(MAX_TASKS) + " 项")
         with self.lock:
             before = copy.deepcopy(self.control)
             try:
-                tasks = [self.assemble(*item, commit=False) for item in items]
+                tasks = [
+                    self.assemble(
+                        item[0], item[1], item[2], commit=False,
+                        concurrency=item[3] if len(item) > 3 else None,
+                    )
+                    for item in items
+                ]
                 self._save_control()
                 return tasks
             except Exception:
                 # Retain uncommitted objects for diagnostics; they are not schedulable.
                 self.control = before
                 if self.fault:
-                    self.control.update(paused=True, batch=[])
+                    self.control.update(paused=True, lane=[])
                 raise
 
+    def clone(self, id, title=None, concurrency="source", transform=None):
+        """A fresh standby copy of a task (same frozen snapshot, new album), placed right after it."""
+        with self.lock:
+            source = self.get(id)
+            if not title:
+                base = re.sub(r"\s*副本(?:\s*\d+)?$", "", source["title"]).strip() or source["title"]
+                existing = 0
+                for other in self.control["order"]:
+                    record = self.tasks.get(other, summary=True)
+                    if record and re.fullmatch(re.escape(base) + r"\s*副本(?:\s*\d+)?", record["title"]):
+                        existing += 1
+                title = base + " 副本" + ("" if existing == 0 else " " + str(existing + 1))
+            snapshot = copy.deepcopy(source["snapshot"])
+            if transform is not None:
+                snapshot = transform(snapshot)
+            task_concurrency = source.get("concurrency") if concurrency == "source" else concurrency
+            task = self.assemble(
+                snapshot,
+                title,
+                "clone-" + uuid.uuid4().hex,
+                concurrency=task_concurrency,
+                after=id,
+            )
+            self._notify("task.cloned", {"id": task["id"], "source": id, "title": task["title"]})
+            return task
+
+    # ------------------------------------------------------------- scheduling
+    def _check_open(self):
+        if self.closed:
+            raise LibraryError("调度器正在关闭，不再接受新任务", 503)
+        if self.fault:
+            raise LibraryError("存储故障未恢复，请检查磁盘后重启服务", 503)
+
+    def _selection(self, task, indices):
+        if indices is None:
+            return [p["index"] for p in task["pages"] if p["state"] != "complete"]
+        if (
+            not isinstance(indices, list)
+            or not indices
+            or any(
+                type(i) is not int or i < 0 or i >= len(task["pages"])
+                for i in indices
+            )
+            or len(set(indices)) != len(indices)
+        ):
+            raise LibraryError("重跑范围无效")
+        return list(indices)
+
+    def _assert_confirmed(self, task, selection, confirm_uncertain):
+        if any(task["pages"][i]["state"] in ("running", "uncertain") for i in selection) and confirm_uncertain is not True:
+            raise LibraryError("MIO-PROD-UNCERTAIN: 存在未确认结果，请先核对上游，并明确确认可能重复计费后再重跑", 409)
+
+    def _arm(self, task, selection, *, force_prepare=False, lane=False, concurrency=None):
+        """Mutate a validated task into the ready state for the given pages."""
+        task["selection"] = selection
+        task["status"] = "ready"
+        task["paused"] = False
+        task["runMode"] = "lane" if lane else "direct"
+        task["forcePrepare"] = force_prepare is True
+        if concurrency is not None:
+            task["concurrency"] = concurrency
+        if force_prepare:
+            task["prepared"] = None
+        task.pop("error", None)
+        for i in selection:
+            task["pages"][i]["state"] = "standby"
+        self._save(task)
+
     def start(
-        self, id, sequential=False, indices=None, trusted=False, force_prepare=False, confirm_uncertain=False
+        self, id, sequential=False, indices=None, trusted=False, force_prepare=False,
+        confirm_uncertain=False, concurrency=None
     ):
+        """Run one book now, in parallel with whatever else is running.
+
+        ``sequential`` keeps the historic meaning for external callers: this book
+        and every later unfinished book join the lane instead (see start_sequence).
+        """
         if trusted is not True:
             raise LibraryError("请确认启动生成与可能产生的费用", 403)
+        if sequential and indices is not None:
+            raise LibraryError("重跑范围无效")
         with self.lock:
-            if self.closed:
-                raise LibraryError("调度器正在关闭，不再接受新任务", 503)
-            if self.active:
-                raise LibraryError("有画册正在运行或暂停在半途，请先继续或取消当前批次，再启动新的运行范围", 409)
-            if self.control["batch"] and not self.control["paused"]:
-                raise LibraryError("请先暂停并取消当前批次，再启动新的运行范围", 409)
-            if self.fault:
-                raise LibraryError("存储故障未恢复，请检查磁盘后重启服务", 503)
-            task = self.get(id)
+            self._check_open()
             if id not in self.control["order"]:
                 raise LibraryError("任务不在队列中", 404)
-            ids = (
-                self.control["order"][self.control["order"].index(id) :]
-                if sequential
-                else [id]
-            )
             if sequential:
-                ids = [i for i in ids if self.get(i)["status"] != "complete"]
-            if indices is not None:
-                if (
-                    sequential
-                    or not isinstance(indices, list)
-                    or not indices
-                    or any(
-                        type(i) is not int or i < 0 or i >= len(task["pages"])
-                        for i in indices
-                    )
-                    or len(set(indices)) != len(indices)
-                ):
-                    raise LibraryError("重跑范围无效")
-            # Validate the entire batch before mutating any task.
-            for selected in ids:
-                item = self.get(selected)
-                selection = indices if indices is not None else [p["index"] for p in item["pages"] if p["state"] != "complete"]
-                if any(item["pages"][i]["state"] in ("running", "uncertain") for i in selection) and confirm_uncertain is not True:
-                    raise LibraryError("MIO-PROD-UNCERTAIN: 存在未确认结果，请先核对上游，并明确确认可能重复计费后再重跑", 409)
-            # A paused batch with nothing in flight is released by the new range: its
-            # unfinished books return to standby exactly as cancel() would leave them.
-            for stale in self.control["batch"]:
-                stale_task = self.tasks.get(stale)
-                if not stale_task:
-                    continue
-                stale_task["status"] = "standby"
-                stale_task["selection"] = []
-                self._save(stale_task)
-            self.control["batch"] = []
-            for selected in ids:
-                item = self.get(selected)
-                selection = (
-                    list(indices)
-                    if indices is not None
-                    else [p["index"] for p in item["pages"] if p["state"] != "complete"]
-                )
-                if not selection:
-                    continue
-                item["selection"] = selection
-                item["status"] = "ready"
-                item["forcePrepare"] = force_prepare is True
-                if force_prepare:
-                    item["prepared"] = None
-                item.pop("error", None)
-                for i in selection:
-                    item["pages"][i]["state"] = "standby"
-                self._save(item)
-            ids = [i for i in ids if self.get(i)["status"] == "ready"]
-            self.control.update(batch=ids, paused=False)
-            self.cancel_event = threading.Event()
+                start = self.control["order"].index(id)
+                return self.start_sequence(self.control["order"][start:], trusted=True, confirm_uncertain=confirm_uncertain)
+            if id in self.runners:
+                raise LibraryError("此任务正在运行；可先暂停或停止它", 409)
+            concurrency = clamp_concurrency(concurrency, allow_none=True)
+            task = self.get(id)
+            # Validate everything before mutating anything.
+            selection = self._selection(task, indices)
+            if not selection:
+                raise LibraryError("该任务已全部完成，没有需要生成的分幕")
+            self._assert_confirmed(task, selection, confirm_uncertain)
+            if id in self.control["lane"]:
+                self.control["lane"].remove(id)
+            self._arm(task, selection, force_prepare=force_prepare, concurrency=concurrency)
             self._save_control()
-            self.wake.set()
-            self._notify("queue.started", {"batch": list(ids), "sequential": sequential, "indices": indices})
+            self._spawn(id, lane=False)
+            self._notify("queue.started", {"batch": [id], "sequential": False, "indices": indices})
             return self.list()
 
-    def pause(self):
+    def start_many(self, ids, trusted=False, confirm_uncertain=False):
+        """Start several books at once, each in its own runner."""
+        if trusted is not True:
+            raise LibraryError("请确认启动生成与可能产生的费用", 403)
+        if not isinstance(ids, list) or not ids or not all(isinstance(i, str) for i in ids):
+            raise LibraryError("请选择要开始的任务")
         with self.lock:
-            if self.closed:
-                raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
-            self.control["paused"] = True
-            self._save_control()
-            self._notify("queue.paused", {"active": self.active})
-            return self.list()
-
-    def resume(self):
-        with self.lock:
-            if self.closed:
-                raise LibraryError("调度器正在关闭，不再接受新任务", 503)
-            if self.fault:
-                raise LibraryError("存储故障，请检查磁盘后重启服务", 503)
-            self.control["paused"] = False
-            self._save_control()
-            self.wake.set()
-            self._notify("queue.resumed", {"batch": list(self.control["batch"])})
-            return self.list()
-
-    def cancel(self):
-        with self.lock:
-            if self.closed:
-                raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
-            self.cancel_event.set()
-            for id in self.control["batch"]:
-                if id == self.active:
+            self._check_open()
+            plan = []
+            for id in dict.fromkeys(ids):
+                if id not in self.control["order"] or id in self.runners:
                     continue
                 task = self.get(id)
-                task["status"] = "standby"
-                task["selection"] = []
-                self._save(task)
-            self.control.update(batch=[], paused=True)
+                selection = self._selection(task, None)
+                if not selection:
+                    continue
+                self._assert_confirmed(task, selection, confirm_uncertain)
+                plan.append((task, selection))
+            if not plan:
+                raise LibraryError("所选任务没有可以开始的分幕")
+            for task, selection in plan:
+                if task["id"] in self.control["lane"]:
+                    self.control["lane"].remove(task["id"])
+                self._arm(task, selection)
             self._save_control()
-            self.wake.set()
-            self._notify("queue.cancelled", {"active": self.active})
+            for task, _ in plan:
+                self._spawn(task["id"], lane=False)
+            self._notify("queue.started", {"batch": [t["id"] for t, _ in plan], "sequential": False, "indices": None})
             return self.list()
 
-    def remove(self, id):
+    def start_sequence(self, ids=None, trusted=False, confirm_uncertain=False):
+        """Queue books into the lane: they run one after another, top to bottom."""
+        if trusted is not True:
+            raise LibraryError("请确认启动生成与可能产生的费用", 403)
+        if ids is not None and (not isinstance(ids, list) or not all(isinstance(i, str) for i in ids)):
+            raise LibraryError("请选择要顺次生成的任务")
+        with self.lock:
+            self._check_open()
+            wanted = list(dict.fromkeys(ids)) if ids is not None else list(self.control["order"])
+            plan = []
+            for id in wanted:
+                if id not in self.control["order"] or id in self.runners or id in self.control["lane"]:
+                    continue
+                task = self.get(id)
+                if task["status"] == "complete":
+                    continue
+                selection = self._selection(task, None)
+                if not selection:
+                    continue
+                self._assert_confirmed(task, selection, confirm_uncertain)
+                plan.append((task, selection))
+            if not plan:
+                raise LibraryError("没有可以顺次生成的任务：请先装配，或等待运行中的任务结束")
+            for task, selection in plan:
+                self._arm(task, selection, lane=True)
+            # The lane follows the visible order of the queue.
+            self.control["lane"] = self._ordered([*self.control["lane"], *(t["id"] for t, _ in plan)])
+            self.control["paused"] = False
+            self._save_control()
+            self._wake()
+            self._notify("queue.started", {"batch": list(self.control["lane"]), "sequential": True, "indices": None})
+            return self.list()
+
+    def _ordered(self, ids):
+        position = {id: i for i, id in enumerate(self.control["order"])}
+        return sorted(dict.fromkeys(ids), key=lambda id: position.get(id, len(position)))
+
+    def _spawn(self, id, lane):
+        task = self.get(id)
+        cancel = threading.Event()
+        runner = {"cancel": cancel, "task": task, "lane": lane, "thread": None}
+        self.runners[id] = runner
+        if lane:
+            self.lane_active = id
+        thread = threading.Thread(target=self._run, args=(id, cancel, lane), daemon=True, name="mio-production-" + id[-8:])
+        runner["thread"] = thread
+        thread.start()
+
+    def pause(self, id=None, ids=None):
+        """Global: hold every running or queued book and the lane itself.
+        Per task: hold only that book's next pages. Calls already in flight finish."""
         with self.lock:
             if self.closed:
                 raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
-            if id == self.active or id in self.control["batch"]:
-                raise LibraryError("请先取消任务所在批次", 409)
-            self.control["order"] = [i for i in self.control["order"] if i != id]
+            targets = self._targets(id, ids)
+            if targets is None:
+                self.control["paused"] = True
+                for other in list(self.runners) + list(self.control["lane"]):
+                    self._set_paused(other, True)
+                self._save_control()
+                self._notify("queue.paused", {"active": self.active})
+            else:
+                for target in targets:
+                    self._set_paused(target, True)
+                self._notify("task.paused", {"ids": targets})
+            self._wake()
+            return self.list()
+
+    def resume(self, id=None, ids=None):
+        """Global: release the lane and every held book. Per task: release that book only."""
+        with self.lock:
+            self._check_open()
+            targets = self._targets(id, ids)
+            if targets is None:
+                self.control["paused"] = False
+                for other in self.control["order"]:
+                    self._set_paused(other, False, only_if_paused=True)
+                self._save_control()
+                self._notify("queue.resumed", {"batch": list(self.control["lane"])})
+            else:
+                for target in targets:
+                    self._set_paused(target, False)
+                self._notify("task.resumed", {"ids": targets})
+            self._wake()
+            return self.list()
+
+    def _targets(self, id, ids):
+        if ids is not None:
+            if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
+                raise LibraryError("请选择任务")
+            return [i for i in dict.fromkeys(ids) if i in self.control["order"]]
+        if id is not None:
+            if id not in self.control["order"]:
+                raise LibraryError("生成任务不存在", 404)
+            return [id]
+        return None
+
+    def _set_paused(self, id, value, only_if_paused=False):
+        task = self._live(id)
+        if task is None:
+            summary = self.tasks.get(id, summary=True)
+            if not summary or bool(summary.get("paused")) == bool(value):
+                return
+            if value and id not in self.control["lane"]:
+                # Only a running or queued book can be held; standby books have nothing to hold.
+                return
+            task = self.tasks.get(id)
+        if not task or bool(task.get("paused")) == bool(value):
+            return
+        task["paused"] = bool(value)
+        self._save(task)
+
+    def cancel(self, id=None, ids=None):
+        """Global: stop every runner and empty the lane. Per task: stop or de-queue that book only."""
+        with self.lock:
+            if self.closed:
+                raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
+            targets = self._targets(id, ids)
+            if targets is None:
+                targets = list(dict.fromkeys(list(self.runners) + list(self.control["lane"])))
+            for target in targets:
+                runner = self.runners.get(target)
+                if runner:
+                    runner["cancel"].set()
+                if target in self.control["lane"]:
+                    self.control["lane"].remove(target)
+                    waiting = self.get(target)
+                    waiting["status"] = "standby"
+                    waiting["selection"] = []
+                    waiting["paused"] = False
+                    self._save(waiting)
             self._save_control()
-            self.tasks.delete(id)
+            self._wake()
+            self._notify("queue.cancelled", {"active": self.active, "targets": targets})
+            return self.list()
+
+    def remove(self, id=None, ids=None):
+        with self.lock:
+            if self.closed:
+                raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
+            targets = self._targets(id, ids)
+            if targets is None:
+                raise LibraryError("请选择要移除的任务")
+            if len(targets) == 1 and (targets[0] in self.runners or targets[0] in self.control["lane"]):
+                raise LibraryError("任务正在运行或排队中，请先停止它", 409)
+            removable = [t for t in targets if t not in self.runners and t not in self.control["lane"]]
+            if not removable:
+                raise LibraryError("所选任务都在运行或排队中，请先停止它们", 409)
+            self.control["order"] = [i for i in self.control["order"] if i not in removable]
+            self._save_control()
+            for target in removable:
+                self.tasks.delete(target)
+            return self.list()
+
+    def clear_finished(self):
+        """Drop every fully completed task record; albums are untouched."""
+        with self.lock:
+            if self.closed:
+                raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
+            done = []
+            for id in self.control["order"]:
+                if id in self.runners or id in self.control["lane"]:
+                    continue
+                task = self.tasks.get(id, summary=True)
+                if task and task["status"] == "complete":
+                    done.append(id)
+            if done:
+                self.control["order"] = [i for i in self.control["order"] if i not in done]
+                self._save_control()
+                for id in done:
+                    self.tasks.delete(id)
+            result = self.list()
+            result["removed"] = len(done)
+            return result
+
+    def reorder(self, order):
+        """Persist a new display order; the lane follows it."""
+        if not isinstance(order, list) or not all(isinstance(i, str) for i in order):
+            raise LibraryError("排序无效")
+        with self.lock:
+            if self.closed:
+                raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
+            if len(set(order)) != len(order) or set(order) != set(self.control["order"]):
+                raise LibraryError("排序与当前队列不一致，请刷新后重试", 409)
+            self.control["order"] = list(order)
+            self.control["lane"] = self._ordered(self.control["lane"])
+            self._save_control()
+            return self.list()
+
+    def set_concurrency(self, value, id=None):
+        """Queue-wide default (id None) or one task's own limit (value None → follow default)."""
+        with self.lock:
+            if self.closed:
+                raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
+            if id is None:
+                self.control["concurrency"] = clamp_concurrency(value)
+                self._save_control()
+            else:
+                if id not in self.control["order"]:
+                    raise LibraryError("生成任务不存在", 404)
+                task = self._live(id) or self.get(id)
+                task["concurrency"] = clamp_concurrency(value, allow_none=True)
+                self._save(task)
+            self._wake()
             return self.list()
 
     def recover_publication(self, id, index):
@@ -405,8 +708,10 @@ class ProductionQueue:
         with self.lock:
             if self.closed:
                 raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
-            if self.active or self.control["batch"] or self.fault:
-                raise LibraryError("请先停止当前批次并处理存储故障", 409)
+            if self.fault:
+                raise LibraryError("请先处理存储故障", 409)
+            if id in self.runners or id in self.control["lane"]:
+                raise LibraryError("任务正在运行或排队中，请先停止它", 409)
             task = self.get(id)
             if type(index) is not int or not 0 <= index < len(task["pages"]):
                 raise LibraryError("分幕索引无效")
@@ -414,7 +719,8 @@ class ProductionQueue:
             attempt = page["attempts"][-1] if page["attempts"] else {}
             if attempt.get("phase") != "publish" or not attempt.get("result"):
                 raise LibraryError("没有可恢复的已生成结果")
-            self.publish(copy.deepcopy(task), index, attempt["result"])
+            with self.publish_lock:
+                self.publish(copy.deepcopy(task), index, attempt["result"])
             page["result"] = attempt["result"]
             page["state"] = "complete"
             attempt["status"] = "complete"
@@ -432,15 +738,7 @@ class ProductionQueue:
                 pass
             return self.list()
 
-    def _await_dispatch(self, cancel):
-        while not self.closed and not cancel.is_set():
-            with self.lock:
-                if not self.control["paused"]:
-                    return True
-            self.wake.wait(0.1)
-            self.wake.clear()
-        return False
-
+    # ------------------------------------------------------------- execution
     def _loop(self):
         try:
             self._run_loop()
@@ -458,6 +756,23 @@ class ProductionQueue:
                     self.lease.close()
 
     def _run_loop(self):
+        """The lane dispatcher: one lane book at a time, only while nothing holds the lane.
+
+        On shutdown it outlives every runner, so the directory lease is held until
+        the last provider call has really returned (see close()).
+        """
+        try:
+            self._dispatch_lane()
+        finally:
+            while True:
+                with self.lock:
+                    threads = [r["thread"] for r in self.runners.values() if r["thread"]]
+                if not threads:
+                    break
+                for thread in threads:
+                    thread.join()
+
+    def _dispatch_lane(self):
         while not self.closed:
             self.wake.wait(0.2)
             self.wake.clear()
@@ -466,37 +781,41 @@ class ProductionQueue:
                     self.closed
                     or self.fault
                     or self.control["paused"]
-                    or not self.control["batch"]
+                    or self.lane_active is not None
+                    or not self.control["lane"]
                 ):
                     continue
-                id = self.control["batch"][0]
-                self.active = id
-                cancel = self.cancel_event
-            try:
-                self._execute(id, cancel)
-            except Exception as exc:
-                with self.lock:
-                    # Disk errors are not converted into implicit retries.
-                    self.fault = str(exc)[:500]
-                    self.control.update(paused=True, batch=[])
-                self._notify("queue.fault", {"error": self.fault})
-            finally:
-                with self.lock:
-                    self.active = None
-                    if id in self.control["batch"]:
-                        self.control["batch"].remove(id)
+                candidate_id = None
+                i = 0
+                while i < len(self.control["lane"]):
+                    id = self.control["lane"][i]
                     try:
-                        self._save_control()
-                    except Exception as exc:
-                        self.fault = str(exc)[:500]
-                        self.control["paused"] = True
-                    self.wake.set()
+                        task = self.tasks.get(id)
+                    except Exception:
+                        task = None
+                    if not task or id in self.runners or task["status"] != "ready":
+                        self.control["lane"].pop(i)
+                        try:
+                            self._save_control()
+                        except Exception:
+                            pass
+                        continue
+                    if not task.get("paused"):
+                        candidate_id = self.control["lane"].pop(i)
+                        try:
+                            self._save_control()
+                        except Exception:
+                            pass
+                        break
+                    i += 1
+                if candidate_id is not None:
+                    self._spawn(candidate_id, lane=True)
 
     def report_attempt(self, id, index, fields):
         """Provider progress updates the same in-memory attempt that will be committed."""
         with self.lock:
-            task = self.active_task
-            if not task or task["id"] != id or not task["pages"][index]["attempts"]:
+            task = self._live(id)
+            if not task or not task["pages"][index]["attempts"]:
                 return
             attempt = task["pages"][index]["attempts"][-1]
             for key in ("upstream", "cancelReport", "rateLimit"):
@@ -512,122 +831,65 @@ class ProductionQueue:
                     notices.append(fields["notice"][:500])
             self._save(task)
 
-    def _execute(self, id, cancel):
-        task = self.get(id)
-        self.active_task = task
+    def _run(self, id, cancel, lane):
+        try:
+            self._execute(id, cancel, lane)
+        except Exception as exc:
+            with self.lock:
+                # Disk errors are not converted into implicit retries.
+                self.fault = str(exc)[:500]
+                self.control.update(paused=True, lane=[])
+            self._notify("queue.fault", {"error": self.fault})
+        finally:
+            with self.lock:
+                self.runners.pop(id, None)
+                if self.lane_active == id:
+                    self.lane_active = None
+                try:
+                    self._save_control()
+                except Exception as exc:
+                    self.fault = str(exc)[:500]
+                    self.control["paused"] = True
+                self._wake()
+
+    def _may_dispatch(self, task, cancel):
+        # The queue-wide hold is expressed through each book's own ``paused``
+        # flag (see pause()); the control flag itself only holds the lane, so a
+        # book the creator starts explicitly during a hold really runs.
+        return not (self.closed or self.fault or cancel.is_set() or task.get("paused"))
+
+    def _execute(self, id, cancel, lane):
+        with self.lock:
+            task = self.runners[id]["task"]
         failures = []
-        streak = 0
         fatal = None
         try:
             if task["prepared"] is None:
-                task["status"] = "preparing"
-                self._save(task)
-                prepared = self.prepare(copy.deepcopy(task), cancel)
+                with self.lock:
+                    task["status"] = "preparing"
+                    self._save(task)
+                with self.lock:
+                    request = copy.deepcopy(task)
+                prepared = self.prepare(request, cancel)
                 if cancel.is_set():
                     raise InterruptedError("已取消；上游已收到的请求可能仍计费")
-                task["prepared"] = prepared
-                # Preparation notices (e.g. blanked variables) belong on the card, not only in the prepared blob.
-                notices = prepared.get("notices") if isinstance(prepared, dict) else None
-                if notices:
-                    task["notices"] = list(notices)
-                else:
-                    task.pop("notices", None)
-                self._save(task)
-            task["status"] = "running"
-            task.pop("error", None)
-            self._save(task)
-            self._notify("task.started", {"id": id, "title": task["title"], "albumId": task["albumId"], "selection": list(task["selection"])})
-            pending = list(task["selection"])
-            retries = {}
-            while pending:
-                index = pending.pop(0)
-                if not self._await_dispatch(cancel):
-                    raise InterruptedError("已取消后续分幕，原有图片保留")
                 with self.lock:
-                    page = task["pages"][index]
-                    attempt = {
-                        "id": uuid.uuid4().hex,
-                        "startedAt": time.time(),
-                        "status": "running",
-                    }
-                    page["attempts"].append(attempt)
-                    page["state"] = "running"
+                    task["prepared"] = prepared
+                    # Preparation notices (e.g. blanked variables) belong on the card, not only in the prepared blob.
+                    notices = prepared.get("notices") if isinstance(prepared, dict) else None
+                    if notices:
+                        task["notices"] = list(notices)
+                    else:
+                        task.pop("notices", None)
                     self._save(task)
-                try:
-                    result = self.render(copy.deepcopy(task), index, cancel)
-                    if cancel.is_set():
-                        raise InterruptedError(
-                            "结果返回前已取消；未替换原图，可能已计费"
-                        )
-                    # Preserve result before publishing; a failed publication is not a reason to re-render.
-                    with self.lock:
-                        attempt.update(
-                            status="rendered",
-                            phase="publish",
-                            result=result,
-                            finishedAt=time.time(),
-                        )
-                        self._save(task)
-                    self.publish(copy.deepcopy(task), index, result)
-                    if cancel.is_set():
-                        raise InterruptedError(
-                            "发布阶段收到取消，请核对画册；不会自动重发"
-                        )
-                    with self.lock:
-                        page["result"] = result
-                        page["state"] = "complete"
-                        attempt["status"] = "complete"
-                        streak = 0
-                        self._save(task)
-                except Exception as exc:
-                    uncertain = cancel.is_set() or isinstance(exc, InterruptedError) or (
-                        attempt.get("phase") != "publish"
-                        and result_unconfirmed(exc, attempt.get("upstream"))
-                    )
-                    with self.lock:
-                        attempt.update(
-                            status=(
-                                "uncertain"
-                                if uncertain
-                                else "failed"
-                            ),
-                            error=failure_summary(safe_error_text(str(exc)), terminal=True),
-                            rawError=safe_error_text(str(exc))[:16384],
-                            finishedAt=time.time(),
-                        )
-                        page["state"] = (
-                            "uncertain"
-                            if uncertain
-                            else "failed"
-                        )
-                    if cancel.is_set() or isinstance(exc, InterruptedError):
-                        raise
-                    # One rejected page (moderation, bad parameters, exhausted
-                    # rate limit) is page-local: record it and keep going so the
-                    # rest of the book still gets rendered.
-                    with self.lock:
-                        self._save(task)
-                    decision = self._retry_decision(task, index, attempt, retries.get(index, 0), fatal_page_failure(exc) or attempt.get("phase") == "publish")
-                    if decision:
-                        retries[index] = retries.get(index, 0) + 1
-                        with self.lock:
-                            page["state"] = "standby"
-                            self._save(task)
-                        if cancel.wait(decision["delay"]):
-                            raise InterruptedError("重试等待期间已取消")
-                        pending.insert(0, index)
-                        continue
-                    failures.append((index, attempt["error"]))
-                    streak += 1
-                    # Publication failures are local storage problems: rendering
-                    # more pages that cannot be saved would only pay twice.
-                    if (
-                        attempt.get("phase") == "publish"
-                        or fatal_page_failure(exc)
-                        or streak >= FAILURE_STREAK_LIMIT
-                    ):
-                        fatal = exc
-                        break
+            with self.lock:
+                task["status"] = "running"
+                task.pop("error", None)
+                self._save(task)
+                # Render and publish see a frozen book; page bookkeeping lives on ``task``.
+                frozen = copy.deepcopy(task)
+            self._notify("task.started", {"id": id, "title": task["title"], "albumId": task["albumId"], "selection": list(task["selection"])})
+            failures, fatal = self._run_pages(task, frozen, cancel)
             with self.lock:
                 task["status"] = (
                     "complete"
@@ -638,10 +900,10 @@ class ProductionQueue:
                     if not any(p["state"] == "complete" for p in task["pages"]):
                         task["status"] = "failed"
                     task["error"] = self._failure_report(task, failures, fatal)
-            if fatal is not None:
-                # A systemic failure stops a sequential batch rather than
-                # skipping into another paid book with the same broken setup.
-                self._halt_batch(id)
+            if fatal is not None and lane:
+                # A systemic failure stops the sequence rather than skipping
+                # into another paid book with the same broken setup.
+                self._halt_lane()
         except Exception as exc:
             with self.lock:
                 task["status"] = (
@@ -650,19 +912,175 @@ class ProductionQueue:
                     else ("interrupted" if isinstance(exc, InterruptedError) else "failed")
                 )
                 task["error"] = failure_summary(safe_error_text(str(exc)), terminal=True)
-            # Failure stops a sequential batch rather than skipping into another paid book.
-            self._halt_batch(id)
+            # A book that could not even start (preparation failed) stops the sequence;
+            # stopping one book by hand leaves the rest of the lane alone.
+            if lane and not cancel.is_set():
+                self._halt_lane()
         finally:
+            with self.lock:
+                task["paused"] = False
+                task.pop("runMode", None)
+                self._save(task)
+                settled = copy.deepcopy(task)
             try:
-                with self.lock:
+                self.finalize(settled)
+            except Exception:
+                pass
+            self._notify("task.finished", {"id": id, "title": task["title"], "albumId": task["albumId"], "status": task["status"], "error": task.get("error")})
+
+    def _run_pages(self, task, frozen, cancel):
+        """Dispatch the selected pages with a live, per-task concurrency limit.
+
+        Returns (failures, fatal). Raises InterruptedError once a cancel, an
+        unconfirmed result or a shutdown stops the book; pages still in flight
+        are always drained first so their outcome is recorded (never re-billed
+        silently). Extension hooks run without holding the queue lock.
+        """
+        pending = list(task["selection"])
+        retry_at = {}
+        retries = {}
+        in_flight = {}
+        outbox = []
+        failures = []
+        streak = 0
+        fatal = None
+        interrupt = None
+        while True:
+            with self.cond:
+                now = time.time()
+                if interrupt is None and fatal is None:
+                    to_start = []
+                    while pending and (len(in_flight) + len(to_start)) < self.effective_concurrency(task) and self._may_dispatch(task, cancel):
+                        index = next((i for i in pending if retry_at.get(i, 0) <= now), None)
+                        if index is None:
+                            break
+                        pending.remove(index)
+                        page = task["pages"][index]
+                        attempt = {
+                            "id": uuid.uuid4().hex,
+                            "startedAt": time.time(),
+                            "status": "running",
+                        }
+                        page["attempts"].append(attempt)
+                        page["state"] = "running"
+                        worker = threading.Thread(
+                            target=self._run_page,
+                            args=(task, frozen, index, attempt, cancel, outbox),
+                            daemon=True,
+                            name="mio-page-" + str(index),
+                        )
+                        to_start.append((index, worker))
+                    if to_start:
+                        self._save(task)
+                        for index, worker in to_start:
+                            in_flight[index] = worker
+                            worker.start()
+                if interrupt is None and (cancel.is_set() or self.closed):
+                    interrupt = InterruptedError(
+                        "已取消后续分幕，原有图片保留" if cancel.is_set() else "服务正在关闭，已停止后续分幕，原有图片保留"
+                    )
+                done = outbox.pop(0) if outbox else None
+                if done is not None:
+                    in_flight.pop(done[0], None)
+                elif in_flight:
+                    self.cond.wait(0.1)
+                    continue
+                elif interrupt is not None:
+                    raise interrupt
+                elif fatal is not None or not pending:
+                    return failures, fatal
+                elif self.fault:
+                    raise RuntimeError(self.fault)
+                else:
+                    # Held (paused) or waiting for a retry delay: nothing in flight, nothing dispatchable yet.
+                    delays = [retry_at[i] - now for i in pending if retry_at.get(i, 0) > now]
+                    if delays and len(delays) == len(pending) and self._may_dispatch(task, cancel):
+                        self.cond.wait(max(0.01, min(min(delays), 0.5)))
+                    else:
+                        self.cond.wait(0.1)
+                    continue
+            index, attempt, exc = done
+            if exc is None:
+                streak = 0
+                continue
+            if isinstance(exc, InterruptedError) or cancel.is_set():
+                # A cancel, or a result the provider could not confirm: stop the
+                # book here; the creator reconciles upstream before anything reruns.
+                # The page's own error stays the book's error: it says more than「已取消」.
+                if interrupt is None or not isinstance(exc, InterruptedError):
+                    interrupt = exc
+                continue
+            decision = self._retry_decision(task, index, attempt, retries.get(index, 0), fatal_page_failure(exc) or attempt.get("phase") == "publish")
+            with self.lock:
+                if decision:
+                    retries[index] = retries.get(index, 0) + 1
+                    task["pages"][index]["state"] = "standby"
                     self._save(task)
+                    retry_at[index] = time.time() + decision["delay"]
+                    pending.insert(0, index)
+                    continue
+                failures.append((index, attempt["error"]))
+                streak += 1
+                # Publication failures are local storage problems: rendering
+                # more pages that cannot be saved would only pay twice.
+                if (
+                    attempt.get("phase") == "publish"
+                    or fatal_page_failure(exc)
+                    or streak >= FAILURE_STREAK_LIMIT
+                ):
+                    fatal = exc
+
+    def _run_page(self, task, frozen, index, attempt, cancel, outbox):
+        page = task["pages"][index]
+        exc_out = None
+        try:
+            result = self.render(copy.deepcopy(frozen), index, cancel)
+            if cancel.is_set():
+                raise InterruptedError(
+                    "结果返回前已取消；未替换原图，可能已计费"
+                )
+            # Preserve result before publishing; a failed publication is not a reason to re-render.
+            with self.lock:
+                attempt.update(
+                    status="rendered",
+                    phase="publish",
+                    result=result,
+                    finishedAt=time.time(),
+                )
+                self._save(task)
+            with self.publish_lock:
+                self.publish(copy.deepcopy(frozen), index, result)
+            if cancel.is_set():
+                raise InterruptedError(
+                    "发布阶段收到取消，请核对画册；不会自动重发"
+                )
+            with self.lock:
+                page["result"] = result
+                page["state"] = "complete"
+                attempt["status"] = "complete"
+                self._save(task)
+        except Exception as exc:
+            exc_out = exc
+            uncertain = cancel.is_set() or isinstance(exc, InterruptedError) or (
+                attempt.get("phase") != "publish"
+                and result_unconfirmed(exc, attempt.get("upstream"))
+            )
+            with self.lock:
+                attempt.update(
+                    status="uncertain" if uncertain else "failed",
+                    error=failure_summary(safe_error_text(str(exc)), terminal=True),
+                    rawError=safe_error_text(str(exc))[:16384],
+                    finishedAt=time.time(),
+                )
+                page["state"] = "uncertain" if uncertain else "failed"
                 try:
-                    self.finalize(copy.deepcopy(task))
+                    self._save(task)
                 except Exception:
                     pass
-                self._notify("task.finished", {"id": id, "title": task["title"], "albumId": task["albumId"], "status": task["status"], "error": task.get("error")})
-            finally:
-                self.active_task = None
+        finally:
+            with self.cond:
+                outbox.append((index, attempt, exc_out))
+                self.cond.notify_all()
 
     def _retry_decision(self, task, index, attempt, done, fatal):
         """Ask the platform whether a page-local failure should be retried (max 3)."""
@@ -680,15 +1098,17 @@ class ProductionQueue:
         delay = decision.get("delay", 0)
         return {"delay": max(0.0, min(600.0, float(delay if isinstance(delay, (int, float)) else 0)))}
 
-    def _halt_batch(self, id):
+    def _halt_lane(self):
         with self.lock:
-            for other in self.control["batch"]:
-                if other != id:
-                    waiting = self.get(other)
-                    waiting["status"] = "standby"
-                    waiting["selection"] = []
-                    self._save(waiting)
-            self.control.update(batch=[], paused=True)
+            for other in self.control["lane"]:
+                waiting = self.tasks.get(other)
+                if not waiting:
+                    continue
+                waiting["status"] = "standby"
+                waiting["selection"] = []
+                waiting["paused"] = False
+                self._save(waiting)
+            self.control["lane"] = []
 
     @staticmethod
     def _failure_report(task, failures, fatal):
@@ -711,10 +1131,19 @@ class ProductionQueue:
         """
         with self.lock:
             self.closed = True
-            self.cancel_event.set()
+            runners = list(self.runners.values())
+            for runner in runners:
+                runner["cancel"].set()
             self.control["paused"] = True
-            self.wake.set()
+            self._wake()
+        deadline = time.monotonic() + timeout
+        for runner in runners:
+            thread = runner["thread"]
+            if thread and thread is not threading.current_thread():
+                thread.join(timeout=max(0.0, deadline - time.monotonic()))
         if threading.current_thread() is not self.worker:
-            self.worker.join(timeout=timeout)
-        self.unclean_shutdown = self.worker.is_alive()
+            self.worker.join(timeout=max(0.0, deadline - time.monotonic()))
+        self.unclean_shutdown = self.worker.is_alive() or any(
+            r["thread"] and r["thread"].is_alive() for r in runners
+        )
         return not self.unclean_shutdown

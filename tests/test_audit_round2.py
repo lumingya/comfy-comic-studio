@@ -64,7 +64,7 @@ class QueueBoundaryTests(unittest.TestCase):
     def wait(self):
         for _ in range(300):
             t = self.q.get(self.task['id'])
-            if t['status'] in ('failed', 'interrupted', 'complete') and self.q.active is None:
+            if t['status'] in ('failed', 'interrupted', 'complete') and not self.q.active:
                 return t
             time.sleep(.01)
         self.fail('worker did not settle')

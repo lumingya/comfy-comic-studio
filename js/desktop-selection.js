@@ -23,8 +23,14 @@ function installDesktopSelection() {
       remove:()=>handleAction('ws-lib-delete-bulk',{})},
     {root:'#wm-binding-rows', item:'[data-binding-row]', key:e=>e.dataset.bindingRow,
       get:()=>mapperUI.sel, set:s=>{mapperUI.sel=s}, render:()=>render(), open:e=>e.querySelector('.wf-row-main')?.click(),
-      remove:()=>handleAction('wm-delete-bulk',{})}
+      remove:()=>handleAction('wm-delete-bulk',{})},
+    // Production task cards: a plain click leaves the card alone (its buttons act), Ctrl / Shift / marquee select,
+    // the selection drives the batch context menu and Delete removes the selected records.
+    {root:'.production-cards', item:'article.production-card[data-production-task]', key:e=>e.dataset.productionTask,
+      get:()=>workshop.pickedTasks, set:s=>{workshop.pickedTasks=s;syncProductionSelectionStatus()}, render:()=>render(), open:()=>{},
+      remove:ids=>handleAction('production-remove',{ids:JSON.stringify(ids)})}
   ];
+  function syncProductionSelectionStatus(){const status=document.querySelector('.production-selection-status'),n=workshop.pickedTasks.size;if(status){status.hidden=!n;status.textContent=n?localeString('已选 {n} 张任务卡 · 右键批量操作，Esc 取消',{n}):''}}
   const OPENERS='.wf-item-body,.wf-row-main,[data-act="read"],[data-select-book],[data-designer-preset]';
   let gesture=null, active=null, suppress=false, raf=0;
   const anchors=new Map();
@@ -43,6 +49,7 @@ function installDesktopSelection() {
       e.classList.toggle('desktop-selected',on);e.classList.toggle('is-picked',on);
       if(c.s.root==='.designer-presets'){e.classList.toggle('selected',on);const cb=e.querySelector('input[type="checkbox"]');if(cb)cb.checked=on}
       if(c.s.root==='#gallery-results'){e.classList.toggle('is-selected',on);e.setAttribute('aria-selected',String(on));const cb=e.querySelector('[data-select-book]');if(cb)cb.checked=on}
+      if(c.s.root==='.production-cards')e.setAttribute('aria-selected',String(on));
     }
     c.root.classList.toggle('has-selection',sel.size>0);
   }
@@ -69,8 +76,8 @@ function installDesktopSelection() {
   window.addEventListener('pointerdown',e=>{
     suppress=false;if(e.button!==0||e.pointerType==='touch'||editable(e.target))return;
     const c=locate(e.target);if(!c)return;
-    // Shelf cards reorder by dragging while nothing is selected; the marquee takes over once a selection exists (or with a modifier).
-    if(c.s.root==='#gallery-results'&&c.item&&!c.s.get().size&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey)return;
+    // Shelf and task cards reorder by dragging while nothing is selected; the marquee takes over once a selection exists (or with a modifier).
+    if((c.s.root==='#gallery-results'||c.s.root==='.production-cards')&&c.item&&!c.s.get().size&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey)return;
     const control=e.target.closest('button,input,a,[data-act]');
     if(control&&!c.item)return;
     if(control&&control!==c.item&&!control.matches(OPENERS))return;
@@ -103,8 +110,11 @@ function installDesktopSelection() {
       if(c.s.get().size){c.s.set(new Set());paint(c);if(id===null)commit(c)}
       return;
     }
-    e.preventDefault();e.stopImmediatePropagation();
-    const before=c.s.get(), toggle=e.ctrlKey||e.metaKey||control?.matches('input[type="checkbox"]');
+    // A checkbox keeps its native toggle (and change event): preventing it would leave the box visually stale once the
+    // browser reverts a cancelled activation after dispatch. Every other target is fully handled here.
+    const checkbox=!!control?.matches('input[type="checkbox"]');
+    if(!checkbox)e.preventDefault();e.stopImmediatePropagation();
+    const before=c.s.get(), toggle=e.ctrlKey||e.metaKey||checkbox;
     let next=new Set(toggle?before:[]);
     if(id!==null){const all=items(c).map(c.s.key),anchor=anchors.get(c.s);
       if(e.shiftKey&&all.includes(anchor)){if(e.ctrlKey||e.metaKey)next=new Set(before);const a=all.indexOf(anchor),b=all.indexOf(id);all.slice(Math.min(a,b),Math.max(a,b)+1).forEach(k=>next.add(k))}
@@ -141,6 +151,7 @@ function installDesktopSelection() {
   window.desktopSelection={
     clear(rootSelector,rerender=true){const root=document.querySelector(rootSelector);const s=scopes.find(x=>x.root===rootSelector);if(!root||!s)return;clearSelection({s,root,item:null},rerender)},
     repaint(rootSelector){const root=document.querySelector(rootSelector);const s=scopes.find(x=>x.root===rootSelector);if(root&&s)paint({s,root,item:null})},
+    busy(){return !!gesture?.drag},
     isTouch:coarse
   };
 }

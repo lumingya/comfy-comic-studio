@@ -82,9 +82,8 @@ export async function runAudit({mobile=false,engine='chromium'}={}){
   await p.locator('#allow-external-fonts').uncheck();check(await p.evaluate(()=>!state.settings.presentation.fonts&&!document.querySelector('#collection-font-stylesheet,#art-font-stylesheet')),'font opt-out removes remote stylesheet links');
   await p.evaluate(()=>{navigate(1);workshop.view='production';render()});
   if(mobile)check(await p.locator('.production-controls button').evaluateAll(nodes=>nodes.length>0&&nodes.every(n=>{const r=n.getBoundingClientRect();return r.width>=44&&r.height>=44})),'production touch targets are at least 44 by 44 pixels');
-  await p.locator('[data-act="production-uncertain-filter"]').click();check(await p.evaluate(()=>workshop.onlyUncertain),'uncertain-result filter is actionable');
-  const dl=p.waitForEvent('download');await p.locator('[data-act="production-uncertain-export"]').click();const file=await dl;
-  const checklist=JSON.parse(fs.readFileSync(await file.path(),'utf8'));check(file.suggestedFilename().endsWith('.json')&&Array.isArray(checklist.tasks),'uncertain-result checklist downloads valid JSON without provider calls');
+  check(await p.locator('.production-toolbar [data-act="production-sequence"],.production-toolbar [data-act="production-clear-finished"],.production-toolbar [data-production-concurrency="*"]').count()===3,'queue toolbar offers sequential start, clear-finished and the default page concurrency');
+  check(await p.locator('[data-act="production-uncertain-filter"],[data-act="production-uncertain-export"],[data-act="production-batch"],[data-act="production-reprepare"]').count()===0,'retired queue controls are not rendered');
   await p.evaluate(()=>{navigate(0);render()});
   const first=p.locator('[data-act="read"]').first();await first.click();check(await p.locator('#reader').evaluate(x=>x.open),'current gallery opens the actual reader');await p.evaluate(()=>closeReader());
   const boot=await context.newPage();let failed=false;await boot.route('**/api/content',route=>{if(!failed){failed=true;return route.fulfill({status:503,json:{error:'controlled temporary startup failure'}})}return route.continue()});
