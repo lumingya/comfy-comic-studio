@@ -29,6 +29,9 @@ def capabilities():
             'generationMode': 'durable_jobs_and_synchronous_compatibility', 'maxConcurrentExternalGenerations': 1,
             'jobChannelConfig': 'latest_saved_by_reference', 'jobConcurrencyScope': 'frames_per_task', 'jobProgressVersion': 2, 'manualTaskPools': True,
             'browserQueueIntegration': True, 'webhooks': False,
+            'catalog': ['workflows', 'storyboards', 'presets', 'layouts', 'channels', 'collections'],
+            'albumExportFormats': ['html', 'zip', 'pdf'], 'productionQueue': True,
+            'integrationOperations': ['read_catalog', 'read_workflows', 'read_presets', 'read_layouts', 'read_channels', 'read_album', 'export_album', 'production_assemble', 'production_control'],
             'notes': 'Durable jobs unify browser and external task execution. Inline credentials use the legacy synchronous endpoint.'}
 
 
@@ -117,6 +120,24 @@ def openapi():
         if path == 'assets':
             op['parameters'] = [{'name': 'path', 'in': 'query', 'required': True, 'schema': {'type': 'string', 'pattern': '^/images/'}}]
         paths['/api/v1/' + path] = {'get': op}
+    for path, summary in [('catalog', 'Workflows, storyboards, presets, layouts, channels and collections in one response'),
+                          ('resources/workflows', 'Saved ComfyUI workflows (no graph body)'), ('resources/presets', 'Character and scene variable-set presets'),
+                          ('resources/characters', 'Character presets'), ('resources/scenes', 'Scene presets'), ('resources/layouts', 'Album export layouts (no html body)'),
+                          ('resources/channels', 'Image generation channels, without credentials'), ('resources/collections', 'Projects'),
+                          ('albums/{albumId}', 'Album document with per-step asset endpoints'), ('production/tasks', 'Production (assembly) queue'), ('production/tasks/{taskId}', 'One production task')]:
+        op = {'summary': summary, 'responses': {'200': response, '401': response, '404': response, '503': response}}
+        if '{albumId}' in path or '{taskId}' in path:
+            op['parameters'] = [{'name': 'albumId' if 'albumId' in path else 'taskId', 'in': 'path', 'required': True, 'schema': {'type': 'string'}}]
+        paths['/api/v1/' + path] = {'get': op}
+    paths['/api/v1/albums/export'] = {'post': {'summary': 'Export albums as a self-contained HTML (with a layout), ZIP or PDF file',
+        'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object', 'required': ['albumIds'], 'properties': {
+            'albumIds': {'type': 'array', 'items': {'type': 'string'}}, 'format': {'type': 'string', 'enum': ['html', 'zip', 'pdf'], 'default': 'html'},
+            'layoutId': {'type': 'string'}, 'imageProfile': {'type': 'string', 'enum': ['auto', 'archive', 'clean', 'publish']},
+            'themeColor': {'type': 'string'}, 'border': {'type': 'integer'}, 'signature': {'type': 'string'}, 'showCaptions': {'type': 'boolean'}, 'showPrompts': {'type': 'boolean'}}}}}},
+        'responses': {'200': {'description': 'File download (Content-Disposition attachment)'}, '400': response, '401': response, '404': response, '409': response}}}
+    for action in ('assemble', 'start', 'start-many', 'pause', 'resume', 'cancel', 'remove'):
+        paths['/api/v1/production/' + action] = {'post': {'summary': 'Production queue: ' + action + ' (same body as the studio UI; start requires trusted: true)',
+            'requestBody': {'required': True, 'content': {'application/json': {'schema': {'type': 'object'}}}}, 'responses': {'200': response, '400': response, '401': response, '404': response}}}
     paths['/api/v1/images/generations'] = {'post': {'summary': 'Generate one image synchronously; no automatic retry and no browser queue mutation',
         'requestBody': {'required': True, 'content': {'application/json': {'schema': {'$ref': '#/components/schemas/GenerationRequest'}}}},
         'responses': {str(code): response for code in (200, 400, 401, 403, 404, 413, 429, 502, 503)}}}
@@ -198,7 +219,10 @@ def handle(handler, backend):
             raise ApiError(403, 'origin_denied', 'Origin is not allowed')
         query = urllib.parse.parse_qs(parsed.query)
         route = parsed.path[len('/api/v1/'):]
-        from backend import mio_foundation
+        from backend import mio_api_ext, mio_foundation
+        # Catalogue / album export / production queue for chat-bot integrations.
+        if mio_api_ext.dispatch(handler, backend, route, query, request_id):
+            return True
         if mio_foundation.dispatch(handler, backend, route, query, request_id):
             return True
         if handler.command == 'GET':

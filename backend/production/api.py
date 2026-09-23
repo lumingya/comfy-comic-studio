@@ -1190,6 +1190,10 @@ def dispatch(handler, host, path):
                         "pages",
                         "cancelReport",
                         "rateLimit",
+                        "paused",
+                        "albumId",
+                        "createdAt",
+                        "updatedAt",
                     )
                 }
         elif handler.command == "POST":
