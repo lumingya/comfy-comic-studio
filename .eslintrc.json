@@ -612,6 +612,7 @@
     "primaryNavItems": "writable",
     "renderQuietShell": "writable",
     "renderV3Modules": "writable",
+    "productionLiveSyncSettingsHTML": "writable",
     "renderResourceHub": "writable",
     "renderCurrentIdentity": "writable",
     "renderWritingWorkspace": "writable",

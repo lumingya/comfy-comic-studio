@@ -1,0 +1,11 @@
+{
+  "id": "collection_db18c070-2f29-4396-8142-1caa8aa48c56",
+  "title": "色色",
+  "createdAt": 1790094900643,
+  "_sourceFormat": {
+    "replaced": {},
+    "added": []
+  },
+  "schema": "mio.resource.v2",
+  "kind": "collections"
+}

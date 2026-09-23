@@ -47,7 +47,9 @@ const mapperUI = {
   libSearch: "",
   healthOpen: false,
   connectionOpen: false,
-  railPinned: workbenchPref("railPinned", false) === true,
+  // The library is a permanent column unless the user explicitly folds it into the edge tab.
+  railPinned: workbenchPref("railPinned", true) !== false,
+  showTargets: workbenchPref("showTargets", false) === true,
   railOpen: false,
   customPath: "",
 };
@@ -114,13 +116,14 @@ const WORKFLOW_ICONS = {
 
 function mapperSelectedBinding() {
   const c = state.settings.comfy;
-  return c.bindings.find((b) => b.id === mapperUI.selected) || c.bindings[0];
+  const list = Array.isArray(c?.bindings) ? c.bindings : [];
+  return list.find((b) => b.id === mapperUI.selected) || list[0];
 }
 
 function mapperBindingIssues() {
   const c = state.settings.comfy,
-    issues = validateMappingTargets(c.workflow, c.bindings);
-  if (c.outputNodeId && !Object.hasOwn(c.workflow, c.outputNodeId))
+    issues = validateMappingTargets(c.workflow, Array.isArray(c?.bindings) ? c.bindings : []);
+  if (c.outputNodeId && !Object.hasOwn(c.workflow || {}, c.outputNodeId))
     issues.push({ id: "", kind: "output", message: "指定的结果图片节点 #" + c.outputNodeId + " 不存在。" });
   const plan=c.slots?.plan;
   for(const t of plan?.model.targets||[])if(t.enabled&&!Object.hasOwn(c.workflow[t.nodeId]?.inputs||{},t.path))issues.push({id:'',kind:'slot-model',message:'目标不在蓝图中：'+t.key});
@@ -147,21 +150,29 @@ function mapperSlotItems(c, issues) {
   const v = slotView(c);
   return ['model', 'lora'].map(kind => {
     const slot = v.resolved[kind], id = `__slot_${kind}__`;
-    return {id, kind, label: kind === 'model' ? '基础模型' : 'LoRA',
-      tag: kind === 'model' ? '模型' : '风格叠加', enabled: kind === 'model' ? slot.enabled : slot.mode !== 'off',
-      issue: issues.find(i => i.kind === 'slot-' + kind), search: [slot.nodeId, slot.path].join(' ')};
+    const enabled = kind === 'model' ? slot.enabled : slot.mode !== 'off';
+    const detail = kind === 'model'
+      ? (!slot.nodeId ? '尚未识别模型加载节点' : enabled ? '装配时可替换底模' : '保持蓝图里的模型')
+      : (!enabled ? '此蓝图没有可用的 LoRA 应用点' : v.currentLoras.length ? `蓝图自带 ${v.currentLoras.length} 个，装配时可追加或解锁` : '装配时可追加 LoRA');
+    const current = kind === 'model' ? (v.currentModel ? WorkflowSlots.loraStem(v.currentModel) : '') : v.currentLoras.map(l => WorkflowSlots.loraStem(l.name)).join('、');
+    const target = mapperUI.showTargets && slot.nodeId ? `#${slot.nodeId} · ${slot.path}${current ? ' · ' + current : ''}` : '';
+    return {id, kind, group: 'model', label: kind === 'model' ? '基础模型' : 'LoRA',
+      tag: kind === 'model' ? '模型' : '风格叠加', tone: 'model', detail, target, enabled,
+      issue: issues.find(i => i.kind === 'slot-' + kind), search: [slot.nodeId, slot.path, current, detail].join(' ')};
   });
 }
 function mapperItemMatches(item) {
   return (mapperUI.filter !== 'enabled' || item.enabled) && (mapperUI.filter !== 'disabled' || !item.enabled) &&
     (mapperUI.filter !== 'issues' || item.issue) && (!mapperUI.search.trim() || [item.label,item.tag,item.search].join(' ').toLowerCase().includes(mapperUI.search.trim().toLowerCase()));
 }
+/* One row component for semantic slots and ordinary bindings: status glyph, name + a one-line summary of what is
+   written, a colour-coded purpose tag, the switch and an edit button. Node IDs appear only on demand. */
 function renderUnifiedMappingRow(item) {
   const selected = mapperUI.selected === item.id, picked = mapperUI.sel.has(item.id), action = item.kind ? 'wm-select-slot' : 'wm-select', key = item.kind || item.id;
-  return `<article class="wm-row wf-row ${selected ? 'selected' : ''} ${picked ? 'is-picked' : ''} ${item.enabled ? '' : 'is-off'} ${item.issue ? 'has-issue' : ''}" data-binding-row="${esc(item.id)}" ${item.kind ? `data-slot-row="${item.kind}"` : ''}>
+  return `<article class="wm-row wf-row ${item.kind ? 'wf-row-slot' : ''} ${selected ? 'selected' : ''} ${picked ? 'is-picked' : ''} ${item.enabled ? '' : 'is-off'} ${item.issue ? 'has-issue' : ''}" data-binding-row="${esc(item.id)}" ${item.kind ? `data-slot-row="${item.kind}"` : ''}>
     <span class="wf-row-lead"><input type="checkbox" class="sel-cbox" ${picked ? 'checked' : ''} data-act="wm-pick" data-id="${esc(item.id)}" aria-label="选择${esc(item.label)}"><span class="wf-row-glyph ${item.issue ? 'is-bad' : item.enabled ? 'is-on' : 'is-off'}" title="${esc(item.issue?.message || (item.enabled ? '已启用' : '已停用'))}">${icon(item.issue ? 'alert' : item.enabled ? 'check' : 'pause','sm')}</span></span>
-    <button type="button" class="wm-row-select wf-row-main" data-act="${action}" data-id="${esc(key)}" aria-pressed="${selected}"><span class="wf-row-name" data-user-content>${esc(item.label)}</span>${item.issue ? '<span class="wf-row-warning">需要检查配置</span>' : ''}</button>
-    <span class="wf-row-source"><span class="wf-tag">${esc(item.tag)}</span></span>
+    <button type="button" class="wm-row-select wf-row-main" data-act="${action}" data-id="${esc(key)}" aria-pressed="${selected}"><span class="wf-row-name" data-user-content>${esc(item.label)}</span>${item.issue ? `<span class="wf-row-warning">${esc(item.issue.message || '需要检查配置')}</span>` : item.detail ? `<span class="wf-row-sub" data-user-content>${esc(item.detail)}</span>` : ''}</button>
+    <span class="wf-row-source"><span class="wf-tag tag-${esc(item.tone || 'fixed')}">${esc(item.tag)}</span>${item.target ? `<span class="wf-row-target mono">${esc(item.target)}</span>` : ''}</span>
     <label class="switch wf-row-switch"><input type="checkbox" role="switch" ${item.kind ? `data-v3-slot="${item.kind}.enabled"` : `data-v3-binding="enabled" data-id="${esc(item.id)}"`} ${item.enabled ? 'checked' : ''} aria-label="启用${esc(item.label)}"><span class="switch-track"></span></label>
     <button type="button" class="ibtn wf-edit-row" data-act="${action}" data-id="${esc(key)}" aria-label="编辑${esc(item.label)}">${icon('edit','sm')}</button>
   </article>`;
@@ -170,13 +181,49 @@ function renderSlotRows(c, issues) {
   return mapperSlotItems(c, issues).filter(mapperItemMatches).map(renderUnifiedMappingRow).join('');
 }
 
+const SLOT_ROLE_LABEL = { primary: '主模型', same: '同名副本', other: '其他模型', 'linked-unwritable': '已连线 · 只读' };
+const SLOT_LORA_KIND_LABEL = { chain: '节点链', stack: '堆栈节点', syntax: '语法注入', object: '对象参数', embedded: '内嵌参数' };
+
 function renderSlotInspector(kind, c) {
-  const plan=slotView(c).plan;
-  const controls=`<div class="row wrap">${btn('重新分析','refresh','wf-slots-analyze','','small')}${btn('手动指定','plus','wf-slots-manual','','small')}</div>`;
-  if(!plan)return `<section class="wf-inspector-card"><h3>语义槽位 v3</h3><p>尚未取得分析计划；请启动本地后端后重新分析。</p>${controls}</section>`;
-  const targets=plan.model.targets.map(t=>`<label class="wf-slot-plan-row"><input type="checkbox" data-slot-plan-kind="model" data-slot-plan-key="${esc(t.key)}" ${t.enabled?'checked':''} ${t.role==='linked-unwritable'?'disabled':''}><span><b data-user-content>${esc(t.title||t.nodeId)}</b> · ${esc(t.role)}<br><code>${esc(t.key)}</code><br><span data-user-content>${esc(t.current)}</span>${t.reason?`<p class="help">${esc(t.reason)}</p>`:''}</span></label>`).join('');
-  const groups=plan.lora.groups.map(g=>`<article class="wf-inspector-card"><label><input type="checkbox" data-slot-plan-kind="lora" data-slot-plan-key="${esc(g.key)}" ${g.enabled?'checked':''}> ${esc(g.kind)} · ${esc(g.series)} · ${g.active?'活跃':'不活跃'}${g.append?' · 追加入口':' · 保留原条目'}</label><p><code>${esc(g.key)}</code></p><p>来源：${esc(g.origin?g.origin.nodeId+':'+g.origin.path:'不可写来源，断链直写')}</p><ul>${g.sites.map(x=>`<li>${esc(x.nodeId+':'+x.path)}${x.reason?' · '+esc(x.reason):''}</li>`).join('')}</ul><p>钉住：${g.pinned.map(l=>esc(l.name)+' ×'+esc(l.strength)).join(' · ')||'无'}</p>${g.warn?`<p class="notice amber">${esc(g.warn)}</p>`:''}</article>`).join('');
-  return `<section class="wf-inspector-card"><h3>语义槽位 v3 · ${kind==='model'?'模型目标':'LoRA 应用组'}</h3><p>${esc(WorkflowSlots.describe({plan}))}</p>${controls}${kind==='model'?targets:groups}${kind==='lora'&&plan.lora.synth?`<p class="help">无活跃应用点：提交时在 #${esc(plan.lora.synth.after.nodeId)} 后插入 ${esc(plan.lora.synth.classType)}</p>`:''}${kind==='lora'&&!plan.lora.enabled?`<p class="notice amber">${esc(plan.lora.reason)}</p>`:''}<h4>分析提示</h4><ul>${plan.issues.map(i=>`<li><code>${esc(i.code)}</code> #${esc(i.nodeId)} · ${esc(i.text)}</li>`).join('')||'<li>无</li>'}</ul></section>`;
+  const plan = slotView(c).plan,
+    label = kind === 'model' ? '基础模型' : 'LoRA',
+    tools = `<div class="wf-slot-tools">${btn('重新分析','refresh','wf-slots-analyze','','small')}${btn('手动指定','plus','wf-slots-manual','','small ghost')}</div>`;
+  const head = `<header class="wf-detail-head"><span class="context-kicker">语义槽位</span><span class="spacer"></span>${tools}</header><h3 class="wf-detail-static">${label}</h3>`;
+  if (!plan) return `<section class="wf-inspector-card wf-slot-inspector">${head}<p class="wf-contract is-todo">尚未取得分析计划。确认 Mio 后端已启动，然后点「重新分析」。</p></section>`;
+  const summary = `<p class="wf-contract">${esc(WorkflowSlots.describe({plan}))}</p>`;
+  const issues = plan.issues.length
+    ? `<details class="wf-advanced wf-slot-issues"><summary>分析提示 <b>${plan.issues.length}</b></summary><ul>${plan.issues.map(i=>`<li><code>${esc(i.code)}</code>${i.nodeId ? ` #${esc(i.nodeId)}` : ''} · ${esc(i.text)}</li>`).join('')}</ul></details>`
+    : '';
+  if (kind === 'model') {
+    const targets = plan.model.targets.map(t => `<label class="wf-slot-card ${t.enabled ? 'is-on' : ''} ${t.role === 'linked-unwritable' ? 'is-locked' : ''}">
+        <input type="checkbox" data-slot-plan-kind="model" data-slot-plan-key="${esc(t.key)}" ${t.enabled ? 'checked' : ''} ${t.role === 'linked-unwritable' ? 'disabled' : ''}>
+        <span class="wf-slot-card-body">
+          <span class="wf-slot-card-head"><b data-user-content>${esc(t.title || ('#' + t.nodeId))}</b><em class="wf-slot-role role-${esc(t.role)}">${esc(SLOT_ROLE_LABEL[t.role] || t.role)}</em>${t.pairedSelector ? '<em class="wf-slot-role">成对模型</em>' : ''}</span>
+          ${t.current ? `<span class="wf-slot-file" data-user-content>${esc(WorkflowSlots.loraStem(t.current))}</span>` : ''}
+          <code>${esc(t.key)}</code>
+          ${t.reason ? `<small>${esc(t.reason)}</small>` : ''}
+        </span>
+      </label>`).join('');
+    return `<section class="wf-inspector-card wf-slot-inspector">${head}${summary}
+      <h4 class="wf-section"><span>写入目标</span><small>装配时替换勾选节点里的模型文件</small></h4>
+      <div class="wf-slot-list">${targets || '<p class="wf-step-placeholder">没有识别到模型加载节点。可以「手动指定」模型字段。</p>'}</div>${issues}</section>`;
+  }
+  const groups = plan.lora.groups.map(g => `<article class="wf-slot-card ${g.enabled ? 'is-on' : ''}">
+      <label class="wf-slot-card-toggle"><input type="checkbox" data-slot-plan-kind="lora" data-slot-plan-key="${esc(g.key)}" ${g.enabled ? 'checked' : ''}>
+        <span class="wf-slot-card-head"><b>${esc(SLOT_LORA_KIND_LABEL[g.kind] || g.kind)}</b><em class="wf-slot-role">${esc(g.series)}</em><em class="wf-slot-role ${g.active ? 'role-primary' : ''}">${g.active ? '活跃' : '不活跃'}</em><em class="wf-slot-role">${g.append ? '追加入口' : '保留原条目'}</em></span></label>
+      <div class="wf-slot-card-body">
+        <span class="wf-slot-meta">来源 ${esc(g.origin ? '#' + g.origin.nodeId + ' · ' + g.origin.path : '不可写来源，断链直写')}</span>
+        <ul class="wf-slot-sites">${g.sites.map(x => `<li><code>#${esc(x.nodeId)} · ${esc(x.path)}</code>${x.reason ? ` <small>${esc(x.reason)}</small>` : ''}</li>`).join('')}</ul>
+        ${g.pinned.length ? `<div class="wf-slot-pins">${g.pinned.map(l => `<span data-user-content>${esc(WorkflowSlots.loraStem(l.name))} <b>×${esc(WorkflowSlots.numberText(l.strength ?? 1))}</b></span>`).join('')}</div>` : '<span class="wf-slot-meta">没有蓝图自带的 LoRA</span>'}
+        ${g.warn ? `<p class="wf-warning">${icon('alert','sm')}<span>${esc(g.warn)}</span></p>` : ''}
+        <code class="wf-slot-key">${esc(g.key)}</code>
+      </div>
+    </article>`).join('');
+  const synth = plan.lora.synth ? `<p class="wf-step-note">没有活跃应用点：提交时在 #${esc(plan.lora.synth.after.nodeId)} 后插入 ${esc(plan.lora.synth.classType)}。</p>` : '';
+  const off = !plan.lora.enabled ? `<p class="wf-warning">${icon('alert','sm')}<span>${esc(plan.lora.reason)}</span></p>` : '';
+  return `<section class="wf-inspector-card wf-slot-inspector">${head}${summary}
+    <h4 class="wf-section"><span>应用组</span><small>装配时在勾选的位置追加或替换 LoRA</small></h4>
+    <div class="wf-slot-list">${groups || '<p class="wf-step-placeholder">没有识别到 LoRA 节点。</p>'}</div>${synth}${off}${issues}</section>`;
 }
 function applySlotControl(key, el) {
   const c=state.settings.comfy,plan=c.slots?.plan,[kind]=key.split('.');
@@ -189,7 +236,8 @@ function applySlotControl(key, el) {
 /* Bindings that survive the current filter + search. Shared with the bulk "全选" action. */
 function mapperVisibleBindings(c = state.settings.comfy, issues = mapperBindingIssues()) {
   const query = mapperUI.search.trim().toLowerCase();
-  return c.bindings.filter((b) => {
+  const list = Array.isArray(c?.bindings) ? c.bindings : [];
+  return list.filter((b) => {
     if (mapperUI.filter === "enabled" && !b.enabled) return false;
     if (mapperUI.filter === "disabled" && b.enabled) return false;
     if (mapperUI.filter === "issues" && !issues.some((i) => i.id === b.id)) return false;
@@ -348,14 +396,19 @@ const WORKBENCH_HELP = {
   cloud: "当前使用云端图像渠道，不需要 ComfyUI 工作流。填好地址、模型与密钥，就可以去编写分镜。",
 };
 
+/* Editorial heading shared by every channel: kicker, serif title, one sentence, and at most two global actions. */
 function renderWorkbenchTitle(comfy) {
   return `<div class="wf-bar-title">
-      <span class="context-kicker">图像生产</span>
-      <h1>工作流与 API 配置</h1>
-      <button type="button" class="wf-help" data-act="wf-help" aria-label="这个页面做什么？" title="${esc(comfy ? WORKBENCH_HELP.comfy : WORKBENCH_HELP.cloud)}">${icon("question", "sm")}</button>
+      <span class="context-kicker">图像生产 · 渠道与工作流</span>
+      <div class="wf-bar-heading">
+        <h1>工作流与 API 配置</h1>
+        <button type="button" class="wf-help" data-act="wf-help" aria-label="这个页面做什么？" title="${esc(comfy ? WORKBENCH_HELP.comfy : WORKBENCH_HELP.cloud)}">${icon("question", "sm")}</button>
+      </div>
+      <p class="wf-bar-lede">${comfy ? "连接本机 ComfyUI，把分镜里的提示词、模型与参数接到工作流节点上。" : "填写服务地址、模型与密钥；云端渠道不需要 ComfyUI 工作流。"}</p>
     </div>`;
 }
 
+/* Compact live status next to the title: one line, click to fold the connection card, ↻ to probe again. */
 function renderConnectionStrip() {
   const status = workflowConnectionStatus(),
     c = state.settings.comfy,
@@ -388,20 +441,22 @@ function renderWorkflowLibrary() {
   if (!comfy) return renderCloudPage(profile);
 
   const c = state.settings.comfy,
-    open = mapperUI.connectionOpen;
-  return `<section class="wf-page">
+    open = mapperUI.connectionOpen,
+    count = (c.presets || []).length;
+  return `<section class="wf-page wf-page-comfy">
     <header class="wf-bar">
       ${renderWorkbenchTitle(true)}
-      ${renderConnectionStrip()}
-      <span class="spacer"></span>
-      <div class="wf-bar-actions">${btn("槽位预设", "layers", "wf-presets", "", "small")}${btn("添加工作流", "plus", "ws-open-unified-import", 'aria-label="添加工作流（导入 API 工作流或映射包）"', "primary small")}</div>
+      <div class="wf-bar-side">
+        <div class="wf-bar-actions">${btn("槽位预设", "layers", "wf-presets", 'title="常用槽位与写入规则，配置一次，应用到任意工作流"', "small")}${btn("添加工作流", "plus", "ws-open-unified-import", 'aria-label="添加工作流（导入 API 工作流或映射包）"', "primary small")}</div>
+        ${renderConnectionStrip()}
+      </div>
     </header>
     ${renderChannelNavigation()}
     <div class="wf-connection-body" id="wf-connection-body" ${open ? "" : "hidden"}>${renderConnectionPanel(profile)}</div>
     <div class="workflow-library wf-body ${mapperUI.railPinned ? "rail-pinned" : "rail-floating"} ${mapperUI.railOpen && !mapperUI.railPinned ? "rail-open" : ""} ${mapperUI.railSticky && !mapperUI.railPinned ? "rail-sticky" : ""}">
       <div class="wf-rail-dock" id="wf-rail-dock" data-no-tip>
-        <button type="button" class="wf-rail-handle" data-act="wf-rail-toggle" aria-expanded="${mapperUI.railOpen || mapperUI.railPinned}" aria-controls="wf-rail" aria-label="工作流库，${(c.presets || []).length} 份">
-          ${icon("sidebar", "sm")}<span class="wf-rail-handle-label">工作流库</span><b class="mono">${(c.presets || []).length}</b>
+        <button type="button" class="wf-rail-handle" data-act="wf-rail-toggle" aria-expanded="${mapperUI.railOpen || mapperUI.railPinned}" aria-controls="wf-rail" aria-label="工作流库，${count} 份">
+          ${icon("sidebar", "sm")}<span class="wf-rail-handle-label">工作流库</span><b class="mono">${count}</b>
         </button>
         ${renderWorkflowRail(c)}
       </div>
@@ -423,15 +478,16 @@ function renderCloudPage(profile) {
   return `<section class="wf-page wf-page-cloud">
     <header class="wf-bar">
       ${renderWorkbenchTitle(false)}
-      <div class="wf-connection wm-connection tone-${issues.length ? "idle" : "ok"}" data-wm-connection>
-        <span class="wf-connection-summary is-static">
-          <i class="wf-dot" aria-hidden="true"></i>
-          <span class="wf-connection-main"><strong data-user-content>${esc(profile.title || meta.label)}</strong><span class="wf-connection-url mono">${esc(host)}</span></span>
-          <span class="wf-connection-state"><b>${issues.length ? "还差几步" : "渠道就绪"}</b><span class="wf-connection-detail">${esc(meta.label)} · ${issues.length ? issues.length + " 项待填写" : "可以开始生成"}</span></span>
-        </span>
+      <div class="wf-bar-side">
+        <div class="wf-bar-actions">${btn("编写分镜", "arrow", "first-run-continue", "", issues.length ? "small" : "primary small")}</div>
+        <div class="wf-connection wm-connection tone-${issues.length ? "idle" : "ok"}" data-wm-connection>
+          <span class="wf-connection-summary is-static">
+            <i class="wf-dot" aria-hidden="true"></i>
+            <span class="wf-connection-main"><strong data-user-content>${esc(profile.title || meta.label)}</strong><span class="wf-connection-url mono">${esc(host)}</span></span>
+            <span class="wf-connection-state"><b>${issues.length ? "还差几步" : "渠道就绪"}</b><span class="wf-connection-detail">${esc(meta.label)} · ${issues.length ? issues.length + " 项待填写" : "可以开始生成"}</span></span>
+          </span>
+        </div>
       </div>
-      <span class="spacer"></span>
-      <div class="wf-bar-actions">${btn("编写分镜", "arrow", "first-run-continue", "", issues.length ? "small" : "primary small")}</div>
     </header>
     ${renderChannelNavigation()}
     <div class="wf-provider">${renderConnectionPanel(profile)}</div>
@@ -440,9 +496,29 @@ function renderCloudPage(profile) {
 
 /* ------------------------------------------------------------------ connection panel */
 
+/* One line of state under each channel name, so switching is informed instead of blind. */
+function channelTabState(p) {
+  if (p.provider === "comfyui") {
+    const status = workflowConnectionStatus();
+    return { tone: status.tone, text: status.tone === "ok" ? "已连接" : status.tone === "bad" ? "连接失败" : "本机工作流" };
+  }
+  const issues = providerSetupIssues(p);
+  return issues.length ? { tone: "idle", text: issues.length + " 项待填写" } : { tone: "ok", text: "渠道就绪" };
+}
+
 function renderChannelNavigation() {
   const g = ensureImageProviders();
-  return `<nav class="wf-channel-nav" aria-label="图像渠道"><div class="wf-channel-nav-label"><span class="context-kicker">生成服务</span><strong>切换渠道</strong></div><div class="wf-channel-tabs">${g.profiles.map(p => `<button type="button" class="wf-channel-tab ${p.id === g.active ? 'active' : ''}" data-act="wf-channel-switch" data-id="${esc(p.id)}" aria-pressed="${p.id === g.active}">${icon(CHANNEL_META[p.provider]?.icon || 'cloud', 'sm')}<span>${esc(p.title)}</span>${p.id === g.active ? icon('check','sm') : ''}</button>`).join('')}</div>${btn('新增渠道','plus','image-provider-new','','small ghost')}${activeImageProfile().provider !== "comfyui" ? btn("管理渠道","more","wf-channel-menu","","small ghost") : ""}</nav>`;
+  const tab = (p) => {
+    const on = p.id === g.active,
+      meta = CHANNEL_META[p.provider] || CHANNEL_META.openai,
+      st = channelTabState(p);
+    return `<button type="button" class="wf-channel-tab ${on ? "active" : ""}" data-act="wf-channel-switch" data-id="${esc(p.id)}" aria-pressed="${on}" title="${esc(meta.hint)}">
+        <span class="wf-channel-glyph">${icon(meta.icon || "cloud", "sm")}</span>
+        <span class="wf-channel-text"><span class="wf-channel-name" data-user-content>${esc(p.title)}</span><small class="tone-${st.tone}"><i class="wf-dot" aria-hidden="true"></i>${esc(st.text)}</small></span>
+        ${on ? `<span class="wf-channel-check">${icon("check", "sm")}</span>` : ""}
+      </button>`;
+  };
+  return `<nav class="wf-channel-nav" aria-label="图像渠道"><div class="wf-channel-nav-label"><span class="context-kicker">生成服务</span><strong>切换渠道</strong></div><div class="wf-channel-tabs">${g.profiles.map(tab).join("")}</div><div class="wf-channel-nav-actions">${btn("新增渠道", "plus", "image-provider-new", "", "small ghost")}${activeImageProfile().provider !== "comfyui" ? btn("管理渠道", "more", "wf-channel-menu", "", "small ghost") : ""}</div></nav>`;
 }
 
 function renderConnectionPanel(profile = activeImageProfile()) {
@@ -464,8 +540,12 @@ function renderComfyChannelForm() {
         ${renderCheckButton()}
       </div>
       ${renderProbeLine()}
-      <p class="help">连通性由 Mio 后端检查，浏览器不会直接访问 ComfyUI，无需 <code>--enable-cors-header</code>。地址只填到端口，不含路径、密钥或查询参数。</p>
-    </div>`;
+    </div>
+    <ul class="wf-conn-notes">
+      <li>${icon("shield", "xs")}<span>连通性由 Mio 后端检查，浏览器不会直接访问 ComfyUI，无需 <code>--enable-cors-header</code>。</span></li>
+      <li>${icon("info", "xs")}<span>地址只填到端口，不含路径、密钥或查询参数；局域网主机填写其 IP。</span></li>
+      <li>${icon("refresh", "xs")}<span>「同步节点定义」读取 <code>/object_info</code>：字段类型、模型与 LoRA 目录。结果缓存在本机，可随时重新同步。</span></li>
+    </ul>`;
 }
 
 function renderComfyStatusCard() {
@@ -474,16 +554,20 @@ function renderComfyStatusCard() {
     rec = connectionRecord(c.baseUrl),
     catalog = comfyModelCatalog(),
     synced = catalog.nodeClasses > 0,
-    fact = (label, value, cls = "") => `<div class="wf-fact ${cls}"><dt>${label}</dt><dd>${value}</dd></div>`;
-  return `<div class="wf-status-card">
-    <h3 class="wf-section-label">服务状态</h3>
+    fact = (label, value, cls = "") => `<div class="wf-fact ${cls}"><dt>${label}</dt><dd>${value}</dd></div>`,
+    metric = (n, label) => `<span class="wf-metric"><b class="mono">${n}</b><small>${label}</small></span>`;
+  return `<div class="wf-status-card tone-${status.tone}">
+    <div class="wf-status-head">
+      <h3 class="wf-section-label">服务状态</h3>
+      <span class="wf-probe tone-${status.tone}"><i class="wf-dot" aria-hidden="true"></i><b>${esc(status.label)}</b></span>
+    </div>
+    ${status.detail && status.tone !== "bad" ? `<p class="wf-status-detail">${esc(status.detail)}</p>` : status.tone === "bad" ? `<p class="wf-status-detail">检查地址与服务后点「检查连接」；未连接时仍可编辑映射。</p>` : ""}
     <dl class="wf-facts">
-      ${fact("连接", `<span class="wf-probe tone-${status.tone}"><i class="wf-dot" aria-hidden="true"></i><b>${esc(status.label)}</b></span>${status.detail ? `<small>${esc(status.detail)}</small>` : ""}`)}
       ${rec?.ok && rec.device ? fact("GPU", `<span data-user-content>${esc(rec.device)}</span>`) : ""}
       ${rec?.ok && rec.version ? fact("ComfyUI 版本", `<span data-user-content>${esc(rec.version)}</span>`) : ""}
-      ${fact("节点定义", synced ? `${catalog.nodeClasses} 个<small>${esc(relativeTime(catalog.fetchedAt))}</small>` : `<span class="muted">尚未同步</span><small>同步后字段列表和类型更准确</small>`)}
-      ${fact("本机模型", synced ? `${catalog.checkpoints.length} Checkpoint · ${catalog.unets.length} 扩散模型 · ${catalog.loras.length} LoRA` : `<span class="muted">同步后显示</span>`)}
+      ${fact("节点定义", synced ? `${catalog.nodeClasses} 个<small>${esc(relativeTime(catalog.fetchedAt))}同步</small>` : `<span class="muted">尚未同步</span><small>同步后字段列表和类型更准确</small>`)}
     </dl>
+    ${synced ? `<div class="wf-metrics" aria-label="本机模型">${metric(catalog.checkpoints.length, "Checkpoint")}${metric(catalog.unets.length, "扩散模型")}${metric(catalog.loras.length, "LoRA")}</div>` : ""}
     <div class="wf-status-actions">
       ${btn(synced ? "重新同步节点定义" : "同步节点定义", "refresh", "v3-read-object-info", 'title="读取 /object_info：字段列表、类型与本机模型目录"', "small")}
       ${btn("编写分镜", "arrow", "first-run-continue", 'title="连接与映射就绪后，去创作工坊写分镜"', "small ghost")}
@@ -584,7 +668,7 @@ function renderWorkflowRail(c) {
       <span class="wf-count mono">${presets.length}</span>
       <span class="spacer"></span>
       ${presets.length > 1 ? btn(mapperUI.libSelMode ? "完成" : "选择", "", "ws-lib-sel-toggle", "", "small ghost") : ""}
-      ${ibtn(pinned ? "pinned" : "pin", "wf-rail-pin", pinned ? "取消固定：鼠标离开后自动收起" : "固定显示工作流库", `aria-pressed="${pinned}"`)}
+      ${ibtn(pinned ? "pinned" : "pin", "wf-rail-pin", pinned ? "取消固定：收起为左侧标签" : "固定显示工作流库", `aria-pressed="${pinned}"`)}
     </div>
     ${searchable ? `<label class="wf-search">${icon("search", "sm")}${searchInput({ id: "ws-library-search-input", value: mapperUI.libSearch, placeholder: "查找工作流…", label: "查找工作流", controls: "wf-rail-list" })}</label>` : ""}
     ${selectionBarHTML({ count: mapperUI.libSel.size, unit: "份", allPicked, allAct: "ws-lib-pick-all", deleteAct: "ws-lib-delete-bulk", exitAct: "ws-lib-sel-toggle" })}
@@ -602,6 +686,7 @@ function renderWorkflowRail(c) {
   </aside>`;
 }
 
+/* A library card says what the blueprint is before you open it: size, mapped inputs, and whether prompts are wired. */
 function renderWorkflowRailItems(c = state.settings.comfy) {
   const filtered = workflowRailPresets(c),
     dupes = workflowDuplicateTitles(c.presets || []);
@@ -613,14 +698,18 @@ function renderWorkflowRailItems(c = state.settings.comfy) {
         isPicked = mapperUI.libSel.has(p.id),
         title = p.title || "未命名工作流",
         nodes = Object.keys(p.workflow || {}).length,
-        bindings = (p.bindings || []).length,
+        bindings = (p.bindings || []).filter((b) => b.enabled).length,
+        prompts = (p.bindings || []).some((b) => b.enabled && b.source === "positive"),
         referenced = workflowReferenced(p.id),
         dup = dupes.has(String(p.title || "").trim().toLowerCase());
       return `<div class="workflow-library-item wf-item ${isCurrent ? "active" : ""} ${isPicked ? "is-picked" : ""}" role="listitem" data-workflow-id="${esc(p.id)}">
         <input type="checkbox" class="sel-cbox" ${isPicked ? "checked" : ""} data-act="ws-lib-pick" data-id="${esc(p.id)}" aria-labelledby="wf-sr-pick wf-item-title-${esc(p.id)}">
         <button type="button" class="wf-item-body" data-act="ws-select" data-id="${esc(p.id)}" aria-current="${isCurrent ? "true" : "false"}" title="${esc(title)}">
-          <strong class="wf-item-title" id="wf-item-title-${esc(p.id)}" data-user-content>${esc(title)}</strong>
-          <span class="wf-item-meta"><span>${nodes} 个节点 · ${bindings} 项映射</span>${referenced ? '<em class="wf-badge ref">画册在用</em>' : ""}${dup ? '<em class="wf-badge dup">重名</em>' : ""}</span>
+          <span class="wf-item-glyph" aria-hidden="true">${icon("nodes", "sm")}</span>
+          <span class="wf-item-text">
+            <strong class="wf-item-title" id="wf-item-title-${esc(p.id)}" data-user-content>${esc(title)}</strong>
+            <span class="wf-item-meta"><span>${nodes} 节点 · ${bindings} 映射</span>${prompts ? "" : '<em class="wf-badge warn">未接提示词</em>'}${referenced ? '<em class="wf-badge ref">画册在用</em>' : ""}${dup ? '<em class="wf-badge dup">重名</em>' : ""}</span>
+          </span>
         </button>
         ${ibtn("more", "wf-row-menu", "管理此工作流", `data-kind="workflow" data-id="${esc(p.id)}" aria-haspopup="menu"`)}
       </div>`;
@@ -648,9 +737,81 @@ function mapperAdvice(c = state.settings.comfy) {
   return tips;
 }
 
+/* Mapping groups, in the order data flows through a workflow. Each row joins exactly one group. */
+const MAPPING_GROUPS = [
+  { id: "prompt", label: "提示词与文本", hint: "每一幕的正负提示词、台词与名称", icon: "edit" },
+  { id: "model", label: "模型与风格", hint: "底模与 LoRA，装配时可替换或追加", icon: "layers" },
+  { id: "scene", label: "画面参数", hint: "尺寸、步数、CFG、种子", icon: "sliders" },
+  { id: "asset", label: "预设与素材", hint: "预设变量、画册标题、参考图", icon: "user" },
+  { id: "fixed", label: "固定值与其他", hint: "固定写入或保持原值", icon: "pin" },
+];
+const SOURCE_MAPPING_GROUP = {
+  positive: "prompt", negative: "prompt", caption: "prompt", sceneName: "prompt",
+  sceneParameter: "scene", random: "scene",
+  variable: "asset", bookTitle: "asset", image: "asset",
+  literal: "fixed", inherit: "fixed",
+};
+const SOURCE_TONE = {
+  positive: "scene", negative: "scene", caption: "scene", sceneName: "scene", sceneParameter: "param", random: "param",
+  variable: "preset", bookTitle: "preset", image: "preset", literal: "fixed", inherit: "inert",
+};
+
+function mapperBindingItem(b, c, issues) {
+  const node = c.workflow?.[b.nodeId];
+  let detail = "";
+  if (b.source === "variable") detail = "{" + (b.value || "…") + "}";
+  else if (b.source === "sceneParameter") detail = ({ width: "画面宽度", height: "画面高度", steps: "采样步数", cfg: "CFG", denoise: "去噪强度", seed: "种子" })[String(b.value || "").trim()] || String(b.value || "未填写参数");
+  else if (b.source === "literal") detail = String(b.value ?? "").trim() ? String(b.value).replace(/\s+/g, " ").slice(0, 60) : "未填写固定值";
+  else detail = SOURCE_META[b.source]?.what || "";
+  return {
+    id: b.id, label: b.label || "未命名映射", tag: SOURCE_TAG[b.source] || b.source, tone: SOURCE_TONE[b.source] || "fixed",
+    group: SOURCE_MAPPING_GROUP[b.source] || "fixed", enabled: b.enabled, issue: issues.find((i) => i.id === b.id), detail,
+    target: mapperUI.showTargets && b.nodeId ? `#${b.nodeId} · ${b.path}${node ? " · " + (node._meta?.title || node.class_type) : ""}` : "",
+  };
+}
+
+/* The five stages a scene passes through, as clickable summary cards: what is wired, what is missing. */
+function renderMapperPipeline(c, issues, slots) {
+  const on = (c.bindings || []).filter((b) => b.enabled),
+    has = (src) => on.some((b) => b.source === src),
+    v = slotView(c),
+    params = on.filter((b) => b.source === "sceneParameter" || b.source === "random"),
+    outputId = c.outputNodeId || Object.keys(c.workflow || {}).find((k) => /SaveImage|PreviewImage/.test(c.workflow[k]?.class_type || "")) || "",
+    outputMissing = c.outputNodeId && !Object.hasOwn(c.workflow || {}, c.outputNodeId);
+  const model = slots.find((x) => x.kind === "model"), lora = slots.find((x) => x.kind === "lora");
+  const stages = [
+    { key: "prompt", label: "提示词", icon: "edit", tone: has("positive") ? "ok" : "warn",
+      value: has("positive") ? (has("negative") ? "正向 + 负向" : "仅正向") : "未接入",
+      note: has("positive") ? "每幕写入分镜提示词" : "识别提示词节点", act: has("positive") ? 'data-act="wf-group-focus" data-group="prompt"' : 'data-act="v3-auto-bind"' },
+    { key: "model", label: "模型", icon: "box", tone: model?.issue ? "warn" : model?.enabled ? "ok" : "idle",
+      value: v.currentModel ? WorkflowSlots.loraStem(v.currentModel) : model?.enabled ? "已识别" : "保持蓝图",
+      note: model?.enabled ? "装配时可替换" : "未启用模型槽", act: 'data-act="wm-select-slot" data-id="model"' },
+    { key: "lora", label: "LoRA", icon: "layers", tone: lora?.issue ? "warn" : lora?.enabled ? "ok" : "idle",
+      value: v.currentLoras.length ? v.currentLoras.length + " 个自带" : lora?.enabled ? "可追加" : "不可用",
+      note: lora?.enabled ? "装配时追加或解锁" : "无应用点", act: 'data-act="wm-select-slot" data-id="lora"' },
+    { key: "scene", label: "画面参数", icon: "sliders", tone: params.length ? "ok" : "idle",
+      value: params.length ? params.length + " 项" : "保持蓝图",
+      note: params.length ? params.map((b) => String(b.source === "random" ? "种子" : ({ width: "宽", height: "高", steps: "步数", cfg: "CFG", denoise: "去噪", seed: "种子" })[b.value] || b.value)).slice(0, 4).join(" · ") : "添加分镜参数映射",
+      act: params.length ? 'data-act="wf-group-focus" data-group="scene"' : 'data-act="v3-add-render-mappings"' },
+    { key: "output", label: "结果输出", icon: "image", tone: outputMissing || !outputId ? "warn" : "ok",
+      value: outputMissing ? "节点不存在" : outputId ? "#" + outputId : "未找到",
+      note: outputId && !outputMissing ? (c.outputNodeId ? "已指定" : "自动探测") + " · " + (workflowNodeLabel(c.workflow, outputId) || "") : "指定 SaveImage 节点",
+      act: 'data-act="wm-select-output"' },
+  ];
+  return `<ol class="wf-pipeline" aria-label="出图流程概览">${stages
+    .map((st, i) => `<li class="wf-stage tone-${st.tone}"><button type="button" class="wf-stage-card" ${st.act}>
+        <span class="wf-stage-top"><span class="wf-stage-icon">${icon(st.icon, "sm")}</span><span class="wf-stage-step mono">${pad(i + 1)}</span><i class="wf-stage-dot" aria-hidden="true"></i></span>
+        <strong>${esc(st.label)}</strong>
+        <span class="wf-stage-value" data-user-content>${esc(st.value)}</span>
+        <small data-user-content>${esc(st.note)}</small>
+      </button></li>`)
+    .join("")}</ol>`;
+}
+
 function renderSmartMapper() {
-  const c = state.settings.comfy,
-    issues = mapperBindingIssues(),
+  const c = state.settings.comfy;
+  if (!Array.isArray(c.bindings)) c.bindings = [];
+  const issues = mapperBindingIssues(),
     advice = mapperAdvice(c),
     visible = mapperVisibleBindings(c, issues),
     slots = mapperSlotItems(c, issues),
@@ -668,6 +829,7 @@ function renderSmartMapper() {
 
   const head = `<header class="wf-editor-head">
       <div class="wf-editor-title">
+        <span class="context-kicker">当前工作流</span>
         <input class="wm-title" aria-label="工作流名称" data-setting="comfy.workflowTitle" value="${esc(c.workflowTitle)}" placeholder="未命名工作流" spellcheck="false" autocomplete="off">
         <p class="wf-editor-meta">
           <span>${nodeCount ? nodeCount + " 个节点" : "空蓝图"}</span>
@@ -684,10 +846,12 @@ function renderSmartMapper() {
   if (!nodeCount)
     return `<section class="mapping-page wm-workbench wf-editor is-blank">${head}${renderBlankBlueprint()}</section>`;
 
-  return `<section class="mapping-page wm-workbench wf-editor ${mapperUI.selMode ? "is-selmode" : ""}">
+  return `<section class="mapping-page wm-workbench wf-editor ${mapperUI.selMode ? "is-selmode" : ""} ${mapperUI.showTargets ? "shows-targets" : ""}">
     ${head}
 
     ${(issues.length || advice.length) && mapperUI.healthOpen ? renderMapperHealthList(issues, advice) : ""}
+
+    ${renderMapperPipeline(c, issues, slots)}
 
     <div class="wf-toolbar">
       <div class="wf-toolbar-left">
@@ -697,6 +861,7 @@ function renderSmartMapper() {
         <label class="wf-search">${icon("search", "sm")}${searchInput({ id: "wm-binding-search", value: mapperUI.search, placeholder: "搜索名称 / 节点 / 字段", label: "搜索映射", controls: "wm-binding-rows" })}</label>
       </div>
       <div class="wf-toolbar-actions">
+        <label class="wf-toggle" title="在每行显示节点 ID 与输入字段"><input type="checkbox" id="wm-show-targets" ${mapperUI.showTargets ? "checked" : ""}><span>显示写入位置</span></label>
         ${mapperUI.selMode ? btn("完成", "check", "wm-sel-toggle", "", "small active") : ""}
         ${btn("添加映射", "plus", "wm-nodes", 'aria-expanded="' + mapperUI.nodes + '" title="从蓝图节点里挑一个输入字段建立映射"', mapperUI.nodes ? "small active" : "small primary")}
       </div>
@@ -719,7 +884,7 @@ function renderSmartMapper() {
       <section class="wf-table" aria-label="映射列表" aria-description="右键任意一行可编辑与管理；↑↓ 在行间移动，Enter 打开">
         <div class="wf-columns" aria-hidden="true">
           <span></span>
-          <span>槽位名称</span>
+          <span>映射</span>
           <span>用途</span>
           <span>启用</span>
           <span></span>
@@ -794,18 +959,28 @@ function renderMapperRows() {
     issues = mapperBindingIssues(),
     rows = mapperVisibleBindings(c, issues),
     filtered = mapperUI.filter !== "all" || !!mapperUI.search.trim(),
-    selected = mapperSelectedBinding();
-  if (!rows.length && !mapperSlotItems(c, issues).some(mapperItemMatches))
+    slots = mapperSlotItems(c, issues).filter(mapperItemMatches);
+  if (!rows.length && !slots.length)
     return `<div class="wf-empty is-filter">
       <strong>没有匹配的映射</strong>
       <p>换个关键词，或清除筛选查看全部 <b>${c.bindings.length}</b> 项。</p>
       <div class="row">${btn("清除筛选", "close", "wf-clear-filter", "", "small")}</div>
     </div>`;
-  return renderSlotRows(c, issues) + rows.map((b) => renderMapperRow(b, c, issues, selected)).join("") + (filtered ? "" : renderOutputNodeRow(c));
+  const items = [...slots, ...rows.map((b) => mapperBindingItem(b, c, issues))];
+  const groups = MAPPING_GROUPS.map((g) => ({ ...g, items: items.filter((x) => x.group === g.id) })).filter((g) => g.items.length);
+  return (
+    groups
+      .map((g) => {
+        const on = g.items.filter((x) => x.enabled).length;
+        return `<div class="wf-group-head" data-mapping-group="${g.id}" role="presentation"><span class="wf-group-icon">${icon(g.icon, "sm")}</span><b>${esc(g.label)}</b><small>${esc(g.hint)}</small><span class="spacer"></span><span class="wf-group-count mono">${on}/${g.items.length}</span></div>` +
+          g.items.map(renderUnifiedMappingRow).join("");
+      })
+      .join("") + (filtered ? "" : renderOutputNodeRow(c))
+  );
 }
 
 function renderMapperRow(b, c, issues) {
-  return renderUnifiedMappingRow({id:b.id, label:b.label || '未命名映射', tag:SOURCE_TAG[b.source] || b.source, enabled:b.enabled, issue:issues.find(i=>i.id===b.id)});
+  return renderUnifiedMappingRow(mapperBindingItem(b, c, issues));
 }
 
 /* The result-image node is not a binding, but it belongs in the same table so every node
@@ -815,24 +990,27 @@ function renderOutputNodeRow(c) {
     id = c.outputNodeId,
     missing = id && !Object.hasOwn(w, id),
     auto = !id && Object.keys(w).find((k) => /SaveImage|PreviewImage/.test(w[k]?.class_type || "")),
-    isSel = mapperUI.selected === "__output__";
-  const glyph = missing
-    ? `<span class="wf-row-glyph is-bad" title="节点不存在">${icon("alert", "sm")}</span>`
+    isSel = mapperUI.selected === "__output__",
+    shown = id || auto;
+  const glyph = missing || !shown
+    ? `<span class="wf-row-glyph is-bad" title="${missing ? "节点不存在" : "未找到结果节点"}">${icon("alert", "sm")}</span>`
     : `<span class="wf-row-glyph is-out">${icon("image", "sm")}</span>`;
-  const target = id
-    ? `<b>#${esc(id)}</b><span class="wf-node" ${missing ? "" : "data-user-content"}>${esc(missing ? "节点不存在" : workflowNodeLabel(w, id))}</span>`
-    : auto
-      ? `<b>#${esc(auto)}</b><span class="wf-node" data-user-content>${esc(workflowNodeLabel(w, auto))}</span><i>·</i><span>自动探测</span>`
-      : `<b>自动探测</b><span>未找到 SaveImage 节点</span>`;
-  return `<article class="wf-row wf-row-output ${isSel ? "selected" : ""} ${missing ? "has-issue" : ""}" data-output-row>
+  const sub = missing
+    ? "指定的节点已不在蓝图中"
+    : id
+      ? `已指定 · ${workflowNodeLabel(w, id)}`
+      : auto
+        ? `自动探测 · ${workflowNodeLabel(w, auto)}`
+        : "蓝图里没有 SaveImage / PreviewImage 节点";
+  return `<div class="wf-group-head" data-mapping-group="output" role="presentation"><span class="wf-group-icon">${icon("image", "sm")}</span><b>结果输出</b><small>生成完成后从哪个节点取回图片</small></div><article class="wf-row wf-row-output ${isSel ? "selected" : ""} ${missing || !shown ? "has-issue" : ""}" data-output-row>
     <span class="wf-row-lead">${glyph}</span>
     <button type="button" class="wm-row-select wf-row-main" data-act="wm-select-output" aria-pressed="${isSel}">
       <span class="wf-row-name">结果图片回传节点</span>
-      <span class="wf-row-target mono">${target}</span>
+      <span class="${missing || !shown ? "wf-row-warning" : "wf-row-sub"}" ${missing ? "" : "data-user-content"}>${esc(sub)}</span>
     </button>
     <span class="wf-row-source">
       <span class="wf-tag tag-output">输出</span>
-      <span class="wf-row-detail"><span>生成完成后取回图片</span></span>
+      ${mapperUI.showTargets && shown ? `<span class="wf-row-target mono">#${esc(shown)}</span>` : ""}
     </span>
     <span class="wf-row-switch" aria-hidden="true"></span>
     ${ibtn("more", "wf-row-menu", "管理结果输出", 'data-kind="output" aria-haspopup="menu"')}
@@ -1440,6 +1618,13 @@ function installWorkflowWorkbench() {
   handleAction = async function (action, d = {}, el) {
     if (action === 'wf-channel-menu') {openWorkbenchMenu([{act:'image-provider-copy',icon:'copy',label:'复制渠道'},{act:'image-provider-delete',icon:'trash',label:'删除渠道'}],{anchor:el,label:'管理渠道'});return;}
     if (action === 'wf-detail-close') {mapperUI.selected='';mapperUI.nodes=false;render();return;}
+    if (action === 'wf-group-focus') {
+      if (mapperUI.filter !== 'all' || mapperUI.search) { mapperUI.filter = 'all'; mapperUI.search = ''; render(); }
+      const head = document.querySelector(`.wf-group-head[data-mapping-group="${CSS.escape(String(d.group || ''))}"]`);
+      head?.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      head?.nextElementSibling?.querySelector('.wf-row-main')?.focus({ preventScroll: true });
+      return;
+    }
     if (action === 'wm-pick-noncore' || action === 'wm-pick-disabled') {
       const c=state.settings.comfy;mapperUI.sel.clear();
       mapperVisibleBindings(c).forEach(b=>{if(action==='wm-pick-disabled'?!b.enabled:!['positive','negative','caption'].includes(b.source))mapperUI.sel.add(b.id);});
@@ -1482,7 +1667,8 @@ function installWorkflowWorkbench() {
       modal(
         "这个页面做什么？",
         `<div class="prose wf-help-sheet"><p>${esc(comfy ? WORKBENCH_HELP.comfy : WORKBENCH_HELP.cloud)}</p>${comfy ? `<ul>
-          <li><strong>工作流库</strong>在左侧边缘的「工作流库」标签里：点击展开（鼠标停留片刻也会展开），点图钉可以固定显示，再次点击或按 Esc 收起。</li>
+          <li><strong>工作流库</strong>默认固定在左侧；点图钉可收起为边缘标签（点击或悬停展开，Esc 收起），再次固定即可常驻。</li>
+          <li>顶部的<strong>出图流程</strong>卡片概括提示词 → 模型 → LoRA → 画面参数 → 结果输出的接入状态，点击直接跳到对应设置。</li>
           <li>每条<strong>映射</strong>分三步设置：① 写到哪里（节点与输入字段）② 填什么（取值来源）③ 效果预览。</li>
           <li><strong>右键</strong>任意映射或工作流，可以启用 / 停用、重命名、复制、导出或删除；行尾的 ⋯ 按钮是同一份菜单。</li>
           <li>映射与原始蓝图分开保存，节点连线受保护，改动自动保存且不影响已入队的任务。</li>
@@ -1672,6 +1858,11 @@ function installWorkflowWorkbench() {
       mapperUI.filter = el.value;
       render();
     }
+    if (el?.id === "wm-show-targets") {
+      mapperUI.showTargets = el.checked;
+      setWorkbenchPref("showTargets", mapperUI.showTargets);
+      render();
+    }
     if (el?.id === "setup-comfy-url") {
       state.settings.comfy.baseUrl = el.value.trim();
       save();
@@ -1839,16 +2030,37 @@ function validateSlotPreset(raw) {
   });
   return {id:typeof raw.id === 'string' && /^[a-zA-Z0-9_-]{1,100}$/.test(raw.id) ? raw.id : uid('slots'),title:raw.title.trim(),rows};
 }
+/* Slot presets are workspace data (settings/comfy.json → slotPresets), so they travel with backups and every
+   browser sees the same list. Presets saved by older builds in this browser's localStorage are adopted once. */
+function slotPresetStore() {
+  const c = state.settings.comfy;
+  if (!Array.isArray(c.slotPresets)) c.slotPresets = [];
+  const legacyKey = WORKBENCH_PREF_PREFIX + SLOT_PRESET_KEY;
+  let legacy = null;
+  try { legacy = localStorage.getItem(legacyKey); } catch { legacy = null; }
+  if (legacy) {
+    const known = new Set(c.slotPresets.map(p => p?.id));
+    let adopted = 0;
+    try {
+      for (const raw of JSON.parse(legacy) || []) {
+        try { const p = validateSlotPreset(raw); if (!known.has(p.id)) { c.slotPresets.push(p); known.add(p.id); adopted++; } } catch { /* skip invalid legacy entries */ }
+      }
+    } catch { /* unreadable legacy value */ }
+    try { localStorage.removeItem(legacyKey); } catch { /* private mode */ }
+    if (adopted) save();
+  }
+  return c.slotPresets;
+}
 function slotPresetLibrary() {
-  const saved = workbenchPref(SLOT_PRESET_KEY, []);
-  return [clone(SLOT_PRESET_DEFAULT), ...(Array.isArray(saved) ? saved.flatMap(p=>{try{return [validateSlotPreset(p)];}catch{return [];}}) : [])];
+  const saved = slotPresetStore();
+  return [clone(SLOT_PRESET_DEFAULT), ...saved.flatMap(p=>{try{return [validateSlotPreset(p)];}catch{return [];}})];
 }
 function persistSlotPresets(items) {
-  // Unlike cosmetic preferences, failed writes must be reported to avoid losing user work.
-  localStorage.setItem(WORKBENCH_PREF_PREFIX + SLOT_PRESET_KEY, JSON.stringify(items));
+  state.settings.comfy.slotPresets = items.map(p => validateSlotPreset(p));
+  save();
 }
 function openSlotPresets() {
-  modal('槽位预设', `<div class="wf-preset-intro"><span class="wf-preset-symbol">${icon('layers')}</span><div><h3>配置一次，重复使用</h3><p>保存常用槽位与写入规则。应用到新工作流时，只需对应节点 ID。</p></div></div><div class="wf-preset-library">${slotPresetLibrary().map(p=>`<article class="wf-preset-card"><div><strong data-user-content>${esc(p.title)}</strong><p>${p.rows.length} 个槽位 · ${p.rows.map(r=>esc(r.label)).join(' / ')}</p></div><div class="row wrap">${btn('应用','arrow','wf-preset-apply',`data-id="${esc(p.id)}"`,'small primary')}${btn('编辑','edit','wf-preset-edit',`data-id="${esc(p.id)}"`,'small')}${btn('导出','download','wf-preset-export',`data-id="${esc(p.id)}"`,'small ghost')}${p.id==='starter'?'':btn('删除','trash','wf-preset-delete',`data-id="${esc(p.id)}"`,'small ghost')}</div></article>`).join('')}</div><footer class="modal-footer">${btn('导入 JSON','upload','wf-preset-import')}${btn('从当前工作流创建','copy','wf-preset-capture')}${btn('新建预设','plus','wf-preset-new','','primary')}</footer>`, '独立于节点插件；预设保存在此浏览器，可导出随身携带。', true);
+  modal('槽位预设', `<div class="wf-preset-intro"><span class="wf-preset-symbol">${icon('layers')}</span><div><h3>配置一次，重复使用</h3><p>保存常用槽位与写入规则。应用到新工作流时，只需对应节点 ID。</p></div></div><div class="wf-preset-library">${slotPresetLibrary().map(p=>`<article class="wf-preset-card"><div><strong data-user-content>${esc(p.title)}</strong><p>${p.rows.length} 个槽位 · ${p.rows.map(r=>esc(r.label)).join(' / ')}</p></div><div class="row wrap">${btn('应用','arrow','wf-preset-apply',`data-id="${esc(p.id)}"`,'small primary')}${btn('编辑','edit','wf-preset-edit',`data-id="${esc(p.id)}"`,'small')}${btn('导出','download','wf-preset-export',`data-id="${esc(p.id)}"`,'small ghost')}${p.id==='starter'?'':btn('删除','trash','wf-preset-delete',`data-id="${esc(p.id)}"`,'small ghost')}</div></article>`).join('')}</div><footer class="modal-footer">${btn('导入 JSON','upload','wf-preset-import')}${btn('从当前工作流创建','copy','wf-preset-capture')}${btn('新建预设','plus','wf-preset-new','','primary')}</footer>`, '独立于节点插件；预设随工作室保存，也可导出 JSON 分享。', true);
 }
 function readSlotPresetDraft() {
   slotPresetDraft.title = document.getElementById('slot-preset-title').value;
@@ -1916,7 +2128,7 @@ async function handleSlotPresetAction(action,d) {
     const input=document.createElement('input');input.type='file';input.accept='.json,application/json';input.onchange=async()=>{try{const f=input.files[0];if(!f)return;if(f.size>256*1024)throw Error('预设文件不能超过 256 KB。');const data=JSON.parse(await f.text());if(!data||typeof data!=='object'||data.kind!=='mio.slot-preset'||data.version!==1)throw Error('不支持的槽位预设格式。');slotPresetDraft=validateSlotPreset(data.preset);slotPresetDraft.id=uid('slots');renderSlotPresetEditor();}catch(e){toast(e.message,'error');}};input.click();return;
   }
   if(action==='wf-preset-capture'){
-    const c=state.settings.comfy,v=slotView(c);slotPresetDraft={id:uid('slots'),title:String(c.workflowTitle||'工作流').slice(0,100)+' · 槽位',rows:c.bindings.map(b=>({label:String(b.label||SOURCE_TAG[b.source]||'槽位').slice(0,100),source:b.source,path:String(b.path||'').slice(0,200),value:String(b.value||'').slice(0,4000)}))};
+    const c=state.settings.comfy,v=slotView(c);slotPresetDraft={id:uid('slots'),title:String(c.workflowTitle||'工作流').slice(0,100)+' · 槽位',rows:(c.bindings||[]).map(b=>({label:String(b.label||SOURCE_TAG[b.source]||'槽位').slice(0,100),source:b.source,path:String(b.path||'').slice(0,200),value:String(b.value||'').slice(0,4000)}))};
     if(v.resolved.model.enabled)slotPresetDraft.rows.push({label:'基础模型',source:'model',path:String(v.resolved.model.path||'ckpt_name').slice(0,200),value:''});
     if(v.resolved.lora.mode!=='off')slotPresetDraft.rows.push({label:'LoRA',source:'lora',path:String(v.resolved.lora.path||'lora_name').slice(0,200),mode:v.resolved.lora.mode,value:''});
     return renderSlotPresetEditor();
@@ -1925,7 +2137,7 @@ async function handleSlotPresetAction(action,d) {
   if(action==='wf-preset-confirm'){
     try{
       const targets=[...document.querySelectorAll('[data-apply-row]')].filter(el=>el.querySelector('[data-recipe-use]').checked).map(el=>({index:Number(el.dataset.applyRow),nodeId:el.querySelector('[data-recipe-node]').value,path:el.querySelector('[data-recipe-path]').value}));
-      const c=state.settings.comfy,result=applySlotPresetTargets(slotPresetDraft,targets,c);Object.assign(c,result);await ensureWorkflowSlotPlan(c,{force:true,manual:[...(c.slots.plan?.manual||[]),...targets.filter(t=>['model','lora'].includes(slotPresetDraft.rows[t.index]?.source)).map(t=>({nodeId:t.nodeId,path:t.path}))]});storeActiveWorkflow();save();closeModal();render();toast('槽位预设已应用，原始蓝图保持不变');
+      const c=state.settings.comfy,result=applySlotPresetTargets(slotPresetDraft,targets,c);Object.assign(c,result);await ensureWorkflowSlotPlan(c,{force:true,manual:[...(c.slots?.plan?.manual||[]),...targets.filter(t=>['model','lora'].includes(slotPresetDraft.rows[t.index]?.source)).map(t=>({nodeId:t.nodeId,path:t.path}))]});storeActiveWorkflow();save();closeModal();render();toast('槽位预设已应用，原始蓝图保持不变');
     }catch(e){document.getElementById('slot-preset-error').textContent=e.message;}
   }
 }

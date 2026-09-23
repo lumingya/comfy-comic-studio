@@ -5,6 +5,7 @@ There is no aggregate content/albums file and no automatic data migration here.
 The GUI/worker transport integration remains a separate step.
 """
 import copy
+from backend import mio_comfy_settings as comfy_settings
 from backend.mio_library_settings import FileSettings
 
 GROUPS = {'templates': 'storyboards', 'savedGalleries': 'albums',
@@ -91,6 +92,10 @@ class WorkspaceRepository:
         result['batchRunState'] = {**copy.deepcopy(native.get('queue', {})), 'queue': groups['queue']}
         for key, name in (('comfyConfig', 'comfy'), ('llmConfig', 'llm'), ('xmlConfig', 'xml')):
             result[key] = settings[name]
+        # settings/comfy.json stores intent only; the flat DTO is rebuilt from the
+        # selected workflow resource and the disposable node-definition cache.
+        result['comfyConfig'] = comfy_settings.hydrate(settings['comfy'], groups['comfyWorkflows'],
+                                                       comfy_settings.read_cache(self.library.root))
         def expand_graphs(value):
             if isinstance(value, dict):
                 result = {k: expand_graphs(v) for k, v in value.items() if k != '_workflowRef'}

@@ -23,6 +23,7 @@ from backend.mio_library import (
     owned_path,
 )
 from backend.mio_library_settings import FileSettings, leaves, binding
+from backend import mio_comfy_settings as comfy_settings
 from backend.mio_library_workspace import WorkspaceRepository, GROUPS, map_images
 
 
@@ -108,6 +109,12 @@ def split_dto(value):
             ("xml", "xmlConfig"),
         ]
     }
+    settings["comfy"], _ = comfy_settings.split(
+        settings["comfy"],
+        keep_workflow=comfy_settings.needs_inline(
+            settings["comfy"], {x.get("id") for x in groups["workflows"]}
+        ),
+    )
     ordering = {
         field: [x["id"] for x in groups[kind]] for field, kind in GROUPS.items()
     }
@@ -538,6 +545,7 @@ class NativeStore(WorkspaceRepository):
             vault_before = encode(vault)
             setting_refs = {}
             names = set()
+            comfy_cache = None
             for op in settings_changes:
                 name = op["name"]
                 if name in names:
@@ -546,6 +554,18 @@ class NativeStore(WorkspaceRepository):
                 current = self.settings.get(name)
                 base_path = self.settings._path(name).with_suffix(".assets")
                 doc = self.localize(op["document"], base_path)
+                if name == "comfy":
+                    # Workflow fields live in workflows/*.json (saved as entities in this
+                    # same transaction); node definitions go to the disposable cache.
+                    known = self._workflow_ids_after(changes, removals)
+                    removed_ids = {op.get("id") for op in removals if op.get("kind") == "workflows"}
+                    active_id = str(doc.get("activeWorkflowId") or "")
+                    if active_id in removed_ids:
+                        ws_order = ((self.settings.get("workspace")["document"].get("ordering") or {}).get("comfyWorkflows") or [])
+                        sorted_known = sorted(known, key=lambda x: (ws_order.index(x) if x in ws_order else len(ws_order), x))
+                        doc["activeWorkflowId"] = sorted_known[0] if sorted_known else ""
+                    inline = comfy_settings.needs_inline(doc, known) and (active_id not in removed_ids)
+                    doc, comfy_cache = comfy_settings.split(doc, keep_workflow=inline)
                 if current["etag"] != op.get("expected"):
                     if not isinstance(op.get("baseline"), dict):
                         raise LibraryError(
@@ -553,6 +573,9 @@ class NativeStore(WorkspaceRepository):
                         )
                     baseline = self.localize(op["baseline"], base_path)
                     public_current = copy.deepcopy(current["document"])
+                    if name == "comfy":
+                        baseline, _ = comfy_settings.split(baseline, keep_workflow=inline)
+                        public_current, _ = comfy_settings.split(public_current, keep_workflow=inline)
                     for obj in (baseline, doc, public_current):
                         obj.pop("_secretRefs", None)
                     doc = merge_three(baseline, doc, public_current)
@@ -616,6 +639,11 @@ class NativeStore(WorkspaceRepository):
                 if before_commit:
                     before_commit()
                 self.library._commit(operations)
+            if comfy_cache is not None:
+                try:
+                    comfy_settings.write_cache(self.root, comfy_cache)
+                except (OSError, LibraryError):
+                    pass
             for action, kind, id, value in prepared:
                 if action == "put":
                     self.library._record(kind, value[0])
@@ -639,10 +667,7 @@ class NativeStore(WorkspaceRepository):
                 "revisions": revisions,
                 "secretRefs": setting_refs,
                 "settingsDocuments": {
-                    op["name"]: map_images(
-                        self.settings.get(op["name"])["document"],
-                        "/images/library/settings/" + op["name"],
-                    )
+                    op["name"]: self.settings_view(op["name"])
                     for op in settings_changes
                 },
                 "entities": {
@@ -651,6 +676,54 @@ class NativeStore(WorkspaceRepository):
                     if action == "put"
                 },
             }
+
+    def _workflow_ids_after(self, changes, removals):
+        """Workflow resource IDs that exist once this transaction commits."""
+        ids = {r["id"] for r in self.records("workflows")}
+        ids |= {op.get("id") for op in changes if op.get("kind") == "workflows"}
+        ids -= {op.get("id") for op in removals if op.get("kind") == "workflows"}
+        return ids
+
+    def settings_view(self, name):
+        """The settings document as the application sees it (the ack of a save).
+
+        comfy.json is stored lean; the browser works with the flat view rebuilt
+        from the active workflow resource and the node-definition cache.
+        """
+        document = map_images(
+            self.settings.get(name)["document"], "/images/library/settings/" + name
+        )
+        if name != "comfy":
+            return document
+        return comfy_settings.hydrate(
+            document, self._comfy_view_workflows(document), comfy_settings.read_cache(self.root)
+        )
+
+    def _comfy_view_workflows(self, document):
+        """Only the referenced workflows are needed; the first one is the fallback."""
+        found = []
+        for id in comfy_settings.view_workflow_ids(document):
+            try:
+                found.append(self.entity("workflows", id, urls=False)["document"])
+            except LibraryError as exc:
+                if exc.status != 404:
+                    raise
+        if found:
+            return found
+        order = {
+            id: i
+            for i, id in enumerate(
+                ((self.settings.get("workspace")["document"].get("ordering") or {}).get("comfyWorkflows") or [])
+            )
+        }
+        rows = sorted(self.records("workflows"), key=lambda r: (order.get(r["id"], len(order)), r["id"]))
+        for row in rows:
+            try:
+                return [self.entity("workflows", row["id"], urls=False)["document"]]
+            except LibraryError as exc:
+                if exc.status != 404:
+                    raise
+        return []
 
     def revision(self):
         path = self.root / "runtime/revision.json"

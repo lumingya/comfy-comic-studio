@@ -13,10 +13,17 @@ function workflowLibraryEnsure(s=state){
   s.settings.studio.visibility.extensions??=true;
 }
 
+/* Mirror the editor's working copy into the active library entry. save() calls this on every autosave, so the
+   entry (a workflows/*.json file) is only rewritten — and updatedAt only bumped — when its content really changed. */
 function storeActiveWorkflow(){
-  const c=state.settings.comfy,p=c.presets.find(x=>x.id===c.activeWorkflowId);
-  if(!p)return;
-  Object.assign(p,{title:c.workflowTitle,workflow:clone(c.workflow),mapping:clone(c.mapping||{}),bindings:clone(c.bindings||[]),outputNodeId:c.outputNodeId||'',randomizeSeeds:!!c.randomizeSeeds,slots:clone(c.slots||{}),updatedAt:Date.now()});
+  const c=state.settings.comfy,p=(c.presets||[]).find(x=>x.id===c.activeWorkflowId);
+  if(!p)return false;
+  const next={title:c.workflowTitle,workflow:c.workflow,mapping:c.mapping||{},bindings:c.bindings||[],outputNodeId:c.outputNodeId||'',randomizeSeeds:!!c.randomizeSeeds,slots:c.slots||{}};
+  const changed=Object.entries(next).filter(([key,value])=>JSON.stringify(p[key]??(key==='title'?'':undefined))!==JSON.stringify(value));
+  if(!changed.length)return false;
+  for(const [key,value] of changed)p[key]=typeof value==='object'&&value?clone(value):value;
+  p.updatedAt=Date.now();
+  return true;
 }
 
 function workflowExecutionFor(plan,frame){

@@ -927,6 +927,35 @@ add('the workshop offers batch creation and the opening template without changin
   assert.ok(source.includes("btn('插入起手模板','plus','workshop-apply-base'"), 'blank scenes offer a one-click insert');
 });
 
+add('production cards edit a scene by clicking its row body, rename through a compact title control and expose three independent live-sync switches', () => {
+  vm.runInContext(`var icon=(n,c='')=>'<svg class="icon '+c+'" data-icon="'+n+'"></svg>';var btn=(l,i,a,x='',c='')=>'<button type="button" class="btn '+c+'" data-act="'+a+'" '+x+'>'+l+'</button>';var ibtn=(i,a,l,x='')=>'<button type="button" class="ibtn" data-act="'+a+'" '+x+'></button>';var imgTag=()=>'<img>';var thumbnailURL=x=>x;var pad=n=>String(n).padStart(2,'0');var esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&#60;','>':'&#62;','"':'&quot;',"'":'&#39;'}[c]));var $=()=>null;var displayUI={locale:null};`, context);
+  const task = { id: 'assembly-1', title: 'Book', status: 'standby', albumId: 'album_1', purpose: 'album', sources: { story: 'Story', presets: [], channel: 'C', provider: 'openai' }, notices: [],
+    pages: [{ index: 0, state: 'standby', result: null, attemptCount: 0, attempts: [], frame: { name: '一', prompt: '{hero} at sea' } }, { index: 1, state: 'running', result: null, attemptCount: 1, attempts: [{ status: 'running' }] }] };
+  const queue = { tasks: [task], active: [], lane: [], batch: [], paused: true, concurrency: 1, maxConcurrency: 128, liveSync: { story: true, presets: false, workflow: false } };
+  const access = context.productionTaskAccess(task, queue);
+  const row = context.renderProductionPage(task, task.pages[0], access);
+  assert.match(row, /<button type="button" class="production-page-body" data-act="production-page-edit" data-id="assembly-1" data-index="0"/, 'the row body itself is the edit entry');
+  assert.ok(row.includes('<b>一</b>') && row.includes('{hero} at sea'), 'the row shows the scene name and a prompt excerpt');
+  assert.equal((row.match(/production-page-edit/g) || []).length, 1, 'no separate edit button is added');
+  assert.ok(row.includes('data-act="production-rerun"') && row.includes('data-act="production-rerun-tail"'), 'rerun controls are untouched');
+  assert.match(context.renderProductionPage(task, task.pages[1], access), /class="production-page-body"[^>]* disabled/, 'a scene with the provider cannot be edited');
+  const card = context.renderProductionCard(task, queue);
+  assert.match(card, /<h2>Book<\/h2><button type="button" class="ibtn production-rename" data-act="production-rename" data-id="assembly-1"/, 'the title carries a compact rename control');
+  assert.equal((card.match(/data-act="production-rename"/g) || []).length, 1, 'exactly one rename control per card');
+  const normalized = context.normalizeProductionQueue(queue);
+  assert.deepEqual(plain(normalized.liveSync), { story: true, presets: false, workflow: false });
+  assert.equal(context.normalizeProductionQueue({ tasks: [] }).liveSync, undefined, 'the flags are unknown until the server reports them');
+  vm.runInContext('workshop.queue=normalizeProductionQueue(' + JSON.stringify(queue) + ')', context);
+  const settings = context.productionLiveSyncSettingsHTML();
+  for (const key of ['story', 'presets', 'workflow']) assert.match(settings, new RegExp('<input role="switch" type="checkbox" data-production-live="' + key + '"'), key + ' has its own switch');
+  assert.equal((settings.match(/data-production-live="story"[^>]*checked/g) || []).length, 1, 'only the enabled kind is checked');
+  assert.equal((settings.match(/ checked/g) || []).length, 1);
+  assert.equal(vm.runInContext('productionHeadline(productionQueueControls(workshop.queue),workshop.queue).detail', context).endsWith('实时读取：分镜'), true, 'the queue headline names the kinds read live');
+  const source = fs.readFileSync(path.join(__dirname, 'assembly-workshop.js'), 'utf8');
+  for (const action of ['production-page-edit', 'production-frame-save', 'production-rename', 'production-live-retry']) assert.ok(source.includes("'" + action + "':"), action + ' is registered');
+  assert.ok(source.includes("productionRequest('update-frame'") && source.includes("productionRequest('rename'") && source.includes("productionRequest('live-sync'"), 'edits go through the production API');
+});
+
 async function main() {
   let failed = 0;
   for (const test of tests) {

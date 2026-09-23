@@ -1305,3 +1305,38 @@ body.production-reordering{cursor:grabbing;user-select:none}
 body.production-reordering .production-card{cursor:grabbing}
 .designer-concurrency{max-width:220px}
 @media(max-width:760px){.production-grip{display:none}.production-concurrency{width:100%;justify-content:space-between}.production-concurrency input{min-height:44px;width:88px}.production-card-actions .production-remove{margin-left:0}}
+/* Production: a scene row's body opens that scene's prompt editor (no extra button); the card title carries a compact rename control. */
+.production-page-main{display:flex;flex-direction:column;gap:2px;min-width:0}
+.production-page-body{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:calc(100% + 16px);padding:4px 8px;margin:-4px -8px;border-radius:8px;text-align:left;color:inherit;min-width:0}
+.production-page-body:hover:not(:disabled),.production-page-body:focus-visible{background:var(--hover)}
+.production-page-body:disabled{opacity:1;cursor:progress}
+.production-page-status{display:flex;align-items:baseline;flex-wrap:wrap}
+.production-page-excerpt{display:flex;align-items:center;gap:8px;max-width:100%;font-size:11px;line-height:1.6;color:var(--muted);min-width:0}
+.production-page-excerpt b{font-weight:500;color:var(--soft);white-space:nowrap}
+.production-page-prompt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.production-page-excerpt .icon{width:12px;height:12px;opacity:0;transition:opacity .15s}
+.production-page-body:hover .production-page-excerpt .icon,.production-page-body:focus-visible .production-page-excerpt .icon{opacity:.8}
+.production-rename{width:22px;height:22px;border-radius:6px;opacity:.45;flex-shrink:0}
+.production-rename .icon{width:13px;height:13px}
+.production-card-title:hover .production-rename,.production-rename:focus-visible{opacity:1}
+.production-frame-writeback{margin:6px 0 0;gap:8px}
+.production-live-settings .settings-row h3{font-size:13px}
+.production-live-pending{display:flex;align-items:center;gap:10px;margin-top:12px}
+@media(hover:none){.production-rename{opacity:.7}.production-page-excerpt .icon{opacity:.6}}
+
+.workshop-heading-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.workshop-heading-actions .btn:not(.primary){background:transparent}
+.workshop-export-sheet{display:grid;gap:12px}
+.workshop-export-tools{display:flex;align-items:center;gap:6px;min-height:30px}
+.workshop-export-count{font-size:11.5px;color:var(--muted)}
+.workshop-export-list{display:grid;gap:6px;max-height:min(52vh,460px);overflow:auto;padding:2px}
+.workshop-export-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border:1px solid var(--line);border-radius:10px;cursor:pointer;transition:border-color .15s,background .15s}
+.workshop-export-item:hover{border-color:color-mix(in srgb,var(--accent2) 55%,var(--line))}
+.workshop-export-item:has(input:checked){border-color:color-mix(in srgb,var(--accent) 60%,var(--line));background:var(--tint)}
+.workshop-export-item input{margin:0}
+.workshop-export-item .grow{display:grid;gap:2px;min-width:0}
+.workshop-export-item strong{font-size:12.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.workshop-export-item small{font-size:11px;color:var(--muted)}
+.workshop-export-item em{font-style:normal;font-size:10.5px;padding:2px 8px;border-radius:999px;background:var(--panel2);color:var(--soft)}
+.workshop-export-sheet .help code{font:10.5px var(--mono);padding:1px 5px;border-radius:4px;background:var(--panel2)}
+@media(max-width:760px){.workshop-heading-actions{width:100%}.workshop-heading-actions .btn{flex:1 1 auto;min-height:40px}}

@@ -117,7 +117,14 @@ function batchFramesModal(){
  attachPromptEditors();setTimeout(()=>$('#batch-frames-count')?.focus(),40);
 }
 function workshopDraft(){const p=workshopPreset();if(!p)return null;workshop.presetId=p.id;const draft=settingPresetDraft(p.id);draft.bindings??=clone(p.bindings||[]);return draft}
-function workshopHeader(){return `<header class="workshop-heading"><div><span class="context-kicker">创作资产 · 独立保存与复用</span><h1>${{stories:'分镜工坊',presets:'预设工坊',production:'装配与生成'}[workshop.view]}</h1><p>${{stories:'先把故事写好。不绑定角色，也不绑定一本画册。',presets:'让人物、画风与视觉设定，成为可反复使用的资产。',production:'选择故事，搭配预设。准备妥当后，再开始生成。'}[workshop.view]}</p></div>${workshop.view==='production'?btn('新建生成任务','plus','assembly-new','','primary'):btn(workshop.view==='stories'?'新建分镜':'新建预设','plus','workshop-new','','primary')}</header><nav class="quiet-tabs workshop-tabs" aria-label="资产与生产">${[['stories','分镜工坊'],['presets','预设工坊'],['production','装配与队列']].map(([id,label])=>`<button data-act="workshop-tab" data-view="${id}" class="${workshop.view===id?'active':''}" ${workshop.view===id?'aria-current="page"':''}>${label}</button>`).join('')}</nav>`}
+/* Library-level actions sit in the page header: importing adds new assets and exporting may pack several, so neither
+   belongs to the toolbar of the one asset being edited (that toolbar keeps rename / save / next step). */
+function workshopHeaderActions(){
+ if(workshop.view==='production')return btn('新建生成任务','plus','assembly-new','','primary');
+ const stories=workshop.view==='stories',count=(stories?projectTemplates():projectVariableSets()).length,noun=stories?'分镜':'预设';
+ return `<div class="workshop-heading-actions" role="group" aria-label="${noun}库操作">${btn('导入','file-import','workshop-import',`title="导入 ${noun}（.json / .mio.zip，可多选）"`)}${btn('导出…','file-export','workshop-export-pick',`title="选择要导出的${noun}" ${count?'':'disabled'}`)}${btn(stories?'新建分镜':'新建预设','plus','workshop-new','','primary')}</div>`;
+}
+function workshopHeader(){return `<header class="workshop-heading"><div><span class="context-kicker">创作资产 · 独立保存与复用</span><h1>${{stories:'分镜工坊',presets:'预设工坊',production:'装配与生成'}[workshop.view]}</h1><p>${{stories:'先把故事写好。不绑定角色，也不绑定一本画册。',presets:'让人物、画风与视觉设定，成为可反复使用的资产。',production:'选择故事，搭配预设。准备妥当后，再开始生成。'}[workshop.view]}</p></div>${workshopHeaderActions()}</header><nav class="quiet-tabs workshop-tabs" aria-label="资产与生产">${[['stories','分镜工坊'],['presets','预设工坊'],['production','装配与队列']].map(([id,label])=>`<button data-act="workshop-tab" data-view="${id}" class="${workshop.view===id?'active':''}" ${workshop.view===id?'aria-current="page"':''}>${label}</button>`).join('')}</nav>`}
 /* B8: the same five fields mean different things per channel; say so where they are edited. */
 function workshopFrameParameterNotice(frame){
  const provider=activeImageProfile()?.provider||'comfyui',on=frame.renderOverride===true;
@@ -177,7 +184,7 @@ function renderStoryWorkshopMobile(stories,story){const allPicked=story.frames.l
    <p class="wm-card-prompt ${sum.empty?'is-blank':''}" data-user-content>${esc(sum.empty?'轻点填写这一幕的画面描述':sum.prompt)}</p>${sum.caption?`<p class="wm-card-caption" data-user-content>${esc(sum.caption)}</p>`:''}</div>
    ${workshop.selMode?'':icon('arrow','sm')}
   </article>`}).join('');
- return `<div class="workshop-asset-head wm-asset-head"><label>当前分镜资产<select id="workshop-story-select">${stories.map(t=>opt(t.id,t.title,story.id)).join('')}</select></label><div class="wm-asset-actions">${btn('去装配此分镜','arrow','first-run-assemble-story','','primary')}${btn('重命名','edit','workshop-rename')}${btn('导入','file-import','workshop-import')}${btn('导出','file-export','workshop-export')}${btn('保存分镜','disk','workshop-save','','ghost')}</div></div>
+ return `<div class="workshop-asset-head wm-asset-head"><label>当前分镜资产<select id="workshop-story-select">${stories.map(t=>opt(t.id,t.title,story.id)).join('')}</select></label><div class="wm-asset-actions">${btn('去装配此分镜','arrow','first-run-assemble-story','','primary')}${btn('重命名','edit','workshop-rename')}${btn('保存分镜','disk','workshop-save','','ghost')}</div></div>
   <details class="story-synopsis"><summary>故事梗概 / 起手模板（可选）</summary>${field('作品简介',`<textarea data-workshop-story="outline" class="workshop-outline" placeholder="可选：为作品补充一段简介。">${esc(story.outline||'')}</textarea>`)}<div class="field"><label class="label" for="workshop-base-prompt">起手模板</label>${promptEditorHTML({attrs:'id="workshop-base-prompt" data-workshop-story="basePrompt" class="workshop-base-prompt"',value:storyBasePrompt(story),placeholder:'可选：新分幕的起手提示词，例如 {character}, {outfit}, {style}, {scene}, ',context:'workshop'})}</div></details>
   <section class="wm-stream ${workshop.selMode?'is-selmode':''}" aria-label="分幕列表">
    <header class="wm-stream-head"><div><strong>${localeString('共 {total} 幕',{total:story.frames.length})}</strong><small>轻点卡片进入全屏编辑，左右滑动切换分幕</small></div><div class="wm-stream-tools">${btn('新增分幕','plus','workshop-add-frame','','small')}${btn('批量新增…','copy','workshop-add-frames','','small ghost')}${btn(workshop.selMode?'退出管理':'批量管理','check','workshop-frame-sel-toggle','',workshop.selMode?'small active':'small ghost')}</div></header>
@@ -189,11 +196,11 @@ function renderStoryWorkshop(){
  workshop.storyId=story.id;workshop.frame=clamp(workshop.frame,0,Math.max(0,story.frames.length-1));const frame=story.frames[workshop.frame];
  if(workshopIsMobile()){if(!story.frames.length)workshop.mobileEditor=false;return renderStoryWorkshopMobile(stories,story)}
  workshop.mobileEditor=false;
- return `<div class="workshop-asset-head"><label>当前分镜资产<select id="workshop-story-select">${stories.map(t=>opt(t.id,t.title,story.id)).join('')}</select></label><div>${btn('重命名','edit','workshop-rename')}${btn('导入','file-import','workshop-import')}${btn('导出','file-export','workshop-export')}${btn('保存分镜','disk','workshop-save','','ghost')}${btn('去装配此分镜','arrow','first-run-assemble-story','','primary')}</div></div><details class="story-synopsis"><summary>故事梗概 / 起手模板（可选）</summary>${field('作品简介',`<textarea data-workshop-story="outline" class="workshop-outline" placeholder="可选：为作品补充一段简介。">${esc(story.outline||'')}</textarea>`)}<div class="field"><label class="label" for="workshop-base-prompt">起手模板</label>${promptEditorHTML({attrs:'id="workshop-base-prompt" data-workshop-story="basePrompt" class="workshop-base-prompt"',value:storyBasePrompt(story),placeholder:'可选：新分幕的起手提示词，例如 {character}, {outfit}, {style}, {scene}, ',context:'workshop'})}<p class="help">批量新增的分幕以它开头；单击「新增分幕」仍是空白分幕，可随时一键插入。</p></div></details><div class="workshop-editor ${workshop.selMode?'is-selmode':''}"><nav class="workshop-frames" aria-label="分幕列表"><div class="workshop-frames-list ${workshop.pickedFrames.size?'has-selection':''}" aria-multiselectable="true">${story.frames.map((f,i)=>{const picked=workshop.pickedFrames.has(i);return `<button data-act="workshop-frame" data-index="${i}" class="${i===workshop.frame?'active':''} ${picked?'is-picked desktop-selected':''}" aria-selected="${picked}"><small>${pad(i+1)}</small><span>${esc(f.name||'未命名分幕')}</span></button>`}).join('')}</div><p class="workshop-frames-status" role="status" aria-live="polite" ${workshop.pickedFrames.size?'':'hidden'}>${workshop.pickedFrames.size?localeString('已选 {n} 幕 · 右键操作',{n:workshop.pickedFrames.size}):''}</p><div class="workshop-frames-actions">${btn('新增分幕','plus','workshop-add-frame','','small')}${btn('批量新增…','copy','workshop-add-frames','','small')}</div></nav><section class="workshop-page" data-editor-key="${esc(frame?.id||story.id)}">${frame?`<div class="workshop-page-title"><input data-workshop-frame="name" value="${esc(frame.name)}" aria-label="分幕名称">${ibtn('up','workshop-move-frame','分幕前移','data-dir="-1"')}${ibtn('down','workshop-move-frame','分幕后移','data-dir="1"')}${ibtn('copy','workshop-copy-frame','复制分幕')}${ibtn('trash','workshop-delete-frame','删除分幕')}</div><div class="negative-heading prompt-heading"><label for="workshop-frame-prompt">正向提示词</label>${!frame.prompt.trim()&&storyBasePrompt(story)?btn('插入起手模板','plus','workshop-apply-base','','small ghost'):''}</div>${promptEditorHTML({attrs:'id="workshop-frame-prompt" data-workshop-frame="prompt" class="workshop-prompt"',value:frame.prompt,placeholder:'描述画面、镜头与人物动作；使用 {变量} 引用装配时的视觉设定。',context:'workshop'})}<div class="negative-heading"><label>负向提示词</label>${btn('应用到所有分幕','copy','workshop-negative-all','','small ghost')}</div>${promptEditorHTML({attrs:'aria-label="负向提示词" data-workshop-frame="negative" class="workshop-negative"',value:frame.negative||'',placeholder:'排除不需要的内容，也可引用 {画风负向} 或 {角色负向}。',context:'workshop'})}${field('台词 / 旁白',promptEditorHTML({attrs:'aria-label="分镜台词" data-workshop-frame="caption" class="workshop-caption"',value:frame.caption||'',context:'workshop',className:'prose'}))}<details class="quiet-advanced"><summary>此幕画面参数</summary>${workshopFrameParameterNotice(frame)}<div class="grid2">${['width','height','steps','cfg','seed'].map(k=>field(({width:'宽度',height:'高度',steps:'步数',cfg:'CFG',seed:'随机种子'})[k],input(k,frame[k],'number',`data-workshop-frame="${k}"`))).join('')}</div></details>`:'<div class="eco-empty"><h3>从第一个镜头开始。</h3></div>'}</section></div>`;
+ return `<div class="workshop-asset-head"><label>当前分镜资产<select id="workshop-story-select">${stories.map(t=>opt(t.id,t.title,story.id)).join('')}</select></label><div>${btn('重命名','edit','workshop-rename')}${btn('保存分镜','disk','workshop-save','','ghost')}${btn('去装配此分镜','arrow','first-run-assemble-story','','primary')}</div></div><details class="story-synopsis"><summary>故事梗概 / 起手模板（可选）</summary>${field('作品简介',`<textarea data-workshop-story="outline" class="workshop-outline" placeholder="可选：为作品补充一段简介。">${esc(story.outline||'')}</textarea>`)}<div class="field"><label class="label" for="workshop-base-prompt">起手模板</label>${promptEditorHTML({attrs:'id="workshop-base-prompt" data-workshop-story="basePrompt" class="workshop-base-prompt"',value:storyBasePrompt(story),placeholder:'可选：新分幕的起手提示词，例如 {character}, {outfit}, {style}, {scene}, ',context:'workshop'})}<p class="help">批量新增的分幕以它开头；单击「新增分幕」仍是空白分幕，可随时一键插入。</p></div></details><div class="workshop-editor ${workshop.selMode?'is-selmode':''}"><nav class="workshop-frames" aria-label="分幕列表"><div class="workshop-frames-list ${workshop.pickedFrames.size?'has-selection':''}" aria-multiselectable="true">${story.frames.map((f,i)=>{const picked=workshop.pickedFrames.has(i);return `<button data-act="workshop-frame" data-index="${i}" class="${i===workshop.frame?'active':''} ${picked?'is-picked desktop-selected':''}" aria-selected="${picked}"><small>${pad(i+1)}</small><span>${esc(f.name||'未命名分幕')}</span></button>`}).join('')}</div><p class="workshop-frames-status" role="status" aria-live="polite" ${workshop.pickedFrames.size?'':'hidden'}>${workshop.pickedFrames.size?localeString('已选 {n} 幕 · 右键操作',{n:workshop.pickedFrames.size}):''}</p><div class="workshop-frames-actions">${btn('新增分幕','plus','workshop-add-frame','','small')}${btn('批量新增…','copy','workshop-add-frames','','small')}</div></nav><section class="workshop-page" data-editor-key="${esc(frame?.id||story.id)}">${frame?`<div class="workshop-page-title"><input data-workshop-frame="name" value="${esc(frame.name)}" aria-label="分幕名称">${ibtn('up','workshop-move-frame','分幕前移','data-dir="-1"')}${ibtn('down','workshop-move-frame','分幕后移','data-dir="1"')}${ibtn('copy','workshop-copy-frame','复制分幕')}${ibtn('trash','workshop-delete-frame','删除分幕')}</div><div class="negative-heading prompt-heading"><label for="workshop-frame-prompt">正向提示词</label>${!frame.prompt.trim()&&storyBasePrompt(story)?btn('插入起手模板','plus','workshop-apply-base','','small ghost'):''}</div>${promptEditorHTML({attrs:'id="workshop-frame-prompt" data-workshop-frame="prompt" class="workshop-prompt"',value:frame.prompt,placeholder:'描述画面、镜头与人物动作；使用 {变量} 引用装配时的视觉设定。',context:'workshop'})}<div class="negative-heading"><label>负向提示词</label>${btn('应用到所有分幕','copy','workshop-negative-all','','small ghost')}</div>${promptEditorHTML({attrs:'aria-label="负向提示词" data-workshop-frame="negative" class="workshop-negative"',value:frame.negative||'',placeholder:'排除不需要的内容，也可引用 {画风负向} 或 {角色负向}。',context:'workshop'})}${field('台词 / 旁白',promptEditorHTML({attrs:'aria-label="分镜台词" data-workshop-frame="caption" class="workshop-caption"',value:frame.caption||'',context:'workshop',className:'prose'}))}<details class="quiet-advanced"><summary>此幕画面参数</summary>${workshopFrameParameterNotice(frame)}<div class="grid2">${['width','height','steps','cfg','seed'].map(k=>field(({width:'宽度',height:'高度',steps:'步数',cfg:'CFG',seed:'随机种子'})[k],input(k,frame[k],'number',`data-workshop-frame="${k}"`))).join('')}</div></details>`:'<div class="eco-empty"><h3>从第一个镜头开始。</h3></div>'}</section></div>`;
 }
 function renderPresetWorkshop(){
  const sets=projectVariableSets(),p=workshopPreset(),draft=workshopDraft();if(!p)return '<div class="eco-empty"><h3>建立你的视觉资产库。</h3><p>人物、画风、场景，可以分别保存为预设。</p>'+btn('导入预设','file-import','workshop-import')+'</div>';
- return `<div class="workshop-asset-head"><label>当前视觉预设<select id="workshop-preset-select">${sets.map(s=>opt(s.id,s.title,p.id)).join('')}</select></label><div>${btn('重命名','edit','workshop-rename')}${btn('导入','file-import','workshop-import')}${btn('导出','file-export','workshop-export')}${btn('独立试绘','brush','workshop-preview')}${btn('保存预设','disk','workshop-save','','primary')}</div></div><div class="workshop-preset-preview">${workshop.queue.tasks.filter(t=>t.purpose==='preview'&&t.previewPresetId===p.id&&t.pages[0]?.result?.image).slice(-3).map(t=>{const a=productionTaskAccess(t,workshop.queue);return `<figure class="workshop-preview-figure" data-production-task="${esc(t.id)}">${imgTag(t.pages[0].result.image,'预设试绘')}<figcaption>${esc(t.title)}</figcaption>${ibtn('trash','workshop-preview-remove',a.canRemove?'删除这张试绘':'试绘任务正在运行或排队中，请先停止它。',`data-id="${esc(t.id)}" ${a.canRemove?'':'disabled'}`)}</figure>`}).join('')}${draft.variables.filter(e=>e.type==='image'&&e.value?.src).map(e=>`<figure>${imgTag(e.value.src,settingLabel(e))}<figcaption>${esc(settingLabel(e))}</figcaption></figure>`).join('')}</div><div class="settings-form-toolbar"><div class="settings-toolbar-label">视觉属性 <span>${draft.variables.length}</span></div><div class="settings-toolbar-actions">${btn('新增属性','plus','art-setting-add')}${btn('新建分组','plus','settings-group-new',`data-owner="${esc(draft.id)}"`)}${btn('编辑分组','edit','settings-group-edit',`data-owner="${esc(draft.id)}"`)}</div></div>${renderSettingsGroups(draft)}<details class="quiet-advanced"><summary>LoRA / 节点输入绑定</summary><div class="row wrap" style="margin:20px 0">${btn('添加节点绑定','plus','workshop-binding-new')}</div>${draft.bindings.map((b,i)=>`<div class="settings-row"><div class="grow"><strong>${esc(b.nodeId)} · ${esc(b.path)}</strong><p>${esc(b.source)} → ${esc(b.value??'')} · ${esc(b.type||'auto')}</p></div>${ibtn('edit','workshop-binding-new','编辑绑定',`data-index="${i}"`)}${ibtn('trash','workshop-binding-delete','删除绑定',`data-index="${i}"`)}</div>`).join('')}<p class="help">按需将视觉变量连接到工作流节点。未配置时保留工作流原值；同一输入不能重复启用。</p></details>`;
+ return `<div class="workshop-asset-head"><label>当前视觉预设<select id="workshop-preset-select">${sets.map(s=>opt(s.id,s.title,p.id)).join('')}</select></label><div>${btn('重命名','edit','workshop-rename')}${btn('独立试绘','brush','workshop-preview')}${btn('保存预设','disk','workshop-save','','primary')}</div></div><div class="workshop-preset-preview">${workshop.queue.tasks.filter(t=>t.purpose==='preview'&&t.previewPresetId===p.id&&t.pages[0]?.result?.image).slice(-3).map(t=>{const a=productionTaskAccess(t,workshop.queue);return `<figure class="workshop-preview-figure" data-production-task="${esc(t.id)}">${imgTag(t.pages[0].result.image,'预设试绘')}<figcaption>${esc(t.title)}</figcaption>${ibtn('trash','workshop-preview-remove',a.canRemove?'删除这张试绘':'试绘任务正在运行或排队中，请先停止它。',`data-id="${esc(t.id)}" ${a.canRemove?'':'disabled'}`)}</figure>`}).join('')}${draft.variables.filter(e=>e.type==='image'&&e.value?.src).map(e=>`<figure>${imgTag(e.value.src,settingLabel(e))}<figcaption>${esc(settingLabel(e))}</figcaption></figure>`).join('')}</div><div class="settings-form-toolbar"><div class="settings-toolbar-label">视觉属性 <span>${draft.variables.length}</span></div><div class="settings-toolbar-actions">${btn('新增属性','plus','art-setting-add')}${btn('新建分组','plus','settings-group-new',`data-owner="${esc(draft.id)}"`)}${btn('编辑分组','edit','settings-group-edit',`data-owner="${esc(draft.id)}"`)}</div></div>${renderSettingsGroups(draft)}<details class="quiet-advanced"><summary>LoRA / 节点输入绑定</summary><div class="row wrap" style="margin:20px 0">${btn('添加节点绑定','plus','workshop-binding-new')}</div>${draft.bindings.map((b,i)=>`<div class="settings-row"><div class="grow"><strong>${esc(b.nodeId)} · ${esc(b.path)}</strong><p>${esc(b.source)} → ${esc(b.value??'')} · ${esc(b.type||'auto')}</p></div>${ibtn('edit','workshop-binding-new','编辑绑定',`data-index="${i}"`)}${ibtn('trash','workshop-binding-delete','删除绑定',`data-index="${i}"`)}</div>`).join('')}<p class="help">按需将视觉变量连接到工作流节点。未配置时保留工作流原值；同一输入不能重复启用。</p></details>`;
 }
 function productionStatus(value){return ({standby:'待命',ready:'排队待命',preparing:'前置准备',running:'生成中',complete:'完成',partial:'部分完成',failed:'异常',cancelled:'已取消',interrupted:'中断待核对',uncertain:'结果未确认'})[value]||value}
 const PRODUCTION_PAGE_SIZE=6;
@@ -205,7 +212,7 @@ function normalizeProductionQueue(raw){
  const active=Array.isArray(q.active)?q.active.filter(Boolean):q.active?[q.active]:[];
  const lane=(Array.isArray(q.lane)?q.lane:Array.isArray(q.batch)?q.batch:[]).filter(id=>!active.includes(id));
  const concurrency=Number.isInteger(q.concurrency)&&q.concurrency>0?q.concurrency:1,maxConcurrency=Number.isInteger(q.maxConcurrency)&&q.maxConcurrency>0?q.maxConcurrency:128;
- return {...q,tasks:tasks.map(t=>{const running=active.includes(t.id)||t.running===true,queued=!running&&(lane.includes(t.id)||t.queued===true);const own=Number.isInteger(t.concurrency)&&t.concurrency>0?t.concurrency:null;return {...t,pages:Array.isArray(t.pages)?t.pages:[],sources:t.sources||{story:'',presets:[],channel:'',provider:''},running,queued,paused:!!t.paused,concurrency:own,effectiveConcurrency:Number.isInteger(t.effectiveConcurrency)?t.effectiveConcurrency:(own||concurrency),queuePosition:queued?(lane.indexOf(t.id)+1||t.queuePosition||null):null}}),active,lane,batch:[...active,...lane],paused:!!q.paused,concurrency,maxConcurrency,fault:q.fault||null,uncleanShutdown:!!q.uncleanShutdown};
+ return {...q,tasks:tasks.map(t=>{const running=active.includes(t.id)||t.running===true,queued=!running&&(lane.includes(t.id)||t.queued===true);const own=Number.isInteger(t.concurrency)&&t.concurrency>0?t.concurrency:null;return {...t,pages:Array.isArray(t.pages)?t.pages:[],sources:t.sources||{story:'',presets:[],channel:'',provider:''},running,queued,paused:!!t.paused,concurrency:own,effectiveConcurrency:Number.isInteger(t.effectiveConcurrency)?t.effectiveConcurrency:(own||concurrency),queuePosition:queued?(lane.indexOf(t.id)+1||t.queuePosition||null):null}}),active,lane,batch:[...active,...lane],paused:!!q.paused,concurrency,maxConcurrency,liveSync:q.liveSync&&typeof q.liveSync==='object'?{story:q.liveSync.story===true,presets:q.liveSync.presets===true,workflow:q.liveSync.workflow===true}:undefined,fault:q.fault||null,uncleanShutdown:!!q.uncleanShutdown};
 }
 function adoptProductionQueue(raw){workshop.queue=normalizeProductionQueue(raw);const ids=new Set(workshop.queue.tasks.map(t=>t.id));for(const id of workshop.pickedTasks)if(!ids.has(id))workshop.pickedTasks.delete(id);return workshop.queue}
 function productionTask(id){return workshop.queue.tasks.find(t=>t.id===id)}
@@ -226,7 +233,15 @@ function previewProductionPage(d){
  const title=localeString('第 {n} 幕',{n:page.index+1});
  modal(task.title+' · '+title,imgTag(page.result.image,title,'class="production-page-full-image"'),'',true);
 }
-function renderProductionPage(t,p,a=productionTaskAccess(t)){const labels=productionPageLabels(t,p),last=p.attempts.at(-1),lock=a.reason?`disabled title="${esc(a.reason)}"`:'';return `<div class="production-page" data-page-index="${p.index}"><div class="production-page-number">${pad(p.index+1)}</div>${p.result?.image?`<button type="button" class="production-page-preview" data-act="production-page-preview" data-id="${esc(t.id)}" data-index="${p.index}" aria-label="${esc(localeString('查看第 {n} 幕图片',{n:p.index+1}))}" title="${esc(localeString('查看图片'))}">${imgTag(thumbnailURL(p.result.image),'第 '+(p.index+1)+' 幕','loading="lazy"')}</button>`:'<span class="production-page-blank"></span>'}<div class="grow"><strong class="page-${esc(p.state)}">${productionStatus(p.state)}</strong><small>${p.attemptCount} 次尝试${last?.upstream?' · 上游任务 '+esc(last.upstream):''}${p.result&&p.state!=='complete'?' · 原图已保留':''}</small>${last?.error?`<p>${esc(last.error)}</p>`:''}${last?.notices?.length?`<details class="production-slot-notices"><summary>本次写入与跳过原因</summary>${last.notices.map(n=>`<p>${esc(n)}</p>`).join('')}</details>`:''}</div><div>${p.state!=='complete'&&p.attempts.at(-1)?.phase==='publish'?btn('恢复已生成结果','disk','production-recover',`data-id="${esc(t.id)}" data-index="${p.index}" ${a.canRecover?'':'disabled title="请先停止这本画册。"'}`,'small'):''}${btn(labels.single,labels.icon,'production-rerun',`data-id="${esc(t.id)}" data-index="${p.index}" ${a.canRerun?'':lock}`,'small')}${btn(labels.tail,'list','production-rerun-tail',`data-id="${esc(t.id)}" data-index="${p.index}" ${a.canRerun?'':lock}`,'small ghost')}</div></div>`}
+/* The scene row's body is the editor entry: one click opens this scene's prompt as the task holds it (no extra button).
+   A scene with the provider right now is shown but not clickable; the server refuses that edit too. */
+function productionPageBodyHTML(t,p,last){
+ const frame=p.frame&&typeof p.frame==='object'?p.frame:null,name=frame?.name||'',excerpt=frame?.prompt||'',busy=p.state==='running';
+ const status=`<span class="production-page-status"><strong class="page-${esc(p.state)}">${productionStatus(p.state)}</strong><small>${p.attemptCount} 次尝试${last?.upstream?' · 上游任务 '+esc(last.upstream):''}${p.result&&p.state!=='complete'?' · 原图已保留':''}</small></span>`;
+ const excerptHTML=`<span class="production-page-excerpt">${name?`<b>${esc(name)}</b>`:''}<span class="production-page-prompt">${esc(frame?(excerpt||'（这一幕还没有提示词）'):'点击查看并编辑这一幕的提示词')}</span>${icon('edit','sm')}</span>`;
+ return `<button type="button" class="production-page-body" data-act="production-page-edit" data-id="${esc(t.id)}" data-index="${p.index}" ${busy?'disabled':''} title="${esc(busy?'这一幕正在生成中，结束后再编辑':'点击编辑这一幕的提示词；可覆写保存回源分镜')}" aria-label="${esc(localeString('编辑第 {n} 幕提示词',{n:p.index+1}))}">${status}${excerptHTML}</button>`;
+}
+function renderProductionPage(t,p,a=productionTaskAccess(t)){const labels=productionPageLabels(t,p),last=p.attempts.at(-1),lock=a.reason?`disabled title="${esc(a.reason)}"`:'';return `<div class="production-page" data-page-index="${p.index}"><div class="production-page-number">${pad(p.index+1)}</div>${p.result?.image?`<button type="button" class="production-page-preview" data-act="production-page-preview" data-id="${esc(t.id)}" data-index="${p.index}" aria-label="${esc(localeString('查看第 {n} 幕图片',{n:p.index+1}))}" title="${esc(localeString('查看图片'))}">${imgTag(thumbnailURL(p.result.image),'第 '+(p.index+1)+' 幕','loading="lazy"')}</button>`:'<span class="production-page-blank"></span>'}<div class="grow production-page-main">${productionPageBodyHTML(t,p,last)}${last?.error?`<p>${esc(last.error)}</p>`:''}${last?.notices?.length?`<details class="production-slot-notices"><summary>本次写入与跳过原因</summary>${last.notices.map(n=>`<p>${esc(n)}</p>`).join('')}</details>`:''}</div><div>${p.state!=='complete'&&p.attempts.at(-1)?.phase==='publish'?btn('恢复已生成结果','disk','production-recover',`data-id="${esc(t.id)}" data-index="${p.index}" ${a.canRecover?'':'disabled title="请先停止这本画册。"'}`,'small'):''}${btn(labels.single,labels.icon,'production-rerun',`data-id="${esc(t.id)}" data-index="${p.index}" ${a.canRerun?'':lock}`,'small')}${btn(labels.tail,'list','production-rerun-tail',`data-id="${esc(t.id)}" data-index="${p.index}" ${a.canRerun?'':lock}`,'small ghost')}</div></div>`}
 function productionOverridesSummary(o){
  if(!o||typeof o!=='object')return '';const parts=[];
  const models=typeof o.model==='string'?[['',o.model]]:Object.entries(o.model||{});
@@ -261,7 +276,7 @@ function renderProductionCard(t,q=workshop.queue){
  const primary=a.running?(a.paused?btn('继续生成','play','production-resume',`data-id="${id}" title="只继续这本画册的后续分幕"`,'primary'):btn('暂停','pause','production-pause',`data-id="${id}" title="只暂停这本画册：已发出的分幕会返回，之后不再派发新分幕"`))+btn('停止','stop','production-cancel',`data-id="${id}" title="停止这本画册的后续分幕；已生成的图片保留"`,'ghost')
   :a.queued?btn('移出队列','close','production-cancel',`data-id="${id}" title="不再顺次生成这本画册；已生成的图片保留"`)
   :btn('开始生成','play','production-start',`data-id="${id}" ${a.canStart?'':`disabled title="${esc(a.startReason)}"`}`,'primary');
- return `<article class="production-card${a.running?' is-running':''}${a.queued?' is-queued':''}${a.paused&&a.busy?' is-held':''}${picked?' desktop-selected is-picked':''}" data-production-task="${id}" aria-selected="${picked}"><header><div class="production-card-title"><span class="production-grip" aria-hidden="true" title="拖动调整顺序">⠿</span><span class="production-state state-${esc(t.status)}">${productionStatus(t.status)}</span>${badges}<h2>${esc(t.title)}</h2></div><div class="production-count"><b>${done}</b><span>/ ${pages.length} 幕</span></div></header><p class="production-meta"><span>分镜 · ${esc(src.story||'')}</span><span>预设 · ${esc((src.presets||[]).join(' + ')||'未选预设')}</span><span>渠道 · ${esc(src.channel||'')}</span>${productionCollectionMeta(src.projectId)}</p>${productionOverridesSummary(src.overrides)}${productionStrip(t)}${t.rateLimit?`<p class="production-rate" role="status" data-rate-task="${id}">服务限流，等待 ${productionRetrySeconds(t.rateLimit)} 秒后重试；不计入连续故障。</p>`:''}${t.cancelReport?`<p class="production-error">${esc(t.cancelReport.message||(t.cancelReport.state==='cancel_dispatched'?'ComfyUI 已接受本任务的定向取消请求。':'ComfyUI 本任务已结束或不在队列中。'))}</p>`:''}${t.error?`<p class="production-error">${esc(t.error)}</p>`:''}${(t.notices||[]).map(n=>`<p class="production-notice" role="status">${esc(n)}</p>`).join('')}<div class="production-card-actions">${primary}${btn('克隆','copy','production-clone-adjust',`data-id="${id}" title="克隆并微调分镜提示词、参数与并发，生成一张新的待命任务卡"`,'ghost small')}${btn(t.purpose==='preview'?'查看试绘':'查看画册','book',t.purpose==='preview'?'production-preview':'production-read',`data-id="${esc(t.albumId)}" ${!pages.some(p=>p.result)?'disabled':''}`,'ghost small')}${productionConcurrencyField(t,q)}${btn('移除','trash','production-remove',`data-id="${id}" ${a.canRemove?'':`disabled title="${esc(a.removeReason)}"`}`,'ghost small production-remove')}</div><details class="production-pages" data-task-details="${id}" ${workshop.openTasks.has(t.id)?'open':''}><summary>展开分幕进度与局部重跑</summary><div class="production-page-list">${pages.map(p=>renderProductionPage(t,p,a)).join('')}</div></details></article>`;
+ return `<article class="production-card${a.running?' is-running':''}${a.queued?' is-queued':''}${a.paused&&a.busy?' is-held':''}${picked?' desktop-selected is-picked':''}" data-production-task="${id}" aria-selected="${picked}"><header><div class="production-card-title"><span class="production-grip" aria-hidden="true" title="拖动调整顺序">⠿</span><span class="production-state state-${esc(t.status)}">${productionStatus(t.status)}</span>${badges}<h2>${esc(t.title)}</h2><button type="button" class="ibtn production-rename" data-act="production-rename" data-id="${id}" title="${esc(localeString('重命名任务'))}" aria-label="${esc(localeString('重命名任务「{title}」',{title:t.title}))}">${icon('edit','sm')}</button></div><div class="production-count"><b>${done}</b><span>/ ${pages.length} 幕</span></div></header><p class="production-meta"><span>分镜 · ${esc(src.story||'')}</span><span>预设 · ${esc((src.presets||[]).join(' + ')||'未选预设')}</span><span>渠道 · ${esc(src.channel||'')}</span>${productionCollectionMeta(src.projectId)}</p>${productionOverridesSummary(src.overrides)}${productionStrip(t)}${t.rateLimit?`<p class="production-rate" role="status" data-rate-task="${id}">服务限流，等待 ${productionRetrySeconds(t.rateLimit)} 秒后重试；不计入连续故障。</p>`:''}${t.cancelReport?`<p class="production-error">${esc(t.cancelReport.message||(t.cancelReport.state==='cancel_dispatched'?'ComfyUI 已接受本任务的定向取消请求。':'ComfyUI 本任务已结束或不在队列中。'))}</p>`:''}${t.error?`<p class="production-error">${esc(t.error)}</p>`:''}${(t.notices||[]).map(n=>`<p class="production-notice" role="status">${esc(n)}</p>`).join('')}<div class="production-card-actions">${primary}${btn('克隆','copy','production-clone-adjust',`data-id="${id}" title="克隆并微调分镜提示词、参数与并发，生成一张新的待命任务卡"`,'ghost small')}${btn(t.purpose==='preview'?'查看试绘':'查看画册','book',t.purpose==='preview'?'production-preview':'production-read',`data-id="${esc(t.albumId)}" ${!pages.some(p=>p.result)?'disabled':''}`,'ghost small')}${productionConcurrencyField(t,q)}${btn('移除','trash','production-remove',`data-id="${id}" ${a.canRemove?'':`disabled title="${esc(a.removeReason)}"`}`,'ghost small production-remove')}</div><details class="production-pages" data-task-details="${id}" ${workshop.openTasks.has(t.id)?'open':''}><summary>展开分幕进度与局部重跑</summary><div class="production-page-list">${pages.map(p=>renderProductionPage(t,p,a)).join('')}</div></details></article>`;
 }
 /* Queue-wide state for the toolbar and the global context menu. A hold is anything「继续生成」would release:
    a book paused on its own, or the sequential lane being held while books wait in it. */
@@ -278,7 +293,8 @@ function productionQueueControls(q=workshop.queue){
 function productionHeadline(c,q=workshop.queue){
  const parts=[];if(c.running)parts.push(localeString('{n} 本生成中',{n:c.running}));if(c.queued)parts.push(localeString('{n} 本排队中',{n:c.queued}));if(c.heldBooks)parts.push(localeString('{n} 本已暂停',{n:c.heldBooks}));
  const title=!c.pending?'等待你的安排':c.held&&!c.running?'队列已暂停':c.running>1?localeString('正在同时生成 {n} 本画册',{n:c.running}):c.running?'正在生成一本画册':'队列待命';
- const detail=parts.length?parts.join(' · ')+(q.paused&&c.queued&&!c.running?' · 顺次队列已暂停':''):localeString('{n} 张任务卡 · 默认每本画册 {c} 幕并行',{n:(q.tasks||[]).length,c:q.concurrency||1});
+ const liveKinds=PRODUCTION_LIVE_SYNC_ROWS.filter(([key])=>q.liveSync?.[key]).map(([,title])=>title.replace('实时读取',''));
+ const detail=(parts.length?parts.join(' · ')+(q.paused&&c.queued&&!c.running?' · 顺次队列已暂停':''):localeString('{n} 张任务卡 · 默认每本画册 {c} 幕并行',{n:(q.tasks||[]).length,c:q.concurrency||1}))+(liveKinds.length?' · '+localeString('实时读取：{kinds}',{kinds:liveKinds.join(' / ')}):'');
  return {title,detail};
 }
 function renderProductionWorkshop(){
@@ -330,7 +346,97 @@ async function saveWorkshop(){
  if(workshop.view==='stories'&&workshopStory())delete workshopStory().ownerPlanId;
  save();if(!await savePythonWorkspace())throw Error('保存尚未确认，请检查冲突或服务状态');toast('独立资产已保存');
 }
-async function importWorkshop(file){if(!file)return;await saveWorkshop();const expected=workshop.view==='presets'?'variables':'storyboards',body={projectId:state.activeProjectId,expectedKind:expected};if(file.name.endsWith('.zip'))body.zip=(await blobData(file)).split(',')[1];else body.document=JSON.parse(await file.text());const info=await(await request('/api/library/inspect',post(body))).json();if(!await confirmAction('导入独立资产？',info.title+'','导入'))return;const result=await(await request('/api/library/import',post(body))).json();await connectPythonBackend();if(expected==='storyboards')workshop.storyId=result.id;else workshop.presetId=result.id;render()}
+/* ---- library import / export ------------------------------------------------------------------------------------
+   Import takes any number of .json documents, .mio.zip resource packages or a bundle of packages produced by
+   「导出…」; every item is inspected first and imported as a NEW asset (never overwriting). Export packs one asset as
+   <title>.mio.zip, or several as one .zip that contains one .mio.zip per asset. */
+const WORKSHOP_IMPORT_LIMIT=64;
+async function workshopImportEntries(files){
+ const entries=[];
+ for(const file of files){
+  const name=String(file.name||'资产');
+  if(/\.zip$/i.test(name)){
+   const bytes=new Uint8Array(await file.arrayBuffer()),inner=await workshopZipEntries(bytes).catch(()=>null);
+   const packages=inner?inner.filter(e=>/\.mio\.zip$/i.test(e.name)):[];
+   if(packages.length&&!inner.some(e=>e.name==='manifest.json'))for(const p of packages)entries.push({name:p.name,zip:p.bytes});
+   else entries.push({name,zip:bytes});
+  }else entries.push({name,text:await file.text()});
+  if(entries.length>WORKSHOP_IMPORT_LIMIT)throw Error('一次最多导入 '+WORKSHOP_IMPORT_LIMIT+' 份资产');
+ }
+ return entries;
+}
+function workshopBase64(bytes){let out='';for(let i=0;i<bytes.length;i+=0x8000)out+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));return btoa(out)}
+/* Read a STORED/DEFLATE zip in the browser (only used to open a bundle of .mio.zip packages). */
+async function workshopZipEntries(bytes){
+ const v=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);let eocd=-1;
+ for(let p=bytes.length-22;p>=Math.max(0,bytes.length-65557);p--)if(v.getUint32(p,true)===0x06054b50){eocd=p;break}
+ if(eocd<0)throw Error('ZIP 目录损坏');
+ const count=v.getUint16(eocd+10,true);let p=v.getUint32(eocd+16,true);const entries=[];
+ for(let i=0;i<count;i++){
+  if(p+46>bytes.length||v.getUint32(p,true)!==0x02014b50)throw Error('ZIP 结构无效');
+  const method=v.getUint16(p+10,true),size=v.getUint32(p+20,true),nl=v.getUint16(p+28,true),xl=v.getUint16(p+30,true),cl=v.getUint16(p+32,true),off=v.getUint32(p+42,true),name=new TextDecoder().decode(bytes.slice(p+46,p+46+nl));
+  const start=off+30+v.getUint16(off+26,true)+v.getUint16(off+28,true);let data=bytes.slice(start,start+size);
+  if(method===8){if(!globalThis.DecompressionStream)throw Error('此浏览器不支持解压 ZIP');data=new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer())}
+  else if(method!==0)throw Error('不支持的 ZIP 压缩方式');
+  if(!name.endsWith('/'))entries.push({name:name.split('/').pop(),bytes:data});
+  p+=46+nl+xl+cl;
+ }
+ return entries;
+}
+async function importWorkshop(files){
+ const list=(Array.isArray(files)?files:[files]).filter(Boolean);if(!list.length)return;await saveWorkshop();
+ const expected=workshop.view==='presets'?'variables':'storyboards',noun=expected==='storyboards'?'分镜':'预设';
+ const entries=await workshopImportEntries(list),checked=[];
+ for(const entry of entries){
+  const body={projectId:state.activeProjectId,expectedKind:expected};
+  try{if(entry.zip)body.zip=workshopBase64(entry.zip);else body.document=JSON.parse(entry.text);const response=await request('/api/library/inspect',post(body));checked.push({entry,body,info:await response.json()})}
+  catch(error){checked.push({entry,error:error.message||String(error)})}
+ }
+ const good=checked.filter(x=>!x.error),bad=checked.filter(x=>x.error);
+ if(!good.length)throw Error(bad.length===1?bad[0].entry.name+'：'+bad[0].error:'没有可导入的'+noun+'：'+bad.map(x=>x.entry.name).join('、'));
+ const summary=good.map(x=>'「'+(x.info.title||x.entry.name)+'」').join('、')+(bad.length?'；跳过 '+bad.length+' 个无法识别的文件':'');
+ if(!await confirmAction(good.length>1?'导入 '+good.length+' 份'+noun+'？':'导入独立资产？',summary+'。导入的'+noun+'使用新 ID，不会覆盖现有资产。','导入'))return;
+ let last=null;const failed=[];
+ for(const item of good){try{last=await(await request('/api/library/import',post(item.body))).json()}catch(error){failed.push((item.info.title||item.entry.name)+'：'+error.message)}}
+ await connectPythonBackend();
+ if(last){if(expected==='storyboards')workshop.storyId=last.id;else workshop.presetId=last.id}
+ render();
+ const done=good.length-failed.length;
+ if(failed.length)toast('已导入 '+done+' 份；'+failed.length+' 份失败：'+failed.join('；'),'warn');else toast(done>1?'已导入 '+done+' 份'+noun:'已导入「'+(good[0].info.title||good[0].entry.name)+'」');
+}
+async function workshopExportDocument(kindView,asset){
+ const stories=kindView==='stories';
+ const document=stories?clone(asset):{...clone(asset),entries:clone(asset.id===workshopPreset()?.id&&workshopDraft()?mergedSettingEntries(workshopDraft()):asset.entries||[])};
+ const response=await request('/api/library/export-document',post({kind:stories?'storyboards':document.category==='scenes'?'scenes':'characters',document}));
+ return {name:safeFolderName(document.title||(stories?'分镜':'预设'))+'.mio.zip',blob:await response.blob()};
+}
+function openWorkshopExportDialog(){
+ const stories=workshop.view==='stories',noun=stories?'分镜':'预设',items=stories?projectTemplates():projectVariableSets(),current=(stories?workshopStory():workshopPreset())?.id;
+ if(!items.length)throw Error('还没有可导出的'+noun);
+ const meta=a=>stories?localeString('{n} 幕',{n:(a.frames||[]).length}):localeString('{n} 个属性',{n:(a.entries||[]).length})+(a.category==='scenes'?' · 场景 / 画风':' · 角色');
+ modal('导出'+noun,`<div class="workshop-export-sheet"><div class="workshop-export-tools"><span class="workshop-export-count" id="workshop-export-count"></span><span class="spacer"></span>${btn('全选','check','workshop-pick-all-assets','','small ghost')}${btn('只选当前','edit','workshop-pick-current-asset','','small ghost')}</div><div class="workshop-export-list" role="group" aria-label="选择要导出的${noun}">${items.map(a=>`<label class="workshop-export-item ${a.id===current?'is-current':''}"><input type="checkbox" data-workshop-export="${esc(a.id)}" ${a.id===current?'checked':''}><span class="grow"><strong data-user-content>${esc(a.title||'未命名')}</strong><small>${esc(meta(a))}</small></span>${a.id===current?'<em>当前</em>':''}</label>`).join('')}</div><p class="help">单份导出为 <code>.mio.zip</code> 资源包（含参考图）；多份会打包成一个 <code>.zip</code>，可在「导入」中整包导入。不包含密钥与生成任务。</p><div class="modal-footer">${btn('取消','','close-modal')}${btn('导出','file-export','workshop-export-confirm','id="workshop-export-confirm"','primary')}</div></div>`,'选择要带走的'+noun+'。',false);
+ updateWorkshopExportCount();
+}
+function updateWorkshopExportCount(){
+ const boxes=[...document.querySelectorAll('[data-workshop-export]')],n=boxes.filter(b=>b.checked).length,label=$('#workshop-export-count'),button=$('#workshop-export-confirm');
+ if(label)label.textContent=localeString('已选 {n} / {total}',{n,total:boxes.length});
+ if(button){button.disabled=!n;button.lastChild.textContent=n>1?localeString('导出 {n} 份',{n}):'导出'}
+}
+async function confirmWorkshopExport(){
+ const stories=workshop.view==='stories',noun=stories?'分镜':'预设',ids=[...document.querySelectorAll('[data-workshop-export]:checked')].map(b=>b.dataset.workshopExport);
+ if(!ids.length)throw Error('请至少选择一份'+noun);
+ const button=$('#workshop-export-confirm');if(button)button.disabled=true;
+ try{
+  await saveWorkshop();
+  const assets=ids.map(id=>(stories?projectTemplates():projectVariableSets()).find(a=>a.id===id)).filter(Boolean),files=[];
+  for(const asset of assets)files.push(await workshopExportDocument(workshop.view,asset));
+  closeModal();
+  if(files.length===1){download(files[0].name,files[0].blob,'application/zip');return}
+  const used=new Map(),entries=new Map();
+  for(const f of files){const base=f.name.replace(/\.mio\.zip$/i,''),n=used.get(base)||0;used.set(base,n+1);entries.set(n?base+' ('+(n+1)+').mio.zip':f.name,f.blob)}
+  download(noun+'库 · '+files.length+' 份.zip',await zipDirectory(entries),'application/zip');toast('已导出 '+files.length+' 份'+noun);
+ }finally{if(button?.isConnected)button.disabled=false}
+}
 /* Confirmations name the real cost: a local ComfyUI run occupies the GPU, a cloud channel may bill. */
 function productionCostNote(tasks,{forcePrepare=false,indices=false}={}){
  const local=tasks.length?tasks.every(productionIsLocal):productionIsLocal(null);
@@ -429,8 +535,11 @@ function workshopStoryContextItems(story){
       {label:'重命名…',icon:'edit',act:'workshop-rename'},
       {label:'新建分镜…',icon:'plus',act:'workshop-new'},
       '-',
-      {label:'导入分镜 / 预设…',icon:'upload',act:'workshop-import'},
       {label:'导出此分镜',icon:'download',act:'workshop-export'}
+    ]},
+    {label:'分镜库',icon:'folder',children:[
+      {label:'导入分镜…',icon:'upload',act:'workshop-import',hint:'.json / .mio.zip，可多选'},
+      {label:'选择并导出…',icon:'download',act:'workshop-export-pick',hint:'一次导出多份分镜'}
     ]},
     workshopViewSwitchItems()
   ];
@@ -451,8 +560,11 @@ function workshopPresetContextItems(draft){
       {label:'新建预设…',icon:'plus',act:'workshop-new'},
       {label:'添加节点绑定…',icon:'nodes',act:'workshop-binding-new'},
       '-',
-      {label:'导入分镜 / 预设…',icon:'upload',act:'workshop-import'},
       {label:'导出此预设',icon:'download',act:'workshop-export'}
+    ]},
+    {label:'预设库',icon:'folder',children:[
+      {label:'导入预设…',icon:'upload',act:'workshop-import',hint:'.json / .mio.zip，可多选'},
+      {label:'选择并导出…',icon:'download',act:'workshop-export-pick',hint:'一次导出多份预设'}
     ]},
     workshopViewSwitchItems()
   ];
@@ -571,6 +683,77 @@ async function commitProductionConcurrency(el){
  if(global&&value===null){revert();return}
  if(global?value===q.concurrency:value===(productionTask(key)?.concurrency??null))return;
  try{adoptProductionQueue(await productionRequest('concurrency',global?{value}:{value,id:key}));render()}catch(error){toast(error.message||'并发设置未保存','error');revert()}
+}
+/* ---- Scene editing inside a task ------------------------------------------------------------------------------------
+   The task keeps its own copy of every scene. Editing rewrites that copy on the server; the source storyboard in the
+   workshop is only overwritten when the creator ticks the write-back box (the frame is matched by id, else by position
+   when the source still has the same number of scenes). */
+function productionFrameSourceTarget(view){
+ if(!view?.sourceStoryId||view.preview)return null;
+ const story=(state.templates||[]).find(t=>t.id===view.sourceStoryId);if(!story||!Array.isArray(story.frames))return null;
+ let frame=view.sourceFrameId?story.frames.find(f=>f.id===view.sourceFrameId):null;
+ if(!frame&&story.frames.length===view.frameCount)frame=story.frames[view.index]||null;
+ return frame?{story,frame}:null;
+}
+async function openProductionFrameEditor(id,index){
+ const task=productionTask(id);if(!task)return;
+ const view=await productionRequest('tasks/'+id+'/frames/'+index),target=productionFrameSourceTarget(view),live=!!workshop.queue.liveSync?.story,access=productionTaskAccess(task);
+ workshop.frameDraft={id,index,view};
+ const writeback=target
+  ?`<label class="row small soft production-frame-writeback"><input type="checkbox" id="production-frame-writeback" ${live?'checked':''}>${localeString('同步写回源分镜「{title}」的这一幕',{title:target.story.title||view.storyTitle||''})}</label>${live?`<p class="help">${esc('已开启“分镜实时读取”：若不写回源分镜，源分镜下次改动时会以源为准覆盖这里的修改。')}</p>`:''}`
+  :`<p class="help">${esc(view.preview?'试绘任务没有源分镜，修改只保存到这条任务。':'源分镜已不在当前工作区，或幕数已变化：本次修改只保存到任务快照。')}</p>`;
+ modal(localeString('第 {n} 幕 · 编辑提示词',{n:index+1}),`<p class="help" style="margin-bottom:12px">${esc('修改会覆写这张任务卡自己的分镜快照，其他任务不受影响。')}</p>
+  ${field('分幕名称',input('name',view.name,'text','id="production-frame-name" maxlength="120"'))}
+  ${field('画面提示词',promptEditorHTML({attrs:'id="production-frame-prompt" rows="6"',value:view.prompt,placeholder:'描述这一幕的画面...',context:'plan'}))}
+  <details class="quiet-advanced" ${view.negative||view.caption?'open':''}><summary>负向提示词与台词</summary>
+   ${field('负向提示词（留空时使用全局负向）',`<textarea id="production-frame-negative" rows="2">${esc(view.negative)}</textarea>`,view.globalNegative?esc('当前全局负向：'+view.globalNegative.slice(0,120)):'')}
+   ${field('台词 / 旁白',`<textarea id="production-frame-caption" class="caption-editor" rows="2">${esc(view.caption)}</textarea>`)}
+  </details>
+  ${writeback}
+  <div class="modal-footer">${btn('取消','','close-modal')}${btn('保存并重跑此幕','play','production-frame-save',`data-rerun="1" ${access.canRerun?'':`disabled title="${esc(access.reason)}"`}`)}${btn('覆写保存','disk','production-frame-save','','primary')}</div>`,
+  task.title);
+ attachPromptEditors();setTimeout(()=>$('#production-frame-prompt')?.focus(),40);
+}
+async function saveProductionFrame(rerun){
+ const draft=workshop.frameDraft;if(!draft)return;
+ const fields={name:$('#production-frame-name')?.value??draft.view.name,prompt:$('#production-frame-prompt')?.value??draft.view.prompt,negative:$('#production-frame-negative')?.value??draft.view.negative,caption:$('#production-frame-caption')?.value??draft.view.caption};
+ if(!fields.prompt.trim()&&!await confirmAction('提示词为空','这一幕将没有画面提示词，仍要保存吗？','仍要保存'))return;
+ adoptProductionQueue(await productionRequest('update-frame',{id:draft.id,index:draft.index,...fields}));
+ let wroteBack=false;
+ if($('#production-frame-writeback')?.checked){
+  const target=productionFrameSourceTarget(draft.view);
+  if(target){Object.assign(target.frame,{name:fields.name.trim()||target.frame.name,prompt:fields.prompt,negative:fields.negative,caption:fields.caption});delete target.story.ownerPlanId;target.story.updatedAt=Date.now();save();wroteBack=await savePythonWorkspace();if(!wroteBack)toast('源分镜的写回尚未确认，请检查服务状态或冲突','warn')}
+ }
+ closeModal();workshop.frameDraft=null;render();
+ toast(wroteBack?localeString('第 {n} 幕已保存，并已写回源分镜',{n:draft.index+1}):localeString('第 {n} 幕已保存到任务快照',{n:draft.index+1}));
+ if(rerun)await startProduction(draft.id,{indices:[draft.index]});
+}
+/* ---- Live reading of sources (设置 · 功能开关) ------------------------------------------------------------------------
+   Three independent switches kept by the queue itself: while one is on, every scene re-reads that source kind right before
+   it renders and adopts the newest content; off keeps the snapshot frozen at assembly time, exactly as before. */
+const PRODUCTION_LIVE_SYNC_ROWS=[
+ ['story','分镜实时读取','每一幕生成前核对源分镜；有改动即用最新分镜内容替换任务快照后再生成。幕数变化时保留快照并提示，需重新装配。','story'],
+ ['presets','预设实时读取','每一幕生成前核对所选角色 / 场景预设；有改动即替换并重新计算变量值。','brush'],
+ ['workflow','工作流实时读取','每一幕生成前核对 ComfyUI 设置与所选工作流蓝图、节点映射；有改动即替换。仅对 ComfyUI 工作流渠道生效。','nodes'],
+];
+/* The settings page is not polled; fetch the queue once when the section first shows and re-render when it lands. */
+async function loadProductionLiveSync(){
+ if(workshop.liveSyncRequested)return;workshop.liveSyncRequested=true;
+ try{const raw=await productionRequest('tasks');delete raw.serverEpochMs;adoptProductionQueue(raw);workshop.liveSyncError=null}
+ catch(error){workshop.liveSyncError=error.message||'生产服务不可用'}
+ if(ui.workspace===5&&$('[data-production-live-settings]'))render();
+}
+function productionLiveSyncSettingsHTML(){
+ const live=workshop.queue.liveSync;
+ if(!live)void loadProductionLiveSync();
+ const rows=PRODUCTION_LIVE_SYNC_ROWS.map(([key,title,desc,ic])=>settingsRow(title,desc,`<label class="switch"><input role="switch" type="checkbox" data-production-live="${key}" aria-label="${esc(title)}" ${live?.[key]?'checked':''} ${live?'':'disabled'}><span class="switch-track" aria-hidden="true"></span></label>`,ic)).join('');
+ const pending=live?'':`<p class="help production-live-pending">${esc(workshop.liveSyncError?'无法读取生成队列设置：'+workshop.liveSyncError:'正在读取当前设置…')}${workshop.liveSyncError?' '+btn('重试','refresh','production-live-retry','','small ghost'):''}</p>`;
+ return `<section class="settings-section production-live-settings" data-production-live-settings><h2>生成任务 · 源内容实时读取</h2><p>默认全部关闭：装配时会把分镜、预设与工作流固化成任务快照，之后修改源资产不影响已创建的任务。开启某一项后，对应内容会在每一幕生成前与最新源内容比对，有差异即替换后再生成；三项各自独立，随时可改，对下一幕开始生效。</p>${rows}${pending}</section>`;
+}
+async function commitProductionLiveSync(el){
+ const key=el.dataset.productionLive,value=el.checked,row=PRODUCTION_LIVE_SYNC_ROWS.find(r=>r[0]===key);
+ try{adoptProductionQueue(await productionRequest('live-sync',{[key]:value}));toast(localeString(value?'已开启{title}：从下一幕开始生效':'已关闭{title}：任务沿用各自的快照',{title:row?.[1]||key}))}
+ catch(error){el.checked=!value;toast(error.message||'实时读取设置未保存','error')}
 }
 /* Persist a new card order. The visible list moves first so the drop feels instant; the server answer is authoritative. */
 async function reorderProduction(order){
@@ -785,8 +968,12 @@ function installAssemblyWorkshop(){
   'workshop-delete-frame':async d=>{const s=workshopStory(),index=workshopFrameIndex(d),frame=s?.frames[index];if(!frame)return;if(await confirmAction('删除「'+(frame.name||'第 '+(index+1)+' 幕')+'」？','只修改分镜资产，不影响已装配的任务。','删除')){s.frames.splice(index,1);if(workshop.frame>index)workshop.frame--;else if(workshop.frame>=s.frames.length)workshop.frame=Math.max(0,s.frames.length-1);workshop.pickedFrames.clear();if(!s.frames.length)workshop.mobileEditor=false;delete s.ownerPlanId;s.updatedAt=Date.now();save();render()}},
   'workshop-move-frame':d=>{const s=workshopStory(),frames=s.frames,i=workshopFrameIndex(d),j=i+Number(d.dir);if(!frames[i]||j<0||j>=frames.length)return;[frames[j],frames[i]]=[frames[i],frames[j]];workshop.frame=j;workshop.pickedFrames.clear();delete s.ownerPlanId;s.updatedAt=Date.now();save();render()},
   'production-toggle-pages':d=>{if(workshop.openTasks.has(d.id))workshop.openTasks.delete(d.id);else workshop.openTasks.add(d.id);render();document.querySelector(`[data-task-details="${CSS.escape(d.id)}"]`)?.scrollIntoView({block:'nearest'})},
-  'workshop-import':()=>pickFile('.json,.zip',importWorkshop),
-  'workshop-export':async()=>{await saveWorkshop();const document=workshop.view==='stories'?clone(workshopStory()):{...clone(workshopPreset()),entries:clone(mergedSettingEntries(workshopDraft()))};const response=await request('/api/library/export-document',post({kind:workshop.view==='stories'?'storyboards':document.category==='scenes'?'scenes':'characters',document}));download(document.title+'.mio.zip',await response.blob(),'application/zip')},
+  'workshop-import':()=>pickFile('.json,.zip',importWorkshop,true),
+  'workshop-export':async()=>{await saveWorkshop();const asset=workshop.view==='stories'?workshopStory():workshopPreset();if(!asset)return;const file=await workshopExportDocument(workshop.view,asset);download(file.name,file.blob,'application/zip')},
+  'workshop-export-pick':()=>openWorkshopExportDialog(),
+  'workshop-pick-all-assets':()=>{const boxes=[...document.querySelectorAll('[data-workshop-export]')],all=boxes.every(b=>b.checked);boxes.forEach(b=>{b.checked=!all});updateWorkshopExportCount()},
+  'workshop-pick-current-asset':()=>{const current=(workshop.view==='stories'?workshopStory():workshopPreset())?.id;document.querySelectorAll('[data-workshop-export]').forEach(b=>{b.checked=b.dataset.workshopExport===current});updateWorkshopExportCount()},
+  'workshop-export-confirm':confirmWorkshopExport,
   'assembly-new':showAssemblyDialog,
   'assembly-confirm':async()=>{const button=$('[data-act="assembly-confirm"]');if(button.disabled)return;const title=$('#assembly-title').value.trim();if(!title)throw Error('请为生成画册命名');button.disabled=true;try{save();try{await savePythonWorkspace()}catch(_){}const presets=$$('[data-assembly-preset]:checked').map(el=>{const p=setBy(el.dataset.assemblyPreset);return {id:p.id,kind:p.category==='scenes'?'scenes':'characters'}});await productionRequest('assemble',{requestId:workshop.requestId,title,projectId:state.activeProjectId,storyId:$('#assembly-story').value,presets,channelId:$('#assembly-channel').value,seed:Number($('#assembly-seed').value)});closeModal();workshop.view='production';await refreshProduction();toast('已添加待命任务，尚未调用模型')}finally{button.disabled=false}},
   'production-start':d=>startProduction(d.id),
@@ -818,10 +1005,9 @@ function installAssemblyWorkshop(){
           <label style="display:block;font-size:12px">全局负向提示词<textarea id="queue-clone-negative" rows="2" style="width:100%">${esc(source.globalNegative||'')}</textarea></label>
           ${source.canSeed?`<label class="row small soft" style="margin-top:8px"><input type="checkbox" id="queue-clone-fixed-seed" ${source.seedEnabled?'checked':''}>固定种子</label><input type="number" min="0" max="4294967295" step="1" id="queue-clone-seed" value="${source.seed??1}">`:''}
         </div>
-      </details>`,
-      `<button type="button" class="btn ghost" data-act="close-modal">取消</button>
-       <button type="button" class="btn ghost" data-act="production-clone" data-id="${esc(t.id)}">直接快速克隆</button>
-       <button type="button" class="btn primary" data-act="production-clone-confirm">确认创建微调副本</button>`);
+      </details>
+      <div class="modal-footer"><button type="button" class="btn ghost" data-act="close-modal">取消</button><button type="button" class="btn ghost" data-act="production-clone" data-id="${esc(t.id)}">直接快速克隆</button><button type="button" class="btn primary" data-act="production-clone-confirm">确认创建微调副本</button></div>`,
+      t.title);
   },
   'production-clone-confirm':async()=>{
     const titleEl=$('#queue-clone-title'),concEl=$('#queue-clone-concurrency');
@@ -851,6 +1037,10 @@ function installAssemblyWorkshop(){
   'production-page-preview':previewProductionPage,
 
   'production-rerun':d=>startProduction(d.id,{indices:[Number(d.index)]}),
+  'production-page-edit':d=>openProductionFrameEditor(d.id,Number(d.index)),
+  'production-live-retry':()=>{workshop.liveSyncRequested=false;return loadProductionLiveSync()},
+  'production-frame-save':d=>saveProductionFrame(d.rerun==='1'),
+  'production-rename':d=>{const t=productionTask(d.id);if(!t)return;textModal('重命名任务','任务名称',t.title,async title=>{const next=String(title||'').trim();if(!next)throw Error('名称不能为空');if(next.length>150)throw Error('名称最多 150 字');if(next!==t.title)adoptProductionQueue(await productionRequest('rename',{id:d.id,title:next}));closeModal();render()},'只修改这张任务卡的名称；已生成的画册保留原名，可在画册集中单独重命名。')},
   'production-rerun-tail': d => {
     const task = workshop.queue.tasks.find(t => t.id === d.id);
     if (!task) return;
@@ -907,7 +1097,7 @@ function installAssemblyWorkshop(){
  });
  document.addEventListener('toggle',e=>{if(e.target.matches('[data-task-details]')){if(e.target.open)workshop.openTasks.add(e.target.dataset.taskDetails);else workshop.openTasks.delete(e.target.dataset.taskDetails)}},true);
  document.addEventListener('input',e=>{const el=e.target;if(el.dataset.workshopFrame){const s=workshopStory(),f=s?.frames[workshop.frame];if(f){f[el.dataset.workshopFrame]=el.type==='checkbox'?el.checked:el.type==='number'?Number(el.value):el.value;delete s.ownerPlanId;s.updatedAt=Date.now();save();if(el.type==='checkbox')render()}}if(el.dataset.workshopStory){workshopStory()[el.dataset.workshopStory]=el.value;save()}if(el.dataset.workshopPreset){const d=workshopDraft();if(el.dataset.workshopPreset==='bindings'){try{const value=JSON.parse(el.value);if(!Array.isArray(value))throw Error();d.bindings=value;el.setCustomValidity('')}catch{el.setCustomValidity('请输入绑定数组 JSON');return}}else d[el.dataset.workshopPreset]=el.value;d.dirty=true;save()}});
- document.addEventListener('change',e=>{if(e.target.id==='workshop-story-select'){workshop.storyId=e.target.value;workshop.frame=0;workshop.pickedFrames.clear();workshop.selMode=false;workshop.mobileEditor=false;render()}if(e.target.id==='workshop-preset-select'){workshop.presetId=e.target.value;render()}if(e.target.dataset?.productionConcurrency!==undefined)void commitProductionConcurrency(e.target)});
+ document.addEventListener('change',e=>{if(e.target.id==='workshop-story-select'){workshop.storyId=e.target.value;workshop.frame=0;workshop.pickedFrames.clear();workshop.selMode=false;workshop.mobileEditor=false;render()}if(e.target.id==='workshop-preset-select'){workshop.presetId=e.target.value;render()}if(e.target.dataset?.productionConcurrency!==undefined)void commitProductionConcurrency(e.target);if(e.target.dataset?.productionLive!==undefined)void commitProductionLiveSync(e.target)});
  const queueBusy=()=>workshop.queue.active?.length||workshop.queue.lane?.length;
  async function poll(){try{if(!document.hidden&&(ui.workspace===0||ui.workspace===1||$('#reader')?.open||queueBusy()))await refreshProduction()}catch(e){workshop.queue.fault=e.message}finally{clearTimeout(workshop.pollTimer);workshop.pollTimer=setTimeout(poll,queueBusy()?2000:15000)}}
  workshop.poll=poll;

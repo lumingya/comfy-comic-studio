@@ -27,7 +27,7 @@ class ProductionAdapterTests(unittest.TestCase):
         from backend.ecosystem.events import EventBus,Hooks
         self.hooks=Hooks();self.events=EventBus()
         self.adapter=ProductionAdapter(self.host,SimpleNamespace(macros=self.macros,hooks=self.hooks,events=self.events))
-        self.q=ProductionQueue(self.root,self.adapter.prepare,self.adapter.render,self.adapter.publish);self.addCleanup(self.q.close)
+        self.q=ProductionQueue(self.root,self.adapter.prepare,self.adapter.render,self.adapter.publish,refresh=self.adapter.refresh);self.addCleanup(self.q.close)
         for kind,doc in [('storyboards',{'id':'story-one','projectId':'project-one','title':'故事','outline':'独立主线','frames':[{'name':'一','prompt':'{hero} at sea','caption':'{hero}'},{'name':'二','prompt':'{hero} returns','caption':'归来'}]}),('characters',{'id':'preset-one','projectId':'project-one','title':'人物','negative':'blur','bindings':[],'settingsGroups':[],'entries':[{'key':'hero','type':'text','value':'Ada'}]})]:
             self.store.apply([{'kind':kind,'id':doc['id'],'document':doc,'expected':None}])
     def assemble(self):
@@ -238,4 +238,58 @@ class ProductionAdapterTests(unittest.TestCase):
     def test_inline_images_keep_stable_input_order(self):
         values={'hero':{'kind':'mio-image','src':'/images/one.png'}};images=[]
         self.assertEqual(interpolate('{hero} then {hero}',values,images),'@image_1 then @image_1');self.assertEqual(images,['/images/one.png'])
+
+    # ----------------------------------------------------------- live sync
+    def edit(self,kind,id,change):
+        record=self.store.entity(kind,id);change(record['document']);self.store.apply([{'kind':kind,'id':id,'document':record['document'],'expected':record['etag']}])
+    def test_snapshot_records_where_each_part_came_from(self):
+        task=self.assemble();snap=task['snapshot']
+        self.assertEqual(snap['sourceRefs'],{'storyId':'story-one','presets':[{'kind':'characters','id':'preset-one'}],'workflowId':None,'usesWorkflow':False})
+        self.assertEqual(snap['sourceRevisions'],{'storyboards:story-one':self.store.entity('storyboards','story-one')['etag'],'characters:preset-one':self.store.entity('characters','preset-one')['etag']})
+    def test_live_story_sync_reads_edits_before_each_page_only_when_enabled(self):
+        task=self.assemble();self.adapter.report=self.q.report_attempt
+        self.edit('storyboards','story-one',lambda d:d['frames'][1].update(prompt='{hero} comes home'))
+        self.q.start(task['id'],trusted=True);self.assertEqual(self.wait(task['id'])['status'],'complete')
+        # Every switch off (the default): the book stays exactly as assembled.
+        self.assertEqual([c['prompt'] for c in self.calls],['Ada at sea','Ada returns'])
+        self.q.set_live_sync({'story':True});self.q.start(task['id'],indices=[1],trusted=True);self.assertEqual(self.wait(task['id'])['status'],'complete')
+        self.assertEqual(self.calls[-1]['prompt'],'Ada comes home')
+        stored=self.q.get(task['id']);self.assertEqual(stored['snapshot']['story']['frames'][1]['prompt'],'{hero} comes home')
+        self.assertEqual(stored['snapshot']['sourceRevisions']['storyboards:story-one'],self.store.entity('storyboards','story-one')['etag'])
+        self.assertIn('生成前已读取最新分镜内容。',stored['pages'][1]['attempts'][-1]['notices'])
+        self.assertEqual(self.store.entity('albums',task['albumId'])['document']['steps'][1]['prompt'],'Ada comes home')
+        # An unchanged source costs nothing and adds no notice.
+        self.q.start(task['id'],indices=[1],trusted=True);self.assertEqual(self.wait(task['id'])['status'],'complete')
+        self.assertNotIn('notices',self.q.get(task['id'])['pages'][1]['attempts'][-1])
+        # A different scene count is a structural change: kept out, said out loud.
+        self.edit('storyboards','story-one',lambda d:d['frames'].append({'name':'三','prompt':'{hero} rests','caption':''}))
+        self.q.start(task['id'],indices=[0],trusted=True);self.assertEqual(self.wait(task['id'])['status'],'complete')
+        stored=self.q.get(task['id']);self.assertEqual(self.calls[-1]['prompt'],'Ada at sea');self.assertEqual(len(stored['snapshot']['story']['frames']),2)
+        self.assertTrue(any('幕数不一致' in n for n in stored['pages'][0]['attempts'][-1]['notices']),stored['pages'][0]['attempts'][-1])
+    def test_live_preset_sync_recomputes_variables_and_leaves_other_kinds_frozen(self):
+        task=self.assemble()
+        self.edit('characters','preset-one',lambda d:d['entries'][0].update(value='Other'))
+        self.edit('storyboards','story-one',lambda d:d['frames'][0].update(prompt='{hero} on land'))
+        self.q.set_live_sync({'presets':True});self.q.start(task['id'],trusted=True);done=self.wait(task['id']);self.assertEqual(done['status'],'complete',done.get('error'))
+        self.assertEqual([c['prompt'] for c in self.calls],['Other at sea','Other returns'])
+        stored=self.q.get(task['id']);self.assertEqual(stored['snapshot']['presets'][0]['entries'][0]['value'],'Other');self.assertEqual(stored['snapshot']['story']['frames'][0]['prompt'],'{hero} at sea')
+    def test_live_workflow_sync_replaces_the_blueprint_and_drops_incompatible_seed_settings(self):
+        config={'comfyConfig':{'mode':'real','baseUrl':'http://127.0.0.1:8188'},'comfyWorkflows':[{'id':'saved-workflow','title':'Chosen','workflow':{'9':{'class_type':'TestSeed','inputs':{'seed':731}}},'bindings':[{'enabled':True,'nodeId':'9','path':'seed','source':'random','type':'number'}]}]}
+        config['uiConfig']={'comfyStudio':{'settings':{'imageGeneration':{'profiles':[{'id':'comfyui','provider':'comfyui','title':'Test'}]}}}}
+        self.store.read=lambda **_:copy.deepcopy(config)
+        snap=self.adapter.snapshot({'storyId':'story-one','presets':[],'channelId':'comfyui','workflowId':'saved-workflow','seedEnabled':True,'seed':8})
+        self.assertEqual(snap['sourceRefs']['workflowId'],'saved-workflow');task=self.q.assemble(snap,'Workflow','wf')
+        config['comfyWorkflows'][0]['workflow']={'9':{'class_type':'TestSeed','inputs':{'seed':1}},'10':{'class_type':'Extra','inputs':{}}};config['comfyWorkflows'][0]['bindings']=[]
+        self.q.start(task['id'],trusted=True);self.assertEqual(self.wait(task['id'])['status'],'complete')
+        self.assertNotIn('10',self.calls[-1]['workflow']);self.assertEqual(self.calls[-1]['workflow']['9']['inputs']['seed'],9)
+        self.q.set_live_sync({'workflow':True});self.q.start(task['id'],indices=[0],trusted=True);done=self.wait(task['id']);self.assertEqual(done['status'],'complete',done.get('error'))
+        self.assertIn('10',self.calls[-1]['workflow'])
+        stored=self.q.get(task['id']);self.assertIn('10',stored['snapshot']['workflow']['workflow']);self.assertFalse(stored['snapshot']['seedEnabled'])
+        self.assertTrue(any('种子' in n for n in stored['notices']),stored.get('notices'))
+    def test_frame_source_and_frame_summaries_expose_the_task_text(self):
+        from backend.production.api import frame_source
+        task=self.assemble();view=frame_source(task,1)
+        self.assertEqual({k:view[k] for k in ('index','name','prompt','caption','sourceStoryId','pageState','preview')},{'index':1,'name':'二','prompt':'{hero} returns','caption':'归来','sourceStoryId':'story-one','pageState':'standby','preview':False})
+        with self.assertRaises(LibraryError):frame_source(task,2)
+        self.assertEqual(self.q.list()['tasks'][0]['pages'][0]['frame'],{'name':'一','prompt':'{hero} at sea'})
 if __name__=='__main__':unittest.main()

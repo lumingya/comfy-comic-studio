@@ -5,6 +5,9 @@ function nativeSplitDTO(value){
   const groups={storyboards:c.templates||[],albums:c.savedGalleries||[],workflows:c.comfyWorkflows||[],rows:matrix.rows||[],collections:meta.projects||[],plans:creation.plans||[],layouts:meta.exportTemplates||[],conversations:chats.sessions||[],tasks:queue.queue||[],characters:[],scenes:[]};
   const presets=creation.variableSets||[];for(const item of presets)groups[item.category==='scenes'?'scenes':'characters'].push(item);
   delete matrix.rows;delete chats.sessions;delete queue.queue;delete meta.projects;delete creation.plans;delete creation.variableSets;delete meta.exportTemplates;
+  // A preset draft without unsaved edits is an exact copy of its preset and is rebuilt on demand
+  // (settingPresetDraft), so only dirty drafts are written to settings/workspace.json.
+  const edits=meta.drafts?.presetEdits;if(edits&&typeof edits==='object')for(const [id,draft] of Object.entries(edits))if(draft?.dirty!==true)delete edits[id];
   const settings={comfy:c.comfyConfig||{},llm:c.llmConfig||{},xml:c.xmlConfig||{}},ordering={},fieldKinds={templates:'storyboards',savedGalleries:'albums',rows:'rows',projects:'collections',plans:'plans',characters:'characters',scenes:'scenes',exportTemplates:'layouts',comfyWorkflows:'workflows',sessions:'conversations',queue:'tasks'};
   for(const[field,kind]of Object.entries(fieldKinds))ordering[field]=groups[kind].map(x=>x.id);ordering.variableSets=presets.map(x=>x.id);
   const excluded=new Set(['uiConfig','templates','savedGalleries','comfyWorkflows','batchMatrix','chatConfig','batchRunState','comfyConfig','llmConfig','xmlConfig','expectedRevision','forceWrite','updatedAt']);

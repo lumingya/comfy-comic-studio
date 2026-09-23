@@ -99,7 +99,7 @@
   },
   "bindings": [
     {
-      "id": "binding_8fad5737-d3f0-4451-87c8-e1c954cf6ced",
+      "id": "binding_7b441220-2e12-486f-929b-7d7a51eea81b",
       "nodeId": "6",
       "path": "text",
       "label": "positive",
@@ -113,7 +113,7 @@
       "allowLink": false
     },
     {
-      "id": "binding_faab2ad9-35d2-4af9-a567-f0f000d65b8d",
+      "id": "binding_2811e673-9292-4553-b7fe-f05152d6606b",
       "nodeId": "7",
       "path": "text",
       "label": "negative",
@@ -125,96 +125,52 @@
       "warning": "",
       "allowCreate": false,
       "allowLink": false
-    },
-    {
-      "id": "bind_23712131-a9f1-4b31-9442-e4ecf4301dfb",
-      "label": "画面宽度",
-      "nodeId": "5",
-      "path": "width",
-      "type": "number",
-      "source": "sceneParameter",
-      "value": "width",
-      "enabled": true,
-      "autoField": false,
-      "warning": "",
-      "allowCreate": false,
-      "allowLink": false
-    },
-    {
-      "id": "bind_7f0e8133-87ca-421a-b95a-94378fada2e2",
-      "label": "画面高度",
-      "nodeId": "5",
-      "path": "height",
-      "type": "number",
-      "source": "sceneParameter",
-      "value": "height",
-      "enabled": true,
-      "autoField": false,
-      "warning": "",
-      "allowCreate": false,
-      "allowLink": false
-    },
-    {
-      "id": "bind_76df6758-4acf-42fe-80a7-0a5e7acfacd2",
-      "label": "采样步数",
-      "nodeId": "3",
-      "path": "steps",
-      "type": "number",
-      "source": "sceneParameter",
-      "value": "steps",
-      "enabled": true,
-      "autoField": false,
-      "warning": "",
-      "allowCreate": false,
-      "allowLink": false
-    },
-    {
-      "id": "bind_72389772-9d41-4f62-9ad0-3868bad8fd2f",
-      "label": "CFG",
-      "nodeId": "3",
-      "path": "cfg",
-      "type": "number",
-      "source": "sceneParameter",
-      "value": "cfg",
-      "enabled": true,
-      "autoField": false,
-      "warning": "",
-      "allowCreate": false,
-      "allowLink": false
-    },
-    {
-      "id": "bind_e1d63d93-45bf-4d35-83cd-84626eb6ad34",
-      "label": "去噪强度",
-      "nodeId": "3",
-      "path": "denoise",
-      "type": "number",
-      "source": "sceneParameter",
-      "value": "denoise",
-      "enabled": true,
-      "autoField": false,
-      "warning": "",
-      "allowCreate": false,
-      "allowLink": false
-    },
-    {
-      "id": "bind_1b871235-a645-491e-baf3-61b445d35c88",
-      "label": "种子",
-      "nodeId": "3",
-      "path": "seed",
-      "type": "number",
-      "source": "sceneParameter",
-      "value": "seed",
-      "enabled": true,
-      "autoField": false,
-      "warning": "",
-      "allowCreate": false,
-      "allowLink": false
     }
   ],
   "outputNodeId": "9",
   "randomizeSeeds": false,
-  "updatedAt": 1789972281535,
-  "slots": {},
+  "updatedAt": 1790147511991,
+  "slots": {
+    "plan": {
+      "version": 3,
+      "analyzedAt": "2026-09-23T07:11:51.952564+00:00",
+      "objectInfoHash": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+      "workflowHash": "73495f3af6b4cbaabe857eb557512da2ac8ece8b3f05546cc5dcf9d611c9135c",
+      "manual": [],
+      "model": {
+        "paired": false,
+        "targets": [
+          {
+            "nodeId": "4",
+            "path": "ckpt_name",
+            "classType": "CheckpointLoaderSimple",
+            "title": "CheckpointLoaderSimple",
+            "value": "your-anime-model.safetensors",
+            "kind": "checkpoint",
+            "score": 7,
+            "key": "4:ckpt_name",
+            "current": "your-anime-model.safetensors",
+            "role": "primary",
+            "enabled": true
+          }
+        ]
+      },
+      "lora": {
+        "enabled": false,
+        "reason": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
+        "groups": [],
+        "synth": null
+      },
+      "issues": [
+        {
+          "level": "warn",
+          "code": "no-lora-site",
+          "nodeId": "",
+          "text": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+        }
+      ]
+    }
+  },
   "_sourceFormat": {
     "replaced": {},
     "added": []

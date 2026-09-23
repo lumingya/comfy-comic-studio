@@ -37,7 +37,22 @@ FAILURE_STREAK_LIMIT = 3
 # and the provider can take. One in-flight page costs one waiting thread.
 MAX_PAGE_CONCURRENCY = 128
 MAX_TASKS = 1000
-DEFAULT_CONTROL = {"order": [], "paused": True, "lane": [], "concurrency": 1}
+# Source kinds a task may follow live instead of keeping its assembly-time
+# snapshot. Every switch is independent and off by default: an untouched
+# queue behaves exactly as before (frozen books).
+LIVE_SYNC_KEYS = ("story", "presets", "workflow")
+# Authoring fields of one scene the creator may rewrite inside a task.
+FRAME_FIELDS = ("name", "prompt", "negative", "caption")
+DEFAULT_CONTROL = {
+    "order": [], "paused": True, "lane": [], "concurrency": 1,
+    "liveSync": {key: False for key in LIVE_SYNC_KEYS},
+}
+
+
+def normalize_live_sync(value):
+    """Three independent booleans; anything malformed falls back to「frozen」."""
+    raw = value if isinstance(value, dict) else {}
+    return {key: raw.get(key) is True for key in LIVE_SYNC_KEYS}
 
 
 def clamp_concurrency(value, *, allow_none=False):
@@ -53,12 +68,16 @@ def clamp_concurrency(value, *, allow_none=False):
 
 class ProductionQueue:
     def __init__(self, root, prepare, render, publish=lambda *_: None, finalize=lambda *_: None,
-                 emit=lambda *_: None, retry_policy=lambda *_: None):
+                 emit=lambda *_: None, retry_policy=lambda *_: None, refresh=None):
         self.tasks = TaskStore(Path(root) / "production/tasks")
         self.state = Storage(Path(root) / "production/control")
         self.prepare = prepare
         self.render = render
         self.publish = publish
+        # Live sync (opt-in per source kind): called right before a page renders
+        # with (book, index, enabled_kinds, cancel); returns None when the book
+        # still matches its sources, else {"snapshot", "prepared"?, "notices"?}.
+        self.refresh = refresh
         # Platform notifications (queue.*, task.*, page.failed). Never raises.
         self.emit = emit
         # Page-failure intervention: returns {"retry": True, "delay": s} to re-run
@@ -154,6 +173,7 @@ class ProductionQueue:
             control["concurrency"] = clamp_concurrency(control.get("concurrency", 1))
         except LibraryError:
             control["concurrency"] = 1
+        control["liveSync"] = normalize_live_sync(control.get("liveSync"))
 
     def _storage_fault(self, exc):
         with self.lock:
@@ -264,6 +284,7 @@ class ProductionQueue:
                 "paused": self.control["paused"],
                 "concurrency": self.control.get("concurrency", 1),
                 "maxConcurrency": MAX_PAGE_CONCURRENCY,
+                "liveSync": normalize_live_sync(self.control.get("liveSync")),
                 "fault": self.fault,
                 "uncleanShutdown": self.unclean_shutdown,
             }
@@ -537,7 +558,9 @@ class ProductionQueue:
     def _spawn(self, id, lane):
         task = self.get(id)
         cancel = threading.Event()
-        runner = {"cancel": cancel, "task": task, "lane": lane, "thread": None}
+        # ``sync`` serialises live-sync refreshes of one book so concurrent pages
+        # never re-read (or re-prepare) the same change twice.
+        runner = {"cancel": cancel, "task": task, "lane": lane, "thread": None, "sync": threading.Lock()}
         self.runners[id] = runner
         if lane:
             self.lane_active = id
@@ -712,6 +735,85 @@ class ProductionQueue:
                 task["concurrency"] = clamp_concurrency(value, allow_none=True)
                 self._save(task)
             self._wake()
+            return self.list()
+
+    def set_live_sync(self, values):
+        """Switch live reading of storyboard / presets / workflow on or off, each on its own.
+
+        Applies from the next page that starts, running books included; nothing in flight
+        is interrupted and a switched-off kind simply keeps whatever snapshot the task holds.
+        """
+        if not isinstance(values, dict) or not values or set(values) - set(LIVE_SYNC_KEYS):
+            raise LibraryError("实时读取设置无效：只能设置 story、presets、workflow")
+        if any(not isinstance(v, bool) for v in values.values()):
+            raise LibraryError("实时读取设置需为布尔值")
+        with self.lock:
+            if self.closed:
+                raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
+            current = normalize_live_sync(self.control.get("liveSync"))
+            current.update(values)
+            self.control["liveSync"] = current
+            self._save_control()
+            self._notify("queue.liveSync", dict(current))
+            return self.list()
+
+    def rename(self, id, title):
+        """Rename a task card. An album already published under the old name keeps it."""
+        if not isinstance(title, str) or not title.strip() or len(title) > 150:
+            raise LibraryError("请填写 1–150 字的任务名称")
+        with self.lock:
+            if self.closed:
+                raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
+            if id not in self.control["order"]:
+                raise LibraryError("生成任务不存在", 404)
+            task = self._live(id) or self.get(id)
+            previous = task["title"]
+            task["title"] = title.strip()
+            runner = self.runners.get(id)
+            if runner and runner.get("frozen"):
+                runner["frozen"]["title"] = task["title"]
+            self._save(task)
+            self._notify("task.renamed", {"id": id, "title": task["title"], "previous": previous})
+            return self.list()
+
+    def update_frame(self, id, index, fields):
+        """Rewrite one scene's authoring text inside the task's own snapshot.
+
+        Allowed while the book runs: the change reaches every page that has not started
+        yet (each page copies the book when it begins). The page being rendered right now
+        is refused instead of silently racing the provider call.
+        """
+        if not isinstance(fields, dict) or not fields or set(fields) - set(FRAME_FIELDS):
+            raise LibraryError("分幕字段无效：只能修改名称、提示词、负向提示词与台词")
+        for key, value in fields.items():
+            if value is not None and (not isinstance(value, str) or len(value) > 100000):
+                raise LibraryError("分幕文本格式无效或超过 100,000 字")
+        with self.lock:
+            if self.closed:
+                raise LibraryError("MIO-PROD-CLOSED: 调度器已关闭，不再接受修改", 503)
+            if id not in self.control["order"]:
+                raise LibraryError("生成任务不存在", 404)
+            task = self._live(id) or self.get(id)
+            frames = task["snapshot"]["story"].get("frames") or []
+            if type(index) is not int or isinstance(index, bool) or not 0 <= index < len(frames):
+                raise LibraryError("分幕索引无效")
+            if task["pages"][index]["state"] == "running":
+                raise LibraryError("这一幕正在生成中，请等它结束后再修改", 409)
+            runner = self.runners.get(id)
+            targets = [frames[index]]
+            if runner and runner.get("frozen"):
+                shadow = runner["frozen"]["snapshot"]["story"].get("frames") or []
+                if index < len(shadow):
+                    targets.append(shadow[index])
+            for frame in targets:
+                for key, value in fields.items():
+                    if key == "name":
+                        cleaned = value.strip() if isinstance(value, str) else ""
+                        frame["name"] = cleaned or frame.get("name") or "第 " + str(index + 1) + " 幕"
+                    else:
+                        frame[key] = value or ""
+            self._save(task)
+            self._notify("task.frameEdited", {"id": id, "index": index, "fields": sorted(fields)})
             return self.list()
 
     def recover_publication(self, id, index):
@@ -898,7 +1000,10 @@ class ProductionQueue:
                 task.pop("error", None)
                 self._save(task)
                 # Render and publish see a frozen book; page bookkeeping lives on ``task``.
+                # The freeze is only ever read or amended under the queue lock (see
+                # _page_request, update_frame, rename).
                 frozen = copy.deepcopy(task)
+                self.runners[id]["frozen"] = frozen
             self._notify("task.started", {"id": id, "title": task["title"], "albumId": task["albumId"], "selection": list(task["selection"])})
             failures, fatal = self._run_pages(task, frozen, cancel)
             with self.lock:
@@ -1041,11 +1146,49 @@ class ProductionQueue:
                 ):
                     fatal = exc
 
+    def _page_request(self, task, frozen, index, cancel):
+        """The book this page renders against.
+
+        Frozen kinds come from the start-time copy; kinds the creator switched to live
+        reading are re-read against the current sources first. A replaced snapshot
+        becomes the new baseline for the pages that follow and for later starts.
+        """
+        with self.lock:
+            enabled = {k: v for k, v in normalize_live_sync(self.control.get("liveSync")).items() if v}
+            if not enabled or self.refresh is None or frozen["snapshot"].get("preview"):
+                return copy.deepcopy(frozen)
+            runner = self.runners.get(task["id"])
+            gate = runner["sync"] if runner else threading.Lock()
+        with gate:
+            with self.lock:
+                book = copy.deepcopy(frozen)
+            outcome = self.refresh(book, index, enabled, cancel)
+            if cancel.is_set():
+                raise InterruptedError("分幕提交前已取消")
+            if not isinstance(outcome, dict):
+                return book
+            with self.lock:
+                for key in ("snapshot", "prepared"):
+                    if key in outcome:
+                        book[key] = outcome[key]
+                        frozen[key] = copy.deepcopy(outcome[key])
+                        task[key] = copy.deepcopy(outcome[key])
+                notices = [n for n in outcome.get("notices") or [] if isinstance(n, str) and n.strip()]
+                if notices:
+                    existing = task.setdefault("notices", [])
+                    for notice in notices:
+                        if notice not in existing:
+                            existing.append(notice[:500])
+                    del existing[:-6]
+                self._save(task)
+        return book
+
     def _run_page(self, task, frozen, index, attempt, cancel, outbox):
         page = task["pages"][index]
         exc_out = None
         try:
-            result = self.render(copy.deepcopy(frozen), index, cancel)
+            book = self._page_request(task, frozen, index, cancel)
+            result = self.render(copy.deepcopy(book), index, cancel)
             if cancel.is_set():
                 raise InterruptedError(
                     "结果返回前已取消；未替换原图，可能已计费"
@@ -1060,7 +1203,7 @@ class ProductionQueue:
                 )
                 self._save(task)
             with self.publish_lock:
-                self.publish(copy.deepcopy(frozen), index, result)
+                self.publish(copy.deepcopy(book), index, result)
             if cancel.is_set():
                 raise InterruptedError(
                     "发布阶段收到取消，请核对画册；不会自动重发"

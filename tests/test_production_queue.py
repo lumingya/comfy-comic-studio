@@ -344,6 +344,81 @@ class ProductionQueueTests(unittest.TestCase):
         self.q.remove(b['id'], on_remove=on_rem)
         self.assertEqual(callback_called, [['alb_b']])
 
+    # ------------------------------------------------- card edits & live sync
+    def test_rename_changes_only_the_card_title(self):
+        a=self.make('A');self.q.rename(a['id'],'  定稿版  ')
+        renamed=self.q.get(a['id']);self.assertEqual(renamed['title'],'定稿版');self.assertEqual(renamed['albumId'],a['albumId']);self.assertEqual(renamed['snapshot'],a['snapshot'])
+        self.assertEqual([t['title'] for t in self.q.list()['tasks']],['定稿版'])
+        for bad in ('', '   ', 'x'*151, None):
+            with self.assertRaises(LibraryError):self.q.rename(a['id'],bad)
+        with self.assertRaises(LibraryError):self.q.rename('assembly-missing','X')
+        # A running book renames in place; pages still render and the new title persists.
+        began,release=self.held_render(lambda task,index:index==0);self.q.start(a['id'],trusted=True);self.assertTrue(began.wait(2))
+        self.q.rename(a['id'],'运行中改名');self.assertEqual(self.q.list()['tasks'][0]['title'],'运行中改名');release.set()
+        self.assertEqual(self.wait(a['id'],'complete')['title'],'运行中改名')
+
+    def test_update_frame_rewrites_the_snapshot_and_refuses_the_page_being_rendered(self):
+        prompts=[]
+        def render(task,index,cancel):prompts.append((index,task['snapshot']['story']['frames'][index]['prompt']));return {'image':str(index)}
+        self.q.render=render;a=self.make('A',count=3)
+        self.q.update_frame(a['id'],1,{'prompt':'edited','name':'  ','caption':None})
+        frame=self.q.get(a['id'])['snapshot']['story']['frames'][1]
+        self.assertEqual(frame['prompt'],'edited');self.assertEqual(frame['name'],'第 2 幕');self.assertEqual(frame['caption'],'')
+        self.assertEqual(self.q.list()['tasks'][0]['pages'][1]['frame'],{'name':'第 2 幕','prompt':'edited'})
+        for index,fields in ((7,{'prompt':'x'}),(1,{}),(1,{'seed':3}),(1,{'prompt':7}),('1',{'prompt':'x'})):
+            with self.assertRaises(LibraryError):self.q.update_frame(a['id'],index,fields)
+        # Page 0 is with the provider: refused. Page 2 has not started: its edit reaches the render.
+        began=threading.Event();release=threading.Event()
+        def held(task,index,cancel):
+            if index==0:began.set();release.wait(2)
+            return render(task,index,cancel)
+        self.q.render=held;self.q.start(a['id'],trusted=True);self.assertTrue(began.wait(2))
+        with self.assertRaises(LibraryError) as ctx:self.q.update_frame(a['id'],0,{'prompt':'too late'})
+        self.assertEqual(ctx.exception.status,409)
+        self.q.update_frame(a['id'],2,{'prompt':'live edit'});release.set();self.wait(a['id'],'complete')
+        self.assertEqual(prompts,[(0,'x'),(1,'edited'),(2,'live edit')])
+        self.assertEqual(self.q.get(a['id'])['snapshot']['story']['frames'][2]['prompt'],'live edit')
+
+    def test_live_sync_switches_are_independent_off_by_default_and_persisted(self):
+        self.assertEqual(self.q.list()['liveSync'],{'story':False,'presets':False,'workflow':False})
+        self.assertEqual(self.q.set_live_sync({'presets':True})['liveSync'],{'story':False,'presets':True,'workflow':False})
+        self.assertEqual(self.q.set_live_sync({'story':True,'presets':False})['liveSync'],{'story':True,'presets':False,'workflow':False})
+        for bad in ({},{'story':'yes'},{'channel':True},[],None):
+            with self.assertRaises(LibraryError):self.q.set_live_sync(bad)
+        self.q.close();self.q=ProductionQueue(self.tmp.name,lambda task,cancel:{'ready':True},self.render);self.addCleanup(self.q.close)
+        self.assertEqual(self.q.list()['liveSync'],{'story':True,'presets':False,'workflow':False})
+
+    def test_refresh_runs_per_page_only_for_enabled_kinds_and_its_result_becomes_the_book(self):
+        seen=[];books=[]
+        def refresh(book,index,enabled,cancel):
+            seen.append((index,dict(enabled)))
+            if index!=1:return None
+            book['snapshot']['story']['frames'][index]['prompt']='fresh '+str(index);return {'snapshot':book['snapshot'],'notices':['源已更新']}
+        def render(task,index,cancel):books.append(task['snapshot']['story']['frames'][index]['prompt']);return {'image':str(index)}
+        q=ProductionQueue(self.tmp.name+'/live',lambda task,cancel:{'ready':True},render,refresh=refresh);self.addCleanup(q.close)
+        t=q.assemble({'story':{'frames':[{'prompt':'x'} for _ in range(3)]},'presets':[]},'A','a')
+        q.start(t['id'],trusted=True)
+        for _ in range(400):
+            if q.get(t['id'])['status']=='complete' and not q.active:break
+            time.sleep(.01)
+        # Every switch off: the book stays frozen and the refresh hook is never consulted.
+        self.assertEqual(seen,[]);self.assertEqual(books,['x','x','x'])
+        q.set_live_sync({'workflow':True});seen.clear();books.clear()
+        q.start(t['id'],indices=[0,1,2],trusted=True)
+        for _ in range(400):
+            if q.get(t['id'])['status']=='complete' and not q.active:break
+            time.sleep(.01)
+        self.assertEqual(seen,[(0,{'workflow':True}),(1,{'workflow':True}),(2,{'workflow':True})])
+        # Only a returned snapshot is adopted and it becomes the stored baseline; None keeps the frozen text.
+        self.assertEqual(books,['x','fresh 1','x'])
+        stored=q.get(t['id']);self.assertEqual([f['prompt'] for f in stored['snapshot']['story']['frames']],['x','fresh 1','x']);self.assertEqual(stored['notices'],['源已更新'])
+        # Preview books never follow sources.
+        p=q.assemble({'story':{'frames':[{'prompt':'p'}]},'presets':[],'preview':True},'P','p');seen.clear();q.start(p['id'],trusted=True)
+        for _ in range(400):
+            if q.get(p['id'])['status']=='complete' and not q.active:break
+            time.sleep(.01)
+        self.assertEqual(seen,[])
+
 if __name__=='__main__':
     unittest.main()
 

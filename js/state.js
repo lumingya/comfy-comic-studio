@@ -130,7 +130,7 @@ function ensureCreationModel(s=state){
   // Native rows and plans are independent files. Never infer new presets/plans
   // from a row on reload: that would bypass import consent or resurrect deletions.
   if(!Array.isArray(s.settings.comfy.bindings)){s.settings.comfy.bindings=initialWorkflowBindings(s.settings.comfy);s.settings.comfy.bindingVersion=1}
-  s.settings.comfy.outputNodeId??=s.settings.comfy.mapping?.output||'';s.settings.comfy.randomizeSeeds??=false;s.settings.comfy.objectInfo??={};s.settings.comfy.slots??={};if(!s.settings.comfy.modelCatalog||typeof s.settings.comfy.modelCatalog!=='object')s.settings.comfy.modelCatalog={checkpoints:[],unets:[],loras:[],vaes:[],fetchedAt:0};
+  s.settings.comfy.outputNodeId??=s.settings.comfy.mapping?.output||'';s.settings.comfy.randomizeSeeds??=false;s.settings.comfy.objectInfo??={};s.settings.comfy.slots??={};if(!Array.isArray(s.settings.comfy.slotPresets))s.settings.comfy.slotPresets=[];if(!s.settings.comfy.modelCatalog||typeof s.settings.comfy.modelCatalog!=='object')s.settings.comfy.modelCatalog={checkpoints:[],unets:[],loras:[],vaes:[],fetchedAt:0};
   if(first)s.creation.migratedAt=Date.now();return s;
 }
 

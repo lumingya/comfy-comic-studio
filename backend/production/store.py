@@ -61,15 +61,33 @@ class TaskStore:
         return json.loads(raw)
 
     @staticmethod
-    def page_summary(page):
+    def frame_summary(frame):
+        """What a queue listing needs to label a scene: its name and a one-line prompt excerpt."""
+        if not isinstance(frame, dict):
+            return None
+        prompt = " ".join(str(frame.get("prompt") or "").split())
+        return {
+            "name": str(frame.get("name") or ""),
+            "prompt": prompt[:80] + ("…" if len(prompt) > 80 else ""),
+        }
+
+    @staticmethod
+    def page_summary(page, frame=None):
         result = page.get("result")
         return {
             "index": page["index"], "state": page["state"],
             "result": {k: v for k, v in result.items() if k in ("image", "name")} if result else None,
             "attemptCount": len(page["attempts"]),
-            "attempts": [{k: v for k, v in a.items() if k in ("status", "phase", "error", "upstream")}
+            "attempts": [{k: v for k, v in a.items() if k in ("status", "phase", "error", "upstream", "notices")}
                          for a in page["attempts"][-3:]],
+            "frame": TaskStore.frame_summary(frame),
         }
+
+    @staticmethod
+    def _frames(snapshot):
+        story = snapshot.get("story") if isinstance(snapshot, dict) else None
+        frames = story.get("frames") if isinstance(story, dict) else None
+        return frames if isinstance(frames, list) else []
 
     def set(self, key, value):
         with self.lock:
@@ -101,7 +119,11 @@ class TaskStore:
                 record["attemptRefs"] = [self._put(a) for a in page["attempts"]]
                 refs.append(self._put(record))
             manifest["pageRefs"] = refs
-            manifest["pageSummaries"] = [self.page_summary(p) for p in value["pages"]]
+            frames = self._frames(snapshot)
+            manifest["pageSummaries"] = [
+                self.page_summary(p, frames[p["index"]] if 0 <= p["index"] < len(frames) else None)
+                for p in value["pages"]
+            ]
             atomic_write(
                 self.file(key),
                 json.dumps(manifest, ensure_ascii=False, allow_nan=False).encode(),
@@ -138,7 +160,9 @@ class TaskStore:
             result["prepared"] = (
                 None if summary else self._read(manifest["preparedRef"])
             )
-            if summary and "pageSummaries" in manifest:
+            if summary and "pageSummaries" in manifest and all(
+                isinstance(p, dict) and "frame" in p for p in manifest["pageSummaries"]
+            ):
                 self._summaries[key] = self._summary(manifest)
                 return copy.deepcopy(self._summaries[key])
             result["pages"] = []
@@ -167,7 +191,14 @@ class TaskStore:
                 result["pages"].append(page)
             if summary:
                 # One-time, atomic cache upgrade for existing tasks, never re-run providers.
-                manifest["pageSummaries"] = [self.page_summary(p) for p in result["pages"]]
+                try:
+                    frames = self._frames(self._read(manifest["snapshotRef"]))
+                except Exception:
+                    frames = []
+                manifest["pageSummaries"] = [
+                    self.page_summary(p, frames[p["index"]] if 0 <= p["index"] < len(frames) else None)
+                    for p in result["pages"]
+                ]
                 for cached, page in zip(manifest["pageSummaries"], result["pages"]):
                     cached["attemptCount"] = page.get("attemptCount", cached["attemptCount"])
                 atomic_write(file, json.dumps(manifest, ensure_ascii=False, allow_nan=False).encode())

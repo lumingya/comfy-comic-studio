@@ -21,7 +21,7 @@ def capability(provider, name):
         return PROVIDERS.spec(provider)["capabilities"].get(name)
     except LibraryError:
         return False
-from .queue import ProductionQueue
+from .queue import ProductionQueue, LIVE_SYNC_KEYS, FRAME_FIELDS
 
 LOCK = threading.RLock()
 
@@ -251,6 +251,99 @@ def seed_binding_ready(workflow):
     return False
 
 
+def workflow_snapshot(config, workflow_id, uses_workflow):
+    """The workflow part of a book: the ComfyUI settings plus the selected blueprint.
+
+    Shared by assembly and live sync so both freeze exactly the same shape and a
+    plain equality check can tell whether the source moved.
+    """
+    workflow = copy.deepcopy(config.get("comfyConfig", {}))
+    if uses_workflow and workflow_id:
+        selected = next(
+            (w for w in config.get("comfyWorkflows", []) if w.get("id") == workflow_id),
+            None,
+        )
+        if not selected:
+            raise LibraryError("所选工作流不存在，请重新选择")
+        if not isinstance(selected.get("workflow"), dict) or not selected["workflow"]:
+            raise LibraryError("所选工作流为空，请先导入有效节点图")
+        workflow.update(
+            {
+                "id": selected["id"],
+                "title": selected.get("title", ""),
+                "workflow": copy.deepcopy(selected["workflow"]),
+                "bindings": copy.deepcopy(selected.get("bindings", [])),
+                "outputNodeId": selected.get("outputNodeId", ""),
+                "slots": copy.deepcopy(selected.get("slots") or {}),
+            }
+        )
+    # Freeze only what rendering needs: node definitions for the classes in
+    # this graph (a full /object_info can run to tens of MiB) and no catalog.
+    graph = workflow.get("workflow") if isinstance(workflow.get("workflow"), dict) else {}
+    classes = {n.get("class_type") for n in graph.values() if isinstance(n, dict)}
+    info = workflow.get("objectInfo") if isinstance(workflow.get("objectInfo"), dict) else {}
+    workflow["objectInfo"] = {k: v for k, v in info.items() if k in classes or k in ("LoraLoader", "LoraLoaderModelOnly")}
+    workflow.pop("modelCatalog", None)
+    if uses_workflow:
+        workflow["slots"] = {"plan": workflow_slots.ensure_plan(graph, workflow.get("slots"), workflow["objectInfo"])}
+    return workflow
+
+
+def workflow_revisions(store, workflow_id, uses_workflow):
+    """Revision keys of everything workflow_snapshot reads: ComfyUI settings and the blueprint file."""
+    if not uses_workflow:
+        return {}
+    revisions = {}
+    try:
+        revisions["settings:comfy"] = store.settings.get("comfy").get("etag")
+    except Exception:
+        revisions["settings:comfy"] = None
+    if workflow_id:
+        try:
+            revisions["workflows:" + workflow_id] = store.entity("workflows", workflow_id, urls=False).get("etag")
+        except LibraryError:
+            revisions["workflows:" + workflow_id] = None
+    return revisions
+
+
+# Bookkeeping fields a save rewrites without the creator changing anything.
+VOLATILE_KEYS = ("updatedAt", "createdAt", "_lazy", "_position", "etag")
+
+
+def stable_document(value):
+    if isinstance(value, dict):
+        return {k: stable_document(v) for k, v in value.items() if k not in VOLATILE_KEYS}
+    if isinstance(value, list):
+        return [stable_document(v) for v in value]
+    return value
+
+
+def same_document(a, b):
+    """Equal for a creator: identical apart from timestamps and listing metadata."""
+    return stable_document(a) == stable_document(b)
+
+
+def frame_source(task, index):
+    """One scene's authoring text as the task holds it, plus where it came from."""
+    snap = task["snapshot"]
+    frames = snap["story"].get("frames") or []
+    if type(index) is not int or isinstance(index, bool) or not 0 <= index < len(frames):
+        raise LibraryError("分幕索引无效")
+    frame = frames[index]
+    refs = snap.get("sourceRefs") or {}
+    return {
+        "index": index,
+        **{k: (frame.get(k) or "") for k in ("name", "prompt", "negative", "caption")},
+        "globalNegative": snap.get("globalNegative", "") or "",
+        "storyTitle": snap["story"].get("title", "") or "",
+        "sourceStoryId": refs.get("storyId") or (None if snap.get("preview") else snap["story"].get("id")),
+        "sourceFrameId": frame.get("id"),
+        "frameCount": len(frames),
+        "pageState": task["pages"][index]["state"] if index < len(task["pages"]) else None,
+        "preview": bool(snap.get("preview")),
+    }
+
+
 class ProductionAdapter:
     def __init__(self, host, eco):
         self.report = lambda *_: None
@@ -260,6 +353,9 @@ class ProductionAdapter:
     def snapshot(self, body):
         store = self.host.native_store()
         presets = []
+        # Source revisions the frozen parts were copied from, so live sync can
+        # tell「unchanged」from「edited since」without comparing whole documents.
+        source_revisions = {}
         preview = body.get("preview") is True
         if preview:
             prompt = body.get("previewPrompt", "")
@@ -276,13 +372,17 @@ class ProductionAdapter:
                 ],
             }
         else:
-            story = store.entity("storyboards", body["storyId"])["document"]
+            story_record = store.entity("storyboards", body["storyId"])
+            story = story_record["document"]
+            source_revisions["storyboards:" + body["storyId"]] = story_record.get("etag")
         if len(body.get("presets", [])) > 20:
             raise LibraryError("一次装配最多 20 份预设")
         for reference in body.get("presets", []):
             if reference.get("kind") not in ("characters", "scenes"):
                 raise LibraryError("只能装配角色或场景预设")
-            presets.append(store.entity(reference["kind"], reference["id"])["document"])
+            preset_record = store.entity(reference["kind"], reference["id"])
+            presets.append(preset_record["document"])
+            source_revisions[reference["kind"] + ":" + reference["id"]] = preset_record.get("etag")
         config = store.read(include_baseline=False)
         channels = (
             config.get("uiConfig", {})
@@ -306,42 +406,8 @@ class ProductionAdapter:
         uses_workflow = workflow_provider(profile.get("provider"))
         if uses_workflow:
             profile["baseUrl"] = config.get("comfyConfig", {}).get("baseUrl", "")
-        workflow = copy.deepcopy(config.get("comfyConfig", {}))
-        if uses_workflow and body.get("workflowId"):
-            selected = next(
-                (
-                    w
-                    for w in config.get("comfyWorkflows", [])
-                    if w.get("id") == body["workflowId"]
-                ),
-                None,
-            )
-            if not selected:
-                raise LibraryError("所选工作流不存在，请重新选择")
-            if (
-                not isinstance(selected.get("workflow"), dict)
-                or not selected["workflow"]
-            ):
-                raise LibraryError("所选工作流为空，请先导入有效节点图")
-            workflow.update(
-                {
-                    "id": selected["id"],
-                    "title": selected.get("title", ""),
-                    "workflow": copy.deepcopy(selected["workflow"]),
-                    "bindings": copy.deepcopy(selected.get("bindings", [])),
-                    "outputNodeId": selected.get("outputNodeId", ""),
-                    "slots": copy.deepcopy(selected.get("slots") or {}),
-                }
-            )
-        # Freeze only what rendering needs: node definitions for the classes in
-        # this graph (a full /object_info can run to tens of MiB) and no catalog.
-        graph = workflow.get("workflow") if isinstance(workflow.get("workflow"), dict) else {}
-        classes = {n.get("class_type") for n in graph.values() if isinstance(n, dict)}
-        info = workflow.get("objectInfo") if isinstance(workflow.get("objectInfo"), dict) else {}
-        workflow["objectInfo"] = {k: v for k, v in info.items() if k in classes or k in ("LoraLoader", "LoraLoaderModelOnly")}
-        workflow.pop("modelCatalog", None)
-        if uses_workflow:
-            workflow["slots"] = {"plan": workflow_slots.ensure_plan(graph, workflow.get("slots"), workflow["objectInfo"])}
+        workflow_id = body.get("workflowId") if uses_workflow and body.get("workflowId") else None
+        workflow = workflow_snapshot(config, workflow_id, uses_workflow)
         overrides = slot_overrides(body, workflow, uses_workflow)
         seed_enabled = body.get("seedEnabled") is True and uses_workflow
         if seed_enabled and not seed_binding_ready(workflow):
@@ -356,11 +422,24 @@ class ProductionAdapter:
         if type(seed) is not int or not 0 <= seed < 2**32:
             raise LibraryError("种子必须为 uint32 整数")
         project_id = body.get("projectId") or story.get("projectId")
+        # Where each frozen part came from (live sync re-reads exactly these).
+        source_refs = {
+            "storyId": None if preview else body["storyId"],
+            "presets": [
+                {"kind": reference["kind"], "id": reference["id"]}
+                for reference in body.get("presets", [])
+            ],
+            "workflowId": workflow_id,
+            "usesWorkflow": bool(uses_workflow),
+        }
+        source_revisions.update(workflow_revisions(store, workflow_id, uses_workflow))
         snapshot = durable_assets(
             self.host,
             {
                 "story": story,
                 "presets": presets,
+                "sourceRefs": source_refs,
+                "sourceRevisions": source_revisions,
                 "knownVariables": self.collection_variable_names(store, config, project_id, presets),
                 "channel": {
                     k: copy.deepcopy(profile[k]) for k in config_fields(profile["provider"]) if k in profile
@@ -485,6 +564,134 @@ class ProductionAdapter:
         return [
             "存在变量 " + keys + " 未定义（第 " + "、".join(str(i) for i in scenes) + " 幕），已替换为空。"
         ]
+
+    def refresh(self, task, index, enabled, cancel):
+        """Live sync for one page: re-read the enabled source kinds and swap them in.
+
+        ``task`` is the page's private copy of the book. Each kind is checked on its
+        own: an unchanged revision costs one etag read; a changed one is re-fetched,
+        compared and, when really different, replaced before this page renders.
+        Returns None when the book already matches, else the parts to commit
+        (snapshot, prepared after a preset change, card-level notices).
+        """
+        snap = task["snapshot"]
+        refs = snap.get("sourceRefs") or {}
+        revisions = dict(snap.get("sourceRevisions") or {})
+        seen = dict(revisions)
+        store = self.host.native_store()
+        changed = set()
+        card, page = [], []
+        config = None
+
+        def current_config():
+            nonlocal config
+            if config is None:
+                config = store.read(include_baseline=False)
+            return config
+
+        def fetch(kind, id):
+            try:
+                return store.entity(kind, id)
+            except LibraryError as exc:
+                if exc.status == 404:
+                    return None
+                raise
+
+        if enabled.get("story"):
+            story_id = refs.get("storyId") or snap["story"].get("id")
+            key = "storyboards:" + str(story_id) if story_id else None
+            record = fetch("storyboards", story_id) if story_id else None
+            if record is None:
+                page.append("源分镜已不存在或未关联，本幕沿用任务快照。")
+            elif key not in revisions or record.get("etag") != revisions.get(key):
+                fresh = durable_assets(self.host, record["document"])
+                before = snap["story"].get("frames") or []
+                after = fresh.get("frames") or []
+                if len(after) != len(before):
+                    page.append(
+                        "源分镜现在有 " + str(len(after)) + " 幕，任务为 " + str(len(before))
+                        + " 幕，幕数不一致；本幕沿用任务快照。需要新结构请重新装配。"
+                    )
+                else:
+                    seen[key] = record.get("etag")
+                    if not same_document(fresh, snap["story"]):
+                        snap["story"] = fresh
+                        changed.add("story")
+                        page.append("生成前已读取最新分镜内容。")
+
+        if enabled.get("presets"):
+            preset_refs = refs.get("presets")
+            if preset_refs is None:
+                preset_refs = [
+                    {"kind": "scenes" if p.get("category") == "scenes" else "characters", "id": p.get("id")}
+                    for p in snap.get("presets", []) if p.get("id")
+                ]
+            for ref in preset_refs:
+                position = next((i for i, p in enumerate(snap.get("presets", [])) if p.get("id") == ref["id"]), None)
+                if position is None:
+                    continue
+                key = ref["kind"] + ":" + str(ref["id"])
+                record = fetch(ref["kind"], ref["id"])
+                if record is None:
+                    page.append("源预设「" + str(snap["presets"][position].get("title", "")) + "」已不存在，本幕沿用任务快照。")
+                    continue
+                if key in revisions and record.get("etag") == revisions.get(key):
+                    continue
+                seen[key] = record.get("etag")
+                fresh = durable_assets(self.host, record["document"])
+                if not same_document(fresh, snap["presets"][position]):
+                    snap["presets"][position] = fresh
+                    changed.add("presets")
+            if "presets" in changed:
+                page.append("生成前已读取最新预设内容，并重新计算了变量。")
+
+        if enabled.get("workflow") and (refs.get("usesWorkflow") if refs else workflow_provider(snap["channel"].get("provider"))):
+            workflow_id = refs.get("workflowId") if refs else snap.get("workflow", {}).get("id")
+            probe = workflow_revisions(store, workflow_id, True)
+            known = all(v is not None and revisions.get(k) == v for k, v in probe.items())
+            # Without a selected blueprint the ComfyUI settings may embed a graph by
+            # reference, which no single etag covers: compare the content each time.
+            if not (known and workflow_id):
+                try:
+                    fresh = workflow_snapshot(current_config(), workflow_id, True)
+                except LibraryError as exc:
+                    page.append("无法读取最新工作流（" + str(exc) + "），本幕沿用任务快照。")
+                else:
+                    seen.update(probe)
+                    if fresh != snap.get("workflow"):
+                        snap["workflow"] = fresh
+                        changed.add("workflow")
+                        page.append("生成前已读取最新工作流蓝图与节点映射。")
+                        if snap.get("overrides"):
+                            try:
+                                snap["overrides"] = slot_overrides({"overrides": snap["overrides"]}, fresh, True)
+                            except LibraryError as exc:
+                                snap["overrides"] = None
+                                card.append("最新工作流不再支持本任务的模型 / LoRA 覆盖，已忽略：" + str(exc))
+                        if snap.get("seedEnabled") and not seed_binding_ready(fresh):
+                            snap["seedEnabled"] = False
+                            card.append("最新工作流没有有效的种子节点映射，已改为不固定种子。")
+
+        if cancel.is_set():
+            raise InterruptedError("分幕提交前已取消")
+        result = {}
+        if "presets" in changed:
+            snap["knownVariables"] = self.collection_variable_names(
+                store, current_config(), snap.get("projectId"), snap.get("presets", [])
+            )
+            prepared = self.prepare(task, cancel)
+            task["prepared"] = prepared
+            result["prepared"] = prepared
+            card.extend(prepared.get("notices") or [])
+        for notice in page:
+            self.report(task["id"], index, {"notice": notice})
+        if not changed and seen == revisions and not card:
+            return None
+        snap["sourceRevisions"] = seen
+        result["snapshot"] = snap
+        if card:
+            result["notices"] = card
+        return result
 
     def render(self, task, index, cancel):
         snap = task["snapshot"]
@@ -929,6 +1136,7 @@ def service(host):
                 adapter.finalize,
                 emit=lambda name, payload: eco.events.emit(name, payload, source="production"),
                 retry_policy=lambda payload: eco.hooks.apply("page.retry", None, payload, expect=dict),
+                refresh=adapter.refresh,
             )
             adapter.report = eco.production.report_attempt
             eco.production_adapter = adapter
@@ -965,6 +1173,11 @@ def dispatch(handler, host, path):
             if route.endswith("/clone-source"):
                 task_id = route[len("tasks/") : -len("/clone-source")]
                 result = clone_source(queue.get(task_id))
+            elif "/frames/" in route:
+                task_id, _, position = route[len("tasks/") :].partition("/frames/")
+                if not re.fullmatch(r"\d{1,4}", position):
+                    raise LibraryError("分幕索引无效")
+                result = frame_source(queue.get(task_id), int(position))
             else:
                 task = queue.get(route[len("tasks/") :])
                 result = {
@@ -1094,6 +1307,14 @@ def dispatch(handler, host, path):
                 result = queue.clear_finished()
             elif route == "concurrency":
                 result = queue.set_concurrency(body.get("value"), body.get("id"))
+            elif route == "live-sync":
+                result = queue.set_live_sync({k: body[k] for k in LIVE_SYNC_KEYS if k in body})
+            elif route == "rename":
+                result = queue.rename(body.get("id"), body.get("title"))
+            elif route == "update-frame":
+                result = queue.update_frame(
+                    body.get("id"), body.get("index"), {k: body[k] for k in FRAME_FIELDS if k in body}
+                )
             else:
                 raise LibraryError("未知生产操作", 404)
         else:
