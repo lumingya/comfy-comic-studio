@@ -36,7 +36,7 @@ T9 开箱检查与离线练习（C1/B3/B6）、T10 多选可发现（C6）。阶
 - [x] T11a 后端 `backend/mio_recycle.py`：列出 `.trash/<id>/receipt.json`、恢复（含画册墓碑清除、目录索引）、永久删除、按天数清理；HTTP 路由；Python 测试
 - [x] T11b 前端回收站：设置 → 数据与备份 → 回收站（列表、恢复、永久删除、清空、保留天数）
 - [x] T11c 统一撤销：画册 / 分镜 / 预设 / 画册集 / 工作流删除后 toast 给出 [撤销]（10 秒），撤销走回收站恢复；文案去掉“不可撤销”
-- [ ] T11d 素材回收并入 `.trash`，引用保护（回收站里的文档仍然保住它引用的素材）；文档
+- [x] T11d 素材回收并入 `.trash`，引用保护（回收站里的文档仍然保住它引用的素材）；文档
   - 后端部分已在 T11a 完成：foundation cleanup 改写到 `.trash/files/<ns>/`（manifest: url/stored），`scan_references` 扫描 `.trash/<id>` 文档，只跳过 `.trash/assets`、`.trash/files`；剩下文档（BACKUP.md `## 回收站`，FOUNDATION 链接补锚点）
 
 ## 进度记录
@@ -62,3 +62,9 @@ T9 开箱检查与离线练习（C1/B3/B6）、T10 多选可发现（C6）。阶
   - 批量删除工作流（workspace.js 的 ws-lib-delete）保留原来的内存快照撤销
   - 「不可撤销」文案已替换；foundation 服务端任务记录的删除仍如实写「不能恢复」
   - JS 测试新增 3 个（91/91）
+- 2026-09-24 · T11d · 文档
+  - BACKUP.md 新增 `## 回收站`（撤销、回收站操作表、恢复不了的情况、素材文件、磁盘位置 `.trash/`）
+  - FOUNDATION、TROUBLESHOOTING、FILE_LIBRARY 链接到 `BACKUP.md#回收站`；en/GUIDE 新增「Undo and the recycle bin」
+  - foundation.js 素材回收文案：data/trash → 回收站；help-drawer 设置说明加上「含回收站」
+  - 已核实：「设置 → 功能开关」存在（ui-settings 的 modules 标签），TROUBLESHOOTING 中的说法正确
+- **T8、T11 全部完成。**

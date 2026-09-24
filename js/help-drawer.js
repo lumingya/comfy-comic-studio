@@ -54,7 +54,7 @@ const HELP_PAGES={
   workflow:{title:'工作流与 API 配置',text:'在这里添加和切换图像服务。使用 ComfyUI 时，导入 API 格式的工作流，再用参数映射指定提示词、种子等写进哪个节点。',
     terms:['图像服务','工作流','参数映射'],docs:['workflow','services'],actions:[]},
   writer:{title:'AI 写故事',text:'把故事想法整理成台词与分镜初稿；不负责生成图片。',terms:['分镜'],docs:[],actions:[]},
-  settings:{title:'设置',text:'常用：工作室、通用偏好（外观、语言、字号）、数据与备份、关于与更新。高级：功能开关、样式工坊、扩展中心、工具与资源。开发者选项默认隐藏，在功能开关里打开。',terms:[],docs:['files','backup','mobile'],
+  settings:{title:'设置',text:'常用：工作室、通用偏好（外观、语言、字号）、数据与备份（含回收站）、关于与更新。高级：功能开关、样式工坊、扩展中心、工具与资源。开发者选项默认隐藏，在功能开关里打开。',terms:[],docs:['files','backup','mobile'],
     actions:[['导出完整备份（ZIP）','download','disk-archive']]},
   logs:{title:'运行日志',text:'按时间查看生成、连接、保存和审校的真实运行记录。',terms:[],docs:['troubleshooting'],actions:[]},
   optional:{title:'可选功能',text:'按需启用，在工具卡片旁配置专属服务。',terms:[],docs:[],actions:[]},

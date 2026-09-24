@@ -1985,7 +1985,7 @@ function extendCurrentLocaleCatalog(catalog){Object.assign(catalog.messages,{
   "预设是一组变量的取值，例如角色外貌或场景设定。装配时可以同时选多个预设，分镜里的 {变量名} 换成对应的值。": "A preset holds values for a set of variables, such as a character's look or a setting. Assembly can combine several presets; each {variable name} in the storyboard gets its value.",
   "装配把分镜、预设、图像服务和工作流组合成生成任务。任务加入后处于待命状态，点「开始」才会请求图像服务。": "Assembly combines a storyboard, presets, an image provider and a workflow into generation tasks. Added tasks stand by; the image provider is only called after you press Start.",
   "在这里添加和切换图像服务。使用 ComfyUI 时，导入 API 格式的工作流，再用参数映射指定提示词、种子等写进哪个节点。": "Add and switch image providers here. With ComfyUI, import an API-format workflow, then use parameter mapping to choose which node receives the prompt, the seed and so on.",
-  "常用：工作室、通用偏好（外观、语言、字号）、数据与备份、关于与更新。高级：功能开关、样式工坊、扩展中心、工具与资源。开发者选项默认隐藏，在功能开关里打开。": "Common: Workspace, General preferences (look, language, text size), Data & backup, About & updates. Advanced: Modules, Style Studio, Extension center, Tools & resources. Developer options are hidden by default; turn them on in Modules.",
+  "常用：工作室、通用偏好（外观、语言、字号）、数据与备份（含回收站）、关于与更新。高级：功能开关、样式工坊、扩展中心、工具与资源。开发者选项默认隐藏，在功能开关里打开。": "Common: Workspace, General preferences (look, language, text size), Data & backup (including the recycle bin), About & updates. Advanced: Modules, Style Studio, Extension center, Tools & resources. Developer options are hidden by default; turn them on in Modules.",
   "ComfyUI 已连接 · {url}": "ComfyUI connected · {url}",
   "正在检测 ComfyUI…": "Checking ComfyUI…",
   "「{title}」已配置": "“{title}” is set up",
