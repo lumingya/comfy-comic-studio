@@ -785,7 +785,7 @@ add('prompt editor paint classifies defined, empty and unknown variables without
 
 add('prompt editor summary says how many variables were recognised and which are undefined or empty', () => {
   const ctx = { definitions: new Set(['character', 'weapon']), emptyKeys: new Set(['weapon']) };
-  assert.equal(context.promptSummaryText('plain words only', ctx), '只有已定义的 {变量名} 会高亮。其他括号、权重与符号原样保留。');
+  assert.equal(context.promptSummaryText('plain words only', ctx), '只有已定义的 {变量名} 会高亮。');
   assert.equal(context.promptSummaryText('{character} {character}', ctx), '识别到 1 个变量');
   assert.equal(context.promptSummaryText('{character} {weapon} {mystery}', ctx), '识别到 3 个变量 · 1 个未定义（mystery） · 1 个值为空（weapon）');
 });

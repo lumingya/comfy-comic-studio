@@ -2,67 +2,68 @@
 <html lang="zh-CN" data-theme="dark">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="theme-color" content="#131517"><meta name="description" content="Mio, a local-first comic production workspace."><title>Mio | 让故事，逐帧发生</title>
-<script>try{document.documentElement.dataset.theme=localStorage.getItem('cc-theme')||'dark';document.documentElement.lang=localStorage.getItem('cc-language')==='en'?'en':'zh-CN';document.documentElement.dataset.lettering=localStorage.getItem('cc-lettering')||'editorial'}catch(e){}</script>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('cc-theme')||'dark';document.documentElement.lang=localStorage.getItem('cc-language')==='en'?'en':'zh-CN';document.documentElement.dataset.lettering=localStorage.getItem('cc-lettering')||'editorial';document.documentElement.dataset.fontScale=localStorage.getItem('cc-font-scale')||'standard'}catch(e){}</script>
 <script src="/js/safe-mode.js"></script>
-<link rel="stylesheet" href="/styles.css?v=d0966d68cf31"><link rel="stylesheet" href="/js/reading-stage.css"><link rel="stylesheet" href="/js/workflow-workbench.css?v=2fb7d69576b3">
+<link rel="stylesheet" href="/styles.css?v=80d76ace8f92"><link rel="stylesheet" href="/js/reading-stage.css"><link rel="stylesheet" href="/js/workflow-workbench.css?v=27b22d716444">
 <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgcm9sZT0iaW1nIiBhcmlhLWxhYmVsPSJNaW8iPjx0aXRsZT5NaW88L3RpdGxlPjxyZWN0IHdpZHRoPSI2NCIgaGVpZ2h0PSI2NCIgcng9IjE2IiBmaWxsPSIjMmY1YTNiIi8+PHBhdGggZmlsbD0iI2VlZjVlYSIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNMTQgMTIuNWgzNmEyLjUgMi41IDAgMCAxIDIuNSAyLjV2MTRhMi41IDIuNSAwIDAgMS0yLjUgMi41SDE0YTIuNSAyLjUgMCAwIDEtMi41LTIuNVYxNWEyLjUgMi41IDAgMCAxIDIuNS0yLjVaIE0zOS41IDIyYTQgNCAwIDEgMCA4IDBhNCA0IDAgMSAwLTggMFoiLz48cGF0aCBmaWxsPSIjZWVmNWVhIiBkPSJNMTQgMzQuNWgxNi41YTAgMCAwIDAgMSAwIDB2MTdhMCAwIDAgMCAxIDAgMEgxNGEyLjUgMi41IDAgMCAxLTIuNS0yLjV2LTEyYTIuNSAyLjUgMCAwIDEgMi41LTIuNVoiLz48cGF0aCBmaWxsPSIjZWVmNWVhIiBkPSJNMzYgMzQuNWgxNGEyLjUgMi41IDAgMCAxIDIuNSAyLjV2OWEyLjUgMi41IDAgMCAxLTIuNSAyLjVoLTkuNWwtNSA0LjJ2LTQuMkgzNmEyLjUgMi41IDAgMCAxLTIuNS0yLjV2LTlhMi41IDIuNSAwIDAgMSAyLjUtMi41WiIvPjwvc3ZnPg==">
 </head>
 <body>
 <aside class="sidebar" id="sidebar" aria-label="主导航"></aside><div class="app"><header aria-label="工作区工具栏" class="topbar" id="topbar"></header><main class="main" id="main"></main></div><footer class="statusbar" id="statusbar"></footer><button type="button" class="assistant-launch" data-act="assistant"><span id="launch-icon"></span>创作助手<span class="kbd" style="color:inherit">⌘ J</span></button>
 <dialog id="modal" aria-labelledby="modal-title"><header aria-label="对话框标题栏" class="modal-head"><div class="grow"><h2 id="modal-title">编辑</h2><p id="modal-subtitle"></p></div><button type="button" class="ibtn" data-act="close-modal" aria-label="关闭">✕</button></header><div class="modal-body" id="modal-body"></div></dialog>
 <dialog id="confirm-dialog" class="confirm-dialog" aria-labelledby="confirm-title"><div class="modal-body"><h3 id="confirm-title">确认操作</h3><p id="confirm-message"></p><label id="confirm-checkbox-row" class="confirm-checkbox-row" hidden><input type="checkbox" id="confirm-checkbox"><span id="confirm-checkbox-label"></span></label><div class="modal-footer"><button type="button" class="btn" id="confirm-no">取消</button><button type="button" class="btn primary" id="confirm-yes">确认</button></div></div></dialog>
-<dialog id="command-dialog" class="command-dialog" aria-labelledby="command-panel-label"><span hidden id="command-panel-label">全局命令面板</span><div class="command-input"><span id="command-icon"></span><input type="text" id="command-input" autocomplete="off" placeholder="搜索画册、角色、模板或执行命令..." aria-label="搜索命令"><span class="kbd">ESC</span></div><div class="command-results" id="command-results"></div><div class="command-footer">↑ ↓ 选择　 Enter 执行 <span style="float:right">MIO COMMAND</span></div></dialog>
+<dialog id="command-dialog" class="command-dialog" aria-labelledby="command-panel-label"><span hidden id="command-panel-label">全局命令面板</span><div class="command-input"><span id="command-icon"></span><input type="text" id="command-input" autocomplete="off" placeholder="搜索画册、分镜、预设与台词，或输入动作，例如“新建”" aria-label="搜索命令"><span class="kbd">ESC</span></div><div class="command-results" id="command-results"></div><div class="command-footer">↑ ↓ 选择　 Enter 执行 <span style="float:right">MIO COMMAND</span></div></dialog>
 <span hidden id="reader-panel-label">沉浸式画册阅读器</span><dialog id="reader" class="reader-dialog" aria-labelledby="reader-panel-label"></dialog><section id="assistant" class="assistant" hidden aria-label="分镜精修助手"></section><div class="toast-region" id="toasts" role="status" aria-live="polite"></div><input id="file-input" type="file" hidden>
 <dialog id="template-studio" class="template-dialog" aria-labelledby="template-studio-title"></dialog>
 <dialog id="welcome-dialog" class="onboarding-dialog" aria-labelledby="welcome-title"></dialog>
 <dialog id="github-dialog" class="service-dialog publish-dialog" aria-labelledby="github-title"></dialog>
 <dialog id="critic-dialog" class="service-dialog" aria-labelledby="critic-title"></dialog>
 <dialog id="guide-dialog" class="guide-dialog" aria-labelledby="guide-title"></dialog>
-<div id="project-popover" class="project-popover" role="menu" aria-label="切换或新建企划" hidden></div>
+<div id="project-popover" class="project-popover" role="menu" aria-label="切换或新建画册集" hidden></div>
 <div id="ui-tooltip" class="ui-tooltip" role="tooltip" hidden></div>
 <input id="directory-import" type="file" webkitdirectory multiple hidden>
-<script src="/js/state.js?v=d1462c3033e5"></script>
-<script src="/js/sync.js?v=6bdd94d83be5"></script>
-<script src="/js/workflow-mapping.js?v=392783341be2"></script>
-<script src="/js/workflow-slots.js?v=d44809edf7c6"></script>
-<script src="/js/engine.js?v=43d82df0751c"></script>
-<script src="/js/creation.js?v=06d7c521bbba"></script>
+<script src="/js/state.js?v=971ed087f5ea"></script>
+<script src="/js/sync.js?v=6428594055eb"></script>
+<script src="/js/workflow-mapping.js?v=a41875a234ef"></script>
+<script src="/js/workflow-slots.js?v=e08f2234b09e"></script>
+<script src="/js/engine.js?v=3b8b0c3a1b73"></script>
+<script src="/js/creation.js?v=68525477ddef"></script>
 <script src="/js/ui-presentation.js?v=7719ae50bc6b"></script>
-<script src="/js/ui-reader.js?v=5734944fbbbc"></script>
-<script src="/js/ui-templates.js?v=201cc7d4dadd"></script>
-<script src="/js/ui-export.js?v=c54e07360451"></script>
-<script src="/js/ui-editors.js?v=8c7d00a1b1ae"></script>
-<script src="/js/ui-locale.js?v=cf2d73c20b09"></script>
-<script src="/js/ui-assistant.js?v=c801e2fa7751"></script>
-<script src="/js/ui-storyboard.js?v=ff3d74c0cf11"></script>
-<script src="/js/ui-gallery.js?v=634fa8ac0653"></script>
-<script src="/js/ui-settings.js?v=4afaeb8d3ae9"></script>
-<script src="/js/ui.js?v=998ab2daf937"></script>
-<script src="/js/workspace.js?v=042bf8114199"></script>
+<script src="/js/ui-reader.js?v=676537281349"></script>
+<script src="/js/ui-templates.js?v=d68413ba2c5b"></script>
+<script src="/js/ui-export.js?v=f3211b1e27ff"></script>
+<script src="/js/ui-editors.js?v=cd232516a767"></script>
+<script src="/js/ui-locale.js?v=0c5b1ae5582a"></script>
+<script src="/js/ui-assistant.js?v=bd1cd7f178b9"></script>
+<script src="/js/ui-storyboard.js?v=a5e36787f912"></script>
+<script src="/js/ui-gallery.js?v=73db1fe888d7"></script>
+<script src="/js/ui-settings.js?v=2612acee75b4"></script>
+<script src="/js/ui.js?v=fdaf08c92247"></script>
+<script src="/js/workspace.js?v=0d26d7142654"></script>
 <script src="/js/context-menu.js?v=6b14927aa89d"></script>
-<script src="/js/organize.js?v=518aa146b64d"></script>
-<script src="/js/foundation.js?v=110b0cab079b"></script>
-<script src="/js/ui-image-studio.js?v=e1e15e39c4c3"></script>
+<script src="/js/organize.js?v=bf0e7131c2cf"></script>
+<script src="/js/foundation.js?v=3ad7a1f52c8d"></script>
+<script src="/js/ui-image-studio.js?v=1d21f93c41a4"></script>
 <script src="/js/ui-template-afterglow.js?v=84a032e4d59e"></script>
 <script src="/js/ui-template-seamless.js?v=cc6d85c6a513"></script>
-<script src="/js/file-library.js?v=0ae1a2e90361"></script>
-<script src="/js/contextual-sharing.js?v=479018c6bdc8"></script>
-<script src="/js/album-metadata.js?v=1f4032927353"></script>
-<script src="/js/creative-context.js?v=c835e97243c2"></script>
-<script src="/js/settings-workbench.js?v=0d41ff32cd53"></script>
+<script src="/js/file-library.js?v=8f56391febb8"></script>
+<script src="/js/contextual-sharing.js?v=15d632ac33ec"></script>
+<script src="/js/album-metadata.js?v=77a718ab3c21"></script>
+<script src="/js/creative-context.js?v=2cfb67579381"></script>
+<script src="/js/settings-workbench.js?v=72943e763ded"></script>
 <script src="/js/platform.js?v=cb11b5a87f43"></script>
-<script src="/js/ecosystem.js?v=780a2a21816e"></script>
-<script src="/js/style-studio.js?v=2f8872765154"></script>
+<script src="/js/ecosystem.js?v=9f978d141ad3"></script>
+<script src="/js/style-studio.js?v=621d3787fd8e"></script>
 <script src="/js/reading-stage.js?v=4703f936134d"></script>
 <script src="/js/preferences-workbench.js?v=280e15816bbf"></script>
-<script src="/js/assembly-workshop.js?v=12c960b9f52c"></script>
-<script src="/js/update-center.js?v=e155aae708d8"></script>
+<script src="/js/assembly-workshop.js?v=080f3eefaced"></script>
+<script src="/js/update-center.js?v=5a3a689e6995"></script>
 <script src="/js/dom-updates.js?v=7f3cda0055b2"></script>
-<script src="/js/architecture.js?v=2c9dd878a6ac"></script>
-<script src="/js/first-run.js?v=1d3218067419"></script>
-<script src="/js/home.js?v=7f5412a081cd"></script>
-<script src="/js/workflow-workbench.js?v=1fef95e6d3f8"></script>
-<script src="/js/desktop-selection.js?v=788e73635a3e"></script>
-<script src="/js/content-loader.js" data-app="/js/app.js?v=d420b1019379"></script>
+<script src="/js/architecture.js?v=c04522389fd9"></script>
+<script src="/js/first-run.js?v=07cb0bcfc1ab"></script>
+<script src="/js/home.js?v=72d236dbd8ec"></script>
+<script src="/js/workflow-workbench.js?v=542b2ca3708f"></script>
+<script src="/js/desktop-selection.js?v=858a8a96f8e5"></script>
+<script src="/js/help-drawer.js?v=5b20c3a8f208"></script>
+<script src="/js/content-loader.js" data-app="/js/app.js?v=ac1e0d8d36bc"></script>
 </body>
 </html>

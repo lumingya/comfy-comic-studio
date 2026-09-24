@@ -30,7 +30,7 @@
     const help=document.createElement('p');help.textContent='MIO-BOOT-001 · 未替换或重置您的数据。请检查服务日志与完整程序包。';
     const retry=document.createElement('button');retry.type='button';retry.className='btn primary';retry.textContent='重试加载';retry.onclick=load;
     const details=document.createElement('details'),summary=document.createElement('summary'),pre=document.createElement('pre');
-    summary.textContent='打开诊断与启动命令';pre.textContent=message+'\n\n在项目目录运行：\npython tools/check_distribution.py\npython server.py\n\n完整诊断来自服务器终端；这里不会伪造校验执行结果。';details.append(summary,pre);
+    summary.textContent='打开诊断与启动命令';pre.textContent=message+'\n\n在项目目录运行：\npython tools/check_distribution.py\npython server.py\n\n完整诊断来自服务器终端。';details.append(summary,pre);
     const link=document.createElement('a');link.href='/docs/SECURITY.md';link.textContent='查看运行与安全说明';box.append(title,help,retry,details,link);document.body.append(box);
   }
   void load();

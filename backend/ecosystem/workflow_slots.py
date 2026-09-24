@@ -520,11 +520,11 @@ def _apply_stack(workflow, lora, loras):
         raise LibraryError('LoRA 堆栈节点不存在')
     slots = copy.deepcopy(lora['slots'])
     if not slots:
-        raise LibraryError('节点没有可识别的 LoRA 槽位')
+        raise LibraryError('节点没有可识别的 LoRA 输入')
     object_style = slots[0]['objectStyle']
     if len(loras) > len(slots):
         if not object_style:
-            raise LibraryError('LoRA 堆栈只有 %d 个槽位，无法放下 %d 个 LoRA' % (len(slots), len(loras)))
+            raise LibraryError('LoRA 堆栈只有 %d 个位置，无法放下 %d 个 LoRA' % (len(slots), len(loras)))
         template = node['inputs'][slots[0]['namePath']]
         base, suffix = slots[0]['namePrefix'], slots[0]['nameSuffix']
         next_index = max(s['index'] for s in slots) + 1
@@ -777,7 +777,7 @@ def analyze(workflow, object_info=None, manual=None, legacy=None):
         if any(t['key'] == c['nodeId']+':'+c['path'] for t in targets):
             continue
         if not g.model_node(nid):
-            issue('accessory-weight', nid, '附属权重，不进模型槽：'+c['path'])
+            issue('accessory-weight', nid, '附属权重，不进模型映射：'+c['path'])
             continue
         key = c['nodeId']+':'+c['path']
         if any(t['key'] == key for t in targets):
@@ -792,7 +792,7 @@ def analyze(workflow, object_info=None, manual=None, legacy=None):
     for entry in manual or []:
         nid, path = str(entry.get('nodeId', '')), entry.get('path', '')
         if nid not in wf or path not in wf[nid]['inputs']:
-            issue('manual-missing', nid, '手动指定的字段不在蓝图中'); continue
+            issue('manual-missing', nid, '手动指定的字段不在工作流中'); continue
         value = wf[nid]['inputs'][path]
         if _is_link(value, wf):
             issue('manual-linked', nid, '手动字段已连线，不能安全写入'); continue
@@ -912,7 +912,7 @@ def analyze(workflow, object_info=None, manual=None, legacy=None):
                 ranges = [rule[1] for key, rule in rules.items() if key in ('strength_model', 'strength_clip') and len(rule) > 1 and isinstance(rule[1], dict)]
                 synth['range'] = {'min': max([r.get('min', -5) for r in ranges] or [-5]), 'max': min([r.get('max', 5) for r in ranges] or [5])}
     enabled = any(group['active'] for group in groups) or synth is not None
-    reason = '' if enabled else '此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）'
+    reason = '' if enabled else '此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）'
     if reason:
         issue('no-lora-site', '', reason)
     plan = {'version': 3, 'analyzedAt': datetime.now(timezone.utc).isoformat(), 'objectInfoHash': info_hash(object_info),
@@ -933,7 +933,7 @@ def _migrate(plan, legacy):
         previous = {x['key']: x for x in oldplan.get(kind, {}).get(collection, [])}
         current_keys = {x['key'] for x in plan[kind][collection]}
         for key in previous.keys() - current_keys:
-            plan['issues'].append({'level': 'warn', 'code': 'stale-target', 'nodeId': previous[key].get('nodeId', ''), 'text': '旧的计划目标不在蓝图中：'+key})
+            plan['issues'].append({'level': 'warn', 'code': 'stale-target', 'nodeId': previous[key].get('nodeId', ''), 'text': '旧的计划目标不在工作流中：'+key})
         for entry in plan[kind][collection]:
             if entry['key'] in previous:
                 entry['enabled'] = previous[entry['key']].get('enabled', entry['enabled'])
@@ -951,7 +951,7 @@ def _migrate(plan, legacy):
             else:
                 for entry in plan[kind][collection]:
                     entry['enabled'] = False
-                plan['issues'].append({'level': 'warn', 'code': 'legacy-missing', 'nodeId': str(old['nodeId']), 'text': '旧的自定义目标不在蓝图中'})
+                plan['issues'].append({'level': 'warn', 'code': 'legacy-missing', 'nodeId': str(old['nodeId']), 'text': '旧的自定义目标不在工作流中'})
 
 
 def ensure_plan(workflow, slots=None, object_info=None):
@@ -1035,7 +1035,7 @@ def apply(workflow, plan, overrides, object_info=None, positive=None):
     model = clean.get('model')
     known = {t['key'] for t in plan['model']['targets']}
     if isinstance(model, dict) and set(model) - known:
-        raise LibraryError('模型目标不在蓝图中')
+        raise LibraryError('模型目标不在工作流中')
     for target in plan['model']['targets']:
         key = target['key']
         selected = target.get('enabled', target['role'] in ('primary', 'same')) or (isinstance(model, dict) and key in model)
@@ -1054,7 +1054,7 @@ def apply(workflow, plan, overrides, object_info=None, positive=None):
         writes.append({'kind': 'model', 'key': key, 'nodeId': nid, 'path': path, 'value': value})
         notices.append('写入模型 '+key+' → '+value)
     if model and not any(w['kind'] == 'model' for w in writes):
-        raise LibraryError('当前工作流没有可写入的模型槽（全部跳过）')
+        raise LibraryError('当前工作流没有可写入的模型映射（全部跳过）')
     if 'loras' in clean or clean.get('unpin'):
         groups = copy.deepcopy(plan['lora']['groups'])
         if clean.get('loras') and plan['lora'].get('synth') and plan['lora']['synth'].get('enabled', True) and 'synth:'+plan['lora']['synth']['after']['nodeId'] not in disabled and not any(g.get('enabled', g['active']) and g['key'] not in disabled for g in groups):
@@ -1104,7 +1104,7 @@ def apply(workflow, plan, overrides, object_info=None, positive=None):
                 _apply_stack(result, writer, final)
             elif kind == 'embedded':
                 if len(final) > 1:
-                    raise LibraryError('此蓝图的加载器最多 1 个 LoRA')
+                    raise LibraryError('此工作流的加载器最多 1 个 LoRA')
                 d = writer['chain'][0]
                 if not final and not d['strengthPath']:
                     raise LibraryError('内嵌 LoRA 没有强度字段，无法安全禁用')

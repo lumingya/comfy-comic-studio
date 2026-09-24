@@ -81,7 +81,7 @@ const WorkflowMapping = (() => {
       }
       if (!exists) {
         if (/^(0|[1-9]\d*)$/.test(parts[index + 1]))
-          throw Error("嵌套数组需在蓝图中预先存在：" + path);
+          throw Error("嵌套数组需在工作流中预先存在：" + path);
         obj[key] = {};
       }
       obj = obj[key];
@@ -248,7 +248,7 @@ const WorkflowMapping = (() => {
           original = inputAt(node, binding.path, workflow),
           resolved = resolve(binding);
         if (resolved === SKIP) {
-          skipped.push({ id: binding.id, reason: "来源未提供，保留蓝图原值" });
+          skipped.push({ id: binding.id, reason: "来源未提供，保留工作流原值" });
           continue;
         }
         const value = castBoundValue(resolved, binding.type, original.value);

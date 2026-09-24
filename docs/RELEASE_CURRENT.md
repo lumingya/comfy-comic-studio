@@ -1,12 +1,14 @@
 # Mio 3.1.0-dev.3 · 可靠性审查版
 
-> 最新首页：见 [独立首页与一级模块导航](HOME_WORKSPACE_2026-09-18.md)。
+> 当前版本是 3.2.0-dev.1，最新变更见 [变更记录](CHANGELOG.md)。本文是 3.1.0-dev.3 的发布说明；下面提到的 2026-09-18 记录和测试日志已从仓库移除，链接指向提交 3fb368a 里的原文件。
 
-> 最新 UI 修订：见 [首页、英文界面与密钥直填](UI_LOCALE_INLINE_KEYS_2026-09-18.md)。
+> 最新首页：见 [独立首页与一级模块导航](https://github.com/lumingya/comfy-comic-studio/blob/3fb368a7f286b84643327cf390487d624798e79e/docs/HOME_WORKSPACE_2026-09-18.md)。
 
-> 后续主动排查：见 [第二轮 8 项修复及兼容变化](AUDIT_ROUND2_2026-09-18.md) 和 [第二轮完整测试日志](AUDIT_ROUND2_RESULTS.txt)。
+> 最新 UI 修订：见 [首页、英文界面与密钥直填](https://github.com/lumingya/comfy-comic-studio/blob/3fb368a7f286b84643327cf390487d624798e79e/docs/UI_LOCALE_INLINE_KEYS_2026-09-18.md)。
 
-> 2026-09-18 审计修复：见 [逐项修复与边界](AUDIT_FIX_2026-09-18.md) 和 [本轮测试记录](AUDIT_TEST_RESULTS.txt)。下文是该修复之前的版本说明，不能代替本轮验收。
+> 后续主动排查：见 [第二轮 8 项修复及兼容变化](https://github.com/lumingya/comfy-comic-studio/blob/3fb368a7f286b84643327cf390487d624798e79e/docs/AUDIT_ROUND2_2026-09-18.md) 和 [第二轮完整测试日志](https://github.com/lumingya/comfy-comic-studio/blob/3fb368a7f286b84643327cf390487d624798e79e/docs/AUDIT_ROUND2_RESULTS.txt)。
+
+> 2026-09-18 审计修复：见 [逐项修复与边界](https://github.com/lumingya/comfy-comic-studio/blob/3fb368a7f286b84643327cf390487d624798e79e/docs/AUDIT_FIX_2026-09-18.md) 和 [本轮测试记录](https://github.com/lumingya/comfy-comic-studio/blob/3fb368a7f286b84643327cf390487d624798e79e/docs/AUDIT_TEST_RESULTS.txt)。下文是该修复之前的版本说明，不能代替本轮验收。
 
 2026-09-16。完成 P0 / P1 / P2 共 11 项代码修正与自动化回归后打包；不承担旧版数据迁移。
 
@@ -48,4 +50,4 @@ python server.py
 - 原图入口上限为 50 MiB；缩略尺寸为 16–1024，按 64 像素量化。SVG 使用有体积限制的矢量预览，不伪称已经栅格化为 WebP。
 - 自动化覆盖不等于真 GPU、真实付费供应商、Windows 实机或系统级输入法验证。未做的验证不作为已完成项宣传。
 
-[详细验收、复现命令与证据](REVIEW_ACCEPTANCE.md) · [测试结果](TEST_RESULTS.txt) · [使用说明](../README.md)
+[详细验收、复现命令与证据](REVIEW_ACCEPTANCE.md) · [测试结果](https://github.com/lumingya/comfy-comic-studio/blob/3fb368a7f286b84643327cf390487d624798e79e/docs/TEST_RESULTS.txt) · [使用说明](../README.md)

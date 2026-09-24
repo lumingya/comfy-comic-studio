@@ -212,7 +212,7 @@ def slot_overrides(body, workflow, uses_workflow):
         raise LibraryError("模型 / LoRA 覆盖必须是对象")
     if not uses_workflow:
         if raw.get("model") or raw.get("loras"):
-            raise LibraryError("只有 ComfyUI 工作流渠道支持模型 / LoRA 覆盖")
+            raise LibraryError("只有 ComfyUI 图像服务支持模型 / LoRA 覆盖")
         return None
     clean = workflow_slots.normalize_overrides(raw)
     if not clean:
@@ -399,10 +399,10 @@ class ProductionAdapter:
             None,
         )
         if not profile:
-            raise LibraryError("请选择并保存有效图像渠道")
+            raise LibraryError("请选择并保存有效图像服务")
         profile = copy.deepcopy(profile)
         if not PROVIDERS.has(profile.get("provider")):
-            raise LibraryError("渠道使用的图像提供方「" + str(profile.get("provider")) + "」未注册；请启用对应扩展或更换渠道")
+            raise LibraryError("图像服务使用的图像提供方「" + str(profile.get("provider")) + "」未注册；请启用对应扩展或更换图像服务")
         uses_workflow = workflow_provider(profile.get("provider"))
         if uses_workflow:
             profile["baseUrl"] = config.get("comfyConfig", {}).get("baseUrl", "")
@@ -661,7 +661,7 @@ class ProductionAdapter:
                     if fresh != snap.get("workflow"):
                         snap["workflow"] = fresh
                         changed.add("workflow")
-                        page.append("生成前已读取最新工作流蓝图与节点映射。")
+                        page.append("生成前已读取最新工作流与节点映射。")
                         if snap.get("overrides"):
                             try:
                                 snap["overrides"] = slot_overrides({"overrides": snap["overrides"]}, fresh, True)

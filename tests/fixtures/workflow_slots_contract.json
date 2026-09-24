@@ -3084,7 +3084,7 @@
             "level": "warn",
             "code": "accessory-weight",
             "nodeId": "4",
-            "text": "附属权重，不进模型槽：ckpt_name"
+            "text": "附属权重，不进模型映射：ckpt_name"
           }
         ]
       },
@@ -4524,7 +4524,7 @@
         },
         "lora": {
           "enabled": false,
-          "reason": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
+          "reason": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
           "groups": [],
           "synth": null
         },
@@ -4533,12 +4533,12 @@
             "level": "warn",
             "code": "no-lora-site",
             "nodeId": "",
-            "text": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+            "text": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
           }
         ]
       },
       "apply": null,
-      "error": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+      "error": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
     },
     {
       "name": "v1 migrated: syntax fallback: without positive binding the slot is off",
@@ -4647,7 +4647,7 @@
         },
         "lora": {
           "enabled": false,
-          "reason": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
+          "reason": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
           "groups": [],
           "synth": null
         },
@@ -4656,12 +4656,12 @@
             "level": "warn",
             "code": "no-lora-site",
             "nodeId": "",
-            "text": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+            "text": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
           }
         ]
       },
       "apply": null,
-      "error": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+      "error": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
     },
     {
       "name": "v1 migrated: stack numbered: fills two slots and switches the third off",
@@ -5259,7 +5259,7 @@
         "positive": null,
         "objectInfo": {},
         "error": true,
-        "errorMessage": "LoRA 堆栈只有 3 个槽位，无法放下 4 个 LoRA"
+        "errorMessage": "LoRA 堆栈只有 3 个位置，无法放下 4 个 LoRA"
       },
       "plan": {
         "version": 3,
@@ -5386,7 +5386,7 @@
         "issues": []
       },
       "apply": null,
-      "error": "LoRA 堆栈只有 3 个槽位，无法放下 5 个 LoRA"
+      "error": "LoRA 堆栈只有 3 个位置，无法放下 5 个 LoRA"
     },
     {
       "name": "v1 migrated: stack object: rgthree grows dynamic keys",
@@ -7342,7 +7342,7 @@
         "positive": null,
         "objectInfo": {},
         "error": true,
-        "errorMessage": "当前工作流没有可写入的模型槽"
+        "errorMessage": "当前工作流没有可写入的模型映射"
       },
       "plan": {
         "version": 3,
@@ -7369,7 +7369,7 @@
         },
         "lora": {
           "enabled": false,
-          "reason": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
+          "reason": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
           "groups": [],
           "synth": null
         },
@@ -7378,12 +7378,12 @@
             "level": "warn",
             "code": "no-lora-site",
             "nodeId": "",
-            "text": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+            "text": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
           }
         ]
       },
       "apply": null,
-      "error": "当前工作流没有可写入的模型槽（全部跳过）"
+      "error": "当前工作流没有可写入的模型映射（全部跳过）"
     },
     {
       "name": "v1 migrated: pinned model target with missing field is disabled",
@@ -7467,7 +7467,7 @@
         "positive": null,
         "objectInfo": {},
         "error": true,
-        "errorMessage": "当前工作流没有可写入的模型槽"
+        "errorMessage": "当前工作流没有可写入的模型映射"
       },
       "plan": {
         "version": 3,
@@ -7494,7 +7494,7 @@
         },
         "lora": {
           "enabled": false,
-          "reason": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
+          "reason": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
           "groups": [],
           "synth": null
         },
@@ -7503,18 +7503,18 @@
             "level": "warn",
             "code": "no-lora-site",
             "nodeId": "",
-            "text": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+            "text": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
           },
           {
             "level": "warn",
             "code": "legacy-missing",
             "nodeId": "4",
-            "text": "旧的自定义目标不在蓝图中"
+            "text": "旧的自定义目标不在工作流中"
           }
         ]
       },
       "apply": null,
-      "error": "当前工作流没有可写入的模型槽（全部跳过）"
+      "error": "当前工作流没有可写入的模型映射（全部跳过）"
     },
     {
       "name": "v1 migrated: pinned lora mode off ignores empty list but rejects entries",
@@ -7634,7 +7634,7 @@
         },
         "lora": {
           "enabled": false,
-          "reason": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
+          "reason": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
           "groups": [],
           "synth": null
         },
@@ -7643,12 +7643,12 @@
             "level": "warn",
             "code": "no-lora-site",
             "nodeId": "",
-            "text": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+            "text": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
           }
         ]
       },
       "apply": null,
-      "error": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+      "error": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
     },
     {
       "name": "v1 migrated: pinned lora mode off accepts empty list",
@@ -7803,7 +7803,7 @@
         },
         "lora": {
           "enabled": false,
-          "reason": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
+          "reason": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
           "groups": [],
           "synth": null
         },
@@ -7812,7 +7812,7 @@
             "level": "warn",
             "code": "no-lora-site",
             "nodeId": "",
-            "text": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+            "text": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
           }
         ]
       },
@@ -8040,7 +8040,7 @@
         },
         "lora": {
           "enabled": false,
-          "reason": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
+          "reason": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
           "groups": [],
           "synth": null
         },
@@ -8049,24 +8049,24 @@
             "level": "warn",
             "code": "accessory-weight",
             "nodeId": "2",
-            "text": "附属权重，不进模型槽：model_name"
+            "text": "附属权重，不进模型映射：model_name"
           },
           {
             "level": "warn",
             "code": "accessory-weight",
             "nodeId": "1",
-            "text": "附属权重，不进模型槽：model_name"
+            "text": "附属权重，不进模型映射：model_name"
           },
           {
             "level": "warn",
             "code": "no-lora-site",
             "nodeId": "",
-            "text": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+            "text": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
           }
         ]
       },
       "apply": null,
-      "error": "当前工作流没有可写入的模型槽（全部跳过）"
+      "error": "当前工作流没有可写入的模型映射（全部跳过）"
     },
     {
       "name": "v1 migrated: invalid lora strength is rejected",
@@ -8178,7 +8178,7 @@
         },
         "lora": {
           "enabled": false,
-          "reason": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
+          "reason": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
           "groups": [],
           "synth": null
         },
@@ -8187,7 +8187,7 @@
             "level": "warn",
             "code": "no-lora-site",
             "nodeId": "",
-            "text": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+            "text": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
           }
         ]
       },
@@ -8304,7 +8304,7 @@
         },
         "lora": {
           "enabled": false,
-          "reason": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
+          "reason": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
           "groups": [],
           "synth": null
         },
@@ -8313,7 +8313,7 @@
             "level": "warn",
             "code": "no-lora-site",
             "nodeId": "",
-            "text": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+            "text": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
           }
         ]
       },
@@ -8856,7 +8856,7 @@
         },
         "lora": {
           "enabled": false,
-          "reason": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
+          "reason": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
           "groups": [],
           "synth": null
         },
@@ -8871,12 +8871,12 @@
             "level": "warn",
             "code": "no-lora-site",
             "nodeId": "",
-            "text": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+            "text": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
           }
         ]
       },
       "apply": null,
-      "error": "当前工作流没有可写入的模型槽（全部跳过）"
+      "error": "当前工作流没有可写入的模型映射（全部跳过）"
     },
     {
       "name": "same-file",
@@ -13285,7 +13285,7 @@
         "issues": []
       },
       "apply": null,
-      "error": "此蓝图的加载器最多 1 个 LoRA"
+      "error": "此工作流的加载器最多 1 个 LoRA"
     },
     {
       "name": "easy-simple",
@@ -14627,7 +14627,7 @@
         },
         "lora": {
           "enabled": false,
-          "reason": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
+          "reason": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
           "groups": [],
           "synth": null
         },
@@ -14636,12 +14636,12 @@
             "level": "warn",
             "code": "no-lora-site",
             "nodeId": "",
-            "text": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+            "text": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
           }
         ]
       },
       "apply": null,
-      "error": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+      "error": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
     },
     {
       "name": "primitive-model",
@@ -14702,7 +14702,7 @@
         },
         "lora": {
           "enabled": false,
-          "reason": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
+          "reason": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
           "groups": [],
           "synth": null
         },
@@ -14711,7 +14711,7 @@
             "level": "warn",
             "code": "no-lora-site",
             "nodeId": "",
-            "text": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+            "text": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
           }
         ]
       },
@@ -14824,7 +14824,7 @@
         },
         "lora": {
           "enabled": false,
-          "reason": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
+          "reason": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
           "groups": [],
           "synth": null
         },
@@ -14839,12 +14839,12 @@
             "level": "warn",
             "code": "no-lora-site",
             "nodeId": "",
-            "text": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+            "text": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
           }
         ]
       },
       "apply": null,
-      "error": "当前工作流没有可写入的模型槽（全部跳过）"
+      "error": "当前工作流没有可写入的模型映射（全部跳过）"
     },
     {
       "name": "negative-not-model",
@@ -16966,7 +16966,7 @@
         "issues": []
       },
       "apply": null,
-      "error": "LoRA 堆栈只有 1 个槽位，无法放下 2 个 LoRA"
+      "error": "LoRA 堆栈只有 1 个位置，无法放下 2 个 LoRA"
     },
     {
       "name": "all-disabled",

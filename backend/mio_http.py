@@ -18,6 +18,7 @@ from backend import (
 from backend.ecosystem import api as ecosystem_api
 from backend.production import api as production_api
 from backend import mio_update
+from backend.mio_connection_check import ServiceUnreachable
 
 
 class HTTPRoutes(SimpleHTTPRequestHandler):
@@ -439,6 +440,9 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
                 self.send_json(200, self.services.provider_operation("check", body))
             except self.services.PayloadTooLargeError:
                 self.send_json(413, {"error": "Connection-check request too large"})
+            except ServiceUnreachable as exc:
+                # A valid address that does not answer is an upstream failure, not a bad request.
+                self.send_json(502, {"error": str(exc)[:400]})
             except ValueError as exc:
                 self.send_json(400, {"error": str(exc)[:400]})
             except Exception as exc:
@@ -461,6 +465,8 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
                 self.send_json(200, result)
             except self.services.PayloadTooLargeError:
                 self.send_json(413, {"error": "Request too large"})
+            except ServiceUnreachable as exc:
+                self.send_json(502, {"error": str(exc)[:240]})
             except ValueError as exc:
                 self.send_json(400, {"error": str(exc)[:240]})
             except Exception:

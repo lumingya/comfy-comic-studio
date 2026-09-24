@@ -13,6 +13,13 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
         return None
 
 
+class ServiceUnreachable(ValueError):
+    """The address is valid but the service did not answer: an upstream problem (HTTP 502), not a bad request."""
+
+
+UNREACHABLE_HINT = '确认 ComfyUI 已启动，地址和端口正确（默认 http://127.0.0.1:8188）。'
+
+
 def comfy_base_url(payload):
     base = str(payload.get('baseUrl', '')).strip().rstrip('/')
     try:
@@ -47,7 +54,7 @@ def comfy_object_info(payload, fetch=None):
             raise ValueError('节点定义响应超过 64 MiB 限制')
         data = json.loads(raw)
     except (urllib.error.URLError, OSError, TimeoutError):
-        raise ValueError('无法读取 ComfyUI 节点定义；检查服务启动、端口与 Mio 后端到该地址的网络。不跟随重定向。') from None
+        raise ServiceUnreachable('无法读取 ComfyUI 节点定义：' + UNREACHABLE_HINT) from None
     except (json.JSONDecodeError, UnicodeError):
         raise ValueError('地址未返回 ComfyUI 节点定义 JSON，请检查是否误填了其他网页地址') from None
     if not isinstance(data, dict) or not data or not all(isinstance(v, dict) for v in data.values()):
@@ -87,9 +94,9 @@ def check_comfy(payload):
         device = str(gpu.get('name') or '')[:120].strip() if gpu else ''
         system = data.get('system') if isinstance(data.get('system'), dict) else {}
         version = str(system.get('comfyui_version') or '')[:40].strip()
-        return {'ok': True, 'message': '服务可读 · 只检查了连接，未生成图片；请继续核对工作流、节点和本机模型。',
+        return {'ok': True, 'message': '已连接 ComfyUI。',
                 'latencyMs': latency, 'vramPercent': vram, 'device': device, 'version': version}
     except (urllib.error.URLError, OSError, TimeoutError):
-        raise ValueError('无法读取 ComfyUI 状态；检查服务启动、端口与 Mio 后端到该地址的网络。不跟随重定向。') from None
+        raise ServiceUnreachable('无法读取 ComfyUI 状态：' + UNREACHABLE_HINT) from None
     except (json.JSONDecodeError, UnicodeError):
         raise ValueError('地址未返回 ComfyUI JSON 状态，请检查是否误填了其他网页地址') from None

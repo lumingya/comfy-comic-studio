@@ -78,14 +78,10 @@ await page.waitForTimeout(200);
 await page.getByRole('button', {name: '下一步', exact: true}).click();
 await page.waitForTimeout(200);
 await shot('step2');
-// No preset → step 3 must surface undefined prompt variables as an advisory (not a blocker).
-await page.getByRole('button', {name: '下一步', exact: true}).click();
+// No preset → the undefined variables are listed in step 2 itself (prompt ones advise, caption ones block 下一步).
+await page.evaluate(() => { assemblyDesign.presets = new Set(); assemblyDesign.presetsTouched = true; renderAssemblyDesigner(); });
 await page.waitForTimeout(200);
-await shot('step3-nopreset');
-const badge0 = page.locator('.preflight-badge').first();
-if (await badge0.count()) { await badge0.hover(); await page.waitForTimeout(700); await shot('step3-nopreset-hover', false); }
-await page.getByRole('button', {name: '上一步', exact: true}).click();
-await page.waitForTimeout(200);
+await shot('step2-nopreset');
 const preset = page.locator('[data-designer-preset]').first();
 if (await preset.count()) await preset.check();
 await page.waitForTimeout(150);
@@ -93,9 +89,9 @@ await shot('step2-selected');
 await page.getByRole('button', {name: '下一步', exact: true}).click();
 await page.waitForTimeout(200);
 await shot('step3');
-// Hover the warning badge if present.
-const badge = page.locator('.preflight-badge').first();
-if (await badge.count()) { await badge.hover(); await page.waitForTimeout(700); await shot('step3-hover', false); }
+// Open the advisory list if present (a click, not a hover).
+const notes = page.locator('#designer-recap details.preflight-notes > summary').first();
+if (await notes.count()) { await notes.click(); await page.waitForTimeout(300); await shot('step3-notes', false); }
 // Pick another collection: the help text explains, the summary flags it, and the choice is remembered.
 await page.locator('#designer-project').selectOption('shot-collection-b');
 await page.waitForTimeout(250);

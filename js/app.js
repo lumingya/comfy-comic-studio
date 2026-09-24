@@ -105,7 +105,7 @@ document.addEventListener('drop',e=>{const target=e.target.closest('[data-drag-i
 window.addEventListener('beforeunload',()=>{flushEditor()});
 
 
-async function boot(){rt.booting=true;$('#launch-icon').innerHTML=icon('spark');$('#command-icon').innerHTML=icon('search');render();await loadState();log('Mio v'+MIO_VERSION+' 已就绪。所有创作默认保存在本地。');log('已载入 '+state.books.length+' 本画册、'+state.exportTemplates.length+' 个画册导出模板。');if(state.queue.some(q=>q.status==='pending'))log('有待执行的渲染任务，已安全保留，等待手动启动。');if(state.settings.comfy.mode==='real')void testEngine(true);setInterval(()=>{if(state.settings.comfy.mode==='real'&&!document.hidden)void testEngine(true)},30000)}
+async function boot(){rt.booting=true;$('#launch-icon').innerHTML=icon('spark');$('#command-icon').innerHTML=icon('search');render();await loadState();log('Mio v'+MIO_VERSION+' 已就绪。所有创作默认保存在本地。');log('已载入 '+state.books.length+' 本画册、'+state.exportTemplates.length+' 个画册导出模板。');if(state.queue.some(q=>q.status==='pending'))log('有待执行的渲染任务，已安全保留，等待手动启动。');const comfyActive=()=>state.settings.comfy.mode==='real'&&activeImageProfile().provider==='comfyui';if(comfyActive())void testEngine(true);setInterval(()=>{if(comfyActive()&&!document.hidden)void testEngine(true)},30000)}
 
 
 const STUDIO_VERSION='3.2.0';
@@ -214,7 +214,7 @@ const studioActions={
   theme:()=>{state.settings.studio.appearance.theme=state.settings.studio.appearance.theme==='dark'?'light':'dark';save();renderShell();if(ui.workspace===5)render()},
   'studio-tab':d=>{studioUI.settingsTab=d.tab;render()},
   'studio-background':async()=>{if($('#template-studio').open&&!await closeTemplateStudio())return;studioUI.settingsTab='connections';settingsModal()},
-  'studio-reset':async()=>{if(await confirmAction('恢复工作室默认设置？','不会删除作品、自定义模板、角色、工作流或 API 配置。','恢复界面默认')){state.settings.studio=clone(studioDefaults);save();render();toast('界面与默认行为已还原。')}},
+  'studio-reset':async()=>{if(await confirmAction('恢复工作室默认设置？','界面偏好会恢复为默认值。','恢复界面默认')){state.settings.studio=clone(studioDefaults);save();render();toast('界面与默认行为已还原。')}},
   'et-open-library':()=>{readExportDraft();openTemplateStudio(studioUI.exportDraft?.templateId)},
   'et-open-selected':()=>{readExportDraft();openTemplateStudio(studioUI.exportDraft.templateId)},
   'et-close':()=>closeTemplateStudio(),
@@ -225,7 +225,7 @@ const studioActions={
   'et-save':()=>saveEditedTemplate(),
   'et-new':async()=>{if($('#template-studio').open&&!await canLeaveTemplate())return;openTemplateStudio(null,makeExportTemplate(uid('export'),'我的画册模板','webtoon',{},'为自己的故事设计一份阅读版式。','local'))},
   'et-duplicate':()=>{const t=exportTemplateCopy(currentEditorTemplate());validateExportTemplate(t);if(state.exportTemplates.length>=100)throw Error('模板库已达上限。');state.exportTemplates.push(t);studioUI.editor=clone(t);studioUI.editorDirty=false;save();renderTemplateStudio();toast('已创建可独立修改的副本。')},
-  'et-delete':async()=>{const t=currentEditorTemplate();if(t.builtin)throw Error('内置模板不可删除，请保留作为恢复基底。');if(!await confirmAction('删除这份自定义模板？','不会删除画册，也不影响已导出的 HTML 文件。','删除模板'))return;state.exportTemplates=state.exportTemplates.filter(x=>x.id!==t.id);for(const p of state.installedPackages)if(p.type==='exports')p.assetIds=p.assetIds.filter(id=>id!==t.id);state.installedPackages=state.installedPackages.filter(p=>p.type!=='exports'||p.assetIds.length);ensureStudioState();studioUI.editor=clone(state.exportTemplates[0]);studioUI.editorDirty=false;save(true);renderTemplateStudio();toast('模板已删除。')},
+  'et-delete':async()=>{const t=currentEditorTemplate();if(t.builtin)throw Error('内置模板不可删除，请保留作为恢复基底。');if(!await confirmAction('删除这份自定义模板？','','删除模板'))return;state.exportTemplates=state.exportTemplates.filter(x=>x.id!==t.id);for(const p of state.installedPackages)if(p.type==='exports')p.assetIds=p.assetIds.filter(id=>id!==t.id);state.installedPackages=state.installedPackages.filter(p=>p.type!=='exports'||p.assetIds.length);ensureStudioState();studioUI.editor=clone(state.exportTemplates[0]);studioUI.editorDirty=false;save(true);renderTemplateStudio();toast('模板已删除。')},
   'et-revert':async()=>{const saved=exportTemplateBy(studioUI.editor?.id);if(!saved)throw Error('这是未保存的新草稿，没有可还原版本。');if(studioUI.editorDirty&&!await confirmAction('放弃尚未保存的修改？','还原到模板库中的最后保存版本。','还原'))return;studioUI.editor=clone(saved);studioUI.editorDirty=false;try{sessionStorage.removeItem('cc-template-draft')}catch(e){}renderTemplateStudio()},
   'et-default':()=>{let t=currentEditorTemplate();if(studioUI.editorDirty||!exportTemplateBy(t.id))t=saveEditedTemplate();state.settings.studio.export.templateId=t.id;save();renderTemplateStudio();toast('下次导出默认使用「'+t.title+'」。')},
   'et-export-menu':()=>{exportTemplatePackage(currentEditorTemplate(),'json');toast('模板包已下载，包含完整 HTML、外观设置与元信息。')},
@@ -328,39 +328,39 @@ window.addEventListener('beforeunload',e=>{if(studioUI.editorDirty){e.preventDef
 const disk={root:null,remembered:null,linkDB:null,phase:'memory',busy:false,connecting:false,revision:0,savedRevision:0,rootRevision:null,lastManifestText:null,lastSavedAt:null,lastError:'',lastErrorShown:'',timer:null,tail:Promise.resolve(),allowReduction:false,written:new Map(),resolved:new Map(),paths:{projects:{},books:{},rows:{},templates:{},exports:{},chats:{}},legacy:null,restored:false,workspaceId:null,progress:'',packBusy:false};
 
 
-const detailUI={projectOpen:false,tooltipTimer:null,tooltipTarget:null,assistantExpanded:false,assistantHeight:130,assistantObserver:null,profileDraft:null,renderingAssistant:false};
+const detailUI={projectOpen:false,tooltipTimer:null,tooltipTarget:null,tipPinned:false,tipOpenAtDown:null,lastInput:matchMedia('(hover:none)').matches?'touch':'mouse',assistantExpanded:false,assistantHeight:130,assistantObserver:null,profileDraft:null,renderingAssistant:false};
 
 
 const actionHelp={
-  'book-menu':'管理这本画册：阅读、星标、剧情版本对比、补齐缺帧或导出。',
+  'book-menu':'管理这本画册：阅读、星标、版本对比、补齐缺失分幕或导出。',
   read:'打开阅读器，逐页查看画面与台词，可切换双页、长卷和翻页模式。',
   star:'添加或取消星标。',
   'copy-book':'复制画册信息。',
   'compare-book':'对照同一角色与模板派生出的不同剧情画册，需要至少两个版本。',
   'export-book':'把画册排版为可离线打开的 HTML，可选模板、台词和提示词水印。',
-  resume:'补齐缺失分镜。',
+  resume:'补齐缺失分幕。',
   'delete-book':'从当前工程索引移除画册。已落盘的旧文件保留，避免误删原图。',
   'bulk-delete':'移除选中画册的工程记录。操作前需要二次确认。',
   'market-install':'把资源安装进本地资产库。安装的 HTML 模板可再复制、自定义或卸载。',
   market:'浏览分镜、角色、工作流和画册 HTML 模板，不是公开作品社区。',
-  'et-open-library':'编辑画册导出的 HTML/CSS 外观，不改变源图片、提示词或台词。',
+  'et-open-library':'编辑画册导出的 HTML/CSS 外观。',
   'et-export-menu':'下载可迁移的 JSON 模板包，包含 HTML、配色和作者信息。',
   'et-export-html':'下载模板 HTML 源文件，可在外部编辑器修改后重新导入。',
   'et-save':'保存当前排版模板。内置模板的修改会另存为个人副本。',
   'et-default':'之后打开导出窗口时优先使用此模板。',
   'et-market-download':'下载模板包。',
-  'project-toggle':'切换当前企划，或在同一个菜单中创建新企划。',
-  'new-project':'创建独立企划。连接目录后会自动建立对应企划文件夹。',
-  'project-rename':'修改企划显示名称。已有文件夹保持稳定，避免破坏图片引用。',
+  'project-toggle':'切换当前画册集，或在同一个菜单中创建新画册集。',
+  'new-project':'创建独立画册集。连接目录后会自动建立对应画册集文件夹。',
+  'project-rename':'修改画册集显示名称。已有文件夹保持稳定，避免破坏图片引用。',
   'disk-connect':'授权一个你可以管理的本地目录。之后工程会分层自动写入该目录。',
   'disk-reconnect':'重新授予之前的工作室目录读写权限，并从磁盘恢复工程。',
   'disk-save':'立即把所有尚未保存的工程变更写入已授权目录。',
   'disk-reload':'读取磁盘上最后一次完整提交。未落盘的内存修改不会自动合并。',
-  'disk-archive':'下载包含企划、画册、图片及模板的 ZIP 目录包。需解压后再打开目录。',
+  'disk-archive':'下载包含画册集、画册、图片及模板的 ZIP 目录包。需解压后再打开目录。',
   'disk-import-folder':'以只读方式载入一个解压后的工作室目录，不具备自动回写权限。',
-  'disk-clear-legacy':'成功落盘后再移除旧浏览器缓存，磁盘中的工程不受影响。',
+  'disk-clear-legacy':'成功落盘后再移除旧浏览器缓存。',
   'assistant-input-expand':'展开输入区域，适合编辑较长的分镜指令；再次点击还原。',
-  'assistant-open-target':'定位到当前对话绑定的源分镜模板，而不是正在阅读的画册图片。',
+  'assistant-open-target':'定位到当前对话绑定的源分镜，而不是正在阅读的画册图片。',
   'assistant-undo':'安全撤销上次助手修改；模板有后续手工编辑时会阻止覆盖。',
   'assistant-stop':'停止当前请求。',
   'settings':'管理工作室名称、文件保存目录、模块开关和生成默认值。',
@@ -434,7 +434,7 @@ renderAssistant=function(){detailCore.renderAssistant();decorateAssistantContext
 showAssistant=function(){if($('#template-studio').open){detailCore.showAssistant();return}if(!featureEnabled('assistant')){toast('分镜精修助手已停用，可在设置中重新开启。');return}if(!rt.chatBusy){const t=contextualTemplate();if(t)bindChatToTemplate(t.id)}detailCore.showAssistant()};
 
 
-sendChat=async function(){if(rt.chatBusy)return;const chat=currentChat();if(!chat.templateId){const t=contextualTemplate();if(!t)throw Error('请先创建分镜模板，再为此模板开启对话。');chat.templateId=t.id;chat.projectId=t.projectId;chat.title=t.title.slice(0,22)+' · 对话 1'}if(!templateBy(chat.templateId))throw Error('此对话绑定的模板已被移除，请选择新的目标模板。');chat.draft='';return detailCore.sendChat()};
+sendChat=async function(){if(rt.chatBusy)return;const chat=currentChat();if(!chat.templateId){const t=contextualTemplate();if(!t)throw Error('请先创建分镜，再为此模板开启对话。');chat.templateId=t.id;chat.projectId=t.projectId;chat.title=t.title.slice(0,22)+' · 对话 1'}if(!templateBy(chat.templateId))throw Error('此对话绑定的模板已被移除，请选择新的目标模板。');chat.draft='';return detailCore.sendChat()};
 
 
 persistEditorDraft=function(){if(!studioUI.editor)return false;state.drafts.exportTemplate={template:clone(studioUI.editor),time:Date.now()};save();return true};
@@ -443,7 +443,7 @@ persistEditorDraft=function(){if(!studioUI.editor)return false;state.drafts.expo
 storedTemplateDraft=function(){return state.drafts?.exportTemplate||null};
 
 
-canLeaveTemplate=async function(){if(!studioUI.editorDirty)return true;persistEditorDraft();let stored=false;if(disk.root&&disk.phase==='connected')stored=await flushDiskSave();return confirmAction('暂不应用这份模板修改？',stored?'未应用的模板草稿已写入工作室目录，稍后可从模板库恢复。现有已保存模板保持不变。':'草稿目前只在本次会话内。关闭页面会丢失尚未落盘的草稿，建议先保存模板或连接工作室目录。','保留草稿并离开')};
+canLeaveTemplate=async function(){if(!studioUI.editorDirty)return true;persistEditorDraft();let stored=false;if(disk.root&&disk.phase==='connected')stored=await flushDiskSave();return confirmAction('暂不应用这份模板修改？',stored?'未应用的模板草稿已写入工作室目录，稍后可从模板库恢复。':'草稿目前只在本次会话内。关闭页面会丢失尚未落盘的草稿，建议先保存模板或连接工作室目录。','保留草稿并离开')};
 
 
 saveEditedTemplate=function(){const result=detailCore.saveEditedTemplate();delete state.drafts.exportTemplate;save();return result};
@@ -456,8 +456,8 @@ validateState=function(s){detailCore.validateState(s);if(s.settings.identity){co
 const detailActions={
   'project-toggle':()=>{if(detailUI.projectOpen)closeProjectPopover();else{renderProjectPopover();$('.project-choice')?.focus()}},
   project:d=>{closeProjectPopover();changeProject(d.id)},
-  'new-project':()=>{closeProjectPopover();flushEditor();textModal('新建企划','企划名称','',name=>{const p={id:uid('project'),title:name,createdAt:Date.now()};state.projects.push(p);closeModal();changeProject(p.id);save();toast(disk.root?'企划已创建，独立文件夹将随自动保存建立。':'企划已创建，连接目录后会建立独立文件夹。')},'新企划拥有独立的画册、模板、角色和图片目录。')},
-  'project-rename':()=>{closeProjectPopover();const id=project().id;textModal('重命名企划','企划名称',project().title,name=>{const p=state.projects.find(x=>x.id===id);p.title=name;save();closeModal();render();toast('显示名称已修改，已落盘目录路径保持稳定。')})},
+  'new-project':()=>{closeProjectPopover();flushEditor();textModal('新建画册集','画册集名称','',name=>{const p={id:uid('project'),title:name,createdAt:Date.now()};state.projects.push(p);closeModal();changeProject(p.id);save();toast(disk.root?'画册集已创建，独立文件夹将随自动保存建立。':'画册集已创建，连接目录后会建立独立文件夹。')},'新画册集拥有独立的画册、模板、角色和图片目录。')},
+  'project-rename':()=>{closeProjectPopover();const id=project().id;textModal('重命名画册集','画册集名称',project().title,name=>{const p=state.projects.find(x=>x.id===id);p.title=name;save();closeModal();render();toast('显示名称已修改，已落盘目录路径保持稳定。')})},
   'profile-settings':()=>{studioUI.settingsTab='general';if($('#modal').open)closeModal();if($('#reader').open)closeReader();navigate(5)},
   'identity-save':()=>saveIdentityFromForm(),
   'storage-settings':()=>openFileSettings(),
@@ -478,7 +478,7 @@ const detailActions={
   'welcome-reconnect':async()=>{captureWelcomeIdentity();const ok=await reconnectWorkspaceDirectory();if(ok&&$('#welcome-dialog').open)finishWelcome()},
   'welcome-import':()=>{captureWelcomeIdentity();importDirectoryReadOnly()},
   'assistant-input-expand':()=>{const panel=$('#assistant');detailUI.assistantExpanded=!detailUI.assistantExpanded;detailUI.assistantHeight=detailUI.assistantExpanded?250:130;if(detailUI.assistantExpanded){detailUI.previousAssistantSize={width:panel.style.width,height:panel.style.height};panel.style.width=Math.min(630,innerWidth-30)+'px';panel.style.height=(innerHeight-85)+'px';if(panel.style.left)panel.style.left=Math.max(12,Math.min(parseFloat(panel.style.left),innerWidth-Math.min(630,innerWidth-30)-12))+'px';if(panel.style.top)panel.style.top=clamp(parseFloat(panel.style.top),12,73)+'px'}else{panel.style.width=detailUI.previousAssistantSize?.width||'';panel.style.height=detailUI.previousAssistantSize?.height||''}renderAssistant();$('#chat-input')?.focus()},
-  'new-chat':()=>{if(rt.chatBusy)throw Error('请等待本次助手操作结束。');const t=assistantScope();if(!t)throw Error('请先选择目标分镜模板。');bindChatToTemplate(t.id,true);renderAssistant()},
+  'new-chat':()=>{if(rt.chatBusy)throw Error('请等待本次助手操作结束。');const t=assistantScope();if(!t)throw Error('请先选择目标分镜。');bindChatToTemplate(t.id,true);renderAssistant()},
   'assistant-close':()=>{const chat=currentChat();if(chat&&$('#chat-input'))chat.draft=$('#chat-input').value;save();$('#assistant').hidden=true;detailUI.assistantObserver?.disconnect()},
   'assistant-open-target':()=>{const t=assistantScope();if(!t)return;if($('#reader').open)closeReader();if(t.projectId!==state.activeProjectId)changeProject(t.projectId);ui.templateId=t.id;ui.frameIndex=0;navigate(1)}
 };
@@ -498,10 +498,12 @@ handleAction=async function(act,d={},el){
 document.addEventListener('pointerover',e=>{if(e.pointerType==='touch')return;const el=e.target.closest('[data-tip],[data-act],[title]');if(!el||el.closest('[data-no-tip]')||!tooltipText(el)||el===detailUI.tooltipTarget)return;hideTip();detailUI.tooltipTarget=el;detailUI.tooltipTimer=setTimeout(()=>revealTip(el),450)});
 
 
-document.addEventListener('pointerout',e=>{const el=detailUI.tooltipTarget;if(el&&!el.contains(e.relatedTarget))hideTip()});
+document.addEventListener('pointerout',e=>{const el=detailUI.tooltipTarget;if(el&&!detailUI.tipPinned&&!el.contains(e.relatedTarget))hideTip()});
 
 
-document.addEventListener('focusin',e=>{const el=e.target.closest('[data-tip],[data-act],[title]');if(el&&!el.closest('[data-no-tip]')&&tooltipText(el)){hideTip();detailUI.tooltipTimer=setTimeout(()=>revealTip(el),250)}});
+/* 聚焦时的提示只给鼠标和键盘：最近一次输入是触屏时不弹（点底部导航、打开弹窗后自动聚焦的按钮都会触发聚焦）。 */
+document.addEventListener('keydown',e=>{if(e.key==='Tab'||e.key.startsWith('Arrow'))detailUI.lastInput='keyboard'},true);
+document.addEventListener('focusin',e=>{if(detailUI.lastInput==='touch')return;const el=e.target.closest('[data-tip],[data-act],[title]');if(el&&!el.closest('[data-no-tip]')&&tooltipText(el)){hideTip();detailUI.tooltipTimer=setTimeout(()=>revealTip(el),250)}});
 
 
 document.addEventListener('focusout',()=>hideTip());
@@ -510,7 +512,10 @@ document.addEventListener('focusout',()=>hideTip());
 document.addEventListener('scroll',()=>{if(detailUI.tooltipTarget||detailUI.tooltipTimer)hideTip()},{capture:true,passive:true});
 
 
-document.addEventListener('pointerdown',()=>hideTip());
+document.addEventListener('pointerdown',e=>{detailUI.lastInput=e.pointerType==='touch'?'touch':'mouse';const tip=$('#ui-tooltip');detailUI.tipOpenAtDown=tip&&!tip.hidden?detailUI.tooltipTarget:null;hideTip()});
+
+/* “?” 说明按钮：点一下显示、再点收起（触屏没有悬停；鼠标悬停仍会显示）。点开的说明不随指针移开消失，点别处、滚动或失焦时收起。 */
+document.addEventListener('click',e=>{const h=e.target.closest?.('.hint-button');if(!h)return;const tip=$('#ui-tooltip'),wasOpen=e.detail===0?!!tip&&!tip.hidden&&detailUI.tooltipTarget===h:detailUI.tipOpenAtDown===h;detailUI.tipOpenAtDown=null;hideTip();if(!wasOpen){revealTip(h);detailUI.tipPinned=true;h.setAttribute('aria-expanded','true')}});
 
 
 window.addEventListener('resize',()=>{hideTip();if(detailUI.projectOpen)renderProjectPopover()});
@@ -553,7 +558,7 @@ for(const dialog of $$('dialog'))dialog.addEventListener('close',()=>{hideTip();
 window.addEventListener('beforeunload',e=>{if(!rt.booting&&(disk.busy||disk.revision>disk.savedRevision||studioUI.editorDirty)){e.preventDefault();e.returnValue=''}});
 
 
-const releaseUI={composerSize:176,composerExpanded:false,composerObserver:null,composerRAF:null,criticDraft:null,criticTesting:false,criticTest:null,criticController:null,criticBatch:null,criticFingerprint:'',criticCache:new Map(),githubToken:'',githubDraft:null,githubBusy:false,githubResult:null,githubController:null,githubTab:'publish',githubCheck:null,guideStep:0,practiceBusy:false,practiceController:null,regressionBusy:false};
+const releaseUI={composerSize:176,composerExpanded:false,composerObserver:null,composerRAF:null,criticDraft:null,criticTesting:false,criticTest:null,criticController:null,criticBatch:null,criticFingerprint:'',criticCache:new Map(),githubToken:'',githubDraft:null,githubBusy:false,githubResult:null,githubController:null,githubTab:'publish',githubCheck:null,practiceBusy:false,practiceController:null,regressionBusy:false};
 
 
 const criticDefaults=clone(MioContent.criticDefaults);
@@ -568,14 +573,18 @@ const githubDefaults={repository:'',branch:'',path:''};
 const encodedPath=path=>path.split('/').map(encodeURIComponent).join('/');
 
 
+/* T9 · B6: the only copy of the quick start's step text. Ids match setupChecklist() (help-drawer.js), which supplies each
+   step's state and button; `more` entries are the 进阶 links. */
 const guideSteps=[
-  {id:'save',title:'保存工作室',headline:'先给作品一个真实的家。',description:'推荐先连接本地目录。自动保存会按企划、画册和图片分层写入，只有底栏显示“已写入磁盘”才代表保存完成。',checks:['点击“选择本地根目录”并允许浏览器读写。','桌面 Chrome / Edge 的安全页面支持目录授权；受限环境可以下载 ZIP 目录包。','浏览器数据库不作为作品主存储，临时会话关闭前要备份。'],action:'guide-storage',label:'打开文件与保存',icon:'folder'},
-  {id:'project',title:'建立企划',headline:'不同的故事，分开管理。',description:'顶栏企划名称既是切换器，也是新建入口。每个企划拥有独立的画册、角色与分镜模板，不会混在一起。',checks:['点击顶栏企划菜单，选择“新建企划”。','不想先配置？可以在后面创建独立的三幕练习工程。','在设置中选择要显示的工作区。'],action:'guide-project',label:'新建一个企划',icon:'plus'},
-  {id:'story',title:'角色与分镜',headline:'先写镜头，再填入角色。',description:'分镜模板定义镜头、提示词和台词；角色矩阵填入姓名、服装与场景。{character}、{outfit} 等变量会在出图时替换。',checks:['在“分镜剧本配置”添加、移动或复制镜头。','在“批量角色矩阵”填写角色变量，并勾选要生成的行。','LLM 剧情是可选环节；没有模型也能使用默认旁白出图。'],action:'guide-storyboard',label:'打开分镜工作区',icon:'story'},
-  {id:'generate',title:'生成第一册',headline:'用三幕，走完一次创作。',description:'下面的练习只使用本地 SVG 引擎，不调用 GPU、不发送 API 请求，也不会修改现有企划。生成后会出现一套完整的角色、模板和画册。',checks:['真实创作时：勾选角色 → 加入队列 → 开始批量渲染。','需要 GPU 时，在“ComfyUI 引擎管线”配置地址和工作流。','中止后图片保留；“断点补齐”只处理缺失或降级帧。'],action:'guide-practice',label:'创建并生成三幕练习',icon:'play'},
-  {id:'review',title:'阅读与审校',headline:'把看见的问题，变成修改。',description:'打开画册，在右侧分镜检查器选择“配置 API”。支持图片输入的视觉模型才能生成真实诊断，离线报告仅用于演示操作。',checks:['填写 Base URL、API Key 和视觉模型名称，先做“带图测试”。','点击“审校本页”或“审校整本画册”，查看具体问题区域。','把建议填入重绘框，确认提示词后精修；助手只改源模板，不直接改已生成图片。'],action:'guide-reader',label:'打开画册体验阅读',icon:'book'},
-  {id:'export',title:'导出画册',headline:'让故事离开工作台，也能被阅读。',description:'导出可选择电影长卷、漫画精装、艺术展册或交互翻页。全部图片与必要样式、脚本内联，导出的 HTML 可以离线打开。',checks:['画册“...”菜单 → 导出离线画册，选择喜欢的模板。','“画册导出模板”中可以修改 HTML / CSS、预览并保存个人副本。','源分镜模板与画册 HTML 模板是两种资产，互不覆盖。'],action:'guide-export',label:'试用画册导出',icon:'download'},
-  {id:'publish',title:'GitHub 托管',headline:'分享模板，不泄露工作室。',description:'模板市场有明确的“上传到 GitHub”入口。只上传所选模板包，不上传你的工程设置、对话或角色库。',checks:['直接上传：选择资源，填写仓库与 Token，检查文件，再确认提交。','无需 Token：下载模板包 → GitHub Add file / Upload files → Commit changes。','把公开文件的 Raw 地址提供给他人，他们即可在市场中安装；私有文件需要读取权限。'],action:'guide-github',label:'查看 GitHub 上传流程',icon:'upload'}
+  {id:'practice',title:'离线练习',intro:'用本地示意图生成一本三幕画册，走一遍从分镜到阅读的流程。',icon:'play'},
+  {id:'service',title:'图像服务',intro:'选择 ComfyUI、NovelAI 或 OpenAI 兼容服务，填写地址或 API Key。',icon:'nodes'},
+  {id:'workflow',title:'工作流',intro:'导入 ComfyUI 的 API 工作流，把提示词和种子映射到节点。',icon:'nodes'},
+  {id:'model',title:'模型',intro:'工作流用到的模型要在 ComfyUI 里装好。',icon:'image'},
+  {id:'material',title:'分镜与预设',intro:'写一个分镜，再准备覆盖它全部变量的预设。',icon:'story'},
+  {id:'trial',title:'试跑',intro:'用图像服务生成第一本画册。',icon:'play'},
+  {id:'reader',more:true,title:'阅读与编辑',intro:'打开画册，调整图片、气泡和文字。',action:'guide-reader',icon:'book'},
+  {id:'export',more:true,title:'导出画册',intro:'选择展示模板，导出 HTML、图片 ZIP 或 PDF。',action:'guide-export',icon:'download'},
+  {id:'publish',more:true,title:'分享模板',intro:'选择模板和目标仓库，上传或下载模板包。',action:'guide-github',icon:'upload'}
 ];
 
 
@@ -601,7 +610,7 @@ async function releaseDiagnostics(){
     await test('审校通过阈值和结构标准化',()=>{const c=normalizeCriticReport({score:6.5,summary:'需调整',anatomy:'手部不清晰',consistency:'缺少参考',suggestions:'refined hands',issues:[{area:'手部',severity:'high',observation:'轮廓不清',fixPrompt:'refined hands'}]});return !c.passed&&c.issues[0].fixPrompt==='refined hands'});
     await test('审校缺少必填字段不会伪造报告',()=>{try{normalizeCriticReport({score:8});return false}catch(e){return true}});
     await test('输入框分隔条有最小/最大高度保护',()=>{const small=composerBounds(460,54,145),large=composerBounds(800,54,180);return small.min<=small.max&&large.min<=large.max&&large.max<=430});
-    await test('七步教程包含所有功能入口',()=>guideSteps.length===7&&guideSteps.every(s=>s.title&&s.action&&s.checks.length));
+    await test('快速开始覆盖开箱检查的每一项',()=>setupChecklist().every(i=>guideSteps.some(s=>s.id===i.id&&s.intro))&&guideSteps.filter(s=>s.more).every(s=>Object.hasOwn(releaseActions,s.action)));
     const area=$('#release-test-results');if(area)area.innerHTML=tests.map(t=>`<div class="template-check-row"><span class="${t.ok?'accent':'danger'}">${icon(t.ok?'check':'close')}</span><span class="grow">${esc(t.name)}<small>${esc(t.message)}</small></span></div>`).join('')+`<div class="modal-footer"><span class="grow tiny muted">${tests.filter(t=>t.ok).length} / ${tests.length} 项通过；不代表真实服务联调已通过。</span>${btn('检查当前助手布局','expand','composer-layout-test')}</div>`;
     return tests;
   }finally{releaseUI.regressionBusy=false}
@@ -659,7 +668,7 @@ loadState=async function(){await releaseCore.loadState();let seen=false;try{seen
 const releaseActions={
   'template-check':()=>templateValidationHub(),
   'template-fix-open':async d=>{if($('#template-studio').open&&studioUI.editorDirty&&!await canLeaveTemplate())return;closeModal();openTemplateStudio(d.id)},
-  'template-reset-builtins':async()=>{if(!await confirmAction('恢复四套内置模板？','只恢复内置模板原版，不删除或覆盖你的独立自定义副本。','恢复内置模板'))return;const defaults=designedTemplates();state.exportTemplates=state.exportTemplates.map(t=>t.builtin&&defaults.some(x=>x.id===t.id)?defaults.find(x=>x.id===t.id):t);save();templateValidationHub();toast('内置模板已恢复，CSS 校验已修复。')},
+  'template-reset-builtins':async()=>{if(!await confirmAction('恢复四套内置模板？','内置模板会恢复为原版。','恢复内置模板'))return;const defaults=designedTemplates();state.exportTemplates=state.exportTemplates.map(t=>t.builtin&&defaults.some(x=>x.id===t.id)?defaults.find(x=>x.id===t.id):t);save();templateValidationHub();toast('内置模板已恢复，CSS 校验已修复。')},
   'assistant-input-expand':()=>{releaseUI.composerExpanded=!releaseUI.composerExpanded;releaseUI.composerSize=releaseUI.composerExpanded?360:176;const panel=$('#assistant');if(releaseUI.composerExpanded&&!panel.classList.contains('fullscreen'))panel.style.height=Math.min(800,innerHeight-24)+'px';fitAssistantWindow();$('#chat-input')?.focus()},
   'critic-close':()=>{if(releaseUI.criticTesting)releaseUI.criticController?.abort();save();closeServiceDialog('critic-dialog');renderCriticEntry();if(ui.workspace===5)render()},
   'critic-key-toggle':()=>{const input=$('[data-critic-field="key"]');if(input)input.type=input.type==='password'?'text':'password'},
@@ -688,11 +697,7 @@ const releaseActions={
   'github-copy-result':()=>{if(!releaseUI.githubResult)throw Error('尚无成功提交的安装链接。');return copyText(releaseUI.githubResult.raw)},
   'github-readme':()=>{const result=releaseUI.githubResult;if(!result)throw Error('请先完成一次 GitHub 提交。');const text='# '+result.title+'\n\n'+result.kind+'，适用于 Mio。\n\n## 安装\n\n1. 打开 Mio 的模板市场。\n2. 在“从 GitHub / Gitee / 自有仓库导入”粘贴以下地址。\n3. 校验并安装为独立副本。\n\n'+result.raw+'\n\n'+(result.private?'这是私有仓库，需要通过 GitHub 带权限安装入口读取。\n':'此链接固定于发布时的提交版本。\n');download('README-template.md',text,'text/markdown')},
   'guide-open':d=>openQuickStart(d.step===undefined?null:Number(d.step)),
-  'guide-close':()=>{markGuidePage();closeServiceDialog('guide-dialog');renderShell()},
-  'guide-step':d=>{markGuidePage();releaseUI.guideStep=clamp(Number(d.index),0,guideSteps.length-1);renderQuickStart()},
-  'guide-prev':()=>{markGuidePage();releaseUI.guideStep=Math.max(0,releaseUI.guideStep-1);renderQuickStart()},
-  'guide-next':()=>{markGuidePage();releaseUI.guideStep=Math.min(guideSteps.length-1,releaseUI.guideStep+1);renderQuickStart()},
-  'guide-finish':()=>{markGuidePage();guidePreferences().completed=true;save();closeServiceDialog('guide-dialog');renderShell();toast('教程已完成。随时从侧栏重新查看。')},
+  'guide-close':()=>{closeServiceDialog('guide-dialog');renderShell()},
   'guide-storage':()=>guideDestination('storage'),
   'guide-project':()=>guideDestination('project'),
   'guide-storyboard':()=>guideDestination('storyboard'),
@@ -720,7 +725,7 @@ handleAction=async function(act,d={},el){
 };
 
 
-Object.assign(actionHelp,{'github-open':'选择模板包，检查仓库并提交。','github-publish-draft':'将当前经过校验的 HTML 模板草稿打包，发布到你有权限的 GitHub 仓库。','github-manual':'不填写 Token：下载模板包，在 GitHub 网页上传，然后复制 Raw 安装链接。','critic-batch':'逐页审校整本画册，真实模式可能产生 API 费用；连续三次失败停止。','guide-open':'内置七步教程，含可执行的本地三幕练习，不需要 GPU 或 API。','template-check':'检查所有 HTML 模板与 CSS。只检查，不删除或覆盖自定义内容。','assistant-input-expand':'扩大或还原输入区域。发送按钮与说明始终保留在浮窗内部。'});
+Object.assign(actionHelp,{'github-open':'选择模板包，检查仓库并提交。','github-publish-draft':'将当前经过校验的 HTML 模板草稿打包，发布到你有权限的 GitHub 仓库。','github-manual':'不填写 Token：下载模板包，在 GitHub 网页上传，然后复制 Raw 安装链接。','critic-batch':'逐页审校整本画册，真实模式可能产生 API 费用；连续三次失败停止。','guide-open':'开箱检查的进度，以及离线三幕练习。','guide-practice':'用本地示意图生成一本三幕画册，完成后直接打开阅读器。','template-check':'检查所有 HTML 模板与 CSS。','assistant-input-expand':'扩大或还原输入区域。发送按钮与说明始终保留在浮窗内部。'});
 
 
 
@@ -748,7 +753,7 @@ for(const id of ['github-dialog','critic-dialog','guide-dialog']){
 }
 
 
-$('#welcome-dialog').addEventListener('close',()=>setTimeout(()=>{if(state.settings.identity?.onboarded&&!guidePreferences().seen&&!document.querySelector('dialog[open]'))openQuickStart(0)},200));
+$('#welcome-dialog').addEventListener('close',()=>setTimeout(()=>{if(state.settings.identity?.onboarded&&!guidePreferences().seen&&!document.querySelector('dialog[open]'))openQuickStart()},200));
 
 
 window.addEventListener('resize',scheduleAssistantFit);
@@ -786,6 +791,7 @@ const v3Core={ensureStudioState,render,renderShell,renderGallery,renderSettingsW
 
 studioDefaults.visibility.logs=true;
 studioDefaults.export.imageProfile??='auto';
+studioDefaults.appearance.fontScale??='standard';
 
 studioDefaults.visibility.llm=false;
 
@@ -862,7 +868,7 @@ validateState=function(s){
   v3Core.validateState(s);const safeId=value=>typeof value==='string'&&/^[a-zA-Z0-9_-]{1,150}$/.test(value)&&!systemVariableKeys.has(value);
   const entriesOK=entries=>{if(!Array.isArray(entries)||entries.length>500)throw Error('变量列表结构不合法。');const ids=new Set(),keys=new Set();for(const e of entries){if(!safeId(e.id)||ids.has(e.id)||keys.has(e.key))throw Error('变量 ID 或名称重复、不合法。');checkVariableKey(e.key);if(!Object.hasOwn(variableTypes,e.type))throw Error('变量类型不合法。');if(e.type==='image'&&e.value!==''&&e.value!==null&&e.value!==undefined&&(!isImageVariable(e.value)||typeof e.value.src!=='string'||e.value.src&&!/^\/images\/[A-Za-z0-9_./-]+$/.test(e.value.src)||e.value.src?.split('/').includes('..')))throw Error('图片变量须先上传，配置仅保存 /images/ 本地资产引用。');ids.add(e.id);keys.add(e.key)}};
   for(const t of s.templates)for(const f of t.frames)if(f.id!==undefined&&!safeId(f.id))throw Error('分镜 ID 不合法。');
-  if(s.creation){if(!Array.isArray(s.creation.plans)||!Array.isArray(s.creation.variableSets))throw Error('创作模型结构不完整。');for(const list of [s.creation.plans,s.creation.variableSets]){const ids=new Set();for(const item of list){if(!safeId(item.id)||ids.has(item.id)||typeof item.title!=='string'||!s.projects.some(p=>p.id===item.projectId))throw Error('创作资产 ID、名称或企划归属不合法。');ids.add(item.id)}}
+  if(s.creation){if(!Array.isArray(s.creation.plans)||!Array.isArray(s.creation.variableSets))throw Error('创作模型结构不完整。');for(const list of [s.creation.plans,s.creation.variableSets]){const ids=new Set();for(const item of list){if(!safeId(item.id)||ids.has(item.id)||typeof item.title!=='string'||!s.projects.some(p=>p.id===item.projectId))throw Error('创作资产 ID、名称或画册集归属不合法。');ids.add(item.id)}}
     for(const set of s.creation.variableSets)entriesOK(set.entries);
     for(const p of s.creation.plans){if(!Array.isArray(p.variableSetIds)||new Set(p.variableSetIds).size!==p.variableSetIds.length||!p.sceneOverrides||typeof p.sceneOverrides!=='object'||Array.isArray(p.sceneOverrides)||!safeId(p.rowId)||!s.rows.some(r=>r.id===p.rowId)||typeof p.enabled!=='boolean')throw Error('画册计划结构不完整。');entriesOK(p.variables);for(const[id,o]of Object.entries(p.sceneOverrides)){if(!safeId(id)||!o||typeof o!=='object')throw Error('单幕覆盖不合法。');if(o.variables)entriesOK(o.variables)}}
   }
@@ -875,7 +881,7 @@ validateState=function(s){
 activeJobs=function(){return v3Core.activeJobs()||createUI.backendBusy||backendRuntime.saving||!!createUI.dryController};
 
 
-backupModal=function(){modal('工程备份与恢复',`<div class="service-context"><strong>${esc(workspaceName())}</strong><br>${esc(backendStatusText())}</div><p class="help" style="margin:18px 0">日常保存交给现有 Python 后端。便携备份包含创作计划、复用变量、所有分镜、画册与通用节点映射。</p><div class="stack">${btn('下载本机配置 JSON','download','backup-export','','primary')}${btn('从 JSON 恢复','upload','import-project')}${btn('下载便携目录 ZIP','folder','disk-archive')}${btn('配置 Python 保存服务','disk','v3-settings-tab','data-tab="connections"')}</div><label class="row small soft" style="margin-top:18px"><input id="backup-secrets" type="checkbox">此次本机 JSON 包含尚未清空的会话密钥（敏感；不包含服务器密钥库）</label><div class="modal-footer">${btn('关闭','','close-modal')}</div>`,'仅在服务明确确认后，状态栏才会显示已保存。')};
+backupModal=function(){modal('工程备份与恢复',`<div class="service-context"><strong>${esc(workspaceName())}</strong><br>${esc(backendStatusText())}</div><p class="help" style="margin:18px 0">日常保存交给现有 Python 后端。便携备份包含创作计划、复用变量、所有分镜、画册与通用节点映射。</p><div class="stack">${btn('下载本机配置 JSON','download','backup-export','','primary')}${btn('从 JSON 恢复','upload','import-project')}${btn('下载便携目录 ZIP','folder','disk-archive')}${btn('配置 Python 保存服务','disk','v3-settings-tab','data-tab="developer"')}</div><label class="row small soft" style="margin-top:18px"><input id="backup-secrets" type="checkbox">此次本机 JSON 包含尚未清空的会话密钥（敏感）</label><div class="modal-footer">${btn('关闭','','close-modal')}</div>`,'仅在服务明确确认后，状态栏才会显示已保存。')};
 
 
 const v3Actions={
@@ -890,7 +896,7 @@ const v3Actions={
   'v3-plan-select':d=>{flushEditor();const p=planBy(d.id);if(!p)throw Error('画册计划不存在。');if(p.projectId!==state.activeProjectId)changeProject(p.projectId);createUI.planId=p.id;createUI.tab='plans';if(p.templateId)ui.templateId=p.templateId;navigate(1)},
   'v3-plan-scenes':()=>{const p=selectedPlan();ui.templateId=p.templateId;ui.frameIndex=0;createUI.tab='scenes';navigate(1)},
   'v3-plan-clone':()=>{const source=selectedPlan(),p=clone(source),row=clone(rowBy(p.rowId));row.id=uid('row');row._planMapped=true;p.id=uid('plan');p.rowId=row.id;p.title+=' · 副本';p.createdAt=Date.now();state.rows.push(row);state.creation.plans.push(p);createUI.planId=p.id;save();render()},
-  'v3-plan-delete':async()=>{const p=selectedPlan();if(!await confirmAction('删除「'+p.title+'」计划？','只移除创作计划。已生成画册、源分镜与复用素材全部保留。','删除计划'))return;state.creation.plans=state.creation.plans.filter(x=>x.id!==p.id);createUI.planId=null;save(true);render()},
+  'v3-plan-delete':async()=>{const p=selectedPlan();if(!await confirmAction('删除「'+p.title+'」计划？','','删除计划'))return;state.creation.plans=state.creation.plans.filter(x=>x.id!==p.id);createUI.planId=null;save(true);render()},
   'v3-choose-sets':()=>renderVariableChooser(),
   'v3-close-chooser':()=>{closeModal();render()},
   'v3-plan-unlink':d=>{const p=selectedPlan();p.variableSetIds=p.variableSetIds.filter(id=>id!==d.id);save();render()},
@@ -903,12 +909,12 @@ const v3Actions={
   'v3-variable-delete':d=>removeVariable(d.group,d.id,d.entry),
   'v3-variable-rename':d=>renameScopedVariable(d.group,d.id,d.entry),
   'v3-refresh-preview':()=>refreshCreationPreviews(),
-  'v3-clear-scene':async()=>{const p=selectedPlan(),f=currentTemplate().frames[ui.frameIndex];if(!await confirmAction('清除当前画册这一幕的覆盖？','将恢复源分镜内容，已生成画面不受影响。','清除覆盖'))return;delete p.sceneOverrides[f.id];save();render()},
+  'v3-clear-scene':async()=>{const p=selectedPlan(),f=currentTemplate().frames[ui.frameIndex];if(!await confirmAction('清除当前画册这一幕的覆盖？','将恢复源分镜内容。','清除覆盖'))return;delete p.sceneOverrides[f.id];save();render()},
   'v3-generate-plan':()=>generateChosenPlans(true,false),
   'v3-enqueue-plan':()=>generateChosenPlans(true,true),
   'v3-generate-selected':()=>generateChosenPlans(false,false),
   'v3-run-queue':()=>{if(!state.queue.some(q=>q.status==='pending'))throw Error('队列为空，请先在画册计划中加入任务。');void runQueue()},
-  'v3-clear-logs':async()=>{if(await confirmAction('清空当前日志显示？','不影响画册、队列或后端保存。','清空日志')){rt.logs=[];renderLogs()}},
+  'v3-clear-logs':async()=>{if(await confirmAction('清空当前日志显示？','','清空日志')){rt.logs=[];renderLogs()}},
   'wm-select':d=>{mapperUI.selected=d.id;mapperUI.tab='bindings';mapperUI.nodes=false;render();if(innerWidth<=700)document.querySelector('.wm-inspector')?.scrollIntoView({block:'start',behavior:'smooth'})},
   'wm-tab':d=>{mapperUI.tab=d.tab;render()},
   'wm-filter':d=>{mapperUI.filter=d.filter;render()},
@@ -919,10 +925,11 @@ const v3Actions={
   'v3-infer-field':d=>{const b=state.settings.comfy.bindings.find(b=>b.id===d.id),inf=inferTextInput(b.nodeId);b.path=inf.field;b.warning=inf.warning;b.autoField=true;save();render();toast(inf.warning||'已读取实际文本字段：'+inf.field)},
   'v3-auto-bind':()=>autoIdentifyBindings(),
   'v3-add-render-mappings':()=>addRenderBindings(),
+  'wf-add-seed-mapping':()=>{addWorkflowSeedMapping(state.settings.comfy.activeWorkflowId);render();toast('已添加种子映射：每一幕都会写入自己的种子。')},
   'v3-read-object-info':()=>readComfyObjectInfo(),
   'v3-import-workflow':()=>pickFile('.json',async f=>{if(f.size>100000000)throw Error('工作流超过 100 MB。');importWorkflowIntoMapper(JSON.parse(await f.text()))}),
   'v3-export-mapping':()=>{const c=state.settings.comfy;download(safeFolderName(c.workflowTitle)+'.mappings.json',JSON.stringify({kind:'comfycomic.workflow-mappings',formatVersion:1,title:c.workflowTitle,workflow:c.workflow,bindings:c.bindings,outputNodeId:c.outputNodeId,randomizeSeeds:c.randomizeSeeds},null,2))},
-  'v3-import-mapping':()=>pickFile('.json',async f=>{const data=JSON.parse(await f.text());if(data.kind!=='comfycomic.workflow-mappings'||data.formatVersion!==1)throw Error('不是通用工作流映射包。');validateBindings(data.bindings);if(!await confirmAction('导入工作流与节点映射？','将替换当前蓝图与映射，已有入队快照不变。建议先导出当前映射包。','导入映射包'))return;importWorkflowIntoMapper(data);state.settings.comfy.randomizeSeeds=!!data.randomizeSeeds;save()}),
+  'v3-import-mapping':()=>pickFile('.json',async f=>{const data=JSON.parse(await f.text());if(data.kind!=='comfycomic.workflow-mappings'||data.formatVersion!==1)throw Error('不是通用工作流映射包。');validateBindings(data.bindings);if(!await confirmAction('导入工作流与节点映射？','将替换当前工作流与映射，建议先导出当前映射包。','导入映射包'))return;importWorkflowIntoMapper(data);state.settings.comfy.randomizeSeeds=!!data.randomizeSeeds;save()}),
   'v3-preview-workflow':()=>previewMappedSubmission(),
   'v3-copy-submission':()=>copyText(JSON.stringify(createUI.lastSubmission,null,2)),
   'v3-mapping-dry':()=>mappedDryRun(),
@@ -947,7 +954,7 @@ handleAction=async function(act,data={},el){
   if(act==='column-add')return addVariable('plan',selectedPlan()?.id);
   if(act==='settings'||act==='profile-settings'){if($('#modal').open)closeModal();if($('#reader').open)closeReader();studioUI.settingsTab=act==='profile-settings'?'general':studioUI.settingsTab;navigate(5);return}
   if(['storage-settings','disk-save'].includes(act)&&!disk.root){studioUI.settingsTab='connections';navigate(5);return}
-  if(act==='engine-info'||act==='go-engine'){studioUI.settingsTab='connections';navigate(5);return}
+  if(act==='engine-info'||act==='go-engine'){if($('#modal').open)closeModal();navigate(3);return}
   if(act==='import-workflow')return v3Actions['v3-import-workflow']();
   if(act==='new-template')createUI.tab='scenes';
   if(['scene','add-frame','clone-frame','delete-frame','move-frame'].includes(act))flushEditor();
@@ -992,13 +999,16 @@ document.addEventListener('change',async e=>{const el=e.target;try{
 window.addEventListener('click',e=>{if(e.target instanceof HTMLDialogElement){e.preventDefault();e.stopImmediatePropagation();return}if(e.target.closest('.assistant-orb')&&(createUI.orbIgnoreClick||createUI.orbDragging)){e.preventDefault();e.stopImmediatePropagation()}},true);
 
 
-window.addEventListener('cancel',e=>{if(e.target instanceof HTMLDialogElement){e.preventDefault();e.stopImmediatePropagation()}},true);
+/* Esc closes the top dialog through the same path as its visible close button. Dialogs with their own cancel handler
+   (confirm, reader, template studio, guides, image studio) keep it; the generic modal flushes its editor first.
+   The welcome dialog is a required first step and stays open; backdrop clicks still never close anything. */
+window.addEventListener('cancel',e=>{const d=e.target;if(!(d instanceof HTMLDialogElement))return;if(d.id==='welcome-dialog'){e.preventDefault();e.stopImmediatePropagation();return}if(d.id==='modal'){e.preventDefault();flushEditor();closeModal()}},true);
 
 
-window.addEventListener('close',e=>{if(e.target===$('#welcome-dialog')){e.stopImmediatePropagation();if($('#welcome-dialog').contains($('#toasts')))document.body.append($('#toasts'))}},true);
+window.addEventListener('close',e=>{const d=e.target;if(!(d instanceof HTMLDialogElement))return;if(d.contains($('#toasts')))document.body.append($('#toasts'));if(d===$('#welcome-dialog'))e.stopImmediatePropagation()},true);
 
 
-window.addEventListener('keydown',e=>{if(e.key==='Escape'&&(document.querySelector('dialog[open]')||detailUI.projectOpen)){e.preventDefault();e.stopImmediatePropagation();return}if(e.target.closest('input,textarea,select,[contenteditable]')||document.querySelector('dialog[open]'))return;if(e.altKey&&!e.ctrlKey&&!e.metaKey&&/^[0-5]$/.test(e.key)){e.preventDefault();e.stopImmediatePropagation();navigate(({0:9,1:0,2:1,3:3,4:4,5:5})[e.key])}},true);
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#welcome-dialog')?.open){e.preventDefault();e.stopImmediatePropagation();return}if(e.key==='Escape')return;if(e.target.closest('input,textarea,select,[contenteditable]')||document.querySelector('dialog[open]'))return;const digit=/^Digit([0-5])$/.exec(e.code||'')?.[1]??(/^[0-5]$/.test(e.key)?e.key:null);if(e.altKey&&!e.ctrlKey&&!e.metaKey&&digit!==null){e.preventDefault();e.stopImmediatePropagation();navigate(({0:9,1:0,2:1,3:3,4:4,5:5})[digit])}},true);
 
 
 window.addEventListener('resize',()=>{const orb=$('.assistant-orb');if(orb){orb.style.right=clamp(parseFloat(orb.style.right)||27,12,Math.max(12,innerWidth-58))+'px';orb.style.bottom=clamp(parseFloat(orb.style.bottom)||49,40,Math.max(40,innerHeight-58))+'px'}});
@@ -1010,7 +1020,7 @@ window.addEventListener('beforeunload',e=>{if(!rt.booting&&(backendRuntime.dirty
 window.addEventListener('keydown',e=>{if(e.key==='Enter'&&$('#welcome-dialog').open&&e.target.id==='welcome-name'){e.preventDefault();e.stopImmediatePropagation();try{finishNameFirst(!e.target.value.trim())}catch(error){toast(error.message,'error')}}},true);
 
 
-Object.assign(actionHelp,{'v3-plan-new':'新建独立的画册计划，再选择分镜与可复用素材。','v3-generate-plan':'检查每幕变量与节点映射，绑定本册与工作流；未发送分镜读取最新保存输入。','v3-choose-sets':'一份计划可以组合多套素材，同名值按顺序覆盖。','v3-add-binding':'手动添加任意节点输入，支持文本、数字、开关和嵌套 JSON。','v3-auto-bind':'根据实际蓝图寻找文本节点。无法确定字段时回退 text 并告警，需人工核对。','v3-preview-workflow':'预览实际提交的节点字典，所有未映射字段保持原值。','v3-connect-backend':'只调用你填写的读取接口，确认数据后连接保存服务。','v3-resources':'教程、画册 HTML 模板、市场与 GitHub 托管都收纳在这里。','v3-variable-delete':'删除此作用域的变量，不擅自移除分镜中的占位符。生成前会检测缺失。'});
+Object.assign(actionHelp,{'v3-plan-new':'新建独立的画册计划，再选择分镜与可复用素材。','v3-generate-plan':'检查每幕变量与节点映射，绑定本册与工作流；未发送分镜读取最新保存输入。','v3-choose-sets':'一份计划可以组合多套素材，同名值按顺序覆盖。','v3-add-binding':'手动添加任意节点输入，支持文本、数字、开关和嵌套 JSON。','v3-auto-bind':'根据实际工作流寻找文本节点。无法确定字段时回退 text 并告警，需人工核对。','v3-preview-workflow':'预览实际提交的节点字典，所有未映射字段保持原值。','v3-connect-backend':'只调用你填写的读取接口，确认数据后连接保存服务。','v3-resources':'教程、画册 HTML 模板、市场与 GitHub 托管都收纳在这里。','v3-variable-delete':'删除此作用域的变量，不擅自移除分镜中的占位符。生成前会检测缺失。'});
 
 
 redrawStep=redrawMappedBookStep;
@@ -1022,21 +1032,6 @@ openCommand=function(){v3Core.openCommand();const inputRow=$('.command-input'),k
 guideDestination=async function(action){if(action==='storyboard')createUI.tab='scenes';return v3Core.guideDestination(action)};
 
 
-Object.assign(guideSteps[0],{title:'设置保存方式',headline:'让已有 Python 服务管理作品。',description:'无需先给浏览器授权文件夹。在“设置 → 服务与保存”填写已有 Python 读取和保存接口，连接确认后自动提交工程；也可先在临时会话里练习。',checks:['先给工作室命名，或使用默认名称进入。','Python 读取接口需返回工程或明确的空状态；未确认接口前不会自动写入。','暂未连接时可导出工程 JSON，ZIP 和浏览器目录保存作为备用。']});
-
-
-Object.assign(guideSteps[2],{title:'组合分镜与素材',headline:'一份分镜，可以讲出不同的故事。',description:'“创作画册”把画册计划、分镜编辑、变量素材与生成队列放在一起。画册名称独立于变量；同一套素材可以被多个计划复用。',checks:['先建画册计划，为画册起名并选择分镜模板。','在变量素材中自由添加字段，然后把多组素材组合到画册。','同名值按素材顺序、本册覆盖、单幕覆盖依次优先。']});
-
-
-guideSteps[3].checks=['在画册计划中预览替换结果，补全缺少变量后生成。','工作流输入可在“设置 → 智能节点映射”任意增删映射，包括 LoRA 管理器。','尺寸和采样参数默认保留蓝图原值；只有主动开启且建立映射后才覆盖。'];
-
-
-guideSteps[4].checks=['视觉审校 API 在设置里独立配置，不必开启 AI 写故事。','悬浮球可拖动，悬停展开说明，点击打开分镜精修助手。','助手对话绑定源模板；只想修改本册时请用分镜编辑里的单幕覆盖。'];
-
-
-guideSteps[5].checks=['在我的画册中点击操作菜单，再选择导出离线画册。','画册 HTML 版式、模板市场与 GitHub 托管都收入“设置 → 工具与资源”。','分镜模板定义内容，HTML 模板定义阅读排版，两者互不覆盖。'];
-
-
 renameScopedVariable=async function(group,id,entryId){
   const list=variableOwner(group,id),entry=list?.find(e=>e.id===entryId);if(!entry)throw Error('变量不存在。');const old=entry.key;
   textModal('重命名变量及引用','新的变量标识符',old,async key=>{
@@ -1044,7 +1039,7 @@ renameScopedVariable=async function(group,id,entryId){
     const scopes=[...state.creation.variableSets.map(s=>s.entries),...state.creation.plans.flatMap(p=>[p.variables,...Object.values(p.sceneOverrides).map(o=>o.variables||[])])];
     if(scopes.some(entries=>entries.some(e=>e.key===old)&&entries.some(e=>e.key===key)))throw Error('至少一个作用域已经同时存在新旧变量名。请先处理同名冲突，避免覆盖。');
     const affected=state.templates.flatMap(t=>t.frames).filter(f=>(f.prompt+' '+f.caption).includes('{'+old+'}')).length;
-    if(!await confirmAction('同步重命名 {'+old+'}？','这次改名会穿透当前工程的素材、本册/单幕覆盖、源分镜和通用节点映射。\n影响 '+affected+' 幕分镜。已有生成画册和队列快照保持不变。','确认全工程改名'))return;
+    if(!await confirmAction('同步重命名 {'+old+'}？','这次改名会穿透当前工程的素材、本册/单幕覆盖、源分镜和通用节点映射。\n影响 '+affected+' 幕分镜。','确认全工程改名'))return;
     const re=new RegExp('\\{'+old+'\\}','g'),replace=text=>String(text||'').replace(re,'{'+key+'}');
     for(const entries of scopes)for(const e of entries)if(e.key===old)e.key=key;
     for(const p of state.creation.plans){p.title=replace(p.title);for(const o of Object.values(p.sceneOverrides))for(const field of ['name','prompt','caption','negative'])if(o[field]!==undefined)o[field]=replace(o[field])}
@@ -1052,7 +1047,7 @@ renameScopedVariable=async function(group,id,entryId){
     for(const r of state.rows)for(const versions of Object.values(r.storyVersions))for(const v of versions)v.captions=Object.fromEntries(Object.entries(v.captions).map(([id,c])=>[id,replace(c)]));
     for(const b of state.settings.comfy.bindings){if(b.source==='variable'&&String(b.value).replace(/^\{|\}$/g,'')===old)b.value=key;else if(b.source==='literal')b.value=replace(b.value)}
     save();closeModal();render();toast('变量名与所有活动引用已同步；已入队快照未改变。');
-  },'仅匹配完整 {变量名}，不会误改类似的变量名。');
+  },'仅匹配完整的 {变量名}。');
 };
 
 
@@ -1065,7 +1060,7 @@ importRaw=importGenericWorkflowLink;
 installGithubFile=async function(){
   if(releaseUI.githubBusy)return;readGithubDraft();const config=githubConfiguration();const target=await verifyGithubTarget(config);let data;try{data=JSON.parse(base64UTF8(target.file?.content||''))}catch(e){return v3Core.installGithubFile()}
   if(data.kind!=='comfycomic.workflow-mappings')return v3Core.installGithubFile();validateBindings(data.bindings);validateWorkflow(data.workflow);
-  if(!await confirmAction('安装仓库中的通用节点映射？','来源 '+config.owner+'/'+config.repo+'。将替换当前工作流与输入映射，已生成画册和入队任务不变。','安装映射'))return;
+  if(!await confirmAction('安装仓库中的通用节点映射？','来源 '+config.owner+'/'+config.repo+'。将替换当前工作流与输入映射。','安装映射'))return;
   importWorkflowIntoMapper(data);state.settings.comfy.randomizeSeeds=!!data.randomizeSeeds;releaseUI.githubToken='';closeServiceDialog('github-dialog');save();toast('工作流及插件输入映射已导入。');
 };
 
@@ -1094,7 +1089,7 @@ async function v3Diagnostics(){
   test('新版创作模型可验证与序列化',()=>{validateState(state);return JSON.parse(JSON.stringify(state)).creation.version===1});
   test('工作流映射导入包结构校验',()=>validateBindings(state.settings.comfy.bindings));
   test('AI 写故事为可选模块',()=>Object.hasOwn(state.settings.studio.visibility,'llm')&&typeof state.settings.studio.visibility.llm==='boolean');
-  test('主导航不再包含我的企划或独立引擎',()=>!primaryNavItems().some(x=>x[0]===2||x[0]===3));
+  test('主导航不再包含我的画册集或独立引擎',()=>!primaryNavItems().some(x=>x[0]===2||x[0]===3));
   modal('创作架构与节点映射自检',`<div style="margin-top:17px">${results.map(r=>`<div class="template-check-row"><span class="${r.ok?'accent':'danger'}">${icon(r.ok?'check':'close')}</span><div class="grow">${esc(r.name)}${r.message?'<small>'+esc(r.message)+'</small>':''}</div><span class="tiny muted">${r.ok?'通过':'未通过'}</span></div>`).join('')}</div><div class="modal-footer"><span class="tiny muted grow">${results.filter(r=>r.ok).length} / ${results.length} 项通过；真实后端与插件仍需实际联调。</span>${btn('关闭','','close-modal','','primary')}</div>`,'以通用输入映射替代固定节点表单。',true);return results;
 }
 
@@ -1118,10 +1113,10 @@ function installArtStudio(){
   interpolate=(text,row={},frame={})=>scopeText(text,frame._scope||row._scope||row);
   interpolateBoundValue=function(text,scope={}){if(typeof text!=='string')return text;const tokens=ns.promptPolicy.tokens(text,definedPromptNames(scope));if(tokens.length===1&&tokens[0].type==='variable'&&Object.hasOwn(scope,tokens[0].key))return scope[tokens[0].key]??'';return scopeText(text,scope)};
   missingScopeKeys=()=>[];
-  effectivePlanScope=function(plan,frame=null,resolveSet=setBy){const resolved=artCore.effectivePlanScope(plan,frame,resolveSet);for(const key of plan?.excludedSettingKeys||[])if(!(planFrameOverrides(plan,frame||{}).variables||[]).some(e=>e.key===key)&&!(planFrameOverrides(plan,frame||{}).variableSetIds||[]).some(id=>resolveSet(id)?.entries?.some(e=>e.key===key))){if(isImageVariable(resolved.values[key])||(state.creation.removedImageKeys?.[plan.projectId]||[]).includes(key))resolved.values[key]={kind:'mio-image',src:'',name:key};else resolved.values[key]='';resolved.sources[key]='此属性已停用'}return resolved};
+  effectivePlanScope=function(plan,frame=null,resolveSet=setBy){const resolved=artCore.effectivePlanScope(plan,frame,resolveSet);for(const key of plan?.excludedSettingKeys||[])if(!(planFrameOverrides(plan,frame||{}).variables||[]).some(e=>e.key===key)&&!(planFrameOverrides(plan,frame||{}).variableSetIds||[]).some(id=>resolveSet(id)?.entries?.some(e=>e.key===key))){if(isImageVariable(resolved.values[key])||(state.creation.removedImageKeys?.[plan.projectId]||[]).includes(key))resolved.values[key]={kind:'mio-image',src:'',name:key};else resolved.values[key]='';resolved.sources[key]='此变量已停用'}return resolved};
   primaryNavItems=function(){return createWorkspaceChromePolicy().navigation(state.settings.studio.visibility)};
   renderShell=function(){
-    artCore.renderShell();const nav=$('#sidebar nav');if(nav)nav.innerHTML=primaryNavItems().map(([id,ic,label,key])=>`<button class="nav-item ${ui.workspace===id?'active':''} ${id===5?'nav-settings':''}" data-act="art-nav" data-route="${id}" aria-label="${label}" title="${label}" ${ui.workspace===id?'aria-current="page"':''}>${icon(ic)}<span>${label}</span><b class="nav-key">${key}</b></button>`).join('');
+    artCore.renderShell();const nav=$('#sidebar nav');if(nav)nav.innerHTML=primaryNavItems().map(([id,ic,label,key,short])=>`<button class="nav-item ${ui.workspace===id?'active':''} ${id===5?'nav-settings':''}" data-act="art-nav" data-route="${id}" aria-label="${label}" title="${label}" ${ui.workspace===id?'aria-current="page"':''}>${icon(ic)}<span>${label}</span>${short?`<span class="nav-short" aria-hidden="true">${short}</span>`:''}<b class="nav-key">${key}</b></button>`).join('');
     const version=$('.brand-sub span');if(version)version.textContent='v3.1';const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent=ui.workspace===9?'首页':ui.workspace===0?'画册集':ui.workspace===7?'可选功能':ui.workspace===1?'创作画册':ui.workspace===6?'运行日志':ui.workspace===5?'设置':crumb.textContent;
     $('#project-switch-button')?.setAttribute('aria-label','切换画册集');refreshInterfaceCopy($('#sidebar'));refreshInterfaceCopy($('#topbar'));
   };
@@ -1156,7 +1151,7 @@ function installArtStudio(){
     'art-create-tab':d=>{flushEditor();createUI.tab=d.tab==='settings'?'settings':d.tab==='queue'?'queue':'scenes';render()},
     'art-setting-add':()=>addUnifiedSetting(),
     'art-setting-confirm':()=>addSettingFromDialog(),
-    'art-setting-remove':async d=>{let p=settingsTargetById(d.owner);if(!p)return;const entryId=mergedSettingEntries(p).find(e=>e.key===d.key)?.id,projectId=p.projectId;if(!await confirmAction('移除此画面属性？',p._presetEditorId?'仅从这份预设草稿移除 {'+d.key+'}，本册和其他预设不变。':'只从本画册移除 {'+d.key+'}。原设定预设保留；若提示词仍引用被移除的图片变量，生成时会明确报错。','移除属性'))return;const latest=settingsTargetById(d.owner);if(!latest||latest.projectId!==projectId||!entryId||mergedSettingEntries(latest).find(e=>e.key===d.key)?.id!==entryId)throw Error('编辑对象已变化，未移除。');p=latest;if(!p._presetEditorId)rememberRemovedImageVariable(mergedSettingEntries(p).find(e=>e.key===d.key),p.projectId);p.variables=p.variables.filter(e=>e.key!==d.key);p.excludedSettingKeys=[...new Set([...(p.excludedSettingKeys||[]),d.key])];if(p._presetEditorId)p.dirty=true;save(true);render()},
+    'art-setting-remove':async d=>{let p=settingsTargetById(d.owner);if(!p)return;const entryId=mergedSettingEntries(p).find(e=>e.key===d.key)?.id,projectId=p.projectId;if(!await confirmAction('移除此变量？',p._presetEditorId?'将从这份预设移除 {'+d.key+'}。':'只从本画册移除 {'+d.key+'}。若提示词仍引用被移除的图片变量，生成时会明确报错。','移除变量'))return;const latest=settingsTargetById(d.owner);if(!latest||latest.projectId!==projectId||!entryId||mergedSettingEntries(latest).find(e=>e.key===d.key)?.id!==entryId)throw Error('编辑对象已变化，未移除。');p=latest;if(!p._presetEditorId)rememberRemovedImageVariable(mergedSettingEntries(p).find(e=>e.key===d.key),p.projectId);p.variables=p.variables.filter(e=>e.key!==d.key);p.excludedSettingKeys=[...new Set([...(p.excludedSettingKeys||[]),d.key])];if(p._presetEditorId)p.dirty=true;save(true);render()},
     'art-apply-preset':()=>applySelectedSettingPreset(),
     'art-save-preset':()=>saveSettingsAsPreset(),
     'art-import-demo':()=>importCuratedDemo(),
@@ -1191,10 +1186,6 @@ function installArtStudio(){
     const result=await artCore.handleAction(action,data,element);refreshInterfaceCopy();return result;
   };
   const originalInfo=backendStatusText;backendStatusText=function(){const text=originalInfo();return text.replace('当前为临时会话','当前未保存到后端')};
-  guideSteps[1].title='建立画册集';guideSteps[1].headline='把相近的故事，收藏在一起。';guideSteps[1].description='顶层画册集收录具体画册，每本画册包含连续分镜。顶栏名称是切换和新建画册集的入口。';guideSteps[1].checks=['从顶栏新建或切换画册集。','进入“创作画册”创建一本新画册。','已有数据会保留，精选示范只用于首次预览。'];
-  guideSteps[2].title='角色与画面设定';guideSteps[2].description='只需一处填写角色、服装与画风。已定义的占位符会高亮；未定义的括号与 NovelAI 权重语法完全保留。';guideSteps[2].checks=['在“角色与画面设定”填写需要的属性。','提示词可自由使用任意括号和权重语法。','空属性会略过，连续逗号自动收敛。'];
-  guideSteps[3].checks=['选择分镜模板，按你的想法修改提示词和台词。','任何不规则括号都不会阻止生成。','节点映射与后端连接问题仍会给出明确提示。'];
-  guideSteps[4].title='欣赏与实验室';guideSteps[4].description='阅读器提供对开本、连续卷轴和胶卷画廊，默认没有审校或重绘面板。专业工具在实验室按需开启。';guideSteps[4].checks=['使用左右箭头翻页，或点击胶卷中的缩略图。','点击本幕文字，查看台词、提示词与图片尺寸。','需要审校和精修时前往实验室，不打扰普通阅读。'];
   const oldGuideDestination=guideDestination;guideDestination=async function(action){if(action==='critic'){closeServiceDialog('guide-dialog');navigate(7);return}return oldGuideDestination(action)};
   ns.presentation={readerSequence,readerSpreadIndices,createCuratedDemo,renderLaboratory};
   loadArtTypography();
@@ -1249,7 +1240,7 @@ function installCollectionDisplay(){
   collectionDisplayCore={ensureStudioState,render,renderShell,refreshGallery,handleAction,renderArtReader,renderArtCanvas,renderRoomInfo,renderStatus,modal,toast,loadState};
   ensureStudioState=function(s=state){collectionDisplayCore.ensureStudioState(s);ensureCollectionDisplay(s);if(s===state)applyDisplayAttributes();return s};
   renderCollectionGallery=renderResponsiveCollection;artGalleryResults=responsiveCollectionResults;galleryResults=responsiveCollectionResults;
-  renderShell=function(){collectionDisplayCore.renderShell();const version=$('.brand-sub span');if(version)version.textContent='v'+MIO_VERSION;applyDisplayAttributes();localizeWorkspace($('#sidebar'));localizeWorkspace($('#topbar'));observeSidebarWordmark()};
+  renderShell=function(){collectionDisplayCore.renderShell();const version=$('.brand-sub span');if(version)version.textContent='v'+MIO_VERSION.replace(/[-+].*$/,'');applyDisplayAttributes();localizeWorkspace($('#sidebar'));localizeWorkspace($('#topbar'));observeSidebarWordmark()};
   render=function(){collectionDisplayCore.render();decorateDisplayPreferences();fitVisibleCovers();localizeWorkspace();requestDemoCleanupSave()};
   refreshGallery=function(){const root=$('#gallery-results');if(ui.workspace===0&&root){root.innerHTML=responsiveCollectionResults();fitVisibleCovers();localizeWorkspace(root)}};
   renderArtReader=function(){collectionDisplayCore.renderArtReader();localizeWorkspace($('#reader'))};
@@ -1365,6 +1356,7 @@ installUpdateCenter();
 installArchitecture();
 installFirstRun();
 installHome();
+installHelpDrawer();
 if (typeof installWorkflowWorkbench === 'function') installWorkflowWorkbench();
 installPlatformUI();
 

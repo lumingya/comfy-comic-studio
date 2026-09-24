@@ -54,12 +54,12 @@
     "presets/characters/七海 · 标准角色设定--tting_nanami.json": "f949f07ea5802cd3d419e425dcb540c374b1fc3423c2b1bdbcaf686689409ef8",
     "records/characters/海风与未寄出的信--acter_nanami.json": "027c6c8b33e22270ba70d40dc3b26e516e5d3ceac59414ce4bf6a994d14933f2",
     "records/conversations/海风来信 · 分镜对话--chat_letter.json": "ff705899dc6ffcaaad7a195b2a9331dbd0ab4faa9d10f0478d6b0702cc2f53c7",
-    "settings/comfy.json": "fc0cf98ac24e852fb2125e78e05006d7fff504461693757034f122d44f716a92",
+    "settings/comfy.json": "8789275741d1e02b82e54dd8ce71e9a94ff84c1209d8e3bf33f83cb99f191337",
     "settings/llm.json": "86da8328506b2e34383e959cd9b952a4d601840c1e39e33bd934ce3b6c0faae0",
-    "settings/workspace.json": "999f176799ef7dff6e5b96617bacfcecef9084ab83cd9655aa75175adc78ae87",
+    "settings/workspace.json": "1205a63456a650d05916d663e8709c768cf5c269b0fa4288d8909158de994db3",
     "settings/xml.json": "221b26cab5a1388f62a9ae61c0971a7ca419839d29a8d1589d4a51f3cb7d3d30",
     "storyboards/远行与归来 · 十二幕--ry_journey12.json": "07731a12dbfe27bde5d1f8c40ebba62e5629db69090d27457de49789d08add7b",
-    "workflows/Anime · 基础图像管线--9399e1242916.json": "65edf9451826d71e252587dedf1baafc0f744bea1456bbd3a2d91dd8599a16aa",
+    "workflows/Anime · 基础图像管线--9399e1242916.json": "0bc6a874a6a4d54b91b45007ad51d1361eb231d121e57448adc3337623a99a08",
     "workspace.json": "e98cce4234fc36df8fe6fc7a8030b2ce43f335baa6f489b234a376fad267e677"
   }
 }

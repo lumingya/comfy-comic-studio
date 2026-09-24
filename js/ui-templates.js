@@ -160,8 +160,8 @@ async function importExportTemplate(file){
   if(file.size>100*1024*1024)throw Error('模板包不能超过 100 MiB。');
   const t=parseExportTemplateFile(await file.text(),file.name);
   let error;try{validateExportTemplate(t)}catch(e){error=e.message}
-  if(error){if(!await confirmAction('在编辑器中修复这份 HTML？',error+'\n文件尚未安装，也不会执行任何脚本。可补全占位符后保存。','打开为草稿'))return;openTemplateStudio(null,t);return}
-  if(!await confirmAction('导入「'+t.title+'」？','将建立独立画册模板副本，不覆盖现有模板或作品。','导入模板'))return;
+  if(error){if(!await confirmAction('在编辑器中修复这份 HTML？',error+'\n文件尚未安装。可补全占位符后保存。','打开为草稿'))return;openTemplateStudio(null,t);return}
+  if(!await confirmAction('导入「'+t.title+'」？','将建立一份独立的画册模板副本。','导入模板'))return;
   if(state.exportTemplates.length>=100)throw Error('模板库已达上限。');state.exportTemplates.push(t);save();openTemplateStudio(t.id);toast('画册模板已导入，可以继续自定义。');
 }
 
@@ -196,7 +196,7 @@ async function publishGithubTemplate(){
   if(!/\.json$/i.test(cfg.path))throw Error('直接上传以 JSON 模板包保存，请将文件路径设置为 .json。');
   releaseUI.githubController=new AbortController();setGithubBusy(true);let putStarted=false;
   try{const target=await verifyGithubTarget(cfg,releaseUI.githubController.signal);
-    if(!await confirmAction(target.file?'更新 GitHub 上的同名文件？':'将模板上传到 GitHub？',`资源：${pkg.title}\n目标：${cfg.owner}/${cfg.repo} / ${target.branch} / ${cfg.path}\n可见性：${target.repo.private?'私有仓库，仅有权限的人可读取':'公开仓库，任何人都可读取'}\n${target.file?'将创建新提交并替换当前文件。Git 历史保留旧版本。':'将创建一个新的仓库文件。'}\n不会上传私有画册或 API 配置。`,'确认提交')){$('#github-result').innerHTML='<span class="service-status">已取消提交，GitHub 文件未被修改。</span>';return}
+    if(!await confirmAction(target.file?'更新 GitHub 上的同名文件？':'将模板上传到 GitHub？',`资源：${pkg.title}\n目标：${cfg.owner}/${cfg.repo} / ${target.branch} / ${cfg.path}\n可见性：${target.repo.private?'私有仓库，仅有权限的人可读取':'公开仓库，任何人都可读取'}\n${target.file?'将创建新提交并替换当前文件。Git 历史保留旧版本。':'将创建一个新的仓库文件。'}`,'确认提交')){$('#github-result').innerHTML='<span class="service-status">已取消提交，GitHub 文件未被修改。</span>';return}
     if(releaseUI.githubController.signal.aborted)throw new DOMException('上传已取消','AbortError');
     const body=githubWriteBody(pkg.text,message,target.branch,target.file?.sha);
     putStarted=true;const result=await githubRequest(githubBase(cfg)+'/contents/'+encodedPath(cfg.path),{method:'PUT',token:cfg.token,signal:releaseUI.githubController.signal,body});

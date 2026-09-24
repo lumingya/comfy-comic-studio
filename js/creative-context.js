@@ -28,7 +28,17 @@ function bookSettingsContext(q,plan=planBy(q?.planId)){
 function currentBookSettings(){const p=selectedPlan(),q=creationTask(p);return q?bookSettingsContext(q,p):p}
 function currentSettingsLabel(){const q=creationTask();return q?bookBy(q.bookId)?.title:selectedPlan()?.title}
 function presetLibraryIsOpen(){return !!$('#modal[open] #preset-library')}
-function refreshSettingsSaveStatus(){for(const el of document.querySelectorAll('[data-settings-save-status]')){el.textContent=backendRuntime.error?'保存未确认':backendRuntime.saving?'正在保存…':backendRuntime.dirty?'有修改待保存':'已保存';el.dataset.state=backendRuntime.error?'error':backendRuntime.dirty?'pending':'saved'}}
+function refreshSettingsSaveStatus(){for(const el of document.querySelectorAll('[data-settings-save-status]')){el.textContent=backendRuntime.error?'保存未确认':backendRuntime.saving?'正在保存…':backendRuntime.dirty?'有修改待保存':'已保存';el.dataset.state=backendRuntime.error?'error':backendRuntime.dirty?'pending':'saved'}
+  const auto=autosaveStatus();for(const el of document.querySelectorAll('[data-autosave-status]')){if(el.textContent!==auto.text)el.textContent=auto.text;el.dataset.state=auto.state;if(auto.title)el.title=auto.title;else el.removeAttribute('title')}}
+/* T2: the editors have no save button; this line says what autosave is doing. */
+function autosaveStatus(){const r=backendRuntime;
+  if(typeof workshop!=='undefined'&&workshop.presetCommitBlocked&&ui.workspace===1&&workshop.view==='presets')return {text:'LoRA 绑定 JSON 无效，修正后自动保存',state:'error'};
+  if(r.error)return {text:'保存未完成',state:'error',title:String(r.error)};
+  if(r.saving||r.dirty)return {text:'正在自动保存…',state:'pending'};
+  if(!r.connected)return {text:'未连接保存服务',state:'error'};
+  const t=Number(r.savedAt)||0;if(!t)return {text:'已自动保存',state:'saved'};
+  const s=Math.max(0,(Date.now()-t)/1000);
+  return {text:'已自动保存 · '+(s<60?'刚刚':s<3600?Math.floor(s/60)+' 分钟前':new Date(t).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',hour12:false})),state:'saved'}}
 function settingsContextSignature(ctx){return JSON.stringify({variables:ctx.variables,excluded:ctx.excludedSettingKeys,scenes:ctx.sceneOverrides},(k,v)=>typeof v==='string'&&v.startsWith('/images/')?v.split('/').at(-1):v)}
 function compileBookFrameInput(q,frame,index,ctx){
   const fresh=clone(frame);fresh._scope=effectivePlanScope(ctx,frame).values;
@@ -57,7 +67,7 @@ function generationContextPlan(plan){
 }
 function presetLibraryHTML(){
   const selected=settingPresetSelection(),draft=selected?settingPresetDraft(selected):null;
-  return `<div id="preset-library"><header class="preset-library-heading"><div><span class="context-kicker">公共预设库</span></div>${btn('新建预设','plus','ws-new-preset','','small')}</header><div class="preset-library-layout"><aside class="preset-library-index"><label for="art-setting-preset">选择公共预设</label><select id="art-setting-preset" aria-label="选择公共预设"><option value="">选择预设…</option>${projectVariableSets().map(s=>opt(s.id,s.title,selected)).join('')}</select><label class="preset-search-label" for="preset-search">搜索预设</label>${searchInput({id:'preset-search',placeholder:'输入预设名称…',label:'搜索预设'})}<div class="preset-library-list">${projectVariableSets().map(s=>`<button type="button" class="preset-library-item ${s.id===selected?'active':''}" data-act="preset-library-select" data-id="${esc(s.id)}"><span>${esc(s.title)}</span><small>${(s.entries||[]).length} 个属性${state.drafts?.presetEdits?.[s.id]?.dirty?' · 草稿待更新':''}</small></button>`).join('')}</div>${btn('导入','upload','native-import','data-kind="variables"','small ghost')}${btn('删除预设','trash','ws-delete-preset',selected?'':'disabled','small ghost')}</aside><section class="preset-library-editor">${draft?`<div class="preset-editor-heading"><div><span class="context-kicker">预设草稿</span><h3>${esc(draft.title)}</h3></div></div>${settingsToolbar(draft)}${renderSettingsGroups(draft)}`:'<div class="empty"><h3>选择一份预设</h3><p>查看或编辑预设。</p></div>'}</section></div><footer class="preset-library-footer"><span><small class="apply-kicker">复制预设到</small><strong>${esc(currentSettingsLabel()||'当前画册')}</strong></span>${btn('应用到当前画册','check','art-apply-preset',draft?'':'disabled','primary')}</footer></div>`;
+  return `<div id="preset-library"><header class="preset-library-heading"><div><span class="context-kicker">公共预设库</span></div>${btn('新建预设','plus','ws-new-preset','','small')}</header><div class="preset-library-layout"><aside class="preset-library-index"><label for="art-setting-preset">选择公共预设</label><select id="art-setting-preset" aria-label="选择公共预设"><option value="">选择预设…</option>${projectVariableSets().map(s=>opt(s.id,s.title,selected)).join('')}</select><label class="preset-search-label" for="preset-search">搜索预设</label>${searchInput({id:'preset-search',placeholder:'输入预设名称…',label:'搜索预设'})}<div class="preset-library-list">${projectVariableSets().map(s=>`<button type="button" class="preset-library-item ${s.id===selected?'active':''}" data-act="preset-library-select" data-id="${esc(s.id)}"><span>${esc(s.title)}</span><small>${(s.entries||[]).length} 个变量${state.drafts?.presetEdits?.[s.id]?.dirty?' · 草稿待更新':''}</small></button>`).join('')}</div>${btn('导入','upload','native-import','data-kind="variables"','small ghost')}${btn('删除预设','trash','ws-delete-preset',selected?'':'disabled','small ghost')}</aside><section class="preset-library-editor">${draft?`<div class="preset-editor-heading"><div><span class="context-kicker">预设草稿</span><h3>${esc(draft.title)}</h3></div></div>${settingsToolbar(draft)}${renderSettingsGroups(draft)}`:'<div class="empty"><h3>选择一份预设</h3><p>查看或编辑预设。</p></div>'}</section></div><footer class="preset-library-footer"><span><small class="apply-kicker">复制预设到</small><strong>${esc(currentSettingsLabel()||'当前画册')}</strong></span>${btn('应用到当前画册','check','art-apply-preset',draft?'':'disabled','primary')}</footer></div>`;
 }
 function openPresetLibrary(id){
   if(id)selectSettingPreset(id);
@@ -102,7 +112,7 @@ function installCreativeContext(){
     try{source.liveInputs[i]={...compileBookFrameInput(q,frame,i,ctx),savedAt:now,textSavedAt:now,settingsSavedAt:now}}
     catch(e){source.liveInputs[i]={error:e.message,savedAt:now,textSavedAt:now}}
   };
-  liveStoryboardNotice=function(plan){const q=creationTask(plan);return q?'<p class="help">提示词、文字变量和参考图统一在保存后供尚未发送的分镜读取。已经发出的请求与已完成图片不变。</p>':''};
+  liveStoryboardNotice=function(plan){const q=creationTask(plan);return q?'<p class="help">提示词、文字变量和参考图保存后供尚未发送的分镜读取。</p>':''};
   storyboardScopeHTML=function(){return ''};
   const oldAction=handleAction;handleAction=async function(action,d={},el){
     if(action==='preset-library-open')return openPresetLibrary();

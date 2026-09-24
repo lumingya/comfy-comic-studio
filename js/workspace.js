@@ -74,7 +74,7 @@ async function importWorkflowFiles(files){
       for(let i=0;i<items.length;i++)try{accepted.push(parseLibraryWorkflow(items[i],file.name.replace(/\.json$/i,'')+(items.length>1?' · '+(i+1):'')))}catch(e){errors.push(file.name+' #'+(i+1)+'：'+e.message)}
     }catch(e){errors.push(file.name+'：'+e.message)}
   }
-  for(const p of accepted)await ensureWorkflowSlotPlan(p,{force:true}).catch(e=>errors.push(p.title+'：槽位分析失败，稍后可重新分析 · '+e.message));
+  for(const p of accepted)await ensureWorkflowSlotPlan(p,{force:true}).catch(e=>errors.push(p.title+'：映射分析失败，稍后可重新分析 · '+e.message));
   storeActiveWorkflow();state.settings.comfy.presets.push(...accepted);
   if(accepted.length)selectLibraryWorkflow(accepted[0].id);
   save();render();
@@ -95,7 +95,7 @@ function workflowControlHTML(id,value,inherit,label){
 
 function sceneAssignmentHTML(p,f){
   const o=planFrameOverrides(p,f),sets=o.variableSetIds||[],current=sets[0]||'';
-  return `<section class="scene-assignment"><div class="scene-assignment-grid">${field('本幕设定预设',`<select id="ws-scene-preset" aria-label="本幕设定预设">${opt('','继承全册设定',current)}${projectVariableSets().map(s=>opt(s.id,s.title,current)).join('')}</select>`)}${field('本幕工作流',workflowControlHTML('ws-scene-workflow',o.workflowId,'全册默认 · '+(state.settings.comfy.presets.find(w=>w.id===p.workflowId)?.title||state.settings.comfy.workflowTitle),'本幕工作流'))}</div><div class="row wrap">${btn('仅此幕加入队列','plus','ws-enqueue-scene','','small')}${activeImageProfile().provider==='comfyui'?btn('调整此工作流','nodes','ws-edit-scene-workflow','','small ghost'):''}</div></section>`;
+  return `<section class="scene-assignment"><div class="scene-assignment-grid">${field('本幕预设',`<select id="ws-scene-preset" aria-label="本幕预设">${opt('','继承全册设定',current)}${projectVariableSets().map(s=>opt(s.id,s.title,current)).join('')}</select>`)}${field('本幕工作流',workflowControlHTML('ws-scene-workflow',o.workflowId,'全册默认 · '+(state.settings.comfy.presets.find(w=>w.id===p.workflowId)?.title||state.settings.comfy.workflowTitle),'本幕工作流'))}</div><div class="row wrap">${btn('仅此幕加入队列','plus','ws-enqueue-scene','','small')}${activeImageProfile().provider==='comfyui'?btn('调整此工作流','nodes','ws-edit-scene-workflow','','small ghost'):''}</div></section>`;
 }
 
 function queueComposerHTML(){
@@ -113,7 +113,7 @@ function taskWorkflowLocked(q,index){
 function queueWorkflowDetails(){
   return state.queue.filter(q=>['pending','running','paused','failed'].includes(q.status)).map(q=>{
     const b=bookBy(q.bookId);if(!b)return '';
-    return `<details class="quiet-advanced queue-workflow-detail" data-task-detail="${esc(q.id)}"><summary>${esc(b.title)} · 查看 / 调整待执行工作流</summary><p class="help">已开始的分镜被锁定；调整未开始的分镜仅更改此任务的快照，不影响其他任务。</p>${q.indices.map(i=>{
+    return `<details class="quiet-advanced queue-workflow-detail" data-task-detail="${esc(q.id)}"><summary>${esc(b.title)} · 查看 / 调整待执行工作流</summary><p class="help">已开始的分镜被锁定；调整未开始的分镜只改这个任务的快照。</p>${q.indices.map(i=>{
       const f=q.frames?.[i],ex=f?._execution||q.execution,locked=taskWorkflowLocked(q,i);
       return `<div class="queue-workflow-row"><span>${i+1}. ${esc(f?.name||'分镜')}</span><span class="tiny muted">快照：${esc(ex?.workflowTitle||'默认')}</span><select data-ws-task="${esc(q.id)}" data-ws-index="${i}" aria-label="第 ${i+1} 幕任务工作流" ${locked?'disabled':''}>${opt('','保留当前快照','')}${state.settings.comfy.presets.map(p=>opt(p.id,p.title,'')).join('')}</select></div>`;
     }).join('')}</details>`;
@@ -178,13 +178,13 @@ async function updateSelectedSettingPreset(){
   draft.variables=clone(set.entries);draft.excludedSettingKeys=[];draft.base=presetContentSignature(set);draft.dirty=false;
   save();render();
   if(!await savePythonWorkspace())throw Error('更新尚未确认。草稿仍保留，请检查保存错误后重新保存；未声称预设文件已更新。');
-  toast('已更新「'+set.title+'」；本册、其他预设和已入队任务不变。');
+  toast('已更新「'+set.title+'」。');
 }
 
 async function applySelectedSettingPreset(){
   commitSettingsGroupNames(settingsEditorTarget());flushEditor();const p=currentBookSettings(),draft=settingsEditorTarget(),id=draft?._presetEditorId,projectId=state.activeProjectId;
   if(!p||!id)throw Error('请先选择要应用的预设。');
-  if(!await confirmAction('应用「'+draft.title+'」到本册？','将当前显示的预设草稿复制到本册，替换本册全局设定；不修改预设文件或单幕覆盖；保存后影响本册尚未发送的分镜，在途请求不变。','应用'))return;
+  if(!await confirmAction('应用「'+draft.title+'」到本册？','将当前显示的预设草稿复制到本册，替换本册全局设定；保存后影响本册尚未发送的分镜。','应用'))return;
   if(projectId!==state.activeProjectId||settingsTargetById(p.id)!==p||currentBookSettings()!==p||settingPresetDraft(id,false)!==draft)throw Error('工作区或预设已变化，未应用。');
   p.settingsGroups=clone(settingsGroups(draft));p.variables=mergedSettingEntries(draft).map(e=>({...clone(e),id:uid('var')}));p.variableSetIds=[];p.excludedSettingKeys=[];delete p.editingPresetId;
   save();closeModal();render();if(!await savePythonWorkspace())throw Error('应用尚未保存成功，未声称已生效。请检查保存错误。');toast('已应用到本册。');
@@ -201,8 +201,8 @@ function saveSettingsAsPreset(){
     if(Object.keys(frames).length)set.frames=frames;
     state.creation.variableSets.push(set);selectSettingPreset(set.id,p);save();closeModal();render();if(inLibrary)openPresetLibrary(set.id);
     if(!await savePythonWorkspace())throw Error('另存尚未确认。新副本草稿仍保留，请检查保存错误后重新保存，不必再次创建副本。');
-    toast('已创建独立预设副本；当前画册不变。');
-  },'保存当前显示的内容为新预设，不覆盖原预设，也不改变本册设定。');
+    toast('已创建独立预设副本。');
+  },'把当前显示的内容保存为新预设。');
 }
 
 function preparePresetRemoval(source,id){
@@ -236,7 +236,7 @@ async function deleteSettingPreset(id=settingPresetSelection()){
   if(!id)throw Error('请先选择要删除的预设。');
   const set=setBy(id),projectId=state.activeProjectId;if(!set||set.projectId!==projectId)throw Error('请从当前画册集选择预设。');
   flushEditor();const count=state.creation.plans.filter(p=>(p.variableSetIds||[]).includes(id)||Object.values(p.sceneOverrides||{}).some(o=>(o.variableSetIds||[]).includes(id))).length;
-  if(!await confirmAction('删除预设「'+set.title+'」？','从预设库移除这份文件。有 '+count+' 份画册计划引用它；正在使用的值和参考图会保留为画册或单幕自己的设定。已生成图片、台词和已入队快照不变。','删除预设'))return;
+  if(!await confirmAction('删除预设「'+set.title+'」？','从预设库移除这份文件。有 '+count+' 份画册计划引用它；正在使用的值和参考图会保留为画册或单幕自己的设定。','删除预设'))return;
   if(state.activeProjectId!==projectId||!setBy(id))throw Error('工作区或预设已变化，请重新选择。');
   await Promise.all(state.books.filter(b=>(b.importedVariableSetIds||[]).includes(id)).map(b=>globalThis.Mio.fileLibrary.hydrate(b.id)));
   if(state.activeProjectId!==projectId)throw Error('工作区已变化，未删除预设。');
@@ -261,7 +261,7 @@ function createBlankPreset(){
     state.creation.variableSets.push(set);selectSettingPreset(set.id,p);
     createUI.tab='settings';save();closeModal();render();openPresetLibrary(set.id);
     if(!await savePythonWorkspace())throw Error('新建尚未确认。预设草稿仍保留，请检查保存错误后重新保存。');
-    toast('已创建空白预设；本册与原预设不变。');
+    toast('已创建空白预设。');
   },'填写内容会暂存为这份预设自己的草稿；点击“更新当前预设”保存，点击“应用”才复制到本册。');
 }
 
@@ -279,7 +279,6 @@ function installWorkspaceUpgrade(){
     oldRender();
     const p=selectedPlan();if(ui.workspace===1&&createUI.tab==='settings'&&settingPresetSelection(p)) $('.settings-preset-line')?.insertAdjacentHTML('beforeend',btn('更新当前预设','disk','ws-update-preset','','small'));
   };
-  const oldPythonSettings=renderPythonSettings;renderPythonSettings=()=>oldPythonSettings()+dataLayoutHTML();
   renderCreationQueue=renderCompactQueue;
   const oldUpdate=updateQueueUI;updateQueueUI=function(){
     const detailKey=x=>(x.closest('[data-sort-task]')?.dataset.sortTask||x.dataset.taskDetail||'')+'/'+x.className;
@@ -314,9 +313,9 @@ function installWorkspaceUpgrade(){
           if(c.outputNodeId&&!c.workflow[c.outputNodeId])c.outputNodeId='';
           storeActiveWorkflow();
           save();render();
-          toast('已更新蓝图底层节点图，原有映射包已自动备份并下载。');
+          toast('已更新工作流的节点图，原有映射包已自动备份并下载。');
         }catch(err){
-          toast('替换蓝图失败：'+err.message,'error');
+          toast('替换工作流 JSON 失败：'+err.message,'error');
         }
         return;
       }
@@ -328,7 +327,7 @@ function installWorkspaceUpgrade(){
       const c=state.settings.comfy,id=c.activeWorkflowId;
       if(c.presets.length===1)throw Error('至少保留一份工作流。');
       if(state.creation.plans.some(p=>p.workflowId===id||Object.values(p.sceneOverrides||{}).some(o=>o.workflowId===id)))throw Error('有画册或分镜正在引用此工作流，请先更换选择。');
-      if(!await confirmAction('删除这份工作流？','已入队的工作流快照不会删除。建议先导出备份。','删除'))return;
+      if(!await confirmAction('删除这份工作流？','建议先导出备份。','删除'))return;
       c.presets=c.presets.filter(p=>p.id!==id);selectLibraryWorkflow(c.presets[0].id);save(true);return;
     }
     /* 工作流库批量选择 */
@@ -484,19 +483,23 @@ function installWorkspaceUpgrade(){
   }catch(e){toast(e.message,'error')}});
 }
 
+/* 设置 → 数据与备份（常用）：数据位置与完整备份。目录结构与手动复制规则在 设置 → 开发者（dataLayoutHTML）。 */
+function dataBackupHTML(){
+  return `<section class="settings-section"><h2>数据目录与完整备份</h2><p>默认使用程序旁的 data/，也可通过 MIO_DATA_DIR 指定独立工作区。</p><div class="row wrap">${btn('导出完整图片目录 ZIP','download','disk-archive')}${btn('载入已解压目录','upload','disk-import-folder')}${btn('导出本机配置 JSON','disk','backup-export')}</div></section>`;
+}
 function dataLayoutHTML(){
-  return `<section class="settings-section"><h2>数据目录与完整备份</h2><p>默认使用程序旁的 data/，也可通过 MIO_DATA_DIR 指定独立工作区。标题与文件 ID 分离；不因改名移动或覆盖原图。</p><pre class="backend-code">data/
+  return `<section class="settings-section"><h2>数据目录结构</h2><p>标题与文件 ID 分离；不因改名移动或覆盖原图。</p><pre class="backend-code">data/
   workspace.json                  v2 工作区标记
   settings/{comfy,llm,xml}.json    服务连接
   settings/workspace.json         界面、顺序等小型元数据
   settings/secrets.json           私密凭据库，禁止公开分享
   storyboards/中文标题--ID.json    独立分镜
   presets/{characters,scenes}/    独立角色 / 场景设定
-  collections/                   独立企划
+  collections/                   独立画册集
   plans/                         独立创作计划
   albums/标题--ID/album.json            画册、对白、提示词及编辑快照
   albums/标题--ID/images/               本册原图、参考图与编辑图
   workflows/ · layouts/           独立工作流与版式
   records/ · runtime/             对话、队列与执行记录
-  .cache/                        可重建的目录索引</pre><p class="help">含图资源的 JSON 同时携带同名 .assets/；画册请复制整个 ID 目录。单文件复制遇到相同 ID 时拒绝覆盖，界面导入分享包会分配新 ID。</p><div class="row wrap">${btn('导出完整图片目录 ZIP','download','disk-archive')}${btn('载入已解压目录','upload','disk-import-folder')}${btn('导出本机配置 JSON','disk','backup-export')}</div></section>`;
+  .cache/                        可重建的目录索引</pre><p class="help">含图资源的 JSON 同时携带同名 .assets/；画册请复制整个 ID 目录。单文件复制遇到相同 ID 时拒绝覆盖，界面导入分享包会分配新 ID。</p></section>`;
 }

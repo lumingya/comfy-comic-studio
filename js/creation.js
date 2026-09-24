@@ -22,7 +22,7 @@ function interpolate(text,row={},f={}){return String(text||'').replace(/\{([a-zA
 function delay(ms,signal){return new Promise((resolve,reject)=>{if(signal?.aborted)return reject(new DOMException('已取消','AbortError'));const done=()=>{signal?.removeEventListener('abort',abort);resolve()},t=setTimeout(done,ms),abort=()=>{clearTimeout(t);reject(new DOMException('已取消','AbortError'))};signal?.addEventListener('abort',abort,{once:true})})}
 
 
-function enqueueBook(row,t,book=null){flushEditor();if(!row||!t)throw Error('角色或模板不存在，请检查企划。');if(book&&state.queue.some(q=>q.bookId===book.id&&['pending','running','paused'].includes(q.status)))return book;const v=activeVersion(row,t.id);if(!book){book={id:uid('book'),projectId:state.activeProjectId,title:row.bookTitle||row.character+'的故事',characterName:row.character,rowId:row.id,templateId:t.id,templateTitle:t.title,storyVersionId:v?.id,storyTitle:v?.title,synopsis:row.storyOutline||t.outline,tags:['原创','本地创作'],totalSteps:t.frames.length,generatedSteps:0,status:'generating',inProgress:false,liked:false,likes:0,createdAt:Date.now(),updatedAt:Date.now(),theme:hash(row.character)%6,steps:[]};state.books.push(book)}const indices=missingIndices(book);if(!indices.length)return book;for(const i of indices)if(!t.frames[i])throw Error('溯源模板的幕数已改变，无法补齐第 '+(i+1)+' 幕。');state.queue.push({id:uid('task'),bookId:book.id,rowId:row.id,templateId:t.id,indices,done:0,status:'pending',frames:clone(t.frames),waitForStory:rt.lockedRows.has(row.id),createdAt:Date.now()});book.status='generating';save();log('加入队列：'+book.title+' · '+indices.length+' 帧');updateQueueUI();return book}
+function enqueueBook(row,t,book=null){flushEditor();if(!row||!t)throw Error('角色或模板不存在，请检查画册集。');if(book&&state.queue.some(q=>q.bookId===book.id&&['pending','running','paused'].includes(q.status)))return book;const v=activeVersion(row,t.id);if(!book){book={id:uid('book'),projectId:state.activeProjectId,title:row.bookTitle||row.character+'的故事',characterName:row.character,rowId:row.id,templateId:t.id,templateTitle:t.title,storyVersionId:v?.id,storyTitle:v?.title,synopsis:row.storyOutline||t.outline,tags:['原创','本地创作'],totalSteps:t.frames.length,generatedSteps:0,status:'generating',inProgress:false,liked:false,likes:0,createdAt:Date.now(),updatedAt:Date.now(),theme:hash(row.character)%6,steps:[]};state.books.push(book)}const indices=missingIndices(book);if(!indices.length)return book;for(const i of indices)if(!t.frames[i])throw Error('溯源模板的幕数已改变，无法补齐第 '+(i+1)+' 幕。');state.queue.push({id:uid('task'),bookId:book.id,rowId:row.id,templateId:t.id,indices,done:0,status:'pending',frames:clone(t.frames),waitForStory:rt.lockedRows.has(row.id),createdAt:Date.now()});book.status='generating';save();log('加入队列：'+book.title+' · '+indices.length+' 帧');updateQueueUI();return book}
 
 
 async function runQueue(){
@@ -73,7 +73,7 @@ lines.forEach((line,k)=>v.captions[frames[i+k].id]=line);v.updatedAt=Date.now();
 async function runStories(rows,t){
 if(rt.llmBusy)throw Error('剧本流水线已在运行。');if(!t||!rows.length||rows.some(r=>!r))throw Error('请先选择模板与角色。');
 rt.llmBusy=true;rt.llmController=new AbortController();rows.forEach(r=>rt.lockedRows.add(r.id));if([2,4].includes(ui.workspace))render();
-try{for(const row of rows){await generateStory(row,t,null,true);if(rt.llmController.signal.aborted)break}toast('剧情版本已保存至角色矩阵。')}
+try{for(const row of rows){await generateStory(row,t,null,true);if(rt.llmController.signal.aborted)break}toast('版本已保存至角色矩阵。')}
 catch(e){log(e.message,'error');toast(rt.llmController.signal.aborted?'剧本推演已中止，已完成分段已保留。':e.message,'error')}
 finally{rows.forEach(r=>rt.lockedRows.delete(r.id));rt.llmBusy=false;rt.llmController=null;if([2,4].includes(ui.workspace))render();save()}}
 
@@ -120,7 +120,7 @@ async function deleteBooks(ids){
     const result=await foundationRequest('albums/delete',{ids});
     applyDeletedAlbums(result.deletedAlbumIds);ui.selected.clear();ui.bulk=false;ui.bulkPinned=false;save(true);closeModal();if(typeof refreshGallery==='function')refreshGallery();render();
     toast(result.warning||'画册及关联队列已删除。');
-  }catch(error){throw Error('删除未获确认，可直接重试；不会重新生成。'+error.message)}
+  }catch(error){throw Error('删除未获确认，可以直接重试。'+error.message)}
   finally{foundationRuntime.deleting=false}
 }
 
@@ -159,7 +159,7 @@ async function applyScopedToolBatch(calls,scopeId){
   if(!changing.length)return outputs;
   if(state.settings.studio.assistant.confirmChanges){
     const lines=changing.map(c=>{const a=JSON.parse(c.function.arguments);return '· '+toolLabels[c.function.name]+(a.frameIndex!==undefined?'：第 '+(a.frameIndex+1)+' 幕':'')});
-    if(!await confirmAction('将修改应用到分镜模板？','目标：'+live.title+'\n'+lines.join('\n')+'\n只修改源模板，不重绘或覆盖已有画册。','应用 '+changing.length+' 项修改'))return fail('用户取消了本批修改，请不要声称已修改。');
+    if(!await confirmAction('将修改应用到分镜？','目标：'+live.title+'\n'+lines.join('\n')+'\n只修改源分镜。','应用 '+changing.length+' 项修改'))return fail('用户取消了本批修改，请不要声称已修改。');
   }
   if(rt.assistantController?.signal.aborted)return fail('助手请求已中止，修改未应用。');
   if(!featureEnabled('assistant')||JSON.stringify(templateBy(scopeId))!==beforeText)return fail('模板或功能状态在等待期间发生变化，已阻止覆盖。请重新读取模板。');
@@ -191,16 +191,16 @@ async function sendScopedChat(){
   const value=$('#chat-input')?.value.trim()||'';if(!value&&!rt.attachments.length)return;
   flushEditor();const scope=assistantScope(),chat=currentChat(),attachments=rt.attachments.splice(0);
   studioUI.assistantTargetId=scope?.id||null;studioUI.assistantDraft='';if($('#chat-input'))$('#chat-input').value='';
-  const content=attachments.length?[{type:'text',text:value||'请参考这些附件，帮助我调整当前分镜模板。'},...attachments.map(a=>a.image?{type:'image_url',image_url:{url:a.image}}:{type:'text',text:'附件 '+a.name+':\n'+a.text})]:value;
+  const content=attachments.length?[{type:'text',text:value||'请参考这些附件，帮助我调整当前分镜。'},...attachments.map(a=>a.image?{type:'image_url',image_url:{url:a.image}}:{type:'text',text:'附件 '+a.name+':\n'+a.text})]:value;
   chat.messages.push({role:'user',content});rt.chatBusy=true;rt.assistantController=new AbortController();renderAssistant();
   try{
     if(llmMock()){
       await delay(500,rt.assistantController.signal);
       const call=scopedMockCall(value,scope);
-      if(call){const c={id:uid('call'),type:'function',function:{name:call.name,arguments:JSON.stringify(call.args)}};const outputs=await applyScopedToolBatch([c],scope?.id);chat.messages.push({role:'assistant',content:null,tool_calls:[c]},{role:'tool',tool_call_id:c.id,content:JSON.stringify(outputs[0])});const result=outputs[0];chat.messages.push({role:'assistant',content:result.error?'本次未修改模板：'+result.error:call.name==='get_current_template_details'?'当前模板「'+result.title+'」包含 '+result.frames.length+' 幕：\n'+result.frames.map((f,i)=>(i+1)+'. '+f.name).join('\n'):'已在「'+scope.title+'」中完成修改。\n已有画册保持不变；需要新画面时，请继续使用渲染队列。可通过顶部撤销按钮还原本次修改。'})}
+      if(call){const c={id:uid('call'),type:'function',function:{name:call.name,arguments:JSON.stringify(call.args)}};const outputs=await applyScopedToolBatch([c],scope?.id);chat.messages.push({role:'assistant',content:null,tool_calls:[c]},{role:'tool',tool_call_id:c.id,content:JSON.stringify(outputs[0])});const result=outputs[0];chat.messages.push({role:'assistant',content:result.error?'本次未修改模板：'+result.error:call.name==='get_current_template_details'?'当前模板「'+result.title+'」包含 '+result.frames.length+' 幕：\n'+result.frames.map((f,i)=>(i+1)+'. '+f.name).join('\n'):'已在「'+scope.title+'」中完成修改。\n需要新画面时，请使用生成任务。可通过顶部撤销按钮还原本次修改。'})}
       else chat.messages.push({role:'assistant',content:'我可以帮你编辑分镜。\n\n离线模式支持明确指令，如「把第 1 幕改成雨夜车站」「把第 2 幕台词改成...」「新增一幕...」「删除第 2 幕」和「查看当前模板」。\n\n若要调整导出 HTML，请打开侧栏「画册导出模板」；复杂创作讨论与附件理解请先连接真实模型。'});
     }else{
-      const system={role:'system',content:'你是 Mio 的分镜精修助手，不是图像生成器，也不是导出HTML模板编辑器。只通过提供的8个工具修改本次锁定的源分镜模板。frameIndex从0开始。提示词格式由作者自由决定；普通括号、NovelAI 权重、不规则符号均合法。不要擅自纠正或拒绝这些语法，按用户指示修改文本。用户取消或工具返回error时不得声称已经修改。不要执行未请求的删除。最多5轮连续工具调用。锁定模板：'+JSON.stringify(scope||null)};
+      const system={role:'system',content:'你是 Mio 的分镜精修助手，不是图像生成器，也不是导出HTML模板编辑器。只通过提供的8个工具修改本次锁定的源分镜。frameIndex从0开始。提示词格式由作者自由决定；普通括号、NovelAI 权重、不规则符号均合法。不要擅自纠正或拒绝这些语法，按用户指示修改文本。用户取消或工具返回error时不得声称已经修改。不要执行未请求的删除。最多5轮连续工具调用。锁定模板：'+JSON.stringify(scope||null)};
       let needsFinal=false;
       for(let depth=0;depth<5;depth++){
         const m=await chatCompletion([system,...chat.messages],assistantTools,rt.assistantController.signal);
@@ -219,15 +219,16 @@ async function sendScopedChat(){
 async function createGuidePractice(){
   if(releaseUI.practiceBusy)return;const prefs=guidePreferences(),existing=bookBy(prefs.practiceBookId);if(existing?.status==='complete'){if($('#guide-dialog').open)$('#guide-dialog').close();changeProject(existing.projectId);openReader(existing.id);return}
   if(activeJobs())throw Error('请先等待当前生产或导出任务结束，再创建练习。');
-  releaseUI.practiceBusy=true;releaseUI.practiceController=new AbortController();let b;
+  releaseUI.practiceBusy=true;releaseUI.practiceController=new AbortController();let b,finished=false;
   try{const now=Date.now(),p={id:uid('project'),title:MioContent.practiceLabels.project,createdAt:now},t={...clone(MioContent.practiceStory),id:uid('tpl'),projectId:p.id,createdAt:now},r={...clone(MioContent.practiceRow),id:uid('row'),projectId:p.id};t.frames.forEach(f=>f.id=uid('f'));
     const v={id:uid('sv'),templateId:t.id,title:MioContent.practiceLabels.version,source:'preset',captions:Object.fromEntries(t.frames.map(f=>[f.id,interpolate(f.caption,r,f)])),createdAt:now,updatedAt:now};r.storyVersions[t.id]=[v];r.activeStoryVersionIds[t.id]=v.id;
     b={id:uid('book'),projectId:p.id,title:r.bookTitle,characterName:r.character_display_name,rowId:r.id,templateId:t.id,templateTitle:t.title,storyVersionId:v.id,storyTitle:v.title,synopsis:t.outline,tags:clone(MioContent.practiceLabels.tags),totalSteps:3,generatedSteps:0,status:'generating',inProgress:true,liked:false,likes:0,createdAt:now,updatedAt:now,theme:0,steps:[]};
     state.projects.push(p);state.templates.push(t);state.rows.push(r);state.books.push(b);Object.assign(prefs,{practiceProjectId:p.id,practiceTemplateId:t.id,practiceBookId:b.id});changeProject(p.id);ui.workspace=0;render();if($('#guide-dialog').open)renderQuickStart();save();
     for(let i=0;i<3;i++){await delay(650,releaseUI.practiceController.signal);const f=t.frames[i];b.steps.push({stepIndex:i,name:f.name,prompt:interpolate(f.prompt,r,f),caption:v.captions[f.id],image:fitSVG(svgArt(i,200+i),768,1024),offlineFallback:false});b.generatedSteps++;b.updatedAt=Date.now();save();refreshGallery();if($('#guide-dialog').open)renderQuickStart()}
-    b.status='complete';b.completedAt=Date.now();toast('三幕练习已生成，可以阅读、审校或导出。');
+    b.status='complete';b.completedAt=Date.now();finished=true;toast('三幕练习已生成，可以阅读、审校或导出。');
   }catch(e){if(b)b.status='canceled';throw e}
   finally{if(b)b.inProgress=false;releaseUI.practiceBusy=false;releaseUI.practiceController=null;save();render();if($('#guide-dialog').open)renderQuickStart()}
+  if(finished){if($('#guide-dialog').open)closeServiceDialog('guide-dialog');changeProject(b.projectId);openReader(b.id)}
 }
 
 
@@ -257,7 +258,7 @@ function planRuntimeRow(plan){const stored=rowBy(plan.rowId);if(!stored)throw Er
 function variableOwner(group,id){if(group==='set')return setBy(id)?.entries;if(group==='plan')return planBy(id)?.variables;if(group==='scene'){const selected=selectedPlan(),task=createUI.sceneScope==='plan'?creationTask(selected):null,p=task?bookSettingsContext(task,selected):selected,t=currentTemplate(),f=task?.frames[ui.frameIndex]||t?.frames[ui.frameIndex];if(!p||!f)return null;p.sceneOverrides[f.id]??={};p.sceneOverrides[f.id].variables??=[];return p.sceneOverrides[f.id].variables}return null}
 
 
-async function renameScopedVariable(group,id,entryId){const list=variableOwner(group,id),entry=list?.find(e=>e.id===entryId);if(!entry)throw Error('变量不存在。');const projectId=group==='set'?setBy(id).projectId:group==='plan'?planBy(id).projectId:state.activeProjectId;textModal('重命名变量','变量标识符',entry.key,async value=>{checkVariableKey(value);if(list.some(e=>e.id!==entry.id&&e.key===value))throw Error('当前作用域已有同名变量。');const old=entry.key;if(value===old){closeModal();return}const affected=state.templates.filter(t=>t.projectId===projectId).flatMap(t=>t.frames).filter(f=>(f.prompt+' '+f.caption).includes('{'+old+'}')).length;if(!await confirmAction('同步重命名 {'+old+'}？','将把当前企划中同名变量和所有分镜引用统一改为 {'+value+'}，影响 '+affected+' 个源分镜。其他企划不受影响。','同步改名'))return;const re=new RegExp('\\{'+old+'\\}','g'),replace=s=>String(s||'').replace(re,'{'+value+'}');for(const s of state.creation.variableSets.filter(s=>s.projectId===projectId))for(const e of s.entries)if(e.key===old)e.key=value;for(const p of state.creation.plans.filter(p=>p.projectId===projectId)){p.title=replace(p.title);for(const e of p.variables)if(e.key===old)e.key=value;for(const o of Object.values(p.sceneOverrides)){for(const e of o.variables||[])if(e.key===old)e.key=value;for(const k of ['name','prompt','caption','negative'])if(o[k]!==undefined)o[k]=replace(o[k])}}for(const t of state.templates.filter(t=>t.projectId===projectId))for(const f of t.frames){f.prompt=replace(f.prompt);f.caption=replace(f.caption);f.negative=replace(f.negative)}for(const r of state.rows.filter(r=>!r.projectId||r.projectId===projectId))for(const versions of Object.values(r.storyVersions||{}))for(const v of versions)if(v.captions)for(const [k,c] of Object.entries(v.captions))v.captions[k]=replace(c);entry.key=value;save();closeModal();render();toast('变量与当前企划中的宏引用已同步。')},'变量不是固定字段，可根据你的工作流自由定义。')}
+async function renameScopedVariable(group,id,entryId){const list=variableOwner(group,id),entry=list?.find(e=>e.id===entryId);if(!entry)throw Error('变量不存在。');const projectId=group==='set'?setBy(id).projectId:group==='plan'?planBy(id).projectId:state.activeProjectId;textModal('重命名变量','变量标识符',entry.key,async value=>{checkVariableKey(value);if(list.some(e=>e.id!==entry.id&&e.key===value))throw Error('当前作用域已有同名变量。');const old=entry.key;if(value===old){closeModal();return}const affected=state.templates.filter(t=>t.projectId===projectId).flatMap(t=>t.frames).filter(f=>(f.prompt+' '+f.caption).includes('{'+old+'}')).length;if(!await confirmAction('同步重命名 {'+old+'}？','将把当前画册集中同名变量和所有分镜引用统一改为 {'+value+'}，影响 '+affected+' 个源分镜。','同步改名'))return;const re=new RegExp('\\{'+old+'\\}','g'),replace=s=>String(s||'').replace(re,'{'+value+'}');for(const s of state.creation.variableSets.filter(s=>s.projectId===projectId))for(const e of s.entries)if(e.key===old)e.key=value;for(const p of state.creation.plans.filter(p=>p.projectId===projectId)){p.title=replace(p.title);for(const e of p.variables)if(e.key===old)e.key=value;for(const o of Object.values(p.sceneOverrides)){for(const e of o.variables||[])if(e.key===old)e.key=value;for(const k of ['name','prompt','caption','negative'])if(o[k]!==undefined)o[k]=replace(o[k])}}for(const t of state.templates.filter(t=>t.projectId===projectId))for(const f of t.frames){f.prompt=replace(f.prompt);f.caption=replace(f.caption);f.negative=replace(f.negative)}for(const r of state.rows.filter(r=>!r.projectId||r.projectId===projectId))for(const versions of Object.values(r.storyVersions||{}))for(const v of versions)if(v.captions)for(const [k,c] of Object.entries(v.captions))v.captions[k]=replace(c);entry.key=value;save();closeModal();render();toast('变量与当前画册集中的宏引用已同步。')},'变量不是固定字段，可根据你的工作流自由定义。')}
 
 
 function flushCreationEditor(){
@@ -281,7 +282,7 @@ function enqueuePlanSnapshot(plan,existing=null,selectedIndices=null){
   for(const f of frames){resolveImageVariables(f.prompt,f._scope,true,f.negative||f._execution?.globalNegative||'',report);for(const key of missingVariableNames(f.caption,f._scope))if(!report.missing.includes(key))report.missing.push(key);validatePrompt(f.prompt);scopeText(f.prompt,f._scope,true);scopeText(f.caption,f._scope,true);buildMappedWorkflow(f,row,{execution:f._execution||execution,preview:true})}
   if(report.missing.length)toast(missingVariablesNotice(report.missing),'warn');
   const source={planId:plan.id,row:clone(row),frames:clone(frames),execution,templateTitle:t.title};
-  let book=existing;const v=plan.storyVersionId?row.storyVersions?.[t.id]?.find(v=>v.id===plan.storyVersionId):null;if(plan.storyVersionId&&!v)throw Error('选中的剧情版本不存在，请重新选择台词来源。');if(!book){book={id:uid('book'),projectId:plan.projectId,title:row.bookTitle,characterName:resolveCharacterNames(row).displayName||'原创画册',rowId:plan.rowId,templateId:t.id,templateTitle:t.title,storyVersionId:v?.id,storyTitle:v?.title,synopsis:t.outline||'使用分镜与变量素材生成的连续画册。',tags:['原创','创作计划'],totalSteps:frames.length,generatedSteps:0,status:'generating',inProgress:false,liked:false,likes:0,createdAt:Date.now(),updatedAt:Date.now(),theme:hash(row.character||plan.title)%6,steps:[],planId:plan.id,sourceSnapshot:source};state.books.push(book)}
+  let book=existing;const v=plan.storyVersionId?row.storyVersions?.[t.id]?.find(v=>v.id===plan.storyVersionId):null;if(plan.storyVersionId&&!v)throw Error('选中的版本不存在，请重新选择台词来源。');if(!book){book={id:uid('book'),projectId:plan.projectId,title:row.bookTitle,characterName:resolveCharacterNames(row).displayName||'原创画册',rowId:plan.rowId,templateId:t.id,templateTitle:t.title,storyVersionId:v?.id,storyTitle:v?.title,synopsis:t.outline||'使用分镜与变量素材生成的连续画册。',tags:['原创','创作计划'],totalSteps:frames.length,generatedSteps:0,status:'generating',inProgress:false,liked:false,likes:0,createdAt:Date.now(),updatedAt:Date.now(),theme:hash(row.character||plan.title)%6,steps:[],planId:plan.id,sourceSnapshot:source};state.books.push(book)}
   if(state.queue.some(q=>q.bookId===book.id&&['pending','running','paused'].includes(q.status)))return book;
   const indices=missingIndices(book).filter(i=>!selectedIndices||selectedIndices.includes(i));if(indices.length){const snapshot=book.sourceSnapshot||source;state.queue.push({id:uid('task'),bookId:book.id,rowId:book.rowId,templateId:book.templateId,planId:plan.id,indices,done:0,status:'pending',frames:clone(snapshot.frames),rowSnapshot:clone(snapshot.row),execution:clone(snapshot.execution),waitForStory:!!plan.storyVersionId&&rt.lockedRows.has(book.rowId),createdAt:Date.now()});book.status='generating';log('计划入队：'+book.title+' · '+indices.length+' 帧 · 工作流已绑定，未发送分镜读取本册最新保存输入')}
   createUI.liveTaskId=state.queue.find(q=>q.bookId===book.id)?.id;createUI.sceneScope='plan';plan.updatedAt=Date.now();save();updateQueueUI();return book;
@@ -294,7 +295,7 @@ function enqueueCompatibleBook(row,t,book=null){
   if(!book&&plan)return enqueuePlanSnapshot(plan);
   if(book&&state.queue.some(q=>q.bookId===book.id&&['pending','running','paused'].includes(q.status)))return book;
   if(!book){const generated={id:uid('plan'),projectId:row.projectId||state.activeProjectId,title:row.bookTitle||'新画册',templateId:t.id,rowId:row.id,enabled:true,variableSetIds:[],variables:Object.entries(row).filter(([k,v])=>!reserved.has(k)&&['string','number','boolean'].includes(typeof v)).map(([k,v])=>variableEntry(k,v)),sceneOverrides:{},createdAt:Date.now()};for(const k of ['character','style','outfit'])if(row[k])generated.variables.push(variableEntry(k,row[k]));state.creation.plans.push(generated);row._planMapped=true;return enqueuePlanSnapshot(generated)}
-  const indices=missingIndices(book);if(!indices.length){toast('画册没有缺失分镜。');return book}
+  const indices=missingIndices(book);if(!indices.length){toast('画册没有缺失分幕。');return book}
   const snapshot=book.sourceSnapshot||{row:clone(row),frames:clone(t.frames),execution:mappedExecutionSnapshot()};if(indices.some(i=>!snapshot.frames[i]))throw Error('源分镜数量已变化，无法按原索引补齐。请从画册计划生成新版本。');
   state.queue.push({id:uid('task'),bookId:book.id,rowId:book.rowId,templateId:book.templateId,indices,done:0,status:'pending',frames:clone(snapshot.frames),rowSnapshot:clone(snapshot.row),execution:clone(snapshot.execution),createdAt:Date.now()});book.status='generating';save();updateQueueUI();return book;
 }
@@ -311,14 +312,14 @@ async function runFlexibleQueue(){
       }q.status='complete';b.status=missingIndices(b).length?'partial':'complete';b.completedAt=Date.now();log('画册生成完成：'+b.title);
     }catch(e){q.status=signal.aborted?'canceled':'failed';q.error=e.message;b.status=signal.aborted?'canceled':'failed';log(e.message,signal.aborted?'warn':'error')}
     finally{b.inProgress=false;save();updateQueueUI()}if(signal.aborted)break;
-  }}finally{rt.running=false;rt.paused=false;rt.controller=null;renderShell();updateQueueUI();toast('队列已结束，已生成画面全部保留。')}
+  }}finally{rt.running=false;rt.paused=false;rt.controller=null;renderShell();updateQueueUI();toast('队列已结束。')}
 }
 
 
-async function removeVariable(group,id,entryId){const list=variableOwner(group,id),entry=list?.find(x=>x.id===entryId);if(!entry)return;const mentions=projectTemplates().flatMap(t=>t.frames).filter(f=>(f.prompt+' '+f.caption).includes('{'+entry.key+'}')).length;if(!await confirmAction('删除变量 {'+entry.key+'}？','当前企划 '+mentions+' 个分镜中出现此变量。删除后不会擅自改写提示词，生成前会提示缺失；也可以从其他素材或单幕覆盖提供此值。','删除变量'))return;rememberRemovedImageVariable(entry);list.splice(list.indexOf(entry),1);save(true);render()}
+async function removeVariable(group,id,entryId){const list=variableOwner(group,id),entry=list?.find(x=>x.id===entryId);if(!entry)return;const mentions=projectTemplates().flatMap(t=>t.frames).filter(f=>(f.prompt+' '+f.caption).includes('{'+entry.key+'}')).length;if(!await confirmAction('删除变量 {'+entry.key+'}？','当前画册集 '+mentions+' 个分镜中出现此变量。删除后生成前会提示缺失，也可以从其他预设或单幕覆盖提供此值。','删除变量'))return;rememberRemovedImageVariable(entry);list.splice(list.indexOf(entry),1);save(true);render()}
 
 
-function legacyImportWorkflowIntoMapper(data){const w=data.workflow&&data.bindings?data.workflow:data;validateWorkflow(w);state.settings.comfy.workflow=clone(w);state.settings.comfy.workflowTitle=data.title||data.workflowTitle||'导入的工作流';if(Array.isArray(data.bindings)){validateBindings(data.bindings);state.settings.comfy.bindings=clone(data.bindings);state.settings.comfy.outputNodeId=String(data.outputNodeId||'')}else if(!state.settings.comfy.bindings.length)state.settings.comfy.bindings=initialWorkflowBindings({...state.settings.comfy,mapping:{}});save();studioUI.settingsTab='mapping';navigate(5);toast('蓝图已导入。已有映射保留，失效的节点会明确告警。')}
+function legacyImportWorkflowIntoMapper(data){const w=data.workflow&&data.bindings?data.workflow:data;validateWorkflow(w);state.settings.comfy.workflow=clone(w);state.settings.comfy.workflowTitle=data.title||data.workflowTitle||'导入的工作流';if(Array.isArray(data.bindings)){validateBindings(data.bindings);state.settings.comfy.bindings=clone(data.bindings);state.settings.comfy.outputNodeId=String(data.outputNodeId||'')}else if(!state.settings.comfy.bindings.length)state.settings.comfy.bindings=initialWorkflowBindings({...state.settings.comfy,mapping:{}});save();studioUI.settingsTab='mapping';navigate(5);toast('工作流已导入。已有映射保留，失效的节点会明确告警。')}
 
 
 async function generateChosenPlans(one=false,onlyQueue=false){flushEditor();const plans=[];for(const source of (one?[selectedPlan()]:projectPlans().filter(p=>p.enabled))){if(!source)continue;plans.push(await prepareComputedPlan(generationContextPlan(source)))};if(!plans.length||!plans[0])throw Error('请先选择至少一份画册计划。');for(const p of plans){const t=p._creationTemplate||templateBy(p.templateId);if(!t)throw Error('「'+p.title+'」尚未选择分镜。');if(p.storyVersionId&&!rowBy(p.rowId)?.storyVersions?.[t.id]?.some(v=>v.id===p.storyVersionId))throw Error('「'+p.title+'」选择的台词版本已不存在。');const row=planRuntimeRow(p);for(const f of t.frames){const effective=effectivePlanFrame(p,f);resolveImageVariables(effective.prompt,effective._scope,true,effective.negative||effective._execution?.globalNegative||'');validatePrompt(effective.prompt);scopeText(effective.prompt,effective._scope,true);scopeText(effective.caption,effective._scope,true);buildMappedWorkflow(effective,row,{preview:true})}}for(const p of plans){if(state.queue.some(q=>q.planId===p.id&&['pending','running','paused'].includes(q.status)))continue;enqueuePlanSnapshot(p)}if(!onlyQueue)void runQueue();createUI.tab='queue';navigate(1);if(onlyQueue)toast('已加入生成队列，尚未启动。')}
@@ -336,17 +337,17 @@ async function redrawMappedBookStep(index){
 function ensureFrameCapacity(frames,additional=1){const limit=globalThis.ComfyComic.MAX_FRAMES;if(!Array.isArray(frames)||!Number.isInteger(additional)||additional<0)throw Error('Invalid frame operation.');if(frames.length+additional>limit)throw Error('This operation would exceed '+limit+' frames.');return true}
 
 
-function installNativeCreationModule(){const ns=globalThis.ComfyComic,enqueuePrevious=enqueuePlanSnapshot;enqueuePlanSnapshot=function(plan,existing=null,selectedIndices=null){const t=templateBy(plan?.templateId);if(!t)throw Error('Select a storyboard before generating.');ns.stateContract.assertFrameCount(t.frames);if(t.frames.length===0)throw Error('空分镜模板可以保存，生成前请先添加一幕。');return enqueuePrevious(plan,existing,selectedIndices)};const assistantPrevious=assistantToolDraft;assistantToolDraft=function(t,name,args={}){t.frames??=[];if(name==='add_new_frame')ensureFrameCapacity(t.frames);if(name==='batch_update_prompts_and_captions')ns.stateContract.assertFrameCount(args.frames||[]);return assistantPrevious(t,name,args)};const packagePrevious=selectedPublishPackage;selectedPublishPackage=function(id){const value=packagePrevious(id);if(value.value?.frames)ns.stateContract.assertFrameCount(value.value.frames);return value};ns.modules.creation=true}
+function installNativeCreationModule(){const ns=globalThis.ComfyComic,enqueuePrevious=enqueuePlanSnapshot;enqueuePlanSnapshot=function(plan,existing=null,selectedIndices=null){const t=templateBy(plan?.templateId);if(!t)throw Error('Select a storyboard before generating.');ns.stateContract.assertFrameCount(t.frames);if(t.frames.length===0)throw Error('空分镜可以保存，生成前请先添加一幕。');return enqueuePrevious(plan,existing,selectedIndices)};const assistantPrevious=assistantToolDraft;assistantToolDraft=function(t,name,args={}){t.frames??=[];if(name==='add_new_frame')ensureFrameCapacity(t.frames);if(name==='batch_update_prompts_and_captions')ns.stateContract.assertFrameCount(args.frames||[]);return assistantPrevious(t,name,args)};const packagePrevious=selectedPublishPackage;selectedPublishPackage=function(id){const value=packagePrevious(id);if(value.value?.frames)ns.stateContract.assertFrameCount(value.value.frames);return value};ns.modules.creation=true}
 
 
 async function deleteStoryboardTemplate(id){
-  flushEditor();const template=templateBy(id);if(!template)throw Error('分镜模板已不存在。');
+  flushEditor();const template=templateBy(id);if(!template)throw Error('分镜已不存在。');
   const checkBusy=()=>{
     if(rt.chatBusy)throw Error('助手正在处理分镜，请等待完成或停止后再删除模板。');
     if(state.queue.some(q=>(q.templateId===id||bookBy(q.bookId)?.templateId===id)&&['pending','running','paused'].includes(q.status))||state.books.some(b=>b.templateId===id&&(b.inProgress||[...rt.redraw].some(k=>k.startsWith(b.id+':')))))throw Error('此模板仍有关联的待执行或生成中任务，请先完成或中止并移除任务。');
   };
   checkBusy();const count=state.creation.plans.filter(p=>p.templateId===id).length;
-  if(!await confirmAction('删除分镜模板「'+template.title+'」？',`将删除整套 ${template.frames.length} 幕分镜，而不是当前一幕。
+  if(!await confirmAction('删除分镜「'+template.title+'」？',`将删除整套 ${template.frames.length} 幕分镜，而不是当前一幕。
 ${count} 份画册计划会解除模板关联并清空单幕覆盖，之后需重新选择模板。
 已生成画册、原图与对话记录保留；依赖此源模板的补齐和精修将不可用。建议先导出分镜备份。`,'删除模板'))return;
   checkBusy();if(!templateBy(id))return;
@@ -356,5 +357,5 @@ ${count} 份画册计划会解除模板关联并清空单幕覆盖，之后需�
   state.installedPackages=state.installedPackages.filter(pkg=>pkg.type!=='templates'||pkg.assetIds.length);
   if(ui.templateId===id)ui.templateId='';if(ui.storyTemplateId===id)ui.storyTemplateId='';ui.frameIndex=0;
   if(studioUI.assistantUndo?.templateId===id)studioUI.assistantUndo=null;
-  save(true);render();if(!$('#assistant').hidden)renderAssistant();toast('分镜模板已删除，画册与原图已保留。');
+  save(true);render();if(!$('#assistant').hidden)renderAssistant();toast('分镜已删除，画册与原图已保留。');
 }

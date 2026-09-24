@@ -30,6 +30,26 @@ data/storyboards/*
 !data/storyboards/远行与归来 · 十二幕--ry_journey12.json
 data/workflows/*
 !data/workflows/Anime · 基础图像管线--9399e1242916.json
+# 画册集、版式与设置同样只保留随包种子；使用中新建的画册集、版式和个人设置不进入仓库
+data/collections/*
+!data/collections/夏日叙事集--ction_summer.json
+data/layouts/*
+!data/layouts/余光 · AFTERGLOW--rt-afterglow.json
+!data/layouts/墨与叙事 · 漫画精装--export-ink.json
+!data/layouts/无缝 · 纯图阅读--ort-seamless.json
+!data/layouts/海风来信 · 电影长卷--export-paper.json
+!data/layouts/深夜放映室 · 交互画册--export-flip.json
+!data/layouts/留白 · 完整画面--mio-fit.json
+!data/layouts/白昼美术馆 · 典藏展册--port-gallery.json
+data/settings/*
+!data/settings/comfy.json
+!data/settings/llm.json
+!data/settings/workspace.json
+!data/settings/xml.json
+data/assets/
+data/packages/
+data/scripts/
+data/styles/
 /images/
 generated_images/
 releases/

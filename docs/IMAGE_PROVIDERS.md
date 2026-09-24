@@ -34,7 +34,7 @@ OpenAI 不发送 ComfyUI 的采样器、steps、cfg、seed，负向提示词合�
 
 ## 验证
 
-渠道验证包含图片变量专项、HTTP 错误保留及有序多图协议。回归结果见 [变更记录](CHANGELOG.md) 和 [测试日志](TEST_RESULTS.txt)。
+渠道验证包含图片变量专项、HTTP 错误保留及有序多图协议。回归结果见 [变更记录](CHANGELOG.md)。
 
 测试覆盖：NovelAI ZIP/V4 请求、OpenAI base64/URL/multipart 编辑、Chat 图片与参考图、缺图/缺密钥/非法尺寸失败；无需工作流预检、冻结渠道隔离、独立渠道复制、配置落盘、密钥正文不写入普通工程配置、移动端布局。
 

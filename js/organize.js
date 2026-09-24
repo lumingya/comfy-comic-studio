@@ -26,7 +26,7 @@ function taskWorkflowHTML(q){
   const editable=q.indices.filter((i,pos)=>{const ex=q.frames[i]?._execution||q.execution;return (!ex?.provider||ex.provider==='comfyui')&&(q.status==='pending'||['running','paused'].includes(q.status)&&pos>q.done)});if(!editable.length)return '';
   return `<details class="quiet-advanced queue-workflow-detail" data-task-detail="${esc(q.id)}"><summary>待发送工作流调整</summary>${editable.map((i,pos)=>{
     const f=q.frames[i],ex=f?._execution||q.execution,locked=!!q.serverInput||!!q.serverId||q.status!=='pending'&&(!['running','paused'].includes(q.status)||pos<=q.done);
-    if(ex?.provider&&ex.provider!=='comfyui')return `<div class="queue-workflow-row"><span>${i+1}. ${esc(f?.name||'分镜')}</span><span class="tiny muted">${esc(ex.provider)} · ${esc(ex.config?.model||'渠道快照')}</span><span class="tiny muted">初始值 · 非当前配置</span></div>`;
+    if(ex?.provider&&ex.provider!=='comfyui')return `<div class="queue-workflow-row"><span>${i+1}. ${esc(f?.name||'分镜')}</span><span class="tiny muted">${esc(ex.provider)} · ${esc(ex.config?.model||'图像服务快照')}</span><span class="tiny muted">初始值 · 非当前配置</span></div>`;
     return `<div class="queue-workflow-row"><span>${i+1}. ${esc(f?.name||'分镜')}</span><span class="tiny muted">${esc(ex?.workflowTitle||'默认工作流')}</span><select data-ws-task="${esc(q.id)}" data-ws-index="${i}" aria-label="第 ${i+1} 幕任务工作流" ${locked?'disabled':''}>${opt('','保留当前快照','')}${state.settings.comfy.presets.map(p=>opt(p.id,p.title,'')).join('')}</select></div>`;
   }).join('')}</details>`;
 }
@@ -98,7 +98,7 @@ function singleBookContextItems(book){
     {label:'翻开这本画册',icon:'book',act:'read',data:{id},primary:true,shortcut:'Enter'},
     {label:book.liked?'取消星标':'星标收藏',icon:'star',act:'star',data:{id},checked:!!book.liked},
     {label:'重命名…',icon:'edit',act:'org-context-edit',data,disabled:busy,title:busy?'画册正在生成，稍后再改名。':''},
-    {label:'补齐缺失分镜',icon:'refresh',act:'resume',data:{id},disabled:!missing,hint:missing?`${missing} 幕待补齐，已完成画面不重跑`:'所有分镜已齐备'},
+    {label:'补齐缺失分幕',icon:'refresh',act:'resume',data:{id},disabled:!missing,hint:missing?`${missing} 幕待补齐，已完成画面不重跑`:'所有分幕已齐备'},
     '-',
     {label:'导出与分享',icon:'download',children:[
       {label:'导出离线画册…',icon:'download',act:'org-context-export',data,hint:'单文件 HTML，可选版式与水印'},
@@ -126,7 +126,7 @@ function multiBookContextItems(ids,focusId=''){
     {label:'批量星标',icon:'star',act:'org-context-star',data},
     {label:'批量重命名…',icon:'edit',act:'org-context-edit',data,disabled:busy,title:busy?'有画册正在生成，稍后再改名。':''},
     {label:'导出离线画册…',icon:'download',act:'org-context-export',data,hint:'合并为一个离线 HTML'},
-    {label:'补齐缺失分镜',icon:'refresh',act:'org-context-resume',data,disabled:!ids.some(id=>missingIndices(bookBy(id)||{steps:[],totalSteps:0}).length),hint:'只重跑缺失的分幕'},
+    {label:'补齐缺失分幕',icon:'refresh',act:'org-context-resume',data,disabled:!ids.some(id=>missingIndices(bookBy(id)||{steps:[],totalSteps:0}).length),hint:'只重跑缺失的分幕'},
     '-',
     focus?{label:'只翻开这本',icon:'book',act:'read',data:{id:focus.id},hint:focus.title}:null,
     {label:'选择当前筛选结果',icon:'check',act:'org-context-select-all',shortcut:'Ctrl/⌘ A'},
@@ -188,7 +188,7 @@ function syncSelectionView(){
     const on=ui.selected.has(card.dataset.sortBook);card.classList.toggle('is-selected',on);card.setAttribute('aria-selected',String(on));
     const box=card.querySelector('[data-select-book]');if(box&&box.checked!==on)box.checked=on;
   });
-  const status=$('#gallery-results .shelf-selection-status');if(status){status.textContent=ui.selected.size?localeString('已选 {count} 本 · 右键操作',{count:ui.selected.size}):'';status.hidden=!ui.selected.size}
+  const status=$('#gallery-results .shelf-selection-status');if(status){status.innerHTML=shelfSelectionInnerHTML();status.hidden=!ui.selected.size}
   $('#gallery-results')?.classList.toggle('has-selection',ui.selected.size>0);
   refreshCollectionSelection();
 }
@@ -248,9 +248,10 @@ function installShelfReorderDrag(){
   }
   window.addEventListener('pointerdown',e=>{
     suppressClick=false;if(gesture)finish();
-    if(e.button!==0||e.pointerType==='touch'||ui.workspace!==0||ui.bulk||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||document.querySelector('dialog[open]'))return;
+    if(e.button!==0||e.pointerType==='touch'||ui.workspace!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||document.querySelector('dialog[open]'))return;
+    // Only the handle reorders: a drag anywhere else on the shelf draws the selection marquee (desktop-selection.js).
+    if(!e.target.closest('.shelf-drag-handle'))return;
     const card=e.target.closest('#gallery-results .shelf-item[data-sort-book],#gallery-results .shelf-exhibit[data-sort-book]');if(!card)return;
-    const control=e.target.closest('[data-act],input,textarea,select,label,a');if(control&&control.dataset.act!=='read')return;
     gesture={id:card.dataset.sortBook,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY,card,active:false,target:null,after:false};
   },true);
   window.addEventListener('pointermove',e=>{

@@ -8,13 +8,29 @@
      · Ctrl / ⌘ + A, Escape, Delete, Enter → select all, clear, delete the selection, open the single selected item
    There is no mode switch, no toolbar, no checkboxes: the selection itself *is* the mode, and the context menu carries the actions. */
 'use strict';
+/* T10 · C6: multi-select has to be discoverable. Until the creator has used it once (two or more items selected) or dismissed
+   the line, the shelf, the scene rail and the task list explain the gestures in one line; while something is selected, the
+   status line carries the most common entries of the right-click menu (taken from the same menu items, so labels, targets and
+   danger styling match) and 更多… opens that menu. */
+function multiSelectHintSeen(){try{return localStorage.getItem('cc-hint-multiselect')==='seen'}catch{return true}}
+function dismissMultiSelectHint(){try{localStorage.setItem('cc-hint-multiselect','seen')}catch{}document.querySelectorAll('.multiselect-hint').forEach(e=>e.remove())}
+function multiSelectHintHTML(){return multiSelectHintSeen()?'':`<p class="multiselect-hint"><span>${esc(localeString('框选或 Ctrl / ⌘ 点击可多选，右键批量操作'))}</span><button type="button" class="link-button" data-act="multiselect-hint-dismiss">${esc(localeString('知道了'))}</button></p>`}
+function selectionStatusInnerHTML(count,items,acts,scope){
+ const data=o=>Object.entries(o||{}).map(([k,v])=>`data-${k.replace(/[A-Z]/g,m=>'-'+m.toLowerCase())}="${esc(String(v))}"`).join(' ');
+ const picked=acts.map(a=>items.find(i=>i&&typeof i==='object'&&i.act===a&&!i.disabled)).filter(Boolean);
+ return `<span class="selection-count" role="status" aria-live="polite">${esc(count)}</span><span class="selection-actions">${picked.map(i=>`<button type="button" class="selection-action${i.danger?' danger':''}" data-act="${esc(i.act)}" ${data(i.data)}>${esc(i.label)}</button>`).join('')}<button type="button" class="selection-action" data-act="selection-more" data-scope="${esc(scope)}" aria-haspopup="menu">${esc(localeString('更多…'))}</button></span>`}
+function productionSelectionStatusHTML(){const ids=[...workshop.pickedTasks];return ids.length?selectionStatusInnerHTML(localeString('已选 {n} 个生成任务',{n:ids.length}),productionSelectionContextItems(ids),['production-start-selected','production-clone','production-remove'],'tasks'):''}
+/* 更多… opens the scope's own right-click menu on a selected item, anchored under the button. */
+function openSelectionMenu(scope,anchor){const root=document.querySelector({books:'#gallery-results',frames:'.workshop-frames-list',tasks:'.production-cards'}[scope]);
+ const item=root&&[...root.querySelectorAll('.desktop-selected,.is-selected,.is-picked,[aria-selected="true"]')].find(e=>e.getClientRects().length);if(!item||!anchor)return;
+ const r=anchor.getBoundingClientRect();item.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,view:window,button:2,clientX:Math.round(r.left),clientY:Math.round(r.bottom+4)}))}
 function installDesktopSelection() {
   const scopes = [
     {root:'#gallery-results', item:'[data-sort-book]', key:e=>e.dataset.sortBook,
       get:()=>ui.selected, set:s=>{ui.selected=s;ui.bulk=s.size>0;if(!s.size)ui.bulkPinned=false}, render:()=>refreshGallery(),
       open:e=>handleAction('read',{id:e.dataset.sortBook}), remove:ids=>handleAction('org-context-delete',{ids:JSON.stringify(ids)})},
     {root:'.designer-presets', item:'.designer-preset', key:e=>e.querySelector('input').dataset.designerPreset,
-      get:()=>assemblyDesign.presets, set:s=>{assemblyDesign.presets=s}, render:()=>{const e=document.querySelector('#designer-presets-status');if(e)e.textContent=designerPresetsStatus()}},
+      get:()=>assemblyDesign.presets, set:s=>{assemblyDesign.presets=s;assemblyDesign.presetsTouched=true}, render:()=>designerSelectionChanged()},
     {root:'.workshop-frames-list', item:'button[data-index]', key:e=>Number(e.dataset.index),
       get:()=>workshop.pickedFrames, set:s=>{workshop.pickedFrames=s}, render:()=>render(), open:e=>e.click(),
       remove:()=>handleAction('workshop-frame-delete-bulk',{})},
@@ -30,7 +46,7 @@ function installDesktopSelection() {
       get:()=>workshop.pickedTasks, set:s=>{workshop.pickedTasks=s;syncProductionSelectionStatus()}, render:()=>render(), open:()=>{},
       remove:ids=>handleAction('production-remove',{ids:JSON.stringify(ids)})}
   ];
-  function syncProductionSelectionStatus(){const status=document.querySelector('.production-selection-status'),n=workshop.pickedTasks.size;if(status){status.hidden=!n;status.textContent=n?localeString('已选 {n} 张任务卡 · 右键批量操作，Esc 取消',{n}):''}}
+  function syncProductionSelectionStatus(){const status=document.querySelector('.production-selection-status'),n=workshop.pickedTasks.size;if(status){status.hidden=!n;status.innerHTML=productionSelectionStatusHTML()}}
   const OPENERS='.wf-item-body,.wf-row-main,[data-act="read"],[data-select-book],[data-designer-preset]';
   let gesture=null, active=null, suppress=false, raf=0;
   const anchors=new Map();
@@ -53,7 +69,7 @@ function installDesktopSelection() {
     }
     c.root.classList.toggle('has-selection',sel.size>0);
   }
-  function commit(c){c.s.render();const root=document.querySelector(c.s.root);if(root){active={...c,root};if(c.s.get().size){root.tabIndex=0;root.focus({preventScroll:true})}paint({...c,root})}}
+  function commit(c){if(c.s.get().size>1&&!multiSelectHintSeen())dismissMultiSelectHint();c.s.render();const root=document.querySelector(c.s.root);if(root){active={...c,root};if(c.s.get().size){root.tabIndex=0;root.focus({preventScroll:true})}paint({...c,root})}}
   function rectHits(a,b){return a.left<b.right&&a.right>b.left&&a.top<b.bottom&&a.bottom>b.top}
   function scrollParent(el){for(let p=el;p;p=p.parentElement){if(p.scrollHeight>p.clientHeight+2&&/(auto|scroll)/.test(getComputedStyle(p).overflowY))return p}return document.scrollingElement}
   function update(){
@@ -76,8 +92,10 @@ function installDesktopSelection() {
   window.addEventListener('pointerdown',e=>{
     suppress=false;if(e.button!==0||e.pointerType==='touch'||editable(e.target))return;
     const c=locate(e.target);if(!c)return;
-    // Shelf and task cards reorder by dragging while nothing is selected; the marquee takes over once a selection exists (or with a modifier).
-    if((c.s.root==='#gallery-results'||c.s.root==='.production-cards')&&c.item&&!c.s.get().size&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey)return;
+    // Shelf albums reorder only from their ⠿ handle, so a drag that starts on a cover still draws the marquee.
+    // Task cards keep drag-to-reorder on the card body while nothing is selected (the marquee takes over with a selection or a modifier).
+    if(e.target.closest('.shelf-drag-handle'))return;
+    if(c.s.root==='.production-cards'&&c.item&&!c.s.get().size&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey)return;
     const control=e.target.closest('button,input,a,[data-act]');
     if(control&&!c.item)return;
     if(control&&control!==c.item&&!control.matches(OPENERS))return;
@@ -138,7 +156,10 @@ function installDesktopSelection() {
     const dialog=document.querySelector('dialog[open]');if(dialog&&!dialog.contains(c.root))return;
     if(typeof contextMenuOpen==='function'&&contextMenuOpen())return;
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='a'){e.preventDefault();e.stopImmediatePropagation();c.s.set(new Set(items(c).map(c.s.key)));commit(c)}
-    if(e.key==='Escape'&&(c.s.get().size||gesture)){e.preventDefault();e.stopImmediatePropagation();stop(true);c.s.set(new Set());commit(c)}
+    // The wizard's preset picks are form state, not a transient selection: there Esc only cancels a marquee in progress
+    // and otherwise falls through, so the dialog closes as usual.
+    if(e.key==='Escape'&&c.s.root==='.designer-presets'){if(gesture){e.preventDefault();e.stopImmediatePropagation();stop(true);commit(c)}}
+    else if(e.key==='Escape'&&(c.s.get().size||gesture)){e.preventDefault();e.stopImmediatePropagation();stop(true);c.s.set(new Set());commit(c)}
     if(e.key==='Delete'&&c.s.get().size&&c.s.remove&&!e.altKey&&!e.ctrlKey&&!e.metaKey){e.preventDefault();e.stopImmediatePropagation();const ids=[...c.s.get()];Promise.resolve(c.s.remove(ids)).catch(error=>{if(typeof toast==='function')toast(error.message||'操作未完成。','error')})}
     if(e.key==='Enter'){
       const focusedBtn=document.activeElement?.closest?.('button,[data-act]');

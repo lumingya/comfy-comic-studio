@@ -591,11 +591,11 @@ def provider_operation(op, payload):
     entry = PROVIDERS.get(provider)
     if op == "models":
         if entry.models is None:
-            raise ValueError("该渠道不提供模型列表；请手动填写模型 ID")
+            raise ValueError("该图像服务不提供模型列表；请手动填写模型 ID")
         return entry.models(payload, application_services())
     if op == "check":
         if entry.check is None:
-            raise ValueError("该渠道不支持连接检查")
+            raise ValueError("该图像服务不支持连接检查")
         return entry.check(payload, application_services())
     raise ValueError("Unsupported provider operation")
 

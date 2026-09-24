@@ -10,7 +10,7 @@ import time
 import uuid
 from backend.providers.transport import close_socket
 from backend.providers.request_evidence import safe_error_text
-from backend.providers.reliability import failure_summary, retry_delay, ExecutionError
+from backend.providers.reliability import failure_summary, retry_delay, ExecutionError, never_sent
 
 
 class FailureLimitHold(Exception):
@@ -973,6 +973,8 @@ class Jobs(JobStore):
                             ExecutionError,
                         ),
                     )
+                    # Refused connection / DNS / TLS: the request never went out.
+                    or never_sent(exc)
                 )
                 else "unknown"
             )
@@ -987,9 +989,13 @@ class Jobs(JobStore):
                             "execution"
                             if isinstance(exc, ExecutionError)
                             else (
-                                "validation"
-                                if state == "failed"
-                                else "result_unconfirmed"
+                                "connection"
+                                if never_sent(exc)
+                                else (
+                                    "validation"
+                                    if state == "failed"
+                                    else "result_unconfirmed"
+                                )
                             )
                         )
                     )

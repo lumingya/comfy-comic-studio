@@ -125,6 +125,20 @@
       "warning": "",
       "allowCreate": false,
       "allowLink": false
+    },
+    {
+      "id": "binding_5f0c2d7e-8a41-4c3b-9e6d-2b7a1c9d4e10",
+      "nodeId": "3",
+      "path": "seed",
+      "label": "种子",
+      "source": "sceneParameter",
+      "type": "number",
+      "value": "seed",
+      "enabled": true,
+      "autoField": false,
+      "warning": "",
+      "allowCreate": false,
+      "allowLink": false
     }
   ],
   "outputNodeId": "9",
@@ -157,7 +171,7 @@
       },
       "lora": {
         "enabled": false,
-        "reason": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
+        "reason": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）",
         "groups": [],
         "synth": null
       },
@@ -166,7 +180,7 @@
           "level": "warn",
           "code": "no-lora-site",
           "nodeId": "",
-          "text": "此蓝图没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
+          "text": "此工作流没有可用的 LoRA 应用点，且加载器不是标准类型（缺少声明时请同步节点定义）"
         }
       ]
     }

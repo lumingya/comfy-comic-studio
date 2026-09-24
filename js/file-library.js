@@ -153,12 +153,16 @@ function nativeReconcile(current,submitted,confirmed){
 }
 function nativeLibrarySettings(){
   const problems=ComfyComic.sync.runtime.previous._libraryProblems||[],content=Array.isArray(globalThis.MioContent?.contentProblems)?MioContent.contentProblems:[];
-  return '<section class="settings-section"><h2>独立文件库</h2><div class="service-context"><code>data/settings/ · storyboards/ · presets/ · collections/ · albums/</code></div><div class="row wrap" style="margin:15px 0">'+btn('扫描并重新读取','refresh','v3-connect-backend')+'</div><p class="help">'+(problems.length?esc(JSON.stringify(problems)):'文件库未报告冲突。修改同一字段发生版本冲突时，保留本页草稿，不强制覆盖。')+'</p>'+(content.length?'<div class="notice amber"><strong>随附内容文件缺失（未复制）</strong><ul class="content-problem-list">'+content.map(p=>'<li><code>'+esc(p.file||'')+'</code> · '+esc(p.reason||'')+'</li>').join('')+'</ul><p class="help">请检查程序 data/ 中列出的源文件；正常编辑不会触发哈希校验。补回源文件不会自动恢复已删除的作品。</p></div>':'')+'<a href="/docs/guide/FILE_LIBRARY.html" target="_blank" rel="noopener">文件复制、分享、备份与密钥教程 ↗</a><h3>已保存密钥</h3><p>密码框留空会保留已绑定密钥；修改地址时需要明确重新填写或忘记原密钥。密钥只保存在 settings/secrets.json，不在普通分享包中。</p>'+['llm','xml','critic'].map(scope=>btn('忘记 '+scope.toUpperCase()+' 密钥','trash','native-forget','data-scope="'+scope+'"','small')).join(' ')+'</section>';
+  return '<section class="settings-section"><h2>独立文件库</h2><div class="service-context"><code>data/settings/ · storyboards/ · presets/ · collections/ · albums/</code></div><div class="row wrap" style="margin:15px 0">'+btn('扫描并重新读取','refresh','v3-connect-backend')+'</div><p class="help">'+(problems.length?esc(JSON.stringify(problems)):'文件库未报告冲突。修改同一字段发生版本冲突时，保留本页草稿，不强制覆盖。')+'</p>'+(content.length?'<div class="notice amber"><strong>随附内容文件缺失（未复制）</strong><ul class="content-problem-list">'+content.map(p=>'<li><code>'+esc(p.file||'')+'</code> · '+esc(p.reason||'')+'</li>').join('')+'</ul><p class="help">请检查程序 data/ 中列出的源文件。补回源文件不会自动恢复已删除的作品。</p></div>':'')+'<a href="/docs/guide/FILE_LIBRARY.html" target="_blank" rel="noopener">文件复制、分享、备份与密钥教程 ↗</a></section>';
+}
+/* 已保存密钥按用途称呼：llm = AI 写故事的文本模型，xml = 把故事整理成分镜结构的解析服务，critic = 视觉审校。 */
+const SAVED_KEY_SCOPES={llm:'文本模型',xml:'结构化解析服务',critic:'视觉审校'};
+function savedKeysSettings(){
+  return '<section class="settings-section"><h2>已保存密钥</h2><p>密码框留空会保留已绑定密钥；修改地址时需要明确重新填写或忘记原密钥。</p><div class="row wrap">'+Object.entries(SAVED_KEY_SCOPES).map(([scope,label])=>btn('忘记'+label+'密钥','trash','native-forget','data-scope="'+scope+'"','small')).join('')+'</div></section>';
 }
 function installNativeLibraryPanel(){
-  const prior=renderPythonSettings;renderPythonSettings=function(){return nativeLibrarySettings()+prior()};
   installContextualSharing();
-  v3Actions['native-forget']=async({scope})=>{if(!await confirmAction('忘记已保存的 '+scope.toUpperCase()+' 密钥？','清除此连接的密钥绑定。','忘记密钥'))return;if(!await ComfyComic.sync.save())throw Error('请先保存当前编辑。');await request('/api/library/forget-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope})});await connectPythonBackend()};
+  v3Actions['native-forget']=async({scope})=>{if(!Object.hasOwn(SAVED_KEY_SCOPES,scope))throw Error('未知的密钥类型。');if(!await confirmAction('忘记已保存的'+SAVED_KEY_SCOPES[scope]+'密钥？','清除此连接的密钥绑定。','忘记密钥'))return;if(!await ComfyComic.sync.save())throw Error('请先保存当前编辑。');await request('/api/library/forget-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope})});await connectPythonBackend()};
 }
 
 function nativeAckSettings(studio,payload,documents){

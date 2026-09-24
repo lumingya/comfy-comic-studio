@@ -33,13 +33,13 @@ python tools/package_project.py --output ../mio-packages
 
 主测试矩阵：Python 396 项（4 项环境相关跳过）、前端契约 56 项、装配 39 项、架构 37 项、阅读 26 项、展示 42 项、图片 30 项、专项浏览器 20 项。可靠性专项 15 项包含在 Python 总数中，不重复累计。
 
-完整结果与交付包复验以 [TEST_RESULTS.txt](TEST_RESULTS.txt) 为准。
+完整结果与交付包复验以 [TEST_RESULTS.txt](https://github.com/lumingya/comfy-comic-studio/blob/3fb368a7f286b84643327cf390487d624798e79e/docs/TEST_RESULTS.txt)（已从仓库移除，链接指向提交 3fb368a） 为准。
 
 ## 图片证据
 
-[图片工作台：竖排、气泡尾端与动态错误提示](acceptance-review/image-studio.png)
+[图片工作台：竖排、气泡尾端与动态错误提示](https://github.com/lumingya/comfy-comic-studio/blob/3fb368a7f286b84643327cf390487d624798e79e/docs/acceptance-review/image-studio.png)
 
-[真实单册导出入口](acceptance-review/export.png)
+[真实单册导出入口](https://github.com/lumingya/comfy-comic-studio/blob/3fb368a7f286b84643327cf390487d624798e79e/docs/acceptance-review/export.png)
 
 ## 限制与安全取舍
 

@@ -130,7 +130,7 @@ class V3Acceptance(unittest.TestCase):
     def test_stack(self):
         for n in ('easy-simple','easy-advanced'):
             p,w,_=self.run_case(n);self.assertEqual(p['lora']['groups'][0]['kind'],'stack');self.assertEqual(w['1']['inputs']['num_loras'],1);self.assertEqual(w['1']['inputs']['lora_1_name'],'A');self.assertEqual(w['1']['inputs']['model_strength_1'],.8)
-        with self.assertRaisesRegex(LibraryError,'槽位'):self.run_case('stack-overflow')
+        with self.assertRaisesRegex(LibraryError,'个位置'):self.run_case('stack-overflow')
     def test_dead(self):
         for n in ('dead-bool','dead-select'):
             p,w,_=self.run_case(n);self.assertFalse(p['lora']['groups'][0]['active']);self.assertTrue(any(i['code']=='dead-branch' for i in p['issues']));self.assertEqual(w,self.cases[n]['workflow'])

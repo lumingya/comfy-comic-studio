@@ -70,7 +70,7 @@ async function pollFoundationJobs(){
     if(changed){save();updateQueueUI();renderStatus()}
     if(foundationRuntime.localAfterDurable&&!rt.running&&!rt.paused&&state.queue.some(q=>q.status==='pending'&&foundationTaskIsMock(q))){foundationRuntime.localAfterDurable=false;void runFlexibleQueue()}
     if(rt.running&&!rt.paused&&!foundationRuntime.submitting&&state.queue.some(q=>q.status==='pending'&&!q.serverId))void runQueue();
-  }catch(error){foundationRuntime.connectionError='与本地服务连接中断，服务端可能仍在执行。连接恢复后自动核对状态，不会重复提交生成。';const status=$('#queue-service-status');if(status){status.hidden=false;status.textContent=foundationRuntime.connectionError}if(!foundationRuntime.connectionWarned){log(foundationRuntime.connectionError,'warn');foundationRuntime.connectionWarned=true}}
+  }catch(error){foundationRuntime.connectionError='与本地服务连接中断，服务端可能仍在执行。连接恢复后会自动核对状态。';const status=$('#queue-service-status');if(status){status.hidden=false;status.textContent=foundationRuntime.connectionError}if(!foundationRuntime.connectionWarned){log(foundationRuntime.connectionError,'warn');foundationRuntime.connectionWarned=true}}
   finally{foundationRuntime.polling=false}
 }
 async function openFoundationAssets(){
@@ -103,7 +103,7 @@ async function foundationAction(action,d={}){
     if(action==='foundation-cleanup'){const paths=$$('[data-recycle-asset]:checked').map(el=>el.dataset.recycleAsset);if(!paths.length)return toast('先选择文件。');if(!await confirmAction('回收所选素材？','仅处理未引用且超过 24 小时的文件，移入 data/trash，不永久删除。','移入回收目录'))return;await foundationRequest('assets/cleanup',{token:d.token,paths});return openFoundationAssets()}
 }
 function syncFoundationOrder(){const ids=state.queue.filter(q=>q.status==='pending'&&q.serverId&&(q.done||0)===0&&!q.serverAttempts).map(q=>q.serverId);if(ids.length)foundationRequest('jobs/reorder',{ids}).catch(e=>{toast('服务端排序未确认：'+e.message,'error');void pollFoundationJobs()})}
-function foundationSettingsHTML(){return `<section class="settings-section"><h2>生产服务与素材</h2>${btn('全部服务端任务','list','foundation-jobs','','small')}${btn('素材索引 / 引用 / 安全清理','image','foundation-assets','','small')}<a class="btn small" href="/docs/guide/FOUNDATION.html" target="_blank" rel="noopener">基座与 API 教程 ↗</a></section>`}
+function foundationSettingsHTML(){return `<section class="settings-section"><h2>服务端任务与素材</h2><div class="row wrap">${btn('全部服务端任务','list','foundation-jobs','','small')}${btn('素材索引 / 引用 / 安全清理','image','foundation-assets','','small')}<a class="btn small" href="/docs/guide/FOUNDATION.html" target="_blank" rel="noopener">基座与 API 教程 ↗</a></div></section>`}
 function installFoundation(){
   if(installFoundation._installed)return;
   installFoundation._installed=true;
@@ -134,7 +134,7 @@ async function openFoundationJobs(id=null){
 
 function queuePolicyHTML(){
   const p=foundationRuntime.failurePolicy,name={pause:'失败暂停本任务',retry:'有限重试',continue:'失败幕保留，其他分镜继续'}[p.mode];
-  return `<details class="queue-policy" id="queue-policy"><summary>失败策略 <strong>${esc(name)}</strong><span>调整策略</span></summary><div class="grid2">${field('发生明确失败时',`<select id="queue-policy-mode">${opt('pause','暂停本任务后续分镜，不影响其他任务',p.mode)}${opt('retry','自动重试 5xx（默认），耗尽后按下方策略处理',p.mode)}${opt('continue','不自动重试，保留失败幕并继续其他分镜',p.mode)}</select>`)}${field('重试耗尽 / 不可自动重试时',`<select id="queue-policy-exhausted" ${p.mode==='retry'?'':'disabled'}>${opt('pause','暂停本任务',p.onExhausted)}${opt('continue','保留失败幕，其他分镜继续',p.onExhausted)}</select>`)}${field('每幕自动重试上限（1–100）',`<input id="queue-policy-count" ${p.mode==='retry'?'':'disabled'} type="number" min="1" max="100" step="1" value="${p.maxRetries}">`)}${field('每次重试前等待秒数（5–300）',`<input id="queue-policy-delay" ${p.mode==='retry'?'':'disabled'} type="number" min="5" max="300" step="1" value="${p.delaySeconds}">`)}${field('连续失败暂停上限（0–100）',`<input id="queue-policy-consecutive" type="number" min="0" max="100" step="1" value="${p.maxConsecutiveFailures??5}">`)}</div><p class="help">自动重试：HTTP 5xx。</p>${btn('应用失败策略','check','queue-policy-save','','small')}<span class="help" id="queue-policy-feedback" role="status"></span></details>`;
+  return `<details class="queue-policy" id="queue-policy"><summary>失败策略 <strong>${esc(name)}</strong><span>调整策略</span></summary><div class="grid2">${field('发生明确失败时',`<select id="queue-policy-mode">${opt('pause','暂停本任务后续分镜',p.mode)}${opt('retry','自动重试 5xx（默认），耗尽后按下方策略处理',p.mode)}${opt('continue','不自动重试，保留失败幕并继续其他分镜',p.mode)}</select>`)}${field('重试耗尽 / 不可自动重试时',`<select id="queue-policy-exhausted" ${p.mode==='retry'?'':'disabled'}>${opt('pause','暂停本任务',p.onExhausted)}${opt('continue','保留失败幕，其他分镜继续',p.onExhausted)}</select>`)}${field('每幕自动重试上限（1–100）',`<input id="queue-policy-count" ${p.mode==='retry'?'':'disabled'} type="number" min="1" max="100" step="1" value="${p.maxRetries}">`)}${field('每次重试前等待秒数（5–300）',`<input id="queue-policy-delay" ${p.mode==='retry'?'':'disabled'} type="number" min="5" max="300" step="1" value="${p.delaySeconds}">`)}${field('连续失败暂停上限（0–100）',`<input id="queue-policy-consecutive" type="number" min="0" max="100" step="1" value="${p.maxConsecutiveFailures??5}">`)}</div><p class="help">自动重试：HTTP 5xx。</p>${btn('应用失败策略','check','queue-policy-save','','small')}<span class="help" id="queue-policy-feedback" role="status"></span></details>`;
 }
 async function saveQueuePolicy(){
   const policy={mode:$('#queue-policy-mode').value,onExhausted:$('#queue-policy-exhausted').value,maxRetries:Number($('#queue-policy-count').value),delaySeconds:Number($('#queue-policy-delay').value),maxConsecutiveFailures:Number($('#queue-policy-consecutive').value)};
@@ -195,7 +195,7 @@ async function syncProductionActivity(result){
   const events=await foundationRequest('jobs/activity?after='+foundationRuntime.activityAfter),labels={pending:'已入队',running:'开始请求',complete:'任务完成',failed:'生成失败',unknown:'结果未确认',canceled:'已停止',cancel:'立即停止，丢弃迟到结果',late_result_discarded:'已丢弃停止前请求的迟到结果',retry_wait:'等待自动重试',hold:'暂存 / 已撤销自动重试倒计时',amend:'未完成提示词已修订',continue:'继续未完成分镜',input_read:'已读取并记录本次分镜输入',frame_complete:'分镜结果已保存',start:'手动并行启动任务',runtime:'已保存每任务并发 / 超时',resume:'恢复调度 / 释放暂存',pause:'暂停',policy:'失败策略已修改',failure_limit_reached:'达到连续失败上限，已暂停当前画册',dispatch_held:'连续失败保护已生效，此幕未发出请求'};
   for(const e of events){const q=state.queue.find(q=>q.serverId===e.jobId);if(e.index!==undefined&&(q?.serverIndices||q?.indices)?.[e.index]!==undefined)e.frameIndex=(q.serverIndices||q.indices)[e.index];foundationRuntime.activityAfter=Math.max(foundationRuntime.activityAfter,e.id);
     const title=e.label||'调度器',scene=e.frameIndex!==undefined?' · 第 '+(e.frameIndex+1)+' 幕':'',attempt=e.frameAttempt?' · 本幕第 '+e.frameAttempt+' 次尝试':'',model=e.model||e.request?.config?.model;
-    let action=labels[e.state]||e.state;if(e.state==='input_read')action='输入已读取';if(e.state==='request_ready')action='请求参数已确定，准备发送';if(e.state==='running')action='取得执行名额';if(e.state==='skipped')action='已跳过：HTTP 422，请修改本册分镜后再继续';if(e.state==='response_received')action='已收到响应（HTTP '+e.httpStatus+'），正在处理结果';if(e.state==='frame_complete')action='图片已保存，继续调度剩余分镜';if(e.state==='failed')action='本幕失败，可修改本册分镜或渠道后继续；其他待办自动推进';if(e.state==='unknown')action='本幕结果不明，不自动重发；可查看已有结果或确认风险后继续';
+    let action=labels[e.state]||e.state;if(e.state==='input_read')action='输入已读取';if(e.state==='request_ready')action='请求参数已确定，准备发送';if(e.state==='running')action='取得执行名额';if(e.state==='skipped')action='已跳过：HTTP 422，请修改本册分镜后再继续';if(e.state==='response_received')action='已收到响应（HTTP '+e.httpStatus+'），正在处理结果';if(e.state==='frame_complete')action='图片已保存，继续调度剩余分镜';if(e.state==='failed')action='本幕失败，可修改本册分镜或图像服务后继续；其他待办自动推进';if(e.state==='unknown')action='本幕结果不明，不自动重发；可查看已有结果或确认风险后继续';
     if(e.state==='retry_wait')action='请求失败，'+new Date(e.retryAt*1000).toLocaleTimeString()+' 自动重试（已安排第 '+e.retryCount+' 次自动重试）';
     const message=title+scene+' · '+action+attempt+(model?' · 模型 '+model:'')+(['input_read','request_ready'].includes(e.state)?' · 等待上限 '+e.timeout+' 秒':'')+(e.error?'\n'+e.error.message:'');
     const attemptKey=e.jobId+':'+e.index+':'+e.frameAttempt,entry={time:e.time*1000,level:e.error?'error':'info',message,request:e.request,eventId:e.id,attemptKey};
@@ -205,8 +205,8 @@ async function syncProductionActivity(result){
 }
 async function releaseHeldTasks(){
   const data=await foundationRequest('jobs'),held=data.jobs.filter(j=>j.state==='paused'&&state.queue.some(q=>q.serverId===j.id));
-  if(!held.length){await pollFoundationJobs();return toast('没有暂存画册。失败或停止的任务请在各自卡片确认继续；并发不会自动重发它们。')}
-  if(!await confirmAction('释放 '+held.length+' 本暂存画册？','这些任务恢复到顺序队列，并不会一起并行启动。需要并行时，在对应卡片手动启动。不会重发失败、未知或停止的分镜。','释放并执行'))return;
+  if(!held.length){await pollFoundationJobs();return toast('没有暂存画册。失败或停止的任务请在各自的生成任务上确认继续。')}
+  if(!await confirmAction('释放 '+held.length+' 本暂存画册？','这些任务回到顺序队列，依次生成。需要并行时，在对应的生成任务上手动启动。失败、未知或停止的分镜需要单独继续。','释放并执行'))return;
   for(const j of held)await foundationRequest('jobs/'+j.id,{action:'resume'});
   await runQueue();await foundationRequest('jobs/scheduler',{action:'resume'});await pollFoundationJobs();
 }
@@ -220,7 +220,7 @@ function saveLiveStoryboardFrame(plan,frame){
   try{source.liveInputs[index]={input:foundationFrameInput(fresh,q.rowSnapshot||source.row,q.bookId,index),savedAt:Date.now()}}
   catch(e){source.liveInputs[index]={error:e.message,savedAt:Date.now()}}
 }
-function liveStoryboardNotice(plan){const q=liveStoryboardTask(plan);return q?`<p class="help">本册修改作用于「${esc(bookBy(q.bookId).title)}」的这个画册版本，不会自动跳到较早任务。保存成功后，尚未发送的分镜自动读取；在途请求不变，已完成图片不重画。共享模板不影响已入队画册。</p>`:''}
+function liveStoryboardNotice(plan){const q=liveStoryboardTask(plan);return q?`<p class="help">本册修改作用于「${esc(bookBy(q.bookId).title)}」的这个画册版本。保存后，尚未发送的分镜会用新内容生成；已完成的图片需要重画才会更新。</p>`:''}
 
 function queueErrorSummary(q){
   if(q.serverFailureLimit)return '已达到连续失败 '+q.serverFailureLimit+' 次上限，当前画册已暂停自动请求。已发出的请求仍可完成；请检查服务后手动继续未完成分镜。';
@@ -230,12 +230,12 @@ function queueErrorSummary(q){
   if(q.serverReadyAt)return rt.paused||q.status==='paused'?'自动重试已暂停，恢复调度后按原计划继续。':'上游暂时失败，已安排自动重试；其他可执行分镜继续。';
   if(q.serverRunningCount)return prefix+'失败信息已保留；其他分镜仍在执行，请等待当前请求结束。';
   const status=Number((q.error||'').match(/HTTP\s+(\d{3})/)?.[1]);
-  if(status===401||status===403)return prefix+'渠道鉴权失败，请检查密钥或权限，保存后继续。';
+  if(status===401||status===403)return prefix+'图像服务鉴权失败，请检查密钥或权限，保存后继续。';
   if(status===429)return prefix+'供应商限流（HTTP 429），不会自动重试，请稍后手动继续。';
   if(status===422)return prefix+'内容被拒绝并跳过；在原分镜编辑器修改本册，保存后继续。';
-  if(status>=400&&status<500)return prefix+'请求被拒绝（HTTP '+status+'），请检查本册分镜与渠道参数后继续。';
+  if(status>=400&&status<500)return prefix+'请求被拒绝（HTTP '+status+'），请检查本册分镜与图像服务参数后继续。';
   if(status>=500)return prefix+'供应商服务错误（HTTP '+status+'），自动尝试已结束，可手动继续。';
-  return prefix+'生成未完成，请检查本册输入或渠道配置。'+(q.error||'').slice(0,90);
+  return prefix+'生成未完成，请检查本册输入或图像服务配置。'+(q.error||'').slice(0,90);
 }
 
 async function startParallelTask(id){
@@ -259,9 +259,9 @@ function queueFrameStatesHTML(q){
 }
 
 function prepareLiveStoryboard(plan){const q=liveStoryboardTask(plan);if(q&&createUI.liveTaskId!==q.id){createUI.liveTaskId=q.id;createUI.sceneScope='plan'}}
-function storyboardScopeHTML(p,t,own){const q=liveStoryboardTask(p),selected=own?(q?'task:'+q.id:'plan'):'shared',tasks=state.queue.filter(x=>x.planId===p.id&&bookBy(x.bookId)?.sourceSnapshot&&(x.done<x.indices.length||x.id===q?.id));return `<div class="field"><label class="label" for="v3-scene-scope">修改范围</label><select id="v3-scene-scope">${opt('shared','修改共享分镜模板',selected)}${p.templateId===t?.id&&!tasks.length?opt('plan','仅修改当前画册这一幕',selected):''}${tasks.map(x=>opt('task:'+x.id,'画册：'+bookBy(x.bookId).title+' · '+new Date(x.createdAt).toLocaleTimeString(),selected)).join('')}</select>${liveStoryboardNotice(p)}</div>`}
+function storyboardScopeHTML(p,t,own){const q=liveStoryboardTask(p),selected=own?(q?'task:'+q.id:'plan'):'shared',tasks=state.queue.filter(x=>x.planId===p.id&&bookBy(x.bookId)?.sourceSnapshot&&(x.done<x.indices.length||x.id===q?.id));return `<div class="field"><label class="label" for="v3-scene-scope">修改范围</label><select id="v3-scene-scope">${opt('shared','修改共享分镜',selected)}${p.templateId===t?.id&&!tasks.length?opt('plan','仅修改当前画册这一幕',selected):''}${tasks.map(x=>opt('task:'+x.id,'画册：'+bookBy(x.bookId).title+' · '+new Date(x.createdAt).toLocaleTimeString(),selected)).join('')}</select>${liveStoryboardNotice(p)}</div>`}
 
 function liveStoryboardPreview(p,f){try{const q=liveStoryboardTask(p),live=liveStoryboardFrame(p,f);if(!live)return quietResolvedPrompt(p,f);const index=q.frames.indexOf(live),entry=bookBy(q.bookId).sourceSnapshot.liveInputs?.[index];return esc(entry?.error||entry?.input?.prompt||foundationFrameInput(live,q.rowSnapshot,q.bookId,index).prompt)}catch(e){return esc(e.message)}}
 
-function queueChannelLabel(q){const channels=q.serverChannels;if(!channels?.length)return '读取已保存渠道…';return channels.map(c=>c.available?`${c.title||c.provider} / ${c.model||'工作流'}`:'渠道配置需处理').join(' · ')}
+function queueChannelLabel(q){const channels=q.serverChannels;if(!channels?.length)return '读取已保存图像服务…';return channels.map(c=>c.available?`${c.title||c.provider} / ${c.model||'工作流'}`:'图像服务配置需处理').join(' · ')}
 if(typeof globalThis.ComfyComic!=='undefined'&&typeof installFoundation==='function')installFoundation();

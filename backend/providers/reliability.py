@@ -73,7 +73,7 @@ def failure_summary(text, terminal=False):
             "image_generation_user_error",
         )
     ) or ("moderation" in lower and "block" in lower):
-        return "触发内容安全审核：服务拒绝生成这一幕。请修改提示词后仅重跑本幕，其余分幕不受影响。"
+        return "触发内容安全审核：服务拒绝生成这一幕。请修改提示词后仅重跑本幕。"
     if _has_status(lower, 401) or "invalid_api_key" in lower or "incorrect api key" in lower:
         return "服务拒绝了密钥：请检查 API 密钥是否有效、过期或绑定了错误的服务。"
     if _has_status(lower, 402) or any(
@@ -92,11 +92,40 @@ def failure_summary(text, terminal=False):
         return "服务拒绝了请求参数（HTTP 400/422）：" + (detail or "请检查模型、尺寸、步数等参数是否符合该服务要求。")
     if any(_has_status(lower, code) for code in (500, 502, 503, 504)) or "bad gateway" in lower or "service unavailable" in lower:
         return "服务端暂时故障（HTTP 5xx）：上游服务或中转不可用，请稍后重跑本幕。"
+    network = _network_summary(lower)
+    if network:
+        return network
     if "text-only responses are not successful generations" in lower or "returned no image" in lower:
         return "服务只返回了文字，没有图片：请确认所选模型支持图像生成；Chat 协议的图像模型需要 modalities 包含 image。"
     if "timed out" in lower or "timeout" in lower:
         return "等待结果超时：上游可能仍在处理或已完成。请先在服务端核对，再决定是否重跑；可在队列运行设置中调大超时。"
     return raw[:500]
+
+
+_REFUSED = ("connection refused", "errno 111]", "errno 61]", "winerror 10061", "actively refused", "积极拒绝")
+_DNS = ("name or service not known", "nodename nor servname", "temporary failure in name resolution",
+        "getaddrinfo failed", "errno -2]", "errno -3]", "errno 11001]", "errno 8]", "no address associated with hostname")
+_UNREACHABLE = ("network is unreachable", "no route to host", "errno 101]", "errno 113]", "winerror 10051", "winerror 10065")
+_TLS = ("certificate_verify_failed", "certificate verify failed", "wrong version number", "ssl:", "sslerror", "tlsv1 alert")
+
+
+def _network_summary(lower):
+    """Plain-language text for requests that never reached the service."""
+    if any(x in lower for x in _REFUSED):
+        return "连接被拒绝：这个地址上没有正在运行的图像服务。请确认服务已启动，地址和端口正确（ComfyUI 默认 http://127.0.0.1:8188）。"
+    if any(x in lower for x in _DNS):
+        return "找不到服务器：地址中的域名无法解析。请检查地址拼写，以及网络或代理设置。"
+    if any(x in lower for x in _UNREACHABLE):
+        return "网络不通：无法到达服务地址。请检查网络、代理或防火墙设置。"
+    if any(x in lower for x in _TLS):
+        return "安全连接失败（SSL / 证书）：请确认地址是 http 还是 https，并检查系统时间和代理证书。"
+    if "urlopen error" in lower and ("timed out" in lower or "timeout" in lower):
+        return "连接超时：服务地址没有响应，请求没有发出。请确认地址正确、服务已启动，或检查网络和代理。"
+    if any(x in lower for x in ("remote end closed connection", "connection reset", "connection aborted", "broken pipe")):
+        if "urlopen error" in lower:
+            return "连接在发送请求时中断，请求没有完整发出。请检查网络或代理后重试。"
+        return "连接中断：服务在返回结果前断开了连接，请求可能已被接收。请先在服务端核对，再决定是否重跑。"
+    return ""
 
 
 def _detail(raw):
@@ -138,8 +167,26 @@ def result_unconfirmed(error, upstream=None):
         return False
     if upstream:
         return True
-    return (isinstance(error, (TimeoutError, ConnectionError, HTTPException))
-            or isinstance(error, URLError) and not isinstance(error, HTTPError))
+    if never_sent(error):
+        return False
+    return isinstance(error, (TimeoutError, ConnectionError, HTTPException))
+
+
+def never_sent(error):
+    """True when the request provably never reached the service, so nothing can have been billed.
+
+    urllib wraps only what fails while connecting and sending (refused connection, DNS, unreachable
+    network, TLS handshake, connect timeout) in ``URLError``; a response that breaks after the request
+    went out surfaces as the raw exception (``RemoteDisconnected``, ``TimeoutError``) and stays
+    unconfirmed. A refused connection or failed lookup can only happen before sending.
+    """
+    import socket
+    from urllib.error import URLError, HTTPError
+    if isinstance(error, HTTPError):
+        return False
+    if isinstance(error, URLError):
+        return True
+    return isinstance(error, (ConnectionRefusedError, socket.gaierror))
 
 
 def fatal_page_failure(error):
