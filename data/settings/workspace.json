@@ -13,7 +13,8 @@
           "llm": false,
           "logs": false,
           "extensions": false,
-          "marketplace": false
+          "marketplace": false,
+          "developer": false
         },
         "features": {
           "assistant": true,
@@ -24,7 +25,8 @@
           "theme": "dark",
           "density": "comfortable",
           "reduceMotion": false,
-          "showMetrics": false
+          "showMetrics": false,
+          "fontScale": "standard"
         },
         "reader": {
           "defaultMode": "focus"
@@ -68,7 +70,14 @@
           "demoCleanupVersion": 2,
           "bookOrder": {
             "collection_summer": [
-              "edition_letter"
+              "edition_letter",
+              "album_026f0e806b3a409aa878dabb45d8de50",
+              "album_588bafcd010f49d99e1460251ac6428c",
+              "album_b9a5527377874dd4b2657b3563f1c139",
+              "album_e9f199e618524e6899c4d697f98daaee",
+              "album_f725fe7d59e54eb0a1633e3c36e9376c",
+              "book_1b07b003-041a-404a-87d3-327c18985ff3",
+              "book_5213ff35-ba03-416b-ab66-17a40177853c"
             ]
           },
           "collectionSort": "manual",
@@ -171,22 +180,45 @@
   "queue": {},
   "ordering": {
     "templates": [
-      "story_journey12"
+      "story_journey12",
+      "story_3dfe5619-28ff-4a69-b881-ceed190610be",
+      "story_7dce2629-6fc2-474d-a026-6071a0c022d2",
+      "story_f45195ae-5f6f-4fe7-8e4a-1488de8c1a0d",
+      "storyboard_6a8ae57bd4df43539690eac3b7a71b4a",
+      "storyboards_50565bedcf5d46d892848fad25d1bf01"
     ],
     "savedGalleries": [
+      "album_026f0e806b3a409aa878dabb45d8de50",
+      "album_588bafcd010f49d99e1460251ac6428c",
+      "album_b9a5527377874dd4b2657b3563f1c139",
+      "album_e9f199e618524e6899c4d697f98daaee",
+      "album_f725fe7d59e54eb0a1633e3c36e9376c",
+      "book_1b07b003-041a-404a-87d3-327c18985ff3",
+      "book_5213ff35-ba03-416b-ab66-17a40177853c",
       "edition_letter"
     ],
     "rows": [
-      "character_nanami"
+      "character_nanami",
+      "character_campus_pair",
+      "character_hello_another_me",
+      "rows_d68d91eb18f64d829818080f68440059"
     ],
     "projects": [
       "collection_summer"
     ],
     "plans": [
-      "draft_letter"
+      "draft_letter",
+      "plan_campus_system_24",
+      "plan_hello_another_me",
+      "plans_0bfaaa70c2f44e878069cd06a39cd828"
     ],
     "characters": [
-      "setting_nanami"
+      "setting_nanami",
+      "characters_b7ea26e8986846219c773c6ba80d6d5a",
+      "preset_22508eed-6dad-4734-a218-0d8c12d87ee2",
+      "preset_5e84bbf6-20d2-4e3a-bfdc-76923df70f02",
+      "setting_campus_pair",
+      "setting_hello_another_me"
     ],
     "scenes": [],
     "exportTemplates": [
@@ -199,14 +231,25 @@
       "export-flip"
     ],
     "comfyWorkflows": [
-      "wf_3aa839c7-6c93-4f93-a0c3-9399e1242916"
+      "wf_3aa839c7-6c93-4f93-a0c3-9399e1242916",
+      "wf_a56d1f8e-14b9-4752-826b-d277d0094d47",
+      "wf_cd634804-bc38-4e41-99a1-f787c2182db8"
     ],
     "sessions": [
-      "chat_letter"
+      "chat_letter",
+      "chat_eb546791-8a79-4418-853d-9d9e79efed03"
     ],
-    "queue": [],
+    "queue": [
+      "task_2a3ae55c-739f-4d30-9dfe-85d989724f61",
+      "task_45d08489-c962-48e3-8cd1-8572e21ae759"
+    ],
     "variableSets": [
-      "setting_nanami"
+      "setting_nanami",
+      "characters_b7ea26e8986846219c773c6ba80d6d5a",
+      "preset_22508eed-6dad-4734-a218-0d8c12d87ee2",
+      "preset_5e84bbf6-20d2-4e3a-bfdc-76923df70f02",
+      "setting_campus_pair",
+      "setting_hello_another_me"
     ]
   },
   "aliases": [],

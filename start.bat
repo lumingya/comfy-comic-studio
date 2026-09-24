@@ -3,6 +3,9 @@ chcp 65001 >nul
 title Mio v3.2.0-dev.1
 cd /d "%~dp0"
 
+REM 启用外部 API（至少32位令牌）
+if not defined MIO_API_TOKEN set "MIO_API_TOKEN=mio-comic-studio-token-0123456789abcdef"
+
 if exist ".venv\Scripts\python.exe" goto use_venv1
 if exist "venv\Scripts\python.exe" goto use_venv2
 
