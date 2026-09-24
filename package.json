@@ -48,7 +48,7 @@
     "test:assembly": "node tests/assembly_workshop.mjs",
     "test:review": "node tests/review.mjs",
     "test:export-profiles": "node tests/export_profiles.mjs",
-    "test:current": "npm run test:production-scenes && npm run lint && npm run test:contracts && npm run test:py && npm run test:assembly && npm run test:architecture && npm run test:reading-stage && npm run test:presentation && npm run test:pictures && npm run test:review && npm run test:export-profiles && npm run test:smoke && npm run test:mobile && npm run test:audit-round2 && npm run test:first-use && npm run test:locale && npm run test:inline-keys && npm run test:home",
+    "test:current": "npm run test:production-scenes && npm run lint && npm run test:contracts && npm run test:py && npm run test:assembly && npm run test:architecture && npm run test:reading-stage && npm run test:presentation && npm run test:pictures && npm run test:review && npm run test:export-profiles && npm run test:smoke && npm run test:dialogs && npm run test:mobile && npm run test:audit-round2 && npm run test:first-use && npm run test:locale && npm run test:inline-keys && npm run test:home",
     "test:architecture": "node tests/architecture.mjs",
     "test:legacy": "npm run lint && npm run test:contracts && npm run test:py && npm run test:smoke && npm run test:assistant && npm run test:templates && npm run test:presentation && npm run test:images && npm run test:foundation && npm run test:mobile && npm run test:experience && npm run test:recovery && npm run test:pools && npm run test:lifecycle && npm run test:pictures && npm run test:reader-preview && npm run test:afterglow && npm run test:storyboard-import && npm run test:native && npm run test:seamless && npm run test:contextual-sharing && npm run test:complete && npm run test:preset-delete && npm run test:preset-isolation && npm run test:rename-retry && npm run test:live-settings && npm run test:reading-stage && npm run test:workbench && npm run test:ecosystem",
     "test:distribution": "python tools/check_distribution.py",
@@ -62,7 +62,8 @@
     "test:album-live": "node tests/album_live_sync.mjs",
     "test:production-scenes": "node tests/production_scene_ui.mjs",
     "test:desktop-refresh": "node tests/desktop_refresh.mjs",
-    "test:slots-v3": "python -m unittest tests.test_workflow_slots tests.test_workflow_slots_v3 -v && node tests/workflow_slots_contract.mjs && node tests/workflow_slots_v3_ui.mjs"
+    "test:slots-v3": "python -m unittest tests.test_workflow_slots tests.test_workflow_slots_v3 -v && node tests/workflow_slots_contract.mjs && node tests/workflow_slots_v3_ui.mjs",
+    "test:dialogs": "node tests/dialog_escape.mjs"
   },
   "devDependencies": {
     "eslint": "^8.57.1",

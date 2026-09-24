@@ -992,13 +992,16 @@ document.addEventListener('change',async e=>{const el=e.target;try{
 window.addEventListener('click',e=>{if(e.target instanceof HTMLDialogElement){e.preventDefault();e.stopImmediatePropagation();return}if(e.target.closest('.assistant-orb')&&(createUI.orbIgnoreClick||createUI.orbDragging)){e.preventDefault();e.stopImmediatePropagation()}},true);
 
 
-window.addEventListener('cancel',e=>{if(e.target instanceof HTMLDialogElement){e.preventDefault();e.stopImmediatePropagation()}},true);
+/* Esc closes the top dialog through the same path as its visible close button. Dialogs with their own cancel handler
+   (confirm, reader, template studio, guides, image studio) keep it; the generic modal flushes its editor first.
+   The welcome dialog is a required first step and stays open; backdrop clicks still never close anything. */
+window.addEventListener('cancel',e=>{const d=e.target;if(!(d instanceof HTMLDialogElement))return;if(d.id==='welcome-dialog'){e.preventDefault();e.stopImmediatePropagation();return}if(d.id==='modal'){e.preventDefault();flushEditor();closeModal()}},true);
 
 
-window.addEventListener('close',e=>{if(e.target===$('#welcome-dialog')){e.stopImmediatePropagation();if($('#welcome-dialog').contains($('#toasts')))document.body.append($('#toasts'))}},true);
+window.addEventListener('close',e=>{const d=e.target;if(!(d instanceof HTMLDialogElement))return;if(d.contains($('#toasts')))document.body.append($('#toasts'));if(d===$('#welcome-dialog'))e.stopImmediatePropagation()},true);
 
 
-window.addEventListener('keydown',e=>{if(e.key==='Escape'&&(document.querySelector('dialog[open]')||detailUI.projectOpen)){e.preventDefault();e.stopImmediatePropagation();return}if(e.target.closest('input,textarea,select,[contenteditable]')||document.querySelector('dialog[open]'))return;if(e.altKey&&!e.ctrlKey&&!e.metaKey&&/^[0-5]$/.test(e.key)){e.preventDefault();e.stopImmediatePropagation();navigate(({0:9,1:0,2:1,3:3,4:4,5:5})[e.key])}},true);
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#welcome-dialog')?.open){e.preventDefault();e.stopImmediatePropagation();return}if(e.key==='Escape')return;if(e.target.closest('input,textarea,select,[contenteditable]')||document.querySelector('dialog[open]'))return;if(e.altKey&&!e.ctrlKey&&!e.metaKey&&/^[0-5]$/.test(e.key)){e.preventDefault();e.stopImmediatePropagation();navigate(({0:9,1:0,2:1,3:3,4:4,5:5})[e.key])}},true);
 
 
 window.addEventListener('resize',()=>{const orb=$('.assistant-orb');if(orb){orb.style.right=clamp(parseFloat(orb.style.right)||27,12,Math.max(12,innerWidth-58))+'px';orb.style.bottom=clamp(parseFloat(orb.style.bottom)||49,40,Math.max(40,innerHeight-58))+'px'}});

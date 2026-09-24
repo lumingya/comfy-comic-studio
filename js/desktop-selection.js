@@ -138,7 +138,10 @@ function installDesktopSelection() {
     const dialog=document.querySelector('dialog[open]');if(dialog&&!dialog.contains(c.root))return;
     if(typeof contextMenuOpen==='function'&&contextMenuOpen())return;
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='a'){e.preventDefault();e.stopImmediatePropagation();c.s.set(new Set(items(c).map(c.s.key)));commit(c)}
-    if(e.key==='Escape'&&(c.s.get().size||gesture)){e.preventDefault();e.stopImmediatePropagation();stop(true);c.s.set(new Set());commit(c)}
+    // The wizard's preset picks are form state, not a transient selection: there Esc only cancels a marquee in progress
+    // and otherwise falls through, so the dialog closes as usual.
+    if(e.key==='Escape'&&c.s.root==='.designer-presets'){if(gesture){e.preventDefault();e.stopImmediatePropagation();stop(true);commit(c)}}
+    else if(e.key==='Escape'&&(c.s.get().size||gesture)){e.preventDefault();e.stopImmediatePropagation();stop(true);c.s.set(new Set());commit(c)}
     if(e.key==='Delete'&&c.s.get().size&&c.s.remove&&!e.altKey&&!e.ctrlKey&&!e.metaKey){e.preventDefault();e.stopImmediatePropagation();const ids=[...c.s.get()];Promise.resolve(c.s.remove(ids)).catch(error=>{if(typeof toast==='function')toast(error.message||'操作未完成。','error')})}
     if(e.key==='Enter'){
       const focusedBtn=document.activeElement?.closest?.('button,[data-act]');
