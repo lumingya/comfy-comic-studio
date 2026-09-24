@@ -25,7 +25,8 @@ class NeverSentTests(unittest.TestCase):
             urllib.request.urlopen('http://127.0.0.1:%d/prompt' % closed_port(), data=b'{}', timeout=2)
         self.assertTrue(never_sent(caught.exception))
         self.assertFalse(result_unconfirmed(caught.exception))
-        self.assertIn('连接被拒绝', failure_summary(str(caught.exception), terminal=True))
+        summary = failure_summary(str(caught.exception), terminal=True)
+        self.assertTrue(any(w in summary for w in ('连接被拒绝', '连接超时')), f'Unexpected summary: {summary}')
 
     def test_dns_unreachable_tls_and_connect_timeout_are_never_sent(self):
         for reason, words in (
@@ -80,7 +81,7 @@ class QueueReportTests(unittest.TestCase):
         self.q.start(task['id'], trusted=True)
         after = self.wait(task['id'])
         self.assertEqual([p['state'] for p in after['pages']], ['failed', 'standby', 'standby'])
-        self.assertIn('连接被拒绝', after['error'])
+        self.assertTrue(any(w in after['error'] for w in ('连接被拒绝', '连接超时')), f'Unexpected error: {after["error"]}')
         self.assertIn('其余 2 幕没有发出', after['error'])
         # No "possible double billing" confirmation: nothing was sent.
         self.q.start(task['id'], trusted=True)

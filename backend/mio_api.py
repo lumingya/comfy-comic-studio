@@ -192,7 +192,7 @@ def openapi():
             operation['operationId'] = method + '_' + route.replace('/', '_').replace('.', '_')
             success_schema = {'type': 'object'} if route == 'openapi.json' else {
                 'type': 'object', 'required': ['data', 'requestId'], 'properties': {
-                    'data': result_schemas[route], 'requestId': {'type': 'string'}}}
+                    'data': result_schemas.get(route, {'type': 'object'}), 'requestId': {'type': 'string'}}}
             operation['responses'] = {str(code): {'description': 'Success' if code == 200 else 'API error',
                 'content': {'application/json': {'schema': success_schema if code == 200 else ref('ErrorEnvelope')}}}
                 for code in ((200, 400, 401, 403, 404, 413, 429, 500, 502, 503) if method == 'post' else (200, 400, 401, 403, 404, 500, 503))}
