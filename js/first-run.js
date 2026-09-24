@@ -3,7 +3,7 @@
 const firstRunUI={checks:new Map(),keyNotices:new Set(),checking:false};
 function firstRunHome(){
  if(state.settings.presentation.hideFirstRun)return `<div class="first-run-reopen">${btn('首次使用指引','help','first-run-show','','ghost small')}</div>`;
- return `<section class="first-run" aria-labelledby="first-run-title"><header><div><h2 id="first-run-title">初光映格，微墨生花</h2><p>在生成任务上点「开始」才会请求图像服务；费用由所选图像服务决定。</p></div>${btn('收起指引','close','first-run-hide','','ghost small')}</header><div class="first-run-paths">${[['comfyui','ComfyUI','连接已运行的服务，导入 API 工作流。','nodes'],['novelai','NovelAI','保存图像 API 密钥，无需工作流。','image'],['openai','OpenAI 兼容','填写基础地址，选模型与接口协议。','link']].map(([id,title,text,ic])=>`<button class="first-run-path" data-act="first-run-provider" data-provider="${id}">${icon(ic)}<span><strong>我使用 ${title}</strong><small>${text}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></section>`;
+ return `<section class="first-run" aria-labelledby="first-run-title"><header><div><h2 id="first-run-title">初光映格，微墨生花</h2><p>在生成任务上点「开始」才会请求图像服务；费用由所选图像服务决定。</p></div>${btn('收起指引','close','first-run-hide','','ghost small')}</header><div class="first-run-paths">${[['comfyui','ComfyUI','连接已运行的服务，导入 API 工作流。','nodes'],['novelai','NovelAI','保存图像 API 密钥，无需工作流。','image'],['openai','OpenAI 兼容','填写基础地址，选模型与接口协议。','link']].map(([id,title,text,ic])=>`<button class="first-run-path" data-act="first-run-provider" data-provider="${id}">${icon(ic)}<span><strong>我使用 ${title}</strong><small>${text}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div>${homeChecklistHTML()}</section>`;
 }
 /* Mirrors backend/mio_credentials.is_private_host: loopback, RFC 1918 / link-local / ULA and LAN-style names may use plain HTTP. */
 function isPrivateHost(hostname){
@@ -132,10 +132,6 @@ function assemblyPreflightHTML(items=designerChecks()){
  return `<div id="designer-recap" class="designer-recap" role="status">${body}</div>`;
 }
 function installFirstRun(){
- [{"title": "选择图像服务", "headline": "连接你的图像服务。", "description": "在图像服务配置中选择 ComfyUI、NovelAI 或 OpenAI 兼容服务。", "checks": ["填写服务地址。", "选择模型并填写 API Key，或导入 ComfyUI API 工作流。"]}, {"title": "管理画册集", "headline": "为每个故事留一个位置。", "description": "使用顶部菜单新建或切换画册集。", "checks": ["新建画册集并填写名称。", "在画册集中整理和阅读作品。"]}, {"title": "编写分镜", "headline": "从一个镜头开始。", "description": "在创作工坊新建分镜，填写画面提示词与台词。", "checks": ["添加或调整分幕。", "选择角色、服装和画风预设。"]}, {"title": "装配与生成", "headline": "把分镜变成画面。", "description": "选择图像服务、分镜和预设，添加生成任务。", "checks": ["在装配向导中确认配置。", "在生成任务上点击开始，查看分幕进度。"]}, {"title": "阅读与编辑", "headline": "让每一帧更完整。", "description": "打开画册，调整图片、气泡和文字。", "checks": ["在阅读器中选择页面。", "点击编辑图片，保存修改。"]}, {"title": "导出画册", "headline": "把故事分享出去。", "description": "选择展示模板，导出 HTML、图片 ZIP 或 PDF。", "checks": ["选择版式与主题色。", "选择导出格式。"]}, {"title": "分享模板", "headline": "在 GitHub 上分享创作资源。", "description": "选择模板和目标仓库，上传或下载模板包。", "checks": ["填写仓库、分支和文件路径。", "检查文件后提交。"]}].forEach((copy,i)=>Object.assign(guideSteps[i],copy));
- Object.assign(guideSteps[0],{action:"first-run-config",label:"配置图像服务",icon:"settings"});
- Object.assign(guideSteps[3],{action:"first-run-queue",label:"打开生成任务",icon:"list"});
- guideTaskStatus=()=>"";
  const previous=handleAction;handleAction=async function(action,d={},el){
   if(action==='first-run-config'||action==='first-run-queue'){if($('#guide-dialog').open)closeServiceDialog('guide-dialog');if(action==='first-run-config')navigate(3);else{workshop.view='production';navigate(1);await refreshProduction()}return}
   if(action==='first-run-hide'||action==='first-run-show'){state.settings.presentation.hideFirstRun=action==='first-run-hide';save();render();return}

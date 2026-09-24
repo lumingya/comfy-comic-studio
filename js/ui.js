@@ -629,29 +629,38 @@ function githubLocationFields(includeToken=true){const d=releaseUI.githubDraft;r
 
 function guidePreferences(){return state.settings.tutorial}
 
-function guideTaskStatus(index){const t=guidePreferences();if(index===0)return disk.root&&rt.saved?'已连接并写入本地目录。':'尚未落盘，也可以先在临时会话中练习。';if(index===3)return releaseUI.practiceBusy?'正在本地生成练习分镜...':bookBy(t.practiceBookId)?.status==='complete'?'三幕练习已生成，可进入下一步阅读。':'练习会新建一个独立的画册集。';if(index===4)return criticReadyLabel();if(index===6)return t.publishedAt?'已完成过一次 GitHub 提交。':'上传是可选步骤。';return ''}
 
 
+/* T9 · B6: `step` (a row index or a checklist id) scrolls to that row and focuses its button. */
 function openQuickStart(step=null){
-  if(step!==null)releaseUI.guideStep=clamp(Number(step),0,guideSteps.length-1);else releaseUI.guideStep=clamp(guidePreferences().lastStep||0,0,guideSteps.length-1);
-  guidePreferences().seen=true;try{localStorage.setItem('cc-quickstart-v25','seen')}catch(e){}save();renderQuickStart();if(!$('#guide-dialog').open)$('#guide-dialog').showModal();
+  guidePreferences().seen=true;try{localStorage.setItem('cc-quickstart-v25','seen')}catch(e){}save();renderQuickStart();
+  const d=$('#guide-dialog');if(!d.open)d.showModal();
+  if(step===null)return;const rows=[...d.querySelectorAll('[data-check]')],row=typeof step==='number'?rows[step]:rows.find(r=>r.dataset.check===step);
+  if(row){row.scrollIntoView({block:'nearest'});row.querySelector('button')?.focus()}
 }
 
 
+/* Real progress: the offline practice (optional) and the setup checklist, each with the button that does it; reading,
+   export and sharing are the 进阶 links. Redrawn in place while the practice runs and after in-place fixes. */
 function renderQuickStart(){
-  const index=releaseUI.guideStep,step=guideSteps[index],prefs=guidePreferences(),book=guideBook();
-  $('#guide-dialog').innerHTML=`<header class="modal-head">${icon('help')}<div class="grow"><h2 id="guide-title">快速开始 · 从灵感到一本画册</h2><p>约 5 分钟 · 可以在侧栏重新打开。</p></div>${ibtn('close','guide-close','暂停教程')}</header><div class="guide-progress"><i style="width:${(index+1)/guideSteps.length*100}%"></i></div><div class="guide-layout"><nav class="guide-sidebar" aria-label="教程步骤"><p>GET STARTED</p>${guideSteps.map((s,i)=>`<button class="guide-step ${i===index?'active':''} ${prefs.readSteps.includes(i)?'complete':''}" data-act="guide-step" data-index="${i}" ${i===index?'aria-current="step"':''}><span class="step-no">${pad(i+1)}</span><span>${s.title}</span></button>`).join('')}</nav><div class="guide-main"><div class="service-eyebrow">STEP ${pad(index+1)} / ${pad(guideSteps.length)}</div><h3>${step.headline}</h3><p class="guide-description">${step.description}</p>${index===0?`<div class="guide-art">${icon('folder')}<div class="guide-mini-steps">工作室 / 画册集 / 画册 / 图片<br><span class="muted">分镜 · 参考图 · 版本 · 导出模板</span></div></div>`:index===4?`<div class="guide-art">${[0,1,2].map(i=>imgTag(svgArt(i,200+i),'本地练习分镜 '+(i+1))).join('')}<span class="tiny muted">离线 SVG<br>三幕完整流程</span></div>`:''}<ul class="guide-checklist">${step.checks.map(text=>`<li>${icon('check')}<span>${text}</span></li>`).join('')}</ul><div class="row wrap" style="margin-top:23px">${btn(step.label,step.icon,step.action,releaseUI.practiceBusy&&index===3?'disabled':'','primary')}${index===4?btn('填写视觉审校 API','settings','guide-critic'):''}${index===5?btn('自定义 HTML 模板','edit','guide-template'):''}</div><p class="guide-task-status">${esc(guideTaskStatus(index))}</p>${index===3?'':''}</div></div><footer class="service-footer"><span class="grow service-status">${index+1} / ${guideSteps.length}</span>${btn('上一步','','guide-prev',index===0?'disabled':'')}${btn(index===guideSteps.length-1?'完成教程':'下一步','arrow',index===guideSteps.length-1?'guide-finish':'guide-next','','primary')}</footer>`;
+  const d=$('#guide-dialog'),steps=quickStartSteps(),required=steps.filter(s=>!s.optional),done=required.filter(s=>s.state==='done').length,next=(done?required:steps).find(s=>s.fix&&s.state!=='done');
+  const active=d.contains(document.activeElement)?document.activeElement:null,focused=active?active.closest('[data-check]')?.dataset.check||'':null;
+  d.innerHTML=`<header class="modal-head">${icon('help')}<div class="grow"><h2 id="guide-title" tabindex="-1">快速开始 · 从灵感到一本画册</h2><p>约 5 分钟 · 之后可以在右上角的“?”里重新打开。</p></div>${ibtn('close','guide-close','关闭快速开始')}</header><div class="guide-progress"><i style="width:${required.length?done/required.length*100:0}%"></i></div>
+  <div class="quickstart-body"><ol class="help-checks quickstart-steps" aria-label="快速开始步骤">${steps.map(s=>setupCheckItemHTML(s,{intro:s.intro,primary:s===next})).join('')}</ol>
+  <section class="quickstart-more" aria-labelledby="quickstart-more-title"><h3 id="quickstart-more-title">进阶</h3><div class="quickstart-more-list">${guideSteps.filter(s=>s.more).map(s=>`<button type="button" class="quickstart-more-item" data-act="${s.action}">${icon(s.icon)}<span><strong>${s.title}</strong><small>${s.intro}</small></span></button>`).join('')}</div></section></div>
+  <footer class="service-footer"><span class="grow service-status">${esc(localeString('已完成 {done} / {total}',{done,total:required.length}))}</span>${btn('关闭','','guide-close','','ghost')}</footer>`;
+  localizeWorkspace(d);
+  if(focused!==null)(d.querySelector(`[data-check="${focused}"] button`)||d.querySelector('#guide-title'))?.focus({preventScroll:true});
 }
 
 
-function markGuidePage(){const p=guidePreferences();if(!p.readSteps.includes(releaseUI.guideStep))p.readSteps.push(releaseUI.guideStep);p.lastStep=releaseUI.guideStep;save()}
 
 async function guideDestination(action){
-  markGuidePage();$('#guide-dialog').close();
+  if($('#guide-dialog').open)closeServiceDialog('guide-dialog');
   if(action==='storage')return handleAction('storage-settings',{});
   if(action==='project')return handleAction('new-project',{});
   if(action==='storyboard'){if(!workspaceVisible(1)){studioUI.settingsTab='modules';navigate(5);toast('分镜工作区已隐藏，可先在模块管理中重新启用。');return}navigate(1);return}
-  if(action==='reader'||action==='export'){const b=guideBook();if(!b){openQuickStart(3);toast('先创建三幕练习或生成你的第一本画册。');return}if(action==='reader'){changeProject(b.projectId);openReader(b.id)}else showExportHub([b.id]);return}
+  if(action==='reader'||action==='export'){const b=guideBook();if(!b){openQuickStart('practice');toast('先创建三幕练习或生成你的第一本画册。');return}if(action==='reader'){changeProject(b.projectId);openReader(b.id)}else showExportHub([b.id]);return}
   if(action==='critic'){openCriticSettings();return}
   if(action==='template'){openTemplateStudio();return}
   if(action==='github'){openGithubPublisher(null,'manual');return}

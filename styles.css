@@ -1505,3 +1505,40 @@ html:is([data-font-scale=large],[data-font-scale=xlarge]) :is(.wf-stage-value,.w
   html[data-nav-collapsed] #sidebar .nav-item:has(>.nav-short)>span:not(.nav-short){display:none!important}
   html[data-nav-collapsed] #sidebar .nav-item>.nav-short{display:block!important;font-size:.75rem;line-height:1.25;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 }
+/* T9 · 开箱检查 on Home, the production page and the quick start (rows come from setupCheckItemHTML). */
+.help-check.is-optional .help-check-mark{border-style:dashed}
+.help-check.is-checking .help-check-mark{border-style:dashed;color:var(--soft)}
+.help-check-intro{font-size:.8125rem;line-height:1.7;color:var(--soft)}
+.help-check-tag{margin-left:8px;padding:0 6px;border:1px solid var(--line);border-radius:4px;font-size:.75rem;font-style:normal;font-weight:400;color:var(--muted)}
+.guide-dialog h2:focus{outline:none}
+.help-check>.btn.small{min-height:30px;padding:0 11px;font-size:.75rem;white-space:nowrap}
+.home-checklist{margin-top:22px;padding-top:20px;border-top:1px solid var(--line)}
+.home-checklist h3{margin:0;font-size:.9375rem;font-weight:600}
+.home-checklist h3:focus{outline:none}
+.checklist-progress{font-size:.75rem;color:var(--amber)}
+.home-checklist .help-checks{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 28px}
+.home-checklist.is-complete{display:flex;align-items:center;gap:10px;font-size:.8125rem;color:var(--soft)}
+.home-checklist.is-complete .help-check-mark,.help-check.is-done .help-check-mark{background:var(--tint);border-color:var(--accent2);color:var(--accent)}
+.setup-remaining{display:inline-flex;align-items:center;gap:6px;margin-top:9px;padding:3px 10px;border:1px solid var(--amber);border-radius:999px;background:transparent;color:var(--amber);font-size:.75rem;cursor:pointer}
+.setup-remaining .icon{width:13px;height:13px}
+.setup-remaining:hover,.setup-remaining:focus-visible{background:var(--panel2)}
+.guide-dialog{width:720px}
+.quickstart-body{padding:8px 28px 22px;overflow:auto;max-height:calc(100dvh - 230px)}
+.quickstart-steps{gap:0}
+.quickstart-steps .help-check{padding:14px 0;border-bottom:1px dashed var(--line)}
+.quickstart-steps .help-check-body{gap:4px}
+.quickstart-more{margin-top:20px}
+.quickstart-more h3{margin:0 0 10px;font-size:.8125rem;font-weight:600;color:var(--soft)}
+.quickstart-more-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.quickstart-more-item{display:flex;align-items:flex-start;gap:10px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);text-align:left;cursor:pointer}
+.quickstart-more-item:hover,.quickstart-more-item:focus-visible{border-color:var(--accent)}
+.quickstart-more-item .icon{flex-shrink:0;width:16px;height:16px;margin-top:2px;color:var(--accent2)}
+.quickstart-more-item strong{display:block;font-size:.8125rem;font-weight:600}
+.quickstart-more-item small{display:block;margin-top:4px;font-size:.75rem;line-height:1.6;color:var(--muted)}
+@media (max-width:760px){
+  .home-checklist .help-checks{grid-template-columns:1fr}
+  .quickstart-body{padding:4px 18px 18px;max-height:calc(100dvh - 250px)}
+  .quickstart-more-list{grid-template-columns:1fr}
+  .help-check>.btn.small{min-height:44px}
+  .home-checklist .help-check>.btn,.quickstart-steps .help-check>.btn{grid-column:2;justify-self:start}
+}

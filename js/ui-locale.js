@@ -2015,7 +2015,32 @@ function extendCurrentLocaleCatalog(catalog){Object.assign(catalog.messages,{
   "标题与文件 ID 分离；不因改名移动或覆盖原图。": "Titles are separate from file IDs; renaming never moves or overwrites images.",
   "开发者选项": "Developer options",
   "在设置里显示“开发者”分类：原生配置接口、数据目录结构、服务端任务与素材索引。": "Shows the Developer section in Settings: native config API, data folder layout, server tasks and asset index.",
-  "显示开发者选项": "Show developer options"
+  "显示开发者选项": "Show developer options",
+  "还没有检测 ComfyUI 连接。": "The ComfyUI connection has not been checked yet.",
+  "未开始": "Not started",
+  "可选": "Optional",
+  "开箱检查已全部完成 · {done} / {total}": "Setup checklist complete · {done} / {total}",
+  "开箱检查还差 {n} 项": "Setup checklist: {n} left",
+  "离线练习": "Offline practice",
+  "正在生成三幕练习 · {done} / 3": "Generating the three-scene practice · {done} / 3",
+  "打开练习画册": "Open the practice book",
+  "会新建画册集「{name}」。": "Creates the collection “{name}”.",
+  "先用离线练习体验": "Try the offline practice",
+  "打开离线练习画册": "Open the offline practice book",
+  "用本地示意图生成一本三幕画册，走一遍从分镜到阅读的流程。": "Generate a three-scene book from local sketches and walk through storyboard to reader.",
+  "选择 ComfyUI、NovelAI 或 OpenAI 兼容服务，填写地址或 API Key。": "Choose ComfyUI, NovelAI or an OpenAI-compatible provider and enter its address or API key.",
+  "导入 ComfyUI 的 API 工作流，把提示词和种子映射到节点。": "Import a ComfyUI API workflow and map the prompt and seed to its nodes.",
+  "工作流用到的模型要在 ComfyUI 里装好。": "The models the workflow uses must be installed in ComfyUI.",
+  "写一个分镜，再准备覆盖它全部变量的预设。": "Write a storyboard, then presets that cover all of its variables.",
+  "用图像服务生成第一本画册。": "Generate your first book with the image provider.",
+  "约 5 分钟 · 之后可以在右上角的“?”里重新打开。": "About 5 minutes · reopen it later from the “?” at the top right.",
+  "关闭快速开始": "Close quick start",
+  "快速开始步骤": "Quick start steps",
+  "进阶": "Next steps",
+  "开箱检查的进度，以及离线三幕练习。": "Setup checklist progress and the offline three-scene practice.",
+  "用本地示意图生成一本三幕画册，完成后直接打开阅读器。": "Generates a three-scene book from local sketches and opens it in the reader.",
+  "快速开始覆盖开箱检查的每一项": "Quick start covers every setup checklist item",
+  "打开快速开始": "Open quick start"
 });return catalog}
 
 function translateCurrentLocale(text){

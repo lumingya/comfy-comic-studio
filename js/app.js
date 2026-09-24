@@ -558,7 +558,7 @@ for(const dialog of $$('dialog'))dialog.addEventListener('close',()=>{hideTip();
 window.addEventListener('beforeunload',e=>{if(!rt.booting&&(disk.busy||disk.revision>disk.savedRevision||studioUI.editorDirty)){e.preventDefault();e.returnValue=''}});
 
 
-const releaseUI={composerSize:176,composerExpanded:false,composerObserver:null,composerRAF:null,criticDraft:null,criticTesting:false,criticTest:null,criticController:null,criticBatch:null,criticFingerprint:'',criticCache:new Map(),githubToken:'',githubDraft:null,githubBusy:false,githubResult:null,githubController:null,githubTab:'publish',githubCheck:null,guideStep:0,practiceBusy:false,practiceController:null,regressionBusy:false};
+const releaseUI={composerSize:176,composerExpanded:false,composerObserver:null,composerRAF:null,criticDraft:null,criticTesting:false,criticTest:null,criticController:null,criticBatch:null,criticFingerprint:'',criticCache:new Map(),githubToken:'',githubDraft:null,githubBusy:false,githubResult:null,githubController:null,githubTab:'publish',githubCheck:null,practiceBusy:false,practiceController:null,regressionBusy:false};
 
 
 const criticDefaults=clone(MioContent.criticDefaults);
@@ -573,14 +573,18 @@ const githubDefaults={repository:'',branch:'',path:''};
 const encodedPath=path=>path.split('/').map(encodeURIComponent).join('/');
 
 
+/* T9 · B6: the only copy of the quick start's step text. Ids match setupChecklist() (help-drawer.js), which supplies each
+   step's state and button; `more` entries are the 进阶 links. */
 const guideSteps=[
-  {id:'save',title:'保存工作室',headline:'先给作品一个真实的家。',description:'推荐先连接本地目录。自动保存会按画册集、画册和图片分层写入，只有底栏显示“已写入磁盘”才代表保存完成。',checks:['点击“选择本地根目录”并允许浏览器读写。','桌面 Chrome / Edge 的安全页面支持目录授权；受限环境可以下载 ZIP 目录包。','浏览器数据库不作为作品主存储，临时会话关闭前要备份。'],action:'guide-storage',label:'打开文件与保存',icon:'folder'},
-  {id:'project',title:'建立画册集',headline:'不同的故事，分开管理。',description:'顶栏画册集名称既是切换器，也是新建入口。每个画册集拥有独立的画册、预设与分镜。',checks:['点击顶栏画册集菜单，选择“新建画册集”。','不想先配置？可以在后面创建独立的三幕练习工程。','在设置中选择要显示的工作区。'],action:'guide-project',label:'新建一个画册集',icon:'plus'},
-  {id:'story',title:'角色与分镜',headline:'先写镜头，再填入角色。',description:'分镜定义镜头、提示词和台词；角色矩阵填入姓名、服装与场景。{character}、{outfit} 等变量会在出图时替换。',checks:['在“分镜剧本配置”添加、移动或复制镜头。','在“批量角色矩阵”填写角色变量，并勾选要生成的行。','LLM 剧情是可选环节；没有模型也能使用默认旁白出图。'],action:'guide-storyboard',label:'打开分镜工作区',icon:'story'},
-  {id:'generate',title:'生成第一册',headline:'用三幕，走完一次创作。',description:'下面的练习使用本地 SVG 引擎，不需要 GPU 或 API。生成后会出现一套完整的预设、分镜和画册。',checks:['真实创作时：勾选角色 → 加入队列 → 开始批量渲染。','需要 GPU 时，在“ComfyUI 引擎管线”配置地址和工作流。','中止后图片保留；“断点补齐”只处理缺失或降级帧。'],action:'guide-practice',label:'创建并生成三幕练习',icon:'play'},
-  {id:'review',title:'阅读与审校',headline:'把看见的问题，变成修改。',description:'打开画册，在右侧分镜检查器选择“配置 API”。支持图片输入的视觉模型才能生成真实诊断，离线报告仅用于演示操作。',checks:['填写 Base URL、API Key 和视觉模型名称，先做“带图测试”。','点击“审校本页”或“审校整本画册”，查看具体问题区域。','把建议填入重绘框，确认提示词后精修；助手只改源模板，不直接改已生成图片。'],action:'guide-reader',label:'打开画册体验阅读',icon:'book'},
-  {id:'export',title:'导出画册',headline:'让故事离开工作台，也能被阅读。',description:'导出可选择电影长卷、漫画精装、艺术展册或交互翻页。全部图片与必要样式、脚本内联，导出的 HTML 可以离线打开。',checks:['画册“...”菜单 → 导出离线画册，选择喜欢的模板。','“画册导出模板”中可以修改 HTML / CSS、预览并保存个人副本。','源分镜与画册 HTML 模板是两种不同的资产。'],action:'guide-export',label:'试用画册导出',icon:'download'},
-  {id:'publish',title:'GitHub 托管',headline:'分享模板，不泄露工作室。',description:'模板市场有“上传到 GitHub”入口，上传的是所选模板包。',checks:['直接上传：选择资源，填写仓库与 Token，检查文件，再确认提交。','无需 Token：下载模板包 → GitHub Add file / Upload files → Commit changes。','把公开文件的 Raw 地址提供给他人，他们即可在市场中安装；私有文件需要读取权限。'],action:'guide-github',label:'查看 GitHub 上传流程',icon:'upload'}
+  {id:'practice',title:'离线练习',intro:'用本地示意图生成一本三幕画册，走一遍从分镜到阅读的流程。',icon:'play'},
+  {id:'service',title:'图像服务',intro:'选择 ComfyUI、NovelAI 或 OpenAI 兼容服务，填写地址或 API Key。',icon:'nodes'},
+  {id:'workflow',title:'工作流',intro:'导入 ComfyUI 的 API 工作流，把提示词和种子映射到节点。',icon:'nodes'},
+  {id:'model',title:'模型',intro:'工作流用到的模型要在 ComfyUI 里装好。',icon:'image'},
+  {id:'material',title:'分镜与预设',intro:'写一个分镜，再准备覆盖它全部变量的预设。',icon:'story'},
+  {id:'trial',title:'试跑',intro:'用图像服务生成第一本画册。',icon:'play'},
+  {id:'reader',more:true,title:'阅读与编辑',intro:'打开画册，调整图片、气泡和文字。',action:'guide-reader',icon:'book'},
+  {id:'export',more:true,title:'导出画册',intro:'选择展示模板，导出 HTML、图片 ZIP 或 PDF。',action:'guide-export',icon:'download'},
+  {id:'publish',more:true,title:'分享模板',intro:'选择模板和目标仓库，上传或下载模板包。',action:'guide-github',icon:'upload'}
 ];
 
 
@@ -606,7 +610,7 @@ async function releaseDiagnostics(){
     await test('审校通过阈值和结构标准化',()=>{const c=normalizeCriticReport({score:6.5,summary:'需调整',anatomy:'手部不清晰',consistency:'缺少参考',suggestions:'refined hands',issues:[{area:'手部',severity:'high',observation:'轮廓不清',fixPrompt:'refined hands'}]});return !c.passed&&c.issues[0].fixPrompt==='refined hands'});
     await test('审校缺少必填字段不会伪造报告',()=>{try{normalizeCriticReport({score:8});return false}catch(e){return true}});
     await test('输入框分隔条有最小/最大高度保护',()=>{const small=composerBounds(460,54,145),large=composerBounds(800,54,180);return small.min<=small.max&&large.min<=large.max&&large.max<=430});
-    await test('七步教程包含所有功能入口',()=>guideSteps.length===7&&guideSteps.every(s=>s.title&&s.action&&s.checks.length));
+    await test('快速开始覆盖开箱检查的每一项',()=>setupChecklist().every(i=>guideSteps.some(s=>s.id===i.id&&s.intro))&&guideSteps.filter(s=>s.more).every(s=>Object.hasOwn(releaseActions,s.action)));
     const area=$('#release-test-results');if(area)area.innerHTML=tests.map(t=>`<div class="template-check-row"><span class="${t.ok?'accent':'danger'}">${icon(t.ok?'check':'close')}</span><span class="grow">${esc(t.name)}<small>${esc(t.message)}</small></span></div>`).join('')+`<div class="modal-footer"><span class="grow tiny muted">${tests.filter(t=>t.ok).length} / ${tests.length} 项通过；不代表真实服务联调已通过。</span>${btn('检查当前助手布局','expand','composer-layout-test')}</div>`;
     return tests;
   }finally{releaseUI.regressionBusy=false}
@@ -693,11 +697,7 @@ const releaseActions={
   'github-copy-result':()=>{if(!releaseUI.githubResult)throw Error('尚无成功提交的安装链接。');return copyText(releaseUI.githubResult.raw)},
   'github-readme':()=>{const result=releaseUI.githubResult;if(!result)throw Error('请先完成一次 GitHub 提交。');const text='# '+result.title+'\n\n'+result.kind+'，适用于 Mio。\n\n## 安装\n\n1. 打开 Mio 的模板市场。\n2. 在“从 GitHub / Gitee / 自有仓库导入”粘贴以下地址。\n3. 校验并安装为独立副本。\n\n'+result.raw+'\n\n'+(result.private?'这是私有仓库，需要通过 GitHub 带权限安装入口读取。\n':'此链接固定于发布时的提交版本。\n');download('README-template.md',text,'text/markdown')},
   'guide-open':d=>openQuickStart(d.step===undefined?null:Number(d.step)),
-  'guide-close':()=>{markGuidePage();closeServiceDialog('guide-dialog');renderShell()},
-  'guide-step':d=>{markGuidePage();releaseUI.guideStep=clamp(Number(d.index),0,guideSteps.length-1);renderQuickStart()},
-  'guide-prev':()=>{markGuidePage();releaseUI.guideStep=Math.max(0,releaseUI.guideStep-1);renderQuickStart()},
-  'guide-next':()=>{markGuidePage();releaseUI.guideStep=Math.min(guideSteps.length-1,releaseUI.guideStep+1);renderQuickStart()},
-  'guide-finish':()=>{markGuidePage();guidePreferences().completed=true;save();closeServiceDialog('guide-dialog');renderShell();toast('教程已完成。可以从侧栏重新打开。')},
+  'guide-close':()=>{closeServiceDialog('guide-dialog');renderShell()},
   'guide-storage':()=>guideDestination('storage'),
   'guide-project':()=>guideDestination('project'),
   'guide-storyboard':()=>guideDestination('storyboard'),
@@ -725,7 +725,7 @@ handleAction=async function(act,d={},el){
 };
 
 
-Object.assign(actionHelp,{'github-open':'选择模板包，检查仓库并提交。','github-publish-draft':'将当前经过校验的 HTML 模板草稿打包，发布到你有权限的 GitHub 仓库。','github-manual':'不填写 Token：下载模板包，在 GitHub 网页上传，然后复制 Raw 安装链接。','critic-batch':'逐页审校整本画册，真实模式可能产生 API 费用；连续三次失败停止。','guide-open':'内置七步教程，含可执行的本地三幕练习，不需要 GPU 或 API。','template-check':'检查所有 HTML 模板与 CSS。','assistant-input-expand':'扩大或还原输入区域。发送按钮与说明始终保留在浮窗内部。'});
+Object.assign(actionHelp,{'github-open':'选择模板包，检查仓库并提交。','github-publish-draft':'将当前经过校验的 HTML 模板草稿打包，发布到你有权限的 GitHub 仓库。','github-manual':'不填写 Token：下载模板包，在 GitHub 网页上传，然后复制 Raw 安装链接。','critic-batch':'逐页审校整本画册，真实模式可能产生 API 费用；连续三次失败停止。','guide-open':'开箱检查的进度，以及离线三幕练习。','guide-practice':'用本地示意图生成一本三幕画册，完成后直接打开阅读器。','template-check':'检查所有 HTML 模板与 CSS。','assistant-input-expand':'扩大或还原输入区域。发送按钮与说明始终保留在浮窗内部。'});
 
 
 
@@ -753,7 +753,7 @@ for(const id of ['github-dialog','critic-dialog','guide-dialog']){
 }
 
 
-$('#welcome-dialog').addEventListener('close',()=>setTimeout(()=>{if(state.settings.identity?.onboarded&&!guidePreferences().seen&&!document.querySelector('dialog[open]'))openQuickStart(0)},200));
+$('#welcome-dialog').addEventListener('close',()=>setTimeout(()=>{if(state.settings.identity?.onboarded&&!guidePreferences().seen&&!document.querySelector('dialog[open]'))openQuickStart()},200));
 
 
 window.addEventListener('resize',scheduleAssistantFit);
@@ -1032,21 +1032,6 @@ openCommand=function(){v3Core.openCommand();const inputRow=$('.command-input'),k
 guideDestination=async function(action){if(action==='storyboard')createUI.tab='scenes';return v3Core.guideDestination(action)};
 
 
-Object.assign(guideSteps[0],{title:'设置保存方式',headline:'让已有 Python 服务管理作品。',description:'无需先给浏览器授权文件夹。在“设置 → 服务与保存”填写已有 Python 读取和保存接口，连接确认后自动提交工程；也可先在临时会话里练习。',checks:['先给工作室命名，或使用默认名称进入。','Python 读取接口需返回工程或明确的空状态，确认连接后才会写入。','暂未连接时可导出工程 JSON，ZIP 和浏览器目录保存作为备用。']});
-
-
-Object.assign(guideSteps[2],{title:'组合分镜与素材',headline:'一份分镜，可以讲出不同的故事。',description:'“创作画册”把画册计划、分镜编辑、变量素材与生成队列放在一起。画册名称独立于变量；同一套素材可以被多个计划复用。',checks:['先建画册计划，为画册起名并选择分镜。','在变量素材中自由添加字段，然后把多组素材组合到画册。','同名值按素材顺序、本册覆盖、单幕覆盖依次优先。']});
-
-
-guideSteps[3].checks=['在画册计划中预览替换结果，补全缺少变量后生成。','工作流输入可在“设置 → 智能节点映射”任意增删映射，包括 LoRA 管理器。','尺寸和采样参数默认保留工作流原值；只有主动开启且建立映射后才覆盖。'];
-
-
-guideSteps[4].checks=['视觉审校 API 在设置里独立配置，不必开启 AI 写故事。','悬浮球可拖动，悬停展开说明，点击打开分镜精修助手。','助手对话绑定源模板；只想修改本册时请用分镜编辑里的单幕覆盖。'];
-
-
-guideSteps[5].checks=['在我的画册中点击操作菜单，再选择导出离线画册。','画册 HTML 版式、模板市场与 GitHub 托管都收入“设置 → 工具与资源”。','分镜定义内容，HTML 模板定义阅读排版。'];
-
-
 renameScopedVariable=async function(group,id,entryId){
   const list=variableOwner(group,id),entry=list?.find(e=>e.id===entryId);if(!entry)throw Error('变量不存在。');const old=entry.key;
   textModal('重命名变量及引用','新的变量标识符',old,async key=>{
@@ -1201,10 +1186,6 @@ function installArtStudio(){
     const result=await artCore.handleAction(action,data,element);refreshInterfaceCopy();return result;
   };
   const originalInfo=backendStatusText;backendStatusText=function(){const text=originalInfo();return text.replace('当前为临时会话','当前未保存到后端')};
-  guideSteps[1].title='建立画册集';guideSteps[1].headline='把相近的故事，收藏在一起。';guideSteps[1].description='顶层画册集收录具体画册，每本画册包含连续分镜。顶栏名称是切换和新建画册集的入口。';guideSteps[1].checks=['从顶栏新建或切换画册集。','进入“创作画册”创建一本新画册。','已有数据会保留，精选示范只用于首次预览。'];
-  guideSteps[2].title='角色与画面设定';guideSteps[2].description='只需一处填写角色、服装与画风。已定义的占位符会高亮；未定义的括号与 NovelAI 权重语法完全保留。';guideSteps[2].checks=['在“角色与画面设定”填写需要的变量。','提示词可自由使用任意括号和权重语法。','空变量会略过，连续逗号自动收敛。'];
-  guideSteps[3].checks=['选择分镜，按你的想法修改提示词和台词。','节点映射与后端连接问题仍会给出明确提示。'];
-  guideSteps[4].title='欣赏与实验室';guideSteps[4].description='阅读器提供对开本、连续卷轴和胶卷画廊，默认没有审校或重绘面板。专业工具在实验室按需开启。';guideSteps[4].checks=['使用左右箭头翻页，或点击胶卷中的缩略图。','点击本幕文字，查看台词、提示词与图片尺寸。','需要审校和精修时前往实验室。'];
   const oldGuideDestination=guideDestination;guideDestination=async function(action){if(action==='critic'){closeServiceDialog('guide-dialog');navigate(7);return}return oldGuideDestination(action)};
   ns.presentation={readerSequence,readerSpreadIndices,createCuratedDemo,renderLaboratory};
   loadArtTypography();

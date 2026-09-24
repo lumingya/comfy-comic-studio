@@ -219,15 +219,16 @@ async function sendScopedChat(){
 async function createGuidePractice(){
   if(releaseUI.practiceBusy)return;const prefs=guidePreferences(),existing=bookBy(prefs.practiceBookId);if(existing?.status==='complete'){if($('#guide-dialog').open)$('#guide-dialog').close();changeProject(existing.projectId);openReader(existing.id);return}
   if(activeJobs())throw Error('请先等待当前生产或导出任务结束，再创建练习。');
-  releaseUI.practiceBusy=true;releaseUI.practiceController=new AbortController();let b;
+  releaseUI.practiceBusy=true;releaseUI.practiceController=new AbortController();let b,finished=false;
   try{const now=Date.now(),p={id:uid('project'),title:MioContent.practiceLabels.project,createdAt:now},t={...clone(MioContent.practiceStory),id:uid('tpl'),projectId:p.id,createdAt:now},r={...clone(MioContent.practiceRow),id:uid('row'),projectId:p.id};t.frames.forEach(f=>f.id=uid('f'));
     const v={id:uid('sv'),templateId:t.id,title:MioContent.practiceLabels.version,source:'preset',captions:Object.fromEntries(t.frames.map(f=>[f.id,interpolate(f.caption,r,f)])),createdAt:now,updatedAt:now};r.storyVersions[t.id]=[v];r.activeStoryVersionIds[t.id]=v.id;
     b={id:uid('book'),projectId:p.id,title:r.bookTitle,characterName:r.character_display_name,rowId:r.id,templateId:t.id,templateTitle:t.title,storyVersionId:v.id,storyTitle:v.title,synopsis:t.outline,tags:clone(MioContent.practiceLabels.tags),totalSteps:3,generatedSteps:0,status:'generating',inProgress:true,liked:false,likes:0,createdAt:now,updatedAt:now,theme:0,steps:[]};
     state.projects.push(p);state.templates.push(t);state.rows.push(r);state.books.push(b);Object.assign(prefs,{practiceProjectId:p.id,practiceTemplateId:t.id,practiceBookId:b.id});changeProject(p.id);ui.workspace=0;render();if($('#guide-dialog').open)renderQuickStart();save();
     for(let i=0;i<3;i++){await delay(650,releaseUI.practiceController.signal);const f=t.frames[i];b.steps.push({stepIndex:i,name:f.name,prompt:interpolate(f.prompt,r,f),caption:v.captions[f.id],image:fitSVG(svgArt(i,200+i),768,1024),offlineFallback:false});b.generatedSteps++;b.updatedAt=Date.now();save();refreshGallery();if($('#guide-dialog').open)renderQuickStart()}
-    b.status='complete';b.completedAt=Date.now();toast('三幕练习已生成，可以阅读、审校或导出。');
+    b.status='complete';b.completedAt=Date.now();finished=true;toast('三幕练习已生成，可以阅读、审校或导出。');
   }catch(e){if(b)b.status='canceled';throw e}
   finally{if(b)b.inProgress=false;releaseUI.practiceBusy=false;releaseUI.practiceController=null;save();render();if($('#guide-dialog').open)renderQuickStart()}
+  if(finished){if($('#guide-dialog').open)closeServiceDialog('guide-dialog');changeProject(b.projectId);openReader(b.id)}
 }
 
 

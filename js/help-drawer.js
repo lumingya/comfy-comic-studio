@@ -86,7 +86,7 @@ function setupChecklist(){
   else if(comfy&&state.settings.comfy.mode==='mock')add('service','图像服务','done',localeString('本地预览模式'));
   else if(comfy&&rt.engineOk)add('service','图像服务','done',localeString('ComfyUI 已连接 · {url}',{url:baseURL()}));
   else if(comfy&&rt.engineChecked)add('service','图像服务','todo',localeString('连不上 ComfyUI：确认它已启动，地址 {url} 可以访问。',{url:baseURL()}),{act:'help-test-engine',label:'测试连接'});
-  else if(comfy)add('service','图像服务','checking',localeString('正在检测 ComfyUI…'),{act:'help-test-engine',label:'测试连接'});
+  else if(comfy)add('service','图像服务','checking',localeString(rt.engineCheck?'正在检测 ComfyUI…':'还没有检测 ComfyUI 连接。'),{act:'help-test-engine',label:'测试连接'});
   else add('service','图像服务','done',localeString('「{title}」已配置',{title:p.title}));
   if(comfy){
     const w=helpActiveWorkflow();
@@ -109,16 +109,47 @@ function setupChecklist(){
     if(missing.length)add('material','分镜与预设','todo',localeString('「{story}」用到的变量 {names} 还没有预设定义。',{story:story.title,names:missing.slice(0,4).join(' ')+(missing.length>4?' …':'')}),{act:'help-new-preset',label:'新建预设'});
     else add('material','分镜与预设','done',localeString('{stories} 个分镜 · {presets} 个预设',{stories:stories.length,presets:presets.length}));
   }
-  const made=state.books.filter(b=>!b.curatedDemo&&(b.generatedSteps||0)>0).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))[0];
+  const practiceId=guidePreferences().practiceBookId,made=state.books.filter(b=>!b.curatedDemo&&b.id!==practiceId&&(b.generatedSteps||0)>0).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))[0];
   if(made){const src=coverImage(made);add('trial','试跑','done',localeString('已生成「{title}」',{title:made.title}),null,{image:src?thumbnailURL(src):''})}
   else add('trial','试跑','todo',localeString('还没有生成过画面。先装配一个只有一两幕的生成任务试一试。'),{act:'assembly-new',label:'新建生成任务'});
   return items;
 }
 
+const CHECK_MARKS={done:'✓',todo:'!',checking:'…',optional:'·'},CHECK_SAID={done:'已完成',todo:'待处理',checking:'未核对',optional:'未开始'};
+/* One checklist row, shared by the help drawer, Home and the quick start. `intro` is the quick start's line on what the step is. */
+function setupCheckItemHTML(i,{intro='',primary=false}={}){
+  return `<li class="help-check is-${i.state}" data-check="${i.id}"><span class="help-check-mark" aria-hidden="true">${CHECK_MARKS[i.state]}</span><span class="help-check-body"><strong>${esc(localeString(i.title))}${i.optional?`<em class="help-check-tag">${esc(localeString('可选'))}</em>`:''}<span class="visually-hidden"> · ${esc(localeString(CHECK_SAID[i.state]))}</span></strong>${intro?`<span class="help-check-intro">${esc(localeString(intro))}</span>`:''}<small>${esc(i.detail)}</small>${i.image?`<img class="help-check-thumb" src="${esc(i.image)}" alt="" loading="lazy">`:''}</span>${i.fix?`<button type="button" class="btn small${primary?' primary':''}" data-act="${esc(i.fix.act)}">${esc(localeString(i.fix.label))}</button>`:''}</li>`;
+}
 function helpChecklistHTML(){
-  const items=setupChecklist(),done=items.filter(i=>i.state==='done').length,marks={done:'✓',todo:'!',checking:'…'},said={done:'已完成',todo:'待处理',checking:'未核对'};
+  const items=setupChecklist(),done=items.filter(i=>i.state==='done').length;
   return `<section class="help-section help-checklist" id="help-checklist" aria-labelledby="help-checklist-title"><header class="help-section-head"><h3 id="help-checklist-title" tabindex="-1">开箱检查</h3><span class="help-progress ${done===items.length?'is-done':''}">${esc(localeString('已完成 {done} / {total}',{done,total:items.length}))}</span></header>
-  <ol class="help-checks">${items.map(i=>`<li class="help-check is-${i.state}" data-check="${i.id}"><span class="help-check-mark" aria-hidden="true">${marks[i.state]}</span><span class="help-check-body"><strong>${esc(localeString(i.title))}<span class="visually-hidden"> · ${esc(localeString(said[i.state]))}</span></strong><small>${esc(i.detail)}</small>${i.image?`<img class="help-check-thumb" src="${esc(i.image)}" alt="" loading="lazy">`:''}</span>${i.fix?`<button type="button" class="btn small" data-act="${esc(i.fix.act)}">${esc(localeString(i.fix.label))}</button>`:''}</li>`).join('')}</ol></section>`;
+  <ol class="help-checks">${items.map(i=>setupCheckItemHTML(i)).join('')}</ol></section>`;
+}
+
+/* T9 · C1 on Home: the same checklist until every item is done, then a single line. Rendering it never probes a service;
+   only the buttons do. */
+function homeChecklistHTML(){
+  const items=setupChecklist(),done=items.filter(i=>i.state==='done').length,total=items.length;
+  if(done===total)return `<div class="home-checklist is-complete" id="home-checklist"><span class="help-check-mark" aria-hidden="true">✓</span><span class="grow">${esc(localeString('开箱检查已全部完成 · {done} / {total}',{done,total}))}</span>${btn('查看','','help-drawer-checklist','','ghost small')}</div>`;
+  return `<section class="home-checklist" id="home-checklist" aria-labelledby="home-checklist-title"><header class="help-section-head"><h3 id="home-checklist-title" tabindex="-1">开箱检查</h3><span class="checklist-progress">${esc(localeString('已完成 {done} / {total}',{done,total}))}</span></header><ol class="help-checks">${items.map(i=>setupCheckItemHTML(i)).join('')}</ol></section>`;
+}
+/* Production page: how many checklist items are still open, next to the start buttons. */
+function setupRemainingChipHTML(){
+  const left=setupChecklist().filter(i=>i.state!=='done').length;
+  return left?`<button type="button" class="setup-remaining" data-act="help-drawer-checklist">${icon('help')}<span>${esc(localeString('开箱检查还差 {n} 项',{n:left}))}</span></button>`:'';
+}
+
+/* T9 · B6: the quick start shows real progress: an optional offline practice, then the setup checklist. Step text lives in
+   guideSteps (app.js); state comes from setupChecklist(). */
+function practiceCheckItem(){
+  const b=bookBy(guidePreferences().practiceBookId),base={id:'practice',title:'离线练习',optional:true};
+  if(releaseUI.practiceBusy)return {...base,state:'checking',detail:localeString('正在生成三幕练习 · {done} / 3',{done:b?.generatedSteps||0}),fix:null};
+  if(b?.status==='complete')return {...base,state:'done',detail:localeString('已生成「{title}」',{title:b.title}),fix:{act:'guide-practice',label:'打开练习画册'}};
+  return {...base,state:'optional',detail:localeString('会新建画册集「{name}」。',{name:MioContent.practiceLabels.project}),fix:{act:'guide-practice',label:'先用离线练习体验'}};
+}
+function quickStartSteps(){
+  const copy=Object.fromEntries(guideSteps.map(s=>[s.id,s]));
+  return [practiceCheckItem(),...setupChecklist()].map(i=>({...i,intro:copy[i.id]?.intro||''}));
 }
 
 function helpShortcutGroups(){
@@ -202,15 +233,26 @@ function refreshHelpChecklist(){
   const pre=d.querySelector('#help-diagnostics-text');if(pre)pre.textContent=helpDiagnosticsText();
 }
 
+function refreshHomeChecklist(){
+  const old=document.getElementById('home-checklist');if(!old||ui.workspace!==9)return;
+  const focused=old.contains(document.activeElement)?(document.activeElement.closest('[data-check]')?.dataset.check||''):null;
+  const box=document.createElement('div');box.innerHTML=homeChecklistHTML();const next=box.firstElementChild;old.replaceWith(next);localizeWorkspace(next);
+  if(focused!==null)(next.querySelector(`[data-check="${focused}"] button`)||next.querySelector('h3,button'))?.focus({preventScroll:true});
+}
+function refreshSetupChecklists(){refreshHelpChecklist();refreshHomeChecklist();if(document.getElementById('guide-dialog')?.open)renderQuickStart()}
+/* Buttons in the quick start that act in place keep it open; everything else goes to another page, so it closes first. */
+const QUICKSTART_STAY_ACTS=new Set(['guide-close','guide-practice','help-test-engine','help-add-seed','help-sync-models']);
+
 function installHelpDrawer(){
   const previous=handleAction;handleAction=async function(action,d={},el){
     switch(action){
       case 'help-drawer':openHelpDrawer();return;
       case 'help-drawer-close':closeHelpDrawer();return;
       case 'help-copy-diagnostics':await copyText(helpDiagnosticsText());return;
-      case 'help-test-engine':await testEngine(false);refreshHelpChecklist();return;
-      case 'help-add-seed':addWorkflowSeedMapping(state.settings.comfy.activeWorkflowId);if(ui.workspace===3)render();toast('已添加种子映射：每一幕都会写入自己的种子。');refreshHelpChecklist();return;
-      case 'help-sync-models':await readComfyObjectInfo();refreshHelpChecklist();return;
+      case 'help-drawer-checklist':openHelpDrawer('checklist');return;
+      case 'help-test-engine':{const probe=testEngine(false);refreshSetupChecklists();await probe;refreshSetupChecklists();return}
+      case 'help-add-seed':addWorkflowSeedMapping(state.settings.comfy.activeWorkflowId);if(ui.workspace===3)render();toast('已添加种子映射：每一幕都会写入自己的种子。');refreshSetupChecklists();return;
+      case 'help-sync-models':await readComfyObjectInfo();refreshSetupChecklists();return;
       case 'help-new-story':case 'help-new-preset':workshop.view=action==='help-new-story'?'stories':'presets';navigate(1);await handleAction('workshop-new',{});return;
       case 'help-quickstart':openQuickStart();return;
     }
@@ -223,5 +265,6 @@ function installHelpDrawer(){
     if(open&&open.id!=='help-drawer')return;
     e.preventDefault();if(open)closeHelpDrawer();else openHelpDrawer('keys');
   });
-  if(typeof onEngineChecked==='function'){const engineChecked=onEngineChecked;onEngineChecked=function(rec){engineChecked(rec);refreshHelpChecklist()}}
+  if(typeof onEngineChecked==='function'){const engineChecked=onEngineChecked;onEngineChecked=function(rec){engineChecked(rec);refreshSetupChecklists()}}
+  document.getElementById('guide-dialog')?.addEventListener('click',e=>{const el=e.target.closest?.('[data-act]');if(el&&!QUICKSTART_STAY_ACTS.has(el.dataset.act))closeServiceDialog('guide-dialog')},true);
 }
