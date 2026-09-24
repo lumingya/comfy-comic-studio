@@ -294,7 +294,7 @@ function enqueueCompatibleBook(row,t,book=null){
   if(!book&&plan)return enqueuePlanSnapshot(plan);
   if(book&&state.queue.some(q=>q.bookId===book.id&&['pending','running','paused'].includes(q.status)))return book;
   if(!book){const generated={id:uid('plan'),projectId:row.projectId||state.activeProjectId,title:row.bookTitle||'新画册',templateId:t.id,rowId:row.id,enabled:true,variableSetIds:[],variables:Object.entries(row).filter(([k,v])=>!reserved.has(k)&&['string','number','boolean'].includes(typeof v)).map(([k,v])=>variableEntry(k,v)),sceneOverrides:{},createdAt:Date.now()};for(const k of ['character','style','outfit'])if(row[k])generated.variables.push(variableEntry(k,row[k]));state.creation.plans.push(generated);row._planMapped=true;return enqueuePlanSnapshot(generated)}
-  const indices=missingIndices(book);if(!indices.length){toast('画册没有缺失分镜。');return book}
+  const indices=missingIndices(book);if(!indices.length){toast('画册没有缺失分幕。');return book}
   const snapshot=book.sourceSnapshot||{row:clone(row),frames:clone(t.frames),execution:mappedExecutionSnapshot()};if(indices.some(i=>!snapshot.frames[i]))throw Error('源分镜数量已变化，无法按原索引补齐。请从画册计划生成新版本。');
   state.queue.push({id:uid('task'),bookId:book.id,rowId:book.rowId,templateId:book.templateId,indices,done:0,status:'pending',frames:clone(snapshot.frames),rowSnapshot:clone(snapshot.row),execution:clone(snapshot.execution),createdAt:Date.now()});book.status='generating';save();updateQueueUI();return book;
 }

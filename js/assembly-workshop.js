@@ -890,12 +890,12 @@ function installAssemblyWorkshop(){
     if(action==='resume'){
       const b=bookBy(d.id);if(!b)return;
       const missing=missingIndices(b);
-      if(!missing.length){toast('所有分镜已齐备，无需补齐');return}
+      if(!missing.length){toast('所有分幕已齐备，无需补齐');return}
       await refreshProduction();
       const task=workshop.queue.tasks.find(t=>t.albumId===b.id);
       if(task){await startProduction(task.id,{indices:missing});return}
       closeModal();ui.workspace=1;workshop.view='production';render();
-      toast('这本画册没有可恢复的生产任务。请用原分镜重新装配，并核对缺帧范围后明确开始。');return;
+      toast('这本画册没有可恢复的生成任务。请用原分镜重新装配，并核对缺失的分幕后明确开始。');return;
     }
     if(action==='bulk-resume'){
       closeModal();ui.workspace=1;workshop.view='production';await refreshProduction();render();

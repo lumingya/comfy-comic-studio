@@ -332,13 +332,13 @@ const detailUI={projectOpen:false,tooltipTimer:null,tooltipTarget:null,tipPinned
 
 
 const actionHelp={
-  'book-menu':'管理这本画册：阅读、星标、版本对比、补齐缺帧或导出。',
+  'book-menu':'管理这本画册：阅读、星标、版本对比、补齐缺失分幕或导出。',
   read:'打开阅读器，逐页查看画面与台词，可切换双页、长卷和翻页模式。',
   star:'添加或取消星标。',
   'copy-book':'复制画册信息。',
   'compare-book':'对照同一角色与模板派生出的不同剧情画册，需要至少两个版本。',
   'export-book':'把画册排版为可离线打开的 HTML，可选模板、台词和提示词水印。',
-  resume:'补齐缺失分镜。',
+  resume:'补齐缺失分幕。',
   'delete-book':'从当前工程索引移除画册。已落盘的旧文件保留，避免误删原图。',
   'bulk-delete':'移除选中画册的工程记录。操作前需要二次确认。',
   'market-install':'把资源安装进本地资产库。安装的 HTML 模板可再复制、自定义或卸载。',

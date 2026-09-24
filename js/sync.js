@@ -242,7 +242,7 @@ async function attachWorkspaceDirectory(handle,auto=false){
 
 async function chooseWorkspaceDirectory(){
   if(!diskSupported())throw Error('当前环境不支持目录写入。请使用桌面 Chrome / Edge 并直接打开安全页面，或下载 ZIP 目录包。');
-  if(disk.connecting||disk.busy||activeJobs())throw Error('请先等待保存或生产任务结束。');
+  if(disk.connecting||disk.busy||activeJobs())throw Error('请先等待保存或生成任务结束。');
   try{const handle=await window.showDirectoryPicker({id:'comfycomic-workspace',mode:'readwrite',startIn:disk.root||disk.remembered||'documents'});return await attachWorkspaceDirectory(handle)}
   catch(e){if(e.name==='AbortError')return false;if(e.name==='SecurityError')throw Error('浏览器拒绝打开目录选择器。请在独立的安全页面中点击此按钮，并检查权限。');throw e}
 }

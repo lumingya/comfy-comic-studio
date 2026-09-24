@@ -98,7 +98,7 @@ function singleBookContextItems(book){
     {label:'翻开这本画册',icon:'book',act:'read',data:{id},primary:true,shortcut:'Enter'},
     {label:book.liked?'取消星标':'星标收藏',icon:'star',act:'star',data:{id},checked:!!book.liked},
     {label:'重命名…',icon:'edit',act:'org-context-edit',data,disabled:busy,title:busy?'画册正在生成，稍后再改名。':''},
-    {label:'补齐缺失分镜',icon:'refresh',act:'resume',data:{id},disabled:!missing,hint:missing?`${missing} 幕待补齐，已完成画面不重跑`:'所有分镜已齐备'},
+    {label:'补齐缺失分幕',icon:'refresh',act:'resume',data:{id},disabled:!missing,hint:missing?`${missing} 幕待补齐，已完成画面不重跑`:'所有分幕已齐备'},
     '-',
     {label:'导出与分享',icon:'download',children:[
       {label:'导出离线画册…',icon:'download',act:'org-context-export',data,hint:'单文件 HTML，可选版式与水印'},
@@ -126,7 +126,7 @@ function multiBookContextItems(ids,focusId=''){
     {label:'批量星标',icon:'star',act:'org-context-star',data},
     {label:'批量重命名…',icon:'edit',act:'org-context-edit',data,disabled:busy,title:busy?'有画册正在生成，稍后再改名。':''},
     {label:'导出离线画册…',icon:'download',act:'org-context-export',data,hint:'合并为一个离线 HTML'},
-    {label:'补齐缺失分镜',icon:'refresh',act:'org-context-resume',data,disabled:!ids.some(id=>missingIndices(bookBy(id)||{steps:[],totalSteps:0}).length),hint:'只重跑缺失的分幕'},
+    {label:'补齐缺失分幕',icon:'refresh',act:'org-context-resume',data,disabled:!ids.some(id=>missingIndices(bookBy(id)||{steps:[],totalSteps:0}).length),hint:'只重跑缺失的分幕'},
     '-',
     focus?{label:'只翻开这本',icon:'book',act:'read',data:{id:focus.id},hint:focus.title}:null,
     {label:'选择当前筛选结果',icon:'check',act:'org-context-select-all',shortcut:'Ctrl/⌘ A'},
