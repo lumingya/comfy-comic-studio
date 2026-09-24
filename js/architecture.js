@@ -364,6 +364,8 @@ function installArchitecture(){
   'designer-workflow-clear':()=>{assemblyDesign.workflowQuery='';const box=$('#designer-workflow-search');if(box){box.value='';box.focus()}refreshDesignerWorkflowPicker()},
   'designer-next':()=>{const d=assemblyDesign;if(designerChecks().some(i=>i.level==='block'&&i.step<=d.step)){designerFooterSync();designerShowIssues();return}d.step=Math.min(2,d.step+1);renderAssemblyDesigner()},
    'designer-fix':designerFix,
+   'multiselect-hint-dismiss':()=>dismissMultiSelectHint(),
+   'selection-more':(d,el)=>openSelectionMenu(d.scope,el),
    'designer-show-issues':designerShowIssues,
   'designer-back':()=>{assemblyDesign.step--;renderAssemblyDesigner()},
   'designer-submit':submitAssemblyDesigner,

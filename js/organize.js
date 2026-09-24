@@ -188,7 +188,7 @@ function syncSelectionView(){
     const on=ui.selected.has(card.dataset.sortBook);card.classList.toggle('is-selected',on);card.setAttribute('aria-selected',String(on));
     const box=card.querySelector('[data-select-book]');if(box&&box.checked!==on)box.checked=on;
   });
-  const status=$('#gallery-results .shelf-selection-status');if(status){status.textContent=ui.selected.size?localeString('已选 {count} 本 · 右键操作',{count:ui.selected.size}):'';status.hidden=!ui.selected.size}
+  const status=$('#gallery-results .shelf-selection-status');if(status){status.innerHTML=shelfSelectionInnerHTML();status.hidden=!ui.selected.size}
   $('#gallery-results')?.classList.toggle('has-selection',ui.selected.size>0);
   refreshCollectionSelection();
 }

@@ -58,10 +58,12 @@ function renderResponsiveCollection(){return `<section class="art-fade" id="coll
 function shelfTouchSelection(){return typeof matchMedia==='function'&&matchMedia('(pointer:coarse)').matches}
 function shelfBulkToggle(){if(!shelfTouchSelection())return'';const on=!!ui.bulkPinned;return shelfButton('check','toggle-bulk',on?'退出多选':'多选',`aria-pressed="${on}" title="${esc(localeString(on?'退出多选（Esc）':'多选画册：批量星标、导出或删除'))}"`,on?'small active shelf-bulk-toggle':'small ghost shelf-bulk-toggle')}
 
-function shelfSelectionBar(){const n=ui.selected.size;return `<p class="shelf-selection-status" role="status" aria-live="polite" ${n?'':'hidden'}>${n?localeString('已选 {count} 本 · 右键操作',{count:n}):''}</p>`}
+/* T10: the count plus the common batch actions (export, delete) and 更多… for the rest of the right-click menu; the one-time gesture hint sits below while nothing is selected. */
+function shelfSelectionInnerHTML(){const ids=[...ui.selected];return ids.length?selectionStatusInnerHTML(localeString('已选 {count} 本',{count:ids.length}),multiBookContextItems(ids,ids[0]),['org-context-export','org-context-delete'],'books'):''}
+function shelfSelectionBar(total=2){const n=ui.selected.size;return `<p class="shelf-selection-status selection-status" ${n?'':'hidden'}>${shelfSelectionInnerHTML()}</p>${total>1?multiSelectHintHTML():''}`}
 
 function responsiveCollectionResults(){
-  const books=getShelfBooks(),mode=state.settings.presentation.homeLayout,b=books[displayUI.featuredIndex],paging=displayModel.page(books.length,displayUI.page),bulk=shelfSelectionBar(),count=`<span>${shelfBookCount(books.length)}</span>`;
+  const books=getShelfBooks(),mode=state.settings.presentation.homeLayout,b=books[displayUI.featuredIndex],paging=displayModel.page(books.length,displayUI.page),bulk=shelfSelectionBar(books.length),count=`<span>${shelfBookCount(books.length)}</span>`;
   if(!books.length)return `<div class="shelf-index">${count}</div><div class="empty">${icon('book')}<h3>${localeString('留一点空白，给新的故事。')}</h3><p>${localeString(ui.search?'没有找到匹配的画册，试试其他名字。':'这里还没有画册。先在创作工坊新建分镜，再装配为待命任务，最后明确确认生成。')}</p>${shelfButton('plus','new-book','开始创作','','primary')}${!ui.search?shelfButton('image','art-import-demo','载入精选示范','style="margin-left:10px"'):''}</div>`;
   const navigation=mode==='showcase'?`<div class="shelf-exhibit-nav">${shelfIcon('up','shelf-feature-prev','上一册',displayUI.featuredIndex===0?'disabled':'')}<span class="shelf-counter">${pad(displayUI.featuredIndex+1)} / ${pad(books.length)}</span>${shelfIcon('down','shelf-feature-next','下一册',displayUI.featuredIndex===books.length-1?'disabled':'')}</div>`:`<span class="shelf-context">${paging.start+1} - ${paging.end} / ${books.length}</span>`;
   const prefix=`${bulk}<div class="shelf-index">${count}${navigation}</div>`;

@@ -1417,3 +1417,22 @@ body.production-reordering .production-card{cursor:grabbing}
 .designer-footer-reason{margin-right:6px;font-size:12.5px;color:var(--red);text-decoration:underline;text-underline-offset:3px}
 .designer-footer .btn.primary:disabled:hover{transform:none;filter:none}
 @media(max-width:760px){.designer-footer-reason{flex-basis:100%;order:4;margin:0;text-align:right}}
+
+/* T10 · multi-select: the status line carries the common batch actions; a one-time line explains the gestures (pointer devices only). */
+.selection-status{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:12.5px}
+.selection-count{font-weight:600;color:var(--accent)}
+.selection-actions{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 12px}
+.selection-action{padding:0;border:0;background:none;color:var(--text);font-size:12.5px;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--muted) 60%,transparent);text-underline-offset:3px;cursor:pointer}
+.selection-action:hover{color:var(--accent)}
+.selection-action.danger{color:var(--red)}
+.selection-action:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+.workshop-frames-status.selection-status{display:grid;gap:4px}
+.workshop-frames-status .selection-actions{flex-direction:column;align-items:flex-start;gap:4px}
+.multiselect-hint{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin:0 0 10px;font-size:12px;line-height:1.6;color:var(--muted)}
+.multiselect-hint .link-button{font-size:12px}
+.workshop-frames .multiselect-hint{padding:8px 10px 0}
+.has-selection~.multiselect-hint,.selection-status:not([hidden])~.multiselect-hint{display:none}
+@media (pointer:coarse){.multiselect-hint{display:none}}
+.workshop-frames button.selection-action,.workshop-frames .multiselect-hint button.link-button{display:inline;width:auto;padding:0;border:0;border-radius:3px;background:none;gap:0;font-size:12.5px;line-height:1.6}
+.workshop-frames button.selection-action:hover,.workshop-frames .multiselect-hint button.link-button:hover{background:none;color:var(--accent)}
+.workshop-frames button.selection-action.danger{color:var(--red)}

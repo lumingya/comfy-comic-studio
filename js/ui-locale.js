@@ -1866,7 +1866,11 @@ function extendCurrentLocaleCatalog(catalog){Object.assign(catalog.messages,{
   "先调入一个分镜": "Add a storyboard first",
   "设置中启用的「{active}」还没配置好，已改选上次装配使用的「{current}」。": "“{active}”, enabled in Settings, is not set up yet, so “{current}”, used last time, is selected.",
   "单击选择预设；Ctrl / ⌘ 点击加选，Shift 连选，也可以拖动框选。同名变量按预设顺序覆盖。": "Click a preset to select it; Ctrl / ⌘-click adds more, Shift selects a range, or drag a box around several. Variables with the same name follow preset order.",
-  "高级选项": "Advanced options"
+  "高级选项": "Advanced options",
+  "框选或 Ctrl / ⌘ 点击可多选，右键批量操作": "Drag a box or Ctrl / ⌘-click to select several; right-click for batch actions",
+  "已选 {count} 本": "{count} selected",
+  "已选 {n} 幕": "{n} selected",
+  "更多…": "More…"
 });return catalog}
 
 function translateCurrentLocale(text){

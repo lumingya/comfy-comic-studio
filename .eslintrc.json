@@ -1295,7 +1295,16 @@
     "assemblyStoryChecks": "readonly",
     "designerSelectionChanged": "readonly",
     "designerChecks": "readonly",
-    "designerIssueListHTML": "readonly"
+    "designerIssueListHTML": "readonly",
+    "dismissMultiSelectHint": "readonly",
+    "multiSelectHintHTML": "readonly",
+    "openSelectionMenu": "readonly",
+    "productionSelectionContextItems": "readonly",
+    "productionSelectionStatusHTML": "readonly",
+    "selectionStatusInnerHTML": "readonly",
+    "shelfSelectionInnerHTML": "readonly",
+    "workshopFramesSelectionContextItems": "readonly",
+    "multiSelectHintSeen": "readonly"
   },
   "parserOptions": {
     "ecmaVersion": 2021,
