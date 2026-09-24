@@ -33,10 +33,11 @@ T9 开箱检查与离线练习（C1/B3/B6）、T10 多选可发现（C6）。阶
 
 ## T11 计划
 
-- [ ] T11a 后端 `backend/mio_recycle.py`：列出 `.trash/<id>/receipt.json`、恢复（含画册墓碑清除、目录索引）、永久删除、按天数清理；HTTP 路由；Python 测试
+- [x] T11a 后端 `backend/mio_recycle.py`：列出 `.trash/<id>/receipt.json`、恢复（含画册墓碑清除、目录索引）、永久删除、按天数清理；HTTP 路由；Python 测试
 - [ ] T11b 前端回收站：设置 → 数据与备份 → 回收站（列表、恢复、永久删除、清空、保留天数）
 - [ ] T11c 统一撤销：画册 / 分镜 / 预设 / 画册集 / 工作流删除后 toast 给出 [撤销]（10 秒），撤销走回收站恢复；文案去掉“不可撤销”
 - [ ] T11d 素材回收并入 `.trash`，引用保护（回收站里的文档仍然保住它引用的素材）；文档
+  - 后端部分已在 T11a 完成：foundation cleanup 改写到 `.trash/files/<ns>/`（manifest: url/stored），`scan_references` 扫描 `.trash/<id>` 文档，只跳过 `.trash/assets`、`.trash/files`；剩下文档（BACKUP.md `## 回收站`，FOUNDATION 链接补锚点）
 
 ## 进度记录
 
@@ -47,3 +48,9 @@ T9 开箱检查与离线练习（C1/B3/B6）、T10 多选可发现（C6）。阶
 - 2026-09-24 · T8f · TROUBLESHOOTING 重写为「常见问题与错误码」：22 个错误码（速查表含“请求发出了吗 / 重试会重复计费吗”）、日志位置、FAQ。任务卡失败面板显示错误码 + 「查看排错 ↗」链接（js/assembly-workshop.js MIO_ERROR_CODES / productionErrorCode），锚点 = 阅读器标题 slug；契约测试 +1（88/88）
 - 2026-09-24 · T8g · 新增 GLOSSARY（内容 / 生成 / 图像服务与工作流 / 管理 + 旧叫法对照）；教程中心 docs/README.md、落地页 docs/index.html（改正链接标签 + 术语表入口）、帮助抽屉 HELP_DOCS、根 README 链接更新；tests/test_documentation.py +3（锚点解析、错误码均有排错条目、术语表入口）。注意：只提交改过的 md 对应的 HTML，其他 HTML 仓库里是 CRLF（Windows 生成），全量重建会产生无意义 diff
 - 2026-09-24 · T8h · FOUNDATION 重写。T8 全部完成
+- 2026-09-24 · T11a · `backend/mio_recycle.py`（list_items / restore / purge / empty / auto_purge / restore_files / undelete_albums）
+  - HTTP：`GET /api/library/recycle[?all=1]`；`POST /api/library/recycle/{restore|purge|empty|auto-clean}`
+  - restore 的 body 是 `{trashId}` 或 `{kind,id}`（取最新回执）；`assets:<batch>` / `files:<ns>` 前缀交给对应恢复函数；purge/empty 需要 `trusted:true`；auto-clean 的 `{retentionDays: 0|7|30|90}`
+  - 列表默认只含 USER_KINDS（albums/storyboards/characters/scenes/collections/layouts/workflows/plans），其余 kind 计入 `hidden`
+  - conflict 取值：''/missing/path/id/invalid；恢复冲突返回 409，不覆盖
+  - 测试：tests/test_recycle.py（9 个）

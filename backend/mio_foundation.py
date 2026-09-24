@@ -198,12 +198,14 @@ def cleanup(host,body):
         if body.get('token')!=report['cleanup']['token']:raise Conflict('Asset references changed; preview again')
         paths=body.get('paths')
         if not isinstance(paths,list) or not paths or len(set(paths))!=len(paths) or any(p not in report['cleanup']['candidates'] for p in paths):raise ValueError('Only explicitly selected eligible files can be recycled')
-        moved=[]
+        moved=[];batch=Path(host.DATA_DIR)/'.trash'/'files'/str(time.time_ns())
         for url in paths:
-            original=host.local_path_from_url(url)
-            dest=Path(host.DATA_DIR)/'trash'/str(time.time_ns())/url.removeprefix('/images/')
-            dest.parent.mkdir(parents=True,exist_ok=True);os.replace(original,dest);moved.append(url)
-        return {'recycled':moved,'note':'Files remain in data/trash; no automatic permanent deletion.'}
+            original=host.local_path_from_url(url);stored=url.removeprefix('/images/')
+            dest=batch/stored
+            dest.parent.mkdir(parents=True,exist_ok=True);os.replace(original,dest);moved.append({'url':url,'stored':stored})
+        # The recycle bin (设置 → 数据与备份 → 回收站) lists, restores and purges this batch.
+        (batch/'manifest.json').write_text(json.dumps({'at':time.time(),'moved':moved},ensure_ascii=False,indent=2),encoding='utf-8')
+        return {'recycled':[m['url'] for m in moved],'batch':'files:'+batch.name,'note':'Files are in the recycle bin until you restore or purge them.'}
 
 def resources(host,kind,body=None):
     if kind not in ('storyboards','plans'):raise ValueError('Unknown resource')

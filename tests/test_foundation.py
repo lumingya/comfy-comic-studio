@@ -35,7 +35,7 @@ class FoundationSafetyTests(unittest.TestCase):
         record=mio_foundation.inventory(server)['items'][0];self.assertFalse(record['cleanupEligible']);self.assertTrue(any(r.startswith('job/') for r in record['references']))
     def test_cleanup_is_preview_confirmed_and_recoverable(self):
         url=self.asset(True);report=mio_foundation.inventory(server)
-        result=mio_foundation.cleanup(server,{'token':report['cleanup']['token'],'paths':[url]});self.assertEqual(result['recycled'],[url]);self.assertTrue(list((self.root/'trash').rglob('*.png')))
+        result=mio_foundation.cleanup(server,{'token':report['cleanup']['token'],'paths':[url]});self.assertEqual(result['recycled'],[url]);self.assertTrue(list((self.root/'.trash'/'files').rglob('*.png')));self.assertTrue(result['batch'].startswith('files:'))
         with self.assertRaises(ValueError):server.local_path_from_url(url)
     def test_new_reference_invalidates_cleanup_preview(self):
         url=self.asset(True);report=mio_foundation.inventory(server);self.config={'snapshot':{'image':url}}

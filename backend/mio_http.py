@@ -377,6 +377,18 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
             except (ValueError, OSError) as e:
                 self.send_json(400, {"error": str(e)[:300]})
             return
+        if request_path == "/api/library/recycle":
+            from backend import mio_recycle
+
+            try:
+                query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+                store = self.services.native_store()
+                self.send_json(200, mio_recycle.list_items(self.services.DATA_DIR, store.library, query.get("all", ["0"])[0] == "1"))
+            except self.services.LibraryError as e:
+                self.send_json(e.status, {"error": str(e)[:400]})
+            except (ValueError, OSError) as e:
+                self.send_json(400, {"error": str(e)[:300]})
+            return
         if request_path == "/api/library/rescan":
             self.services.native_store().library.scan()
             self.send_json(
@@ -608,6 +620,48 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
                 self.send_json(413, {"error": "Request too large"})
             except self.services.LibraryError as e:
                 self.send_json(e.status, {"error": str(e)[:400]})
+            except (ValueError, OSError) as e:
+                self.send_json(400, {"error": str(e)[:300]})
+            return
+
+        if request_path.startswith("/api/library/recycle/"):
+            from backend import mio_assets, mio_recycle
+
+            try:
+                body = self.read_json_body(max_bytes=65536)
+                action = request_path.rsplit("/", 1)[-1]
+                root = self.services.DATA_DIR
+                if action == "restore":
+                    target = str(body.get("trashId") or "")
+                    if target.startswith("assets:"):
+                        result = mio_assets.restore(root, target.split(":", 1)[1])
+                    elif target.startswith("files:"):
+                        result = mio_recycle.restore_files(root, target.split(":", 1)[1], self.services.application.local_path_from_url)
+                    else:
+                        service = mio_foundation.jobs(self.services.application)
+                        with service.lock, self.services.CONFIG_LOCK:
+                            result = mio_recycle.restore(
+                                self.services.native_store(),
+                                target or None,
+                                body.get("kind"),
+                                body.get("id"),
+                                before_commit=lambda kind, id: kind == "albums" and mio_recycle.undelete_albums(root, [id]),
+                            )
+                elif action in ("purge", "empty"):
+                    if body.get("trusted") is not True:
+                        raise self.services.LibraryError("Confirm permanent deletion", 403)
+                    with self.services.CONFIG_LOCK:
+                        result = mio_recycle.purge(root, body.get("trashId")) if action == "purge" else mio_recycle.empty(root)
+                elif action == "auto-clean":
+                    with self.services.CONFIG_LOCK:
+                        result = mio_recycle.auto_purge(root, body.get("retentionDays", mio_recycle.DEFAULT_RETENTION))
+                else:
+                    raise self.services.LibraryError("Unknown recycle action", 404)
+                self.send_json(200, result)
+            except self.services.PayloadTooLargeError:
+                self.send_json(413, {"error": "Request too large"})
+            except self.services.LibraryError as e:
+                self.send_json(e.status, {"error": str(e)[:400], "code": e.code})
             except (ValueError, OSError) as e:
                 self.send_json(400, {"error": str(e)[:300]})
             return

@@ -29,7 +29,9 @@ NAME = re.compile(r"[a-f0-9]{64}\.(?:png|jpe?g|webp|svg)")
 GRACE_HOURS = 24
 # Folders that hold caches, derived data or files awaiting deletion: nothing
 # inside them may keep an asset alive.
-SKIP_DIRS = {".cache", ".transactions", ".trash", "trash", "runtime/thumbnails", "runtime/assets", "runtime/staging", "runtime/execution", "assets"}
+# Deleted documents in ``.trash/<id>/`` still pin their images so a restore
+# from the recycle bin never comes back with missing pictures.
+SKIP_DIRS = {".cache", ".transactions", ".trash/assets", ".trash/files", "trash", "runtime/thumbnails", "runtime/assets", "runtime/staging", "runtime/execution", "assets"}
 TRASH = ".trash/assets"
 
 
