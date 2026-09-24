@@ -1002,7 +1002,7 @@ window.addEventListener('cancel',e=>{const d=e.target;if(!(d instanceof HTMLDial
 window.addEventListener('close',e=>{const d=e.target;if(!(d instanceof HTMLDialogElement))return;if(d.contains($('#toasts')))document.body.append($('#toasts'));if(d===$('#welcome-dialog'))e.stopImmediatePropagation()},true);
 
 
-window.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#welcome-dialog')?.open){e.preventDefault();e.stopImmediatePropagation();return}if(e.key==='Escape')return;if(e.target.closest('input,textarea,select,[contenteditable]')||document.querySelector('dialog[open]'))return;if(e.altKey&&!e.ctrlKey&&!e.metaKey&&/^[0-5]$/.test(e.key)){e.preventDefault();e.stopImmediatePropagation();navigate(({0:9,1:0,2:1,3:3,4:4,5:5})[e.key])}},true);
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#welcome-dialog')?.open){e.preventDefault();e.stopImmediatePropagation();return}if(e.key==='Escape')return;if(e.target.closest('input,textarea,select,[contenteditable]')||document.querySelector('dialog[open]'))return;const digit=/^Digit([0-5])$/.exec(e.code||'')?.[1]??(/^[0-5]$/.test(e.key)?e.key:null);if(e.altKey&&!e.ctrlKey&&!e.metaKey&&digit!==null){e.preventDefault();e.stopImmediatePropagation();navigate(({0:9,1:0,2:1,3:3,4:4,5:5})[digit])}},true);
 
 
 window.addEventListener('resize',()=>{const orb=$('.assistant-orb');if(orb){orb.style.right=clamp(parseFloat(orb.style.right)||27,12,Math.max(12,innerWidth-58))+'px';orb.style.bottom=clamp(parseFloat(orb.style.bottom)||49,40,Math.max(40,innerHeight-58))+'px'}});
@@ -1369,6 +1369,7 @@ installUpdateCenter();
 installArchitecture();
 installFirstRun();
 installHome();
+installHelpDrawer();
 if (typeof installWorkflowWorkbench === 'function') installWorkflowWorkbench();
 installPlatformUI();
 

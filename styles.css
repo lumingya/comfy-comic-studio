@@ -1436,3 +1436,54 @@ body.production-reordering .production-card{cursor:grabbing}
 .workshop-frames button.selection-action,.workshop-frames .multiselect-hint button.link-button{display:inline;width:auto;padding:0;border:0;border-radius:3px;background:none;gap:0;font-size:12.5px;line-height:1.6}
 .workshop-frames button.selection-action:hover,.workshop-frames .multiselect-hint button.link-button:hover{background:none;color:var(--accent)}
 .workshop-frames button.selection-action.danger{color:var(--red)}
+/* T5 · help drawer: the “?” in the top bar opens page help, the setup checklist, tutorials, shortcuts and diagnostics. */
+/* The id outranks the generic (and phone) dialog rules, which centre dialogs with margin:auto !important. */
+body dialog#help-drawer{position:fixed;inset:var(--mobile-vtop,0px) 0 auto auto;margin:0!important;width:min(440px,100vw);max-width:100vw;height:var(--mobile-vh,100dvh);max-height:none;overflow:hidden;border:0;border-left:1px solid var(--line);border-radius:0;flex-direction:column;box-shadow:-18px 0 60px rgb(var(--shadow-rgb)/.35);font-size:13px;line-height:1.7}
+dialog.help-drawer[open]{display:flex;animation:help-drawer-in .18s ease-out}
+dialog.help-drawer::backdrop{background:rgb(var(--shadow-rgb)/.45)}
+@keyframes help-drawer-in{from{transform:translateX(28px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){dialog.help-drawer[open]{animation:none}}
+.help-drawer-head{display:flex;align-items:flex-start;gap:10px;padding:18px 20px 14px 22px;border-bottom:1px solid var(--line)}
+.help-drawer-head h2{margin:0;font-size:17px;font-weight:600;line-height:1.4}
+.help-drawer-head h2:focus{outline:none}
+.help-kicker{margin:0 0 4px;font:11px/1.4 var(--mono);letter-spacing:.16em;color:var(--muted)}
+.help-drawer-body{flex:1;overflow:auto;padding:0 22px 28px;overscroll-behavior:contain}
+.help-section{padding:18px 0;border-bottom:1px solid var(--line)}
+.help-section:last-child{border-bottom:0}
+.help-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.help-section h3{margin:0;font-size:14px;font-weight:600}
+.help-section h3:focus,.help-section h3:focus-visible{outline:none;box-shadow:none}
+.help-section h4{margin:14px 0 6px;font-size:12px;font-weight:600;color:var(--soft)}
+.help-lead{margin:0;color:var(--text)}
+.help-note{margin:0 0 10px;font-size:12px;color:var(--muted)}
+.help-drawer .btn.small{min-height:30px;padding:0 11px;font-size:12px}
+.help-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.help-terms{display:grid;gap:8px;margin:14px 0 0}
+.help-terms div{display:grid;grid-template-columns:5.5em 1fr;gap:10px}
+.help-terms dt{font-weight:600;color:var(--soft)}
+.help-terms dd{margin:0;font-size:12px;color:var(--muted)}
+.help-progress{font-size:12px;color:var(--amber)}
+.help-progress.is-done{color:var(--accent)}
+.help-checks{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.help-check{display:grid;grid-template-columns:22px 1fr auto;align-items:start;gap:10px}
+.help-check-mark{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;font-size:12px;font-weight:700;border:1px solid var(--line);color:var(--muted)}
+.help-check.is-done .help-check-mark{background:var(--tint);border-color:var(--accent2);color:var(--accent)}
+.help-check.is-todo .help-check-mark{border-color:var(--amber);color:var(--amber)}
+.help-check-body{display:grid;gap:2px;min-width:0}
+.help-check-body strong{font-weight:600}
+.help-check-body small{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.help-check-thumb{width:72px;height:54px;margin-top:6px;object-fit:cover;border-radius:4px;border:1px solid var(--line)}
+.help-doc-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px}
+.help-doc-list a{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 0;color:var(--text);text-decoration:none;border-bottom:1px dashed var(--line)}
+.help-doc-list a:hover,.help-doc-list a:focus-visible{color:var(--accent)}
+.help-doc-list a span{color:var(--muted);font-size:12px}
+.help-key-list{margin:0;display:grid;gap:4px}
+.help-key-list div{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.help-key-list dt{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.help-key-list dt span{font-size:12px;color:var(--muted)}
+.help-key-list dd{margin:0;font-size:12px;color:var(--soft);text-align:right}
+.help-drawer kbd{display:inline-block;min-width:22px;padding:1px 6px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;background:var(--panel2);font:12px/1.5 var(--mono);color:var(--text);text-align:center}
+.help-diagnostics-view summary{cursor:pointer;font-size:12px;color:var(--accent2)}
+.help-diagnostics-view pre{margin:8px 0 0;padding:10px 12px;max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel2);font:12px/1.6 var(--mono);white-space:pre-wrap;overflow-wrap:anywhere;color:var(--soft)}
+@media (max-width:700px){.help-doc-list{grid-template-columns:1fr}.help-drawer-body{padding:0 16px 24px}.help-drawer-head{padding:14px 12px 12px 16px}}
+@media (hover:none) and (pointer:coarse){.help-keys{display:none}}

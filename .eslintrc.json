@@ -1306,7 +1306,10 @@
     "workshopFramesSelectionContextItems": "readonly",
     "multiSelectHintSeen": "readonly",
     "designerFocusWorkshopField": "readonly",
-    "productionQueueControls": "readonly"
+    "productionQueueControls": "readonly",
+    "workflowSeedReady": "readonly",
+    "openHelpDrawer": "readonly",
+    "installHelpDrawer": "readonly"
   },
   "parserOptions": {
     "ecmaVersion": 2021,
