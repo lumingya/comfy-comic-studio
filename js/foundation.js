@@ -195,7 +195,7 @@ async function syncProductionActivity(result){
   const events=await foundationRequest('jobs/activity?after='+foundationRuntime.activityAfter),labels={pending:'已入队',running:'开始请求',complete:'任务完成',failed:'生成失败',unknown:'结果未确认',canceled:'已停止',cancel:'立即停止，丢弃迟到结果',late_result_discarded:'已丢弃停止前请求的迟到结果',retry_wait:'等待自动重试',hold:'暂存 / 已撤销自动重试倒计时',amend:'未完成提示词已修订',continue:'继续未完成分镜',input_read:'已读取并记录本次分镜输入',frame_complete:'分镜结果已保存',start:'手动并行启动任务',runtime:'已保存每任务并发 / 超时',resume:'恢复调度 / 释放暂存',pause:'暂停',policy:'失败策略已修改',failure_limit_reached:'达到连续失败上限，已暂停当前画册',dispatch_held:'连续失败保护已生效，此幕未发出请求'};
   for(const e of events){const q=state.queue.find(q=>q.serverId===e.jobId);if(e.index!==undefined&&(q?.serverIndices||q?.indices)?.[e.index]!==undefined)e.frameIndex=(q.serverIndices||q.indices)[e.index];foundationRuntime.activityAfter=Math.max(foundationRuntime.activityAfter,e.id);
     const title=e.label||'调度器',scene=e.frameIndex!==undefined?' · 第 '+(e.frameIndex+1)+' 幕':'',attempt=e.frameAttempt?' · 本幕第 '+e.frameAttempt+' 次尝试':'',model=e.model||e.request?.config?.model;
-    let action=labels[e.state]||e.state;if(e.state==='input_read')action='输入已读取';if(e.state==='request_ready')action='请求参数已确定，准备发送';if(e.state==='running')action='取得执行名额';if(e.state==='skipped')action='已跳过：HTTP 422，请修改本册分镜后再继续';if(e.state==='response_received')action='已收到响应（HTTP '+e.httpStatus+'），正在处理结果';if(e.state==='frame_complete')action='图片已保存，继续调度剩余分镜';if(e.state==='failed')action='本幕失败，可修改本册分镜或渠道后继续；其他待办自动推进';if(e.state==='unknown')action='本幕结果不明，不自动重发；可查看已有结果或确认风险后继续';
+    let action=labels[e.state]||e.state;if(e.state==='input_read')action='输入已读取';if(e.state==='request_ready')action='请求参数已确定，准备发送';if(e.state==='running')action='取得执行名额';if(e.state==='skipped')action='已跳过：HTTP 422，请修改本册分镜后再继续';if(e.state==='response_received')action='已收到响应（HTTP '+e.httpStatus+'），正在处理结果';if(e.state==='frame_complete')action='图片已保存，继续调度剩余分镜';if(e.state==='failed')action='本幕失败，可修改本册分镜或图像服务后继续；其他待办自动推进';if(e.state==='unknown')action='本幕结果不明，不自动重发；可查看已有结果或确认风险后继续';
     if(e.state==='retry_wait')action='请求失败，'+new Date(e.retryAt*1000).toLocaleTimeString()+' 自动重试（已安排第 '+e.retryCount+' 次自动重试）';
     const message=title+scene+' · '+action+attempt+(model?' · 模型 '+model:'')+(['input_read','request_ready'].includes(e.state)?' · 等待上限 '+e.timeout+' 秒':'')+(e.error?'\n'+e.error.message:'');
     const attemptKey=e.jobId+':'+e.index+':'+e.frameAttempt,entry={time:e.time*1000,level:e.error?'error':'info',message,request:e.request,eventId:e.id,attemptKey};
@@ -230,12 +230,12 @@ function queueErrorSummary(q){
   if(q.serverReadyAt)return rt.paused||q.status==='paused'?'自动重试已暂停，恢复调度后按原计划继续。':'上游暂时失败，已安排自动重试；其他可执行分镜继续。';
   if(q.serverRunningCount)return prefix+'失败信息已保留；其他分镜仍在执行，请等待当前请求结束。';
   const status=Number((q.error||'').match(/HTTP\s+(\d{3})/)?.[1]);
-  if(status===401||status===403)return prefix+'渠道鉴权失败，请检查密钥或权限，保存后继续。';
+  if(status===401||status===403)return prefix+'图像服务鉴权失败，请检查密钥或权限，保存后继续。';
   if(status===429)return prefix+'供应商限流（HTTP 429），不会自动重试，请稍后手动继续。';
   if(status===422)return prefix+'内容被拒绝并跳过；在原分镜编辑器修改本册，保存后继续。';
-  if(status>=400&&status<500)return prefix+'请求被拒绝（HTTP '+status+'），请检查本册分镜与渠道参数后继续。';
+  if(status>=400&&status<500)return prefix+'请求被拒绝（HTTP '+status+'），请检查本册分镜与图像服务参数后继续。';
   if(status>=500)return prefix+'供应商服务错误（HTTP '+status+'），自动尝试已结束，可手动继续。';
-  return prefix+'生成未完成，请检查本册输入或渠道配置。'+(q.error||'').slice(0,90);
+  return prefix+'生成未完成，请检查本册输入或图像服务配置。'+(q.error||'').slice(0,90);
 }
 
 async function startParallelTask(id){
@@ -259,9 +259,9 @@ function queueFrameStatesHTML(q){
 }
 
 function prepareLiveStoryboard(plan){const q=liveStoryboardTask(plan);if(q&&createUI.liveTaskId!==q.id){createUI.liveTaskId=q.id;createUI.sceneScope='plan'}}
-function storyboardScopeHTML(p,t,own){const q=liveStoryboardTask(p),selected=own?(q?'task:'+q.id:'plan'):'shared',tasks=state.queue.filter(x=>x.planId===p.id&&bookBy(x.bookId)?.sourceSnapshot&&(x.done<x.indices.length||x.id===q?.id));return `<div class="field"><label class="label" for="v3-scene-scope">修改范围</label><select id="v3-scene-scope">${opt('shared','修改共享分镜模板',selected)}${p.templateId===t?.id&&!tasks.length?opt('plan','仅修改当前画册这一幕',selected):''}${tasks.map(x=>opt('task:'+x.id,'画册：'+bookBy(x.bookId).title+' · '+new Date(x.createdAt).toLocaleTimeString(),selected)).join('')}</select>${liveStoryboardNotice(p)}</div>`}
+function storyboardScopeHTML(p,t,own){const q=liveStoryboardTask(p),selected=own?(q?'task:'+q.id:'plan'):'shared',tasks=state.queue.filter(x=>x.planId===p.id&&bookBy(x.bookId)?.sourceSnapshot&&(x.done<x.indices.length||x.id===q?.id));return `<div class="field"><label class="label" for="v3-scene-scope">修改范围</label><select id="v3-scene-scope">${opt('shared','修改共享分镜',selected)}${p.templateId===t?.id&&!tasks.length?opt('plan','仅修改当前画册这一幕',selected):''}${tasks.map(x=>opt('task:'+x.id,'画册：'+bookBy(x.bookId).title+' · '+new Date(x.createdAt).toLocaleTimeString(),selected)).join('')}</select>${liveStoryboardNotice(p)}</div>`}
 
 function liveStoryboardPreview(p,f){try{const q=liveStoryboardTask(p),live=liveStoryboardFrame(p,f);if(!live)return quietResolvedPrompt(p,f);const index=q.frames.indexOf(live),entry=bookBy(q.bookId).sourceSnapshot.liveInputs?.[index];return esc(entry?.error||entry?.input?.prompt||foundationFrameInput(live,q.rowSnapshot,q.bookId,index).prompt)}catch(e){return esc(e.message)}}
 
-function queueChannelLabel(q){const channels=q.serverChannels;if(!channels?.length)return '读取已保存渠道…';return channels.map(c=>c.available?`${c.title||c.provider} / ${c.model||'工作流'}`:'渠道配置需处理').join(' · ')}
+function queueChannelLabel(q){const channels=q.serverChannels;if(!channels?.length)return '读取已保存图像服务…';return channels.map(c=>c.available?`${c.title||c.provider} / ${c.model||'工作流'}`:'图像服务配置需处理').join(' · ')}
 if(typeof globalThis.ComfyComic!=='undefined'&&typeof installFoundation==='function')installFoundation();

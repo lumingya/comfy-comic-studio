@@ -19,7 +19,7 @@ function save(allow=false){if(rt.booting)return;saveAllow=saveAllow||allow;rt.sa
 async function persist(allow){if(nativeHTTPMode())return globalThis.ComfyComic?.sync?.save(allow);try{validateState(state);const n=assetCount(state);if(!allow&&rt.lastCount>10&&n<rt.lastCount*.6)throw Error('防冲刷保护：工程资产异常减少，已阻止覆盖。请导出当前工程检查。');state.updatedAt=Date.now();const snapshot=clone(state);let ok=false;if(rt.db){try{await dbWrite(snapshot,allow);ok=true}catch(e){if(e?.message?.includes('防冲刷'))throw e}}try{const previous=JSON.parse(localStorage.getItem('cc-project')||'null');if(previous&&!allow&&n<assetCount(previous)*.6)throw Error('防冲刷保护：本地缓存包含更多资产。');localStorage.setItem('cc-project',JSON.stringify(snapshot));ok=true}catch(e){if(e?.message?.includes('防冲刷'))throw e}if(!ok)throw Error('浏览器存储不可用或空间不足，请立即导出工程。');rt.lastCount=n;rt.saved=true;rt.saving=false;renderStatus()}catch(e){rt.saved=false;rt.saving=false;renderStatus();toast(e.message,'error')}}
 
 
-async function restoreObject(data){if(rt.running||rt.llmBusy||rt.chatBusy)throw Error('请先停止正在执行的渲染、剧本或助手任务。');validateState(data);if(!await confirmAction('恢复并覆盖当前工程？',`将载入 ${data.projects.length} 个企划、${data.books.length} 本画册、${data.templates.length} 个模板。建议先导出当前备份。`,'恢复工程'))return;state=clone(data);state.customColumns??=[];state.installedPackages??=[];state.settings.comfy.presets??=[];state.settings.xml??={separate:false,baseUrl:'https://api.openai.com/v1',key:'',model:'gpt-4o'};state.queue.forEach(q=>{if(['running','paused'].includes(q.status))q.status='pending'});state.books.forEach(b=>b.inProgress=false);ui.workspace=0;ui.selected.clear();ui.templateId=projectTemplates()[0]?.id;ui.storyTemplateId=ui.templateId;ui.storyRowId=projectRows()[0]?.id;resetWS();save(true);closeModal();if($('#reader').open)closeReader();render();toast('工程已恢复，待执行任务已安全暂停。')}
+async function restoreObject(data){if(rt.running||rt.llmBusy||rt.chatBusy)throw Error('请先停止正在执行的渲染、剧本或助手任务。');validateState(data);if(!await confirmAction('恢复并覆盖当前工程？',`将载入 ${data.projects.length} 个画册集、${data.books.length} 本画册、${data.templates.length} 个模板。建议先导出当前备份。`,'恢复工程'))return;state=clone(data);state.customColumns??=[];state.installedPackages??=[];state.settings.comfy.presets??=[];state.settings.xml??={separate:false,baseUrl:'https://api.openai.com/v1',key:'',model:'gpt-4o'};state.queue.forEach(q=>{if(['running','paused'].includes(q.status))q.status='pending'});state.books.forEach(b=>b.inProgress=false);ui.workspace=0;ui.selected.clear();ui.templateId=projectTemplates()[0]?.id;ui.storyTemplateId=ui.templateId;ui.storyRowId=projectRows()[0]?.id;resetWS();save(true);closeModal();if($('#reader').open)closeReader();render();toast('工程已恢复，待执行任务已安全暂停。')}
 
 
 async function syncRemote(direction){flushEditor();const url=state.settings.syncUrl.trim();if(!/^https?:\/\//.test(url))throw Error('请先配置可信的 HTTP(S) JSON 存储端点。');if(direction==='push'){let remote;try{remote=await(await request(url)).json();validateState(remote)}catch(e){if(!e.message.includes('404'))throw e}if(remote&&assetCount(state)<assetCount(remote)*.6)throw Error('防冲刷保护：本地数据明显少于远端，已拒绝覆盖。');if(!await confirmAction('推送工程到自有远端？','画册与角色数据将离开浏览器。API 密钥不会包含在同步包中。','安全推送'))return;await request(url,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(backupObject(false))});rt.syncStatus='已安全推送 · '+new Date().toLocaleTimeString()}else{const data=await(await request(url)).json();validateState(data);if(assetCount(data)<assetCount(state)*.6)throw Error('防冲刷保护：远端资产异常偏少，拒绝覆盖本地。');await restoreObject(data);rt.syncStatus='已拉取并恢复远端工程'}if($('#sync-status'))$('#sync-status').textContent=rt.syncStatus;toast(rt.syncStatus)}
@@ -73,7 +73,7 @@ async function diskImage(source,fallback=''){
 
 async function buildDiskPackage(source,progress=()=>{},options={}){
   const snapshot=clone(source);ensureStudioState(snapshot);ensureWorkspaceIdentity(snapshot);
-  for(const group of ['books','rows','templates'])for(const entity of snapshot[group]){entity.projectId ||= snapshot.activeProjectId;if(!snapshot.projects.some(p=>p.id===entity.projectId))throw Error('资产「'+(entity.title||entity.character||entity.id)+'」的企划不存在，未保存。')}
+  for(const group of ['books','rows','templates'])for(const entity of snapshot[group]){entity.projectId ||= snapshot.activeProjectId;if(!snapshot.projects.some(p=>p.id===entity.projectId))throw Error('资产「'+(entity.title||entity.character||entity.id)+'」的画册集不存在，未保存。')}
   validateState(snapshot);
   const files=new Map(),paths=clone(options.paths||disk.paths),directories=new Set(['企划','导出模板','引擎','对话记录','工作室']);for(const key of ['projects','books','rows','templates','exports','chats'])paths[key]||={};
   const emit=(path,data,type='application/json')=>{checkedPath(path);files.set(path,data instanceof Blob?data:new Blob([data],{type}));return path};
@@ -106,7 +106,7 @@ async function buildDiskPackage(source,progress=()=>{},options={}){
     }
     const file=await record(base,'project.json',projectRecord);manifest.projects.push({id:p.id,title:p.title,base,file});
   }
-  if(manifest.projects.reduce((n,p)=>n+snapshot.books.filter(b=>b.projectId===p.id).length,0)!==snapshot.books.length)throw Error('有画册缺少有效企划归属，未提交磁盘工程。');
+  if(manifest.projects.reduce((n,p)=>n+snapshot.books.filter(b=>b.projectId===p.id).length,0)!==snapshot.books.length)throw Error('有画册缺少有效画册集归属，未提交磁盘工程。');
   for(const t of snapshot.exportTemplates){const base=entityBase('exports',t,'导出模板',t.title),copy=clone(t);copy.htmlFile=await record(base,'layout.html',copy.html,'text/html');delete copy.html;const file=await record(base,'template.json',copy);manifest.exportTemplates.push({id:t.id,title:t.title,base,file})}
   for(const chat of snapshot.chats){const base=entityBase('chats',chat,'对话记录',chat.title||'对话'),data=await externalize(chat,base+'/附件'),file=await record(base,'session.json',data);manifest.chats.push({id:chat.id,base,file})}
   emit('工作室使用说明.txt','Mio '+STUDIO_VERSION+'\n\nworkspace.json 是工作室入口，请保留目录结构。\n企划/<企划名称>/画册/<画册名称>/图片/ 保存独立的原图文件。\n分镜模板、角色、剧情版本按企划存放；导出模板和引擎工作流独立存放。\n\n应用先写入不可变版本文件，再最后提交 workspace.json。每个目录中的同名 JSON/HTML 是方便浏览的当前副本；索引引用 .history/ 中的完整版本。\n修改目录内的模板可通过应用的导入功能重新载入。请勿手动修改索引或删除 .history/。\n删除作品仅移除当前工程索引，旧原图和版本文件不会被自动销毁。\nAPI 密钥默认不写入目录；可以在设置中明确开启。\n\n浏览器数据库仅记住目录授权，作品内容不作为浏览器缓存保存。\n','text/plain');
@@ -219,7 +219,7 @@ async function attachWorkspaceDirectory(handle,auto=false){
     await disk.tail.catch(()=>{});
     const loaded=await readFolderWorkspace(handle);
     if(loaded){
-      if(!auto&&!await confirmAction('打开「'+(loaded.state.settings.identity?.workspaceName||handle.name)+'」？','将从所选目录恢复 '+loaded.state.projects.length+' 个企划、'+loaded.state.books.length+' 本画册。\n当前临时会话不会与磁盘记录混合；如需保留，请先导出备份。','打开磁盘工程'))return false;
+      if(!auto&&!await confirmAction('打开「'+(loaded.state.settings.identity?.workspaceName||handle.name)+'」？','将从所选目录恢复 '+loaded.state.projects.length+' 个画册集、'+loaded.state.books.length+' 本画册。\n当前临时会话不会与磁盘记录混合；如需保留，请先导出备份。','打开磁盘工程'))return false;
       disk.root=handle;installLoadedWorkspace(loaded);disk.phase=loaded.recovered?'recovery':await handle.queryPermission({mode:'readwrite'})==='granted'?'connected':'permission';disk.lastError=loaded.recovered?'当前索引异常，已载入上次完整提交：'+loaded.error:'';
       if(loaded.recovered)rt.saved=false;
     }else{
@@ -234,7 +234,7 @@ async function attachWorkspaceDirectory(handle,auto=false){
     if($('#welcome-dialog').open&&state.settings.identity.workspaceName){state.settings.identity.onboarded=true;rememberProfile();$('#welcome-dialog').close()}
     if($('#modal').open)closeModal();render();
     if(!state.settings.identity.workspaceName)showWorkspaceWelcome();
-    if(!auto)toast(loaded?'磁盘工作室已载入，企划和图片已恢复。':'目录已连接，完整工程已分层写入磁盘。');
+    if(!auto)toast(loaded?'磁盘工作室已载入，画册集和图片已恢复。':'目录已连接，完整工程已分层写入磁盘。');
     return true;
   }finally{disk.connecting=false;renderStatus()}
 }
@@ -369,7 +369,7 @@ function applyPythonState(data,config){state=clone(data);ensureStudioState();sta
 
 async function connectPythonBackend(){
   if(activeJobs())throw Error('请先完成生成、导出或其他正在执行的服务任务。');const config=clone(backendConfig());if(!config.savePath?.trim())throw Error('请填写保存接口。');backendURL(config.savePath,config);backendRuntime.loading=true;createUI.backendBusy=true;renderStatus();
-  try{const result=await readPythonWorkspace(config);if(result.state){if(!await confirmAction('打开 Python 后端里的工作室？','读取到 '+result.state.projects.length+' 个企划和 '+result.state.books.length+' 本画册。当前内存工程不会与后端自动混合。','读取并连接'))return;applyPythonState(result.state,config)}else{if(!await confirmAction('连接空的 Python 工作室？','读取接口明确返回空工程。连接后，你下一次保存会发送当前内存工程给此服务。','确认连接'))return;state.settings.backend.enabled=true}
+  try{const result=await readPythonWorkspace(config);if(result.state){if(!await confirmAction('打开 Python 后端里的工作室？','读取到 '+result.state.projects.length+' 个画册集和 '+result.state.books.length+' 本画册。当前内存工程不会与后端自动混合。','读取并连接'))return;applyPythonState(result.state,config)}else{if(!await confirmAction('连接空的 Python 工作室？','读取接口明确返回空工程。连接后，你下一次保存会发送当前内存工程给此服务。','确认连接'))return;state.settings.backend.enabled=true}
     backendRuntime.connected=true;backendRuntime.loaded=true;backendRuntime.etag=result.etag;backendRuntime.revision=result.revision;backendRuntime.count=result.state?assetCount(result.state):0;backendRuntime.error='';backendRuntime.dirty=!result.state;backendRuntime.savedAt=result.state?Date.now():null;persistBackendLocation();render();toast(result.state?'已读取后端工程，后续修改通过保存接口提交。':'空工作室已连接，可点击“立即保存”首次提交。')
   }catch(e){backendRuntime.connected=false;backendRuntime.error=e.message;throw e}finally{backendRuntime.loading=false;createUI.backendBusy=false;renderStatus()}
 }

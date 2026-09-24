@@ -3,7 +3,7 @@
 const firstRunUI={checks:new Map(),keyNotices:new Set(),checking:false};
 function firstRunHome(){
  if(state.settings.presentation.hideFirstRun)return `<div class="first-run-reopen">${btn('首次使用指引','help','first-run-show','','ghost small')}</div>`;
- return `<section class="first-run" aria-labelledby="first-run-title"><header><div><h2 id="first-run-title">初光映格，微墨生花</h2><p>配置不会自动生成。只有在任务中明确开始，才会请求图像服务；费用由所选渠道决定。</p></div>${btn('收起指引','close','first-run-hide','','ghost small')}</header><div class="first-run-paths">${[['comfyui','ComfyUI','连接已运行的服务，导入 API 工作流。','nodes'],['novelai','NovelAI','保存图像 API 密钥，无需工作流。','image'],['openai','OpenAI 兼容','填写基础地址，选模型与接口协议。','link']].map(([id,title,text,ic])=>`<button class="first-run-path" data-act="first-run-provider" data-provider="${id}">${icon(ic)}<span><strong>我使用 ${title}</strong><small>${text}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></section>`;
+ return `<section class="first-run" aria-labelledby="first-run-title"><header><div><h2 id="first-run-title">初光映格，微墨生花</h2><p>配置不会自动生成。只有在任务中明确开始，才会请求图像服务；费用由所选图像服务决定。</p></div>${btn('收起指引','close','first-run-hide','','ghost small')}</header><div class="first-run-paths">${[['comfyui','ComfyUI','连接已运行的服务，导入 API 工作流。','nodes'],['novelai','NovelAI','保存图像 API 密钥，无需工作流。','image'],['openai','OpenAI 兼容','填写基础地址，选模型与接口协议。','link']].map(([id,title,text,ic])=>`<button class="first-run-path" data-act="first-run-provider" data-provider="${id}">${icon(ic)}<span><strong>我使用 ${title}</strong><small>${text}</small></span><span aria-hidden="true">↗</span></button>`).join('')}</div></section>`;
 }
 /* Mirrors backend/mio_credentials.is_private_host: loopback, RFC 1918 / link-local / ULA and LAN-style names may use plain HTTP. */
 function isPrivateHost(hostname){
@@ -19,7 +19,7 @@ function providerSetupIssues(p=activeImageProfile()){
  const issues=[],base=p.provider==='comfyui'?state.settings.comfy.baseUrl:p.baseUrl;let url;
  try{url=new URL(base);if(!['http:','https:'].includes(url.protocol)||url.username||url.password||url.search||url.hash)throw Error()}catch{issues.push('填写有效的 HTTP(S) 服务基础地址，不要包含密钥、查询参数或片段。')}
  if(url&&p.provider!=='comfyui'){
-  if(url.protocol==='http:'&&!isPrivateHost(url.hostname))issues.push('公网云渠道需要 HTTPS；HTTP 仅允许本机或局域网（192.168.x.x、10.x.x.x、*.local 等）服务。');
+  if(url.protocol==='http:'&&!isPrivateHost(url.hostname))issues.push('公网服务需要 HTTPS；HTTP 仅允许本机或局域网（192.168.x.x、10.x.x.x、*.local 等）服务。');
   if(/\/(?:images\/(?:generations|edits)|chat\/completions|models)\/?$/.test(url.pathname))issues.push('这里只填基础地址（通常到 /v1），不要包含 /images/generations、/chat/completions 或 /models。');
   if(!p.model?.trim())issues.push('填写模型 ID；可获取模型列表，也可按服务商说明手动填写。');
   if(providerKeyRequirement(p)==='required'&&!providerKeyCount(p))issues.push(p.provider==='novelai'?'添加 NovelAI API 密钥。':'添加 API 密钥：'+url.host+' 需要密钥才能生成。');
@@ -79,7 +79,7 @@ function assemblyPreflightNotices(storyId,presetIds,channel,workflow){
   const bound=bindings.some(b=>b.source==='image'||(b.source==='variable'&&imageKeys.has(String(b.value||'').replace(/^\{|\}$/g,''))));
   if(used.length&&!bound)notes.push('所选工作流是纯文生图（没有映射 LoadImage 等图片输入），提示词里引用的立绘参考图 {'+used.join('}、{')+'} 会被忽略，文字描述照常生成。需要参考图时，请在「工作流与 API 配置 → 节点映射」中为 LoadImage 节点绑定图片变量。');
  }
- if(channel?.provider==='comfyui'&&workflow&&!(workflow.bindings||[]).some(b=>b.enabled!==false&&(b.source==='random'||(b.source==='sceneParameter'&&String(b.value||'').trim()==='seed'))))notes.push('所选工作流没有种子映射，每一幕都会沿用蓝图里的同一个种子，画面可能几乎一样。可以在「生成环境」里点「一键添加种子映射」。');
+ if(channel?.provider==='comfyui'&&workflow&&!(workflow.bindings||[]).some(b=>b.enabled!==false&&(b.source==='random'||(b.source==='sceneParameter'&&String(b.value||'').trim()==='seed'))))notes.push('所选工作流没有种子映射，每一幕都会沿用工作流里的同一个种子，画面可能几乎一样。可以在「生成环境」里点「一键添加种子映射」。');
  /* Prompt placeholders no selected preset defines stay in the prompt verbatim (NovelAI braces are weight syntax and are skipped). */
  if(channel?.provider!=='novelai'){
   const defined=new Set(sets.flatMap(s=>(s.entries||[]).map(e=>e.key))),unknown=[];
@@ -102,8 +102,8 @@ function assemblyPreflightHTML(){const d=assemblyDesign,channel=designerChannel(
  const badge=notes.length?`<span class="preflight-badge" tabindex="0" role="button" aria-label="查看 ${notes.length} 项提示" aria-describedby="preflight-pop"><span class="preflight-pill is-advised">${issues.length?'⚠️ ':''}${notes.length} 项提示<small>悬停查看</small></span><span class="preflight-pop" id="preflight-pop" role="tooltip"><strong>⚠️ 可以生成，但请留意</strong><ul>${notes.slice(0,4).map(s=>'<li>'+esc(s)+'</li>').join('')}</ul></span></span>`:'';
  return `<div class="assembly-preflight ${tone}" role="status"><div class="preflight-row"><span class="preflight-emoji" aria-hidden="true">${emoji}</span><strong>${headline}</strong><span class="preflight-count">共 ${frames} 幕</span><span class="grow"></span>${blocked}${badge}</div>${issues.length?'<ul class="preflight-issues">'+issues.slice(0,8).map(s=>'<li>'+esc(s)+'</li>').join('')+'</ul>':''}</div>`}
 function installFirstRun(){
- [{"title": "选择图像渠道", "headline": "连接你的图像服务。", "description": "在渠道配置中选择 ComfyUI、NovelAI 或 OpenAI 兼容服务。", "checks": ["填写服务地址。", "选择模型并填写 API Key，或导入 ComfyUI API 工作流。"]}, {"title": "管理画册集", "headline": "为每个故事留一个位置。", "description": "使用顶部菜单新建或切换画册集。", "checks": ["新建画册集并填写名称。", "在画册集中整理和阅读作品。"]}, {"title": "编写分镜", "headline": "从一个镜头开始。", "description": "在创作工坊新建分镜，填写画面提示词与台词。", "checks": ["添加或调整分幕。", "选择角色、服装和画风预设。"]}, {"title": "装配与生成", "headline": "把分镜变成画面。", "description": "选择渠道、分镜和预设，添加生成任务。", "checks": ["在装配向导中确认配置。", "在任务卡点击开始，查看分幕进度。"]}, {"title": "阅读与编辑", "headline": "让每一帧更完整。", "description": "打开画册，调整图片、气泡和文字。", "checks": ["在阅读器中选择页面。", "点击编辑图片，保存修改。"]}, {"title": "导出画册", "headline": "把故事分享出去。", "description": "选择展示模板，导出 HTML、图片 ZIP 或 PDF。", "checks": ["选择版式与主题色。", "选择导出格式。"]}, {"title": "分享模板", "headline": "在 GitHub 上分享创作资源。", "description": "选择模板和目标仓库，上传或下载模板包。", "checks": ["填写仓库、分支和文件路径。", "检查文件后提交。"]}].forEach((copy,i)=>Object.assign(guideSteps[i],copy));
- Object.assign(guideSteps[0],{action:"first-run-config",label:"配置渠道",icon:"settings"});
+ [{"title": "选择图像服务", "headline": "连接你的图像服务。", "description": "在图像服务配置中选择 ComfyUI、NovelAI 或 OpenAI 兼容服务。", "checks": ["填写服务地址。", "选择模型并填写 API Key，或导入 ComfyUI API 工作流。"]}, {"title": "管理画册集", "headline": "为每个故事留一个位置。", "description": "使用顶部菜单新建或切换画册集。", "checks": ["新建画册集并填写名称。", "在画册集中整理和阅读作品。"]}, {"title": "编写分镜", "headline": "从一个镜头开始。", "description": "在创作工坊新建分镜，填写画面提示词与台词。", "checks": ["添加或调整分幕。", "选择角色、服装和画风预设。"]}, {"title": "装配与生成", "headline": "把分镜变成画面。", "description": "选择图像服务、分镜和预设，添加生成任务。", "checks": ["在装配向导中确认配置。", "在生成任务上点击开始，查看分幕进度。"]}, {"title": "阅读与编辑", "headline": "让每一帧更完整。", "description": "打开画册，调整图片、气泡和文字。", "checks": ["在阅读器中选择页面。", "点击编辑图片，保存修改。"]}, {"title": "导出画册", "headline": "把故事分享出去。", "description": "选择展示模板，导出 HTML、图片 ZIP 或 PDF。", "checks": ["选择版式与主题色。", "选择导出格式。"]}, {"title": "分享模板", "headline": "在 GitHub 上分享创作资源。", "description": "选择模板和目标仓库，上传或下载模板包。", "checks": ["填写仓库、分支和文件路径。", "检查文件后提交。"]}].forEach((copy,i)=>Object.assign(guideSteps[i],copy));
+ Object.assign(guideSteps[0],{action:"first-run-config",label:"配置图像服务",icon:"settings"});
  Object.assign(guideSteps[3],{action:"first-run-queue",label:"打开生成任务",icon:"list"});
  guideTaskStatus=()=>"";
  const previous=handleAction;handleAction=async function(action,d={},el){

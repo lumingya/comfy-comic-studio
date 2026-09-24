@@ -90,7 +90,7 @@ try {
   check(await p.locator('#modal pre').first().textContent() === '<urlopen error [Errno 111] Connection refused>', 'technical details show the raw error');
   await p.locator('#modal').getByRole('button', {name: '复制全部'}).click();
   const copied = await p.evaluate(() => workshop.diagnosticsText);
-  check(copied.includes('Errno 111') && copied.includes('第 2 幕') && copied.includes('尚未请求生成服务'), 'copy includes every scene, even collapsed ones');
+  check(copied.includes('Errno 111') && copied.includes('第 2 幕') && copied.includes('尚未请求图像服务'), 'copy includes every scene, even collapsed ones');
 
   // 5. English interface strings exist for the new parts.
   const en = await p.evaluate(() => [translateCurrentLocale('1/3 幕失败'), translateCurrentLocale('已停止：其余 2 幕没有发出。修好后点“开始生成”，会接着生成未完成的分幕。')]);

@@ -74,7 +74,7 @@ async function importWorkflowFiles(files){
       for(let i=0;i<items.length;i++)try{accepted.push(parseLibraryWorkflow(items[i],file.name.replace(/\.json$/i,'')+(items.length>1?' · '+(i+1):'')))}catch(e){errors.push(file.name+' #'+(i+1)+'：'+e.message)}
     }catch(e){errors.push(file.name+'：'+e.message)}
   }
-  for(const p of accepted)await ensureWorkflowSlotPlan(p,{force:true}).catch(e=>errors.push(p.title+'：槽位分析失败，稍后可重新分析 · '+e.message));
+  for(const p of accepted)await ensureWorkflowSlotPlan(p,{force:true}).catch(e=>errors.push(p.title+'：映射分析失败，稍后可重新分析 · '+e.message));
   storeActiveWorkflow();state.settings.comfy.presets.push(...accepted);
   if(accepted.length)selectLibraryWorkflow(accepted[0].id);
   save();render();
@@ -95,7 +95,7 @@ function workflowControlHTML(id,value,inherit,label){
 
 function sceneAssignmentHTML(p,f){
   const o=planFrameOverrides(p,f),sets=o.variableSetIds||[],current=sets[0]||'';
-  return `<section class="scene-assignment"><div class="scene-assignment-grid">${field('本幕设定预设',`<select id="ws-scene-preset" aria-label="本幕设定预设">${opt('','继承全册设定',current)}${projectVariableSets().map(s=>opt(s.id,s.title,current)).join('')}</select>`)}${field('本幕工作流',workflowControlHTML('ws-scene-workflow',o.workflowId,'全册默认 · '+(state.settings.comfy.presets.find(w=>w.id===p.workflowId)?.title||state.settings.comfy.workflowTitle),'本幕工作流'))}</div><div class="row wrap">${btn('仅此幕加入队列','plus','ws-enqueue-scene','','small')}${activeImageProfile().provider==='comfyui'?btn('调整此工作流','nodes','ws-edit-scene-workflow','','small ghost'):''}</div></section>`;
+  return `<section class="scene-assignment"><div class="scene-assignment-grid">${field('本幕预设',`<select id="ws-scene-preset" aria-label="本幕预设">${opt('','继承全册设定',current)}${projectVariableSets().map(s=>opt(s.id,s.title,current)).join('')}</select>`)}${field('本幕工作流',workflowControlHTML('ws-scene-workflow',o.workflowId,'全册默认 · '+(state.settings.comfy.presets.find(w=>w.id===p.workflowId)?.title||state.settings.comfy.workflowTitle),'本幕工作流'))}</div><div class="row wrap">${btn('仅此幕加入队列','plus','ws-enqueue-scene','','small')}${activeImageProfile().provider==='comfyui'?btn('调整此工作流','nodes','ws-edit-scene-workflow','','small ghost'):''}</div></section>`;
 }
 
 function queueComposerHTML(){
@@ -314,9 +314,9 @@ function installWorkspaceUpgrade(){
           if(c.outputNodeId&&!c.workflow[c.outputNodeId])c.outputNodeId='';
           storeActiveWorkflow();
           save();render();
-          toast('已更新蓝图底层节点图，原有映射包已自动备份并下载。');
+          toast('已更新工作流的节点图，原有映射包已自动备份并下载。');
         }catch(err){
-          toast('替换蓝图失败：'+err.message,'error');
+          toast('替换工作流 JSON 失败：'+err.message,'error');
         }
         return;
       }
@@ -492,7 +492,7 @@ function dataLayoutHTML(){
   settings/secrets.json           私密凭据库，禁止公开分享
   storyboards/中文标题--ID.json    独立分镜
   presets/{characters,scenes}/    独立角色 / 场景设定
-  collections/                   独立企划
+  collections/                   独立画册集
   plans/                         独立创作计划
   albums/标题--ID/album.json            画册、对白、提示词及编辑快照
   albums/标题--ID/images/               本册原图、参考图与编辑图

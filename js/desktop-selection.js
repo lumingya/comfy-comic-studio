@@ -30,7 +30,7 @@ function installDesktopSelection() {
       get:()=>workshop.pickedTasks, set:s=>{workshop.pickedTasks=s;syncProductionSelectionStatus()}, render:()=>render(), open:()=>{},
       remove:ids=>handleAction('production-remove',{ids:JSON.stringify(ids)})}
   ];
-  function syncProductionSelectionStatus(){const status=document.querySelector('.production-selection-status'),n=workshop.pickedTasks.size;if(status){status.hidden=!n;status.textContent=n?localeString('已选 {n} 张任务卡 · 右键批量操作，Esc 取消',{n}):''}}
+  function syncProductionSelectionStatus(){const status=document.querySelector('.production-selection-status'),n=workshop.pickedTasks.size;if(status){status.hidden=!n;status.textContent=n?localeString('已选 {n} 个生成任务 · 右键批量操作，Esc 取消',{n}):''}}
   const OPENERS='.wf-item-body,.wf-row-main,[data-act="read"],[data-select-book],[data-designer-preset]';
   let gesture=null, active=null, suppress=false, raf=0;
   const anchors=new Map();

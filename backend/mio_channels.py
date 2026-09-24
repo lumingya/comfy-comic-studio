@@ -38,15 +38,15 @@ def resolve_channel(config,channel_id,provider):
     settings=config.get('uiConfig',{}).get('comfyStudio',{}).get('settings',{})
     profiles=settings.get('imageGeneration',{}).get('profiles',[])
     profile=next((p for p in profiles if p.get('id')==channel_id),None)
-    if not profile:raise ChannelConfigurationError('渠道已删除或不存在：'+str(channel_id)+'。请恢复渠道；不会使用旧配置。')
-    if profile.get('provider')!=provider:raise ChannelConfigurationError('渠道类型已改变，不能将已有任务静默切换到另一种协议引擎。')
+    if not profile:raise ChannelConfigurationError('图像服务已删除或不存在：'+str(channel_id)+'。请恢复图像服务；不会使用旧配置。')
+    if profile.get('provider')!=provider:raise ChannelConfigurationError('图像服务类型已改变，不能将已有任务静默切换到另一种协议引擎。')
     value={k:copy.deepcopy(profile[k]) for k in config_fields(provider) if k in profile}
     if workflow_provider(provider):
         value['baseUrl']=config.get('comfyConfig',{}).get('baseUrl','')
     else:
-        if not isinstance(value.get('model'),str) or not value['model'].strip():raise ChannelConfigurationError('渠道模型为空，请保存有效模型后继续。')
+        if not isinstance(value.get('model'),str) or not value['model'].strip():raise ChannelConfigurationError('图像服务模型为空，请保存有效模型后继续。')
         value.setdefault('keyMode','none')
-    if not isinstance(value.get('baseUrl'),str) or not value['baseUrl'].strip():raise ChannelConfigurationError('渠道地址为空，请保存有效地址后继续。')
+    if not isinstance(value.get('baseUrl'),str) or not value['baseUrl'].strip():raise ChannelConfigurationError('图像服务地址为空，请保存有效地址后继续。')
     return value
 
 def channel_preview(config,ref):

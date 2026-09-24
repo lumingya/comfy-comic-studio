@@ -26,7 +26,7 @@ function taskWorkflowHTML(q){
   const editable=q.indices.filter((i,pos)=>{const ex=q.frames[i]?._execution||q.execution;return (!ex?.provider||ex.provider==='comfyui')&&(q.status==='pending'||['running','paused'].includes(q.status)&&pos>q.done)});if(!editable.length)return '';
   return `<details class="quiet-advanced queue-workflow-detail" data-task-detail="${esc(q.id)}"><summary>待发送工作流调整</summary>${editable.map((i,pos)=>{
     const f=q.frames[i],ex=f?._execution||q.execution,locked=!!q.serverInput||!!q.serverId||q.status!=='pending'&&(!['running','paused'].includes(q.status)||pos<=q.done);
-    if(ex?.provider&&ex.provider!=='comfyui')return `<div class="queue-workflow-row"><span>${i+1}. ${esc(f?.name||'分镜')}</span><span class="tiny muted">${esc(ex.provider)} · ${esc(ex.config?.model||'渠道快照')}</span><span class="tiny muted">初始值 · 非当前配置</span></div>`;
+    if(ex?.provider&&ex.provider!=='comfyui')return `<div class="queue-workflow-row"><span>${i+1}. ${esc(f?.name||'分镜')}</span><span class="tiny muted">${esc(ex.provider)} · ${esc(ex.config?.model||'图像服务快照')}</span><span class="tiny muted">初始值 · 非当前配置</span></div>`;
     return `<div class="queue-workflow-row"><span>${i+1}. ${esc(f?.name||'分镜')}</span><span class="tiny muted">${esc(ex?.workflowTitle||'默认工作流')}</span><select data-ws-task="${esc(q.id)}" data-ws-index="${i}" aria-label="第 ${i+1} 幕任务工作流" ${locked?'disabled':''}>${opt('','保留当前快照','')}${state.settings.comfy.presets.map(p=>opt(p.id,p.title,'')).join('')}</select></div>`;
   }).join('')}</details>`;
 }

@@ -87,7 +87,7 @@ try {
   const chip = p.locator('.wf-health-chip');
   check(/1\s*项待检查/.test(await chip.innerText()), 'the header counts it as one thing to check');
   await chip.click();
-  check(/占位名/.test(await p.locator('.wm-issue', {hasText: '模型槽'}).innerText()), 'the check list explains it');
+  check(/占位名/.test(await p.locator('.wm-issue', {hasText: '模型映射'}).innerText()), 'the check list explains it');
   check(await p.locator('.wm-advice', {hasText: '添加种子映射'}).count() === 0, 'no seed advice while the seed is mapped');
   await dropSeedMapping();
   await p.evaluate(() => { mapperUI.healthOpen = true; render(); });

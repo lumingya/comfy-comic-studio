@@ -296,7 +296,7 @@ class ProductionQueue:
         if not isinstance(snapshot, dict) or not isinstance(
             snapshot.get("story"), dict
         ):
-            raise LibraryError("请选择分镜资产")
+            raise LibraryError("请选择分镜")
         frames = snapshot["story"].get("frames")
         if not isinstance(frames, list) or not 1 <= len(frames) <= 512:
             raise LibraryError("分镜需包含 1–512 幕")

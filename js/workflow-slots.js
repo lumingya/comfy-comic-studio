@@ -195,10 +195,10 @@ const WorkflowSlots = (() => {
     const node = workflow[lora.nodeId];
     if (!node) fail("LoRA 堆栈节点不存在");
     const slots = clone(lora.slots);
-    if (!slots.length) fail("节点没有可识别的 LoRA 槽位");
+    if (!slots.length) fail("节点没有可识别的 LoRA 输入");
     const objectStyle = slots[0].objectStyle;
     if (loras.length > slots.length) {
-      if (!objectStyle) fail("LoRA 堆栈只有 " + slots.length + " 个槽位，无法放下 " + loras.length + " 个 LoRA");
+      if (!objectStyle) fail("LoRA 堆栈只有 " + slots.length + " 个位置，无法放下 " + loras.length + " 个 LoRA");
       const template=node.inputs[slots[0].namePath],base=slots[0].namePrefix,suffix=slots[0].nameSuffix;
       let nextIndex=Math.max(...slots.map(s=>s.index))+1;
       while(slots.length<loras.length){
@@ -282,9 +282,9 @@ const WorkflowSlots = (() => {
     inputs[site.path]=!tags?base:!base?tags:base+(/[ ,\n]$/.test(base)?' ':base.includes('\n')?'\n':' ')+tags;
   }
   function applyPlan(workflow, slots, overrides, {objectInfo={}}={}) {
-    const plan=planOf(slots);if(!plan)fail('槽位计划尚未生成，请在工作台重新分析');
+    const plan=planOf(slots);if(!plan)fail('映射计划尚未生成，请在工作台重新分析');
     const clean=normalizeOverrides(overrides),result=clone(workflow||{}),notices=[],writes=[],disabled=new Set(clean.disabled||[]),model=clean.model;
-    if(model&&typeof model==='object'&&Object.keys(model).some(k=>!plan.model.targets.some(t=>t.key===k)))fail('模型目标不在蓝图中');
+    if(model&&typeof model==='object'&&Object.keys(model).some(k=>!plan.model.targets.some(t=>t.key===k)))fail('模型目标不在工作流中');
     for(const t of plan.model.targets){
       const selected=t.enabled??['primary','same'].includes(t.role), keyed=model&&typeof model==='object',value=keyed?model[t.key]:model;
       if(!value)continue;
@@ -293,7 +293,7 @@ const WorkflowSlots = (() => {
       if(options&&!options.some(o=>String(o).replace(/\\/g,'/').toLowerCase()===String(value).replace(/\\/g,'/').toLowerCase()))fail('模型 '+value+' 不在 '+t.key+' 的枚举列表中');
       writeField(result,t.nodeId,t.path,value);writes.push({kind:'model',key:t.key,nodeId:t.nodeId,path:t.path,value});notices.push('写入模型 '+t.key+' → '+value);
     }
-    if(model&&Object.keys(model).length&&!writes.some(w=>w.kind==='model'))fail('当前工作流没有可写入的模型槽（全部跳过）');
+    if(model&&Object.keys(model).length&&!writes.some(w=>w.kind==='model'))fail('当前工作流没有可写入的模型映射（全部跳过）');
     if(Object.hasOwn(clean,'loras')||clean.unpin?.length){
       const groups=clone(plan.lora.groups);
       if(clean.loras?.length&&plan.lora.synth&&plan.lora.synth.enabled!==false&&!disabled.has('synth:'+plan.lora.synth.after.nodeId)&&!groups.some(g=>(g.enabled??g.active)&&!disabled.has(g.key))){
@@ -324,7 +324,7 @@ const WorkflowSlots = (() => {
         else if(g.kind==='object')writeObject(result,w,final);
         else if(g.kind==='syntax')for(const site of g.origin?[g.origin]:g.sites){if(site.active===false&&g.active)continue;writeSyntax(result,site,final);}
         else if(g.kind==='embedded'){
-          if(final.length>1)fail('此蓝图的加载器最多 1 个 LoRA');const d=w.chain[0];
+          if(final.length>1)fail('此工作流的加载器最多 1 个 LoRA');const d=w.chain[0];
           if(!final.length&&!d.strengthPath)fail('内嵌 LoRA 没有强度字段，无法安全禁用');
           if(final.length)writeField(result,w.nodeId,w.path,final[0].name);
           if(d.strengthPath)writeField(result,w.nodeId,d.strengthPath,final[0]?.strength??0);
@@ -339,7 +339,7 @@ const WorkflowSlots = (() => {
     return {workflow:result,notices,writes,slots:{plan},plan,overrides:clean};
   }
   function describe(slots) {
-    const p=planOf(slots);if(!p)return '槽位尚未分析';
+    const p=planOf(slots);if(!p)return '映射尚未分析';
     const count=p.model.targets.filter(t=>t.enabled).length,groups=p.lora.groups;
     const sites=groups.filter(g=>g.enabled&&g.append).flatMap(g=>g.sites),skipped=groups.flatMap(g=>g.sites).filter(s=>s.active===false).length;
     return `将写入 ${count} 个底模 · LoRA 追加到 ${sites.filter(s=>s.active!==false).length+(p.lora.synth?1:0)} 处${skipped?`（${skipped} 处未启用，已跳过）`:''}`;

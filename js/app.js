@@ -332,7 +332,7 @@ const detailUI={projectOpen:false,tooltipTimer:null,tooltipTarget:null,assistant
 
 
 const actionHelp={
-  'book-menu':'管理这本画册：阅读、星标、剧情版本对比、补齐缺帧或导出。',
+  'book-menu':'管理这本画册：阅读、星标、版本对比、补齐缺帧或导出。',
   read:'打开阅读器，逐页查看画面与台词，可切换双页、长卷和翻页模式。',
   star:'添加或取消星标。',
   'copy-book':'复制画册信息。',
@@ -349,18 +349,18 @@ const actionHelp={
   'et-save':'保存当前排版模板。内置模板的修改会另存为个人副本。',
   'et-default':'之后打开导出窗口时优先使用此模板。',
   'et-market-download':'下载模板包。',
-  'project-toggle':'切换当前企划，或在同一个菜单中创建新企划。',
-  'new-project':'创建独立企划。连接目录后会自动建立对应企划文件夹。',
-  'project-rename':'修改企划显示名称。已有文件夹保持稳定，避免破坏图片引用。',
+  'project-toggle':'切换当前画册集，或在同一个菜单中创建新画册集。',
+  'new-project':'创建独立画册集。连接目录后会自动建立对应画册集文件夹。',
+  'project-rename':'修改画册集显示名称。已有文件夹保持稳定，避免破坏图片引用。',
   'disk-connect':'授权一个你可以管理的本地目录。之后工程会分层自动写入该目录。',
   'disk-reconnect':'重新授予之前的工作室目录读写权限，并从磁盘恢复工程。',
   'disk-save':'立即把所有尚未保存的工程变更写入已授权目录。',
   'disk-reload':'读取磁盘上最后一次完整提交。未落盘的内存修改不会自动合并。',
-  'disk-archive':'下载包含企划、画册、图片及模板的 ZIP 目录包。需解压后再打开目录。',
+  'disk-archive':'下载包含画册集、画册、图片及模板的 ZIP 目录包。需解压后再打开目录。',
   'disk-import-folder':'以只读方式载入一个解压后的工作室目录，不具备自动回写权限。',
   'disk-clear-legacy':'成功落盘后再移除旧浏览器缓存，磁盘中的工程不受影响。',
   'assistant-input-expand':'展开输入区域，适合编辑较长的分镜指令；再次点击还原。',
-  'assistant-open-target':'定位到当前对话绑定的源分镜模板，而不是正在阅读的画册图片。',
+  'assistant-open-target':'定位到当前对话绑定的源分镜，而不是正在阅读的画册图片。',
   'assistant-undo':'安全撤销上次助手修改；模板有后续手工编辑时会阻止覆盖。',
   'assistant-stop':'停止当前请求。',
   'settings':'管理工作室名称、文件保存目录、模块开关和生成默认值。',
@@ -434,7 +434,7 @@ renderAssistant=function(){detailCore.renderAssistant();decorateAssistantContext
 showAssistant=function(){if($('#template-studio').open){detailCore.showAssistant();return}if(!featureEnabled('assistant')){toast('分镜精修助手已停用，可在设置中重新开启。');return}if(!rt.chatBusy){const t=contextualTemplate();if(t)bindChatToTemplate(t.id)}detailCore.showAssistant()};
 
 
-sendChat=async function(){if(rt.chatBusy)return;const chat=currentChat();if(!chat.templateId){const t=contextualTemplate();if(!t)throw Error('请先创建分镜模板，再为此模板开启对话。');chat.templateId=t.id;chat.projectId=t.projectId;chat.title=t.title.slice(0,22)+' · 对话 1'}if(!templateBy(chat.templateId))throw Error('此对话绑定的模板已被移除，请选择新的目标模板。');chat.draft='';return detailCore.sendChat()};
+sendChat=async function(){if(rt.chatBusy)return;const chat=currentChat();if(!chat.templateId){const t=contextualTemplate();if(!t)throw Error('请先创建分镜，再为此模板开启对话。');chat.templateId=t.id;chat.projectId=t.projectId;chat.title=t.title.slice(0,22)+' · 对话 1'}if(!templateBy(chat.templateId))throw Error('此对话绑定的模板已被移除，请选择新的目标模板。');chat.draft='';return detailCore.sendChat()};
 
 
 persistEditorDraft=function(){if(!studioUI.editor)return false;state.drafts.exportTemplate={template:clone(studioUI.editor),time:Date.now()};save();return true};
@@ -456,8 +456,8 @@ validateState=function(s){detailCore.validateState(s);if(s.settings.identity){co
 const detailActions={
   'project-toggle':()=>{if(detailUI.projectOpen)closeProjectPopover();else{renderProjectPopover();$('.project-choice')?.focus()}},
   project:d=>{closeProjectPopover();changeProject(d.id)},
-  'new-project':()=>{closeProjectPopover();flushEditor();textModal('新建企划','企划名称','',name=>{const p={id:uid('project'),title:name,createdAt:Date.now()};state.projects.push(p);closeModal();changeProject(p.id);save();toast(disk.root?'企划已创建，独立文件夹将随自动保存建立。':'企划已创建，连接目录后会建立独立文件夹。')},'新企划拥有独立的画册、模板、角色和图片目录。')},
-  'project-rename':()=>{closeProjectPopover();const id=project().id;textModal('重命名企划','企划名称',project().title,name=>{const p=state.projects.find(x=>x.id===id);p.title=name;save();closeModal();render();toast('显示名称已修改，已落盘目录路径保持稳定。')})},
+  'new-project':()=>{closeProjectPopover();flushEditor();textModal('新建画册集','画册集名称','',name=>{const p={id:uid('project'),title:name,createdAt:Date.now()};state.projects.push(p);closeModal();changeProject(p.id);save();toast(disk.root?'画册集已创建，独立文件夹将随自动保存建立。':'画册集已创建，连接目录后会建立独立文件夹。')},'新画册集拥有独立的画册、模板、角色和图片目录。')},
+  'project-rename':()=>{closeProjectPopover();const id=project().id;textModal('重命名画册集','画册集名称',project().title,name=>{const p=state.projects.find(x=>x.id===id);p.title=name;save();closeModal();render();toast('显示名称已修改，已落盘目录路径保持稳定。')})},
   'profile-settings':()=>{studioUI.settingsTab='general';if($('#modal').open)closeModal();if($('#reader').open)closeReader();navigate(5)},
   'identity-save':()=>saveIdentityFromForm(),
   'storage-settings':()=>openFileSettings(),
@@ -478,7 +478,7 @@ const detailActions={
   'welcome-reconnect':async()=>{captureWelcomeIdentity();const ok=await reconnectWorkspaceDirectory();if(ok&&$('#welcome-dialog').open)finishWelcome()},
   'welcome-import':()=>{captureWelcomeIdentity();importDirectoryReadOnly()},
   'assistant-input-expand':()=>{const panel=$('#assistant');detailUI.assistantExpanded=!detailUI.assistantExpanded;detailUI.assistantHeight=detailUI.assistantExpanded?250:130;if(detailUI.assistantExpanded){detailUI.previousAssistantSize={width:panel.style.width,height:panel.style.height};panel.style.width=Math.min(630,innerWidth-30)+'px';panel.style.height=(innerHeight-85)+'px';if(panel.style.left)panel.style.left=Math.max(12,Math.min(parseFloat(panel.style.left),innerWidth-Math.min(630,innerWidth-30)-12))+'px';if(panel.style.top)panel.style.top=clamp(parseFloat(panel.style.top),12,73)+'px'}else{panel.style.width=detailUI.previousAssistantSize?.width||'';panel.style.height=detailUI.previousAssistantSize?.height||''}renderAssistant();$('#chat-input')?.focus()},
-  'new-chat':()=>{if(rt.chatBusy)throw Error('请等待本次助手操作结束。');const t=assistantScope();if(!t)throw Error('请先选择目标分镜模板。');bindChatToTemplate(t.id,true);renderAssistant()},
+  'new-chat':()=>{if(rt.chatBusy)throw Error('请等待本次助手操作结束。');const t=assistantScope();if(!t)throw Error('请先选择目标分镜。');bindChatToTemplate(t.id,true);renderAssistant()},
   'assistant-close':()=>{const chat=currentChat();if(chat&&$('#chat-input'))chat.draft=$('#chat-input').value;save();$('#assistant').hidden=true;detailUI.assistantObserver?.disconnect()},
   'assistant-open-target':()=>{const t=assistantScope();if(!t)return;if($('#reader').open)closeReader();if(t.projectId!==state.activeProjectId)changeProject(t.projectId);ui.templateId=t.id;ui.frameIndex=0;navigate(1)}
 };
@@ -569,12 +569,12 @@ const encodedPath=path=>path.split('/').map(encodeURIComponent).join('/');
 
 
 const guideSteps=[
-  {id:'save',title:'保存工作室',headline:'先给作品一个真实的家。',description:'推荐先连接本地目录。自动保存会按企划、画册和图片分层写入，只有底栏显示“已写入磁盘”才代表保存完成。',checks:['点击“选择本地根目录”并允许浏览器读写。','桌面 Chrome / Edge 的安全页面支持目录授权；受限环境可以下载 ZIP 目录包。','浏览器数据库不作为作品主存储，临时会话关闭前要备份。'],action:'guide-storage',label:'打开文件与保存',icon:'folder'},
-  {id:'project',title:'建立企划',headline:'不同的故事，分开管理。',description:'顶栏企划名称既是切换器，也是新建入口。每个企划拥有独立的画册、角色与分镜模板，不会混在一起。',checks:['点击顶栏企划菜单，选择“新建企划”。','不想先配置？可以在后面创建独立的三幕练习工程。','在设置中选择要显示的工作区。'],action:'guide-project',label:'新建一个企划',icon:'plus'},
-  {id:'story',title:'角色与分镜',headline:'先写镜头，再填入角色。',description:'分镜模板定义镜头、提示词和台词；角色矩阵填入姓名、服装与场景。{character}、{outfit} 等变量会在出图时替换。',checks:['在“分镜剧本配置”添加、移动或复制镜头。','在“批量角色矩阵”填写角色变量，并勾选要生成的行。','LLM 剧情是可选环节；没有模型也能使用默认旁白出图。'],action:'guide-storyboard',label:'打开分镜工作区',icon:'story'},
-  {id:'generate',title:'生成第一册',headline:'用三幕，走完一次创作。',description:'下面的练习只使用本地 SVG 引擎，不调用 GPU、不发送 API 请求，也不会修改现有企划。生成后会出现一套完整的角色、模板和画册。',checks:['真实创作时：勾选角色 → 加入队列 → 开始批量渲染。','需要 GPU 时，在“ComfyUI 引擎管线”配置地址和工作流。','中止后图片保留；“断点补齐”只处理缺失或降级帧。'],action:'guide-practice',label:'创建并生成三幕练习',icon:'play'},
+  {id:'save',title:'保存工作室',headline:'先给作品一个真实的家。',description:'推荐先连接本地目录。自动保存会按画册集、画册和图片分层写入，只有底栏显示“已写入磁盘”才代表保存完成。',checks:['点击“选择本地根目录”并允许浏览器读写。','桌面 Chrome / Edge 的安全页面支持目录授权；受限环境可以下载 ZIP 目录包。','浏览器数据库不作为作品主存储，临时会话关闭前要备份。'],action:'guide-storage',label:'打开文件与保存',icon:'folder'},
+  {id:'project',title:'建立画册集',headline:'不同的故事，分开管理。',description:'顶栏画册集名称既是切换器，也是新建入口。每个画册集拥有独立的画册、角色与分镜，不会混在一起。',checks:['点击顶栏画册集菜单，选择“新建画册集”。','不想先配置？可以在后面创建独立的三幕练习工程。','在设置中选择要显示的工作区。'],action:'guide-project',label:'新建一个画册集',icon:'plus'},
+  {id:'story',title:'角色与分镜',headline:'先写镜头，再填入角色。',description:'分镜定义镜头、提示词和台词；角色矩阵填入姓名、服装与场景。{character}、{outfit} 等变量会在出图时替换。',checks:['在“分镜剧本配置”添加、移动或复制镜头。','在“批量角色矩阵”填写角色变量，并勾选要生成的行。','LLM 剧情是可选环节；没有模型也能使用默认旁白出图。'],action:'guide-storyboard',label:'打开分镜工作区',icon:'story'},
+  {id:'generate',title:'生成第一册',headline:'用三幕，走完一次创作。',description:'下面的练习只使用本地 SVG 引擎，不调用 GPU、不发送 API 请求，也不会修改现有画册集。生成后会出现一套完整的角色、模板和画册。',checks:['真实创作时：勾选角色 → 加入队列 → 开始批量渲染。','需要 GPU 时，在“ComfyUI 引擎管线”配置地址和工作流。','中止后图片保留；“断点补齐”只处理缺失或降级帧。'],action:'guide-practice',label:'创建并生成三幕练习',icon:'play'},
   {id:'review',title:'阅读与审校',headline:'把看见的问题，变成修改。',description:'打开画册，在右侧分镜检查器选择“配置 API”。支持图片输入的视觉模型才能生成真实诊断，离线报告仅用于演示操作。',checks:['填写 Base URL、API Key 和视觉模型名称，先做“带图测试”。','点击“审校本页”或“审校整本画册”，查看具体问题区域。','把建议填入重绘框，确认提示词后精修；助手只改源模板，不直接改已生成图片。'],action:'guide-reader',label:'打开画册体验阅读',icon:'book'},
-  {id:'export',title:'导出画册',headline:'让故事离开工作台，也能被阅读。',description:'导出可选择电影长卷、漫画精装、艺术展册或交互翻页。全部图片与必要样式、脚本内联，导出的 HTML 可以离线打开。',checks:['画册“...”菜单 → 导出离线画册，选择喜欢的模板。','“画册导出模板”中可以修改 HTML / CSS、预览并保存个人副本。','源分镜模板与画册 HTML 模板是两种资产，互不覆盖。'],action:'guide-export',label:'试用画册导出',icon:'download'},
+  {id:'export',title:'导出画册',headline:'让故事离开工作台，也能被阅读。',description:'导出可选择电影长卷、漫画精装、艺术展册或交互翻页。全部图片与必要样式、脚本内联，导出的 HTML 可以离线打开。',checks:['画册“...”菜单 → 导出离线画册，选择喜欢的模板。','“画册导出模板”中可以修改 HTML / CSS、预览并保存个人副本。','源分镜与画册 HTML 模板是两种资产，互不覆盖。'],action:'guide-export',label:'试用画册导出',icon:'download'},
   {id:'publish',title:'GitHub 托管',headline:'分享模板，不泄露工作室。',description:'模板市场有明确的“上传到 GitHub”入口。只上传所选模板包，不上传你的工程设置、对话或角色库。',checks:['直接上传：选择资源，填写仓库与 Token，检查文件，再确认提交。','无需 Token：下载模板包 → GitHub Add file / Upload files → Commit changes。','把公开文件的 Raw 地址提供给他人，他们即可在市场中安装；私有文件需要读取权限。'],action:'guide-github',label:'查看 GitHub 上传流程',icon:'upload'}
 ];
 
@@ -862,7 +862,7 @@ validateState=function(s){
   v3Core.validateState(s);const safeId=value=>typeof value==='string'&&/^[a-zA-Z0-9_-]{1,150}$/.test(value)&&!systemVariableKeys.has(value);
   const entriesOK=entries=>{if(!Array.isArray(entries)||entries.length>500)throw Error('变量列表结构不合法。');const ids=new Set(),keys=new Set();for(const e of entries){if(!safeId(e.id)||ids.has(e.id)||keys.has(e.key))throw Error('变量 ID 或名称重复、不合法。');checkVariableKey(e.key);if(!Object.hasOwn(variableTypes,e.type))throw Error('变量类型不合法。');if(e.type==='image'&&e.value!==''&&e.value!==null&&e.value!==undefined&&(!isImageVariable(e.value)||typeof e.value.src!=='string'||e.value.src&&!/^\/images\/[A-Za-z0-9_./-]+$/.test(e.value.src)||e.value.src?.split('/').includes('..')))throw Error('图片变量须先上传，配置仅保存 /images/ 本地资产引用。');ids.add(e.id);keys.add(e.key)}};
   for(const t of s.templates)for(const f of t.frames)if(f.id!==undefined&&!safeId(f.id))throw Error('分镜 ID 不合法。');
-  if(s.creation){if(!Array.isArray(s.creation.plans)||!Array.isArray(s.creation.variableSets))throw Error('创作模型结构不完整。');for(const list of [s.creation.plans,s.creation.variableSets]){const ids=new Set();for(const item of list){if(!safeId(item.id)||ids.has(item.id)||typeof item.title!=='string'||!s.projects.some(p=>p.id===item.projectId))throw Error('创作资产 ID、名称或企划归属不合法。');ids.add(item.id)}}
+  if(s.creation){if(!Array.isArray(s.creation.plans)||!Array.isArray(s.creation.variableSets))throw Error('创作模型结构不完整。');for(const list of [s.creation.plans,s.creation.variableSets]){const ids=new Set();for(const item of list){if(!safeId(item.id)||ids.has(item.id)||typeof item.title!=='string'||!s.projects.some(p=>p.id===item.projectId))throw Error('创作资产 ID、名称或画册集归属不合法。');ids.add(item.id)}}
     for(const set of s.creation.variableSets)entriesOK(set.entries);
     for(const p of s.creation.plans){if(!Array.isArray(p.variableSetIds)||new Set(p.variableSetIds).size!==p.variableSetIds.length||!p.sceneOverrides||typeof p.sceneOverrides!=='object'||Array.isArray(p.sceneOverrides)||!safeId(p.rowId)||!s.rows.some(r=>r.id===p.rowId)||typeof p.enabled!=='boolean')throw Error('画册计划结构不完整。');entriesOK(p.variables);for(const[id,o]of Object.entries(p.sceneOverrides)){if(!safeId(id)||!o||typeof o!=='object')throw Error('单幕覆盖不合法。');if(o.variables)entriesOK(o.variables)}}
   }
@@ -923,7 +923,7 @@ const v3Actions={
   'v3-read-object-info':()=>readComfyObjectInfo(),
   'v3-import-workflow':()=>pickFile('.json',async f=>{if(f.size>100000000)throw Error('工作流超过 100 MB。');importWorkflowIntoMapper(JSON.parse(await f.text()))}),
   'v3-export-mapping':()=>{const c=state.settings.comfy;download(safeFolderName(c.workflowTitle)+'.mappings.json',JSON.stringify({kind:'comfycomic.workflow-mappings',formatVersion:1,title:c.workflowTitle,workflow:c.workflow,bindings:c.bindings,outputNodeId:c.outputNodeId,randomizeSeeds:c.randomizeSeeds},null,2))},
-  'v3-import-mapping':()=>pickFile('.json',async f=>{const data=JSON.parse(await f.text());if(data.kind!=='comfycomic.workflow-mappings'||data.formatVersion!==1)throw Error('不是通用工作流映射包。');validateBindings(data.bindings);if(!await confirmAction('导入工作流与节点映射？','将替换当前蓝图与映射，已有入队快照不变。建议先导出当前映射包。','导入映射包'))return;importWorkflowIntoMapper(data);state.settings.comfy.randomizeSeeds=!!data.randomizeSeeds;save()}),
+  'v3-import-mapping':()=>pickFile('.json',async f=>{const data=JSON.parse(await f.text());if(data.kind!=='comfycomic.workflow-mappings'||data.formatVersion!==1)throw Error('不是通用工作流映射包。');validateBindings(data.bindings);if(!await confirmAction('导入工作流与节点映射？','将替换当前工作流与映射，已有入队快照不变。建议先导出当前映射包。','导入映射包'))return;importWorkflowIntoMapper(data);state.settings.comfy.randomizeSeeds=!!data.randomizeSeeds;save()}),
   'v3-preview-workflow':()=>previewMappedSubmission(),
   'v3-copy-submission':()=>copyText(JSON.stringify(createUI.lastSubmission,null,2)),
   'v3-mapping-dry':()=>mappedDryRun(),
@@ -1014,7 +1014,7 @@ window.addEventListener('beforeunload',e=>{if(!rt.booting&&(backendRuntime.dirty
 window.addEventListener('keydown',e=>{if(e.key==='Enter'&&$('#welcome-dialog').open&&e.target.id==='welcome-name'){e.preventDefault();e.stopImmediatePropagation();try{finishNameFirst(!e.target.value.trim())}catch(error){toast(error.message,'error')}}},true);
 
 
-Object.assign(actionHelp,{'v3-plan-new':'新建独立的画册计划，再选择分镜与可复用素材。','v3-generate-plan':'检查每幕变量与节点映射，绑定本册与工作流；未发送分镜读取最新保存输入。','v3-choose-sets':'一份计划可以组合多套素材，同名值按顺序覆盖。','v3-add-binding':'手动添加任意节点输入，支持文本、数字、开关和嵌套 JSON。','v3-auto-bind':'根据实际蓝图寻找文本节点。无法确定字段时回退 text 并告警，需人工核对。','v3-preview-workflow':'预览实际提交的节点字典，所有未映射字段保持原值。','v3-connect-backend':'只调用你填写的读取接口，确认数据后连接保存服务。','v3-resources':'教程、画册 HTML 模板、市场与 GitHub 托管都收纳在这里。','v3-variable-delete':'删除此作用域的变量，不擅自移除分镜中的占位符。生成前会检测缺失。'});
+Object.assign(actionHelp,{'v3-plan-new':'新建独立的画册计划，再选择分镜与可复用素材。','v3-generate-plan':'检查每幕变量与节点映射，绑定本册与工作流；未发送分镜读取最新保存输入。','v3-choose-sets':'一份计划可以组合多套素材，同名值按顺序覆盖。','v3-add-binding':'手动添加任意节点输入，支持文本、数字、开关和嵌套 JSON。','v3-auto-bind':'根据实际工作流寻找文本节点。无法确定字段时回退 text 并告警，需人工核对。','v3-preview-workflow':'预览实际提交的节点字典，所有未映射字段保持原值。','v3-connect-backend':'只调用你填写的读取接口，确认数据后连接保存服务。','v3-resources':'教程、画册 HTML 模板、市场与 GitHub 托管都收纳在这里。','v3-variable-delete':'删除此作用域的变量，不擅自移除分镜中的占位符。生成前会检测缺失。'});
 
 
 redrawStep=redrawMappedBookStep;
@@ -1029,16 +1029,16 @@ guideDestination=async function(action){if(action==='storyboard')createUI.tab='s
 Object.assign(guideSteps[0],{title:'设置保存方式',headline:'让已有 Python 服务管理作品。',description:'无需先给浏览器授权文件夹。在“设置 → 服务与保存”填写已有 Python 读取和保存接口，连接确认后自动提交工程；也可先在临时会话里练习。',checks:['先给工作室命名，或使用默认名称进入。','Python 读取接口需返回工程或明确的空状态；未确认接口前不会自动写入。','暂未连接时可导出工程 JSON，ZIP 和浏览器目录保存作为备用。']});
 
 
-Object.assign(guideSteps[2],{title:'组合分镜与素材',headline:'一份分镜，可以讲出不同的故事。',description:'“创作画册”把画册计划、分镜编辑、变量素材与生成队列放在一起。画册名称独立于变量；同一套素材可以被多个计划复用。',checks:['先建画册计划，为画册起名并选择分镜模板。','在变量素材中自由添加字段，然后把多组素材组合到画册。','同名值按素材顺序、本册覆盖、单幕覆盖依次优先。']});
+Object.assign(guideSteps[2],{title:'组合分镜与素材',headline:'一份分镜，可以讲出不同的故事。',description:'“创作画册”把画册计划、分镜编辑、变量素材与生成队列放在一起。画册名称独立于变量；同一套素材可以被多个计划复用。',checks:['先建画册计划，为画册起名并选择分镜。','在变量素材中自由添加字段，然后把多组素材组合到画册。','同名值按素材顺序、本册覆盖、单幕覆盖依次优先。']});
 
 
-guideSteps[3].checks=['在画册计划中预览替换结果，补全缺少变量后生成。','工作流输入可在“设置 → 智能节点映射”任意增删映射，包括 LoRA 管理器。','尺寸和采样参数默认保留蓝图原值；只有主动开启且建立映射后才覆盖。'];
+guideSteps[3].checks=['在画册计划中预览替换结果，补全缺少变量后生成。','工作流输入可在“设置 → 智能节点映射”任意增删映射，包括 LoRA 管理器。','尺寸和采样参数默认保留工作流原值；只有主动开启且建立映射后才覆盖。'];
 
 
 guideSteps[4].checks=['视觉审校 API 在设置里独立配置，不必开启 AI 写故事。','悬浮球可拖动，悬停展开说明，点击打开分镜精修助手。','助手对话绑定源模板；只想修改本册时请用分镜编辑里的单幕覆盖。'];
 
 
-guideSteps[5].checks=['在我的画册中点击操作菜单，再选择导出离线画册。','画册 HTML 版式、模板市场与 GitHub 托管都收入“设置 → 工具与资源”。','分镜模板定义内容，HTML 模板定义阅读排版，两者互不覆盖。'];
+guideSteps[5].checks=['在我的画册中点击操作菜单，再选择导出离线画册。','画册 HTML 版式、模板市场与 GitHub 托管都收入“设置 → 工具与资源”。','分镜定义内容，HTML 模板定义阅读排版，两者互不覆盖。'];
 
 
 renameScopedVariable=async function(group,id,entryId){
@@ -1098,7 +1098,7 @@ async function v3Diagnostics(){
   test('新版创作模型可验证与序列化',()=>{validateState(state);return JSON.parse(JSON.stringify(state)).creation.version===1});
   test('工作流映射导入包结构校验',()=>validateBindings(state.settings.comfy.bindings));
   test('AI 写故事为可选模块',()=>Object.hasOwn(state.settings.studio.visibility,'llm')&&typeof state.settings.studio.visibility.llm==='boolean');
-  test('主导航不再包含我的企划或独立引擎',()=>!primaryNavItems().some(x=>x[0]===2||x[0]===3));
+  test('主导航不再包含我的画册集或独立引擎',()=>!primaryNavItems().some(x=>x[0]===2||x[0]===3));
   modal('创作架构与节点映射自检',`<div style="margin-top:17px">${results.map(r=>`<div class="template-check-row"><span class="${r.ok?'accent':'danger'}">${icon(r.ok?'check':'close')}</span><div class="grow">${esc(r.name)}${r.message?'<small>'+esc(r.message)+'</small>':''}</div><span class="tiny muted">${r.ok?'通过':'未通过'}</span></div>`).join('')}</div><div class="modal-footer"><span class="tiny muted grow">${results.filter(r=>r.ok).length} / ${results.length} 项通过；真实后端与插件仍需实际联调。</span>${btn('关闭','','close-modal','','primary')}</div>`,'以通用输入映射替代固定节点表单。',true);return results;
 }
 
@@ -1160,7 +1160,7 @@ function installArtStudio(){
     'art-create-tab':d=>{flushEditor();createUI.tab=d.tab==='settings'?'settings':d.tab==='queue'?'queue':'scenes';render()},
     'art-setting-add':()=>addUnifiedSetting(),
     'art-setting-confirm':()=>addSettingFromDialog(),
-    'art-setting-remove':async d=>{let p=settingsTargetById(d.owner);if(!p)return;const entryId=mergedSettingEntries(p).find(e=>e.key===d.key)?.id,projectId=p.projectId;if(!await confirmAction('移除此画面属性？',p._presetEditorId?'仅从这份预设草稿移除 {'+d.key+'}，本册和其他预设不变。':'只从本画册移除 {'+d.key+'}。原设定预设保留；若提示词仍引用被移除的图片变量，生成时会明确报错。','移除属性'))return;const latest=settingsTargetById(d.owner);if(!latest||latest.projectId!==projectId||!entryId||mergedSettingEntries(latest).find(e=>e.key===d.key)?.id!==entryId)throw Error('编辑对象已变化，未移除。');p=latest;if(!p._presetEditorId)rememberRemovedImageVariable(mergedSettingEntries(p).find(e=>e.key===d.key),p.projectId);p.variables=p.variables.filter(e=>e.key!==d.key);p.excludedSettingKeys=[...new Set([...(p.excludedSettingKeys||[]),d.key])];if(p._presetEditorId)p.dirty=true;save(true);render()},
+    'art-setting-remove':async d=>{let p=settingsTargetById(d.owner);if(!p)return;const entryId=mergedSettingEntries(p).find(e=>e.key===d.key)?.id,projectId=p.projectId;if(!await confirmAction('移除此画面属性？',p._presetEditorId?'仅从这份预设草稿移除 {'+d.key+'}，本册和其他预设不变。':'只从本画册移除 {'+d.key+'}。原预设保留；若提示词仍引用被移除的图片变量，生成时会明确报错。','移除属性'))return;const latest=settingsTargetById(d.owner);if(!latest||latest.projectId!==projectId||!entryId||mergedSettingEntries(latest).find(e=>e.key===d.key)?.id!==entryId)throw Error('编辑对象已变化，未移除。');p=latest;if(!p._presetEditorId)rememberRemovedImageVariable(mergedSettingEntries(p).find(e=>e.key===d.key),p.projectId);p.variables=p.variables.filter(e=>e.key!==d.key);p.excludedSettingKeys=[...new Set([...(p.excludedSettingKeys||[]),d.key])];if(p._presetEditorId)p.dirty=true;save(true);render()},
     'art-apply-preset':()=>applySelectedSettingPreset(),
     'art-save-preset':()=>saveSettingsAsPreset(),
     'art-import-demo':()=>importCuratedDemo(),
@@ -1197,7 +1197,7 @@ function installArtStudio(){
   const originalInfo=backendStatusText;backendStatusText=function(){const text=originalInfo();return text.replace('当前为临时会话','当前未保存到后端')};
   guideSteps[1].title='建立画册集';guideSteps[1].headline='把相近的故事，收藏在一起。';guideSteps[1].description='顶层画册集收录具体画册，每本画册包含连续分镜。顶栏名称是切换和新建画册集的入口。';guideSteps[1].checks=['从顶栏新建或切换画册集。','进入“创作画册”创建一本新画册。','已有数据会保留，精选示范只用于首次预览。'];
   guideSteps[2].title='角色与画面设定';guideSteps[2].description='只需一处填写角色、服装与画风。已定义的占位符会高亮；未定义的括号与 NovelAI 权重语法完全保留。';guideSteps[2].checks=['在“角色与画面设定”填写需要的属性。','提示词可自由使用任意括号和权重语法。','空属性会略过，连续逗号自动收敛。'];
-  guideSteps[3].checks=['选择分镜模板，按你的想法修改提示词和台词。','任何不规则括号都不会阻止生成。','节点映射与后端连接问题仍会给出明确提示。'];
+  guideSteps[3].checks=['选择分镜，按你的想法修改提示词和台词。','任何不规则括号都不会阻止生成。','节点映射与后端连接问题仍会给出明确提示。'];
   guideSteps[4].title='欣赏与实验室';guideSteps[4].description='阅读器提供对开本、连续卷轴和胶卷画廊，默认没有审校或重绘面板。专业工具在实验室按需开启。';guideSteps[4].checks=['使用左右箭头翻页，或点击胶卷中的缩略图。','点击本幕文字，查看台词、提示词与图片尺寸。','需要审校和精修时前往实验室，不打扰普通阅读。'];
   const oldGuideDestination=guideDestination;guideDestination=async function(action){if(action==='critic'){closeServiceDialog('guide-dialog');navigate(7);return}return oldGuideDestination(action)};
   ns.presentation={readerSequence,readerSpreadIndices,createCuratedDemo,renderLaboratory};

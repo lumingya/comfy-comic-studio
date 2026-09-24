@@ -151,7 +151,7 @@ class ProviderRegistry:
         with self.lock:
             item = self.items.get(id)
         if not item:
-            raise LibraryError("Unknown image provider: " + str(id) + "。请启用提供该渠道的扩展，或改选其他渠道。", 404)
+            raise LibraryError("Unknown image provider: " + str(id) + "。请启用提供该图像服务的扩展，或改选其他图像服务。", 404)
         return item
 
     def has(self, id):
