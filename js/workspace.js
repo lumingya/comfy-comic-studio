@@ -279,7 +279,6 @@ function installWorkspaceUpgrade(){
     oldRender();
     const p=selectedPlan();if(ui.workspace===1&&createUI.tab==='settings'&&settingPresetSelection(p)) $('.settings-preset-line')?.insertAdjacentHTML('beforeend',btn('更新当前预设','disk','ws-update-preset','','small'));
   };
-  const oldPythonSettings=renderPythonSettings;renderPythonSettings=()=>oldPythonSettings()+dataLayoutHTML();
   renderCreationQueue=renderCompactQueue;
   const oldUpdate=updateQueueUI;updateQueueUI=function(){
     const detailKey=x=>(x.closest('[data-sort-task]')?.dataset.sortTask||x.dataset.taskDetail||'')+'/'+x.className;
@@ -484,8 +483,12 @@ function installWorkspaceUpgrade(){
   }catch(e){toast(e.message,'error')}});
 }
 
+/* 设置 → 数据与备份（常用）：数据位置与完整备份。目录结构与手动复制规则在 设置 → 开发者（dataLayoutHTML）。 */
+function dataBackupHTML(){
+  return `<section class="settings-section"><h2>数据目录与完整备份</h2><p>默认使用程序旁的 data/，也可通过 MIO_DATA_DIR 指定独立工作区。</p><div class="row wrap">${btn('导出完整图片目录 ZIP','download','disk-archive')}${btn('载入已解压目录','upload','disk-import-folder')}${btn('导出本机配置 JSON','disk','backup-export')}</div></section>`;
+}
 function dataLayoutHTML(){
-  return `<section class="settings-section"><h2>数据目录与完整备份</h2><p>默认使用程序旁的 data/，也可通过 MIO_DATA_DIR 指定独立工作区。标题与文件 ID 分离；不因改名移动或覆盖原图。</p><pre class="backend-code">data/
+  return `<section class="settings-section"><h2>数据目录结构</h2><p>标题与文件 ID 分离；不因改名移动或覆盖原图。</p><pre class="backend-code">data/
   workspace.json                  v2 工作区标记
   settings/{comfy,llm,xml}.json    服务连接
   settings/workspace.json         界面、顺序等小型元数据
@@ -498,5 +501,5 @@ function dataLayoutHTML(){
   albums/标题--ID/images/               本册原图、参考图与编辑图
   workflows/ · layouts/           独立工作流与版式
   records/ · runtime/             对话、队列与执行记录
-  .cache/                        可重建的目录索引</pre><p class="help">含图资源的 JSON 同时携带同名 .assets/；画册请复制整个 ID 目录。单文件复制遇到相同 ID 时拒绝覆盖，界面导入分享包会分配新 ID。</p><div class="row wrap">${btn('导出完整图片目录 ZIP','download','disk-archive')}${btn('载入已解压目录','upload','disk-import-folder')}${btn('导出本机配置 JSON','disk','backup-export')}</div></section>`;
+  .cache/                        可重建的目录索引</pre><p class="help">含图资源的 JSON 同时携带同名 .assets/；画册请复制整个 ID 目录。单文件复制遇到相同 ID 时拒绝覆盖，界面导入分享包会分配新 ID。</p></section>`;
 }

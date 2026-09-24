@@ -881,7 +881,7 @@ validateState=function(s){
 activeJobs=function(){return v3Core.activeJobs()||createUI.backendBusy||backendRuntime.saving||!!createUI.dryController};
 
 
-backupModal=function(){modal('工程备份与恢复',`<div class="service-context"><strong>${esc(workspaceName())}</strong><br>${esc(backendStatusText())}</div><p class="help" style="margin:18px 0">日常保存交给现有 Python 后端。便携备份包含创作计划、复用变量、所有分镜、画册与通用节点映射。</p><div class="stack">${btn('下载本机配置 JSON','download','backup-export','','primary')}${btn('从 JSON 恢复','upload','import-project')}${btn('下载便携目录 ZIP','folder','disk-archive')}${btn('配置 Python 保存服务','disk','v3-settings-tab','data-tab="connections"')}</div><label class="row small soft" style="margin-top:18px"><input id="backup-secrets" type="checkbox">此次本机 JSON 包含尚未清空的会话密钥（敏感）</label><div class="modal-footer">${btn('关闭','','close-modal')}</div>`,'仅在服务明确确认后，状态栏才会显示已保存。')};
+backupModal=function(){modal('工程备份与恢复',`<div class="service-context"><strong>${esc(workspaceName())}</strong><br>${esc(backendStatusText())}</div><p class="help" style="margin:18px 0">日常保存交给现有 Python 后端。便携备份包含创作计划、复用变量、所有分镜、画册与通用节点映射。</p><div class="stack">${btn('下载本机配置 JSON','download','backup-export','','primary')}${btn('从 JSON 恢复','upload','import-project')}${btn('下载便携目录 ZIP','folder','disk-archive')}${btn('配置 Python 保存服务','disk','v3-settings-tab','data-tab="developer"')}</div><label class="row small soft" style="margin-top:18px"><input id="backup-secrets" type="checkbox">此次本机 JSON 包含尚未清空的会话密钥（敏感）</label><div class="modal-footer">${btn('关闭','','close-modal')}</div>`,'仅在服务明确确认后，状态栏才会显示已保存。')};
 
 
 const v3Actions={
@@ -954,7 +954,7 @@ handleAction=async function(act,data={},el){
   if(act==='column-add')return addVariable('plan',selectedPlan()?.id);
   if(act==='settings'||act==='profile-settings'){if($('#modal').open)closeModal();if($('#reader').open)closeReader();studioUI.settingsTab=act==='profile-settings'?'general':studioUI.settingsTab;navigate(5);return}
   if(['storage-settings','disk-save'].includes(act)&&!disk.root){studioUI.settingsTab='connections';navigate(5);return}
-  if(act==='engine-info'||act==='go-engine'){studioUI.settingsTab='connections';navigate(5);return}
+  if(act==='engine-info'||act==='go-engine'){if($('#modal').open)closeModal();navigate(3);return}
   if(act==='import-workflow')return v3Actions['v3-import-workflow']();
   if(act==='new-template')createUI.tab='scenes';
   if(['scene','add-frame','clone-frame','delete-frame','move-frame'].includes(act))flushEditor();

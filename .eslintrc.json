@@ -712,6 +712,8 @@
     "createBlankPreset": "writable",
     "installWorkspaceUpgrade": "writable",
     "dataLayoutHTML": "writable",
+    "dataBackupHTML": "readonly",
+    "savedKeysSettings": "readonly",
     "contextMenuUI": "writable",
     "contextMenuOpen": "writable",
     "closeContextMenu": "writable",

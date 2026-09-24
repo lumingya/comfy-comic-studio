@@ -114,10 +114,28 @@ function renderPythonSettings(){const c=backendConfig();return `<section class="
 如果后端返回 ETag，保存时自动发送 If-Match 防止并发覆盖。
 实际的 图片 / 画册 / 画册集 文件结构由已有 Python 后端实现。</pre><p class="help">当前项目没有 Python 源码可供自动适配。如果你的接口使用不同结构，请按实际后端填写。连接未测试通过前，状态栏会保留“临时会话”提醒。</p></details></section><section class="settings-section"><h2>图像服务</h2><p>这里集中管理连接地址。智能节点映射页面只负责输入参数，不再重复连接设置。</p><div class="plan-context-grid">${field('图像生成模式',`<select data-setting="comfy.mode">${opt('real','真实 ComfyUI',state.settings.comfy.mode)}</select>`)}${field('ComfyUI 地址',setting('comfy.baseUrl',state.settings.comfy.baseUrl))}</div><div class="row wrap">${btn('测试 ComfyUI','refresh','test-engine')}${btn('配置智能节点映射','nodes','v3-settings-tab','data-tab="mapping"')}${btn('AI 模型连接','spark','llm-settings')}</div></section><section class="settings-section"><h2>便携备份</h2><p>即使尚未连接 Python，也可以下载当前工程。高级浏览器目录写入保留为备用，不再是首次使用的必经步骤。</p><div class="row wrap">${btn('工程 JSON','download','backup-export')}${btn('目录 ZIP','folder','disk-archive')}${btn('从工程恢复','upload','import-project')}${btn('备用目录保存','settings','v3-browser-storage','','small')}</div></section>`}
 
+/* 设置分三层：常用 / 高级 / 开发者。开发者默认隐藏（设置 → 功能开关 → 开发者选项）；从链接直接打开开发者页时也显示这一组。 */
+function settingsTabGroups(tab=studioUI.settingsTab){
+  const developer=state.settings.studio.visibility.developer===true||tab==='developer';
+  return [
+    ['常用',[['general','users','工作室'],['appearance','settings','通用偏好'],['connections','disk','数据与备份'],['about','shield','关于与更新']]],
+    ['高级',[['modules','grid','功能开关'],['themes','sun','样式工坊'],['extensions','box','扩展中心'],['resources','box','工具与资源']]],
+    ...(developer?[['开发者',[['developer','terminal','开发者']]]]:[])
+  ];
+}
+/* 数据与备份：数据位置与完整备份、文件库、已保存密钥。图像服务只在「工作流与 API 配置」里设置，这里只放跳转。 */
+function dataSettingsHTML(){
+  return dataBackupHTML()+nativeLibrarySettings()+savedKeysSettings()+`<section class="settings-section"><h2>图像服务</h2><p>ComfyUI 地址与 NovelAI、OpenAI 兼容服务的密钥都在「工作流与 API 配置」里设置。</p><div class="row wrap">${btn('打开工作流与 API 配置','nodes','art-nav','data-route="3"')}</div></section>`;
+}
+/* 开发者：原生配置接口、真实服务默认值、数据目录结构、服务端任务与素材索引。 */
+function developerSettingsHTML(){
+  return renderPythonSettings()+dataLayoutHTML()+foundationSettingsHTML();
+}
+
 function renderSimpleSettings(){
-  const tab=studioUI.settingsTab,tabs=[['general','users','工作室'],['modules','grid','功能开关'],['appearance','settings','通用偏好'],['themes','sun','样式工坊'],['extensions','box','扩展中心'],['connections','disk','服务与保存'],['resources','box','工具与资源'],['about','shield','关于与更新']];
-  let content='';if(tab==='themes'||tab==='extensions')content=renderEcosystemSettings(tab);else if(tab==='mapping')content=renderSmartMapper();else if(tab==='connections'||tab==='storage')content=renderPythonSettings()+foundationSettingsHTML();else if(tab==='modules')content=renderV3Modules();else if(tab==='resources')content=renderResourceHub();else if(tab==='general')content=renderCurrentIdentity();else if(tab==='github')content=githubSummarySettings();else if(tab==='guide')content=quickStartSettings();else if(tab==='about')content=renderAboutSettings();else if(tab==='appearance'||tab==='export'){const markup=v3Core.renderSettingsWorkspace(),inert=document.createElement('template');inert.innerHTML=markup;content=[...inert.content.querySelectorAll('#studio-settings-content > .settings-section')].map(x=>x.outerHTML).join('')}else content=renderResourceHub();
-  return `${heading('设置','创作流程由你定义，工具保持安静。','','')}<div class="settings-layout"><nav class="settings-nav" aria-label="设置分类">${tabs.map(([id,ic,label])=>`<button class="${id===tab||id==='connections'&&tab==='storage'?'active':''}" data-act="v3-settings-tab" data-tab="${id}">${icon(ic,'sm')}${label}</button>`).join('')}</nav><div id="studio-settings-content">${content}</div></div>`;
+  const tab=studioUI.settingsTab,groups=settingsTabGroups(tab);
+  let content='';if(tab==='themes'||tab==='extensions')content=renderEcosystemSettings(tab);else if(tab==='mapping')content=renderSmartMapper();else if(tab==='connections'||tab==='storage')content=dataSettingsHTML();else if(tab==='developer')content=developerSettingsHTML();else if(tab==='modules')content=renderV3Modules();else if(tab==='resources')content=renderResourceHub();else if(tab==='general')content=renderCurrentIdentity();else if(tab==='github')content=githubSummarySettings();else if(tab==='guide')content=quickStartSettings();else if(tab==='about')content=renderAboutSettings();else if(tab==='appearance'||tab==='export'){const markup=v3Core.renderSettingsWorkspace(),inert=document.createElement('template');inert.innerHTML=markup;content=[...inert.content.querySelectorAll('#studio-settings-content > .settings-section')].map(x=>x.outerHTML).join('')}else content=renderResourceHub();
+  return `${heading('设置','创作流程由你定义，工具保持安静。','','')}<div class="settings-layout"><nav class="settings-nav" aria-label="设置分类">${groups.map(([group,tabs])=>`<span class="settings-nav-label">${group}</span>`+tabs.map(([id,ic,label])=>`<button class="${id===tab||id==='connections'&&tab==='storage'?'active':''}" data-act="v3-settings-tab" data-tab="${id}" ${id===tab||id==='connections'&&tab==='storage'?'aria-current="page"':''}>${icon(ic,'sm')}${label}</button>`).join('')).join('')}</nav><div id="studio-settings-content">${content}</div></div>`;
 }
 
 async function importGenericWorkflowLink(){const raw=$('#raw-url')?.value.trim();if(!raw)throw Error('请填写资源链接。');let url=new URL(raw);if(!['https:','http:'].includes(url.protocol)||url.username||url.password)throw Error('请输入可信的 HTTP(S) 地址。');if(url.hostname==='github.com'&&url.pathname.includes('/blob/'))url=new URL('https://raw.githubusercontent.com'+url.pathname.replace('/blob/','/'));if(url.hostname==='gitee.com')url.pathname=url.pathname.replace('/blob/','/raw/');const text=await(await request(url.href,{},15000)).text();let data;try{data=JSON.parse(text)}catch(e){return v3Core.importRaw()}if(data.kind!=='comfycomic.workflow-mappings')return v3Core.importRaw();validateBindings(data.bindings);validateWorkflow(data.workflow);if(!await confirmAction('安装通用节点映射包？','将替换当前工作流和映射，请先备份当前映射。','安装映射包'))return;importWorkflowIntoMapper(data);state.settings.comfy.randomizeSeeds=!!data.randomizeSeeds;save();closeModal()}

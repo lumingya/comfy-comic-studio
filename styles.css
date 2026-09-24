@@ -1495,6 +1495,10 @@ html[data-font-scale=xlarge]{font-size:125%}
 /* 大 / 特大 下窄卡片里的短文字改为换行，不再截成省略号（模型名、映射说明）。 */
 html:is([data-font-scale=large],[data-font-scale=xlarge]) :is(.wf-stage-value,.wf-stage-card small,.wf-row-sub){white-space:normal;overflow-wrap:anywhere}
 .side-search .grow{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 设置导航分组：常用 / 高级 / 开发者（手机横向滚动时不显示组名）。 */
+.settings-nav-label{padding:14px 13px 4px;font-size:.75rem;letter-spacing:.08em;color:var(--soft);opacity:.8}
+.settings-nav-label:first-child{padding-top:0}
+@media (max-width:760px), (max-width:950px) and (hover:none) and (pointer:coarse){.settings-nav-label{display:none}}
 /* 手机底部导航用短名（“工作流与 API 配置”在 12px 下放不下）；桌面侧栏仍显示全名。 */
 .nav-item>.nav-short{display:none!important}
 @media (max-width:760px), (max-width:950px) and (hover:none) and (pointer:coarse){

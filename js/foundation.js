@@ -103,7 +103,7 @@ async function foundationAction(action,d={}){
     if(action==='foundation-cleanup'){const paths=$$('[data-recycle-asset]:checked').map(el=>el.dataset.recycleAsset);if(!paths.length)return toast('先选择文件。');if(!await confirmAction('回收所选素材？','仅处理未引用且超过 24 小时的文件，移入 data/trash，不永久删除。','移入回收目录'))return;await foundationRequest('assets/cleanup',{token:d.token,paths});return openFoundationAssets()}
 }
 function syncFoundationOrder(){const ids=state.queue.filter(q=>q.status==='pending'&&q.serverId&&(q.done||0)===0&&!q.serverAttempts).map(q=>q.serverId);if(ids.length)foundationRequest('jobs/reorder',{ids}).catch(e=>{toast('服务端排序未确认：'+e.message,'error');void pollFoundationJobs()})}
-function foundationSettingsHTML(){return `<section class="settings-section"><h2>生产服务与素材</h2>${btn('全部服务端任务','list','foundation-jobs','','small')}${btn('素材索引 / 引用 / 安全清理','image','foundation-assets','','small')}<a class="btn small" href="/docs/guide/FOUNDATION.html" target="_blank" rel="noopener">基座与 API 教程 ↗</a></section>`}
+function foundationSettingsHTML(){return `<section class="settings-section"><h2>服务端任务与素材</h2><div class="row wrap">${btn('全部服务端任务','list','foundation-jobs','','small')}${btn('素材索引 / 引用 / 安全清理','image','foundation-assets','','small')}<a class="btn small" href="/docs/guide/FOUNDATION.html" target="_blank" rel="noopener">基座与 API 教程 ↗</a></div></section>`}
 function installFoundation(){
   if(installFoundation._installed)return;
   installFoundation._installed=true;
