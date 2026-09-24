@@ -6,7 +6,7 @@
 
 Mio 是用于分镜创作、图像生成、画册阅读与编辑的本地工作室，支持 ComfyUI、NovelAI 和 OpenAI 兼容图像服务。
 
-[教程中心](docs/index.html) · [快速开始](docs/guide/QUICKSTART.md) · [English](docs/README.en.md)
+[教程中心](docs/README.md) · [快速开始](docs/guide/QUICKSTART.md) · [English](docs/README.en.md)
 
 ## 启动
 
