@@ -75,20 +75,22 @@ class RecycleTests(unittest.TestCase):
         self.assertEqual(len(self.items()["items"]), 1)
 
     def test_album_restore_moves_the_folder_and_clears_the_tombstone(self):
+        from contextlib import closing
         self.create("albums", "book")
         folder = self.root / self.store.entity("albums", "book")["file"]
         folder = folder.parent
         db_path = self.root / "runtime" / "execution" / "jobs.sqlite3"
         db_path.parent.mkdir(parents=True, exist_ok=True)
-        with sqlite3.connect(db_path) as db:
-            db.execute("CREATE TABLE IF NOT EXISTS deleted_albums(id TEXT PRIMARY KEY,deleted REAL NOT NULL)")
-            db.execute("INSERT INTO deleted_albums VALUES('book',1)")
+        with closing(sqlite3.connect(db_path)) as db:
+            with db:
+                db.execute("CREATE TABLE IF NOT EXISTS deleted_albums(id TEXT PRIMARY KEY,deleted REAL NOT NULL)")
+                db.execute("INSERT INTO deleted_albums VALUES('book',1)")
         self.remove("albums", "book")
         self.assertFalse(folder.exists())
         mio_recycle.restore(self.store, kind="albums", id="book",
                             before_commit=lambda kind, id: mio_recycle.undelete_albums(self.root, [id]))
         self.assertTrue((folder / "album.json").is_file())
-        with sqlite3.connect(db_path) as db:
+        with closing(sqlite3.connect(db_path)) as db:
             self.assertIsNone(db.execute("SELECT 1 FROM deleted_albums WHERE id='book'").fetchone())
 
     def test_side_effect_kinds_are_hidden_but_counted(self):
