@@ -15,8 +15,8 @@ try{
  await p.route(/^https?:\/\//,r=>new URL(r.request().url()).origin===base?r.continue():r.abort());
  await p.goto(base);await p.waitForFunction(()=>typeof rt!=='undefined'&&!rt.booting);
  await p.evaluate(()=>{document.querySelectorAll('dialog[open]').forEach(d=>d.close());clearTimeout(workshop.pollTimer)});
- // Let any boot-time request finish before substituting the queue transport.
- await p.waitForFunction(()=>!workshop.loading);
+ // Let any boot-time request finish before substituting the queue transport (the extension boot renders once more when it lands).
+ await p.waitForFunction(()=>!workshop.loading&&ecoState.booted);
  await p.evaluate(()=>clearTimeout(workshop.pollTimer));
  await check('duplicate inferred keys do not steal already reconciled siblings',()=>p.evaluate(()=>{
   const el=document.createElement('section');document.body.append(el);el.innerHTML='<button data-act="sample">one</button>';
@@ -27,7 +27,7 @@ try{
   const el=document.createElement('section');document.body.append(el);try{for(let i=0;i<200;i++){const before=Array.from({length:rand(8)},node).join(''),after=Array.from({length:rand(8)},node).join('');el.innerHTML=before;patchDOM(el,after);const expected=document.createElement('section');expected.innerHTML=after;if(el.innerHTML!==expected.innerHTML)throw Error(JSON.stringify({i,before,after,actual:el.innerHTML}))}return true}finally{el.remove()}
  }));
  await check('queue change deferred by modal renders once after close, even on 304',()=>p.evaluate(async()=>{
-  const old={request,render,queue:workshop.queue,etag:workshop.etag};workshop.view='production';navigate(1);let calls=0,requests=0;
+  const old={request,render,queue:workshop.queue,etag:workshop.etag};workshop.view='production';navigate(1);clearTimeout(workshop.pollTimer);let calls=0,requests=0;
   const next={...workshop.queue,paused:!workshop.queue.paused,serverEpochMs:Date.now()};
   request=async(url,...args)=>url==='/api/production/tasks'?(requests++===0?new Response(JSON.stringify({data:next}),{headers:{ETag:'"round2"'}}):new Response(null,{status:304})):old.request(url,...args);
   render=(...args)=>{calls++;return old.render(...args)};
