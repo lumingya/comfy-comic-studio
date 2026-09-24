@@ -22,8 +22,18 @@ function providerSetupIssues(p=activeImageProfile()){
   if(url.protocol==='http:'&&!isPrivateHost(url.hostname))issues.push('公网云渠道需要 HTTPS；HTTP 仅允许本机或局域网（192.168.x.x、10.x.x.x、*.local 等）服务。');
   if(/\/(?:images\/(?:generations|edits)|chat\/completions|models)\/?$/.test(url.pathname))issues.push('这里只填基础地址（通常到 /v1），不要包含 /images/generations、/chat/completions 或 /models。');
   if(!p.model?.trim())issues.push('填写模型 ID；可获取模型列表，也可按服务商说明手动填写。');
+  if(providerKeyRequirement(p)==='required'&&!providerKeyCount(p))issues.push(p.provider==='novelai'?'添加 NovelAI API 密钥。':'添加 API 密钥：'+url.host+' 需要密钥才能生成。');
  }
  return issues;
+}
+/* keyMode only records whether a key is stored, so the requirement follows the service: NovelAI and OpenAI always need one,
+   other public endpoints usually do (a reminder, not a block), local / LAN services may run without. */
+function providerKeyCount(p){return p?.keyMode==='stored'?(p.keyIds||[p.keyId]).filter(Boolean).length:0}
+function providerKeyRequirement(p){
+ if(!p||p.provider==='comfyui')return 'none';if(p.provider==='novelai')return 'required';
+ let host='';try{host=new URL(p.baseUrl).hostname}catch{return 'none'}
+ if(/(^|\.)openai\.com$/i.test(host))return 'required';
+ return isPrivateHost(host)?'optional':'recommended';
 }
 function providerSetupHTML(p=activeImageProfile()){
  if(p.provider!=='comfyui')return '';

@@ -249,7 +249,7 @@ function extendCurrentLocaleCatalog(catalog){Object.assign(catalog.messages,{
   "正在通过 Mio 后端读取 /system_stats": "Reading /system_stats through the Mio backend",
   "连通性由 Mio 后端检查，浏览器不会直接访问 ComfyUI，无需": "Connectivity is checked by the Mio backend; the browser never talks to ComfyUI directly, so",
   "。地址只填到端口，不含路径、密钥或查询参数。": "is not needed. Enter the address up to the port only — no path, key or query string.",
-  "无法读取 ComfyUI 状态；检查服务启动、端口与 Mio 后端到该地址的网络。不跟随重定向。": "Could not read the ComfyUI status; check that the service is running, the port, and the network from the Mio backend to that address. Redirects are not followed.",
+  "无法读取 ComfyUI 状态：确认 ComfyUI 已启动，地址和端口正确（默认 http://127.0.0.1:8188）。": "Cannot read the ComfyUI status: make sure ComfyUI is running and the address and port are correct (default http://127.0.0.1:8188).",
   "服务状态": "Server status",
   "连接": "Connection",
   "节点定义": "Node definitions",
@@ -1098,7 +1098,7 @@ function extendCurrentLocaleCatalog(catalog){Object.assign(catalog.messages,{
   "远程云渠道需要 HTTPS；HTTP 仅支持本机回环服务。": "Remote providers require HTTPS. HTTP is allowed only for loopback services.",
   "这里只填基础地址（通常到 /v1），不要包含 /images/generations、/chat/completions 或 /models。": "Enter only the base URL (usually ending in /v1), without /images/generations, /chat/completions or /models.",
   "填写模型 ID；可获取模型列表，也可按服务商说明手动填写。": "Enter a model ID. Fetch the list or enter an ID from your provider's documentation.",
-  "服务可读 · 只检查了连接，未生成图片；请继续核对工作流、节点和本机模型。": "Service reachable · connection checked only; no image generated. Review the workflow, nodes and local model files.",
+  "已连接 ComfyUI。": "Connected to ComfyUI.",
   "保存尚未确认，请检查冲突或服务状态": "Save not confirmed. Check for conflicts or service errors.",
   "配置保存尚未确认，请检查服务或冲突。": "Configuration save not confirmed. Check the service and resolve any conflicts.",
   "下一步：新建分镜，先写一幕，再点击“去装配此分镜”。": "Next: create a storyboard, write one scene, then click Assemble this storyboard.",
@@ -1764,11 +1764,24 @@ function extendCurrentLocaleCatalog(catalog){Object.assign(catalog.messages,{
   "生成任务右键菜单": "Task card context menu",
   "分幕进度右键菜单": "Scene progress context menu",
   "装配与队列右键菜单": "Assembly & queue context menu",
-  "整本任务": "Whole task"
+  "整本任务": "Whole task",
+  // UX pass 2026-09: renamed terms, removed reassurance copy, new readiness/error texts
+  "按住拖动，调整画册顺序": "Drag to reorder albums",
+  "添加 NovelAI API 密钥。": "Add a NovelAI API key.",
+  "未保存；这个服务必须填写密钥": "Not saved; this service requires a key",
+  "未保存；多数公网服务需要密钥": "Not saved; most public services require a key",
+  "离线预览": "Offline preview",
+  "检测中": "Checking",
+  "待配置": "Needs setup",
+  "图像服务设置": "Image service settings",
+  "无法读取 ComfyUI 节点定义：确认 ComfyUI 已启动，地址和端口正确（默认 http://127.0.0.1:8188）。": "Cannot read the ComfyUI node definitions: make sure ComfyUI is running and the address and port are correct (default http://127.0.0.1:8188)."
 });return catalog}
 
 function translateCurrentLocale(text){
  const patterns=[
+  [/^连不上 ComfyUI：确认它已启动，地址 (.+) 可以访问。$/,(_,url)=>'Cannot reach ComfyUI: make sure it is running and '+url+' is reachable.'],
+  [/^(图像服务：)?(.+) · (已连接|未连接|检测中|待配置|就绪|离线预览)$/,(_,lead,name,st)=>(lead?'Image service: ':'')+name+' · '+({已连接:'connected',未连接:'not connected',检测中:'checking',待配置:'needs setup',就绪:'ready',离线预览:'offline preview'})[st]],
+  [/^添加 API 密钥：(.+) 需要密钥才能生成。$/,(_,host)=>'Add an API key: '+host+' requires a key to generate.'],
   [/^(\d+) 个$/,(_,n)=>n],
   [/^(\d+) 幕并行$/,(_,n)=>n+' scenes in parallel'],
   [/^(\d+) 分钟前$/,(_,n)=>n+' min ago'],

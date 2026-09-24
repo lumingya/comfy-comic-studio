@@ -1064,6 +1064,8 @@
     "firstRunHome": "writable",
     "isPrivateHost": "writable",
     "providerSetupIssues": "writable",
+    "providerKeyCount": "writable",
+    "providerKeyRequirement": "writable",
     "providerSetupHTML": "writable",
     "providerSetupFooter": "writable",
     "assemblyInputIssues": "writable",

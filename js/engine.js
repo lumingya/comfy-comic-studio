@@ -9,7 +9,20 @@ async function request(url,options={},timeout=15000){const ctrl=new AbortControl
 async function probeComfy(baseUrl=baseURL()){const at=Date.now();try{const response=await request('/api/image/comfy-check',post({baseUrl}),12000),data=await response.json();if(!response.ok||data.error||!data.ok)throw Error(data.error||data.message||'连接失败');return{baseUrl,ok:true,message:data.message||'服务可读',latencyMs:Number.isFinite(data.latencyMs)?data.latencyMs:null,vramPercent:Number.isFinite(data.vramPercent)?data.vramPercent:null,device:typeof data.device==='string'?data.device:'',version:typeof data.version==='string'?data.version:'',at}}catch(e){return{baseUrl,ok:false,message:String(e?.message||'连接失败').replace(/^HTTP \d+: /,''),at}}}
 
 /* Apply a probe record to the live runtime (real mode only) and tell the shell + workbench. */
-function applyEngineProbe(rec){if(!rec)return;if(state.settings.comfy.mode==='real'&&rec.baseUrl===baseURL()){if(rec.ok){rt.connected=true;rt.latency=rec.latencyMs;rt.vram=rec.vramPercent;if(rt.ws&&typeof resetWS==='function'){try{const cur=new URL(rt.ws.url),tgt=new URL(baseURL());if(cur.host!==tgt.host||cur.protocol!==(tgt.protocol==='https:'?'wss:':'ws:'))resetWS()}catch(_){resetWS()}}connectWS()}else{rt.connected=false;rt.latency=null;rt.vram=null}}renderShell();if(typeof onEngineChecked==='function')onEngineChecked(rec)}
+function applyEngineProbe(rec){if(!rec)return;if(state.settings.comfy.mode==='real'&&rec.baseUrl===baseURL()){rt.engineChecked=true;rt.engineOk=rec.ok;if(rec.ok){rt.connected=true;rt.latency=rec.latencyMs;rt.vram=rec.vramPercent;if(rt.ws&&typeof resetWS==='function'){try{const cur=new URL(rt.ws.url),tgt=new URL(baseURL());if(cur.host!==tgt.host||cur.protocol!==(tgt.protocol==='https:'?'wss:':'ws:'))resetWS()}catch(_){resetWS()}}connectWS()}else{rt.connected=false;rt.latency=null;rt.vram=null}}renderShell();if(typeof onEngineChecked==='function')onEngineChecked(rec)}
+
+/* Top-bar chip: the image service generation will use and whether it is ready; a click opens its settings. */
+function imageServiceChipState(p=activeImageProfile()){
+  if(p.provider==='comfyui'){
+    if(state.settings.comfy.mode==='mock')return {tone:'idle',text:'离线预览'};
+    /* The backend's last HTTP probe decides; the browser WebSocket (rt.connected) is only a progress channel. */
+    if(rt.engineOk)return {tone:'ok',text:'已连接'};
+    return rt.engineChecked?{tone:'bad',text:'未连接',detail:'连不上 ComfyUI：确认它已启动，地址 '+baseURL()+' 可以访问。'}:{tone:'idle',text:'检测中'};
+  }
+  const issues=typeof providerSetupIssues==='function'?providerSetupIssues(p):[];
+  return issues.length?{tone:'warn',text:'待配置',detail:issues[0]}:{tone:'ok',text:'就绪'};
+}
+function imageServiceChipHTML(){const p=activeImageProfile(),s=imageServiceChipState(p),name=p.provider==='comfyui'?'ComfyUI':(p.title||'图像服务');return `<button type="button" class="image-service-chip tone-${s.tone}" data-act="image-provider-settings" title="${esc(s.detail||'图像服务设置')}" aria-label="${esc('图像服务：'+name+' · '+s.text)}"><i class="dot" aria-hidden="true"></i><span>${esc(name)} · ${esc(s.text)}</span></button>`}
 
 async function testEngine(silent=false){if(state.settings.comfy.mode==='mock'){rt.connected=false;rt.latency=null;rt.vram=null;if(!silent)toast('离线 SVG 引擎已就绪，无需 GPU。');return true}if(rt.engineCheck)return rt.engineCheck;rt.engineCheck=(async()=>{try{const rec=await probeComfy();applyEngineProbe(rec);if($('#connection-result'))$('#connection-result').textContent=rec.ok?'已连接 · '+(rec.latencyMs??'—')+' ms'+(rec.vramPercent!==null?' · VRAM '+rec.vramPercent+'%':''):'未连接 · '+rec.message;if(!silent)toast(rec.ok?'ComfyUI 连接成功，延迟 '+(rec.latencyMs??'—')+' ms':'连接失败：'+rec.message,rec.ok?'ok':'error');return rec.ok}finally{rt.engineCheck=null}})();return rt.engineCheck}
 
@@ -327,7 +340,7 @@ function installImageProviders(){
   const oldExecution=workflowExecutionFor;workflowExecutionFor=function(plan,frame){return activeImageProfile().provider==='comfyui'?{...oldExecution(plan,frame),provider:'comfyui'}:imageProviderSnapshot()};
   const oldBuild=buildMappedWorkflow;buildMappedWorkflow=function(frame,row,options={}){const ex=options.execution||frame._execution;if(ex?.provider&&ex.provider!=='comfyui'){validatePrompt(scopeText(frame.prompt,frame._scope||row._scope||row,true));if(!ex.config?.model||!ex.config?.baseUrl)throw Error('请先填写图像渠道地址和模型。');return {workflow:{},changes:[]}}return oldBuild(frame,row,options)};
   const oldGenerate=generateFrame;generateFrame=async function(frame,row,signal,theme=0,source=null){const ex=frame._execution,provider=ex?(ex.provider||'comfyui'):activeImageProfile().provider;return provider==='comfyui'?oldGenerate(frame,row,signal,theme,source):generateProviderFrame(frame,row,signal,source)};
-  const oldShell=renderShell;renderShell=function(){oldShell();const p=activeImageProfile(),status=$('#topbar > .tiny.muted');if(status){status.textContent=p.provider==='comfyui'?'ComfyUI · 后端按需连接':p.title+' · API';status.title=''}};
+  const oldShell=renderShell;renderShell=function(){oldShell();const status=$('#topbar > .tiny.muted');if(status)status.outerHTML=imageServiceChipHTML()};
   const oldComposer=queueComposerHTML;queueComposerHTML=function(){const html=oldComposer();return '<div class="queue-provider-picker">'+imageProviderSelect()+btn('配置渠道','settings','image-provider-settings','','small')+'</div>'+html};
   const oldRender=render;render=function(){oldRender();const nonComfy=activeImageProfile().provider!=='comfyui';document.querySelectorAll('[data-act="ws-edit-scene-workflow"]').forEach(el=>el.hidden=nonComfy);if(ui.workspace===3){const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent='工作流与 API 配置'}};
   const oldAction=handleAction;handleAction=async function(action,d={},el){if(action.startsWith('image-provider-')||action.startsWith('image-key-')){if(await handleImageProviderAction(action,d,el))return}return oldAction(action,d,el)};
@@ -358,7 +371,7 @@ function installImageProviders(){
   document.addEventListener('change',e=>{
     const el=e.target,p=activeImageProfile();
     if(el.matches('[data-image-key]')){void saveImageKeyDrafts(p).catch(error=>toast(error.message,'error'));return}
-    if(el.id==='image-provider-select'){document.querySelectorAll('[data-image-key]').forEach(e=>{e.value='';delete e.dataset.keyRef;delete e.dataset.keyEdited});ensureImageProviders().active=el.value;save();render();return}
+    if(el.id==='image-provider-select'){document.querySelectorAll('[data-image-key]').forEach(e=>{e.value='';delete e.dataset.keyRef;delete e.dataset.keyEdited});ensureImageProviders().active=el.value;save();render();if(activeImageProfile().provider==='comfyui'&&state.settings.comfy.mode==='real')void testEngine(true);return}
     if(el.dataset.imageConfig){p[el.dataset.imageConfig]=el.type==='checkbox'?el.checked:el.value.trim();save();if(['sendSize','sendQuality','sendAspectHint','protocol','baseUrl'].includes(el.dataset.imageConfig))render()}
   });
 }

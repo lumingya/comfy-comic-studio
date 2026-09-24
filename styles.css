@@ -1278,6 +1278,14 @@ select.choice-list:focus-visible{border-color:var(--accent2);box-shadow:0 0 0 3p
 .shelf-drag-ghost img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform:none!important}
 .shelf-drag-ghost .artwork-missing{position:absolute;inset:0;width:100%;height:100%;margin:0}
 .shelf-item .shelf-cover,.shelf-exhibit .shelf-cover{-webkit-user-drag:none}
+/* Top-bar image service chip (engine.js imageServiceChipHTML): which service generation uses and whether it is ready. */
+.image-service-chip{display:inline-flex;align-items:center;gap:7px;min-height:30px;padding:0 11px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font-size:12px;line-height:1;cursor:pointer;white-space:nowrap}
+.image-service-chip:hover{color:var(--text);border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.image-service-chip .dot{width:7px;height:7px;margin:0;background:var(--muted);opacity:1}
+.image-service-chip.tone-ok .dot{background:var(--success)}
+.image-service-chip.tone-warn .dot{background:var(--amber)}
+.image-service-chip.tone-bad .dot{background:var(--red)}
+@media(max-width:760px){.image-service-chip span{display:none}.image-service-chip{padding:0 9px}}
 /* Albums reorder from an explicit ⠿ handle; a drag anywhere else on the shelf draws the selection marquee. */
 .shelf-item{position:relative}
 .shelf-drag-handle{position:absolute;top:8px;left:8px;z-index:2;display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:rgb(0 0 0/.55);color:#fff;font-size:16px;line-height:1;cursor:grab;opacity:0;transition:opacity .15s;touch-action:none;user-select:none}

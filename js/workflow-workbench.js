@@ -625,7 +625,8 @@ function renderCloudChannelForm(p) {
 
 function renderCloudReadiness(p) {
   const issues = providerSetupIssues(p),
-    keys = p.keyMode === "stored" ? (p.keyIds || [p.keyId]).filter(Boolean).length : 0,
+    keys = providerKeyCount(p),
+    needKey = providerKeyRequirement(p),
     ready = !issues.length;
   let url = null;
   try {
@@ -637,7 +638,12 @@ function renderCloudReadiness(p) {
     items = [
       { ok: !!url && !addressIssue, label: "服务地址", detail: addressIssue || (url ? url.host : "未填写") },
       { ok: !!String(p.model || "").trim(), label: "模型", detail: String(p.model || "").trim() || "未填写模型 ID" },
-      { ok: keys > 0, soft: true, label: "API Key", detail: keys ? `已保存 ${keys} 个，请求时轮流使用` : "未保存；本机或局域网服务可留空" },
+      {
+        ok: keys > 0,
+        soft: needKey !== "required",
+        label: "API Key",
+        detail: keys ? `已保存 ${keys} 个，请求时轮流使用` : needKey === "required" ? "未保存；这个服务必须填写密钥" : needKey === "recommended" ? "未保存；多数公网服务需要密钥" : "未保存；本机或局域网服务可留空",
+      },
     ];
   return `<div class="wf-status-card">
     <h3 class="wf-section-label">${ready ? "渠道就绪" : "还差几步"}</h3>
@@ -1633,7 +1639,9 @@ function installWorkflowWorkbench() {
     if (action === "wf-channel-switch") {
       const g = ensureImageProviders();
       if (!g.profiles.some(p => p.id === d.id)) return;
-      g.active = d.id; save(); render(); return;
+      g.active = d.id; save(); render();
+      if (activeImageProfile().provider === "comfyui" && state.settings.comfy.mode === "real") void testEngine(true);
+      return;
     }
     if (action.startsWith('wf-preset')) { await handleSlotPresetAction(action, d); return; }
     if (action === 'wm-pick-all') {

@@ -105,7 +105,7 @@ document.addEventListener('drop',e=>{const target=e.target.closest('[data-drag-i
 window.addEventListener('beforeunload',()=>{flushEditor()});
 
 
-async function boot(){rt.booting=true;$('#launch-icon').innerHTML=icon('spark');$('#command-icon').innerHTML=icon('search');render();await loadState();log('Mio v'+MIO_VERSION+' 已就绪。所有创作默认保存在本地。');log('已载入 '+state.books.length+' 本画册、'+state.exportTemplates.length+' 个画册导出模板。');if(state.queue.some(q=>q.status==='pending'))log('有待执行的渲染任务，已安全保留，等待手动启动。');if(state.settings.comfy.mode==='real')void testEngine(true);setInterval(()=>{if(state.settings.comfy.mode==='real'&&!document.hidden)void testEngine(true)},30000)}
+async function boot(){rt.booting=true;$('#launch-icon').innerHTML=icon('spark');$('#command-icon').innerHTML=icon('search');render();await loadState();log('Mio v'+MIO_VERSION+' 已就绪。所有创作默认保存在本地。');log('已载入 '+state.books.length+' 本画册、'+state.exportTemplates.length+' 个画册导出模板。');if(state.queue.some(q=>q.status==='pending'))log('有待执行的渲染任务，已安全保留，等待手动启动。');const comfyActive=()=>state.settings.comfy.mode==='real'&&activeImageProfile().provider==='comfyui';if(comfyActive())void testEngine(true);setInterval(()=>{if(comfyActive()&&!document.hidden)void testEngine(true)},30000)}
 
 
 const STUDIO_VERSION='3.2.0';

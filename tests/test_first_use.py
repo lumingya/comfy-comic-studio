@@ -4,7 +4,7 @@ import json
 import unittest
 import urllib.error
 from unittest.mock import patch
-from backend.mio_connection_check import check_comfy
+from backend.mio_connection_check import check_comfy, ServiceUnreachable
 from backend.production.api import interpolate
 from backend.mio_library import LibraryError
 
@@ -40,6 +40,16 @@ class ComfyConnectionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, '无法读取 ComfyUI 状态'):
                 check_comfy({'baseUrl': 'http://localhost:8188'})
         self.assertEqual(captured, [True])
+
+    def test_unreachable_is_distinct_from_a_bad_address(self):
+        with patch('urllib.request.build_opener') as build:
+            build.return_value.open.side_effect = urllib.error.URLError(ConnectionRefusedError(111, 'Connection refused'))
+            with self.assertRaises(ServiceUnreachable) as caught:
+                check_comfy({'baseUrl': 'http://127.0.0.1:8188'})
+        self.assertIn('http://127.0.0.1:8188', str(caught.exception))
+        with self.assertRaises(ValueError) as bad:
+            check_comfy({'baseUrl': 'bad'})
+        self.assertNotIsInstance(bad.exception, ServiceUnreachable)
 
 class NovelAIBraceTests(unittest.TestCase):
     def test_literal_weight_braces_and_known_variables_coexist(self):
@@ -92,3 +102,11 @@ class CheckHTTPBoundaryTests(unittest.TestCase):
             self.assertEqual(self.request({'baseUrl': 'x' * 4096})[0], 413)
             self.assertEqual(self.request([])[0], 400)
             self.assertEqual(probe.call_count, 1)
+
+    def test_unreachable_service_is_502_and_bad_address_400(self):
+        with patch('backend.mio_connection_check.check_comfy', side_effect=ServiceUnreachable('无法读取 ComfyUI 状态：x')):
+            status, body = self.request({'baseUrl': 'http://localhost:8188'})
+        self.assertEqual(status, 502)
+        self.assertIn('无法读取 ComfyUI 状态', json.loads(body)['error'])
+        with patch('backend.mio_connection_check.check_comfy', side_effect=ValueError('填写有效的 ComfyUI HTTP(S) 基础地址')):
+            self.assertEqual(self.request({'baseUrl': 'bad'})[0], 400)
