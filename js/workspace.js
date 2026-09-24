@@ -113,7 +113,7 @@ function taskWorkflowLocked(q,index){
 function queueWorkflowDetails(){
   return state.queue.filter(q=>['pending','running','paused','failed'].includes(q.status)).map(q=>{
     const b=bookBy(q.bookId);if(!b)return '';
-    return `<details class="quiet-advanced queue-workflow-detail" data-task-detail="${esc(q.id)}"><summary>${esc(b.title)} · 查看 / 调整待执行工作流</summary><p class="help">已开始的分镜被锁定；调整未开始的分镜仅更改此任务的快照，不影响其他任务。</p>${q.indices.map(i=>{
+    return `<details class="quiet-advanced queue-workflow-detail" data-task-detail="${esc(q.id)}"><summary>${esc(b.title)} · 查看 / 调整待执行工作流</summary><p class="help">已开始的分镜被锁定；调整未开始的分镜只改这个任务的快照。</p>${q.indices.map(i=>{
       const f=q.frames?.[i],ex=f?._execution||q.execution,locked=taskWorkflowLocked(q,i);
       return `<div class="queue-workflow-row"><span>${i+1}. ${esc(f?.name||'分镜')}</span><span class="tiny muted">快照：${esc(ex?.workflowTitle||'默认')}</span><select data-ws-task="${esc(q.id)}" data-ws-index="${i}" aria-label="第 ${i+1} 幕任务工作流" ${locked?'disabled':''}>${opt('','保留当前快照','')}${state.settings.comfy.presets.map(p=>opt(p.id,p.title,'')).join('')}</select></div>`;
     }).join('')}</details>`;
@@ -178,13 +178,13 @@ async function updateSelectedSettingPreset(){
   draft.variables=clone(set.entries);draft.excludedSettingKeys=[];draft.base=presetContentSignature(set);draft.dirty=false;
   save();render();
   if(!await savePythonWorkspace())throw Error('更新尚未确认。草稿仍保留，请检查保存错误后重新保存；未声称预设文件已更新。');
-  toast('已更新「'+set.title+'」；本册、其他预设和已入队任务不变。');
+  toast('已更新「'+set.title+'」。');
 }
 
 async function applySelectedSettingPreset(){
   commitSettingsGroupNames(settingsEditorTarget());flushEditor();const p=currentBookSettings(),draft=settingsEditorTarget(),id=draft?._presetEditorId,projectId=state.activeProjectId;
   if(!p||!id)throw Error('请先选择要应用的预设。');
-  if(!await confirmAction('应用「'+draft.title+'」到本册？','将当前显示的预设草稿复制到本册，替换本册全局设定；不修改预设文件或单幕覆盖；保存后影响本册尚未发送的分镜，在途请求不变。','应用'))return;
+  if(!await confirmAction('应用「'+draft.title+'」到本册？','将当前显示的预设草稿复制到本册，替换本册全局设定；保存后影响本册尚未发送的分镜。','应用'))return;
   if(projectId!==state.activeProjectId||settingsTargetById(p.id)!==p||currentBookSettings()!==p||settingPresetDraft(id,false)!==draft)throw Error('工作区或预设已变化，未应用。');
   p.settingsGroups=clone(settingsGroups(draft));p.variables=mergedSettingEntries(draft).map(e=>({...clone(e),id:uid('var')}));p.variableSetIds=[];p.excludedSettingKeys=[];delete p.editingPresetId;
   save();closeModal();render();if(!await savePythonWorkspace())throw Error('应用尚未保存成功，未声称已生效。请检查保存错误。');toast('已应用到本册。');
@@ -201,8 +201,8 @@ function saveSettingsAsPreset(){
     if(Object.keys(frames).length)set.frames=frames;
     state.creation.variableSets.push(set);selectSettingPreset(set.id,p);save();closeModal();render();if(inLibrary)openPresetLibrary(set.id);
     if(!await savePythonWorkspace())throw Error('另存尚未确认。新副本草稿仍保留，请检查保存错误后重新保存，不必再次创建副本。');
-    toast('已创建独立预设副本；当前画册不变。');
-  },'保存当前显示的内容为新预设，不覆盖原预设，也不改变本册设定。');
+    toast('已创建独立预设副本。');
+  },'把当前显示的内容保存为新预设。');
 }
 
 function preparePresetRemoval(source,id){
@@ -236,7 +236,7 @@ async function deleteSettingPreset(id=settingPresetSelection()){
   if(!id)throw Error('请先选择要删除的预设。');
   const set=setBy(id),projectId=state.activeProjectId;if(!set||set.projectId!==projectId)throw Error('请从当前画册集选择预设。');
   flushEditor();const count=state.creation.plans.filter(p=>(p.variableSetIds||[]).includes(id)||Object.values(p.sceneOverrides||{}).some(o=>(o.variableSetIds||[]).includes(id))).length;
-  if(!await confirmAction('删除预设「'+set.title+'」？','从预设库移除这份文件。有 '+count+' 份画册计划引用它；正在使用的值和参考图会保留为画册或单幕自己的设定。已生成图片、台词和已入队快照不变。','删除预设'))return;
+  if(!await confirmAction('删除预设「'+set.title+'」？','从预设库移除这份文件。有 '+count+' 份画册计划引用它；正在使用的值和参考图会保留为画册或单幕自己的设定。','删除预设'))return;
   if(state.activeProjectId!==projectId||!setBy(id))throw Error('工作区或预设已变化，请重新选择。');
   await Promise.all(state.books.filter(b=>(b.importedVariableSetIds||[]).includes(id)).map(b=>globalThis.Mio.fileLibrary.hydrate(b.id)));
   if(state.activeProjectId!==projectId)throw Error('工作区已变化，未删除预设。');
@@ -261,7 +261,7 @@ function createBlankPreset(){
     state.creation.variableSets.push(set);selectSettingPreset(set.id,p);
     createUI.tab='settings';save();closeModal();render();openPresetLibrary(set.id);
     if(!await savePythonWorkspace())throw Error('新建尚未确认。预设草稿仍保留，请检查保存错误后重新保存。');
-    toast('已创建空白预设；本册与原预设不变。');
+    toast('已创建空白预设。');
   },'填写内容会暂存为这份预设自己的草稿；点击“更新当前预设”保存，点击“应用”才复制到本册。');
 }
 
@@ -328,7 +328,7 @@ function installWorkspaceUpgrade(){
       const c=state.settings.comfy,id=c.activeWorkflowId;
       if(c.presets.length===1)throw Error('至少保留一份工作流。');
       if(state.creation.plans.some(p=>p.workflowId===id||Object.values(p.sceneOverrides||{}).some(o=>o.workflowId===id)))throw Error('有画册或分镜正在引用此工作流，请先更换选择。');
-      if(!await confirmAction('删除这份工作流？','已入队的工作流快照不会删除。建议先导出备份。','删除'))return;
+      if(!await confirmAction('删除这份工作流？','建议先导出备份。','删除'))return;
       c.presets=c.presets.filter(p=>p.id!==id);selectLibraryWorkflow(c.presets[0].id);save(true);return;
     }
     /* 工作流库批量选择 */

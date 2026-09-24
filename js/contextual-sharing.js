@@ -3,7 +3,7 @@
 function resourceKindLabel(kind){return {albums:'画册',storyboards:'分镜',characters:'角色设定',scenes:'场景设定',variables:'变量设定',layouts:'展示模板',workflows:'工作流'}[kind]||'资源'}
 async function confirmResourceImport(info){
   return new Promise(resolve=>{
-    modal('导入'+resourceKindLabel(info.kind),`<div class="resource-import-summary"><strong data-user-content>${esc(info.title)}</strong><p class="help">${info.count} 项内容 · ${info.images} 个图片文件</p></div><p class="help">将导入到「${esc(project().title)}」，创建独立的新副本，不覆盖已有资源。导入设定只加入预设库，不自动替换当前画册的变量。</p><div id="resource-extra-choices" class="resource-import-choices">${info.storyboards?`<label class="resource-import-choice"><input type="checkbox" id="import-include-storyboards"><span>导入附带分镜<small>${info.storyboards} 份，创建独立新副本。</small></span></label>`:''}${info.variables?`<label class="resource-import-choice"><input type="checkbox" id="import-include-variables"><span>导入附带变量设定<small>${info.variables} 组，包含参考图片；不覆盖现有设定。</small></span></label>`:''}</div><div class="modal-footer">${btn('取消','','close-modal','','ghost')}<button type="button" class="btn primary" id="resource-import-confirm">导入新副本</button></div>`,'只读取资源数据，不运行文件中的脚本。');
+    modal('导入'+resourceKindLabel(info.kind),`<div class="resource-import-summary"><strong data-user-content>${esc(info.title)}</strong><p class="help">${info.count} 项内容 · ${info.images} 个图片文件</p></div><p class="help">将导入到「${esc(project().title)}」，作为独立的新副本。导入的设定会加入预设库，需要时再应用到画册。</p><div id="resource-extra-choices" class="resource-import-choices">${info.storyboards?`<label class="resource-import-choice"><input type="checkbox" id="import-include-storyboards"><span>导入附带分镜<small>${info.storyboards} 份，创建独立新副本。</small></span></label>`:''}${info.variables?`<label class="resource-import-choice"><input type="checkbox" id="import-include-variables"><span>导入附带变量设定<small>${info.variables} 组，包含参考图片；不覆盖现有设定。</small></span></label>`:''}</div><div class="modal-footer">${btn('取消','','close-modal','','ghost')}<button type="button" class="btn primary" id="resource-import-confirm">导入新副本</button></div>`,'只读取资源数据，不运行文件中的脚本。');
     const dialog=$('#modal');let finished=false;
     const finish=value=>{if(finished)return;finished=true;dialog.removeEventListener('close',cancel);resolve(value)};
     const cancel=()=>finish(null);dialog.addEventListener('close',cancel);
@@ -18,7 +18,7 @@ async function exportContextResource(kind,id){
   if(kind==='albums')item.sharedSources=albumSharedSources(bookBy(id),include);
   const response=kind==='albums'?await request('/api/library/export-document',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind,document:item})},90000):await request('/api/library/export/'+encodeURIComponent(kind)+'/'+encodeURIComponent(id));
   download((item?.title||id)+'.mio.zip',await response.blob(),'application/zip');
-  toast('独立分享包已下载，图片随包携带，不包含服务密钥。');
+  toast('独立分享包已下载，图片随包携带。');
 }
 function installContextualSharing(){
   v3Actions['native-export']=async d=>exportContextResource(d.kind||'albums',d.id);

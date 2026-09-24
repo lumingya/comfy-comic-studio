@@ -120,7 +120,7 @@ async function deleteBooks(ids){
     const result=await foundationRequest('albums/delete',{ids});
     applyDeletedAlbums(result.deletedAlbumIds);ui.selected.clear();ui.bulk=false;ui.bulkPinned=false;save(true);closeModal();if(typeof refreshGallery==='function')refreshGallery();render();
     toast(result.warning||'画册及关联队列已删除。');
-  }catch(error){throw Error('删除未获确认，可直接重试；不会重新生成。'+error.message)}
+  }catch(error){throw Error('删除未获确认，可以直接重试。'+error.message)}
   finally{foundationRuntime.deleting=false}
 }
 
@@ -159,7 +159,7 @@ async function applyScopedToolBatch(calls,scopeId){
   if(!changing.length)return outputs;
   if(state.settings.studio.assistant.confirmChanges){
     const lines=changing.map(c=>{const a=JSON.parse(c.function.arguments);return '· '+toolLabels[c.function.name]+(a.frameIndex!==undefined?'：第 '+(a.frameIndex+1)+' 幕':'')});
-    if(!await confirmAction('将修改应用到分镜？','目标：'+live.title+'\n'+lines.join('\n')+'\n只修改源模板，不重绘或覆盖已有画册。','应用 '+changing.length+' 项修改'))return fail('用户取消了本批修改，请不要声称已修改。');
+    if(!await confirmAction('将修改应用到分镜？','目标：'+live.title+'\n'+lines.join('\n')+'\n只修改源分镜。','应用 '+changing.length+' 项修改'))return fail('用户取消了本批修改，请不要声称已修改。');
   }
   if(rt.assistantController?.signal.aborted)return fail('助手请求已中止，修改未应用。');
   if(!featureEnabled('assistant')||JSON.stringify(templateBy(scopeId))!==beforeText)return fail('模板或功能状态在等待期间发生变化，已阻止覆盖。请重新读取模板。');
@@ -197,7 +197,7 @@ async function sendScopedChat(){
     if(llmMock()){
       await delay(500,rt.assistantController.signal);
       const call=scopedMockCall(value,scope);
-      if(call){const c={id:uid('call'),type:'function',function:{name:call.name,arguments:JSON.stringify(call.args)}};const outputs=await applyScopedToolBatch([c],scope?.id);chat.messages.push({role:'assistant',content:null,tool_calls:[c]},{role:'tool',tool_call_id:c.id,content:JSON.stringify(outputs[0])});const result=outputs[0];chat.messages.push({role:'assistant',content:result.error?'本次未修改模板：'+result.error:call.name==='get_current_template_details'?'当前模板「'+result.title+'」包含 '+result.frames.length+' 幕：\n'+result.frames.map((f,i)=>(i+1)+'. '+f.name).join('\n'):'已在「'+scope.title+'」中完成修改。\n已有画册保持不变；需要新画面时，请继续使用渲染队列。可通过顶部撤销按钮还原本次修改。'})}
+      if(call){const c={id:uid('call'),type:'function',function:{name:call.name,arguments:JSON.stringify(call.args)}};const outputs=await applyScopedToolBatch([c],scope?.id);chat.messages.push({role:'assistant',content:null,tool_calls:[c]},{role:'tool',tool_call_id:c.id,content:JSON.stringify(outputs[0])});const result=outputs[0];chat.messages.push({role:'assistant',content:result.error?'本次未修改模板：'+result.error:call.name==='get_current_template_details'?'当前模板「'+result.title+'」包含 '+result.frames.length+' 幕：\n'+result.frames.map((f,i)=>(i+1)+'. '+f.name).join('\n'):'已在「'+scope.title+'」中完成修改。\n需要新画面时，请使用生成任务。可通过顶部撤销按钮还原本次修改。'})}
       else chat.messages.push({role:'assistant',content:'我可以帮你编辑分镜。\n\n离线模式支持明确指令，如「把第 1 幕改成雨夜车站」「把第 2 幕台词改成...」「新增一幕...」「删除第 2 幕」和「查看当前模板」。\n\n若要调整导出 HTML，请打开侧栏「画册导出模板」；复杂创作讨论与附件理解请先连接真实模型。'});
     }else{
       const system={role:'system',content:'你是 Mio 的分镜精修助手，不是图像生成器，也不是导出HTML模板编辑器。只通过提供的8个工具修改本次锁定的源分镜。frameIndex从0开始。提示词格式由作者自由决定；普通括号、NovelAI 权重、不规则符号均合法。不要擅自纠正或拒绝这些语法，按用户指示修改文本。用户取消或工具返回error时不得声称已经修改。不要执行未请求的删除。最多5轮连续工具调用。锁定模板：'+JSON.stringify(scope||null)};
@@ -257,7 +257,7 @@ function planRuntimeRow(plan){const stored=rowBy(plan.rowId);if(!stored)throw Er
 function variableOwner(group,id){if(group==='set')return setBy(id)?.entries;if(group==='plan')return planBy(id)?.variables;if(group==='scene'){const selected=selectedPlan(),task=createUI.sceneScope==='plan'?creationTask(selected):null,p=task?bookSettingsContext(task,selected):selected,t=currentTemplate(),f=task?.frames[ui.frameIndex]||t?.frames[ui.frameIndex];if(!p||!f)return null;p.sceneOverrides[f.id]??={};p.sceneOverrides[f.id].variables??=[];return p.sceneOverrides[f.id].variables}return null}
 
 
-async function renameScopedVariable(group,id,entryId){const list=variableOwner(group,id),entry=list?.find(e=>e.id===entryId);if(!entry)throw Error('变量不存在。');const projectId=group==='set'?setBy(id).projectId:group==='plan'?planBy(id).projectId:state.activeProjectId;textModal('重命名变量','变量标识符',entry.key,async value=>{checkVariableKey(value);if(list.some(e=>e.id!==entry.id&&e.key===value))throw Error('当前作用域已有同名变量。');const old=entry.key;if(value===old){closeModal();return}const affected=state.templates.filter(t=>t.projectId===projectId).flatMap(t=>t.frames).filter(f=>(f.prompt+' '+f.caption).includes('{'+old+'}')).length;if(!await confirmAction('同步重命名 {'+old+'}？','将把当前画册集中同名变量和所有分镜引用统一改为 {'+value+'}，影响 '+affected+' 个源分镜。其他画册集不受影响。','同步改名'))return;const re=new RegExp('\\{'+old+'\\}','g'),replace=s=>String(s||'').replace(re,'{'+value+'}');for(const s of state.creation.variableSets.filter(s=>s.projectId===projectId))for(const e of s.entries)if(e.key===old)e.key=value;for(const p of state.creation.plans.filter(p=>p.projectId===projectId)){p.title=replace(p.title);for(const e of p.variables)if(e.key===old)e.key=value;for(const o of Object.values(p.sceneOverrides)){for(const e of o.variables||[])if(e.key===old)e.key=value;for(const k of ['name','prompt','caption','negative'])if(o[k]!==undefined)o[k]=replace(o[k])}}for(const t of state.templates.filter(t=>t.projectId===projectId))for(const f of t.frames){f.prompt=replace(f.prompt);f.caption=replace(f.caption);f.negative=replace(f.negative)}for(const r of state.rows.filter(r=>!r.projectId||r.projectId===projectId))for(const versions of Object.values(r.storyVersions||{}))for(const v of versions)if(v.captions)for(const [k,c] of Object.entries(v.captions))v.captions[k]=replace(c);entry.key=value;save();closeModal();render();toast('变量与当前画册集中的宏引用已同步。')},'变量不是固定字段，可根据你的工作流自由定义。')}
+async function renameScopedVariable(group,id,entryId){const list=variableOwner(group,id),entry=list?.find(e=>e.id===entryId);if(!entry)throw Error('变量不存在。');const projectId=group==='set'?setBy(id).projectId:group==='plan'?planBy(id).projectId:state.activeProjectId;textModal('重命名变量','变量标识符',entry.key,async value=>{checkVariableKey(value);if(list.some(e=>e.id!==entry.id&&e.key===value))throw Error('当前作用域已有同名变量。');const old=entry.key;if(value===old){closeModal();return}const affected=state.templates.filter(t=>t.projectId===projectId).flatMap(t=>t.frames).filter(f=>(f.prompt+' '+f.caption).includes('{'+old+'}')).length;if(!await confirmAction('同步重命名 {'+old+'}？','将把当前画册集中同名变量和所有分镜引用统一改为 {'+value+'}，影响 '+affected+' 个源分镜。','同步改名'))return;const re=new RegExp('\\{'+old+'\\}','g'),replace=s=>String(s||'').replace(re,'{'+value+'}');for(const s of state.creation.variableSets.filter(s=>s.projectId===projectId))for(const e of s.entries)if(e.key===old)e.key=value;for(const p of state.creation.plans.filter(p=>p.projectId===projectId)){p.title=replace(p.title);for(const e of p.variables)if(e.key===old)e.key=value;for(const o of Object.values(p.sceneOverrides)){for(const e of o.variables||[])if(e.key===old)e.key=value;for(const k of ['name','prompt','caption','negative'])if(o[k]!==undefined)o[k]=replace(o[k])}}for(const t of state.templates.filter(t=>t.projectId===projectId))for(const f of t.frames){f.prompt=replace(f.prompt);f.caption=replace(f.caption);f.negative=replace(f.negative)}for(const r of state.rows.filter(r=>!r.projectId||r.projectId===projectId))for(const versions of Object.values(r.storyVersions||{}))for(const v of versions)if(v.captions)for(const [k,c] of Object.entries(v.captions))v.captions[k]=replace(c);entry.key=value;save();closeModal();render();toast('变量与当前画册集中的宏引用已同步。')},'变量不是固定字段，可根据你的工作流自由定义。')}
 
 
 function flushCreationEditor(){
@@ -311,11 +311,11 @@ async function runFlexibleQueue(){
       }q.status='complete';b.status=missingIndices(b).length?'partial':'complete';b.completedAt=Date.now();log('画册生成完成：'+b.title);
     }catch(e){q.status=signal.aborted?'canceled':'failed';q.error=e.message;b.status=signal.aborted?'canceled':'failed';log(e.message,signal.aborted?'warn':'error')}
     finally{b.inProgress=false;save();updateQueueUI()}if(signal.aborted)break;
-  }}finally{rt.running=false;rt.paused=false;rt.controller=null;renderShell();updateQueueUI();toast('队列已结束，已生成画面全部保留。')}
+  }}finally{rt.running=false;rt.paused=false;rt.controller=null;renderShell();updateQueueUI();toast('队列已结束。')}
 }
 
 
-async function removeVariable(group,id,entryId){const list=variableOwner(group,id),entry=list?.find(x=>x.id===entryId);if(!entry)return;const mentions=projectTemplates().flatMap(t=>t.frames).filter(f=>(f.prompt+' '+f.caption).includes('{'+entry.key+'}')).length;if(!await confirmAction('删除变量 {'+entry.key+'}？','当前画册集 '+mentions+' 个分镜中出现此变量。删除后不会擅自改写提示词，生成前会提示缺失；也可以从其他素材或单幕覆盖提供此值。','删除变量'))return;rememberRemovedImageVariable(entry);list.splice(list.indexOf(entry),1);save(true);render()}
+async function removeVariable(group,id,entryId){const list=variableOwner(group,id),entry=list?.find(x=>x.id===entryId);if(!entry)return;const mentions=projectTemplates().flatMap(t=>t.frames).filter(f=>(f.prompt+' '+f.caption).includes('{'+entry.key+'}')).length;if(!await confirmAction('删除变量 {'+entry.key+'}？','当前画册集 '+mentions+' 个分镜中出现此变量。删除后生成前会提示缺失，也可以从其他预设或单幕覆盖提供此值。','删除变量'))return;rememberRemovedImageVariable(entry);list.splice(list.indexOf(entry),1);save(true);render()}
 
 
 function legacyImportWorkflowIntoMapper(data){const w=data.workflow&&data.bindings?data.workflow:data;validateWorkflow(w);state.settings.comfy.workflow=clone(w);state.settings.comfy.workflowTitle=data.title||data.workflowTitle||'导入的工作流';if(Array.isArray(data.bindings)){validateBindings(data.bindings);state.settings.comfy.bindings=clone(data.bindings);state.settings.comfy.outputNodeId=String(data.outputNodeId||'')}else if(!state.settings.comfy.bindings.length)state.settings.comfy.bindings=initialWorkflowBindings({...state.settings.comfy,mapping:{}});save();studioUI.settingsTab='mapping';navigate(5);toast('工作流已导入。已有映射保留，失效的节点会明确告警。')}

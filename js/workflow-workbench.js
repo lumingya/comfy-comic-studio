@@ -340,7 +340,7 @@ function workflowProbeStatus() {
   const c = state.settings.comfy,
     rec = connectionRecord(c.baseUrl);
   if (connectionUI.checking) return { tone: "idle", label: "检查中…", detail: "正在通过 Mio 后端读取 /system_stats" };
-  if (!rec) return { tone: "idle", label: "尚未检查", detail: "点「检查连接」只读取服务状态，不会生成图片" };
+  if (!rec) return { tone: "idle", label: "尚未检查", detail: "点「检查连接」读取服务状态" };
   if (rec.ok) return { tone: "ok", label: "服务可读", detail: [...connectionBits(rec), rec.device, relativeTime(rec.at)].filter(Boolean).join(" · ") };
   return { tone: "bad", label: "连接失败", detail: rec.message };
 }
@@ -393,7 +393,7 @@ function refreshConnectionViews() {
 /* ------------------------------------------------------------------ page */
 
 const WORKBENCH_HELP = {
-  comfy: "把分镜里的提示词、参数与素材接到 ComfyUI 节点上。映射与原始工作流分开保存，改动不会影响已入队的任务。",
+  comfy: "把分镜里的提示词、参数与素材接到 ComfyUI 节点上。映射与原始工作流分开保存。",
   cloud: "当前使用云端图像服务，不需要 ComfyUI 工作流。填好地址、模型与密钥，就可以去编写分镜。",
 };
 
@@ -545,7 +545,7 @@ function renderComfyChannelForm() {
     <ul class="wf-conn-notes">
       <li>${icon("shield", "xs")}<span>连通性由 Mio 后端检查，浏览器不会直接访问 ComfyUI，无需 <code>--enable-cors-header</code>。</span></li>
       <li>${icon("info", "xs")}<span>地址只填到端口，不含路径、密钥或查询参数；局域网主机填写其 IP。</span></li>
-      <li>${icon("refresh", "xs")}<span>「同步节点定义」读取 <code>/object_info</code>：字段类型、模型与 LoRA 目录。结果缓存在本机，可随时重新同步。</span></li>
+      <li>${icon("refresh", "xs")}<span>「同步节点定义」读取 <code>/object_info</code>：字段类型、模型与 LoRA 目录。结果缓存在本机。</span></li>
     </ul>`;
 }
 
@@ -1237,7 +1237,7 @@ function renderOutputInspector(c) {
 
     <h4 class="wf-section"><span>工作流选项</span></h4>
     <label class="wf-switch-row">
-      <span><strong>每次任务随机化种子</strong><small>提交前把工作流里所有 seed 字段换成新随机数；已映射的种子字段不受影响。</small></span>
+      <span><strong>每次任务随机化种子</strong><small>提交前把工作流里所有未映射的 seed 字段换成新随机数。</small></span>
       <span class="switch"><input type="checkbox" role="switch" id="v3-randomize-seeds" ${c.randomizeSeeds ? "checked" : ""} aria-label="每次任务随机化种子"><span class="switch-track"></span></span>
     </label>
     <div class="wf-detail-actions">
@@ -1351,7 +1351,7 @@ function bindingContextItems(id) {
     { act: "wf-binding-locate", extra: ref, icon: "nodes", label: "在节点列表里查看", hint: node ? `#${b.nodeId} 的全部输入字段` : "节点不在工作流中", disabled: !node },
     { act: mapperUI.selMode ? "wm-pick" : "wf-binding-multi", extra: ref, icon: "list", label: mapperUI.selMode ? (mapperUI.sel.has(id) ? "取消勾选" : "勾选此项") : "批量管理…", hint: mapperUI.selMode ? "" : "多选后一起启用、停用或删除" },
     "sep",
-    { act: "v3-remove-binding", extra: ref, icon: "trash", label: "删除映射", danger: true, hint: "工作流节点不会被删除" },
+    { act: "v3-remove-binding", extra: ref, icon: "trash", label: "删除映射", danger: true },
   ];
 }
 
@@ -1493,7 +1493,7 @@ function openUnifiedWorkflowImportModal(mode = "new") {
       <div class="radios">
         <label>
           <input type="radio" name="wf-import-mode" value="new" ${mode === "replace" ? "" : "checked"}>
-          <div><b>新建工作流</b><small>作为独立条目加入工作流库，当前编辑的工作流完全不受影响。</small></div>
+          <div><b>新建工作流</b><small>作为独立条目加入工作流库。</small></div>
         </label>
         <label>
           <input type="radio" name="wf-import-mode" value="replace" ${mode === "replace" ? "checked" : ""}>
@@ -1651,7 +1651,7 @@ function installWorkflowWorkbench() {
       const all = ids.every(id=>mapperUI.sel.has(id)); ids.forEach(id=> all ? mapperUI.sel.delete(id) : mapperUI.sel.add(id)); render(); return;
     }
     if (action === 'wm-delete-bulk' && [...mapperUI.sel].some(id=>id.startsWith('__slot_'))) {
-      if (!await confirmAction('移除所选映射？','普通映射将删除，模型与 LoRA 映射将停用；工作流不会改变。','移除')) return;
+      if (!await confirmAction('移除所选映射？','普通映射将删除，模型与 LoRA 映射将停用。','移除')) return;
       const c=state.settings.comfy; c.slots ||= {};
       if(mapperUI.sel.has('__slot_model__'))for(const t of c.slots.plan?.model.targets||[])t.enabled=false;
       if(mapperUI.sel.has('__slot_lora__'))for(const g of c.slots.plan?.lora.groups||[])g.enabled=false;
@@ -1681,7 +1681,7 @@ function installWorkflowWorkbench() {
           <li>顶部的<strong>出图流程</strong>卡片概括提示词 → 模型 → LoRA → 画面参数 → 结果输出的接入状态，点击直接跳到对应设置。</li>
           <li>每条<strong>映射</strong>分三步设置：① 写到哪里（节点与输入字段）② 填什么（取值来源）③ 效果预览。</li>
           <li><strong>右键</strong>任意映射或工作流，可以启用 / 停用、重命名、复制、导出或删除；行尾的 ⋯ 按钮是同一份菜单。</li>
-          <li>映射与原始工作流分开保存，节点连线受保护，改动自动保存且不影响已入队的任务。</li>
+          <li>映射与原始工作流分开保存，节点连线受保护，改动自动保存。</li>
         </ul>` : ""}</div><div class="modal-footer">${btn("知道了", "check", "close-modal", "", "primary")}</div>`
       );
       return;
@@ -1845,7 +1845,7 @@ function installWorkflowWorkbench() {
       if (!p) return;
       if (c.presets.length === 1) throw Error("至少保留一份工作流。");
       if (workflowReferenced(p.id)) throw Error("有画册或分镜正在引用此工作流，请先更换选择。");
-      if (!(await confirmAction(`删除「${p.title || "未命名工作流"}」？`, "已入队的工作流快照不会删除。建议先导出备份。", "删除"))) return;
+      if (!(await confirmAction(`删除「${p.title || "未命名工作流"}」？`, "建议先导出备份。", "删除"))) return;
       c.presets = c.presets.filter((x) => x.id !== p.id);
       mapperUI.libSel.delete(p.id);
       save(true);
@@ -2084,7 +2084,7 @@ function openSlotPresetApply(p) {
   const c=state.settings.comfy;
   if (!Object.keys(c.workflow || {}).length) throw Error('请先导入 ComfyUI API 工作流，再应用预设。');
   slotPresetDraft=clone(p);
-  modal('应用 · '+p.title, `<p class="help">只添加新映射，不覆盖已有映射。模型与 LoRA 映射会替换对应的映射设置。取消勾选可跳过暂不需要的映射。</p><div class="wf-recipe-list">${p.rows.map((r,i)=>`<fieldset class="wf-apply-row" data-apply-row="${i}"><legend><label><input type="checkbox" data-recipe-use checked> ${esc(r.label)}</label></legend>${field('节点 ID',`<input data-recipe-node list="preset-node-ids" placeholder="填写节点 ID" autocomplete="off">`)}${field('输入字段',`<input data-recipe-path value="${esc(r.path)}">`)}<span class="help">${esc(SLOT_PRESET_TYPES[r.source])}${r.source==='lora'?' · '+esc(SLOT_MODE_LABEL[r.mode]):''}</span></fieldset>`).join('')}</div><datalist id="preset-node-ids">${Object.entries(c.workflow).map(([id,n])=>`<option value="${esc(id)}">${esc(n._meta?.title || n.class_type)}</option>`).join('')}</datalist><p id="slot-preset-error" class="wf-row-warning" role="alert"></p><footer class="modal-footer">${btn('返回','','wf-presets')}${btn('校验并应用','check','wf-preset-confirm','','primary')}</footer>`, '先对应节点，再一次应用。字段不匹配时可在这里调整。', true);
+  modal('应用 · '+p.title, `<p class="help">普通映射会追加到现有映射之后；模型与 LoRA 映射会替换对应的设置。取消勾选可跳过暂不需要的映射。</p><div class="wf-recipe-list">${p.rows.map((r,i)=>`<fieldset class="wf-apply-row" data-apply-row="${i}"><legend><label><input type="checkbox" data-recipe-use checked> ${esc(r.label)}</label></legend>${field('节点 ID',`<input data-recipe-node list="preset-node-ids" placeholder="填写节点 ID" autocomplete="off">`)}${field('输入字段',`<input data-recipe-path value="${esc(r.path)}">`)}<span class="help">${esc(SLOT_PRESET_TYPES[r.source])}${r.source==='lora'?' · '+esc(SLOT_MODE_LABEL[r.mode]):''}</span></fieldset>`).join('')}</div><datalist id="preset-node-ids">${Object.entries(c.workflow).map(([id,n])=>`<option value="${esc(id)}">${esc(n._meta?.title || n.class_type)}</option>`).join('')}</datalist><p id="slot-preset-error" class="wf-row-warning" role="alert"></p><footer class="modal-footer">${btn('返回','','wf-presets')}${btn('校验并应用','check','wf-preset-confirm','','primary')}</footer>`, '先对应节点，再一次应用。字段不匹配时可在这里调整。', true);
 }
 function applySlotPresetTargets(p, targets, c) {
   const bindings=clone(c.bindings), slots=clone(c.slots || {}), added=[];
@@ -2131,7 +2131,7 @@ async function handleSlotPresetAction(action,d) {
     readSlotPresetDraft();const validated=validateSlotPreset(slotPresetDraft),items=slotPresetLibrary().filter(p=>p.id!=='starter' && p.id!==validated.id);items.push(validated);persistSlotPresets(items);toast('映射预设已保存');return openSlotPresets();
   }
   if(action==='wf-preset-delete'){
-    if(p && p.id!=='starter' && await confirmAction('删除预设？','已应用的工作流不会改变。','删除')){persistSlotPresets(slotPresetLibrary().filter(x=>x.id!=='starter'&&x.id!==p.id));openSlotPresets();}return;
+    if(p && p.id!=='starter' && await confirmAction('删除预设？','','删除')){persistSlotPresets(slotPresetLibrary().filter(x=>x.id!=='starter'&&x.id!==p.id));openSlotPresets();}return;
   }
   if(action==='wf-preset-export')return download(safeFolderName(p.title)+'.slots.json',JSON.stringify({kind:'mio.slot-preset',version:1,preset:validateSlotPreset(p)},null,2));
   if(action==='wf-preset-import'){
@@ -2147,7 +2147,7 @@ async function handleSlotPresetAction(action,d) {
   if(action==='wf-preset-confirm'){
     try{
       const targets=[...document.querySelectorAll('[data-apply-row]')].filter(el=>el.querySelector('[data-recipe-use]').checked).map(el=>({index:Number(el.dataset.applyRow),nodeId:el.querySelector('[data-recipe-node]').value,path:el.querySelector('[data-recipe-path]').value}));
-      const c=state.settings.comfy,result=applySlotPresetTargets(slotPresetDraft,targets,c);Object.assign(c,result);await ensureWorkflowSlotPlan(c,{force:true,manual:[...(c.slots?.plan?.manual||[]),...targets.filter(t=>['model','lora'].includes(slotPresetDraft.rows[t.index]?.source)).map(t=>({nodeId:t.nodeId,path:t.path}))]});storeActiveWorkflow();save();closeModal();render();toast('映射预设已应用，原始工作流保持不变');
+      const c=state.settings.comfy,result=applySlotPresetTargets(slotPresetDraft,targets,c);Object.assign(c,result);await ensureWorkflowSlotPlan(c,{force:true,manual:[...(c.slots?.plan?.manual||[]),...targets.filter(t=>['model','lora'].includes(slotPresetDraft.rows[t.index]?.source)).map(t=>({nodeId:t.nodeId,path:t.path}))]});storeActiveWorkflow();save();closeModal();render();toast('映射预设已应用');
     }catch(e){document.getElementById('slot-preset-error').textContent=e.message;}
   }
 }

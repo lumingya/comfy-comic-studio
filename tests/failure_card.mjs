@@ -72,7 +72,7 @@ try {
   check(true, 'image service settings opens the image service page');
 
   // 3. Moderation: open the scenes to edit and rerun just that one.
-  await show('1/3 幕失败：触发内容安全审核：服务拒绝生成这一幕。请修改提示词后仅重跑本幕，其余分幕不受影响。');
+  await show('1/3 幕失败：触发内容安全审核：服务拒绝生成这一幕。请修改提示词后仅重跑本幕。');
   await panel.getByRole('button', {name: '查看分幕'}).click();
   await p.waitForFunction(() => workshop.openTasks.has('card-1') && document.querySelector('[data-task-details="card-1"]')?.open);
   check(true, 'moderation offers the scene list for a single rerun');

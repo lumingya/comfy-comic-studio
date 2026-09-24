@@ -73,7 +73,7 @@ def failure_summary(text, terminal=False):
             "image_generation_user_error",
         )
     ) or ("moderation" in lower and "block" in lower):
-        return "触发内容安全审核：服务拒绝生成这一幕。请修改提示词后仅重跑本幕，其余分幕不受影响。"
+        return "触发内容安全审核：服务拒绝生成这一幕。请修改提示词后仅重跑本幕。"
     if _has_status(lower, 401) or "invalid_api_key" in lower or "incorrect api key" in lower:
         return "服务拒绝了密钥：请检查 API 密钥是否有效、过期或绑定了错误的服务。"
     if _has_status(lower, 402) or any(

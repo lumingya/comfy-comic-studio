@@ -70,7 +70,7 @@ async function pollFoundationJobs(){
     if(changed){save();updateQueueUI();renderStatus()}
     if(foundationRuntime.localAfterDurable&&!rt.running&&!rt.paused&&state.queue.some(q=>q.status==='pending'&&foundationTaskIsMock(q))){foundationRuntime.localAfterDurable=false;void runFlexibleQueue()}
     if(rt.running&&!rt.paused&&!foundationRuntime.submitting&&state.queue.some(q=>q.status==='pending'&&!q.serverId))void runQueue();
-  }catch(error){foundationRuntime.connectionError='与本地服务连接中断，服务端可能仍在执行。连接恢复后自动核对状态，不会重复提交生成。';const status=$('#queue-service-status');if(status){status.hidden=false;status.textContent=foundationRuntime.connectionError}if(!foundationRuntime.connectionWarned){log(foundationRuntime.connectionError,'warn');foundationRuntime.connectionWarned=true}}
+  }catch(error){foundationRuntime.connectionError='与本地服务连接中断，服务端可能仍在执行。连接恢复后会自动核对状态。';const status=$('#queue-service-status');if(status){status.hidden=false;status.textContent=foundationRuntime.connectionError}if(!foundationRuntime.connectionWarned){log(foundationRuntime.connectionError,'warn');foundationRuntime.connectionWarned=true}}
   finally{foundationRuntime.polling=false}
 }
 async function openFoundationAssets(){
@@ -134,7 +134,7 @@ async function openFoundationJobs(id=null){
 
 function queuePolicyHTML(){
   const p=foundationRuntime.failurePolicy,name={pause:'失败暂停本任务',retry:'有限重试',continue:'失败幕保留，其他分镜继续'}[p.mode];
-  return `<details class="queue-policy" id="queue-policy"><summary>失败策略 <strong>${esc(name)}</strong><span>调整策略</span></summary><div class="grid2">${field('发生明确失败时',`<select id="queue-policy-mode">${opt('pause','暂停本任务后续分镜，不影响其他任务',p.mode)}${opt('retry','自动重试 5xx（默认），耗尽后按下方策略处理',p.mode)}${opt('continue','不自动重试，保留失败幕并继续其他分镜',p.mode)}</select>`)}${field('重试耗尽 / 不可自动重试时',`<select id="queue-policy-exhausted" ${p.mode==='retry'?'':'disabled'}>${opt('pause','暂停本任务',p.onExhausted)}${opt('continue','保留失败幕，其他分镜继续',p.onExhausted)}</select>`)}${field('每幕自动重试上限（1–100）',`<input id="queue-policy-count" ${p.mode==='retry'?'':'disabled'} type="number" min="1" max="100" step="1" value="${p.maxRetries}">`)}${field('每次重试前等待秒数（5–300）',`<input id="queue-policy-delay" ${p.mode==='retry'?'':'disabled'} type="number" min="5" max="300" step="1" value="${p.delaySeconds}">`)}${field('连续失败暂停上限（0–100）',`<input id="queue-policy-consecutive" type="number" min="0" max="100" step="1" value="${p.maxConsecutiveFailures??5}">`)}</div><p class="help">自动重试：HTTP 5xx。</p>${btn('应用失败策略','check','queue-policy-save','','small')}<span class="help" id="queue-policy-feedback" role="status"></span></details>`;
+  return `<details class="queue-policy" id="queue-policy"><summary>失败策略 <strong>${esc(name)}</strong><span>调整策略</span></summary><div class="grid2">${field('发生明确失败时',`<select id="queue-policy-mode">${opt('pause','暂停本任务后续分镜',p.mode)}${opt('retry','自动重试 5xx（默认），耗尽后按下方策略处理',p.mode)}${opt('continue','不自动重试，保留失败幕并继续其他分镜',p.mode)}</select>`)}${field('重试耗尽 / 不可自动重试时',`<select id="queue-policy-exhausted" ${p.mode==='retry'?'':'disabled'}>${opt('pause','暂停本任务',p.onExhausted)}${opt('continue','保留失败幕，其他分镜继续',p.onExhausted)}</select>`)}${field('每幕自动重试上限（1–100）',`<input id="queue-policy-count" ${p.mode==='retry'?'':'disabled'} type="number" min="1" max="100" step="1" value="${p.maxRetries}">`)}${field('每次重试前等待秒数（5–300）',`<input id="queue-policy-delay" ${p.mode==='retry'?'':'disabled'} type="number" min="5" max="300" step="1" value="${p.delaySeconds}">`)}${field('连续失败暂停上限（0–100）',`<input id="queue-policy-consecutive" type="number" min="0" max="100" step="1" value="${p.maxConsecutiveFailures??5}">`)}</div><p class="help">自动重试：HTTP 5xx。</p>${btn('应用失败策略','check','queue-policy-save','','small')}<span class="help" id="queue-policy-feedback" role="status"></span></details>`;
 }
 async function saveQueuePolicy(){
   const policy={mode:$('#queue-policy-mode').value,onExhausted:$('#queue-policy-exhausted').value,maxRetries:Number($('#queue-policy-count').value),delaySeconds:Number($('#queue-policy-delay').value),maxConsecutiveFailures:Number($('#queue-policy-consecutive').value)};
@@ -205,8 +205,8 @@ async function syncProductionActivity(result){
 }
 async function releaseHeldTasks(){
   const data=await foundationRequest('jobs'),held=data.jobs.filter(j=>j.state==='paused'&&state.queue.some(q=>q.serverId===j.id));
-  if(!held.length){await pollFoundationJobs();return toast('没有暂存画册。失败或停止的任务请在各自卡片确认继续；并发不会自动重发它们。')}
-  if(!await confirmAction('释放 '+held.length+' 本暂存画册？','这些任务恢复到顺序队列，并不会一起并行启动。需要并行时，在对应卡片手动启动。不会重发失败、未知或停止的分镜。','释放并执行'))return;
+  if(!held.length){await pollFoundationJobs();return toast('没有暂存画册。失败或停止的任务请在各自的生成任务上确认继续。')}
+  if(!await confirmAction('释放 '+held.length+' 本暂存画册？','这些任务回到顺序队列，依次生成。需要并行时，在对应的生成任务上手动启动。失败、未知或停止的分镜需要单独继续。','释放并执行'))return;
   for(const j of held)await foundationRequest('jobs/'+j.id,{action:'resume'});
   await runQueue();await foundationRequest('jobs/scheduler',{action:'resume'});await pollFoundationJobs();
 }
@@ -220,7 +220,7 @@ function saveLiveStoryboardFrame(plan,frame){
   try{source.liveInputs[index]={input:foundationFrameInput(fresh,q.rowSnapshot||source.row,q.bookId,index),savedAt:Date.now()}}
   catch(e){source.liveInputs[index]={error:e.message,savedAt:Date.now()}}
 }
-function liveStoryboardNotice(plan){const q=liveStoryboardTask(plan);return q?`<p class="help">本册修改作用于「${esc(bookBy(q.bookId).title)}」的这个画册版本，不会自动跳到较早任务。保存成功后，尚未发送的分镜自动读取；在途请求不变，已完成图片不重画。共享模板不影响已入队画册。</p>`:''}
+function liveStoryboardNotice(plan){const q=liveStoryboardTask(plan);return q?`<p class="help">本册修改作用于「${esc(bookBy(q.bookId).title)}」的这个画册版本。保存后，尚未发送的分镜会用新内容生成；已完成的图片需要重画才会更新。</p>`:''}
 
 function queueErrorSummary(q){
   if(q.serverFailureLimit)return '已达到连续失败 '+q.serverFailureLimit+' 次上限，当前画册已暂停自动请求。已发出的请求仍可完成；请检查服务后手动继续未完成分镜。';
