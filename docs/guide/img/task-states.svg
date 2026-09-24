@@ -17,5 +17,5 @@ text{font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Source Han 
 <path class="a" d="M360 140 C420 80 430 60 490 60"/><path class="a" d="M360 152 H490"/><path class="a" d="M360 166 C420 226 430 244 490 244"/>
 <rect class="ok" x="494" y="30" width="360" height="62" rx="10"/><text class="t" x="512" y="56">完成</text><text class="s" x="512" y="78">画册出现在「画册集」；可单幕重跑某一幕</text>
 <rect class="bad" x="494" y="120" width="360" height="64" rx="10"/><text class="t" x="512" y="146">失败 · 可以安全重试</text><text class="s" x="512" y="168">请求没发出（连不上、密钥错…）→ 修好后点「开始生成」续跑</text>
-<rect class="warn" x="494" y="212" width="360" height="84" rx="10"/><text class="t" x="512" y="238">结果未确认</text><text class="s" x="512" y="260">请求已发出，但没拿到结果；上游可能已出图或已计费</text><text class="s" x="512" y="280">→ 先到服务端核对，再选「恢复结果」或确认重跑</text>
+<rect class="warn" x="494" y="212" width="360" height="84" rx="10"/><text class="t" x="512" y="238">结果未确认</text><text class="s" x="512" y="260">请求已发出，但没拿到结果；上游可能已出图或已计费</text><text class="s" x="512" y="280">→ 先到服务端核对，再选「恢复已生成结果」或确认重跑</text>
 </svg>

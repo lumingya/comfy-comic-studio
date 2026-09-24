@@ -23,8 +23,8 @@ T9 开箱检查与离线练习（C1/B3/B6）、T10 多选可发现（C6）。阶
 ## T8 计划
 
 - [x] T8a 示意图：`docs/guide/img/` 下的 SVG（流程总览、首页开箱检查、工作流映射、变量解析、任务状态）
-- [ ] T8b QUICKSTART：两条路线（离线练习 30 秒 / 真实图像服务 5 分钟），每步写预期结果与失败去向
-- [ ] T8c CHANNELS_AND_KEYS：三种图像服务分节（地址示例、密钥、测试连接、费用、常见错误）
+- [x] T8b QUICKSTART：两条路线（离线练习 30 秒 / 真实图像服务 5 分钟），每步写预期结果与失败去向
+- [x] T8c CHANNELS_AND_KEYS：三种图像服务分节（地址示例、密钥、测试连接、费用、常见错误）
 - [ ] T8d WORKFLOW：Dev Mode → Export (API) → 导入 → 映射提示词/种子/尺寸/模型/LoRA → 一帧试跑
 - [ ] T8e IMAGE_VARIABLES：预设 → 变量关系、覆盖顺序、空值处理、未定义变量规则、图片变量
 - [ ] T8f TROUBLESHOOTING：错误码对照表（MIO-CONN-001 …）+ 日志位置 + 诊断信息 + FAQ
@@ -41,3 +41,4 @@ T9 开箱检查与离线练习（C1/B3/B6）、T10 多选可发现（C6）。阶
 
 （每完成一项追加一行：日期 · 提交 · 内容）
 - 2026-09-24 · T8a · 6 张 SVG 示意图：flow / checklist / comfy-export / workflow-mapping / variables / task-states（节点编号取自随包工作流 #3 #4 #5 #6 #7 #9）
+- 2026-09-24 · T8b/T8c · QUICKSTART 重写（离线练习 / 真实出图两条路线，每步预期结果与失败去向）；CHANNELS_AND_KEYS 重写（对比表、三种服务分节、密钥保存、可靠性规则）。注意：本地预览模式（comfy.mode=mock）界面已无入口，文档不再提及
