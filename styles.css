@@ -1377,3 +1377,12 @@ body.production-reordering .production-card{cursor:grabbing}
 .workshop-export-item em{font-style:normal;font-size:10.5px;padding:2px 8px;border-radius:999px;background:var(--panel2);color:var(--soft)}
 .workshop-export-sheet .help code{font:10.5px var(--mono);padding:1px 5px;border-radius:4px;background:var(--panel2)}
 @media(max-width:760px){.workshop-heading-actions{width:100%}.workshop-heading-actions .btn{flex:1 1 auto;min-height:40px}}
+
+/* T2 · autosave status beside the editor title (no save buttons) */
+.workshop-asset-head>.workshop-autosave{margin-right:auto;align-self:flex-end;display:inline-flex;align-items:center;gap:6px;padding-bottom:11px;font-size:12px;line-height:1.4;color:var(--muted);white-space:nowrap}
+.workshop-autosave::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--success);flex:0 0 auto}
+.workshop-autosave[data-state="pending"]::before{background:var(--amber)}
+.workshop-autosave[data-state="error"]{color:var(--red)}
+.workshop-autosave[data-state="error"]::before{background:var(--red)}
+.workshop-autosave:empty{display:none}
+@media(max-width:1000px){.workshop-asset-head>.workshop-autosave{align-self:flex-start;padding-bottom:0}}

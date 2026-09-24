@@ -1041,6 +1041,8 @@
     "designerWorkflow": "writable",
     "findSeedInput": "readonly",
     "placeholderModelName": "readonly",
+    "commitWorkshopPresetDraft": "readonly",
+    "autosaveStatus": "readonly",
     "workflowModelProblems": "readonly",
     "modelProblemText": "readonly",
     "addWorkflowSeedMapping": "readonly",

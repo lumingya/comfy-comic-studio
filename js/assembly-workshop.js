@@ -172,7 +172,7 @@ function workshopMobileEditorHTML(story){const frame=story.frames[workshop.frame
   </div>
   <div class="wm-chips" role="toolbar" aria-label="快捷变量">${chips}</div>
   <footer class="wm-focus-actions">
-   ${btn(last?'保存并新增一幕':'保存并下一幕','check','workshop-mobile-save-next','','primary')}
+   ${btn(last?'新增一幕':'下一幕','check','workshop-mobile-save-next','','primary')}
    ${btn('复制此幕','copy','workshop-copy-frame','','ghost')}
    ${btn('删除','trash','workshop-delete-frame','','ghost danger')}
   </footer>
@@ -184,7 +184,7 @@ function renderStoryWorkshopMobile(stories,story){const allPicked=story.frames.l
    <p class="wm-card-prompt ${sum.empty?'is-blank':''}" data-user-content>${esc(sum.empty?'轻点填写这一幕的画面描述':sum.prompt)}</p>${sum.caption?`<p class="wm-card-caption" data-user-content>${esc(sum.caption)}</p>`:''}</div>
    ${workshop.selMode?'':icon('arrow','sm')}
   </article>`}).join('');
- return `<div class="workshop-asset-head wm-asset-head"><label>当前分镜<select id="workshop-story-select">${stories.map(t=>opt(t.id,t.title,story.id)).join('')}</select></label><div class="wm-asset-actions">${btn('去装配此分镜','arrow','first-run-assemble-story','','primary')}${btn('重命名','edit','workshop-rename')}${btn('保存分镜','disk','workshop-save','','ghost')}</div></div>
+ return `<div class="workshop-asset-head wm-asset-head"><label>当前分镜<select id="workshop-story-select">${stories.map(t=>opt(t.id,t.title,story.id)).join('')}</select></label>${workshopAutosaveHTML()}<div class="wm-asset-actions">${btn('去装配此分镜','arrow','first-run-assemble-story','','primary')}${btn('重命名','edit','workshop-rename')}</div></div>
   <details class="story-synopsis"><summary>故事梗概 / 起手模板（可选）</summary>${field('作品简介',`<textarea data-workshop-story="outline" class="workshop-outline" placeholder="可选：为作品补充一段简介。">${esc(story.outline||'')}</textarea>`)}<div class="field"><label class="label" for="workshop-base-prompt">起手模板</label>${promptEditorHTML({attrs:'id="workshop-base-prompt" data-workshop-story="basePrompt" class="workshop-base-prompt"',value:storyBasePrompt(story),placeholder:'可选：新分幕的起手提示词，例如 {character}, {outfit}, {style}, {scene}, ',context:'workshop'})}</div></details>
   <section class="wm-stream ${workshop.selMode?'is-selmode':''}" aria-label="分幕列表">
    <header class="wm-stream-head"><div><strong>${localeString('共 {total} 幕',{total:story.frames.length})}</strong><small>轻点卡片进入全屏编辑，左右滑动切换分幕</small></div><div class="wm-stream-tools">${btn('新增分幕','plus','workshop-add-frame','','small')}${btn('批量新增…','copy','workshop-add-frames','','small ghost')}${btn(workshop.selMode?'退出管理':'批量管理','check','workshop-frame-sel-toggle','',workshop.selMode?'small active':'small ghost')}</div></header>
@@ -196,11 +196,11 @@ function renderStoryWorkshop(){
  workshop.storyId=story.id;workshop.frame=clamp(workshop.frame,0,Math.max(0,story.frames.length-1));const frame=story.frames[workshop.frame];
  if(workshopIsMobile()){if(!story.frames.length)workshop.mobileEditor=false;return renderStoryWorkshopMobile(stories,story)}
  workshop.mobileEditor=false;
- return `<div class="workshop-asset-head"><label>当前分镜<select id="workshop-story-select">${stories.map(t=>opt(t.id,t.title,story.id)).join('')}</select></label><div>${btn('重命名','edit','workshop-rename')}${btn('保存分镜','disk','workshop-save','','ghost')}${btn('去装配此分镜','arrow','first-run-assemble-story','','primary')}</div></div><details class="story-synopsis"><summary>故事梗概 / 起手模板（可选）</summary>${field('作品简介',`<textarea data-workshop-story="outline" class="workshop-outline" placeholder="可选：为作品补充一段简介。">${esc(story.outline||'')}</textarea>`)}<div class="field"><label class="label" for="workshop-base-prompt">起手模板</label>${promptEditorHTML({attrs:'id="workshop-base-prompt" data-workshop-story="basePrompt" class="workshop-base-prompt"',value:storyBasePrompt(story),placeholder:'可选：新分幕的起手提示词，例如 {character}, {outfit}, {style}, {scene}, ',context:'workshop'})}<p class="help">批量新增的分幕以它开头；单击「新增分幕」仍是空白分幕。</p></div></details><div class="workshop-editor ${workshop.selMode?'is-selmode':''}"><nav class="workshop-frames" aria-label="分幕列表"><div class="workshop-frames-list ${workshop.pickedFrames.size?'has-selection':''}" aria-multiselectable="true">${story.frames.map((f,i)=>{const picked=workshop.pickedFrames.has(i);return `<button data-act="workshop-frame" data-index="${i}" class="${i===workshop.frame?'active':''} ${picked?'is-picked desktop-selected':''}" aria-selected="${picked}"><small>${pad(i+1)}</small><span>${esc(f.name||'未命名分幕')}</span></button>`}).join('')}</div><p class="workshop-frames-status" role="status" aria-live="polite" ${workshop.pickedFrames.size?'':'hidden'}>${workshop.pickedFrames.size?localeString('已选 {n} 幕 · 右键操作',{n:workshop.pickedFrames.size}):''}</p><div class="workshop-frames-actions">${btn('新增分幕','plus','workshop-add-frame','','small')}${btn('批量新增…','copy','workshop-add-frames','','small')}</div></nav><section class="workshop-page" data-editor-key="${esc(frame?.id||story.id)}">${frame?`<div class="workshop-page-title"><input data-workshop-frame="name" value="${esc(frame.name)}" aria-label="分幕名称">${ibtn('up','workshop-move-frame','分幕前移','data-dir="-1"')}${ibtn('down','workshop-move-frame','分幕后移','data-dir="1"')}${ibtn('copy','workshop-copy-frame','复制分幕')}${ibtn('trash','workshop-delete-frame','删除分幕')}</div><div class="negative-heading prompt-heading"><label for="workshop-frame-prompt">正向提示词</label>${!frame.prompt.trim()&&storyBasePrompt(story)?btn('插入起手模板','plus','workshop-apply-base','','small ghost'):''}</div>${promptEditorHTML({attrs:'id="workshop-frame-prompt" data-workshop-frame="prompt" class="workshop-prompt"',value:frame.prompt,placeholder:'描述画面、镜头与人物动作；使用 {变量} 引用装配时的视觉设定。',context:'workshop'})}<div class="negative-heading"><label>负向提示词</label>${btn('应用到所有分幕','copy','workshop-negative-all','','small ghost')}</div>${promptEditorHTML({attrs:'aria-label="负向提示词" data-workshop-frame="negative" class="workshop-negative"',value:frame.negative||'',placeholder:'排除不需要的内容，也可引用 {画风负向} 或 {角色负向}。',context:'workshop'})}${field('台词 / 旁白',promptEditorHTML({attrs:'aria-label="分镜台词" data-workshop-frame="caption" class="workshop-caption"',value:frame.caption||'',context:'workshop',className:'prose'}))}<details class="quiet-advanced"><summary>此幕画面参数</summary>${workshopFrameParameterNotice(frame)}<div class="grid2">${['width','height','steps','cfg','seed'].map(k=>field(({width:'宽度',height:'高度',steps:'步数',cfg:'CFG',seed:'随机种子'})[k],input(k,frame[k],'number',`data-workshop-frame="${k}"`))).join('')}</div></details>`:'<div class="eco-empty"><h3>从第一个镜头开始。</h3></div>'}</section></div>`;
+ return `<div class="workshop-asset-head"><label>当前分镜<select id="workshop-story-select">${stories.map(t=>opt(t.id,t.title,story.id)).join('')}</select></label>${workshopAutosaveHTML()}<div>${btn('重命名','edit','workshop-rename')}${btn('去装配此分镜','arrow','first-run-assemble-story','','primary')}</div></div><details class="story-synopsis"><summary>故事梗概 / 起手模板（可选）</summary>${field('作品简介',`<textarea data-workshop-story="outline" class="workshop-outline" placeholder="可选：为作品补充一段简介。">${esc(story.outline||'')}</textarea>`)}<div class="field"><label class="label" for="workshop-base-prompt">起手模板</label>${promptEditorHTML({attrs:'id="workshop-base-prompt" data-workshop-story="basePrompt" class="workshop-base-prompt"',value:storyBasePrompt(story),placeholder:'可选：新分幕的起手提示词，例如 {character}, {outfit}, {style}, {scene}, ',context:'workshop'})}<p class="help">批量新增的分幕以它开头；单击「新增分幕」仍是空白分幕。</p></div></details><div class="workshop-editor ${workshop.selMode?'is-selmode':''}"><nav class="workshop-frames" aria-label="分幕列表"><div class="workshop-frames-list ${workshop.pickedFrames.size?'has-selection':''}" aria-multiselectable="true">${story.frames.map((f,i)=>{const picked=workshop.pickedFrames.has(i);return `<button data-act="workshop-frame" data-index="${i}" class="${i===workshop.frame?'active':''} ${picked?'is-picked desktop-selected':''}" aria-selected="${picked}"><small>${pad(i+1)}</small><span>${esc(f.name||'未命名分幕')}</span></button>`}).join('')}</div><p class="workshop-frames-status" role="status" aria-live="polite" ${workshop.pickedFrames.size?'':'hidden'}>${workshop.pickedFrames.size?localeString('已选 {n} 幕 · 右键操作',{n:workshop.pickedFrames.size}):''}</p><div class="workshop-frames-actions">${btn('新增分幕','plus','workshop-add-frame','','small')}${btn('批量新增…','copy','workshop-add-frames','','small')}</div></nav><section class="workshop-page" data-editor-key="${esc(frame?.id||story.id)}">${frame?`<div class="workshop-page-title"><input data-workshop-frame="name" value="${esc(frame.name)}" aria-label="分幕名称">${ibtn('up','workshop-move-frame','分幕前移','data-dir="-1"')}${ibtn('down','workshop-move-frame','分幕后移','data-dir="1"')}${ibtn('copy','workshop-copy-frame','复制分幕')}${ibtn('trash','workshop-delete-frame','删除分幕')}</div><div class="negative-heading prompt-heading"><label for="workshop-frame-prompt">正向提示词</label>${!frame.prompt.trim()&&storyBasePrompt(story)?btn('插入起手模板','plus','workshop-apply-base','','small ghost'):''}</div>${promptEditorHTML({attrs:'id="workshop-frame-prompt" data-workshop-frame="prompt" class="workshop-prompt"',value:frame.prompt,placeholder:'描述画面、镜头与人物动作；使用 {变量} 引用装配时的视觉设定。',context:'workshop'})}<div class="negative-heading"><label>负向提示词</label>${btn('应用到所有分幕','copy','workshop-negative-all','','small ghost')}</div>${promptEditorHTML({attrs:'aria-label="负向提示词" data-workshop-frame="negative" class="workshop-negative"',value:frame.negative||'',placeholder:'排除不需要的内容，也可引用 {画风负向} 或 {角色负向}。',context:'workshop'})}${field('台词 / 旁白',promptEditorHTML({attrs:'aria-label="分镜台词" data-workshop-frame="caption" class="workshop-caption"',value:frame.caption||'',context:'workshop',className:'prose'}))}<details class="quiet-advanced"><summary>此幕画面参数</summary>${workshopFrameParameterNotice(frame)}<div class="grid2">${['width','height','steps','cfg','seed'].map(k=>field(({width:'宽度',height:'高度',steps:'步数',cfg:'CFG',seed:'随机种子'})[k],input(k,frame[k],'number',`data-workshop-frame="${k}"`))).join('')}</div></details>`:'<div class="eco-empty"><h3>从第一个镜头开始。</h3></div>'}</section></div>`;
 }
 function renderPresetWorkshop(){
  const sets=projectVariableSets(),p=workshopPreset(),draft=workshopDraft();if(!p)return '<div class="eco-empty"><h3>建立你的视觉资产库。</h3><p>人物、画风、场景，可以分别保存为预设。</p>'+btn('导入预设','file-import','workshop-import')+'</div>';
- return `<div class="workshop-asset-head"><label>当前预设<select id="workshop-preset-select">${sets.map(s=>opt(s.id,s.title,p.id)).join('')}</select></label><div>${btn('重命名','edit','workshop-rename')}${btn('独立试绘','brush','workshop-preview')}${btn('保存预设','disk','workshop-save','','primary')}</div></div><div class="workshop-preset-preview">${workshop.queue.tasks.filter(t=>t.purpose==='preview'&&t.previewPresetId===p.id&&t.pages[0]?.result?.image).slice(-3).map(t=>{const a=productionTaskAccess(t,workshop.queue);return `<figure class="workshop-preview-figure" data-production-task="${esc(t.id)}">${imgTag(t.pages[0].result.image,'预设试绘')}<figcaption>${esc(t.title)}</figcaption>${ibtn('trash','workshop-preview-remove',a.canRemove?'删除这张试绘':'试绘任务正在运行或排队中，请先停止它。',`data-id="${esc(t.id)}" ${a.canRemove?'':'disabled'}`)}</figure>`}).join('')}${draft.variables.filter(e=>e.type==='image'&&e.value?.src).map(e=>`<figure>${imgTag(e.value.src,settingLabel(e))}<figcaption>${esc(settingLabel(e))}</figcaption></figure>`).join('')}</div><div class="settings-form-toolbar"><div class="settings-toolbar-label">变量 <span>${draft.variables.length}</span></div><div class="settings-toolbar-actions">${btn('新增变量','plus','art-setting-add')}${btn('新建分组','plus','settings-group-new',`data-owner="${esc(draft.id)}"`)}${btn('编辑分组','edit','settings-group-edit',`data-owner="${esc(draft.id)}"`)}</div></div>${renderSettingsGroups(draft)}<details class="quiet-advanced"><summary>LoRA / 节点输入绑定</summary><div class="row wrap" style="margin:20px 0">${btn('添加节点绑定','plus','workshop-binding-new')}</div>${draft.bindings.map((b,i)=>`<div class="settings-row"><div class="grow"><strong>${esc(b.nodeId)} · ${esc(b.path)}</strong><p>${esc(b.source)} → ${esc(b.value??'')} · ${esc(b.type||'auto')}</p></div>${ibtn('edit','workshop-binding-new','编辑绑定',`data-index="${i}"`)}${ibtn('trash','workshop-binding-delete','删除绑定',`data-index="${i}"`)}</div>`).join('')}<p class="help">按需将变量连接到工作流节点。未配置时保留工作流原值；同一输入不能重复启用。</p></details>`;
+ return `<div class="workshop-asset-head"><label>当前预设<select id="workshop-preset-select">${sets.map(s=>opt(s.id,s.title,p.id)).join('')}</select></label>${workshopAutosaveHTML()}<div>${btn('重命名','edit','workshop-rename')}${btn('独立试绘','brush','workshop-preview')}</div></div><div class="workshop-preset-preview">${workshop.queue.tasks.filter(t=>t.purpose==='preview'&&t.previewPresetId===p.id&&t.pages[0]?.result?.image).slice(-3).map(t=>{const a=productionTaskAccess(t,workshop.queue);return `<figure class="workshop-preview-figure" data-production-task="${esc(t.id)}">${imgTag(t.pages[0].result.image,'预设试绘')}<figcaption>${esc(t.title)}</figcaption>${ibtn('trash','workshop-preview-remove',a.canRemove?'删除这张试绘':'试绘任务正在运行或排队中，请先停止它。',`data-id="${esc(t.id)}" ${a.canRemove?'':'disabled'}`)}</figure>`}).join('')}${draft.variables.filter(e=>e.type==='image'&&e.value?.src).map(e=>`<figure>${imgTag(e.value.src,settingLabel(e))}<figcaption>${esc(settingLabel(e))}</figcaption></figure>`).join('')}</div><div class="settings-form-toolbar"><div class="settings-toolbar-label">变量 <span>${draft.variables.length}</span></div><div class="settings-toolbar-actions">${btn('新增变量','plus','art-setting-add')}${btn('新建分组','plus','settings-group-new',`data-owner="${esc(draft.id)}"`)}${btn('编辑分组','edit','settings-group-edit',`data-owner="${esc(draft.id)}"`)}</div></div>${renderSettingsGroups(draft)}<details class="quiet-advanced"><summary>LoRA / 节点输入绑定</summary><div class="row wrap" style="margin:20px 0">${btn('添加节点绑定','plus','workshop-binding-new')}</div>${draft.bindings.map((b,i)=>`<div class="settings-row"><div class="grow"><strong>${esc(b.nodeId)} · ${esc(b.path)}</strong><p>${esc(b.source)} → ${esc(b.value??'')} · ${esc(b.type||'auto')}</p></div>${ibtn('edit','workshop-binding-new','编辑绑定',`data-index="${i}"`)}${ibtn('trash','workshop-binding-delete','删除绑定',`data-index="${i}"`)}</div>`).join('')}<p class="help">按需将变量连接到工作流节点。未配置时保留工作流原值；同一输入不能重复启用。</p></details>`;
 }
 function productionStatus(value){return ({standby:'待命',ready:'排队待命',preparing:'前置准备',running:'生成中',complete:'完成',partial:'部分完成',failed:'异常',cancelled:'已取消',interrupted:'中断待核对',uncertain:'结果未确认'})[value]||value}
 const PRODUCTION_PAGE_SIZE=6;
@@ -369,10 +369,23 @@ function productionRetrySeconds(rate){
 
 function showAssemblyDialog(){return openAssemblyDesigner()}
 async function saveWorkshop(){
- if(workshop.view==='presets'&&workshopPreset()){const p=workshopPreset(),d=workshopDraft();if($('[data-workshop-preset=bindings]')?.validationMessage)throw Error('LoRA 绑定 JSON 无效，请先修正');commitSettingsGroupNames(d);p.entries=clone(mergedSettingEntries(d));p.settingsGroups=clone(d.settingsGroups);delete p.negative;p.bindings=clone(d.bindings);d.base=presetContentSignature(p);d.dirty=false}
+ if(workshop.view==='presets'&&workshopPreset()){if($('[data-workshop-preset=bindings]')?.validationMessage)throw Error('LoRA 绑定 JSON 无效，请先修正');commitWorkshopPresetDraft()}
  if(workshop.view==='stories'&&workshopStory())delete workshopStory().ownerPlanId;
- save();if(!await savePythonWorkspace())throw Error('保存尚未确认，请检查冲突或服务状态');toast('独立资产已保存');
+ save();if(!await savePythonWorkspace())throw Error('保存尚未确认，请检查冲突或服务状态');refreshSettingsSaveStatus();
 }
+/* T2 / C5: storyboards and presets save themselves. Preset edits live in a draft (so a half-typed JSON never reaches a
+   shared preset); the draft is committed a moment after the last edit instead of waiting for a save button. */
+function workshopAutosaveHTML(){return '<span class="workshop-autosave" data-autosave-status></span>'}
+function commitWorkshopPresetDraft(){
+ clearTimeout(workshop.presetCommitTimer);workshop.presetCommitTimer=null;
+ const p=workshopPreset(),d=p&&settingPresetDraft(p.id,false);if(!d?.dirty)return false;
+ if($('[data-workshop-preset=bindings]')?.validationMessage){workshop.presetCommitBlocked=true;refreshSettingsSaveStatus();return false}
+ workshop.presetCommitBlocked=false;commitSettingsGroupNames(d);
+ p.entries=clone(mergedSettingEntries(d));p.settingsGroups=clone(d.settingsGroups);delete p.negative;p.bindings=clone(d.bindings);d.base=presetContentSignature(p);d.dirty=false;
+ save();return true}
+function scheduleWorkshopPresetCommit(){
+ if(ui.workspace!==1||workshop.view!=='presets')return;const p=workshopPreset(),d=p&&settingPresetDraft(p.id,false);if(!d?.dirty)return;
+ clearTimeout(workshop.presetCommitTimer);workshop.presetCommitTimer=setTimeout(commitWorkshopPresetDraft,500)}
 /* ---- library import / export ------------------------------------------------------------------------------------
    Import takes any number of .json documents, .mio.zip resource packages or a bundle of packages produced by
    「导出…」; every item is inspected first and imported as a NEW asset (never overwriting). Export packs one asset as
@@ -555,7 +568,6 @@ function workshopStoryContextItems(story){
     {label:'批量新增分幕…',icon:'copy',act:'workshop-add-frames',hint:'按起手模板一次生成多幕'},
     {label:'全选分幕',icon:'list',act:'workshop-frame-pick-all',shortcut:'Ctrl/⌘ A',hint:'拖动框选或 Ctrl / ⌘ 点击也可多选'},
     '-',
-    {label:'保存分镜',icon:'disk',act:'workshop-save',shortcut:'Ctrl/⌘ ↵ 下一幕'},
     {label:'去装配此分镜',icon:'arrow',act:'first-run-assemble-story',hint:'下一步：搭配预设，生成画册'},
     '-',
     {label:'分镜',icon:'story',children:[
@@ -579,7 +591,6 @@ function workshopPresetContextItems(draft){
     {label:'编辑分组…',icon:'edit',act:'settings-group-edit',data:owner},
     '-',
     {label:'独立试绘',icon:'brush',act:'workshop-preview',hint:'只用这套预设画一张，检验效果'},
-    {label:'保存预设',icon:'disk',act:'workshop-save'},
     {label:'新建生成任务…',icon:'play',act:'assembly-new',hint:'下一步：选择分镜与预设，装配任务'},
     '-',
     {label:'预设资产',icon:'brush',children:[
@@ -839,7 +850,7 @@ function installWorkshopContextMenu(){
 function installWorkshopMobileEditor(){
  paths['chevron-left']??='<path d="m15 5-7 7 7 7"/>';paths['chevron-right']??='<path d="m9 5 7 7-7 7"/>';
  const layerOf=el=>el?.closest?.('.wm-focus');
-  /* Which editor the chips insert into; the timestamp lets「保存并下一幕」keep the keyboard when it was open. */
+  /* Which editor the chips insert into; the timestamp lets「下一幕」keep the keyboard when it was open. */
   document.addEventListener('focusin',e=>{const layer=layerOf(e.target);if(!layer)return;if(e.target.matches('.wm-focus-body textarea,.wm-focus-body input:not([type="number"]):not([type="checkbox"]):not([type="radio"])')){workshop.mobileField=e.target;layer.classList.add('is-editing');setTimeout(()=>{if(document.activeElement===e.target)e.target.scrollIntoView({block:'center',behavior:'smooth'})},320)}});
   document.addEventListener('focusout',e=>{const layer=layerOf(e.target);if(!layer)return;workshop.mobileBlurAt=performance.now();setTimeout(()=>{if(!layer.isConnected)return;const active=document.activeElement;if(!active||!layer.contains(active)||!active.matches('.wm-focus-body textarea,.wm-focus-body input'))layer.classList.remove('is-editing')},0)});
   /* Chips: pointerdown + preventDefault keeps focus (and the keyboard) in the textarea while the text is inserted. */
@@ -864,6 +875,12 @@ function installAssemblyWorkshop(){
  renderQuietCreation=renderAssemblyWorkshop;renderCreationWorkspace=renderAssemblyWorkshop;
  const priorShell=renderShell;renderShell=function(...args){priorShell(...args);const queue=$('.top-queue');if(queue){queue.dataset.act='workshop-open-production';queue.removeAttribute('data-tab');queue.querySelector('b').textContent=workshop.queue.tasks.filter(t=>!['complete','cancelled'].includes(t.status)).length}if(ui.workspace===1){const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent=({stories:'分镜工坊',presets:'预设工坊',production:'装配与生成'})[workshop.view]}};
  const previousRender=render;render=function(...args){const result=previousRender(...args);applyViewportLock();if(ui.workspace===1){const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent=({stories:'分镜工坊',presets:'预设工坊',production:'装配与生成'})[workshop.view]}return result};
+ const saveBeforeAutosave=save;save=function(...args){const result=saveBeforeAutosave.apply(this,args);scheduleWorkshopPresetCommit();return result};
+ /* Every page switch and most actions call flushEditor first; a pending preset edit is committed there too. */
+ const flushBeforeAutosave=flushEditor;flushEditor=function(...args){const result=flushBeforeAutosave.apply(this,args);commitWorkshopPresetDraft();return result};
+ /* Ctrl/⌘ S out of habit: flush now instead of opening the browser's save-page dialog. */
+ document.addEventListener('keydown',e=>{if(!(e.metaKey||e.ctrlKey)||e.altKey||e.key.toLowerCase()!=='s'||ui.workspace!==1||!['stories','presets'].includes(workshop.view)||document.querySelector('dialog[open]'))return;e.preventDefault();saveWorkshop().catch(err=>toast(err.message,'error'))});
+ setInterval(()=>{if(document.querySelector('[data-autosave-status]'))refreshSettingsSaveStatus()},30000);
  installWorkshopKeys();
  installWorkshopContextMenu();
  installWorkshopMobileEditor();
@@ -895,18 +912,7 @@ function installAssemblyWorkshop(){
   'production-page':d=>{workshop.taskPage=Number(d.page);render();$('.production-cards')?.scrollIntoView({block:'start'})},
   'workshop-open-production':async()=>{ui.workspace=1;workshop.view='production';render();await refreshProduction()},
   'workshop-tab':async d=>{
-    if(workshop.view==='presets'&&workshopPreset()){
-      const p=workshopPreset(),draft=workshopDraft();
-      if(!$('[data-workshop-preset=bindings]')?.validationMessage){
-        commitSettingsGroupNames(draft);
-        p.entries=clone(mergedSettingEntries(draft));
-        p.settingsGroups=clone(draft.settingsGroups);
-        delete p.negative;
-        p.bindings=clone(draft.bindings);
-        draft.base=presetContentSignature(p);
-        draft.dirty=false;
-      }
-    }
+    if(workshop.view==='presets'&&workshopPreset())commitWorkshopPresetDraft();
     if(workshop.view==='stories'&&workshopStory())delete workshopStory().ownerPlanId;
     save();
     workshop.view=d.view;
@@ -1126,7 +1132,7 @@ function installAssemblyWorkshop(){
  });
  document.addEventListener('toggle',e=>{if(e.target.matches('[data-task-details]')){if(e.target.open)workshop.openTasks.add(e.target.dataset.taskDetails);else workshop.openTasks.delete(e.target.dataset.taskDetails)}},true);
  document.addEventListener('input',e=>{const el=e.target;if(el.dataset.workshopFrame){const s=workshopStory(),f=s?.frames[workshop.frame];if(f){f[el.dataset.workshopFrame]=el.type==='checkbox'?el.checked:el.type==='number'?Number(el.value):el.value;delete s.ownerPlanId;s.updatedAt=Date.now();save();if(el.type==='checkbox')render()}}if(el.dataset.workshopStory){workshopStory()[el.dataset.workshopStory]=el.value;save()}if(el.dataset.workshopPreset){const d=workshopDraft();if(el.dataset.workshopPreset==='bindings'){try{const value=JSON.parse(el.value);if(!Array.isArray(value))throw Error();d.bindings=value;el.setCustomValidity('')}catch{el.setCustomValidity('请输入绑定数组 JSON');return}}else d[el.dataset.workshopPreset]=el.value;d.dirty=true;save()}});
- document.addEventListener('change',e=>{if(e.target.id==='workshop-story-select'){workshop.storyId=e.target.value;workshop.frame=0;workshop.pickedFrames.clear();workshop.selMode=false;workshop.mobileEditor=false;render()}if(e.target.id==='workshop-preset-select'){workshop.presetId=e.target.value;render()}if(e.target.dataset?.productionConcurrency!==undefined)void commitProductionConcurrency(e.target);if(e.target.dataset?.productionLive!==undefined)void commitProductionLiveSync(e.target)});
+ document.addEventListener('change',e=>{if(e.target.id==='workshop-story-select'){workshop.storyId=e.target.value;workshop.frame=0;workshop.pickedFrames.clear();workshop.selMode=false;workshop.mobileEditor=false;render()}if(e.target.id==='workshop-preset-select'){commitWorkshopPresetDraft();workshop.presetId=e.target.value;render()}if(e.target.dataset?.productionConcurrency!==undefined)void commitProductionConcurrency(e.target);if(e.target.dataset?.productionLive!==undefined)void commitProductionLiveSync(e.target)});
  const queueBusy=()=>workshop.queue.active?.length||workshop.queue.lane?.length;
  async function poll(){try{if(!document.hidden&&(ui.workspace===0||ui.workspace===1||$('#reader')?.open||queueBusy()))await refreshProduction()}catch(e){workshop.queue.fault=e.message}finally{clearTimeout(workshop.pollTimer);workshop.pollTimer=setTimeout(poll,queueBusy()?2000:15000)}}
  workshop.poll=poll;

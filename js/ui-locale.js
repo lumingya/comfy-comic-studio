@@ -1822,11 +1822,18 @@ function extendCurrentLocaleCatalog(catalog){Object.assign(catalog.messages,{
   "复制原任务冻结的分镜、预设与参数，可在下方微调副本内容。": "Copies the storyboard, presets and parameters frozen in the original task; adjust the copy below.",
   "组内变量会回到平铺列表。": "Variables in the group return to the flat list.",
   "只移除装配记录。": "Only the assembly records are removed.",
-  "会移除这条试绘任务记录及其缩略图。": "Removes this test render record and its thumbnail."
+  "会移除这条试绘任务记录及其缩略图。": "Removes this test render record and its thumbnail.",
+  "已自动保存": "Saved automatically",
+  "正在自动保存…": "Saving…",
+  "保存未完成": "Save incomplete",
+  "未连接保存服务": "Not connected to the save service",
+  "LoRA 绑定 JSON 无效，修正后自动保存": "LoRA binding JSON is invalid; it saves once fixed",
+  "新增一幕": "Add a scene"
 });return catalog}
 
 function translateCurrentLocale(text){
  const patterns=[
+  [/^已自动保存 · (?:(刚刚)|(\d+) 分钟前|(\d{1,2}:\d{2}))$/,(_,now,min,time)=>'Saved automatically · '+(now?'just now':min?min+' min ago':time)],
   [/^(.+) · 只用于本次任务$/,(_,lead)=>(lead==='尚未同步模型列表'?'Model list not synced':lead.replace(/^已同步 (\d+) 个模型 · (\d+) 个 LoRA$/,'$1 models · $2 LoRAs synced'))+' · applies to this task only'],
   [/^ComfyUI 里没有模型「(.+)」（按上次同步的模型列表）。(.*)$/,(_,name,rest)=>'ComfyUI does not list the model “'+name+'” (as of the last model sync).'+({'请在「模型与 LoRA」里选一个已安装的模型。':' Pick an installed model under Model & LoRA.','装配时在「模型与 LoRA」里选一个已安装的模型，或用「编辑工作流 JSON」改掉。':' Pick an installed model under Model & LoRA when assembling, or change it with Edit workflow JSON.'}[rest]??rest)],
   [/^模型「(.+)」是占位名，ComfyUI 里没有这个文件，直接生成会失败。(.*)$/,(_,name,rest)=>'The model “'+name+'” is a placeholder name. ComfyUI has no such file, so generation will fail.'+({'请在「模型与 LoRA」里选一个已安装的模型。':' Pick an installed model under Model & LoRA.','装配时在「模型与 LoRA」里选一个已安装的模型，或用「编辑工作流 JSON」改掉。':' Pick an installed model under Model & LoRA when assembling, or change it with Edit workflow JSON.'}[rest]??rest)],

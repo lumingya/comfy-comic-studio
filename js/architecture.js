@@ -174,6 +174,7 @@ function designerAddLora(name){
  d.overrides.loras.push({name,strength});
 }
 function openAssemblyDesigner(){
+ if(typeof commitWorkshopPresetDraft==='function')commitWorkshopPresetDraft();
  const d=assemblyDesign,prefs=state.settings.productionAssembly||{},providers=ensureImageProviders(),lastUsed=providers.profiles.find(p=>p.id===prefs.channelId)?.id||'';
  /* B10: the wizard follows the channel enabled in Settings, never silently the last one billed; a differing history is only a notice. */
  Object.assign(d,{mode:'wizard',step:0,storyId:workshopStory()?.id||'',channelId:providers.active||lastUsed,previousChannelId:lastUsed&&lastUsed!==providers.active?lastUsed:'',workflowId:(prefs.channelId===providers.active?prefs.workflowId:'')||state.settings.comfy.activeWorkflowId,workflowQuery:'',seedEnabled:false,seed:1,concurrency:null,presets:new Set(),title:'',projectId:state.projects.some(p=>p.id===prefs.projectId)?prefs.projectId:state.activeProjectId,stories:[],visuals:[],edges:[],requestId:uid('assembly'),busy:false,drag:null});
