@@ -76,8 +76,10 @@ function installDesktopSelection() {
   window.addEventListener('pointerdown',e=>{
     suppress=false;if(e.button!==0||e.pointerType==='touch'||editable(e.target))return;
     const c=locate(e.target);if(!c)return;
-    // Shelf and task cards reorder by dragging while nothing is selected; the marquee takes over once a selection exists (or with a modifier).
-    if((c.s.root==='#gallery-results'||c.s.root==='.production-cards')&&c.item&&!c.s.get().size&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey)return;
+    // Shelf albums reorder only from their ⠿ handle, so a drag that starts on a cover still draws the marquee.
+    // Task cards keep drag-to-reorder on the card body while nothing is selected (the marquee takes over with a selection or a modifier).
+    if(e.target.closest('.shelf-drag-handle'))return;
+    if(c.s.root==='.production-cards'&&c.item&&!c.s.get().size&&!e.ctrlKey&&!e.metaKey&&!e.shiftKey)return;
     const control=e.target.closest('button,input,a,[data-act]');
     if(control&&!c.item)return;
     if(control&&control!==c.item&&!control.matches(OPENERS))return;

@@ -248,9 +248,10 @@ function installShelfReorderDrag(){
   }
   window.addEventListener('pointerdown',e=>{
     suppressClick=false;if(gesture)finish();
-    if(e.button!==0||e.pointerType==='touch'||ui.workspace!==0||ui.bulk||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||document.querySelector('dialog[open]'))return;
+    if(e.button!==0||e.pointerType==='touch'||ui.workspace!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey||document.querySelector('dialog[open]'))return;
+    // Only the handle reorders: a drag anywhere else on the shelf draws the selection marquee (desktop-selection.js).
+    if(!e.target.closest('.shelf-drag-handle'))return;
     const card=e.target.closest('#gallery-results .shelf-item[data-sort-book],#gallery-results .shelf-exhibit[data-sort-book]');if(!card)return;
-    const control=e.target.closest('[data-act],input,textarea,select,label,a');if(control&&control.dataset.act!=='read')return;
     gesture={id:card.dataset.sortBook,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY,card,active:false,target:null,after:false};
   },true);
   window.addEventListener('pointermove',e=>{

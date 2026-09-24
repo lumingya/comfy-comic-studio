@@ -1278,6 +1278,13 @@ select.choice-list:focus-visible{border-color:var(--accent2);box-shadow:0 0 0 3p
 .shelf-drag-ghost img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform:none!important}
 .shelf-drag-ghost .artwork-missing{position:absolute;inset:0;width:100%;height:100%;margin:0}
 .shelf-item .shelf-cover,.shelf-exhibit .shelf-cover{-webkit-user-drag:none}
+/* Albums reorder from an explicit ⠿ handle; a drag anywhere else on the shelf draws the selection marquee. */
+.shelf-item{position:relative}
+.shelf-drag-handle{position:absolute;top:8px;left:8px;z-index:2;display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:rgb(0 0 0/.55);color:#fff;font-size:16px;line-height:1;cursor:grab;opacity:0;transition:opacity .15s;touch-action:none;user-select:none}
+.shelf-item:hover .shelf-drag-handle,.shelf-item:focus-within .shelf-drag-handle{opacity:1}
+.shelf-drag-handle:hover{background:var(--accent)}
+.desktop-selecting .shelf-drag-handle{opacity:0}
+@media (pointer:coarse){.shelf-drag-handle{display:none}}
 /* Production queue: books run side by side; cards carry their own hold, order and page concurrency. */
 .production-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .production-card{position:relative;transition:border-color .2s,opacity .2s,box-shadow .2s}
