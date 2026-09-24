@@ -24,14 +24,15 @@ const HELP_DOCS={
   quickstart:['快速开始','guide/QUICKSTART.html','en/GUIDE.html#start'],
   services:['图像服务与密钥','guide/CHANNELS_AND_KEYS.html','en/GUIDE.html#connect-a-provider'],
   workflow:['ComfyUI 工作流','guide/WORKFLOW.html',''],
-  variables:['图片变量','guide/IMAGE_VARIABLES.html',''],
+  variables:['变量与预设','guide/IMAGE_VARIABLES.html',''],
   tasks:['生成任务','guide/FOUNDATION.html','en/FOUNDATION.html'],
   presentation:['阅读与导出','guide/PRESENTATION.html','en/GUIDE.html#read-and-share'],
   sharing:['内容与分享','guide/CONTENT_AND_SHARING.html','en/CONTENT_AND_SHARING.html'],
   backup:['备份与恢复','guide/BACKUP.html',''],
   files:['文件与保存','guide/FILE_LIBRARY.html','en/FILE_LIBRARY.html'],
   mobile:['手机访问','guide/MOBILE.html','en/MOBILE.html'],
-  troubleshooting:['常见问题','guide/TROUBLESHOOTING.html','']
+  troubleshooting:['常见问题与错误码','guide/TROUBLESHOOTING.html',''],
+  glossary:['术语表','guide/GLOSSARY.html','']
 };
 
 const HELP_PAGES={
@@ -193,7 +194,7 @@ function helpDrawerHTML(){
   const key=helpPageKey(),page=HELP_PAGES[key],comfy=activeImageProfile()?.provider==='comfyui';
   const actions=[...page.actions];if(key==='workflow'&&comfy)actions.push(['测试 ComfyUI 连接','refresh','help-test-engine']);
   if(key==='stories'&&!workshopStory())actions.splice(1);
-  const terms=page.terms.filter(t=>HELP_GLOSSARY[t]),docs=[...new Set([...page.docs,'quickstart','troubleshooting'])];
+  const terms=page.terms.filter(t=>HELP_GLOSSARY[t]),docs=[...new Set([...page.docs,'quickstart','troubleshooting','glossary'])];
   const center=state.settings.presentation.language==='en'?'/docs/en/GUIDE.html':'/docs/index.html';
   return `<header class="help-drawer-head"><div class="grow"><p class="help-kicker">HELP</p><h2 id="help-drawer-title" tabindex="-1" autofocus>${esc(localeString(page.title))}</h2></div>${ibtn('close','help-drawer-close','关闭帮助')}</header>
   <div class="help-drawer-body">

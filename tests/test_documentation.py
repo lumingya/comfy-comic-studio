@@ -51,6 +51,44 @@ class DocumentationTests(unittest.TestCase):
                 headings = [slug(h) for h in re.findall(r'^#{1,3} (.+)$', source.read_text(encoding='utf-8'), flags=re.M)]
                 self.assertIn(anchor, headings, target)
 
+    @staticmethod
+    def _heading_slugs(path):
+        # Same slug rule as docs/reader-template.html, which assigns the heading ids.
+        slug = lambda text: re.sub(r'\s+', '-', re.sub(r'[^\w\-\s]', '', text.strip().lower())) or 'section'
+        text = re.sub(r'^```[^\n]*\n.*?^```\s*$', '', path.read_text(encoding='utf-8'), flags=re.M | re.S)
+        return {slug(h) for h in re.findall(r'^#{1,3} (.+)$', text, flags=re.M)}
+
+    def test_guide_anchors_resolve(self):
+        # T8: the rewritten guides link to each other's sections; every #anchor must name a real heading.
+        dead = []
+        for file in sorted((ROOT / 'docs' / 'guide').glob('*.md')):
+            prose = re.sub(r'^```[^\n]*\n.*?^```\s*$', '', file.read_text(encoding='utf-8'), flags=re.M | re.S)
+            for target in re.findall(r'\]\(([^)\s]*#[^)\s]+)\)', prose):
+                path, _, anchor = target.partition('#')
+                source = (file.parent / path) if path else file
+                if source.suffix == '.html':
+                    source = source.with_suffix('.md')
+                if anchor not in self._heading_slugs(source):
+                    dead.append(f'{file.name}: {target}')
+        self.assertEqual(dead, [])
+
+    def test_every_error_code_has_a_troubleshooting_entry(self):
+        # T8 · B5: failure cards link to TROUBLESHOOTING.md#<code>-<title>; the heading must exist.
+        source = (ROOT / 'js' / 'assembly-workshop.js').read_text(encoding='utf-8')
+        codes = re.findall(r"\['(MIO-[A-Z]+-\d{3})','([^']+)',/", source)
+        self.assertGreaterEqual(len(codes), 15)
+        slugs = self._heading_slugs(ROOT / 'docs' / 'guide' / 'TROUBLESHOOTING.md')
+        for code, title in codes:
+            expected = re.sub(r'\s+', '-', re.sub(r'[^\w\-\s]', '', (code + ' ' + title).lower()))
+            self.assertIn(expected, slugs, code + ' has no heading in TROUBLESHOOTING.md')
+        self.assertEqual(len({c for c, _ in codes}), len(codes), 'error codes are unique')
+
+    def test_glossary_is_linked_from_the_handbook(self):
+        self.assertTrue((ROOT / 'docs/guide/GLOSSARY.md').exists())
+        self.assertIn('guide/GLOSSARY.md', (ROOT / 'docs/README.md').read_text(encoding='utf-8'))
+        self.assertIn('guide/GLOSSARY.html', (ROOT / 'docs/index.html').read_text(encoding='utf-8'))
+        self.assertIn("glossary:['术语表','guide/GLOSSARY.html'", (ROOT / 'js/help-drawer.js').read_text(encoding='utf-8'))
+
     def test_documents_agree_on_the_current_version(self):
         version = json.loads((ROOT / 'package.json').read_text())['version']
         self.assertIn(version, (ROOT / 'docs/CHANGELOG.md').read_text(encoding='utf-8').splitlines()[0])

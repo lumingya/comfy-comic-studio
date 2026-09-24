@@ -6,7 +6,7 @@
 
 Mio 是用于分镜创作、图像生成、画册阅读与编辑的本地工作室，支持 ComfyUI、NovelAI 和 OpenAI 兼容图像服务。
 
-[教程中心](docs/README.md) · [快速开始](docs/guide/QUICKSTART.md) · [English](docs/README.en.md)
+[教程中心](docs/README.md) · [快速开始](docs/guide/QUICKSTART.md) · [常见问题](docs/guide/TROUBLESHOOTING.md) · [术语表](docs/guide/GLOSSARY.md) · [English](docs/README.en.md)
 
 ## 启动
 
@@ -25,11 +25,11 @@ python server.py
 
 ## 创作流程
 
-1. 从首页打开「工作流与 API 配置」，配置图像渠道。
+1. 从首页打开「工作流与 API 配置」，配置图像服务。
 2. 在「创作工坊 → 分镜」填写画面提示词与台词。
-3. 在「预设库」准备角色、服装、画风或图片变量。
+3. 在「创作工坊 → 预设工坊」准备角色、服装、画风或图片变量。
 4. 使用装配向导或连线画布组合分镜与预设，添加生成任务。
-5. 在任务卡点击「开始」，查看逐幕进度。
+5. 在任务卡点击「开始生成」，查看逐幕进度。
 6. 到画册集阅读、编辑图片或导出作品。
 
 ## 阅读与导出
