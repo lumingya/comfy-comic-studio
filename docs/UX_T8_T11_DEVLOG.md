@@ -34,8 +34,8 @@ T9 开箱检查与离线练习（C1/B3/B6）、T10 多选可发现（C6）。阶
 ## T11 计划
 
 - [x] T11a 后端 `backend/mio_recycle.py`：列出 `.trash/<id>/receipt.json`、恢复（含画册墓碑清除、目录索引）、永久删除、按天数清理；HTTP 路由；Python 测试
-- [ ] T11b 前端回收站：设置 → 数据与备份 → 回收站（列表、恢复、永久删除、清空、保留天数）
-- [ ] T11c 统一撤销：画册 / 分镜 / 预设 / 画册集 / 工作流删除后 toast 给出 [撤销]（10 秒），撤销走回收站恢复；文案去掉“不可撤销”
+- [x] T11b 前端回收站：设置 → 数据与备份 → 回收站（列表、恢复、永久删除、清空、保留天数）
+- [x] T11c 统一撤销：画册 / 分镜 / 预设 / 画册集 / 工作流删除后 toast 给出 [撤销]（10 秒），撤销走回收站恢复；文案去掉“不可撤销”
 - [ ] T11d 素材回收并入 `.trash`，引用保护（回收站里的文档仍然保住它引用的素材）；文档
   - 后端部分已在 T11a 完成：foundation cleanup 改写到 `.trash/files/<ns>/`（manifest: url/stored），`scan_references` 扫描 `.trash/<id>` 文档，只跳过 `.trash/assets`、`.trash/files`；剩下文档（BACKUP.md `## 回收站`，FOUNDATION 链接补锚点）
 
@@ -54,3 +54,11 @@ T9 开箱检查与离线练习（C1/B3/B6）、T10 多选可发现（C6）。阶
   - 列表默认只含 USER_KINDS（albums/storyboards/characters/scenes/collections/layouts/workflows/plans），其余 kind 计入 `hidden`
   - conflict 取值：''/missing/path/id/invalid；恢复冲突返回 409，不覆盖
   - 测试：tests/test_recycle.py（9 个）
+- 2026-09-24 · T11b+T11c · 两项的改动交织在同几个文件里，所以一起提交
+  - 回收站 UI 在 js/file-library.js（`recycleBinHTML`、`installRecycleBin`、`undoDeletion`、`reloadStudioFromServer`），接在 ui-settings.js 的 `dataSettingsHTML` 里（数据与备份：完整备份之后）
+  - 保留天数存在 `state.settings.recycle.retentionDays`（默认 30），启动 30 秒后调用一次 auto-clean
+  - 撤销核心在 js/ui.js：`runUndo` 支持异步，另有 `RECYCLE_UNDO_MS=10000`、`recycleIdentities`、`recycleRemoved`、`withDeletionUndo`、`adoptRecycledOrphans`、`restoreLocalCopies`
+  - 已接入的删除入口：画册 deleteBooks、分镜 deleteStoryboardTemplate、画册集 deleteCollection、预设 deleteSettingPreset、工作流（ws-delete / wf-ws-delete）、版式 et-delete、计划 v3-plan-delete、角色 delete-row、生成任务「同时删除对应的画册」
+  - 批量删除工作流（workspace.js 的 ws-lib-delete）保留原来的内存快照撤销
+  - 「不可撤销」文案已替换；foundation 服务端任务记录的删除仍如实写「不能恢复」
+  - JS 测试新增 3 个（91/91）

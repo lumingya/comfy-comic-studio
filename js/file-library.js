@@ -161,7 +161,7 @@ function savedKeysSettings(){
   return '<section class="settings-section"><h2>已保存密钥</h2><p>密码框留空会保留已绑定密钥；修改地址时需要明确重新填写或忘记原密钥。</p><div class="row wrap">'+Object.entries(SAVED_KEY_SCOPES).map(([scope,label])=>btn('忘记'+label+'密钥','trash','native-forget','data-scope="'+scope+'"','small')).join('')+'</div></section>';
 }
 function installNativeLibraryPanel(){
-  installContextualSharing();
+  installContextualSharing();installRecycleBin();
   v3Actions['native-forget']=async({scope})=>{if(!Object.hasOwn(SAVED_KEY_SCOPES,scope))throw Error('未知的密钥类型。');if(!await confirmAction('忘记已保存的'+SAVED_KEY_SCOPES[scope]+'密钥？','清除此连接的密钥绑定。','忘记密钥'))return;if(!await ComfyComic.sync.save())throw Error('请先保存当前编辑。');await request('/api/library/forget-key',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({scope})});await connectPythonBackend()};
 }
 
@@ -192,4 +192,118 @@ function nativePatch(target,value){
     for(const k of Object.keys(target))if(!Object.hasOwn(value,k))delete target[k];for(const[k,v]of Object.entries(value))target[k]=nativePatch(target[k],v);return target;
   }
   return value;
+}
+
+/* 回收站（UX A8）。后端删除任何独立文件时都先移进 data/.trash/<id>/（附 receipt.json），
+   这里列出、原样恢复、永久删除，并按保留天数自动清理。撤销（D5）也走这里：undoDeletion。 */
+const RECYCLE_KIND_LABELS={albums:'画册',storyboards:'分镜',characters:'预设',scenes:'预设',collections:'画册集',layouts:'画册版式',workflows:'工作流',plans:'创作计划',rows:'角色记录',conversations:'助手对话',tasks:'生成任务',unknown:'无法识别'};
+const RECYCLE_KIND_ORDER=['albums','storyboards','characters','scenes','collections','workflows','layouts','plans','unknown'];
+const RECYCLE_RETENTION=[[0,'不自动清理'],[7,'7 天'],[30,'30 天'],[90,'90 天']];
+const RECYCLE_CONFLICTS={path:'原位置已有同名文件',id:'已存在同一 ID 的内容（可能已经恢复过）',missing:'回收站里的文件已经不在了',invalid:'回收记录已损坏，只能永久删除'};
+const recycleUI={data:null,loading:false,error:'',busy:'',autoCleaned:false};
+function recycleRetention(){const d=state.settings.recycle?.retentionDays;return RECYCLE_RETENTION.some(([n])=>n===d)?d:30}
+function recycleAvailable(){return !!ComfyComic.sync?.runtime.loaded&&/http/.test(location.protocol)}
+function recycleBytes(n){n=Number(n)||0;return n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':(n/1048576).toFixed(1)+' MB'}
+function recycleWhen(ms){const days=Math.floor((Date.now()-ms)/86400000),time=new Date(ms);if(days<1)return localeString('今天 {time}',{time:time.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})});return days<2?localeString('昨天'):localeString('{n} 天前',{n:days})}
+async function recycleRequest(action,body){
+  const r=await request('/api/library/recycle'+(action?'/'+action:''),action?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body||{})}:{cache:'no-store'},60000);
+  return r.json();
+}
+function recycleRowHTML(item){
+  const blocked=item.conflict?RECYCLE_CONFLICTS[item.conflict]||item.conflict:'';
+  return `<div class="settings-row recycle-row" data-recycle-id="${esc(item.trashId)}"><div class="grow"><strong data-user-content>${esc(item.title||item.id)}</strong><p>${esc(recycleWhen(item.deletedAt))} · ${esc(recycleBytes(item.bytes))}${item.original?` · <code>${esc(item.original)}</code>`:''}</p>${blocked?`<p class="help danger">${esc(localeString(blocked))}</p>`:''}</div>${btn('恢复','refresh','recycle-restore',`data-id="${esc(item.trashId)}" ${blocked||recycleUI.busy?'disabled':''} ${blocked?`title="${esc(localeString(blocked))}"`:''}`,'small')}${btn('永久删除','trash','recycle-purge',`data-id="${esc(item.trashId)}" data-title="${esc(item.title||item.id)}" ${recycleUI.busy?'disabled':''}`,'small ghost danger')}</div>`;
+}
+function recycleBodyHTML(){
+  const days=recycleRetention(),d=recycleUI.data;
+  const toolbar=`<div class="row wrap recycle-toolbar"><label class="recycle-retention">${esc(localeString('自动清理'))}<select id="recycle-retention">${RECYCLE_RETENTION.map(([n,label])=>`<option value="${n}" ${n===days?'selected':''}>${esc(localeString(label))}</option>`).join('')}</select></label>${btn('刷新','refresh','recycle-refresh','','small ghost')}${btn('清空回收站','trash','recycle-empty',recycleUI.busy||!d||!(d.items.length+d.assets.length+d.files.length+d.hidden.count)?'disabled':'','small ghost danger')}</div>`;
+  const intro=`<p>${esc(localeString('删除的画册、分镜、预设、画册集和工作流会先放在这里，可以原样恢复。删除后 10 秒内也可以直接点提示条上的「撤销」。'))}</p>`;
+  if(!recycleAvailable())return intro+`<p class="help">${esc(localeString('回收站需要连接本地服务。离线打开的页面没有回收站。'))}</p>`;
+  if(recycleUI.error)return intro+toolbar+`<p class="help danger">${esc(recycleUI.error)}</p>`;
+  if(!d)return intro+toolbar+`<p class="help">${esc(localeString('正在读取回收站…'))}</p>`;
+  const groups=RECYCLE_KIND_ORDER.map(kind=>[kind,d.items.filter(i=>i.kind===kind)]).filter(([,items])=>items.length);
+  const merged=[];for(const [kind,items] of groups){const label=RECYCLE_KIND_LABELS[kind],last=merged[merged.length-1];if(last&&last[0]===label)last[1].push(...items);else merged.push([label,items])}
+  const list=merged.map(([label,items])=>`<h3 class="recycle-group">${esc(localeString(label))} <span>${items.length}</span></h3>`+items.map(recycleRowHTML).join('')).join('');
+  const batches=[...d.assets.map(b=>({id:'assets:'+b.batch,label:localeString('未引用的图片 · {n} 个文件',{n:b.files}),...b})),...d.files.map(b=>({id:'files:'+b.batch,label:localeString('素材索引回收的文件 · {n} 个',{n:b.files}),...b}))];
+  const batchHTML=batches.length?`<h3 class="recycle-group">${esc(localeString('素材文件'))} <span>${batches.length}</span></h3>`+batches.map(b=>`<div class="settings-row recycle-row"><div class="grow"><strong>${esc(b.label)}</strong><p>${esc(recycleWhen(b.deletedAt))} · ${esc(recycleBytes(b.bytes))}</p></div>${btn('恢复','refresh','recycle-restore',`data-id="${esc(b.id)}" ${recycleUI.busy?'disabled':''}`,'small')}${btn('永久删除','trash','recycle-purge',`data-id="${esc(b.id)}" data-title="${esc(b.label)}" ${recycleUI.busy?'disabled':''}`,'small ghost danger')}</div>`).join(''):'';
+  const hidden=d.hidden.count?`<p class="help">${esc(localeString('另有 {n} 条生成任务、角色记录或助手对话随删除一起进入回收站（{size}），清空或到期时一并删除。',{n:d.hidden.count,size:recycleBytes(d.hidden.bytes)}))}</p>`:'';
+  const empty=!list&&!batchHTML?`<div class="eco-empty recycle-empty"><p>${esc(localeString('回收站是空的。'))}</p></div>`:'';
+  return intro+toolbar+(recycleUI.busy?`<p class="help" role="status">${esc(localeString(recycleUI.busy))}</p>`:'')+empty+list+batchHTML+hidden;
+}
+function recycleBinHTML(){
+  if(recycleAvailable()&&!recycleUI.data&&!recycleUI.loading&&!recycleUI.error)setTimeout(()=>loadRecycleBin(),0);
+  return `<section class="settings-section recycle-bin" id="recycle-bin" aria-live="polite"><h2>${esc(localeString('回收站'))}</h2><div class="recycle-body">${recycleBodyHTML()}</div></section>`;
+}
+function paintRecycleBin(){const body=document.querySelector('#recycle-bin .recycle-body');if(body)body.innerHTML=recycleBodyHTML()}
+async function loadRecycleBin(){
+  if(recycleUI.loading)return;recycleUI.loading=true;recycleUI.error='';
+  try{recycleUI.data=await recycleRequest()}catch(e){recycleUI.error=localeString('回收站读取失败：')+e.message}
+  finally{recycleUI.loading=false;paintRecycleBin()}
+}
+/* 恢复后重新读取整个工作室（同「扫描并重新读取」），保留当前能保留的选择。 */
+async function reloadStudioFromServer(){
+  const ns=ComfyComic;state=await ns.sync.read();ensureStudioState();ns.sync.runtime.dirty=false;backendRuntime.dirty=false;rt.saved=true;ui.selected.clear();
+  if(!templateBy(ui.templateId))ui.templateId=projectTemplates()[0]?.id;if(!templateBy(ui.storyTemplateId))ui.storyTemplateId=ui.templateId;
+  if(!projectPlans().some(p=>p.id===createUI.planId))createUI.planId=projectPlans()[0]?.id||null;
+  if(typeof refreshGallery==='function')refreshGallery();render();
+}
+async function prepareRecycleRestore(){
+  if(!recycleAvailable())throw Error(localeString('回收站需要连接本地服务。'));
+  if(activeJobs())throw Error(localeString('请等当前的生成、导出或保存结束后再恢复。'));
+  flushEditor();await ComfyComic.sync.save();
+  const r=ComfyComic.sync.runtime;if(r.dirty&&r.error)throw Error(localeString('还有修改没保存成功，先处理保存问题再恢复：')+r.error);
+}
+function finishRecycleRestore(keys){
+  const moved=adoptRecycledOrphans(state,keys);if(moved.length){save(true);render()}
+  return moved.length?localeString('原来的画册集已不在，{n} 项已放进当前画册集。',{n:moved.length}):'';
+}
+/* 撤销一次删除：先把删除提交到磁盘，再按回执把文件原样移回；从未保存过的项目用内存副本放回。 */
+async function undoDeletion(removed){
+  if(!recycleAvailable()){const n=restoreLocalCopies(state,removed);ensureStudioState();save(true);render();return n?localeString('已撤销删除。'):localeString('没有可恢复的内容。')}
+  await prepareRecycleRestore();
+  const missing=[],failed=[];let restored=0;
+  for(const r of removed){try{await recycleRequest('restore',{kind:r.kind,id:r.id});restored++}catch(e){if(/HTTP 404/.test(e.message))missing.push(r);else failed.push((r.title||r.id)+'：'+e.message.replace(/^HTTP \d+: /,''))}}
+  await reloadStudioFromServer();
+  if(missing.length&&restoreLocalCopies(state,missing)){ensureStudioState();save(true);render()}
+  const note=finishRecycleRestore(removed.map(r=>r.kind+':'+r.id));recycleUI.data=null;paintRecycleBin();
+  if(failed.length)throw Error(localeString('{ok} 项已恢复，{n} 项没有恢复：',{ok:restored+missing.length,n:failed.length})+failed.join('；'));
+  return [localeString('已撤销删除。'),note].filter(Boolean).join(' ');
+}
+async function recycleAutoClean(){
+  if(recycleUI.autoCleaned||!recycleAvailable())return;recycleUI.autoCleaned=true;
+  const days=recycleRetention();if(!days)return;
+  try{const result=await recycleRequest('auto-clean',{retentionDays:days});if(result.purged?.length){recycleUI.data=null;log(localeString('回收站自动清理：永久删除 {n} 项超过 {days} 天的内容。',{n:result.purged.length,days}))}}catch(e){log('回收站自动清理失败：'+e.message,'error')}
+}
+function installRecycleBin(){
+  v3Actions['recycle-refresh']=()=>{recycleUI.data=null;recycleUI.error='';return loadRecycleBin()};
+  v3Actions['recycle-restore']=async({id})=>{
+    recycleUI.busy='正在恢复…';paintRecycleBin();
+    try{
+      await prepareRecycleRestore();
+      const result=await recycleRequest('restore',{trashId:id}),item=result.restored;
+      if(item?.kind){await reloadStudioFromServer();const note=finishRecycleRestore([item.kind+':'+item.id]);toast([localeString('已恢复「{title}」。',{title:item.title||item.id}),note].filter(Boolean).join(' '))}
+      else toast(result.skipped?.length?localeString('已恢复 {ok} 个文件；{n} 个原位置已有文件，保留在回收站。',{ok:result.restored.length,n:result.skipped.length}):localeString('素材文件已恢复。'));
+    }finally{recycleUI.busy='';recycleUI.data=null;await loadRecycleBin()}
+  };
+  v3Actions['recycle-purge']=async({id,title})=>{
+    if(!await confirmAction(localeString('永久删除「{title}」？',{title}),localeString('文件会从磁盘上删除，之后无法再恢复。'),localeString('永久删除')))return;
+    recycleUI.busy='正在删除…';paintRecycleBin();
+    try{await recycleRequest('purge',{trashId:id,trusted:true});toast(localeString('已永久删除。'))}finally{recycleUI.busy='';recycleUI.data=null;await loadRecycleBin()}
+  };
+  v3Actions['recycle-empty']=async()=>{
+    const d=recycleUI.data,count=d?d.items.length+d.assets.length+d.files.length+d.hidden.count:0;
+    if(!await confirmAction(localeString('清空回收站？'),localeString('{n} 项会从磁盘上永久删除，之后无法再恢复。',{n:count}),localeString('清空回收站')))return;
+    recycleUI.busy='正在清空…';paintRecycleBin();
+    try{const result=await recycleRequest('empty',{trusted:true});toast(localeString('已清空回收站，释放 {size}。',{size:recycleBytes(result.bytes)}))}finally{recycleUI.busy='';recycleUI.data=null;await loadRecycleBin()}
+  };
+  document.addEventListener('change',async event=>{
+    const select=event.target.closest?.('#recycle-retention');if(!select)return;
+    const days=Number(select.value),d=recycleUI.data,cutoff=Date.now()-days*86400000;
+    const affected=days&&d?[...d.items,...d.assets,...d.files].filter(i=>i.deletedAt<cutoff).length:0;
+    if(affected&&!await confirmAction(localeString('改为保留 {days} 天？',{days}),localeString('回收站里 {n} 项已超过 {days} 天，会立即永久删除。',{n:affected,days}),localeString('确认修改'))){select.value=String(recycleRetention());return}
+    state.settings.recycle={...(state.settings.recycle||{}),retentionDays:days};save();
+    if(affected){try{await recycleRequest('auto-clean',{retentionDays:days})}catch(e){toast(e.message,'error')}recycleUI.data=null;await loadRecycleBin()}
+    else paintRecycleBin();
+    toast(days?localeString('回收站会自动清理超过 {days} 天的内容。',{days}):localeString('回收站不会自动清理。'));
+  });
+  setTimeout(()=>recycleAutoClean(),30000);
 }

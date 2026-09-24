@@ -111,15 +111,17 @@ function importTemplateObject(data){const raw=data.template||data,frames=raw.fra
 function saveStoryInputs(){const row=rowBy(ui.storyRowId),t=templateBy(ui.storyTemplateId),fields=$$('[data-story-caption]');if(!row||!t||!fields.length||rt.lockedRows.has(row.id))return;const v=ensureManual(row,t);fields.forEach(e=>v.captions[e.dataset.storyCaption]=e.value);v.updatedAt=Date.now();save()}
 
 
-async function deleteBooks(ids){
+/* 画册先进回收站：10 秒内可撤销，之后在 设置 → 数据与备份 → 回收站 恢复。 */
+async function deleteBooks(ids){return withDeletionUndo(r=>localeString('已删除 {n} 本画册',{n:r.filter(x=>x.kind==='albums').length}),()=>deleteBooksNow(ids))}
+async function deleteBooksNow(ids){
   ids=[...new Set(ids)].filter(id=>bookBy(id));if(!ids.length||foundationRuntime.deleting)return;
   foundationRuntime.deleting=true;
   try{
     const busy=ids.some(id=>bookBy(id)?.inProgress||state.queue.some(q=>q.bookId===id&&q.status==='running')||[...rt.redraw].some(k=>k.startsWith(id+':')));
-    if(!await confirmAction((busy?'停止并删除 ':'删除 ')+ids.length+' 本画册？','删除画册及全部关联队列记录，保留模板、角色和设定。若正在生成，将立即停止本地跟踪；不能取消上游请求或退款。此操作不可撤销。',busy?'停止并删除':'删除画册'))return;
+    if(!await confirmAction((busy?'停止并删除 ':'删除 ')+ids.length+' 本画册？','画册移进回收站，关联的队列记录一并移除；分镜、角色和设定保留。删除后 10 秒内可以撤销，之后也能在「设置 → 数据与备份 → 回收站」找回。若正在生成，会立即停止本地跟踪；已发出的请求不能取消或退款。',busy?'停止并删除':'删除画册'))return;
     const result=await foundationRequest('albums/delete',{ids});
     applyDeletedAlbums(result.deletedAlbumIds);ui.selected.clear();ui.bulk=false;ui.bulkPinned=false;save(true);closeModal();if(typeof refreshGallery==='function')refreshGallery();render();
-    toast(result.warning||'画册及关联队列已删除。');
+    if(result.warning)toast(result.warning);
   }catch(error){throw Error('删除未获确认，可以直接重试。'+error.message)}
   finally{foundationRuntime.deleting=false}
 }
@@ -340,7 +342,8 @@ function ensureFrameCapacity(frames,additional=1){const limit=globalThis.ComfyCo
 function installNativeCreationModule(){const ns=globalThis.ComfyComic,enqueuePrevious=enqueuePlanSnapshot;enqueuePlanSnapshot=function(plan,existing=null,selectedIndices=null){const t=templateBy(plan?.templateId);if(!t)throw Error('Select a storyboard before generating.');ns.stateContract.assertFrameCount(t.frames);if(t.frames.length===0)throw Error('空分镜可以保存，生成前请先添加一幕。');return enqueuePrevious(plan,existing,selectedIndices)};const assistantPrevious=assistantToolDraft;assistantToolDraft=function(t,name,args={}){t.frames??=[];if(name==='add_new_frame')ensureFrameCapacity(t.frames);if(name==='batch_update_prompts_and_captions')ns.stateContract.assertFrameCount(args.frames||[]);return assistantPrevious(t,name,args)};const packagePrevious=selectedPublishPackage;selectedPublishPackage=function(id){const value=packagePrevious(id);if(value.value?.frames)ns.stateContract.assertFrameCount(value.value.frames);return value};ns.modules.creation=true}
 
 
-async function deleteStoryboardTemplate(id){
+async function deleteStoryboardTemplate(id){return withDeletionUndo('分镜已删除，画册与原图已保留',()=>deleteStoryboardTemplateNow(id))}
+async function deleteStoryboardTemplateNow(id){
   flushEditor();const template=templateBy(id);if(!template)throw Error('分镜已不存在。');
   const checkBusy=()=>{
     if(rt.chatBusy)throw Error('助手正在处理分镜，请等待完成或停止后再删除模板。');
@@ -349,7 +352,7 @@ async function deleteStoryboardTemplate(id){
   checkBusy();const count=state.creation.plans.filter(p=>p.templateId===id).length;
   if(!await confirmAction('删除分镜「'+template.title+'」？',`将删除整套 ${template.frames.length} 幕分镜，而不是当前一幕。
 ${count} 份画册计划会解除模板关联并清空单幕覆盖，之后需重新选择模板。
-已生成画册、原图与对话记录保留；依赖此源模板的补齐和精修将不可用。建议先导出分镜备份。`,'删除模板'))return;
+已生成画册、原图与对话记录保留；依赖此源模板的补齐和精修将不可用。删除后 10 秒内可以撤销，之后也能在「设置 → 数据与备份 → 回收站」找回。`,'删除模板'))return;
   checkBusy();if(!templateBy(id))return;
   state.templates=state.templates.filter(t=>t.id!==id);
   for(const plan of state.creation.plans)if(plan.templateId===id){plan.templateId='';plan.storyVersionId='';plan.sceneOverrides={};plan.updatedAt=Date.now()}
@@ -357,5 +360,5 @@ ${count} 份画册计划会解除模板关联并清空单幕覆盖，之后需�
   state.installedPackages=state.installedPackages.filter(pkg=>pkg.type!=='templates'||pkg.assetIds.length);
   if(ui.templateId===id)ui.templateId='';if(ui.storyTemplateId===id)ui.storyTemplateId='';ui.frameIndex=0;
   if(studioUI.assistantUndo?.templateId===id)studioUI.assistantUndo=null;
-  save(true);render();if(!$('#assistant').hidden)renderAssistant();toast('分镜已删除，画册与原图已保留。');
+  save(true);render();if(!$('#assistant').hidden)renderAssistant();
 }

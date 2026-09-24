@@ -232,11 +232,12 @@ function preparePresetRemoval(source,id){
   return {set,plans,books};
 }
 
-async function deleteSettingPreset(id=settingPresetSelection()){
+async function deleteSettingPreset(id=settingPresetSelection()){return withDeletionUndo('预设已删除；正在使用的设定、原图和任务快照已保留',()=>deleteSettingPresetNow(id))}
+async function deleteSettingPresetNow(id=settingPresetSelection()){
   if(!id)throw Error('请先选择要删除的预设。');
   const set=setBy(id),projectId=state.activeProjectId;if(!set||set.projectId!==projectId)throw Error('请从当前画册集选择预设。');
   flushEditor();const count=state.creation.plans.filter(p=>(p.variableSetIds||[]).includes(id)||Object.values(p.sceneOverrides||{}).some(o=>(o.variableSetIds||[]).includes(id))).length;
-  if(!await confirmAction('删除预设「'+set.title+'」？','从预设库移除这份文件。有 '+count+' 份画册计划引用它；正在使用的值和参考图会保留为画册或单幕自己的设定。','删除预设'))return;
+  if(!await confirmAction('删除预设「'+set.title+'」？','从预设库移除这份文件。有 '+count+' 份画册计划引用它；正在使用的值和参考图会保留为画册或单幕自己的设定。删除后 10 秒内可以撤销，之后也能在「设置 → 数据与备份 → 回收站」找回。','删除预设'))return;
   if(state.activeProjectId!==projectId||!setBy(id))throw Error('工作区或预设已变化，请重新选择。');
   await Promise.all(state.books.filter(b=>(b.importedVariableSetIds||[]).includes(id)).map(b=>globalThis.Mio.fileLibrary.hydrate(b.id)));
   if(state.activeProjectId!==projectId)throw Error('工作区已变化，未删除预设。');
@@ -249,7 +250,6 @@ async function deleteSettingPreset(id=settingPresetSelection()){
   for(const key of Object.keys(state.drafts?.settingSelections||{}))if(state.drafts.settingSelections[key]===id)state.drafts.settingSelections[key]='';
   save(true);render();
   if(!await savePythonWorkspace())throw Error('删除尚未确认。本页保留待保存更改，请检查保存错误后重新保存或读取，未声称磁盘已删除。');
-  toast('预设已删除；正在使用的设定、原图和任务快照已保留。');
 }
 
 function createBlankPreset(){
@@ -327,8 +327,10 @@ function installWorkspaceUpgrade(){
       const c=state.settings.comfy,id=c.activeWorkflowId;
       if(c.presets.length===1)throw Error('至少保留一份工作流。');
       if(state.creation.plans.some(p=>p.workflowId===id||Object.values(p.sceneOverrides||{}).some(o=>o.workflowId===id)))throw Error('有画册或分镜正在引用此工作流，请先更换选择。');
-      if(!await confirmAction('删除这份工作流？','建议先导出备份。','删除'))return;
-      c.presets=c.presets.filter(p=>p.id!==id);selectLibraryWorkflow(c.presets[0].id);save(true);return;
+      return withDeletionUndo('工作流已删除',async()=>{
+        if(!await confirmAction('删除这份工作流？','删除后 10 秒内可以撤销，之后也能在「设置 → 数据与备份 → 回收站」找回。','删除'))return;
+        c.presets=c.presets.filter(p=>p.id!==id);selectLibraryWorkflow(c.presets[0].id);save(true);
+      });
     }
     /* 工作流库批量选择 */
     if(action==='ws-lib-sel-toggle'){

@@ -1122,7 +1122,7 @@ function installAssemblyWorkshop(){
     adoptProductionQueue(await productionRequest('cancel',scope));render();if(!running.length&&targets.length)toast(targets.length>1?'已将所选任务移出顺次队列':'已移出顺次队列')},
   'production-remove':async d=>{const scope=productionScope(d),targets=productionScopeTasks(scope),removable=targets.filter(t=>productionTaskAccess(t).canRemove);if(!removable.length){toast('所选任务都在运行或排队中，请先停止它们');return}
     const defaultMsg='只移除装配记录。'+(removable.length<targets.length?' 运行或排队中的任务会被跳过。':'');
-    const deleteMsg=(removable.length>1?localeString('将同时删除这 {n} 本对应的画册及其生成内容，此操作不可撤销。',{n:removable.length}):localeString('将同时删除对应的画册及其生成内容，此操作不可撤销。'))+(removable.length<targets.length?' 运行或排队中的任务会被跳过。':'');
+    const deleteMsg=(removable.length>1?localeString('将同时把这 {n} 本对应的画册移进回收站，10 秒内可以撤销。',{n:removable.length}):localeString('将同时把对应的画册移进回收站，10 秒内可以撤销。'))+(removable.length<targets.length?' 运行或排队中的任务会被跳过。':'');
     const conf=await confirmAction(
       removable.length>1?localeString('移除 {n} 条任务记录？',{n:removable.length}):'移除任务记录？',
       defaultMsg,
@@ -1142,16 +1142,19 @@ function installAssemblyWorkshop(){
     const deleteAlbums=typeof conf==='object'?!!conf.checked:false;
     const removePayload=removable.length===1&&!scope.ids?{id:removable[0].id}:{ids:removable.map(t=>t.id)};
     if(deleteAlbums)removePayload.delete_albums=true;
-    const result=await productionRequest('remove',removePayload);
-    adoptProductionQueue(result);
-    if(result?.deletedAlbumIds?.length){
-      applyDeletedAlbums(result.deletedAlbumIds);
-      save(true);
-      if(typeof refreshGallery==='function')refreshGallery();
-    }
-    render();
+    let result;
+    await withDeletionUndo(removable.length>1?localeString('已移除 {n} 条任务记录及对应画册',{n:removable.length}):localeString('已移除任务记录及对应画册'),async()=>{
+      result=await productionRequest('remove',removePayload);
+      adoptProductionQueue(result);
+      if(result?.deletedAlbumIds?.length){
+        applyDeletedAlbums(result.deletedAlbumIds);
+        save(true);
+        if(typeof refreshGallery==='function')refreshGallery();
+      }
+      render();
+    });
     if(deleteAlbums&&result?.deletedAlbumIds?.length){
-      toast(removable.length>1?localeString('已移除 {n} 条任务记录及对应画册',{n:removable.length}):localeString('已移除任务记录及对应画册'));
+      /* 可撤销提示条已经说明了删除结果。 */
     }else{
       toast(removable.length>1?localeString('已移除 {n} 条任务记录',{n:removable.length}):localeString('已移除任务记录'));
     }

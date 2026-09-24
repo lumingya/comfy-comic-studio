@@ -180,7 +180,7 @@ case'column-edit':columnModal(d.key);break;
 case'column-save':await updateColumn(d.key,$('#column-name').value.trim());break;
 case'column-delete':await updateColumn(d.key,'',true);break;
 case'add-row':{const r=makeRow(projectRows().length,state.activeProjectId);r.character='新角色';r.bookTitle='未命名画册集';r.active=true;state.customColumns.forEach(k=>{r[k]??='' });state.rows.push(r);save();navigate(2);toast('角色已追加，可直接编辑表格。');break}
-case'delete-row':{if(state.books.some(b=>b.rowId===d.id))throw Error('此角色已有溯源画册，请先删除相关画册。');if(rt.lockedRows.has(d.id))throw Error('此角色正在推演中。');if(await confirmAction('删除角色？','专属版本也会被移除。','删除角色')){state.rows=state.rows.filter(r=>r.id!==d.id);save(true);render()}break}
+case'delete-row':{if(state.books.some(b=>b.rowId===d.id))throw Error('此角色已有溯源画册，请先删除相关画册。');if(rt.lockedRows.has(d.id))throw Error('此角色正在推演中。');await withDeletionUndo('角色已删除',async()=>{if(await confirmAction('删除角色？','专属版本也会被移除。删除后 10 秒内可以撤销，之后也能在「设置 → 数据与备份 → 回收站」找回。','删除角色')){state.rows=state.rows.filter(r=>r.id!==d.id);save(true);render()}});break}
 case'script-modal':scriptModal(d.id);break;
 case'script-save':{const r=rowBy(ui.scriptRow),t=templateBy(ui.scriptTemplate),v=ensureManual(r,t);if(rt.lockedRows.has(r.id))throw Error('剧情正在推演中，请稍候。');v.title=$('#script-title').value;$$('[data-script-caption]').forEach(e=>v.captions[e.dataset.scriptCaption]=e.value);v.source='manual';v.updatedAt=Date.now();save();closeModal();toast('角色专属台词已保存。');break}
 case'script-regenerate':{const r=rowBy(ui.scriptRow),t=templateBy(ui.scriptTemplate);closeModal();await runStories([r],t);break}
@@ -1082,6 +1082,7 @@ let undoTimer = null;
 let undoSnapshot = null;
 
 function undoToast(message, snapshot, ms = 7000) {
+  /* 进度条时长跟随 ms（CSS 默认 7 秒动画）。 */
   clearTimeout(undoTimer);
   if (typeof document !== 'undefined') {
     document.querySelectorAll('.toast.undoable').forEach(e => e.remove());
@@ -1103,7 +1104,7 @@ function undoToast(message, snapshot, ms = 7000) {
   el.className = 'toast undoable show';
   el.innerHTML = `${icon('check', 'sm')}<span>${esc(message)}</span>
     <button class="undo-btn" data-act="undo-bulk">撤销</button>
-    <i class="undo-bar"></i>`;
+    <i class="undo-bar" style="animation-duration:${ms}ms"></i>`;
   region.append(el);
 
   undoTimer = setTimeout(() => {
@@ -1113,16 +1114,11 @@ function undoToast(message, snapshot, ms = 7000) {
   }, ms);
 }
 
-function runUndo() {
+/* 撤销回调可以是同步函数（改回内存里的快照），也可以返回 Promise（从回收站恢复文件）。
+   Promise 解析出的字符串作为完成提示。 */
+async function runUndo() {
   clearTimeout(undoTimer);
-  if (typeof undoSnapshot === 'function') {
-    try {
-      undoSnapshot();
-      toast('已撤销操作');
-    } catch (e) {
-      toast('撤销失败：' + e.message, 'error');
-    }
-  }
+  const undo = undoSnapshot;
   undoSnapshot = null;
   if (typeof document !== 'undefined') {
     document.querySelectorAll('.toast.undoable').forEach(e => {
@@ -1130,6 +1126,81 @@ function runUndo() {
       setTimeout(() => e.remove(), 200);
     });
   }
+  if (typeof undo !== 'function') return;
+  try {
+    const pending = undo();
+    if (pending && typeof pending.then === 'function') {
+      toast('正在撤销…');
+      const message = await pending;
+      toast(typeof message === 'string' && message ? message : '已撤销操作');
+    } else toast('已撤销操作');
+  } catch (e) {
+    toast('撤销失败：' + e.message, 'error');
+  }
+}
+
+/* D5 统一撤销：删除画册、分镜、预设、画册集、工作流、版式、创作计划等独立文件后，
+   提示条给 10 秒「撤销」。撤销 = 先提交这次删除，再从回收站（data/.trash）把同一批文件原样移回
+   （undoDeletion，见 file-library.js）。超过 10 秒也能在 设置 → 数据与备份 → 回收站 找回。 */
+const RECYCLE_UNDO_MS = 10000;
+const RECYCLE_SOURCES = [
+  ['collections', s => s.projects],
+  ['albums', s => s.books],
+  ['storyboards', s => s.templates],
+  ['characters', s => s.creation?.variableSets, x => x.category !== 'scenes'],
+  ['scenes', s => s.creation?.variableSets, x => x.category === 'scenes'],
+  ['plans', s => s.creation?.plans],
+  ['layouts', s => s.exportTemplates, x => !x.builtin],
+  ['workflows', s => s.settings?.comfy?.presets],
+  ['rows', s => s.rows],
+  ['conversations', s => s.chats]
+];
+function recycleIdentities(studio) {
+  const out = new Map();
+  for (const [kind, list, match] of RECYCLE_SOURCES) {
+    const items = list(studio || {});
+    if (Array.isArray(items)) for (const item of items) if (item?.id && (!match || match(item))) out.set(kind + ':' + item.id, { kind, id: item.id, item });
+  }
+  return out;
+}
+/* 父级先恢复：画册集 → 画册 / 分镜 / 预设 / 计划 → 其余。 */
+function recycleRemoved(before, after) {
+  const order = RECYCLE_SOURCES.map(([kind]) => kind);
+  return [...before].filter(([key]) => !after.has(key)).map(([, v]) => ({ kind: v.kind, id: v.id, title: v.item.title || v.item.name || v.id, item: clone(v.item) }))
+    .sort((a, b) => order.indexOf(a.kind) - order.indexOf(b.kind));
+}
+/* 把一次删除包起来：比较前后的独立文件，确有删除才弹出可撤销提示。取消确认框时什么也不发生。 */
+async function withDeletionUndo(message, run) {
+  const before = recycleIdentities(state);
+  const value = await run();
+  const removed = recycleRemoved(before, recycleIdentities(state));
+  if (removed.length && typeof undoDeletion === 'function') {
+    const text = typeof message === 'function' ? message(removed) : message;
+    undoToast(text, () => undoDeletion(removed), RECYCLE_UNDO_MS);
+  }
+  return value;
+}
+/* 恢复后原来的画册集已不在：把孤儿放进当前画册集，否则它们在任何画册集里都看不到。 */
+function adoptRecycledOrphans(studio, keys) {
+  const projects = new Set((studio.projects || []).map(p => p.id)), moved = [];
+  const current = recycleIdentities(studio);
+  for (const key of keys) {
+    const entry = current.get(key);
+    if (entry && typeof entry.item.projectId === 'string' && entry.item.projectId && !projects.has(entry.item.projectId)) {
+      entry.item.projectId = studio.activeProjectId;
+      moved.push(entry.item.title || entry.item.name || entry.id);
+    }
+  }
+  return moved;
+}
+/* 从未保存到磁盘的项目不在回收站里：用删除前的内存副本放回去。 */
+function restoreLocalCopies(studio, removed) {
+  let count = 0;
+  for (const r of removed) {
+    const source = RECYCLE_SOURCES.find(([kind]) => kind === r.kind), list = source?.[1](studio);
+    if (Array.isArray(list) && !list.some(x => x?.id === r.id)) { list.push(clone(r.item)); count++ }
+  }
+  return count;
 }
 
 if (typeof document !== 'undefined') {

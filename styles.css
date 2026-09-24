@@ -1544,3 +1544,14 @@ html:is([data-font-scale=large],[data-font-scale=xlarge]) :is(.wf-stage-value,.w
   .help-check>.btn.small{min-height:44px}
   .home-checklist .help-check>.btn,.quickstart-steps .help-check>.btn{grid-column:2;justify-self:start}
 }
+
+/* 回收站（设置 → 数据与备份） */
+.recycle-bin .recycle-toolbar{align-items:center;gap:8px;margin:12px 0 4px}
+.recycle-bin .recycle-retention{display:inline-flex;align-items:center;gap:8px;margin-right:auto;font-size:13px;color:var(--muted)}
+.recycle-bin .recycle-retention select{width:auto;min-width:120px}
+.recycle-bin .recycle-group{margin:18px 0 4px;font-size:13px;font-weight:600;color:var(--muted)}
+.recycle-bin .recycle-group span{font-weight:400;margin-left:4px}
+.recycle-bin .recycle-row{gap:8px}
+.recycle-bin .recycle-row p{overflow-wrap:anywhere}
+.recycle-bin .recycle-row code{font-size:11px}
+.recycle-bin .recycle-empty{padding:18px 0}

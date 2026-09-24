@@ -76,11 +76,12 @@ function updateCollectionFontStatus(){const label=$('#collection-font-status');i
 
 function loadCollectionFonts(){if(state.settings.presentation.fonts===false)return;const existing=$('#collection-font-stylesheet');if(existing){void verifyDisplayTypeface();return}displayUI.fontStatus='loading';const link=document.createElement('link');link.id='collection-font-stylesheet';link.rel='stylesheet';link.href='https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;1,400&family=DM+Serif+Display:ital@0;1&family=Ma+Shan+Zheng&display=swap';link.onload=()=>void verifyDisplayTypeface();link.onerror=()=>{displayUI.fontStatus='fallback';updateCollectionFontStatus()};$('#art-font-stylesheet')?.addEventListener('load',()=>void verifyDisplayTypeface(),{once:true});document.head.append(link)}
 
-async function deleteCollection(collectionId=state.activeProjectId){
+async function deleteCollection(collectionId=state.activeProjectId){return withDeletionUndo(localeString('画册集已删除'),()=>deleteCollectionNow(collectionId))}
+async function deleteCollectionNow(collectionId=state.activeProjectId){
   if(activeJobs()||backendRuntime.loading||disk.busy||disk.connecting)throw Error(localeString('请先等待当前生成、审校、上传或保存任务结束，再删除画册集。'));
   flushEditor();saveStoryInputs();closeProjectPopover();
   const original=state,replacement={id:uid('collection'),title:localeString('未命名画册集'),createdAt:Date.now()},preview=planCollectionRemoval(state,collectionId,replacement),s=preview.summary;
-  const description=[s.title,localeString('将移除 {books} 本画册、{plans} 份创作草稿、{templates} 套专属分镜和 {sets} 组设定。',{books:s.books,plans:s.plans,templates:s.templates,sets:s.variableSets}),localeString('关联的角色记录、对话与队列任务也会移除；全局工作流和导出模板保留。'),s.sharedAssets?localeString('另外 {count} 项被其他画册集使用的资产会保留。',{count:s.sharedAssets}):'',s.lastCollection?localeString('这是最后一个画册集，删除后会建立一个新的空白画册集。'):'',localeString('无法撤销，建议先导出备份。磁盘文件的清理由你的后端策略决定。')].filter(Boolean).join('\n\n');
+  const description=[s.title,localeString('将移除 {books} 本画册、{plans} 份创作草稿、{templates} 套专属分镜和 {sets} 组设定。',{books:s.books,plans:s.plans,templates:s.templates,sets:s.variableSets}),localeString('关联的角色记录、对话与队列任务也会移除；全局工作流和导出模板保留。'),s.sharedAssets?localeString('另外 {count} 项被其他画册集使用的资产会保留。',{count:s.sharedAssets}):'',s.lastCollection?localeString('这是最后一个画册集，删除后会建立一个新的空白画册集。'):'',localeString('删除后 10 秒内可以撤销，之后也能在「设置 → 数据与备份 → 回收站」找回。')].filter(Boolean).join('\n\n');
   if(!await confirmAction(localeString('确定删除这个画册集？'),description,localeString('删除画册集')))return;
   if(state!==original||activeJobs()||backendRuntime.loading||disk.busy||disk.connecting)throw Error(localeString('工程在确认期间发生变化，请重新检查后删除。'));
   const deletion=planCollectionRemoval(state,collectionId,replacement);if(JSON.stringify(deletion.summary)!==JSON.stringify(s))throw Error(localeString('工程在确认期间发生变化，请重新检查后删除。'));

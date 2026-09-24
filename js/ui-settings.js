@@ -123,9 +123,9 @@ function settingsTabGroups(tab=studioUI.settingsTab){
     ...(developer?[['开发者',[['developer','terminal','开发者']]]]:[])
   ];
 }
-/* 数据与备份：数据位置与完整备份、文件库、已保存密钥。图像服务只在「工作流与 API 配置」里设置，这里只放跳转。 */
+/* 数据与备份：数据位置与完整备份、回收站、文件库、已保存密钥。图像服务只在「工作流与 API 配置」里设置，这里只放跳转。 */
 function dataSettingsHTML(){
-  return dataBackupHTML()+nativeLibrarySettings()+savedKeysSettings()+`<section class="settings-section"><h2>图像服务</h2><p>ComfyUI 地址与 NovelAI、OpenAI 兼容服务的密钥都在「工作流与 API 配置」里设置。</p><div class="row wrap">${btn('打开工作流与 API 配置','nodes','art-nav','data-route="3"')}</div></section>`;
+  return dataBackupHTML()+recycleBinHTML()+nativeLibrarySettings()+savedKeysSettings()+`<section class="settings-section"><h2>图像服务</h2><p>ComfyUI 地址与 NovelAI、OpenAI 兼容服务的密钥都在「工作流与 API 配置」里设置。</p><div class="row wrap">${btn('打开工作流与 API 配置','nodes','art-nav','data-route="3"')}</div></section>`;
 }
 /* 开发者：原生配置接口、真实服务默认值、数据目录结构、服务端任务与素材索引。 */
 function developerSettingsHTML(){

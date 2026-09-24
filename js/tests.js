@@ -977,6 +977,52 @@ add('T8 failure cards carry an error code that links to its troubleshooting entr
   assert.doesNotMatch(plainHTML, /production-error-code|production-error-doc/, 'no code, no link');
 });
 
+add('T11 deletion undo sees every removed file-backed item and restores parents first', () => {
+  const studio = defaults();
+  studio.projects.push({ id: 'p2', title: 'Other', createdAt: 2 });
+  studio.books = [{ id: 'b1', projectId: 'p2', title: 'Book' }, { id: 'b2', projectId: 'p1', title: 'Keep' }];
+  studio.templates = [{ id: 't1', projectId: 'p2', title: 'Story', frames: [] }];
+  studio.creation = { plans: [{ id: 'plan1', projectId: 'p2' }], variableSets: [{ id: 'hero', category: 'characters', projectId: 'p2' }, { id: 'yard', category: 'scenes', projectId: 'p1' }] };
+  studio.exportTemplates = [{ id: 'builtin', builtin: true }, { id: 'mine', title: 'Mine' }];
+  studio.settings.comfy.presets = [{ id: 'wf1', title: 'Flow' }, { id: 'wf2', title: 'Flow 2' }];
+  const before = context.recycleIdentities(studio);
+  assert.ok(before.has('characters:hero') && before.has('scenes:yard') && !before.has('layouts:builtin'), 'presets split by category; built-in layouts are not files');
+  const after = plain(studio);
+  after.projects = after.projects.filter(p => p.id !== 'p2');
+  after.books = after.books.filter(b => b.projectId !== 'p2');
+  after.templates = [];
+  after.creation.plans = [];
+  after.creation.variableSets = after.creation.variableSets.filter(s => s.id !== 'hero');
+  after.settings.comfy.presets = after.settings.comfy.presets.slice(1);
+  const removed = plain(context.recycleRemoved(before, context.recycleIdentities(after)));
+  assert.deepEqual(removed.map(r => r.kind + ':' + r.id), ['collections:p2', 'albums:b1', 'storyboards:t1', 'characters:hero', 'plans:plan1', 'workflows:wf1']);
+  assert.equal(removed[1].title, 'Book');
+  assert.equal(context.recycleRemoved(before, before).length, 0, 'a canceled confirmation offers no undo');
+});
+
+add('T11 restored items whose collection is gone move into the current collection', () => {
+  const studio = defaults();
+  studio.books = [{ id: 'b1', projectId: 'gone', title: 'Orphan' }, { id: 'b2', projectId: 'p1', title: 'Home' }];
+  studio.creation = { plans: [], variableSets: [] };
+  const moved = context.adoptRecycledOrphans(studio, ['albums:b1', 'albums:b2', 'albums:missing']);
+  assert.deepEqual(plain(moved), ['Orphan']);
+  assert.equal(studio.books[0].projectId, 'p1');
+  const local = defaults();
+  local.creation = { plans: [], variableSets: [] };
+  assert.equal(context.restoreLocalCopies(local, [{ kind: 'storyboards', id: 't9', item: { id: 't9', title: 'Never saved', frames: [] } }, { kind: 'albums', id: 'b1', item: { id: 'b1' } }]), 2);
+  assert.equal(local.templates[0].title, 'Never saved');
+  assert.equal(context.restoreLocalCopies(local, [{ kind: 'albums', id: 'b1', item: { id: 'b1' } }]), 0, 'never duplicates an item that is already back');
+  assert.equal(vm.runInContext('RECYCLE_UNDO_MS', context), 10000);
+});
+
+add('T11 recycle-bin retention is a persisted workspace setting', () => {
+  const studio = defaults();
+  studio.settings.recycle = { retentionDays: 7 };
+  const payload = converters.toApi(studio, apiConfig());
+  const back = converters.fromApi(plain(payload), defaults());
+  assert.equal(back.settings.recycle?.retentionDays, 7);
+});
+
 async function main() {
   let failed = 0;
   for (const test of tests) {

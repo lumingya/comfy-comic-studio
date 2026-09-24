@@ -1845,13 +1845,13 @@ function installWorkflowWorkbench() {
       if (!p) return;
       if (c.presets.length === 1) throw Error("至少保留一份工作流。");
       if (workflowReferenced(p.id)) throw Error("有画册或分镜正在引用此工作流，请先更换选择。");
-      if (!(await confirmAction(`删除「${p.title || "未命名工作流"}」？`, "建议先导出备份。", "删除"))) return;
-      c.presets = c.presets.filter((x) => x.id !== p.id);
-      mapperUI.libSel.delete(p.id);
-      save(true);
-      render();
-      toast("工作流已删除");
-      return;
+      return withDeletionUndo("工作流已删除", async () => {
+        if (!(await confirmAction(`删除「${p.title || "未命名工作流"}」？`, "删除后 10 秒内可以撤销，之后也能在「设置 → 数据与备份 → 回收站」找回。", "删除"))) return;
+        c.presets = c.presets.filter((x) => x.id !== p.id);
+        mapperUI.libSel.delete(p.id);
+        save(true);
+        render();
+      });
     }
     if (action === "ws-open-unified-import") {
       openUnifiedWorkflowImportModal(d.mode || "new");
