@@ -1299,6 +1299,8 @@ select.choice-list:focus-visible{border-color:var(--accent2);box-shadow:0 0 0 3p
 .production-error-panel .production-error{margin:0;color:var(--text)}
 .production-error-tail{margin:0;font-size:.75rem;line-height:1.6;color:var(--muted)}
 .production-error-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.production-error-code{padding:1px 6px;border:1px solid var(--line);border-radius:6px;color:var(--muted);font-size:.75rem;letter-spacing:.02em}
+.production-error-doc{text-decoration:none}
 .production-diagnostics-tools{display:flex;justify-content:flex-end;margin-bottom:8px}
 /* Top-bar image service chip (engine.js imageServiceChipHTML): which service generation uses and whether it is ready. */
 .image-service-chip{display:inline-flex;align-items:center;gap:7px;min-height:30px;padding:0 11px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font-size:.75rem;line-height:1;cursor:pointer;white-space:nowrap}

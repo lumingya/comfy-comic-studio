@@ -1763,6 +1763,8 @@ function extendCurrentLocaleCatalog(catalog){Object.assign(catalog.messages,{
   "图像服务设置": "Image service settings",
   "无法读取 ComfyUI 节点定义：确认 ComfyUI 已启动，地址和端口正确（默认 http://127.0.0.1:8188）。": "Cannot read the ComfyUI node definitions: make sure ComfyUI is running and the address and port are correct (default http://127.0.0.1:8188).",
   "技术详情": "Technical details",
+  "查看排错": "Troubleshooting",
+  "错误码": "Error code",
   "测试连接": "Test connection",
   "打开工作流": "Open workflow",
   "查看分幕": "View scenes",

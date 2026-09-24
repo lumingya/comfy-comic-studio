@@ -286,8 +286,38 @@ function productionErrorKind(text){
  if(/内容安全审核/.test(s))return 'moderation';
  return 'other';
 }
+/* T8 · B5: every user-visible failure gets a short code that links to its entry in docs/guide/TROUBLESHOOTING.md.
+   [code, heading text after the code, pattern on the plain-language summary]. The anchor is the heading's slug as the
+   handbook reader builds it (tests/test_documentation.py checks every code has its heading). First match wins. */
+const MIO_ERROR_CODES=[
+ ['MIO-CONN-001','连接被拒绝',/连接被拒绝|无法读取 ComfyUI/],
+ ['MIO-CONN-002','找不到服务器',/找不到服务器/],
+ ['MIO-CONN-003','网络不通',/网络不通/],
+ ['MIO-CONN-004','安全连接失败',/安全连接失败/],
+ ['MIO-CONN-005','连接超时',/连接超时/],
+ ['MIO-CONN-006','连接中断',/连接中断|连接在发送请求时中断/],
+ ['MIO-AUTH-001','密钥无效',/拒绝了密钥|未填写密钥/],
+ ['MIO-AUTH-002','余额或额度不足',/余额或额度不足/],
+ ['MIO-AUTH-003','拒绝访问',/服务拒绝访问/],
+ ['MIO-RATE-001','服务限流',/限流/],
+ ['MIO-REQ-001','请求参数被拒绝',/拒绝了请求参数/],
+ ['MIO-REQ-002','模型或接口地址不存在',/模型或接口地址不存在/],
+ ['MIO-REQ-003','只返回了文字',/只返回了文字|模型没有返回图片|回复中的链接无法作为图片/],
+ ['MIO-REQ-004','内容安全审核',/内容安全审核/],
+ ['MIO-WF-001','缺少模型文件',/缺少模型文件/],
+ ['MIO-WF-002','工作流节点缺失',/工作流节点缺失/],
+ ['MIO-WF-003','显存不足',/显存不足/],
+ ['MIO-UP-001','服务端暂时故障',/服务端暂时故障/],
+ ['MIO-UP-002','等待结果超时',/等待结果超时/],
+ ['MIO-RES-001','结果未确认',/结果未确认/]
+];
+function productionErrorCode(text){
+ const s=String(text||''),hit=MIO_ERROR_CODES.find(([,,pattern])=>pattern.test(s));if(!hit)return null;
+ const anchor=(hit[0]+' '+hit[1]).toLowerCase().replace(/[^\p{L}\p{N}_\-\s]/gu,'').replace(/\s+/g,'-');
+ return {code:hit[0],anchor,href:'/docs/guide/TROUBLESHOOTING.html#'+encodeURIComponent(anchor)};
+}
 function productionErrorHTML(t){
- const parts=productionErrorParts(t.error),kind=productionErrorKind(t.error),id=esc(t.id),comfy=(t.sources?.provider||'comfyui')==='comfyui';
+ const parts=productionErrorParts(t.error),kind=productionErrorKind(t.error),code=productionErrorCode(t.error),id=esc(t.id),comfy=(t.sources?.provider||'comfyui')==='comfyui';
  const actions={
   connection:[comfy?btn('测试连接','refresh','production-test-connection','','small'):'',btn('图像服务设置','settings','image-provider-settings','','small ghost')],
   credentials:[btn('图像服务设置','settings','image-provider-settings','','small')],
@@ -295,7 +325,7 @@ function productionErrorHTML(t){
   moderation:[btn('查看分幕','list','production-toggle-pages',`data-id="${id}"`,'small')],
   other:[]
  }[kind];
- return `<div class="production-error-panel" role="alert" data-error-kind="${kind}"><p class="production-error-head"><strong>${esc(parts.title)}</strong>${parts.count?`<span>${esc(parts.count)}</span>`:''}</p><p class="production-error">${esc(parts.reason)}</p>${parts.tail.map(line=>`<p class="production-error-tail">${esc(line)}</p>`).join('')}<div class="production-error-actions">${actions.join('')}${btn('技术详情','help','production-details',`data-id="${id}"`,'small ghost')}</div></div>`;
+ return `<div class="production-error-panel" role="alert" data-error-kind="${kind}"><p class="production-error-head"><strong>${esc(parts.title)}</strong>${parts.count?`<span>${esc(parts.count)}</span>`:''}${code?`<code class="production-error-code" title="${esc(localeString('错误码'))}">${esc(code.code)}</code>`:''}</p><p class="production-error">${esc(parts.reason)}</p>${parts.tail.map(line=>`<p class="production-error-tail">${esc(line)}</p>`).join('')}<div class="production-error-actions">${actions.join('')}${code?`<a class="btn small ghost production-error-doc" href="${esc(code.href)}" target="_blank" rel="noopener">${icon('book')}${esc(localeString('查看排错'))} ↗</a>`:''}${btn('技术详情','help','production-details',`data-id="${id}"`,'small ghost')}</div></div>`;
 }
 function renderProductionCard(t,q=workshop.queue){
  const pages=t.pages||[],src=t.sources||{},done=pages.filter(p=>p.state==='complete').length,a=productionTaskAccess(t,q),id=esc(t.id),picked=workshop.pickedTasks.has(t.id);

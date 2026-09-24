@@ -956,6 +956,27 @@ add('production cards edit a scene by clicking its row body, rename through a co
   assert.ok(source.includes("productionRequest('update-frame'") && source.includes("productionRequest('rename'") && source.includes("productionRequest('live-sync'"), 'edits go through the production API');
 });
 
+add('T8 failure cards carry an error code that links to its troubleshooting entry', () => {
+  const code = text => { const hit = context.productionErrorCode(text); return hit && hit.code; };
+  assert.equal(code('1/12 幕失败：连接被拒绝：这个地址上没有正在运行的图像服务。'), 'MIO-CONN-001');
+  assert.equal(code('找不到服务器：地址中的域名无法解析。'), 'MIO-CONN-002');
+  assert.equal(code('连接在发送请求时中断，请求没有完整发出。'), 'MIO-CONN-006');
+  assert.equal(code('服务拒绝了密钥：请检查 API 密钥是否有效'), 'MIO-AUTH-001');
+  assert.equal(code('服务限流（HTTP 429）：已按服务端要求多次等待重试仍被拒绝'), 'MIO-RATE-001');
+  assert.equal(code('缺少模型文件：请检查工作流中的模型'), 'MIO-WF-001');
+  assert.equal(code('等待结果超时：上游可能仍在处理或已完成。'), 'MIO-UP-002');
+  assert.equal(code('something nobody has seen before'), null, 'unknown errors get no code rather than a wrong one');
+  const hit = context.productionErrorCode('连接被拒绝：x');
+  assert.equal(hit.anchor, 'mio-conn-001-连接被拒绝', 'the anchor is the handbook reader\'s heading slug');
+  assert.equal(hit.href, '/docs/guide/TROUBLESHOOTING.html#' + encodeURIComponent('mio-conn-001-连接被拒绝'));
+  const html = context.productionErrorHTML({ id: 't1', error: '1/12 幕失败：连接被拒绝：这个地址上没有正在运行的图像服务。', sources: { provider: 'comfyui' } });
+  assert.match(html, /<code class="production-error-code"[^>]*>MIO-CONN-001<\/code>/);
+  assert.match(html, /class="btn small ghost production-error-doc" href="\/docs\/guide\/TROUBLESHOOTING\.html#mio-conn-001-/);
+  assert.match(html, /data-act="production-details"/, 'technical details stay available');
+  const plainHTML = context.productionErrorHTML({ id: 't2', error: '1/1 幕失败：奇怪的错误' });
+  assert.doesNotMatch(plainHTML, /production-error-code|production-error-doc/, 'no code, no link');
+});
+
 async function main() {
   let failed = 0;
   for (const test of tests) {
