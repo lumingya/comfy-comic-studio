@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 390" width="720" height="390" role="img" aria-labelledby="t d">
+<title id="t">首页的开箱检查</title>
+<desc id="d">开箱检查逐项列出图像服务、工作流、模型、分镜与预设、试跑的状态，每个未完成项旁边有修复按钮。</desc>
+<style>
+text{font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;fill:#223a30}
+.card{fill:#fff;stroke:#dfe4d9;stroke-width:1.5}
+.h{font-size:18px;font-weight:700}.p{font-size:13px;fill:#5d6f63}
+.ti{font-size:15px;font-weight:600}.d{font-size:12.5px;fill:#5d6f63}
+.ok{fill:#287553}.todo{fill:#c9772b}.wait{fill:#8a978d}
+.mk{font-size:13px;font-weight:700;fill:#fff}
+.btn{fill:#fff;stroke:#287553;stroke-width:1.2}.bt{font-size:12.5px;fill:#287553;font-weight:600}
+</style>
+<rect width="720" height="390" fill="#f7f6f0"/>
+<rect class="card" x="20" y="16" width="680" height="358" rx="14"/>
+<text class="h" x="44" y="52">开箱检查</text><text class="p" x="566" y="52">已完成 2 / 5</text>
+<g transform="translate(44 76)"><circle class="ok" cx="12" cy="18" r="12"/><text class="mk" x="7.5" y="23">✓</text><text class="ti" x="38" y="16">图像服务</text><text class="d" x="38" y="36">ComfyUI 已连接 · http://127.0.0.1:8188</text></g>
+<g transform="translate(44 136)"><circle class="todo" cx="12" cy="18" r="12"/><text class="mk" x="9.5" y="23">!</text><text class="ti" x="38" y="16">工作流</text><text class="d" x="38" y="36">「Anime · 基础图像管线」没有种子映射，每一幕会沿用同一个种子……</text><rect class="btn" x="494" y="4" width="136" height="30" rx="7"/><text class="bt" x="510" y="24">一键添加种子映射</text></g>
+<g transform="translate(44 196)"><circle class="todo" cx="12" cy="18" r="12"/><text class="mk" x="9.5" y="23">!</text><text class="ti" x="38" y="16">模型</text><text class="d" x="38" y="36">模型「your-anime-model」是占位名，请换成已安装的模型。</text><rect class="btn" x="534" y="4" width="96" height="30" rx="7"/><text class="bt" x="552" y="24">选择模型</text></g>
+<g transform="translate(44 256)"><circle class="ok" cx="12" cy="18" r="12"/><text class="mk" x="7.5" y="23">✓</text><text class="ti" x="38" y="16">分镜与预设</text><text class="d" x="38" y="36">1 个分镜 · 2 个预设</text></g>
+<g transform="translate(44 316)"><circle class="todo" cx="12" cy="18" r="12"/><text class="mk" x="9.5" y="23">!</text><text class="ti" x="38" y="16">试跑</text><text class="d" x="38" y="36">还没有生成过画面。先装配一个只有一两幕的生成任务试一试。</text><rect class="btn" x="520" y="4" width="110" height="30" rx="7"/><text class="bt" x="534" y="24">新建生成任务</text></g>
+</svg>

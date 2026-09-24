@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 420" width="880" height="420" role="img" aria-labelledby="t d">
+<title id="t">参数映射：Mio 的字段写进 ComfyUI 工作流的哪个节点</title>
+<desc id="d">左侧是 Mio 每一幕提供的值，右侧是 ComfyUI 工作流节点和输入，连线表示参数映射。</desc>
+<style>
+text{font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;fill:#223a30}
+.mio{fill:#e8f1ea;stroke:#287553;stroke-width:1.4}.node{fill:#2b3230;stroke:#4a5551;stroke-width:1.4}
+.nt{font-size:13px;fill:#e9efe9;font-weight:700}.ni{font-size:12px;fill:#b8c4bd;font-family:ui-monospace,Consolas,monospace}
+.mt{font-size:13.5px;font-weight:600}.ms{font-size:11.5px;fill:#5d6f63}
+.h{font-size:13px;font-weight:700;fill:#287553;letter-spacing:.08em}
+.l{stroke:#287553;stroke-width:1.8;fill:none}.o{stroke:#c9772b;stroke-width:1.8;fill:none;stroke-dasharray:5 4}
+.dot{fill:#9fe0b8}
+</style>
+<rect width="880" height="420" fill="#f7f6f0"/>
+<text class="h" x="30" y="32">MIO · 每一幕提供</text><text class="h" x="520" y="32">COMFYUI 工作流（API 格式）</text>
+<rect class="mio" x="30" y="50" width="230" height="46" rx="8"/><text class="mt" x="44" y="70">正向提示词</text><text class="ms" x="44" y="87">变量替换后的这一幕提示词</text>
+<rect class="mio" x="30" y="108" width="230" height="46" rx="8"/><text class="mt" x="44" y="128">负向提示词</text><text class="ms" x="44" y="145">这一幕的，留空用全局负向</text>
+<rect class="mio" x="30" y="166" width="230" height="46" rx="8"/><text class="mt" x="44" y="186">种子</text><text class="ms" x="44" y="203">默认每幕随机；可复现＝固定值＋幕序号</text>
+<rect class="mio" x="30" y="224" width="230" height="46" rx="8"/><text class="mt" x="44" y="244">宽 / 高 · 步数 · CFG</text><text class="ms" x="44" y="261">只在开启「画面参数覆盖」的幕写入</text>
+<rect class="mio" x="30" y="282" width="230" height="46" rx="8"/><text class="mt" x="44" y="302">模型 · LoRA</text><text class="ms" x="44" y="319">装配时在「模型与 LoRA」里选</text>
+<rect class="node" x="520" y="46" width="330" height="54" rx="8"/><text class="nt" x="534" y="68">#6 CLIPTextEncode（正向）</text><text class="ni" x="534" y="88">text</text><circle class="dot" cx="520" cy="84" r="4"/>
+<rect class="node" x="520" y="108" width="330" height="54" rx="8"/><text class="nt" x="534" y="130">#7 CLIPTextEncode（负向）</text><text class="ni" x="534" y="150">text</text><circle class="dot" cx="520" cy="146" r="4"/>
+<rect class="node" x="520" y="170" width="330" height="54" rx="8"/><text class="nt" x="534" y="192">#3 KSampler</text><text class="ni" x="534" y="212">seed · steps · cfg</text><circle class="dot" cx="520" cy="208" r="4"/>
+<rect class="node" x="520" y="232" width="330" height="54" rx="8"/><text class="nt" x="534" y="254">#5 EmptyLatentImage</text><text class="ni" x="534" y="274">width · height</text><circle class="dot" cx="520" cy="270" r="4"/>
+<rect class="node" x="520" y="294" width="330" height="54" rx="8"/><text class="nt" x="534" y="316">#4 CheckpointLoaderSimple</text><text class="ni" x="534" y="336">ckpt_name</text><circle class="dot" cx="520" cy="332" r="4"/>
+<rect class="node" x="520" y="356" width="330" height="48" rx="8"/><text class="nt" x="534" y="378">#9 SaveImage</text><text class="ni" x="534" y="396">输出节点：结果图片从这里取回</text>
+<path class="l" d="M260 73 C390 73 390 84 516 84"/>
+<path class="l" d="M260 131 C390 131 390 146 516 146"/>
+<path class="l" d="M260 189 C390 189 390 208 516 208"/>
+<path class="l" d="M260 247 C390 247 390 212 516 212"/><path class="l" d="M260 247 C390 247 390 270 516 270"/>
+<path class="o" d="M260 305 C390 305 390 332 516 332"/>
+<text class="ms" x="290" y="400">实线：参数映射 · 虚线：模型选择（写进加载器节点）· 节点编号以你自己的工作流为准</text>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 250" width="880" height="250" role="img" aria-labelledby="t d">
+<title id="t">从 ComfyUI 导出 API 格式工作流并导入 Mio</title>
+<desc id="d">在 ComfyUI 中打开工作流，用 Workflow 菜单的 Export (API) 导出 JSON；在 Mio 的工作流与 API 配置页添加工作流并导入该文件。</desc>
+<style>
+text{font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;fill:#223a30}
+.dark{fill:#2b3230}.menu{fill:#39423f}.lt{font-size:13px;fill:#e9efe9}.hl{fill:#287553}
+.card{fill:#fff;stroke:#dfe4d9;stroke-width:1.5}.t{font-size:15px;font-weight:700}.s{font-size:12.5px;fill:#5d6f63}
+.n{font-size:12px;font-weight:700;fill:#287553;letter-spacing:.06em}.c{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.a{stroke:#287553;stroke-width:2;fill:none;marker-end:url(#m)}
+</style>
+<defs><marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" fill="#287553"/></marker></defs>
+<rect width="880" height="250" fill="#f7f6f0"/>
+<text class="n" x="24" y="28">① COMFYUI</text>
+<rect class="dark" x="24" y="40" width="300" height="190" rx="10"/>
+<rect class="menu" x="24" y="40" width="300" height="30" rx="10"/><text class="lt" x="40" y="60">Workflow ▾</text>
+<rect class="menu" x="36" y="76" width="200" height="140" rx="6"/>
+<text class="lt" x="50" y="100">New</text><text class="lt" x="50" y="126">Open…</text><text class="lt" x="50" y="152">Save</text><text class="lt" x="50" y="178">Export</text>
+<rect class="hl" x="40" y="188" width="192" height="24" rx="4"/><text class="lt" x="50" y="205">Export (API)</text>
+<path class="a" d="M324 135 H384"/><text class="s" x="330" y="124">得到 .json</text>
+<text class="n" x="388" y="28">② 检查文件</text>
+<rect class="card" x="388" y="40" width="200" height="190" rx="10"/>
+<text class="c" x="402" y="66">{</text><text class="c" x="412" y="86">"3": {</text><text class="c" x="424" y="106">"class_type":</text><text class="c" x="436" y="124">"KSampler",</text><text class="c" x="424" y="144">"inputs": {…}</text><text class="c" x="412" y="164">}, "4": {…}</text><text class="c" x="402" y="184">}</text>
+<text class="s" x="402" y="214">键是节点编号 ✓（不是 nodes/links）</text>
+<path class="a" d="M588 135 H648"/>
+<text class="n" x="652" y="28">③ MIO</text>
+<rect class="card" x="652" y="40" width="204" height="190" rx="10"/>
+<text class="t" x="666" y="68">工作流与 API 配置</text><text class="s" x="666" y="94">左侧工作流库</text><text class="s" x="666" y="114">→「添加工作流」→「导入 JSON」</text>
+<text class="s" x="666" y="144">→ 核对参数映射</text><text class="s" x="666" y="164">→ 一键添加种子映射</text><text class="s" x="666" y="184">→ 同步模型列表</text><text class="s" x="666" y="204">→ 一帧试跑</text>
+</svg>

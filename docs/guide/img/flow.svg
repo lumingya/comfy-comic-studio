@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 300" width="880" height="300" role="img" aria-labelledby="t d">
+<title id="t">Mio 创作流程</title>
+<desc id="d">分镜和预设经过装配成为生成任务，生成任务请求图像服务，结果成为画册。</desc>
+<style>
+text{font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;fill:#223a30}
+.box{fill:#fff;stroke:#b9c7b8;stroke-width:1.5}
+.key{fill:#e8f1ea;stroke:#287553;stroke-width:1.5}
+.t{font-size:17px;font-weight:600}
+.s{font-size:12.5px;fill:#5d6f63}
+.n{font-size:12px;fill:#287553;font-weight:700;letter-spacing:.06em}
+.a{stroke:#287553;stroke-width:2;fill:none;marker-end:url(#m)}
+</style>
+<defs><marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" fill="#287553"/></marker></defs>
+<rect width="880" height="300" fill="#f7f6f0"/>
+<rect class="box" x="24" y="40" width="170" height="92" rx="10"/>
+<text class="n" x="40" y="64">① 分镜</text><text class="t" x="40" y="90">故事脚本</text><text class="s" x="40" y="114">每一幕：提示词 · 台词</text>
+<rect class="box" x="24" y="168" width="170" height="92" rx="10"/>
+<text class="n" x="40" y="192">② 预设</text><text class="t" x="40" y="218">角色 · 画风 · 场景</text><text class="s" x="40" y="242">{变量} 的取值</text>
+<path class="a" d="M194 86 C230 86 232 150 262 150"/><path class="a" d="M194 214 C230 214 232 150 262 150"/>
+<rect class="key" x="266" y="104" width="160" height="92" rx="10"/>
+<text class="n" x="282" y="128">③ 装配</text><text class="t" x="282" y="154">选分镜、预设</text><text class="s" x="282" y="178">图像服务 · 工作流</text>
+<path class="a" d="M426 150 H466"/>
+<rect class="box" x="470" y="104" width="160" height="92" rx="10"/>
+<text class="n" x="486" y="128">④ 生成任务</text><text class="t" x="486" y="154">点「开始生成」</text><text class="s" x="486" y="178">逐幕请求图像服务</text>
+<path class="a" d="M630 150 H670"/>
+<rect class="box" x="674" y="104" width="182" height="92" rx="10"/>
+<text class="n" x="690" y="128">⑤ 画册</text><text class="t" x="690" y="154">阅读 · 编辑 · 导出</text><text class="s" x="690" y="178">在「画册集」页</text>
+<text class="s" x="470" y="236">图像服务：ComfyUI（本机显卡）</text>
+<text class="s" x="470" y="256">NovelAI / OpenAI 兼容（云端，可能计费）</text>
+<text class="s" x="24" y="24">所有资产都属于当前画册集；顶栏左侧切换画册集。</text>
+</svg>

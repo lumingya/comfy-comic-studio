@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 380" width="880" height="380" role="img" aria-labelledby="t d">
+<title id="t">变量如何取值</title>
+<desc id="d">分幕提示词里的变量，从所选预设中取值；同名变量后面的预设覆盖前面的，画册自己的设定和单幕覆盖优先级更高。空值会连同多余的逗号一起去掉。</desc>
+<style>
+text{font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;fill:#223a30}
+code,.c{font-family:ui-monospace,Consolas,monospace}
+.card{fill:#fff;stroke:#dfe4d9;stroke-width:1.5}.hot{fill:#e8f1ea;stroke:#287553;stroke-width:1.5}
+.h{font-size:13px;font-weight:700;fill:#287553;letter-spacing:.06em}
+.t{font-size:14px;font-weight:600}.s{font-size:12.5px;fill:#5d6f63}.c{font-size:13px}
+.v{fill:#287553;font-weight:700}.x{fill:#b04a3a;text-decoration:line-through}
+.a{stroke:#287553;stroke-width:2;fill:none;marker-end:url(#m)}
+</style>
+<defs><marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" fill="#287553"/></marker></defs>
+<rect width="880" height="380" fill="#f7f6f0"/>
+<text class="h" x="30" y="30">分幕里写的</text>
+<rect class="card" x="30" y="42" width="820" height="46" rx="8"/>
+<text class="c" x="46" y="71"><tspan class="v">{character}</tspan>, <tspan class="v">{outfit}</tspan>, <tspan class="v">{weapon}</tspan>, standing on the beach, <tspan class="v">{style}</tspan></text>
+<text class="h" x="30" y="120">取值顺序（越往右优先级越高，同名时覆盖左边）</text>
+<rect class="card" x="30" y="132" width="190" height="112" rx="8"/><text class="t" x="44" y="156">预设 A · 角色</text><text class="c" x="44" y="180">character = Mio</text><text class="c" x="44" y="200">outfit = school uniform</text><text class="c" x="44" y="220">weapon =</text><text class="s" x="118" y="220">（空值）</text>
+<rect class="card" x="236" y="132" width="190" height="112" rx="8"/><text class="t" x="250" y="156">预设 B · 夏装</text><text class="c x" x="250" y="180">outfit = …</text><text class="c" x="250" y="200">outfit = sundress</text><text class="s" x="250" y="224">后选的预设覆盖同名变量</text>
+<rect class="card" x="442" y="132" width="190" height="112" rx="8"/><text class="t" x="456" y="156">画册自己的设定</text><text class="c" x="456" y="180">style = watercolor</text><text class="s" x="456" y="204">在阅读器「设定」里改</text><text class="s" x="456" y="222">只影响这一本画册</text>
+<rect class="hot" x="648" y="132" width="202" height="112" rx="8"/><text class="t" x="662" y="156">单幕覆盖</text><text class="s" x="662" y="180">只改某一幕的取值</text><text class="s" x="662" y="200">优先级最高</text>
+<path class="a" d="M440 250 V282"/>
+<text class="h" x="30" y="300">最终发给图像服务的</text>
+<rect class="hot" x="30" y="312" width="820" height="46" rx="8"/>
+<text class="c" x="46" y="341">Mio, sundress, standing on the beach, watercolor</text>
+<text class="s" x="520" y="341">← {weapon} 为空，逗号一并去掉</text>
+</svg>

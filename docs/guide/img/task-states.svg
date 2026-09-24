@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 330" width="880" height="330" role="img" aria-labelledby="t d">
+<title id="t">生成任务的状态</title>
+<desc id="d">待命的任务点开始后运行，可以暂停和继续；成功为完成，请求没发出为失败可安全重试，已发出但没拿到结果为结果未确认。</desc>
+<style>
+text{font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;fill:#223a30}
+.st{fill:#fff;stroke:#b9c7b8;stroke-width:1.5}.ok{fill:#e8f1ea;stroke:#287553;stroke-width:1.5}.bad{fill:#fbeee8;stroke:#b04a3a;stroke-width:1.5}.warn{fill:#fbf3e3;stroke:#c9772b;stroke-width:1.5}
+.t{font-size:16px;font-weight:700}.s{font-size:12px;fill:#5d6f63}.e{font-size:12px;fill:#287553;font-weight:600}
+.a{stroke:#6c7d72;stroke-width:1.8;fill:none;marker-end:url(#m)}
+</style>
+<defs><marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 10 5 0 10z" fill="#6c7d72"/></marker></defs>
+<rect width="880" height="330" fill="#f7f6f0"/>
+<rect class="st" x="24" y="120" width="130" height="64" rx="10"/><text class="t" x="62" y="148">待命</text><text class="s" x="40" y="170">装配后，不花钱</text>
+<path class="a" d="M154 152 H216"/><text class="e" x="160" y="142">开始生成</text>
+<rect class="st" x="220" y="120" width="140" height="64" rx="10"/><text class="t" x="258" y="148">运行中</text><text class="s" x="236" y="170">逐幕请求图像服务</text>
+<path class="a" d="M290 184 V236"/><path class="a" d="M306 236 V188"/><text class="e" x="312" y="216">暂停 / 继续</text>
+<rect class="st" x="220" y="240" width="140" height="56" rx="10"/><text class="t" x="258" y="274">已暂停</text>
+<path class="a" d="M360 140 C420 80 430 60 490 60"/><path class="a" d="M360 152 H490"/><path class="a" d="M360 166 C420 226 430 244 490 244"/>
+<rect class="ok" x="494" y="30" width="360" height="62" rx="10"/><text class="t" x="512" y="56">完成</text><text class="s" x="512" y="78">画册出现在「画册集」；可单幕重跑某一幕</text>
+<rect class="bad" x="494" y="120" width="360" height="64" rx="10"/><text class="t" x="512" y="146">失败 · 可以安全重试</text><text class="s" x="512" y="168">请求没发出（连不上、密钥错…）→ 修好后点「开始生成」续跑</text>
+<rect class="warn" x="494" y="212" width="360" height="84" rx="10"/><text class="t" x="512" y="238">结果未确认</text><text class="s" x="512" y="260">请求已发出，但没拿到结果；上游可能已出图或已计费</text><text class="s" x="512" y="280">→ 先到服务端核对，再选「恢复结果」或确认重跑</text>
+</svg>
