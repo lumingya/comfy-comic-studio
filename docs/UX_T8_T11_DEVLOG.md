@@ -28,7 +28,8 @@ T9 开箱检查与离线练习（C1/B3/B6）、T10 多选可发现（C6）。阶
 - [x] T8d WORKFLOW：Dev Mode → Export (API) → 导入 → 映射提示词/种子/尺寸/模型/LoRA → 一帧试跑
 - [x] T8e IMAGE_VARIABLES：预设 → 变量关系、覆盖顺序、空值处理、未定义变量规则、图片变量
 - [x] T8f TROUBLESHOOTING：错误码对照表（MIO-CONN-001 …）+ 日志位置 + 诊断信息 + FAQ
-- [x] T8g GLOSSARY（新增）+ 教程中心 / 帮助抽屉 / README 链接；重新生成 HTML；文档测试
+- [x] T8g
+- [x] T8h FOUNDATION（生成任务）：状态表 + 状态图、运行操作表、失败卡片说明、结果未确认处理步骤 GLOSSARY（新增）+ 教程中心 / 帮助抽屉 / README 链接；重新生成 HTML；文档测试
 
 ## T11 计划
 
@@ -45,3 +46,4 @@ T9 开箱检查与离线练习（C1/B3/B6）、T10 多选可发现（C6）。阶
 - 2026-09-24 · T8d/T8e · WORKFLOW 重写（导出 API → 导入 → 映射表 → 种子规则 → 模型/LoRA → 一帧试跑排错表）；IMAGE_VARIABLES 重写为「变量与预设」（取值顺序、空值/未定义/从未定义三态表、图片变量）。取值顺序依据 js/ui.js mergedSettingEntries（后者覆盖前者）；空值去逗号依据 js/state.js collapseEmptyPunctuation
 - 2026-09-24 · T8f · TROUBLESHOOTING 重写为「常见问题与错误码」：22 个错误码（速查表含“请求发出了吗 / 重试会重复计费吗”）、日志位置、FAQ。任务卡失败面板显示错误码 + 「查看排错 ↗」链接（js/assembly-workshop.js MIO_ERROR_CODES / productionErrorCode），锚点 = 阅读器标题 slug；契约测试 +1（88/88）
 - 2026-09-24 · T8g · 新增 GLOSSARY（内容 / 生成 / 图像服务与工作流 / 管理 + 旧叫法对照）；教程中心 docs/README.md、落地页 docs/index.html（改正链接标签 + 术语表入口）、帮助抽屉 HELP_DOCS、根 README 链接更新；tests/test_documentation.py +3（锚点解析、错误码均有排错条目、术语表入口）。注意：只提交改过的 md 对应的 HTML，其他 HTML 仓库里是 CRLF（Windows 生成），全量重建会产生无意义 diff
+- 2026-09-24 · T8h · FOUNDATION 重写。T8 全部完成
