@@ -62,12 +62,12 @@ const SOURCE_META = {
   negative: { what: "这一幕的负向提示词", when: "每一幕生成前", scope: "逐幕不同", who: "分镜工坊的负向提示词；留空时使用全局负向", explain: "每一幕生成前，写入这一幕的负向提示词；这一幕没有填写时，改用全局负向提示词。" },
   caption: { what: "这一幕的台词 / 旁白", when: "每一幕生成前", scope: "逐幕不同", who: "分镜工坊的台词输入框", explain: "每一幕生成前，写入这一幕在分镜工坊里填写的台词 / 旁白。" },
   sceneName: { what: "分幕名称", when: "每一幕生成前", scope: "逐幕不同", who: "分镜工坊当前分幕的名称", explain: "每一幕生成前，写入这一幕的名称。" },
-  sceneParameter: { what: "分镜画面参数", when: "仅覆盖时", scope: "逐幕不同", who: "分镜画面参数；未开启覆盖的分幕保持原值", explain: "只有分幕开启了「画面参数覆盖」时才写入；没开启的分幕保持蓝图原值（种子例外：每幕都会写入一个新种子）。" },
+  sceneParameter: { what: "分镜画面参数", when: "仅覆盖时", scope: "逐幕不同", who: "分镜画面参数；未开启覆盖的分幕保持原值", explain: "只有分幕开启了「画面参数覆盖」时才写入；没开启的分幕保持蓝图原值（种子例外：每一幕都会写入这一幕的种子）。" },
   variable: { what: "预设变量", when: "装配时", scope: "随预设", who: "视觉预设工坊里定义的变量", explain: "装配时，从所选视觉预设里读取这个变量的值写入；预设没有这个变量时跳过不写。" },
   bookTitle: { what: "画册标题", when: "任务开始时", scope: "整本一致", who: "装配时填写的画册名称", explain: "任务开始时，把装配时填写的画册名称写入，整本画册一致。" },
   image: { what: "角色立绘或参考图", when: "装配时", scope: "随角色", who: "角色资产中的参考图像", explain: "装配时，把角色资产里的立绘 / 参考图上传到 ComfyUI 后写入；没有图片时跳过不写。" },
   literal: { what: "这里填写的固定值 / 模板", when: "始终写入", scope: "始终生效", who: "在右侧直接填写", explain: "每次生成都写入这里填写的固定内容；可以用 {变量名} 引用预设变量。" },
-  random: { what: "新生成的随机种子", when: "每次生成前", scope: "每次不同", who: "按时间戳自动计算", explain: "每次生成前自动换一个随机种子写入。" },
+  random: { what: "这一幕的种子", when: "每次生成前", scope: "逐幕不同", who: "默认随机；开启可复现种子时为 固定种子 + 幕序号", explain: "每一幕生成前写入这一幕的种子：默认每次随机；装配时开启「可复现种子」，则按 固定种子 + 幕序号，方便复现。" },
   inherit: { what: "蓝图原值", when: "不写入", scope: "不修改", who: "ComfyUI 原始蓝图", explain: "不写入任何内容，保持蓝图里原来的值——相当于暂时关闭这条映射。" },
 };
 
@@ -127,6 +127,7 @@ function mapperBindingIssues() {
     issues.push({ id: "", kind: "output", message: "指定的结果图片节点 #" + c.outputNodeId + " 不存在。" });
   const plan=c.slots?.plan;
   for(const t of plan?.model.targets||[])if(t.enabled&&!Object.hasOwn(c.workflow[t.nodeId]?.inputs||{},t.path))issues.push({id:'',kind:'slot-model',message:'目标不在蓝图中：'+t.key});
+  for(const p of workflowModelProblems(c.workflow))issues.push({id:'',kind:'slot-model',message:modelProblemText(p)+'装配时在「模型与 LoRA」里选一个已安装的模型，或用「编辑蓝图 JSON」改掉。'});
   for(const g of plan?.lora.groups||[])if(g.enabled&&g.sites.some(x=>!Object.hasOwn(c.workflow[x.nodeId]?.inputs||{},x.path)))issues.push({id:'',kind:'slot-lora',message:'应用点不在蓝图中：'+g.key});
   return issues;
 }
@@ -734,9 +735,10 @@ function mapperAdvice(c = state.settings.comfy) {
   const on = (c.bindings || []).filter((b) => b.enabled);
   if (!on.some((b) => b.source === "positive"))
     tips.push({ id: "advice-positive", act: "v3-auto-bind", label: "正向提示词", message: "还没有启用正向提示词映射，每一幕都会用蓝图里写死的提示词出图。", action: "识别提示词节点" });
-  const seedVaries = c.randomizeSeeds || on.some((b) => b.source === "random" || (b.source === "sceneParameter" && String(b.value || "").trim() === "seed"));
+  // Only a seed mapping reaches the production queue; the legacy “randomize seeds” switch does not.
+  const seedVaries = on.some((b) => b.source === "random" || (b.source === "sceneParameter" && String(b.value || "").trim() === "seed"));
   if (!seedVaries)
-    tips.push({ id: "advice-seed", act: "wm-select-output", label: "随机种子", message: "种子固定不变：同样的提示词每次都会得到同一张画面。可在蓝图选项里开启“每次任务随机化种子”。", action: "打开蓝图选项" });
+    tips.push({ id: "advice-seed", act: "wf-add-seed-mapping", label: "种子", message: "没有种子映射：每一幕都用蓝图里的同一个种子，画面可能几乎一样。", action: "添加种子映射" });
   const hasOutput = c.outputNodeId ? Object.hasOwn(w, c.outputNodeId) : Object.values(w).some((n) => /SaveImage|PreviewImage/.test(n?.class_type || ""));
   if (!hasOutput)
     tips.push({ id: "advice-output", act: "wm-select-output", label: "结果图片节点", message: "没有找到 SaveImage / PreviewImage 节点，生成结束后拿不到图片。", action: "指定结果节点" });
@@ -784,14 +786,14 @@ function renderMapperPipeline(c, issues, slots) {
     params = on.filter((b) => b.source === "sceneParameter" || b.source === "random"),
     outputId = c.outputNodeId || Object.keys(c.workflow || {}).find((k) => /SaveImage|PreviewImage/.test(c.workflow[k]?.class_type || "")) || "",
     outputMissing = c.outputNodeId && !Object.hasOwn(c.workflow || {}, c.outputNodeId);
-  const model = slots.find((x) => x.kind === "model"), lora = slots.find((x) => x.kind === "lora");
+  const model = slots.find((x) => x.kind === "model"), lora = slots.find((x) => x.kind === "lora"), modelProblem = workflowModelProblems(c.workflow)[0];
   const stages = [
     { key: "prompt", label: "提示词", icon: "edit", tone: has("positive") ? "ok" : "warn",
       value: has("positive") ? (has("negative") ? "正向 + 负向" : "仅正向") : "未接入",
       note: has("positive") ? "每幕写入分镜提示词" : "识别提示词节点", act: has("positive") ? 'data-act="wf-group-focus" data-group="prompt"' : 'data-act="v3-auto-bind"' },
     { key: "model", label: "模型", icon: "box", tone: model?.issue ? "warn" : model?.enabled ? "ok" : "idle",
       value: v.currentModel ? WorkflowSlots.loraStem(v.currentModel) : model?.enabled ? "已识别" : "保持蓝图",
-      note: model?.enabled ? "装配时可替换" : "未启用模型槽", act: 'data-act="wm-select-slot" data-id="model"' },
+      note: modelProblem ? (modelProblem.placeholder ? "占位名，需要替换" : "ComfyUI 里没有这个模型") : model?.enabled ? "装配时可替换" : "未启用模型槽", act: 'data-act="wm-select-slot" data-id="model"' },
     { key: "lora", label: "LoRA", icon: "layers", tone: lora?.issue ? "warn" : lora?.enabled ? "ok" : "idle",
       value: v.currentLoras.length ? v.currentLoras.length + " 个自带" : lora?.enabled ? "可追加" : "不可用",
       note: lora?.enabled ? "装配时追加或解锁" : "无应用点", act: 'data-act="wm-select-slot" data-id="lora"' },

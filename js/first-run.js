@@ -79,7 +79,7 @@ function assemblyPreflightNotices(storyId,presetIds,channel,workflow){
   const bound=bindings.some(b=>b.source==='image'||(b.source==='variable'&&imageKeys.has(String(b.value||'').replace(/^\{|\}$/g,''))));
   if(used.length&&!bound)notes.push('所选工作流是纯文生图（没有映射 LoadImage 等图片输入），提示词里引用的立绘参考图 {'+used.join('}、{')+'} 会被忽略，文字描述照常生成。需要参考图时，请在「工作流与 API 配置 → 节点映射」中为 LoadImage 节点绑定图片变量。');
  }
- if(channel?.provider==='comfyui'&&workflow&&!(workflow.bindings||[]).some(b=>b.enabled!==false&&(b.source==='random'||(b.source==='sceneParameter'&&String(b.value||'').trim()==='seed'))))notes.push('所选工作流没有种子映射，每一幕都会沿用蓝图里的固定种子，整本画面可能雷同。建议在「工作流与 API 配置」中点击「添加分镜参数映射」。');
+ if(channel?.provider==='comfyui'&&workflow&&!(workflow.bindings||[]).some(b=>b.enabled!==false&&(b.source==='random'||(b.source==='sceneParameter'&&String(b.value||'').trim()==='seed'))))notes.push('所选工作流没有种子映射，每一幕都会沿用蓝图里的同一个种子，画面可能几乎一样。可以在「生成环境」里点「一键添加种子映射」。');
  /* Prompt placeholders no selected preset defines stay in the prompt verbatim (NovelAI braces are weight syntax and are skipped). */
  if(channel?.provider!=='novelai'){
   const defined=new Set(sets.flatMap(s=>(s.entries||[]).map(e=>e.key))),unknown=[];
@@ -95,7 +95,7 @@ function assemblyPreflightNotices(storyId,presetIds,channel,workflow){
 }
 /* One status line instead of a warning box. Blocking issues stay listed (they must be fixed before enqueueing); non-blocking
    advisories collapse into a ⚠️ badge whose details open on hover / focus, so a ready book is not shouted at. */
-function assemblyPreflightHTML(){const d=assemblyDesign,channel=designerChannel(),issues=assemblyInputIssues(d.storyId,[...d.presets],channel),notes=assemblyPreflightNotices(d.storyId,[...d.presets],channel,channel?.provider==='comfyui'?designerWorkflow():null),frames=templateBy(d.storyId)?.frames.length||0;
+function assemblyPreflightHTML(){const d=assemblyDesign,channel=designerChannel(),issues=assemblyInputIssues(d.storyId,[...d.presets],channel),notes=[...designerModelProblems().slice(0,1).map(p=>modelProblemText(p)+'请在「模型与 LoRA」里选一个已安装的模型。'),...assemblyPreflightNotices(d.storyId,[...d.presets],channel,channel?.provider==='comfyui'?designerWorkflow():null)],frames=templateBy(d.storyId)?.frames.length||0;
  const tone=issues.length?'is-blocked':notes.length?'is-advised':'is-ready',emoji=issues.length?'⛔':notes.length?'⚠️':'✅';
  const headline=issues.length?'检查分镜':notes.length?'可以生成':'输入检查通过';
  const blocked=issues.length?`<span class="preflight-pill is-blocked">${issues.length} 处需要修正</span>`:'';

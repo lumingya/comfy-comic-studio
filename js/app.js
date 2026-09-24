@@ -919,6 +919,7 @@ const v3Actions={
   'v3-infer-field':d=>{const b=state.settings.comfy.bindings.find(b=>b.id===d.id),inf=inferTextInput(b.nodeId);b.path=inf.field;b.warning=inf.warning;b.autoField=true;save();render();toast(inf.warning||'已读取实际文本字段：'+inf.field)},
   'v3-auto-bind':()=>autoIdentifyBindings(),
   'v3-add-render-mappings':()=>addRenderBindings(),
+  'wf-add-seed-mapping':()=>{addWorkflowSeedMapping(state.settings.comfy.activeWorkflowId);render();toast('已添加种子映射：每一幕都会写入自己的种子。')},
   'v3-read-object-info':()=>readComfyObjectInfo(),
   'v3-import-workflow':()=>pickFile('.json',async f=>{if(f.size>100000000)throw Error('工作流超过 100 MB。');importWorkflowIntoMapper(JSON.parse(await f.text()))}),
   'v3-export-mapping':()=>{const c=state.settings.comfy;download(safeFolderName(c.workflowTitle)+'.mappings.json',JSON.stringify({kind:'comfycomic.workflow-mappings',formatVersion:1,title:c.workflowTitle,workflow:c.workflow,bindings:c.bindings,outputNodeId:c.outputNodeId,randomizeSeeds:c.randomizeSeeds},null,2))},

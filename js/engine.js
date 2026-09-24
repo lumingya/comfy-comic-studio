@@ -207,7 +207,47 @@ function validateBindings(bindings){if(!Array.isArray(bindings)||bindings.length
 function autoIdentifyBindings(){const c=state.settings.comfy,entries=Object.entries(c.workflow||{}).filter(([,n])=>n&&typeof n==='object'&&n.inputs),textNodes=entries.filter(([id,n])=>Object.values(n.inputs).some(v=>typeof v==='string')&&(/CLIPTextEncode|TextEncode|Prompt/i.test(n.class_type||'')||Object.keys(n.inputs).some(k=>['text','opt_text','text_g'].includes(k)))),neg=textNodes.find(([,n])=>/negative|负向/i.test(n?._meta?.title||''))||textNodes[1],pos=textNodes.find(([,n])=>/positive|正向/i.test(n?._meta?.title||''))||textNodes.find(x=>x!==neg)||textNodes[0];for(const[source,label,node]of[['positive','正向提示词',pos],['negative','负向提示词',neg]]){if(!node)continue;const info=inferTextInput(node[0]),existing=c.bindings.find(b=>b.source===source);if(existing){existing.nodeId=node[0];existing.path=info.field;existing.warning=info.warning;existing.autoField=true}else addInputBinding(node[0],info.field,source)}if(!c.outputNodeId)c.outputNodeId=entries.find(([,n])=>/SaveImage|PreviewImage/.test(n.class_type||''))?.[0]||'';save();render();toast(textNodes.length?'已识别文本候选节点，请核对正负语义与字段。':'未识别到文本节点，可手动添加任意节点映射。')}
 
 
-function addRenderBindings(){const c=state.settings.comfy;let count=0;const spec=[['width','画面宽度',['width','image_width']],['height','画面高度',['height','image_height']],['steps','采样步数',['steps','step','step_count']],['cfg','CFG',['cfg','cfg_scale','scale']],['denoise','去噪强度',['denoise','denoising_strength']],['seed','种子',['seed','noise_seed','seed_num','random_seed','seed_value','sampler_seed']]];const entries=Object.entries(c.workflow||{}).filter(([,n])=>n&&typeof n==='object'&&n.inputs);for(const[key,label,alts]of spec){let found=null,actualKey=key;for(const k of alts){found=entries.find(([,n])=>Object.hasOwn(n.inputs,k)&&!isWorkflowLink(n.inputs[k],c.workflow));if(found){actualKey=k;break}}if(!found&&key==='seed'){const samplerWithSeedLink=entries.find(([,n])=>alts.some(k=>Object.hasOwn(n.inputs,k)&&isWorkflowLink(n.inputs[k],c.workflow)));if(samplerWithSeedLink){const linkKey=alts.find(k=>Object.hasOwn(samplerWithSeedLink[1].inputs,k)&&isWorkflowLink(samplerWithSeedLink[1].inputs[k],c.workflow));const linkVal=samplerWithSeedLink[1].inputs[linkKey];let currNodeId=String(Array.isArray(linkVal)?linkVal[0]:'');let hop=0;while(currNodeId&&hop++<10){const currNode=entries.find(([id])=>id===currNodeId);if(!currNode)break;if(/Reroute/i.test(currNode[1].class_type||'')){const firstLink=Object.values(currNode[1].inputs||{}).find(v=>isWorkflowLink(v,c.workflow));if(firstLink&&Array.isArray(firstLink)){currNodeId=String(firstLink[0]);continue}}const seedKey=Object.keys(currNode[1].inputs||{}).find(k=>!isWorkflowLink(currNode[1].inputs[k],c.workflow)&&(/seed/i.test(k)||/(^|_)(value|val|int|integer)(_|$)/i.test(k)));if(seedKey){found=currNode;actualKey=seedKey;break}break}}if(!found){for(const[,n]of entries){if(/Seed/i.test(n.class_type||'')||/Seed/i.test(n?._meta?.title||'')){const k=Object.keys(n.inputs||{}).find(k=>!isWorkflowLink(n.inputs[k],c.workflow)&&(/seed/i.test(k)||/(^|_)(value|val|int|integer)(_|$)/i.test(k)));if(k){found=entries.find(([,candidate])=>candidate===n);actualKey=k;break}}}}}if(!found)continue;if(c.bindings.some(b=>b.nodeId===found[0]&&WorkflowMapping.samePath(b.path,actualKey)))continue;const b=addInputBinding(found[0],actualKey,'sceneParameter');b.label=label;b.value=key;b.type='number';count++}save();render();toast('已添加 '+count+' 个分镜参数映射。种子会为每一幕自动写入；宽高、步数等只在单幕启用渲染覆盖时写入。')}
+/* Where a frame seed can be written. A plain seed input on any node wins; otherwise a linked sampler seed is followed
+   through Reroute nodes to the primitive that holds it, and finally a node named like a seed generator is used.
+   Shared by addRenderBindings and the assembly wizard's one-click seed mapping. */
+const SEED_INPUT_KEYS=['seed','noise_seed','seed_num','random_seed','seed_value','sampler_seed'];
+function findLinkedSeedInput(workflow){
+  const entries=Object.entries(workflow||{}).filter(([,n])=>n&&typeof n==='object'&&n.inputs),linked=v=>isWorkflowLink(v,workflow),
+    valueKey=n=>Object.keys(n.inputs||{}).find(k=>!linked(n.inputs[k])&&(/seed/i.test(k)||/(^|_)(value|val|int|integer)(_|$)/i.test(k)));
+  const sampler=entries.find(([,n])=>SEED_INPUT_KEYS.some(k=>Object.hasOwn(n.inputs,k)&&linked(n.inputs[k])));
+  if(sampler){
+    const link=sampler[1].inputs[SEED_INPUT_KEYS.find(k=>Object.hasOwn(sampler[1].inputs,k)&&linked(sampler[1].inputs[k]))];
+    let id=String(Array.isArray(link)?link[0]:''),hop=0;
+    while(id&&hop++<10){const node=entries.find(([key])=>key===id);if(!node)break;if(/Reroute/i.test(node[1].class_type||'')){const next=Object.values(node[1].inputs||{}).find(linked);if(next&&Array.isArray(next)){id=String(next[0]);continue}}const k=valueKey(node[1]);if(k)return [node[0],k];break}
+  }
+  for(const [id,n] of entries)if(/Seed/i.test(n.class_type||'')||/Seed/i.test(n?._meta?.title||'')){const k=valueKey(n);if(k)return [id,k]}
+  return null;
+}
+function findSeedInput(workflow){
+  const entries=Object.entries(workflow||{}).filter(([,n])=>n&&typeof n==='object'&&n.inputs);
+  for(const k of SEED_INPUT_KEYS){const hit=entries.find(([,n])=>Object.hasOwn(n.inputs,k)&&!isWorkflowLink(n.inputs[k],workflow));if(hit)return [hit[0],k]}
+  return findLinkedSeedInput(workflow);
+}
+/* The shipped workflow names a placeholder checkpoint (your-anime-model.safetensors). Placeholders are always flagged;
+   once the model list has been synced, a checkpoint / UNet that ComfyUI does not list is flagged as well. */
+function placeholderModelName(name){return /^your[-_ ]/i.test(String(name||'').split(/[\\/]/).pop())}
+function workflowModelProblems(workflow,catalog=comfyModelCatalog()){
+  const out=[],norm=s=>String(s).replace(/\\/g,'/');
+  for(const [nodeId,n] of Object.entries(workflow||{}))for(const [path,value] of Object.entries(n?.inputs||{})){
+    if(typeof value!=='string'||!value)continue;
+    if(placeholderModelName(value)&&WorkflowSlots.MODEL_EXT.test(value)){out.push({nodeId,path,key:nodeId+':'+path,value,placeholder:true});continue}
+    const list=catalog.fetchedAt?(path==='ckpt_name'?catalog.checkpoints:path==='unet_name'?catalog.unets:null):null;
+    if(list&&!list.some(m=>norm(m)===norm(value)))out.push({nodeId,path,key:nodeId+':'+path,value,placeholder:false});
+  }
+  return out;
+}
+function modelProblemText(problem){
+  const name=WorkflowSlots.loraStem(problem.value);
+  return problem.placeholder
+    ?`模型「${name}」是占位名，ComfyUI 里没有这个文件，直接生成会失败。`
+    :`ComfyUI 里没有模型「${name}」（按上次同步的模型列表）。`;
+}
+function addRenderBindings(){const c=state.settings.comfy;let count=0;const spec=[['width','画面宽度',['width','image_width']],['height','画面高度',['height','image_height']],['steps','采样步数',['steps','step','step_count']],['cfg','CFG',['cfg','cfg_scale','scale']],['denoise','去噪强度',['denoise','denoising_strength']],['seed','种子',['seed','noise_seed','seed_num','random_seed','seed_value','sampler_seed']]];const entries=Object.entries(c.workflow||{}).filter(([,n])=>n&&typeof n==='object'&&n.inputs);for(const[key,label,alts]of spec){let found=null,actualKey=key;for(const k of alts){found=entries.find(([,n])=>Object.hasOwn(n.inputs,k)&&!isWorkflowLink(n.inputs[k],c.workflow));if(found){actualKey=k;break}}if(!found&&key==='seed'){const hit=findLinkedSeedInput(c.workflow);if(hit){found=entries.find(([id])=>id===hit[0]);actualKey=hit[1]}}if(!found)continue;if(c.bindings.some(b=>b.nodeId===found[0]&&WorkflowMapping.samePath(b.path,actualKey)))continue;const b=addInputBinding(found[0],actualKey,'sceneParameter');b.label=label;b.value=key;b.type='number';count++}save();render();toast('已添加 '+count+' 个分镜参数映射。种子会为每一幕自动写入；宽高、步数等只在单幕启用渲染覆盖时写入。')}
 
 
 /* Source: /js/engine.js */

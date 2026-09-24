@@ -1107,6 +1107,15 @@ select.choice-list:focus-visible{border-color:var(--accent2);box-shadow:0 0 0 3p
 .seed-setting-row>input{flex:0 0 160px;max-width:160px;font-family:var(--mono)}
 .seed-setting input:disabled{opacity:.45}
 .seed-setting>.help{margin:10px 0 0}
+/* S6: problems that make every scene look the same or make generation fail are shown in place, with the fix next to them. */
+.seed-setting-alert,.designer-model-alert{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin:10px 0 0;padding:9px 12px;border:1px solid color-mix(in srgb,var(--amber) 45%,var(--line));border-radius:9px;background:color-mix(in srgb,var(--amber) 8%,transparent);color:var(--text);font-size:12.5px;line-height:1.5}
+.seed-setting-alert>span,.designer-model-alert>span{flex:1 1 220px}
+.seed-setting-alert>small{flex:1 0 100%;color:var(--muted)}
+.seed-setting-alert>.icon,.designer-model-alert>.icon{color:var(--amber);flex:0 0 auto}
+.designer-model-alert{border-color:color-mix(in srgb,var(--red) 40%,var(--line));background:color-mix(in srgb,var(--red) 7%,transparent)}
+.designer-model-alert>.icon{color:var(--red)}
+#designer-model-alert:empty{display:none}
+#designer-model-note:not(:empty){font-weight:500}
 
 .designer-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:6px}
 .designer-fact{display:grid;gap:5px;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg);font-size:12px}
