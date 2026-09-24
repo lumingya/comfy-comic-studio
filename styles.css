@@ -1310,7 +1310,7 @@ select.choice-list:focus-visible{border-color:var(--accent2);box-shadow:0 0 0 3p
 @media(max-width:760px){.image-service-chip span{display:none}.image-service-chip{padding:0 9px}}
 /* Albums reorder from an explicit ⠿ handle; a drag anywhere else on the shelf draws the selection marquee. */
 .shelf-item{position:relative}
-.shelf-drag-handle{position:absolute;top:8px;left:8px;z-index:2;display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:rgb(0 0 0/.55);color:#fff;font-size:16px;line-height:1;cursor:grab;opacity:0;transition:opacity .15s;touch-action:none;user-select:none}
+.shelf-drag-handle{position:absolute;top:8px;left:8px;z-index:2;display:grid;place-items:center;width:30px;height:30px;border-radius:8px;background:var(--cover-chip);color:var(--cover-chip-text);border:1px solid rgb(var(--glass-rgb)/.13);font-size:16px;line-height:1;cursor:grab;opacity:0;transition:opacity .15s;touch-action:none;user-select:none}
 .shelf-item:hover .shelf-drag-handle,.shelf-item:focus-within .shelf-drag-handle{opacity:1}
 .shelf-drag-handle:hover{background:var(--accent)}
 .desktop-selecting .shelf-drag-handle{opacity:0}
