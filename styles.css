@@ -1386,3 +1386,34 @@ body.production-reordering .production-card{cursor:grabbing}
 .workshop-autosave[data-state="error"]::before{background:var(--red)}
 .workshop-autosave:empty{display:none}
 @media(max-width:1000px){.workshop-asset-head>.workshop-autosave{align-self:flex-start;padding-bottom:0}}
+
+/* T3 · assembly wizard: each step lists its own problems with fix buttons, the primary button is disabled while something
+   blocks (the reason sits next to it), advisories open on click instead of hover, concurrency lives under 高级选项. */
+.designer-step-issues{margin:20px 0 6px;padding:12px 16px 14px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.designer-step-issues.is-blocked{border-color:color-mix(in srgb,var(--red) 50%,var(--line))}
+.designer-step-issues.is-advised{border-color:color-mix(in srgb,var(--amber) 45%,var(--line))}
+.designer-step-issues-head{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin:0 0 8px;font-size:13px;font-weight:600}
+.designer-step-issues-head i{font-style:normal;font-weight:400;color:var(--muted)}
+.designer-issues,.preflight-notes-list,.assembly-preflight .preflight-issues{display:grid;gap:9px;margin:0;list-style:none}
+.designer-issues{padding:0}
+.designer-issue{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 8px;align-items:start;font-size:13px;line-height:1.65;color:var(--text)}
+.designer-issue-mark{font-size:12px;line-height:1.75}
+.designer-issue-fixes{grid-column:2;display:flex;flex-wrap:wrap;gap:4px 14px}
+.designer-fix{padding:0;border:0;background:none;color:var(--accent);font-size:12.5px;font-weight:500;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.designer-fix:hover{color:var(--text)}
+.designer-fix:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:3px}
+.assembly-preflight .preflight-issues{padding:12px 16px 14px}
+.preflight-notes>summary{list-style:none;cursor:pointer}
+.preflight-notes>summary::-webkit-details-marker{display:none}
+.preflight-notes>summary .preflight-pill::after{content:"";width:5px;height:5px;margin-left:3px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:translateY(-2px) rotate(45deg);transition:transform .15s}
+.preflight-notes[open]>summary .preflight-pill::after{transform:translateY(1px) rotate(-135deg)}
+.preflight-notes-list{padding:12px 16px 14px;border-top:1px solid color-mix(in srgb,var(--amber) 30%,var(--line))}
+.assembly-preflight>.preflight-notes{padding:0 14px 10px}
+.assembly-preflight>.preflight-notes>.preflight-notes-list{margin-top:8px;padding:10px 2px 0}
+.designer-auto-note{display:flex;align-items:center;gap:8px;margin:0 0 14px;font-size:13px;color:var(--accent)}
+.designer-more{margin:4px 0 14px;border-top:1px solid var(--line);padding-top:12px}
+.designer-more>summary{padding:2px 0;font-size:12.5px;color:var(--soft);cursor:pointer}
+.designer-more[open]>summary{margin-bottom:12px}
+.designer-footer-reason{margin-right:6px;font-size:12.5px;color:var(--red);text-decoration:underline;text-underline-offset:3px}
+.designer-footer .btn.primary:disabled:hover{transform:none;filter:none}
+@media(max-width:760px){.designer-footer-reason{flex-basis:100%;order:4;margin:0;text-align:right}}

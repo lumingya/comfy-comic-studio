@@ -14,7 +14,7 @@ function installDesktopSelection() {
       get:()=>ui.selected, set:s=>{ui.selected=s;ui.bulk=s.size>0;if(!s.size)ui.bulkPinned=false}, render:()=>refreshGallery(),
       open:e=>handleAction('read',{id:e.dataset.sortBook}), remove:ids=>handleAction('org-context-delete',{ids:JSON.stringify(ids)})},
     {root:'.designer-presets', item:'.designer-preset', key:e=>e.querySelector('input').dataset.designerPreset,
-      get:()=>assemblyDesign.presets, set:s=>{assemblyDesign.presets=s}, render:()=>{const e=document.querySelector('#designer-presets-status');if(e)e.textContent=designerPresetsStatus()}},
+      get:()=>assemblyDesign.presets, set:s=>{assemblyDesign.presets=s;assemblyDesign.presetsTouched=true}, render:()=>designerSelectionChanged()},
     {root:'.workshop-frames-list', item:'button[data-index]', key:e=>Number(e.dataset.index),
       get:()=>workshop.pickedFrames, set:s=>{workshop.pickedFrames=s}, render:()=>render(), open:e=>e.click(),
       remove:()=>handleAction('workshop-frame-delete-bulk',{})},
