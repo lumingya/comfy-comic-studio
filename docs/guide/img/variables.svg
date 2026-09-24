@@ -18,7 +18,7 @@ code,.c{font-family:ui-monospace,Consolas,monospace}
 <text class="h" x="30" y="120">取值顺序（越往右优先级越高，同名时覆盖左边）</text>
 <rect class="card" x="30" y="132" width="190" height="112" rx="8"/><text class="t" x="44" y="156">预设 A · 角色</text><text class="c" x="44" y="180">character = Mio</text><text class="c" x="44" y="200">outfit = school uniform</text><text class="c" x="44" y="220">weapon =</text><text class="s" x="118" y="220">（空值）</text>
 <rect class="card" x="236" y="132" width="190" height="112" rx="8"/><text class="t" x="250" y="156">预设 B · 夏装</text><text class="c x" x="250" y="180">outfit = …</text><text class="c" x="250" y="200">outfit = sundress</text><text class="s" x="250" y="224">后选的预设覆盖同名变量</text>
-<rect class="card" x="442" y="132" width="190" height="112" rx="8"/><text class="t" x="456" y="156">画册自己的设定</text><text class="c" x="456" y="180">style = watercolor</text><text class="s" x="456" y="204">在阅读器「设定」里改</text><text class="s" x="456" y="222">只影响这一本画册</text>
+<rect class="card" x="442" y="132" width="190" height="112" rx="8"/><text class="t" x="456" y="156">画册自己的设定</text><text class="c" x="456" y="180">style = watercolor</text><text class="s" x="456" y="204">为这一本单独设的值</text><text class="s" x="456" y="222">只影响这一本画册</text>
 <rect class="hot" x="648" y="132" width="202" height="112" rx="8"/><text class="t" x="662" y="156">单幕覆盖</text><text class="s" x="662" y="180">只改某一幕的取值</text><text class="s" x="662" y="200">优先级最高</text>
 <path class="a" d="M440 250 V282"/>
 <text class="h" x="30" y="300">最终发给图像服务的</text>
