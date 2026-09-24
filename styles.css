@@ -1278,6 +1278,15 @@ select.choice-list:focus-visible{border-color:var(--accent2);box-shadow:0 0 0 3p
 .shelf-drag-ghost img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform:none!important}
 .shelf-drag-ghost .artwork-missing{position:absolute;inset:0;width:100%;height:100%;margin:0}
 .shelf-item .shelf-cover,.shelf-exhibit .shelf-cover{-webkit-user-drag:none}
+/* Failed task card (assembly-workshop.js productionErrorHTML): category, one-line reason, what fixes it, technical details. */
+.production-error-panel{display:grid;gap:4px;margin:2px 0 0;padding:10px 12px;border:1px solid color-mix(in srgb,var(--red) 35%,var(--line));border-radius:10px;background:color-mix(in srgb,var(--red) 6%,transparent)}
+.production-error-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;margin:0;font-size:13px}
+.production-error-head strong{color:var(--red)}
+.production-error-head span{color:var(--muted);font-size:12px}
+.production-error-panel .production-error{margin:0;color:var(--text)}
+.production-error-tail{margin:0;font-size:12px;line-height:1.6;color:var(--muted)}
+.production-error-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.production-diagnostics-tools{display:flex;justify-content:flex-end;margin-bottom:8px}
 /* Top-bar image service chip (engine.js imageServiceChipHTML): which service generation uses and whether it is ready. */
 .image-service-chip{display:inline-flex;align-items:center;gap:7px;min-height:30px;padding:0 11px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font-size:12px;line-height:1;cursor:pointer;white-space:nowrap}
 .image-service-chip:hover{color:var(--text);border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}

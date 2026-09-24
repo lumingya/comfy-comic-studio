@@ -1274,7 +1274,8 @@ class ProductionQueue:
         first = failures[0][1]
         text = str(len(failures)) + "/" + str(total) + " 幕失败：" + first
         if fatal is not None and remaining:
-            text += "；连续失败或凭据错误，已停止剩余 " + str(len(remaining)) + " 幕"
+            # The first error says why; the tail says what happened to the rest and how to go on.
+            text += "\n已停止：其余 " + str(len(remaining)) + " 幕没有发出。修好后点“开始生成”，会接着生成未完成的分幕。"
         return text
 
     def close(self, timeout=30):

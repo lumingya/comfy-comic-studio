@@ -174,7 +174,7 @@ class ProductionQueueTests(unittest.TestCase):
         class Denied(Exception):status=401
         def render(task,index,cancel):raise Denied('HTTP 401: invalid_api_key')
         self.q.render=render;a,b=self.make('A'),self.make('B');self.q.start(a['id'],sequential=True,trusted=True);after=self.wait(a['id'],'failed')
-        self.assertEqual([p['state'] for p in after['pages']],['failed','standby','standby']);self.assertIn('拒绝了密钥',after['error']);self.assertIn('已停止剩余 2 幕',after['error'])
+        self.assertEqual([p['state'] for p in after['pages']],['failed','standby','standby']);self.assertIn('拒绝了密钥',after['error']);self.assertIn('其余 2 幕没有发出',after['error'])
         self.assertEqual(self.q.get(b['id'])['status'],'standby');self.assertEqual(self.q.get(b['id'])['selection'],[]);self.assertEqual(self.q.list()['lane'],[])
     def test_consecutive_failures_trip_the_streak_guard(self):
         def render(task,index,cancel):raise ValueError('boom '+str(index))

@@ -1774,11 +1774,32 @@ function extendCurrentLocaleCatalog(catalog){Object.assign(catalog.messages,{
   "检测中": "Checking",
   "待配置": "Needs setup",
   "图像服务设置": "Image service settings",
-  "无法读取 ComfyUI 节点定义：确认 ComfyUI 已启动，地址和端口正确（默认 http://127.0.0.1:8188）。": "Cannot read the ComfyUI node definitions: make sure ComfyUI is running and the address and port are correct (default http://127.0.0.1:8188)."
+  "无法读取 ComfyUI 节点定义：确认 ComfyUI 已启动，地址和端口正确（默认 http://127.0.0.1:8188）。": "Cannot read the ComfyUI node definitions: make sure ComfyUI is running and the address and port are correct (default http://127.0.0.1:8188).",
+  "技术详情": "Technical details",
+  "测试连接": "Test connection",
+  "打开工作流": "Open workflow",
+  "查看分幕": "View scenes",
+  "复制全部": "Copy all",
+  "生成失败": "Generation failed",
+  "连接被拒绝": "Connection refused",
+  "这个地址上没有正在运行的图像服务。请确认服务已启动，地址和端口正确（ComfyUI 默认 http://127.0.0.1:8188）。": "No image service is running at this address. Make sure it is started and the address and port are correct (ComfyUI default: http://127.0.0.1:8188).",
+  "找不到服务器": "Server not found",
+  "地址中的域名无法解析。请检查地址拼写，以及网络或代理设置。": "The host name in the address could not be resolved. Check the spelling and your network or proxy settings.",
+  "网络不通": "Network unreachable",
+  "无法到达服务地址。请检查网络、代理或防火墙设置。": "The service address cannot be reached. Check your network, proxy or firewall settings.",
+  "安全连接失败（SSL / 证书）": "Secure connection failed (SSL / certificate)",
+  "请确认地址是 http 还是 https，并检查系统时间和代理证书。": "Check whether the address should be http or https, and check the system clock and proxy certificates.",
+  "连接超时": "Connection timed out",
+  "服务地址没有响应，请求没有发出。请确认地址正确、服务已启动，或检查网络和代理。": "The service address did not respond, so the request was not sent. Check the address, make sure the service is running, or check your network and proxy.",
+  "连接中断": "Connection lost",
+  "服务在返回结果前断开了连接，请求可能已被接收。请先在服务端核对，再决定是否重跑。": "The service closed the connection before returning a result; the request may have been accepted. Check on the service side before rerunning.",
+  "连接在发送请求时中断，请求没有完整发出。请检查网络或代理后重试。": "The connection broke while sending, so the request was not fully sent. Check your network or proxy and try again."
 });return catalog}
 
 function translateCurrentLocale(text){
  const patterns=[
+  [/^已停止：其余 (\d+) 幕没有发出。修好后点“开始生成”，会接着生成未完成的分幕。$/,(_,n)=>'Stopped: the other '+n+(n==='1'?' scene was':' scenes were')+' not sent. After fixing the problem, click Start generation to continue with the unfinished scenes.'],
+  [/^(\d+)\/(\d+) 幕失败$/,(_,a,b)=>a+'/'+b+(b==='1'?' scene failed':' scenes failed')],
   [/^连不上 ComfyUI：确认它已启动，地址 (.+) 可以访问。$/,(_,url)=>'Cannot reach ComfyUI: make sure it is running and '+url+' is reachable.'],
   [/^(图像服务：)?(.+) · (已连接|未连接|检测中|待配置|就绪|离线预览)$/,(_,lead,name,st)=>(lead?'Image service: ':'')+name+' · '+({已连接:'connected',未连接:'not connected',检测中:'checking',待配置:'needs setup',就绪:'ready',离线预览:'offline preview'})[st]],
   [/^添加 API 密钥：(.+) 需要密钥才能生成。$/,(_,host)=>'Add an API key: '+host+' requires a key to generate.'],
