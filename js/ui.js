@@ -739,22 +739,50 @@ function finishNameFirst(useDefault=false){const text=$('#welcome-name')?.value.
 function renderPersistentProjectMenu(){const menu=$('#project-popover'),trigger=$('#project-switch-button');if(!trigger)return;menu.innerHTML=`<div class="project-popover-label row">切换画册集<span class="spacer"></span>${ibtn('close','v3-project-close','关闭画册集菜单')}</div>${state.projects.map(p=>`<button class="project-choice" role="menuitem" data-act="project" data-id="${p.id}" aria-current="${p.id===state.activeProjectId}">${icon('folder','sm')}<span class="grow"><strong>${esc(p.title)}</strong><small>${state.creation.plans.filter(x=>x.projectId===p.id).length} 个计划 · ${state.books.filter(b=>b.projectId===p.id).length} 本画册</small></span></button>`).join('')}<button class="project-new" data-act="new-project">${icon('plus','sm')}新建画册集</button><button class="project-choice" data-act="project-rename">${icon('edit','sm')}重命名当前画册集</button>`;const r=trigger.getBoundingClientRect();menu.style.left=clamp(r.left,12,Math.max(12,innerWidth-312))+'px';menu.style.top=(r.bottom+7)+'px';menu.hidden=false;trigger.setAttribute('aria-expanded','true');detailUI.projectOpen=true;}
 
 
+/* T4 · C7: the command palette is an action centre. Besides places and resources it runs the everyday actions (new storyboard,
+   preset, generation task or collection; start / pause the queue; test the image service; switch collection; export a backup;
+   theme; language) and, from two characters on, finds scenes by the words in their prompt or caption. Keywords let an English
+   query ("new", "theme", "backup") find the Chinese titles. */
+function commandSnippet(text,query){const raw=String(text||'').replace(/\s+/g,' '),at=raw.toLowerCase().indexOf(query);if(at<0)return '';const start=Math.max(0,at-10),end=Math.min(raw.length,at+query.length+18);return (start?'…':'')+raw.slice(start,end)+(end<raw.length?'…':'')}
 function commandIndexV3(query){
-  const all=[
-    {title:'画册集',type:'主功能',icon:'book',run:()=>navigate(0)},
-    {title:'创作画册',type:'主功能',icon:'story',run:()=>navigate(1)},
-    {title:'设置',type:'主功能',icon:'settings',run:()=>navigate(5)},
-    {title:'工作流配置',type:'设置',icon:'nodes',run:()=>{studioUI.settingsTab='mapping';navigate(5)}},
-    {title:'可选功能',type:'主功能',icon:'nodes',run:()=>navigate(7)},
-    {title:'工具与资源',type:'设置',icon:'box',run:()=>{studioUI.settingsTab='resources';navigate(5)}},
-    {title:'快速开始教程',type:'帮助',icon:'help',run:()=>openQuickStart(0)}
-  ];
-  if(state.settings.studio.visibility.logs)all.push({title:'运行日志',type:'主功能',icon:'terminal',run:()=>navigate(6)});
-  if(state.settings.studio.visibility.llm)all.push({title:'AI 写故事',type:'可选工具',icon:'spark',run:()=>navigate(4)});
-  for(const p of state.creation.plans)all.push({title:p.title,type:'画册',icon:'story',run:()=>{changeProject(p.projectId);createUI.planId=p.id;createUI.tab='plans';navigate(1)}});
-  for(const b of state.books)all.push({title:b.title,type:'已生成画册',icon:'book',run:()=>openReader(b.id)});
-  for(const t of state.templates)all.push({title:t.title,type:'分镜',icon:'story',run:()=>{changeProject(t.projectId);ui.templateId=t.id;createUI.tab='scenes';navigate(1)}});
-  rt.commandItems=all.filter(x=>(x.title+' '+x.type+' '+localeString(x.title)).toLowerCase().includes(query.toLowerCase())).slice(0,50);
+  const q=String(query||'').trim().toLowerCase(),all=[],add=(title,type,iconName,run,keywords='')=>all.push({title,type,icon:iconName,run,keywords});
+  const inWorkshop=(view,after)=>async()=>{workshop.view=view;navigate(1);if(view==='production'&&typeof refreshProduction==='function')await refreshProduction();if(after)await after()};
+  const openStory=(t,index=null,field='prompt')=>()=>{if(t.projectId&&t.projectId!==state.activeProjectId)changeProject(t.projectId);workshop.view='stories';workshop.storyId=t.id;workshop.pickedFrames?.clear();navigate(1);if(index!==null){selectWorkshopFrame(index);designerFocusWorkshopField(field)}};
+  const comfy=activeImageProfile()?.provider==='comfyui',english=state.settings.presentation.language==='en',dark=(state.settings.studio.appearance?.theme||document.documentElement.dataset.theme)!=='light';
+  add('新建分镜','动作','plus',inWorkshop('stories',()=>handleAction('workshop-new',{})),'new storyboard create 创建 添加');
+  add('新建预设','动作','plus',inWorkshop('presets',()=>handleAction('workshop-new',{})),'new preset create character scene 创建 添加 角色 场景');
+  add('新建生成任务','动作','play',()=>openAssemblyDesigner(),'new generation task create assemble 创建 添加 装配 向导');
+  add('新建画册集','动作','folder',()=>handleAction('new-project',{}),'new collection create 创建 添加');
+  const queueAction=(act,can,why)=>inWorkshop('production',()=>{const c=typeof productionQueueControls==='function'?productionQueueControls():null;if(c&&!c[can]){toast(why,'warn');return}return handleAction(act,{})});
+  add('按顺序开始生成','动作','list',queueAction('production-sequence','canSequence','没有可以顺次生成的任务：请先装配'),'start all queue generate 全部开始 队列');
+  add('全局暂停','动作','pause',queueAction('production-pause','canPause','没有正在运行或排队的任务'),'pause all queue 全部暂停 队列');
+  add('继续生成','动作','play',queueAction('production-resume','canResume','没有暂停中的任务'),'resume queue 队列');
+  add(comfy?'测试 ComfyUI 连接':'图像服务设置','动作','refresh',comfy?()=>testEngine(false):()=>handleAction('image-provider-settings',{}),'test connection image service comfyui 连接 检查 图像服务');
+  for(const p of state.projects)if(p.id!==state.activeProjectId)add(localeString('切换到画册集「{title}」',{title:p.title}),'画册集','folder',()=>handleAction('project',{id:p.id}),'switch collection 切换');
+  add('导出完整备份（ZIP）','动作','download',()=>handleAction('disk-archive',{}),'export backup archive download 备份 导出 下载');
+  add('工程备份与恢复…','动作','disk',()=>backupModal(),'backup restore import 备份 恢复 导入');
+  add(dark?'切换到浅色主题':'切换到深色主题','偏好','sun',()=>handleAction('theme',{}),'theme light dark appearance 主题 外观');
+  add(english?'切换到中文':'Switch to English','偏好','settings',()=>changeInterfaceLanguage(english?'zh-CN':'en'),'language english chinese 语言 中文 英文');
+  add('快速开始教程','帮助','help',()=>openQuickStart(0),'tutorial guide quickstart help 教程 帮助');
+  add('首页','前往','home',()=>navigate(9),'home');
+  add('画册集','前往','book',()=>navigate(0),'collections albums gallery');
+  add('分镜工坊','前往','story',inWorkshop('stories'),'storyboard workshop');
+  add('预设工坊','前往','brush',inWorkshop('presets'),'preset workshop');
+  add('装配与队列','前往','play',inWorkshop('production'),'generation tasks queue production');
+  add('工作流与 API 配置','前往','nodes',()=>navigate(3),'workflow api image service mapping');
+  add('设置','前往','settings',()=>navigate(5),'settings preferences');
+  add('工具与资源','设置','box',()=>{studioUI.settingsTab='resources';navigate(5)},'tools resources');
+  if(state.settings.studio.visibility.logs)add('运行日志','前往','terminal',()=>navigate(6),'logs');
+  if(state.settings.studio.visibility.llm)add('AI 写故事','可选工具','spark',()=>navigate(4),'story ai llm');
+  if(workspaceVisible(7))add('可选功能','前往','nodes',()=>navigate(7),'extensions optional');
+  for(const b of state.books)add(b.title,'画册','book',()=>{if(b.projectId&&b.projectId!==state.activeProjectId)changeProject(b.projectId);openReader(b.id)});
+  for(const t of state.templates)add(t.title,'分镜','story',openStory(t));
+  for(const p of state.creation?.variableSets||[])add(p.title,'预设','brush',()=>{if(p.projectId&&p.projectId!==state.activeProjectId)changeProject(p.projectId);workshop.view='presets';workshop.presetId=p.id;navigate(1)});
+  for(const w of state.settings.comfy.presets||[])add(w.title||w.id,'工作流','nodes',()=>{navigate(3);handleAction('ws-select',{id:w.id})});
+  const match=x=>!q||(x.title+' '+x.type+' '+localeString(x.title)+' '+localeString(x.type)+' '+x.keywords).toLowerCase().includes(q);
+  const items=all.filter(match);
+  if(q.length>=2){let found=0;for(const t of state.templates)for(const [i,f] of (t.frames||[]).entries()){if(found>=12)break;for(const [field,label] of [['caption','台词'],['prompt','提示词'],['name','']]){const snippet=commandSnippet(f[field],q);if(!snippet)continue;items.push({title:localeString('第 {n} 幕',{n:i+1})+(f.name?' · '+f.name:''),type:t.title+(label?' · '+localeString(label)+'：'+snippet:''),icon:'story',run:openStory(t,i,field==='name'?'prompt':field)});found++;break}}}
+  rt.commandItems=items.slice(0,60);
   rt.commandIndex=clamp(rt.commandIndex,0,Math.max(0,rt.commandItems.length-1));
   $('#command-results').innerHTML=rt.commandItems.map((x,i)=>`<button class="command-item ${i===rt.commandIndex?'active':''}" data-act="run-command" data-index="${i}">${icon(x.icon)}<span>${esc(x.title)}</span><small>${esc(x.type)}</small></button>`).join('')||'<div class="empty">没有匹配结果。</div>';
 }

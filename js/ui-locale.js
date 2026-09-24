@@ -1870,7 +1870,21 @@ function extendCurrentLocaleCatalog(catalog){Object.assign(catalog.messages,{
   "框选或 Ctrl / ⌘ 点击可多选，右键批量操作": "Drag a box or Ctrl / ⌘-click to select several; right-click for batch actions",
   "已选 {count} 本": "{count} selected",
   "已选 {n} 幕": "{n} selected",
-  "更多…": "More…"
+  "更多…": "More…",
+  "动作": "Action",
+  "偏好": "Preference",
+  "前往": "Go to",
+  "测试 ComfyUI 连接": "Test ComfyUI connection",
+  "导出完整备份（ZIP）": "Export full backup (ZIP)",
+  "工程备份与恢复…": "Backup and restore…",
+  "切换到浅色主题": "Switch to light theme",
+  "切换到深色主题": "Switch to dark theme",
+  "切换到中文": "切换到中文 (Chinese)",
+  "切换到画册集「{title}」": "Switch to collection “{title}”",
+  "提示词": "Prompt",
+  "可选工具": "Optional tool",
+  "没有匹配结果。": "No matches.",
+  "搜索画册、分镜、预设与台词，或输入动作，例如“新建”": "Search albums, storyboards, presets and captions, or type an action such as “new”"
 });return catalog}
 
 function translateCurrentLocale(text){

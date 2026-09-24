@@ -1304,7 +1304,9 @@
     "selectionStatusInnerHTML": "readonly",
     "shelfSelectionInnerHTML": "readonly",
     "workshopFramesSelectionContextItems": "readonly",
-    "multiSelectHintSeen": "readonly"
+    "multiSelectHintSeen": "readonly",
+    "designerFocusWorkshopField": "readonly",
+    "productionQueueControls": "readonly"
   },
   "parserOptions": {
     "ecmaVersion": 2021,
