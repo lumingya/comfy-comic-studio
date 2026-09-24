@@ -1027,17 +1027,17 @@ function installAssemblyWorkshop(){
         <summary>微调分镜提示词（${source.frames.length} 幕）</summary>
         <div class="queue-clone-frames" style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;margin-top:8px">
           ${source.frames.map((f,i)=>`<fieldset style="border:1px solid var(--border,#333);border-radius:6px;padding:8px 12px">
-            <legend style="font-weight:bold;font-size:12px">第 ${i+1} 幕 · ${esc(f.name||'分幕')}</legend>
-            <label style="display:block;margin-top:4px;font-size:12px">提示词<textarea data-clone-frame="${i}" data-clone-field="prompt" rows="2" style="width:100%">${esc(f.prompt||'')}</textarea></label>
-            <label style="display:block;margin-top:4px;font-size:12px">负向提示词<textarea data-clone-frame="${i}" data-clone-field="negative" rows="1" style="width:100%">${esc(f.negative||'')}</textarea></label>
-            <label style="display:block;margin-top:4px;font-size:12px">台词 / 旁白<textarea data-clone-frame="${i}" data-clone-field="caption" rows="1" style="width:100%">${esc(f.caption||'')}</textarea></label>
+            <legend style="font-weight:bold;font-size:.75rem">第 ${i+1} 幕 · ${esc(f.name||'分幕')}</legend>
+            <label style="display:block;margin-top:4px;font-size:.75rem">提示词<textarea data-clone-frame="${i}" data-clone-field="prompt" rows="2" style="width:100%">${esc(f.prompt||'')}</textarea></label>
+            <label style="display:block;margin-top:4px;font-size:.75rem">负向提示词<textarea data-clone-frame="${i}" data-clone-field="negative" rows="1" style="width:100%">${esc(f.negative||'')}</textarea></label>
+            <label style="display:block;margin-top:4px;font-size:.75rem">台词 / 旁白<textarea data-clone-frame="${i}" data-clone-field="caption" rows="1" style="width:100%">${esc(f.caption||'')}</textarea></label>
           </fieldset>`).join('')}
         </div>
       </details>
       <details class="quiet-advanced" style="margin-top:12px">
         <summary>微调生成参数</summary>
         <div style="margin-top:8px">
-          <label style="display:block;font-size:12px">全局负向提示词<textarea id="queue-clone-negative" rows="2" style="width:100%">${esc(source.globalNegative||'')}</textarea></label>
+          <label style="display:block;font-size:.75rem">全局负向提示词<textarea id="queue-clone-negative" rows="2" style="width:100%">${esc(source.globalNegative||'')}</textarea></label>
           ${source.canSeed?`<label class="row small soft" style="margin-top:8px"><input type="checkbox" id="queue-clone-fixed-seed" ${source.seedEnabled?'checked':''}>固定种子</label><input type="number" min="0" max="4294967295" step="1" id="queue-clone-seed" value="${source.seed??1}">`:''}
         </div>
       </details>

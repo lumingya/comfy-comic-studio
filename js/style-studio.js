@@ -17,7 +17,7 @@ const SS_RECIPES=[
   {id:'no-motion',name:'减少动效',css:'*,*::before,*::after{animation-duration:.001s!important;transition-duration:.001s!important}'},
   {id:'scrollbar',name:'细滚动条',css:'*{scrollbar-width:thin;scrollbar-color:var(--line) transparent}\n::-webkit-scrollbar{width:8px;height:8px}\n::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}'},
   {id:'hide-element',name:'隐藏某个元素（配合“拾取元素”）',css:'/* 点击“拾取元素”，把生成的选择器粘到下面 */\n.selector-here{display:none!important}'},
-  {id:'bigger-text',name:'放大界面文字',css:'html{font-size:15px}\nbody{font-size:14px}\n.nav-item,.btn{font-size:13px}'}
+  {id:'bigger-text',name:'放大界面文字',css:'/* 常用三档在 设置 → 通用偏好 → 界面字号；这里可以设任意比例 */\nhtml,html[data-font-scale]{font-size:118.75%}'}
 ];
 /* ------------------------------------------------------------------ data */
 function ssLoad(force=false){

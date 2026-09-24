@@ -258,6 +258,7 @@ function validateStudioData(s){
     for(const key of ['showMetrics','reduceMotion'])if(p.appearance?.[key]!==undefined&&typeof p.appearance[key]!=='boolean')throw Error('外观开关必须是布尔值。');
     if(p.appearance?.theme&&!['light','dark'].includes(p.appearance.theme))throw Error('主题配置不合法。');
     if(p.appearance?.density&&!['comfortable','compact'].includes(p.appearance.density))throw Error('界面密度不合法。');
+    if(p.appearance?.fontScale&&!FONT_SCALES.includes(p.appearance.fontScale))throw Error('界面字号不合法。');
     if(p.reader?.defaultMode&&!['focus','manga','webtoon','flip'].includes(p.reader.defaultMode))throw Error('默认阅读模式不合法。');
     if(p.assistant?.confirmChanges!==undefined&&typeof p.assistant.confirmChanges!=='boolean')throw Error('助手确认开关不合法。');
     if(p.export?.border!==undefined&&(!Number.isFinite(p.export.border)||p.export.border<0||p.export.border>8))throw Error('默认导出框线不合法。');
@@ -279,11 +280,20 @@ function featureEnabled(key){return state.settings.studio?.features?.[key]!==fal
 
 function switchControl(path,label,value,disabled=false){return `<label class="switch"><input type="checkbox" role="switch" data-studio-pref="${path}" aria-label="${esc(label)}" ${value?'checked':''} ${disabled?'disabled':''}><span class="switch-track" aria-hidden="true"></span></label>`;}
 
+/* 界面字号：所有界面字号都是 rem，改根字号即可整体放大（不用 zoom，框选、菜单与提示的坐标保持正确）。index.html 开头按 cc-font-scale 先套用，避免闪一下。 */
+const FONT_SCALES=['standard','large','xlarge'];
+function applyFontScale(scale){
+  const value=FONT_SCALES.includes(scale)?scale:'standard';
+  document.documentElement.dataset.fontScale=value;
+  try{localStorage.setItem('cc-font-scale',value)}catch(e){}
+}
+
 function applyStudioPreferences(){
   const p=state.settings.studio;if(!p)return;
   document.documentElement.dataset.theme=p.appearance.theme;
   try{localStorage.setItem('cc-theme',p.appearance.theme)}catch(e){}
   document.documentElement.dataset.density=p.appearance.density;
+  applyFontScale(p.appearance.fontScale);
   document.documentElement.dataset.reduceMotion=String(p.appearance.reduceMotion);
   document.querySelectorAll('.metrics').forEach(e=>e.hidden=!p.appearance.showMetrics);
   const launcher=$('.assistant-launch');if(launcher)launcher.hidden=!featureEnabled('assistant');
@@ -326,6 +336,7 @@ function changeStudioPreference(el){
   if(path==='export.templateId'&&!exportTemplateBy(value))throw Error('默认导出模板不存在。');
   if(path==='reader.defaultMode'&&!['focus','manga','webtoon','flip'].includes(value))throw Error('阅读模式不合法。');
   if(path==='appearance.density'&&!['compact','comfortable'].includes(value))throw Error('界面密度不合法。');
+  if(path==='appearance.fontScale'&&!FONT_SCALES.includes(value))throw Error('界面字号不合法。');
   state.settings.studio[group][key]=value;
   if(path==='features.visualCritic'&&!value)state.settings.autoCritique=false;
   if(!workspaceVisible(ui.workspace))ui.workspace=0;
@@ -390,7 +401,7 @@ function workspaceName(){return state.settings.identity?.workspaceName||'未命�
 function tooltipText(el){return el.dataset.tip||actionHelp[el.dataset.act]||el.getAttribute('title')||''}
 
 
-function hideTip(){clearTimeout(detailUI.tooltipTimer);const tip=$('#ui-tooltip');if(tip&&!tip.hidden)tip.hidden=true;detailUI.tooltipTarget?.removeAttribute('aria-describedby');detailUI.tooltipTarget=null}
+function hideTip(){clearTimeout(detailUI.tooltipTimer);const tip=$('#ui-tooltip');if(tip&&!tip.hidden)tip.hidden=true;detailUI.tooltipTarget?.removeAttribute('aria-describedby');if(detailUI.tipPinned)detailUI.tooltipTarget?.setAttribute('aria-expanded','false');detailUI.tooltipTarget=null;detailUI.tipPinned=false}
 
 
 function revealTip(el){
@@ -402,12 +413,12 @@ function revealTip(el){
 }
 
 
-function hint(text){return `<button type="button" class="hint-button" data-tip="${esc(text)}" aria-label="操作说明：${esc(text)}">?</button>`}
+function hint(text){return `<button type="button" class="hint-button" data-tip="${esc(text)}" aria-expanded="false" aria-label="操作说明：${esc(text)}">?</button>`}
 
 
 function renderProjectPopover(){
   const menu=$('#project-popover'),button=$('#project-switch-button');if(!menu||!button)return;
-  menu.innerHTML=`<div class="project-popover-label">切换画册集 / PROJECTS</div>${state.projects.map(p=>`<button class="project-choice" role="menuitem" aria-current="${p.id===state.activeProjectId}" data-act="project" data-id="${p.id}">${icon('folder','sm')}<span class="grow"><strong>${esc(p.title)}</strong><small>${state.books.filter(b=>b.projectId===p.id).length} 本画册 · 独立资产目录</small></span>${p.id===state.activeProjectId?icon('check','sm'):''}</button>`).join('')}<button class="project-new" role="menuitem" data-act="new-project">${icon('plus','sm')}新建画册集<span class="spacer"></span><span class="kbd">N</span></button><button class="project-choice" role="menuitem" data-act="project-rename">${icon('edit','sm')}<span style="font-size:11px">重命名当前画册集</span></button>`;
+  menu.innerHTML=`<div class="project-popover-label">切换画册集 / PROJECTS</div>${state.projects.map(p=>`<button class="project-choice" role="menuitem" aria-current="${p.id===state.activeProjectId}" data-act="project" data-id="${p.id}">${icon('folder','sm')}<span class="grow"><strong>${esc(p.title)}</strong><small>${state.books.filter(b=>b.projectId===p.id).length} 本画册 · 独立资产目录</small></span>${p.id===state.activeProjectId?icon('check','sm'):''}</button>`).join('')}<button class="project-new" role="menuitem" data-act="new-project">${icon('plus','sm')}新建画册集<span class="spacer"></span><span class="kbd">N</span></button><button class="project-choice" role="menuitem" data-act="project-rename">${icon('edit','sm')}<span style="font-size:.75rem">重命名当前画册集</span></button>`;
   const rect=button.getBoundingClientRect();menu.style.left=clamp(rect.left,12,innerWidth-312)+'px';menu.style.top=(rect.bottom+7)+'px';menu.hidden=false;button.setAttribute('aria-expanded','true');detailUI.projectOpen=true;
 }
 
@@ -667,9 +678,9 @@ function renderCreationWorkspace(){
 
 function renderPlanRail(){return `<aside class="creation-rail"><div class="creation-rail-head"><span>本画册集的画册计划</span>${ibtn('plus','v3-plan-new','新建画册计划')}</div>${projectPlans().map(p=>`<div class="plan-list-item ${p.id===createUI.planId?'active':''}"><input type="checkbox" data-v3-plan-enabled="${p.id}" ${p.enabled?'checked':''} aria-label="勾选 ${esc(p.title)} 参与生成"><button class="plan-list-button" data-act="v3-plan-select" data-id="${p.id}"><strong>${esc(p.title)}</strong><small>${esc(templateBy(p.templateId)?.title||'尚未选择分镜')}<br>${p.variableSetIds.length} 组复用素材</small></button></div>`).join('')}${!projectPlans().length?'<p class="help">先给你的第一本画册起一个名字。</p>':''}</aside>`}
 
-function renderPlanPreview(p){try{const t=templateBy(p.templateId),f=t?.frames[0],scope=effectivePlanScope(p,f),title=scopeText(p.title,effectivePlanScope(p).values),frame=f?effectivePlanFrame(p,f):null,missing=missingScopeKeys(p.title,effectivePlanScope(p).values).concat(frame?missingScopeKeys(frame.prompt+' '+frame.caption,scope.values):[]);return `${missing.length?`<div class="scope-warnings">待补充 ${[...new Set(missing)].map(k=>'{'+esc(k)+'}').join('、')}。缺少的变量会在生成前拦截。</div>`:''}<div class="resolved-preview"><strong style="font-family:var(--sans);font-size:13px">${esc(title)}</strong>${frame?'\n\n'+esc(scopeText(frame.prompt,scope.values))+'\n\n'+esc(scopeText(frame.caption,scope.values)):'\n请先选择分镜。'}</div><div class="scope-explain">${icon('nodes')}<span>优先级：复用素材从上到下 → 本册变量 → 本幕变量。${scope.overrides.length?'本幕发生 '+scope.overrides.length+' 处同名覆盖，可在“分镜编辑”中查看。':'当前没有同名冲突。'}</span></div>`}catch(e){return '<div class="scope-warnings">'+esc(e.message)+'</div>'}}
+function renderPlanPreview(p){try{const t=templateBy(p.templateId),f=t?.frames[0],scope=effectivePlanScope(p,f),title=scopeText(p.title,effectivePlanScope(p).values),frame=f?effectivePlanFrame(p,f):null,missing=missingScopeKeys(p.title,effectivePlanScope(p).values).concat(frame?missingScopeKeys(frame.prompt+' '+frame.caption,scope.values):[]);return `${missing.length?`<div class="scope-warnings">待补充 ${[...new Set(missing)].map(k=>'{'+esc(k)+'}').join('、')}。缺少的变量会在生成前拦截。</div>`:''}<div class="resolved-preview"><strong style="font-family:var(--sans);font-size:.8125rem">${esc(title)}</strong>${frame?'\n\n'+esc(scopeText(frame.prompt,scope.values))+'\n\n'+esc(scopeText(frame.caption,scope.values)):'\n请先选择分镜。'}</div><div class="scope-explain">${icon('nodes')}<span>优先级：复用素材从上到下 → 本册变量 → 本幕变量。${scope.overrides.length?'本幕发生 '+scope.overrides.length+' 处同名覆盖，可在“分镜编辑”中查看。':'当前没有同名冲突。'}</span></div>`}catch(e){return '<div class="scope-warnings">'+esc(e.message)+'</div>'}}
 
-function renderCreationQueue(){return `<div class="row wrap" style="margin-bottom:21px"><div class="grow"><h2 style="font-size:17px;font-weight:500;margin:0 0 8px">生成队列</h2><span class="tiny muted">入队后使用当时的分镜、变量和工作流快照，可暂停、继续或增量补齐。</span></div>${btn('开始队列','play','v3-run-queue','','primary')}${btn(rt.paused?'继续':'暂停',rt.paused?'play':'pause','pause-queue')}${btn('中止','stop','interrupt','','danger')}</div><div class="panel table-panel" id="queue-list">${queueHTML()}</div><div class="row" style="margin-top:18px">${btn('查找缺失分镜','refresh','scan-resume','','small')}${btn('查看运行日志','terminal','v3-nav','data-route="logs"','small ghost')}</div>`}
+function renderCreationQueue(){return `<div class="row wrap" style="margin-bottom:21px"><div class="grow"><h2 style="font-size:1.0625rem;font-weight:500;margin:0 0 8px">生成队列</h2><span class="tiny muted">入队后使用当时的分镜、变量和工作流快照，可暂停、继续或增量补齐。</span></div>${btn('开始队列','play','v3-run-queue','','primary')}${btn(rt.paused?'继续':'暂停',rt.paused?'play':'pause','pause-queue')}${btn('中止','stop','interrupt','','danger')}</div><div class="panel table-panel" id="queue-list">${queueHTML()}</div><div class="row" style="margin-top:18px">${btn('查找缺失分镜','refresh','scan-resume','','small')}${btn('查看运行日志','terminal','v3-nav','data-route="logs"','small ghost')}</div>`}
 
 
 function renderLogsWorkspace(){return `<div class="logs-full">${heading('运行日志','按时间查看生成、连接、保存和审校的真实运行记录。',btn('复制日志','copy','copy-logs')+btn('清空本次显示','trash','v3-clear-logs'),'ACTIVITY / EXECUTION')}<div class="logs-filter">${searchInput({id:'v3-log-search',value:createUI.logsSearch,placeholder:'搜索任务、错误或关键词...',label:'搜索运行日志'})}<select id="v3-log-level">${[['all','全部级别'],['error','错误'],['warn','警告'],['info','普通']].map(x=>opt(...x,createUI.logLevel)).join('')}</select><span class="spacer"></span>${btn('打开生成队列','nodes','v3-create-tab','data-tab="queue"','small')}</div><div class="terminal"><div class="terminal-head">${icon('terminal','sm')}LIVE ACTIVITY<span class="spacer"></span><span id="v3-log-count">${rt.logs.length} 条</span></div><div id="log-body" class="terminal-body"></div></div></div>`}
@@ -892,7 +903,7 @@ async function importCuratedDemo(){if(!await confirmAction('载入精选十二�
 /* Domain source: js/ui.js. Cover fitting never crops or stretches the artwork. */
 
 function createWorkspaceChromePolicy(){
-  function navigation(visibility={}){return [[9,'home','首页','0'],[0,'book','画册集','1'],[1,'story','创作工坊','2'],[3,'nodes','工作流与 API 配置','3'],...(visibility.extensions===true?[[7,'toolbox','可选功能','']]:[]),...(visibility.marketplace===true?[[8,'box','模板与扩展市场','']]:[]),...(visibility.llm===true?[[4,'spark','AI 写故事','4']]:[]),[5,'settings','设置',','],...(visibility.logs===true?[[6,'terminal','运行日志','']]:[])]}
+  function navigation(visibility={}){return [[9,'home','首页','0'],[0,'book','画册集','1'],[1,'story','创作工坊','2'],[3,'nodes','工作流与 API 配置','3','工作流'],...(visibility.extensions===true?[[7,'toolbox','可选功能','']]:[]),...(visibility.marketplace===true?[[8,'box','模板与扩展市场','']]:[]),...(visibility.llm===true?[[4,'spark','AI 写故事','4']]:[]),[5,'settings','设置',','],...(visibility.logs===true?[[6,'terminal','运行日志','']]:[])]}
   function ownsDisplayPreferences(tab){return tab==='appearance'}
   function brandFontSize(preferred,availableWidth,measuredWidth){if(![preferred,availableWidth,measuredWidth].every(value=>Number.isFinite(value)&&value>0))return 0;return Math.min(preferred,preferred*Math.max(0,availableWidth-2)/measuredWidth)}
   return Object.freeze({navigation,ownsDisplayPreferences,brandFontSize});

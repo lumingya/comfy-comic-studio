@@ -328,7 +328,7 @@ window.addEventListener('beforeunload',e=>{if(studioUI.editorDirty){e.preventDef
 const disk={root:null,remembered:null,linkDB:null,phase:'memory',busy:false,connecting:false,revision:0,savedRevision:0,rootRevision:null,lastManifestText:null,lastSavedAt:null,lastError:'',lastErrorShown:'',timer:null,tail:Promise.resolve(),allowReduction:false,written:new Map(),resolved:new Map(),paths:{projects:{},books:{},rows:{},templates:{},exports:{},chats:{}},legacy:null,restored:false,workspaceId:null,progress:'',packBusy:false};
 
 
-const detailUI={projectOpen:false,tooltipTimer:null,tooltipTarget:null,assistantExpanded:false,assistantHeight:130,assistantObserver:null,profileDraft:null,renderingAssistant:false};
+const detailUI={projectOpen:false,tooltipTimer:null,tooltipTarget:null,tipPinned:false,tipOpenAtDown:null,lastInput:matchMedia('(hover:none)').matches?'touch':'mouse',assistantExpanded:false,assistantHeight:130,assistantObserver:null,profileDraft:null,renderingAssistant:false};
 
 
 const actionHelp={
@@ -498,10 +498,12 @@ handleAction=async function(act,d={},el){
 document.addEventListener('pointerover',e=>{if(e.pointerType==='touch')return;const el=e.target.closest('[data-tip],[data-act],[title]');if(!el||el.closest('[data-no-tip]')||!tooltipText(el)||el===detailUI.tooltipTarget)return;hideTip();detailUI.tooltipTarget=el;detailUI.tooltipTimer=setTimeout(()=>revealTip(el),450)});
 
 
-document.addEventListener('pointerout',e=>{const el=detailUI.tooltipTarget;if(el&&!el.contains(e.relatedTarget))hideTip()});
+document.addEventListener('pointerout',e=>{const el=detailUI.tooltipTarget;if(el&&!detailUI.tipPinned&&!el.contains(e.relatedTarget))hideTip()});
 
 
-document.addEventListener('focusin',e=>{const el=e.target.closest('[data-tip],[data-act],[title]');if(el&&!el.closest('[data-no-tip]')&&tooltipText(el)){hideTip();detailUI.tooltipTimer=setTimeout(()=>revealTip(el),250)}});
+/* 聚焦时的提示只给鼠标和键盘：最近一次输入是触屏时不弹（点底部导航、打开弹窗后自动聚焦的按钮都会触发聚焦）。 */
+document.addEventListener('keydown',e=>{if(e.key==='Tab'||e.key.startsWith('Arrow'))detailUI.lastInput='keyboard'},true);
+document.addEventListener('focusin',e=>{if(detailUI.lastInput==='touch')return;const el=e.target.closest('[data-tip],[data-act],[title]');if(el&&!el.closest('[data-no-tip]')&&tooltipText(el)){hideTip();detailUI.tooltipTimer=setTimeout(()=>revealTip(el),250)}});
 
 
 document.addEventListener('focusout',()=>hideTip());
@@ -510,7 +512,10 @@ document.addEventListener('focusout',()=>hideTip());
 document.addEventListener('scroll',()=>{if(detailUI.tooltipTarget||detailUI.tooltipTimer)hideTip()},{capture:true,passive:true});
 
 
-document.addEventListener('pointerdown',()=>hideTip());
+document.addEventListener('pointerdown',e=>{detailUI.lastInput=e.pointerType==='touch'?'touch':'mouse';const tip=$('#ui-tooltip');detailUI.tipOpenAtDown=tip&&!tip.hidden?detailUI.tooltipTarget:null;hideTip()});
+
+/* “?” 说明按钮：点一下显示、再点收起（触屏没有悬停；鼠标悬停仍会显示）。点开的说明不随指针移开消失，点别处、滚动或失焦时收起。 */
+document.addEventListener('click',e=>{const h=e.target.closest?.('.hint-button');if(!h)return;const tip=$('#ui-tooltip'),wasOpen=e.detail===0?!!tip&&!tip.hidden&&detailUI.tooltipTarget===h:detailUI.tipOpenAtDown===h;detailUI.tipOpenAtDown=null;hideTip();if(!wasOpen){revealTip(h);detailUI.tipPinned=true;h.setAttribute('aria-expanded','true')}});
 
 
 window.addEventListener('resize',()=>{hideTip();if(detailUI.projectOpen)renderProjectPopover()});
@@ -786,6 +791,7 @@ const v3Core={ensureStudioState,render,renderShell,renderGallery,renderSettingsW
 
 studioDefaults.visibility.logs=true;
 studioDefaults.export.imageProfile??='auto';
+studioDefaults.appearance.fontScale??='standard';
 
 studioDefaults.visibility.llm=false;
 
@@ -1125,7 +1131,7 @@ function installArtStudio(){
   effectivePlanScope=function(plan,frame=null,resolveSet=setBy){const resolved=artCore.effectivePlanScope(plan,frame,resolveSet);for(const key of plan?.excludedSettingKeys||[])if(!(planFrameOverrides(plan,frame||{}).variables||[]).some(e=>e.key===key)&&!(planFrameOverrides(plan,frame||{}).variableSetIds||[]).some(id=>resolveSet(id)?.entries?.some(e=>e.key===key))){if(isImageVariable(resolved.values[key])||(state.creation.removedImageKeys?.[plan.projectId]||[]).includes(key))resolved.values[key]={kind:'mio-image',src:'',name:key};else resolved.values[key]='';resolved.sources[key]='此变量已停用'}return resolved};
   primaryNavItems=function(){return createWorkspaceChromePolicy().navigation(state.settings.studio.visibility)};
   renderShell=function(){
-    artCore.renderShell();const nav=$('#sidebar nav');if(nav)nav.innerHTML=primaryNavItems().map(([id,ic,label,key])=>`<button class="nav-item ${ui.workspace===id?'active':''} ${id===5?'nav-settings':''}" data-act="art-nav" data-route="${id}" aria-label="${label}" title="${label}" ${ui.workspace===id?'aria-current="page"':''}>${icon(ic)}<span>${label}</span><b class="nav-key">${key}</b></button>`).join('');
+    artCore.renderShell();const nav=$('#sidebar nav');if(nav)nav.innerHTML=primaryNavItems().map(([id,ic,label,key,short])=>`<button class="nav-item ${ui.workspace===id?'active':''} ${id===5?'nav-settings':''}" data-act="art-nav" data-route="${id}" aria-label="${label}" title="${label}" ${ui.workspace===id?'aria-current="page"':''}>${icon(ic)}<span>${label}</span>${short?`<span class="nav-short" aria-hidden="true">${short}</span>`:''}<b class="nav-key">${key}</b></button>`).join('');
     const version=$('.brand-sub span');if(version)version.textContent='v3.1';const crumb=$('.breadcrumb strong');if(crumb)crumb.textContent=ui.workspace===9?'首页':ui.workspace===0?'画册集':ui.workspace===7?'可选功能':ui.workspace===1?'创作画册':ui.workspace===6?'运行日志':ui.workspace===5?'设置':crumb.textContent;
     $('#project-switch-button')?.setAttribute('aria-label','切换画册集');refreshInterfaceCopy($('#sidebar'));refreshInterfaceCopy($('#topbar'));
   };
@@ -1253,7 +1259,7 @@ function installCollectionDisplay(){
   collectionDisplayCore={ensureStudioState,render,renderShell,refreshGallery,handleAction,renderArtReader,renderArtCanvas,renderRoomInfo,renderStatus,modal,toast,loadState};
   ensureStudioState=function(s=state){collectionDisplayCore.ensureStudioState(s);ensureCollectionDisplay(s);if(s===state)applyDisplayAttributes();return s};
   renderCollectionGallery=renderResponsiveCollection;artGalleryResults=responsiveCollectionResults;galleryResults=responsiveCollectionResults;
-  renderShell=function(){collectionDisplayCore.renderShell();const version=$('.brand-sub span');if(version)version.textContent='v'+MIO_VERSION;applyDisplayAttributes();localizeWorkspace($('#sidebar'));localizeWorkspace($('#topbar'));observeSidebarWordmark()};
+  renderShell=function(){collectionDisplayCore.renderShell();const version=$('.brand-sub span');if(version)version.textContent='v'+MIO_VERSION.replace(/[-+].*$/,'');applyDisplayAttributes();localizeWorkspace($('#sidebar'));localizeWorkspace($('#topbar'));observeSidebarWordmark()};
   render=function(){collectionDisplayCore.render();decorateDisplayPreferences();fitVisibleCovers();localizeWorkspace();requestDemoCleanupSave()};
   refreshGallery=function(){const root=$('#gallery-results');if(ui.workspace===0&&root){root.innerHTML=responsiveCollectionResults();fitVisibleCovers();localizeWorkspace(root)}};
   renderArtReader=function(){collectionDisplayCore.renderArtReader();localizeWorkspace($('#reader'))};
