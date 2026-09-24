@@ -1107,6 +1107,10 @@ select.choice-list:focus-visible{border-color:var(--accent2);box-shadow:0 0 0 3p
 .seed-setting-row>input{flex:0 0 160px;max-width:160px;font-family:var(--mono)}
 .seed-setting input:disabled{opacity:.45}
 .seed-setting>.help{margin:10px 0 0}
+/* S7: a destructive confirmation says so in colour; Cancel keeps the initial focus. */
+#confirm-dialog.is-danger #confirm-yes{background:var(--red);border-color:var(--red);color:var(--bg)}
+#confirm-dialog.is-danger #confirm-yes:hover{filter:brightness(1.08)}
+#confirm-dialog.is-danger #confirm-yes:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 /* S6: problems that make every scene look the same or make generation fail are shown in place, with the fix next to them. */
 .seed-setting-alert,.designer-model-alert{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin:10px 0 0;padding:9px 12px;border:1px solid color-mix(in srgb,var(--amber) 45%,var(--line));border-radius:9px;background:color-mix(in srgb,var(--amber) 8%,transparent);color:var(--text);font-size:12.5px;line-height:1.5}
 .seed-setting-alert>span,.designer-model-alert>span{flex:1 1 220px}
