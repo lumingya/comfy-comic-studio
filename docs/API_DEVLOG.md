@@ -99,7 +99,7 @@
 
 - [x] A0 审查、计划，写本日志
 - [x] A1 框架：`backend/api_v1`（路由表、上下文、信封和错误、OpenAPI 生成、PUT/PATCH/DELETE、ETag/If-Match、X-Request-Id、CORS），迁移全部现有 v1 路由，删除 `mio_api_ext.py` 和 `mio_contracts.py`
-- [ ] A2 文件库通用 CRUD：
+- [x] A2 文件库通用 CRUD：
   - 路由：`/library`、`/library/{kind}`、`/library/{kind}/{id}`
   - 附加操作：duplicate、bundle 导出、import/inspect、order、problems、rescan
   - 修复 `host.library.put/delete`
@@ -145,4 +145,29 @@
   - 测试夹具 `tests/api_support.py`：临时 DATA_DIR 加真实 HTTP 服务，teardown 时关闭 ecosystem、foundation 和 native store。
   - `test_external_api` 改为使用真实临时工作区。新增 `test_api_v1_core`（9 个）。全量 Python：619 OK。
   - 注意：生产任务 ID 必须形如 `assembly-*`，否则返回 400 Invalid production identity；空工作区没有导出版式，HTML 导出会返回 404。
+- 2026-09-25 · A2 · 文件库通用 CRUD，模块 `backend/api_v1/library.py`：
+  - 路由：
+    - `GET /library`：概览。
+    - `GET|POST /library/{kind}`：列表（limit、offset、q、projectId、status、sort、full）和新建。
+    - `GET|PUT|PATCH|DELETE /library/{kind}/{id}`。
+    - `POST /library/{kind}/{id}/duplicate`、`GET /library/{kind}/{id}/bundle`、`POST /library/{kind}/reorder`。
+    - `POST /library/inspect|import`（二进制 application/zip，或 JSON 的 zip/document/html）、`POST /library/export`、`GET /library/problems`、`POST /library/rescan`。
+  - 共享函数：`put_document`、`remove_document`、`normalize`、`save`。
+  - 规则：
+    - 写操作走 `NativeStore.apply`。
+    - 画册写入前先套 `mio_pictures.project`，已有墓碑的画册 ID 返回 409 album_deleted。
+    - 删除画册走 `mio_foundation.delete_albums`，同时删除相关任务，并写入回收站。
+    - 删除非空画册集返回 409 collection_not_empty（`details` 给出各类成员数），传 `cascade=true` 时一起删除成员。
+  - 补全：
+    - 缺省 projectId 用当前画册集。
+    - 分幕补 id、名称（第 N 幕）和空文本字段。
+    - 预设写入 category，条目补 id 和 type。
+    - 画册补 album_defaults 和 generatedSteps，新建时根据图片数推断 status。
+    - 每次写入更新 updatedAt（PATCH 显式带 updatedAt 时除外）。
+  - 排序：界面顺序取 `workspace.ordering[field]`；预设两类共用 `variableSets`，reorder 时同时更新。
+  - **修复潜在问题 1**：扩展 `host.library.put/delete` 改为调用 `put_document` 和 `remove_document`（原先会抛 AttributeError）。
+  - 注意：
+    - 缺 title 时 `_resource` 会用 id 兜底，这是原有行为。
+    - PATCH 会补回默认字段（如 storyboard.outline）。
+  - 测试 `tests/test_api_library.py` 10 个，全量 638 OK。测试夹具改用静默 handler，不再输出请求日志。
 

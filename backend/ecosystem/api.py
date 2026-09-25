@@ -207,11 +207,12 @@ class Ecosystem:
             document = args.get("document")
             if not isinstance(document, dict):
                 raise LibraryError("document must be an object")
-            create = bool(args.get("create")) or not document.get("id")
-            expected = args.get("expected")
-            if not create and not expected:
-                expected = store.entity(kind, str(document["id"]))["etag"]
-            stored = store.put(kind, document, expected=expected, create=create)
+            # NativeStore has no put(): go through the same transaction as the public API
+            # (asset localisation, validation, recycle receipts, revision).
+            from backend.api_v1.library import put_document
+
+            stored = put_document(self.host, kind, document, expected=args.get("expected") or None,
+                                  create=bool(args.get("create")) or not document.get("id"), notify=False)
             self.events.emit("library.saved", {"kind": kind, "id": stored["id"], "source": "ext:" + extension_id}, source=extension_id)
             return stored
         if name == "library.delete":
@@ -219,8 +220,9 @@ class Ecosystem:
             if kind not in LIBRARY_KINDS:
                 raise LibraryError("Unknown library kind: " + kind)
             id = str(args.get("id"))
-            expected = args.get("expected") or store.entity(kind, id)["etag"]
-            result = store.delete(kind, id, expected)
+            from backend.api_v1.library import remove_document
+
+            result = remove_document(self.host, kind, id, args.get("expected") or None, notify=False)
             self.events.emit("library.deleted", {"kind": kind, "id": id, "source": "ext:" + extension_id}, source=extension_id)
             return result
         if name == "images.generate":

@@ -13,6 +13,37 @@
 | `GET` | `/api/v1/openapi.json` | 本 API 的 OpenAPI 3.1 文档（不套信封） |
 | `GET` | `/api/v1/routes` | 全部路由的精简索引（方法、路径、说明、标签） |
 
+## workspace
+
+工作区状态、完整快照、索引重建与文件问题。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `GET` | `/api/v1/library/problems` | 文件问题：无法解析的文件、重复 ID |
+| `POST` | `/api/v1/library/rescan` | 重新扫描文件夹（手工复制文件后），返回问题列表 |
+
+## library
+
+文件库通用读写：分镜、角色/场景预设、画册集、创作计划、画册、版式、工作流、角色行、会话。支持 ETag 并发控制、合并补丁、复制、导入导出与排序。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `GET` | `/api/v1/library` | 文件库概览：各类资源数量、是否可写、目录修订号与索引状态 |
+| `GET` | `/api/v1/library/problems` | 文件问题：无法解析的文件、重复 ID |
+| `POST` | `/api/v1/library/rescan` | 重新扫描文件夹（手工复制文件后），返回问题列表 |
+| `GET` | `/api/v1/library/{kind}` | 列出一类资源（分页、搜索、按画册集过滤、排序） |
+| `POST` | `/api/v1/library/{kind}` | 新建资源（请求体即文档；缺省 id 自动分配、projectId 默认当前画册集） |
+| `POST` | `/api/v1/library/{kind}/reorder` | 调整界面中的显示顺序（列出的 ID 排在最前，其余保持原顺序） |
+| `GET` | `/api/v1/library/{kind}/{id}` | 读取完整文档（响应头带 ETag） |
+| `PUT` | `/api/v1/library/{kind}/{id}` | 替换整个文档；不存在时创建（If-Match 做并发保护，If-None-Match: * 只创建） |
+| `PATCH` | `/api/v1/library/{kind}/{id}` | 合并补丁（RFC 7396：null 删除字段，对象递归合并，数组整体替换） |
+| `DELETE` | `/api/v1/library/{kind}/{id}` | 删除（移入回收站，可用 /recycle 恢复）；画册集默认拒绝删除非空集合 |
+| `POST` | `/api/v1/library/{kind}/{id}/duplicate` | 复制资源（新 ID，标题加「副本」，图片一并复制） |
+| `GET` | `/api/v1/library/{kind}/{id}/bundle` | 导出为 .mio.zip 分享包（含图片，可再导入） |
+| `POST` | `/api/v1/library/inspect` | 预览待导入的分享包 / JSON / HTML 画册（只读） |
+| `POST` | `/api/v1/library/import` | 导入分享包 / JSON / HTML 画册为新资源（总是分配新 ID） |
+| `POST` | `/api/v1/library/export` | 把一份（未保存的）文档打包成 .mio.zip |
+
 ## albums
 
 画册：列表、详情、修改、删除、逐页图片编辑、导入导出。
@@ -128,4 +159,4 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 | `GET` | `/api/v1/resources/plans` | 创作计划 DTO 与工作区修订号（旧接口，请改用 /library/plans） *(deprecated)* |
 | `POST` | `/api/v1/resources/plans` | 按工作区修订号 upsert 创作计划（旧接口，请改用 /library/plans） *(deprecated)* |
 
-共 67 个操作。
+共 82 个操作。

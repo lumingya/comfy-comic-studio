@@ -21,6 +21,11 @@ PNG = base64.b64decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4
 PNG_DATA_URL = "data:image/png;base64," + base64.b64encode(PNG).decode()
 
 
+class QuietHandler(server.ComicRequestHandler):
+    def log_message(self, *args):
+        pass
+
+
 class Response:
     def __init__(self, status, headers, raw):
         self.status, self.headers, self.raw = status, headers, raw
@@ -52,7 +57,7 @@ class ApiServerCase(unittest.TestCase):
         ]
         for item in cls.patches:
             item.start()
-        cls.httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.ComicRequestHandler)
+        cls.httpd = ThreadingHTTPServer(("127.0.0.1", 0), QuietHandler)
         cls.thread = threading.Thread(target=cls.httpd.serve_forever, daemon=True)
         cls.thread.start()
         cls.seed()
