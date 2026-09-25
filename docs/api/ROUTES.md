@@ -19,6 +19,10 @@
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
+| `GET` | `/api/v1/workspace` | 工作区状态：版本、修订号、当前画册集 / 渠道 / 工作流、各类资源数量、文件问题 |
+| `GET` | `/api/v1/workspace/snapshot` | 完整工作区快照（与界面启动时读取的结构相同；不含任何密钥；结构随版本变化） |
+| `GET` | `/api/v1/workspace/content` | 随程序附带的内容：画册版式模板、阅读样式、示例素材目录 |
+| `PUT` | `/api/v1/workspace/active-collection` | 切换当前画册集（新建资源默认归入当前画册集） |
 | `GET` | `/api/v1/library/problems` | 文件问题：无法解析的文件、重复 ID |
 | `POST` | `/api/v1/library/rescan` | 重新扫描文件夹（手工复制文件后），返回问题列表 |
 
@@ -192,6 +196,8 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
+| `POST` | `/api/v1/library/workflows/{id}/activate` | 设为当前 ComfyUI 工作流 |
+| `POST` | `/api/v1/library/workflows/{id}/analyze` | 分析已保存工作流的可调槽位（模型、LoRA、尺寸、种子…） |
 | `POST` | `/api/v1/comfy/check` | 检查 ComfyUI 是否可用（默认使用已保存的地址） |
 | `GET` | `/api/v1/comfy/object-info` | ComfyUI 节点信息（/object_info）与已安装模型目录 |
 | `POST` | `/api/v1/production/analyze-slots` | 分析 ComfyUI 工作流的可调槽位（模型、LoRA、尺寸…） |
@@ -218,7 +224,9 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 | `POST` | `/api/v1/maintenance/assets/restore` | 恢复一批回收的素材 |
 | `POST` | `/api/v1/maintenance/trash/purge` | 永久删除超过指定天数的回收素材 |
 | `GET` | `/api/v1/assets` | 读取本地图片为 data URL |
-| `POST` | `/api/v1/assets/upload` | 上传图片素材（data URL），返回可在文档中引用的 /images/ 地址 |
+| `GET` | `/api/v1/assets/raw` | 读取本地图片的原始字节（可选 thumb=宽x高 生成 WebP 缩略图） |
+| `POST` | `/api/v1/assets/upload` | 上传图片素材（JSON data URL 或直接发送图片字节），返回可在文档中引用的 /images/ 地址 |
+| `POST` | `/api/v1/assets/fetch` | 抓取一张远程图片（http/https，≤50 MB）保存为本地素材 |
 | `GET` | `/api/v1/assets/catalog` | 素材索引：来源、引用、缺失文件与可清理预览 |
 | `POST` | `/api/v1/assets/cleanup` | 把预览过的、24 小时以上未引用的素材移入回收站 |
 
@@ -234,6 +242,16 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 | `POST` | `/api/v1/recycle/empty` | 清空回收站（不可撤销） |
 | `POST` | `/api/v1/recycle/auto-clean` | 按保留天数清理（0 / 7 / 30 / 90；0 表示不清理） |
 | `POST` | `/api/v1/maintenance/trash/purge` | 永久删除超过指定天数的回收素材 |
+
+## marketplace
+
+分镜市场：索引、抓取远程分镜、安装到文件库。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `GET` | `/api/v1/marketplace` | 分镜市场目录（本地缓存或内置目录） |
+| `POST` | `/api/v1/marketplace/fetch` | 抓取远程 JSON（http/https，≤5 MB），例如社区分享的分镜 |
+| `POST` | `/api/v1/marketplace/install` | 把市场分镜安装到文件库（按目录 id、远程 url 或直接给 data） |
 
 ## ecosystem
 
@@ -334,4 +352,4 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 | `GET` | `/api/v1/resources/plans` | 创作计划 DTO 与工作区修订号（旧接口，请改用 /library/plans） *(deprecated)* |
 | `POST` | `/api/v1/resources/plans` | 按工作区修订号 upsert 创作计划（旧接口，请改用 /library/plans） *(deprecated)* |
 
-共 199 个操作。
+共 210 个操作。

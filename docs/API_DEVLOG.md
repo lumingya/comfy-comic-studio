@@ -119,7 +119,7 @@
 - [x] A9 生产队列：所有路由都登记进路由表，统一信封，写文档，并提供 REST 风格的 `tasks/{id}/{action}`
 - [x] A10 生态桥接：`/ecosystem/*`、`/extensions/{id}/*`
 - [x] A11 更新中心：`/update/*`
-- [ ] A12 市场、素材（raw、fetch、二进制上传）、工作流（analyze、apply、activate）、`/workspace`（状态、快照、rescan）
+- [x] A12 市场、素材（raw、fetch、二进制上传）、工作流（analyze、apply、activate）、`/workspace`（状态、快照、rescan）
 - [ ] A13 文档：
   - `docs/api/README.md` 重写，`openapi.json` 重新生成
   - 更新 `examples/mio_client.py`、`docs/astrbot-api.md`、CHANGELOG
@@ -260,4 +260,21 @@
   - apply、rollback、restart 要求 `confirm: true`（403 confirmation_required）；apply 返回 202。UpdateError 按自身 status 映射。
   - 测试 `tests/test_api_update.py` 2 个。网络和重启一律打补丁：**测试里绝对不能真的调用 request_restart**。
   - 测试夹具在 teardown 时同时清理 `mio_update._services` 中临时工作区对应的条目。
+- 2026-09-25 · A12 · 工作区、工作流、素材、市场：
+  - `backend/api_v1/workspace.py`：
+    - `GET /workspace`：状态、计数、当前画册集/渠道/工作流、问题数。
+    - `GET /workspace/snapshot`：`read_merged_config` 的完整快照，递归去掉 `_secretRefs`，结构不承诺稳定。
+    - `GET /workspace/content`：随程序附带的内容。
+    - `PUT /workspace/active-collection`。
+    - `POST /library/workflows/{id}/activate`：写入 comfy.activeWorkflowId。
+    - `POST /library/workflows/{id}/analyze`：槽位分析。
+  - `backend/api_v1/assets.py` 新增：
+    - `GET /assets/raw`：原始字节；`thumb=宽x高` 时生成 WebP 缩略图；`download=true` 以附件下载。
+    - `POST /assets/upload` 支持二进制图片（image/png、jpeg、webp、svg+xml、octet-stream），`?name=`。
+    - `POST /assets/fetch`：抓取远程图片，并记录来源 `{kind: remote, url}`。
+    - 注意：`image_type` 不接受 GIF，所以不宣称支持 GIF。
+  - `backend/api_v1/marketplace.py`：
+    - `GET /marketplace`、`POST /marketplace/fetch`。
+    - `POST /marketplace/install`：可按目录 id、远程 url 或内联 data 安装；市场格式 steps 与分镜格式 frames 都能转成分镜，归入 projectId 或当前画册集。
+  - 测试 `tests/test_api_workspace.py` 4 个。全量 Python 见下一行。
 
