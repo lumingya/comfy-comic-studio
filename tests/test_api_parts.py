@@ -88,3 +88,38 @@ class PartsApiTests(ApiServerCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AlbumTransferTests(ApiServerCase):
+    @classmethod
+    def seed(cls):
+        cls.store().apply(
+            [{"kind": "collections", "id": "c1", "document": {"id": "c1", "title": "C"}, "expected": None},
+             {"kind": "albums", "id": "trip", "expected": None, "document": {
+                 "id": "trip", "title": "旅行", "projectId": "c1", "totalSteps": 2, "tags": ["夏"],
+                 "steps": [{"stepIndex": 0, "caption": "出发", "prompt": "p", "image": PNG_DATA_URL},
+                           {"stepIndex": 1, "caption": "到达", "prompt": "q"}]}}],
+            settings_changes=[{"name": "workspace", "expected": None,
+                               "document": {"ui": {"comfyStudio": {"activeProjectId": "c1"}}}}])
+
+    def test_pages_zip_export_and_import_round_trip(self):
+        import io
+        import zipfile
+
+        self.assertIn("pages-zip", [e["id"] for e in self.ok(self.get("/api/v1/exporters"))])
+        self.assertIn("pages-zip", [i["id"] for i in self.ok(self.get("/api/v1/importers"))])
+        exported = self.post("/api/v1/albums/trip/export", {"exporter": "pages-zip"})
+        self.assertEqual(exported.status, 200, exported.raw[:300])
+        names = zipfile.ZipFile(io.BytesIO(exported.raw)).namelist()
+        self.assertIn("album.json", names)
+        self.assertIn("pages/001.png", names)
+        imported = self.ok(self.call("POST", "/api/v1/albums/import?filename=trip.zip", raw=exported.raw,
+                                     content_type="application/zip"), 201)
+        self.assertEqual(imported["kind"], "albums")
+        self.assertNotEqual(imported["id"], "trip")
+        album = self.ok(self.get("/api/v1/albums/" + imported["id"]))
+        self.assertEqual((album["title"], album["projectId"]), ("旅行", "c1"))
+        self.assertEqual([s["caption"] for s in album["steps"]], ["出发", "到达"])
+        self.assertTrue(album["steps"][0]["image"].startswith("/images/library/albums/" + imported["id"]))
+        self.assertEqual(self.post("/api/v1/albums/trip/export", {"exporter": "nope"}).status, 404)
+        self.assertEqual(self.post("/api/v1/albums/missing/export").status, 404)

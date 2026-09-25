@@ -83,6 +83,10 @@
 | `GET` | `/api/v1/albums` | 画册列表（状态、进度、封面） |
 | `GET` | `/api/v1/albums/{albumId}` | 画册详情：每一页的台词、提示词、图片与 assetEndpoint |
 | `POST` | `/api/v1/albums/export` | 导出画册为自包含 HTML（套用版式）、ZIP 或 PDF 文件 |
+| `GET` | `/api/v1/exporters` | 可用的画册导出器（内置 pages-zip 与扩展注册的导出器） |
+| `GET` | `/api/v1/importers` | 可用的画册导入器（内置 pages-zip 与扩展注册的导入器） |
+| `POST` | `/api/v1/albums/{albumId}/export` | 用指定导出器导出一本画册（默认 pages-zip：页面图片 + album.json） |
+| `POST` | `/api/v1/albums/import` | 用指定导入器导入画册（二进制上传或 {importer, payload, options}） |
 | `POST` | `/api/v1/albums/page` | 保存 / 移除 / 恢复画册某一页的图片（非破坏式编辑记录） |
 | `GET` | `/api/v1/albums/page-edits` | 页面编辑记录（after 之后，按序号） |
 | `POST` | `/api/v1/albums/delete` | 批量删除画册，同时停止并删除相关任务（进入回收站） |
@@ -252,4 +256,4 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 | `GET` | `/api/v1/resources/plans` | 创作计划 DTO 与工作区修订号（旧接口，请改用 /library/plans） *(deprecated)* |
 | `POST` | `/api/v1/resources/plans` | 按工作区修订号 upsert 创作计划（旧接口，请改用 /library/plans） *(deprecated)* |
 
-共 131 个操作。
+共 135 个操作。

@@ -346,7 +346,29 @@ class Ecosystem:
         for name, b64 in (document.get("assets") or {}).items():
             raw = base64.b64decode(b64, validate=True)
             assets[name] = raw
-        stored = self.host.native_store().put(kind, body, create=True, assets=assets or None)
+
+        # Importers reference their assets by name ("<sha>.png" or "images/<sha>.png"). Inline
+        # them as data URLs so the store localises them into owned files like any other write.
+        def inline(value):
+            if isinstance(value, str):
+                name = value[len("images/"):] if value.startswith("images/") else value
+                if name in assets:
+                    return "data:" + image_type(assets[name])[0] + ";base64," + base64.b64encode(assets[name]).decode()
+                return value
+            if isinstance(value, dict):
+                return {k: inline(v) for k, v in value.items()}
+            if isinstance(value, list):
+                return [inline(v) for v in value]
+            return value
+
+        body = inline(body)
+        body.pop("id", None)  # imports always receive a new identity
+        if not body.get("projectId") and options.get("projectId"):
+            body["projectId"] = options["projectId"]
+        # NativeStore has no put(): use the same transaction as the public API.
+        from backend.api_v1.library import put_document
+
+        stored = put_document(self.host, kind, body, create=True, notify=False)
         self.events.emit("import.finished", {"importer": importer_id, "kind": kind, "id": stored["id"]})
         if kind == "albums":
             self.events.emit("album.created", {"id": stored["id"], "source": "import:" + importer_id})

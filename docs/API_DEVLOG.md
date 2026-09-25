@@ -93,7 +93,8 @@
 
 1. `backend/ecosystem/api.py` 的 `host_call` 里，`library.put` 和 `library.delete` 调的是 NativeStore 的 `put`/`delete`，但**这两个方法不存在**，只有 FileLibrary 有，所以会抛 AttributeError。另外 `library.put` 读取 `stored["id"]`，而 FileLibrary.put 返回的是 `{document,etag,file}`，也会出错。结果是扩展 SDK 的 `host.library.put/delete` 实际上不可用。计划在 A2 里修复：改成走 `NativeStore.apply`。
 2. `mio_native_store.prepare_execution` 读取的是 `settings.imageProviders.profiles`，但当前键名是 `imageGeneration`。这是遗留问题，优先级低，先记录。
-3. 私有路由 `/api/production/*` 的错误没有统一格式：有的是 `{"error": 文本}`，有的带 `code`。v1 统一后，私有接口继续沿用原格式。
+3. （A8 审查中发现）`Ecosystem.import_document` 同样调用了不存在的 `NativeStore.put`，并且导入器返回的图片名是裸名（`<sha>.png`），而画册校验要求 `images/...`，所以 `/api/ecosystem/import`（pages-zip 导入）原本不可用。已修复：先把资源内联为 data URL，再调用 `put_document`，总是分配新 ID，projectId 取 options 中的值或当前画册集。
+4. 私有路由 `/api/production/*` 的错误没有统一格式：有的是 `{"error": 文本}`，有的带 `code`。v1 统一后，私有接口继续沿用原格式。
 
 ## 任务计划
 
@@ -111,7 +112,7 @@
   - `/comfy/check`、`/comfy/object-info`
 - [x] A6 LLM 与视觉：`/llm/chat`、`/vision/audit`，连接信息在服务端从已保存的设置读取
 - [x] A7 回收站与维护：`/recycle*`、`/maintenance/*`
-- [ ] A8 画册：
+- [x] A8 画册：
   - PATCH 和 DELETE `/albums/{id}`，以及 steps
   - `/albums/import`（HTML 或导入器）
   - `/albums/{id}/export`（导出器）
@@ -229,4 +230,12 @@
   - 永久删除（purge、empty、trash/purge）要求 `confirm: true`，兼容私有接口的 `trusted: true`；否则返回 403 confirmation_required。
   - 新增 `mio_recycle.restore_target(host, body)`，私有和公开接口共用；私有 `/api/library/recycle/restore` 已改为调用它。
   - 测试 `tests/test_api_recycle.py` 3 个，覆盖分镜删除→恢复→永久删除，以及画册恢复后墓碑被清除。
+- 2026-09-25 · A8 · 画册导入导出：
+  - 路由：
+    - `GET /exporters`、`GET /importers`：放在顶层，避免和 `/albums/{albumId}` 冲突。
+    - `POST /albums/{albumId}/export`：用导出器导出，默认 pages-zip，返回原始文件。
+    - `POST /albums/import`：用导入器导入，支持二进制上传加 `?importer&projectId&filename`，或 JSON 的 `{importer, payload, options}`。
+    - HTML 画册导入走 `/library/import` 的 html 字段，多本画册的 HTML/ZIP/PDF 导出仍走 `POST /albums/export`。
+  - **修复潜在问题 3**：ecosystem 的 `import_document`。
+  - 测试：`test_api_parts.AlbumTransferTests` 覆盖 pages-zip 导出后再导入的往返，图片成为新画册自己的资源。
 
