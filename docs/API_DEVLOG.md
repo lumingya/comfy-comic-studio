@@ -117,7 +117,7 @@
   - `/albums/import`（HTML 或导入器）
   - `/albums/{id}/export`（导出器）
 - [x] A9 生产队列：所有路由都登记进路由表，统一信封，写文档，并提供 REST 风格的 `tasks/{id}/{action}`
-- [ ] A10 生态桥接：`/ecosystem/*`、`/extensions/{id}/*`
+- [x] A10 生态桥接：`/ecosystem/*`、`/extensions/{id}/*`
 - [ ] A11 更新中心：`/update/*`
 - [ ] A12 市场、素材（raw、fetch、二进制上传）、工作流（analyze、apply、activate）、`/workspace`（状态、快照、rescan）
 - [ ] A13 文档：
@@ -246,4 +246,13 @@
     - `PATCH /production/tasks/{id}/frames/{index}`：update-frame。
   - 本次补充：API 调用装配时可以省略 `requestId`，服务端自动生成 `api-<uuid>`；带上它则重试是幂等的（队列要求必须有，界面总是会传）。assemble-batch 的每一项同样处理。
   - 测试 `test_api_v1_core.ProductionFlowTests`：用云渠道装配，不启动生成；覆盖详情、逐幕来源、重命名、改台词、clone-source、克隆、暂停、列表、删除和批量删除。任务 ID 形如 `assembly-*`。
+- 2026-09-25 · A10 · 生态桥接，模块 `backend/api_v1/ecosystem.py`：
+  - 桥接到 `ecosystem_api._ecosystem_route` 和 `_extension_route`，与界面走同一套实现。
+  - 登记 40 个带文档的生态路由（status、platform、activity、watch、themes/*、styles/*、scripts/*、preparations/*、extensions/install|enable|update|uninstall|purge|link|reload|deps、events/emit、cache/clear、reset），另有：
+    - `GET /ecosystem/scripts/{id}`、`GET /ecosystem/preparations/{id}`、`GET /ecosystem/themes/css/{id}`。
+    - 扩展文件：`GET|PUT|POST|DELETE /ecosystem/extensions/{id}/files/{path}`。
+    - 通用兜底 `GET|POST|PUT|DELETE /ecosystem/{route:path}`：贪婪路由优先级最低。
+  - 扩展后端：`GET /extensions`；`GET|POST|PUT|PATCH|DELETE /extensions/{id}/{tail:path}`，覆盖自定义路由、storage、settings、capabilities、tasks。扩展的原始响应（`raw_response` 和 `__mio_response__`）会转成 Raw，不套信封。
+  - 请求体缺少字段（KeyError）时返回 400 missing_field。安装或启用代码仍要求 `trusted: true`，安全模式下由底层拒绝。
+  - 测试 `tests/test_api_ecosystem.py` 3 个：用 zip 安装示例扩展 scene-notebook，调用它的 Python 路由 `/notes`、storage 和扩展文件读写，再停用、卸载。
 

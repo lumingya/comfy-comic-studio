@@ -31,7 +31,7 @@ for _name, _description in (
 ):
     ROUTER.tag(_name, _description)
 
-from backend.api_v1 import system, library, parts, settings, channels, llm, recycle, catalog, albums, assets, generation, jobs, production  # noqa: E402,F401
+from backend.api_v1 import system, library, parts, settings, channels, llm, recycle, ecosystem, catalog, albums, assets, generation, jobs, production  # noqa: E402,F401
 from backend.api_v1.generation import GENERATION_SLOT, generation_payload  # noqa: E402,F401
 from backend.api_v1.spec import VERSION, openapi, route_table  # noqa: E402,F401
 from backend.api_v1.system import capabilities  # noqa: E402,F401

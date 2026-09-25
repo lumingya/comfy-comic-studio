@@ -235,6 +235,72 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 | `POST` | `/api/v1/recycle/auto-clean` | 按保留天数清理（0 / 7 / 30 / 90；0 表示不清理） |
 | `POST` | `/api/v1/maintenance/trash/purge` | 永久删除超过指定天数的回收素材 |
 
+## ecosystem
+
+扩展、主题、样式、用户脚本、预处理、事件与导入导出器；以及扩展自身的后端路由。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `GET` | `/api/v1/ecosystem/status` | 生态总览：扩展、主题、样式、脚本、平台清单、安全模式、Node/Git 可用性 |
+| `GET` | `/api/v1/ecosystem/platform` | 平台清单：图像服务、导出器、导入器、钩子与事件 |
+| `GET` | `/api/v1/ecosystem/activity` | 最近的事件、失败与通知（?since=时间戳） |
+| `GET` | `/api/v1/ecosystem/watch` | 链接目录（开发模式）的变更与修订号 |
+| `GET` | `/api/v1/ecosystem/themes/compiled` | 当前主题栈与用户样式编译后的 CSS |
+| `GET` | `/api/v1/ecosystem/styles` | 样式工坊状态：片段、设计令牌、资源 |
+| `GET` | `/api/v1/ecosystem/styles/css` | 用户自定义 CSS |
+| `GET` | `/api/v1/ecosystem/scripts` | 用户脚本列表（含源码） |
+| `GET` | `/api/v1/ecosystem/preparations` | 预处理（计算变量宏）列表 |
+| `POST` | `/api/v1/ecosystem/events/emit` | 广播一个自定义事件（app.* 除外） |
+| `POST` | `/api/v1/ecosystem/extensions/install` | 安装扩展（git url / 本地 path / zip base64；需要 trusted: true 才能启用代码） |
+| `POST` | `/api/v1/ecosystem/extensions/enable` | 启用或停用扩展（启用需 trusted: true） |
+| `POST` | `/api/v1/ecosystem/extensions/update` | 更新扩展（git 安装） |
+| `POST` | `/api/v1/ecosystem/extensions/uninstall` | 卸载扩展（purge: none / cache / all） |
+| `POST` | `/api/v1/ecosystem/extensions/purge` | 清除扩展数据（level: cache / all） |
+| `POST` | `/api/v1/ecosystem/extensions/link` | 链接本地扩展目录（热重载开发） |
+| `POST` | `/api/v1/ecosystem/extensions/reload` | 重新加载扩展 |
+| `POST` | `/api/v1/ecosystem/extensions/deps` | 安装扩展的 Python 依赖（requirements） |
+| `POST` | `/api/v1/ecosystem/themes/install` | 安装主题包（zip base64） |
+| `POST` | `/api/v1/ecosystem/themes/link` | 链接本地主题目录 |
+| `POST` | `/api/v1/ecosystem/themes/reload` | 重新加载主题 |
+| `POST` | `/api/v1/ecosystem/themes/select` | 选择唯一主题（空 id 恢复默认） |
+| `POST` | `/api/v1/ecosystem/themes/enable` | 在主题栈中启用或停用一个主题 |
+| `POST` | `/api/v1/ecosystem/themes/order` | 调整主题叠加顺序 |
+| `POST` | `/api/v1/ecosystem/themes/settings` | 修改主题的可调设置项 |
+| `POST` | `/api/v1/ecosystem/themes/uninstall` | 卸载主题 |
+| `POST` | `/api/v1/ecosystem/styles/snippet` | 保存一个样式片段 |
+| `POST` | `/api/v1/ecosystem/styles/snippets` | 替换全部样式片段 |
+| `POST` | `/api/v1/ecosystem/styles/snippet/delete` | 删除样式片段 |
+| `POST` | `/api/v1/ecosystem/styles/tokens` | 设置设计令牌（CSS 变量覆盖） |
+| `POST` | `/api/v1/ecosystem/styles/assets/upload` | 上传样式资源（字体、图片；base64） |
+| `POST` | `/api/v1/ecosystem/styles/assets/delete` | 删除样式资源 |
+| `POST` | `/api/v1/ecosystem/styles/export` | 把当前样式导出为主题包（返回 zip 文件） |
+| `POST` | `/api/v1/ecosystem/scripts/save` | 保存用户脚本 |
+| `POST` | `/api/v1/ecosystem/scripts/delete` | 删除用户脚本 |
+| `POST` | `/api/v1/ecosystem/scripts/order` | 调整用户脚本顺序 |
+| `POST` | `/api/v1/ecosystem/scripts/toggle` | 启用或停用用户脚本 |
+| `POST` | `/api/v1/ecosystem/preparations` | 运行一个预处理（计算变量宏） |
+| `POST` | `/api/v1/ecosystem/preparations/cancel` | 取消正在运行的预处理 |
+| `POST` | `/api/v1/ecosystem/cache/clear` | 清除预处理缓存（需 trusted: true） |
+| `POST` | `/api/v1/ecosystem/reset` | 一键恢复：停用全部扩展、主题与脚本（styles: true 同时停用样式片段） |
+| `GET` | `/api/v1/ecosystem/scripts/{scriptId}` | 读取一个用户脚本（含源码） |
+| `GET` | `/api/v1/ecosystem/preparations/{preparationId}` | 读取一个预处理的状态与结果 |
+| `GET` | `/api/v1/ecosystem/themes/css/{themeId}` | 编译一个主题的 CSS |
+| `GET` | `/api/v1/ecosystem/extensions/{extensionId}/files/{path}` | 读取扩展目录中的文件（目录则列出） |
+| `PUT` | `/api/v1/ecosystem/extensions/{extensionId}/files/{path}` | 写入扩展目录中的文件（二进制或 {b64}/{text}） |
+| `POST` | `/api/v1/ecosystem/extensions/{extensionId}/files/{path}` | 写入扩展目录中的文件（同 PUT） |
+| `DELETE` | `/api/v1/ecosystem/extensions/{extensionId}/files/{path}` | 删除扩展目录中的文件 |
+| `GET` | `/api/v1/ecosystem/extensions/{extensionId}/files` | 列出扩展目录的文件 |
+| `GET` | `/api/v1/ecosystem/{route}` | 其余生态路由的通用桥接（与界面 /api/ecosystem/* 相同） |
+| `POST` | `/api/v1/ecosystem/{route}` | 其余生态路由的通用桥接（与界面 /api/ecosystem/* 相同） |
+| `PUT` | `/api/v1/ecosystem/{route}` | 其余生态路由的通用桥接（与界面 /api/ecosystem/* 相同） |
+| `DELETE` | `/api/v1/ecosystem/{route}` | 其余生态路由的通用桥接（与界面 /api/ecosystem/* 相同） |
+| `GET` | `/api/v1/extensions` | 已安装的扩展（ID、版本、是否启用、后端能力） |
+| `GET` | `/api/v1/extensions/{extensionId}/{tail}` | 调用扩展后端（扩展自定义路由，以及 storage / settings / capabilities / tasks） |
+| `POST` | `/api/v1/extensions/{extensionId}/{tail}` | 调用扩展后端（扩展自定义路由，以及 storage / settings / capabilities / tasks） |
+| `PUT` | `/api/v1/extensions/{extensionId}/{tail}` | 调用扩展后端（扩展自定义路由，以及 storage / settings / capabilities / tasks） |
+| `PATCH` | `/api/v1/extensions/{extensionId}/{tail}` | 调用扩展后端（扩展自定义路由，以及 storage / settings / capabilities / tasks） |
+| `DELETE` | `/api/v1/extensions/{extensionId}/{tail}` | 调用扩展后端（扩展自定义路由，以及 storage / settings / capabilities / tasks） |
+
 ## catalog
 
 给聊天机器人的精简只读视图：一次拿到可选的工作流、分镜、预设、版式、渠道和画册集。
@@ -256,4 +322,4 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 | `GET` | `/api/v1/resources/plans` | 创作计划 DTO 与工作区修订号（旧接口，请改用 /library/plans） *(deprecated)* |
 | `POST` | `/api/v1/resources/plans` | 按工作区修订号 upsert 创作计划（旧接口，请改用 /library/plans） *(deprecated)* |
 
-共 135 个操作。
+共 194 个操作。
