@@ -114,7 +114,10 @@
           "seen": false,
           "completed": false,
           "readSteps": [],
-          "lastStep": 0
+          "lastStep": 0,
+          "practiceProjectId": "project_0b67e60b-8764-409f-8cd3-9596b48657f6",
+          "practiceTemplateId": "tpl_35dd7be3-878d-44fa-819d-4fe3d42b3144",
+          "practiceBookId": "book_df6ba178-e61e-40a6-88b0-74eb8324bb06"
         },
         "backend": {
           "enabled": true,
@@ -185,7 +188,8 @@
       "story_7dce2629-6fc2-474d-a026-6071a0c022d2",
       "story_f45195ae-5f6f-4fe7-8e4a-1488de8c1a0d",
       "storyboard_6a8ae57bd4df43539690eac3b7a71b4a",
-      "storyboards_50565bedcf5d46d892848fad25d1bf01"
+      "storyboards_50565bedcf5d46d892848fad25d1bf01",
+      "tpl_35dd7be3-878d-44fa-819d-4fe3d42b3144"
     ],
     "savedGalleries": [
       "album_026f0e806b3a409aa878dabb45d8de50",
@@ -195,16 +199,19 @@
       "album_f725fe7d59e54eb0a1633e3c36e9376c",
       "book_1b07b003-041a-404a-87d3-327c18985ff3",
       "book_5213ff35-ba03-416b-ab66-17a40177853c",
+      "book_df6ba178-e61e-40a6-88b0-74eb8324bb06",
       "edition_letter"
     ],
     "rows": [
       "character_nanami",
       "character_campus_pair",
       "character_hello_another_me",
-      "rows_d68d91eb18f64d829818080f68440059"
+      "rows_d68d91eb18f64d829818080f68440059",
+      "row_d9cf6817-88a4-488e-a610-654e1d46e9ad"
     ],
     "projects": [
-      "collection_summer"
+      "collection_summer",
+      "project_0b67e60b-8764-409f-8cd3-9596b48657f6"
     ],
     "plans": [
       "draft_letter",
