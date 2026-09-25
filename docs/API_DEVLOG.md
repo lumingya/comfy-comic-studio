@@ -105,7 +105,7 @@
   - 修复 `host.library.put/delete`
 - [x] A3 细粒度子资源：分镜 frames、预设 entries、画册 steps
 - [x] A4 设置：`/settings`、`/settings/{name}`（GET/PUT/PATCH），`/settings/{name}/secrets`
-- [ ] A5 渠道与密钥：
+- [x] A5 渠道与密钥：
   - `/providers` 改为类型注册表
   - `/channels` CRUD，以及 activate、check、models、keys
   - `/comfy/check`、`/comfy/object-info`
@@ -194,4 +194,23 @@
   - PUT secrets 在替换密钥时会用 clearSecrets 从密钥库删除旧值，避免被替换的密钥一直残留。
   - 私有接口 `forget-key` 的对应用法：`DELETE /settings/llm/secrets?pointer=/key`；critic 的指针是 `/ui/comfyStudio/settings/critic/key`。
   - 测试 `tests/test_api_settings.py` 4 个。注意：同一个测试类共用一个工作区，断言不要依赖测试执行顺序。
+- 2026-09-25 · A5 · 渠道与密钥，模块 `backend/api_v1/channels.py`：
+  - 路由：
+    - `GET /providers`、`GET /providers/{id}`：图像服务类型注册表（破坏性变更）。
+    - `GET|POST /channels`、`GET|PATCH|DELETE /channels/{id}`。
+    - `POST /channels/{id}/activate`、`POST /channels/{id}/check`、`GET /channels/{id}/models`。
+    - `GET|POST /channels/{id}/keys`、`DELETE /channels/{id}/keys/{keyId}`。
+    - `POST /comfy/check`、`GET /comfy/object-info`。
+  - 新建渠道：
+    - 新 ID 为 `provider_<hex>`（与界面的 `uid('provider')` 风格一致）。
+    - 用 provider spec 的 defaults 补全字段；按 spec 字段类型校验（toggle 须为 bool，select 须在选项内）。
+    - 不允许直接写 keyId/keyIds，Key 走 `/keys` 或请求体里的 `apiKey`/`apiKeys`。
+  - Key 规则：
+    - 存储在 `mio_credentials`，按 `{profileId, provider, baseUrl}` 作用域绑定；公网地址必须用 HTTPS，否则拒绝保存 Key。
+    - 更换 baseUrl 或 provider 而没有给新 Key 时，清掉 keyIds、改为 keyMode none，并返回 `keysReset: true`（与界面行为一致，Key 不会被发往新地址）。
+    - 删除最后一个 Key 时，keyMode 改为 none。
+  - 内置 ComfyUI 渠道：不可删除、不可新建、不可改 provider（409 builtin_channel）。PATCH 它的 baseUrl 实际写入 comfy 设置。
+  - 删除渠道时 purge 该渠道的全部 Key。没有检查在途任务：持久任务按引用解析渠道，渠道缺失时直接失败，不会回退到快照。
+  - check：provider 有 check 能力就用 check，否则用 models 数量代替；两者都没有时返回 400。上游异常返回 502 upstream_error。
+  - 测试 `tests/test_api_channels.py` 5 个。
 

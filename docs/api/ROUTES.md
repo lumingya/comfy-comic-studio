@@ -100,6 +100,26 @@
 | `PUT` | `/api/v1/settings/{name}/secrets` | 保存一个密钥（例：{pointer: "/key", value: "sk-…"}） |
 | `DELETE` | `/api/v1/settings/{name}/secrets` | 删除一个已保存的密钥（?pointer=/key） |
 
+## channels
+
+图像渠道：增删改、设为当前、测试连接、模型列表、密钥池；以及图像服务类型注册表。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `GET` | `/api/v1/providers` | 图像服务类型注册表（内置 + 扩展注册），含字段定义与能力 |
+| `GET` | `/api/v1/providers/{providerId}` | 一个图像服务类型的字段、默认值与能力 |
+| `GET` | `/api/v1/channels` | 已保存的图像渠道与当前渠道（不含密钥） |
+| `POST` | `/api/v1/channels` | 新建渠道（可同时保存 API Key，并设为当前渠道） |
+| `GET` | `/api/v1/channels/{channelId}` | 读取一个渠道 |
+| `PATCH` | `/api/v1/channels/{channelId}` | 修改渠道（合并补丁）；更换地址或服务类型且未给新 Key 时会解除旧 Key |
+| `DELETE` | `/api/v1/channels/{channelId}` | 删除渠道及其保存的 Key（内置 ComfyUI 渠道不可删除） |
+| `POST` | `/api/v1/channels/{channelId}/activate` | 设为当前渠道 |
+| `POST` | `/api/v1/channels/{channelId}/check` | 测试连接（ComfyUI：系统状态；云端渠道：读取模型列表） |
+| `GET` | `/api/v1/channels/{channelId}/models` | 渠道可用的模型列表（ComfyUI：节点信息与模型目录） |
+| `GET` | `/api/v1/channels/{channelId}/keys` | 渠道的 Key 池（只返回 ID、标签、创建时间） |
+| `POST` | `/api/v1/channels/{channelId}/keys` | 向 Key 池添加一个 Key（多个 Key 轮流使用） |
+| `DELETE` | `/api/v1/channels/{channelId}/keys/{keyId}` | 从 Key 池删除一个 Key |
+
 ## generation
 
 同步单张出图（云端渠道）。整册、可恢复的执行请用 jobs 或 production。
@@ -167,6 +187,8 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
+| `POST` | `/api/v1/comfy/check` | 检查 ComfyUI 是否可用（默认使用已保存的地址） |
+| `GET` | `/api/v1/comfy/object-info` | ComfyUI 节点信息（/object_info）与已安装模型目录 |
 | `POST` | `/api/v1/production/analyze-slots` | 分析 ComfyUI 工作流的可调槽位（模型、LoRA、尺寸…） |
 | `POST` | `/api/v1/production/apply-slots` | 把槽位覆盖应用到 ComfyUI 工作流，返回新工作流 |
 
@@ -202,4 +224,4 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 | `GET` | `/api/v1/resources/plans` | 创作计划 DTO 与工作区修订号（旧接口，请改用 /library/plans） *(deprecated)* |
 | `POST` | `/api/v1/resources/plans` | 按工作区修订号 upsert 创作计划（旧接口，请改用 /library/plans） *(deprecated)* |
 
-共 104 个操作。
+共 119 个操作。
