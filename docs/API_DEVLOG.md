@@ -103,7 +103,7 @@
   - 路由：`/library`、`/library/{kind}`、`/library/{kind}/{id}`
   - 附加操作：duplicate、bundle 导出、import/inspect、order、problems、rescan
   - 修复 `host.library.put/delete`
-- [ ] A3 细粒度子资源：分镜 frames、预设 entries、画册 steps
+- [x] A3 细粒度子资源：分镜 frames、预设 entries、画册 steps
 - [ ] A4 设置：`/settings`、`/settings/{name}`（GET/PUT/PATCH），`/settings/{name}/secrets`
 - [ ] A5 渠道与密钥：
   - `/providers` 改为类型注册表
@@ -170,4 +170,18 @@
     - 缺 title 时 `_resource` 会用 id 兜底，这是原有行为。
     - PATCH 会补回默认字段（如 storyboard.outline）。
   - 测试 `tests/test_api_library.py` 10 个，全量 638 OK。测试夹具改用静默 handler，不再输出请求日志。
+- 2026-09-25 · A3 · 细粒度子资源，模块 `backend/api_v1/parts.py`：
+  - 所有操作都对父文档读-改-写，用父文档的 ETag 做 CAS；If-Match 或 `?expectedEtag` 与父文档不一致时返回 409。
+  - 分幕：
+    - `GET|POST /library/storyboards/{id}/frames`：新增接受单个对象、`frames` 数组，或 `count` + `namePattern` + `basePrompt` 批量生成；可用 `?index=` 指定插入位置。
+    - `GET|PATCH|DELETE .../frames/{frame}`：`{frame}` 可以是 frame id，也可以是序号。
+    - `POST .../frames/reorder`。
+  - 预设变量：`GET /library/{characters|scenes}/{id}/entries`；`PUT|DELETE .../entries/{key}`，按变量名 upsert。
+  - 画册：
+    - `POST /albums`，别名，等同 POST /library/albums。
+    - `PATCH /albums/{albumId}`：合并补丁。
+    - `DELETE /albums/{albumId}`。
+    - `GET|PATCH|DELETE /albums/{albumId}/steps/{index}`：PATCH 在页不存在时创建，并自动提升 totalSteps；图片可以是 data URL。
+  - 注意：`merge_patch` 返回新对象，原地修改时要先 clear 再 update，否则 null 删除不生效。
+  - 测试 `tests/test_api_parts.py` 4 个。
 

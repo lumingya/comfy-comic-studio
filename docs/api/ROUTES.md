@@ -44,12 +44,41 @@
 | `POST` | `/api/v1/library/import` | 导入分享包 / JSON / HTML 画册为新资源（总是分配新 ID） |
 | `POST` | `/api/v1/library/export` | 把一份（未保存的）文档打包成 .mio.zip |
 
+## storyboards
+
+分镜的分幕（frames）细粒度增删改与排序。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `GET` | `/api/v1/library/storyboards/{id}/frames` | 分镜的全部分幕（带序号） |
+| `POST` | `/api/v1/library/storyboards/{id}/frames` | 新增分幕：单个对象、frames 数组，或 count 批量生成空白分幕 |
+| `GET` | `/api/v1/library/storyboards/{id}/frames/{frame}` | 读取一幕 |
+| `PATCH` | `/api/v1/library/storyboards/{id}/frames/{frame}` | 合并补丁修改一幕（提示词、台词、镜头、尺寸…） |
+| `DELETE` | `/api/v1/library/storyboards/{id}/frames/{frame}` | 删除一幕 |
+| `POST` | `/api/v1/library/storyboards/{id}/frames/reorder` | 调整分幕顺序（列出的分幕排在最前） |
+
+## presets
+
+角色 / 场景预设的变量条目（entries）细粒度读写。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `GET` | `/api/v1/library/{kind}/{id}/entries` | 预设的全部变量条目 |
+| `PUT` | `/api/v1/library/{kind}/{id}/entries/{key}` | 写入一个变量（按变量名新增或覆盖） |
+| `DELETE` | `/api/v1/library/{kind}/{id}/entries/{key}` | 删除一个变量 |
+
 ## albums
 
 画册：列表、详情、修改、删除、逐页图片编辑、导入导出。
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
+| `PATCH` | `/api/v1/albums/{albumId}` | 合并补丁修改画册（标题、简介、标签、喜欢、封面…；同 /library/albums/{id}） |
+| `DELETE` | `/api/v1/albums/{albumId}` | 删除画册（同时删除相关任务，进入回收站） |
+| `POST` | `/api/v1/albums` | 新建画册（同 POST /library/albums；steps 的 image 可用 data URL） |
+| `GET` | `/api/v1/albums/{albumId}/steps/{index}` | 读取画册的一页 |
+| `PATCH` | `/api/v1/albums/{albumId}/steps/{index}` | 合并补丁修改一页（台词、提示词、名称、图片 URL/data URL）；页不存在时创建 |
+| `DELETE` | `/api/v1/albums/{albumId}/steps/{index}` | 删除一页的内容（图片、台词、提示词） |
 | `GET` | `/api/v1/albums` | 画册列表（状态、进度、封面） |
 | `GET` | `/api/v1/albums/{albumId}` | 画册详情：每一页的台词、提示词、图片与 assetEndpoint |
 | `POST` | `/api/v1/albums/export` | 导出画册为自包含 HTML（套用版式）、ZIP 或 PDF 文件 |
@@ -159,4 +188,4 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 | `GET` | `/api/v1/resources/plans` | 创作计划 DTO 与工作区修订号（旧接口，请改用 /library/plans） *(deprecated)* |
 | `POST` | `/api/v1/resources/plans` | 按工作区修订号 upsert 创作计划（旧接口，请改用 /library/plans） *(deprecated)* |
 
-共 82 个操作。
+共 97 个操作。
