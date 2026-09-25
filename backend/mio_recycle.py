@@ -339,3 +339,22 @@ def restore_files(root, batch, resolve):
     if not skipped:
         shutil.rmtree(folder, ignore_errors=True)
     return {"restored": restored, "skipped": skipped}
+
+
+def restore_target(host, body):
+    """Restore ``{trashId}`` (entity receipt, ``assets:<batch>`` or ``files:<ns>``) or the newest ``{kind, id}``.
+
+    Shared by the private UI route and the public API.
+    """
+    from backend import mio_assets, mio_foundation
+
+    root = host.DATA_DIR
+    target = str(body.get("trashId") or "")
+    if target.startswith("assets:"):
+        return mio_assets.restore(root, target.split(":", 1)[1])
+    if target.startswith("files:"):
+        return restore_files(root, target.split(":", 1)[1], host.local_path_from_url)
+    service = mio_foundation.jobs(host)
+    with service.lock, host.CONFIG_LOCK:
+        return restore(host.native_store(), target or None, body.get("kind"), body.get("id"),
+                       before_commit=lambda kind, id: kind == "albums" and undelete_albums(root, [id]))

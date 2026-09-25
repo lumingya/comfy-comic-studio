@@ -209,10 +209,27 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
+| `GET` | `/api/v1/maintenance/assets` | 素材池体检：未被引用的文件、缺失引用、可回收预览（含 token） |
+| `POST` | `/api/v1/maintenance/assets/gc` | 回收未引用素材：apply=false 预览，apply=true 按预览 token 移入回收站 |
+| `POST` | `/api/v1/maintenance/assets/restore` | 恢复一批回收的素材 |
+| `POST` | `/api/v1/maintenance/trash/purge` | 永久删除超过指定天数的回收素材 |
 | `GET` | `/api/v1/assets` | 读取本地图片为 data URL |
 | `POST` | `/api/v1/assets/upload` | 上传图片素材（data URL），返回可在文档中引用的 /images/ 地址 |
 | `GET` | `/api/v1/assets/catalog` | 素材索引：来源、引用、缺失文件与可清理预览 |
 | `POST` | `/api/v1/assets/cleanup` | 把预览过的、24 小时以上未引用的素材移入回收站 |
+
+## recycle
+
+回收站：列出、恢复、永久删除、清空、自动清理。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `GET` | `/api/v1/recycle` | 回收站：可恢复的资源、素材批次和文件批次（新的在前） |
+| `POST` | `/api/v1/recycle/restore` | 恢复：trashId（资源、assets:批次、files:批次）或 {kind, id} 的最新一次删除 |
+| `POST` | `/api/v1/recycle/purge` | 永久删除回收站中的一项 |
+| `POST` | `/api/v1/recycle/empty` | 清空回收站（不可撤销） |
+| `POST` | `/api/v1/recycle/auto-clean` | 按保留天数清理（0 / 7 / 30 / 90；0 表示不清理） |
+| `POST` | `/api/v1/maintenance/trash/purge` | 永久删除超过指定天数的回收素材 |
 
 ## catalog
 
@@ -235,4 +252,4 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 | `GET` | `/api/v1/resources/plans` | 创作计划 DTO 与工作区修订号（旧接口，请改用 /library/plans） *(deprecated)* |
 | `POST` | `/api/v1/resources/plans` | 按工作区修订号 upsert 创作计划（旧接口，请改用 /library/plans） *(deprecated)* |
 
-共 122 个操作。
+共 131 个操作。

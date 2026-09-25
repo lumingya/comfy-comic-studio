@@ -110,7 +110,7 @@
   - `/channels` CRUD，以及 activate、check、models、keys
   - `/comfy/check`、`/comfy/object-info`
 - [x] A6 LLM 与视觉：`/llm/chat`、`/vision/audit`，连接信息在服务端从已保存的设置读取
-- [ ] A7 回收站与维护：`/recycle*`、`/maintenance/*`
+- [x] A7 回收站与维护：`/recycle*`、`/maintenance/*`
 - [ ] A8 画册：
   - PATCH 和 DELETE `/albums/{id}`，以及 steps
   - `/albums/import`（HTML 或导入器）
@@ -221,4 +221,12 @@
   - 连接选择与界面一致：xml 未开启 `separate` 时用 llm 连接；critic 的 `connection: shared` 时用 llm 连接。Key 在服务端从密钥库解析，客户端无法传入，也看不到。
   - 上游 HTTPError 返回 502 upstream_error，`details.upstreamStatus` 给出上游状态码；不回显上游响应体，报错信息里的 Key 会被脱敏。
   - 测试 `tests/test_api_llm.py` 3 个：用 127.0.0.1 上的假模型服务器（http 只允许私有地址，正好覆盖），验证 Authorization 是服务端解析出的 Key。
+- 2026-09-25 · A7 · 回收站与维护，模块 `backend/api_v1/recycle.py`：
+  - 路由：
+    - `GET /recycle?all=`。
+    - `POST /recycle/restore|purge|empty|auto-clean`。
+    - `GET /maintenance/assets`、`POST /maintenance/assets/gc|restore`、`POST /maintenance/trash/purge`。
+  - 永久删除（purge、empty、trash/purge）要求 `confirm: true`，兼容私有接口的 `trusted: true`；否则返回 403 confirmation_required。
+  - 新增 `mio_recycle.restore_target(host, body)`，私有和公开接口共用；私有 `/api/library/recycle/restore` 已改为调用它。
+  - 测试 `tests/test_api_recycle.py` 3 个，覆盖分镜删除→恢复→永久删除，以及画册恢复后墓碑被清除。
 

@@ -634,21 +634,7 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
                 action = request_path.rsplit("/", 1)[-1]
                 root = self.services.DATA_DIR
                 if action == "restore":
-                    target = str(body.get("trashId") or "")
-                    if target.startswith("assets:"):
-                        result = mio_assets.restore(root, target.split(":", 1)[1])
-                    elif target.startswith("files:"):
-                        result = mio_recycle.restore_files(root, target.split(":", 1)[1], self.services.application.local_path_from_url)
-                    else:
-                        service = mio_foundation.jobs(self.services.application)
-                        with service.lock, self.services.CONFIG_LOCK:
-                            result = mio_recycle.restore(
-                                self.services.native_store(),
-                                target or None,
-                                body.get("kind"),
-                                body.get("id"),
-                                before_commit=lambda kind, id: kind == "albums" and mio_recycle.undelete_albums(root, [id]),
-                            )
+                    result = mio_recycle.restore_target(self.services.application, body)
                 elif action in ("purge", "empty"):
                     if body.get("trusted") is not True:
                         raise self.services.LibraryError("Confirm permanent deletion", 403)
