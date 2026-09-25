@@ -252,62 +252,95 @@ def resources(host,kind,body=None):
         config['updatedAt']=max(int(time.time()*1000),int(config.get('updatedAt') or 0)+1);host.validate_config_payload(config);host.write_split_config(config)
         return {'item':item,'revision':config['updatedAt']}
 
+def annotate_jobs(host,data):
+    """Attach safe previews of the channels each job will resolve for its next request."""
+    records=data.get('jobs',[]) if isinstance(data,dict) and 'jobs' in data else [data] if isinstance(data,dict) and 'channelRefs' in data else []
+    if records:
+        config=host.native_store().read(album_summaries=True) if hasattr(host,'native_store') else (host.read_merged_config_raw() if hasattr(host,'read_merged_config_raw') else host.read_merged_config())
+        for job in records:job['currentChannels']=[channel_preview(config,ref) for ref in job.get('channelRefs',[])]
+    return data
+
+def mutate_page(host,body):
+    """Save, remove or restore one picture of an album page (non-destructive edit record)."""
+    store=jobs(host)
+    receipt=host.native_store().mark_materialization(body.get('albumId'))
+    data=mio_pictures.mutate(host,store,body)
+    try:
+        materialize_album(host,body.get('albumId'));receipt.unlink(missing_ok=True)
+    except Exception:
+        projection_warning(receipt)
+        data['warning']='图片记录已持久保存；独立画册文件等待恢复提交。'
+    return data
+
+def page_edits(host,after=0):
+    edits=mio_pictures.records(host.DATA_DIR,max(0,int(after)))
+    return {'edits':edits,'cursor':edits[-1]['seq'] if edits else int(after)}
+
+def delete_albums(host,ids):
+    """Atomically stop tracking and delete albums plus every associated task."""
+    store=jobs(host)
+    with store.lock,host.CONFIG_LOCK:
+        data=store.delete_albums(ids)
+        # Tombstones are the authoritative commit. A failed JSON materialization
+        # must not report a partially failed deletion or require another confirmation.
+        try:
+            pending=recover_deletions(host,data['deletedAlbumIds'])
+        except Exception:pending=True
+        if pending:data['warning']='画册已删除；独立文件整理失败，请检查磁盘权限/空间，重启后继续整理。不会重新生成。'
+        return data
+
+def submit_job(host,body):
+    return jobs(host).submit(host.native_store().freeze(body.get('input',{})),body.get('idempotencyKey'))
+
+def control_job(host,id,body):
+    store=jobs(host)
+    if body.get('action') in ('archive','remove'):
+        with store.lock,host.CONFIG_LOCK:
+            snapshot=host.read_merged_config()
+            if snapshot.get('templates') is not None:host.write_split_config(snapshot)
+            return store.control(id,body.get('action'))
+    return store.control(id,body.get('action'),body.get('policy'),body.get('runtime'),body.get('recovery'),body.get('edits'))
+
+def event_stream(store,after):
+    events=store.events(after)
+    return ('retry: 1500\n'+''.join('id: '+str(e['id'])+'\nevent: job\ndata: '+json.dumps(e)+'\n\n' for e in events)+'\n').encode()
+
+def upload_asset(host,data_url,name=''):
+    url=host.store_image_data(data_url,'external-assets');name=str(name or '')[:250]
+    record_asset_origin(host,url,{'kind':'upload','name':name})
+    return {'kind':'image','url':url,'name':name}
+
+def asset_catalog(host,verify=False):
+    store=jobs(host)
+    with store.lock,host.CONFIG_LOCK:return inventory(host,verify)
+
 def dispatch(handler,host,route,query,request_id=None):
-    """Returns False for other namespaces. Shared private/public semantics."""
+    """Private /api/foundation/* routes. The public API calls the helpers above directly."""
     if not (route in ('albums/page','albums/page-edits','albums/delete','jobs','jobs/events','jobs/activity','jobs/reorder','assets/catalog','assets/upload','assets/cleanup') or route.startswith('jobs/') or route.startswith('resources/')):return False
     def reply(status,payload):
         if request_id:payload['requestId']=request_id
         handler.send_json(status,payload)
     try:
         store=jobs(host);body=handler.read_json_body(max_bytes=host.MAX_IMAGE_BYTES*4//3+65536) if handler.command=='POST' else None
-        if route=='albums/page' and body is not None:
-            receipt=host.native_store().mark_materialization(body.get('albumId'))
-            data=mio_pictures.mutate(host,store,body)
-            try:
-                materialize_album(host,body.get('albumId'));receipt.unlink(missing_ok=True)
-            except Exception:
-                projection_warning(receipt)
-                data['warning']='图片记录已持久保存；独立画册文件等待恢复提交。'
-        elif route=='albums/page-edits' and handler.command=='GET':
-            edits=mio_pictures.records(host.DATA_DIR,max(0,int(query.get('after',['0'])[0])))
-            data={'edits':edits,'cursor':edits[-1]['seq'] if edits else int(query.get('after',['0'])[0])}
-        elif route=='albums/delete' and body is not None:
-            with store.lock,host.CONFIG_LOCK:
-                data=store.delete_albums(body.get('ids'))
-                # Tombstones are the authoritative commit. A failed JSON materialization
-                # must not report a partially failed deletion or require another confirmation.
-                try:
-                    pending=recover_deletions(host,data['deletedAlbumIds'])
-                except Exception:pending=True
-                if pending:data['warning']='画册已删除；独立文件整理失败，请检查磁盘权限/空间，重启后继续整理。不会重新生成。'
-        elif route=='jobs' and body is not None:data=store.submit(host.native_store().freeze(body.get('input',{})),body.get('idempotencyKey'))
+        if route=='albums/page' and body is not None:data=mutate_page(host,body)
+        elif route=='albums/page-edits' and handler.command=='GET':data=page_edits(host,int(query.get('after',['0'])[0]))
+        elif route=='albums/delete' and body is not None:data=delete_albums(host,body.get('ids'))
+        elif route=='jobs' and body is not None:data=submit_job(host,body)
         elif route=='jobs' and handler.command=='GET':data=store.list()
         elif route=='jobs/activity' and handler.command=='GET':data=store.activity(int(query.get('after',['0'])[0]))
         elif route=='jobs/events' and handler.command=='GET':
-            after=int(query.get('after',[handler.headers.get('Last-Event-ID','0')])[0]);events=store.events(after)
-            raw=('retry: 1500\n'+''.join('id: '+str(e['id'])+'\nevent: job\ndata: '+json.dumps(e)+'\n\n' for e in events)+'\n').encode()
+            raw=event_stream(store,int(query.get('after',[handler.headers.get('Last-Event-ID','0')])[0]))
             handler.send_response(200);handler.send_header('Content-Type','text/event-stream');handler.send_header('Cache-Control','no-cache');handler.send_header('Content-Length',str(len(raw)));handler.end_headers();handler.wfile.write(raw);return True
         elif route=='jobs/reorder' and body is not None:data=store.reorder(body.get('ids'))
         elif route.startswith('jobs/'):
             id=route.split('/')[1]
-            if body is not None and body.get('action') in ('archive','remove'):
-                with store.lock,host.CONFIG_LOCK:
-                    snapshot=host.read_merged_config()
-                    if snapshot.get('templates') is not None:host.write_split_config(snapshot)
-                    data=store.control(id,body.get('action'))
-            else:data=store.control(id,body.get('action'),body.get('policy'),body.get('runtime'),body.get('recovery'),body.get('edits')) if body is not None else store.get(id)
-        elif route=='assets/upload' and body is not None:
-            url=host.store_image_data(body.get('dataUrl',''),'external-assets');record_asset_origin(host,url,{'kind':'upload','name':str(body.get('name',''))[:250]});data={'kind':'image','url':url,'name':str(body.get('name',''))[:250]}
-        elif route=='assets/catalog' and handler.command=='GET':
-            with store.lock,host.CONFIG_LOCK:data=inventory(host,query.get('verify',['0'])[0]=='1')
+            data=control_job(host,id,body) if body is not None else store.get(id)
+        elif route=='assets/upload' and body is not None:data=upload_asset(host,body.get('dataUrl',''),body.get('name',''))
+        elif route=='assets/catalog' and handler.command=='GET':data=asset_catalog(host,query.get('verify',['0'])[0]=='1')
         elif route=='assets/cleanup' and body is not None:data=cleanup(host,body)
         elif route.startswith('resources/'):data=resources(host,route.split('/')[1],body)
         else:raise ValueError('Method not supported')
-        if route.startswith('jobs') and isinstance(data,dict):
-            records=data.get('jobs',[]) if 'jobs' in data else [data] if 'channelRefs' in data else []
-            if records:
-                config=host.native_store().read(album_summaries=True) if hasattr(host,'native_store') else (host.read_merged_config_raw() if hasattr(host,'read_merged_config_raw') else host.read_merged_config())
-                for job in records:job['currentChannels']=[channel_preview(config,ref) for ref in job.get('channelRefs',[])]
+        if route.startswith('jobs'):annotate_jobs(host,data)
         reply(200,{'data':data})
     except Conflict as exc:reply(409,{'error':{'code':'conflict','message':str(exc)}})
     except KeyError:reply(404,{'error':{'code':'not_found','message':'Not found'}})

@@ -98,7 +98,7 @@
 ## 任务计划
 
 - [x] A0 审查、计划，写本日志
-- [ ] A1 框架：`backend/api_v1`（路由表、上下文、信封和错误、OpenAPI 生成、PUT/PATCH/DELETE、ETag/If-Match、X-Request-Id、CORS），迁移全部现有 v1 路由，删除 `mio_api_ext.py` 和 `mio_contracts.py`
+- [x] A1 框架：`backend/api_v1`（路由表、上下文、信封和错误、OpenAPI 生成、PUT/PATCH/DELETE、ETag/If-Match、X-Request-Id、CORS），迁移全部现有 v1 路由，删除 `mio_api_ext.py` 和 `mio_contracts.py`
 - [ ] A2 文件库通用 CRUD：
   - 路由：`/library`、`/library/{kind}`、`/library/{kind}/{id}`
   - 附加操作：duplicate、bundle 导出、import/inspect、order、problems、rescan
@@ -129,3 +129,20 @@
 （每完成一项追加一行，格式：日期 · 任务 · 内容）
 
 - 2026-09-25 · A0 · 审查三套接口和存储层（NativeStore、FileLibrary、FileSettings、credentials、providers registry、production、ecosystem、update），写出缺口表、设计决策和计划。
+- 2026-09-25 · A1 · 框架落地，旧路由全部迁移：
+  - 新包 `backend/api_v1/`：
+    - `core.py`：Router、Route、Context、ApiError/Reply/Raw/SENT、错误映射、鉴权、信封、`merge_patch`。
+    - `spec.py`：OpenAPI 生成与共享 schema。
+    - `common.py`：工作区设置读写、渠道、排序、锁顺序。
+    - 路由模块 `system`、`catalog`、`albums`、`assets`、`generation`、`jobs`、`production`。
+  - `mio_api.py` 改为门面。`mio_api_ext.py` 和 `mio_contracts.py` 已删除。
+  - `mio_http.external_api` 改为传入 HTTPServices（`ctx.services`），`ctx.host` 为 application。CORS 放开 PUT/PATCH/DELETE、If-Match，并暴露 ETag/X-Request-Id。
+  - `mio_foundation.dispatch` 拆出可复用函数：`annotate_jobs`、`mutate_page`、`page_edits`、`delete_albums`、`submit_job`、`control_job`、`event_stream`、`upload_asset`、`asset_catalog`。
+  - `production/api.py` 的 dispatch 改为 `ACTIONS` 表加 `run_action`、`list_tasks`、`read_task`，私有和公开接口共用。`snapshot` 缺 `storyId` 或预设引用格式不对时，返回可读的 400（原先是 KeyError）。
+  - 路由匹配规则：字面段优先（specificity），同一路径方法不符时返回 405 和 Allow。集合级动作一律用 POST（如 `POST /library/{kind}/reorder`），避免和 `{id}` 冲突。
+  - `/images/generations` 的字段改为 `channelId`（`providerId` 仍可用作别名），渠道从工作区设置文档读取。
+  - 文档工具 `tools/build_api_docs.py` 生成 `docs/api/openapi.json` 和 `docs/api/ROUTES.md`，测试校验两者与运行时一致。
+  - 测试夹具 `tests/api_support.py`：临时 DATA_DIR 加真实 HTTP 服务，teardown 时关闭 ecosystem、foundation 和 native store。
+  - `test_external_api` 改为使用真实临时工作区。新增 `test_api_v1_core`（9 个）。全量 Python：619 OK。
+  - 注意：生产任务 ID 必须形如 `assembly-*`，否则返回 400 Invalid production identity；空工作区没有导出版式，HTML 导出会返回 404。
+

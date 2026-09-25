@@ -372,12 +372,18 @@ class ProductionAdapter:
                 ],
             }
         else:
+            if not isinstance(body.get("storyId"), str) or not body["storyId"]:
+                raise LibraryError("请选择分镜（storyId）")
             story_record = store.entity("storyboards", body["storyId"])
             story = story_record["document"]
             source_revisions["storyboards:" + body["storyId"]] = story_record.get("etag")
+        if not isinstance(body.get("presets", []), list):
+            raise LibraryError("presets 必须是 [{kind, id}] 数组")
         if len(body.get("presets", [])) > 20:
             raise LibraryError("一次装配最多 20 份预设")
         for reference in body.get("presets", []):
+            if not isinstance(reference, dict) or not isinstance(reference.get("id"), str):
+                raise LibraryError("预设引用必须是 {kind, id}")
             if reference.get("kind") not in ("characters", "scenes"):
                 raise LibraryError("只能装配角色或场景预设")
             preset_record = store.entity(reference["kind"], reference["id"])
@@ -1143,15 +1149,151 @@ def service(host):
         return eco
 
 
+def _workflow_graph(body):
+    graph = body.get("workflow") or {}
+    if not isinstance(graph, dict) or any(not isinstance(n, dict) or not isinstance(n.get("inputs"), dict) for n in graph.values()):
+        raise LibraryError("请提供 ComfyUI API 格式工作流")
+    return graph
+
+
+def analyze_slots(body):
+    graph = _workflow_graph(body)
+    return {"plan": workflow_slots.analyze(graph, body.get("objectInfo"), body.get("manual"), body.get("slots"))}
+
+
+def apply_slots(body):
+    graph = _workflow_graph(body)
+    plan = workflow_slots.ensure_plan(graph, body.get("slots"), body.get("objectInfo"))
+    return workflow_slots.apply(graph, plan, body.get("overrides") or {}, body.get("objectInfo"))
+
+
+def task_view(task):
+    return {key: task.get(key) for key in ("id", "title", "status", "error", "pages", "cancelReport", "rateLimit",
+                                           "paused", "albumId", "createdAt", "updatedAt")}
+
+
+def _required_id(body, message="缺少任务标识"):
+    task_id = body.get("id")
+    if not isinstance(task_id, str) or not task_id:
+        raise LibraryError(message)
+    return task_id
+
+
+def _remove(eco, host, body):
+    delete_albums = bool(body.get("delete_albums") or body.get("deleteAlbums"))
+
+    def cascade_albums(removed_tasks):
+        album_ids = [t["albumId"] for t in removed_tasks if t.get("albumId") and t.get("purpose") != "preview"]
+        if not album_ids:
+            return None
+        album_ids = list(dict.fromkeys(album_ids))
+        try:
+            from backend import mio_foundation
+            from backend.mio_foundation import recover_deletions
+
+            f_store = mio_foundation.jobs(host)
+            with f_store.lock, host.CONFIG_LOCK:
+                f_store.delete_albums(album_ids)
+                try:
+                    recover_deletions(host, album_ids)
+                except Exception:
+                    pass
+            return {"deletedAlbumIds": album_ids}
+        except Exception:
+            return None
+
+    return eco.production.remove(body.get("id"), body.get("ids"), on_remove=cascade_albums if delete_albums else None)
+
+
+def _assemble_batch(eco, host, body):
+    items = body.get("items")
+    if not isinstance(items, list) or not items:
+        raise LibraryError("批量装配需至少包含 1 项")
+    if any(not isinstance(item, dict) for item in items):
+        raise LibraryError("批量装配的每一项都必须是对象")
+    return eco.production.assemble_many([
+        (eco.production_adapter.snapshot(item), item.get("title"), item.get("requestId"), item.get("concurrency"))
+        for item in items])
+
+
+def _clone(eco, host, body):
+    task_id = _required_id(body, "缺少克隆目标任务标识")
+    adjustments = body.get("adjustments")
+    transform = (lambda snap: adjust_clone(snap, adjustments)) if adjustments is not None else None
+    return eco.production.clone(task_id, body.get("title"), concurrency=body.get("concurrency", "source"), transform=transform)
+
+
+def _recover_publication(eco, host, body):
+    index = body.get("index")
+    if type(index) is not int or index < 0:
+        raise LibraryError("分幕索引无效")
+    return eco.production.recover_publication(_required_id(body), index)
+
+
+ACTIONS = {
+    "analyze-slots": lambda eco, host, body: analyze_slots(body),
+    "apply-slots": lambda eco, host, body: apply_slots(body),
+    "assemble": lambda eco, host, body: eco.production.assemble(
+        eco.production_adapter.snapshot(body), body.get("title"), body.get("requestId"), concurrency=body.get("concurrency")),
+    "assemble-batch": _assemble_batch,
+    "start": lambda eco, host, body: eco.production.start(
+        _required_id(body), body.get("sequential") is True, body.get("indices"), body.get("trusted") is True,
+        body.get("forcePrepare") is True, body.get("confirmUncertain") is True, concurrency=body.get("concurrency")),
+    "start-many": lambda eco, host, body: eco.production.start_many(
+        body.get("ids"), trusted=body.get("trusted") is True, confirm_uncertain=body.get("confirmUncertain") is True),
+    "start-sequence": lambda eco, host, body: eco.production.start_sequence(
+        body.get("ids"), trusted=body.get("trusted") is True, confirm_uncertain=body.get("confirmUncertain") is True),
+    "recover-publication": _recover_publication,
+    "pause": lambda eco, host, body: eco.production.pause(body.get("id"), body.get("ids")),
+    "resume": lambda eco, host, body: eco.production.resume(body.get("id"), body.get("ids")),
+    "cancel": lambda eco, host, body: eco.production.cancel(body.get("id"), body.get("ids")),
+    "remove": _remove,
+    "clone": _clone,
+    "reorder": lambda eco, host, body: eco.production.reorder(body.get("order")),
+    "clear-finished": lambda eco, host, body: eco.production.clear_finished(),
+    "concurrency": lambda eco, host, body: eco.production.set_concurrency(body.get("value"), body.get("id")),
+    "live-sync": lambda eco, host, body: eco.production.set_live_sync({k: body[k] for k in LIVE_SYNC_KEYS if k in body}),
+    "rename": lambda eco, host, body: eco.production.rename(body.get("id"), body.get("title")),
+    "update-frame": lambda eco, host, body: eco.production.update_frame(
+        body.get("id"), body.get("index"), {k: body[k] for k in FRAME_FIELDS if k in body}),
+}
+BODY_LIMITS = {"analyze-slots": 64 * 1024 * 1024, "apply-slots": 64 * 1024 * 1024}
+
+
+def run_action(host, route, body):
+    """One production operation; shared by the private UI API and the public /api/v1 API."""
+    action = ACTIONS.get(route)
+    if action is None:
+        raise LibraryError("未知生产操作", 404)
+    if not isinstance(body, dict):
+        raise LibraryError("请求体必须是 JSON 对象")
+    return action(service(host), host, body)
+
+
+def list_tasks(host):
+    return service(host).production.list()
+
+
+def read_task(host, route):
+    """GET tasks/<id>, tasks/<id>/clone-source and tasks/<id>/frames/<n>."""
+    queue = service(host).production
+    if route.endswith("/clone-source"):
+        return clone_source(queue.get(route[: -len("/clone-source")]))
+    if "/frames/" in route:
+        task_id, _, position = route.partition("/frames/")
+        if not re.fullmatch(r"\d{1,4}", position):
+            raise LibraryError("分幕索引无效")
+        return frame_source(queue.get(task_id), int(position))
+    return task_view(queue.get(route))
+
+
 def dispatch(handler, host, path):
     if not path.startswith("/api/production/"):
         return False
     try:
-        eco = service(host)
-        queue = eco.production
         route = path[len("/api/production/") :]
         if handler.command == "GET" and route == "tasks":
-            result = queue.list()
+            result = list_tasks(host)
             import hashlib, json
             etag = '"' + hashlib.sha256(json.dumps(result, sort_keys=True, ensure_ascii=False).encode()).hexdigest() + '"'
             if handler.headers.get("If-None-Match") == etag:
@@ -1170,157 +1312,10 @@ def dispatch(handler, host, path):
             handler.wfile.write(encoded)
             return True
         elif handler.command == "GET" and route.startswith("tasks/"):
-            if route.endswith("/clone-source"):
-                task_id = route[len("tasks/") : -len("/clone-source")]
-                result = clone_source(queue.get(task_id))
-            elif "/frames/" in route:
-                task_id, _, position = route[len("tasks/") :].partition("/frames/")
-                if not re.fullmatch(r"\d{1,4}", position):
-                    raise LibraryError("分幕索引无效")
-                result = frame_source(queue.get(task_id), int(position))
-            else:
-                task = queue.get(route[len("tasks/") :])
-                result = {
-                    key: task.get(key)
-                    for key in (
-                        "id",
-                        "title",
-                        "status",
-                        "error",
-                        "pages",
-                        "cancelReport",
-                        "rateLimit",
-                        "paused",
-                        "albumId",
-                        "createdAt",
-                        "updatedAt",
-                    )
-                }
+            result = read_task(host, route[len("tasks/") :])
         elif handler.command == "POST":
-            body = handler.read_json_body(max_bytes=(64 if route in ("analyze-slots", "apply-slots") else 2) * 1024 * 1024)
-            if route == "analyze-slots":
-                graph = body.get("workflow") or {}
-                if not isinstance(graph, dict) or any(not isinstance(n, dict) or not isinstance(n.get("inputs"), dict) for n in graph.values()):
-                    raise LibraryError("请提供 ComfyUI API 格式工作流")
-                result = {"plan": workflow_slots.analyze(graph, body.get("objectInfo"), body.get("manual"), body.get("slots"))}
-            elif route == "apply-slots":
-                graph = body.get("workflow") or {}
-                if not isinstance(graph, dict) or any(not isinstance(n, dict) or not isinstance(n.get("inputs"), dict) for n in graph.values()):
-                    raise LibraryError("请提供 ComfyUI API 格式工作流")
-                plan = workflow_slots.ensure_plan(graph, body.get("slots"), body.get("objectInfo"))
-                result = workflow_slots.apply(graph, plan, body.get("overrides") or {}, body.get("objectInfo"))
-            elif route == "assemble":
-                result = queue.assemble(
-                    eco.production_adapter.snapshot(body),
-                    body.get("title"),
-                    body.get("requestId"),
-                    concurrency=body.get("concurrency"),
-                )
-            elif route == "assemble-batch":
-                items = body.get("items")
-                if not isinstance(items, list) or not items:
-                    raise LibraryError("批量装配需至少包含 1 项")
-                result = queue.assemble_many(
-                    [
-                        (
-                            eco.production_adapter.snapshot(item),
-                            item.get("title"),
-                            item.get("requestId"),
-                            item.get("concurrency"),
-                        )
-                        for item in items
-                    ]
-                )
-            elif route == "start":
-                result = queue.start(
-                    body["id"],
-                    body.get("sequential") is True,
-                    body.get("indices"),
-                    body.get("trusted") is True,
-                    body.get("forcePrepare") is True,
-                    body.get("confirmUncertain") is True,
-                    concurrency=body.get("concurrency"),
-                )
-            elif route == "start-many":
-                result = queue.start_many(
-                    body.get("ids"),
-                    trusted=body.get("trusted") is True,
-                    confirm_uncertain=body.get("confirmUncertain") is True,
-                )
-            elif route == "start-sequence":
-                result = queue.start_sequence(
-                    body.get("ids"),
-                    trusted=body.get("trusted") is True,
-                    confirm_uncertain=body.get("confirmUncertain") is True,
-                )
-            elif route == "recover-publication":
-                result = queue.recover_publication(body["id"], body["index"])
-            elif route == "pause":
-                result = queue.pause(body.get("id"), body.get("ids"))
-            elif route == "resume":
-                result = queue.resume(body.get("id"), body.get("ids"))
-            elif route == "cancel":
-                result = queue.cancel(body.get("id"), body.get("ids"))
-            elif route == "remove":
-                delete_albums = bool(body.get("delete_albums") or body.get("deleteAlbums"))
-
-                def cascade_albums(removed_tasks):
-                    album_ids = [
-                        t["albumId"]
-                        for t in removed_tasks
-                        if t.get("albumId") and t.get("purpose") != "preview"
-                    ]
-                    if not album_ids:
-                        return None
-                    album_ids = list(dict.fromkeys(album_ids))
-                    try:
-                        from backend import mio_foundation
-                        from backend.mio_foundation import recover_deletions
-
-                        f_store = mio_foundation.jobs(host)
-                        with f_store.lock, host.CONFIG_LOCK:
-                            f_store.delete_albums(album_ids)
-                            try:
-                                recover_deletions(host, album_ids)
-                            except Exception:
-                                pass
-                        return {"deletedAlbumIds": album_ids}
-                    except Exception:
-                        return None
-
-                result = queue.remove(
-                    body.get("id"),
-                    body.get("ids"),
-                    on_remove=cascade_albums if delete_albums else None,
-                )
-            elif route == "clone":
-                task_id = body.get("id")
-                if not isinstance(task_id, str) or not task_id:
-                    raise LibraryError("缺少克隆目标任务标识")
-                adjustments = body.get("adjustments")
-                transform = (lambda snap: adjust_clone(snap, adjustments)) if adjustments is not None else None
-                result = queue.clone(
-                    task_id,
-                    body.get("title"),
-                    concurrency=body.get("concurrency", "source"),
-                    transform=transform,
-                )
-            elif route == "reorder":
-                result = queue.reorder(body.get("order"))
-            elif route == "clear-finished":
-                result = queue.clear_finished()
-            elif route == "concurrency":
-                result = queue.set_concurrency(body.get("value"), body.get("id"))
-            elif route == "live-sync":
-                result = queue.set_live_sync({k: body[k] for k in LIVE_SYNC_KEYS if k in body})
-            elif route == "rename":
-                result = queue.rename(body.get("id"), body.get("title"))
-            elif route == "update-frame":
-                result = queue.update_frame(
-                    body.get("id"), body.get("index"), {k: body[k] for k in FRAME_FIELDS if k in body}
-                )
-            else:
-                raise LibraryError("未知生产操作", 404)
+            body = handler.read_json_body(max_bytes=BODY_LIMITS.get(route, 2 * 1024 * 1024))
+            result = run_action(host, route, body)
         else:
             raise LibraryError("未知生产接口", 404)
         handler.send_json(200, {"data": result})
@@ -1328,4 +1323,3 @@ def dispatch(handler, host, path):
         handler.send_json(exc.status, {"error": str(exc)})
     except Exception as exc:
         handler.send_json(400, {"error": str(exc)[:500]})
-    return True

@@ -95,7 +95,7 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
     server_version = "Mio/1.0"
 
     def external_api(self):
-        return mio_api.handle(self, self.services.application)
+        return mio_api.handle(self, self.services)
 
     def guess_type(self, path):
         if Path(urllib.parse.urlparse(path).path).name == "LICENSE":
@@ -236,10 +236,12 @@ class HTTPRoutes(SimpleHTTPRequestHandler):
         if origin and origin != "null" and origin in self.services.ALLOWED_ORIGINS:
             self.send_header("Access-Control-Allow-Origin", origin)
             self.send_header("Vary", "Origin")
-            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
             self.send_header(
-                "Access-Control-Allow-Headers", "Content-Type, Authorization, X-Mio-CSRF, If-None-Match"
+                "Access-Control-Allow-Headers",
+                "Content-Type, Authorization, X-Mio-CSRF, If-None-Match, If-Match, Last-Event-ID",
             )
+            self.send_header("Access-Control-Expose-Headers", "ETag, X-Request-Id, Content-Disposition, Allow")
 
         request_path = urllib.parse.urlparse(self.path).path
         if (

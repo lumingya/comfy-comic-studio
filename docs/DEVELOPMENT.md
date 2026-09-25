@@ -79,12 +79,15 @@ examples/mio_client.py          stdlib integration example
 
 ## 公共接口演进
 
-- 浏览器状态保存与外部只读 DTO 分离，避免 schema 泄露和全量覆写。
+- 公共 API 在 `backend/api_v1/`：每个路由在 `ROUTER` 上声明一次（方法、路径模板、说明、请求/响应 schema、handler）。分发和 OpenAPI 都由这张表生成，文档和实现不会漂移。
+- 新增路由：在对应领域模块里用 `@ROUTER.get/post/put/patch/delete(...)` 声明；需要新的功能区时在 `backend/api_v1/__init__.py` 的标签表里登记。
+- 浏览器私有接口（`/api/*`、`/api/foundation/*`）和公共接口共用同一批领域函数（`mio_foundation.submit_job`、`production.api.run_action` 等），不要复制业务逻辑。
 - /jobs 持久任务 API 和界面共用服务端调度器。同步单图接口不提供幂等与恢复语义；集成使用 /jobs 的不可变快照与幂等提交。owner 是可信本地关联标记，不是多租户权限隔离。
-- 更新 schema 后运行：
+- 改动路由后重新生成文档（测试会校验两者与运行时一致）：
 
 ```bash
-python -c "import json,mio_api; from pathlib import Path; Path('docs/api/openapi.json').write_text(json.dumps(mio_api.openapi(),ensure_ascii=False,indent=2)+'\n')"
+python tools/build_api_docs.py          # 写入 docs/api/openapi.json 与 docs/api/ROUTES.md
+python tools/build_api_docs.py --check  # 只检查
 ```
 
 ## 测试与发布
