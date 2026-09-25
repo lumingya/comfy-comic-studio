@@ -116,7 +116,7 @@
   - PATCH 和 DELETE `/albums/{id}`，以及 steps
   - `/albums/import`（HTML 或导入器）
   - `/albums/{id}/export`（导出器）
-- [ ] A9 生产队列：所有路由都登记进路由表，统一信封，写文档，并提供 REST 风格的 `tasks/{id}/{action}`
+- [x] A9 生产队列：所有路由都登记进路由表，统一信封，写文档，并提供 REST 风格的 `tasks/{id}/{action}`
 - [ ] A10 生态桥接：`/ecosystem/*`、`/extensions/{id}/*`
 - [ ] A11 更新中心：`/update/*`
 - [ ] A12 市场、素材（raw、fetch、二进制上传）、工作流（analyze、apply、activate）、`/workspace`（状态、快照、rescan）
@@ -238,4 +238,12 @@
     - HTML 画册导入走 `/library/import` 的 html 字段，多本画册的 HTML/ZIP/PDF 导出仍走 `POST /albums/export`。
   - **修复潜在问题 3**：ecosystem 的 `import_document`。
   - 测试：`test_api_parts.AlbumTransferTests` 覆盖 pages-zip 导出后再导入的往返，图片成为新画册自己的资源。
+- 2026-09-25 · A9 · 生产队列收尾：
+  - A1 中已登记全部 19 个动作的文档化请求体，以及 REST 风格别名：
+    - `POST /production/tasks`：装配。
+    - `DELETE /production/tasks/{id}`：支持 `?deleteAlbums`。
+    - `POST /production/tasks/{id}/{start|pause|resume|cancel|clone|rename}`。
+    - `PATCH /production/tasks/{id}/frames/{index}`：update-frame。
+  - 本次补充：API 调用装配时可以省略 `requestId`，服务端自动生成 `api-<uuid>`；带上它则重试是幂等的（队列要求必须有，界面总是会传）。assemble-batch 的每一项同样处理。
+  - 测试 `test_api_v1_core.ProductionFlowTests`：用云渠道装配，不启动生成；覆盖详情、逐幕来源、重命名、改台词、clone-source、克隆、暂停、列表、删除和批量删除。任务 ID 形如 `assembly-*`。
 

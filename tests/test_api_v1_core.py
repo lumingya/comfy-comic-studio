@@ -94,3 +94,47 @@ class MigratedRouteTests(ApiServerCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ProductionFlowTests(ApiServerCase):
+    """Assemble and control a production task without starting any generation."""
+
+    @classmethod
+    def seed(cls):
+        cls.store().apply(
+            [{"kind": "collections", "id": "c1", "document": {"id": "c1", "title": "C"}, "expected": None},
+             {"kind": "storyboards", "id": "s1", "expected": None, "document": {
+                 "id": "s1", "title": "S", "projectId": "c1",
+                 "frames": [{"id": "f1", "name": "一", "prompt": "{hair} girl", "caption": "a"},
+                            {"id": "f2", "name": "二", "prompt": "sea", "caption": "b"}]}},
+             {"kind": "characters", "id": "hero", "expected": None, "document": {
+                 "id": "hero", "title": "Hero", "projectId": "c1", "entries": [{"id": "e1", "key": "hair", "type": "text", "value": "silver"}]}}],
+            settings_changes=[{"name": "workspace", "expected": None, "document": {"ui": {"comfyStudio": {
+                "activeProjectId": "c1", "settings": {"imageGeneration": {"active": "cloud", "profiles": [
+                    {"id": "cloud", "title": "Cloud", "provider": "openai", "baseUrl": "https://api.example.com/v1",
+                     "model": "gpt-image-1", "keyMode": "none"}]}}}}}}])
+
+    def test_assemble_rename_clone_edit_pause_and_remove(self):
+        task = self.ok(self.post("/api/v1/production/tasks", {"storyId": "s1", "channelId": "cloud", "title": "第一本",
+                                                               "presets": [{"kind": "characters", "id": "hero"}]}), 201)
+        task_id = task["id"]
+        self.assertTrue(task_id.startswith("assembly-"))
+        detail = self.ok(self.get("/api/v1/production/tasks/" + task_id))
+        self.assertEqual((detail["title"], len(detail["pages"])), ("第一本", 2))
+        frame = self.ok(self.get("/api/v1/production/tasks/%s/frames/0" % task_id))
+        self.assertEqual((frame["prompt"], frame["sourceFrameId"]), ("{hair} girl", "f1"))
+        self.ok(self.post("/api/v1/production/tasks/%s/rename" % task_id, {"title": "改名"}))
+        self.assertEqual(self.ok(self.get("/api/v1/production/tasks/" + task_id))["title"], "改名")
+        self.ok(self.patch("/api/v1/production/tasks/%s/frames/1" % task_id, {"caption": "新台词"}))
+        self.assertIsInstance(self.ok(self.get("/api/v1/production/tasks/%s/clone-source" % task_id)), dict)
+        clone = self.ok(self.post("/api/v1/production/tasks/%s/clone" % task_id, {"title": "副本"}))
+        self.assertTrue(clone["id"].startswith("assembly-"))
+        self.ok(self.post("/api/v1/production/tasks/%s/pause" % task_id))
+        listed = self.ok(self.get("/api/v1/production/tasks"))
+        self.assertEqual({t["id"] for t in listed["tasks"]} >= {task_id, clone["id"]}, True)
+        self.ok(self.delete("/api/v1/production/tasks/" + clone["id"]))
+        self.ok(self.post("/api/v1/production/remove", {"ids": [task_id]}))
+        self.assertEqual(self.get("/api/v1/production/tasks/" + task_id).status, 404)
+        bad = self.post("/api/v1/production/assemble", {"storyId": "s1", "channelId": "missing"})
+        self.assertEqual(bad.status, 400)
+

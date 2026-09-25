@@ -21,7 +21,7 @@ ASSEMBLE = schema("AssembleRequest", obj({
     "presets": array(PRESET_REF, maxItems=20, description="Character / scene presets, later ones override earlier ones"),
     "channelId": {"type": "string", "description": "Saved image channel (see /channels)"},
     "workflowId": {"type": "string", "description": "ComfyUI workflow for workflow channels; default = active workflow"},
-    "title": STRING, "requestId": {"type": "string", "description": "Client idempotency token"},
+    "title": STRING, "requestId": {"type": "string", "description": "Idempotency token: repeating a requestId returns the same task (generated when omitted)"},
     "projectId": STRING, "seedEnabled": BOOLEAN,
     "seed": {"type": "integer", "minimum": 0, "maximum": 4294967295},
     "concurrency": {"type": ["integer", "null"], "minimum": 1, "maximum": 16},
@@ -64,6 +64,18 @@ ACTION_DOCS = {
 }
 
 
+def with_request_ids(action, body):
+    """Assembly is idempotent per requestId; generate one when the client does not care."""
+    import uuid
+
+    if action == "assemble" and not body.get("requestId"):
+        body = {**body, "requestId": "api-" + uuid.uuid4().hex}
+    if action == "assemble-batch" and isinstance(body.get("items"), list):
+        body = {**body, "items": [{**item, "requestId": item.get("requestId") or "api-" + uuid.uuid4().hex}
+                                  if isinstance(item, dict) else item for item in body["items"]]}
+    return body
+
+
 def _etag(value):
     return '"' + hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False).encode()).hexdigest() + '"'
 
@@ -81,7 +93,7 @@ def list_tasks(ctx):
 @ROUTER.post("/production/tasks", summary="装配一个生产任务（同 POST /production/assemble）", tags=["production"],
              body=ASSEMBLE, status=201, operation_id="createProductionTask")
 def create_task(ctx):
-    return production_api.run_action(ctx.host, "assemble", ctx.json())
+    return production_api.run_action(ctx.host, "assemble", with_request_ids("assemble", ctx.json()))
 
 
 @ROUTER.get("/production/tasks/{taskId}", summary="任务详情：状态、逐页状态、画册 ID", tags=["production"],
@@ -141,7 +153,7 @@ for _action in ("start", "pause", "resume", "cancel", "clone", "rename"):
 
 def _action_route(action):
     def handler(ctx):
-        return production_api.run_action(ctx.host, action, ctx.json(required=False))
+        return production_api.run_action(ctx.host, action, with_request_ids(action, ctx.json(required=False)))
 
     return handler
 

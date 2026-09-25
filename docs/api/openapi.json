@@ -11189,7 +11189,7 @@
           },
           "requestId": {
             "type": "string",
-            "description": "Client idempotency token"
+            "description": "Idempotency token: repeating a requestId returns the same task (generated when omitted)"
           },
           "projectId": {
             "type": "string"
