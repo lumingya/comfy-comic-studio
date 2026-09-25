@@ -95,6 +95,8 @@
 2. `mio_native_store.prepare_execution` 读取的是 `settings.imageProviders.profiles`，但当前键名是 `imageGeneration`。这是遗留问题，优先级低，先记录。
 3. （A8 审查中发现）`Ecosystem.import_document` 同样调用了不存在的 `NativeStore.put`，并且导入器返回的图片名是裸名（`<sha>.png`），而画册校验要求 `images/...`，所以 `/api/ecosystem/import`（pages-zip 导入）原本不可用。已修复：先把资源内联为 data URL，再调用 `put_document`，总是分配新 ID，projectId 取 options 中的值或当前画册集。
 4. 私有路由 `/api/production/*` 的错误没有统一格式：有的是 `{"error": 文本}`，有的带 `code`。v1 统一后，私有接口继续沿用原格式。
+5. （A13 用示例客户端联调时发现）没有“当前画册集”时，`POST /library/{kind}` 会回落到第一个画册集，但 `POST /library/import` 不回落，直接报 400「请选择目标画册集」。已修复：两处共用 `default_project_id`。
+6. （同上）生产队列要求画册名称，界面总会预填，API 调用方却常常不传，于是得到 400「请填写 1–150 字的画册名称」。已修复：`title` 缺省时取分镜标题；试绘取「预设名 · 试绘」；批量装配逐项补齐。
 
 ## 任务计划
 
@@ -276,5 +278,10 @@
   - `backend/api_v1/marketplace.py`：
     - `GET /marketplace`、`POST /marketplace/fetch`。
     - `POST /marketplace/install`：可按目录 id、远程 url 或内联 data 安装；市场格式 steps 与分镜格式 frames 都能转成分镜，归入 projectId 或当前画册集。
-  - 测试 `tests/test_api_workspace.py` 4 个。全量 Python 见下一行。
-
+  - 测试 `tests/test_api_workspace.py` 4 个。
+  - A12 后全量 Python：668 OK（4 skipped），43.6 秒。
+- 2026-09-25 · A13（联调修复）· 用 `examples/mio_client.py` 对临时工作区的真实服务器逐个调用（发现、CRUD、ETag 冲突、分幕、变量、分享包导出再导入、渠道、上传与下载、生成（打补丁）、装配、未确认启动 403、LLM 未配置 409、画册 zip 导出），发现并修复了上面的问题 5 和 6：
+  - `backend/api_v1/library.py`：新增 `default_project_id`。
+  - `backend/api_v1/production.py`：`with_request_ids` 改为 `assembly_defaults`，同时补 requestId 和 title。
+  - 测试：`NoActiveCollectionTests`（test_api_library），以及 `ProductionFlowTests.test_title_defaults_to_the_storyboard_or_the_preset`（test_api_v1_core）。顺带把 test_api_v1_core 里位置不对的 `__main__` 守卫移到文件末尾。
+  - 任务状态：standby（未开始）→ ready → preparing → running → complete / partial / failed / cancelled / interrupted。示例客户端的 `wait_task` 只在 ready / preparing / running 时继续轮询。

@@ -92,10 +92,6 @@ class MigratedRouteTests(ApiServerCase):
             self.assertIn("items", self.ok(self.get("/api/v1/resources/" + kind)))
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 class ProductionFlowTests(ApiServerCase):
     """Assemble and control a production task without starting any generation."""
 
@@ -138,3 +134,17 @@ class ProductionFlowTests(ApiServerCase):
         bad = self.post("/api/v1/production/assemble", {"storyId": "s1", "channelId": "missing"})
         self.assertEqual(bad.status, 400)
 
+    def test_title_defaults_to_the_storyboard_or_the_preset(self):
+        task = self.ok(self.post("/api/v1/production/tasks", {"storyId": "s1", "channelId": "cloud"}), 201)
+        self.assertEqual(task["title"], "S")
+        preview = self.ok(self.post("/api/v1/production/tasks", {
+            "preview": True, "previewPrompt": "portrait", "channelId": "cloud", "presets": [{"kind": "characters", "id": "hero"}]}), 201)
+        self.assertEqual(preview["title"], "Hero · 试绘")
+        batch = self.ok(self.post("/api/v1/production/assemble-batch", {"items": [{"storyId": "s1", "channelId": "cloud", "title": "自定义"},
+                                                                                {"storyId": "s1", "channelId": "cloud"}]}))
+        self.assertEqual([t["title"] for t in batch], ["自定义", "S"])
+        self.ok(self.post("/api/v1/production/remove", {"ids": [task["id"], preview["id"], *(t["id"] for t in batch)]}))
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -16490,7 +16490,9 @@
             "description": "ComfyUI workflow for workflow channels; default = active workflow"
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "maxLength": 150,
+            "description": "Album title; default: the storyboard title (previews: preset title + \" · 试绘\")"
           },
           "requestId": {
             "type": "string",

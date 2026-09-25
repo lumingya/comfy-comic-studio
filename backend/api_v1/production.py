@@ -21,7 +21,8 @@ ASSEMBLE = schema("AssembleRequest", obj({
     "presets": array(PRESET_REF, maxItems=20, description="Character / scene presets, later ones override earlier ones"),
     "channelId": {"type": "string", "description": "Saved image channel (see /channels)"},
     "workflowId": {"type": "string", "description": "ComfyUI workflow for workflow channels; default = active workflow"},
-    "title": STRING, "requestId": {"type": "string", "description": "Idempotency token: repeating a requestId returns the same task (generated when omitted)"},
+    "title": {"type": "string", "maxLength": 150, "description": "Album title; default: the storyboard title (previews: preset title + \" · 试绘\")"},
+    "requestId": {"type": "string", "description": "Idempotency token: repeating a requestId returns the same task (generated when omitted)"},
     "projectId": STRING, "seedEnabled": BOOLEAN,
     "seed": {"type": "integer", "minimum": 0, "maximum": 4294967295},
     "concurrency": {"type": ["integer", "null"], "minimum": 1, "maximum": 16},
@@ -64,15 +65,39 @@ ACTION_DOCS = {
 }
 
 
-def with_request_ids(action, body):
-    """Assembly is idempotent per requestId; generate one when the client does not care."""
+def _record_title(store, kind, id):
+    if kind not in ("storyboards", "characters", "scenes") or not isinstance(id, str):
+        return ""
+    return next((row.get("title") or "" for row in store.records(kind) if row.get("id") == id), "")
+
+
+def _assembly_item(host, item):
+    """Fill what the studio UI always sends: a requestId and the album title."""
     import uuid
 
-    if action == "assemble" and not body.get("requestId"):
-        body = {**body, "requestId": "api-" + uuid.uuid4().hex}
+    if not isinstance(item, dict):
+        return item
+    item = dict(item)
+    if not item.get("requestId"):
+        item["requestId"] = "api-" + uuid.uuid4().hex
+    if not (isinstance(item.get("title"), str) and item["title"].strip()):
+        store = host.native_store()
+        if item.get("preview"):
+            first = next((p for p in item.get("presets") or [] if isinstance(p, dict)), {})
+            name = _record_title(store, first.get("kind"), first.get("id"))
+            title = (name + " · 试绘") if name else "预设试绘"
+        else:
+            title = _record_title(store, "storyboards", item.get("storyId")) or "API 任务"
+        item["title"] = title[:150]
+    return item
+
+
+def assembly_defaults(host, action, body):
+    """Assembly is idempotent per requestId (generated when omitted); the title defaults to the storyboard title."""
+    if action == "assemble":
+        return _assembly_item(host, body)
     if action == "assemble-batch" and isinstance(body.get("items"), list):
-        body = {**body, "items": [{**item, "requestId": item.get("requestId") or "api-" + uuid.uuid4().hex}
-                                  if isinstance(item, dict) else item for item in body["items"]]}
+        return {**body, "items": [_assembly_item(host, item) for item in body["items"]]}
     return body
 
 
@@ -93,7 +118,7 @@ def list_tasks(ctx):
 @ROUTER.post("/production/tasks", summary="装配一个生产任务（同 POST /production/assemble）", tags=["production"],
              body=ASSEMBLE, status=201, operation_id="createProductionTask")
 def create_task(ctx):
-    return production_api.run_action(ctx.host, "assemble", with_request_ids("assemble", ctx.json()))
+    return production_api.run_action(ctx.host, "assemble", assembly_defaults(ctx.host, "assemble", ctx.json()))
 
 
 @ROUTER.get("/production/tasks/{taskId}", summary="任务详情：状态、逐页状态、画册 ID", tags=["production"],
@@ -153,7 +178,7 @@ for _action in ("start", "pause", "resume", "cancel", "clone", "rename"):
 
 def _action_route(action):
     def handler(ctx):
-        return production_api.run_action(ctx.host, action, with_request_ids(action, ctx.json(required=False)))
+        return production_api.run_action(ctx.host, action, assembly_defaults(ctx.host, action, ctx.json(required=False)))
 
     return handler
 

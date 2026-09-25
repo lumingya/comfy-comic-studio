@@ -172,5 +172,22 @@ class LibraryApiTests(ApiServerCase):
         self.assertIn("library.deleted", events)
 
 
+
+class NoActiveCollectionTests(ApiServerCase):
+    """Without an active collection, creates and imports both fall back to the first collection."""
+
+    @classmethod
+    def seed(cls):
+        cls.store().apply([{"kind": "collections", "id": "only", "document": {"id": "only", "title": "唯一"}, "expected": None}])
+
+    def test_create_and_import_share_the_default_collection(self):
+        self.assertIsNone(self.ok(self.get("/api/v1/workspace"))["activeProjectId"])
+        source = self.ok(self.post("/api/v1/library/storyboards", {"title": "原稿", "frames": [{"prompt": "a"}]}), 201)
+        self.assertEqual(source["document"]["projectId"], "only")
+        bundle = self.get("/api/v1/library/storyboards/%s/bundle" % source["id"])
+        imported = self.ok(self.call("POST", "/api/v1/library/import", raw=bundle.raw, content_type="application/zip"), 201)
+        self.assertEqual(self.ok(self.get("/api/v1/library/storyboards/" + imported["id"]))["document"]["projectId"], "only")
+
+
 if __name__ == "__main__":
     unittest.main()

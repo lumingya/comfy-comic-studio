@@ -86,6 +86,11 @@ def collection_ids(host):
     return {row["id"] for row in host.native_store().records("collections")}
 
 
+def default_project_id(host):
+    """Target collection when a request names none: the active one, else the first existing one."""
+    return active_project_id(host) or next(iter(sorted(collection_ids(host))), None)
+
+
 def normalize(host, kind, doc, creating, touch=True):
     """Fill the fields the studio UI expects so API-created resources are first-class."""
     if not isinstance(doc, dict):
@@ -99,7 +104,7 @@ def normalize(host, kind, doc, creating, touch=True):
         doc["updatedAt"] = stamp
     if kind in PROJECT_SCOPED:
         if not doc.get("projectId"):
-            doc["projectId"] = active_project_id(host) or next(iter(sorted(collection_ids(host))), None)
+            doc["projectId"] = default_project_id(host)
         if not doc.get("projectId"):
             raise ApiError(400, "collection_required", "Create a collection first (POST /library/collections)")
         if doc["projectId"] not in collection_ids(host):
@@ -556,7 +561,8 @@ def import_resource(ctx):
     from backend import mio_resource_sharing as sharing
 
     body = _import_body(ctx)
-    body.setdefault("projectId", active_project_id(ctx.host))
+    if not body.get("projectId"):
+        body["projectId"] = default_project_id(ctx.host)
     store = ctx.store
     with write_lock(ctx.host, ("albums",)):
         if "html" in body:
