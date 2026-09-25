@@ -36,12 +36,12 @@ TASK = schema("ProductionTask", obj({
 ACTION_DOCS = {
     "assemble": ("装配一个生产任务（分镜 + 预设 + 渠道/工作流 → 画册）", ASSEMBLE),
     "assemble-batch": ("批量装配多个任务", obj({"items": array(ASSEMBLE, minItems=1)}, ["items"])),
-    "start": ("开始任务（付费渠道需 trusted: true）", obj({
+    "start": ("开始任务（需 trusted: true 确认启动生成与可能的费用）", obj({
         "id": STRING, "trusted": BOOLEAN, "sequential": BOOLEAN, "indices": array(INTEGER),
         "forcePrepare": BOOLEAN, "confirmUncertain": BOOLEAN,
         "concurrency": {"type": ["integer", "null"], "minimum": 1, "maximum": 16}}, ["id"])),
-    "start-many": ("并行开始多个任务", obj({"ids": array(STRING), "trusted": BOOLEAN, "confirmUncertain": BOOLEAN}, ["ids"])),
-    "start-sequence": ("按顺序依次执行多个任务", obj({"ids": array(STRING), "trusted": BOOLEAN, "confirmUncertain": BOOLEAN}, ["ids"])),
+    "start-many": ("并行开始多个任务（需 trusted: true）", obj({"ids": array(STRING), "trusted": BOOLEAN, "confirmUncertain": BOOLEAN}, ["ids"])),
+    "start-sequence": ("按顺序依次执行多个任务（需 trusted: true）", obj({"ids": array(STRING), "trusted": BOOLEAN, "confirmUncertain": BOOLEAN}, ["ids"])),
     "pause": ("暂停任务（id 或 ids）", obj(IDS)),
     "resume": ("继续任务（id 或 ids）", obj(IDS)),
     "cancel": ("停止任务（id 或 ids）；在途请求的结果仍会保留", obj(IDS)),

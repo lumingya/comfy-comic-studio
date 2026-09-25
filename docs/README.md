@@ -27,4 +27,4 @@
 
 ## 参考
 
-[API](en/API.md) · [旧数据转换](guide/FILE_LIBRARY_CONVERSION.md)
+[开放 API](api/README.md)（[English](en/API.md)） · [旧数据转换](guide/FILE_LIBRARY_CONVERSION.md)

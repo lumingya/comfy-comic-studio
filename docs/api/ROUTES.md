@@ -164,7 +164,7 @@
 | `GET` | `/api/v1/production/tasks/{taskId}/clone-source` | 克隆任务时可调整的来源参数 |
 | `GET` | `/api/v1/production/tasks/{taskId}/frames/{index}` | 任务内某一幕的来源与当前状态 |
 | `PATCH` | `/api/v1/production/tasks/{taskId}/frames/{index}` | 修改任务内某一幕（name / prompt / negative / caption） |
-| `POST` | `/api/v1/production/tasks/{taskId}/start` | 开始任务（付费渠道需 trusted: true）（单任务） |
+| `POST` | `/api/v1/production/tasks/{taskId}/start` | 开始任务（需 trusted: true 确认启动生成与可能的费用）（单任务） |
 | `POST` | `/api/v1/production/tasks/{taskId}/pause` | 暂停任务（id 或 ids）（单任务） |
 | `POST` | `/api/v1/production/tasks/{taskId}/resume` | 继续任务（id 或 ids）（单任务） |
 | `POST` | `/api/v1/production/tasks/{taskId}/cancel` | 停止任务（id 或 ids）；在途请求的结果仍会保留（单任务） |
@@ -172,9 +172,9 @@
 | `POST` | `/api/v1/production/tasks/{taskId}/rename` | 重命名任务（单任务） |
 | `POST` | `/api/v1/production/assemble` | 装配一个生产任务（分镜 + 预设 + 渠道/工作流 → 画册） |
 | `POST` | `/api/v1/production/assemble-batch` | 批量装配多个任务 |
-| `POST` | `/api/v1/production/start` | 开始任务（付费渠道需 trusted: true） |
-| `POST` | `/api/v1/production/start-many` | 并行开始多个任务 |
-| `POST` | `/api/v1/production/start-sequence` | 按顺序依次执行多个任务 |
+| `POST` | `/api/v1/production/start` | 开始任务（需 trusted: true 确认启动生成与可能的费用） |
+| `POST` | `/api/v1/production/start-many` | 并行开始多个任务（需 trusted: true） |
+| `POST` | `/api/v1/production/start-sequence` | 按顺序依次执行多个任务（需 trusted: true） |
 | `POST` | `/api/v1/production/pause` | 暂停任务（id 或 ids） |
 | `POST` | `/api/v1/production/resume` | 继续任务（id 或 ids） |
 | `POST` | `/api/v1/production/cancel` | 停止任务（id 或 ids）；在途请求的结果仍会保留 |

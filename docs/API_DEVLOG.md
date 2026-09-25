@@ -122,7 +122,7 @@
 - [x] A10 生态桥接：`/ecosystem/*`、`/extensions/{id}/*`
 - [x] A11 更新中心：`/update/*`
 - [x] A12 市场、素材（raw、fetch、二进制上传）、工作流（analyze、apply、activate）、`/workspace`（状态、快照、rescan）
-- [ ] A13 文档：
+- [x] A13 文档：
   - `docs/api/README.md` 重写，`openapi.json` 重新生成
   - 更新 `examples/mio_client.py`、`docs/astrbot-api.md`、CHANGELOG
 - [ ] A14 全量测试，给用户汇报
@@ -285,3 +285,10 @@
   - `backend/api_v1/production.py`：`with_request_ids` 改为 `assembly_defaults`，同时补 requestId 和 title。
   - 测试：`NoActiveCollectionTests`（test_api_library），以及 `ProductionFlowTests.test_title_defaults_to_the_storyboard_or_the_preset`（test_api_v1_core）。顺带把 test_api_v1_core 里位置不对的 `__main__` 守卫移到文件末尾。
   - 任务状态：standby（未开始）→ ready → preparing → running → complete / partial / failed / cancelled / interrupted。示例客户端的 `wait_task` 只在 ready / preparing / running 时继续轮询。
+- 2026-09-25 · A13 · 文档：
+  - `docs/api/README.md` 全部重写（契约 2.0）：功能区总表、鉴权、信封与错误码、ETag、合并补丁、危险操作、密钥只写、快速上手、各功能区要点、限额、安全边界、1.x 迁移表。
+  - `docs/en/API.md`、`docs/astrbot-api.md` 同步重写；`docs/README.md` 的参考链接改为指向中文 API 教程。
+  - `docs/CHANGELOG.md` 顶部新增“未发布（3.2.0-dev.1 之后）”条目。首行必须包含 package.json 的版本号（test_documentation 会检查），所以没有改程序版本号。
+  - `examples/mio_client.py` 重写为 `MioClient` 加命令行子命令，并新增 `tests/test_api_example_client.py`，防止示例和接口脱节。
+  - 核对时更正：开始生成（start / start-many / start-sequence）**一律**要求 `trusted: true`，与渠道是否付费无关，否则返回 403 forbidden。路由说明和三份文档都已改正。
+  - HTML 副本只重新生成 `docs/api/README.html` 和 `docs/en/API.html`，并且**按 CRLF 写入**（仓库里的这两个文件是 CRLF）。这样 diff 只涉及内嵌 Markdown 的那一行。

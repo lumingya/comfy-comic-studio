@@ -1,91 +1,128 @@
-# External API v1
+# Mio public API (path v1 · contract 2.0)
 
-[Home](../README.en.md) · [OpenAPI](../api/openapi.json) · [Python example](../../examples/mio_client.py) · [中文详细教程](../api/README.md)
+[Home](../README.en.md) · [Route table](../api/ROUTES.md) · [OpenAPI](../api/openapi.json) · [Python example](../../examples/mio_client.py) · [中文详细教程](../api/README.md)
+
+## Overview
+
+`/api/v1` is Mio's automation API. Almost everything the studio UI does is available through it:
+
+- the file library (storyboards, presets, albums, collections, plans, layouts, workflows, conversations);
+- settings, image channels and write-only keys;
+- production and durable jobs, LLM chat and the vision critic;
+- import/export, the recycle bin and asset maintenance;
+- extensions, themes and updates.
+
+About 210 operations are generated from one route table. The [route table](../api/ROUTES.md) and [OpenAPI document](../api/openapi.json) match the running server (tests enforce it). A live copy is available at `GET /api/v1/openapi.json` and `GET /api/v1/routes`.
 
 ## Enable
 
-Generate a cryptographically random token of at least 32 characters:
+Generate a random token of at least 32 characters and set it in the server process:
 
 ```bash
 python -c "import secrets; print(secrets.token_urlsafe(32))"
-export MIO_API_TOKEN="the-generated-token"
+export MIO_API_TOKEN="the-generated-token"      # PowerShell: $env:MIO_API_TOKEN = "..."
 python server.py
 ```
 
-PowerShell: `$env:MIO_API_TOKEN = "the-generated-token"`.
+Every request, including health and the schema, needs `Authorization: Bearer YOUR_MIO_TOKEN`.
 
-Every public GET/POST, including health and the schema, requires `Authorization: Bearer YOUR_MIO_TOKEN`. Without a sufficiently long server token the API returns 503; a wrong token returns 401. Provider credentials are separate: pass `apiKey` for generation or configure `NOVELAI_API_KEY` / `OPENAI_API_KEY` on the server.
+| Situation | Response |
+|---|---|
+| No token configured, or shorter than 32 characters | 503 `api_disabled` |
+| Wrong token | 401 |
+| Browser request from an Origin not in `MIO_ORIGINS` | 403 |
 
-## Contract
+**The token is an administrator credential.** It grants full read/write access to creative data, settings, extensions and paid generation.
 
-The versioned namespace is separate from private browser synchronization endpoints. Current capabilities:
+## Conventions
 
-| Method | Endpoint | Purpose |
-| --- | --- | --- |
-| GET | `/api/v1/health` | Process health and product version, not provider availability |
-| GET | `/api/v1/capabilities` | Discover actual supported operations |
-| GET | `/api/v1/providers` | Saved provider IDs and non-secret labels; no base URLs or keys |
-| GET | `/api/v1/storyboards?limit=50&offset=0` | Storyboards and selected frame fields, no execution snapshots |
-| GET | `/api/v1/albums?limit=50&offset=0` | Album metadata, no source snapshots |
-| POST | `/api/v1/images/generations` | One synchronous NovelAI/OpenAI generation |
-| GET | `/api/v1/assets?path=%2Fimages%2F...` | Local asset as a data URL |
-| GET | `/api/v1/openapi.json` | Raw OpenAPI 3.1 schema |
+**Envelopes.** Success is `{data, requestId}`. Errors are `{error: {code, message, details?}, requestId}`. Every response carries an `X-Request-Id` header. Files, images, SSE and `openapi.json` are returned raw.
 
-Lists return `{items,total,limit,offset}`. Limit is 1–100; offset is nonnegative. Saved providers may be empty until the browser configuration has been persisted.
+**Request bodies.**
 
-Success responses are `{data: ..., requestId: "req_..."}`. Errors are `{error: {code, message}, requestId: "req_..."}`. The schema endpoint returns the raw schema on success for tooling compatibility. Provider HTTP errors preserve status and redacted upstream bodies, subject to a 2 MiB safety limit. Internal implementation details and raw credentials are not returned.
+- JSON objects with `Content-Type: application/json`. PATCH also accepts `application/merge-patch+json`.
+- Action routes that need no input accept an empty body.
+- Some uploads accept raw bytes: images for `/assets/upload`, and `application/zip` for `/library/import` and `/albums/import`.
 
-The `/jobs` API supports durable whole-album inputs, external ComfyUI execution, idempotent submission, controls and SSE. Use the [foundation API](FOUNDATION.md), not private configuration writes. Webhooks and multi-tenant permissions are not provided.
+**Optimistic concurrency.**
 
-## Generate an image
+- Single-resource reads return an `ETag`.
+- Send `If-Match: "<etag>"` (or `?expectedEtag=`) on writes. A concurrent change, including one from the browser UI, yields `409 revision_conflict` instead of being overwritten.
+- Fine-grained routes (frames, variables, album pages) use the parent document's ETag.
 
-Either reference a saved profile:
+**PATCH.** RFC 7396 merge patch: objects merge recursively, `null` deletes a field, and arrays are replaced.
 
-```json
-{"providerId":"openai","prompt":"A quiet illustrated bookshop","apiKey":"YOUR_PROVIDER_KEY"}
-```
+**Destructive operations.** These need `"confirm": true`:
 
-Or supply its configuration explicitly:
+- permanently deleting recycle-bin contents;
+- applying, rolling back or restarting updates.
 
-```bash
-curl -X POST http://127.0.0.1:8777/api/v1/images/generations \
-  -H "Authorization: Bearer $MIO_API_TOKEN" \
-  -H "Content-Type: application/json" \
-  --data '{"config":{"provider":"openai","baseUrl":"https://api.openai.com/v1","model":"gpt-image-1","protocol":"images","size":"1024x1024"},"prompt":"A quiet illustrated bookshop"}'
-```
+Enabling extension or theme code still needs `"trusted": true`, as in the UI.
 
-The second example uses the server provider key. Supply **exactly one** of providerId/config. Provider is novelai/openai; protocol is images/chat. Config values are strings except boolean `sendSize` / `sendQuality` switches and the optional `extraParams` object. False or blank values omit those parameters. Saved providerId configurations can use endpoint-bound local `keyMode: stored` / `keyId` references. Explicit `apiKey: ""` or `keyMode: none` disables authentication; `keyMode: environment` explicitly uses server environment keys. Use an API base URL, not a full operation URL. Remote providers require HTTPS; loopback HTTP is allowed.
+**Credentials are write-only.**
 
-For NovelAI, use `https://image.novelai.net`, a supported model such as `nai-diffusion-4-5-full`, and optional numeric frame parameters `{width:768,height:1024,steps:28,cfg:5,seed:-1}`. Width/height must be multiples of 64. The optional `source` is a PNG/JPEG/WebP base64 data URL. NovelAI uses img2img; OpenAI Images uses edits; Chat uses image_url. OpenAI does not receive ComfyUI sampling fields. Prompts are passed literally: external clients must resolve template variables themselves.
+- Secret fields in settings are moved into the local vault and read back as empty strings; `secrets` lists which JSON pointers hold a key.
+- Channel key pools list metadata only.
+- No endpoint ever returns a key.
 
-The generated result includes `image`, `provider`, `offlineFallback:false` and `assetEndpoint`. GET assetEndpoint with the same token; decode `data.dataUrl`. The image is saved locally under the external asset group, but is not automatically added to an album or browser queue.
+## Areas
 
-Set a client read timeout of at least 330 seconds. The Python example uses 360 seconds and never automatically retries. Its default command only reads capabilities; generation requires `--prompt` and `--provider-id` explicitly.
+| Area | Main routes |
+|---|---|
+| Workspace | `GET /workspace`, `GET /workspace/snapshot`, `PUT /workspace/active-collection` |
+| Library | `GET/POST /library/{kind}`, `GET/PUT/PATCH/DELETE /library/{kind}/{id}`, `/duplicate`, `/bundle`, `/reorder`, `/import`, `/inspect`, `/export` |
+| Frames / variables | `/library/storyboards/{id}/frames[/{frame}]`, `/library/{characters\|scenes}/{id}/entries/{key}` |
+| Albums | `POST /albums`, `GET/PATCH/DELETE /albums/{id}`, `/albums/{id}/steps/{n}`, `POST /albums/export`, `POST /albums/{id}/export`, `POST /albums/import`, `/exporters`, `/importers` |
+| Settings | `GET/PUT/PATCH /settings/{workspace\|comfy\|llm\|xml}`, `/settings/{name}/secrets` |
+| Channels | `GET /providers`, `/channels` CRUD, `/activate`, `/check`, `/models`, `/keys` |
+| Generation | `POST /images/generations` (sync, cloud only), `/jobs` (durable, idempotent), `/production/*` (storyboard + presets → album) |
+| Workflows | `POST /comfy/check`, `GET /comfy/object-info`, `POST /library/workflows/{id}/activate`, `POST /library/workflows/{id}/analyze` |
+| LLM | `POST /llm/chat`, `POST /vision/audit`, `POST /albums/{id}/steps/{n}/critique` |
+| Assets | `GET /assets`, `GET /assets/raw`, `POST /assets/upload`, `POST /assets/fetch`, `/assets/catalog`, `/maintenance/*` |
+| Recycle bin | `GET /recycle`, `POST /recycle/restore\|purge\|empty\|auto-clean` |
+| Marketplace | `GET /marketplace`, `POST /marketplace/fetch`, `POST /marketplace/install` |
+| Ecosystem | `/ecosystem/*` (extensions, themes, styles, scripts, preparations, events), `/extensions/{id}/*` (extension backends) |
+| Update | `GET /update/status`, `POST /update/check\|apply\|rollback\|restart` |
+| Bot catalogue | `GET /catalog`, `/resources/*`, `GET /storyboards`, `GET /albums` |
 
-## Errors and limits
+Library kinds are `storyboards`, `characters`, `scenes`, `collections`, `plans`, `albums`, `layouts`, `workflows`, `rows`, `conversations`, and `tasks` (read-only).
 
-400 means invalid/rejected inputs or generation; 401 bad token; 403 denied browser Origin; 404 missing endpoint/provider/asset; 405 wrong method; 413 oversized body; 429 generation busy; 502 upstream failure/timeout; 503 API disabled. Record requestId in your client. It is not a pollable job ID.
+- **Create** (`POST`): an omitted `id` is generated. An omitted `projectId` defaults to the active collection, then to the first collection; with no collection at all the call fails with `400 collection_required`, so create one first (`POST /library/collections`). `POST /library/import` follows the same rule.
+- **Images**: fields accept `data:image/...` or `/images/...` URLs and are stored as owned assets.
+- **Delete** moves the resource to the recycle bin. A non-empty collection needs `?cascade=true`.
 
-For the direct synchronous image endpoint, one external generation may run at a time. This does not cap durable `/jobs`, which use independent per-task frame pools. This is a concurrency limit, not a per-minute quota; browser generation is independent. Request bodies permit approximately 66.7 MiB for base64 input, and upstream image/ZIP-entry content is bounded to 50 MiB. Provider limits may be smaller.
+Synchronous generation:
 
-The synchronous endpoint has no idempotency semantics and never automatically retries. For durable submissions use `/jobs` with an explicit JSON `idempotencyKey`; repeating synchronous requests or choosing new task keys can incur repeated charges. Disconnecting a client does not guarantee upstream cancellation. Check provider billing before retrying after a timeout.
+- Only one call runs at a time; a concurrent call gets 429.
+- Paid requests are never retried automatically.
+- Use a read timeout of at least 330 seconds.
 
-## Security and evolution
+For resumable execution use `/jobs` (see the [foundation guide](FOUNDATION.md)) or the production queue.
 
-Tokens grant trusted-client access to private creative data and paid providers. The API excludes full config and execution snapshots, not private prose inside prompts. Only trust configured endpoints, especially with server-side provider keys.
+Production queue (`/production/*`, the UI's assembly wizard):
 
-`MIO_API_TOKEN` protects `/api/v1` only. Keep the entire local service behind loopback or an authenticated HTTPS proxy; private application routes and image URLs are not protected by this token. Browser clients need explicitly allowed Origins via `MIO_ORIGINS`, never wildcard access.
+- `POST /production/tasks` assembles storyboard + presets + channel/workflow into a task. It only takes a snapshot: no image service is called and nothing is billed.
+  - `requestId` is optional; repeating one returns the same task.
+  - `title` (the album name) is optional and defaults to the storyboard title. Preset previews (`preview: true` with `previewPrompt`) default to "preset title · 试绘".
+- `POST /production/tasks/{id}/start|pause|resume|cancel|clone|rename`. Starting (`start`, `start-many`, `start-sequence`) always needs `"trusted": true` to acknowledge that generation may incur charges; otherwise the call fails with `403 forbidden`.
+- `status` goes `standby` (assembled, not started) → `ready` (queued) → `preparing` → `running` → `complete`, `partial`, `failed`, `cancelled` or `interrupted`. Per-page state is in `pages[].state`.
 
-New optional response fields may be added to v1; ignore unknown response fields. Breaking semantics require a new major API namespace. Do not rely on browser global objects as stable integration APIs. See [Security](../SECURITY.md) and [Development](../DEVELOPMENT.md).
+## Migrating from 1.x
 
-## Ordered image inputs
+The path prefix stays `/api/v1`; the contract version is **2.0.0**.
 
-`POST /api/v1/images/generations` accepts optional `images`: an ordered array of up to 32 local `/images/` references or PNG/JPEG/WebP data URLs (50 MiB combined raw input limit). Clients resolve their own prompt variables. Provider HTTP errors retain status and redacted response details as `upstream_error`, subject to a 2 MiB error-body safety limit. No automatic paid retries or text-only fallback. NovelAI raw reference-array support is model-dependent; no automatic V4+ Vibe encoding is performed.
+| 1.x | 2.0 |
+|---|---|
+| `GET /providers` listed saved channels | It lists provider **types**. Saved channels are at `GET /channels`. |
+| `providerId` in `images/generations` | Now `channelId`; `providerId` remains an alias. |
+| `production/*` errors were `{"error": "text"}` | They use the standard error envelope. |
+| `resources/storyboards\|plans` upserts | Kept but deprecated; use `/library/{kind}`. |
+| — | PUT, PATCH and DELETE are supported; CORS exposes `ETag` and `X-Request-Id`. |
+| `/health` `version` was 1.0.1 | `version` is the API contract version; the program version is `appVersion`. |
 
-## Durable foundation API
+## Security
 
-The jobs, asset-management and revision-checked resource APIs are documented in [Production foundation](FOUNDATION.md) and included in OpenAPI. They support server-side ComfyUI and cloud execution, idempotency, control, short reconnectable SSE responses, uploads and safe recycling. The synchronous-generation limitations above apply only to that endpoint, not to `/jobs`.
+- Keep the service on loopback or behind an authenticated HTTPS proxy that protects **every** path. The token protects `/api/v1` only.
+- `/assets/fetch` and `/marketplace/fetch` make server-side requests to URLs you supply; treat the token accordingly.
 
-### Task summaries versus details
-
-`GET /api/v1/jobs` returns lightweight summaries: `results` is empty and errors indicate that details are available. Read `GET /api/v1/jobs/{id}` for complete artifacts and the original sanitized error. An empty summary array does not mean the task produced no output.
+See [Security](../SECURITY.md) and [Development](../DEVELOPMENT.md).

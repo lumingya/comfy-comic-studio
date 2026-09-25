@@ -1,3 +1,24 @@
+# 未发布（3.2.0-dev.1 之后）· 2026-09-25
+
+开放 API 契约 2.0：界面能做的事基本都能通过 `/api/v1` 完成，操作数从约 45 个增加到约 210 个。[API 教程](api/README.md) · [路由总表](api/ROUTES.md) · [开发日志](API_DEVLOG.md)。
+
+- **新框架** `backend/api_v1`（取代 `mio_api_ext.py` 与 `mio_contracts.py`）：一张路由表同时驱动请求分发、OpenAPI 3.1 和路由总表；支持 PUT、PATCH（RFC 7396 合并补丁）、DELETE，ETag + `If-Match` 乐观并发，`X-Request-Id`，统一错误信封，图片和 .mio.zip 可直接以二进制上传。
+- **新功能区**：
+  - 工作区状态与快照；文件库 11 类资源的通用增删改查（浏览器队列任务只读）、复制、排序、分享包导入导出；分镜分幕、预设变量的细粒度修改。
+  - 画册页编辑与导入导出；设置读写（密钥只写不读）；图像渠道与 Key 池。
+  - LLM 对话与视觉审图（使用已保存的连接，客户端不接触密钥）；回收站与素材维护；工作流激活与槽位分析；素材原图、缩略图与远程抓取；分镜市场。
+  - 扩展、主题、样式工坊与扩展后端；更新中心；生产队列的 REST 风格路由（装配时 `requestId`、画册名称都可省略）。
+- **破坏性变更**：
+  - `GET /providers` 改为返回图像服务类型，已保存的渠道改用 `GET /channels`。
+  - `images/generations` 改用 `channelId`，`providerId` 暂时保留为别名。
+  - 生产队列的错误改用标准错误信封。
+  - `/health` 的 `version` 改为 API 契约版本，程序版本见 `appVersion`。
+- **修复**：
+  - 扩展 SDK 的 `host.library.put/delete` 调用了不存在的存储方法，实际不可用。
+  - pages-zip 画册导入（`/api/ecosystem/import`）有同样的问题，而且图片路径不合法。
+  - 生产快照缺少 storyId 或 presets 时抛出未处理的异常，现在返回可读的 400。
+- 示例客户端 `examples/mio_client.py` 重写，并有测试保证它与接口保持一致。
+
 # Mio 3.2.0-dev.1 · 2026-09-19
 
 扩展 SDK v3 开放平台 + 样式工坊：主题与自定义 CSS 不再受限，扩展可以触达界面与核心的任何位置。

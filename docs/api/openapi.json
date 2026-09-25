@@ -14248,7 +14248,7 @@
     "/api/v1/production/tasks/{taskId}/start": {
       "post": {
         "operationId": "productionTaskStart",
-        "summary": "开始任务（付费渠道需 trusted: true）（单任务）",
+        "summary": "开始任务（需 trusted: true 确认启动生成与可能的费用）（单任务）",
         "tags": [
           "production"
         ],
@@ -14894,7 +14894,7 @@
     "/api/v1/production/start": {
       "post": {
         "operationId": "productionStart",
-        "summary": "开始任务（付费渠道需 trusted: true）",
+        "summary": "开始任务（需 trusted: true 确认启动生成与可能的费用）",
         "tags": [
           "production"
         ],
@@ -14993,7 +14993,7 @@
     "/api/v1/production/start-many": {
       "post": {
         "operationId": "productionStartMany",
-        "summary": "并行开始多个任务",
+        "summary": "并行开始多个任务（需 trusted: true）",
         "tags": [
           "production"
         ],
@@ -15075,7 +15075,7 @@
     "/api/v1/production/start-sequence": {
       "post": {
         "operationId": "productionStartSequence",
-        "summary": "按顺序依次执行多个任务",
+        "summary": "按顺序依次执行多个任务（需 trusted: true）",
         "tags": [
           "production"
         ],
