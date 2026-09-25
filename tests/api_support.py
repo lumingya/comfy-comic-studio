@@ -83,6 +83,9 @@ class ApiServerCase(unittest.TestCase):
         server.reset_native_stores()
         for item in reversed(cls.patches):
             item.stop()
+        import gc
+
+        gc.collect()
         cls.temp.cleanup()
 
     @classmethod
