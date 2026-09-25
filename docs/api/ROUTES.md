@@ -79,6 +79,7 @@
 | `GET` | `/api/v1/albums/{albumId}/steps/{index}` | 读取画册的一页 |
 | `PATCH` | `/api/v1/albums/{albumId}/steps/{index}` | 合并补丁修改一页（台词、提示词、名称、图片 URL/data URL）；页不存在时创建 |
 | `DELETE` | `/api/v1/albums/{albumId}/steps/{index}` | 删除一页的内容（图片、台词、提示词） |
+| `POST` | `/api/v1/albums/{albumId}/steps/{index}/critique` | 审查画册某一页并把审图结果保存到这一页 |
 | `GET` | `/api/v1/albums` | 画册列表（状态、进度、封面） |
 | `GET` | `/api/v1/albums/{albumId}` | 画册详情：每一页的台词、提示词、图片与 assetEndpoint |
 | `POST` | `/api/v1/albums/export` | 导出画册为自包含 HTML（套用版式）、ZIP 或 PDF 文件 |
@@ -192,6 +193,16 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 | `POST` | `/api/v1/production/analyze-slots` | 分析 ComfyUI 工作流的可调槽位（模型、LoRA、尺寸…） |
 | `POST` | `/api/v1/production/apply-slots` | 把槽位覆盖应用到 ComfyUI 工作流，返回新工作流 |
 
+## llm
+
+文本模型与视觉审图：使用已保存的连接与密钥，在服务端代发请求。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `POST` | `/api/v1/llm/chat` | 用已保存的文本模型连接发送对话（OpenAI 兼容 chat/completions） |
+| `POST` | `/api/v1/vision/audit` | 视觉审图：用已保存的审图模型评估一张图（分数、一致性、解剖、建议） |
+| `POST` | `/api/v1/albums/{albumId}/steps/{index}/critique` | 审查画册某一页并把审图结果保存到这一页 |
+
 ## assets
 
 本地图片素材：读取、原始字节、上传、抓取远程图片、索引与清理、维护。
@@ -224,4 +235,4 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 | `GET` | `/api/v1/resources/plans` | 创作计划 DTO 与工作区修订号（旧接口，请改用 /library/plans） *(deprecated)* |
 | `POST` | `/api/v1/resources/plans` | 按工作区修订号 upsert 创作计划（旧接口，请改用 /library/plans） *(deprecated)* |
 
-共 119 个操作。
+共 122 个操作。

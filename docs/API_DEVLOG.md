@@ -109,7 +109,7 @@
   - `/providers` 改为类型注册表
   - `/channels` CRUD，以及 activate、check、models、keys
   - `/comfy/check`、`/comfy/object-info`
-- [ ] A6 LLM 与视觉：`/llm/chat`、`/vision/audit`，连接信息在服务端从已保存的设置读取
+- [x] A6 LLM 与视觉：`/llm/chat`、`/vision/audit`，连接信息在服务端从已保存的设置读取
 - [ ] A7 回收站与维护：`/recycle*`、`/maintenance/*`
 - [ ] A8 画册：
   - PATCH 和 DELETE `/albums/{id}`，以及 steps
@@ -213,4 +213,12 @@
   - 删除渠道时 purge 该渠道的全部 Key。没有检查在途任务：持久任务按引用解析渠道，渠道缺失时直接失败，不会回退到快照。
   - check：provider 有 check 能力就用 check，否则用 models 数量代替；两者都没有时返回 400。上游异常返回 502 upstream_error。
   - 测试 `tests/test_api_channels.py` 5 个。
+- 2026-09-25 · A6 · LLM 与视觉，模块 `backend/api_v1/llm.py`：
+  - 路由：
+    - `POST /llm/chat`：scope 为 llm、xml 或 critic；messages；可选 model；白名单透传 temperature、max_tokens、tools、response_format 等；返回 content、message、usage 和 raw。
+    - `POST /vision/audit`：image 为 /images/ 或 data URL，可选 promptText 和 model。
+    - `POST /albums/{albumId}/steps/{index}/critique`：审图后把 `critique` 写回该页（默认 save:true）。
+  - 连接选择与界面一致：xml 未开启 `separate` 时用 llm 连接；critic 的 `connection: shared` 时用 llm 连接。Key 在服务端从密钥库解析，客户端无法传入，也看不到。
+  - 上游 HTTPError 返回 502 upstream_error，`details.upstreamStatus` 给出上游状态码；不回显上游响应体，报错信息里的 Key 会被脱敏。
+  - 测试 `tests/test_api_llm.py` 3 个：用 127.0.0.1 上的假模型服务器（http 只允许私有地址，正好覆盖），验证 Authorization 是服务端解析出的 Key。
 
