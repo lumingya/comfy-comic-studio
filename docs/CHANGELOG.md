@@ -1,6 +1,6 @@
 # 未发布（3.2.0-dev.1 之后）· 2026-09-25
 
-开放 API 契约 2.0：界面能做的事基本都能通过 `/api/v1` 完成，操作数从约 45 个增加到约 210 个。[API 教程](api/README.md) · [路由总表](api/ROUTES.md) · [开发日志](API_DEVLOG.md)。
+开放 API 契约 2.0：界面能做的事基本都能通过 `/api/v1` 完成。有文档的操作从 40 个（37 个路径）增加到 210 个（171 个路径），原先只能转发、没有文档的生产队列动作也全部登记。[API 教程](api/README.md) · [路由总表](api/ROUTES.md) · [开发日志](API_DEVLOG.md)。
 
 - **新框架** `backend/api_v1`（取代 `mio_api_ext.py` 与 `mio_contracts.py`）：一张路由表同时驱动请求分发、OpenAPI 3.1 和路由总表；支持 PUT、PATCH（RFC 7396 合并补丁）、DELETE，ETag + `If-Match` 乐观并发，`X-Request-Id`，统一错误信封，图片和 .mio.zip 可直接以二进制上传。
 - **新功能区**：

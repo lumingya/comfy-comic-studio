@@ -125,7 +125,7 @@
 - [x] A13 文档：
   - `docs/api/README.md` 重写，`openapi.json` 重新生成
   - 更新 `examples/mio_client.py`、`docs/astrbot-api.md`、CHANGELOG
-- [ ] A14 全量测试，给用户汇报
+- [x] A14 全量测试，给用户汇报
 
 ## 进度记录
 
@@ -292,3 +292,8 @@
   - `examples/mio_client.py` 重写为 `MioClient` 加命令行子命令，并新增 `tests/test_api_example_client.py`，防止示例和接口脱节。
   - 核对时更正：开始生成（start / start-many / start-sequence）**一律**要求 `trusted: true`，与渠道是否付费无关，否则返回 403 forbidden。路由说明和三份文档都已改正。
   - HTML 副本只重新生成 `docs/api/README.html` 和 `docs/en/API.html`，并且**按 CRLF 写入**（仓库里的这两个文件是 CRLF）。这样 diff 只涉及内嵌 Markdown 的那一行。
+- 2026-09-25 · A14 · 全量验证：
+  - `node js/build.js dev` 通过；`node js/tests.js` 91/91；`python3 -m unittest discover -s tests -q` 672 OK（4 skipped），41.9 秒。基线是 617 OK，新增 55 个测试。
+  - 规模：OpenAPI 从 37 个路径 / 40 个操作增加到 171 个路径 / 210 个操作。按标签统计：ecosystem 59、production 32、library 15、albums 15、catalog 14、channels 13、assets 10、settings 7、jobs 7、storyboards 6、recycle 5、update 5、system 4、workspace 4、workflows 4、presets 3、llm 3、marketplace 3、generation 1。
+  - 输出里的 “Storage/worker failure” 等警告来自 tests/test_native_runtime 模拟的磁盘故障，基线时就有。
+  - 遗留（未修复）：`prepare_execution` 读取旧键 `settings.imageProviders`（问题 2）；私有 `/api/production/*` 保持旧错误格式（问题 4，有意保留）。
