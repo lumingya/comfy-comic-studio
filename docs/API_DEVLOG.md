@@ -104,7 +104,7 @@
   - 附加操作：duplicate、bundle 导出、import/inspect、order、problems、rescan
   - 修复 `host.library.put/delete`
 - [x] A3 细粒度子资源：分镜 frames、预设 entries、画册 steps
-- [ ] A4 设置：`/settings`、`/settings/{name}`（GET/PUT/PATCH），`/settings/{name}/secrets`
+- [x] A4 设置：`/settings`、`/settings/{name}`（GET/PUT/PATCH），`/settings/{name}/secrets`
 - [ ] A5 渠道与密钥：
   - `/providers` 改为类型注册表
   - `/channels` CRUD，以及 activate、check、models、keys
@@ -184,4 +184,14 @@
     - `GET|PATCH|DELETE /albums/{albumId}/steps/{index}`：PATCH 在页不存在时创建，并自动提升 totalSteps；图片可以是 data URL。
   - 注意：`merge_patch` 返回新对象，原地修改时要先 clear 再 update，否则 null 删除不生效。
   - 测试 `tests/test_api_parts.py` 4 个。
+- 2026-09-25 · A4 · 设置，模块 `backend/api_v1/settings.py`：
+  - 路由：
+    - `GET /settings`。
+    - `GET|PUT|PATCH /settings/{workspace|comfy|llm|xml}`：`?view=true` 返回 comfy 展开后的视图。
+    - `GET|PUT|DELETE /settings/{name}/secrets`：`slots` 列出可以存放密钥的指针，`stored` 列出已保存的指针。
+  - 读取时去掉 `_secretRefs`，只返回已保存密钥的 JSON 指针，不返回任何值。
+  - 写入时让 apply 从磁盘重新挂回原有的 refs：字段留空则保持原密钥；换了端点又没给新密钥，返回 409 credential_binding_changed（原有语义）。
+  - PUT secrets 在替换密钥时会用 clearSecrets 从密钥库删除旧值，避免被替换的密钥一直残留。
+  - 私有接口 `forget-key` 的对应用法：`DELETE /settings/llm/secrets?pointer=/key`；critic 的指针是 `/ui/comfyStudio/settings/critic/key`。
+  - 测试 `tests/test_api_settings.py` 4 个。注意：同一个测试类共用一个工作区，断言不要依赖测试执行顺序。
 

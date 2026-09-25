@@ -86,6 +86,20 @@
 | `GET` | `/api/v1/albums/page-edits` | 页面编辑记录（after 之后，按序号） |
 | `POST` | `/api/v1/albums/delete` | 批量删除画册，同时停止并删除相关任务（进入回收站） |
 
+## settings
+
+设置文档（comfy / llm / xml / workspace）读写；密钥只写不读。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `GET` | `/api/v1/settings` | 设置文档列表：名称、ETag、已保存密钥的位置 |
+| `GET` | `/api/v1/settings/{name}` | 读取设置文档（不含密钥值；?view=true 返回界面使用的展开视图） |
+| `PUT` | `/api/v1/settings/{name}` | 替换设置文档（密钥字段填明文即保存到本地密钥库；留空则保持原密钥） |
+| `PATCH` | `/api/v1/settings/{name}` | 合并补丁修改设置（例：切换当前画册集、修改 LLM 模型） |
+| `GET` | `/api/v1/settings/{name}/secrets` | 哪些位置保存了密钥、哪些位置可以保存密钥（不返回值） |
+| `PUT` | `/api/v1/settings/{name}/secrets` | 保存一个密钥（例：{pointer: "/key", value: "sk-…"}） |
+| `DELETE` | `/api/v1/settings/{name}/secrets` | 删除一个已保存的密钥（?pointer=/key） |
+
 ## generation
 
 同步单张出图（云端渠道）。整册、可恢复的执行请用 jobs 或 production。
@@ -188,4 +202,4 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 | `GET` | `/api/v1/resources/plans` | 创作计划 DTO 与工作区修订号（旧接口，请改用 /library/plans） *(deprecated)* |
 | `POST` | `/api/v1/resources/plans` | 按工作区修订号 upsert 创作计划（旧接口，请改用 /library/plans） *(deprecated)* |
 
-共 97 个操作。
+共 104 个操作。
