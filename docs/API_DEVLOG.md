@@ -118,7 +118,7 @@
   - `/albums/{id}/export`（导出器）
 - [x] A9 生产队列：所有路由都登记进路由表，统一信封，写文档，并提供 REST 风格的 `tasks/{id}/{action}`
 - [x] A10 生态桥接：`/ecosystem/*`、`/extensions/{id}/*`
-- [ ] A11 更新中心：`/update/*`
+- [x] A11 更新中心：`/update/*`
 - [ ] A12 市场、素材（raw、fetch、二进制上传）、工作流（analyze、apply、activate）、`/workspace`（状态、快照、rescan）
 - [ ] A13 文档：
   - `docs/api/README.md` 重写，`openapi.json` 重新生成
@@ -255,4 +255,9 @@
   - 扩展后端：`GET /extensions`；`GET|POST|PUT|PATCH|DELETE /extensions/{id}/{tail:path}`，覆盖自定义路由、storage、settings、capabilities、tasks。扩展的原始响应（`raw_response` 和 `__mio_response__`）会转成 Raw，不套信封。
   - 请求体缺少字段（KeyError）时返回 400 missing_field。安装或启用代码仍要求 `trusted: true`，安全模式下由底层拒绝。
   - 测试 `tests/test_api_ecosystem.py` 3 个：用 zip 安装示例扩展 scene-notebook，调用它的 Python 路由 `/notes`、storage 和扩展文件读写，再停用、卸载。
+- 2026-09-25 · A11 · 更新中心，模块 `backend/api_v1/update.py`：
+  - 路由：`GET /update/status`；`POST /update/check|apply|rollback|restart`。
+  - apply、rollback、restart 要求 `confirm: true`（403 confirmation_required）；apply 返回 202。UpdateError 按自身 status 映射。
+  - 测试 `tests/test_api_update.py` 2 个。网络和重启一律打补丁：**测试里绝对不能真的调用 request_restart**。
+  - 测试夹具在 teardown 时同时清理 `mio_update._services` 中临时工作区对应的条目。
 

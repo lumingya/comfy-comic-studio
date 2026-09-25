@@ -301,6 +301,18 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 | `PATCH` | `/api/v1/extensions/{extensionId}/{tail}` | 调用扩展后端（扩展自定义路由，以及 storage / settings / capabilities / tasks） |
 | `DELETE` | `/api/v1/extensions/{extensionId}/{tail}` | 调用扩展后端（扩展自定义路由，以及 storage / settings / capabilities / tasks） |
 
+## update
+
+更新中心：检查、应用、回滚、重启。
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| `GET` | `/api/v1/update/status` | 当前版本、更新通道、正在进行的更新与可回滚版本 |
+| `POST` | `/api/v1/update/check` | 检查新版本（prerelease 可选） |
+| `POST` | `/api/v1/update/apply` | 下载并应用指定版本（后台进行，返回 202） |
+| `POST` | `/api/v1/update/rollback` | 回滚到上一个版本 |
+| `POST` | `/api/v1/update/restart` | 重启服务（应用更新后使用） |
+
 ## catalog
 
 给聊天机器人的精简只读视图：一次拿到可选的工作流、分镜、预设、版式、渠道和画册集。
@@ -322,4 +334,4 @@ ComfyUI 工作流：连接检查、节点信息、槽位分析与应用、设为
 | `GET` | `/api/v1/resources/plans` | 创作计划 DTO 与工作区修订号（旧接口，请改用 /library/plans） *(deprecated)* |
 | `POST` | `/api/v1/resources/plans` | 按工作区修订号 upsert 创作计划（旧接口，请改用 /library/plans） *(deprecated)* |
 
-共 194 个操作。
+共 199 个操作。

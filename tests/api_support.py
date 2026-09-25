@@ -74,6 +74,9 @@ class ApiServerCase(unittest.TestCase):
         eco = ecosystem_api.SERVICES.pop((str(server.BASE_DIR), str(cls.root)), None)
         if eco is not None:
             eco.close()
+        from backend import mio_update
+
+        mio_update._services.pop((str(server.BASE_DIR), str(cls.root)), None)
         jobs = mio_foundation._STORES.pop(os.path.join(cls.root, "runtime", "execution"), None)
         if jobs is not None:
             jobs.close()
