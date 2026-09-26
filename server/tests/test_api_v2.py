@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import importlib.util
 import json
 import sys
 import threading
@@ -238,6 +239,10 @@ class ClientAndBotTests(ApiCase):
             asset = mio.upload_asset(png, filename="strip.png")
             self.assertEqual(mio.get_asset(asset["id"])[:4], b"\x89PNG")
 
+    @unittest.skipUnless(
+        importlib.util.find_spec("ruff"),
+        "generate.py formats with ruff (server/requirements-dev.txt)",
+    )
     def test_generated_client_is_current(self):
         import subprocess
 
