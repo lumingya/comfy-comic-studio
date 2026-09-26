@@ -6,6 +6,8 @@ rem (no "for /f" over quoted commands).  Dependency checks live in server\bootst
 rem server\tests\test_launchers.py runs it for real in a path with spaces, CJK and "&".
 setlocal
 chcp 65001 >nul
+rem UTF-8 stdio for Python and pip: non-ASCII folder names crash pip on other code pages.
+set "PYTHONUTF8=1"
 cd /d "%~dp0"
 if exist ".venv\Scripts\python.exe" goto venv_ready
 echo [mio] creating .venv ...

@@ -5,10 +5,10 @@ Three layers:
 * static checks on the launcher bytes and constructs known to break cmd.exe;
 * unit tests of the dependency bootstrap (stamp plus import probe, so a stale stamp cannot skip
   the install);
-* real execution of the launcher with ``--check`` in a folder whose name has spaces, CJK and
-  shell metacharacters (cmd.exe on Windows, sh elsewhere).  By default the fixture gets a
-  ready ``.venv`` that sees this interpreter's packages; ``MIO_LAUNCHER_FULL=1`` (CI) starts
-  from nothing, so the launcher creates ``.venv`` and installs the requirements from the network.
+* real execution of the launcher with ``--check`` in a folder whose name has spaces, CJK, an
+  emoji and shell metacharacters (cmd.exe on Windows, sh elsewhere).  By default the fixture
+  gets a ready ``.venv`` that sees this interpreter's packages; ``MIO_LAUNCHER_FULL=1`` (CI)
+  starts from nothing, so the launcher creates ``.venv`` and installs the requirements.
 """
 
 from __future__ import annotations
@@ -52,8 +52,11 @@ class BatchFileTests(unittest.TestCase):
         self.assertNotIn(b"\r", data.replace(b"\r\n", b""))
         self.assertTrue(data.endswith(b"\r\n"))
 
-    def test_git_keeps_crlf(self):
-        self.assertIn("*.bat text eol=crlf", (ROOT / ".gitattributes").read_text("utf-8"))
+    def test_git_keeps_line_endings(self):
+        attributes = (ROOT / ".gitattributes").read_text("utf-8")
+        self.assertIn("*.bat text eol=crlf", attributes)
+        # without it, a Windows checkout with core.autocrlf=true gets a CRLF start.sh
+        self.assertIn("*.sh text eol=lf", attributes)
 
     def test_goto_targets_exist(self):
         code = "\n".join(bat_code_lines())
@@ -105,6 +108,9 @@ class BatchFileTests(unittest.TestCase):
         positions = [code.index(step) for step in steps]
         self.assertEqual(positions, sorted(positions))
         self.assertIn("if not defined MIO_NO_PAUSE pause", code)
+        # UTF-8 stdio for every Python child before the first one runs (pip crashes on
+        # non-ASCII paths under cp1252 and similar code pages)
+        self.assertLess(code.index('set "PYTHONUTF8=1"'), positions[0])
 
 
 class ShellScriptTests(unittest.TestCase):
@@ -254,7 +260,8 @@ class LauncherExecutionTests(unittest.TestCase):
     def fixture(self) -> Path:
         tmp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
         self.addCleanup(tmp.cleanup)
-        folder = Path(tmp.name) / "Mio 空格 & (test)!"
+        # CJK and an emoji: outside cp1252 and GBK alike
+        folder = Path(tmp.name) / "Mio 空格 & (test)! 🎨"
         (folder / "server").mkdir(parents=True)
         for name in ("start.bat", "start.sh"):
             shutil.copy2(ROOT / name, folder / name)

@@ -15,6 +15,7 @@ from __future__ import annotations
 import hashlib
 import importlib
 import importlib.util
+import os
 import subprocess
 import sys
 from collections.abc import Callable, Iterable
@@ -51,7 +52,9 @@ def missing_modules(names: Iterable[str] = MODULES) -> list[str]:
 
 def pip_install(requirements: Path) -> int:
     command = [sys.executable, "-m", "pip", "install", "--disable-pip-version-check"]
-    return subprocess.call([*command, "-r", str(requirements)])
+    # pip crashes printing non-ASCII paths when stdio uses a legacy code page (cp1252 ...)
+    env = {**os.environ, "PYTHONUTF8": "1"}
+    return subprocess.call([*command, "-r", str(requirements)], env=env)
 
 
 def ensure(
