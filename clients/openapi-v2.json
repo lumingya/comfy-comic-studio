@@ -3483,6 +3483,110 @@
     "title": "Series",
     "type": "object"
    },
+   "SeriesCard": {
+    "additionalProperties": false,
+    "description": "A series as listed on the works page: plus its episode count and a cover image.",
+    "properties": {
+     "bible": {
+      "$ref": "#/components/schemas/Bible-Output"
+     },
+     "cover_asset_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cover Asset Id"
+     },
+     "created_at": {
+      "title": "Created At",
+      "type": "string"
+     },
+     "default_profile_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Default Profile Id"
+     },
+     "deleted_at": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Deleted At"
+     },
+     "episode_count": {
+      "default": 0,
+      "title": "Episode Count",
+      "type": "integer"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "status": {
+      "$ref": "#/components/schemas/SeriesStatus",
+      "default": "draft"
+     },
+     "subtitle": {
+      "default": "",
+      "title": "Subtitle",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "updated_at": {
+      "title": "Updated At",
+      "type": "string"
+     },
+     "variables": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "description": "{变量} values (advanced layer).",
+      "title": "Variables",
+      "type": "object"
+     },
+     "variants": {
+      "items": {
+       "$ref": "#/components/schemas/VariantSet-Output"
+      },
+      "title": "Variants",
+      "type": "array"
+     }
+    },
+    "required": [
+     "id",
+     "title",
+     "subtitle",
+     "status",
+     "bible",
+     "variants",
+     "variables",
+     "default_profile_id",
+     "created_at",
+     "updated_at",
+     "deleted_at",
+     "episode_count",
+     "cover_asset_id"
+    ],
+    "title": "SeriesCard",
+    "type": "object"
+   },
    "SeriesCreate": {
     "additionalProperties": false,
     "properties": {
@@ -7798,7 +7902,7 @@
        "application/json": {
         "schema": {
          "items": {
-          "$ref": "#/components/schemas/Series"
+          "$ref": "#/components/schemas/SeriesCard"
          },
          "title": "Response List Series",
          "type": "array"

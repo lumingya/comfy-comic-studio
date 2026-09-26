@@ -3,6 +3,8 @@ import type { components } from './schema';
 type S = components['schemas'];
 
 export type Series = S['Series'];
+/** A series as listed on the works page (plus episode count and cover). */
+export type SeriesCard = S['SeriesCard'];
 export type Bible = S['Bible-Output'];
 export type Character = S['Character-Output'];
 export type Location = S['Location-Output'];
@@ -60,6 +62,10 @@ export interface EpisodeSummary {
   title: string;
   order: number;
   panel_count: number;
+  /** Panels with an adopted base-variant take. */
+  adopted_count: number;
+  /** First adopted panel image, if any. */
+  cover_asset_id: string | null;
   created_at: string;
   updated_at: string;
 }

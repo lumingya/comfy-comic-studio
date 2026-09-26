@@ -2954,6 +2954,48 @@ export interface components {
             /** Deleted At */
             deleted_at: string | null;
         };
+        /**
+         * SeriesCard
+         * @description A series as listed on the works page: plus its episode count and a cover image.
+         */
+        SeriesCard: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /**
+             * Subtitle
+             * @default
+             */
+            subtitle: string;
+            /** @default draft */
+            status: components["schemas"]["SeriesStatus"];
+            bible: components["schemas"]["Bible-Output"];
+            /** Variants */
+            variants: components["schemas"]["VariantSet-Output"][];
+            /**
+             * Variables
+             * @description {变量} values (advanced layer).
+             */
+            variables: {
+                [key: string]: string;
+            };
+            /** Default Profile Id */
+            default_profile_id: string | null;
+            /** Created At */
+            created_at: string;
+            /** Updated At */
+            updated_at: string;
+            /** Deleted At */
+            deleted_at: string | null;
+            /**
+             * Episode Count
+             * @default 0
+             */
+            episode_count: number;
+            /** Cover Asset Id */
+            cover_asset_id: string | null;
+        };
         /** SeriesCreate */
         SeriesCreate: {
             /** Title */
@@ -3390,7 +3432,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Series"][];
+                    "application/json": components["schemas"]["SeriesCard"][];
                 };
             };
             /** @description Validation Error */

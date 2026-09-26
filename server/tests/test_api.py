@@ -105,6 +105,44 @@ class CrudTests(ApiCase):
         self.assertEqual(self.client.get(f"/api/series/{sid}/restore").status_code, 405)
         self.assertEqual(self.client.post(f"/api/series/{sid}/restore").status_code, 404)
 
+    def test_listings_carry_progress_and_covers(self):
+        series = self.ok(self.client.post("/api/series", json={"title": "雨夜"}), 201)
+        sid = series["id"]
+        # An empty first episode must not hide the cover of a later one.
+        self.ok(self.client.post(f"/api/series/{sid}/episodes", json={"title": "序章"}), 201)
+        ep = self.ok(
+            self.client.post(f"/api/series/{sid}/episodes/generate", json={"sentence": "雨夜"}),
+            201,
+        )
+        card = self.ok(self.client.get("/api/series"))[0]
+        self.assertEqual((card["episode_count"], card["cover_asset_id"]), (2, None))
+        items = self.ok(self.client.get(f"/api/series/{sid}/episodes"))["items"]
+        self.assertEqual(
+            [(i["adopted_count"], i["cover_asset_id"]) for i in items], [(0, None)] * 2
+        )
+
+        ep = self.adopt_all(ep)
+        first = min(ep["panels"], key=lambda p: p["order"])["id"]
+        cover = next(t["asset_id"] for t in ep["takes"] if t["panel_id"] == first)
+        items = self.ok(self.client.get(f"/api/series/{sid}/episodes"))["items"]
+        self.assertEqual(
+            (items[1]["adopted_count"], items[1]["cover_asset_id"]), (len(ep["panels"]), cover)
+        )
+        extra = self.ok(self.client.post(f"/api/series/{sid}/episodes", json={"title": "x"}), 201)
+        self.ok(self.client.delete(f"/api/episodes/{extra['id']}"), 204)  # trashed: not counted
+        card = self.ok(self.client.get("/api/series"))[0]
+        self.assertEqual((card["episode_count"], card["cover_asset_id"]), (2, cover))
+        # Rejected takes stop counting; the cover is the first adopted panel that remains.
+        keep = next(t for t in ep["takes"] if t["panel_id"] == first)
+        for take in ep["takes"]:
+            if take["id"] != keep["id"]:
+                self.ok(self.client.post(f"/api/episodes/{ep['id']}/takes/{take['id']}/reject"))
+        items = self.ok(self.client.get(f"/api/series/{sid}/episodes"))["items"]
+        self.assertEqual((items[1]["adopted_count"], items[1]["cover_asset_id"]), (1, cover))
+        self.ok(self.client.post(f"/api/episodes/{ep['id']}/takes/{keep['id']}/reject"))
+        card = self.ok(self.client.get("/api/series"))[0]
+        self.assertEqual((card["episode_count"], card["cover_asset_id"]), (2, None))
+
     def test_panel_editing_and_revision_conflict(self):
         _, ep = self.make_episode()
         eid, first = ep["id"], ep["panels"][0]["id"]

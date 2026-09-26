@@ -73,6 +73,18 @@ CREATE TABLE IF NOT EXISTS assets (
 """
 
 
+# Card data straight from the stored JSON (no payload round trip through Python).  ``e`` is the
+# episodes row; only base-variant takes count, and only for panels that still exist.
+_ADOPTED_TAKES = """FROM json_each(e.payload_json, '$.takes') AS t
+    JOIN json_each(e.payload_json, '$.panels') AS p
+      ON json_extract(p.value, '$.id') = json_extract(t.value, '$.panel_id')
+    WHERE json_extract(t.value, '$.status') = 'adopted'
+      AND json_extract(t.value, '$.variant_id') IS NULL"""
+EPISODE_COVER = f"""(SELECT json_extract(t.value, '$.asset_id') {_ADOPTED_TAKES}
+    ORDER BY json_extract(p.value, '$.order') LIMIT 1)"""
+EPISODE_ADOPTED = f"(SELECT COUNT(DISTINCT json_extract(t.value, '$.panel_id')) {_ADOPTED_TAKES})"
+
+
 class SQLiteStore:
     def __init__(self, path: str | Path):
         self.path = Path(path)
@@ -160,6 +172,19 @@ class SQLiteStore:
             f"SELECT payload_json FROM series WHERE {cond} ORDER BY updated_at DESC, id"
         )
         return [Series.model_validate_json(row["payload_json"]) for row in rows]
+
+    def series_stats(self) -> dict[str, tuple[int, str | None]]:
+        """``series_id → (live episode count, cover asset)``; the cover is the first adopted
+        panel of the earliest episode that has one."""
+        rows = self._rows(
+            f"""SELECT e.series_id AS sid, {EPISODE_COVER} AS cover FROM episodes e
+               WHERE e.deleted_at IS NULL ORDER BY e.series_id, e.episode_order, e.id"""
+        )
+        stats: dict[str, tuple[int, str | None]] = {}
+        for r in rows:
+            count, cover = stats.get(r["sid"], (0, None))
+            stats[r["sid"]] = (count + 1, cover or r["cover"])
+        return stats
 
     def save_series(self, series: Series) -> Series:
         series.updated_at = now_iso()
@@ -260,8 +285,10 @@ class SQLiteStore:
             (series_id,),
         )[0]["n"]
         rows = self._rows(
-            """SELECT id, series_id, title, episode_order, panel_count, created_at, updated_at FROM episodes
-               WHERE series_id = ? AND deleted_at IS NULL ORDER BY episode_order, id LIMIT ? OFFSET ?""",
+            f"""SELECT e.id, e.series_id, e.title, e.episode_order, e.panel_count, e.created_at,
+                   e.updated_at, {EPISODE_ADOPTED} AS adopted, {EPISODE_COVER} AS cover
+               FROM episodes e WHERE e.series_id = ? AND e.deleted_at IS NULL
+               ORDER BY e.episode_order, e.id LIMIT ? OFFSET ?""",
             (series_id, limit, offset),
         )
         items = [
@@ -271,6 +298,8 @@ class SQLiteStore:
                 "title": r["title"],
                 "order": r["episode_order"],
                 "panel_count": r["panel_count"],
+                "adopted_count": r["adopted"],
+                "cover_asset_id": r["cover"],
                 "created_at": r["created_at"],
                 "updated_at": r["updated_at"],
             }

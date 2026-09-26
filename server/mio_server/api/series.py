@@ -13,6 +13,7 @@ from ..models import (
     EpisodePatch,
     Panel,
     Series,
+    SeriesCard,
     SeriesCreate,
     SeriesPatch,
     TakeStatus,
@@ -49,9 +50,14 @@ class GenerateEpisode(BaseModel):
 
 
 # ------------------------------------------------------------------ series
-@router.get("/series", response_model=list[Series])
-def list_series(ctx: Ctx, deleted: bool = False) -> list[Series]:
-    return ctx.store.list_series(deleted=deleted)
+@router.get("/series", response_model=list[SeriesCard])
+def list_series(ctx: Ctx, deleted: bool = False) -> list[SeriesCard]:
+    stats = ctx.store.series_stats()
+    cards = []
+    for series in ctx.store.list_series(deleted=deleted):
+        count, cover = stats.get(series.id, (0, None))
+        cards.append(SeriesCard(**series.model_dump(), episode_count=count, cover_asset_id=cover))
+    return cards
 
 
 @router.post("/series", response_model=Series, status_code=status.HTTP_201_CREATED)

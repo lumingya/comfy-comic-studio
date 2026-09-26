@@ -485,6 +485,13 @@ class Series(StrictModel):
         return _required(value, "series title")
 
 
+class SeriesCard(Series):
+    """A series as listed on the works page: plus its episode count and a cover image."""
+
+    episode_count: int = 0
+    cover_asset_id: str | None = None
+
+
 class SeriesCreate(StrictModel):
     title: str
     subtitle: str = ""
