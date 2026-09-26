@@ -6,7 +6,15 @@
   inset: 0;
   z-index: 50;
   background: rgb(0 0 0 / 0.55);
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(3px);
+}
+
+.overlay[data-state='open'] {
+  animation: fade-in 0.16s ease-out;
+}
+
+.overlay[data-state='closed'] {
+  animation: fade-out 0.12s ease-in;
 }
 
 .dialog {
@@ -20,9 +28,21 @@
   overflow: auto;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   padding: 24px;
+}
+
+.dialog:focus {
+  outline: none;
+}
+
+.dialog[data-state='open'] {
+  animation: dialog-in 0.2s var(--ease);
+}
+
+.dialog[data-state='closed'] {
+  animation: dialog-out 0.12s ease-in;
 }
 
 .dialog.lg {
@@ -31,7 +51,14 @@
 
 .dialog h2 {
   margin: 0 0 6px;
+  padding-right: 28px;
   font: 500 19px var(--serif);
+}
+
+.dialog-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
 }
 
 .dialog-desc {
@@ -43,9 +70,36 @@
 
 .dialog-foot {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
   margin-top: 22px;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -48%) scale(0.97);
+  }
+}
+
+@keyframes dialog-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, -49%) scale(0.98);
+  }
 }
 
 /* ---- menus / tooltips ---- */
@@ -54,9 +108,11 @@
   min-width: 170px;
   padding: 5px;
   background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 9px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
   box-shadow: var(--shadow);
+  transform-origin: var(--radix-dropdown-menu-content-transform-origin);
+  animation: pop-in 0.14s var(--ease);
 }
 
 .menu-item {
@@ -66,16 +122,45 @@
   padding: 7px 10px;
   border-radius: 6px;
   font-size: 13px;
+  color: var(--soft);
   cursor: pointer;
   outline: none;
 }
 
-.menu-item[data-highlighted] {
-  background: var(--hover);
+.menu-item svg {
+  color: var(--muted);
 }
 
-.menu-item.danger {
+.menu-item[data-highlighted] {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.menu-item[data-disabled] {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.menu-item.danger,
+.menu-item.danger svg {
   color: var(--red);
+}
+
+.menu-item.danger[data-highlighted] {
+  background: color-mix(in srgb, var(--red) 12%, transparent);
+}
+
+.menu-sep {
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--line);
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
 }
 
 .tooltip {
@@ -95,23 +180,80 @@
   z-index: 80;
   display: flex;
   flex-direction: column;
+  align-items: flex-end;
   gap: 8px;
+  pointer-events: none;
 }
 
 .toast {
-  max-width: 380px;
-  padding: 11px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: max-content;
+  max-width: min(420px, calc(100vw - 40px));
+  padding: 11px 12px 11px 13px;
   font-size: 13px;
+  line-height: 1.55;
   background: var(--panel);
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--accent-strong);
-  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
   box-shadow: var(--shadow);
-  animation: rise 0.2s ease-out;
+  animation: rise 0.22s var(--ease);
+  pointer-events: auto;
 }
 
-.toast.error {
-  border-left-color: var(--red);
+.toast-icon {
+  flex: none;
+  margin-top: 1px;
+  color: var(--accent);
+}
+
+.toast.error .toast-icon {
+  color: var(--red);
+}
+
+.toast-text {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.toast-action {
+  flex: none;
+  margin: -3px 0 -3px 4px;
+  padding: 2px 9px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 6px;
+  background: var(--tint);
+  color: var(--accent);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toast-action:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.toast-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin: 0 -2px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.toast-close:hover {
+  background: var(--hover);
+  color: var(--text);
 }
 
 @keyframes rise {
@@ -121,4 +263,16 @@
   }
 }
 
-/* ---- switch (Radix) ---- */
+@media (max-width: 900px) {
+  .toasts {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    align-items: stretch;
+  }
+
+  .toast {
+    width: auto;
+    max-width: none;
+  }
+}

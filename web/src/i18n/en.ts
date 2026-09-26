@@ -11,6 +11,8 @@ const en: Widen<Dict> = {
     trash: 'Trash',
     theme: 'Toggle theme',
     language: '中文',
+    main: 'Main navigation',
+    breadcrumbs: 'Breadcrumbs',
   },
   common: {
     duplicate: 'Duplicate',
@@ -46,6 +48,14 @@ const en: Widen<Dict> = {
     prev: 'Previous',
     next: 'Next',
     error: 'Something went wrong',
+    undo: 'Undo',
+    saving: 'Saving…',
+    saveFailed: 'Save failed (Ctrl+S to retry)',
+    autosave: 'Autosave',
+    invalidJson: 'Invalid JSON — node overrides not saved',
+    unsavedTitle: 'Leave this page?',
+    unsavedBody: 'Some changes are not saved yet and will be lost.',
+    leave: 'Leave',
   },
   works: {
     heading: 'My works',
@@ -63,6 +73,8 @@ const en: Widen<Dict> = {
     characters: '{{count}} characters',
     exportBundle: 'Export .mio.zip',
     empty: 'No works yet. Create one, or import a .mio.zip / legacy data.',
+    emptyTitle: 'Start your first work',
+    subtitlePlaceholder: 'Add a subtitle',
   },
   series: {
     bible: 'Bible',
@@ -76,6 +88,12 @@ const en: Widen<Dict> = {
     generating: 'Writing the script…',
     panels: '{{count}} panels',
     status: { draft: 'Draft', active: 'Ongoing', archived: 'Finished' },
+    episodeNo: 'Episode {{n}}',
+    adoptedOf: '{{done}}/{{total}} panels adopted',
+    noPanels: 'No panels yet',
+    emptyTitle: 'No episodes yet',
+    emptyBody: "Let the AI draft this episode's panels from one sentence, or start a blank one.",
+    statusLabel: 'Status',
   },
   bible: {
     select: 'Pick an entry on the left to edit it',
@@ -107,6 +125,8 @@ const en: Widen<Dict> = {
     genders: { female: 'Female', male: 'Male', nonbinary: 'Non-binary', unknown: 'Unset' },
     variables: '{Variables}',
     variablesHint: 'Reference as {name} in prompts; panel values override work values.',
+    deleted: 'Deleted “{{name}}”',
+    emptyTitle: 'Characters, places and styles',
   },
   variants: {
     heading: 'Batch variants (character matrix)',
@@ -130,7 +150,7 @@ const en: Widen<Dict> = {
     duplicate: 'Duplicate',
     lock: 'Lock',
     unlock: 'Unlock',
-    locked: 'Locked: the assistant will not touch it',
+    locked: 'Locked: the script assistant, pacing and auto-QA leave this panel alone',
     shot: 'Shot',
     angle: 'Angle',
     location: 'Location',
@@ -200,6 +220,13 @@ const en: Widen<Dict> = {
       toDay: 'Daybreak',
       flash: 'Flashback',
     },
+    panelNo: 'Panel {{n}}',
+    deletePanel: 'Delete panel',
+    dragToReorder: 'Drag to reorder',
+    panelDeleted: 'Deleted panel {{n}}',
+    rawChip: 'Raw prompt',
+    copyPrompt: 'Copy prompt',
+    naturalPrompt: 'Natural-language version',
   },
   assistant: {
     heading: 'Script assistant',
@@ -249,6 +276,8 @@ const en: Widen<Dict> = {
     feather: 'Feather (px)',
     anchor: 'Keep original at',
     anchors: { center: 'Center', top: 'Top', bottom: 'Bottom', left: 'Left', right: 'Right' },
+    seed: 'Seed',
+    adoptedShort: 'Chosen',
   },
   canvas: {
     autoLayout: 'Auto layout',
@@ -425,9 +454,11 @@ const en: Widen<Dict> = {
       uncertain: 'Unconfirmed',
       skipped: 'Skipped',
     },
+    activeCount: '{{count}} active jobs',
   },
   settings: {
     heading: 'Settings',
+    groups: { basic: 'Basics', render: 'Rendering', open: 'Open API' },
     tabs: {
       general: 'General',
       workflows: 'Workflows',
@@ -617,6 +648,7 @@ const en: Widen<Dict> = {
     purge: 'Delete forever',
     purgeTitle: 'Delete "{{title}}" forever?',
     purgeHint: 'This cannot be undone.',
+    moved: 'Moved “{{title}}” to the trash',
   },
 };
 

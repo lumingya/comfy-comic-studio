@@ -8,6 +8,8 @@ const zh = {
     trash: '回收站',
     theme: '切换明暗',
     language: 'English',
+    main: '主导航',
+    breadcrumbs: '当前位置',
   },
   common: {
     duplicate: '复制',
@@ -43,6 +45,14 @@ const zh = {
     prev: '上一页',
     next: '下一页',
     error: '出错了',
+    undo: '撤销',
+    saving: '保存中…',
+    saveFailed: '保存失败（Ctrl+S 重试）',
+    autosave: '自动保存',
+    invalidJson: 'JSON 有误，节点覆盖暂未保存',
+    unsavedTitle: '离开此页？',
+    unsavedBody: '还有修改没有保存，离开后会丢失。',
+    leave: '离开',
   },
   works: {
     heading: '我的作品',
@@ -59,6 +69,8 @@ const zh = {
     characters: '{{count}} 个角色',
     exportBundle: '导出 .mio.zip',
     empty: '还没有作品。新建一部，或者导入 .mio.zip / 旧版数据。',
+    emptyTitle: '开始你的第一部作品',
+    subtitlePlaceholder: '添加副标题',
   },
   series: {
     bible: '设定集',
@@ -71,6 +83,12 @@ const zh = {
     generating: '正在生成剧本…',
     panels: '{{count}} 格',
     status: { draft: '草稿', active: '连载中', archived: '已完结' },
+    episodeNo: '第 {{n}} 话',
+    adoptedOf: '已采用 {{done}}/{{total}} 格',
+    noPanels: '还没有分格',
+    emptyTitle: '还没有剧集',
+    emptyBody: '用一句话让 AI 写出这一集的分格剧本，或者新建一集自己写。',
+    statusLabel: '连载状态',
   },
   bible: {
     select: '从左侧选择一个条目进行编辑',
@@ -102,6 +120,8 @@ const zh = {
     genders: { female: '女', male: '男', nonbinary: '非二元', unknown: '未设定' },
     variables: '{变量}',
     variablesHint: '在提示词里写 {名字} 引用；格的变量覆盖作品变量。',
+    deleted: '已删除「{{name}}」',
+    emptyTitle: '角色、地点与画风',
   },
   variants: {
     heading: '批量变体（角色矩阵）',
@@ -125,7 +145,7 @@ const zh = {
     duplicate: '复制这格',
     lock: '锁定',
     unlock: '解锁',
-    locked: '已锁定：剧本助手不会改动',
+    locked: '已锁定：剧本助手、节奏调整和自动质检都不会改动这一格',
     shot: '景别',
     angle: '角度',
     location: '地点',
@@ -182,6 +202,13 @@ const zh = {
       toDay: '天亮',
       flash: '闪回',
     },
+    panelNo: '第 {{n}} 格',
+    deletePanel: '删除这一格',
+    dragToReorder: '拖动排序',
+    panelDeleted: '已删除第 {{n}} 格',
+    rawChip: '原始提示词',
+    copyPrompt: '复制提示词',
+    naturalPrompt: '自然语言版本',
   },
   assistant: {
     heading: '剧本助手',
@@ -230,6 +257,8 @@ const zh = {
     feather: '边缘羽化（像素）',
     anchor: '原图位置',
     anchors: { center: '居中', top: '靠上', bottom: '靠下', left: '靠左', right: '靠右' },
+    seed: '种子',
+    adoptedShort: '已选',
   },
   canvas: {
     autoLayout: '自动排版',
@@ -403,9 +432,11 @@ const zh = {
       uncertain: '未确认',
       skipped: '跳过',
     },
+    activeCount: '{{count}} 个任务进行中',
   },
   settings: {
     heading: '设置',
+    groups: { basic: '基础', render: '出图', open: '开放接口' },
     tabs: {
       general: '通用',
       workflows: '工作流',
@@ -588,6 +619,7 @@ const zh = {
     purge: '彻底删除',
     purgeTitle: '彻底删除「{{title}}」？',
     purgeHint: '彻底删除后无法恢复。',
+    moved: '已将「{{title}}」移到回收站',
   },
 };
 

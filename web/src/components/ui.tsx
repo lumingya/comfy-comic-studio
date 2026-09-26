@@ -3,12 +3,15 @@ import * as Menu from '@radix-ui/react-dropdown-menu';
 import * as RSwitch from '@radix-ui/react-switch';
 import { MoreHorizontal, X } from 'lucide-react';
 import {
+  useEffect,
+  useRef,
   useState,
   type ChangeEvent,
   type KeyboardEvent,
   type ReactNode,
   type SelectHTMLAttributes,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 
 export function Field(props: { label: ReactNode; hint?: ReactNode; children: ReactNode }) {
   return (
@@ -88,20 +91,23 @@ export function Select<T extends string>(
     options: { value: T; label: string }[];
   } & Omit<SelectHTMLAttributes<HTMLSelectElement>, 'value' | 'onChange'>,
 ) {
-  const { value, onChange, options, className, ...rest } = props;
+  // Layout props (className / style) size the wrapper, which also draws the chevron.
+  const { value, onChange, options, className, style, ...rest } = props;
   return (
-    <select
-      {...rest}
-      className={`select ${className ?? ''}`}
-      value={value}
-      onChange={(e) => onChange(e.target.value as T)}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+    <span className={`select-wrap ${className ?? ''}`} style={style}>
+      <select
+        {...rest}
+        className="select"
+        value={value}
+        onChange={(e) => onChange(e.target.value as T)}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </span>
   );
 }
 
@@ -166,11 +172,17 @@ export function Modal(props: {
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  const { t } = useTranslation();
   return (
     <Dialog.Root open={props.open} onOpenChange={props.onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="overlay" />
         <Dialog.Content className={`dialog ${props.size === 'lg' ? 'lg' : ''}`}>
+          <Dialog.Close asChild>
+            <button className="btn ghost icon sm dialog-close" aria-label={t('common.close')}>
+              <X size={16} />
+            </button>
+          </Dialog.Close>
           <Dialog.Title>{props.title}</Dialog.Title>
           {props.description ? (
             <Dialog.Description className="dialog-desc">{props.description}</Dialog.Description>
@@ -209,10 +221,11 @@ export interface MenuAction {
 }
 
 export function ActionMenu(props: { actions: MenuAction[]; label?: string }) {
+  const { t } = useTranslation();
   return (
     <Menu.Root>
       <Menu.Trigger asChild>
-        <button className="btn ghost icon sm" aria-label={props.label ?? 'more'}>
+        <button className="btn ghost icon sm" aria-label={props.label ?? t('common.more')}>
           <MoreHorizontal size={16} />
         </button>
       </Menu.Trigger>
@@ -235,26 +248,37 @@ export function ActionMenu(props: { actions: MenuAction[]; label?: string }) {
   );
 }
 
-export function Empty(props: { children: ReactNode; action?: ReactNode }) {
+/** Empty state: optional icon and title, a line of guidance, and the next action. */
+export function Empty(props: {
+  children?: ReactNode;
+  action?: ReactNode;
+  icon?: ReactNode;
+  title?: ReactNode;
+  compact?: boolean;
+}) {
   return (
-    <div className="empty">
-      <div>{props.children}</div>
-      {props.action}
+    <div className={`empty ${props.compact ? 'compact' : ''}`}>
+      {props.icon ? <div className="empty-icon">{props.icon}</div> : null}
+      {props.title ? <div className="empty-title">{props.title}</div> : null}
+      {props.children ? <div className="empty-body">{props.children}</div> : null}
+      {props.action ? <div className="empty-action">{props.action}</div> : null}
     </div>
   );
 }
 
-export function Loading() {
+export function Loading({ label }: { label?: ReactNode }) {
+  const { t } = useTranslation();
   return (
-    <div className="row muted small" style={{ padding: 24 }}>
+    <div className="loading" role="status">
       <span className="spinner" />
+      {label ?? t('common.loading')}
     </div>
   );
 }
 
-export function Progress({ value }: { value: number }) {
+export function Progress({ value, className }: { value: number; className?: string }) {
   return (
-    <div className="progress">
+    <div className={`progress ${className ?? ''}`}>
       <i style={{ width: `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%` }} />
     </div>
   );
@@ -283,5 +307,51 @@ export function FilePick(props: {
         }}
       />
     </label>
+  );
+}
+
+/**
+ * A title edited in place: saves trimmed text on blur / Enter, Escape reverts, and an emptied
+ * field snaps back to the saved value instead of saving nothing.
+ */
+export function InlineTitle(props: {
+  value: string;
+  onSave: (value: string) => void;
+  label: string;
+  className?: string;
+  placeholder?: string;
+  /** Optional fields (a subtitle) may be cleared. */
+  allowEmpty?: boolean;
+}) {
+  const [draft, setDraft] = useState(props.value);
+  const cancel = useRef(false);
+  useEffect(() => setDraft(props.value), [props.value]);
+  const commit = () => {
+    const next = draft.trim();
+    if (cancel.current || (!next && !props.allowEmpty)) {
+      cancel.current = false;
+      setDraft(props.value);
+      return;
+    }
+    if (next !== props.value) props.onSave(next);
+    setDraft(next);
+  };
+  return (
+    <input
+      className={props.className ?? 'input title'}
+      value={draft}
+      aria-label={props.label}
+      title={props.label}
+      placeholder={props.placeholder}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') e.currentTarget.blur();
+        if (e.key === 'Escape') {
+          cancel.current = true;
+          e.currentTarget.blur();
+        }
+      }}
+    />
   );
 }

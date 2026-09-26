@@ -102,7 +102,7 @@ PAPER = Theme(
         "line-strong": "#c3cabd",
         "text": "#1f2721",
         "soft": "#4b5a4e",
-        "muted": "#7a847b",
+        "muted": "#667066",
         "accent": "#2f5b3c",
         "accent-strong": "#3f7550",
         "on-accent": "#f5f8f3",

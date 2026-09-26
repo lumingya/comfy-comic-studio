@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useJobEvents, useJobs, useLive } from '../api/jobs';
-import { useThemes } from '../api/open';
+import { useThemes, useUpdateStatus } from '../api/open';
+import { ConfirmHost } from '../components/confirm';
 import { Toaster } from '../components/toast';
 import { setLocale } from '../i18n';
 import { applyTheme, resolveTheme, systemPrefersDark, toggled } from './theme';
@@ -31,13 +32,19 @@ function useAppliedTheme() {
 }
 
 function ActiveJobsBadge() {
+  const { t } = useTranslation();
   const { data } = useJobs(undefined, true);
   const n = data?.length ?? 0;
   return n ? (
-    <span className="chip ok" style={{ marginLeft: 'auto' }}>
+    <span className="rail-badge" title={t('jobs.activeCount', { count: n })}>
       {n}
     </span>
   ) : null;
+}
+
+function Version() {
+  const { data } = useUpdateStatus();
+  return data?.current ? <span className="rail-version">{data.current}</span> : null;
 }
 
 export function Shell() {
@@ -51,38 +58,41 @@ export function Shell() {
 
   return (
     <div className="shell">
-      <nav className="rail" aria-label="main">
+      <nav className="rail" aria-label={t('nav.main')}>
         <div className="brand">
           <span className="brand-mark">{t('app.name')}</span>
           <span className="brand-sub">{t('app.tagline')}</span>
         </div>
-        <NavLink to="/" end className={link}>
-          <BookOpen size={17} /> {t('nav.works')}
+        <NavLink to="/" end className={link} title={t('nav.works')}>
+          <BookOpen size={17} /> <span className="rail-label">{t('nav.works')}</span>
         </NavLink>
-        <NavLink to="/jobs" className={link}>
-          <ListTodo size={17} /> {t('nav.jobs')}
+        <NavLink to="/jobs" className={link} title={t('nav.jobs')}>
+          <ListTodo size={17} /> <span className="rail-label">{t('nav.jobs')}</span>
           <ActiveJobsBadge />
         </NavLink>
-        <NavLink to="/settings" className={link}>
-          <Settings size={17} /> {t('nav.settings')}
+        <NavLink to="/settings" className={link} title={t('nav.settings')}>
+          <Settings size={17} /> <span className="rail-label">{t('nav.settings')}</span>
         </NavLink>
-        <NavLink to="/trash" className={link}>
-          <Trash2 size={17} /> {t('nav.trash')}
+        <NavLink to="/trash" className={link} title={t('nav.trash')}>
+          <Trash2 size={17} /> <span className="rail-label">{t('nav.trash')}</span>
         </NavLink>
         <div className="rail-foot">
           <button
             className="btn ghost icon"
             title={t('nav.theme')}
+            aria-label={t('nav.theme')}
             onClick={() => setTheme(toggled(theme.mode))}
           >
             {theme.mode === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           <button
             className="btn ghost sm"
+            title={t('nav.language')}
             onClick={() => setLocale(i18n.language === 'en' ? 'zh-CN' : 'en')}
           >
-            <Languages size={15} /> {t('nav.language')}
+            <Languages size={15} /> <span className="btn-label">{t('nav.language')}</span>
           </button>
+          <Version />
         </div>
       </nav>
       <main className="main">
@@ -90,6 +100,7 @@ export function Shell() {
         <Outlet />
       </main>
       <Toaster />
+      <ConfirmHost />
     </div>
   );
 }

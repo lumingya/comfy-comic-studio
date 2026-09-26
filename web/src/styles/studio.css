@@ -16,7 +16,8 @@
   border-bottom: 1px solid var(--line);
 }
 
-.board-toolbar .select {
+.board-toolbar .select-wrap,
+.canvas-toolbar .select-wrap {
   width: auto;
   min-width: 140px;
 }

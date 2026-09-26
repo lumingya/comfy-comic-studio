@@ -26,6 +26,12 @@
   --serif: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'STSong', Georgia, serif;
   --mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
   --rail: 232px;
+  /* Derived tokens: computed from the theme colours above, so every theme gets them. */
+  --radius-lg: 14px;
+  --ring: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.14), 0 4px 14px rgb(0 0 0 / 0.1);
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --fast: 140ms;
   color-scheme: dark;
 }
 
@@ -39,7 +45,7 @@
   --line-strong: #c3cabd;
   --text: #1f2721;
   --soft: #4b5a4e;
-  --muted: #7a847b;
+  --muted: #667066;
   --accent: #2f5b3c;
   --accent-strong: #3f7550;
   --on-accent: #f5f8f3;
@@ -109,6 +115,15 @@ img {
   outline-offset: 2px;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* ---------------------------------------------------------------- shell */
 .shell {
   display: grid;
@@ -140,12 +155,16 @@ img {
 }
 
 .brand-sub {
+  overflow: hidden;
   font-size: 11px;
-  letter-spacing: 0.32em;
+  letter-spacing: 0.2em;
   color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .rail-link {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 11px;
@@ -153,6 +172,9 @@ img {
   border-radius: var(--radius-sm);
   color: var(--soft);
   font-size: 13.5px;
+  transition:
+    background var(--fast),
+    color var(--fast);
 }
 
 .rail-link:hover {
@@ -163,6 +185,30 @@ img {
 .rail-link.active {
   background: var(--tint);
   color: var(--accent);
+  font-weight: 500;
+}
+
+.rail-link.active::before {
+  content: '';
+  position: absolute;
+  left: -14px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+}
+
+.rail-badge {
+  margin-left: auto;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font: 600 11px/20px var(--mono);
+  text-align: center;
 }
 
 .rail-section {
@@ -176,9 +222,16 @@ img {
 .rail-foot {
   margin-top: auto;
   display: flex;
+  align-items: center;
   gap: 6px;
   padding: 12px 4px 0;
   border-top: 1px solid var(--line);
+}
+
+.rail-version {
+  margin-left: auto;
+  font: 11px var(--mono);
+  color: var(--muted);
 }
 
 .main {
@@ -195,17 +248,30 @@ img {
 
 .page.wide {
   max-width: none;
-  padding: 0;
-  height: 100%;
+  padding: 28px 32px 48px;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
 }
 
 .page-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
-  gap: 20px;
+  gap: 16px 20px;
   margin-bottom: 28px;
+}
+
+.page-head > :first-child {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
 }
 
 .page-head h1 {
@@ -218,6 +284,28 @@ img {
   margin: 6px 0 0;
   color: var(--muted);
   font-size: 13px;
+}
+
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.crumbs a {
+  color: var(--soft);
+}
+
+.crumbs a:hover {
+  color: var(--accent);
+}
+
+.crumbs svg {
+  opacity: 0.6;
 }
 
 .overline {
@@ -309,19 +397,52 @@ img {
   .rail {
     flex-direction: row;
     align-items: center;
-    padding: 8px 10px;
+    gap: 2px;
+    padding: 6px 8px;
     border-right: 0;
     border-bottom: 1px solid var(--line);
     overflow-x: auto;
   }
 
   .brand {
-    padding: 0 10px 0 4px;
+    padding: 0 10px 0 6px;
+  }
+
+  .brand-mark {
+    font-size: 21px;
   }
 
   .rail-section,
-  .brand-sub {
+  .brand-sub,
+  .rail-label,
+  .rail-version,
+  .rail-foot .btn-label {
     display: none;
+  }
+
+  .rail-link {
+    padding: 9px 10px;
+  }
+
+  .rail-link.active::before {
+    left: 10px;
+    right: 10px;
+    top: auto;
+    bottom: -6px;
+    width: auto;
+    height: 3px;
+    border-radius: 3px 3px 0 0;
+  }
+
+  .rail-badge {
+    position: absolute;
+    top: 2px;
+    right: 0;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    font-size: 10px;
+    line-height: 16px;
   }
 
   .rail-foot {
@@ -330,8 +451,17 @@ img {
     padding: 0;
   }
 
-  .page {
-    padding: 24px 18px 56px;
+  .page,
+  .page.wide {
+    padding: 22px 16px 56px;
+  }
+
+  .page-head {
+    margin-bottom: 20px;
+  }
+
+  .page-head h1 {
+    font-size: 24px;
   }
 
   .grid-2,
