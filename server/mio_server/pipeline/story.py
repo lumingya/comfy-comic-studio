@@ -125,10 +125,29 @@ def to_story(series: Series, episode: Episode, variant: VariantSet | None = None
     }
 
 
+def split_times(story: dict) -> tuple[dict, dict[str, str]]:
+    """Undo to_story's per-panel time scene copies (``s1@morning``) before normalizing ids."""
+    story = copy.deepcopy(story) if isinstance(story, dict) else {}
+    story["scenes"] = [
+        sc
+        for sc in story.get("scenes") or []
+        if not (isinstance(sc, dict) and "@" in str(sc.get("id", "")))
+    ]
+    times = {}
+    for pn in story.get("panels") or []:
+        if isinstance(pn, dict) and "@" in str(pn.get("scene") or ""):
+            base, _, time = str(pn["scene"]).partition("@")
+            pn["scene"] = base
+            if time in ("morning", "day", "evening", "night"):
+                times[str(pn.get("id"))] = time
+    return story, times
+
+
 def from_story(
     story: dict, series_id: str, title: str | None = None, order: int = 0
 ) -> tuple[Bible, Episode]:
     """LLM / golden story JSON → v3 bible + episode (ids kept, so re-imports are stable)."""
+    story, times = split_times(story)
     story = S.normalize_story(story)
     characters = []
     for ch in story.get("characters") or []:
@@ -183,7 +202,8 @@ def from_story(
                 shot=pn["shot"] if pn["shot"] in S.SHOTS else "medium",
                 angle=pn["angle"] if pn["angle"] in S.ANGLES else "eye",
                 characters=cast,
-                location_id=pn.get("scene") or None,
+                location_id=(pn.get("scene") or "").split("@")[0] or None,
+                time=times.get(pn["id"], ""),
                 description=pn.get("description") or "",
                 tags=pn.get("tags") or [],
                 dialogues=dialogues,

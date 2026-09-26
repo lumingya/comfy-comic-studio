@@ -120,8 +120,10 @@ class Client:
         retries: int = 1,
         cooldown: float = 300.0,
         pace: float | None = None,
+        api_key: str = "",
     ):
         self.base_url = base_url.rstrip("/")
+        self.api_key = api_key
         self.timeout = timeout
         self.retries = retries
         self.cooldown = cooldown  # circuit breaker: skip a model this long after it gave up
@@ -179,7 +181,10 @@ class Client:
         req = urllib.request.Request(
             self.base_url + path,
             data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
+            headers={
+                "Content-Type": "application/json",
+                **({"Authorization": f"Bearer {self.api_key}"} if self.api_key else {}),
+            },
             method="POST",
         )
         try:

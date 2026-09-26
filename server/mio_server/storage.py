@@ -21,12 +21,14 @@ from pydantic import BaseModel
 
 from .models import Episode, Series, now_iso
 from .render_models import Asset, ComfyInstance, RenderProfile, WorkflowDoc
+from .settings import AppSettings
 
 SCHEMA_VERSION = 2
 DOC_KINDS: dict[str, type[BaseModel]] = {
     "workflow": WorkflowDoc,
     "profile": RenderProfile,
     "instance": ComfyInstance,
+    "settings": AppSettings,
 }
 T = TypeVar("T", bound=BaseModel)
 

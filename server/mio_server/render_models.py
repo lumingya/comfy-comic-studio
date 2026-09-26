@@ -14,7 +14,9 @@ StageKind = Literal["generate", "refine", "upscale", "face", "inpaint", "outpain
 class WorkflowConfig(StrictModel):
     """Run configuration next to an API-format workflow (same keys as the spike runner)."""
 
-    mapping: dict[str, str] = Field(default_factory=dict, description="kind → JSON Pointer")
+    mapping: dict[str, str | list[str]] = Field(
+        default_factory=dict, description="kind → JSON Pointer (or several: one-to-many)"
+    )
     values: dict[str, object] = Field(default_factory=dict)
     overrides: dict[str, object] = Field(default_factory=dict)
     guard: list[str] = Field(default_factory=list)
