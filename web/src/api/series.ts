@@ -208,6 +208,88 @@ export function useReorderPanels(episodeId: string) {
   );
 }
 
+/** Same changes to several panels in one revision (`overrides` merges key by key). */
+export function useBatchPatchPanels(episodeId: string) {
+  return useEpisodeMutation(
+    episodeId,
+    async (vars: {
+      panelIds: string[];
+      changes: Record<string, unknown>;
+      appendText?: Record<string, string>;
+    }) =>
+      data(
+        await api.POST('/api/episodes/{episode_id}/panels/batch', {
+          params: ep(episodeId),
+          body: {
+            panel_ids: vars.panelIds,
+            changes: vars.changes,
+            append_text: vars.appendText ?? {},
+            revision: null,
+          },
+        }),
+      ),
+  );
+}
+
+export function useBatchDeletePanels(episodeId: string) {
+  return useEpisodeMutation(episodeId, async (panelIds: string[]) =>
+    data(
+      await api.POST('/api/episodes/{episode_id}/panels/batch-delete', {
+        params: ep(episodeId),
+        body: { panel_ids: panelIds },
+      }),
+    ),
+  );
+}
+
+/** Insert exported panels (ids re-issued) after `after`, or at the end. */
+export function useImportPanels(episodeId: string) {
+  return useEpisodeMutation(
+    episodeId,
+    async (vars: { panels: Record<string, unknown>[]; after: string | null }) =>
+      data(
+        await api.POST('/api/episodes/{episode_id}/panels/import', {
+          params: ep(episodeId),
+          body: { panels: vars.panels, after: vars.after },
+        }),
+      ),
+  );
+}
+
+export interface PanelVersion {
+  revision: number;
+  created_at: string;
+  shot: string;
+  description: string;
+  prompt: string;
+  dialogue: string;
+  panel: Panel;
+}
+
+export function usePanelHistory(episodeId: string, panelId: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: ['panel-history', episodeId, panelId],
+    enabled: enabled && !!panelId,
+    queryFn: async () =>
+      data(
+        await api.GET('/api/episodes/{episode_id}/panels/{panel_id}/history', {
+          params: { path: { episode_id: episodeId, panel_id: panelId! } },
+        }),
+      ) as unknown as PanelVersion[],
+  });
+}
+
+export function useRestorePanel(episodeId: string) {
+  return useEpisodeMutation(episodeId, async (vars: { panelId: string; revision: number }) =>
+    data(
+      await api.POST('/api/episodes/{episode_id}/panels/{panel_id}/restore', {
+        params: { path: { episode_id: episodeId, panel_id: vars.panelId } },
+        body: { revision: vars.revision },
+      }),
+    ),
+  );
+}
+
 export type TakeAction = 'adopt' | 'reject' | 'restore';
 
 export function useTakeAction(episodeId: string) {

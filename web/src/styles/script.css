@@ -333,3 +333,126 @@ details > summary {
 .src-extra {
   --src: var(--red);
 }
+
+/* ---- multi-selection in the panel list ---- */
+.panel-row.checked {
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.panel-row.checked:not(.active) {
+  background: color-mix(in srgb, var(--accent) 7%, var(--panel));
+}
+
+.selection-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 8px;
+  margin: 0 0 8px;
+  border-radius: var(--radius-sm);
+  background: var(--tint);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  font-size: 12px;
+}
+
+.selection-bar .count {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.panel-list:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+  border-radius: var(--radius-sm);
+}
+
+/* per-panel render values + variable overrides (PanelEditor advanced) */
+.kv-table {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
+  gap: 6px 8px;
+  align-items: center;
+}
+
+/* history / recent takes strips */
+.version-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 55vh;
+  overflow: auto;
+}
+
+.version-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.version-list .ellipsis {
+  min-width: 0;
+}
+
+.take-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.take-strip img {
+  height: 96px;
+  width: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  display: block;
+}
+
+.take-strip figure {
+  margin: 0;
+  flex: none;
+}
+
+.take-strip figure.adopted img {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* batch edit dialog */
+.batch-form {
+  gap: 8px;
+}
+
+.batch-row {
+  display: grid;
+  grid-template-columns: 18px 120px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.batch-row.on {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.batch-row input[type='checkbox'] {
+  accent-color: var(--accent);
+}
+
+.batch-control {
+  display: block;
+  min-width: 0;
+}

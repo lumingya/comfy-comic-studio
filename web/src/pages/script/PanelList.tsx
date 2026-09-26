@@ -16,17 +16,21 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Lock } from 'lucide-react';
+import type { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assetUrl } from '../../api/client';
 import type { Panel, Series } from '../../api/types';
+import type { Modifiers } from '../../app/selection';
 
 function Row(props: {
   panel: Panel;
   index: number;
   active: boolean;
+  checked: boolean;
   names: Record<string, string>;
   cover?: string;
-  onSelect: () => void;
+  onSelect: (mods: Modifiers) => void;
+  onContextMenu?: (e: MouseEvent) => void;
 }) {
   const { t } = useTranslation();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -43,7 +47,9 @@ function Row(props: {
         transition,
         opacity: isDragging ? 0.6 : 1,
       }}
-      className={`panel-row ${props.active ? 'active' : ''}`}
+      className={`panel-row ${props.active ? 'active' : ''} ${props.checked ? 'checked' : ''}`}
+      aria-selected={props.checked || undefined}
+      onContextMenu={props.onContextMenu}
     >
       <button
         className="drag-handle"
@@ -53,14 +59,19 @@ function Row(props: {
       >
         <GripVertical size={14} />
       </button>
-      <button className="panel-row-body" onClick={props.onSelect}>
+      <button
+        className="panel-row-body"
+        onClick={(e) =>
+          props.onSelect({ ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey })
+        }
+      >
         <span className="panel-no mono">{String(props.index + 1).padStart(2, '0')}</span>
         {props.cover ? (
           <img className="panel-thumb" src={assetUrl(props.cover, 96)} alt="" loading="lazy" />
         ) : null}
         <span className="grow">
           <span className="row small" style={{ gap: 6 }}>
-            <span className="chip">{t(`script.shots.${p.shot}`)}</span>
+            {p.shot ? <span className="chip">{t(`script.shots.${p.shot}`)}</span> : null}
             {p.locked ? <Lock size={12} className="muted" /> : null}
             <span className="muted ellipsis">{cast}</span>
           </span>
@@ -71,12 +82,19 @@ function Row(props: {
   );
 }
 
-/** Drag to reorder (mouse or keyboard); the parent persists the new order. */
+/**
+ * Drag to reorder (mouse or keyboard); the parent persists the new order.  Clicks carry their
+ * modifier keys so the parent can run a multi-selection; right-click reports the row.
+ */
 export function PanelList(props: {
   panels: Panel[];
   series: Series;
+  /** The panel open in the editor. */
   selected: string | null;
-  onSelect: (id: string) => void;
+  /** Multi-selection (may be empty). */
+  checked?: ReadonlySet<string>;
+  onSelect: (id: string, mods: Modifiers) => void;
+  onContextMenu?: (id: string, e: MouseEvent) => void;
   onReorder: (ids: string[]) => void;
   /** panel id → adopted image, shown as a thumbnail. */
   covers?: Record<string, string>;
@@ -107,7 +125,11 @@ export function PanelList(props: {
               names={names}
               cover={props.covers?.[p.id!]}
               active={p.id === props.selected}
-              onSelect={() => props.onSelect(p.id!)}
+              checked={props.checked?.has(p.id!) ?? false}
+              onSelect={(mods) => props.onSelect(p.id!, mods)}
+              onContextMenu={
+                props.onContextMenu ? (e) => props.onContextMenu!(p.id!, e) : undefined
+              }
             />
           ))}
         </ol>

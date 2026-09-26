@@ -88,6 +88,33 @@ describe('PanelList', () => {
       />,
     );
     fireEvent.click(screen.getByText('描述 p2'));
-    expect(onSelect).toHaveBeenCalledWith('p2');
+    expect(onSelect).toHaveBeenCalledWith('p2', {
+      ctrlKey: false,
+      metaKey: false,
+      shiftKey: false,
+    });
+  });
+
+  it('reports modifier keys, marks the multi-selection and forwards right-clicks', () => {
+    const onSelect = vi.fn();
+    const onContextMenu = vi.fn();
+    renderWithProviders(
+      <PanelList
+        series={series}
+        selected="p1"
+        checked={new Set(['p1', 'p2'])}
+        onSelect={onSelect}
+        onContextMenu={onContextMenu}
+        onReorder={() => undefined}
+        panels={[panel('p1', 0), panel('p2', 1, { shot: '' })]}
+      />,
+    );
+    fireEvent.click(screen.getByText('描述 p2'), { ctrlKey: true });
+    expect(onSelect).toHaveBeenCalledWith('p2', { ctrlKey: true, metaKey: false, shiftKey: false });
+    fireEvent.contextMenu(screen.getByText('描述 p1'));
+    expect(onContextMenu).toHaveBeenCalledWith('p1', expect.anything());
+    expect(document.querySelectorAll('.panel-row.checked')).toHaveLength(2);
+    // An unspecified shot shows no framing chip instead of a missing-key label.
+    expect(screen.queryByText('script.shots.')).toBeNull();
   });
 });

@@ -54,6 +54,8 @@ const en: Widen<Dict> = {
     undo: 'Undo',
     saving: 'Saving…',
     saveFailed: 'Save failed (Ctrl+S to retry)',
+    export: 'Export',
+    ok: 'OK',
     autosave: 'Autosave',
     invalidJson: 'Invalid JSON — node overrides not saved',
     unsavedTitle: 'Leave this page?',
@@ -269,6 +271,12 @@ const en: Widen<Dict> = {
     rawChip: 'Raw prompt',
     copyPrompt: 'Copy prompt',
     naturalPrompt: 'Natural-language version',
+    renderOne: 'Test-render this panel',
+    renderOneHint: 'Save, then queue one draft image for this panel only',
+    queued: 'Queued {{count}} panel(s); progress is on the Jobs page',
+    recentTakes: 'Latest images of this panel',
+    rendering: 'Rendering {{count}}',
+    noTakes: 'No images yet',
   },
   assistant: {
     heading: 'Script assistant',
@@ -283,7 +291,262 @@ const en: Widen<Dict> = {
     before: 'Before',
     after: 'After',
   },
+  batch: {
+    selected: '{{count}} panels selected',
+    edit: 'Batch edit',
+    title: 'Batch edit {{count}} panels',
+    hint: 'Tick the fields to change; unticked fields keep each panel’s own value.',
+    apply: 'Apply to {{count}} panels',
+    applied: '{{count}} panels changed',
+    appendMode: 'Append after existing prompt',
+    replaceMode: 'Replace existing prompt',
+    moveUp: 'Move up',
+    moveDown: 'Move down',
+    moveTo: 'Move to…',
+    moveHint: 'Move the {{count}} selected panel(s) to position (1–{{max}})',
+    render: 'Render {{count}} panels',
+    export: 'Export {{count}} panels (JSON)',
+    exported: 'Exported {{count}} panels (also copied to the clipboard)',
+    import: 'Import panels (JSON)',
+    importAfter: 'Import after this…',
+    imported: 'Imported {{count}} panels',
+    importError: {
+      json: 'Not valid JSON',
+      empty: 'No panels in the file',
+      shape: 'Wrong shape: expected an array of panel objects',
+    },
+    delete: 'Delete {{count}} panels',
+    deleteTitle: 'Delete the {{count}} selected panels?',
+    deleteHint: 'They are removed from this episode; their images stay as hidden orphan takes.',
+    deleted: '{{count}} panels deleted',
+    locked: '{{count}} panels locked',
+    unlocked: '{{count}} panels unlocked',
+    listHint:
+      'Ctrl-click / Shift-click / right-click; Ctrl+A all, Esc clear, Delete remove, ↑↓ move',
+  },
+  render: {
+    heading: 'Render overrides (this panel only)',
+    profile: 'Render profile',
+    fromRatio: 'From ratio',
+    width: 'Width',
+    height: 'Height',
+    steps: 'Steps',
+    cfg: 'CFG',
+    denoise: 'Denoise',
+    sampler: 'Sampler',
+    profileDefault: 'Profile default',
+    valuesHint:
+      'Empty = the render profile’s value. Width / height also size this panel on the strip canvas; steps / CFG / denoise / sampler go to the workflow’s matching [mio:steps]… inputs and are ignored when it has none.',
+    variables: 'Variable overrides (this panel only)',
+    varName: 'Variable',
+    varValue: 'Value',
+    varHint: '{variables} in this panel use these values, ahead of the series-level ones.',
+  },
+  history: {
+    button: 'History',
+    title: 'Earlier versions of this panel',
+    hint: 'Every save keeps a version; restoring changes only this panel, in place.',
+    none: 'No earlier versions yet',
+    restore: 'Restore this version',
+    restored: 'Restored version #{{n}}',
+  },
+  help: {
+    title: 'Help',
+    shortcuts: 'Shortcuts',
+    more: 'Full docs live in the repository’s docs/ folder; press ? on any page to open this help.',
+    keys: {
+      help: 'Open / close help',
+      save: 'Save now (in the editor)',
+      all: 'Select all panels (focus in the panel list)',
+      clear: 'Clear selection / close menu',
+      delete: 'Delete the selected panels',
+      move: 'Previous / next panel (hold Shift to extend)',
+      range: 'Select a range',
+      toggle: 'Add / remove one',
+      menu: 'Menu for the object under the cursor',
+    },
+    pages: {
+      works: {
+        title: 'Works',
+        intro: 'One work = one webtoon: a bible (characters / locations / styles) plus episodes.',
+        items: {
+          create: {
+            q: 'Where do I start?',
+            a: 'New work → add characters and locations in the bible → new episode, write the script or let the assistant draft it.',
+          },
+          open: {
+            q: 'Recently opened episodes?',
+            a: 'The “Recent” list at the bottom of the rail; one click from anywhere.',
+          },
+          search: {
+            q: 'Too many works?',
+            a: 'Search, filter by status and sort by update time or title at the top of the works page.',
+          },
+          trash: {
+            q: 'Deleted by mistake?',
+            a: 'Works and episodes are soft-deleted; restore them from Trash (kept 30 days by default).',
+          },
+        },
+      },
+      bible: {
+        title: 'Bible',
+        intro:
+          'Characters, locations, styles and series-level variables. Their tags flow into every panel prompt.',
+        items: {
+          characters: {
+            q: 'How are character tags used?',
+            a: 'A character’s appearance tags join the prompt whenever they appear; outfit / expression / action are set per panel in the cast.',
+          },
+          refs: {
+            q: 'Reference images?',
+            a: 'Upload front / side / expression references; at render time the best ones for the shot and angle are mounted on the workflow’s reference inputs.',
+          },
+          variables: {
+            q: 'What is {variable}?',
+            a: 'Write {name} in a prompt; define the value here. Any panel can override it.',
+          },
+          styles: {
+            q: 'Styles',
+            a: 'A style contributes positive / negative tags and LoRAs; render profiles can also replace the quality and negative lists.',
+          },
+        },
+      },
+      script: {
+        title: 'Script: panel editor',
+        intro:
+          'Panel list on the left (multi-select, right-click), the current panel on the right. Changes autosave.',
+        items: {
+          prompt: {
+            q: 'Where does the prompt go?',
+            a: '“Panel prompt” is the first field; it is appended verbatim after the generated tags and accepts {variables}.',
+          },
+          description: {
+            q: 'Description vs prompt?',
+            a: 'The description is for the script assistant and the natural-language model only; it is not part of the tag prompt.',
+          },
+          camera: {
+            q: 'Are shot / angle required?',
+            a: 'No. They default to “Unspecified” and add no framing tags; open “Camera, scene & tags” when you want them.',
+          },
+          select: {
+            q: 'How do I multi-select?',
+            a: 'Ctrl-click to add / remove, Shift-click for a range, Ctrl+A for all; a batch bar appears above the list.',
+          },
+          menu: {
+            q: 'What is in the right-click menu?',
+            a: 'Edit, batch edit, move up / down / to, duplicate, lock, render, copy prompt, export, import, delete.',
+          },
+          batch: {
+            q: 'Batch-change fields?',
+            a: '“Batch edit” lets you tick the fields to change; unticked ones keep each panel’s value. The prompt can append or replace.',
+          },
+          io: {
+            q: 'Import / export?',
+            a: 'Export the selected panels as JSON (also copied to the clipboard) and import them into any episode at a chosen position; ids are re-issued.',
+          },
+          render: {
+            q: 'Want to see one image first?',
+            a: '“Test-render this panel” queues a single draft; results appear under the editor in “Latest images of this panel”.',
+          },
+          history: {
+            q: 'Broke something?',
+            a: 'Every save keeps a version; “History” restores this panel in place. Deleting a panel offers Undo in the toast.',
+          },
+          preview: {
+            q: 'Where do the compiled tags come from?',
+            a: 'Each tag is coloured by origin (character / shot / location / time / quality / yours…); hover for the exact field; plain text is one click away.',
+          },
+        },
+      },
+      board: {
+        title: 'Board',
+        intro: 'Candidates per panel; adopt one as the panel’s image.',
+        items: {
+          render: {
+            q: 'Rendering',
+            a: '“Draft all” or per panel; candidate count is set at the top. Progress is on Jobs and streamed here live.',
+          },
+          adopt: {
+            q: 'Adopt / reject',
+            a: 'One adopted take per panel; rejected ones are under “show rejected”.',
+          },
+          candidates: { q: 'Candidates', a: 'How many images per run; lower it on small GPUs.' },
+          edit: {
+            q: 'Retouch',
+            a: 'Inpaint / outpaint an adopted take; the result becomes a new candidate.',
+          },
+          qa: { q: 'QA', a: 'A vision model scores candidates and can auto-adopt the best.' },
+        },
+      },
+      canvas: {
+        title: 'Strip canvas',
+        intro:
+          'Adopted images stacked by layout, with balloons and captions; export the long strip.',
+        items: {
+          layout: {
+            q: 'Layout',
+            a: 'Ratio / full / inset / bleed per panel are set in the script’s “Ratio & layout”; gaps and transition backgrounds are tuned here.',
+          },
+          lettering: {
+            q: 'Lettering',
+            a: 'Drag balloons and change styles; bridge balloons are enabled in the panel’s dialogue.',
+          },
+          export: {
+            q: 'Export',
+            a: 'Slice by preset (Webtoon etc.); album and motion-comic exports are also here.',
+          },
+        },
+      },
+      jobs: {
+        title: 'Jobs',
+        intro: 'All render / QA / export jobs with progress and per-item state.',
+        items: {
+          progress: {
+            q: 'Progress',
+            a: 'The list shows done/total; open a job for every item and failure reasons.',
+          },
+          retry: {
+            q: 'Retry',
+            a: 'Retry failed items individually; pause / resume / cancel whole jobs.',
+          },
+          uncertain: {
+            q: 'What is “uncertain”?',
+            a: 'The connection dropped after ComfyUI accepted the prompt; check, then mark it done or re-run.',
+          },
+        },
+      },
+      settings: {
+        title: 'Settings',
+        intro: 'ComfyUI instances, render profiles, model APIs, themes, extensions and API tokens.',
+        items: {
+          comfy: {
+            q: 'ComfyUI',
+            a: 'Just the address; several instances are scheduled by model group.',
+          },
+          profiles: {
+            q: 'Render profiles',
+            a: 'Workflow + quality / negative lists + stage chain (draft → final); a panel can pick its own profile.',
+          },
+          llm: { q: 'Model APIs', a: 'Text / vision models for the assistant and QA.' },
+          themes: {
+            q: 'Themes',
+            a: 'Built-in ink / paper / midnight / sakura, importable; the rail button flips between light and dark.',
+          },
+          tokens: { q: 'API tokens', a: 'For bots and scripts, scoped and revocable.' },
+        },
+      },
+    },
+  },
   board: {
+    batch: {
+      selected: '{{count}} takes selected',
+      hint: 'Ctrl / Shift-click images to multi-select; right-click for a menu',
+      adoptN: 'Adopt {{count}} (last one per panel wins)',
+      rejectN: 'Reject {{count}}',
+      adopt: 'Adopted {{count}}',
+      reject: 'Rejected {{count}}',
+      restore: 'Restored {{count}}',
+    },
     renderAll: 'Draft all',
     renderMissing: 'Fill missing ({{count}})',
     render: 'Render',
@@ -473,6 +736,13 @@ const en: Widen<Dict> = {
     pause: 'Pause',
     resume: 'Resume',
     cancel: 'Stop',
+    batch: {
+      selected: '{{count}} jobs selected',
+      pause: 'Paused {{count}} jobs',
+      resume: 'Resumed {{count}} jobs',
+      cancel: 'Canceled {{count}} jobs',
+      retry: 'Retried failed items of {{count}} jobs',
+    },
     retryFailed: 'Retry failed ({{count}})',
     resolve: 'Resolve',
     resolveTitle: 'Resolve unconfirmed item: {{label}}',

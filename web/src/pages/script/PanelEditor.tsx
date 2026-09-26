@@ -1,21 +1,21 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { Copy, Lock, Trash2, Unlock } from 'lucide-react';
+import { Copy, History, Lock, Play, Trash2, Unlock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ApiError } from '../../api/client';
 import { keys } from '../../api/keys';
+import { useRender } from '../../api/production';
 import { useDuplicatePanel, usePatchPanel } from '../../api/series';
 import { ANGLES, SHOTS, TIMES, type Episode, type Panel, type Series } from '../../api/types';
 import { useAutosave } from '../../app/autosave';
-import { toastError } from '../../components/toast';
+import { toast, toastError } from '../../components/toast';
 import { Field, NumberInput, Select, TagInput, TextArea, TextInput } from '../../components/ui';
 import { CompositionEditor } from './CompositionEditor';
 import { CastEditor, DialogueEditor, PromptPreview } from './parts';
+import { HistoryDialog, RecentTakes, RenderValuesFields, VariableOverrides } from './PanelExtras';
+import { RATIOS, WIDTHS } from './options';
 import { SaveState } from '../../components/SaveState';
 import { StripFields } from './StripFields';
-
-const WIDTHS = ['full', 'inset', 'bleed', 'frameless'] as const;
-const RATIOS = ['3:4', '2:3', '9:16', '1:1', '4:3', '16:9', '1:2', '2:1'];
 
 function parseOverrides(text: string): Record<string, unknown> | null {
   if (!text.trim()) return {};
@@ -56,6 +56,8 @@ export function PanelEditor(props: {
   const { episode, series } = props;
   const patch = usePatchPanel(episode.id!);
   const duplicate = useDuplicatePanel(episode.id!);
+  const render = useRender(episode.id!);
+  const [history, setHistory] = useState(false);
   const [draft, setDraft] = useState<Panel>(props.panel);
   const [nodeText, setNodeText] = useState(() => nodeJson(props.panel));
   const nodeOverrides = parseOverrides(nodeText);
@@ -99,6 +101,22 @@ export function PanelEditor(props: {
   ];
   const cameraUsed =
     !!draft.shot || !!draft.angle || !!draft.location_id || !!draft.time || !!draft.tags?.length;
+  const values = (draft.overrides.values ?? {}) as Record<string, unknown>;
+  const renderKeys = ['steps', 'cfg', 'denoise', 'sampler'];
+  const valuesUsed =
+    Object.keys(values).some((k) => renderKeys.includes(k) || k.startsWith('$')) ||
+    !!draft.overrides.width ||
+    !!draft.overrides.height ||
+    !!draft.overrides.profile_id;
+
+  // One-frame test run (legacy 试跑这一格): save first, then queue a single candidate.
+  const renderOne = () =>
+    autosave
+      .flush()
+      .then(() =>
+        render.mutateAsync({ panel_ids: [draft.id!], candidates: 1, variant_ids: [null] }),
+      )
+      .then(() => toast(t('script.queued', { count: 1 })), toastError);
 
   return (
     <div
@@ -116,6 +134,17 @@ export function PanelEditor(props: {
         </span>
         <SaveState state={autosave.state} invalid={nodeOverrides === null} />
         <span className="grow" />
+        <button
+          className="btn ghost sm"
+          disabled={render.isPending}
+          onClick={renderOne}
+          title={t('script.renderOneHint')}
+        >
+          <Play size={14} /> {t('script.renderOne')}
+        </button>
+        <button className="btn ghost sm" onClick={() => setHistory(true)} title={t('history.hint')}>
+          <History size={14} /> {t('history.button')}
+        </button>
         <button
           className={`btn ghost sm ${draft.locked ? 'active' : ''}`}
           onClick={() => set({ locked: !draft.locked })}
@@ -270,6 +299,25 @@ export function PanelEditor(props: {
         </div>
       </details>
 
+      <details className="advanced" open={valuesUsed}>
+        <summary>{t('render.heading')}</summary>
+        <div className="col" style={{ gap: 14, marginTop: 14 }}>
+          <RenderValuesFields
+            overrides={draft.overrides}
+            values={values}
+            onChange={(v) => setOv({ values: v })}
+            onOverrides={setOv}
+          />
+          <Field label={t('render.variables')}>
+            <VariableOverrides
+              values={values}
+              known={Object.keys(series.variables ?? {})}
+              onChange={(v) => setOv({ values: v })}
+            />
+          </Field>
+        </div>
+      </details>
+
       <details className="advanced">
         <summary>{t('script.advanced')}</summary>
         <div className="col" style={{ gap: 14, marginTop: 14 }}>
@@ -315,6 +363,20 @@ export function PanelEditor(props: {
         <h2>{t('script.preview')}</h2>
         <PromptPreview episodeId={episode.id!} panelId={draft.id!} series={series} />
       </section>
+      <section className="card" style={{ marginTop: 12 }}>
+        <RecentTakes
+          episode={episode}
+          panelId={draft.id!}
+          onRender={renderOne}
+          busy={render.isPending}
+        />
+      </section>
+      <HistoryDialog
+        episodeId={episode.id!}
+        panel={draft}
+        open={history}
+        onOpenChange={setHistory}
+      />
     </div>
   );
 }
