@@ -26,6 +26,7 @@ from .hooks import HookBus
 from .jobs import JobEngine, ResourcePool
 from .pipeline import export as X
 from .pipeline import lettering as LT
+from .pipeline import providers as PV
 from .pipeline.cloud_jobs import CloudExecutor
 from .pipeline.qa import QAService
 from .pipeline.render import RenderService
@@ -110,6 +111,10 @@ class AppContext:
         return ctx
 
     # ------------------------------------------------------------- helpers
+    def image_backend(self, channel_id: str = ""):
+        kinds = {c.id: c.value for c in self.registry.all("cloud_adapter")}
+        return SET.image_backend(self.settings(), self.llm_factory, channel_id, kinds=kinds)
+
     def settings(self) -> SET.AppSettings:
         return SET.load(self.store)
 
@@ -133,7 +138,9 @@ class AppContext:
             "comfy.render": ComfyRenderExecutor(
                 self.assets, self.comfy_client_factory, on_result=self.render.apply_result
             ),
-            "cloud.render": CloudExecutor(self.assets, self.llm_factory, self.render),
+            "cloud.render": CloudExecutor(
+                self.assets, self.llm_factory, self.render, backend=self.image_backend
+            ),
             "qa.check": self.qa,
         }
         for kind, executor in executors.items():
@@ -174,6 +181,8 @@ class AppContext:
                 "album_template", tpl.id, tpl, source="user", title=tpl.title, replace=True
             )
         reg.register("exporter", "album", AR.render_album, title="画册（离线 HTML 模板）")
+        for kind, cls in PV.KINDS.items():
+            reg.register("cloud_adapter", kind, cls, title=cls.what)
         for name in LT.SFX_PRESETS:
             reg.register("sfx_preset", name, LT.preset_style(name), title=name)
         reg.register(

@@ -2456,6 +2456,12 @@ export interface components {
              * @description Scheduler affinity key; default = checkpoint
              */
             model_group?: string | null;
+            /**
+             * Cloud Channel
+             * @description Image channel for cloud steps; '' = the settings default
+             * @default
+             */
+            cloud_channel?: string;
             /** Created At */
             created_at?: string;
             /** Updated At */
@@ -2517,6 +2523,12 @@ export interface components {
              * @description Scheduler affinity key; default = checkpoint
              */
             model_group: string | null;
+            /**
+             * Cloud Channel
+             * @description Image channel for cloud steps; '' = the settings default
+             * @default
+             */
+            cloud_channel: string;
             /** Created At */
             created_at: string;
             /** Updated At */

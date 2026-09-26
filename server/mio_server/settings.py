@@ -12,6 +12,7 @@ from pydantic import Field
 
 from . import llm as L
 from .models import StrictModel, now_iso
+from .pipeline.providers import ImageChannel
 
 MASK = "••••••"
 PROTECTED = {"extensions", "api_tokens", "id", "name"}
@@ -50,6 +51,10 @@ class AppSettings(StrictModel):
     locale: str = "zh-CN"
     theme: str = Field(default="system", description="system, or a theme id")
     extensions: dict[str, ExtensionState] = Field(default_factory=dict)
+    image_channels: list[ImageChannel] = Field(
+        default_factory=list, description="Extra cloud image channels (NovelAI, OpenAI Images…)"
+    )
+    image_channel: str = Field(default="", description="Default channel id; '' = LLM proxy")
     updated_at: str = Field(default_factory=now_iso)
 
 
@@ -65,6 +70,8 @@ def load(store) -> AppSettings:
 def public(settings: AppSettings) -> dict:
     data = settings.model_dump()
     data["llm"]["api_key"] = MASK if settings.llm.api_key else ""
+    for channel in data["image_channels"]:
+        channel["api_key"] = MASK if channel["api_key"] else ""
     return data
 
 
@@ -79,6 +86,10 @@ def apply_patch(settings: AppSettings, patch: dict) -> AppSettings:
             data[key] = value
     if data["llm"].get("api_key") == MASK:
         data["llm"]["api_key"] = settings.llm.api_key
+    stored = {c.id: c.api_key for c in settings.image_channels}
+    for channel in data.get("image_channels") or []:
+        if isinstance(channel, dict) and channel.get("api_key") == MASK:
+            channel["api_key"] = stored.get(channel.get("id"), "")
     data["id"], data["name"] = "app", "settings"
     return AppSettings.model_validate(data)
 
@@ -100,6 +111,21 @@ class ConfiguredClient(L.Client):
 
     def generate_image(self, *args, models=None, **kw):
         return super().generate_image(*args, models=models or self.image_models, **kw)
+
+
+def image_backend(
+    settings: AppSettings, llm_factory, channel_id: str = "", transport=None, kinds=None
+):
+    """Image client for ``channel_id`` (or the default channel); raises LookupError if unknown."""
+    from .pipeline import providers as PV
+
+    channel_id = channel_id or settings.image_channel
+    if not channel_id:
+        return llm_factory()
+    channel = next((c for c in settings.image_channels if c.id == channel_id), None)
+    if channel is None:
+        raise LookupError(f"出图渠道不存在：{channel_id}")
+    return PV.build(channel, llm_factory, transport, kinds)
 
 
 def llm_factory(store) -> Callable[[], L.Client]:

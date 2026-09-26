@@ -14,14 +14,19 @@ from .cloud import CloudRenderer
 
 
 class CloudExecutor:
-    def __init__(self, assets, llm_factory, render_service):
+    def __init__(self, assets, llm_factory, render_service, backend=None):
         self.assets = assets
         self.llm_factory = llm_factory
         self.render = render_service
+        self.backend = backend  # callable(channel_id) -> image client; None = the LLM client
 
     def execute(self, ctx: ItemContext) -> dict:
         inp = ctx.input
-        renderer = CloudRenderer(self.llm_factory())
+        try:
+            client = self.backend(inp.get("channel") or "") if self.backend else self.llm_factory()
+        except LookupError as exc:
+            raise ExecError(str(exc), kind="bad_input", sent=False) from None
+        renderer = CloudRenderer(client)
         ctx.mark_sent()
         try:
             if inp["mode"] == "shape":

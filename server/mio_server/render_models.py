@@ -89,6 +89,9 @@ class RenderProfile(StrictModel):
     model_group: str | None = Field(
         default=None, description="Scheduler affinity key; default = checkpoint"
     )
+    cloud_channel: str = Field(
+        default="", description="Image channel for cloud steps; '' = the settings default"
+    )
     created_at: str = Field(default_factory=now_iso)
     updated_at: str = Field(default_factory=now_iso)
 
