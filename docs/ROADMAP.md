@@ -503,6 +503,7 @@ Job / Attempt：统一任务引擎（继承旧版的安全语义）
 | 新版上限反而更低 | §2 的三条原则加能力对照表作为验收；ComfyUI 不做减法 |
 | 本地显存门槛高（8 GB） | 草稿档 / 成品档分离；在「不下载新模型」前提下，8 GB 档默认先用已装 SDXL / Illustrious / NoobAI + LoRA；需要参考图强一致性时走 `max` 定形、本地 tile 统一画风；以后若解除下载限制，再评估 FLUX.2 Klein 4B |
 | ComfyUI / Portal 经公网隧道暴露 | 没有鉴权时，任何人都能提交任务、查看出图历史（`/history`、`/view`）、上传文件，还可能通过 ComfyUI-Manager 安装节点，相当于远程执行代码。**只在联调时开隧道，用完即关**；长期使用请加 Cloudflare Access 或带令牌的反向代理，并调高 Manager 的安全等级。有了 Portal 之后，ComfyUI 不再需要公网隧道。Portal 端点等于远程 Shell，令牌等同密码：不用时停止 Portal，并定期更换令牌 |
+| 本地界面的 `/api` 不需要登录 | 任何网页都能向 127.0.0.1 发「简单请求」（不触发预检）、打开任务 WebSocket，或把自己的域名重绑定到 127.0.0.1 冒充同源，进而安装并启用扩展（等于执行代码）、登记 Webhook / ComfyUI 实例外传数据、提交付费出图。服务端由 `api/guard.py` 兜底：Host 只认 localhost、IP 和 `MIO_ALLOWED_HOSTS`，写请求与 WebSocket 握手必须同源；`/api/v2` 走令牌，不受影响。**不要把 8788 端口直接暴露到公网**；需要远程访问时用带鉴权的反向代理，并把它的主机名加入 `MIO_ALLOWED_HOSTS` |
 | 扩展系统被误认为降级 | 采用 §2.4 的注册表机制：内置功能也注册成扩展，并保留 `ctx.internal` 逃生口 |
 | VLM 质检不稳定 | 结构化清单、多次投票，最终由人拍板 |
 | 沙盒无法真实出图 | 沙盒里只跑模拟和单测；真实基准在本地跑，回传 `metrics.json` |
