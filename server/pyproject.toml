@@ -1,0 +1,13 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+# Ported verbatim from legacy/backend/ecosystem; kept diff-able against the original.
+extend-exclude = [
+    "mio_server/comfy/workflow_slots.py",
+    "tests/test_workflow_slots.py",
+    "tests/test_workflow_slots_v3.py",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501", "E741"]

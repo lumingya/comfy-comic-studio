@@ -1,4 +1,5 @@
 import unittest
+
 from pydantic import ValidationError
 
 from mio_server.models import Character, Dialogue, Episode, Panel, PanelCharacter, Series
@@ -13,7 +14,9 @@ class DomainModelTests(unittest.TestCase):
             Series(title="x", books=[])
 
     def test_character_is_adult_and_has_identity_checklist(self):
-        character = Character(name="苏晚", age=24, appearance=["short black hair"], signature=["red scarf"])
+        character = Character(
+            name="苏晚", age=24, appearance=["short black hair"], signature=["red scarf"]
+        )
         self.assertIn("red scarf", character.signature)
         with self.assertRaises(ValidationError):
             Character(name="未成年", age=17)

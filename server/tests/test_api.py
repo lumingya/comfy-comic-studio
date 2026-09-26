@@ -19,14 +19,21 @@ class ApiTests(unittest.TestCase):
         series = response.json()
         self.assertTrue(series["id"].startswith("series_"))
 
-        response = self.client.post(f"/api/series/{series['id']}/episodes", json={"title": "第一话", "order": 0})
+        response = self.client.post(
+            f"/api/series/{series['id']}/episodes", json={"title": "第一话", "order": 0}
+        )
         self.assertEqual(response.status_code, 201, response.text)
         self.assertEqual(response.json()["series_id"], series["id"])
         self.assertEqual(len(self.client.get(f"/api/series/{series['id']}/episodes").json()), 1)
 
     def test_not_found(self):
         self.assertEqual(self.client.get("/api/series/nope").status_code, 404)
-        self.assertEqual(self.client.post("/api/series/nope/episodes", json={"title": "x", "order": 0}).status_code, 404)
+        self.assertEqual(
+            self.client.post(
+                "/api/series/nope/episodes", json={"title": "x", "order": 0}
+            ).status_code,
+            404,
+        )
 
 
 if __name__ == "__main__":

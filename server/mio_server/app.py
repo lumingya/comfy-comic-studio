@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+
 from fastapi import Depends, FastAPI, HTTPException, status
 
 from .models import Episode, EpisodeCreate, Series, SeriesCreate
@@ -52,10 +53,18 @@ def create_app(store: SQLiteStore | None = None) -> FastAPI:
         except NotFound as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
-    @app.post("/api/series/{series_id}/episodes", response_model=Episode, status_code=status.HTTP_201_CREATED)
-    def create_episode(series_id: str, payload: EpisodeCreate, store: SQLiteStore = Depends(get_store)) -> Episode:
+    @app.post(
+        "/api/series/{series_id}/episodes",
+        response_model=Episode,
+        status_code=status.HTTP_201_CREATED,
+    )
+    def create_episode(
+        series_id: str, payload: EpisodeCreate, store: SQLiteStore = Depends(get_store)
+    ) -> Episode:
         try:
-            return store.create_episode(Episode(series_id=series_id, title=payload.title, order=payload.order))
+            return store.create_episode(
+                Episode(series_id=series_id, title=payload.title, order=payload.order)
+            )
         except NotFound as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
