@@ -346,7 +346,7 @@ Job / Attempt：统一任务引擎（继承旧版的安全语义）
 
 ## 7. 分阶段路线图
 
-### Phase 0 · 止血（1–2 天）
+### Phase 0 · 止血（1–2 天）✅ 已完成（2026-09-26）
 
 - [x] 当前 main 打标签 `legacy-v3.2` 并推送。标签指向 `bd693b2`，代码与 `79ea9c0` 相同。
 - [x] 删除调试遗留：`jam_events.json`、`stream_generate_resp.txt`、`parse_stream.py`、`check_err.py`、`dump_blocks.py`。历史清理（`git filter-repo` 加强推）需要你决定，暂未执行。
@@ -362,8 +362,13 @@ Job / Attempt：统一任务引擎（继承旧版的安全语义）
   - 新增 `tools/protect_local_data.py`：在本机把 59 个随包数据文件标为 skip-worktree，`git add -A` 不会再带上个人状态。
   - CI 每次推送运行 `check_distribution`，误提交会立刻变红。
   - 彻底分离（用户数据放在仓库外）留给 v3 数据设计完成；旧版也可以用 `MIO_DATA_DIR` 手动分离。
-- [ ] 查明 Windows 上 Python 测试慢约 12 倍的原因：本机 575 秒，沙盒 47 秒。
-- **完成标准**：main 的 CI 显示绿色；新代理读 README、AGENTS.md、ROADMAP.md 即可上手。
+- [x] 查明 Windows 上 Python 测试慢的原因，与 Windows 本身关系不大：
+  - 3 个测试模块的每个用例都整目录复制 `data/`，把开发者本机约 4000 个个人文件带了进来（仅 `production/` 就有 3023 个）；
+  - 泄漏的调度线程在空转。
+  
+  修复：夹具只复制随包数据（`46bd144`），并修复线程泄漏（`f260062`）。本机全量从 575 秒（4 项失败）降到 281 秒，674 项全部通过。
+- [ ] 后续（不阻塞）：`start.bat` 内置了公开的默认 `MIO_API_TOKEN`。服务默认只监听 `127.0.0.1`，CORS 也只放行本地来源，所以风险限于本机其他程序，或设置 `MIO_HOST=0.0.0.0` 暴露到局域网的情况。建议首次启动时随机生成令牌。
+- **完成标准**：main 的 CI 显示绿色；新代理读 README、AGENTS.md、ROADMAP.md 即可上手。✅ 已达成。
 
 ### Phase 0.5 · 技术验证 Spike（约 1 周，独立目录 `next/`）— **决定是否全面重写的闸门**
 
