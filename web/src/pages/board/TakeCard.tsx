@@ -44,11 +44,12 @@ export function TakeCard(props: {
         ) : (
           <>
             <button
-              className={`btn sm ${take.status === 'adopted' ? 'primary' : ''}`}
+              className={`btn sm ${take.status === 'adopted' ? 'is-adopted' : ''}`}
               onClick={props.onAdopt}
               disabled={take.status === 'adopted'}
             >
-              <Check size={13} /> {t('board.adopt')}
+              <Check size={13} />{' '}
+              {take.status === 'adopted' ? t('board.adoptedShort') : t('board.adopt')}
             </button>
             <button
               className="btn ghost icon sm"

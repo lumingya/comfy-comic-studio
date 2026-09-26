@@ -380,3 +380,23 @@ tr.item-uncertain td {
     max-height: none;
   }
 }
+
+.board-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.board-summary .progress {
+  width: 90px;
+}
+
+.take .btn.is-adopted:disabled {
+  opacity: 1;
+  cursor: default;
+  background: var(--tint);
+  border-color: transparent;
+  color: var(--accent);
+  font-weight: 600;
+}

@@ -1,7 +1,9 @@
+import { ListTodo } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useJobs } from '../../api/jobs';
 import { QueryError } from '../../app/errors';
+import { usePageTitle } from '../../app/title';
 import { Empty, Loading, Switch } from '../../components/ui';
 import { JobDetail } from './JobDetail';
 
@@ -29,13 +31,14 @@ export default function JobsPage() {
     setParams(next, { replace: true });
   };
 
+  usePageTitle(t('jobs.heading'));
+
   return (
-    <div className="page wide">
+    <div className="page">
       <header className="page-head">
         <div>
-          <div className="overline">{t('nav.jobs')}</div>
           <h1>{t('jobs.heading')}</h1>
-          <p className="muted">{t('jobs.sub')}</p>
+          <p>{t('jobs.sub')}</p>
         </div>
         <Switch
           checked={activeOnly}
@@ -45,7 +48,9 @@ export default function JobsPage() {
       </header>
       {jobs.error ? <QueryError error={jobs.error} /> : null}
       {jobs.isLoading ? <Loading /> : null}
-      {jobs.data && !jobs.data.length ? <Empty>{t('jobs.none')}</Empty> : null}
+      {jobs.data && !jobs.data.length ? (
+        <Empty icon={<ListTodo size={24} />} title={t('jobs.none')} />
+      ) : null}
       {jobs.data?.length ? (
         <div className="split">
           <nav className="split-rail">

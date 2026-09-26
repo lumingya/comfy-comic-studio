@@ -1,12 +1,12 @@
-import { ChevronLeft } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { BookText, ChevronRight, Layers, ListOrdered } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Link, NavLink, Outlet, useOutletContext, useParams } from 'react-router-dom';
+import { Link, NavLink, Outlet, useLocation, useOutletContext, useParams } from 'react-router-dom';
 import { usePatchSeries, useSeries } from '../../api/series';
 import type { Series } from '../../api/types';
 import { QueryError } from '../../app/errors';
+import { usePageTitle } from '../../app/title';
 import { toastError } from '../../components/toast';
-import { Loading, Select } from '../../components/ui';
+import { InlineTitle, Loading, Select } from '../../components/ui';
 
 export function useSeriesContext() {
   return useOutletContext<{ series: Series }>();
@@ -19,9 +19,10 @@ export default function SeriesPage() {
   const { seriesId } = useParams();
   const query = useSeries(seriesId);
   const patch = usePatchSeries(seriesId ?? '');
-  const [title, setTitle] = useState('');
-
-  useEffect(() => setTitle(query.data?.title ?? ''), [query.data?.title]);
+  const section = useLocation().pathname.split('/').pop();
+  const sectionTitle =
+    section === 'bible' || section === 'variants' ? t(`series.${section}`) : t('series.episodes');
+  usePageTitle(query.data?.title, sectionTitle);
 
   if (query.isLoading) return <Loading />;
   if (query.error || !query.data)
@@ -32,28 +33,33 @@ export default function SeriesPage() {
     );
   const series = query.data;
   const tab = ({ isActive }: { isActive: boolean }) => `tab ${isActive ? 'active' : ''}`;
-  const saveTitle = () => {
-    if (title.trim() && title !== series.title) patch.mutate({ title }, { onError: toastError });
-  };
 
   return (
     <div className="page">
-      <Link to="/" className="back-link">
-        <ChevronLeft size={14} /> {t('nav.works')}
-      </Link>
+      <nav className="crumbs" aria-label={t('nav.breadcrumbs')}>
+        <Link to="/">{t('nav.works')}</Link>
+        <ChevronRight size={13} />
+        <span>{series.title}</span>
+      </nav>
       <header className="page-head" style={{ marginBottom: 18 }}>
-        <div className="grow">
-          <input
-            className="input title"
-            value={title}
-            aria-label={t('common.title')}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={saveTitle}
-            onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+        <div>
+          <InlineTitle
+            value={series.title}
+            label={t('common.title')}
+            onSave={(title) => patch.mutate({ title }, { onError: toastError })}
+          />
+          <InlineTitle
+            className="input bare page-subtitle"
+            value={series.subtitle ?? ''}
+            label={t('works.subtitle')}
+            placeholder={t('works.subtitlePlaceholder')}
+            allowEmpty
+            onSave={(subtitle) => patch.mutate({ subtitle }, { onError: toastError })}
           />
         </div>
         <Select
           style={{ width: 130 }}
+          aria-label={t('series.statusLabel')}
           value={series.status ?? 'draft'}
           onChange={(status) => patch.mutate({ status }, { onError: toastError })}
           options={STATUSES.map((s) => ({ value: s, label: t(`series.status.${s}`) }))}
@@ -61,13 +67,13 @@ export default function SeriesPage() {
       </header>
       <nav className="tabs-list">
         <NavLink to="episodes" className={tab}>
-          {t('series.episodes')}
+          <ListOrdered size={14} /> {t('series.episodes')}
         </NavLink>
         <NavLink to="bible" className={tab}>
-          {t('series.bible')}
+          <BookText size={14} /> {t('series.bible')}
         </NavLink>
         <NavLink to="variants" className={tab}>
-          {t('series.variants')}
+          <Layers size={14} /> {t('series.variants')}
         </NavLink>
       </nav>
       <Outlet context={{ series }} />

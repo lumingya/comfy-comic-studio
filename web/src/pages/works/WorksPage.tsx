@@ -1,38 +1,54 @@
-import { Archive, Download, FolderInput, Plus, Trash2 } from 'lucide-react';
+import { Archive, BookOpen, Download, FolderInput, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
-import { download } from '../../api/client';
+import { assetUrl, download } from '../../api/client';
 import { useCreateSeries, useSeriesList, useTrashSeries } from '../../api/series';
 import { useImportBundle } from '../../api/system';
-import type { Series } from '../../api/types';
+import type { SeriesCard } from '../../api/types';
 import { QueryError } from '../../app/errors';
+import { relativeTime } from '../../app/format';
+import { usePageTitle } from '../../app/title';
+import { Avatar } from '../../components/avatar';
 import { toast, toastError } from '../../components/toast';
-import { ActionMenu, Empty, Field, FilePick, Loading, Modal, TextInput } from '../../components/ui';
+import { useUndoTrash } from '../../components/undo';
+import { ActionMenu, Empty, Field, FilePick, Modal, TextInput } from '../../components/ui';
 import { LegacyImportDialog } from './LegacyImportDialog';
 
-function SeriesCard({ series, index }: { series: Series; index: number }) {
-  const { t } = useTranslation();
+function SeriesCardView({ series }: { series: SeriesCard }) {
+  const { t, i18n } = useTranslation();
   const trash = useTrashSeries();
+  const undo = useUndoTrash();
   const cast = series.bible?.characters ?? [];
+  const status = series.status ?? 'draft';
   return (
     <article className="work-card">
-      <Link to={`/series/${series.id}`} className="work-cover">
-        <span className="work-index mono">{String(index + 1).padStart(2, '0')}</span>
-        <h3>{series.title}</h3>
-        {series.subtitle ? <p>{series.subtitle}</p> : null}
-        <div className="work-cast">
-          {cast.slice(0, 4).map((c) => (
-            <span key={c.id} className="work-avatar" title={c.name}>
-              {c.name.slice(0, 1)}
-            </span>
-          ))}
-        </div>
+      <Link to={`/series/${series.id}`} className="work-cover" tabIndex={-1} aria-hidden>
+        {series.cover_asset_id ? (
+          <img src={assetUrl(series.cover_asset_id, 640)} alt="" loading="lazy" />
+        ) : (
+          <span className="work-cover-mark">{series.title.slice(0, 1)}</span>
+        )}
+        <span className={`chip work-status status-${status}`}>{t(`series.status.${status}`)}</span>
       </Link>
-      <footer className="row small">
-        <span className="chip">{t(`series.status.${series.status ?? 'draft'}`)}</span>
-        <span className="muted">{t('works.characters', { count: cast.length })}</span>
-        <span className="grow" />
+      <div className="work-body">
+        <Link to={`/series/${series.id}`} className="work-title">
+          <h3>{series.title}</h3>
+        </Link>
+        {series.subtitle ? <p className="work-sub">{series.subtitle}</p> : null}
+        <div className="work-meta">
+          <span>{t('works.episodes', { count: series.episode_count ?? 0 })}</span>
+          <span>{t('works.characters', { count: cast.length })}</span>
+          <span title={series.updated_at}>{relativeTime(series.updated_at, i18n.language)}</span>
+        </div>
+      </div>
+      <footer className="work-foot">
+        <div className="work-cast">
+          {cast.slice(0, 5).map((c) => (
+            <Avatar key={c.id} character={c} size={26} />
+          ))}
+          {cast.length > 5 ? <span className="avatar more">+{cast.length - 5}</span> : null}
+        </div>
         <ActionMenu
           actions={[
             {
@@ -47,12 +63,32 @@ function SeriesCard({ series, index }: { series: Series; index: number }) {
               label: t('common.delete'),
               icon: <Trash2 size={14} />,
               danger: true,
-              onSelect: () => trash.mutate(series.id, { onError: toastError }),
+              onSelect: () =>
+                trash.mutate(series.id!, {
+                  onSuccess: () => undo('series', series.id!, series.title),
+                  onError: toastError,
+                }),
             },
           ]}
         />
       </footer>
     </article>
+  );
+}
+
+function SkeletonGrid() {
+  return (
+    <div className="work-grid" aria-hidden>
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="work-card">
+          <div className="work-cover skeleton" style={{ borderRadius: 0 }} />
+          <div className="work-body">
+            <div className="skeleton" style={{ height: 18, width: '60%' }} />
+            <div className="skeleton" style={{ height: 12, width: '40%', marginTop: 10 }} />
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -122,6 +158,7 @@ export default function WorksPage() {
   const importBundle = useImportBundle();
   const [creating, setCreating] = useState(false);
   const [legacy, setLegacy] = useState(false);
+  usePageTitle(t('works.heading'));
 
   const onBundle = (file: File) =>
     importBundle.mutate(file, {
@@ -135,40 +172,58 @@ export default function WorksPage() {
   return (
     <div className="page">
       <header className="page-head">
-        <div className="grow">
-          <div className="overline">Mio Studio</div>
+        <div>
           <h1>{t('works.heading')}</h1>
           <p>{t('works.sub')}</p>
         </div>
-        <button className="btn ghost" onClick={() => setLegacy(true)}>
-          <Archive size={15} /> {t('works.importLegacy')}
-        </button>
-        <FilePick accept=".zip,application/zip" onFile={onBundle} disabled={importBundle.isPending}>
-          <FolderInput size={15} /> {t('works.importBundle')}
-        </FilePick>
-        <button className="btn primary" onClick={() => setCreating(true)}>
-          <Plus size={15} /> {t('works.newSeries')}
-        </button>
+        <div className="page-actions">
+          <button className="btn ghost" onClick={() => setLegacy(true)}>
+            <Archive size={15} /> {t('works.importLegacy')}
+          </button>
+          <FilePick
+            accept=".zip,application/zip"
+            onFile={onBundle}
+            disabled={importBundle.isPending}
+          >
+            <FolderInput size={15} /> {t('works.importBundle')}
+          </FilePick>
+          <button className="btn primary" onClick={() => setCreating(true)}>
+            <Plus size={15} /> {t('works.newSeries')}
+          </button>
+        </div>
       </header>
 
-      {list.isLoading ? <Loading /> : null}
+      {list.isLoading ? <SkeletonGrid /> : null}
       {list.error ? <QueryError error={list.error} /> : null}
       {list.data && !list.data.length ? (
         <Empty
+          icon={<BookOpen size={24} />}
+          title={t('works.emptyTitle')}
           action={
-            <button className="btn primary" onClick={() => setCreating(true)}>
-              <Plus size={15} /> {t('works.newSeries')}
-            </button>
+            <>
+              <button className="btn primary" onClick={() => setCreating(true)}>
+                <Plus size={15} /> {t('works.newSeries')}
+              </button>
+              <FilePick accept=".zip,application/zip" onFile={onBundle}>
+                <FolderInput size={15} /> {t('works.importBundle')}
+              </FilePick>
+            </>
           }
         >
           {t('works.empty')}
         </Empty>
       ) : null}
-      <div className="work-grid">
-        {list.data?.map((s, i) => (
-          <SeriesCard key={s.id} series={s} index={i} />
-        ))}
-      </div>
+      {list.data?.length ? (
+        <div className="work-grid">
+          {list.data.map((s) => (
+            <SeriesCardView key={s.id} series={s} />
+          ))}
+          <button className="work-card work-new" onClick={() => setCreating(true)}>
+            <Plus size={22} />
+            <span>{t('works.newSeries')}</span>
+          </button>
+        </div>
+      ) : null}
 
       <NewSeriesDialog open={creating} onOpenChange={setCreating} />
       <LegacyImportDialog open={legacy} onOpenChange={setLegacy} />
