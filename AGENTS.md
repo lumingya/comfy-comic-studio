@@ -5,20 +5,17 @@
 ## 项目现状
 
 - **产品**：Mio · 绘页，本地优先的「从一个故事到一部作品」工作室。
-- **当前代码**（3.2.0-dev.1）是**旧架构**，功能开发已冻结。
+- **新版**在 `server/`（FastAPI）与 `web/`（React）；**旧版**（3.2.0-dev.1）已移到 `legacy/`，功能冻结，只作参考。
 - **方向**：按[路线图](docs/ROADMAP.md)转向「条漫 + 本地 ComfyUI + React」新架构。顺序是 Phase 0 止血 → Phase 0.5 技术验证（Spike）→ Phase 1 起重建。
-- **旧版快照**：Git 标签 `legacy-v3.2`。
+- **旧版快照**：Git 标签 `legacy-v3.2`。`legacy/` 按路线图会在 Phase 2 完成标准里删除（需用户确认）。
 
 ## 目录速览
 
 | 路径 | 内容 |
 |---|---|
-| `server.py`、`backend/` | Python 标准库 HTTP 服务（:8777）、任务系统（`mio_job_store.py`、`mio_frame_jobs.py`、`production/`）、出图渠道（`providers/`）、工作流槽位（`ecosystem/workflow_slots.py`）、开放 API（`api_v1/`） |
-| `js/`、`index.html`、`styles.css` | 旧前端：全局脚本，由 `js/build.js` 汇编，产物随仓库提交 |
-| `data/` | 随包默认数据（清单见 `data/distribution.json`）和运行时用户数据（大多被 `.gitignore` 忽略） |
-| `tests/` | `test_*.py` 是 unittest；`*.mjs` 是 Playwright 浏览器 E2E，较重，只在手动时运行 |
-| `tools/` | 打包、随包清单、文档生成、开发辅助脚本 |
-| `docs/` | 文档；`docs/archive/` 存放不再维护的历史文档 |
+| `legacy/` | 旧版（冻结）：`server.py`、`backend/`（标准库 HTTP 服务 :8777、任务系统、出图渠道、开放 API）、`js/`（全局脚本，由 `js/build.js` 汇编，产物随仓库提交）、`tests/`（`test_*.py` 为 unittest，`*.mjs` 为 Playwright E2E）、`tools/`（打包、随包清单、文档生成）、`docs/`（旧版文档，`docs/archive/` 为历史文档）。旧版经 `backend/mio_paths.py` 使用上一级的 `data/` |
+| `data/` | 随包默认数据（清单见 `data/distribution.json`）和旧版运行时用户数据（大多被 `.gitignore` 忽略）。**留在根目录**：新版「导入旧数据」也从这里读 |
+| `docs/` | 路线图 `ROADMAP.md` |
 | `next/` | Phase 0.5 技术验证（Spike），独立于旧版，只用标准库；说明见 [next/README.md](next/README.md) |
 | `server/` | 新后端：FastAPI + Pydantic + SQLite。领域模型、导入器、任务引擎、ComfyUI 模块、出图管线、HTTP API v1；`python -m mio_server` 启动，存在 `web/dist` 时一并托管界面 |
 | `web/` | 新前端：Vite + React + TypeScript（TanStack Query、Zustand、i18next、Radix、react-konva、dnd-kit）。API 类型由 `npm --prefix web run gen:api` 从 OpenAPI 生成到 `web/src/api/schema.d.ts`，改了接口要重新生成并提交 |
@@ -26,17 +23,21 @@
 ## 验证命令（提交前必跑，都很轻）
 
 ```bash
+python -m unittest discover -s server/tests -t server -q   # 新后端单测，约 20 秒
+ruff check server && ruff format --check server            # 新后端 lint（行宽 100）
+python -m unittest discover -s next/tests -t next -q       # Spike（next/）单测，约 5 秒
+python legacy/tools/check_distribution.py                  # 随包数据与清单一致（以 CI 的干净检出为准）
+
+# 旧版：在 legacy/ 目录下运行
+cd legacy
 node js/build.js dev                      # 汇编前端；产物已提交，跑完不应产生 git diff
 node js/tests.js                          # 前端契约测试，约 1 秒
 python -m unittest discover -s tests -q   # Python 单元测试，Linux 约 1 分钟
-python -m unittest discover -s next/tests -t next -q   # Spike（next/）单测，约 5 秒
-python -m unittest discover -s server/tests -t server -q   # 新后端单测，约 1 秒
-python tools/check_distribution.py        # 随包数据与清单一致（以 CI 的干净检出为准）
 python tools/package_project.py --output releases   # 打包冒烟（可选）
 ```
 
 - CI（`.github/workflows/ci.yml`）每次推送都跑同一组门禁，**必须保持绿色**。
-- 浏览器 E2E（`npm run test:current`）只在手动触发的 `e2e.yml` 或本机按需运行。**沙盒里禁止安装浏览器或跑 E2E**。
+- 旧版浏览器 E2E（在 `legacy/` 下 `npm run test:current`）只在手动触发的 `e2e.yml` 或本机按需运行。**沙盒里禁止安装浏览器或跑 E2E**。这些套件从程序目录复制 `data/`，本机运行前先建链接：Windows 在仓库根目录 `mklink /J legacy\data data`，Linux / macOS `ln -s ../data legacy/data`（已被忽略）。
 - 新栈前端在 `web/` 下（先 `npm ci --prefix web`）：
 
   ```bash
@@ -59,16 +60,16 @@ python tools/package_project.py --output releases   # 打包冒烟（可选）
 
 ## 数据与隐私（重要）
 
-- **随包文件会被运行时改写**：App 会把状态写回 `data/` 下的随包文件，例如 `data/settings/workspace.json`、内置工作流。本机开发前先运行一次 `python tools/protect_local_data.py`（标记为 skip-worktree），避免个人状态被提交。
+- **随包文件会被运行时改写**：App 会把状态写回 `data/` 下的随包文件，例如 `data/settings/workspace.json`、内置工作流。本机开发前先运行一次 `python legacy/tools/protect_local_data.py`（标记为 skip-worktree），避免个人状态被提交。
 - **有意修改随包默认值时**：
   1. `--undo`
   2. 修改文件
-  3. `python tools/build_distribution.py`
+  3. `python legacy/tools/build_distribution.py`
   4. 提交
   5. 重新保护
 - **彻底分离**：也可以用环境变量 `MIO_DATA_DIR` 把运行时数据放到仓库外。
-- **测试夹具**只能复制随包数据（`tests/data_support.py` 里的 `copy_shipped_data`），不要整目录复制 `data/`。
-- **全局执行队列**：`mio_foundation.jobs()` 会启动后台调度线程。测试结束、删除临时目录之前，先调用 `mio_foundation.close_jobs(root)`。
+- **测试夹具**只能复制随包数据（旧版 `legacy/tests/data_support.py` 的 `copy_shipped_data`，新版 `server/tests/legacy_fixture.py` 的 `copy_shipped_legacy`），不要整目录复制 `data/`。
+- **全局执行队列**（旧版）：`mio_foundation.jobs()` 会启动后台调度线程。测试结束、删除临时目录之前，先调用 `mio_foundation.close_jobs(root)`。
 - **绝不提交**密钥、令牌、Cookie、会话抓包，也不要在对话或日志里回显它们。
 
 ## 冻结区

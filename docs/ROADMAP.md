@@ -397,9 +397,9 @@ Job / Attempt：统一任务引擎（继承旧版的安全语义）
 
 ### Phase 1 · 地基（1–2 周）
 
-- [ ] 旧代码移到 `legacy/` 作为只读参考。建立 `server/`（FastAPI）和 `web/`（Vite + React + TS）。
+- [x] 旧代码移到 `legacy/` 作为只读参考。建立 `server/`（FastAPI）和 `web/`（Vite + React + TS）。
   - **进展（2026-09-26）**：已先建立新栈骨架，旧版暂未搬迁：`server/mio_server/`（FastAPI 入口、健康检查、Series / Episode API）、`web/`（Vite + React + TypeScript 入口页）。
-  - **进展（2026-09-26）**：`server/` 与 `web/` 都已是完整实现（见下方各项与 Phase 2）。旧版搬迁到 `legacy/` 会改动启动器、打包与 CI 路径，留到 Phase 2 完成标准里「删除 `legacy/`」时一起做。
+  - **进展（2026-09-26）**：`server/` 与 `web/` 都已是完整实现（见下方各项与 Phase 2）。旧版已整体移入 `legacy/`（代码、测试、工具、旧版文档、启动器），内部相对路径不变，旧版测试、打包与启动器照常可用。`data/` 留在根目录：个人工作区不动，新版「导入旧数据」也从这里读；旧版经 `legacy/backend/mio_paths.py` 找到它，发布包布局不变。CI 的旧版步骤改在 `legacy/` 下运行；新版测试夹具不再依赖 `legacy/`，为之后删除做好准备。
 - [x] 领域模型 v3：SQLite schema、Pydantic 模型、单测。一次性导入器（分镜、预设、工作流）。
   - **进展（2026-09-26）**：已完成第一版 Pydantic 领域模型与 SQLite JSON 文档库：Series、Bible、Character、Location、Prop、Style、Episode、Panel、Take、Strip、Lettering；已有模型 / 存储 / API 单测。
   - **进展（2026-09-26）**：模型补齐批量变体、`{变量}`、每格覆盖（原始提示词 / 追加 / 节点覆盖 / 出图配置）、候选修图历史、质检结果；存储升到 schema v2（工作流、出图配置、ComfyUI 实例等文档表，素材按 sha256 去重存储）。导入器尚未开始。
@@ -421,7 +421,7 @@ Job / Attempt：统一任务引擎（继承旧版的安全语义）
 - [x] 结构化剧本助手：可审阅 diff。批量变体。`.mio.zip`。回收站。
   - **进展（2026-09-26）**：后端完成并有单测：剧本助手按「规范化剧本视图」出逐条 diff（增删改格、角色、地点、重排），锁定格不动，按 `base_revision` 防并发覆盖，只应用勾选的条目；`.mio.zip` 导出 / 导入（sha256 校验、路径安全、防解压炸弹、永不覆盖，id 冲突自动换新 id）；回收站（作品 / 集软删除、恢复、彻底删除、按保留天数过期）；批量变体随出图接口提交。界面待接入。
 - **完成标准**：§2.2 中 P2 项通过；效果基准不低于 Spike；删除 `legacy/`，只保留标签。
-  - 未完成：效果基准需在本机用真实 ComfyUI 与 LLM 复测；删除 `legacy/` 需要你确认后再做。
+  - 未完成：效果基准需在本机用真实 ComfyUI 复测；删除 `legacy/` 需要你确认后再做（新版已不依赖其中任何文件，`data/` 在根目录不受影响）。
 
 ### Phase 3 · 一致性与质检（约 2 周）
 
