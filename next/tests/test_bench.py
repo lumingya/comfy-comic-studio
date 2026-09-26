@@ -94,8 +94,8 @@ class BenchTests(unittest.TestCase):
             self.assertEqual(hybrid["consistency"]["appearances"], 2)  # p04: lin + zhou
             self.assertEqual(hybrid["consistency"]["pass_rate"], 1.0)
             self.assertEqual(hybrid["timing"]["per_panel"]["n"], 2)
-            self.assertIn("max", proxy.models)                  # two references -> multi-reference model
-            self.assertIn("gpt-image-2.5-flare", proxy.models)  # sheets and the empty shot
+            self.assertIn("max", proxy.models)                  # all cloud image requests use the chosen model
+            self.assertNotIn("gpt-image-2.5-flare", proxy.models)
             submitted = comfy.submitted[-1]["prompt"]
             self.assertEqual(submitted["1"]["inputs"]["ckpt_name"], "x.safetensors")
             self.assertTrue(submitted["10"]["inputs"]["image"].startswith("mio/"))

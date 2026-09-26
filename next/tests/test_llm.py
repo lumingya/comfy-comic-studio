@@ -136,6 +136,17 @@ class ClientTests(unittest.TestCase):
         sent = self.server.requests[-1]["messages"][0]["content"]
         self.assertEqual(sum(1 for part in sent if part.get("type") == "image_url"), 2)
 
+    def test_image_prompts_get_punctuation_nonce(self):
+        self.client.generate_image("repeat", models=("img",))
+        self.client.generate_image("repeat", models=("img",))
+        prompts = [r["messages"][0]["content"] for r in self.server.requests[-2:]]
+        self.assertNotEqual(prompts[0], prompts[1])
+        self.assertTrue(all(p.startswith("repeat") for p in prompts))
+        self.client.generate_image("repeat", refs=[PNG], models=("max",))
+        content = self.server.requests[-1]["messages"][0]["content"]
+        self.assertTrue(content[0]["text"].startswith("repeat"))
+        self.assertNotEqual(content[0]["text"], "repeat")
+
     def test_cloud_panel_falls_back_to_a_lineup_reference(self):
         from mio_next import render, script
         from tests.story_fixture import make_story
