@@ -398,7 +398,9 @@ Job / Attempt：统一任务引擎（继承旧版的安全语义）
 ### Phase 1 · 地基（1–2 周）
 
 - [ ] 旧代码移到 `legacy/` 作为只读参考。建立 `server/`（FastAPI）和 `web/`（Vite + React + TS）。
+  - **进展（2026-09-26）**：已先建立新栈骨架，旧版暂未搬迁：`server/mio_server/`（FastAPI 入口、健康检查、Series / Episode API）、`web/`（Vite + React + TypeScript 入口页）。
 - [ ] 领域模型 v3：SQLite schema、Pydantic 模型、单测。一次性导入器（分镜、预设、工作流）。
+  - **进展（2026-09-26）**：已完成第一版 Pydantic 领域模型与 SQLite JSON 文档库：Series、Bible、Character、Location、Prop、Style、Episode、Panel、Take、Strip、Lettering；已有模型 / 存储 / API 单测。导入器尚未开始。
 - [ ] 统一任务引擎：移植旧版的安全语义与测试用例；实现多实例池。
 - [ ] ComfyUI 模块：把 Spike 的代码转正，再移植 `workflow_slots.py`。
 - **完成标准**：§2.2 中标为 P1 的项全部通过；黄金故事能通过 API 出图。

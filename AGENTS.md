@@ -20,6 +20,8 @@
 | `tools/` | 打包、随包清单、文档生成、开发辅助脚本 |
 | `docs/` | 文档；`docs/archive/` 存放不再维护的历史文档 |
 | `next/` | Phase 0.5 技术验证（Spike），独立于旧版，只用标准库；说明见 [next/README.md](next/README.md) |
+| `server/` | Phase 1 新后端：FastAPI + Pydantic + SQLite。当前已有 `mio_server` 包、Series / Episode API、模型 / 存储 / API 单测 |
+| `web/` | Phase 1 新前端：Vite + React + TypeScript 入口骨架，后续接设定集、剧本、出图板和条漫画布 |
 
 ## 验证命令（提交前必跑，都很轻）
 
@@ -28,13 +30,14 @@ node js/build.js dev                      # 汇编前端；产物已提交，跑
 node js/tests.js                          # 前端契约测试，约 1 秒
 python -m unittest discover -s tests -q   # Python 单元测试，Linux 约 1 分钟
 python -m unittest discover -s next/tests -t next -q   # Spike（next/）单测，约 5 秒
+python -m unittest discover -s server/tests -t server -q   # 新后端单测，约 1 秒
 python tools/check_distribution.py        # 随包数据与清单一致（以 CI 的干净检出为准）
 python tools/package_project.py --output releases   # 打包冒烟（可选）
 ```
 
 - CI（`.github/workflows/ci.yml`）每次推送都跑同一组门禁，**必须保持绿色**。
 - 浏览器 E2E（`npm run test:current`）只在手动触发的 `e2e.yml` 或本机按需运行。**沙盒里禁止安装浏览器或跑 E2E**。
-- 新栈（Phase 1 起）的轻量验证命令以路线图 §9 为准，确认后补进这里。
+- 新栈前端在 `web/` 下：依赖安装后使用 `npm --prefix web run typecheck`、`npm --prefix web run test`、`npm --prefix web run build`。
 
 ## 提交规范
 
