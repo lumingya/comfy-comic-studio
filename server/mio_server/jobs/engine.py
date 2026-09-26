@@ -248,7 +248,25 @@ class JobEngine(EngineRuntime):
         sql += " ORDER BY created DESC LIMIT ?"
         args.append(limit)
         with self.lock:
-            return [self._job_dict(r) for r in self.db.execute(sql, args).fetchall()]
+            jobs = [self._job_dict(r) for r in self.db.execute(sql, args).fetchall()]
+            if not jobs:
+                return jobs
+            # Item counts so a list can show progress without loading every item.
+            marks = ",".join("?" * len(jobs))
+            rows = self.db.execute(
+                "SELECT job_id, state, COUNT(*) AS n FROM job_items "
+                f"WHERE job_id IN ({marks}) GROUP BY job_id, state",
+                [j["id"] for j in jobs],
+            ).fetchall()
+        counts: dict[str, dict[str, int]] = {}
+        for r in rows:
+            counts.setdefault(r["job_id"], {})[r["state"]] = r["n"]
+        for job in jobs:
+            by_state = counts.get(job["id"], {})
+            job["total"] = sum(by_state.values())
+            job["done"] = by_state.get("complete", 0) + by_state.get("skipped", 0)
+            job["failed"] = by_state.get("failed", 0) + by_state.get("uncertain", 0)
+        return jobs
 
     def events(self, job_id: str, after: int = 0, limit: int = 200) -> list[dict]:
         with self.lock:

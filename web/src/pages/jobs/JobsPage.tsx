@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { ListTodo } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -53,7 +54,24 @@ export default function JobsPage() {
                 onClick={() => set({ job: j.id })}
               >
                 <span className={`dot state-${j.state}`} />
-                <span className="grow ellipsis">{j.title}</span>
+                <span className="grow ellipsis">
+                  {j.title}
+                  {j.total ? (
+                    <span
+                      className="job-progress"
+                      style={
+                        {
+                          '--p': `${Math.round((100 * (j.done ?? 0)) / j.total)}%`,
+                        } as CSSProperties
+                      }
+                    />
+                  ) : null}
+                </span>
+                {j.total ? (
+                  <span className={`small mono ${j.failed ? 'bad' : 'muted'}`}>
+                    {j.done ?? 0}/{j.total}
+                  </span>
+                ) : null}
                 <span className="small muted mono">{shortDateTime(j.updated, i18n.language)}</span>
               </button>
             ))}

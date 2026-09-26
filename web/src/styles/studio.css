@@ -400,3 +400,12 @@ tr.item-uncertain td {
   color: var(--accent);
   font-weight: 600;
 }
+
+/* Thin completion bar under a job title in the jobs rail (--p = done/total). */
+.job-progress {
+  display: block;
+  height: 2px;
+  margin-top: 4px;
+  border-radius: 1px;
+  background: linear-gradient(to right, var(--accent) var(--p, 0%), var(--line) var(--p, 0%));
+}

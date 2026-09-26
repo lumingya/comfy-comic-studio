@@ -70,6 +70,16 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(sorted(ex.applied), [(0, {"ok": 0}), (1, {"ok": 1}), (2, {"ok": 2})])
         self.assertEqual([i["result"] for i in job["items"]], [{"ok": 0}, {"ok": 1}, {"ok": 2}])
 
+    def test_list_carries_item_counts(self):
+        engine, ex = self.make(), Recorder()
+        engine.register("demo", ex)
+        job = engine.wait(engine.submit("demo", items(3), {"episode": "e1"})["id"])
+        summary = engine.list()[0]
+        self.assertEqual(summary["id"], job["id"])
+        self.assertEqual((summary["done"], summary["total"], summary["failed"]), (3, 3, 0))
+        self.assertNotIn("items", summary)
+        self.assertEqual(engine.list(owner="nobody"), [])
+
     def test_idempotency_and_frozen_snapshot(self):
         engine = self.make(autostart=False)
         payload = {"prompt": "rain"}
