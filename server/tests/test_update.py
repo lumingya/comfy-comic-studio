@@ -134,11 +134,17 @@ class UpdaterTests(unittest.TestCase):
         pending = up.stage()
         self.assertEqual(pending["version"], "4.1.0")
         applied = up.apply_pending()
-        self.assertIn('"4.1.0"', (self.root / "server/mio_server/__init__.py").read_text())
+        self.assertIn(
+            '"4.1.0"', (self.root / "server/mio_server/__init__.py").read_text(encoding="utf-8")
+        )
         self.assertFalse((self.root / "server/mio_server/stale.py").exists())
-        self.assertEqual((self.root / "server/data/runtime/keep.db").read_text(), "user data")
+        self.assertEqual(
+            (self.root / "server/data/runtime/keep.db").read_text(encoding="utf-8"), "user data"
+        )
         self.assertTrue((self.root / "data/layouts/mine.json").exists())
-        self.assertEqual((self.root / "web/dist/index.html").read_text(), "<html>new</html>")
+        self.assertEqual(
+            (self.root / "web/dist/index.html").read_text(encoding="utf-8"), "<html>new</html>"
+        )
         backup = Path(applied["backup"])
         self.assertTrue((backup / "server/mio_server/stale.py").exists())
         self.assertIsNone(up.pending())

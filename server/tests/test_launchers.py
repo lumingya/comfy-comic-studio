@@ -121,7 +121,9 @@ class ShellScriptTests(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("sh"), "needs sh")
     def test_syntax(self):
-        result = subprocess.run(["sh", "-n", str(SH)], capture_output=True, text=True)
+        result = subprocess.run(
+            ["sh", "-n", str(SH)], capture_output=True, text=True, encoding="utf-8"
+        )
         self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_same_steps_as_bat(self):
@@ -176,33 +178,35 @@ class BootstrapTests(unittest.TestCase):
     def test_fresh_environment_installs_and_stamps(self):
         self.assertEqual(self.run_ensure(["fastapi", "uvicorn"]), 0)
         self.assertEqual(self.installs, 1)
-        self.assertEqual(self.stamp.read_text().strip(), bootstrap.requirements_hash(self.req))
+        self.assertEqual(
+            self.stamp.read_text(encoding="utf-8").strip(), bootstrap.requirements_hash(self.req)
+        )
 
     def test_stamp_matches_but_module_missing_reinstalls(self):
-        self.stamp.write_text(bootstrap.requirements_hash(self.req) + "\n")
+        self.stamp.write_text(bootstrap.requirements_hash(self.req) + "\n", encoding="utf-8")
         self.assertEqual(self.run_ensure(["pydantic"]), 0)
         self.assertEqual(self.installs, 1)
         self.assertIn("缺少 pydantic", self.said[0])
 
     def test_empty_stamp_and_missing_modules_is_not_up_to_date(self):
-        self.stamp.write_text("")
+        self.stamp.write_text("", encoding="utf-8")
         self.assertEqual(self.run_ensure(["uvicorn"]), 0)
         self.assertEqual(self.installs, 1)
 
     def test_up_to_date_does_nothing(self):
-        self.stamp.write_text(bootstrap.requirements_hash(self.req) + "\n")
+        self.stamp.write_text(bootstrap.requirements_hash(self.req) + "\n", encoding="utf-8")
         self.assertEqual(self.run_ensure([]), 0)
         self.assertEqual(self.installs, 0)
 
     def test_changed_requirements_reinstall(self):
-        self.stamp.write_text("0" * 64 + "\n")
+        self.stamp.write_text("0" * 64 + "\n", encoding="utf-8")
         self.assertEqual(self.run_ensure([]), 0)
         self.assertEqual(self.installs, 1)
 
     def test_failed_install_keeps_old_stamp(self):
-        self.stamp.write_text("old\n")
+        self.stamp.write_text("old\n", encoding="utf-8")
         self.assertEqual(self.run_ensure(["fastapi"], install_rc=1), 1)
-        self.assertEqual(self.stamp.read_text(), "old\n")
+        self.assertEqual(self.stamp.read_text(encoding="utf-8"), "old\n")
 
     def test_still_missing_after_install_fails(self):
         self.assertEqual(self.run_ensure(["PIL"], missing_after=["PIL"]), 1)

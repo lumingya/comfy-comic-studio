@@ -126,7 +126,9 @@ def formatted(source: str) -> str:
 
     args = [sys.executable, "-m", "ruff", "format", "--config", str(HERE.parent / "ruff.toml"), "-"]
     try:
-        done = subprocess.run(args, input=source, capture_output=True, text=True, check=True)
+        done = subprocess.run(
+            args, input=source, capture_output=True, text=True, encoding="utf-8", check=True
+        )
     except (OSError, subprocess.CalledProcessError) as exc:
         raise SystemExit(f"ruff is required (pip install -r server/requirements-dev.txt): {exc}")
     return done.stdout
