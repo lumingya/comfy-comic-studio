@@ -79,7 +79,8 @@ class WindowsLauncherExecutionTests(unittest.TestCase):
             script = folder / ('server.py' if name == 'start.bat' else 'tools/build_release.py')
             script.parent.mkdir(exist_ok=True)
             script.write_text('from pathlib import Path\nimport sys\nPath("launcher-ok.txt").write_text(sys.prefix, encoding="utf-8")\n', encoding='utf-8')
-            result = subprocess.run([os.environ.get('COMSPEC', 'cmd.exe'), '/d', '/v:off', '/c', name], cwd=folder,
+            # 显式 .\ 前缀：环境变量 NoDefaultCurrentDirectoryInExePath=1 时，cmd 不会在当前目录查找裸命令名。
+            result = subprocess.run([os.environ.get('COMSPEC', 'cmd.exe'), '/d', '/v:off', '/c', '.\\' + name], cwd=folder,
                                     env={**os.environ, 'MIO_NO_PAUSE': '1'}, input=b'\r\n',
                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=30)
             marker = folder / 'launcher-ok.txt'

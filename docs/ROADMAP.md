@@ -356,6 +356,9 @@ Job / Attempt：统一任务引擎（继承旧版的安全语义）
   - 每次推送只跑轻量门禁：`node js/build.js dev`、`node js/tests.js`、`python -m unittest`、`check_distribution.py`。
   - E2E 改为手动运行。
   - 更新随包清单。
+- [x] Windows 启动器测试显式调用 `.\start.bat`，兼容环境变量 `NoDefaultCurrentDirectoryInExePath=1`（Portal 等代理环境会设置它）。
+- [ ] 运行时状态不再写回受版本控制的文件（`data/settings/workspace.json`、内置工作流）。这正是随包清单哈希过期（MIO-DATA-001）的根因。
+- [ ] 查明 Windows 上 Python 测试慢约 12 倍的原因：本机 575 秒，沙盒 47 秒。
 - **完成标准**：main 的 CI 显示绿色；新代理读 README、AGENTS.md、ROADMAP.md 即可上手。
 
 ### Phase 0.5 · 技术验证 Spike（约 1 周，独立目录 `next/`）— **决定是否全面重写的闸门**
