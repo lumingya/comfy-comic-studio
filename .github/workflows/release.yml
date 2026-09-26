@@ -1,11 +1,11 @@
-name: Publish release package
+name: Publish legacy release package (3.x)
 # Pushing a tag such as v3.2.0 builds the verified source ZIP and attaches it,
 # with its SHA-256 file, to a GitHub Release. The in-app updater
 # (legacy/backend/mio_update.py) reads exactly these assets, so the tag must match
 # legacy/package.json "version"; a "-" in the version marks the release as a pre-release.
 on:
   push:
-    tags: ['v*']
+    tags: ['v3.*']
   workflow_dispatch:
 permissions:
   contents: write

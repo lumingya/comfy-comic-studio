@@ -558,6 +558,21 @@ class MioClient(_Base):
         """
         return self._request("POST", "/legacy/import", json=body)
 
+    def update_status(self) -> Any:
+        """GET /update — Update Status."""
+        return self._request("GET", "/update")
+
+    def check_update(self) -> Any:
+        """POST /update/check — Check Update."""
+        return self._request("POST", "/update/check")
+
+    def download_update(self) -> Any:
+        """POST /update/download — Download Update.
+
+        Download and verify, then stage; the launcher installs it on the next start.
+        """
+        return self._request("POST", "/update/download")
+
     def list_webhooks(self) -> Any:
         """GET /webhooks — List Webhooks."""
         return self._request("GET", "/webhooks")

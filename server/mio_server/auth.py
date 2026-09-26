@@ -40,7 +40,7 @@ RENDER_RE = re.compile(
     r"|episodes/[^/]+/(render|finalize|edit|qa|assistant/propose)"
     r"|jobs/[^/]+/(retry|resume))$"
 )
-ADMIN_RE = re.compile(r"^/(settings|instances|webhooks|legacy)(/|$)")
+ADMIN_RE = re.compile(r"^/(settings|instances|webhooks|legacy|update)(/|$)")
 
 
 class ApiToken(StrictModel):

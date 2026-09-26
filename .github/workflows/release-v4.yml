@@ -1,0 +1,58 @@
+name: Publish release (4.x)
+# Pushing a tag such as v4.0.0 builds web/dist, runs the checks, packs the release zip with
+# tools/build_release.py and attaches it with the signed manifest (mio-release.json) that the
+# in-app updater reads.  The tag must equal server/mio_server/__init__.py __version__ and
+# web/package.json "version".  Signing uses the MIO_RELEASE_KEY repository secret; without it the
+# manifest is unsigned and the updater refuses it (manual download still works).
+on:
+  push:
+    tags: ['v4.*']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Checks
+        run: |
+          python -m pip install -r server/requirements-dev.txt
+          ruff check server
+          python -m unittest discover -s server/tests -t server -q
+          python clients/python/generate.py --check
+      - name: Build web
+        run: |
+          npm ci --prefix web --no-audit --no-fund
+          npm --prefix web run build
+      - name: Build release zip and signed manifest
+        id: build
+        env:
+          MIO_RELEASE_KEY: ${{ secrets.MIO_RELEASE_KEY }}
+        run: |
+          python tools/build_release.py --out releases
+          VERSION=$(python -c "import sys; sys.path.insert(0, 'server'); import mio_server; print(mio_server.__version__)")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          case "$VERSION" in *-*) echo "prerelease=true" >> "$GITHUB_OUTPUT" ;; *) echo "prerelease=false" >> "$GITHUB_OUTPUT" ;; esac
+      - name: Attach to the GitHub Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Mio v${{ steps.build.outputs.version }}
+          prerelease: ${{ steps.build.outputs.prerelease }}
+          generate_release_notes: true
+          files: |
+            releases/mio-studio-${{ steps.build.outputs.version }}.zip
+            releases/mio-studio-${{ steps.build.outputs.version }}.zip.sha256
+            releases/mio-release.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mio-studio-${{ steps.build.outputs.version }}
+          path: releases/

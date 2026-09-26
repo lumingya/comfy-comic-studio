@@ -21,7 +21,8 @@ from ..pipeline.assistant import AssistantError
 from ..pipeline.render import RenderError
 from ..registry import RegistryError
 from ..storage import Conflict, NotFound
-from . import access, album, canvas, extensions, jobs, library, production, series, system
+from ..update import UpdateError
+from . import access, album, canvas, extensions, jobs, library, production, series, system, update
 from .v2 import build_v2
 
 API_VERSION = "1"
@@ -39,6 +40,7 @@ ERRORS: list[tuple[type[Exception], int, str]] = [
     (BundleError, 400, "invalid"),
     (BindingError, 400, "invalid"),
     (JobError, 400, "invalid"),
+    (UpdateError, 400, "invalid"),
     (ValueError, 400, "invalid"),
 ]
 
@@ -68,6 +70,7 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
         app.include_router(module.router, prefix="/api")
     app.include_router(access.tokens, prefix="/api")
     app.include_router(access.hooks, prefix="/api")
+    app.include_router(update.router, prefix="/api")
     app.mount("/api/v2", build_v2(app.state.ctx, ERRORS))
     _mount_extensions(app)
 

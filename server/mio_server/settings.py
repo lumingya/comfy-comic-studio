@@ -55,6 +55,7 @@ class AppSettings(StrictModel):
         default_factory=list, description="Extra cloud image channels (NovelAI, OpenAI Images…)"
     )
     image_channel: str = Field(default="", description="Default channel id; '' = LLM proxy")
+    update_feed: str = Field(default="", description="Signed release manifest URL; '' = GitHub")
     updated_at: str = Field(default_factory=now_iso)
 
 

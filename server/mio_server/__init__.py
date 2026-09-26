@@ -1,8 +1,4 @@
-"""Mio v3 server package.
-
-Phase 1 starts here: keep the old application untouched while the new FastAPI/SQLite core is
-built behind an independent package and test suite.
-"""
+"""Mio Comic Studio server (release line 4.x; the frozen 3.x app lives in ``legacy/``)."""
 
 __all__ = ["__version__"]
-__version__ = "0.1.0"
+__version__ = "4.0.0"

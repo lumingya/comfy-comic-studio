@@ -224,3 +224,7 @@ ehthumbs.db
 /server/data/
 # Optional link to ../data for running legacy browser E2E locally (see AGENTS.md)
 /legacy/data
+
+# Release build output (tools/build_release.py)
+/releases/
+/.venv/

@@ -35,7 +35,10 @@ from .registry import Registry
 from .render_models import ComfyInstance
 from .storage import SQLiteStore
 from .trash import Trash
+from .update import Updater
 from .webhooks import Dispatcher
+
+INSTALL_ROOT = Path(__file__).resolve().parents[2]
 
 log = logging.getLogger("mio")
 
@@ -60,6 +63,7 @@ class AppContext:
     extensions: ExtensionManager | None = None
     tokens: TokenStore | None = None
     webhooks: Dispatcher | None = None
+    updater: Updater | None = None
 
     @classmethod
     def create(
@@ -104,6 +108,7 @@ class AppContext:
         render.hooks = ctx.registry.hooks
         engine.subscribe(lambda event: ctx.hooks.action("job.event", event))
         ctx.tokens = TokenStore(store)
+        ctx.updater = Updater(ctx.data_dir, INSTALL_ROOT)
         ctx.webhooks = Dispatcher(store, engine)
         ctx.webhooks.attach(ctx.hooks)
         ctx.extensions = ExtensionManager(ctx)

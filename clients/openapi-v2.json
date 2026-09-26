@@ -8248,6 +8248,91 @@
     ]
    }
   },
+  "/update": {
+   "get": {
+    "operationId": "update_status",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Update Status",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Update Status",
+    "tags": [
+     "update"
+    ]
+   }
+  },
+  "/update/check": {
+   "post": {
+    "operationId": "check_update",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Check Update",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Check Update",
+    "tags": [
+     "update"
+    ]
+   }
+  },
+  "/update/download": {
+   "post": {
+    "description": "Download and verify, then stage; the launcher installs it on the next start.",
+    "operationId": "download_update",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Download Update",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Download Update",
+    "tags": [
+     "update"
+    ]
+   }
+  },
   "/webhooks": {
    "get": {
     "operationId": "list_webhooks",

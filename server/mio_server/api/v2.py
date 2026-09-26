@@ -18,10 +18,10 @@ from fastapi.responses import JSONResponse
 
 from .. import __version__
 from ..auth import SCOPES, ApiToken, AuthError
-from . import access, album, canvas, jobs, library, production, series, system
+from . import access, album, canvas, jobs, library, production, series, system, update
 
 V2_VERSION = "2.0"
-ROUTERS = (series, production, canvas, library, jobs, album, system)
+ROUTERS = (series, production, canvas, library, jobs, album, system, update)
 # operationId = route function name (= generated client method); generic names get context.
 RENAMES = {
     "render": "render_episode",
