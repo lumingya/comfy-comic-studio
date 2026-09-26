@@ -351,7 +351,7 @@ Job / Attempt：统一任务引擎（继承旧版的安全语义）
 - [x] 当前 main 打标签 `legacy-v3.2` 并推送。标签指向 `bd693b2`，代码与 `79ea9c0` 相同。
 - [x] 删除调试遗留：`jam_events.json`、`stream_generate_resp.txt`、`parse_stream.py`、`check_err.py`、`dump_blocks.py`。历史清理（`git filter-repo` 加强推）需要你决定，暂未执行。
 - [x] 归档 `FIXES.md`、`SELECTION_CHANGES.md` 和过时的 `docs/CURRENT_STATUS.md`，统一移到 `docs/archive/`（附索引）。生成的 HTML 文档留到 Phase 1 随旧版一起处理：docs 服务会按需渲染 Markdown，但部分 `docs/guide/*.html` 是运行时依赖。
-- [ ] 新增 `AGENTS.md`：架构、命令、禁区和沙盒协作规范，并写明新栈的轻量验证命令。
+- [x] 新增 `AGENTS.md`：项目现状、目录、验证命令、提交规范、数据与隐私、冻结区、运行环境备忘。新栈的验证命令在 Phase 1 确认后补充。README 的开发一节已改为指向它，并改用轻量命令。
 - [x] **让 CI 变绿**：首次变绿是 `f260062`，整个任务约 70 秒。
   - 每次推送只跑轻量门禁（`.github/workflows/ci.yml`）：构建产物与提交一致（`node js/build.js dev` 加 `git diff --exit-code`）、`node js/tests.js`、`python -m unittest`、`check_distribution.py`、`package_project.py` 打包冒烟。
   - 浏览器 E2E 改为手动触发（`e2e.yml`）。已知失败项：`production_scene_ui.mjs` 的手机横向溢出断言。

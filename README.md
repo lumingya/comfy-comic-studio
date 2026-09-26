@@ -40,13 +40,16 @@ python server.py
 
 ## 扩展与开发
 
+> 项目正按[路线图](docs/ROADMAP.md)重构（条漫 + 本地 ComfyUI + React），旧版功能已冻结。开发者和 AI 代理请先读 [AGENTS.md](AGENTS.md)。
+
 [扩展 SDK](docs/ECOSYSTEM_GUIDE.md) · [样式工坊与主题包](docs/STYLE_STUDIO.md) · [可执行变量](docs/COMPUTED_VARIABLES.md) · [外部 API](docs/api/README.md) · [OpenAPI](docs/api/openapi.json)
 
 ```bash
-npm ci
-npx playwright install chromium
-npm run build
-npm run test:current
+node js/build.js dev
+node js/tests.js
+python -m unittest discover -s tests -q
 ```
+
+浏览器端到端回归较重，按需运行：`npm ci && npx playwright install chromium && npm run test:current`。
 
 [开发指南](docs/DEVELOPMENT.md) · [MIT License](LICENSE)
