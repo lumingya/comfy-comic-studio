@@ -1,0 +1,124 @@
+/* Dialogs, menus, tooltips and toasts (Radix portals). */
+
+/* ---- dialog (Radix) ---- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.dialog {
+  position: fixed;
+  z-index: 51;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  overflow: auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 24px;
+}
+
+.dialog.lg {
+  width: min(980px, calc(100vw - 32px));
+}
+
+.dialog h2 {
+  margin: 0 0 6px;
+  font: 500 19px var(--serif);
+}
+
+.dialog-desc {
+  margin: 0 0 18px;
+  font-size: 12.5px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+
+.dialog-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+/* ---- menus / tooltips ---- */
+.menu {
+  z-index: 60;
+  min-width: 170px;
+  padding: 5px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  box-shadow: var(--shadow);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+}
+
+.menu-item[data-highlighted] {
+  background: var(--hover);
+}
+
+.menu-item.danger {
+  color: var(--red);
+}
+
+.tooltip {
+  z-index: 70;
+  padding: 5px 9px;
+  font-size: 12px;
+  background: var(--text);
+  color: var(--bg);
+  border-radius: 5px;
+}
+
+/* ---- toasts ---- */
+.toasts {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  max-width: 380px;
+  padding: 11px 14px;
+  font-size: 13px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent-strong);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  animation: rise 0.2s ease-out;
+}
+
+.toast.error {
+  border-left-color: var(--red);
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+}
+
+/* ---- switch (Radix) ---- */

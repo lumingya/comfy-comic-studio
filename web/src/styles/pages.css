@@ -1,0 +1,330 @@
+/* Page layouts: works, series, bible, script, jobs, settings, trash. */
+
+.chip.accent {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  background: var(--tint);
+}
+
+.notice.ok {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  background: var(--tint);
+}
+
+.accent-text {
+  color: var(--accent);
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 12.5px;
+  text-decoration: none;
+  margin-bottom: 10px;
+}
+
+.back-link:hover {
+  color: var(--accent);
+}
+
+/* ---- works ---- */
+.work-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+}
+
+.work-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
+}
+
+.work-card:hover {
+  border-color: var(--line-strong);
+  transform: translateY(-2px);
+}
+
+.work-cover {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background:
+    radial-gradient(circle at 20% 15%, var(--tint), transparent 55%),
+    linear-gradient(160deg, var(--panel-2), var(--bg-deep));
+  display: flex;
+  align-items: flex-end;
+  padding: 16px 18px;
+}
+
+.work-cover h3 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 21px;
+  letter-spacing: 1.5px;
+  line-height: 1.3;
+}
+
+.work-index {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+.work-cast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 18px 14px;
+  border-top: 1px solid var(--line);
+}
+
+.work-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--panel);
+  margin-left: -8px;
+  background: var(--panel-2);
+}
+
+.work-avatar:first-child {
+  margin-left: 0;
+}
+
+/* ---- series / episodes ---- */
+.episode-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.episode-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  color: inherit;
+  text-decoration: none;
+}
+
+.episode-row:last-child {
+  border-bottom: 0;
+}
+
+.episode-row:hover {
+  background: var(--hover);
+}
+
+.episode-no {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 34px;
+}
+
+/* ---- split (rail + main), used by bible / jobs / profiles ---- */
+.split {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.split-rail {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: calc(100vh - 120px);
+  overflow: auto;
+}
+
+.split-main {
+  min-width: 0;
+}
+
+.rail-group + .rail-group {
+  margin-top: 16px;
+}
+
+.rail-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.rail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--soft);
+  font: inherit;
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rail-item:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.rail-item.active {
+  background: var(--tint);
+  color: var(--accent);
+}
+
+.save-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.save-bar.sticky {
+  position: sticky;
+  bottom: 0;
+  margin: 0;
+  padding: 12px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: var(--bg);
+}
+
+/* ---- bible ---- */
+.ref-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ref-card {
+  position: relative;
+  width: 118px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ref-card img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+}
+
+.ref-card.mini {
+  width: 84px;
+}
+
+.ref-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.ref-card:hover .ref-remove {
+  opacity: 1;
+}
+
+.ref-add {
+  width: 118px;
+  aspect-ratio: 3 / 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.ref-add:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.outfit-row,
+.var-row {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: start;
+}
+
+.variant-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
+}
+
+/* ---- episode workspace ---- */
+.workspace-head {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 20px;
+}
+
+.workspace-title {
+  font-family: var(--serif);
+  font-size: 24px;
+  letter-spacing: 1.5px;
+  padding-left: 0;
+}
+
+.workspace-tabs {
+  display: flex;
+  gap: 24px;
+  margin-top: 6px;
+}
+
+.workspace-tabs .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
