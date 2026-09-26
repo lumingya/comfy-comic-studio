@@ -16,6 +16,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from backend.mio_library import decode, digest, encode, owned_path  # noqa: E402
+from backend.mio_paths import shipped_data_dir  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 IGNORED_PREFIXES = ('.cache/', '.transactions/', '.trash/', 'runtime/', 'production/', 'ecosystem/')
@@ -91,4 +92,4 @@ if __name__ == '__main__':
     parser.add_argument('--check', action='store_true', help='verify only; exit 1 when checksums are stale')
     parser.add_argument('--add', action='append', default=[], metavar='RELATIVE', help='register a new shipped file (relative to data/)')
     args = parser.parse_args()
-    sys.exit(build(ROOT / 'data', args.add, args.check))
+    sys.exit(build(shipped_data_dir(ROOT), args.add, args.check))

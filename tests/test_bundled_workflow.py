@@ -5,9 +5,10 @@ from pathlib import Path
 
 from backend.ecosystem.workflow import compile_workflow
 from backend.production.api import frame_seed, seed_binding_ready
+from backend.mio_paths import shipped_data_dir
 
 ROOT = Path(__file__).resolve().parents[1]
-BUNDLED = next((ROOT / 'data' / 'workflows').glob('*9399e1242916.json'))
+BUNDLED = next((shipped_data_dir(ROOT) / 'workflows').glob('*9399e1242916.json'))
 
 
 class BundledWorkflowSeed(unittest.TestCase):

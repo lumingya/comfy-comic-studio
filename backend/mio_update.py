@@ -34,6 +34,8 @@ from datetime import datetime, timezone
 from functools import cmp_to_key
 from pathlib import Path
 
+from backend.mio_paths import inside_repository_subfolder
+
 REPO = os.environ.get("MIO_UPDATE_REPO", "lumingya/comfy-comic-studio")
 API_BASE = os.environ.get("MIO_UPDATE_API", "https://api.github.com")
 RELEASES_PAGE = f"https://github.com/{REPO}/releases"
@@ -156,6 +158,8 @@ def install_facts(base_dir, data_dir):
         blockers.append("打包的可执行程序无法就地更新，请下载新版本后替换程序目录。")
     if not _writable(base_dir):
         blockers.append("程序目录不可写，请检查文件夹权限后再试。")
+    if inside_repository_subfolder(base_dir):
+        blockers.append("旧版代码已移入仓库的 legacy/ 目录作为只读参考，不支持就地更新。")
     if not (Path(base_dir) / "server.py").is_file() and kind != "frozen":
         blockers.append("程序目录里找不到 server.py，无法确认安装位置。")
     return {

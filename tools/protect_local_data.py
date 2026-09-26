@@ -20,7 +20,13 @@ import json
 import subprocess
 import sys
 
-ROOT = Path(__file__).resolve().parents[1]
+PROGRAM = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(PROGRAM))
+from backend.mio_paths import shipped_data_dir  # noqa: E402
+
+# The folder that contains data/ (the repository root, also after the legacy/ move); git runs
+# there so the data/... paths below stay repository-relative.
+ROOT = shipped_data_dir(PROGRAM).parent
 
 
 def shipped_paths(root=ROOT):

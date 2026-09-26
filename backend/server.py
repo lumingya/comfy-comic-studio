@@ -21,6 +21,7 @@ from backend.production import api as production_api
 from backend import mio_update
 from backend.mio_native_store import NativeStore
 from backend.mio_library import LibraryError
+from backend.mio_paths import shipped_data_dir
 import io
 from pathlib import Path
 from datetime import datetime
@@ -57,7 +58,7 @@ else:
     BASE_DIR = str(Path(__file__).resolve().parents[1])
 LEGACY_DATA_FILE = os.path.join(BASE_DIR, "comfy_comic_data.json")
 DATA_DIR = os.path.abspath(
-    os.environ.get("MIO_DATA_DIR", os.path.join(BASE_DIR, "data"))
+    os.environ.get("MIO_DATA_DIR", str(shipped_data_dir(BASE_DIR)))
 )
 LEGACY_CONFIG_FILES = {
     key: os.path.join(DATA_DIR, key + ".json")

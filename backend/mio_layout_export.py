@@ -19,6 +19,7 @@ from datetime import datetime
 from pathlib import Path
 
 from backend.mio_library import LibraryError
+from backend.mio_paths import shipped_data_dir
 from backend.mio_export import sources as album_sources, content_disposition
 from backend.mio_export_images import DEFAULT_PROFILE, prepare as prepare_image, resolve_profile
 
@@ -96,7 +97,7 @@ def book_runtime():
 
 
 def reader_sizing():
-    path = BASE_DIR / "data" / "catalog" / "reader-sizing.json"
+    path = shipped_data_dir(BASE_DIR) / "catalog" / "reader-sizing.json"
     try:
         stamp = path.stat().st_mtime_ns
     except OSError:

@@ -23,10 +23,16 @@ EXCLUDED = {'__pycache__', 'node_modules', '.git', '.cache', 'data', 'images',
 
 
 def source_files():
+    """Program files from ROOT plus the shipped data (``data/`` beside ROOT in the repository).
+
+    The package layout is always flat: ``data/`` sits next to ``server.py``.
+    """
     from tools.check_distribution import require_verified_distribution
-    manifest=require_verified_distribution(ROOT/'data')
-    for rel in sorted(manifest['files']):yield ROOT/'data'/rel,'data/'+rel
-    yield ROOT/'data/distribution.json','data/distribution.json'
+    from backend.mio_paths import shipped_data_dir
+    data = shipped_data_dir(ROOT)
+    manifest=require_verified_distribution(data)
+    for rel in sorted(manifest['files']):yield data/rel,'data/'+rel
+    yield data/'distribution.json','data/distribution.json'
     for path in sorted(ROOT.rglob('*')):
         rel = path.relative_to(ROOT)
         if any(part in EXCLUDED or (part.startswith('acceptance') and part != 'acceptance-review') for part in rel.parts) or path.is_symlink() or not path.is_file():

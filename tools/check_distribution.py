@@ -11,6 +11,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from backend.mio_content import distribution
 from backend.mio_library import LibraryError, digest, owned_path
+from backend.mio_paths import shipped_data_dir
 
 
 def verify(source):
@@ -41,7 +42,7 @@ def require_verified_distribution(source):
 
 def main():
     try:
-        manifest = require_verified_distribution(Path(__file__).resolve().parents[1] / 'data')
+        manifest = require_verified_distribution(shipped_data_dir(Path(__file__).resolve().parents[1]))
     except (LibraryError, OSError) as error:
         print(str(error), file=sys.stderr)
         return 1

@@ -2,6 +2,7 @@
 import base64
 from pathlib import Path
 from backend.mio_library import LibraryError, atomic_write, decode, encode, owned_path, image_type
+from backend.mio_paths import shipped_data_dir
 
 
 def distribution(source):
@@ -40,7 +41,7 @@ def initialize(store, project):
     reported; invalid entity JSON is handled by the file library's diagnostics.
     Unlisted drafts, secrets and runtime files are never discovered or copied.
     """
-    source = Path(project) / 'data'
+    source = shipped_data_dir(project)
     marker = owned_path(store.root, 'runtime/content-installed.json')
     store.content_problems = []
     if marker.exists():

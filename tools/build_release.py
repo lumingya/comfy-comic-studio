@@ -13,7 +13,8 @@ def get_v9_pure_default_data():
     """Conversion-test adapter only; read actual data files, never construct sample content."""
     from backend.mio_native_store import NativeStore
     from backend.mio_library import image_type
-    store=NativeStore(Path(ROOT_DIR)/'data',ROOT_DIR)
+    from backend.mio_paths import shipped_data_dir
+    store=NativeStore(shipped_data_dir(ROOT_DIR),ROOT_DIR)
     try:
         config=store.read(include_baseline=False)
         def inline(v):

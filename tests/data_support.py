@@ -9,12 +9,15 @@ import json
 import shutil
 from pathlib import Path
 
+from backend.mio_paths import shipped_data_dir
+
 ROOT = Path(__file__).resolve().parents[1]
+SHIPPED = shipped_data_dir(ROOT)
 
 
 def copy_shipped_data(dest, source=None):
     """Copy data/distribution.json and every file it lists into dest; return dest."""
-    source = Path(source or ROOT / 'data')
+    source = Path(source or SHIPPED)
     dest = Path(dest)
     manifest = json.loads((source / 'distribution.json').read_text(encoding='utf-8'))
     for relative in ['distribution.json', *manifest['files']]:
