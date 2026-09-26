@@ -77,7 +77,7 @@ def fixtures():
     w=basic();w['5']=lora('other','2');w['3']['inputs']['model']=['5',0];add('series-override-existing',w,{'loras':[{'name':'turbo','strength':.3}]})
     w={'1':node(lora_1='pinned',strength_1=1),'2':node(lora_stack=['1',0])};add('stack-overflow',w)
     w=basic();add('all-disabled',w,{'loras':[{'name':'A','strength':.8}],'disabled':['origin:2:lora_name']})
-    add('alice',json.loads((Path(__file__).parents[2]/"docs/workflows/alice_copy_workflow.json").read_text())['workflow'],{'model':'new.safetensors','loras':[{'name':'A','strength':.8}]})
+    add('alice',json.loads((Path(__file__).parents[1]/"fixtures/alice_copy_workflow.json").read_text())['workflow'],{'model':'new.safetensors','loras':[{'name':'A','strength':.8}]})
     return cases
 
 

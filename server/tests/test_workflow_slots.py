@@ -10,7 +10,7 @@ from mio_server.comfy.workflow_slots import LibraryError
 class WorkflowSlotsTests(unittest.TestCase):
     def test_shared_contract(self):
         fixtures = json.loads(
-            (Path(__file__).parents[2] / "tests/fixtures/workflow_slots_contract.json").read_text()
+            (Path(__file__).parents[1] / "fixtures/workflow_slots_contract.json").read_text()
         )["cases"]
         for f in fixtures:
             with self.subTest(fixture=f["name"]):
