@@ -147,6 +147,18 @@ def layout_strip(ctx: Ctx, episode_id: str, body: LayoutRequest) -> Strip:
     return strip
 
 
+@router.put("/episodes/{episode_id}/strip", response_model=Strip)
+def save_strip(ctx: Ctx, episode_id: str, strip: Strip) -> Strip:
+    """Hand edits from the canvas (moved / resized lettering, crops, boxes)."""
+    ep = ctx.store.get_episode(episode_id)
+    known = {p.id for p in ep.panels}
+    unknown = (set(strip.panel_boxes) | set(strip.crops)) - known
+    if unknown:
+        raise ValueError(f"未知的格：{', '.join(sorted(unknown))}")
+    ctx.store.update_episode(episode_id, lambda e: setattr(e, "strip", strip))
+    return strip
+
+
 @router.get("/episodes/{episode_id}/strip.png")
 def strip_png(ctx: Ctx, episode_id: str, variant_id: str | None = None, width: int = 0) -> Response:
     _, _, _, image = _render_strip(ctx, episode_id, variant_id)

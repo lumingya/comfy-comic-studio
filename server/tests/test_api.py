@@ -49,6 +49,16 @@ class GoldenStoryTests(ApiCase):
         strip = self.ok(self.client.post(f"/api/episodes/{ep['id']}/strip/layout", json={}))
         self.assertEqual(len(strip["panel_boxes"]), 12)
         self.assertTrue(strip["lettering"])
+        strip["lettering"][0]["locked"] = True
+        strip["lettering"][0]["text"] = "改过的台词"
+        saved = self.ok(self.client.put(f"/api/episodes/{ep['id']}/strip", json=strip))
+        self.assertEqual(saved["lettering"][0]["text"], "改过的台词")
+        bad = {**strip, "crops": {"nope": [0, 0, 1, 1]}}
+        self.assertEqual(
+            self.client.put(f"/api/episodes/{ep['id']}/strip", json=bad).status_code, 400
+        )
+        relaid = self.ok(self.client.post(f"/api/episodes/{ep['id']}/strip/layout", json={}))
+        self.assertIn("改过的台词", [layer["text"] for layer in relaid["lettering"]])
         png = self.client.get(f"/api/episodes/{ep['id']}/strip.png")
         self.assertEqual(png.content[:8], b"\x89PNG\r\n\x1a\n")
 
@@ -157,6 +167,15 @@ class CrudTests(ApiCase):
         r = self.client.post("/api/series/nope/episodes", json={"title": "x", "order": 0})
         self.assertEqual(r.status_code, 404)
         self.assertEqual(r.json()["kind"], "not_found")
+
+    def test_openapi_marks_defaulted_response_fields_required(self):
+        """web/src/api/schema.d.ts relies on this: response fields with defaults are non-optional,
+        request bodies keep them optional."""
+        schemas = self.client.get("/openapi.json").json()["components"]["schemas"]
+        self.assertIn("bible", schemas["Series"]["required"])
+        self.assertIn("lettering", schemas["Strip-Output"]["required"])
+        self.assertNotIn("lettering", schemas["Strip-Input"].get("required", []))
+        self.assertNotIn("confirm_uncertain", schemas["RetryRequest"].get("required", []))
 
 
 if __name__ == "__main__":

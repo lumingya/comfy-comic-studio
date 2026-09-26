@@ -38,7 +38,12 @@ def now_iso() -> str:
 
 
 class StrictModel(BaseModel):
-    model_config = ConfigDict(extra="forbid", validate_assignment=True)
+    model_config = ConfigDict(
+        extra="forbid",
+        validate_assignment=True,
+        # Response schemas mark defaulted fields as required, so generated TS types are exact.
+        json_schema_serialization_defaults_required=True,
+    )
 
 
 def _required(value: str, label: str) -> str:
