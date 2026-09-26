@@ -1,6 +1,6 @@
 name: CI
 # 每次推送与 PR 的轻量门禁：构建产物与提交一致、前端契约测试、Python 单元测试、
-# 随包数据清单、打包冒烟。浏览器端到端回归见 e2e.yml（手动触发）。
+# 新栈前后端（lint / 类型 / 单测 / 构建）、随包数据清单、打包冒烟。浏览器端到端回归见 e2e.yml（手动触发）。
 on:
   push:
   pull_request:
@@ -40,6 +40,13 @@ jobs:
           ruff check server
           ruff format --check server
           python -m unittest discover -s server/tests -t server -q
+      - name: v3 web (format + typecheck + tests + build)
+        run: |
+          npm ci --prefix web --no-audit --no-fund
+          npm --prefix web run format:check
+          npm --prefix web run typecheck
+          npm --prefix web test
+          npm --prefix web run build
       - name: Shipped data manifest
         run: python tools/check_distribution.py
       - name: Package smoke test
