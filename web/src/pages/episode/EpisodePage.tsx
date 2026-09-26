@@ -1,5 +1,6 @@
 import {
   BookOpenText,
+  ChevronLeft,
   ChevronRight,
   Download,
   Image,
@@ -7,12 +8,15 @@ import {
   Puzzle,
   ScrollText,
 } from 'lucide-react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet, useLocation, useOutletContext, useParams } from 'react-router-dom';
 import { useExtensionPanels } from '../../api/open';
-import { useEpisode, usePatchEpisode, useSeries } from '../../api/series';
+import { useEpisode, useEpisodes, usePatchEpisode, useSeries } from '../../api/series';
 import type { Episode, Series } from '../../api/types';
+import { ApiError } from '../../api/client';
 import { QueryError } from '../../app/errors';
+import { useRecents } from '../../app/recents';
 import { usePageTitle } from '../../app/title';
 import { panelKey } from '../../components/ExtensionFrame';
 import { toastError } from '../../components/toast';
@@ -36,12 +40,25 @@ export default function EpisodePage() {
   const series = useSeries(episode.data?.series_id);
   const patch = usePatchEpisode(episodeId ?? '');
   const panels = useExtensionPanels('episode');
+  // Neighbours for prev / next (first page of the series' episodes covers the common case).
+  const siblings = useEpisodes(episode.data?.series_id);
   const section = useLocation().pathname.split('/')[3] as (typeof TABS)[number] | undefined;
   usePageTitle(
     section && TABS.includes(section) ? t(`episode.${section}`) : null,
     episode.data?.title,
     series.data?.title,
   );
+
+  // Remember the visit for the rail's "Recent" list; forget episodes that no longer exist.
+  const { visit, forget } = useRecents();
+  const loaded = episode.data;
+  const seriesTitle = series.data?.title;
+  useEffect(() => {
+    if (loaded && seriesTitle)
+      visit({ id: loaded.id!, title: loaded.title, seriesId: loaded.series_id, seriesTitle });
+    else if (episode.error instanceof ApiError && episode.error.status === 404 && episodeId)
+      forget(episodeId);
+  }, [loaded, seriesTitle, episode.error, episodeId, visit, forget]);
 
   if (episode.isLoading || series.isLoading)
     return (
@@ -61,6 +78,11 @@ export default function EpisodePage() {
 
   const ep = episode.data;
   const tab = ({ isActive }: { isActive: boolean }) => `tab ${isActive ? 'active' : ''}`;
+  const order = siblings.data?.items ?? [];
+  const at = order.findIndex((e) => e.id === ep.id);
+  const prev = at > 0 ? order[at - 1] : null;
+  const next = at >= 0 && at < order.length - 1 ? order[at + 1] : null;
+  const keepTab = section && TABS.includes(section) ? section : 'script';
   const adopted = new Set(
     ep.takes.filter((x) => x.status === 'adopted' && !x.variant_id).map((x) => x.panel_id),
   );
@@ -75,6 +97,33 @@ export default function EpisodePage() {
           <Link to={`/series/${ep.series_id}/episodes`}>{series.data.title}</Link>
           <ChevronRight size={13} />
           <span>{t('series.episodeNo', { n: ep.order + 1 })}</span>
+          {at >= 0 && order.length > 1 ? (
+            <span className="workspace-nav">
+              <Link
+                to={prev ? `/episodes/${prev.id}/${keepTab}` : '#'}
+                className="btn ghost icon sm"
+                aria-disabled={!prev}
+                tabIndex={prev ? 0 : -1}
+                title={prev ? `${t('episode.prev')} · ${prev.title}` : t('episode.prev')}
+                aria-label={t('episode.prev')}
+              >
+                <ChevronLeft size={15} />
+              </Link>
+              <span className="mono">
+                {at + 1} / {order.length}
+              </span>
+              <Link
+                to={next ? `/episodes/${next.id}/${keepTab}` : '#'}
+                className="btn ghost icon sm"
+                aria-disabled={!next}
+                tabIndex={next ? 0 : -1}
+                title={next ? `${t('episode.next')} · ${next.title}` : t('episode.next')}
+                aria-label={t('episode.next')}
+              >
+                <ChevronRight size={15} />
+              </Link>
+            </span>
+          ) : null}
         </nav>
         <div className="workspace-title-row">
           <InlineTitle

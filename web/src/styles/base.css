@@ -219,6 +219,76 @@ img {
   text-transform: uppercase;
 }
 
+/* Recently opened episodes: title over series, a dismiss button on hover. */
+.rail-recents {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rail-recents .rail-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rail-recent-row {
+  position: relative;
+}
+
+.rail-recent {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1px;
+  padding: 6px 26px 6px 11px;
+  font-size: 13px;
+}
+
+.rail-recent-title {
+  display: block;
+}
+
+.rail-recent-series {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.rail-recent.active .rail-recent-series {
+  color: color-mix(in srgb, var(--accent) 70%, var(--muted));
+}
+
+.rail-recent-forget {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-50%);
+  transition:
+    opacity var(--fast),
+    background var(--fast);
+}
+
+.rail-recent-row:hover .rail-recent-forget,
+.rail-recent-forget:focus-visible {
+  opacity: 1;
+}
+
+.rail-recent-forget:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
 .rail-foot {
   margin-top: auto;
   display: flex;
@@ -412,6 +482,7 @@ img {
     font-size: 21px;
   }
 
+  .rail-recents,
   .rail-section,
   .brand-sub,
   .rail-label,

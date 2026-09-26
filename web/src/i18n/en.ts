@@ -13,6 +13,8 @@ const en: Widen<Dict> = {
     language: '中文',
     main: 'Main navigation',
     breadcrumbs: 'Breadcrumbs',
+    recent: 'Recent',
+    removeRecent: 'Remove “{{title}}” from recent',
   },
   common: {
     duplicate: 'Duplicate',
@@ -142,6 +144,8 @@ const en: Widen<Dict> = {
     override: "Override {{name}}'s prompt tags",
   },
   episode: {
+    prev: 'Previous episode',
+    next: 'Next episode',
     script: 'Script',
     board: 'Board',
     canvas: 'Canvas',

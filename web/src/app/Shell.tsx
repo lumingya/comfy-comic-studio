@@ -1,12 +1,23 @@
-import { BookOpen, Languages, ListTodo, Moon, Settings, Sun, Trash2 } from 'lucide-react';
+import {
+  BookOpen,
+  History,
+  Languages,
+  ListTodo,
+  Moon,
+  Settings,
+  Sun,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useJobEvents, useJobs, useLive } from '../api/jobs';
 import { useThemes, useUpdateStatus } from '../api/open';
 import { ConfirmHost } from '../components/confirm';
 import { Toaster } from '../components/toast';
 import { setLocale } from '../i18n';
+import { useRecents } from './recents';
 import { applyTheme, resolveTheme, systemPrefersDark, toggled } from './theme';
 import { useUI } from './ui-store';
 
@@ -42,6 +53,43 @@ function ActiveJobsBadge() {
   ) : null;
 }
 
+/** Episodes opened lately: one click back into the work, from anywhere. */
+function RecentEpisodes() {
+  const { t } = useTranslation();
+  const items = useRecents((s) => s.items);
+  const forget = useRecents((s) => s.forget);
+  if (!items.length) return null;
+  const link = ({ isActive }: { isActive: boolean }) =>
+    `rail-link rail-recent ${isActive ? 'active' : ''}`;
+  return (
+    <div className="rail-recents" aria-label={t('nav.recent')}>
+      <div className="rail-section">
+        <History size={11} /> {t('nav.recent')}
+      </div>
+      {items.map((r) => (
+        <div key={r.id} className="rail-recent-row">
+          <NavLink
+            to={`/episodes/${r.id}`}
+            className={link}
+            title={`${r.seriesTitle} · ${r.title}`}
+          >
+            <span className="rail-recent-title ellipsis">{r.title}</span>
+            <span className="rail-recent-series ellipsis">{r.seriesTitle}</span>
+          </NavLink>
+          <button
+            className="rail-recent-forget"
+            aria-label={t('nav.removeRecent', { title: r.title })}
+            title={t('nav.removeRecent', { title: r.title })}
+            onClick={() => forget(r.id)}
+          >
+            <X size={12} />
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Version() {
   const { data } = useUpdateStatus();
   return data?.current ? <span className="rail-version">{data.current}</span> : null;
@@ -59,10 +107,10 @@ export function Shell() {
   return (
     <div className="shell">
       <nav className="rail" aria-label={t('nav.main')}>
-        <div className="brand">
+        <Link to="/" className="brand" aria-label={t('app.name')}>
           <span className="brand-mark">{t('app.name')}</span>
           <span className="brand-sub">{t('app.tagline')}</span>
-        </div>
+        </Link>
         <NavLink to="/" end className={link} title={t('nav.works')}>
           <BookOpen size={17} /> <span className="rail-label">{t('nav.works')}</span>
         </NavLink>
@@ -76,6 +124,7 @@ export function Shell() {
         <NavLink to="/trash" className={link} title={t('nav.trash')}>
           <Trash2 size={17} /> <span className="rail-label">{t('nav.trash')}</span>
         </NavLink>
+        <RecentEpisodes />
         <div className="rail-foot">
           <button
             className="btn ghost icon"

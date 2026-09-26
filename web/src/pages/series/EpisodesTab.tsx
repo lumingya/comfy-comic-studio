@@ -12,6 +12,7 @@ import { assetUrl } from '../../api/client';
 import type { EpisodeSummary } from '../../api/types';
 import { QueryError } from '../../app/errors';
 import { relativeTime } from '../../app/format';
+import { useRecents } from '../../app/recents';
 import { toastError } from '../../components/toast';
 import {
   ActionMenu,
@@ -140,6 +141,7 @@ export default function EpisodesTab() {
   const create = useCreateEpisode(series.id!);
   const trash = useTrashEpisode(series.id!);
   const undo = useUndoTrash();
+  const forgetRecent = useRecents((s) => s.forget);
   const [newTitle, setNewTitle] = useState('');
   const [adding, setAdding] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -200,7 +202,10 @@ export default function EpisodesTab() {
               ep={ep}
               onTrash={() =>
                 trash.mutate(ep.id, {
-                  onSuccess: () => undo('episode', ep.id, ep.title),
+                  onSuccess: () => {
+                    forgetRecent(ep.id);
+                    undo('episode', ep.id, ep.title);
+                  },
                   onError: toastError,
                 })
               }

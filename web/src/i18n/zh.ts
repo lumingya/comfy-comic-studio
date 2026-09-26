@@ -10,6 +10,8 @@ const zh = {
     language: 'English',
     main: '主导航',
     breadcrumbs: '当前位置',
+    recent: '最近打开',
+    removeRecent: '从最近打开中移除「{{title}}」',
   },
   common: {
     duplicate: '复制',
@@ -137,6 +139,8 @@ const zh = {
     override: '覆盖 {{name}} 的提示词标签',
   },
   episode: {
+    prev: '上一话',
+    next: '下一话',
     script: '剧本',
     board: '出图板',
     canvas: '条漫画布',

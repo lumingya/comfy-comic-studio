@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -309,5 +309,13 @@ describe('every route mounts with API data', () => {
     mount('/nope');
     expect(await screen.findByText('页面不存在')).toBeInTheDocument();
     expect(screen.getByText('回到作品')).toBeInTheDocument();
+  });
+
+  it('opening an episode lists it under Recent in the rail', async () => {
+    mount('/episodes/ep_1/script');
+    const recent = await screen.findByLabelText('最近打开');
+    expect(await within(recent).findByText('雨夜便利店')).toBeInTheDocument();
+    fireEvent.click(within(recent).getByLabelText('从最近打开中移除「第一话」'));
+    expect(screen.queryByLabelText('最近打开')).toBeNull();
   });
 });
