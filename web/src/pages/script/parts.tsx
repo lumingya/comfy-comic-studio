@@ -1,8 +1,9 @@
-import { Link2, Plus, X } from 'lucide-react';
+import { Copy, Link2, Plus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { assetUrl } from '../../api/client';
 import { usePrompt } from '../../api/series';
 import { DIALOGUE_KINDS, type Dialogue, type PanelCharacter, type Series } from '../../api/types';
+import { toast, toastError } from '../../components/toast';
 import { Loading, Select, TagInput, TextInput } from '../../components/ui';
 
 export function CastEditor(props: {
@@ -169,12 +170,23 @@ export function PromptPreview(props: { episodeId: string; panelId: string }) {
         <span className="chip">
           {p.tags.width}×{p.tags.height}
         </span>
-        {p.tags.raw ? <span className="chip warn">raw</span> : null}
+        {p.tags.raw ? <span className="chip warn">{t('script.rawChip')}</span> : null}
         {p.tags.loras.map((l) => (
           <span key={l.name} className="chip">
             {l.name}
           </span>
         ))}
+        <span className="grow" />
+        <button
+          className="btn ghost sm"
+          onClick={() =>
+            navigator.clipboard
+              ?.writeText(p.tags.positive)
+              .then(() => toast(t('common.copied')), toastError)
+          }
+        >
+          <Copy size={13} /> {t('script.copyPrompt')}
+        </button>
       </div>
       {p.tags.unresolved.length ? (
         <div className="notice warn">
@@ -184,7 +196,7 @@ export function PromptPreview(props: { episodeId: string; panelId: string }) {
       <pre className="prompt-box">{p.tags.positive}</pre>
       <pre className="prompt-box negative">{p.tags.negative}</pre>
       <details>
-        <summary className="small muted">natural</summary>
+        <summary className="small muted">{t('script.naturalPrompt')}</summary>
         <pre className="prompt-box">{p.natural.positive}</pre>
       </details>
       {p.references.length ? (

@@ -9,11 +9,12 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStripReport } from '../../api/canvas';
 import { useLayoutStrip, useSaveStrip } from '../../api/production';
 import type { LetteringLayer, Strip } from '../../api/types';
+import { useUnsavedGuard } from '../../app/autosave';
 import { useUI } from '../../app/ui-store';
 import { toast, toastError } from '../../components/toast';
 import { Empty, Field, NumberInput, Select, TextInput } from '../../components/ui';
@@ -83,15 +84,30 @@ export default function CanvasTab() {
   const layout = useLayoutStrip(episode.id);
   const save = useSaveStrip(episode.id);
   const [strip, setStrip] = useState<Strip>(episode.strip);
-  const [dirty, setDirty] = useState(false);
+  const [dirty, setDirtyState] = useState(false);
+  const dirtyRef = useRef(false);
+  const setDirty = (value: boolean) => {
+    dirtyRef.current = value;
+    setDirtyState(value);
+  };
   const [selection, setSelection] = useState<Selection>(null);
   const [scale, setScale] = useState(0.6);
   const [pacing, setPacing] = useState(false);
+  useUnsavedGuard(dirty);
 
+  // A new server copy (auto layout, pacing) replaces the canvas — but never unsaved edits.
   useEffect(() => {
-    setStrip(episode.strip);
-    setDirty(false);
+    if (!dirtyRef.current) setStrip(episode.strip);
   }, [episode.strip]);
+
+  const saveStrip = () =>
+    save.mutate(strip, {
+      onSuccess: () => {
+        setDirty(false);
+        toast(t('common.saved'));
+      },
+      onError: toastError,
+    });
 
   const panels = useMemo(
     () => [...episode.panels].sort((a, b) => a.order - b.order),
@@ -136,7 +152,15 @@ export default function CanvasTab() {
     );
 
   return (
-    <div className="canvas-layout">
+    <div
+      className="canvas-layout"
+      onKeyDown={(e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+          e.preventDefault();
+          if (dirty && !save.isPending) saveStrip();
+        }
+      }}
+    >
       <div className="canvas-toolbar">
         <button className="btn" onClick={() => setPacing(true)} disabled={dirty}>
           <Wand2 size={15} /> {t('pacing.open')}
@@ -180,9 +204,8 @@ export default function CanvasTab() {
         <button
           className="btn primary"
           disabled={!dirty || save.isPending}
-          onClick={() =>
-            save.mutate(strip, { onSuccess: () => toast(t('common.saved')), onError: toastError })
-          }
+          title="Ctrl+S"
+          onClick={saveStrip}
         >
           <Save size={15} /> {t('common.save')}
         </button>

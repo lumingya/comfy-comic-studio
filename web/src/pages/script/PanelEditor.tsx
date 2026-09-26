@@ -1,12 +1,17 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { Copy, Lock, Trash2, Unlock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDeletePanel, useDuplicatePanel, usePatchPanel } from '../../api/series';
+import { ApiError } from '../../api/client';
+import { keys } from '../../api/keys';
+import { useDuplicatePanel, usePatchPanel } from '../../api/series';
 import { ANGLES, SHOTS, TIMES, type Episode, type Panel, type Series } from '../../api/types';
+import { useAutosave } from '../../app/autosave';
 import { toastError } from '../../components/toast';
 import { Field, NumberInput, Select, TagInput, TextArea, TextInput } from '../../components/ui';
 import { CompositionEditor } from './CompositionEditor';
 import { CastEditor, DialogueEditor, PromptPreview } from './parts';
+import { SaveState } from '../../components/SaveState';
 import { StripFields } from './StripFields';
 
 const WIDTHS = ['full', 'inset', 'bleed', 'frameless'] as const;
@@ -22,51 +27,71 @@ function parseOverrides(text: string): Record<string, unknown> | null {
   }
 }
 
+const nodeJson = (panel: Panel) =>
+  Object.keys(panel.overrides.node_overrides ?? {}).length
+    ? JSON.stringify(panel.overrides.node_overrides, null, 2)
+    : '';
+
+/** The draft as it would be stored (node overrides parsed; invalid JSON keeps the saved ones). */
+export function panelSnapshot(draft: Panel, nodeText: string): Panel {
+  const node = parseOverrides(nodeText);
+  return node === null
+    ? draft
+    : { ...draft, overrides: { ...draft.overrides, node_overrides: node } };
+}
+
+/**
+ * Edits one panel.  Changes autosave shortly after typing stops (and when switching panels);
+ * Ctrl+S saves at once.  Deleting is delegated to the parent so it can offer "Undo".
+ */
 export function PanelEditor(props: {
   episode: Episode;
   series: Series;
   panel: Panel;
-  onDeleted: () => void;
+  index: number;
+  onDelete: (snapshot: Panel) => void;
 }) {
   const { t } = useTranslation();
+  const qc = useQueryClient();
   const { episode, series } = props;
   const patch = usePatchPanel(episode.id!);
   const duplicate = useDuplicatePanel(episode.id!);
-  const remove = useDeletePanel(episode.id!);
   const [draft, setDraft] = useState<Panel>(props.panel);
-  const [nodeText, setNodeText] = useState('');
-  const [dirty, setDirty] = useState(false);
+  const [nodeText, setNodeText] = useState(() => nodeJson(props.panel));
+  const nodeOverrides = parseOverrides(nodeText);
 
+  const autosave = useAutosave(async () => {
+    const { id, order: _order, ...changes } = panelSnapshot(draft, nodeText);
+    const send = () =>
+      patch.mutateAsync({
+        panelId: id!,
+        changes,
+        // The latest revision we know of (every save / reorder refreshes the cached episode).
+        revision: qc.getQueryData<Episode>(keys.episode(episode.id!))?.revision ?? episode.revision,
+      });
+    try {
+      await send();
+    } catch (error) {
+      if (!(error instanceof ApiError && error.status === 409)) throw error;
+      // Changed elsewhere meanwhile: reload, then write this panel's fields once more.
+      await qc.refetchQueries({ queryKey: keys.episode(episode.id!), exact: true });
+      await send();
+    }
+  });
+
+  // Server-side changes (assistant, undo, another tab) replace the draft unless edits are pending.
   useEffect(() => {
+    if (autosave.busy()) return;
     setDraft(props.panel);
-    setNodeText(
-      Object.keys(props.panel.overrides.node_overrides ?? {}).length
-        ? JSON.stringify(props.panel.overrides.node_overrides, null, 2)
-        : '',
-    );
-    setDirty(false);
-  }, [props.panel]);
+    setNodeText(nodeJson(props.panel));
+  }, [props.panel]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const set = (changes: Partial<Panel>) => {
-    setDraft({ ...draft, ...changes });
-    setDirty(true);
+    setDraft((d) => ({ ...d, ...changes }));
+    autosave.touch();
   };
   const setOv = (changes: Partial<Panel['overrides']>) =>
     set({ overrides: { ...draft.overrides, ...changes } });
-  const nodeOverrides = parseOverrides(nodeText);
-
-  const save = () => {
-    if (nodeOverrides === null) return;
-    const { id: _id, order: _order, ...changes } = draft;
-    patch.mutate(
-      {
-        panelId: draft.id!,
-        changes: { ...changes, overrides: { ...draft.overrides, node_overrides: nodeOverrides } },
-        revision: episode.revision,
-      },
-      { onSuccess: () => setDirty(false), onError: toastError },
-    );
-  };
 
   const locations = [
     { value: '', label: t('common.none') },
@@ -77,20 +102,20 @@ export function PanelEditor(props: {
     <div
       className="panel-editor"
       onKeyDown={(e) => {
-        if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
           e.preventDefault();
-          save();
+          autosave.flush().catch(toastError);
         }
       }}
     >
       <div className="save-bar">
-        <span className="overline" style={{ margin: 0 }}>
-          {draft.id}
+        <span className="panel-title" title={draft.id}>
+          {t('script.panelNo', { n: props.index + 1 })}
         </span>
-        {dirty ? <span className="chip warn">{t('canvas.unsaved')}</span> : null}
+        <SaveState state={autosave.state} invalid={nodeOverrides === null} />
         <span className="grow" />
         <button
-          className="btn ghost sm"
+          className={`btn ghost sm ${draft.locked ? 'active' : ''}`}
           onClick={() => set({ locked: !draft.locked })}
           title={t('script.locked')}
         >
@@ -99,24 +124,26 @@ export function PanelEditor(props: {
         </button>
         <button
           className="btn ghost sm"
-          onClick={() => duplicate.mutate(draft.id!, { onError: toastError })}
+          disabled={duplicate.isPending}
+          onClick={() =>
+            autosave
+              .flush()
+              .then(() => duplicate.mutateAsync(draft.id!))
+              .catch(toastError)
+          }
         >
           <Copy size={14} /> {t('script.duplicate')}
         </button>
         <button
-          className="btn ghost sm danger"
-          onClick={() =>
-            remove.mutate(draft.id!, { onSuccess: props.onDeleted, onError: toastError })
-          }
+          className="btn ghost icon sm danger"
+          title={t('script.deletePanel')}
+          aria-label={t('script.deletePanel')}
+          onClick={() => {
+            autosave.discard();
+            props.onDelete(panelSnapshot(draft, nodeText));
+          }}
         >
           <Trash2 size={14} />
-        </button>
-        <button
-          className="btn primary"
-          disabled={!dirty || patch.isPending || nodeOverrides === null}
-          onClick={save}
-        >
-          {t('common.save')}
         </button>
       </div>
 
@@ -249,7 +276,7 @@ export function PanelEditor(props: {
               mono
               rows={4}
               value={nodeText}
-              onChange={(v) => (setNodeText(v), setDirty(true))}
+              onChange={(v) => (setNodeText(v), autosave.touch())}
             />
           </Field>
         </div>

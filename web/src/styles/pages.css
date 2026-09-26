@@ -173,13 +173,25 @@
 .rail-group-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 4px 8px;
+  gap: 8px;
+  padding: 4px 4px 4px 10px;
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+.rail-group-head > :first-child {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.rail-count {
+  font-size: 10.5px;
+  color: var(--muted);
+  opacity: 0.8;
 }
 
 .rail-item {
@@ -206,6 +218,11 @@
 .rail-item.active {
   background: var(--tint);
   color: var(--accent);
+}
+
+.rail-item .ellipsis {
+  flex: 1;
+  min-width: 0;
 }
 
 .save-bar {

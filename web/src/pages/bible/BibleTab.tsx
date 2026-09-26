@@ -3,6 +3,9 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePatchSeries } from '../../api/series';
 import type { Bible, Character, Location, Style } from '../../api/types';
+import { useAutosave } from '../../app/autosave';
+import { Avatar } from '../../components/avatar';
+import { SaveState } from '../../components/SaveState';
 import { toast, toastError } from '../../components/toast';
 import { Empty } from '../../components/ui';
 import { useSeriesContext } from '../series/SeriesPage';
@@ -54,18 +57,28 @@ function blank(kind: Kind, name: string): Character | Location | Style {
 export default function BibleTab() {
   const { t } = useTranslation();
   const { series } = useSeriesContext();
-  const patch = usePatchSeries(series.id);
+  const patch = usePatchSeries(series.id!);
   const [bible, setBible] = useState<Bible>(series.bible);
   const [variables, setVariables] = useState<Record<string, string>>(series.variables ?? {});
-  const [dirty, setDirty] = useState(false);
-  const [sel, setSel] = useState<Selection | null>(null);
+  const [sel, setSel] = useState<Selection | null>(() => {
+    const first = series.bible.characters[0];
+    return first ? { kind: 'characters', id: first.id! } : null;
+  });
 
-  // Reset the draft when the server copy changes (e.g. the assistant added a character).
+  const autosave = useAutosave(() => patch.mutateAsync({ bible, variables }), 1000);
+
+  // Take the server copy (e.g. the assistant added a character) unless local edits are pending —
+  // renaming the series in the header must not throw away an unsaved character.
   useEffect(() => {
+    if (autosave.busy()) return;
     setBible(series.bible);
     setVariables(series.variables ?? {});
-    setDirty(false);
   }, [series.updated_at]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const edit = (next: (b: Bible) => Bible) => {
+    setBible(next);
+    autosave.touch();
+  };
 
   const groups: { kind: Kind; icon: ReactNode; label: string; add: string }[] = [
     {
@@ -93,61 +106,84 @@ export default function BibleTab() {
     return (bible[sel.kind] as { id: string }[]).find((x) => x.id === sel.id) ?? null;
   }, [bible, sel]);
 
-  const update = (kind: Kind, id: string, changes: object) => {
-    setBible({
-      ...bible,
-      [kind]: (bible[kind] as { id: string }[]).map((x) =>
-        x.id === id ? { ...x, ...changes } : x,
-      ),
-    });
-    setDirty(true);
-  };
+  const update = (kind: Kind, id: string, changes: object) =>
+    edit((b) => ({
+      ...b,
+      [kind]: (b[kind] as { id: string }[]).map((x) => (x.id === id ? { ...x, ...changes } : x)),
+    }));
 
   const add = (kind: Kind, label: string) => {
     const item = blank(kind, label);
-    setBible({ ...bible, [kind]: [...(bible[kind] ?? []), item] });
+    edit((b) => ({ ...b, [kind]: [...(b[kind] ?? []), item] }));
     setSel({ kind, id: item.id! });
-    setDirty(true);
   };
 
   const remove = (kind: Kind, id: string) => {
-    setBible({ ...bible, [kind]: (bible[kind] as { id: string }[]).filter((x) => x.id !== id) });
+    const list = bible[kind] as { id: string; name: string }[];
+    const index = list.findIndex((x) => x.id === id);
+    const item = list[index];
+    if (!item) return;
+    edit((b) => ({ ...b, [kind]: (b[kind] as { id: string }[]).filter((x) => x.id !== id) }));
     setSel(null);
-    setDirty(true);
+    toast(t('bible.deleted', { name: item.name || item.id }), {
+      action: {
+        label: t('common.undo'),
+        onClick: () => {
+          edit((b) => {
+            const items = [...(b[kind] as object[])];
+            items.splice(Math.min(index, items.length), 0, item);
+            return { ...b, [kind]: items };
+          });
+          setSel({ kind, id });
+        },
+      },
+    });
   };
 
-  const save = () =>
-    patch.mutate(
-      { bible, variables },
-      { onSuccess: () => (setDirty(false), toast(t('common.saved'))), onError: toastError },
-    );
-
   return (
-    <div className="split">
+    <div
+      className="split"
+      onKeyDown={(e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+          e.preventDefault();
+          autosave.flush().catch(toastError);
+        }
+      }}
+    >
       <aside className="split-rail">
-        {groups.map((g) => (
-          <div key={g.kind} className="rail-group">
-            <div className="rail-group-head">
-              {g.icon} {g.label}
-              <button
-                className="btn ghost icon sm"
-                title={g.add}
-                onClick={() => add(g.kind, g.add)}
-              >
-                <Plus size={14} />
-              </button>
+        {groups.map((g) => {
+          const items = bible[g.kind] as { id: string; name: string }[];
+          return (
+            <div key={g.kind} className="rail-group">
+              <div className="rail-group-head">
+                <span className="row" style={{ gap: 6 }}>
+                  {g.icon} {g.label}
+                  <span className="rail-count">{items.length}</span>
+                </span>
+                <button
+                  className="btn ghost icon sm"
+                  title={g.add}
+                  aria-label={g.add}
+                  onClick={() => add(g.kind, g.add)}
+                >
+                  <Plus size={14} />
+                </button>
+              </div>
+              {items.map((item) => (
+                <button
+                  key={item.id}
+                  className={`rail-item ${sel && 'id' in sel && sel.id === item.id ? 'active' : ''}`}
+                  onClick={() => setSel({ kind: g.kind, id: item.id })}
+                >
+                  {g.kind === 'characters' ? (
+                    <Avatar character={item as Character} size={22} />
+                  ) : null}
+                  <span className="ellipsis">{item.name || item.id}</span>
+                </button>
+              ))}
             </div>
-            {(bible[g.kind] as { id: string; name: string }[]).map((item) => (
-              <button
-                key={item.id}
-                className={`rail-item ${sel && 'id' in sel && sel.id === item.id ? 'active' : ''}`}
-                onClick={() => setSel({ kind: g.kind, id: item.id })}
-              >
-                {item.name || item.id}
-              </button>
-            ))}
-          </div>
-        ))}
+          );
+        })}
         <button
           className={`rail-item ${sel?.kind === 'variables' ? 'active' : ''}`}
           onClick={() => setSel({ kind: 'variables' })}
@@ -158,25 +194,26 @@ export default function BibleTab() {
 
       <section className="split-main">
         <div className="save-bar">
-          {dirty ? <span className="chip warn">{t('canvas.unsaved')}</span> : null}
+          <SaveState state={autosave.state} />
           <span className="grow" />
           {current && sel && sel.kind !== 'variables' ? (
             <button className="btn ghost danger sm" onClick={() => remove(sel.kind, sel.id)}>
               <Trash2 size={14} /> {t('common.delete')}
             </button>
           ) : null}
-          <button className="btn primary" disabled={!dirty || patch.isPending} onClick={save}>
-            {t('common.save')}
-          </button>
         </div>
-        {!sel ? <Empty>{t('bible.select')}</Empty> : null}
+        {!sel ? (
+          <Empty icon={<User size={24} />} title={t('bible.emptyTitle')}>
+            {t('bible.select')}
+          </Empty>
+        ) : null}
         {sel?.kind === 'variables' ? (
           <div className="card">
             <h2>{t('bible.variables')}</h2>
             <p className="hint">{t('bible.variablesHint')}</p>
             <VariablesEditor
               value={variables}
-              onChange={(v) => (setVariables(v), setDirty(true))}
+              onChange={(v) => (setVariables(v), autosave.touch())}
             />
           </div>
         ) : null}

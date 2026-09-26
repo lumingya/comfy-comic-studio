@@ -17,6 +17,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Lock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { assetUrl } from '../../api/client';
 import type { Panel, Series } from '../../api/types';
 
 function Row(props: {
@@ -24,6 +25,7 @@ function Row(props: {
   index: number;
   active: boolean;
   names: Record<string, string>;
+  cover?: string;
   onSelect: () => void;
 }) {
   const { t } = useTranslation();
@@ -43,11 +45,19 @@ function Row(props: {
       }}
       className={`panel-row ${props.active ? 'active' : ''}`}
     >
-      <button className="drag-handle" aria-label="drag" {...attributes} {...listeners}>
+      <button
+        className="drag-handle"
+        aria-label={t('script.dragToReorder')}
+        {...attributes}
+        {...listeners}
+      >
         <GripVertical size={14} />
       </button>
       <button className="panel-row-body" onClick={props.onSelect}>
         <span className="panel-no mono">{String(props.index + 1).padStart(2, '0')}</span>
+        {props.cover ? (
+          <img className="panel-thumb" src={assetUrl(props.cover, 96)} alt="" loading="lazy" />
+        ) : null}
         <span className="grow">
           <span className="row small" style={{ gap: 6 }}>
             <span className="chip">{t(`script.shots.${p.shot}`)}</span>
@@ -68,6 +78,8 @@ export function PanelList(props: {
   selected: string | null;
   onSelect: (id: string) => void;
   onReorder: (ids: string[]) => void;
+  /** panel id → adopted image, shown as a thumbnail. */
+  covers?: Record<string, string>;
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -93,6 +105,7 @@ export function PanelList(props: {
               panel={p}
               index={i}
               names={names}
+              cover={props.covers?.[p.id!]}
               active={p.id === props.selected}
               onSelect={() => props.onSelect(p.id!)}
             />
