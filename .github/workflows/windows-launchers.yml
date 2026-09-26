@@ -1,9 +1,9 @@
 name: Windows launcher regression
 on:
   push:
-    paths: ['*.bat', '.gitattributes', 'tools/build_release.py', 'tests/test_windows_launchers.py', '.github/workflows/windows-launchers.yml']
+    paths: ['legacy/*.bat', '.gitattributes', 'legacy/.gitattributes', 'legacy/tools/build_release.py', 'legacy/tests/test_windows_launchers.py', '.github/workflows/windows-launchers.yml']
   pull_request:
-    paths: ['*.bat', '.gitattributes', 'tools/build_release.py', 'tests/test_windows_launchers.py', '.github/workflows/windows-launchers.yml']
+    paths: ['legacy/*.bat', '.gitattributes', 'legacy/.gitattributes', 'legacy/tools/build_release.py', 'legacy/tests/test_windows_launchers.py', '.github/workflows/windows-launchers.yml']
   workflow_dispatch:
 jobs:
   launchers:
@@ -14,4 +14,5 @@ jobs:
         with:
           python-version: '3.12'
       - name: Test launcher bytes and real CMD execution
+        working-directory: legacy
         run: python -m unittest discover -s tests -p test_windows_launchers.py -v

@@ -11,9 +11,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+// Shipped data/: next to the program in a release package, one level up in the repository (legacy/).
+const SHIPPED_DATA = [path.join(__dirname, '../data'), path.join(__dirname, '../../data')]
+  .find(dir => fs.existsSync(path.join(dir, 'distribution.json'))) || path.join(__dirname, '../data');
 const vm = require('node:vm');
 
-const context = vm.createContext({ console, setTimeout, clearTimeout, structuredClone, clone:x=>JSON.parse(JSON.stringify(x)), uid:prefix=>prefix+'_'+Math.random().toString(36).slice(2,10), projectTemplates:()=>[], projectVariableSets:()=>[], MioContent:{demoSpec:JSON.parse(fs.readFileSync(path.join(__dirname,'../data/catalog/demo-spec.json'),'utf8'))} });
+const context = vm.createContext({ console, setTimeout, clearTimeout, structuredClone, clone:x=>JSON.parse(JSON.stringify(x)), uid:prefix=>prefix+'_'+Math.random().toString(36).slice(2,10), projectTemplates:()=>[], projectVariableSets:()=>[], MioContent:{demoSpec:JSON.parse(fs.readFileSync(path.join(SHIPPED_DATA,'catalog/demo-spec.json'),'utf8'))} });
 for (const file of ['state.js', 'sync.js', 'workflow-mapping.js', 'engine.js', 'ui-presentation.js', 'ui-reader.js', 'ui-templates.js', 'ui-export.js', 'ui-editors.js', 'ui-locale.js', 'ui-assistant.js', 'ui-storyboard.js', 'ui-gallery.js', 'ui-settings.js', 'ui.js', 'assembly-workshop.js']) {
   const source = fs.readFileSync(path.join(__dirname, file), 'utf8');
   new vm.Script(source, { filename: file }).runInContext(context);

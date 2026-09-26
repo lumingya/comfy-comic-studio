@@ -1,6 +1,6 @@
 name: CI
-# 每次推送与 PR 的轻量门禁：构建产物与提交一致、前端契约测试、Python 单元测试、
-# 新栈前后端（lint / 类型 / 单测 / 构建）、随包数据清单、打包冒烟。浏览器端到端回归见 e2e.yml（手动触发）。
+# 每次推送与 PR 的轻量门禁：新栈前后端（lint / 类型 / 单测 / 构建）、Spike 单测，以及 legacy/ 旧版的
+# 构建产物与提交一致、前端契约测试、Python 单元测试、随包数据清单、打包冒烟。浏览器端到端回归见 e2e.yml（手动触发）。
 on:
   push:
   pull_request:
@@ -23,14 +23,17 @@ jobs:
         with:
           node-version: '20'
       - name: Install runtime dependency (Pillow)
-        run: python -m pip install -r packaging/requirements.txt
-      - name: Build (dev) and verify the committed output is current
+        run: python -m pip install -r legacy/packaging/requirements.txt
+      - name: Legacy build (dev) and verify the committed output is current
+        working-directory: legacy
         run: |
           node js/build.js dev
           git diff --exit-code
-      - name: Frontend contract tests
+      - name: Legacy frontend contract tests
+        working-directory: legacy
         run: node js/tests.js
-      - name: Python unit tests
+      - name: Legacy Python unit tests
+        working-directory: legacy
         run: python -m unittest discover -s tests -q
       - name: Spike unit tests (next/)
         run: python -m unittest discover -s next/tests -t next -q
@@ -50,6 +53,6 @@ jobs:
           npm --prefix web test
           npm --prefix web run build
       - name: Shipped data manifest
-        run: python tools/check_distribution.py
-      - name: Package smoke test
-        run: python tools/package_project.py --output releases
+        run: python legacy/tools/check_distribution.py
+      - name: Legacy package smoke test
+        run: python legacy/tools/package_project.py --output releases

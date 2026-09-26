@@ -1,55 +1,39 @@
-<div align="center">
-  <img src="docs/assets/mio-banner.svg" alt="Mio · 绘页" width="900">
-  <h1>Mio · 绘页</h1>
-  <p>从一个故事，到一本画册。</p>
-</div>
+# Mio · 绘页
 
-Mio 是用于分镜创作、图像生成、画册阅读与编辑的本地工作室，支持 ComfyUI、NovelAI 和 OpenAI 兼容图像服务。
+从一个故事，到一部条漫。本地优先：剧本、设定集、ComfyUI 出图、条漫画布与导出都在你自己的电脑上完成。
 
-[教程中心](docs/README.md) · [快速开始](docs/guide/QUICKSTART.md) · [常见问题](docs/guide/TROUBLESHOOTING.md) · [术语表](docs/guide/GLOSSARY.md) · [English](docs/README.en.md)
+> 项目正按[路线图](docs/ROADMAP.md)重建（条漫 + 本地 ComfyUI + React）。开发者和 AI 代理请先读 [AGENTS.md](AGENTS.md)。
 
-## 启动
+## 目录
 
-需要 Python 3.10+、Pillow 11.3–12.x 和现代浏览器。可执行变量另需 Node.js 20+，Git 扩展安装另需 Git。
+| 路径 | 内容 |
+|---|---|
+| `server/` | 新后端：FastAPI + Pydantic + SQLite（领域模型、任务引擎、ComfyUI 模块、出图管线、HTTP API） |
+| `web/` | 新前端：Vite + React + TypeScript |
+| `data/` | 随包默认数据与旧版工作区；新版的「导入旧数据」从这里读取 |
+| `next/` | Phase 0.5 技术验证（Spike） |
+| `legacy/` | 旧版 3.2（功能已冻结，只作参考），用法见 [legacy/README.md](legacy/README.md) |
+| `docs/` | 路线图 |
 
-在项目根目录运行：
+## 启动新版
 
-```bash
-python -m pip install -r packaging/requirements.txt
-python server.py
-```
-
-打开 **http://127.0.0.1:8777**。Windows 可双击 `start.bat`；Linux/macOS 可运行 `sh start.sh`。
-
-工作区默认位于 `data/`，也可通过 `MIO_DATA_DIR` 指定目录。更换程序前备份工作区，保留个人数据。
-
-## 创作流程
-
-1. 从首页打开「工作流与 API 配置」，配置图像服务。
-2. 在「创作工坊 → 分镜」填写画面提示词与台词。
-3. 在「创作工坊 → 预设工坊」准备角色、服装、画风或图片变量。
-4. 使用装配向导或连线画布组合分镜与预设，添加生成任务。
-5. 在任务卡点击「开始生成」，查看逐幕进度。
-6. 到画册集阅读、编辑图片或导出作品。
-
-## 阅读与导出
-
-阅读器提供展示模板、气泡与文字编辑，以及 HTML、图片 ZIP、PDF 导出。
-
-[阅读与导出](docs/guide/PRESENTATION.md) · [图片编辑](docs/guide/IMAGE_STUDIO.md) · [备份与恢复](docs/guide/BACKUP.md)
-
-## 扩展与开发
-
-> 项目正按[路线图](docs/ROADMAP.md)重构（条漫 + 本地 ComfyUI + React），旧版功能已冻结。开发者和 AI 代理请先读 [AGENTS.md](AGENTS.md)。
-
-[扩展 SDK](docs/ECOSYSTEM_GUIDE.md) · [样式工坊与主题包](docs/STYLE_STUDIO.md) · [可执行变量](docs/COMPUTED_VARIABLES.md) · [外部 API](docs/api/README.md) · [OpenAPI](docs/api/openapi.json)
+需要 Python 3.11+ 与 Node.js 20+。
 
 ```bash
-node js/build.js dev
-node js/tests.js
-python -m unittest discover -s tests -q
+python -m pip install -r server/requirements.txt
+npm ci --prefix web
+npm --prefix web run build
+
+cd server
+python -m mio_server          # http://127.0.0.1:8788 ，同时托管 web/dist
 ```
 
-浏览器端到端回归较重，按需运行：`npm ci && npx playwright install chromium && npm run test:current`。
+开发时另开一个终端运行 `npm --prefix web run dev`（Vite 把 `/api` 与 WebSocket 代理到 8788）。
+新版的运行数据默认在 `server/data/runtime/v3`（`--data` 或环境变量 `MIO_V3_DATA` 可改）。
 
-[开发指南](docs/DEVELOPMENT.md) · [MIT License](LICENSE)
+## 旧版
+
+旧版仍可运行：在 `legacy/` 目录执行 `python server.py`，或双击 `legacy/start.bat`（端口 8777）。
+工作区仍是仓库根目录的 `data/`，也可以用 `MIO_DATA_DIR` 指定。快照标签：`legacy-v3.2`。
+
+[MIT License](LICENSE)

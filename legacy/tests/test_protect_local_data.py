@@ -7,7 +7,8 @@ from pathlib import Path
 
 from tools import protect_local_data as protect
 
-ROOT = Path(__file__).resolve().parents[1]
+# The folder that contains data/ (the repository root once the program lives in legacy/).
+ROOT = protect.ROOT
 
 
 @unittest.skipUnless(shutil.which('git'), 'git is required')

@@ -1,6 +1,6 @@
 name: Browser E2E (manual)
 # 浏览器端到端回归（Playwright，约 30 个套件串行）。耗时长，且仍有已知失败项
-# （tests/production_scene_ui.mjs 的「手机队列无横向溢出」断言），所以只在手动触发时运行。
+# （legacy/tests/production_scene_ui.mjs 的「手机队列无横向溢出」断言），所以只在手动触发时运行。
 # 每次推送的门禁见 ci.yml。
 on:
   workflow_dispatch:
@@ -10,6 +10,9 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: legacy
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -19,8 +22,11 @@ jobs:
         with:
           node-version: '20'
           cache: npm
+          cache-dependency-path: legacy/package-lock.json
       - run: python -m pip install -r packaging/requirements.txt
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      # The browser suites copy the shipped data from the program folder; it stays at the repo root.
+      - run: ln -s ../data data
       - run: node js/build.js dev
       - run: npm run test:current
