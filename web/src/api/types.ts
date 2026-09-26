@@ -37,8 +37,9 @@ export type Angle = Panel['angle'];
 export type DialogueKind = Dialogue['kind'];
 export type RefRole = AssetRef['role'];
 
-export const SHOTS: Shot[] = ['extreme_close', 'close', 'medium', 'cowboy', 'full', 'wide'];
-export const ANGLES: Angle[] = ['eye', 'high', 'low', 'side', 'back', 'dutch'];
+// '' = unspecified: no framing tags are generated, the author's own prompt decides.
+export const SHOTS: Shot[] = ['', 'extreme_close', 'close', 'medium', 'cowboy', 'full', 'wide'];
+export const ANGLES: Angle[] = ['', 'eye', 'high', 'low', 'side', 'back', 'dutch'];
 export const TIMES: Panel['time'][] = ['', 'morning', 'day', 'evening', 'night'];
 export const DIALOGUE_KINDS: DialogueKind[] = ['speech', 'thought', 'narration', 'sfx', 'caption'];
 export const WIDTH_MODES: Panel['width_mode'][] = ['full', 'inset', 'bleed', 'frameless'];
@@ -107,6 +108,10 @@ export interface Job {
   error: string | null;
   created: number;
   updated: number;
+  /** List responses carry counts instead of items (done = complete + skipped). */
+  total?: number;
+  done?: number;
+  failed?: number;
   items?: JobItem[];
 }
 
@@ -130,6 +135,15 @@ export interface CompiledPrompt {
   refs: string[];
   loras: { name: string; strength?: number }[];
   unresolved: string[];
+  /** Every tag with the field / rule that produced it (see prompts.danbooru_parts). */
+  sources: PromptSource[];
+  negative_sources: PromptSource[];
+}
+
+export interface PromptSource {
+  tag: string;
+  /** quality | rating | style | cast | character:<id> | shot | angle | location | time | panel | append | negative | profile | style_negative | extra */
+  source: string;
 }
 
 export interface PromptPreview {

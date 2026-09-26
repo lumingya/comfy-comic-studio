@@ -2392,16 +2392,16 @@ export interface components {
             order: number;
             /**
              * Shot
-             * @default medium
+             * @default
              * @enum {string}
              */
-            shot: "extreme_close" | "close" | "medium" | "cowboy" | "full" | "wide";
+            shot: "" | "extreme_close" | "close" | "medium" | "cowboy" | "full" | "wide";
             /**
              * Angle
-             * @default eye
+             * @default
              * @enum {string}
              */
-            angle: "eye" | "high" | "low" | "side" | "back" | "dutch";
+            angle: "" | "eye" | "high" | "low" | "side" | "back" | "dutch";
             /** Characters */
             characters: components["schemas"]["PanelCharacter"][];
             /** Location Id */

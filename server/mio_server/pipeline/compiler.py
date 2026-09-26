@@ -31,6 +31,10 @@ class PanelPrompt:
     refs: list[str] = field(default_factory=list)  # character ids, in reference-image order
     loras: list[dict] = field(default_factory=list)
     unresolved: list[str] = field(default_factory=list)  # {变量} names nobody defines
+    # Where each tag came from (tags dialect): [{"tag", "source"}], see prompts.danbooru_parts.
+    # Extra sources here: "profile" (quality / negative lists), "append", "style_negative", "extra".
+    sources: list[dict] = field(default_factory=list)
+    negative_sources: list[dict] = field(default_factory=list)
 
     def to_json(self) -> dict:
         return asdict(self)
@@ -51,6 +55,23 @@ def canvas_size(panel: Panel, pixels: int = SDXL_PIXELS) -> tuple[int, int]:
 
 def _join(*parts: str) -> str:
     return ", ".join(p.strip().strip(",") for p in parts if p and p.strip().strip(","))
+
+
+def _split(text: str | None) -> list[str]:
+    """Comma-separated tags -> list; commas inside (...) / [...] stay with their group."""
+    out, buf, depth = [], [], 0
+    for ch in text or "":
+        if ch in "([":
+            depth += 1
+        elif ch in ")]":
+            depth = max(0, depth - 1)
+        if ch == "," and depth == 0:
+            out.append("".join(buf))
+            buf = []
+        else:
+            buf.append(ch)
+    out.append("".join(buf))
+    return [t.strip() for t in out if t.strip()]
 
 
 def compile_panel(
@@ -119,17 +140,22 @@ def compile_panel(
             unresolved=unresolved,
         )
     style_tags = tuple(style.tag_description) if style and style.tag_description else P.STYLE_TAGS
-    pos, neg = P.danbooru(story, pv, extra_style=style_tags)
+    pos_parts, neg_parts = P.danbooru_parts(story, pv, extra_style=style_tags)
+    pos_parts = [(P.escape_tag(t), s) for t, s in pos_parts]
     if quality is not None:
-        defaults = {P.escape_tag(t) for t in P.QUALITY}
-        rest = [t for t in pos.split(", ") if t not in defaults]
-        pos = ", ".join(P.dedupe([P.escape_tag(t) for t in quality] + rest))
+        # The render profile's own quality list replaces the built-in one.
+        rest = [(t, s) for t, s in pos_parts if s != "quality"]
+        pos_parts = P.sourced([(P.escape_tag(t), "profile") for t in quality] + rest)
     if negative is not None:
-        neg = ", ".join(negative)
+        neg_parts = [(t, "profile") for t in P.dedupe(negative)]
+    # The author's own text is appended verbatim (never deduped against generated tags).
+    pos_parts += [(t, "append") for t in _split(append)]
+    neg_parts += [(t, "style_negative") for t in _split(style_negative)]
+    neg_parts += [(t, "extra") for t in _split(extra_neg)]
     refs = [c["id"] for c in pv["characters"]]
     return PanelPrompt(
-        _join(pos, append),
-        _join(neg, style_negative, extra_neg),
+        ", ".join(t for t, _ in pos_parts),
+        ", ".join(t for t, _ in neg_parts),
         width,
         height,
         chosen_seed,
@@ -137,6 +163,8 @@ def compile_panel(
         refs=refs,
         loras=loras,
         unresolved=unresolved,
+        sources=[{"tag": t, "source": s} for t, s in pos_parts],
+        negative_sources=[{"tag": t, "source": s} for t, s in neg_parts],
     )
 
 

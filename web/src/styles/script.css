@@ -254,3 +254,82 @@ details > summary {
   background: var(--tint);
   color: var(--accent);
 }
+
+/* ---- prompt provenance ---- */
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 5px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-deep);
+  border: 1px solid var(--line);
+  max-height: 220px;
+  overflow: auto;
+}
+
+.tag-chips.negative {
+  opacity: 0.75;
+}
+
+.tag-chip {
+  --src: var(--muted);
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text);
+  background: color-mix(in srgb, var(--src) 16%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--src) 45%, transparent);
+  cursor: help;
+}
+
+.source-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 5px;
+}
+
+.source-legend .tag-chip {
+  font-family: inherit;
+  cursor: default;
+}
+
+/* One hue per origin; author-typed text is the accent so it stands out from generated tags. */
+.src-append {
+  --src: var(--accent-strong);
+}
+.src-panel {
+  --src: #7fb069;
+}
+.src-character {
+  --src: #d98c5f;
+}
+.src-cast {
+  --src: #c9a227;
+}
+.src-shot,
+.src-angle {
+  --src: #5f8fd9;
+}
+.src-location {
+  --src: #4fb3bf;
+}
+.src-time {
+  --src: #8e7cc3;
+}
+.src-style,
+.src-style_negative {
+  --src: #d967a8;
+}
+.src-quality,
+.src-rating,
+.src-profile,
+.src-negative {
+  --src: var(--muted);
+}
+.src-extra {
+  --src: var(--red);
+}

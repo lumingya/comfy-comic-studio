@@ -146,27 +146,52 @@ def panel_size(panel: dict) -> tuple[int, int]:
     return PANEL_SIZES.get(panel.get("shot"), (1024, 1024))
 
 
-def danbooru(story: dict, panel: dict, extra_style=STYLE_TAGS) -> tuple[str, str]:
-    """``(positive, negative)`` tag prompts for one panel."""
+def sourced(pairs) -> list[tuple[str, str]]:
+    """Dedupe ``(tag, source)`` pairs by tag, keeping the first source that produced it."""
+    out, seen = [], set()
+    for tag, source in pairs:
+        tag = tag.strip()
+        if tag and tag not in seen:
+            seen.add(tag)
+            out.append((tag, source))
+    return out
+
+
+def danbooru_parts(
+    story: dict, panel: dict, extra_style=STYLE_TAGS
+) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+    """``(positive, negative)`` as ``(tag, source)`` pairs, so the UI can show where every tag
+    came from.  Sources: ``quality`` ``rating`` ``style`` ``cast`` ``character:<id>`` ``shot``
+    ``angle`` ``location`` ``time`` ``panel`` ``negative``."""
     chars, scenes = index(story)
     scene = scenes.get(panel.get("scene"), {})
     cast = [c for c in panel.get("characters") or [] if c.get("id") in chars]
-    tags = list(QUALITY) + list(RATING) + list(extra_style)
-    tags += count_tags([chars[c["id"]]["gender"] for c in cast])
+    pos: list[tuple[str, str]] = []
+    pos += [(t, "quality") for t in QUALITY]
+    pos += [(t, "rating") for t in RATING]
+    pos += [(t, "style") for t in extra_style]
+    pos += [(t, "cast") for t in count_tags([chars[c["id"]]["gender"] for c in cast])]
     for c in cast:
-        tags += chars[c["id"]]["tags"]
-        tags += c.get("tags") or []
-    tags += SHOT_TAGS.get(panel.get("shot"), ())
-    tags += ANGLE_TAGS.get(panel.get("angle"), ())
-    tags += scene.get("tags") or []
-    tags += TIME_TAGS.get(scene.get("time"), ())
-    tags += panel.get("tags") or []
-    negative = list(NEGATIVE)
+        source = f"character:{c['id']}"
+        pos += [(t, source) for t in chars[c["id"]]["tags"]]
+        pos += [(t, source) for t in c.get("tags") or []]
+    pos += [(t, "shot") for t in SHOT_TAGS.get(panel.get("shot"), ())]
+    pos += [(t, "angle") for t in ANGLE_TAGS.get(panel.get("angle"), ())]
+    pos += [(t, "location") for t in scene.get("tags") or []]
+    pos += [(t, "time") for t in TIME_TAGS.get(scene.get("time"), ())]
+    pos += [(t, "panel") for t in panel.get("tags") or []]
+    neg: list[tuple[str, str]] = [(t, "negative") for t in NEGATIVE]
     if not cast:
-        negative += ["1girl", "1boy", "people"]
+        neg += [(t, "cast") for t in ("1girl", "1boy", "people")]
     elif len(cast) == 1:
-        negative += ["multiple girls", "multiple boys", "2girls", "2boys"]
-    return ", ".join(escape_tag(t) for t in dedupe(tags)), ", ".join(dedupe(negative))
+        neg += [(t, "cast") for t in ("multiple girls", "multiple boys", "2girls", "2boys")]
+    return sourced(pos), sourced(neg)
+
+
+def danbooru(story: dict, panel: dict, extra_style=STYLE_TAGS) -> tuple[str, str]:
+    """``(positive, negative)`` tag prompts for one panel."""
+    pos, neg = danbooru_parts(story, panel, extra_style)
+    return ", ".join(escape_tag(t) for t, _ in pos), ", ".join(t for t, _ in neg)
 
 
 ORDINALS = ("first", "second", "third", "fourth")
@@ -189,10 +214,9 @@ def natural(
         if height > width
         else "a square frame"
     )
-    parts = [
-        f"{NATURAL_STYLE} Composition: {SHOT_TEXT.get(panel.get('shot'), 'a medium shot')}, "
-        f"{ANGLE_TEXT.get(panel.get('angle'), 'at eye level')}, {frame}."
-    ]
+    framing = [SHOT_TEXT.get(panel.get("shot") or ""), ANGLE_TEXT.get(panel.get("angle") or "")]
+    composition = ", ".join([f for f in framing if f] + [frame])
+    parts = [f"{NATURAL_STYLE} Composition: {composition}."]
     refs = []
     if cast:
         people = []

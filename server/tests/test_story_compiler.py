@@ -147,3 +147,35 @@ class RefTests(unittest.TestCase):
         self.assertEqual([c.asset_id for c in R.select_references(series.bible, panel)], ["m1"])
         panel.reference_mode = "off"
         self.assertEqual(R.select_references(series.bible, panel), [])
+
+
+class ProvenanceTests(unittest.TestCase):
+    def test_every_tag_names_its_source(self):
+        series, episode = project()
+        panel = episode.panel("p02")
+        panel.overrides = PanelOverrides(append_prompt="rain, (wet street, puddles:1.2)")
+        out = K.compile_panel(series, episode, panel, seed=1)
+        self.assertEqual(", ".join(s["tag"] for s in out.sources), out.positive)
+        by_source = {}
+        for s in out.sources:
+            by_source.setdefault(s["source"], []).append(s["tag"])
+        self.assertEqual(by_source["quality"][0], "masterpiece")
+        self.assertEqual(by_source["append"], ["rain", "(wet street, puddles:1.2)"])
+        self.assertTrue(any(k.startswith("character:") for k in by_source))
+        self.assertEqual(out.negative_sources[0]["source"], "negative")
+
+    def test_profile_quality_list_is_marked_as_such(self):
+        series, episode = project()
+        out = K.compile_panel(series, episode, episode.panel("p02"), quality=["score_9"], seed=1)
+        self.assertEqual(out.sources[0], {"tag": "score_9", "source": "profile"})
+        self.assertNotIn("masterpiece", out.positive)
+
+    def test_unspecified_shot_and_angle_add_no_framing(self):
+        series, episode = project()
+        panel = episode.panel("p02")
+        panel.shot, panel.angle = "", ""
+        out = K.compile_panel(series, episode, panel, seed=1)
+        self.assertFalse({"shot", "angle"} & {s["source"] for s in out.sources})
+        prose = K.compile_panel(series, episode, panel, dialect="natural", seed=1).positive
+        self.assertNotIn("medium shot", prose)
+        self.assertNotIn("eye level", prose)

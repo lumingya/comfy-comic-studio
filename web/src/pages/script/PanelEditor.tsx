@@ -97,6 +97,8 @@ export function PanelEditor(props: {
     { value: '', label: t('common.none') },
     ...series.bible.locations.map((l) => ({ value: l.id!, label: l.name })),
   ];
+  const cameraUsed =
+    !!draft.shot || !!draft.angle || !!draft.location_id || !!draft.time || !!draft.tags?.length;
 
   return (
     <div
@@ -147,38 +149,21 @@ export function PanelEditor(props: {
         </button>
       </div>
 
-      <div className="grid-3">
-        <Field label={t('script.shot')}>
-          <Select
-            value={draft.shot}
-            onChange={(shot) => set({ shot })}
-            options={SHOTS.map((s) => ({ value: s, label: t(`script.shots.${s}`) }))}
-          />
-        </Field>
-        <Field label={t('script.angle')}>
-          <Select
-            value={draft.angle}
-            onChange={(angle) => set({ angle })}
-            options={ANGLES.map((a) => ({ value: a, label: t(`script.angles.${a}`) }))}
-          />
-        </Field>
-        <Field label={t('script.location')}>
-          <Select
-            value={draft.location_id ?? ''}
-            onChange={(v) => set({ location_id: v || null })}
-            options={locations}
-          />
-        </Field>
-      </div>
-      <Field label={t('common.description')}>
+      {/* What the image should obey comes first; structured helpers below are optional. */}
+      <Field label={t('script.appendPrompt')} hint={t('script.appendPromptHint')}>
+        <TextArea
+          mono
+          rows={3}
+          value={draft.overrides.append_prompt}
+          onChange={(append_prompt) => setOv({ append_prompt })}
+        />
+      </Field>
+      <Field label={t('common.description')} hint={t('script.descriptionHint')}>
         <TextArea
           rows={2}
           value={draft.description}
           onChange={(description) => set({ description })}
         />
-      </Field>
-      <Field label={t('common.tags')}>
-        <TagInput value={draft.tags ?? []} onChange={(tags) => set({ tags })} />
       </Field>
       <Field label={t('script.cast')}>
         <CastEditor
@@ -194,36 +179,89 @@ export function PanelEditor(props: {
           onChange={(dialogues) => set({ dialogues })}
         />
       </Field>
-      <div className="grid-3">
-        <Field label={t('bible.time')}>
-          <Select
-            value={draft.time || 'unset'}
-            onChange={(v) => set({ time: (v === 'unset' ? '' : v) as Panel['time'] })}
-            options={TIMES.map((x) => ({
-              value: x || 'unset',
-              label: t(`script.times.${x || 'unset'}`),
-            }))}
-          />
-        </Field>
-        <Field label={t('script.ratio')}>
-          <Select
-            value={draft.aspect_ratio}
-            onChange={(aspect_ratio) => set({ aspect_ratio })}
-            options={[...new Set([draft.aspect_ratio, ...RATIOS])].map((r) => ({
-              value: r,
-              label: r,
-            }))}
-          />
-        </Field>
-        <Field label={t('script.widthMode')}>
-          <Select
-            value={draft.width_mode}
-            onChange={(width_mode) => set({ width_mode })}
-            options={WIDTHS.map((w) => ({ value: w, label: t(`script.widths.${w}`) }))}
-          />
-        </Field>
-      </div>
-      <StripFields draft={draft} set={set} />
+
+      <details className="advanced" open={cameraUsed}>
+        <summary>
+          {t('script.groupCamera')}
+          {cameraUsed ? null : <span className="muted"> · {t('script.shots.unset')}</span>}
+        </summary>
+        <div className="col" style={{ gap: 14, marginTop: 14 }}>
+          <div className="grid-2">
+            <Field label={t('script.shot')}>
+              <Select
+                value={draft.shot || 'unset'}
+                onChange={(v) => set({ shot: (v === 'unset' ? '' : v) as Panel['shot'] })}
+                options={SHOTS.map((x) => ({
+                  value: x || 'unset',
+                  label: t(`script.shots.${x || 'unset'}`),
+                }))}
+              />
+            </Field>
+            <Field label={t('script.angle')}>
+              <Select
+                value={draft.angle || 'unset'}
+                onChange={(v) => set({ angle: (v === 'unset' ? '' : v) as Panel['angle'] })}
+                options={ANGLES.map((x) => ({
+                  value: x || 'unset',
+                  label: t(`script.angles.${x || 'unset'}`),
+                }))}
+              />
+            </Field>
+            <Field label={t('script.location')}>
+              <Select
+                value={draft.location_id ?? ''}
+                onChange={(v) => set({ location_id: v || null })}
+                options={locations}
+              />
+            </Field>
+            <Field label={t('bible.time')}>
+              <Select
+                value={draft.time || 'unset'}
+                onChange={(v) => set({ time: (v === 'unset' ? '' : v) as Panel['time'] })}
+                options={TIMES.map((x) => ({
+                  value: x || 'unset',
+                  label: t(`script.times.${x || 'unset'}`),
+                }))}
+              />
+            </Field>
+          </div>
+          <Field label={t('common.tags')}>
+            <TagInput value={draft.tags ?? []} onChange={(tags) => set({ tags })} />
+          </Field>
+        </div>
+      </details>
+
+      <details className="advanced">
+        <summary>
+          {t('script.groupLayout')}
+          <span className="muted">
+            {' '}
+            · {draft.aspect_ratio} · {t(`script.widths.${draft.width_mode}`)}
+          </span>
+        </summary>
+        <div className="col" style={{ gap: 14, marginTop: 14 }}>
+          <div className="grid-2">
+            <Field label={t('script.ratio')}>
+              <Select
+                value={draft.aspect_ratio}
+                onChange={(aspect_ratio) => set({ aspect_ratio })}
+                options={[...new Set([draft.aspect_ratio, ...RATIOS])].map((r) => ({
+                  value: r,
+                  label: r,
+                }))}
+              />
+            </Field>
+            <Field label={t('script.widthMode')}>
+              <Select
+                value={draft.width_mode}
+                onChange={(width_mode) => set({ width_mode })}
+                options={WIDTHS.map((w) => ({ value: w, label: t(`script.widths.${w}`) }))}
+              />
+            </Field>
+          </div>
+          <StripFields draft={draft} set={set} />
+        </div>
+      </details>
 
       <details className="advanced" open={!!draft.regional || !!draft.controls?.length}>
         <summary>{t('composition.heading')}</summary>
@@ -244,13 +282,6 @@ export function PanelEditor(props: {
             />
           </Field>
           <div className="grid-2">
-            <Field label={t('script.appendPrompt')}>
-              <TextInput
-                mono
-                value={draft.overrides.append_prompt}
-                onChange={(append_prompt) => setOv({ append_prompt })}
-              />
-            </Field>
             <Field label={t('script.negativePrompt')}>
               <TextInput
                 mono
@@ -258,8 +289,6 @@ export function PanelEditor(props: {
                 onChange={(negative_prompt) => setOv({ negative_prompt })}
               />
             </Field>
-          </div>
-          <div className="grid-3">
             <Field label={t('script.seed')}>
               <NumberInput
                 value={draft.overrides.seed}
@@ -284,7 +313,7 @@ export function PanelEditor(props: {
 
       <section className="card" style={{ marginTop: 18 }}>
         <h2>{t('script.preview')}</h2>
-        <PromptPreview episodeId={episode.id!} panelId={draft.id!} />
+        <PromptPreview episodeId={episode.id!} panelId={draft.id!} series={series} />
       </section>
     </div>
   );

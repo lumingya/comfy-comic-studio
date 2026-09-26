@@ -20,8 +20,9 @@ ANGLES = ("eye", "high", "low", "side", "back", "dutch")
 TIMES = ("", "morning", "day", "evening", "night")
 REFERENCE_ROLES = ("front", "side", "back", "expression", "outfit", "reference", "style", "sheet")
 
-Shot = Literal["extreme_close", "close", "medium", "cowboy", "full", "wide"]
-Angle = Literal["eye", "high", "low", "side", "back", "dutch"]
+# "" = unspecified: the prompt gets no framing tags and the author's own words decide.
+Shot = Literal["", "extreme_close", "close", "medium", "cowboy", "full", "wide"]
+Angle = Literal["", "eye", "high", "low", "side", "back", "dutch"]
 TimeOfDay = Literal["", "morning", "day", "evening", "night"]
 ReferenceRole = Literal[
     "front", "side", "back", "expression", "outfit", "reference", "style", "sheet"
@@ -265,8 +266,8 @@ class PanelMotion(StrictModel):
 class Panel(StrictModel):
     id: str = Field(default_factory=lambda: new_id("panel"))
     order: int = Field(ge=0)
-    shot: Shot = "medium"
-    angle: Angle = "eye"
+    shot: Shot = ""
+    angle: Angle = ""
     characters: list[PanelCharacter] = Field(default_factory=list)
     location_id: str | None = None
     props: list[str] = Field(default_factory=list)

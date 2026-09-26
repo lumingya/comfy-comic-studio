@@ -38,6 +38,12 @@ const prompt = {
     refs: [],
     loras: [],
     unresolved: ['天气'],
+    sources: [
+      { tag: 'masterpiece', source: 'quality' },
+      { tag: '1girl', source: 'cast' },
+      { tag: 'short black hair', source: 'character:c1' },
+    ],
+    negative_sources: [{ tag: 'lowres', source: 'negative' }],
   },
   natural: {
     positive: 'A woman with short black hair',
@@ -217,7 +223,10 @@ describe('every route mounts with API data', () => {
 
   it('episode → script with compiled prompt', async () => {
     mount('/episodes/ep_1/script');
-    expect(await screen.findByText('masterpiece, 1girl, short black hair')).toBeInTheDocument();
+    // Every tag is a chip that names its origin; the plain text stays available for copying.
+    expect(await screen.findByText('short black hair')).toHaveAttribute('title', '角色: c1');
+    expect(screen.getByText('1girl')).toHaveAttribute('title', '人数');
+    expect(screen.getByText('masterpiece, 1girl, short black hair')).toBeInTheDocument();
     expect(screen.getByText('未定义的变量：天气')).toBeInTheDocument();
   });
 

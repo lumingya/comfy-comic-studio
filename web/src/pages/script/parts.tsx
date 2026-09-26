@@ -2,7 +2,13 @@ import { Copy, Link2, Plus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { assetUrl } from '../../api/client';
 import { usePrompt } from '../../api/series';
-import { DIALOGUE_KINDS, type Dialogue, type PanelCharacter, type Series } from '../../api/types';
+import {
+  DIALOGUE_KINDS,
+  type Dialogue,
+  type PanelCharacter,
+  type PromptSource,
+  type Series,
+} from '../../api/types';
 import { toast, toastError } from '../../components/toast';
 import { Loading, Select, TagInput, TextInput } from '../../components/ui';
 
@@ -157,13 +163,50 @@ export function DialogueEditor(props: {
   );
 }
 
-/** What will actually be sent: both prompt dialects plus the auto-mounted reference images. */
-export function PromptPreview(props: { episodeId: string; panelId: string }) {
+/** Colour bucket for a provenance key ("character:lin" -> "character"). */
+const sourceKind = (source: string) => source.split(':')[0];
+
+/** One dialect's tags as chips, each coloured by where it came from. */
+function TagChips(props: {
+  items: PromptSource[];
+  negative?: boolean;
+  nameOf: (source: string) => string;
+}) {
+  return (
+    <div className={`tag-chips ${props.negative ? 'negative' : ''}`}>
+      {props.items.map((s, i) => (
+        <span
+          key={`${s.tag}-${i}`}
+          className={`tag-chip src-${sourceKind(s.source)}`}
+          title={props.nameOf(s.source)}
+        >
+          {s.tag}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * What will actually be sent: every tag coloured by the field / rule that produced it (so a
+ * stray "no humans" or "upper body" is explained), both dialects, and the auto-mounted references.
+ */
+export function PromptPreview(props: { episodeId: string; panelId: string; series?: Series }) {
   const { t } = useTranslation();
   const q = usePrompt(props.episodeId, props.panelId);
   if (q.isLoading) return <Loading />;
   if (!q.data) return null;
   const p = q.data;
+  const characters = new Map(props.series?.bible.characters.map((c) => [c.id, c.name]) ?? []);
+  const nameOf = (source: string) => {
+    const [kind, id] = source.split(':');
+    const base = t(`script.sources.${kind}`);
+    return id ? `${base}: ${characters.get(id) ?? id}` : base;
+  };
+  const sources = p.tags.sources ?? [];
+  const negatives = p.tags.negative_sources ?? [];
+  const legend = [...new Set([...sources, ...negatives].map((s) => s.source))];
+  const hasSources = sources.length > 0 && !p.tags.raw;
   return (
     <div className="col prompt-preview">
       <div className="row small muted">
@@ -193,8 +236,29 @@ export function PromptPreview(props: { episodeId: string; panelId: string }) {
           {t('script.unresolved', { names: p.tags.unresolved.join('、') })}
         </div>
       ) : null}
-      <pre className="prompt-box">{p.tags.positive}</pre>
-      <pre className="prompt-box negative">{p.tags.negative}</pre>
+      {hasSources ? (
+        <>
+          <TagChips items={sources} nameOf={nameOf} />
+          <TagChips items={negatives} negative nameOf={nameOf} />
+          <div className="source-legend small muted" title={t('script.sourceLegend')}>
+            {legend.map((s) => (
+              <span key={s} className={`tag-chip src-${sourceKind(s)}`}>
+                {nameOf(s)}
+              </span>
+            ))}
+          </div>
+          <details>
+            <summary className="small muted">{t('script.promptText')}</summary>
+            <pre className="prompt-box">{p.tags.positive}</pre>
+            <pre className="prompt-box negative">{p.tags.negative}</pre>
+          </details>
+        </>
+      ) : (
+        <>
+          <pre className="prompt-box">{p.tags.positive}</pre>
+          <pre className="prompt-box negative">{p.tags.negative}</pre>
+        </>
+      )}
       <details>
         <summary className="small muted">{t('script.naturalPrompt')}</summary>
         <pre className="prompt-box">{p.natural.positive}</pre>
