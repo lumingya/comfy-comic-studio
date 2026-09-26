@@ -400,9 +400,12 @@ Job / Attempt：统一任务引擎（继承旧版的安全语义）
 - [ ] 旧代码移到 `legacy/` 作为只读参考。建立 `server/`（FastAPI）和 `web/`（Vite + React + TS）。
   - **进展（2026-09-26）**：已先建立新栈骨架，旧版暂未搬迁：`server/mio_server/`（FastAPI 入口、健康检查、Series / Episode API）、`web/`（Vite + React + TypeScript 入口页）。
 - [ ] 领域模型 v3：SQLite schema、Pydantic 模型、单测。一次性导入器（分镜、预设、工作流）。
-  - **进展（2026-09-26）**：已完成第一版 Pydantic 领域模型与 SQLite JSON 文档库：Series、Bible、Character、Location、Prop、Style、Episode、Panel、Take、Strip、Lettering；已有模型 / 存储 / API 单测。导入器尚未开始。
-- [ ] 统一任务引擎：移植旧版的安全语义与测试用例；实现多实例池。
-- [ ] ComfyUI 模块：把 Spike 的代码转正，再移植 `workflow_slots.py`。
+  - **进展（2026-09-26）**：已完成第一版 Pydantic 领域模型与 SQLite JSON 文档库：Series、Bible、Character、Location、Prop、Style、Episode、Panel、Take、Strip、Lettering；已有模型 / 存储 / API 单测。
+  - **进展（2026-09-26）**：模型补齐批量变体、`{变量}`、每格覆盖（原始提示词 / 追加 / 节点覆盖 / 出图配置）、候选修图历史、质检结果；存储升到 schema v2（工作流、出图配置、ComfyUI 实例等文档表，素材按 sha256 去重存储）。导入器尚未开始。
+- [x] 统一任务引擎：移植旧版的安全语义与测试用例；实现多实例池。
+  - `server/mio_server/jobs/`：不可变快照 + 幂等键、租约、epoch 防过期结果、`uncertain` 不自动重试、立即停止（中断 ComfyUI）、并发窗口、失败上限暂停、重启恢复与只读对账、暂停 / 取消、单格与后缀重跑；ComfyUI 多实例池按模型分组调度（同组优先落在已加载该模型的实例）。
+- [x] ComfyUI 模块：把 Spike 的代码转正，再移植 `workflow_slots.py`。
+  - `server/mio_server/comfy/`：`[mio:*]` 绑定（字段选择、一对多、输出变体、inspect 回读拦截、JSON Pointer 覆盖）、WS 进度与预览、`/object_info` 缺节点 / 缺模型诊断、编译器（图片输入占位 → 执行时上传）、任务执行器（多阶段串联、失败分类）；`workflow_slots.py` 原样移植并保留旧测试。内置 SDXL 文生图 / tile 图生图 / 局部重绘外扩工作流。
 - **完成标准**：§2.2 中标为 P1 的项全部通过；黄金故事能通过 API 出图。
 
 ### Phase 2 · 条漫主链路（2–3 周）
@@ -414,6 +417,7 @@ Job / Attempt：统一任务引擎（继承旧版的安全语义）
 ### Phase 3 · 一致性与质检（约 2 周）
 
 - [ ] 参考图自动挂载完善；VLM 质检与自动挑选；单格局部重绘、指令编辑、外扩；多工作流管线；按模型分组调度。
+  - **进展（2026-09-26）**：后端已完成并有单测（`server/mio_server/pipeline/`）：按出场角色 / 角度 / 服装 / 表情挑参考图；VLM 多票质检（身份取中位数、特征多数决）与自动挑选（不碰锁定格和手动采用）；局部重绘（框选 / 多边形遮罩）、外扩（按目标比例补边）、指令编辑（工作流或云端）；草稿 → 成品多阶段管线与「云端定形、本地定画风」混合路线。界面待 P2 页面完成后接入。
 - **完成标准**：一致性通过率大于等于 85%，修一格不超过 1 分钟。
 
 ### Phase 4 · 条漫表现力（约 2 周）
