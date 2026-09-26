@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
@@ -83,7 +83,16 @@ def _mount_web(app: FastAPI) -> None:
 
     @app.get("/{path:path}", include_in_schema=False)
     def spa(path: str):
-        target = (WEB_DIST / path).resolve()
-        if path and target.is_file() and WEB_DIST in target.parents:
-            return FileResponse(target)
-        return FileResponse(WEB_DIST / "index.html")
+        root = WEB_DIST.resolve()
+        target = (root / path).resolve()
+        if path and target.is_file() and root in target.parents:
+            # Vite emits content-hashed names under assets/, safe to cache forever.
+            immutable = path.startswith("assets/")
+            headers = {"Cache-Control": "public, max-age=31536000, immutable"} if immutable else {}
+            return FileResponse(target, headers=headers)
+        # Unknown API routes and missing files must not masquerade as the SPA shell.
+        if path == "api" or path.startswith("api/") or PurePosixPath(path).suffix:
+            return JSONResponse(
+                status_code=404, content={"detail": "Not Found", "kind": "not_found"}
+            )
+        return FileResponse(root / "index.html", headers={"Cache-Control": "no-cache"})
