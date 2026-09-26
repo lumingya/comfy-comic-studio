@@ -6,6 +6,7 @@ import {
   useInstances,
   useProfiles,
   useSaveProfile,
+  useSettings,
   useWorkflows,
 } from '../../api/system';
 import type { RenderProfile, RenderStage, WorkflowSummary } from '../../api/types';
@@ -20,6 +21,7 @@ import {
   TextInput,
 } from '../../components/ui';
 import { rid } from '../bible/BibleTab';
+import type { ImageChannel } from './ChannelsSection';
 
 const KINDS = ['generate', 'refine', 'upscale', 'face', 'inpaint', 'outpaint', 'edit'] as const;
 const EDIT_KINDS = ['inpaint', 'outpaint', 'edit'] as const;
@@ -143,6 +145,8 @@ function ProfileEditor({
   const { t } = useTranslation();
   const workflows = useWorkflows().data ?? [];
   const instances = useInstances().data?.instances ?? [];
+  const settings = useSettings().data as unknown as { image_channels?: ImageChannel[] } | undefined;
+  const channels = settings?.image_channels ?? [];
   const save = useSaveProfile();
   const remove = useDeleteProfile();
   const [p, setP] = useState(profile);
@@ -272,6 +276,16 @@ function ProfileEditor({
           value={p.negative_tags ?? []}
           onChange={(v) => set({ negative_tags: v.length ? v : null })}
           placeholder={t('common.auto')}
+        />
+      </Field>
+      <Field label={t('settings.cloudChannel')} hint={t('settings.cloudChannelHint')}>
+        <Select
+          value={p.cloud_channel ?? ''}
+          onChange={(cloud_channel) => set({ cloud_channel })}
+          options={[
+            { value: '', label: t('settings.channels.default') },
+            ...channels.map((c) => ({ value: c.id, label: c.label || c.id })),
+          ]}
         />
       </Field>
       <Switch

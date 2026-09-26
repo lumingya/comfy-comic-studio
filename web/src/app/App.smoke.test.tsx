@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -66,8 +66,23 @@ const settings = {
   guard_terms: [],
   trash_days: 30,
   locale: 'zh-CN',
-  theme: 'dark',
+  theme: 'system',
+  image_channels: [],
+  image_channel: '',
+  update_feed: '',
 };
+
+const themes = [
+  { id: 'ink', name: '墨', mode: 'dark', author: '', source: 'builtin', tokens: { bg: '#101312' } },
+  {
+    id: 'paper',
+    name: '纸',
+    mode: 'light',
+    author: '',
+    source: 'builtin',
+    tokens: { bg: '#f3f4ef' },
+  },
+];
 
 const { items: _items, ...jobSummary } = job;
 
@@ -113,6 +128,28 @@ beforeEach(() => {
     'GET /api/instances': { instances: [], pool: {} },
     'GET /api/registry': {},
     'GET /api/trash': { items: [], retention_days: 30 },
+    'GET /api/themes': themes,
+    'GET /api/extensions': { items: [], hooks: [], safe_mode: false },
+    'GET /api/tokens': { items: [], scopes: ['read', 'write', 'render', 'admin'] },
+    'GET /api/webhooks': { items: [], events: { 'job.completed': '任务完成' } },
+    'GET /api/update': {
+      current: '4.0.0',
+      dev_checkout: true,
+      keys_configured: false,
+      releases_page: 'https://example.invalid/releases',
+      last_check: null,
+      pending: null,
+    },
+    'GET /api/album-templates': [],
+    'GET /api/extension-panels': [
+      {
+        extension: 'demo',
+        id: 'stats',
+        slot: 'episode',
+        title: '字数统计',
+        url: '/api/extensions/demo/files/panel.html',
+      },
+    ],
   });
 });
 
@@ -187,6 +224,37 @@ describe('every route mounts with API data', () => {
   it.each(['general', 'workflows', 'profiles', 'instances'])('settings → %s', async (tab) => {
     mount(`/settings?tab=${tab}`);
     expect(await screen.findByRole('tab', { selected: true })).toBeInTheDocument();
+  });
+
+  it.each([
+    ['channels', '还没有云端出图渠道'],
+    ['themes', '跟随系统'],
+    ['extensions', '还没有安装扩展'],
+    ['access', '还没有 Webhook'],
+    ['updates', 'v4.0.0'],
+  ])('settings → %s', async (tab, text) => {
+    mount(`/settings?tab=${tab}`);
+    expect(await screen.findByText(text)).toBeInTheDocument();
+  });
+
+  it('picking a theme writes its tokens onto <html>', async () => {
+    mount('/settings?tab=themes');
+    fireEvent.click(await screen.findByText('纸'));
+    await waitFor(() => expect(document.documentElement.dataset.theme).toBe('light'));
+    expect(document.documentElement.style.getPropertyValue('--bg')).toBe('#f3f4ef');
+  });
+
+  it('episode → extension panel in a sandboxed iframe', async () => {
+    mount('/episodes/ep_1/ext/demo.stats');
+    const frame = await screen.findByTitle('字数统计');
+    expect(frame.getAttribute('sandbox')).toBe('allow-scripts');
+    expect(frame.getAttribute('src')).toContain('episode=ep_1');
+  });
+
+  it('episode → export → album', async () => {
+    mount('/episodes/ep_1/export');
+    fireEvent.click(await screen.findByText('画册'));
+    expect(await screen.findByText('画册模板')).toBeInTheDocument();
   });
 
   it('trash', async () => {

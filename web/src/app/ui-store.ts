@@ -1,11 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-type Theme = 'dark' | 'light';
+import { migrateChoice, SYSTEM, type ThemeChoice } from './theme';
 
 interface UIState {
-  theme: Theme;
-  toggleTheme: () => void;
+  /** 'system' or a theme id (see app/theme.ts). */
+  theme: ThemeChoice;
+  setTheme: (theme: ThemeChoice) => void;
   /** Board: which variant is being viewed (null = base). */
   variantId: string | null;
   setVariant: (id: string | null) => void;
@@ -17,9 +17,9 @@ interface UIState {
 
 export const useUI = create<UIState>()(
   persist(
-    (set, get) => ({
-      theme: 'dark',
-      toggleTheme: () => set({ theme: get().theme === 'dark' ? 'light' : 'dark' }),
+    (set) => ({
+      theme: SYSTEM,
+      setTheme: (theme) => set({ theme }),
       variantId: null,
       setVariant: (variantId) => set({ variantId }),
       showRejected: false,
@@ -27,6 +27,14 @@ export const useUI = create<UIState>()(
       candidates: 2,
       setCandidates: (candidates) => set({ candidates }),
     }),
-    { name: 'mio.ui', partialize: (s) => ({ theme: s.theme, candidates: s.candidates }) },
+    {
+      name: 'mio.ui',
+      version: 1,
+      partialize: (s) => ({ theme: s.theme, candidates: s.candidates }),
+      migrate: (persisted) => {
+        const state = (persisted ?? {}) as Partial<UIState>;
+        return { ...state, theme: migrateChoice(state.theme) } as UIState;
+      },
+    },
   ),
 );

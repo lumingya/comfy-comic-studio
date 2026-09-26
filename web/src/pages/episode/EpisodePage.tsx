@@ -4,14 +4,17 @@ import {
   Download,
   Image,
   LayoutPanelTop,
+  Puzzle,
   ScrollText,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet, useOutletContext, useParams } from 'react-router-dom';
+import { useExtensionPanels } from '../../api/open';
 import { useEpisode, usePatchEpisode, useSeries } from '../../api/series';
 import type { Episode, Series } from '../../api/types';
 import { QueryError } from '../../app/errors';
+import { panelKey } from '../../components/ExtensionFrame';
 import { toastError } from '../../components/toast';
 import { Loading } from '../../components/ui';
 
@@ -30,6 +33,7 @@ export default function EpisodePage() {
   const episode = useEpisode(episodeId);
   const series = useSeries(episode.data?.series_id);
   const patch = usePatchEpisode(episodeId ?? '');
+  const panels = useExtensionPanels('episode');
   const [title, setTitle] = useState('');
 
   useEffect(() => setTitle(episode.data?.title ?? ''), [episode.data?.title]);
@@ -77,6 +81,11 @@ export default function EpisodePage() {
           <NavLink to="export" className={tab}>
             <Download size={14} /> {t('episode.export')}
           </NavLink>
+          {(panels.data ?? []).map((p) => (
+            <NavLink key={panelKey(p)} to={`ext/${panelKey(p)}`} className={tab}>
+              <Puzzle size={14} /> {p.title}
+            </NavLink>
+          ))}
         </nav>
       </header>
       <div className="workspace-body">

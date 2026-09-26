@@ -1,11 +1,34 @@
 import { BookOpen, Languages, ListTodo, Moon, Settings, Sun, Trash2 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useJobEvents, useJobs, useLive } from '../api/jobs';
+import { useThemes } from '../api/open';
 import { Toaster } from '../components/toast';
 import { setLocale } from '../i18n';
+import { applyTheme, resolveTheme, systemPrefersDark, toggled } from './theme';
 import { useUI } from './ui-store';
+
+/** Resolve the chosen theme (or the OS preference) and keep <html> in sync. */
+function useAppliedTheme() {
+  const choice = useUI((s) => s.theme);
+  const themes = useThemes();
+  const [prefersDark, setPrefersDark] = useState(systemPrefersDark);
+
+  useEffect(() => {
+    if (typeof window.matchMedia !== 'function') return;
+    const query = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => setPrefersDark(query.matches);
+    query.addEventListener?.('change', onChange);
+    return () => query.removeEventListener?.('change', onChange);
+  }, []);
+
+  const resolved = resolveTheme(choice, themes.data ?? [], prefersDark);
+  useEffect(() => {
+    applyTheme(document.documentElement, resolved.mode, resolved.theme);
+  }, [resolved.mode, resolved.theme]);
+  return resolved;
+}
 
 function ActiveJobsBadge() {
   const { data } = useJobs(undefined, true);
@@ -19,13 +42,10 @@ function ActiveJobsBadge() {
 
 export function Shell() {
   const { t, i18n } = useTranslation();
-  const { theme, toggleTheme } = useUI();
+  const setTheme = useUI((s) => s.setTheme);
+  const theme = useAppliedTheme();
   const connected = useLive((s) => s.connected);
   useJobEvents();
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-  }, [theme]);
 
   const link = ({ isActive }: { isActive: boolean }) => `rail-link ${isActive ? 'active' : ''}`;
 
@@ -50,8 +70,12 @@ export function Shell() {
           <Trash2 size={17} /> {t('nav.trash')}
         </NavLink>
         <div className="rail-foot">
-          <button className="btn ghost icon" title={t('nav.theme')} onClick={toggleTheme}>
-            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          <button
+            className="btn ghost icon"
+            title={t('nav.theme')}
+            onClick={() => setTheme(toggled(theme.mode))}
+          >
+            {theme.mode === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </button>
           <button
             className="btn ghost sm"

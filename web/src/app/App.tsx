@@ -17,6 +17,7 @@ const BoardTab = lazy(() => import('../pages/board/BoardTab'));
 const CanvasTab = lazy(() => import('../pages/canvas/CanvasTab'));
 const ReaderTab = lazy(() => import('../pages/episode/ReaderTab'));
 const ExportTab = lazy(() => import('../pages/episode/ExportTab'));
+const ExtensionTab = lazy(() => import('../pages/episode/ExtensionTab'));
 const Jobs = lazy(() => import('../pages/jobs/JobsPage'));
 const Settings = lazy(() => import('../pages/settings/SettingsPage'));
 const Trash = lazy(() => import('../pages/trash/TrashPage'));
@@ -50,6 +51,7 @@ export const routes = [
           { path: 'canvas', element: s(<CanvasTab />) },
           { path: 'read', element: s(<ReaderTab />) },
           { path: 'export', element: s(<ExportTab />) },
+          { path: 'ext/:panelId', element: s(<ExtensionTab />) },
         ],
       },
       { path: 'jobs', element: s(<Jobs />) },

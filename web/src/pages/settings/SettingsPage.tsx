@@ -1,11 +1,26 @@
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { AccessSection } from './AccessSection';
+import { ChannelsSection } from './ChannelsSection';
+import { ExtensionsSection } from './ExtensionsSection';
 import { GeneralSection } from './GeneralSection';
 import { InstancesSection } from './InstancesSection';
 import { ProfilesSection } from './ProfilesSection';
+import { ThemesSection } from './ThemesSection';
+import { UpdatesSection } from './UpdatesSection';
 import { WorkflowsSection } from './WorkflowsSection';
 
-const TABS = ['general', 'workflows', 'profiles', 'instances'] as const;
+const TABS = [
+  'general',
+  'workflows',
+  'profiles',
+  'instances',
+  'channels',
+  'themes',
+  'extensions',
+  'access',
+  'updates',
+] as const;
 type Tab = (typeof TABS)[number];
 
 export default function SettingsPage() {
@@ -41,6 +56,11 @@ export default function SettingsPage() {
         {tab === 'workflows' ? <WorkflowsSection /> : null}
         {tab === 'profiles' ? <ProfilesSection /> : null}
         {tab === 'instances' ? <InstancesSection /> : null}
+        {tab === 'channels' ? <ChannelsSection /> : null}
+        {tab === 'themes' ? <ThemesSection /> : null}
+        {tab === 'extensions' ? <ExtensionsSection /> : null}
+        {tab === 'access' ? <AccessSection /> : null}
+        {tab === 'updates' ? <UpdatesSection /> : null}
       </div>
     </div>
   );
