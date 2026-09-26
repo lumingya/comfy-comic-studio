@@ -7,6 +7,7 @@ Series → Bible → Episode → Panel → Take → Strip.  The models are delib
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Literal
@@ -26,7 +27,9 @@ ReferenceRole = Literal[
     "front", "side", "back", "expression", "outfit", "reference", "style", "sheet"
 ]
 Position = Literal["left", "center", "right", "foreground", "background", "unspecified"]
+ControlKind = Literal["pose", "depth", "canny", "lineart"]
 Box = tuple[float, float, float, float]
+COLOR_RE = re.compile(r"^\s*#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\s*$")
 
 
 def new_id(prefix: str) -> str:
@@ -204,6 +207,9 @@ class Dialogue(StrictModel):
     speaker_id: str | None = None
     text: str
     kind: DialogueKind = DialogueKind.speech
+    bridge: bool = Field(
+        default=False, description="Cross-panel bubble: straddles the gutter to the next panel."
+    )
 
     @field_validator("text")
     @classmethod
@@ -228,6 +234,20 @@ class PanelOverrides(StrictModel):
     profile_id: str | None = None
 
 
+class ControlInput(StrictModel):
+    """One ControlNet input, bound to ``[mio:control:<kind>]`` (+ ``[mio:strength:<kind>]``)."""
+
+    kind: ControlKind = "pose"
+    source: Literal["auto", "asset", "take"] = Field(
+        default="auto",
+        description="auto = skeleton drawn from character positions (pose only); "
+        "asset = uploaded image; take = an existing take of this panel.",
+    )
+    asset_id: str | None = None
+    take_id: str | None = None
+    strength: float = Field(default=0.8, ge=0, le=2)
+
+
 class Panel(StrictModel):
     id: str = Field(default_factory=lambda: new_id("panel"))
     order: int = Field(ge=0)
@@ -242,11 +262,17 @@ class Panel(StrictModel):
     tags: list[str] = Field(default_factory=list)
     dialogues: list[Dialogue] = Field(default_factory=list)
     width_mode: PanelWidth = PanelWidth.full
+    inset_align: Literal["left", "center", "right"] = "center"
+    inset_scale: float = Field(default=0.78, ge=0.4, le=0.95, description="Inset width / strip.")
     aspect_ratio: str = "2:3"
     gap_after: int = Field(default=48, ge=0, le=1200)
     transition_background: str = "transparent"
     reference_mode: Literal["auto", "manual", "off"] = "auto"
     references: list[AssetRef] = Field(default_factory=list, description="Manual references.")
+    controls: list[ControlInput] = Field(default_factory=list)
+    regional: bool = Field(
+        default=False, description="Per-character regional prompts ([mio:region:N] slots)."
+    )
     locked: bool = Field(
         default=False, description="Automation (assistant, auto-pick) may not touch it."
     )
@@ -256,6 +282,14 @@ class Panel(StrictModel):
     @classmethod
     def ratio_valid(cls, value: str) -> str:
         parse_ratio(value)
+        return value
+
+    @field_validator("transition_background")
+    @classmethod
+    def background_valid(cls, value: str) -> str:
+        value = value.strip() or "transparent"
+        if value != "transparent" and not all(COLOR_RE.match(c) for c in value.split(">")):
+            raise ValueError(f"过渡背景须为 transparent、#rrggbb 或 #a>#b>#c：{value!r}")
         return value
 
 
@@ -320,6 +354,18 @@ class Take(StrictModel):
     created_at: str = Field(default_factory=now_iso)
 
 
+class LetterStyle(StrictModel):
+    """Free styling for SFX (拟声字) and any other layer."""
+
+    fill: str = "#111111"
+    stroke: str = "#ffffff"
+    stroke_width: int = Field(default=4, ge=0, le=40)
+    rotation: float = Field(default=0, ge=-180, le=180)
+    effect: Literal["none", "grow", "shake", "arc"] = "none"
+    letter_spacing: int = Field(default=0, ge=-40, le=200)
+    preset: str = ""
+
+
 class LetteringLayer(StrictModel):
     id: str = Field(default_factory=lambda: new_id("letter"))
     panel_id: str | None = None
@@ -331,12 +377,17 @@ class LetteringLayer(StrictModel):
     vertical: bool = False
     font_size: int | None = None
     locked: bool = False
+    bridge_to: str | None = Field(
+        default=None, description="Next panel id of a cross-panel bubble."
+    )
+    style: LetterStyle | None = None
 
 
 class Strip(StrictModel):
     width: int = Field(default=800, ge=320, le=2400)
     background: str = "#ffffff"
     margin: int = Field(default=24, ge=0, le=400)
+    text_direction: Literal["horizontal", "vertical"] = "horizontal"
     panel_boxes: dict[str, Box] = Field(default_factory=dict)
     crops: dict[str, Box] = Field(default_factory=dict, description="Normalized crop per panel.")
     lettering: list[LetteringLayer] = Field(default_factory=list)
