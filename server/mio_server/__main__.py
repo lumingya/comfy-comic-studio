@@ -21,11 +21,19 @@ import uvicorn
 
 from . import __version__
 from .api import create_app
+from .api.guard import host_allowed
 from .context import AppContext, default_data_dir
 
 
 def browser_host(host: str) -> str:
     return "127.0.0.1" if host in ("", "0.0.0.0", "::") else host
+
+
+def trust_host(host: str) -> None:
+    """``--host mybox.lan`` means the browser will send ``Host: mybox.lan``: allow that name."""
+    if host and not host_allowed(host):
+        known = os.environ.get("MIO_ALLOWED_HOSTS", "")
+        os.environ["MIO_ALLOWED_HOSTS"] = f"{known},{host}" if known else host
 
 
 def port_in_use(host: str, port: int) -> bool:
@@ -82,6 +90,7 @@ def main(argv: list[str] | None = None) -> int:
         print("[mio] 换一个端口：start.bat --port 8790，或设置环境变量 MIO_PORT。", file=sys.stderr)
         return 2
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+    trust_host(args.host)
     ctx = AppContext.create(args.data)
     print(f"[mio] {url}", flush=True)
     if args.open:

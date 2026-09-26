@@ -35,6 +35,7 @@ from . import (
     system,
     update,
 )
+from .guard import LocalGuard, env_hosts
 from .v2 import build_v2
 
 API_VERSION = "1"
@@ -68,6 +69,8 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
 
     app = FastAPI(title="Mio v3 API", version=API_VERSION, lifespan=lifespan)
     app.state.ctx = ctx or AppContext.create()
+    # /api has no login: refuse cross-site writes and DNS-rebound hosts (see guard.py).
+    app.add_middleware(LocalGuard, allowed=env_hosts())
 
     for exc_type, code, kind in ERRORS:
         app.add_exception_handler(exc_type, _handler(code, kind))

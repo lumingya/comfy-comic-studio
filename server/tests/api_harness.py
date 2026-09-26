@@ -20,6 +20,11 @@ from .test_compile_executor import FakeClient
 from .test_jobs import drain
 from .test_render_qa import FakeVLM
 
+# The local API only answers loopback / IP hosts (api/guard.py); TestClient defaults to testserver
+# and websocket_connect ignores base_url, so sockets need the absolute WS prefix.
+LOCAL = "http://127.0.0.1"
+WS = "ws://127.0.0.1"
+
 
 class FakeComfy(FakeClient):
     def system_stats(self):
@@ -66,7 +71,7 @@ class ApiCase(unittest.TestCase):
         self.ctx.refresh_instances()
         FakeClient.uploads, FakeClient.graphs, FakeClient.mode = [], [], "ok"
         FakeLLM.edit = None
-        self.client = TestClient(create_app(self.ctx, serve_web=False))
+        self.client = TestClient(create_app(self.ctx, serve_web=False), base_url=LOCAL)
         self.tmp = tmp.name
 
     # ------------------------------------------------------------ helpers

@@ -32,6 +32,7 @@ npm --prefix web run build
 
 开发时另开一个终端运行 `npm --prefix web run dev`（Vite 把 `/api` 与 WebSocket 代理到 8788）。
 新版的运行数据默认在 `server/data/runtime/v3`（`--data` 或环境变量 `MIO_V3_DATA` 可改）。
+本地界面的 `/api` 不需要登录，所以服务端会拒绝别的网站发来的写请求和陌生主机名（防 CSRF 与 DNS 重绑定）。用 `--host 0.0.0.0` 在局域网里访问时，按 IP 打开即可；要用主机名访问，把它加进环境变量 `MIO_ALLOWED_HOSTS`（逗号分隔）。
 启动脚本的参数会传给服务端，例如 `start.bat --port 8790`。`start.bat --check` 只检查依赖并组装一遍应用，不启动服务，排查启动问题时可以先跑它。依赖缺失或安装失败时，脚本会停下并说明原因。
 
 ## 更新

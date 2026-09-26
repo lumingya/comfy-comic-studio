@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 from mio_server.api import create_app
 from mio_server.hooks import HookBus, HookError
 
-from .api_harness import ApiCase
+from .api_harness import LOCAL, ApiCase
 from .test_compile_executor import FakeClient
 
 THEME = {
@@ -106,7 +106,7 @@ class ExtensionApiTests(ApiCase):
         self.adopt_all(ep)
         self.assertIn("ext_marker_tag", json.dumps(FakeClient.graphs, ensure_ascii=False))
 
-        client = TestClient(create_app(self.ctx, serve_web=False))  # "restart"
+        client = TestClient(create_app(self.ctx, serve_web=False), base_url=LOCAL)  # "restart"
         hello = self.ok(client.get("/api/ext/demo/hello"))
         self.assertEqual(hello, {"hi": "demo", "saved": {"count": 1}})
 

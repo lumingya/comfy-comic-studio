@@ -11,6 +11,8 @@ import mio_server.api as api_module
 from mio_server.api import create_app
 from mio_server.context import AppContext
 
+from .api_harness import LOCAL
+
 
 class WebMountTests(unittest.TestCase):
     def setUp(self):
@@ -24,7 +26,7 @@ class WebMountTests(unittest.TestCase):
         )
         self.patch = mock.patch.object(api_module, "WEB_DIST", dist)
         self.patch.start()
-        self.client = TestClient(create_app(self.ctx))
+        self.client = TestClient(create_app(self.ctx), base_url=LOCAL)
 
     def tearDown(self):
         self.patch.stop()

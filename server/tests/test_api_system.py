@@ -8,7 +8,7 @@ from pathlib import Path
 
 from mio_server.comfy.compile import BUILTINS
 
-from .api_harness import ApiCase, FakeLLM
+from .api_harness import WS, ApiCase, FakeLLM
 from .legacy_fixture import copy_shipped_legacy
 from .test_compile_executor import png
 
@@ -110,7 +110,7 @@ class LibraryTests(ApiCase):
 class JobsTests(ApiCase):
     def test_job_controls_and_websocket(self):
         _, ep = self.make_episode()
-        with self.client.websocket_connect("/api/ws/jobs?previews=false") as ws:
+        with self.client.websocket_connect(f"{WS}/api/ws/jobs?previews=false") as ws:
             self.assertEqual(ws.receive_json()["type"], "hello")
             pid = ep["panels"][0]["id"]
             job = self.ok(
