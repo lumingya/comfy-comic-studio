@@ -17,14 +17,17 @@
 | `data/` | 随包默认数据（清单见 `data/distribution.json`）和旧版运行时用户数据（大多被 `.gitignore` 忽略）。**留在根目录**：新版「导入旧数据」也从这里读 |
 | `docs/` | 路线图 `ROADMAP.md` |
 | `next/` | Phase 0.5 技术验证（Spike），独立于旧版，只用标准库；说明见 [next/README.md](next/README.md) |
-| `server/` | 新后端：FastAPI + Pydantic + SQLite。领域模型、导入器、任务引擎、ComfyUI 模块、出图管线、HTTP API v1；`python -m mio_server` 启动，存在 `web/dist` 时一并托管界面 |
+| `server/` | 新后端：FastAPI + Pydantic + SQLite。领域模型、导入器、任务引擎、ComfyUI 模块、出图管线、HTTP API（`/api` 本机界面用，`/api/v2` 带令牌的开放接口）、扩展、主题、画册导出、签名更新；`python -m mio_server` 启动（根目录 `start.bat` / `start.sh` 会建 `.venv`、装依赖并先安装已暂存的更新），存在 `web/dist` 时一并托管界面 |
+| `clients/` | 开放 API v2 的 OpenAPI 快照、生成的 Python 客户端（`python clients/python/generate.py`，改了接口要重新生成并提交）与 AstrBot 插件；说明见 [clients/README.md](clients/README.md) |
+| `tools/` | `build_release.py`（发布 zip + 签名清单 `mio-release.json`）、`release_keygen.py`（生成发布签名密钥；私钥只放仓库 Secret `MIO_RELEASE_KEY`，公钥写入 `server/mio_server/update/keys.py`） |
 | `web/` | 新前端：Vite + React + TypeScript（TanStack Query、Zustand、i18next、Radix、react-konva、dnd-kit）。API 类型由 `npm --prefix web run gen:api` 从 OpenAPI 生成到 `web/src/api/schema.d.ts`，改了接口要重新生成并提交 |
 
 ## 验证命令（提交前必跑，都很轻）
 
 ```bash
 python -m unittest discover -s server/tests -t server -q   # 新后端单测，约 20 秒
-ruff check server && ruff format --check server            # 新后端 lint（行宽 100）
+ruff check server clients tools && ruff format --check server clients tools   # lint（行宽 100）
+python clients/python/generate.py --check                  # 生成的 API v2 客户端与接口一致
 python -m unittest discover -s next/tests -t next -q       # Spike（next/）单测，约 5 秒
 python legacy/tools/check_distribution.py                  # 随包数据与清单一致（以 CI 的干净检出为准）
 

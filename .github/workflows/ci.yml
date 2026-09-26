@@ -43,11 +43,11 @@ jobs:
           ruff check server
           ruff format --check server
           python -m unittest discover -s server/tests -t server -q
-      - name: API v2 clients (generated client current + lint)
+      - name: API v2 clients and release tools (generated client current + lint)
         run: |
           python clients/python/generate.py --check
-          ruff check clients
-          ruff format --check clients
+          ruff check clients tools
+          ruff format --check clients tools
       - name: v3 web (API types current + format + typecheck + tests + build)
         run: |
           npm ci --prefix web --no-audit --no-fund
