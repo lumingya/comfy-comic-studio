@@ -399,9 +399,12 @@ Job / Attempt：统一任务引擎（继承旧版的安全语义）
 
 - [ ] 旧代码移到 `legacy/` 作为只读参考。建立 `server/`（FastAPI）和 `web/`（Vite + React + TS）。
   - **进展（2026-09-26）**：已先建立新栈骨架，旧版暂未搬迁：`server/mio_server/`（FastAPI 入口、健康检查、Series / Episode API）、`web/`（Vite + React + TypeScript 入口页）。
-- [ ] 领域模型 v3：SQLite schema、Pydantic 模型、单测。一次性导入器（分镜、预设、工作流）。
+- [x] 领域模型 v3：SQLite schema、Pydantic 模型、单测。一次性导入器（分镜、预设、工作流）。
   - **进展（2026-09-26）**：已完成第一版 Pydantic 领域模型与 SQLite JSON 文档库：Series、Bible、Character、Location、Prop、Style、Episode、Panel、Take、Strip、Lettering；已有模型 / 存储 / API 单测。
   - **进展（2026-09-26）**：模型补齐批量变体、`{变量}`、每格覆盖（原始提示词 / 追加 / 节点覆盖 / 出图配置）、候选修图历史、质检结果；存储升到 schema v2（工作流、出图配置、ComfyUI 实例等文档表，素材按 sha256 去重存储）。导入器尚未开始。
+  - **进展（2026-09-26）**：一次性导入器 `server/mio_server/importer.py`：旧版合集 → 作品，预设 → 设定集角色与 `{变量}`，分镜 → 集与格（原始提示词、每格节点覆盖、镜头与画幅），工作流 → `WorkflowDoc`（旧 mapping / bindings 转 JSON Pointer 绑定）；重复导入幂等，可选覆盖。用随包 `data/` 做单测。
+- [x] HTTP API v1（`server/mio_server/api/`，`AppContext` 统一装配存储、素材、任务引擎、服务和内部注册表）：作品 / 设定集 / 集（分页）/ 格 / 候选；出图、成品、修图、质检、提示词预览；条漫排版、长图、导出；任务控制与 `/api/ws/jobs` 实时事件；工作流导入（拒绝界面格式）、编译预览、诊断；出图配置、ComfyUI 实例与健康检查；素材上传与缩略图；设置（密钥打码）、注册表、回收站、`.mio.zip`、旧数据导入。同一幂等键的重复请求得到同一任务（随机种子由幂等键派生）。
+  - 黄金故事 API 测试（`server/tests/test_api.py`）：一句话 → 剧本 → 出图 → 采用 → 质检 → 排版 → 切片 / HTML 导出，全程走 HTTP，LLM 与 ComfyUI 用替身。
 - [x] 统一任务引擎：移植旧版的安全语义与测试用例；实现多实例池。
   - `server/mio_server/jobs/`：不可变快照 + 幂等键、租约、epoch 防过期结果、`uncertain` 不自动重试、立即停止（中断 ComfyUI）、并发窗口、失败上限暂停、重启恢复与只读对账、暂停 / 取消、单格与后缀重跑；ComfyUI 多实例池按模型分组调度（同组优先落在已加载该模型的实例）。
 - [x] ComfyUI 模块：把 Spike 的代码转正，再移植 `workflow_slots.py`。
@@ -412,6 +415,7 @@ Job / Attempt：统一任务引擎（继承旧版的安全语义）
 
 - [ ] React 页面：作品、设定集、剧本、出图板、条漫画布（基础版）、阅读、导出（切片、长图）。
 - [ ] 结构化剧本助手：可审阅 diff。批量变体。`.mio.zip`。回收站。
+  - **进展（2026-09-26）**：后端完成并有单测：剧本助手按「规范化剧本视图」出逐条 diff（增删改格、角色、地点、重排），锁定格不动，按 `base_revision` 防并发覆盖，只应用勾选的条目；`.mio.zip` 导出 / 导入（sha256 校验、路径安全、防解压炸弹、永不覆盖，id 冲突自动换新 id）；回收站（作品 / 集软删除、恢复、彻底删除、按保留天数过期）；批量变体随出图接口提交。界面待接入。
 - **完成标准**：§2.2 中 P2 项通过；效果基准不低于 Spike；删除 `legacy/`，只保留标签。
 
 ### Phase 3 · 一致性与质检（约 2 周）
