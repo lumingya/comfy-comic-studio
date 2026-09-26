@@ -10,19 +10,16 @@
     "test": "vitest run --environment jsdom"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.62.7",
     "@vitejs/plugin-react": "^4.3.4",
-    "mio-studio": "file:..",
+    "vite": "^6.0.7",
+    "typescript": "^5.7.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "typescript": "^5.7.2",
-    "vite": "^6.0.7",
-    "zustand": "^5.0.2"
+    "zustand": "^5.0.2",
+    "@tanstack/react-query": "^5.62.7"
   },
   "devDependencies": {
-    "@types/react": "^19.3.0",
-    "@types/react-dom": "^19.3.0",
-    "jsdom": "^25.0.1",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "jsdom": "^25.0.1"
   }
 }
