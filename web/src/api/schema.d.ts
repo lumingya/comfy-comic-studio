@@ -183,6 +183,100 @@ export interface paths {
         patch: operations["patch_panel_api_episodes__episode_id__panels__panel_id__patch"];
         trace?: never;
     };
+    "/api/episodes/{episode_id}/panels/batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Patch Panels
+         * @description Batch edit: one revision, every listed panel gets the same changes.
+         */
+        post: operations["patch_panels_api_episodes__episode_id__panels_batch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/episodes/{episode_id}/panels/batch-delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Delete Panels */
+        post: operations["delete_panels_api_episodes__episode_id__panels_batch_delete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/episodes/{episode_id}/panels/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Panels */
+        post: operations["import_panels_api_episodes__episode_id__panels_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/episodes/{episode_id}/panels/{panel_id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Panel History
+         * @description Earlier saved versions of one panel (newest first, unchanged saves collapsed).
+         */
+        get: operations["panel_history_api_episodes__episode_id__panels__panel_id__history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/episodes/{episode_id}/panels/{panel_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore Panel
+         * @description Put the panel back to how it was at ``revision`` (position and id stay).
+         */
+        post: operations["restore_panel_api_episodes__episode_id__panels__panel_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/episodes/{episode_id}/panels/reorder": {
         parameters: {
             query?: never;
@@ -2486,6 +2580,22 @@ export interface components {
             /** @description Dynamic comic; None = auto */
             motion: components["schemas"]["PanelMotion"] | null;
         };
+        /**
+         * PanelBatch
+         * @description Same ``changes`` applied to several panels in one revision (``overrides`` is merged).
+         */
+        PanelBatch: {
+            /** Panel Ids */
+            panel_ids: string[];
+            /** Changes */
+            changes: Record<string, unknown>;
+            /** Append Text */
+            append_text?: {
+                [key: string]: string;
+            };
+            /** Revision */
+            revision?: number | null;
+        };
         /** PanelCharacter */
         PanelCharacter: {
             /** Character Id */
@@ -2522,6 +2632,21 @@ export interface components {
              * After
              * @description Insert after this panel; null = at the end
              */
+            after?: string | null;
+        };
+        /** PanelIds */
+        PanelIds: {
+            /** Panel Ids */
+            panel_ids: string[];
+        };
+        /**
+         * PanelImport
+         * @description Panels exported from this or another episode; ids are re-issued, order follows the list.
+         */
+        PanelImport: {
+            /** Panels */
+            panels: Record<string, unknown>[];
+            /** After */
             after?: string | null;
         };
         /**
@@ -2585,6 +2710,11 @@ export interface components {
             changes: Record<string, unknown>;
             /** Revision */
             revision?: number | null;
+        };
+        /** PanelRestore */
+        PanelRestore: {
+            /** Revision */
+            revision: number;
         };
         /**
          * PanelWidth
@@ -3915,6 +4045,179 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["PanelPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Episode"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_panels_api_episodes__episode_id__panels_batch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PanelBatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Episode"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_panels_api_episodes__episode_id__panels_batch_delete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PanelIds"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Episode"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_panels_api_episodes__episode_id__panels_import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PanelImport"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Episode"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    panel_history_api_episodes__episode_id__panels__panel_id__history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+                panel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>[];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_panel_api_episodes__episode_id__panels__panel_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+                panel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PanelRestore"];
             };
         };
         responses: {

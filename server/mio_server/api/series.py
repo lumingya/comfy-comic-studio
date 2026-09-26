@@ -44,6 +44,32 @@ class Reorder(BaseModel):
     revision: int | None = None
 
 
+class PanelBatch(BaseModel):
+    """Same ``changes`` applied to several panels in one revision (``overrides`` is merged)."""
+
+    panel_ids: list[str]
+    changes: dict[str, Any]
+    # Text to add after each panel's own value (comma-joined) instead of replacing it;
+    # keys are override fields such as ``append_prompt`` / ``negative_prompt``.
+    append_text: dict[str, str] = Field(default_factory=dict)
+    revision: int | None = None
+
+
+class PanelIds(BaseModel):
+    panel_ids: list[str]
+
+
+class PanelImport(BaseModel):
+    """Panels exported from this or another episode; ids are re-issued, order follows the list."""
+
+    panels: list[dict[str, Any]]
+    after: str | None = None
+
+
+class PanelRestore(BaseModel):
+    revision: int
+
+
 class GenerateEpisode(BaseModel):
     sentence: str
     title: str | None = None
@@ -195,18 +221,125 @@ def add_panel(ctx: Ctx, episode_id: str, payload: PanelCreate) -> Episode:
     return ctx.store.update_episode(episode_id, apply)
 
 
+def _merged(panel: Panel, changes: dict[str, Any]) -> Panel:
+    """``changes`` over ``panel``; id / order never change, ``overrides`` merges key by key."""
+    data = {**panel.model_dump(), **changes, "id": panel.id, "order": panel.order}
+    if isinstance(changes.get("overrides"), dict):
+        data["overrides"] = {**panel.overrides.model_dump(), **changes["overrides"]}
+    return Panel.model_validate(data)
+
+
 @router.patch("/episodes/{episode_id}/panels/{panel_id}", response_model=Episode)
 def patch_panel(ctx: Ctx, episode_id: str, panel_id: str, payload: PanelPatch) -> Episode:
     def apply(ep: Episode) -> None:
         panel = ep.panel(panel_id)
         if panel is None:
             raise NotFound(f"panel not found: {panel_id}")
-        data = {**panel.model_dump(), **payload.changes, "id": panel.id, "order": panel.order}
-        if isinstance(payload.changes.get("overrides"), dict):
-            data["overrides"] = {**panel.overrides.model_dump(), **payload.changes["overrides"]}
-        ep.panels[ep.panels.index(panel)] = Panel.model_validate(data)
+        ep.panels[ep.panels.index(panel)] = _merged(panel, payload.changes)
 
     return ctx.store.update_episode(episode_id, apply, expected_revision=payload.revision)
+
+
+@router.post("/episodes/{episode_id}/panels/batch", response_model=Episode)
+def patch_panels(ctx: Ctx, episode_id: str, payload: PanelBatch) -> Episode:
+    """Batch edit: one revision, every listed panel gets the same changes."""
+
+    def apply(ep: Episode) -> None:
+        wanted = set(payload.panel_ids)
+        missing = wanted - {p.id for p in ep.panels}
+        if missing:
+            raise NotFound(f"panel not found: {sorted(missing)[0]}")
+
+        def edit(panel: Panel) -> Panel:
+            changes = dict(payload.changes)
+            if payload.append_text:
+                current = panel.overrides.model_dump()
+                joined = {
+                    key: ", ".join(x for x in (str(current.get(key) or ""), text) if x)
+                    for key, text in payload.append_text.items()
+                }
+                overrides = changes.get("overrides")
+                changes["overrides"] = {
+                    **(overrides if isinstance(overrides, dict) else {}),
+                    **joined,
+                }
+            return _merged(panel, changes)
+
+        ep.panels = [edit(p) if p.id in wanted else p for p in ep.panels]
+
+    return ctx.store.update_episode(episode_id, apply, expected_revision=payload.revision)
+
+
+@router.post("/episodes/{episode_id}/panels/batch-delete", response_model=Episode)
+def delete_panels(ctx: Ctx, episode_id: str, payload: PanelIds) -> Episode:
+    def apply(ep: Episode) -> None:
+        wanted = set(payload.panel_ids)
+        _sequence(ep, [p.id for p in ep.ordered_panels() if p.id not in wanted])
+
+    return ctx.store.update_episode(episode_id, apply)
+
+
+@router.post("/episodes/{episode_id}/panels/import", response_model=Episode, status_code=201)
+def import_panels(ctx: Ctx, episode_id: str, payload: PanelImport) -> Episode:
+    def apply(ep: Episode) -> None:
+        ids = [p.id for p in ep.ordered_panels()]
+        pos = ids.index(payload.after) + 1 if payload.after in ids else len(ids)
+        fresh = [
+            Panel.model_validate({**{k: v for k, v in raw.items() if k != "id"}, "order": 0})
+            for raw in payload.panels
+        ]
+        ep.panels.extend(fresh)
+        _sequence(ep, ids[:pos] + [p.id for p in fresh] + ids[pos:])
+
+    return ctx.store.update_episode(episode_id, apply)
+
+
+@router.get("/episodes/{episode_id}/panels/{panel_id}/history")
+def panel_history(ctx: Ctx, episode_id: str, panel_id: str) -> list[dict]:
+    """Earlier saved versions of one panel (newest first, unchanged saves collapsed)."""
+    ctx.store.get_episode(episode_id)
+    out: list[dict] = []
+    last: str | None = None
+    for revision, created_at, snapshot in ctx.store.episode_snapshots(episode_id):
+        panel = snapshot.panel(panel_id)
+        if panel is None:
+            continue
+        fingerprint = panel.model_dump_json(exclude={"order"})
+        if fingerprint == last:
+            out[-1]["revision"] = revision  # same content: report the oldest revision it held
+            continue
+        last = fingerprint
+        out.append(
+            {
+                "revision": revision,
+                "created_at": created_at,
+                "shot": panel.shot,
+                "description": panel.description,
+                "prompt": panel.overrides.append_prompt,
+                "dialogue": panel.dialogues[0].text if panel.dialogues else "",
+                "panel": panel.model_dump(),
+            }
+        )
+    return out
+
+
+@router.post("/episodes/{episode_id}/panels/{panel_id}/restore", response_model=Episode)
+def restore_panel(ctx: Ctx, episode_id: str, panel_id: str, payload: PanelRestore) -> Episode:
+    """Put the panel back to how it was at ``revision`` (position and id stay)."""
+    older = next(
+        (s for r, _, s in ctx.store.episode_snapshots(episode_id) if r == payload.revision), None
+    )
+    then = older.panel(panel_id) if older else None
+    if then is None:
+        raise NotFound(f"no saved version {payload.revision} of panel {panel_id}")
+
+    def apply(ep: Episode) -> None:
+        panel = ep.panel(panel_id)
+        if panel is None:
+            raise NotFound(f"panel not found: {panel_id}")
+        ep.panels[ep.panels.index(panel)] = _merged(panel, then.model_dump(exclude={"id", "order"}))
+
+    return ctx.store.update_episode(episode_id, apply)
 
 
 @router.delete("/episodes/{episode_id}/panels/{panel_id}", response_model=Episode)

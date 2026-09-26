@@ -70,7 +70,13 @@ CREATE TABLE IF NOT EXISTS documents (
 CREATE TABLE IF NOT EXISTS assets (
     id TEXT PRIMARY KEY, mime TEXT NOT NULL, size INTEGER NOT NULL, width INTEGER, height INTEGER,
     source TEXT NOT NULL DEFAULT '', filename TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS episode_snapshots (
+    episode_id TEXT NOT NULL REFERENCES episodes(id) ON DELETE CASCADE, revision INTEGER NOT NULL,
+    created_at TEXT NOT NULL, payload_json TEXT NOT NULL, PRIMARY KEY(episode_id, revision));
 """
+
+# Saved states kept per episode for "restore this panel to how it was" (oldest pruned).
+SNAPSHOT_LIMIT = 60
 
 
 # Card data straight from the stored JSON (no payload round trip through Python).  ``e`` is the
@@ -314,15 +320,25 @@ class SQLiteStore:
             ).fetchone()
             if not row:
                 raise NotFound(f"episode not found: {episode.id}")
-            if expected_revision is not None:
-                current = Episode.model_validate_json(row["payload_json"]).revision
-                if current != expected_revision:
-                    raise Conflict(
-                        f"episode changed (revision {current}, expected {expected_revision})"
-                    )
+            current = Episode.model_validate_json(row["payload_json"]).revision
+            if expected_revision is not None and current != expected_revision:
+                raise Conflict(
+                    f"episode changed (revision {current}, expected {expected_revision})"
+                )
             self._check_order(db, episode)
+            if not db.execute(
+                "SELECT 1 FROM episode_snapshots WHERE episode_id = ? AND revision = ?",
+                (episode.id, current),
+            ).fetchone():
+                # First save since the snapshot table exists: keep the state we are replacing too.
+                db.execute(
+                    "INSERT INTO episode_snapshots(episode_id, revision, created_at, payload_json) "
+                    "VALUES (?, ?, ?, ?)",
+                    (episode.id, current, now_iso(), row["payload_json"]),
+                )
             episode.updated_at = now_iso()
             episode.revision += 1
+            payload = episode.model_dump_json()
             db.execute(
                 """UPDATE episodes SET title = ?, episode_order = ?, panel_count = ?, updated_at = ?, deleted_at = ?,
                    payload_json = ? WHERE id = ?""",
@@ -332,11 +348,34 @@ class SQLiteStore:
                     len(episode.panels),
                     episode.updated_at,
                     episode.deleted_at,
-                    episode.model_dump_json(),
+                    payload,
                     episode.id,
                 ),
             )
+            db.execute(
+                "INSERT OR REPLACE INTO episode_snapshots(episode_id, revision, created_at, payload_json) "
+                "VALUES (?, ?, ?, ?)",
+                (episode.id, episode.revision, episode.updated_at, payload),
+            )
+            db.execute(
+                "DELETE FROM episode_snapshots WHERE episode_id = ? AND revision NOT IN "
+                "(SELECT revision FROM episode_snapshots WHERE episode_id = ? "
+                "ORDER BY revision DESC LIMIT ?)",
+                (episode.id, episode.id, SNAPSHOT_LIMIT),
+            )
         return episode
+
+    def episode_snapshots(self, episode_id: str) -> list[tuple[int, str, Episode]]:
+        """Saved states, newest first: ``(revision, created_at, episode)``."""
+        rows = self._rows(
+            "SELECT revision, created_at, payload_json FROM episode_snapshots "
+            "WHERE episode_id = ? ORDER BY revision DESC",
+            (episode_id,),
+        )
+        return [
+            (r["revision"], r["created_at"], Episode.model_validate_json(r["payload_json"]))
+            for r in rows
+        ]
 
     def update_episode(
         self,

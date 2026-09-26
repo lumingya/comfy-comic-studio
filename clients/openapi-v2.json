@@ -2077,8 +2077,9 @@
     "additionalProperties": false,
     "properties": {
      "angle": {
-      "default": "eye",
+      "default": "",
       "enum": [
+       "",
        "eye",
        "high",
        "low",
@@ -2222,8 +2223,9 @@
       "type": "boolean"
      },
      "shot": {
-      "default": "medium",
+      "default": "",
       "enum": [
+       "",
        "extreme_close",
        "close",
        "medium",
@@ -2291,6 +2293,47 @@
      "motion"
     ],
     "title": "Panel",
+    "type": "object"
+   },
+   "PanelBatch": {
+    "description": "Same ``changes`` applied to several panels in one revision (``overrides`` is merged).",
+    "properties": {
+     "append_text": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Append Text",
+      "type": "object"
+     },
+     "changes": {
+      "additionalProperties": true,
+      "title": "Changes",
+      "type": "object"
+     },
+     "panel_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Panel Ids",
+      "type": "array"
+     },
+     "revision": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Revision"
+     }
+    },
+    "required": [
+     "panel_ids",
+     "changes"
+    ],
+    "title": "PanelBatch",
     "type": "object"
    },
    "PanelCharacter": {
@@ -2368,6 +2411,51 @@
      }
     },
     "title": "PanelCreate",
+    "type": "object"
+   },
+   "PanelIds": {
+    "properties": {
+     "panel_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Panel Ids",
+      "type": "array"
+     }
+    },
+    "required": [
+     "panel_ids"
+    ],
+    "title": "PanelIds",
+    "type": "object"
+   },
+   "PanelImport": {
+    "description": "Panels exported from this or another episode; ids are re-issued, order follows the list.",
+    "properties": {
+     "after": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "After"
+     },
+     "panels": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "title": "Panels",
+      "type": "array"
+     }
+    },
+    "required": [
+     "panels"
+    ],
+    "title": "PanelImport",
     "type": "object"
    },
    "PanelMotion": {
@@ -2547,6 +2635,19 @@
      "changes"
     ],
     "title": "PanelPatch",
+    "type": "object"
+   },
+   "PanelRestore": {
+    "properties": {
+     "revision": {
+      "title": "Revision",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "revision"
+    ],
+    "title": "PanelRestore",
     "type": "object"
    },
    "PanelWidth": {
@@ -5607,6 +5708,178 @@
     ]
    }
   },
+  "/episodes/{episode_id}/panels/batch": {
+   "post": {
+    "description": "Batch edit: one revision, every listed panel gets the same changes.",
+    "operationId": "patch_panels",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "episode_id",
+      "required": true,
+      "schema": {
+       "title": "Episode Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PanelBatch"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Episode"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Patch Panels",
+    "tags": [
+     "series"
+    ]
+   }
+  },
+  "/episodes/{episode_id}/panels/batch-delete": {
+   "post": {
+    "operationId": "delete_panels",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "episode_id",
+      "required": true,
+      "schema": {
+       "title": "Episode Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PanelIds"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Episode"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Delete Panels",
+    "tags": [
+     "series"
+    ]
+   }
+  },
+  "/episodes/{episode_id}/panels/import": {
+   "post": {
+    "operationId": "import_panels",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "episode_id",
+      "required": true,
+      "schema": {
+       "title": "Episode Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PanelImport"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Episode"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Import Panels",
+    "tags": [
+     "series"
+    ]
+   }
+  },
   "/episodes/{episode_id}/panels/reorder": {
    "post": {
     "operationId": "reorder_panels",
@@ -5912,6 +6185,68 @@
     ]
    }
   },
+  "/episodes/{episode_id}/panels/{panel_id}/history": {
+   "get": {
+    "description": "Earlier saved versions of one panel (newest first, unchanged saves collapsed).",
+    "operationId": "panel_history",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "episode_id",
+      "required": true,
+      "schema": {
+       "title": "Episode Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "panel_id",
+      "required": true,
+      "schema": {
+       "title": "Panel Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         "title": "Response Panel History",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Panel History",
+    "tags": [
+     "series"
+    ]
+   }
+  },
   "/episodes/{episode_id}/panels/{panel_id}/prompt": {
    "get": {
     "description": "Compiled prompt in both dialects plus the automatically chosen reference images.",
@@ -5982,6 +6317,73 @@
      }
     ],
     "summary": "Panel Prompt",
+    "tags": [
+     "series"
+    ]
+   }
+  },
+  "/episodes/{episode_id}/panels/{panel_id}/restore": {
+   "post": {
+    "description": "Put the panel back to how it was at ``revision`` (position and id stay).",
+    "operationId": "restore_panel",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "episode_id",
+      "required": true,
+      "schema": {
+       "title": "Episode Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "panel_id",
+      "required": true,
+      "schema": {
+       "title": "Panel Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PanelRestore"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Episode"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Restore Panel",
     "tags": [
      "series"
     ]

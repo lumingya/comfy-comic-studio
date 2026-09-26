@@ -188,6 +188,39 @@ class MioClient(_Base):
         """
         return self._request("DELETE", f"/episodes/{_q(episode_id)}/panels/{_q(panel_id)}")
 
+    def patch_panels(self, episode_id: str, body: dict | list | None = None) -> Any:
+        """POST /episodes/{episode_id}/panels/batch — Patch Panels.
+
+        Batch edit: one revision, every listed panel gets the same changes.
+        """
+        return self._request("POST", f"/episodes/{_q(episode_id)}/panels/batch", json=body)
+
+    def delete_panels(self, episode_id: str, body: dict | list | None = None) -> Any:
+        """POST /episodes/{episode_id}/panels/batch-delete — Delete Panels."""
+        return self._request("POST", f"/episodes/{_q(episode_id)}/panels/batch-delete", json=body)
+
+    def import_panels(self, episode_id: str, body: dict | list | None = None) -> Any:
+        """POST /episodes/{episode_id}/panels/import — Import Panels."""
+        return self._request("POST", f"/episodes/{_q(episode_id)}/panels/import", json=body)
+
+    def panel_history(self, episode_id: str, panel_id: str) -> Any:
+        """GET /episodes/{episode_id}/panels/{panel_id}/history — Panel History.
+
+        Earlier saved versions of one panel (newest first, unchanged saves collapsed).
+        """
+        return self._request("GET", f"/episodes/{_q(episode_id)}/panels/{_q(panel_id)}/history")
+
+    def restore_panel(self, episode_id: str, panel_id: str, body: dict | list | None = None) -> Any:
+        """POST /episodes/{episode_id}/panels/{panel_id}/restore — Restore Panel.
+
+        Put the panel back to how it was at ``revision`` (position and id stay).
+        """
+        return self._request(
+            "POST",
+            f"/episodes/{_q(episode_id)}/panels/{_q(panel_id)}/restore",
+            json=body,
+        )
+
     def reorder_panels(self, episode_id: str, body: dict | list | None = None) -> Any:
         """POST /episodes/{episode_id}/panels/reorder — Reorder Panels."""
         return self._request("POST", f"/episodes/{_q(episode_id)}/panels/reorder", json=body)

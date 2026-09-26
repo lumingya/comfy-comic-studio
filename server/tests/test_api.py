@@ -182,6 +182,98 @@ class CrudTests(ApiCase):
         self.assertNotIn("p_new", [p["id"] for p in ep["panels"]])
         self.assertEqual(self.client.delete(f"/api/episodes/{eid}/panels/p_new").status_code, 404)
 
+    def test_batch_edit_import_and_panel_history(self):
+        _, ep = self.make_episode()
+        eid = ep["id"]
+        ids = [p["id"] for p in sorted(ep["panels"], key=lambda p: p["order"])]
+        first, second, third = ids[:3]
+
+        # Batch edit: one revision, overrides merged, unknown ids rejected.
+        before = ep["revision"]
+        ep = self.ok(
+            self.client.post(
+                f"/api/episodes/{eid}/panels/batch",
+                json={
+                    "panel_ids": [first, second],
+                    "changes": {"time": "night", "overrides": {"append_prompt": "rain"}},
+                },
+            )
+        )
+        self.assertEqual(ep["revision"], before + 1)
+        by_id = {p["id"]: p for p in ep["panels"]}
+        self.assertEqual(
+            [(by_id[i]["time"], by_id[i]["overrides"]["append_prompt"]) for i in (first, second)],
+            [("night", "rain"), ("night", "rain")],
+        )
+        self.assertNotEqual(by_id[third]["time"], "night")
+        ep = self.ok(
+            self.client.post(
+                f"/api/episodes/{eid}/panels/batch",
+                json={
+                    "panel_ids": [first, third],
+                    "changes": {},
+                    "append_text": {"append_prompt": "fog"},
+                },
+            )
+        )
+        by_id = {p["id"]: p for p in ep["panels"]}
+        self.assertEqual(by_id[first]["overrides"]["append_prompt"], "rain, fog")
+        self.assertEqual(by_id[third]["overrides"]["append_prompt"], "fog")
+        by_id[first]["overrides"]["append_prompt"] = (
+            "rain"  # exported below expects the batch value
+        )
+        r = self.client.post(
+            f"/api/episodes/{eid}/panels/batch",
+            json={"panel_ids": ["nope"], "changes": {"time": "day"}},
+        )
+        self.assertEqual(r.status_code, 404)
+
+        # Export = the panel JSON; import re-issues ids and lands after the anchor.
+        exported = [by_id[first], by_id[second]]
+        ep = self.ok(
+            self.client.post(
+                f"/api/episodes/{eid}/panels/import",
+                json={"panels": exported, "after": third},
+            ),
+            201,
+        )
+        order = [p["id"] for p in sorted(ep["panels"], key=lambda p: p["order"])]
+        self.assertEqual(len(order), len(ids) + 2)
+        self.assertEqual(order[:3], [first, second, third])
+        copies = order[3:5]
+        self.assertTrue(all(c not in ids for c in copies))
+        copied = next(p for p in ep["panels"] if p["id"] == copies[0])
+        self.assertEqual(copied["overrides"]["append_prompt"], "rain")
+
+        # Batch delete.
+        ep = self.ok(
+            self.client.post(f"/api/episodes/{eid}/panels/batch-delete", json={"panel_ids": copies})
+        )
+        self.assertEqual([p["id"] for p in ep["panels"]], ids)
+
+        # History: every save is a version; restore brings the old content back in place.
+        self.ok(
+            self.client.patch(
+                f"/api/episodes/{eid}/panels/{first}",
+                json={"changes": {"overrides": {"append_prompt": "snow"}}},
+            )
+        )
+        history = self.ok(self.client.get(f"/api/episodes/{eid}/panels/{first}/history"))
+        self.assertEqual([h["prompt"] for h in history[:3]], ["snow", "rain, fog", "rain"])
+        self.assertEqual(history[-1]["prompt"], "")  # the state before any edit is kept too
+        ep = self.ok(
+            self.client.post(
+                f"/api/episodes/{eid}/panels/{first}/restore",
+                json={"revision": history[1]["revision"]},
+            )
+        )
+        panel = next(p for p in ep["panels"] if p["id"] == first)
+        self.assertEqual((panel["overrides"]["append_prompt"], panel["order"]), ("rain, fog", 0))
+        r = self.client.post(
+            f"/api/episodes/{eid}/panels/{first}/restore", json={"revision": 99999}
+        )
+        self.assertEqual(r.status_code, 404)
+
     def test_take_adopt_is_exclusive_per_panel(self):
         _, ep = self.make_episode()
         pid = ep["panels"][0]["id"]
