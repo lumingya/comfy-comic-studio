@@ -400,9 +400,11 @@ Job / Attempt：统一任务引擎（继承旧版的安全语义）
 - [ ] 旧代码移到 `legacy/` 作为只读参考。建立 `server/`（FastAPI）和 `web/`（Vite + React + TS）。
   - **进展（2026-09-26）**：已先建立新栈骨架，旧版暂未搬迁：`server/mio_server/`（FastAPI 入口、健康检查、Series / Episode API）、`web/`（Vite + React + TypeScript 入口页）。
 - [ ] 领域模型 v3：SQLite schema、Pydantic 模型、单测。一次性导入器（分镜、预设、工作流）。
-  - **进展（2026-09-26）**：已完成第一版 Pydantic 领域模型与 SQLite JSON 文档库：Series、Bible、Character、Location、Prop、Style、Episode、Panel、Take、Strip、Lettering；已有模型 / 存储 / API 单测。导入器尚未开始。
+  - **进展（2026-09-26）**：已完成第一版 Pydantic 领域模型与 SQLite JSON 文档库：Series、Bible、Character、Location、Prop、Style、Episode、Panel、Take、Strip、Lettering；已有模型 / 存储 / API 单测。一次性导入器已覆盖旧分镜、角色预设变量和工作流 RenderProfile，后续补真实批量迁移命令与更多旧数据边界。
 - [ ] 统一任务引擎：移植旧版的安全语义与测试用例；实现多实例池。
+  - **进展（2026-09-26）**：已建立 `server/mio_server/jobs.py` 骨架，覆盖幂等键、不可变快照、租约、取消、失败和 `uncertain` 状态；多实例池尚未实现。
 - [ ] ComfyUI 模块：把 Spike 的代码转正，再移植 `workflow_slots.py`。
+  - **进展（2026-09-26）**：已把 Spike 的 ComfyUI 绑定 / 客户端 / WebSocket / CLI 迁入 `server/mio_server/comfy/`，并带入旧版 `workflow_slots.py`；已有端口冒烟测试。
 - **完成标准**：§2.2 中标为 P1 的项全部通过；黄金故事能通过 API 出图。
 
 ### Phase 2 · 条漫主链路（2–3 周）
