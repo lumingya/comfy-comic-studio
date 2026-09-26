@@ -28,8 +28,13 @@ BUILTINS = {
     "builtin_t2i_sdxl": ("SDXL 文生图（内置）", "t2i_sdxl.json"),
     "builtin_i2i_tile": ("SDXL 图生图 + tile 统一画风（内置）", "i2i_tile.json"),
     "builtin_inpaint_sdxl": ("SDXL 局部重绘 / 外扩（内置）", "inpaint_sdxl.json"),
+    "builtin_t2i_sdxl_regions": ("SDXL 文生图 + 双人分区（内置）", "t2i_sdxl_regions.json"),
+    "builtin_t2i_sdxl_pose": (
+        "SDXL 文生图 + 姿势 ControlNet + 双人分区（内置，需自备 OpenPose 模型）",
+        "t2i_sdxl_pose.json",
+    ),
 }
-IMAGE_KINDS = ("init", "mask", "ref")
+IMAGE_KINDS = ("init", "mask", "ref", "control")
 
 
 @dataclass
@@ -126,7 +131,7 @@ def compile_workflow(
     bound, problems = B.resolve(graph, config.mapping or None)
     warnings.extend(problems)
     merged = _merge(config.values, var_cfg.get("values"), stage_values, values)
-    for kind in ("prompt",) + IMAGE_KINDS:
+    for kind in ("prompt", "region") + IMAGE_KINDS:
         wanted = [k for k in merged if k == kind or k.startswith(kind + ":")]
         for key in wanted:
             base, _, qual = key.partition(":")
@@ -170,11 +175,13 @@ def describe(doc: WorkflowDoc) -> dict:
             if b.kind in IMAGE_KINDS
         }
     )
+    regions = sorted({b.qualifier for b in bound if b.kind == "region" and b.qualifier})
     return {
         "bindings": B.summary(bound),
         "problems": problems,
         "variants": variants,
         "image_inputs": image_inputs,
+        "regions": regions,
         "nodes": len(doc.graph),
         "checkpoint": primary_checkpoint(doc.graph, bound),
     }

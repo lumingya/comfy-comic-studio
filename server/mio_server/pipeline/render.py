@@ -30,6 +30,8 @@ from ..storage import NotFound
 from . import variables as V
 from .compiler import compile_panel
 from .refs import reference_values, select_references
+from .render_composition import KEY as COMPOSITION
+from .render_composition import CompositionMixin
 from .render_edits import PREVIOUS, EditsMixin, RenderError  # noqa: F401
 
 
@@ -72,7 +74,7 @@ def panel_values(series: Series, panel) -> dict:
     return out
 
 
-class RenderService(EditsMixin):
+class RenderService(CompositionMixin, EditsMixin):
     def __init__(self, store, assets, engine):
         self.store, self.assets, self.engine = store, assets, engine
         self._rng = random.Random()
@@ -122,7 +124,7 @@ class RenderService(EditsMixin):
     ) -> tuple[dict, str | None, list[str]]:
         doc = self.workflow(stage.workflow_id)
         info = describe(doc)
-        values = dict(values)
+        values, composition_warnings = self.resolve_composition(info, values)
         for key in [k for k in values if k.startswith("ref:")]:
             if key not in info["image_inputs"] and "ref" not in info["image_inputs"]:
                 values.pop(key)  # workflow has no reference input: references are simply not used
@@ -135,7 +137,7 @@ class RenderService(EditsMixin):
             if loras
             else None
         )
-        warnings = []
+        warnings = list(composition_warnings)
         try:
             compiled = compile_workflow(
                 doc,
@@ -206,6 +208,7 @@ class RenderService(EditsMixin):
         refs = select_references(series.bible, panel)
         ref_values = reference_values(refs)
         extra = panel_values(series, panel)
+        prepared = None
         for k in range(candidates):
             pp = compile_panel(
                 series,
@@ -217,6 +220,10 @@ class RenderService(EditsMixin):
                 negative=profile.negative_tags,
                 rng=self.rng,
             )
+            if prepared is None:
+                prepared = self.prepare_composition(
+                    series, episode, panel, pp.width, pp.height, profile.dialect, variant
+                )
             base = {
                 "prompt": pp.positive,
                 "negative": pp.negative,
@@ -224,6 +231,7 @@ class RenderService(EditsMixin):
                 "width": pp.width,
                 "height": pp.height,
                 **ref_values,
+                COMPOSITION: prepared,
                 **extra,
             }
             later = {

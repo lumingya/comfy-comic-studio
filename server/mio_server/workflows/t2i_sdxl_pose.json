@@ -1,0 +1,256 @@
+{
+  "1": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "anikawaxl_v4.safetensors"
+    },
+    "_meta": {
+      "title": "Checkpoint [mio:checkpoint]"
+    }
+  },
+  "2": {
+    "class_type": "CLIPSetLastLayer",
+    "inputs": {
+      "stop_at_clip_layer": -2,
+      "clip": [
+        "1",
+        1
+      ]
+    },
+    "_meta": {
+      "title": "CLIP skip 2"
+    }
+  },
+  "3": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Positive [mio:prompt]"
+    }
+  },
+  "4": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Negative [mio:negative]"
+    }
+  },
+  "5": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "_meta": {
+      "title": "Latent [mio:width] [mio:height] [mio:batch]"
+    }
+  },
+  "6": {
+    "class_type": "KSampler",
+    "inputs": {
+      "seed": 0,
+      "steps": 24,
+      "cfg": 5.0,
+      "sampler_name": "euler_ancestral",
+      "scheduler": "normal",
+      "denoise": 1.0,
+      "model": [
+        "1",
+        0
+      ],
+      "positive": [
+        "17",
+        0
+      ],
+      "negative": [
+        "17",
+        1
+      ],
+      "latent_image": [
+        "5",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Sampler [mio:seed] [mio:steps] [mio:cfg] [mio:sampler] [mio:scheduler]"
+    }
+  },
+  "7": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "6",
+        0
+      ],
+      "vae": [
+        "1",
+        2
+      ]
+    },
+    "_meta": {
+      "title": "Decode"
+    }
+  },
+  "8": {
+    "class_type": "PreviewImage",
+    "inputs": {
+      "images": [
+        "7",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Output [mio:output]"
+    }
+  },
+  "9": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Region 1 prompt [mio:region:1]"
+    }
+  },
+  "10": {
+    "class_type": "ConditioningSetAreaPercentage",
+    "inputs": {
+      "conditioning": [
+        "9",
+        0
+      ],
+      "width": 0.5,
+      "height": 1.0,
+      "x": 0.0,
+      "y": 0.0,
+      "strength": 1.0
+    },
+    "_meta": {
+      "title": "Region 1 area [mio:area:1]"
+    }
+  },
+  "11": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "text": "",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Region 2 prompt [mio:region:2]"
+    }
+  },
+  "12": {
+    "class_type": "ConditioningSetAreaPercentage",
+    "inputs": {
+      "conditioning": [
+        "11",
+        0
+      ],
+      "width": 0.5,
+      "height": 1.0,
+      "x": 0.5,
+      "y": 0.0,
+      "strength": 1.0
+    },
+    "_meta": {
+      "title": "Region 2 area [mio:area:2]"
+    }
+  },
+  "13": {
+    "class_type": "ConditioningCombine",
+    "inputs": {
+      "conditioning_1": [
+        "10",
+        0
+      ],
+      "conditioning_2": [
+        "12",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Regions"
+    }
+  },
+  "14": {
+    "class_type": "ConditioningCombine",
+    "inputs": {
+      "conditioning_1": [
+        "3",
+        0
+      ],
+      "conditioning_2": [
+        "13",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "Base + regions"
+    }
+  },
+  "15": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "mio_pose.png"
+    },
+    "_meta": {
+      "title": "Pose image [mio:control:pose]"
+    }
+  },
+  "16": {
+    "class_type": "ControlNetLoader",
+    "inputs": {
+      "control_net_name": "openpose_sdxl.safetensors"
+    },
+    "_meta": {
+      "title": "OpenPose ControlNet (replace with your model)"
+    }
+  },
+  "17": {
+    "class_type": "ControlNetApplyAdvanced",
+    "inputs": {
+      "positive": [
+        "14",
+        0
+      ],
+      "negative": [
+        "4",
+        0
+      ],
+      "control_net": [
+        "16",
+        0
+      ],
+      "image": [
+        "15",
+        0
+      ],
+      "strength": 0.8,
+      "start_percent": 0.0,
+      "end_percent": 0.8
+    },
+    "_meta": {
+      "title": "Apply pose [mio:strength:pose]"
+    }
+  }
+}

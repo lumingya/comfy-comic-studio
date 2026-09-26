@@ -8,6 +8,11 @@ Binding priority (ROADMAP §6.4):
 
 Tag grammar: ``[mio:<kind>[:<qualifier>][=<field>]]``. Everything here is a pure function over
 plain dicts, so the module is unit-testable without a ComfyUI server.
+
+Composition kinds (P4): ``[mio:control:pose]`` / ``[mio:control:depth]`` take a ControlNet
+image, ``[mio:strength:pose]`` its strength; ``[mio:region:N]`` takes character N's prompt and
+``[mio:area:N]`` on a ``ConditioningSetArea(Percentage)`` node receives ``{x, y, width,
+height[, strength]}`` as fractions (converted to pixels for the non-percentage node).
 """
 
 from __future__ import annotations
@@ -36,7 +41,12 @@ VALUE_KINDS = {
     "init",
     "mask",
     "strength",
+    "control",
+    "region",
+    "area",
 }
+TEXT_KINDS = ("prompt", "negative", "region")
+AREA_PARTS = ("x", "y", "width", "height", "strength")
 SELECT_KINDS = {"output", "inspect"}
 DEFAULT_FIELDS = {
     "seed": ("seed", "noise_seed"),
@@ -53,6 +63,7 @@ DEFAULT_FIELDS = {
     "init": ("image",),
     "mask": ("image",),
     "strength": ("strength",),
+    "control": ("image",),
 }
 TEXT_FIELDS = ("text", "prompt", "positive", "string", "value", "text_g", "text_l")
 SAMPLER_CLASSES = {"KSampler", "KSamplerAdvanced", "SamplerCustom", "SamplerCustomAdvanced"}
@@ -73,6 +84,7 @@ class Binding:
     field: str | None = None
     qualifier: str | None = None
     source: str = "tag"  # tag | mapping | heuristic
+    part: str | None = None  # key of a dict value (``area`` → x / y / width / height)
 
 
 def is_link(value) -> bool:
@@ -94,7 +106,7 @@ def parse_tags(title: str) -> list[tuple[str, str | None, str | None]]:
 
 
 def _default_field(kind: str, inputs: dict) -> str | None:
-    if kind in ("prompt", "negative"):
+    if kind in TEXT_KINDS:
         for name in TEXT_FIELDS:
             if isinstance(inputs.get(name), str):
                 return name
@@ -119,6 +131,13 @@ def tag_bindings(graph: dict) -> tuple[list[Binding], list[str]]:
                 continue
             if kind not in VALUE_KINDS:
                 problems.append(f"节点 {node_id}：未知标签 [mio:{kind}]")
+                continue
+            if kind == "area" and not field:
+                parts = [n for n in AREA_PARTS if n in inputs and not is_link(inputs[n])]
+                if not parts:
+                    problems.append(f"节点 {node_id}：[mio:area] 需要 x/y/width/height 输入")
+                for name in parts:
+                    found.append(Binding(kind, node_id, name, qualifier, part=name))
                 continue
             target = field or _default_field(kind, inputs)
             if not target:
@@ -155,7 +174,8 @@ def mapping_bindings(graph: dict, mapping: dict | None) -> list[Binding]:
                 raise BindingError(f"映射 {key}：指针 {pointer} 必须形如 /<节点>/inputs/<字段>")
             if parts[2] not in graph[parts[0]].get("inputs", {}):
                 raise BindingError(f"映射 {key}：节点 {parts[0]} 没有字段 {parts[2]}")
-            result.append(Binding(kind, parts[0], parts[2], qualifier or None, "mapping"))
+            part = parts[2] if kind == "area" and parts[2] in AREA_PARTS else None
+            result.append(Binding(kind, parts[0], parts[2], qualifier or None, "mapping", part))
     return result
 
 
@@ -213,6 +233,18 @@ def _value_for(binding: Binding, values: dict):
     return False, None
 
 
+def area_part(value: dict, part: str, class_type: str, values: dict):
+    """One component of an area value; fractions become pixels (multiples of 8) unless the node
+    works in percentages."""
+    v = value.get(part)
+    if v is None or part == "strength" or "Percentage" in class_type:
+        return v
+    total = values.get("width" if part in ("x", "width") else "height")
+    if not isinstance(total, (int, float)) or not 0 <= v <= 1:
+        return v
+    return max(8 if part in ("width", "height") else 0, int(round(v * total / 8)) * 8)
+
+
 def apply_values(graph: dict, bindings: list[Binding], values: dict) -> dict:
     """Return a copy of graph with every bound field that has a value written (fan-out)."""
     out = copy.deepcopy(graph)
@@ -220,6 +252,10 @@ def apply_values(graph: dict, bindings: list[Binding], values: dict) -> dict:
         if b.kind in SELECT_KINDS or b.field is None or b.node not in out:
             continue
         present, value = _value_for(b, values)
+        if present and b.part:
+            if not isinstance(value, dict):
+                continue
+            value = area_part(value, b.part, out[b.node].get("class_type", ""), values)
         if present and value is not None:
             out[b.node]["inputs"][b.field] = value
     return out
