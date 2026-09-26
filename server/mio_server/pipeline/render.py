@@ -23,6 +23,7 @@ from contextlib import contextmanager
 from ..comfy import bindings as B
 from ..comfy.compile import asset_value, builtin_workflows, compile_workflow, describe
 from ..comfy.workflow_slots import LibraryError
+from ..hooks import HookBus
 from ..jobs import COMFY, ItemSpec
 from ..models import Episode, Series, Take, TakeEdit, TakeStatus
 from ..render_models import RenderProfile, RenderStage, WorkflowDoc
@@ -77,6 +78,7 @@ def panel_values(series: Series, panel) -> dict:
 class RenderService(CompositionMixin, EditsMixin):
     def __init__(self, store, assets, engine):
         self.store, self.assets, self.engine = store, assets, engine
+        self.hooks = HookBus()  # replaced by the registry's bus in AppContext
         self._rng = random.Random()
         self._local = threading.local()
 
@@ -159,6 +161,9 @@ class RenderService(CompositionMixin, EditsMixin):
         except B.BindingError as exc:
             raise RenderError(f"{doc.name}：{exc}") from None
         data = compiled.to_json()
+        data["graph"] = self.hooks.filter(
+            "render.workflow", data["graph"], workflow_id=doc.id, stage=stage.kind
+        )
         data["warnings"] = warnings + data["warnings"]
         data["workflow_id"], data["stage_id"], data["kind"] = doc.id, stage.id, stage.kind
         feed = next((p for p, a in data["uploads"].items() if a == PREVIOUS), None)
@@ -220,6 +225,7 @@ class RenderService(CompositionMixin, EditsMixin):
                 negative=profile.negative_tags,
                 rng=self.rng,
             )
+            self.prompt_hook(pp, series, episode, panel)
             if prepared is None:
                 prepared = self.prepare_composition(
                     series, episode, panel, pp.width, pp.height, profile.dialect, variant
@@ -474,4 +480,30 @@ class RenderService(CompositionMixin, EditsMixin):
                 created.append(take.id)
 
         self.store.update_episode(meta["episode_id"], mutate)
+        for take_id in created:
+            self.hooks.action(
+                "take.created",
+                {
+                    "episode_id": meta["episode_id"],
+                    "panel_id": meta["panel_id"],
+                    "take_id": take_id,
+                    "stage": meta.get("stage", "draft"),
+                    "job_id": job["id"],
+                },
+            )
         return created
+
+    def prompt_hook(self, pp, series, episode, panel) -> None:
+        """Run the ``prompt.compiled`` filter; extensions may rewrite positive / negative."""
+        value = {"positive": pp.positive, "negative": pp.negative}
+        out = self.hooks.filter(
+            "prompt.compiled",
+            value,
+            series=series,
+            episode=episode,
+            panel=panel,
+            dialect=pp.dialect,
+        )
+        if isinstance(out, dict):
+            pp.positive = str(out.get("positive", pp.positive))
+            pp.negative = str(out.get("negative", pp.negative))

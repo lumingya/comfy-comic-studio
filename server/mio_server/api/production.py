@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-import io
 from typing import Any, Literal
 from urllib.parse import quote
 
 from fastapi import APIRouter, Response
-from PIL import Image
 from pydantic import BaseModel, Field
 
-from ..models import Episode, Strip
+from ..models import Strip
 from ..pipeline import assistant as A
+from ..pipeline import episode_strip as ES
 from ..pipeline import export as X
 from ..pipeline import strip as SP
 from ..storage import NotFound
@@ -112,27 +111,8 @@ def qa(ctx: Ctx, episode_id: str, body: QARequest) -> dict:
 
 
 # ------------------------------------------------------------------- strip
-def _adopted_images(ctx, ep: Episode, variant_id: str | None) -> tuple[dict, dict]:
-    images, faces = {}, {}
-    for panel in ep.ordered_panels():
-        take = ep.adopted(panel.id, variant_id)
-        if take is None:
-            continue
-        with Image.open(io.BytesIO(ctx.assets.read(take.asset_id))) as im:
-            images[panel.id] = im.convert("RGB")
-        faces[panel.id] = [{"box": list(f.box), "character": f.character_id} for f in take.faces]
-    return images, faces
-
-
-def _render_strip(ctx, episode_id: str, variant_id: str | None = None):
-    ep = ctx.store.get_episode(episode_id)
-    series = ctx.store.get_series(ep.series_id)
-    images, faces = _adopted_images(ctx, ep, variant_id)
-    if not images:
-        raise ValueError("还没有采用任何一格的图片")
-    stale = not ep.strip.panel_boxes or bool(set(images) - set(ep.strip.panel_boxes))
-    strip, scaled = SP.layout(series, ep, images, faces, relayout_lettering=stale)
-    return series, ep, strip, SP.render(series, ep, strip, scaled)
+_adopted_images = ES.adopted_images
+_render_strip = ES.render_episode_strip
 
 
 @router.post("/episodes/{episode_id}/strip/layout", response_model=Strip)
@@ -143,6 +123,10 @@ def layout_strip(ctx: Ctx, episode_id: str, body: LayoutRequest) -> Strip:
     if not images:
         raise ValueError("还没有采用任何一格的图片")
     strip, _ = SP.layout(series, ep, images, faces, relayout_lettering=body.relayout_lettering)
+    if body.relayout_lettering:
+        layers = ctx.hooks.filter("strip.lettering", strip.lettering, series=series, episode=ep)
+        if isinstance(layers, list):
+            strip.lettering = layers
     ctx.store.update_episode(episode_id, lambda e: setattr(e, "strip", strip))
     return strip
 
@@ -173,16 +157,26 @@ def export(
     preset: str = "webtoon",
     variant_id: str | None = None,
 ) -> Response:
+    slice_preset = ctx.registry.get("slice_preset", preset)
     series, ep, strip, image = _render_strip(ctx, episode_id, variant_id)
     data, mime, filename = X.export(
-        image, strip, fmt, preset_id=preset, title=f"{series.title}_{ep.title}", subtitle=ep.title
+        image,
+        strip,
+        fmt,
+        preset_id=slice_preset,
+        title=f"{series.title}_{ep.title}",
+        subtitle=ep.title,
+    )
+    ctx.hooks.action(
+        "episode.exported",
+        {"episode_id": episode_id, "fmt": fmt, "bytes": len(data), "filename": filename},
     )
     disposition = f"attachment; filename*=UTF-8''{quote(filename)}"
     return Response(data, media_type=mime, headers={"Content-Disposition": disposition})
 
 
 @router.get("/export/presets")
-def export_presets() -> list[dict]:
+def export_presets(ctx: Ctx) -> list[dict]:
     return [
         {
             "id": p.id,
@@ -191,7 +185,7 @@ def export_presets() -> list[dict]:
             "max_height": p.max_height,
             "format": p.fmt,
         }
-        for p in X.PRESETS.values()
+        for p in (c.value for c in ctx.registry.all("slice_preset"))
     ]
 
 

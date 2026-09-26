@@ -14,12 +14,18 @@ from pathlib import Path
 from typing import Callable
 
 from . import settings as SET
+from . import themes as TH
+from .album import render as AR
+from .album.templates import builtin_templates
 from .assets import AssetStore
 from .comfy.client import ComfyClient
 from .comfy.compile import BUILTINS
 from .comfy.executor import ComfyRenderExecutor
+from .extensions import ExtensionManager
+from .hooks import HookBus
 from .jobs import JobEngine, ResourcePool
 from .pipeline import export as X
+from .pipeline import lettering as LT
 from .pipeline.cloud_jobs import CloudExecutor
 from .pipeline.qa import QAService
 from .pipeline.render import RenderService
@@ -48,6 +54,7 @@ class AppContext:
     llm_factory: Callable
     comfy_client_factory: Callable = ComfyClient
     closers: list[Callable[[], None]] = field(default_factory=list)
+    extensions: ExtensionManager | None = None
 
     @classmethod
     def create(
@@ -89,6 +96,10 @@ class AppContext:
             store.put_doc(ComfyInstance(id="comfy_local"))
         ctx.refresh_instances()
         ctx._register_builtins()
+        render.hooks = ctx.registry.hooks
+        engine.subscribe(lambda event: ctx.hooks.action("job.event", event))
+        ctx.extensions = ExtensionManager(ctx)
+        ctx.extensions.load_all()
         try:
             purged = ctx.trash.expire(ctx.settings().trash_days)
             if purged:
@@ -101,6 +112,10 @@ class AppContext:
     # ------------------------------------------------------------- helpers
     def settings(self) -> SET.AppSettings:
         return SET.load(self.store)
+
+    @property
+    def hooks(self) -> HookBus:
+        return self.registry.hooks
 
     def refresh_instances(self) -> None:
         self.engine.pool.set_instances(self.store.list_docs("instance"))
@@ -148,6 +163,19 @@ class AppContext:
         reg.register("script_template", "generate", "generate", title="一句话生成剧本")
         reg.register("script_template", "revise", "revise", title="按要求修改剧本（可审阅 diff）")
         reg.register("provider", "comfyui", "comfyui", title="ComfyUI（本地 / 局域网，多实例）")
+        for theme in TH.BUILTIN:
+            reg.register("theme", theme.id, theme, title=theme.name)
+        for theme in self.store.list_docs("theme"):
+            reg.register("theme", theme.id, theme, source="user", title=theme.name, replace=True)
+        for tpl in builtin_templates():
+            reg.register("album_template", tpl.id, tpl, title=tpl.title)
+        for tpl in self.store.list_docs("album_template"):
+            reg.register(
+                "album_template", tpl.id, tpl, source="user", title=tpl.title, replace=True
+            )
+        reg.register("exporter", "album", AR.render_album, title="画册（离线 HTML 模板）")
+        for name in LT.SFX_PRESETS:
+            reg.register("sfx_preset", name, LT.preset_style(name), title=name)
         reg.register(
             "provider", "openai-compatible", "llm", title="OpenAI 兼容接口（文本 / 视觉 / 出图）"
         )

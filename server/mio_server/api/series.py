@@ -130,6 +130,14 @@ def generate_episode(ctx: Ctx, series_id: str, payload: GenerateEpisode) -> Epis
     ctx.store.update_series(series_id, merge)
     if payload.title:
         episode.title = payload.title
+    filtered = ctx.hooks.filter(
+        "script.generated",
+        episode,
+        series=ctx.store.get_series(series_id),
+        sentence=payload.sentence,
+    )
+    if isinstance(filtered, Episode):
+        episode = filtered
     return ctx.store.create_episode(episode)
 
 
@@ -259,7 +267,11 @@ def _set_status(ctx, episode_id: str, take_id: str, status_: TakeStatus) -> Epis
             take.parameter_snapshot = {**take.parameter_snapshot, "adopted_by": "user"}
         take.status = status_
 
-    return ctx.store.update_episode(episode_id, apply)
+    episode = ctx.store.update_episode(episode_id, apply)
+    ctx.hooks.action(
+        "take.status", {"episode_id": episode_id, "take_id": take_id, "status": status_.value}
+    )
+    return episode
 
 
 @router.post("/episodes/{episode_id}/takes/{take_id}/adopt", response_model=Episode)

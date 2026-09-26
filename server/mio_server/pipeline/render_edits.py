@@ -188,6 +188,7 @@ class EditsMixin:
                 negative=profile.negative_tags,
                 rng=self.rng,
             )
+            self.prompt_hook(pp, series, episode, panel)
             meta = {
                 "episode_id": episode.id,
                 "panel_id": panel.id,

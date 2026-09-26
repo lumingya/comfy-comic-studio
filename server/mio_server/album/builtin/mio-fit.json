@@ -1,0 +1,20 @@
+{
+ "id": "mio-fit",
+ "formatVersion": 1,
+ "title": "留白 · 完整画面",
+ "description": "桌面完整画面的自适应双页与单页，手机连续阅读；不裁切、不放大小图。可显示贴近画面的台词。",
+ "author": "Mio",
+ "version": "1.1.0",
+ "layout": "webtoon",
+ "options": {
+  "accent": "#a9c4ac",
+  "background": "#101719",
+  "paper": "#101719",
+  "text": "#dce5df",
+  "width": 1200,
+  "gap": 24,
+  "radius": 2,
+  "font": "serif"
+ },
+ "html": "<!DOCTYPE html><html lang=\"zh-CN\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>{{title}}</title><style>*{box-sizing:border-box}body{margin:0;background:{{background}};color:{{textColor}};font:14px/1.8 system-ui}header,footer{text-align:center;padding:22px}header h1{font-size:20px;font-weight:400}figure{margin:0 auto 24px;max-width:{{contentWidth}}px;padding:12px;break-inside:avoid}img{display:block;width:100%;height:calc(100svh - 110px);object-fit:contain;border-radius:{{imageRadius}}px;border:{{frameBorder}}px solid {{themeColor}}}figcaption{text-align:center;font-size:12px;opacity:.75;padding:12px}pre{white-space:pre-wrap}footer{font-size:11px;opacity:.6}@media print{img{height:auto;max-height:90vh}figure{break-after:page}}</style></head><body>{{#books}}<article data-cc-book><header><h1>{{title}}</h1></header><main data-cc-pages>{{#frames}}<figure data-cc-frame><img src=\"{{image}}\" alt=\"{{name}}\" loading=\"lazy\" decoding=\"async\"><figcaption data-cc-caption>{{caption}}</figcaption><pre data-cc-prompt>{{prompt}}</pre></figure>{{/frames}}</main></article>{{/books}}<footer>{{signature}}</footer></body></html>"
+}

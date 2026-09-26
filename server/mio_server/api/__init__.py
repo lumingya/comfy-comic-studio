@@ -21,7 +21,7 @@ from ..pipeline.assistant import AssistantError
 from ..pipeline.render import RenderError
 from ..registry import RegistryError
 from ..storage import Conflict, NotFound
-from . import canvas, jobs, library, production, series, system
+from . import album, canvas, extensions, jobs, library, production, series, system
 
 API_VERSION = "1"
 WEB_DIST = Path(__file__).resolve().parents[3] / "web" / "dist"
@@ -63,12 +63,23 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
 
         return {"ok": True, "schema": SCHEMA_VERSION, "api": API_VERSION}
 
-    for module in (series, production, canvas, library, jobs, system):
+    for module in (series, production, canvas, library, jobs, system, extensions, album):
         app.include_router(module.router, prefix="/api")
+    _mount_extensions(app)
 
     if serve_web and (WEB_DIST / "index.html").exists():
         _mount_web(app)
     return app
+
+
+def _mount_extensions(app: FastAPI) -> None:
+    """Routes declared by loaded extensions live under ``/api/ext/<id>`` (fixed at start-up)."""
+    manager = app.state.ctx.extensions
+    if manager is None:
+        return
+    for ext_id, router in manager.routers():
+        app.include_router(router, prefix=f"/api/ext/{ext_id}")
+        manager.mounted.add(ext_id)
 
 
 def _handler(code: int, kind: str):

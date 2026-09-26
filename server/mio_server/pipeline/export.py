@@ -33,7 +33,9 @@ PRESETS = {
 }
 
 
-def preset(preset_id: str) -> SlicePreset:
+def preset(preset_id: "str | SlicePreset") -> SlicePreset:
+    if isinstance(preset_id, SlicePreset):
+        return preset_id
     try:
         return PRESETS[preset_id]
     except KeyError:
@@ -81,7 +83,7 @@ def _ext(fmt: str) -> str:
 
 
 def slices_zip(
-    image: Image.Image, strip: Strip, preset_id: str, basename: str = "episode"
+    image: Image.Image, strip: Strip, preset_id: "str | SlicePreset", basename: str = "episode"
 ) -> bytes:
     p = preset(preset_id)
     parts = slice_image(image, strip, p)
@@ -157,7 +159,7 @@ def export(
     strip: Strip,
     fmt: str,
     *,
-    preset_id: str = "webtoon",
+    preset_id: "str | SlicePreset" = "webtoon",
     title: str = "episode",
     subtitle: str = "",
 ) -> tuple[bytes, str, str]:
@@ -167,7 +169,7 @@ def export(
         return (
             slices_zip(image, strip, preset_id, safe),
             "application/zip",
-            f"{safe}_{preset_id}.zip",
+            f"{safe}_{preset(preset_id).id}.zip",
         )
     if fmt == "long":
         return long_image(image), "image/png", f"{safe}.png"

@@ -93,6 +93,15 @@ class ApiCase(unittest.TestCase):
         )
         return series, ep
 
+    def adopt_all(self, ep: dict) -> dict:
+        """Render one candidate per panel and adopt every take."""
+        eid = ep["id"]
+        self.drain(self.ok(self.client.post(f"/api/episodes/{eid}/render", json={"candidates": 1})))
+        ep = self.ok(self.client.get(f"/api/episodes/{eid}"))
+        for take in ep["takes"]:
+            ep = self.ok(self.client.post(f"/api/episodes/{eid}/takes/{take['id']}/adopt"))
+        return ep
+
 
 def zip_names(data: bytes) -> list[str]:
     import zipfile

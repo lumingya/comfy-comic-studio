@@ -14,6 +14,7 @@ from . import llm as L
 from .models import StrictModel, now_iso
 
 MASK = "••••••"
+PROTECTED = {"extensions", "api_tokens", "id", "name"}
 
 
 class LLMSettings(StrictModel):
@@ -32,6 +33,11 @@ class QASettings(StrictModel):
     faces: bool = True
 
 
+class ExtensionState(StrictModel):
+    enabled: bool = False
+    digest: str = Field(default="", description="sha256 of the folder the user enabled")
+
+
 class AppSettings(StrictModel):
     id: str = "app"
     name: str = "settings"
@@ -42,7 +48,8 @@ class AppSettings(StrictModel):
     )
     trash_days: int = Field(default=30, ge=1, le=3650)
     locale: str = "zh-CN"
-    theme: str = "system"
+    theme: str = Field(default="system", description="system, or a theme id")
+    extensions: dict[str, ExtensionState] = Field(default_factory=dict)
     updated_at: str = Field(default_factory=now_iso)
 
 
@@ -64,6 +71,8 @@ def public(settings: AppSettings) -> dict:
 def apply_patch(settings: AppSettings, patch: dict) -> AppSettings:
     data = settings.model_dump()
     for key, value in patch.items():
+        if key in PROTECTED:
+            continue  # changed only through their own endpoints (trust / token flows)
         if isinstance(value, dict) and isinstance(data.get(key), dict):
             data[key] = {**data[key], **value}
         else:

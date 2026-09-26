@@ -19,9 +19,11 @@ from typing import Callable, Iterator, TypeVar
 
 from pydantic import BaseModel
 
+from .album.templates import AlbumTemplate
 from .models import Episode, Series, now_iso
 from .render_models import Asset, ComfyInstance, RenderProfile, WorkflowDoc
 from .settings import AppSettings
+from .themes import Theme
 
 SCHEMA_VERSION = 2
 DOC_KINDS: dict[str, type[BaseModel]] = {
@@ -29,6 +31,8 @@ DOC_KINDS: dict[str, type[BaseModel]] = {
     "profile": RenderProfile,
     "instance": ComfyInstance,
     "settings": AppSettings,
+    "theme": Theme,
+    "album_template": AlbumTemplate,
 }
 T = TypeVar("T", bound=BaseModel)
 

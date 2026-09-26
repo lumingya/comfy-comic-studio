@@ -1,8 +1,9 @@
 """Extension registry (ROADMAP §2.4).
 
-P1 builds the registry for **internal** use only: built-in job executors, exporters, slice presets,
-prompt dialects and pipeline steps register here exactly like future extensions will, so an
-extension's ceiling equals the core's.  Third-party loading, signing and trust prompts arrive in P5.
+Built-in job executors, exporters, slice presets, prompt dialects, pipeline steps, themes, album
+templates and SFX presets register here exactly like extensions do, so an extension's ceiling
+equals the core's.  Extensions (``mio_server.extensions``) contribute with ``source="ext:<id>"``;
+disabling one removes everything it registered.  Domain hooks live on ``registry.hooks``.
 
 ``ctx.internal`` (the escape hatch) is the :class:`AppContext` itself: explicitly unstable, but it
 can reach every store and service.
@@ -13,6 +14,8 @@ from __future__ import annotations
 import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable
+
+from .hooks import HookBus
 
 POINTS = {
     "job_executor": "统一任务引擎的执行器（按 job kind）",
@@ -27,6 +30,10 @@ POINTS = {
     "panel": "界面面板：React 组件挂在指定插槽",
     "command": "命令、快捷键、设置页",
     "route": "后端路由与后台任务",
+    "theme": "界面主题（配色令牌）",
+    "album_template": "画册导出模板（次要输出）",
+    "sfx_preset": "拟声字样式预设",
+    "cloud_adapter": "云端出图适配器（按渠道类型）",
 }
 
 
@@ -49,6 +56,7 @@ class Registry:
         self._lock = threading.RLock()
         self._items: dict[str, dict[str, Contribution]] = {p: {} for p in POINTS}
         self._listeners: dict[str, list[Callable[[dict], None]]] = {}
+        self.hooks = HookBus()
 
     def register(
         self,
@@ -83,6 +91,19 @@ class Registry:
     def unregister(self, point: str, id: str) -> None:
         with self._lock:
             self._items.get(point, {}).pop(id, None)
+
+    def unregister_source(self, source: str) -> int:
+        """Remove every contribution and hook handler of one source (an extension)."""
+        with self._lock:
+            removed = 0
+            for items in self._items.values():
+                for key in [k for k, c in items.items() if c.source == source]:
+                    del items[key]
+                    removed += 1
+        removed += self.hooks.remove_source(source)
+        if removed:
+            self.emit("registry.changed", {"source": source, "removed": removed})
+        return removed
 
     def get(self, point: str, id: str) -> Any:
         with self._lock:

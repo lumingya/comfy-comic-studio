@@ -9,7 +9,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ..models import Episode, LetterStyle, PanelWidth
 from ..pipeline import composition as CP
-from ..pipeline import lettering as LT
 from ..pipeline import pacing as PC
 from ..pipeline import readability as RD
 from ..pipeline.compiler import canvas_size
@@ -52,8 +51,9 @@ class PacingApply(BaseModel):
 
 
 @router.get("/lettering/sfx-presets", response_model=dict[str, LetterStyle])
-def sfx_presets() -> dict[str, LetterStyle]:
-    return {name: LT.preset_style(name) for name in LT.SFX_PRESETS}
+def sfx_presets(ctx: Ctx) -> dict[str, LetterStyle]:
+    """Built-in presets plus those contributed by extensions (registry point ``sfx_preset``)."""
+    return {c.id: c.value for c in ctx.registry.all("sfx_preset")}
 
 
 @router.post("/episodes/{episode_id}/pacing/suggest", response_model=PacingPreview)
