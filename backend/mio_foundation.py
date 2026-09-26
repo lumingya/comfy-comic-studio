@@ -27,6 +27,14 @@ def jobs(host):
             recover_materializations(host)
         return _STORES[root]
 
+def close_jobs(data_dir):
+    """Close and forget the execution store of one data directory (tests, workspace switches)."""
+    with _LOCK:
+        store=_STORES.pop(os.path.join(str(data_dir),'runtime','execution'),None)
+    if store is not None:
+        store.close()
+    return store is not None
+
 def recover_deletions(host, ids=None):
     from backend.mio_lifecycle import deleted_album_ids
     from backend.mio_library import LibraryError

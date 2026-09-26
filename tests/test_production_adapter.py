@@ -7,6 +7,7 @@ import time
 from types import SimpleNamespace
 import json
 import unittest
+from backend import mio_foundation
 from backend.ecosystem.macros import Macros
 from backend.mio_native_store import NativeStore
 from backend.mio_library import LibraryError
@@ -17,6 +18,7 @@ PNG=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42m
 class ProductionAdapterTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory(ignore_cleanup_errors=True);self.addCleanup(self.tmp.cleanup);self.root=Path(self.tmp.name)
+        self.addCleanup(mio_foundation.close_jobs,self.root)  # 先于删除临时目录关闭全局执行队列，避免泄漏的调度线程空转
         self.store=NativeStore(self.root,Path(__file__).resolve().parents[1]);self.addCleanup(self.store.library.close)
         self.profile={'id':'channel-one','provider':'openai','model':'fixed-model','baseUrl':'https://example.invalid/v1','keyMode':'none','title':'受控渠道'}
         config={'uiConfig':{'comfyStudio':{'settings':{'imageGeneration':{'profiles':[self.profile]}}}}}

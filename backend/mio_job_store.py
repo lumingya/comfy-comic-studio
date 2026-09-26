@@ -71,6 +71,16 @@ def validate_progress(row):
     return results
 
 
+def _worker_notice(message):
+    """Print a dispatcher notice unless stdout is gone or the interpreter is shutting down."""
+    try:
+        if sys.is_finalizing() or sys.stdout is None or getattr(sys.stdout, "closed", False):
+            return
+        print(message, flush=True)
+    except (ValueError, OSError, AttributeError):
+        pass
+
+
 class JobStore:
     def __init__(self, root, execute):
         os.makedirs(root, exist_ok=True)
@@ -322,6 +332,11 @@ class JobStore:
             ]
 
     def loop(self):
+        # A failing dispatcher reports once, backs off, and stops for good when its
+        # storage directory is gone (deleted workspace or a finished test), instead of
+        # spinning and flooding stdout until interpreter shutdown aborts the process.
+        failing = False
+        delay = 0.25
         try:
             while not self.closed:
                 try:
@@ -342,19 +357,25 @@ class JobStore:
                             except Exception:
                                 self.workers.discard(worker)
                                 raise
+                    if failing:
+                        failing, delay = False, 0.25
                     if row:
                         continue
                 except Exception:
                     if self.closed:
                         break
-                    try:
-                        if sys.stdout is not None and not getattr(sys.stdout, "closed", False):
-                            print(
-                                "[Mio worker] Storage/worker failure: no replay. Check storage before resuming.",
-                                flush=True,
-                            )
-                    except (ValueError, OSError, AttributeError):
-                        pass
+                    if not os.path.isdir(os.path.dirname(self.path)):
+                        _worker_notice(
+                            "[Mio worker] Storage directory is gone; dispatcher stopped. Restart Mio to resume."
+                        )
+                        self.closed = True
+                        break
+                    if not failing:
+                        _worker_notice(
+                            "[Mio worker] Storage/worker failure: no replay. Check storage before resuming."
+                        )
+                    failing = True
+                    delay = min(delay * 2, 5.0)
                     try:
                         with self.connect() as db:
                             db.execute(
@@ -362,7 +383,7 @@ class JobStore:
                             )
                     except Exception:
                         pass
-                self.wake.wait(0.25)
+                self.wake.wait(delay if failing else 0.25)
                 self.wake.clear()
         finally:
             with self.lock:

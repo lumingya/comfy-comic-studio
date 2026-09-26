@@ -77,9 +77,7 @@ class ApiServerCase(unittest.TestCase):
         from backend import mio_update
 
         mio_update._services.pop((str(server.BASE_DIR), str(cls.root)), None)
-        jobs = mio_foundation._STORES.pop(os.path.join(cls.root, "runtime", "execution"), None)
-        if jobs is not None:
-            jobs.close()
+        mio_foundation.close_jobs(cls.root)
         server.reset_native_stores()
         for item in reversed(cls.patches):
             item.stop()
