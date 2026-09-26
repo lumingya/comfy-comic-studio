@@ -92,7 +92,7 @@ class DocumentationTests(unittest.TestCase):
     def test_documents_agree_on_the_current_version(self):
         version = json.loads((ROOT / 'package.json').read_text())['version']
         self.assertIn(version, (ROOT / 'docs/CHANGELOG.md').read_text(encoding='utf-8').splitlines()[0])
-        for name in ('RELEASE_CURRENT.md', 'CURRENT_STATUS.md'):
+        for name in ('RELEASE_CURRENT.md',):  # CURRENT_STATUS.md 已归档到 docs/archive/
             self.assertIn(version, (ROOT / 'docs' / name).read_text(encoding='utf-8')[:600], f'{name} must not present an older version as current')
 
     def test_readme_handbook_link_renders_on_github(self):
