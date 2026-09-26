@@ -17,4 +17,6 @@ export const keys = {
   instances: ['instances'] as const,
   trash: ['trash'] as const,
   presets: ['export-presets'] as const,
+  sfxPresets: ['sfx-presets'] as const,
+  stripReport: (episodeId: string) => ['strip-report', episodeId] as const,
 };

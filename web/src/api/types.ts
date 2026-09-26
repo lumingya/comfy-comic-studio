@@ -23,6 +23,12 @@ export type RenderProfile = S['RenderProfile-Output'];
 export type RenderStage = S['RenderStage-Output'];
 export type ComfyInstance = S['ComfyInstance-Output'];
 export type Asset = S['Asset'];
+export type LetterStyle = S['LetterStyle-Output'];
+export type ControlInput = S['ControlInput'];
+export type PacingSuggestion = S['PacingSuggestion'];
+export type PacingPreview = S['PacingPreview'];
+export type PacingChanges = S['PacingChanges'];
+export type CompositionPreview = S['CompositionPreview'];
 
 export type Shot = Panel['shot'];
 export type Angle = Panel['angle'];
@@ -33,6 +39,8 @@ export const SHOTS: Shot[] = ['extreme_close', 'close', 'medium', 'cowboy', 'ful
 export const ANGLES: Angle[] = ['eye', 'high', 'low', 'side', 'back', 'dutch'];
 export const TIMES: Panel['time'][] = ['', 'morning', 'day', 'evening', 'night'];
 export const DIALOGUE_KINDS: DialogueKind[] = ['speech', 'thought', 'narration', 'sfx', 'caption'];
+export const WIDTH_MODES: Panel['width_mode'][] = ['full', 'inset', 'bleed', 'frameless'];
+export const CONTROL_KINDS: ControlInput['kind'][] = ['pose', 'depth', 'canny', 'lineart'];
 export const REF_ROLES: RefRole[] = [
   'front',
   'side',
@@ -187,4 +195,17 @@ export interface AppSettings {
   trash_days: number;
   locale: string;
   theme: string;
+}
+
+export interface StripReport {
+  panels: number;
+  layers: number;
+  missing: { panel_id: string; text: string }[];
+  face_hits: { layer_id: string; ratio: number }[];
+  overlaps: [string, string][];
+  order: [string, string][];
+  outside: string[];
+  cut: string[];
+  problems: number;
+  readable: boolean;
 }

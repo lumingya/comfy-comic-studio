@@ -495,6 +495,97 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/lettering/sfx-presets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Sfx Presets */
+        get: operations["sfx_presets_api_lettering_sfx_presets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/episodes/{episode_id}/pacing/suggest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pacing Suggest */
+        post: operations["pacing_suggest_api_episodes__episode_id__pacing_suggest_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/episodes/{episode_id}/pacing/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pacing Apply */
+        post: operations["pacing_apply_api_episodes__episode_id__pacing_apply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/episodes/{episode_id}/strip/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Strip Report
+         * @description Readability check of the saved strip (missing lines, faces covered, overlaps …).
+         */
+        get: operations["strip_report_api_episodes__episode_id__strip_report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/episodes/{episode_id}/panels/{panel_id}/composition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Composition Preview
+         * @description Regions, regional prompts and the auto pose skeleton exactly as a render would use them.
+         */
+        post: operations["composition_preview_api_episodes__episode_id__panels__panel_id__composition_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/workflows": {
         parameters: {
             query?: never;
@@ -1276,6 +1367,63 @@ export interface components {
             /** Overrides */
             overrides?: Record<string, unknown>;
         };
+        /** CompositionPreview */
+        CompositionPreview: {
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Regions */
+            regions: components["schemas"]["CompositionRegion"][];
+            /** Pose Asset Id */
+            pose_asset_id?: string | null;
+            /** Warnings */
+            warnings?: string[];
+        };
+        /** CompositionRegion */
+        CompositionRegion: {
+            /** Character Id */
+            character_id: string;
+            /** Name */
+            name: string;
+            /** Box */
+            box: [
+                number,
+                number,
+                number,
+                number
+            ];
+            /** Prompt */
+            prompt: string;
+        };
+        /**
+         * ControlInput
+         * @description One ControlNet input, bound to ``[mio:control:<kind>]`` (+ ``[mio:strength:<kind>]``).
+         */
+        ControlInput: {
+            /**
+             * Kind
+             * @default pose
+             * @enum {string}
+             */
+            kind: "pose" | "depth" | "canny" | "lineart";
+            /**
+             * Source
+             * @description auto = skeleton drawn from character positions (pose only); asset = uploaded image; take = an existing take of this panel.
+             * @default auto
+             * @enum {string}
+             */
+            source: "auto" | "asset" | "take";
+            /** Asset Id */
+            asset_id: string | null;
+            /** Take Id */
+            take_id: string | null;
+            /**
+             * Strength
+             * @default 0.8
+             */
+            strength: number;
+        };
         /** Dialogue */
         Dialogue: {
             /** Speaker Id */
@@ -1284,6 +1432,12 @@ export interface components {
             text: string;
             /** @default speech */
             kind: components["schemas"]["DialogueKind"];
+            /**
+             * Bridge
+             * @description Cross-panel bubble: straddles the gutter to the next panel.
+             * @default false
+             */
+            bridge: boolean;
         };
         /**
          * DialogueKind
@@ -1432,6 +1586,90 @@ export interface components {
              */
             overwrite?: boolean;
         };
+        /**
+         * LetterStyle
+         * @description Free styling for SFX (拟声字) and any other layer.
+         */
+        "LetterStyle-Input": {
+            /**
+             * Fill
+             * @default #111111
+             */
+            fill?: string;
+            /**
+             * Stroke
+             * @default #ffffff
+             */
+            stroke?: string;
+            /**
+             * Stroke Width
+             * @default 4
+             */
+            stroke_width?: number;
+            /**
+             * Rotation
+             * @default 0
+             */
+            rotation?: number;
+            /**
+             * Effect
+             * @default none
+             * @enum {string}
+             */
+            effect?: "none" | "grow" | "shake" | "arc";
+            /**
+             * Letter Spacing
+             * @default 0
+             */
+            letter_spacing?: number;
+            /**
+             * Preset
+             * @default
+             */
+            preset?: string;
+        };
+        /**
+         * LetterStyle
+         * @description Free styling for SFX (拟声字) and any other layer.
+         */
+        "LetterStyle-Output": {
+            /**
+             * Fill
+             * @default #111111
+             */
+            fill: string;
+            /**
+             * Stroke
+             * @default #ffffff
+             */
+            stroke: string;
+            /**
+             * Stroke Width
+             * @default 4
+             */
+            stroke_width: number;
+            /**
+             * Rotation
+             * @default 0
+             */
+            rotation: number;
+            /**
+             * Effect
+             * @default none
+             * @enum {string}
+             */
+            effect: "none" | "grow" | "shake" | "arc";
+            /**
+             * Letter Spacing
+             * @default 0
+             */
+            letter_spacing: number;
+            /**
+             * Preset
+             * @default
+             */
+            preset: string;
+        };
         /** LetteringLayer */
         "LetteringLayer-Input": {
             /** Id */
@@ -1468,6 +1706,12 @@ export interface components {
              * @default false
              */
             locked?: boolean;
+            /**
+             * Bridge To
+             * @description Next panel id of a cross-panel bubble.
+             */
+            bridge_to?: string | null;
+            style?: components["schemas"]["LetterStyle-Input"] | null;
         };
         /** LetteringLayer */
         "LetteringLayer-Output": {
@@ -1505,6 +1749,12 @@ export interface components {
              * @default false
              */
             locked: boolean;
+            /**
+             * Bridge To
+             * @description Next panel id of a cross-panel bubble.
+             */
+            bridge_to: string | null;
+            style: components["schemas"]["LetterStyle-Output"] | null;
         };
         /** Location */
         "Location-Input": {
@@ -1590,6 +1840,48 @@ export interface components {
              */
             model_family: string;
         };
+        /** PacingApply */
+        PacingApply: {
+            /** Base Revision */
+            base_revision: number;
+            /** Patches */
+            patches: components["schemas"]["PacingPatch"][];
+        };
+        /** PacingChanges */
+        PacingChanges: {
+            width_mode?: components["schemas"]["PanelWidth"] | null;
+            /** Aspect Ratio */
+            aspect_ratio?: string | null;
+            /** Gap After */
+            gap_after?: number | null;
+            /** Transition Background */
+            transition_background?: string | null;
+            /** Inset Align */
+            inset_align?: ("left" | "center" | "right") | null;
+        };
+        /** PacingPatch */
+        PacingPatch: {
+            /** Panel Id */
+            panel_id: string;
+            changes: components["schemas"]["PacingChanges"];
+        };
+        /** PacingPreview */
+        PacingPreview: {
+            /** Revision */
+            revision: number;
+            /** Suggestions */
+            suggestions: components["schemas"]["PacingSuggestion"][];
+        };
+        /** PacingSuggestion */
+        PacingSuggestion: {
+            /** Panel Id */
+            panel_id: string;
+            /** Order */
+            order: number;
+            changes: components["schemas"]["PacingChanges"];
+            /** Reasons */
+            reasons?: string[];
+        };
         /** Panel */
         Panel: {
             /** Id */
@@ -1637,6 +1929,18 @@ export interface components {
             /** @default full */
             width_mode: components["schemas"]["PanelWidth"];
             /**
+             * Inset Align
+             * @default center
+             * @enum {string}
+             */
+            inset_align: "left" | "center" | "right";
+            /**
+             * Inset Scale
+             * @description Inset width / strip.
+             * @default 0.78
+             */
+            inset_scale: number;
+            /**
              * Aspect Ratio
              * @default 2:3
              */
@@ -1662,6 +1966,14 @@ export interface components {
              * @description Manual references.
              */
             references: components["schemas"]["AssetRef-Output"][];
+            /** Controls */
+            controls: components["schemas"]["ControlInput"][];
+            /**
+             * Regional
+             * @description Per-character regional prompts ([mio:region:N] slots).
+             * @default false
+             */
+            regional: boolean;
             /**
              * Locked
              * @description Automation (assistant, auto-pick) may not touch it.
@@ -2158,6 +2470,12 @@ export interface components {
              * @default 24
              */
             margin?: number;
+            /**
+             * Text Direction
+             * @default horizontal
+             * @enum {string}
+             */
+            text_direction?: "horizontal" | "vertical";
             /** Panel Boxes */
             panel_boxes?: {
                 [key: string]: [
@@ -2210,6 +2528,12 @@ export interface components {
              * @default 24
              */
             margin: number;
+            /**
+             * Text Direction
+             * @default horizontal
+             * @enum {string}
+             */
+            text_direction: "horizontal" | "vertical";
             /** Panel Boxes */
             panel_boxes: {
                 [key: string]: [
@@ -3596,6 +3920,161 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sfx_presets_api_lettering_sfx_presets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: components["schemas"]["LetterStyle-Output"];
+                    };
+                };
+            };
+        };
+    };
+    pacing_suggest_api_episodes__episode_id__pacing_suggest_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PacingPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pacing_apply_api_episodes__episode_id__pacing_apply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PacingApply"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Episode"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    strip_report_api_episodes__episode_id__strip_report_get: {
+        parameters: {
+            query?: {
+                variant_id?: string | null;
+            };
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    composition_preview_api_episodes__episode_id__panels__panel_id__composition_post: {
+        parameters: {
+            query?: {
+                dialect?: "tags" | "natural";
+            };
+            header?: never;
+            path: {
+                episode_id: string;
+                panel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompositionPreview"];
                 };
             };
             /** @description Validation Error */

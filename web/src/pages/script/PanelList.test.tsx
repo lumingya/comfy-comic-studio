@@ -62,7 +62,7 @@ describe('PanelList', () => {
                 position: 'unspecified',
               },
             ],
-            dialogues: [{ speaker_id: 'char_a', text: '好久不见', kind: 'speech' }],
+            dialogues: [{ speaker_id: 'char_a', text: '好久不见', kind: 'speech', bridge: false }],
           }),
         ]}
       />,
