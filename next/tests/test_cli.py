@@ -92,6 +92,13 @@ class CliTests(unittest.TestCase):
         self.assertIn("forbidden_tag", out)
         self.assertEqual(server.submitted, [])
 
+    def test_negative_prompt_may_contain_blocked_terms(self):
+        server, url = self.server()
+        code, out = self.cli("run", self.workflow, "--config", self.config(), "--variant", "draft", "--seed", 5,
+                             "--negative", "forbidden_tag, lowres", "--server", url, "--out", self.dir / "out")
+        self.assertEqual(code, 0, out)
+        self.assertEqual(server.submitted[0]["prompt"]["11"]["inputs"]["positive"], "forbidden_tag, lowres")
+
     def test_final_prompt_is_checked_after_the_run(self):
         server, url = self.server()
         code, out = self.cli("run", self.workflow, "--config", self.config(), "--variant", "draft", "--prompt", "1girl, adult",
@@ -119,7 +126,7 @@ class CliTests(unittest.TestCase):
         self.assertIn("draft, final", str(ctx.exception))
 
     def test_inspect_reports_variants_and_stateful_nodes(self):
-        code, out = self.cli("inspect", self.workflow, "--config", self.config())
+        code, out = self.cli("inspect", self.workflow, "--config", self.config(state="not-yet.json"))
         self.assertEqual(code, 0, out)
         self.assertIn("变体 draft：输出 50", out)
         self.assertIn("变体 final：输出 62", out)

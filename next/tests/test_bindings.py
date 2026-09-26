@@ -199,6 +199,13 @@ class WildcardGuardLintTests(unittest.TestCase):
         self.assertFalse(any(n == "2" for n, _, _ in hits))
         self.assertFalse(any("ckpt" in path for _, path, _ in hits))
 
+    def test_guard_skips_fields_bound_as_negative(self):
+        graph = multi_stage_workflow()
+        graph["11"]["inputs"]["positive"] = "forbidden_tag, lowres"
+        clean = B.apply_overrides(graph, {"/12/inputs/selected_prompts": "", "/13/inputs/selected_prompts": ""})
+        self.assertEqual(len(B.guard_terms(clean, ["forbidden_tag"])), 1)
+        self.assertEqual(B.guard_terms(clean, ["forbidden_tag"], skip={("11", "positive")}), [])
+
     def test_guard_text_on_final_prompt(self):
         self.assertEqual(B.guard_text("masterpiece, forbidden_tag, 1girl", ["forbidden_tag", "x"]), ["forbidden_tag"])
         self.assertEqual(B.guard_text("masterpiece", ["forbidden_tag"]), [])

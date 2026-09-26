@@ -321,15 +321,20 @@ def string_values(graph: dict):
                 yield node_id, path, text
 
 
-def guard_terms(graph: dict, terms) -> list[tuple[str, str, str]]:
+def guard_terms(graph: dict, terms, skip=()) -> list[tuple[str, str, str]]:
     """Pre-flight content guard: ``(node, path, term)`` for every string containing a term.
 
     Scans all strings, not only known prompt fields, so text hidden in helper nodes (trigger
     word lists, cached editor state, fixed prefixes/suffixes) is caught before submission.
-    ASCII terms match whole words; other scripts match substrings.
+    ``skip`` holds ``(node, field)`` pairs to leave out, i.e. fields bound as the negative
+    prompt, where blocked terms are expected. ASCII terms match whole words; other scripts
+    match substrings.
     """
     hits = []
+    skip = {(str(n), f) for n, f in skip}
     for node_id, path, value in string_values(graph):
+        if (node_id, path.split("/", 1)[0]) in skip:
+            continue
         low = value.lower()
         for term in terms:
             t = term.lower().strip()

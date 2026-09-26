@@ -60,8 +60,9 @@ def load_config(path, variant: str | None) -> dict:
     merged = deep_merge({k: v for k, v in config.items() if k != "variants"},
                         (config.get("variants") or {}).get(variant or "", {}))
     state = merged.get("state")
-    if isinstance(state, str):  # path relative to the config file
-        merged["state"] = json.loads((Path(path).parent / state).read_text(encoding="utf-8"))
+    if isinstance(state, str):  # path relative to the config file; missing = nothing saved yet
+        state_path = Path(path).parent / state
+        merged["state"] = json.loads(state_path.read_text(encoding="utf-8")) if state_path.exists() else {}
     return merged
 
 
@@ -173,7 +174,8 @@ def cmd_run(args) -> int:
     for warning in B.lint_outputs(final, outputs):
         print(f"提示：{warning}")
     terms = list(config.get("guard") or []) + [t for t in (args.guard or "").split(",") if t.strip()]
-    hits = B.guard_terms(final, terms)
+    negative_fields = {(b.node, b.field) for b in bindings if b.kind == "negative" and b.field}
+    hits = B.guard_terms(final, terms, skip=negative_fields)
     if hits:
         print("内容检查未通过，已停止提交：")
         for node_id, path, term in hits:
