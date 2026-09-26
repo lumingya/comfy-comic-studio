@@ -70,7 +70,7 @@ python clients/python/generate.py --check  # CI 用：不一致时失败
 | `job.completed` / `job.failed` / `job.canceled` | 任务结束 |
 | `take.created` | 出图结果入库 |
 | `take.status` | 采用或淘汰某张图 |
-| `episode.exported` | 导出完成（包括画册） |
+| `episode.exported` | 导出完成（包括画册和动态漫） |
 
 `*` 表示订阅全部事件。请求体格式是 `{"id", "event", "at", "data"}`，请求头包括：
 
