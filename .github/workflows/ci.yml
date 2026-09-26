@@ -34,6 +34,12 @@ jobs:
         run: python -m unittest discover -s tests -q
       - name: Spike unit tests (next/)
         run: python -m unittest discover -s next/tests -t next -q
+      - name: v3 server (lint + unit tests)
+        run: |
+          python -m pip install -r server/requirements-dev.txt
+          ruff check server
+          ruff format --check server
+          python -m unittest discover -s server/tests -t server -q
       - name: Shipped data manifest
         run: python tools/check_distribution.py
       - name: Package smoke test
