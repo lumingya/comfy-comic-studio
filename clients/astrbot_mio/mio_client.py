@@ -506,6 +506,24 @@ class MioClient(_Base):
         """
         return self._request("POST", "/export/album", json=body)
 
+    def motion_plan(self, episode_id: str, *, variant_id: Any | None = None) -> Any:
+        """GET /episodes/{episode_id}/motion-plan — Motion Plan.
+
+        Resolved move and hold for every panel (``Panel.motion`` overrides, else automatic).
+        """
+        return self._request(
+            "GET",
+            f"/episodes/{_q(episode_id)}/motion-plan",
+            params={"variant_id": variant_id},
+        )
+
+    def export_motion(self, body: dict | list | None = None) -> Any:
+        """POST /export/motion — Export Motion.
+
+        Self-contained offline motion-comic player (one HTML file, no network needed).
+        """
+        return self._request("POST", "/export/motion", json=body)
+
     def get_settings(self) -> Any:
         """GET /settings — Get Settings."""
         return self._request("GET", "/settings")

@@ -248,6 +248,20 @@ class ControlInput(StrictModel):
     strength: float = Field(default=0.8, ge=0, le=2)
 
 
+MotionMove = Literal[
+    "auto", "still", "push_in", "pull_out", "pan_left", "pan_right", "pan_up", "pan_down", "shake"
+]
+
+
+class PanelMotion(StrictModel):
+    """Dynamic-comic camera for this panel (``auto`` = chosen from shot size, SFX and text)."""
+
+    move: MotionMove = "auto"
+    hold: float | None = Field(
+        default=None, ge=0.5, le=30, description="Seconds on screen; None = from reading time"
+    )
+
+
 class Panel(StrictModel):
     id: str = Field(default_factory=lambda: new_id("panel"))
     order: int = Field(ge=0)
@@ -277,6 +291,7 @@ class Panel(StrictModel):
         default=False, description="Automation (assistant, auto-pick) may not touch it."
     )
     overrides: PanelOverrides = Field(default_factory=PanelOverrides)
+    motion: PanelMotion | None = Field(default=None, description="Dynamic comic; None = auto")
 
     @field_validator("aspect_ratio")
     @classmethod

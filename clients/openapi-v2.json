@@ -1853,6 +1853,70 @@
     "title": "LoraRef",
     "type": "object"
    },
+   "MotionExport": {
+    "properties": {
+     "aspect": {
+      "default": "portrait",
+      "enum": [
+       "portrait",
+       "landscape"
+      ],
+      "title": "Aspect",
+      "type": "string"
+     },
+     "episode_id": {
+      "title": "Episode Id",
+      "type": "string"
+     },
+     "lang": {
+      "default": "zh-CN",
+      "pattern": "^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8})*$",
+      "title": "Lang",
+      "type": "string"
+     },
+     "lettered": {
+      "default": true,
+      "description": "Crop panels from the lettered strip",
+      "title": "Lettered",
+      "type": "boolean"
+     },
+     "max_width": {
+      "default": 1280,
+      "maximum": 3000.0,
+      "minimum": 320.0,
+      "title": "Max Width",
+      "type": "integer"
+     },
+     "subtitles": {
+      "default": false,
+      "description": "Subtitles on at start (toggle in player)",
+      "title": "Subtitles",
+      "type": "boolean"
+     },
+     "variant_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Variant Id"
+     },
+     "voice": {
+      "default": true,
+      "description": "Read lines aloud with browser speech",
+      "title": "Voice",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "episode_id"
+    ],
+    "title": "MotionExport",
+    "type": "object"
+   },
    "PacingApply": {
     "properties": {
      "base_revision": {
@@ -2107,6 +2171,17 @@
       "title": "Locked",
       "type": "boolean"
      },
+     "motion": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PanelMotion"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Dynamic comic; None = auto"
+     },
      "order": {
       "minimum": 0.0,
       "title": "Order",
@@ -2212,7 +2287,8 @@
      "controls",
      "regional",
      "locked",
-     "overrides"
+     "overrides",
+     "motion"
     ],
     "title": "Panel",
     "type": "object"
@@ -2292,6 +2368,48 @@
      }
     },
     "title": "PanelCreate",
+    "type": "object"
+   },
+   "PanelMotion": {
+    "additionalProperties": false,
+    "description": "Dynamic-comic camera for this panel (``auto`` = chosen from shot size, SFX and text).",
+    "properties": {
+     "hold": {
+      "anyOf": [
+       {
+        "maximum": 30.0,
+        "minimum": 0.5,
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Seconds on screen; None = from reading time",
+      "title": "Hold"
+     },
+     "move": {
+      "default": "auto",
+      "enum": [
+       "auto",
+       "still",
+       "push_in",
+       "pull_out",
+       "pan_left",
+       "pan_right",
+       "pan_up",
+       "pan_down",
+       "shake"
+      ],
+      "title": "Move",
+      "type": "string"
+     }
+    },
+    "required": [
+     "move",
+     "hold"
+    ],
+    "title": "PanelMotion",
     "type": "object"
    },
    "PanelOverrides": {
@@ -5158,6 +5276,72 @@
     ]
    }
   },
+  "/episodes/{episode_id}/motion-plan": {
+   "get": {
+    "description": "Resolved move and hold for every panel (``Panel.motion`` overrides, else automatic).",
+    "operationId": "motion_plan",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "episode_id",
+      "required": true,
+      "schema": {
+       "title": "Episode Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "variant_id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Variant Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Motion Plan",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Motion Plan",
+    "tags": [
+     "motion"
+    ]
+   }
+  },
   "/episodes/{episode_id}/pacing/apply": {
    "post": {
     "operationId": "pacing_apply",
@@ -6382,6 +6566,51 @@
     "summary": "Export Album",
     "tags": [
      "album"
+    ]
+   }
+  },
+  "/export/motion": {
+   "post": {
+    "description": "Self-contained offline motion-comic player (one HTML file, no network needed).",
+    "operationId": "export_motion",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/MotionExport"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Export Motion",
+    "tags": [
+     "motion"
     ]
    }
   },

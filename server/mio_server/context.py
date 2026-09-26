@@ -25,6 +25,7 @@ from .comfy.executor import ComfyRenderExecutor
 from .extensions import ExtensionManager
 from .hooks import HookBus
 from .jobs import JobEngine, ResourcePool
+from .motion import export as MX
 from .pipeline import export as X
 from .pipeline import lettering as LT
 from .pipeline import providers as PV
@@ -193,6 +194,7 @@ class AppContext:
                 "album_template", tpl.id, tpl, source="user", title=tpl.title, replace=True
             )
         reg.register("exporter", "album", AR.render_album, title="画册（离线 HTML 模板）")
+        reg.register("exporter", "motion", MX.render_motion, title="动态漫（离线播放器）")
         for kind, cls in PV.KINDS.items():
             reg.register("cloud_adapter", kind, cls, title=cls.what)
         for name in LT.SFX_PRESETS:

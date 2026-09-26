@@ -22,7 +22,19 @@ from ..pipeline.render import RenderError
 from ..registry import RegistryError
 from ..storage import Conflict, NotFound
 from ..update import UpdateError
-from . import access, album, canvas, extensions, jobs, library, production, series, system, update
+from . import (
+    access,
+    album,
+    canvas,
+    extensions,
+    jobs,
+    library,
+    motion,
+    production,
+    series,
+    system,
+    update,
+)
 from .v2 import build_v2
 
 API_VERSION = "1"
@@ -66,7 +78,7 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
 
         return {"ok": True, "schema": SCHEMA_VERSION, "api": API_VERSION}
 
-    for module in (series, production, canvas, library, jobs, system, extensions, album):
+    for module in (series, production, canvas, library, jobs, system, extensions, album, motion):
         app.include_router(module.router, prefix="/api")
     app.include_router(access.tokens, prefix="/api")
     app.include_router(access.hooks, prefix="/api")
