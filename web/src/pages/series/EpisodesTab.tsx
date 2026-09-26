@@ -173,7 +173,7 @@ export default function EpisodesTab() {
         </button>
       </div>
       {page.isLoading ? <Loading /> : null}
-      {page.error ? <QueryError error={page.error} /> : null}
+      {page.error ? <QueryError error={page.error} onRetry={page.refetch} /> : null}
       {page.data && !page.data.items.length ? (
         <Empty
           icon={<ListOrdered size={24} />}

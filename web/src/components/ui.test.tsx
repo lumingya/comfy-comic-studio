@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { confirm, ConfirmHost } from './confirm';
 import { toast, Toaster } from './toast';
@@ -25,6 +25,22 @@ describe('InlineTitle', () => {
     expect(onSave).toHaveBeenCalledWith('晴天');
     expect(input.value).toBe('晴天');
   });
+
+  it('lets Enter finish an IME composition instead of committing', () => {
+    const onSave = vi.fn();
+    render(<InlineTitle value="雨夜" label="title" onSave={onSave} />);
+    const input = screen.getByLabelText('title') as HTMLInputElement;
+    input.focus();
+    fireEvent.change(input, { target: { value: 'yu' } });
+    // Composing: the keydown carries isComposing=true and must not blur/commit.
+    fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
+    expect(document.activeElement).toBe(input);
+    expect(onSave).not.toHaveBeenCalled();
+    fireEvent.change(input, { target: { value: '雨天' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    fireEvent.blur(input);
+    expect(onSave).toHaveBeenCalledWith('雨天');
+  });
 });
 
 describe('confirm', () => {
@@ -42,6 +58,23 @@ describe('confirm', () => {
     });
     fireEvent.click(await screen.findByText('取消'));
     await expect(answer!).resolves.toBe(false);
+  });
+
+  it('starts destructive dialogs on Cancel so Enter cannot delete', async () => {
+    render(<ConfirmHost />);
+    act(() => {
+      void confirm({ title: '彻底删除？', confirmLabel: '删除', danger: true });
+    });
+    const cancel = await screen.findByText('取消');
+    await waitFor(() => expect(document.activeElement).toBe(cancel));
+    fireEvent.click(cancel);
+
+    act(() => {
+      void confirm({ title: '保存？' });
+    });
+    const ok = await screen.findByText('确定');
+    await waitFor(() => expect(document.activeElement).toBe(ok));
+    fireEvent.click(ok);
   });
 });
 

@@ -82,6 +82,7 @@ export function Toaster() {
         <div
           key={item.id}
           className={`toast ${item.kind}`}
+          role={item.kind === 'error' ? 'alert' : undefined}
           onMouseEnter={() => hold(item.id)}
           onMouseLeave={() => release(item.id)}
         >

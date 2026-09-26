@@ -194,7 +194,7 @@ export default function WorksPage() {
       </header>
 
       {list.isLoading ? <SkeletonGrid /> : null}
-      {list.error ? <QueryError error={list.error} /> : null}
+      {list.error ? <QueryError error={list.error} onRetry={list.refetch} /> : null}
       {list.data && !list.data.length ? (
         <Empty
           icon={<BookOpen size={24} />}

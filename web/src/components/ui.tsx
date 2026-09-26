@@ -346,6 +346,8 @@ export function InlineTitle(props: {
       onChange={(e) => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => {
+        // Enter while an IME is composing (e.g. Chinese pinyin) confirms the composition, not the title.
+        if (e.nativeEvent.isComposing) return;
         if (e.key === 'Enter') e.currentTarget.blur();
         if (e.key === 'Escape') {
           cancel.current = true;

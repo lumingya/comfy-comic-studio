@@ -43,11 +43,19 @@ export default function EpisodePage() {
     series.data?.title,
   );
 
-  if (episode.isLoading || series.isLoading) return <Loading />;
+  if (episode.isLoading || series.isLoading)
+    return (
+      <div className="page wide">
+        <Loading />
+      </div>
+    );
   if (episode.error || !episode.data || !series.data)
     return (
       <div className="page">
-        <QueryError error={episode.error ?? series.error} />
+        <QueryError
+          error={episode.error ?? series.error}
+          onRetry={() => Promise.all([episode.refetch(), series.refetch()])}
+        />
       </div>
     );
 

@@ -35,7 +35,7 @@ export default function TrashPage() {
         </div>
       </header>
       {trash.isLoading ? <Loading /> : null}
-      {trash.error ? <QueryError error={trash.error} /> : null}
+      {trash.error ? <QueryError error={trash.error} onRetry={trash.refetch} /> : null}
       {trash.data && !trash.data.items.length ? (
         <Empty icon={<Trash2 size={24} />} title={t('trash.empty')} />
       ) : null}

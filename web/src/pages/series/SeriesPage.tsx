@@ -24,11 +24,16 @@ export default function SeriesPage() {
     section === 'bible' || section === 'variants' ? t(`series.${section}`) : t('series.episodes');
   usePageTitle(query.data?.title, sectionTitle);
 
-  if (query.isLoading) return <Loading />;
+  if (query.isLoading)
+    return (
+      <div className="page">
+        <Loading />
+      </div>
+    );
   if (query.error || !query.data)
     return (
       <div className="page">
-        <QueryError error={query.error} />
+        <QueryError error={query.error} onRetry={query.refetch} />
       </div>
     );
   const series = query.data;

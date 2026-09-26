@@ -307,6 +307,7 @@ describe('every route mounts with API data', () => {
 
   it('unknown route', async () => {
     mount('/nope');
-    expect(await screen.findByText('404')).toBeInTheDocument();
+    expect(await screen.findByText('页面不存在')).toBeInTheDocument();
+    expect(screen.getByText('回到作品')).toBeInTheDocument();
   });
 });

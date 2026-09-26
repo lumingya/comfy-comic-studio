@@ -1,3 +1,13 @@
+/** "9/26 22:41" for a unix timestamp in seconds, in the UI language. */
+export function shortDateTime(seconds: number, locale: string): string {
+  return new Date(seconds * 1000).toLocaleString(locale, {
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 /** "刚刚 / 3 分钟前 / 昨天" (or the date for anything older than a week). */
 export function relativeTime(iso: string | null | undefined, locale: string, now = Date.now()) {
   if (!iso) return '';

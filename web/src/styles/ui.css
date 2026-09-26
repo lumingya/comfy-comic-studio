@@ -656,3 +656,11 @@ input[type='range'] {
 .save-state.error {
   color: var(--red);
 }
+
+/* Query errors carry their retry inline. */
+.notice.query-error {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}

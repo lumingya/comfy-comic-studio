@@ -56,6 +56,11 @@ const en: Widen<Dict> = {
     unsavedTitle: 'Leave this page?',
     unsavedBody: 'Some changes are not saved yet and will be lost.',
     leave: 'Leave',
+    errorWith: 'Something went wrong: {{message}}',
+    reload: 'Reload',
+    backToWorks: 'Back to works',
+    notFoundTitle: 'Page not found',
+    notFoundBody: 'Nothing lives at this address — it may have been deleted or moved.',
   },
   works: {
     heading: 'My works',

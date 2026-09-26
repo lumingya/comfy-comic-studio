@@ -3,21 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useJobs } from '../../api/jobs';
 import { QueryError } from '../../app/errors';
+import { shortDateTime } from '../../app/format';
 import { usePageTitle } from '../../app/title';
 import { Empty, Loading, Switch } from '../../components/ui';
 import { JobDetail } from './JobDetail';
 
-function when(seconds: number) {
-  return new Date(seconds * 1000).toLocaleString(undefined, {
-    month: 'numeric',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
 export default function JobsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [params, setParams] = useSearchParams();
   const activeOnly = params.get('active') === '1';
   const jobs = useJobs(undefined, activeOnly);
@@ -46,7 +38,7 @@ export default function JobsPage() {
           label={t('jobs.activeOnly')}
         />
       </header>
-      {jobs.error ? <QueryError error={jobs.error} /> : null}
+      {jobs.error ? <QueryError error={jobs.error} onRetry={jobs.refetch} /> : null}
       {jobs.isLoading ? <Loading /> : null}
       {jobs.data && !jobs.data.length ? (
         <Empty icon={<ListTodo size={24} />} title={t('jobs.none')} />
@@ -62,7 +54,7 @@ export default function JobsPage() {
               >
                 <span className={`dot state-${j.state}`} />
                 <span className="grow ellipsis">{j.title}</span>
-                <span className="small muted mono">{when(j.updated)}</span>
+                <span className="small muted mono">{shortDateTime(j.updated, i18n.language)}</span>
               </button>
             ))}
           </nav>

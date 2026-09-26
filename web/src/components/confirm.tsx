@@ -40,12 +40,13 @@ export function ConfirmHost() {
       description={pending?.description}
       footer={
         <>
-          <button className="btn ghost" onClick={() => settle(false)}>
+          {/* Enter must not destroy anything: destructive dialogs start on Cancel. */}
+          <button className="btn ghost" autoFocus={pending?.danger} onClick={() => settle(false)}>
             {t('common.cancel')}
           </button>
           <button
             className={`btn ${pending?.danger ? 'danger solid' : 'primary'}`}
-            autoFocus
+            autoFocus={!pending?.danger}
             onClick={() => settle(true)}
           >
             {pending?.confirmLabel ?? t('common.confirm')}

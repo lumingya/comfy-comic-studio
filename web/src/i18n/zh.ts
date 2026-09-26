@@ -53,6 +53,11 @@ const zh = {
     unsavedTitle: '离开此页？',
     unsavedBody: '还有修改没有保存，离开后会丢失。',
     leave: '离开',
+    errorWith: '出错了：{{message}}',
+    reload: '重新加载',
+    backToWorks: '回到作品',
+    notFoundTitle: '页面不存在',
+    notFoundBody: '这个地址没有对应的页面，可能已被删除或移动。',
   },
   works: {
     heading: '我的作品',
