@@ -1,0 +1,173 @@
+{
+ "1": {
+  "class_type": "CheckpointLoaderSimple",
+  "inputs": {
+   "ckpt_name": "anikawaxl_v4.safetensors"
+  },
+  "_meta": {
+   "title": "Checkpoint [mio:checkpoint]"
+  }
+ },
+ "2": {
+  "class_type": "CLIPSetLastLayer",
+  "inputs": {
+   "stop_at_clip_layer": -2,
+   "clip": [
+    "1",
+    1
+   ]
+  },
+  "_meta": {
+   "title": "CLIP skip 2"
+  }
+ },
+ "3": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": "",
+   "clip": [
+    "2",
+    0
+   ]
+  },
+  "_meta": {
+   "title": "Positive [mio:prompt]"
+  }
+ },
+ "4": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": "",
+   "clip": [
+    "2",
+    0
+   ]
+  },
+  "_meta": {
+   "title": "Negative [mio:negative]"
+  }
+ },
+ "10": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "example.png"
+  },
+  "_meta": {
+   "title": "Init image [mio:init]"
+  }
+ },
+ "11": {
+  "class_type": "VAEEncode",
+  "inputs": {
+   "pixels": [
+    "10",
+    0
+   ],
+   "vae": [
+    "1",
+    2
+   ]
+  },
+  "_meta": {
+   "title": "Encode"
+  }
+ },
+ "12": {
+  "class_type": "ControlNetLoader",
+  "inputs": {
+   "control_net_name": "noobaiXLControlnet_epsTile.safetensors"
+  },
+  "_meta": {
+   "title": "Tile ControlNet"
+  }
+ },
+ "13": {
+  "class_type": "ControlNetApplyAdvanced",
+  "inputs": {
+   "strength": 0.75,
+   "start_percent": 0.0,
+   "end_percent": 0.85,
+   "positive": [
+    "3",
+    0
+   ],
+   "negative": [
+    "4",
+    0
+   ],
+   "control_net": [
+    "12",
+    0
+   ],
+   "image": [
+    "10",
+    0
+   ],
+   "vae": [
+    "1",
+    2
+   ]
+  },
+  "_meta": {
+   "title": "Apply tile [mio:strength]"
+  }
+ },
+ "14": {
+  "class_type": "KSampler",
+  "inputs": {
+   "seed": 0,
+   "steps": 24,
+   "cfg": 5.0,
+   "sampler_name": "euler_ancestral",
+   "scheduler": "normal",
+   "denoise": 0.5,
+   "model": [
+    "1",
+    0
+   ],
+   "positive": [
+    "13",
+    0
+   ],
+   "negative": [
+    "13",
+    1
+   ],
+   "latent_image": [
+    "11",
+    0
+   ]
+  },
+  "_meta": {
+   "title": "Sampler [mio:seed] [mio:steps] [mio:cfg] [mio:sampler] [mio:scheduler] [mio:denoise]"
+  }
+ },
+ "15": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "14",
+    0
+   ],
+   "vae": [
+    "1",
+    2
+   ]
+  },
+  "_meta": {
+   "title": "Decode"
+  }
+ },
+ "16": {
+  "class_type": "PreviewImage",
+  "inputs": {
+   "images": [
+    "15",
+    0
+   ]
+  },
+  "_meta": {
+   "title": "Output [mio:output]"
+  }
+ }
+}
