@@ -18,6 +18,7 @@ from . import themes as TH
 from .album import render as AR
 from .album.templates import builtin_templates
 from .assets import AssetStore
+from .auth import TokenStore
 from .comfy.client import ComfyClient
 from .comfy.compile import BUILTINS
 from .comfy.executor import ComfyRenderExecutor
@@ -34,6 +35,7 @@ from .registry import Registry
 from .render_models import ComfyInstance
 from .storage import SQLiteStore
 from .trash import Trash
+from .webhooks import Dispatcher
 
 log = logging.getLogger("mio")
 
@@ -56,6 +58,8 @@ class AppContext:
     comfy_client_factory: Callable = ComfyClient
     closers: list[Callable[[], None]] = field(default_factory=list)
     extensions: ExtensionManager | None = None
+    tokens: TokenStore | None = None
+    webhooks: Dispatcher | None = None
 
     @classmethod
     def create(
@@ -99,6 +103,9 @@ class AppContext:
         ctx._register_builtins()
         render.hooks = ctx.registry.hooks
         engine.subscribe(lambda event: ctx.hooks.action("job.event", event))
+        ctx.tokens = TokenStore(store)
+        ctx.webhooks = Dispatcher(store, engine)
+        ctx.webhooks.attach(ctx.hooks)
         ctx.extensions = ExtensionManager(ctx)
         ctx.extensions.load_all()
         try:
@@ -107,7 +114,7 @@ class AppContext:
                 log.info("trash: purged %d expired items", purged)
         except Exception:  # never block start-up on housekeeping
             log.exception("trash expiry failed")
-        ctx.closers += [lambda: engine.close(wait=False), store.close]
+        ctx.closers += [lambda: engine.close(wait=False), store.close, ctx.webhooks.close]
         return ctx
 
     # ------------------------------------------------------------- helpers

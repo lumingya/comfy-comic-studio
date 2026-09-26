@@ -21,7 +21,8 @@ from ..pipeline.assistant import AssistantError
 from ..pipeline.render import RenderError
 from ..registry import RegistryError
 from ..storage import Conflict, NotFound
-from . import album, canvas, extensions, jobs, library, production, series, system
+from . import access, album, canvas, extensions, jobs, library, production, series, system
+from .v2 import build_v2
 
 API_VERSION = "1"
 WEB_DIST = Path(__file__).resolve().parents[3] / "web" / "dist"
@@ -65,6 +66,9 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
 
     for module in (series, production, canvas, library, jobs, system, extensions, album):
         app.include_router(module.router, prefix="/api")
+    app.include_router(access.tokens, prefix="/api")
+    app.include_router(access.hooks, prefix="/api")
+    app.mount("/api/v2", build_v2(app.state.ctx, ERRORS))
     _mount_extensions(app)
 
     if serve_web and (WEB_DIST / "index.html").exists():

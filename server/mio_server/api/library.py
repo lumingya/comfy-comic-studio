@@ -33,6 +33,13 @@ async def read_body(request: Request, limit: int, message: str) -> bytes:
 
 
 MAX_UPLOAD = 64 * 1024 * 1024
+# Raw-body uploads (no multipart dependency): declared so OpenAPI clients send bytes.
+BINARY_BODY = {
+    "requestBody": {
+        "required": True,
+        "content": {"application/octet-stream": {"schema": {"type": "string", "format": "binary"}}},
+    }
+}
 
 
 class WorkflowImport(BaseModel):
@@ -241,7 +248,9 @@ def instance_health(ctx: Ctx, instance_id: str) -> dict:
 
 
 # ------------------------------------------------------------------ assets
-@router.post("/assets", response_model=Asset, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/assets", response_model=Asset, status_code=status.HTTP_201_CREATED, openapi_extra=BINARY_BODY
+)
 async def upload_asset(ctx: Ctx, request: Request, filename: str = "") -> Asset:
     """Raw request body = file bytes (``Content-Type`` is ignored; the type is sniffed)."""
     data = await read_body(request, MAX_UPLOAD, "文件超过 64 MB")

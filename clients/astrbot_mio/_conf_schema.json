@@ -1,0 +1,42 @@
+{
+  "base_url": {
+    "description": "Mio 地址",
+    "type": "string",
+    "default": "http://127.0.0.1:8788"
+  },
+  "token": {
+    "description": "API 令牌（Mio → 设置 → API；需要 read / write / render 权限）",
+    "type": "string",
+    "default": ""
+  },
+  "allowed_ids": {
+    "description": "允许出图的发送者 ID；留空表示仅 AstrBot 管理员",
+    "type": "list",
+    "default": []
+  },
+  "series_title": {
+    "description": "机器人作品归入的系列名",
+    "type": "string",
+    "default": "机器人作品"
+  },
+  "candidates": {
+    "description": "每格候选张数",
+    "type": "int",
+    "default": 1
+  },
+  "strip_width": {
+    "description": "发回的条漫宽度（像素）",
+    "type": "int",
+    "default": 720
+  },
+  "timeout": {
+    "description": "单次请求超时（秒；生成剧本可能较慢）",
+    "type": "int",
+    "default": 300
+  },
+  "render_timeout": {
+    "description": "等待出图的最长时间（秒）",
+    "type": "int",
+    "default": 1800
+  }
+}

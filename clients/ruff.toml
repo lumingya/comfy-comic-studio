@@ -1,0 +1,7 @@
+# Same style as server/pyproject.toml; mio_client.py is generated at this width.
+line-length = 100
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501", "E741"]

@@ -20,10 +20,12 @@ from typing import Callable, Iterator, TypeVar
 from pydantic import BaseModel
 
 from .album.templates import AlbumTemplate
+from .auth import ApiToken
 from .models import Episode, Series, now_iso
 from .render_models import Asset, ComfyInstance, RenderProfile, WorkflowDoc
 from .settings import AppSettings
 from .themes import Theme
+from .webhooks import Webhook
 
 SCHEMA_VERSION = 2
 DOC_KINDS: dict[str, type[BaseModel]] = {
@@ -33,6 +35,8 @@ DOC_KINDS: dict[str, type[BaseModel]] = {
     "settings": AppSettings,
     "theme": Theme,
     "album_template": AlbumTemplate,
+    "api_token": ApiToken,
+    "webhook": Webhook,
 }
 T = TypeVar("T", bound=BaseModel)
 

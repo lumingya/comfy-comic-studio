@@ -14,7 +14,7 @@ from .. import settings as SET
 from ..importer import LegacyImporter
 from ..models import now_iso
 from .deps import Ctx
-from .library import read_body
+from .library import BINARY_BODY, read_body
 
 router = APIRouter(tags=["system"])
 MAX_BUNDLE = 1024 * 1024 * 1024
@@ -76,7 +76,7 @@ def export_bundle(ctx: Ctx, series_id: str) -> Response:
     )
 
 
-@router.post("/bundles", status_code=status.HTTP_201_CREATED)
+@router.post("/bundles", status_code=status.HTTP_201_CREATED, openapi_extra=BINARY_BODY)
 async def import_bundle(ctx: Ctx, request: Request) -> dict:
     """Raw request body = the ``.mio.zip`` file."""
     data = await read_body(request, MAX_BUNDLE, "压缩包超过 1 GB")

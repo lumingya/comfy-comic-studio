@@ -12,7 +12,7 @@ from .. import themes as TH
 from ..extensions.manifest import ManifestError, inside
 from ..storage import NotFound
 from .deps import Ctx
-from .library import read_body
+from .library import BINARY_BODY, read_body
 
 router = APIRouter(tags=["extensions"])
 
@@ -37,7 +37,7 @@ def list_extensions(ctx: Ctx) -> dict:
     }
 
 
-@router.post("/extensions", status_code=status.HTTP_201_CREATED)
+@router.post("/extensions", status_code=status.HTTP_201_CREATED, openapi_extra=BINARY_BODY)
 async def install_extension(ctx: Ctx, request: Request, replace: bool = False) -> dict:
     """Raw body = zipped extension folder.  Installed disabled; review, then enable."""
     data = await read_body(request, 50 * 1024 * 1024, "扩展包超过 50 MB")

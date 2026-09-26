@@ -1,0 +1,5 @@
+name: astrbot_plugin_mio
+desc: Mio 漫画工作室：一句话生成剧本、出图并发回整条漫画（通过 Mio 开放 API v2）
+version: 4.0.0
+author: Mio
+repo: https://github.com/lumingya/comfy-comic-studio
