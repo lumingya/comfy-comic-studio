@@ -143,7 +143,7 @@
   ],
   "outputNodeId": "9",
   "randomizeSeeds": false,
-  "updatedAt": 1790256597539,
+  "updatedAt": 1790147511991,
   "slots": {
     "plan": {
       "version": 3,
@@ -165,8 +165,7 @@
             "key": "4:ckpt_name",
             "current": "your-anime-model.safetensors",
             "role": "primary",
-            "enabled": false,
-            "disabled": true
+            "enabled": true
           }
         ]
       },
