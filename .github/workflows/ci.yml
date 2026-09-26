@@ -32,6 +32,8 @@ jobs:
         run: node js/tests.js
       - name: Python unit tests
         run: python -m unittest discover -s tests -q
+      - name: Spike unit tests (next/)
+        run: python -m unittest discover -s next/tests -t next -q
       - name: Shipped data manifest
         run: python tools/check_distribution.py
       - name: Package smoke test

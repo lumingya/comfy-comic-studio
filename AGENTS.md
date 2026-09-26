@@ -19,6 +19,7 @@
 | `tests/` | `test_*.py` 是 unittest；`*.mjs` 是 Playwright 浏览器 E2E，较重，只在手动时运行 |
 | `tools/` | 打包、随包清单、文档生成、开发辅助脚本 |
 | `docs/` | 文档；`docs/archive/` 存放不再维护的历史文档 |
+| `next/` | Phase 0.5 技术验证（Spike），独立于旧版，只用标准库；说明见 [next/README.md](next/README.md) |
 
 ## 验证命令（提交前必跑，都很轻）
 
@@ -26,6 +27,7 @@
 node js/build.js dev                      # 汇编前端；产物已提交，跑完不应产生 git diff
 node js/tests.js                          # 前端契约测试，约 1 秒
 python -m unittest discover -s tests -q   # Python 单元测试，Linux 约 1 分钟
+python -m unittest discover -s next/tests -t next -q   # Spike（next/）单测，约 5 秒
 python tools/check_distribution.py        # 随包数据与清单一致（以 CI 的干净检出为准）
 python tools/package_project.py --output releases   # 打包冒烟（可选）
 ```
