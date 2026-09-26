@@ -1029,7 +1029,7 @@ export interface components {
         /** ApplyRequest */
         ApplyRequest: {
             /** Ops */
-            ops: Record<string, never>[];
+            ops: Record<string, unknown>[];
             /** Accepted */
             accepted: string[];
             /** Base Revision */
@@ -1270,11 +1270,11 @@ export interface components {
         /** CompileRequest */
         CompileRequest: {
             /** Values */
-            values?: Record<string, never>;
+            values?: Record<string, unknown>;
             /** Variant */
             variant?: string | null;
             /** Overrides */
-            overrides?: Record<string, never>;
+            overrides?: Record<string, unknown>;
         };
         /** Dialogue */
         Dialogue: {
@@ -1300,7 +1300,7 @@ export interface components {
              */
             kind: "inpaint" | "outpaint" | "edit";
             /** Params */
-            params?: Record<string, never>;
+            params?: Record<string, unknown>;
             /** Profile Id */
             profile_id?: string | null;
             /** Idempotency Key */
@@ -1701,7 +1701,7 @@ export interface components {
         /** PanelCreate */
         PanelCreate: {
             /** Panel */
-            panel?: Record<string, never>;
+            panel?: Record<string, unknown>;
             /**
              * After
              * @description Insert after this panel; null = at the end
@@ -1737,19 +1737,19 @@ export interface components {
              * Values
              * @description Extra [mio:*] values.
              */
-            values: Record<string, never>;
+            values: Record<string, unknown>;
             /**
              * Node Overrides
              * @description JSON Pointer → value.
              */
-            node_overrides: Record<string, never>;
+            node_overrides: Record<string, unknown>;
             /** Profile Id */
             profile_id: string | null;
         };
         /** PanelPatch */
         PanelPatch: {
             /** Changes */
-            changes: Record<string, never>;
+            changes: Record<string, unknown>;
             /** Revision */
             revision?: number | null;
         };
@@ -1993,9 +1993,9 @@ export interface components {
              */
             variant?: string | null;
             /** Values */
-            values?: Record<string, never>;
+            values?: Record<string, unknown>;
             /** Overrides */
-            overrides?: Record<string, never>;
+            overrides?: Record<string, unknown>;
             /**
              * Enabled
              * @default true
@@ -2027,9 +2027,9 @@ export interface components {
              */
             variant: string | null;
             /** Values */
-            values: Record<string, never>;
+            values: Record<string, unknown>;
             /** Overrides */
-            overrides: Record<string, never>;
+            overrides: Record<string, unknown>;
             /**
              * Enabled
              * @default true
@@ -2058,7 +2058,7 @@ export interface components {
              */
             action: "reconcile" | "failed" | "resubmit";
             /** Result */
-            result?: Record<string, never> | null;
+            result?: Record<string, unknown> | null;
         };
         /** RetryRequest */
         RetryRequest: {
@@ -2321,7 +2321,7 @@ export interface components {
             /** Seed */
             seed: number | null;
             /** Parameter Snapshot */
-            parameter_snapshot: Record<string, never>;
+            parameter_snapshot: Record<string, unknown>;
             qa: components["schemas"]["QAResult"] | null;
             /** Faces */
             faces: components["schemas"]["Face"][];
@@ -2340,7 +2340,7 @@ export interface components {
             /** From Take Id */
             from_take_id: string;
             /** Params */
-            params: Record<string, never>;
+            params: Record<string, unknown>;
             /** Created At */
             created_at: string;
         };
@@ -2360,7 +2360,7 @@ export interface components {
             /** Input */
             input?: unknown;
             /** Context */
-            ctx?: Record<string, never>;
+            ctx?: Record<string, unknown>;
         };
         /**
          * VariantSet
@@ -2375,7 +2375,7 @@ export interface components {
             name: string;
             /** Characters */
             characters?: {
-                [key: string]: Record<string, never>;
+                [key: string]: Record<string, unknown>;
             };
             /** Style Id */
             style_id?: string | null;
@@ -2395,7 +2395,7 @@ export interface components {
             name: string;
             /** Characters */
             characters: {
-                [key: string]: Record<string, never>;
+                [key: string]: Record<string, unknown>;
             };
             /** Style Id */
             style_id: string | null;
@@ -2415,18 +2415,18 @@ export interface components {
                 [key: string]: string | string[];
             };
             /** Values */
-            values?: Record<string, never>;
+            values?: Record<string, unknown>;
             /** Overrides */
-            overrides?: Record<string, never>;
+            overrides?: Record<string, unknown>;
             /** Guard */
             guard?: string[];
             /** Variants */
             variants?: {
-                [key: string]: Record<string, never>;
+                [key: string]: Record<string, unknown>;
             };
             /** Frontend */
             frontend?: {
-                [key: string]: Record<string, never>;
+                [key: string]: Record<string, unknown>;
             };
             /**
              * State
@@ -2441,7 +2441,7 @@ export interface components {
             /** Name */
             name: string;
             /** Graph */
-            graph: Record<string, never>;
+            graph: Record<string, unknown>;
             config?: components["schemas"]["WorkflowConfig"] | null;
             /**
              * Notes
@@ -2454,7 +2454,7 @@ export interface components {
             /** Name */
             name?: string | null;
             /** Graph */
-            graph?: Record<string, never> | null;
+            graph?: Record<string, unknown> | null;
             config?: components["schemas"]["WorkflowConfig"] | null;
             /** Notes */
             notes?: string | null;
@@ -2483,7 +2483,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
         };
@@ -2698,7 +2698,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -2894,7 +2894,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -3098,7 +3098,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -3229,7 +3229,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -3264,7 +3264,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -3299,7 +3299,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -3334,7 +3334,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -3502,7 +3502,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>[];
+                    "application/json": Record<string, unknown>[];
                 };
             };
         };
@@ -3528,7 +3528,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -3563,7 +3563,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -3624,7 +3624,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>[];
+                    "application/json": Record<string, unknown>[];
                 };
             };
         };
@@ -3648,7 +3648,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -3679,7 +3679,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -3743,7 +3743,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -3774,7 +3774,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -3809,7 +3809,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -3842,7 +3842,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -4019,7 +4019,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
         };
@@ -4138,7 +4138,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -4235,7 +4235,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>[];
+                    "application/json": Record<string, unknown>[];
                 };
             };
             /** @description Validation Error */
@@ -4266,7 +4266,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -4329,7 +4329,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>[];
+                    "application/json": Record<string, unknown>[];
                 };
             };
             /** @description Validation Error */
@@ -4360,7 +4360,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -4391,7 +4391,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -4422,7 +4422,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -4457,7 +4457,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -4493,7 +4493,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -4522,7 +4522,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
         };
@@ -4536,7 +4536,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": Record<string, never>;
+                "application/json": Record<string, unknown>;
             };
         };
         responses: {
@@ -4546,7 +4546,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -4575,7 +4575,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
         };
@@ -4595,7 +4595,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
         };
@@ -4645,7 +4645,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
         };
@@ -4696,7 +4696,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
         };
@@ -4718,7 +4718,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -4751,7 +4751,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
