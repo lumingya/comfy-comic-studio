@@ -1,9 +1,13 @@
 """Strip canvas for v3 episodes: layout, lettering and rendering.
 
-Layout honours each panel's strip attributes (width mode, aspect ratio, gap after, transition
-background) and keeps hand-edited geometry: panels with a box in a ``manual`` strip keep it, and
-``locked`` lettering layers are never regenerated.  Bubble placement reuses the spike's
-face-avoiding placer (``layout.place_bubbles``); drawing reuses ``layout.draw_bubble``.
+Layout honours each panel's strip attributes and keeps hand-edited geometry: panels with a box
+in a ``manual`` strip keep it, and ``locked`` lettering layers are never regenerated.
+
+Width modes: ``full`` edge to edge; ``bleed`` edge to edge *and* flush with its neighbours (the
+gaps on both sides collapse); ``inset`` a framed panel of ``inset_scale`` × width aligned
+left / centre / right; ``frameless`` no frame, all edges fading into the background track
+(``backdrop``).  Bubble placement uses the face-avoiding placer (``layout.place_bubbles``);
+cross-panel bubbles, SFX and vertical text live in ``lettering``.
 """
 
 from __future__ import annotations
@@ -11,7 +15,9 @@ from __future__ import annotations
 from PIL import Image, ImageDraw
 
 from ..models import DialogueKind, Episode, LetteringLayer, PanelWidth, Series, Strip, parse_ratio
+from . import backdrop as BD
 from . import layout as LY
+from . import lettering as LT
 
 TITLE_SPACE = 170
 END_SPACE = 220
@@ -42,51 +48,84 @@ def _fonts(style: LY.Style) -> dict:
     }
 
 
+def panel_x(panel, strip: Strip) -> tuple[int, int]:
+    W, m = strip.width, strip.margin
+    if panel.width_mode in (PanelWidth.full, PanelWidth.bleed):
+        return 0, W
+    if panel.width_mode == PanelWidth.frameless:
+        return m, W - m
+    w = round(W * panel.inset_scale)
+    if panel.inset_align == "left":
+        x0 = m
+    elif panel.inset_align == "right":
+        x0 = W - m - w
+    else:
+        x0 = (W - w) // 2
+    return x0, x0 + w
+
+
 def panel_geometry(
     episode: Episode, strip: Strip, present: set[str], title: bool = True
 ) -> tuple[dict, int]:
     """Boxes (x0, y0, x1, y1) in strip pixels for every panel that has an image."""
-    W, m = strip.width, strip.margin
-    y = TITLE_SPACE if title else m
+    y = TITLE_SPACE if title else strip.margin
     boxes = {}
-    for panel in episode.ordered_panels():
-        if panel.id not in present:
-            continue
+    panels = [p for p in episode.ordered_panels() if p.id in present]
+    for i, panel in enumerate(panels):
+        nxt = panels[i + 1] if i + 1 < len(panels) else None
+        flush = nxt is not None and PanelWidth.bleed in (panel.width_mode, nxt.width_mode)
+        gap = 0 if flush else panel.gap_after
         if strip.manual and panel.id in strip.panel_boxes:
             box = tuple(round(v) for v in strip.panel_boxes[panel.id])
             boxes[panel.id] = box
-            y = max(y, box[3] + panel.gap_after)
+            y = max(y, box[3] + gap)
             continue
-        if panel.width_mode in (PanelWidth.full, PanelWidth.bleed):
-            x0, x1 = 0, W
-        elif panel.width_mode == PanelWidth.inset:
-            x0, x1 = m * 3, W - m * 3
-        else:  # frameless
-            x0, x1 = m, W - m
+        x0, x1 = panel_x(panel, strip)
         h = round((x1 - x0) / parse_ratio(panel.aspect_ratio))
         boxes[panel.id] = (x0, y, x1, y + h)
-        y += h + (
-            0 if panel.width_mode == PanelWidth.bleed and panel.gap_after == 0 else panel.gap_after
-        )
+        y += h + gap
     return boxes, y + END_SPACE
 
 
-def _paint_background(draw: ImageDraw.ImageDraw, spec: str, box: tuple[int, int, int, int]) -> None:
-    """``#rrggbb`` solid, or ``#top>#bottom`` vertical gradient; ``transparent`` = strip colour."""
-    if not spec or spec == "transparent":
-        return
-    x0, y0, x1, y1 = box
-    if ">" in spec:
-        a, b = (Image.new("RGB", (1, 1), c.strip()).getpixel((0, 0)) for c in spec.split(">", 1))
-        span = max(1, y1 - y0)
-        for i in range(span):
-            t = i / span
-            draw.line(
-                [(x0, y0 + i), (x1, y0 + i)],
-                fill=tuple(round(a[k] + (b[k] - a[k]) * t) for k in range(3)),
-            )
-    else:
-        draw.rectangle(box, fill=spec)
+def _specs(panel, names: dict, prev_loc, vertical: bool) -> tuple[list[dict], list[dict]]:
+    """``(in_panel, bridges)`` bubble specs for one panel."""
+    specs, bridges = [], []
+    if panel.location_id and panel.location_id != prev_loc and names.get(panel.location_id):
+        specs.append({"kind": "caption", "text": names[panel.location_id], "speaker": None})
+    for d in panel.dialogues:
+        spec = {
+            "kind": d.kind.value,
+            "text": d.text,
+            "speaker": None if d.kind == DialogueKind.narration else d.speaker_id,
+            "vertical": vertical and d.kind != DialogueKind.sfx,
+        }
+        (bridges if d.bridge and d.kind != DialogueKind.sfx else specs).append(spec)
+    return specs, bridges
+
+
+def _layer(q: LY.Placement, style: LY.Style, bridge_to: str | None = None) -> LetteringLayer:
+    kind = DialogueKind(q.kind)
+    return LetteringLayer(
+        panel_id=q.panel,
+        kind=kind,
+        text=q.text,
+        speaker_id=q.speaker,
+        box=tuple(float(v) for v in q.box),
+        tail_to=tuple(float(v) for v in q.tail) if q.tail else None,
+        font_size=style.caption_size if kind == DialogueKind.caption else None,
+        vertical=q.vertical,
+        bridge_to=bridge_to,
+        style=LT.preset_style() if kind == DialogueKind.sfx else None,
+    )
+
+
+def _fit_sfx(q: LY.Placement, style: LY.Style) -> None:
+    """Styled SFX are measured from their rendered glyphs, centred where the placer put them."""
+    center = ((q.box[0] + q.box[2]) / 2, (q.box[1] + q.box[3]) / 2)
+    box = LT.sfx_box(
+        q.text, style.bold_path or style.font_path, style.font_size + 16, LT.preset_style(), center
+    )
+    q.box = tuple(round(v) for v in box)
 
 
 def auto_lettering(
@@ -103,50 +142,64 @@ def auto_lettering(
     occupied = [tuple(l.box) for l in kept]
     locked_panels = {l.panel_id for l in kept}
     out = list(kept)
+    vertical = strip.text_direction == "vertical"
     prev_bottom, prev_loc = TITLE_SPACE - style.gutter, None
     names = {loc.id: loc.name for loc in series.bible.locations}
-    for panel in episode.ordered_panels():
-        box = boxes.get(panel.id)
-        if box is None:
-            continue
-        specs = []
-        if panel.location_id and panel.location_id != prev_loc and names.get(panel.location_id):
-            specs.append({"kind": "caption", "text": names[panel.location_id], "speaker": None})
-        for d in panel.dialogues:
-            specs.append(
-                {
-                    "kind": d.kind.value,
-                    "text": d.text,
-                    "speaker": None if d.kind == DialogueKind.narration else d.speaker_id,
-                }
-            )
-        if specs and panel.id not in locked_panels:
-            edges = LY.EdgeMap(scaled[panel.id])
+    panels = [p for p in episode.ordered_panels() if p.id in boxes]
+    for i, panel in enumerate(panels):
+        box = boxes[panel.id]
+        specs, bridges = _specs(panel, names, prev_loc, vertical)
+        panel_faces = LT.faces_for(panel, faces.get(panel.id))
+        free = panel.id not in locked_panels
+        if specs and free:
             placed = LY.place_bubbles(
                 panel.id,
                 box,
                 specs,
-                faces.get(panel.id, []),
-                edges,
+                panel_faces,
+                LY.EdgeMap(scaled[panel.id]),
                 style,
                 fonts,
                 occupied,
                 box[1] - prev_bottom,
                 strip.width,
+                rtl=vertical,
             )
             for q in placed:
+                if q.kind == "sfx":
+                    _fit_sfx(q, style)
                 occupied.append(q.box)
-                out.append(
-                    LetteringLayer(
-                        panel_id=panel.id,
-                        kind=DialogueKind(q.kind),
-                        text=q.text,
-                        speaker_id=q.speaker,
-                        box=tuple(float(v) for v in q.box),
-                        tail_to=tuple(float(v) for v in q.tail) if q.tail else None,
-                        font_size=None if q.kind != "caption" else style.caption_size,
-                    )
+                out.append(_layer(q, style))
+        nxt = panels[i + 1] if i + 1 < len(panels) else None
+        for spec in bridges if free else []:
+            if nxt is None:  # last panel: nothing to bridge to, keep it inside
+                q = LY.place_bubbles(
+                    panel.id,
+                    box,
+                    [spec],
+                    panel_faces,
+                    None,
+                    style,
+                    fonts,
+                    occupied,
+                    0,
+                    strip.width,
+                    rtl=vertical,
+                )[0]
+            else:
+                q = LT.place_bridge(
+                    panel.id,
+                    spec,
+                    box,
+                    boxes[nxt.id],
+                    panel_faces,
+                    occupied,
+                    style,
+                    fonts,
+                    strip.width,
                 )
+            occupied.append(q.box)
+            out.append(_layer(q, style, nxt.id if nxt else None))
         prev_bottom, prev_loc = box[3], panel.location_id or prev_loc
     return out
 
@@ -185,70 +238,42 @@ def render(
 ) -> Image.Image:
     style = style or LY.Style(width=strip.width)
     fonts = _fonts(style)
-    canvas = Image.new("RGB", (strip.width, max(strip.height, 1)), strip.background)
+    bg = strip.background if BD.HEX_RE.match(strip.background or "") else "#ffffff"
+    canvas = Image.new("RGB", (strip.width, max(strip.height, 1)), bg)
     draw = ImageDraw.Draw(canvas)
     ordered = [p for p in episode.ordered_panels() if p.id in strip.panel_boxes and p.id in scaled]
-    for i, panel in enumerate(ordered):
+    BD.paint_track(canvas, bg, ordered, strip.panel_boxes)
+    for panel in ordered:
         box = tuple(round(v) for v in strip.panel_boxes[panel.id])
-        if i + 1 < len(ordered):
-            nxt = tuple(round(v) for v in strip.panel_boxes[ordered[i + 1].id])
-            if nxt[1] > box[3]:
-                _paint_background(
-                    draw, panel.transition_background, (0, box[3], strip.width, nxt[1])
-                )
         im = scaled[panel.id]
         if panel.width_mode == PanelWidth.frameless:
-            mask = Image.new("L", im.size, 255)
-            fade = max(8, im.height // 12)
-            md = ImageDraw.Draw(mask)
-            for k in range(fade):
-                md.line([(0, k), (im.width, k)], fill=round(255 * k / fade))
-                md.line(
-                    [(0, im.height - 1 - k), (im.width, im.height - 1 - k)],
-                    fill=round(255 * k / fade),
-                )
-            canvas.paste(im, box[:2], mask)
+            canvas.paste(im, box[:2], BD.frameless_mask(im.size))
         else:
             canvas.paste(im, box[:2])
         if panel.width_mode == PanelWidth.inset:
             draw.rectangle(box, outline="black", width=3)
     for layer in strip.lettering:
-        font = {DialogueKind.caption: fonts["caption"], DialogueKind.sfx: fonts["sfx"]}.get(
-            layer.kind, fonts["text"]
-        )
-        x0, y0, x1, y1 = layer.box
-        if layer.vertical:
-            lines = ["\n".join(layer.text)]
-        else:
-            pad = 44 if layer.kind in (DialogueKind.speech, DialogueKind.thought) else 24
-            lines = LY.wrap(layer.text, font, max(40, x1 - x0 - pad))
-        q = LY.Placement(
-            layer.panel_id or "",
-            layer.kind.value,
-            layer.text,
-            lines,
-            tuple(round(v) for v in layer.box),
-            tuple(round(v) for v in layer.tail_to) if layer.tail_to else None,
-            layer.speaker_id,
-        )
-        LY.draw_bubble(draw, q, fonts, style)
+        LT.draw_layer(canvas, draw, layer, fonts, style)
     if series.title and TITLE_SPACE <= (
         min((b[1] for b in strip.panel_boxes.values()), default=TITLE_SPACE)
     ):
         tw = fonts["title"].getlength(episode.title or series.title)
+        ty = (TITLE_SPACE - style.title_size) / 2 - 10
         draw.text(
-            ((strip.width - tw) / 2, (TITLE_SPACE - style.title_size) / 2 - 10),
+            ((strip.width - tw) / 2, ty),
             episode.title or series.title,
             font=fonts["title"],
-            fill="black",
+            fill=BD.ink_for(BD.color_at(canvas, round(ty))),
         )
     end = "— 完 —"
     ew = fonts["text"].getlength(end)
+    ey = strip.height - END_SPACE / 2 - style.font_size / 2
+    dark = BD.ink_for(BD.color_at(canvas, round(ey))) == "white"
     draw.text(
-        ((strip.width - ew) / 2, strip.height - END_SPACE / 2 - style.font_size / 2),
+        ((strip.width - ew) / 2, ey),
         end,
         font=fonts["text"],
-        fill=(90, 90, 90),
+        fill=(200, 200, 200) if dark else (90, 90, 90),
     )
     return canvas
 

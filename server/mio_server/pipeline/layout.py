@@ -14,6 +14,8 @@ from dataclasses import dataclass, field
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
+from . import vertical as VT
+
 FONT_CANDIDATES = (
     "C:/Windows/Fonts/msyh.ttc",
     "C:/Windows/Fonts/simhei.ttf",
@@ -76,6 +78,7 @@ class Placement:
     tail: tuple[int, int] | None = None
     speaker: str | None = None
     face_overlap: float = 0.0
+    vertical: bool = False
 
 
 @dataclass
@@ -232,6 +235,45 @@ class EdgeMap:
         return total / ((x1 - x0) * (y1 - y0) * 255)
 
 
+def font_for(kind: str, fonts: dict):
+    return (
+        fonts["caption"] if kind == "caption" else fonts["sfx"] if kind == "sfx" else fonts["text"]
+    )
+
+
+def measure(spec: dict, style: Style, fonts: dict) -> tuple[list[str], int, int, bool]:
+    """``(lines, bubble_w, bubble_h, vertical)`` for one spec (``kind``, ``text``, ``vertical``).
+
+    Vertical specs return columns (rightmost first) instead of lines.
+    """
+    kind, text = spec["kind"], spec["text"]
+    font = font_for(kind, fonts)
+    if spec.get("vertical") and kind in ("speech", "thought", "narration"):
+        cells = len([g for g in VT.glyphs(text) if g != "\n"])
+        cols = VT.columns(text, min(10, max(4, math.ceil(math.sqrt(cells * 1.8)))))
+        tw, th = VT.block_size(cols, font.size, style.line_gap)
+        if kind == "narration":
+            return cols, tw + 36, th + 36, True
+        return cols, math.ceil(tw * 1.3 + 40), math.ceil(th * 1.18 + 44), True
+    max_w = style.max_text_width if kind in ("speech", "thought") else style.max_text_width + 120
+    if kind in ("speech", "thought"):
+        lines = balanced_wrap(text, font, max_w)
+    elif kind == "narration":
+        lines = balanced_wrap(text, font, max_w, ratio=5.0)
+    else:
+        lines = wrap(text, font, max_w)
+    tw, th, _ = text_block(lines, font, style.line_gap)
+    if kind in ("speech", "thought"):
+        bw, bh = ellipse_size(lines, font, style.line_gap)
+    elif kind == "caption":
+        bw, bh = tw + 28, th + 18
+    elif kind == "sfx":
+        bw, bh = tw + 12, th + 12
+    else:  # narration
+        bw, bh = tw + 40, th + 30
+    return lines, bw, bh, False
+
+
 def place_bubbles(
     panel_id: str,
     panel_box,
@@ -243,8 +285,14 @@ def place_bubbles(
     occupied: list,
     gutter_above: int,
     strip_width: int,
+    rtl: bool = False,
 ) -> list[Placement]:
-    """Choose a box for each bubble spec (``kind``, ``text``, ``speaker``) in reading order."""
+    """Choose a box for each bubble spec (``kind``, ``text``, ``speaker``) in reading order.
+
+    ``faces`` items: ``{"box": normalized, "character": id, "estimated": bool}``; estimated
+    boxes (from the script's character positions) weigh less than detected ones.  ``rtl`` reads
+    right-to-left (vertical manga text).
+    """
     px0, py0, px1, py1 = panel_box
     pw, ph = px1 - px0, py1 - py0
     face_boxes = []
@@ -254,6 +302,7 @@ def place_bubbles(
         face_boxes.append(
             {
                 "character": f.get("character"),
+                "weight": 3.5 if f.get("estimated") else 10.0,
                 "box": (
                     px0 + x1 * pw - fw * 0.12,
                     py0 + y1 * ph - fh * 0.12,
@@ -265,31 +314,7 @@ def place_bubbles(
     placed: list[Placement] = []
     for spec in specs:
         kind, text = spec["kind"], spec["text"]
-        font = (
-            fonts["caption"]
-            if kind == "caption"
-            else fonts["sfx"]
-            if kind == "sfx"
-            else fonts["text"]
-        )
-        max_w = (
-            style.max_text_width if kind in ("speech", "thought") else style.max_text_width + 120
-        )
-        if kind in ("speech", "thought"):
-            lines = balanced_wrap(text, font, max_w)
-        elif kind == "narration":
-            lines = balanced_wrap(text, font, max_w, ratio=5.0)
-        else:
-            lines = wrap(text, font, max_w)
-        tw, th, _ = text_block(lines, font, style.line_gap)
-        if kind in ("speech", "thought"):
-            bw, bh = ellipse_size(lines, font, style.line_gap)
-        elif kind == "caption":
-            bw, bh = tw + 28, th + 18
-        elif kind == "sfx":
-            bw, bh = tw + 12, th + 12
-        else:  # narration
-            bw, bh = tw + 40, th + 30
+        lines, bw, bh, vertical = measure(spec, style, fonts)
         speaker_face = next(
             (
                 f["box"]
@@ -317,7 +342,7 @@ def place_bubbles(
                 ):
                     continue
                 area = _area(box)
-                face_hit = sum(_overlap(box, f["box"]) for f in face_boxes) / area
+                face_hit = sum(_overlap(box, f["box"]) * f["weight"] for f in face_boxes) / area
                 inside = (
                     box[0] - px0,
                     max(box[1], py0) - py0,
@@ -326,7 +351,7 @@ def place_bubbles(
                 )
                 busy = edges.mean(inside) if edges and inside[3] > inside[1] else 0.0
                 inside_frac = max(0.0, inside[3] - inside[1]) / bh
-                s = face_hit * 10 + busy * inside_frac * 2.5 + (cy - py0) / ph * 0.6
+                s = face_hit + busy * inside_frac * 2.5 + (cy - py0) / ph * 0.6
                 if speaker_face:
                     fx, fy = (speaker_face[0] + speaker_face[2]) / 2, speaker_face[1]
                     s += math.hypot(cx - fx, cy - fy) / pw * 1.2 + (0.8 if cy > fy else 0)
@@ -335,7 +360,7 @@ def place_bubbles(
                     pcx, pcy = (prev[0] + prev[2]) / 2, (prev[1] + prev[3]) / 2
                     if cy < pcy - (prev[3] - prev[1]) * 0.25:
                         s += 3
-                    elif abs(cy - pcy) < bh * 0.6 and cx < pcx:
+                    elif abs(cy - pcy) < bh * 0.6 and (cx > pcx if rtl else cx < pcx):
                         s += 2
                 if s < best_score:
                     best, best_score = box, s
@@ -359,17 +384,28 @@ def place_bubbles(
             else:
                 tail = (round(cx + (box[2] - box[0]) * 0.12), round(box[3] + 34))
         area = _area(box)
-        overlap = sum(_overlap(box, f["box"]) for f in face_boxes) / area if area else 0.0
+        real = [f for f in face_boxes if f["weight"] >= 10]
+        overlap = sum(_overlap(box, f["box"]) for f in real) / area if area else 0.0
         placed.append(
             Placement(
-                panel_id, kind, text, lines, box, tail, spec.get("speaker"), round(overlap, 3)
+                panel_id,
+                kind,
+                text,
+                lines,
+                box,
+                tail,
+                spec.get("speaker"),
+                round(overlap, 3),
+                vertical,
             )
         )
     return placed
 
 
 # ----------------------------------------------------------------------------- drawing
-def draw_bubble(draw: ImageDraw.ImageDraw, p: Placement, fonts: dict, style: Style) -> None:
+def draw_bubble(
+    draw: ImageDraw.ImageDraw, p: Placement, fonts: dict, style: Style, text: bool = True
+) -> None:
     x0, y0, x1, y1 = p.box
     cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
     ow = style.outline
@@ -407,6 +443,11 @@ def draw_bubble(draw: ImageDraw.ImageDraw, p: Placement, fonts: dict, style: Sty
     else:
         draw.rectangle(p.box, fill=(255, 250, 236), outline="black", width=ow)
         font, color = fonts["text"], "black"
+    if not text:
+        return
+    if p.vertical:
+        VT.draw(draw, p.lines, (cx, cy), font, style.line_gap, fill=color)
+        return
     _, th, widths = text_block(p.lines, font, style.line_gap)
     y = cy - th / 2
     for line, lw in zip(p.lines, widths):

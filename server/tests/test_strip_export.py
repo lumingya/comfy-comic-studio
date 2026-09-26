@@ -28,8 +28,10 @@ def project(n=6):
 class StripTests(unittest.TestCase):
     def test_layout_stacks_panels_with_gaps_and_modes(self):
         series, episode, images = project()
+        episode.panels[0].gap_after = 300
         episode.panels[1].width_mode = PanelWidth.inset
-        episode.panels[1].gap_after = 300
+        episode.panels[1].inset_align = "right"
+        episode.panels[1].gap_after = 120
         episode.panels[2].width_mode = PanelWidth.bleed
         episode.panels[2].gap_after = 0
         episode.panels[2].aspect_ratio = "16:9"
@@ -37,9 +39,11 @@ class StripTests(unittest.TestCase):
         b = strip.panel_boxes
         p1, p2, p3, p4 = (b[p.id] for p in episode.ordered_panels()[:4])
         self.assertEqual(p1[0], 0)
-        self.assertGreater(p2[0], 0)  # inset
-        self.assertEqual(p3[1] - p2[3], 300)  # rhythm: custom gap
-        self.assertEqual(p4[1], p3[3])  # bleed with no gap
+        self.assertEqual(p2[1] - p1[3], 300)  # rhythm: custom gap
+        self.assertEqual(p2[2], 800 - 24)  # inset aligned right inside the margin
+        self.assertEqual(round(p2[2] - p2[0]), round(800 * 0.78))
+        self.assertEqual(p3[1], p2[3])  # bleed butts the panel above …
+        self.assertEqual(p4[1], p3[3])  # … and the one below
         self.assertEqual(round(p3[2] - p3[0]), 800)
         self.assertEqual(round((p3[2] - p3[0]) / (p3[3] - p3[1]), 2), round(16 / 9, 2))
         self.assertGreater(strip.height, p4[3])
