@@ -1,7 +1,7 @@
-import { Archive, BookOpen, Download, FolderInput, Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Archive, BookOpen, Download, FolderInput, Plus, Search, Trash2, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { assetUrl, download } from '../../api/client';
 import { useCreateSeries, useSeriesList, useTrashSeries } from '../../api/series';
 import { useImportBundle } from '../../api/system';
@@ -12,8 +12,99 @@ import { usePageTitle } from '../../app/title';
 import { Avatar } from '../../components/avatar';
 import { toast, toastError } from '../../components/toast';
 import { useUndoTrash } from '../../components/undo';
-import { ActionMenu, Empty, Field, FilePick, Modal, TextInput } from '../../components/ui';
+import { ActionMenu, Empty, Field, FilePick, Modal, Select, TextInput } from '../../components/ui';
 import { LegacyImportDialog } from './LegacyImportDialog';
+
+const STATUSES = ['draft', 'active', 'archived'] as const;
+type Status = (typeof STATUSES)[number];
+const SORTS = ['updated', 'title', 'created'] as const;
+type Sort = (typeof SORTS)[number];
+
+export interface WorksFilter {
+  q: string;
+  status: Status | '';
+  sort: Sort;
+}
+
+/** Search (title / subtitle), status and sort, all client-side. Exported for tests. */
+export function filterWorks(items: SeriesCard[], f: WorksFilter, locale: string): SeriesCard[] {
+  const q = f.q.trim().toLocaleLowerCase(locale);
+  const out = items.filter((s) => {
+    if (f.status && (s.status ?? 'draft') !== f.status) return false;
+    if (!q) return true;
+    return `${s.title}\n${s.subtitle ?? ''}`.toLocaleLowerCase(locale).includes(q);
+  });
+  const collator = new Intl.Collator(locale, { numeric: true });
+  return out.sort((a, b) => {
+    if (f.sort === 'title') return collator.compare(a.title, b.title);
+    const key = f.sort === 'created' ? 'created_at' : 'updated_at';
+    return (b[key] ?? '').localeCompare(a[key] ?? '');
+  });
+}
+
+function FilterBar(props: {
+  items: SeriesCard[];
+  filter: WorksFilter;
+  onChange: (patch: Partial<WorksFilter>) => void;
+}) {
+  const { t } = useTranslation();
+  const counts = useMemo(() => {
+    const c: Record<Status, number> = { draft: 0, active: 0, archived: 0 };
+    for (const s of props.items) c[(s.status ?? 'draft') as Status]++;
+    return c;
+  }, [props.items]);
+  return (
+    <div className="filter-bar" role="search">
+      <label className="filter-search">
+        <Search size={15} aria-hidden />
+        <input
+          className="input"
+          type="search"
+          value={props.filter.q}
+          placeholder={t('works.search')}
+          aria-label={t('works.search')}
+          onChange={(e) => props.onChange({ q: e.target.value })}
+        />
+        {props.filter.q ? (
+          <button
+            type="button"
+            className="filter-clear"
+            aria-label={t('common.clear')}
+            onClick={() => props.onChange({ q: '' })}
+          >
+            <X size={13} />
+          </button>
+        ) : null}
+      </label>
+      <div className="segmented" role="group" aria-label={t('series.statusLabel')}>
+        <button
+          type="button"
+          className={props.filter.status === '' ? 'active' : ''}
+          onClick={() => props.onChange({ status: '' })}
+        >
+          {t('common.all')} <span className="seg-count">{props.items.length}</span>
+        </button>
+        {STATUSES.map((st) => (
+          <button
+            key={st}
+            type="button"
+            className={props.filter.status === st ? 'active' : ''}
+            onClick={() => props.onChange({ status: st })}
+          >
+            {t(`series.status.${st}`)} <span className="seg-count">{counts[st]}</span>
+          </button>
+        ))}
+      </div>
+      <Select
+        className="filter-sort"
+        aria-label={t('works.sortLabel')}
+        value={props.filter.sort}
+        onChange={(sort) => props.onChange({ sort })}
+        options={SORTS.map((v) => ({ value: v, label: t(`works.sort.${v}`) }))}
+      />
+    </div>
+  );
+}
 
 function SeriesCardView({ series }: { series: SeriesCard }) {
   const { t, i18n } = useTranslation();
@@ -152,9 +243,33 @@ function NewSeriesDialog(props: { open: boolean; onOpenChange: (open: boolean) =
 }
 
 export default function WorksPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const list = useSeriesList();
+  // Filter state lives in the URL so Back returns to the same view.
+  const [params, setParams] = useSearchParams();
+  const filter: WorksFilter = {
+    q: params.get('q') ?? '',
+    status: (STATUSES as readonly string[]).includes(params.get('status') ?? '')
+      ? (params.get('status') as Status)
+      : '',
+    sort: (SORTS as readonly string[]).includes(params.get('sort') ?? '')
+      ? (params.get('sort') as Sort)
+      : 'updated',
+  };
+  const setFilter = (patch: Partial<WorksFilter>) => {
+    const next = { ...filter, ...patch };
+    const p = new URLSearchParams();
+    if (next.q) p.set('q', next.q);
+    if (next.status) p.set('status', next.status);
+    if (next.sort !== 'updated') p.set('sort', next.sort);
+    setParams(p, { replace: true });
+  };
+  const filtered = useMemo(
+    () => (list.data ? filterWorks(list.data, filter, i18n.language) : []),
+    [list.data, filter.q, filter.status, filter.sort, i18n.language],
+  );
+  const filtering = !!(filter.q || filter.status);
   const importBundle = useImportBundle();
   const [creating, setCreating] = useState(false);
   const [legacy, setLegacy] = useState(false);
@@ -214,14 +329,31 @@ export default function WorksPage() {
         </Empty>
       ) : null}
       {list.data?.length ? (
+        <FilterBar items={list.data} filter={filter} onChange={setFilter} />
+      ) : null}
+      {list.data?.length && !filtered.length ? (
+        <Empty
+          compact
+          icon={<Search size={20} />}
+          title={t('works.noMatch')}
+          action={
+            <button className="btn" onClick={() => setFilter({ q: '', status: '' })}>
+              {t('works.clearFilters')}
+            </button>
+          }
+        />
+      ) : null}
+      {filtered.length ? (
         <div className="work-grid">
-          {list.data.map((s) => (
+          {filtered.map((s) => (
             <SeriesCardView key={s.id} series={s} />
           ))}
-          <button className="work-card work-new" onClick={() => setCreating(true)}>
-            <Plus size={22} />
-            <span>{t('works.newSeries')}</span>
-          </button>
+          {!filtering ? (
+            <button className="work-card work-new" onClick={() => setCreating(true)}>
+              <Plus size={22} />
+              <span>{t('works.newSeries')}</span>
+            </button>
+          ) : null}
         </div>
       ) : null}
 
