@@ -20,8 +20,8 @@
 | `tools/` | 打包、随包清单、文档生成、开发辅助脚本 |
 | `docs/` | 文档；`docs/archive/` 存放不再维护的历史文档 |
 | `next/` | Phase 0.5 技术验证（Spike），独立于旧版，只用标准库；说明见 [next/README.md](next/README.md) |
-| `server/` | Phase 1 新后端：FastAPI + Pydantic + SQLite。当前已有 `mio_server` 包、Series / Episode API、模型 / 存储 / API 单测 |
-| `web/` | Phase 1 新前端：Vite + React + TypeScript 入口骨架，后续接设定集、剧本、出图板和条漫画布 |
+| `server/` | 新后端：FastAPI + Pydantic + SQLite。领域模型、导入器、任务引擎、ComfyUI 模块、出图管线、HTTP API v1；`python -m mio_server` 启动，存在 `web/dist` 时一并托管界面 |
+| `web/` | 新前端：Vite + React + TypeScript（TanStack Query、Zustand、i18next、Radix、react-konva、dnd-kit）。API 类型由 `npm --prefix web run gen:api` 从 OpenAPI 生成到 `web/src/api/schema.d.ts`，改了接口要重新生成并提交 |
 
 ## 验证命令（提交前必跑，都很轻）
 
@@ -37,7 +37,16 @@ python tools/package_project.py --output releases   # 打包冒烟（可选）
 
 - CI（`.github/workflows/ci.yml`）每次推送都跑同一组门禁，**必须保持绿色**。
 - 浏览器 E2E（`npm run test:current`）只在手动触发的 `e2e.yml` 或本机按需运行。**沙盒里禁止安装浏览器或跑 E2E**。
-- 新栈前端在 `web/` 下：依赖安装后使用 `npm --prefix web run typecheck`、`npm --prefix web run test`、`npm --prefix web run build`。
+- 新栈前端在 `web/` 下（先 `npm ci --prefix web`）：
+
+  ```bash
+  npm --prefix web run format:check   # Prettier，行宽 100
+  npm --prefix web run typecheck      # tsc strict
+  npm --prefix web test               # Vitest + Testing Library（jsdom，不需要浏览器）
+  npm --prefix web run build          # 产物在 web/dist（不提交）
+  npm --prefix web run gen:api        # 接口变更后重新生成 API 类型（需要能 import fastapi 的 python）
+  ```
+- 开发时：`python -m mio_server`（默认 8788）+ `npm --prefix web run dev`（Vite 把 `/api` 与 WebSocket 代理到 8788）。
 
 ## 提交规范
 
