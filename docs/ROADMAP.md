@@ -352,12 +352,16 @@ Job / Attempt：统一任务引擎（继承旧版的安全语义）
 - [x] 删除调试遗留：`jam_events.json`、`stream_generate_resp.txt`、`parse_stream.py`、`check_err.py`、`dump_blocks.py`。历史清理（`git filter-repo` 加强推）需要你决定，暂未执行。
 - [ ] 归档 `FIXES.md`、`SELECTION_CHANGES.md` 和过时的状态文档。生成的 HTML 文档移出版本库。
 - [ ] 新增 `AGENTS.md`：架构、命令、禁区和沙盒协作规范，并写明新栈的轻量验证命令。
-- [ ] **让 CI 变绿**：
-  - 每次推送只跑轻量门禁：`node js/build.js dev`、`node js/tests.js`、`python -m unittest`、`check_distribution.py`。
-  - E2E 改为手动运行。
-  - 更新随包清单。
+- [x] **让 CI 变绿**：首次变绿是 `f260062`，整个任务约 70 秒。
+  - 每次推送只跑轻量门禁（`.github/workflows/ci.yml`）：构建产物与提交一致（`node js/build.js dev` 加 `git diff --exit-code`）、`node js/tests.js`、`python -m unittest`、`check_distribution.py`、`package_project.py` 打包冒烟。
+  - 浏览器 E2E 改为手动触发（`e2e.yml`）。已知失败项：`production_scene_ui.mjs` 的手机横向溢出断言。
+  - 随包清单：清单本身是对的，错的是被误提交个人运行时状态的 3 个数据文件，已恢复为发布版本（`35dd5b3`）。
+  - 顺带修复两个一直被掩盖的问题：打包必需清单引用了已删除的文档（`8cfcdee`）；全局执行队列在测试中泄漏调度线程，线程空转刷屏，导致 CI 退出码 134（`f260062`）。
 - [x] Windows 启动器测试显式调用 `.\start.bat`，兼容环境变量 `NoDefaultCurrentDirectoryInExePath=1`（Portal 等代理环境会设置它）。
-- [ ] 运行时状态不再写回受版本控制的文件（`data/settings/workspace.json`、内置工作流）。这正是随包清单哈希过期（MIO-DATA-001）的根因。
+- [x] 运行时状态与随包数据隔离（旧版的缓解措施）。
+  - 新增 `tools/protect_local_data.py`：在本机把 59 个随包数据文件标为 skip-worktree，`git add -A` 不会再带上个人状态。
+  - CI 每次推送运行 `check_distribution`，误提交会立刻变红。
+  - 彻底分离（用户数据放在仓库外）留给 v3 数据设计完成；旧版也可以用 `MIO_DATA_DIR` 手动分离。
 - [ ] 查明 Windows 上 Python 测试慢约 12 倍的原因：本机 575 秒，沙盒 47 秒。
 - **完成标准**：main 的 CI 显示绿色；新代理读 README、AGENTS.md、ROADMAP.md 即可上手。
 
