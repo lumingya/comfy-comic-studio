@@ -40,9 +40,11 @@ jobs:
           ruff check server
           ruff format --check server
           python -m unittest discover -s server/tests -t server -q
-      - name: v3 web (format + typecheck + tests + build)
+      - name: v3 web (API types current + format + typecheck + tests + build)
         run: |
           npm ci --prefix web --no-audit --no-fund
+          npm --prefix web run gen:api
+          git diff --exit-code -- web/src/api/schema.d.ts
           npm --prefix web run format:check
           npm --prefix web run typecheck
           npm --prefix web test
