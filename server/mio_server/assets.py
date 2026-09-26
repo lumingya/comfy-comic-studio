@@ -6,6 +6,7 @@ import hashlib
 import io
 import os
 import tempfile
+import threading
 from pathlib import Path
 
 from PIL import Image, UnidentifiedImageError
@@ -39,6 +40,7 @@ class AssetStore:
         self.root = Path(root)
         self.store = store
         self.root.mkdir(parents=True, exist_ok=True)
+        self._lock = threading.Lock()
 
     def path(self, asset: Asset | str) -> Path:
         if isinstance(asset, str):
@@ -58,13 +60,25 @@ class AssetStore:
             filename=filename[:200],
         )
         target = self.path(asset)
-        if not target.exists():
-            target.parent.mkdir(parents=True, exist_ok=True)
-            fd, tmp = tempfile.mkstemp(dir=target.parent, prefix=".tmp-")
-            with os.fdopen(fd, "wb") as fh:
-                fh.write(data)
-            os.replace(tmp, target)
+        with self._lock:
+            if not target.exists():
+                self._write(target, data)
         return self.store.put_asset(asset)
+
+    @staticmethod
+    def _write(target: Path, data: bytes) -> None:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(dir=target.parent, prefix=".tmp-")
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(data)
+        try:
+            os.replace(tmp, target)
+        except PermissionError:
+            # Windows: the target appeared meanwhile (another process) and is open for reading.
+            # The name is the content hash, so the existing file already holds these bytes.
+            os.unlink(tmp)
+            if not target.exists():
+                raise
 
     def read(self, asset_id: str) -> bytes:
         path = self.path(asset_id)

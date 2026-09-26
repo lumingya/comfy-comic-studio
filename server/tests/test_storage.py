@@ -35,5 +35,35 @@ class StorageTests(unittest.TestCase):
             store.close()
 
 
+class AssetConcurrencyTests(unittest.TestCase):
+    def test_identical_bytes_from_many_threads(self):
+        """Regression: concurrent puts of the same content raised WinError 5 on Windows."""
+        import threading
+
+        from mio_server.assets import AssetStore
+
+        with tempfile.TemporaryDirectory() as tmp:
+            store = SQLiteStore(Path(tmp) / "db.sqlite3")
+            assets = AssetStore(Path(tmp) / "assets", store)
+            data = b"\x89PNG\r\n\x1a\n" + b"x" * 4096
+            errors, ids = [], []
+
+            def put():
+                try:
+                    ids.append(assets.put(data, source="t").id)
+                except Exception as exc:  # pragma: no cover - the failure being guarded
+                    errors.append(exc)
+
+            threads = [threading.Thread(target=put) for _ in range(8)]
+            for t in threads:
+                t.start()
+            for t in threads:
+                t.join()
+            self.assertEqual(errors, [])
+            self.assertEqual(len(set(ids)), 1)
+            self.assertEqual(assets.read(ids[0]), data)
+            store.close()
+
+
 if __name__ == "__main__":
     unittest.main()

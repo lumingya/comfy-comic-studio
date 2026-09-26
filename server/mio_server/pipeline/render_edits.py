@@ -22,7 +22,11 @@ class RenderError(ValueError):
 
 class EditsMixin:
     # ---------------------------------------------------------------- edit
-    def edit(
+    def edit(self, episode_id: str, *args, idempotency_key: str | None = None, **kw) -> dict:
+        with self.seeded(idempotency_key):
+            return self._edit(episode_id, *args, idempotency_key=idempotency_key, **kw)
+
+    def _edit(
         self,
         episode_id: str,
         take_id: str,

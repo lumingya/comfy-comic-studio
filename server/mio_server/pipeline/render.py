@@ -17,6 +17,8 @@ overwrites concurrent edits).
 from __future__ import annotations
 
 import random
+import threading
+from contextlib import contextmanager
 
 from ..comfy import bindings as B
 from ..comfy.compile import asset_value, builtin_workflows, compile_workflow, describe
@@ -25,6 +27,7 @@ from ..jobs import COMFY, ItemSpec
 from ..models import Episode, Series, Take, TakeEdit, TakeStatus
 from ..render_models import RenderProfile, RenderStage, WorkflowDoc
 from ..storage import NotFound
+from . import variables as V
 from .compiler import compile_panel
 from .refs import reference_values, select_references
 from .render_edits import PREVIOUS, EditsMixin, RenderError  # noqa: F401
@@ -60,12 +63,39 @@ def default_profile() -> RenderProfile:
     )
 
 
+def panel_values(series: Series, panel) -> dict:
+    """Panel ``values`` plus ``var.<name>`` for every {变量} (legacy variable bindings)."""
+    table = V.table(series, panel)
+    names = set(series.variables) | {k[1:] for k in panel.overrides.values if k.startswith("$")}
+    out = {f"var.{n}": V.expand(str(table[n]), table) for n in sorted(names)}
+    out.update({k: v for k, v in panel.overrides.values.items() if not k.startswith("$")})
+    return out
+
+
 class RenderService(EditsMixin):
     def __init__(self, store, assets, engine):
         self.store, self.assets, self.engine = store, assets, engine
-        self.rng = random.Random()
+        self._rng = random.Random()
+        self._local = threading.local()
 
     # ------------------------------------------------------------- lookups
+    @property
+    def rng(self) -> random.Random:
+        return getattr(self._local, "rng", None) or self._rng
+
+    @contextmanager
+    def seeded(self, idempotency_key: str | None):
+        """Random seeds derive from the idempotency key, so a retried request (same key) builds
+        the byte-identical snapshot instead of tripping the engine's payload-mismatch guard."""
+        if not idempotency_key:
+            yield
+            return
+        self._local.rng = random.Random(f"mio:{idempotency_key}")
+        try:
+            yield
+        finally:
+            self._local.rng = None
+
     def seed_builtins(self) -> None:
         for doc in builtin_workflows():
             self.store.put_doc(doc)
@@ -175,6 +205,7 @@ class RenderService(EditsMixin):
         specs = []
         refs = select_references(series.bible, panel)
         ref_values = reference_values(refs)
+        extra = panel_values(series, panel)
         for k in range(candidates):
             pp = compile_panel(
                 series,
@@ -193,13 +224,13 @@ class RenderService(EditsMixin):
                 "width": pp.width,
                 "height": pp.height,
                 **ref_values,
-                **panel.overrides.values,
+                **extra,
             }
             later = {
                 "prompt": pp.positive,
                 "negative": pp.negative,
                 "seed": pp.seed,
-                **panel.overrides.values,
+                **extra,
             }
             stages, feeds = self._chain(
                 profile.draft, base, later, panel.overrides.node_overrides, pp.loras
@@ -232,7 +263,7 @@ class RenderService(EditsMixin):
             )
         return specs
 
-    def render(
+    def _render(
         self,
         episode_id: str,
         panel_ids: list[str] | None = None,
@@ -282,6 +313,14 @@ class RenderService(EditsMixin):
             owner=episode.id,
         )
 
+    def render(self, episode_id: str, *args, idempotency_key: str | None = None, **kw) -> dict:
+        with self.seeded(idempotency_key):
+            return self._render(episode_id, *args, idempotency_key=idempotency_key, **kw)
+
+    def finalize(self, episode_id: str, *args, idempotency_key: str | None = None, **kw) -> dict:
+        with self.seeded(idempotency_key):
+            return self._finalize(episode_id, *args, idempotency_key=idempotency_key, **kw)
+
     def _variants(self, series: Series, variant_ids):
         if not variant_ids:
             return [None]
@@ -297,7 +336,7 @@ class RenderService(EditsMixin):
         return out
 
     # --------------------------------------------------------------- final
-    def finalize(
+    def _finalize(
         self,
         episode_id: str,
         take_ids: list[str] | None = None,
