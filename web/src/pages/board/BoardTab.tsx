@@ -3,9 +3,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Image,
+  Maximize2,
   Play,
+  RotateCcw,
   ScanSearch,
   Sparkles,
+  Wand2,
   X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -16,7 +19,9 @@ import { useActiveRenders } from '../../api/jobs';
 import { useFinalize, useQA, useRender } from '../../api/production';
 import { useTakeAction, type TakeAction } from '../../api/series';
 import type { Panel, Take } from '../../api/types';
+import { useSelection } from '../../app/selection';
 import { useUI } from '../../app/ui-store';
+import { ContextMenu, useContextMenu, type ContextGroup } from '../../components/ContextMenu';
 import { toast, toastError } from '../../components/toast';
 import { Empty, Modal, NumberInput, Progress, Select, Switch } from '../../components/ui';
 import { useEpisodeContext } from '../episode/EpisodePage';
@@ -50,6 +55,10 @@ export default function BoardTab() {
   const adoptedPanels = new Set(adopted.map((tk) => tk.panel_id)).size;
   // Zoom works on ids so the dialog follows live data (adopting shows at once).
   const visible = panels.flatMap((p) => takesOf(p));
+  const visibleIds = useMemo(() => visible.map((tk) => tk.id), [visible]); // eslint-disable-line react-hooks/exhaustive-deps
+  const selection = useSelection(visibleIds);
+  const menu = useContextMenu<string[]>();
+  const takeById = (id: string) => takes.find((tk) => tk.id === id);
   const zoom = visible.find((tk) => tk.id === zoomId) ?? takes.find((tk) => tk.id === zoomId);
   const zoomIndex = zoom ? visible.indexOf(zoom) : -1;
   const zoomPanel = zoom ? panels.findIndex((p) => p.id === zoom.panel_id) : -1;
@@ -70,6 +79,76 @@ export default function BoardTab() {
     );
   const act = (take: Take, a: TakeAction) =>
     action.mutate({ takeId: take.id, action: a }, { onError: toastError });
+  // Batch: sequential so exclusive adopts settle in list order (last adopted per panel wins).
+  const actMany = async (ids: string[], a: TakeAction) => {
+    try {
+      for (const id of ids) {
+        const take = takeById(id);
+        if (!take) continue;
+        if (a === 'adopt' && take.status === 'adopted') continue;
+        if (a === 'reject' && take.status === 'rejected') continue;
+        if (a === 'restore' && take.status !== 'rejected') continue;
+        await action.mutateAsync({ takeId: id, action: a });
+      }
+      toast(t(`board.batch.${a}`, { count: ids.length }));
+      if (a === 'reject' && !ui.showRejected) selection.clear();
+    } catch (error) {
+      toastError(error);
+    }
+  };
+  const qaMany = (ids: string[]) =>
+    qa.mutate({ take_ids: ids }, { onSuccess: queued, onError: toastError });
+  const menuGroups = (ids: string[]): ContextGroup[] => {
+    const one = ids.length === 1 ? takeById(ids[0]) : undefined;
+    const n = ids.length;
+    return [
+      {
+        heading: n > 1 ? t('board.batch.selected', { count: n }) : undefined,
+        items: [
+          ...(one
+            ? [
+                {
+                  label: t('board.zoom'),
+                  icon: <Maximize2 size={14} />,
+                  onSelect: () => setZoomId(one.id),
+                },
+              ]
+            : []),
+          {
+            label: n > 1 ? t('board.batch.adoptN', { count: n }) : t('board.adopt'),
+            icon: <Check size={14} />,
+            onSelect: () => void actMany(ids, 'adopt'),
+          },
+          {
+            label: n > 1 ? t('board.batch.rejectN', { count: n }) : t('board.reject'),
+            icon: <X size={14} />,
+            danger: true,
+            onSelect: () => void actMany(ids, 'reject'),
+          },
+          {
+            label: t('board.restore'),
+            icon: <RotateCcw size={14} />,
+            onSelect: () => void actMany(ids, 'restore'),
+            disabled: !ids.some((id) => takeById(id)?.status === 'rejected'),
+          },
+        ],
+      },
+      {
+        items: [
+          ...(one
+            ? [
+                {
+                  label: t('board.edit'),
+                  icon: <Wand2 size={14} />,
+                  onSelect: () => setEditing(one),
+                },
+              ]
+            : []),
+          { label: t('board.qa'), icon: <ScanSearch size={14} />, onSelect: () => qaMany(ids) },
+        ],
+      },
+    ];
+  };
 
   // In the zoom view: ←/→ browse every take on the board, A adopts, X rejects.
   useEffect(() => {
@@ -175,6 +254,30 @@ export default function BoardTab() {
         </button>
       </div>
 
+      {selection.ids.length > 1 ? (
+        <div className="selection-bar" role="status">
+          <span className="count">
+            {t('board.batch.selected', { count: selection.ids.length })}
+          </span>
+          <span className="small muted">{t('board.batch.hint')}</span>
+          <span className="grow" />
+          <button className="btn ghost sm" onClick={() => void actMany(selection.ids, 'adopt')}>
+            <Check size={13} /> {t('board.adopt')}
+          </button>
+          <button
+            className="btn ghost sm danger"
+            onClick={() => void actMany(selection.ids, 'reject')}
+          >
+            <X size={13} /> {t('board.reject')}
+          </button>
+          <button className="btn ghost sm" onClick={() => qaMany(selection.ids)}>
+            <ScanSearch size={13} /> {t('board.qa')}
+          </button>
+          <button className="btn ghost sm" onClick={selection.clear} title="Esc">
+            {t('common.cancel')}
+          </button>
+        </div>
+      ) : null}
       <div className="board-rows">
         {panels.map((p, i) => {
           const list = takesOf(p);
@@ -185,7 +288,7 @@ export default function BoardTab() {
                 <span className="panel-no mono">{String(i + 1).padStart(2, '0')}</span>
                 <div className="grow">
                   <div className="small">
-                    <span className="chip">{t(`script.shots.${p.shot}`)}</span>{' '}
+                    {p.shot ? <span className="chip">{t(`script.shots.${p.shot}`)}</span> : null}{' '}
                     {p.description || p.dialogues[0]?.text}
                   </div>
                 </div>
@@ -204,6 +307,9 @@ export default function BoardTab() {
                   <TakeCard
                     key={tk.id}
                     take={tk}
+                    checked={selection.has(tk.id)}
+                    onSelect={(mods) => selection.click(tk.id, mods)}
+                    onContextMenu={(e) => menu.open(e, selection.contextTarget(tk.id))}
                     onAdopt={() => act(tk, 'adopt')}
                     onReject={() => act(tk, 'reject')}
                     onRestore={() => act(tk, 'restore')}
@@ -223,6 +329,14 @@ export default function BoardTab() {
         })}
       </div>
 
+      {menu.state ? (
+        <ContextMenu
+          x={menu.state.x}
+          y={menu.state.y}
+          groups={menuGroups(menu.state.payload)}
+          onClose={menu.close}
+        />
+      ) : null}
       <EditDialog
         key={editing?.id}
         episodeId={episode.id}

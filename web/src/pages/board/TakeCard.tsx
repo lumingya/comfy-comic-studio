@@ -1,4 +1,5 @@
 import { Check, Maximize2, RotateCcw, ScanSearch, Wand2, X } from 'lucide-react';
+import type { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assetUrl } from '../../api/client';
 import type { ActiveItem } from '../../api/jobs';
@@ -8,19 +9,36 @@ import { ActionMenu } from '../../components/ui';
 
 export function TakeCard(props: {
   take: Take;
+  checked?: boolean;
   onAdopt: () => void;
   onReject: () => void;
   onRestore: () => void;
   onEdit: () => void;
   onQA: () => void;
   onZoom: () => void;
+  /** Ctrl / Shift click on the image (plain click zooms). */
+  onSelect?: (mods: { ctrlKey: boolean; metaKey: boolean; shiftKey: boolean }) => void;
+  onContextMenu?: (e: MouseEvent) => void;
 }) {
   const { t } = useTranslation();
   const take = props.take;
   const qa = take.qa;
   return (
-    <figure className={`take ${take.status}`}>
-      <button className="take-image" onClick={props.onZoom} aria-label={t('board.zoom')}>
+    <figure
+      className={`take ${take.status} ${props.checked ? 'checked' : ''}`}
+      aria-selected={props.checked || undefined}
+      onContextMenu={props.onContextMenu}
+    >
+      <button
+        className="take-image"
+        onClick={(e) => {
+          if (props.onSelect && (e.ctrlKey || e.metaKey || e.shiftKey)) {
+            e.preventDefault();
+            props.onSelect({ ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey });
+          } else props.onZoom();
+        }}
+        aria-label={t('board.zoom')}
+      >
         <img src={assetUrl(take.asset_id, 480)} alt="" loading="lazy" />
       </button>
       <div className="take-badges">

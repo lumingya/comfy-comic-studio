@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { episode, job, series } from '../test/fixtures';
+import { useHelp } from '../components/HelpDrawer';
 import { mockFetch } from '../test/utils';
 import { makeQueryClient, routes } from './App';
 
@@ -189,7 +190,10 @@ beforeEach(() => {
   });
 });
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  useHelp.setState({ open: false });
+});
 
 function mount(path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
@@ -228,6 +232,33 @@ describe('every route mounts with API data', () => {
     expect(screen.getByText('1girl')).toHaveAttribute('title', '人数');
     expect(screen.getByText('masterpiece, 1girl, short black hair')).toBeInTheDocument();
     expect(screen.getByText('未定义的变量：天气')).toBeInTheDocument();
+  });
+
+  it('episode → script: multi-select, right-click menu, batch edit and help', async () => {
+    mount('/episodes/ep_1/script');
+    const rows = await screen.findAllByText(/^「欢迎光临」$|^第 2 格$/);
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+    // Ctrl-click the second row: both panels selected, the batch bar appears.
+    fireEvent.click(screen.getByText('第 2 格'), { ctrlKey: true });
+    expect(screen.getByText('已选 2 格')).toBeInTheDocument();
+    // Right-click keeps the multi-selection and offers the batch items.
+    fireEvent.contextMenu(screen.getByText('第 2 格'));
+    const menu = screen.getByRole('menu');
+    expect(within(menu).getByText('批量编辑')).toBeInTheDocument();
+    expect(within(menu).getByText('删除 2 格')).toBeInTheDocument();
+    expect(within(menu).getByText('导出 2 格（JSON）')).toBeInTheDocument();
+    fireEvent.click(within(menu).getByText('批量编辑'));
+    expect(await screen.findByText('批量编辑 2 格')).toBeInTheDocument();
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    // Per-panel render overrides and the one-frame test run are in the editor.
+    expect(screen.getByText('出图参数覆盖（只对这一格）')).toBeInTheDocument();
+    expect(screen.getAllByText('试出这一格').length).toBeGreaterThan(0);
+    // ? opens the page help.
+    fireEvent.keyDown(document.body, { key: '?' });
+    expect(await screen.findByText('剧本：分格编辑')).toBeInTheDocument();
+    expect(screen.getByText('景别 / 角度必须选吗？')).toBeInTheDocument();
+    fireEvent.keyDown(document.body, { key: '?' });
+    await waitFor(() => expect(screen.queryByText('剧本：分格编辑')).not.toBeInTheDocument());
   });
 
   it('episode → board with takes and live items', async () => {

@@ -409,3 +409,10 @@ tr.item-uncertain td {
   border-radius: 1px;
   background: linear-gradient(to right, var(--accent) var(--p, 0%), var(--line) var(--p, 0%));
 }
+
+/* multi-selected take (Ctrl / Shift click) */
+.take.checked {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
