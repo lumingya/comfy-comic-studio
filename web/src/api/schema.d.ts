@@ -1308,6 +1308,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/episodes/{episode_id}/motion-plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Motion Plan
+         * @description Resolved move and hold for every panel (``Panel.motion`` overrides, else automatic).
+         */
+        get: operations["motion_plan_api_episodes__episode_id__motion_plan_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/export/motion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Export Motion
+         * @description Self-contained offline motion-comic player (one HTML file, no network needed).
+         */
+        post: operations["export_motion_api_export_motion_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tokens": {
         parameters: {
             query?: never;
@@ -2261,6 +2301,47 @@ export interface components {
              */
             model_family: string;
         };
+        /** MotionExport */
+        MotionExport: {
+            /** Episode Id */
+            episode_id: string;
+            /** Variant Id */
+            variant_id?: string | null;
+            /**
+             * Aspect
+             * @default portrait
+             * @enum {string}
+             */
+            aspect?: "portrait" | "landscape";
+            /**
+             * Lettered
+             * @description Crop panels from the lettered strip
+             * @default true
+             */
+            lettered?: boolean;
+            /**
+             * Subtitles
+             * @description Subtitles on at start (toggle in player)
+             * @default false
+             */
+            subtitles?: boolean;
+            /**
+             * Voice
+             * @description Read lines aloud with browser speech
+             * @default true
+             */
+            voice?: boolean;
+            /**
+             * Lang
+             * @default zh-CN
+             */
+            lang?: string;
+            /**
+             * Max Width
+             * @default 1280
+             */
+            max_width?: number;
+        };
         /** PacingApply */
         PacingApply: {
             /** Base Revision */
@@ -2402,6 +2483,8 @@ export interface components {
              */
             locked: boolean;
             overrides: components["schemas"]["PanelOverrides"];
+            /** @description Dynamic comic; None = auto */
+            motion: components["schemas"]["PanelMotion"] | null;
         };
         /** PanelCharacter */
         PanelCharacter: {
@@ -2440,6 +2523,23 @@ export interface components {
              * @description Insert after this panel; null = at the end
              */
             after?: string | null;
+        };
+        /**
+         * PanelMotion
+         * @description Dynamic-comic camera for this panel (``auto`` = chosen from shot size, SFX and text).
+         */
+        PanelMotion: {
+            /**
+             * Move
+             * @default auto
+             * @enum {string}
+             */
+            move: "auto" | "still" | "push_in" | "pull_out" | "pan_left" | "pan_right" | "pan_up" | "pan_down" | "shake";
+            /**
+             * Hold
+             * @description Seconds on screen; None = from reading time
+             */
+            hold: number | null;
         };
         /** PanelOverrides */
         PanelOverrides: {
@@ -6088,6 +6188,72 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AlbumExport"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    motion_plan_api_episodes__episode_id__motion_plan_get: {
+        parameters: {
+            query?: {
+                variant_id?: string | null;
+            };
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_motion_api_export_motion_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MotionExport"];
             };
         };
         responses: {

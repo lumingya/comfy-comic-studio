@@ -24,6 +24,8 @@ vi.mock('react-konva', () => {
   };
 });
 
+let calls: ReturnType<typeof mockFetch> = [];
+
 const prompt = {
   tags: {
     positive: 'masterpiece, 1girl, short black hair',
@@ -96,7 +98,7 @@ beforeEach(() => {
       close() {}
     },
   );
-  mockFetch({
+  calls = mockFetch({
     'GET /api/series': [series],
     'GET /api/series/ser_1': series,
     'GET /api/series/ser_1/episodes': {
@@ -141,6 +143,34 @@ beforeEach(() => {
       pending: null,
     },
     'GET /api/album-templates': [],
+    'GET /api/episodes/ep_1/motion-plan': {
+      moves: [
+        'still',
+        'push_in',
+        'pull_out',
+        'pan_left',
+        'pan_right',
+        'pan_up',
+        'pan_down',
+        'shake',
+      ],
+      total_seconds: 5.2,
+      shots: [
+        {
+          panel_id: 'p0',
+          index: 0,
+          move: 'push_in',
+          auto_move: 'push_in',
+          move_overridden: false,
+          hold: 2.6,
+          auto_hold: 2.6,
+          lines: [{ text: '走吧', speaker: '林', kind: 'speech' }],
+          description: '便利店门口',
+          has_image: true,
+        },
+      ],
+    },
+    'PATCH /api/episodes/ep_1/panels/p0': episode,
     'GET /api/extension-panels': [
       {
         extension: 'demo',
@@ -249,6 +279,19 @@ describe('every route mounts with API data', () => {
     const frame = await screen.findByTitle('字数统计');
     expect(frame.getAttribute('sandbox')).toBe('allow-scripts');
     expect(frame.getAttribute('src')).toContain('episode=ep_1');
+  });
+
+  it('episode → export → motion comic plan and override', async () => {
+    mount('/episodes/ep_1/export');
+    fireEvent.click(await screen.findByText('动态漫'));
+    expect(await screen.findByText('1 个镜头 · 约 5s')).toBeInTheDocument();
+    expect(screen.getByText('便利店门口')).toBeInTheDocument();
+    fireEvent.change(screen.getByDisplayValue('自动（推近）'), { target: { value: 'shake' } });
+    await waitFor(() =>
+      expect(calls.some((c) => c.method === 'PATCH' && c.url.endsWith('/panels/p0'))).toBe(true),
+    );
+    const patch = calls.find((c) => c.method === 'PATCH')!;
+    expect(patch.body).toMatchObject({ changes: { motion: { move: 'shake', hold: null } } });
   });
 
   it('episode → export → album', async () => {

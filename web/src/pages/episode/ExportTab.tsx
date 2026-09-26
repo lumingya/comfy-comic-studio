@@ -1,4 +1,4 @@
-import { BookOpen, Download, FileImage, FileText, Globe, Layers } from 'lucide-react';
+import { BookOpen, Clapperboard, Download, FileImage, FileText, Globe, Layers } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { download } from '../../api/client';
@@ -9,14 +9,16 @@ import { Empty, Field, Select } from '../../components/ui';
 import { pickAdopted } from '../canvas/adopted';
 import { AlbumExport } from './AlbumExport';
 import { useEpisodeContext } from './EpisodePage';
+import { MotionExport } from './MotionExport';
 
-type Format = 'slices' | 'long' | 'pdf' | 'html' | 'album';
+type Format = 'slices' | 'long' | 'pdf' | 'html' | 'album' | 'motion';
 const FORMATS: { id: Format; icon: ReactNode }[] = [
   { id: 'slices', icon: <Layers size={18} /> },
   { id: 'long', icon: <FileImage size={18} /> },
   { id: 'pdf', icon: <FileText size={18} /> },
   { id: 'html', icon: <Globe size={18} /> },
   { id: 'album', icon: <BookOpen size={18} /> },
+  { id: 'motion', icon: <Clapperboard size={18} /> },
 ];
 
 export default function ExportTab() {
@@ -76,7 +78,20 @@ export default function ExportTab() {
           </button>
         ))}
       </div>
-      {format === 'album' ? (
+      {format === 'motion' ? (
+        <div className="col" style={{ gap: 14 }}>
+          {variantPicker ? (
+            <div className="card" style={{ maxWidth: 720 }}>
+              {variantPicker}
+            </div>
+          ) : null}
+          <MotionExport
+            episode={episode}
+            variantId={variantId}
+            fallbackName={`${series.title}_${episode.title}`}
+          />
+        </div>
+      ) : format === 'album' ? (
         <div className="col" style={{ gap: 14 }}>
           {variantPicker ? (
             <div className="card" style={{ maxWidth: 520 }}>
