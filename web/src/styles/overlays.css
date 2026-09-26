@@ -276,3 +276,146 @@
     max-width: none;
   }
 }
+
+/* ---- right-click menu (components/ContextMenu) ---- */
+.context-menu {
+  min-width: 210px;
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  transform-origin: top left;
+}
+
+.context-menu .menu-item {
+  width: 100%;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+}
+
+.context-menu .menu-item:hover,
+.context-menu .menu-item:focus-visible {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.context-menu .menu-item.danger:hover,
+.context-menu .menu-item.danger:focus-visible {
+  background: color-mix(in srgb, var(--red) 12%, transparent);
+}
+
+.context-menu .menu-item:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.context-group + .context-group {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+}
+
+.context-heading {
+  padding: 4px 10px 2px;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.context-shortcut {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  padding-left: 12px;
+}
+
+/* ---- help drawer (right side) ---- */
+.drawer {
+  position: fixed;
+  z-index: 51;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: min(440px, 100vw);
+  overflow: auto;
+  padding: 24px 26px 32px;
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.drawer:focus {
+  outline: none;
+}
+
+.drawer[data-state='open'] {
+  animation: drawer-in 0.22s var(--ease);
+}
+
+.drawer[data-state='closed'] {
+  animation: drawer-out 0.14s ease-in;
+}
+
+.drawer h2 {
+  margin: 0 0 6px;
+  padding-right: 28px;
+  font: 500 19px var(--serif);
+}
+
+.help-sub {
+  margin: 22px 0 8px;
+  font-size: 13px;
+  color: var(--soft);
+}
+
+.help-list,
+.help-keys {
+  margin: 12px 0 0;
+}
+
+.help-list div {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.help-list dt {
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.help-list dd,
+.help-keys dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--soft);
+  line-height: 1.55;
+}
+
+.help-keys div {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.help-keys dt {
+  margin: 0;
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+@keyframes drawer-out {
+  to {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}

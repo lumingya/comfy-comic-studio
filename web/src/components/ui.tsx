@@ -40,6 +40,7 @@ interface TextProps {
   readOnly?: boolean;
   maxLength?: number;
   autoComplete?: string;
+  list?: string;
   onBlur?: () => void;
 }
 
