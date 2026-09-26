@@ -4,6 +4,7 @@ from pathlib import Path
 import shutil
 import tempfile
 import unittest
+from tests.data_support import copy_shipped_data
 from unittest.mock import patch
 
 from backend.mio_content import bootstrap, distribution, initialize
@@ -21,8 +22,7 @@ class DistributionPolicyTests(unittest.TestCase):
         self.project = Path(temp.name) / 'program'
         self.source = self.project / 'data'
         self.workspace = Path(temp.name) / 'workspace'
-        shutil.copytree(ROOT / 'data', self.source, ignore=shutil.ignore_patterns(
-            'runtime', '.cache', '.write.lock', '.transactions', '.trash', '*.lock', 'worker.lock'))
+        copy_shipped_data(self.source)
         self.manifest_path = self.source / 'distribution.json'
         self.original_manifest = self.manifest_path.read_bytes()
         manifest = decode(self.original_manifest)

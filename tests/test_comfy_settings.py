@@ -4,6 +4,7 @@ import json
 import shutil
 import tempfile
 import unittest
+from tests.data_support import copy_shipped_data
 from pathlib import Path
 
 from backend import mio_comfy_settings as comfy
@@ -111,7 +112,7 @@ class NativeStoreLayoutTests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name) / 'data'
-        shutil.copytree(ROOT / 'data', self.root, ignore=shutil.ignore_patterns('runtime', '.cache', '*.lock', 'worker.lock'))
+        copy_shipped_data(self.root)
         self.store = NativeStore(str(self.root), str(ROOT))
         self.store.wait_index()
 

@@ -4,6 +4,7 @@ from pathlib import Path
 import shutil
 import tempfile
 import unittest
+from tests.data_support import copy_shipped_data
 from backend.mio_native_store import NativeStore
 from backend.mio_library import FileLibrary
 from backend.mio_content import initialize, bootstrap
@@ -27,14 +28,14 @@ class ContentDistributionTests(unittest.TestCase):
             self.assertTrue((Path(temp)/'catalog/index.json').exists());s.library.close()
     def test_removing_all_shipped_entities_before_first_launch_is_respected(self):
         with tempfile.TemporaryDirectory() as temp:
-            project=Path(temp);data=project/'data';shutil.copytree(ROOT/'data',data,ignore=shutil.ignore_patterns('runtime','.cache','.write.lock','*.lock','worker.lock'))
+            project=Path(temp);data=project/'data';copy_shipped_data(data)
             for name in ('albums','layouts','storyboards','presets','settings','collections','plans','records','workflows'):shutil.rmtree(data/name,ignore_errors=True)
             s=self.store(data,project);initialize(s,project)
             values=bootstrap(s);self.assertEqual(values['config']['savedGalleries'],[]);self.assertEqual(values['layouts'],[])
             self.assertFalse(any((data/'albums').rglob('album.json')));s.library.close()
     def test_existing_external_workspace_receives_upgraded_catalog_text_only(self):
         with tempfile.TemporaryDirectory() as temp:
-            project=Path(temp)/'program';shutil.copytree(ROOT/'data',project/'data',ignore=shutil.ignore_patterns('runtime','.cache','.write.lock','.transactions','.trash','*.lock','worker.lock'))
+            project=Path(temp)/'program';copy_shipped_data(project/'data')
             workspace=Path(temp)/'workspace';s=self.store(workspace,project);self.assertTrue(initialize(s,project));s.library.close()
             # Simulate a program upgrade: the shipped catalog changes and the manifest is rebuilt; the user meanwhile deleted the demo album.
             captions=project/'data/catalog/captions.json';captions.write_text(json.dumps({'upgraded':True}),'utf-8')
