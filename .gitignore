@@ -228,3 +228,6 @@ ehthumbs.db
 # Release build output (tools/build_release.py)
 /releases/
 /.venv/
+
+# Portal (remote MCP bridge) session logs
+.portal/

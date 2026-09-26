@@ -98,6 +98,7 @@ function Version() {
 export function Shell() {
   const { t, i18n } = useTranslation();
   const setTheme = useUI((s) => s.setTheme);
+  const recentThemes = useUI((s) => s.recentThemes);
   const theme = useAppliedTheme();
   const connected = useLive((s) => s.connected);
   useJobEvents();
@@ -130,7 +131,10 @@ export function Shell() {
             className="btn ghost icon"
             title={t('nav.theme')}
             aria-label={t('nav.theme')}
-            onClick={() => setTheme(toggled(theme.mode))}
+            onClick={() => {
+              const next = toggled(theme.mode, recentThemes);
+              setTheme(next, theme.mode === 'dark' ? 'light' : 'dark');
+            }}
           >
             {theme.mode === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
           </button>

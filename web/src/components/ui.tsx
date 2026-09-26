@@ -33,6 +33,14 @@ interface TextProps {
   autoFocus?: boolean;
   onEnter?: () => void;
   'aria-label'?: string;
+  // Plain <input> attributes forms commonly need; anything else stays deliberate.
+  id?: string;
+  name?: string;
+  disabled?: boolean;
+  readOnly?: boolean;
+  maxLength?: number;
+  autoComplete?: string;
+  onBlur?: () => void;
 }
 
 export function TextInput({ value, onChange, mono, className, onEnter, ...rest }: TextProps) {

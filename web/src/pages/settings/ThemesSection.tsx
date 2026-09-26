@@ -81,7 +81,10 @@ export function ThemesSection() {
     try {
       const body = JSON.parse(await file.text());
       importTheme.mutate(body, {
-        onSuccess: (theme) => (toast(t('settings.themes.imported')), setTheme(theme.id)),
+        onSuccess: (theme) => (
+          toast(t('settings.themes.imported')),
+          setTheme(theme.id, theme.mode)
+        ),
         onError: toastError,
       });
     } catch {
@@ -125,7 +128,7 @@ export function ThemesSection() {
             key={theme.id}
             theme={theme}
             active={choice === theme.id}
-            onPick={() => setTheme(theme.id)}
+            onPick={() => setTheme(theme.id, theme.mode)}
             onDelete={
               theme.source === 'user'
                 ? () =>

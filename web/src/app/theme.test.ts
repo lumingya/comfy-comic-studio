@@ -38,8 +38,15 @@ describe('theme', () => {
     expect(root.style.getPropertyValue('--bg')).toBe('#000000');
   });
 
-  it('toggles between ink and paper', () => {
+  it('toggles between ink and paper by default', () => {
     expect(toggled('dark')).toBe('paper');
     expect(toggled('light')).toBe('ink');
+  });
+
+  it('toggles back to the last theme used in the other mode', () => {
+    const recent = { dark: 'ext-midnight', light: 'ext-cream' };
+    expect(toggled('dark', recent)).toBe('ext-cream');
+    expect(toggled('light', recent)).toBe('ext-midnight');
+    expect(toggled('light', { light: 'ext-cream' })).toBe('ink');
   });
 });

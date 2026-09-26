@@ -45,7 +45,14 @@ export function applyTheme(root: HTMLElement, mode: 'dark' | 'light', theme?: Th
   }
 }
 
-/** Next theme for the quick toggle in the rail: flips between ink and paper. */
-export function toggled(currentMode: 'dark' | 'light'): ThemeChoice {
-  return currentMode === 'dark' ? FALLBACK.light : FALLBACK.dark;
+/**
+ * Next theme for the quick toggle in the rail: the other mode's last-used theme, so someone on
+ * an extension's dark theme comes back to it after a trip through light (ink / paper otherwise).
+ */
+export function toggled(
+  currentMode: 'dark' | 'light',
+  recent: Partial<Record<'dark' | 'light', string>> = {},
+): ThemeChoice {
+  const target = currentMode === 'dark' ? 'light' : 'dark';
+  return recent[target] || FALLBACK[target];
 }
