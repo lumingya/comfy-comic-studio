@@ -15,6 +15,7 @@ import { Link, NavLink, Outlet } from 'react-router-dom';
 import { useJobEvents, useJobs, useLive } from '../api/jobs';
 import { useThemes, useUpdateStatus } from '../api/open';
 import { ConfirmHost } from '../components/confirm';
+import { HelpButton, HelpDrawer, useHelpShortcut } from '../components/HelpDrawer';
 import { Toaster } from '../components/toast';
 import { setLocale } from '../i18n';
 import { useRecents } from './recents';
@@ -102,6 +103,7 @@ export function Shell() {
   const theme = useAppliedTheme();
   const connected = useLive((s) => s.connected);
   useJobEvents();
+  useHelpShortcut();
 
   const link = ({ isActive }: { isActive: boolean }) => `rail-link ${isActive ? 'active' : ''}`;
 
@@ -127,6 +129,7 @@ export function Shell() {
         </NavLink>
         <RecentEpisodes />
         <div className="rail-foot">
+          <HelpButton />
           <button
             className="btn ghost icon"
             title={t('nav.theme')}
@@ -154,6 +157,7 @@ export function Shell() {
       </main>
       <Toaster />
       <ConfirmHost />
+      <HelpDrawer />
     </div>
   );
 }
