@@ -17,6 +17,8 @@ vi.mock('react-konva', () => {
     Rect: box,
     Text: box,
     Line: box,
+    Circle: box,
+    Ellipse: box,
     Image: box,
     Transformer: () => null,
   };

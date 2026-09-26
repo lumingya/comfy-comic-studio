@@ -117,7 +117,7 @@
 
 .dialogue-row {
   display: grid;
-  grid-template-columns: 130px 100px minmax(0, 1fr) auto;
+  grid-template-columns: 130px 100px minmax(0, 1fr) auto auto;
   gap: 8px;
   align-items: center;
 }
@@ -216,5 +216,10 @@ details > summary {
 }
 
 .diff-table .after {
+  color: var(--accent);
+}
+
+.btn.icon.active {
+  background: var(--tint);
   color: var(--accent);
 }

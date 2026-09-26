@@ -5,7 +5,9 @@ import { useDeletePanel, useDuplicatePanel, usePatchPanel } from '../../api/seri
 import { ANGLES, SHOTS, TIMES, type Episode, type Panel, type Series } from '../../api/types';
 import { toastError } from '../../components/toast';
 import { Field, NumberInput, Select, TagInput, TextArea, TextInput } from '../../components/ui';
+import { CompositionEditor } from './CompositionEditor';
 import { CastEditor, DialogueEditor, PromptPreview } from './parts';
+import { StripFields } from './StripFields';
 
 const WIDTHS = ['full', 'inset', 'bleed', 'frameless'] as const;
 const RATIOS = ['3:4', '2:3', '9:16', '1:1', '4:3', '16:9', '1:2', '2:1'];
@@ -194,6 +196,14 @@ export function PanelEditor(props: {
           />
         </Field>
       </div>
+      <StripFields draft={draft} set={set} />
+
+      <details className="advanced" open={!!draft.regional || !!draft.controls?.length}>
+        <summary>{t('composition.heading')}</summary>
+        <div style={{ marginTop: 14 }}>
+          <CompositionEditor episode={episode} draft={draft} set={set} />
+        </div>
+      </details>
 
       <details className="advanced">
         <summary>{t('script.advanced')}</summary>
@@ -228,14 +238,6 @@ export function PanelEditor(props: {
                 value={draft.overrides.seed}
                 onChange={(seed) => setOv({ seed })}
                 placeholder={t('common.auto')}
-              />
-            </Field>
-            <Field label={t('script.gapAfter')}>
-              <NumberInput
-                value={draft.gap_after}
-                min={0}
-                max={2000}
-                onChange={(v) => set({ gap_after: v ?? 0 })}
               />
             </Field>
           </div>

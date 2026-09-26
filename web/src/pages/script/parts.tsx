@@ -1,4 +1,4 @@
-import { Plus, X } from 'lucide-react';
+import { Link2, Plus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { assetUrl } from '../../api/client';
 import { usePrompt } from '../../api/series';
@@ -121,6 +121,16 @@ export function DialogueEditor(props: {
           />
           <TextInput value={d.text} onChange={(text) => edit(i, { text })} />
           <button
+            className={`btn ghost icon sm ${d.bridge ? 'active' : ''}`}
+            title={t('script.bridgeHint')}
+            aria-label={t('script.bridge')}
+            aria-pressed={d.bridge}
+            disabled={d.kind === 'sfx'}
+            onClick={() => edit(i, { bridge: !d.bridge })}
+          >
+            <Link2 size={14} />
+          </button>
+          <button
             className="btn ghost icon sm"
             aria-label={t('common.remove')}
             onClick={() => props.onChange(props.value.filter((_, j) => j !== i))}
@@ -133,7 +143,10 @@ export function DialogueEditor(props: {
         <button
           className="btn sm"
           onClick={() =>
-            props.onChange([...props.value, { speaker_id: null, text: '', kind: 'speech' }])
+            props.onChange([
+              ...props.value,
+              { speaker_id: null, text: '', kind: 'speech', bridge: false },
+            ])
           }
         >
           <Plus size={13} /> {t('script.addLine')}

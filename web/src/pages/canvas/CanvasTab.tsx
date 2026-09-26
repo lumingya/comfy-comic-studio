@@ -1,24 +1,81 @@
-import { LayoutTemplate, Lock, Plus, Save, Trash2, Unlock, ZoomIn, ZoomOut } from 'lucide-react';
+import {
+  CheckCircle2,
+  LayoutTemplate,
+  Plus,
+  Save,
+  Sparkles,
+  TriangleAlert,
+  Wand2,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useStripReport } from '../../api/canvas';
 import { useLayoutStrip, useSaveStrip } from '../../api/production';
-import { DIALOGUE_KINDS, type LetteringLayer, type Strip } from '../../api/types';
+import type { LetteringLayer, Strip } from '../../api/types';
 import { useUI } from '../../app/ui-store';
 import { toast, toastError } from '../../components/toast';
-import {
-  Empty,
-  Field,
-  NumberInput,
-  Select,
-  Switch,
-  TextArea,
-  TextInput,
-} from '../../components/ui';
+import { Empty, Field, NumberInput, Select, TextInput } from '../../components/ui';
 import { useEpisodeContext } from '../episode/EpisodePage';
 import { pickAdopted } from './adopted';
+import { LetterInspector } from './LetterInspector';
+import { PacingDialog } from './PacingDialog';
+import { DEFAULT_STYLE } from './sfx';
 import { StripStage, type Selection } from './StripStage';
 
 type Box = [number, number, number, number];
+
+function newLayer(strip: Strip, kind: 'caption' | 'sfx'): LetteringLayer {
+  const y = Math.max(40, Math.round(strip.height / 2));
+  const sfx = kind === 'sfx';
+  return {
+    id: `letter_${Date.now().toString(16)}`,
+    panel_id: null,
+    kind,
+    text: sfx ? '砰！' : '…',
+    speaker_id: null,
+    box: sfx ? [300, y, 500, y + 90] : [40, y, 320, y + 70],
+    tail_to: null,
+    vertical: false,
+    font_size: null,
+    locked: true,
+    bridge_to: null,
+    style: sfx ? DEFAULT_STYLE : null,
+  };
+}
+
+function ReadabilityBadge(props: { episodeId: string; variantId: string | null; bust: string }) {
+  const { t } = useTranslation();
+  const q = useStripReport(props.episodeId, props.variantId, props.bust);
+  const r = q.data;
+  if (!r) return null;
+  if (r.readable)
+    return (
+      <span className="chip ok" title={t('canvas.readableHint')}>
+        <CheckCircle2 size={13} /> {t('canvas.readable')}
+      </span>
+    );
+  const parts = (
+    [
+      ['missing', r.missing.length],
+      ['face_hits', r.face_hits.length],
+      ['overlaps', r.overlaps.length],
+      ['order', r.order.length],
+      ['outside', r.outside.length],
+      ['cut', r.cut.length],
+    ] as const
+  ).filter(([, n]) => n);
+  return (
+    <span
+      className="chip warn"
+      title={parts.map(([k, n]) => `${t(`canvas.problems.${k}`)} × ${n}`).join('\n')}
+    >
+      <TriangleAlert size={13} /> {t('canvas.problemsN', { count: r.problems })}
+    </span>
+  );
+}
+
 export default function CanvasTab() {
   const { t } = useTranslation();
   const { episode, series } = useEpisodeContext();
@@ -29,12 +86,17 @@ export default function CanvasTab() {
   const [dirty, setDirty] = useState(false);
   const [selection, setSelection] = useState<Selection>(null);
   const [scale, setScale] = useState(0.6);
+  const [pacing, setPacing] = useState(false);
 
   useEffect(() => {
     setStrip(episode.strip);
     setDirty(false);
   }, [episode.strip]);
 
+  const panels = useMemo(
+    () => [...episode.panels].sort((a, b) => a.order - b.order),
+    [episode.panels],
+  );
   const images = useMemo(() => pickAdopted(episode.takes, variantId), [episode.takes, variantId]);
   const change = (next: Strip) => {
     setStrip(next);
@@ -47,6 +109,11 @@ export default function CanvasTab() {
       ...strip,
       lettering: strip.lettering.map((l) => (l.id === id ? { ...l, ...patch } : l)),
     });
+  const addLayer = (kind: 'caption' | 'sfx') => {
+    const layer = newLayer(strip, kind);
+    change({ ...strip, lettering: [...strip.lettering, layer] });
+    setSelection({ type: 'letter', id: layer.id });
+  };
 
   const autoLayout = (relayout: boolean) =>
     layout.mutate(
@@ -68,50 +135,32 @@ export default function CanvasTab() {
       </Empty>
     );
 
-  const speakers = [
-    { value: '', label: t('script.narrator') },
-    ...series.bible.characters.map((c) => ({ value: c.id, label: c.name })),
-  ];
-
   return (
     <div className="canvas-layout">
       <div className="canvas-toolbar">
+        <button className="btn" onClick={() => setPacing(true)} disabled={dirty}>
+          <Wand2 size={15} /> {t('pacing.open')}
+        </button>
         <button className="btn" disabled={layout.isPending} onClick={() => autoLayout(false)}>
           <LayoutTemplate size={15} /> {t('canvas.relayoutPanels')}
         </button>
         <button className="btn" disabled={layout.isPending} onClick={() => autoLayout(true)}>
           {t('canvas.relayoutAll')}
         </button>
-        <button
-          className="btn ghost"
-          onClick={() => {
-            const id = `letter_${Date.now().toString(16)}`;
-            const y = Math.max(40, Math.round(strip.height / 2));
-            change({
-              ...strip,
-              manual: true,
-              lettering: [
-                ...strip.lettering,
-                {
-                  id,
-                  panel_id: null,
-                  kind: 'caption',
-                  text: '…',
-                  speaker_id: null,
-                  box: [40, y, 320, y + 70],
-                  tail_to: null,
-                  vertical: false,
-                  font_size: null,
-                  locked: true,
-                },
-              ],
-            });
-            setSelection({ type: 'letter', id });
-          }}
-        >
+        <button className="btn ghost" onClick={() => addLayer('caption')}>
           <Plus size={15} /> {t('canvas.addText')}
         </button>
+        <button className="btn ghost" onClick={() => addLayer('sfx')}>
+          <Sparkles size={15} /> {t('canvas.addSfx')}
+        </button>
         <span className="grow" />
+        {!dirty ? (
+          <ReadabilityBadge
+            episodeId={episode.id}
+            variantId={variantId}
+            bust={String(episode.revision)}
+          />
+        ) : null}
         <button
           className="btn ghost icon"
           aria-label="zoom out"
@@ -142,78 +191,28 @@ export default function CanvasTab() {
         <div className="canvas-scroll">
           <StripStage
             strip={strip}
+            panels={panels}
             images={images}
             scale={scale}
             selection={selection}
             onSelect={setSelection}
-            onPanelBox={(id, box) =>
+            onPanelBox={(id, box: Box) =>
               change({ ...strip, manual: true, panel_boxes: { ...strip.panel_boxes, [id]: box } })
             }
-            onLetterBox={(id, box: Box) => editLetter(id, { box, locked: true })}
+            onLetter={(id, patch) => editLetter(id, { ...patch, locked: true })}
           />
         </div>
         <aside className="canvas-inspector card">
           {letter ? (
-            <div className="col" style={{ gap: 12 }}>
-              <div className="row">
-                <h2 className="grow" style={{ margin: 0 }}>
-                  {t('canvas.text')}
-                </h2>
-                <button
-                  className="btn ghost icon sm"
-                  title={t('script.locked')}
-                  onClick={() => editLetter(letter.id, { locked: !letter.locked })}
-                >
-                  {letter.locked ? <Lock size={14} /> : <Unlock size={14} />}
-                </button>
-                <button
-                  className="btn ghost icon sm danger"
-                  aria-label={t('common.delete')}
-                  onClick={() => (
-                    change({
-                      ...strip,
-                      lettering: strip.lettering.filter((l) => l.id !== letter.id),
-                    }),
-                    setSelection(null)
-                  )}
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-              <TextArea
-                rows={3}
-                value={letter.text}
-                onChange={(text) => editLetter(letter.id, { text, locked: true })}
-              />
-              <Field label={t('script.kind')}>
-                <Select
-                  value={letter.kind}
-                  options={DIALOGUE_KINDS.map((k) => ({ value: k, label: t(`script.kinds.${k}`) }))}
-                  onChange={(kind) => editLetter(letter.id, { kind, locked: true })}
-                />
-              </Field>
-              <Field label={t('script.speaker')}>
-                <Select
-                  value={letter.speaker_id ?? ''}
-                  options={speakers}
-                  onChange={(s) => editLetter(letter.id, { speaker_id: s || null })}
-                />
-              </Field>
-              <Field label={t('canvas.fontSize')}>
-                <NumberInput
-                  value={letter.font_size}
-                  min={10}
-                  max={120}
-                  placeholder={t('common.auto')}
-                  onChange={(font_size) => editLetter(letter.id, { font_size, locked: true })}
-                />
-              </Field>
-              <Switch
-                checked={letter.vertical}
-                onChange={(vertical) => editLetter(letter.id, { vertical, locked: true })}
-                label={t('canvas.vertical')}
-              />
-            </div>
+            <LetterInspector
+              letter={letter}
+              series={series}
+              onEdit={(patch) => editLetter(letter.id, patch)}
+              onDelete={() => {
+                change({ ...strip, lettering: strip.lettering.filter((l) => l.id !== letter.id) });
+                setSelection(null);
+              }}
+            />
           ) : (
             <div className="col" style={{ gap: 12 }}>
               <h2 style={{ margin: 0 }}>{t('canvas.strip')}</h2>
@@ -240,11 +239,28 @@ export default function CanvasTab() {
                   onChange={(background) => change({ ...strip, background })}
                 />
               </Field>
+              <Field label={t('canvas.direction')} hint={t('canvas.directionHint')}>
+                <Select
+                  value={strip.text_direction}
+                  options={(['horizontal', 'vertical'] as const).map((d) => ({
+                    value: d,
+                    label: t(`canvas.directions.${d}`),
+                  }))}
+                  onChange={(text_direction) => change({ ...strip, text_direction })}
+                />
+              </Field>
               <p className="small muted">{t('canvas.hint')}</p>
             </div>
           )}
         </aside>
       </div>
+      <PacingDialog
+        episodeId={episode.id}
+        panels={panels}
+        open={pacing}
+        onOpenChange={setPacing}
+        onApplied={() => autoLayout(true)}
+      />
     </div>
   );
 }
