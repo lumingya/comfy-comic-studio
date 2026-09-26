@@ -1,0 +1,594 @@
+{
+  "title": "雨夜的未完画稿",
+  "logline": "刚辞职的迷茫插画师在旧书店躲雨，与温和的店主在一本绝版画册中找回了画画的初心与共鸣。",
+  "characters": [
+    {
+      "id": "su_wan",
+      "name": "苏晚",
+      "gender": "female",
+      "age": 24,
+      "tags": [
+        "brown hair",
+        "wavy hair",
+        "low ponytail",
+        "amber eyes",
+        "yellow raincoat",
+        "grey hoodie",
+        "blue jeans",
+        "canvas tote bag"
+      ],
+      "signature": [
+        "yellow raincoat",
+        "low ponytail",
+        "amber eyes",
+        "canvas tote bag"
+      ],
+      "description": "a 24-year-old woman with wavy brown hair tied in a low ponytail and amber eyes, carrying a canvas tote bag and wearing a yellow raincoat over a grey hoodie and blue jeans"
+    },
+    {
+      "id": "lu_chuan",
+      "name": "陆川",
+      "gender": "male",
+      "age": 28,
+      "tags": [
+        "black hair",
+        "short hair",
+        "dark brown eyes",
+        "wire-rim glasses",
+        "brown apron",
+        "dark green knit sweater",
+        "black trousers"
+      ],
+      "signature": [
+        "wire-rim glasses",
+        "brown apron",
+        "dark green knit sweater"
+      ],
+      "description": "a 28-year-old man with short black hair and dark brown eyes wearing wire-rim glasses, a brown apron over a dark green knit sweater, and black trousers"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "s1",
+      "location": "旧书店屋檐下街道",
+      "time": "night",
+      "tags": [
+        "street",
+        "night",
+        "heavy rain",
+        "rain puddles",
+        "storefront",
+        "wooden door",
+        "warm glow"
+      ],
+      "description": "a rainy street outside an old wooden bookstore glowing with warm interior light at night"
+    },
+    {
+      "id": "s2",
+      "location": "旧书店内部主陈列区",
+      "time": "night",
+      "tags": [
+        "indoors",
+        "bookstore",
+        "wooden bookshelves",
+        "warm lighting",
+        "stacked books",
+        "counter"
+      ],
+      "description": "a cozy vintage bookstore interior lined with towering wooden bookshelves under warm ambient lighting"
+    },
+    {
+      "id": "s3",
+      "location": "旧书店靠窗阅读角",
+      "time": "night",
+      "tags": [
+        "indoors",
+        "window",
+        "rain on glass",
+        "small wooden table",
+        "steaming mug",
+        "vintage desk lamp"
+      ],
+      "description": "a quiet corner inside the bookstore beside a rain-streaked window with a small wooden table and a glowing desk lamp"
+    }
+  ],
+  "panels": [
+    {
+      "id": "p01",
+      "scene": "s1",
+      "shot": "wide",
+      "angle": "high",
+      "characters": [
+        {
+          "id": "su_wan",
+          "expression": "tired",
+          "action": "running under the bookstore eaves while hugging her tote bag",
+          "tags": [
+            "running",
+            "wet hair",
+            "looking up",
+            "tired"
+          ]
+        }
+      ],
+      "tags": [
+        "heavy rain",
+        "street lights",
+        "rain puddles",
+        "storefront"
+      ],
+      "description": "Su Wan rushes under the bookstore eaves to escape the pouring rain late at night",
+      "dialogue": [
+        {
+          "speaker": "su_wan",
+          "kind": "thought",
+          "text": "刚辞职就赶上暴雨，今天真是倒霉透了。"
+        }
+      ]
+    },
+    {
+      "id": "p02",
+      "scene": "s1",
+      "shot": "medium",
+      "angle": "eye",
+      "characters": [
+        {
+          "id": "lu_chuan",
+          "expression": "surprised",
+          "action": "holding a closed sign at the glass door and looking out at Su Wan",
+          "tags": [
+            "standing",
+            "holding sign",
+            "looking outside"
+          ]
+        }
+      ],
+      "tags": [
+        "glass door",
+        "warm light",
+        "reflection"
+      ],
+      "description": "Lu Chuan pauses as he is about to flip the closed sign, noticing the drenched woman outside",
+      "dialogue": [
+        {
+          "speaker": "lu_chuan",
+          "kind": "speech",
+          "text": "雨下得挺大，先进来避避吧。"
+        }
+      ]
+    },
+    {
+      "id": "p03",
+      "scene": "s2",
+      "shot": "wide",
+      "angle": "eye",
+      "characters": [
+        {
+          "id": "su_wan",
+          "expression": "embarrassed",
+          "action": "stepping onto the indoor doormat and shaking rain from her raincoat hood",
+          "tags": [
+            "standing",
+            "taking off hood",
+            "nervous smile"
+          ]
+        },
+        {
+          "id": "lu_chuan",
+          "expression": "gentle",
+          "action": "holding the front door open with one hand",
+          "tags": [
+            "standing",
+            "holding door",
+            "smiling"
+          ]
+        }
+      ],
+      "tags": [
+        "entrance",
+        "wooden floor",
+        "warm lighting"
+      ],
+      "description": "Lu Chuan welcomes Su Wan into the warm, book-filled shop as she timidly steps inside",
+      "dialogue": [
+        {
+          "speaker": "su_wan",
+          "kind": "speech",
+          "text": "打扰了！等雨小一点我就走。"
+        }
+      ]
+    },
+    {
+      "id": "p04",
+      "scene": "s2",
+      "shot": "cowboy",
+      "angle": "side",
+      "characters": [
+        {
+          "id": "lu_chuan",
+          "expression": "warm",
+          "action": "handing a clean dry towel across the space",
+          "tags": [
+            "standing",
+            "offering towel",
+            "gentle smile"
+          ]
+        },
+        {
+          "id": "su_wan",
+          "expression": "grateful",
+          "action": "taking the towel with both hands",
+          "tags": [
+            "standing",
+            "taking towel",
+            "relieved"
+          ]
+        }
+      ],
+      "tags": [
+        "wooden counter",
+        "towel",
+        "cozy atmosphere"
+      ],
+      "description": "Lu Chuan hands a clean towel to Su Wan, who receives it gratefully",
+      "dialogue": [
+        {
+          "speaker": "lu_chuan",
+          "kind": "speech",
+          "text": "不着急，反正店里也没别人。"
+        }
+      ]
+    },
+    {
+      "id": "p05",
+      "scene": "s2",
+      "shot": "medium",
+      "angle": "eye",
+      "characters": [
+        {
+          "id": "su_wan",
+          "expression": "curious",
+          "action": "browsing along a tall bookshelf and pointing at a large hardbound volume",
+          "tags": [
+            "standing",
+            "browsing shelf",
+            "reaching hand"
+          ]
+        }
+      ],
+      "tags": [
+        "bookshelf",
+        "stacked books",
+        "warm lighting"
+      ],
+      "description": "Su Wan walks along the bookshelf and suddenly spots an unusual vintage artbook",
+      "dialogue": [
+        {
+          "speaker": "su_wan",
+          "kind": "speech",
+          "text": "咦……这本画册不是早就绝版了吗？"
+        }
+      ]
+    },
+    {
+      "id": "p06",
+      "scene": "s2",
+      "shot": "close",
+      "angle": "high",
+      "characters": [
+        {
+          "id": "su_wan",
+          "expression": "amazed",
+          "action": "holding the heavy illustrated artbook with sparkling eyes",
+          "tags": [
+            "holding book",
+            "looking down",
+            "fascinated"
+          ]
+        }
+      ],
+      "tags": [
+        "vintage book",
+        "artbook",
+        "gold foil details"
+      ],
+      "description": "Su Wan holds the rare vintage artbook carefully in her hands with genuine awe",
+      "dialogue": [
+        {
+          "speaker": "su_wan",
+          "kind": "thought",
+          "text": "找了三年都没买到，竟然会在这里！"
+        }
+      ]
+    },
+    {
+      "id": "p07",
+      "scene": "s2",
+      "shot": "cowboy",
+      "angle": "eye",
+      "characters": [
+        {
+          "id": "su_wan",
+          "expression": "excited",
+          "action": "turning around while still cradling the artbook",
+          "tags": [
+            "standing",
+            "holding book",
+            "enthusiastic"
+          ]
+        },
+        {
+          "id": "lu_chuan",
+          "expression": "pleasant",
+          "action": "walking over carrying two steaming mugs of tea",
+          "tags": [
+            "standing",
+            "carrying mugs",
+            "soft smile"
+          ]
+        }
+      ],
+      "tags": [
+        "bookshelves",
+        "steaming tea",
+        "indoor alley"
+      ],
+      "description": "Lu Chuan walks up with warm tea as Su Wan turns to show him the artbook she found",
+      "dialogue": [
+        {
+          "speaker": "lu_chuan",
+          "kind": "speech",
+          "text": "眼光不错，这是上一任店主从海外淘回来的孤本。"
+        }
+      ]
+    },
+    {
+      "id": "p08",
+      "scene": "s3",
+      "shot": "wide",
+      "angle": "eye",
+      "characters": [
+        {
+          "id": "su_wan",
+          "expression": "relaxed",
+          "action": "sitting on a wooden chair with the open artbook resting on the table",
+          "tags": [
+            "sitting",
+            "open book",
+            "talking"
+          ]
+        },
+        {
+          "id": "lu_chuan",
+          "expression": "attentive",
+          "action": "sitting opposite her, listening with arms resting on the wooden table",
+          "tags": [
+            "sitting",
+            "resting arms",
+            "listening"
+          ]
+        }
+      ],
+      "tags": [
+        "window",
+        "rain streaks",
+        "wooden table",
+        "steaming tea",
+        "vintage lamp"
+      ],
+      "description": "Su Wan and Lu Chuan sit opposite each other by the rain-streaked window, immersed in conversation",
+      "dialogue": [
+        {
+          "speaker": "su_wan",
+          "kind": "speech",
+          "text": "我大学学插画时，最崇拜的就是这位画家的光影处理。"
+        }
+      ]
+    },
+    {
+      "id": "p09",
+      "scene": "s3",
+      "shot": "close",
+      "angle": "low",
+      "characters": [
+        {
+          "id": "su_wan",
+          "expression": "nostalgic",
+          "action": "gently tracing the edge of an illustration page with a melancholic smile",
+          "tags": [
+            "pointing",
+            "tracing page",
+            "bittersweet smile"
+          ]
+        }
+      ],
+      "tags": [
+        "book page",
+        "warm glow",
+        "table surface"
+      ],
+      "description": "Su Wan looks down at the intricate page with mixed feelings of fondness and exhaustion",
+      "dialogue": [
+        {
+          "speaker": "su_wan",
+          "kind": "speech",
+          "text": "今天刚辞掉商业插画的工作，差点以为自己已经不喜欢画画了。"
+        }
+      ]
+    },
+    {
+      "id": "p10",
+      "scene": "s3",
+      "shot": "close",
+      "angle": "eye",
+      "characters": [
+        {
+          "id": "lu_chuan",
+          "expression": "understanding",
+          "action": "looking across at her with a gentle, reassuring gaze behind his glasses",
+          "tags": [
+            "holding mug",
+            "gentle expression",
+            "looking ahead"
+          ]
+        }
+      ],
+      "tags": [
+        "rainy window background",
+        "mug steam"
+      ],
+      "description": "Lu Chuan speaks reassuringly to Su Wan while holding his warm cup of tea",
+      "dialogue": [
+        {
+          "speaker": "lu_chuan",
+          "kind": "speech",
+          "text": "喜欢画画的眼睛是藏不住的。你刚才看它时的眼神很亮。"
+        }
+      ]
+    },
+    {
+      "id": "p11",
+      "scene": "s3",
+      "shot": "extreme_close",
+      "angle": "eye",
+      "characters": [
+        {
+          "id": "su_wan",
+          "expression": "touched",
+          "action": "blinking with wide amber eyes reflecting the soft yellow lamplight",
+          "tags": [
+            "amber eyes",
+            "slight blush",
+            "soft smile"
+          ]
+        }
+      ],
+      "tags": [
+        "soft lighting",
+        "bokeh"
+      ],
+      "description": "Su Wan's amber eyes brighten with emotion as she hears Lu Chuan's sincere words",
+      "dialogue": [
+        {
+          "speaker": "su_wan",
+          "kind": "thought",
+          "text": "原来……我眼里的光还在啊。"
+        }
+      ]
+    },
+    {
+      "id": "p12",
+      "scene": "s3",
+      "shot": "medium",
+      "angle": "side",
+      "characters": [
+        {
+          "id": "su_wan",
+          "expression": "smiling",
+          "action": "leaning slightly forward over the table with a bright smile",
+          "tags": [
+            "sitting",
+            "leaning forward",
+            "radiant smile"
+          ]
+        },
+        {
+          "id": "lu_chuan",
+          "expression": "smiling",
+          "action": "nodding gently while taking a sip of tea",
+          "tags": [
+            "sitting",
+            "nodding",
+            "drinking tea"
+          ]
+        }
+      ],
+      "tags": [
+        "table",
+        "lamp light",
+        "books"
+      ],
+      "description": "The heavy atmosphere dissolves as the two share a lighthearted, warm moment over the book",
+      "dialogue": [
+        {
+          "speaker": "lu_chuan",
+          "kind": "speech",
+          "text": "这本画册不卖，但只要雨天，随时欢迎你来看。"
+        }
+      ]
+    },
+    {
+      "id": "p13",
+      "scene": "s1",
+      "shot": "wide",
+      "angle": "low",
+      "characters": [],
+      "tags": [
+        "light rain",
+        "street",
+        "storefront",
+        "warm window light",
+        "quiet night"
+      ],
+      "description": "The exterior of the bookstore in the late night as the heavy downpour subsides into a quiet drizzle",
+      "dialogue": [
+        {
+          "speaker": "narrator",
+          "kind": "narration",
+          "text": "不知不觉间，窗外的暴雨渐渐变成了温柔的细雨。"
+        }
+      ]
+    },
+    {
+      "id": "p14",
+      "scene": "s2",
+      "shot": "cowboy",
+      "angle": "eye",
+      "characters": [
+        {
+          "id": "su_wan",
+          "expression": "happy",
+          "action": "pushing open the exit door and turning back to wave goodbye",
+          "tags": [
+            "standing",
+            "waving",
+            "beaming smile",
+            "carrying tote bag"
+          ]
+        },
+        {
+          "id": "lu_chuan",
+          "expression": "warm",
+          "action": "standing beside the checkout counter waving back with a calm smile",
+          "tags": [
+            "standing",
+            "waving back",
+            "gentle smile"
+          ]
+        }
+      ],
+      "tags": [
+        "doorway",
+        "entrance",
+        "warm bookstore light"
+      ],
+      "description": "Su Wan steps out of the bookstore with renewed vitality, turning back to wave goodbye to Lu Chuan",
+      "dialogue": [
+        {
+          "speaker": "su_wan",
+          "kind": "speech",
+          "text": "陆店主，那我们下次雨天见！"
+        }
+      ]
+    }
+  ],
+  "source": {
+    "sentence": "雨夜里，刚辞职的插画师苏晚在旧书店避雨，遇见了正要关店的店主陆川，两人因为一本绝版画册聊了起来。",
+    "model": "gemini-3.7-flash",
+    "seconds": 59.0,
+    "fallbacks": [],
+    "edits": [
+      "p02.description: \"girl\" → \"woman\"（避免把 24 岁的主角画得年幼）"
+    ]
+  }
+}

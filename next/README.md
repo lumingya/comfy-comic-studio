@@ -10,7 +10,12 @@ next/
 │   ├── client.py        HTTP + WebSocket：提交、进度、预览帧、逐节点耗时、取图；WS 不通时自动轮询
 │   ├── adapters.py      前端状态节点适配（参数不在 API JSON 里的节点）
 │   └── cli.py           python -m mio_next.comfy inspect | snapshot | run
-├── tests/               单测（录制式假服务器，不需要 ComfyUI）
+├── mio_next/llm.py      反代客户端：文本、视觉、出图（兼容 OpenAI 接口），模型按顺序回退，JSON 校验失败时让模型修正
+├── mio_next/script.py   结构化剧本：一句话 → 角色 / 场景 / 12–16 格 JSON；校验是纯函数（成年角色、全年龄、引用完整）
+├── mio_next/prompts.py  双方言编译器：同一格 → Danbooru 标签（本地 SDXL）或英文描述加参考图编号（云端模型）
+├── mio_next/cli.py      python -m mio_next script | compile | bench
+├── fixtures/            黄金故事（效果基准固定用这一份）
+├── tests/               单测（录制式假服务器，不需要 ComfyUI 和反代）
 ├── local/               本机私有文件：工作流副本、运行配置、状态快照（已忽略，不提交）
 └── out/                 出图与指标（已忽略）
 ```
@@ -22,6 +27,18 @@ cd next && python -m unittest discover -s tests -t . -q     # 约 5 秒
 ```
 
 CI 在仓库根目录跑同一组：`python -m unittest discover -s next/tests -t next -q`。
+
+## 剧本与提示词
+
+```bash
+cd next
+python -m mio_next script "雨夜里，刚辞职的插画师苏晚在旧书店避雨……" --out local/story.json   # 走本机反代
+python -m mio_next compile fixtures/golden_story.json --panel p07                              # 查看两种方言
+```
+
+- 剧本 JSON：`characters`（id、性别、年龄 ≥ 20、外貌标签、用于一致性检查的 `signature`、英文描述）、`scenes`（地点、时间、标签）、`panels`（景别、机位、出场角色的表情 / 动作 / 标签、画面描述、对白）。
+- 校验不通过时，把问题清单发回模型修正，最多两轮。默认模型 `gemini-3.7-flash`，失败回退 `gpt-5.2`。
+- 黄金故事 `fixtures/golden_story.json`：《雨夜的未完画稿》，由上面那句话一次生成（gemini-3.7-flash，59 s，校验一次通过），14 格、3 个场景、2 个角色、14 句对白。人工只改了一处：p02 描述里的 "girl" 改为 "woman"。
 
 ## 运行器用法
 
