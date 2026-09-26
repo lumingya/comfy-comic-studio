@@ -110,9 +110,13 @@ def danbooru(story: dict, panel: dict, extra_style=STYLE_TAGS) -> tuple[str, str
     return ", ".join(escape_tag(t) for t in dedupe(tags)), ", ".join(dedupe(negative))
 
 
-def natural(story: dict, panel: dict, with_refs: bool = True) -> tuple[str, list[str]]:
+ORDINALS = ("first", "second", "third", "fourth")
+
+
+def natural(story: dict, panel: dict, with_refs: bool = True, lineup: bool = False) -> tuple[str, list[str]]:
     """``(prompt, ref_character_ids)``: prose prompt plus the characters whose sheets go along,
-    in reference-image order."""
+    in reference-image order. ``lineup`` describes one composite reference image with the
+    characters standing side by side (for models that accept a single reference)."""
     chars, scenes = index(story)
     scene = scenes.get(panel.get("scene"), {})
     cast = [c for c in panel.get("characters") or [] if c.get("id") in chars]
@@ -125,14 +129,22 @@ def natural(story: dict, panel: dict, with_refs: bool = True) -> tuple[str, list
         people = []
         for i, c in enumerate(cast, 1):
             ch = chars[c["id"]]
-            ref = f" (exactly the person in reference image {i}: same face, hairstyle, hair color and outfit)" if with_refs else ""
+            if lineup:
+                ref = (f" (exactly the {ORDINALS[i - 1]} figure from the left in the reference image: "
+                       f"same face, hairstyle, hair color and outfit)")
+            elif with_refs:
+                ref = f" (exactly the person in reference image {i}: same face, hairstyle, hair color and outfit)"
+            else:
+                ref = ""
             if with_refs:
                 refs.append(ch["id"])
             action = f"; {c['action']}" if c.get("action") else ""
             mood = f"; expression: {c['expression']}" if c.get("expression") else ""
             people.append(f"{display_name(ch)}: {ch['description']}{ref}{action}{mood}")
         count = "one person" if len(cast) == 1 else f"{len(cast)} people"
-        parts.append(f"Characters ({count}, nobody else): " + " | ".join(people) + ".")
+        lead = ("The reference image is a character lineup, not a scene; redraw these characters inside the scene. "
+                if lineup else "")
+        parts.append(f"{lead}Characters ({count}, nobody else): " + " | ".join(people) + ".")
     else:
         parts.append("No people in this panel.")
     setting = scene.get("description") or ", ".join(scene.get("tags") or [])

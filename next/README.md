@@ -13,7 +13,12 @@ next/
 ├── mio_next/llm.py      反代客户端：文本、视觉、出图（兼容 OpenAI 接口），模型按顺序回退，JSON 校验失败时让模型修正
 ├── mio_next/script.py   结构化剧本：一句话 → 角色 / 场景 / 12–16 格 JSON；校验是纯函数（成年角色、全年龄、引用完整）
 ├── mio_next/prompts.py  双方言编译器：同一格 → Danbooru 标签（本地 SDXL）或英文描述加参考图编号（云端模型）
+├── mio_next/render.py   出图：本地（ComfyUI，文生图 / 图生图加 tile）与云端（参考图定形；多参考失败时拼成一张并排参考图）
+├── mio_next/judge.py    VLM 评审：逐格逐角色的身份分与标志特征；定位人脸供气泡避让
+├── mio_next/layout.py   条漫排版：800 px 全宽分格、自动气泡（避脸、读序、尾巴指向说话人）、1280 px 切片
+├── mio_next/bench.py    效果基准流水线：出图 → 评审 → 排版 → 报告，可断点续跑
 ├── mio_next/cli.py      python -m mio_next script | compile | bench
+├── workflows/           内置工作流（带 [mio:*] 标签）：t2i_sdxl.json、i2i_tile.json
 ├── fixtures/            黄金故事（效果基准固定用这一份）
 ├── tests/               单测（录制式假服务器，不需要 ComfyUI 和反代）
 ├── local/               本机私有文件：工作流副本、运行配置、状态快照（已忽略，不提交）
@@ -39,6 +44,29 @@ python -m mio_next compile fixtures/golden_story.json --panel p07               
 - 剧本 JSON：`characters`（id、性别、年龄 ≥ 20、外貌标签、用于一致性检查的 `signature`、英文描述）、`scenes`（地点、时间、标签）、`panels`（景别、机位、出场角色的表情 / 动作 / 标签、画面描述、对白）。
 - 校验不通过时，把问题清单发回模型修正，最多两轮。默认模型 `gemini-3.7-flash`，失败回退 `gpt-5.2`。
 - 黄金故事 `fixtures/golden_story.json`：《雨夜的未完画稿》，由上面那句话一次生成（gemini-3.7-flash，59 s，校验一次通过），14 格、3 个场景、2 个角色、14 句对白。人工只改了一处：p02 描述里的 "girl" 改为 "woman"。
+
+## 效果基准
+
+```bash
+cd next
+python -m mio_next bench fixtures/golden_story.json --out out/bench                 # 全部步骤
+python -m mio_next bench fixtures/golden_story.json --out out/bench --approaches baseline --steps sheets,baseline
+python -m mio_next bench fixtures/golden_story.json --out out/bench --approaches hybrid --steps cloud   # 可与上一条同时跑
+```
+
+| 步骤 | 内容 |
+|---|---|
+| `sheets` | 角色设定图。基线：本地文生图；混合：云端生成后本地图生图统一画风 |
+| `baseline` | 旧管线的代表：每格只用 Danbooru 标签本地文生图 |
+| `cloud` | 混合策略第一步：云端按参考图定构图和角色（只用反代，不占 ComfyUI） |
+| `hybrid` | 混合策略第二步：本地图生图加 tile ControlNet 统一画风 |
+| `judge` | VLM 评审：每格每个出场角色对照该策略自己的设定图打身份分（1–5），并检查标志特征 |
+| `faces` | VLM 定位人脸，供气泡避让和尾巴指向 |
+| `layout` | 排版并切成 800×1280 的 JPEG |
+| `report`、`contact` | `metrics.json`、`REPORT.md`，以及逐格对照缩略图 |
+
+- 每张图旁边都有同名 JSON：耗时、实际使用的模型、回退记录。已有的结果会跳过，中断后重跑即可续上（`--force` 重做）。
+- 反代经常遇到 429 冷却和 reCAPTCHA 失败：客户端会按提示的冷却时间等待重试；一个模型重试用尽后，5 分钟内跳过它（熔断），再换下一个模型。云端出图默认串行。
 
 ## 运行器用法
 

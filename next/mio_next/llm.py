@@ -20,11 +20,26 @@ DEFAULT_BASE = os.environ.get("MIO_LLM_BASE", "http://127.0.0.1:5104/v1")
 TEXT_MODELS = ("gemini-3.7-flash", "gpt-5.2")
 VISION_MODELS = ("qwen3-vl-235b-a22b-instruct", "gemini-3.7-flash")
 IMAGE_SINGLE = ("gpt-image-2.5-flare", "gpt-image-2")  # text-only or one reference image
-IMAGE_MULTI = ("max",)                                 # several reference images
+IMAGE_MULTI = ("max", "gemini-3.1-flash-lite-image")  # several reference images
+
+
+RETRYABLE_STATUS = (408, 409, 425, 429, 500, 502, 503, 504)
 
 
 class LLMError(RuntimeError):
-    pass
+    def __init__(self, message: str, status: int | None = None, retryable: bool = False):
+        super().__init__(message)
+        self.status = status
+        self.retryable = retryable
+
+
+def retry_wait(message: str, attempt: int) -> float:
+    """Seconds to wait before retrying: an announced cooldown ("请等待 30s" / "cooldown: 30.0s")
+    wins, otherwise exponential backoff (3, 6, 12 ... s, capped at 90)."""
+    found = re.search(r"(?:等待|cooldown:?|retry after)\s*(\d+(?:\.\d+)?)\s*s", message, re.I)
+    if found:
+        return min(max(float(found.group(1)), 0.1), 90.0) + 0.5
+    return min(3.0 * 2 ** attempt, 90.0)
 
 
 @dataclass
@@ -91,10 +106,13 @@ def extract_json(text: str):
 
 
 class Client:
-    def __init__(self, base_url: str = DEFAULT_BASE, timeout: float = 240.0, retries: int = 1):
+    def __init__(self, base_url: str = DEFAULT_BASE, timeout: float = 240.0, retries: int = 1,
+                 cooldown: float = 300.0):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.retries = retries
+        self.cooldown = cooldown          # circuit breaker: skip a model this long after it gave up
+        self._down: dict[str, float] = {}
 
     def _post(self, path: str, payload: dict, timeout: float | None) -> dict:
         req = urllib.request.Request(self.base_url + path, data=json.dumps(payload).encode("utf-8"),
@@ -104,17 +122,23 @@ class Client:
                 return json.loads(resp.read())
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", "replace")[:300]
-            raise LLMError(f"HTTP {exc.code}: {body}") from None
+            raise LLMError(f"HTTP {exc.code}: {body}", exc.code, exc.code in RETRYABLE_STATUS) from None
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
-            raise LLMError(f"连接失败：{getattr(exc, 'reason', exc)}") from None
+            raise LLMError(f"连接失败：{getattr(exc, 'reason', exc)}", None, True) from None
         except ValueError:
-            raise LLMError("返回的不是 JSON") from None
+            raise LLMError("返回的不是 JSON", None, True) from None
 
     def chat(self, messages: list, models=TEXT_MODELS, json_mode: bool = False,
-             temperature: float | None = None, timeout: float | None = None, need_image: bool = False) -> Reply:
+             temperature: float | None = None, timeout: float | None = None, need_image: bool = False,
+             retries: int | None = None) -> Reply:
+        """Try each model in order; retryable failures (429/5xx/network) wait and retry first."""
         failures = []
-        for model in models:
-            for _ in range(self.retries + 1):
+        tries = (self.retries if retries is None else retries) + 1
+        now = time.monotonic()
+        order = [m for m in models if self._down.get(m, 0) <= now] or list(models)
+        failures += [f"{m}: 近期连续失败，暂时跳过" for m in models if m not in order]
+        for model in order:
+            for attempt in range(tries):
                 payload = {"model": model, "messages": messages, "stream": False}
                 if json_mode:
                     payload["response_format"] = {"type": "json_object"}
@@ -124,17 +148,26 @@ class Client:
                 try:
                     data = self._post("/chat/completions", payload, timeout)
                     if data.get("error"):
-                        raise LLMError(str(data["error"])[:300])
+                        raise LLMError(str(data["error"])[:300], None, True)
                     message = data["choices"][0]["message"]
                     reply = Reply(content_text(message), data.get("model") or model,
                                   time.monotonic() - started, image_urls(message), list(failures))
                     if need_image and not reply.images:
-                        raise LLMError(f"没有返回图片：{reply.text[:160]}")
+                        raise LLMError(f"没有返回图片：{reply.text[:160]}", None, True)
                     if not need_image and not reply.text.strip():
-                        raise LLMError("空回复")
+                        raise LLMError("空回复", None, True)
+                    self._down.pop(model, None)
                     return reply
-                except (LLMError, KeyError, IndexError, TypeError) as exc:
+                except LLMError as exc:
                     failures.append(f"{model}: {exc}")
+                    if exc.retryable and attempt == tries - 1 and self.cooldown:
+                        self._down[model] = time.monotonic() + self.cooldown
+                    if not exc.retryable or attempt == tries - 1:
+                        break
+                    time.sleep(retry_wait(str(exc), attempt))
+                except (KeyError, IndexError, TypeError) as exc:
+                    failures.append(f"{model}: 回复格式不对 {exc}")
+                    break
         raise LLMError("全部模型失败：" + "；".join(failures))
 
     def chat_json(self, messages: list, models=TEXT_MODELS, validate=None, repairs: int = 1,
@@ -161,7 +194,8 @@ class Client:
         reply = self.chat([{"role": "user", "content": content}], models, timeout=timeout)
         return extract_json(reply.text), reply
 
-    def generate_image(self, prompt: str, refs: list[bytes] = (), models=None, timeout: float = 360.0):
+    def generate_image(self, prompt: str, refs: list[bytes] = (), models=None, timeout: float = 360.0,
+                       retries: int = 3):
         """Returns ``(image_bytes, reply)``. Several refs go to a multi-reference model."""
         refs = list(refs)
         models = models or ((IMAGE_MULTI + IMAGE_SINGLE) if len(refs) > 1 else IMAGE_SINGLE)
@@ -171,7 +205,7 @@ class Client:
             content = [{"type": "text", "text": prompt}] + [image_part(r, max_side=1024) for r in use]
             try:
                 reply = self.chat([{"role": "user", "content": content if use else prompt}], (model,),
-                                  timeout=timeout, need_image=True)
+                                  timeout=timeout, need_image=True, retries=retries)
                 reply.attempts = failures + reply.attempts
                 return self.download(reply.images[0]), reply
             except LLMError as exc:

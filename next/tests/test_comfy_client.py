@@ -58,14 +58,19 @@ class FakeComfy(BaseHTTPRequestHandler):
         if self.path.startswith("/danbooru_gallery/pcp/load_config"):
             node_id = self.path.split("node_id=", 1)[1]
             return self._json(200, {"status": "success", "parameters": server.pcp.get(node_id, [])})
+        if self.path.startswith("/history/p1") and getattr(server, "history_delay", 0):
+            server.history_calls = getattr(server, "history_calls", 0) + 1
+            if server.history_calls <= server.history_delay:
+                return self._json(200, {})
         if self.path.startswith("/history/p1"):
             status = {"status_str": "error" if server.scenario == "error" else "success", "completed": True}
-            return self._json(200, {"p1": {"status": status, "outputs": {
+            outputs = getattr(server, "history_outputs", None) or {
                 "9": {"images": [{"filename": "a.png", "subfolder": "", "type": "output"}]},
                 "50": {"images": [{"filename": "draft.png", "subfolder": "", "type": "temp"}]},
-                "70": {"text": ["1girl, adult, seaside"]}}}})
+                "70": {"text": ["1girl, adult, seaside"]}}
+            return self._json(200, {"p1": {"status": status, "outputs": outputs}})
         if self.path.startswith("/view"):
-            data = b"PNG:" + self.path.encode()
+            data = getattr(server, "view_bytes", None) or b"PNG:" + self.path.encode()
             self.send_response(200)
             self.send_header("Content-Length", str(len(data)))
             self.end_headers()
@@ -161,6 +166,13 @@ class ClientTests(unittest.TestCase):
         frames = server.client_frames
         self.assertEqual(frames[0] & 0x0F, OP_PONG)
         self.assertTrue(frames[1] & 0x80)
+
+    def test_waits_for_history_written_after_the_success_event(self):
+        server, client = self.start("ok")
+        server.history_delay = 3  # first three reads: not stored yet
+        result = client.run({"9": {"class_type": "SaveImage", "inputs": {}}}, output_nodes=["9"], timeout=20)
+        self.assertEqual([i.filename for i in result.images], ["a.png"])
+        self.assertGreaterEqual(server.history_calls, 4)
 
     def test_all_outputs_when_no_filter(self):
         _, client = self.start("ok")

@@ -150,7 +150,7 @@ class ComfyClient:
         finally:
             if ws:
                 ws.close()
-        entry = self.history(prompt_id)
+        entry = self._settled_history(prompt_id)
         status = entry.get("status") or {}
         if status.get("status_str") == "error":
             raise ComfyError("ComfyUI 执行失败", status.get("messages"))
@@ -214,6 +214,22 @@ class ComfyClient:
                 if current is not None:
                     node_seconds[current] = node_seconds.get(current, 0.0) + time.monotonic() - since
                 return previews
+
+    def _settled_history(self, prompt_id: str, wait: float = 15.0) -> dict:
+        """History entry once ComfyUI has stored it.
+
+        ComfyUI sends ``execution_success`` before it writes ``/history`` (``executing: null``
+        comes after), so an immediate read can come back empty. Poll briefly until it settles.
+        """
+        deadline = time.monotonic() + wait
+        while True:
+            entry = self.history(prompt_id)
+            status = entry.get("status") or {}
+            if entry and (status.get("completed") or status.get("status_str") in ("success", "error") or entry.get("outputs")):
+                return entry
+            if time.monotonic() > deadline:
+                return entry
+            time.sleep(0.25)
 
     def _poll(self, prompt_id, started, timeout) -> None:
         while time.monotonic() - started <= timeout:

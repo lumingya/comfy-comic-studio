@@ -96,6 +96,25 @@ class CompilerTests(unittest.TestCase):
         self.assertEqual(refs, [])
         self.assertNotIn("reference image", text)
 
+    def test_lineup_wording_and_composite(self):
+        text, refs = P.natural(self.story, self.panel("p04"), lineup=True)
+        self.assertEqual(refs, ["lin", "zhou"])
+        self.assertIn("first figure from the left", text)
+        self.assertIn("second figure from the left", text)
+        self.assertIn("character lineup, not a scene", text)
+        self.assertNotIn("reference image 1", text)
+        import io
+        from PIL import Image
+        from mio_next import imaging
+
+        def png(size):
+            buf = io.BytesIO()
+            Image.new("RGB", size, "gray").save(buf, "PNG")
+            return buf.getvalue()
+
+        combo = Image.open(io.BytesIO(imaging.lineup([png((400, 800)), png((300, 900))], height=600, gap=20)))
+        self.assertEqual(combo.size, (20 + 300 + 20 + 200 + 20, 640))
+
     def test_sizes_and_sheets(self):
         self.assertEqual(P.panel_size({"shot": "wide"}), (1216, 832))
         self.assertEqual(P.panel_size({"shot": "full"}), (832, 1216))

@@ -232,6 +232,14 @@ class FallbackTests(unittest.TestCase):
         self.assertEqual(outputs, ["9"])
         self.assertEqual(len(pruned), 7)
 
+    def test_heuristics_never_duplicate_tagged_kinds(self):
+        graph = plain_sdxl()
+        graph["5"]["_meta"] = {"title": "[mio:width] [mio:height] [mio:batch]"}
+        bindings, _ = B.resolve(graph)
+        self.assertEqual([b.source for b in bindings if b.kind == "batch"], ["tag"])
+        bindings, _ = B.resolve(plain_sdxl())
+        self.assertEqual([b.source for b in bindings if b.kind == "batch"], ["heuristic"])
+
     def test_mapping_bindings_and_errors(self):
         graph = plain_sdxl()
         bindings, _ = B.resolve(graph, {"seed": ["/3/inputs/seed"], "ref:1": "/6/inputs/text"})

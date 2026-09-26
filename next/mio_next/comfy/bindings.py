@@ -20,7 +20,7 @@ TAG_RE = re.compile(r"\[mio:([a-z][a-z0-9_-]*)(?::([a-z0-9_.-]+))?(?:=([^\]\s]+)
 # Kinds whose value is written into a node input. ``output``/``inspect`` only select nodes.
 VALUE_KINDS = {
     "prompt", "negative", "seed", "width", "height", "steps", "cfg", "denoise",
-    "sampler", "scheduler", "batch", "checkpoint", "ref", "init", "mask",
+    "sampler", "scheduler", "batch", "checkpoint", "ref", "init", "mask", "strength",
 }
 SELECT_KINDS = {"output", "inspect"}
 DEFAULT_FIELDS = {
@@ -37,6 +37,7 @@ DEFAULT_FIELDS = {
     "ref": ("image",),
     "init": ("image",),
     "mask": ("image",),
+    "strength": ("strength",),
 }
 TEXT_FIELDS = ("text", "prompt", "positive", "string", "value", "text_g", "text_l")
 SAMPLER_CLASSES = {"KSampler", "KSamplerAdvanced", "SamplerCustom", "SamplerCustomAdvanced"}
@@ -159,7 +160,7 @@ def heuristic_bindings(graph: dict, missing: set[str]) -> list[Binding]:
         if cls in LATENT_CLASSES:
             for kind in ("width", "height", "batch"):
                 field = _default_field(kind, inputs)
-                if (kind in missing or kind == "batch") and field:
+                if kind in missing and field:
                     found.append(Binding(kind, node_id, field, None, "heuristic"))
         if cls in OUTPUT_CLASSES and "output" in missing:
             found.append(Binding("output", node_id, None, None, "heuristic"))
@@ -171,7 +172,7 @@ def resolve(graph: dict, mapping: dict | None = None) -> tuple[list[Binding], li
     tags, problems = tag_bindings(graph)
     maps = mapping_bindings(graph, mapping)
     have = {b.kind for b in tags + maps}
-    missing = set(CORE_KINDS) - have
+    missing = (set(CORE_KINDS) | {"batch"}) - have
     return tags + maps + heuristic_bindings(graph, missing), problems
 
 
