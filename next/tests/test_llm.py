@@ -94,6 +94,15 @@ class ClientTests(unittest.TestCase):
             client.chat([{"role": "user", "content": "x"}], models=("bad",))
         self.assertEqual(sum(1 for r in self.server.requests if r["model"] == "bad"), 2)
 
+    def test_pace_spaces_requests_across_threads(self):
+        import time
+        from concurrent.futures import ThreadPoolExecutor
+        client = L.Client(self.client.base_url, timeout=5, retries=0, pace=0.3)
+        started = time.monotonic()
+        with ThreadPoolExecutor(3) as pool:
+            list(pool.map(lambda _: client.chat([{"role": "user", "content": "x"}], models=("plain",)), range(3)))
+        self.assertGreaterEqual(time.monotonic() - started, 0.6)
+
     def test_retry_wait_reads_announced_cooldown(self):
         self.assertAlmostEqual(L.retry_wait("处于 429 冷却中 (请等待 30s 后重试)", 0), 30.5)
         self.assertAlmostEqual(L.retry_wait("error (cooldown: 12.0s)", 3), 12.5)

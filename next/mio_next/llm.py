@@ -11,6 +11,7 @@ import io
 import json
 import os
 import re
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -107,14 +108,29 @@ def extract_json(text: str):
 
 class Client:
     def __init__(self, base_url: str = DEFAULT_BASE, timeout: float = 240.0, retries: int = 1,
-                 cooldown: float = 300.0):
+                 cooldown: float = 300.0, pace: float | None = None):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.retries = retries
         self.cooldown = cooldown          # circuit breaker: skip a model this long after it gave up
         self._down: dict[str, float] = {}
+        # minimum seconds between requests, across threads: the proxy drives one web account and
+        # bursts get it throttled (429 cooldown / Cloudflare challenge)
+        self.pace = float(os.environ.get("MIO_LLM_PACE", "0")) if pace is None else pace
+        self._pace_lock = threading.Lock()
+        self._last_request = 0.0
+
+    def _wait_turn(self) -> None:
+        if self.pace <= 0:
+            return
+        with self._pace_lock:
+            delay = self._last_request + self.pace - time.monotonic()
+            if delay > 0:
+                time.sleep(delay)
+            self._last_request = time.monotonic()
 
     def _post(self, path: str, payload: dict, timeout: float | None) -> dict:
+        self._wait_turn()
         req = urllib.request.Request(self.base_url + path, data=json.dumps(payload).encode("utf-8"),
                                      headers={"Content-Type": "application/json"}, method="POST")
         try:

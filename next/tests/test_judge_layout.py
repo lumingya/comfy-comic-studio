@@ -88,6 +88,19 @@ class LayoutTests(unittest.TestCase):
         self.assertEqual("".join(lines), "这本画册不卖，但只要雨天，随时欢迎你来看。")
         self.assertEqual(LY.wrap("hello brave new world", font, font.getlength("hello brave")), ["hello brave", "new world"])
 
+    def test_balanced_wrap_evens_lines_and_prefers_punctuation(self):
+        font = LY.load_font(self.style.font_path, 27)
+        lines = LY.balanced_wrap("雨下得挺大，先进来避避吧。", font, 300)
+        self.assertEqual(lines, ["雨下得挺大，", "先进来避避吧。"])
+        lines = LY.balanced_wrap("我大学学插画时，最崇拜的就是这位画家的光影处理。", font, 300)
+        counts = [len(l) for l in lines]
+        self.assertLessEqual(max(counts) - min(counts), 2, lines)  # no orphan line
+        self.assertEqual("".join(lines), "我大学学插画时，最崇拜的就是这位画家的光影处理。")
+        for text in ("原来……我眼里的光还在啊。", "陆店主，那我们下次雨天见！", "hello brave new world of comics"):
+            lines = LY.balanced_wrap(text, font, 300)
+            self.assertTrue(all(l[:1] not in LY.NO_LINE_START for l in lines[1:]), lines)
+            self.assertTrue(all(font.getlength(l) <= 300 for l in lines))
+
     def test_ellipse_contains_every_line(self):
         font = LY.load_font(self.style.font_path, 27)
         lines = LY.balanced_wrap("喜欢画画的眼睛是藏不住的。你刚才看它时的眼神很亮。", font, 300)

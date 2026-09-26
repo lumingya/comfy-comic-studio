@@ -115,12 +115,55 @@ def wrap(text: str, font, max_width: float) -> list[str]:
     return [l for l in lines if l.strip()]
 
 
+BREAK_AFTER = set("，。！？、；：…—」』）》,.!?;:")
+
+
+def _even_lines(tokens: list[str], widths: list[float], n: int) -> list[str] | None:
+    """Split tokens into ``n`` lines of near-equal width (dynamic programming). Breaking after
+    punctuation is rewarded; a line may not start with closing punctuation."""
+    T = len(tokens)
+    prefix = [0.0]
+    for w in widths:
+        prefix.append(prefix[-1] + w)
+    target = prefix[-1] / n
+    INF = math.inf
+    best = [[INF] * (n + 1) for _ in range(T + 1)]
+    back = [[0] * (n + 1) for _ in range(T + 1)]
+    best[0][0] = 0.0
+    for i in range(1, T + 1):
+        for k in range(1, min(n, i) + 1):
+            for j in range(k - 1, i):
+                if best[j][k - 1] == INF or (j > 0 and tokens[j].strip()[:1] in NO_LINE_START):
+                    continue
+                cost = ((prefix[i] - prefix[j] - target) / target) ** 2
+                if i < T and tokens[i - 1].strip()[-1:] in BREAK_AFTER:
+                    cost -= 0.12
+                if best[j][k - 1] + cost < best[i][k]:
+                    best[i][k], back[i][k] = best[j][k - 1] + cost, j
+    if best[T][n] == INF:
+        return None
+    lines, i = [], T
+    for k in range(n, 0, -1):
+        j = back[i][k]
+        lines.append("".join(tokens[j:i]).strip())
+        i = j
+    return lines[::-1]
+
+
 def balanced_wrap(text: str, font, max_width: float, ratio: float = 1.7) -> list[str]:
-    """Pick a line width so the text block is about ``ratio`` wide/high (fits an ellipse)."""
-    total = font.getlength(text)
-    line_h = font.size * 1.3
-    width = min(max_width, max(font.size * 3.2, math.sqrt(ratio * total * line_h)))
-    return wrap(text, font, width)
+    """Even lines whose block is about ``ratio`` wide/high (speech ellipses ~1.7, captions wider)."""
+    tokens = _tokens(text.strip())
+    if not tokens:
+        return []
+    widths = [font.getlength(t) for t in tokens]
+    total, line_h = sum(widths), font.size * 1.3
+    n = max(1, round(math.sqrt(total / (ratio * line_h))), math.ceil(total / max_width))
+    while n <= len(tokens):
+        lines = _even_lines(tokens, widths, n)
+        if lines and all(font.getlength(l) <= max_width for l in lines):
+            return lines
+        n += 1
+    return wrap(text, font, max_width)
 
 
 def text_block(lines: list[str], font, gap: int) -> tuple[int, int, list[float]]:
@@ -196,7 +239,12 @@ def place_bubbles(panel_id: str, panel_box, specs: list[dict], faces: list[dict]
         kind, text = spec["kind"], spec["text"]
         font = fonts["caption"] if kind == "caption" else fonts["sfx"] if kind == "sfx" else fonts["text"]
         max_w = style.max_text_width if kind in ("speech", "thought") else style.max_text_width + 120
-        lines = balanced_wrap(text, font, max_w) if kind in ("speech", "thought") else wrap(text, font, max_w)
+        if kind in ("speech", "thought"):
+            lines = balanced_wrap(text, font, max_w)
+        elif kind == "narration":
+            lines = balanced_wrap(text, font, max_w, ratio=5.0)
+        else:
+            lines = wrap(text, font, max_w)
         tw, th, _ = text_block(lines, font, style.line_gap)
         if kind in ("speech", "thought"):
             bw, bh = ellipse_size(lines, font, style.line_gap)

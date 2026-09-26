@@ -77,7 +77,7 @@ class BenchTests(unittest.TestCase):
             story_path.write_text(json.dumps(make_story(), ensure_ascii=False), encoding="utf-8")
             args = argparse.Namespace(
                 story=str(story_path), out=str(Path(tmp) / "bench"), approaches="baseline,hybrid", panels="p01,p04",
-                checkpoint="x.safetensors", sampling_steps=8, i2i_steps=6, denoise=0.5, strength=0.7, seed=1, workers=2, cloud_workers=2,
+                checkpoint="x.safetensors", sampling_steps=8, i2i_steps=6, denoise=0.5, strength=0.7, seed=1, workers=2, cloud_workers=2, pace=0,
                 server=f"http://127.0.0.1:{comfy.server_address[1]}", llm=f"http://127.0.0.1:{proxy.server_address[1]}/v1",
                 force=False)
             buf = io.StringIO()
@@ -102,6 +102,16 @@ class BenchTests(unittest.TestCase):
             self.assertEqual(submitted["14"]["inputs"]["steps"], 6)  # img2img uses its own step count
             meta = json.loads((out / "hybrid" / "cloud" / "p04.json").read_text(encoding="utf-8"))
             self.assertEqual((meta["mode"], meta["model"]), ("multi", "max"))
+            # the cloud drafts can be judged on their own (no local restyle)
+            args.approaches = "cloud"
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(bench.Bench(args).run(["judge", "report"]), 0)
+            cloud = json.loads((out / "metrics.json").read_text(encoding="utf-8"))["approaches"]["cloud"]
+            self.assertEqual(cloud["consistency"]["appearances"], 2)
+            self.assertEqual(cloud["timing"]["cloud"]["n"], 2)
+            args.approaches = "baseline,hybrid"
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(bench.Bench(args).run(["report"]), 0)
             report = (out / "REPORT.md").read_text(encoding="utf-8")
             self.assertIn("## 一致性", report)
             self.assertIn("| p04 |", report)

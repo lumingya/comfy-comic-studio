@@ -23,7 +23,12 @@ from . import prompts as P
 from . import script as S
 
 STEPS = ("sheets", "baseline", "cloud", "hybrid", "judge", "faces", "layout", "report", "contact")
-APPROACHES = ("baseline", "hybrid")
+APPROACHES = ("baseline", "hybrid", "cloud")
+# where each approach keeps its panels and the character sheets it is judged against
+DIRS = {"baseline": (("baseline", "panels"), ("baseline", "sheets")),
+        "hybrid": (("hybrid", "panels"), ("hybrid", "sheets")),
+        "cloud": (("hybrid", "cloud"), ("hybrid", "cloud", "sheets"))}
+LABELS = {"baseline": "基线（旧管线：只用标签）", "hybrid": "混合（云端定形 + 本地画风）", "cloud": "云端直出（混合的第一步）"}
 
 
 def log(msg: str) -> None:
@@ -54,7 +59,7 @@ class Bench:
     def llm(self):
         if self._llm is None:
             from .llm import Client
-            self._llm = Client(self.args.llm)
+            self._llm = Client(self.args.llm, pace=self.args.pace)
         return self._llm
 
     # -------------------------------------------------------------- files
@@ -72,6 +77,12 @@ class Bench:
     def meta(self, path: Path) -> dict:
         side = path.with_suffix(".json")
         return json.loads(side.read_text(encoding="utf-8")) if side.exists() else {}
+
+    def panel_path(self, approach: str, pid: str) -> Path:
+        return self.path(*DIRS[approach][0], f"{pid}.png")
+
+    def sheet_path(self, approach: str, cid: str) -> Path:
+        return self.path(*DIRS[approach][1], f"{cid}.png")
 
     def seed(self, panel_index: int) -> int:
         return self.args.seed + panel_index * 7
@@ -168,11 +179,11 @@ class Bench:
             target = self.path("judge", f"{approach}.json")
             if not self.todo(target):
                 continue
-            anchors = {ch["id"]: self.path(approach, "sheets", f"{ch['id']}.png").read_bytes() for ch in self.chars}
-            panels = [p for p in self.panels if self.path(approach, "panels", f"{p['id']}.png").exists()]
+            anchors = {ch["id"]: self.sheet_path(approach, ch["id"]).read_bytes() for ch in self.chars}
+            panels = [p for p in self.panels if self.panel_path(approach, p["id"]).exists()]
 
             def work(panel):
-                image = self.path(approach, "panels", f"{panel['id']}.png").read_bytes()
+                image = self.panel_path(approach, panel["id"]).read_bytes()
                 for attempt in range(2):
                     try:
                         return J.judge_panel(self.llm, self.story, panel, anchors, image)
@@ -192,10 +203,10 @@ class Bench:
             target = self.path("faces", f"{approach}.json")
             if not self.todo(target):
                 continue
-            panels = [p for p in self.panels if p["characters"] and self.path(approach, "panels", f"{p['id']}.png").exists()]
+            panels = [p for p in self.panels if p["characters"] and self.panel_path(approach, p["id"]).exists()]
 
             def work(panel):
-                data = self.path(approach, "panels", f"{panel['id']}.png").read_bytes()
+                data = self.panel_path(approach, panel["id"]).read_bytes()
                 size = imaging.open_image(data).size
                 try:
                     return panel["id"], J.locate_faces(self.llm, self.story, panel, data, size)
@@ -216,7 +227,7 @@ class Bench:
                 continue
             images = {}
             for p in self.panels:
-                path = self.path(approach, "panels", f"{p['id']}.png")
+                path = self.panel_path(approach, p["id"])
                 if path.exists():
                     images[p["id"]] = imaging.open_image(path.read_bytes())
             faces_path = self.path("faces", f"{approach}.json")
@@ -302,6 +313,9 @@ class Bench:
         if approach == "baseline":
             local = collect(("baseline", "panels"))
             return {"per_panel": stat(local), "local": stat(local), "sheets": stat(collect(("baseline", "sheets")))}
+        if approach == "cloud":
+            cloud = collect(("hybrid", "cloud"))
+            return {"per_panel": stat(cloud), "cloud": stat(cloud)}
         cloud, local = collect(("hybrid", "cloud")), collect(("hybrid", "panels"))
         models = {}
         for side in self.path("hybrid", "cloud").glob("*.json"):
@@ -341,20 +355,20 @@ def render_report(metrics: dict, story: dict) -> str:
     for name, entry in metrics["approaches"].items():
         c = entry.get("consistency")
         if c:
-            out.append(f"| {name} | {c['appearances']} | {c['passed']} | {_pct(c['pass_rate'])} | {c['identity_mean']} | "
+            out.append(f"| {LABELS.get(name, name)} | {c['appearances']} | {c['passed']} | {_pct(c['pass_rate'])} | {c['identity_mean']} | "
                        f"{_pct(c['feature_accuracy'])} | {c['missing']} | {c['extra_people']} | {c['scene_mean']} | {c['quality_mean']} |")
     out += ["", "分角色通过率：", ""]
     for name, entry in metrics["approaches"].items():
         c = entry.get("consistency")
         if c:
             parts = [f"{names.get(cid, cid)} {v['passed']}/{v['appearances']}" for cid, v in c["by_character"].items()]
-            out.append(f"- {name}：" + "，".join(parts))
+            out.append(f"- {LABELS.get(name, name)}：" + "，".join(parts))
     out += ["", "## 耗时", "", "| 策略 | 每格中位数 | 每格平均 | 云端中位数 | 本地中位数 | 格数 |", "|---|---|---|---|---|---|"]
     for name, entry in metrics["approaches"].items():
         t = entry["timing"]
         pp, cl, lo = t.get("per_panel", {}), t.get("cloud", {}), t.get("local", {})
-        out.append(f"| {name} | {pp.get('median', '—')} s | {pp.get('mean', '—')} s | {cl.get('median', '—') if cl else '—'} s | "
-                   f"{lo.get('median', '—')} s | {pp.get('n', 0)} |")
+        out.append(f"| {LABELS.get(name, name)} | {pp.get('median', '—')} s | {pp.get('mean', '—')} s | "
+                   f"{(str(cl.get('median', '—')) + ' s') if cl else '—'} | {(str(lo.get('median', '—')) + ' s') if lo else '—'} | {pp.get('n', 0)} |")
     hy = metrics["approaches"].get("hybrid", {}).get("timing", {})
     if hy.get("cloud_models"):
         out.append("")
@@ -363,9 +377,9 @@ def render_report(metrics: dict, story: dict) -> str:
     for name, entry in metrics["approaches"].items():
         lay = entry.get("layout")
         if lay:
-            out.append(f"| {name} | {lay['slices']} | {lay['height']} px | {lay['bubbles']} | {lay['bubbles_on_faces']} | "
+            out.append(f"| {LABELS.get(name, name)} | {lay['slices']} | {lay['height']} px | {lay['bubbles']} | {lay['bubbles_on_faces']} | "
                        f"{lay['total_bytes'] / 1e6:.1f} MB |")
-    out += ["", "## 逐格明细", "", "| 分格 | 景别 | 出场 | " + " | ".join(metrics["approaches"]) + " |",
+    out += ["", "## 逐格明细", "", "| 分格 | 景别 | 出场 | " + " | ".join(LABELS.get(a, a).split("（")[0] for a in metrics["approaches"]) + " |",
             "|---|---|---|" + "---|" * len(metrics["approaches"])]
     for panel in story["panels"]:
         cells = []
@@ -405,6 +419,7 @@ def add_parser(sub) -> None:
     p.add_argument("--seed", type=int, default=20260926)
     p.add_argument("--workers", type=int, default=2, help="视觉评审并发")
     p.add_argument("--cloud-workers", type=int, default=1, help="云端出图并发（反代账号会限流，默认串行）")
+    p.add_argument("--pace", type=float, default=3.0, help="反代请求之间的最小间隔（秒）")
     p.add_argument("--server", default=os.environ.get("MIO_COMFY_URL", "http://127.0.0.1:8188"))
     p.add_argument("--llm", default=DEFAULT_BASE)
     p.add_argument("--force", action="store_true")
