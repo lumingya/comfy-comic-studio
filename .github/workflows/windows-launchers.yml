@@ -13,6 +13,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Install the legacy runtime dependency (Pillow)
+        run: python -m pip install -r legacy/packaging/requirements.txt
       - name: Test launcher bytes and real CMD execution
         working-directory: legacy
         run: python -m unittest discover -s tests -p test_windows_launchers.py -v
