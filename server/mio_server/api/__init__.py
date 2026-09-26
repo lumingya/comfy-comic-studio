@@ -21,7 +21,7 @@ from ..pipeline.assistant import AssistantError
 from ..pipeline.render import RenderError
 from ..registry import RegistryError
 from ..storage import Conflict, NotFound
-from . import jobs, library, production, series, system
+from . import canvas, jobs, library, production, series, system
 
 API_VERSION = "1"
 WEB_DIST = Path(__file__).resolve().parents[3] / "web" / "dist"
@@ -63,7 +63,7 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
 
         return {"ok": True, "schema": SCHEMA_VERSION, "api": API_VERSION}
 
-    for module in (series, production, library, jobs, system):
+    for module in (series, production, canvas, library, jobs, system):
         app.include_router(module.router, prefix="/api")
 
     if serve_web and (WEB_DIST / "index.html").exists():
