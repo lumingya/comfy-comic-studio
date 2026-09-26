@@ -348,8 +348,8 @@ Job / Attempt：统一任务引擎（继承旧版的安全语义）
 
 ### Phase 0 · 止血（1–2 天）
 
-- [ ] 当前 main 打标签 `legacy-v3.2` 并推送。
-- [ ] 删除调试遗留：`jam_events.json`、`stream_generate_resp.txt`、`parse_stream.py`、`check_err.py`、`dump_blocks.py`。可以考虑用 `git filter-repo` 清理历史。
+- [x] 当前 main 打标签 `legacy-v3.2` 并推送。标签指向 `bd693b2`，代码与 `79ea9c0` 相同。
+- [x] 删除调试遗留：`jam_events.json`、`stream_generate_resp.txt`、`parse_stream.py`、`check_err.py`、`dump_blocks.py`。历史清理（`git filter-repo` 加强推）需要你决定，暂未执行。
 - [ ] 归档 `FIXES.md`、`SELECTION_CHANGES.md` 和过时的状态文档。生成的 HTML 文档移出版本库。
 - [ ] 新增 `AGENTS.md`：架构、命令、禁区和沙盒协作规范，并写明新栈的轻量验证命令。
 - [ ] **让 CI 变绿**：
