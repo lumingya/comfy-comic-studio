@@ -257,13 +257,24 @@ async def upload_asset(ctx: Ctx, request: Request, filename: str = "") -> Asset:
     return ctx.assets.put(data, source="upload", filename=filename)
 
 
+def _is_svg(data: bytes) -> bool:
+    """Pillow cannot read SVG, so imported vector art is stored as octet-stream."""
+    head = data[:2048].lstrip(b"\xef\xbb\xbf \t\r\n").lower()
+    return head.startswith(b"<svg") or (head.startswith(b"<?xml") and b"<svg" in head)
+
+
 @router.get("/assets/{asset_id}")
 def get_asset(ctx: Ctx, asset_id: str, thumb: int = 0) -> Response:
     asset = ctx.store.get_asset(asset_id)
     data = ctx.assets.read(asset_id)
     mime = asset.mime
-    if thumb and asset.mime.startswith("image/"):
+    headers = {"Cache-Control": "public, max-age=31536000, immutable"}
+    if mime == "application/octet-stream" and _is_svg(data):
+        # Served as an image so <img> renders it (no thumbnail: it scales anyway). The CSP keeps
+        # a directly opened SVG inert.
+        mime = "image/svg+xml"
+        headers["Content-Security-Policy"] = "default-src 'none'; style-src 'unsafe-inline'"
+        headers["X-Content-Type-Options"] = "nosniff"
+    elif thumb and mime.startswith("image/"):
         data, mime = imaging.thumbnail(data, max_side=max(64, min(thumb, 1024))), "image/jpeg"
-    return Response(
-        data, media_type=mime, headers={"Cache-Control": "public, max-age=31536000, immutable"}
-    )
+    return Response(data, media_type=mime, headers=headers)

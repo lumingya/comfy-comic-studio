@@ -107,6 +107,17 @@ class LibraryTests(ApiCase):
         self.assertEqual(thumb.headers["content-type"], "image/jpeg")
         self.assertEqual(self.client.post("/api/assets", content=b"").status_code, 400)
 
+    def test_svg_asset_is_served_as_an_image(self):
+        svg = (
+            b'<?xml version="1.0"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="4" height="4"/>'
+        )
+        asset = self.ok(self.client.post("/api/assets?filename=a.svg", content=svg), 201)
+        for query in ("", "?thumb=640"):
+            r = self.client.get(f"/api/assets/{asset['id']}{query}")
+            self.assertEqual(r.headers["content-type"], "image/svg+xml")
+            self.assertEqual(r.content, svg)
+            self.assertIn("default-src 'none'", r.headers["content-security-policy"])
+
 
 class JobsTests(ApiCase):
     def test_job_controls_and_websocket(self):
