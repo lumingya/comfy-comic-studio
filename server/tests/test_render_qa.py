@@ -45,7 +45,7 @@ class FakeCloudRenderer:
     def __init__(self, llm):
         pass
 
-    def panel(self, story, panel, sheets):
+    def panel(self, story, panel, sheets, **kwargs):
         return png((9, 9, 9)), {"model": "cloud", "mode": "shape"}
 
     def edit(self, image, instruction, refs=()):

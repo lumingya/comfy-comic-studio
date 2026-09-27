@@ -80,7 +80,8 @@ class HttpChannel:
 
     def generate_image(self, prompt: str, refs=(), models=None, timeout=360.0, retries=3):
         refs, failures, started = list(refs), [], time.monotonic()
-        for attempt in range(max(1, retries)):
+        attempts = max(1, retries)
+        for attempt in range(attempts):
             try:
                 with self.client(timeout) as http:
                     data = self._once(http, prompt, refs)
@@ -89,11 +90,13 @@ class HttpChannel:
                 reply.attempts = failures
                 return data, reply
             except httpx.ConnectError as exc:
-                raise L.LLMError(f"{self.what}连接失败：{exc}") from None
+                raise L.LLMError(f"{self.what}连接失败：{exc}", sent=False) from None
             except httpx.TimeoutException:
-                raise L.LLMError(f"{self.what}超时（{timeout:.0f}s）", None, True) from None
+                raise L.LLMError(
+                    f"{self.what}超时（{timeout:.0f}s）", None, True, sent=True
+                ) from None
             except L.LLMError as exc:
-                if not exc.retryable or attempt == retries - 1:
+                if not exc.retryable or attempt == attempts - 1:
                     exc.args = ("；".join([*failures, str(exc)]),)
                     raise
                 failures.append(str(exc))
@@ -130,9 +133,28 @@ class OpenAIImages(HttpChannel):
         if item.get("b64_json"):
             return base64.b64decode(item["b64_json"])
         if item.get("url"):
-            got = http.get(item["url"])
-            _raise_for(got, "下载图片")
-            return got.content
+            # Provider keys belong to the API origin, not to arbitrary image CDNs. Use a
+            # separate header set even on the first hop; httpx also strips auth on redirects.
+            request = http.build_request("GET", item["url"])
+            api_url, image_url = httpx.URL(base), request.url
+            if image_url.scheme not in ("http", "https"):
+                raise L.LLMError("图片已生成，但返回的下载地址不是 HTTP(S)", sent=True)
+            if (api_url.scheme, api_url.host, api_url.port) != (
+                image_url.scheme,
+                image_url.host,
+                image_url.port,
+            ):
+                request.headers.pop("authorization", None)
+                request.headers.pop("cookie", None)
+            try:
+                got = http.send(request, follow_redirects=True)
+                _raise_for(got, "下载图片")
+                return got.content
+            except L.LLMError as exc:
+                exc.sent, exc.retryable = True, False  # never regenerate an already-paid image
+                raise
+            except httpx.HTTPError as exc:
+                raise L.LLMError(f"图片已生成，但下载失败：{exc}", sent=True) from None
         raise L.LLMError(f"{self.what}没有返回图片", 200)
 
 
@@ -140,7 +162,7 @@ class NovelAI(HttpChannel):
     what = "NovelAI"
 
     def is_v4(self) -> bool:
-        return bool(re.search(r"diffusion-4", self.channel.model or ""))
+        return bool(re.search(r"diffusion-4", self.channel.model or "nai-diffusion-4-5-full"))
 
     def _once(self, http, prompt, refs):
         c = self.channel

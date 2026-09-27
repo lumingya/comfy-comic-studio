@@ -9,7 +9,7 @@ from __future__ import annotations
 from .. import imaging
 from ..comfy.compile import asset_value
 from ..jobs import COMFY, LOCAL, ItemSpec
-from ..models import Episode, Take, parse_ratio
+from ..models import Episode, Take, TakeStatus, parse_ratio
 from .compiler import compile_panel
 from .refs import select_references
 
@@ -168,55 +168,86 @@ class EditsMixin:
         )
 
     def _render_hybrid(
-        self, series, episode, profile, panel_ids, idempotency_key, priority, qa
+        self,
+        series,
+        episode,
+        profile,
+        panel_ids,
+        idempotency_key,
+        priority,
+        qa,
+        *,
+        candidates=None,
+        variant_ids=None,
+        adopt_first=False,
     ) -> dict:
-        from .story import to_story
+        from .story import apply_variant, to_story
 
-        story = to_story(series, episode)
         specs = []
-        for panel in episode.ordered_panels():
-            if panel_ids is not None and panel.id not in panel_ids:
-                continue
-            refs = select_references(series.bible, panel, include_scene=False)
-            sheets = {r.owner: r.asset_id for r in refs if r.owner != "manual"}
-            pv = next(p for p in story["panels"] if p["id"] == panel.id)
-            pp = compile_panel(
-                series,
-                episode,
-                panel,
-                dialect="tags",
-                quality=profile.quality_tags,
-                negative=profile.negative_tags,
-                rng=self.rng,
-            )
-            self.prompt_hook(pp, series, episode, panel)
-            meta = {
-                "episode_id": episode.id,
-                "panel_id": panel.id,
-                "variant_id": None,
-                "stage": "shape",
-                "seed": pp.seed,
-                "prompt": pp.positive,
-                "negative": pp.negative,
-                "profile_id": profile.id,
-                "width": pp.width,
-                "height": pp.height,
-                "refine": bool(profile.final or profile.draft[1:]),
-            }
-            specs.append(
-                ItemSpec(
-                    input={
-                        "mode": "shape",
-                        "story": story,
-                        "panel": pv,
-                        "sheets": sheets,
-                        "channel": profile.cloud_channel,
-                        "meta": meta,
-                    },
-                    resource=LOCAL,
-                    label=f"第 {panel.order + 1} 格 · 云端定形",
+        for variant in self._variants(series, variant_ids):
+            bible = apply_variant(series.bible, variant)
+            story = to_story(series, episode, variant)
+            for panel in episode.ordered_panels():
+                if panel_ids is not None and panel.id not in panel_ids:
+                    continue
+                prof = self.profile(
+                    panel.overrides.profile_id
+                    or (variant.profile_id if variant else None)
+                    or profile.id
                 )
-            )
+                if not prof.cloud_shape:
+                    raise RenderError("同一批任务不能混用本地与云端出图配置，请分开提交")
+                refs = select_references(bible, panel, include_scene=False)
+                sheets = {r.owner: r.asset_id for r in refs if r.owner != "manual"}
+                pv = next(p for p in story["panels"] if p["id"] == panel.id)
+                refine = any(s.enabled for s in (prof.final or prof.draft[1:]))
+                for k in range(candidates or prof.candidates):
+                    pp = compile_panel(
+                        series,
+                        episode,
+                        panel,
+                        dialect=prof.dialect,
+                        variant=variant,
+                        quality=prof.quality_tags,
+                        negative=prof.negative_tags,
+                        rng=self.rng,
+                    )
+                    self.prompt_hook(pp, series, episode, panel)
+                    meta = {
+                        "episode_id": episode.id,
+                        "panel_id": panel.id,
+                        "variant_id": variant.id if variant else None,
+                        "stage": "shape",
+                        "seed": pp.seed,
+                        "prompt": pp.positive,
+                        "negative": pp.negative,
+                        "profile_id": prof.id,
+                        "dialect": pp.dialect,
+                        "raw": pp.raw,
+                        "candidate": k,
+                        "width": pp.width,
+                        "height": pp.height,
+                        "refine": refine,
+                        # Queue progress counts adopted images: only mark the final output,
+                        # not an intermediate cloud shape that is still waiting for ComfyUI.
+                        "adopt_first": adopt_first and k == 0 and not refine,
+                        "refine_adopt_first": adopt_first and k == 0 and refine,
+                    }
+                    specs.append(
+                        ItemSpec(
+                            input={
+                                "mode": "shape",
+                                "story": story,
+                                "panel": pv,
+                                "sheets": sheets,
+                                "prompt": pp.positive,
+                                "channel": prof.cloud_channel,
+                                "meta": meta,
+                            },
+                            resource=LOCAL,
+                            label=f"第 {panel.order + 1} 格 · 云端定形 · 候选 {k + 1}",
+                        )
+                    )
         if not specs:
             raise RenderError("没有要出图的格")
         return self.engine.submit(
@@ -229,12 +260,14 @@ class EditsMixin:
             owner=episode.id,
         )
 
-    def refine_shape(self, episode_id: str, take_id: str, profile_id: str) -> dict | None:
+    def refine_shape(
+        self, episode_id: str, take_id: str, profile_id: str, *, adopt_first: bool = False
+    ) -> dict | None:
         """Hybrid second step: local style unification of a cloud-shaped take."""
         episode = self.store.get_episode(episode_id)
         take = episode.take(take_id)
         profile = self.store.get_doc("profile", profile_id)
-        chain = profile.final or profile.draft[1:]
+        chain = [s for s in (profile.final or profile.draft[1:]) if s.enabled]
         if take is None or not chain:
             return None
         snap = take.parameter_snapshot
@@ -257,6 +290,8 @@ class EditsMixin:
             "profile_id": profile.id,
             "parent_take_id": take.id,
             "edit": {"kind": "refine", "params": {"route": "hybrid"}},
+            "adopt_first": adopt_first,
+            "adopt": take.status == TakeStatus.adopted,
         }
         spec = ItemSpec(
             input={"stages": stages, "feeds": feeds, "meta": meta},

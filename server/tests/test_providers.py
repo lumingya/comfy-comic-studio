@@ -126,6 +126,14 @@ class NovelAITests(unittest.TestCase):
         self.assertEqual(p["reference_image_multiple"], [base64.b64encode(b"VIBE").decode()])
         self.assertNotIn("reference_information_extracted_multiple", p)
 
+    def test_default_novelai_model_uses_v4_parameters(self):
+        rec = Recorder(httpx.Response(200, content=png()))
+        PV.NovelAI(channel(kind="novelai", model=""), rec.transport()).generate_image("cat")
+        body = json.loads(rec.requests[0].content)
+        self.assertEqual(body["model"], "nai-diffusion-4-5-full")
+        self.assertIn("v4_prompt", body["parameters"])
+        self.assertIn("v4_negative_prompt", body["parameters"])
+
     def test_v3_raw_references(self):
         rec = Recorder(httpx.Response(200, content=png()))  # some proxies answer the PNG directly
         ch = channel(kind="novelai", model="nai-diffusion-3")

@@ -30,10 +30,18 @@ RETRYABLE_STATUS = (408, 409, 425, 429, 500, 502, 503, 504)
 
 
 class LLMError(RuntimeError):
-    def __init__(self, message: str, status: int | None = None, retryable: bool = False):
+    def __init__(
+        self,
+        message: str,
+        status: int | None = None,
+        retryable: bool = False,
+        *,
+        sent: bool | None = None,
+    ):
         super().__init__(message)
         self.status = status
         self.retryable = retryable
+        self.sent = sent  # None = unknown; False only when the request provably was not sent
 
 
 def retry_wait(message: str, attempt: int) -> float:
@@ -196,7 +204,13 @@ class Client:
                 f"HTTP {exc.code}: {body}", exc.code, exc.code in RETRYABLE_STATUS
             ) from None
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
-            raise LLMError(f"连接失败：{getattr(exc, 'reason', exc)}", None, True) from None
+            reason = getattr(exc, "reason", exc)
+            raise LLMError(
+                f"连接失败：{reason}",
+                None,
+                True,
+                sent=not isinstance(reason, ConnectionRefusedError),
+            ) from None
         except ValueError:
             raise LLMError("返回的不是 JSON", None, True) from None
 
@@ -244,6 +258,9 @@ class Client:
                     self._down.pop(model, None)
                     return reply
                 except LLMError as exc:
+                    if need_image and retries == 0:
+                        exc.args = (f"{model}: {exc}",)
+                        raise  # preserve delivery evidence for the image caller
                     failures.append(f"{model}: {exc}")
                     if exc.retryable and attempt == tries - 1 and self.cooldown:
                         self._down[model] = time.monotonic() + self.cooldown
@@ -251,6 +268,8 @@ class Client:
                         break
                     time.sleep(retry_wait(str(exc), attempt))
                 except (KeyError, IndexError, TypeError) as exc:
+                    if need_image and retries == 0:
+                        raise LLMError(f"{model}: 回复格式不对 {exc}", sent=True) from None
                     failures.append(f"{model}: 回复格式不对 {exc}")
                     break
         raise LLMError("全部模型失败：" + "；".join(failures))
@@ -322,6 +341,8 @@ class Client:
                 reply.attempts = failures + reply.attempts
                 return self.download(reply.images[0]), reply
             except LLMError as exc:
+                if retries == 0 and len(models) == 1:
+                    raise  # single-attempt paid request; keep status / delivery evidence
                 failures.append(str(exc))
         raise LLMError("出图失败：" + "；".join(failures))
 

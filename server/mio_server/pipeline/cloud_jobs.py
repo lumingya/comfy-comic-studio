@@ -27,26 +27,30 @@ class CloudExecutor:
         except LookupError as exc:
             raise ExecError(str(exc), kind="bad_input", sent=False) from None
         renderer = CloudRenderer(client)
-        ctx.mark_sent()
         try:
             if inp["mode"] == "shape":
                 sheets = {
                     cid: self.assets.read(aid) for cid, aid in (inp.get("sheets") or {}).items()
                 }
-                data, meta = renderer.panel(inp["story"], inp["panel"], sheets)
+                ctx.mark_sent()
+                data, meta = renderer.panel(
+                    inp["story"], inp["panel"], sheets, prompt=inp.get("prompt")
+                )
             elif inp["mode"] == "edit":
                 refs = [self.assets.read(a) for a in inp.get("refs") or []]
-                data, meta = renderer.edit(self.assets.read(inp["image"]), inp["instruction"], refs)
+                image = self.assets.read(inp["image"])
+                ctx.mark_sent()
+                data, meta = renderer.edit(image, inp["instruction"], refs)
             else:
                 raise ExecError(f"unknown cloud mode {inp['mode']}", kind="bad_input", sent=False)
         except L.LLMError as exc:
             definitive = (
                 exc.status is not None and 400 <= exc.status < 500 and exc.status not in (408, 429)
             )
-            refused = exc.status is None and "连" in str(exc)
-            raise ExecError(
-                str(exc), kind="cloud_error", sent=not (definitive or refused)
-            ) from None
+            # Error text is not evidence of delivery (a read timeout can say "connection").
+            # Adapters may prove an unsent connect failure or an already-generated download.
+            sent = exc.sent if exc.sent is not None else not definitive
+            raise ExecError(str(exc), kind="cloud_error", sent=sent) from None
         asset = self.assets.put(data, source=f"cloud:{meta.get('model')}")
         return {
             "images": [{"asset_id": asset.id, "width": asset.width, "height": asset.height}],
@@ -58,4 +62,9 @@ class CloudExecutor:
         created = self.render.apply_result(job, item, result)
         meta = result.get("meta") or {}
         if item["input"]["mode"] == "shape" and meta.get("refine") and created:
-            self.render.refine_shape(meta["episode_id"], created[0], meta["profile_id"])
+            self.render.refine_shape(
+                meta["episode_id"],
+                created[0],
+                meta["profile_id"],
+                adopt_first=bool(meta.get("refine_adopt_first")),
+            )

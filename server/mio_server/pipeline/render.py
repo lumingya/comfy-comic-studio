@@ -297,7 +297,16 @@ class RenderService(CompositionMixin, EditsMixin):
         profile = self.profile(profile_id, series)
         if profile.cloud_shape:
             return self._render_hybrid(
-                series, episode, profile, panel_ids, idempotency_key, priority, qa
+                series,
+                episode,
+                profile,
+                panel_ids,
+                idempotency_key,
+                priority,
+                qa,
+                candidates=candidates,
+                variant_ids=variant_ids,
+                adopt_first=adopt_first,
             )
         panels = [p for p in episode.ordered_panels() if panel_ids is None or p.id in panel_ids]
         if not panels:
@@ -311,6 +320,8 @@ class RenderService(CompositionMixin, EditsMixin):
                     or (variant.profile_id if variant else None)
                     or profile.id
                 )
+                if prof.cloud_shape:
+                    raise RenderError("同一批任务不能混用本地与云端出图配置，请分开提交")
                 specs += self.plan_panel(
                     series,
                     episode,
@@ -472,7 +483,7 @@ class RenderService(CompositionMixin, EditsMixin):
                     }
                     | {"instance": result.get("instance")},
                 )
-                if meta.get("adopt") and parent:
+                if meta.get("adopt") and parent and parent.status == TakeStatus.adopted:
                     for t in ep.takes:
                         if (
                             t.panel_id == take.panel_id
