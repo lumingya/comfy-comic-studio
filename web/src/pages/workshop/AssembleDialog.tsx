@@ -5,6 +5,7 @@ import { useProfiles, useSettings } from '../../api/system';
 import { useAssemble, useBoardVariables, useWorkshop, type Preset } from '../../api/workshop';
 import { Icon } from '../../app/icons';
 import { toast, toastError } from '../../components/toast';
+import { AssemblyCanvas, EMPTY_DESIGN, canvasTasks, type CanvasDesign } from './AssemblyCanvas';
 
 const STEPS = ['story', 'presets', 'name'] as const;
 
@@ -28,6 +29,10 @@ export default function AssembleDialog({
   const settings = useSettings();
   const collection = settings.data?.collection_title || t('classic.shelf.defaultTitle');
   const assemble = useAssemble();
+  const [mode, setMode] = useState<'wizard' | 'canvas'>('wizard');
+  const [design, setDesign] = useState<CanvasDesign>(EMPTY_DESIGN);
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [step, setStep] = useState(0);
   const [story, setStory] = useState(initialStory ?? '');
   const [profile, setProfile] = useState('');
@@ -86,6 +91,83 @@ export default function AssembleDialog({
     ref.current?.close?.();
     onClose();
   };
+  const changeDesign = (next: CanvasDesign) => {
+    setDesign(next);
+    setConfirming(false);
+  };
+  /** Canvas mode: one standby task per storyboard node, after an inline confirmation. */
+  const submitCanvas = async () => {
+    let tasks;
+    try {
+      tasks = canvasTasks(design, {
+        empty: t('ws.canvas.needStory'),
+        unlinked: t('ws.canvas.needPreset'),
+      });
+    } catch (e) {
+      toastError(e);
+      return;
+    }
+    if (!confirming) return setConfirming(true);
+    setBusy(true);
+    let done = 0;
+    try {
+      for (const task of tasks) {
+        await assemble.mutateAsync({ ...task, profile_id: profileId || null });
+        done += 1;
+      }
+      toast(t('ws.canvas.added', { count: done }));
+      close();
+    } catch (e) {
+      if (done) toast(t('ws.canvas.added', { count: done }));
+      toastError(e);
+      // Drop the nodes that already became tasks so a retry does not duplicate them.
+      const left = design.stories.slice(done);
+      setDesign({
+        ...design,
+        stories: left,
+        edges: design.edges.filter((x) => left.some((n) => n.id === x.story)),
+      });
+      setConfirming(false);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const environment = (
+    <section className="designer-card designer-environment">
+      <header className="designer-card-head">
+        <span className="designer-kicker">
+          {mode === 'canvas' ? t('ws.canvas.kEnv') : t('ws.assemble.kEnv')}
+        </span>
+        <h4>{t('ws.assemble.env')}</h4>
+      </header>
+      <div className="field">
+        <label className="label" htmlFor="designer-channel">
+          {t('ws.assemble.channel')}
+        </label>
+        <select id="designer-channel" value="comfyui" disabled>
+          <option value="comfyui">ComfyUI</option>
+        </select>
+      </div>
+      <div className="field">
+        <label className="label" htmlFor="designer-profile">
+          {t('ws.assemble.profile')}
+        </label>
+        <select
+          id="designer-profile"
+          value={profileId}
+          onChange={(e) => setProfile(e.target.value)}
+        >
+          <option value="">{t('ws.assemble.profileDefault')}</option>
+          {profileList.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+        <p className="help">{t('ws.assemble.profileHelp')}</p>
+      </div>
+    </section>
+  );
 
   return (
     <dialog
@@ -109,266 +191,288 @@ export default function AssembleDialog({
       <div className="modal-body">
         <div className="designer-head">
           <div className="designer-modes" role="group" aria-label={t('ws.assemble.mode')}>
-            <button type="button" className="btn active" aria-pressed="true">
-              <Icon name="list" sm />
-              {t('ws.assemble.wizard')}
-            </button>
+            {(['wizard', 'canvas'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                className={`btn ${mode === m ? 'active' : 'ghost'}`}
+                aria-pressed={mode === m}
+                onClick={() => {
+                  setMode(m);
+                  setConfirming(false);
+                }}
+              >
+                <Icon name={m === 'wizard' ? 'list' : 'nodes'} sm />
+                {t(m === 'wizard' ? 'ws.assemble.wizard' : 'ws.canvas.mode')}
+              </button>
+            ))}
           </div>
-          <p className="designer-head-note">{t('ws.assemble.note')}</p>
+          <p className="designer-head-note">
+            {mode === 'canvas' ? t('ws.canvas.note') : t('ws.assemble.note')}
+          </p>
         </div>
-        <div className="designer-workbench">
-          <aside className="designer-navigation">
-            <div className="designer-brand">
-              MIO <span>PRODUCTION STUDIO</span>
-            </div>
-            <h2>
-              {t('ws.assemble.brand1')}
-              <br />
-              {t('ws.assemble.brand2')}
-            </h2>
-            <p>
-              {t('ws.assemble.brandLede1')}
-              <br />
-              {t('ws.assemble.brandLede2')}
-            </p>
-            <ol className="assembly-stepper" aria-label={t('ws.assemble.steps')}>
-              {STEPS.map((s, i) => (
-                <li
-                  key={s}
-                  className={i === step ? 'active' : i < step ? 'done' : ''}
-                  aria-current={i === step ? 'step' : undefined}
-                >
-                  <b>{i < step ? <Icon name="check" sm /> : i + 1}</b>
-                  <span>{t(`ws.assemble.step.${s}`)}</span>
-                </li>
-              ))}
-            </ol>
-            <div className="designer-safety">
-              <Icon name="shield" sm /> {t('ws.assemble.safety1')}
-              <small>{t('ws.assemble.safety2')}</small>
-            </div>
-          </aside>
-          {step === 0 ? (
-            <section className="designer-step" data-step="0">
-              <header className="designer-step-head">
-                <h3>{t('ws.assemble.storyTitle')}</h3>
-                <p>{t('ws.assemble.storyLede')}</p>
-              </header>
+        {mode === 'canvas' ? (
+          <>
+            <div className="canvas-environment">
               <div className="designer-columns">
-                <div className="designer-main">
-                  <section className="designer-card">
-                    <header className="designer-card-head">
-                      <span className="designer-kicker">{t('ws.assemble.kStory')}</span>
-                      <h4>{t('ws.assemble.whichStory')}</h4>
-                    </header>
-                    <div className="field">
-                      <label className="label" htmlFor="designer-story">
-                        {t('ws.assemble.story')}
-                      </label>
-                      <select
-                        id="designer-story"
-                        value={storyId ?? ''}
-                        onChange={(e) => {
-                          setStory(e.target.value);
-                          setChosen(null);
-                          setTitle(null);
-                        }}
-                      >
-                        {items.map((b) => (
-                          <option key={b.id} value={b.id}>
-                            {b.title} · {t('ws.story.frames', { count: b.panel_count })}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </section>
-                  <section className="designer-card designer-environment">
-                    <header className="designer-card-head">
-                      <span className="designer-kicker">{t('ws.assemble.kEnv')}</span>
-                      <h4>{t('ws.assemble.env')}</h4>
-                    </header>
-                    <div className="field">
-                      <label className="label" htmlFor="designer-channel">
-                        {t('ws.assemble.channel')}
-                      </label>
-                      <select id="designer-channel" value="comfyui" disabled>
-                        <option value="comfyui">ComfyUI</option>
-                      </select>
-                    </div>
-                    <div className="field">
-                      <label className="label" htmlFor="designer-profile">
-                        {t('ws.assemble.profile')}
-                      </label>
-                      <select
-                        id="designer-profile"
-                        value={profileId}
-                        onChange={(e) => setProfile(e.target.value)}
-                      >
-                        <option value="">{t('ws.assemble.profileDefault')}</option>
-                        {profileList.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="help">{t('ws.assemble.profileHelp')}</p>
-                    </div>
-                  </section>
-                </div>
+                <div className="designer-main">{environment}</div>
               </div>
-            </section>
-          ) : step === 1 ? (
-            <section className="designer-step" data-step="1">
-              <header className="designer-step-head">
-                <h3>{t('ws.assemble.presetsTitle')}</h3>
-                <p>{t('ws.assemble.presetsLede')}</p>
-              </header>
-              {chosen === null && first ? (
-                <p className="designer-auto-note">
-                  <span>{t('ws.assemble.autoNote', { title: first.title })}</span>
-                </p>
-              ) : null}
-              <div className="designer-presets" role="group" aria-label={t('ws.assemble.presets')}>
-                {presets.map((p) => {
-                  const on = picked.includes(p.id!);
-                  const keys = p.entries.map((e) => e.key);
-                  return (
-                    <label key={p.id} className={`designer-preset${on ? ' selected' : ''}`}>
-                      <input type="checkbox" checked={on} onChange={() => toggle(p.id!)} />
-                      <span className="designer-preset-mark" aria-hidden="true" />
-                      <span className="designer-preset-icon">
-                        <Icon name="users" sm />
-                      </span>
-                      <span className="designer-preset-body">
-                        <strong>{p.title}</strong>
-                        <small>{t('ws.assemble.presetKind', { count: keys.length })}</small>
-                        <span className="designer-preset-keys">
-                          {keys.slice(0, 4).map((k) => (
-                            <code key={k}>{`{${k}}`}</code>
-                          ))}
-                          {keys.length > 4 ? <code>+{keys.length - 4}</code> : null}
-                        </span>
-                      </span>
-                    </label>
-                  );
-                })}
+            </div>
+            <AssemblyCanvas
+              design={design}
+              onChange={changeDesign}
+              boards={items}
+              presets={presets}
+            />
+          </>
+        ) : (
+          <div className="designer-workbench">
+            <aside className="designer-navigation">
+              <div className="designer-brand">
+                MIO <span>PRODUCTION STUDIO</span>
               </div>
-              <p className="help designer-presets-status" role="status">
-                {missing.length
-                  ? t('ws.assemble.coverMissing', {
-                      used: vars.length,
-                      picked: picked.length,
-                      covered: vars.length - missing.length,
-                      names: missing.map((m) => `{${m}}`).join('、'),
-                    })
-                  : t('ws.assemble.coverOk', {
-                      used: vars.length,
-                      picked: picked.length,
-                      covered: vars.length,
-                    })}
+              <h2>
+                {t('ws.assemble.brand1')}
+                <br />
+                {t('ws.assemble.brand2')}
+              </h2>
+              <p>
+                {t('ws.assemble.brandLede1')}
+                <br />
+                {t('ws.assemble.brandLede2')}
               </p>
-            </section>
-          ) : (
-            <section className="designer-step" data-step="2">
-              <header className="designer-step-head">
-                <h3>{t('ws.assemble.nameTitle')}</h3>
-                <p>{t('ws.assemble.nameLede')}</p>
-              </header>
-              <div className="designer-columns designer-naming">
-                <div className="designer-main">
-                  <section className="designer-card">
-                    <header className="designer-card-head">
-                      <span className="designer-kicker">{t('ws.assemble.kName')}</span>
-                      <h4>{t('ws.assemble.whatName')}</h4>
-                    </header>
-                    <div className="field">
-                      <label className="label" htmlFor="designer-title">
-                        {t('ws.assemble.albumName')}
-                      </label>
-                      <input
-                        id="designer-title"
-                        value={name}
-                        maxLength={150}
-                        placeholder={t('ws.assemble.albumNameHint')}
-                        onChange={(e) => setTitle(e.target.value)}
-                      />
-                    </div>
-                    <div className="field">
-                      <label className="label" htmlFor="designer-project">
-                        {t('ws.assemble.collection')}
-                      </label>
-                      <select id="designer-project" value="default" disabled>
-                        <option value="default">{collection}</option>
-                      </select>
-                      <div className="help">{t('ws.assemble.collectionHelp')}</div>
-                    </div>
-                  </section>
-                </div>
-                <aside className="designer-side">
-                  <section className="designer-card designer-summary-card">
-                    <header className="designer-card-head">
-                      <span className="designer-kicker">{t('ws.assemble.kCheck')}</span>
-                      <h4>{t('ws.assemble.summary')}</h4>
-                    </header>
-                    <dl className="designer-summary">
-                      <div className="designer-summary-row">
-                        <dt>{t('ws.assemble.story')}</dt>
-                        <dd>
-                          <span>{board?.title}</span>
-                          <small>{t('ws.story.frames', { count: board?.panel_count ?? 0 })}</small>
-                        </dd>
-                      </div>
-                      <div className="designer-summary-row">
-                        <dt>{t('ws.assemble.collection')}</dt>
-                        <dd>
-                          <span>{collection}</span>
-                        </dd>
-                      </div>
-                      <div className="designer-summary-row">
-                        <dt>{t('ws.assemble.channel')}</dt>
-                        <dd>ComfyUI</dd>
-                      </div>
-                      <div className="designer-summary-row">
-                        <dt>{t('ws.assemble.profile')}</dt>
-                        <dd>
-                          <span>{profileName}</span>
-                        </dd>
-                      </div>
-                      <div className="designer-summary-row is-chips">
-                        <dt>{t('ws.assemble.presets')}</dt>
-                        <dd>
-                          {presets
-                            .filter((p) => picked.includes(p.id!))
-                            .map((p) => (
-                              <span className="designer-summary-chip" key={p.id}>
-                                <span>{p.title}</span>
-                                <b>{t('ws.assemble.items', { count: p.entries.length })}</b>
-                              </span>
-                            ))}
-                        </dd>
-                      </div>
-                    </dl>
-                  </section>
-                </aside>
+              <ol className="assembly-stepper" aria-label={t('ws.assemble.steps')}>
+                {STEPS.map((s, i) => (
+                  <li
+                    key={s}
+                    className={i === step ? 'active' : i < step ? 'done' : ''}
+                    aria-current={i === step ? 'step' : undefined}
+                  >
+                    <b>{i < step ? <Icon name="check" sm /> : i + 1}</b>
+                    <span>{t(`ws.assemble.step.${s}`)}</span>
+                  </li>
+                ))}
+              </ol>
+              <div className="designer-safety">
+                <Icon name="shield" sm /> {t('ws.assemble.safety1')}
+                <small>{t('ws.assemble.safety2')}</small>
               </div>
-            </section>
-          )}
-        </div>
+            </aside>
+            {step === 0 ? (
+              <section className="designer-step" data-step="0">
+                <header className="designer-step-head">
+                  <h3>{t('ws.assemble.storyTitle')}</h3>
+                  <p>{t('ws.assemble.storyLede')}</p>
+                </header>
+                <div className="designer-columns">
+                  <div className="designer-main">
+                    <section className="designer-card">
+                      <header className="designer-card-head">
+                        <span className="designer-kicker">{t('ws.assemble.kStory')}</span>
+                        <h4>{t('ws.assemble.whichStory')}</h4>
+                      </header>
+                      <div className="field">
+                        <label className="label" htmlFor="designer-story">
+                          {t('ws.assemble.story')}
+                        </label>
+                        <select
+                          id="designer-story"
+                          value={storyId ?? ''}
+                          onChange={(e) => {
+                            setStory(e.target.value);
+                            setChosen(null);
+                            setTitle(null);
+                          }}
+                        >
+                          {items.map((b) => (
+                            <option key={b.id} value={b.id}>
+                              {b.title} · {t('ws.story.frames', { count: b.panel_count })}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </section>
+                    {environment}
+                  </div>
+                </div>
+              </section>
+            ) : step === 1 ? (
+              <section className="designer-step" data-step="1">
+                <header className="designer-step-head">
+                  <h3>{t('ws.assemble.presetsTitle')}</h3>
+                  <p>{t('ws.assemble.presetsLede')}</p>
+                </header>
+                {chosen === null && first ? (
+                  <p className="designer-auto-note">
+                    <span>{t('ws.assemble.autoNote', { title: first.title })}</span>
+                  </p>
+                ) : null}
+                <div
+                  className="designer-presets"
+                  role="group"
+                  aria-label={t('ws.assemble.presets')}
+                >
+                  {presets.map((p) => {
+                    const on = picked.includes(p.id!);
+                    const keys = p.entries.map((e) => e.key);
+                    return (
+                      <label key={p.id} className={`designer-preset${on ? ' selected' : ''}`}>
+                        <input type="checkbox" checked={on} onChange={() => toggle(p.id!)} />
+                        <span className="designer-preset-mark" aria-hidden="true" />
+                        <span className="designer-preset-icon">
+                          <Icon name="users" sm />
+                        </span>
+                        <span className="designer-preset-body">
+                          <strong>{p.title}</strong>
+                          <small>{t('ws.assemble.presetKind', { count: keys.length })}</small>
+                          <span className="designer-preset-keys">
+                            {keys.slice(0, 4).map((k) => (
+                              <code key={k}>{`{${k}}`}</code>
+                            ))}
+                            {keys.length > 4 ? <code>+{keys.length - 4}</code> : null}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <p className="help designer-presets-status" role="status">
+                  {missing.length
+                    ? t('ws.assemble.coverMissing', {
+                        used: vars.length,
+                        picked: picked.length,
+                        covered: vars.length - missing.length,
+                        names: missing.map((m) => `{${m}}`).join('、'),
+                      })
+                    : t('ws.assemble.coverOk', {
+                        used: vars.length,
+                        picked: picked.length,
+                        covered: vars.length,
+                      })}
+                </p>
+              </section>
+            ) : (
+              <section className="designer-step" data-step="2">
+                <header className="designer-step-head">
+                  <h3>{t('ws.assemble.nameTitle')}</h3>
+                  <p>{t('ws.assemble.nameLede')}</p>
+                </header>
+                <div className="designer-columns designer-naming">
+                  <div className="designer-main">
+                    <section className="designer-card">
+                      <header className="designer-card-head">
+                        <span className="designer-kicker">{t('ws.assemble.kName')}</span>
+                        <h4>{t('ws.assemble.whatName')}</h4>
+                      </header>
+                      <div className="field">
+                        <label className="label" htmlFor="designer-title">
+                          {t('ws.assemble.albumName')}
+                        </label>
+                        <input
+                          id="designer-title"
+                          value={name}
+                          maxLength={150}
+                          placeholder={t('ws.assemble.albumNameHint')}
+                          onChange={(e) => setTitle(e.target.value)}
+                        />
+                      </div>
+                      <div className="field">
+                        <label className="label" htmlFor="designer-project">
+                          {t('ws.assemble.collection')}
+                        </label>
+                        <select id="designer-project" value="default" disabled>
+                          <option value="default">{collection}</option>
+                        </select>
+                        <div className="help">{t('ws.assemble.collectionHelp')}</div>
+                      </div>
+                    </section>
+                  </div>
+                  <aside className="designer-side">
+                    <section className="designer-card designer-summary-card">
+                      <header className="designer-card-head">
+                        <span className="designer-kicker">{t('ws.assemble.kCheck')}</span>
+                        <h4>{t('ws.assemble.summary')}</h4>
+                      </header>
+                      <dl className="designer-summary">
+                        <div className="designer-summary-row">
+                          <dt>{t('ws.assemble.story')}</dt>
+                          <dd>
+                            <span>{board?.title}</span>
+                            <small>
+                              {t('ws.story.frames', { count: board?.panel_count ?? 0 })}
+                            </small>
+                          </dd>
+                        </div>
+                        <div className="designer-summary-row">
+                          <dt>{t('ws.assemble.collection')}</dt>
+                          <dd>
+                            <span>{collection}</span>
+                          </dd>
+                        </div>
+                        <div className="designer-summary-row">
+                          <dt>{t('ws.assemble.channel')}</dt>
+                          <dd>ComfyUI</dd>
+                        </div>
+                        <div className="designer-summary-row">
+                          <dt>{t('ws.assemble.profile')}</dt>
+                          <dd>
+                            <span>{profileName}</span>
+                          </dd>
+                        </div>
+                        <div className="designer-summary-row is-chips">
+                          <dt>{t('ws.assemble.presets')}</dt>
+                          <dd>
+                            {presets
+                              .filter((p) => picked.includes(p.id!))
+                              .map((p) => (
+                                <span className="designer-summary-chip" key={p.id}>
+                                  <span>{p.title}</span>
+                                  <b>{t('ws.assemble.items', { count: p.entries.length })}</b>
+                                </span>
+                              ))}
+                          </dd>
+                        </div>
+                      </dl>
+                    </section>
+                  </aside>
+                </div>
+              </section>
+            )}
+          </div>
+        )}
         <div className="modal-footer designer-footer">
           <span className="designer-footer-hint">
-            {t('ws.assemble.stepOf', { n: step + 1, total: STEPS.length })}
+            {mode === 'canvas'
+              ? t('ws.canvas.footer', {
+                  stories: design.stories.length,
+                  edges: design.edges.length,
+                })
+              : t('ws.assemble.stepOf', { n: step + 1, total: STEPS.length })}
           </span>
           <span className="grow" />
           <button type="button" className="btn ghost" onClick={close}>
             {t('ws.cancel')}
           </button>
-          {step > 0 ? (
+          {mode === 'canvas' ? (
+            <button
+              type="button"
+              className="btn primary"
+              disabled={!design.stories.length || busy}
+              title={design.stories.length ? undefined : t('ws.canvas.needStory')}
+              onClick={() => void submitCanvas()}
+            >
+              <Icon name="plus" />
+              {confirming
+                ? t('ws.canvas.confirm', { count: design.stories.length })
+                : t('ws.canvas.submit')}
+            </button>
+          ) : step > 0 ? (
             <button type="button" className="btn" onClick={() => setStep(step - 1)}>
               <Icon name="arrow" className="is-back" />
               {t('ws.assemble.prev')}
             </button>
           ) : null}
-          {step < STEPS.length - 1 ? (
+          {mode === 'canvas' ? null : step < STEPS.length - 1 ? (
             <button
               type="button"
               className="btn primary"
