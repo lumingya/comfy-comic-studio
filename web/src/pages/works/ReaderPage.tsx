@@ -253,7 +253,8 @@ export default function ReaderPage() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (panel || (e.target as HTMLElement).closest('input, textarea, select')) return;
+      if (!nativeStage || panel || (e.target as HTMLElement).closest('input, textarea, select'))
+        return;
       if (e.key === 'ArrowRight' || e.key === 'PageDown') step(1);
       else if (e.key === 'ArrowLeft' || e.key === 'PageUp') step(-1);
       else return;
@@ -327,6 +328,9 @@ export default function ReaderPage() {
   // What the stage shows while the drawer is open: the template, the platform cuts or motion setup.
   const drawerStage =
     panel !== 'export' ? '' : motionOpen && studio ? 'motion' : platformOpen ? 'platform' : '';
+  // Reading mode, paging and the filmstrip drive the native stage only; templates, platform cuts,
+  // motion and layout render elsewhere, where those controls would silently do nothing.
+  const nativeStage = native && !drawerStage && panel !== 'layout';
   const context =
     episode.data && series.data
       ? ({ episode: episode.data, series: series.data } satisfies EpisodeContext)
@@ -524,13 +528,13 @@ export default function ReaderPage() {
             </div>
           </div>
         )}
-        {cur && !info ? (
+        {cur && !info && nativeStage ? (
           <button type="button" className="room-open-details" onClick={() => setInfo(true)}>
             <Icon name="eye" sm />
             {t('reader.info')}
           </button>
         ) : null}
-        {cur ? (
+        {cur && nativeStage ? (
           <aside className="room-info" id="room-info" hidden={!info} aria-label={t('reader.info')}>
             <h3>{cur.title || t('reader.pageN', { n: current + 1 })}</h3>
             <p>{cur.caption || t('reader.noCaption')}</p>
@@ -540,7 +544,7 @@ export default function ReaderPage() {
       <div
         className="room-filmstrip"
         id="room-filmstrip"
-        hidden={!film}
+        hidden={!film || !nativeStage}
         aria-label={t('reader.film')}
       >
         {pages.map((p, i) => (
@@ -564,69 +568,79 @@ export default function ReaderPage() {
         </div>
       ) : null}
       <footer className="room-footer">
-        <span className="native-reading-controls">
-          {READING_MODES.map((m) => (
+        {nativeStage ? (
+          <>
+            <span className="native-reading-controls">
+              {READING_MODES.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  data-mode={m}
+                  aria-pressed={mode === m}
+                  onClick={() => setModeSaved(m)}
+                >
+                  {t(`reader.mode.${m}`)}
+                </button>
+              ))}
+            </span>
+            <span className="spacer" />
+            <div className="room-pagination">
+              <button
+                type="button"
+                className="ibtn"
+                title={t('reader.prev')}
+                aria-label={t('reader.prev')}
+                disabled={first <= 0}
+                onClick={() => step(-1)}
+              >
+                <Icon name="up" />
+              </button>
+              <span className="page-label" id="page-position">
+                {String(pages.length ? first + 1 : 0).padStart(2, '0')}
+                {range > 1 ? `–${String(first + range).padStart(2, '0')}` : ''} /{' '}
+                {String(pages.length).padStart(2, '0')}
+              </span>
+              <button
+                type="button"
+                className="ibtn"
+                title={t('reader.next')}
+                aria-label={t('reader.next')}
+                disabled={first + range >= pages.length}
+                onClick={() => step(1)}
+              >
+                <Icon name="down" />
+              </button>
+            </div>
+            <span className="spacer" />
+          </>
+        ) : (
+          <span className="spacer" />
+        )}
+        <span className="room-scene-title">{nativeStage ? cur?.title : null}</span>
+        {nativeStage ? (
+          <>
             <button
-              key={m}
               type="button"
-              data-mode={m}
-              aria-pressed={mode === m}
-              onClick={() => setModeSaved(m)}
+              className="ibtn"
+              title={t('reader.film')}
+              aria-label={t('reader.film')}
+              aria-pressed={film}
+              onClick={() => setFilm(!film)}
             >
-              {t(`reader.mode.${m}`)}
+              <Icon name="list" />
             </button>
-          ))}
-        </span>
-        <span className="spacer" />
-        <div className="room-pagination">
-          <button
-            type="button"
-            className="ibtn"
-            title={t('reader.prev')}
-            aria-label={t('reader.prev')}
-            disabled={first <= 0}
-            onClick={() => step(-1)}
-          >
-            <Icon name="up" />
-          </button>
-          <span className="page-label" id="page-position">
-            {String(pages.length ? first + 1 : 0).padStart(2, '0')}
-            {range > 1 ? `–${String(first + range).padStart(2, '0')}` : ''} /{' '}
-            {String(pages.length).padStart(2, '0')}
-          </span>
-          <button
-            type="button"
-            className="ibtn"
-            title={t('reader.next')}
-            aria-label={t('reader.next')}
-            disabled={first + range >= pages.length}
-            onClick={() => step(1)}
-          >
-            <Icon name="down" />
-          </button>
-        </div>
-        <span className="spacer" />
-        <span className="room-scene-title">{cur?.title}</span>
-        <button
-          type="button"
-          className="ibtn"
-          title={t('reader.film')}
-          aria-label={t('reader.film')}
-          aria-pressed={film}
-          onClick={() => setFilm(!film)}
-        >
-          <Icon name="list" />
-        </button>
-        <button
-          type="button"
-          className="ibtn"
-          title={t('reader.info')}
-          aria-label={t('reader.info')}
-          aria-pressed={info}
-          onClick={() => setInfo(!info)}
-        >
-          <Icon name="help" />
-        </button>
+            <button
+              type="button"
+              className="ibtn"
+              title={t('reader.info')}
+              aria-label={t('reader.info')}
+              aria-pressed={info}
+              onClick={() => setInfo(!info)}
+            >
+              <Icon name="help" />
+            </button>
+          </>
+        ) : null}
       </footer>
       <PresentationDrawer
         open={panel === 'export'}
