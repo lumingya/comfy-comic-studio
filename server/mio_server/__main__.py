@@ -23,6 +23,7 @@ from . import __version__
 from .api import create_app
 from .api.guard import host_allowed
 from .context import AppContext, default_data_dir
+from .importer import seed_albums
 
 
 def browser_host(host: str) -> str:
@@ -92,6 +93,10 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
     trust_host(args.host)
     ctx = AppContext.create(args.data)
+    try:
+        seed_albums(ctx)
+    except Exception:  # never block start-up on the legacy data
+        logging.getLogger("mio").exception("legacy album import failed")
     print(f"[mio] {url}", flush=True)
     if args.open:
         threading.Thread(

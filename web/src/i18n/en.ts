@@ -76,8 +76,9 @@ const en: Widen<Dict> = {
     importBundle: 'Import .mio.zip',
     importLegacy: 'Import legacy data',
     legacyHint:
-      'Reads storyboards, character presets and workflows from the old data/ folder. Safe to repeat.',
-    legacyFound: 'Found {{storyboards}} storyboards, {{presets}} presets, {{workflows}} workflows',
+      'Reads albums (with their images), storyboards, character presets and workflows from the old data/ folder. Safe to repeat.',
+    legacyFound:
+      'Found {{albums}} albums, {{storyboards}} storyboards, {{presets}} presets, {{workflows}} workflows',
     imported: 'Imported {{count}} works',
     episodes: '{{count}} episodes',
     characters: '{{count}} characters',

@@ -72,8 +72,10 @@ const zh = {
     subtitle: '副标题',
     importBundle: '导入 .mio.zip',
     importLegacy: '导入旧版数据',
-    legacyHint: '从旧版 data/ 目录读取分镜、角色预设和工作流，重复导入不会生成重复作品。',
-    legacyFound: '找到：{{storyboards}} 个分镜，{{presets}} 个角色预设，{{workflows}} 个工作流',
+    legacyHint:
+      '从旧版 data/ 目录读取画册（连同图片）、分镜、角色预设和工作流，重复导入不会生成重复作品。',
+    legacyFound:
+      '找到：{{albums}} 本画册，{{storyboards}} 个分镜，{{presets}} 个角色预设，{{workflows}} 个工作流',
     imported: '已导入 {{count}} 部作品',
     episodes: '{{count}} 集',
     characters: '{{count}} 个角色',

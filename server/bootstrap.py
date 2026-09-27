@@ -8,6 +8,12 @@ Dependencies are (re)installed when the hash of ``requirements.txt`` differs fro
 environment, **or** when any required module cannot be imported, so a stale stamp, an interrupted
 install or a hand-edited environment cannot leave the server without its packages.  Exit code 0
 means the server can start; anything else is an error that has already been explained on stderr.
+
+It then keeps the web UI current: when ``web/src`` (or the build config) is newer than
+``web/dist/index.html``, it runs ``npm run build`` (``npm ci`` first if ``node_modules`` is
+missing), so ``start.bat`` always shows the frontend in the working tree.  That step never blocks
+start-up: without Node.js, or if the build fails, the previous ``web/dist`` is served.  Set
+``MIO_SKIP_WEB_BUILD=1`` to turn it off.
 """
 
 from __future__ import annotations
@@ -16,6 +22,7 @@ import hashlib
 import importlib
 import importlib.util
 import os
+import shutil
 import subprocess
 import sys
 from collections.abc import Callable, Iterable
@@ -23,6 +30,9 @@ from pathlib import Path
 
 MIN_PYTHON = (3, 11)
 REQUIREMENTS = Path(__file__).resolve().with_name("requirements.txt")
+WEB = Path(__file__).resolve().parents[1] / "web"
+# What a UI build depends on, besides web/src.
+WEB_INPUTS = ("index.html", "package.json", "package-lock.json", "vite.config.ts", "tsconfig.json")
 # import name -> distribution name, one per line of requirements.txt
 MODULES = {
     "fastapi": "fastapi",
@@ -92,10 +102,64 @@ def ensure(
     return 0
 
 
+def newest_source(web: Path) -> float:
+    """Latest mtime among the UI sources (0 when this is not a source checkout)."""
+    src = web / "src"
+    if not src.is_dir():
+        return 0.0
+    times = [p.stat().st_mtime for p in src.rglob("*") if p.is_file()]
+    times += [(web / n).stat().st_mtime for n in WEB_INPUTS if (web / n).is_file()]
+    return max(times, default=0.0)
+
+
+def web_is_stale(web: Path = WEB) -> bool:
+    newest = newest_source(web)
+    if not newest:
+        return False
+    index = web / "dist" / "index.html"
+    return not index.is_file() or index.stat().st_mtime < newest
+
+
+def npm_run(web: Path, *args: str) -> int:
+    npm = shutil.which("npm")
+    if not npm:
+        return 127
+    return subprocess.call([npm, *args], cwd=web)
+
+
+def ensure_web(
+    web: Path = WEB,
+    *,
+    run: Callable[..., int] = npm_run,
+    have_npm: Callable[[], bool] = lambda: shutil.which("npm") is not None,
+) -> int:
+    """Rebuild ``web/dist`` when the sources are newer.  Returns 0 unless a build was tried and
+    failed (start-up goes on either way)."""
+    if os.environ.get("MIO_SKIP_WEB_BUILD") == "1" or not web_is_stale(web):
+        return 0
+    if not have_npm():
+        say("界面源码比 web/dist 新，但没找到 Node.js（npm），继续使用旧的界面。")
+        say("安装 Node.js 20+ 后重新运行启动脚本即可自动构建：https://nodejs.org/")
+        return 0
+    if not (web / "node_modules").is_dir():
+        say("正在安装界面依赖（npm ci），首次需要一两分钟 ...")
+        if run(web, "ci", "--no-audit", "--no-fund") != 0:
+            say("界面依赖安装失败，继续使用旧的界面（错误信息见上方）。")
+            return 1
+    say("界面有更新，正在构建 web/dist ...")
+    if run(web, "run", "build") != 0:
+        say("界面构建失败，继续使用旧的界面（错误信息见上方）。")
+        return 1
+    return 0
+
+
 def main() -> int:
     for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(errors="backslashreplace")  # legacy console code pages
-    return ensure()
+    code = ensure()
+    if code == 0:
+        ensure_web()
+    return code
 
 
 if __name__ == "__main__":

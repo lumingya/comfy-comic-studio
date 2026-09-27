@@ -7,9 +7,10 @@ import unittest
 from pathlib import Path
 
 from mio_server.comfy.compile import BUILTINS
+from mio_server.importer import seed_albums
 
 from .api_harness import WS, ApiCase, FakeLLM
-from .legacy_fixture import copy_shipped_legacy
+from .legacy_fixture import LEGACY_KINDS, copy_shipped_legacy
 from .test_compile_executor import png
 
 GRAPH = {
@@ -173,6 +174,51 @@ class BundleLegacyAssistantTests(ApiCase):
         self.assertEqual(again["series"], [])
         missing = self.client.get("/api/legacy/scan", params={"root": str(root / "nope")})
         self.assertEqual(missing.status_code, 400)
+
+    def test_first_start_brings_over_the_legacy_shelf(self):
+        root = Path(self.tmp) / "legacy"
+        copy_shipped_legacy(root, kinds=(*LEGACY_KINDS, "albums", "settings"))
+        self.ok(self.client.patch("/api/settings", json={"collection_title": "遇见你，真好"}))
+        report = seed_albums(self.ctx, root)
+        self.assertEqual(len(report.albums), 1)
+        [card] = self.ok(self.client.get("/api/series"))
+        self.assertEqual(card["title"], "海风与未寄出的信")
+        self.assertTrue(card["subtitle"].startswith("那些没说出口的话"))
+        self.assertEqual((card["panel_count"], card["adopted_count"]), (1, 1))
+        self.assertEqual((card["status"], card["cover_auto"]), ("archived", True))
+        self.assertTrue(card["created_at"].startswith("2026-09-13"))
+        self.assertEqual(card["bible"]["characters"][0]["name"], "七海")
+        cover = self.client.get(f"/api/assets/{card['cover_asset_id']}")
+        self.assertEqual(cover.status_code, 200)
+        [ep] = self.ok(self.client.get(f"/api/series/{card['id']}/episodes"))["items"]
+        episode = self.ok(self.client.get(f"/api/episodes/{ep['id']}"))
+        self.assertEqual(
+            episode["panels"][0]["dialogues"][0]["text"], "夏日的风经过窗边，故事还没有名字。"
+        )
+        settings = self.ok(self.client.get("/api/settings"))
+        self.assertEqual(
+            (settings["collection_title"], settings["legacy_seeded"]), ("遇见你，真好", True)
+        )
+        # Only once: a trashed or renamed shelf is not brought back on the next start.
+        self.ok(self.client.delete(f"/api/series/{card['id']}"), 204)
+        self.assertIsNone(seed_albums(self.ctx, root))
+        self.assertEqual(self.ok(self.client.get("/api/series")), [])
+        # The manual import knows the book is already there.
+        again = self.ok(self.client.post("/api/legacy/import", json={"root": str(root)}))
+        self.assertEqual(again["albums"], [])
+        self.assertEqual(
+            self.ok(self.client.get("/api/legacy/scan", params={"root": str(root)}))["albums"], 1
+        )
+
+    def test_first_start_takes_the_legacy_collection_name(self):
+        root = Path(self.tmp) / "legacy"
+        (root / "albums").mkdir(parents=True)
+        (root / "collections").mkdir()
+        (root / "collections" / "a.json").write_text(
+            '{"id": "c1", "title": "夏夜合集", "kind": "collections"}', encoding="utf-8"
+        )
+        seed_albums(self.ctx, root)
+        self.assertEqual(self.ok(self.client.get("/api/settings"))["collection_title"], "夏夜合集")
 
     def test_assistant_propose_then_apply(self):
         _, ep = self.make_episode()

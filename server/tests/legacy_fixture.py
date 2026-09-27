@@ -18,11 +18,13 @@ def mangle(name: str) -> str:
     return "".join(c if ord(c) < 128 else f"#U{ord(c):04x}" for c in name)
 
 
-def copy_shipped_legacy(dest: Path, source: Path | None = None) -> Path:
+def copy_shipped_legacy(
+    dest: Path, source: Path | None = None, kinds: tuple[str, ...] = LEGACY_KINDS
+) -> Path:
     source = source or REPO / "data"
     manifest = json.loads((source / "distribution.json").read_text(encoding="utf-8"))
     for rel in manifest["files"]:
-        if not rel.startswith(tuple(k + "/" for k in LEGACY_KINDS)):
+        if not rel.startswith(tuple(k + "/" for k in kinds)):
             continue
         src = source / rel
         if not src.exists():

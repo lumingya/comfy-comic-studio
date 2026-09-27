@@ -44,6 +44,7 @@ export function LegacyImportDialog(props: { open: boolean; onOpenChange: (o: boo
         <div className="col">
           <div className="notice">
             {t('works.legacyFound', {
+              albums: counts.albums ?? 0,
               storyboards: counts.storyboards ?? 0,
               presets: counts['presets/characters'] ?? 0,
               workflows: counts.workflows ?? 0,

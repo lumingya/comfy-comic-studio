@@ -217,6 +217,8 @@ export interface AppSettings {
   theme: string;
   /** The works shelf (画册集) name; defaults to 遇见你，真好 on the server. */
   collection_title?: string;
+  /** The legacy books were brought over on first start. */
+  legacy_seeded?: boolean;
 }
 
 export interface StripReport {

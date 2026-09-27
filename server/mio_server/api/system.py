@@ -11,14 +11,13 @@ from pydantic import BaseModel
 
 from .. import bundle as B
 from .. import settings as SET
-from ..importer import LegacyImporter
+from ..importer import LEGACY_ROOT, LegacyImporter
 from ..models import now_iso
 from .deps import Ctx
 from .library import BINARY_BODY, read_body
 
 router = APIRouter(tags=["system"])
 MAX_BUNDLE = 1024 * 1024 * 1024
-LEGACY_ROOT = Path(__file__).resolve().parents[3] / "data"
 
 
 class LegacyRequest(BaseModel):
@@ -88,7 +87,7 @@ def _legacy(ctx, root: str | None) -> LegacyImporter:
     path = Path(root) if root else LEGACY_ROOT
     if not path.is_dir():
         raise ValueError(f"找不到旧版数据目录：{path}")
-    return LegacyImporter(ctx.store, path)
+    return LegacyImporter(ctx.store, path, ctx.assets)
 
 
 @router.get("/legacy/scan")

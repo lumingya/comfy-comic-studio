@@ -354,3 +354,80 @@ class LauncherExecutionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class WebBuildTests(unittest.TestCase):
+    """bootstrap.ensure_web: rebuild web/dist only when the UI sources are newer."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.web = Path(tmp.name) / "web"
+        (self.web / "src").mkdir(parents=True)
+        (self.web / "node_modules").mkdir()
+        self.source = self.web / "src" / "main.tsx"
+        self.source.write_text("x", encoding="utf-8")
+        self.calls: list[tuple[str, ...]] = []
+        self.rc = 0
+        self.said: list[str] = []
+        for patcher in (
+            mock.patch.object(bootstrap, "say", self.said.append),
+            mock.patch.dict(os.environ, {"MIO_SKIP_WEB_BUILD": ""}),
+        ):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def run_web(self, npm=True):
+        def run(web, *args):
+            self.assertEqual(web, self.web)
+            self.calls.append(args)
+            if args == ("run", "build") and self.rc == 0:
+                (web / "dist").mkdir(exist_ok=True)
+                (web / "dist" / "index.html").write_text("<html>", encoding="utf-8")
+            return self.rc
+
+        return bootstrap.ensure_web(self.web, run=run, have_npm=lambda: npm)
+
+    def age(self, path: Path, seconds: int):
+        t = path.stat().st_mtime - seconds
+        os.utime(path, (t, t))
+
+    def test_missing_dist_is_built(self):
+        self.assertEqual(self.run_web(), 0)
+        self.assertEqual(self.calls, [("run", "build")])
+
+    def test_fresh_dist_is_left_alone(self):
+        self.run_web()
+        self.age(self.source, 60)
+        self.calls.clear()
+        self.assertEqual(self.run_web(), 0)
+        self.assertEqual(self.calls, [])
+
+    def test_newer_source_rebuilds(self):
+        self.run_web()
+        self.age(self.web / "dist" / "index.html", 60)
+        self.calls.clear()
+        self.run_web()
+        self.assertEqual(self.calls, [("run", "build")])
+
+    def test_installs_dependencies_first(self):
+        (self.web / "node_modules").rmdir()
+        self.run_web()
+        self.assertEqual(self.calls, [("ci", "--no-audit", "--no-fund"), ("run", "build")])
+
+    def test_no_node_or_failed_build_never_blocks_start(self):
+        self.assertEqual(self.run_web(npm=False), 0)
+        self.assertEqual(self.calls, [])
+        self.assertIn("Node.js", self.said[0])
+        self.rc = 1
+        self.assertEqual(self.run_web(), 1)
+        self.assertFalse((self.web / "dist" / "index.html").exists())
+
+    def test_release_without_sources_and_opt_out(self):
+        shutil.rmtree(self.web / "src")
+        self.assertFalse(bootstrap.web_is_stale(self.web))
+        (self.web / "src").mkdir()
+        self.source.write_text("x", encoding="utf-8")
+        with mock.patch.dict(os.environ, {"MIO_SKIP_WEB_BUILD": "1"}):
+            self.run_web()
+        self.assertEqual(self.calls, [])

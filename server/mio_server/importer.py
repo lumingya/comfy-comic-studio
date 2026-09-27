@@ -7,7 +7,12 @@
   kept verbatim, variables included), size / seed / steps / cfg / denoise carried over, legacy
   ``nodeOverrides`` (keyed by binding id) turned into JSON Pointer overrides;
 * workflows → :class:`WorkflowDoc` with the legacy mapping / bindings as JSON Pointer mappings,
-  fixed-value bindings as overrides and the ``workflow_slots`` plan preserved.
+  fixed-value bindings as overrides and the ``workflow_slots`` plan preserved;
+* albums (finished books, ``albums/<name>/album.json`` plus ``images/``) → one :class:`Series`
+  each, with a single episode whose panels carry the legacy frames and whose images come in as
+  adopted takes, so the first picture is the cover.  The legacy collection name (画册集) becomes
+  ``collection_title``.  :func:`seed_albums` does this once on first start, so the default shelf
+  is the old one (the bundled 「遇见你，真好」 with 《海风与未寄出的信》) rather than an empty one.
 
 The legacy files are only read.  Importing twice is safe: ids are derived from legacy ids, and
 existing documents are skipped unless ``overwrite`` is set.
@@ -16,12 +21,25 @@ existing documents are skipped unless ``overwrite`` is set.
 from __future__ import annotations
 
 import json
+import logging
 import math
 import re
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 
-from .models import Character, Dialogue, DialogueKind, Episode, Panel, PanelOverrides, Series
+from .models import (
+    Character,
+    Dialogue,
+    DialogueKind,
+    Episode,
+    Panel,
+    PanelOverrides,
+    Series,
+    SeriesStatus,
+    Take,
+    TakeStatus,
+)
 from .render_models import WorkflowConfig, WorkflowDoc
 from .storage import NotFound
 
@@ -35,6 +53,11 @@ SHOTS = [
     ("wide", "wide"),
     ("establish", "wide"),
 ]
+log = logging.getLogger("mio.importer")
+# Repository ``data/`` (the legacy app's data directory, bundled seed album included).
+LEGACY_ROOT = Path(__file__).resolve().parents[2] / "data"
+# characterName values that mean "no named character" in the legacy app.
+ANONYMOUS = {"", "原创", "原创画册"}
 SCENE_PARAMS = {"seed", "steps", "cfg", "denoise", "width", "height", "sampler", "scheduler"}
 FRAME_DEFAULTS = {"steps": 24, "cfg": 7, "denoise": 1}
 
@@ -43,6 +66,7 @@ FRAME_DEFAULTS = {"steps": 24, "cfg": 7, "denoise": 1}
 class ImportReport:
     series: list[str] = field(default_factory=list)
     episodes: list[str] = field(default_factory=list)
+    albums: list[str] = field(default_factory=list)
     workflows: list[str] = field(default_factory=list)
     characters: list[str] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)
@@ -216,19 +240,161 @@ def character_from_preset(preset: dict, variables: dict[str, str]) -> Character 
     )
 
 
+def _load_albums(root: Path) -> list[tuple[Path, dict]]:
+    """``albums/<name>/album.json`` (one folder per book, images beside it)."""
+    out = []
+    for path in sorted((root / "albums").glob("*/album.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(data, dict) and data.get("id") and not data.get("deletedAt"):
+            out.append((path.parent, data))
+    return out
+
+
+def _iso(ms) -> str | None:
+    if not isinstance(ms, (int, float)) or ms <= 0:
+        return None
+    return datetime.fromtimestamp(ms / 1000, UTC).isoformat(timespec="seconds")
+
+
+def legacy_collection(root: str | Path) -> str | None:
+    """Name of the legacy app's active collection (画册集), else of the one holding most books."""
+    root = Path(root)
+    titles = {c["id"]: str(c.get("title") or "") for c in _load_dir(root, "collections")}
+    active = None
+    try:
+        ws = json.loads((root / "settings" / "workspace.json").read_text(encoding="utf-8"))
+        active = ((ws.get("ui") or {}).get("comfyStudio") or {}).get("activeProjectId")
+    except (OSError, ValueError, AttributeError):
+        pass
+    if active and titles.get(active):
+        return titles[active]
+    counts: dict[str, int] = {}
+    for _, album in _load_albums(root):
+        pid = str(album.get("projectId") or "")
+        counts[pid] = counts.get(pid, 0) + 1
+    for pid in sorted(counts, key=lambda k: -counts[k]):
+        if titles.get(pid):
+            return titles[pid]
+    return next((t for t in titles.values() if t), None)
+
+
 class LegacyImporter:
-    def __init__(self, store, root: str | Path):
+    def __init__(self, store, root: str | Path, assets=None):
         self.store = store
         self.root = Path(root)
+        self.assets = assets
 
     def scan(self) -> dict:
-        return {
+        found = {
             sub: len(_load_dir(self.root, sub))
             for sub in ("collections", "storyboards", "presets/characters", "workflows")
         }
+        found["albums"] = len(_load_albums(self.root))
+        return found
+
+    def import_albums(self, report: ImportReport | None = None, overwrite: bool = False):
+        """Every legacy book → a series with one episode; images become adopted takes."""
+        report = report or ImportReport()
+        if self.assets is None:
+            return report
+        for folder, album in _load_albums(self.root):
+            self._import_album(folder, album, overwrite, report)
+        return report
+
+    def _import_album(self, folder: Path, album: dict, overwrite: bool, report) -> None:
+        legacy_id = str(album["id"])
+        series_id = _safe_id("series_album", legacy_id)
+        try:
+            existing = self.store.get_series(series_id, include_deleted=True)
+        except NotFound:
+            existing = None
+        if existing and not overwrite:
+            report.skipped.append(f"album {legacy_id}（已导入）")
+            return
+        if existing:
+            self.store.delete_series(series_id)
+        steps = sorted(
+            (s for s in album.get("steps") or [] if isinstance(s, dict)),
+            key=lambda s: s.get("stepIndex") if isinstance(s.get("stepIndex"), int) else 0,
+        )
+        panels, takes = [], []
+        stamp = _iso(album.get("updatedAt")) or _iso(album.get("createdAt"))
+        for order, step in enumerate(steps):
+            panel = convert_frame(step, order, {}, report.warnings)
+            panels.append(panel)
+            blob = self._image(folder, step.get("image"))
+            if step.get("image") and blob is None:
+                report.warnings.append(f"画册「{album.get('title')}」第 {order + 1} 幕：找不到图片")
+            if blob is None or step.get("offlineFallback"):
+                continue
+            asset = self.assets.put(blob, source="legacy", filename=Path(step["image"]).name)
+            takes.append(
+                Take(
+                    panel_id=panel.id,
+                    asset_id=asset.id,
+                    status=TakeStatus.adopted,
+                    stage="final",
+                    width=asset.width,
+                    height=asset.height,
+                    **({"created_at": stamp} if stamp else {}),
+                )
+            )
+        created = _iso(album.get("createdAt"))
+        updated = _iso(album.get("updatedAt")) or created
+        name = str(album.get("characterName") or "").strip()
+        series = Series(
+            id=series_id,
+            title=str(album.get("title") or legacy_id),
+            subtitle=str(album.get("synopsis") or "").strip(),
+            status=SeriesStatus.archived
+            if album.get("status") == "complete"
+            else SeriesStatus.draft,
+            **({"created_at": created, "updated_at": updated} if created else {}),
+        )
+        if name not in ANONYMOUS:
+            series.bible.characters = [
+                Character(
+                    id=_safe_id("char", str(album.get("rowId") or legacy_id)),
+                    name=name,
+                    age=20,
+                    description="导入自旧版画册（年龄为默认值，请核对）",
+                )
+            ]
+        self.store.create_series(series)
+        episode = Episode(
+            id=_safe_id("episode_album", legacy_id),
+            series_id=series_id,
+            title=str(album.get("storyTitle") or album.get("title") or legacy_id),
+            order=0,
+            synopsis=series.subtitle,
+            panels=panels,
+            takes=takes,
+        )
+        self.store.create_episode(episode)
+        report.series.append(series_id)
+        report.albums.append(series_id)
+        report.episodes.append(episode.id)
+
+    def _image(self, folder: Path, ref) -> bytes | None:
+        if not isinstance(ref, str) or not ref or "://" in ref or ref.startswith("data:"):
+            return None
+        path = (folder / ref).resolve()
+        if folder.resolve() not in path.parents:
+            return None  # stay inside the album folder
+        if not path.is_file():  # older books store the name without its extension
+            matches = sorted(path.parent.glob(path.name + ".*")) if path.parent.is_dir() else []
+            path = matches[0] if matches else path
+        try:
+            return path.read_bytes()
+        except OSError:
+            return None
 
     def run(self, overwrite: bool = False) -> ImportReport:
         report = ImportReport()
+        self.import_albums(report, overwrite)
         binding_ptrs: dict[str, str] = {}
         for data in _load_dir(self.root, "workflows"):
             if not isinstance(data.get("workflow"), dict) or not data["workflow"]:
@@ -308,3 +474,24 @@ class LegacyImporter:
             self.store.create_episode(episode)
             report.episodes.append(episode.id)
             order += 1
+
+
+def seed_albums(ctx, root: str | Path = LEGACY_ROOT) -> ImportReport | None:
+    """First start only: bring over the legacy books and collection name, so the default shelf is
+    the one the old app had.  Runs once (``legacy_seeded``); later imports are manual."""
+    from .settings import DEFAULT_COLLECTION
+
+    settings = ctx.settings()
+    root = Path(root)
+    if settings.legacy_seeded or not (root / "albums").is_dir():
+        return None
+    report = LegacyImporter(ctx.store, root, ctx.assets).import_albums()
+    title = legacy_collection(root)
+    settings = ctx.settings()  # re-read: the import may take a moment
+    if title and settings.collection_title == DEFAULT_COLLECTION:
+        settings.collection_title = title[:80]
+    settings.legacy_seeded = True
+    ctx.store.put_doc(settings)
+    if report.albums:
+        log.info("imported %d legacy album(s) from %s", len(report.albums), root)
+    return report
