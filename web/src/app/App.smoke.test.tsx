@@ -7,6 +7,7 @@ import { episode, job, series } from '../test/fixtures';
 import { useHelp } from '../components/HelpDrawer';
 import { mockFetch } from '../test/utils';
 import { makeQueryClient, routes } from './App';
+import { useUI } from './ui-store';
 
 // jsdom has no canvas: render konva nodes as plain elements so the canvas/edit screens mount.
 vi.mock('react-konva', () => {
@@ -193,6 +194,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   useHelp.setState({ open: false });
+  useUI.setState({ studioMode: false });
 });
 
 function mount(path: string) {
@@ -228,13 +230,17 @@ describe('every route mounts with API data', () => {
   it('episode → script with compiled prompt', async () => {
     mount('/episodes/ep_1/script');
     // Every tag is a chip that names its origin; the plain text stays available for copying.
-    expect(await screen.findByText('short black hair')).toHaveAttribute('title', '角色: c1');
+    expect(
+      await screen.findByText('short black hair', undefined, { timeout: 3000 }),
+    ).toHaveAttribute('title', '角色: c1');
     expect(screen.getByText('1girl')).toHaveAttribute('title', '人数');
     expect(screen.getByText('masterpiece, 1girl, short black hair')).toBeInTheDocument();
     expect(screen.getByText('未定义的变量：天气')).toBeInTheDocument();
   });
 
   it('episode → script: multi-select, right-click menu, batch edit and help', async () => {
+    // The per-panel render overrides live in the Studio inspector.
+    useUI.setState({ studioMode: true });
     mount('/episodes/ep_1/script');
     const rows = await screen.findAllByText(/^「欢迎光临」$|^第 2 格$/);
     expect(rows.length).toBeGreaterThanOrEqual(2);
@@ -305,6 +311,39 @@ describe('every route mounts with API data', () => {
   ])('settings → %s', async (tab, text) => {
     mount(`/settings?tab=${tab}`);
     expect(await screen.findByText(text)).toBeInTheDocument();
+  });
+
+  it('classic mode: prompt, characters and the generate stage; no studio drawer', async () => {
+    mount('/episodes/ep_1/script');
+    expect(await screen.findByLabelText('画面提示词')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /生成 \d 张/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /林夏/, pressed: true })).toBeInTheDocument();
+    expect(screen.queryByText('出图参数覆盖（只对这一格）')).toBeNull();
+    expect(screen.queryByText('剧本助手')).toBeNull();
+  });
+
+  it('generate queues the chosen number of candidates for this panel', async () => {
+    mount('/episodes/ep_1/script');
+    fireEvent.click(await screen.findByRole('button', { name: '4', pressed: false }));
+    fireEvent.click(screen.getByRole('button', { name: /生成 4 张/ }));
+    await waitFor(() =>
+      expect(calls.some((c) => c.method === 'POST' && c.url.includes('/render'))).toBe(true),
+    );
+    const call = calls.find((c) => c.method === 'POST' && c.url.includes('/render'))!;
+    expect(call.body).toMatchObject({ panel_ids: ['p0'], candidates: 4 });
+  });
+
+  it('studio mode switch in settings is persisted', async () => {
+    mount('/settings?tab=studio');
+    fireEvent.click(await screen.findByRole('radio', { name: /专业模式 · Studio/ }));
+    expect(useUI.getState().studioMode).toBe(true);
+    expect(JSON.parse(localStorage.getItem('mio.ui') ?? '{}').state.studioMode).toBe(true);
+  });
+
+  it('classic board hides QA, finalize and variants', async () => {
+    mount('/episodes/ep_1/board');
+    expect(await screen.findByText('全部出草稿')).toBeInTheDocument();
+    expect(screen.queryByText('质检已采用的图')).toBeNull();
   });
 
   it('picking a theme writes its tokens onto <html>', async () => {

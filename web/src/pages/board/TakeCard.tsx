@@ -13,8 +13,8 @@ export function TakeCard(props: {
   onAdopt: () => void;
   onReject: () => void;
   onRestore: () => void;
-  onEdit: () => void;
-  onQA: () => void;
+  onEdit?: () => void;
+  onQA?: () => void;
   onZoom: () => void;
   /** Ctrl / Shift click on the image (plain click zooms). */
   onSelect?: (mods: { ctrlKey: boolean; metaKey: boolean; shiftKey: boolean }) => void;
@@ -82,8 +82,12 @@ export function TakeCard(props: {
         <ActionMenu
           actions={[
             { label: t('board.zoom'), icon: <Maximize2 size={14} />, onSelect: props.onZoom },
-            { label: t('board.edit'), icon: <Wand2 size={14} />, onSelect: props.onEdit },
-            { label: t('board.qa'), icon: <ScanSearch size={14} />, onSelect: props.onQA },
+            ...(props.onEdit
+              ? [{ label: t('board.edit'), icon: <Wand2 size={14} />, onSelect: props.onEdit }]
+              : []),
+            ...(props.onQA
+              ? [{ label: t('board.qa'), icon: <ScanSearch size={14} />, onSelect: props.onQA }]
+              : []),
           ]}
         />
       </figcaption>

@@ -10,6 +10,7 @@ import './styles/script.css';
 import './styles/studio.css';
 import './styles/composition.css';
 import './styles/settings.css';
+import './styles/classic.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

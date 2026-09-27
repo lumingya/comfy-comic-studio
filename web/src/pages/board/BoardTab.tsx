@@ -32,6 +32,7 @@ export default function BoardTab() {
   const { t } = useTranslation();
   const { episode, series } = useEpisodeContext();
   const ui = useUI();
+  const studio = ui.studioMode;
   const render = useRender(episode.id);
   const finalize = useFinalize(episode.id);
   const qa = useQA(episode.id);
@@ -133,20 +134,28 @@ export default function BoardTab() {
           },
         ],
       },
-      {
-        items: [
-          ...(one
-            ? [
+      ...(studio
+        ? [
+            {
+              items: [
+                ...(one
+                  ? [
+                      {
+                        label: t('board.edit'),
+                        icon: <Wand2 size={14} />,
+                        onSelect: () => setEditing(one),
+                      },
+                    ]
+                  : []),
                 {
-                  label: t('board.edit'),
-                  icon: <Wand2 size={14} />,
-                  onSelect: () => setEditing(one),
+                  label: t('board.qa'),
+                  icon: <ScanSearch size={14} />,
+                  onSelect: () => qaMany(ids),
                 },
-              ]
-            : []),
-          { label: t('board.qa'), icon: <ScanSearch size={14} />, onSelect: () => qaMany(ids) },
-        ],
-      },
+              ],
+            },
+          ]
+        : []),
     ];
   };
 
@@ -184,7 +193,7 @@ export default function BoardTab() {
   return (
     <div className="board">
       <div className="board-toolbar">
-        {variants.length ? (
+        {studio && variants.length ? (
           <Select
             value={variantId ?? ''}
             onChange={(v) => ui.setVariant(v || null)}
@@ -218,30 +227,34 @@ export default function BoardTab() {
           />
         </span>
         <span className="grow" />
-        <button
-          className="btn"
-          disabled={!adopted.length || qa.isPending}
-          onClick={() =>
-            qa.mutate(
-              { take_ids: adopted.map((tk) => tk.id) },
-              { onSuccess: queued, onError: toastError },
-            )
-          }
-        >
-          <ScanSearch size={15} /> {t('board.qaAdopted')}
-        </button>
-        <button
-          className="btn"
-          disabled={!adopted.length || finalize.isPending}
-          onClick={() =>
-            finalize.mutate(
-              { take_ids: adopted.map((tk) => tk.id) },
-              { onSuccess: queued, onError: toastError },
-            )
-          }
-        >
-          <Sparkles size={15} /> {t('board.finalize', { count: adopted.length })}
-        </button>
+        {studio ? (
+          <>
+            <button
+              className="btn"
+              disabled={!adopted.length || qa.isPending}
+              onClick={() =>
+                qa.mutate(
+                  { take_ids: adopted.map((tk) => tk.id) },
+                  { onSuccess: queued, onError: toastError },
+                )
+              }
+            >
+              <ScanSearch size={15} /> {t('board.qaAdopted')}
+            </button>
+            <button
+              className="btn"
+              disabled={!adopted.length || finalize.isPending}
+              onClick={() =>
+                finalize.mutate(
+                  { take_ids: adopted.map((tk) => tk.id) },
+                  { onSuccess: queued, onError: toastError },
+                )
+              }
+            >
+              <Sparkles size={15} /> {t('board.finalize', { count: adopted.length })}
+            </button>
+          </>
+        ) : null}
         <button
           className="btn"
           disabled={!missing.length || render.isPending}
@@ -270,9 +283,11 @@ export default function BoardTab() {
           >
             <X size={13} /> {t('board.reject')}
           </button>
-          <button className="btn ghost sm" onClick={() => qaMany(selection.ids)}>
-            <ScanSearch size={13} /> {t('board.qa')}
-          </button>
+          {studio ? (
+            <button className="btn ghost sm" onClick={() => qaMany(selection.ids)}>
+              <ScanSearch size={13} /> {t('board.qa')}
+            </button>
+          ) : null}
           <button className="btn ghost sm" onClick={selection.clear} title="Esc">
             {t('common.cancel')}
           </button>
@@ -313,9 +328,15 @@ export default function BoardTab() {
                     onAdopt={() => act(tk, 'adopt')}
                     onReject={() => act(tk, 'reject')}
                     onRestore={() => act(tk, 'restore')}
-                    onEdit={() => setEditing(tk)}
-                    onQA={() =>
-                      qa.mutate({ take_ids: [tk.id] }, { onSuccess: queued, onError: toastError })
+                    onEdit={studio ? () => setEditing(tk) : undefined}
+                    onQA={
+                      studio
+                        ? () =>
+                            qa.mutate(
+                              { take_ids: [tk.id] },
+                              { onSuccess: queued, onError: toastError },
+                            )
+                        : undefined
                     }
                     onZoom={() => setZoomId(tk.id)}
                   />

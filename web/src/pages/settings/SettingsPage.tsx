@@ -4,6 +4,7 @@ import {
   Layers3,
   Palette,
   Puzzle,
+  PenTool,
   RefreshCw,
   Server,
   SlidersHorizontal,
@@ -20,12 +21,13 @@ import { ExtensionsSection } from './ExtensionsSection';
 import { GeneralSection } from './GeneralSection';
 import { InstancesSection } from './InstancesSection';
 import { ProfilesSection } from './ProfilesSection';
+import { StudioSection } from './StudioSection';
 import { ThemesSection } from './ThemesSection';
 import { UpdatesSection } from './UpdatesSection';
 import { WorkflowsSection } from './WorkflowsSection';
 
 const GROUPS = [
-  { id: 'basic', tabs: ['general', 'themes', 'updates'] },
+  { id: 'basic', tabs: ['general', 'studio', 'themes', 'updates'] },
   { id: 'render', tabs: ['instances', 'workflows', 'profiles', 'channels'] },
   { id: 'open', tabs: ['extensions', 'access'] },
 ] as const;
@@ -34,6 +36,7 @@ const TABS: readonly Tab[] = GROUPS.flatMap((g) => g.tabs);
 
 const ICONS: Record<Tab, LucideIcon> = {
   general: SlidersHorizontal,
+  studio: PenTool,
   themes: Palette,
   updates: RefreshCw,
   instances: Server,
@@ -46,6 +49,7 @@ const ICONS: Record<Tab, LucideIcon> = {
 
 const SECTIONS: Record<Tab, ComponentType> = {
   general: GeneralSection,
+  studio: StudioSection,
   themes: ThemesSection,
   updates: UpdatesSection,
   instances: InstancesSection,

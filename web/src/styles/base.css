@@ -1,59 +1,76 @@
 /* Design tokens, reset and app layout. Ink (dark) is the default; paper (light) via data-theme. */
 :root {
-  --bg: #101312;
-  --bg-deep: #0b0d0c;
-  --panel: #171b1a;
-  --panel-2: #1e2321;
-  --hover: #252b28;
-  --line: #29302d;
-  --line-strong: #3a4340;
-  --text: #e8ece7;
-  --soft: #b6beb5;
-  --muted: #7d887f;
-  --accent: #a9dcb1;
-  --accent-strong: #6f9f77;
-  --on-accent: #0f2215;
-  --tint: rgb(169 220 177 / 0.09);
-  --amber: #e0bb7c;
-  --red: #ec9a94;
-  --blue: #9cc3e6;
-  --shadow: 0 18px 48px rgb(0 0 0 / 0.45);
-  --radius: 10px;
+  /* Graphite & Sage — the classic Mio palette (kept in sync with server/mio_server/themes.py). */
+  --bg: #131517;
+  --bg-deep: #17191b;
+  --panel: #1c1f21;
+  --panel-2: #24282a;
+  --hover: #2b302e;
+  --line: #2c3031;
+  --line-strong: #3a403f;
+  --text: #e8ebe7;
+  --soft: #b1b8b0;
+  --muted: #a0aaa2;
+  --accent: #b8e9bd;
+  --accent-strong: #89b993;
+  --on-accent: #15291c;
+  --tint: #293b2e;
+  --amber: #d1b181;
+  --red: #e99292;
+  --blue: #489abe;
+  --shadow: 0 10px 28px rgb(0 0 0 / 0.36);
+  --radius: 8px;
   --radius-sm: 6px;
   --sans:
-    Inter, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui,
-    sans-serif;
+    Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif;
   --serif: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'STSong', Georgia, serif;
+  --latin: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
   --mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
-  --rail: 232px;
+  --rail: 216px;
+  /* Classic surfaces: parchment, book covers and glass chips (derived per mode below). */
+  --shadow-rgb: 0 0 0;
+  --glass-rgb: 255 255 255;
+  --paper: #eae5d8;
+  --paper-ink: #3d443c;
+  --paper-muted: #8a8575;
+  --paper-shade: #e0cdac;
+  --cover-bg: #27323c;
+  --cover-chip: #162020da;
+  --cover-chip-text: #eef3ec;
+  --live: #51a387;
   /* Derived tokens: computed from the theme colours above, so every theme gets them. */
-  --radius-lg: 14px;
-  --ring: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+  --radius-lg: 12px;
+  --ring: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.14), 0 4px 14px rgb(0 0 0 / 0.1);
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --fast: 140ms;
+  --fast: 180ms;
   color-scheme: dark;
 }
 
 [data-theme='light'] {
-  --bg: #f3f4ef;
-  --bg-deep: #e9ebe4;
+  --bg: #f3f5f0;
+  --bg-deep: #ecefe7;
   --panel: #ffffff;
-  --panel-2: #eef0ea;
-  --hover: #e5e9e1;
-  --line: #dadfd4;
-  --line-strong: #c3cabd;
-  --text: #1f2721;
-  --soft: #4b5a4e;
-  --muted: #667066;
-  --accent: #2f5b3c;
-  --accent-strong: #3f7550;
-  --on-accent: #f5f8f3;
-  --tint: rgb(47 91 60 / 0.08);
-  --amber: #9a6e22;
-  --red: #b0473f;
-  --blue: #2f6c9e;
-  --shadow: 0 18px 48px rgb(30 40 30 / 0.16);
+  --panel-2: #e4e9df;
+  --hover: #dce4d7;
+  --line: #d6ddcf;
+  --line-strong: #c3ccbc;
+  --text: #29332a;
+  --soft: #566754;
+  --muted: #5b6a57;
+  --accent: #355e40;
+  --accent-strong: #5f8963;
+  --on-accent: #f4f7f1;
+  --tint: #dce9d7;
+  --amber: #9e762d;
+  --red: #b44444;
+  --blue: #2f7fa8;
+  --shadow: 0 10px 28px rgb(20 30 20 / 0.16);
+  --shadow-rgb: 20 30 20;
+  --cover-bg: #dfe5da;
+  --cover-chip: #1c2622cc;
+  --live: #3f8f74;
   color-scheme: light;
 }
 
@@ -73,7 +90,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 14px/1.6 var(--sans);
+  font: 13.5px/1.65 var(--sans);
   letter-spacing: 0.01em;
   -webkit-font-smoothing: antialiased;
 }

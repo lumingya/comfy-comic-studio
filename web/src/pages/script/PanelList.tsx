@@ -39,6 +39,10 @@ function Row(props: {
   const p = props.panel;
   const cast = p.characters.map((c) => props.names[c.character_id] ?? c.character_id).join('、');
   const firstLine = p.dialogues[0]?.text;
+  const prompt = (p.overrides.raw_prompt ?? p.overrides.append_prompt ?? '').trim();
+  const text = firstLine
+    ? `「${firstLine}」`
+    : p.description || prompt.slice(0, 60) || t('classic.editor.untitled');
   return (
     <li
       ref={setNodeRef}
@@ -75,7 +79,9 @@ function Row(props: {
             {p.locked ? <Lock size={12} className="muted" /> : null}
             <span className="muted ellipsis">{cast}</span>
           </span>
-          <span className="panel-row-text">{firstLine ? `「${firstLine}」` : p.description}</span>
+          <span className={`panel-row-text ${firstLine || p.description ? '' : 'mono muted'}`}>
+            {text}
+          </span>
         </span>
       </button>
     </li>

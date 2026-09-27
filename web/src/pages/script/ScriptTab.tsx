@@ -61,6 +61,7 @@ export default function ScriptTab() {
   const render = useRender(episode.id!);
   const patchEpisode = usePatchEpisode(episode.id!);
   const candidates = useUI((s) => s.candidates);
+  const studio = useUI((s) => s.studioMode);
   const [assistant, setAssistant] = useState(false);
   const [synopsis, setSynopsis] = useState<string | null>(null);
   const [batch, setBatch] = useState<string[] | null>(null);
@@ -411,20 +412,28 @@ export default function ScriptTab() {
       <aside className="script-rail" onKeyDown={onListKey}>
         <div className="row" style={{ padding: '0 4px 10px' }}>
           <span className="small muted grow">{t('series.panels', { count: panels.length })}</span>
-          <button className="btn sm" onClick={() => setAssistant(true)}>
-            <Sparkles size={13} /> {t('script.assistant')}
-          </button>
-          <button
-            className="btn icon sm"
-            title={t('batch.import')}
-            aria-label={t('batch.import')}
-            onClick={() => pickImport(selectedId)}
-          >
-            <Upload size={14} />
-          </button>
-          <button className="btn icon sm" title={t('script.addPanel')} onClick={addAfter}>
-            <Plus size={14} />
-          </button>
+          {studio ? (
+            <>
+              <button className="btn sm" onClick={() => setAssistant(true)}>
+                <Sparkles size={13} /> {t('script.assistant')}
+              </button>
+              <button
+                className="btn icon sm"
+                title={t('batch.import')}
+                aria-label={t('batch.import')}
+                onClick={() => pickImport(selectedId)}
+              >
+                <Upload size={14} />
+              </button>
+              <button className="btn icon sm" title={t('script.addPanel')} onClick={addAfter}>
+                <Plus size={14} />
+              </button>
+            </>
+          ) : (
+            <button className="btn sm" title={t('script.addPanel')} onClick={addAfter}>
+              <Plus size={14} /> {t('classic.editor.newPanel')}
+            </button>
+          )}
           <input
             ref={fileInput}
             type="file"
@@ -437,23 +446,25 @@ export default function ScriptTab() {
             }}
           />
         </div>
-        <details className="synopsis">
-          <summary className="small muted">{t('episode.synopsis')}</summary>
-          <TextArea rows={3} value={synopsis ?? episode.synopsis ?? ''} onChange={setSynopsis} />
-          {synopsis !== null && synopsis !== episode.synopsis ? (
-            <button
-              className="btn sm"
-              onClick={() =>
-                patchEpisode.mutate(
-                  { synopsis },
-                  { onSuccess: () => setSynopsis(null), onError: toastError },
-                )
-              }
-            >
-              {t('common.save')}
-            </button>
-          ) : null}
-        </details>
+        {studio ? (
+          <details className="synopsis">
+            <summary className="small muted">{t('episode.synopsis')}</summary>
+            <TextArea rows={3} value={synopsis ?? episode.synopsis ?? ''} onChange={setSynopsis} />
+            {synopsis !== null && synopsis !== episode.synopsis ? (
+              <button
+                className="btn sm"
+                onClick={() =>
+                  patchEpisode.mutate(
+                    { synopsis },
+                    { onSuccess: () => setSynopsis(null), onError: toastError },
+                  )
+                }
+              >
+                {t('common.save')}
+              </button>
+            ) : null}
+          </details>
+        ) : null}
         {multi ? (
           <div className="selection-bar" role="status">
             <span className="count">{t('batch.selected', { count: multi.length })}</span>
@@ -485,9 +496,11 @@ export default function ScriptTab() {
           onContextMenu={onRowMenu}
           onReorder={(order) => reorder.mutate(order, { onError: toastError })}
         />
-        <p className="small muted" style={{ padding: '10px 4px 0' }}>
-          {t('batch.listHint')}
-        </p>
+        {studio ? (
+          <p className="small muted" style={{ padding: '10px 4px 0' }}>
+            {t('batch.listHint')}
+          </p>
+        ) : null}
       </aside>
       <section className="script-main">
         {selected ? (
