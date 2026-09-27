@@ -11,6 +11,7 @@ import {
   type SelectHTMLAttributes,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useTopDialog } from './topLayer';
 
 export function Field(props: { label: ReactNode; hint?: ReactNode; children: ReactNode }) {
   return (
@@ -181,9 +182,11 @@ export function Modal(props: {
   footer?: ReactNode;
 }) {
   const { t } = useTranslation();
+  // Inside an open modal <dialog> (the reader, …) a portal to <body> would sit behind it.
+  const host = useTopDialog(props.open);
   return (
     <Dialog.Root open={props.open} onOpenChange={props.onOpenChange}>
-      <Dialog.Portal>
+      <Dialog.Portal container={host}>
         <Dialog.Overlay className="overlay" />
         <Dialog.Content className={`dialog ${props.size === 'lg' ? 'lg' : ''}`}>
           <Dialog.Close asChild>
@@ -237,14 +240,16 @@ export interface MenuAction {
 
 export function ActionMenu(props: { actions: MenuAction[]; label?: string }) {
   const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const host = useTopDialog(open);
   return (
-    <Menu.Root>
+    <Menu.Root open={open} onOpenChange={setOpen}>
       <Menu.Trigger asChild>
         <button className="btn ghost icon sm" aria-label={props.label ?? t('common.more')}>
           <MoreHorizontal size={16} />
         </button>
       </Menu.Trigger>
-      <Menu.Portal>
+      <Menu.Portal container={host}>
         <Menu.Content className="menu" align="end" sideOffset={4}>
           {props.actions.map((a, i) => (
             <Menu.Item

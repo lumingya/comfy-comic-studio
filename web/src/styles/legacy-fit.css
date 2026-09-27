@@ -609,3 +609,11 @@ html:not(.is-studio) .workshop-body .panel-no {
 .room-layout .canvas-toolbar {
   color: var(--text);
 }
+
+/* Dialogs, menus and toasts portalled into an open <dialog> (see components/topLayer.ts) must not
+   inherit the dark reader room's light text colour. */
+dialog .dialog,
+dialog .menu,
+dialog .toasts {
+  color: var(--text);
+}

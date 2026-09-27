@@ -7,6 +7,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { topDialog } from './topLayer';
 
 export interface ContextItem {
   label: ReactNode;
@@ -137,6 +138,6 @@ export function ContextMenu(props: {
         </div>
       ))}
     </div>,
-    document.body,
+    topDialog() ?? document.body,
   );
 }

@@ -1,7 +1,9 @@
 import { CircleAlert, CircleCheck, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { create } from 'zustand';
 import { ApiError } from '../api/client';
+import { useTopDialog } from './topLayer';
 
 export interface ToastAction {
   label: string;
@@ -76,7 +78,9 @@ export function toastError(error: unknown): void {
 export function Toaster() {
   const { t } = useTranslation();
   const { items, dismiss, hold, release } = useToasts();
-  return (
+  // Shown inside the topmost modal <dialog> when one is open, or it would render behind it.
+  const host = useTopDialog(items.length > 0);
+  const list = (
     <div className="toasts" role="status" aria-live="polite">
       {items.map((item) => (
         <div
@@ -112,4 +116,5 @@ export function Toaster() {
       ))}
     </div>
   );
+  return host ? createPortal(list, host) : list;
 }
