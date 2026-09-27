@@ -14,6 +14,7 @@ from PIL import Image
 
 from ..models import DialogueKind, Episode, Series
 from ..pipeline import episode_strip as ES
+from ..pipeline import variables as V
 from ..pipeline.compiler import compile_panel
 from . import media as M
 from .render import Book, Frame
@@ -50,15 +51,17 @@ def palette(im: Image.Image, n: int = 3) -> list[str]:
 
 def caption(series: Series, panel) -> str:
     names = {c.id: c.name for c in series.bible.characters}
+    values = V.table(series, panel)
     lines = []
     for d in panel.dialogues:
         if d.kind == DialogueKind.sfx:
             continue
         who = names.get(d.speaker_id or "", "")
+        text = V.expand(d.text, values)
         if d.kind in (DialogueKind.narration, DialogueKind.caption) or not who:
-            lines.append(d.text)
+            lines.append(text)
         else:
-            lines.append(f"{who}：{d.text}")
+            lines.append(f"{who}：{text}")
     return "　".join(lines)
 
 

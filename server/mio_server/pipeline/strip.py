@@ -18,6 +18,7 @@ from ..models import DialogueKind, Episode, LetteringLayer, PanelWidth, Series, 
 from . import backdrop as BD
 from . import layout as LY
 from . import lettering as LT
+from . import variables as V
 
 TITLE_SPACE = 170
 END_SPACE = 220
@@ -87,7 +88,9 @@ def panel_geometry(
     return boxes, y + END_SPACE
 
 
-def _specs(panel, names: dict, prev_loc, vertical: bool) -> tuple[list[dict], list[dict]]:
+def _specs(
+    panel, names: dict, prev_loc, vertical: bool, values: dict
+) -> tuple[list[dict], list[dict]]:
     """``(in_panel, bridges)`` bubble specs for one panel."""
     specs, bridges = [], []
     if panel.location_id and panel.location_id != prev_loc and names.get(panel.location_id):
@@ -95,7 +98,7 @@ def _specs(panel, names: dict, prev_loc, vertical: bool) -> tuple[list[dict], li
     for d in panel.dialogues:
         spec = {
             "kind": d.kind.value,
-            "text": d.text,
+            "text": V.expand(d.text, values),
             "speaker": None if d.kind == DialogueKind.narration else d.speaker_id,
             "vertical": vertical and d.kind != DialogueKind.sfx,
         }
@@ -148,7 +151,7 @@ def auto_lettering(
     panels = [p for p in episode.ordered_panels() if p.id in boxes]
     for i, panel in enumerate(panels):
         box = boxes[panel.id]
-        specs, bridges = _specs(panel, names, prev_loc, vertical)
+        specs, bridges = _specs(panel, names, prev_loc, vertical, V.table(series, panel))
         panel_faces = LT.faces_for(panel, faces.get(panel.id))
         free = panel.id not in locked_panels
         if specs and free:

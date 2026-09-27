@@ -5,11 +5,16 @@ from __future__ import annotations
 from pathlib import Path
 
 from .api_harness import ApiCase
+from .legacy_fixture import copy_shipped_legacy
 
 EMPTY = Path(__file__).resolve().parent / "no-legacy-here"
 
 
 class WorkshopTest(ApiCase):
+    def setUp(self):
+        super().setUp()
+        self.ctx.legacy_root = copy_shipped_legacy(Path(self.tmp) / "legacy")
+
     def workshop(self):
         return self.ok(self.client.get("/api/workshop"))
 
@@ -17,7 +22,7 @@ class WorkshopTest(ApiCase):
         ws = self.workshop()
         self.assertEqual(ws["kind"], "workshop")
         self.assertEqual(self.workshop()["id"], ws["id"])  # created once
-        # The repo's data/ may hold more legacy material than the demo; look the demo up by name.
+        # Use only the shipped demo copied into this test's temporary directory.
         preset = next(p for p in ws["presets"] if p["title"] == "七海 · 标准角色设定")
         self.assertEqual([g["title"] for g in preset["groups"]], ["主角与服装", "画风与场景"])
         entry = next(e for e in preset["entries"] if e["key"] == "character_display_name")
