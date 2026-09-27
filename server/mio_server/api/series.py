@@ -81,8 +81,19 @@ def list_series(ctx: Ctx, deleted: bool = False) -> list[SeriesCard]:
     stats = ctx.store.series_stats()
     cards = []
     for series in ctx.store.list_series(deleted=deleted):
-        count, cover = stats.get(series.id, (0, None))
-        cards.append(SeriesCard(**series.model_dump(), episode_count=count, cover_asset_id=cover))
+        s = stats.get(series.id, {})
+        data = series.model_dump()
+        chosen = data.pop("cover_asset_id")
+        cards.append(
+            SeriesCard(
+                **data,
+                episode_count=s.get("episodes", 0),
+                panel_count=s.get("panels", 0),
+                adopted_count=s.get("adopted", 0),
+                cover_asset_id=chosen or s.get("cover"),
+                cover_auto=not chosen,
+            )
+        )
     return cards
 
 

@@ -34,7 +34,7 @@ class BundleError(ValueError):
 
 
 def _asset_ids(series: Series, episodes: list[Episode]) -> set[str]:
-    ids: set[str] = set()
+    ids: set[str] = {series.cover_asset_id} if series.cover_asset_id else set()
     b = series.bible
     for item in [*b.characters, *b.locations, *b.props, *b.styles]:
         ids.update(r.asset_id for r in item.references)

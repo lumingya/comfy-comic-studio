@@ -49,6 +49,9 @@ class AppSettings(StrictModel):
     )
     trash_days: int = Field(default=30, ge=1, le=3650)
     locale: str = "zh-CN"
+    collection_title: str = Field(
+        default="遇见你，真好", max_length=80, description="Name of the works shelf (画册集)"
+    )
     theme: str = Field(default="system", description="system, or a theme id")
     extensions: dict[str, ExtensionState] = Field(default_factory=dict)
     image_channels: list[ImageChannel] = Field(

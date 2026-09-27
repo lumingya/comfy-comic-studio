@@ -81,13 +81,16 @@ SNAPSHOT_LIMIT = 60
 
 # Card data straight from the stored JSON (no payload round trip through Python).  ``e`` is the
 # episodes row; only base-variant takes count, and only for panels that still exist.
-_ADOPTED_TAKES = """FROM json_each(e.payload_json, '$.takes') AS t
+_BASE_TAKES = """FROM json_each(e.payload_json, '$.takes') AS t
     JOIN json_each(e.payload_json, '$.panels') AS p
       ON json_extract(p.value, '$.id') = json_extract(t.value, '$.panel_id')
-    WHERE json_extract(t.value, '$.status') = 'adopted'
-      AND json_extract(t.value, '$.variant_id') IS NULL"""
-EPISODE_COVER = f"""(SELECT json_extract(t.value, '$.asset_id') {_ADOPTED_TAKES}
-    ORDER BY json_extract(p.value, '$.order') LIMIT 1)"""
+    WHERE json_extract(t.value, '$.variant_id') IS NULL"""
+_ADOPTED_TAKES = f"{_BASE_TAKES} AND json_extract(t.value, '$.status') = 'adopted'"
+# The cover: the first adopted panel's image, else the first image drawn (rejected ones never).
+EPISODE_COVER = f"""(SELECT json_extract(t.value, '$.asset_id') {_BASE_TAKES}
+      AND json_extract(t.value, '$.status') != 'rejected'
+    ORDER BY json_extract(t.value, '$.status') = 'adopted' DESC,
+             json_extract(p.value, '$.order'), json_extract(t.value, '$.created_at') LIMIT 1)"""
 EPISODE_ADOPTED = f"(SELECT COUNT(DISTINCT json_extract(t.value, '$.panel_id')) {_ADOPTED_TAKES})"
 
 
@@ -179,17 +182,31 @@ class SQLiteStore:
         )
         return [Series.model_validate_json(row["payload_json"]) for row in rows]
 
-    def series_stats(self) -> dict[str, tuple[int, str | None]]:
-        """``series_id → (live episode count, cover asset)``; the cover is the first adopted
-        panel of the earliest episode that has one."""
+    def series_stats(self) -> dict[str, dict]:
+        """``series_id → {episodes, panels, adopted, cover}`` over live episodes; the cover is
+        the first adopted panel of the earliest episode that has one, else the first image."""
         rows = self._rows(
-            f"""SELECT e.series_id AS sid, {EPISODE_COVER} AS cover FROM episodes e
+            f"""SELECT e.series_id AS sid, e.panel_count AS panels, {EPISODE_ADOPTED} AS adopted,
+                   {EPISODE_COVER} AS cover,
+                   (SELECT json_extract(t.value, '$.asset_id') {_ADOPTED_TAKES}
+                    ORDER BY json_extract(p.value, '$.order') LIMIT 1) AS adopted_cover
+               FROM episodes e
                WHERE e.deleted_at IS NULL ORDER BY e.series_id, e.episode_order, e.id"""
         )
-        stats: dict[str, tuple[int, str | None]] = {}
+        stats: dict[str, dict] = {}
         for r in rows:
-            count, cover = stats.get(r["sid"], (0, None))
-            stats[r["sid"]] = (count + 1, cover or r["cover"])
+            s = stats.setdefault(
+                r["sid"],
+                {"episodes": 0, "panels": 0, "adopted": 0, "cover": None, "any": None},
+            )
+            s["episodes"] += 1
+            s["panels"] += r["panels"] or 0
+            s["adopted"] += r["adopted"] or 0
+            s["cover"] = s["cover"] or r["adopted_cover"]
+            s["any"] = s["any"] or r["cover"]
+        for s in stats.values():
+            s["cover"] = s["cover"] or s.pop("any")
+            s.pop("any", None)
         return stats
 
     def save_series(self, series: Series) -> Series:

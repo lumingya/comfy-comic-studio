@@ -215,6 +215,8 @@ export interface AppSettings {
   trash_days: number;
   locale: string;
   theme: string;
+  /** The works shelf (画册集) name; defaults to 遇见你，真好 on the server. */
+  collection_title?: string;
 }
 
 export interface StripReport {

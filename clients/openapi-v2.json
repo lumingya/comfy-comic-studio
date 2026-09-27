@@ -3505,6 +3505,18 @@
      "bible": {
       "$ref": "#/components/schemas/Bible-Output"
      },
+     "cover_asset_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Chosen cover image; None = automatic (the first image).",
+      "title": "Cover Asset Id"
+     },
      "created_at": {
       "title": "Created At",
       "type": "string"
@@ -3577,6 +3589,7 @@
      "variants",
      "variables",
      "default_profile_id",
+     "cover_asset_id",
      "created_at",
      "updated_at",
      "deleted_at"
@@ -3586,8 +3599,13 @@
    },
    "SeriesCard": {
     "additionalProperties": false,
-    "description": "A series as listed on the works page: plus its episode count and a cover image.",
+    "description": "A series as listed on the works page: episode / panel counts and the effective cover\n(the chosen one, else the first adopted image, else the first image drawn).",
     "properties": {
+     "adopted_count": {
+      "default": 0,
+      "title": "Adopted Count",
+      "type": "integer"
+     },
      "bible": {
       "$ref": "#/components/schemas/Bible-Output"
      },
@@ -3600,7 +3618,13 @@
         "type": "null"
        }
       ],
+      "description": "Chosen cover image; None = automatic (the first image).",
       "title": "Cover Asset Id"
+     },
+     "cover_auto": {
+      "default": true,
+      "title": "Cover Auto",
+      "type": "boolean"
      },
      "created_at": {
       "title": "Created At",
@@ -3637,6 +3661,11 @@
       "title": "Id",
       "type": "string"
      },
+     "panel_count": {
+      "default": 0,
+      "title": "Panel Count",
+      "type": "integer"
+     },
      "status": {
       "$ref": "#/components/schemas/SeriesStatus",
       "default": "draft"
@@ -3679,11 +3708,14 @@
      "variants",
      "variables",
      "default_profile_id",
+     "cover_asset_id",
      "created_at",
      "updated_at",
      "deleted_at",
      "episode_count",
-     "cover_asset_id"
+     "panel_count",
+     "adopted_count",
+     "cover_auto"
     ],
     "title": "SeriesCard",
     "type": "object"
@@ -3719,6 +3751,17 @@
         "type": "null"
        }
       ]
+     },
+     "cover_asset_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cover Asset Id"
      },
      "default_profile_id": {
       "anyOf": [

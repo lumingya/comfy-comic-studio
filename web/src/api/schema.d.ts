@@ -3077,6 +3077,11 @@ export interface components {
             };
             /** Default Profile Id */
             default_profile_id: string | null;
+            /**
+             * Cover Asset Id
+             * @description Chosen cover image; None = automatic (the first image).
+             */
+            cover_asset_id: string | null;
             /** Created At */
             created_at: string;
             /** Updated At */
@@ -3086,7 +3091,8 @@ export interface components {
         };
         /**
          * SeriesCard
-         * @description A series as listed on the works page: plus its episode count and a cover image.
+         * @description A series as listed on the works page: episode / panel counts and the effective cover
+         *     (the chosen one, else the first adopted image, else the first image drawn).
          */
         SeriesCard: {
             /** Id */
@@ -3112,6 +3118,11 @@ export interface components {
             };
             /** Default Profile Id */
             default_profile_id: string | null;
+            /**
+             * Cover Asset Id
+             * @description Chosen cover image; None = automatic (the first image).
+             */
+            cover_asset_id: string | null;
             /** Created At */
             created_at: string;
             /** Updated At */
@@ -3123,8 +3134,21 @@ export interface components {
              * @default 0
              */
             episode_count: number;
-            /** Cover Asset Id */
-            cover_asset_id: string | null;
+            /**
+             * Panel Count
+             * @default 0
+             */
+            panel_count: number;
+            /**
+             * Adopted Count
+             * @default 0
+             */
+            adopted_count: number;
+            /**
+             * Cover Auto
+             * @default true
+             */
+            cover_auto: boolean;
         };
         /** SeriesCreate */
         SeriesCreate: {
@@ -3152,6 +3176,8 @@ export interface components {
             } | null;
             /** Default Profile Id */
             default_profile_id?: string | null;
+            /** Cover Asset Id */
+            cover_asset_id?: string | null;
         };
         /**
          * SeriesStatus

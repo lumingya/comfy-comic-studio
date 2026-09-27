@@ -50,6 +50,7 @@ export const series: Series = {
   variants: [{ id: 'var_1', name: '冬装', characters: {}, style_id: null, profile_id: null }],
   variables: {},
   default_profile_id: null,
+  cover_asset_id: null,
   created_at: T,
   updated_at: T,
   deleted_at: null,

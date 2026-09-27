@@ -1,10 +1,24 @@
-import { Archive, Download, FolderInput, Plus, Search, Sparkles, Trash2, X } from 'lucide-react';
-import { useMemo, useState, type CSSProperties } from 'react';
+import {
+  Archive,
+  Download,
+  FolderInput,
+  GalleryHorizontal,
+  ImageIcon,
+  LayoutGrid,
+  Pencil,
+  Plus,
+  Search,
+  Sparkles,
+  Star,
+  Trash2,
+  X,
+} from 'lucide-react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api, assetUrl, data as unwrap, download } from '../../api/client';
 import { useCreateSeries, useSeriesList, useTrashSeries } from '../../api/series';
-import { useImportBundle } from '../../api/system';
+import { useImportBundle, usePatchSettings, useSettings } from '../../api/system';
 import type { SeriesCard } from '../../api/types';
 import { QueryError } from '../../app/errors';
 import { relativeTime } from '../../app/format';
@@ -13,7 +27,19 @@ import { useUI } from '../../app/ui-store';
 import { Avatar } from '../../components/avatar';
 import { toast, toastError } from '../../components/toast';
 import { useUndoTrash } from '../../components/undo';
-import { ActionMenu, Empty, Field, FilePick, Modal, Select, TextInput } from '../../components/ui';
+import {
+  ActionMenu,
+  Empty,
+  Field,
+  FilePick,
+  InlineTitle,
+  Modal,
+  Select,
+  TextInput,
+  type MenuAction,
+} from '../../components/ui';
+import { CoverPicker } from './CoverPicker';
+import { Parchment, Showcase, ShowcaseNav, StarButton } from './Showcase';
 import { WorksHero } from './WorksHero';
 import { LegacyImportDialog } from './LegacyImportDialog';
 
@@ -48,8 +74,12 @@ function FilterBar(props: {
   items: SeriesCard[];
   filter: WorksFilter;
   onChange: (patch: Partial<WorksFilter>) => void;
+  starredOnly: boolean;
+  onStarredOnly: (on: boolean) => void;
 }) {
   const { t } = useTranslation();
+  const view = useUI((s) => s.worksView);
+  const setView = useUI((s) => s.setWorksView);
   const counts = useMemo(() => {
     const c: Record<Status, number> = { draft: 0, active: 0, archived: 0 };
     for (const s of props.items) c[(s.status ?? 'draft') as Status]++;
@@ -78,6 +108,15 @@ function FilterBar(props: {
           </button>
         ) : null}
       </label>
+      <button
+        type="button"
+        className={`filter-link ${props.starredOnly ? 'is-on' : ''}`}
+        aria-pressed={props.starredOnly}
+        onClick={() => props.onStarredOnly(!props.starredOnly)}
+      >
+        <Star size={13} fill={props.starredOnly ? 'currentColor' : 'none'} />
+        {t('classic.shelf.starred')}
+      </button>
       <div className="segmented" role="group" aria-label={t('series.statusLabel')}>
         <button
           type="button"
@@ -104,31 +143,70 @@ function FilterBar(props: {
         onChange={(sort) => props.onChange({ sort })}
         options={SORTS.map((v) => ({ value: v, label: t(`works.sort.${v}`) }))}
       />
+      <div className="shelf-view-switch" role="group" aria-label={t('classic.shelf.view')}>
+        <button
+          type="button"
+          className={view === 'showcase' ? 'active' : ''}
+          aria-pressed={view === 'showcase'}
+          onClick={() => setView('showcase')}
+        >
+          <GalleryHorizontal size={13} /> {t('classic.shelf.showcase')}
+        </button>
+        <button
+          type="button"
+          className={view === 'grid' ? 'active' : ''}
+          aria-pressed={view === 'grid'}
+          onClick={() => setView('grid')}
+        >
+          <LayoutGrid size={13} /> {t('classic.shelf.grid')}
+        </button>
+      </div>
     </div>
   );
 }
 
-function SeriesCardView({ series, index }: { series: SeriesCard; index: number }) {
-  const { t, i18n } = useTranslation();
+/** Export / change cover / delete, shared by the showcase and the grid card. */
+function useBookActions(onChangeCover: (series: SeriesCard) => void) {
+  const { t } = useTranslation();
   const trash = useTrashSeries();
   const undo = useUndoTrash();
+  return (series: SeriesCard): MenuAction[] => [
+    {
+      label: t('classic.shelf.changeCover'),
+      icon: <ImageIcon size={14} />,
+      onSelect: () => onChangeCover(series),
+    },
+    {
+      label: t('works.exportBundle'),
+      icon: <Download size={14} />,
+      onSelect: () =>
+        download(`/api/series/${series.id}/bundle`, `${series.title}.mio.zip`).catch(toastError),
+    },
+    {
+      label: t('common.delete'),
+      icon: <Trash2 size={14} />,
+      danger: true,
+      onSelect: () =>
+        trash.mutate(series.id!, {
+          onSuccess: () => undo('series', series.id!, series.title),
+          onError: toastError,
+        }),
+    },
+  ];
+}
+
+function SeriesCardView(props: { series: SeriesCard; index: number; actions: MenuAction[] }) {
+  const { t, i18n } = useTranslation();
+  const { series } = props;
   const cast = series.bible?.characters ?? [];
   const status = series.status ?? 'draft';
   return (
-    <article className="work-card book-card" style={{ '--i': index } as CSSProperties}>
+    <article className="work-card book-card" style={{ '--i': props.index } as CSSProperties}>
       <Link to={`/series/${series.id}`} className="work-cover book-cover" tabIndex={-1} aria-hidden>
         {series.cover_asset_id ? (
           <img src={assetUrl(series.cover_asset_id, 640)} alt="" loading="lazy" />
         ) : (
-          <span className="parchment">
-            <span className="parchment-mark">MIO · COLLECTION</span>
-            {/* Painted from data-* so the cover does not repeat the title for screen readers. */}
-            <span className="parchment-title" data-text={series.title} />
-            {series.subtitle ? (
-              <span className="parchment-sub" data-text={series.subtitle} />
-            ) : null}
-            <span className="parchment-rule" />
-          </span>
+          <Parchment series={series} />
         )}
         <span className="book-spine" />
         <span className={`glass-chip work-status status-${status}`}>
@@ -144,6 +222,7 @@ function SeriesCardView({ series, index }: { series: SeriesCard; index: number }
         </Link>
         {series.subtitle ? <p className="work-sub">{series.subtitle}</p> : null}
         <div className="work-meta">
+          <span>{t('classic.shelf.frames', { count: series.panel_count ?? 0 })}</span>
           <span>{t('works.characters', { count: cast.length })}</span>
           <span title={series.updated_at}>{relativeTime(series.updated_at, i18n.language)}</span>
         </div>
@@ -155,30 +234,30 @@ function SeriesCardView({ series, index }: { series: SeriesCard; index: number }
           ))}
           {cast.length > 5 ? <span className="avatar more">+{cast.length - 5}</span> : null}
         </div>
-        <ActionMenu
-          actions={[
-            {
-              label: t('works.exportBundle'),
-              icon: <Download size={14} />,
-              onSelect: () =>
-                download(`/api/series/${series.id}/bundle`, `${series.title}.mio.zip`).catch(
-                  toastError,
-                ),
-            },
-            {
-              label: t('common.delete'),
-              icon: <Trash2 size={14} />,
-              danger: true,
-              onSelect: () =>
-                trash.mutate(series.id!, {
-                  onSuccess: () => undo('series', series.id!, series.title),
-                  onError: toastError,
-                }),
-            },
-          ]}
-        />
+        <StarButton series={series} small />
+        <ActionMenu actions={props.actions} />
       </footer>
     </article>
+  );
+}
+
+/** The collection (画册集) name as the page heading, renamed in place. */
+function CollectionTitle() {
+  const { t } = useTranslation();
+  const settings = useSettings();
+  const patch = usePatchSettings();
+  const title = settings.data?.collection_title || t('classic.shelf.defaultTitle');
+  usePageTitle(title);
+  return (
+    <h1 className="collection-title">
+      <InlineTitle
+        className="collection-title-input"
+        value={title}
+        label={t('classic.shelf.rename')}
+        onSave={(collection_title) => patch.mutate({ collection_title }, { onError: toastError })}
+      />
+      <Pencil size={15} className="collection-title-pen" aria-hidden />
+    </h1>
   );
 }
 
@@ -309,17 +388,45 @@ export default function WorksPage() {
     if (next.q) p.set('q', next.q);
     if (next.status) p.set('status', next.status);
     if (next.sort !== 'updated') p.set('sort', next.sort);
+    if (params.get('starred') === '1') p.set('starred', '1');
+    setParams(p, { replace: true });
+  };
+  const setStarredOnly = (on: boolean) => {
+    const p = new URLSearchParams(params);
+    if (on) p.set('starred', '1');
+    else p.delete('starred');
     setParams(p, { replace: true });
   };
   const filtered = useMemo(
     () => (list.data ? filterWorks(list.data, filter, i18n.language) : []),
     [list.data, filter.q, filter.status, filter.sort, i18n.language],
   );
-  const filtering = !!(filter.q || filter.status);
+  const starred = useUI((s) => s.starred);
+  const starredOnly = params.get('starred') === '1';
+  const books = useMemo(
+    () => (starredOnly ? filtered.filter((s) => starred.includes(s.id!)) : filtered),
+    [filtered, starred, starredOnly],
+  );
+  const filtering = !!(filter.q || filter.status || starredOnly);
+  const view = useUI((s) => s.worksView);
+  // The featured book (showcase); back to the first one whenever the filter changes.
+  const [featured, setFeatured] = useState(0);
+  const filterKey = `${filter.q}|${filter.status}|${filter.sort}|${starredOnly}`;
+  useEffect(() => setFeatured(0), [filterKey]);
+  const index = Math.min(featured, Math.max(0, books.length - 1));
+  const firstEditionId = useMemo(
+    () =>
+      [...(list.data ?? [])].sort((a, b) =>
+        (a.created_at ?? '').localeCompare(b.created_at ?? ''),
+      )[0]?.id,
+    [list.data],
+  );
+  const [coverFor, setCoverFor] = useState<string | null>(null);
+  const coverSeries = list.data?.find((s) => s.id === coverFor);
+  const actions = useBookActions((s) => setCoverFor(s.id!));
   const importBundle = useImportBundle();
   const [creating, setCreating] = useState(false);
   const [legacy, setLegacy] = useState(false);
-  usePageTitle(t('works.heading'));
 
   const onBundle = (file: File) =>
     importBundle.mutate(file, {
@@ -335,7 +442,7 @@ export default function WorksPage() {
       <header className="page-head classic-head">
         <div>
           <div className="eyebrow">{t('classic.works.eyebrow')}</div>
-          <h1>{t('works.heading')}</h1>
+          <CollectionTitle />
           <p>{t('works.sub')}</p>
         </div>
         <div className="page-actions">
@@ -368,29 +475,60 @@ export default function WorksPage() {
         />
       ) : null}
       {list.data?.length ? (
-        <FilterBar items={list.data} filter={filter} onChange={setFilter} />
+        <FilterBar
+          items={list.data}
+          filter={filter}
+          onChange={setFilter}
+          starredOnly={starredOnly}
+          onStarredOnly={setStarredOnly}
+        />
       ) : null}
-      {list.data?.length && !filtered.length ? (
+      {list.data?.length ? (
+        <div className="shelf-index">
+          <span>{t('classic.shelf.count', { count: books.length })}</span>
+          {view === 'showcase' && books.length ? (
+            <ShowcaseNav index={index} total={books.length} onIndex={setFeatured} />
+          ) : null}
+        </div>
+      ) : null}
+      {list.data?.length && !books.length ? (
         <Empty
           compact
-          icon={<Search size={20} />}
-          title={t('works.noMatch')}
+          icon={starredOnly ? <Star size={20} /> : <Search size={20} />}
+          title={
+            starredOnly && !filter.q && !filter.status
+              ? t('classic.shelf.noStarred')
+              : t('works.noMatch')
+          }
           action={
-            <button className="btn" onClick={() => setFilter({ q: '', status: '' })}>
+            <button
+              className="btn"
+              onClick={() => setParams(new URLSearchParams(), { replace: true })}
+            >
               {t('works.clearFilters')}
             </button>
           }
         />
       ) : null}
-      {filtered.length ? (
+      {books.length && view === 'showcase' ? (
+        <Showcase
+          books={books}
+          index={index}
+          onIndex={setFeatured}
+          firstEditionId={firstEditionId}
+          actions={actions}
+          onChangeCover={(s) => setCoverFor(s.id!)}
+        />
+      ) : null}
+      {books.length && view === 'grid' ? (
         <div className="work-grid">
-          {filtered.map((s, i) => (
-            <SeriesCardView key={s.id} series={s} index={i} />
+          {books.map((s, i) => (
+            <SeriesCardView key={s.id} series={s} index={i} actions={actions(s)} />
           ))}
           {!filtering ? (
             <button
               className="work-card book-card work-new"
-              style={{ '--i': filtered.length } as CSSProperties}
+              style={{ '--i': books.length } as CSSProperties}
               onClick={() => setCreating(true)}
             >
               <span className="work-new-inner">
@@ -401,7 +539,15 @@ export default function WorksPage() {
           ) : null}
         </div>
       ) : null}
+      {list.data?.length ? <p className="collection-note">{t('classic.shelf.note')}</p> : null}
 
+      {coverSeries ? (
+        <CoverPicker
+          series={coverSeries}
+          open={!!coverSeries}
+          onOpenChange={(open) => !open && setCoverFor(null)}
+        />
+      ) : null}
       <NewSeriesDialog open={creating} onOpenChange={setCreating} />
       <LegacyImportDialog open={legacy} onOpenChange={setLegacy} />
     </div>

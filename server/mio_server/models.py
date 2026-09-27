@@ -476,6 +476,9 @@ class Series(StrictModel):
         default_factory=dict, description="{变量} values (advanced layer)."
     )
     default_profile_id: str | None = None
+    cover_asset_id: str | None = Field(
+        default=None, description="Chosen cover image; None = automatic (the first image)."
+    )
     created_at: str = Field(default_factory=now_iso)
     updated_at: str = Field(default_factory=now_iso)
     deleted_at: str | None = None
@@ -487,10 +490,13 @@ class Series(StrictModel):
 
 
 class SeriesCard(Series):
-    """A series as listed on the works page: plus its episode count and a cover image."""
+    """A series as listed on the works page: episode / panel counts and the effective cover
+    (the chosen one, else the first adopted image, else the first image drawn)."""
 
     episode_count: int = 0
-    cover_asset_id: str | None = None
+    panel_count: int = 0
+    adopted_count: int = 0
+    cover_auto: bool = True
 
 
 class SeriesCreate(StrictModel):
@@ -506,6 +512,7 @@ class SeriesPatch(StrictModel):
     variants: list[VariantSet] | None = None
     variables: dict[str, str] | None = None
     default_profile_id: str | None = None
+    cover_asset_id: str | None = None
 
 
 class EpisodeCreate(StrictModel):

@@ -143,6 +143,42 @@ class CrudTests(ApiCase):
         card = self.ok(self.client.get("/api/series"))[0]
         self.assertEqual((card["episode_count"], card["cover_asset_id"]), (2, None))
 
+    def test_series_cover_is_the_first_image_until_one_is_chosen(self):
+        series, ep = self.make_episode()
+        sid, eid = series["id"], ep["id"]
+        self.drain(self.ok(self.client.post(f"/api/episodes/{eid}/render", json={"candidates": 1})))
+        ep = self.ok(self.client.get(f"/api/episodes/{eid}"))
+        order = {p["id"]: p["order"] for p in ep["panels"]}
+        takes = sorted(ep["takes"], key=lambda t: order[t["panel_id"]])
+        # Nothing adopted yet: the first image drawn is the cover.
+        card = self.ok(self.client.get("/api/series"))[0]
+        self.assertEqual((card["cover_asset_id"], card["cover_auto"]), (takes[0]["asset_id"], True))
+        self.assertEqual((card["panel_count"], card["adopted_count"]), (len(order), 0))
+        # An adopted image outranks earlier candidates.
+        self.ok(self.client.post(f"/api/episodes/{eid}/takes/{takes[-1]['id']}/adopt"))
+        card = self.ok(self.client.get("/api/series"))[0]
+        self.assertEqual(
+            (card["cover_asset_id"], card["adopted_count"]), (takes[-1]["asset_id"], 1)
+        )
+        # A chosen cover sticks (and travels with the bundle) until it is cleared again.
+        chosen = takes[1]["asset_id"]
+        patched = self.ok(self.client.patch(f"/api/series/{sid}", json={"cover_asset_id": chosen}))
+        self.assertEqual(patched["cover_asset_id"], chosen)
+        card = self.ok(self.client.get("/api/series"))[0]
+        self.assertEqual((card["cover_asset_id"], card["cover_auto"]), (chosen, False))
+        self.ok(self.client.patch(f"/api/series/{sid}", json={"cover_asset_id": None}))
+        card = self.ok(self.client.get("/api/series"))[0]
+        self.assertEqual(
+            (card["cover_asset_id"], card["cover_auto"]), (takes[-1]["asset_id"], True)
+        )
+
+    def test_collection_title_defaults_and_renames(self):
+        self.assertEqual(
+            self.ok(self.client.get("/api/settings"))["collection_title"], "遇见你，真好"
+        )
+        renamed = self.ok(self.client.patch("/api/settings", json={"collection_title": "夏日"}))
+        self.assertEqual(renamed["collection_title"], "夏日")
+
     def test_panel_editing_and_revision_conflict(self):
         _, ep = self.make_episode()
         eid, first = ep["id"], ep["panels"][0]["id"]

@@ -28,7 +28,15 @@ interface UIState {
   /** Studio mode: the panel inspector drawer is open. */
   inspectorOpen: boolean;
   setInspectorOpen: (on: boolean) => void;
+  /** Works page layout: one featured book at a time (legacy 精选展示) or the compact grid. */
+  worksView: WorksView;
+  setWorksView: (view: WorksView) => void;
+  /** Starred series ids (legacy 星标收藏; kept on this device). */
+  starred: string[];
+  toggleStar: (id: string) => void;
 }
+
+export type WorksView = 'showcase' | 'grid';
 
 export const useUI = create<UIState>()(
   persist(
@@ -53,6 +61,13 @@ export const useUI = create<UIState>()(
       setNavCollapsed: (navCollapsed) => set({ navCollapsed }),
       inspectorOpen: true,
       setInspectorOpen: (inspectorOpen) => set({ inspectorOpen }),
+      worksView: 'showcase',
+      setWorksView: (worksView) => set({ worksView }),
+      starred: [],
+      toggleStar: (id) =>
+        set((s) => ({
+          starred: s.starred.includes(id) ? s.starred.filter((x) => x !== id) : [...s.starred, id],
+        })),
     }),
     {
       name: 'mio.ui',
@@ -64,6 +79,8 @@ export const useUI = create<UIState>()(
         studioMode: s.studioMode,
         navCollapsed: s.navCollapsed,
         inspectorOpen: s.inspectorOpen,
+        worksView: s.worksView,
+        starred: s.starred,
       }),
       migrate: (persisted) => {
         const state = (persisted ?? {}) as Partial<UIState>;
@@ -71,6 +88,8 @@ export const useUI = create<UIState>()(
           ...state,
           theme: migrateChoice(state.theme),
           recentThemes: state.recentThemes ?? {},
+          worksView: state.worksView === 'grid' ? 'grid' : 'showcase',
+          starred: Array.isArray(state.starred) ? state.starred : [],
         } as UIState;
       },
     },
