@@ -125,7 +125,7 @@ export function Showcase(props: {
   }, [index, books.length, onIndex]);
 
   if (!b) return null;
-  const to = `/series/${b.id}`;
+  const to = `/gallery/${b.id}`;
   const cast = (b.bible?.characters ?? []).map((c) => c.name).filter(Boolean);
   const state = frameState(b);
   const status = b.status ?? 'draft';

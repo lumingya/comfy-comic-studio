@@ -26,6 +26,11 @@ class RenderRequest(BaseModel):
     variant_ids: list[str | None] | None = None
     idempotency_key: str | None = None
     qa: bool = False
+    adopt_first: bool = Field(
+        default=False,
+        description="Adopt the first image of each panel that has no adopted image yet "
+        "(the queue's one-click flow: images go straight into the album).",
+    )
 
 
 class FinalizeRequest(BaseModel):
@@ -75,6 +80,7 @@ def render(ctx: Ctx, episode_id: str, body: RenderRequest) -> dict:
         body.variant_ids,
         idempotency_key=body.idempotency_key,
         qa=body.qa,
+        adopt_first=body.adopt_first,
     )
 
 

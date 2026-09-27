@@ -208,6 +208,7 @@ class RenderService(CompositionMixin, EditsMixin):
         *,
         candidates: int,
         variant=None,
+        adopt_first: bool = False,
     ) -> list[ItemSpec]:
         specs = []
         refs = select_references(series.bible, panel)
@@ -266,6 +267,8 @@ class RenderService(CompositionMixin, EditsMixin):
                 "refs": [r.to_json() for r in refs],
                 "candidate": k,
             }
+            if adopt_first and k == 0:
+                meta["adopt_first"] = True
             specs.append(
                 ItemSpec(
                     input={"stages": stages, "feeds": feeds, "meta": meta},
@@ -287,6 +290,7 @@ class RenderService(CompositionMixin, EditsMixin):
         idempotency_key: str | None = None,
         priority: int = 0,
         qa: bool = False,
+        adopt_first: bool = False,
     ) -> dict:
         episode = self.store.get_episode(episode_id)
         series = self.store.get_series(episode.series_id)
@@ -314,6 +318,7 @@ class RenderService(CompositionMixin, EditsMixin):
                     prof,
                     candidates=candidates or prof.candidates,
                     variant=variant,
+                    adopt_first=adopt_first,
                 )
         title = f"{series.title} · {episode.title} · {len(panels)} 格草稿"
         return self.engine.submit(
@@ -475,6 +480,8 @@ class RenderService(CompositionMixin, EditsMixin):
                             and t.status == TakeStatus.adopted
                         ):
                             t.status = TakeStatus.candidate
+                    take.status = TakeStatus.adopted
+                elif meta.get("adopt_first") and ep.adopted(take.panel_id, take.variant_id) is None:
                     take.status = TakeStatus.adopted
                 ep.takes.append(take)
                 created.append(take.id)

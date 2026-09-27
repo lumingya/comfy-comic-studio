@@ -34,6 +34,7 @@ from . import (
     series,
     system,
     update,
+    workshop,
 )
 from .guard import LocalGuard, env_hosts
 from .v2 import build_v2
@@ -81,7 +82,18 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
 
         return {"ok": True, "schema": SCHEMA_VERSION, "api": API_VERSION}
 
-    for module in (series, production, canvas, library, jobs, system, extensions, album, motion):
+    for module in (
+        series,
+        production,
+        canvas,
+        library,
+        jobs,
+        system,
+        extensions,
+        album,
+        motion,
+        workshop,
+    ):
         app.include_router(module.router, prefix="/api")
     app.include_router(access.tokens, prefix="/api")
     app.include_router(access.hooks, prefix="/api")

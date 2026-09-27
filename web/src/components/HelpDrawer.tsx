@@ -12,10 +12,10 @@ export const useHelp = create<{ open: boolean; set: (open: boolean) => void }>((
 
 /** Which help page applies to a route. */
 export function helpPageFor(pathname: string): HelpPage {
-  if (/\/(episodes|workshop)\/[^/]+\/script/.test(pathname)) return 'script';
-  if (/\/(episodes|workshop)\/[^/]+\/board/.test(pathname)) return 'board';
-  if (/\/(episodes|workshop)\/[^/]+\/canvas/.test(pathname)) return 'canvas';
-  if (/\/series\/[^/]+\/bible|\/workshop\/[^/]+\/presets/.test(pathname)) return 'bible';
+  if (/\/workshop\/(story\/[^/]+$|assembly\/[^/]+\/script)/.test(pathname)) return 'script';
+  if (/\/workshop\/assembly\/[^/]+\/board/.test(pathname)) return 'board';
+  if (/\/gallery\/[^/]+\/layout/.test(pathname)) return 'canvas';
+  if (/\/series\/[^/]+\/bible|\/workshop\/presets/.test(pathname)) return 'bible';
   if (pathname.startsWith('/jobs')) return 'jobs';
   if (pathname.startsWith('/settings')) return 'settings';
   return 'works';

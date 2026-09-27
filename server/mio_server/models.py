@@ -459,6 +459,37 @@ class Episode(StrictModel):
         )
 
 
+class PresetGroup(StrictModel):
+    id: str = Field(default_factory=lambda: new_id("group"))
+    title: str
+
+
+class PresetEntry(StrictModel):
+    """One ``{key}`` variable of a preset (legacy 预设工坊)."""
+
+    id: str = Field(default_factory=lambda: new_id("var"))
+    key: str = Field(pattern=r"^[^\s{}]{1,64}$")
+    label: str = ""
+    value: str = ""
+    hint: str = ""
+    group_id: str | None = None
+
+
+class Preset(StrictModel):
+    """A reusable visual asset: a named set of ``{变量}`` values (character, outfit, style…).
+
+    Presets live in the workshop; assembling copies their values into the new album, so later
+    edits never change an album that was already assembled."""
+
+    id: str = Field(default_factory=lambda: new_id("preset"))
+    title: str
+    groups: list[PresetGroup] = Field(default_factory=list)
+    entries: list[PresetEntry] = Field(default_factory=list)
+
+    def variables(self) -> dict[str, str]:
+        return {e.key: e.value for e in self.entries}
+
+
 class SeriesStatus(str, Enum):
     draft = "draft"
     active = "active"
@@ -470,6 +501,12 @@ class Series(StrictModel):
     title: str
     subtitle: str = ""
     status: SeriesStatus = SeriesStatus.draft
+    kind: Literal["album", "workshop"] = Field(
+        default="album",
+        description="album = a book on the shelf; workshop = the storyboards and presets of the "
+        "创作工坊 (never listed as a book).",
+    )
+    presets: list[Preset] = Field(default_factory=list, description="Workshop presets.")
     bible: Bible = Field(default_factory=Bible)
     variants: list[VariantSet] = Field(default_factory=list)
     variables: dict[str, str] = Field(
@@ -513,6 +550,7 @@ class SeriesPatch(StrictModel):
     variables: dict[str, str] | None = None
     default_profile_id: str | None = None
     cover_asset_id: str | None = None
+    presets: list[Preset] | None = None
 
 
 class EpisodeCreate(StrictModel):

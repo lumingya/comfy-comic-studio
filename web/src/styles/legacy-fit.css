@@ -38,7 +38,10 @@ svg.icon.is-filled {
     .wf-channel-nav,
     #mio-home,
     #collection-home,
-    .workshop-asset-head
+    .workshop-asset-head,
+    .assembly-workshop,
+    .assembly-designer,
+    #reader
   )
   button:where(:not(.btn)) {
   background: none;
@@ -46,6 +49,35 @@ svg.icon.is-filled {
   color: inherit;
   cursor: pointer;
   font: inherit;
+}
+:where(.assembly-workshop, .assembly-designer, #reader) button:where(:not(.btn)):disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+/* Legacy form defaults (styles.css input/select/textarea) for the workshop, wizard and reader. */
+:where(.assembly-workshop, .assembly-designer, #reader)
+  :where(input:not([type='checkbox'], [type='range'], [type='color']), select, textarea) {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  outline: none;
+}
+:where(.assembly-workshop, .assembly-designer, #reader)
+  :where(input:not([type='checkbox'], [type='range'], [type='color']), select) {
+  height: 37px;
+  padding: 0 11px;
+  width: 100%;
+}
+:where(.assembly-workshop, .assembly-designer, #reader) :where(textarea) {
+  padding: 11px;
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+  line-height: 1.8;
+}
+:where(.assembly-workshop, .assembly-designer, #reader) :where(input, select, textarea):focus {
+  border-color: var(--accent2);
 }
 :where(#sidebar, #topbar, .command-dialog, .shelf-toolbar) input {
   font: inherit;
@@ -293,4 +325,67 @@ html:not(.is-studio) .workshop-body .panel-no {
     1rem Georgia,
     serif;
   flex-shrink: 0;
+}
+
+/* Legacy `dialog` element defaults (styles.css), for the wizard and the reader. */
+:where(dialog#modal, dialog#reader) {
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 24px 90px rgb(var(--shadow-rgb) / 0.53);
+  padding: 0;
+  width: 650px;
+  max-width: calc(100vw - 30px);
+  max-height: 90vh;
+}
+:where(dialog#modal, dialog#reader)::backdrop {
+  background: rgb(var(--shadow-rgb) / 0.82);
+}
+:where(dialog#modal, dialog#reader)[open] {
+  animation: modalin 0.2s;
+}
+@keyframes modalin {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Legacy reader palette (styles.css :root) and its global [hidden] rule. */
+:root {
+  --reader-bg: #101719;
+  --reader-surface: #121a1c;
+  --reader-line: #2c3a34;
+  --reader-text: #e0e5d8;
+  --reader-soft: #b3c0b3;
+  --reader-muted: #84958a;
+}
+:where(#reader, .assembly-workshop, .assembly-designer) [hidden] {
+  display: none !important;
+}
+
+/* Legacy utilities (styles.css .field / .label / .help) inside the legacy screens. */
+:is(.assembly-workshop, .assembly-designer, #reader) .field {
+  margin-bottom: 18px;
+}
+:is(.assembly-workshop, .assembly-designer, #reader) .label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--soft);
+  margin-bottom: 8px;
+}
+:is(.assembly-workshop, .assembly-designer, #reader) .help {
+  font-size: 0.75rem;
+  line-height: 1.9;
+  color: var(--muted);
+  margin-top: 7px;
+  font-weight: 400;
+}
+.icon.is-back {
+  transform: scaleX(-1);
 }

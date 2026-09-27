@@ -105,7 +105,10 @@ class MioClient(_Base):
         return self._request("GET", "/whoami")
 
     def list_series(self, *, deleted: bool | None = None) -> Any:
-        """GET /series — List Series."""
+        """GET /series — List Series.
+
+        The books on the shelf (the hidden 创作工坊 series is not one).
+        """
         return self._request("GET", "/series", params={"deleted": deleted})
 
     def create_series(self, body: dict | list | None = None) -> Any:

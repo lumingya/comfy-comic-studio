@@ -32,6 +32,8 @@ export interface RenderVars {
   candidates?: number | null;
   variant_ids?: (string | null)[] | null;
   qa?: boolean;
+  /** Queue flow: the first image of each panel without one goes straight into the album. */
+  adopt_first?: boolean;
 }
 
 export function useRender(episodeId: string) {

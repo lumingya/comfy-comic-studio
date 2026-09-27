@@ -8,10 +8,15 @@ import { NotFound, RouteError } from './errors';
 
 const Home = lazy(() => import('../pages/home/HomePage'));
 const Works = lazy(() => import('../pages/works/WorksPage'));
-const Workshop = lazy(() => import('../pages/workshop/WorkshopPage'));
-const WorkshopIndex = lazy(() =>
-  import('../pages/workshop/WorkshopPage').then((m) => ({ default: m.WorkshopIndex })),
-);
+const ws = () => import('../pages/workshop/WorkshopPage');
+const StoryIndex = lazy(() => ws().then((m) => ({ default: m.StoryIndex })));
+const StoryTab = lazy(() => ws().then((m) => ({ default: m.StoryTab })));
+const StoryBody = lazy(() => ws().then((m) => ({ default: m.StoryBody })));
+const TaskDetail = lazy(() => ws().then((m) => ({ default: m.TaskDetail })));
+const LegacyRedirect = lazy(() => ws().then((m) => ({ default: m.LegacyRedirect })));
+const PresetsTab = lazy(() => import('../pages/workshop/PresetsTab'));
+const AssemblyTab = lazy(() => import('../pages/workshop/AssemblyTab'));
+const Reader = lazy(() => import('../pages/works/ReaderPage'));
 const Engine = lazy(() => import('../pages/engine/EnginePage'));
 const SeriesPage = lazy(() => import('../pages/series/SeriesPage'));
 const EpisodesTab = lazy(() => import('../pages/series/EpisodesTab'));
@@ -21,7 +26,6 @@ const EpisodeRedirect = lazy(() => import('../pages/episode/EpisodePage'));
 const ScriptTab = lazy(() => import('../pages/script/ScriptTab'));
 const BoardTab = lazy(() => import('../pages/board/BoardTab'));
 const CanvasTab = lazy(() => import('../pages/canvas/CanvasTab'));
-const ReaderTab = lazy(() => import('../pages/episode/ReaderTab'));
 const ExportTab = lazy(() => import('../pages/episode/ExportTab'));
 const ExtensionTab = lazy(() => import('../pages/episode/ExtensionTab'));
 const Jobs = lazy(() => import('../pages/jobs/JobsPage'));
@@ -45,7 +49,20 @@ export const routes = [
     errorElement: <RouteError />,
     children: [
       { index: true, element: s(<Home />) },
-      { path: 'gallery', element: s(<Works />) },
+      {
+        path: 'gallery',
+        element: s(<Works />),
+        children: [
+          {
+            path: ':seriesId',
+            element: s(<Reader />),
+            children: [
+              { path: 'export', element: s(<ExportTab />) },
+              { path: 'layout', element: s(<CanvasTab />) },
+            ],
+          },
+        ],
+      },
       {
         path: 'series/:seriesId',
         element: s(<SeriesPage />),
@@ -56,19 +73,29 @@ export const routes = [
           { path: 'variants', element: s(<VariantsTab />) },
         ],
       },
-      { path: 'workshop', element: s(<WorkshopIndex />) },
       {
-        path: 'workshop/:episodeId',
-        element: s(<Workshop />),
+        path: 'workshop',
         children: [
-          { index: true, element: <Navigate to="script" replace /> },
-          { path: 'script', element: s(<ScriptTab />) },
-          { path: 'presets', element: s(<BibleTab />) },
-          { path: 'board', element: s(<BoardTab />) },
-          { path: 'canvas', element: s(<CanvasTab />) },
-          { path: 'read', element: s(<ReaderTab />) },
-          { path: 'export', element: s(<ExportTab />) },
-          { path: 'ext/:panelId', element: s(<ExtensionTab />) },
+          { index: true, element: <Navigate to="story" replace /> },
+          { path: 'story', element: s(<StoryIndex />) },
+          {
+            path: 'story/:episodeId',
+            element: s(<StoryTab />),
+            children: [{ index: true, element: s(<StoryBody />) }],
+          },
+          { path: 'presets', element: s(<PresetsTab />) },
+          { path: 'assembly', element: s(<AssemblyTab />) },
+          {
+            path: 'assembly/:episodeId',
+            element: s(<TaskDetail />),
+            children: [
+              { index: true, element: <Navigate to="board" replace /> },
+              { path: 'board', element: s(<BoardTab />) },
+              { path: 'script', element: s(<ScriptTab />) },
+              { path: 'ext/:panelId', element: s(<ExtensionTab />) },
+            ],
+          },
+          { path: ':episodeId/*', element: s(<LegacyRedirect />) },
         ],
       },
       { path: 'episodes/:episodeId/*', element: s(<EpisodeRedirect />) },

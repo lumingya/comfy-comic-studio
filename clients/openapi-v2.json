@@ -2660,6 +2660,209 @@
     "title": "PanelWidth",
     "type": "string"
    },
+   "Preset-Input": {
+    "additionalProperties": false,
+    "description": "A reusable visual asset: a named set of ``{变量}`` values (character, outfit, style…).\n\nPresets live in the workshop; assembling copies their values into the new album, so later\nedits never change an album that was already assembled.",
+    "properties": {
+     "entries": {
+      "items": {
+       "$ref": "#/components/schemas/PresetEntry-Input"
+      },
+      "title": "Entries",
+      "type": "array"
+     },
+     "groups": {
+      "items": {
+       "$ref": "#/components/schemas/PresetGroup-Input"
+      },
+      "title": "Groups",
+      "type": "array"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "title"
+    ],
+    "title": "Preset",
+    "type": "object"
+   },
+   "Preset-Output": {
+    "additionalProperties": false,
+    "description": "A reusable visual asset: a named set of ``{变量}`` values (character, outfit, style…).\n\nPresets live in the workshop; assembling copies their values into the new album, so later\nedits never change an album that was already assembled.",
+    "properties": {
+     "entries": {
+      "items": {
+       "$ref": "#/components/schemas/PresetEntry-Output"
+      },
+      "title": "Entries",
+      "type": "array"
+     },
+     "groups": {
+      "items": {
+       "$ref": "#/components/schemas/PresetGroup-Output"
+      },
+      "title": "Groups",
+      "type": "array"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "title",
+     "groups",
+     "entries"
+    ],
+    "title": "Preset",
+    "type": "object"
+   },
+   "PresetEntry-Input": {
+    "additionalProperties": false,
+    "description": "One ``{key}`` variable of a preset (legacy 预设工坊).",
+    "properties": {
+     "group_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Group Id"
+     },
+     "hint": {
+      "default": "",
+      "title": "Hint",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "key": {
+      "pattern": "^[^\\s{}]{1,64}$",
+      "title": "Key",
+      "type": "string"
+     },
+     "label": {
+      "default": "",
+      "title": "Label",
+      "type": "string"
+     },
+     "value": {
+      "default": "",
+      "title": "Value",
+      "type": "string"
+     }
+    },
+    "required": [
+     "key"
+    ],
+    "title": "PresetEntry",
+    "type": "object"
+   },
+   "PresetEntry-Output": {
+    "additionalProperties": false,
+    "description": "One ``{key}`` variable of a preset (legacy 预设工坊).",
+    "properties": {
+     "group_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Group Id"
+     },
+     "hint": {
+      "default": "",
+      "title": "Hint",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "key": {
+      "pattern": "^[^\\s{}]{1,64}$",
+      "title": "Key",
+      "type": "string"
+     },
+     "label": {
+      "default": "",
+      "title": "Label",
+      "type": "string"
+     },
+     "value": {
+      "default": "",
+      "title": "Value",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "key",
+     "label",
+     "value",
+     "hint",
+     "group_id"
+    ],
+    "title": "PresetEntry",
+    "type": "object"
+   },
+   "PresetGroup-Input": {
+    "additionalProperties": false,
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "title"
+    ],
+    "title": "PresetGroup",
+    "type": "object"
+   },
+   "PresetGroup-Output": {
+    "additionalProperties": false,
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "title"
+    ],
+    "title": "PresetGroup",
+    "type": "object"
+   },
    "Prop-Input": {
     "additionalProperties": false,
     "properties": {
@@ -3177,6 +3380,12 @@
    },
    "RenderRequest": {
     "properties": {
+     "adopt_first": {
+      "default": false,
+      "description": "Adopt the first image of each panel that has no adopted image yet (the queue's one-click flow: images go straight into the album).",
+      "title": "Adopt First",
+      "type": "boolean"
+     },
      "candidates": {
       "anyOf": [
        {
@@ -3547,6 +3756,24 @@
       "title": "Id",
       "type": "string"
      },
+     "kind": {
+      "default": "album",
+      "description": "album = a book on the shelf; workshop = the storyboards and presets of the 创作工坊 (never listed as a book).",
+      "enum": [
+       "album",
+       "workshop"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "presets": {
+      "description": "Workshop presets.",
+      "items": {
+       "$ref": "#/components/schemas/Preset-Output"
+      },
+      "title": "Presets",
+      "type": "array"
+     },
      "status": {
       "$ref": "#/components/schemas/SeriesStatus",
       "default": "draft"
@@ -3585,6 +3812,8 @@
      "title",
      "subtitle",
      "status",
+     "kind",
+     "presets",
      "bible",
      "variants",
      "variables",
@@ -3661,10 +3890,28 @@
       "title": "Id",
       "type": "string"
      },
+     "kind": {
+      "default": "album",
+      "description": "album = a book on the shelf; workshop = the storyboards and presets of the 创作工坊 (never listed as a book).",
+      "enum": [
+       "album",
+       "workshop"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
      "panel_count": {
       "default": 0,
       "title": "Panel Count",
       "type": "integer"
+     },
+     "presets": {
+      "description": "Workshop presets.",
+      "items": {
+       "$ref": "#/components/schemas/Preset-Output"
+      },
+      "title": "Presets",
+      "type": "array"
      },
      "status": {
       "$ref": "#/components/schemas/SeriesStatus",
@@ -3704,6 +3951,8 @@
      "title",
      "subtitle",
      "status",
+     "kind",
+     "presets",
      "bible",
      "variants",
      "variables",
@@ -3773,6 +4022,20 @@
        }
       ],
       "title": "Default Profile Id"
+     },
+     "presets": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/Preset-Input"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Presets"
      },
      "status": {
       "anyOf": [
@@ -8328,6 +8591,7 @@
   },
   "/series": {
    "get": {
+    "description": "The books on the shelf (the hidden 创作工坊 series is not one).",
     "operationId": "list_series",
     "parameters": [
      {

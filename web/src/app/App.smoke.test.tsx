@@ -95,6 +95,42 @@ const themes = [
 ];
 
 const { items: _items, ...jobSummary } = job;
+// The hidden 创作工坊 series: one storyboard (sb_1) and one preset.
+const workshop = {
+  ...series,
+  id: 'ws_1',
+  title: '创作工坊',
+  kind: 'workshop' as const,
+  presets: [
+    {
+      id: 'pre_1',
+      title: '林夏 · 夏日',
+      groups: [{ id: 'g1', title: '主角与服装' }],
+      entries: [
+        {
+          id: 'v1',
+          key: 'character',
+          label: '角色名 / 提示词',
+          value: 'lin xia',
+          hint: '',
+          group_id: 'g1',
+        },
+        { id: 'v2', key: 'outfit', label: '服装', value: '', hint: '', group_id: 'g1' },
+      ],
+    },
+  ],
+};
+const storyboard = {
+  ...episode,
+  id: 'sb_1',
+  series_id: 'ws_1',
+  title: '海风来信',
+  takes: [],
+  panels: episode.panels.map((p) => ({
+    ...p,
+    overrides: { ...p.overrides, raw_prompt: '1girl, {character}, {outfit}, {天气}' },
+  })),
+};
 
 beforeEach(() => {
   vi.stubGlobal(
@@ -126,6 +162,27 @@ beforeEach(() => {
       limit: 50,
     },
     'GET /api/episodes/ep_1': episode,
+    'GET /api/workshop': workshop,
+    'GET /api/series/ws_1': workshop,
+    'GET /api/series/ws_1/episodes': {
+      items: [
+        {
+          id: 'sb_1',
+          series_id: 'ws_1',
+          title: '海风来信',
+          order: 0,
+          panel_count: 2,
+          created_at: '',
+          updated_at: '',
+        },
+      ],
+      total: 1,
+      offset: 0,
+      limit: 50,
+    },
+    'GET /api/episodes/sb_1': storyboard,
+    'PATCH /api/series/ws_1': (body: unknown) => ({ ...workshop, ...(body as object) }),
+    'POST /api/workshop/assemble': { series: series, episode: episode },
     'GET /api/episodes/ep_1/panels/p0/prompt': prompt,
     'GET /api/export/presets': [
       { id: 'webtoon', label: 'Webtoon', width: 800, max_height: 1280, format: 'jpg' },
@@ -237,7 +294,7 @@ describe('every route mounts with API data', () => {
   });
 
   it('episode → script with compiled prompt', async () => {
-    mount('/episodes/ep_1/script');
+    mount('/workshop/assembly/ep_1/script');
     // Every tag is a chip that names its origin; the plain text stays available for copying.
     expect(
       await screen.findByText('short black hair', undefined, { timeout: 3000 }),
@@ -250,7 +307,7 @@ describe('every route mounts with API data', () => {
   it('episode → script: multi-select, right-click menu, batch edit and help', async () => {
     // The per-panel render overrides live in the Studio inspector.
     useUI.setState({ studioMode: true });
-    mount('/episodes/ep_1/script');
+    mount('/workshop/assembly/ep_1/script');
     const rows = await screen.findAllByText(/^「欢迎光临」$|^第 2 格$/);
     expect(rows.length).toBeGreaterThanOrEqual(2);
     // Ctrl-click the second row: both panels selected, the batch bar appears.
@@ -277,7 +334,7 @@ describe('every route mounts with API data', () => {
   });
 
   it('episode → board with takes and live items', async () => {
-    mount('/episodes/ep_1/board');
+    mount('/workshop/assembly/ep_1/board');
     expect(await screen.findByText('全部出草稿')).toBeInTheDocument();
     expect(screen.getAllByText('已采用').length).toBeGreaterThan(0);
     expect(await screen.findByText('第 1 格 · 候选 1')).toBeInTheDocument();
@@ -285,18 +342,78 @@ describe('every route mounts with API data', () => {
   });
 
   it('episode → canvas', async () => {
-    mount('/episodes/ep_1/canvas');
+    mount('/gallery/ser_1/layout');
     expect(await screen.findByText('重排分格')).toBeInTheDocument();
   });
 
-  it('episode → reader shows the composed strip', async () => {
-    mount('/episodes/ep_1/read');
-    const img = await screen.findByAltText('第一话');
-    expect(img.getAttribute('src')).toContain('/api/episodes/ep_1/strip.png');
+  it('画册集 → the reader dialog shows the adopted pages, nothing to edit', async () => {
+    mount('/gallery/ser_1');
+    const img = await screen.findByAltText('第 1 格');
+    expect(img.getAttribute('src')).toContain('/api/assets/');
+    expect(document.querySelector('#page-position')?.textContent).toBe('01 / 01');
+    expect(screen.getByRole('button', { name: '关闭画册' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('画面提示词')).toBeNull();
+  });
+
+  it('old episode links: storyboards open in 分镜工坊, album pages in the reader', async () => {
+    const router = mount('/episodes/ep_1/read');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/gallery/ser_1'));
+    await router.navigate('/workshop/sb_1/script');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/workshop/story/sb_1'));
+  });
+
+  it('分镜工坊: frames, highlighted variables and the per-frame parameters', async () => {
+    const router = mount('/workshop');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/workshop/story/sb_1'));
+    expect(await screen.findByRole('heading', { name: '分镜工坊' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /第 2 格/ })).toBeInTheDocument();
+    const marks = document.querySelectorAll('.prompt-paint mark[data-prompt-variable]');
+    expect([...marks].map((m) => (m as HTMLElement).dataset.state)).toEqual(['defined', 'empty']);
+    expect(screen.getByText(/识别到 2 个变量，其中 1 个还没有值：outfit/)).toBeInTheDocument();
+    expect(screen.getByText('此幕画面参数')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '去装配此分镜' }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/workshop/assembly'));
+    expect(await screen.findByRole('dialog', { name: '新建生成任务' })).toBeInTheDocument();
+  });
+
+  it('预设工坊: groups fold open, values save as the whole preset list', async () => {
+    mount('/workshop/presets');
+    const toggle = await screen.findByRole('button', { name: '展开「主角与服装」' });
+    fireEvent.click(toggle);
+    const value = screen.getByRole('textbox', { name: '服装' });
+    fireEvent.change(value, { target: { value: 'white dress' } });
+    await waitFor(
+      () =>
+        expect(calls.some((c) => c.method === 'PATCH' && c.url === '/api/series/ws_1')).toBe(true),
+      { timeout: 3000 },
+    );
+    const patch = calls.find((c) => c.method === 'PATCH' && c.url === '/api/series/ws_1')!;
+    expect(JSON.stringify(patch.body)).toContain('white dress');
+  });
+
+  it('装配: the 3-step wizard adds a standby task without generating', async () => {
+    mount('/workshop/assembly');
+    expect(await screen.findByText('等待你的安排')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '新建生成任务' }));
+    await screen.findByRole('dialog', { name: '新建生成任务' });
+    await screen.findByRole('option', { name: /海风来信/ });
+    fireEvent.click(screen.getByRole('button', { name: '下一步' }));
+    expect(await screen.findByText(/还缺 \{天气\}/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '下一步' }));
+    expect(screen.getByLabelText('画册名称')).toHaveValue('海风来信 · 林夏');
+    fireEvent.click(screen.getByRole('button', { name: '添加待命任务' }));
+    await waitFor(() =>
+      expect(calls.some((c) => c.method === 'POST' && c.url === '/api/workshop/assemble')).toBe(
+        true,
+      ),
+    );
+    const call = calls.find((c) => c.url === '/api/workshop/assemble')!;
+    expect(call.body).toMatchObject({ storyboard_id: 'sb_1', preset_ids: ['pre_1'] });
+    expect(calls.some((c) => c.url.includes('/render'))).toBe(false);
   });
 
   it('episode → export', async () => {
-    mount('/episodes/ep_1/export');
+    mount('/gallery/ser_1/export');
     expect(await screen.findByText('导出并下载')).toBeInTheDocument();
   });
 
@@ -323,7 +440,7 @@ describe('every route mounts with API data', () => {
   });
 
   it('classic mode: prompt, characters and the generate stage; no studio drawer', async () => {
-    mount('/episodes/ep_1/script');
+    mount('/workshop/assembly/ep_1/script');
     expect(await screen.findByLabelText('画面提示词')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /生成 \d 张/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /林夏/, pressed: true })).toBeInTheDocument();
@@ -332,7 +449,7 @@ describe('every route mounts with API data', () => {
   });
 
   it('generate queues the chosen number of candidates for this panel', async () => {
-    mount('/episodes/ep_1/script');
+    mount('/workshop/assembly/ep_1/script');
     fireEvent.click(await screen.findByRole('button', { name: '4', pressed: false }));
     fireEvent.click(screen.getByRole('button', { name: /生成 4 张/ }));
     await waitFor(() =>
@@ -350,7 +467,7 @@ describe('every route mounts with API data', () => {
   });
 
   it('classic board hides QA, finalize and variants', async () => {
-    mount('/episodes/ep_1/board');
+    mount('/workshop/assembly/ep_1/board');
     expect(await screen.findByText('全部出草稿')).toBeInTheDocument();
     expect(screen.queryByText('质检已采用的图')).toBeNull();
   });
@@ -363,14 +480,14 @@ describe('every route mounts with API data', () => {
   });
 
   it('episode → extension panel in a sandboxed iframe', async () => {
-    mount('/episodes/ep_1/ext/demo.stats');
+    mount('/workshop/assembly/ep_1/ext/demo.stats');
     const frame = await screen.findByTitle('字数统计');
     expect(frame.getAttribute('sandbox')).toBe('allow-scripts');
     expect(frame.getAttribute('src')).toContain('episode=ep_1');
   });
 
   it('episode → export → motion comic plan and override', async () => {
-    mount('/episodes/ep_1/export');
+    mount('/gallery/ser_1/export');
     fireEvent.click(await screen.findByText('动态漫'));
     expect(await screen.findByText('1 个镜头 · 约 5s')).toBeInTheDocument();
     expect(screen.getByText('便利店门口')).toBeInTheDocument();
@@ -383,7 +500,7 @@ describe('every route mounts with API data', () => {
   });
 
   it('episode → export → album', async () => {
-    mount('/episodes/ep_1/export');
+    mount('/gallery/ser_1/export');
     fireEvent.click(await screen.findByText('画册'));
     expect(await screen.findByText('画册模板')).toBeInTheDocument();
   });
@@ -399,12 +516,14 @@ describe('every route mounts with API data', () => {
     expect(screen.getByText('回到作品')).toBeInTheDocument();
   });
 
-  it('the workshop reopens the last storyboard; ⌘K finds it', async () => {
+  it('old links to an album page open its task; ⌘K finds it', async () => {
     const router = mount('/episodes/ep_1/script');
     expect(await screen.findByLabelText('画面提示词')).toBeInTheDocument();
-    expect(router.state.location.pathname).toBe('/workshop/ep_1/script');
-    await router.navigate('/workshop?tab=board');
-    await waitFor(() => expect(router.state.location.pathname).toBe('/workshop/ep_1/board'));
+    expect(router.state.location.pathname).toBe('/workshop/assembly/ep_1/script');
+    await router.navigate('/workshop/ep_1/board');
+    await waitFor(() =>
+      expect(router.state.location.pathname).toBe('/workshop/assembly/ep_1/board'),
+    );
     fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
     fireEvent.change(await screen.findByPlaceholderText(/搜索画册、分镜与台词/), {
       target: { value: '第一话' },

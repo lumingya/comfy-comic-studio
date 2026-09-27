@@ -1,3 +1,4 @@
+import { readerZh, wsZh } from './ws';
 /** Chinese (primary). Keys are grouped by screen; English mirrors this shape exactly. */
 const zh = {
   app: { name: 'Mio', tagline: '条漫工作室', offline: '与服务器的实时连接已断开，正在重连…' },
@@ -620,6 +621,7 @@ const zh = {
     takeStatus: { candidate: '候选', adopted: '已采用', rejected: '已弃用' },
   },
   reader: {
+    ...readerZh,
     composed: '与导出一致的合成效果',
     stacked: '尚未排版：按顺序预览已采用的图',
     refresh: '刷新',
@@ -1256,6 +1258,7 @@ const zh = {
       queue: '打开生成队列',
     },
   },
+  ws: wsZh,
 };
 
 export default zh;

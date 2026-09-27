@@ -7,6 +7,8 @@ export const series: Series = {
   title: '雨夜便利店',
   subtitle: '第一季',
   status: 'active',
+  kind: 'album',
+  presets: [],
   bible: {
     characters: [
       {

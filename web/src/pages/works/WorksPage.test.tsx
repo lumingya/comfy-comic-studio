@@ -90,7 +90,10 @@ describe('WorksPage showcase', () => {
     expect(screen.getByText('3 本画册')).toBeInTheDocument();
     expect(screen.getByText('01 / 03')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '上一册' })).toBeDisabled();
-    expect(screen.getByRole('link', { name: '翻开这本画册' })).toHaveAttribute('href', '/series/b');
+    expect(screen.getByRole('link', { name: '翻开这本画册' })).toHaveAttribute(
+      'href',
+      '/gallery/b',
+    );
 
     fireEvent.click(screen.getByRole('button', { name: '下一册' }));
     expect(screen.getByRole('heading', { level: 2, name: '雨夜便利店' })).toBeInTheDocument();

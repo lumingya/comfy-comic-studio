@@ -1,18 +1,9 @@
-import {
-  Download,
-  FolderInput,
-  ImageIcon,
-  Pencil,
-  Search,
-  Sparkles,
-  Star,
-  Trash2,
-} from 'lucide-react';
+import { Download, FolderInput, ImageIcon, Pencil, Search, Star, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { api, assetUrl, data as unwrap, download } from '../../api/client';
-import { useCreateSeries, useSeriesList, useTrashSeries } from '../../api/series';
+import { Outlet, useNavigate, useSearchParams } from 'react-router-dom';
+import { assetUrl, download } from '../../api/client';
+import { useSeriesList, useTrashSeries } from '../../api/series';
 import { useImportBundle, usePatchSettings, useSettings } from '../../api/system';
 import type { SeriesCard } from '../../api/types';
 import { QueryError } from '../../app/errors';
@@ -21,16 +12,7 @@ import { usePageTitle } from '../../app/title';
 import { useUI } from '../../app/ui-store';
 import { toast, toastError } from '../../components/toast';
 import { useUndoTrash } from '../../components/undo';
-import {
-  ActionMenu,
-  Empty,
-  Field,
-  FilePick,
-  InlineTitle,
-  Modal,
-  TextInput,
-  type MenuAction,
-} from '../../components/ui';
+import { ActionMenu, Empty, FilePick, InlineTitle, type MenuAction } from '../../components/ui';
 import { CoverPicker } from './CoverPicker';
 import { Parchment, Showcase, ShowcaseNav, StarButton } from './Showcase';
 import { WorksHero } from './WorksHero';
@@ -200,7 +182,7 @@ function SeriesCardView(props: { series: SeriesCard; index: number; actions: Men
         style={{ '--cover-ratio': 0.75, '--cover-fit': 'cover' } as CSSProperties}
         data-cover-mode="grid"
         aria-label={series.title}
-        onClick={() => navigate(`/series/${series.id}`)}
+        onClick={() => navigate(`/gallery/${series.id}`)}
       >
         {series.cover_asset_id ? (
           <img src={assetUrl(series.cover_asset_id, 640)} alt={series.title} loading="lazy" />
@@ -260,96 +242,6 @@ function SkeletonGrid() {
   );
 }
 
-function NewSeriesDialog(props: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const create = useCreateSeries();
-  const [title, setTitle] = useState('');
-  const [subtitle, setSubtitle] = useState('');
-  const studio = useUI((s) => s.studioMode);
-  const [starting, setStarting] = useState(false);
-  // Classic mode drops you straight into the first panel's prompt (series → "Episode 1" → one
-  // empty panel); Studio mode opens the bible first, as a production would.
-  const firstPanel = async (seriesId: string) => {
-    const episode = unwrap(
-      await api.POST('/api/series/{series_id}/episodes', {
-        params: { path: { series_id: seriesId } },
-        body: { title: t('series.episodeNo', { n: 1 }), synopsis: '' },
-      }),
-    );
-    unwrap(
-      await api.POST('/api/episodes/{episode_id}/panels', {
-        params: { path: { episode_id: episode.id! } },
-        body: { panel: {}, after: null },
-      }),
-    );
-    return episode.id!;
-  };
-  const submit = () => {
-    if (!title.trim()) return;
-    create.mutate(
-      { title: title.trim(), subtitle: subtitle.trim() },
-      {
-        onSuccess: async (s) => {
-          const done = (to: string) => {
-            props.onOpenChange(false);
-            setTitle('');
-            setSubtitle('');
-            setStarting(false);
-            navigate(to);
-          };
-          if (studio) return done(`/series/${s.id}/bible`);
-          setStarting(true);
-          try {
-            done(`/workshop/${await firstPanel(s.id!)}/script`);
-          } catch (error) {
-            toastError(error);
-            done(`/series/${s.id}`);
-          }
-        },
-        onError: toastError,
-      },
-    );
-  };
-  return (
-    <Modal
-      open={props.open}
-      onOpenChange={props.onOpenChange}
-      title={t('works.newSeries')}
-      description={studio ? undefined : t('classic.works.newHint')}
-      footer={
-        <>
-          <button className="btn ghost" onClick={() => props.onOpenChange(false)}>
-            {t('common.cancel')}
-          </button>
-          <button
-            className="btn primary"
-            disabled={!title.trim() || create.isPending || starting}
-            onClick={submit}
-          >
-            {studio ? t('common.create') : t('classic.works.createAndStart')}
-          </button>
-        </>
-      }
-    >
-      <div className="col" style={{ gap: 14 }}>
-        <Field label={t('common.title')}>
-          <TextInput
-            autoFocus
-            value={title}
-            onChange={setTitle}
-            placeholder={t('works.titlePlaceholder')}
-            onEnter={submit}
-          />
-        </Field>
-        <Field label={t('works.subtitle')}>
-          <TextInput value={subtitle} onChange={setSubtitle} onEnter={submit} />
-        </Field>
-      </div>
-    </Modal>
-  );
-}
-
 export default function WorksPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -390,7 +282,6 @@ export default function WorksPage() {
     () => (starredOnly ? filtered.filter((s) => starred.includes(s.id!)) : filtered),
     [filtered, starred, starredOnly],
   );
-  const filtering = !!(filter.q || filter.status || starredOnly);
   const view = useUI((s) => s.worksView);
   // The featured book (showcase); back to the first one whenever the filter changes.
   const [featured, setFeatured] = useState(0);
@@ -408,21 +299,17 @@ export default function WorksPage() {
   const coverSeries = list.data?.find((s) => s.id === coverFor);
   const actions = useBookActions((s) => setCoverFor(s.id!));
   const importBundle = useImportBundle();
-  const [creating, setCreating] = useState(false);
-  // `?new=1` (home 「从一幕开始」, the command palette) opens the create dialog.
+  // 画册集 is for reading; a new album starts in 创作工坊 (装配 → 新建生成任务).
+  const create = () => navigate('/workshop/assembly?new=1');
   useEffect(() => {
-    if (params.get('new') !== '1') return;
-    setCreating(true);
-    const next = new URLSearchParams(params);
-    next.delete('new');
-    setParams(next, { replace: true });
-  }, [params, setParams]);
+    if (params.get('new') === '1') navigate('/workshop/assembly?new=1', { replace: true });
+  }, [params, navigate]);
 
   const onBundle = (file: File) =>
     importBundle.mutate(file, {
       onSuccess: (r) => {
         toast(t('works.imported', { count: 1 }));
-        navigate(`/series/${r.series_id}`);
+        navigate(`/gallery/${r.series_id}`);
       },
       onError: toastError,
     });
@@ -445,7 +332,7 @@ export default function WorksPage() {
               <Icon name="download" />
               {t('works.importBundle')}
             </FilePick>
-            <button className="btn primary" onClick={() => setCreating(true)}>
+            <button className="btn primary" onClick={create}>
               <Icon name="plus" />
               {t('works.newSeries')}
             </button>
@@ -456,7 +343,7 @@ export default function WorksPage() {
         {list.error ? <QueryError error={list.error} onRetry={list.refetch} /> : null}
         {list.data && !list.data.length ? (
           <WorksHero
-            onCreate={() => setCreating(true)}
+            onCreate={create}
             importAction={
               <FilePick accept=".zip,application/zip" onFile={onBundle}>
                 <FolderInput size={15} /> {t('works.importBundle')}
@@ -515,16 +402,6 @@ export default function WorksPage() {
             {books.map((s, i) => (
               <SeriesCardView key={s.id} series={s} index={i} actions={actions(s)} />
             ))}
-            {!filtering ? (
-              <article className="shelf-item shelf-new">
-                <button className="shelf-cover" onClick={() => setCreating(true)}>
-                  <span className="work-new-inner">
-                    <Sparkles size={22} />
-                    <span>{t('works.newSeries')}</span>
-                  </span>
-                </button>
-              </article>
-            ) : null}
           </div>
         ) : null}
         {list.data?.length ? <p className="collection-note">{t('classic.shelf.note')}</p> : null}
@@ -536,8 +413,8 @@ export default function WorksPage() {
             onOpenChange={(open) => !open && setCoverFor(null)}
           />
         ) : null}
-        <NewSeriesDialog open={creating} onOpenChange={setCreating} />
       </section>
+      <Outlet />
     </div>
   );
 }

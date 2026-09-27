@@ -78,9 +78,12 @@ class GenerateEpisode(BaseModel):
 # ------------------------------------------------------------------ series
 @router.get("/series", response_model=list[SeriesCard])
 def list_series(ctx: Ctx, deleted: bool = False) -> list[SeriesCard]:
+    """The books on the shelf (the hidden 创作工坊 series is not one)."""
     stats = ctx.store.series_stats()
     cards = []
     for series in ctx.store.list_series(deleted=deleted):
+        if series.kind == "workshop":
+            continue
         s = stats.get(series.id, {})
         data = series.model_dump()
         chosen = data.pop("cover_asset_id")

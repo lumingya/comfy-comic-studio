@@ -1,4 +1,5 @@
 import type { Dict } from './zh';
+import { readerEn, wsEn } from './ws';
 
 type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };
 
@@ -666,6 +667,7 @@ const en: Widen<Dict> = {
     takeStatus: { candidate: 'Candidate', adopted: 'Adopted', rejected: 'Rejected' },
   },
   reader: {
+    ...readerEn,
     composed: 'Composited exactly as exported',
     stacked: 'Not laid out yet — previewing adopted images in order',
     refresh: 'Refresh',
@@ -1313,6 +1315,7 @@ const en: Widen<Dict> = {
       queue: 'Open the render queue',
     },
   },
+  ws: wsEn,
 };
 
 export default en;

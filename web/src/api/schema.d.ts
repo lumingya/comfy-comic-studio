@@ -24,7 +24,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Series */
+        /**
+         * List Series
+         * @description The books on the shelf (the hidden 创作工坊 series is not one).
+         */
         get: operations["list_series_api_series_get"];
         put?: never;
         /** Create Series */
@@ -1442,6 +1445,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/workshop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Workshop
+         * @description The hidden workshop series: its episodes are the storyboards, ``presets`` the presets.
+         *     Created (seeded from the legacy ``data/``) on first use.
+         */
+        get: operations["get_workshop_api_workshop_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workshop/assemble": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assemble
+         * @description Storyboard + presets → a new album waiting in the queue.  Makes no model call; start it
+         *     with ``POST /episodes/{id}/render``.
+         */
+        post: operations["assemble_api_workshop_assemble_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tokens": {
         parameters: {
             query?: never;
@@ -1675,6 +1720,25 @@ export interface components {
             accepted: string[];
             /** Base Revision */
             base_revision: number;
+        };
+        /** AssembleRequest */
+        AssembleRequest: {
+            /** Storyboard Id */
+            storyboard_id: string;
+            /** Preset Ids */
+            preset_ids?: string[];
+            /**
+             * Title
+             * @default
+             */
+            title?: string;
+            /** Profile Id */
+            profile_id?: string | null;
+        };
+        /** Assembled */
+        Assembled: {
+            series: components["schemas"]["Series"];
+            episode: components["schemas"]["Episode"];
         };
         /** Asset */
         Asset: {
@@ -2721,6 +2785,108 @@ export interface components {
          * @enum {string}
          */
         PanelWidth: "full" | "inset" | "bleed" | "frameless";
+        /**
+         * Preset
+         * @description A reusable visual asset: a named set of ``{变量}`` values (character, outfit, style…).
+         *
+         *     Presets live in the workshop; assembling copies their values into the new album, so later
+         *     edits never change an album that was already assembled.
+         */
+        "Preset-Input": {
+            /** Id */
+            id?: string;
+            /** Title */
+            title: string;
+            /** Groups */
+            groups?: components["schemas"]["PresetGroup-Input"][];
+            /** Entries */
+            entries?: components["schemas"]["PresetEntry-Input"][];
+        };
+        /**
+         * Preset
+         * @description A reusable visual asset: a named set of ``{变量}`` values (character, outfit, style…).
+         *
+         *     Presets live in the workshop; assembling copies their values into the new album, so later
+         *     edits never change an album that was already assembled.
+         */
+        "Preset-Output": {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Groups */
+            groups: components["schemas"]["PresetGroup-Output"][];
+            /** Entries */
+            entries: components["schemas"]["PresetEntry-Output"][];
+        };
+        /**
+         * PresetEntry
+         * @description One ``{key}`` variable of a preset (legacy 预设工坊).
+         */
+        "PresetEntry-Input": {
+            /** Id */
+            id?: string;
+            /** Key */
+            key: string;
+            /**
+             * Label
+             * @default
+             */
+            label?: string;
+            /**
+             * Value
+             * @default
+             */
+            value?: string;
+            /**
+             * Hint
+             * @default
+             */
+            hint?: string;
+            /** Group Id */
+            group_id?: string | null;
+        };
+        /**
+         * PresetEntry
+         * @description One ``{key}`` variable of a preset (legacy 预设工坊).
+         */
+        "PresetEntry-Output": {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /**
+             * Label
+             * @default
+             */
+            label: string;
+            /**
+             * Value
+             * @default
+             */
+            value: string;
+            /**
+             * Hint
+             * @default
+             */
+            hint: string;
+            /** Group Id */
+            group_id: string | null;
+        };
+        /** PresetGroup */
+        "PresetGroup-Input": {
+            /** Id */
+            id?: string;
+            /** Title */
+            title: string;
+        };
+        /** PresetGroup */
+        "PresetGroup-Output": {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+        };
         /** Prop */
         "Prop-Input": {
             /** Id */
@@ -2949,6 +3115,12 @@ export interface components {
              * @default false
              */
             qa?: boolean;
+            /**
+             * Adopt First
+             * @description Adopt the first image of each panel that has no adopted image yet (the queue's one-click flow: images go straight into the album).
+             * @default false
+             */
+            adopt_first?: boolean;
         };
         /** RenderStage */
         "RenderStage-Input": {
@@ -3065,6 +3237,18 @@ export interface components {
             subtitle: string;
             /** @default draft */
             status: components["schemas"]["SeriesStatus"];
+            /**
+             * Kind
+             * @description album = a book on the shelf; workshop = the storyboards and presets of the 创作工坊 (never listed as a book).
+             * @default album
+             * @enum {string}
+             */
+            kind: "album" | "workshop";
+            /**
+             * Presets
+             * @description Workshop presets.
+             */
+            presets: components["schemas"]["Preset-Output"][];
             bible: components["schemas"]["Bible-Output"];
             /** Variants */
             variants: components["schemas"]["VariantSet-Output"][];
@@ -3106,6 +3290,18 @@ export interface components {
             subtitle: string;
             /** @default draft */
             status: components["schemas"]["SeriesStatus"];
+            /**
+             * Kind
+             * @description album = a book on the shelf; workshop = the storyboards and presets of the 创作工坊 (never listed as a book).
+             * @default album
+             * @enum {string}
+             */
+            kind: "album" | "workshop";
+            /**
+             * Presets
+             * @description Workshop presets.
+             */
+            presets: components["schemas"]["Preset-Output"][];
             bible: components["schemas"]["Bible-Output"];
             /** Variants */
             variants: components["schemas"]["VariantSet-Output"][];
@@ -3178,6 +3374,8 @@ export interface components {
             default_profile_id?: string | null;
             /** Cover Asset Id */
             cover_asset_id?: string | null;
+            /** Presets */
+            presets?: components["schemas"]["Preset-Input"][] | null;
         };
         /**
          * SeriesStatus
@@ -6635,6 +6833,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_workshop_api_workshop_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Series"];
+                };
+            };
+        };
+    };
+    assemble_api_workshop_assemble_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssembleRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Assembled"];
                 };
             };
             /** @description Validation Error */

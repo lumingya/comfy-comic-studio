@@ -35,12 +35,13 @@ export function useVersion() {
 function useSection(): string {
   const { t } = useTranslation();
   const path = useLocation().pathname;
-  if (path.startsWith('/workshop/')) {
-    const tab = path.split('/')[3] ?? 'script';
-    return ['script', 'presets', 'board', 'canvas', 'read', 'export'].includes(tab)
-      ? t(`legacy.workshop.heads.${tab}`)
+  if (path.startsWith('/workshop')) {
+    const tab = path.split('/')[2] || 'story';
+    return ['story', 'presets', 'assembly'].includes(tab)
+      ? t(`ws.head.${tab}`)
       : t('legacy.nav.workshop');
   }
+  if (path.startsWith('/gallery/')) return t('legacy.nav.gallery');
   if (path.startsWith('/jobs')) return t('legacy.workshop.heads.board');
   if (path.startsWith('/series/')) return t('legacy.nav.gallery');
   if (path.startsWith('/trash')) return t('legacy.settings.trashTitle');

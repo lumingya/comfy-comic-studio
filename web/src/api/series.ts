@@ -32,7 +32,7 @@ export function useCreateSeries() {
 }
 
 export type SeriesChanges = Partial<
-  Pick<Series, 'title' | 'subtitle' | 'status' | 'bible' | 'variants' | 'variables'>
+  Pick<Series, 'title' | 'subtitle' | 'status' | 'bible' | 'variants' | 'variables' | 'presets'>
 > & { default_profile_id?: string | null; cover_asset_id?: string | null };
 
 export function usePatchSeries(id: string) {
