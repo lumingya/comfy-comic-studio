@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mio · 新版使用手册</title><style>*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;background:#f6f7f4;color:#27352d;font:16px/1.85 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}a{color:#386b50;text-underline-offset:4px}a:hover{color:#132e20}header{padding:28px max(24px,calc((100vw - 1180px)/2));background:#24392d;color:#eef5e9;display:flex;justify-content:space-between;gap:20px;align-items:center}header a{color:#eef5e9}.brand{font-size:19px;letter-spacing:2px}.tag{font-size:11px;letter-spacing:2px;opacity:.7}.wrap{max-width:1180px;margin:0 auto;padding:44px 24px 90px;display:grid;grid-template-columns:210px minmax(0,1fr);gap:54px}aside{position:sticky;top:24px;align-self:start}aside b{display:block;font-size:12px;color:#708077;letter-spacing:2px;margin:0 0 14px}aside a{display:block;text-decoration:none;padding:4px 0;font-size:14px}h1{font-size:clamp(30px,4vw,48px);line-height:1.3;font-weight:600;margin:12px 0 22px;letter-spacing:-1px}h2{font-size:25px;line-height:1.4;margin:0 0 22px}h3{font-size:18px;margin:24px 0 8px}p{margin:12px 0}section{border-top:1px solid #d6dfd4;padding-top:30px;margin-top:42px}section:first-of-type{border:0;margin-top:26px}.lead{font-size:19px;color:#5a6a60}.eyebrow{color:#52705c;letter-spacing:2px;font-size:12px}.notice{padding:16px 20px;background:#e8efe3;border-left:3px solid #739765;border-radius:0 6px 6px 0;font-size:14px}.warn{background:#f3eee2;border-color:#b89750}code{font:13px/1.7 ui-monospace,Consolas,monospace;background:#e8ede6;padding:2px 5px;border-radius:3px;overflow-wrap:anywhere}pre{background:#24392d;color:#e8f1e3;padding:18px;border-radius:8px;overflow:auto;line-height:1.7}pre code{background:none;color:inherit;padding:0}table{border-collapse:collapse;width:100%;font-size:14px;margin:18px 0}th{text-align:left;background:#e9eee6;font-weight:600}th,td{border-bottom:1px solid #d6dfd4;padding:10px 12px;vertical-align:top}ul,ol{padding-left:24px}li{margin:7px 0}small,.muted{color:#69796e}figure{margin:24px 0}figure img{width:100%;max-height:200px}figcaption{font-size:12px;color:#748075;text-align:center}.steps{counter-reset:steps;list-style:none;padding:0}.steps>li{position:relative;padding:4px 0 16px 44px}.steps>li:before{counter-increment:steps;content:counter(steps,decimal-leading-zero);position:absolute;left:0;top:4px;color:#78916f;font-weight:700;font-size:18px}.steps strong{display:block}details{border:1px solid #d6dfd4;padding:12px 16px;margin:12px 0;border-radius:6px}summary{font-weight:600;cursor:pointer}.pill{display:inline-block;padding:2px 10px;border:1px solid #628168;border-radius:20px;font-size:12px;margin-right:6px}footer{border-top:1px solid #d6dfd4;margin-top:40px;padding-top:18px;font-size:12px;color:#6a7a6d}@media(max-width:800px){.wrap{display:block;padding:26px 20px 64px}aside{position:static;border-bottom:1px solid #d6dfd4;padding-bottom:20px;margin-bottom:30px}aside a{display:inline-block;margin-right:16px}header{padding:18px 20px;align-items:flex-start}header .tag{display:none}table{display:block;overflow:auto}h1{font-size:33px}}@media print{body{background:white}header,aside{display:none}.wrap{display:block;max-width:none;padding:0}section{break-inside:avoid}a{color:inherit}pre{white-space:pre-wrap}}</style></head>
+<body><header><div><div class="brand">MIO · 绘页</div><div class="tag">THE MIO HANDBOOK · 4.x</div></div><nav><a href="en/GUIDE.html">English</a> &nbsp; · &nbsp; <a href="/">打开 Mio</a></nav></header>
+<div class="wrap"><aside aria-label="目录"><b>使用手册 / CONTENTS</b><a href="#start">01 · 快速开始</a><a href="#connect-a-provider">02 · 图像服务与密钥</a><a href="#workflow">03 · 工作流与出图配置</a><a href="#variables">04 · 分镜、预设与变量</a><a href="#tasks">05 · 队列、候选与失败恢复</a><a href="#read-and-share">06 · 阅读、排版与导出</a><a href="#sharing">07 · 分享与可编辑作品包</a><a href="#backup">08 · 数据目录、备份与迁移</a><a href="#files">09 · 文件与旧版能力边界</a><a href="#mobile">10 · 局域网访问</a><a href="#troubleshooting">11 · 常见问题</a><a href="#glossary">12 · 术语对照</a></aside><main><div class="eyebrow">CLASSIC INTERFACE · NEW ENGINE</div><h1>新版使用手册</h1><p class="lead">分镜、预设、出图与分享。以实际的新后端链路为准。</p><p><span class="pill">8788</span><span class="pill">FastAPI + React</span><span class="pill">可离线阅读</span></p><section id="start"><h2>01 · 快速开始</h2>
+<p class="notice"><strong>适用于新版 4.x：FastAPI 后端 + React 界面，默认端口 8788。</strong>现在的界面复刻了旧版外观，但不是旧版 3.2。旧教程中的 <code>python server.py</code>、8777 端口、离线练习按钮和旧文件库操作，不适用于这里。</p>
+<h3>启动与检查</h3>
+<p>发布包需要 <strong>Python 3.11+</strong>。解压后双击根目录 <code>start.bat</code>（Windows），或运行 <code>./start.sh</code>（macOS / Linux）。首次启动会创建虚拟环境并安装依赖。源码版另需 <strong>Node.js 20+</strong>：</p>
+<pre><code>npm ci --prefix web
+npm --prefix web run build
+# Windows
+start.bat --check
+start.bat
+# macOS / Linux
+./start.sh --check
+./start.sh</code></pre>
+<p>浏览器打开 <strong>http://127.0.0.1:8788</strong>。开发界面用 <code>npm --prefix web run dev</code>；Vite 会把 API、WebSocket 和本手册转发到 8788。Mio 不会代你启动 ComfyUI。</p>
+<figure><img src="guide/img/flow.svg" alt="分镜与预设装配为画册快照，开始生成后进入任务引擎，采用图片后阅读与导出"><figcaption>新版创作链路示意 · 不是界面截图</figcaption></figure>
+<ol class="steps">
+<li><strong>连接图像服务</strong>在 <a href="/engine?tab=instances">工作流与 API 配置 → ComfyUI 实例</a> 填写地址并测试。默认 <code>http://127.0.0.1:8188</code>。只配置云端渠道还不够，见下一节。</li>
+<li><strong>确定真正要运行的出图配置</strong>导入可用的 API 格式工作流，并在 <a href="/engine?tab=profiles">出图配置</a> 的草稿阶段选择它。<em>导入工作流不等于切换了出图配置。</em>第一次只做一幕、一个候选。</li>
+<li><strong>写一幕分镜</strong>进入 <a href="/workshop/story">创作工坊 → 分镜工坊</a>，新建分镜并添加一幕。正向提示词可写 <code>{character}, standing by a window, {style}</code>。台词单独填写，不需要把文字绘入图片。</li>
+<li><strong>填预设</strong>进入 <a href="/workshop/presets">预设工坊</a>，定义 <code>character</code>（如 <code>a young adult traveler, blue jacket</code>）与 <code>style</code>（如 <code>anime, soft lighting</code>）。等待保存完成再装配。</li>
+<li><strong>装配，再开始生成</strong>进入 <a href="/workshop/assembly">装配与队列</a>，选择分镜、预设和出图配置，命名并入队。装配只创建快照，不请求模型；任务卡上的“开始生成”才会调用图像服务。</li>
+<li><strong>检查结果并导出</strong>队列会自动采用每幕的首个候选（不替换已有采用图）。从 <a href="/gallery">画册集</a> 打开画册；如果重跑后封面不变，去候选页采用新图。失败原因看 <a href="/jobs">任务详情</a>。</li>
+</ol>
+<p class="notice warn">本版没有旧教程承诺的“一键离线练习生成画册”。查看已有图片、编辑分镜和装配可以离线进行；真正出图需要可用服务，云端可能计费。</p></section><section id="connect-a-provider"><h2>02 · 图像服务与密钥</h2>
+<table><thead><tr><th>服务</th><th>配置位置与必要条件</th><th>容易混淆的地方</th></tr></thead><tbody>
+<tr><td>本地 ComfyUI</td><td><a href="/engine?tab=instances">实例</a>中保存地址；先在 ComfyUI 自己的页面跑通工作流。</td><td>实例在线 ≠ 工作流的节点和模型都已安装。</td></tr>
+<tr><td>OpenAI Images / NovelAI</td><td><a href="/engine?tab=channels">云端渠道</a>中保存类型、服务地址、模型与 API Key。</td><td>渠道保存后，还要在出图配置中启用云端定形并选择渠道。</td></tr>
+<tr><td>聊天接口出图</td><td>设置中的 LLM 连接供剧本、审校及兼容的聊天出图接口使用；可另建 chat_image 渠道。</td><td>文本模型、视觉模型和图像模型不是同一个用途。普通聊天接口不一定会返回图片。</td></tr>
+</tbody></table>
+<p><strong>纯云端：</strong>启用出图配置的“云端定形”，选择渠道，不设置启用的成品阶段或后续本地阶段。<strong>混合：</strong>云端定形之后，还会跑成品链（没有成品链时取草稿链首阶段以后的部分），因此仍需本地 ComfyUI。自动采用在最后一步完成后才发生。</p>
+<p>同一批出图不能混用本地与云端模式的分格 / 变体覆盖；需要不同模式时分批提交。不要把 API Key 写进提示词、截图、工作流说明或公开的分享包。页面返回的密钥是掩码，原样保存会保留已有密钥。</p>
+<p class="notice">云端适配器有离线请求 / 响应测试，但并不代表所有真实服务商或代理都已实测。先用中性题材、一个候选试跑，并确认你的服务商支持所选接口。</p></section><section id="workflow"><h2>03 · 工作流与出图配置</h2>
+<p><a href="/engine?tab=workflows">工作流</a>是 ComfyUI 节点图；<a href="/engine?tab=profiles">出图配置</a>决定运行哪些工作流、候选数、阶段和实例。装配选择的是出图配置，不是工作流文件本身。</p>
+<ol><li>在 ComfyUI 导出 <strong>API 格式 JSON</strong>（节点含 <code>class_type</code> 和 <code>inputs</code>），再导入 Mio。带 <code>nodes/links</code> 的可视化编辑器 JSON 不能直接作为 API 工作流。</li>
+<li>内置工作流只作起点：先复制，再修改。把 CheckpointLoaderSimple 等节点里的模型名换成你安装的真实文件名；可在 JSON 编辑器中调整 graph / 配置。不要照旧教程寻找已不在当前页的一键种子修复按钮。</li>
+<li>通过节点标题标签（如 <code>[mio:prompt]</code>、<code>[mio:seed]</code>）或配置中的 JSON Pointer 映射连接正负提示词、种子、宽高。使用工作流的编译预览和诊断检查映射与缺失节点。</li>
+<li>在出图配置的草稿阶段选择这份工作流，保存；装配时明确选择此配置。精修 / 放大阶段若要接前一阶段图片，必须有 <code>[mio:init]</code> 输入。未启用的阶段不会执行。</li></ol>
+<p>原始提示词模式保留你写的文本；自动编译模式才会组合设定集、景别、风格等结构化字段。更改工作流不会自动刷新已经提交到任务引擎的请求快照；需要明确重新提交任务。</p></section><section id="variables"><h2>04 · 分镜、预设与变量</h2>
+<p>分镜是可复用模板，预设是变量表。提示词和台词都可以使用 <code>{变量名}</code>。例如台词 <code>{character_display_name}：我们到了。</code> 会在阅读 / 导出时使用装配后画册的变量值。</p>
+<table><thead><tr><th>规则</th><th>实际行为</th></tr></thead><tbody>
+<tr><td>优先级</td><td>内建变量 → 作品变量 → 每格的 <code>$变量名</code> 覆盖。后者优先。</td></tr>
+<tr><td>多个预设</td><td>按装配请求中的选择顺序合并，同名变量以后面的预设为准；先检查向导预览。</td></tr>
+<tr><td>嵌套与字面花括号</td><td>值可以引用其他变量；用 <code>{{name}}</code> 输出字面 <code>{name}</code>。未知变量保留原文，不会自动猜值。</td></tr>
+<tr><td>装配快照</td><td>已装配画册保存分镜、预设、变量和画布设置。之后修改工坊模板，不会追改旧画册；要应用新模板，重新装配。</td></tr>
+<tr><td>预设类型</td><td>当前预设工坊支持文本变量。旧版可执行 / 计算变量、脚本及其他旧扩展能力不等于已经迁移。</td></tr>
+</tbody></table>
+<p>经典分镜编辑器用于标题、正负提示词、台词与参数。Studio 模式显示更完整的结构化分格、参考图、每格出图覆盖和历史操作。自动保存失败时先查看错误，不要立刻切换页面或反复装配。</p></section><section id="tasks"><h2>05 · 队列、候选与失败恢复</h2>
+<p>“装配与队列”展示待生成画册；“任务”页展示引擎中的具体执行批次。装配成功不代表图像已经生成，任务完成也不代表所有候选都被采用。</p>
+<ul><li><strong>开始生成：</strong>只补齐没有采用图的分幕。首次生成自动采用首个候选；混合出图等待本地精修结束才计入完成。</li>
+<li><strong>单幕重跑 / 从此幕开始：</strong>可能为已有图片的分幕添加候选，不自动覆盖你已经采用的图片。去候选页比较并采用新图，再查看画册。</li>
+<li><strong>暂停 / 继续：</strong>控制队列调度，不承诺撤回服务端已经收到的请求。取消也不代表云端退款。</li>
+<li><strong>失败：</strong>查看任务详情中的具体错误、出图配置、模型与工作流；修复后再重试未完成项。</li>
+<li><strong>不确定（uncertain）：</strong>请求可能已送达服务商。先核对上游记录，再选择认领结果、标记失败或明确确认重发；不要反复点击以免重复计费。</li></ul>
+<p>删除画册前应先停止它的活动任务。“清理已完成”把画册移出待生成队列，不是删除图片。任何永久删除都应先备份。</p></section><section id="read-and-share"><h2>06 · 阅读、排版与导出</h2>
+<p>从 <a href="/gallery">画册集</a> 打开画册。经典阅读器以已采用图片为准；展示模板改变阅读外观，不会生成图片。气泡 / 文字排版属于 Studio 的条漫画布，不能把旧版阅读器的编辑教程直接套用过来。</p>
+<table><thead><tr><th>输出</th><th>用途与区别</th></tr></thead><tbody>
+<tr><td>单文件 HTML 画册</td><td>模板、样式与图片打包在网页内，可离线阅读。不是可编辑工作区备份。</td></tr>
+<tr><td>图片 ZIP</td><td>图片文件、简单阅读页与清单。适合整理与传递图像资源。</td></tr>
+<tr><td>图片画册 PDF</td><td>每格一页，不等于整条条漫切页。PDF 会编码图像，不是原图字节归档；关闭图片内排字时，独立台词不会自动排进 PDF。</td></tr>
+<tr><td>平台切片 / 长图</td><td>基于采用图和条漫画布合成；切片按平台宽度、高度限制拆分。先检查真实切片预览。</td></tr>
+</tbody></table>
+<h3>图片处理选项</h3>
+<ul><li><strong>自动：</strong>优先无损清洗；单文件 HTML 的内嵌图像超出预算时改为轻量发布。</li>
+<li><strong>无损清洗：</strong>对支持的原始 PNG / JPEG / WebP 去除提示词、工作流或 EXIF 等相关容器元数据，不重新生成画面。</li>
+<li><strong>轻量发布：</strong>重新编码 WebP，长边不超过 2560px，适合分享。</li>
+<li><strong>无损归档：</strong>没有排字裁切时保留原图字节及可能的工作流元数据，<strong>只建议本地存档</strong>。有排字的图片是重新合成的 PNG，不再是原始文件。</li></ul>
+<p>显示 / 隐藏台词和提示词是呈现选项，不是全面隐私清理。发给别人之前检查导出内容；原图、提示词和嵌入的工作流可能包含私人信息。</p></section><section id="sharing"><h2>07 · 分享与可编辑作品包</h2>
+<p>给读者用 HTML、图片 ZIP 或 PDF；给另一个 Mio 工作区继续编辑，用 <code>.mio.zip</code> 作品包。两种 ZIP 不是同一种格式，不要把图片包当成项目导入。</p>
+<p>作品包导出端点为 <code>GET /api/series/{id}/bundle</code>，导入为 <code>POST /api/bundles</code>（请求体是 ZIP 原始字节）。界面入口会随 UI 交接调整；如需脚本调用，外部程序用带令牌的 <code>/api/v2</code> 对应端点，不要使用旧 <code>/api/v1</code> 示例。</p>
+<p>作品包主要搬运作品内容和相关资产，并非完整服务器备份；实例连接、API 密钥、出图配置和扩展仍应单独核对。分享前检查角色参考图、提示词和图像元数据。</p></section><section id="backup"><h2>08 · 数据目录、备份与迁移</h2>
+<p>用根启动器启动时，新版数据默认在 <code>server/data/runtime/v3</code>，包含 <code>mio.sqlite3</code>、<code>jobs.sqlite3</code> 与 <code>assets/</code>。自定义 <code>--data</code> 或 <code>MIO_V3_DATA</code> 时，以实际路径为准；手动从其他工作目录启动时，相对路径也会改变。</p>
+<ol><li>先等待活动任务结束，停止 Mio（不要仅关闭浏览器标签页）。</li><li>完整复制实际新版数据目录，再备份仍需保留的根目录 <code>data/</code> 旧版资料。不要只复制数据库而漏掉图像。</li><li>恢复前先保留当前数据副本；在停止服务的状态下恢复。不要把新版 SQLite 文件塞进旧版的 JSON 目录。</li></ol>
+<p><strong>迁移不是双向同步：</strong>旧版分镜 / 文本预设可在首次工坊初始化时带入；已有旧画册可在首次启动时导入，新版也提供手动旧数据导入。后续对旧目录的编辑不会持续同步到新版。旧工作流导入后仍需检查模型名、节点、映射和新版出图配置。</p>
+<p class="notice warn">不要根据旧教程直接删除 <code>data/</code>，也不要为了重置界面而删除数据库。<code>legacy/</code> 是参考与旧版运行目录，不能等同于新版备份；确认不再需要并有备份后才能清理。</p></section><section id="files"><h2>09 · 文件与旧版能力边界</h2>
+<p>新版以作品、分集、分格、候选和资产为核心；旧版“文件库 / 转换 / 市场 / 用户脚本 / 可执行变量”的整套操作并未因外观复刻而自动恢复。没有对应入口时，不要继续照旧教程寻找按钮或改旧 JSON 来控制新界面。</p>
+<p>分镜工坊的 JSON 导入 / 导出用于分镜模板；预设工坊的导入 / 导出用于文本预设；作品备份请参考上一节。可复用的工作流和出图配置在“工作流与 API 配置”中管理。</p></section><section id="mobile"><h2>10 · 局域网访问</h2>
+<p>默认仅允许本机访问。确有需要时，可用 <code>start.bat --host 0.0.0.0</code> 或 <code>./start.sh --host 0.0.0.0</code>，在同一可信局域网的设备上打开电脑的 <code>http://局域网IP:8788</code>，并按需配置防火墙。</p>
+<p><strong>不要在手机上填 127.0.0.1：</strong>那是手机自身。Mio 中的 ComfyUI 地址则由运行后端的电脑访问，本机 ComfyUI 仍可用 127.0.0.1:8188。</p>
+<p class="notice warn">本地 <code>/api</code> 没有登录认证，主机 / 来源检查不等于账号保护。不要直接暴露到公网或不可信网络。使用自定义主机名时才配置 <code>MIO_ALLOWED_HOSTS</code>；外部自动化接口使用作用域令牌保护的 <code>/api/v2</code>。</p></section><section id="troubleshooting"><h2>11 · 常见问题</h2>
+<details open><summary>按钮点了，看不到变化？</summary><p>先区分“保存模板”“装配快照”“开始请求”“生成候选”“采用图片”五步。检查保存错误和任务详情；在旧画册中看不到模板新改动是快照行为，重跑后画册不变通常是新图还没有被采用。</p></details>
+<details><summary>ComfyUI 已连接，但出图失败</summary><p>在线检查只证明服务可访问。检查所选出图配置是否用了正确工作流，Checkpoint / LoRA 文件名是否存在，自定义节点是否安装，必填映射与后续阶段的 init 是否齐全。先在 ComfyUI 自己的界面跑一张。</p></details>
+<details><summary>云端渠道已填，却仍在等 ComfyUI</summary><p>检查出图配置是否启用了云端定形、是否选择正确渠道，以及是否还启用了本地精修阶段。仅添加渠道不会改变默认本地配置。</p></details>
+<details><summary>台词里还有 {变量}</summary><p>检查装配时选的预设是否定义该变量；未知变量保留原文。修改工坊预设不会追改已装配画册。确认修改的是当前画册变量或重新装配。</p></details>
+<details><summary>下载 PDF / ZIP 或平台切片没有内容</summary><p>先确认有已采用图片，而不仅是候选。平台导出需要可合成的条漫；经典画册 PDF 与平台长图不是同一种输出。</p></details>
+<details><summary>更新代码后行为没变</summary><p>Python 服务通常需要重启。源码前端需要重新构建（根启动器也会检查 UI 是否需重建）。先结束任务再重启，不要强制终止正在出图的请求。</p></details>
+<details><summary>教程在开发界面打不开</summary><p>确认新版后端 8788 正在运行，并重启改过代理配置的 Vite。新版手册随 server 一起打包，不再依赖 legacy/docs 或外网脚本。</p></details></section><section id="glossary"><h2>12 · 术语对照</h2>
+<table><thead><tr><th>界面术语</th><th>后端含义</th></tr></thead><tbody>
+<tr><td>分镜 / 分幕</td><td>隐藏工坊中的 Episode / Panel；用于复用的模板。</td></tr>
+<tr><td>预设</td><td>有名称的文本变量集合；装配时合并成作品变量。</td></tr>
+<tr><td>画册 / 作品</td><td>Series；可含 Episode、采用图、设定集、变量及其他数据。</td></tr>
+<tr><td>出图配置</td><td>RenderProfile；不是工作流本身，也不是文字预设。</td></tr>
+<tr><td>任务 / 候选 / 采用</td><td>Job 是执行记录，Take 是一次输出；只有已采用的图才进入常规画册与条漫导出。</td></tr>
+<tr><td>经典 / Studio</td><td>同一新后端的两种界面复杂度，不代表切回旧版服务。</td></tr>
+</tbody></table></section><footer>核对日期：2026-09-27。界面交接中如按钮名称变化，以对应页面和任务详情为准。旧版 3.2 手册仅配合 legacy 服务（8777）使用。</footer></main></div></body></html>

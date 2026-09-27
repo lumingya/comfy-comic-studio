@@ -101,7 +101,7 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
     app.include_router(update.router, prefix="/api")
     app.mount("/api/v2", build_v2(app.state.ctx, ERRORS))
     _mount_extensions(app)
-    app.include_router(manual.router)  # the legacy handbook, before the SPA fallback
+    app.include_router(manual.router)  # the bundled current handbook, before the SPA fallback
 
     if serve_web and (WEB_DIST / "index.html").exists():
         _mount_web(app)
