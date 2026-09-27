@@ -126,6 +126,59 @@
     "title": "ApplyRequest",
     "type": "object"
    },
+   "AssembleRequest": {
+    "properties": {
+     "preset_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Preset Ids",
+      "type": "array"
+     },
+     "profile_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Profile Id"
+     },
+     "storyboard_id": {
+      "title": "Storyboard Id",
+      "type": "string"
+     },
+     "title": {
+      "default": "",
+      "maxLength": 120,
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "storyboard_id"
+    ],
+    "title": "AssembleRequest",
+    "type": "object"
+   },
+   "Assembled": {
+    "properties": {
+     "episode": {
+      "$ref": "#/components/schemas/Episode"
+     },
+     "series": {
+      "$ref": "#/components/schemas/Series"
+     }
+    },
+    "required": [
+     "series",
+     "episode"
+    ],
+    "title": "Assembled",
+    "type": "object"
+   },
    "Asset": {
     "additionalProperties": false,
     "properties": {
@@ -10286,6 +10339,80 @@
     "summary": "Diagnose Workflow",
     "tags": [
      "library"
+    ]
+   }
+  },
+  "/workshop": {
+   "get": {
+    "description": "The hidden workshop series: its episodes are the storyboards, ``presets`` the presets.\nCreated (seeded from the legacy ``data/``) on first use.",
+    "operationId": "get_workshop",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Series"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Get Workshop",
+    "tags": [
+     "workshop"
+    ]
+   }
+  },
+  "/workshop/assemble": {
+   "post": {
+    "description": "Storyboard + presets → a new album waiting in the queue.  Makes no model call; start it\nwith ``POST /episodes/{id}/render``.",
+    "operationId": "assemble",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AssembleRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Assembled"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Assemble",
+    "tags": [
+     "workshop"
     ]
    }
   }

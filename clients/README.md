@@ -2,7 +2,7 @@
 
 `/api/v2` 是给机器人、脚本和其他程序用的开放接口。它和网页界面用的 `/api` 是**同一套领域接口**：同样的路由、模型和错误格式 `{detail, kind}`，由领域模型自动生成，所以界面上能做的事都能通过 API 做。两者的区别：
 
-- `/api/v2` 的每个请求都要带令牌：`Authorization: Bearer mio_…`；
+- `/api/v2` 的领域操作都要带令牌：`Authorization: Bearer mio_…`；`/meta` 和 OpenAPI 文档用于公开发现，不返回作品或密钥；
 - 令牌管理和扩展管理不对外开放；
 - 它有自己的 OpenAPI 文档 `/api/v2/openapi.json`（仓库里的快照是 [`openapi-v2.json`](openapi-v2.json)），客户端就是从这份文档生成的。
 
@@ -14,7 +14,7 @@
 
 | 权限 | 能做什么 |
 | --- | --- |
-| `read` | 所有 GET 请求，以及订阅任务事件的 WebSocket |
+| `read` | 作品、工坊、任务等读取，以及订阅任务事件的 WebSocket；配置管理类读取仍需 `admin` |
 | `write` | 编辑作品、剧本、画布，采用或淘汰出图结果，导出 |
 | `render` | 会消耗算力或额度的操作：一句话生成剧本、出图、定稿、修图、质检、剧本助手、重跑任务 |
 | `admin` | 设置、ComfyUI 实例、Webhook、旧版导入、更新 |
@@ -25,7 +25,7 @@
 
 ## Python 客户端
 
-[`python/mio_client.py`](python/mio_client.py) 是一个单文件客户端，只依赖 `httpx`。每个接口操作对应一个方法，方法名就是 OpenAPI 的 operationId：
+[`python/mio_client.py`](python/mio_client.py) 是一个单文件客户端，只使用 Python 标准库（`urllib`），不需要安装 `httpx`。每个接口操作对应一个方法，方法名就是 OpenAPI 的 operationId：
 
 ```python
 from mio_client import MioClient, MioError
@@ -37,7 +37,32 @@ job = mio.render_episode(episode_id, body={"candidates": 1})  # 不传 panel_ids
 mio.wait_job(job["id"])  # 轮询到完成 / 失败 / 取消
 ```
 
-出错时抛出 `MioError`，带 `status`、`kind` 和 `detail`。
+出错时抛出 `MioError`，带 `status`、`kind` 和 `detail`。`wait_job` 返回终态记录，调用方仍需检查
+`state == "completed"`；对于 `uncertain` 条目应先核对上游记录，不要盲目重发付费请求。
+
+### 工坊装配（新版经典 UI 的同一条链路）
+
+`GET /api/v2/workshop` 需要 `read`；`POST /api/v2/workshop/assemble` 需要 `write`，只做快照，
+不消耗模型额度。后续出图仍需 `render`。例如：
+
+```python
+workshop = mio.get_workshop()
+boards = mio.list_episodes(workshop["id"])["items"]
+board = next((b for b in boards if b["panel_count"] > 0), None)
+if board is None:
+    raise ValueError("请先在分镜工坊创建至少一幕")
+assembled = mio.assemble(
+    {
+        "storyboard_id": board["id"],
+        "preset_ids": [p["id"] for p in workshop["presets"][:1]],
+        "title": "API 装配示例",
+    }
+)
+# 检查预设变量和出图配置后，才显式调用 render_episode。
+# body={"candidates": 1, "adopt_first": True} 会填入尚未有采用图的分格。
+```
+
+装配会固定当前分镜、预设、变量和画布设置；修改工坊模板不会追改已装配画册。
 
 改了服务端接口之后要重新生成客户端：
 

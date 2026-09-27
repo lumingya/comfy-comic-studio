@@ -36,8 +36,7 @@ function newStage(kind: RenderStage['kind'], workflow_id = ''): RenderStage {
     overrides: {},
     enabled: true,
     feed: 'previous',
-    order: [],
-  } as unknown as RenderStage;
+  };
 }
 
 function StageRow(props: {

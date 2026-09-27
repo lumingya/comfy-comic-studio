@@ -652,6 +652,20 @@ class MioClient(_Base):
         """
         return self._request("POST", "/update/download")
 
+    def get_workshop(self) -> Any:
+        """GET /workshop — Get Workshop.
+
+        The hidden workshop series: its episodes are the storyboards, ``presets`` the presets.
+        """
+        return self._request("GET", "/workshop")
+
+    def assemble(self, body: dict | list | None = None) -> Any:
+        """POST /workshop/assemble — Assemble.
+
+        Storyboard + presets → a new album waiting in the queue.  Makes no model call; start it
+        """
+        return self._request("POST", "/workshop/assemble", json=body)
+
     def list_webhooks(self) -> Any:
         """GET /webhooks — List Webhooks."""
         return self._request("GET", "/webhooks")
