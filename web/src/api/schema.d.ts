@@ -1529,6 +1529,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/workshop/tasks/{series_id}/clone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Clone Task
+         * @description 装配队列「克隆」: a new standby album with the same frames, presets and profile (no images).
+         */
+        post: operations["clone_task_api_workshop_tasks__series_id__clone_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tokens": {
         parameters: {
             query?: never;
@@ -1967,6 +1987,14 @@ export interface components {
              * @default
              */
             trigger: string;
+        };
+        /** CloneRequest */
+        CloneRequest: {
+            /**
+             * Title
+             * @default
+             */
+            title?: string;
         };
         /** ComfyInstance */
         "ComfyInstance-Input": {
@@ -7029,6 +7057,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AssembleRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Assembled"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clone_task_api_workshop_tasks__series_id__clone_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CloneRequest"] | null;
             };
         };
         responses: {

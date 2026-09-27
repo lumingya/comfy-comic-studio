@@ -19,6 +19,10 @@ class AssembleRequest(BaseModel):
     profile_id: str | None = None
 
 
+class CloneRequest(BaseModel):
+    title: str = Field(default="", max_length=120)
+
+
 class Assembled(BaseModel):
     series: Series
     episode: Episode
@@ -39,4 +43,15 @@ def assemble(ctx: Ctx, body: AssembleRequest) -> Assembled:
     series, episode = W.assemble(
         ctx.store, body.storyboard_id, body.preset_ids, body.title, body.profile_id
     )
+    return Assembled(series=series, episode=episode)
+
+
+@router.post(
+    "/workshop/tasks/{series_id}/clone",
+    response_model=Assembled,
+    status_code=status.HTTP_201_CREATED,
+)
+def clone_task(ctx: Ctx, series_id: str, body: CloneRequest | None = None) -> Assembled:
+    """装配队列「克隆」: a new standby album with the same frames, presets and profile (no images)."""
+    series, episode = W.clone_task(ctx.store, series_id, body.title if body else "")
     return Assembled(series=series, episode=episode)

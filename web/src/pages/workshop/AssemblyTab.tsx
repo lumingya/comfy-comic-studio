@@ -6,6 +6,7 @@ import { api, data } from '../../api/client';
 import { useJobControl, useJobs } from '../../api/jobs';
 import { keys } from '../../api/keys';
 import { useRender } from '../../api/production';
+import { useCloneTask } from '../../api/workshop';
 import { usePatchSeries, useSeriesList, useTrashSeries } from '../../api/series';
 import type { Episode, Job, SeriesCard } from '../../api/types';
 import { Icon } from '../../app/icons';
@@ -242,6 +243,7 @@ function TaskCard({
   const { album, episode, adopted, state } = task;
   const render = useRender(episode?.id ?? '');
   const trash = useTrashSeries();
+  const clone = useCloneTask();
   const patch = usePatchSeries(album.id!);
   const control = useJobControl();
   const [renaming, setRenaming] = useState(false);
@@ -377,6 +379,21 @@ function TaskCard({
         >
           <Icon name="book" sm />
           {t('ws.queue.read')}
+        </button>
+        <button
+          type="button"
+          className="btn ghost small production-clone"
+          disabled={!episode || clone.isPending}
+          title={t('ws.queue.cloneHint')}
+          onClick={() =>
+            clone.mutate(album.id!, {
+              onSuccess: (out) => toast(t('ws.queue.cloned', { title: out.series.title })),
+              onError: toastError,
+            })
+          }
+        >
+          <Icon name="copy" sm />
+          {t('ws.queue.clone')}
         </button>
         <span className="grow" />
         <button

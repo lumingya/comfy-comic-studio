@@ -57,6 +57,24 @@ export function useAssemble() {
   });
 }
 
+/** 装配队列「克隆」: a new standby album with the task's frames, presets and profile. */
+export function useCloneTask() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (seriesId: string) =>
+      data(
+        await api.POST('/api/workshop/tasks/{series_id}/clone', {
+          params: { path: { series_id: seriesId } },
+          body: {},
+        }),
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['series'] });
+      qc.invalidateQueries({ queryKey: ['episodes'] });
+    },
+  });
+}
+
 let seq = 0;
 /** Local ids for new presets / entries / groups (the server keeps whatever we send). */
 export function localId(prefix: string) {

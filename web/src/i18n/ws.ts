@@ -104,6 +104,9 @@ export const wsZh = {
       'LoRA 与节点输入在「工作流与 API 配置」中设置；开启专业模式后，可在分镜工作台逐幕覆盖任意参数。',
   },
   queue: {
+    clone: '克隆',
+    cloneHint: '复制这个任务冻结的分镜、预设与工作流，得到一个新的待命任务（不复制图片）',
+    cloned: '已克隆为「{{title}}」，尚未开始生成',
     new: '新建生成任务',
     title: '等待你的安排',
     summary: '{{count}} 个生成任务 · 确认后才会开始生成',
@@ -332,6 +335,9 @@ export const wsEn: Widen<typeof wsZh> = {
       'LoRAs and node inputs live in Workflows & API. In Studio mode any parameter can be overridden per frame.',
   },
   queue: {
+    clone: 'Clone',
+    cloneHint: 'Copy this task’s frames, presets and workflow into a new standby task (no images)',
+    cloned: 'Cloned as “{{title}}”; not started yet',
     new: 'New generation task',
     title: 'Waiting for you',
     summary: '{{count}} generation tasks · nothing starts until you confirm',

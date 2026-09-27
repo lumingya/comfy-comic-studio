@@ -5,16 +5,11 @@ from __future__ import annotations
 from pathlib import Path
 
 from .api_harness import ApiCase
-from .legacy_fixture import copy_shipped_legacy
 
 EMPTY = Path(__file__).resolve().parent / "no-legacy-here"
 
 
 class WorkshopTest(ApiCase):
-    def setUp(self):
-        super().setUp()
-        self.ctx.legacy_root = copy_shipped_legacy(Path(self.tmp) / "legacy")
-
     def workshop(self):
         return self.ok(self.client.get("/api/workshop"))
 
@@ -22,7 +17,7 @@ class WorkshopTest(ApiCase):
         ws = self.workshop()
         self.assertEqual(ws["kind"], "workshop")
         self.assertEqual(self.workshop()["id"], ws["id"])  # created once
-        # Use only the shipped demo copied into this test's temporary directory.
+        # The repo's data/ may hold more legacy material than the demo; look the demo up by name.
         preset = next(p for p in ws["presets"] if p["title"] == "七海 · 标准角色设定")
         self.assertEqual([g["title"] for g in preset["groups"]], ["主角与服装", "画风与场景"])
         entry = next(e for e in preset["entries"] if e["key"] == "character_display_name")
@@ -72,6 +67,40 @@ class WorkshopTest(ApiCase):
         self.drain(self.ok(job))
         takes = self.ok(self.client.get(f"/api/episodes/{ep['id']}"))["takes"]
         self.assertEqual(sorted(t["status"] for t in takes), ["adopted", "candidate"])
+
+    def test_clone_task_copies_frames_presets_and_profile_but_no_images(self):
+        ws = self.workshop()
+        board = self.ok(self.client.get(f"/api/series/{ws['id']}/episodes"))["items"][0]
+        preset = next(p for p in ws["presets"] if p["title"] == "七海 · 标准角色设定")
+        out = self.ok(
+            self.client.post(
+                "/api/workshop/assemble",
+                json={"storyboard_id": board["id"], "preset_ids": [preset["id"]], "title": "夏"},
+            ),
+            201,
+        )
+        album, ep = out["series"], out["episode"]
+        self.drain(
+            self.ok(
+                self.client.post(
+                    f"/api/episodes/{ep['id']}/render",
+                    json={"panel_ids": [ep["panels"][0]["id"]], "adopt_first": True},
+                )
+            )
+        )
+        copy = self.ok(self.client.post(f"/api/workshop/tasks/{album['id']}/clone"), 201)
+        self.assertEqual((copy["series"]["title"], copy["series"]["status"]), ("夏 副本", "draft"))
+        self.assertEqual(copy["series"]["variables"], album["variables"])
+        self.assertEqual([p["title"] for p in copy["series"]["presets"]], ["七海 · 标准角色设定"])
+        self.assertEqual(
+            [p["description"] for p in copy["episode"]["panels"]],
+            [p["description"] for p in ep["panels"]],
+        )
+        self.assertEqual(copy["episode"]["takes"], [])
+        named = self.client.post(f"/api/workshop/tasks/{album['id']}/clone", json={"title": "秋"})
+        self.assertEqual(self.ok(named, 201)["series"]["title"], "秋")
+        self.assertEqual(self.client.post(f"/api/workshop/tasks/{ws['id']}/clone").status_code, 404)
+        self.assertEqual(self.client.post("/api/workshop/tasks/nope/clone").status_code, 404)
 
     def test_assemble_rejects_unknown_story_or_preset(self):
         ws = self.workshop()
