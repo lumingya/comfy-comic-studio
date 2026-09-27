@@ -105,6 +105,21 @@ class AlbumApiTests(ApiCase):
         self.assertIn("data:image/jpeg;base64,", raw.text)
         missing = self.client.post("/api/export/album", json={**body, "template_id": "nope"})
         self.assertEqual(missing.status_code, 404)
+        # 模板工作室: an unsaved draft previews without being stored; broken drafts are refused.
+        draft = {
+            "id": "draft",
+            "title": "草稿",
+            "html": MINIMAL.replace("<body>", "<body>草稿标记"),
+        }
+        inline = self.ok(self.client.post("/api/export/album", json={**body, "template": draft}))
+        self.assertIn("草稿标记", inline.text)
+        self.assertNotIn(
+            "draft", {t["id"] for t in self.ok(self.client.get("/api/album-templates"))}
+        )
+        bad = {**draft, "html": MINIMAL.replace("{{image}}", "")}
+        self.assertEqual(
+            self.client.post("/api/export/album", json={**body, "template": bad}).status_code, 400
+        )
 
     def test_template_import_list_delete(self):
         listed = {t["id"]: t for t in self.ok(self.client.get("/api/album-templates"))}

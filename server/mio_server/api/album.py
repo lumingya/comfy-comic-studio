@@ -21,6 +21,11 @@ router = APIRouter(tags=["album"])
 class AlbumExport(BaseModel):
     episode_ids: list[str] = Field(min_length=1, max_length=50)
     template_id: str = "export-paper"
+    template: dict | None = Field(
+        default=None,
+        description="An unsaved template draft (模板工作室 live preview); validated like an import "
+        "and used instead of ``template_id``",
+    )
     variant_id: str | None = None
     lettered: bool = Field(default=True, description="Crop panels from the lettered strip")
     show_captions: bool = True
@@ -91,7 +96,7 @@ def delete_template(ctx: Ctx, template_id: str) -> None:
 @router.post("/export/album")
 def export_album(ctx: Ctx, body: AlbumExport) -> Response:
     """Self-contained offline HTML album; one book per episode."""
-    tpl = _find(ctx, body.template_id).value
+    tpl = T.parse_template(body.template) if body.template else _find(ctx, body.template_id).value
     requested = body.image_profile
     profile = "clean" if requested == "auto" else requested
 

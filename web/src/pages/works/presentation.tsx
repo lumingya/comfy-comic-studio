@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { download, downloadPost, raw } from '../../api/client';
 import { useImportAlbumTemplate, type AlbumTemplateInfo } from '../../api/open';
+import { TemplateStudio } from './TemplateStudio';
 import { useExportPresets } from '../../api/production';
 import { Icon } from '../../app/icons';
 import { toast, toastError } from '../../components/toast';
@@ -304,6 +305,7 @@ export function PresentationDrawer(props: {
   const presets = useExportPresets();
   const importTpl = useImportAlbumTemplate();
   const file = useRef<HTMLInputElement>(null);
+  const [studioOpen, setStudioOpen] = useState(false);
   const report = useReport();
   const isNative = props.look === props.native;
   const accent =
@@ -460,6 +462,16 @@ export function PresentationDrawer(props: {
         )}
       </div>
       <div className="presentation-tools">
+        <button
+          type="button"
+          className="btn small"
+          title={t('reader.customizeHint')}
+          disabled={!props.infos.length}
+          onClick={() => setStudioOpen(true)}
+        >
+          <Icon name="edit" sm />
+          {t('reader.customize')}
+        </button>
         <button type="button" className="btn small" onClick={() => file.current?.click()}>
           <Icon name="upload" sm />
           {t('reader.importTemplate')}
@@ -476,6 +488,24 @@ export function PresentationDrawer(props: {
           }}
         />
       </div>
+      {studioOpen ? (
+        <TemplateStudio
+          templates={props.infos}
+          initialId={props.infos.some((x) => x.id === props.look) ? props.look : props.infos[0].id}
+          preview={{
+            episodeId: props.episodeId,
+            variantId: props.variantId,
+            lettered: props.lettered,
+            captions: d.captions,
+          }}
+          onSaved={(id) => {
+            props.onLook(id);
+            props.onPlatform(false);
+            props.onMotion(false);
+          }}
+          onClose={() => setStudioOpen(false)}
+        />
+      ) : null}
       <details className="presentation-options" open>
         <summary>{t('reader.options')}</summary>
         {isNative ? (

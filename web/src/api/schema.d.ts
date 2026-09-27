@@ -1730,6 +1730,11 @@ export interface components {
              * @default export-paper
              */
             template_id?: string;
+            /**
+             * Template
+             * @description An unsaved template draft (模板工作室 live preview); validated like an import and used instead of ``template_id``
+             */
+            template?: Record<string, unknown> | null;
             /** Variant Id */
             variant_id?: string | null;
             /**

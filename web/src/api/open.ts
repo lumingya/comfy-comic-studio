@@ -265,6 +265,47 @@ export function useImportAlbumTemplate() {
   });
 }
 
+/** A full album template document (GET /api/album-templates/{id}; the legacy file format). */
+export interface AlbumTemplateDoc {
+  id: string;
+  formatVersion?: 1;
+  title: string;
+  description: string;
+  author: string;
+  version: string;
+  layout: 'webtoon' | 'manga' | 'artbook' | 'flip';
+  options: {
+    accent: string;
+    background: string;
+    paper: string;
+    text: string;
+    width: number;
+    gap: number;
+    radius: number;
+    font: 'serif' | 'sans';
+  };
+  html: string;
+  assets: Record<string, string>;
+}
+
+export function useAlbumTemplate(id: string | null) {
+  return useQuery({
+    queryKey: [...k.albumTemplates, id],
+    enabled: !!id,
+    staleTime: 60_000,
+    queryFn: () => json<AlbumTemplateDoc>(`/api/album-templates/${encodeURIComponent(id!)}`),
+  });
+}
+
+export function useDeleteAlbumTemplate() {
+  const done = useInvalidate(k.albumTemplates);
+  return useMutation({
+    mutationFn: (id: string) =>
+      json<void>(`/api/album-templates/${encodeURIComponent(id)}`, 'DELETE'),
+    onSuccess: done,
+  });
+}
+
 // ------------------------------------------------------- extension panels
 export interface ExtensionPanel {
   extension: string;
