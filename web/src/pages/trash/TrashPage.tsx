@@ -4,17 +4,16 @@ import { usePurge, useRestore, useTrash } from '../../api/system';
 import type { TrashItem } from '../../api/types';
 import { QueryError } from '../../app/errors';
 import { relativeTime } from '../../app/format';
-import { usePageTitle } from '../../app/title';
 import { confirm } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
 import { Empty, Loading } from '../../components/ui';
 
-export default function TrashPage() {
+/** 回收站, shown under 设置 › 数据与备份. */
+export function TrashSection() {
   const { t, i18n } = useTranslation();
   const trash = useTrash();
   const restore = useRestore();
   const purge = usePurge();
-  usePageTitle(t('trash.heading'));
 
   const purgeItem = async (item: TrashItem) => {
     const ok = await confirm({
@@ -27,13 +26,10 @@ export default function TrashPage() {
   };
 
   return (
-    <div className="page">
-      <header className="page-head">
-        <div>
-          <h1>{t('trash.heading')}</h1>
-          {trash.data ? <p>{t('trash.sub', { days: trash.data.retention_days })}</p> : null}
-        </div>
-      </header>
+    <div className="trash-section">
+      {trash.data ? (
+        <p className="small muted">{t('trash.sub', { days: trash.data.retention_days })}</p>
+      ) : null}
       {trash.isLoading ? <Loading /> : null}
       {trash.error ? <QueryError error={trash.error} onRetry={trash.refetch} /> : null}
       {trash.data && !trash.data.items.length ? (

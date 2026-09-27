@@ -53,16 +53,16 @@ describe('WorksPage', () => {
     expect(await screen.findByText('雨夜便利店')).toBeInTheDocument();
     expect(screen.getByText('Night Shift')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('搜索作品'), { target: { value: '便利店' } });
+    fireEvent.change(screen.getByLabelText('寻找一本画册...'), { target: { value: '便利店' } });
     expect(screen.getByText('雨夜便利店')).toBeInTheDocument();
     expect(screen.queryByText('Night Shift')).toBeNull();
 
-    fireEvent.change(screen.getByLabelText('搜索作品'), { target: { value: '不存在' } });
+    fireEvent.change(screen.getByLabelText('寻找一本画册...'), { target: { value: '不存在' } });
     expect(screen.getByText('没有符合条件的作品')).toBeInTheDocument();
     fireEvent.click(screen.getByText('清除筛选'));
     expect(screen.getByText('Night Shift')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: /已完结/ }));
+    fireEvent.change(screen.getByDisplayValue('所有画册'), { target: { value: 'archived' } });
     expect(screen.queryByText('雨夜便利店')).toBeNull();
     expect(screen.getByText('Night Shift')).toBeInTheDocument();
   });

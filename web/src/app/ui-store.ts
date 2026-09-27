@@ -34,6 +34,9 @@ interface UIState {
   /** Starred series ids (legacy 星标收藏; kept on this device). */
   starred: string[];
   toggleStar: (id: string) => void;
+  /** Home: the GET STARTED guide is folded away (legacy 收起指引). */
+  homeGuideHidden: boolean;
+  setHomeGuideHidden: (on: boolean) => void;
 }
 
 export type WorksView = 'showcase' | 'grid';
@@ -63,6 +66,8 @@ export const useUI = create<UIState>()(
       setInspectorOpen: (inspectorOpen) => set({ inspectorOpen }),
       worksView: 'showcase',
       setWorksView: (worksView) => set({ worksView }),
+      homeGuideHidden: false,
+      setHomeGuideHidden: (homeGuideHidden) => set({ homeGuideHidden }),
       starred: [],
       toggleStar: (id) =>
         set((s) => ({
@@ -81,6 +86,7 @@ export const useUI = create<UIState>()(
         inspectorOpen: s.inspectorOpen,
         worksView: s.worksView,
         starred: s.starred,
+        homeGuideHidden: s.homeGuideHidden,
       }),
       migrate: (persisted) => {
         const state = (persisted ?? {}) as Partial<UIState>;

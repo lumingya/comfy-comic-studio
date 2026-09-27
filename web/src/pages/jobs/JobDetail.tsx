@@ -84,7 +84,7 @@ export function JobDetail({ id }: { id: string }) {
             {j.owner ? (
               <>
                 {' · '}
-                <Link to={`/episodes/${j.owner}/board`}>{t('jobs.openEpisode')}</Link>
+                <Link to={`/workshop/${j.owner}/board`}>{t('jobs.openEpisode')}</Link>
               </>
             ) : null}
           </div>

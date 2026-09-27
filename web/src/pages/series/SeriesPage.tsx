@@ -42,7 +42,7 @@ export default function SeriesPage() {
   return (
     <div className="page">
       <nav className="crumbs" aria-label={t('nav.breadcrumbs')}>
-        <Link to="/">{t('nav.works')}</Link>
+        <Link to="/gallery">{t('legacy.nav.gallery')}</Link>
         <ChevronRight size={13} />
         <span>{series.title}</span>
       </nav>

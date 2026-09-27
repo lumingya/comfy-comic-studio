@@ -204,11 +204,20 @@ function mount(path: string) {
       <RouterProvider router={router} />
     </QueryClientProvider>,
   );
+  return router;
 }
 
 describe('every route mounts with API data', () => {
-  it('works', async () => {
+  it('home: the legacy landing with the setup checklist', async () => {
     mount('/');
+    expect(await screen.findByText('让灵感成册。')).toBeInTheDocument();
+    expect(screen.getByText('开箱检查')).toBeInTheDocument();
+    for (const name of ['首页', '画册集', '创作工坊', '工作流与 API 配置', '设置'])
+      expect(screen.getByRole('link', { name: new RegExp(`^${name}`) })).toBeInTheDocument();
+  });
+
+  it('works (画册集)', async () => {
+    mount('/gallery');
     expect(await screen.findByText('雨夜便利店')).toBeInTheDocument();
   });
 
@@ -310,7 +319,7 @@ describe('every route mounts with API data', () => {
     ['updates', 'v4.0.0'],
   ])('settings → %s', async (tab, text) => {
     mount(`/settings?tab=${tab}`);
-    expect(await screen.findByText(text)).toBeInTheDocument();
+    expect((await screen.findAllByText(text)).length).toBeGreaterThan(0);
   });
 
   it('classic mode: prompt, characters and the generate stage; no studio drawer', async () => {
@@ -390,11 +399,22 @@ describe('every route mounts with API data', () => {
     expect(screen.getByText('回到作品')).toBeInTheDocument();
   });
 
-  it('opening an episode lists it under Recent in the rail', async () => {
-    mount('/episodes/ep_1/script');
-    const recent = await screen.findByLabelText('最近打开');
-    expect(await within(recent).findByText('雨夜便利店')).toBeInTheDocument();
-    fireEvent.click(within(recent).getByLabelText('从最近打开中移除「第一话」'));
-    expect(screen.queryByLabelText('最近打开')).toBeNull();
+  it('the workshop reopens the last storyboard; ⌘K finds it', async () => {
+    const router = mount('/episodes/ep_1/script');
+    expect(await screen.findByLabelText('画面提示词')).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/workshop/ep_1/script');
+    await router.navigate('/workshop?tab=board');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/workshop/ep_1/board'));
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+    fireEvent.change(await screen.findByPlaceholderText(/搜索画册、分镜与台词/), {
+      target: { value: '第一话' },
+    });
+    expect(await screen.findByText('第一话 · 雨夜便利店')).toBeInTheDocument();
+  });
+
+  it('old render settings links open 工作流与 API 配置', async () => {
+    const router = mount('/settings?tab=instances');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/engine'));
+    expect(await screen.findByText('切换配置项')).toBeInTheDocument();
   });
 });

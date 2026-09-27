@@ -16,7 +16,7 @@ export function NotFound() {
         icon={<Compass size={24} />}
         title={t('common.notFoundTitle')}
         action={
-          <Link className="btn primary" to="/">
+          <Link className="btn primary" to="/gallery">
             {t('common.backToWorks')}
           </Link>
         }
@@ -39,7 +39,7 @@ export function RouteError() {
             <button className="btn" onClick={() => window.location.reload()}>
               <RotateCw size={14} /> {t('common.reload')}
             </button>
-            <Link className="btn primary" to="/">
+            <Link className="btn primary" to="/gallery">
               {t('common.backToWorks')}
             </Link>
           </>

@@ -1,0 +1,296 @@
+/* Glue between the generated legacy stylesheet (legacy.css) and the React markup.
+   Keep this small: anything here is a deliberate difference from legacy/styles.css. */
+
+/* Legacy line icons (app/icons.tsx). Scoped to <svg> so `.btn.icon` buttons are untouched. */
+svg.icon {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  flex-shrink: 0;
+}
+svg.icon.sm {
+  width: 14px;
+  height: 14px;
+}
+svg.icon.is-filled {
+  fill: currentColor;
+}
+.spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Legacy button reset (legacy styles.css: button{background:none;border:0;color:inherit}),
+   limited to legacy chrome and kept at element specificity so legacy class rules win. */
+:where(
+    #sidebar,
+    #topbar,
+    #statusbar,
+    .project-popover,
+    .command-dialog,
+    .quiet-tabs,
+    .settings-nav,
+    .wf-bar,
+    .wf-channel-nav,
+    #mio-home,
+    #collection-home,
+    .workshop-asset-head
+  )
+  button:where(:not(.btn)) {
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+:where(#sidebar, #topbar, .command-dialog, .shelf-toolbar) input {
+  font: inherit;
+}
+
+/* Links rendered where legacy used <button>. */
+a.nav-item,
+a.brand,
+a.workspace-profile-button,
+a.disk-status-action {
+  text-decoration: none;
+}
+a.workspace-profile-button {
+  color: inherit;
+}
+
+/* Pages inside the legacy <main> keep the legacy padding only once. */
+#main > .page,
+#main > .page.wide {
+  padding: 0;
+  max-width: none;
+  min-height: 0;
+}
+#main {
+  min-height: calc(100vh - var(--topbar-h) - var(--statusbar-h));
+}
+
+/* Top bar: the service chip is a button (legacy styles it as such); queue badge. */
+.image-service-chip.tone-good .dot {
+  background: var(--live);
+  animation: pulse 2.4s infinite;
+}
+.image-service-chip.tone-bad .dot {
+  background: var(--red);
+}
+
+/* Status bar extras (new: running jobs and studio mode). */
+.status-running {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: 14px;
+  color: var(--accent);
+}
+.beacon {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--live);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--live) 60%, transparent);
+  animation: task-beacon 1.8s infinite;
+}
+.status-mode {
+  margin-right: 17px;
+  color: var(--accent);
+  text-decoration: none;
+}
+#statusbar .dot.amber {
+  background: var(--amber);
+}
+
+/* Collection popover: inline rename. */
+.project-rename {
+  padding: 4px 6px 8px;
+}
+.project-rename .input {
+  width: 100%;
+}
+
+/* Command palette: legacy base <dialog> look (the generic dialog rules were not extracted). */
+.command-dialog {
+  position: fixed;
+  inset: 0;
+  margin: 14vh auto auto;
+  height: fit-content;
+  max-width: calc(100vw - 32px);
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 24px 70px rgb(var(--shadow-rgb) / 0.45);
+}
+.command-dialog::backdrop {
+  background: rgb(var(--shadow-rgb) / 0.45);
+  backdrop-filter: blur(2px);
+}
+.command-dialog .command-input input {
+  width: 100%;
+  color: var(--text);
+  outline: none;
+}
+.command-item .ellipsis {
+  min-width: 0;
+}
+.command-empty {
+  padding: 22px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+/* Workshop: the three legacy tabs, then the new strip / reader / export stages. */
+.workshop-tabs-sep {
+  width: 1px;
+  margin: 12px -8px 16px;
+  background: var(--line);
+}
+.quiet-tabs button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.assembly-workshop.is-board,
+.assembly-workshop.is-canvas,
+.assembly-workshop.is-export {
+  max-width: 1600px;
+}
+.workshop-asset-head select,
+.workshop-asset-head input {
+  height: 37px;
+  padding: 0 11px;
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+.workshop-progress {
+  color: var(--soft);
+}
+.workshop-body {
+  min-height: 0;
+}
+.eco-empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 70px 20px;
+  color: var(--muted);
+  text-align: center;
+}
+.eco-empty h3 {
+  margin: 0;
+  font: 500 1rem var(--art-serif);
+  color: var(--soft);
+}
+
+/* Collection: toolbar selects and the "new album" tile. */
+.collection-toolbar select {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--soft);
+}
+.collection-toolbar .search-field input {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text);
+  outline: none;
+}
+.collection-toolbar .filter-link.active {
+  color: var(--accent);
+}
+.shelf-cover .parchment {
+  position: absolute;
+  inset: 0;
+}
+.shelf-new .shelf-cover {
+  border: 1px dashed var(--line);
+  color: var(--muted);
+}
+.shelf-new .shelf-cover:hover {
+  color: var(--accent);
+}
+.resource-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* 工作流与 API 配置: the existing section editors sit under the legacy service switcher. */
+.wf-section {
+  margin-top: 26px;
+}
+
+/* 设置: sections from the new app inside the legacy layout. */
+#studio-settings-content .field {
+  margin-bottom: 18px;
+  max-width: 460px;
+}
+#studio-settings-content .label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.75rem;
+  color: var(--soft);
+}
+
+/* 分镜工坊 frame list in classic mode: the legacy plain rows (01 · text), no cards or thumbnails.
+   Studio mode keeps the richer rows (shot chip, cast, thumbnail). */
+html:not(.is-studio) .workshop-body .panel-row {
+  border: 0;
+  background: none;
+  border-radius: 6px;
+}
+html:not(.is-studio) .workshop-body .panel-row:hover {
+  background: var(--hover);
+}
+html:not(.is-studio) .workshop-body .panel-row.active {
+  background: var(--tint);
+  color: var(--accent);
+}
+html:not(.is-studio) .workshop-body .panel-row .panel-thumb,
+html:not(.is-studio) .workshop-body .panel-row .row.small {
+  display: none;
+}
+html:not(.is-studio) .workshop-body .panel-row-body {
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px 11px 2px;
+}
+html:not(.is-studio) .workshop-body .panel-row-text {
+  -webkit-line-clamp: 1;
+  margin: 0;
+  font-size: 0.75rem;
+  color: inherit;
+}
+html:not(.is-studio) .workshop-body .panel-no {
+  font-size: 0.75rem;
+  padding: 0;
+}
+
+/* Sidebar profile avatar (the generic legacy .avatar rule is not extracted). */
+.profile .avatar {
+  width: 31px;
+  height: 31px;
+  border-radius: 50%;
+  background: var(--avatar-bg);
+  color: var(--avatar-ink);
+  display: grid;
+  place-items: center;
+  font:
+    1rem Georgia,
+    serif;
+  flex-shrink: 0;
+}

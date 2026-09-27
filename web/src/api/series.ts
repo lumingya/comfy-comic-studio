@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, data } from './client';
 import { keys } from './keys';
 import type { Episode, EpisodeSummary, Page, Panel, PromptPreview, Series } from './types';
@@ -76,6 +76,27 @@ export function useEpisodes(seriesId: string | undefined, offset = 0) {
         }),
       ) as unknown as Page<EpisodeSummary>,
   });
+}
+
+/** Every series with its (first page of) episodes: the workshop's 「当前分镜」 picker. */
+export function useAllEpisodes() {
+  const list = useSeriesList();
+  const series = list.data ?? [];
+  const pages = useQueries({
+    queries: series.map((s) => ({
+      queryKey: keys.episodes(s.id!, 0),
+      queryFn: async () =>
+        data(
+          await api.GET('/api/series/{series_id}/episodes', {
+            params: { path: { series_id: s.id! }, query: { offset: 0, limit: PAGE } },
+          }),
+        ) as unknown as Page<EpisodeSummary>,
+    })),
+  });
+  return {
+    isLoading: list.isLoading || pages.some((p) => p.isLoading),
+    groups: series.map((s, i) => ({ series: s, episodes: pages[i]?.data?.items ?? [] })),
+  };
 }
 
 export function useEpisode(id: string | undefined) {

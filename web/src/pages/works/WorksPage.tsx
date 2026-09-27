@@ -1,30 +1,24 @@
 import {
-  Archive,
   Download,
   FolderInput,
-  GalleryHorizontal,
   ImageIcon,
-  LayoutGrid,
   Pencil,
-  Plus,
   Search,
   Sparkles,
   Star,
   Trash2,
-  X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api, assetUrl, data as unwrap, download } from '../../api/client';
 import { useCreateSeries, useSeriesList, useTrashSeries } from '../../api/series';
 import { useImportBundle, usePatchSettings, useSettings } from '../../api/system';
 import type { SeriesCard } from '../../api/types';
 import { QueryError } from '../../app/errors';
-import { relativeTime } from '../../app/format';
+import { Icon } from '../../app/icons';
 import { usePageTitle } from '../../app/title';
 import { useUI } from '../../app/ui-store';
-import { Avatar } from '../../components/avatar';
 import { toast, toastError } from '../../components/toast';
 import { useUndoTrash } from '../../components/undo';
 import {
@@ -34,14 +28,12 @@ import {
   FilePick,
   InlineTitle,
   Modal,
-  Select,
   TextInput,
   type MenuAction,
 } from '../../components/ui';
 import { CoverPicker } from './CoverPicker';
 import { Parchment, Showcase, ShowcaseNav, StarButton } from './Showcase';
 import { WorksHero } from './WorksHero';
-import { LegacyImportDialog } from './LegacyImportDialog';
 
 const STATUSES = ['draft', 'active', 'archived'] as const;
 type Status = (typeof STATUSES)[number];
@@ -86,79 +78,75 @@ function FilterBar(props: {
     return c;
   }, [props.items]);
   return (
-    <div className="filter-bar" role="search">
-      <label className="filter-search">
-        <Search size={15} aria-hidden />
+    <div className="collection-toolbar shelf-toolbar" role="search">
+      <div className="search-field">
+        <Icon name="search" />
         <input
-          className="input"
           type="search"
+          id="gallery-search"
           value={props.filter.q}
           placeholder={t('works.search')}
           aria-label={t('works.search')}
+          autoComplete="off"
+          spellCheck={false}
           onChange={(e) => props.onChange({ q: e.target.value })}
         />
-        {props.filter.q ? (
-          <button
-            type="button"
-            className="filter-clear"
-            aria-label={t('common.clear')}
-            onClick={() => props.onChange({ q: '' })}
-          >
-            <X size={13} />
-          </button>
-        ) : null}
-      </label>
+      </div>
+      <span className="spacer" />
       <button
         type="button"
-        className={`filter-link ${props.starredOnly ? 'is-on' : ''}`}
+        className={`filter-link ${props.starredOnly ? 'active' : ''}`}
         aria-pressed={props.starredOnly}
         onClick={() => props.onStarredOnly(!props.starredOnly)}
       >
-        <Star size={13} fill={props.starredOnly ? 'currentColor' : 'none'} />
+        <Icon name="star" sm className={props.starredOnly ? 'is-filled' : ''} />
         {t('classic.shelf.starred')}
       </button>
-      <div className="segmented" role="group" aria-label={t('series.statusLabel')}>
-        <button
-          type="button"
-          className={props.filter.status === '' ? 'active' : ''}
-          onClick={() => props.onChange({ status: '' })}
-        >
-          {t('common.all')} <span className="seg-count">{props.items.length}</span>
-        </button>
+      <select
+        id="gallery-filter"
+        aria-label={t('series.statusLabel')}
+        value={props.filter.status}
+        onChange={(e) => props.onChange({ status: e.target.value as Status | '' })}
+      >
+        <option value="">{t('legacy.allAlbums')}</option>
         {STATUSES.map((st) => (
-          <button
-            key={st}
-            type="button"
-            className={props.filter.status === st ? 'active' : ''}
-            onClick={() => props.onChange({ status: st })}
-          >
-            {t(`series.status.${st}`)} <span className="seg-count">{counts[st]}</span>
-          </button>
+          <option key={st} value={st}>
+            {t(`series.status.${st}`)} · {counts[st]}
+          </option>
         ))}
-      </div>
-      <Select
-        className="filter-sort"
+      </select>
+      <select
+        id="gallery-sort"
         aria-label={t('works.sortLabel')}
         value={props.filter.sort}
-        onChange={(sort) => props.onChange({ sort })}
-        options={SORTS.map((v) => ({ value: v, label: t(`works.sort.${v}`) }))}
-      />
+        onChange={(e) => props.onChange({ sort: e.target.value as Sort })}
+      >
+        {SORTS.map((v) => (
+          <option key={v} value={v}>
+            {t(`works.sort.${v}`)}
+          </option>
+        ))}
+      </select>
       <div className="shelf-view-switch" role="group" aria-label={t('classic.shelf.view')}>
         <button
           type="button"
           className={view === 'showcase' ? 'active' : ''}
           aria-pressed={view === 'showcase'}
+          title={t('classic.shelf.showcase')}
           onClick={() => setView('showcase')}
         >
-          <GalleryHorizontal size={13} /> {t('classic.shelf.showcase')}
+          <Icon name="image" sm />
+          <span>{t('classic.shelf.showcase')}</span>
         </button>
         <button
           type="button"
           className={view === 'grid' ? 'active' : ''}
           aria-pressed={view === 'grid'}
+          title={t('classic.shelf.grid')}
           onClick={() => setView('grid')}
         >
-          <LayoutGrid size={13} /> {t('classic.shelf.grid')}
+          <Icon name="grid" sm />
+          <span>{t('classic.shelf.grid')}</span>
         </button>
       </div>
     </div>
@@ -196,47 +184,42 @@ function useBookActions(onChangeCover: (series: SeriesCard) => void) {
 }
 
 function SeriesCardView(props: { series: SeriesCard; index: number; actions: MenuAction[] }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
   const { series } = props;
-  const cast = series.bible?.characters ?? [];
   const status = series.status ?? 'draft';
+  const date = (series.updated_at ?? '').slice(5, 10).replace('-', '.');
   return (
-    <article className="work-card book-card" style={{ '--i': props.index } as CSSProperties}>
-      <Link to={`/series/${series.id}`} className="work-cover book-cover" tabIndex={-1} aria-hidden>
+    <article
+      className="shelf-item"
+      style={{ '--i': props.index } as CSSProperties}
+      aria-label={series.title}
+    >
+      <button
+        className="shelf-cover book-cover"
+        style={{ '--cover-ratio': 0.75, '--cover-fit': 'cover' } as CSSProperties}
+        data-cover-mode="grid"
+        aria-label={series.title}
+        onClick={() => navigate(`/series/${series.id}`)}
+      >
         {series.cover_asset_id ? (
-          <img src={assetUrl(series.cover_asset_id, 640)} alt="" loading="lazy" />
+          <img src={assetUrl(series.cover_asset_id, 640)} alt={series.title} loading="lazy" />
         ) : (
           <Parchment series={series} />
         )}
-        <span className="book-spine" />
-        <span className={`glass-chip work-status status-${status}`}>
-          <i className="dot" /> {t(`series.status.${status}`)}
-        </span>
-        <span className="book-badge mono">
-          {t('works.episodes', { count: series.episode_count ?? 0 })}
-        </span>
-      </Link>
-      <div className="work-body">
-        <Link to={`/series/${series.id}`} className="work-title">
-          <h3>{series.title}</h3>
-        </Link>
-        {series.subtitle ? <p className="work-sub">{series.subtitle}</p> : null}
-        <div className="work-meta">
-          <span>{t('classic.shelf.frames', { count: series.panel_count ?? 0 })}</span>
-          <span>{t('works.characters', { count: cast.length })}</span>
-          <span title={series.updated_at}>{relativeTime(series.updated_at, i18n.language)}</span>
-        </div>
-      </div>
-      <footer className="work-foot">
-        <div className="work-cast">
-          {cast.slice(0, 5).map((c) => (
-            <Avatar key={c.id} character={c} size={24} />
-          ))}
-          {cast.length > 5 ? <span className="avatar more">+{cast.length - 5}</span> : null}
-        </div>
+        <span className="cover-paper" aria-hidden />
+        <span className="pic-count">▧ {series.adopted_count ?? 0}</span>
+      </button>
+      <div className="edition-tile-footer">
+        <h3>{series.title}</h3>
         <StarButton series={series} small />
         <ActionMenu actions={props.actions} />
-      </footer>
+      </div>
+      <div className="edition-tile-meta">
+        <span>{t('classic.shelf.frames', { count: series.panel_count ?? 0 })}</span>
+        <span className={`status-label status-${status}`}>{t(`series.status.${status}`)}</span>
+        <time dateTime={series.updated_at}>{date}</time>
+      </div>
     </article>
   );
 }
@@ -318,7 +301,7 @@ function NewSeriesDialog(props: { open: boolean; onOpenChange: (open: boolean) =
           if (studio) return done(`/series/${s.id}/bible`);
           setStarting(true);
           try {
-            done(`/episodes/${await firstPanel(s.id!)}/script`);
+            done(`/workshop/${await firstPanel(s.id!)}/script`);
           } catch (error) {
             toastError(error);
             done(`/series/${s.id}`);
@@ -426,7 +409,14 @@ export default function WorksPage() {
   const actions = useBookActions((s) => setCoverFor(s.id!));
   const importBundle = useImportBundle();
   const [creating, setCreating] = useState(false);
-  const [legacy, setLegacy] = useState(false);
+  // `?new=1` (home 「从一幕开始」, the command palette) opens the create dialog.
+  useEffect(() => {
+    if (params.get('new') !== '1') return;
+    setCreating(true);
+    const next = new URLSearchParams(params);
+    next.delete('new');
+    setParams(next, { replace: true });
+  }, [params, setParams]);
 
   const onBundle = (file: File) =>
     importBundle.mutate(file, {
@@ -438,118 +428,116 @@ export default function WorksPage() {
     });
 
   return (
-    <div className="page">
-      <header className="page-head classic-head">
-        <div>
-          <div className="eyebrow">{t('classic.works.eyebrow')}</div>
-          <CollectionTitle />
-          <p>{t('works.sub')}</p>
-        </div>
-        <div className="page-actions">
-          <button className="btn ghost" onClick={() => setLegacy(true)}>
-            <Archive size={15} /> {t('works.importLegacy')}
-          </button>
-          <FilePick
-            accept=".zip,application/zip"
-            onFile={onBundle}
-            disabled={importBundle.isPending}
-          >
-            <FolderInput size={15} /> {t('works.importBundle')}
-          </FilePick>
-          <button className="btn primary glow" onClick={() => setCreating(true)}>
-            <Plus size={15} /> {t('works.newSeries')}
-          </button>
-        </div>
-      </header>
-
-      {list.isLoading ? <SkeletonGrid /> : null}
-      {list.error ? <QueryError error={list.error} onRetry={list.refetch} /> : null}
-      {list.data && !list.data.length ? (
-        <WorksHero
-          onCreate={() => setCreating(true)}
-          importAction={
-            <FilePick accept=".zip,application/zip" onFile={onBundle}>
-              <FolderInput size={15} /> {t('works.importBundle')}
+    <div className="art-fade">
+      <section className="art-fade" id="collection-home">
+        <div className="collection-heading">
+          <div className="grow">
+            <div className="overline">{t('classic.works.eyebrow')}</div>
+            <CollectionTitle />
+            <p>{t('works.sub')}</p>
+          </div>
+          <div className="resource-actions">
+            <FilePick
+              accept=".zip,application/zip"
+              onFile={onBundle}
+              disabled={importBundle.isPending}
+            >
+              <Icon name="download" />
+              {t('works.importBundle')}
             </FilePick>
-          }
-        />
-      ) : null}
-      {list.data?.length ? (
-        <FilterBar
-          items={list.data}
-          filter={filter}
-          onChange={setFilter}
-          starredOnly={starredOnly}
-          onStarredOnly={setStarredOnly}
-        />
-      ) : null}
-      {list.data?.length ? (
-        <div className="shelf-index">
-          <span>{t('classic.shelf.count', { count: books.length })}</span>
-          {view === 'showcase' && books.length ? (
-            <ShowcaseNav index={index} total={books.length} onIndex={setFeatured} />
-          ) : null}
-        </div>
-      ) : null}
-      {list.data?.length && !books.length ? (
-        <Empty
-          compact
-          icon={starredOnly ? <Star size={20} /> : <Search size={20} />}
-          title={
-            starredOnly && !filter.q && !filter.status
-              ? t('classic.shelf.noStarred')
-              : t('works.noMatch')
-          }
-          action={
-            <button
-              className="btn"
-              onClick={() => setParams(new URLSearchParams(), { replace: true })}
-            >
-              {t('works.clearFilters')}
+            <button className="btn primary" onClick={() => setCreating(true)}>
+              <Icon name="plus" />
+              {t('works.newSeries')}
             </button>
-          }
-        />
-      ) : null}
-      {books.length && view === 'showcase' ? (
-        <Showcase
-          books={books}
-          index={index}
-          onIndex={setFeatured}
-          firstEditionId={firstEditionId}
-          actions={actions}
-          onChangeCover={(s) => setCoverFor(s.id!)}
-        />
-      ) : null}
-      {books.length && view === 'grid' ? (
-        <div className="work-grid">
-          {books.map((s, i) => (
-            <SeriesCardView key={s.id} series={s} index={i} actions={actions(s)} />
-          ))}
-          {!filtering ? (
-            <button
-              className="work-card book-card work-new"
-              style={{ '--i': books.length } as CSSProperties}
-              onClick={() => setCreating(true)}
-            >
-              <span className="work-new-inner">
-                <Sparkles size={22} />
-                <span>{t('works.newSeries')}</span>
-              </span>
-            </button>
-          ) : null}
+          </div>
         </div>
-      ) : null}
-      {list.data?.length ? <p className="collection-note">{t('classic.shelf.note')}</p> : null}
 
-      {coverSeries ? (
-        <CoverPicker
-          series={coverSeries}
-          open={!!coverSeries}
-          onOpenChange={(open) => !open && setCoverFor(null)}
-        />
-      ) : null}
-      <NewSeriesDialog open={creating} onOpenChange={setCreating} />
-      <LegacyImportDialog open={legacy} onOpenChange={setLegacy} />
+        {list.isLoading ? <SkeletonGrid /> : null}
+        {list.error ? <QueryError error={list.error} onRetry={list.refetch} /> : null}
+        {list.data && !list.data.length ? (
+          <WorksHero
+            onCreate={() => setCreating(true)}
+            importAction={
+              <FilePick accept=".zip,application/zip" onFile={onBundle}>
+                <FolderInput size={15} /> {t('works.importBundle')}
+              </FilePick>
+            }
+          />
+        ) : null}
+        {list.data?.length ? (
+          <FilterBar
+            items={list.data}
+            filter={filter}
+            onChange={setFilter}
+            starredOnly={starredOnly}
+            onStarredOnly={setStarredOnly}
+          />
+        ) : null}
+        {list.data?.length ? (
+          <div className="shelf-index">
+            <span>{t('classic.shelf.count', { count: books.length })}</span>
+            {view === 'showcase' && books.length ? (
+              <ShowcaseNav index={index} total={books.length} onIndex={setFeatured} />
+            ) : null}
+          </div>
+        ) : null}
+        {list.data?.length && !books.length ? (
+          <Empty
+            compact
+            icon={starredOnly ? <Star size={20} /> : <Search size={20} />}
+            title={
+              starredOnly && !filter.q && !filter.status
+                ? t('classic.shelf.noStarred')
+                : t('works.noMatch')
+            }
+            action={
+              <button
+                className="btn"
+                onClick={() => setParams(new URLSearchParams(), { replace: true })}
+              >
+                {t('works.clearFilters')}
+              </button>
+            }
+          />
+        ) : null}
+        {books.length && view === 'showcase' ? (
+          <Showcase
+            books={books}
+            index={index}
+            onIndex={setFeatured}
+            firstEditionId={firstEditionId}
+            actions={actions}
+            onChangeCover={(s) => setCoverFor(s.id!)}
+          />
+        ) : null}
+        {books.length && view === 'grid' ? (
+          <div className="shelf-grid">
+            {books.map((s, i) => (
+              <SeriesCardView key={s.id} series={s} index={i} actions={actions(s)} />
+            ))}
+            {!filtering ? (
+              <article className="shelf-item shelf-new">
+                <button className="shelf-cover" onClick={() => setCreating(true)}>
+                  <span className="work-new-inner">
+                    <Sparkles size={22} />
+                    <span>{t('works.newSeries')}</span>
+                  </span>
+                </button>
+              </article>
+            ) : null}
+          </div>
+        ) : null}
+        {list.data?.length ? <p className="collection-note">{t('classic.shelf.note')}</p> : null}
+
+        {coverSeries ? (
+          <CoverPicker
+            series={coverSeries}
+            open={!!coverSeries}
+            onOpenChange={(open) => !open && setCoverFor(null)}
+          />
+        ) : null}
+        <NewSeriesDialog open={creating} onOpenChange={setCreating} />
+      </section>
     </div>
   );
 }

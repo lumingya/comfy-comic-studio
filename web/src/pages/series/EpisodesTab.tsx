@@ -42,7 +42,7 @@ function GenerateDialog(props: {
       {
         onSuccess: (ep) => {
           props.onOpenChange(false);
-          navigate(`/episodes/${ep.id}/script`);
+          navigate(`/workshop/${ep.id}/script`);
         },
         onError: toastError,
       },
@@ -89,7 +89,7 @@ function EpisodeRow({ ep, onTrash }: { ep: EpisodeSummary; onTrash: () => void }
   const done = ep.panel_count > 0 && ep.adopted_count >= ep.panel_count;
   return (
     <li className="episode-item">
-      <Link to={`/episodes/${ep.id}/script`} className="episode-row">
+      <Link to={`/workshop/${ep.id}/script`} className="episode-row">
         <span className="episode-thumb">
           {ep.cover_asset_id ? (
             <img src={assetUrl(ep.cover_asset_id, 160)} alt="" loading="lazy" />
@@ -157,7 +157,7 @@ export default function EpisodesTab() {
         onSuccess: (ep) => {
           setAdding(false);
           setNewTitle('');
-          navigate(`/episodes/${ep.id}/script`);
+          navigate(`/workshop/${ep.id}/script`);
         },
         onError: toastError,
       },
