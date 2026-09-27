@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { assetUrl } from '../../api/client';
@@ -11,8 +11,15 @@ import { pickAdopted } from '../canvas/adopted';
 import type { EpisodeContext } from '../episode/EpisodePage';
 import { MotionExport } from '../episode/MotionExport';
 import { PresentationDrawer, SlicePreview, TemplatePreview, useExportDraft } from './presentation';
+import {
+  DESKTOP_QUERY,
+  READING_MODES,
+  buildStages,
+  readingMode,
+  stageOf,
+  type ReadingMode,
+} from './readingStage';
 
-type Mode = 'auto' | 'single' | 'continuous';
 const MODE_KEY = 'mio.reader.mode';
 const LOOK_KEY = 'mio.reader.look';
 /** The native reading stage (legacy mio-fit); every other template renders in a sandboxed preview. */
@@ -35,13 +42,15 @@ export default function ReaderPage() {
   const [params, setParams] = useSearchParams();
   const studio = useUI((s) => s.studioMode);
   const ref = useRef<HTMLDialogElement>(null);
-  const scroller = useRef<HTMLDivElement>(null);
+  // The reading stage is remounted whenever the drawer swaps what the stage shows, so it is tracked
+  // as state: measuring and scroll tracking re-attach to the new element.
+  const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
   const series = useSeries(seriesId);
   const episodes = useEpisodes(seriesId);
   const items = episodes.data?.items ?? [];
   const epId = params.get('ep') ?? items[0]?.id;
   const episode = useEpisode(epId);
-  const [mode, setMode] = useState<Mode>(() => (localStorage.getItem(MODE_KEY) as Mode) || 'auto');
+  const [mode, setMode] = useState<ReadingMode>(() => readingMode(localStorage.getItem(MODE_KEY)));
   const [look, setLook] = useState<string>(() => {
     const saved = localStorage.getItem(LOOK_KEY) || NATIVE;
     return OLD_LOOKS[saved] ?? saved;
@@ -58,10 +67,25 @@ export default function ReaderPage() {
   const [film, setFilm] = useState(false);
   const [sizes, setSizes] = useState<Record<string, { w: number; h: number }>>({});
   const [view, setView] = useState({ w: 0, h: 0 });
+  const [desktop, setDesktop] = useState(() =>
+    typeof window.matchMedia === 'function' ? window.matchMedia(DESKTOP_QUERY).matches : true,
+  );
   useEffect(() => {
-    const root = scroller.current;
+    if (typeof window.matchMedia !== 'function') return;
+    const media = window.matchMedia(DESKTOP_QUERY);
+    const onChange = () => setDesktop(media.matches);
+    media.addEventListener?.('change', onChange);
+    return () => media.removeEventListener?.('change', onChange);
+  }, []);
+  useEffect(() => {
+    const root = scroller;
     if (!root) return;
-    const measure = () => setView({ w: root.clientWidth, h: root.clientHeight });
+    const measure = () =>
+      setView((v) =>
+        v.w === root.clientWidth && v.h === root.clientHeight
+          ? v
+          : { w: root.clientWidth, h: root.clientHeight },
+      );
     measure();
     window.addEventListener('resize', measure);
     // The presentation drawer narrows the stage without a window resize.
@@ -71,7 +95,7 @@ export default function ReaderPage() {
       window.removeEventListener('resize', measure);
       observer?.disconnect();
     };
-  }, [episode.data]);
+  }, [scroller]);
   const panel = pathname.endsWith('/export')
     ? 'export'
     : pathname.endsWith('/layout')
@@ -104,30 +128,85 @@ export default function ReaderPage() {
       }));
   }, [episode.data]);
   const current = Math.min(page, Math.max(0, pages.length - 1));
-  const single = mode === 'single';
+  // Legacy reading-stage.js: fit each stage into one screen, except in continuous mode or on phones.
+  const staged = desktop && mode !== 'continuous' && view.w > 0 && view.h > 0;
+  const stages = useMemo(
+    () =>
+      staged
+        ? buildStages(
+            pages.map((p) => ({ id: p.id, caption: !!(captions && p.caption) })),
+            sizes,
+            mode,
+            view,
+          )
+        : [],
+    [staged, pages, sizes, mode, view, captions],
+  );
+  const stageAt = staged ? stageOf(stages, current) : -1;
+  const range = staged && stages[stageAt] ? stages[stageAt].items.length : 1;
+  const first = staged && stages[stageAt] ? stages[stageAt].start : current;
 
-  // Track the page in view while scrolling.
+  const anchorOf = (index: number) => {
+    if (!scroller) return null;
+    const target = staged ? stages[stageOf(stages, index)]?.start : index;
+    return target === undefined
+      ? null
+      : scroller.querySelector<HTMLElement>(`[data-page-anchor="${target}"]`);
+  };
+  const scrollTo = (index: number, smooth: boolean) => {
+    const el = anchorOf(index);
+    if (!scroller || !el) return;
+    const top =
+      el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
+    const reduced =
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    scroller.scrollTo?.({ top, behavior: smooth && !reduced ? 'smooth' : 'instant' });
+  };
+  const pageRef = useRef(current);
+  pageRef.current = current;
+  // Switching mode (or a re-layout as images load) keeps the page in view, like legacy build().
+  const layoutKey = `${epId}|${mode}|${staged}|${view.w}x${view.h}|${stages
+    .map((x) => x.items.length)
+    .join('')}|${pages.length}`;
+  useLayoutEffect(() => {
+    scrollTo(pageRef.current, false);
+  }, [layoutKey, scroller]);
+
+  // Track the page in view while scrolling: the last anchor whose top passed the reading line.
   useEffect(() => {
-    const root = scroller.current;
-    if (!root || single || typeof IntersectionObserver === 'undefined') return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries)
-          if (e.isIntersecting) setPage(Number((e.target as HTMLElement).dataset.scrollStep));
-      },
-      { root, threshold: 0.55 },
-    );
-    root.querySelectorAll('.mio-stage-item').forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, [pages, single]);
+    const root = scroller;
+    if (!root) return;
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const top = root.getBoundingClientRect().top;
+        const line = top + Math.min(root.clientHeight * 0.35, 240);
+        let index = 0;
+        root.querySelectorAll<HTMLElement>('[data-page-anchor]').forEach((el) => {
+          if (el.getBoundingClientRect().top <= line) index = Number(el.dataset.pageAnchor);
+        });
+        setPage((p) => (p === index ? p : index));
+      });
+    };
+    root.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      cancelAnimationFrame(raf);
+      root.removeEventListener('scroll', onScroll);
+    };
+  }, [scroller]);
 
   const go = (n: number) => {
     const next = Math.max(0, Math.min(pages.length - 1, n));
     setPage(next);
-    if (!single)
-      scroller.current
-        ?.querySelector(`[data-scroll-step="${next}"]`)
-        ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollTo(next, true);
+  };
+  /** Previous / next screen: a whole stage when staged, one page otherwise. */
+  const step = (direction: 1 | -1) => {
+    if (!staged) return go(current + direction);
+    const target = stages[Math.max(0, Math.min(stages.length - 1, stageAt + direction))];
+    if (target) go(target.start);
   };
   const close = () => {
     ref.current?.close?.();
@@ -141,8 +220,8 @@ export default function ReaderPage() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (panel || (e.target as HTMLElement).closest('input, textarea, select')) return;
-      if (e.key === 'ArrowRight' || e.key === 'PageDown') go(current + 1);
-      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') go(current - 1);
+      if (e.key === 'ArrowRight' || e.key === 'PageDown') step(1);
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') step(-1);
       else return;
       e.preventDefault();
     };
@@ -150,7 +229,7 @@ export default function ReaderPage() {
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  const setModeSaved = (m: Mode) => {
+  const setModeSaved = (m: ReadingMode) => {
     setMode(m);
     localStorage.setItem(MODE_KEY, m);
   };
@@ -158,17 +237,40 @@ export default function ReaderPage() {
     setLook(l);
     localStorage.setItem(LOOK_KEY, l);
   };
-  const shown = single ? pages.slice(current, current + 1) : pages;
-  // Legacy reading-stage.js: fit each page into one screen (except in continuous mode).
-  const staged = mode !== 'continuous' && view.w > 0;
-  const fit = (id: string, caption: boolean) => {
-    const d = sizes[id];
-    if (!staged || !d) return null;
-    const pad = 16;
-    const maxH = Math.max(100, view.h - pad - 16 - (caption ? 80 : 0));
-    const maxW = view.w - pad * 2;
-    const scale = Math.min(1, maxW / d.w, maxH / d.h);
-    return { w: d.w * scale, h: d.h * scale };
+  /** One page of the native stage; continuous mode anchors on the page itself. */
+  const renderPage = (
+    i: number,
+    opts: { className?: string; style?: CSSProperties; anchor?: boolean },
+  ) => {
+    const p = pages[i];
+    const size = sizes[p.id];
+    return (
+      <article
+        key={p.id}
+        data-scroll-step={i}
+        data-page-anchor={opts.anchor ? i : undefined}
+        className={opts.className}
+        style={
+          opts.style ?? (size ? ({ '--native-w': `${size.w}px` } as CSSProperties) : undefined)
+        }
+        aria-label={opts.anchor ? t('reader.pageN', { n: i + 1 }) : undefined}
+      >
+        <div className="room-page" data-shape={p.shape}>
+          <img
+            src={assetUrl(p.asset, 1600)}
+            alt={p.title}
+            data-shape={p.shape}
+            loading={i > 2 ? 'lazy' : undefined}
+            onLoad={(e) => {
+              const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
+              setSizes((m) => (m[p.id] ? m : { ...m, [p.id]: { w, h } }));
+            }}
+          />
+          <span className="room-page-number">{String(i + 1).padStart(2, '0')}</span>
+        </div>
+        {captions && p.caption ? <div className="scroll-caption">{p.caption}</div> : null}
+      </article>
+    );
   };
   const cur = pages[current];
   const native = look === NATIVE || !epId;
@@ -327,65 +429,53 @@ export default function ReaderPage() {
           <div
             className={`room-canvas ${staged ? 'mio-stage-root mio-stage-scroll' : ''}`}
             id="reader-canvas"
-            ref={scroller}
+            ref={setScroller}
+            data-reading-mode={mode}
             style={staged ? ({ '--mio-stage-height': `${view.h}px` } as CSSProperties) : undefined}
           >
-            <div className="room-scroll mio-stage-pages">
+            <div className={`room-scroll ${staged ? 'mio-stage-pages' : ''}`}>
               {episode.isLoading || series.isLoading ? (
                 <p className="room-empty">{t('reader.loading')}</p>
               ) : !pages.length ? (
                 <p className="room-empty">{t('reader.empty')}</p>
+              ) : staged ? (
+                stages.map((stage) => (
+                  <section
+                    key={pages[stage.start].id}
+                    className="mio-reading-stage"
+                    data-count={stage.items.length}
+                    data-page-anchor={stage.start}
+                    aria-label={
+                      stage.items.length > 1
+                        ? t('reader.pagesN', { from: stage.start + 1, to: stage.start + 2 })
+                        : t('reader.pageN', { n: stage.start + 1 })
+                    }
+                    style={
+                      {
+                        '--mio-stage-backdrop': `url("${assetUrl(pages[stage.start].asset, 512)}")`,
+                      } as CSSProperties
+                    }
+                  >
+                    {stage.items.map((item) =>
+                      renderPage(item.index, {
+                        className: 'mio-stage-item',
+                        style: {
+                          '--mio-image-width': `${item.w}px`,
+                          '--mio-image-height': `${item.h}px`,
+                        } as CSSProperties,
+                      }),
+                    )}
+                  </section>
+                ))
               ) : (
-                shown.map((p) => {
-                  const i = pages.indexOf(p);
-                  const box = fit(p.id, !!(captions && p.caption));
-                  return (
-                    <section
-                      key={p.id}
-                      className="mio-reading-stage"
-                      data-count="1"
-                      aria-label={t('reader.pageN', { n: i + 1 })}
-                      style={
-                        {
-                          '--mio-stage-backdrop': `url("${assetUrl(p.asset, 512)}")`,
-                        } as CSSProperties
-                      }
-                    >
-                      <article
-                        data-scroll-step={i}
-                        className="mio-stage-item"
-                        style={
-                          box
-                            ? ({
-                                '--mio-image-width': `${box.w}px`,
-                                '--mio-image-height': `${box.h}px`,
-                              } as CSSProperties)
-                            : undefined
-                        }
-                      >
-                        <div className="room-page" data-shape={p.shape}>
-                          <img
-                            src={assetUrl(p.asset, 1600)}
-                            alt={p.title}
-                            data-shape={p.shape}
-                            loading={i > 2 ? 'lazy' : undefined}
-                            onLoad={(e) => {
-                              const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
-                              setSizes((m) => (m[p.id] ? m : { ...m, [p.id]: { w, h } }));
-                            }}
-                          />
-                          <span className="room-page-number">{String(i + 1).padStart(2, '0')}</span>
-                        </div>
-                        {captions && p.caption ? (
-                          <div className="scroll-caption">{p.caption}</div>
-                        ) : null}
-                      </article>
-                    </section>
-                  );
-                })
+                pages.map((_, i) => renderPage(i, { anchor: true }))
               )}
-              {pages.length && (!single || current === pages.length - 1) ? (
-                <div className="mio-colophon mio-stage-ending" role="contentinfo">
+              {pages.length ? (
+                <div
+                  className={`mio-colophon ${staged ? 'mio-stage-ending' : ''}`}
+                  data-mio-colophon
+                  role="contentinfo"
+                >
                   <p>
                     {t('reader.colophon1')}
                     <br />
@@ -436,7 +526,7 @@ export default function ReaderPage() {
       </div>
       <footer className="room-footer">
         <span className="native-reading-controls">
-          {(['auto', 'single', 'continuous'] as const).map((m) => (
+          {READING_MODES.map((m) => (
             <button
               key={m}
               type="button"
@@ -455,13 +545,14 @@ export default function ReaderPage() {
             className="ibtn"
             title={t('reader.prev')}
             aria-label={t('reader.prev')}
-            disabled={current <= 0}
-            onClick={() => go(current - 1)}
+            disabled={first <= 0}
+            onClick={() => step(-1)}
           >
             <Icon name="up" />
           </button>
           <span className="page-label" id="page-position">
-            {String(pages.length ? current + 1 : 0).padStart(2, '0')} /{' '}
+            {String(pages.length ? first + 1 : 0).padStart(2, '0')}
+            {range > 1 ? `–${String(first + range).padStart(2, '0')}` : ''} /{' '}
             {String(pages.length).padStart(2, '0')}
           </span>
           <button
@@ -469,8 +560,8 @@ export default function ReaderPage() {
             className="ibtn"
             title={t('reader.next')}
             aria-label={t('reader.next')}
-            disabled={current >= pages.length - 1}
-            onClick={() => go(current + 1)}
+            disabled={first + range >= pages.length}
+            onClick={() => step(1)}
           >
             <Icon name="down" />
           </button>
