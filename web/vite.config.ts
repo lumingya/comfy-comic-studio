@@ -10,7 +10,10 @@ export default defineConfig({
     proxy: {
       '/api': { target: 'http://127.0.0.1:8788', ws: true },
       '/healthz': 'http://127.0.0.1:8788',
+      // The legacy handbook and the API docs are served by the backend too.
       '/manual': 'http://127.0.0.1:8788',
+      '/docs': 'http://127.0.0.1:8788',
+      '/openapi.json': 'http://127.0.0.1:8788',
     },
   },
   build: {

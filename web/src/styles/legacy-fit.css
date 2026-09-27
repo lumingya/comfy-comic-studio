@@ -430,3 +430,16 @@ html:not(.is-studio) .workshop-body .panel-no {
     flex: 1 0 100%;
   }
 }
+
+/* Legacy reader: the presentation drawer sits on the app panel colour, so it takes the app text
+   colour instead of the reader's light text (unreadable on the light themes)… */
+#reader .presentation-drawer {
+  color: var(--text);
+}
+/* …and on desktop the stage makes room for it instead of reading underneath (styles.css). */
+@media (min-width: 761px) {
+  .presentation-panel-open .room-stage,
+  .presentation-panel-open .room-filmstrip {
+    margin-right: 320px;
+  }
+}
