@@ -68,18 +68,25 @@ export async function uploadAsset(file: Blob, filename = ''): Promise<{ id: stri
 }
 
 /** Trigger a browser download for a GET endpoint that answers with an attachment. */
-export async function download(path: string, fallbackName: string): Promise<void> {
-  await saveResponse(await raw(path), fallbackName);
+export async function download(path: string, fallbackName: string): Promise<Response> {
+  const response = await raw(path);
+  await saveResponse(response, fallbackName);
+  return response;
 }
 
 /** Same as {@link download} for endpoints that take a JSON body (e.g. album export). */
-export async function downloadPost(path: string, body: unknown, fallbackName: string) {
+export async function downloadPost(
+  path: string,
+  body: unknown,
+  fallbackName: string,
+): Promise<Response> {
   const response = await raw(path, {
     method: 'POST',
     body: JSON.stringify(body),
     headers: { 'Content-Type': 'application/json' },
   });
   await saveResponse(response, fallbackName);
+  return response;
 }
 
 async function saveResponse(response: Response, fallbackName: string): Promise<void> {

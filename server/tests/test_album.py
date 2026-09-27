@@ -126,3 +126,133 @@ class AlbumApiTests(ApiCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MediaTests(unittest.TestCase):
+    """The legacy「图片处理」profiles."""
+
+    def png_with_workflow(self) -> bytes:
+        import io
+
+        from PIL import PngImagePlugin
+
+        info = PngImagePlugin.PngInfo()
+        info.add_text("workflow", '{"nodes": []}')
+        info.add_text("prompt", "1girl")
+        buf = io.BytesIO()
+        Image.new("RGB", (32, 48), "#336699").save(buf, "PNG", pnginfo=info)
+        return buf.getvalue()
+
+    def test_clean_png_drops_metadata_and_keeps_pixels(self):
+        import io
+
+        from mio_server.album import media as M
+
+        src = self.png_with_workflow()
+        out = M.scrub(src)
+        self.assertIn(b"workflow", src)
+        self.assertNotIn(b"workflow", out)
+        with Image.open(io.BytesIO(src)) as a, Image.open(io.BytesIO(out)) as b:
+            self.assertEqual(a.convert("RGB").tobytes(), b.convert("RGB").tobytes())
+            self.assertEqual(b.info.get("prompt"), None)
+
+    def test_clean_jpeg_and_webp_drop_exif(self):
+        import io
+
+        from mio_server.album import media as M
+
+        exif = Image.Exif()
+        exif[0x010E] = "workflow-secret"  # ImageDescription
+        for fmt in ("JPEG", "WEBP"):
+            with self.subTest(fmt):
+                buf = io.BytesIO()
+                Image.new("RGB", (40, 40), "#aa3355").save(buf, fmt, exif=exif.tobytes())
+                src = buf.getvalue()
+                self.assertIn(b"workflow-secret", src)
+                out = M.scrub(src)
+                self.assertNotIn(b"workflow-secret", out)
+                with Image.open(io.BytesIO(out)) as im:
+                    im.load()
+                    self.assertEqual(im.size, (40, 40))
+
+    def test_profiles(self):
+        from mio_server.album import media as M
+
+        src = self.png_with_workflow()
+        im = Image.new("RGB", (3000, 1000), "#ffffff")
+        stats = M.Stats("clean")
+        data, mime = M.process("clean", original=src, image=im, stats=stats)
+        self.assertEqual((mime, stats.scrubbed), ("image/png", 1))
+        self.assertNotIn(b"workflow", data)
+        data, mime = M.process("archive", original=src, image=im, stats=stats)
+        self.assertEqual(data, src)
+        data, mime = M.process("publish", original=src, image=im, stats=stats)
+        self.assertEqual(mime, "image/webp")
+        import io
+
+        with Image.open(io.BytesIO(data)) as out:
+            self.assertEqual(max(out.size), M.PUBLISH_MAX_SIDE)
+        data, mime = M.process("clean", original=None, image=im, stats=stats)  # lettered crop
+        self.assertEqual(mime, "image/png")
+        self.assertEqual(json.loads(stats.header())["count"], 4)
+
+
+class ExportChannelTests(ApiCase):
+    def test_album_image_profiles_report_what_they_did(self):
+        _, ep = self.make_episode()
+        ep = self.adopt_all(ep)
+        body = {"episode_ids": [ep["id"]], "template_id": "export-ink", "lettered": False}
+        for profile, mime in (("clean", None), ("publish", "image/webp"), ("archive", None)):
+            with self.subTest(profile):
+                res = self.ok(
+                    self.client.post("/api/export/album", json={**body, "image_profile": profile})
+                )
+                report = json.loads(res.headers["x-mio-export"])
+                self.assertEqual(report["profile"], profile)
+                self.assertEqual(report["count"], len(ep["panels"]))
+                if mime:
+                    self.assertIn(f"data:{mime};base64,", res.text)
+        auto = self.ok(
+            self.client.post("/api/export/album", json={**body, "image_profile": "auto"})
+        )
+        self.assertEqual(json.loads(auto.headers["x-mio-export"])["profile"], "clean")
+        self.assertFalse(json.loads(auto.headers["x-mio-export"])["auto_compressed"])
+
+    def test_portable_zip_and_pdf(self):
+        import io
+        import zipfile
+
+        _, ep = self.make_episode()
+        ep = self.adopt_all(ep)
+        body = {"episode_ids": [ep["id"]], "title": "雨夜"}
+        res = self.ok(self.client.post("/api/export/portable", json={**body, "format": "zip"}))
+        self.assertIn(".zip", res.headers["content-disposition"])
+        names = zipfile.ZipFile(io.BytesIO(res.content)).namelist()
+        self.assertIn("index.html", names)
+        self.assertIn("manifest.json", names)
+        self.assertEqual(len([n for n in names if n.startswith("images/")]), len(ep["panels"]))
+        pdf = self.ok(
+            self.client.post(
+                "/api/export/portable", json={**body, "format": "pdf", "image_profile": "publish"}
+            )
+        )
+        self.assertTrue(pdf.content.startswith(b"%PDF"))
+        self.assertEqual(json.loads(pdf.headers["x-mio-export"])["profile"], "publish")
+
+    def test_slice_plan_and_quality(self):
+        _, ep = self.make_episode()
+        ep = self.adopt_all(ep)
+        plan = self.ok(self.client.get(f"/api/episodes/{ep['id']}/slices?preset=kuaikan"))
+        self.assertEqual((plan["preset"], plan["width"]), ("kuaikan", 750))
+        self.assertEqual(sum(plan["heights"]), plan["height"])
+        self.assertTrue(all(h <= 1500 for h in plan["heights"]))
+        url = f"/api/episodes/{ep['id']}/export?fmt=long"
+        self.assertEqual(self.ok(self.client.get(url)).headers["content-type"], "image/png")
+        lossy = self.ok(self.client.get(url + "&quality=80"))
+        self.assertEqual(lossy.headers["content-type"], "image/jpeg")
+        lossless = self.ok(self.client.get(f"/api/episodes/{ep['id']}/export?fmt=slices&quality=0"))
+        import io
+        import zipfile
+
+        names = zipfile.ZipFile(io.BytesIO(lossless.content)).namelist()
+        self.assertTrue(any(n.endswith(".png") for n in names))

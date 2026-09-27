@@ -19,6 +19,19 @@
       "title": "Episode Ids",
       "type": "array"
      },
+     "image_profile": {
+      "default": "preview",
+      "description": "图片处理: auto / clean (无损清洗) / publish (轻量发布) / archive (无损归档); preview = fast in-app preview encoding",
+      "enum": [
+       "auto",
+       "clean",
+       "publish",
+       "archive",
+       "preview"
+      ],
+      "title": "Image Profile",
+      "type": "string"
+     },
      "lettered": {
       "default": true,
       "description": "Crop panels from the lettered strip",
@@ -27,6 +40,7 @@
      },
      "max_width": {
       "default": 1400,
+      "description": "Only used by the ``preview`` image profile",
       "maximum": 4000.0,
       "minimum": 320.0,
       "title": "Max Width",
@@ -2659,6 +2673,72 @@
     ],
     "title": "PanelWidth",
     "type": "string"
+   },
+   "PortableExport": {
+    "properties": {
+     "episode_ids": {
+      "items": {
+       "type": "string"
+      },
+      "maxItems": 50,
+      "minItems": 1,
+      "title": "Episode Ids",
+      "type": "array"
+     },
+     "format": {
+      "default": "zip",
+      "enum": [
+       "zip",
+       "pdf"
+      ],
+      "title": "Format",
+      "type": "string"
+     },
+     "image_profile": {
+      "default": "auto",
+      "enum": [
+       "auto",
+       "clean",
+       "publish",
+       "archive",
+       "preview"
+      ],
+      "title": "Image Profile",
+      "type": "string"
+     },
+     "lettered": {
+      "default": true,
+      "title": "Lettered",
+      "type": "boolean"
+     },
+     "show_captions": {
+      "default": true,
+      "title": "Show Captions",
+      "type": "boolean"
+     },
+     "title": {
+      "default": "",
+      "maxLength": 120,
+      "title": "Title",
+      "type": "string"
+     },
+     "variant_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Variant Id"
+     }
+    },
+    "required": [
+     "episode_ids"
+    ],
+    "title": "PortableExport",
+    "type": "object"
    },
    "Preset-Input": {
     "additionalProperties": false,
@@ -5695,6 +5775,26 @@
        ],
        "title": "Variant Id"
       }
+     },
+     {
+      "description": "0 = lossless PNG; else JPEG / WebP quality",
+      "in": "query",
+      "name": "quality",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "maximum": 100,
+         "minimum": 0,
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "description": "0 = lossless PNG; else JPEG / WebP quality",
+       "title": "Quality"
+      }
      }
     ],
     "responses": {
@@ -6862,6 +6962,82 @@
     ]
    }
   },
+  "/episodes/{episode_id}/slices": {
+   "get": {
+    "description": "Where a platform preset would cut the strip — drives the slice preview in the reader.",
+    "operationId": "slice_plan",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "episode_id",
+      "required": true,
+      "schema": {
+       "title": "Episode Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "preset",
+      "required": false,
+      "schema": {
+       "default": "webtoon",
+       "title": "Preset",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "variant_id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Variant Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Slice Plan",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Slice Plan",
+    "tags": [
+     "production"
+    ]
+   }
+  },
   "/episodes/{episode_id}/strip": {
    "put": {
     "description": "Hand edits from the canvas (moved / resized lettering, crops, boxes).",
@@ -7423,6 +7599,51 @@
     "summary": "Export Motion",
     "tags": [
      "motion"
+    ]
+   }
+  },
+  "/export/portable": {
+   "post": {
+    "description": "ZIP 图片资源包 (simple reader + image files) or PDF 图片画册 (one page per panel).\n\nNeither is bound by the single-file inline budget, so ``auto`` means 无损清洗 here.",
+    "operationId": "export_portable",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PortableExport"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Export Portable",
+    "tags": [
+     "album"
     ]
    }
   },

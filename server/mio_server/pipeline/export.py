@@ -7,7 +7,7 @@ import html
 import io
 import json
 import zipfile
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from PIL import Image
 
@@ -40,6 +40,16 @@ def preset(preset_id: "str | SlicePreset") -> SlicePreset:
         return PRESETS[preset_id]
     except KeyError:
         raise ValueError(f"unknown export preset: {preset_id}") from None
+
+
+def with_quality(p: "str | SlicePreset", quality: int | None) -> SlicePreset:
+    """The preset with a user-chosen quality; ``0`` = lossless PNG, ``None`` = the preset's own."""
+    p = preset(p)
+    if quality is None:
+        return p
+    if quality == 0:
+        return replace(p, fmt="PNG")
+    return replace(p, fmt=p.fmt if p.fmt != "PNG" else "JPEG", quality=quality)
 
 
 def _scaled(image: Image.Image, strip: Strip, width: int) -> tuple[Image.Image, float]:
@@ -162,6 +172,7 @@ def export(
     preset_id: "str | SlicePreset" = "webtoon",
     title: str = "episode",
     subtitle: str = "",
+    quality: int | None = None,
 ) -> tuple[bytes, str, str]:
     """Return ``(bytes, mime, filename)`` for one export format."""
     safe = "".join(c if c.isalnum() or c in "-_" else "_" for c in title)[:60] or "episode"
@@ -172,6 +183,8 @@ def export(
             f"{safe}_{preset(preset_id).id}.zip",
         )
     if fmt == "long":
+        if quality:  # lossy long image (JPEG); default / 0 = lossless PNG
+            return long_image(image, "JPEG", quality=quality), "image/jpeg", f"{safe}.jpg"
         return long_image(image), "image/png", f"{safe}.png"
     if fmt == "pdf":
         return pdf(image, strip), "application/pdf", f"{safe}.pdf"

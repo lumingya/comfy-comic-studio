@@ -1,6 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import * as Menu from '@radix-ui/react-dropdown-menu';
-import * as RSwitch from '@radix-ui/react-switch';
 import { MoreHorizontal, X } from 'lucide-react';
 import {
   useEffect,
@@ -213,9 +212,16 @@ export function Switch(props: {
 }) {
   return (
     <label className="row small soft" style={{ cursor: 'pointer' }}>
-      <RSwitch.Root className="switch" checked={props.checked} onCheckedChange={props.onChange}>
-        <RSwitch.Thumb className="switch-thumb" />
-      </RSwitch.Root>
+      <span className="switch">
+        <input
+          type="checkbox"
+          role="switch"
+          checked={props.checked}
+          aria-checked={props.checked}
+          onChange={(e) => props.onChange(e.target.checked)}
+        />
+        <span className="switch-track" aria-hidden="true" />
+      </span>
       {props.label}
     </label>
   );

@@ -185,8 +185,34 @@ beforeEach(() => {
     'POST /api/workshop/assemble': { series: series, episode: episode },
     'GET /api/episodes/ep_1/panels/p0/prompt': prompt,
     'GET /api/export/presets': [
-      { id: 'webtoon', label: 'Webtoon', width: 800, max_height: 1280, format: 'jpg' },
+      { id: 'webtoon', label: 'Webtoon', width: 800, max_height: 1280, format: 'JPEG' },
+      { id: 'kuaikan', label: '国内平台', width: 750, max_height: 1500, format: 'JPEG' },
+      { id: 'long', label: '整张长图', width: 0, max_height: 0, format: 'PNG' },
     ],
+    'GET /api/episodes/ep_1/slices': {
+      preset: 'webtoon',
+      width: 800,
+      height: 2000,
+      heights: [1280, 720],
+      format: 'JPEG',
+      quality: 90,
+    },
+    'POST /api/export/portable': () =>
+      new Response('zip', {
+        status: 200,
+        headers: {
+          'content-disposition': "attachment; filename*=UTF-8''a.zip",
+          'x-mio-export': JSON.stringify({
+            profile: 'publish',
+            scrubbed: 0,
+            recompressed: 2,
+            original_bytes: 10,
+            output_bytes: 5,
+            auto_compressed: false,
+            over_budget: false,
+          }),
+        },
+      }),
     'GET /api/jobs': [jobSummary],
     'GET /api/jobs/job_1': job,
     'GET /api/settings': settings,
@@ -502,9 +528,55 @@ describe('every route mounts with API data', () => {
     expect(calls.some((c) => c.url.includes('/render'))).toBe(false);
   });
 
-  it('episode → export', async () => {
+  it('reader drawer: legacy order, 图片处理 and ZIP export', async () => {
+    vi.stubGlobal(
+      'URL',
+      Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL() {} }),
+    );
     mount('/gallery/ser_1/export');
-    expect(await screen.findByText('导出并下载')).toBeInTheDocument();
+    const drawer = await screen.findByRole('complementary', { name: '展示模板与导出' });
+    expect(within(drawer).getByRole('button', { name: /导出完整 HTML/ })).toBeInTheDocument();
+    const profile = within(drawer).getByLabelText('图片处理') as HTMLSelectElement;
+    expect([...profile.options].map((o) => o.value)).toEqual([
+      'auto',
+      'clean',
+      'publish',
+      'archive',
+    ]);
+    fireEvent.change(profile, { target: { value: 'publish' } });
+    expect(within(drawer).getByText(/长边不超过 2560 px/)).toBeInTheDocument();
+    const zip = within(drawer).getByRole('button', { name: /ZIP 图片资源包/ });
+    await waitFor(() => expect(zip).toBeEnabled());
+    fireEvent.click(zip);
+    await waitFor(() =>
+      expect(calls.some((c) => c.method === 'POST' && c.url === '/api/export/portable')).toBe(true),
+    );
+    expect(calls.find((c) => c.url === '/api/export/portable')!.body).toMatchObject({
+      format: 'zip',
+      image_profile: 'publish',
+    });
+    // Template-free exports are not listed next to the template exports.
+    const platform = within(drawer).getByText('平台发布 · 切片与长图').closest('details')!;
+    expect(platform.open).toBe(false);
+    expect(within(drawer).queryByText('离线阅读页')).toBeNull();
+    localStorage.removeItem('mio.reader.export');
+  });
+
+  it('reader drawer: the slice preview follows the platform preset', async () => {
+    mount('/gallery/ser_1/export');
+    const drawer = await screen.findByRole('complementary', { name: '展示模板与导出' });
+    const platform = within(drawer).getByText('平台发布 · 切片与长图').closest('details')!;
+    platform.open = true;
+    fireEvent(platform, new Event('toggle'));
+    expect(await screen.findByText('切片预览')).toBeInTheDocument();
+    await screen.findByRole('option', { name: '国内平台' });
+    fireEvent.change(within(drawer).getByLabelText('平台预设'), { target: { value: 'kuaikan' } });
+    await waitFor(() =>
+      expect(calls.some((c) => c.url === '/api/episodes/ep_1/slices?preset=kuaikan')).toBe(true),
+    );
+    fireEvent.change(within(drawer).getByLabelText('画质'), { target: { value: 'lossless' } });
+    expect(within(drawer).getByText(/750 px 宽 · 每张 ≤ 1500 px · PNG/)).toBeInTheDocument();
+    localStorage.removeItem('mio.reader.export');
   });
 
   it('jobs with an unconfirmed item', async () => {
@@ -576,10 +648,15 @@ describe('every route mounts with API data', () => {
     expect(frame.getAttribute('src')).toContain('episode=ep_1');
   });
 
-  it('episode → export → motion comic plan and override', async () => {
+  it('reader drawer → motion comic plan and override (Studio mode)', async () => {
+    useUI.setState({ studioMode: true });
     mount('/gallery/ser_1/export');
-    fireEvent.click(await screen.findByText('动态漫'));
-    expect(await screen.findByText('1 个镜头 · 约 5s')).toBeInTheDocument();
+    const motion = await screen.findByRole('button', { name: /设置镜头并导出/ });
+    await waitFor(() => expect(motion).toBeEnabled());
+    fireEvent.click(motion);
+    expect(
+      await screen.findByText('1 个镜头 · 约 5s', undefined, { timeout: 4000 }),
+    ).toBeInTheDocument();
     expect(screen.getByText('便利店门口')).toBeInTheDocument();
     fireEvent.change(screen.getByDisplayValue('自动（推近）'), { target: { value: 'shake' } });
     await waitFor(() =>
@@ -587,12 +664,6 @@ describe('every route mounts with API data', () => {
     );
     const patch = calls.find((c) => c.method === 'PATCH')!;
     expect(patch.body).toMatchObject({ changes: { motion: { move: 'shake', hold: null } } });
-  });
-
-  it('episode → export → album', async () => {
-    mount('/gallery/ser_1/export');
-    fireEvent.click(await screen.findByText('画册'));
-    expect(await screen.findByText('画册模板')).toBeInTheDocument();
   });
 
   it('trash', async () => {

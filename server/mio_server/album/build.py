@@ -8,23 +8,35 @@ dialogue goes into the caption.
 from __future__ import annotations
 
 import base64
-import io
+from dataclasses import dataclass
 
 from PIL import Image
 
 from ..models import DialogueKind, Episode, Series
 from ..pipeline import episode_strip as ES
 from ..pipeline.compiler import compile_panel
+from . import media as M
 from .render import Book, Frame
 
 
 def data_url(im: Image.Image, max_width: int, quality: int = 86) -> str:
-    im = im.convert("RGB")
-    if max_width and im.width > max_width:
-        im = im.resize((max_width, round(im.height * max_width / im.width)), Image.LANCZOS)
-    buf = io.BytesIO()
-    im.save(buf, "JPEG", quality=quality, optimize=True)
-    return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+    return "data:image/jpeg;base64," + base64.b64encode(M.preview(im, max_width, quality)).decode(
+        "ascii"
+    )
+
+
+@dataclass
+class Page:
+    """One exported panel: encoded bytes plus the book metadata that goes with it."""
+
+    data: bytes
+    mime: str
+    name: str
+    caption: str
+    prompt: str
+    width: int
+    height: int
+    palette: list[str]
 
 
 def palette(im: Image.Image, n: int = 3) -> list[str]:
@@ -50,16 +62,20 @@ def caption(series: Series, panel) -> str:
     return "　".join(lines)
 
 
-def episode_book(
+def episode_pages(
     ctx,
     episode_id: str,
     *,
     variant_id: str | None = None,
     lettered: bool = True,
+    profile: str = "preview",
     max_width: int = 1400,
-) -> Book:
+    stats: M.Stats | None = None,
+) -> tuple[Episode, Series, list[Page | None]]:
+    """Every panel of an episode encoded for ``profile``; ``None`` where nothing is adopted yet."""
     ep: Episode = ctx.store.get_episode(episode_id)
     series: Series = ctx.store.get_series(ep.series_id)
+    stats = stats if stats is not None else M.Stats(profile)
     images, _ = ES.adopted_images(ctx, ep, variant_id)
     crops: dict[str, Image.Image] = {}
     if lettered and images:
@@ -68,19 +84,71 @@ def episode_book(
             if pid in images:
                 x0, y0, x1, y1 = (round(v) for v in box)
                 crops[pid] = full.crop((x0, y0, x1, y1))
-    frames = []
+    pages: list[Page | None] = []
     for i, panel in enumerate(ep.ordered_panels(), start=1):
         im = crops.get(panel.id) or images.get(panel.id)
+        if im is None:
+            pages.append(None)
+            continue
+        original = None
+        if panel.id not in crops and profile in ("clean", "archive", "auto", "publish"):
+            take = ep.adopted(panel.id, variant_id)
+            original = ctx.assets.read(take.asset_id) if take else None
+        data, mime = M.process(
+            profile, original=original, image=im, stats=stats, max_width=max_width
+        )
         prompt = compile_panel(series, ep, panel, dialect="tags", seed=0).positive
-        frames.append(
-            Frame(
-                image=data_url(im, max_width) if im is not None else "",
+        pages.append(
+            Page(
+                data=data,
+                mime=mime,
                 name=f"第 {i} 格",
                 caption=caption(series, panel),
                 prompt=prompt,
-                width=im.width if im is not None else None,
-                height=im.height if im is not None else None,
-                palette=palette(im) if im is not None else [],
+                width=im.width,
+                height=im.height,
+                palette=palette(im),
+            )
+        )
+    return ep, series, pages
+
+
+def episode_book(
+    ctx,
+    episode_id: str,
+    *,
+    variant_id: str | None = None,
+    lettered: bool = True,
+    max_width: int = 1400,
+    profile: str = "preview",
+    stats: M.Stats | None = None,
+) -> Book:
+    ep, series, pages = episode_pages(
+        ctx,
+        episode_id,
+        variant_id=variant_id,
+        lettered=lettered,
+        profile=profile,
+        max_width=max_width,
+        stats=stats,
+    )
+    frames = []
+    for i, (panel, page) in enumerate(zip(ep.ordered_panels(), pages), start=1):
+        if page is None:
+            prompt = compile_panel(series, ep, panel, dialect="tags", seed=0).positive
+            frames.append(
+                Frame(image="", name=f"第 {i} 格", caption=caption(series, panel), prompt=prompt)
+            )
+            continue
+        frames.append(
+            Frame(
+                image=f"data:{page.mime};base64," + base64.b64encode(page.data).decode("ascii"),
+                name=page.name,
+                caption=page.caption,
+                prompt=page.prompt,
+                width=page.width,
+                height=page.height,
+                palette=page.palette,
             )
         )
     return Book(

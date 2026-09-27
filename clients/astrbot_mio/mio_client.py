@@ -303,12 +303,30 @@ class MioClient(_Base):
         fmt: str | None = None,
         preset: str | None = None,
         variant_id: Any | None = None,
+        quality: Any | None = None,
     ) -> Any:
         """GET /episodes/{episode_id}/export — Export."""
         return self._request(
             "GET",
             f"/episodes/{_q(episode_id)}/export",
-            params={"fmt": fmt, "preset": preset, "variant_id": variant_id},
+            params={"fmt": fmt, "preset": preset, "variant_id": variant_id, "quality": quality},
+        )
+
+    def slice_plan(
+        self,
+        episode_id: str,
+        *,
+        preset: str | None = None,
+        variant_id: Any | None = None,
+    ) -> Any:
+        """GET /episodes/{episode_id}/slices — Slice Plan.
+
+        Where a platform preset would cut the strip — drives the slice preview in the reader.
+        """
+        return self._request(
+            "GET",
+            f"/episodes/{_q(episode_id)}/slices",
+            params={"preset": preset, "variant_id": variant_id},
         )
 
     def export_presets(self) -> Any:
@@ -541,6 +559,13 @@ class MioClient(_Base):
         Self-contained offline HTML album; one book per episode.
         """
         return self._request("POST", "/export/album", json=body)
+
+    def export_portable(self, body: dict | list | None = None) -> Any:
+        """POST /export/portable — Export Portable.
+
+        ZIP 图片资源包 (simple reader + image files) or PDF 图片画册 (one page per panel).
+        """
+        return self._request("POST", "/export/portable", json=body)
 
     def motion_plan(self, episode_id: str, *, variant_id: Any | None = None) -> Any:
         """GET /episodes/{episode_id}/motion-plan — Motion Plan.

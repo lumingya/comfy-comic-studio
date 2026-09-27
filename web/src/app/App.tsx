@@ -26,7 +26,6 @@ const EpisodeRedirect = lazy(() => import('../pages/episode/EpisodePage'));
 const ScriptTab = lazy(() => import('../pages/script/ScriptTab'));
 const BoardTab = lazy(() => import('../pages/board/BoardTab'));
 const CanvasTab = lazy(() => import('../pages/canvas/CanvasTab'));
-const ExportTab = lazy(() => import('../pages/episode/ExportTab'));
 const ExtensionTab = lazy(() => import('../pages/episode/ExtensionTab'));
 const Jobs = lazy(() => import('../pages/jobs/JobsPage'));
 const Settings = lazy(() => import('../pages/settings/SettingsPage'));
@@ -57,7 +56,8 @@ export const routes = [
             path: ':seriesId',
             element: s(<Reader />),
             children: [
-              { path: 'export', element: s(<ExportTab />) },
+              // The presentation drawer lives in the reader itself; the path only opens it.
+              { path: 'export', element: null },
               { path: 'layout', element: s(<CanvasTab />) },
             ],
           },

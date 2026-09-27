@@ -524,6 +524,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/episodes/{episode_id}/slices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Slice Plan
+         * @description Where a platform preset would cut the strip — drives the slice preview in the reader.
+         */
+        get: operations["slice_plan_api_episodes__episode_id__slices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/export/presets": {
         parameters: {
             query?: never;
@@ -1405,6 +1425,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/export/portable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Export Portable
+         * @description ZIP 图片资源包 (simple reader + image files) or PDF 图片画册 (one page per panel).
+         *
+         *     Neither is bound by the single-file inline budget, so ``auto`` means 无损清洗 here.
+         */
+        post: operations["export_portable_api_export_portable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/episodes/{episode_id}/motion-plan": {
         parameters: {
             query?: never;
@@ -1708,9 +1750,17 @@ export interface components {
             title?: string;
             /**
              * Max Width
+             * @description Only used by the ``preview`` image profile
              * @default 1400
              */
             max_width?: number;
+            /**
+             * Image Profile
+             * @description 图片处理: auto / clean (无损清洗) / publish (轻量发布) / archive (无损归档); preview = fast in-app preview encoding
+             * @default preview
+             * @enum {string}
+             */
+            image_profile?: "auto" | "clean" | "publish" | "archive" | "preview";
         };
         /** ApplyRequest */
         ApplyRequest: {
@@ -2785,6 +2835,40 @@ export interface components {
          * @enum {string}
          */
         PanelWidth: "full" | "inset" | "bleed" | "frameless";
+        /** PortableExport */
+        PortableExport: {
+            /** Episode Ids */
+            episode_ids: string[];
+            /**
+             * Format
+             * @default zip
+             * @enum {string}
+             */
+            format?: "zip" | "pdf";
+            /** Variant Id */
+            variant_id?: string | null;
+            /**
+             * Lettered
+             * @default true
+             */
+            lettered?: boolean;
+            /**
+             * Show Captions
+             * @default true
+             */
+            show_captions?: boolean;
+            /**
+             * Title
+             * @default
+             */
+            title?: string;
+            /**
+             * Image Profile
+             * @default auto
+             * @enum {string}
+             */
+            image_profile?: "auto" | "clean" | "publish" | "archive" | "preview";
+        };
         /**
          * Preset
          * @description A reusable visual asset: a named set of ``{变量}`` values (character, outfit, style…).
@@ -4912,6 +4996,8 @@ export interface operations {
                 fmt?: "slices" | "long" | "pdf" | "html";
                 preset?: string;
                 variant_id?: string | null;
+                /** @description 0 = lossless PNG; else JPEG / WebP quality */
+                quality?: number | null;
             };
             header?: never;
             path: {
@@ -4928,6 +5014,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    slice_plan_api_episodes__episode_id__slices_get: {
+        parameters: {
+            query?: {
+                preset?: string;
+                variant_id?: string | null;
+            };
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -6757,6 +6877,39 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AlbumExport"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_portable_api_export_portable_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PortableExport"];
             };
         };
         responses: {

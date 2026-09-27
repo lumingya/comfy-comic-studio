@@ -560,3 +560,102 @@ dialog.help-drawer::backdrop {
 .resource-link:hover strong {
   color: var(--accent);
 }
+
+/* Presentation drawer extras (legacy ui-export.js markup). */
+.presentation-portable {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.presentation-portable > .btn {
+  flex: 1 1 0;
+  justify-content: center;
+  white-space: nowrap;
+}
+.presentation-export > .help {
+  margin: 10px 0 4px;
+}
+.presentation-options .field {
+  margin: 15px 0 0;
+}
+.presentation-options > label input[type='checkbox'] {
+  accent-color: var(--accent);
+  vertical-align: -2px;
+}
+.export-color-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.export-color-row input[type='color'] {
+  width: 44px;
+  height: 30px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  cursor: pointer;
+}
+.presentation-drawer .quiet-advanced {
+  margin-top: 22px;
+  padding-top: 16px;
+}
+.presentation-drawer .quiet-advanced > .help {
+  margin: 0 0 4px;
+}
+.presentation-drawer .quiet-advanced .field {
+  margin: 14px 0 0;
+}
+.presentation-drawer .quiet-advanced > .btn {
+  margin-top: 10px;
+}
+
+/* Platform slice preview on the reader stage. */
+.slice-preview {
+  overflow: auto;
+  padding: 22px 24px 60px;
+  scrollbar-width: thin;
+}
+.slice-preview-head {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: center;
+  margin: 0 0 16px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.slice-preview-head strong {
+  color: var(--text);
+  font-weight: 500;
+}
+.slice-preview-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+.slice-preview-item {
+  margin: 0;
+}
+.slice-preview-item figcaption {
+  font: 0.6875rem var(--mono);
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.slice-preview-crop {
+  position: relative;
+  overflow: hidden;
+  background: var(--panel);
+  box-shadow: 0 14px 40px rgb(0 0 0 / 0.35);
+  outline: 1px dashed color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 3px;
+}
+.slice-preview-crop img {
+  position: absolute;
+  left: 0;
+  display: block;
+  height: auto;
+  max-width: none;
+}

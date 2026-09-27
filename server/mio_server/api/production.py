@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Literal
 from urllib.parse import quote
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Query, Response
 from pydantic import BaseModel, Field
 
 from ..models import Strip
@@ -162,8 +162,11 @@ def export(
     fmt: Literal["slices", "long", "pdf", "html"] = "slices",
     preset: str = "webtoon",
     variant_id: str | None = None,
+    quality: int | None = Query(
+        default=None, ge=0, le=100, description="0 = lossless PNG; else JPEG / WebP quality"
+    ),
 ) -> Response:
-    slice_preset = ctx.registry.get("slice_preset", preset)
+    slice_preset = X.with_quality(ctx.registry.get("slice_preset", preset), quality)
     series, ep, strip, image = _render_strip(ctx, episode_id, variant_id)
     data, mime, filename = X.export(
         image,
@@ -172,6 +175,7 @@ def export(
         preset_id=slice_preset,
         title=f"{series.title}_{ep.title}",
         subtitle=ep.title,
+        quality=quality,
     )
     ctx.hooks.action(
         "episode.exported",
@@ -179,6 +183,24 @@ def export(
     )
     disposition = f"attachment; filename*=UTF-8''{quote(filename)}"
     return Response(data, media_type=mime, headers={"Content-Disposition": disposition})
+
+
+@router.get("/episodes/{episode_id}/slices")
+def slice_plan(
+    ctx: Ctx, episode_id: str, preset: str = "webtoon", variant_id: str | None = None
+) -> dict:
+    """Where a platform preset would cut the strip — drives the slice preview in the reader."""
+    p = X.preset(ctx.registry.get("slice_preset", preset))
+    _, _, strip, image = _render_strip(ctx, episode_id, variant_id)
+    parts = X.slice_image(image, strip, p)
+    return {
+        "preset": p.id,
+        "width": parts[0].width,
+        "height": sum(part.height for part in parts),
+        "heights": [part.height for part in parts],
+        "format": p.fmt,
+        "quality": p.quality,
+    }
 
 
 @router.get("/export/presets")
@@ -190,6 +212,7 @@ def export_presets(ctx: Ctx) -> list[dict]:
             "width": p.width,
             "max_height": p.max_height,
             "format": p.fmt,
+            "quality": p.quality,
         }
         for p in (c.value for c in ctx.registry.all("slice_preset"))
     ]

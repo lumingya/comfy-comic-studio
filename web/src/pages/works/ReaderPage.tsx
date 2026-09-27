@@ -1,16 +1,16 @@
-import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { assetUrl, downloadPost, raw } from '../../api/client';
+import { assetUrl } from '../../api/client';
 import { useAlbumTemplates } from '../../api/open';
 import { useEpisode, useEpisodes, useSeries } from '../../api/series';
 import { Icon } from '../../app/icons';
 import { usePageTitle } from '../../app/title';
 import { useUI } from '../../app/ui-store';
 import { pickAdopted } from '../canvas/adopted';
-import { toastError } from '../../components/toast';
 import type { EpisodeContext } from '../episode/EpisodePage';
+import { MotionExport } from '../episode/MotionExport';
+import { PresentationDrawer, SlicePreview, TemplatePreview, useExportDraft } from './presentation';
 
 type Mode = 'auto' | 'single' | 'continuous';
 const MODE_KEY = 'mio.reader.mode';
@@ -22,54 +22,6 @@ const BUILTIN = [
   { id: NATIVE, look: 'fit' },
   { id: 'export-seamless', look: 'seamless' },
 ] as const;
-
-/** The album rendered with a legacy HTML template (POST /api/export/album), shown in an iframe. */
-function TemplatePreview(props: {
-  episodeId: string;
-  templateId: string;
-  captions: boolean;
-  lettered: boolean;
-}) {
-  const { t } = useTranslation();
-  const q = useQuery({
-    queryKey: ['album-preview', props.episodeId, props.templateId, props.captions, props.lettered],
-    staleTime: 5 * 60_000,
-    retry: false,
-    queryFn: async () =>
-      (
-        await raw('/api/export/album', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            episode_ids: [props.episodeId],
-            template_id: props.templateId,
-            lettered: props.lettered,
-            show_captions: props.captions,
-            max_width: 1400,
-          }),
-        })
-      ).text(),
-  });
-  return (
-    <div className="presentation-preview-wrap">
-      {q.isLoading ? (
-        <div id="presentation-preview-status" role="status">
-          {t('reader.previewing')}
-        </div>
-      ) : q.error ? (
-        <div id="presentation-preview-status" role="alert">
-          {t('reader.previewFailed', { message: (q.error as Error).message })}
-        </div>
-      ) : (
-        <iframe
-          title={t('reader.previewTitle')}
-          sandbox="allow-scripts allow-popups"
-          srcDoc={q.data}
-        />
-      )}
-    </div>
-  );
-}
 
 /**
  * The legacy reader (画册阅读室): a full-screen dialog over 画册集. Reading only — 版式 / 导出
@@ -94,10 +46,13 @@ export default function ReaderPage() {
     const saved = localStorage.getItem(LOOK_KEY) || NATIVE;
     return OLD_LOOKS[saved] ?? saved;
   });
-  const [query, setQuery] = useState('');
-  const [exporting, setExporting] = useState(false);
   const templates = useAlbumTemplates();
-  const [captions, setCaptions] = useState(true);
+  const [draft, setDraft] = useExportDraft();
+  const captions = draft.captions;
+  const [platformOpen, setPlatformOpen] = useState(false);
+  const [motionOpen, setMotionOpen] = useState(false);
+  const variantId = useUI((s) => s.variantId);
+  const setVariant = useUI((s) => s.setVariant);
   const [page, setPage] = useState(0);
   const [info, setInfo] = useState(false);
   const [film, setFilm] = useState(false);
@@ -230,32 +185,12 @@ export default function ReaderPage() {
       ? templates.data.map((x) => ({ id: x.id, title: x.title, description: x.description }))
       : BUILTIN.map((b) => ({ id: b.id, title: t(`reader.look.${b.look}`), description: '' }))
   ).sort((a, b) => Number(b.id === NATIVE) - Number(a.id === NATIVE));
-  const needle = query.trim().toLowerCase();
-  const shownTemplates = needle
-    ? list.filter((x) => `${x.title} ${x.description}`.toLowerCase().includes(needle))
-    : list;
   const lookTitle = list.find((x) => x.id === look)?.title ?? t('reader.look.fit');
-  const exportHtml = async () => {
-    if (!epId) return;
-    setExporting(true);
-    try {
-      await downloadPost(
-        '/api/export/album',
-        {
-          episode_ids: [epId],
-          template_id: look,
-          lettered: studio,
-          show_captions: captions,
-          title: series.data?.title ?? '',
-        },
-        `${series.data?.title ?? 'album'}.html`,
-      );
-    } catch (err) {
-      toastError(err);
-    } finally {
-      setExporting(false);
-    }
-  };
+  const variants = series.data?.variants ?? [];
+  const activeVariant = studio && variants.some((v) => v.id === variantId) ? variantId : null;
+  // What the stage shows while the drawer is open: the template, the platform cuts or motion setup.
+  const drawerStage =
+    panel !== 'export' ? '' : motionOpen && studio ? 'motion' : platformOpen ? 'platform' : '';
   const context =
     episode.data && series.data
       ? ({ episode: episode.data, series: series.data } satisfies EpisodeContext)
@@ -368,13 +303,24 @@ export default function ReaderPage() {
           <div className="room-canvas room-layout workspace-body">
             <Outlet context={context} />
           </div>
+        ) : drawerStage === 'motion' && episode.data ? (
+          <div className="room-canvas room-layout workspace-body">
+            <MotionExport
+              episode={episode.data}
+              variantId={activeVariant}
+              fallbackName={series.data?.title ?? 'motion'}
+            />
+          </div>
+        ) : drawerStage === 'platform' && epId ? (
+          <SlicePreview episodeId={epId} variantId={activeVariant} preset={draft.preset} />
         ) : !native && epId ? (
           <div className="room-canvas" id="reader-canvas">
             <TemplatePreview
               episodeId={epId}
               templateId={look}
-              captions={captions}
+              variantId={activeVariant}
               lettered={studio}
+              draft={draft}
             />
           </div>
         ) : (
@@ -552,92 +498,31 @@ export default function ReaderPage() {
           <Icon name="help" />
         </button>
       </footer>
-      <aside
-        className="presentation-drawer"
-        id="presentation-drawer"
-        hidden={panel !== 'export'}
-        aria-label={t('reader.drawer')}
-      >
-        <header>
-          <div>
-            <small>PRESENTATION STUDIO</small>
-            <h2>{t('reader.drawerTitle')}</h2>
-          </div>
-          <button
-            type="button"
-            className="ibtn"
-            title={t('reader.drawerClose')}
-            aria-label={t('reader.drawerClose')}
-            onClick={() => navigate(`${base}${keep}`)}
-          >
-            <Icon name="close" />
-          </button>
-        </header>
-        <label className="presentation-search">
-          <Icon name="search" sm />
-          <input
-            id="presentation-search"
-            type="search"
-            value={query}
-            placeholder={t('reader.search')}
-            aria-label={t('reader.searchLabel')}
-            aria-controls="presentation-template-list"
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </label>
-        <div id="presentation-template-list">
-          {shownTemplates.length ? (
-            shownTemplates.map((x) => (
-              <button
-                key={x.id}
-                type="button"
-                className={`presentation-choice ${look === x.id ? 'selected' : ''}`}
-                aria-pressed={look === x.id}
-                onClick={() => setLookSaved(x.id)}
-              >
-                <span className="presentation-swatch">
-                  <Icon name={x.id === NATIVE ? 'image' : 'book'} />
-                </span>
-                <span>
-                  <strong>{x.title}</strong>
-                  <small>{hintOf(x.id)}</small>
-                </span>
-                {look === x.id ? <Icon name="check" sm /> : null}
-              </button>
-            ))
-          ) : (
-            <p className="help choice-empty">
-              {t('reader.noMatch', { query: query.trim() })}{' '}
-              <button type="button" className="link-button" onClick={() => setQuery('')}>
-                {t('reader.clearSearch')}
-              </button>
-            </p>
-          )}
-        </div>
-        <details className="presentation-options" open>
-          <summary>{t('reader.options')}</summary>
-          <label>
-            <input
-              type="checkbox"
-              checked={captions}
-              onChange={(e) => setCaptions(e.target.checked)}
-            />{' '}
-            {t('reader.captions')}
-          </label>
-        </details>
-        <div className="presentation-export">
-          {panel === 'export' && context ? <Outlet context={context} /> : null}
-          <button
-            type="button"
-            className="btn primary"
-            disabled={!epId || exporting}
-            onClick={exportHtml}
-          >
-            <Icon name="download" />
-            {exporting ? t('reader.exporting') : t('reader.exportHtml')}
-          </button>
-        </div>
-      </aside>
+      <PresentationDrawer
+        open={panel === 'export'}
+        onClose={() => navigate(`${base}${keep}`)}
+        templates={list}
+        infos={templates.data ?? []}
+        look={look}
+        native={NATIVE}
+        onLook={setLookSaved}
+        hintOf={hintOf}
+        draft={draft}
+        onDraft={setDraft}
+        mode={mode}
+        onMode={setModeSaved}
+        episodeId={epId}
+        title={series.data?.title ?? ''}
+        lettered={studio}
+        variants={variants}
+        variantId={activeVariant}
+        onVariant={setVariant}
+        platformOpen={platformOpen}
+        onPlatform={setPlatformOpen}
+        studio={studio}
+        motionOpen={motionOpen}
+        onMotion={setMotionOpen}
+      />
     </dialog>
   );
 }
