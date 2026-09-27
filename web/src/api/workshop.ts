@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { api, data } from './client';
 import { keys } from './keys';
 import type { Series } from './types';
@@ -71,4 +72,25 @@ export function promptVariables(text: string): string[] {
 /** Replace `{name}` with the album's values (unknown names are left as written). */
 export function fillVariables(text: string, vars: Record<string, string>) {
   return text.replace(/\{([^\s{}]{1,64})\}/g, (all, k: string) => (k in vars ? vars[k] : all));
+}
+
+/** The variables a storyboard uses (prompts, negatives and captions). */
+export function useBoardVariables(id: string | undefined) {
+  const q = useQuery({
+    queryKey: ['episode', id ?? ''],
+    enabled: !!id,
+    queryFn: async () =>
+      data(await api.GET('/api/episodes/{episode_id}', { params: { path: { episode_id: id! } } })),
+  });
+  const vars = useMemo(() => {
+    const text = (q.data?.panels ?? [])
+      .flatMap((p) => [
+        p.overrides.raw_prompt ?? '',
+        p.overrides.raw_negative ?? '',
+        ...p.dialogues.map((d) => d.text),
+      ])
+      .join('\n');
+    return promptVariables(text);
+  }, [q.data]);
+  return { vars, episode: q.data };
 }

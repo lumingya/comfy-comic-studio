@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { create } from 'zustand';
 import { useAllEpisodes } from '../api/series';
-import { useHelp } from '../components/HelpDrawer';
+import { useHelp, useQuickStart } from '../components/HelpDrawer';
 import { setLocale } from '../i18n';
 import { Icon, type IconName } from './icons';
 import { NAV } from './nav';
@@ -34,6 +34,7 @@ export function CommandPalette() {
   const studio = useUI((s) => s.studioMode);
   const setStudio = useUI((s) => s.setStudioMode);
   const openHelp = useHelp((s) => s.set);
+  const openQuick = useQuickStart((s) => s.set);
   const { groups } = useAllEpisodes();
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
@@ -118,6 +119,20 @@ export function CommandPalette() {
         icon: 'help',
         run: () => openHelp(true),
       },
+      {
+        id: 'quickstart',
+        label: t('guide.quickstart'),
+        kind: 'help',
+        icon: 'help',
+        run: () => openQuick(true),
+      },
+      {
+        id: 'resources',
+        label: t('guide.resources'),
+        kind: 'help',
+        icon: 'box',
+        run: go('/settings?tab=resources'),
+      },
       ...NAV.map<Command>((n) => ({
         id: `go-${n.to}`,
         label: t(n.label),
@@ -130,7 +145,7 @@ export function CommandPalette() {
         label: g.series.title,
         kind: 'album',
         icon: 'book',
-        run: go(`/series/${g.series.id}`),
+        run: go(`/gallery/${g.series.id}`),
       })),
       ...groups.flatMap((g) =>
         g.episodes.map<Command>((e) => ({
@@ -142,7 +157,7 @@ export function CommandPalette() {
         })),
       ),
     ];
-  }, [groups, i18n.language, navigate, openHelp, setStudio, studio, t, theme]);
+  }, [groups, i18n.language, navigate, openHelp, openQuick, setStudio, studio, t, theme]);
 
   const q = query.trim().toLowerCase();
   const shown = q

@@ -6,6 +6,7 @@ import { useCollectionTitle } from '../../app/CollectionSwitch';
 import { Icon, type IconName } from '../../app/icons';
 import { usePageTitle } from '../../app/title';
 import { toast, toastError } from '../../components/toast';
+import { manualHref, useQuickStart } from '../../components/HelpDrawer';
 import { FilePick } from '../../components/ui';
 import { setLocale } from '../../i18n';
 import { TrashSection } from '../trash/TrashPage';
@@ -101,7 +102,7 @@ function DataSection() {
               importBundle.mutate(file, {
                 onSuccess: (r) => {
                   toast(t('works.imported', { count: 1 }));
-                  navigate(`/series/${r.series_id}`);
+                  navigate(`/gallery/${r.series_id}`);
                 },
                 onError: toastError,
               })
@@ -121,9 +122,67 @@ function DataSection() {
   );
 }
 
+/** 工具与资源 (legacy renderResourceHub): the tutorials and the less-used tools. */
+function ResourcesSection() {
+  const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
+  const openQuick = useQuickStart((s) => s.set);
+  const en = i18n.language === 'en';
+  const items: { icon: IconName; title: string; text: string; run: () => void }[] = [
+    {
+      icon: 'help',
+      title: t('guide.quickstart'),
+      text: t('guide.res.quickstart'),
+      run: () => openQuick(true),
+    },
+    {
+      icon: 'book',
+      title: t('guide.res.handbook'),
+      text: t('guide.res.handbookBody'),
+      run: () => window.open(manualHref('', en), '_blank', 'noopener'),
+    },
+    {
+      icon: 'list',
+      title: t('guide.res.jobs'),
+      text: t('guide.res.jobsBody'),
+      run: () => navigate('/jobs'),
+    },
+    {
+      icon: 'disk',
+      title: t('guide.res.backup'),
+      text: t('guide.res.backupBody'),
+      run: () => navigate('/settings?tab=data'),
+    },
+    {
+      icon: 'terminal',
+      title: t('guide.res.api'),
+      text: t('guide.res.apiBody'),
+      run: () => window.open('/docs', '_blank', 'noopener'),
+    },
+  ];
+  return (
+    <section className="settings-section">
+      <h2>{t('legacy.settings.tabs.resources')}</h2>
+      <p>{t('guide.res.lede')}</p>
+      <div className="resources-list">
+        {items.map((item) => (
+          <button key={item.title} type="button" className="resource-link" onClick={item.run}>
+            <Icon name={item.icon} />
+            <span className="grow">
+              <strong>{item.title}</strong>
+              <small>{item.text}</small>
+            </span>
+            <Icon name="arrow" sm />
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 const GROUPS = [
   { id: 'common', tabs: ['workspace', 'general', 'data', 'updates'] },
-  { id: 'advanced', tabs: ['studio', 'themes', 'extensions', 'access'] },
+  { id: 'advanced', tabs: ['studio', 'themes', 'extensions', 'access', 'resources'] },
 ] as const;
 type Tab = (typeof GROUPS)[number]['tabs'][number];
 const TABS: readonly Tab[] = GROUPS.flatMap((g) => g.tabs);
@@ -136,6 +195,7 @@ const ICONS: Record<Tab, IconName> = {
   themes: 'brush',
   extensions: 'box',
   access: 'link',
+  resources: 'box',
 };
 
 /** Existing sections render their own headings; the new ones use legacy settings-section. */
@@ -148,6 +208,7 @@ const SECTIONS: Record<Tab, ComponentType> = {
   themes: ThemesSection,
   extensions: ExtensionsSection,
   access: AccessSection,
+  resources: ResourcesSection,
 };
 
 /** 设置 — legacy layout: heading, grouped left nav, one section at a time. */

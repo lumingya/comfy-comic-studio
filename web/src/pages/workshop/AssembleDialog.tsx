@@ -1,35 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { api, data } from '../../api/client';
 import { useEpisodes } from '../../api/series';
 import { useProfiles, useSettings } from '../../api/system';
-import { promptVariables, useAssemble, useWorkshop, type Preset } from '../../api/workshop';
+import { useAssemble, useBoardVariables, useWorkshop, type Preset } from '../../api/workshop';
 import { Icon } from '../../app/icons';
 import { toast, toastError } from '../../components/toast';
 
 const STEPS = ['story', 'presets', 'name'] as const;
-
-/** The variables a storyboard uses (prompts, negatives and captions). */
-function useBoardVariables(id: string | undefined) {
-  const q = useQuery({
-    queryKey: ['episode', id ?? ''],
-    enabled: !!id,
-    queryFn: async () =>
-      data(await api.GET('/api/episodes/{episode_id}', { params: { path: { episode_id: id! } } })),
-  });
-  const vars = useMemo(() => {
-    const text = (q.data?.panels ?? [])
-      .flatMap((p) => [
-        p.overrides.raw_prompt ?? '',
-        p.overrides.raw_negative ?? '',
-        ...p.dialogues.map((d) => d.text),
-      ])
-      .join('\n');
-    return promptVariables(text);
-  }, [q.data]);
-  return { vars, episode: q.data };
-}
 
 const displayName = (p: Preset) =>
   p.entries.find((e) => e.key === 'character_display_name')?.value.trim() ||

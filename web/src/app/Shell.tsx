@@ -4,7 +4,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useJobEvents, useJobs, useLive } from '../api/jobs';
 import { useUpdateStatus } from '../api/open';
 import { ConfirmHost } from '../components/confirm';
-import { HelpDrawer, useHelp, useHelpShortcut } from '../components/HelpDrawer';
+import { HelpDrawer, QuickStart, useHelp, useHelpShortcut } from '../components/HelpDrawer';
 import { Toaster } from '../components/toast';
 import { CommandPalette, useCommand } from './CommandPalette';
 import { useComfyHealth } from './comfy';
@@ -267,6 +267,7 @@ export function Shell() {
       <Toaster />
       <ConfirmHost />
       <HelpDrawer />
+      <QuickStart />
     </>
   );
 }

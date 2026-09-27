@@ -1,13 +1,11 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { useAllEpisodes, useSeriesList } from '../../api/series';
-import { useQueryClient } from '@tanstack/react-query';
-import { useWorkflows } from '../../api/system';
-import { useComfyHealth } from '../../app/comfy';
+import { useAllEpisodes } from '../../api/series';
 import { Icon, type IconName } from '../../app/icons';
+import { useSetupChecks } from '../../app/setup';
 import { usePageTitle } from '../../app/title';
 import { useUI } from '../../app/ui-store';
-import { useHelp } from '../../components/HelpDrawer';
+import { CheckItem, manualHref } from '../../components/HelpDrawer';
 
 /** The legacy hero illustration: a sage comic page over a tilted card. */
 function HomeArt() {
@@ -84,84 +82,6 @@ function HomeArt() {
   );
 }
 
-interface Check {
-  id: string;
-  title: string;
-  detail: string;
-  done: boolean;
-  action?: { label: string; run: () => void };
-}
-
-/** 开箱检查: service, workflow, storyboard, first render. */
-function useChecks(): Check[] {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const comfy = useComfyHealth();
-  const workflows = useWorkflows();
-  const series = useSeriesList();
-  const qc = useQueryClient();
-  const books = series.data ?? [];
-  const panels = books.reduce((n, s) => n + (s.panel_count ?? 0), 0);
-  const adopted = books.reduce((n, s) => n + (s.adopted_count ?? 0), 0);
-  const wf = workflows.data?.length ?? 0;
-  return [
-    {
-      id: 'service',
-      title: t('legacy.home.checks.service'),
-      done: comfy.state === 'online',
-      detail:
-        comfy.state === 'online'
-          ? t('legacy.home.checks.serviceOk', { name: comfy.name })
-          : comfy.state === 'unset'
-            ? t('legacy.home.checks.serviceUnset')
-            : t('legacy.home.checks.serviceBad', { url: comfy.detail || 'http://127.0.0.1:8188' }),
-      action:
-        comfy.state === 'unset'
-          ? { label: t('legacy.nav.engine'), run: () => navigate('/engine?tab=instances') }
-          : {
-              label: t('legacy.home.checks.test'),
-              run: () => void qc.invalidateQueries({ queryKey: ['comfy-health'] }),
-            },
-    },
-    {
-      id: 'workflow',
-      title: t('legacy.home.checks.workflow'),
-      done: wf > 0,
-      detail: wf
-        ? t('legacy.home.checks.workflowOk', { count: wf })
-        : t('legacy.home.checks.workflowNone'),
-      action: wf
-        ? undefined
-        : {
-            label: t('legacy.home.checks.importWorkflow'),
-            run: () => navigate('/engine?tab=workflows'),
-          },
-    },
-    {
-      id: 'material',
-      title: t('legacy.home.checks.material'),
-      done: panels > 0,
-      detail: panels
-        ? t('legacy.home.checks.materialOk', { stories: books.length, panels })
-        : t('legacy.home.checks.materialNone'),
-      action: panels
-        ? undefined
-        : { label: t('legacy.home.checks.write'), run: () => navigate('/workshop') },
-    },
-    {
-      id: 'trial',
-      title: t('legacy.home.checks.trial'),
-      done: adopted > 0,
-      detail: adopted
-        ? t('legacy.home.checks.trialOk', { count: adopted })
-        : t('legacy.home.checks.trialNone'),
-      action: adopted
-        ? undefined
-        : { label: t('legacy.home.checks.run'), run: () => navigate('/workshop?tab=board') },
-    },
-  ];
-}
-
 const PATHS: { id: 'comfy' | 'novelai' | 'openai'; icon: IconName; to: string }[] = [
   { id: 'comfy', icon: 'nodes', to: '/engine?tab=instances' },
   { id: 'novelai', icon: 'image', to: '/engine?tab=channels' },
@@ -171,10 +91,10 @@ const PATHS: { id: 'comfy' | 'novelai' | 'openai'; icon: IconName; to: string }[
 function FirstRun() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const checks = useChecks();
+  const checks = useSetupChecks();
   const hidden = useUI((s) => s.homeGuideHidden);
   const setHidden = useUI((s) => s.setHomeGuideHidden);
-  const done = checks.filter((c) => c.done).length;
+  const done = checks.filter((c) => c.state === 'done').length;
   if (hidden)
     return (
       <button type="button" className="btn ghost small" onClick={() => setHidden(false)}>
@@ -221,30 +141,7 @@ function FirstRun() {
         </header>
         <ol className="help-checks">
           {checks.map((c) => (
-            <li
-              key={c.id}
-              className={`help-check ${c.done ? 'is-done' : 'is-todo'}`}
-              data-check={c.id}
-            >
-              <span className="help-check-mark" aria-hidden>
-                {c.done ? '✓' : '!'}
-              </span>
-              <span className="help-check-body">
-                <strong>
-                  {c.title}
-                  <span className="visually-hidden">
-                    {' · '}
-                    {c.done ? t('legacy.home.done') : t('legacy.home.todo')}
-                  </span>
-                </strong>
-                <small>{c.detail}</small>
-              </span>
-              {!c.done && c.action ? (
-                <button type="button" className="btn small" onClick={c.action.run}>
-                  {c.action.label}
-                </button>
-              ) : null}
-            </li>
+            <CheckItem key={c.id} check={c} />
           ))}
         </ol>
       </section>
@@ -254,16 +151,12 @@ function FirstRun() {
 
 /** 首页 — the legacy landing: hero, three steps, GET STARTED, footer. */
 export default function HomePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const openHelp = useHelp((s) => s.set);
   const { groups } = useAllEpisodes();
   usePageTitle(t('legacy.nav.home'));
   const first = groups.find((g) => g.episodes.length);
-  const sample =
-    groups
-      .find((g) => g.episodes.some((e) => e.adopted_count > 0))
-      ?.episodes.find((e) => e.adopted_count > 0) ?? first?.episodes[0];
+  const sample = (groups.find((g) => g.episodes.some((e) => e.adopted_count > 0)) ?? first)?.series;
 
   return (
     <section id="mio-home" aria-labelledby="home-title">
@@ -282,7 +175,7 @@ export default function HomePage() {
             <button
               type="button"
               className="btn primary"
-              onClick={() => navigate(first ? '/workshop' : '/gallery?new=1')}
+              onClick={() => navigate('/workshop/story')}
             >
               <Icon name="plus" />
               {t('legacy.home.start')}
@@ -291,7 +184,7 @@ export default function HomePage() {
               type="button"
               className="btn"
               disabled={!sample}
-              onClick={() => sample && navigate(`/workshop/${sample.id}/read`)}
+              onClick={() => sample && navigate(`/gallery/${sample.id}`)}
             >
               <Icon name="play" />
               {t('legacy.home.sample')}
@@ -321,11 +214,9 @@ export default function HomePage() {
         <FirstRun />
         <a
           className="home-learning"
-          href="#help"
-          onClick={(e) => {
-            e.preventDefault();
-            openHelp(true);
-          }}
+          href={manualHref('', i18n.language === 'en')}
+          target="_blank"
+          rel="noopener"
         >
           <Icon name="book" />
           <span>

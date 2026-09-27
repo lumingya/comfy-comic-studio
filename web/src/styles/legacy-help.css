@@ -1,0 +1,562 @@
+/* Verbatim from legacy/styles.css: the help drawer (T5), 开箱检查 / quick start (T9) and the
+   presentation preview. genlegacy.py only captured rules for states it rendered, so these are
+   copied by hand; keep them byte-identical with the legacy source. */
+/* T5 · help drawer: the “?” in the top bar opens page help, the setup checklist, tutorials, shortcuts and diagnostics. */
+/* The id outranks the generic (and phone) dialog rules, which centre dialogs with margin:auto !important. */
+body dialog#help-drawer {
+  position: fixed;
+  inset: var(--mobile-vtop, 0px) 0 auto auto;
+  margin: 0 !important;
+  width: min(440px, 100vw);
+  max-width: 100vw;
+  height: var(--mobile-vh, 100dvh);
+  max-height: none;
+  overflow: hidden;
+  border: 0;
+  border-left: 1px solid var(--line);
+  border-radius: 0;
+  flex-direction: column;
+  box-shadow: -18px 0 60px rgb(var(--shadow-rgb) / 0.35);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+}
+dialog.help-drawer[open] {
+  display: flex;
+  animation: help-drawer-in 0.18s ease-out;
+}
+dialog.help-drawer::backdrop {
+  background: rgb(var(--shadow-rgb) / 0.45);
+}
+@keyframes help-drawer-in {
+  from {
+    transform: translateX(28px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog.help-drawer[open] {
+    animation: none;
+  }
+}
+.help-drawer-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 18px 20px 14px 22px;
+  border-bottom: 1px solid var(--line);
+}
+.help-drawer-head h2 {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.help-drawer-head h2:focus {
+  outline: none;
+}
+.help-kicker {
+  margin: 0 0 4px;
+  font: 0.75rem/1.4 var(--mono);
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+.help-drawer-body {
+  flex: 1;
+  overflow: auto;
+  padding: 0 22px 28px;
+  overscroll-behavior: contain;
+}
+.help-section {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+.help-section:last-child {
+  border-bottom: 0;
+}
+.help-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.help-section h3 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.help-section h3:focus,
+.help-section h3:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+.help-section h4 {
+  margin: 14px 0 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--soft);
+}
+.help-lead {
+  margin: 0;
+  color: var(--text);
+}
+.help-note {
+  margin: 0 0 10px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.help-drawer .btn.small {
+  min-height: 30px;
+  padding: 0 11px;
+  font-size: 0.75rem;
+}
+.help-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.help-terms {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+}
+.help-terms div {
+  display: grid;
+  grid-template-columns: 5.5em 1fr;
+  gap: 10px;
+}
+.help-terms dt {
+  font-weight: 600;
+  color: var(--soft);
+}
+.help-terms dd {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.help-progress {
+  font-size: 0.75rem;
+  color: var(--amber);
+}
+.help-progress.is-done {
+  color: var(--accent);
+}
+.help-checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.help-check {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: start;
+  gap: 10px;
+}
+.help-check-mark {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+.help-check.is-done .help-check-mark {
+  background: var(--tint);
+  border-color: var(--accent2);
+  color: var(--accent);
+}
+.help-check.is-todo .help-check-mark {
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.help-check-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.help-check-body strong {
+  font-weight: 600;
+}
+.help-check-body small {
+  font-size: 0.75rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.help-check-thumb {
+  width: 72px;
+  height: 54px;
+  margin-top: 6px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+}
+.help-doc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 14px;
+}
+.help-doc-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 0;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--line);
+}
+.help-doc-list a:hover,
+.help-doc-list a:focus-visible {
+  color: var(--accent);
+}
+.help-doc-list a span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.help-key-list {
+  margin: 0;
+  display: grid;
+  gap: 4px;
+}
+.help-key-list div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.help-key-list dt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.help-key-list dt span {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.help-key-list dd {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--soft);
+  text-align: right;
+}
+.help-drawer kbd {
+  display: inline-block;
+  min-width: 22px;
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--panel2);
+  font: 0.75rem/1.5 var(--mono);
+  color: var(--text);
+  text-align: center;
+}
+.help-diagnostics-view summary {
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--accent2);
+}
+.help-diagnostics-view pre {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  max-height: 240px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel2);
+  font: 0.75rem/1.6 var(--mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--soft);
+}
+@media (max-width: 700px) {
+  .help-doc-list {
+    grid-template-columns: 1fr;
+  }
+  .help-drawer-body {
+    padding: 0 16px 24px;
+  }
+  .help-drawer-head {
+    padding: 14px 12px 12px 16px;
+  }
+}
+@media (hover: none) and (pointer: coarse) {
+  .help-keys {
+    display: none;
+  }
+}
+/* T9 · 开箱检查 on Home, the production page and the quick start (rows come from setupCheckItemHTML). */
+.help-check.is-optional .help-check-mark {
+  border-style: dashed;
+}
+.help-check.is-checking .help-check-mark {
+  border-style: dashed;
+  color: var(--soft);
+}
+.help-check-intro {
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  color: var(--soft);
+}
+.help-check-tag {
+  margin-left: 8px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 400;
+  color: var(--muted);
+}
+.guide-dialog h2:focus {
+  outline: none;
+}
+.help-check > .btn.small {
+  min-height: 30px;
+  padding: 0 11px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+.home-checklist {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.home-checklist h3 {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.home-checklist h3:focus {
+  outline: none;
+}
+.checklist-progress {
+  font-size: 0.75rem;
+  color: var(--amber);
+}
+.home-checklist .help-checks {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 28px;
+}
+.home-checklist.is-complete {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8125rem;
+  color: var(--soft);
+}
+.home-checklist.is-complete .help-check-mark,
+.help-check.is-done .help-check-mark {
+  background: var(--tint);
+  border-color: var(--accent2);
+  color: var(--accent);
+}
+.setup-remaining {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 9px;
+  padding: 3px 10px;
+  border: 1px solid var(--amber);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--amber);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.setup-remaining .icon {
+  width: 13px;
+  height: 13px;
+}
+.setup-remaining:hover,
+.setup-remaining:focus-visible {
+  background: var(--panel2);
+}
+.guide-dialog {
+  width: 720px;
+}
+.quickstart-body {
+  padding: 8px 28px 22px;
+  overflow: auto;
+  max-height: calc(100dvh - 230px);
+}
+.quickstart-steps {
+  gap: 0;
+}
+.quickstart-steps .help-check {
+  padding: 14px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.quickstart-steps .help-check-body {
+  gap: 4px;
+}
+.quickstart-more {
+  margin-top: 20px;
+}
+.quickstart-more h3 {
+  margin: 0 0 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--soft);
+}
+.quickstart-more-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.quickstart-more-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.quickstart-more-item:hover,
+.quickstart-more-item:focus-visible {
+  border-color: var(--accent);
+}
+.quickstart-more-item .icon {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  color: var(--accent2);
+}
+.quickstart-more-item strong {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.quickstart-more-item small {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+@media (max-width: 760px) {
+  .home-checklist .help-checks {
+    grid-template-columns: 1fr;
+  }
+  .quickstart-body {
+    padding: 4px 18px 18px;
+    max-height: calc(100dvh - 250px);
+  }
+  .quickstart-more-list {
+    grid-template-columns: 1fr;
+  }
+  .help-check > .btn.small {
+    min-height: 44px;
+  }
+  .home-checklist .help-check > .btn,
+  .quickstart-steps .help-check > .btn {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+.service-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 24px;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+.service-status {
+  font-size: 0.75rem;
+  color: var(--muted);
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.guide-progress {
+  height: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+.guide-progress i {
+  display: block;
+  height: 100%;
+  background: var(--accent2);
+  transition: width 0.25s;
+}
+.presentation-preview-wrap {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.presentation-preview-wrap > div {
+  font-size: 0.75rem;
+  color: var(--muted);
+  padding: 10px 18px;
+  text-align: center;
+}
+.presentation-preview-wrap iframe {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  border: 0;
+  background: var(--bg);
+}
+.resources-list {
+  border-top: 1px solid var(--line);
+}
+.resource-link {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  text-align: left;
+  padding: 19px 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.resource-link > .grow {
+  flex: 1;
+  min-width: 0;
+}
+.resource-link > .icon:last-child {
+  color: var(--muted);
+}
+.resource-link > .icon:first-child {
+  color: var(--accent2);
+}
+.resource-link strong {
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: block;
+}
+.resource-link small {
+  display: block;
+  font-size: 0.75rem;
+  line-height: 1.8;
+  color: var(--muted);
+  margin-top: 5px;
+}
+.resource-link:hover strong {
+  color: var(--accent);
+}

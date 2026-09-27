@@ -151,8 +151,9 @@ def assemble(
     album = store.create_series(
         Series(
             title=title.strip() or board.title,
-            subtitle="、".join(by_id[pid].title for pid in preset_ids)[:200],
             kind="album",
+            # The presets it was assembled from, as a snapshot (the queue card's 预设 line).
+            presets=[by_id[pid].model_copy(deep=True) for pid in preset_ids],
             bible=workshop.bible.model_copy(deep=True),
             variables=variables,
             default_profile_id=profile_id or workshop.default_profile_id,

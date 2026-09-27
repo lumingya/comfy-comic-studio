@@ -1,4 +1,5 @@
 import type { Dict } from './zh';
+import { guideEn } from './guide';
 import { readerEn, wsEn } from './ws';
 
 type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };
@@ -1277,6 +1278,7 @@ const en: Widen<Dict> = {
         themes: 'Style workshop',
         extensions: 'Extensions',
         access: 'Tools & connections',
+        resources: 'Tools & resources',
       },
       workspaceTitle: 'Your studio',
       workspaceHint: 'The collection name appears in the top bar and on the collection page.',
@@ -1316,6 +1318,7 @@ const en: Widen<Dict> = {
     },
   },
   ws: wsEn,
+  guide: guideEn,
 };
 
 export default en;

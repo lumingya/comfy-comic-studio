@@ -11,6 +11,7 @@ import type { Episode, Job, SeriesCard } from '../../api/types';
 import { Icon } from '../../app/icons';
 import { confirm } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
+import { SetupRemaining } from '../../components/HelpDrawer';
 import { Loading } from '../../components/ui';
 import AssembleDialog from './AssembleDialog';
 import { WorkshopFrame } from './WorkshopPage';
@@ -106,6 +107,7 @@ export default function AssemblyTab() {
         <div>
           <strong>{t('ws.queue.title')}</strong>
           <small>{t('ws.queue.summary', { count: tasks.length })}</small>
+          <SetupRemaining />
         </div>
         <div className="production-toolbar">
           <button
@@ -302,8 +304,10 @@ function TaskCard({
       </header>
       <p className="production-meta">
         <span>{t('ws.queue.metaStory', { title: episode?.title ?? '…' })}</span>
-        {album.subtitle ? (
-          <span>{t('ws.queue.metaPresets', { titles: album.subtitle })}</span>
+        {album.presets.length ? (
+          <span>
+            {t('ws.queue.metaPresets', { titles: album.presets.map((p) => p.title).join('、') })}
+          </span>
         ) : null}
         <span>{t('ws.queue.metaService')}</span>
       </p>

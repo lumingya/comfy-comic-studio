@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { episode, job, series } from '../test/fixtures';
-import { useHelp } from '../components/HelpDrawer';
+import { useHelp, useQuickStart } from '../components/HelpDrawer';
 import { mockFetch } from '../test/utils';
 import { makeQueryClient, routes } from './App';
 import { useUI } from './ui-store';
@@ -251,6 +251,7 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   useHelp.setState({ open: false });
+  useQuickStart.setState({ open: false });
   useUI.setState({ studioMode: false });
 });
 
@@ -353,6 +354,95 @@ describe('every route mounts with API data', () => {
     expect(document.querySelector('#page-position')?.textContent).toBe('01 / 01');
     expect(screen.getByRole('button', { name: '关闭画册' })).toBeInTheDocument();
     expect(screen.queryByLabelText('画面提示词')).toBeNull();
+  });
+
+  it('reader: every template in the drawer changes what you see', async () => {
+    const tpl = (id: string, title: string) => ({
+      id,
+      title,
+      description: '',
+      author: 'Mio',
+      layout: 'webtoon',
+      layout_name: 'Webtoon 长卷',
+      options: { accent: '#000000', background: '#ffffff', paper: '#ffffff', text: '#000000' },
+      source: 'builtin',
+    });
+    calls = mockFetch({
+      'GET /api/series/ser_1': series,
+      'GET /api/series/ser_1/episodes': {
+        items: [{ id: 'ep_1', series_id: 'ser_1', title: '第一话', order: 0, panel_count: 2 }],
+        total: 1,
+        offset: 0,
+        limit: 50,
+      },
+      'GET /api/episodes/ep_1': episode,
+      'GET /api/album-templates': [
+        tpl('export-seamless', '无缝 · 纯图阅读'),
+        tpl('mio-fit', '留白 · 完整画面'),
+        tpl('export-paper', '海风来信 · 电影长卷'),
+      ],
+      'POST /api/export/album': () =>
+        new Response('<!doctype html><p>paper</p>', { headers: { 'content-type': 'text/html' } }),
+    });
+    localStorage.removeItem('mio.reader.look');
+    mount('/gallery/ser_1/export');
+    await screen.findByAltText('第 1 格');
+    const list = document.getElementById('presentation-template-list')!;
+    // The native stage (留白) is listed first; picking another template swaps in its preview.
+    const choices = await within(list).findAllByRole('button');
+    expect(choices.map((b) => b.querySelector('strong')?.textContent)).toEqual([
+      '留白 · 完整画面',
+      '无缝 · 纯图阅读',
+      '海风来信 · 电影长卷',
+    ]);
+    fireEvent.click(within(list).getByText('海风来信 · 电影长卷'));
+    const frame = await screen.findByTitle('展示模板预览');
+    expect(frame.getAttribute('srcdoc')).toContain('paper');
+    expect(screen.queryByAltText('第 1 格')).toBeNull();
+    const call = calls.find((c) => c.url === '/api/export/album');
+    expect(call?.body).toMatchObject({ episode_ids: ['ep_1'], template_id: 'export-paper' });
+    expect(screen.getByText('版式 · 海风来信 · 电影长卷')).toBeInTheDocument();
+    // Search filters the list.
+    fireEvent.change(screen.getByLabelText('搜索展示模板'), { target: { value: '无缝' } });
+    expect(within(list).getAllByRole('button')).toHaveLength(1);
+    localStorage.removeItem('mio.reader.look');
+  });
+
+  it('help drawer: page help, 开箱检查, tutorials, then the quick start', async () => {
+    mount('/workshop/assembly');
+    // The queue shows how much setup is left; the chip opens the checklist.
+    fireEvent.click(await screen.findByText(/开箱检查还差 \d 项/));
+    const drawer = await screen.findByRole('dialog', { name: '装配与队列' });
+    expect(within(drawer).getByText(/任务加入后处于待命状态/)).toBeInTheDocument();
+    expect(within(drawer).getByText('开箱检查')).toBeInTheDocument();
+    expect(within(drawer).getByText('还没有保存的工作流。')).toBeInTheDocument();
+    // The storyboard uses {天气}, which no preset defines.
+    expect(
+      await within(drawer).findByText('「海风来信」用到的变量 {天气} 还没有预设定义。'),
+    ).toBeInTheDocument();
+    expect(
+      within(drawer)
+        .getByRole('link', { name: /^生成任务/ })
+        .getAttribute('href'),
+    ).toBe('/manual/docs/guide/FOUNDATION.html');
+    expect(
+      within(drawer)
+        .getByRole('link', { name: /^教程中心/ })
+        .getAttribute('href'),
+    ).toBe('/manual/docs/index.html');
+    expect(within(drawer).getByText('复制诊断信息')).toBeInTheDocument();
+    fireEvent.click(within(drawer).getByRole('button', { name: /快速开始教程/ }));
+    const quick = await screen.findByRole('dialog', { name: '快速开始 · 从灵感到一本画册' });
+    expect(within(quick).getByText(/导入 ComfyUI 的 API 工作流/)).toBeInTheDocument();
+    expect(within(quick).getByText('进阶')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: '装配与队列' })).toBeNull();
+  });
+
+  it('设置 → 工具与资源 lists the tutorials and the less-used tools', async () => {
+    mount('/settings?tab=resources');
+    expect(await screen.findByRole('heading', { name: '工具与资源' })).toBeInTheDocument();
+    for (const name of ['快速开始教程', '使用教程 · 教程中心', '全部服务端任务', '工程备份与恢复'])
+      expect(screen.getByText(name)).toBeInTheDocument();
   });
 
   it('old episode links: storyboards open in 分镜工坊, album pages in the reader', async () => {

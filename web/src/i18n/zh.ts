@@ -1,3 +1,4 @@
+import { guideZh } from './guide';
 import { readerZh, wsZh } from './ws';
 /** Chinese (primary). Keys are grouped by screen; English mirrors this shape exactly. */
 const zh = {
@@ -1221,6 +1222,7 @@ const zh = {
         themes: '样式工坊',
         extensions: '扩展中心',
         access: '工具与连接',
+        resources: '工具与资源',
       },
       workspaceTitle: '你的工作室',
       workspaceHint: '画册集的名字显示在顶栏与画册集首页。',
@@ -1259,6 +1261,7 @@ const zh = {
     },
   },
   ws: wsZh,
+  guide: guideZh,
 };
 
 export default zh;

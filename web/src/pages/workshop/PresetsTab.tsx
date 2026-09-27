@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import {
   localId,
   useSavePresets,
@@ -58,6 +59,19 @@ export default function PresetsTab() {
   useEffect(() => {
     if (ws.data && presets === null) setPresets(ws.data.presets);
   }, [ws.data, presets]);
+  // ?new=1 (help drawer / 开箱检查 「新建预设」): add a blank preset once and select it.
+  const [params, setParams] = useSearchParams();
+  useEffect(() => {
+    if (!presets || !params.has('new')) return;
+    setParams({}, { replace: true });
+    const p = blankPreset(t('ws.presets.untitled', { n: presets.length + 1 }));
+    const next = [...presets, p];
+    setPresets(next);
+    save.mutate(next, { onError: toastError });
+    setPick(p.id!);
+    localStorage.setItem(PICK_KEY, p.id!);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presets, params]);
   // Flush a pending save when leaving the tab.
   useEffect(
     () => () => {

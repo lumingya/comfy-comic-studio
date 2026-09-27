@@ -1,18 +1,75 @@
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { assetUrl } from '../../api/client';
+import { assetUrl, downloadPost, raw } from '../../api/client';
+import { useAlbumTemplates } from '../../api/open';
 import { useEpisode, useEpisodes, useSeries } from '../../api/series';
 import { Icon } from '../../app/icons';
 import { usePageTitle } from '../../app/title';
 import { useUI } from '../../app/ui-store';
 import { pickAdopted } from '../canvas/adopted';
+import { toastError } from '../../components/toast';
 import type { EpisodeContext } from '../episode/EpisodePage';
 
 type Mode = 'auto' | 'single' | 'continuous';
-type Look = 'fit' | 'seamless';
 const MODE_KEY = 'mio.reader.mode';
 const LOOK_KEY = 'mio.reader.look';
+/** The native reading stage (legacy mio-fit); every other template renders in a sandboxed preview. */
+const NATIVE = 'mio-fit';
+const OLD_LOOKS: Record<string, string> = { fit: NATIVE, seamless: 'export-seamless' };
+const BUILTIN = [
+  { id: NATIVE, look: 'fit' },
+  { id: 'export-seamless', look: 'seamless' },
+] as const;
+
+/** The album rendered with a legacy HTML template (POST /api/export/album), shown in an iframe. */
+function TemplatePreview(props: {
+  episodeId: string;
+  templateId: string;
+  captions: boolean;
+  lettered: boolean;
+}) {
+  const { t } = useTranslation();
+  const q = useQuery({
+    queryKey: ['album-preview', props.episodeId, props.templateId, props.captions, props.lettered],
+    staleTime: 5 * 60_000,
+    retry: false,
+    queryFn: async () =>
+      (
+        await raw('/api/export/album', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            episode_ids: [props.episodeId],
+            template_id: props.templateId,
+            lettered: props.lettered,
+            show_captions: props.captions,
+            max_width: 1400,
+          }),
+        })
+      ).text(),
+  });
+  return (
+    <div className="presentation-preview-wrap">
+      {q.isLoading ? (
+        <div id="presentation-preview-status" role="status">
+          {t('reader.previewing')}
+        </div>
+      ) : q.error ? (
+        <div id="presentation-preview-status" role="alert">
+          {t('reader.previewFailed', { message: (q.error as Error).message })}
+        </div>
+      ) : (
+        <iframe
+          title={t('reader.previewTitle')}
+          sandbox="allow-scripts allow-popups"
+          srcDoc={q.data}
+        />
+      )}
+    </div>
+  );
+}
 
 /**
  * The legacy reader (画册阅读室): a full-screen dialog over 画册集. Reading only — 版式 / 导出
@@ -33,7 +90,13 @@ export default function ReaderPage() {
   const epId = params.get('ep') ?? items[0]?.id;
   const episode = useEpisode(epId);
   const [mode, setMode] = useState<Mode>(() => (localStorage.getItem(MODE_KEY) as Mode) || 'auto');
-  const [look, setLook] = useState<Look>(() => (localStorage.getItem(LOOK_KEY) as Look) || 'fit');
+  const [look, setLook] = useState<string>(() => {
+    const saved = localStorage.getItem(LOOK_KEY) || NATIVE;
+    return OLD_LOOKS[saved] ?? saved;
+  });
+  const [query, setQuery] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const templates = useAlbumTemplates();
   const [captions, setCaptions] = useState(true);
   const [page, setPage] = useState(0);
   const [info, setInfo] = useState(false);
@@ -46,7 +109,13 @@ export default function ReaderPage() {
     const measure = () => setView({ w: root.clientWidth, h: root.clientHeight });
     measure();
     window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    // The presentation drawer narrows the stage without a window resize.
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    observer?.observe(root);
+    return () => {
+      window.removeEventListener('resize', measure);
+      observer?.disconnect();
+    };
   }, [episode.data]);
   const panel = pathname.endsWith('/export')
     ? 'export'
@@ -130,7 +199,7 @@ export default function ReaderPage() {
     setMode(m);
     localStorage.setItem(MODE_KEY, m);
   };
-  const setLookSaved = (l: Look) => {
+  const setLookSaved = (l: string) => {
     setLook(l);
     localStorage.setItem(LOOK_KEY, l);
   };
@@ -147,6 +216,46 @@ export default function ReaderPage() {
     return { w: d.w * scale, h: d.h * scale };
   };
   const cur = pages[current];
+  const native = look === NATIVE || !epId;
+  const hintOf = (id: string) =>
+    id === NATIVE
+      ? t('reader.lookHint.fit')
+      : id === 'export-seamless'
+        ? t('reader.lookHint.seamless')
+        : id === 'export-afterglow'
+          ? t('reader.lookHint.afterglow')
+          : t('reader.lookHint.html');
+  const list = (
+    templates.data?.length
+      ? templates.data.map((x) => ({ id: x.id, title: x.title, description: x.description }))
+      : BUILTIN.map((b) => ({ id: b.id, title: t(`reader.look.${b.look}`), description: '' }))
+  ).sort((a, b) => Number(b.id === NATIVE) - Number(a.id === NATIVE));
+  const needle = query.trim().toLowerCase();
+  const shownTemplates = needle
+    ? list.filter((x) => `${x.title} ${x.description}`.toLowerCase().includes(needle))
+    : list;
+  const lookTitle = list.find((x) => x.id === look)?.title ?? t('reader.look.fit');
+  const exportHtml = async () => {
+    if (!epId) return;
+    setExporting(true);
+    try {
+      await downloadPost(
+        '/api/export/album',
+        {
+          episode_ids: [epId],
+          template_id: look,
+          lettered: studio,
+          show_captions: captions,
+          title: series.data?.title ?? '',
+        },
+        `${series.data?.title ?? 'album'}.html`,
+      );
+    } catch (err) {
+      toastError(err);
+    } finally {
+      setExporting(false);
+    }
+  };
   const context =
     episode.data && series.data
       ? ({ episode: episode.data, series: series.data } satisfies EpisodeContext)
@@ -156,7 +265,9 @@ export default function ReaderPage() {
     <dialog
       id="reader"
       ref={ref}
-      className={`reader-dialog art-reader presentation-reader is-${look}`}
+      className={`reader-dialog art-reader presentation-reader ${native ? '' : 'is-template'} ${
+        panel === 'export' ? 'presentation-panel-open' : ''
+      }`}
       aria-labelledby="reader-panel-label"
       data-mode={mode}
       onCancel={(e) => {
@@ -204,7 +315,7 @@ export default function ReaderPage() {
           onClick={() => togglePanel('export')}
         >
           <Icon name="book" sm />
-          {t('reader.presentation', { look: t(`reader.look.${look}`) })}
+          {t('reader.presentation', { look: lookTitle })}
         </button>
         <button
           type="button"
@@ -256,6 +367,15 @@ export default function ReaderPage() {
         {panel === 'layout' && context ? (
           <div className="room-canvas room-layout workspace-body">
             <Outlet context={context} />
+          </div>
+        ) : !native && epId ? (
+          <div className="room-canvas" id="reader-canvas">
+            <TemplatePreview
+              episodeId={epId}
+              templateId={look}
+              captions={captions}
+              lettered={studio}
+            />
           </div>
         ) : (
           <div
@@ -453,25 +573,46 @@ export default function ReaderPage() {
             <Icon name="close" />
           </button>
         </header>
+        <label className="presentation-search">
+          <Icon name="search" sm />
+          <input
+            id="presentation-search"
+            type="search"
+            value={query}
+            placeholder={t('reader.search')}
+            aria-label={t('reader.searchLabel')}
+            aria-controls="presentation-template-list"
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </label>
         <div id="presentation-template-list">
-          {(['fit', 'seamless'] as const).map((l) => (
-            <button
-              key={l}
-              type="button"
-              className={`presentation-choice ${look === l ? 'selected' : ''}`}
-              aria-pressed={look === l}
-              onClick={() => setLookSaved(l)}
-            >
-              <span className="presentation-swatch">
-                <Icon name={l === 'fit' ? 'image' : 'grid'} />
-              </span>
-              <span>
-                <strong>{t(`reader.look.${l}`)}</strong>
-                <small>{t(`reader.lookHint.${l}`)}</small>
-              </span>
-              {look === l ? <Icon name="check" /> : null}
-            </button>
-          ))}
+          {shownTemplates.length ? (
+            shownTemplates.map((x) => (
+              <button
+                key={x.id}
+                type="button"
+                className={`presentation-choice ${look === x.id ? 'selected' : ''}`}
+                aria-pressed={look === x.id}
+                onClick={() => setLookSaved(x.id)}
+              >
+                <span className="presentation-swatch">
+                  <Icon name={x.id === NATIVE ? 'image' : 'book'} />
+                </span>
+                <span>
+                  <strong>{x.title}</strong>
+                  <small>{hintOf(x.id)}</small>
+                </span>
+                {look === x.id ? <Icon name="check" sm /> : null}
+              </button>
+            ))
+          ) : (
+            <p className="help choice-empty">
+              {t('reader.noMatch', { query: query.trim() })}{' '}
+              <button type="button" className="link-button" onClick={() => setQuery('')}>
+                {t('reader.clearSearch')}
+              </button>
+            </p>
+          )}
         </div>
         <details className="presentation-options" open>
           <summary>{t('reader.options')}</summary>
@@ -486,6 +627,15 @@ export default function ReaderPage() {
         </details>
         <div className="presentation-export">
           {panel === 'export' && context ? <Outlet context={context} /> : null}
+          <button
+            type="button"
+            className="btn primary"
+            disabled={!epId || exporting}
+            onClick={exportHtml}
+          >
+            <Icon name="download" />
+            {exporting ? t('reader.exporting') : t('reader.exportHtml')}
+          </button>
         </div>
       </aside>
     </dialog>

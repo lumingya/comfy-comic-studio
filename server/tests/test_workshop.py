@@ -49,7 +49,8 @@ class WorkshopTest(ApiCase):
         album, ep = out["series"], out["episode"]
         self.assertEqual((album["kind"], album["status"], album["title"]), ("album", "draft", "夏"))
         self.assertEqual(album["variables"]["character"], "nanami")
-        self.assertEqual(album["subtitle"], "七海 · 标准角色设定")  # the queue card's 预设 line
+        # The queue card's 预设 line comes from the snapshot of the chosen presets.
+        self.assertEqual([p["title"] for p in album["presets"]], ["七海 · 标准角色设定"])
         self.assertEqual(len(ep["panels"]), board["panel_count"])
         self.assertEqual([c["id"] for c in self.ok(self.client.get("/api/series"))], [album["id"]])
         # Editing the preset afterwards does not touch the assembled album.
