@@ -626,7 +626,11 @@ const zh = {
     composed: '与导出一致的合成效果',
     stacked: '尚未排版：按顺序预览已采用的图',
     refresh: '刷新',
-    fullscreen: '全屏阅读',
+    fullscreen: '网页全屏 · 电脑也可使用 F11',
+    fullscreenExit: '退出网页全屏',
+    fullscreenHint:
+      '阅读器已铺满页面。此环境未提供网页全屏；电脑可使用浏览器 F11（部分设备需 Fn）。F11 与网页全屏按钮是两套独立功能。',
+    gotIt: '知道了',
   },
   exporter: {
     preset: '平台预设',

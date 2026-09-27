@@ -64,6 +64,39 @@ export default function ReaderPage() {
   const setVariant = useUI((s) => s.setVariant);
   const [page, setPage] = useState(0);
   const [info, setInfo] = useState(false);
+  const [fullscreen, setFullscreen] = useState(() => !!document.fullscreenElement);
+  const [fullscreenHint, setFullscreenHint] = useState(false);
+  useEffect(() => {
+    const onChange = () => {
+      setFullscreen(!!document.fullscreenElement);
+      if (document.fullscreenElement) setFullscreenHint(false);
+    };
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
+  /**
+   * Legacy toggleReaderFullscreen: a modal <dialog> itself cannot go full screen, so the page does
+   * and the dialog is re-shown to stay on top; without the Fullscreen API a hint explains F11.
+   */
+  const toggleFullscreen = async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen?.().catch(() => undefined);
+      return;
+    }
+    try {
+      const root = document.documentElement;
+      if (!document.fullscreenEnabled || !root.requestFullscreen) throw new Error('unavailable');
+      await root.requestFullscreen();
+      const d = ref.current;
+      if (d?.open && typeof d.showModal === 'function') {
+        d.close();
+        d.showModal();
+      }
+      setFullscreenHint(false);
+    } catch {
+      setFullscreenHint(true);
+    }
+  };
   const [film, setFilm] = useState(false);
   const [sizes, setSizes] = useState<Record<string, { w: number; h: number }>>({});
   const [view, setView] = useState({ w: 0, h: 0 });
@@ -209,6 +242,7 @@ export default function ReaderPage() {
     if (target) go(target.start);
   };
   const close = () => {
+    if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
     ref.current?.close?.();
     navigate('/gallery');
   };
@@ -357,13 +391,10 @@ export default function ReaderPage() {
         <button
           type="button"
           className="ibtn"
-          title={t('reader.fullscreen')}
-          aria-label={t('reader.fullscreen')}
-          onClick={() =>
-            document.fullscreenElement
-              ? document.exitFullscreen()
-              : ref.current?.requestFullscreen?.()
-          }
+          title={fullscreen ? t('reader.fullscreenExit') : t('reader.fullscreen')}
+          aria-label={fullscreen ? t('reader.fullscreenExit') : t('reader.fullscreen')}
+          aria-pressed={fullscreen}
+          onClick={() => void toggleFullscreen()}
         >
           <Icon name="expand" />
         </button>
@@ -524,6 +555,14 @@ export default function ReaderPage() {
           </button>
         ))}
       </div>
+      {fullscreenHint ? (
+        <div id="reader-fullscreen-hint" className="reader-fullscreen-hint" role="status">
+          <span>{t('reader.fullscreenHint')}</span>
+          <button type="button" className="btn small" onClick={() => setFullscreenHint(false)}>
+            {t('reader.gotIt')}
+          </button>
+        </div>
+      ) : null}
       <footer className="room-footer">
         <span className="native-reading-controls">
           {READING_MODES.map((m) => (

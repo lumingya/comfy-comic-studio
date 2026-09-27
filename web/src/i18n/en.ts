@@ -672,7 +672,11 @@ const en: Widen<Dict> = {
     composed: 'Composited exactly as exported',
     stacked: 'Not laid out yet — previewing adopted images in order',
     refresh: 'Refresh',
-    fullscreen: 'Full screen',
+    fullscreen: 'Full screen · F11 also works on desktop',
+    fullscreenExit: 'Exit full screen',
+    fullscreenHint:
+      'The reader already fills the page. This environment has no web full screen; on a computer use the browser’s F11 (some keyboards need Fn). F11 and this button are separate features.',
+    gotIt: 'Got it',
   },
   exporter: {
     preset: 'Platform preset',
