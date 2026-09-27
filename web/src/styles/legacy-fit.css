@@ -602,3 +602,10 @@ html:not(.is-studio) .workshop-body .panel-no {
     grid-template-columns: 1fr;
   }
 }
+
+/* Editor pages hosted in the dark reader room (版式 / 动态分镜): the room's light text colour
+   cascaded into their white cards and made headings and field values unreadable. */
+.room-layout .card,
+.room-layout .canvas-toolbar {
+  color: var(--text);
+}
