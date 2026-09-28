@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { download } from '../../api/client';
 import { useTrashSeries } from '../../api/series';
@@ -93,6 +93,8 @@ export function BulkBar(props: {
   onAll: () => void;
   onNone: () => void;
   onExit: () => void;
+  pinned?: boolean;
+  onMore: (event: MouseEvent<HTMLButtonElement>) => void;
 }) {
   const { t } = useTranslation();
   const { chosen, actions: a } = props;
@@ -100,24 +102,37 @@ export function BulkBar(props: {
   const allSelected = n === props.books.length;
   const allStarred = a.allStarred(chosen);
   return (
-    <div className="bulk-bar" role="toolbar" aria-label={t('classic.shelf.bulk')}>
-      <span className="bulk-count" role="status" aria-live="polite">
+    <div
+      className="shelf-selection-status selection-status"
+      role="toolbar"
+      aria-label={t('classic.shelf.selectionLabel')}
+    >
+      <span className="selection-count" role="status" aria-live="polite">
         {t('classic.shelf.bulkSelected', { count: n })}
       </span>
+      {props.pinned ? (
+        <>
+          <button
+            type="button"
+            className="selection-action"
+            onClick={allSelected ? props.onNone : props.onAll}
+          >
+            {allSelected ? t('classic.shelf.bulkNone') : t('classic.shelf.bulkAll')}
+          </button>
+          <button
+            type="button"
+            className="selection-action"
+            disabled={!n}
+            onClick={() => a.star(chosen)}
+          >
+            <Icon name="star" sm />
+            {allStarred ? t('classic.shelf.unstar') : t('classic.shelf.star')}
+          </button>
+        </>
+      ) : null}
       <button
         type="button"
-        className="btn small"
-        onClick={allSelected ? props.onNone : props.onAll}
-      >
-        {allSelected ? t('classic.shelf.bulkNone') : t('classic.shelf.bulkAll')}
-      </button>
-      <button type="button" className="btn small" disabled={!n} onClick={() => a.star(chosen)}>
-        <Icon name="star" sm />
-        {allStarred ? t('classic.shelf.unstar') : t('classic.shelf.star')}
-      </button>
-      <button
-        type="button"
-        className="btn small"
+        className="selection-action"
         disabled={!n || a.busy}
         title={t('classic.shelf.bulkExportHint')}
         onClick={() => void a.exportAll(chosen)}
@@ -127,19 +142,28 @@ export function BulkBar(props: {
       </button>
       <button
         type="button"
-        className="btn small danger"
+        className="selection-action danger"
         disabled={!n || a.busy}
         onClick={() => void a.remove(chosen)}
       >
         <Icon name="trash" sm />
         {t('common.delete')}
       </button>
+      <button
+        type="button"
+        className="selection-action"
+        disabled={!n}
+        onClick={props.onMore}
+        aria-haspopup="menu"
+      >
+        {t('classic.shelf.selectionMore')}
+      </button>
       <span className="spacer" />
       <button
         type="button"
         className="ibtn"
-        title={`${t('classic.shelf.bulkExit')} (Esc)`}
-        aria-label={t('classic.shelf.bulkExit')}
+        title={`${t('classic.shelf.clearSelection')} (Esc)`}
+        aria-label={t('classic.shelf.clearSelection')}
         onClick={props.onExit}
       >
         <Icon name="close" />

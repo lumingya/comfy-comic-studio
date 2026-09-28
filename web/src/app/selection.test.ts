@@ -46,4 +46,13 @@ describe('useSelection', () => {
     expect(target).toEqual(['e']);
     expect(result.current.ids).toEqual(['e']);
   });
+  it('remembers an opened item as the range anchor without selecting it, and replaces marquee sets without losing it', () => {
+    const { result } = renderHook(() => useSelection(order));
+    act(() => result.current.anchorAt('b'));
+    expect(result.current.ids).toEqual([]);
+    act(() => result.current.replace(['a', 'missing']));
+    expect(result.current.ids).toEqual(['a']);
+    act(() => result.current.click('d', { shiftKey: true }));
+    expect(result.current.ids).toEqual(['b', 'c', 'd']);
+  });
 });

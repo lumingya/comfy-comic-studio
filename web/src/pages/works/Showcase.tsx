@@ -105,6 +105,9 @@ export function Showcase(props: {
   firstEditionId?: string;
   actions: (series: SeriesCard) => MenuAction[];
   onChangeCover: (series: SeriesCard) => void;
+  selected?: boolean;
+  context?: boolean;
+  disabled?: boolean;
 }) {
   const { t, i18n } = useTranslation();
   const { books, index, onIndex } = props;
@@ -113,7 +116,15 @@ export function Showcase(props: {
   // ← / → leaf through the shelf unless focus is in a field or a dialog is up.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.altKey || e.ctrlKey || e.metaKey || typing(e.target)) return;
+      if (
+        props.disabled ||
+        e.defaultPrevented ||
+        e.altKey ||
+        e.ctrlKey ||
+        e.metaKey ||
+        typing(e.target)
+      )
+        return;
       if (document.querySelector('[role="dialog"], [role="menu"]')) return;
       if (e.key === 'ArrowLeft' && index > 0) onIndex(index - 1);
       else if (e.key === 'ArrowRight' && index < books.length - 1) onIndex(index + 1);
@@ -122,7 +133,7 @@ export function Showcase(props: {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [index, books.length, onIndex]);
+  }, [index, books.length, onIndex, props.disabled]);
 
   if (!b) return null;
   const to = `/gallery/${b.id}`;
@@ -131,15 +142,23 @@ export function Showcase(props: {
   const status = b.status ?? 'draft';
   const pics = b.adopted_count ?? 0;
   return (
-    <article className="shelf-exhibit" key={b.id} aria-label={b.title}>
+    <article
+      className={`shelf-exhibit ${props.selected ? 'is-selected' : ''} ${props.context ? 'is-context' : ''}`}
+      key={b.id}
+      aria-label={b.title}
+      data-shelf-id={b.id}
+      tabIndex={0}
+      aria-selected={props.selected || undefined}
+    >
       <div className="exhibit-cover">
         <Link
           to={to}
           className="exhibit-cover-link"
+          data-shelf-open
           aria-label={`${t('classic.shelf.open')} · ${b.title}`}
         >
           {b.cover_asset_id ? (
-            <img src={assetUrl(b.cover_asset_id, 1024)} alt="" decoding="async" />
+            <img draggable={false} src={assetUrl(b.cover_asset_id, 1024)} alt="" decoding="async" />
           ) : (
             <span className="exhibit-book book-cover">
               <Parchment series={b} />
@@ -173,7 +192,7 @@ export function Showcase(props: {
           {cast.length ? cast.slice(0, 3).join(' · ') : t('classic.shelf.original')}
         </div>
         <div className="edition-entry">
-          <Link to={to} className="read-link">
+          <Link to={to} className="read-link" data-shelf-open>
             {t('classic.shelf.open')} <ArrowRight size={14} />
           </Link>
           <span className="spacer" />

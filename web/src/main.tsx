@@ -15,6 +15,7 @@ import './styles/legacy.css';
 import './styles/legacy-help.css';
 import './styles/legacy-fit.css';
 import './styles/configuration.css';
+import './styles/shelf-selection.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

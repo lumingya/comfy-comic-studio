@@ -1,15 +1,15 @@
 import { Download, FolderInput, ImageIcon, Pencil, Search, Star, Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useState, type CSSProperties, type MouseEvent } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { BulkBar, useBulkActions } from './BulkBar';
 import { useTranslation } from 'react-i18next';
-import { Outlet, useNavigate, useSearchParams } from 'react-router-dom';
+import { Outlet, useMatch, useNavigate, useSearchParams } from 'react-router-dom';
 import { assetUrl, download } from '../../api/client';
 import { useSeriesList, useTrashSeries } from '../../api/series';
 import { useImportBundle, usePatchSettings, useSettings } from '../../api/system';
 import type { SeriesCard } from '../../api/types';
 import { QueryError } from '../../app/errors';
 import { Icon } from '../../app/icons';
-import { useSelection, type Modifiers } from '../../app/selection';
+import { useSelection } from '../../app/selection';
 import { usePageTitle } from '../../app/title';
 import { useUI } from '../../app/ui-store';
 import { ContextMenu, useContextMenu, type ContextGroup } from '../../components/ContextMenu';
@@ -19,6 +19,7 @@ import { ActionMenu, Empty, FilePick, InlineTitle, type MenuAction } from '../..
 import { CoverPicker } from './CoverPicker';
 import { Parchment, Showcase, ShowcaseNav, StarButton } from './Showcase';
 import { WorksHero } from './WorksHero';
+import { useShelfSelection, type ShelfContext } from './useShelfSelection';
 
 const STATUSES = ['draft', 'active', 'archived'] as const;
 /** Legacy key: the one-line multi-select hint stays hidden once used or dismissed. */
@@ -56,6 +57,7 @@ function FilterBar(props: {
   starredOnly: boolean;
   onStarredOnly: (on: boolean) => void;
   bulk: boolean;
+  touch: boolean;
   onBulk: (on: boolean) => void;
 }) {
   const { t } = useTranslation();
@@ -91,16 +93,18 @@ function FilterBar(props: {
         <Icon name="star" sm className={props.starredOnly ? 'is-filled' : ''} />
         {t('classic.shelf.starred')}
       </button>
-      <button
-        type="button"
-        className={`filter-link bulk-toggle ${props.bulk ? 'active' : ''}`}
-        aria-pressed={props.bulk}
-        title={t('classic.shelf.bulkHint')}
-        onClick={() => props.onBulk(!props.bulk)}
-      >
-        <Icon name="check" sm />
-        {t('classic.shelf.bulk')}
-      </button>
+      {props.touch ? (
+        <button
+          type="button"
+          className={`filter-link bulk-toggle ${props.bulk ? 'active' : ''}`}
+          aria-pressed={props.bulk}
+          title={t('classic.shelf.bulkHint')}
+          onClick={() => props.onBulk(!props.bulk)}
+        >
+          <Icon name="check" sm />
+          {t('classic.shelf.bulk')}
+        </button>
+      ) : null}
       <select
         id="gallery-filter"
         aria-label={t('series.statusLabel')}
@@ -189,22 +193,20 @@ function SeriesCardView(props: {
   /** Touch 批量管理 mode: the cover toggles selection instead of opening the reader. */
   selecting?: boolean;
   selected?: boolean;
-  /** Ctrl / ⌘ / Shift + click, or any click while `selecting`. */
-  onSelect?: (mods: Modifiers) => void;
-  onContextMenu?: (e: MouseEvent<HTMLElement>) => void;
+  context?: boolean;
 }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { series } = props;
   const status = series.status ?? 'draft';
   const date = (series.updated_at ?? '').slice(5, 10).replace('-', '.');
   return (
     <article
-      className={`shelf-item ${props.selecting ? 'is-selecting' : ''} ${props.selected ? 'is-selected' : ''}`}
+      className={`shelf-item ${props.selecting ? 'is-selecting' : ''} ${props.selected ? 'is-selected' : ''} ${props.context ? 'is-context' : ''}`}
       style={{ '--i': props.index } as CSSProperties}
       aria-label={series.title}
       aria-selected={props.selected || undefined}
-      onContextMenu={props.onContextMenu}
+      data-shelf-id={series.id}
+      tabIndex={0}
     >
       <button
         className="shelf-cover book-cover"
@@ -212,20 +214,21 @@ function SeriesCardView(props: {
         data-cover-mode="grid"
         aria-label={series.title}
         aria-pressed={props.selecting ? !!props.selected : undefined}
-        onClick={(e) => {
-          if (props.selecting || e.ctrlKey || e.metaKey || e.shiftKey) {
-            e.preventDefault();
-            props.onSelect?.(props.selecting ? { ctrlKey: true } : e);
-          } else navigate(`/gallery/${series.id}`);
-        }}
+        type="button"
+        data-shelf-open
       >
-        {props.selecting || props.selected ? (
+        {props.selecting ? (
           <span className="bulk-check" aria-hidden>
             {props.selected ? <Icon name="check" sm /> : null}
           </span>
         ) : null}
         {series.cover_asset_id ? (
-          <img src={assetUrl(series.cover_asset_id, 640)} alt={series.title} loading="lazy" />
+          <img
+            draggable={false}
+            src={assetUrl(series.cover_asset_id, 640)}
+            alt={series.title}
+            loading="lazy"
+          />
         ) : (
           <Parchment series={series} />
         )}
@@ -323,42 +326,48 @@ export default function WorksPage() {
     [filtered, starred, starredOnly],
   );
   const view = useUI((s) => s.worksView);
+  const readerOpen = !!useMatch('/gallery/:seriesId/*');
+  const [coverFor, setCoverFor] = useState<string | null>(null);
   // Multi-select (legacy desktop selection): Ctrl / ⌘ / Shift + click, right-click for batch
   // actions, Ctrl+A / Esc / Delete. 批量管理 is the touch fallback that makes a tap select.
   const [bulk, setBulk] = useState(false);
   const bookIds = useMemo(() => books.map((b) => b.id!), [books]);
   const selection = useSelection(bookIds);
-  const chosen = books.filter((b) => selection.has(b.id!));
-  const selecting = bulk || selection.ids.length > 1;
+  const showGrid = view === 'grid' || bulk;
   const bulkActions = useBulkActions(() => selection.clear());
-  const menu = useContextMenu<string[]>();
+  const menu = useContextMenu<ShelfContext>();
   const setBulkMode = (on: boolean) => {
     setBulk(on);
     selection.clear();
   };
+  const shelf = useShelfSelection({
+    selection,
+    enabled: !readerOpen && !coverFor,
+    pinned: bulk,
+    contextOpen: !!menu.state,
+    onExit: () => setBulkMode(false),
+    onOpen: (id) => navigate(`/gallery/${id}`),
+    onDelete: (ids) => {
+      if (!bulkActions.busy) void bulkActions.remove(books.filter((b) => ids.includes(b.id!)));
+    },
+    onContext: menu.openAt,
+    onCloseContext: menu.close,
+  });
+  const visibleSelection = shelf.snapshot ?? selection.ids;
+  const chosen = books.filter((b) => visibleSelection.includes(b.id!));
+  useEffect(() => {
+    menu.close();
+  }, [view, filter.q, filter.status, filter.sort, starredOnly, menu.close]);
+  useEffect(() => {
+    if (menu.state?.payload.ids.some((id) => !bookIds.includes(id))) menu.close();
+  }, [bookIds, menu.state, menu.close]);
   const [hintSeen, setHintSeen] = useState(() => localStorage.getItem(HINT_KEY) === 'seen');
   const seeHint = () => {
     localStorage.setItem(HINT_KEY, 'seen');
     setHintSeen(true);
   };
   useEffect(() => {
-    if (selection.ids.length > 1 && !hintSeen) seeHint();
-  });
-  useEffect(() => {
-    if (view !== 'grid' && !selecting) return;
-    const onKey = (e: KeyboardEvent) => {
-      const el = e.target as HTMLElement | null;
-      if (el?.closest('input, textarea, select, [contenteditable="true"], dialog')) return;
-      if (e.key === 'Escape' && (bulk || selection.ids.length)) setBulkMode(false);
-      else if ((e.key === 'Delete' || e.key === 'Backspace') && chosen.length)
-        void bulkActions.remove(chosen);
-      else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
-        e.preventDefault();
-        selection.all();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    if (selection.ids.length > 1 && !hintSeen && shelf.snapshot === null) seeHint();
   });
   // The featured book (showcase); back to the first one whenever the filter changes.
   const [featured, setFeatured] = useState(0);
@@ -372,7 +381,6 @@ export default function WorksPage() {
       )[0]?.id,
     [list.data],
   );
-  const [coverFor, setCoverFor] = useState<string | null>(null);
   const coverSeries = list.data?.find((s) => s.id === coverFor);
   const actions = useBookActions((s) => setCoverFor(s.id!));
   const importBundle = useImportBundle();
@@ -400,7 +408,11 @@ export default function WorksPage() {
                   label: t('classic.shelf.open'),
                   icon: <Icon name="book" sm />,
                   shortcut: 'Enter',
-                  onSelect: () => navigate(`/gallery/${one.id}`),
+                  onSelect: () => {
+                    setBulkMode(false);
+                    selection.anchorAt(one.id!);
+                    navigate(`/gallery/${one.id}`);
+                  },
                 },
                 {
                   label: t('classic.shelf.changeCover'),
@@ -420,6 +432,27 @@ export default function WorksPage() {
             disabled: bulkActions.busy,
             onSelect: () => void bulkActions.exportAll(targets),
           },
+        ],
+      },
+      {
+        items: [
+          {
+            label: t('classic.shelf.selectFiltered'),
+            shortcut: 'Ctrl/⌘ A',
+            onSelect: () => {
+              selection.all();
+              shelf.ref.current?.focus({ preventScroll: true });
+            },
+          },
+          ...(selection.ids.length
+            ? [
+                {
+                  label: t('classic.shelf.clearSelection'),
+                  shortcut: 'Esc',
+                  onSelect: () => setBulkMode(false),
+                },
+              ]
+            : []),
         ],
       },
       {
@@ -491,87 +524,109 @@ export default function WorksPage() {
             starredOnly={starredOnly}
             onStarredOnly={setStarredOnly}
             bulk={bulk}
+            touch={shelf.touch}
             onBulk={setBulkMode}
           />
         ) : null}
-        {list.data?.length ? (
-          <div className="shelf-index">
-            <span>{t('classic.shelf.count', { count: books.length })}</span>
-            {view === 'showcase' && !selecting && books.length ? (
-              <ShowcaseNav index={index} total={books.length} onIndex={setFeatured} />
-            ) : null}
-          </div>
-        ) : null}
-        {list.data?.length && !books.length ? (
-          <Empty
-            compact
-            icon={starredOnly ? <Star size={20} /> : <Search size={20} />}
-            title={
-              starredOnly && !filter.q && !filter.status
-                ? t('classic.shelf.noStarred')
-                : t('works.noMatch')
-            }
-            action={
-              <button
-                className="btn"
-                onClick={() => setParams(new URLSearchParams(), { replace: true })}
-              >
-                {t('works.clearFilters')}
+        <div
+          id="gallery-results"
+          ref={shelf.ref}
+          tabIndex={0}
+          role="region"
+          aria-label={t('classic.shelf.listLabel')}
+          className={selection.ids.length ? 'has-selection' : undefined}
+          onClickCapture={shelf.onClickCapture}
+          onPointerDown={shelf.onPointerDown}
+          onDragStartCapture={shelf.onDragStartCapture}
+          onContextMenu={shelf.onContextMenu}
+        >
+          {list.data?.length ? (
+            <div className="shelf-index">
+              <span>{t('classic.shelf.count', { count: books.length })}</span>
+              {view === 'showcase' && !showGrid && books.length ? (
+                <ShowcaseNav index={index} total={books.length} onIndex={setFeatured} />
+              ) : null}
+            </div>
+          ) : null}
+          {list.data?.length && !books.length ? (
+            <Empty
+              compact
+              icon={starredOnly ? <Star size={20} /> : <Search size={20} />}
+              title={
+                starredOnly && !filter.q && !filter.status
+                  ? t('classic.shelf.noStarred')
+                  : t('works.noMatch')
+              }
+              action={
+                <button
+                  className="btn"
+                  onClick={() => setParams(new URLSearchParams(), { replace: true })}
+                >
+                  {t('works.clearFilters')}
+                </button>
+              }
+            />
+          ) : null}
+          {(bulk || chosen.length > 0) && books.length ? (
+            <BulkBar
+              books={books}
+              chosen={chosen}
+              actions={bulkActions}
+              onAll={selection.all}
+              onNone={selection.clear}
+              onExit={() => setBulkMode(false)}
+              pinned={bulk}
+              onMore={(event) => {
+                const target = event.currentTarget,
+                  rect = target.getBoundingClientRect();
+                menu.openAt(rect.left, rect.bottom + 4, { ids: selection.ids, target });
+              }}
+            />
+          ) : null}
+          {books.length && view === 'showcase' && !showGrid ? (
+            <Showcase
+              books={books}
+              index={index}
+              onIndex={setFeatured}
+              firstEditionId={firstEditionId}
+              actions={actions}
+              onChangeCover={(s) => setCoverFor(s.id!)}
+              selected={!!books[index] && selection.has(books[index].id!)}
+              context={menu.state?.payload.focusId === books[index]?.id}
+              disabled={readerOpen || !!coverFor}
+            />
+          ) : null}
+          {books.length > 1 && !bulk && !chosen.length && !shelf.touch && !hintSeen ? (
+            <p className="multiselect-hint">
+              <span>{t('classic.shelf.multiHint')}</span>
+              <button type="button" className="link-button" onClick={seeHint}>
+                {t('classic.shelf.multiHintOk')}
               </button>
-            }
-          />
-        ) : null}
-        {selecting && books.length ? (
-          <BulkBar
-            books={books}
-            chosen={chosen}
-            actions={bulkActions}
-            onAll={selection.all}
-            onNone={selection.clear}
-            onExit={() => setBulkMode(false)}
-          />
-        ) : null}
-        {books.length && view === 'showcase' && !selecting ? (
-          <Showcase
-            books={books}
-            index={index}
-            onIndex={setFeatured}
-            firstEditionId={firstEditionId}
-            actions={actions}
-            onChangeCover={(s) => setCoverFor(s.id!)}
-          />
-        ) : null}
-        {books.length > 1 && view === 'grid' && !selecting && !hintSeen ? (
-          <p className="multiselect-hint">
-            <span>{t('classic.shelf.multiHint')}</span>
-            <button type="button" className="link-button" onClick={seeHint}>
-              {t('classic.shelf.multiHintOk')}
-            </button>
-          </p>
-        ) : null}
-        {books.length && (view === 'grid' || selecting) ? (
-          <div className={`shelf-grid ${bulk ? 'bulk-active' : ''}`}>
-            {books.map((s, i) => (
-              <SeriesCardView
-                key={s.id}
-                series={s}
-                index={i}
-                actions={actions(s)}
-                selecting={bulk}
-                selected={selection.has(s.id!)}
-                onSelect={(mods) => selection.click(s.id!, mods)}
-                onContextMenu={(e) => menu.open(e, selection.contextTarget(s.id!))}
-              />
-            ))}
-          </div>
-        ) : null}
-        {list.data?.length ? <p className="collection-note">{t('classic.shelf.note')}</p> : null}
-
+            </p>
+          ) : null}
+          {books.length && showGrid ? (
+            <div className={`shelf-grid ${bulk ? 'bulk-active' : ''}`}>
+              {books.map((s, i) => (
+                <SeriesCardView
+                  key={s.id}
+                  series={s}
+                  index={i}
+                  actions={actions(s)}
+                  selecting={bulk}
+                  selected={selection.has(s.id!)}
+                  context={menu.state?.payload.focusId === s.id}
+                />
+              ))}
+            </div>
+          ) : null}
+          {list.data?.length ? <p className="collection-note">{t('classic.shelf.note')}</p> : null}
+        </div>
         {menu.state ? (
           <ContextMenu
             x={menu.state.x}
             y={menu.state.y}
-            groups={shelfMenu(menu.state.payload)}
+            groups={shelfMenu(menu.state.payload.ids)}
+            returnFocus={menu.state.payload.target}
             onClose={menu.close}
           />
         ) : null}

@@ -18,6 +18,10 @@ export interface Selection {
   only: (id: string) => void;
   all: () => void;
   clear: () => void;
+  /** Replace a marquee result without changing the click/range anchor. */
+  replace: (ids: readonly string[]) => void;
+  /** Remember an opened or context-targeted item without selecting it. */
+  anchorAt: (id: string) => void;
   /** Right-click: keep a multi-selection when the target is part of it, else select the target. */
   contextTarget: (id: string) => string[];
 }
@@ -78,6 +82,16 @@ export function useSelection(order: string[]): Selection {
     anchor.current = null;
     setSet(new Set());
   }, []);
+  const anchorAt = useCallback((id: string) => {
+    anchor.current = id;
+  }, []);
+  const replace = useCallback((ids: readonly string[]) => {
+    const alive = new Set(orderRef.current);
+    const next = new Set(ids.filter((id) => alive.has(id)));
+    setSet((prev) =>
+      prev.size === next.size && [...prev].every((id) => next.has(id)) ? prev : next,
+    );
+  }, []);
   const contextTarget = useCallback(
     (id: string) => {
       if (set.has(id) && set.size > 1) return orderRef.current.filter((x) => set.has(x));
@@ -98,8 +112,10 @@ export function useSelection(order: string[]): Selection {
       only,
       all,
       clear,
+      replace,
+      anchorAt,
       contextTarget,
     }),
-    [ids, set, click, toggle, only, all, clear, contextTarget],
+    [ids, set, click, toggle, only, all, clear, replace, anchorAt, contextTarget],
   );
 }

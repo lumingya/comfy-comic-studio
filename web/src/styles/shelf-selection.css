@@ -1,0 +1,69 @@
+/* Album selection only; leave the editor, canvas and configuration workbench alone. */
+#gallery-results {
+  min-height: 120px;
+  outline: none;
+}
+#gallery-results [data-shelf-id] {
+  position: relative;
+}
+#gallery-results [data-shelf-id]:focus-visible {
+  outline: 1px dashed var(--muted);
+  outline-offset: 5px;
+}
+#gallery-results .is-context .shelf-cover,
+#gallery-results .shelf-exhibit.is-context .exhibit-cover,
+#gallery-results .shelf-exhibit.is-selected .exhibit-cover {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+#gallery-results .shelf-selection-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+  padding: 8px 0;
+}
+#gallery-results .selection-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--soft);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+#gallery-results .selection-action:hover {
+  background: var(--tint);
+  color: var(--accent);
+}
+#gallery-results .selection-action.danger {
+  color: var(--red);
+}
+#gallery-results .selection-action:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+#gallery-results .selection-count {
+  color: var(--muted);
+  font-size: 12px;
+}
+#gallery-results .selection-action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.shelf-marquee {
+  position: fixed;
+  pointer-events: none;
+  z-index: 50;
+  border: 1px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+body.shelf-marquee-active {
+  user-select: none;
+  cursor: crosshair;
+}
