@@ -403,7 +403,10 @@ def panel_prompt(ctx: Ctx, episode_id: str, panel_id: str, variant_id: str | Non
         raise NotFound(f"panel not found: {panel_id}")
     variant = next((v for v in series.variants if v.id == variant_id), None)
     refs = [r.to_json() for r in select_references(series.bible, panel)]
-    return {**prompt_preview(series, ep, panel, variant), "references": refs}
+    profile = ctx.render.profile(
+        panel.overrides.profile_id or (variant.profile_id if variant else None), series
+    )
+    return {**prompt_preview(series, ep, panel, variant, profile=profile), "references": refs}
 
 
 # ------------------------------------------------------------------- takes

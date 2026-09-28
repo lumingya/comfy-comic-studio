@@ -12,6 +12,7 @@ import random
 from dataclasses import asdict, dataclass, field
 
 from ..models import Episode, Panel, PanelWidth, Series, VariantSet, parse_ratio
+from ..render_models import RenderProfile
 from . import prompts as P
 from . import variables as V
 from .story import apply_variant, panel_view, to_story
@@ -44,9 +45,14 @@ def _round64(value: float) -> int:
     return max(512, int(round(value / 64.0)) * 64)
 
 
-def canvas_size(panel: Panel, pixels: int = SDXL_PIXELS) -> tuple[int, int]:
-    """Size from the panel's aspect ratio at ~1 MP (SDXL sweet spot), multiples of 64."""
+def canvas_size(
+    panel: Panel, pixels: int = SDXL_PIXELS, *, base_width: int | None = None
+) -> tuple[int, int]:
+    """Align the profile width to 64 px; without a profile retain the ~1 MP preview default."""
     ratio = parse_ratio(panel.aspect_ratio)
+    if base_width is not None:
+        width = base_width * (0.8**0.5 if panel.width_mode == PanelWidth.inset else 1)
+        return max(64, round(width / 64) * 64), max(64, round(width / ratio / 64) * 64)
     if panel.width_mode == PanelWidth.inset:
         pixels = int(pixels * 0.8)
     width = (pixels * ratio) ** 0.5
@@ -85,9 +91,10 @@ def compile_panel(
     negative: list[str] | None = None,
     seed: int | None = None,
     rng: random.Random | None = None,
+    base_width: int | None = None,
 ) -> PanelPrompt:
     ov = panel.overrides
-    width, height = canvas_size(panel)
+    width, height = canvas_size(panel, base_width=base_width)
     width, height = ov.width or width, ov.height or height
     chosen_seed = ov.seed if ov.seed is not None else seed
     if chosen_seed is None:
@@ -169,11 +176,23 @@ def compile_panel(
 
 
 def preview(
-    series: Series, episode: Episode, panel: Panel, variant: VariantSet | None = None
+    series: Series,
+    episode: Episode,
+    panel: Panel,
+    variant: VariantSet | None = None,
+    *,
+    profile: RenderProfile | None = None,
 ) -> dict:
-    """Both dialects side by side for the UI (编译结果可见、可改)."""
-    tags = compile_panel(series, episode, panel, dialect="tags", variant=variant, seed=0)
-    natural = compile_panel(series, episode, panel, dialect="natural", variant=variant, seed=0)
+    """Both dialects side by side, using the same profile defaults as generation."""
+    options = {
+        "base_width": profile.base_width if profile and not profile.cloud_shape else None,
+        "quality": profile.quality_tags if profile else None,
+        "negative": profile.negative_tags if profile else None,
+    }
+    tags = compile_panel(series, episode, panel, dialect="tags", variant=variant, seed=0, **options)
+    natural = compile_panel(
+        series, episode, panel, dialect="natural", variant=variant, seed=0, **options
+    )
     return {
         "tags": tags.to_json(),
         "natural": natural.to_json(),

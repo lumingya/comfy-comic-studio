@@ -225,6 +225,7 @@ class RenderService(CompositionMixin, EditsMixin):
                 quality=profile.quality_tags,
                 negative=profile.negative_tags,
                 rng=self.rng,
+                base_width=profile.base_width,
             )
             self.prompt_hook(pp, series, episode, panel)
             if prepared is None:
