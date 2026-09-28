@@ -695,6 +695,8 @@ describe('every route mounts with API data', () => {
   it('old render settings links open 工作流与 API 配置', async () => {
     const router = mount('/settings?tab=instances');
     await waitFor(() => expect(router.state.location.pathname).toBe('/engine'));
-    expect(await screen.findByText('切换配置项')).toBeInTheDocument();
+    expect(
+      await screen.findByRole('tab', { name: /本地 ComfyUI/, selected: true }),
+    ).toBeInTheDocument();
   });
 });

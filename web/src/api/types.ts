@@ -200,7 +200,53 @@ export interface WorkflowSummary {
   updated_at: string;
 }
 
+export type WorkflowConfig = S['WorkflowConfig'];
+
+export interface WorkflowDocument {
+  id: string;
+  name: string;
+  source: WorkflowSummary['source'];
+  graph: Record<
+    string,
+    {
+      class_type: string;
+      inputs: Record<string, unknown>;
+      _meta?: { title?: string };
+    }
+  >;
+  config: WorkflowConfig;
+  notes: string;
+  describe: {
+    bindings: Record<string, string[]>;
+    problems: string[];
+    variants: string[];
+    image_inputs: string[];
+    nodes: number;
+    checkpoint: string;
+  };
+}
+
+export interface ImageChannel {
+  id: string;
+  label: string;
+  kind: string;
+  base_url: string;
+  api_key: string;
+  model: string;
+  negative: string;
+  width: number;
+  height: number;
+  size: string;
+  quality: string;
+  steps: number;
+  scale: number;
+  sampler: string;
+  ref_strength: number;
+}
+
 export interface AppSettings {
+  image_channels?: ImageChannel[];
+  image_channel?: string;
   llm: {
     base_url: string;
     api_key: string;

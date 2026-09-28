@@ -1,7 +1,9 @@
 import { guideZh } from './guide';
+import { configZh } from './configuration';
 import { readerZh, wsZh } from './ws';
 /** Chinese (primary). Keys are grouped by screen; English mirrors this shape exactly. */
 const zh = {
+  config: configZh,
   app: { name: 'Mio', tagline: '条漫工作室', offline: '与服务器的实时连接已断开，正在重连…' },
   nav: {
     works: '作品',
@@ -1224,8 +1226,8 @@ const zh = {
         instancesd: '本机或局域网的服务',
         workflows: '工作流库',
         workflowsd: 'API 工作流与节点映射',
-        profiles: '生成档案',
-        profilesd: '模型与参数的组合',
+        profiles: '出图配置',
+        profilesd: '生成时使用的工作流与渠道',
         channels: '云端通道',
         channelsd: 'NovelAI / OpenAI 兼容',
       },

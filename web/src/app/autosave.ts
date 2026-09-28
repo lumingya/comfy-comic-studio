@@ -80,11 +80,13 @@ export function useAutosave(save: () => Promise<unknown>, delay = 800) {
 }
 
 /** For editors with an explicit Save: confirm before leaving the route with unsaved changes. */
-export function useUnsavedGuard(dirty: boolean) {
+export function useUnsavedGuard(dirty: boolean, includeSearch = false) {
   const { t } = useTranslation();
   const blocker = useBlocker(
     ({ currentLocation, nextLocation }) =>
-      dirty && currentLocation.pathname !== nextLocation.pathname,
+      dirty &&
+      (currentLocation.pathname !== nextLocation.pathname ||
+        (includeSearch && currentLocation.search !== nextLocation.search)),
   );
   const latest = useRef(blocker);
   latest.current = blocker;

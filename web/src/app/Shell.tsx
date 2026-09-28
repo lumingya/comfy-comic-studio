@@ -201,7 +201,7 @@ function StatusBar() {
     <footer className="statusbar" id="statusbar" aria-label={t('classic.statusbar')}>
       <i className={`dot ${connected === false ? 'amber' : ''}`} />
       <Link className="disk-status-action" to="/settings?tab=data">
-        {connected === false ? t('classic.reconnecting') : t('legacy.saved')}
+        {connected === false ? t('classic.reconnecting') : t('legacy.settings.tabs.data')}
       </Link>
       {running ? (
         <span className="status-running">

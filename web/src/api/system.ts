@@ -7,6 +7,8 @@ import type {
   RenderProfile,
   TrashItem,
   WorkflowSummary,
+  WorkflowDocument,
+  WorkflowConfig,
 } from './types';
 
 // ---------------------------------------------------------------- settings
@@ -69,16 +71,71 @@ export function useWorkflow(id: string | undefined) {
     queryFn: async () =>
       data(
         await api.GET('/api/workflows/{workflow_id}', { params: { path: { workflow_id: id! } } }),
-      ) as unknown as Record<string, unknown> & { describe: Record<string, unknown> },
+      ) as unknown as WorkflowDocument,
   });
 }
 
 export function useImportWorkflow() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (body: { name: string; graph: Record<string, unknown> }) =>
-      data(await api.POST('/api/workflows', { body: { ...body, notes: '' } })),
+    mutationFn: async (body: {
+      name: string;
+      graph: Record<string, unknown>;
+      config?: WorkflowConfig;
+      notes?: string;
+    }) =>
+      data(
+        await api.POST('/api/workflows', { body: { notes: '', ...body } }),
+      ) as unknown as WorkflowDocument,
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.workflows }),
+  });
+}
+
+export function useSaveWorkflow() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: {
+        name?: string;
+        notes?: string;
+        graph?: Record<string, unknown>;
+        config?: WorkflowConfig;
+      };
+    }) =>
+      data(
+        await api.PATCH('/api/workflows/{workflow_id}', {
+          params: { path: { workflow_id: id } },
+          body: patch,
+        }),
+      ) as unknown as WorkflowDocument,
+    onSuccess: async (doc) => {
+      qc.setQueryData(keys.workflow(doc.id), doc);
+      await qc.invalidateQueries({ queryKey: keys.workflows });
+    },
+  });
+}
+
+export function useCompileWorkflow() {
+  return useMutation({
+    mutationFn: async ({
+      id,
+      values,
+      variant,
+    }: {
+      id: string;
+      values: Record<string, unknown>;
+      variant: string | null;
+    }) =>
+      data(
+        await api.POST('/api/workflows/{workflow_id}/compile', {
+          params: { path: { workflow_id: id } },
+          body: { values, variant },
+        }),
+      ) as Record<string, unknown>,
   });
 }
 
@@ -99,7 +156,7 @@ export function useCopyWorkflow() {
         await api.POST('/api/workflows/{workflow_id}/copy', {
           params: { path: { workflow_id: id } },
         }),
-      ),
+      ) as unknown as WorkflowDocument,
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.workflows }),
   });
 }
@@ -172,7 +229,10 @@ export function useSaveInstance() {
               body: instance,
             }),
           ),
-    onSuccess: () => qc.invalidateQueries({ queryKey: keys.instances }),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: keys.instances });
+      await qc.invalidateQueries({ queryKey: ['comfy-health'] });
+    },
   });
 }
 
@@ -194,7 +254,10 @@ export function useInstanceHealth() {
           params: { path: { instance_id: id } },
         }),
       ) as unknown as { id: string; ok: boolean; stats: Record<string, unknown> },
-    onSettled: () => qc.invalidateQueries({ queryKey: keys.instances }),
+    onSettled: async () => {
+      await qc.invalidateQueries({ queryKey: keys.instances });
+      await qc.invalidateQueries({ queryKey: ['comfy-health'] });
+    },
   });
 }
 

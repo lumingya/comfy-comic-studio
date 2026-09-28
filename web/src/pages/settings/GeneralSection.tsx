@@ -1,153 +1,179 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { usePatchSettings, useSettings } from '../../api/system';
 import type { AppSettings } from '../../api/types';
+import { QueryError } from '../../app/errors';
 import { toast, toastError } from '../../components/toast';
 import { Field, Loading, NumberInput, Switch, TagInput, TextInput } from '../../components/ui';
+import {
+  Advanced,
+  ConfigurationGuard,
+  ConfigurationSaveBar,
+  validHttpUrl,
+} from './ConfigurationParts';
 
-/** LLM endpoint, QA voting and safety knobs. The API key comes back masked and stays masked. */
+const editable = (s: AppSettings) => ({
+  llm: s.llm,
+  qa: s.qa,
+  guard_terms: s.guard_terms,
+  trash_days: s.trash_days,
+});
+
 export function GeneralSection() {
   const { t } = useTranslation();
   const settings = useSettings();
   const patch = usePatchSettings();
   const [draft, setDraft] = useState<AppSettings | null>(null);
-
-  useEffect(() => {
-    if (settings.data) setDraft(settings.data);
-  }, [settings.data]);
-
-  if (!draft) return <Loading />;
-  const llm = (changes: Partial<AppSettings['llm']>) =>
-    setDraft({ ...draft, llm: { ...draft.llm, ...changes } });
-  const qa = (changes: Partial<AppSettings['qa']>) =>
-    setDraft({ ...draft, qa: { ...draft.qa, ...changes } });
-  const dirty = JSON.stringify(draft) !== JSON.stringify(settings.data);
-  const save = () =>
-    patch.mutate(
-      {
-        llm: draft.llm,
-        qa: draft.qa,
-        guard_terms: draft.guard_terms,
-        trash_days: draft.trash_days,
-      },
-      { onSuccess: () => toast(t('common.saved')), onError: toastError },
-    );
-
+  if (settings.isError) return <QueryError error={settings.error} onRetry={settings.refetch} />;
+  if (!settings.data) return <Loading />;
+  const d = draft ?? settings.data;
+  const llm = (change: Partial<AppSettings['llm']>) =>
+    setDraft({ ...d, llm: { ...d.llm, ...change } });
+  const qa = (change: Partial<AppSettings['qa']>) => setDraft({ ...d, qa: { ...d.qa, ...change } });
+  const dirty =
+    !!draft && JSON.stringify(editable(draft)) !== JSON.stringify(editable(settings.data));
+  const invalid = !validHttpUrl(d.llm.base_url);
   return (
-    <div className="col" style={{ gap: 20 }}>
-      <section className="card col" style={{ gap: 14 }}>
-        <h2>{t('settings.llm')}</h2>
-        <p className="small muted" style={{ margin: 0 }}>
-          {t('settings.llmHint')}
-        </p>
+    <form
+      className="config-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (invalid || patch.isPending) return;
+        patch.mutate(
+          { ...editable(d), llm: { ...d.llm, base_url: d.llm.base_url.trim() } },
+          {
+            onSuccess: () => {
+              setDraft(null);
+              toast(t('common.saved'));
+            },
+            onError: toastError,
+          },
+        );
+      }}
+    >
+      <ConfigurationGuard dirty={dirty} />
+      <fieldset disabled={patch.isPending}>
+        <div className="config-section-head">
+          <div>
+            <h2>{t('settings.llm')}</h2>
+            <p>{t('config.general.intro')}</p>
+          </div>
+        </div>
         <div className="grid-2">
-          <Field label={t('settings.baseUrl')}>
+          <Field label={t('settings.baseUrl')} hint={t('config.general.addressHint')}>
             <TextInput
               mono
-              value={draft.llm.base_url}
+              type="url"
+              value={d.llm.base_url}
               onChange={(base_url) => llm({ base_url })}
               placeholder="https://…/v1"
             />
           </Field>
-          <Field label={t('settings.apiKey')}>
-            <input
-              className="input mono"
+          <Field
+            label={t('settings.apiKey')}
+            hint={
+              d.llm.api_key === '••••••' ? t('config.cloud.maskedKey') : t('config.cloud.keyHint')
+            }
+          >
+            <TextInput
+              mono
               type="password"
-              autoComplete="off"
-              value={draft.llm.api_key}
-              onChange={(e) => llm({ api_key: e.target.value })}
+              autoComplete="new-password"
+              value={d.llm.api_key}
+              onChange={(api_key) => llm({ api_key })}
             />
           </Field>
         </div>
-        <Field label={t('settings.textModels')}>
-          <TagInput
-            value={draft.llm.text_models}
-            onChange={(text_models) => llm({ text_models })}
-          />
+        <Field label={t('settings.textModels')} hint={t('config.general.modelsHint')}>
+          <TagInput value={d.llm.text_models} onChange={(text_models) => llm({ text_models })} />
         </Field>
-        <Field label={t('settings.visionModels')}>
-          <TagInput
-            value={draft.llm.vision_models}
-            onChange={(vision_models) => llm({ vision_models })}
-          />
-        </Field>
-        <Field label={t('settings.imageModels')}>
-          <TagInput
-            value={draft.llm.image_models}
-            onChange={(image_models) => llm({ image_models })}
-          />
-        </Field>
-        <div className="grid-3">
-          <Field label={t('settings.timeout')}>
-            <NumberInput
-              value={draft.llm.timeout}
-              min={5}
-              max={600}
-              onChange={(v) => llm({ timeout: v ?? 120 })}
+        <Advanced title={t('config.general.models')} hint={t('config.general.modelsAdvancedHint')}>
+          <Field label={t('settings.visionModels')}>
+            <TagInput
+              value={d.llm.vision_models}
+              onChange={(vision_models) => llm({ vision_models })}
             />
           </Field>
-          <Field label={t('settings.pace')}>
-            <NumberInput
-              value={draft.llm.pace}
-              min={0}
-              max={60}
-              step={0.5}
-              onChange={(v) => llm({ pace: v ?? 0 })}
+          <Field label={t('settings.imageModels')} hint={t('config.general.imageHint')}>
+            <TagInput
+              value={d.llm.image_models}
+              onChange={(image_models) => llm({ image_models })}
             />
           </Field>
-        </div>
-      </section>
-
-      <section className="card col" style={{ gap: 14 }}>
-        <h2>{t('settings.qa')}</h2>
-        <div className="grid-3">
+          <Link className="btn ghost sm" to="/engine?tab=channels">
+            {t('config.profile.manageChannels')}
+          </Link>
+        </Advanced>
+        <Advanced title={t('config.general.request')} hint={t('config.general.requestHint')}>
+          <div className="grid-2">
+            <Field label={t('settings.timeout')}>
+              <NumberInput
+                value={d.llm.timeout}
+                min={5}
+                max={1800}
+                onChange={(value) => llm({ timeout: value ?? 240 })}
+              />
+            </Field>
+            <Field label={t('settings.pace')}>
+              <NumberInput
+                value={d.llm.pace}
+                min={0}
+                max={60}
+                step={0.5}
+                onChange={(value) => llm({ pace: value ?? 0 })}
+              />
+            </Field>
+          </div>
+        </Advanced>
+        <Advanced title={t('settings.qa')} hint={t('config.general.qaHint')}>
           <Field label={t('settings.votes')} hint={t('settings.votesHint')}>
             <NumberInput
-              value={draft.qa.votes}
+              value={d.qa.votes}
               min={1}
               max={7}
-              onChange={(v) => qa({ votes: v ?? 1 })}
+              onChange={(value) => qa({ votes: value ?? 3 })}
             />
           </Field>
-        </div>
-        <Switch
-          checked={draft.qa.auto_adopt}
-          onChange={(auto_adopt) => qa({ auto_adopt })}
-          label={t('settings.autoAdopt')}
-        />
-        <Switch
-          checked={draft.qa.faces}
-          onChange={(faces) => qa({ faces })}
-          label={t('settings.faces')}
-        />
-      </section>
-
-      <section className="card col" style={{ gap: 14 }}>
-        <h2>{t('settings.safety')}</h2>
-        <Field label={t('settings.guardTerms')} hint={t('settings.guardHint')}>
-          <TagInput
-            value={draft.guard_terms}
-            onChange={(guard_terms) => setDraft({ ...draft, guard_terms })}
+          <Switch
+            checked={d.qa.auto_adopt}
+            onChange={(auto_adopt) => qa({ auto_adopt })}
+            label={t('settings.autoAdopt')}
           />
-        </Field>
-        <div className="grid-3">
+          <Switch
+            checked={d.qa.faces}
+            onChange={(faces) => qa({ faces })}
+            label={t('settings.faces')}
+          />
+        </Advanced>
+        <Advanced title={t('settings.safety')} hint={t('config.general.safetyHint')}>
+          <Field label={t('settings.guardTerms')} hint={t('settings.guardHint')}>
+            <TagInput
+              value={d.guard_terms}
+              onChange={(guard_terms) => setDraft({ ...d, guard_terms })}
+            />
+          </Field>
           <Field label={t('settings.trashDays')}>
             <NumberInput
-              value={draft.trash_days}
+              value={d.trash_days}
               min={1}
-              max={365}
-              onChange={(v) => setDraft({ ...draft, trash_days: v ?? 30 })}
+              max={3650}
+              onChange={(value) => setDraft({ ...d, trash_days: value ?? 30 })}
             />
           </Field>
-        </div>
-      </section>
-
-      <div className="save-bar sticky">
-        <span className="grow" />
-        <button className="btn primary" disabled={!dirty || patch.isPending} onClick={save}>
-          {t('common.save')}
-        </button>
-      </div>
-    </div>
+        </Advanced>
+        {invalid && d.llm.base_url ? (
+          <p className="notice error" role="alert">
+            {t('config.invalidUrl')}
+          </p>
+        ) : null}
+      </fieldset>
+      <ConfigurationSaveBar
+        dirty={dirty}
+        pending={patch.isPending}
+        invalid={invalid}
+        onCancel={() => setDraft(null)}
+      />
+    </form>
   );
 }

@@ -1,0 +1,577 @@
+/* Configuration workbench: familiar shell, one selected item, progressive disclosure.
+   Loaded after the legacy skin; all rules are scoped to avoid changing other workspaces. */
+.config-page .wf-bar {
+  align-items: center;
+  gap: 20px;
+}
+.config-page .wf-bar > .btn {
+  flex-shrink: 0;
+}
+.config-services {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+}
+.config-service {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--soft);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.config-service:hover,
+.config-service.active {
+  border-color: var(--accent);
+  background: var(--tint);
+}
+.config-service.active {
+  color: var(--accent);
+}
+.config-service > svg {
+  flex-shrink: 0;
+}
+.config-service strong {
+  display: block;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+}
+.config-service small {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.config-count {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--muted);
+  font: 12px var(--mono);
+}
+.config-steps {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 18px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.config-steps button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+.config-steps button.active,
+.config-steps button:hover {
+  background: var(--tint);
+  color: var(--accent);
+}
+.config-steps b {
+  display: grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  font: 11px var(--mono);
+}
+.config-panel {
+  margin-top: 22px;
+}
+.config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+.config-form > fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.config-form :is(h2, h3, p) {
+  margin: 0;
+}
+.config-form h2 {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.config-form h3 {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.config-form .field {
+  min-width: 0;
+  margin: 0;
+}
+#studio-settings-content .config-form .field {
+  max-width: none;
+  margin: 0;
+}
+.config-form .field > span:first-child {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.config-form .field > small {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.config-form :is(.input, .select-wrap, .textarea) {
+  width: 100%;
+  min-width: 0;
+}
+.config-form :is(.input, .select, .textarea) {
+  font-size: 13px;
+}
+.config-form .input[readonly] {
+  color: var(--muted);
+  background: var(--bg);
+}
+.config-form .grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.config-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+.config-section-head > .field {
+  flex: 1;
+}
+.config-section-head > div {
+  min-width: 0;
+}
+.config-section-head > :is(button, label) {
+  flex-shrink: 0;
+}
+.config-section-head p,
+.config-subheading p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+  margin-top: 5px;
+  max-width: 76ch;
+}
+.config-default {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.config-default > .field {
+  display: grid;
+  grid-template-columns: auto minmax(220px, 1fr);
+  align-items: center;
+  gap: 6px 14px;
+  flex: 1 1 500px;
+  max-width: 800px;
+}
+.config-default > .field small {
+  grid-column: 2;
+}
+.config-default > .btn {
+  margin-left: auto;
+}
+.config-split {
+  display: grid;
+  grid-template-columns: 218px minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+  min-width: 0;
+}
+.config-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  max-height: 65vh;
+  overflow: auto;
+  padding: 2px;
+}
+.config-rail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  min-width: 0;
+}
+.config-rail-item:hover {
+  background: var(--panel);
+}
+.config-rail-item.active {
+  border-color: var(--line);
+  background: var(--tint);
+}
+.config-rail-item.active strong {
+  color: var(--accent);
+}
+.config-rail-item strong {
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.config-rail-item small {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.config-rail > .btn {
+  justify-content: flex-start;
+  margin-top: 4px;
+  white-space: normal;
+}
+.config-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.config-explainer {
+  padding: 11px 13px;
+  border-left: 2px solid var(--accent);
+  background: var(--tint);
+  color: var(--soft);
+  font-size: 12px;
+  line-height: 1.65;
+}
+.config-advanced {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: transparent;
+  min-width: 0;
+}
+.config-advanced > summary {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  cursor: pointer;
+  color: var(--soft);
+  list-style: none;
+}
+.config-advanced > summary::-webkit-details-marker {
+  display: none;
+}
+.config-advanced > summary strong {
+  font-size: 13px;
+  font-weight: 500;
+}
+.config-advanced > summary small {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 3px;
+  line-height: 1.5;
+}
+.config-advanced > summary svg {
+  flex-shrink: 0;
+  transition: transform 0.15s;
+}
+.config-advanced[open] > summary svg {
+  transform: rotate(180deg);
+}
+.config-advanced[open] > summary {
+  border-bottom: 1px solid var(--line);
+}
+.config-advanced-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  min-width: 0;
+}
+.config-form:has(> .config-save-bar) {
+  padding-bottom: 78px;
+}
+.config-save-bar {
+  position: fixed;
+  left: calc(var(--nav-width, 196px) + 40px);
+  right: 40px;
+  max-width: 1530px;
+  margin-inline: auto;
+  bottom: calc(var(--mobile-bottom, 29px) + 11px);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--panel);
+  box-shadow: 0 5px 20px #00000012;
+}
+/* Keep transient feedback above the persistent actions, not over the save button. */
+.app:has(.config-save-bar) ~ .toasts {
+  bottom: calc(var(--mobile-bottom, 29px) + 77px);
+}
+.config-next {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.config-next > span {
+  flex: 1 1 240px;
+}
+.config-next .btn {
+  flex-shrink: 0;
+}
+.config-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.config-mapping-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.config-form .config-stage {
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 12px;
+  min-width: 0;
+}
+.config-form .config-stage-main {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+.config-stage .config-advanced {
+  margin-top: 9px;
+  border: 0;
+}
+.config-stage .config-advanced > summary {
+  padding: 6px 0;
+}
+.config-stage .config-advanced-body {
+  padding: 12px 0 0;
+}
+.config-stage-actions {
+  gap: 3px;
+  flex-wrap: nowrap;
+}
+.config-stages {
+  gap: 12px;
+}
+.config-check {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+.config-check input {
+  accent-color: var(--accent);
+}
+.config-facts {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.config-facts > div {
+  display: grid;
+  grid-template-columns: minmax(100px, 160px) minmax(0, 1fr);
+  gap: 16px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.config-facts dt {
+  color: var(--soft);
+}
+.config-facts dd {
+  color: var(--muted);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.config-code {
+  max-height: 400px;
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: 12px/1.6 var(--mono);
+  tab-size: 2;
+}
+.config-result {
+  margin-top: 16px;
+}
+.config-help {
+  margin-top: 24px;
+}
+.config-help .config-advanced {
+  border-color: transparent;
+}
+.config-help .config-advanced > summary {
+  padding-left: 0;
+}
+.config-form .notice {
+  overflow-wrap: anywhere;
+}
+.config-form :is(button, summary, input, select, textarea):focus-visible,
+.config-page .config-service:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+@media (max-width: 1050px) {
+  .config-save-bar {
+    left: calc(var(--nav-width, 196px) + 26px);
+    right: 26px;
+  }
+}
+@media (max-width: 1000px) {
+  .config-split {
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: 14px;
+  }
+  .config-editor {
+    padding: 16px;
+  }
+  .config-service {
+    padding: 14px;
+    gap: 10px;
+  }
+  .config-form .config-stage-main {
+    grid-template-columns: 1fr 2fr;
+  }
+  .config-stage-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}
+@media (max-width: 760px) {
+  .config-default > .field {
+    display: flex;
+    flex: 1 1 240px;
+  }
+  .config-page .wf-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .config-services {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .config-service small {
+    margin-top: 2px;
+  }
+  .config-service {
+    padding: 13px 15px;
+  }
+  .config-split {
+    grid-template-columns: 1fr;
+  }
+  .config-rail {
+    flex-direction: row;
+    max-height: none;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .config-rail-item {
+    flex: 0 0 180px;
+  }
+  .config-rail > :is(.btn, .input) {
+    flex: 0 0 160px;
+    align-self: center;
+  }
+  .config-form .grid-2,
+  .config-mapping-grid {
+    grid-template-columns: 1fr;
+  }
+  .config-section-head {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .config-section-head > .field {
+    min-width: 180px;
+  }
+  .config-save-bar {
+    left: 16px;
+    right: 16px;
+    padding: 10px;
+    gap: 6px;
+  }
+  .config-save-bar .small {
+    font-size: 11px;
+  }
+  .config-steps {
+    gap: 3px;
+  }
+  .config-steps button {
+    padding: 6px;
+    font-size: 12px;
+  }
+  .config-facts > div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .config-service,
+  .config-advanced > summary svg {
+    transition: none;
+  }
+}

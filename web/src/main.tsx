@@ -14,6 +14,7 @@ import './styles/classic.css';
 import './styles/legacy.css';
 import './styles/legacy-help.css';
 import './styles/legacy-fit.css';
+import './styles/configuration.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

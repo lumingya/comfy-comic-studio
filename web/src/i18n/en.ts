@@ -1,10 +1,12 @@
 import type { Dict } from './zh';
 import { guideEn } from './guide';
+import { configEn } from './configuration';
 import { readerEn, wsEn } from './ws';
 
 type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };
 
 const en: Widen<Dict> = {
+  config: configEn,
   app: { name: 'Mio', tagline: 'Webtoon studio', offline: 'Live connection lost — reconnecting…' },
   nav: {
     works: 'Works',
