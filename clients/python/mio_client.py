@@ -666,6 +666,13 @@ class MioClient(_Base):
         """
         return self._request("POST", "/workshop/assemble", json=body)
 
+    def clone_task(self, series_id: str, body: dict | list | None = None) -> Any:
+        """POST /workshop/tasks/{series_id}/clone — Clone Task.
+
+        装配队列「克隆」: a new standby album with the same frames, presets and profile (no images).
+        """
+        return self._request("POST", f"/workshop/tasks/{_q(series_id)}/clone", json=body)
+
     def list_webhooks(self) -> Any:
         """GET /webhooks — List Webhooks."""
         return self._request("GET", "/webhooks")

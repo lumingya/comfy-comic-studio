@@ -18,6 +18,7 @@ only, not verified against the live services.
 from __future__ import annotations
 
 import base64
+import copy
 import io
 import random
 import re
@@ -245,12 +246,25 @@ def build(channel: ImageChannel, llm_factory, transport=None, kinds: dict | None
     ``kinds`` maps kind → class ``(channel, transport)`` (the registry point ``cloud_adapter``).
     """
     if channel.kind == "chat_image":
-        client = llm_factory()
+        # Factories normally create a client, but extensions may return a shared one. Never
+        # redirect that shared text/vision client, or wrap its method repeatedly.
+        client = copy.copy(llm_factory())
+        if channel.base_url.strip():
+            client.base_url = channel.base_url.strip().rstrip("/")
+            # An explicit endpoint owns its own credential. Inheriting the text service's
+            # secret here could leak it to an unrelated provider (or an unauthenticated proxy).
+            client.api_key = channel.api_key
+        elif channel.api_key:
+            client.api_key = channel.api_key
         if channel.model:
+            client.image_models = (channel.model,)
+        if channel.model or channel.negative:
             original = client.generate_image
 
-            def generate_image(*args, models=None, **kw):
-                return original(*args, models=(channel.model,), **kw)
+            def generate_image(prompt, *args, models=None, **kw):
+                text = prompt + (f"\nAvoid: {channel.negative}" if channel.negative else "")
+                selected = (channel.model,) if channel.model else models
+                return original(text, *args, models=selected, **kw)
 
             client.generate_image = generate_image
         return client

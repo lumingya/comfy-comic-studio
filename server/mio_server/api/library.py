@@ -152,6 +152,13 @@ def delete_workflow(ctx: Ctx, workflow_id: str) -> None:
     doc = ctx.store.get_doc("workflow", workflow_id)
     if doc.source == "builtin":
         raise Conflict("内置工作流不能删除")
+    users = [
+        p.name
+        for p in ctx.store.list_docs("profile")
+        if any(s.workflow_id == workflow_id for s in [*p.draft, *p.final, *p.edits.values()])
+    ]
+    if users:
+        raise Conflict("工作流仍被出图配置使用，请先更换工作流：" + "、".join(users))
     doc.deleted_at = now_iso()
     ctx.store.put_doc(doc)
 
@@ -184,6 +191,10 @@ def list_profiles(ctx: Ctx) -> list[RenderProfile]:
 
 @router.post("/profiles", response_model=RenderProfile, status_code=status.HTTP_201_CREATED)
 def create_profile(ctx: Ctx, body: RenderProfile) -> RenderProfile:
+    if body.cloud_channel and body.cloud_channel not in {
+        c.id for c in ctx.settings().image_channels
+    }:
+        raise ValueError("出图配置选择的云端渠道不存在，请重新选择")
     for stage in [*body.draft, *body.final, *body.edits.values()]:
         ctx.store.get_doc("workflow", stage.workflow_id)
     return ctx.store.put_doc(body)
@@ -231,6 +242,9 @@ def put_instance(ctx: Ctx, instance_id: str, body: ComfyInstance) -> ComfyInstan
 
 @router.delete("/instances/{instance_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_instance(ctx: Ctx, instance_id: str) -> None:
+    users = [p.name for p in ctx.store.list_docs("profile") if instance_id in p.instances]
+    if users:
+        raise Conflict("服务仍被出图配置指定使用，请先更换服务：" + "、".join(users))
     ctx.store.delete_doc("instance", instance_id)
     ctx.refresh_instances()
 

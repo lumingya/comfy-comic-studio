@@ -13,6 +13,7 @@ from .. import bundle as B
 from .. import settings as SET
 from ..importer import LEGACY_ROOT, LegacyImporter
 from ..models import now_iso
+from ..storage import Conflict
 from .deps import Ctx
 from .library import BINARY_BODY, read_body
 
@@ -34,7 +35,12 @@ def get_settings(ctx: Ctx) -> dict:
 @router.patch("/settings")
 def patch_settings(ctx: Ctx, patch: dict[str, Any]) -> dict:
     """Deep-merges one level; sending the masked api key back keeps the stored one."""
-    updated = SET.apply_patch(ctx.settings(), patch)
+    current = ctx.settings()
+    updated = SET.apply_patch(current, patch)
+    removed = {c.id for c in current.image_channels} - {c.id for c in updated.image_channels}
+    users = [p.name for p in ctx.store.list_docs("profile") if p.cloud_channel in removed]
+    if users:
+        raise Conflict("渠道仍被出图配置使用，请先更换渠道：" + "、".join(users))
     updated.updated_at = now_iso()
     ctx.store.put_doc(updated)
     return SET.public(updated)

@@ -58,6 +58,16 @@ class WorkshopBridgeTests(ApiCase):
         self.assertEqual(out["episode"]["takes"], [])
         self.assertNotEqual(out["episode"]["id"], board.id)
 
+    def test_clone_keeps_canvas_snapshot_without_reusing_images(self):
+        _, board = self.board()
+        album, assembled = W.assemble(self.ctx.store, board.id, [], "Original")
+        clone, episode = W.clone_task(self.ctx.store, album.id)
+        self.assertNotEqual(clone.id, album.id)
+        self.assertEqual(episode.strip, assembled.strip)
+        self.assertEqual(episode.takes, [])
+        episode.strip.width = 512
+        self.assertEqual(self.ctx.store.get_episode(assembled.id).strip.width, 960)
+
     def test_missing_profile_is_rejected_before_creating_an_album(self):
         _, board = self.board()
         response = self.client.post(

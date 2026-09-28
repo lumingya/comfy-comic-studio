@@ -105,7 +105,12 @@ def find_workshop(store) -> Series | None:
 
 
 def ensure_workshop(store, root: str | Path | None = None) -> Series:
-    """The workshop series, created (and seeded from the legacy data) on first use."""
+    """Seed once even when several browser tabs open the workshop simultaneously."""
+    with store.lock:
+        return _ensure_workshop(store, root)
+
+
+def _ensure_workshop(store, root: str | Path | None = None) -> Series:
     found = find_workshop(store)
     if found:
         return found
@@ -145,6 +150,11 @@ def assemble(
     missing = [pid for pid in preset_ids if pid not in by_id]
     if missing:
         raise NotFound(f"preset not found: {missing[0]}")
+    if not board.panels:
+        raise ValueError("分镜还没有分幕，请先添加至少一幕再装配")
+    chosen_profile = profile_id or workshop.default_profile_id
+    if chosen_profile:
+        store.get_doc("profile", chosen_profile)
     variables = dict(workshop.variables)
     for pid in preset_ids:
         variables.update(by_id[pid].variables())
@@ -155,8 +165,9 @@ def assemble(
             # The presets it was assembled from, as a snapshot (the queue card's 预设 line).
             presets=[by_id[pid].model_copy(deep=True) for pid in preset_ids],
             bible=workshop.bible.model_copy(deep=True),
+            variants=[v.model_copy(deep=True) for v in workshop.variants],
             variables=variables,
-            default_profile_id=profile_id or workshop.default_profile_id,
+            default_profile_id=chosen_profile,
         )
     )
     panels = [Panel.model_validate(p.model_dump()) for p in board.ordered_panels()]
@@ -167,6 +178,7 @@ def assemble(
             order=0,
             synopsis=board.synopsis,
             panels=panels,
+            strip=board.strip.model_copy(deep=True),
         )
     )
     return album, episode
@@ -189,6 +201,7 @@ def clone_task(store, series_id: str, title: str = "") -> tuple[Series, Episode]
             kind="album",
             presets=[p.model_copy(deep=True) for p in source.presets],
             bible=source.bible.model_copy(deep=True),
+            variants=[v.model_copy(deep=True) for v in source.variants],
             variables=dict(source.variables),
             default_profile_id=source.default_profile_id,
         )
@@ -201,6 +214,7 @@ def clone_task(store, series_id: str, title: str = "") -> tuple[Series, Episode]
             order=0,
             synopsis=board.synopsis,
             panels=panels,
+            strip=board.strip.model_copy(deep=True),
         )
     )
     return album, episode

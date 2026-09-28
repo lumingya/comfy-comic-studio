@@ -62,6 +62,19 @@
       "title": "Signature",
       "type": "string"
      },
+     "template": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "An unsaved template draft (模板工作室 live preview); validated like an import and used instead of ``template_id``",
+      "title": "Template"
+     },
      "template_id": {
       "default": "export-paper",
       "title": "Template Id",
@@ -617,6 +630,18 @@
      "trigger"
     ],
     "title": "Character",
+    "type": "object"
+   },
+   "CloneRequest": {
+    "properties": {
+     "title": {
+      "default": "",
+      "maxLength": 120,
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "title": "CloneRequest",
     "type": "object"
    },
    "ComfyInstance-Input": {
@@ -10411,6 +10436,71 @@
      }
     ],
     "summary": "Assemble",
+    "tags": [
+     "workshop"
+    ]
+   }
+  },
+  "/workshop/tasks/{series_id}/clone": {
+   "post": {
+    "description": "装配队列「克隆」: a new standby album with the same frames, presets and profile (no images).",
+    "operationId": "clone_task",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "anyOf": [
+         {
+          "$ref": "#/components/schemas/CloneRequest"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "title": "Body"
+       }
+      }
+     }
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Assembled"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Clone Task",
     "tags": [
      "workshop"
     ]

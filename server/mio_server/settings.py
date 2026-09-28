@@ -100,9 +100,20 @@ def apply_patch(settings: AppSettings, patch: dict) -> AppSettings:
     stored = {c.id: c.api_key for c in settings.image_channels}
     for channel in data.get("image_channels") or []:
         if isinstance(channel, dict) and channel.get("api_key") == MASK:
-            channel["api_key"] = stored.get(channel.get("id"), "")
+            if channel.get("id") not in stored:
+                raise ValueError("渠道 ID 已改变，无法沿用原密钥；请保留原 ID 或重新填写密钥")
+            channel["api_key"] = stored[channel["id"]]
     data["id"], data["name"] = "app", "settings"
-    return AppSettings.model_validate(data)
+    updated = AppSettings.model_validate(data)
+    # Validate changes at the write boundary, not when loading older settings: a broken old
+    # channel must not prevent the user from opening the UI to repair it.
+    if "image_channels" in patch or "image_channel" in patch:
+        ids = [c.id for c in updated.image_channels]
+        if len(ids) != len(set(ids)):
+            raise ValueError("渠道 ID 重复，请为每个渠道使用独立 ID")
+        if updated.image_channel and updated.image_channel not in ids:
+            raise ValueError("默认云端渠道不存在；删除前请明确选择新的默认渠道")
+    return updated
 
 
 class ConfiguredClient(L.Client):
