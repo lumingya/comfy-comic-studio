@@ -1392,6 +1392,15 @@ html[data-nav-collapsed='true'] .sidebar .profile {
   background: color-mix(in srgb, var(--muted) 6%, transparent);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--muted) 13%, transparent);
 }
+.prompt-paint mark.unknown-token,
+.prompt-resolved mark.unknown-token {
+  color: inherit;
+  background: transparent;
+  box-shadow: none;
+  text-decoration: underline dotted var(--muted);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
 .prompt-foot {
   display: flex;
   align-items: flex-start;

@@ -1,6 +1,11 @@
 import { useDesktopSelection, type DesktopContext } from '../../app/useDesktopSelection';
 import { useSelection } from '../../app/selection';
-import { ContextMenu, useContextMenu } from '../../components/ContextMenu';
+import {
+  ContextMenu,
+  useContextMenu,
+  type ContextGroup,
+  type ContextItem,
+} from '../../components/ContextMenu';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -27,7 +32,13 @@ import { captionText, replaceCaption } from './caption';
 import { confirm } from '../../components/confirm';
 import { toastError } from '../../components/toast';
 import { useEpisodeContext } from '../episode/EpisodePage';
-import { PromptSurface, type KnownVariables } from './PromptSurface';
+import {
+  PromptSurface,
+  variableUsage,
+  type KnownVariables,
+  type PromptSources,
+  type PromptUsage,
+} from './PromptSurface';
 
 /** Every variable some preset defines (true when at least one gives it a value). */
 export function useKnownVariables(): KnownVariables {
@@ -42,16 +53,40 @@ export function useKnownVariables(): KnownVariables {
   }, [ws.data]);
 }
 
+/** Variable name → the presets defining it (title + value), in library order, for completion. */
+export function usePromptSources(): PromptSources {
+  const ws = useWorkshop();
+  return useMemo(() => {
+    const sources: PromptSources = new Map();
+    for (const p of ws.data?.presets ?? [])
+      for (const e of p.entries) {
+        const list = sources.get(e.key) ?? [];
+        list.push({ title: p.title, value: e.value });
+        sources.set(e.key, list);
+      }
+    return sources;
+  }, [ws.data]);
+}
+
 export const basePromptKey = (id: string) => `mio.basePrompt.${id}`;
+const HINT_KEY = 'cc-hint-multiselect';
+const promptOf = (p: Panel) => p.overrides.raw_prompt ?? '';
+/** Legacy 只选空白分幕: neither a prompt nor dialogue. */
+const isEmptyFrame = (p: Panel) => !promptOf(p).trim() && !captionText(p.dialogues).trim();
 
 /** 分镜工坊: legacy frame list + page editor (name, prompt, negative, caption, parameters). */
 export default function StoryboardEditor() {
   const { t } = useTranslation();
   const { episode } = useEpisodeContext();
   const known = useKnownVariables();
+  const sources = usePromptSources();
   const panels = useMemo(
     () => [...episode.panels].sort((a, b) => a.order - b.order),
     [episode.panels],
+  );
+  const used = useMemo(
+    () => variableUsage(panels.flatMap((p) => [promptOf(p), p.overrides.raw_negative ?? ''])),
+    [panels],
   );
   const [activeId, setActiveId] = useState<string | undefined>(panels[0]?.id);
   const active = panels.find((p) => p.id === activeId) ?? panels[0];
@@ -73,10 +108,18 @@ export default function StoryboardEditor() {
   const menu = useContextMenu<DesktopContext>();
   const duplicate = useDuplicatePanel(episode.id!);
   const removeMany = useBatchDeletePanels(episode.id!);
+  const reorder = useReorderPanels(episode.id!);
+  const patchOne = usePatchPanel(episode.id!);
+  const patchMany = useBatchPatchPanels(episode.id!);
+  const flush = async () => {
+    if (editorSave.current) await flushDraft(editorSave.current);
+  };
+  const basePrompt = () => localStorage.getItem(basePromptKey(episode.id!)) ?? '';
   const removeSelected = async (ids: string[]) => {
     if (
       !ids.length ||
       removeMany.isPending ||
+      ids.length >= panels.length ||
       !(await confirm({ title: t('batch.deleteTitle', { count: ids.length }), danger: true }))
     )
       return;
@@ -91,11 +134,52 @@ export default function StoryboardEditor() {
   };
   const copySelected = async (ids: string[]) => {
     try {
-      if (editorSave.current) await flushDraft(editorSave.current);
+      await flush();
       for (const id of ids) await duplicate.mutateAsync(id);
     } catch (error) {
       toastError(error);
     }
+  };
+  const moveFrame = async (id: string, dir: -1 | 1) => {
+    const ids = [...panelIds];
+    const i = ids.indexOf(id);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    try {
+      await flush();
+      await reorder.mutateAsync(ids);
+    } catch (error) {
+      toastError(error);
+    }
+  };
+  /** Legacy 插入起手模板: fill the empty prompts among `ids` with the story's starting template. */
+  const applyBase = async (ids: string[]) => {
+    const base = basePrompt();
+    const blank = panels
+      .filter((p) => ids.includes(p.id!) && !promptOf(p).trim())
+      .map((p) => p.id!);
+    if (!base || !blank.length) return;
+    try {
+      await flush();
+      if (blank.length === 1)
+        await patchOne.mutateAsync({
+          panelId: blank[0],
+          changes: { overrides: { raw_prompt: base } },
+        });
+      else
+        await patchMany.mutateAsync({
+          panelIds: blank,
+          changes: { overrides: { raw_prompt: base } },
+        });
+    } catch (error) {
+      toastError(error);
+    }
+  };
+  const [hintSeen, setHintSeen] = useState(() => localStorage.getItem(HINT_KEY) === 'seen');
+  const seeHint = () => {
+    localStorage.setItem(HINT_KEY, 'seen');
+    setHintSeen(true);
   };
   const desktop = useDesktopSelection({
     itemAttribute: 'data-selection-id',
@@ -116,13 +200,34 @@ export default function StoryboardEditor() {
   useEffect(() => {
     if (active?.id && !selection.ids.length) selection.anchorAt(active.id);
   }, [active?.id, selection.ids.length, selection.anchorAt]);
+  const activeIndex = active ? panels.indexOf(active) : -1;
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (!(event.metaKey || event.ctrlKey) || event.isComposing) return;
+      if (document.querySelector('dialog[open]') || activeIndex < 0) return;
+      if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+        event.preventDefault();
+        const next = panels[activeIndex + (event.key === 'ArrowDown' ? 1 : -1)];
+        if (next) void choose(next.id);
+      } else if (event.key === 'Enter') {
+        event.preventDefault();
+        const next = panels[activeIndex + 1];
+        void (async () => {
+          await choose(next?.id ?? active?.id);
+          if (next) document.getElementById('workshop-frame-prompt')?.focus();
+        })();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  });
   const [batch, setBatch] = useState(false);
   const [batchCount, setBatchCount] = useState(4);
 
-  const addFrames = (count: number, prompt: string) => {
-    let after = active?.id ?? null;
+  const addFrames = (count: number, prompt: string, anchor: string | null = active?.id ?? null) => {
+    let after = anchor;
     const run = async () => {
-      if (editorSave.current) await flushDraft(editorSave.current);
+      await flush();
       if (!Number.isInteger(count) || count < 1 || count > 24) return;
       for (let i = 0; i < count; i += 1) {
         const ep = await add.mutateAsync({
@@ -139,6 +244,148 @@ export default function StoryboardEditor() {
       }
     };
     run().catch(toastError);
+  };
+
+  /** Legacy workshopFrameContextItems / workshopFramesSelectionContextItems. */
+  const frameMenu = ({ ids, focusId }: DesktopContext): ContextGroup[] => {
+    const focus = panels.find((p) => p.id === focusId) ?? panels.find((p) => p.id === ids[0]);
+    const base = basePrompt();
+    const pickEmpty = () => selection.replace(panels.filter(isEmptyFrame).map((p) => p.id!));
+    const select: ContextGroup = {
+      heading: t('ws.story.menu.select'),
+      items: [
+        { label: t('ws.story.menu.selectAll'), shortcut: 'Ctrl/⌘ A', onSelect: selection.all },
+        {
+          label: t('ws.story.menu.selectEmpty'),
+          hint: t('ws.story.menu.selectEmptyHint'),
+          onSelect: pickEmpty,
+        },
+      ],
+      note: t('ws.story.menu.selectHint'),
+    };
+    if (!focus) return [select];
+    const index = panels.indexOf(focus);
+    const editItem = (hint?: string): ContextItem => ({
+      label: focus.id === active?.id ? t('ws.story.menu.editing') : t('ws.story.menu.edit'),
+      icon: <Icon name="edit" sm />,
+      primary: true,
+      disabled: focus.id === active?.id,
+      shortcut: hint ? undefined : t('ws.story.menu.editShortcut'),
+      hint,
+      onSelect: () => void choose(focus.id),
+    });
+    if (ids.length > 1 && ids.includes(focus.id!)) {
+      const blank = panels.filter((p) => ids.includes(p.id!) && !promptOf(p).trim()).length;
+      return [
+        {
+          heading: t('ws.story.menu.selected', { count: ids.length }),
+          items: [
+            editItem(focus.description || undefined),
+            {
+              label: blank
+                ? t('ws.story.menu.applyBaseMany', { count: blank })
+                : t('ws.story.applyBase'),
+              icon: <Icon name="spark" sm />,
+              disabled: !base || !blank,
+              hint: !base
+                ? t('ws.story.menu.baseMissing')
+                : blank
+                  ? undefined
+                  : t('ws.story.menu.applyBaseNone'),
+              onSelect: () => void applyBase(ids),
+            },
+            {
+              label: t('ws.story.menu.copyMany'),
+              icon: <Icon name="copy" sm />,
+              hint: t('ws.story.menu.copyManyHint'),
+              disabled: duplicate.isPending,
+              onSelect: () => void copySelected(ids),
+            },
+          ],
+        },
+        {
+          items: [
+            { label: t('ws.story.menu.selectAll'), shortcut: 'Ctrl/⌘ A', onSelect: selection.all },
+            { label: t('ws.story.menu.selectEmpty'), onSelect: pickEmpty },
+            { label: t('ws.story.menu.clear'), shortcut: 'Esc', onSelect: selection.clear },
+          ],
+        },
+        {
+          items: [
+            {
+              label: t('ws.story.menu.removeMany', { count: ids.length }),
+              icon: <Icon name="trash" sm />,
+              danger: true,
+              shortcut: 'Delete',
+              disabled: removeMany.isPending || ids.length >= panels.length,
+              title: ids.length >= panels.length ? t('ws.story.menu.keepOne') : undefined,
+              onSelect: () => void removeSelected(ids),
+            },
+          ],
+        },
+      ];
+    }
+    const taken = !!promptOf(focus).trim();
+    return [
+      {
+        items: [
+          editItem(),
+          {
+            label: t('ws.story.applyBase'),
+            icon: <Icon name="spark" sm />,
+            disabled: !base || taken,
+            hint: !base
+              ? t('ws.story.menu.baseMissing')
+              : taken
+                ? t('ws.story.menu.baseTaken')
+                : t('ws.story.menu.baseFill'),
+            onSelect: () => void applyBase([focus.id!]),
+          },
+        ],
+      },
+      {
+        items: [
+          {
+            label: t('ws.story.menu.insertAfter'),
+            icon: <Icon name="plus" sm />,
+            disabled: add.isPending,
+            onSelect: () => addFrames(1, '', focus.id!),
+          },
+          {
+            label: t('ws.story.menu.copyOne'),
+            icon: <Icon name="copy" sm />,
+            hint: t('ws.story.menu.copyHint'),
+            disabled: duplicate.isPending,
+            onSelect: () => void copySelected([focus.id!]),
+          },
+          {
+            label: t('ws.story.menu.moveUp'),
+            icon: <Icon name="up" sm />,
+            disabled: index === 0 || reorder.isPending,
+            onSelect: () => void moveFrame(focus.id!, -1),
+          },
+          {
+            label: t('ws.story.menu.moveDown'),
+            icon: <Icon name="down" sm />,
+            disabled: index >= panels.length - 1 || reorder.isPending,
+            onSelect: () => void moveFrame(focus.id!, 1),
+          },
+        ],
+      },
+      select,
+      {
+        items: [
+          {
+            label: t('ws.story.menu.remove'),
+            icon: <Icon name="trash" sm />,
+            danger: true,
+            disabled: removeMany.isPending || panels.length <= 1,
+            title: panels.length <= 1 ? t('ws.story.menu.keepOne') : undefined,
+            onSelect: () => void removeSelected([focus.id!]),
+          },
+        ],
+      },
+    ];
   };
 
   return (
@@ -179,6 +426,14 @@ export default function StoryboardEditor() {
               </button>
             ))}
           </div>
+          {panels.length > 1 && !hintSeen && !selection.ids.length ? (
+            <p className="multiselect-hint">
+              <span>{t('classic.shelf.multiHint')}</span>
+              <button type="button" className="link-button" onClick={seeHint}>
+                {t('classic.shelf.multiHintOk')}
+              </button>
+            </p>
+          ) : null}
           <div className="workshop-frames-actions">
             <button
               type="button"
@@ -237,6 +492,9 @@ export default function StoryboardEditor() {
             count={panels.length}
             panels={panels}
             known={known}
+            sources={sources}
+            used={used}
+            base={basePrompt()}
             onSelect={(id) => void choose(id)}
             registerSave={registerSave}
           />
@@ -252,29 +510,7 @@ export default function StoryboardEditor() {
           y={menu.state.y}
           returnFocus={menu.state.payload.target}
           onClose={menu.close}
-          groups={[
-            {
-              items: [
-                {
-                  label: t('ws.story.copy'),
-                  disabled: duplicate.isPending,
-                  onSelect: () => {
-                    void copySelected(menu.state!.payload.ids);
-                  },
-                },
-                {
-                  label: t('common.delete'),
-                  danger: true,
-                  disabled: removeMany.isPending,
-                  onSelect: () => {
-                    void removeSelected(menu.state!.payload.ids);
-                  },
-                },
-                { label: t('classic.shelf.selectFiltered'), onSelect: selection.all },
-                { label: t('classic.shelf.clearSelection'), onSelect: selection.clear },
-              ],
-            },
-          ]}
+          groups={frameMenu(menu.state.payload)}
         />
       ) : null}
     </>
@@ -287,6 +523,9 @@ function FramePage({
   count,
   panels,
   known,
+  sources,
+  used,
+  base,
   onSelect,
   registerSave,
 }: {
@@ -295,6 +534,10 @@ function FramePage({
   count: number;
   panels: Panel[];
   known: KnownVariables;
+  sources: PromptSources;
+  used: PromptUsage;
+  /** The story's starting template (故事梗概 / 起手模板), '' when none. */
+  base: string;
   onSelect: (id: string | undefined) => void;
   registerSave: (save: AutosaveController | null) => void;
 }) {
@@ -474,11 +717,26 @@ function FramePage({
       </div>
       <div className="negative-heading prompt-heading">
         <label htmlFor="workshop-frame-prompt">{t('ws.story.prompt')}</label>
+        {base && !prompt.value.trim() ? (
+          <button
+            type="button"
+            className="btn small ghost"
+            onClick={() => {
+              prompt.onChange(base);
+              document.getElementById('workshop-frame-prompt')?.focus();
+            }}
+          >
+            <Icon name="plus" sm />
+            {t('ws.story.applyBase')}
+          </button>
+        ) : null}
       </div>
       <PromptSurface
         id="workshop-frame-prompt"
         className="workshop-prompt"
         known={known}
+        sources={sources}
+        used={used}
         placeholder={t('ws.story.promptHint')}
         {...prompt}
       />
@@ -505,8 +763,9 @@ function FramePage({
         id="workshop-frame-negative"
         className="workshop-negative"
         known={known}
+        sources={sources}
+        used={used}
         placeholder={t('ws.story.negativeHint')}
-        foot={false}
         {...negative}
       />
       <div className="field">
@@ -517,6 +776,8 @@ function FramePage({
           id="workshop-frame-caption"
           className="workshop-caption"
           known={known}
+          sources={sources}
+          used={used}
           prose
           {...text}
         />

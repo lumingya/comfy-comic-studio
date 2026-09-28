@@ -15,15 +15,23 @@ export interface ContextItem {
   icon?: ReactNode;
   onSelect: () => void;
   danger?: boolean;
+  /** The main action of the menu (bold, like the legacy `primary` item). */
+  primary?: boolean;
   disabled?: boolean;
   /** Shown right-aligned, e.g. "Del" or "Ctrl+D". */
   shortcut?: string;
+  /** One quiet line under the label: what the action does or why it is disabled. */
+  hint?: ReactNode;
+  /** Native tooltip (legacy `title`), e.g. the reason a disabled item cannot run. */
+  title?: string;
 }
 
-/** Items separated by thin rules; a heading (optional) names the group. */
+/** Items separated by thin rules; a heading (optional) names the group, a note closes it. */
 export interface ContextGroup {
   heading?: ReactNode;
   items: ContextItem[];
+  /** Plain text after the items (legacy `{type:'label'}`), e.g. how to multi-select. */
+  note?: ReactNode;
 }
 
 export interface ContextMenuState<T> {
@@ -140,7 +148,7 @@ export function ContextMenu(props: {
     };
   }, [onClose, returnFocus]);
 
-  const groups = props.groups.filter((g) => g.items.length);
+  const groups = props.groups.filter((g) => g.items.length || g.note);
   return createPortal(
     <div
       ref={ref}
@@ -164,9 +172,10 @@ export function ContextMenu(props: {
               key={i}
               type="button"
               role="menuitem"
-              className={`menu-item ${item.danger ? 'danger' : ''}`}
+              className={`menu-item ${item.danger ? 'danger' : ''} ${item.primary ? 'primary' : ''}`}
               aria-disabled={item.disabled || undefined}
               disabled={item.disabled}
+              title={item.title}
               onClick={() => {
                 if (item.disabled) return;
                 onClose();
@@ -174,10 +183,14 @@ export function ContextMenu(props: {
               }}
             >
               {item.icon}
-              <span className="grow">{item.label}</span>
+              <span className="grow context-text">
+                <span>{item.label}</span>
+                {item.hint ? <small className="context-hint">{item.hint}</small> : null}
+              </span>
               {item.shortcut ? <kbd className="context-shortcut">{item.shortcut}</kbd> : null}
             </button>
           ))}
+          {g.note ? <div className="context-note">{g.note}</div> : null}
         </div>
       ))}
     </div>,

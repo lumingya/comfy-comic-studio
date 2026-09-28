@@ -329,6 +329,51 @@
   font-size: 11px;
   color: var(--muted);
   padding-left: 12px;
+  white-space: nowrap;
+}
+
+.context-menu .menu-item {
+  align-items: flex-start;
+  max-width: min(360px, calc(100vw - 16px));
+}
+
+.context-menu .menu-item > svg {
+  margin-top: 2px;
+}
+
+.context-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.context-text > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.context-menu .menu-item.primary .context-text > span {
+  font-weight: 600;
+}
+
+.context-menu .menu-item.primary > svg {
+  color: var(--accent);
+}
+
+.context-hint {
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--muted);
+  white-space: normal;
+}
+
+.context-note {
+  padding: 6px 10px 4px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
 }
 
 /* ---- help drawer (right side) ---- */
@@ -417,5 +462,97 @@
   to {
     transform: translateX(24px);
     opacity: 0;
+  }
+}
+
+/* ---- prompt variable completion (pages/workshop/PromptSurface) ---- */
+#prompt-completion {
+  position: fixed;
+  z-index: 1000;
+  min-width: 280px;
+  max-width: min(440px, calc(100vw - 16px));
+  max-height: min(340px, calc(100vh - 16px));
+  overflow: auto;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel, var(--panel2));
+  box-shadow: var(--shadow);
+  color: var(--text);
+  font-size: 0.75rem;
+  scrollbar-width: thin;
+}
+
+#prompt-completion [role='option'] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  padding: 7px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--soft);
+}
+
+#prompt-completion [role='option'].active {
+  background: var(--tint, var(--hover));
+  color: var(--text);
+}
+
+#prompt-completion .key {
+  font: 0.75rem/1.6 var(--mono);
+  color: var(--accent);
+  overflow-wrap: anywhere;
+}
+
+#prompt-completion .state-empty .key {
+  color: var(--muted);
+}
+
+#prompt-completion .state-unknown .key {
+  color: var(--soft);
+  text-decoration: underline dotted var(--muted);
+  text-underline-offset: 3px;
+}
+
+#prompt-completion .source {
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+  text-align: right;
+}
+
+#prompt-completion .preview,
+#prompt-completion .note {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+#prompt-completion .preview {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#prompt-completion .note.warn {
+  color: var(--amber, var(--warn, #b8860b));
+}
+
+#prompt-completion .foot {
+  margin-top: 4px;
+  padding: 6px 10px 2px;
+  border-top: 1px solid var(--line);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+@media (max-width: 760px) {
+  #prompt-completion {
+    left: 8px !important;
+    right: 8px;
+    max-width: none;
+    min-width: 0;
   }
 }

@@ -483,9 +483,25 @@ describe('every route mounts with API data', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/workshop/story/sb_1'));
     expect(await screen.findByRole('heading', { name: '分镜工坊' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: /第 2 格/ })).toBeInTheDocument();
+    // Legacy paint: defined / empty / undefined (dotted) — every {name} gets a state.
     const marks = document.querySelectorAll('.prompt-paint mark[data-prompt-variable]');
-    expect([...marks].map((m) => (m as HTMLElement).dataset.state)).toEqual(['defined', 'empty']);
-    expect(screen.getByText(/识别到 2 个变量，其中 1 个还没有值：outfit/)).toBeInTheDocument();
+    expect([...marks].map((m) => (m as HTMLElement).dataset.state)).toEqual([
+      'defined',
+      'empty',
+      'unknown',
+    ]);
+    expect(
+      screen.getByText('识别到 3 个变量 · 1 个未定义（天气） · 1 个值为空（outfit）'),
+    ).toBeInTheDocument();
+    // The summary foot sits beside the surface, never over the textarea's last line.
+    const foot = document
+      .querySelector('#workshop-frame-prompt')!
+      .closest('.prompt-surface')!.nextElementSibling;
+    expect(foot).toHaveClass('prompt-editor-foot');
+    expect(
+      document.querySelector('#workshop-frame-negative')!.closest('.prompt-surface')!
+        .nextElementSibling,
+    ).toHaveClass('prompt-editor-foot');
     expect(screen.getByText('此幕画面参数')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '去装配此分镜' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/workshop/assembly'));
