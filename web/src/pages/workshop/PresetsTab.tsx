@@ -14,7 +14,7 @@ import { Icon } from '../../app/icons';
 import { AutoSaveGuard, useAutoDraft } from '../../app/useAutoDraft';
 import { SaveState } from '../../components/SaveState';
 import type { Series } from '../../api/types';
-import { confirm } from '../../components/confirm';
+import { confirm, promptText } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
 import { Loading } from '../../components/ui';
 import { downloadJson, pickJsonFiles, presetFromFile, presetToFile } from './files';
@@ -88,8 +88,17 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
   const update = (fn: (p: Preset) => Preset, now = false) =>
     commit((previous) => previous.map((p) => (p.id === current?.id ? fn(p) : p)), now);
 
-  const addPreset = () => {
-    const p = blankPreset(t('ws.presets.untitled', { n: presets.length + 1 }));
+  // Legacy workshop-new: the name is asked first (blank names are refused).
+  const addPreset = async () => {
+    const title = await promptText({
+      title: t('ws.presets.new'),
+      label: t('ws.assetName'),
+      value: t('ws.presets.untitled', { n: presets.length + 1 }),
+      confirmLabel: t('common.create'),
+      required: true,
+    });
+    if (title === null) return;
+    const p = blankPreset(title);
     commit([...presets, p], true);
     choose(p.id!);
   };
@@ -133,7 +142,7 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
         <Icon name="upload" />
         {t('ws.export')}
       </button>
-      <button type="button" className="btn" onClick={addPreset}>
+      <button type="button" className="btn" onClick={() => void addPreset()}>
         <Icon name="plus" />
         {t('ws.presets.new')}
       </button>

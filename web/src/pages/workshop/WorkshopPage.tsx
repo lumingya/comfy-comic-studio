@@ -19,6 +19,7 @@ import { Icon } from '../../app/icons';
 import { useRecents } from '../../app/recents';
 import { usePageTitle } from '../../app/title';
 import { useUI } from '../../app/ui-store';
+import { promptText } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
 import { Loading } from '../../components/ui';
 import type { EpisodeContext } from '../episode/EpisodePage';
@@ -108,6 +109,26 @@ export function StoryIndex() {
   return <StoryEmpty />;
 }
 
+/** Legacy workshop-new: ask for the name, then start the storyboard with its first frame. */
+export async function createStoryboard(
+  create: ReturnType<typeof useCreateEpisode>,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): Promise<Episode | null> {
+  const title = await promptText({
+    title: t('ws.story.new'),
+    label: t('ws.assetName'),
+    confirmLabel: t('common.create'),
+    required: true,
+  });
+  if (title === null) return null;
+  const e = await create.mutateAsync({ title });
+  const first = await api.POST('/api/episodes/{episode_id}/panels', {
+    params: { path: { episode_id: e.id! } },
+    body: { panel: { description: t('ws.story.frameN', { n: 1 }) }, after: null },
+  });
+  return first.data ?? e;
+}
+
 function StoryEmpty() {
   const { t } = useTranslation();
   const ws = useWorkshop();
@@ -121,11 +142,11 @@ function StoryEmpty() {
         <button
           type="button"
           className="btn primary"
+          disabled={create.isPending}
           onClick={() =>
-            create.mutate(
-              { title: t('ws.story.untitled') },
-              { onSuccess: (e) => navigate(`/workshop/story/${e.id}`), onError: toastError },
-            )
+            createStoryboard(create, t)
+              .then((e) => e && navigate(`/workshop/story/${e.id}`))
+              .catch(toastError)
           }
         >
           <Icon name="plus" />
@@ -187,11 +208,12 @@ export function StoryTab() {
     if (title && title !== ep.title) patch.mutate({ title }, { onError: toastError });
     setRenaming(false);
   };
-  const newBoard = (title = t('ws.story.untitled')) =>
-    create.mutateAsync({ title }).then((e) => {
-      navigate(`/workshop/story/${e.id}`);
-      return e;
-    });
+  const newBoard = async () => {
+    const e = await createStoryboard(create, t);
+    if (!e) return;
+    await qc.invalidateQueries({ queryKey: keys.episodesOf(ws.data!.id!) });
+    navigate(`/workshop/story/${e.id}`);
+  };
   const importBoards = async () => {
     try {
       const files = await pickJsonFiles();
