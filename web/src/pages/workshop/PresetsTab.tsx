@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { assetUrl } from '../../api/client';
@@ -69,6 +69,12 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
   const cancelRename = useRef(false);
   const [editGroups, setEditGroups] = useState(false);
   const [previewing, setPreviewing] = useState(false);
+  // Legacy settings workbench: tick cards to move several at once; drag a card (or the ticked
+  // cards) by its handle into a group section or the loose area below.
+  const [picked, setPicked] = useState<Set<string>>(() => new Set());
+  const [moveTarget, setMoveTarget] = useState('');
+  const [dropOver, setDropOver] = useState<string | null>(null);
+  const dragIds = useRef<string[]>([]);
   const shelf = useSeriesList();
   const trashSeries = useTrashSeries();
   const navigate = useNavigate();
@@ -90,6 +96,11 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
     if (now) void draft.flushAll().catch(toastError);
   };
   const current = presets.find((p) => p.id === pick) ?? presets[0];
+  const currentId = current?.id;
+  useEffect(() => {
+    setPicked(new Set());
+    setMoveTarget('');
+  }, [currentId]);
   // Legacy preset page: the last three 独立试绘 results of this preset (queue tasks marked as
   // previews), newest last.
   const previews = useMemo(
@@ -215,6 +226,55 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
       ...p,
       groups: p.groups.map((g) => (g.id === id ? { ...g, ...changes } : g)),
     }));
+  const pickedHere = current.entries.filter((e) => picked.has(e.id!));
+  const togglePick = (id: string, on: boolean) =>
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  const moveEntries = (ids: string[], group_id: string | null) => {
+    if (!ids.length) return;
+    update(
+      (p) => ({
+        ...p,
+        entries: p.entries.map((e) => (ids.includes(e.id!) ? { ...e, group_id } : e)),
+      }),
+      true,
+    );
+    setPicked(new Set());
+  };
+  const startDrag = (id: string, e: DragEvent) => {
+    dragIds.current = picked.has(id) ? [...picked] : [id];
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', dragIds.current.join(','));
+  };
+  /** Drop-zone props for a group section (`gid`) or the loose area (`null`). */
+  const dropZone = (gid: string | null): DropZone => {
+    const key = gid ?? '';
+    return {
+      'data-drop-group': key,
+      isDropTarget: dropOver === key,
+      onDragOver: (e: DragEvent) => {
+        if (!dragIds.current.length) return;
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (dropOver !== key) setDropOver(key);
+      },
+      onDragLeave: (e: DragEvent) => {
+        if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+        setDropOver((prev) => (prev === key ? null : prev));
+      },
+      onDrop: (e: DragEvent) => {
+        e.preventDefault();
+        const ids = dragIds.current;
+        dragIds.current = [];
+        setDropOver(null);
+        moveEntries(ids, gid);
+      },
+    };
+  };
 
   return (
     <WorkshopFrame tab="presets" actions={actions}>
@@ -404,7 +464,48 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
           </button>
         </div>
       </div>
-      <div className="settings-groups">
+      <div className={`settings-groups${pickedHere.length ? ' has-picked' : ''}`}>
+        {pickedHere.length ? (
+          <div
+            className="setting-selection-bar"
+            role="toolbar"
+            aria-label={t('ws.presets.pickedActions')}
+          >
+            <strong>{t('ws.presets.pickedCount', { count: pickedHere.length })}</strong>
+            <label className="setting-selection-target">
+              <span>{t('ws.presets.moveTo')}</span>
+              <select
+                value={moveTarget}
+                aria-label={t('ws.presets.moveTarget')}
+                onChange={(e) => setMoveTarget(e.target.value)}
+              >
+                <option value="">{t('ws.presets.noGroup')}</option>
+                {groups.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              className="btn small"
+              onClick={() =>
+                moveEntries(
+                  pickedHere.map((e) => e.id!),
+                  moveTarget || null,
+                )
+              }
+            >
+              <Icon name="check" sm />
+              {t('ws.presets.move')}
+            </button>
+            <button type="button" className="btn small ghost" onClick={() => setPicked(new Set())}>
+              {t('ws.presets.clearPick')}
+            </button>
+            <span className="setting-selection-hint">{t('ws.presets.pickHint')}</span>
+          </div>
+        ) : null}
         {groups.map((g) => (
           <Group
             key={g.id}
@@ -412,6 +513,10 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
             entries={byGroup(g.id!)}
             groups={groups}
             editing={editGroups}
+            picked={picked}
+            onPick={togglePick}
+            onDragStart={startDrag}
+            drop={dropZone(g.id!)}
             onRename={(title) => setGroup(g.id!, { title })}
             onRemove={() =>
               update(
@@ -432,25 +537,42 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
             }
           />
         ))}
-        <div className="setting-loose setting-cards">
+        <DropArea
+          className="setting-loose setting-cards"
+          zone={dropZone(null)}
+          aria-label={t('ws.presets.loose')}
+        >
           {loose.length ? (
-            <div className="character-settings-grid">
-              {loose.map((e) => (
-                <EntryCard
-                  key={e.id}
-                  entry={e}
-                  groups={groups}
-                  onChange={setEntry}
-                  onRemove={() =>
-                    update((p) => ({ ...p, entries: p.entries.filter((x) => x.id !== e.id) }), true)
-                  }
-                />
-              ))}
-            </div>
+            <>
+              {groups.length ? (
+                <p className="setting-loose-hint">{t('ws.presets.looseHint')}</p>
+              ) : null}
+              <div className="character-settings-grid">
+                {loose.map((e) => (
+                  <EntryCard
+                    key={e.id}
+                    entry={e}
+                    groups={groups}
+                    picked={picked.has(e.id!)}
+                    onPick={togglePick}
+                    onDragStart={startDrag}
+                    onChange={setEntry}
+                    onRemove={() =>
+                      update(
+                        (p) => ({ ...p, entries: p.entries.filter((x) => x.id !== e.id) }),
+                        true,
+                      )
+                    }
+                  />
+                ))}
+              </div>
+            </>
           ) : (
-            <p className="group-empty setting-loose-empty">{t('ws.presets.allGrouped')}</p>
+            <p className="group-empty setting-loose-empty">
+              {groups.length ? t('ws.presets.allGrouped') : t('ws.presets.noVars')}
+            </p>
           )}
-        </div>
+        </DropArea>
       </div>
       <details className="quiet-advanced">
         <summary>{t('ws.presets.bindings')}</summary>
@@ -605,11 +727,43 @@ function PreviewDialog({
   );
 }
 
+interface DropZone {
+  'data-drop-group': string;
+  isDropTarget: boolean;
+  onDragOver: (e: DragEvent) => void;
+  onDragLeave: (e: DragEvent) => void;
+  onDrop: (e: DragEvent) => void;
+}
+
+/** A `<div>` that accepts dragged variable cards (the loose area). */
+function DropArea({
+  zone,
+  className,
+  children,
+  ...rest
+}: {
+  zone: DropZone;
+  className: string;
+  children: ReactNode;
+  'aria-label'?: string;
+}) {
+  const { isDropTarget, ...handlers } = zone;
+  return (
+    <div className={`${className}${isDropTarget ? ' is-drop-target' : ''}`} {...handlers} {...rest}>
+      {children}
+    </div>
+  );
+}
+
 function Group({
   group,
   entries,
   groups,
   editing,
+  picked,
+  onPick,
+  onDragStart,
+  drop,
   onRename,
   onRemove,
   onAdd,
@@ -620,6 +774,10 @@ function Group({
   entries: PresetEntry[];
   groups: PresetGroup[];
   editing: boolean;
+  picked: Set<string>;
+  onPick: (id: string, on: boolean) => void;
+  onDragStart: (id: string, e: DragEvent) => void;
+  drop: DropZone;
   onRename: (title: string) => void;
   onRemove: () => void;
   onAdd: () => void;
@@ -629,8 +787,13 @@ function Group({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const body = `group-body-${group.id}`;
+  const { isDropTarget, ...dropHandlers } = drop;
   return (
-    <section className={`setting-group${open ? ' is-open' : ''}`} data-group-id={group.id}>
+    <section
+      className={`setting-group${open ? ' is-open' : ''}${isDropTarget ? ' is-drop-target' : ''}`}
+      data-group-id={group.id}
+      {...dropHandlers}
+    >
       <header className="setting-group-heading">
         <button
           type="button"
@@ -680,17 +843,24 @@ function Group({
         )}
       </header>
       <div id={body} className="group-content setting-cards" hidden={!open}>
-        <div className="character-settings-grid">
-          {entries.map((e) => (
-            <EntryCard
-              key={e.id}
-              entry={e}
-              groups={groups}
-              onChange={onEntry}
-              onRemove={() => onRemoveEntry(e.id!)}
-            />
-          ))}
-        </div>
+        {entries.length ? (
+          <div className="character-settings-grid">
+            {entries.map((e) => (
+              <EntryCard
+                key={e.id}
+                entry={e}
+                groups={groups}
+                picked={picked.has(e.id!)}
+                onPick={onPick}
+                onDragStart={onDragStart}
+                onChange={onEntry}
+                onRemove={() => onRemoveEntry(e.id!)}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="group-empty">{t('ws.presets.groupEmpty')}</p>
+        )}
       </div>
     </section>
   );
@@ -699,21 +869,52 @@ function Group({
 function EntryCard({
   entry,
   groups,
+  picked,
+  onPick,
+  onDragStart,
   onChange,
   onRemove,
 }: {
   entry: PresetEntry;
   groups: PresetGroup[];
+  picked: boolean;
+  onPick: (id: string, on: boolean) => void;
+  onDragStart: (id: string, e: DragEvent) => void;
   onChange: (id: string, changes: Partial<PresetEntry>, now?: boolean) => void;
   onRemove: () => void;
 }) {
   const { t } = useTranslation();
   const [meta, setMeta] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const label = entry.label || entry.key;
   const id = `setting-${entry.id}`;
   return (
-    <div className="character-setting" data-setting-key={entry.key}>
+    <div
+      className={`character-setting${picked ? ' is-picked' : ''}${dragging ? ' is-dragging' : ''}`}
+      data-setting-key={entry.key}
+    >
       <div className="character-setting-head">
+        <span
+          className="setting-drag-handle"
+          draggable
+          title={t('ws.presets.dragHint')}
+          aria-hidden="true"
+          onDragStart={(e) => {
+            onDragStart(entry.id!, e);
+            setDragging(true);
+          }}
+          onDragEnd={() => setDragging(false)}
+        >
+          <Icon name="grip" />
+        </span>
+        <input
+          type="checkbox"
+          className="setting-pick"
+          checked={picked}
+          aria-label={t('ws.presets.pickOf', { label })}
+          title={t('ws.presets.pickTitle')}
+          onChange={(e) => onPick(entry.id!, e.target.checked)}
+        />
         <label htmlFor={id} className="grow">
           {label}
         </label>

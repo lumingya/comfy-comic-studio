@@ -52,6 +52,7 @@ const PATHS = {
   home: "<path d='m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-8H9v8H4a1 1 0 0 1-1-1Z'/>",
   link: "<path d='M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1'/><path d='M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1'/>",
   moon: "<path d='M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z'/>",
+  grip: "<circle cx='9' cy='6' r='1.3'/><circle cx='15' cy='6' r='1.3'/><circle cx='9' cy='12' r='1.3'/><circle cx='15' cy='12' r='1.3'/><circle cx='9' cy='18' r='1.3'/><circle cx='15' cy='18' r='1.3'/>",
 } as const;
 
 export type IconName = keyof typeof PATHS;
