@@ -17,12 +17,14 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from .models import Episode, Panel, Preset, PresetEntry, PresetGroup, Series
+from .models import Episode, Panel, PanelOverrides, Preset, PresetEntry, PresetGroup, Series
 from .storage import NotFound
 
 log = logging.getLogger("mio.workshop")
 
 WORKSHOP_TITLE = "创作工坊"
+# ``Series.subtitle`` of the one-frame albums made by 预设工坊「独立试绘」 (the preset page lists them).
+PREVIEW_SUBTITLE = "预设试绘"
 
 # Labels / hints the legacy 预设工坊 shows for its well-known variables.
 LABELS: dict[str, tuple[str, str]] = {
@@ -180,6 +182,54 @@ def assemble(
             panels=panels,
             strip=board.strip.model_copy(deep=True),
         )
+    )
+    return album, episode
+
+
+def preview(
+    store,
+    preset_ids: list[str],
+    prompt: str,
+    title: str = "",
+    profile_id: str | None = None,
+) -> tuple[Series, Episode]:
+    """预设工坊「独立试绘」: one prompt + the chosen presets → a one-frame album waiting in the
+    queue (no storyboard involved).  The legacy workshop used it to check a character or style
+    preset on its own; the album is marked with ``subtitle = PREVIEW_SUBTITLE`` so the preset page
+    can list its results."""
+    workshop = ensure_workshop(store)
+    by_id = {p.id: p for p in workshop.presets}
+    missing = [pid for pid in preset_ids if pid not in by_id]
+    if missing:
+        raise NotFound(f"preset not found: {missing[0]}")
+    if not preset_ids:
+        raise ValueError("请先选择要试绘的预设")
+    text = prompt.strip()
+    if not text:
+        raise ValueError("请先填写画面描述")
+    chosen_profile = profile_id or workshop.default_profile_id
+    if chosen_profile:
+        store.get_doc("profile", chosen_profile)
+    variables = dict(workshop.variables)
+    for pid in preset_ids:
+        variables.update(by_id[pid].variables())
+    first = by_id[preset_ids[0]]
+    album = store.create_series(
+        Series(
+            title=(title.strip() or f"{first.title} · 试绘")[:120],
+            subtitle=PREVIEW_SUBTITLE,
+            kind="album",
+            presets=[by_id[pid].model_copy(deep=True) for pid in preset_ids],
+            bible=workshop.bible.model_copy(deep=True),
+            variants=[v.model_copy(deep=True) for v in workshop.variants],
+            variables=variables,
+            default_profile_id=chosen_profile,
+        )
+    )
+    # Raw mode keeps the ``{变量}`` prompt as written; a fixed seed makes presets comparable.
+    panel = Panel(order=0, description=text, overrides=PanelOverrides(raw_prompt=text, seed=1))
+    episode = store.create_episode(
+        Episode(series_id=album.id, title="试绘", order=0, synopsis=text, panels=[panel])
     )
     return album, episode
 

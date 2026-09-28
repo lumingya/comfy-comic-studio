@@ -19,6 +19,13 @@ class AssembleRequest(BaseModel):
     profile_id: str | None = None
 
 
+class PreviewRequest(BaseModel):
+    preset_ids: list[str] = Field(min_length=1)
+    prompt: str = Field(min_length=1, max_length=8000)
+    title: str = Field(default="", max_length=120)
+    profile_id: str | None = None
+
+
 class CloneRequest(BaseModel):
     title: str = Field(default="", max_length=120)
 
@@ -42,6 +49,17 @@ def assemble(ctx: Ctx, body: AssembleRequest) -> Assembled:
     W.ensure_workshop(ctx.store, getattr(ctx, "legacy_root", None))
     series, episode = W.assemble(
         ctx.store, body.storyboard_id, body.preset_ids, body.title, body.profile_id
+    )
+    return Assembled(series=series, episode=episode)
+
+
+@router.post("/workshop/preview", response_model=Assembled, status_code=status.HTTP_201_CREATED)
+def preview_preset(ctx: Ctx, body: PreviewRequest) -> Assembled:
+    """预设工坊「独立试绘」: one prompt + presets → a one-frame album waiting in the queue (no
+    storyboard, no model call).  Start it with ``POST /episodes/{id}/render``."""
+    W.ensure_workshop(ctx.store, getattr(ctx, "legacy_root", None))
+    series, episode = W.preview(
+        ctx.store, body.preset_ids, body.prompt, body.title, body.profile_id
     )
     return Assembled(series=series, episode=episode)
 

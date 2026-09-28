@@ -1529,6 +1529,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/workshop/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Preset
+         * @description 预设工坊「独立试绘」: one prompt + presets → a one-frame album waiting in the queue (no
+         *     storyboard, no model call).  Start it with ``POST /episodes/{id}/render``.
+         */
+        post: operations["preview_preset_api_workshop_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/workshop/tasks/{series_id}/clone": {
         parameters: {
             query?: never;
@@ -3003,6 +3024,20 @@ export interface components {
             id: string;
             /** Title */
             title: string;
+        };
+        /** PreviewRequest */
+        PreviewRequest: {
+            /** Preset Ids */
+            preset_ids: string[];
+            /** Prompt */
+            prompt: string;
+            /**
+             * Title
+             * @default
+             */
+            title?: string;
+            /** Profile Id */
+            profile_id?: string | null;
         };
         /** Prop */
         "Prop-Input": {
@@ -7062,6 +7097,39 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["AssembleRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Assembled"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_preset_api_workshop_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreviewRequest"];
             };
         };
         responses: {

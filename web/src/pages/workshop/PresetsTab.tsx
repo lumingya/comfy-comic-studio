@@ -1,8 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { assetUrl } from '../../api/client';
+import { useSeriesList, useTrashSeries } from '../../api/series';
+import { useProfiles } from '../../api/system';
 import {
+  PREVIEW_SUBTITLE,
   localId,
+  usePreviewPreset,
   useSavePresets,
   useWorkshop,
   type Preset,
@@ -13,10 +18,10 @@ import { QueryError } from '../../app/errors';
 import { Icon } from '../../app/icons';
 import { AutoSaveGuard, useAutoDraft } from '../../app/useAutoDraft';
 import { SaveState } from '../../components/SaveState';
-import type { Series } from '../../api/types';
+import type { Series, SeriesCard } from '../../api/types';
 import { confirm, promptText } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
-import { Loading } from '../../components/ui';
+import { Loading, Modal } from '../../components/ui';
 import { downloadJson, pickJsonFiles, presetFromFile, presetToFile } from './files';
 import { WorkshopFrame } from './WorkshopPage';
 
@@ -63,6 +68,10 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
   const [renaming, setRenaming] = useState(false);
   const cancelRename = useRef(false);
   const [editGroups, setEditGroups] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
+  const shelf = useSeriesList();
+  const trashSeries = useTrashSeries();
+  const navigate = useNavigate();
   // ?new=1 (help drawer / 开箱检查 「新建预设」): add a blank preset once and select it.
   const [params, setParams] = useSearchParams();
   useEffect(() => {
@@ -81,6 +90,18 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
     if (now) void draft.flushAll().catch(toastError);
   };
   const current = presets.find((p) => p.id === pick) ?? presets[0];
+  // Legacy preset page: the last three 独立试绘 results of this preset (queue tasks marked as
+  // previews), newest last.
+  const previews = useMemo(
+    () =>
+      (shelf.data ?? [])
+        .filter(
+          (s) => s.subtitle === PREVIEW_SUBTITLE && s.presets.some((p) => p.id === current?.id),
+        )
+        .sort((a, b) => a.created_at.localeCompare(b.created_at))
+        .slice(-3),
+    [shelf.data, current?.id],
+  );
   const choose = (id: string) => {
     setPick(id);
     localStorage.setItem(PICK_KEY, id);
@@ -264,6 +285,15 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
           <button
             type="button"
             className="btn"
+            title={t('ws.presets.previewDesc')}
+            onClick={() => setPreviewing(true)}
+          >
+            <Icon name="brush" />
+            {t('ws.presets.preview')}
+          </button>
+          <button
+            type="button"
+            className="btn"
             onClick={() => {
               const copy: Preset = {
                 ...structuredClone(current),
@@ -300,6 +330,41 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
           </button>
         </div>
       </div>
+      {previews.length ? (
+        <div className="workshop-preset-preview" role="list" aria-label={t('ws.presets.previews')}>
+          {previews.map((album) => (
+            <PreviewFigure
+              key={album.id}
+              album={album}
+              onOpen={() => navigate('/workshop/assembly')}
+              onRemove={async () => {
+                if (
+                  !(await confirm({
+                    title: t('ws.presets.previewRemoveConfirm', { title: album.title }),
+                    description: t('ws.presets.previewRemoveHelp'),
+                    confirmLabel: t('common.delete'),
+                    danger: true,
+                  }))
+                )
+                  return;
+                trashSeries.mutate(album.id, { onError: toastError });
+              }}
+            />
+          ))}
+        </div>
+      ) : null}
+      {previewing ? (
+        <PreviewDialog
+          preset={current}
+          onClose={() => setPreviewing(false)}
+          beforeSubmit={() => draft.flushAll()}
+          onQueued={(title) => {
+            setPreviewing(false);
+            toast(t('ws.presets.previewQueued', { title }));
+            navigate('/workshop/assembly');
+          }}
+        />
+      ) : null}
       <div className="settings-form-toolbar">
         <div className="settings-toolbar-label">
           {t('ws.presets.variables')} <span>{current.entries.length}</span>
@@ -392,6 +457,151 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
         <p className="help">{t('ws.presets.bindingsHelp')}</p>
       </details>
     </WorkshopFrame>
+  );
+}
+
+/** One 独立试绘 result on the preset page: cover (or a waiting placeholder), title, delete. */
+function PreviewFigure({
+  album,
+  onOpen,
+  onRemove,
+}: {
+  album: SeriesCard;
+  onOpen: () => void;
+  onRemove: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <figure className="workshop-preview-figure" role="listitem" data-preview-id={album.id}>
+      <button
+        type="button"
+        className="workshop-preview-open"
+        title={t('ws.presets.previewOpen')}
+        onClick={onOpen}
+      >
+        {album.cover_asset_id ? (
+          <img src={assetUrl(album.cover_asset_id, 320)} alt={album.title} loading="lazy" />
+        ) : (
+          <span className="workshop-preview-blank">{t('ws.presets.previewPending')}</span>
+        )}
+      </button>
+      <figcaption>{album.title}</figcaption>
+      <button
+        type="button"
+        className="ibtn"
+        title={t('ws.presets.previewRemove')}
+        aria-label={t('ws.presets.previewRemove')}
+        onClick={onRemove}
+      >
+        <Icon name="trash" />
+      </button>
+    </figure>
+  );
+}
+
+/** Legacy 「预设独立试绘」 modal: a prompt (prefilled with the preset's variables) and the
+ * workflow to use; submitting adds a one-frame standby task to the assembly queue. */
+function PreviewDialog({
+  preset,
+  onClose,
+  beforeSubmit,
+  onQueued,
+}: {
+  preset: Preset;
+  onClose: () => void;
+  beforeSubmit: () => Promise<unknown>;
+  onQueued: (title: string) => void;
+}) {
+  const { t } = useTranslation();
+  const profiles = useProfiles();
+  const preview = usePreviewPreset();
+  const [prompt, setPrompt] = useState(() => preset.entries.map((e) => `{${e.key}}`).join(', '));
+  const [profile, setProfile] = useState('');
+  const [busy, setBusy] = useState(false);
+  const submit = async () => {
+    if (!prompt.trim() || busy) return;
+    setBusy(true);
+    try {
+      await beforeSubmit();
+      const made = await preview.mutateAsync({
+        preset_ids: [preset.id!],
+        prompt: prompt.trim(),
+        profile_id: profile || null,
+      });
+      onQueued(made.series.title);
+    } catch (error) {
+      toastError(error);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Modal
+      id="preset-preview-dialog"
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+      title={t('ws.presets.previewTitle')}
+      description={t('ws.presets.previewDesc')}
+      footer={
+        <>
+          <button type="button" className="btn" onClick={onClose}>
+            {t('common.cancel')}
+          </button>
+          <button
+            type="submit"
+            form="preset-preview-form"
+            className="btn primary"
+            disabled={!prompt.trim() || busy}
+          >
+            <Icon name="plus" />
+            {t('ws.presets.previewAdd')}
+          </button>
+        </>
+      }
+    >
+      <form
+        id="preset-preview-form"
+        className="preset-preview-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          void submit();
+        }}
+      >
+        <div className="field">
+          <label className="label" htmlFor="preset-preview-prompt">
+            {t('ws.presets.previewPrompt')}
+          </label>
+          <textarea
+            id="preset-preview-prompt"
+            autoFocus
+            rows={5}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+          />
+          <p className="help">{t('ws.presets.previewPromptHelp')}</p>
+        </div>
+        <div className="field">
+          <label className="label" htmlFor="preset-preview-profile">
+            {t('ws.assemble.profile')}
+          </label>
+          <select
+            id="preset-preview-profile"
+            value={profile}
+            onChange={(e) => setProfile(e.target.value)}
+          >
+            <option value="">{t('ws.assemble.profileDefault')}</option>
+            {(profiles.data ?? []).map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+          <p className="help">{t('ws.assemble.profileHelp')}</p>
+        </div>
+      </form>
+    </Modal>
   );
 }
 

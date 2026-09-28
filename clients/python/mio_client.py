@@ -666,6 +666,13 @@ class MioClient(_Base):
         """
         return self._request("POST", "/workshop/assemble", json=body)
 
+    def preview_preset(self, body: dict | list | None = None) -> Any:
+        """POST /workshop/preview — Preview Preset.
+
+        预设工坊「独立试绘」: one prompt + presets → a one-frame album waiting in the queue (no
+        """
+        return self._request("POST", "/workshop/preview", json=body)
+
     def clone_task(self, series_id: str, body: dict | list | None = None) -> Any:
         """POST /workshop/tasks/{series_id}/clone — Clone Task.
 

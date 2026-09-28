@@ -3021,6 +3021,47 @@
     "title": "PresetGroup",
     "type": "object"
    },
+   "PreviewRequest": {
+    "properties": {
+     "preset_ids": {
+      "items": {
+       "type": "string"
+      },
+      "minItems": 1,
+      "title": "Preset Ids",
+      "type": "array"
+     },
+     "profile_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Profile Id"
+     },
+     "prompt": {
+      "maxLength": 8000,
+      "minLength": 1,
+      "title": "Prompt",
+      "type": "string"
+     },
+     "title": {
+      "default": "",
+      "maxLength": 120,
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "preset_ids",
+     "prompt"
+    ],
+    "title": "PreviewRequest",
+    "type": "object"
+   },
    "Prop-Input": {
     "additionalProperties": false,
     "properties": {
@@ -10436,6 +10477,53 @@
      }
     ],
     "summary": "Assemble",
+    "tags": [
+     "workshop"
+    ]
+   }
+  },
+  "/workshop/preview": {
+   "post": {
+    "description": "预设工坊「独立试绘」: one prompt + presets → a one-frame album waiting in the queue (no\nstoryboard, no model call).  Start it with ``POST /episodes/{id}/render``.",
+    "operationId": "preview_preset",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PreviewRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Assembled"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Preview Preset",
     "tags": [
      "workshop"
     ]

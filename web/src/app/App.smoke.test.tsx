@@ -183,6 +183,10 @@ beforeEach(() => {
     'GET /api/episodes/sb_1': storyboard,
     'PATCH /api/series/ws_1': (body: unknown) => ({ ...workshop, ...(body as object) }),
     'POST /api/workshop/assemble': { series: series, episode: episode },
+    'POST /api/workshop/preview': {
+      series: { ...series, id: 'ser_pv', title: '林夏 · 夏日 · 试绘', subtitle: '预设试绘' },
+      episode: { ...episode, id: 'ep_pv', series_id: 'ser_pv' },
+    },
     'GET /api/episodes/ep_1/panels/p0/prompt': prompt,
     'GET /api/export/presets': [
       { id: 'webtoon', label: 'Webtoon', width: 800, max_height: 1280, format: 'JPEG' },
@@ -521,6 +525,29 @@ describe('every route mounts with API data', () => {
     );
     const patch = calls.find((c) => c.method === 'PATCH' && c.url === '/api/series/ws_1')!;
     expect(JSON.stringify(patch.body)).toContain('white dress');
+  });
+
+  it('预设工坊: 独立试绘 queues a one-frame task with the preset variables prefilled', async () => {
+    const router = mount('/workshop/presets');
+    fireEvent.click(await screen.findByRole('button', { name: '独立试绘' }));
+    const dialog = await screen.findByRole('dialog', { name: '预设独立试绘' });
+    const prompt = within(dialog).getByLabelText('画面描述') as HTMLTextAreaElement;
+    expect(prompt.value).toBe('{character}, {outfit}');
+    fireEvent.change(prompt, { target: { value: '{character} wearing {outfit}, portrait' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: '添加待命试绘' }));
+    await waitFor(() =>
+      expect(calls.some((c) => c.method === 'POST' && c.url === '/api/workshop/preview')).toBe(
+        true,
+      ),
+    );
+    const call = calls.find((c) => c.url === '/api/workshop/preview')!;
+    expect(call.body).toMatchObject({
+      preset_ids: ['pre_1'],
+      prompt: '{character} wearing {outfit}, portrait',
+      profile_id: null,
+    });
+    expect(calls.some((c) => c.url.includes('/render'))).toBe(false);
+    await waitFor(() => expect(router.state.location.pathname).toBe('/workshop/assembly'));
   });
 
   it('装配: the 3-step wizard adds a standby task without generating', async () => {

@@ -57,6 +57,29 @@ export function useAssemble() {
   });
 }
 
+/** `Series.subtitle` of the one-frame albums made by 预设工坊「独立试绘」 (server constant). */
+export const PREVIEW_SUBTITLE = '预设试绘';
+
+export interface PreviewVars {
+  preset_ids: string[];
+  prompt: string;
+  title?: string;
+  profile_id?: string | null;
+}
+
+/** 预设「独立试绘」: one prompt + presets → a one-frame album waiting in the queue. */
+export function usePreviewPreset() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (body: PreviewVars) =>
+      data(await api.POST('/api/workshop/preview', { body })),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['series'] });
+      qc.invalidateQueries({ queryKey: ['episodes'] });
+    },
+  });
+}
+
 /** 装配队列「克隆」: a new standby album with the task's frames, presets and profile. */
 export function useCloneTask() {
   const qc = useQueryClient();

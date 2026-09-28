@@ -102,6 +102,40 @@ class WorkshopTest(ApiCase):
         self.assertEqual(self.client.post(f"/api/workshop/tasks/{ws['id']}/clone").status_code, 404)
         self.assertEqual(self.client.post("/api/workshop/tasks/nope/clone").status_code, 404)
 
+    def test_preview_makes_a_one_frame_album_for_the_preset(self):
+        ws = self.workshop()
+        preset = next(p for p in ws["presets"] if p["title"] == "七海 · 标准角色设定")
+        boards = self.ok(self.client.get(f"/api/series/{ws['id']}/episodes"))["total"]
+        out = self.ok(
+            self.client.post(
+                "/api/workshop/preview",
+                json={"preset_ids": [preset["id"]], "prompt": "{character}, {outfit}, {style}"},
+            ),
+            201,
+        )
+        album, ep = out["series"], out["episode"]
+        self.assertEqual(album["title"], "七海 · 标准角色设定 · 试绘")
+        self.assertEqual(
+            (album["kind"], album["status"], album["subtitle"]), ("album", "draft", "预设试绘")
+        )
+        self.assertEqual(album["variables"]["character"], "nanami")
+        self.assertEqual([p["id"] for p in album["presets"]], [preset["id"]])
+        self.assertEqual(len(ep["panels"]), 1)
+        self.assertEqual(
+            ep["panels"][0]["overrides"]["raw_prompt"], "{character}, {outfit}, {style}"
+        )
+        self.assertEqual(self.ctx.engine.list(), [])  # nothing is generated until 开始生成
+        # No storyboard was created on the way: the workshop still lists the same boards.
+        self.assertEqual(
+            self.ok(self.client.get(f"/api/series/{ws['id']}/episodes"))["total"], boards
+        )
+        r = self.client.post("/api/workshop/preview", json={"preset_ids": ["x"], "prompt": "a"})
+        self.assertEqual(r.status_code, 404)
+        r = self.client.post(
+            "/api/workshop/preview", json={"preset_ids": [preset["id"]], "prompt": " "}
+        )
+        self.assertEqual(r.status_code, 400)
+
     def test_assemble_rejects_unknown_story_or_preset(self):
         ws = self.workshop()
         board = self.ok(self.client.get(f"/api/series/{ws['id']}/episodes"))["items"][0]

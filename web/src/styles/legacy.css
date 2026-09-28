@@ -4096,6 +4096,82 @@ html[data-lettering='calligraphy'] .shelf-item h3 {
   overflow: auto;
   margin: 0px 0px 24px;
 }
+.workshop-preset-preview figure {
+  margin: 0;
+  flex: 0 0 150px;
+  min-width: 0;
+}
+.workshop-preset-preview img,
+.workshop-preview-blank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+.workshop-preview-blank {
+  border-style: dashed;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.workshop-preset-preview figcaption {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.workshop-preview-figure {
+  position: relative;
+}
+.workshop-preview-open {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 8px;
+}
+.workshop-preview-open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.workshop-preview-figure .ibtn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.workshop-preview-figure:hover .ibtn,
+.workshop-preview-figure:focus-within .ibtn {
+  opacity: 1;
+}
+.workshop-preview-figure .ibtn:not([disabled]):hover {
+  color: var(--red);
+}
+@media (hover: none) {
+  .workshop-preview-figure .ibtn {
+    opacity: 1;
+  }
+}
+.preset-preview-form {
+  display: grid;
+  gap: 18px;
+}
+.preset-preview-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
 .production-controls {
   display: flex;
   align-items: center;
