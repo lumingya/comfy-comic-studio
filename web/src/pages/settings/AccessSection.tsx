@@ -1,3 +1,6 @@
+import { QueryError } from '../../app/errors';
+import { confirm } from '../../components/confirm';
+import { copyText } from '../../app/clipboard';
 import { KeyRound, Plus, Send, Trash2, Webhook } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -56,7 +59,9 @@ function SecretDialog(props: { secret: string; title: string; onClose: () => voi
           <button
             className="btn"
             onClick={() =>
-              navigator.clipboard?.writeText(props.secret).then(() => toast(t('common.copied')))
+              copyText(props.secret)
+                .then(() => toast(t('common.copied')))
+                .catch(toastError)
             }
           >
             {t('common.copy')}
@@ -85,6 +90,7 @@ function TokensPanel() {
 
   const submit = () => {
     const n = Number(days);
+    if (create.isPending || !Number.isSafeInteger(n) || n < 0 || n > 36500) return;
     const expires_at = n > 0 ? new Date(Date.now() + n * 86400_000).toISOString() : '';
     create.mutate(
       { name: name.trim(), scopes, expires_at },
@@ -108,7 +114,21 @@ function TokensPanel() {
           <TextInput value={name} onChange={setName} placeholder="astrbot" />
         </Field>
         <Field label={t('settings.access.expiresDays')} hint={t('settings.access.neverHint')}>
-          <TextInput value={days} onChange={(v) => setDays(v.replace(/\D/g, ''))} />
+          <input
+            className="input"
+            type="number"
+            min={0}
+            max={36500}
+            step={1}
+            value={days}
+            onChange={(e) => setDays(e.target.value)}
+          />
+          {days &&
+          (!Number.isSafeInteger(Number(days)) || Number(days) < 0 || Number(days) > 36500) ? (
+            <span className="error-text" role="alert">
+              {t('interaction.expiryRange')}
+            </span>
+          ) : null}
         </Field>
         <Field label={t('settings.access.scopes')}>
           <Checks
@@ -124,12 +144,22 @@ function TokensPanel() {
       <div>
         <button
           className="btn primary"
-          disabled={!name.trim() || !scopes.length || create.isPending}
+          disabled={
+            tokens.isLoading ||
+            tokens.isError ||
+            !name.trim() ||
+            !scopes.length ||
+            create.isPending ||
+            !Number.isSafeInteger(Number(days)) ||
+            Number(days) < 0 ||
+            Number(days) > 36500
+          }
           onClick={submit}
         >
           <Plus size={14} /> {t('settings.access.createToken')}
         </button>
       </div>
+      {tokens.isError ? <QueryError error={tokens.error} onRetry={tokens.refetch} /> : null}
       {items.length ? (
         <table className="table">
           <thead>
@@ -154,7 +184,17 @@ function TokensPanel() {
                   <button
                     className="btn ghost icon sm danger"
                     aria-label={t('settings.access.revoke')}
-                    onClick={() => revoke.mutate(tok.id, { onError: toastError })}
+                    disabled={revoke.isPending}
+                    onClick={async () => {
+                      if (
+                        await confirm({
+                          title: `${t('settings.access.revoke')}「${tok.name}」？`,
+                          confirmLabel: t('settings.access.revoke'),
+                          danger: true,
+                        })
+                      )
+                        revoke.mutate(tok.id, { onError: toastError });
+                    }}
                   >
                     <Trash2 size={13} />
                   </button>
@@ -225,7 +265,17 @@ function HookRow({ hook, events }: { hook: WebhookInfo; events: Record<string, s
         <button
           className="btn ghost icon sm danger"
           aria-label={t('common.delete')}
-          onClick={() => remove.mutate(hook.id, { onError: toastError })}
+          disabled={remove.isPending}
+          onClick={async () => {
+            if (
+              await confirm({
+                title: `${t('common.delete')}「${hook.name}」？`,
+                confirmLabel: t('common.delete'),
+                danger: true,
+              })
+            )
+              remove.mutate(hook.id, { onError: toastError });
+          }}
         >
           <Trash2 size={13} />
         </button>
@@ -302,7 +352,11 @@ function WebhooksPanel() {
           </button>
         </div>
       </div>
-      {!items.length ? <Empty>{t('settings.access.noWebhooks')}</Empty> : null}
+      {hooks.isError ? (
+        <QueryError error={hooks.error} onRetry={hooks.refetch} />
+      ) : !items.length && !hooks.isLoading ? (
+        <Empty>{t('settings.access.noWebhooks')}</Empty>
+      ) : null}
       {items.map((h) => (
         <HookRow key={h.id} hook={h} events={events} />
       ))}

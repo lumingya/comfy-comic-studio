@@ -1,3 +1,5 @@
+import { useDesktopSelection, type DesktopContext } from '../../app/useDesktopSelection';
+import { confirm } from '../../components/confirm';
 import { Ban, ListTodo, Pause, Play, RotateCcw } from 'lucide-react';
 import { useMemo, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,22 +22,50 @@ export default function JobsPage() {
   const [params, setParams] = useSearchParams();
   const activeOnly = params.get('active') === '1';
   const jobs = useJobs(undefined, activeOnly);
-  const selected = params.get('job') ?? jobs.data?.[0]?.id ?? null;
+  const selected = jobs.data?.some((j) => j.id === params.get('job'))
+    ? params.get('job')
+    : (jobs.data?.[0]?.id ?? null);
   const ids = useMemo(() => (jobs.data ?? []).map((j) => j.id), [jobs.data]);
   const selection = useSelection(ids);
-  const menu = useContextMenu<string[]>();
+  const menu = useContextMenu<DesktopContext>();
   const control = useJobControl();
   const retry = useRetryJob();
   const jobOf = (id: string) => jobs.data?.find((j) => j.id === id);
+  const desktop = useDesktopSelection({
+    itemAttribute: 'data-selection-id',
+    selection,
+    enabled: true,
+    pinned: false,
+    contextOpen: !!menu.state,
+    onExit: selection.clear,
+    onOpen: (id) => set({ job: id }),
+    onDelete: async (list) => {
+      if (
+        await confirm({ title: t('interaction.cancelTasks', { count: list.length }), danger: true })
+      )
+        await controlMany(list, 'cancel');
+    },
+    onContext: menu.openAt,
+    onCloseContext: menu.close,
+  });
+  const canPause = (id: string) => {
+    const j = jobOf(id);
+    return !!j && ['running', 'queued'].includes(j.state) && !j.paused;
+  };
+  const canResume = (id: string) => {
+    const j = jobOf(id);
+    return !!j && (j.paused || ['paused', 'blocked'].includes(j.state));
+  };
 
   // Batch controls run one by one; jobs that cannot take the action are skipped, not failed.
   const controlMany = async (list: string[], action: JobControl) => {
+    if (control.isPending) return;
     const can = (j: Job) =>
       action === 'cancel'
         ? ACTIVE.has(j.state)
         : action === 'pause'
-          ? j.state === 'running' || j.state === 'queued'
-          : j.state === 'paused';
+          ? canPause(j.id)
+          : canResume(j.id);
     const targets = list.map(jobOf).filter((j): j is Job => !!j && can(j));
     try {
       for (const j of targets) await control.mutateAsync({ id: j.id, action });
@@ -61,17 +91,19 @@ export default function JobsPage() {
           label: t('jobs.pause'),
           icon: <Pause size={14} />,
           onSelect: () => void controlMany(list, 'pause'),
+          disabled: control.isPending || !list.some(canPause),
         },
         {
           label: t('jobs.resume'),
           icon: <Play size={14} />,
           onSelect: () => void controlMany(list, 'resume'),
+          disabled: control.isPending || !list.some(canResume),
         },
         {
           label: t('jobs.retryFailed'),
           icon: <RotateCcw size={14} />,
           onSelect: () => void retryMany(list),
-          disabled: !list.some((id) => (jobOf(id)?.failed ?? 0) > 0),
+          disabled: retry.isPending || !list.some((id) => (jobOf(id)?.failed ?? 0) > 0),
         },
       ],
     },
@@ -82,7 +114,7 @@ export default function JobsPage() {
           icon: <Ban size={14} />,
           danger: true,
           onSelect: () => void controlMany(list, 'cancel'),
-          disabled: !list.some((id) => ACTIVE.has(jobOf(id)?.state ?? '')),
+          disabled: control.isPending || !list.some((id) => ACTIVE.has(jobOf(id)?.state ?? '')),
         },
       ],
     },
@@ -118,16 +150,18 @@ export default function JobsPage() {
       ) : null}
       {jobs.data?.length ? (
         <div className="split">
-          <nav
-            className="split-rail"
-            onKeyDown={(e) => {
-              if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
-                e.preventDefault();
-                selection.all();
-              } else if (e.key === 'Escape') selection.clear();
-            }}
+          <div
+            className="split-rail desktop-list"
+            ref={desktop.ref}
+            tabIndex={0}
+            role="navigation"
+            aria-label={t('interaction.list')}
+            onClickCapture={desktop.onClickCapture}
+            onContextMenu={desktop.onContextMenu}
+            onPointerDown={desktop.onPointerDown}
+            onDragStartCapture={desktop.onDragStartCapture}
           >
-            {selection.ids.length > 1 ? (
+            {(desktop.snapshot ?? selection.ids).length > 1 ? (
               <div className="selection-bar" role="status">
                 <span className="count">
                   {t('jobs.batch.selected', { count: selection.ids.length })}
@@ -162,13 +196,10 @@ export default function JobsPage() {
             {jobs.data.map((j) => (
               <button
                 key={j.id}
-                className={`rail-item job-item ${j.id === selected ? 'active' : ''} ${selection.has(j.id) ? 'checked' : ''}`}
+                className={`rail-item job-item ${j.id === selected ? 'active' : ''} ${selection.has(j.id) ? 'checked' : ''} ${menu.state?.payload.focusId === j.id ? 'is-context' : ''}`}
+                data-selection-id={j.id}
+                data-selection-open
                 aria-selected={selection.has(j.id) || undefined}
-                onClick={(e) => {
-                  selection.click(j.id, e);
-                  if (!(e.ctrlKey || e.metaKey || e.shiftKey)) set({ job: j.id });
-                }}
-                onContextMenu={(e) => menu.open(e, selection.contextTarget(j.id))}
               >
                 <span className={`dot state-${j.state}`} />
                 <span className="grow ellipsis">
@@ -192,7 +223,7 @@ export default function JobsPage() {
                 <span className="small muted mono">{shortDateTime(j.updated, i18n.language)}</span>
               </button>
             ))}
-          </nav>
+          </div>
           <section className="split-main">
             {selected ? <JobDetail key={selected} id={selected} /> : null}
           </section>
@@ -202,7 +233,8 @@ export default function JobsPage() {
         <ContextMenu
           x={menu.state.x}
           y={menu.state.y}
-          groups={menuGroups(menu.state.payload)}
+          groups={menuGroups(menu.state.payload.ids)}
+          returnFocus={menu.state.payload.target}
           onClose={menu.close}
         />
       ) : null}

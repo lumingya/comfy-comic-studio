@@ -1,3 +1,4 @@
+import { QueryError } from '../../app/errors';
 import { Ban, Pause, Play, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -57,6 +58,7 @@ export function JobDetail({ id }: { id: string }) {
   const retry = useRetryJob();
   const resolve = useResolveItem();
   const [resolving, setResolving] = useState<JobItem | null>(null);
+  if (job.isError) return <QueryError error={job.error} onRetry={job.refetch} />;
   if (job.isLoading || !job.data) return <Loading />;
   const j = job.data;
   const items = j.items ?? [];
@@ -64,9 +66,10 @@ export function JobDetail({ id }: { id: string }) {
   const failed = items.filter((i) => ['failed', 'canceled'].includes(i.state));
   const uncertain = items.filter((i) => i.state === 'uncertain');
   const act = (action: 'pause' | 'resume' | 'cancel') =>
-    control.mutate({ id, action }, { onError: toastError });
+    !control.isPending && control.mutate({ id, action }, { onError: toastError });
   const doResolve = (action: 'reconcile' | 'failed' | 'resubmit') =>
     resolving &&
+    !resolve.isPending &&
     resolve.mutate(
       { id, idx: resolving.idx, action },
       { onSuccess: () => setResolving(null), onError: toastError },
@@ -90,17 +93,17 @@ export function JobDetail({ id }: { id: string }) {
           </div>
         </div>
         {ACTIVE.includes(j.state) && !j.paused ? (
-          <button className="btn" onClick={() => act('pause')}>
+          <button className="btn" disabled={control.isPending} onClick={() => act('pause')}>
             <Pause size={14} /> {t('jobs.pause')}
           </button>
         ) : null}
         {j.paused || j.state === 'blocked' ? (
-          <button className="btn" onClick={() => act('resume')}>
+          <button className="btn" disabled={control.isPending} onClick={() => act('resume')}>
             <Play size={14} /> {t('jobs.resume')}
           </button>
         ) : null}
         {ACTIVE.includes(j.state) ? (
-          <button className="btn danger" onClick={() => act('cancel')}>
+          <button className="btn danger" disabled={control.isPending} onClick={() => act('cancel')}>
             <Ban size={14} /> {t('jobs.cancel')}
           </button>
         ) : null}
@@ -138,18 +141,30 @@ export function JobDetail({ id }: { id: string }) {
       </table>
       <Modal
         open={!!resolving}
-        onOpenChange={(o) => !o && setResolving(null)}
+        onOpenChange={(o) => !resolve.isPending && !o && setResolving(null)}
         title={t('jobs.resolveTitle', { label: resolving?.label ?? '' })}
         description={t('jobs.resolveHint')}
         footer={
           <>
-            <button className="btn" onClick={() => doResolve('failed')}>
+            <button
+              className="btn"
+              disabled={resolve.isPending}
+              onClick={() => doResolve('failed')}
+            >
               {t('jobs.markFailed')}
             </button>
-            <button className="btn" onClick={() => doResolve('reconcile')}>
+            <button
+              className="btn"
+              disabled={resolve.isPending}
+              onClick={() => doResolve('reconcile')}
+            >
               {t('jobs.reconcile')}
             </button>
-            <button className="btn danger" onClick={() => doResolve('resubmit')}>
+            <button
+              className="btn danger"
+              disabled={resolve.isPending}
+              onClick={() => doResolve('resubmit')}
+            >
               {t('jobs.resubmit')}
             </button>
           </>

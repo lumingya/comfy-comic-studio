@@ -6,6 +6,9 @@ import { useAlbumTemplates } from '../../api/open';
 import { useEpisode, useEpisodes, useSeries } from '../../api/series';
 import { Icon } from '../../app/icons';
 import { usePageTitle } from '../../app/title';
+import { gallerySearch } from '../../app/navigation';
+import { shortcutBlocked } from '../../app/shortcuts';
+import { QueryError } from '../../app/errors';
 import { useUI } from '../../app/ui-store';
 import { pickAdopted } from '../canvas/adopted';
 import type { EpisodeContext } from '../episode/EpisodePage';
@@ -141,6 +144,10 @@ export default function ReaderPage() {
     if (!d || d.open) return;
     if (typeof d.showModal === 'function') d.showModal();
     else d.setAttribute('open', '');
+    return () => {
+      d.close?.();
+      if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
+    };
   }, []);
 
   const pages = useMemo(() => {
@@ -242,19 +249,17 @@ export default function ReaderPage() {
     if (target) go(target.start);
   };
   const close = () => {
-    if (document.fullscreenElement) void document.exitFullscreen?.().catch(() => undefined);
-    ref.current?.close?.();
-    navigate('/gallery');
+    // Let successful navigation unmount the dialog. Closing it here would defeat a dirty-canvas blocker.
+    navigate(`/gallery${gallerySearch(params)}`);
   };
   const base = `/gallery/${seriesId}`;
-  const keep = epId && params.get('ep') ? `?ep=${epId}` : '';
+  const keep = params.size ? `?${params}` : '';
   const togglePanel = (to: 'export' | 'layout') =>
     navigate(panel === to ? `${base}${keep}` : `${base}/${to}${keep}`);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (!nativeStage || panel || (e.target as HTMLElement).closest('input, textarea, select'))
-        return;
+      if (!nativeStage || panel || shortcutBlocked(e, ref.current)) return;
       if (e.key === 'ArrowRight' || e.key === 'PageDown') step(1);
       else if (e.key === 'ArrowLeft' || e.key === 'PageUp') step(-1);
       else return;
@@ -351,6 +356,16 @@ export default function ReaderPage() {
         else close();
       }}
     >
+      {series.error || episodes.error || episode.error ? (
+        <QueryError
+          error={series.error || episodes.error || episode.error}
+          onRetry={() => {
+            void series.refetch();
+            void episodes.refetch();
+            void episode.refetch();
+          }}
+        />
+      ) : null}
       <header className="room-head">
         <button
           type="button"
@@ -371,7 +386,9 @@ export default function ReaderPage() {
               value={epId ?? ''}
               onChange={(e) => {
                 setPage(0);
-                setParams({ ep: e.target.value }, { replace: true });
+                const next = new URLSearchParams(params);
+                next.set('ep', e.target.value);
+                setParams(next, { replace: true });
               }}
             >
               {items.map((e) => (
@@ -427,7 +444,6 @@ export default function ReaderPage() {
           disabled={!epId}
           title={t('reader.editHint')}
           onClick={() => {
-            ref.current?.close?.();
             navigate(`/workshop/assembly/${epId}`);
           }}
         >
@@ -438,7 +454,7 @@ export default function ReaderPage() {
       <section className="room-stage">
         {panel === 'layout' && context ? (
           <div className="room-canvas room-layout workspace-body">
-            <Outlet context={context} />
+            <Outlet key={context.episode.id} context={context} />
           </div>
         ) : drawerStage === 'motion' && episode.data ? (
           <div className="room-canvas room-layout workspace-body">

@@ -1,3 +1,5 @@
+import { useDesktopSelection, type DesktopContext } from '../../app/useDesktopSelection';
+import { shortcutBlocked } from '../../app/shortcuts';
 import {
   Check,
   ChevronLeft,
@@ -58,7 +60,22 @@ export default function BoardTab() {
   const visible = panels.flatMap((p) => takesOf(p));
   const visibleIds = useMemo(() => visible.map((tk) => tk.id), [visible]); // eslint-disable-line react-hooks/exhaustive-deps
   const selection = useSelection(visibleIds);
-  const menu = useContextMenu<string[]>();
+  const menu = useContextMenu<DesktopContext>();
+  const desktop = useDesktopSelection({
+    itemAttribute: 'data-selection-id',
+    selection,
+    enabled: !zoomId && !editing,
+    pinned: false,
+    contextOpen: !!menu.state,
+    onExit: selection.clear,
+    onOpen: setZoomId,
+    onDelete: (list) => {
+      void actMany(list, 'reject');
+    },
+    onContext: menu.openAt,
+    onCloseContext: menu.close,
+  });
+
   const takeById = (id: string) => takes.find((tk) => tk.id === id);
   const zoom = visible.find((tk) => tk.id === zoomId) ?? takes.find((tk) => tk.id === zoomId);
   const zoomIndex = zoom ? visible.indexOf(zoom) : -1;
@@ -164,7 +181,14 @@ export default function BoardTab() {
     if (!zoom) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (
+        shortcutBlocked(e, document.getElementById('board-zoom')) ||
+        e.repeat ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.altKey
+      )
+        return;
       if (e.key === 'ArrowRight') step(1);
       else if (e.key === 'ArrowLeft') step(-1);
       else if (e.key.toLowerCase() === 'a' && zoom.status !== 'adopted') act(zoom, 'adopt');
@@ -267,94 +291,112 @@ export default function BoardTab() {
         </button>
       </div>
 
-      {selection.ids.length > 1 ? (
-        <div className="selection-bar" role="status">
-          <span className="count">
-            {t('board.batch.selected', { count: selection.ids.length })}
-          </span>
-          <span className="small muted">{t('board.batch.hint')}</span>
-          <span className="grow" />
-          <button className="btn ghost sm" onClick={() => void actMany(selection.ids, 'adopt')}>
-            <Check size={13} /> {t('board.adopt')}
-          </button>
-          <button
-            className="btn ghost sm danger"
-            onClick={() => void actMany(selection.ids, 'reject')}
-          >
-            <X size={13} /> {t('board.reject')}
-          </button>
-          {studio ? (
-            <button className="btn ghost sm" onClick={() => qaMany(selection.ids)}>
-              <ScanSearch size={13} /> {t('board.qa')}
+      <div
+        className="desktop-list"
+        ref={desktop.ref}
+        tabIndex={0}
+        role="region"
+        aria-label={t('interaction.list')}
+        onClickCapture={desktop.onClickCapture}
+        onContextMenu={desktop.onContextMenu}
+        onPointerDown={desktop.onPointerDown}
+        onDragStartCapture={desktop.onDragStartCapture}
+      >
+        {(desktop.snapshot ?? selection.ids).length > 1 ? (
+          <div className="selection-bar" role="status">
+            <span className="count">
+              {t('board.batch.selected', { count: selection.ids.length })}
+            </span>
+            <span className="small muted">{t('board.batch.hint')}</span>
+            <span className="grow" />
+            <button className="btn ghost sm" onClick={() => void actMany(selection.ids, 'adopt')}>
+              <Check size={13} /> {t('board.adopt')}
             </button>
-          ) : null}
-          <button className="btn ghost sm" onClick={selection.clear} title="Esc">
-            {t('common.cancel')}
-          </button>
-        </div>
-      ) : null}
-      <div className="board-rows">
-        {panels.map((p, i) => {
-          const list = takesOf(p);
-          const pending = (byPanel[p.id] ?? []).filter((it) => it.variantId === variantId);
-          return (
-            <section key={p.id} className="board-row">
-              <header className="board-row-head">
-                <span className="panel-no mono">{String(i + 1).padStart(2, '0')}</span>
-                <div className="grow">
-                  <div className="small">
-                    {p.shot ? <span className="chip">{t(`script.shots.${p.shot}`)}</span> : null}{' '}
-                    {p.description || p.dialogues[0]?.text}
+            <button
+              className="btn ghost sm danger"
+              onClick={() => void actMany(selection.ids, 'reject')}
+            >
+              <X size={13} /> {t('board.reject')}
+            </button>
+            {studio ? (
+              <button className="btn ghost sm" onClick={() => qaMany(selection.ids)}>
+                <ScanSearch size={13} /> {t('board.qa')}
+              </button>
+            ) : null}
+            <button className="btn ghost sm" onClick={selection.clear} title="Esc">
+              {t('common.cancel')}
+            </button>
+          </div>
+        ) : null}
+        <div className="board-rows">
+          {panels.map((p, i) => {
+            const list = takesOf(p);
+            const pending = (byPanel[p.id] ?? []).filter((it) => it.variantId === variantId);
+            return (
+              <section key={p.id} className="board-row">
+                <header className="board-row-head">
+                  <span className="panel-no mono">{String(i + 1).padStart(2, '0')}</span>
+                  <div className="grow">
+                    <div className="small">
+                      {p.shot ? <span className="chip">{t(`script.shots.${p.shot}`)}</span> : null}{' '}
+                      {p.description || p.dialogues[0]?.text}
+                    </div>
                   </div>
+                  <Link className="btn ghost sm" to={`../script?panel=${p.id}`}>
+                    {t('common.edit')}
+                  </Link>
+                  <button
+                    className="btn sm"
+                    disabled={render.isPending}
+                    onClick={() => run([p.id])}
+                  >
+                    <Play size={13} /> {t('board.render')}
+                  </button>
+                </header>
+                <div className="take-strip">
+                  {pending.map((it) => (
+                    <PendingCard key={`${it.jobId}:${it.idx}`} item={it} />
+                  ))}
+                  {list.map((tk) => (
+                    <TakeCard
+                      key={tk.id}
+                      take={tk}
+                      checked={selection.has(tk.id)}
+                      context={menu.state?.payload.focusId === tk.id}
+                      onAdopt={() => act(tk, 'adopt')}
+                      onReject={() => act(tk, 'reject')}
+                      onRestore={() => act(tk, 'restore')}
+                      onEdit={studio ? () => setEditing(tk) : undefined}
+                      onQA={
+                        studio
+                          ? () =>
+                              qa.mutate(
+                                { take_ids: [tk.id] },
+                                { onSuccess: queued, onError: toastError },
+                              )
+                          : undefined
+                      }
+                      onZoom={() => {
+                        selection.clear();
+                        setZoomId(tk.id);
+                      }}
+                    />
+                  ))}
+                  {!list.length && !pending.length ? (
+                    <div className="take empty small muted">{t('board.noTakes')}</div>
+                  ) : null}
                 </div>
-                <Link className="btn ghost sm" to={`../script?panel=${p.id}`}>
-                  {t('common.edit')}
-                </Link>
-                <button className="btn sm" disabled={render.isPending} onClick={() => run([p.id])}>
-                  <Play size={13} /> {t('board.render')}
-                </button>
-              </header>
-              <div className="take-strip">
-                {pending.map((it) => (
-                  <PendingCard key={`${it.jobId}:${it.idx}`} item={it} />
-                ))}
-                {list.map((tk) => (
-                  <TakeCard
-                    key={tk.id}
-                    take={tk}
-                    checked={selection.has(tk.id)}
-                    onSelect={(mods) => selection.click(tk.id, mods)}
-                    onContextMenu={(e) => menu.open(e, selection.contextTarget(tk.id))}
-                    onAdopt={() => act(tk, 'adopt')}
-                    onReject={() => act(tk, 'reject')}
-                    onRestore={() => act(tk, 'restore')}
-                    onEdit={studio ? () => setEditing(tk) : undefined}
-                    onQA={
-                      studio
-                        ? () =>
-                            qa.mutate(
-                              { take_ids: [tk.id] },
-                              { onSuccess: queued, onError: toastError },
-                            )
-                        : undefined
-                    }
-                    onZoom={() => setZoomId(tk.id)}
-                  />
-                ))}
-                {!list.length && !pending.length ? (
-                  <div className="take empty small muted">{t('board.noTakes')}</div>
-                ) : null}
-              </div>
-            </section>
-          );
-        })}
+              </section>
+            );
+          })}
+        </div>
       </div>
-
       {menu.state ? (
         <ContextMenu
           x={menu.state.x}
           y={menu.state.y}
-          groups={menuGroups(menu.state.payload)}
+          groups={menuGroups(menu.state.payload.ids)}
+          returnFocus={menu.state.payload.target}
           onClose={menu.close}
         />
       ) : null}
@@ -365,6 +407,7 @@ export default function BoardTab() {
         onClose={() => setEditing(null)}
       />
       <Modal
+        id="board-zoom"
         open={!!zoom}
         onOpenChange={(o) => !o && setZoomId(null)}
         size="lg"

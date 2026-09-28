@@ -27,6 +27,7 @@ function Row(props: {
   index: number;
   active: boolean;
   checked: boolean;
+  context?: boolean;
   names: Record<string, string>;
   cover?: string;
   onSelect: (mods: Modifiers) => void;
@@ -51,7 +52,9 @@ function Row(props: {
         transition,
         opacity: isDragging ? 0.6 : 1,
       }}
-      className={`panel-row ${props.active ? 'active' : ''} ${props.checked ? 'checked' : ''}`}
+      className={`panel-row ${props.active ? 'active' : ''} ${props.checked ? 'checked' : ''} ${props.context ? 'is-context' : ''}`}
+      data-selection-id={p.id}
+      tabIndex={0}
       aria-selected={props.checked || undefined}
       onContextMenu={props.onContextMenu}
     >
@@ -65,6 +68,7 @@ function Row(props: {
       </button>
       <button
         className="panel-row-body"
+        data-selection-open
         onClick={(e) =>
           props.onSelect({ ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey })
         }
@@ -104,6 +108,7 @@ export function PanelList(props: {
   onReorder: (ids: string[]) => void;
   /** panel id → adopted image, shown as a thumbnail. */
   covers?: Record<string, string>;
+  contextId?: string;
 }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -132,6 +137,7 @@ export function PanelList(props: {
               cover={props.covers?.[p.id!]}
               active={p.id === props.selected}
               checked={props.checked?.has(p.id!) ?? false}
+              context={props.contextId === p.id}
               onSelect={(mods) => props.onSelect(p.id!, mods)}
               onContextMenu={
                 props.onContextMenu ? (e) => props.onContextMenu!(p.id!, e) : undefined

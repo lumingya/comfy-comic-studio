@@ -1,3 +1,4 @@
+import { shortcutBlocked } from '../../app/shortcuts';
 import { Check, Maximize2, RotateCcw, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -124,7 +125,14 @@ export function GenerateStage(props: {
   useEffect(() => {
     if (!zoom) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (
+        shortcutBlocked(e, document.getElementById('stage-zoom')) ||
+        e.repeat ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.altKey
+      )
+        return;
       const k = e.key.toLowerCase();
       if (k === 'arrowright' || k === 'arrowleft') {
         const next = shown[(zoomAt + (k === 'arrowright' ? 1 : -1) + shown.length) % shown.length];
@@ -228,6 +236,7 @@ export function GenerateStage(props: {
       </footer>
 
       <Modal
+        id="stage-zoom"
         open={!!zoom}
         onOpenChange={(o) => !o && setZoomId(null)}
         size="lg"

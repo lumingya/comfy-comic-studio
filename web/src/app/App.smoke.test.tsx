@@ -338,7 +338,7 @@ describe('every route mounts with API data', () => {
     const rows = await screen.findAllByText(/^「欢迎光临」$|^第 2 格$/);
     expect(rows.length).toBeGreaterThanOrEqual(2);
     // Ctrl-click the second row: both panels selected, the batch bar appears.
-    fireEvent.click(screen.getByText('第 2 格'), { ctrlKey: true });
+    fireEvent.click(screen.getByText('第 2 格'), { shiftKey: true });
     expect(screen.getByText('已选 2 格')).toBeInTheDocument();
     // Right-click keeps the multi-selection and offers the batch items.
     fireEvent.contextMenu(screen.getByText('第 2 格'));

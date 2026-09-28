@@ -52,7 +52,11 @@ export function TextInput({ value, onChange, mono, className, onEnter, ...rest }
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' && onEnter && !e.nativeEvent.isComposing) onEnter();
+        if (e.key === 'Enter' && onEnter && !e.nativeEvent.isComposing) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!e.repeat) onEnter();
+        }
       }}
     />
   );
@@ -173,6 +177,7 @@ export function TagInput(props: {
 }
 
 export function Modal(props: {
+  id?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: ReactNode;
@@ -188,7 +193,7 @@ export function Modal(props: {
     <Dialog.Root open={props.open} onOpenChange={props.onOpenChange}>
       <Dialog.Portal container={host}>
         <Dialog.Overlay className="overlay" />
-        <Dialog.Content className={`dialog ${props.size === 'lg' ? 'lg' : ''}`}>
+        <Dialog.Content id={props.id} className={`dialog ${props.size === 'lg' ? 'lg' : ''}`}>
           <Dialog.Close asChild>
             <button className="btn ghost icon sm dialog-close" aria-label={t('common.close')}>
               <X size={16} />
@@ -336,7 +341,10 @@ export function FilePick(props: {
  */
 export function InlineTitle(props: {
   value: string;
-  onSave: (value: string) => void;
+  onSave: (value: string) => void | Promise<unknown>;
+  autoFocus?: boolean;
+  onCancel?: () => void;
+  onFinish?: () => void;
   label: string;
   className?: string;
   placeholder?: string;
@@ -345,33 +353,92 @@ export function InlineTitle(props: {
 }) {
   const [draft, setDraft] = useState(props.value);
   const cancel = useRef(false);
-  useEffect(() => setDraft(props.value), [props.value]);
+  const dirty = useRef(false);
+  const saving = useRef(false);
+  const [pending, setPending] = useState(false);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (!dirty.current) setDraft(props.value);
+  }, [props.value]);
   const commit = () => {
+    if (saving.current) return;
     const next = draft.trim();
     if (cancel.current || (!next && !props.allowEmpty)) {
       cancel.current = false;
+      dirty.current = false;
+      setFailed(false);
       setDraft(props.value);
       return;
     }
-    if (next !== props.value) props.onSave(next);
     setDraft(next);
+    if (next === props.value) {
+      dirty.current = false;
+      props.onFinish?.();
+      return;
+    }
+    saving.current = true;
+    try {
+      const result = props.onSave(next);
+      if (result) {
+        setPending(true);
+        void result
+          .then(
+            () => {
+              dirty.current = false;
+              setFailed(false);
+              props.onFinish?.();
+            },
+            () => {
+              dirty.current = true;
+              setFailed(true);
+            },
+          )
+          .finally(() => {
+            saving.current = false;
+            setPending(false);
+          });
+      } else {
+        saving.current = false;
+        dirty.current = false;
+        setFailed(false);
+        props.onFinish?.();
+      }
+    } catch {
+      saving.current = false;
+      dirty.current = true;
+      setFailed(true);
+    }
   };
   return (
     <input
       className={props.className ?? 'input title'}
+      autoFocus={props.autoFocus}
       value={draft}
       aria-label={props.label}
       title={props.label}
       placeholder={props.placeholder}
-      onChange={(e) => setDraft(e.target.value)}
+      disabled={pending}
+      aria-busy={pending || undefined}
+      aria-invalid={failed || undefined}
+      onChange={(e) => {
+        dirty.current = true;
+        setDraft(e.target.value);
+      }}
       onBlur={commit}
       onKeyDown={(e) => {
         // Enter while an IME is composing (e.g. Chinese pinyin) confirms the composition, not the title.
         if (e.nativeEvent.isComposing) return;
-        if (e.key === 'Enter') e.currentTarget.blur();
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          e.stopPropagation();
+          e.currentTarget.blur();
+        }
         if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
           cancel.current = true;
           e.currentTarget.blur();
+          props.onCancel?.();
         }
       }}
     />

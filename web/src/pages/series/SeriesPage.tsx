@@ -51,7 +51,7 @@ export default function SeriesPage() {
           <InlineTitle
             value={series.title}
             label={t('common.title')}
-            onSave={(title) => patch.mutate({ title }, { onError: toastError })}
+            onSave={(title) => patch.mutateAsync({ title }, { onError: toastError })}
           />
           <InlineTitle
             className="input bare page-subtitle"
@@ -59,7 +59,7 @@ export default function SeriesPage() {
             label={t('works.subtitle')}
             placeholder={t('works.subtitlePlaceholder')}
             allowEmpty
-            onSave={(subtitle) => patch.mutate({ subtitle }, { onError: toastError })}
+            onSave={(subtitle) => patch.mutateAsync({ subtitle }, { onError: toastError })}
           />
         </div>
         <Select
@@ -81,7 +81,7 @@ export default function SeriesPage() {
           <Layers size={14} /> {t('series.variants')}
         </NavLink>
       </nav>
-      <Outlet context={{ series }} />
+      <Outlet key={series.id} context={{ series }} />
     </div>
   );
 }

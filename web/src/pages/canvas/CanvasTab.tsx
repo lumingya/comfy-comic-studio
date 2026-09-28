@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { useStripReport } from '../../api/canvas';
 import { useLayoutStrip, useSaveStrip } from '../../api/production';
 import type { LetteringLayer, Strip } from '../../api/types';
+import { shortcutBlocked } from '../../app/shortcuts';
 import { useUnsavedGuard } from '../../app/autosave';
 import { useUI } from '../../app/ui-store';
 import { toast, toastError } from '../../components/toast';
@@ -93,21 +94,30 @@ export default function CanvasTab() {
   const [selection, setSelection] = useState<Selection>(null);
   const [scale, setScale] = useState(0.6);
   const [pacing, setPacing] = useState(false);
-  useUnsavedGuard(dirty);
+  useUnsavedGuard(dirty, true);
+  const stripRef = useRef(strip);
+  stripRef.current = strip;
 
   // A new server copy (auto layout, pacing) replaces the canvas — but never unsaved edits.
   useEffect(() => {
     if (!dirtyRef.current) setStrip(episode.strip);
   }, [episode.strip]);
 
-  const saveStrip = () =>
-    save.mutate(strip, {
-      onSuccess: () => {
-        setDirty(false);
+  const saveStrip = () => {
+    if (save.isPending) return;
+    const snapshot = stripRef.current;
+    save.mutate(snapshot, {
+      onSuccess: (stored) => {
+        if (stripRef.current === snapshot) {
+          stripRef.current = stored;
+          setStrip(stored);
+          setDirty(false);
+        }
         toast(t('common.saved'));
       },
       onError: toastError,
     });
+  };
 
   const panels = useMemo(
     () => [...episode.panels].sort((a, b) => a.order - b.order),
@@ -115,6 +125,7 @@ export default function CanvasTab() {
   );
   const images = useMemo(() => pickAdopted(episode.takes, variantId), [episode.takes, variantId]);
   const change = (next: Strip) => {
+    stripRef.current = next;
     setStrip(next);
     setDirty(true);
   };
@@ -131,11 +142,13 @@ export default function CanvasTab() {
     setSelection({ type: 'letter', id: layer.id });
   };
 
-  const autoLayout = (relayout: boolean) =>
+  const autoLayout = (relayout: boolean) => {
+    if (dirtyRef.current || save.isPending || layout.isPending) return;
     layout.mutate(
       { relayout_lettering: relayout, variant_id: variantId },
       { onSuccess: () => toast(t('canvas.laidOut')), onError: toastError },
     );
+  };
 
   if (!Object.keys(images).length) return <Empty>{t('canvas.noAdopted')}</Empty>;
   if (!Object.keys(strip.panel_boxes).length)
@@ -155,7 +168,11 @@ export default function CanvasTab() {
     <div
       className="canvas-layout"
       onKeyDown={(e) => {
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        if (
+          !shortcutBlocked(e, e.currentTarget, true) &&
+          (e.metaKey || e.ctrlKey) &&
+          e.key.toLowerCase() === 's'
+        ) {
           e.preventDefault();
           if (dirty && !save.isPending) saveStrip();
         }
@@ -165,10 +182,20 @@ export default function CanvasTab() {
         <button className="btn" onClick={() => setPacing(true)} disabled={dirty}>
           <Wand2 size={15} /> {t('pacing.open')}
         </button>
-        <button className="btn" disabled={layout.isPending} onClick={() => autoLayout(false)}>
+        <button
+          className="btn"
+          disabled={dirty || save.isPending || layout.isPending}
+          title={dirty ? t('canvas.unsaved') : undefined}
+          onClick={() => autoLayout(false)}
+        >
           <LayoutTemplate size={15} /> {t('canvas.relayoutPanels')}
         </button>
-        <button className="btn" disabled={layout.isPending} onClick={() => autoLayout(true)}>
+        <button
+          className="btn"
+          disabled={dirty || save.isPending || layout.isPending}
+          title={dirty ? t('canvas.unsaved') : undefined}
+          onClick={() => autoLayout(true)}
+        >
           {t('canvas.relayoutAll')}
         </button>
         <button className="btn ghost" onClick={() => addLayer('caption')}>

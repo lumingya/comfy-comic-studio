@@ -51,6 +51,7 @@ const scrollHost = (root: HTMLElement): HTMLElement => {
 };
 
 interface Options {
+  itemAttribute?: string;
   root: RefObject<HTMLDivElement | null>;
   selection: Selection;
   enabled: boolean;
@@ -134,8 +135,9 @@ export function useMarquee(options: Options) {
         width: `${Math.max(0, Math.min(rect.right, clip.right) - left)}px`,
         height: `${Math.max(0, Math.min(rect.bottom, clip.bottom, bounds.bottom) - top)}px`,
       });
-      const items = [...g.root.querySelectorAll<HTMLElement>('[data-shelf-id]')].map((el) => ({
-        id: el.dataset.shelfId!,
+      const attribute = latest.current.itemAttribute ?? 'data-shelf-id';
+      const items = [...g.root.querySelectorAll<HTMLElement>(`[${attribute}]`)].map((el) => ({
+        id: el.getAttribute(attribute)!,
         rect: el.getBoundingClientRect(),
       }));
       latest.current.selection.replace(marqueeIds(items, rect, g.before, g.mode));

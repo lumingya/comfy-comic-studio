@@ -1,3 +1,5 @@
+import { flushEditors } from '../../app/useAutoDraft';
+import type { Episode } from '../../api/types';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -99,6 +101,7 @@ export function StoryIndex() {
         <Loading />
       </div>
     );
+  if (boards.error) return <QueryError error={boards.error} onRetry={boards.refetch} />;
   const items = boards.data?.items ?? [];
   const pick = recents.find((r) => items.some((e) => e.id === r.id))?.id ?? items[0]?.id;
   if (pick) return <Navigate to={`/workshop/story/${pick}`} replace />;
@@ -145,6 +148,7 @@ export function StoryTab() {
   const patch = usePatchEpisode(episodeId ?? '');
   const create = useCreateEpisode(ws.data?.id ?? '');
   const [renaming, setRenaming] = useState(false);
+  const cancelRename = useRef(false);
   const [draft, setDraft] = useState('');
   const { visit, forget } = useRecents();
   const loaded = episode.data;
@@ -174,6 +178,11 @@ export function StoryTab() {
   if (ep.series_id !== ws.data.id) return <Navigate to={`/workshop/assembly/${ep.id}`} replace />;
 
   const saveTitle = () => {
+    if (cancelRename.current) {
+      cancelRename.current = false;
+      setRenaming(false);
+      return;
+    }
     const title = draft.trim();
     if (title && title !== ep.title) patch.mutate({ title }, { onError: toastError });
     setRenaming(false);
@@ -224,7 +233,16 @@ export function StoryTab() {
           <button
             type="button"
             className="btn"
-            onClick={() => downloadJson(`${ep.title}.json`, storyboardToFile(ep))}
+            disabled={patch.isPending || renaming}
+            onClick={async () => {
+              try {
+                await flushEditors();
+                const current = qc.getQueryData<Episode>(keys.episode(ep.id!)) ?? ep;
+                downloadJson(`${current.title}.json`, storyboardToFile(current));
+              } catch (error) {
+                toastError(error);
+              }
+            }}
           >
             <Icon name="upload" />
             {t('ws.export')}
@@ -247,13 +265,24 @@ export function StoryTab() {
           {renaming ? (
             <input
               autoFocus
+              onFocus={() => {
+                cancelRename.current = false;
+              }}
               value={draft}
               aria-label={t('ws.story.name')}
               onChange={(e) => setDraft(e.target.value)}
               onBlur={saveTitle}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') saveTitle();
-                if (e.key === 'Escape') setRenaming(false);
+                if (e.nativeEvent.isComposing) return;
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.currentTarget.blur();
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  cancelRename.current = true;
+                  setRenaming(false);
+                }
               }}
             />
           ) : (
@@ -304,7 +333,10 @@ export function StoryTab() {
         value={ep.synopsis}
         onSave={(synopsis) => patch.mutate({ synopsis })}
       />
-      <Outlet context={{ episode: ep, series: ws.data } satisfies EpisodeContext} />
+      <Outlet
+        key={`story-editor:${ep.id}`}
+        context={{ episode: ep, series: ws.data } satisfies EpisodeContext}
+      />
     </WorkshopFrame>
   );
 }
@@ -480,7 +512,10 @@ export function TaskDetail() {
         </div>
       </div>
       <div className="workspace-body workshop-body">
-        <Outlet context={{ episode: episode.data, series: series.data } satisfies EpisodeContext} />
+        <Outlet
+          key={`task-editor:${episode.data.id}`}
+          context={{ episode: episode.data, series: series.data } satisfies EpisodeContext}
+        />
       </div>
     </WorkshopFrame>
   );

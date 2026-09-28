@@ -10,6 +10,7 @@ import type { SeriesCard } from '../../api/types';
 import { QueryError } from '../../app/errors';
 import { Icon } from '../../app/icons';
 import { useSelection } from '../../app/selection';
+import { gallerySearch } from '../../app/navigation';
 import { usePageTitle } from '../../app/title';
 import { useUI } from '../../app/ui-store';
 import { ContextMenu, useContextMenu, type ContextGroup } from '../../components/ContextMenu';
@@ -262,7 +263,9 @@ function CollectionTitle() {
         className="collection-title-input"
         value={title}
         label={t('classic.shelf.rename')}
-        onSave={(collection_title) => patch.mutate({ collection_title }, { onError: toastError })}
+        onSave={(collection_title) =>
+          patch.mutateAsync({ collection_title }, { onError: toastError })
+        }
       />
       <Pencil size={15} className="collection-title-pen" aria-hidden />
     </h1>
@@ -346,7 +349,7 @@ export default function WorksPage() {
     pinned: bulk,
     contextOpen: !!menu.state,
     onExit: () => setBulkMode(false),
-    onOpen: (id) => navigate(`/gallery/${id}`),
+    onOpen: (id) => navigate(`/gallery/${id}${gallerySearch(params)}`),
     onDelete: (ids) => {
       if (!bulkActions.busy) void bulkActions.remove(books.filter((b) => ids.includes(b.id!)));
     },
@@ -411,7 +414,7 @@ export default function WorksPage() {
                   onSelect: () => {
                     setBulkMode(false);
                     selection.anchorAt(one.id!);
-                    navigate(`/gallery/${one.id}`);
+                    navigate(`/gallery/${one.id}${gallerySearch(params)}`);
                   },
                 },
                 {

@@ -1,3 +1,10 @@
+import { useQueryClient } from '@tanstack/react-query';
+import { flushEditors } from '../../app/useAutoDraft';
+import { keys } from '../../api/keys';
+import type { Episode } from '../../api/types';
+import { useDesktopSelection, type DesktopContext } from '../../app/useDesktopSelection';
+import { shortcutBlocked } from '../../app/shortcuts';
+import { copyText } from '../../app/clipboard';
 import {
   ArrowDown,
   ArrowUp,
@@ -15,7 +22,7 @@ import {
   Unlock,
   Upload,
 } from 'lucide-react';
-import { useMemo, useRef, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { api, data } from '../../api/client';
@@ -44,11 +51,9 @@ import { PanelEditor } from './PanelEditor';
 import { PanelList } from './PanelList';
 import { bundlePanels, downloadJson, PanelImportError, parsePanelBundle } from './panelIO';
 
-const isEditable = (el: EventTarget | null) =>
-  el instanceof HTMLElement && !!el.closest('input, textarea, select, [contenteditable=true]');
-
 export default function ScriptTab() {
   const { t } = useTranslation();
+  const qc = useQueryClient();
   const { episode, series } = useEpisodeContext();
   const [params, setParams] = useSearchParams();
   const add = useAddPanel(episode.id!);
@@ -84,13 +89,32 @@ export default function ScriptTab() {
       ),
     [episode.takes],
   );
-  const selectedId = params.get('panel') ?? panels[0]?.id ?? null;
+  const requestedId = params.get('panel');
+  const selectedId =
+    requestedId && ids.includes(requestedId) ? requestedId : (panels[0]?.id ?? null);
   const selected = panels.find((p) => p.id === selectedId) ?? null;
   const select = (id: string | null) => setParams(id ? { panel: id } : {}, { replace: true });
   const byId = (list: string[]) =>
     list.map((id) => panels.find((p) => p.id === id)!).filter(Boolean);
   const indexOf = (id: string) => ids.indexOf(id);
-  const menu = useContextMenu<string[]>();
+  const menu = useContextMenu<DesktopContext>();
+  const desktop = useDesktopSelection({
+    itemAttribute: 'data-selection-id',
+    selection,
+    enabled: true,
+    pinned: false,
+    contextOpen: !!menu.state,
+    onExit: selection.clear,
+    onOpen: (id) => select(id),
+    onDelete: (list) => {
+      void deleteMany(list);
+    },
+    onContext: menu.openAt,
+    onCloseContext: menu.close,
+  });
+  useEffect(() => {
+    if (selectedId && !selection.ids.length) selection.anchorAt(selectedId);
+  }, [selectedId, selection.ids.length, selection.anchorAt]);
 
   const addAfter = () =>
     add.mutate(
@@ -188,33 +212,45 @@ export default function ScriptTab() {
       },
     );
 
-  const renderMany = (list: string[]) =>
+  const renderMany = async (list: string[]) => {
+    if (render.isPending) return;
+    try {
+      await flushEditors();
+    } catch (error) {
+      toastError(error);
+      return;
+    }
     render.mutate(
       { panel_ids: list, candidates: list.length === 1 ? 1 : candidates, variant_ids: [null] },
       { onSuccess: () => toast(t('script.queued', { count: list.length })), onError: toastError },
     );
+  };
 
   const copyPrompt = async (id: string) => {
     try {
+      await flushEditors();
       const p = data(
         await api.GET('/api/episodes/{episode_id}/panels/{panel_id}/prompt', {
           params: { path: { episode_id: episode.id!, panel_id: id } },
         }),
       ) as unknown as PromptPreview;
-      await navigator.clipboard?.writeText(p.tags.positive);
+      await copyText(p.tags.positive);
       toast(t('common.copied'));
     } catch (error) {
       toastError(error);
     }
   };
 
-  const exportMany = (list: string[]) => {
-    const chosen = byId(list);
-    downloadJson(`${episode.title || 'panels'}-${list.length}.json`, bundlePanels(chosen));
-    navigator.clipboard
-      ?.writeText(JSON.stringify(bundlePanels(chosen), null, 2))
-      .catch(() => undefined);
-    toast(t('batch.exported', { count: list.length }));
+  const exportMany = async (list: string[]) => {
+    try {
+      await flushEditors();
+      const current = qc.getQueryData<Episode>(keys.episode(episode.id!)) ?? episode;
+      const chosen = current.panels.filter((panel) => list.includes(panel.id!));
+      downloadJson(`${episode.title || 'panels'}-${list.length}.json`, bundlePanels(chosen));
+      toast(t('batch.exported', { count: list.length }));
+    } catch (error) {
+      toastError(error);
+    }
   };
 
   const onImportFile = async (file: File) => {
@@ -252,28 +288,20 @@ export default function ScriptTab() {
     );
   };
 
-  // Keyboard on the list: Ctrl+A, Esc, Delete, ↑/↓ (Shift extends).  Text fields are left alone.
+  // Arrow keys switch the editor; the shared list owns selection, Escape and Delete.
   const onListKey = (e: KeyboardEvent) => {
-    if (isEditable(e.target)) return;
-    const mod = e.ctrlKey || e.metaKey;
-    if (mod && e.key.toLowerCase() === 'a') {
-      e.preventDefault();
-      selection.all();
-    } else if (e.key === 'Escape') {
+    if (shortcutBlocked(e, e.currentTarget) || e.isPropagationStopped()) return;
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    if (!selectedId) return;
+    const next = ids[indexOf(selectedId) + (e.key === 'ArrowDown' ? 1 : -1)];
+    if (!next) return;
+    e.preventDefault();
+    if (e.shiftKey) selection.click(next, { shiftKey: true });
+    else {
       selection.clear();
-    } else if (e.key === 'Delete' || e.key === 'Backspace') {
-      if (selection.ids.length) {
-        e.preventDefault();
-        void deleteMany(selection.ids);
-      }
-    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-      if (!selectedId) return;
-      const next = ids[indexOf(selectedId) + (e.key === 'ArrowDown' ? 1 : -1)];
-      if (!next) return;
-      e.preventDefault();
-      select(next);
-      selection.click(next, { shiftKey: e.shiftKey });
+      selection.anchorAt(next);
     }
+    select(next);
   };
 
   const onRowSelect = (
@@ -281,14 +309,13 @@ export default function ScriptTab() {
     mods: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean },
   ) => {
     const extend = mods.ctrlKey || mods.metaKey || mods.shiftKey;
-    // The open panel counts as the anchor when nothing is selected yet, so Ctrl / Shift-clicking
-    // another row already gives a pair (legacy behaviour).  State updates are batched in order.
-    if (extend && !selection.ids.length && selectedId && selectedId !== id)
-      selection.only(selectedId);
-    selection.click(id, mods);
-    if (!extend) select(id);
+    if (extend) selection.click(id, mods);
+    else {
+      selection.clear();
+      selection.anchorAt(id);
+      select(id);
+    }
   };
-  const onRowMenu = (id: string, e: MouseEvent) => menu.open(e, selection.contextTarget(id));
 
   const menuGroups = (list: string[]): ContextGroup[] => {
     const n = list.length;
@@ -395,7 +422,13 @@ export default function ScriptTab() {
     ];
   };
 
-  const duplicateOne = (id: string) =>
+  const duplicateOne = async (id: string) => {
+    try {
+      await flushEditors();
+    } catch (error) {
+      toastError(error);
+      return;
+    }
     duplicate.mutate(id, {
       onSuccess: (ep) => {
         const known = new Set(ids);
@@ -404,12 +437,25 @@ export default function ScriptTab() {
       },
       onError: toastError,
     });
+  };
 
-  const multi = selection.ids.length > 1 ? selection.ids : null;
+  const shownSelection = desktop.snapshot ?? selection.ids;
+  const multi = shownSelection.length > 1 ? shownSelection : null;
 
   return (
     <div className="script-layout">
-      <aside className="script-rail" onKeyDown={onListKey}>
+      <div
+        className="script-rail desktop-list"
+        ref={desktop.ref}
+        tabIndex={0}
+        role="navigation"
+        aria-label={t('interaction.list')}
+        onKeyDown={onListKey}
+        onClickCapture={desktop.onClickCapture}
+        onContextMenu={desktop.onContextMenu}
+        onPointerDown={desktop.onPointerDown}
+        onDragStartCapture={desktop.onDragStartCapture}
+      >
         <div className="row" style={{ padding: '0 4px 10px' }}>
           <span className="small muted grow">{t('series.panels', { count: panels.length })}</span>
           {studio ? (
@@ -491,9 +537,9 @@ export default function ScriptTab() {
           series={series}
           selected={selectedId}
           checked={selection.set}
+          contextId={menu.state?.payload.focusId}
           covers={covers}
           onSelect={onRowSelect}
-          onContextMenu={onRowMenu}
           onReorder={(order) => reorder.mutate(order, { onError: toastError })}
         />
         {studio ? (
@@ -501,7 +547,7 @@ export default function ScriptTab() {
             {t('batch.listHint')}
           </p>
         ) : null}
-      </aside>
+      </div>
       <section className="script-main">
         {selected ? (
           <PanelEditor
@@ -529,7 +575,8 @@ export default function ScriptTab() {
         <ContextMenu
           x={menu.state.x}
           y={menu.state.y}
-          groups={menuGroups(menu.state.payload)}
+          groups={menuGroups(menu.state.payload.ids)}
+          returnFocus={menu.state.payload.target}
           onClose={menu.close}
         />
       ) : null}

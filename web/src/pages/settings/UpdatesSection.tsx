@@ -1,9 +1,11 @@
+import { QueryError } from '../../app/errors';
 import { Download, ExternalLink, RefreshCw, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUpdateAction, useUpdateStatus } from '../../api/open';
 import { usePatchSettings, useSettings } from '../../api/system';
 import { toast, toastError } from '../../components/toast';
+import { ConfigurationGuard } from './ConfigurationParts';
 import { Field, Loading, TextInput } from '../../components/ui';
 
 function formatSize(bytes: number): string {
@@ -18,25 +20,38 @@ function FeedField() {
   const [feed, setFeed] = useState<string | null>(null);
   const value = feed ?? stored ?? '';
   return (
-    <Field label={t('settings.updates.feed')} hint={t('settings.updates.feedHint')}>
-      <div className="row">
-        <TextInput mono className="grow" value={value} onChange={setFeed} placeholder="GitHub" />
-        {feed !== null && feed !== stored ? (
-          <button
-            className="btn primary sm"
+    <>
+      <ConfigurationGuard dirty={feed !== null && feed !== (stored ?? '')} />
+      <Field label={t('settings.updates.feed')} hint={t('settings.updates.feedHint')}>
+        <div className="row">
+          <TextInput
+            mono
+            className="grow"
             disabled={patch.isPending}
-            onClick={() =>
-              patch.mutate(
-                { update_feed: feed.trim() },
-                { onSuccess: () => (toast(t('common.saved')), setFeed(null)), onError: toastError },
-              )
-            }
-          >
-            {t('common.save')}
-          </button>
-        ) : null}
-      </div>
-    </Field>
+            value={value}
+            onChange={setFeed}
+            placeholder="GitHub"
+          />
+          {feed !== null && feed !== stored ? (
+            <button
+              className="btn primary sm"
+              disabled={patch.isPending}
+              onClick={() =>
+                patch.mutate(
+                  { update_feed: feed.trim() },
+                  {
+                    onSuccess: () => (toast(t('common.saved')), setFeed(null)),
+                    onError: toastError,
+                  },
+                )
+              }
+            >
+              {t('common.save')}
+            </button>
+          ) : null}
+        </div>
+      </Field>
+    </>
   );
 }
 
@@ -45,6 +60,7 @@ export function UpdatesSection() {
   const status = useUpdateStatus();
   const action = useUpdateAction();
 
+  if (status.isError) return <QueryError error={status.error} onRetry={status.refetch} />;
   if (!status.data) return <Loading />;
   const s = status.data;
   const check = s.last_check;

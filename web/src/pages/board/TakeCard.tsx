@@ -10,6 +10,7 @@ import { ActionMenu } from '../../components/ui';
 export function TakeCard(props: {
   take: Take;
   checked?: boolean;
+  context?: boolean;
   onAdopt: () => void;
   onReject: () => void;
   onRestore: () => void;
@@ -25,12 +26,15 @@ export function TakeCard(props: {
   const qa = take.qa;
   return (
     <figure
-      className={`take ${take.status} ${props.checked ? 'checked' : ''}`}
+      className={`take ${take.status} ${props.checked ? 'checked' : ''} ${props.context ? 'is-context' : ''}`}
+      data-selection-id={take.id}
+      tabIndex={0}
       aria-selected={props.checked || undefined}
       onContextMenu={props.onContextMenu}
     >
       <button
         className="take-image"
+        data-selection-open
         onClick={(e) => {
           if (props.onSelect && (e.ctrlKey || e.metaKey || e.shiftKey)) {
             e.preventDefault();
@@ -39,7 +43,7 @@ export function TakeCard(props: {
         }}
         aria-label={t('board.zoom')}
       >
-        <img src={assetUrl(take.asset_id, 480)} alt="" loading="lazy" />
+        <img draggable={false} src={assetUrl(take.asset_id, 480)} alt="" loading="lazy" />
       </button>
       <div className="take-badges">
         {take.stage !== 'draft' ? <span className="chip">{take.stage}</span> : null}

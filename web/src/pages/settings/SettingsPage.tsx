@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState, type ComponentType, type KeyboardEvent } from 'react';
+import { Fragment, useState, type ComponentType, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useImportBundle, usePatchSettings } from '../../api/system';
@@ -7,6 +7,7 @@ import { Icon, type IconName } from '../../app/icons';
 import { usePageTitle } from '../../app/title';
 import { toast, toastError } from '../../components/toast';
 import { manualHref, useQuickStart } from '../../components/HelpDrawer';
+import { ConfigurationGuard } from './ConfigurationParts';
 import { FilePick } from '../../components/ui';
 import { setLocale } from '../../i18n';
 import { TrashSection } from '../trash/TrashPage';
@@ -23,10 +24,11 @@ function WorkspaceSection() {
   const { t, i18n } = useTranslation();
   const title = useCollectionTitle();
   const patch = usePatchSettings();
-  const [draft, setDraft] = useState(title);
-  useEffect(() => setDraft(title), [title]);
+  const [draft, setDraft] = useState<string | null>(null);
+  const value = draft ?? title;
   return (
     <>
+      <ConfigurationGuard dirty={value.trim() !== title} />
       <section className="settings-section">
         <h2>{t('legacy.settings.workspaceTitle')}</h2>
         <p>{t('legacy.settings.workspaceHint')}</p>
@@ -37,7 +39,8 @@ function WorkspaceSection() {
           <input
             id="collection-name"
             className="input"
-            value={draft}
+            value={value}
+            disabled={patch.isPending}
             maxLength={60}
             onChange={(e) => setDraft(e.target.value)}
           />
@@ -58,11 +61,17 @@ function WorkspaceSection() {
         </div>
         <button
           className="btn primary"
-          disabled={!draft.trim() || draft.trim() === title || patch.isPending}
+          disabled={!value.trim() || value.trim() === title || patch.isPending}
           onClick={() =>
             patch.mutate(
-              { collection_title: draft.trim() },
-              { onSuccess: () => toast(t('common.saved')), onError: toastError },
+              { collection_title: value.trim() },
+              {
+                onSuccess: () => {
+                  setDraft(null);
+                  toast(t('common.saved'));
+                },
+                onError: toastError,
+              },
             )
           }
         >
@@ -72,7 +81,7 @@ function WorkspaceSection() {
       </section>
       <section className="settings-section">
         <h2>{t('legacy.settings.storageTitle')}</h2>
-        <div className="service-context">{t('legacy.saved')}</div>
+        <div className="service-context">{t('legacy.storage')}</div>
         <p>{t('legacy.settings.storageBody')}</p>
       </section>
     </>

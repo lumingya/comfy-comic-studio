@@ -1,3 +1,4 @@
+import { QueryError } from '../../app/errors';
 import { Check, Monitor, Trash2, Upload } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useDeleteTheme, useImportTheme, useThemes, type ThemeInfo } from '../../api/open';
@@ -92,6 +93,7 @@ export function ThemesSection() {
     }
   };
 
+  if (themes.isError) return <QueryError error={themes.error} onRetry={themes.refetch} />;
   if (themes.isLoading) return <Loading />;
   const list = themes.data ?? [];
   const known = choice === SYSTEM || list.some((th) => th.id === choice);

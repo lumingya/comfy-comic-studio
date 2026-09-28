@@ -1,3 +1,4 @@
+import { QueryError } from '../../app/errors';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
 import { useExtensionPanels } from '../../api/open';
@@ -11,6 +12,7 @@ export default function ExtensionTab() {
   const { panelId } = useParams();
   const { episode } = useEpisodeContext();
   const panels = useExtensionPanels('episode');
+  if (panels.isError) return <QueryError error={panels.error} onRetry={panels.refetch} />;
   if (panels.isLoading) return <Loading />;
   const panel = panels.data?.find((p) => panelKey(p) === panelId);
   if (!panel) return <Empty>{t('settings.ext.panelGone')}</Empty>;

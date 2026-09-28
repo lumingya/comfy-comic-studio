@@ -1,11 +1,12 @@
 import { Plus, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePatchSeries } from '../../api/series';
 import { useProfiles } from '../../api/system';
 import type { VariantSet } from '../../api/types';
 import { toast, toastError } from '../../components/toast';
 import { Empty, Field, Select, TagInput, TextInput } from '../../components/ui';
+import { ConfigurationGuard } from '../settings/ConfigurationParts';
 import { rid } from '../bible/BibleTab';
 import { useSeriesContext } from './SeriesPage';
 
@@ -15,11 +16,17 @@ export default function VariantsTab() {
   const patch = usePatchSeries(series.id);
   const profiles = useProfiles();
   const [variants, setVariants] = useState<VariantSet[]>(series.variants ?? []);
-  const [dirty, setDirty] = useState(false);
+  const [dirty, setDirtyState] = useState(false);
+  const dirtyRef = useRef(false);
+  const current = useRef(variants);
+  current.current = variants;
+  const setDirty = (value: boolean) => {
+    dirtyRef.current = value;
+    setDirtyState(value);
+  };
 
   useEffect(() => {
-    setVariants(series.variants ?? []);
-    setDirty(false);
+    if (!dirtyRef.current) setVariants(series.variants ?? []);
   }, [series.updated_at]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const edit = (id: string, changes: Partial<VariantSet>) => {
@@ -41,8 +48,23 @@ export default function VariantsTab() {
     setDirty(true);
   };
 
-  const save = () =>
-    patch.mutate({ variants }, { onSuccess: () => toast(t('common.saved')), onError: toastError });
+  const save = () => {
+    if (patch.isPending) return;
+    const snapshot = current.current;
+    patch.mutate(
+      { variants: snapshot },
+      {
+        onSuccess: (stored) => {
+          if (current.current === snapshot) {
+            setVariants(stored.variants);
+            setDirty(false);
+          }
+          toast(t('common.saved'));
+        },
+        onError: toastError,
+      },
+    );
+  };
 
   const styleOptions = [
     { value: '', label: t('common.auto') },
@@ -55,6 +77,7 @@ export default function VariantsTab() {
 
   return (
     <section>
+      <ConfigurationGuard dirty={dirty} />
       <div className="row" style={{ marginBottom: 16 }}>
         <p className="muted small grow" style={{ margin: 0 }}>
           {t('variants.hint')}
@@ -111,7 +134,12 @@ export default function VariantsTab() {
                       onChange={(tags) => {
                         const characters = { ...(v.characters ?? {}) };
                         if (tags.length) characters[c.id!] = { ...override, tag_description: tags };
-                        else delete characters[c.id!];
+                        else {
+                          const remaining = { ...override };
+                          delete remaining.tag_description;
+                          if (Object.keys(remaining).length) characters[c.id!] = remaining;
+                          else delete characters[c.id!];
+                        }
                         edit(v.id!, { characters });
                       }}
                     />

@@ -150,7 +150,8 @@ export default function EpisodesTab() {
   const limit = page.data?.limit ?? 50;
   const defaultTitle = t('series.episodeNo', { n: total + 1 });
 
-  const add = () =>
+  const add = () => {
+    if (create.isPending) return;
     create.mutate(
       { title: newTitle.trim() || defaultTitle },
       {
@@ -162,6 +163,7 @@ export default function EpisodesTab() {
         onError: toastError,
       },
     );
+  };
 
   return (
     <section>
@@ -237,7 +239,7 @@ export default function EpisodesTab() {
 
       <Modal
         open={adding}
-        onOpenChange={setAdding}
+        onOpenChange={(open) => !create.isPending && setAdding(open)}
         title={t('series.newEpisode')}
         footer={
           <>
@@ -253,6 +255,7 @@ export default function EpisodesTab() {
         <Field label={t('common.title')}>
           <TextInput
             autoFocus
+            disabled={create.isPending}
             value={newTitle}
             onChange={setNewTitle}
             onEnter={add}

@@ -1,7 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useDesktopSelection, type DesktopContext } from '../../app/useDesktopSelection';
+import { useSelection } from '../../app/selection';
+import { ContextMenu, useContextMenu } from '../../components/ContextMenu';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useAddPanel,
+  useBatchDeletePanels,
   useBatchPatchPanels,
   useDeletePanel,
   useDuplicatePanel,
@@ -11,6 +15,15 @@ import {
 import type { Panel, PanelOverrides } from '../../api/types';
 import { useWorkshop } from '../../api/workshop';
 import { Icon } from '../../app/icons';
+import {
+  AutoSaveGuard,
+  flushDraft,
+  useAutoDraft,
+  type AutosaveController,
+} from '../../app/useAutoDraft';
+import { shortcutBlocked } from '../../app/shortcuts';
+import { SaveState } from '../../components/SaveState';
+import { captionText, replaceCaption } from './caption';
 import { confirm } from '../../components/confirm';
 import { toastError } from '../../components/toast';
 import { useEpisodeContext } from '../episode/EpisodePage';
@@ -29,38 +42,6 @@ export function useKnownVariables(): KnownVariables {
   }, [ws.data]);
 }
 
-const caption = (p: Panel) =>
-  p.dialogues.find((d) => d.kind === 'narration')?.text ?? p.dialogues[0]?.text ?? '';
-
-/** A text field that edits locally and saves on blur or after a short pause. */
-function useField(initial: string, save: (v: string) => void) {
-  const [value, setValue] = useState(initial);
-  const saved = useRef(initial);
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const saveRef = useRef(save);
-  saveRef.current = save;
-  useEffect(() => {
-    setValue(initial);
-    saved.current = initial;
-  }, [initial]);
-  const commit = (v = value) => {
-    clearTimeout(timer.current);
-    if (v === saved.current) return;
-    saved.current = v;
-    saveRef.current(v);
-  };
-  useEffect(() => () => clearTimeout(timer.current), []);
-  return {
-    value,
-    onChange: (v: string) => {
-      setValue(v);
-      clearTimeout(timer.current);
-      timer.current = setTimeout(() => commit(v), 800);
-    },
-    onBlur: () => commit(),
-  };
-}
-
 export const basePromptKey = (id: string) => `mio.basePrompt.${id}`;
 
 /** 分镜工坊: legacy frame list + page editor (name, prompt, negative, caption, parameters). */
@@ -75,12 +56,74 @@ export default function StoryboardEditor() {
   const [activeId, setActiveId] = useState<string | undefined>(panels[0]?.id);
   const active = panels.find((p) => p.id === activeId) ?? panels[0];
   const add = useAddPanel(episode.id!);
+  const editorSave = useRef<AutosaveController | null>(null);
+  const registerSave = useCallback((save: AutosaveController | null) => {
+    editorSave.current = save;
+  }, []);
+  const choose = async (id: string | undefined) => {
+    try {
+      if (editorSave.current) await flushDraft(editorSave.current);
+      setActiveId(id);
+    } catch (error) {
+      toastError(error);
+    }
+  };
+  const panelIds = useMemo(() => panels.map((p) => p.id!), [panels]);
+  const selection = useSelection(panelIds);
+  const menu = useContextMenu<DesktopContext>();
+  const duplicate = useDuplicatePanel(episode.id!);
+  const removeMany = useBatchDeletePanels(episode.id!);
+  const removeSelected = async (ids: string[]) => {
+    if (
+      !ids.length ||
+      removeMany.isPending ||
+      !(await confirm({ title: t('batch.deleteTitle', { count: ids.length }), danger: true }))
+    )
+      return;
+    try {
+      if (editorSave.current) await flushDraft(editorSave.current).catch(() => undefined);
+      await removeMany.mutateAsync(ids);
+      if (active?.id && ids.includes(active.id)) editorSave.current?.discard();
+      selection.clear();
+    } catch (error) {
+      toastError(error);
+    }
+  };
+  const copySelected = async (ids: string[]) => {
+    try {
+      if (editorSave.current) await flushDraft(editorSave.current);
+      for (const id of ids) await duplicate.mutateAsync(id);
+    } catch (error) {
+      toastError(error);
+    }
+  };
+  const desktop = useDesktopSelection({
+    itemAttribute: 'data-selection-id',
+    selection,
+    enabled: true,
+    pinned: false,
+    contextOpen: !!menu.state,
+    onExit: selection.clear,
+    onOpen: (id) => {
+      void choose(id);
+    },
+    onDelete: (ids) => {
+      void removeSelected(ids);
+    },
+    onContext: menu.openAt,
+    onCloseContext: menu.close,
+  });
+  useEffect(() => {
+    if (active?.id && !selection.ids.length) selection.anchorAt(active.id);
+  }, [active?.id, selection.ids.length, selection.anchorAt]);
   const [batch, setBatch] = useState(false);
   const [batchCount, setBatchCount] = useState(4);
 
   const addFrames = (count: number, prompt: string) => {
     let after = active?.id ?? null;
     const run = async () => {
+      if (editorSave.current) await flushDraft(editorSave.current);
+      if (!Number.isInteger(count) || count < 1 || count > 24) return;
       for (let i = 0; i < count; i += 1) {
         const ep = await add.mutateAsync({
           panel: {
@@ -102,14 +145,34 @@ export default function StoryboardEditor() {
     <>
       <div className="workshop-editor">
         <nav className="workshop-frames" aria-label={t('ws.story.framesLabel')}>
-          <div className="workshop-frames-list">
+          <div
+            className="workshop-frames-list desktop-list"
+            ref={desktop.ref}
+            tabIndex={0}
+            onClickCapture={desktop.onClickCapture}
+            onContextMenu={desktop.onContextMenu}
+            onPointerDown={desktop.onPointerDown}
+            onDragStartCapture={desktop.onDragStartCapture}
+          >
+            {(desktop.snapshot ?? selection.ids).length ? (
+              <div className="selection-bar" role="status">
+                <span>
+                  {t('interaction.selected', { count: (desktop.snapshot ?? selection.ids).length })}
+                </span>
+                <button type="button" className="btn ghost small" onClick={selection.clear}>
+                  {t('common.cancel')}
+                </button>
+              </div>
+            ) : null}
             {panels.map((p, i) => (
               <button
                 key={p.id}
                 type="button"
-                className={p.id === active?.id ? 'active' : ''}
+                className={`${p.id === active?.id ? 'active' : ''} ${selection.has(p.id!) ? 'checked' : ''} ${menu.state?.payload.focusId === p.id ? 'is-context' : ''}`}
+                data-selection-id={p.id}
+                data-selection-open
+                aria-selected={selection.has(p.id!) || undefined}
                 aria-current={p.id === active?.id ? 'true' : undefined}
-                onClick={() => setActiveId(p.id)}
               >
                 <small>{String(i + 1).padStart(2, '0')}</small>
                 <span>{p.description || t('ws.story.frameN', { n: i + 1 })}</span>
@@ -151,7 +214,10 @@ export default function StoryboardEditor() {
                 <button
                   type="button"
                   className="btn small primary"
-                  disabled={add.isPending || !(batchCount >= 1 && batchCount <= 24)}
+                  disabled={
+                    add.isPending ||
+                    !(Number.isInteger(batchCount) && batchCount >= 1 && batchCount <= 24)
+                  }
                   onClick={() => {
                     setBatch(false);
                     addFrames(batchCount, localStorage.getItem(basePromptKey(episode.id!)) ?? '');
@@ -171,7 +237,8 @@ export default function StoryboardEditor() {
             count={panels.length}
             panels={panels}
             known={known}
-            onSelect={setActiveId}
+            onSelect={(id) => void choose(id)}
+            registerSave={registerSave}
           />
         ) : (
           <section className="workshop-page is-empty">
@@ -179,6 +246,37 @@ export default function StoryboardEditor() {
           </section>
         )}
       </div>
+      {menu.state ? (
+        <ContextMenu
+          x={menu.state.x}
+          y={menu.state.y}
+          returnFocus={menu.state.payload.target}
+          onClose={menu.close}
+          groups={[
+            {
+              items: [
+                {
+                  label: t('ws.story.copy'),
+                  disabled: duplicate.isPending,
+                  onSelect: () => {
+                    void copySelected(menu.state!.payload.ids);
+                  },
+                },
+                {
+                  label: t('common.delete'),
+                  danger: true,
+                  disabled: removeMany.isPending,
+                  onSelect: () => {
+                    void removeSelected(menu.state!.payload.ids);
+                  },
+                },
+                { label: t('classic.shelf.selectFiltered'), onSelect: selection.all },
+                { label: t('classic.shelf.clearSelection'), onSelect: selection.clear },
+              ],
+            },
+          ]}
+        />
+      ) : null}
     </>
   );
 }
@@ -190,6 +288,7 @@ function FramePage({
   panels,
   known,
   onSelect,
+  registerSave,
 }: {
   panel: Panel;
   index: number;
@@ -197,6 +296,7 @@ function FramePage({
   panels: Panel[];
   known: KnownVariables;
   onSelect: (id: string | undefined) => void;
+  registerSave: (save: AutosaveController | null) => void;
 }) {
   const { t } = useTranslation();
   const { episode } = useEpisodeContext();
@@ -206,30 +306,59 @@ function FramePage({
   const reorder = useReorderPanels(eid);
   const duplicate = useDuplicatePanel(eid);
   const remove = useDeletePanel(eid);
-  const ov = panel.overrides;
+  const initial = useMemo(
+    () => ({
+      description: panel.description,
+      overrides: panel.overrides,
+      dialogues: panel.dialogues,
+    }),
+    [panel],
+  );
+  const draft = useAutoDraft(initial, (changes) =>
+    patch.mutateAsync({ panelId: panel.id!, changes }),
+  );
+  useEffect(() => {
+    registerSave(draft);
+    return () => registerSave(null);
+  }, [registerSave, draft.flush]);
+  const ov = draft.value.overrides;
+  const commit = () => {
+    void draft.flushAll().catch(toastError);
+  };
   const setOverrides = (changes: Partial<PanelOverrides>) =>
-    patch.mutate(
-      { panelId: panel.id!, changes: { overrides: { ...ov, ...changes } } },
-      { onError: toastError },
-    );
+    draft.change((previous) => ({ ...previous, overrides: { ...previous.overrides, ...changes } }));
+  const name = {
+    value: draft.value.description,
+    onChange: (description: string) => draft.change((previous) => ({ ...previous, description })),
+    onBlur: commit,
+  };
+  const prompt = {
+    value: ov.raw_prompt ?? '',
+    onChange: (raw_prompt: string) => setOverrides({ raw_prompt }),
+    onBlur: commit,
+  };
+  const negative = {
+    value: ov.raw_negative ?? '',
+    onChange: (raw_negative: string) => setOverrides({ raw_negative: raw_negative || null }),
+    onBlur: commit,
+  };
+  const text = {
+    value: captionText(draft.value.dialogues),
+    onChange: (value: string) =>
+      draft.change((previous) => ({
+        ...previous,
+        dialogues: replaceCaption(previous.dialogues, value),
+      })),
+    onBlur: commit,
+  };
 
-  const name = useField(panel.description, (description) =>
-    patch.mutate({ panelId: panel.id!, changes: { description } }, { onError: toastError }),
-  );
-  const prompt = useField(ov.raw_prompt ?? '', (raw_prompt) => setOverrides({ raw_prompt }));
-  const negative = useField(ov.raw_negative ?? '', (v) =>
-    setOverrides({ raw_negative: v || null }),
-  );
-  const text = useField(caption(panel), (v) => {
-    const rest = panel.dialogues.filter((d) => d.kind !== 'narration');
-    const narration = v.trim() ? [{ text: v, kind: 'narration' as const }] : [];
-    patch.mutate(
-      { panelId: panel.id!, changes: { dialogues: [...narration, ...rest] } },
-      { onError: toastError },
-    );
-  });
-
-  const move = (dir: -1 | 1) => {
+  const move = async (dir: -1 | 1) => {
+    try {
+      await draft.flushAll();
+    } catch (error) {
+      toastError(error);
+      return;
+    }
     const ids = panels.map((p) => p.id!);
     const j = index + dir;
     if (j < 0 || j >= ids.length) return;
@@ -246,7 +375,33 @@ function FramePage({
   };
 
   return (
-    <section className="workshop-page" data-editor-key={panel.id}>
+    <section
+      className="workshop-page"
+      data-editor-key={panel.id}
+      onKeyDown={(event) => {
+        if (
+          !shortcutBlocked(event, event.currentTarget, true) &&
+          (event.ctrlKey || event.metaKey) &&
+          event.key.toLowerCase() === 's'
+        ) {
+          event.preventDefault();
+          commit();
+        }
+      }}
+    >
+      <AutoSaveGuard save={draft} includeSearch />
+      <div className="row" style={{ marginBottom: 10 }}>
+        <SaveState state={draft.state} />
+        <span className="grow" />
+        <button
+          type="button"
+          className="btn ghost small"
+          disabled={!draft.busy() || draft.state === 'saving'}
+          onClick={commit}
+        >
+          {t('common.save')}
+        </button>
+      </div>
       <div className="workshop-page-title">
         <input
           value={name.value}
@@ -279,15 +434,21 @@ function FramePage({
           className="ibtn"
           title={t('ws.story.copy')}
           aria-label={t('ws.story.copy')}
-          onClick={() =>
+          onClick={async () => {
+            try {
+              await draft.flushAll();
+            } catch (error) {
+              toastError(error);
+              return;
+            }
             duplicate.mutate(panel.id!, {
               onSuccess: (ep) => {
                 const sorted = [...ep.panels].sort((a, b) => a.order - b.order);
                 onSelect(sorted[index + 1]?.id);
               },
               onError: toastError,
-            })
-          }
+            });
+          }}
         >
           <Icon name="copy" />
         </button>
@@ -298,8 +459,12 @@ function FramePage({
           aria-label={t('ws.story.remove')}
           onClick={async () => {
             if (!(await confirm({ title: t('ws.story.removeConfirm'), danger: true }))) return;
+            await draft.flushAll().catch(() => undefined);
             remove.mutate(panel.id!, {
-              onSuccess: () => onSelect(panels[index + 1]?.id ?? panels[index - 1]?.id),
+              onSuccess: () => {
+                draft.discard();
+                onSelect(panels[index + 1]?.id ?? panels[index - 1]?.id);
+              },
               onError: toastError,
             });
           }}
@@ -376,11 +541,10 @@ function FramePage({
               <input
                 id={`frame-${key}`}
                 type="number"
-                defaultValue={value ?? ''}
+                value={value ?? ''}
                 placeholder={t('ws.story.paramDefault')}
-                onBlur={(e) => {
-                  if (e.target.value !== String(value ?? '')) set(e.target.value);
-                }}
+                onChange={(e) => set(e.target.value)}
+                onBlur={commit}
               />
             </div>
           ))}

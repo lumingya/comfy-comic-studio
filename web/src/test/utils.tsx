@@ -26,7 +26,9 @@ export function mockFetch(routes: Record<string, unknown | ((body: unknown) => u
     if (!(key in routes))
       return new Response(JSON.stringify({ detail: `no route ${key}` }), { status: 404 });
     const value = routes[key];
-    const result = typeof value === 'function' ? (value as (b: unknown) => unknown)(body) : value;
+    const result = await (typeof value === 'function'
+      ? (value as (b: unknown) => unknown)(body)
+      : value);
     return result instanceof Response
       ? result
       : new Response(JSON.stringify(result), {
@@ -42,9 +44,11 @@ export function renderWithProviders(ui: ReactNode, route = '/') {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  return render(
-    <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>
-    </QueryClientProvider>,
-  );
+  return render(ui, {
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={client}>
+        <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+      </QueryClientProvider>
+    ),
+  });
 }

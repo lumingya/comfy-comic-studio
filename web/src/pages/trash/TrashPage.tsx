@@ -66,7 +66,11 @@ export function TrashSection() {
                     >
                       <RotateCcw size={13} /> {t('trash.restore')}
                     </button>{' '}
-                    <button className="btn ghost sm danger" onClick={() => purgeItem(item)}>
+                    <button
+                      className="btn ghost sm danger"
+                      disabled={purge.isPending || restore.isPending}
+                      onClick={() => purgeItem(item)}
+                    >
                       <Trash2 size={13} /> {t('trash.purge')}
                     </button>
                   </td>

@@ -1,7 +1,8 @@
+import { useLayoutEffect } from 'react';
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Toaster, toast, useToasts } from './toast';
-import { topDialog } from './topLayer';
+import { topDialog, useTopDialog } from './topLayer';
 
 /** jsdom has no top layer: make a dialog opened via the attribute count as `showModal()`-ed. */
 function modal(): HTMLDialogElement {
@@ -45,5 +46,21 @@ describe('top layer', () => {
     const later = await screen.findByText('after closing');
     expect(document.querySelector('dialog')).toBeNull();
     expect(later.isConnected).toBe(true);
+  });
+  it('chooses an existing native modal during the first opening paint, not one passive effect later', () => {
+    const dialog = modal();
+    dialog.setAttribute('open', '');
+    document.body.append(dialog);
+    const paints: (HTMLElement | undefined)[] = [];
+    function Probe({ active }: { active: boolean }) {
+      const host = useTopDialog(active);
+      useLayoutEffect(() => {
+        if (active) paints.push(host);
+      }, [active, host]);
+      return null;
+    }
+    const { rerender } = render(<Probe active={false} />);
+    rerender(<Probe active />);
+    expect(paints[0]).toBe(dialog);
   });
 });

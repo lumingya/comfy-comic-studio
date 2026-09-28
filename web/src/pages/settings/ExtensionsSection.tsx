@@ -1,3 +1,5 @@
+import { confirm } from '../../components/confirm';
+import { QueryError } from '../../app/errors';
 import { Package, Power, PowerOff, ShieldAlert, Trash2, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -28,12 +30,12 @@ function TrustDialog(props: { ext: ExtensionInfo | null; onClose: () => void }) 
   return (
     <Modal
       open={!!ext}
-      onOpenChange={(open) => !open && props.onClose()}
+      onOpenChange={(open) => !action.isPending && !open && props.onClose()}
       title={t('settings.ext.trustTitle', { name: ext?.name ?? '' })}
       description={t('settings.ext.trustHint')}
       footer={
         <>
-          <button className="btn ghost" onClick={props.onClose}>
+          <button className="btn ghost" disabled={action.isPending} onClick={props.onClose}>
             {t('common.cancel')}
           </button>
           <button
@@ -131,7 +133,16 @@ function ExtensionCard({ ext, onTrust }: { ext: ExtensionInfo; onTrust: () => vo
           className="btn ghost icon sm danger"
           aria-label={t('common.delete')}
           disabled={action.isPending}
-          onClick={() => window.confirm(t('settings.ext.confirmRemove')) && run('remove')}
+          onClick={async () => {
+            if (
+              await confirm({
+                title: t('settings.ext.confirmRemove'),
+                confirmLabel: t('common.delete'),
+                danger: true,
+              })
+            )
+              run('remove');
+          }}
         >
           <Trash2 size={13} />
         </button>
@@ -148,6 +159,7 @@ export function ExtensionsSection() {
   const [trusting, setTrusting] = useState<ExtensionInfo | null>(null);
   const panels = useExtensionPanels('settings');
 
+  if (list.isError) return <QueryError error={list.error} onRetry={list.refetch} />;
   if (list.isLoading) return <Loading />;
   const items = list.data?.items ?? [];
   return (

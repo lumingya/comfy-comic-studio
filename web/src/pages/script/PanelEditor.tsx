@@ -17,6 +17,8 @@ import { keys } from '../../api/keys';
 import { useRender } from '../../api/production';
 import { useDuplicatePanel, usePatchPanel } from '../../api/series';
 import { ANGLES, SHOTS, TIMES, type Episode, type Panel, type Series } from '../../api/types';
+import { AutoSaveGuard, flushDraft } from '../../app/useAutoDraft';
+import { shortcutBlocked } from '../../app/shortcuts';
 import { useAutosave } from '../../app/autosave';
 import { useUI } from '../../app/ui-store';
 import { insertVariable, PromptField, scanVariables } from '../../components/PromptField';
@@ -97,6 +99,7 @@ export function PanelEditor(props: {
   const promptRef = useRef<HTMLTextAreaElement>(null);
 
   const autosave = useAutosave(async () => {
+    if (parseOverrides(nodeText) === null) throw new Error(t('common.invalidJson'));
     const { id, order: _order, ...changes } = panelSnapshot(draft, nodeText);
     const send = () =>
       patch.mutateAsync({
@@ -172,13 +175,20 @@ export function PanelEditor(props: {
     !!draft.overrides.profile_id;
 
   // Save first, then queue `count` candidates of this panel on the job engine.
-  const generate = (count: number) =>
-    autosave
-      .flush()
-      .then(() =>
-        render.mutateAsync({ panel_ids: [draft.id!], candidates: count, variant_ids: [null] }),
-      )
-      .then(() => toast(t('classic.stage.queuedToast', { count })), toastError);
+  const generating = useRef(false);
+  const generate = async (count: number) => {
+    if (generating.current || render.isPending || nodeOverrides === null) return;
+    generating.current = true;
+    try {
+      await flushDraft(autosave);
+      await render.mutateAsync({ panel_ids: [draft.id!], candidates: count, variant_ids: [null] });
+      toast(t('classic.stage.queuedToast', { count }));
+    } catch (error) {
+      toastError(error);
+    } finally {
+      generating.current = false;
+    }
+  };
 
   const cameraSummary = [
     draft.shot ? t(`script.shots.${draft.shot}`) : '',
@@ -347,6 +357,7 @@ export function PanelEditor(props: {
     <div
       className={`panel-editor ${studio ? 'studio' : 'classic'} ${studio && inspectorOpen ? 'with-inspector' : ''}`}
       onKeyDown={(e) => {
+        if (shortcutBlocked(e, e.currentTarget, true) || e.repeat) return;
         const mod = e.metaKey || e.ctrlKey;
         if (mod && e.key.toLowerCase() === 's') {
           e.preventDefault();
@@ -357,6 +368,7 @@ export function PanelEditor(props: {
         }
       }}
     >
+      <AutoSaveGuard save={autosave} includeSearch />
       <div className="editor-main">
         <div className="save-bar editor-head">
           <span className="panel-badge mono" title={draft.id}>
@@ -407,8 +419,7 @@ export function PanelEditor(props: {
               title={t('script.duplicate')}
               aria-label={t('script.duplicate')}
               onClick={() =>
-                autosave
-                  .flush()
+                flushDraft(autosave)
                   .then(() => duplicate.mutateAsync(draft.id!))
                   .catch(toastError)
               }

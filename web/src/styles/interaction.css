@@ -1,0 +1,85 @@
+/* Shared interaction fixes, scoped to opt-in lists and narrow editor headers. */
+.desktop-list {
+  min-width: 0;
+  outline: none;
+}
+.desktop-list .selection-bar {
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.desktop-list [data-selection-id].is-context {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.desktop-list [data-selection-id][aria-selected='true'] {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.desktop-list [data-selection-id]:focus-visible {
+  outline: 1px dashed var(--muted);
+  outline-offset: 2px;
+}
+.production-cards > .selection-bar {
+  grid-column: 1 / -1;
+}
+@media (max-width: 760px) {
+  .script-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .script-rail {
+    position: static;
+    max-height: 240px;
+  }
+  .panel-editor.with-inspector {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dialogue-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+  }
+  .dialogue-row > .input {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-width: 0;
+    width: 100%;
+  }
+  .dialogue-row > .btn {
+    grid-row: 1;
+  }
+  .cast-row {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .cast-row > .field,
+  .cast-row > .tag-input {
+    grid-column: 1 / -1;
+  }
+
+  .panel-editor .editor-head {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .panel-editor .editor-head .panel-title-input {
+    flex: 1 1 120px;
+    min-width: 80px;
+  }
+  .panel-editor .editor-actions {
+    flex-basis: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .workshop-page-title {
+    flex-wrap: wrap;
+  }
+  .workshop-page-title > input {
+    flex: 1 1 160px;
+    min-width: 0;
+  }
+  .production-card-title {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .production-card-title > input {
+    min-width: 0;
+    max-width: 100%;
+  }
+}

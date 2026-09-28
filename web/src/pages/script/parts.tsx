@@ -1,3 +1,4 @@
+import { copyText } from '../../app/clipboard';
 import { Copy, Link2, Plus, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { assetUrl } from '../../api/client';
@@ -223,9 +224,7 @@ export function PromptPreview(props: { episodeId: string; panelId: string; serie
         <button
           className="btn ghost sm"
           onClick={() =>
-            navigator.clipboard
-              ?.writeText(p.tags.positive)
-              .then(() => toast(t('common.copied')), toastError)
+            copyText(p.tags.positive).then(() => toast(t('common.copied')), toastError)
           }
         >
           <Copy size={13} /> {t('script.copyPrompt')}

@@ -23,9 +23,7 @@ export function topDialog(): HTMLElement | undefined {
 
 /** {@link topDialog}, kept up to date while `active` (dialogs opening / closing). */
 export function useTopDialog(active = true): HTMLElement | undefined {
-  const [host, setHost] = useState<HTMLElement | undefined>(() =>
-    active ? topDialog() : undefined,
-  );
+  const [, setHost] = useState<HTMLElement | undefined>(() => (active ? topDialog() : undefined));
   useEffect(() => {
     if (!active) return;
     const update = () => setHost(topDialog());
@@ -39,5 +37,8 @@ export function useTopDialog(active = true): HTMLElement | undefined {
     });
     return () => observer.disconnect();
   }, [active]);
-  return active ? host : undefined;
+  // Resolve synchronously on the first open render. A portal briefly mounted outside an
+  // existing native modal is inert and its autofocus can be refused by the browser.
+  // The state above only invalidates this render when native modal ownership changes.
+  return active ? topDialog() : undefined;
 }

@@ -11,11 +11,14 @@ import {
 } from '../../api/workshop';
 import { QueryError } from '../../app/errors';
 import { Icon } from '../../app/icons';
+import { AutoSaveGuard, useAutoDraft } from '../../app/useAutoDraft';
+import { SaveState } from '../../components/SaveState';
+import type { Series } from '../../api/types';
 import { confirm } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
 import { Loading } from '../../components/ui';
 import { downloadJson, pickJsonFiles, presetFromFile, presetToFile } from './files';
-import { Autosave, WorkshopFrame } from './WorkshopPage';
+import { WorkshopFrame } from './WorkshopPage';
 
 const PICK_KEY = 'mio.workshop.preset';
 
@@ -46,19 +49,20 @@ function blankPreset(title: string): Preset {
 
 /** 预设工坊: named sets of `{变量}` values, grouped, saved automatically. */
 export default function PresetsTab() {
-  const { t } = useTranslation();
   const ws = useWorkshop();
-  const save = useSavePresets(ws.data?.id);
-  const [presets, setPresets] = useState<Preset[] | null>(null);
+  if (ws.error) return <QueryError error={ws.error} onRetry={ws.refetch} />;
+  if (!ws.data) return <Loading />;
+  return <PresetsEditor key={ws.data.id} workshop={ws.data} />;
+}
+function PresetsEditor({ workshop }: { workshop: Series }) {
+  const { t } = useTranslation();
+  const save = useSavePresets(workshop.id);
+  const draft = useAutoDraft(workshop.presets, (next) => save.mutateAsync(next), 700);
+  const presets = draft.value;
   const [pick, setPick] = useState(() => localStorage.getItem(PICK_KEY) ?? '');
   const [renaming, setRenaming] = useState(false);
+  const cancelRename = useRef(false);
   const [editGroups, setEditGroups] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const pending = useRef<Preset[] | null>(null);
-
-  useEffect(() => {
-    if (ws.data && presets === null) setPresets(ws.data.presets);
-  }, [ws.data, presets]);
   // ?new=1 (help drawer / 开箱检查 「新建预设」): add a blank preset once and select it.
   const [params, setParams] = useSearchParams();
   useEffect(() => {
@@ -66,40 +70,15 @@ export default function PresetsTab() {
     setParams({}, { replace: true });
     const p = blankPreset(t('ws.presets.untitled', { n: presets.length + 1 }));
     const next = [...presets, p];
-    setPresets(next);
-    save.mutate(next, { onError: toastError });
+    draft.change(next);
+    void draft.flushAll().catch(toastError);
     setPick(p.id!);
     localStorage.setItem(PICK_KEY, p.id!);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presets, params]);
-  // Flush a pending save when leaving the tab.
-  useEffect(
-    () => () => {
-      clearTimeout(timer.current);
-      if (pending.current) save.mutate(pending.current);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
-
-  if (ws.error) return <QueryError error={ws.error} onRetry={() => ws.refetch()} />;
-  if (!presets)
-    return (
-      <div className="assembly-workshop">
-        <Loading />
-      </div>
-    );
-
-  const commit = (next: Preset[], now = false) => {
-    setPresets(next);
-    pending.current = next;
-    clearTimeout(timer.current);
-    const run = () => {
-      pending.current = null;
-      save.mutate(next, { onError: toastError });
-    };
-    if (now) run();
-    else timer.current = setTimeout(run, 700);
+  const commit = (next: Preset[] | ((previous: Preset[]) => Preset[]), now = false) => {
+    draft.change(next);
+    if (now) void draft.flushAll().catch(toastError);
   };
   const current = presets.find((p) => p.id === pick) ?? presets[0];
   const choose = (id: string) => {
@@ -107,10 +86,7 @@ export default function PresetsTab() {
     localStorage.setItem(PICK_KEY, id);
   };
   const update = (fn: (p: Preset) => Preset, now = false) =>
-    commit(
-      presets.map((p) => (p.id === current?.id ? fn(p) : p)),
-      now,
-    );
+    commit((previous) => previous.map((p) => (p.id === current?.id ? fn(p) : p)), now);
 
   const addPreset = () => {
     const p = blankPreset(t('ws.presets.untitled', { n: presets.length + 1 }));
@@ -121,7 +97,7 @@ export default function PresetsTab() {
     try {
       const added = (await pickJsonFiles()).map(presetFromFile);
       if (!added.length) return;
-      commit([...presets, ...added], true);
+      commit((previous) => [...previous, ...added], true);
       choose(added[added.length - 1].id!);
       toast(t('ws.imported', { count: added.length }));
     } catch (e) {
@@ -144,7 +120,15 @@ export default function PresetsTab() {
         type="button"
         className="btn"
         disabled={!current}
-        onClick={() => current && downloadJson(`${current.title}.json`, presetToFile(current))}
+        onClick={async () => {
+          try {
+            await draft.flushAll();
+            const latest = draft.read().find((p) => p.id === current?.id);
+            if (latest) downloadJson(`${latest.title}.json`, presetToFile(latest));
+          } catch (error) {
+            toastError(error);
+          }
+        }}
       >
         <Icon name="upload" />
         {t('ws.export')}
@@ -159,6 +143,7 @@ export default function PresetsTab() {
   if (!current)
     return (
       <WorkshopFrame tab="presets" actions={actions}>
+        <AutoSaveGuard save={draft} />
         <div className="eco-empty">
           <h3>{t('ws.presets.emptyTitle')}</h3>
           <p>{t('ws.presets.emptyBody')}</p>
@@ -203,22 +188,39 @@ export default function PresetsTab() {
 
   return (
     <WorkshopFrame tab="presets" actions={actions}>
+      <AutoSaveGuard save={draft} />
       <div className="workshop-asset-head">
         <label>
           {t('ws.presets.current')}
           {renaming ? (
             <input
               autoFocus
+              onFocus={() => {
+                cancelRename.current = false;
+              }}
               defaultValue={current.title}
               aria-label={t('ws.presets.name')}
               onBlur={(e) => {
+                if (cancelRename.current) {
+                  cancelRename.current = false;
+                  setRenaming(false);
+                  return;
+                }
                 const title = e.target.value.trim();
-                if (title) update((p) => ({ ...p, title }), true);
+                if (title && title !== current.title) update((p) => ({ ...p, title }), true);
                 setRenaming(false);
               }}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') e.currentTarget.blur();
-                if (e.key === 'Escape') setRenaming(false);
+                if (e.nativeEvent.isComposing) return;
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.currentTarget.blur();
+                }
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  cancelRename.current = true;
+                  setRenaming(false);
+                }
               }}
             />
           ) : (
@@ -235,7 +237,16 @@ export default function PresetsTab() {
             </select>
           )}
         </label>
-        <Autosave saving={save.isPending || !!pending.current} error={save.isError} />
+        <SaveState state={draft.state} />
+        {draft.state === 'error' ? (
+          <button
+            type="button"
+            className="btn small"
+            onClick={() => void draft.flushAll().catch(toastError)}
+          >
+            {t('common.save')}
+          </button>
+        ) : null}
         <div>
           <button type="button" className="btn" onClick={() => setRenaming(!renaming)}>
             <Icon name="edit" />

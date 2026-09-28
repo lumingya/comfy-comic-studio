@@ -38,9 +38,10 @@ export function useAutosave(save: () => Promise<unknown>, delay = 800) {
     if (!dirty.current) return;
     dirty.current = false;
     setState('saving');
-    const run = saveRef.current();
-    running.current = run;
     try {
+      // Also capture synchronous validation errors, so dirty/error/retry remain truthful.
+      const run = Promise.resolve().then(() => saveRef.current());
+      running.current = run;
       await run;
       setState(dirty.current ? 'pending' : 'saved');
     } catch (error) {

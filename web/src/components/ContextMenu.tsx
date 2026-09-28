@@ -150,7 +150,7 @@ export function ContextMenu(props: {
         position: 'fixed',
         left: pos.left,
         top: pos.top,
-        zIndex: 60,
+        zIndex: 110,
         maxHeight: 'calc(100dvh - 8px)',
         overflowY: 'auto',
       }}

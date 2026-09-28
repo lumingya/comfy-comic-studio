@@ -1,5 +1,8 @@
+import { useSelection } from '../../app/selection';
+import { useDesktopSelection, type DesktopContext } from '../../app/useDesktopSelection';
+import { ContextMenu, useContextMenu } from '../../components/ContextMenu';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api, data } from '../../api/client';
@@ -13,7 +16,8 @@ import { Icon } from '../../app/icons';
 import { confirm } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
 import { SetupRemaining } from '../../components/HelpDrawer';
-import { Loading } from '../../components/ui';
+import { QueryError } from '../../app/errors';
+import { InlineTitle, Loading } from '../../components/ui';
 import AssembleDialog from './AssembleDialog';
 import { WorkshopFrame } from './WorkshopPage';
 
@@ -25,6 +29,7 @@ export interface Task {
   jobs: Job[];
   adopted: Set<string>;
   state: 'standby' | 'running' | 'paused' | 'done';
+  ready: boolean;
 }
 
 function useTasks() {
@@ -71,9 +76,30 @@ function useTasks() {
         : total > 0 && adopted.size >= total
           ? 'done'
           : 'standby';
-    return { album, episode, jobs: mine, adopted, state };
+    const ready =
+      !jobs.isPending &&
+      !jobs.isError &&
+      !firstEpisodes[i]?.isPending &&
+      !firstEpisodes[i]?.isError &&
+      (!ids[i] || (!episodes[i]?.isPending && !episodes[i]?.isError));
+    return { album, episode, jobs: mine, adopted, state, ready };
   });
-  return { tasks, isLoading: list.isLoading, jobs: jobs.data ?? [] };
+  return {
+    tasks,
+    isLoading: list.isLoading,
+    jobs: jobs.data ?? [],
+    error:
+      list.error ||
+      jobs.error ||
+      firstEpisodes.find((q) => q.error)?.error ||
+      episodes.find((q) => q.error)?.error,
+    retry: () => {
+      void list.refetch();
+      void jobs.refetch();
+      firstEpisodes.forEach((q) => void q.refetch());
+      episodes.forEach((q) => void q.refetch());
+    },
+  };
 }
 
 /** 装配与队列: assembled albums waiting for 「开始生成」, with progress and partial reruns. */
@@ -81,7 +107,7 @@ export default function AssemblyTab() {
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
   const [open, setOpen] = useState(() => params.has('story') || params.has('new'));
-  const { tasks, isLoading, jobs } = useTasks();
+  const { tasks, isLoading, jobs, error, retry } = useTasks();
   const control = useJobControl();
   const active = jobs.filter(
     (j) => ACTIVE.includes(j.state) && tasks.some((x) => x.episode?.id === j.owner),
@@ -90,6 +116,65 @@ export default function AssemblyTab() {
   const paused = active.filter((j) => j.paused || j.state === 'paused');
   const done = tasks.filter((x) => x.state === 'done');
   const [sequence, setSequence] = useState(false);
+  const [sequenceRun, setSequenceRun] = useState(0);
+  const taskIds = useMemo(() => tasks.map((task) => task.album.id!), [tasks]);
+  const selection = useSelection(taskIds);
+  const menu = useContextMenu<DesktopContext>();
+  const clone = useCloneTask();
+  const trash = useTrashSeries();
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const selectedTasks = (ids: string[]) => tasks.filter((task) => ids.includes(task.album.id!));
+  const removeTasks = async (ids: string[]) => {
+    const targets = selectedTasks(ids);
+    if (
+      bulkBusy ||
+      targets.some((task) => !task.ready) ||
+      !(await confirm({
+        title: t('classic.shelf.bulkDeleteTitle', { count: targets.length }),
+        description: t('ws.queue.removeHelp'),
+        danger: true,
+      }))
+    )
+      return;
+    setSequence(false);
+    setBulkBusy(true);
+    try {
+      for (const task of targets) {
+        for (const job of task.jobs) await control.mutateAsync({ id: job.id, action: 'cancel' });
+        await trash.mutateAsync(task.album.id!);
+      }
+      selection.clear();
+    } catch (error) {
+      toastError(error);
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+  const cloneTasks = async (ids: string[]) => {
+    if (bulkBusy) return;
+    setBulkBusy(true);
+    try {
+      for (const id of ids) await clone.mutateAsync(id);
+    } catch (error) {
+      toastError(error);
+    } finally {
+      setBulkBusy(false);
+    }
+  };
+  const desktop = useDesktopSelection({
+    itemAttribute: 'data-selection-id',
+    selection,
+    enabled: true,
+    pinned: false,
+    contextOpen: !!menu.state,
+    onExit: selection.clear,
+    onOpen: () => {},
+    onDelete: (ids) => {
+      void removeTasks(ids);
+    },
+    onContext: menu.openAt,
+    onCloseContext: menu.close,
+  });
 
   const each = (list: Job[], action: 'pause' | 'resume' | 'cancel') =>
     Promise.all(list.map((j) => control.mutateAsync({ id: j.id, action }))).catch(toastError);
@@ -114,18 +199,31 @@ export default function AssemblyTab() {
           <button
             type="button"
             className="btn"
-            disabled={!tasks.some((x) => x.state === 'standby') || sequence}
-            onClick={() => setSequence(true)}
+            disabled={
+              !sequence &&
+              !tasks.some((x) => x.state === 'standby' && x.ready && !!x.episode?.panels.length)
+            }
+            title={sequence ? t('interaction.stopSequenceHint') : undefined}
+            onClick={() => {
+              if (sequence) setSequence(false);
+              else {
+                setSequenceRun((n) => n + 1);
+                setSequence(true);
+              }
+            }}
           >
             <Icon name="list" />
-            {t('ws.queue.sequence')}
+            {sequence ? t('interaction.stopSequence') : t('ws.queue.sequence')}
           </button>
           <button
             type="button"
             className="btn ghost"
             disabled={!running.length}
             title={running.length ? undefined : t('ws.queue.nothingRunning')}
-            onClick={() => each(running, 'pause')}
+            onClick={() => {
+              setSequence(false);
+              void each(running, 'pause');
+            }}
           >
             <Icon name="pause" />
             {t('ws.queue.pauseAll')}
@@ -146,8 +244,10 @@ export default function AssemblyTab() {
             disabled={!active.length}
             title={active.length ? undefined : t('ws.queue.nothingActive')}
             onClick={async () => {
-              if (await confirm({ title: t('ws.queue.cancelConfirm'), danger: true }))
-                each(active, 'cancel');
+              if (await confirm({ title: t('ws.queue.cancelConfirm'), danger: true })) {
+                setSequence(false);
+                void each(active, 'cancel');
+              }
             }}
           >
             <Icon name="stop" />
@@ -156,18 +256,56 @@ export default function AssemblyTab() {
           <ClearFinished done={done} />
         </div>
       </div>
+      {error ? <QueryError error={error} onRetry={retry} /> : null}
       {isLoading ? (
         <Loading />
       ) : tasks.length ? (
-        <div className="production-cards">
+        <div
+          className="production-cards desktop-list"
+          ref={desktop.ref}
+          tabIndex={0}
+          role="region"
+          aria-label={t('interaction.list')}
+          onClickCapture={desktop.onClickCapture}
+          onContextMenu={desktop.onContextMenu}
+          onPointerDown={desktop.onPointerDown}
+          onDragStartCapture={desktop.onDragStartCapture}
+        >
+          {(desktop.snapshot ?? selection.ids).length ? (
+            <div className="selection-bar" role="status">
+              <span>
+                {t('interaction.selected', { count: (desktop.snapshot ?? selection.ids).length })}
+              </span>
+              <button
+                type="button"
+                className="btn small"
+                disabled={bulkBusy}
+                onClick={() => void cloneTasks(selection.ids)}
+              >
+                {t('ws.queue.clone')}
+              </button>
+              <button
+                type="button"
+                className="btn small danger"
+                disabled={bulkBusy || selectedTasks(selection.ids).some((task) => !task.ready)}
+                onClick={() => void removeTasks(selection.ids)}
+              >
+                {t('common.delete')}
+              </button>
+              <button type="button" className="btn ghost small" onClick={selection.clear}>
+                {t('common.cancel')}
+              </button>
+            </div>
+          ) : null}
           {tasks.map((task, i) => (
             <TaskCard
               key={task.album.id}
               task={task}
-              autostart={
-                sequence &&
-                tasks.slice(0, i).every((x) => x.state !== 'standby' && x.state !== 'running')
-              }
+              selected={selection.has(task.album.id!)}
+              context={menu.state?.payload.focusId === task.album.id}
+              autostart={sequence && tasks.slice(0, i).every((x) => x.state === 'done')}
+              sequenceRun={sequenceRun}
+              onStartFailed={() => setSequence(false)}
               onStarted={() => {
                 if (!tasks.slice(i + 1).some((x) => x.state === 'standby')) setSequence(false);
               }}
@@ -179,6 +317,38 @@ export default function AssemblyTab() {
           <p>{t('ws.queue.empty')}</p>
         </div>
       )}
+      {menu.state ? (
+        <ContextMenu
+          x={menu.state.x}
+          y={menu.state.y}
+          returnFocus={menu.state.payload.target}
+          onClose={menu.close}
+          groups={[
+            {
+              items: [
+                {
+                  label: t('ws.queue.clone'),
+                  disabled: bulkBusy,
+                  onSelect: () => {
+                    void cloneTasks(menu.state!.payload.ids);
+                  },
+                },
+                {
+                  label: t('common.delete'),
+                  danger: true,
+                  disabled:
+                    bulkBusy || selectedTasks(menu.state.payload.ids).some((task) => !task.ready),
+                  onSelect: () => {
+                    void removeTasks(menu.state!.payload.ids);
+                  },
+                },
+                { label: t('classic.shelf.selectFiltered'), onSelect: selection.all },
+                { label: t('classic.shelf.clearSelection'), onSelect: selection.clear },
+              ],
+            },
+          ]}
+        />
+      ) : null}
       {open ? (
         <AssembleDialog
           initialStory={params.get('story') ?? undefined}
@@ -233,10 +403,18 @@ function TaskCard({
   task,
   autostart,
   onStarted,
+  sequenceRun,
+  onStartFailed,
+  selected,
+  context,
 }: {
   task: Task;
   autostart: boolean;
   onStarted: () => void;
+  sequenceRun: number;
+  onStartFailed: () => void;
+  selected?: boolean;
+  context?: boolean;
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -254,37 +432,53 @@ function TaskCard({
   const busy = new Set(
     task.jobs.length ? panels.filter((p) => !adopted.has(p.id!)).map((p) => p.id!) : [],
   );
+  const lastRun = useRef<number | null>(null);
   const start = (ids?: string[]) => {
+    if (render.isPending || !episode) return;
     const missing = ids ?? panels.filter((p) => !adopted.has(p.id!)).map((p) => p.id!);
     if (!missing.length) return;
     render.mutate(
       { panel_ids: missing, candidates: 1, adopt_first: true },
-      { onSuccess: onStarted, onError: toastError },
+      {
+        onSuccess: onStarted,
+        onError: (error) => {
+          onStartFailed();
+          toastError(error);
+        },
+      },
     );
   };
-  const ready = autostart && state === 'standby' && !!episode && render.isIdle;
+  const ready = autostart && state === 'standby' && !!episode && !render.isPending;
   useEffect(() => {
-    if (ready) start();
+    if (ready && lastRun.current !== sequenceRun) {
+      lastRun.current = sequenceRun;
+      start();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready]);
+  }, [ready, sequenceRun]);
 
   return (
-    <article className="production-card" data-production-task={album.id}>
+    <article
+      className={`production-card ${selected ? 'is-selected' : ''} ${context ? 'is-context' : ''}`}
+      data-production-task={album.id}
+      data-selection-id={album.id}
+      tabIndex={0}
+      aria-selected={selected || undefined}
+    >
       <header>
         <div className="production-card-title">
           <span className={`production-state state-${state}`}>{t(`ws.queue.state.${state}`)}</span>
           {renaming ? (
-            <input
+            <InlineTitle
               autoFocus
-              defaultValue={album.title}
-              aria-label={t('ws.queue.rename')}
-              onBlur={(e) => {
-                const title = e.target.value.trim();
-                if (title && title !== album.title)
-                  patch.mutate({ title }, { onError: toastError });
+              onCancel={() => setRenaming(false)}
+              onFinish={() => setRenaming(false)}
+              value={album.title}
+              label={t('ws.queue.rename')}
+              onSave={async (title) => {
+                await patch.mutateAsync({ title }, { onError: toastError });
                 setRenaming(false);
               }}
-              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
             />
           ) : (
             <h2>{album.title}</h2>
@@ -399,6 +593,7 @@ function TaskCard({
         <button
           type="button"
           className="btn ghost small production-remove"
+          disabled={!task.ready || trash.isPending || control.isPending}
           onClick={async () => {
             if (
               await confirm({
@@ -407,10 +602,14 @@ function TaskCard({
                 danger: true,
               })
             ) {
-              await Promise.all(
-                task.jobs.map((j) => control.mutateAsync({ id: j.id, action: 'cancel' })),
-              );
-              trash.mutate(album.id!, { onError: toastError });
+              try {
+                await Promise.all(
+                  task.jobs.map((j) => control.mutateAsync({ id: j.id, action: 'cancel' })),
+                );
+                await trash.mutateAsync(album.id!);
+              } catch (error) {
+                toastError(error);
+              }
             }
           }}
         >
@@ -433,7 +632,9 @@ function TaskCard({
                     type="button"
                     className="production-page-body"
                     title={t('ws.queue.pageEdit')}
-                    onClick={() => navigate(`/workshop/assembly/${episode!.id}/script`)}
+                    onClick={() =>
+                      navigate(`/workshop/assembly/${episode!.id}/script?panel=${p.id}`)
+                    }
                   >
                     <span className="production-page-status">
                       <strong className={`page-${st}`}>{t(`ws.queue.state.${st}`)}</strong>

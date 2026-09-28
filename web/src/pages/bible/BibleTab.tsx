@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePatchSeries } from '../../api/series';
 import type { Bible, Character, Location, Style } from '../../api/types';
+import { AutoSaveGuard } from '../../app/useAutoDraft';
+import { shortcutBlocked } from '../../app/shortcuts';
 import { useAutosave } from '../../app/autosave';
 import { Avatar } from '../../components/avatar';
 import { SaveState } from '../../components/SaveState';
@@ -144,12 +146,17 @@ export default function BibleTab() {
     <div
       className="split"
       onKeyDown={(e) => {
-        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        if (
+          !shortcutBlocked(e, e.currentTarget, true) &&
+          (e.metaKey || e.ctrlKey) &&
+          e.key.toLowerCase() === 's'
+        ) {
           e.preventDefault();
           autosave.flush().catch(toastError);
         }
       }}
     >
+      <AutoSaveGuard save={autosave} />
       <aside className="split-rail">
         {groups.map((g) => {
           const items = bible[g.kind] as { id: string; name: string }[];

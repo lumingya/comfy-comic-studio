@@ -1,3 +1,4 @@
+import { copyText } from '../app/clipboard';
 import { Fragment, useEffect, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -565,11 +566,7 @@ function HelpDrawerBody() {
             <button
               type="button"
               className="btn small"
-              onClick={() =>
-                navigator.clipboard
-                  .writeText(diagnostics)
-                  .then(() => toast(t('guide.copied')), toastError)
-              }
+              onClick={() => copyText(diagnostics).then(() => toast(t('guide.copied')), toastError)}
             >
               <Icon name="copy" />
               {t('guide.copy')}

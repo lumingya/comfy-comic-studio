@@ -90,3 +90,25 @@ describe('toast', () => {
     expect(screen.queryByText('已删除第 3 格')).toBeNull();
   });
 });
+
+describe('InlineTitle background and failure recovery', () => {
+  it('does not overwrite a focused local draft when the server title refreshes', () => {
+    const save = vi.fn();
+    const { rerender } = render(<InlineTitle value="server" label="rename" onSave={save} />);
+    fireEvent.change(screen.getByLabelText('rename'), { target: { value: 'local' } });
+    rerender(<InlineTitle value="refreshed" label="rename" onSave={save} />);
+    expect(screen.getByLabelText('rename')).toHaveValue('local');
+  });
+  it('retains a rejected rename and allows the same text to be retried', async () => {
+    const save = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue(undefined);
+    render(<InlineTitle value="server" label="rename" onSave={save} />);
+    const input = screen.getByLabelText('rename');
+    fireEvent.change(input, { target: { value: 'local' } });
+    fireEvent.blur(input);
+    await waitFor(() => expect(input).toHaveAttribute('aria-invalid', 'true'));
+    expect(input).toHaveValue('local');
+    fireEvent.blur(input);
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(input).not.toHaveAttribute('aria-invalid'));
+  });
+});
