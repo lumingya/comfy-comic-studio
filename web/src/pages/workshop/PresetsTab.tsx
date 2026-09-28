@@ -22,10 +22,15 @@ import type { Series, SeriesCard } from '../../api/types';
 import { confirm, promptText } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
 import { Loading, Modal } from '../../components/ui';
+import { ContextMenu, type ContextGroup } from '../../components/ContextMenu';
+import { askAssetTitle } from './storyActions';
 import { downloadJson, pickJsonFiles, presetFromFile, presetToFile } from './files';
 import { WorkshopFrame } from './WorkshopPage';
 
 const PICK_KEY = 'mio.workshop.preset';
+/** Right-clicks on these keep the browser menu (legacy workshopContextSpec). */
+const NATIVE_MENU =
+  'input,textarea,select,[contenteditable]:not([contenteditable="false"]),a[href],dialog,[role=dialog],.context-menu';
 
 function blankPreset(title: string): Preset {
   const people = { id: localId('group'), title: '主角与服装' };
@@ -69,6 +74,25 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
   const cancelRename = useRef(false);
   const [editGroups, setEditGroups] = useState(false);
   const [previewing, setPreviewing] = useState(false);
+  // Legacy workshopPresetContextItems: right-clicking the page (outside text fields) opens the
+  // preset menu.  Bound natively on the page so it also covers the heading and the tabs.
+  const headRef = useRef<HTMLDivElement>(null);
+  const [pageMenu, setPageMenu] = useState<{ x: number; y: number; target: HTMLElement } | null>(
+    null,
+  );
+  useEffect(() => {
+    const host = headRef.current?.closest<HTMLElement>('.assembly-workshop');
+    if (!host) return;
+    const onMenu = (e: MouseEvent) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.closest(NATIVE_MENU) || document.querySelector('dialog[open]')) return;
+      e.preventDefault();
+      setPageMenu({ x: e.clientX, y: e.clientY, target });
+    };
+    host.addEventListener('contextmenu', onMenu);
+    return () => host.removeEventListener('contextmenu', onMenu);
+  }, [presets.length]);
   // Legacy settings workbench: tick cards to move several at once; drag a card (or the ticked
   // cards) by its handle into a group section or the loose area below.
   const [picked, setPicked] = useState<Set<string>>(() => new Set());
@@ -279,7 +303,7 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
   return (
     <WorkshopFrame tab="presets" actions={actions}>
       <AutoSaveGuard save={draft} />
-      <div className="workshop-asset-head">
+      <div className="workshop-asset-head" ref={headRef}>
         <label>
           {t('ws.presets.current')}
           {renaming ? (
@@ -578,8 +602,126 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
         <summary>{t('ws.presets.bindings')}</summary>
         <p className="help">{t('ws.presets.bindingsHelp')}</p>
       </details>
+      {pageMenu ? (
+        <ContextMenu
+          x={pageMenu.x}
+          y={pageMenu.y}
+          returnFocus={pageMenu.target}
+          onClose={() => setPageMenu(null)}
+          groups={presetMenuGroups()}
+        />
+      ) : null}
     </WorkshopFrame>
   );
+
+  /** Legacy workshopPresetContextItems, submenus flattened into headed groups. */
+  function presetMenuGroups(): ContextGroup[] {
+    const p = current!;
+    const go = (fn: () => Promise<unknown>) => () => void fn().catch(toastError);
+    return [
+      {
+        heading: `${p.title} · ${t('ws.presets.count', { count: p.entries.length })}`,
+        items: [
+          {
+            label: t('ws.presets.addVar'),
+            icon: <Icon name="plus" sm />,
+            primary: true,
+            hint: t('ws.presets.menu.addVarHint'),
+            onSelect: () => addEntry(null),
+          },
+          {
+            label: t('ws.presets.newGroup'),
+            icon: <Icon name="folder" sm />,
+            onSelect: () =>
+              update(
+                (x) => ({
+                  ...x,
+                  groups: [
+                    ...x.groups,
+                    { id: localId('group'), title: t('ws.presets.newGroupName') },
+                  ],
+                }),
+                true,
+              ),
+          },
+          {
+            label: editGroups ? t('ws.done') : t('ws.presets.menu.editGroupsDots'),
+            icon: <Icon name="edit" sm />,
+            onSelect: () => setEditGroups(!editGroups),
+          },
+        ],
+      },
+      {
+        items: [
+          {
+            label: t('ws.presets.preview'),
+            icon: <Icon name="brush" sm />,
+            hint: t('ws.presets.menu.previewHint'),
+            onSelect: () => setPreviewing(true),
+          },
+          {
+            label: t('ws.presets.menu.newTaskDots'),
+            icon: <Icon name="play" sm />,
+            hint: t('ws.presets.menu.newTaskHint'),
+            onSelect: () => navigate('/workshop/assembly?new=1'),
+          },
+        ],
+      },
+      {
+        heading: t('ws.presets.menu.assetGroup'),
+        items: [
+          {
+            label: t('ws.presets.menu.renameDots'),
+            icon: <Icon name="edit" sm />,
+            onSelect: go(async () => {
+              const title = await askAssetTitle(p.title, t);
+              if (title) update((x) => ({ ...x, title }), true);
+            }),
+          },
+          {
+            label: t('ws.presets.menu.newDots'),
+            icon: <Icon name="plus" sm />,
+            onSelect: () => void addPreset(),
+          },
+          {
+            label: t('ws.presets.menu.exportThis'),
+            icon: <Icon name="upload" sm />,
+            onSelect: go(async () => {
+              await draft.flushAll();
+              const latest = draft.read().find((x) => x.id === p.id);
+              if (latest) downloadJson(`${latest.title}.json`, presetToFile(latest));
+            }),
+          },
+        ],
+      },
+      {
+        heading: t('ws.presets.menu.libraryGroup'),
+        items: [
+          {
+            label: t('ws.presets.menu.importDots'),
+            icon: <Icon name="download" sm />,
+            hint: t('ws.presets.menu.importHint'),
+            onSelect: () => void importPresets(),
+          },
+        ],
+      },
+      {
+        heading: t('ws.menu.switchTo'),
+        items: [
+          {
+            label: t('ws.tab.story'),
+            icon: <Icon name="story" sm />,
+            onSelect: () => navigate('/workshop/story'),
+          },
+          {
+            label: t('ws.tab.assembly'),
+            icon: <Icon name="play" sm />,
+            onSelect: () => navigate('/workshop/assembly'),
+          },
+        ],
+      },
+    ];
+  }
 }
 
 /** One 独立试绘 result on the preset page: cover (or a waiting placeholder), title, delete. */

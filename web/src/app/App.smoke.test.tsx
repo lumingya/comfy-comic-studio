@@ -527,6 +527,40 @@ describe('every route mounts with API data', () => {
     expect(JSON.stringify(patch.body)).toContain('white dress');
   });
 
+  it('分镜工坊 / 预设工坊: right-clicking the page opens the legacy asset menus', async () => {
+    const router = mount('/workshop');
+    await waitFor(() => expect(router.state.location.pathname).toBe('/workshop/story/sb_1'));
+    await screen.findByRole('button', { name: /第 2 格/ }); // the (lazy) editor is mounted
+    fireEvent.contextMenu(screen.getByRole('heading', { name: '分镜工坊' }));
+    const story = await screen.findByRole('menu');
+    expect(within(story).getByRole('menuitem', { name: /^新增分幕/ })).toBeInTheDocument();
+    expect(within(story).getByRole('menuitem', { name: /导出此分镜/ })).toBeInTheDocument();
+    expect(within(story).getByRole('menuitem', { name: /导入分镜/ })).toBeInTheDocument();
+    // Text fields keep the browser menu.
+    fireEvent.keyDown(story, { key: 'Escape' });
+    fireEvent.contextMenu(screen.getByLabelText('作品简介'));
+    expect(screen.queryByRole('menu')).toBeNull();
+    // The frame editor opens the menu of the frame being edited.
+    fireEvent.contextMenu(screen.getByText('此幕画面参数'));
+    expect(
+      within(await screen.findByRole('menu')).getByRole('menuitem', { name: /正在编辑这一幕/ }),
+    ).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
+    fireEvent.click(
+      within(screen.getByRole('navigation', { name: '创作工坊分区' })).getByRole('button', {
+        name: '预设工坊',
+      }),
+    );
+    await screen.findByRole('button', { name: '独立试绘' }); // the (lazy) presets page is mounted
+    fireEvent.contextMenu(screen.getByRole('heading', { name: '预设工坊' }));
+    const preset = await screen.findByRole('menu');
+    expect(within(preset).getByRole('menuitem', { name: /独立试绘/ })).toBeInTheDocument();
+    expect(within(preset).getByRole('menuitem', { name: /导出此预设/ })).toBeInTheDocument();
+    fireEvent.click(within(preset).getByRole('menuitem', { name: /新建生成任务/ }));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/workshop/assembly'));
+    expect(await screen.findByRole('dialog', { name: '新建生成任务' })).toBeInTheDocument();
+  });
+
   it('预设工坊: 独立试绘 queues a one-frame task with the preset variables prefilled', async () => {
     const router = mount('/workshop/presets');
     fireEvent.click(await screen.findByRole('button', { name: '独立试绘' }));

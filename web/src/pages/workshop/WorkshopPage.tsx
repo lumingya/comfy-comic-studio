@@ -1,10 +1,7 @@
-import { flushEditors } from '../../app/useAutoDraft';
-import type { Episode } from '../../api/types';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { api } from '../../api/client';
 import { keys } from '../../api/keys';
 import {
   useCreateEpisode,
@@ -19,11 +16,10 @@ import { Icon } from '../../app/icons';
 import { useRecents } from '../../app/recents';
 import { usePageTitle } from '../../app/title';
 import { useUI } from '../../app/ui-store';
-import { promptText } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
 import { Loading } from '../../components/ui';
 import type { EpisodeContext } from '../episode/EpisodePage';
-import { downloadJson, pickJsonFiles, storyboardFromFile, storyboardToFile } from './files';
+import { createStoryboard, exportStoryboard, importStoryboards } from './storyActions';
 import { PromptSurface } from './PromptSurface';
 import StoryboardEditor, { basePromptKey, useKnownVariables } from './StoryboardEditor';
 
@@ -107,26 +103,6 @@ export function StoryIndex() {
   const pick = recents.find((r) => items.some((e) => e.id === r.id))?.id ?? items[0]?.id;
   if (pick) return <Navigate to={`/workshop/story/${pick}`} replace />;
   return <StoryEmpty />;
-}
-
-/** Legacy workshop-new: ask for the name, then start the storyboard with its first frame. */
-export async function createStoryboard(
-  create: ReturnType<typeof useCreateEpisode>,
-  t: (key: string, options?: Record<string, unknown>) => string,
-): Promise<Episode | null> {
-  const title = await promptText({
-    title: t('ws.story.new'),
-    label: t('ws.assetName'),
-    confirmLabel: t('common.create'),
-    required: true,
-  });
-  if (title === null) return null;
-  const e = await create.mutateAsync({ title });
-  const first = await api.POST('/api/episodes/{episode_id}/panels', {
-    params: { path: { episode_id: e.id! } },
-    body: { panel: { description: t('ws.story.frameN', { n: 1 }) }, after: null },
-  });
-  return first.data ?? e;
 }
 
 function StoryEmpty() {
@@ -216,22 +192,11 @@ export function StoryTab() {
   };
   const importBoards = async () => {
     try {
-      const files = await pickJsonFiles();
-      let last = '';
-      for (const f of files) {
-        const board = storyboardFromFile(f);
-        const e = await create.mutateAsync({ title: board.title, synopsis: board.synopsis });
-        if (board.panels.length)
-          await api.POST('/api/episodes/{episode_id}/panels/import', {
-            params: { path: { episode_id: e.id! } },
-            body: { panels: board.panels, after: null },
-          });
-        last = e.id!;
-      }
+      const { last, count } = await importStoryboards(create);
       if (last) {
         await qc.invalidateQueries({ queryKey: keys.episodesOf(ws.data!.id!) });
         navigate(`/workshop/story/${last}`);
-        toast(t('ws.imported', { count: files.length }));
+        toast(t('ws.imported', { count }));
       }
     } catch (e) {
       toastError(e);
@@ -256,15 +221,7 @@ export function StoryTab() {
             type="button"
             className="btn"
             disabled={patch.isPending || renaming}
-            onClick={async () => {
-              try {
-                await flushEditors();
-                const current = qc.getQueryData<Episode>(keys.episode(ep.id!)) ?? ep;
-                downloadJson(`${current.title}.json`, storyboardToFile(current));
-              } catch (error) {
-                toastError(error);
-              }
-            }}
+            onClick={() => exportStoryboard(qc, ep).catch(toastError)}
           >
             <Icon name="upload" />
             {t('ws.export')}

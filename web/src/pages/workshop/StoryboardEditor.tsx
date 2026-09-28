@@ -6,14 +6,19 @@ import {
   type ContextGroup,
   type ContextItem,
 } from '../../components/ContextMenu';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { keys } from '../../api/keys';
 import {
   useAddPanel,
   useBatchDeletePanels,
   useBatchPatchPanels,
+  useCreateEpisode,
   useDeletePanel,
   useDuplicatePanel,
+  usePatchEpisode,
   usePatchPanel,
   useReorderPanels,
 } from '../../api/series';
@@ -30,7 +35,13 @@ import { shortcutBlocked } from '../../app/shortcuts';
 import { SaveState } from '../../components/SaveState';
 import { captionText, replaceCaption } from './caption';
 import { confirm } from '../../components/confirm';
-import { toastError } from '../../components/toast';
+import { toast, toastError } from '../../components/toast';
+import {
+  askAssetTitle,
+  createStoryboard,
+  exportStoryboard,
+  importStoryboards,
+} from './storyActions';
 import { useEpisodeContext } from '../episode/EpisodePage';
 import {
   PromptSurface,
@@ -75,9 +86,17 @@ const promptOf = (p: Panel) => p.overrides.raw_prompt ?? '';
 const isEmptyFrame = (p: Panel) => !promptOf(p).trim() && !captionText(p.dialogues).trim();
 
 /** 分镜工坊: legacy frame list + page editor (name, prompt, negative, caption, parameters). */
+/** Right-clicks on these keep the browser menu (legacy workshopContextSpec). */
+const NATIVE_MENU =
+  'input,textarea,select,[contenteditable]:not([contenteditable="false"]),a[href],dialog,[role=dialog],.context-menu';
+
 export default function StoryboardEditor() {
   const { t } = useTranslation();
-  const { episode } = useEpisodeContext();
+  const { episode, series } = useEpisodeContext();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const createBoard = useCreateEpisode(series.id!);
+  const patchBoard = usePatchEpisode(episode.id!);
   const known = useKnownVariables();
   const sources = usePromptSources();
   const panels = useMemo(
@@ -246,6 +265,140 @@ export default function StoryboardEditor() {
     run().catch(toastError);
   };
 
+  // Legacy workshopStoryContextItems: right-clicking anywhere else on the 分镜工坊 page (the
+  // heading, the 当前分镜 row, the space around the editor) opens the storyboard menu; the frame
+  // editor opens the menu of the frame being edited.  Bound natively on the page so the frames
+  // list (which owns its own menu) is not affected.
+  const editorRef = useRef<HTMLDivElement>(null);
+  const [storyMenu, setStoryMenu] = useState<{ x: number; y: number; target: HTMLElement } | null>(
+    null,
+  );
+  const activeId2 = active?.id;
+  const openFrameMenu = menu.openAt;
+  useEffect(() => {
+    const host = editorRef.current?.closest<HTMLElement>('.assembly-workshop');
+    if (!host) return;
+    const onMenu = (e: globalThis.MouseEvent) => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.closest(NATIVE_MENU) || target.closest('.workshop-frames-list')) return;
+      if (document.querySelector('dialog[open]')) return;
+      e.preventDefault();
+      if (target.closest('.workshop-page') && activeId2) {
+        setStoryMenu(null);
+        openFrameMenu(e.clientX, e.clientY, { ids: [activeId2], focusId: activeId2, target });
+        return;
+      }
+      setStoryMenu({ x: e.clientX, y: e.clientY, target });
+    };
+    host.addEventListener('contextmenu', onMenu);
+    return () => host.removeEventListener('contextmenu', onMenu);
+  }, [activeId2, openFrameMenu]);
+  useEffect(() => {
+    if (menu.state) setStoryMenu(null);
+  }, [menu.state]);
+  const storyMenuGroups = (): ContextGroup[] => {
+    const go = (fn: () => Promise<unknown>) => () => void fn().catch(toastError);
+    return [
+      {
+        heading: `${episode.title} · ${t('ws.story.frames', { count: panels.length })}`,
+        items: [
+          {
+            label: t('ws.story.addFrame'),
+            icon: <Icon name="plus" sm />,
+            primary: true,
+            disabled: add.isPending || panels.length >= 512,
+            onSelect: () => addFrames(1, '', panelIds[panelIds.length - 1] ?? null),
+          },
+          {
+            label: t('ws.story.menu.addFramesDots'),
+            icon: <Icon name="list" sm />,
+            hint: t('ws.story.menu.addFramesHint'),
+            onSelect: () => setBatch(true),
+          },
+          {
+            label: t('ws.story.menu.selectAll'),
+            icon: <Icon name="check" sm />,
+            shortcut: 'Ctrl/⌘ A',
+            hint: t('ws.story.menu.selectAllHint'),
+            disabled: panels.length < 1,
+            onSelect: selection.all,
+          },
+        ],
+      },
+      {
+        items: [
+          {
+            label: t('ws.story.toAssembly'),
+            icon: <Icon name="arrow" sm />,
+            hint: t('ws.story.menu.toAssemblyHint'),
+            onSelect: () => navigate(`/workshop/assembly?story=${episode.id}`),
+          },
+        ],
+      },
+      {
+        heading: t('ws.story.menu.storyGroup'),
+        items: [
+          {
+            label: t('ws.story.menu.renameDots'),
+            icon: <Icon name="edit" sm />,
+            onSelect: go(async () => {
+              const title = await askAssetTitle(episode.title, t);
+              if (title) await patchBoard.mutateAsync({ title });
+            }),
+          },
+          {
+            label: t('ws.story.menu.newDots'),
+            icon: <Icon name="plus" sm />,
+            onSelect: go(async () => {
+              const e = await createStoryboard(createBoard, t);
+              if (!e) return;
+              await qc.invalidateQueries({ queryKey: keys.episodesOf(series.id!) });
+              navigate(`/workshop/story/${e.id}`);
+            }),
+          },
+          {
+            label: t('ws.story.menu.exportThis'),
+            icon: <Icon name="upload" sm />,
+            onSelect: go(() => exportStoryboard(qc, episode)),
+          },
+        ],
+      },
+      {
+        heading: t('ws.story.menu.libraryGroup'),
+        items: [
+          {
+            label: t('ws.story.menu.importDots'),
+            icon: <Icon name="download" sm />,
+            hint: t('ws.story.menu.importHint'),
+            onSelect: go(async () => {
+              const { last, count } = await importStoryboards(createBoard);
+              if (!last) return;
+              await qc.invalidateQueries({ queryKey: keys.episodesOf(series.id!) });
+              navigate(`/workshop/story/${last}`);
+              toast(t('ws.imported', { count }));
+            }),
+          },
+        ],
+      },
+      {
+        heading: t('ws.menu.switchTo'),
+        items: [
+          {
+            label: t('ws.tab.presets'),
+            icon: <Icon name="brush" sm />,
+            onSelect: () => navigate('/workshop/presets'),
+          },
+          {
+            label: t('ws.tab.assembly'),
+            icon: <Icon name="play" sm />,
+            onSelect: () => navigate('/workshop/assembly'),
+          },
+        ],
+      },
+    ];
+  };
+
   /** Legacy workshopFrameContextItems / workshopFramesSelectionContextItems. */
   const frameMenu = ({ ids, focusId }: DesktopContext): ContextGroup[] => {
     const focus = panels.find((p) => p.id === focusId) ?? panels.find((p) => p.id === ids[0]);
@@ -390,7 +543,7 @@ export default function StoryboardEditor() {
 
   return (
     <>
-      <div className="workshop-editor">
+      <div className="workshop-editor" ref={editorRef}>
         <nav className="workshop-frames" aria-label={t('ws.story.framesLabel')}>
           <div
             className="workshop-frames-list desktop-list"
@@ -511,6 +664,15 @@ export default function StoryboardEditor() {
           returnFocus={menu.state.payload.target}
           onClose={menu.close}
           groups={frameMenu(menu.state.payload)}
+        />
+      ) : null}
+      {storyMenu && !menu.state ? (
+        <ContextMenu
+          x={storyMenu.x}
+          y={storyMenu.y}
+          returnFocus={storyMenu.target}
+          onClose={() => setStoryMenu(null)}
+          groups={storyMenuGroups()}
         />
       ) : null}
     </>
