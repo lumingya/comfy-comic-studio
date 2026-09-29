@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { api, data } from './client';
 import { keys } from './keys';
-import type { Series } from './types';
+import type { QueueStatus, Series } from './types';
 
 export type Preset = Series['presets'][number];
 export type PresetEntry = Preset['entries'][number];
@@ -134,4 +134,69 @@ export function useBoardVariables(id: string | undefined) {
     return promptVariables(text);
   }, [q.data]);
   return { vars, episode: q.data };
+}
+
+// ---------------------------------------------------------------- 装配队列
+/** The server-side queue; besides the job events it is polled while the lane has work. */
+export function useQueue() {
+  return useQuery({
+    queryKey: keys.queue,
+    refetchInterval: (q) => (q.state.data?.lane.length || q.state.data?.active ? 5000 : false),
+    queryFn: async () => data(await api.GET('/api/workshop/queue')) as QueueStatus,
+  });
+}
+
+export type QueueAction =
+  | { action: 'start'; ids: string[] }
+  | { action: 'remove'; id: string }
+  | { action: 'pause' | 'resume' | 'clear' }
+  | { action: 'order'; ids: string[] }
+  | { action: 'concurrency'; value: number | null };
+
+async function queueCall(v: QueueAction): Promise<QueueStatus> {
+  switch (v.action) {
+    case 'start':
+      return data(
+        await api.POST('/api/workshop/queue/start', { body: { album_ids: v.ids } }),
+      ) as QueueStatus;
+    case 'remove':
+      return data(
+        await api.POST('/api/workshop/queue/remove', { body: { album_id: v.id } }),
+      ) as QueueStatus;
+    case 'pause':
+      return data(await api.POST('/api/workshop/queue/pause')) as QueueStatus;
+    case 'resume':
+      return data(await api.POST('/api/workshop/queue/resume')) as QueueStatus;
+    case 'clear':
+      return data(await api.POST('/api/workshop/queue/clear')) as QueueStatus;
+    case 'order':
+      return data(
+        await api.PUT('/api/workshop/queue/order', { body: { album_ids: v.ids } }),
+      ) as QueueStatus;
+    case 'concurrency':
+      return data(
+        await api.PATCH('/api/workshop/queue', { body: { concurrency: v.value } }),
+      ) as QueueStatus;
+  }
+}
+
+/** Every queue command answers with the new queue state. The card order is applied at once. */
+export function useQueueAction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: queueCall,
+    onMutate: (v) => {
+      const prev = qc.getQueryData<QueueStatus>(keys.queue);
+      if (v.action === 'order' && prev) qc.setQueryData(keys.queue, { ...prev, order: v.ids });
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => {
+      if (ctx?.prev) qc.setQueryData(keys.queue, ctx.prev);
+    },
+    onSuccess: (q) => {
+      qc.setQueryData(keys.queue, q);
+      // Starting the lane creates a job at once.
+      qc.invalidateQueries({ queryKey: ['jobs'] });
+    },
+  });
 }

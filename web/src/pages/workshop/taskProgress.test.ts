@@ -116,6 +116,7 @@ describe('errorCategory', () => {
     expect(errorCategory('unreachable')).toBe('connection');
     expect(errorCategory('rejected')).toBe('workflow');
     expect(errorCategory('cloud_error')).toBe('channel');
+    expect(errorCategory('rate_limited')).toBe('rate');
     expect(errorCategory('guard')).toBe('other');
   });
 });

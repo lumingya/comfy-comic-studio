@@ -49,6 +49,24 @@ export function useRender(episodeId: string) {
   );
 }
 
+/** Start a render on any album's episode (装配队列 page and context-menu actions). */
+export function useRenderEpisode() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ episodeId, ...vars }: RenderVars & { episodeId: string }) =>
+      data(
+        await api.POST('/api/episodes/{episode_id}/render', {
+          params: ep(episodeId),
+          body: { qa: false, ...vars, idempotency_key: newKey() },
+        }),
+      ) as unknown as Job,
+    onSuccess: (_job, v) => {
+      qc.invalidateQueries({ queryKey: ['jobs'] });
+      qc.invalidateQueries({ queryKey: keys.episode(v.episodeId) });
+    },
+  });
+}
+
 export function useFinalize(episodeId: string) {
   return useJobMutation(
     episodeId,

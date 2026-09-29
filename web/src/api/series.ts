@@ -33,7 +33,12 @@ export function useCreateSeries() {
 
 export type SeriesChanges = Partial<
   Pick<Series, 'title' | 'subtitle' | 'status' | 'bible' | 'variants' | 'variables' | 'presets'>
-> & { default_profile_id?: string | null; cover_asset_id?: string | null };
+> & {
+  default_profile_id?: string | null;
+  cover_asset_id?: string | null;
+  /** Panels rendered at once for this album (None = the queue default). */
+  concurrency?: number | null;
+};
 
 export function usePatchSeries(id: string) {
   const qc = useQueryClient();

@@ -9,6 +9,8 @@ export const keys = {
     ['prompt', episodeId, panelId, variant ?? null] as const,
   jobs: (owner?: string) => ['jobs', owner ?? null] as const,
   job: (id: string) => ['job', id] as const,
+  /** 装配队列 (card order, sequential lane, default concurrency). */
+  queue: ['workshop-queue'] as const,
   settings: ['settings'] as const,
   registry: ['registry'] as const,
   workflows: ['workflows'] as const,

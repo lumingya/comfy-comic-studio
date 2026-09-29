@@ -1,17 +1,30 @@
 import { useSelection } from '../../app/selection';
 import { useDesktopSelection, type DesktopContext } from '../../app/useDesktopSelection';
-import { ContextMenu, useContextMenu } from '../../components/ContextMenu';
+import {
+  ContextMenu,
+  useContextMenu,
+  type ContextGroup,
+  type ContextItem,
+} from '../../components/ContextMenu';
 import { useQueries, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api, assetUrl, data } from '../../api/client';
 import { useJobControl, useJobs, useLive, useRetryJob } from '../../api/jobs';
 import { keys } from '../../api/keys';
-import { useRender } from '../../api/production';
-import { useCloneTask } from '../../api/workshop';
+import { useRender, useRenderEpisode } from '../../api/production';
+import { useProfiles } from '../../api/system';
+import { useCloneTask, useQueue, useQueueAction } from '../../api/workshop';
 import { usePatchSeries, useSeriesList, useTrashSeries } from '../../api/series';
-import type { Episode, Job, SeriesCard } from '../../api/types';
+import type { Episode, Job, QueueStatus, SeriesCard } from '../../api/types';
 import { Icon } from '../../app/icons';
 import { confirm } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
@@ -27,11 +40,20 @@ import {
   pageProgress,
   type PageProgress,
 } from './taskProgress';
+import {
+  headlineTitle,
+  moveId,
+  orderByQueue,
+  overridesSummary,
+  pageNumbers,
+  paging,
+  shiftId,
+  type OverridePart,
+} from './queueView';
 
 const ACTIVE = ACTIVE_JOB;
-
-/** Tasks 「开始生成」 applies to: never run, or the last run left failed frames. */
-const startable = (task: Task) => task.state === 'standby' || task.state === 'failed';
+const MAX_CONCURRENCY = 128;
+const isPaused = (j: Job) => !!j.paused || j.state === 'paused';
 
 export interface Task {
   album: SeriesCard;
@@ -43,9 +65,30 @@ export interface Task {
   adopted: Set<string>;
   state: 'standby' | 'running' | 'paused' | 'done' | 'failed';
   ready: boolean;
+  /** Waiting in the server's sequential lane (1-based position, 0 = not queued). */
+  position: number;
+  /** The last run was stopped by the user and nothing runs now. */
+  stopped: boolean;
 }
 
-function useTasks() {
+/** What a card allows right now (legacy productionTaskAccess). */
+function access(task: Task) {
+  const busy = task.jobs.length > 0;
+  const queued = task.position > 0;
+  const canStart =
+    !busy && !queued && task.state !== 'done' && task.ready && !!task.episode?.panels.length;
+  return {
+    busy,
+    queued,
+    canStart,
+    canQueue: canStart,
+    canPause: task.state === 'running',
+    canResume: task.state === 'paused',
+    canStop: busy,
+  };
+}
+
+function useTasks(queue: QueueStatus | undefined) {
   const list = useSeriesList();
   const albums = useMemo(() => (list.data ?? []).filter((s) => s.status === 'draft'), [list.data]);
   const firstEpisodes = useQueries({
@@ -72,6 +115,7 @@ function useTasks() {
   });
   // Not only the active ones: a task whose last run failed must say so (legacy 异常).
   const jobs = useJobs(undefined, false, 300);
+  const lane = queue?.lane ?? [];
   const tasks: Task[] = albums.map((album, i) => {
     const episode = episodes[i]?.data;
     const recent = (jobs.data ?? []).filter((j) => !!episode && j.owner === episode.id);
@@ -82,7 +126,7 @@ function useTasks() {
         .map((t) => t.panel_id),
     );
     const total = episode?.panels.length ?? album.panel_count ?? 0;
-    const state: Task['state'] = mine.some((j) => j.state !== 'paused' && !j.paused)
+    const state: Task['state'] = mine.some((j) => !isPaused(j))
       ? 'running'
       : mine.length
         ? 'paused'
@@ -97,12 +141,18 @@ function useTasks() {
       !firstEpisodes[i]?.isPending &&
       !firstEpisodes[i]?.isError &&
       (!ids[i] || (!episodes[i]?.isPending && !episodes[i]?.isError));
-    return { album, episode, jobs: mine, recent, adopted, state, ready };
+    const position = mine.length ? 0 : lane.indexOf(album.id!) + 1;
+    const stopped = !mine.length && recent[0]?.state === 'canceled' && state !== 'done';
+    return { album, episode, jobs: mine, recent, adopted, state, ready, position, stopped };
   });
   return {
-    tasks,
+    tasks: orderByQueue(
+      tasks,
+      queue?.order,
+      (x) => x.album.id!,
+      (x) => x.album.created_at ?? '',
+    ),
     isLoading: list.isLoading,
-    jobs: jobs.data ?? [],
     error:
       list.error ||
       jobs.error ||
@@ -117,41 +167,174 @@ function useTasks() {
   };
 }
 
+interface Drag {
+  id: string;
+  title: string;
+  x: number;
+  y: number;
+  target: string | null;
+  after: boolean;
+}
+
+type MenuPayload = DesktopContext;
+
 /** 装配与队列: assembled albums waiting for 「开始生成」, with progress and partial reruns. */
 export default function AssemblyTab() {
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
   const [open, setOpen] = useState(() => params.has('story') || params.has('new'));
-  const { tasks, isLoading, jobs, error, retry } = useTasks();
+  const queueQ = useQueue();
+  const queue = queueQ.data;
+  const act = useQueueAction();
+  const { tasks, isLoading, error, retry } = useTasks(queue);
+  const profiles = useProfiles();
   const control = useJobControl();
-  const active = jobs.filter(
-    (j) => ACTIVE.includes(j.state) && tasks.some((x) => x.episode?.id === j.owner),
-  );
-  const running = active.filter((j) => !j.paused && j.state !== 'paused');
-  const paused = active.filter((j) => j.paused || j.state === 'paused');
-  const done = tasks.filter((x) => x.state === 'done');
-  const [sequence, setSequence] = useState(false);
-  const [sequenceRun, setSequenceRun] = useState(0);
-  const taskIds = useMemo(() => tasks.map((task) => task.album.id!), [tasks]);
-  const selection = useSelection(taskIds);
-  const menu = useContextMenu<DesktopContext>();
+  const renderEpisode = useRenderEpisode();
   const clone = useCloneTask();
   const trash = useTrashSeries();
+  const navigate = useNavigate();
+  const [starting, setStarting] = useState<Set<string>>(() => new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
-  const selectedTasks = (ids: string[]) => tasks.filter((task) => ids.includes(task.album.id!));
+  const [page, setPage] = useState<number | null>(null);
+  const [drag, setDrag] = useState<Drag | null>(null);
+  const taskIds = useMemo(() => tasks.map((task) => task.album.id!), [tasks]);
+  const selection = useSelection(taskIds);
+  const menu = useContextMenu<MenuPayload>();
+
+  // A newly assembled task lands at the end: show the newest page again (legacy taskPage = ∞).
+  const count = useRef(tasks.length);
+  useEffect(() => {
+    if (tasks.length > count.current) setPage(null);
+    count.current = tasks.length;
+  }, [tasks.length]);
+  useEffect(() => {
+    document.body.classList.toggle('production-reordering', !!drag);
+    return () => document.body.classList.remove('production-reordering');
+  }, [drag]);
+
+  const auto = queue?.auto_concurrency ?? 1;
+  const globalConcurrency = queue?.concurrency ?? auto;
+  const running = tasks.filter((x) => x.jobs.length);
+  const held = tasks.filter((x) => x.state === 'paused');
+  const queued = tasks.filter((x) => x.position > 0);
+  const lanePaused = !!queue?.paused;
+  const sequenceable = tasks.filter((x) => access(x).canQueue);
+  const done = tasks.filter((x) => x.state === 'done' && !x.position);
+  const canPause = tasks.some((x) => x.state === 'running') || (queued.length > 0 && !lanePaused);
+  const canResume = held.length > 0 || (queued.length > 0 && lanePaused);
+  const canCancel = running.length + queued.length > 0;
+  const title = headlineTitle({
+    running: running.length,
+    queued: queued.length,
+    heldBooks: held.length,
+    lanePaused,
+  });
+  const detailParts = [
+    running.length ? t('ws.queue.detail.running', { count: running.length }) : '',
+    queued.length ? t('ws.queue.detail.queued', { count: queued.length }) : '',
+    held.length ? t('ws.queue.detail.held', { count: held.length }) : '',
+    lanePaused && queued.length && !(running.length - held.length)
+      ? t('ws.queue.detail.laneHeld')
+      : '',
+  ].filter(Boolean);
+  const detail = detailParts.length
+    ? detailParts.join(' · ')
+    : t('ws.queue.detail.idle', { count: tasks.length, n: globalConcurrency });
+
+  const byIds = (ids: string[]) => tasks.filter((task) => ids.includes(task.album.id!));
+  const profileOf = (album: SeriesCard) => {
+    const list = profiles.data ?? [];
+    return (
+      list.find((p) => p.id === album.default_profile_id) ??
+      list.find((p) => p.id === 'profile_default') ??
+      list[0]
+    );
+  };
+
+  // ---------------------------------------------------------------- actions
+  const startTask = async (task: Task, only?: string[]) => {
+    const id = task.album.id!;
+    if (!task.episode || starting.has(id)) return;
+    const missing =
+      only ?? task.episode.panels.filter((p) => !task.adopted.has(p.id!)).map((p) => p.id!);
+    if (!missing.length) return;
+    setStarting((s) => new Set(s).add(id));
+    try {
+      await renderEpisode.mutateAsync({
+        episodeId: task.episode.id!,
+        panel_ids: missing,
+        candidates: 1,
+        adopt_first: true,
+      });
+    } catch (e) {
+      toastError(e);
+    } finally {
+      setStarting((s) => {
+        const next = new Set(s);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+  const jobs = (list: Task[], action: 'pause' | 'resume' | 'cancel') =>
+    Promise.all(
+      list
+        .flatMap((x) => x.jobs)
+        .filter((j) =>
+          action === 'pause' ? !isPaused(j) : action === 'resume' ? isPaused(j) : true,
+        )
+        .map((j) => control.mutateAsync({ id: j.id, action })),
+    );
+  const run = (p: Promise<unknown>) => void p.catch(toastError);
+  const queueRun = (ids: string[]) => {
+    if (!ids.length) return;
+    act.mutate(
+      { action: 'start', ids },
+      {
+        onSuccess: () => toast(t('ws.queue.sequenceStarted', { count: ids.length })),
+        onError: toastError,
+      },
+    );
+  };
+  const dequeue = (task: Task) =>
+    act.mutate({ action: 'remove', id: task.album.id! }, { onError: toastError });
+  const reorder = (next: string[] | null) => {
+    if (next) act.mutate({ action: 'order', ids: next }, { onError: toastError });
+  };
+  const pauseAll = () =>
+    run(
+      Promise.all([
+        jobs(tasks, 'pause'),
+        queued.length && !lanePaused ? act.mutateAsync({ action: 'pause' }) : null,
+      ]),
+    );
+  const resumeAll = () =>
+    run(
+      Promise.all([
+        jobs(tasks, 'resume'),
+        lanePaused ? act.mutateAsync({ action: 'resume' }) : null,
+      ]),
+    );
+  const cancelAll = async () => {
+    if (!(await confirm({ title: t('ws.queue.cancelConfirm'), danger: true }))) return;
+    run(Promise.all([act.mutateAsync({ action: 'clear' }), jobs(tasks, 'cancel')]));
+  };
   const removeTasks = async (ids: string[]) => {
-    const targets = selectedTasks(ids);
+    const targets = byIds(ids);
     if (
       bulkBusy ||
+      !targets.length ||
       targets.some((task) => !task.ready) ||
       !(await confirm({
-        title: t('classic.shelf.bulkDeleteTitle', { count: targets.length }),
+        title:
+          targets.length === 1
+            ? t('ws.queue.removeConfirm', { title: targets[0].album.title })
+            : t('classic.shelf.bulkDeleteTitle', { count: targets.length }),
         description: t('ws.queue.removeHelp'),
         danger: true,
       }))
     )
       return;
-    setSequence(false);
     setBulkBusy(true);
     try {
       for (const task of targets) {
@@ -169,13 +352,17 @@ export default function AssemblyTab() {
     if (bulkBusy) return;
     setBulkBusy(true);
     try {
-      for (const id of ids) await clone.mutateAsync(id);
+      for (const id of ids) {
+        const out = await clone.mutateAsync(id);
+        if (ids.length === 1) toast(t('ws.queue.cloned', { title: out.series.title }));
+      }
     } catch (error) {
       toastError(error);
     } finally {
       setBulkBusy(false);
     }
   };
+
   const desktop = useDesktopSelection({
     itemAttribute: 'data-selection-id',
     selection,
@@ -190,9 +377,352 @@ export default function AssemblyTab() {
     onContext: menu.openAt,
     onCloseContext: menu.close,
   });
+  // Right-click on the empty part of the list: the page menu (legacy productionContextItems).
+  const onContextMenu = (e: ReactMouseEvent<HTMLDivElement>) => {
+    desktop.onContextMenu(e);
+    if (e.defaultPrevented || !(e.target instanceof Element)) return;
+    if (e.target.closest('input,textarea,select,[contenteditable="true"]')) return;
+    e.preventDefault();
+    menu.openAt(e.clientX, e.clientY, { ids: [], target: e.currentTarget });
+  };
 
-  const each = (list: Job[], action: 'pause' | 'resume' | 'cancel') =>
-    Promise.all(list.map((j) => control.mutateAsync({ id: j.id, action }))).catch(toastError);
+  // ---------------------------------------------------------------- drag to reorder
+  const onGripDown = (e: ReactPointerEvent<HTMLElement>, task: Task) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const grip = e.currentTarget;
+    grip.setPointerCapture(e.pointerId);
+    let state: Drag = {
+      id: task.album.id!,
+      title: task.album.title,
+      x: e.clientX,
+      y: e.clientY,
+      target: null,
+      after: false,
+    };
+    setDrag(state);
+    menu.close();
+    const move = (ev: PointerEvent) => {
+      const hit = document
+        .elementFromPoint(ev.clientX, ev.clientY)
+        ?.closest<HTMLElement>('[data-production-task]');
+      const target = hit && hit.dataset.productionTask !== state.id ? hit : null;
+      const box = target?.getBoundingClientRect();
+      state = {
+        ...state,
+        x: ev.clientX,
+        y: ev.clientY,
+        target: target?.dataset.productionTask ?? null,
+        after: box ? ev.clientY > box.top + box.height / 2 : false,
+      };
+      setDrag(state);
+    };
+    const end = (drop: boolean) => {
+      grip.removeEventListener('pointermove', move);
+      grip.removeEventListener('pointerup', up);
+      grip.removeEventListener('pointercancel', cancel);
+      setDrag(null);
+      if (drop && state.target) reorder(moveId(taskIds, state.id, state.target, state.after));
+    };
+    const up = () => end(true);
+    const cancel = () => end(false);
+    grip.addEventListener('pointermove', move);
+    grip.addEventListener('pointerup', up);
+    grip.addEventListener('pointercancel', cancel);
+  };
+
+  // ---------------------------------------------------------------- context menu
+  const pageGroups = (): ContextGroup[] => [
+    {
+      items: [
+        {
+          label: t('ws.queue.new'),
+          icon: <Icon name="plus" sm />,
+          primary: true,
+          onSelect: () => setOpen(true),
+        },
+        {
+          label: t('ws.queue.sequence'),
+          icon: <Icon name="list" sm />,
+          disabled: !sequenceable.length,
+          hint: sequenceable.length
+            ? t('ws.queue.menu.sequenceHint', { count: sequenceable.length })
+            : t('ws.queue.nothingSequence'),
+          onSelect: () => queueRun(sequenceable.map((x) => x.album.id!)),
+        },
+      ],
+    },
+    {
+      items: [
+        {
+          label: t('ws.queue.pauseAll'),
+          icon: <Icon name="pause" sm />,
+          disabled: !canPause,
+          hint: t('ws.queue.menu.pauseAllHint'),
+          onSelect: pauseAll,
+        },
+        {
+          label: t('ws.queue.resumeAll'),
+          icon: <Icon name="play" sm />,
+          disabled: !canResume,
+          hint: t('ws.queue.menu.resumeAllHint'),
+          onSelect: resumeAll,
+        },
+        {
+          label: t('ws.queue.menu.cancelAll'),
+          icon: <Icon name="stop" sm />,
+          danger: true,
+          disabled: !canCancel,
+          onSelect: () => void cancelAll(),
+        },
+      ],
+    },
+    {
+      items: [
+        {
+          label: t('ws.queue.menu.selectAll'),
+          icon: <Icon name="check" sm />,
+          disabled: !tasks.length,
+          onSelect: selection.all,
+        },
+      ],
+    },
+  ];
+  const taskGroups = (task: Task): ContextGroup[] => {
+    const a = access(task);
+    const id = task.album.id!;
+    const index = taskIds.indexOf(id);
+    const last = taskIds.length - 1;
+    const primary: ContextItem = a.canResume
+      ? {
+          label: t('ws.queue.resume'),
+          icon: <Icon name="play" sm />,
+          primary: true,
+          hint: t('ws.queue.resumeHint'),
+          onSelect: () => run(jobs([task], 'resume')),
+        }
+      : a.canPause
+        ? {
+            label: t('ws.queue.menu.pauseOne'),
+            icon: <Icon name="pause" sm />,
+            primary: true,
+            hint: t('ws.queue.pauseHint'),
+            onSelect: () => run(jobs([task], 'pause')),
+          }
+        : a.queued
+          ? {
+              label: t('ws.queue.dequeue'),
+              icon: <Icon name="close" sm />,
+              primary: true,
+              hint: t('ws.queue.queuedAt', { n: task.position }),
+              onSelect: () => dequeue(task),
+            }
+          : {
+              label: t('ws.queue.start'),
+              icon: <Icon name="play" sm />,
+              primary: true,
+              disabled: !a.canStart,
+              onSelect: () => void startTask(task),
+            };
+    const move = (to: 'up' | 'down' | 'first' | 'last') => () => reorder(shiftId(taskIds, id, to));
+    return [
+      {
+        items: [
+          primary,
+          ...(a.canStop
+            ? [
+                {
+                  label: t('ws.queue.menu.stopOne'),
+                  icon: <Icon name="stop" sm />,
+                  hint: t('ws.queue.stopHint'),
+                  onSelect: () => run(jobs([task], 'cancel')),
+                },
+              ]
+            : []),
+          ...(a.canQueue
+            ? [
+                {
+                  label: t('ws.queue.menu.enqueue'),
+                  icon: <Icon name="list" sm />,
+                  hint: t('ws.queue.menu.enqueueHint'),
+                  onSelect: () => queueRun([id]),
+                },
+              ]
+            : []),
+        ],
+      },
+      {
+        items: [
+          {
+            label: t('ws.queue.clone'),
+            icon: <Icon name="copy" sm />,
+            disabled: bulkBusy || !task.episode,
+            hint: t('ws.queue.cloneHint'),
+            onSelect: () => void cloneTasks([id]),
+          },
+          {
+            label: t('ws.queue.candidates'),
+            icon: <Icon name="image" sm />,
+            disabled: !task.episode,
+            onSelect: () => navigate(`/workshop/assembly/${task.episode!.id}`),
+          },
+          {
+            label: t('ws.queue.read'),
+            icon: <Icon name="book" sm />,
+            disabled: !task.adopted.size,
+            onSelect: () => navigate(`/gallery/${id}`),
+          },
+        ],
+      },
+      {
+        heading: t('ws.queue.menu.order'),
+        note: t('ws.queue.menu.orderHint'),
+        items: [
+          {
+            label: t('ws.queue.menu.up'),
+            icon: <Icon name="up" sm />,
+            disabled: index <= 0,
+            onSelect: move('up'),
+          },
+          {
+            label: t('ws.queue.menu.down'),
+            icon: <Icon name="down" sm />,
+            disabled: index < 0 || index >= last,
+            onSelect: move('down'),
+          },
+          {
+            label: t('ws.queue.menu.first'),
+            icon: <Icon name="up" sm />,
+            disabled: index <= 0,
+            onSelect: move('first'),
+          },
+          {
+            label: t('ws.queue.menu.last'),
+            icon: <Icon name="down" sm />,
+            disabled: index < 0 || index >= last,
+            onSelect: move('last'),
+          },
+        ],
+      },
+      {
+        items: [
+          {
+            label: t('ws.queue.menu.removeOne'),
+            icon: <Icon name="trash" sm />,
+            danger: true,
+            disabled: bulkBusy || !task.ready,
+            onSelect: () => void removeTasks([id]),
+          },
+        ],
+      },
+    ];
+  };
+  const selectionGroups = (ids: string[]): ContextGroup[] => {
+    const picked = byIds(ids);
+    const pick = (test: (a: ReturnType<typeof access>) => boolean) =>
+      picked.filter((x) => test(access(x)));
+    const startable = pick((a) => a.canStart);
+    const pausable = pick((a) => a.canPause);
+    const resumable = pick((a) => a.canResume);
+    const stoppable = pick((a) => a.canStop);
+    const entry = (
+      label: string,
+      icon: 'play' | 'list' | 'pause' | 'stop',
+      list: Task[],
+      onSelect: () => void,
+      extra: Partial<ContextItem> = {},
+    ): ContextItem[] =>
+      list.length
+        ? [
+            {
+              label: t(label, { count: list.length }),
+              icon: <Icon name={icon} sm />,
+              onSelect,
+              ...extra,
+            },
+          ]
+        : [];
+    return [
+      {
+        items: [
+          ...entry(
+            'ws.queue.menu.startMany',
+            'play',
+            startable,
+            () => startable.forEach((x) => void startTask(x)),
+            {
+              primary: true,
+              hint: t('ws.queue.menu.startManyHint'),
+            },
+          ),
+          ...entry(
+            'ws.queue.menu.sequenceMany',
+            'list',
+            startable,
+            () => queueRun(startable.map((x) => x.album.id!)),
+            {
+              hint: t('ws.queue.menu.sequenceManyHint'),
+            },
+          ),
+        ],
+      },
+      {
+        items: [
+          ...entry('ws.queue.menu.pauseMany', 'pause', pausable, () =>
+            run(jobs(pausable, 'pause')),
+          ),
+          ...entry('ws.queue.menu.resumeMany', 'play', resumable, () =>
+            run(jobs(resumable, 'resume')),
+          ),
+          ...entry('ws.queue.menu.stopMany', 'stop', stoppable, () =>
+            run(jobs(stoppable, 'cancel')),
+          ),
+        ],
+      },
+      {
+        items: [
+          {
+            label: t('ws.queue.menu.cloneMany', { count: picked.length }),
+            icon: <Icon name="copy" sm />,
+            disabled: bulkBusy,
+            onSelect: () => void cloneTasks(ids),
+          },
+          {
+            label: t('ws.queue.menu.selectAll'),
+            icon: <Icon name="check" sm />,
+            onSelect: selection.all,
+          },
+          {
+            label: t('ws.queue.menu.selectNone'),
+            icon: <Icon name="close" sm />,
+            onSelect: selection.clear,
+          },
+        ],
+      },
+      {
+        items: [
+          {
+            label: t('ws.queue.menu.removeMany', { count: picked.length }),
+            icon: <Icon name="trash" sm />,
+            danger: true,
+            disabled: bulkBusy || picked.some((x) => !x.ready),
+            onSelect: () => void removeTasks(ids),
+          },
+        ],
+      },
+    ];
+  };
+  const menuGroups = (p: MenuPayload): ContextGroup[] => {
+    if (!p.ids.length) return pageGroups();
+    if (p.ids.length > 1) return selectionGroups(p.ids);
+    const task = byIds(p.ids)[0];
+    return task ? taskGroups(task) : pageGroups();
+  };
+
+  const view = paging(tasks.length, page);
+  const shown = tasks.slice(view.start, view.end);
+  const pageLabel = t('ws.queue.pager.label', { current: view.index + 1, total: view.pages });
 
   return (
     <WorkshopFrame
@@ -206,38 +736,31 @@ export default function AssemblyTab() {
     >
       <div className="production-controls">
         <div>
-          <strong>{t('ws.queue.title')}</strong>
-          <small>{t('ws.queue.summary', { count: tasks.length })}</small>
+          <strong>{t(`ws.queue.head.${title}`, { count: running.length - held.length })}</strong>
+          <small>{detail}</small>
           <SetupRemaining />
         </div>
         <div className="production-toolbar">
           <button
             type="button"
             className="btn"
-            disabled={
-              !sequence && !tasks.some((x) => startable(x) && x.ready && !!x.episode?.panels.length)
+            disabled={!sequenceable.length || act.isPending}
+            title={
+              sequenceable.length
+                ? t('ws.queue.menu.sequenceHint', { count: sequenceable.length })
+                : t('ws.queue.nothingSequence')
             }
-            title={sequence ? t('interaction.stopSequenceHint') : undefined}
-            onClick={() => {
-              if (sequence) setSequence(false);
-              else {
-                setSequenceRun((n) => n + 1);
-                setSequence(true);
-              }
-            }}
+            onClick={() => queueRun(sequenceable.map((x) => x.album.id!))}
           >
             <Icon name="list" />
-            {sequence ? t('interaction.stopSequence') : t('ws.queue.sequence')}
+            {t('ws.queue.sequence')}
           </button>
           <button
             type="button"
             className="btn ghost"
-            disabled={!running.length}
-            title={running.length ? undefined : t('ws.queue.nothingRunning')}
-            onClick={() => {
-              setSequence(false);
-              void each(running, 'pause');
-            }}
+            disabled={!canPause}
+            title={canPause ? t('ws.queue.menu.pauseAllHint') : t('ws.queue.nothingRunning')}
+            onClick={pauseAll}
           >
             <Icon name="pause" />
             {t('ws.queue.pauseAll')}
@@ -245,9 +768,9 @@ export default function AssemblyTab() {
           <button
             type="button"
             className="btn ghost"
-            disabled={!paused.length}
-            title={paused.length ? undefined : t('ws.queue.nothingPaused')}
-            onClick={() => each(paused, 'resume')}
+            disabled={!canResume}
+            title={canResume ? t('ws.queue.menu.resumeAllHint') : t('ws.queue.nothingPaused')}
+            onClick={resumeAll}
           >
             <Icon name="play" />
             {t('ws.queue.resumeAll')}
@@ -255,22 +778,43 @@ export default function AssemblyTab() {
           <button
             type="button"
             className="btn danger"
-            disabled={!active.length}
-            title={active.length ? undefined : t('ws.queue.nothingActive')}
-            onClick={async () => {
-              if (await confirm({ title: t('ws.queue.cancelConfirm'), danger: true })) {
-                setSequence(false);
-                void each(active, 'cancel');
-              }
-            }}
+            disabled={!canCancel}
+            title={canCancel ? undefined : t('ws.queue.nothingActive')}
+            onClick={() => void cancelAll()}
           >
             <Icon name="stop" />
             {t('ws.queue.cancelAll')}
           </button>
           <ClearFinished done={done} />
+          <ConcurrencyInput
+            className="production-concurrency-global"
+            caption={t('ws.queue.defaultConcurrency')}
+            label={t('ws.queue.defaultConcurrencyLabel')}
+            hint={t('ws.queue.defaultConcurrencyHint', { n: auto })}
+            value={queue?.concurrency ?? null}
+            placeholder={t('ws.queue.auto', { n: auto })}
+            disabled={!queue}
+            onCommit={(value) =>
+              act.mutate({ action: 'concurrency', value }, { onError: toastError })
+            }
+          />
         </div>
       </div>
-      {error ? <QueryError error={error} onRetry={retry} /> : null}
+      {queue?.fault ? (
+        <div className="eco-safety danger" role="alert">
+          <Icon name="disk" />
+          <p>{t('ws.queue.storage', { message: queue.fault })}</p>
+        </div>
+      ) : null}
+      {error || queueQ.error ? (
+        <QueryError
+          error={error || queueQ.error}
+          onRetry={() => {
+            retry();
+            void queueQ.refetch();
+          }}
+        />
+      ) : null}
       {isLoading ? (
         <Loading />
       ) : tasks.length ? (
@@ -281,7 +825,7 @@ export default function AssemblyTab() {
           role="region"
           aria-label={t('interaction.list')}
           onClickCapture={desktop.onClickCapture}
-          onContextMenu={desktop.onContextMenu}
+          onContextMenu={onContextMenu}
           onPointerDown={desktop.onPointerDown}
           onDragStartCapture={desktop.onDragStartCapture}
         >
@@ -301,7 +845,7 @@ export default function AssemblyTab() {
               <button
                 type="button"
                 className="btn small danger"
-                disabled={bulkBusy || selectedTasks(selection.ids).some((task) => !task.ready)}
+                disabled={bulkBusy || byIds(selection.ids).some((task) => !task.ready)}
                 onClick={() => void removeTasks(selection.ids)}
               >
                 {t('common.delete')}
@@ -311,60 +855,99 @@ export default function AssemblyTab() {
               </button>
             </div>
           ) : null}
-          {tasks.map((task, i) => (
-            <TaskCard
-              key={task.album.id}
-              task={task}
-              selected={selection.has(task.album.id!)}
-              context={menu.state?.payload.focusId === task.album.id}
-              // Legacy lane: one book after another; a failed book does not hold up the rest.
-              autostart={
-                sequence &&
-                tasks.slice(0, i).every((x) => x.state === 'done' || x.state === 'failed')
-              }
-              sequenceRun={sequenceRun}
-              onStartFailed={() => setSequence(false)}
-              onStarted={() => {
-                if (!tasks.slice(i + 1).some(startable)) setSequence(false);
-              }}
-            />
-          ))}
+          {shown.map((task) => {
+            const profile = profileOf(task.album);
+            return (
+              <TaskCard
+                key={task.album.id}
+                task={task}
+                selected={selection.has(task.album.id!)}
+                context={menu.state?.payload.focusId === task.album.id}
+                profileName={profile?.name}
+                overrides={(profile?.draft ?? [])
+                  .filter((s) => s.enabled !== false)
+                  .flatMap((s) => overridesSummary(s.overrides as Record<string, unknown>))}
+                globalConcurrency={globalConcurrency}
+                notice={queue?.notices?.[task.album.id!]}
+                starting={starting.has(task.album.id!)}
+                dragging={drag?.id === task.album.id}
+                drop={drag?.target === task.album.id ? (drag.after ? 'after' : 'before') : null}
+                onGripDown={(e) => onGripDown(e, task)}
+                onStart={(only) => void startTask(task, only)}
+                onPause={() => run(jobs([task], 'pause'))}
+                onResume={() => run(jobs([task], 'resume'))}
+                onStop={() => run(jobs([task], 'cancel'))}
+                onDequeue={() => dequeue(task)}
+                onRemove={() => void removeTasks([task.album.id!])}
+                removing={bulkBusy}
+              />
+            );
+          })}
         </div>
       ) : (
         <div className="eco-empty production-empty">
           <p>{t('ws.queue.empty')}</p>
         </div>
       )}
+      {view.pages > 1 ? (
+        <nav className="production-pager" aria-label={pageLabel}>
+          <button
+            type="button"
+            className="btn ghost small"
+            disabled={view.index === 0}
+            onClick={() => setPage(view.index - 1)}
+          >
+            {t('ws.queue.pager.prev')}
+          </button>
+          <div className="production-pager-numbers">
+            {pageNumbers(view.index, view.pages).map((i, k) =>
+              i === null ? (
+                <span key={`gap${k}`} className="production-pager-gap">
+                  …
+                </span>
+              ) : (
+                <button
+                  key={i}
+                  type="button"
+                  className={`production-pager-number ${i === view.index ? 'active' : ''}`}
+                  aria-current={i === view.index ? 'page' : undefined}
+                  onClick={() => setPage(i)}
+                >
+                  {i + 1}
+                </button>
+              ),
+            )}
+          </div>
+          <button
+            type="button"
+            className="btn ghost small"
+            disabled={view.index === view.pages - 1}
+            onClick={() => setPage(view.index + 1)}
+          >
+            {t('ws.queue.pager.next')}
+          </button>
+          <span className="production-pager-summary">
+            {pageLabel} · {view.end - view.start > 1 ? `${view.start + 1}–${view.end}` : view.end} /{' '}
+            {tasks.length}
+          </span>
+        </nav>
+      ) : null}
+      {drag ? (
+        <div
+          className="production-drag-ghost"
+          aria-hidden="true"
+          style={{ transform: `translate(${drag.x + 14}px, ${drag.y + 12}px)` }}
+        >
+          ⠿ {drag.title}
+        </div>
+      ) : null}
       {menu.state ? (
         <ContextMenu
           x={menu.state.x}
           y={menu.state.y}
           returnFocus={menu.state.payload.target}
           onClose={menu.close}
-          groups={[
-            {
-              items: [
-                {
-                  label: t('ws.queue.clone'),
-                  disabled: bulkBusy,
-                  onSelect: () => {
-                    void cloneTasks(menu.state!.payload.ids);
-                  },
-                },
-                {
-                  label: t('common.delete'),
-                  danger: true,
-                  disabled:
-                    bulkBusy || selectedTasks(menu.state.payload.ids).some((task) => !task.ready),
-                  onSelect: () => {
-                    void removeTasks(menu.state!.payload.ids);
-                  },
-                },
-                { label: t('classic.shelf.selectFiltered'), onSelect: selection.all },
-                { label: t('classic.shelf.clearSelection'), onSelect: selection.clear },
-              ],
-            },
-          ]}
+          groups={menuGroups(menu.state.payload)}
         />
       ) : null}
       {open ? (
@@ -384,6 +967,66 @@ export default function AssemblyTab() {
   );
 }
 
+/** Panel concurrency field; empty follows the default. An invalid value snaps back. */
+function ConcurrencyInput({
+  value,
+  placeholder,
+  caption,
+  label,
+  hint,
+  className = '',
+  disabled,
+  onCommit,
+}: {
+  value: number | null;
+  placeholder: string;
+  caption: string;
+  label: string;
+  hint: string;
+  className?: string;
+  disabled?: boolean;
+  onCommit: (value: number | null) => void;
+}) {
+  const { t } = useTranslation();
+  const [text, setText] = useState(value?.toString() ?? '');
+  useEffect(() => setText(value?.toString() ?? ''), [value]);
+  const commit = () => {
+    const raw = text.trim();
+    const next = raw === '' ? null : Number(raw);
+    if (next !== null && (!Number.isInteger(next) || next < 1 || next > MAX_CONCURRENCY)) {
+      toast(t('ws.queue.concurrencyInvalid', { max: MAX_CONCURRENCY }));
+      setText(value?.toString() ?? '');
+      return;
+    }
+    if (next !== value) onCommit(next);
+  };
+  return (
+    <label className={`production-concurrency ${className}`} title={hint}>
+      <span>{caption}</span>
+      <input
+        type="number"
+        inputMode="numeric"
+        min={1}
+        max={MAX_CONCURRENCY}
+        step={1}
+        value={text}
+        placeholder={placeholder}
+        aria-label={label}
+        disabled={disabled}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.currentTarget.blur();
+          if (e.key === 'Escape') {
+            setText(value?.toString() ?? '');
+            e.currentTarget.blur();
+          }
+        }}
+      />
+    </label>
+  );
+}
+
 function ClearFinished({ done }: { done: Task[] }) {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
@@ -393,7 +1036,9 @@ function ClearFinished({ done }: { done: Task[] }) {
       type="button"
       className="btn ghost"
       disabled={!done.length || busy}
-      title={done.length ? t('ws.queue.clearHint') : t('ws.queue.nothingDone')}
+      title={
+        done.length ? t('ws.queue.clearHint', { count: done.length }) : t('ws.queue.nothingDone')
+      }
       onClick={async () => {
         setBusy(true);
         try {
@@ -408,6 +1053,7 @@ function ClearFinished({ done }: { done: Task[] }) {
         } finally {
           setBusy(false);
           qc.invalidateQueries({ queryKey: ['series'] });
+          qc.invalidateQueries({ queryKey: keys.queue });
         }
       }}
     >
@@ -417,29 +1063,69 @@ function ClearFinished({ done }: { done: Task[] }) {
   );
 }
 
+function OverridesSummary({ parts }: { parts: OverridePart[] }) {
+  const { t } = useTranslation();
+  if (!parts.length) return null;
+  return (
+    <p className="production-overrides">
+      {parts.map((p, i) => (
+        <span key={i} title={p.title || undefined}>
+          <i>
+            {t(`ws.queue.ov.${p.kind}`)}
+            {p.key ? ` #${p.key}` : ''}
+          </i>
+          {p.kind === 'noLora' ? t('ws.queue.ov.none') : p.name}
+          {p.kind === 'lora' ? <b>×{p.strength}</b> : null}
+        </span>
+      ))}
+    </p>
+  );
+}
+
 function TaskCard({
   task,
-  autostart,
-  onStarted,
-  sequenceRun,
-  onStartFailed,
   selected,
   context,
+  profileName,
+  overrides,
+  globalConcurrency,
+  notice,
+  starting,
+  dragging,
+  drop,
+  removing,
+  onGripDown,
+  onStart,
+  onPause,
+  onResume,
+  onStop,
+  onDequeue,
+  onRemove,
 }: {
   task: Task;
-  autostart: boolean;
-  onStarted: () => void;
-  sequenceRun: number;
-  onStartFailed: () => void;
   selected?: boolean;
   context?: boolean;
+  profileName?: string;
+  overrides: OverridePart[];
+  globalConcurrency: number;
+  notice?: string;
+  starting: boolean;
+  dragging: boolean;
+  drop: 'before' | 'after' | null;
+  removing: boolean;
+  onGripDown: (e: ReactPointerEvent<HTMLElement>) => void;
+  onStart: (only?: string[]) => void;
+  onPause: () => void;
+  onResume: () => void;
+  onStop: () => void;
+  onDequeue: () => void;
+  onRemove: () => void;
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { album, episode, adopted, state } = task;
+  const a = access(task);
   const render = useRender(episode?.id ?? '');
-  const trash = useTrashSeries();
-  const clone = useCloneTask();
   const patch = usePatchSeries(album.id!);
   const control = useJobControl();
   const retry = useRetryJob();
@@ -468,22 +1154,6 @@ function TaskCard({
   const pages = pageProgress(episode, detailed);
   const failure = state === 'done' ? null : failureSummary(pages, detailed);
   const pageOf = (id: string): PageProgress => pages.get(id) ?? { state: 'standby' };
-  const lastRun = useRef<number | null>(null);
-  const start = (ids?: string[]) => {
-    if (render.isPending || !episode) return;
-    const missing = ids ?? panels.filter((p) => !adopted.has(p.id!)).map((p) => p.id!);
-    if (!missing.length) return;
-    render.mutate(
-      { panel_ids: missing, candidates: 1, adopt_first: true },
-      {
-        onSuccess: onStarted,
-        onError: (error) => {
-          onStartFailed();
-          toastError(error);
-        },
-      },
-    );
-  };
   /** Legacy 单幕重跑 / 从此幕往后重跑: new images replace the ones already in the album. */
   const rerun = (ids: string[]) => {
     if (render.isPending || !ids.length) return;
@@ -499,22 +1169,29 @@ function TaskCard({
       retry.mutate({ id: failure.jobId, indexes: failure.indexes }, { onError: toastError });
     else if (failure.held)
       control.mutate({ id: failure.jobId, action: 'resume' }, { onError: toastError });
-    else start();
+    else onStart();
   };
-  const ready = autostart && startable(task) && !task.jobs.length && !!episode && !render.isPending;
-  useEffect(() => {
-    if (ready && lastRun.current !== sequenceRun) {
-      lastRun.current = sequenceRun;
-      start();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, sequenceRun]);
   const category = failure ? errorCategory(failure.kind) : 'other';
   const settingsTab =
-    category === 'workflow' ? 'workflows' : category === 'channel' ? 'channels' : 'instances';
+    category === 'workflow'
+      ? 'workflows'
+      : category === 'channel' || category === 'rate'
+        ? 'channels'
+        : 'instances';
+  const classes = [
+    'production-card',
+    state === 'running' ? 'is-running' : '',
+    state === 'paused' ? 'is-held' : '',
+    a.queued ? 'is-queued' : '',
+    selected ? 'is-selected' : '',
+    context ? 'is-context' : '',
+    dragging ? 'is-dragging' : '',
+    drop ? 'is-drop-target' : '',
+    drop === 'after' ? 'is-drop-after' : '',
+  ];
   return (
     <article
-      className={`production-card ${state === 'running' ? 'is-running' : ''} ${state === 'paused' ? 'is-held' : ''} ${selected ? 'is-selected' : ''} ${context ? 'is-context' : ''}`}
+      className={classes.filter(Boolean).join(' ')}
       data-production-task={album.id}
       data-selection-id={album.id}
       tabIndex={0}
@@ -522,7 +1199,22 @@ function TaskCard({
     >
       <header>
         <div className="production-card-title">
+          <button
+            type="button"
+            className="production-grip"
+            tabIndex={-1}
+            aria-hidden="true"
+            title={t('ws.queue.grip')}
+            onPointerDown={onGripDown}
+          >
+            ⠿
+          </button>
           <span className={`production-state state-${state}`}>{t(`ws.queue.state.${state}`)}</span>
+          {a.queued ? (
+            <span className="production-flag flag-queued">
+              {t('ws.queue.queuedAt', { n: task.position })}
+            </span>
+          ) : null}
           {renaming ? (
             <InlineTitle
               autoFocus
@@ -560,13 +1252,24 @@ function TaskCard({
             {t('ws.queue.metaPresets', { titles: album.presets.map((p) => p.title).join('、') })}
           </span>
         ) : null}
-        <span>{t('ws.queue.metaService')}</span>
+        <span>{t('ws.queue.metaProfile', { name: profileName ?? 'ComfyUI' })}</span>
       </p>
+      <OverridesSummary parts={overrides} />
       <div className={`production-strip ${panels.length > 48 ? 'dense' : ''}`} aria-hidden="true">
         {panels.map((p) => (
           <i key={p.id} className={`seg-${pageOf(p.id!).state}`} />
         ))}
       </div>
+      {notice ? (
+        <p className="production-notice" role="status">
+          {t('ws.queue.notStarted', { message: notice })}
+        </p>
+      ) : null}
+      {task.stopped && !failure ? (
+        <p className="production-notice" role="status">
+          {t('ws.queue.stopped')}
+        </p>
+      ) : null}
       {failure ? (
         <div className="production-error-panel" role="alert" data-error-kind={category}>
           <p className="production-error-head">
@@ -583,7 +1286,9 @@ function TaskCard({
               type="button"
               className="btn small"
               title={t('ws.queue.fail.retryHint')}
-              disabled={render.isPending || retry.isPending || control.isPending || !episode}
+              disabled={
+                starting || render.isPending || retry.isPending || control.isPending || !episode
+              }
               onClick={retryFailed}
             >
               <Icon name="refresh" sm />
@@ -611,38 +1316,55 @@ function TaskCard({
         </div>
       ) : null}
       <div className="production-card-actions">
-        {state === 'running' ? (
+        {a.busy ? (
+          <>
+            {state === 'paused' ? (
+              <button
+                type="button"
+                className="btn"
+                title={t('ws.queue.resumeHint')}
+                onClick={onResume}
+              >
+                <Icon name="play" />
+                {t('ws.queue.resume')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="btn"
+                title={t('ws.queue.pauseHint')}
+                onClick={onPause}
+              >
+                <Icon name="pause" />
+                {t('ws.queue.pause')}
+              </button>
+            )}
+            <button
+              type="button"
+              className="btn ghost"
+              title={t('ws.queue.stopHint')}
+              onClick={onStop}
+            >
+              <Icon name="stop" />
+              {t('ws.queue.stop')}
+            </button>
+          </>
+        ) : a.queued ? (
           <button
             type="button"
             className="btn"
-            onClick={() =>
-              Promise.all(
-                task.jobs.map((j) => control.mutateAsync({ id: j.id, action: 'pause' })),
-              ).catch(toastError)
-            }
+            title={t('ws.queue.dequeueHint')}
+            onClick={onDequeue}
           >
-            <Icon name="pause" />
-            {t('ws.queue.pause')}
-          </button>
-        ) : state === 'paused' ? (
-          <button
-            type="button"
-            className="btn"
-            onClick={() =>
-              Promise.all(
-                task.jobs.map((j) => control.mutateAsync({ id: j.id, action: 'resume' })),
-              ).catch(toastError)
-            }
-          >
-            <Icon name="play" />
-            {t('ws.queue.resume')}
+            <Icon name="close" />
+            {t('ws.queue.dequeue')}
           </button>
         ) : (
           <button
             type="button"
             className="btn"
-            disabled={!episode || state === 'done' || render.isPending}
-            onClick={() => start()}
+            disabled={!a.canStart || starting}
+            onClick={() => onStart()}
           >
             <Icon name="play" />
             {t('ws.queue.start')}
@@ -667,44 +1389,21 @@ function TaskCard({
           <Icon name="book" sm />
           {t('ws.queue.read')}
         </button>
-        <button
-          type="button"
-          className="btn ghost small production-clone"
-          disabled={!episode || clone.isPending}
-          title={t('ws.queue.cloneHint')}
-          onClick={() =>
-            clone.mutate(album.id!, {
-              onSuccess: (out) => toast(t('ws.queue.cloned', { title: out.series.title })),
-              onError: toastError,
-            })
-          }
-        >
-          <Icon name="copy" sm />
-          {t('ws.queue.clone')}
-        </button>
+        <CloneButton album={album} disabled={!episode} />
+        <ConcurrencyInput
+          caption={t('ws.queue.concurrency')}
+          label={t('ws.queue.concurrencyOf', { title: album.title })}
+          hint={t('ws.queue.concurrencyHint', { n: globalConcurrency })}
+          value={album.concurrency ?? null}
+          placeholder={t('ws.queue.concurrencyGlobal', { n: globalConcurrency })}
+          onCommit={(concurrency) => patch.mutate({ concurrency }, { onError: toastError })}
+        />
         <span className="grow" />
         <button
           type="button"
           className="btn ghost small production-remove"
-          disabled={!task.ready || trash.isPending || control.isPending}
-          onClick={async () => {
-            if (
-              await confirm({
-                title: t('ws.queue.removeConfirm', { title: album.title }),
-                description: t('ws.queue.removeHelp'),
-                danger: true,
-              })
-            ) {
-              try {
-                await Promise.all(
-                  task.jobs.map((j) => control.mutateAsync({ id: j.id, action: 'cancel' })),
-                );
-                await trash.mutateAsync(album.id!);
-              } catch (error) {
-                toastError(error);
-              }
-            }
-          }}
+          disabled={!task.ready || removing}
+          onClick={onRemove}
         >
           <Icon name="trash" sm />
           {t('ws.queue.remove')}
@@ -807,5 +1506,27 @@ function TaskCard({
         </Modal>
       ) : null}
     </article>
+  );
+}
+
+function CloneButton({ album, disabled }: { album: SeriesCard; disabled: boolean }) {
+  const { t } = useTranslation();
+  const clone = useCloneTask();
+  return (
+    <button
+      type="button"
+      className="btn ghost small production-clone"
+      disabled={disabled || clone.isPending}
+      title={t('ws.queue.cloneHint')}
+      onClick={() =>
+        clone.mutate(album.id!, {
+          onSuccess: (out) => toast(t('ws.queue.cloned', { title: out.series.title })),
+          onError: toastError,
+        })
+      }
+    >
+      <Icon name="copy" sm />
+      {t('ws.queue.clone')}
+    </button>
   );
 }

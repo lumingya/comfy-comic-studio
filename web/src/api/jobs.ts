@@ -152,6 +152,8 @@ export function useJobEvents() {
         qc.invalidateQueries({ queryKey: ['jobs'] });
         qc.invalidateQueries({ queryKey: keys.job(event.job_id) });
         qc.invalidateQueries({ queryKey: ['episode'] });
+        // The server lane starts the next album when a job finishes.
+        qc.invalidateQueries({ queryKey: keys.queue });
       }
     };
 

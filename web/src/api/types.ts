@@ -18,6 +18,7 @@ export type PanelCharacter = S['PanelCharacter'];
 export type PanelOverrides = S['PanelOverrides'];
 export type Dialogue = S['Dialogue'];
 export type Take = S['Take'];
+export type QueueStatus = S['QueueStatus'];
 export type QAResult = S['QAResult'];
 export type Strip = S['Strip-Output'];
 export type LetteringLayer = S['LetteringLayer-Output'];

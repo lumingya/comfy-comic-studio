@@ -53,6 +53,7 @@ export const series: Series = {
   variables: {},
   default_profile_id: null,
   cover_asset_id: null,
+  concurrency: null,
   created_at: T,
   updated_at: T,
   deleted_at: null,

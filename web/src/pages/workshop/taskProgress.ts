@@ -120,11 +120,15 @@ export function failureSummary(
 }
 
 /** Legacy productionErrorKind: which settings fix this error. */
-export function errorCategory(kind: string): 'connection' | 'workflow' | 'channel' | 'other' {
+export function errorCategory(
+  kind: string,
+): 'connection' | 'workflow' | 'channel' | 'rate' | 'other' {
   if (['unreachable', 'no_instance', 'connection_lost', 'timeout'].includes(kind))
     return 'connection';
   if (['rejected', 'execution_error', 'no_image', 'bad_input', 'upload_failed'].includes(kind))
     return 'workflow';
   if (kind === 'cloud_error') return 'channel';
+  // Legacy 服务限流: the channel said 429 on every attempt; it is not a broken setting.
+  if (kind === 'rate_limited') return 'rate';
   return 'other';
 }
