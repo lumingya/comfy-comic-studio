@@ -1350,7 +1350,10 @@ function TaskCard({
             </button>
           </>
         ) : a.queued ? (
+          // Own keys: the start button must not reuse this node (and its focus) once the card
+          // leaves the queue, or a second click / Enter would start the album.
           <button
+            key="dequeue"
             type="button"
             className="btn"
             title={t('ws.queue.dequeueHint')}
@@ -1361,6 +1364,7 @@ function TaskCard({
           </button>
         ) : (
           <button
+            key="start"
             type="button"
             className="btn"
             disabled={!a.canStart || starting}

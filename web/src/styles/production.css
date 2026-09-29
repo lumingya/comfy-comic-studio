@@ -325,3 +325,7 @@ body.production-reordering .production-grip {
     text-align: center;
   }
 }
+/* The placeholder names the value it follows (全局 2 / 自动 2): leave room for it. */
+.production-concurrency input {
+  width: 84px;
+}
