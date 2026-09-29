@@ -137,6 +137,7 @@ export const episode: Episode = {
   title: '第一话',
   order: 0,
   synopsis: '深夜的便利店',
+  base_prompt: '',
   panels: [panel(0), panel(1, { locked: true, dialogues: [] })],
   takes: [take('t1', 'p0', 'adopted'), take('t2', 'p0', 'candidate'), take('t3', 'p1', 'rejected')],
   strip: {

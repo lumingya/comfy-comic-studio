@@ -18,6 +18,7 @@ import {
   useCreateEpisode,
   useDeletePanel,
   useDuplicatePanel,
+  useImportPanels,
   usePatchEpisode,
   usePatchPanel,
   useReorderPanels,
@@ -34,6 +35,8 @@ import {
 import { shortcutBlocked } from '../../app/shortcuts';
 import { SaveState } from '../../components/SaveState';
 import { captionText, replaceCaption } from './caption';
+import { BatchFramesDialog, type BatchFramesResult } from './BatchFramesDialog';
+import { MAX_FRAMES } from './frameBatch';
 import { confirm } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
 import {
@@ -79,7 +82,6 @@ export function usePromptSources(): PromptSources {
   }, [ws.data]);
 }
 
-export const basePromptKey = (id: string) => `mio.basePrompt.${id}`;
 const HINT_KEY = 'cc-hint-multiselect';
 const promptOf = (p: Panel) => p.overrides.raw_prompt ?? '';
 /** Legacy 只选空白分幕: neither a prompt nor dialogue. */
@@ -133,7 +135,7 @@ export default function StoryboardEditor() {
   const flush = async () => {
     if (editorSave.current) await flushDraft(editorSave.current);
   };
-  const basePrompt = () => localStorage.getItem(basePromptKey(episode.id!)) ?? '';
+  const basePrompt = () => episode.base_prompt ?? '';
   const removeSelected = async (ids: string[]) => {
     if (
       !ids.length ||
@@ -241,28 +243,46 @@ export default function StoryboardEditor() {
     return () => document.removeEventListener('keydown', onKey);
   });
   const [batch, setBatch] = useState(false);
-  const [batchCount, setBatchCount] = useState(4);
+  const importPanels = useImportPanels(episode.id!);
 
-  const addFrames = (count: number, prompt: string, anchor: string | null = active?.id ?? null) => {
-    let after = anchor;
+  /** Legacy workshop-add-frame: a blank 「第 N 幕」 at the end (or right after `anchor`), opened. */
+  const addFrame = (anchor: string | null = null) => {
     const run = async () => {
+      if (panels.length >= MAX_FRAMES) throw new Error(t('ws.story.batch.full'));
       await flush();
-      if (!Number.isInteger(count) || count < 1 || count > 24) return;
-      for (let i = 0; i < count; i += 1) {
-        const ep = await add.mutateAsync({
-          panel: {
-            description: t('ws.story.frameN', { n: panels.length + i + 1 }),
-            overrides: { raw_prompt: prompt } as PanelOverrides,
-          },
-          after,
-        });
-        const sorted = [...ep.panels].sort((a, b) => a.order - b.order);
-        const idx = after ? sorted.findIndex((p) => p.id === after) + 1 : sorted.length - 1;
-        after = sorted[idx]?.id ?? after;
-        setActiveId(after ?? undefined);
-      }
+      const ep = await add.mutateAsync({
+        panel: {
+          description: t('ws.story.frameN', { n: panels.length + 1 }),
+          overrides: { raw_prompt: '' } as PanelOverrides,
+        },
+        after: anchor,
+      });
+      const sorted = [...ep.panels].sort((a, b) => a.order - b.order);
+      const idx = anchor ? sorted.findIndex((p) => p.id === anchor) + 1 : sorted.length - 1;
+      setActiveId(sorted[idx]?.id);
+      selection.clear();
     };
     run().catch(toastError);
+  };
+  const openBatch = () => {
+    if (panels.length >= MAX_FRAMES) toastError(new Error(t('ws.story.batch.full')));
+    else setBatch(true);
+  };
+  /** Legacy workshop-add-frames-confirm: append the batch, optionally remember the template. */
+  const addBatch = async ({ frames, remember }: BatchFramesResult) => {
+    try {
+      await flush();
+      const ep = await importPanels.mutateAsync({ panels: frames, after: null });
+      if (remember !== null && remember !== (ep.base_prompt ?? ''))
+        await patchBoard.mutateAsync({ base_prompt: remember });
+      const sorted = [...ep.panels].sort((a, b) => a.order - b.order);
+      setActiveId(sorted[sorted.length - frames.length]?.id);
+      selection.clear();
+      setBatch(false);
+      toast(t('ws.story.batch.done', { n: frames.length }));
+    } catch (error) {
+      toastError(error);
+    }
   };
 
   // Legacy workshopStoryContextItems: right-clicking anywhere else on the 分镜工坊 page (the
@@ -307,14 +327,15 @@ export default function StoryboardEditor() {
             label: t('ws.story.addFrame'),
             icon: <Icon name="plus" sm />,
             primary: true,
-            disabled: add.isPending || panels.length >= 512,
-            onSelect: () => addFrames(1, '', panelIds[panelIds.length - 1] ?? null),
+            disabled: add.isPending || panels.length >= MAX_FRAMES,
+            onSelect: () => addFrame(),
           },
           {
             label: t('ws.story.menu.addFramesDots'),
             icon: <Icon name="list" sm />,
             hint: t('ws.story.menu.addFramesHint'),
-            onSelect: () => setBatch(true),
+            disabled: importPanels.isPending || panels.length >= MAX_FRAMES,
+            onSelect: openBatch,
           },
           {
             label: t('ws.story.menu.selectAll'),
@@ -502,7 +523,7 @@ export default function StoryboardEditor() {
             label: t('ws.story.menu.insertAfter'),
             icon: <Icon name="plus" sm />,
             disabled: add.isPending,
-            onSelect: () => addFrames(1, '', focus.id!),
+            onSelect: () => addFrame(focus.id!),
           },
           {
             label: t('ws.story.menu.copyOne'),
@@ -591,8 +612,8 @@ export default function StoryboardEditor() {
             <button
               type="button"
               className="btn small"
-              disabled={add.isPending}
-              onClick={() => addFrames(1, '')}
+              disabled={add.isPending || panels.length >= MAX_FRAMES}
+              onClick={() => addFrame()}
             >
               <Icon name="plus" sm />
               {t('ws.story.addFrame')}
@@ -600,41 +621,13 @@ export default function StoryboardEditor() {
             <button
               type="button"
               className="btn small"
-              disabled={add.isPending}
-              aria-expanded={batch}
-              onClick={() => setBatch(!batch)}
+              disabled={importPanels.isPending || panels.length >= MAX_FRAMES}
+              aria-haspopup="dialog"
+              onClick={openBatch}
             >
               <Icon name="list" sm />
               {t('ws.story.addFrames')}
             </button>
-            {batch ? (
-              <div className="workshop-batch-add">
-                <label>
-                  {t('ws.story.batchCount')}
-                  <input
-                    type="number"
-                    min={1}
-                    max={24}
-                    value={batchCount}
-                    onChange={(e) => setBatchCount(Number(e.target.value))}
-                  />
-                </label>
-                <button
-                  type="button"
-                  className="btn small primary"
-                  disabled={
-                    add.isPending ||
-                    !(Number.isInteger(batchCount) && batchCount >= 1 && batchCount <= 24)
-                  }
-                  onClick={() => {
-                    setBatch(false);
-                    addFrames(batchCount, localStorage.getItem(basePromptKey(episode.id!)) ?? '');
-                  }}
-                >
-                  {t('ws.story.batchGo')}
-                </button>
-              </div>
-            ) : null}
           </div>
         </nav>
         {active ? (
@@ -657,6 +650,18 @@ export default function StoryboardEditor() {
           </section>
         )}
       </div>
+      {batch ? (
+        <BatchFramesDialog
+          existing={panels.length}
+          prompts={panels.map(promptOf)}
+          remembered={basePrompt()}
+          known={known}
+          sources={sources}
+          busy={importPanels.isPending || patchBoard.isPending}
+          onClose={() => setBatch(false)}
+          onSubmit={(result) => void addBatch(result)}
+        />
+      ) : null}
       {menu.state ? (
         <ContextMenu
           x={menu.state.x}
@@ -907,15 +912,20 @@ function FramePage({
         <button
           type="button"
           className="btn small ghost"
-          onClick={() =>
-            batch.mutate(
-              {
+          disabled={batch.isPending}
+          onClick={async () => {
+            // Save this frame's pending edits first so the autosave cannot land after the batch.
+            try {
+              await draft.flushAll();
+              await batch.mutateAsync({
                 panelIds: panels.map((p) => p.id!),
                 changes: { overrides: { raw_negative: negative.value || null } },
-              },
-              { onError: toastError },
-            )
-          }
+              });
+              toast(t('ws.story.negativeAllDone', { n: panels.length }));
+            } catch (error) {
+              toastError(error);
+            }
+          }}
         >
           <Icon name="copy" sm />
           {t('ws.story.negativeAll')}

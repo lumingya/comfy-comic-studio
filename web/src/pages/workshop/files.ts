@@ -40,6 +40,8 @@ const int = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? Math.
 export interface BoardFile {
   title: string;
   synopsis: string;
+  /** 起手模板: legacy `basePrompt`, `base_prompt` in our own files. */
+  base_prompt: string;
   panels: Obj[];
 }
 
@@ -72,12 +74,14 @@ export function storyboardFromFile(raw: unknown): BoardFile {
     return {
       title: str(d.title) || '导入的分镜',
       synopsis: str(d.outline),
+      base_prompt: str(d.basePrompt),
       panels: (d.frames as Obj[]).filter((f) => f && typeof f === 'object').map(frameToPanel),
     };
   if (Array.isArray(d.panels))
     return {
       title: str(d.title) || '导入的分镜',
       synopsis: str(d.synopsis),
+      base_prompt: str(d.base_prompt),
       panels: d.panels as Obj[],
     };
   throw new Error('不是分镜文件：缺少 frames / panels');
@@ -90,7 +94,13 @@ export function storyboardToFile(ep: Episode) {
       const { id: _id, order: _order, ...rest } = p;
       return rest;
     });
-  return { schema: 'mio.storyboard.v1', title: ep.title, synopsis: ep.synopsis, panels };
+  return {
+    schema: 'mio.storyboard.v1',
+    title: ep.title,
+    synopsis: ep.synopsis,
+    base_prompt: ep.base_prompt ?? '',
+    panels,
+  };
 }
 
 export function presetFromFile(raw: unknown): Preset {

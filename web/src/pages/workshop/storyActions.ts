@@ -50,7 +50,11 @@ export async function importStoryboards(
   let last = '';
   for (const f of files) {
     const board = storyboardFromFile(f);
-    const e = await create.mutateAsync({ title: board.title, synopsis: board.synopsis });
+    const e = await create.mutateAsync({
+      title: board.title,
+      synopsis: board.synopsis,
+      base_prompt: board.base_prompt,
+    });
     if (board.panels.length)
       await api.POST('/api/episodes/{episode_id}/panels/import', {
         params: { path: { episode_id: e.id! } },

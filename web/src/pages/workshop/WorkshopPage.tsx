@@ -21,7 +21,10 @@ import { Loading } from '../../components/ui';
 import type { EpisodeContext } from '../episode/EpisodePage';
 import { createStoryboard, exportStoryboard, importStoryboards } from './storyActions';
 import { PromptSurface } from './PromptSurface';
-import StoryboardEditor, { basePromptKey, useKnownVariables } from './StoryboardEditor';
+import StoryboardEditor, { useKnownVariables, usePromptSources } from './StoryboardEditor';
+
+/** Where the template lived before it moved onto the storyboard (moved over once on open). */
+const basePromptKey = (id: string) => `mio.basePrompt.${id}`;
 
 export type WorkshopTab = 'story' | 'presets' | 'assembly';
 const TABS: WorkshopTab[] = ['story', 'presets', 'assembly'];
@@ -310,7 +313,9 @@ export function StoryTab() {
         key={ep.id}
         episodeId={ep.id!}
         value={ep.synopsis}
-        onSave={(synopsis) => patch.mutate({ synopsis })}
+        base={ep.base_prompt ?? ''}
+        onSave={(synopsis) => patch.mutate({ synopsis }, { onError: toastError })}
+        onSaveBase={(base_prompt) => patch.mutate({ base_prompt }, { onError: toastError })}
       />
       <Outlet
         key={`story-editor:${ep.id}`}
@@ -323,15 +328,19 @@ export function StoryTab() {
 function Synopsis({
   episodeId,
   value,
+  base: savedBase,
   onSave,
+  onSaveBase,
 }: {
   episodeId: string;
   value: string;
+  base: string;
   onSave: (v: string) => void;
+  onSaveBase: (v: string) => void;
 }) {
   const { t } = useTranslation();
   const known = useKnownVariables();
-  const [base, setBase] = useState(() => localStorage.getItem(basePromptKey(episodeId)) ?? '');
+  const sources = usePromptSources();
   const [text, setText] = useState(value);
   const last = useRef(value);
   const commit = () => {
@@ -340,6 +349,34 @@ function Synopsis({
       onSave(text);
     }
   };
+  // 起手模板 lives on the storyboard; follow outside changes (批量新增 → 保存为起手模板) unless the
+  // field holds unsaved typing.
+  const [base, setBase] = useState(savedBase);
+  const lastBase = useRef(savedBase);
+  useEffect(() => {
+    setBase((current) => (current === lastBase.current ? savedBase : current));
+    lastBase.current = savedBase;
+  }, [savedBase]);
+  const commitBase = () => {
+    if (base !== lastBase.current) {
+      lastBase.current = base;
+      onSaveBase(base);
+    }
+  };
+  // Before the field existed the template was kept in this browser only: move it over once.
+  const migrate = useRef({ savedBase, onSaveBase });
+  useEffect(() => {
+    const key = basePromptKey(episodeId);
+    const local = localStorage.getItem(key);
+    if (local === null) return;
+    const { savedBase: current, onSaveBase: save } = migrate.current;
+    if (!current && local.trim()) {
+      lastBase.current = local;
+      setBase(local);
+      save(local);
+    }
+    localStorage.removeItem(key);
+  }, [episodeId]);
   return (
     <details className="story-synopsis">
       <summary>{t('ws.story.synopsis')}</summary>
@@ -365,11 +402,10 @@ function Synopsis({
           className="workshop-base-prompt"
           value={base}
           known={known}
+          sources={sources}
           placeholder={t('ws.story.baseHint')}
-          onChange={(v) => {
-            setBase(v);
-            localStorage.setItem(basePromptKey(episodeId), v);
-          }}
+          onChange={setBase}
+          onBlur={commitBase}
         />
         <p className="help">{t('ws.story.baseHelp')}</p>
       </div>

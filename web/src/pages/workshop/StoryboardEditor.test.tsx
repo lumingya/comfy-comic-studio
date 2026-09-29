@@ -1,9 +1,11 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { episode, series } from '../../test/fixtures';
 import { mockFetch, renderWithProviders } from '../../test/utils';
 import type { Episode } from '../../api/types';
+import { useToasts } from '../../components/toast';
 import StoryboardEditor from './StoryboardEditor';
+const toasts = () => useToasts.getState().items.map((i) => i.text);
 let ep: Episode;
 vi.mock('../episode/EpisodePage', () => ({ useEpisodeContext: () => ({ episode: ep, series }) }));
 beforeEach(() => {
@@ -85,5 +87,126 @@ describe('storyboard editing recovery', () => {
     expect(rows().filter((r) => r.getAttribute('aria-selected') === 'true')).toHaveLength(2);
     fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
     expect(rows().filter((r) => r.getAttribute('aria-selected') === 'true')).toHaveLength(0);
+  });
+});
+
+describe('adding frames (legacy workshop-add-frame / batchFramesModal)', () => {
+  const routes = () => ({
+    'GET /api/workshop': series,
+    'POST /api/episodes/sb_test/panels': (body: unknown) => {
+      const { panel } = body as { panel: { description: string } };
+      ep = {
+        ...ep,
+        panels: [...ep.panels, { ...ep.panels[0], id: 'p_new', order: 99, ...panel }],
+      };
+      return ep;
+    },
+    'POST /api/episodes/sb_test/panels/import': (body: unknown) => {
+      const { panels } = body as { panels: { description: string }[] };
+      ep = {
+        ...ep,
+        panels: [
+          ...ep.panels,
+          ...panels.map((p, i) => ({ ...ep.panels[0], id: `p_b${i}`, order: 10 + i, ...p })),
+        ],
+      };
+      return ep;
+    },
+    'PATCH /api/episodes/sb_test': (body: unknown) => {
+      ep = { ...ep, ...(body as object) };
+      return ep;
+    },
+  });
+
+  it('「新增分幕」 appends a blank 「第 N 幕」 at the end, even with an earlier frame open', async () => {
+    const calls = mockFetch(routes());
+    renderWithProviders(<StoryboardEditor />);
+    fireEvent.click(screen.getByRole('button', { name: '新增分幕' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
+    const post = calls.find((c) => c.method === 'POST')!;
+    expect(post.body).toMatchObject({
+      after: null,
+      panel: { description: '第 3 幕', overrides: { raw_prompt: '' } },
+    });
+  });
+
+  it('prefills the common prompt start, appends the batch and remembers the template', async () => {
+    ep.panels = ep.panels.map((p, i) => ({
+      ...p,
+      overrides: { ...p.overrides, raw_prompt: `{character}, {style}, shot ${i}` },
+    }));
+    const calls = mockFetch(routes());
+    renderWithProviders(<StoryboardEditor />);
+    fireEvent.click(screen.getByRole('button', { name: '批量新增…' }));
+    const dialog = await screen.findByRole('dialog', { name: '批量新增分幕' });
+    expect(dialog).toHaveTextContent('最多还可新增 510 幕。');
+    expect(document.getElementById('batch-frames-base')).toHaveValue('{character}, {style}, ');
+    expect(dialog).toHaveTextContent('已按现有分幕的共同开头预填。');
+    fireEvent.change(document.getElementById('batch-frames-count')!, { target: { value: '2' } });
+    fireEvent.change(document.getElementById('batch-frames-pattern')!, {
+      target: { value: '镜头 {n}' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '新增分幕' }));
+    await waitFor(() => expect(ep.base_prompt).toBe('{character}, {style}, '));
+    const imported = calls.find((c) => c.url.endsWith('/panels/import'))!;
+    expect(imported.body).toEqual({
+      after: null,
+      panels: [
+        { description: '镜头 3', overrides: { raw_prompt: '{character}, {style}, ' } },
+        { description: '镜头 4', overrides: { raw_prompt: '{character}, {style}, ' } },
+      ],
+    });
+    await waitFor(() => expect(toasts()).toContain('已新增 2 个分幕'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('refuses a count beyond the frames left', async () => {
+    mockFetch(routes());
+    renderWithProviders(<StoryboardEditor />);
+    fireEvent.click(screen.getByRole('button', { name: '批量新增…' }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.change(document.getElementById('batch-frames-count')!, { target: { value: '600' } });
+    expect(within(dialog).getByRole('alert')).toHaveTextContent('最多还可新增 510 幕。');
+    expect(within(dialog).getByRole('button', { name: '新增分幕' })).toBeDisabled();
+  });
+});
+
+describe('负向「应用到所有分幕」', () => {
+  it('saves the open frame first, then applies the typed negative to every frame', async () => {
+    const order: string[] = [];
+    mockFetch({
+      'GET /api/workshop': series,
+      'PATCH /api/episodes/sb_test/panels/p0': (body: unknown) => {
+        order.push('patch');
+        const changes = (body as { changes: { overrides?: object } }).changes;
+        ep = {
+          ...ep,
+          panels: ep.panels.map((p) =>
+            p.id === 'p0' ? { ...p, overrides: { ...p.overrides, ...changes.overrides } } : p,
+          ),
+        };
+        return ep;
+      },
+      'POST /api/episodes/sb_test/panels/batch': (body: unknown) => {
+        order.push('batch');
+        const { changes } = body as { changes: { overrides: object } };
+        ep = {
+          ...ep,
+          panels: ep.panels.map((p) => ({
+            ...p,
+            overrides: { ...p.overrides, ...changes.overrides },
+          })),
+        };
+        return ep;
+      },
+    });
+    renderWithProviders(<StoryboardEditor />);
+    fireEvent.change(prompt(), { target: { value: 'typed prompt' } });
+    fireEvent.change(negative(), { target: { value: 'blurry' } });
+    fireEvent.click(screen.getByRole('button', { name: '应用到所有分幕' }));
+    await waitFor(() => expect(toasts()).toContain('负向提示词已应用到 2 个分幕'));
+    expect(order).toEqual(['patch', 'batch']);
+    expect(ep.panels.map((p) => p.overrides.raw_negative)).toEqual(['blurry', 'blurry']);
+    expect(ep.panels[0].overrides.raw_prompt).toBe('typed prompt');
   });
 });

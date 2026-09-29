@@ -111,7 +111,7 @@ export function useEpisode(id: string | undefined) {
 export function useCreateEpisode(seriesId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (body: { title: string; synopsis?: string }) =>
+    mutationFn: async (body: { title: string; synopsis?: string; base_prompt?: string }) =>
       data(
         await api.POST('/api/series/{series_id}/episodes', {
           params: { path: { series_id: seriesId } },
@@ -167,8 +167,10 @@ function useEpisodeMutation<V>(episodeId: string, fn: (vars: V) => Promise<Episo
 const ep = (episode_id: string) => ({ path: { episode_id } });
 
 export function usePatchEpisode(episodeId: string) {
-  return useEpisodeMutation(episodeId, async (body: { title?: string; synopsis?: string }) =>
-    data(await api.PATCH('/api/episodes/{episode_id}', { params: ep(episodeId), body })),
+  return useEpisodeMutation(
+    episodeId,
+    async (body: { title?: string; synopsis?: string; base_prompt?: string }) =>
+      data(await api.PATCH('/api/episodes/{episode_id}', { params: ep(episodeId), body })),
   );
 }
 
