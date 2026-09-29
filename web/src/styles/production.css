@@ -1,0 +1,144 @@
+/* 装配与队列: the legacy production styles the first port left out (legacy/styles.css), mapped
+   onto the scene / task states derived in pages/workshop/taskProgress.ts. */
+
+.production-strip.dense {
+  gap: 0;
+}
+.production-strip.dense i {
+  border-radius: 0;
+}
+.production-strip .seg-done {
+  background: var(--accent2);
+}
+.production-strip .seg-running {
+  background: var(--live);
+  animation: production-breathe 1.4s ease-in-out infinite;
+}
+.production-strip .seg-queued {
+  background: color-mix(in srgb, var(--live) 35%, var(--panel2));
+}
+.production-strip .seg-paused,
+.production-strip .seg-uncertain {
+  background: var(--amber);
+}
+.production-strip .seg-failed {
+  background: var(--red);
+}
+
+.production-state.state-running {
+  color: var(--live);
+  background: var(--tint);
+}
+.production-state.state-paused {
+  color: var(--amber);
+}
+.production-state.state-failed {
+  color: var(--red);
+}
+.production-state.state-standby {
+  color: var(--muted);
+}
+
+.production-card.is-running {
+  border-color: color-mix(in srgb, var(--live) 55%, var(--line));
+}
+.production-card.is-held {
+  border-color: color-mix(in srgb, var(--amber) 55%, var(--line));
+}
+
+.production-page strong.page-failed,
+.production-page strong.page-uncertain {
+  color: var(--red);
+}
+.production-page strong.page-running {
+  color: var(--live);
+}
+.production-page strong.page-queued {
+  color: var(--accent);
+}
+.production-page strong.page-paused {
+  color: var(--amber);
+}
+.production-page strong.page-standby {
+  color: var(--muted);
+}
+
+.production-error,
+.production-page-main .production-error-tail {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.production-error {
+  color: var(--red);
+}
+
+/* Failed task card (legacy productionErrorHTML): category, one-line reason, what fixes it. */
+.production-error-panel {
+  display: grid;
+  gap: 4px;
+  margin: 2px 0 0;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--red) 35%, var(--line));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--red) 6%, transparent);
+}
+.production-error-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.8125rem;
+}
+.production-error-head strong {
+  color: var(--red);
+}
+.production-error-head span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.production-error-panel .production-error {
+  color: var(--text);
+}
+.production-error-tail {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.production-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* Direct scene preview, available while generation is running. */
+.production-page-preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: var(--panel2);
+  cursor: zoom-in;
+}
+.production-page-preview:hover {
+  border-color: var(--accent2);
+}
+.production-page-preview:focus-visible {
+  outline: 2px solid var(--accent2);
+  outline-offset: 3px;
+}
+.production-page-full-image {
+  display: block;
+  width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+}

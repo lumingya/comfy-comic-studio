@@ -34,6 +34,8 @@ export interface RenderVars {
   qa?: boolean;
   /** Queue flow: the first image of each panel without one goes straight into the album. */
   adopt_first?: boolean;
+  /** 单幕重跑: the first new image replaces the album image (the old one stays a candidate). */
+  adopt_replace?: boolean;
 }
 
 export function useRender(episodeId: string) {

@@ -5,12 +5,12 @@ import { api, data } from './client';
 import { keys } from './keys';
 import type { Job, JobEvent, JobItem } from './types';
 
-export function useJobs(owner?: string, active = false) {
+export function useJobs(owner?: string, active = false, limit = 100) {
   return useQuery({
-    queryKey: [...keys.jobs(owner), active],
+    queryKey: [...keys.jobs(owner), active, limit],
     queryFn: async () =>
       data(
-        await api.GET('/api/jobs', { params: { query: { owner, active, limit: 100 } } }),
+        await api.GET('/api/jobs', { params: { query: { owner, active, limit } } }),
       ) as unknown as Job[],
   });
 }

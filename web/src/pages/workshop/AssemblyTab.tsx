@@ -5,8 +5,8 @@ import { useQueries, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { api, data } from '../../api/client';
-import { useJobControl, useJobs } from '../../api/jobs';
+import { api, assetUrl, data } from '../../api/client';
+import { useJobControl, useJobs, useLive, useRetryJob } from '../../api/jobs';
 import { keys } from '../../api/keys';
 import { useRender } from '../../api/production';
 import { useCloneTask } from '../../api/workshop';
@@ -17,18 +17,31 @@ import { confirm } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
 import { SetupRemaining } from '../../components/HelpDrawer';
 import { QueryError } from '../../app/errors';
-import { InlineTitle, Loading } from '../../components/ui';
+import { InlineTitle, Loading, Modal } from '../../components/ui';
 import AssembleDialog from './AssembleDialog';
 import { WorkshopFrame } from './WorkshopPage';
+import {
+  ACTIVE_JOB,
+  errorCategory,
+  failureSummary,
+  pageProgress,
+  type PageProgress,
+} from './taskProgress';
 
-const ACTIVE = ['queued', 'running', 'paused', 'blocked'];
+const ACTIVE = ACTIVE_JOB;
+
+/** Tasks 「开始生成」 applies to: never run, or the last run left failed frames. */
+const startable = (task: Task) => task.state === 'standby' || task.state === 'failed';
 
 export interface Task {
   album: SeriesCard;
   episode: Episode | undefined;
+  /** Active jobs of this album. */
   jobs: Job[];
+  /** Every recent job of this album, newest first (failed and finished ones too). */
+  recent: Job[];
   adopted: Set<string>;
-  state: 'standby' | 'running' | 'paused' | 'done';
+  state: 'standby' | 'running' | 'paused' | 'done' | 'failed';
   ready: boolean;
 }
 
@@ -57,12 +70,12 @@ function useTasks() {
         ),
     })),
   });
-  const jobs = useJobs(undefined, true);
+  // Not only the active ones: a task whose last run failed must say so (legacy 异常).
+  const jobs = useJobs(undefined, false, 300);
   const tasks: Task[] = albums.map((album, i) => {
     const episode = episodes[i]?.data;
-    const mine = (jobs.data ?? []).filter(
-      (j) => j.owner === episode?.id && ACTIVE.includes(j.state),
-    );
+    const recent = (jobs.data ?? []).filter((j) => !!episode && j.owner === episode.id);
+    const mine = recent.filter((j) => ACTIVE.includes(j.state));
     const adopted = new Set(
       (episode?.takes ?? [])
         .filter((t) => t.status === 'adopted' && !t.variant_id)
@@ -75,14 +88,16 @@ function useTasks() {
         ? 'paused'
         : total > 0 && adopted.size >= total
           ? 'done'
-          : 'standby';
+          : recent[0] && ((recent[0].failed ?? 0) > 0 || recent[0].state === 'failed')
+            ? 'failed'
+            : 'standby';
     const ready =
       !jobs.isPending &&
       !jobs.isError &&
       !firstEpisodes[i]?.isPending &&
       !firstEpisodes[i]?.isError &&
       (!ids[i] || (!episodes[i]?.isPending && !episodes[i]?.isError));
-    return { album, episode, jobs: mine, adopted, state, ready };
+    return { album, episode, jobs: mine, recent, adopted, state, ready };
   });
   return {
     tasks,
@@ -200,8 +215,7 @@ export default function AssemblyTab() {
             type="button"
             className="btn"
             disabled={
-              !sequence &&
-              !tasks.some((x) => x.state === 'standby' && x.ready && !!x.episode?.panels.length)
+              !sequence && !tasks.some((x) => startable(x) && x.ready && !!x.episode?.panels.length)
             }
             title={sequence ? t('interaction.stopSequenceHint') : undefined}
             onClick={() => {
@@ -303,11 +317,15 @@ export default function AssemblyTab() {
               task={task}
               selected={selection.has(task.album.id!)}
               context={menu.state?.payload.focusId === task.album.id}
-              autostart={sequence && tasks.slice(0, i).every((x) => x.state === 'done')}
+              // Legacy lane: one book after another; a failed book does not hold up the rest.
+              autostart={
+                sequence &&
+                tasks.slice(0, i).every((x) => x.state === 'done' || x.state === 'failed')
+              }
               sequenceRun={sequenceRun}
               onStartFailed={() => setSequence(false)}
               onStarted={() => {
-                if (!tasks.slice(i + 1).some((x) => x.state === 'standby')) setSequence(false);
+                if (!tasks.slice(i + 1).some(startable)) setSequence(false);
               }}
             />
           ))}
@@ -424,14 +442,32 @@ function TaskCard({
   const clone = useCloneTask();
   const patch = usePatchSeries(album.id!);
   const control = useJobControl();
+  const retry = useRetryJob();
+  const offline = useLive((s) => s.connected === false);
   const [renaming, setRenaming] = useState(false);
+  const [preview, setPreview] = useState<{ asset: string; n: number } | null>(null);
   const panels = useMemo(
     () => [...(episode?.panels ?? [])].sort((a, b) => a.order - b.order),
     [episode?.panels],
   );
-  const busy = new Set(
-    task.jobs.length ? panels.filter((p) => !adopted.has(p.id!)).map((p) => p.id!) : [],
-  );
+  // Items of the jobs that can still say something the takes cannot: running, queued or failed.
+  const watched = task.recent
+    .slice(0, 3)
+    .filter((j) => ACTIVE.includes(j.state) || (j.failed ?? 0) > 0 || j.state === 'failed');
+  const details = useQueries({
+    queries: watched.map((j) => ({
+      queryKey: keys.job(j.id),
+      refetchInterval: offline && ACTIVE.includes(j.state) ? 3000 : (false as const),
+      queryFn: async () =>
+        data(
+          await api.GET('/api/jobs/{job_id}', { params: { path: { job_id: j.id } } }),
+        ) as unknown as Job,
+    })),
+  });
+  const detailed = details.map((q) => q.data).filter((j): j is Job => !!j);
+  const pages = pageProgress(episode, detailed);
+  const failure = state === 'done' ? null : failureSummary(pages, detailed);
+  const pageOf = (id: string): PageProgress => pages.get(id) ?? { state: 'standby' };
   const lastRun = useRef<number | null>(null);
   const start = (ids?: string[]) => {
     if (render.isPending || !episode) return;
@@ -448,7 +484,24 @@ function TaskCard({
       },
     );
   };
-  const ready = autostart && state === 'standby' && !!episode && !render.isPending;
+  /** Legacy 单幕重跑 / 从此幕往后重跑: new images replace the ones already in the album. */
+  const rerun = (ids: string[]) => {
+    if (render.isPending || !ids.length) return;
+    const replace = ids.some((id) => adopted.has(id));
+    render.mutate(
+      { panel_ids: ids, candidates: 1, adopt_first: true, adopt_replace: replace },
+      { onError: toastError },
+    );
+  };
+  const retryFailed = () => {
+    if (!failure) return;
+    if (failure.held && failure.indexes.length)
+      retry.mutate({ id: failure.jobId, indexes: failure.indexes }, { onError: toastError });
+    else if (failure.held)
+      control.mutate({ id: failure.jobId, action: 'resume' }, { onError: toastError });
+    else start();
+  };
+  const ready = autostart && startable(task) && !task.jobs.length && !!episode && !render.isPending;
   useEffect(() => {
     if (ready && lastRun.current !== sequenceRun) {
       lastRun.current = sequenceRun;
@@ -456,10 +509,12 @@ function TaskCard({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, sequenceRun]);
-
+  const category = failure ? errorCategory(failure.kind) : 'other';
+  const settingsTab =
+    category === 'workflow' ? 'workflows' : category === 'channel' ? 'channels' : 'instances';
   return (
     <article
-      className={`production-card ${selected ? 'is-selected' : ''} ${context ? 'is-context' : ''}`}
+      className={`production-card ${state === 'running' ? 'is-running' : ''} ${state === 'paused' ? 'is-held' : ''} ${selected ? 'is-selected' : ''} ${context ? 'is-context' : ''}`}
       data-production-task={album.id}
       data-selection-id={album.id}
       tabIndex={0}
@@ -507,16 +562,54 @@ function TaskCard({
         ) : null}
         <span>{t('ws.queue.metaService')}</span>
       </p>
-      <div className="production-strip" aria-hidden="true">
+      <div className={`production-strip ${panels.length > 48 ? 'dense' : ''}`} aria-hidden="true">
         {panels.map((p) => (
-          <i
-            key={p.id}
-            className={
-              adopted.has(p.id!) ? 'seg-done' : busy.has(p.id!) ? 'seg-running' : 'seg-standby'
-            }
-          />
+          <i key={p.id} className={`seg-${pageOf(p.id!).state}`} />
         ))}
       </div>
+      {failure ? (
+        <div className="production-error-panel" role="alert" data-error-kind={category}>
+          <p className="production-error-head">
+            <strong>{t(`ws.queue.fail.${category}`)}</strong>
+            {failure.count ? (
+              <span>{t('ws.queue.fail.count', { count: failure.count })}</span>
+            ) : null}
+            {failure.held ? <span>{t('ws.queue.fail.held')}</span> : null}
+          </p>
+          {failure.message ? <p className="production-error">{failure.message}</p> : null}
+          {failure.note ? <p className="production-error-tail">{failure.note}</p> : null}
+          <div className="production-error-actions">
+            <button
+              type="button"
+              className="btn small"
+              title={t('ws.queue.fail.retryHint')}
+              disabled={render.isPending || retry.isPending || control.isPending || !episode}
+              onClick={retryFailed}
+            >
+              <Icon name="refresh" sm />
+              {t('ws.queue.fail.retry')}
+            </button>
+            <button
+              type="button"
+              className="btn small ghost"
+              onClick={() => navigate(`/engine?tab=${settingsTab}`)}
+            >
+              <Icon name="settings" sm />
+              {t(`ws.queue.fail.${settingsTab}`)}
+            </button>
+            {failure.jobId ? (
+              <button
+                type="button"
+                className="btn small ghost"
+                onClick={() => navigate(`/jobs?job=${failure.jobId}`)}
+              >
+                <Icon name="help" sm />
+                {t('ws.queue.fail.details')}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
       <div className="production-card-actions">
         {state === 'running' ? (
           <button
@@ -617,21 +710,38 @@ function TaskCard({
           {t('ws.queue.remove')}
         </button>
       </div>
-      <details className="production-pages">
+      <details className="production-pages" open={failure ? true : undefined}>
         <summary>{t('ws.queue.pages')}</summary>
         <div className="production-page-list">
           {panels.map((p, i) => {
-            const st = adopted.has(p.id!) ? 'done' : busy.has(p.id!) ? 'running' : 'standby';
+            const page = pageOf(p.id!);
+            const st = page.state;
+            const busy = st === 'running' || st === 'queued';
             const tries = episode?.takes.filter((x) => x.panel_id === p.id).length ?? 0;
+            const again = !!page.asset;
+            const tailAgain = panels.slice(i).some((x) => adopted.has(x.id!));
             return (
               <div className="production-page" key={p.id}>
                 <div className="production-page-number">{String(i + 1).padStart(2, '0')}</div>
-                <span className="production-page-blank" />
+                {page.asset ? (
+                  <button
+                    type="button"
+                    className="production-page-preview"
+                    aria-label={t('ws.queue.previewOf', { n: i + 1 })}
+                    title={t('ws.queue.previewOf', { n: i + 1 })}
+                    onClick={() => setPreview({ asset: page.asset!, n: i + 1 })}
+                  >
+                    <img src={assetUrl(page.asset, 160)} alt="" loading="lazy" />
+                  </button>
+                ) : (
+                  <span className="production-page-blank" />
+                )}
                 <div className="grow production-page-main">
                   <button
                     type="button"
                     className="production-page-body"
-                    title={t('ws.queue.pageEdit')}
+                    disabled={st === 'running'}
+                    title={st === 'running' ? t('ws.queue.pageBusy') : t('ws.queue.pageEdit')}
                     onClick={() =>
                       navigate(`/workshop/assembly/${episode!.id}/script?panel=${p.id}`)
                     }
@@ -647,30 +757,33 @@ function TaskCard({
                       </span>
                     </span>
                   </button>
+                  {page.error && st !== 'done' ? (
+                    <p className="production-error">{page.error.message}</p>
+                  ) : page.error ? (
+                    <p className="production-error-tail" title={page.error.message}>
+                      {t('ws.queue.keptOriginal')}
+                    </p>
+                  ) : null}
                 </div>
                 <div>
                   <button
                     type="button"
                     className="btn small"
-                    disabled={render.isPending}
-                    onClick={() =>
-                      render.mutate(
-                        { panel_ids: [p.id!], candidates: 1, adopt_first: true },
-                        { onError: toastError },
-                      )
-                    }
+                    disabled={render.isPending || busy}
+                    title={again ? t('ws.queue.rerunHint') : undefined}
+                    onClick={() => rerun([p.id!])}
                   >
-                    <Icon name="play" sm />
-                    {t('ws.queue.runOne')}
+                    <Icon name={again ? 'refresh' : 'play'} sm />
+                    {again ? t('ws.queue.rerunOne') : t('ws.queue.runOne')}
                   </button>
                   <button
                     type="button"
                     className="btn small ghost"
-                    disabled={render.isPending}
-                    onClick={() => start(panels.slice(i).map((x) => x.id!))}
+                    disabled={render.isPending || busy}
+                    onClick={() => rerun(panels.slice(i).map((x) => x.id!))}
                   >
-                    <Icon name="down" sm />
-                    {t('ws.queue.runFrom')}
+                    <Icon name="list" sm />
+                    {tailAgain ? t('ws.queue.rerunFrom') : t('ws.queue.runFrom')}
                   </button>
                 </div>
               </div>
@@ -678,6 +791,20 @@ function TaskCard({
           })}
         </div>
       </details>
+      {preview ? (
+        <Modal
+          open
+          size="lg"
+          onOpenChange={(open) => !open && setPreview(null)}
+          title={`${album.title} · ${t('ws.story.frameN', { n: preview.n })}`}
+        >
+          <img
+            className="production-page-full-image"
+            src={assetUrl(preview.asset)}
+            alt={t('ws.story.frameN', { n: preview.n })}
+          />
+        </Modal>
+      ) : null}
     </article>
   );
 }
