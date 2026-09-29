@@ -1358,6 +1358,7 @@ html[data-nav-collapsed='true'] .sidebar .profile {
 }
 .prompt-surface > textarea {
   display: block;
+  width: 100%;
   position: relative;
   z-index: 1;
   min-height: 165px;
@@ -4240,6 +4241,12 @@ html[data-lettering='calligraphy'] .shelf-item h3 {
 .batch-frames .grid2 {
   margin: 0;
 }
+.batch-frames .prompt-editor-foot {
+  margin-bottom: 0;
+}
+.batch-frames .field .help {
+  margin-top: 6px;
+}
 .batch-frames .row {
   gap: 8px;
   font-size: 13px;
@@ -5368,6 +5375,9 @@ select.choice-list:focus-visible {
 .prompt-surface > textarea.workshop-base-prompt {
   min-height: 96px;
   height: 110px;
+}
+.prompt-surface:has(> textarea.workshop-base-prompt) {
+  min-height: 96px;
 }
 @media (max-width: 760px), (max-width: 950px) and (hover: none) and (pointer: coarse) {
   .workshop-heading {
