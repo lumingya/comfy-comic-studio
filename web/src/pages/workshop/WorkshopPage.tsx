@@ -19,7 +19,13 @@ import { useUI } from '../../app/ui-store';
 import { toast, toastError } from '../../components/toast';
 import { Loading } from '../../components/ui';
 import type { EpisodeContext } from '../episode/EpisodePage';
-import { createStoryboard, exportStoryboard, importStoryboards } from './storyActions';
+import {
+  createStoryboard,
+  exportStoryboards,
+  importStoryboards,
+  listStoryboards,
+} from './storyActions';
+import { ExportPicker, type ExportItem } from './ExportPicker';
 import { PromptSurface } from './PromptSurface';
 import StoryboardEditor, { useKnownVariables, usePromptSources } from './StoryboardEditor';
 
@@ -150,6 +156,7 @@ export function StoryTab() {
   const [renaming, setRenaming] = useState(false);
   const cancelRename = useRef(false);
   const [draft, setDraft] = useState('');
+  const [exporting, setExporting] = useState<ExportItem[] | null>(null);
   const { visit, forget } = useRecents();
   const loaded = episode.data;
   useEffect(() => {
@@ -224,10 +231,23 @@ export function StoryTab() {
             type="button"
             className="btn"
             disabled={patch.isPending || renaming}
-            onClick={() => exportStoryboard(qc, ep).catch(toastError)}
+            title={t('ws.exportPick.storyHint')}
+            onClick={() =>
+              listStoryboards(ws.data!.id!)
+                .then((list) =>
+                  setExporting(
+                    list.map((b) => ({
+                      id: b.id,
+                      title: b.title,
+                      meta: t('ws.exportPick.frames', { count: b.panel_count }),
+                    })),
+                  ),
+                )
+                .catch(toastError)
+            }
           >
             <Icon name="upload" />
-            {t('ws.export')}
+            {t('ws.exportDots')}
           </button>
           <button
             type="button"
@@ -321,6 +341,22 @@ export function StoryTab() {
         key={`story-editor:${ep.id}`}
         context={{ episode: ep, series: ws.data } satisfies EpisodeContext}
       />
+      {exporting ? (
+        <ExportPicker
+          title={t('ws.exportPick.storyTitle')}
+          noun={t('ws.exportPick.storyNoun')}
+          items={exporting}
+          current={ep.id}
+          onClose={() => setExporting(null)}
+          onExport={async (ids) => {
+            await exportStoryboards(ids, t('ws.exportPick.storyBundle', { count: ids.length }));
+            if (ids.length > 1)
+              toast(
+                t('ws.exportPick.done', { count: ids.length, noun: t('ws.exportPick.storyNoun') }),
+              );
+          }}
+        />
+      ) : null}
     </WorkshopFrame>
   );
 }

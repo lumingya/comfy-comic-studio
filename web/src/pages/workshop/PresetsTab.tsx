@@ -25,6 +25,7 @@ import { Loading, Modal } from '../../components/ui';
 import { ContextMenu, type ContextGroup } from '../../components/ContextMenu';
 import { askAssetTitle } from './storyActions';
 import { downloadJson, pickJsonFiles, presetFromFile, presetToFile } from './files';
+import { ExportPicker } from './ExportPicker';
 import { WorkshopFrame } from './WorkshopPage';
 
 const PICK_KEY = 'mio.workshop.preset';
@@ -74,6 +75,7 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
   const cancelRename = useRef(false);
   const [editGroups, setEditGroups] = useState(false);
   const [previewing, setPreviewing] = useState(false);
+  const [exporting, setExporting] = useState(false);
   // Legacy workshopPresetContextItems: right-clicking the page (outside text fields) opens the
   // preset menu.  Bound natively on the page so it also covers the heading and the tabs.
   const headRef = useRef<HTMLDivElement>(null);
@@ -184,20 +186,44 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
       <button
         type="button"
         className="btn"
-        disabled={!current}
-        onClick={async () => {
-          try {
-            await draft.flushAll();
-            const latest = draft.read().find((p) => p.id === current?.id);
-            if (latest) downloadJson(`${latest.title}.json`, presetToFile(latest));
-          } catch (error) {
-            toastError(error);
-          }
-        }}
+        disabled={!presets.length}
+        title={t('ws.exportPick.presetHint')}
+        onClick={() => setExporting(true)}
       >
         <Icon name="upload" />
-        {t('ws.export')}
+        {t('ws.exportDots')}
       </button>
+      {exporting ? (
+        <ExportPicker
+          title={t('ws.exportPick.presetTitle')}
+          noun={t('ws.exportPick.presetNoun')}
+          items={presets.map((p) => ({
+            id: p.id!,
+            title: p.title,
+            meta: t('ws.exportPick.vars', { count: p.entries.length }),
+          }))}
+          current={current?.id}
+          onClose={() => setExporting(false)}
+          onExport={async (ids) => {
+            await draft.flushAll();
+            const chosen = draft.read().filter((p) => ids.includes(p.id!));
+            if (chosen.length === 1)
+              downloadJson(`${chosen[0].title}.json`, presetToFile(chosen[0]));
+            else {
+              downloadJson(
+                `${t('ws.exportPick.presetBundle', { count: chosen.length })}.json`,
+                chosen.map(presetToFile),
+              );
+              toast(
+                t('ws.exportPick.done', {
+                  count: chosen.length,
+                  noun: t('ws.exportPick.presetNoun'),
+                }),
+              );
+            }
+          }}
+        />
+      ) : null}
       <button type="button" className="btn" onClick={() => void addPreset()}>
         <Icon name="plus" />
         {t('ws.presets.new')}

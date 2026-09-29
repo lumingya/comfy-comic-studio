@@ -14,7 +14,7 @@ export function downloadJson(name: string, value: unknown) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-/** Let the user pick one or more `.json` files; resolves to their parsed contents. */
+/** Let the user pick one or more `.json` files; resolves to their documents (lists flattened). */
 export function pickJsonFiles(): Promise<unknown[]> {
   return new Promise((resolve, reject) => {
     const input = document.createElement('input');
@@ -24,7 +24,11 @@ export function pickJsonFiles(): Promise<unknown[]> {
     input.onchange = async () => {
       try {
         const files = [...(input.files ?? [])];
-        resolve(await Promise.all(files.map(async (f) => JSON.parse(await f.text()) as unknown)));
+        const docs = await Promise.all(
+          files.map(async (f) => JSON.parse(await f.text()) as unknown),
+        );
+        // A multi-export is one file holding a list of documents.
+        resolve(docs.flatMap((d) => (Array.isArray(d) ? (d as unknown[]) : [d])));
       } catch (e) {
         reject(e instanceof Error ? e : new Error(String(e)));
       }
