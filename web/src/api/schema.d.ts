@@ -3273,6 +3273,12 @@ export interface components {
              * @default false
              */
             adopt_first?: boolean;
+            /**
+             * Adopt Replace
+             * @description Adopt the first new image of each panel even if the panel already has one (the queue's 单幕重跑: the rerun replaces the album image; the old one stays a candidate).
+             * @default false
+             */
+            adopt_replace?: boolean;
         };
         /** RenderStage */
         "RenderStage-Input": {

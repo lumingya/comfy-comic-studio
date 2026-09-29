@@ -67,6 +67,33 @@ class WorkshopTest(ApiCase):
         self.drain(self.ok(job))
         takes = self.ok(self.client.get(f"/api/episodes/{ep['id']}"))["takes"]
         self.assertEqual(sorted(t["status"] for t in takes), ["adopted", "candidate"])
+        first = next(t["id"] for t in takes if t["status"] == "adopted")
+        # 单幕生成 again with adopt_first keeps the album image …
+        self.drain(
+            self.ok(
+                self.client.post(
+                    f"/api/episodes/{ep['id']}/render",
+                    json={"panel_ids": [pid], "candidates": 1, "adopt_first": True},
+                )
+            )
+        )
+        takes = self.ok(self.client.get(f"/api/episodes/{ep['id']}"))["takes"]
+        self.assertEqual([t["id"] for t in takes if t["status"] == "adopted"], [first])
+        # … 单幕重跑 (adopt_replace) puts the new image in and keeps the old one as a candidate.
+        self.drain(
+            self.ok(
+                self.client.post(
+                    f"/api/episodes/{ep['id']}/render",
+                    json={"panel_ids": [pid], "candidates": 2, "adopt_replace": True},
+                )
+            )
+        )
+        takes = self.ok(self.client.get(f"/api/episodes/{ep['id']}"))["takes"]
+        adopted = [t for t in takes if t["status"] == "adopted"]
+        self.assertEqual(len(adopted), 1)
+        self.assertNotEqual(adopted[0]["id"], first)
+        self.assertEqual(adopted[0]["id"], takes[-2]["id"])  # the first new candidate
+        self.assertEqual(next(t for t in takes if t["id"] == first)["status"], "candidate")
 
     def test_clone_task_copies_frames_presets_and_profile_but_no_images(self):
         ws = self.workshop()

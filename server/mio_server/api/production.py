@@ -31,6 +31,11 @@ class RenderRequest(BaseModel):
         description="Adopt the first image of each panel that has no adopted image yet "
         "(the queue's one-click flow: images go straight into the album).",
     )
+    adopt_replace: bool = Field(
+        default=False,
+        description="Adopt the first new image of each panel even if the panel already has one "
+        "(the queue's 单幕重跑: the rerun replaces the album image; the old one stays a candidate).",
+    )
 
 
 class FinalizeRequest(BaseModel):
@@ -81,6 +86,7 @@ def render(ctx: Ctx, episode_id: str, body: RenderRequest) -> dict:
         idempotency_key=body.idempotency_key,
         qa=body.qa,
         adopt_first=body.adopt_first,
+        adopt_replace=body.adopt_replace,
     )
 
 

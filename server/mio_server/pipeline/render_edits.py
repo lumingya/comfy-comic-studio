@@ -180,6 +180,7 @@ class EditsMixin:
         candidates=None,
         variant_ids=None,
         adopt_first=False,
+        adopt_replace=False,
     ) -> dict:
         from .story import apply_variant, to_story
 
@@ -230,8 +231,10 @@ class EditsMixin:
                         "refine": refine,
                         # Queue progress counts adopted images: only mark the final output,
                         # not an intermediate cloud shape that is still waiting for ComfyUI.
-                        "adopt_first": adopt_first and k == 0 and not refine,
-                        "refine_adopt_first": adopt_first and k == 0 and refine,
+                        "adopt_first": (adopt_first or adopt_replace) and k == 0 and not refine,
+                        "refine_adopt_first": (adopt_first or adopt_replace) and k == 0 and refine,
+                        "adopt_replace": adopt_replace and k == 0 and not refine,
+                        "refine_adopt_replace": adopt_replace and k == 0 and refine,
                     }
                     specs.append(
                         ItemSpec(
@@ -261,7 +264,13 @@ class EditsMixin:
         )
 
     def refine_shape(
-        self, episode_id: str, take_id: str, profile_id: str, *, adopt_first: bool = False
+        self,
+        episode_id: str,
+        take_id: str,
+        profile_id: str,
+        *,
+        adopt_first: bool = False,
+        adopt_replace: bool = False,
     ) -> dict | None:
         """Hybrid second step: local style unification of a cloud-shaped take."""
         episode = self.store.get_episode(episode_id)
@@ -291,6 +300,7 @@ class EditsMixin:
             "parent_take_id": take.id,
             "edit": {"kind": "refine", "params": {"route": "hybrid"}},
             "adopt_first": adopt_first,
+            "adopt_replace": adopt_replace,
             "adopt": take.status == TakeStatus.adopted,
         }
         spec = ItemSpec(

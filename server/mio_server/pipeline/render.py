@@ -209,6 +209,7 @@ class RenderService(CompositionMixin, EditsMixin):
         candidates: int,
         variant=None,
         adopt_first: bool = False,
+        adopt_replace: bool = False,
     ) -> list[ItemSpec]:
         specs = []
         refs = select_references(series.bible, panel)
@@ -268,8 +269,10 @@ class RenderService(CompositionMixin, EditsMixin):
                 "refs": [r.to_json() for r in refs],
                 "candidate": k,
             }
-            if adopt_first and k == 0:
+            if (adopt_first or adopt_replace) and k == 0:
                 meta["adopt_first"] = True
+            if adopt_replace and k == 0:
+                meta["adopt_replace"] = True
             specs.append(
                 ItemSpec(
                     input={"stages": stages, "feeds": feeds, "meta": meta},
@@ -292,6 +295,7 @@ class RenderService(CompositionMixin, EditsMixin):
         priority: int = 0,
         qa: bool = False,
         adopt_first: bool = False,
+        adopt_replace: bool = False,
     ) -> dict:
         episode = self.store.get_episode(episode_id)
         series = self.store.get_series(episode.series_id)
@@ -308,6 +312,7 @@ class RenderService(CompositionMixin, EditsMixin):
                 candidates=candidates,
                 variant_ids=variant_ids,
                 adopt_first=adopt_first,
+                adopt_replace=adopt_replace,
             )
         panels = [p for p in episode.ordered_panels() if panel_ids is None or p.id in panel_ids]
         if not panels:
@@ -331,6 +336,7 @@ class RenderService(CompositionMixin, EditsMixin):
                     candidates=candidates or prof.candidates,
                     variant=variant,
                     adopt_first=adopt_first,
+                    adopt_replace=adopt_replace,
                 )
         title = f"{series.title} · {episode.title} · {len(panels)} 格草稿"
         return self.engine.submit(
@@ -446,6 +452,7 @@ class RenderService(CompositionMixin, EditsMixin):
             if ep.panel(meta["panel_id"]) is None:
                 return  # panel deleted meanwhile: the job keeps the result, nothing to attach to
             parent = ep.take(meta["parent_take_id"]) if meta.get("parent_take_id") else None
+            replaced = False
             for img in result.get("images") or []:
                 edits = list(parent.edits) if parent else []
                 if meta.get("edit"):
@@ -493,6 +500,16 @@ class RenderService(CompositionMixin, EditsMixin):
                         ):
                             t.status = TakeStatus.candidate
                     take.status = TakeStatus.adopted
+                elif meta.get("adopt_replace") and not replaced:
+                    for t in ep.takes:
+                        if (
+                            t.panel_id == take.panel_id
+                            and t.variant_id == take.variant_id
+                            and t.status == TakeStatus.adopted
+                        ):
+                            t.status = TakeStatus.candidate
+                    take.status = TakeStatus.adopted
+                    replaced = True
                 elif meta.get("adopt_first") and ep.adopted(take.panel_id, take.variant_id) is None:
                     take.status = TakeStatus.adopted
                 ep.takes.append(take)

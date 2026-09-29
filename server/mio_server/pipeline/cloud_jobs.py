@@ -67,4 +67,5 @@ class CloudExecutor:
                 created[0],
                 meta["profile_id"],
                 adopt_first=bool(meta.get("refine_adopt_first")),
+                adopt_replace=bool(meta.get("refine_adopt_replace")),
             )

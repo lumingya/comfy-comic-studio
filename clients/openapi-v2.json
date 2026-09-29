@@ -3585,6 +3585,12 @@
       "title": "Adopt First",
       "type": "boolean"
      },
+     "adopt_replace": {
+      "default": false,
+      "description": "Adopt the first new image of each panel even if the panel already has one (the queue's 单幕重跑: the rerun replaces the album image; the old one stays a candidate).",
+      "title": "Adopt Replace",
+      "type": "boolean"
+     },
      "candidates": {
       "anyOf": [
        {
