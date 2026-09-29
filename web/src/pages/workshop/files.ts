@@ -1,5 +1,6 @@
 import type { Episode, Panel } from '../../api/types';
 import { localId, type Preset } from '../../api/workshop';
+import { bindingProblem, normalizeBinding } from './presetBindings';
 
 /** Save `value` as a pretty-printed JSON download. */
 export function downloadJson(name: string, value: unknown) {
@@ -110,7 +111,11 @@ export function storyboardToFile(ep: Episode) {
 export function presetFromFile(raw: unknown): Preset {
   const d = (raw ?? {}) as Obj;
   if (Array.isArray(d.entries) && Array.isArray(d.groups))
-    return { ...(d as unknown as Preset), id: localId('preset') };
+    return {
+      ...(d as unknown as Preset),
+      bindings: Array.isArray(d.bindings) ? (d.bindings as Preset['bindings']) : [],
+      id: localId('preset'),
+    };
   if (Array.isArray(d.entries)) {
     const groups = ((d.settingsGroups as Obj[]) ?? [])
       .filter((g) => g && g.id)
@@ -130,9 +135,35 @@ export function presetFromFile(raw: unknown): Preset {
           hint: '',
           group_id: known.has(str(e.groupId)) ? str(e.groupId) : null,
         })),
+      bindings: legacyBindings(d.bindings),
     };
   }
   throw new Error('不是预设文件：缺少 entries');
+}
+
+/** Legacy preset `bindings` (nodeId/path/source/type/value/enabled); other sources are dropped. */
+function legacyBindings(raw: unknown): Preset['bindings'] {
+  const out: Preset['bindings'] = [];
+  for (const b of Array.isArray(raw) ? (raw as Obj[]) : []) {
+    const source = str(b?.source) || 'literal';
+    if (source !== 'literal' && source !== 'variable') continue;
+    const type = (['text', 'number', 'boolean', 'json', 'auto'] as const).find(
+      (k) => k === (str(b.type) || 'auto'),
+    );
+    const binding = normalizeBinding({
+      node_id: str(b.nodeId),
+      path: str(b.path),
+      source,
+      type: type ?? 'auto',
+      value: str(b.value),
+      enabled: b.enabled !== false,
+    });
+    if (!binding.node_id || !binding.path) continue;
+    // The legacy app never applied a second enabled binding of one input either.
+    if (bindingProblem(binding, out) === 'duplicate') binding.enabled = false;
+    out.push(binding);
+  }
+  return out;
 }
 
 export function presetToFile(p: Preset) {

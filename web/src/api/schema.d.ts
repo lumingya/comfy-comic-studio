@@ -3093,6 +3093,8 @@ export interface components {
             groups?: components["schemas"]["PresetGroup-Input"][];
             /** Entries */
             entries?: components["schemas"]["PresetEntry-Input"][];
+            /** Bindings */
+            bindings?: components["schemas"]["PresetBinding-Input"][];
         };
         /**
          * Preset
@@ -3110,6 +3112,88 @@ export interface components {
             groups: components["schemas"]["PresetGroup-Output"][];
             /** Entries */
             entries: components["schemas"]["PresetEntry-Output"][];
+            /** Bindings */
+            bindings: components["schemas"]["PresetBinding-Output"][];
+        };
+        /**
+         * PresetBinding
+         * @description LoRA / 节点输入绑定 (legacy preset ``bindings``): the preset writes one workflow node input
+         *     whenever an album assembled from it renders — a LoRA name, its strength, a switch.
+         *
+         *     ``source="variable"`` takes the value of the preset variable named in ``value`` (an empty
+         *     variable keeps the workflow's value); ``literal`` writes ``value`` itself, with ``{变量}``
+         *     expanded.  Nodes the workflow does not have are skipped; the frame's own node override wins.
+         */
+        "PresetBinding-Input": {
+            /** Node Id */
+            node_id: string;
+            /**
+             * Path
+             * @description Input name; nested: a/b/0
+             */
+            path: string;
+            /**
+             * Source
+             * @default literal
+             * @enum {string}
+             */
+            source?: "literal" | "variable";
+            /**
+             * Type
+             * @default text
+             * @enum {string}
+             */
+            type?: "auto" | "text" | "number" | "boolean" | "json";
+            /**
+             * Value
+             * @default
+             */
+            value?: string;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled?: boolean;
+        };
+        /**
+         * PresetBinding
+         * @description LoRA / 节点输入绑定 (legacy preset ``bindings``): the preset writes one workflow node input
+         *     whenever an album assembled from it renders — a LoRA name, its strength, a switch.
+         *
+         *     ``source="variable"`` takes the value of the preset variable named in ``value`` (an empty
+         *     variable keeps the workflow's value); ``literal`` writes ``value`` itself, with ``{变量}``
+         *     expanded.  Nodes the workflow does not have are skipped; the frame's own node override wins.
+         */
+        "PresetBinding-Output": {
+            /** Node Id */
+            node_id: string;
+            /**
+             * Path
+             * @description Input name; nested: a/b/0
+             */
+            path: string;
+            /**
+             * Source
+             * @default literal
+             * @enum {string}
+             */
+            source: "literal" | "variable";
+            /**
+             * Type
+             * @default text
+             * @enum {string}
+             */
+            type: "auto" | "text" | "number" | "boolean" | "json";
+            /**
+             * Value
+             * @default
+             */
+            value: string;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
         };
         /**
          * PresetEntry

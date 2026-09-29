@@ -7,6 +7,8 @@ Series → Bible → Episode → Panel → Take → Strip.  The models are delib
 
 from __future__ import annotations
 
+import json
+import math
 import re
 from datetime import datetime, timezone
 from enum import Enum
@@ -480,6 +482,84 @@ class PresetEntry(StrictModel):
     group_id: str | None = None
 
 
+BindingType = Literal["auto", "text", "number", "boolean", "json"]
+_TRUE, _FALSE = ("true", "1", "yes", "on"), ("false", "0", "no", "off")
+
+
+def coerce_binding(raw: str, kind: str):
+    """A binding's text as the node input value.  ``auto`` reads ``true``/``false`` and finite
+    numbers as such and keeps everything else as text.  Raises ``ValueError`` in Chinese."""
+    if kind == "text":
+        return raw
+    text = raw.strip()
+    if kind == "boolean" or (kind == "auto" and text.lower() in _TRUE[:1] + _FALSE[:1]):
+        if text.lower() in _TRUE:
+            return True
+        if text.lower() in _FALSE:
+            return False
+        raise ValueError(f"「{raw}」不是布尔值（true/false 或 1/0）")
+    if kind in ("number", "auto"):
+        try:
+            number = float(text) if text else math.nan
+        except ValueError:
+            number = math.nan
+        if math.isfinite(number):
+            return int(number) if number.is_integer() else number
+        if kind == "number":
+            raise ValueError(f"「{raw}」不是有限数字")
+        return raw
+    try:
+        return json.loads(text)
+    except ValueError:
+        raise ValueError(f"「{raw}」不是合法的 JSON") from None
+
+
+class PresetBinding(StrictModel):
+    """LoRA / 节点输入绑定 (legacy preset ``bindings``): the preset writes one workflow node input
+    whenever an album assembled from it renders — a LoRA name, its strength, a switch.
+
+    ``source="variable"`` takes the value of the preset variable named in ``value`` (an empty
+    variable keeps the workflow's value); ``literal`` writes ``value`` itself, with ``{变量}``
+    expanded.  Nodes the workflow does not have are skipped; the frame's own node override wins."""
+
+    node_id: str = Field(min_length=1, max_length=64, pattern=r"^[^/\s]+$")
+    path: str = Field(min_length=1, max_length=256, description="Input name; nested: a/b/0")
+    source: Literal["literal", "variable"] = "literal"
+    type: BindingType = "text"
+    value: str = ""
+    enabled: bool = True
+
+    @field_validator("path")
+    @classmethod
+    def _path(cls, v: str) -> str:
+        v = v.strip().strip("/")
+        if not v or "*" in v:
+            raise ValueError("输入路径不能为空，也不能用通配符")
+        return v
+
+    @model_validator(mode="before")
+    @classmethod
+    def _variable_name(cls, data):
+        # 「{lora}」 and 「lora」 name the same variable.
+        if isinstance(data, dict) and data.get("source") == "variable":
+            data = {**data, "value": str(data.get("value") or "").strip().strip("{}").strip()}
+        return data
+
+    @model_validator(mode="after")
+    def _check(self) -> PresetBinding:
+        if self.source == "variable":
+            if not self.value:
+                raise ValueError("请填写要取值的变量标识符")
+        elif self.type == "json" or "{" not in self.value:
+            # A literal with {变量} is typed at render time; JSON (which has braces) is checked now.
+            coerce_binding(self.value, self.type)
+        return self
+
+    @property
+    def pointer(self) -> str:
+        return f"/{self.node_id}/inputs/{self.path}"
+
+
 class Preset(StrictModel):
     """A reusable visual asset: a named set of ``{变量}`` values (character, outfit, style…).
 
@@ -490,6 +570,17 @@ class Preset(StrictModel):
     title: str
     groups: list[PresetGroup] = Field(default_factory=list)
     entries: list[PresetEntry] = Field(default_factory=list)
+    bindings: list[PresetBinding] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _one_binding_per_input(self) -> Preset:
+        seen: set[str] = set()
+        for b in self.bindings:
+            if b.enabled and b.pointer in seen:
+                raise ValueError(f"节点 {b.node_id} 的输入 {b.path} 已有启用的绑定")
+            if b.enabled:
+                seen.add(b.pointer)
+        return self
 
     def variables(self) -> dict[str, str]:
         return {e.key: e.value for e in self.entries}

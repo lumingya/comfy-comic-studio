@@ -17,7 +17,16 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from .models import Episode, Panel, PanelOverrides, Preset, PresetEntry, PresetGroup, Series
+from .models import (
+    Episode,
+    Panel,
+    PanelOverrides,
+    Preset,
+    PresetBinding,
+    PresetEntry,
+    PresetGroup,
+    Series,
+)
 from .storage import NotFound
 
 log = logging.getLogger("mio.workshop")
@@ -77,7 +86,31 @@ def preset_from_legacy(data: dict) -> Preset:
             )
         except ValueError:  # a key the variable syntax can't express
             continue
-    return Preset(title=str(data.get("title") or data["id"]), groups=groups, entries=entries)
+    bindings = []
+    for b in data.get("bindings") or []:
+        if not isinstance(b, dict) or b.get("source", "literal") not in ("literal", "variable"):
+            continue
+        try:
+            binding = PresetBinding(
+                node_id=str(b.get("nodeId") or ""),
+                path=str(b.get("path") or ""),
+                source=b.get("source") or "literal",
+                type=b.get("type") or "auto",
+                value=str(b.get("value") if b.get("value") is not None else ""),
+                enabled=bool(b.get("enabled", True)),
+            )
+        except ValueError:  # an incomplete legacy row
+            continue
+        # A second enabled binding of the same input was never applied by the legacy app either.
+        if binding.enabled and any(x.enabled and x.pointer == binding.pointer for x in bindings):
+            binding.enabled = False
+        bindings.append(binding)
+    return Preset(
+        title=str(data.get("title") or data["id"]),
+        groups=groups,
+        entries=entries,
+        bindings=bindings,
+    )
 
 
 def _legacy_assets(store, series_id: str, root: Path) -> None:

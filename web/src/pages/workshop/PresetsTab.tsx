@@ -26,6 +26,7 @@ import { ContextMenu, type ContextGroup } from '../../components/ContextMenu';
 import { askAssetTitle } from './storyActions';
 import { downloadJson, pickJsonFiles, presetFromFile, presetToFile } from './files';
 import { ExportPicker } from './ExportPicker';
+import { BindingDialog, BindingsSection } from './PresetBindings';
 import { WorkshopFrame } from './WorkshopPage';
 
 const PICK_KEY = 'mio.workshop.preset';
@@ -55,6 +56,7 @@ function blankPreset(title: string): Preset {
       e('style', '画风', visual.id),
       e('scene', '场景与环境', visual.id),
     ],
+    bindings: [],
   };
 }
 
@@ -76,6 +78,7 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
   const [editGroups, setEditGroups] = useState(false);
   const [previewing, setPreviewing] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [bindingEdit, setBindingEdit] = useState<number | 'new' | null>(null);
   // Legacy workshopPresetContextItems: right-clicking the page (outside text fields) opens the
   // preset menu.  Bound natively on the page so it also covers the heading and the tabs.
   const headRef = useRef<HTMLDivElement>(null);
@@ -624,10 +627,44 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
           )}
         </DropArea>
       </div>
-      <details className="quiet-advanced">
-        <summary>{t('ws.presets.bindings')}</summary>
-        <p className="help">{t('ws.presets.bindingsHelp')}</p>
-      </details>
+      <BindingsSection
+        key={current.id}
+        preset={current}
+        presets={presets}
+        onEdit={setBindingEdit}
+        onToggle={(index, enabled) =>
+          update(
+            (p) => ({
+              ...p,
+              bindings: p.bindings.map((b, i) => (i === index ? { ...b, enabled } : b)),
+            }),
+            true,
+          )
+        }
+        onRemove={async (index) => {
+          const b = current.bindings[index];
+          if (
+            !(await confirm({
+              title: t('ws.presets.binding.removeConfirm', { target: `${b.node_id} · ${b.path}` }),
+              confirmLabel: t('common.delete'),
+              danger: true,
+            }))
+          )
+            return;
+          update((p) => ({ ...p, bindings: p.bindings.filter((_, i) => i !== index) }), true);
+        }}
+      />
+      {bindingEdit !== null ? (
+        <BindingDialog
+          preset={current}
+          index={bindingEdit}
+          onClose={() => setBindingEdit(null)}
+          onSave={(bindings) => {
+            update((p) => ({ ...p, bindings }), true);
+            setBindingEdit(null);
+          }}
+        />
+      ) : null}
       {pageMenu ? (
         <ContextMenu
           x={pageMenu.x}
@@ -710,6 +747,12 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
             onSelect: () => void addPreset(),
           },
           {
+            label: t('ws.presets.menu.bindingDots'),
+            icon: <Icon name="nodes" sm />,
+            hint: t('ws.presets.menu.bindingHint'),
+            onSelect: () => setBindingEdit('new'),
+          },
+          {
             label: t('ws.presets.menu.exportThis'),
             icon: <Icon name="upload" sm />,
             onSelect: go(async () => {
@@ -728,6 +771,12 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
             icon: <Icon name="download" sm />,
             hint: t('ws.presets.menu.importHint'),
             onSelect: () => void importPresets(),
+          },
+          {
+            label: t('ws.presets.menu.exportPickDots'),
+            icon: <Icon name="upload" sm />,
+            hint: t('ws.presets.menu.exportPickHint'),
+            onSelect: () => setExporting(true),
           },
         ],
       },

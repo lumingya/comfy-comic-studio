@@ -2845,6 +2845,13 @@
     "additionalProperties": false,
     "description": "A reusable visual asset: a named set of ``{变量}`` values (character, outfit, style…).\n\nPresets live in the workshop; assembling copies their values into the new album, so later\nedits never change an album that was already assembled.",
     "properties": {
+     "bindings": {
+      "items": {
+       "$ref": "#/components/schemas/PresetBinding-Input"
+      },
+      "title": "Bindings",
+      "type": "array"
+     },
      "entries": {
       "items": {
        "$ref": "#/components/schemas/PresetEntry-Input"
@@ -2878,6 +2885,13 @@
     "additionalProperties": false,
     "description": "A reusable visual asset: a named set of ``{变量}`` values (character, outfit, style…).\n\nPresets live in the workshop; assembling copies their values into the new album, so later\nedits never change an album that was already assembled.",
     "properties": {
+     "bindings": {
+      "items": {
+       "$ref": "#/components/schemas/PresetBinding-Output"
+      },
+      "title": "Bindings",
+      "type": "array"
+     },
      "entries": {
       "items": {
        "$ref": "#/components/schemas/PresetEntry-Output"
@@ -2905,9 +2919,128 @@
      "id",
      "title",
      "groups",
-     "entries"
+     "entries",
+     "bindings"
     ],
     "title": "Preset",
+    "type": "object"
+   },
+   "PresetBinding-Input": {
+    "additionalProperties": false,
+    "description": "LoRA / 节点输入绑定 (legacy preset ``bindings``): the preset writes one workflow node input\nwhenever an album assembled from it renders — a LoRA name, its strength, a switch.\n\n``source=\"variable\"`` takes the value of the preset variable named in ``value`` (an empty\nvariable keeps the workflow's value); ``literal`` writes ``value`` itself, with ``{变量}``\nexpanded.  Nodes the workflow does not have are skipped; the frame's own node override wins.",
+    "properties": {
+     "enabled": {
+      "default": true,
+      "title": "Enabled",
+      "type": "boolean"
+     },
+     "node_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[^/\\s]+$",
+      "title": "Node Id",
+      "type": "string"
+     },
+     "path": {
+      "description": "Input name; nested: a/b/0",
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Path",
+      "type": "string"
+     },
+     "source": {
+      "default": "literal",
+      "enum": [
+       "literal",
+       "variable"
+      ],
+      "title": "Source",
+      "type": "string"
+     },
+     "type": {
+      "default": "text",
+      "enum": [
+       "auto",
+       "text",
+       "number",
+       "boolean",
+       "json"
+      ],
+      "title": "Type",
+      "type": "string"
+     },
+     "value": {
+      "default": "",
+      "title": "Value",
+      "type": "string"
+     }
+    },
+    "required": [
+     "node_id",
+     "path"
+    ],
+    "title": "PresetBinding",
+    "type": "object"
+   },
+   "PresetBinding-Output": {
+    "additionalProperties": false,
+    "description": "LoRA / 节点输入绑定 (legacy preset ``bindings``): the preset writes one workflow node input\nwhenever an album assembled from it renders — a LoRA name, its strength, a switch.\n\n``source=\"variable\"`` takes the value of the preset variable named in ``value`` (an empty\nvariable keeps the workflow's value); ``literal`` writes ``value`` itself, with ``{变量}``\nexpanded.  Nodes the workflow does not have are skipped; the frame's own node override wins.",
+    "properties": {
+     "enabled": {
+      "default": true,
+      "title": "Enabled",
+      "type": "boolean"
+     },
+     "node_id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "^[^/\\s]+$",
+      "title": "Node Id",
+      "type": "string"
+     },
+     "path": {
+      "description": "Input name; nested: a/b/0",
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Path",
+      "type": "string"
+     },
+     "source": {
+      "default": "literal",
+      "enum": [
+       "literal",
+       "variable"
+      ],
+      "title": "Source",
+      "type": "string"
+     },
+     "type": {
+      "default": "text",
+      "enum": [
+       "auto",
+       "text",
+       "number",
+       "boolean",
+       "json"
+      ],
+      "title": "Type",
+      "type": "string"
+     },
+     "value": {
+      "default": "",
+      "title": "Value",
+      "type": "string"
+     }
+    },
+    "required": [
+     "node_id",
+     "path",
+     "source",
+     "type",
+     "value",
+     "enabled"
+    ],
+    "title": "PresetBinding",
     "type": "object"
    },
    "PresetEntry-Input": {

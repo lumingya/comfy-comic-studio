@@ -398,3 +398,61 @@ body.production-reordering .production-grip {
   background: var(--panel2);
   color: var(--soft);
 }
+
+/* ---------------------------------------------------------------- 预设 LoRA / 节点输入绑定 */
+.preset-bindings summary .setting-count {
+  margin-left: 8px;
+}
+.preset-bindings-tools {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0 12px;
+}
+.preset-binding-list {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+}
+.preset-binding-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.preset-binding-row .grow {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.preset-binding-row strong {
+  font: 500 0.78125rem var(--mono);
+  overflow-wrap: anywhere;
+}
+.preset-binding-row p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.preset-binding-row.is-off strong,
+.preset-binding-row.is-off p:not(.help) {
+  opacity: 0.55;
+}
+.preset-binding-form {
+  display: grid;
+  gap: 12px;
+}
+.preset-binding-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 560px) {
+  .preset-binding-pair {
+    grid-template-columns: 1fr;
+  }
+}

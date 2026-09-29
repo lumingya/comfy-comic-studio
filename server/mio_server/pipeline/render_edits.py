@@ -11,6 +11,7 @@ from ..comfy.compile import asset_value
 from ..jobs import COMFY, LOCAL, ItemSpec
 from ..models import Episode, Take, TakeStatus, parse_ratio
 from .compiler import compile_panel
+from .node_overrides import node_overrides
 from .refs import select_references
 
 PREVIOUS = "__previous__"
@@ -95,9 +96,7 @@ class EditsMixin:
             record["pads"] = list(pads)
         if "denoise" in params:
             values["denoise"] = params["denoise"]
-        data, _, _ = self._compile_stage(
-            stage, values, panel.overrides.node_overrides if panel else None
-        )
+        data, _, _ = self._compile_stage(stage, values, node_overrides(series, panel))
         meta = {
             "episode_id": episode.id,
             "panel_id": take.panel_id,

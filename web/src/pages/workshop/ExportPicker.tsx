@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Icon } from '../../app/icons';
-import { toastError } from '../../components/toast';
+import { toast, toastError } from '../../components/toast';
 import { Modal } from '../../components/ui';
+import { exportStoryboards, listStoryboards } from './storyActions';
 
 export interface ExportItem {
   id: string;
@@ -121,4 +122,39 @@ export function ExportPicker({
       </div>
     </Modal>
   );
+}
+
+/** 「导出…」 / 「选择并导出…」 for storyboards: `open()` lists every storyboard, then the picker. */
+export function useStoryboardExport(workshopId: string | undefined, currentId: string | undefined) {
+  const { t } = useTranslation();
+  const [items, setItems] = useState<ExportItem[] | null>(null);
+  const open = () => {
+    if (!workshopId) return;
+    listStoryboards(workshopId)
+      .then((list) =>
+        setItems(
+          list.map((b) => ({
+            id: b.id,
+            title: b.title,
+            meta: t('ws.exportPick.frames', { count: b.panel_count }),
+          })),
+        ),
+      )
+      .catch(toastError);
+  };
+  const noun = t('ws.exportPick.storyNoun');
+  const element = items ? (
+    <ExportPicker
+      title={t('ws.exportPick.storyTitle')}
+      noun={noun}
+      items={items}
+      current={currentId}
+      onClose={() => setItems(null)}
+      onExport={async (ids) => {
+        await exportStoryboards(ids, t('ws.exportPick.storyBundle', { count: ids.length }));
+        if (ids.length > 1) toast(t('ws.exportPick.done', { count: ids.length, noun }));
+      }}
+    />
+  ) : null;
+  return { open, element };
 }

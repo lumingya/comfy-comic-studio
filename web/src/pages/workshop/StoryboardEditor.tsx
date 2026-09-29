@@ -53,6 +53,7 @@ import {
   type PromptSources,
   type PromptUsage,
 } from './PromptSurface';
+import { useStoryboardExport } from './ExportPicker';
 
 /** Every variable some preset defines (true when at least one gives it a value). */
 export function useKnownVariables(): KnownVariables {
@@ -137,6 +138,7 @@ export default function StoryboardEditor() {
   };
   const basePrompt = () => episode.base_prompt ?? '';
   const restore = useImportPanels(episode.id!);
+  const exporter = useStoryboardExport(series.id, episode.id);
   /** Legacy workshop-frame-delete-bulk: at least one frame stays, and the deletion can be undone. */
   const removeSelected = async (ids: string[]) => {
     if (!ids.length || removeMany.isPending) return;
@@ -433,6 +435,12 @@ export default function StoryboardEditor() {
               toast(t('ws.imported', { count }));
             }),
           },
+          {
+            label: t('ws.story.menu.exportPickDots'),
+            icon: <Icon name="upload" sm />,
+            hint: t('ws.story.menu.exportPickHint'),
+            onSelect: exporter.open,
+          },
         ],
       },
       {
@@ -713,6 +721,7 @@ export default function StoryboardEditor() {
           groups={storyMenuGroups()}
         />
       ) : null}
+      {exporter.element}
     </>
   );
 }

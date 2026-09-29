@@ -31,6 +31,7 @@ from ..render_models import RenderProfile, RenderStage, WorkflowDoc
 from ..storage import NotFound
 from . import variables as V
 from .compiler import compile_panel
+from .node_overrides import node_overrides
 from .refs import reference_values, select_references
 from .render_composition import KEY as COMPOSITION
 from .render_composition import CompositionMixin
@@ -251,7 +252,7 @@ class RenderService(CompositionMixin, EditsMixin):
                 **extra,
             }
             stages, feeds = self._chain(
-                profile.draft, base, later, panel.overrides.node_overrides, pp.loras
+                profile.draft, base, later, node_overrides(series, panel), pp.loras
             )
             group = profile.model_group or stages[0].get("checkpoint") or ""
             meta = {
@@ -414,7 +415,7 @@ class RenderService(CompositionMixin, EditsMixin):
                 profile.final,
                 values,
                 {k: v for k, v in values.items() if k != "init"},
-                panel.overrides.node_overrides,
+                node_overrides(series, panel),
                 [],
             )
             meta = {

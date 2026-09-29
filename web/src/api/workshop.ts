@@ -15,8 +15,13 @@ export function useWorkshop() {
   return useQuery({
     queryKey: workshopKey,
     staleTime: 60_000,
-    queryFn: async () => data(await api.GET('/api/workshop')),
+    queryFn: async () => withBindings(data(await api.GET('/api/workshop'))),
   });
+}
+
+/** Presets saved before node bindings existed arrive without the list. */
+function withBindings<T extends { presets: Preset[] }>(series: T): T {
+  return { ...series, presets: series.presets.map((p) => ({ ...p, bindings: p.bindings ?? [] })) };
 }
 
 /** Save the preset library (the whole list, like the legacy autosave). */
@@ -30,7 +35,8 @@ export function useSavePresets(workshopId: string | undefined) {
           body: { presets } as never,
         }),
       ),
-    onSuccess: (series) => {
+    onSuccess: (saved) => {
+      const series = withBindings(saved);
       qc.setQueryData(workshopKey, series);
       qc.setQueryData(keys.series(series.id!), series);
     },
