@@ -716,7 +716,8 @@ function TaskCard({
           {panels.map((p, i) => {
             const page = pageOf(p.id!);
             const st = page.state;
-            const busy = st === 'running' || st === 'queued';
+            // Legacy canRerun: a scene the engine still owns (running, queued or held) is not rerun.
+            const busy = st === 'running' || st === 'queued' || st === 'paused';
             const tries = episode?.takes.filter((x) => x.panel_id === p.id).length ?? 0;
             const again = !!page.asset;
             const tailAgain = panels.slice(i).some((x) => adopted.has(x.id!));
