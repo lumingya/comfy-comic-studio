@@ -4,7 +4,7 @@ import type { Preset } from '../../api/workshop';
 import { renderWithProviders } from '../../test/utils';
 import { presetFromFile } from './files';
 import { BindingDialog } from './PresetBindings';
-import { bindingProblem, blankBinding, normalizeBinding, sharedTargets } from './presetBindings';
+import { bindingProblem, blankBinding, normalizeBinding, sharedTargets } from './bindingRules';
 
 const b = (changes: object) => ({ ...blankBinding(), node_id: '12', ...changes });
 const preset = (id: string, bindings: Preset['bindings']): Preset => ({

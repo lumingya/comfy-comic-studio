@@ -1,6 +1,6 @@
 import type { Episode, Panel } from '../../api/types';
 import { localId, type Preset } from '../../api/workshop';
-import { bindingProblem, normalizeBinding } from './presetBindings';
+import { bindingProblem, normalizeBinding } from './bindingRules';
 
 /** Save `value` as a pretty-printed JSON download. */
 export function downloadJson(name: string, value: unknown) {

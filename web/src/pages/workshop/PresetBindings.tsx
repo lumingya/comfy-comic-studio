@@ -10,7 +10,7 @@ import {
   normalizeBinding,
   sharedTargets,
   type Binding,
-} from './presetBindings';
+} from './bindingRules';
 
 /**
  * Legacy renderPresetWorkshop 「LoRA / 节点输入绑定」: the preset's own node-input writes. Kept
