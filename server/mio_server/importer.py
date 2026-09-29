@@ -469,6 +469,7 @@ class LegacyImporter:
                 title=str(board.get("title") or board["id"]),
                 order=order,
                 synopsis=str(board.get("outline") or ""),
+                base_prompt=str(board.get("basePrompt") or ""),
                 panels=panels,
             )
             self.store.create_episode(episode)

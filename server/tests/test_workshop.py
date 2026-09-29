@@ -95,6 +95,43 @@ class WorkshopTest(ApiCase):
         self.assertEqual(adopted[0]["id"], takes[-2]["id"])  # the first new candidate
         self.assertEqual(next(t for t in takes if t["id"] == first)["status"], "candidate")
 
+    def test_storyboard_keeps_its_starting_template_and_the_album_snapshots_it(self):
+        ws = self.workshop()
+        board = self.ok(
+            self.client.post(
+                f"/api/series/{ws['id']}/episodes",
+                json={"title": "起手", "base_prompt": "{character}, {style}, "},
+            ),
+            201,
+        )
+        self.assertEqual(board["base_prompt"], "{character}, {style}, ")
+        board = self.ok(
+            self.client.patch(f"/api/episodes/{board['id']}", json={"base_prompt": "{scene}, "})
+        )
+        self.assertEqual(board["base_prompt"], "{scene}, ")
+        self.ok(
+            self.client.post(
+                f"/api/episodes/{board['id']}/panels", json={"panel": {"description": "一"}}
+            ),
+            201,
+        )
+        preset = ws["presets"][0]
+        out = self.ok(
+            self.client.post(
+                "/api/workshop/assemble",
+                json={"storyboard_id": board["id"], "preset_ids": [preset["id"]]},
+            ),
+            201,
+        )
+        self.assertEqual(out["episode"]["base_prompt"], "{scene}, ")
+        # Patching another field leaves the template alone.
+        self.assertEqual(
+            self.ok(self.client.patch(f"/api/episodes/{board['id']}", json={"title": "x"}))[
+                "base_prompt"
+            ],
+            "{scene}, ",
+        )
+
     def test_clone_task_copies_frames_presets_and_profile_but_no_images(self):
         ws = self.workshop()
         board = self.ok(self.client.get(f"/api/series/{ws['id']}/episodes"))["items"][0]

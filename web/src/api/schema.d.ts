@@ -2198,6 +2198,12 @@ export interface components {
              * @default
              */
             synopsis: string;
+            /**
+             * Base Prompt
+             * @description Starting template (起手模板) copied into the prompt of new blank panels; never resolved at render time.
+             * @default
+             */
+            base_prompt: string;
             /** Panels */
             panels: components["schemas"]["Panel"][];
             /** Takes */
@@ -2226,6 +2232,11 @@ export interface components {
              * @default
              */
             synopsis?: string;
+            /**
+             * Base Prompt
+             * @default
+             */
+            base_prompt?: string;
         };
         /** EpisodePatch */
         EpisodePatch: {
@@ -2235,6 +2246,8 @@ export interface components {
             order?: number | null;
             /** Synopsis */
             synopsis?: string | null;
+            /** Base Prompt */
+            base_prompt?: string | null;
             strip?: components["schemas"]["Strip-Input"] | null;
             /**
              * Revision

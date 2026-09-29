@@ -148,7 +148,11 @@ def create_episode(ctx: Ctx, series_id: str, payload: EpisodeCreate) -> Episode:
     ctx.store.get_series(series_id)
     order = payload.order if payload.order is not None else ctx.store.next_episode_order(series_id)
     episode = Episode(
-        series_id=series_id, title=payload.title, order=order, synopsis=payload.synopsis
+        series_id=series_id,
+        title=payload.title,
+        order=order,
+        synopsis=payload.synopsis,
+        base_prompt=payload.base_prompt,
     )
     return ctx.store.create_episode(episode)
 

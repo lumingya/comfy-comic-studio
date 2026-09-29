@@ -419,6 +419,11 @@ class Episode(StrictModel):
     title: str
     order: int = Field(ge=0)
     synopsis: str = ""
+    base_prompt: str = Field(
+        default="",
+        description="Starting template (起手模板) copied into the prompt of new blank panels; "
+        "never resolved at render time.",
+    )
     panels: list[Panel] = Field(default_factory=list)
     takes: list[Take] = Field(default_factory=list)
     strip: Strip = Field(default_factory=Strip)
@@ -557,11 +562,13 @@ class EpisodeCreate(StrictModel):
     title: str
     order: int | None = Field(default=None, ge=0)
     synopsis: str = ""
+    base_prompt: str = ""
 
 
 class EpisodePatch(StrictModel):
     title: str | None = None
     order: int | None = Field(default=None, ge=0)
     synopsis: str | None = None
+    base_prompt: str | None = None
     strip: Strip | None = None
     revision: int | None = Field(default=None, description="Optimistic concurrency check.")

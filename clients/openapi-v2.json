@@ -1015,6 +1015,12 @@
    "Episode": {
     "additionalProperties": false,
     "properties": {
+     "base_prompt": {
+      "default": "",
+      "description": "Starting template (起手模板) copied into the prompt of new blank panels; never resolved at render time.",
+      "title": "Base Prompt",
+      "type": "string"
+     },
      "created_at": {
       "title": "Created At",
       "type": "string"
@@ -1085,6 +1091,7 @@
      "title",
      "order",
      "synopsis",
+     "base_prompt",
      "panels",
      "takes",
      "strip",
@@ -1099,6 +1106,11 @@
    "EpisodeCreate": {
     "additionalProperties": false,
     "properties": {
+     "base_prompt": {
+      "default": "",
+      "title": "Base Prompt",
+      "type": "string"
+     },
      "order": {
       "anyOf": [
        {
@@ -1130,6 +1142,17 @@
    "EpisodePatch": {
     "additionalProperties": false,
     "properties": {
+     "base_prompt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Base Prompt"
+     },
      "order": {
       "anyOf": [
        {

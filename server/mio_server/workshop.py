@@ -97,6 +97,7 @@ def _legacy_assets(store, series_id: str, root: Path) -> None:
                 title=str(board.get("title") or board["id"]),
                 order=order,
                 synopsis=str(board.get("outline") or ""),
+                base_prompt=str(board.get("basePrompt") or ""),
                 panels=panels,
             )
         )
@@ -179,6 +180,7 @@ def assemble(
             title=board.title,
             order=0,
             synopsis=board.synopsis,
+            base_prompt=board.base_prompt,
             panels=panels,
             strip=board.strip.model_copy(deep=True),
         )
@@ -263,6 +265,7 @@ def clone_task(store, series_id: str, title: str = "") -> tuple[Series, Episode]
             title=board.title,
             order=0,
             synopsis=board.synopsis,
+            base_prompt=board.base_prompt,
             panels=panels,
             strip=board.strip.model_copy(deep=True),
         )
