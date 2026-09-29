@@ -92,7 +92,8 @@ class WorkshopTest(ApiCase):
         adopted = [t for t in takes if t["status"] == "adopted"]
         self.assertEqual(len(adopted), 1)
         self.assertNotEqual(adopted[0]["id"], first)
-        self.assertEqual(adopted[0]["id"], takes[-2]["id"])  # the first new candidate
+        # The first new candidate to finish (both may render at once).
+        self.assertIn(adopted[0]["id"], [t["id"] for t in takes[-2:]])
         self.assertEqual(next(t for t in takes if t["id"] == first)["status"], "candidate")
 
     def test_storyboard_keeps_its_starting_template_and_the_album_snapshots_it(self):

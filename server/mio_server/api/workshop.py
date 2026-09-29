@@ -50,6 +50,7 @@ def assemble(ctx: Ctx, body: AssembleRequest) -> Assembled:
     series, episode = W.assemble(
         ctx.store, body.storyboard_id, body.preset_ids, body.title, body.profile_id
     )
+    ctx.queue.track(series.id)
     return Assembled(series=series, episode=episode)
 
 
@@ -61,6 +62,7 @@ def preview_preset(ctx: Ctx, body: PreviewRequest) -> Assembled:
     series, episode = W.preview(
         ctx.store, body.preset_ids, body.prompt, body.title, body.profile_id
     )
+    ctx.queue.track(series.id)
     return Assembled(series=series, episode=episode)
 
 
@@ -72,6 +74,7 @@ def preview_preset(ctx: Ctx, body: PreviewRequest) -> Assembled:
 def clone_task(ctx: Ctx, series_id: str, body: CloneRequest | None = None) -> Assembled:
     """装配队列「克隆」: a new standby album with the same frames, presets and profile (no images)."""
     series, episode = W.clone_task(ctx.store, series_id, body.title if body else "")
+    ctx.queue.track(series.id)
     return Assembled(series=series, episode=episode)
 
 

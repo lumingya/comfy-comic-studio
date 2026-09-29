@@ -40,6 +40,14 @@ class QueueTest(ApiCase):
     def jobs_of(self, episode_id):
         return self.ctx.engine.list(owner=episode_id)
 
+    def test_new_albums_take_the_last_card_in_creation_order(self):
+        a, _ = self.assemble("A")
+        b, _ = self.assemble("B")
+        c, _ = self.assemble("C")
+        self.assertEqual(self.queue()["order"], [a, b, c])
+        clone = self.ok(self.client.post(f"/api/workshop/tasks/{a}/clone", json={}), 201)
+        self.assertEqual(self.queue()["order"], [a, b, c, clone["series"]["id"]])
+
     def test_lane_starts_albums_one_after_another_and_skips_finished_ones(self):
         a, ep_a = self.assemble("A")
         b, ep_b = self.assemble("B")

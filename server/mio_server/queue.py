@@ -189,6 +189,25 @@ class ProductionQueue:
                 if job["kind"] == RENDER_KIND and job["window"] != window:
                     self.engine.set_window(job["id"], window)
 
+    def track(self, album_id: str) -> None:
+        """A new album (assembled, cloned, 试绘) takes the last card.  Albums the order does not
+        know yet (made before the queue kept one) are listed first, oldest first."""
+        with self.lock:
+            q = self.state()
+            if album_id in q.order:
+                return
+            known = set(q.order) | {album_id}
+            older = sorted(
+                (
+                    s
+                    for s in self.store.list_series()
+                    if s.kind == "album" and s.status == "draft" and s.id not in known
+                ),
+                key=lambda s: (s.created_at, s.id),
+            )
+            q.order = [*q.order, *(s.id for s in older), album_id]
+            self._save(q)
+
     def forget(self, album_id: str) -> None:
         """An album left the queue (trashed, moved to the shelf)."""
         with self.lock:
