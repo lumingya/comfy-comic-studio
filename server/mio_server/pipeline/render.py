@@ -26,6 +26,7 @@ from ..comfy.workflow_slots import LibraryError
 from ..hooks import HookBus
 from ..jobs import COMFY, ItemSpec
 from ..models import Episode, Series, Take, TakeEdit, TakeStatus
+from ..queue import default_window
 from ..render_models import RenderProfile, RenderStage, WorkflowDoc
 from ..storage import NotFound
 from . import variables as V
@@ -345,10 +346,14 @@ class RenderService(CompositionMixin, EditsMixin):
             {"episode_id": episode.id, "profile_id": profile.id, "qa": qa, "purpose": "draft"},
             title=title,
             idempotency_key=idempotency_key,
-            window=max(1, len(self.engine.pool.instances) or 1) * 2,
+            window=default_window(self.store, series) or self.auto_window(),
             priority=priority,
             owner=episode.id,
         )
+
+    def auto_window(self) -> int:
+        """Panels a render job runs at once when nobody chose: two per ComfyUI instance."""
+        return max(1, len(self.engine.pool.instances) or 1) * 2
 
     def render(self, episode_id: str, *args, idempotency_key: str | None = None, **kw) -> dict:
         with self.seeded(idempotency_key):

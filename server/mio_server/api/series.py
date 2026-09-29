@@ -118,12 +118,20 @@ def patch_series(ctx: Ctx, series_id: str, payload: SeriesPatch) -> Series:
         for key in changes:
             setattr(series, key, getattr(payload, key))
 
-    return ctx.store.update_series(series_id, apply)
+    series = ctx.store.update_series(series_id, apply)
+    if ctx.queue and series.kind == "album":
+        if series.status != "draft":
+            ctx.queue.forget(series.id)  # 清空已完成: the album moved to the shelf
+        elif "concurrency" in changes:
+            ctx.queue.retune(series)
+    return series
 
 
 @router.delete("/series/{series_id}", status_code=status.HTTP_204_NO_CONTENT)
 def trash_series(ctx: Ctx, series_id: str) -> None:
     ctx.trash.delete_series(series_id)
+    if ctx.queue:
+        ctx.queue.forget(series_id)
 
 
 @router.post("/series/{series_id}/restore", response_model=Series)

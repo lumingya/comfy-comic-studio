@@ -50,7 +50,9 @@ class CloudExecutor:
             # Error text is not evidence of delivery (a read timeout can say "connection").
             # Adapters may prove an unsent connect failure or an already-generated download.
             sent = exc.sent if exc.sent is not None else not definitive
-            raise ExecError(str(exc), kind="cloud_error", sent=sent) from None
+            # 429 after the client's own retries: the channel is throttling (legacy 服务限流).
+            kind = "rate_limited" if exc.status == 429 else "cloud_error"
+            raise ExecError(str(exc), kind=kind, sent=sent) from None
         asset = self.assets.put(data, source=f"cloud:{meta.get('model')}")
         return {
             "images": [{"asset_id": asset.id, "width": asset.width, "height": asset.height}],

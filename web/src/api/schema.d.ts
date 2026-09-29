@@ -1570,6 +1570,147 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/workshop/queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Queue
+         * @description 装配队列: card order, the sequential lane, the default concurrency and storage warnings.
+         */
+        get: operations["get_queue_api_workshop_queue_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Patch Queue
+         * @description 默认并发: panels per album for albums without their own setting (None = automatic).
+         */
+        patch: operations["patch_queue_api_workshop_queue_patch"];
+        trace?: never;
+    };
+    "/api/workshop/queue/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start Queue
+         * @description 按顺序开始生成: the albums start one after another (each renders its missing panels).
+         */
+        post: operations["start_queue_api_workshop_queue_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workshop/queue/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Remove From Queue
+         * @description 移出队列: the album stops waiting in the lane; jobs already started are not touched.
+         */
+        post: operations["remove_from_queue_api_workshop_queue_remove_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workshop/queue/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pause Queue
+         * @description Hold the lane (全局暂停 also pauses the running jobs, through the job API).
+         */
+        post: operations["pause_queue_api_workshop_queue_pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workshop/queue/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resume Queue */
+        post: operations["resume_queue_api_workshop_queue_resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workshop/queue/clear": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Clear Queue
+         * @description 停止全部: empty the lane (running jobs are stopped through the job API).
+         */
+        post: operations["clear_queue_api_workshop_queue_clear_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workshop/queue/order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Order Queue
+         * @description Drag to reorder the task cards; the lane follows the new order.
+         */
+        put: operations["order_queue_api_workshop_queue_order_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tokens": {
         parameters: {
             query?: never;
@@ -3129,6 +3270,79 @@ export interface components {
             /** Checked At */
             checked_at: string;
         };
+        /** QueueAlbum */
+        QueueAlbum: {
+            /** Album Id */
+            album_id: string;
+        };
+        /** QueueAlbums */
+        QueueAlbums: {
+            /** Album Ids */
+            album_ids?: string[];
+        };
+        /** QueueSettings */
+        QueueSettings: {
+            /** Concurrency */
+            concurrency?: number | null;
+        };
+        /**
+         * QueueStatus
+         * @description The queue state plus what the page needs to explain it.
+         */
+        QueueStatus: {
+            /**
+             * Id
+             * @default queue
+             */
+            id: string;
+            /**
+             * Order
+             * @description Album ids in card order; unlisted albums follow.
+             */
+            order: string[];
+            /**
+             * Lane
+             * @description Albums waiting to start one after another.
+             */
+            lane: string[];
+            /**
+             * Paused
+             * @description The lane is held (全局暂停).
+             * @default false
+             */
+            paused: boolean;
+            /**
+             * Active
+             * @description Album the lane started last.
+             */
+            active: string | null;
+            /** Active Job */
+            active_job: string | null;
+            /**
+             * Concurrency
+             * @description Default panels per album; None = automatic.
+             */
+            concurrency: number | null;
+            /**
+             * Notices
+             * @description Album id → why the lane could not start it.
+             */
+            notices: {
+                [key: string]: string;
+            };
+            /** Updated At */
+            updated_at: string;
+            /**
+             * Fault
+             * @description Storage warning (low disk space).
+             */
+            fault: string | null;
+            /**
+             * Auto Concurrency
+             * @description Panels per album when no default is set.
+             */
+            auto_concurrency: number;
+        };
         /**
          * RenderProfile
          * @description A pipeline of workflows.  ``draft`` runs per candidate, ``final`` only on adopted takes.
@@ -3437,6 +3651,11 @@ export interface components {
              * @description Chosen cover image; None = automatic (the first image).
              */
             cover_asset_id: string | null;
+            /**
+             * Concurrency
+             * @description Panels this album renders at once (装配队列「并发」); None = the queue default.  A change applies to the running job from its next panel.
+             */
+            concurrency: number | null;
             /** Created At */
             created_at: string;
             /** Updated At */
@@ -3490,6 +3709,11 @@ export interface components {
              * @description Chosen cover image; None = automatic (the first image).
              */
             cover_asset_id: string | null;
+            /**
+             * Concurrency
+             * @description Panels this album renders at once (装配队列「并发」); None = the queue default.  A change applies to the running job from its next panel.
+             */
+            concurrency: number | null;
             /** Created At */
             created_at: string;
             /** Updated At */
@@ -3547,6 +3771,8 @@ export interface components {
             cover_asset_id?: string | null;
             /** Presets */
             presets?: components["schemas"]["Preset-Input"][] | null;
+            /** Concurrency */
+            concurrency?: number | null;
         };
         /**
          * SeriesStatus
@@ -7194,6 +7420,218 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Assembled"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_queue_api_workshop_queue_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueStatus"];
+                };
+            };
+        };
+    };
+    patch_queue_api_workshop_queue_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QueueSettings"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_queue_api_workshop_queue_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QueueAlbums"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_from_queue_api_workshop_queue_remove_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QueueAlbum"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pause_queue_api_workshop_queue_pause_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueStatus"];
+                };
+            };
+        };
+    };
+    resume_queue_api_workshop_queue_resume_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueStatus"];
+                };
+            };
+        };
+    };
+    clear_queue_api_workshop_queue_clear_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueStatus"];
+                };
+            };
+        };
+    };
+    order_queue_api_workshop_queue_order_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QueueAlbums"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QueueStatus"];
                 };
             };
             /** @description Validation Error */

@@ -9,8 +9,8 @@ Scopes, from least to most powerful:
 * ``read`` – every GET.
 * ``write`` – edits to series, episodes, panels, strips, workflows and templates.
 * ``render`` – anything that can spend money or GPU time: generating scripts, rendering, finalize,
-  edits, QA, the assistant, and retrying or resuming jobs.  This replaces v1's
-  ``trusted: true`` confirmation.
+  edits, QA, the assistant, retrying or resuming jobs, and starting or resuming the workshop
+  queue.  This replaces v1's ``trusted: true`` confirmation.
 * ``admin`` – settings, ComfyUI instances, webhooks, legacy import.
 
 Token management and extensions are never reachable through v2.  Tokens and extensions can only
@@ -38,7 +38,8 @@ TOKEN_RE = re.compile(r"^mio_(tok_[A-Za-z0-9]+)_([A-Za-z0-9_-]{20,})$")
 RENDER_RE = re.compile(
     r"^/(series/[^/]+/episodes/generate"
     r"|episodes/[^/]+/(render|finalize|edit|qa|assistant/propose)"
-    r"|jobs/[^/]+/(retry|resume))$"
+    r"|jobs/[^/]+/(retry|resume)"
+    r"|workshop/queue/(start|resume))$"
 )
 ADMIN_RE = re.compile(r"^/(settings|instances|webhooks|legacy|update)(/|$)")
 

@@ -680,6 +680,59 @@ class MioClient(_Base):
         """
         return self._request("POST", f"/workshop/tasks/{_q(series_id)}/clone", json=body)
 
+    def get_queue(self) -> Any:
+        """GET /workshop/queue — Get Queue.
+
+        装配队列: card order, the sequential lane, the default concurrency and storage warnings.
+        """
+        return self._request("GET", "/workshop/queue")
+
+    def patch_queue(self, body: dict | list | None = None) -> Any:
+        """PATCH /workshop/queue — Patch Queue.
+
+        默认并发: panels per album for albums without their own setting (None = automatic).
+        """
+        return self._request("PATCH", "/workshop/queue", json=body)
+
+    def start_queue(self, body: dict | list | None = None) -> Any:
+        """POST /workshop/queue/start — Start Queue.
+
+        按顺序开始生成: the albums start one after another (each renders its missing panels).
+        """
+        return self._request("POST", "/workshop/queue/start", json=body)
+
+    def remove_from_queue(self, body: dict | list | None = None) -> Any:
+        """POST /workshop/queue/remove — Remove From Queue.
+
+        移出队列: the album stops waiting in the lane; jobs already started are not touched.
+        """
+        return self._request("POST", "/workshop/queue/remove", json=body)
+
+    def pause_queue(self) -> Any:
+        """POST /workshop/queue/pause — Pause Queue.
+
+        Hold the lane (全局暂停 also pauses the running jobs, through the job API).
+        """
+        return self._request("POST", "/workshop/queue/pause")
+
+    def resume_queue(self) -> Any:
+        """POST /workshop/queue/resume — Resume Queue."""
+        return self._request("POST", "/workshop/queue/resume")
+
+    def clear_queue(self) -> Any:
+        """POST /workshop/queue/clear — Clear Queue.
+
+        停止全部: empty the lane (running jobs are stopped through the job API).
+        """
+        return self._request("POST", "/workshop/queue/clear")
+
+    def order_queue(self, body: dict | list | None = None) -> Any:
+        """PUT /workshop/queue/order — Order Queue.
+
+        Drag to reorder the task cards; the lane follows the new order.
+        """
+        return self._request("PUT", "/workshop/queue/order", json=body)
+
     def list_webhooks(self) -> Any:
         """GET /webhooks — List Webhooks."""
         return self._request("GET", "/webhooks")

@@ -3321,6 +3321,166 @@
     "title": "QAResult",
     "type": "object"
    },
+   "QueueAlbum": {
+    "properties": {
+     "album_id": {
+      "title": "Album Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "album_id"
+    ],
+    "title": "QueueAlbum",
+    "type": "object"
+   },
+   "QueueAlbums": {
+    "properties": {
+     "album_ids": {
+      "items": {
+       "type": "string"
+      },
+      "maxItems": 2000,
+      "title": "Album Ids",
+      "type": "array"
+     }
+    },
+    "title": "QueueAlbums",
+    "type": "object"
+   },
+   "QueueSettings": {
+    "properties": {
+     "concurrency": {
+      "anyOf": [
+       {
+        "maximum": 128.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Concurrency"
+     }
+    },
+    "title": "QueueSettings",
+    "type": "object"
+   },
+   "QueueStatus": {
+    "additionalProperties": false,
+    "description": "The queue state plus what the page needs to explain it.",
+    "properties": {
+     "active": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Album the lane started last.",
+      "title": "Active"
+     },
+     "active_job": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Active Job"
+     },
+     "auto_concurrency": {
+      "description": "Panels per album when no default is set.",
+      "title": "Auto Concurrency",
+      "type": "integer"
+     },
+     "concurrency": {
+      "anyOf": [
+       {
+        "maximum": 128.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Default panels per album; None = automatic.",
+      "title": "Concurrency"
+     },
+     "fault": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Storage warning (low disk space).",
+      "title": "Fault"
+     },
+     "id": {
+      "default": "queue",
+      "title": "Id",
+      "type": "string"
+     },
+     "lane": {
+      "description": "Albums waiting to start one after another.",
+      "items": {
+       "type": "string"
+      },
+      "title": "Lane",
+      "type": "array"
+     },
+     "notices": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "description": "Album id → why the lane could not start it.",
+      "title": "Notices",
+      "type": "object"
+     },
+     "order": {
+      "description": "Album ids in card order; unlisted albums follow.",
+      "items": {
+       "type": "string"
+      },
+      "title": "Order",
+      "type": "array"
+     },
+     "paused": {
+      "default": false,
+      "description": "The lane is held (全局暂停).",
+      "title": "Paused",
+      "type": "boolean"
+     },
+     "updated_at": {
+      "title": "Updated At",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "order",
+     "lane",
+     "paused",
+     "active",
+     "active_job",
+     "concurrency",
+     "notices",
+     "updated_at",
+     "fault",
+     "auto_concurrency"
+    ],
+    "title": "QueueStatus",
+    "type": "object"
+   },
    "RenderProfile-Input": {
     "additionalProperties": false,
     "description": "A pipeline of workflows.  ``draft`` runs per candidate, ``final`` only on adopted takes.",
@@ -3942,6 +4102,20 @@
      "bible": {
       "$ref": "#/components/schemas/Bible-Output"
      },
+     "concurrency": {
+      "anyOf": [
+       {
+        "maximum": 128.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Panels this album renders at once (装配队列「并发」); None = the queue default.  A change applies to the running job from its next panel.",
+      "title": "Concurrency"
+     },
      "cover_asset_id": {
       "anyOf": [
        {
@@ -4047,6 +4221,7 @@
      "variables",
      "default_profile_id",
      "cover_asset_id",
+     "concurrency",
      "created_at",
      "updated_at",
      "deleted_at"
@@ -4065,6 +4240,20 @@
      },
      "bible": {
       "$ref": "#/components/schemas/Bible-Output"
+     },
+     "concurrency": {
+      "anyOf": [
+       {
+        "maximum": 128.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Panels this album renders at once (装配队列「并发」); None = the queue default.  A change applies to the running job from its next panel.",
+      "title": "Concurrency"
      },
      "cover_asset_id": {
       "anyOf": [
@@ -4186,6 +4375,7 @@
      "variables",
      "default_profile_id",
      "cover_asset_id",
+     "concurrency",
      "created_at",
      "updated_at",
      "deleted_at",
@@ -4228,6 +4418,19 @@
         "type": "null"
        }
       ]
+     },
+     "concurrency": {
+      "anyOf": [
+       {
+        "maximum": 128.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Concurrency"
      },
      "cover_asset_id": {
       "anyOf": [
@@ -10553,6 +10756,299 @@
      }
     ],
     "summary": "Preview Preset",
+    "tags": [
+     "workshop"
+    ]
+   }
+  },
+  "/workshop/queue": {
+   "get": {
+    "description": "装配队列: card order, the sequential lane, the default concurrency and storage warnings.",
+    "operationId": "get_queue",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/QueueStatus"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Get Queue",
+    "tags": [
+     "workshop"
+    ]
+   },
+   "patch": {
+    "description": "默认并发: panels per album for albums without their own setting (None = automatic).",
+    "operationId": "patch_queue",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/QueueSettings"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/QueueStatus"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Patch Queue",
+    "tags": [
+     "workshop"
+    ]
+   }
+  },
+  "/workshop/queue/clear": {
+   "post": {
+    "description": "停止全部: empty the lane (running jobs are stopped through the job API).",
+    "operationId": "clear_queue",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/QueueStatus"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Clear Queue",
+    "tags": [
+     "workshop"
+    ]
+   }
+  },
+  "/workshop/queue/order": {
+   "put": {
+    "description": "Drag to reorder the task cards; the lane follows the new order.",
+    "operationId": "order_queue",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/QueueAlbums"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/QueueStatus"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Order Queue",
+    "tags": [
+     "workshop"
+    ]
+   }
+  },
+  "/workshop/queue/pause": {
+   "post": {
+    "description": "Hold the lane (全局暂停 also pauses the running jobs, through the job API).",
+    "operationId": "pause_queue",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/QueueStatus"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Pause Queue",
+    "tags": [
+     "workshop"
+    ]
+   }
+  },
+  "/workshop/queue/remove": {
+   "post": {
+    "description": "移出队列: the album stops waiting in the lane; jobs already started are not touched.",
+    "operationId": "remove_from_queue",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/QueueAlbum"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/QueueStatus"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Remove From Queue",
+    "tags": [
+     "workshop"
+    ]
+   }
+  },
+  "/workshop/queue/resume": {
+   "post": {
+    "operationId": "resume_queue",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/QueueStatus"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Resume Queue",
+    "tags": [
+     "workshop"
+    ]
+   }
+  },
+  "/workshop/queue/start": {
+   "post": {
+    "description": "按顺序开始生成: the albums start one after another (each renders its missing panels).",
+    "operationId": "start_queue",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/QueueAlbums"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/QueueStatus"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Start Queue",
     "tags": [
      "workshop"
     ]

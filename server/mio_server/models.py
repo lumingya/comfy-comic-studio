@@ -521,6 +521,13 @@ class Series(StrictModel):
     cover_asset_id: str | None = Field(
         default=None, description="Chosen cover image; None = automatic (the first image)."
     )
+    concurrency: int | None = Field(
+        default=None,
+        ge=1,
+        le=128,
+        description="Panels this album renders at once (装配队列「并发」); None = the queue "
+        "default.  A change applies to the running job from its next panel.",
+    )
     created_at: str = Field(default_factory=now_iso)
     updated_at: str = Field(default_factory=now_iso)
     deleted_at: str | None = None
@@ -556,6 +563,30 @@ class SeriesPatch(StrictModel):
     default_profile_id: str | None = None
     cover_asset_id: str | None = None
     presets: list[Preset] | None = None
+    concurrency: int | None = Field(default=None, ge=1, le=128)
+
+
+class WorkshopQueue(StrictModel):
+    """装配队列 state kept by the server (legacy production queue): the order of the task cards,
+    the sequential lane of 「按顺序开始生成」, and the default panel concurrency."""
+
+    id: str = "queue"
+    order: list[str] = Field(
+        default_factory=list, description="Album ids in card order; unlisted albums follow."
+    )
+    lane: list[str] = Field(
+        default_factory=list, description="Albums waiting to start one after another."
+    )
+    paused: bool = Field(default=False, description="The lane is held (全局暂停).")
+    active: str | None = Field(default=None, description="Album the lane started last.")
+    active_job: str | None = None
+    concurrency: int | None = Field(
+        default=None, ge=1, le=128, description="Default panels per album; None = automatic."
+    )
+    notices: dict[str, str] = Field(
+        default_factory=dict, description="Album id → why the lane could not start it."
+    )
+    updated_at: str = Field(default_factory=now_iso)
 
 
 class EpisodeCreate(StrictModel):

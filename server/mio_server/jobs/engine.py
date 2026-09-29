@@ -301,6 +301,18 @@ class JobEngine(EngineRuntime):
         self.wake.set()
         return self.get(job_id)
 
+    def set_window(self, job_id: str, window: int) -> dict:
+        """How many items of the job may run at once; applies from the next dispatch."""
+        with self.lock, self.db:
+            self._require(job_id)
+            self.db.execute(
+                "UPDATE jobs SET window = ?, updated = ? WHERE id = ?",
+                (max(1, int(window)), time.time(), job_id),
+            )
+            self._event(job_id, None, "window", {"window": max(1, int(window))})
+        self.wake.set()
+        return self.get(job_id, items=False)
+
     def cancel(self, job_id: str) -> dict:
         """Immediate stop: pending → canceled; running → canceled now, worker signalled, result dropped."""
         hooks = []

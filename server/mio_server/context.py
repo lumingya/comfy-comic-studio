@@ -32,6 +32,7 @@ from .pipeline import providers as PV
 from .pipeline.cloud_jobs import CloudExecutor
 from .pipeline.qa import QAService
 from .pipeline.render import RenderService
+from .queue import ProductionQueue
 from .registry import Registry
 from .render_models import ComfyInstance
 from .storage import SQLiteStore
@@ -65,6 +66,7 @@ class AppContext:
     tokens: TokenStore | None = None
     webhooks: Dispatcher | None = None
     updater: Updater | None = None
+    queue: ProductionQueue | None = None
 
     @classmethod
     def create(
@@ -120,7 +122,14 @@ class AppContext:
                 log.info("trash: purged %d expired items", purged)
         except Exception:  # never block start-up on housekeeping
             log.exception("trash expiry failed")
-        ctx.closers += [lambda: engine.close(wait=False), store.close, ctx.webhooks.close]
+        ctx.queue = ProductionQueue(store, engine, render, data_dir, autostart=autostart)
+        # Closers run last-first: the lane thread stops before the engine and the store.
+        ctx.closers += [
+            lambda: engine.close(wait=False),
+            store.close,
+            ctx.webhooks.close,
+            ctx.queue.close,
+        ]
         return ctx
 
     # ------------------------------------------------------------- helpers
