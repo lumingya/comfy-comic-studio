@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { framesBatch, suggestBasePrompt } from './frameBatch';
+import { framesBatch, restoredOrder, suggestBasePrompt } from './frameBatch';
 
 describe('suggestBasePrompt (legacy suggestStoryBasePrompt)', () => {
   it('returns the shared leading segments', () => {
@@ -37,5 +37,21 @@ describe('framesBatch (legacy createFramesBatch)', () => {
       '第 511 幕',
       '第 512 幕',
     ]);
+  });
+});
+
+describe('restoredOrder', () => {
+  it('puts the re-imported frames back where they were', () => {
+    // a b c d e, b and d deleted, then x added; b′ d′ re-imported at the end.
+    const out = restoredOrder(
+      ['a', 'b', 'c', 'd', 'e'],
+      ['b', 'd'],
+      ['b2', 'd2'],
+      ['a', 'c', 'e', 'x', 'b2', 'd2'],
+    );
+    expect(out).toEqual(['a', 'b2', 'c', 'd2', 'e', 'x']);
+  });
+  it('skips frames removed in the meantime', () => {
+    expect(restoredOrder(['a', 'b', 'c'], ['a'], ['a2'], ['c', 'a2'])).toEqual(['a2', 'c']);
   });
 });

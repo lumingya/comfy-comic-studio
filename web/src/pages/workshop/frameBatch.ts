@@ -45,3 +45,24 @@ export function framesBatch({
     overrides: { raw_prompt: basePrompt },
   }));
 }
+
+/**
+ * Undo of 批量删除: the deleted frames come back (re-imported with fresh ids, `fresh[i]` for
+ * `deleted[i]`) at their old places. Frames added since stay, after the ones that existed.
+ */
+export function restoredOrder(
+  original: string[],
+  deleted: string[],
+  fresh: string[],
+  current: string[],
+): string[] {
+  const back = new Map(deleted.map((id, i) => [id, fresh[i]]));
+  const now = new Set(current);
+  const order = original.flatMap((id) => {
+    const again = back.get(id);
+    if (again) return now.has(again) ? [again] : [];
+    return now.has(id) ? [id] : [];
+  });
+  const placed = new Set(order);
+  return [...order, ...current.filter((id) => !placed.has(id))];
+}

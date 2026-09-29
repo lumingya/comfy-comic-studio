@@ -7,6 +7,7 @@ import { useToasts } from '../../components/toast';
 import StoryboardEditor from './StoryboardEditor';
 const toasts = () => useToasts.getState().items.map((i) => i.text);
 let ep: Episode;
+vi.mock('../../components/confirm', () => ({ confirm: vi.fn().mockResolvedValue(true) }));
 vi.mock('../episode/EpisodePage', () => ({ useEpisodeContext: () => ({ episode: ep, series }) }));
 beforeEach(() => {
   ep = structuredClone(episode);
@@ -208,5 +209,60 @@ describe('负向「应用到所有分幕」', () => {
     expect(order).toEqual(['patch', 'batch']);
     expect(ep.panels.map((p) => p.overrides.raw_negative)).toEqual(['blurry', 'blurry']);
     expect(ep.panels[0].overrides.raw_prompt).toBe('typed prompt');
+  });
+});
+
+describe('bulk delete (legacy workshop-frame-delete-bulk)', () => {
+  const routes = () => ({
+    'GET /api/workshop': series,
+    'POST /api/episodes/sb_test/panels/batch-delete': (body: unknown) => {
+      const { panel_ids } = body as { panel_ids: string[] };
+      ep = { ...ep, panels: ep.panels.filter((p) => !panel_ids.includes(p.id!)) };
+      return ep;
+    },
+    'POST /api/episodes/sb_test/panels/import': (body: unknown) => {
+      const { panels } = body as { panels: object[] };
+      ep = {
+        ...ep,
+        panels: [
+          ...ep.panels,
+          ...panels.map(
+            (p, i) => ({ ...p, id: `back${i}`, order: 50 + i }) as Episode['panels'][0],
+          ),
+        ],
+      };
+      return ep;
+    },
+    'POST /api/episodes/sb_test/panels/reorder': (body: unknown) => {
+      const { order } = body as { order: string[] };
+      ep = {
+        ...ep,
+        panels: ep.panels.map((p) => ({ ...p, order: order.indexOf(p.id!) })),
+      };
+      return ep;
+    },
+  });
+
+  it('refuses to delete every frame', async () => {
+    const calls = mockFetch(routes());
+    renderWithProviders(<StoryboardEditor />);
+    fireEvent.click(rows()[0], { ctrlKey: true });
+    fireEvent.click(rows()[1], { shiftKey: true });
+    fireEvent.keyDown(document.activeElement!, { key: 'Delete' });
+    await waitFor(() => expect(toasts()).toContain('分镜至少保留一幕。'));
+    expect(calls.some((c) => c.url.includes('batch-delete'))).toBe(false);
+  });
+
+  it('can be undone: the frames come back where they were', async () => {
+    const calls = mockFetch(routes());
+    renderWithProviders(<StoryboardEditor />);
+    fireEvent.click(rows()[0], { ctrlKey: true });
+    fireEvent.keyDown(document.activeElement!, { key: 'Delete' });
+    await waitFor(() => expect(toasts()).toContain('已删除 1 幕分镜'));
+    const undo = useToasts.getState().items.find((i) => i.text === '已删除 1 幕分镜')!;
+    undo.action!.onClick();
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith('/panels/reorder'))).toBe(true));
+    const reorder = calls.find((c) => c.url.endsWith('/panels/reorder'))!;
+    expect(reorder.body).toMatchObject({ order: ['back0', 'p1'] });
   });
 });

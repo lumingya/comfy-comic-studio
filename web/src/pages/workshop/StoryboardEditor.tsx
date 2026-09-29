@@ -36,7 +36,7 @@ import { shortcutBlocked } from '../../app/shortcuts';
 import { SaveState } from '../../components/SaveState';
 import { captionText, replaceCaption } from './caption';
 import { BatchFramesDialog, type BatchFramesResult } from './BatchFramesDialog';
-import { MAX_FRAMES } from './frameBatch';
+import { MAX_FRAMES, restoredOrder } from './frameBatch';
 import { confirm } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
 import {
@@ -136,19 +136,52 @@ export default function StoryboardEditor() {
     if (editorSave.current) await flushDraft(editorSave.current);
   };
   const basePrompt = () => episode.base_prompt ?? '';
+  const restore = useImportPanels(episode.id!);
+  /** Legacy workshop-frame-delete-bulk: at least one frame stays, and the deletion can be undone. */
   const removeSelected = async (ids: string[]) => {
+    if (!ids.length || removeMany.isPending) return;
+    if (ids.length >= panels.length) {
+      toastError(new Error(t('ws.story.menu.keepOne')));
+      return;
+    }
     if (
-      !ids.length ||
-      removeMany.isPending ||
-      ids.length >= panels.length ||
-      !(await confirm({ title: t('batch.deleteTitle', { count: ids.length }), danger: true }))
+      !(await confirm({
+        title: t('batch.deleteTitle', { count: ids.length }),
+        description: t('ws.story.deleteUndoable'),
+        danger: true,
+      }))
     )
       return;
     try {
       if (editorSave.current) await flushDraft(editorSave.current).catch(() => undefined);
+      const original = [...panelIds];
+      const gone = panels.filter((p) => ids.includes(p.id!));
       await removeMany.mutateAsync(ids);
       if (active?.id && ids.includes(active.id)) editorSave.current?.discard();
       selection.clear();
+      toast(t('ws.story.deleted', { count: gone.length }), {
+        duration: 10_000,
+        action: {
+          label: t('common.undo'),
+          onClick: () =>
+            void (async () => {
+              const ep = (await restore.mutateAsync({
+                panels: gone as unknown as Record<string, unknown>[],
+                after: null,
+              })) as unknown as { panels: Panel[] };
+              const current = [...ep.panels].sort((a, b) => a.order - b.order).map((p) => p.id!);
+              const fresh = current.slice(-gone.length);
+              await reorder.mutateAsync(
+                restoredOrder(
+                  original,
+                  gone.map((p) => p.id!),
+                  fresh,
+                  current,
+                ),
+              );
+            })().catch(toastError),
+        },
+      });
     } catch (error) {
       toastError(error);
     }

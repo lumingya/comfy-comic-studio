@@ -297,7 +297,19 @@ export default function AssemblyTab() {
     );
   };
   const dequeue = (task: Task) =>
-    act.mutate({ action: 'remove', id: task.album.id! }, { onError: toastError });
+    act.mutate(
+      { action: 'remove', id: task.album.id! },
+      {
+        onError: toastError,
+        // The button is replaced: keep the keyboard on this card.
+        onSuccess: () => {
+          if (document.activeElement === document.body)
+            document
+              .querySelector<HTMLElement>(`[data-production-task="${task.album.id}"]`)
+              ?.focus({ preventScroll: true });
+        },
+      },
+    );
   const reorder = (next: string[] | null) => {
     if (next) act.mutate({ action: 'order', ids: next }, { onError: toastError });
   };
