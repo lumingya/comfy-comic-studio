@@ -53,11 +53,11 @@ def display_name(series: Series, values: dict[str, str] | None = None) -> str:
     """主演 (the templates' ``{{characterName}}``, legacy ``resolveCharacterNames``): the preset's
     角色展示名, else the characters of the bible, else the character prompt name."""
     values = values if values is not None else V.series_table(series)
-    shown = V.expand(str(series.variables.get("character_display_name") or ""), values).strip()
+    shown = V.display(str(series.variables.get("character_display_name") or ""), values).strip()
     if shown:
         return shown
     cast = "、".join(c.name for c in series.bible.characters if c.name.strip())
-    return cast or V.expand(str(series.variables.get("character") or ""), values).strip()
+    return cast or V.display(str(series.variables.get("character") or ""), values).strip()
 
 
 def caption(series: Series, panel) -> str:
@@ -68,7 +68,7 @@ def caption(series: Series, panel) -> str:
         if d.kind == DialogueKind.sfx:
             continue
         who = names.get(d.speaker_id or "", "")
-        text = V.expand(d.text, values)
+        text = V.display(d.text, values)
         if d.kind in (DialogueKind.narration, DialogueKind.caption) or not who:
             lines.append(text)
         else:
@@ -168,7 +168,7 @@ def episode_book(
     # Text outside the panels uses the album's variables too: a synopsis written in the workshop
     # says {style} / {character_display_name} just like the prompts do (unknown names stay).
     values = V.series_table(series)
-    episode_title = V.expand(ep.title, values).strip() or f"第 {ep.order + 1} 话"
+    episode_title = V.display(ep.title, values).strip() or f"第 {ep.order + 1} 话"
     _, count = ctx.store.episode_summaries(series.id, 0, 1)
     # Legacy books: the cover shows the album's own name and 「CHAPTER 01 / …」 the story's; an
     # album of several episodes names each book after its episode.
@@ -176,7 +176,7 @@ def episode_book(
     return Book(
         title=series.title if single else episode_title,
         frames=frames,
-        synopsis=V.expand(ep.synopsis, values),
+        synopsis=V.display(ep.synopsis, values),
         character_name=display_name(series, values),
         story_title=episode_title if single else series.title,
     )

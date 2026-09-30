@@ -16,6 +16,7 @@ import hashlib
 import re
 
 from ..models import DialogueKind, Gender, Panel, Series, parse_ratio
+from ..pipeline import variables as V
 
 MOVES = ("still", "push_in", "pull_out", "pan_left", "pan_right", "pan_up", "pan_down", "shake")
 MIN_HOLD, MAX_HOLD = 2.0, 14.0
@@ -81,13 +82,14 @@ def voice_for(series: Series, speaker_id: str | None, kind: DialogueKind) -> dic
 
 def lines(series: Series, panel: Panel) -> list[dict]:
     names = {c.id: c.name for c in series.bible.characters}
+    values = V.table(series, panel)
     out = []
     for d in panel.dialogues:
         if d.kind == DialogueKind.sfx:
             continue
         out.append(
             {
-                "text": d.text,
+                "text": V.display(d.text, values),
                 "kind": d.kind.value,
                 "speaker": names.get(d.speaker_id or "", ""),
                 "voice": voice_for(series, d.speaker_id, d.kind),

@@ -35,13 +35,15 @@ export interface WorksFilter {
   sort: Sort;
 }
 
-/** Search (title / subtitle), status and sort, all client-side. Exported for tests. */
+/** Search (title / subtitle / 简介, like legacy), status and sort, all client-side. Exported for tests. */
 export function filterWorks(items: SeriesCard[], f: WorksFilter, locale: string): SeriesCard[] {
   const q = f.q.trim().toLocaleLowerCase(locale);
   const out = items.filter((s) => {
     if (f.status && (s.status ?? 'draft') !== f.status) return false;
     if (!q) return true;
-    return `${s.title}\n${s.subtitle ?? ''}`.toLocaleLowerCase(locale).includes(q);
+    return `${s.title}\n${s.subtitle ?? ''}\n${s.synopsis ?? ''}`
+      .toLocaleLowerCase(locale)
+      .includes(q);
   });
   const collator = new Intl.Collator(locale, { numeric: true });
   return out.sort((a, b) => {

@@ -98,7 +98,7 @@ def _specs(
     for d in panel.dialogues:
         spec = {
             "kind": d.kind.value,
-            "text": V.expand(d.text, values),
+            "text": V.display(d.text, values),
             "speaker": None if d.kind == DialogueKind.narration else d.speaker_id,
             "vertical": vertical and d.kind != DialogueKind.sfx,
         }

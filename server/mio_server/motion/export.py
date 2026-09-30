@@ -70,8 +70,8 @@ def episode_motion(ctx, episode_id: str, variant_id: str | None, opts: MotionOpt
     return {
         "schema": "mio.motion.v1",
         "series": series.title,
-        "title": V.expand(ep.title, values).strip() or f"第 {ep.order + 1} 话",
-        "synopsis": V.expand(ep.synopsis, values),
+        "title": V.display(ep.title, values).strip() or f"第 {ep.order + 1} 话",
+        "synopsis": V.display(ep.synopsis, values),
         "shots": shots,
     }
 

@@ -100,6 +100,46 @@ def expand(text: str, values: dict[str, str]) -> str:
     return one(text, 0).replace("{{", "{").replace("}}", "}") if text else text
 
 
+_BLANK = "\x00"
+_WORD = re.compile(r"\w{1,64}")
+_BLANK_RUN = re.compile(r"\x00(?:[ \t]*[、，,/／·][ \t]*\x00)+")
+_BLANK_THEN_SEP = re.compile(r"\x00[ \t]*[、，,/／][ \t]*")
+_SEP_THEN_BLANK = re.compile(r"[ \t]*[、，,/／][ \t]*\x00")
+
+
+def display(text: str, values: dict[str, str]) -> str:
+    """Reader-facing text (captions, an album's title, synopsis and 主演): :func:`expand`, except
+    that a ``{name}`` that stays unresolved is blanked the way the legacy books blanked caption
+    variables, instead of showing ``{female_name}`` to the reader.  One separator next to a blanked
+    name goes with it (``七海、{a}、{b}`` → ``七海``); ``{{`` / ``}}`` escapes still print braces and
+    braces that are not a plain name (``{a|b}``, ``{ x }``) are left alone."""
+    if not text:
+        return text
+
+    def one(s: str, depth: int) -> str:
+        def sub(m: re.Match) -> str:
+            token = m.group(0)
+            if token in ("{{", "}}"):
+                return token
+            name = m.group(1).strip()
+            if name not in values:
+                return _BLANK if _WORD.fullmatch(name) else token
+            value = str(values[name])
+            if not value.strip():
+                return _BLANK  # an empty value takes its separator along, like a missing one
+            return one(value, depth + 1) if depth < MAX_DEPTH else value
+
+        return PATTERN.sub(sub, s)
+
+    out = one(text, 0)
+    if _BLANK in out:
+        out = _BLANK_RUN.sub(_BLANK, out)
+        out = _BLANK_THEN_SEP.sub("", out)
+        out = _SEP_THEN_BLANK.sub("", out)
+        out = re.sub(r"[ \t]{2,}", " ", out.replace(_BLANK, "")).strip()
+    return out.replace("{{", "{").replace("}}", "}")
+
+
 def unknown(text: str, values: dict[str, str]) -> list[str]:
     """Names in ``text`` that would stay unresolved (shown as warnings in the UI)."""
     return sorted(

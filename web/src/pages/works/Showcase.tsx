@@ -187,7 +187,7 @@ export function Showcase(props: {
           / {t('classic.shelf.frames', { count: b.panel_count ?? 0 })}
         </div>
         <h2>{b.title}</h2>
-        <p className="synopsis">{b.subtitle || t('classic.shelf.noSynopsis')}</p>
+        <p className="synopsis">{b.synopsis || b.subtitle || t('classic.shelf.noSynopsis')}</p>
         <div className="edition-byline">
           {cast.length ? cast.slice(0, 3).join(' · ') : t('classic.shelf.original')}
         </div>

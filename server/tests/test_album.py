@@ -122,7 +122,7 @@ class AlbumApiTests(ApiCase):
         )
 
     def test_book_text_uses_album_variables_like_legacy(self):
-        """The cover resolves {变量} in the synopsis (unknown names stay, as in prompts), 主演 is
+        """The cover resolves {变量} in the synopsis (unknown names are blanked for readers), 主演 is
         the preset's 展示名, and — like legacy books — the cover title is the album's own name
         while CHAPTER shows the story's."""
         series, ep = self.make_episode()
@@ -147,11 +147,21 @@ class AlbumApiTests(ApiCase):
         title, story, synopsis, starring = text.split("|")
         self.assertEqual(title, "雨夜便利店")
         self.assertEqual(story, ep["title"])
-        self.assertEqual(synopsis, "七海的夏天，水彩，&#123;unknown&#125;")
+        self.assertEqual(synopsis, "七海的夏天，水彩")
         self.assertEqual(starring, "七海")
-        self.assertEqual(
-            metadata(doc)["books"][0]["album"]["synopsis"], "七海的夏天，水彩，{unknown}"
+        self.assertEqual(metadata(doc)["books"][0]["album"]["synopsis"], "七海的夏天，水彩")
+
+    def test_shelf_card_carries_the_resolved_synopsis(self):
+        """画册集 shows the album's 简介 (legacy ``book.synopsis``) with the album variables applied."""
+        series, ep = self.make_episode()
+        self.ctx.store.update_series(
+            series["id"], lambda s: setattr(s, "variables", {"character_display_name": "七海"})
         )
+        self.ctx.store.update_episode(
+            ep["id"], lambda e: setattr(e, "synopsis", "{character_display_name}的夏天、{unknown}")
+        )
+        cards = {c["id"]: c for c in self.ok(self.client.get("/api/series"))}
+        self.assertEqual(cards[series["id"]]["synopsis"], "七海的夏天")
 
     def test_template_import_list_delete(self):
         listed = {t["id"]: t for t in self.ok(self.client.get("/api/album-templates"))}

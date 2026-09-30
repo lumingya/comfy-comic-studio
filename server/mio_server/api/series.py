@@ -19,6 +19,7 @@ from ..models import (
     TakeStatus,
 )
 from ..pipeline import assistant as A
+from ..pipeline import variables as V
 from ..pipeline.compiler import preview as prompt_preview
 from ..pipeline.refs import select_references
 from ..storage import NotFound
@@ -95,6 +96,7 @@ def list_series(ctx: Ctx, deleted: bool = False) -> list[SeriesCard]:
                 adopted_count=s.get("adopted", 0),
                 cover_asset_id=chosen or s.get("cover"),
                 cover_auto=not chosen,
+                synopsis=V.display(s.get("synopsis") or "", V.series_table(series)),
             )
         )
     return cards

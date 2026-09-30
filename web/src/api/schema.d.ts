@@ -3824,6 +3824,12 @@ export interface components {
              * @default true
              */
             cover_auto: boolean;
+            /**
+             * Synopsis
+             * @description The first episode's synopsis with the album variables applied (the shelf's 简介)
+             * @default
+             */
+            synopsis: string;
         };
         /** SeriesCreate */
         SeriesCreate: {

@@ -4472,6 +4472,12 @@
       "title": "Subtitle",
       "type": "string"
      },
+     "synopsis": {
+      "default": "",
+      "description": "The first episode's synopsis with the album variables applied (the shelf's 简介)",
+      "title": "Synopsis",
+      "type": "string"
+     },
      "title": {
       "title": "Title",
       "type": "string"
@@ -4515,7 +4521,8 @@
      "episode_count",
      "panel_count",
      "adopted_count",
-     "cover_auto"
+     "cover_auto",
+     "synopsis"
     ],
     "title": "SeriesCard",
     "type": "object"

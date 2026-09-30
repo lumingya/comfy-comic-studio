@@ -637,6 +637,10 @@ class SeriesCard(Series):
     panel_count: int = 0
     adopted_count: int = 0
     cover_auto: bool = True
+    synopsis: str = Field(
+        default="",
+        description="The first episode's synopsis with the album variables applied (the shelf's 简介)",
+    )
 
 
 class SeriesCreate(StrictModel):

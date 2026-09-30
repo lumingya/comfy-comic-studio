@@ -29,6 +29,12 @@ describe('filterWorks', () => {
     expect(filterWorks(items, { ...f, q: '番外' }, 'zh-CN').map((s) => s.id)).toEqual(['b']);
   });
 
+  it('also searches the resolved 简介 (legacy searched book.synopsis)', () => {
+    const withSynopsis = [...items, card('d', '海边', { synopsis: '七海在海边停下脚步' })];
+    const f = { q: '停下脚步', status: '' as const, sort: 'updated' as const };
+    expect(filterWorks(withSynopsis, f, 'zh-CN').map((s) => s.id)).toEqual(['d']);
+  });
+
   it('filters by status and sorts', () => {
     const all = { q: '', status: '' as const, sort: 'updated' as const };
     expect(filterWorks(items, all, 'zh-CN').map((s) => s.id)).toEqual(['b', 'a', 'c']);

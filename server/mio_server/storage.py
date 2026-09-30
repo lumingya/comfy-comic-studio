@@ -184,13 +184,15 @@ class SQLiteStore:
         return [Series.model_validate_json(row["payload_json"]) for row in rows]
 
     def series_stats(self) -> dict[str, dict]:
-        """``series_id → {episodes, panels, adopted, cover}`` over live episodes; the cover is
-        the first adopted panel of the earliest episode that has one, else the first image."""
+        """``series_id → {episodes, panels, adopted, cover, synopsis}`` over live episodes; the
+        cover is the first adopted panel of the earliest episode that has one, else the first
+        image; the synopsis is the first episode's that has one (the shelf's 简介)."""
         rows = self._rows(
             f"""SELECT e.series_id AS sid, e.panel_count AS panels, {EPISODE_ADOPTED} AS adopted,
                    {EPISODE_COVER} AS cover,
                    (SELECT json_extract(t.value, '$.asset_id') {_ADOPTED_TAKES}
-                    ORDER BY json_extract(p.value, '$.order') LIMIT 1) AS adopted_cover
+                    ORDER BY json_extract(p.value, '$.order') LIMIT 1) AS adopted_cover,
+                   json_extract(e.payload_json, '$.synopsis') AS synopsis
                FROM episodes e
                WHERE e.deleted_at IS NULL ORDER BY e.series_id, e.episode_order, e.id"""
         )
@@ -198,13 +200,21 @@ class SQLiteStore:
         for r in rows:
             s = stats.setdefault(
                 r["sid"],
-                {"episodes": 0, "panels": 0, "adopted": 0, "cover": None, "any": None},
+                {
+                    "episodes": 0,
+                    "panels": 0,
+                    "adopted": 0,
+                    "cover": None,
+                    "any": None,
+                    "synopsis": "",
+                },
             )
             s["episodes"] += 1
             s["panels"] += r["panels"] or 0
             s["adopted"] += r["adopted"] or 0
             s["cover"] = s["cover"] or r["adopted_cover"]
             s["any"] = s["any"] or r["cover"]
+            s["synopsis"] = s["synopsis"] or (r["synopsis"] or "").strip()
         for s in stats.values():
             s["cover"] = s["cover"] or s.pop("any")
             s.pop("any", None)
