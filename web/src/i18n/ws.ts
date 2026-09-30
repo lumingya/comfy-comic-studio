@@ -1140,7 +1140,10 @@ export const readerZh = {
   },
   importTemplate: '导入',
   imported: '模板「{{title}}」已导入',
-  badTemplate: '不是有效的展示模板 JSON',
+  badTemplate: '不是有效的画册模板文件（HTML 或 JSON）',
+  notTemplate: '这份 JSON 不是画册模板，请使用对应的导入入口',
+  badTemplateMeta: 'HTML 模板元数据损坏',
+  templateFromHtml: '从 HTML 导入的自定义画册模板。',
   profile: '图片处理',
   profiles: {
     auto: {
@@ -1332,7 +1335,10 @@ export const readerEn: Widen<typeof readerZh> = {
   },
   importTemplate: 'Import',
   imported: 'Template “{{title}}” imported',
-  badTemplate: 'Not a valid presentation template JSON',
+  badTemplate: 'Not a valid album template file (HTML or JSON)',
+  notTemplate: 'This JSON is not an album template — use the matching import',
+  badTemplateMeta: 'The HTML template metadata is damaged',
+  templateFromHtml: 'A custom album template imported from HTML.',
   profile: 'Image processing',
   profiles: {
     auto: {

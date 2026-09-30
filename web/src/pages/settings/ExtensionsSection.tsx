@@ -175,7 +175,7 @@ export function ExtensionsSection() {
         </p>
         <Switch checked={replace} onChange={setReplace} label={t('settings.ext.replace')} />
         <FilePick
-          accept=".zip,application/zip"
+          accept=".zip"
           disabled={install.isPending}
           onFile={(file) =>
             install.mutate(

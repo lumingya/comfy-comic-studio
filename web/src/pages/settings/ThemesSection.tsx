@@ -104,7 +104,7 @@ export function ThemesSection() {
         <p className="small muted grow" style={{ margin: 0 }}>
           {t('settings.themes.hint')}
         </p>
-        <FilePick accept=".json,application/json" onFile={onFile}>
+        <FilePick accept=".json" onFile={onFile}>
           <Upload size={15} /> {t('settings.themes.import')}
         </FilePick>
       </div>

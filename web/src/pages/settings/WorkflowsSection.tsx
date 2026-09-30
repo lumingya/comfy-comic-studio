@@ -121,7 +121,7 @@ export function WorkflowsSection() {
           <h2>{t('config.workflow.title')}</h2>
           <p>{t('config.workflow.intro')}</p>
         </div>
-        <FilePick accept=".json,application/json" disabled={busy} onFile={onFile}>
+        <FilePick accept=".json" disabled={busy} onFile={onFile}>
           <Upload size={15} />
           {t('settings.importWorkflow')}
         </FilePick>

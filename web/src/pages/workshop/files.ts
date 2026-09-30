@@ -20,7 +20,7 @@ export function pickJsonFiles(): Promise<unknown[]> {
   return new Promise((resolve, reject) => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.json,application/json';
+    input.accept = '.json';
     input.multiple = true;
     input.onchange = async () => {
       try {

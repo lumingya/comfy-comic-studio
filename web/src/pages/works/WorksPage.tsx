@@ -494,11 +494,7 @@ export default function WorksPage() {
             <p>{t('works.sub')}</p>
           </div>
           <div className="resource-actions">
-            <FilePick
-              accept=".zip,application/zip"
-              onFile={onBundle}
-              disabled={importBundle.isPending}
-            >
+            <FilePick accept=".zip" onFile={onBundle} disabled={importBundle.isPending}>
               <Icon name="download" />
               {t('works.importBundle')}
             </FilePick>
@@ -515,7 +511,7 @@ export default function WorksPage() {
           <WorksHero
             onCreate={create}
             importAction={
-              <FilePick accept=".zip,application/zip" onFile={onBundle}>
+              <FilePick accept=".zip" onFile={onBundle}>
                 <FolderInput size={15} /> {t('works.importBundle')}
               </FilePick>
             }

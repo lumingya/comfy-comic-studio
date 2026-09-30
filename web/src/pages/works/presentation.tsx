@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { download, downloadPost, raw } from '../../api/client';
 import { useImportAlbumTemplate, type AlbumTemplateInfo } from '../../api/open';
 import { TemplateStudio } from './TemplateStudio';
+import { parseTemplateFile, TemplateFileError } from './templateFile';
 import { useExportPresets } from '../../api/production';
 import { Icon } from '../../app/icons';
 import { toast, toastError } from '../../components/toast';
@@ -308,7 +309,7 @@ type Job = 'html' | 'zip' | 'pdf' | 'slices' | 'long';
 export function PresentationDrawer(props: {
   open: boolean;
   onClose: () => void;
-  templates: { id: string; title: string; description: string }[];
+  templates: { id: string; title: string; description: string; accent?: string }[];
   infos: AlbumTemplateInfo[];
   look: string;
   native: string;
@@ -351,6 +352,14 @@ export function PresentationDrawer(props: {
     ? props.templates.filter((x) => `${x.title} ${x.description}`.toLowerCase().includes(needle))
     : props.templates;
   const preset = presets.data?.find((p) => p.id === d.preset);
+  // The chosen template stays in view: after an import it is at the end of the list.
+  const listRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!props.open) return;
+    listRef.current
+      ?.querySelector<HTMLElement>('.presentation-choice[aria-pressed="true"]')
+      ?.scrollIntoView?.({ block: 'nearest' });
+  }, [props.open, props.look, shown.length]);
   const platformPresets = (presets.data ?? []).filter((p) => p.width > 0);
 
   const run = async (job: Job, go: () => Promise<Response>) => {
@@ -415,18 +424,25 @@ export function PresentationDrawer(props: {
     return run(fmt, () => download(`/api/episodes/${ep}/export?${q}`, name));
   };
   const importFile = async (f: File) => {
+    let body: Record<string, unknown>;
     try {
-      const body = JSON.parse(await f.text());
-      importTpl.mutate(body, {
-        onSuccess: (tpl) => {
-          toast(t('reader.imported', { title: tpl.title }));
-          props.onLook(tpl.id);
-        },
-        onError: toastError,
+      body = parseTemplateFile(await f.text(), f.name, {
+        invalid: t('reader.badTemplate'),
+        notTemplate: t('reader.notTemplate'),
+        badMeta: t('reader.badTemplateMeta'),
+        fromHtml: t('reader.templateFromHtml'),
       });
-    } catch {
-      toastError(new Error(t('reader.badTemplate')));
+    } catch (e) {
+      toastError(e instanceof TemplateFileError ? e : new Error(t('reader.badTemplate')));
+      return;
     }
+    importTpl.mutate(body, {
+      onSuccess: (tpl) => {
+        toast(t('reader.imported', { title: tpl.title }));
+        props.onLook(tpl.id);
+      },
+      onError: toastError,
+    });
   };
 
   return (
@@ -463,7 +479,7 @@ export function PresentationDrawer(props: {
           onChange={(e) => setQuery(e.target.value)}
         />
       </label>
-      <div id="presentation-template-list">
+      <div id="presentation-template-list" ref={listRef}>
         {shown.length ? (
           shown.map((x) => (
             <button
@@ -477,7 +493,10 @@ export function PresentationDrawer(props: {
                 props.onMotion(false);
               }}
             >
-              <span className="presentation-swatch">
+              <span
+                className="presentation-swatch"
+                style={x.accent ? ({ '--swatch': x.accent } as CSSProperties) : undefined}
+              >
                 <Icon name={x.id === props.native ? 'image' : 'book'} />
               </span>
               <span>
@@ -514,7 +533,7 @@ export function PresentationDrawer(props: {
         <input
           ref={file}
           type="file"
-          accept=".json,application/json"
+          accept=".html,.htm,.json"
           hidden
           onChange={(e) => {
             const f = e.target.files?.[0];

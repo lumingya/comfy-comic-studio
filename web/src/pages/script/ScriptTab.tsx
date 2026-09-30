@@ -483,7 +483,7 @@ export default function ScriptTab() {
           <input
             ref={fileInput}
             type="file"
-            accept="application/json,.json"
+            accept=".json"
             hidden
             onChange={(e) => {
               const file = e.target.files?.[0];

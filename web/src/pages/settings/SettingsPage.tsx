@@ -105,7 +105,7 @@ function DataSection() {
             {t('legacy.settings.legacyImport')}
           </button>
           <FilePick
-            accept=".zip,application/zip"
+            accept=".zip"
             disabled={importBundle.isPending}
             onFile={(file) =>
               importBundle.mutate(file, {
