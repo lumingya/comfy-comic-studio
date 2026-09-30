@@ -34,14 +34,21 @@ _MISSING_SVG = (
 )
 MISSING = "data:image/svg+xml;base64," + base64.b64encode(_MISSING_SVG.encode()).decode()
 
+# Legacy compileTemplateDocument's base style.  The reader controls and the blank end paper get
+# zero-specificity fallbacks (:where) so a template's own .cc-controls / .cc-blank design wins.
 BASE_STYLE = (
     "[hidden]{display:none!important}[data-cc-prompt]:empty{display:none!important}"
-    ".cc-controls{display:flex;gap:14px;align-items:center;justify-content:center;margin:18px 0;"
-    "font:14px system-ui}.cc-controls button{width:40px;height:40px;border-radius:50%;"
-    "border:1px solid currentColor;background:transparent;color:inherit;font-size:20px;"
-    "cursor:pointer}.cc-controls button:disabled{opacity:.3;cursor:default}"
-    ".cc-blank{display:grid;place-items:center;opacity:.35}"
-    "@media print{[data-cc-frame][hidden]{display:block!important}.cc-controls{display:none}}"
+    ":where(.cc-controls){display:flex;gap:14px;align-items:center;justify-content:center;"
+    "margin:18px 0;font:13px system-ui}:where(.cc-controls button){min-height:36px;"
+    "padding:8px 16px;border-radius:999px;border:1px solid currentColor;background:transparent;"
+    "color:inherit;font:inherit;cursor:pointer}:where(.cc-controls button:disabled){opacity:.3;"
+    "cursor:default}:where(.cc-blank){display:grid;place-items:center;opacity:.35}"
+    "@media(max-width:640px){[data-layout=flip] .cc-pages{grid-template-columns:1fr!important}"
+    "[data-layout=flip] .cc-image{height:auto!important;max-height:65svh;object-fit:contain}"
+    "[data-layout=flip] .cc-caption{min-height:0!important}}"
+    "@media print{.edition-cover[hidden],.edition-opening[hidden],.edition-chapter[hidden],"
+    ".cc-cover[hidden],.edition-end[hidden]{display:block!important}"
+    "[data-cc-frame][hidden]{display:block!important}.cc-controls{display:none!important}}"
 )
 
 

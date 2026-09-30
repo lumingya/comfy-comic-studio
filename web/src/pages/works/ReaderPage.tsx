@@ -260,6 +260,16 @@ export default function ReaderPage() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (templateStage && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+        // Legacy installPresentationStudio: a template turns its own spreads (交互画册).
+        if (shortcutBlocked(e, ref.current)) return;
+        const frame = ref.current?.querySelector<HTMLIFrameElement>('#reader-canvas iframe');
+        if (!frame?.contentWindow) return;
+        e.preventDefault();
+        const direction = e.key === 'ArrowRight' ? 1 : -1;
+        frame.contentWindow.postMessage({ type: 'mio-reader-turn', direction }, '*');
+        return;
+      }
       if (!nativeStage || panel || shortcutBlocked(e, ref.current)) return;
       if (e.key === 'ArrowRight' || e.key === 'PageDown') step(1);
       else if (e.key === 'ArrowLeft' || e.key === 'PageUp') step(-1);
@@ -337,6 +347,7 @@ export default function ReaderPage() {
   // Reading mode, paging and the filmstrip drive the native stage only; templates, platform cuts,
   // motion and layout render elsewhere, where those controls would silently do nothing.
   const nativeStage = native && !drawerStage && panel !== 'layout';
+  const templateStage = !native && !drawerStage && panel !== 'layout';
   const context =
     episode.data && series.data
       ? ({ episode: episode.data, series: series.data } satisfies EpisodeContext)
