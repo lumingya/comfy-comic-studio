@@ -22,7 +22,7 @@ import { useFinalize, useQA, useRender } from '../../api/production';
 import { useTakeAction, type TakeAction } from '../../api/series';
 import type { Panel, Take } from '../../api/types';
 import { useSelection } from '../../app/selection';
-import { useUI } from '../../app/ui-store';
+import { useStudio, useUI } from '../../app/ui-store';
 import { ContextMenu, useContextMenu, type ContextGroup } from '../../components/ContextMenu';
 import { toast, toastError } from '../../components/toast';
 import { Empty, Modal, NumberInput, Progress, Select, Switch } from '../../components/ui';
@@ -34,7 +34,9 @@ export default function BoardTab() {
   const { t } = useTranslation();
   const { episode, series } = useEpisodeContext();
   const ui = useUI();
-  const studio = ui.studioMode;
+  // 功能开关: 修图与 AI 质检 and 批量变体 are separate professional tools.
+  const studio = useStudio('retouch');
+  const variantsOn = useStudio('variants');
   const render = useRender(episode.id);
   const finalize = useFinalize(episode.id);
   const qa = useQA(episode.id);
@@ -44,7 +46,8 @@ export default function BoardTab() {
   const [zoomId, setZoomId] = useState<string | null>(null);
 
   const variants = series.variants ?? [];
-  const variantId = variants.some((v) => v.id === ui.variantId) ? ui.variantId : null;
+  // A variant picked earlier only applies while its selector is shown (as in the reader).
+  const variantId = variantsOn && variants.some((v) => v.id === ui.variantId) ? ui.variantId : null;
   const panels = useMemo(
     () => [...episode.panels].sort((a, b) => a.order - b.order),
     [episode.panels],
@@ -217,7 +220,7 @@ export default function BoardTab() {
   return (
     <div className="board">
       <div className="board-toolbar">
-        {studio && variants.length ? (
+        {variantsOn && variants.length ? (
           <Select
             value={variantId ?? ''}
             onChange={(v) => ui.setVariant(v || null)}

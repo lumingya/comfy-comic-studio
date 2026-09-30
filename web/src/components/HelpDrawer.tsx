@@ -10,7 +10,7 @@ import { useWorkshop } from '../api/workshop';
 import { useComfyHealth } from '../app/comfy';
 import { Icon, type IconName } from '../app/icons';
 import { useSetupChecks, useNewStory, type SetupCheck } from '../app/setup';
-import { useUI } from '../app/ui-store';
+import { useStudio, useUI } from '../app/ui-store';
 import { toast, toastError } from './toast';
 import { ownCancel } from './topLayer';
 
@@ -381,7 +381,7 @@ function HelpDrawerBody() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const studio = useUI((s) => s.studioMode);
+  const studio = useStudio('script');
   const section = useHelp((s) => s.section);
   const set = useHelp((s) => s.set);
   const openQuick = useQuickStart((s) => s.set);

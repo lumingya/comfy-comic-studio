@@ -326,7 +326,9 @@ export function PresentationDrawer(props: {
   onVariant: (id: string | null) => void;
   platformOpen: boolean;
   onPlatform: (open: boolean) => void;
-  studio: boolean;
+  /** 功能开关 → 批量变体 / 动态漫. */
+  variantsOn: boolean;
+  motionOn: boolean;
   motionOpen: boolean;
   onMotion: (open: boolean) => void;
 }) {
@@ -610,7 +612,7 @@ export function PresentationDrawer(props: {
             </div>
           </>
         )}
-        {props.studio && props.variants.length ? (
+        {props.variantsOn && props.variants.length ? (
           <div className="field">
             <label className="label" htmlFor="export-variant">
               {t('reader.variant')}
@@ -773,7 +775,7 @@ export function PresentationDrawer(props: {
           </button>
         </div>
       </details>
-      {props.studio ? (
+      {props.motionOn ? (
         <details className="quiet-advanced presentation-motion">
           <summary>{t('reader.motion.title')}</summary>
           <p className="help">{t('reader.motion.hint')}</p>

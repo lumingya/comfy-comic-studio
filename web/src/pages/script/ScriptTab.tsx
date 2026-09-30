@@ -39,7 +39,7 @@ import {
 } from '../../api/series';
 import type { Panel, PromptPreview } from '../../api/types';
 import { useSelection } from '../../app/selection';
-import { useUI } from '../../app/ui-store';
+import { useStudio, useUI } from '../../app/ui-store';
 import { confirm } from '../../components/confirm';
 import { ContextMenu, useContextMenu, type ContextGroup } from '../../components/ContextMenu';
 import { toast, toastError } from '../../components/toast';
@@ -66,7 +66,7 @@ export default function ScriptTab() {
   const render = useRender(episode.id!);
   const patchEpisode = usePatchEpisode(episode.id!);
   const candidates = useUI((s) => s.candidates);
-  const studio = useUI((s) => s.studioMode);
+  const studio = useStudio('script');
   const [assistant, setAssistant] = useState(false);
   const [synopsis, setSynopsis] = useState<string | null>(null);
   const [batch, setBatch] = useState<string[] | null>(null);

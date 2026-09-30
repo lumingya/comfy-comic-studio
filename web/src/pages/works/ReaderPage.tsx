@@ -10,7 +10,7 @@ import { gallerySearch } from '../../app/navigation';
 import { shortcutBlocked } from '../../app/shortcuts';
 import { QueryError } from '../../app/errors';
 import { ownCancel } from '../../components/topLayer';
-import { useUI } from '../../app/ui-store';
+import { useStudio, useUI } from '../../app/ui-store';
 import { pickAdopted } from '../canvas/adopted';
 import type { EpisodeContext } from '../episode/EpisodePage';
 import { MotionExport } from '../episode/MotionExport';
@@ -44,7 +44,10 @@ export default function ReaderPage() {
   const { seriesId } = useParams();
   const { pathname } = useLocation();
   const [params, setParams] = useSearchParams();
-  const studio = useUI((s) => s.studioMode);
+  // 功能开关: 条漫排版与嵌字, 批量变体 and 动态漫 are separate professional tools.
+  const layoutOn = useStudio('layout');
+  const variantsOn = useStudio('variants');
+  const motionOn = useStudio('motion');
   const ref = useRef<HTMLDialogElement>(null);
   // The reading stage is remounted whenever the drawer swaps what the stage shows, so it is tracked
   // as state: measuring and scroll tracking re-attach to the new element.
@@ -340,10 +343,10 @@ export default function ReaderPage() {
   ).sort((a, b) => Number(b.id === NATIVE) - Number(a.id === NATIVE));
   const lookTitle = list.find((x) => x.id === look)?.title ?? t('reader.look.fit');
   const variants = series.data?.variants ?? [];
-  const activeVariant = studio && variants.some((v) => v.id === variantId) ? variantId : null;
+  const activeVariant = variantsOn && variants.some((v) => v.id === variantId) ? variantId : null;
   // What the stage shows while the drawer is open: the template, the platform cuts or motion setup.
   const drawerStage =
-    panel !== 'export' ? '' : motionOpen && studio ? 'motion' : platformOpen ? 'platform' : '';
+    panel !== 'export' ? '' : motionOpen && motionOn ? 'motion' : platformOpen ? 'platform' : '';
   // Reading mode, paging and the filmstrip drive the native stage only; templates, platform cuts,
   // motion and layout render elsewhere, where those controls would silently do nothing.
   const nativeStage = native && !drawerStage && panel !== 'layout';
@@ -441,7 +444,7 @@ export default function ReaderPage() {
           <Icon name="download" sm />
           {t('reader.export')}
         </button>
-        {studio ? (
+        {layoutOn ? (
           <button
             type="button"
             className="btn small"
@@ -491,7 +494,7 @@ export default function ReaderPage() {
               episodeId={epId}
               templateId={look}
               variantId={activeVariant}
-              lettered={studio}
+              lettered={layoutOn}
               draft={draft}
               revision={episode.data?.revision}
             />
@@ -693,13 +696,14 @@ export default function ReaderPage() {
         onMode={setModeSaved}
         episodeId={epId}
         title={series.data?.title ?? ''}
-        lettered={studio}
+        lettered={layoutOn}
         variants={variants}
         variantId={activeVariant}
         onVariant={setVariant}
         platformOpen={platformOpen}
         onPlatform={setPlatformOpen}
-        studio={studio}
+        variantsOn={variantsOn}
+        motionOn={motionOn}
         motionOpen={motionOpen}
         onMotion={setMotionOpen}
       />

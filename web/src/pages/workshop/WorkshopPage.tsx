@@ -15,7 +15,7 @@ import { QueryError } from '../../app/errors';
 import { Icon } from '../../app/icons';
 import { useRecents } from '../../app/recents';
 import { usePageTitle } from '../../app/title';
-import { useUI } from '../../app/ui-store';
+import { useStudio } from '../../app/ui-store';
 import { toast, toastError } from '../../components/toast';
 import { Loading } from '../../components/ui';
 import type { EpisodeContext } from '../episode/EpisodePage';
@@ -419,7 +419,7 @@ function Synopsis({
 
 /** Classic: the legacy frames editor. Studio mode: the full panel workbench. */
 export function StoryBody() {
-  const studio = useUI((s) => s.studioMode);
+  const studio = useStudio('script');
   return studio ? <StudioScript /> : <StoryboardEditor />;
 }
 

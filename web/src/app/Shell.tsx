@@ -12,7 +12,7 @@ import { CollectionSwitch } from './CollectionSwitch';
 import { Icon } from './icons';
 import { NAV } from './nav';
 import { useAppliedTheme, useThemeToggle } from './useTheme';
-import { useUI } from './ui-store';
+import { useStudio, useUI } from './ui-store';
 
 /** The legacy Mio mark: four tilted comic panels. */
 export function BrandMark() {
@@ -223,7 +223,8 @@ function StatusBar() {
 
 export function Shell() {
   const collapsed = useUI((s) => s.navCollapsed);
-  const studio = useUI((s) => s.studioMode);
+  // The classic script list styles key off html:not(.is-studio): follow the script editor switch.
+  const studio = useStudio('script');
   const connected = useLive((s) => s.connected);
   const navigate = useNavigate();
   const { t } = useTranslation();

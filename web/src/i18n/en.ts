@@ -1139,7 +1139,43 @@ const en: Widen<Dict> = {
         body: 'Adds shot & angle, part-level character tags, pose / depth control slots, bleed & gutters, JSON Pointer overrides, batch variants and AI QA.',
       },
       switch: 'Studio mode (Advanced)',
-      switchHint: 'Saved in this browser and kept next time.',
+      switchHint:
+        'When on, the Studio tools switched on below appear on their pages; off returns to Classic. Saved in this browser — nothing you filled in is lost by switching.',
+      modeTitle: 'Creation mode',
+      featuresTitle: 'Keep only what you need',
+      featuresBody:
+        'Core creation always stays; each Studio tool has its own switch and only appears in Studio mode.',
+      toolsLabel: 'Studio tools',
+      core: {
+        title: 'Collection & workshop',
+        body: 'Albums, storyboards, presets and render tasks — in both Classic and Studio.',
+        note: 'Core',
+      },
+      features: {
+        script: {
+          title: 'Studio storyboard editor',
+          body: 'The workshop edits frame by frame: shot & angle, cast and part-level tags, pose / depth control images, seed and JSON Pointer overrides, plus the script assistant and batch import.',
+        },
+        retouch: {
+          title: 'Retouch & AI QA',
+          body: 'While picking, inpaint, outpaint or instruct-edit a candidate, and run vision-model QA on one or many.',
+        },
+        variants: {
+          title: 'Batch variants',
+          body: 'Render the same storyboard with another cast; switch variants while picking, reading and exporting.',
+        },
+        layout: {
+          title: 'Strip layout & lettering',
+          body: 'The reader gains the Layout canvas — bleed, gutters, speech bubbles and SFX; templates and exports use the lettered panels.',
+        },
+        motion: {
+          title: 'Motion comic export',
+          body: 'Export an offline motion-comic player with camera moves, captions and voice from the presentation drawer.',
+        },
+      },
+      summaryOn: 'Studio mode is on: {{count}} of {{total}} Studio tools available.',
+      summaryOff:
+        'Classic mode: every Studio tool is hidden. Turn Studio mode on above and they appear as chosen here.',
     },
   },
   legacy: {

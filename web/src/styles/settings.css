@@ -193,3 +193,96 @@
 .settings-panel {
   min-width: 0;
 }
+
+/* ---------------------------------------------------------------- 功能开关 (legacy settings rows) */
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  min-height: 79px;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.settings-row > .icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+}
+
+.settings-row h3 {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 550;
+}
+
+.settings-row p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.8;
+}
+
+.settings-row-note {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.settings-row.is-muted > .icon,
+.settings-row.is-muted h3,
+.settings-row.is-muted p {
+  opacity: 0.55;
+}
+
+/* The tools belong to the Studio switch above them. */
+.feature-children {
+  margin-left: 8px;
+  padding-left: 27px;
+  border-left: 1px solid var(--line);
+}
+
+.feature-summary {
+  margin-top: 14px;
+}
+
+@media (max-width: 760px) {
+  .settings-row {
+    gap: 10px;
+  }
+
+  .settings-row > .icon {
+    display: none;
+  }
+
+  .feature-children {
+    margin-left: 0;
+    padding-left: 14px;
+  }
+}
+
+/* 创作模式: two compact choices — the schematic beside its explanation. */
+.mode-cards-compact {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 14px;
+}
+
+.mode-cards-compact .mode-card {
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+}
+
+.mode-cards-compact .mode-sketch {
+  flex-shrink: 0;
+  width: 132px;
+}
+
+.mode-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}

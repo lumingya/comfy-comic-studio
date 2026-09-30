@@ -1,7 +1,8 @@
 import { Check } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useUI } from '../../app/ui-store';
-import { Switch } from '../../components/ui';
+import { Icon, type IconName } from '../../app/icons';
+import { STUDIO_FEATURES, useUI, type StudioFeature } from '../../app/ui-store';
 
 /** Tiny schematic of each layout, drawn with the theme's own colours. */
 function Sketch({ studio }: { studio: boolean }) {
@@ -25,58 +26,156 @@ function Sketch({ studio }: { studio: boolean }) {
   );
 }
 
+/** One legacy settings row: icon, title and explanation, then the control on the right. */
+function SettingsRow(props: {
+  icon: IconName;
+  title: string;
+  body: string;
+  control: ReactNode;
+  muted?: boolean;
+}) {
+  return (
+    <div className={`settings-row ${props.muted ? 'is-muted' : ''}`}>
+      <Icon name={props.icon} />
+      <div className="grow">
+        <h3>{props.title}</h3>
+        <p>{props.body}</p>
+      </div>
+      {props.control}
+    </div>
+  );
+}
+
+function RowSwitch(props: {
+  label: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (on: boolean) => void;
+}) {
+  return (
+    <label className="switch">
+      <input
+        type="checkbox"
+        role="switch"
+        aria-label={props.label}
+        checked={props.checked}
+        disabled={props.disabled}
+        onChange={(e) => props.onChange(e.target.checked)}
+      />
+      <span className="switch-track" aria-hidden="true" />
+    </label>
+  );
+}
+
+const ICONS: Record<StudioFeature, IconName> = {
+  script: 'story',
+  retouch: 'brush',
+  variants: 'copy',
+  layout: 'grid',
+  motion: 'play',
+};
+
 /**
- * Classic (default) keeps creation to prompt → characters → generate → pick.  Studio mode brings
- * back the professional toolkit — camera, part-level character tags, pose / depth slots, bleed,
- * gutters, JSON Pointer overrides, variants, QA — in an inspector drawer.  The choice is saved
- * in this browser and can be flipped at any time without losing anything already set.
+ * 功能开关 (legacy optionalModulesHTML): the creation mode as two quick choices, then one switch
+ * per professional tool — the script inspector, retouch & QA, batch variants, strip layout and
+ * motion comics can each be kept or hidden.  Everything is saved in this browser and can be
+ * flipped at any time without losing what was already set.
  */
 export function StudioSection() {
   const { t } = useTranslation();
   const studio = useUI((s) => s.studioMode);
   const setStudio = useUI((s) => s.setStudioMode);
+  const off = useUI((s) => s.studioOff);
+  const setFeature = useUI((s) => s.setStudioFeature);
+  const enabled = STUDIO_FEATURES.filter((f) => !off.includes(f)).length;
   const modes = [
     { id: false, key: 'classic' },
     { id: true, key: 'studio' },
   ] as const;
   return (
-    <div className="col" style={{ gap: 18 }}>
-      <p className="soft" style={{ margin: 0 }}>
-        {t('classic.settings.intro')}
-      </p>
-      <div className="mode-cards" role="radiogroup" aria-label={t('settings.tabs.studio')}>
-        {modes.map((m) => {
-          const on = studio === m.id;
-          return (
-            <button
-              key={m.key}
-              type="button"
-              role="radio"
-              aria-checked={on}
-              className={`mode-card ${on ? 'on' : ''}`}
-              onClick={() => setStudio(m.id)}
-            >
-              <Sketch studio={m.id} />
-              <span className="mode-card-title">
-                {t(`classic.settings.${m.key}.title`)}
-                {on ? (
-                  <span className="chip ok">
-                    <Check size={11} /> {t('classic.settings.current')}
+    <>
+      <section className="settings-section">
+        <h2>{t('classic.settings.modeTitle')}</h2>
+        <p>{t('classic.settings.intro')}</p>
+        <div
+          className="mode-cards mode-cards-compact"
+          role="radiogroup"
+          aria-label={t('classic.settings.modeTitle')}
+        >
+          {modes.map((m) => {
+            const on = studio === m.id;
+            return (
+              <button
+                key={m.key}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                className={`mode-card ${on ? 'on' : ''}`}
+                onClick={() => setStudio(m.id)}
+              >
+                <Sketch studio={m.id} />
+                <span className="mode-card-text">
+                  <span className="mode-card-title">
+                    {t(`classic.settings.${m.key}.title`)}
+                    {on ? (
+                      <span className="chip ok">
+                        <Check size={11} /> {t('classic.settings.current')}
+                      </span>
+                    ) : null}
                   </span>
-                ) : null}
-              </span>
-              <span className="mode-card-body">{t(`classic.settings.${m.key}.body`)}</span>
-            </button>
-          );
-        })}
-      </div>
-      <div className="card row" style={{ gap: 14 }}>
-        <div className="grow">
-          <strong>{t('classic.settings.switch')}</strong>
-          <div className="small muted">{t('classic.settings.switchHint')}</div>
+                  <span className="mode-card-body">{t(`classic.settings.${m.key}.body`)}</span>
+                </span>
+              </button>
+            );
+          })}
         </div>
-        <Switch checked={studio} onChange={setStudio} label={t('classic.modeStudio')} />
-      </div>
-    </div>
+      </section>
+      <section className="settings-section feature-switches">
+        <h2>{t('classic.settings.featuresTitle')}</h2>
+        <p>{t('classic.settings.featuresBody')}</p>
+        <SettingsRow
+          icon="book"
+          title={t('classic.settings.core.title')}
+          body={t('classic.settings.core.body')}
+          control={<span className="settings-row-note">{t('classic.settings.core.note')}</span>}
+        />
+        <SettingsRow
+          icon="spark"
+          title={t('classic.settings.switch')}
+          body={t('classic.settings.switchHint')}
+          control={
+            <RowSwitch label={t('classic.modeStudio')} checked={studio} onChange={setStudio} />
+          }
+        />
+        <div
+          className="feature-children"
+          role="group"
+          aria-label={t('classic.settings.toolsLabel')}
+        >
+          {STUDIO_FEATURES.map((f) => (
+            <SettingsRow
+              key={f}
+              icon={ICONS[f]}
+              muted={!studio}
+              title={t(`classic.settings.features.${f}.title`)}
+              body={t(`classic.settings.features.${f}.body`)}
+              control={
+                <RowSwitch
+                  label={t(`classic.settings.features.${f}.title`)}
+                  checked={!off.includes(f)}
+                  disabled={!studio}
+                  onChange={(on) => setFeature(f, on)}
+                />
+              }
+            />
+          ))}
+        </div>
+        <p className="help feature-summary" role="status">
+          {studio
+            ? t('classic.settings.summaryOn', { count: enabled, total: STUDIO_FEATURES.length })
+            : t('classic.settings.summaryOff')}
+        </p>
+      </section>
+    </>
   );
 }

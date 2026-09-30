@@ -20,7 +20,7 @@ import { ANGLES, SHOTS, TIMES, type Episode, type Panel, type Series } from '../
 import { AutoSaveGuard, flushDraft } from '../../app/useAutoDraft';
 import { shortcutBlocked } from '../../app/shortcuts';
 import { useAutosave } from '../../app/autosave';
-import { useUI } from '../../app/ui-store';
+import { useStudio, useUI } from '../../app/ui-store';
 import { insertVariable, PromptField, scanVariables } from '../../components/PromptField';
 import { SaveState } from '../../components/SaveState';
 import { toast, toastError } from '../../components/toast';
@@ -86,7 +86,7 @@ export function PanelEditor(props: {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const { episode, series } = props;
-  const studio = useUI((s) => s.studioMode);
+  const studio = useStudio('script');
   const inspectorOpen = useUI((s) => s.inspectorOpen);
   const setInspectorOpen = useUI((s) => s.setInspectorOpen);
   const patch = usePatchPanel(episode.id!);
