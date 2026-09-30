@@ -9,6 +9,7 @@ import { usePageTitle } from '../../app/title';
 import { gallerySearch } from '../../app/navigation';
 import { shortcutBlocked } from '../../app/shortcuts';
 import { QueryError } from '../../app/errors';
+import { ownCancel } from '../../components/topLayer';
 import { useUI } from '../../app/ui-store';
 import { pickAdopted } from '../canvas/adopted';
 import type { EpisodeContext } from '../episode/EpisodePage';
@@ -351,6 +352,8 @@ export default function ReaderPage() {
       aria-labelledby="reader-panel-label"
       data-mode={mode}
       onCancel={(e) => {
+        // A dismissed file picker (版式 → 导入) or a nested dialog must not close the drawer.
+        if (!ownCancel(e)) return;
         e.preventDefault();
         if (panel) navigate(`${base}${keep}`);
         else close();

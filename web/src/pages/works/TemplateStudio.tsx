@@ -11,6 +11,7 @@ import {
 } from '../../api/open';
 import { Icon } from '../../app/icons';
 import { confirm } from '../../components/confirm';
+import { ownCancel } from '../../components/topLayer';
 import { toast, toastError } from '../../components/toast';
 
 const LAYOUTS = ['webtoon', 'manga', 'artbook', 'flip'] as const;
@@ -233,6 +234,7 @@ export function TemplateStudio(props: {
       className="template-dialog"
       aria-labelledby="template-studio-title"
       onCancel={(e) => {
+        if (!ownCancel(e)) return;
         e.preventDefault();
         void close();
       }}

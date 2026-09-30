@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { create } from 'zustand';
 import { useAllEpisodes } from '../api/series';
 import { useHelp, useQuickStart } from '../components/HelpDrawer';
+import { ownCancel } from '../components/topLayer';
 import { setLocale } from '../i18n';
 import { Icon, type IconName } from './icons';
 import { NAV } from './nav';
@@ -193,7 +194,7 @@ export function CommandPalette() {
       className="command-dialog"
       aria-label={t('legacy.palette.label')}
       onClose={() => set(false)}
-      onCancel={() => set(false)}
+      onCancel={(e) => ownCancel(e) && set(false)}
       onClick={(e) => e.target === dialog.current && set(false)}
     >
       {open ? (

@@ -7,3 +7,4 @@
 | # | 现象 | 原因 | 处理 |
 | - | ---- | ---- | ---- |
 | 3 | 队列卡片「展开分幕进度与局部重跑」点了没反应 | 可框选列表（`useDesktopSelection`）把卡片里 `<summary>` 的点击当成「选中卡片」并 `preventDefault`，`<details>` 无法展开；`<label>` 同样受影响 | `<summary>`、`<label>` 归为控件，点击保留原生行为 |
+| 2 | 版式抽屉点「导入」，在文件对话框里点「取消」，抽屉自己收起 | Chromium 在文件选择被取消时向 `<input type=file>` 派发**冒泡**的 `cancel` 事件；React 的 `onCancel` 把它交给阅读器 `<dialog>`，后者当成 Esc 关闭抽屉 | 新增 `ownCancel()`：阅读器、模板工作室、新建生成任务、帮助抽屉、命令面板只响应发给自己的 `cancel` |

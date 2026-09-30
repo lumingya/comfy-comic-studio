@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type SyntheticEvent } from 'react';
 
 function isModal(d: HTMLDialogElement) {
   try {
@@ -41,4 +41,15 @@ export function useTopDialog(active = true): HTMLElement | undefined {
   // existing native modal is inert and its autofocus can be refused by the browser.
   // The state above only invalidates this render when native modal ownership changes.
   return active ? topDialog() : undefined;
+}
+
+/**
+ * True when a `cancel` event belongs to the dialog it is handled on (Escape pressed there).
+ *
+ * `cancel` also fires, *bubbling*, on an `<input type="file">` whose picker was dismissed, and
+ * React re-dispatches a nested dialog's `cancel` to the outer dialog's `onCancel`. Without this
+ * check, pressing 取消 in the file picker of 版式 → 导入 closed the presentation drawer.
+ */
+export function ownCancel(e: SyntheticEvent): boolean {
+  return e.target === e.currentTarget;
 }

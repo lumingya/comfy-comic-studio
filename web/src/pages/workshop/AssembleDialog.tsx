@@ -5,6 +5,7 @@ import { useProfiles, useSettings } from '../../api/system';
 import { useAssemble, useBoardVariables, useWorkshop, type Preset } from '../../api/workshop';
 import { Icon } from '../../app/icons';
 import { toast, toastError } from '../../components/toast';
+import { ownCancel } from '../../components/topLayer';
 import { AssemblyCanvas, EMPTY_DESIGN, canvasTasks, type CanvasDesign } from './AssemblyCanvas';
 
 const STEPS = ['story', 'presets', 'name'] as const;
@@ -176,6 +177,7 @@ export default function AssembleDialog({
       className="modal-wide assembly-designer"
       aria-labelledby="modal-title"
       onCancel={(e) => {
+        if (!ownCancel(e)) return;
         e.preventDefault();
         close();
       }}

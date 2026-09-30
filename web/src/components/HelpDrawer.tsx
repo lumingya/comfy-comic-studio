@@ -12,6 +12,7 @@ import { Icon, type IconName } from '../app/icons';
 import { useSetupChecks, useNewStory, type SetupCheck } from '../app/setup';
 import { useUI } from '../app/ui-store';
 import { toast, toastError } from './toast';
+import { ownCancel } from './topLayer';
 
 type Section = '' | 'checklist' | 'keys';
 
@@ -185,6 +186,7 @@ function useModal(onClose: () => void) {
     ref,
     onClose,
     onCancel: (e: React.SyntheticEvent) => {
+      if (!ownCancel(e)) return;
       e.preventDefault();
       onClose();
     },

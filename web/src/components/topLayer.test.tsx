@@ -64,3 +64,37 @@ describe('top layer', () => {
     expect(paints[0]).toBe(dialog);
   });
 });
+
+describe('ownCancel', () => {
+  it('ignores the bubbling cancel of a dismissed file picker inside a dialog', async () => {
+    const { ownCancel } = await import('./topLayer');
+    const closed: string[] = [];
+    function Host() {
+      return (
+        <dialog
+          open
+          data-testid="host"
+          onCancel={(e) => {
+            if (!ownCancel(e)) return;
+            e.preventDefault();
+            closed.push('dialog');
+          }}
+        >
+          <input data-testid="file" type="file" />
+        </dialog>
+      );
+    }
+    const view = render(<Host />);
+    // Chromium fires a bubbling `cancel` at the input when the picker is dismissed.
+    act(() => {
+      screen.getByTestId('file').dispatchEvent(new Event('cancel', { bubbles: true }));
+    });
+    expect(closed).toEqual([]);
+    // Escape on the dialog itself still closes it.
+    act(() => {
+      screen.getByTestId('host').dispatchEvent(new Event('cancel', { cancelable: true }));
+    });
+    expect(closed).toEqual(['dialog']);
+    view.unmount(); // before afterEach strips every <dialog> from the document
+  });
+});
