@@ -479,7 +479,12 @@ export default function ReaderPage() {
             />
           </div>
         ) : drawerStage === 'platform' && epId ? (
-          <SlicePreview episodeId={epId} variantId={activeVariant} preset={draft.preset} />
+          <SlicePreview
+            episodeId={epId}
+            variantId={activeVariant}
+            preset={draft.preset}
+            revision={episode.data?.revision}
+          />
         ) : !native && epId ? (
           <div className="room-canvas" id="reader-canvas">
             <TemplatePreview
@@ -488,6 +493,7 @@ export default function ReaderPage() {
               variantId={activeVariant}
               lettered={studio}
               draft={draft}
+              revision={episode.data?.revision}
             />
           </div>
         ) : (

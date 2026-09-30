@@ -108,6 +108,9 @@ const REFRESH = new Set([
   'reconcile_miss',
 ]);
 
+/** Item outcomes (`_finish` in jobs/runtime.py emits the item's new state as the event type). */
+const ITEM_DONE = new Set(['complete', 'failed']);
+
 /** Connects once (mounted by the shell) and turns engine events into cache invalidations. */
 export function useJobEvents() {
   const qc = useQueryClient();
@@ -148,10 +151,16 @@ export function useJobEvents() {
         const mime = d.format === 'png' || d.format === 'PNG' ? 'image/png' : 'image/jpeg';
         live.set({ previews: { ...live.previews, [key]: `data:${mime};base64,${d.data}` } });
       }
-      if (REFRESH.has(event.type)) {
+      const itemDone = ITEM_DONE.has(event.type) && typeof event.idx === 'number';
+      if (REFRESH.has(event.type) || itemDone) {
         qc.invalidateQueries({ queryKey: ['jobs'] });
         qc.invalidateQueries({ queryKey: keys.job(event.job_id) });
+        // A finished item has already written (and with adopt_first adopted) its take: the
+        // reader, its template preview, candidates and the queue card show it right away instead
+        // of when the whole job ends.
         qc.invalidateQueries({ queryKey: ['episode'] });
+        qc.invalidateQueries({ queryKey: ['episodes'] });
+        qc.invalidateQueries({ queryKey: ['series'] });
         // The server lane starts the next album when a job finishes.
         qc.invalidateQueries({ queryKey: keys.queue });
       }

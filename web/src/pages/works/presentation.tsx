@@ -88,21 +88,36 @@ function albumBody(
   };
 }
 
-/** The album rendered with a legacy HTML template (POST /api/export/album), shown in an iframe. */
+/** Where the reader was in a template preview, kept across live refreshes (see runtime.js). */
+const previewSpots = new Map<string, { y: number; spread: number }>();
+
+/**
+ * The album rendered with a legacy HTML template (POST /api/export/album), shown in an iframe.
+ *
+ * `revision` is the episode's: every adopted take (a finished job item, 采用, 重跑) bumps it, so the
+ * preview re-renders with the new image instead of serving a stale copy — and then goes back to
+ * the scroll position / spread the reader was at.
+ */
 export function TemplatePreview(props: {
   episodeId: string;
   templateId: string;
   variantId: string | null;
   lettered: boolean;
   draft: ExportDraft;
+  revision?: number;
 }) {
   const { t } = useTranslation();
-  const body = useDebounced(
-    { ...albumBody(props, props.draft), image_profile: 'preview', max_width: 1400 },
+  const frame = useRef<HTMLIFrameElement>(null);
+  const spot = `${props.episodeId}|${props.templateId}|${props.variantId ?? ''}`;
+  const request = useDebounced(
+    {
+      body: { ...albumBody(props, props.draft), image_profile: 'preview', max_width: 1400 },
+      revision: props.revision ?? 0,
+    },
     300,
   );
   const q = useQuery({
-    queryKey: ['album-preview', body],
+    queryKey: ['album-preview', request.body, request.revision],
     staleTime: 5 * 60_000,
     retry: false,
     placeholderData: (previous) => previous,
@@ -111,17 +126,31 @@ export function TemplatePreview(props: {
         await raw('/api/export/album', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
+          body: JSON.stringify(request.body),
         })
       ).text(),
   });
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      if (e.source !== frame.current?.contentWindow || e.data?.type !== 'mio-reader-state') return;
+      previewSpots.set(spot, { y: Number(e.data.y) || 0, spread: Number(e.data.spread) || 0 });
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [spot]);
+  const restore = () => {
+    const at = previewSpots.get(spot);
+    if (at) frame.current?.contentWindow?.postMessage({ type: 'mio-reader-restore', ...at }, '*');
+  };
   return (
     <div className="presentation-preview-wrap">
       {q.data ? (
         <iframe
+          ref={frame}
           title={t('reader.previewTitle')}
           sandbox="allow-scripts allow-popups"
           srcDoc={q.data}
+          onLoad={restore}
         />
       ) : null}
       {q.isFetching && !q.data ? (
@@ -153,12 +182,14 @@ export function SlicePreview(props: {
   episodeId: string;
   variantId: string | null;
   preset: string;
+  /** The episode revision: new images re-plan the cuts and reload the strip. */
+  revision?: number;
 }) {
   const { t } = useTranslation();
   const presets = useExportPresets();
   const v = props.variantId ? `&variant_id=${encodeURIComponent(props.variantId)}` : '';
   const plan = useQuery({
-    queryKey: ['slice-plan', props.episodeId, props.preset, props.variantId],
+    queryKey: ['slice-plan', props.episodeId, props.preset, props.variantId, props.revision ?? 0],
     retry: false,
     placeholderData: (previous) => previous,
     queryFn: async () =>
@@ -170,7 +201,9 @@ export function SlicePreview(props: {
   });
   const p = plan.data;
   const label = presets.data?.find((x) => x.id === props.preset)?.label ?? props.preset;
-  const src = p ? `/api/episodes/${props.episodeId}/strip.png?width=${p.width}${v}` : '';
+  const src = p
+    ? `/api/episodes/${props.episodeId}/strip.png?width=${p.width}${v}&rev=${props.revision ?? 0}`
+    : '';
   let top = 0;
   return (
     <div className="room-canvas slice-preview" id="reader-canvas">
