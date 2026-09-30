@@ -121,6 +121,38 @@ class AlbumApiTests(ApiCase):
             self.client.post("/api/export/album", json={**body, "template": bad}).status_code, 400
         )
 
+    def test_book_text_uses_album_variables_like_legacy(self):
+        """The cover resolves {变量} in the synopsis (unknown names stay, as in prompts), 主演 is
+        the preset's 展示名, and — like legacy books — the cover title is the album's own name
+        while CHAPTER shows the story's."""
+        series, ep = self.make_episode()
+        self.ctx.store.update_series(
+            series["id"],
+            lambda s: setattr(s, "variables", {"character_display_name": "七海", "style": "水彩"}),
+        )
+        self.ctx.store.update_episode(
+            ep["id"],
+            lambda e: setattr(e, "synopsis", "{character_display_name}的夏天，{style}，{unknown}"),
+        )
+        probe = MINIMAL.replace(
+            "<section data-cc-book>",
+            "<section data-cc-book><p id=probe>{{title}}|{{storyTitle}}|{{synopsis}}|{{characterName}}</p>",
+        )
+        body = {
+            "episode_ids": [ep["id"]],
+            "template": {"id": "probe", "title": "探针", "html": probe},
+        }
+        doc = self.ok(self.client.post("/api/export/album", json=body)).text
+        text = re.search(r"<p id=probe>(.*?)</p>", doc).group(1)
+        title, story, synopsis, starring = text.split("|")
+        self.assertEqual(title, "雨夜便利店")
+        self.assertEqual(story, ep["title"])
+        self.assertEqual(synopsis, "七海的夏天，水彩，&#123;unknown&#125;")
+        self.assertEqual(starring, "七海")
+        self.assertEqual(
+            metadata(doc)["books"][0]["album"]["synopsis"], "七海的夏天，水彩，{unknown}"
+        )
+
     def test_template_import_list_delete(self):
         listed = {t["id"]: t for t in self.ok(self.client.get("/api/album-templates"))}
         self.assertEqual(listed["export-flip"]["layout"], "flip")

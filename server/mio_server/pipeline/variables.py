@@ -64,6 +64,25 @@ def table(
     return values
 
 
+def series_table(
+    series: Series, bible: Bible | None = None, style_id: str | None = None
+) -> dict[str, str]:
+    """Values for text that belongs to no panel (an album's title, synopsis and 主演): the series
+    variables over the panel-free built-ins — ``{style}`` / ``{画风}`` of the default style and
+    ``{<character name or id>}`` of every character in the bible."""
+    bible = bible or series.bible
+    values: dict[str, str] = {}
+    for ch in bible.characters:
+        values[ch.name] = values[ch.id] = _tags(
+            [*ch.tag_description, *([ch.trigger] if ch.trigger else [])]
+        )
+    style = bible.style(style_id)
+    if style:
+        values["style"] = values["画风"] = _tags(style.tag_description)
+    values.update(series.variables)
+    return values
+
+
 def expand(text: str, values: dict[str, str]) -> str:
     def one(s: str, depth: int) -> str:
         def sub(m: re.Match) -> str:

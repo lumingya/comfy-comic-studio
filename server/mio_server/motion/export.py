@@ -20,6 +20,7 @@ from PIL import Image
 
 from ..album.build import data_url
 from ..pipeline import episode_strip as ES
+from ..pipeline import variables as V
 from .plan import plan_episode
 
 HERE = Path(__file__).resolve().parent
@@ -65,11 +66,12 @@ def episode_motion(ctx, episode_id: str, variant_id: str | None, opts: MotionOpt
                 "lines": plan["lines"],
             }
         )
+    values = V.series_table(series)  # the title card reads like the album cover
     return {
         "schema": "mio.motion.v1",
         "series": series.title,
-        "title": ep.title or f"第 {ep.order + 1} 话",
-        "synopsis": ep.synopsis,
+        "title": V.expand(ep.title, values).strip() or f"第 {ep.order + 1} 话",
+        "synopsis": V.expand(ep.synopsis, values),
         "shots": shots,
     }
 

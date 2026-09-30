@@ -49,6 +49,17 @@ def palette(im: Image.Image, n: int = 3) -> list[str]:
     return ["#%02x%02x%02x" % tuple(pal[i * 3 : i * 3 + 3]) for _, i in counts[:n]]
 
 
+def display_name(series: Series, values: dict[str, str] | None = None) -> str:
+    """主演 (the templates' ``{{characterName}}``, legacy ``resolveCharacterNames``): the preset's
+    角色展示名, else the characters of the bible, else the character prompt name."""
+    values = values if values is not None else V.series_table(series)
+    shown = V.expand(str(series.variables.get("character_display_name") or ""), values).strip()
+    if shown:
+        return shown
+    cast = "、".join(c.name for c in series.bible.characters if c.name.strip())
+    return cast or V.expand(str(series.variables.get("character") or ""), values).strip()
+
+
 def caption(series: Series, panel) -> str:
     names = {c.id: c.name for c in series.bible.characters}
     values = V.table(series, panel)
@@ -154,9 +165,18 @@ def episode_book(
                 palette=page.palette,
             )
         )
+    # Text outside the panels uses the album's variables too: a synopsis written in the workshop
+    # says {style} / {character_display_name} just like the prompts do (unknown names stay).
+    values = V.series_table(series)
+    episode_title = V.expand(ep.title, values).strip() or f"第 {ep.order + 1} 话"
+    _, count = ctx.store.episode_summaries(series.id, 0, 1)
+    # Legacy books: the cover shows the album's own name and 「CHAPTER 01 / …」 the story's; an
+    # album of several episodes names each book after its episode.
+    single = count <= 1 and bool(series.title.strip())
     return Book(
-        title=ep.title or f"第 {ep.order + 1} 话",
+        title=series.title if single else episode_title,
         frames=frames,
-        synopsis=ep.synopsis,
-        story_title=series.title,
+        synopsis=V.expand(ep.synopsis, values),
+        character_name=display_name(series, values),
+        story_title=episode_title if single else series.title,
     )
