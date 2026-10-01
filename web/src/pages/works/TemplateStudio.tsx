@@ -23,12 +23,14 @@ const SIZES = [
 ] as const;
 const newId = () => `my-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
 
+/** `value` after it stopped changing for `ms`; compared by content, so literals don't loop. */
 function useDebounced<T>(value: T, ms: number): T {
+  const key = JSON.stringify(value);
   const [v, setV] = useState(value);
   useEffect(() => {
-    const id = setTimeout(() => setV(value), ms);
+    const id = setTimeout(() => setV(JSON.parse(key) as T), ms);
     return () => clearTimeout(id);
-  }, [value, ms]);
+  }, [key, ms]);
   return v;
 }
 

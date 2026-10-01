@@ -277,6 +277,24 @@ a.workspace-profile-button {
   font-size: 0.75rem;
   color: var(--soft);
 }
+/* 你的工作室: legacy full-width name fields, then the signature switch row. */
+#studio-settings-content .identity-form .field {
+  max-width: none;
+}
+.identity-sync {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  margin: 0 0 19px;
+  font-size: 0.75rem;
+  color: var(--soft);
+  cursor: pointer;
+}
+#studio-settings-content .identity-language {
+  margin: 28px 0 0;
+}
 
 /* 分镜工坊 frame list in classic mode: the legacy plain rows (01 · text), no cards or thumbnails.
    Studio mode keeps the richer rows (shot chip, cast, thumbnail). */

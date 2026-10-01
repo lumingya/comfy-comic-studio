@@ -20,12 +20,16 @@ import {
   DESKTOP_QUERY,
   READING_MODES,
   buildStages,
+  nativeLayout,
   readingMode,
+  stageMode,
   stageOf,
+  type NativeLayout,
   type ReadingMode,
 } from './readingStage';
 
 const MODE_KEY = 'mio.reader.mode';
+const LAYOUT_KEY = 'mio.reader.layout';
 const LOOK_KEY = 'mio.reader.look';
 /** The native reading stage (legacy mio-fit); every other template renders in a sandboxed preview. */
 const NATIVE = 'mio-fit';
@@ -59,6 +63,10 @@ export default function ReaderPage() {
   const epId = params.get('ep') ?? items[0]?.id;
   const episode = useEpisode(epId);
   const [mode, setMode] = useState<ReadingMode>(() => readingMode(localStorage.getItem(MODE_KEY)));
+  const [layout, setLayout] = useState<NativeLayout>(() =>
+    nativeLayout(localStorage.getItem(LAYOUT_KEY)),
+  );
+  const stage = stageMode(layout, mode);
   const [look, setLook] = useState<string>(() => {
     const saved = localStorage.getItem(LOOK_KEY) || NATIVE;
     return OLD_LOOKS[saved] ?? saved;
@@ -174,18 +182,18 @@ export default function ReaderPage() {
   }, [episode.data]);
   const current = Math.min(page, Math.max(0, pages.length - 1));
   // Legacy reading-stage.js: fit each stage into one screen, except in continuous mode or on phones.
-  const staged = desktop && mode !== 'continuous' && view.w > 0 && view.h > 0;
+  const staged = desktop && stage !== 'continuous' && view.w > 0 && view.h > 0;
   const stages = useMemo(
     () =>
       staged
         ? buildStages(
             pages.map((p) => ({ id: p.id, caption: !!(captions && p.caption) })),
             sizes,
-            mode,
+            stage,
             view,
           )
         : [],
-    [staged, pages, sizes, mode, view, captions],
+    [staged, pages, sizes, stage, view, captions],
   );
   const stageAt = staged ? stageOf(stages, current) : -1;
   const range = staged && stages[stageAt] ? stages[stageAt].items.length : 1;
@@ -211,7 +219,7 @@ export default function ReaderPage() {
   const pageRef = useRef(current);
   pageRef.current = current;
   // Switching mode (or a re-layout as images load) keeps the page in view, like legacy build().
-  const layoutKey = `${epId}|${mode}|${staged}|${view.w}x${view.h}|${stages
+  const layoutKey = `${epId}|${stage}|${staged}|${view.w}x${view.h}|${stages
     .map((x) => x.items.length)
     .join('')}|${pages.length}`;
   useLayoutEffect(() => {
@@ -287,6 +295,10 @@ export default function ReaderPage() {
   const setModeSaved = (m: ReadingMode) => {
     setMode(m);
     localStorage.setItem(MODE_KEY, m);
+  };
+  const setLayoutSaved = (l: NativeLayout) => {
+    setLayout(l);
+    localStorage.setItem(LAYOUT_KEY, l);
   };
   const setLookSaved = (l: string) => {
     setLook(l);
@@ -370,7 +382,7 @@ export default function ReaderPage() {
         panel === 'export' ? 'presentation-panel-open' : ''
       }`}
       aria-labelledby="reader-panel-label"
-      data-mode={mode}
+      data-mode={stage}
       onCancel={(e) => {
         // A dismissed file picker (版式 → 导入) or a nested dialog must not close the drawer.
         if (!ownCancel(e)) return;
@@ -503,6 +515,7 @@ export default function ReaderPage() {
               lettered={layoutOn}
               draft={draft}
               revision={episode.data?.revision}
+              progress={{ done: pages.length, total: episode.data?.panels.length ?? 0 }}
             />
           </div>
         ) : (
@@ -510,7 +523,7 @@ export default function ReaderPage() {
             className={`room-canvas ${staged ? 'mio-stage-root mio-stage-scroll' : ''}`}
             id="reader-canvas"
             ref={setScroller}
-            data-reading-mode={mode}
+            data-reading-mode={stage}
             style={staged ? ({ '--mio-stage-height': `${view.h}px` } as CSSProperties) : undefined}
           >
             <div className={`room-scroll ${staged ? 'mio-stage-pages' : ''}`}>
@@ -589,7 +602,7 @@ export default function ReaderPage() {
       <div
         className="room-filmstrip"
         id="room-filmstrip"
-        hidden={!film || !nativeStage}
+        hidden={!(film || layout === 'gallery') || !nativeStage}
         aria-label={t('reader.film')}
       >
         {pages.map((p, i) => (
@@ -615,7 +628,7 @@ export default function ReaderPage() {
       <footer className="room-footer">
         {nativeStage ? (
           <>
-            <span className="native-reading-controls">
+            <span className="native-reading-controls" hidden={layout !== 'webtoon'}>
               {READING_MODES.map((m) => (
                 <button
                   key={m}
@@ -698,8 +711,8 @@ export default function ReaderPage() {
         hintOf={hintOf}
         draft={draft}
         onDraft={setDraft}
-        mode={mode}
-        onMode={setModeSaved}
+        layout={layout}
+        onLayout={setLayoutSaved}
         episodeId={epId}
         title={series.data?.title ?? ''}
         lettered={layoutOn}

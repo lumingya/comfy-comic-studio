@@ -56,6 +56,13 @@ class AppSettings(StrictModel):
     collection_title: str = Field(
         default=DEFAULT_COLLECTION, max_length=80, description="Name of the works shelf (画册集)"
     )
+    studio_name: str = Field(
+        default="", max_length=40, description="工作室名称 in the sidebar; '' = 我的工作室"
+    )
+    creator_name: str = Field(default="", max_length=60, description="创作者署名")
+    signature: str = Field(
+        default="", max_length=120, description="Default album signature (画册落款)"
+    )
     legacy_seeded: bool = Field(
         default=False, description="The legacy books were brought over on first start"
     )

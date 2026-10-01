@@ -1,8 +1,7 @@
 import { Fragment, useState, type ComponentType, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useImportBundle, usePatchSettings } from '../../api/system';
-import { useCollectionTitle } from '../../app/CollectionSwitch';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useImportBundle, usePatchSettings, useSettings } from '../../api/system';
 import { Icon, type IconName } from '../../app/icons';
 import { usePageTitle } from '../../app/title';
 import { toast, toastError } from '../../components/toast';
@@ -19,33 +18,110 @@ import { StudioSection } from './StudioSection';
 import { ThemesSection } from './ThemesSection';
 import { UpdatesSection } from './UpdatesSection';
 
-/** 你的工作室: the collection name, interface language and where data lives. */
+/**
+ * 你的工作室 (legacy renderCurrentIdentity): the studio name shown in the sidebar, the creator
+ * signature — optionally also the default album signature — and where the work is saved.
+ * The collection is renamed from the top bar or 画册集.
+ */
 function WorkspaceSection() {
   const { t, i18n } = useTranslation();
-  const title = useCollectionTitle();
+  const settings = useSettings();
   const patch = usePatchSettings();
-  const [draft, setDraft] = useState<string | null>(null);
-  const value = draft ?? title;
+  const saved = {
+    name: settings.data?.studio_name?.trim() || t('legacy.studio'),
+    creator: settings.data?.creator_name ?? '',
+  };
+  const [draft, setDraft] = useState<typeof saved | null>(null);
+  const [sync, setSync] = useState(true);
+  const value = draft ?? saved;
+  const name = value.name.trim();
+  const creator = value.creator.trim();
+  const dirty = name !== saved.name || creator !== saved.creator.trim();
+  const signed = (settings.data?.signature ?? '') === (creator || name);
+  const save = () => {
+    if (!name || [...name].length > 40) {
+      toastError(new Error(t('legacy.settings.studioNameRequired')));
+      return;
+    }
+    patch.mutate(
+      {
+        studio_name: name,
+        creator_name: creator,
+        ...(sync ? { signature: creator || name } : {}),
+      },
+      {
+        onSuccess: () => {
+          setDraft(null);
+          toast(t('legacy.settings.identitySaved'));
+        },
+        onError: toastError,
+      },
+    );
+  };
   return (
     <>
-      <ConfigurationGuard dirty={value.trim() !== title} />
+      <ConfigurationGuard dirty={dirty} />
       <section className="settings-section">
         <h2>{t('legacy.settings.workspaceTitle')}</h2>
         <p>{t('legacy.settings.workspaceHint')}</p>
-        <div className="field">
-          <label className="label" htmlFor="collection-name">
-            {t('legacy.settings.collectionName')}
+        <form
+          className="identity-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!patch.isPending) save();
+          }}
+        >
+          <div className="field">
+            <label className="label" htmlFor="identity-workspace">
+              {t('legacy.settings.studioName')}
+            </label>
+            <input
+              id="identity-workspace"
+              className="input"
+              value={value.name}
+              maxLength={40}
+              placeholder={t('legacy.settings.studioPlaceholder')}
+              disabled={!settings.data || patch.isPending}
+              onChange={(e) => setDraft({ ...value, name: e.target.value })}
+            />
+          </div>
+          <div className="field">
+            <label className="label" htmlFor="identity-creator">
+              {t('legacy.settings.creatorName')}
+            </label>
+            <input
+              id="identity-creator"
+              className="input"
+              value={value.creator}
+              maxLength={60}
+              placeholder={t('legacy.settings.creatorPlaceholder')}
+              disabled={!settings.data || patch.isPending}
+              onChange={(e) => setDraft({ ...value, creator: e.target.value })}
+            />
+          </div>
+          <label className="identity-sync">
+            <span>{t('legacy.settings.syncSignature')}</span>
+            <span className="switch">
+              <input
+                id="identity-sync-signature"
+                type="checkbox"
+                role="switch"
+                checked={sync}
+                onChange={(e) => setSync(e.target.checked)}
+              />
+              <span className="switch-track" aria-hidden="true" />
+            </span>
           </label>
-          <input
-            id="collection-name"
-            className="input"
-            value={value}
-            disabled={patch.isPending}
-            maxLength={60}
-            onChange={(e) => setDraft(e.target.value)}
-          />
-        </div>
-        <div className="field">
+          <button
+            type="submit"
+            className="btn primary"
+            disabled={!settings.data || patch.isPending || (!dirty && (!sync || signed))}
+          >
+            <Icon name="check" />
+            {t('legacy.settings.saveIdentity')}
+          </button>
+        </form>
+        <div className="field identity-language">
           <label className="label" htmlFor="ui-language">
             {t('legacy.settings.language')}
           </label>
@@ -59,30 +135,17 @@ function WorkspaceSection() {
             <option value="en">English</option>
           </select>
         </div>
-        <button
-          className="btn primary"
-          disabled={!value.trim() || value.trim() === title || patch.isPending}
-          onClick={() =>
-            patch.mutate(
-              { collection_title: value.trim() },
-              {
-                onSuccess: () => {
-                  setDraft(null);
-                  toast(t('common.saved'));
-                },
-                onError: toastError,
-              },
-            )
-          }
-        >
-          <Icon name="check" />
-          {t('legacy.settings.saveName')}
-        </button>
       </section>
       <section className="settings-section">
         <h2>{t('legacy.settings.storageTitle')}</h2>
         <div className="service-context">{t('legacy.storage')}</div>
         <p>{t('legacy.settings.storageBody')}</p>
+        <div className="row">
+          <Link className="btn" to="/settings?tab=data">
+            <Icon name="disk" />
+            {t('legacy.settings.tabs.data')}
+          </Link>
+        </div>
       </section>
     </>
   );

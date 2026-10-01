@@ -281,6 +281,22 @@ def legacy_collection(root: str | Path) -> str | None:
     return next((t for t in titles.values() if t), None)
 
 
+def legacy_identity(root: str | Path) -> dict[str, str]:
+    """工作室名称, 创作者署名 and the default album signature of the legacy workspace."""
+    try:
+        ws = json.loads((Path(root) / "settings" / "workspace.json").read_text(encoding="utf-8"))
+        prefs = ((ws.get("ui") or {}).get("comfyStudio") or {}).get("settings") or {}
+        identity = prefs.get("identity") or {}
+        found = {
+            "studio_name": str(identity.get("workspaceName") or "").strip()[:40],
+            "creator_name": str(identity.get("creatorName") or "").strip()[:60],
+            "signature": str(prefs.get("signature") or "").strip()[:120],
+        }
+    except (OSError, ValueError, AttributeError):
+        return {}
+    return {key: value for key, value in found.items() if value}
+
+
 class LegacyImporter:
     def __init__(self, store, root: str | Path, assets=None):
         self.store = store
@@ -478,8 +494,9 @@ class LegacyImporter:
 
 
 def seed_albums(ctx, root: str | Path = LEGACY_ROOT) -> ImportReport | None:
-    """First start only: bring over the legacy books and collection name, so the default shelf is
-    the one the old app had.  Runs once (``legacy_seeded``); later imports are manual."""
+    """First start only: bring over the legacy books, collection name and studio identity (name,
+    creator, album signature), so the default shelf is the one the old app had.  Runs once
+    (``legacy_seeded``); later imports are manual."""
     from .settings import DEFAULT_COLLECTION
 
     settings = ctx.settings()
@@ -491,6 +508,9 @@ def seed_albums(ctx, root: str | Path = LEGACY_ROOT) -> ImportReport | None:
     settings = ctx.settings()  # re-read: the import may take a moment
     if title and settings.collection_title == DEFAULT_COLLECTION:
         settings.collection_title = title[:80]
+    for key, value in legacy_identity(root).items():
+        if not getattr(settings, key):
+            setattr(settings, key, value)
     settings.legacy_seeded = True
     ctx.store.put_doc(settings)
     if report.albums:

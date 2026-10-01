@@ -5,7 +5,9 @@ import { download, downloadPost, raw } from '../../api/client';
 import { useImportAlbumTemplate, type AlbumTemplateInfo } from '../../api/open';
 import { TemplateStudio } from './TemplateStudio';
 import { parseTemplateFile, TemplateFileError } from './templateFile';
+import { NATIVE_LAYOUTS, nativeLayout, type NativeLayout } from './readingStage';
 import { useExportPresets } from '../../api/production';
+import { useSettings } from '../../api/system';
 import { Icon } from '../../app/icons';
 import { toast, toastError } from '../../components/toast';
 
@@ -44,30 +46,41 @@ const DEFAULT_DRAFT: ExportDraft = {
   quality: 'q90',
 };
 
-/** The export draft, remembered across sessions like the legacy studioUI.exportDraft. */
+type StoredDraft = Omit<ExportDraft, 'signature'> & { signature: string | null };
+
+/**
+ * The export draft, remembered across sessions like the legacy studioUI.exportDraft — except
+ * the signature: like legacy it starts from 设置 → 工作室's default album signature every time
+ * the reader opens, and an edit only lasts for this visit.
+ */
 export function useExportDraft(): [ExportDraft, (patch: Partial<ExportDraft>) => void] {
-  const [draft, setDraft] = useState<ExportDraft>(() => {
+  const fallback = useSettings().data?.signature ?? '';
+  const [draft, setDraft] = useState<StoredDraft>(() => {
     try {
-      return { ...DEFAULT_DRAFT, ...JSON.parse(localStorage.getItem(DRAFT_KEY) || '{}') };
+      const stored = JSON.parse(localStorage.getItem(DRAFT_KEY) || '{}');
+      return { ...DEFAULT_DRAFT, ...stored, signature: null };
     } catch {
-      return DEFAULT_DRAFT;
+      return { ...DEFAULT_DRAFT, signature: null };
     }
   });
   const update = (patch: Partial<ExportDraft>) =>
     setDraft((d) => {
       const next = { ...d, ...patch };
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(next));
+      const { signature: _signature, ...kept } = next;
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(kept));
       return next;
     });
-  return [draft, update];
+  return [{ ...draft, signature: draft.signature ?? fallback }, update];
 }
 
+/** `value` after it stopped changing for `ms`; compared by content, so literals don't loop. */
 function useDebounced<T>(value: T, ms = 350): T {
+  const key = JSON.stringify(value);
   const [v, setV] = useState(value);
   useEffect(() => {
-    const id = setTimeout(() => setV(value), ms);
+    const id = setTimeout(() => setV(JSON.parse(key) as T), ms);
     return () => clearTimeout(id);
-  }, [value, ms]);
+  }, [key, ms]);
   return v;
 }
 
@@ -106,6 +119,8 @@ export function TemplatePreview(props: {
   lettered: boolean;
   draft: ExportDraft;
   revision?: number;
+  /** Adopted pictures / panels, for the legacy status line 整册阅读 · 已生成 N / M 幕. */
+  progress?: { done: number; total: number };
 }) {
   const { t } = useTranslation();
   const frame = useRef<HTMLIFrameElement>(null);
@@ -143,8 +158,28 @@ export function TemplatePreview(props: {
     const at = previewSpots.get(spot);
     if (at) frame.current?.contentWindow?.postMessage({ type: 'mio-reader-restore', ...at }, '*');
   };
+  // Legacy #presentation-preview-status: one line above the album, kept while it re-renders.
+  const status = q.error
+    ? t('reader.previewFailed', { message: (q.error as Error).message })
+    : !q.data
+      ? q.isFetching
+        ? t('reader.previewLoading')
+        : ''
+      : props.progress
+        ? [
+            t('reader.previewStatus', props.progress),
+            q.isFetching ? t('reader.previewUpdating') : '',
+          ]
+            .filter(Boolean)
+            .join(' · ')
+        : '';
   return (
     <div className="presentation-preview-wrap">
+      {status ? (
+        <div id="presentation-preview-status" role={q.error ? 'alert' : 'status'}>
+          {status}
+        </div>
+      ) : null}
       {q.data ? (
         <iframe
           ref={frame}
@@ -153,15 +188,6 @@ export function TemplatePreview(props: {
           srcDoc={q.data}
           onLoad={restore}
         />
-      ) : null}
-      {q.isFetching && !q.data ? (
-        <div id="presentation-preview-status" role="status">
-          {t('reader.previewing')}
-        </div>
-      ) : q.error ? (
-        <div id="presentation-preview-status" role="alert">
-          {t('reader.previewFailed', { message: (q.error as Error).message })}
-        </div>
       ) : null}
     </div>
   );
@@ -317,8 +343,9 @@ export function PresentationDrawer(props: {
   hintOf: (id: string) => string;
   draft: ExportDraft;
   onDraft: (patch: Partial<ExportDraft>) => void;
-  mode: string;
-  onMode: (mode: 'auto' | 'single' | 'continuous') => void;
+  /** 留白 阅读方式 (legacy nativeReaderMode). */
+  layout: NativeLayout;
+  onLayout: (layout: NativeLayout) => void;
   episodeId: string | undefined;
   title: string;
   lettered: boolean;
@@ -569,12 +596,12 @@ export function PresentationDrawer(props: {
             </label>
             <select
               id="presentation-native-mode"
-              value={props.mode}
-              onChange={(e) => props.onMode(e.target.value as 'auto' | 'single' | 'continuous')}
+              value={props.layout}
+              onChange={(e) => props.onLayout(nativeLayout(e.target.value))}
             >
-              {(['auto', 'single', 'continuous'] as const).map((m) => (
+              {NATIVE_LAYOUTS.map((m) => (
                 <option key={m} value={m}>
-                  {t(`reader.readModes.${m}`)}
+                  {t(`reader.layouts.${m}`)}
                 </option>
               ))}
             </select>

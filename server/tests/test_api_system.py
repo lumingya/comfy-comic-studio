@@ -2,6 +2,7 @@
 `.mio.zip` bundles, the legacy importer and the script assistant."""
 
 import importlib
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -230,6 +231,29 @@ class BundleLegacyAssistantTests(ApiCase):
         )
         seed_albums(self.ctx, root)
         self.assertEqual(self.ok(self.client.get("/api/settings"))["collection_title"], "夏夜合集")
+
+    def test_first_start_takes_the_legacy_identity(self):
+        root = Path(self.tmp) / "legacy"
+        (root / "albums").mkdir(parents=True)
+        (root / "settings").mkdir()
+        prefs = {
+            "signature": "纸间",
+            "identity": {"workspaceName": "纸间漫画工作室", "creatorName": "Kira"},
+        }
+        (root / "settings" / "workspace.json").write_text(
+            json.dumps({"ui": {"comfyStudio": {"settings": prefs}}}, ensure_ascii=False),
+            encoding="utf-8",
+        )
+        seed_albums(self.ctx, root)
+        s = self.ok(self.client.get("/api/settings"))
+        self.assertEqual(
+            (s["studio_name"], s["creator_name"], s["signature"]),
+            ("纸间漫画工作室", "Kira", "纸间"),
+        )
+        renamed = self.ok(self.client.patch("/api/settings", json={"studio_name": "夜读社"}))
+        self.assertEqual((renamed["studio_name"], renamed["signature"]), ("夜读社", "纸间"))
+        too_long = self.client.patch("/api/settings", json={"studio_name": "长" * 41})
+        self.assertIn(too_long.status_code, (400, 422))
 
     def test_assistant_propose_then_apply(self):
         _, ep = self.make_episode()

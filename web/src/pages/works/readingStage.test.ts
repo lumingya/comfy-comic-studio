@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildStages, readingMode, stageOf } from './readingStage';
+import { buildStages, nativeLayout, readingMode, stageMode, stageOf } from './readingStage';
 
 const pages = ['a', 'b', 'c'].map((id) => ({ id, caption: false }));
 const portrait = { w: 800, h: 1200 };
@@ -33,6 +33,27 @@ describe('reading stage', () => {
     expect(s.items[0].h).toBeCloseTo(900 - 32);
     const [small] = buildStages([pages[0]], { a: { w: 200, h: 300 } }, 'single', view);
     expect(small.items[0]).toMatchObject({ w: 200, h: 300 });
+  });
+
+  it('pairs every two pages in 双页阅读, whatever their shape or the stage width', () => {
+    const four = ['a', 'b', 'c', 'd', 'e'].map((id) => ({ id, caption: false }));
+    const sizes = { a: wide, b: portrait, c: wide, d: wide, e: portrait };
+    const stages = buildStages(four, sizes, 'spread', { w: 700, h: 900 });
+    expect(stages.map((s) => [s.start, s.items.length])).toEqual([
+      [0, 2],
+      [2, 2],
+      [4, 1],
+    ]);
+    const [x, y] = stages[0].items;
+    expect(x.w + y.w + 16).toBeLessThanOrEqual(700 - 32 + 0.001);
+  });
+
+  it('maps the legacy 阅读方式 onto stage modes', () => {
+    expect(stageMode('webtoon', 'continuous')).toBe('continuous');
+    expect(stageMode('gallery', 'auto')).toBe('single');
+    expect(stageMode('spread', 'continuous')).toBe('spread');
+    expect(nativeLayout('spread')).toBe('spread');
+    expect(nativeLayout('auto')).toBe('webtoon');
   });
 
   it('sanitises stored modes', () => {

@@ -617,6 +617,7 @@ dialog.help-drawer::backdrop {
   padding: 22px 24px 60px;
   scrollbar-width: thin;
 }
+/* The slice preview sits on the always-dark reader stage. */
 .slice-preview-head {
   display: flex;
   gap: 12px;
@@ -624,10 +625,10 @@ dialog.help-drawer::backdrop {
   justify-content: center;
   margin: 0 0 16px;
   font-size: 0.75rem;
-  color: var(--muted);
+  color: var(--reader-soft, var(--muted));
 }
 .slice-preview-head strong {
-  color: var(--text);
+  color: var(--reader-text, var(--text));
   font-weight: 500;
 }
 .slice-preview-list {

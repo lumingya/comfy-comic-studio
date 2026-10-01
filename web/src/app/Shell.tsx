@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useJobEvents, useJobs, useLive } from '../api/jobs';
 import { useUpdateStatus } from '../api/open';
+import { useSettings } from '../api/system';
 import { ConfirmHost } from '../components/confirm';
 import { HelpDrawer, QuickStart, useHelp, useHelpShortcut } from '../components/HelpDrawer';
 import { Toaster } from '../components/toast';
@@ -56,6 +57,7 @@ function Sidebar() {
   const setCollapsed = useUI((s) => s.setNavCollapsed);
   const openCommand = useCommand((s) => s.set);
   const version = useVersion();
+  const studio = useSettings().data?.studio_name?.trim() || t('legacy.studio');
   return (
     <aside className="sidebar" id="sidebar" aria-label={t('nav.main')}>
       <Link className="brand" to="/" aria-label={t('app.name')}>
@@ -114,10 +116,11 @@ function Sidebar() {
           className="workspace-profile-button"
           to="/settings?tab=workspace"
           aria-label={t('legacy.profileLabel')}
+          title={t('legacy.profileTip')}
         >
-          <span className="avatar">{t('classic.me')}</span>
+          <span className="avatar">{[...studio][0]}</span>
           <span className="grow">
-            <strong>{t('legacy.studio')}</strong>
+            <strong>{studio}</strong>
             <p>{t('legacy.studioSub')}</p>
           </span>
         </Link>

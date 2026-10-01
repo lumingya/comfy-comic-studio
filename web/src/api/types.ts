@@ -264,6 +264,12 @@ export interface AppSettings {
   theme: string;
   /** The works shelf (画册集) name; defaults to 遇见你，真好 on the server. */
   collection_title?: string;
+  /** 工作室名称 in the sidebar; '' = 我的工作室. */
+  studio_name?: string;
+  /** 创作者署名. */
+  creator_name?: string;
+  /** The default album signature (画册落款) the export drawer starts with. */
+  signature?: string;
   /** The legacy books were brought over on first start. */
   legacy_seeded?: boolean;
 }

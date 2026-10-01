@@ -8,6 +8,7 @@ import type { SeriesCard } from '../../api/types';
 import { toast, toastError } from '../../components/toast';
 import { Field, Modal, Select, TextInput } from '../../components/ui';
 import { templateRank } from './templateFile';
+import { useSettings } from '../../api/system';
 
 /** Legacy 画册名称 limit (organize.js saveBookNames). */
 const MAX_TITLE = 150;
@@ -123,6 +124,9 @@ export function ExportBooks(props: {
   const templates = useAlbumTemplates();
   const [picked, setTemplateId] = useState(lastLook);
   const [title, setTitle] = useState(props.collectionTitle);
+  // Legacy: the signature field starts from 设置 → 工作室's default album signature.
+  const fallback = useSettings().data?.signature ?? '';
+  const [signature, setSignature] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const list = useMemo(
     () => [...(templates.data ?? [])].sort((a, b) => templateRank(a.id) - templateRank(b.id)),
@@ -146,6 +150,7 @@ export function ExportBooks(props: {
           episode_ids,
           template_id: templateId,
           title: title.trim() || undefined,
+          signature: (signature ?? fallback).trim(),
           image_profile: 'auto',
         },
         `${title.trim() || props.collectionTitle}.html`,
@@ -185,6 +190,9 @@ export function ExportBooks(props: {
         </Field>
         <Field label={t('classic.shelf.exportName')}>
           <TextInput value={title} maxLength={MAX_TITLE} onChange={setTitle} />
+        </Field>
+        <Field label={t('reader.signature')}>
+          <TextInput value={signature ?? fallback} maxLength={120} onChange={setSignature} />
         </Field>
       </div>
       <ul className="book-export-list">
