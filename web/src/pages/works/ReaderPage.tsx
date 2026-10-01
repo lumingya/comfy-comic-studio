@@ -15,6 +15,7 @@ import { pickAdopted } from '../canvas/adopted';
 import type { EpisodeContext } from '../episode/EpisodePage';
 import { MotionExport } from '../episode/MotionExport';
 import { PresentationDrawer, SlicePreview, TemplatePreview, useExportDraft } from './presentation';
+import { templateRank } from './templateFile';
 import {
   DESKTOP_QUERY,
   READING_MODES,
@@ -33,20 +34,6 @@ const BUILTIN = [
   { id: NATIVE, look: 'fit' },
   { id: 'export-seamless', look: 'seamless' },
 ] as const;
-/** The legacy template library order; imported and custom templates follow in their own order. */
-const LEGACY_ORDER = [
-  NATIVE,
-  'export-seamless',
-  'export-afterglow',
-  'export-paper',
-  'export-ink',
-  'export-gallery',
-  'export-flip',
-];
-const rank = (id: string) => {
-  const i = LEGACY_ORDER.indexOf(id);
-  return i < 0 ? LEGACY_ORDER.length : i;
-};
 
 /**
  * The legacy reader (画册阅读室): a full-screen dialog over 画册集. Reading only — 版式 / 导出
@@ -359,7 +346,7 @@ export default function ReaderPage() {
           accent: x.options?.accent,
         }))
       : BUILTIN.map((b) => ({ id: b.id, title: t(`reader.look.${b.look}`), description: '' }))
-  ).sort((a, b) => rank(a.id) - rank(b.id));
+  ).sort((a, b) => templateRank(a.id) - templateRank(b.id));
   const lookTitle = list.find((x) => x.id === look)?.title ?? t('reader.look.fit');
   const variants = series.data?.variants ?? [];
   const activeVariant = variantsOn && variants.some((v) => v.id === variantId) ? variantId : null;

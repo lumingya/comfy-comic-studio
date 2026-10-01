@@ -316,6 +316,25 @@
   border-top: 1px solid var(--line);
 }
 
+.context-title {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 6px 10px 8px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--line);
+}
+.context-title strong {
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.context-title small {
+  font-size: 11px;
+  color: var(--muted);
+}
+
 .context-heading {
   padding: 4px 10px 2px;
   font-size: 11px;

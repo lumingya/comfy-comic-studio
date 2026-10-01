@@ -40,12 +40,22 @@ interface UIState {
   /** Starred series ids (legacy 星标收藏; kept on this device). */
   starred: string[];
   toggleStar: (id: string) => void;
+  /** 画册排序 (legacy collectionSort), remembered on this device. */
+  shelfSort: ShelfSort;
+  setShelfSort: (sort: ShelfSort) => void;
+  /** 手动排序: album ids in the order dragged on the shelf (legacy bookOrder). */
+  shelfOrder: string[];
+  setShelfOrder: (ids: string[]) => void;
   /** Home: the GET STARTED guide is folded away (legacy 收起指引). */
   homeGuideHidden: boolean;
   setHomeGuideHidden: (on: boolean) => void;
 }
 
 export type WorksView = 'showcase' | 'grid';
+
+/** Legacy 画册排序 options; 手动排序 is the order dragged on the shelf. */
+export const SHELF_SORTS = ['manual', 'createdAt', 'updatedAt', 'totalSteps'] as const;
+export type ShelfSort = (typeof SHELF_SORTS)[number];
 
 /** The professional tools Studio mode adds, each with its own switch in 设置 → 功能开关. */
 export const STUDIO_FEATURES = ['script', 'retouch', 'variants', 'layout', 'motion'] as const;
@@ -85,6 +95,10 @@ export const useUI = create<UIState>()(
       setWorksView: (worksView) => set({ worksView }),
       homeGuideHidden: false,
       setHomeGuideHidden: (homeGuideHidden) => set({ homeGuideHidden }),
+      shelfSort: 'createdAt',
+      setShelfSort: (shelfSort) => set({ shelfSort }),
+      shelfOrder: [],
+      setShelfOrder: (shelfOrder) => set({ shelfOrder }),
       starred: [],
       toggleStar: (id) =>
         set((s) => ({
@@ -104,6 +118,8 @@ export const useUI = create<UIState>()(
         inspectorOpen: s.inspectorOpen,
         worksView: s.worksView,
         starred: s.starred,
+        shelfSort: s.shelfSort,
+        shelfOrder: s.shelfOrder,
         homeGuideHidden: s.homeGuideHidden,
       }),
       migrate: (persisted) => {
@@ -114,6 +130,10 @@ export const useUI = create<UIState>()(
           recentThemes: state.recentThemes ?? {},
           worksView: state.worksView === 'grid' ? 'grid' : 'showcase',
           starred: Array.isArray(state.starred) ? state.starred : [],
+          shelfSort: (SHELF_SORTS as readonly string[]).includes(state.shelfSort ?? '')
+            ? state.shelfSort
+            : 'createdAt',
+          shelfOrder: Array.isArray(state.shelfOrder) ? state.shelfOrder : [],
           studioOff: Array.isArray(state.studioOff)
             ? state.studioOff.filter((x) => (STUDIO_FEATURES as readonly string[]).includes(x))
             : [],

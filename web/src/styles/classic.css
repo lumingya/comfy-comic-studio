@@ -1859,6 +1859,31 @@ mark.var.is-missing {
   opacity: 0.4;
 }
 
+/* Legacy 补齐 N 幕 under the meta line of the featured album. */
+.shelf-resume {
+  margin-top: 19px;
+}
+
+.book-rename-list,
+.book-export-form,
+.book-export-list {
+  display: grid;
+  gap: 14px;
+}
+
+.book-export-list {
+  gap: 4px;
+  max-height: 180px;
+  margin: 14px 0 0;
+  padding: 10px 12px 10px 28px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 0.75rem;
+  line-height: 1.7;
+  color: var(--soft);
+}
+
 .edition-credit {
   margin-top: 36px;
   font-size: 0.75rem;

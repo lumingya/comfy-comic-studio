@@ -70,6 +70,24 @@ export function useTrashSeries() {
 }
 
 // ---------------------------------------------------------------- episodes
+/** The first page of a series' episodes, sharing the cache of useEpisodes / useAllEpisodes. */
+export const episodePageQuery = (seriesId: string) => ({
+  queryKey: keys.episodes(seriesId, 0),
+  queryFn: async () =>
+    data(
+      await api.GET('/api/series/{series_id}/episodes', {
+        params: { path: { series_id: seriesId }, query: { offset: 0, limit: PAGE } },
+      }),
+    ) as unknown as Page<EpisodeSummary>,
+});
+
+/** One episode with panels and takes, sharing the cache of useEpisode. */
+export const episodeQuery = (id: string) => ({
+  queryKey: keys.episode(id),
+  queryFn: async () =>
+    data(await api.GET('/api/episodes/{episode_id}', { params: { path: { episode_id: id } } })),
+});
+
 export function useEpisodes(seriesId: string | undefined, offset = 0) {
   return useQuery({
     queryKey: keys.episodes(seriesId ?? '', offset),

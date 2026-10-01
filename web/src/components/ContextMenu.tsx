@@ -63,6 +63,9 @@ export function useContextMenu<T>() {
 export function ContextMenu(props: {
   x: number;
   y: number;
+  /** Legacy ctx-title: what the menu acts on, with one quiet line of facts under it. */
+  title?: ReactNode;
+  subtitle?: ReactNode;
   groups: ContextGroup[];
   onClose: () => void;
   returnFocus?: HTMLElement | null;
@@ -164,6 +167,12 @@ export function ContextMenu(props: {
       }}
       onContextMenu={(e) => e.preventDefault()}
     >
+      {props.title ? (
+        <div className="context-title">
+          <strong>{props.title}</strong>
+          {props.subtitle ? <small>{props.subtitle}</small> : null}
+        </div>
+      ) : null}
       {groups.map((g, gi) => (
         <div key={gi} className="context-group">
           {g.heading ? <div className="context-heading">{g.heading}</div> : null}

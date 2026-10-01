@@ -4,8 +4,9 @@ import type { Selection } from './selection';
 
 const EDITABLE = 'input,textarea,select,[contenteditable]:not([contenteditable="false"])';
 // <summary> and <label> have their own click behaviour (toggle the <details>, check the box):
-// a card that contains them must not turn that click into a selection (and swallow it).
-const CONTROL = `${EDITABLE},button,a,[role="button"],summary,label`;
+// a card that contains them must not turn that click into a selection (and swallow it).  A
+// reorder handle (⠿) starts its own drag, never the marquee.
+const CONTROL = `${EDITABLE},button,a,[role="button"],summary,label,[data-reorder-handle]`;
 const canSelect = (el: Element) =>
   !el.closest(EDITABLE) &&
   (!el.closest(CONTROL) ||

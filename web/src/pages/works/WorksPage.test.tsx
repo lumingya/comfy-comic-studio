@@ -5,7 +5,7 @@ import { useUI } from '../../app/ui-store';
 import { episode, series } from '../../test/fixtures';
 import { mockFetch, renderWithProviders } from '../../test/utils';
 import { coverChoices } from './CoverPicker';
-import WorksPage, { filterWorks } from './WorksPage';
+import WorksPage from './WorksPage';
 
 const card = (id: string, title: string, extra: Partial<SeriesCard> = {}): SeriesCard => ({
   ...(series as unknown as SeriesCard),
@@ -16,41 +16,36 @@ const card = (id: string, title: string, extra: Partial<SeriesCard> = {}): Serie
   ...extra,
 });
 
+// Newest first (the legacy default sort): 晴天修理铺, 雨夜便利店, Night Shift.
 const items = [
-  card('a', '雨夜便利店', { status: 'active', updated_at: '2026-09-20T00:00:00' }),
-  card('b', '晴天修理铺', { status: 'draft', updated_at: '2026-09-26T00:00:00', subtitle: '番外' }),
-  card('c', 'Night Shift', { status: 'archived', updated_at: '2026-09-01T00:00:00' }),
+  card('a', '雨夜便利店', {
+    status: 'active',
+    created_at: '2026-09-20T00:00:00',
+    updated_at: '2026-09-20T00:00:00',
+    panel_count: 3,
+    adopted_count: 3,
+  }),
+  card('b', '晴天修理铺', {
+    status: 'draft',
+    created_at: '2026-09-26T00:00:00',
+    updated_at: '2026-09-26T00:00:00',
+    subtitle: '番外',
+    panel_count: 4,
+    adopted_count: 1,
+  }),
+  card('c', 'Night Shift', {
+    status: 'archived',
+    created_at: '2026-09-01T00:00:00',
+    updated_at: '2026-09-01T00:00:00',
+    panel_count: 2,
+    adopted_count: 2,
+  }),
 ];
 
-describe('filterWorks', () => {
-  it('matches title or subtitle, case-insensitively', () => {
-    const f = { q: 'night', status: '' as const, sort: 'updated' as const };
-    expect(filterWorks(items, f, 'en').map((s) => s.id)).toEqual(['c']);
-    expect(filterWorks(items, { ...f, q: '番外' }, 'zh-CN').map((s) => s.id)).toEqual(['b']);
-  });
-
-  it('also searches the resolved 简介 (legacy searched book.synopsis)', () => {
-    const withSynopsis = [...items, card('d', '海边', { synopsis: '七海在海边停下脚步' })];
-    const f = { q: '停下脚步', status: '' as const, sort: 'updated' as const };
-    expect(filterWorks(withSynopsis, f, 'zh-CN').map((s) => s.id)).toEqual(['d']);
-  });
-
-  it('filters by status and sorts', () => {
-    const all = { q: '', status: '' as const, sort: 'updated' as const };
-    expect(filterWorks(items, all, 'zh-CN').map((s) => s.id)).toEqual(['b', 'a', 'c']);
-    expect(filterWorks(items, { ...all, status: 'active' }, 'zh-CN').map((s) => s.id)).toEqual([
-      'a',
-    ]);
-    expect(filterWorks(items, { ...all, sort: 'title' }, 'en').map((s) => s.id)).toEqual([
-      'c',
-      'b',
-      'a',
-    ]);
-  });
-});
-
 describe('WorksPage', () => {
-  beforeEach(() => useUI.setState({ worksView: 'grid', starred: [] }));
+  beforeEach(() =>
+    useUI.setState({ worksView: 'grid', starred: [], shelfSort: 'createdAt', shelfOrder: [] }),
+  );
   afterEach(() => vi.unstubAllGlobals());
 
   it('narrows the grid from the search box and offers to clear an empty result', async () => {
@@ -68,9 +63,119 @@ describe('WorksPage', () => {
     fireEvent.click(screen.getByText('清除筛选'));
     expect(screen.getByText('Night Shift')).toBeInTheDocument();
 
-    fireEvent.change(screen.getByDisplayValue('所有画册'), { target: { value: 'archived' } });
+    // Legacy 画册状态: 待补齐 lists albums with scenes still missing an image.
+    fireEvent.change(screen.getByDisplayValue('所有画册'), { target: { value: 'failed' } });
     expect(screen.queryByText('雨夜便利店')).toBeNull();
+    expect(screen.getByText('晴天修理铺')).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('画册状态'), { target: { value: 'complete' } });
     expect(screen.getByText('Night Shift')).toBeInTheDocument();
+    expect(screen.queryByText('晴天修理铺')).toBeNull();
+  });
+
+  it('shows each album as N 幕 · state · created day and sorts like legacy', async () => {
+    mockFetch({ 'GET /api/series': items, 'GET /api/update': {}, 'GET /api/jobs': [] });
+    renderWithProviders(<WorksPage />);
+    const card = (await screen.findByText('晴天修理铺')).closest('article')!;
+    expect(within(card).getByText('4 幕')).toBeInTheDocument();
+    expect(within(card).getByText('待补齐')).toBeInTheDocument();
+    expect(within(card).getByText('09.26')).toBeInTheDocument();
+    const titles = () => screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
+    expect(titles()).toEqual(['晴天修理铺', '雨夜便利店', 'Night Shift']);
+    fireEvent.change(screen.getByLabelText('画册排序'), { target: { value: 'totalSteps' } });
+    expect(titles()).toEqual(['晴天修理铺', '雨夜便利店', 'Night Shift']);
+    expect(useUI.getState().shelfSort).toBe('totalSteps');
+    fireEvent.change(screen.getByLabelText('画册排序'), { target: { value: 'manual' } });
+    expect(titles()).toEqual(['晴天修理铺', '雨夜便利店', 'Night Shift']);
+  });
+
+  it('marks an album with a running render job as 生成中', async () => {
+    mockFetch({
+      'GET /api/series': items,
+      'GET /api/update': {},
+      'GET /api/jobs': [{ id: 'job_1', owner: 'ep_a', state: 'running', kind: 'render' }],
+      'GET /api/series/a/episodes': { items: [{ id: 'ep_a' }], total: 1, offset: 0, limit: 50 },
+      'GET /api/series/b/episodes': { items: [{ id: 'ep_b' }], total: 1, offset: 0, limit: 50 },
+      'GET /api/series/c/episodes': { items: [{ id: 'ep_c' }], total: 1, offset: 0, limit: 50 },
+    });
+    renderWithProviders(<WorksPage />);
+    const card = (await screen.findByText('雨夜便利店')).closest('article')!;
+    expect(await within(card).findByText('生成中')).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: '生成中 · 1' })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('画册状态'), { target: { value: 'generating' } });
+    expect(screen.queryByText('Night Shift')).toBeNull();
+    expect(screen.getByText('雨夜便利店')).toBeInTheDocument();
+  });
+
+  it('opens the album menu from ⋯ and moves an album in the manual order', async () => {
+    mockFetch({ 'GET /api/series': items, 'GET /api/update': {}, 'GET /api/jobs': [] });
+    renderWithProviders(<WorksPage />);
+    const card = (await screen.findByText('Night Shift')).closest('article')!;
+    fireEvent.click(within(card).getByRole('button', { name: '画册操作' }));
+    const menu = await screen.findByRole('menu');
+    expect(within(menu).getByText('2 幕 · 林夏 · 已齐备')).toBeInTheDocument();
+    for (const label of [
+      '翻开这本画册',
+      '重命名…',
+      '补齐缺失分幕',
+      '导出离线画册…',
+      '分享画册源文件…',
+    ])
+      expect(within(menu).getByRole('menuitem', { name: new RegExp(label) })).toBeInTheDocument();
+    expect(within(menu).getByRole('menuitem', { name: /补齐缺失分幕/ })).toBeDisabled();
+    expect(within(menu).getByRole('menuitem', { name: /向后移动/ })).toBeDisabled();
+    fireEvent.click(within(menu).getByRole('menuitem', { name: /向前移动/ }));
+    const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
+    expect(titles).toEqual(['晴天修理铺', 'Night Shift', '雨夜便利店']);
+    expect(useUI.getState().shelfSort).toBe('manual');
+    expect(useUI.getState().shelfOrder).toEqual(['b', 'c', 'a']);
+  });
+
+  it('renames an album from its menu', async () => {
+    const calls = mockFetch({
+      'GET /api/series': items,
+      'GET /api/update': {},
+      'GET /api/jobs': [],
+      'PATCH /api/series/a': (body: unknown) => ({ ...items[0], ...(body as object) }),
+    });
+    renderWithProviders(<WorksPage />);
+    const card = (await screen.findByText('雨夜便利店')).closest('article')!;
+    fireEvent.contextMenu(card);
+    fireEvent.click(await screen.findByRole('menuitem', { name: /重命名/ }));
+    const dialog = await screen.findByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('画册名称'), { target: { value: '雨夜' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: '保存名称' }));
+    await waitFor(() =>
+      expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({ title: '雨夜' }),
+    );
+  });
+
+  it('queues only the missing scenes from 补齐缺失分幕', async () => {
+    const [p1, p2] = episode.panels;
+    const ep = {
+      ...episode,
+      id: 'ep_b',
+      series_id: 'b',
+      panels: [p1, p2],
+      takes: [{ ...episode.takes[0], id: 't1', panel_id: p1.id, status: 'adopted' }],
+    } as Episode;
+    const calls = mockFetch({
+      'GET /api/series': items,
+      'GET /api/update': {},
+      'GET /api/jobs': [],
+      'GET /api/series/b/episodes': { items: [{ id: 'ep_b' }], total: 1, offset: 0, limit: 50 },
+      'GET /api/episodes/ep_b': ep,
+      'POST /api/episodes/ep_b/render': { id: 'job_1', state: 'queued' },
+    });
+    renderWithProviders(<WorksPage />);
+    const card = (await screen.findByText('晴天修理铺')).closest('article')!;
+    fireEvent.contextMenu(card);
+    fireEvent.click(await screen.findByRole('menuitem', { name: /补齐缺失分幕/ }));
+    await waitFor(() => expect(calls.find((c) => c.method === 'POST')).toBeTruthy());
+    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({
+      panel_ids: [p2.id],
+      candidates: 1,
+      adopt_first: true,
+    });
   });
 });
 
@@ -82,13 +187,15 @@ const routes = (extra: Record<string, unknown> = {}) => ({
 });
 
 describe('WorksPage showcase', () => {
-  beforeEach(() => useUI.setState({ worksView: 'showcase', starred: [] }));
+  beforeEach(() =>
+    useUI.setState({ worksView: 'showcase', starred: [], shelfSort: 'createdAt', shelfOrder: [] }),
+  );
   afterEach(() => vi.unstubAllGlobals());
 
   it('features one book at a time and leafs through with the buttons and arrow keys', async () => {
     mockFetch(routes());
     renderWithProviders(<WorksPage />);
-    // Sorted by last update: 晴天修理铺, 雨夜便利店, Night Shift.
+    // Newest first: 晴天修理铺, 雨夜便利店, Night Shift.
     expect(
       await screen.findByRole('heading', { level: 2, name: '晴天修理铺' }),
     ).toBeInTheDocument();

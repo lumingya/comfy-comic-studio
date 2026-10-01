@@ -1,23 +1,39 @@
-import { ArrowRight, ChevronLeft, ChevronRight, ImageIcon, Star } from 'lucide-react';
-import { useEffect } from 'react';
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  ImageIcon,
+  MoreHorizontal,
+  RefreshCw,
+  Star,
+} from 'lucide-react';
+import { useEffect, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { assetUrl } from '../../api/client';
 import type { SeriesCard } from '../../api/types';
 import { useUI } from '../../app/ui-store';
-import { ActionMenu, type MenuAction } from '../../components/ui';
+import { missingOf, type ShelfState } from './shelf';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-/** Legacy shelf status: every panel has an adopted image → complete; otherwise what is missing. */
-export function frameState(series: SeriesCard): {
-  key: 'blank' | 'complete' | 'missing';
-  n: number;
-} {
-  const panels = series.panel_count ?? 0;
-  const done = series.adopted_count ?? 0;
-  if (!panels) return { key: 'blank', n: 0 };
-  return done >= panels ? { key: 'complete', n: 0 } : { key: 'missing', n: panels - done };
+/** The ⋯ button of an album: the same menu as a right-click, anchored under the button. */
+export function BookMenuButton(props: {
+  label: string;
+  onMenu: (e: MouseEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="btn ghost icon sm"
+      aria-label={props.label}
+      title={props.label}
+      aria-haspopup="menu"
+      onClick={props.onMenu}
+    >
+      <MoreHorizontal size={16} />
+    </button>
+  );
 }
 
 export function shelfDate(iso: string | undefined, language: string): string {
@@ -103,7 +119,10 @@ export function Showcase(props: {
   index: number;
   onIndex: (i: number) => void;
   firstEditionId?: string;
-  actions: (series: SeriesCard) => MenuAction[];
+  stateOf: (series: SeriesCard) => ShelfState;
+  onMenu: (series: SeriesCard, e: MouseEvent<HTMLButtonElement>) => void;
+  onResume: (series: SeriesCard) => void;
+  resuming?: boolean;
   onChangeCover: (series: SeriesCard) => void;
   selected?: boolean;
   context?: boolean;
@@ -138,8 +157,8 @@ export function Showcase(props: {
   if (!b) return null;
   const to = `/gallery/${b.id}`;
   const cast = (b.bible?.characters ?? []).map((c) => c.name).filter(Boolean);
-  const state = frameState(b);
-  const status = b.status ?? 'draft';
+  const state = props.stateOf(b);
+  const missing = missingOf(b);
   const pics = b.adopted_count ?? 0;
   return (
     <article
@@ -197,16 +216,25 @@ export function Showcase(props: {
           </Link>
           <span className="spacer" />
           <StarButton series={b} />
-          <ActionMenu label={t('classic.shelf.manage')} actions={props.actions(b)} />
+          <BookMenuButton label={t('classic.shelf.manage')} onMenu={(e) => props.onMenu(b, e)} />
         </div>
         <div className="shelf-meta-line">
-          <i className={`dot ${state.key === 'missing' ? 'is-amber' : ''}`} />
-          <span>{t(`classic.shelf.${state.key}`, { count: state.n })}</span>
-          <span className="sep">/</span>
-          <span>{t(`series.status.${status}`)}</span>
+          <i className={`dot ${missing ? 'is-amber' : ''}`} />
+          <span>{t(`classic.shelf.state.${state}`)}</span>
           <span className="sep">/</span>
           <time dateTime={b.created_at}>{shelfDate(b.created_at, i18n.language)}</time>
         </div>
+        {missing && state !== 'generating' ? (
+          <button
+            type="button"
+            className="btn sm shelf-resume"
+            disabled={props.resuming}
+            title={t('classic.shelf.resumeHint', { count: missing })}
+            onClick={() => props.onResume(b)}
+          >
+            <RefreshCw size={13} /> {t('classic.shelf.resume', { count: missing })}
+          </button>
+        ) : null}
         <div className="edition-credit mono">
           MIO
           <span>{t('classic.shelf.credit')}</span>

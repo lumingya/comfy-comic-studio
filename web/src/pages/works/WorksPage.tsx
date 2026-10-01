@@ -1,10 +1,17 @@
-import { Download, FolderInput, ImageIcon, Pencil, Search, Star, Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { FolderInput, Pencil, Search, Star } from 'lucide-react';
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type MouseEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import { BulkBar, useBulkActions } from './BulkBar';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useMatch, useNavigate, useSearchParams } from 'react-router-dom';
 import { assetUrl, download } from '../../api/client';
-import { useSeriesList, useTrashSeries } from '../../api/series';
+import { useSeriesList } from '../../api/series';
 import { useImportBundle, usePatchSettings, useSettings } from '../../api/system';
 import type { SeriesCard } from '../../api/types';
 import { QueryError } from '../../app/errors';
@@ -15,50 +22,37 @@ import { usePageTitle } from '../../app/title';
 import { useUI } from '../../app/ui-store';
 import { ContextMenu, useContextMenu, type ContextGroup } from '../../components/ContextMenu';
 import { toast, toastError } from '../../components/toast';
-import { useUndoTrash } from '../../components/undo';
-import { ActionMenu, Empty, FilePick, InlineTitle, type MenuAction } from '../../components/ui';
+import { Empty, FilePick, InlineTitle } from '../../components/ui';
 import { CoverPicker } from './CoverPicker';
-import { Parchment, Showcase, ShowcaseNav, StarButton } from './Showcase';
+import { BookMenuButton, Parchment, Showcase, ShowcaseNav, StarButton } from './Showcase';
+import { ExportBooks, RenameBooks } from './ShelfDialogs';
+import {
+  filterShelf,
+  missingOf,
+  reorderShelf,
+  shelfDay,
+  shelfState,
+  SHELF_FILTERS,
+  SHELF_SORTS,
+  useGeneratingSeries,
+  useResumeSeries,
+  type ShelfFilter,
+  type ShelfQuery,
+  type ShelfSort,
+  type ShelfState,
+} from './shelf';
 import { WorksHero } from './WorksHero';
+import { useShelfReorder } from './useShelfReorder';
 import { useShelfSelection, type ShelfContext } from './useShelfSelection';
 
-const STATUSES = ['draft', 'active', 'archived'] as const;
 /** Legacy key: the one-line multi-select hint stays hidden once used or dismissed. */
 const HINT_KEY = 'cc-hint-multiselect';
-type Status = (typeof STATUSES)[number];
-const SORTS = ['updated', 'title', 'created'] as const;
-type Sort = (typeof SORTS)[number];
-
-export interface WorksFilter {
-  q: string;
-  status: Status | '';
-  sort: Sort;
-}
-
-/** Search (title / subtitle / 简介, like legacy), status and sort, all client-side. Exported for tests. */
-export function filterWorks(items: SeriesCard[], f: WorksFilter, locale: string): SeriesCard[] {
-  const q = f.q.trim().toLocaleLowerCase(locale);
-  const out = items.filter((s) => {
-    if (f.status && (s.status ?? 'draft') !== f.status) return false;
-    if (!q) return true;
-    return `${s.title}\n${s.subtitle ?? ''}\n${s.synopsis ?? ''}`
-      .toLocaleLowerCase(locale)
-      .includes(q);
-  });
-  const collator = new Intl.Collator(locale, { numeric: true });
-  return out.sort((a, b) => {
-    if (f.sort === 'title') return collator.compare(a.title, b.title);
-    const key = f.sort === 'created' ? 'created_at' : 'updated_at';
-    return (b[key] ?? '').localeCompare(a[key] ?? '');
-  });
-}
+type Counts = Record<Exclude<ShelfFilter, 'all'>, number>;
 
 function FilterBar(props: {
-  items: SeriesCard[];
-  filter: WorksFilter;
-  onChange: (patch: Partial<WorksFilter>) => void;
-  starredOnly: boolean;
-  onStarredOnly: (on: boolean) => void;
+  counts: Counts;
+  filter: ShelfQuery;
+  onChange: (patch: Partial<ShelfQuery>) => void;
   bulk: boolean;
   touch: boolean;
   onBulk: (on: boolean) => void;
@@ -66,11 +60,7 @@ function FilterBar(props: {
   const { t } = useTranslation();
   const view = useUI((s) => s.worksView);
   const setView = useUI((s) => s.setWorksView);
-  const counts = useMemo(() => {
-    const c: Record<Status, number> = { draft: 0, active: 0, archived: 0 };
-    for (const s of props.items) c[(s.status ?? 'draft') as Status]++;
-    return c;
-  }, [props.items]);
+  const starredOnly = props.filter.filter === 'starred';
   return (
     <div className="collection-toolbar shelf-toolbar" role="search">
       <div className="search-field">
@@ -89,11 +79,11 @@ function FilterBar(props: {
       <span className="spacer" />
       <button
         type="button"
-        className={`filter-link ${props.starredOnly ? 'active' : ''}`}
-        aria-pressed={props.starredOnly}
-        onClick={() => props.onStarredOnly(!props.starredOnly)}
+        className={`filter-link ${starredOnly ? 'active' : ''}`}
+        aria-pressed={starredOnly}
+        onClick={() => props.onChange({ filter: starredOnly ? 'all' : 'starred' })}
       >
-        <Icon name="star" sm className={props.starredOnly ? 'is-filled' : ''} />
+        <Icon name="star" sm className={starredOnly ? 'is-filled' : ''} />
         {t('classic.shelf.starred')}
       </button>
       {props.touch ? (
@@ -110,26 +100,31 @@ function FilterBar(props: {
       ) : null}
       <select
         id="gallery-filter"
-        aria-label={t('series.statusLabel')}
-        value={props.filter.status}
-        onChange={(e) => props.onChange({ status: e.target.value as Status | '' })}
+        aria-label={t('classic.shelf.filterLabel')}
+        value={props.filter.filter}
+        onChange={(e) => props.onChange({ filter: e.target.value as ShelfFilter })}
       >
-        <option value="">{t('legacy.allAlbums')}</option>
-        {STATUSES.map((st) => (
-          <option key={st} value={st}>
-            {t(`series.status.${st}`)} · {counts[st]}
-          </option>
-        ))}
+        {SHELF_FILTERS.map((f) =>
+          f === 'all' ? (
+            <option key={f} value={f}>
+              {t('legacy.allAlbums')}
+            </option>
+          ) : (
+            <option key={f} value={f}>
+              {t(`classic.shelf.filter.${f}`)} · {props.counts[f]}
+            </option>
+          ),
+        )}
       </select>
       <select
         id="gallery-sort"
-        aria-label={t('works.sortLabel')}
+        aria-label={t('classic.shelf.sortLabel')}
         value={props.filter.sort}
-        onChange={(e) => props.onChange({ sort: e.target.value as Sort })}
+        onChange={(e) => props.onChange({ sort: e.target.value as ShelfSort })}
       >
-        {SORTS.map((v) => (
+        {SHELF_SORTS.map((v) => (
           <option key={v} value={v}>
-            {t(`works.sort.${v}`)}
+            {t(`classic.shelf.sort.${v}`)}
           </option>
         ))}
       </select>
@@ -159,49 +154,20 @@ function FilterBar(props: {
   );
 }
 
-/** Export / change cover / delete, shared by the showcase and the grid card. */
-function useBookActions(onChangeCover: (series: SeriesCard) => void) {
-  const { t } = useTranslation();
-  const trash = useTrashSeries();
-  const undo = useUndoTrash();
-  return (series: SeriesCard): MenuAction[] => [
-    {
-      label: t('classic.shelf.changeCover'),
-      icon: <ImageIcon size={14} />,
-      onSelect: () => onChangeCover(series),
-    },
-    {
-      label: t('works.exportBundle'),
-      icon: <Download size={14} />,
-      onSelect: () =>
-        download(`/api/series/${series.id}/bundle`, `${series.title}.mio.zip`).catch(toastError),
-    },
-    {
-      label: t('common.delete'),
-      icon: <Trash2 size={14} />,
-      danger: true,
-      onSelect: () =>
-        trash.mutate(series.id!, {
-          onSuccess: () => undo('series', series.id!, series.title),
-          onError: toastError,
-        }),
-    },
-  ];
-}
-
 function SeriesCardView(props: {
   series: SeriesCard;
   index: number;
-  actions: MenuAction[];
+  state: ShelfState;
+  onMenu: (e: MouseEvent<HTMLButtonElement>) => void;
+  /** The ⠿ handle's drag start; absent while dragging would make no sense (one album, selecting). */
+  onReorder?: (e: ReactPointerEvent<HTMLElement>) => void;
   /** Touch 批量管理 mode: the cover toggles selection instead of opening the reader. */
   selecting?: boolean;
   selected?: boolean;
   context?: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { series } = props;
-  const status = series.status ?? 'draft';
-  const date = (series.updated_at ?? '').slice(5, 10).replace('-', '.');
   return (
     <article
       className={`shelf-item ${props.selecting ? 'is-selecting' : ''} ${props.selected ? 'is-selected' : ''} ${props.context ? 'is-context' : ''}`}
@@ -211,6 +177,17 @@ function SeriesCardView(props: {
       data-shelf-id={series.id}
       tabIndex={0}
     >
+      {props.onReorder ? (
+        <span
+          className="shelf-drag-handle"
+          data-reorder-handle
+          title={t('classic.shelf.dragHandle')}
+          aria-hidden
+          onPointerDown={props.onReorder}
+        >
+          ⠿
+        </span>
+      ) : null}
       <button
         className="shelf-cover book-cover"
         style={{ '--cover-ratio': 0.75, '--cover-fit': 'cover' } as CSSProperties}
@@ -241,12 +218,14 @@ function SeriesCardView(props: {
       <div className="edition-tile-footer">
         <h3>{series.title}</h3>
         <StarButton series={series} small />
-        <ActionMenu actions={props.actions} />
+        <BookMenuButton label={t('classic.shelf.menu')} onMenu={props.onMenu} />
       </div>
       <div className="edition-tile-meta">
         <span>{t('classic.shelf.frames', { count: series.panel_count ?? 0 })}</span>
-        <span className={`status-label status-${status}`}>{t(`series.status.${status}`)}</span>
-        <time dateTime={series.updated_at}>{date}</time>
+        <span className={`status-label is-${props.state}`}>
+          {t(`classic.shelf.state.${props.state}`)}
+        </span>
+        <time dateTime={series.created_at}>{shelfDay(series.created_at, i18n.language)}</time>
       </div>
     </article>
   );
@@ -294,45 +273,57 @@ export default function WorksPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const list = useSeriesList();
-  // Filter state lives in the URL so Back returns to the same view.
+  const items = useMemo(() => list.data ?? [], [list.data]);
+  const sort = useUI((s) => s.shelfSort);
+  const setSort = useUI((s) => s.setShelfSort);
+  const order = useUI((s) => s.shelfOrder);
+  const setOrder = useUI((s) => s.setShelfOrder);
+  const starred = useUI((s) => s.starred);
+  const generating = useGeneratingSeries(items);
+  const generatingKey = [...generating].sort().join(',');
+  // Search and status live in the URL so Back returns to the same view; the sort is remembered.
   const [params, setParams] = useSearchParams();
-  const filter: WorksFilter = {
+  const status = params.get('status') ?? '';
+  const filter: ShelfQuery = {
     q: params.get('q') ?? '',
-    status: (STATUSES as readonly string[]).includes(params.get('status') ?? '')
-      ? (params.get('status') as Status)
-      : '',
-    sort: (SORTS as readonly string[]).includes(params.get('sort') ?? '')
-      ? (params.get('sort') as Sort)
-      : 'updated',
+    // ?starred=1 is the old link to the starred shelf.
+    filter:
+      params.get('starred') === '1'
+        ? 'starred'
+        : (SHELF_FILTERS as readonly string[]).includes(status)
+          ? (status as ShelfFilter)
+          : 'all',
+    sort,
   };
-  const setFilter = (patch: Partial<WorksFilter>) => {
+  const setFilter = (patch: Partial<ShelfQuery>) => {
+    if (patch.sort) setSort(patch.sort);
     const next = { ...filter, ...patch };
     const p = new URLSearchParams();
     if (next.q) p.set('q', next.q);
-    if (next.status) p.set('status', next.status);
-    if (next.sort !== 'updated') p.set('sort', next.sort);
-    if (params.get('starred') === '1') p.set('starred', '1');
+    if (next.filter !== 'all') p.set('status', next.filter);
     setParams(p, { replace: true });
   };
-  const setStarredOnly = (on: boolean) => {
-    const p = new URLSearchParams(params);
-    if (on) p.set('starred', '1');
-    else p.delete('starred');
-    setParams(p, { replace: true });
-  };
-  const filtered = useMemo(
-    () => (list.data ? filterWorks(list.data, filter, i18n.language) : []),
-    [list.data, filter.q, filter.status, filter.sort, i18n.language],
-  );
-  const starred = useUI((s) => s.starred);
-  const starredOnly = params.get('starred') === '1';
   const books = useMemo(
-    () => (starredOnly ? filtered.filter((s) => starred.includes(s.id!)) : filtered),
-    [filtered, starred, starredOnly],
+    () => filterShelf(items, filter, { starred, generating, order }, i18n.language),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items, filter.q, filter.filter, sort, starred, generatingKey, order, i18n.language],
   );
+  const counts = useMemo<Counts>(
+    () => ({
+      complete: items.filter((s) => shelfState(s, generating.has(s.id!)) === 'complete').length,
+      generating: items.filter((s) => generating.has(s.id!)).length,
+      failed: items.filter((s) => missingOf(s) > 0).length,
+      starred: items.filter((s) => starred.includes(s.id!)).length,
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [items, starred, generatingKey],
+  );
+  const stateOf = (s: SeriesCard) => shelfState(s, generating.has(s.id!));
   const view = useUI((s) => s.worksView);
   const readerOpen = !!useMatch('/gallery/:seriesId/*');
   const [coverFor, setCoverFor] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState<SeriesCard[] | null>(null);
+  const [exporting, setExporting] = useState<SeriesCard[] | null>(null);
   // Multi-select (legacy desktop selection): Ctrl / ⌘ / Shift + click, right-click for batch
   // actions, Ctrl+A / Esc / Delete. 批量管理 is the touch fallback that makes a tap select.
   const [bulk, setBulk] = useState(false);
@@ -341,13 +332,14 @@ export default function WorksPage() {
   const showGrid = view === 'grid' || bulk;
   const bulkActions = useBulkActions(() => selection.clear());
   const menu = useContextMenu<ShelfContext>();
+  const dialogOpen = !!coverFor || !!renaming || !!exporting;
   const setBulkMode = (on: boolean) => {
     setBulk(on);
     selection.clear();
   };
   const shelf = useShelfSelection({
     selection,
-    enabled: !readerOpen && !coverFor,
+    enabled: !readerOpen && !dialogOpen,
     pinned: bulk,
     contextOpen: !!menu.state,
     onExit: () => setBulkMode(false),
@@ -360,9 +352,20 @@ export default function WorksPage() {
   });
   const visibleSelection = shelf.snapshot ?? selection.ids;
   const chosen = books.filter((b) => visibleSelection.includes(b.id!));
+  /** Legacy reorderCollectionBook: the drop becomes the manual order (and 手动排序 the sort). */
+  const moveBook = (source: string, target: string, after: boolean) => {
+    setOrder(reorderShelf(items, bookIds, order, sort, source, target, after));
+    setSort('manual');
+    toast(t('classic.shelf.reordered'));
+  };
+  const reorder = useShelfReorder({
+    root: shelf.ref,
+    enabled: !readerOpen && !dialogOpen && !bulk && !selection.ids.length && books.length > 1,
+    onDrop: moveBook,
+  });
   useEffect(() => {
     menu.close();
-  }, [view, filter.q, filter.status, filter.sort, starredOnly, menu.close]);
+  }, [view, filter.q, filter.filter, sort, menu.close]);
   useEffect(() => {
     if (menu.state?.payload.ids.some((id) => !bookIds.includes(id))) menu.close();
   }, [bookIds, menu.state, menu.close]);
@@ -376,18 +379,16 @@ export default function WorksPage() {
   });
   // The featured book (showcase); back to the first one whenever the filter changes.
   const [featured, setFeatured] = useState(0);
-  const filterKey = `${filter.q}|${filter.status}|${filter.sort}|${starredOnly}`;
+  const filterKey = `${filter.q}|${filter.filter}|${sort}`;
   useEffect(() => setFeatured(0), [filterKey]);
   const index = Math.min(featured, Math.max(0, books.length - 1));
   const firstEditionId = useMemo(
-    () =>
-      [...(list.data ?? [])].sort((a, b) =>
-        (a.created_at ?? '').localeCompare(b.created_at ?? ''),
-      )[0]?.id,
-    [list.data],
+    () => [...items].sort((a, b) => (a.created_at ?? '').localeCompare(b.created_at ?? ''))[0]?.id,
+    [items],
   );
-  const coverSeries = list.data?.find((s) => s.id === coverFor);
-  const actions = useBookActions((s) => setCoverFor(s.id!));
+  const coverSeries = items.find((s) => s.id === coverFor);
+  const settings = useSettings();
+  const collectionTitle = settings.data?.collection_title || t('classic.shelf.defaultTitle');
   const importBundle = useImportBundle();
   // 画册集 is for reading; a new album starts in 创作工坊 (装配 → 新建生成任务).
   const create = () => navigate('/workshop/assembly?new=1');
@@ -395,75 +396,222 @@ export default function WorksPage() {
     if (params.get('new') === '1') navigate('/workshop/assembly?new=1', { replace: true });
   }, [params, navigate]);
 
-  /** Right-click: one album gets its own actions, a multi-selection gets the batch ones. */
-  const shelfMenu = (ids: string[]): ContextGroup[] => {
+  // 补齐缺失分幕: only scenes without an album image run, one candidate each, adopted as they land.
+  const resumeSeries = useResumeSeries();
+  const [resuming, setResuming] = useState<string[]>([]);
+  const resume = async (targets: SeriesCard[]) => {
+    const todo = targets.filter((b) => missingOf(b) > 0 && !generating.has(b.id!));
+    if (!todo.length) {
+      toast(
+        t(
+          targets.some((b) => generating.has(b.id!))
+            ? 'classic.shelf.resumeBusy'
+            : 'classic.shelf.resumeNone',
+        ),
+      );
+      return;
+    }
+    const ids = todo.map((b) => b.id!);
+    setResuming((r) => [...r, ...ids]);
+    let queued = 0;
+    try {
+      for (const b of todo) queued += await resumeSeries(b);
+      toast(queued ? t('classic.shelf.resumed', { count: queued }) : t('classic.shelf.resumeNone'));
+    } catch (e) {
+      toastError(e);
+    } finally {
+      setResuming((r) => r.filter((id) => !ids.includes(id)));
+    }
+  };
+  const open = (id: string) => {
+    setBulkMode(false);
+    selection.anchorAt(id);
+    navigate(`/gallery/${id}${gallerySearch(params)}`);
+  };
+  /** ⋯ opens the right-click menu under the button (legacy book-menu on the shelf). */
+  const openMenu = (series: SeriesCard, e: MouseEvent<HTMLButtonElement>) => {
+    const target = e.currentTarget,
+      rect = target.getBoundingClientRect(),
+      id = series.id!;
+    const multi = selection.has(id) && selection.ids.length > 1;
+    if (!multi && selection.ids.length) selection.clear();
+    menu.openAt(rect.left, rect.bottom + 4, {
+      ids: multi ? selection.ids : [id],
+      focusId: id,
+      target,
+    });
+  };
+
+  /** Legacy singleBookContextItems / multiBookContextItems. */
+  const shelfMenu = (ids: string[], focusId?: string): ContextGroup[] => {
     const targets = books.filter((b) => ids.includes(b.id!));
-    const one = targets.length === 1 ? targets[0] : undefined;
     const starredAll = bulkActions.allStarred(targets);
+    const selectAll = {
+      label: t('classic.shelf.selectFiltered'),
+      icon: <Icon name="check" sm />,
+      shortcut: 'Ctrl/⌘ A',
+      onSelect: () => {
+        selection.all();
+        shelf.ref.current?.focus({ preventScroll: true });
+      },
+    };
+    if (targets.length > 1) {
+      const focus = targets.find((b) => b.id === focusId);
+      return [
+        {
+          heading: t('classic.shelf.forSelection', { count: targets.length }),
+          items: [
+            {
+              label: t(starredAll ? 'classic.shelf.unstarMany' : 'classic.shelf.starMany'),
+              icon: <Icon name="star" sm />,
+              onSelect: () => bulkActions.star(targets),
+            },
+            {
+              label: t('classic.shelf.renameMulti'),
+              icon: <Icon name="edit" sm />,
+              onSelect: () => setRenaming(targets),
+            },
+            {
+              label: t('classic.shelf.exportOffline'),
+              icon: <Icon name="download" sm />,
+              hint: t('classic.shelf.exportOfflineMultiHint'),
+              onSelect: () => setExporting(targets),
+            },
+            {
+              label: t('classic.shelf.shareSource'),
+              icon: <Icon name="upload" sm />,
+              hint: t('classic.shelf.bulkExportHint'),
+              disabled: bulkActions.busy,
+              onSelect: () => void bulkActions.exportAll(targets),
+            },
+            {
+              label: t('classic.shelf.resumeMenu'),
+              icon: <Icon name="refresh" sm />,
+              hint: t('classic.shelf.resumeMultiHint'),
+              disabled: !targets.some((b) => missingOf(b) > 0),
+              onSelect: () => void resume(targets),
+            },
+          ],
+        },
+        {
+          items: [
+            ...(focus
+              ? [
+                  {
+                    label: t('classic.shelf.openOnly'),
+                    icon: <Icon name="book" sm />,
+                    hint: focus.title,
+                    onSelect: () => open(focus.id!),
+                  },
+                ]
+              : []),
+            selectAll,
+            {
+              label: t('classic.shelf.clearSelection'),
+              icon: <Icon name="close" sm />,
+              shortcut: 'Esc',
+              onSelect: () => setBulkMode(false),
+            },
+          ],
+        },
+        {
+          items: [
+            {
+              label: t('classic.shelf.deleteMany'),
+              icon: <Icon name="trash" sm />,
+              danger: true,
+              shortcut: 'Del',
+              disabled: bulkActions.busy,
+              onSelect: () => void bulkActions.remove(targets),
+            },
+          ],
+        },
+      ];
+    }
+    const one = targets[0];
+    if (!one) return [];
+    const id = one.id!,
+      at = bookIds.indexOf(id),
+      missing = missingOf(one),
+      busy = generating.has(id);
     return [
       {
-        heading:
-          targets.length > 1
-            ? t('classic.shelf.bulkSelected', { count: targets.length })
-            : one?.title,
         items: [
-          ...(one
-            ? [
-                {
-                  label: t('classic.shelf.open'),
-                  icon: <Icon name="book" sm />,
-                  shortcut: 'Enter',
-                  onSelect: () => {
-                    setBulkMode(false);
-                    selection.anchorAt(one.id!);
-                    navigate(`/gallery/${one.id}${gallerySearch(params)}`);
-                  },
-                },
-                {
-                  label: t('classic.shelf.changeCover'),
-                  icon: <Icon name="image" sm />,
-                  onSelect: () => setCoverFor(one.id!),
-                },
-              ]
-            : []),
+          {
+            label: t('classic.shelf.open'),
+            icon: <Icon name="book" sm />,
+            primary: true,
+            shortcut: 'Enter',
+            onSelect: () => open(id),
+          },
           {
             label: starredAll ? t('classic.shelf.unstar') : t('classic.shelf.star'),
             icon: <Icon name="star" sm />,
             onSelect: () => bulkActions.star(targets),
           },
           {
-            label: one ? t('works.exportBundle') : t('classic.shelf.bulkExportHint'),
+            label: t('classic.shelf.renameMenu'),
+            icon: <Icon name="edit" sm />,
+            onSelect: () => setRenaming(targets),
+          },
+          {
+            label: t('classic.shelf.resumeMenu'),
+            icon: <Icon name="refresh" sm />,
+            disabled: !missing || busy || resuming.includes(id),
+            hint: busy
+              ? t('classic.shelf.resumeBusy')
+              : missing
+                ? t('classic.shelf.resumeHint', { count: missing })
+                : t('classic.shelf.resumeNone'),
+            onSelect: () => void resume(targets),
+          },
+          {
+            label: t('classic.shelf.changeCover'),
+            icon: <Icon name="image" sm />,
+            onSelect: () => setCoverFor(id),
+          },
+        ],
+      },
+      {
+        heading: t('classic.shelf.exportGroup'),
+        items: [
+          {
+            label: t('classic.shelf.exportOffline'),
             icon: <Icon name="download" sm />,
-            disabled: bulkActions.busy,
-            onSelect: () => void bulkActions.exportAll(targets),
+            hint: t('classic.shelf.exportOfflineHint'),
+            onSelect: () => navigate(`/gallery/${id}/export${gallerySearch(params)}`),
           },
+          {
+            label: t('classic.shelf.shareSource'),
+            icon: <Icon name="upload" sm />,
+            hint: t('classic.shelf.shareSourceHint'),
+            onSelect: () =>
+              void download(`/api/series/${id}/bundle`, `${one.title}.mio.zip`).catch(toastError),
+          },
+        ],
+      },
+      {
+        heading: t('classic.shelf.organize'),
+        items: [
+          {
+            label: t('classic.shelf.moveUp'),
+            icon: <Icon name="up" sm />,
+            disabled: at <= 0,
+            onSelect: () => moveBook(id, bookIds[at - 1], false),
+          },
+          {
+            label: t('classic.shelf.moveDown'),
+            icon: <Icon name="down" sm />,
+            disabled: at < 0 || at >= bookIds.length - 1,
+            onSelect: () => moveBook(id, bookIds[at + 1], true),
+          },
+          { ...selectAll, hint: t('classic.shelf.selectFilteredHint') },
         ],
       },
       {
         items: [
           {
-            label: t('classic.shelf.selectFiltered'),
-            shortcut: 'Ctrl/⌘ A',
-            onSelect: () => {
-              selection.all();
-              shelf.ref.current?.focus({ preventScroll: true });
-            },
-          },
-          ...(selection.ids.length
-            ? [
-                {
-                  label: t('classic.shelf.clearSelection'),
-                  shortcut: 'Esc',
-                  onSelect: () => setBulkMode(false),
-                },
-              ]
-            : []),
-        ],
-      },
-      {
-        items: [
-          {
-            label: t('common.delete'),
+            label: t('classic.shelf.deleteOne'),
             icon: <Icon name="trash" sm />,
             danger: true,
             shortcut: 'Del',
@@ -473,6 +621,32 @@ export default function WorksPage() {
         ],
       },
     ];
+  };
+  /** Legacy ctx-title / subtitle: the album and its facts, or the size of the selection. */
+  const menuHead = (ids: string[]) => {
+    if (ids.length > 1)
+      return {
+        title: t('classic.shelf.selectedTitle', { count: ids.length }),
+        subtitle: t('classic.shelf.multiSubtitle'),
+      };
+    const one = books.find((b) => b.id === ids[0]);
+    if (!one) return {};
+    const missing = missingOf(one);
+    const cast = (one.bible?.characters ?? [])
+      .map((c) => c.name)
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('、');
+    return {
+      title: one.title,
+      subtitle: [
+        t('classic.shelf.frames', { count: one.panel_count ?? 0 }),
+        cast,
+        missing ? t('classic.shelf.missingShort', { count: missing }) : t('classic.shelf.ready'),
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    };
   };
 
   const onBundle = (file: File) =>
@@ -519,11 +693,9 @@ export default function WorksPage() {
         ) : null}
         {list.data?.length ? (
           <FilterBar
-            items={list.data}
+            counts={counts}
             filter={filter}
             onChange={setFilter}
-            starredOnly={starredOnly}
-            onStarredOnly={setStarredOnly}
             bulk={bulk}
             touch={shelf.touch}
             onBulk={setBulkMode}
@@ -552,9 +724,9 @@ export default function WorksPage() {
           {list.data?.length && !books.length ? (
             <Empty
               compact
-              icon={starredOnly ? <Star size={20} /> : <Search size={20} />}
+              icon={filter.filter === 'starred' ? <Star size={20} /> : <Search size={20} />}
               title={
-                starredOnly && !filter.q && !filter.status
+                filter.filter === 'starred' && !filter.q
                   ? t('classic.shelf.noStarred')
                   : t('works.noMatch')
               }
@@ -590,11 +762,14 @@ export default function WorksPage() {
               index={index}
               onIndex={setFeatured}
               firstEditionId={firstEditionId}
-              actions={actions}
+              stateOf={stateOf}
+              onMenu={openMenu}
+              onResume={(s) => void resume([s])}
+              resuming={!!books[index] && resuming.includes(books[index].id!)}
               onChangeCover={(s) => setCoverFor(s.id!)}
               selected={!!books[index] && selection.has(books[index].id!)}
               context={menu.state?.payload.focusId === books[index]?.id}
-              disabled={readerOpen || !!coverFor}
+              disabled={readerOpen || dialogOpen}
             />
           ) : null}
           {books.length > 1 && !bulk && !chosen.length && !shelf.touch && !hintSeen ? (
@@ -612,7 +787,9 @@ export default function WorksPage() {
                   key={s.id}
                   series={s}
                   index={i}
-                  actions={actions(s)}
+                  state={stateOf(s)}
+                  onMenu={(e) => openMenu(s, e)}
+                  onReorder={books.length > 1 && !bulk ? reorder.onPointerDown : undefined}
                   selecting={bulk}
                   selected={selection.has(s.id!)}
                   context={menu.state?.payload.focusId === s.id}
@@ -626,7 +803,8 @@ export default function WorksPage() {
           <ContextMenu
             x={menu.state.x}
             y={menu.state.y}
-            groups={shelfMenu(menu.state.payload.ids)}
+            {...menuHead(menu.state.payload.ids)}
+            groups={shelfMenu(menu.state.payload.ids, menu.state.payload.focusId)}
             returnFocus={menu.state.payload.target}
             onClose={menu.close}
           />
@@ -636,6 +814,17 @@ export default function WorksPage() {
             series={coverSeries}
             open={!!coverSeries}
             onOpenChange={(open) => !open && setCoverFor(null)}
+          />
+        ) : null}
+        {renaming ? (
+          <RenameBooks books={renaming} open onOpenChange={(open) => !open && setRenaming(null)} />
+        ) : null}
+        {exporting ? (
+          <ExportBooks
+            books={exporting}
+            open
+            collectionTitle={collectionTitle}
+            onOpenChange={(open) => !open && setExporting(null)}
           />
         ) : null}
       </section>
