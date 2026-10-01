@@ -131,7 +131,7 @@ export const wsZh = {
     },
     prompt: '正向提示词',
     promptHint: '描述这一幕的画面，可以使用 {character} 这样的变量',
-    negative: '负面提示词',
+    negative: '负向提示词',
     negativeHint: '不希望出现在画面里的内容',
     negativeAll: '应用到所有分幕',
     negativeAllDone: '负向提示词已应用到 {{n}} 个分幕',
