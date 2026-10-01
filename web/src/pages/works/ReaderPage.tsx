@@ -63,9 +63,11 @@ export default function ReaderPage() {
   const epId = params.get('ep') ?? items[0]?.id;
   const episode = useEpisode(epId);
   const [mode, setMode] = useState<ReadingMode>(() => readingMode(localStorage.getItem(MODE_KEY)));
-  const [layout, setLayout] = useState<NativeLayout>(() =>
-    nativeLayout(localStorage.getItem(LAYOUT_KEY)),
-  );
+  const storeLayout = useUI((s) => s.defaultReaderMode);
+  const [layout, setLayout] = useState<NativeLayout>(() => {
+    const stored = localStorage.getItem(LAYOUT_KEY);
+    return nativeLayout(stored || storeLayout);
+  });
   const stage = stageMode(layout, mode);
   const [look, setLook] = useState<string>(() => {
     const saved = localStorage.getItem(LOOK_KEY) || NATIVE;

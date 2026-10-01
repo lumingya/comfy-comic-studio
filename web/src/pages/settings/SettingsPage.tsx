@@ -8,11 +8,11 @@ import { toast, toastError } from '../../components/toast';
 import { manualHref, useQuickStart } from '../../components/HelpDrawer';
 import { ConfigurationGuard } from './ConfigurationParts';
 import { FilePick } from '../../components/ui';
-import { setLocale } from '../../i18n';
 import { TrashSection } from '../trash/TrashPage';
 import { LegacyImportDialog } from '../works/LegacyImportDialog';
 import { AccessSection } from './AccessSection';
 import { ExtensionsSection } from './ExtensionsSection';
+import { AppearanceSection } from './AppearanceSection';
 import { GeneralSection } from './GeneralSection';
 import { StudioSection } from './StudioSection';
 import { ThemesSection } from './ThemesSection';
@@ -24,7 +24,7 @@ import { UpdatesSection } from './UpdatesSection';
  * The collection is renamed from the top bar or 画册集.
  */
 function WorkspaceSection() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const settings = useSettings();
   const patch = usePatchSettings();
   const saved = {
@@ -121,20 +121,6 @@ function WorkspaceSection() {
             {t('legacy.settings.saveIdentity')}
           </button>
         </form>
-        <div className="field identity-language">
-          <label className="label" htmlFor="ui-language">
-            {t('legacy.settings.language')}
-          </label>
-          <select
-            id="ui-language"
-            className="input"
-            value={i18n.language === 'en' ? 'en' : 'zh-CN'}
-            onChange={(e) => setLocale(e.target.value as 'en' | 'zh-CN')}
-          >
-            <option value="zh-CN">简体中文</option>
-            <option value="en">English</option>
-          </select>
-        </div>
       </section>
       <section className="settings-section">
         <h2>{t('legacy.settings.storageTitle')}</h2>
@@ -253,13 +239,14 @@ function ResourcesSection() {
 }
 
 const GROUPS = [
-  { id: 'common', tabs: ['workspace', 'general', 'data', 'updates'] },
+  { id: 'common', tabs: ['workspace', 'appearance', 'general', 'data', 'updates'] },
   { id: 'advanced', tabs: ['studio', 'themes', 'extensions', 'access', 'resources'] },
 ] as const;
 type Tab = (typeof GROUPS)[number]['tabs'][number];
 const TABS: readonly Tab[] = GROUPS.flatMap((g) => g.tabs);
 const ICONS: Record<Tab, IconName> = {
   workspace: 'edit',
+  appearance: 'sun',
   general: 'settings',
   data: 'disk',
   updates: 'refresh',
@@ -273,6 +260,7 @@ const ICONS: Record<Tab, IconName> = {
 /** Existing sections render their own headings; the new ones use legacy settings-section. */
 const SECTIONS: Record<Tab, ComponentType> = {
   workspace: WorkspaceSection,
+  appearance: AppearanceSection,
   general: GeneralSection,
   data: DataSection,
   updates: UpdatesSection,

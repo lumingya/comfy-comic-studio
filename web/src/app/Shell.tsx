@@ -235,12 +235,20 @@ export function Shell() {
   useJobEvents();
   useHelpShortcut();
 
+  const density = useUI((s) => s.density);
+  const fontScale = useUI((s) => s.fontScale);
+  const reduceMotion = useUI((s) => s.reduceMotion);
+  const lettering = useUI((s) => s.lettering);
   // Legacy nav state lives on <html> (the legacy stylesheet keys off it).
   useEffect(() => {
     const root = document.documentElement;
     root.dataset.navCollapsed = String(collapsed);
     root.classList.toggle('is-studio', studio);
-  }, [collapsed, studio]);
+    root.dataset.density = density;
+    root.dataset.fontScale = fontScale;
+    root.dataset.reduceMotion = String(reduceMotion);
+    root.dataset.lettering = lettering;
+  }, [collapsed, studio, density, fontScale, reduceMotion, lettering]);
 
   // Alt+0 / 1 / 2 / 3 / , jump between sections (legacy nav keys; e.code survives macOS Alt).
   useEffect(() => {

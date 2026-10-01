@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { migrateChoice, SYSTEM, type ThemeChoice } from './theme';
+import type { NativeLayout } from '../pages/works/readingStage';
+
+export const LETTERING_OPTS = ['editorial', 'calligraphy', 'classic'] as const;
+export type LetteringStyle = (typeof LETTERING_OPTS)[number];
 
 interface UIState {
   /** 'system' or a theme id (see app/theme.ts). */
@@ -49,9 +53,31 @@ interface UIState {
   /** Home: the GET STARTED guide is folded away (legacy 收起指引). */
   homeGuideHidden: boolean;
   setHomeGuideHidden: (on: boolean) => void;
+  /** 界面密度 (legacy appearance.density). */
+  density: DisplayDensity;
+  setDensity: (v: DisplayDensity) => void;
+  /** 界面字号 (legacy appearance.fontScale). */
+  fontScale: DisplayFontScale;
+  setFontScale: (v: DisplayFontScale) => void;
+  /** 减少动态效果 (legacy appearance.reduceMotion). */
+  reduceMotion: boolean;
+  setReduceMotion: (on: boolean) => void;
+  /** 艺术字体风格 (legacy presentation.lettering). */
+  lettering: LetteringStyle;
+  setLettering: (v: LetteringStyle) => void;
+  /** 阅读与翻页: the default reader layout (legacy presentation.defaultReaderMode). */
+  defaultReaderMode: NativeLayout;
+  setDefaultReaderMode: (v: NativeLayout) => void;
 }
 
 export type WorksView = 'showcase' | 'grid';
+
+/** Legacy 界面密度. */
+export const DENSITY_OPTS = ['comfortable', 'compact'] as const;
+export type DisplayDensity = (typeof DENSITY_OPTS)[number];
+/** Legacy 界面字号. */
+export const FONT_SCALE_OPTS = ['standard', 'large', 'xlarge'] as const;
+export type DisplayFontScale = (typeof FONT_SCALE_OPTS)[number];
 
 /** Legacy 画册排序 options; 手动排序 is the order dragged on the shelf. */
 export const SHELF_SORTS = ['manual', 'createdAt', 'updatedAt', 'totalSteps'] as const;
@@ -99,6 +125,16 @@ export const useUI = create<UIState>()(
       setShelfSort: (shelfSort) => set({ shelfSort }),
       shelfOrder: [],
       setShelfOrder: (shelfOrder) => set({ shelfOrder }),
+      density: 'comfortable',
+      setDensity: (density) => set({ density }),
+      fontScale: 'standard',
+      setFontScale: (fontScale) => set({ fontScale }),
+      reduceMotion: false,
+      setReduceMotion: (reduceMotion) => set({ reduceMotion }),
+      lettering: 'editorial',
+      setLettering: (lettering) => set({ lettering }),
+      defaultReaderMode: 'webtoon',
+      setDefaultReaderMode: (defaultReaderMode) => set({ defaultReaderMode }),
       starred: [],
       toggleStar: (id) =>
         set((s) => ({
@@ -121,6 +157,11 @@ export const useUI = create<UIState>()(
         shelfSort: s.shelfSort,
         shelfOrder: s.shelfOrder,
         homeGuideHidden: s.homeGuideHidden,
+        density: s.density,
+        fontScale: s.fontScale,
+        reduceMotion: s.reduceMotion,
+        lettering: s.lettering,
+        defaultReaderMode: s.defaultReaderMode,
       }),
       migrate: (persisted) => {
         const state = (persisted ?? {}) as Partial<UIState>;
@@ -134,6 +175,21 @@ export const useUI = create<UIState>()(
             ? state.shelfSort
             : 'createdAt',
           shelfOrder: Array.isArray(state.shelfOrder) ? state.shelfOrder : [],
+          density: DENSITY_OPTS.includes(state.density as DisplayDensity)
+            ? (state.density as DisplayDensity)
+            : 'comfortable',
+          fontScale: FONT_SCALE_OPTS.includes(state.fontScale as DisplayFontScale)
+            ? (state.fontScale as DisplayFontScale)
+            : 'standard',
+          reduceMotion: !!state.reduceMotion,
+          lettering: LETTERING_OPTS.includes(state.lettering as LetteringStyle)
+            ? (state.lettering as LetteringStyle)
+            : 'editorial',
+          defaultReaderMode: (['webtoon', 'gallery', 'spread'] as const).includes(
+            state.defaultReaderMode as NativeLayout,
+          )
+            ? (state.defaultReaderMode as NativeLayout)
+            : 'webtoon',
           studioOff: Array.isArray(state.studioOff)
             ? state.studioOff.filter((x) => (STUDIO_FEATURES as readonly string[]).includes(x))
             : [],
