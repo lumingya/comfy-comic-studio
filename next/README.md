@@ -1,6 +1,6 @@
-# next/ · Phase 0.5 技术验证（Spike）
+# next/ · 技术验证（Spike）
 
-新架构的技术验证，与旧版代码完全独立，只用 Python 标准库（后续排版会用 Pillow）。任务与验收标准见[路线图 §7](../docs/ROADMAP.md)。
+ComfyUI 绑定、结构化剧本、条漫排版与效果基准的技术验证，独立于 `server/`，只用 Python 标准库（排版另需 Pillow）。验证过的做法已并入 `server/`，结论见[路线图 §4](../docs/ROADMAP.md)。
 
 ```
 next/
@@ -92,7 +92,7 @@ python -m mio_next.comfy run      local/wf.json --config local/wf.run.json --var
 
 每次运行写出 `out/<变体>-<种子>.json`：总耗时、逐节点耗时、缓存命中、预览帧数、读回的最终提示词、图片路径。效果基准直接读这些文件。
 
-## 接入真实工作流时发现的兼容问题
+## 接入真实工作流时发现的问题
 
 | 现象 | 原因 | 运行器的处理 |
 |---|---|---|

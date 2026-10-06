@@ -70,11 +70,11 @@ my-ext/
 - `mode` 取 `light` 或 `dark`。没写的令牌会沿用对应模式内置主题（「纸」或「墨」）的值。
 - 可用的令牌：`bg`、`bg-deep`、`panel`、`panel-2`、`hover`、`line`、`line-strong`、`text`、`soft`、`muted`、`accent`、`accent-strong`、`on-accent`、`tint`、`amber`、`red`、`blue`、`shadow`。
 - 取值只能是颜色，`#hex`、`rgb()` 或 `hsl()` 都行。`shadow` 取 CSS 阴影值。含 `url(` 的值会被拒绝。
-- 不装扩展也能用主题：在「设置 → 主题」里直接导入同样格式的 JSON 文件。
+- 不装扩展也能用主题：在「设置 → 外观与阅读 → 主题」里直接导入同样格式的 JSON 文件。
 
 ## 画册模板
 
-画册模板用的是旧版的 `formatVersion: 1` 格式，旧模板文件可以直接导入。
+画册模板使用 `formatVersion: 1` 格式。
 
 - 模板是一个 HTML 文档，里面可以用 `{{变量}}`。
 - 模板里必须恰好有一个 `{{#books}}…{{/books}}` 循环，这个循环里必须恰好有一个 `{{#frames}}…{{/frames}}` 循环，`{{image}}` 要写在 frames 循环里面。

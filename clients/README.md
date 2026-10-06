@@ -10,14 +10,14 @@
 
 ## 令牌与权限
 
-在「设置 → API 与 Webhook」里生成令牌。明文令牌只显示一次，服务端只保存它的 sha256。
+在「设置 → 模型与连接 → API 令牌」里生成令牌。明文令牌只显示一次，服务端只保存它的 sha256。
 
 | 权限 | 能做什么 |
 | --- | --- |
 | `read` | 作品、工坊、任务等读取，以及订阅任务事件的 WebSocket；配置管理类读取仍需 `admin` |
 | `write` | 编辑作品、剧本、画布，采用或淘汰出图结果，导出 |
 | `render` | 会消耗算力或额度的操作：一句话生成剧本、出图、定稿、修图、质检、剧本助手、重跑任务 |
-| `admin` | 设置、ComfyUI 实例、Webhook、旧版导入、更新 |
+| `admin` | 设置、ComfyUI 实例、Webhook、数据导入、更新 |
 
 权限之间**不互相包含**，例如出图的机器人通常需要 `read + write + render`。令牌可以设置过期时间，也可以随时吊销。
 
@@ -40,7 +40,7 @@ mio.wait_job(job["id"])  # 轮询到完成 / 失败 / 取消
 出错时抛出 `MioError`，带 `status`、`kind` 和 `detail`。`wait_job` 返回终态记录，调用方仍需检查
 `state == "completed"`；对于 `uncertain` 条目应先核对上游记录，不要盲目重发付费请求。
 
-### 工坊装配（新版经典 UI 的同一条链路）
+### 工坊装配（与界面相同的链路）
 
 `GET /api/v2/workshop` 需要 `read`；`POST /api/v2/workshop/assemble` 需要 `write`，只做快照，
 不消耗模型额度。后续出图仍需 `render`。例如：
@@ -88,7 +88,7 @@ python clients/python/generate.py --check  # CI 用：不一致时失败
 
 ## Webhook
 
-在「设置 → API 与 Webhook」里添加 Webhook 后，事件发生时服务端会向指定 URL 发送 JSON POST 请求。可订阅的事件有：
+在「设置 → 模型与连接 → Webhook」里添加 Webhook 后，事件发生时服务端会向指定 URL 发送 JSON POST 请求。可订阅的事件有：
 
 | 事件 | 触发时机 |
 | --- | --- |
