@@ -10,7 +10,7 @@ import { gallerySearch } from '../../app/navigation';
 import { shortcutBlocked } from '../../app/shortcuts';
 import { QueryError } from '../../app/errors';
 import { ownCancel } from '../../components/topLayer';
-import { useStudio, useUI } from '../../app/ui-store';
+import { useUI } from '../../app/ui-store';
 import { pickAdopted } from '../canvas/adopted';
 import type { EpisodeContext } from '../episode/EpisodePage';
 import { PresentationDrawer, SlicePreview, TemplatePreview, useExportDraft } from './presentation';
@@ -48,8 +48,6 @@ export default function ReaderPage() {
   const { seriesId } = useParams();
   const { pathname } = useLocation();
   const [params, setParams] = useSearchParams();
-  // 功能开关: 条漫排版与嵌字 is a separate professional tool.
-  const layoutOn = useStudio('layout');
   const ref = useRef<HTMLDialogElement>(null);
   // The reading stage is remounted whenever the drawer swaps what the stage shows, so it is tracked
   // as state: measuring and scroll tracking re-attach to the new element.
@@ -455,17 +453,15 @@ export default function ReaderPage() {
           <Icon name="download" sm />
           {t('reader.export')}
         </button>
-        {layoutOn ? (
-          <button
-            type="button"
-            className="btn small"
-            aria-pressed={panel === 'layout'}
-            onClick={() => togglePanel('layout')}
-          >
-            <Icon name="grid" sm />
-            {t('reader.layout')}
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className="btn small"
+          aria-pressed={panel === 'layout'}
+          onClick={() => togglePanel('layout')}
+        >
+          <Icon name="grid" sm />
+          {t('reader.layout')}
+        </button>
       </header>
       <section className="room-stage">
         {panel === 'layout' && context ? (
@@ -479,7 +475,7 @@ export default function ReaderPage() {
             <TemplatePreview
               episodeId={epId}
               templateId={look}
-              lettered={layoutOn}
+              lettered
               draft={draft}
               revision={episode.data?.revision}
               progress={{ done: pages.length, total: episode.data?.panels.length ?? 0 }}
@@ -682,7 +678,7 @@ export default function ReaderPage() {
         onLayout={setLayoutSaved}
         episodeId={epId}
         title={series.data?.title ?? ''}
-        lettered={layoutOn}
+        lettered
         platformOpen={platformOpen}
         onPlatform={setPlatformOpen}
       />

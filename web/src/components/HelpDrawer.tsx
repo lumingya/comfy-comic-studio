@@ -10,7 +10,6 @@ import { useWorkshop } from '../api/workshop';
 import { useComfyHealth } from '../app/comfy';
 import { Icon, type IconName } from '../app/icons';
 import { useSetupChecks, useNewStory, type SetupCheck } from '../app/setup';
-import { useStudio, useUI } from '../app/ui-store';
 import { toast, toastError } from './toast';
 import { ownCancel } from './topLayer';
 
@@ -39,7 +38,7 @@ type StudioPage = 'script' | 'board' | 'canvas' | 'bible';
 export type HelpPage = LegacyPage | StudioPage;
 
 /** Which help page applies to a route. */
-export function helpPageFor(pathname: string, studio = false): HelpPage {
+export function helpPageFor(pathname: string): HelpPage {
   if (/^\/gallery\/[^/]+\/layout/.test(pathname)) return 'canvas';
   if (pathname.startsWith('/gallery') || pathname.startsWith('/series/'))
     return /\/bible/.test(pathname) ? 'bible' : 'gallery';
@@ -47,7 +46,6 @@ export function helpPageFor(pathname: string, studio = false): HelpPage {
   if (/^\/workshop\/assembly\/[^/]+/.test(pathname)) return 'board';
   if (pathname.startsWith('/workshop/assembly')) return 'production';
   if (pathname.startsWith('/workshop/presets')) return 'presets';
-  if (/^\/workshop\/story\/[^/]+/.test(pathname) && studio) return 'script';
   if (pathname.startsWith('/workshop')) return 'stories';
   if (pathname.startsWith('/engine')) return 'workflow';
   if (pathname.startsWith('/settings') || pathname.startsWith('/trash')) return 'settings';
@@ -336,7 +334,6 @@ function useDiagnostics(page: HelpPage, checks: SetupCheck[]) {
   const boards = useEpisodes(ws.data?.id);
   const settings = useSettings();
   const jobs = useJobs(undefined, true);
-  const studio = useUI((s) => s.studioMode);
   const d = (s: string) => t(`guide.diag.${s}`);
   const title = PAGE_TITLE(page, t);
   const open = checks.filter((c) => c.state !== 'done');
@@ -350,7 +347,6 @@ function useDiagnostics(page: HelpPage, checks: SetupCheck[]) {
       `${innerWidth}×${innerHeight}`,
       matchMedia?.('(pointer:coarse)')?.matches ? d('touch') : d('mouse'),
     ].join(' · ')}`,
-    `${d('studio')}：${studio ? d('on') : d('off')}`,
     `${d('browser')}：${navigator.userAgent}`,
     `${d('service')}：ComfyUI · ${comfy.url || '—'} · ${t(`classic.comfy.${comfy.state}`)}${
       comfy.state === 'offline' && comfy.detail !== comfy.url ? ` · ${comfy.detail}` : ''
@@ -381,13 +377,12 @@ function HelpDrawerBody() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const studio = useStudio('script');
   const section = useHelp((s) => s.section);
   const set = useHelp((s) => s.set);
   const openQuick = useQuickStart((s) => s.set);
   const checks = useSetupChecks();
   const newStory = useNewStory();
-  const page = helpPageFor(pathname, studio);
+  const page = helpPageFor(pathname);
   const spec = PAGE[page];
   const en = i18n.language === 'en';
   const diagnostics = useDiagnostics(page, checks);

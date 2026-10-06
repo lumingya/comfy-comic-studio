@@ -15,7 +15,6 @@ import { QueryError } from '../../app/errors';
 import { Icon } from '../../app/icons';
 import { useRecents } from '../../app/recents';
 import { usePageTitle } from '../../app/title';
-import { useStudio } from '../../app/ui-store';
 import { toast, toastError } from '../../components/toast';
 import { Loading } from '../../components/ui';
 import type { EpisodeContext } from '../episode/EpisodePage';
@@ -417,28 +416,9 @@ function Synopsis({
   );
 }
 
-/** Classic: the legacy frames editor. Studio mode: the full panel workbench. */
+/** 分镜工坊: the frames editor. Per-panel detail work happens in the assembly script tab. */
 export function StoryBody() {
-  const studio = useStudio('script');
-  return studio ? <StudioScript /> : <StoryboardEditor />;
-}
-
-function StudioScript() {
-  const [Comp, setComp] = useState<null | (() => ReactNode)>(null);
-  useEffect(() => {
-    let live = true;
-    import('../script/ScriptTab').then((m) => live && setComp(() => m.default));
-    return () => {
-      live = false;
-    };
-  }, []);
-  return Comp ? (
-    <div className="workspace-body workshop-body">
-      <Comp />
-    </div>
-  ) : (
-    <Loading />
-  );
+  return <StoryboardEditor />;
 }
 
 /**

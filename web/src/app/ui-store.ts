@@ -16,23 +16,10 @@ interface UIState {
   setShowRejected: (v: boolean) => void;
   candidates: number;
   setCandidates: (n: number) => void;
-  /**
-   * Studio (professional) mode.  Off by default: the classic prompt → generate → pick flow.
-   * On: shot / angle, cast details, layout, composition, per-panel render overrides and the
-   * rest of the webtoon toolkit appear in the inspector drawer and the board toolbar.
-   */
-  studioMode: boolean;
-  setStudioMode: (on: boolean) => void;
-  /**
-   * 功能开关: professional tools switched off one by one inside Studio mode (legacy granular
-   * feature switches).  Stored as the *off* list so tools added later start switched on.
-   */
-  studioOff: StudioFeature[];
-  setStudioFeature: (feature: StudioFeature, on: boolean) => void;
   /** Rail collapsed to icons (legacy 折叠侧栏). */
   navCollapsed: boolean;
   setNavCollapsed: (on: boolean) => void;
-  /** Studio mode: the panel inspector drawer is open. */
+  /** Script tab: the panel inspector drawer is open. */
   inspectorOpen: boolean;
   setInspectorOpen: (on: boolean) => void;
   /** Works page layout: one featured book at a time (legacy 精选展示) or the compact grid. */
@@ -80,10 +67,6 @@ export type DisplayFontScale = (typeof FONT_SCALE_OPTS)[number];
 export const SHELF_SORTS = ['manual', 'createdAt', 'updatedAt', 'totalSteps'] as const;
 export type ShelfSort = (typeof SHELF_SORTS)[number];
 
-/** The professional tools Studio mode adds, each with its own switch in 设置 → 功能开关. */
-export const STUDIO_FEATURES = ['script', 'layout'] as const;
-export type StudioFeature = (typeof STUDIO_FEATURES)[number];
-
 export const useUI = create<UIState>()(
   persist(
     (set) => ({
@@ -99,15 +82,6 @@ export const useUI = create<UIState>()(
       setShowRejected: (showRejected) => set({ showRejected }),
       candidates: 2,
       setCandidates: (candidates) => set({ candidates }),
-      studioMode: false,
-      setStudioMode: (studioMode) => set({ studioMode }),
-      studioOff: [],
-      setStudioFeature: (feature, on) =>
-        set((s) => ({
-          studioOff: on
-            ? s.studioOff.filter((x) => x !== feature)
-            : [...new Set([...s.studioOff, feature])],
-        })),
       navCollapsed: false,
       setNavCollapsed: (navCollapsed) => set({ navCollapsed }),
       inspectorOpen: true,
@@ -143,8 +117,6 @@ export const useUI = create<UIState>()(
         theme: s.theme,
         recentThemes: s.recentThemes,
         candidates: s.candidates,
-        studioMode: s.studioMode,
-        studioOff: s.studioOff,
         navCollapsed: s.navCollapsed,
         inspectorOpen: s.inspectorOpen,
         worksView: s.worksView,
@@ -185,19 +157,8 @@ export const useUI = create<UIState>()(
           )
             ? (state.defaultReaderMode as NativeLayout)
             : 'webtoon',
-          studioOff: Array.isArray(state.studioOff)
-            ? state.studioOff.filter((x) => (STUDIO_FEATURES as readonly string[]).includes(x))
-            : [],
         } as UIState;
       },
     },
   ),
 );
-
-/**
- * Whether a professional tool shows: Studio mode is on and that tool is not switched off in
- * 功能开关.  Without a feature: Studio mode itself.
- */
-export function useStudio(feature?: StudioFeature): boolean {
-  return useUI((s) => s.studioMode && (!feature || !s.studioOff.includes(feature)));
-}

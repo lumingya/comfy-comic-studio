@@ -52,7 +52,7 @@ export const guideZh = {
     },
     settings: {
       title: '设置',
-      text: '常用：工作室、通用偏好（外观、语言、字号）、数据与备份（含回收站）、关于与更新。高级：功能开关（含专业模式）、样式工坊、扩展中心、工具与连接，以及工具与资源。',
+      text: '常用：工作室、通用偏好（外观、语言、字号）、数据与备份（含回收站）、关于与更新。高级：样式工坊、扩展中心、工具与连接，以及工具与资源。',
     },
     jobs: {
       title: '运行日志',
@@ -141,9 +141,6 @@ export const guideZh = {
     jobs: '生成任务',
     checks: '开箱检查',
     open: '未完成',
-    studio: '专业模式',
-    on: '开',
-    off: '关',
     mouse: '鼠标',
     touch: '触屏',
   },
@@ -248,7 +245,7 @@ export const guideEn: Widen<typeof guideZh> = {
     },
     settings: {
       title: 'Settings',
-      text: 'Common: studio, preferences (look, language, font size), data & backup (with the trash), about & updates. Advanced: feature switches (with Studio mode), style workshop, extensions, tools & connections, and tools & resources.',
+      text: 'Common: studio, preferences (look, language, font size), data & backup (with the trash), about & updates. Advanced: style workshop, extensions, tools & connections, and tools & resources.',
     },
     jobs: {
       title: 'Run log',
@@ -338,9 +335,6 @@ export const guideEn: Widen<typeof guideZh> = {
     jobs: 'Render tasks',
     checks: 'Setup checklist',
     open: 'open',
-    studio: 'Studio mode',
-    on: 'on',
-    off: 'off',
     mouse: 'mouse',
     touch: 'touch',
   },

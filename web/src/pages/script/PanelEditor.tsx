@@ -20,7 +20,7 @@ import { ANGLES, SHOTS, TIMES, type Episode, type Panel, type Series } from '../
 import { AutoSaveGuard, flushDraft } from '../../app/useAutoDraft';
 import { shortcutBlocked } from '../../app/shortcuts';
 import { useAutosave } from '../../app/autosave';
-import { useStudio, useUI } from '../../app/ui-store';
+import { useUI } from '../../app/ui-store';
 import { insertVariable, PromptField, scanVariables } from '../../components/PromptField';
 import { SaveState } from '../../components/SaveState';
 import { toast, toastError } from '../../components/toast';
@@ -71,8 +71,8 @@ function Group(props: { title: string; summary?: string; open?: boolean; childre
 }
 
 /**
- * Edits one panel.  The classic core — prompt with `{变量}`, characters, lines, generate & pick —
- * is the same in both modes; Studio mode adds the professional toolkit in an inspector drawer.
+ * Edits one panel: prompt with `{变量}`, characters, lines, generate & pick, plus the professional
+ * toolkit in a collapsible inspector drawer.
  * Changes autosave shortly after typing stops (and when switching panels); Ctrl+S saves at once,
  * Ctrl+Enter generates.  Deleting is delegated to the parent so it can offer "Undo".
  */
@@ -86,7 +86,6 @@ export function PanelEditor(props: {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const { episode, series } = props;
-  const studio = useStudio('script');
   const inspectorOpen = useUI((s) => s.inspectorOpen);
   const setInspectorOpen = useUI((s) => s.setInspectorOpen);
   const patch = usePatchPanel(episode.id!);
@@ -355,7 +354,7 @@ export function PanelEditor(props: {
 
   return (
     <div
-      className={`panel-editor ${studio ? 'studio' : 'classic'} ${studio && inspectorOpen ? 'with-inspector' : ''}`}
+      className={`panel-editor studio ${inspectorOpen ? 'with-inspector' : ''}`}
       onKeyDown={(e) => {
         if (shortcutBlocked(e, e.currentTarget, true) || e.repeat) return;
         const mod = e.metaKey || e.ctrlKey;
@@ -385,34 +384,30 @@ export function PanelEditor(props: {
           <span className="sr-only">{t('script.panelNo', { n: props.index + 1 })}</span>
           <SaveState state={autosave.state} invalid={nodeOverrides === null} />
           <span className="editor-actions">
-            {studio ? (
-              <>
-                <button
-                  className="btn ghost sm"
-                  disabled={render.isPending}
-                  onClick={() => void generate(1)}
-                  title={t('script.renderOneHint')}
-                >
-                  <Play size={14} /> {t('script.renderOne')}
-                </button>
-                <button
-                  className="btn ghost icon sm"
-                  onClick={() => setHistory(true)}
-                  title={t('history.hint')}
-                  aria-label={t('history.button')}
-                >
-                  <History size={14} />
-                </button>
-                <button
-                  className={`btn ghost icon sm ${draft.locked ? 'active' : ''}`}
-                  onClick={() => set({ locked: !draft.locked })}
-                  title={draft.locked ? t('script.unlock') : t('script.lock')}
-                  aria-label={draft.locked ? t('script.unlock') : t('script.lock')}
-                >
-                  {draft.locked ? <Lock size={14} /> : <Unlock size={14} />}
-                </button>
-              </>
-            ) : null}
+            <button
+              className="btn ghost sm"
+              disabled={render.isPending}
+              onClick={() => void generate(1)}
+              title={t('script.renderOneHint')}
+            >
+              <Play size={14} /> {t('script.renderOne')}
+            </button>
+            <button
+              className="btn ghost icon sm"
+              onClick={() => setHistory(true)}
+              title={t('history.hint')}
+              aria-label={t('history.button')}
+            >
+              <History size={14} />
+            </button>
+            <button
+              className={`btn ghost icon sm ${draft.locked ? 'active' : ''}`}
+              onClick={() => set({ locked: !draft.locked })}
+              title={draft.locked ? t('script.unlock') : t('script.lock')}
+              aria-label={draft.locked ? t('script.unlock') : t('script.lock')}
+            >
+              {draft.locked ? <Lock size={14} /> : <Unlock size={14} />}
+            </button>
             <button
               className="btn ghost icon sm"
               disabled={duplicate.isPending}
@@ -437,7 +432,7 @@ export function PanelEditor(props: {
             >
               <Trash2 size={14} />
             </button>
-            {studio && !inspectorOpen ? (
+            {!inspectorOpen ? (
               <button
                 className="btn sm inspector-toggle"
                 onClick={() => setInspectorOpen(true)}
@@ -452,43 +447,37 @@ export function PanelEditor(props: {
         <section className="editor-block">
           <div className="editor-label">
             <span>{t('classic.editor.prompt')}</span>
-            {studio ? (
-              <div
-                className="segmented mini"
-                role="group"
-                aria-label={t('classic.editor.promptMode')}
+            <div
+              className="segmented mini"
+              role="group"
+              aria-label={t('classic.editor.promptMode')}
+            >
+              <button
+                type="button"
+                className={rawMode ? '' : 'active'}
+                aria-pressed={!rawMode}
+                title={t('classic.editor.appendHint')}
+                onClick={() => setRawMode(false)}
               >
-                <button
-                  type="button"
-                  className={rawMode ? '' : 'active'}
-                  aria-pressed={!rawMode}
-                  title={t('classic.editor.appendHint')}
-                  onClick={() => setRawMode(false)}
-                >
-                  {t('classic.editor.modeAppend')}
-                </button>
-                <button
-                  type="button"
-                  className={rawMode ? 'active' : ''}
-                  aria-pressed={rawMode}
-                  title={t('classic.editor.rawHint')}
-                  onClick={() => setRawMode(true)}
-                >
-                  {t('classic.editor.modeRaw')}
-                </button>
-              </div>
-            ) : rawMode ? (
-              <span className="chip ok" title={t('classic.editor.rawHint')}>
+                {t('classic.editor.modeAppend')}
+              </button>
+              <button
+                type="button"
+                className={rawMode ? 'active' : ''}
+                aria-pressed={rawMode}
+                title={t('classic.editor.rawHint')}
+                onClick={() => setRawMode(true)}
+              >
                 {t('classic.editor.modeRaw')}
-              </span>
-            ) : null}
+              </button>
+            </div>
           </div>
           <PromptField
             inputRef={promptRef}
             value={promptValue}
             onChange={setPrompt}
             known={known}
-            minRows={studio ? 4 : 6}
+            minRows={4}
             aria-label={t('classic.editor.prompt')}
             placeholder={t('classic.editor.promptPlaceholder')}
           />
@@ -561,16 +550,9 @@ export function PanelEditor(props: {
           onGenerate={(n) => void generate(n)}
           busy={render.isPending}
         />
-
-        {!studio ? (
-          <details className="editor-fold">
-            <summary>{t('classic.editor.finalPrompt')}</summary>
-            <PromptPreview episodeId={episode.id!} panelId={draft.id!} series={series} />
-          </details>
-        ) : null}
       </div>
 
-      {studio && inspectorOpen ? inspector : null}
+      {inspectorOpen ? inspector : null}
 
       <HistoryDialog
         episodeId={episode.id!}

@@ -571,10 +571,6 @@
   animation: arrive 0.3s var(--ease) both;
 }
 
-.panel-editor.classic .editor-main {
-  max-width: 980px;
-}
-
 .editor-main > .editor-head {
   position: sticky;
   top: 0;
@@ -724,10 +720,6 @@
 .prompt-input::selection {
   background: color-mix(in srgb, var(--accent) 28%, transparent);
   color: transparent;
-}
-
-.panel-editor.classic .prompt-input {
-  min-height: 160px;
 }
 
 mark.var {

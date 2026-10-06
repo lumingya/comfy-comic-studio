@@ -13,7 +13,7 @@ import { CollectionSwitch } from './CollectionSwitch';
 import { Icon } from './icons';
 import { NAV } from './nav';
 import { useAppliedTheme, useThemeToggle } from './useTheme';
-import { useStudio, useUI } from './ui-store';
+import { useUI } from './ui-store';
 
 /** The legacy Mio mark: four tilted comic panels. */
 export function BrandMark() {
@@ -196,7 +196,6 @@ function Topbar() {
 function StatusBar() {
   const { t } = useTranslation();
   const connected = useLive((s) => s.connected);
-  const studio = useUI((s) => s.studioMode);
   const { data } = useJobs(undefined, true);
   const running = data?.length ?? 0;
   const version = useVersion();
@@ -213,11 +212,6 @@ function StatusBar() {
         </span>
       ) : null}
       <span className="spacer" />
-      {studio ? (
-        <Link to="/settings?tab=studio" className="status-mode">
-          {t('classic.modeStudio')}
-        </Link>
-      ) : null}
       <span>{t('legacy.storage')}</span>
       {version ? <span style={{ marginLeft: 17 }}>Mio v{version}</span> : null}
     </footer>
@@ -226,8 +220,6 @@ function StatusBar() {
 
 export function Shell() {
   const collapsed = useUI((s) => s.navCollapsed);
-  // The classic script list styles key off html:not(.is-studio): follow the script editor switch.
-  const studio = useStudio('script');
   const connected = useLive((s) => s.connected);
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -243,12 +235,11 @@ export function Shell() {
   useEffect(() => {
     const root = document.documentElement;
     root.dataset.navCollapsed = String(collapsed);
-    root.classList.toggle('is-studio', studio);
     root.dataset.density = density;
     root.dataset.fontScale = fontScale;
     root.dataset.reduceMotion = String(reduceMotion);
     root.dataset.lettering = lettering;
-  }, [collapsed, studio, density, fontScale, reduceMotion, lettering]);
+  }, [collapsed, density, fontScale, reduceMotion, lettering]);
 
   // Alt+0 / 1 / 2 / 3 / , jump between sections (legacy nav keys; e.code survives macOS Alt).
   useEffect(() => {

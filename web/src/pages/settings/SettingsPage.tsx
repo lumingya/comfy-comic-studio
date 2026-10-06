@@ -14,7 +14,6 @@ import { AccessSection } from './AccessSection';
 import { ExtensionsSection } from './ExtensionsSection';
 import { AppearanceSection } from './AppearanceSection';
 import { GeneralSection } from './GeneralSection';
-import { StudioSection } from './StudioSection';
 import { ThemesSection } from './ThemesSection';
 import { UpdatesSection } from './UpdatesSection';
 
@@ -240,7 +239,7 @@ function ResourcesSection() {
 
 const GROUPS = [
   { id: 'common', tabs: ['workspace', 'appearance', 'general', 'data', 'updates'] },
-  { id: 'advanced', tabs: ['studio', 'themes', 'extensions', 'access', 'resources'] },
+  { id: 'advanced', tabs: ['themes', 'extensions', 'access', 'resources'] },
 ] as const;
 type Tab = (typeof GROUPS)[number]['tabs'][number];
 const TABS: readonly Tab[] = GROUPS.flatMap((g) => g.tabs);
@@ -250,7 +249,6 @@ const ICONS: Record<Tab, IconName> = {
   general: 'settings',
   data: 'disk',
   updates: 'refresh',
-  studio: 'grid',
   themes: 'brush',
   extensions: 'box',
   access: 'link',
@@ -264,7 +262,6 @@ const SECTIONS: Record<Tab, ComponentType> = {
   general: GeneralSection,
   data: DataSection,
   updates: UpdatesSection,
-  studio: StudioSection,
   themes: ThemesSection,
   extensions: ExtensionsSection,
   access: AccessSection,

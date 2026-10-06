@@ -9,7 +9,6 @@ import { setLocale } from '../i18n';
 import { Icon, type IconName } from './icons';
 import { NAV } from './nav';
 import { useThemeToggle } from './useTheme';
-import { useUI } from './ui-store';
 
 export const useCommand = create<{ open: boolean; set: (open: boolean) => void }>((set) => ({
   open: false,
@@ -32,8 +31,6 @@ export function CommandPalette() {
   const set = useCommand((s) => s.set);
   const navigate = useNavigate();
   const theme = useThemeToggle();
-  const studio = useUI((s) => s.studioMode);
-  const setStudio = useUI((s) => s.setStudioMode);
   const openHelp = useHelp((s) => s.set);
   const openQuick = useQuickStart((s) => s.set);
   const { groups } = useAllEpisodes();
@@ -107,13 +104,6 @@ export function CommandPalette() {
         run: () => setLocale(i18n.language === 'en' ? 'zh-CN' : 'en'),
       },
       {
-        id: 'studio',
-        label: studio ? t('legacy.palette.studioOff') : t('legacy.palette.studioOn'),
-        kind: 'pref',
-        icon: 'brush',
-        run: () => setStudio(!studio),
-      },
-      {
         id: 'help',
         label: t('legacy.help'),
         kind: 'help',
@@ -158,7 +148,7 @@ export function CommandPalette() {
         })),
       ),
     ];
-  }, [groups, i18n.language, navigate, openHelp, openQuick, setStudio, studio, t, theme]);
+  }, [groups, i18n.language, navigate, openHelp, openQuick, t, theme]);
 
   const q = query.trim().toLowerCase();
   const shown = q

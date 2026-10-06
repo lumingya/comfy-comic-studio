@@ -38,7 +38,7 @@ import {
 } from '../../api/series';
 import type { Panel, PromptPreview } from '../../api/types';
 import { useSelection } from '../../app/selection';
-import { useStudio, useUI } from '../../app/ui-store';
+import { useUI } from '../../app/ui-store';
 import { confirm } from '../../components/confirm';
 import { ContextMenu, useContextMenu, type ContextGroup } from '../../components/ContextMenu';
 import { toast, toastError } from '../../components/toast';
@@ -64,7 +64,6 @@ export default function ScriptTab() {
   const render = useRender(episode.id!);
   const patchEpisode = usePatchEpisode(episode.id!);
   const candidates = useUI((s) => s.candidates);
-  const studio = useStudio('script');
   const [synopsis, setSynopsis] = useState<string | null>(null);
   const [batch, setBatch] = useState<string[] | null>(null);
   const [moveTarget, setMoveTarget] = useState<{ ids: string[]; to: number } | null>(null);
@@ -455,25 +454,17 @@ export default function ScriptTab() {
       >
         <div className="row" style={{ padding: '0 4px 10px' }}>
           <span className="small muted grow">{t('series.panels', { count: panels.length })}</span>
-          {studio ? (
-            <>
-              <button
-                className="btn icon sm"
-                title={t('batch.import')}
-                aria-label={t('batch.import')}
-                onClick={() => pickImport(selectedId)}
-              >
-                <Upload size={14} />
-              </button>
-              <button className="btn icon sm" title={t('script.addPanel')} onClick={addAfter}>
-                <Plus size={14} />
-              </button>
-            </>
-          ) : (
-            <button className="btn sm" title={t('script.addPanel')} onClick={addAfter}>
-              <Plus size={14} /> {t('classic.editor.newPanel')}
-            </button>
-          )}
+          <button
+            className="btn icon sm"
+            title={t('batch.import')}
+            aria-label={t('batch.import')}
+            onClick={() => pickImport(selectedId)}
+          >
+            <Upload size={14} />
+          </button>
+          <button className="btn icon sm" title={t('script.addPanel')} onClick={addAfter}>
+            <Plus size={14} />
+          </button>
           <input
             ref={fileInput}
             type="file"
@@ -486,25 +477,23 @@ export default function ScriptTab() {
             }}
           />
         </div>
-        {studio ? (
-          <details className="synopsis">
-            <summary className="small muted">{t('episode.synopsis')}</summary>
-            <TextArea rows={3} value={synopsis ?? episode.synopsis ?? ''} onChange={setSynopsis} />
-            {synopsis !== null && synopsis !== episode.synopsis ? (
-              <button
-                className="btn sm"
-                onClick={() =>
-                  patchEpisode.mutate(
-                    { synopsis },
-                    { onSuccess: () => setSynopsis(null), onError: toastError },
-                  )
-                }
-              >
-                {t('common.save')}
-              </button>
-            ) : null}
-          </details>
-        ) : null}
+        <details className="synopsis">
+          <summary className="small muted">{t('episode.synopsis')}</summary>
+          <TextArea rows={3} value={synopsis ?? episode.synopsis ?? ''} onChange={setSynopsis} />
+          {synopsis !== null && synopsis !== episode.synopsis ? (
+            <button
+              className="btn sm"
+              onClick={() =>
+                patchEpisode.mutate(
+                  { synopsis },
+                  { onSuccess: () => setSynopsis(null), onError: toastError },
+                )
+              }
+            >
+              {t('common.save')}
+            </button>
+          ) : null}
+        </details>
         {multi ? (
           <div className="selection-bar" role="status">
             <span className="count">{t('batch.selected', { count: multi.length })}</span>
@@ -536,11 +525,9 @@ export default function ScriptTab() {
           onSelect={onRowSelect}
           onReorder={(order) => reorder.mutate(order, { onError: toastError })}
         />
-        {studio ? (
-          <p className="small muted" style={{ padding: '10px 4px 0' }}>
-            {t('batch.listHint')}
-          </p>
-        ) : null}
+        <p className="small muted" style={{ padding: '10px 4px 0' }}>
+          {t('batch.listHint')}
+        </p>
       </div>
       <section className="script-main">
         {selected ? (

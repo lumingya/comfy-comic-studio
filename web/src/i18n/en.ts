@@ -709,7 +709,6 @@ const en: Widen<Dict> = {
     groups: { basic: 'Basics', render: 'Rendering', open: 'Open API' },
     tabs: {
       general: 'General',
-      studio: 'Creation mode',
       workflows: 'Workflows',
       profiles: 'Render profiles',
       instances: 'ComfyUI instances',
@@ -893,9 +892,6 @@ const en: Widen<Dict> = {
     reconnecting: 'Reconnecting live channel…',
     liveReady: 'Live preview ready',
     running: '{{count}} running',
-    modeStudio: 'Studio mode',
-    modeClassic: 'Classic mode',
-    modeHint: 'Switch between Classic and Studio mode',
     localStorage: 'Local file storage',
     expandNav: 'Expand sidebar',
     collapseNav: 'Collapse sidebar',
@@ -1105,45 +1101,6 @@ const en: Widen<Dict> = {
       cast: 'Cast detail (expression / action / outfit / part tags)',
       advanced: 'Advanced: seed & node overrides',
     },
-    settings: {
-      intro:
-        'Classic keeps only the shortest path to a picture; Studio adds camera, composition, layout and parameter overrides in a side drawer. Switch any time — nothing you set is lost.',
-      current: 'Current',
-      classic: {
-        title: 'Classic',
-        body: 'One big prompt box ({variables} supported), character picks and one-click Generate with live sampling preview and picking. Best for quick results.',
-      },
-      studio: {
-        title: 'Studio',
-        body: 'Adds shot & angle, part-level character tags, pose / depth control slots, bleed & gutters and JSON Pointer overrides.',
-      },
-      switch: 'Studio mode (Advanced)',
-      switchHint:
-        'When on, the Studio tools switched on below appear on their pages; off returns to Classic. Saved in this browser — nothing you filled in is lost by switching.',
-      modeTitle: 'Creation mode',
-      featuresTitle: 'Keep only what you need',
-      featuresBody:
-        'Core creation always stays; each Studio tool has its own switch and only appears in Studio mode.',
-      toolsLabel: 'Studio tools',
-      core: {
-        title: 'Collection & workshop',
-        body: 'Albums, storyboards, presets and render tasks — in both Classic and Studio.',
-        note: 'Core',
-      },
-      features: {
-        script: {
-          title: 'Studio storyboard editor',
-          body: 'The workshop edits frame by frame: shot & angle, cast and part-level tags, pose / depth control images, seed and JSON Pointer overrides, plus batch import.',
-        },
-        layout: {
-          title: 'Strip layout & lettering',
-          body: 'The reader gains the Layout canvas — bleed, gutters, speech bubbles and SFX; templates and exports use the lettered panels.',
-        },
-      },
-      summaryOn: 'Studio mode is on: {{count}} of {{total}} Studio tools available.',
-      summaryOff:
-        'Classic mode: every Studio tool is hidden. Turn Studio mode on above and they appear as chosen here.',
-    },
   },
   legacy: {
     brandSub: 'Pages',
@@ -1308,7 +1265,6 @@ const en: Widen<Dict> = {
         general: 'General',
         data: 'Data & backup',
         updates: 'About & updates',
-        studio: 'Feature switches',
         themes: 'Style workshop',
         extensions: 'Extensions',
         access: 'Tools & connections',
@@ -1383,8 +1339,6 @@ const en: Widen<Dict> = {
       toLight: 'Switch to light theme',
       toDark: 'Switch to dark theme',
       language: '切换到中文',
-      studioOn: 'Turn on Studio mode',
-      studioOff: 'Turn off Studio mode',
       queue: 'Open the render queue',
     },
   },

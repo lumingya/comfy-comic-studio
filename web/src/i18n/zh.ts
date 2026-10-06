@@ -666,7 +666,6 @@ const zh = {
     groups: { basic: '基础', render: '出图', open: '开放接口' },
     tabs: {
       general: '通用',
-      studio: '创作模式',
       workflows: '工作流',
       profiles: '出图配置',
       instances: 'ComfyUI 实例',
@@ -844,9 +843,6 @@ const zh = {
     reconnecting: '实时通道重连中…',
     liveReady: '实时预览就绪',
     running: '{{count}} 个任务进行中',
-    modeStudio: '专业模式',
-    modeClassic: '经典模式',
-    modeHint: '切换经典 / 专业模式',
     localStorage: '本地文件存储',
     expandNav: '展开侧栏',
     collapseNav: '收起侧栏',
@@ -1044,43 +1040,6 @@ const zh = {
       cast: '角色细化（表情 / 动作 / 服装 / 部位标签）',
       advanced: '高级：种子与节点覆盖',
     },
-    settings: {
-      intro:
-        '经典模式只保留最短的创作路径；专业模式把镜头、构图、版式和参数覆盖放进右侧抽屉。随时可以切换，已设置的内容不会丢失。',
-      current: '当前',
-      classic: {
-        title: '经典模式',
-        body: '一个大提示词框（支持 {变量}）+ 角色选择 + 一键生成，实时预览采样并挑图。适合快速出图。',
-      },
-      studio: {
-        title: '专业模式 · Studio',
-        body: '额外提供景别机位、角色部位细化、姿势 / 深度控制槽、出血与格间距和 JSON Pointer 参数覆盖。',
-      },
-      switch: '专业模式（Advanced / Studio Mode）',
-      switchHint:
-        '打开后，下面开启的专业工具出现在对应页面；关闭即回到经典模式。保存在本浏览器，已填写的内容不会因切换而丢失。',
-      modeTitle: '创作模式',
-      featuresTitle: '只留下你需要的功能',
-      featuresBody: '核心创作始终保留；专业工具逐项开关，只在专业模式下出现。',
-      toolsLabel: '专业工具',
-      core: {
-        title: '画册集与创作工坊',
-        body: '管理画册、分镜、预设与生成任务，经典与专业模式都在。',
-        note: '核心功能',
-      },
-      features: {
-        script: {
-          title: '专业分镜编辑',
-          body: '分镜工坊改用逐格编辑器：景别与机位、出场角色与部位细化、姿势 / 深度控制图、种子与 JSON Pointer 参数覆盖，以及批量导入。',
-        },
-        layout: {
-          title: '条漫排版与嵌字',
-          body: '阅读器多出「排版」画布：出血、格间距、对白气泡与拟声字；模板与导出使用嵌好字的画面。',
-        },
-      },
-      summaryOn: '专业模式已开启：{{count}} / {{total}} 项专业工具可用。',
-      summaryOff: '当前为经典模式，专业工具都已隐藏；打开上面的专业模式后，按这里的选择出现。',
-    },
   },
   legacy: {
     brandSub: '绘页',
@@ -1244,7 +1203,6 @@ const zh = {
         general: '通用',
         data: '数据与备份',
         updates: '关于与更新',
-        studio: '功能开关',
         themes: '样式工坊',
         extensions: '扩展中心',
         access: '工具与连接',
@@ -1315,8 +1273,6 @@ const zh = {
       toLight: '切换到浅色主题',
       toDark: '切换到深色主题',
       language: 'Switch to English',
-      studioOn: '打开专业模式',
-      studioOff: '关闭专业模式',
       queue: '打开生成队列',
     },
   },

@@ -7,7 +7,6 @@ import { episode, job, series } from '../test/fixtures';
 import { useHelp, useQuickStart } from '../components/HelpDrawer';
 import { mockFetch } from '../test/utils';
 import { makeQueryClient, routes } from './App';
-import { useUI } from './ui-store';
 
 // jsdom has no canvas: render konva nodes as plain elements so the canvas/edit screens mount.
 vi.mock('react-konva', () => {
@@ -255,7 +254,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
   useHelp.setState({ open: false });
   useQuickStart.setState({ open: false });
-  useUI.setState({ studioMode: false });
 });
 
 function mount(path: string) {
@@ -310,8 +308,6 @@ describe('every route mounts with API data', () => {
   });
 
   it('episode → script: multi-select, right-click menu, batch edit and help', async () => {
-    // The per-panel render overrides live in the Studio inspector.
-    useUI.setState({ studioMode: true });
     mount('/workshop/assembly/ep_1/script');
     const rows = await screen.findAllByText(/^「欢迎光临」$|^第 2 格$/);
     expect(rows.length).toBeGreaterThanOrEqual(2);
@@ -655,13 +651,11 @@ describe('every route mounts with API data', () => {
     expect((await screen.findAllByText(text)).length).toBeGreaterThan(0);
   });
 
-  it('classic mode: prompt, characters and the generate stage; no studio drawer', async () => {
+  it('script tab: prompt, characters and the generate stage', async () => {
     mount('/workshop/assembly/ep_1/script');
     expect(await screen.findByLabelText('画面提示词')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /生成 \d 张/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /林夏/, pressed: true })).toBeInTheDocument();
-    expect(screen.queryByText('出图参数覆盖（只对这一格）')).toBeNull();
-    expect(screen.queryByText('剧本助手')).toBeNull();
   });
 
   it('generate queues the chosen number of candidates for this panel', async () => {
@@ -675,15 +669,14 @@ describe('every route mounts with API data', () => {
     expect(call.body).toMatchObject({ panel_ids: ['p0'], candidates: 4 });
   });
 
-  it('studio mode switch in settings is persisted', async () => {
-    mount('/settings?tab=studio');
-    fireEvent.click(await screen.findByRole('radio', { name: /专业模式 · Studio/ }));
-    expect(useUI.getState().studioMode).toBe(true);
-    expect(JSON.parse(localStorage.getItem('mio.ui') ?? '{}').state.studioMode).toBe(true);
+  it('settings have no mode or feature switches', async () => {
+    mount('/settings?tab=themes');
+    expect((await screen.findAllByText('跟随系统')).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('tab', { name: /功能开关/ })).toBeNull();
+    expect(screen.queryByText(/专业模式/)).toBeNull();
   });
 
   it('board offers no retouch, QA or finalize actions', async () => {
-    useUI.setState({ studioMode: true });
     mount('/workshop/assembly/ep_1/board');
     expect(await screen.findByText('全部出草稿')).toBeInTheDocument();
     expect(screen.queryByText('质检')).toBeNull();
@@ -706,7 +699,6 @@ describe('every route mounts with API data', () => {
   });
 
   it('reader drawer offers no motion comic or version switch (Studio mode)', async () => {
-    useUI.setState({ studioMode: true });
     mount('/gallery/ser_1/export');
     expect(await screen.findByText('本次展示与导出设置')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /设置镜头并导出/ })).toBeNull();

@@ -130,11 +130,6 @@ a.workspace-profile-button {
   box-shadow: 0 0 0 0 color-mix(in srgb, var(--live) 60%, transparent);
   animation: task-beacon 1.8s infinite;
 }
-.status-mode {
-  margin-right: 17px;
-  color: var(--accent);
-  text-decoration: none;
-}
 #statusbar .dot.amber {
   background: var(--amber);
 }
@@ -294,40 +289,6 @@ a.workspace-profile-button {
 }
 #studio-settings-content .identity-language {
   margin: 28px 0 0;
-}
-
-/* 分镜工坊 frame list in classic mode: the legacy plain rows (01 · text), no cards or thumbnails.
-   Studio mode keeps the richer rows (shot chip, cast, thumbnail). */
-html:not(.is-studio) .workshop-body .panel-row {
-  border: 0;
-  background: none;
-  border-radius: 6px;
-}
-html:not(.is-studio) .workshop-body .panel-row:hover {
-  background: var(--hover);
-}
-html:not(.is-studio) .workshop-body .panel-row.active {
-  background: var(--tint);
-  color: var(--accent);
-}
-html:not(.is-studio) .workshop-body .panel-row .panel-thumb,
-html:not(.is-studio) .workshop-body .panel-row .row.small {
-  display: none;
-}
-html:not(.is-studio) .workshop-body .panel-row-body {
-  align-items: center;
-  gap: 12px;
-  padding: 11px 12px 11px 2px;
-}
-html:not(.is-studio) .workshop-body .panel-row-text {
-  -webkit-line-clamp: 1;
-  margin: 0;
-  font-size: 0.75rem;
-  color: inherit;
-}
-html:not(.is-studio) .workshop-body .panel-no {
-  font-size: 0.75rem;
-  padding: 0;
 }
 
 /* Sidebar profile avatar (the generic legacy .avatar rule is not extracted). */
