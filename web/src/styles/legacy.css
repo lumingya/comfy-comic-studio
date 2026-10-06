@@ -3395,9 +3395,6 @@ html[data-lettering='calligraphy'] .shelf-item h3 {
   max-height: none;
   object-fit: contain;
 }
-.picture-reader-edit {
-  flex-shrink: 0;
-}
 .pic-row {
   display: flex;
   flex-wrap: wrap;
@@ -3416,12 +3413,6 @@ html[data-lettering='calligraphy'] .shelf-item h3 {
 @media (max-width: 760px) {
   #reader-canvas .room-scroll article {
     padding: 14px 0px;
-  }
-}
-@media (max-width: 760px) {
-  .picture-reader-edit {
-    font-size: 0.75rem !important;
-    padding: 6px !important;
   }
 }
 @media (max-width: 760px) {

@@ -475,18 +475,6 @@ export default function ReaderPage() {
             {t('reader.layout')}
           </button>
         ) : null}
-        <button
-          type="button"
-          className="btn small picture-reader-edit"
-          disabled={!epId}
-          title={t('reader.editHint')}
-          onClick={() => {
-            navigate(`/workshop/assembly/${epId}`);
-          }}
-        >
-          <Icon name="edit" sm />
-          {t('reader.edit')}
-        </button>
       </header>
       <section className="room-stage">
         {panel === 'layout' && context ? (

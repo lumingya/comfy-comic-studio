@@ -1,7 +1,7 @@
 import { Group, Image as KImage, Rect } from 'react-konva';
 import { assetUrl } from '../../api/client';
 import type { Panel } from '../../api/types';
-import { useImage } from '../board/MaskCanvas';
+import { useImage } from './useImage';
 import { css, type RGB } from './backdrop';
 
 type Box = [number, number, number, number];

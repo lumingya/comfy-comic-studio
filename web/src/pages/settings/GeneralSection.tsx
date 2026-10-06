@@ -5,7 +5,7 @@ import { usePatchSettings, useSettings } from '../../api/system';
 import type { AppSettings } from '../../api/types';
 import { QueryError } from '../../app/errors';
 import { toast, toastError } from '../../components/toast';
-import { Field, Loading, NumberInput, Switch, TagInput, TextInput } from '../../components/ui';
+import { Field, Loading, NumberInput, TagInput, TextInput } from '../../components/ui';
 import {
   Advanced,
   ConfigurationGuard,
@@ -15,7 +15,6 @@ import {
 
 const editable = (s: AppSettings) => ({
   llm: s.llm,
-  qa: s.qa,
   guard_terms: s.guard_terms,
   trash_days: s.trash_days,
 });
@@ -30,7 +29,6 @@ export function GeneralSection() {
   const d = draft ?? settings.data;
   const llm = (change: Partial<AppSettings['llm']>) =>
     setDraft({ ...d, llm: { ...d.llm, ...change } });
-  const qa = (change: Partial<AppSettings['qa']>) => setDraft({ ...d, qa: { ...d.qa, ...change } });
   const dirty =
     !!draft && JSON.stringify(editable(draft)) !== JSON.stringify(editable(settings.data));
   const invalid = !validHttpUrl(d.llm.base_url);
@@ -89,12 +87,6 @@ export function GeneralSection() {
           <TagInput value={d.llm.text_models} onChange={(text_models) => llm({ text_models })} />
         </Field>
         <Advanced title={t('config.general.models')} hint={t('config.general.modelsAdvancedHint')}>
-          <Field label={t('settings.visionModels')}>
-            <TagInput
-              value={d.llm.vision_models}
-              onChange={(vision_models) => llm({ vision_models })}
-            />
-          </Field>
           <Field label={t('settings.imageModels')} hint={t('config.general.imageHint')}>
             <TagInput
               value={d.llm.image_models}
@@ -125,26 +117,6 @@ export function GeneralSection() {
               />
             </Field>
           </div>
-        </Advanced>
-        <Advanced title={t('settings.qa')} hint={t('config.general.qaHint')}>
-          <Field label={t('settings.votes')} hint={t('settings.votesHint')}>
-            <NumberInput
-              value={d.qa.votes}
-              min={1}
-              max={7}
-              onChange={(value) => qa({ votes: value ?? 3 })}
-            />
-          </Field>
-          <Switch
-            checked={d.qa.auto_adopt}
-            onChange={(auto_adopt) => qa({ auto_adopt })}
-            label={t('settings.autoAdopt')}
-          />
-          <Switch
-            checked={d.qa.faces}
-            onChange={(faces) => qa({ faces })}
-            label={t('settings.faces')}
-          />
         </Advanced>
         <Advanced title={t('settings.safety')} hint={t('config.general.safetyHint')}>
           <Field label={t('settings.guardTerms')} hint={t('settings.guardHint')}>

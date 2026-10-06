@@ -705,10 +705,13 @@ describe('every route mounts with API data', () => {
     expect(JSON.parse(localStorage.getItem('mio.ui') ?? '{}').state.studioMode).toBe(true);
   });
 
-  it('classic board hides QA, finalize and variants', async () => {
+  it('board offers no retouch, QA or finalize actions', async () => {
+    useUI.setState({ studioMode: true });
     mount('/workshop/assembly/ep_1/board');
     expect(await screen.findByText('全部出草稿')).toBeInTheDocument();
-    expect(screen.queryByText('质检已采用的图')).toBeNull();
+    expect(screen.queryByText('质检')).toBeNull();
+    expect(screen.queryByText(/出成品档/)).toBeNull();
+    expect(screen.queryByText('修图')).toBeNull();
   });
 
   it('picking a theme writes its tokens onto <html>', async () => {

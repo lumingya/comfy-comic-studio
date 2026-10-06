@@ -8,9 +8,6 @@ import {
   Maximize2,
   Play,
   RotateCcw,
-  ScanSearch,
-  Sparkles,
-  Wand2,
   X,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -18,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { assetUrl } from '../../api/client';
 import { useActiveRenders } from '../../api/jobs';
-import { useFinalize, useQA, useRender } from '../../api/production';
+import { useRender } from '../../api/production';
 import { useTakeAction, type TakeAction } from '../../api/series';
 import type { Panel, Take } from '../../api/types';
 import { useSelection } from '../../app/selection';
@@ -27,22 +24,16 @@ import { ContextMenu, useContextMenu, type ContextGroup } from '../../components
 import { toast, toastError } from '../../components/toast';
 import { Empty, Modal, NumberInput, Progress, Select, Switch } from '../../components/ui';
 import { useEpisodeContext } from '../episode/EpisodePage';
-import { EditDialog } from './EditDialog';
 import { PendingCard, TakeCard } from './TakeCard';
 
 export default function BoardTab() {
   const { t } = useTranslation();
   const { episode, series } = useEpisodeContext();
   const ui = useUI();
-  // 功能开关: 修图与 AI 质检 and 批量变体 are separate professional tools.
-  const studio = useStudio('retouch');
   const variantsOn = useStudio('variants');
   const render = useRender(episode.id);
-  const finalize = useFinalize(episode.id);
-  const qa = useQA(episode.id);
   const action = useTakeAction(episode.id);
   const { byPanel } = useActiveRenders(episode.id);
-  const [editing, setEditing] = useState<Take | null>(null);
   const [zoomId, setZoomId] = useState<string | null>(null);
 
   const variants = series.variants ?? [];
@@ -67,7 +58,7 @@ export default function BoardTab() {
   const desktop = useDesktopSelection({
     itemAttribute: 'data-selection-id',
     selection,
-    enabled: !zoomId && !editing,
+    enabled: !zoomId,
     pinned: false,
     contextOpen: !!menu.state,
     onExit: selection.clear,
@@ -117,8 +108,6 @@ export default function BoardTab() {
       toastError(error);
     }
   };
-  const qaMany = (ids: string[]) =>
-    qa.mutate({ take_ids: ids }, { onSuccess: queued, onError: toastError });
   const menuGroups = (ids: string[]): ContextGroup[] => {
     const one = ids.length === 1 ? takeById(ids[0]) : undefined;
     const n = ids.length;
@@ -154,28 +143,6 @@ export default function BoardTab() {
           },
         ],
       },
-      ...(studio
-        ? [
-            {
-              items: [
-                ...(one
-                  ? [
-                      {
-                        label: t('board.edit'),
-                        icon: <Wand2 size={14} />,
-                        onSelect: () => setEditing(one),
-                      },
-                    ]
-                  : []),
-                {
-                  label: t('board.qa'),
-                  icon: <ScanSearch size={14} />,
-                  onSelect: () => qaMany(ids),
-                },
-              ],
-            },
-          ]
-        : []),
     ];
   };
 
@@ -254,34 +221,6 @@ export default function BoardTab() {
           />
         </span>
         <span className="grow" />
-        {studio ? (
-          <>
-            <button
-              className="btn"
-              disabled={!adopted.length || qa.isPending}
-              onClick={() =>
-                qa.mutate(
-                  { take_ids: adopted.map((tk) => tk.id) },
-                  { onSuccess: queued, onError: toastError },
-                )
-              }
-            >
-              <ScanSearch size={15} /> {t('board.qaAdopted')}
-            </button>
-            <button
-              className="btn"
-              disabled={!adopted.length || finalize.isPending}
-              onClick={() =>
-                finalize.mutate(
-                  { take_ids: adopted.map((tk) => tk.id) },
-                  { onSuccess: queued, onError: toastError },
-                )
-              }
-            >
-              <Sparkles size={15} /> {t('board.finalize', { count: adopted.length })}
-            </button>
-          </>
-        ) : null}
         <button
           className="btn"
           disabled={!missing.length || render.isPending}
@@ -321,11 +260,6 @@ export default function BoardTab() {
             >
               <X size={13} /> {t('board.reject')}
             </button>
-            {studio ? (
-              <button className="btn ghost sm" onClick={() => qaMany(selection.ids)}>
-                <ScanSearch size={13} /> {t('board.qa')}
-              </button>
-            ) : null}
             <button className="btn ghost sm" onClick={selection.clear} title="Esc">
               {t('common.cancel')}
             </button>
@@ -369,16 +303,6 @@ export default function BoardTab() {
                       onAdopt={() => act(tk, 'adopt')}
                       onReject={() => act(tk, 'reject')}
                       onRestore={() => act(tk, 'restore')}
-                      onEdit={studio ? () => setEditing(tk) : undefined}
-                      onQA={
-                        studio
-                          ? () =>
-                              qa.mutate(
-                                { take_ids: [tk.id] },
-                                { onSuccess: queued, onError: toastError },
-                              )
-                          : undefined
-                      }
                       onZoom={() => {
                         selection.clear();
                         setZoomId(tk.id);
@@ -403,12 +327,6 @@ export default function BoardTab() {
           onClose={menu.close}
         />
       ) : null}
-      <EditDialog
-        key={editing?.id}
-        episodeId={episode.id}
-        take={editing}
-        onClose={() => setEditing(null)}
-      />
       <Modal
         id="board-zoom"
         open={!!zoom}
@@ -459,13 +377,6 @@ export default function BoardTab() {
         {zoom ? (
           <div className="zoom">
             <img src={assetUrl(zoom.asset_id)} alt="" />
-            {zoom.qa?.issues.length ? (
-              <ul className="small muted">
-                {zoom.qa.issues.map((x) => (
-                  <li key={x}>{x}</li>
-                ))}
-              </ul>
-            ) : null}
           </div>
         ) : null}
       </Modal>

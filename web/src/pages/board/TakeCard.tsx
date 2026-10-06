@@ -1,4 +1,4 @@
-import { Check, Maximize2, RotateCcw, ScanSearch, Wand2, X } from 'lucide-react';
+import { Check, Maximize2, RotateCcw, X } from 'lucide-react';
 import type { MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assetUrl } from '../../api/client';
@@ -14,8 +14,6 @@ export function TakeCard(props: {
   onAdopt: () => void;
   onReject: () => void;
   onRestore: () => void;
-  onEdit?: () => void;
-  onQA?: () => void;
   onZoom: () => void;
   /** Ctrl / Shift click on the image (plain click zooms). */
   onSelect?: (mods: { ctrlKey: boolean; metaKey: boolean; shiftKey: boolean }) => void;
@@ -23,7 +21,6 @@ export function TakeCard(props: {
 }) {
   const { t } = useTranslation();
   const take = props.take;
-  const qa = take.qa;
   return (
     <figure
       className={`take ${take.status} ${props.checked ? 'checked' : ''} ${props.context ? 'is-context' : ''}`}
@@ -50,11 +47,6 @@ export function TakeCard(props: {
         {take.status === 'adopted' ? (
           <span className="chip accent">
             <Check size={11} /> {t('board.adopted')}
-          </span>
-        ) : null}
-        {qa ? (
-          <span className={`chip ${qa.passed ? 'accent' : 'warn'}`} title={qa.issues.join('\n')}>
-            QA {Math.round(qa.score * 100)}
           </span>
         ) : null}
       </div>
@@ -86,12 +78,6 @@ export function TakeCard(props: {
         <ActionMenu
           actions={[
             { label: t('board.zoom'), icon: <Maximize2 size={14} />, onSelect: props.onZoom },
-            ...(props.onEdit
-              ? [{ label: t('board.edit'), icon: <Wand2 size={14} />, onSelect: props.onEdit }]
-              : []),
-            ...(props.onQA
-              ? [{ label: t('board.qa'), icon: <ScanSearch size={14} />, onSelect: props.onQA }]
-              : []),
           ]}
         />
       </figcaption>

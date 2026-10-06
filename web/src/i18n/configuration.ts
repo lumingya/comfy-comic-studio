@@ -13,7 +13,7 @@ export const configZh = {
     cloudHint: 'OpenAI / NovelAI / 图像反代',
     profiles: '出图配置',
     profilesHint: '把工作流或渠道用于生成任务',
-    textApi: '文本与视觉 API',
+    textApi: '文本模型 API',
     services: '选择配置类型',
     steps: 'ComfyUI 配置顺序',
     connect: '连接服务',
@@ -26,15 +26,15 @@ export const configZh = {
     profilesHelp:
       '生成任务使用的是出图配置，不是当前正在编辑的渠道或工作流。已有装配画册不会跟着模板自动改变。',
     textHelp:
-      '这里配置写剧本和视觉质检使用的模型；机器人访问 Mio 的 API 令牌仍在「设置 → API 与 Webhook」。',
+      '这里配置写剧本使用的文本模型；机器人访问 Mio 的 API 令牌仍在「设置 → API 与 Webhook」。',
   },
   cloud: {
     title: '云端出图渠道',
     intro: '左侧选择渠道，右侧编辑。保存配置不会调用模型，也不会产生出图费用。',
     nameHint: '给自己看的名称，不会影响密钥或已有引用。',
     namePlaceholder: '例如：日常出图、备用服务',
-    sharedAddress: '留空沿用文本与视觉 API 地址',
-    sharedModel: '文本与视觉 API 中的出图模型',
+    sharedAddress: '留空沿用文本模型 API 地址',
+    sharedModel: '文本模型 API 中的出图模型',
     protocol: {
       openai_images: 'Images 协议：文生图使用 /images/generations，带参考图时使用 /images/edits。',
       novelai: 'NovelAI 图像协议：使用 /ai/generate-image；尺寸、采样器和参考强度在此渠道生效。',
@@ -65,8 +65,8 @@ export const configZh = {
     sampler: '采样器',
     refStrength: '参考强度',
     idHint: '系统用它关联密钥和出图配置。需要改名请修改上方「名称」，不要更换 ID。',
-    defaultHint: '仅在云端出图或修图未指定渠道时使用；不会把本地任务自动改成云端任务。',
-    sharedDefault: '沿用文本与视觉 API 的出图模型',
+    defaultHint: '仅在云端出图未指定渠道时使用；不会把本地任务自动改成云端任务。',
+    sharedDefault: '沿用文本模型 API 的出图模型',
     sharedSettings: '配置共享 API',
     emptyHint: '可以添加独立的图像服务；如果只使用共享反代，不必再创建一个重复渠道。',
     list: '云端渠道列表',
@@ -158,20 +158,12 @@ export const configZh = {
     deleteHint: '引用此配置的作品需要重新选择配置；已有图片不会删除。',
     route: '出图方式',
     local: '本地 ComfyUI',
-    cloud: '云端出图 / 混合流程',
+    cloud: '云端出图',
     candidatesHint: '每幕生成几张候选；云端每张都可能计费。',
     cloudHint: '这里选择的渠道才会用于此配置的云端出图。',
-    cloudBilling:
-      '保存不会出图。真正开始生成时会调用云端服务；若配置了本地精修，还会继续运行 ComfyUI。',
+    cloudBilling: '保存不会出图。真正开始生成时才会调用云端服务，每张都可能计费。',
     manageChannels: '管理云端渠道',
     mainStages: '基础出图工作流',
-    finishing: '成品、修图与多阶段流程',
-    finishingHint: '修脸、放大、局部重绘、外扩；不需要时保持收起',
-    hybridRule:
-      '云端先出图，然后执行「成品阶段」；若成品列表为空，则使用保留草稿流程的第二步及以后。两者都没有启用阶段时，就是纯云端出图。',
-    finalHint: '基础出图按上方流程运行；成品阶段用于已采用图片的后续处理。',
-    retainedDraft: '保留的本地草稿流程',
-    editChannelHint: '指令修图没有本地工作流时使用；不会启用云端基础出图。',
     promptAdvanced: '提示词与多服务调度',
     promptHint: '提示词类型、质量标签、基础宽度、指定实例和模型分组',
     widthHint: '本地出图按此宽度和分幕比例计算尺寸，每幕的宽高覆盖优先。云端尺寸在渠道中配置。',
@@ -211,15 +203,14 @@ export const configZh = {
     next: '导入与检查工作流',
   },
   general: {
-    intro: '用于写剧本、剧本助手和视觉质检。独立图像渠道在「工作流与 API 配置」中管理。',
+    intro: '用于写剧本和剧本助手。独立图像渠道在「工作流与 API 配置」中管理。',
     addressHint: 'OpenAI 兼容基础地址；不要追加 /chat/completions。',
     modelsHint: '输入后按 Enter 或逗号添加；按顺序尝试文本模型。',
-    models: '视觉与共享出图模型',
-    modelsAdvancedHint: '只在使用视觉质检或共享图像反代时配置',
+    models: '共享出图模型',
+    modelsAdvancedHint: '只在使用共享图像反代时配置',
     imageHint: '共享聊天出图使用列表中的首个模型；付费结果不明确时不会自动切换模型重发。',
     request: '请求控制',
     requestHint: '超时与请求间隔，通常无需修改',
-    qaHint: '质检票数、自动采用与人脸避让',
     safetyHint: '提示词屏蔽与回收站保留时间',
   },
 };
@@ -240,7 +231,7 @@ export const configEn = {
     cloudHint: 'OpenAI / NovelAI / image proxies',
     profiles: 'Render profiles',
     profilesHint: 'Choose workflows or channels for generation',
-    textApi: 'Text & vision API',
+    textApi: 'Text model API',
     services: 'Configuration type',
     steps: 'ComfyUI setup steps',
     connect: 'Connect',
@@ -254,7 +245,7 @@ export const configEn = {
     profilesHelp:
       'Generation uses the selected render profile, not whichever channel or workflow you are editing. Assembled albums keep their template snapshot.',
     textHelp:
-      'Configure story-writing and visual QA models here. Tokens for bots calling Mio remain in Settings → API & Webhook.',
+      'Configure the text models used for story writing here. Tokens for bots calling Mio remain in Settings → API & Webhook.',
   },
   cloud: {
     title: 'Cloud image channels',
@@ -262,8 +253,8 @@ export const configEn = {
       'Select a channel to edit. Saving never calls a model or submits a paid generation request.',
     nameHint: 'A display name. Renaming it does not affect keys or existing references.',
     namePlaceholder: 'For example: everyday images, backup service',
-    sharedAddress: 'Leave blank to use the text & vision endpoint',
-    sharedModel: 'the image model in Text & vision API',
+    sharedAddress: 'Leave blank to use the text model endpoint',
+    sharedModel: 'the image model in Text model API',
     protocol: {
       openai_images:
         'Images protocol: /images/generations for text prompts, /images/edits when references are supplied.',
@@ -306,8 +297,8 @@ export const configEn = {
     idHint:
       'Used to associate the key and render profiles. To rename a channel, edit its display name, not its ID.',
     defaultHint:
-      'Used only when a cloud render or edit does not name a channel. This does not turn local jobs into cloud jobs.',
-    sharedDefault: 'Use the image model from Text & vision API',
+      'Used only when a cloud render does not name a channel. This does not turn local jobs into cloud jobs.',
+    sharedDefault: 'Use the image model from Text model API',
     sharedSettings: 'Configure shared API',
     emptyHint:
       'Add a dedicated image service. No duplicate channel is needed if you only use the shared proxy.',
@@ -413,23 +404,13 @@ export const configEn = {
       'Works referencing this profile will need another profile. Existing images will not be deleted.',
     route: 'Render route',
     local: 'Local ComfyUI',
-    cloud: 'Cloud / hybrid',
+    cloud: 'Cloud render',
     candidatesHint: 'Candidates per panel. Each cloud candidate may incur a charge.',
     cloudHint: 'This is the channel used for this profile’s cloud generation.',
     cloudBilling:
-      'Saving does not generate images. Starting generation calls the cloud service and, if configured, ComfyUI refinement.',
+      'Saving does not generate images. The cloud service is called only when generation starts, and each image may be billed.',
     manageChannels: 'Manage cloud channels',
     mainStages: 'Base generation workflow',
-    finishing: 'Finishing, edits & multi-stage pipelines',
-    finishingHint:
-      'Face correction, upscaling, inpainting and outpainting — leave collapsed if not needed',
-    hybridRule:
-      'Cloud generation runs first, then the final stages. If the final list is empty, draft stages after the first are used. With neither enabled, generation is cloud-only.',
-    finalHint:
-      'Base generation uses the workflow above. Final stages process adopted images later.',
-    retainedDraft: 'Retained local draft pipeline',
-    editChannelHint:
-      'Used when an instruction edit has no local workflow. This does not enable cloud base generation.',
     promptAdvanced: 'Prompts & multi-server scheduling',
     promptHint: 'Prompt dialect, quality tags, base width, server selection and model grouping',
     widthHint:
@@ -479,16 +460,15 @@ export const configEn = {
   },
   general: {
     intro:
-      'For story generation, the script assistant and visual QA. Manage dedicated image channels in Workflow & API setup.',
+      'For story generation and the script assistant. Manage dedicated image channels in Workflow & API setup.',
     addressHint: 'OpenAI-compatible base URL, without /chat/completions.',
     modelsHint: 'Press Enter or comma to add a model. Text models are tried in order.',
-    models: 'Vision & shared image models',
-    modelsAdvancedHint: 'Configure when using visual QA or the shared image proxy',
+    models: 'Shared image models',
+    modelsAdvancedHint: 'Only needed for the shared image proxy',
     imageHint:
       'Shared chat-image generation uses the first model. Uncertain paid requests are not automatically resent through another model.',
     request: 'Request controls',
     requestHint: 'Timeout and pacing — usually no changes needed',
-    qaHint: 'QA votes, automatic adoption and face avoidance',
     safetyHint: 'Prompt guard terms and trash retention',
   },
 };

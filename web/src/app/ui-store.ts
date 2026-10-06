@@ -84,7 +84,7 @@ export const SHELF_SORTS = ['manual', 'createdAt', 'updatedAt', 'totalSteps'] as
 export type ShelfSort = (typeof SHELF_SORTS)[number];
 
 /** The professional tools Studio mode adds, each with its own switch in 设置 → 功能开关. */
-export const STUDIO_FEATURES = ['script', 'retouch', 'variants', 'layout', 'motion'] as const;
+export const STUDIO_FEATURES = ['script', 'variants', 'layout', 'motion'] as const;
 export type StudioFeature = (typeof STUDIO_FEATURES)[number];
 
 export const useUI = create<UIState>()(

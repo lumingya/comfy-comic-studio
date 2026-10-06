@@ -216,8 +216,16 @@ describe('render profiles', () => {
   });
 
   it('keeps advanced stage values and overrides when editing the name', async () => {
+    const stored: RenderProfile = {
+      ...configProfile,
+      final: [{ ...configProfile.draft[0], id: 'stage_face', kind: 'face' }],
+      edits: { inpaint: { ...configProfile.draft[0], id: 'stage_inpaint', kind: 'inpaint' } },
+    };
     const calls = mockFetch(
-      configurationRoutes({ 'PUT /api/profiles/profile_default': (body: unknown) => body }),
+      configurationRoutes({
+        'GET /api/profiles': [stored],
+        'PUT /api/profiles/profile_default': (body: unknown) => body,
+      }),
     );
     renderWithProviders(<ProfilesSection />);
     fireEvent.change(await screen.findByDisplayValue('测试出图配置'), {
@@ -225,12 +233,12 @@ describe('render profiles', () => {
     });
     await userEvent.click(screen.getByRole('button', { name: '保存' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
-    expect((calls.find((c) => c.method === 'PUT')!.body as RenderProfile).draft).toEqual(
-      configProfile.draft,
-    );
-    expect(screen.getByText('成品、修图与多阶段流程').closest('details')).not.toHaveAttribute(
-      'open',
-    );
+    const saved = calls.find((c) => c.method === 'PUT')!.body as RenderProfile;
+    expect(saved.draft).toEqual(configProfile.draft);
+    // Stages that are no longer edited in the UI are still saved untouched.
+    expect(saved.final).toEqual(stored.final);
+    expect(saved.edits).toEqual(stored.edits);
+    expect(screen.queryByText('成品、修图与多阶段流程')).toBeNull();
   });
 });
 

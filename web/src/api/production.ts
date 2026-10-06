@@ -31,7 +31,6 @@ export interface RenderVars {
   profile_id?: string | null;
   candidates?: number | null;
   variant_ids?: (string | null)[] | null;
-  qa?: boolean;
   /** Queue flow: the first image of each panel without one goes straight into the album. */
   adopt_first?: boolean;
   /** 单幕重跑: the first new image replaces the album image (the old one stays a candidate). */
@@ -65,47 +64,6 @@ export function useRenderEpisode() {
       qc.invalidateQueries({ queryKey: keys.episode(v.episodeId) });
     },
   });
-}
-
-export function useFinalize(episodeId: string) {
-  return useJobMutation(
-    episodeId,
-    async (vars: { take_ids?: string[] | null; profile_id?: string | null }, key) =>
-      data(
-        await api.POST('/api/episodes/{episode_id}/finalize', {
-          params: ep(episodeId),
-          body: { ...vars, idempotency_key: key },
-        }),
-      ),
-  );
-}
-
-export type EditKind = 'inpaint' | 'outpaint' | 'edit';
-
-export function useEditTake(episodeId: string) {
-  return useJobMutation(
-    episodeId,
-    async (vars: { take_id: string; kind: EditKind; params: Record<string, unknown> }, key) =>
-      data(
-        await api.POST('/api/episodes/{episode_id}/edit', {
-          params: ep(episodeId),
-          body: { ...vars, idempotency_key: key },
-        }),
-      ),
-  );
-}
-
-export function useQA(episodeId: string) {
-  return useJobMutation(
-    episodeId,
-    async (vars: { take_ids?: string[] | null; votes?: number; auto_adopt?: boolean }, key) =>
-      data(
-        await api.POST('/api/episodes/{episode_id}/qa', {
-          params: ep(episodeId),
-          body: { ...vars, idempotency_key: key },
-        }),
-      ),
-  );
 }
 
 // ------------------------------------------------------------------- strip

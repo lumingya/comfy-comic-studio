@@ -110,16 +110,6 @@ export function CharacterEditor({
           onChange={(appearance) => onChange({ appearance })}
         />
       </Field>
-      <Field label={t('bible.signature')} hint={t('bible.signatureHint')}>
-        <TagInput value={value.signature ?? []} onChange={(signature) => onChange({ signature })} />
-      </Field>
-      <Field label={t('common.description')}>
-        <TextArea
-          rows={2}
-          value={value.description ?? ''}
-          onChange={(description) => onChange({ description })}
-        />
-      </Field>
       <div className="grid-2">
         <Field label={t('bible.trigger')}>
           <TextInput

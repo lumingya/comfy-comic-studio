@@ -32,8 +32,7 @@ import {
   useDiscardChanges,
 } from './ConfigurationParts';
 
-const KINDS = ['generate', 'refine', 'upscale', 'face', 'inpaint', 'outpaint', 'edit'] as const;
-const EDIT_KINDS = ['inpaint', 'outpaint', 'edit'] as const;
+const KINDS = ['generate', 'refine', 'upscale', 'face'] as const;
 
 function newStage(kind: RenderStage['kind'], workflow_id = ''): RenderStage {
   return {
@@ -93,7 +92,12 @@ function StageRow({
         <Select
           aria-label={t('config.profile.stageKind')}
           value={s.kind}
-          options={KINDS.map((value) => ({ value, label: t(`settings.kinds.${value}`) }))}
+          options={[
+            ...KINDS.map((value) => ({ value, label: t(`settings.kinds.${value}`) })),
+            ...((KINDS as readonly string[]).includes(s.kind)
+              ? []
+              : [{ value: s.kind, label: s.kind }]),
+          ]}
           onChange={(kind) => onChange({ ...s, kind })}
         />
         <Select
@@ -261,8 +265,8 @@ function ProfileEditor({
       ? [{ value: p.cloud_channel, label: t('config.missing', { id: p.cloud_channel }) }]
       : []),
   ];
-  const allStages = [...p.draft, ...p.final, ...Object.values(p.edits)];
-  const missingWorkflow = allStages.some(
+  // Only the stages edited here are validated; other stored stages are kept as they are.
+  const missingWorkflow = (p.cloud_shape ? [] : p.draft).some(
     (s) => !(workflows.data ?? []).some((w) => w.id === s.workflow_id),
   );
   const noStages = !p.cloud_shape && !p.draft.some((s) => s.enabled);
@@ -376,66 +380,6 @@ function ProfileEditor({
           <QueryError error={workflows.error} onRetry={workflows.refetch} />
         ) : null}
         {settings.isError ? <QueryError error={settings.error} onRetry={settings.refetch} /> : null}
-        <Advanced title={t('config.profile.finishing')} hint={t('config.profile.finishingHint')}>
-          <p className="small muted">
-            {p.cloud_shape ? t('config.profile.hybridRule') : t('config.profile.finalHint')}
-          </p>
-          <StageList
-            label={t('settings.finalStages')}
-            stages={p.final}
-            workflows={wfList}
-            onChange={(final) => set({ final })}
-          />
-          {p.cloud_shape ? (
-            <StageList
-              label={t('config.profile.retainedDraft')}
-              stages={p.draft}
-              workflows={wfList}
-              onChange={(draft) => set({ draft })}
-            />
-          ) : null}
-          <h3>{t('settings.editStages')}</h3>
-          <div className="grid-2">
-            {EDIT_KINDS.map((kind) => (
-              <Field key={kind} label={t(`board.kinds.${kind}`)}>
-                <Select
-                  value={p.edits[kind]?.workflow_id ?? ''}
-                  options={[
-                    {
-                      value: '',
-                      label: kind === 'edit' ? t('settings.cloudEdit') : t('common.none'),
-                    },
-                    ...wfList.map((w) => ({ value: w.id, label: w.name })),
-                    ...(p.edits[kind] && !wfList.some((w) => w.id === p.edits[kind].workflow_id)
-                      ? [
-                          {
-                            value: p.edits[kind].workflow_id,
-                            label: t('config.missing', { id: p.edits[kind].workflow_id }),
-                          },
-                        ]
-                      : []),
-                  ]}
-                  onChange={(workflow_id) => {
-                    const edits = { ...p.edits };
-                    if (workflow_id)
-                      edits[kind] = { ...(edits[kind] ?? newStage(kind)), workflow_id };
-                    else delete edits[kind];
-                    set({ edits });
-                  }}
-                />
-              </Field>
-            ))}
-          </div>
-          {!p.cloud_shape ? (
-            <Field label={t('settings.cloudChannel')} hint={t('config.profile.editChannelHint')}>
-              <Select
-                value={p.cloud_channel}
-                onChange={(cloud_channel) => set({ cloud_channel })}
-                options={channelOptions}
-              />
-            </Field>
-          ) : null}
-        </Advanced>
         <Advanced title={t('config.profile.promptAdvanced')} hint={t('config.profile.promptHint')}>
           <div className="grid-2">
             <Field label={t('settings.dialect')}>

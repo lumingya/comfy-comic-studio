@@ -68,7 +68,7 @@ const STUDIO_ITEMS: Record<StudioPage, string[]> = {
     'history',
     'preview',
   ],
-  board: ['render', 'adopt', 'candidates', 'edit', 'qa'],
+  board: ['render', 'adopt', 'candidates'],
   canvas: ['layout', 'lettering', 'export'],
   bible: ['characters', 'refs', 'variables', 'styles'],
 };

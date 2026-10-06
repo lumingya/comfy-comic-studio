@@ -167,34 +167,6 @@
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.2);
 }
 
-.edit-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 20px;
-}
-
-.edit-preview {
-  max-width: 100%;
-  max-height: 520px;
-  border-radius: var(--radius-sm);
-}
-
-.mask-stage {
-  cursor: crosshair;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  width: fit-content;
-}
-
-.mask-stage.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 240px;
-  background: var(--bg-deep);
-}
-
 /* ---- canvas ---- */
 .canvas-body {
   display: grid;
@@ -368,7 +340,6 @@ tr.item-uncertain td {
 @media (max-width: 1100px) {
   .script-layout,
   .canvas-body,
-  .edit-layout,
   .split {
     grid-template-columns: minmax(0, 1fr);
   }
