@@ -118,7 +118,7 @@ export function PanelEditor(props: {
     }
   });
 
-  // Server-side changes (assistant, undo, another tab) replace the draft unless edits are pending.
+  // Server-side changes (undo, another tab) replace the draft unless edits are pending.
   useEffect(() => {
     if (autosave.busy()) return;
     setDraft(props.panel);

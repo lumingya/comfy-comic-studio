@@ -327,6 +327,9 @@ describe('every route mounts with API data', () => {
     fireEvent.click(within(menu).getByText('批量编辑'));
     expect(await screen.findByText('批量编辑 2 格')).toBeInTheDocument();
     fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    // Batch import stays; there is no script assistant.
+    expect(screen.getByRole('button', { name: '导入分格（JSON）' })).toBeInTheDocument();
+    expect(screen.queryByText('剧本助手')).toBeNull();
     // Per-panel render overrides and the one-frame test run are in the editor.
     expect(screen.getByText('出图参数覆盖（只对这一格）')).toBeInTheDocument();
     expect(screen.getAllByText('试出这一格').length).toBeGreaterThan(0);

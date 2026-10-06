@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, data } from './client';
 import { keys } from './keys';
-import type { Job, Proposal, Strip } from './types';
+import type { Job, Strip } from './types';
 
 function newKey(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -109,39 +109,5 @@ export function useExportPresets() {
         max_height: number;
         format: string;
       }[],
-  });
-}
-
-// --------------------------------------------------------------- assistant
-export function usePropose(episodeId: string) {
-  return useMutation({
-    mutationFn: async (instruction: string) =>
-      data(
-        await api.POST('/api/episodes/{episode_id}/assistant/propose', {
-          params: ep(episodeId),
-          body: { instruction },
-        }),
-      ) as unknown as Proposal,
-  });
-}
-
-export function useApplyProposal(episodeId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (vars: { proposal: Proposal; accepted: string[] }) =>
-      data(
-        await api.POST('/api/episodes/{episode_id}/assistant/apply', {
-          params: ep(episodeId),
-          body: {
-            ops: vars.proposal.ops as unknown as Record<string, unknown>[],
-            accepted: vars.accepted,
-            base_revision: vars.proposal.base_revision,
-          },
-        }),
-      ) as unknown as { applied: string[]; revision: number },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: keys.episode(episodeId) });
-      qc.invalidateQueries({ queryKey: ['series'] });
-    },
   });
 }

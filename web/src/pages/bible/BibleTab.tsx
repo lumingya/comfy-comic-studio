@@ -69,7 +69,7 @@ export default function BibleTab() {
 
   const autosave = useAutosave(() => patch.mutateAsync({ bible, variables }), 1000);
 
-  // Take the server copy (e.g. the assistant added a character) unless local edits are pending —
+  // Take the server copy (e.g. another tab added a character) unless local edits are pending —
   // renaming the series in the header must not throw away an unsaved character.
   useEffect(() => {
     if (autosave.busy()) return;

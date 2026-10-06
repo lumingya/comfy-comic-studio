@@ -164,7 +164,7 @@ const en: Widen<Dict> = {
     duplicate: 'Duplicate',
     lock: 'Lock',
     unlock: 'Unlock',
-    locked: 'Locked: the script assistant and pacing leave this panel alone',
+    locked: 'Locked: pacing leaves this panel alone',
     shot: 'Shot',
     angle: 'Angle',
     location: 'Location',
@@ -184,8 +184,7 @@ const en: Widen<Dict> = {
     appendPrompt: 'Panel prompt',
     appendPromptHint:
       'Appended verbatim after the generated tags; {variables} allowed. Put what the image should obey here.',
-    descriptionHint:
-      'Notes for the script assistant and the natural-language model; not part of the tag prompt.',
+    descriptionHint: 'Notes for the natural-language model; not part of the tag prompt.',
     negativePrompt: 'Extra negative',
     groupCamera: 'Camera, scene & tags',
     groupLayout: 'Ratio & layout',
@@ -213,7 +212,6 @@ const en: Widen<Dict> = {
     preview: 'Compiled prompt',
     references: 'Auto references',
     unresolved: 'Undefined variables: {{names}}',
-    assistant: 'Assistant',
     selectPanel: 'Pick a panel on the left to edit it',
     shots: {
       unset: 'Unspecified',
@@ -274,19 +272,6 @@ const en: Widen<Dict> = {
     recentTakes: 'Latest images of this panel',
     rendering: 'Rendering {{count}}',
     noTakes: 'No images yet',
-  },
-  assistant: {
-    heading: 'Script assistant',
-    hint: 'Say what to change; review each suggested edit and apply the ones you accept. Locked panels stay untouched.',
-    placeholder: 'e.g. Make panel 3 a rainy night and let Zhou speak first in panel 5',
-    propose: 'Suggest edits',
-    proposing: 'Thinking…',
-    noChanges: 'No changes suggested.',
-    applyN: 'Apply {{count}} selected',
-    applied: 'Applied {{count}} edits',
-    blocked: 'Cannot apply: {{reason}}',
-    before: 'Before',
-    after: 'After',
   },
   batch: {
     selected: '{{count}} panels selected',
@@ -369,7 +354,7 @@ const en: Widen<Dict> = {
         items: {
           create: {
             q: 'Where do I start?',
-            a: 'New work → add characters and locations in the bible → new episode, write the script or let the assistant draft it.',
+            a: 'New work → add characters and locations in the bible → new episode, write the script or generate it with the text model.',
           },
           open: {
             q: 'Recently opened episodes?',
@@ -419,7 +404,7 @@ const en: Widen<Dict> = {
           },
           description: {
             q: 'Description vs prompt?',
-            a: 'The description is for the script assistant and the natural-language model only; it is not part of the tag prompt.',
+            a: 'The description is for the natural-language model only; it is not part of the tag prompt.',
           },
           camera: {
             q: 'Are shot / angle required?',
@@ -519,7 +504,7 @@ const en: Widen<Dict> = {
             q: 'Render profiles',
             a: 'Workflow + quality / negative lists + render pipeline; a panel can pick its own profile.',
           },
-          llm: { q: 'Model APIs', a: 'Text models for script writing and the assistant.' },
+          llm: { q: 'Model APIs', a: 'Text models for script generation.' },
           themes: {
             q: 'Themes',
             a: 'Built-in ink / paper / midnight / sakura, importable; the rail button flips between light and dark.',
@@ -838,7 +823,7 @@ const en: Widen<Dict> = {
       feedHint: 'Empty = GitHub releases; point it at a mirrored mio-release.json if you host one',
     },
     llm: 'Text models',
-    llmHint: 'OpenAI-compatible endpoint used for script generation and the assistant.',
+    llmHint: 'OpenAI-compatible endpoint used for script generation.',
     baseUrl: 'Base URL',
     apiKey: 'API key',
     textModels: 'Text models (fallback order)',
@@ -1148,7 +1133,7 @@ const en: Widen<Dict> = {
       features: {
         script: {
           title: 'Studio storyboard editor',
-          body: 'The workshop edits frame by frame: shot & angle, cast and part-level tags, pose / depth control images, seed and JSON Pointer overrides, plus the script assistant and batch import.',
+          body: 'The workshop edits frame by frame: shot & angle, cast and part-level tags, pose / depth control images, seed and JSON Pointer overrides, plus batch import.',
         },
         layout: {
           title: 'Strip layout & lettering',

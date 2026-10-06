@@ -203,7 +203,7 @@ export const configZh = {
     next: '导入与检查工作流',
   },
   general: {
-    intro: '用于写剧本和剧本助手。独立图像渠道在「工作流与 API 配置」中管理。',
+    intro: '用于生成剧本。独立图像渠道在「工作流与 API 配置」中管理。',
     addressHint: 'OpenAI 兼容基础地址；不要追加 /chat/completions。',
     modelsHint: '输入后按 Enter 或逗号添加；按顺序尝试文本模型。',
     models: '共享出图模型',
@@ -459,8 +459,7 @@ export const configEn = {
     next: 'Import & check workflows',
   },
   general: {
-    intro:
-      'For story generation and the script assistant. Manage dedicated image channels in Workflow & API setup.',
+    intro: 'For script generation. Manage dedicated image channels in Workflow & API setup.',
     addressHint: 'OpenAI-compatible base URL, without /chat/completions.',
     modelsHint: 'Press Enter or comma to add a model. Text models are tried in order.',
     models: 'Shared image models',

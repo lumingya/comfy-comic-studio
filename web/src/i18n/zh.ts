@@ -159,7 +159,7 @@ const zh = {
     duplicate: '复制这格',
     lock: '锁定',
     unlock: '解锁',
-    locked: '已锁定：剧本助手和节奏调整都不会改动这一格',
+    locked: '已锁定：节奏调整不会改动这一格',
     shot: '景别',
     angle: '角度',
     location: '地点',
@@ -178,7 +178,7 @@ const zh = {
     rawPrompt: '原始提示词（填写后不再自动编译，下面的字段全部失效）',
     appendPrompt: '画面提示词',
     appendPromptHint: '原样追加到自动生成的标签之后，可用 {变量}；想让画面听你的，写这里',
-    descriptionHint: '给剧本助手和自然语言模型看的文字说明，不会进入 tag 提示词',
+    descriptionHint: '给自然语言模型看的文字说明，不会进入 tag 提示词',
     negativePrompt: '追加负向',
     groupCamera: '镜头、场景与标签',
     groupLayout: '画幅与版式',
@@ -206,7 +206,6 @@ const zh = {
     preview: '编译结果',
     references: '自动参考图',
     unresolved: '未定义的变量：{{names}}',
-    assistant: '剧本助手',
     selectPanel: '从左侧选一格开始编辑',
     shots: {
       unset: '不指定',
@@ -261,19 +260,6 @@ const zh = {
     recentTakes: '这一格最近的图',
     rendering: '出图中 {{count}}',
     noTakes: '还没有出过图',
-  },
-  assistant: {
-    heading: '剧本助手',
-    hint: '说出想怎么改，助手给出逐条修改建议；勾选要接受的条目后应用。锁定的格不会被改动。',
-    placeholder: '例如：把第 3 格改成雨夜，让周然在第 5 格先开口',
-    propose: '生成修改建议',
-    proposing: '思考中…',
-    noChanges: '助手认为不需要修改。',
-    applyN: '应用选中的 {{count}} 条',
-    applied: '已应用 {{count}} 条修改',
-    blocked: '不可应用：{{reason}}',
-    before: '修改前',
-    after: '修改后',
   },
   batch: {
     selected: '已选 {{count}} 格',
@@ -355,7 +341,7 @@ const zh = {
         items: {
           create: {
             q: '怎么开始？',
-            a: '新建作品 → 在设定集里加角色和地点 → 新建一话，写剧本或让助手生成。',
+            a: '新建作品 → 在设定集里加角色和地点 → 新建一话，写剧本或用文本模型生成。',
           },
           open: {
             q: '最近打开的话在哪？',
@@ -397,7 +383,7 @@ const zh = {
           },
           description: {
             q: '「描述」和提示词有什么区别？',
-            a: '描述只给剧本助手和自然语言模型看，不进入 tag 提示词。',
+            a: '描述只给自然语言模型看，不进入 tag 提示词。',
           },
           camera: {
             q: '景别 / 角度必须选吗？',
@@ -478,7 +464,7 @@ const zh = {
             q: '渲染档',
             a: '工作流 + 质量词 / 负面词 + 出图流程；每格也能单独指定渲染档。',
           },
-          llm: { q: '模型接口', a: '写剧本和剧本助手用的文本模型。' },
+          llm: { q: '模型接口', a: '生成剧本用的文本模型。' },
           themes: {
             q: '主题',
             a: '内置墨 / 纸 / 午夜 / 樱，可导入；左下角按钮在明暗之间快速切换。',
@@ -790,7 +776,7 @@ const zh = {
       feedHint: '留空使用 GitHub 发布；自建镜像时填写 mio-release.json 的地址',
     },
     llm: '文本模型',
-    llmHint: 'OpenAI 兼容接口；剧本生成和剧本助手都走这里。',
+    llmHint: 'OpenAI 兼容接口；生成剧本时使用。',
     baseUrl: '接口地址',
     apiKey: 'API Key',
     textModels: '文本模型（按顺序回退）',
@@ -1085,7 +1071,7 @@ const zh = {
       features: {
         script: {
           title: '专业分镜编辑',
-          body: '分镜工坊改用逐格编辑器：景别与机位、出场角色与部位细化、姿势 / 深度控制图、种子与 JSON Pointer 参数覆盖，以及剧本助手与批量导入。',
+          body: '分镜工坊改用逐格编辑器：景别与机位、出场角色与部位细化、姿势 / 深度控制图、种子与 JSON Pointer 参数覆盖，以及批量导入。',
         },
         layout: {
           title: '条漫排版与嵌字',

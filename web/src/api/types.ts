@@ -153,33 +153,6 @@ export interface PromptPreview {
   references: { slot: number; asset_id: string; role: string; owner: string; reason: string }[];
 }
 
-export type OpName =
-  | 'add_character'
-  | 'update_character'
-  | 'add_location'
-  | 'update_location'
-  | 'add_panel'
-  | 'update_panel'
-  | 'remove_panel'
-  | 'reorder';
-
-export interface DiffOp {
-  id: string;
-  op: OpName;
-  target: string | null;
-  summary: string;
-  changes?: Record<string, [unknown, unknown]>;
-  after?: Record<string, unknown>;
-  blocked: string | null;
-}
-
-export interface Proposal {
-  episode_id: string;
-  base_revision: number;
-  instruction: string;
-  ops: DiffOp[];
-}
-
 export interface TrashItem {
   kind: 'series' | 'episode';
   id: string;

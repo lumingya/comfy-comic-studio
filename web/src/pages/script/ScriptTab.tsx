@@ -17,7 +17,6 @@ import {
   Pencil,
   Play,
   Plus,
-  Sparkles,
   Trash2,
   Unlock,
   Upload,
@@ -45,7 +44,6 @@ import { ContextMenu, useContextMenu, type ContextGroup } from '../../components
 import { toast, toastError } from '../../components/toast';
 import { Empty, Modal, NumberInput, TextArea } from '../../components/ui';
 import { useEpisodeContext } from '../episode/EpisodePage';
-import { AssistantDialog } from './AssistantDialog';
 import { BatchEditDialog, type BatchBody } from './BatchEditDialog';
 import { PanelEditor } from './PanelEditor';
 import { PanelList } from './PanelList';
@@ -67,7 +65,6 @@ export default function ScriptTab() {
   const patchEpisode = usePatchEpisode(episode.id!);
   const candidates = useUI((s) => s.candidates);
   const studio = useStudio('script');
-  const [assistant, setAssistant] = useState(false);
   const [synopsis, setSynopsis] = useState<string | null>(null);
   const [batch, setBatch] = useState<string[] | null>(null);
   const [moveTarget, setMoveTarget] = useState<{ ids: string[]; to: number } | null>(null);
@@ -460,9 +457,6 @@ export default function ScriptTab() {
           <span className="small muted grow">{t('series.panels', { count: panels.length })}</span>
           {studio ? (
             <>
-              <button className="btn sm" onClick={() => setAssistant(true)}>
-                <Sparkles size={13} /> {t('script.assistant')}
-              </button>
               <button
                 className="btn icon sm"
                 title={t('batch.import')}
@@ -570,7 +564,6 @@ export default function ScriptTab() {
           </Empty>
         )}
       </section>
-      <AssistantDialog episodeId={episode.id!} open={assistant} onOpenChange={setAssistant} />
       {menu.state ? (
         <ContextMenu
           x={menu.state.x}
