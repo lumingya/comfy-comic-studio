@@ -101,7 +101,6 @@ const en: Widen<Dict> = {
   series: {
     bible: 'Bible',
     episodes: 'Episodes',
-    variants: 'Variants',
     newEpisode: 'New episode',
     generate: 'From one sentence',
     generateHint:
@@ -148,14 +147,6 @@ const en: Widen<Dict> = {
     variablesHint: 'Reference as {name} in prompts; panel values override work values.',
     deleted: 'Deleted “{{name}}”',
     emptyTitle: 'Characters, places and styles',
-  },
-  variants: {
-    heading: 'Batch variants (character matrix)',
-    hint: 'Render the same episode with different looks / styles / profiles to compare or publish versions.',
-    add: 'New variant',
-    style: 'Style',
-    profile: 'Render profile',
-    override: "Override {{name}}'s prompt tags",
   },
   episode: {
     prev: 'Previous episode',
@@ -494,7 +485,7 @@ const en: Widen<Dict> = {
           },
           export: {
             q: 'Export',
-            a: 'Slice by preset (Webtoon etc.); album and motion-comic exports are also here.',
+            a: 'Slice by preset (Webtoon etc.); album exports are also here.',
           },
         },
       },
@@ -552,7 +543,6 @@ const en: Widen<Dict> = {
     renderMissing: 'Fill missing ({{count}})',
     render: 'Render',
     candidates: 'Takes per panel',
-    baseVariant: 'Base',
     adopt: 'Adopt',
     reject: 'Reject',
     restore: 'Restore',
@@ -665,7 +655,6 @@ const en: Widen<Dict> = {
       pdf: 'PDF',
       html: 'Offline reader',
       album: 'Album',
-      motion: 'Motion comic',
     },
     formatHints: {
       slices: 'Cut to platform height, zipped',
@@ -673,31 +662,6 @@ const en: Widen<Dict> = {
       pdf: 'For print or sharing',
       html: 'Single file, opens offline',
       album: 'Single-file page styled by an album template',
-      motion: 'Offline player with camera moves and voice-over',
-    },
-    motion: {
-      aspect: { portrait: 'Portrait 9:16', landscape: 'Landscape 16:9' },
-      summary: '{{count}} shots · about {{duration}}',
-      voice: 'Voice-over (browser reads the lines)',
-      subtitles: 'Subtitles on by default',
-      hint: 'Adds a camera move to every panel and holds each one while its lines are read, exported as a single offline web page. The voice comes from the viewer’s browser, so it varies by system; voice and subtitles can be toggled while playing.',
-      preview: 'Preview',
-      panel: 'Panel',
-      move: 'Camera',
-      hold: 'Hold (s)',
-      lines: 'Lines',
-      noImage: 'No adopted image; skipped',
-      autoMove: 'Auto ({{move}})',
-      moves: {
-        still: 'Still',
-        push_in: 'Push in',
-        pull_out: 'Pull out',
-        pan_left: 'Pan left',
-        pan_right: 'Pan right',
-        pan_up: 'Tilt up',
-        pan_down: 'Tilt down',
-        shake: 'Shake',
-      },
     },
     album: {
       template: 'Album template',
@@ -1166,7 +1130,7 @@ const en: Widen<Dict> = {
       },
       studio: {
         title: 'Studio',
-        body: 'Adds shot & angle, part-level character tags, pose / depth control slots, bleed & gutters, JSON Pointer overrides and batch variants.',
+        body: 'Adds shot & angle, part-level character tags, pose / depth control slots, bleed & gutters and JSON Pointer overrides.',
       },
       switch: 'Studio mode (Advanced)',
       switchHint:
@@ -1186,17 +1150,9 @@ const en: Widen<Dict> = {
           title: 'Studio storyboard editor',
           body: 'The workshop edits frame by frame: shot & angle, cast and part-level tags, pose / depth control images, seed and JSON Pointer overrides, plus the script assistant and batch import.',
         },
-        variants: {
-          title: 'Batch variants',
-          body: 'Render the same storyboard with another cast; switch variants while picking, reading and exporting.',
-        },
         layout: {
           title: 'Strip layout & lettering',
           body: 'The reader gains the Layout canvas — bleed, gutters, speech bubbles and SFX; templates and exports use the lettered panels.',
-        },
-        motion: {
-          title: 'Motion comic export',
-          body: 'Export an offline motion-comic player with camera moves, captions and voice from the presentation drawer.',
         },
       },
       summaryOn: 'Studio mode is on: {{count}} of {{total}} Studio tools available.',
@@ -1321,7 +1277,7 @@ const en: Widen<Dict> = {
         read: 'Read the album',
         readd: 'Read it like a reader, from the first panel to the last.',
         export: 'Export & share',
-        exportd: 'Export long images, pages, albums and motion previews.',
+        exportd: 'Export long images, pages and albums.',
       },
       current: 'Storyboard',
       autosaved: 'Saved automatically',

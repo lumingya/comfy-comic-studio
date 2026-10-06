@@ -19,31 +19,28 @@ import { useRender } from '../../api/production';
 import { useTakeAction, type TakeAction } from '../../api/series';
 import type { Panel, Take } from '../../api/types';
 import { useSelection } from '../../app/selection';
-import { useStudio, useUI } from '../../app/ui-store';
+import { useUI } from '../../app/ui-store';
 import { ContextMenu, useContextMenu, type ContextGroup } from '../../components/ContextMenu';
 import { toast, toastError } from '../../components/toast';
-import { Empty, Modal, NumberInput, Progress, Select, Switch } from '../../components/ui';
+import { Empty, Modal, NumberInput, Progress, Switch } from '../../components/ui';
 import { useEpisodeContext } from '../episode/EpisodePage';
 import { PendingCard, TakeCard } from './TakeCard';
 
 export default function BoardTab() {
   const { t } = useTranslation();
-  const { episode, series } = useEpisodeContext();
+  const { episode } = useEpisodeContext();
   const ui = useUI();
-  const variantsOn = useStudio('variants');
   const render = useRender(episode.id);
   const action = useTakeAction(episode.id);
   const { byPanel } = useActiveRenders(episode.id);
   const [zoomId, setZoomId] = useState<string | null>(null);
 
-  const variants = series.variants ?? [];
-  // A variant picked earlier only applies while its selector is shown (as in the reader).
-  const variantId = variantsOn && variants.some((v) => v.id === ui.variantId) ? ui.variantId : null;
   const panels = useMemo(
     () => [...episode.panels].sort((a, b) => a.order - b.order),
     [episode.panels],
   );
-  const takes = episode.takes.filter((tk) => (tk.variant_id ?? null) === variantId);
+  // The board shows the base version; takes of other versions stay on the server untouched.
+  const takes = episode.takes.filter((tk) => !tk.variant_id);
   const takesOf = (p: Panel) =>
     takes
       .filter((tk) => tk.panel_id === p.id && (ui.showRejected || tk.status !== 'rejected'))
@@ -86,7 +83,7 @@ export default function BoardTab() {
   const queued = () => toast(t('board.queued'));
   const run = (panelIds: string[] | null) =>
     render.mutate(
-      { panel_ids: panelIds, candidates: ui.candidates, variant_ids: [variantId] },
+      { panel_ids: panelIds, candidates: ui.candidates, variant_ids: [null] },
       { onSuccess: queued, onError: toastError },
     );
   const act = (take: Take, a: TakeAction) =>
@@ -187,16 +184,6 @@ export default function BoardTab() {
   return (
     <div className="board">
       <div className="board-toolbar">
-        {variantsOn && variants.length ? (
-          <Select
-            value={variantId ?? ''}
-            onChange={(v) => ui.setVariant(v || null)}
-            options={[
-              { value: '', label: t('board.baseVariant') },
-              ...variants.map((v) => ({ value: v.id, label: v.name })),
-            ]}
-          />
-        ) : null}
         <label className="row small soft">
           {t('board.candidates')}
           <span style={{ width: 64 }}>
@@ -268,7 +255,7 @@ export default function BoardTab() {
         <div className="board-rows">
           {panels.map((p, i) => {
             const list = takesOf(p);
-            const pending = (byPanel[p.id] ?? []).filter((it) => it.variantId === variantId);
+            const pending = (byPanel[p.id] ?? []).filter((it) => !it.variantId);
             return (
               <section key={p.id} className="board-row">
                 <header className="board-row-head">

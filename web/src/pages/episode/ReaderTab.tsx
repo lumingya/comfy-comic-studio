@@ -3,7 +3,6 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assetUrl } from '../../api/client';
 import { stripUrl } from '../../api/production';
-import { useUI } from '../../app/ui-store';
 import { Empty } from '../../components/ui';
 import { pickAdopted } from '../canvas/adopted';
 import { useEpisodeContext } from './EpisodePage';
@@ -15,11 +14,10 @@ import { useEpisodeContext } from './EpisodePage';
 export default function ReaderTab() {
   const { t } = useTranslation();
   const { episode } = useEpisodeContext();
-  const variantId = useUI((s) => s.variantId);
   const [bust, setBust] = useState(0);
   const [failed, setFailed] = useState(false);
   const frame = useRef<HTMLDivElement>(null);
-  const images = pickAdopted(episode.takes, variantId);
+  const images = pickAdopted(episode.takes);
   const ordered = [...episode.panels].sort((a, b) => a.order - b.order).filter((p) => images[p.id]);
 
   if (!ordered.length) return <Empty>{t('canvas.noAdopted')}</Empty>;
@@ -41,7 +39,7 @@ export default function ReaderTab() {
       <div className="reader-page">
         {laidOut && !failed ? (
           <img
-            src={stripUrl(episode.id, `${episode.updated_at}-${bust}`, variantId)}
+            src={stripUrl(episode.id, `${episode.updated_at}-${bust}`)}
             alt={episode.title}
             onError={() => setFailed(true)}
           />

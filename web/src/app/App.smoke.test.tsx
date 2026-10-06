@@ -238,33 +238,6 @@ beforeEach(() => {
       pending: null,
     },
     'GET /api/album-templates': [],
-    'GET /api/episodes/ep_1/motion-plan': {
-      moves: [
-        'still',
-        'push_in',
-        'pull_out',
-        'pan_left',
-        'pan_right',
-        'pan_up',
-        'pan_down',
-        'shake',
-      ],
-      total_seconds: 5.2,
-      shots: [
-        {
-          panel_id: 'p0',
-          index: 0,
-          move: 'push_in',
-          auto_move: 'push_in',
-          move_overridden: false,
-          hold: 2.6,
-          auto_hold: 2.6,
-          lines: [{ text: '走吧', speaker: '林', kind: 'speech' }],
-          description: '便利店门口',
-          has_image: true,
-        },
-      ],
-    },
     'PATCH /api/episodes/ep_1/panels/p0': episode,
     'GET /api/extension-panels': [
       {
@@ -319,9 +292,10 @@ describe('every route mounts with API data', () => {
     expect((await screen.findAllByText('林夏')).length).toBeGreaterThan(0);
   });
 
-  it('series → variants', async () => {
-    mount('/series/ser_1/variants');
-    expect(await screen.findByDisplayValue('冬装')).toBeInTheDocument();
+  it('series tabs offer no batch variants', async () => {
+    mount('/series/ser_1/bible');
+    expect((await screen.findAllByText('林夏')).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('link', { name: /批量变体/ })).toBeNull();
   });
 
   it('episode → script with compiled prompt', async () => {
@@ -728,22 +702,12 @@ describe('every route mounts with API data', () => {
     expect(frame.getAttribute('src')).toContain('episode=ep_1');
   });
 
-  it('reader drawer → motion comic plan and override (Studio mode)', async () => {
+  it('reader drawer offers no motion comic or version switch (Studio mode)', async () => {
     useUI.setState({ studioMode: true });
     mount('/gallery/ser_1/export');
-    const motion = await screen.findByRole('button', { name: /设置镜头并导出/ });
-    await waitFor(() => expect(motion).toBeEnabled());
-    fireEvent.click(motion);
-    expect(
-      await screen.findByText('1 个镜头 · 约 5s', undefined, { timeout: 4000 }),
-    ).toBeInTheDocument();
-    expect(screen.getByText('便利店门口')).toBeInTheDocument();
-    fireEvent.change(screen.getByDisplayValue('自动（推近）'), { target: { value: 'shake' } });
-    await waitFor(() =>
-      expect(calls.some((c) => c.method === 'PATCH' && c.url.endsWith('/panels/p0'))).toBe(true),
-    );
-    const patch = calls.find((c) => c.method === 'PATCH')!;
-    expect(patch.body).toMatchObject({ changes: { motion: { move: 'shake', hold: null } } });
+    expect(await screen.findByText('本次展示与导出设置')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /设置镜头并导出/ })).toBeNull();
+    expect(screen.queryByLabelText('画面版本')).toBeNull();
   });
 
   it('trash', async () => {

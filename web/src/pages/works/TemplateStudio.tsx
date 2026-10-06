@@ -44,7 +44,6 @@ export function TemplateStudio(props: {
   initialId: string;
   preview: {
     episodeId: string | undefined;
-    variantId: string | null;
     lettered: boolean;
     captions: boolean;
   };
@@ -181,7 +180,6 @@ export function TemplateStudio(props: {
       ? {
           episode_ids: [props.preview.episodeId],
           template: tpl,
-          variant_id: props.preview.variantId,
           lettered: props.preview.lettered,
           show_captions: props.preview.captions,
           image_profile: 'preview',

@@ -16,7 +16,6 @@ import { useLayoutStrip, useSaveStrip } from '../../api/production';
 import type { LetteringLayer, Strip } from '../../api/types';
 import { shortcutBlocked } from '../../app/shortcuts';
 import { useUnsavedGuard } from '../../app/autosave';
-import { useUI } from '../../app/ui-store';
 import { toast, toastError } from '../../components/toast';
 import { Empty, Field, NumberInput, Select, TextInput } from '../../components/ui';
 import { useEpisodeContext } from '../episode/EpisodePage';
@@ -47,9 +46,9 @@ function newLayer(strip: Strip, kind: 'caption' | 'sfx'): LetteringLayer {
   };
 }
 
-function ReadabilityBadge(props: { episodeId: string; variantId: string | null; bust: string }) {
+function ReadabilityBadge(props: { episodeId: string; bust: string }) {
   const { t } = useTranslation();
-  const q = useStripReport(props.episodeId, props.variantId, props.bust);
+  const q = useStripReport(props.episodeId, props.bust);
   const r = q.data;
   if (!r) return null;
   if (r.readable)
@@ -81,7 +80,6 @@ function ReadabilityBadge(props: { episodeId: string; variantId: string | null; 
 export default function CanvasTab() {
   const { t } = useTranslation();
   const { episode, series } = useEpisodeContext();
-  const variantId = useUI((s) => s.variantId);
   const layout = useLayoutStrip(episode.id);
   const save = useSaveStrip(episode.id);
   const [strip, setStrip] = useState<Strip>(episode.strip);
@@ -123,7 +121,7 @@ export default function CanvasTab() {
     () => [...episode.panels].sort((a, b) => a.order - b.order),
     [episode.panels],
   );
-  const images = useMemo(() => pickAdopted(episode.takes, variantId), [episode.takes, variantId]);
+  const images = useMemo(() => pickAdopted(episode.takes), [episode.takes]);
   const change = (next: Strip) => {
     stripRef.current = next;
     setStrip(next);
@@ -145,7 +143,7 @@ export default function CanvasTab() {
   const autoLayout = (relayout: boolean) => {
     if (dirtyRef.current || save.isPending || layout.isPending) return;
     layout.mutate(
-      { relayout_lettering: relayout, variant_id: variantId },
+      { relayout_lettering: relayout },
       { onSuccess: () => toast(t('canvas.laidOut')), onError: toastError },
     );
   };
@@ -206,11 +204,7 @@ export default function CanvasTab() {
         </button>
         <span className="grow" />
         {!dirty ? (
-          <ReadabilityBadge
-            episodeId={episode.id}
-            variantId={variantId}
-            bust={String(episode.revision)}
-          />
+          <ReadabilityBadge episodeId={episode.id} bust={String(episode.revision)} />
         ) : null}
         <button
           className="btn ghost icon"

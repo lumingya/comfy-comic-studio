@@ -353,20 +353,15 @@ export function useTakeAction(episodeId: string) {
   );
 }
 
-export function usePrompt(
-  episodeId: string,
-  panelId: string | undefined,
-  variantId?: string | null,
-) {
+export function usePrompt(episodeId: string, panelId: string | undefined) {
   return useQuery({
-    queryKey: keys.prompt(episodeId, panelId ?? '', variantId),
+    queryKey: keys.prompt(episodeId, panelId ?? ''),
     enabled: !!panelId,
     queryFn: async () =>
       data(
         await api.GET('/api/episodes/{episode_id}/panels/{panel_id}/prompt', {
           params: {
             path: { episode_id: episodeId, panel_id: panelId! },
-            query: { variant_id: variantId ?? undefined },
           },
         }),
       ) as unknown as PromptPreview,

@@ -69,15 +69,12 @@ function RowSwitch(props: {
 
 const ICONS: Record<StudioFeature, IconName> = {
   script: 'story',
-  variants: 'copy',
   layout: 'grid',
-  motion: 'play',
 };
 
 /**
  * 功能开关 (legacy optionalModulesHTML): the creation mode as two quick choices, then one switch
- * per professional tool — the script inspector, batch variants, strip layout and
- * motion comics can each be kept or hidden.  Everything is saved in this browser and can be
+ * per professional tool — the script inspector and strip layout can each be kept or hidden.  Everything is saved in this browser and can be
  * flipped at any time without losing what was already set.
  */
 export function StudioSection() {

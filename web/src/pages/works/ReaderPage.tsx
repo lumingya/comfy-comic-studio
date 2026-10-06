@@ -13,7 +13,6 @@ import { ownCancel } from '../../components/topLayer';
 import { useStudio, useUI } from '../../app/ui-store';
 import { pickAdopted } from '../canvas/adopted';
 import type { EpisodeContext } from '../episode/EpisodePage';
-import { MotionExport } from '../episode/MotionExport';
 import { PresentationDrawer, SlicePreview, TemplatePreview, useExportDraft } from './presentation';
 import { templateRank } from './templateFile';
 import {
@@ -49,10 +48,8 @@ export default function ReaderPage() {
   const { seriesId } = useParams();
   const { pathname } = useLocation();
   const [params, setParams] = useSearchParams();
-  // 功能开关: 条漫排版与嵌字, 批量变体 and 动态漫 are separate professional tools.
+  // 功能开关: 条漫排版与嵌字 is a separate professional tool.
   const layoutOn = useStudio('layout');
-  const variantsOn = useStudio('variants');
-  const motionOn = useStudio('motion');
   const ref = useRef<HTMLDialogElement>(null);
   // The reading stage is remounted whenever the drawer swaps what the stage shows, so it is tracked
   // as state: measuring and scroll tracking re-attach to the new element.
@@ -77,9 +74,6 @@ export default function ReaderPage() {
   const [draft, setDraft] = useExportDraft();
   const captions = draft.captions;
   const [platformOpen, setPlatformOpen] = useState(false);
-  const [motionOpen, setMotionOpen] = useState(false);
-  const variantId = useUI((s) => s.variantId);
-  const setVariant = useUI((s) => s.setVariant);
   const [page, setPage] = useState(0);
   const [info, setInfo] = useState(false);
   const [fullscreen, setFullscreen] = useState(() => !!document.fullscreenElement);
@@ -168,7 +162,7 @@ export default function ReaderPage() {
   const pages = useMemo(() => {
     const ep = episode.data;
     if (!ep) return [];
-    const images = pickAdopted(ep.takes, null);
+    const images = pickAdopted(ep.takes);
     return [...ep.panels]
       .sort((a, b) => a.order - b.order)
       .filter((p) => images[p.id!])
@@ -362,13 +356,10 @@ export default function ReaderPage() {
       : BUILTIN.map((b) => ({ id: b.id, title: t(`reader.look.${b.look}`), description: '' }))
   ).sort((a, b) => templateRank(a.id) - templateRank(b.id));
   const lookTitle = list.find((x) => x.id === look)?.title ?? t('reader.look.fit');
-  const variants = series.data?.variants ?? [];
-  const activeVariant = variantsOn && variants.some((v) => v.id === variantId) ? variantId : null;
-  // What the stage shows while the drawer is open: the template, the platform cuts or motion setup.
-  const drawerStage =
-    panel !== 'export' ? '' : motionOpen && motionOn ? 'motion' : platformOpen ? 'platform' : '';
-  // Reading mode, paging and the filmstrip drive the native stage only; templates, platform cuts,
-  // motion and layout render elsewhere, where those controls would silently do nothing.
+  // What the stage shows while the drawer is open: the template or the platform cuts.
+  const drawerStage = panel === 'export' && platformOpen ? 'platform' : '';
+  // Reading mode, paging and the filmstrip drive the native stage only; templates, platform cuts
+  // and layout render elsewhere, where those controls would silently do nothing.
   const nativeStage = native && !drawerStage && panel !== 'layout';
   const templateStage = !native && !drawerStage && panel !== 'layout';
   const context =
@@ -481,27 +472,13 @@ export default function ReaderPage() {
           <div className="room-canvas room-layout workspace-body">
             <Outlet key={context.episode.id} context={context} />
           </div>
-        ) : drawerStage === 'motion' && episode.data ? (
-          <div className="room-canvas room-layout workspace-body">
-            <MotionExport
-              episode={episode.data}
-              variantId={activeVariant}
-              fallbackName={series.data?.title ?? 'motion'}
-            />
-          </div>
         ) : drawerStage === 'platform' && epId ? (
-          <SlicePreview
-            episodeId={epId}
-            variantId={activeVariant}
-            preset={draft.preset}
-            revision={episode.data?.revision}
-          />
+          <SlicePreview episodeId={epId} preset={draft.preset} revision={episode.data?.revision} />
         ) : !native && epId ? (
           <div className="room-canvas" id="reader-canvas">
             <TemplatePreview
               episodeId={epId}
               templateId={look}
-              variantId={activeVariant}
               lettered={layoutOn}
               draft={draft}
               revision={episode.data?.revision}
@@ -706,15 +683,8 @@ export default function ReaderPage() {
         episodeId={epId}
         title={series.data?.title ?? ''}
         lettered={layoutOn}
-        variants={variants}
-        variantId={activeVariant}
-        onVariant={setVariant}
         platformOpen={platformOpen}
         onPlatform={setPlatformOpen}
-        variantsOn={variantsOn}
-        motionOn={motionOn}
-        motionOpen={motionOpen}
-        onMotion={setMotionOpen}
       />
     </dialog>
   );

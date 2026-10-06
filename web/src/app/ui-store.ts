@@ -12,9 +12,6 @@ interface UIState {
   /** Last explicit theme id per mode, for the quick toggle (see theme.toggled). */
   recentThemes: Partial<Record<'dark' | 'light', string>>;
   setTheme: (theme: ThemeChoice, mode?: 'dark' | 'light') => void;
-  /** Board: which variant is being viewed (null = base). */
-  variantId: string | null;
-  setVariant: (id: string | null) => void;
   showRejected: boolean;
   setShowRejected: (v: boolean) => void;
   candidates: number;
@@ -84,7 +81,7 @@ export const SHELF_SORTS = ['manual', 'createdAt', 'updatedAt', 'totalSteps'] as
 export type ShelfSort = (typeof SHELF_SORTS)[number];
 
 /** The professional tools Studio mode adds, each with its own switch in 设置 → 功能开关. */
-export const STUDIO_FEATURES = ['script', 'variants', 'layout', 'motion'] as const;
+export const STUDIO_FEATURES = ['script', 'layout'] as const;
 export type StudioFeature = (typeof STUDIO_FEATURES)[number];
 
 export const useUI = create<UIState>()(
@@ -98,8 +95,6 @@ export const useUI = create<UIState>()(
           recentThemes:
             mode && theme !== SYSTEM ? { ...s.recentThemes, [mode]: theme } : s.recentThemes,
         })),
-      variantId: null,
-      setVariant: (variantId) => set({ variantId }),
       showRejected: false,
       setShowRejected: (showRejected) => set({ showRejected }),
       candidates: 2,

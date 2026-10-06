@@ -16,21 +16,17 @@ const take = (id: string, extra: Partial<Take>): Take =>
 
 describe('pickAdopted', () => {
   it('uses the first adopted take per panel, like the server', () => {
-    const picked = pickAdopted(
-      [
-        take('a', { status: 'rejected' }),
-        take('b', {}),
-        take('c', {}),
-        take('d', { panel_id: 'p2', status: 'candidate' }),
-      ],
-      null,
-    );
+    const picked = pickAdopted([
+      take('a', { status: 'rejected' }),
+      take('b', {}),
+      take('c', {}),
+      take('d', { panel_id: 'p2', status: 'candidate' }),
+    ]);
     expect(picked).toEqual({ p1: 'asset_b' });
   });
 
-  it('only considers the requested variant', () => {
-    const takes = [take('a', {}), take('v', { variant_id: 'var_1' })];
-    expect(pickAdopted(takes, 'var_1')).toEqual({ p1: 'asset_v' });
-    expect(pickAdopted(takes, null)).toEqual({ p1: 'asset_a' });
+  it('ignores takes of other versions', () => {
+    const takes = [take('v', { variant_id: 'var_1' }), take('a', {})];
+    expect(pickAdopted(takes)).toEqual({ p1: 'asset_a' });
   });
 });

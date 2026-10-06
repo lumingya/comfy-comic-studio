@@ -21,7 +21,6 @@ const Engine = lazy(() => import('../pages/engine/EnginePage'));
 const SeriesPage = lazy(() => import('../pages/series/SeriesPage'));
 const EpisodesTab = lazy(() => import('../pages/series/EpisodesTab'));
 const BibleTab = lazy(() => import('../pages/bible/BibleTab'));
-const VariantsTab = lazy(() => import('../pages/series/VariantsTab'));
 const EpisodeRedirect = lazy(() => import('../pages/episode/EpisodePage'));
 const ScriptTab = lazy(() => import('../pages/script/ScriptTab'));
 const BoardTab = lazy(() => import('../pages/board/BoardTab'));
@@ -70,7 +69,6 @@ export const routes = [
           { index: true, element: <Navigate to="episodes" replace /> },
           { path: 'episodes', element: s(<EpisodesTab />) },
           { path: 'bible', element: s(<BibleTab />) },
-          { path: 'variants', element: s(<VariantsTab />) },
         ],
       },
       {

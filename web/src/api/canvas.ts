@@ -20,13 +20,13 @@ export function useSfxPresets() {
   });
 }
 
-export function useStripReport(episodeId: string, variantId: string | null, bust: string) {
+export function useStripReport(episodeId: string, bust: string) {
   return useQuery({
-    queryKey: [...keys.stripReport(episodeId), variantId, bust],
+    queryKey: [...keys.stripReport(episodeId), bust],
     queryFn: async () =>
       data(
         await api.GET('/api/episodes/{episode_id}/strip/report', {
-          params: { ...ep(episodeId), query: { variant_id: variantId } },
+          params: ep(episodeId),
         }),
       ) as unknown as StripReport,
   });

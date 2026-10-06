@@ -14,7 +14,7 @@ import { toast, toastError } from '../../components/toast';
 /*
  * The legacy presentation drawer (ui-presentation.js + ui-export.js), in its order:
  *   templates → 本次展示与导出设置 (incl. 图片处理) → ZIP / PDF / 导出完整 HTML.
- * Everything that does NOT use a presentation template (platform slices, long image, motion comic)
+ * Everything that does NOT use a presentation template (platform slices, long image)
  * lives in its own collapsed group below, never side by side with the template exports.
  */
 
@@ -86,13 +86,12 @@ function useDebounced<T>(value: T, ms = 350): T {
 
 /** Body shared by the preview and the real HTML export. */
 function albumBody(
-  p: { episodeId: string; templateId: string; variantId: string | null; lettered: boolean },
+  p: { episodeId: string; templateId: string; lettered: boolean },
   d: ExportDraft,
 ) {
   return {
     episode_ids: [p.episodeId],
     template_id: p.templateId,
-    variant_id: p.variantId,
     lettered: p.lettered,
     show_captions: d.captions,
     show_prompts: d.prompts,
@@ -115,7 +114,6 @@ const previewSpots = new Map<string, { y: number; spread: number }>();
 export function TemplatePreview(props: {
   episodeId: string;
   templateId: string;
-  variantId: string | null;
   lettered: boolean;
   draft: ExportDraft;
   revision?: number;
@@ -124,7 +122,7 @@ export function TemplatePreview(props: {
 }) {
   const { t } = useTranslation();
   const frame = useRef<HTMLIFrameElement>(null);
-  const spot = `${props.episodeId}|${props.templateId}|${props.variantId ?? ''}`;
+  const spot = `${props.episodeId}|${props.templateId}`;
   const request = useDebounced(
     {
       body: { ...albumBody(props, props.draft), image_profile: 'preview', max_width: 1400 },
@@ -207,29 +205,27 @@ const SCALE = 0.55;
 /** Where the platform preset cuts the strip: every slice as its own sheet, to scale. */
 export function SlicePreview(props: {
   episodeId: string;
-  variantId: string | null;
   preset: string;
   /** The episode revision: new images re-plan the cuts and reload the strip. */
   revision?: number;
 }) {
   const { t } = useTranslation();
   const presets = useExportPresets();
-  const v = props.variantId ? `&variant_id=${encodeURIComponent(props.variantId)}` : '';
   const plan = useQuery({
-    queryKey: ['slice-plan', props.episodeId, props.preset, props.variantId, props.revision ?? 0],
+    queryKey: ['slice-plan', props.episodeId, props.preset, props.revision ?? 0],
     retry: false,
     placeholderData: (previous) => previous,
     queryFn: async () =>
       (
         await raw(
-          `/api/episodes/${props.episodeId}/slices?preset=${encodeURIComponent(props.preset)}${v}`,
+          `/api/episodes/${props.episodeId}/slices?preset=${encodeURIComponent(props.preset)}`,
         )
       ).json() as Promise<SlicePlan>,
   });
   const p = plan.data;
   const label = presets.data?.find((x) => x.id === props.preset)?.label ?? props.preset;
   const src = p
-    ? `/api/episodes/${props.episodeId}/strip.png?width=${p.width}${v}&rev=${props.revision ?? 0}`
+    ? `/api/episodes/${props.episodeId}/strip.png?width=${p.width}&rev=${props.revision ?? 0}`
     : '';
   let top = 0;
   return (
@@ -349,16 +345,8 @@ export function PresentationDrawer(props: {
   episodeId: string | undefined;
   title: string;
   lettered: boolean;
-  variants: { id: string; name: string }[];
-  variantId: string | null;
-  onVariant: (id: string | null) => void;
   platformOpen: boolean;
   onPlatform: (open: boolean) => void;
-  /** 功能开关 → 批量变体 / 动态漫. */
-  variantsOn: boolean;
-  motionOn: boolean;
-  motionOpen: boolean;
-  onMotion: (open: boolean) => void;
 }) {
   const { t } = useTranslation();
   const { draft: d, onDraft } = props;
@@ -416,7 +404,6 @@ export function PresentationDrawer(props: {
             {
               episodeId: ep,
               templateId: props.look,
-              variantId: props.variantId,
               lettered: props.lettered,
             },
             d,
@@ -434,7 +421,6 @@ export function PresentationDrawer(props: {
         {
           episode_ids: [ep],
           format,
-          variant_id: props.variantId,
           lettered: props.lettered,
           show_captions: d.captions,
           title: props.title,
@@ -447,7 +433,6 @@ export function PresentationDrawer(props: {
     const q = new URLSearchParams({ fmt, preset: d.preset });
     const quality = QUALITIES[d.quality];
     if (fmt === 'slices' || quality) q.set('quality', String(quality));
-    if (props.variantId) q.set('variant_id', props.variantId);
     return run(fmt, () => download(`/api/episodes/${ep}/export?${q}`, name));
   };
   const importFile = async (f: File) => {
@@ -517,7 +502,6 @@ export function PresentationDrawer(props: {
               onClick={() => {
                 props.onLook(x.id);
                 props.onPlatform(false);
-                props.onMotion(false);
               }}
             >
               <span
@@ -575,14 +559,12 @@ export function PresentationDrawer(props: {
           initialId={props.infos.some((x) => x.id === props.look) ? props.look : props.infos[0].id}
           preview={{
             episodeId: props.episodeId,
-            variantId: props.variantId,
             lettered: props.lettered,
             captions: d.captions,
           }}
           onSaved={(id) => {
             props.onLook(id);
             props.onPlatform(false);
-            props.onMotion(false);
           }}
           onClose={() => setStudioOpen(false)}
         />
@@ -658,25 +640,6 @@ export function PresentationDrawer(props: {
             </div>
           </>
         )}
-        {props.variantsOn && props.variants.length ? (
-          <div className="field">
-            <label className="label" htmlFor="export-variant">
-              {t('reader.variant')}
-            </label>
-            <select
-              id="export-variant"
-              value={props.variantId ?? ''}
-              onChange={(e) => props.onVariant(e.target.value || null)}
-            >
-              <option value="">{t('reader.baseVariant')}</option>
-              {props.variants.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : null}
         <label>
           <input
             id="export-captions"
@@ -821,22 +784,6 @@ export function PresentationDrawer(props: {
           </button>
         </div>
       </details>
-      {props.motionOn ? (
-        <details className="quiet-advanced presentation-motion">
-          <summary>{t('reader.motion.title')}</summary>
-          <p className="help">{t('reader.motion.hint')}</p>
-          <button
-            type="button"
-            className="btn small"
-            disabled={!props.episodeId}
-            aria-pressed={props.motionOpen}
-            onClick={() => props.onMotion(!props.motionOpen)}
-          >
-            <Icon name="play" sm />
-            {props.motionOpen ? t('reader.motion.close') : t('reader.motion.open')}
-          </button>
-        </details>
-      ) : null}
     </aside>
   );
 }

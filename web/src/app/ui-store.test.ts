@@ -10,20 +10,20 @@ describe('功能开关', () => {
   it('shows a Studio tool only while Studio mode is on and the tool is not switched off', () => {
     const tool = renderHook(() => ({
       mode: useStudio(),
-      variants: useStudio('variants'),
+      layout: useStudio('layout'),
       script: useStudio('script'),
     }));
-    expect(tool.result.current).toEqual({ mode: false, variants: false, script: false });
+    expect(tool.result.current).toEqual({ mode: false, layout: false, script: false });
     act(() => useUI.getState().setStudioMode(true));
-    expect(tool.result.current).toEqual({ mode: true, variants: true, script: true });
-    act(() => useUI.getState().setStudioFeature('variants', false));
-    expect(tool.result.current).toEqual({ mode: true, variants: false, script: true });
+    expect(tool.result.current).toEqual({ mode: true, layout: true, script: true });
+    act(() => useUI.getState().setStudioFeature('layout', false));
+    expect(tool.result.current).toEqual({ mode: true, layout: false, script: true });
     // Leaving Studio mode keeps the per-tool choice for next time.
     act(() => useUI.getState().setStudioMode(false));
-    expect(tool.result.current.variants).toBe(false);
+    expect(tool.result.current.layout).toBe(false);
     act(() => useUI.getState().setStudioMode(true));
-    expect(useUI.getState().studioOff).toEqual(['variants']);
-    act(() => useUI.getState().setStudioFeature('variants', true));
-    expect(tool.result.current.variants).toBe(true);
+    expect(useUI.getState().studioOff).toEqual(['layout']);
+    act(() => useUI.getState().setStudioFeature('layout', true));
+    expect(tool.result.current.layout).toBe(true);
   });
 });

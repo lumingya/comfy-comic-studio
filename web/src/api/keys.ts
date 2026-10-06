@@ -5,8 +5,7 @@ export const keys = {
   episodes: (seriesId: string, offset = 0) => ['episodes', seriesId, offset] as const,
   episodesOf: (seriesId: string) => ['episodes', seriesId] as const,
   episode: (id: string) => ['episode', id] as const,
-  prompt: (episodeId: string, panelId: string, variant?: string | null) =>
-    ['prompt', episodeId, panelId, variant ?? null] as const,
+  prompt: (episodeId: string, panelId: string) => ['prompt', episodeId, panelId] as const,
   jobs: (owner?: string) => ['jobs', owner ?? null] as const,
   job: (id: string) => ['job', id] as const,
   /** 装配队列 (card order, sequential lane, default concurrency). */

@@ -1,4 +1,4 @@
-import { BookText, ChevronRight, Layers, ListOrdered } from 'lucide-react';
+import { BookText, ChevronRight, ListOrdered } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet, useLocation, useOutletContext, useParams } from 'react-router-dom';
 import { usePatchSeries, useSeries } from '../../api/series';
@@ -20,8 +20,7 @@ export default function SeriesPage() {
   const query = useSeries(seriesId);
   const patch = usePatchSeries(seriesId ?? '');
   const section = useLocation().pathname.split('/').pop();
-  const sectionTitle =
-    section === 'bible' || section === 'variants' ? t(`series.${section}`) : t('series.episodes');
+  const sectionTitle = section === 'bible' ? t('series.bible') : t('series.episodes');
   usePageTitle(query.data?.title, sectionTitle);
 
   if (query.isLoading)
@@ -76,9 +75,6 @@ export default function SeriesPage() {
         </NavLink>
         <NavLink to="bible" className={tab}>
           <BookText size={14} /> {t('series.bible')}
-        </NavLink>
-        <NavLink to="variants" className={tab}>
-          <Layers size={14} /> {t('series.variants')}
         </NavLink>
       </nav>
       <Outlet key={series.id} context={{ series }} />

@@ -1074,8 +1074,6 @@ export const readerZh = {
   themeReset: '恢复模板默认',
   border: '分镜框线 / px',
   signature: '创作者签名',
-  variant: '画面版本',
-  baseVariant: '基础版本',
   customize: '自定义',
   customizeHint: '在模板工作室里修改外观、信息与 HTML / CSS 源码',
   studio: {
@@ -1205,12 +1203,6 @@ export const readerZh = {
     sliceN: '第 {{n}} 张 · {{height}} px',
     loading: '正在计算切片…',
   },
-  motion: {
-    title: '动态漫画',
-    hint: '镜头运动 + 配音的离线播放器（专业模式）。设置在左侧展开。',
-    open: '设置镜头并导出',
-    close: '返回预览',
-  },
 };
 
 export const readerEn: Widen<typeof readerZh> = {
@@ -1267,8 +1259,6 @@ export const readerEn: Widen<typeof readerZh> = {
   themeReset: 'Template default',
   border: 'Panel border / px',
   signature: 'Creator signature',
-  variant: 'Picture version',
-  baseVariant: 'Base version',
   customize: 'Customize',
   customizeHint: 'Change the look, information and HTML / CSS source in the template studio',
   studio: {
@@ -1402,11 +1392,5 @@ export const readerEn: Widen<typeof readerZh> = {
     previewInfo: '{{preset}} · {{width}} px · {{count}} slices',
     sliceN: 'Slice {{n}} · {{height}} px',
     loading: 'Working out the slices…',
-  },
-  motion: {
-    title: 'Motion comic',
-    hint: 'Camera moves plus voice in an offline player (Studio mode). Settings open on the stage.',
-    open: 'Set up shots and export',
-    close: 'Back to preview',
   },
 };
