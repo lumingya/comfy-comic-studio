@@ -80,16 +80,11 @@ const en: Widen<Dict> = {
     titlePlaceholder: 'Title, e.g. “Night Shift Konbini”',
     subtitle: 'Subtitle',
     importBundle: 'Import album',
-    importLegacy: 'Import legacy data',
-    legacyHint:
-      'Reads albums (with their images), storyboards, character presets and workflows from the old data/ folder. Safe to repeat.',
-    legacyFound:
-      'Found {{albums}} albums, {{storyboards}} storyboards, {{presets}} presets, {{workflows}} workflows',
     imported: 'Imported {{count}} works',
     episodes: '{{count}} episodes',
     characters: '{{count}} characters',
     exportBundle: 'Export .mio.zip',
-    empty: 'No works yet. Create one, or import a .mio.zip / legacy data.',
+    empty: 'No works yet. Create one, or import a .mio.zip bundle.',
     emptyTitle: 'Start your first work',
     subtitlePlaceholder: 'Add a subtitle',
     search: 'Find an album...',
@@ -1316,8 +1311,7 @@ const en: Widen<Dict> = {
       storageBody:
         'Works, storyboards and images live in the local data folder and are never uploaded.',
       dataTitle: 'Import & backup',
-      dataBody: 'Import albums, characters and storyboards from legacy Mio, or a .mio.zip bundle.',
-      legacyImport: 'Import legacy data',
+      dataBody: 'Import a .mio.zip bundle, or restore deleted works from the trash.',
       bundleImport: 'Import .mio.zip',
       trashTitle: 'Trash',
     },

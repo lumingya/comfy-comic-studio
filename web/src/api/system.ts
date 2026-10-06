@@ -319,24 +319,3 @@ export function useImportBundle() {
     onSuccess: refresh,
   });
 }
-
-export function useLegacyScan(enabled: boolean) {
-  return useQuery({
-    queryKey: ['legacy-scan'],
-    enabled,
-    retry: false,
-    queryFn: async () =>
-      data(await api.GET('/api/legacy/scan')) as unknown as Record<string, number>,
-  });
-}
-
-export function useLegacyImport() {
-  const refresh = useInvalidateAll();
-  return useMutation({
-    mutationFn: async (overwrite: boolean) =>
-      data(
-        await api.POST('/api/legacy/import', { body: { overwrite, root: null } }),
-      ) as unknown as Record<string, string[]>,
-    onSuccess: refresh,
-  });
-}

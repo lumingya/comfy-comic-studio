@@ -93,7 +93,7 @@ export const configZh = {
     sources: {
       builtin: '内置',
       import: '导入',
-      legacy: '旧版导入',
+      legacy: '自动导入',
     },
     mapping: '常用参数映射',
     mappingHint:
@@ -332,7 +332,7 @@ export const configEn = {
     sources: {
       builtin: 'Built-in',
       import: 'Imported',
-      legacy: 'Legacy import',
+      legacy: 'Auto-imported',
     },
     mapping: 'Common parameter mappings',
     mappingHint:

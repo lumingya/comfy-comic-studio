@@ -9,7 +9,6 @@ import { manualHref, useQuickStart } from '../../components/HelpDrawer';
 import { ConfigurationGuard } from './ConfigurationParts';
 import { FilePick } from '../../components/ui';
 import { TrashSection } from '../trash/TrashPage';
-import { LegacyImportDialog } from '../works/LegacyImportDialog';
 import { AccessSection } from './AccessSection';
 import { ExtensionsSection } from './ExtensionsSection';
 import { AppearanceSection } from './AppearanceSection';
@@ -141,17 +140,12 @@ function DataSection() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const importBundle = useImportBundle();
-  const [legacy, setLegacy] = useState(false);
   return (
     <>
       <section className="settings-section">
         <h2>{t('legacy.settings.dataTitle')}</h2>
         <p>{t('legacy.settings.dataBody')}</p>
         <div className="row">
-          <button className="btn" onClick={() => setLegacy(true)}>
-            <Icon name="download" />
-            {t('legacy.settings.legacyImport')}
-          </button>
           <FilePick
             accept=".zip"
             disabled={importBundle.isPending}
@@ -174,7 +168,6 @@ function DataSection() {
         <h2>{t('legacy.settings.trashTitle')}</h2>
         <TrashSection />
       </section>
-      <LegacyImportDialog open={legacy} onOpenChange={setLegacy} />
     </>
   );
 }

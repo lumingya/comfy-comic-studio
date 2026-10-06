@@ -669,6 +669,12 @@ describe('every route mounts with API data', () => {
     expect(call.body).toMatchObject({ panel_ids: ['p0'], candidates: 4 });
   });
 
+  it('settings → data offers the .mio.zip import, no legacy import', async () => {
+    mount('/settings?tab=data');
+    expect(await screen.findByText('导入 .mio.zip')).toBeInTheDocument();
+    expect(screen.queryByText('导入旧版数据')).toBeNull();
+  });
+
   it('settings have no mode or feature switches', async () => {
     mount('/settings?tab=themes');
     expect((await screen.findAllByText('跟随系统')).length).toBeGreaterThan(0);
