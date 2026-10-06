@@ -26,7 +26,7 @@ export const configZh = {
     profilesHelp:
       '生成任务使用的是出图配置，不是当前正在编辑的渠道或工作流。已有装配画册不会跟着模板自动改变。',
     textHelp:
-      '这里配置写剧本使用的文本模型；机器人访问 Mio 的 API 令牌仍在「设置 → API 与 Webhook」。',
+      '写剧本用的文本模型在「设置 → 模型与连接」中配置，机器人访问 Mio 的 API 令牌也在那里。',
   },
   cloud: {
     title: '云端出图渠道',
@@ -245,7 +245,7 @@ export const configEn = {
     profilesHelp:
       'Generation uses the selected render profile, not whichever channel or workflow you are editing. Assembled albums keep their template snapshot.',
     textHelp:
-      'Configure the text models used for story writing here. Tokens for bots calling Mio remain in Settings → API & Webhook.',
+      'Text models for story writing are set in Settings → Models & connections, together with API tokens for bots calling Mio.',
   },
   cloud: {
     title: 'Cloud image channels',

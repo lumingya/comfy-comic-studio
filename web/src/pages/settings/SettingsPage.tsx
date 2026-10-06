@@ -5,7 +5,6 @@ import { useImportBundle, usePatchSettings, useSettings } from '../../api/system
 import { Icon, type IconName } from '../../app/icons';
 import { usePageTitle } from '../../app/title';
 import { toast, toastError } from '../../components/toast';
-import { manualHref, useQuickStart } from '../../components/HelpDrawer';
 import { ConfigurationGuard } from './ConfigurationParts';
 import { FilePick } from '../../components/ui';
 import { TrashSection } from '../trash/TrashPage';
@@ -135,7 +134,7 @@ function WorkspaceSection() {
   );
 }
 
-/** 数据与备份: legacy import, .mio.zip bundles and the trash. */
+/** 数据与备份: .mio.zip bundles and the trash. */
 function DataSection() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -172,101 +171,68 @@ function DataSection() {
   );
 }
 
-/** 工具与资源 (legacy renderResourceHub): the tutorials and the less-used tools. */
-function ResourcesSection() {
-  const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const openQuick = useQuickStart((s) => s.set);
-  const en = i18n.language === 'en';
-  const items: { icon: IconName; title: string; text: string; run: () => void }[] = [
-    {
-      icon: 'help',
-      title: t('guide.quickstart'),
-      text: t('guide.res.quickstart'),
-      run: () => openQuick(true),
-    },
-    {
-      icon: 'book',
-      title: t('guide.res.handbook'),
-      text: t('guide.res.handbookBody'),
-      run: () => window.open(manualHref('', en), '_blank', 'noopener'),
-    },
-    {
-      icon: 'list',
-      title: t('guide.res.jobs'),
-      text: t('guide.res.jobsBody'),
-      run: () => navigate('/jobs'),
-    },
-    {
-      icon: 'disk',
-      title: t('guide.res.backup'),
-      text: t('guide.res.backupBody'),
-      run: () => navigate('/settings?tab=data'),
-    },
-    {
-      icon: 'terminal',
-      title: t('guide.res.api'),
-      text: t('guide.res.apiBody'),
-      run: () => window.open('/docs', '_blank', 'noopener'),
-    },
-  ];
+/** 外观与阅读: interface and reading preferences, then the theme gallery. */
+function AppearanceAndThemes() {
+  const { t } = useTranslation();
   return (
-    <section className="settings-section">
-      <h2>{t('legacy.settings.tabs.resources')}</h2>
-      <p>{t('guide.res.lede')}</p>
-      <div className="resources-list">
-        {items.map((item) => (
-          <button key={item.title} type="button" className="resource-link" onClick={item.run}>
-            <Icon name={item.icon} />
-            <span className="grow">
-              <strong>{item.title}</strong>
-              <small>{item.text}</small>
-            </span>
-            <Icon name="arrow" sm />
-          </button>
-        ))}
-      </div>
-    </section>
+    <>
+      <AppearanceSection />
+      <section className="settings-section">
+        <h2>{t('legacy.settings.themesTitle')}</h2>
+        <ThemesSection />
+      </section>
+    </>
+  );
+}
+
+/** 模型与连接: the text model API, then API tokens and webhooks for bots and scripts. */
+function ModelsAndConnections() {
+  const { t } = useTranslation();
+  return (
+    <>
+      <GeneralSection />
+      <section className="settings-section">
+        <h2>{t('legacy.settings.accessTitle')}</h2>
+        <AccessSection />
+      </section>
+    </>
   );
 }
 
 const GROUPS = [
-  { id: 'common', tabs: ['workspace', 'appearance', 'general', 'data', 'updates'] },
-  { id: 'advanced', tabs: ['themes', 'extensions', 'access', 'resources'] },
+  { id: 'common', tabs: ['workspace', 'appearance', 'general', 'data'] },
+  { id: 'system', tabs: ['extensions', 'updates'] },
 ] as const;
 type Tab = (typeof GROUPS)[number]['tabs'][number];
 const TABS: readonly Tab[] = GROUPS.flatMap((g) => g.tabs);
+/** Tabs that were merged into another one. */
+const MERGED: Record<string, Tab> = { themes: 'appearance', access: 'general' };
 const ICONS: Record<Tab, IconName> = {
   workspace: 'edit',
   appearance: 'sun',
   general: 'settings',
   data: 'disk',
   updates: 'refresh',
-  themes: 'brush',
   extensions: 'box',
-  access: 'link',
-  resources: 'box',
 };
 
 /** Existing sections render their own headings; the new ones use legacy settings-section. */
 const SECTIONS: Record<Tab, ComponentType> = {
   workspace: WorkspaceSection,
-  appearance: AppearanceSection,
-  general: GeneralSection,
+  appearance: AppearanceAndThemes,
+  general: ModelsAndConnections,
   data: DataSection,
   updates: UpdatesSection,
-  themes: ThemesSection,
   extensions: ExtensionsSection,
-  access: AccessSection,
-  resources: ResourcesSection,
 };
 
 /** 设置 — legacy layout: heading, grouped left nav, one section at a time. */
 export default function SettingsPage() {
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
-  const requested = params.get('tab') as Tab | null;
-  const tab: Tab = requested && TABS.includes(requested) ? requested : 'workspace';
+  const asked = params.get('tab') ?? '';
+  const requested = (MERGED[asked] ?? asked) as Tab;
+  const tab: Tab = TABS.includes(requested) ? requested : 'workspace';
   const open = (id: Tab) => setParams({ tab: id }, { replace: true });
   usePageTitle(t(`legacy.settings.tabs.${tab}`), t('legacy.nav.settings'));
 

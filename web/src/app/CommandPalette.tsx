@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { create } from 'zustand';
 import { useAllEpisodes } from '../api/series';
-import { useHelp, useQuickStart } from '../components/HelpDrawer';
+import { manualHref, useHelp, useQuickStart } from '../components/HelpDrawer';
 import { ownCancel } from '../components/topLayer';
 import { setLocale } from '../i18n';
 import { Icon, type IconName } from './icons';
@@ -118,11 +118,11 @@ export function CommandPalette() {
         run: () => openQuick(true),
       },
       {
-        id: 'resources',
-        label: t('guide.resources'),
+        id: 'handbook',
+        label: t('guide.centre'),
         kind: 'help',
-        icon: 'box',
-        run: go('/settings?tab=resources'),
+        icon: 'book',
+        run: () => window.open(manualHref('', i18n.language === 'en'), '_blank', 'noopener'),
       },
       ...NAV.map<Command>((n) => ({
         id: `go-${n.to}`,

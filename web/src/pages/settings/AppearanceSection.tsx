@@ -40,7 +40,7 @@ function Select<K extends string>(props: {
 }
 
 /**
- * 通用偏好 (legacy appearance tab): interface language, lettering style, display density,
+ * 外观与阅读 (legacy appearance tab): interface language, lettering style, display density,
  * font scale, reduce motion, and default reading mode — grouped like the legacy
  * preferences-workbench (语言与常规, 字体与界面显示, 阅读与翻页).
  */

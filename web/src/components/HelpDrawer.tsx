@@ -537,17 +537,6 @@ function HelpDrawerBody() {
               <Icon name="help" />
               {t('guide.quickstart')}
             </button>
-            <button
-              type="button"
-              className="btn small ghost"
-              onClick={() => {
-                close();
-                navigate('/settings?tab=resources');
-              }}
-            >
-              <Icon name="grid" />
-              {t('guide.resources')}
-            </button>
           </div>
         </section>
         <Keys />

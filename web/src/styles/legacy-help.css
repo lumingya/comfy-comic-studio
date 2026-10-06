@@ -517,50 +517,6 @@ dialog.help-drawer::backdrop {
   border: 0;
   background: var(--bg);
 }
-.resources-list {
-  border-top: 1px solid var(--line);
-}
-.resource-link {
-  display: flex;
-  align-items: center;
-  gap: 13px;
-  width: 100%;
-  text-align: left;
-  padding: 19px 0;
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  border-radius: 0;
-  background: transparent;
-  color: var(--ink);
-  font: inherit;
-  cursor: pointer;
-}
-.resource-link > .grow {
-  flex: 1;
-  min-width: 0;
-}
-.resource-link > .icon:last-child {
-  color: var(--muted);
-}
-.resource-link > .icon:first-child {
-  color: var(--accent2);
-}
-.resource-link strong {
-  font-size: 0.75rem;
-  font-weight: 500;
-  display: block;
-}
-.resource-link small {
-  display: block;
-  font-size: 0.75rem;
-  line-height: 1.8;
-  color: var(--muted);
-  margin-top: 5px;
-}
-.resource-link:hover strong {
-  color: var(--accent);
-}
-
 /* Presentation drawer extras (legacy ui-export.js markup). */
 .presentation-portable {
   display: flex;

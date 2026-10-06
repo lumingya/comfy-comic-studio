@@ -2959,7 +2959,6 @@ html[data-lettering='calligraphy'] .shelf-item h3 {
 }
 @media (max-width: 760px), (max-width: 950px) and (hover: none) and (pointer: coarse) {
   .ibtn,
-  button.resource-link,
   .settings-nav button,
   .quiet-tabs button {
     min-height: 44px;

@@ -1,5 +1,5 @@
 /**
- * The legacy help drawer (「?」), 开箱检查, 快速开始 and 设置 → 工具与资源, in the legacy wording
+ * The help drawer (「?」), 开箱检查 and 快速开始, in the legacy wording
  * (legacy/js/help-drawer.js, app.js guideSteps, ui.js renderQuickStart). Merged into zh / en.
  */
 type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };
@@ -17,7 +17,6 @@ export const guideZh = {
   docs: '教程',
   centre: '教程中心',
   quickstart: '快速开始教程',
-  resources: '工具与资源',
   keys: '快捷键',
   keysNote: '侧栏名称右侧的数字就是 Alt + 数字。',
   diagnostics: '诊断信息',
@@ -52,7 +51,7 @@ export const guideZh = {
     },
     settings: {
       title: '设置',
-      text: '常用：工作室、通用偏好（外观、语言、字号）、数据与备份（含回收站）、关于与更新。高级：样式工坊、扩展中心、工具与连接，以及工具与资源。',
+      text: '常用：工作室、外观与阅读（语言、字号、主题）、模型与连接（文本模型、API 令牌、Webhook）、数据与备份（含回收站）。系统：扩展、关于与更新。',
     },
     jobs: {
       title: '运行日志',
@@ -183,18 +182,6 @@ export const guideZh = {
       handbook: { title: '使用教程', intro: '首次生成、图片变量、手机访问与常见问题。' },
     },
   },
-  res: {
-    lede: '低频工具集中在这里，主侧栏只保留日常创作入口。',
-    quickstart: '从创作计划到生成画册，逐项核对准备工作。',
-    handbook: '使用教程 · 教程中心',
-    handbookBody: '首次生成、图片变量、手机访问与常见问题。',
-    jobs: '全部服务端任务',
-    jobsBody: '生成队列的运行记录、失败重试与待确认的结果。',
-    backup: '工程备份与恢复',
-    backupBody: '画册包（.mio.zip）导入与回收站。',
-    api: '接口文档',
-    apiBody: '本机 API 的交互式文档，给开发者和脚本使用。',
-  },
 };
 
 export const guideEn: Widen<typeof guideZh> = {
@@ -210,7 +197,6 @@ export const guideEn: Widen<typeof guideZh> = {
   docs: 'Guides',
   centre: 'Guide centre',
   quickstart: 'Quick-start guide',
-  resources: 'Tools & resources',
   keys: 'Keyboard shortcuts',
   keysNote: 'The number next to each sidebar item is Alt + that number.',
   diagnostics: 'Diagnostics',
@@ -245,7 +231,7 @@ export const guideEn: Widen<typeof guideZh> = {
     },
     settings: {
       title: 'Settings',
-      text: 'Common: studio, preferences (look, language, font size), data & backup (with the trash), about & updates. Advanced: style workshop, extensions, tools & connections, and tools & resources.',
+      text: 'Common: studio, appearance & reading (language, font size, themes), models & connections (text models, API tokens, webhooks), data & backup (with the trash). System: extensions, about & updates.',
     },
     jobs: {
       title: 'Run log',
@@ -386,17 +372,5 @@ export const guideEn: Widen<typeof guideZh> = {
         intro: 'First renders, image variables, phone access and common questions.',
       },
     },
-  },
-  res: {
-    lede: 'Less-used tools stay here so the sidebar remains focused on daily work.',
-    quickstart: 'From the plan to a finished album, one check at a time.',
-    handbook: 'Handbook · guide centre',
-    handbookBody: 'First renders, image variables, phone access and common questions.',
-    jobs: 'All server tasks',
-    jobsBody: 'The render queue’s history, retries and results waiting for you.',
-    backup: 'Backup & restore',
-    backupBody: 'Album bundle (.mio.zip) import and the trash.',
-    api: 'API reference',
-    apiBody: 'Interactive documentation of the local API, for developers and scripts.',
   },
 };

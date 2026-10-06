@@ -441,11 +441,38 @@ describe('every route mounts with API data', () => {
     expect(screen.queryByRole('dialog', { name: '装配与队列' })).toBeNull();
   });
 
-  it('设置 → 工具与资源 lists the tutorials and the less-used tools', async () => {
-    mount('/settings?tab=resources');
-    expect(await screen.findByRole('heading', { name: '工具与资源' })).toBeInTheDocument();
-    for (const name of ['快速开始教程', '使用教程 · 教程中心', '全部服务端任务', '工程备份与恢复'])
-      expect(screen.getByText(name)).toBeInTheDocument();
+  it('设置 has six tabs in two groups', async () => {
+    mount('/settings');
+    const tabs = await screen.findAllByRole('tab');
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      '工作室',
+      '外观与阅读',
+      '模型与连接',
+      '数据与备份',
+      '扩展',
+      '关于与更新',
+    ]);
+    expect(screen.getByText('常用')).toBeInTheDocument();
+    expect(screen.getByText('系统')).toBeInTheDocument();
+  });
+
+  it('merged settings tabs: themes live in 外观与阅读, tokens in 模型与连接', async () => {
+    mount('/settings?tab=themes');
+    expect(
+      await screen.findByRole('tab', { name: '外观与阅读', selected: true }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '主题' })).toBeInTheDocument();
+    expect((await screen.findAllByText('跟随系统')).length).toBeGreaterThan(0);
+  });
+
+  it('模型与连接 shows the text model API and API tokens & webhooks', async () => {
+    mount('/settings?tab=access');
+    expect(
+      await screen.findByRole('tab', { name: '模型与连接', selected: true }),
+    ).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'API 令牌与 Webhook' })).toBeInTheDocument();
+    expect(await screen.findByText('还没有 Webhook')).toBeInTheDocument();
+    expect(screen.getByText('接口地址')).toBeInTheDocument();
   });
 
   it('old episode links: storyboards open in 分镜工坊, album pages in the reader', async () => {
