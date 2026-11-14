@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 from collections import namedtuple
+from pathlib import Path
 from unittest import mock
 
+from mio_server.models import Panel, PanelOverrides
 from mio_server.queue import lane_finished
 
 from .api_harness import ApiCase
@@ -16,8 +18,20 @@ Usage = namedtuple("Usage", "total used free")
 class QueueTest(ApiCase):
     def setUp(self):
         super().setUp()
+        # Queue ordering needs two frames, independent of shipped storyboard size or order.
+        self.ctx.legacy_root = Path(self.tmp) / "empty-legacy"
         ws = self.ok(self.client.get("/api/workshop"))
         self.board = self.ok(self.client.get(f"/api/series/{ws['id']}/episodes"))["items"][0]
+        board = self.ctx.store.get_episode(self.board["id"])
+        board.panels = [
+            Panel(
+                order=idx,
+                description=f"Frame {idx + 1}",
+                overrides=PanelOverrides(raw_prompt="a quiet room", seed=idx),
+            )
+            for idx in range(2)
+        ]
+        self.ctx.store.save_episode(board)
         self.preset = ws["presets"][0]["id"]
 
     def assemble(self, title):
@@ -54,6 +68,7 @@ class QueueTest(ApiCase):
         q = self.ok(self.client.post("/api/workshop/queue/start", json={"album_ids": [a, b]}))
         self.assertEqual((q["active"], q["lane"]), (a, [b]))
         self.assertEqual(len(self.jobs_of(ep_a)), 1)
+        self.assertEqual(len(self.ctx.engine.get(q["active_job"])["items"]), 2)
         self.assertEqual(self.jobs_of(ep_b), [])  # B waits for A
         # Every panel of A lands in the album (adopt_first), and only then B starts.
         drain(self.ctx.engine, q["active_job"])
