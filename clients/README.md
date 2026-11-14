@@ -84,6 +84,51 @@ assembled = mio.assemble(
 渠道按「配置渠道 → 设置默认渠道 → 模型连接」回退。纯云端也可在采用后明确调用
 `finalize_episode` 运行本地成品工作流，不会因保存或切换路线自动执行。
 
+### 云端参数与候选记录
+
+分镜编译出的负向、宽高和种子随任务固定；渠道中的负向作为附加约束。逐格画幅优先，
+未指定宽高的云端分镜按画幅比例计算约一百万像素；配置基宽仍只用于本地工作流。
+渠道尺寸只在没有分镜画幅参数时作为默认值。渠道生成选项和模型也随提交固定，密钥不会
+写入任务或候选记录。更改密钥可影响后续执行，删除渠道或改变渠道类型则明确失败。
+
+| 渠道 | 画幅 | 负向 | 种子 | 参考图 |
+| --- | --- | --- | --- | --- |
+| OpenAI Images 兼容 | 传入 `size=WIDTHxHEIGHT`；不支持时由服务拒绝，不静默换尺寸 | 追加提示约束 | 不发送 | 多张图片通过 edits 发送 |
+| 聊天接口出图 | 写入提示语，不保证精确像素 | 追加提示约束 | 不发送 | 按顺序发送全部图片，不按模型名截断 |
+| NovelAI | 传入宽高，按 64 对齐并记录调整 | 独立负向字段 | 固定为 32 位种子，超范围取模并记录 | 沿用 V3 / V4 vibe 条件，不保证人物身份一致 |
+
+生成成功的 `Take.cloud_request` 是有类型的请求记录，缺失时为 `null`，不能据此猜测
+旧候选是否支持某参数。`requested` 保存编译意图；`effective` 保存实际提交参数，
+`parameter_modes` 区分原生参数、提示约束、不支持和未知；`adjustments` 是稳定的调整代码。
+参考图记录保留素材 ID、顺序、角色及来源。`effective.options` 只记录生成选项，不含
+连接密钥。图片的真实宽高仍读取 `Take.width/height`。
+
+```python
+take = mio.get_episode(episode_id)["takes"][0]
+request = take.get("cloud_request")
+if request:
+    print("请求画幅", request["requested"]["width"], request["requested"]["height"])
+    print("提交画幅", request["effective"]["size"], request["parameter_modes"]["size"])
+    print("实际图片", take["width"], take["height"])
+    print("种子能力", request["parameter_modes"]["seed"], take["seed"])
+```
+
+只有原生使用的种子才写入云端候选的 `Take.seed`，Images / Chat 为 `null`；混合任务
+后续本地精修的种子仍来自其独立快照。固定种子不承诺跨模型版本、服务配置的像素一致。
+扩展未声明参数能力时记录未知，不把编译参数伪报为服务已使用的参数。
+
+云端适配器可实现 `generate_image_request(request, refs, timeout, retries)`，返回图片字节和
+`Reply`，通过 `Reply.image_request` 提供符合 `CloudRequestSnapshot` 的实际请求记录。
+原有 `generate_image` 签名仍可使用，其参数能力标为未知。扩展生成选项遵循无密钥记录
+约定；只有带明确“参考图不支持”证据的拒绝才允许合图重试，普通 400、超时或结果不明
+不能成为重新发送付费请求的理由。
+
+接口边界参考 [OpenAI Images 生成参数](https://developers.openai.com/api/reference/resources/images/methods/generate)、
+[图像编辑参数](https://developers.openai.com/api/reference/resources/images/methods/edit) 和
+[NovelAI 图像说明](https://docs.novelai.net/en/image/basics/)（核对日期：2026-11-14）。
+OpenAI 官方接口未列出 seed / negative_prompt 字段；兼容服务的额外字段不作统一假定。
+NovelAI 的 Swagger 参数详情本次无法读取，既有 V3 / V4 协议仍以仓库模拟请求契约验证，未宣称新增实服认证。
+
 改了服务端接口之后要重新生成客户端：
 
 ```bash

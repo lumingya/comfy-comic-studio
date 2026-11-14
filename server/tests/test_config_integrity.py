@@ -34,17 +34,27 @@ class ChatChannelTests(unittest.TestCase):
             model="image-model",
             negative="blur",
         )
-        with mock.patch.object(L.Client, "generate_image", autospec=True) as generate:
+        answer = {"choices": [{"message": {"images": [{"url": "https://image.test/cat.png"}]}}]}
+        with (
+            mock.patch.object(L.Client, "_post", autospec=True, return_value=answer) as post,
+            mock.patch.object(L.Client, "download", return_value=b"image"),
+        ):
             client = PV.build(channel, lambda: shared)
-            client.generate_image("a cat", models=("wrong",), retries=0)
+            _, reply = client.generate_image("a cat", models=("wrong",), retries=0)
         self.assertEqual(client.base_url, "https://image.test/v1")
         self.assertEqual(client.api_key, "image-test-key")
         self.assertEqual(client.image_models, ("image-model",))
         self.assertEqual(shared.base_url, "https://shared.test/v1")
         self.assertEqual(shared.api_key, "shared-test-key")
-        self.assertEqual(generate.call_args.args[1], "a cat\nAvoid: blur")
-        self.assertEqual(generate.call_args.kwargs["models"], ("image-model",))
-        self.assertEqual(generate.call_args.kwargs["retries"], 0)
+        sent_client, path, body, _ = post.call_args.args
+        self.assertIs(sent_client, client)
+        self.assertEqual(path, "/chat/completions")
+        self.assertEqual(body["model"], "image-model")
+        prompt = body["messages"][0]["content"]
+        self.assertTrue(prompt.startswith("a cat\nAvoid: blur\nRequested image dimensions:"))
+        self.assertEqual(prompt.count("Avoid: blur"), 1)
+        self.assertEqual(reply.image_request["effective"]["prompt"], prompt)
+        self.assertEqual(post.call_count, 1)
 
     def test_custom_chat_endpoint_never_inherits_another_services_key(self):
         client = PV.build(

@@ -5,6 +5,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { episode, job, series } from '../test/fixtures';
 import { configInstance, configProfile, configSettings } from '../test/configuration';
+import { cloudRequest } from '../test/cloudRequest';
 import { useHelp, useQuickStart } from '../components/HelpDrawer';
 import { mockFetch } from '../test/utils';
 import { makeQueryClient, routes } from './App';
@@ -270,6 +271,35 @@ function mount(path: string) {
 }
 
 describe('every route mounts with API data', () => {
+  it.each(['script', 'board'])(
+    'shows the stored cloud request in the %s candidate details',
+    async (tab) => {
+      responses['GET /api/episodes/ep_1'] = {
+        ...episode,
+        takes: [
+          {
+            ...episode.takes[0],
+            width: 1024,
+            height: 1536,
+            seed: null,
+            cloud_request: cloudRequest,
+          },
+        ],
+      };
+      mount(`/workshop/assembly/ep_1/${tab}`);
+      // Wait for the lazy route and episode queries before interacting with its candidates.
+      const zooms = await screen.findAllByRole('button', { name: '查看大图' }, { timeout: 5000 });
+      fireEvent.click(zooms[0]);
+      const dialog = await screen.findByRole('dialog');
+      expect(within(dialog).getByText(/1024×1536.*未应用（渠道不支持）/)).toBeInTheDocument();
+      const summary = within(dialog).getByText('云端生成参数');
+      expect(summary.closest('details')).not.toHaveAttribute('open');
+      fireEvent.click(summary);
+      expect(within(dialog).getByRole('row', { name: /种子/ })).toHaveTextContent('42');
+      expect(within(dialog).getByRole('row', { name: /参考图/ })).toHaveTextContent('合成参考图');
+    },
+  );
+
   const cloudProfile = {
     ...configProfile,
     id: 'cloud',

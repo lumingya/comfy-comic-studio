@@ -11,6 +11,7 @@ import { useRenderRoute } from '../../app/renderRoute';
 import { useUI } from '../../app/ui-store';
 import { toastError } from '../../components/toast';
 import { Modal } from '../../components/ui';
+import { CloudRequestDetails, TakeParameterSummary } from '../../components/CloudRequestDetails';
 
 const COUNTS = [1, 2, 4] as const;
 
@@ -197,6 +198,10 @@ export function GenerateStage(props: {
         </p>
       )}
 
+      {route.kind === 'cloud' || route.kind === 'hybrid' ? (
+        <p className="small muted">{t('cloudRequest.generationHint')}</p>
+      ) : null}
+
       {live.length || shown.length ? (
         <div className="stage-grid">
           {live.map((it) => (
@@ -246,11 +251,7 @@ export function GenerateStage(props: {
         onOpenChange={(o) => !o && setZoomId(null)}
         size="lg"
         title={zoom ? `${zoomAt + 1} / ${shown.length}` : ''}
-        description={
-          zoom
-            ? `${zoom.width ?? '?'}×${zoom.height ?? '?'} · ${t('board.seed')} ${zoom.seed ?? '—'}`
-            : undefined
-        }
+        description={zoom ? <TakeParameterSummary take={zoom} /> : undefined}
         footer={
           zoom ? (
             <>
@@ -283,9 +284,12 @@ export function GenerateStage(props: {
         }
       >
         {zoom ? (
-          <div className="zoom">
-            <img src={assetUrl(zoom.asset_id)} alt="" />
-          </div>
+          <>
+            <div className="zoom">
+              <img src={assetUrl(zoom.asset_id)} alt="" />
+            </div>
+            <CloudRequestDetails snapshot={zoom.cloud_request} />
+          </>
         ) : null}
       </Modal>
     </section>

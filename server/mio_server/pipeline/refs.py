@@ -3,8 +3,8 @@
 ``auto``: for every character on stage pick the best reference from the bible:
   back view for back shots, side view for side angles, a matching expression for close-ups,
   a matching outfit whenever possible, then front view / sheet / anything.
-``manual``: the panel's own list, in order.  ``off``: none.
-Locations and the style reference fill the remaining slots.
+``manual``: the panel's entire list, in order.  ``off``: none.
+Locations and the selected style reference fill the remaining auto slots (four by default).
 """
 
 from __future__ import annotations
@@ -61,14 +61,19 @@ def pick_character_ref(
 
 
 def select_references(
-    bible: Bible, panel: Panel, max_refs: int = 4, include_scene: bool = True
+    bible: Bible,
+    panel: Panel,
+    max_refs: int = 4,
+    include_scene: bool = True,
+    *,
+    style_id: str | None = None,
 ) -> list[RefChoice]:
     if panel.reference_mode == "off":
         return []
     if panel.reference_mode == "manual":
         return [
             RefChoice(i + 1, r.asset_id, r.role, "manual", "手动指定")
-            for i, r in enumerate(panel.references[:max_refs])
+            for i, r in enumerate(panel.references)
         ]
     chosen: list[RefChoice] = []
     for pc in panel.characters:
@@ -83,6 +88,11 @@ def select_references(
     if include_scene and loc and loc.references and len(chosen) < max_refs:
         chosen.append(
             RefChoice(len(chosen) + 1, loc.references[0].asset_id, "reference", loc.id, "场景参考")
+        )
+    style = bible.style(style_id)
+    if style and style.references and len(chosen) < max_refs:
+        chosen.append(
+            RefChoice(len(chosen) + 1, style.references[0].asset_id, "style", style.id, "画风参考")
         )
     return chosen
 

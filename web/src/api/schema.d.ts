@@ -2163,6 +2163,127 @@ export interface components {
              */
             title?: string;
         };
+        /** CloudEffectiveParameters */
+        CloudEffectiveParameters: {
+            /**
+             * Prompt
+             * @default
+             */
+            prompt: string;
+            /**
+             * Negative
+             * @default
+             */
+            negative: string;
+            /** Width */
+            width: number | null;
+            /** Height */
+            height: number | null;
+            /** Size */
+            size: string | null;
+            /** Seed */
+            seed: number | null;
+            /**
+             * Reference Mode
+             * @default none
+             * @enum {string}
+             */
+            reference_mode: "none" | "images" | "lineup" | "vibe" | "unknown";
+            /** Refs */
+            refs: components["schemas"]["CloudReference"][];
+            /**
+             * Options
+             * @description Applied generation options; excludes connection secrets
+             */
+            options: Record<string, unknown>;
+        };
+        /** CloudParameterModes */
+        CloudParameterModes: {
+            /**
+             * Negative
+             * @default unknown
+             * @enum {string}
+             */
+            negative: "native" | "prompt" | "unsupported" | "unknown";
+            /**
+             * Size
+             * @default unknown
+             * @enum {string}
+             */
+            size: "native" | "prompt" | "unsupported" | "unknown";
+            /**
+             * Seed
+             * @default unknown
+             * @enum {string}
+             */
+            seed: "native" | "unsupported" | "unknown";
+        };
+        /** CloudReference */
+        CloudReference: {
+            /** Slot */
+            slot: number;
+            /** Asset Id */
+            asset_id: string;
+            /** Role */
+            role: string;
+            /** Owner */
+            owner: string;
+            /** Reason */
+            reason: string;
+        };
+        /**
+         * CloudRequestSnapshot
+         * @description Cloud request provenance, without credentials; output dimensions belong to Take.
+         */
+        CloudRequestSnapshot: {
+            /**
+             * Channel Id
+             * @default
+             */
+            channel_id: string;
+            /**
+             * Kind
+             * @default
+             */
+            kind: string;
+            /**
+             * Model
+             * @default
+             */
+            model: string;
+            requested: components["schemas"]["CloudRequestedParameters"];
+            effective: components["schemas"]["CloudEffectiveParameters"];
+            parameter_modes: components["schemas"]["CloudParameterModes"];
+            /** Adjustments */
+            adjustments: string[];
+        };
+        /** CloudRequestedParameters */
+        CloudRequestedParameters: {
+            /**
+             * Prompt
+             * @default
+             */
+            prompt: string;
+            /**
+             * Negative
+             * @default
+             */
+            negative: string;
+            /** Width */
+            width: number | null;
+            /** Height */
+            height: number | null;
+            /** Seed */
+            seed: number | null;
+            /**
+             * Reference Mode
+             * @default off
+             * @enum {string}
+             */
+            reference_mode: "auto" | "manual" | "off";
+            /** Refs */
+            refs: components["schemas"]["CloudReference"][];
+        };
         /** ComfyInstance */
         "ComfyInstance-Input": {
             /** Id */
@@ -4074,6 +4195,8 @@ export interface components {
             seed: number | null;
             /** Parameter Snapshot */
             parameter_snapshot: Record<string, unknown>;
+            /** @description Actual cloud request and parameter support; no credentials */
+            cloud_request: components["schemas"]["CloudRequestSnapshot"] | null;
             qa: components["schemas"]["QAResult"] | null;
             /** Faces */
             faces: components["schemas"]["Face"][];

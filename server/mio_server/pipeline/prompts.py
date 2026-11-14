@@ -198,14 +198,25 @@ ORDINALS = ("first", "second", "third", "fourth")
 
 
 def natural(
-    story: dict, panel: dict, with_refs: bool = True, lineup: bool = False
+    story: dict,
+    panel: dict,
+    with_refs: bool = True,
+    lineup: bool = False,
+    *,
+    reference_slots: dict[str, int] | None = None,
 ) -> tuple[str, list[str]]:
     """``(prompt, ref_character_ids)``: prose prompt plus the characters whose sheets go along,
     in reference-image order. ``lineup`` describes one composite reference image with the
-    characters standing side by side (for models that accept a single reference)."""
+    characters standing side by side (for models that accept a single reference).
+    ``reference_slots`` maps only characters with actual reference images to their slots;
+    ``None`` retains the standalone story compiler's one-image-per-character convention.
+    """
     chars, scenes = index(story)
     scene = scenes.get(panel.get("scene"), {})
     cast = [c for c in panel.get("characters") or [] if c.get("id") in chars]
+    slots = (
+        {c["id"]: i for i, c in enumerate(cast, 1)} if reference_slots is None else reference_slots
+    )
     width, height = panel_size(panel)
     frame = (
         "a wide horizontal frame"
@@ -217,29 +228,29 @@ def natural(
     framing = [SHOT_TEXT.get(panel.get("shot") or ""), ANGLE_TEXT.get(panel.get("angle") or "")]
     composition = ", ".join([f for f in framing if f] + [frame])
     parts = [f"{NATURAL_STYLE} Composition: {composition}."]
-    refs = []
+    refs = sorted((c["id"] for c in cast if with_refs and c["id"] in slots), key=slots.__getitem__)
     if cast:
         people = []
-        for i, c in enumerate(cast, 1):
+        for c in cast:
             ch = chars[c["id"]]
-            if lineup:
+            slot = slots.get(ch["id"]) if with_refs else None
+            if lineup and slot is not None:
+                ordinal = ORDINALS[slot - 1] if 1 <= slot <= len(ORDINALS) else f"number {slot}"
                 ref = (
-                    f" (exactly the {ORDINALS[i - 1]} figure from the left in the reference image: "
+                    f" (exactly the {ordinal} figure from the left in the reference image: "
                     f"same face, hairstyle, hair color and outfit)"
                 )
-            elif with_refs:
-                ref = f" (exactly the person in reference image {i}: same face, hairstyle, hair color and outfit)"
+            elif slot is not None:
+                ref = f" (exactly the person in reference image {slot}: same face, hairstyle, hair color and outfit)"
             else:
                 ref = ""
-            if with_refs:
-                refs.append(ch["id"])
             action = f"; {c['action']}" if c.get("action") else ""
             mood = f"; expression: {c['expression']}" if c.get("expression") else ""
             people.append(f"{display_name(ch)}: {ch['description']}{ref}{action}{mood}")
         count = "one person" if len(cast) == 1 else f"{len(cast)} people"
         lead = (
             "The reference image is a character lineup, not a scene; redraw these characters inside the scene. "
-            if lineup
+            if lineup and refs
             else ""
         )
         parts.append(f"{lead}Characters ({count}, nobody else): " + " | ".join(people) + ".")

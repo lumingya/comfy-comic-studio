@@ -37,11 +37,27 @@ class LLMError(RuntimeError):
         retryable: bool = False,
         *,
         sent: bool | None = None,
+        reference_unsupported: bool = False,
     ):
         super().__init__(message)
         self.status = status
         self.retryable = retryable
         self.sent = sent  # None = unknown; False only when the request provably was not sent
+        self.reference_unsupported = reference_unsupported
+
+
+def reference_rejection(detail: str) -> bool:
+    """Positive evidence of a reference-count rejection, never an arbitrary HTTP 400."""
+    return bool(
+        re.search(
+            r"multiple (?:reference )?images? (?:are |is )?not supported|"
+            r"only (?:one|1|a single) (?:reference )?image (?:is )?(?:allowed|supported)|"
+            r"too many (?:reference )?images|"
+            r'"code"\s*:\s*"(?:multiple_images_not_supported|too_many_images)"',
+            detail,
+            re.IGNORECASE,
+        )
+    )
 
 
 def retry_wait(message: str, attempt: int) -> float:
@@ -60,6 +76,7 @@ class Reply:
     seconds: float
     images: list[str] = field(default_factory=list)
     attempts: list[str] = field(default_factory=list)  # failures before this reply
+    image_request: dict = field(default_factory=dict)
 
 
 def image_part(data: bytes, max_side: int = 1024, quality: int = 88) -> dict:
@@ -207,7 +224,10 @@ class Client:
         except urllib.error.HTTPError as exc:
             body = exc.read().decode("utf-8", "replace")[:300]
             raise LLMError(
-                f"HTTP {exc.code}: {body}", exc.code, exc.code in RETRYABLE_STATUS
+                f"HTTP {exc.code}: {body}",
+                exc.code,
+                exc.code in RETRYABLE_STATUS,
+                reference_unsupported=reference_rejection(body),
             ) from None
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             reason = getattr(exc, "reason", exc)
@@ -261,6 +281,13 @@ class Client:
                         raise LLMError(f"没有返回图片：{reply.text[:160]}", None, True)
                     if not need_image and not reply.text.strip():
                         raise LLMError("空回复", None, True)
+                    if need_image:
+                        sent_content = send_messages[0]["content"]
+                        reply.image_request = {
+                            "prompt": sent_content
+                            if isinstance(sent_content, str)
+                            else "".join(p.get("text", "") for p in sent_content)
+                        }
                     self._down.pop(model, None)
                     return reply
                 except LLMError as exc:
@@ -327,12 +354,41 @@ class Client:
         timeout: float = 360.0,
         retries: int = 3,
     ):
-        """Returns ``(image_bytes, reply)``. Several refs go to a multi-reference model."""
+        """Returns ``(image_bytes, reply)`` with the actual image request metadata."""
+        from .pipeline import cloud_request as CR
+
+        channel = getattr(self, "_image_channel", None)
+        if channel is not None and channel.model:
+            models = (channel.model,)
+        request = CR.freeze_request(self, {"prompt": prompt}, models=models)
+        return self._generate_image_request(request, refs, timeout, retries, models=models)
+
+    def generate_image_request(self, request: dict, refs=(), timeout=360.0, retries=3):
+        return self._generate_image_request(request, refs, timeout, retries)
+
+    def _generate_image_request(self, request, refs, timeout, retries, models=None):
+        from .pipeline import cloud_request as CR
+
+        actual = CR.snapshot(request)
+        data, reply = self._generate_image(
+            actual["effective"]["prompt"], refs, models or (request["model"],), timeout, retries
+        )
+        if refs and actual["effective"]["reference_mode"] == "none":
+            actual["effective"]["reference_mode"] = "images"
+        actual["effective"]["prompt"] = reply.image_request.get(
+            "prompt", actual["effective"]["prompt"]
+        )
+        if models:
+            actual["model"] = reply.model
+        reply.image_request = actual
+        return data, reply
+
+    def _generate_image(self, prompt, refs, models, timeout, retries):
         refs = list(refs)
         models = models or ((IMAGE_MULTI + IMAGE_SINGLE) if len(refs) > 1 else IMAGE_SINGLE)
         failures = []
         for model in models:
-            use = refs if model in IMAGE_MULTI else refs[:1]
+            use = refs
             content = [{"type": "text", "text": prompt}] + [
                 image_part(r, max_side=1024) for r in use
             ]

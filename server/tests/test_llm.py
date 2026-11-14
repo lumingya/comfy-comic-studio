@@ -42,13 +42,17 @@ class FakeProxy(BaseHTTPRequestHandler):
                 return self._send(429, {"error": {"message": "Arena 冷却中 (请等待 0.1s 后重试)"}})
         if model == "denied":
             return self._send(400, {"error": "bad request"})
+        if model == "single-ref":
+            content = payload["messages"][0]["content"]
+            if isinstance(content, list) and sum(p.get("type") == "image_url" for p in content) > 1:
+                return self._send(400, {"error": "Only one reference image is supported"})
         if model == "empty":
             return self._send(200, {"choices": [{"message": {"content": ""}}]})
         if model == "fence":
             text = '好的：\n```json\n{"ok": 1}\n```'
         elif model == "repair":
             text = '{"ok": 0}' if len(server.requests) == 1 else '{"ok": 2}'
-        elif model in ("img", "max"):
+        elif model in ("img", "max", "single-ref"):
             url = f"http://127.0.0.1:{server.server_address[1]}/img.png"
             return self._send(
                 200,
@@ -164,8 +168,8 @@ class ClientTests(unittest.TestCase):
         self.assertEqual(data, PNG)
         sent = self.server.requests[-1]["messages"][0]["content"]
         self.assertEqual(
-            sum(1 for part in sent if part.get("type") == "image_url"), 1
-        )  # single-ref fallback
+            sum(1 for part in sent if part.get("type") == "image_url"), 2
+        )  # user-selected models receive every reference
         data, _ = self.client.generate_image("two", refs=[PNG, PNG], models=("max",))
         sent = self.server.requests[-1]["messages"][0]["content"]
         self.assertEqual(sum(1 for part in sent if part.get("type") == "image_url"), 2)
@@ -189,7 +193,7 @@ class ClientTests(unittest.TestCase):
         story = script.normalize_story(make_story())
         two_shot = next(p for p in story["panels"] if p["id"] == "p04")
         saved = (L.IMAGE_MULTI, L.IMAGE_SINGLE)
-        L.IMAGE_MULTI, L.IMAGE_SINGLE = ("denied",), ("img",)
+        L.IMAGE_MULTI, L.IMAGE_SINGLE = ("single-ref",), ("img",)
         try:
             data, meta = render.CloudRenderer(self.client).panel(
                 story, two_shot, {"lin": PNG, "zhou": PNG}
@@ -197,12 +201,12 @@ class ClientTests(unittest.TestCase):
         finally:
             L.IMAGE_MULTI, L.IMAGE_SINGLE = saved
         self.assertEqual(
-            (meta["mode"], meta["model"], meta["refs"]), ("lineup", "img", ["lin", "zhou"])
+            (meta["mode"], meta["model"], meta["refs"]), ("lineup", "single-ref", ["lin", "zhou"])
         )
         sent = self.server.requests[-1]["messages"][0]["content"]
         self.assertEqual(sum(1 for part in sent if part.get("type") == "image_url"), 1)
         self.assertIn("first figure from the left", sent[0]["text"])
-        self.assertTrue(any("denied" in f for f in meta["fallbacks"]))
+        self.assertTrue(any("single-ref" in f for f in meta["fallbacks"]))
 
     def test_no_image_is_an_error(self):
         with self.assertRaises(L.LLMError):

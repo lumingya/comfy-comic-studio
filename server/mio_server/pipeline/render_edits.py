@@ -12,6 +12,8 @@ from .. import imaging
 from ..comfy.compile import asset_value
 from ..jobs import COMFY, LOCAL, ItemSpec
 from ..models import Episode, Take, parse_ratio
+from . import cloud_request as CR
+from .cloud import CloudRenderer
 from .compiler import compile_panel
 from .node_overrides import node_overrides
 from .refs import select_references
@@ -24,6 +26,24 @@ class RenderError(ValueError):
 
 
 class EditsMixin:
+    def _cloud_request(
+        self, channel_id: str, requested: dict, *, allow_missing: bool = False
+    ) -> dict:
+        try:
+            return CR.freeze_request(
+                self.cloud_backend(channel_id), requested, channel_id=channel_id, rng=self.rng
+            )
+        except LookupError as exc:
+            if allow_missing:
+                return {
+                    "channel_id": channel_id,
+                    "kind": "missing",
+                    "model": "",
+                    "requested": requested,
+                    "options": {},
+                }
+            raise RenderError(str(exc)) from None
+
     # ---------------------------------------------------------------- edit
     def edit(self, episode_id: str, *args, idempotency_key: str | None = None, **kw) -> dict:
         with self.seeded(idempotency_key):
@@ -135,6 +155,29 @@ class EditsMixin:
         instruction = (params.get("instruction") or "").strip()
         if not instruction:
             raise RenderError("指令修图需要填写修改说明")
+        refs = [take.asset_id, *(params.get("ref_asset_ids") or [])]
+        request = self._cloud_request(
+            params.get("channel") or "",
+            {
+                "prompt": CloudRenderer.edit_prompt(instruction),
+                "negative": params.get("negative") or take.parameter_snapshot.get("negative", ""),
+                "width": params.get("width") or take.width,
+                "height": params.get("height") or take.height,
+                "seed": params.get("seed"),
+                "reference_mode": "manual",
+                "refs": [
+                    {
+                        "slot": i + 1,
+                        "asset_id": aid,
+                        "role": "reference",
+                        "owner": "manual",
+                        "reason": "编辑原图" if i == 0 else "手动指定",
+                    }
+                    for i, aid in enumerate(refs)
+                ],
+            },
+            allow_missing=True,
+        )
         meta = {
             "episode_id": episode.id,
             "panel_id": take.panel_id,
@@ -153,6 +196,7 @@ class EditsMixin:
                 "instruction": instruction,
                 "refs": params.get("ref_asset_ids") or [],
                 "channel": params.get("channel") or "",
+                "request": request,
                 "meta": meta,
             },
             resource=LOCAL,
@@ -191,8 +235,9 @@ class EditsMixin:
             bible = apply_variant(series.bible, variant)
             story = to_story(series, episode, variant)
             for _, panel, prof in entries:
-                refs = select_references(bible, panel, include_scene=False)
-                sheets = {r.owner: r.asset_id for r in refs if r.owner != "manual"}
+                refs = select_references(
+                    bible, panel, style_id=variant.style_id if variant else None
+                )
                 pv = next(p for p in story["panels"] if p["id"] == panel.id)
                 refine = prof.cloud_refine
                 for k in range(candidates or prof.candidates):
@@ -205,6 +250,7 @@ class EditsMixin:
                         quality=prof.quality_tags,
                         negative=prof.negative_tags,
                         rng=self.rng,
+                        references=refs,
                     )
                     self.prompt_hook(pp, series, episode, panel)
                     meta = {
@@ -222,6 +268,7 @@ class EditsMixin:
                         "width": pp.width,
                         "height": pp.height,
                         "refine": refine,
+                        "refs": [r.to_json() for r in refs],
                         # Queue progress counts adopted images: only mark the final output,
                         # not an intermediate cloud shape that is still waiting for ComfyUI.
                         "adopt_first": (adopt_first or adopt_replace) and k == 0 and not refine,
@@ -230,13 +277,25 @@ class EditsMixin:
                         "refine_adopt_replace": adopt_replace and k == 0 and refine,
                     }
                     refinement = self.plan_cloud_refinement(prof, meta) if refine else None
+                    request = self._cloud_request(
+                        prof.cloud_channel,
+                        {
+                            "prompt": pp.positive,
+                            "negative": pp.negative,
+                            "width": pp.width,
+                            "height": pp.height,
+                            "seed": pp.seed,
+                            "reference_mode": panel.reference_mode,
+                            "refs": meta["refs"],
+                        },
+                    )
                     specs.append(
                         ItemSpec(
                             input={
                                 "mode": "shape",
                                 "story": story,
                                 "panel": pv,
-                                "sheets": sheets,
+                                "request": request,
                                 "prompt": pp.positive,
                                 "channel": prof.cloud_channel,
                                 "meta": meta,

@@ -125,6 +125,7 @@ export function take(id: string, panelId: string, status: Take['status']): Take 
     height: 1109,
     seed: 1,
     parameter_snapshot: {},
+    cloud_request: null,
     qa: null,
     faces: [],
     edits: [],

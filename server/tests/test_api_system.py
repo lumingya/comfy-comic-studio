@@ -2,13 +2,16 @@
 `.mio.zip` bundles, the legacy importer and the script assistant."""
 
 import importlib
+import io
 import json
 import sys
 import unittest
+import zipfile
 from pathlib import Path
 
 from mio_server.comfy.compile import BUILTINS
 from mio_server.importer import seed_albums
+from mio_server.models import CloudRequestSnapshot
 
 from .api_harness import WS, ApiCase, FakeLLM
 from .legacy_fixture import LEGACY_KINDS, copy_shipped_legacy
@@ -150,6 +153,41 @@ class JobsTests(ApiCase):
 
 
 class BundleLegacyAssistantTests(ApiCase):
+    def test_bundle_keeps_historical_cloud_reference_assets(self):
+        series, ep = self.make_episode()
+        pid = ep["panels"][0]["id"]
+        self.drain(
+            self.ok(self.client.post(f"/api/episodes/{ep['id']}/render", json={"panel_ids": [pid]}))
+        )
+        # These references survive only in a completed request, not today's panel or bible.
+        refs = [
+            self.ctx.assets.put(png(color), source="test") for color in ((12, 34, 56), (65, 43, 21))
+        ]
+        choices = [
+            {"slot": 1, "asset_id": asset.id, "role": "front", "owner": "manual", "reason": "test"}
+            for asset in refs
+        ]
+        snapshot = CloudRequestSnapshot.model_validate(
+            {
+                "kind": "openai_images",
+                "requested": {"reference_mode": "manual", "refs": choices[:1]},
+                "effective": {"reference_mode": "images", "refs": choices[1:]},
+            }
+        )
+
+        def save_snapshot(episode):
+            episode.takes[0].cloud_request = snapshot
+
+        self.ctx.store.update_episode(ep["id"], save_snapshot)
+        data = self.client.get(f"/api/series/{series['id']}/bundle").content
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+            for asset in refs:
+                filename = self.ctx.assets.path(asset.id).name
+                self.assertEqual(archive.read(f"assets/{filename}"), self.ctx.assets.read(asset.id))
+        report = self.ok(self.client.post("/api/bundles", content=data), 201)
+        copied = self.ctx.store.list_episodes(report["series_id"])[0]
+        self.assertEqual(copied.takes[0].cloud_request, snapshot)
+
     def test_bundle_round_trip_renames_on_collision(self):
         series, ep = self.make_episode()
         pid = ep["panels"][0]["id"]

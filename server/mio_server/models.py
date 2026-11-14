@@ -352,6 +352,56 @@ class Face(StrictModel):
     character_id: str | None = None
 
 
+class CloudReference(StrictModel):
+    slot: int
+    asset_id: str
+    role: str
+    owner: str
+    reason: str
+
+
+class CloudRequestedParameters(StrictModel):
+    prompt: str = ""
+    negative: str = ""
+    width: int | None = None
+    height: int | None = None
+    seed: int | None = None
+    reference_mode: Literal["auto", "manual", "off"] = "off"
+    refs: list[CloudReference] = Field(default_factory=list)
+
+
+class CloudEffectiveParameters(StrictModel):
+    prompt: str = ""
+    negative: str = ""
+    width: int | None = None
+    height: int | None = None
+    size: str | None = None
+    seed: int | None = None
+    reference_mode: Literal["none", "images", "lineup", "vibe", "unknown"] = "none"
+    refs: list[CloudReference] = Field(default_factory=list)
+    options: dict[str, object] = Field(
+        default_factory=dict, description="Applied generation options; excludes connection secrets"
+    )
+
+
+class CloudParameterModes(StrictModel):
+    negative: Literal["native", "prompt", "unsupported", "unknown"] = "unknown"
+    size: Literal["native", "prompt", "unsupported", "unknown"] = "unknown"
+    seed: Literal["native", "unsupported", "unknown"] = "unknown"
+
+
+class CloudRequestSnapshot(StrictModel):
+    """Cloud request provenance, without credentials; output dimensions belong to Take."""
+
+    channel_id: str = ""
+    kind: str = ""
+    model: str = ""
+    requested: CloudRequestedParameters = Field(default_factory=CloudRequestedParameters)
+    effective: CloudEffectiveParameters = Field(default_factory=CloudEffectiveParameters)
+    parameter_modes: CloudParameterModes = Field(default_factory=CloudParameterModes)
+    adjustments: list[str] = Field(default_factory=list)
+
+
 class Take(StrictModel):
     id: str = Field(default_factory=lambda: new_id("take"))
     panel_id: str
@@ -366,6 +416,9 @@ class Take(StrictModel):
     height: int | None = None
     seed: int | None = None
     parameter_snapshot: dict[str, object] = Field(default_factory=dict)
+    cloud_request: CloudRequestSnapshot | None = Field(
+        default=None, description="Actual cloud request and parameter support; no credentials"
+    )
     qa: QAResult | None = None
     faces: list[Face] = Field(default_factory=list)
     edits: list[TakeEdit] = Field(default_factory=list)

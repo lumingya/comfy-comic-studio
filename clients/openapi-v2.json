@@ -644,6 +644,305 @@
     "title": "CloneRequest",
     "type": "object"
    },
+   "CloudEffectiveParameters": {
+    "additionalProperties": false,
+    "properties": {
+     "height": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Height"
+     },
+     "negative": {
+      "default": "",
+      "title": "Negative",
+      "type": "string"
+     },
+     "options": {
+      "additionalProperties": true,
+      "description": "Applied generation options; excludes connection secrets",
+      "title": "Options",
+      "type": "object"
+     },
+     "prompt": {
+      "default": "",
+      "title": "Prompt",
+      "type": "string"
+     },
+     "reference_mode": {
+      "default": "none",
+      "enum": [
+       "none",
+       "images",
+       "lineup",
+       "vibe",
+       "unknown"
+      ],
+      "title": "Reference Mode",
+      "type": "string"
+     },
+     "refs": {
+      "items": {
+       "$ref": "#/components/schemas/CloudReference"
+      },
+      "title": "Refs",
+      "type": "array"
+     },
+     "seed": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Seed"
+     },
+     "size": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Size"
+     },
+     "width": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Width"
+     }
+    },
+    "required": [
+     "prompt",
+     "negative",
+     "width",
+     "height",
+     "size",
+     "seed",
+     "reference_mode",
+     "refs",
+     "options"
+    ],
+    "title": "CloudEffectiveParameters",
+    "type": "object"
+   },
+   "CloudParameterModes": {
+    "additionalProperties": false,
+    "properties": {
+     "negative": {
+      "default": "unknown",
+      "enum": [
+       "native",
+       "prompt",
+       "unsupported",
+       "unknown"
+      ],
+      "title": "Negative",
+      "type": "string"
+     },
+     "seed": {
+      "default": "unknown",
+      "enum": [
+       "native",
+       "unsupported",
+       "unknown"
+      ],
+      "title": "Seed",
+      "type": "string"
+     },
+     "size": {
+      "default": "unknown",
+      "enum": [
+       "native",
+       "prompt",
+       "unsupported",
+       "unknown"
+      ],
+      "title": "Size",
+      "type": "string"
+     }
+    },
+    "required": [
+     "negative",
+     "size",
+     "seed"
+    ],
+    "title": "CloudParameterModes",
+    "type": "object"
+   },
+   "CloudReference": {
+    "additionalProperties": false,
+    "properties": {
+     "asset_id": {
+      "title": "Asset Id",
+      "type": "string"
+     },
+     "owner": {
+      "title": "Owner",
+      "type": "string"
+     },
+     "reason": {
+      "title": "Reason",
+      "type": "string"
+     },
+     "role": {
+      "title": "Role",
+      "type": "string"
+     },
+     "slot": {
+      "title": "Slot",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "slot",
+     "asset_id",
+     "role",
+     "owner",
+     "reason"
+    ],
+    "title": "CloudReference",
+    "type": "object"
+   },
+   "CloudRequestSnapshot": {
+    "additionalProperties": false,
+    "description": "Cloud request provenance, without credentials; output dimensions belong to Take.",
+    "properties": {
+     "adjustments": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Adjustments",
+      "type": "array"
+     },
+     "channel_id": {
+      "default": "",
+      "title": "Channel Id",
+      "type": "string"
+     },
+     "effective": {
+      "$ref": "#/components/schemas/CloudEffectiveParameters"
+     },
+     "kind": {
+      "default": "",
+      "title": "Kind",
+      "type": "string"
+     },
+     "model": {
+      "default": "",
+      "title": "Model",
+      "type": "string"
+     },
+     "parameter_modes": {
+      "$ref": "#/components/schemas/CloudParameterModes"
+     },
+     "requested": {
+      "$ref": "#/components/schemas/CloudRequestedParameters"
+     }
+    },
+    "required": [
+     "channel_id",
+     "kind",
+     "model",
+     "requested",
+     "effective",
+     "parameter_modes",
+     "adjustments"
+    ],
+    "title": "CloudRequestSnapshot",
+    "type": "object"
+   },
+   "CloudRequestedParameters": {
+    "additionalProperties": false,
+    "properties": {
+     "height": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Height"
+     },
+     "negative": {
+      "default": "",
+      "title": "Negative",
+      "type": "string"
+     },
+     "prompt": {
+      "default": "",
+      "title": "Prompt",
+      "type": "string"
+     },
+     "reference_mode": {
+      "default": "off",
+      "enum": [
+       "auto",
+       "manual",
+       "off"
+      ],
+      "title": "Reference Mode",
+      "type": "string"
+     },
+     "refs": {
+      "items": {
+       "$ref": "#/components/schemas/CloudReference"
+      },
+      "title": "Refs",
+      "type": "array"
+     },
+     "seed": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Seed"
+     },
+     "width": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Width"
+     }
+    },
+    "required": [
+     "prompt",
+     "negative",
+     "width",
+     "height",
+     "seed",
+     "reference_mode",
+     "refs"
+    ],
+    "title": "CloudRequestedParameters",
+    "type": "object"
+   },
    "ComfyInstance-Input": {
     "additionalProperties": false,
     "properties": {
@@ -5021,6 +5320,17 @@
       "title": "Asset Id",
       "type": "string"
      },
+     "cloud_request": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/CloudRequestSnapshot"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Actual cloud request and parameter support; no credentials"
+     },
      "created_at": {
       "title": "Created At",
       "type": "string"
@@ -5165,6 +5475,7 @@
      "height",
      "seed",
      "parameter_snapshot",
+     "cloud_request",
      "qa",
      "faces",
      "edits",

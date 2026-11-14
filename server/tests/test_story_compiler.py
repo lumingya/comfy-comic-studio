@@ -3,7 +3,7 @@ import random
 import unittest
 from pathlib import Path
 
-from mio_server.models import AssetRef, PanelOverrides, Series, VariantSet
+from mio_server.models import AssetRef, PanelOverrides, Series, Style, VariantSet
 from mio_server.pipeline import compiler as K
 from mio_server.pipeline import refs as R
 from mio_server.pipeline import story as ST
@@ -73,6 +73,76 @@ class CompilerTests(unittest.TestCase):
         out = K.compile_panel(series, episode, episode.panel("p04"), dialect="natural", seed=3)
         self.assertEqual(out.seed, 3)
         self.assertIn("trench coat", out.positive)
+
+    def test_natural_negative_combines_profile_style_and_panel(self):
+        series, episode = project()
+        series.bible.styles[0].negative = ["style defect"]
+        panel = episode.panel("p02")
+        panel.overrides.negative_prompt = "panel defect"
+        out = K.compile_panel(
+            series, episode, panel, dialect="natural", negative=["profile defect"], seed=3
+        )
+        self.assertEqual(out.negative, "profile defect, style defect, panel defect")
+
+    def test_natural_reference_numbers_follow_available_images(self):
+        series, episode = project()
+        # The first character has no image; the second one's image occupies slot 1.
+        series.bible.character("zhou").references = [AssetRef(asset_id="zhou-front")]
+        out = K.compile_panel(series, episode, episode.panel("p04"), dialect="natural", seed=3)
+        self.assertEqual(out.refs, ["zhou"])
+        self.assertNotIn("reference image", out.positive.split(" | ")[0])
+        self.assertIn("reference image 1", out.positive.split(" | ")[1])
+        self.assertNotIn("reference image 2", out.positive)
+
+    def test_natural_manual_and_off_do_not_invent_character_associations(self):
+        series, episode = project()
+        series.bible.character("lin").references = [AssetRef(asset_id="lin-front")]
+        panel = episode.panel("p02")
+        panel.references = [AssetRef(asset_id="m1")]
+        for mode in ("manual", "off"):
+            with self.subTest(mode=mode):
+                panel.reference_mode = mode
+                out = K.compile_panel(series, episode, panel, dialect="natural", seed=3)
+                self.assertEqual(out.refs, [])
+                self.assertNotIn("reference image", out.positive)
+
+    def test_natural_uses_explicit_reference_order(self):
+        series, episode = project()
+        selected = [
+            R.RefChoice(1, "manual", "reference", "manual", "manual"),
+            R.RefChoice(2, "zhou-front", "front", "zhou", "character"),
+            R.RefChoice(3, "lin-front", "front", "lin", "character"),
+        ]
+        out = K.compile_panel(
+            series, episode, episode.panel("p04"), dialect="natural", references=selected, seed=3
+        )
+        self.assertEqual(out.refs, ["zhou", "lin"])
+        self.assertIn("reference image 3", out.positive.split(" | ")[0])
+        self.assertIn("reference image 2", out.positive.split(" | ")[1])
+        self.assertNotIn("reference image 1", out.positive)
+        out = K.compile_panel(
+            series, episode, episode.panel("p04"), dialect="natural", references=[], seed=3
+        )
+        self.assertNotIn("reference image", out.positive)
+
+    def test_raw_prompt_is_not_rewritten_for_references_or_profile_negative(self):
+        series, episode = project()
+        series.bible.character("lin").references = [AssetRef(asset_id="lin-front")]
+        panel = episode.panel("p02")
+        panel.overrides = PanelOverrides(
+            raw_prompt="Exactly my text", raw_negative="Exactly my exclusions"
+        )
+        out = K.compile_panel(
+            series,
+            episode,
+            panel,
+            dialect="natural",
+            references=R.select_references(series.bible, panel),
+            negative=["profile defect"],
+            seed=3,
+        )
+        self.assertEqual(out.positive, "Exactly my text")
+        self.assertEqual(out.negative, "Exactly my exclusions")
 
     def test_custom_quality_replaces_defaults(self):
         series, episode = project()
@@ -147,6 +217,47 @@ class RefTests(unittest.TestCase):
         self.assertEqual([c.asset_id for c in R.select_references(series.bible, panel)], ["m1"])
         panel.reference_mode = "off"
         self.assertEqual(R.select_references(series.bible, panel), [])
+
+    def test_manual_keeps_every_image_in_user_order(self):
+        series, episode = project()
+        panel = episode.panel("p02")
+        panel.reference_mode = "manual"
+        ids = ["m6", "m2", "m4", "m3", "m1", "m5"]
+        panel.references = [AssetRef(asset_id=aid) for aid in ids]
+        selected = R.select_references(series.bible, panel)
+        self.assertEqual([ref.asset_id for ref in selected], ids)
+        self.assertEqual([ref.slot for ref in selected], list(range(1, 7)))
+        self.assertEqual({ref.owner for ref in selected}, {"manual"})
+
+    def test_auto_includes_scene_and_selected_style_after_characters(self):
+        series, episode = project()
+        panel = episode.panel("p04")
+        for cid in ("lin", "zhou"):
+            series.bible.character(cid).references = [AssetRef(asset_id=f"{cid}-front")]
+        series.bible.location(panel.location_id).references = [AssetRef(asset_id="scene")]
+        series.bible.styles[0].references = [AssetRef(asset_id="default-style")]
+        alternate = Style(
+            id="alternate",
+            description="warm watercolor",
+            references=[AssetRef(asset_id="alternate-style")],
+        )
+        series.bible.styles.append(alternate)
+        variant = VariantSet(name="Alternate", style_id=alternate.id)
+        bible = ST.apply_variant(series.bible, variant)
+        selected = R.select_references(bible, panel, style_id=variant.style_id)
+        self.assertEqual(
+            [ref.asset_id for ref in selected],
+            ["lin-front", "zhou-front", "scene", "alternate-style"],
+        )
+        self.assertEqual([ref.slot for ref in selected], [1, 2, 3, 4])
+        self.assertEqual(selected[-1].owner, alternate.id)
+        self.assertEqual(selected[-1].role, "style")
+        default = R.select_references(bible, panel)
+        self.assertEqual(default[-1].asset_id, "default-style")
+        limited = R.select_references(bible, panel, max_refs=3, style_id=variant.style_id)
+        self.assertEqual([ref.asset_id for ref in limited], ["lin-front", "zhou-front", "scene"])
+        out = K.compile_panel(series, episode, panel, variant=variant, dialect="natural", seed=3)
+        self.assertIn("warm watercolor", out.positive)
 
 
 class ProvenanceTests(unittest.TestCase):

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from .. import llm as L
 from ..jobs import ExecError, ItemContext
+from . import cloud_request as CR
 from .cloud import CloudRenderer
 
 
@@ -19,11 +20,26 @@ class CloudExecutor:
         self.llm_factory = llm_factory
         self.render = render_service
         self.backend = backend  # callable(channel_id) -> image client; None = the LLM client
+        self.render.cloud_backend = self._backend
+
+    def _backend(self, channel_id):
+        return self.backend(channel_id) if self.backend else self.llm_factory()
 
     def execute(self, ctx: ItemContext) -> dict:
         inp = ctx.input
+        request = inp.get("request")
         try:
-            client = self.backend(inp.get("channel") or "") if self.backend else self.llm_factory()
+            if request is not None:
+                # An empty frozen channel is specifically the default chat client, not a
+                # request to resolve whatever channel becomes the new default later.
+                client = (
+                    self._backend(request["channel_id"])
+                    if request["channel_id"]
+                    else self.llm_factory()
+                )
+                client = CR.bind_request(client, request)
+            else:
+                client = self._backend(inp.get("channel") or "")
         except LookupError as exc:
             raise ExecError(str(exc), kind="bad_input", sent=False) from None
         renderer = CloudRenderer(client)
@@ -32,15 +48,25 @@ class CloudExecutor:
                 sheets = {
                     cid: self.assets.read(aid) for cid, aid in (inp.get("sheets") or {}).items()
                 }
+                references = (
+                    [self.assets.read(r["asset_id"]) for r in request["requested"]["refs"]]
+                    if request
+                    else None
+                )
                 ctx.mark_sent()
                 data, meta = renderer.panel(
-                    inp["story"], inp["panel"], sheets, prompt=inp.get("prompt")
+                    inp["story"],
+                    inp["panel"],
+                    sheets,
+                    prompt=inp.get("prompt"),
+                    request=request,
+                    references=references,
                 )
             elif inp["mode"] == "edit":
                 refs = [self.assets.read(a) for a in inp.get("refs") or []]
                 image = self.assets.read(inp["image"])
                 ctx.mark_sent()
-                data, meta = renderer.edit(image, inp["instruction"], refs)
+                data, meta = renderer.edit(image, inp["instruction"], refs, request=request)
             else:
                 raise ExecError(f"unknown cloud mode {inp['mode']}", kind="bad_input", sent=False)
         except L.LLMError as exc:
@@ -54,9 +80,14 @@ class CloudExecutor:
             kind = "rate_limited" if exc.status == 429 else "cloud_error"
             raise ExecError(str(exc), kind=kind, sent=sent) from None
         asset = self.assets.put(data, source=f"cloud:{meta.get('model')}")
+        actual = meta.get("request")
+        if not actual and request:
+            unknown = {**request, "kind": "unknown"}
+            actual = CR.snapshot(unknown)
+            actual["kind"] = request["kind"]
         return {
             "images": [{"asset_id": asset.id, "width": asset.width, "height": asset.height}],
-            "cloud": {k: meta.get(k) for k in ("model", "mode", "refs", "seconds", "fallbacks")},
+            "cloud": actual,
             "meta": inp.get("meta") or {},
         }
 

@@ -37,6 +37,7 @@ from .render_cloud import CloudRefinementMixin
 from .render_composition import KEY as COMPOSITION
 from .render_composition import CompositionMixin
 from .render_edits import PREVIOUS, EditsMixin, RenderError  # noqa: F401
+from .story import apply_variant
 
 
 def default_profile() -> RenderProfile:
@@ -82,6 +83,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
     def __init__(self, store, assets, engine):
         self.store, self.assets, self.engine = store, assets, engine
         self.hooks = HookBus()  # replaced by the registry's bus in AppContext
+        self.cloud_backend = lambda channel_id: None  # wired by CloudExecutor
         self._rng = random.Random()
         self._local = threading.local()
 
@@ -215,7 +217,11 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         adopt_replace: bool = False,
     ) -> list[ItemSpec]:
         specs = []
-        refs = select_references(series.bible, panel)
+        refs = select_references(
+            apply_variant(series.bible, variant),
+            panel,
+            style_id=variant.style_id if variant else None,
+        )
         ref_values = reference_values(refs)
         extra = panel_values(series, panel)
         prepared = None
@@ -230,6 +236,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
                 negative=profile.negative_tags,
                 rng=self.rng,
                 base_width=profile.base_width,
+                references=refs,
             )
             self.prompt_hook(pp, series, episode, panel)
             if prepared is None:
@@ -486,7 +493,15 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
                     parent_take_id=parent.id if parent else None,
                     width=img.get("width"),
                     height=img.get("height"),
-                    seed=meta.get("seed"),
+                    seed=(
+                        result["cloud"]["effective"].get("seed")
+                        if result.get("cloud")
+                        and result["cloud"]["parameter_modes"]["seed"] == "native"
+                        else None
+                        if result.get("cloud")
+                        else meta.get("seed")
+                    ),
+                    cloud_request=result.get("cloud"),
                     edits=edits,
                     parameter_snapshot={
                         k: meta.get(k)

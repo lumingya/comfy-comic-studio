@@ -15,6 +15,7 @@ from ..models import Episode, Panel, PanelWidth, Series, VariantSet, parse_ratio
 from ..render_models import RenderProfile
 from . import prompts as P
 from . import variables as V
+from .refs import RefChoice, select_references
 from .story import apply_variant, panel_view, to_story
 
 SDXL_PIXELS = 1024 * 1024
@@ -92,6 +93,7 @@ def compile_panel(
     seed: int | None = None,
     rng: random.Random | None = None,
     base_width: int | None = None,
+    references: list[RefChoice] | None = None,
 ) -> PanelPrompt:
     ov = panel.overrides
     width, height = canvas_size(panel, base_width=base_width)
@@ -130,11 +132,21 @@ def compile_panel(
     story = to_story(series, episode, variant)
     pv = next(p for p in story["panels"] if p["id"] == panel.id)
     if dialect == "natural":
-        text, refs = P.natural(story, pv, with_refs=True)
+        selected = (
+            references
+            if references is not None
+            else select_references(bible, panel, style_id=style.id if style else None)
+        )
+        slots = {
+            ref.owner: ref.slot
+            for ref in selected
+            if ref.owner != "manual" and bible.character(ref.owner) is not None
+        }
+        text, refs = P.natural(story, pv, with_refs=True, reference_slots=slots)
         if style and style.description:
             text = f"{text} Style: {style.description}."
         positive = _join(text, append)
-        neg = _join(extra_neg, style_negative)
+        neg = _join(", ".join(negative) if negative is not None else "", style_negative, extra_neg)
         return PanelPrompt(
             positive,
             neg,

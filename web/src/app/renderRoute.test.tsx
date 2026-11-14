@@ -148,6 +148,7 @@ describe('render routes', () => {
       />,
     );
     await screen.findByText(/纯云端出图 · 主力图像服务 · 已配置/);
+    expect(screen.getByText(/实际请求记录可在候选详情查看/)).toBeInTheDocument();
     expect(document.querySelector('.stage-notice')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /生成/ }));
     expect(generate).toHaveBeenCalledOnce();
@@ -162,6 +163,7 @@ describe('render routes', () => {
       />,
     );
     await screen.findByText(/此配置没有可用的 ComfyUI 实例/);
+    expect(screen.queryByText(/实际请求记录可在候选详情查看/)).toBeNull();
     expect(screen.getByRole('link', { name: '检查出图配置' })).toHaveAttribute(
       'href',
       '/engine?tab=instances',

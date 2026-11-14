@@ -37,7 +37,8 @@ export const configZh = {
     sharedModel: '文本模型 API 中的出图模型',
     protocol: {
       openai_images: 'Images 协议：文生图使用 /images/generations，带参考图时使用 /images/edits。',
-      novelai: 'NovelAI 图像协议：使用 /ai/generate-image；尺寸、采样器和参考强度在此渠道生效。',
+      novelai:
+        'NovelAI 图像协议：使用 /ai/generate-image；分镜尺寸优先，采样器和参考强度使用渠道设置。',
       chat_image:
         'Chat Completions 协议：使用 /chat/completions。需要能返回图片的模型或反代，不是普通文本聊天。',
     },
@@ -51,16 +52,17 @@ export const configZh = {
     modelHint: '留空使用 {{model}}；兼容服务请填写它实际支持的模型 ID。',
     extensionModel: '填写扩展支持的模型 ID。',
     outputSize: '输出尺寸（size）',
-    sizeHint: '这里才是 Images API 的尺寸参数。留空不发送；也可填写服务商支持的自定义值。',
+    sizeHint: '无分镜尺寸时使用此值，留空不发送。分镜生成优先使用逐格尺寸；须符合服务商支持范围。',
     quality: '输出质量（quality）',
     optionalHint: '留空不发送；仅填写服务商支持的参数。',
     providerDefault: '不指定，使用服务商默认值',
-    multiple64: '像素；服务端会按 64 像素对齐。',
-    noChatSize: 'Chat 协议不发送宽高或 size 参数；画幅要求请写在提示词中。',
+    multiple64: '无分镜尺寸时使用此值；分镜尺寸优先，服务端按 64 像素对齐。',
+    noChatSize: 'Chat 协议不发送宽高或 size 参数；分镜画幅要求会写入提示词，不保证精确尺寸。',
     advanced: '高级参数与标识',
     novelAdvancedHint: '负面描述、步数、采样器、参考强度',
     advancedHint: '负面描述与只读渠道 ID',
-    negativeHint: '会追加到提示词的 Avoid 段落，不是独立的负向参数。',
+    negativeHint: '与分镜负向描述合并，追加到提示词的 Avoid 段落，不是独立的负向参数。',
+    negativeNativeHint: '与分镜负向描述合并后，作为负向参数发送。',
     scale: '提示词引导（scale）',
     sampler: '采样器',
     refStrength: '参考强度',
@@ -259,7 +261,7 @@ export const configEn = {
       openai_images:
         'Images protocol: /images/generations for text prompts, /images/edits when references are supplied.',
       novelai:
-        'NovelAI protocol: /ai/generate-image. Dimensions, sampler and reference strength are configured for this channel.',
+        'NovelAI protocol: /ai/generate-image. Panel dimensions take priority; sampler and reference strength use channel settings.',
       chat_image:
         'Chat Completions protocol: /chat/completions. Requires an image-capable model or proxy, not an ordinary text-only chat model.',
     },
@@ -279,18 +281,21 @@ export const configEn = {
     extensionModel: 'Enter a model ID supported by the extension.',
     outputSize: 'Output size',
     sizeHint:
-      'This is the Images API size parameter. Blank omits it. Custom provider-supported values are allowed.',
+      'Used when no panel dimensions are supplied; blank omits it. Panel dimensions take priority and must be supported by the provider.',
     quality: 'Output quality',
     optionalHint: 'Blank omits this parameter. Use a value supported by your provider.',
     providerDefault: 'Unspecified — provider default',
-    multiple64: 'Pixels; the server aligns to multiples of 64.',
+    multiple64:
+      'Used when no panel dimensions are supplied. Panel dimensions take priority and are aligned to multiples of 64.',
     noChatSize:
-      'Chat requests do not send width, height or size parameters. Describe the desired aspect ratio in your prompt.',
+      'Chat requests do not send width, height or size parameters. Panel dimensions are described in the prompt; exact dimensions are not guaranteed.',
     advanced: 'Advanced parameters & ID',
     novelAdvancedHint: 'Negative prompt, steps, sampler and reference strength',
     advancedHint: 'Negative prompt and read-only channel ID',
     negativeHint:
-      'Appended as an “Avoid” paragraph, not sent as a separate negative-prompt parameter.',
+      'Combined with the panel negative prompt and appended as an “Avoid” paragraph, not sent as a separate negative-prompt parameter.',
+    negativeNativeHint:
+      'Combined with the panel negative prompt and sent as a negative-prompt parameter.',
     scale: 'Prompt guidance (scale)',
     sampler: 'Sampler',
     refStrength: 'Reference strength',

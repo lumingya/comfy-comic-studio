@@ -1,0 +1,45 @@
+.cloud-request {
+  margin-top: 16px;
+}
+.cloud-request > summary {
+  cursor: pointer;
+}
+.cloud-request-table {
+  overflow-x: auto;
+  margin-block: 12px;
+}
+.cloud-request table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.cloud-request th,
+.cloud-request td {
+  text-align: left;
+  vertical-align: top;
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.cloud-request td small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+}
+.cloud-request-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-width: 38ch;
+}
+.cloud-request pre {
+  max-width: none;
+  font-size: 12px;
+}
+.cloud-request-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  font-size: 12px;
+}
+.cloud-request-options dd {
+  margin: 4px 0;
+}

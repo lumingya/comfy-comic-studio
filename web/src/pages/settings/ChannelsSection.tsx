@@ -196,7 +196,7 @@ function ChannelFields({
       >
         <Field
           label={t('settings.channels.negative')}
-          hint={novelai ? undefined : t('config.cloud.negativeHint')}
+          hint={t(novelai ? 'config.cloud.negativeNativeHint' : 'config.cloud.negativeHint')}
         >
           <TextInput value={c.negative} onChange={(negative) => set({ negative })} />
         </Field>

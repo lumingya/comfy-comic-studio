@@ -25,6 +25,7 @@ import { toast, toastError } from '../../components/toast';
 import { Empty, Modal, NumberInput, Progress, Switch } from '../../components/ui';
 import { useEpisodeContext } from '../episode/EpisodePage';
 import { PendingCard, TakeCard } from './TakeCard';
+import { CloudRequestDetails, TakeParameterSummary } from '../../components/CloudRequestDetails';
 
 export default function BoardTab() {
   const { t } = useTranslation();
@@ -325,9 +326,11 @@ export default function BoardTab() {
             : ''
         }
         description={
-          zoom
-            ? `${zoom.stage} · ${zoom.width ?? '?'}×${zoom.height ?? '?'} · ${t('board.seed')} ${zoom.seed ?? '—'}`
-            : undefined
+          zoom ? (
+            <>
+              {zoom.stage} · <TakeParameterSummary take={zoom} />
+            </>
+          ) : undefined
         }
         footer={
           zoom ? (
@@ -362,9 +365,12 @@ export default function BoardTab() {
         }
       >
         {zoom ? (
-          <div className="zoom">
-            <img src={assetUrl(zoom.asset_id)} alt="" />
-          </div>
+          <>
+            <div className="zoom">
+              <img src={assetUrl(zoom.asset_id)} alt="" />
+            </div>
+            <CloudRequestDetails snapshot={zoom.cloud_request} />
+          </>
         ) : null}
       </Modal>
     </div>

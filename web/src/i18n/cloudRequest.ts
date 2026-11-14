@@ -1,0 +1,96 @@
+export const cloudRequestZh = {
+  title: '云端生成参数',
+  explanation:
+    '记录生成时的创作意图和请求参数；上方尺寸来自实际图片。服务是否遵循提示词由模型决定。',
+  generationHint: '云端种子、尺寸和参考图按渠道能力处理；实际请求记录可在候选详情查看。',
+  parameter: '参数',
+  requested: '创作意图',
+  effective: '请求记录',
+  size: '尺寸',
+  negative: '负向描述',
+  references: '参考图',
+  prompts: '提示词详情',
+  referenceAssets: '参考素材',
+  seed: { unsupported: '未应用（渠道不支持）', unknown: '是否应用未知（扩展未声明）' },
+  mode: {
+    native: '独立参数',
+    prompt: '写入提示词，不保证精确遵循',
+    unsupported: '未应用',
+    unknown: '扩展未声明支持情况',
+  },
+  requestRefs: { auto: '自动选择', manual: '手动选择', off: '关闭' },
+  effectiveRefs: {
+    none: '未发送',
+    images: '逐张发送',
+    lineup: '合成参考图（列出源素材）',
+    vibe: '风格参考',
+    unknown: '扩展未声明处理方式',
+  },
+  options: {
+    quality: '质量',
+    steps: '步数',
+    scale: '提示词引导',
+    sampler: '采样器',
+    ref_strength: '参考强度',
+  },
+  adjustments: {
+    seed_modulo_32bit: '种子已转换到服务支持的 32 位范围。',
+    width_aligned_64: '宽度已按 64 像素对齐。',
+    height_aligned_64: '高度已按 64 像素对齐。',
+    multi_reference_lineup: '多张参考素材已合成为一张参考图。',
+    adapter_capabilities_unknown: '扩展未声明参数能力，无法确认哪些参数已应用。',
+    novelai_reference_tokens_removed: '已移除 NovelAI 不使用的参考图占位标记。',
+  },
+  otherAdjustment: '适配器调整：{{code}}',
+};
+
+export const cloudRequestEn = {
+  title: 'Cloud generation parameters',
+  explanation:
+    'Records creative intent and request parameters at generation time. Dimensions above come from the output image. Prompt adherence depends on the model.',
+  generationHint:
+    'Cloud seed, dimensions and references depend on channel support. View the request record in candidate details.',
+  parameter: 'Parameter',
+  requested: 'Creative intent',
+  effective: 'Request record',
+  size: 'Dimensions',
+  negative: 'Negative prompt',
+  references: 'References',
+  prompts: 'Prompt details',
+  referenceAssets: 'Reference assets',
+  seed: {
+    unsupported: 'Not applied (unsupported)',
+    unknown: 'Application unknown (extension has not declared support)',
+  },
+  mode: {
+    native: 'Dedicated parameter',
+    prompt: 'Included in the prompt; exact adherence is not guaranteed',
+    unsupported: 'Not applied',
+    unknown: 'Support not declared by the extension',
+  },
+  requestRefs: { auto: 'Automatic', manual: 'Manual', off: 'Off' },
+  effectiveRefs: {
+    none: 'Not sent',
+    images: 'Sent individually',
+    lineup: 'Combined reference (source assets shown)',
+    vibe: 'Vibe reference',
+    unknown: 'Handling not declared by the extension',
+  },
+  options: {
+    quality: 'Quality',
+    steps: 'Steps',
+    scale: 'Prompt guidance',
+    sampler: 'Sampler',
+    ref_strength: 'Reference strength',
+  },
+  adjustments: {
+    seed_modulo_32bit: 'Seed converted to the supported 32-bit range.',
+    width_aligned_64: 'Width aligned to a multiple of 64 pixels.',
+    height_aligned_64: 'Height aligned to a multiple of 64 pixels.',
+    multi_reference_lineup: 'Multiple source references were combined into one image.',
+    adapter_capabilities_unknown:
+      'The extension has not declared its capabilities; applied parameters cannot be confirmed.',
+    novelai_reference_tokens_removed: 'Reference placeholders unused by NovelAI were removed.',
+  },
+  otherAdjustment: 'Adapter adjustment: {{code}}',
+};

@@ -20,7 +20,6 @@ from __future__ import annotations
 import base64
 import copy
 import io
-import random
 import re
 import time
 import zipfile
@@ -30,6 +29,7 @@ from pydantic import Field
 
 from .. import llm as L
 from ..models import StrictModel
+from . import cloud_request as CR
 
 NOVELAI_BASE = "https://image.novelai.net"
 
@@ -61,7 +61,12 @@ def _raise_for(resp: httpx.Response, what: str) -> None:
         return
     detail = resp.text[:300].strip()
     retryable = resp.status_code in (408, 429) or resp.status_code >= 500
-    raise L.LLMError(f"{what} HTTP {resp.status_code}：{detail}", resp.status_code, retryable)
+    raise L.LLMError(
+        f"{what} HTTP {resp.status_code}：{detail}",
+        resp.status_code,
+        retryable,
+        reference_unsupported=L.reference_rejection(detail),
+    )
 
 
 class HttpChannel:
@@ -72,6 +77,8 @@ class HttpChannel:
     def __init__(self, channel: ImageChannel, transport: httpx.BaseTransport | None = None):
         self.channel = channel
         self.transport = transport
+        model = channel.model or CR.DEFAULT_MODELS.get(channel.kind, "")
+        self.image_models = (model,) if model else ()
 
     def client(self, timeout: float) -> httpx.Client:
         headers = {"User-Agent": "mio-studio"}
@@ -80,13 +87,36 @@ class HttpChannel:
         return httpx.Client(timeout=timeout, headers=headers, transport=self.transport)
 
     def generate_image(self, prompt: str, refs=(), models=None, timeout=360.0, retries=3):
+        refs = list(refs)
+        request = CR.freeze_request(self, {"prompt": prompt}, models=models)
+        return self.generate_image_request(request, refs, timeout=timeout, retries=retries)
+
+    def generate_image_request(self, request: dict, refs=(), timeout=360.0, retries=3):
+        client = CR.bind_request(self, request)
+        client._request_snapshot = CR.snapshot(request)
+        return client._generate_image(refs, timeout, retries)
+
+    def _generate_image(self, refs, timeout, retries):
         refs, failures, started = list(refs), [], time.monotonic()
+        actual = self._request_snapshot
+        if refs and actual["effective"]["reference_mode"] == "none":
+            actual["effective"]["reference_mode"] = (
+                "vibe" if actual["kind"] == "novelai" else "images"
+            )
+        if refs and actual["kind"] == "novelai":
+            actual["effective"]["options"]["reference_strength_multiple"] = [
+                self.channel.ref_strength
+            ] * len(refs)
+            if not self.is_v4():
+                actual["effective"]["options"]["reference_information_extracted_multiple"] = [
+                    1.0
+                ] * len(refs)
         attempts = max(1, retries)
         for attempt in range(attempts):
             try:
                 with self.client(timeout) as http:
-                    data = self._once(http, prompt, refs)
-                reply = L.Reply("", self.channel.model or self.channel.kind, 0.0)
+                    data = self._once(http, actual["effective"]["prompt"], refs)
+                reply = L.Reply("", actual["model"], 0.0, image_request=actual)
                 reply.seconds = round(time.monotonic() - started, 2)
                 reply.attempts = failures
                 return data, reply
@@ -113,13 +143,12 @@ class OpenAIImages(HttpChannel):
 
     def _once(self, http, prompt, refs):
         c = self.channel
+        effective = self._request_snapshot["effective"]
         base = (c.base_url or "https://api.openai.com/v1").rstrip("/")
-        text = prompt + (f"\nAvoid: {c.negative}" if c.negative else "")
-        fields = {"model": c.model or "gpt-image-1", "prompt": text, "n": 1}
-        if c.size:
-            fields["size"] = c.size
-        if c.quality:
-            fields["quality"] = c.quality
+        fields = {"model": c.model, "prompt": prompt, "n": 1}
+        if effective["size"]:
+            fields["size"] = effective["size"]
+        fields.update(effective["options"])
         if refs:
             files = [("image[]", (f"ref{i}.png", _png(r), "image/png")) for i, r in enumerate(refs)]
             form = {k: str(v) for k, v in fields.items()}
@@ -167,20 +196,20 @@ class NovelAI(HttpChannel):
 
     def _once(self, http, prompt, refs):
         c = self.channel
+        effective = self._request_snapshot["effective"]
         base = (c.base_url or NOVELAI_BASE).rstrip("/")
         model = c.model or "nai-diffusion-4-5-full"
-        prompt = re.sub(r"@image_\d+", "", prompt).strip()
         params = {
             "params_version": 3,
-            "width": max(64, round(c.width / 64) * 64),
-            "height": max(64, round(c.height / 64) * 64),
+            "width": effective["width"],
+            "height": effective["height"],
             "scale": c.scale,
             "sampler": c.sampler,
             "steps": c.steps,
-            "seed": random.randint(0, 2**32 - 1),
+            "seed": effective["seed"],
             "n_samples": 1,
             "noise_schedule": "karras",
-            "negative_prompt": c.negative,
+            "negative_prompt": effective["negative"],
             "ucPreset": 0,
         }
         if self.is_v4():
@@ -190,7 +219,7 @@ class NovelAI(HttpChannel):
                 "use_order": True,
             }
             params["v4_negative_prompt"] = {
-                "caption": {"base_caption": c.negative, "char_captions": []},
+                "caption": {"base_caption": effective["negative"], "char_captions": []},
                 "legacy_uc": False,
             }
         if refs:
@@ -240,6 +269,23 @@ def _first_image(payload: bytes) -> bytes:
 KINDS = {"openai_images": OpenAIImages, "novelai": NovelAI}
 
 
+class ExtensionChannel:
+    """Keep channel identity even when a legacy extension retains no public config."""
+
+    def __init__(self, channel, factory, transport):
+        self.channel, self.factory, self.transport = channel, factory, transport
+        self.client = factory(channel, transport)
+        self.image_models = (channel.model,) if channel.model else ()
+
+    def generate_image(self, *args, **kwargs):
+        return self.client.generate_image(*args, **kwargs)
+
+    def generate_image_request(self, request, refs=(), timeout=360.0, retries=3):
+        bound = CR.bind_request(self, request)
+        client = self.factory(bound.channel, self.transport)
+        return CR.call(client, request, refs, timeout=timeout, retries=retries)
+
+
 def build(channel: ImageChannel, llm_factory, transport=None, kinds: dict | None = None):
     """Image backend for a channel; ``chat_image`` reuses the configured LLM client.
 
@@ -258,17 +304,11 @@ def build(channel: ImageChannel, llm_factory, transport=None, kinds: dict | None
             client.api_key = channel.api_key
         if channel.model:
             client.image_models = (channel.model,)
-        if channel.model or channel.negative:
-            original = client.generate_image
-
-            def generate_image(prompt, *args, models=None, **kw):
-                text = prompt + (f"\nAvoid: {channel.negative}" if channel.negative else "")
-                selected = (channel.model,) if channel.model else models
-                return original(text, *args, models=selected, **kw)
-
-            client.generate_image = generate_image
+        client._image_channel = channel
         return client
     cls = (kinds or KINDS).get(channel.kind)
     if cls is None:
         raise LookupError(f"未知的出图渠道类型：{channel.kind}（扩展未启用？）")
+    if cls not in (OpenAIImages, NovelAI):
+        return ExtensionChannel(channel, cls, transport)
     return cls(channel, transport)

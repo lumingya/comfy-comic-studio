@@ -43,6 +43,9 @@ def _asset_ids(series: Series, episodes: list[Episode]) -> set[str]:
             ids.update(r.asset_id for r in p.references)
         for t in ep.takes:
             ids.add(t.asset_id)
+            if t.cloud_request:
+                ids.update(r.asset_id for r in t.cloud_request.requested.refs)
+                ids.update(r.asset_id for r in t.cloud_request.effective.refs)
             for e in t.edits:
                 mask = e.params.get("mask_asset_id")
                 if isinstance(mask, str):
