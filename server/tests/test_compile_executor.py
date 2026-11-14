@@ -90,6 +90,46 @@ class CompileTests(unittest.TestCase):
 
 
 class DiagnosticsTests(unittest.TestCase):
+    def test_invalid_combo_alone_fails_diagnostics(self):
+        graph = {"1": {"class_type": "CustomSampler", "inputs": {"sampler": "removed"}}}
+        for spec in ([["euler"]], ["COMBO", {"options": ["euler"]}]):
+            with self.subTest(spec=spec):
+                info = {"CustomSampler": {"input": {"required": {"sampler": spec}}}}
+                report = diagnose(graph, info)
+                self.assertFalse(report["ok"])
+                self.assertEqual(report["missing_nodes"], [])
+                self.assertEqual(report["missing_models"], [])
+                self.assertEqual(report["invalid_values"][0]["value"], "removed")
+                self.assertEqual(report["invalid_values"][0]["allowed"], ["euler"])
+
+    def test_valid_combo_and_unconstrained_input_pass_diagnostics(self):
+        graph = {
+            "1": {
+                "class_type": "CustomSampler",
+                "inputs": {"sampler": "euler", "text": "free text", "model": ["2", 0]},
+            }
+        }
+        info = {
+            "CustomSampler": {
+                "input": {
+                    "required": {"sampler": [["euler"]], "text": ["STRING"]},
+                    "optional": {"model": [["literal"]]},
+                }
+            }
+        }
+        report = diagnose(graph, info)
+        self.assertTrue(report["ok"])
+        self.assertEqual(report["invalid_values"], [])
+
+    def test_empty_combo_rejects_a_value(self):
+        graph = {"1": {"class_type": "CustomSampler", "inputs": {"sampler": "euler"}}}
+        for spec in ([[]], ["COMBO", {"options": []}]):
+            with self.subTest(spec=spec):
+                info = {"CustomSampler": {"input": {"optional": {"sampler": spec}}}}
+                report = diagnose(graph, info)
+                self.assertFalse(report["ok"])
+                self.assertEqual(report["invalid_values"][0]["allowed"], [])
+
     def test_missing_nodes_and_models(self):
         graph = {
             "1": {

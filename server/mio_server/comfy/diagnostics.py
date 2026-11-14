@@ -43,10 +43,10 @@ def diagnose(graph: dict, object_info: dict) -> dict:
             entry = {"node": node_id, "class_type": cls, "input": key, "value": value}
             if MODEL_FILE.search(value):
                 missing_models.append(entry)
-            elif allowed:
+            else:
                 invalid_values.append({**entry, "allowed": allowed[:20]})
     return {
-        "ok": not missing_nodes and not missing_models,
+        "ok": not missing_nodes and not missing_models and not invalid_values,
         "missing_nodes": [{"class_type": k, "nodes": v} for k, v in sorted(missing_nodes.items())],
         "missing_models": missing_models,
         "invalid_values": invalid_values,

@@ -174,6 +174,10 @@ def mapping_bindings(graph: dict, mapping: dict | None) -> list[Binding]:
                 raise BindingError(f"映射 {key}：指针 {pointer} 必须形如 /<节点>/inputs/<字段>")
             if parts[2] not in graph[parts[0]].get("inputs", {}):
                 raise BindingError(f"映射 {key}：节点 {parts[0]} 没有字段 {parts[2]}")
+            if is_link(graph[parts[0]]["inputs"][parts[2]]):
+                raise BindingError(
+                    f"映射 {key}：{pointer} 是连线输入，请映射到上游节点的字面值输入"
+                )
             part = parts[2] if kind == "area" and parts[2] in AREA_PARTS else None
             result.append(Binding(kind, parts[0], parts[2], qualifier or None, "mapping", part))
     return result
@@ -295,8 +299,12 @@ def select_variant(
     return pruned, sorted({b.node for b in outputs})
 
 
-def _expand(target, parts: list[str]):
+def _expand(target, parts: list[str], path: tuple[str, ...] = ()):
     """Concrete ``(container, key)`` matches for pointer ``parts``; ``*`` matches every item."""
+    # A node input link is indivisible; /node/inputs/link/0 must not rewrite its source.
+    # Lists inside custom widget data are ordinary values, even when they resemble links.
+    if len(path) == 3 and path[1] == "inputs" and is_link(target):
+        raise BindingError(f"不能覆盖连线：/{'/'.join(path)}，请修改上游节点的字面值输入")
     head, rest = parts[0], parts[1:]
     if head == "*":
         keys = (
@@ -314,7 +322,7 @@ def _expand(target, parts: list[str]):
         keys = []
     for key in keys:
         if rest:
-            yield from _expand(target[key], rest)
+            yield from _expand(target[key], rest, (*path, str(key)))
         else:
             yield target, key
 

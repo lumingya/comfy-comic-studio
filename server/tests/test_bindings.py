@@ -288,6 +288,26 @@ class OverrideAndGuardTests(unittest.TestCase):
         with self.assertRaises(B.BindingError):
             B.apply_overrides(self.graph, {"/2/inputs/loras/__value__/9/active": False})
 
+    def test_overrides_cannot_rewrite_link_components(self):
+        before = copy.deepcopy(self.graph)
+        for pointer, value in (
+            ("/15/inputs/text/0", "11"),
+            ("/15/inputs/text/1", 2),
+            ("/15/inputs/text/*", 2),
+            ("/15/inputs/*/0", "11"),
+        ):
+            with self.subTest(pointer=pointer), self.assertRaises(B.BindingError):
+                B.apply_overrides(self.graph, {pointer: value})
+        self.assertEqual(self.graph, before)
+
+    def test_overrides_keep_nested_custom_arrays_editable(self):
+        self.graph["10"]["inputs"]["widget"] = {"rows": [["label", 0], ["other", 1]]}
+        out = B.apply_overrides(
+            self.graph, {"/10/inputs/widget/rows/*/1": 9, "/10/inputs/widget/rows/0/0": "changed"}
+        )
+        self.assertEqual(out["10"]["inputs"]["widget"]["rows"], [["changed", 9], ["other", 9]])
+        self.assertEqual(self.graph["10"]["inputs"]["widget"]["rows"], [["label", 0], ["other", 1]])
+
     def test_overrides_for_pruned_nodes_are_ignored(self):
         bindings, _ = B.resolve(self.graph)
         pruned, _ = B.select_variant(self.graph, bindings, "draft")
@@ -396,6 +416,28 @@ class FallbackTests(unittest.TestCase):
             B.resolve(graph, {"seed": ["/3/seed"]})
         with self.assertRaises(B.BindingError):
             B.resolve(graph, {"seed": ["/3/inputs/nope"]})
+
+    def test_mapping_rejects_links_and_link_components_without_mutating_graph(self):
+        graph = plain_sdxl()
+        before = copy.deepcopy(graph)
+        for pointer in ("/3/inputs/positive", "/3/inputs/positive/0", "/3/inputs/positive/1"):
+            with self.subTest(pointer=pointer), self.assertRaises(B.BindingError):
+                B.resolve(graph, {"prompt": pointer})
+        self.assertEqual(graph, before)
+
+    def test_mapping_writes_upstream_literals_and_custom_arrays_without_changing_links(self):
+        graph = plain_sdxl()
+        graph["6"]["inputs"]["custom/weights"] = [0.1, 0.2, 0.3]
+        before = copy.deepcopy(graph)
+        bindings, problems = B.resolve(
+            graph, {"prompt": "/6/inputs/text", "weights": "/6/inputs/custom~1weights"}
+        )
+        out = B.apply_values(graph, bindings, {"prompt": "replacement", "weights": [0.4, 0.5]})
+        self.assertEqual(problems, [])
+        self.assertEqual(out["6"]["inputs"]["text"], "replacement")
+        self.assertEqual(out["6"]["inputs"]["custom/weights"], [0.4, 0.5])
+        self.assertEqual(out["3"]["inputs"]["positive"], ["6", 0])
+        self.assertEqual(graph, before)
 
 
 if __name__ == "__main__":
