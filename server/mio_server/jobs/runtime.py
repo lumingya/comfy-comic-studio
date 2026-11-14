@@ -74,7 +74,8 @@ class EngineRuntime:
         """One scheduling pass (the background loop calls this; tests may call it directly)."""
         with self.lock:
             rows = self.db.execute(
-                """SELECT i.job_id, i.idx, i.resource, i.group_key, i.instances, j.priority, j.created, j.window,
+                """SELECT i.job_id, i.idx, i.resource, i.group_key, i.instances, i.input_json,
+                   j.priority, j.created, j.window,
                    (SELECT COUNT(*) FROM job_items r WHERE r.job_id = i.job_id AND r.state = 'running') AS active
                    FROM job_items i JOIN jobs j ON j.id = i.job_id
                    WHERE i.state = 'pending' AND j.paused = 0 AND j.blocked = 0 AND j.canceled = 0
@@ -96,6 +97,7 @@ class EngineRuntime:
                         r["group_key"],
                         tuple(json.loads(r["instances"])),
                         (-r["priority"], r["created"], r["idx"]),
+                        self._needs_state_lease(json.loads(r["input_json"])),
                     )
                 )
             plan = self.pool.plan(candidates)
@@ -122,32 +124,61 @@ class EngineRuntime:
 
     def _claim(self, cand: Candidate, instance_id: str | None) -> ItemContext | None:
         now = time.time()
-        with self.db:
-            cur = self.db.execute(
-                "UPDATE job_items SET state = 'running', epoch = epoch + 1, attempts = attempts + 1, sent = 0, "
-                "upstream = NULL, instance_id = ?, started = ?, finished = NULL, error_json = NULL, updated = ? "
-                "WHERE job_id = ? AND idx = ? AND state = 'pending'",
-                (instance_id, now, now, cand.job_id, cand.idx),
-            )
-            if cur.rowcount != 1:
+        with self.lock, self.pool.lock:
+            item = self._item_row(cand.job_id, cand.idx)
+            exclusive = self._needs_state_lease(json.loads(item["input_json"]))
+            if not self.pool.available(cand.resource, instance_id, exclusive):
                 return None
-            self.pool.acquire(cand.resource, instance_id, cand.group)
-            job = self._job_dict(
-                self.db.execute("SELECT * FROM jobs WHERE id = ?", (cand.job_id,)).fetchone()
-            )
-            row = self.db.execute(
-                "SELECT * FROM job_items WHERE job_id = ? AND idx = ?", (cand.job_id, cand.idx)
-            ).fetchone()
-            ctx = self._context(job, row, self.pool.instance(instance_id))
-            self.running[(cand.job_id, cand.idx)] = ctx
-            self._event(
-                cand.job_id,
-                cand.idx,
-                "started",
-                {"instance": instance_id, "attempt": row["attempts"]},
-            )
-            self._aggregate(cand.job_id)
+            instance = self.pool.instance(instance_id)
+            record, ctx, acquired = None, None, False
+            try:
+                with self.db:
+                    cur = self.db.execute(
+                        "UPDATE job_items SET state = 'running', epoch = epoch + 1, "
+                        "attempts = attempts + 1, sent = 0, upstream = NULL, instance_id = ?, "
+                        "started = ?, finished = NULL, error_json = NULL, updated = ? "
+                        "WHERE job_id = ? AND idx = ? AND state = 'pending'",
+                        (instance_id, now, now, cand.job_id, cand.idx),
+                    )
+                    if cur.rowcount != 1:
+                        return None
+                    job = self._job_dict(
+                        self.db.execute(
+                            "SELECT * FROM jobs WHERE id = ?", (cand.job_id,)
+                        ).fetchone()
+                    )
+                    row = self._item_row(cand.job_id, cand.idx)
+                    if exclusive and cand.resource == COMFY:
+                        record = self.state_leases._reserve(
+                            cand.job_id, cand.idx, row["epoch"], instance.base_url
+                        )
+                    self.pool.acquire(cand.resource, instance_id, cand.group)
+                    acquired = True
+                    ctx = self._context(job, row, instance)
+                    self.running[(cand.job_id, cand.idx)] = ctx
+                    self._event(
+                        cand.job_id,
+                        cand.idx,
+                        "started",
+                        {"instance": instance_id, "attempt": row["attempts"]},
+                    )
+                    self._aggregate(cand.job_id)
+            except Exception:
+                if ctx is not None and self.running.get((cand.job_id, cand.idx)) is ctx:
+                    del self.running[(cand.job_id, cand.idx)]
+                if acquired:
+                    self.pool.release(
+                        cand.resource, instance_id, instance.base_url if instance else None
+                    )
+                if record and self.state_leases.get(cand.job_id, cand.idx) is None:
+                    if self.pool.state_blocks.get(record["endpoint"]) == record["token"]:
+                        del self.pool.state_blocks[record["endpoint"]]
+                raise
         return ctx
+
+    @staticmethod
+    def _needs_state_lease(payload: dict) -> bool:
+        return any(stage.get("frontend_state") for stage in payload.get("stages", []))
 
     def _context(self, job: dict, row, instance) -> ItemContext:
         return ItemContext(
@@ -161,16 +192,19 @@ class EngineRuntime:
             job["snapshot"],
             instance,
             row["upstream"],
+            state_lease=self.state_leases.get(job["id"], row["idx"]),
         )
 
     def _run(self, ctx: ItemContext, resource: str, instance_id: str | None) -> None:
         executor = self.executors.get(ctx.kind)
+        entered_executor = False
         try:
             if executor is None:
                 raise ExecError(
                     f"no executor registered for {ctx.kind}", kind="no_executor", sent=False
                 )
             ctx.raise_if_cancelled()
+            entered_executor = True
             result = executor.execute(ctx)
             self._finish(
                 ctx.job_id, ctx.idx, ctx.epoch, "complete", result=result or {}, apply=True
@@ -205,10 +239,27 @@ class EngineRuntime:
                 },
             )
         finally:
+            try:
+                if ctx.state_lease:
+                    record = self.state_leases.get(ctx.job_id, ctx.idx)
+                    if record and record["token"] == ctx.state_lease["token"]:
+                        data = record["data"]
+                        unused = not entered_executor and not data
+                        saved = (
+                            data.get("phase") == "restored"
+                            and data.get("result") is not None
+                            and self._item_row(ctx.job_id, ctx.idx)["state"] in TERMINAL
+                        )
+                        if unused or saved:
+                            self.state_leases.release(record["token"])
+            except Exception:
+                log.exception("could not release restored endpoint state reservation")
             with self.lock:
                 if self.running.get((ctx.job_id, ctx.idx)) is ctx:
                     del self.running[(ctx.job_id, ctx.idx)]
-            self.pool.release(resource, instance_id)
+            self.pool.release(
+                resource, instance_id, ctx.instance.base_url if ctx.instance else None
+            )
             self.wake.set()
 
     def _was_sent(self, ctx: ItemContext) -> bool:

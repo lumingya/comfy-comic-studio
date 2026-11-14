@@ -4500,6 +4500,22 @@
     "title": "ResolveRequest",
     "type": "object"
    },
+   "RestoreStateRequest": {
+    "properties": {
+     "confirm_stopped": {
+      "default": false,
+      "title": "Confirm Stopped",
+      "type": "boolean"
+     },
+     "discard_result": {
+      "default": false,
+      "title": "Discard Result",
+      "type": "boolean"
+     }
+    },
+    "title": "RestoreStateRequest",
+    "type": "object"
+   },
    "RetryRequest": {
     "properties": {
      "confirm_uncertain": {
@@ -9067,6 +9083,75 @@
     ]
    }
   },
+  "/jobs/{job_id}/items/{idx}/restore-state": {
+   "post": {
+    "description": "Restore state after upstream completion; confirm_stopped explicitly attests an unknown run ended.",
+    "operationId": "restore_job_item_state",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "job_id",
+      "required": true,
+      "schema": {
+       "title": "Job Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "idx",
+      "required": true,
+      "schema": {
+       "title": "Idx",
+       "type": "integer"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RestoreStateRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Restore Job Item State",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Restore Job Item State",
+    "tags": [
+     "jobs"
+    ]
+   }
+  },
   "/jobs/{job_id}/pause": {
    "post": {
     "operationId": "pause_job",
@@ -9220,6 +9305,59 @@
      }
     ],
     "summary": "Retry",
+    "tags": [
+     "jobs"
+    ]
+   }
+  },
+  "/jobs/{job_id}/state-recovery": {
+   "get": {
+    "description": "Saved frontend-state restoration records, including canceled tasks.",
+    "operationId": "get_job_state_recovery",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "job_id",
+      "required": true,
+      "schema": {
+       "title": "Job Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         "title": "Response Get Job State Recovery",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Get Job State Recovery",
     "tags": [
      "jobs"
     ]
@@ -10933,6 +11071,66 @@
      }
     ],
     "summary": "Patch Workflow",
+    "tags": [
+     "library"
+    ]
+   }
+  },
+  "/workflows/{workflow_id}/capture-state": {
+   "post": {
+    "description": "Read existing frontend-node snapshots; callers explicitly save the returned config.state.",
+    "operationId": "capture_workflow_state",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "workflow_id",
+      "required": true,
+      "schema": {
+       "title": "Workflow Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "instance_id",
+      "required": false,
+      "schema": {
+       "default": "comfy_local",
+       "title": "Instance Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Capture Workflow State",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Capture Workflow State",
     "tags": [
      "library"
     ]

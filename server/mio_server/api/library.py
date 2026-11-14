@@ -8,6 +8,7 @@ from fastapi import APIRouter, Request, Response, status
 from pydantic import BaseModel, Field
 
 from .. import imaging
+from ..comfy import adapters
 from ..comfy import compile as C
 from ..comfy import workflow_slots as slots
 from ..comfy.client import ComfyError
@@ -181,6 +182,31 @@ def diagnose_workflow(ctx: Ctx, workflow_id: str, instance_id: str = "comfy_loca
     except (ComfyError, OSError) as exc:
         raise ValueError(f"无法读取 {inst.name} 的 /object_info：{exc}") from None
     return {**diagnose(doc.graph, info), "models": model_catalog(info), "instance": inst.id}
+
+
+@router.post("/workflows/{workflow_id}/capture-state")
+def capture_workflow_state(ctx: Ctx, workflow_id: str, instance_id: str = "comfy_local") -> dict:
+    """Read existing frontend-node snapshots; callers explicitly save the returned config.state."""
+    doc = ctx.store.get_doc("workflow", workflow_id)
+    inst = ctx.store.get_doc("instance", instance_id)
+    if not adapters.stateful_nodes(doc.graph):
+        raise ValueError("工作流没有支持捕获状态的参数面板节点")
+    try:
+        captured = adapters.capture(ctx.comfy_client_factory(inst.base_url), doc.graph)
+    except Exception as exc:
+        raise ValueError(
+            f"无法读取 {inst.name} 的参数面板状态；请确认 ComfyUI 与对应插件可用：{exc}"
+        ) from None
+    state = {}
+    for node_id, item in captured.items():
+        try:
+            adapters.validate_state(item["state"], nonempty=True)
+        except ComfyError as exc:
+            raise ValueError(
+                f"节点 {node_id} 状态不可用：{exc}。请先在 ComfyUI 中打开工作流并保存面板参数。"
+            ) from None
+        state[node_id] = item["state"]
+    return {"state": state}
 
 
 # ---------------------------------------------------------------- profiles

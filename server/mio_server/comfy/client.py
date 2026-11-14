@@ -154,7 +154,50 @@ class ComfyClient:
         return result["prompt_id"]
 
     def history(self, prompt_id: str) -> dict:
-        return self.get_json(f"/history/{prompt_id}").get(prompt_id, {})
+        history = self.get_json(f"/history/{urllib.parse.quote(prompt_id, safe='')}")
+        if not isinstance(history, dict):
+            raise ComfyError("ComfyUI history 响应格式无效", kind="invalid_response")
+        entry = history.get(prompt_id, {})
+        if not isinstance(entry, dict) or (
+            "status" in entry and not isinstance(entry["status"], dict)
+        ):
+            raise ComfyError("ComfyUI history 条目格式无效", kind="invalid_response")
+        return entry
+
+    def queue_status(self) -> dict:
+        """A validated queue snapshot; malformed responses never prove the instance is idle."""
+        queue = self.get_json("/queue")
+        if not isinstance(queue, dict):
+            raise ComfyError("ComfyUI queue 响应格式无效", kind="invalid_response")
+        for name in ("queue_running", "queue_pending"):
+            entries = queue.get(name)
+            if not isinstance(entries, list) or any(
+                not isinstance(entry, list)
+                or len(entry) < 2
+                or not isinstance(entry[1], str)
+                or not entry[1].strip()
+                for entry in entries
+            ):
+                raise ComfyError(f"ComfyUI {name} 格式无效", kind="invalid_response")
+        return queue
+
+    def execution_state(self, prompt_id: str) -> tuple[str, dict]:
+        """Return active/terminal_success/terminal_error/unknown with any history evidence.
+
+        Queue membership wins over history. Empty queue/history and outputs alone never prove
+        terminal execution, so callers can safely retain state until a later reconciliation.
+        """
+        if not isinstance(prompt_id, str) or not prompt_id.strip():
+            return "unknown", {}
+        queue = self.queue_status()
+        if any(
+            entry[1] == prompt_id
+            for name in ("queue_running", "queue_pending")
+            for entry in queue[name]
+        ):
+            return "active", {}
+        entry = self.history(prompt_id)
+        return _history_state(entry), entry
 
     def view(self, filename: str, subfolder: str, kind: str) -> bytes:
         query = urllib.parse.urlencode({"filename": filename, "subfolder": subfolder, "type": kind})
@@ -215,8 +258,9 @@ class ComfyClient:
             else:
                 self._poll(prompt_id, started, timeout)
         except TimeoutError:
-            self.interrupt()
-            raise ComfyError(f"出图超时（{timeout:.0f} 秒），已请求中断", kind="timeout") from None
+            raise ComfyError(
+                f"等待出图超时（{timeout:.0f} 秒），请稍后核对执行结果", kind="timeout"
+            ) from None
         finally:
             if ws:
                 ws.close()
@@ -323,12 +367,7 @@ class ComfyClient:
         deadline = time.monotonic() + wait
         while True:
             entry = self.history(prompt_id)
-            status = entry.get("status") or {}
-            if entry and (
-                status.get("completed")
-                or status.get("status_str") in ("success", "error")
-                or entry.get("outputs")
-            ):
+            if _history_state(entry) != "unknown":
                 return entry
             if time.monotonic() > deadline:
                 raise ComfyError("ComfyUI 尚未保存执行结果，请稍后核对", kind="timeout")
@@ -338,13 +377,20 @@ class ComfyClient:
         while time.monotonic() - started <= timeout:
             if getattr(self, "_cancelled", lambda: False)():
                 raise ComfyError("出图已停止", kind="canceled")
-            entry = self.history(prompt_id)
-            if entry.get("outputs") or (entry.get("status") or {}).get("completed"):
-                return
-            if (entry.get("status") or {}).get("status_str") == "error":
+            state, _ = self.execution_state(prompt_id)
+            if state in ("terminal_success", "terminal_error"):
                 return
             time.sleep(1.0)
         raise TimeoutError
+
+
+def _history_state(entry: dict) -> str:
+    status = entry.get("status") or {}
+    if status.get("status_str") == "error":
+        return "terminal_error"
+    if status.get("status_str") == "success" or status.get("completed") is True:
+        return "terminal_success"
+    return "unknown"
 
 
 def parse_preview(message: bytes) -> dict:

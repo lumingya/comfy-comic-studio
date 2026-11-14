@@ -35,8 +35,9 @@ from pathlib import Path
 from typing import Any, Callable
 
 from .lease import FileLease
-from .pool import ResourcePool
+from .pool import InstanceSlot, ResourcePool
 from .runtime import EngineRuntime
+from .state_leases import StateLeases
 from .types import (  # noqa: F401  (re-exported)
     ITEM_STATES,
     SCHEMA,
@@ -85,6 +86,7 @@ class JobEngine(EngineRuntime):
         self.running: dict[tuple[str, int], ItemContext] = {}
         self.listeners: list[Callable[[dict], None]] = []
         self.workers = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="mio-job")
+        self.state_leases = StateLeases(self)
         self._recover()
         self.thread = threading.Thread(target=self._loop, name="mio-job-scheduler", daemon=True)
         if autostart:
@@ -122,13 +124,17 @@ class JobEngine(EngineRuntime):
                     "message": "服务中断时这一项正在执行。先核对上游结果，确认后再决定是否重新提交。",
                     "upstream": r["upstream"],
                 }
-                state = "uncertain" if r["sent"] else "pending"
+                state = (
+                    "uncertain"
+                    if r["sent"] or self.state_leases.get(r["job_id"], r["idx"])
+                    else "pending"
+                )
                 self.db.execute(
                     "UPDATE job_items SET state = ?, error_json = ?, epoch = epoch + 1, updated = ? "
                     "WHERE job_id = ? AND idx = ?",
                     (
                         state,
-                        json.dumps(error, ensure_ascii=False) if r["sent"] else None,
+                        json.dumps(error, ensure_ascii=False) if state == "uncertain" else None,
                         now,
                         r["job_id"],
                         r["idx"],
@@ -384,6 +390,8 @@ class JobEngine(EngineRuntime):
         now = time.time()
         with self.lock, self.db:
             self._require(job_id)
+            if self.state_leases.list(job_id):
+                raise JobConflict("restore the endpoint state before retrying this job")
             rows = self.db.execute(
                 "SELECT idx, state FROM job_items WHERE job_id = ? ORDER BY idx", (job_id,)
             ).fetchall()
@@ -425,6 +433,11 @@ class JobEngine(EngineRuntime):
 
     def resolve(self, job_id: str, idx: int, action: str, result: dict | None = None) -> dict:
         """Resolve an uncertain item: ``failed`` | ``complete`` (with result) | ``reconcile``."""
+        if self.state_leases.get(job_id, idx):
+            if action != "reconcile":
+                raise JobConflict("restore the endpoint state before resolving this item")
+            self.restore_state(job_id, idx)
+            return self.get(job_id)
         row = self._item_row(job_id, idx)
         if row["state"] != "uncertain":
             raise JobConflict(f"item {idx} is {row['state']}, not uncertain")
@@ -453,12 +466,61 @@ class JobEngine(EngineRuntime):
             raise JobError(f"unknown action: {action}")
         return self.get(job_id)
 
+    def restore_state(
+        self, job_id: str, idx: int, confirm_stopped: bool = False, *, discard_result: bool = False
+    ) -> dict:
+        """Explicitly restore a frozen endpoint and only then allow further dispatch."""
+        with self._job_guard(job_id, command=True):
+            with self.lock:
+                job = self._require(job_id)
+                row = self._item_row(job_id, idx)
+                if (job_id, idx) in self.running:
+                    raise JobConflict("the original worker is still running")
+                record = self.state_leases.get(job_id, idx)
+                if record is None:
+                    raise JobConflict("this item has no endpoint state to restore")
+                executor = self.executors.get(job["kind"])
+                if not hasattr(executor, "recover_state"):
+                    raise JobError("this job kind cannot restore endpoint state")
+                instance = InstanceSlot(row["instance_id"] or "", record["base_url"])
+                ctx = self._context(job, row, instance)
+            options = {"confirm_stopped": confirm_stopped}
+            if discard_result:
+                options["discard_result"] = True
+            report = executor.recover_state(ctx, record, **options)
+            if not report.get("restored"):
+                return report
+            # Cancellation is allowed to retain ownership; cleanup must never adopt its result.
+            with self.lock:
+                job = self._require(job_id)
+                row = self._item_row(job_id, idx)
+            if row["state"] == "uncertain" and not job["canceled"]:
+                result = report.get("result")
+                if result is not None:
+                    self._finish(job_id, idx, row["epoch"], "complete", result=result, apply=True)
+                else:
+                    self._finish(
+                        job_id,
+                        idx,
+                        row["epoch"],
+                        "failed",
+                        error=report.get("error")
+                        or {
+                            "kind": "state_restored",
+                            "message": "Endpoint restored; retry explicitly.",
+                        },
+                    )
+            self.state_leases.release(record["token"])
+            return report
+
     def reconcile_all(self) -> int:
         """Try every uncertain item whose executor supports reconcile (read-only upstream lookups)."""
         with self.lock:
             rows = self.db.execute(
                 "SELECT i.job_id, i.idx, j.kind FROM job_items i JOIN jobs j ON j.id = i.job_id "
-                "WHERE i.state = 'uncertain' AND i.upstream IS NOT NULL"
+                "WHERE i.state = 'uncertain' AND i.upstream IS NOT NULL "
+                "AND NOT EXISTS (SELECT 1 FROM state_leases s "
+                "WHERE s.job_id = i.job_id AND s.idx = i.idx)"
             ).fetchall()
         fixed = 0
         for r in rows:
@@ -476,6 +538,8 @@ class JobEngine(EngineRuntime):
     def delete(self, job_id: str) -> None:
         with self._job_guard(job_id, command=True), self.lock, self.db:
             job = self._require(job_id)
+            if self.state_leases.list(job_id):
+                raise JobConflict("restore the endpoint state before deleting this job")
             if job["state"] in ("running",):
                 raise JobConflict("stop the job before deleting it")
             self.db.execute("DELETE FROM job_events WHERE job_id = ?", (job_id,))

@@ -427,6 +427,17 @@ class MioClient(_Base):
             params={"instance_id": instance_id},
         )
 
+    def capture_workflow_state(self, workflow_id: str, *, instance_id: str | None = None) -> Any:
+        """POST /workflows/{workflow_id}/capture-state — Capture Workflow State.
+
+        Read existing frontend-node snapshots; callers explicitly save the returned config.state.
+        """
+        return self._request(
+            "POST",
+            f"/workflows/{_q(workflow_id)}/capture-state",
+            params={"instance_id": instance_id},
+        )
+
     def list_profiles(self) -> Any:
         """GET /profiles — List Profiles."""
         return self._request("GET", "/profiles")
@@ -507,6 +518,20 @@ class MioClient(_Base):
             f"/jobs/{_q(job_id)}/events",
             params={"after": after, "limit": limit},
         )
+
+    def get_job_state_recovery(self, job_id: str) -> Any:
+        """GET /jobs/{job_id}/state-recovery — Get Job State Recovery.
+
+        Saved frontend-state restoration records, including canceled tasks.
+        """
+        return self._request("GET", f"/jobs/{_q(job_id)}/state-recovery")
+
+    def restore_job_item_state(self, job_id: str, idx: int, body: dict | list | None = None) -> Any:
+        """POST /jobs/{job_id}/items/{idx}/restore-state — Restore Job Item State.
+
+        Restore state after upstream completion; confirm_stopped explicitly attests an unknown run ended.
+        """
+        return self._request("POST", f"/jobs/{_q(job_id)}/items/{_q(idx)}/restore-state", json=body)
 
     def pause_job(self, job_id: str) -> Any:
         """POST /jobs/{job_id}/pause — Pause."""

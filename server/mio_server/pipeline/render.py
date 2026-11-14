@@ -169,6 +169,12 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         data["graph"] = self.hooks.filter(
             "render.workflow", data["graph"], workflow_id=doc.id, stage=stage.kind
         )
+        from ..comfy.compile import validate_plan
+
+        try:
+            validate_plan(data["graph"], data["frontend_state"])
+        except B.BindingError as exc:
+            raise RenderError(f"{doc.name}：{exc}") from None
         data["warnings"] = warnings + data["warnings"]
         data["workflow_id"], data["stage_id"], data["kind"] = doc.id, stage.id, stage.kind
         feed = next((p for p, a in data["uploads"].items() if a == PREVIOUS), None)

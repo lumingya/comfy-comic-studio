@@ -32,6 +32,10 @@ CREATE TABLE IF NOT EXISTS job_events (
     seq INTEGER PRIMARY KEY AUTOINCREMENT, job_id TEXT NOT NULL, idx INTEGER, type TEXT NOT NULL,
     data_json TEXT NOT NULL DEFAULT '{}', at REAL NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_events_job ON job_events(job_id, seq);
+CREATE TABLE IF NOT EXISTS state_leases (
+    endpoint TEXT PRIMARY KEY, token TEXT NOT NULL UNIQUE, job_id TEXT NOT NULL,
+    idx INTEGER NOT NULL, epoch INTEGER NOT NULL, base_url TEXT NOT NULL, data_json TEXT NOT NULL,
+    UNIQUE(job_id, idx));
 """
 
 
@@ -86,6 +90,7 @@ class ItemContext:
     upstream: str | None = None
     cancelled: threading.Event = field(default_factory=threading.Event)
     abort_hooks: list[Callable[[], None]] = field(default_factory=list)
+    state_lease: dict | None = None
 
     def mark_sent(self, upstream: str | None = None) -> None:
         """Call *before* the request leaves the process: from now on a failure is uncertain."""

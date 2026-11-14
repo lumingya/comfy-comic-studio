@@ -76,6 +76,8 @@ class FakeComfy(BaseHTTPRequestHandler):
 
     def do_GET(self):
         server = self.server
+        if self.path == "/queue":
+            return self._json(200, {"queue_running": [], "queue_pending": []})
         if self.path.startswith("/ws"):
             if server.scenario == "no-ws":
                 return self._json(404, {})
@@ -277,6 +279,127 @@ class ClientTests(unittest.TestCase):
         server, client = self.start("ok")
         self.assertEqual(client.upload_image(b"\x89PNG", "ref.png"), "mio/ref.png")
         self.assertIn(b'name="image"; filename="ref.png"', server.uploads[0])
+
+
+class ExecutionStateTests(unittest.TestCase):
+    def setUp(self):
+        self.client = ComfyClient("http://unused")
+        self.empty_queue = {"queue_running": [], "queue_pending": []}
+
+    def test_timeout_does_not_interrupt_instance(self):
+        for websocket in (True, False):
+            with self.subTest(websocket=websocket):
+                socket = Mock()
+                with (
+                    patch(
+                        "mio_server.comfy.client.WebSocket",
+                        return_value=socket,
+                        side_effect=None if websocket else OSError("no websocket"),
+                    ),
+                    patch.object(self.client, "queue_prompt", return_value="p1"),
+                    patch.object(self.client, "_follow", side_effect=TimeoutError),
+                    patch.object(self.client, "_poll", side_effect=TimeoutError),
+                    patch.object(self.client, "interrupt") as interrupt,
+                    self.assertRaises(ComfyError) as caught,
+                ):
+                    self.client.run({}, timeout=1)
+                self.assertEqual(caught.exception.kind, "timeout")
+                interrupt.assert_not_called()
+                if websocket:
+                    socket.close.assert_called_once()
+
+    def test_queue_status_preserves_valid_entries(self):
+        queue = {"queue_running": [[0, "p1", {}, {}, []]], "queue_pending": [[1, "p2"]]}
+        with patch.object(self.client, "get_json", return_value=queue):
+            self.assertIs(self.client.queue_status(), queue)
+
+    def test_queue_status_rejects_malformed_payloads(self):
+        cases = [[], {}, {"queue_running": [], "queue_pending": None}]
+        cases += [
+            {"queue_running": [entry], "queue_pending": []}
+            for entry in (None, {}, [], [1], [1, 42], [1, ""], [1, " "])
+        ]
+        for queue in cases:
+            with self.subTest(queue=queue):
+                with (
+                    patch.object(self.client, "get_json", return_value=queue),
+                    self.assertRaises(ComfyError) as caught,
+                ):
+                    self.client.queue_status()
+                self.assertEqual(caught.exception.kind, "invalid_response")
+
+    def test_queued_or_running_prompt_overrides_any_old_history(self):
+        for name in ("queue_running", "queue_pending"):
+            with self.subTest(name=name):
+                queue = {**self.empty_queue, name: [[0, "p1"]]}
+                with (
+                    patch.object(self.client, "get_json", return_value=queue) as read,
+                    patch.object(self.client, "history") as history,
+                ):
+                    self.assertEqual(self.client.execution_state("p1"), ("active", {}))
+                read.assert_called_once_with("/queue")
+                history.assert_not_called()
+
+    def test_only_explicit_terminal_status_proves_completion(self):
+        cases = [
+            ({"status": {"completed": True}}, "terminal_success"),
+            ({"status": {"status_str": "success", "completed": False}}, "terminal_success"),
+            ({"status": {"status_str": "error", "completed": False}}, "terminal_error"),
+            ({"status": {"status_str": "error", "completed": True}}, "terminal_error"),
+            ({"outputs": {"9": {"images": []}}}, "unknown"),
+            ({"status": {"completed": "true"}}, "unknown"),
+            ({}, "unknown"),
+        ]
+        for entry, expected in cases:
+            with self.subTest(entry=entry):
+                with patch.object(
+                    self.client, "get_json", side_effect=[self.empty_queue, {"p1": entry}]
+                ) as read:
+                    self.assertEqual(self.client.execution_state("p1"), (expected, entry))
+                self.assertEqual(
+                    [call.args[0] for call in read.call_args_list], ["/queue", "/history/p1"]
+                )
+
+    def test_missing_prompt_id_performs_no_requests(self):
+        with patch.object(self.client, "get_json") as read:
+            for prompt_id in (None, "", " "):
+                self.assertEqual(self.client.execution_state(prompt_id), ("unknown", {}))
+        read.assert_not_called()
+
+    def test_execution_state_preserves_http_failure(self):
+        error = ComfyError("HTTP failed", kind="http", status=503)
+        for responses in ([error], [self.empty_queue, error]):
+            with (
+                patch.object(self.client, "get_json", side_effect=responses),
+                self.assertRaises(ComfyError) as caught,
+            ):
+                self.client.execution_state("p1")
+            self.assertIs(caught.exception, error)
+
+    def test_history_rejects_malformed_responses(self):
+        for response in ([], {"p1": []}, {"p1": {"status": "success"}}):
+            with (
+                patch.object(self.client, "get_json", return_value=response),
+                self.assertRaises(ComfyError),
+            ):
+                self.client.history("p1")
+
+    def test_polling_and_settling_do_not_accept_outputs_alone(self):
+        incomplete = {"outputs": {"9": {"images": []}}}
+        with (
+            patch.object(self.client, "execution_state", return_value=("unknown", incomplete)),
+            patch("mio_server.comfy.client.time.monotonic", side_effect=[0, 2]),
+            patch("mio_server.comfy.client.time.sleep"),
+            self.assertRaises(TimeoutError),
+        ):
+            self.client._poll("p1", 0, 1)
+        with (
+            patch.object(self.client, "history", return_value=incomplete),
+            patch("mio_server.comfy.client.time.monotonic", side_effect=[0, 2]),
+            self.assertRaises(ComfyError) as caught,
+        ):
+            self.client._settled_history("p1", wait=1)
+        self.assertEqual(caught.exception.kind, "timeout")
 
 
 class WebSocketTimeoutTests(unittest.TestCase):

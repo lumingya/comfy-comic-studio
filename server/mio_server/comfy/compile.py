@@ -20,8 +20,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from ..render_models import WorkflowConfig, WorkflowDoc
+from . import adapters
 from . import bindings as B
 from . import workflow_slots as slots
+from .client import ComfyError
 
 BUILTIN_DIR = Path(__file__).resolve().parent.parent / "workflows"
 BUILTINS = {
@@ -46,6 +48,7 @@ class Compiled:
     bindings: dict = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
     checkpoint: str = ""
+    frontend_state: dict = field(default_factory=dict)
 
     def to_json(self) -> dict:
         return {
@@ -56,6 +59,7 @@ class Compiled:
             "bindings": self.bindings,
             "warnings": self.warnings,
             "checkpoint": self.checkpoint,
+            "frontend_state": copy.deepcopy(self.frontend_state),
         }
 
 
@@ -110,6 +114,60 @@ def primary_checkpoint(graph: dict, bound: list[B.Binding]) -> str:
     return ""
 
 
+def validate_plan(graph: dict, plan: dict) -> None:
+    """Reject hook changes that no longer match the compiled frontend-state snapshot."""
+    expected = adapters.stateful_nodes(graph)
+    if not isinstance(plan, dict) or set(expected) != set(plan):
+        raise B.BindingError("工作流参数面板节点与编译快照不一致，请重新编译工作流")
+    for node_id, class_type in expected.items():
+        item = plan[node_id]
+        if not isinstance(item, dict) or item.get("class_type") != class_type:
+            raise B.BindingError(f"节点 {node_id} 的参数面板类型与编译快照不一致")
+        try:
+            desired = adapters.desired_state(class_type, item.get("saved"), item.get("changes"))
+            if item.get("desired") != desired:
+                raise ComfyError("参数面板目标值与编译快照不一致")
+        except ComfyError as exc:
+            raise B.BindingError(f"节点 {node_id}：{exc}") from exc
+
+
+def _frontend_plan(doc: WorkflowDoc, graph: dict, variant: dict) -> dict:
+    state = variant.get("state", {})
+    frontend = variant.get("frontend", {})
+    if not isinstance(state, dict) or not isinstance(frontend, dict):
+        raise B.BindingError("变体的 state 和 frontend 必须是按节点 ID 索引的对象")
+    for source in (doc.config.state, doc.config.frontend, state, frontend):
+        for node_id in source:
+            original = doc.graph.get(node_id)
+            if original is None or original.get("class_type") not in adapters.ADAPTERS:
+                raise B.BindingError(f"配置指向不存在或类型不匹配的参数面板节点 {node_id}")
+            if node_id in graph and graph[node_id].get("class_type") != original["class_type"]:
+                raise B.BindingError(f"节点 {node_id} 的参数面板类型已改变")
+    saved = _merge(doc.config.state, state)
+    plan = {}
+    for node_id, class_type in adapters.stateful_nodes(graph).items():
+        if doc.graph.get(node_id, {}).get("class_type") != class_type:
+            raise B.BindingError(f"节点 {node_id} 的参数面板类型已改变")
+        base_changes = doc.config.frontend.get(node_id, {})
+        variant_changes = frontend.get(node_id, {})
+        if not isinstance(base_changes, dict) or not isinstance(variant_changes, dict):
+            raise B.BindingError(f"节点 {node_id} 的 frontend 必须是参数名称到值的对象")
+        changes = _merge(base_changes, variant_changes)
+        snapshot = copy.deepcopy(saved.get(node_id))
+        try:
+            desired = adapters.desired_state(class_type, snapshot, changes)
+        except ComfyError as exc:
+            raise B.BindingError(f"节点 {node_id}：{exc}") from exc
+        plan[node_id] = {
+            "class_type": class_type,
+            "saved": snapshot,
+            "changes": copy.deepcopy(changes),
+            "desired": desired,
+        }
+    validate_plan(graph, plan)
+    return plan
+
+
 def compile_workflow(
     doc: WorkflowDoc,
     values: dict,
@@ -144,6 +202,7 @@ def compile_workflow(
     graph = B.apply_values(graph, bound, merged)
     graph, outputs = B.select_variant(graph, bound, variant)
     graph = B.apply_overrides(graph, _merge(config.overrides, var_cfg.get("overrides"), overrides))
+    frontend_state = _frontend_plan(doc, graph, var_cfg)
     terms = list(config.guard) + list(guard or [])
     if terms:
         skip = [(b.node, b.field) for b in bound if b.kind == "negative" and b.field]
@@ -161,6 +220,7 @@ def compile_workflow(
         bindings=B.summary([b for b in bound if b.node in graph]),
         warnings=warnings,
         checkpoint=primary_checkpoint(graph, bound),
+        frontend_state=frontend_state,
     )
 
 

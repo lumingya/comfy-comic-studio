@@ -84,6 +84,40 @@ assembled = mio.assemble(
 渠道按「配置渠道 → 设置默认渠道 → 模型连接」回退。纯云端也可在采用后明确调用
 `finalize_episode` 运行本地成品工作流，不会因保存或切换路线自动执行。
 
+### PCP 参数面板：捕获、预览与恢复
+
+`ParameterControlPanel` 的参数存在 ComfyUI 插件中，API 节点图里的 `pcp_ui` 不能代替参数快照。
+先在 ComfyUI 中打开工作流并保存面板参数，再按以下顺序调用（路径均以 `/api/v2` 为前缀）：
+
+1. `POST /workflows/{workflow_id}/capture-state?instance_id={instance_id}` 读取已有参数，返回
+   `{"state":{"节点ID":[参数对象]}}`。需要 `write`，只读取远端状态，不保存工作流、不出图。
+   插件不可用或任一面板状态为空时会明确报错。
+2. `GET /workflows/{workflow_id}` 取出当前配置，把捕获结果的 `state` 合入完整 `config`，再
+   `PATCH /workflows/{workflow_id}`，请求体为 `{"config":完整配置}`。这样保留已有绑定、变体和覆盖。
+   `config.frontend` 可按节点 ID、参数名声明覆盖值，例如 `{"1":{"steps":20}}`。
+3. `POST /workflows/{workflow_id}/compile`，请求体如 `{"variant":"draft","values":{}}`。
+   检查返回的 `frontend_state` 中 `saved`、`changes`、`desired`；编译只做预览，不访问远端。
+4. 在出图配置的 `draft` 中引用该工作流后，明确调用 `POST /episodes/{episode_id}/render`，
+   请求体如 `{"profile_id":"profile_x","candidates":1}`，需要 `render`。提交时固定参数计划，
+   后续修改工作流不会追改已提交任务。
+
+Mio 在执行前记录并临时应用面板参数，确认远端执行结束并取得结果后恢复原值。
+同一规范化端点的 PCP 任务独占该端点，其他端点可并行。为每个 ComfyUI 使用唯一规范 URL；
+例如不要同时用 `localhost`、`127.0.0.1` 或不同代理地址登记同一个服务。租约只约束 Mio 的任务，
+外部浏览器和其他客户端不受约束；它们改过面板后出现恢复冲突时，Mio 保留其当前值并等待人工处理。
+
+出现 `uncertain`、取消后仍有恢复记录或恢复失败时，先用
+`GET /jobs/{job_id}/state-recovery`（`read`）查看记录，再调用
+`POST /jobs/{job_id}/items/{idx}/restore-state`（`render`），请求体默认为 `{}`。
+运行中的任务始终拒绝恢复；上游执行状态未知时，只有先确认执行已停止，才传
+`{"confirm_stopped":true}`，服务端仍会要求远端队列为空。未知执行不会自动重新提交，也不会为恢复
+调用影响整个 ComfyUI 的全局 interrupt。
+
+正常恢复会尝试取回结果，下载失败时保留待恢复参数和租约。若历史已丢失或决定明确放弃结果，
+可传 `{"discard_result":true}`（状态未知时同时传 `confirm_stopped:true`）；这仍不能绕过运行中检查。
+响应 `restored:false` 时记录继续阻塞端点；`restored:true` 才解除租约。已取消的任务不会采用结果，
+需要重跑时在恢复完成后显式调用 retry。
+
 ### 云端参数与候选记录
 
 分镜编译出的负向、宽高和种子随任务固定；渠道中的负向作为附加约束。逐格画幅优先，

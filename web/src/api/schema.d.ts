@@ -797,6 +797,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/workflows/{workflow_id}/capture-state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Capture Workflow State
+         * @description Read existing frontend-node snapshots; callers explicitly save the returned config.state.
+         */
+        post: operations["capture_workflow_state_api_workflows__workflow_id__capture_state_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/profiles": {
         parameters: {
             query?: never;
@@ -970,6 +990,46 @@ export interface paths {
         get: operations["job_events_api_jobs__job_id__events_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{job_id}/state-recovery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Job State Recovery
+         * @description Saved frontend-state restoration records, including canceled tasks.
+         */
+        get: operations["get_job_state_recovery_api_jobs__job_id__state_recovery_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{job_id}/items/{idx}/restore-state": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore Job Item State
+         * @description Restore state after upstream completion; confirm_stopped explicitly attests an unknown run ended.
+         */
+        post: operations["restore_job_item_state_api_jobs__job_id__items__idx__restore_state_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3809,6 +3869,19 @@ export interface components {
             /** Result */
             result?: Record<string, unknown> | null;
         };
+        /** RestoreStateRequest */
+        RestoreStateRequest: {
+            /**
+             * Confirm Stopped
+             * @default false
+             */
+            confirm_stopped?: boolean;
+            /**
+             * Discard Result
+             * @default false
+             */
+            discard_result?: boolean;
+        };
         /** RetryRequest */
         RetryRequest: {
             /** Indexes */
@@ -6123,6 +6196,39 @@ export interface operations {
             };
         };
     };
+    capture_workflow_state_api_workflows__workflow_id__capture_state_post: {
+        parameters: {
+            query?: {
+                instance_id?: string;
+            };
+            header?: never;
+            path: {
+                workflow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_profiles_api_profiles_get: {
         parameters: {
             query?: never;
@@ -6601,6 +6707,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": Record<string, unknown>[];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_job_state_recovery_api_jobs__job_id__state_recovery_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>[];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_job_item_state_api_jobs__job_id__items__idx__restore_state_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+                idx: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestoreStateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */

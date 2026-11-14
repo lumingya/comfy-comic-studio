@@ -9,10 +9,25 @@ policy is unit-testable without threads.
 from __future__ import annotations
 
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from urllib.parse import urlsplit, urlunsplit
 
 LOCAL = "local"
 COMFY = "comfy"
+
+
+def normalize_endpoint(base_url: str) -> str:
+    """Stable identity for a configured Comfy endpoint, independent of instance ids."""
+    parts = urlsplit(base_url.strip())
+    scheme = parts.scheme.lower()
+    host = (parts.hostname or "").lower()
+    if ":" in host:
+        host = f"[{host}]"
+    port = parts.port
+    authority = host
+    if port is not None and (scheme, port) not in (("http", 80), ("https", 443)):
+        authority += f":{port}"
+    return urlunsplit((scheme, authority, parts.path.rstrip("/"), parts.query, ""))
 
 
 @dataclass
@@ -23,6 +38,7 @@ class Candidate:
     group: str = ""
     instances: tuple[str, ...] = ()  # allowed instance ids; empty = any
     order: tuple = ()  # sort key: (-priority, created, idx)
+    exclusive: bool = False
 
 
 @dataclass
@@ -43,6 +59,8 @@ class ResourcePool:
         self.local_capacity = local_capacity
         self.local_busy = 0
         self.instances: dict[str, InstanceSlot] = {}
+        self.endpoint_active: dict[str, int] = {}
+        self.state_blocks: dict[str, str] = {}
 
     # ------------------------------------------------------------ configuration
     def set_instances(self, instances) -> None:
@@ -56,7 +74,7 @@ class ResourcePool:
                 slot = InstanceSlot(
                     inst.id, inst.base_url, inst.capacity, tuple(getattr(inst, "tags", ()) or ())
                 )
-                if old:
+                if old and normalize_endpoint(old.base_url) == normalize_endpoint(inst.base_url):
                     slot.busy, slot.last_group, slot.healthy = old.busy, old.last_group, old.healthy
                 fresh[inst.id] = slot
             # keep busy counters of removed instances so running work can still release
@@ -110,6 +128,8 @@ class ResourcePool:
                 if s.healthy and s.capacity > s.busy
             }
             warm = {s.last_group for s in self.instances.values() if s.last_group}
+            active = dict(self.endpoint_active)
+            blocked = set(self.state_blocks)
             progress = True
             while progress and free:
                 progress = False
@@ -117,11 +137,15 @@ class ResourcePool:
                     if free[iid] <= 0:
                         continue
                     slot = self.instances[iid]
+                    endpoint = normalize_endpoint(slot.base_url)
+                    if endpoint in blocked:
+                        continue
                     eligible = [
                         c
                         for c in comfy
                         if (c.job_id, c.idx) not in taken
                         and (not c.instances or iid in c.instances)
+                        and (not c.exclusive or active.get(endpoint, 0) == 0)
                     ]
                     if not eligible:
                         continue
@@ -136,10 +160,25 @@ class ResourcePool:
                     chosen.append((pick, iid))
                     taken.add((pick.job_id, pick.idx))
                     free[iid] -= 1
+                    active[endpoint] = active.get(endpoint, 0) + 1
+                    if pick.exclusive:
+                        blocked.add(endpoint)
                     warm.add(pick.group)
                     progress = True
                 free = {k: v for k, v in free.items() if v > 0}
             return chosen
+
+    def available(self, resource: str, instance_id: str | None, exclusive: bool = False) -> bool:
+        with self.lock:
+            if resource == LOCAL:
+                return self.local_busy < self.local_capacity
+            slot = self.instances.get(instance_id)
+            if slot is None or not slot.healthy or slot.busy >= slot.capacity:
+                return False
+            endpoint = normalize_endpoint(slot.base_url)
+            return endpoint not in self.state_blocks and (
+                not exclusive or not self.endpoint_active.get(endpoint, 0)
+            )
 
     def acquire(self, resource: str, instance_id: str | None, group: str = "") -> None:
         with self.lock:
@@ -148,19 +187,32 @@ class ResourcePool:
             else:
                 slot = self.instances[instance_id]
                 slot.busy += 1
+                endpoint = normalize_endpoint(slot.base_url)
+                self.endpoint_active[endpoint] = self.endpoint_active.get(endpoint, 0) + 1
                 if group:
                     slot.last_group = group
 
-    def release(self, resource: str, instance_id: str | None) -> None:
+    def release(self, resource: str, instance_id: str | None, base_url: str | None = None) -> None:
         with self.lock:
             if resource == LOCAL:
                 self.local_busy = max(0, self.local_busy - 1)
-            elif instance_id in self.instances:
-                slot = self.instances[instance_id]
-                slot.busy = max(0, slot.busy - 1)
-                if slot.capacity == 0 and slot.busy == 0:
-                    del self.instances[instance_id]
+            else:
+                slot = self.instances.get(instance_id)
+                captured = base_url if base_url is not None else (slot.base_url if slot else None)
+                if captured is None:
+                    return
+                endpoint = normalize_endpoint(captured)
+                remaining = self.endpoint_active.get(endpoint, 0) - 1
+                if remaining > 0:
+                    self.endpoint_active[endpoint] = remaining
+                else:
+                    self.endpoint_active.pop(endpoint, None)
+                if slot and normalize_endpoint(slot.base_url) == endpoint:
+                    slot.busy = max(0, slot.busy - 1)
+                    if slot.capacity == 0 and slot.busy == 0:
+                        del self.instances[instance_id]
 
     def instance(self, instance_id: str | None) -> InstanceSlot | None:
         with self.lock:
-            return self.instances.get(instance_id) if instance_id else None
+            slot = self.instances.get(instance_id) if instance_id else None
+            return replace(slot) if slot else None

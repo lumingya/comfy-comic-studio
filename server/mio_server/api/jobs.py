@@ -27,6 +27,11 @@ class ResolveRequest(BaseModel):
     result: dict[str, Any] | None = None
 
 
+class RestoreStateRequest(BaseModel):
+    confirm_stopped: bool = False
+    discard_result: bool = False
+
+
 @router.get("/jobs")
 def list_jobs(
     ctx: Ctx, owner: str | None = None, active: bool = False, limit: int = 100
@@ -42,6 +47,21 @@ def get_job(ctx: Ctx, job_id: str) -> dict:
 @router.get("/jobs/{job_id}/events")
 def job_events(ctx: Ctx, job_id: str, after: int = 0, limit: int = 200) -> list[dict]:
     return ctx.engine.events(job_id, after, min(max(limit, 1), 1000))
+
+
+@router.get("/jobs/{job_id}/state-recovery")
+def get_job_state_recovery(ctx: Ctx, job_id: str) -> list[dict]:
+    """Saved frontend-state restoration records, including canceled tasks."""
+    ctx.engine.get(job_id, items=False)
+    return ctx.engine.state_leases.list(job_id)
+
+
+@router.post("/jobs/{job_id}/items/{idx}/restore-state")
+def restore_job_item_state(ctx: Ctx, job_id: str, idx: int, body: RestoreStateRequest) -> dict:
+    """Restore state after upstream completion; confirm_stopped explicitly attests an unknown run ended."""
+    return ctx.engine.restore_state(
+        job_id, idx, body.confirm_stopped, discard_result=body.discard_result
+    )
 
 
 @router.post("/jobs/{job_id}/pause")
