@@ -235,6 +235,19 @@ def _sequence(ep: Episode, ids: list[str]) -> None:
     ep.panels = [by_id[pid] for pid in ids]
 
 
+def _remove_panels(ep: Episode, panel_ids: set[str]) -> None:
+    """Remove current canvas references with the panels, keeping artwork and manual spacing."""
+    _sequence(ep, [p.id for p in ep.ordered_panels() if p.id not in panel_ids])
+    strip = ep.strip
+    strip.panel_boxes = {pid: box for pid, box in strip.panel_boxes.items() if pid not in panel_ids}
+    strip.crops = {pid: crop for pid, crop in strip.crops.items() if pid not in panel_ids}
+    strip.lettering = [layer for layer in strip.lettering if layer.panel_id not in panel_ids]
+    for layer in strip.lettering:
+        if layer.bridge_to in panel_ids:
+            layer.bridge_to = None
+    # Takes and assets remain recoverable; surviving boxes and the canvas height stay put.
+
+
 @router.post("/episodes/{episode_id}/panels", response_model=Episode, status_code=201)
 def add_panel(ctx: Ctx, episode_id: str, payload: PanelCreate) -> Episode:
     def apply(ep: Episode) -> None:
@@ -301,8 +314,7 @@ def patch_panels(ctx: Ctx, episode_id: str, payload: PanelBatch) -> Episode:
 @router.post("/episodes/{episode_id}/panels/batch-delete", response_model=Episode)
 def delete_panels(ctx: Ctx, episode_id: str, payload: PanelIds) -> Episode:
     def apply(ep: Episode) -> None:
-        wanted = set(payload.panel_ids)
-        _sequence(ep, [p.id for p in ep.ordered_panels() if p.id not in wanted])
+        _remove_panels(ep, set(payload.panel_ids))
 
     return ctx.store.update_episode(episode_id, apply)
 
@@ -377,7 +389,7 @@ def delete_panel(ctx: Ctx, episode_id: str, panel_id: str) -> Episode:
     def apply(ep: Episode) -> None:
         if ep.panel(panel_id) is None:
             raise NotFound(f"panel not found: {panel_id}")
-        _sequence(ep, [p.id for p in ep.ordered_panels() if p.id != panel_id])
+        _remove_panels(ep, {panel_id})
 
     return ctx.store.update_episode(episode_id, apply)
 
