@@ -4,7 +4,9 @@ import json
 import struct
 import threading
 import unittest
+import urllib.error
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from unittest.mock import Mock, patch
 
 from mio_server.comfy.client import ComfyClient, ComfyError, describe_prompt_error, parse_preview
 from mio_server.comfy.ws import (
@@ -235,6 +237,7 @@ class ClientTests(unittest.TestCase):
             client.run({}, timeout=20)
         self.assertIn("KSampler", str(ctx.exception))
         self.assertIn("CUDA out of memory", str(ctx.exception))
+        self.assertEqual(ctx.exception.kind, "execution_error")
 
     def test_falls_back_to_polling_without_websocket(self):
         _, client = self.start("no-ws")
@@ -250,6 +253,25 @@ class ClientTests(unittest.TestCase):
             client.queue_prompt({"5": {"class_type": "Broken", "inputs": {}}})
         self.assertIn("节点 5（Broken）", str(ctx.exception))
         self.assertIn("not in", str(ctx.exception))
+        self.assertEqual(ctx.exception.kind, "rejected")
+        self.assertEqual(ctx.exception.status, 400)
+
+    def test_prompt_transport_failures_preserve_outcome_uncertainty_and_close_socket(self):
+        client = ComfyClient("http://unused")
+        for reason, kind in (
+            (ConnectionRefusedError("refused"), "unreachable"),
+            (ConnectionResetError("response lost"), "connection_lost"),
+        ):
+            with self.subTest(kind=kind):
+                socket = Mock()
+                with (
+                    patch("mio_server.comfy.client.WebSocket", return_value=socket),
+                    patch("urllib.request.urlopen", side_effect=urllib.error.URLError(reason)),
+                    self.assertRaises(ComfyError) as caught,
+                ):
+                    client.run({})
+                self.assertEqual(caught.exception.kind, kind)
+                socket.close.assert_called_once()
 
     def test_upload_returns_loadimage_value(self):
         server, client = self.start("ok")

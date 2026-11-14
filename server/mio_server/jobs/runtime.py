@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 import time
+from contextlib import contextmanager
 
 from .pool import COMFY, LOCAL, Candidate
 from .types import (  # noqa: F401
@@ -17,6 +19,7 @@ from .types import (  # noqa: F401
     Canceled,
     ExecError,
     ItemContext,
+    JobConflict,
     JobNotFound,
     canonical,
 )
@@ -25,6 +28,48 @@ log = logging.getLogger("mio.jobs")
 
 
 class EngineRuntime:
+    @contextmanager
+    def _job_guard(self, job_id: str, *, command: bool = False):
+        """Serialize result application and destructive commands for one job.
+
+        Never wait for this guard while holding the database lock: a result hook may
+        read the engine or submit another job. References keep guards alive for waiters.
+        Reentrant mutations from a result hook are rejected rather than invalidating the
+        result that hook is currently committing.
+        """
+        with self.lock:
+            guard, users = self._job_guards.get(job_id, (threading.RLock(), 0))
+            self._job_guards[job_id] = (guard, users + 1)
+        try:
+            # Listeners may hold the database lock; hooks may call another job.
+            # Nested calls must not wait and invert either lock order.
+            if not guard.acquire(blocking=not getattr(self._callback_context, "active", False)):
+                raise JobConflict("a result is being saved; retry this command after it finishes")
+            try:
+                if command and job_id in self._applying_jobs:
+                    raise JobConflict(
+                        "a result is being saved; retry this command after it finishes"
+                    )
+                yield
+            finally:
+                guard.release()
+        finally:
+            with self.lock:
+                _, users = self._job_guards[job_id]
+                if users == 1:
+                    del self._job_guards[job_id]
+                else:
+                    self._job_guards[job_id] = (guard, users - 1)
+
+    @contextmanager
+    def _callback_scope(self):
+        active = getattr(self._callback_context, "active", False)
+        self._callback_context.active = True
+        try:
+            yield
+        finally:
+            self._callback_context.active = active
+
     def tick(self) -> int:
         """One scheduling pass (the background loop calls this; tests may call it directly)."""
         with self.lock:
@@ -193,6 +238,10 @@ class EngineRuntime:
         error: dict | None = None,
         apply: bool = False,
     ) -> None:
+        with self._job_guard(job_id, command=True):
+            self._finish_guarded(job_id, idx, epoch, state, result, error, apply)
+
+    def _finish_guarded(self, job_id, idx, epoch, state, result, error, apply) -> None:
         now = time.time()
         with self.lock:
             row = self.db.execute(
@@ -214,18 +263,22 @@ class EngineRuntime:
             executor = self.executors.get(job["kind"])
             hook = getattr(executor, "on_complete", None)
             if hook:
+                self._applying_jobs.add(job_id)
                 try:
-                    hook(job, self._item_dict(row), result)
+                    with self._callback_scope():
+                        hook(job, self._item_dict(row), result)
                 except Exception as exc:
                     log.exception("on_complete failed")
                     state, error = (
                         "failed",
                         {"kind": "apply_failed", "message": f"结果已返回但保存失败：{exc}"},
                     )
+                finally:
+                    self._applying_jobs.remove(job_id)
         with self.lock, self.db:
-            self.db.execute(
+            updated = self.db.execute(
                 "UPDATE job_items SET state = ?, result_json = ?, error_json = ?, finished = ?, updated = ? "
-                "WHERE job_id = ? AND idx = ? AND epoch = ?",
+                "WHERE job_id = ? AND idx = ? AND epoch = ? AND state IN ('running', 'uncertain')",
                 (
                     state,
                     canonical(result) if result is not None else row["result_json"],
@@ -237,6 +290,9 @@ class EngineRuntime:
                     epoch,
                 ),
             )
+            if updated.rowcount != 1:
+                self._event(job_id, idx, "stale_result", {"state": state})
+                return
             self._event(job_id, idx, state, {"error": error} if error else {})
             if state == "failed":
                 failures = self.db.execute(
@@ -300,7 +356,8 @@ class EngineRuntime:
                 payload["seq"] = cur.lastrowid
         for fn in list(self.listeners):
             try:
-                fn(payload)
+                with self._callback_scope():
+                    fn(payload)
             except Exception:
                 log.exception("job listener failed")
 

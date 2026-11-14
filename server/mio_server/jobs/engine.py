@@ -13,8 +13,9 @@ Safety semantics inherited from the legacy paid-request engine:
   implicitly; the user reconciles (e.g. Comfy history lookup), marks it failed, or confirms a
   resubmit.
 * **No implicit retry** – ``failed`` items stay failed.  A failure limit pauses the job.
-* **Immediate stop** – ``cancel`` marks items canceled at once, signals workers and calls the
-  executor's ``abort`` (Comfy: interrupt / delete from queue).
+* **Stop** – ``cancel`` signals running work and calls the executor's ``abort`` (Comfy:
+  interrupt / delete from queue). A result already being committed finishes first; a stop
+  that wins the commit guard prevents result application. Other jobs remain independent.
 * **Restart recovery** – items found ``running`` on start-up become ``uncertain``; executors with a
   ``reconcile`` hook can confirm them from upstream records without resubmitting.
 * **Lease** – one engine per database file (OS file lock).
@@ -67,6 +68,9 @@ class JobEngine(EngineRuntime):
         self.pool = pool or ResourcePool()
         self.executors: dict[str, Any] = {}
         self.lock = threading.RLock()
+        self._job_guards: dict[str, tuple[threading.RLock, int]] = {}
+        self._applying_jobs: set[str] = set()
+        self._callback_context = threading.local()
         self.wake = threading.Event()
         self.closed = False
         self.poll = poll
@@ -314,7 +318,11 @@ class JobEngine(EngineRuntime):
         return self.get(job_id, items=False)
 
     def cancel(self, job_id: str) -> dict:
-        """Immediate stop: pending → canceled; running → canceled now, worker signalled, result dropped."""
+        """Stop execution immediately, after any result already being committed finishes."""
+        with self._job_guard(job_id, command=True):
+            return self._cancel_guarded(job_id)
+
+    def _cancel_guarded(self, job_id: str) -> dict:
         hooks = []
         now = time.time()
         with self.lock, self.db:
@@ -322,17 +330,20 @@ class JobEngine(EngineRuntime):
             self.db.execute("UPDATE jobs SET canceled = 1, updated = ? WHERE id = ?", (now, job_id))
             self.db.execute(
                 "UPDATE job_items SET state = 'canceled', updated = ?, epoch = epoch + 1 "
-                "WHERE job_id = ? AND state = 'pending'",
+                "WHERE job_id = ? AND state IN ('pending', 'uncertain')",
                 (now, job_id),
             )
             for (jid, idx), ctx in list(self.running.items()):
                 if jid != job_id:
                     continue
+                row = self.db.execute(
+                    "SELECT state, sent, upstream FROM job_items WHERE job_id = ? AND idx = ?",
+                    (jid, idx),
+                ).fetchone()
+                if row["state"] != "running":
+                    continue  # The callback committed before cancellation acquired the guard.
                 ctx.cancelled.set()
                 hooks.extend(ctx.abort_hooks)
-                row = self.db.execute(
-                    "SELECT sent, upstream FROM job_items WHERE job_id = ? AND idx = ?", (jid, idx)
-                ).fetchone()
                 error = {
                     "kind": "canceled_after_send" if row["sent"] else "canceled",
                     "message": "已停止。请求可能已到达上游，结果不会被采用。"
@@ -349,7 +360,8 @@ class JobEngine(EngineRuntime):
             self._aggregate(job_id)
         for hook in hooks:
             try:
-                hook()
+                with self._callback_scope():
+                    hook()
             except Exception as exc:  # abort is best effort
                 log.warning("abort hook failed: %s", exc)
         return self.get(job_id)
@@ -363,6 +375,12 @@ class JobEngine(EngineRuntime):
         include_complete: bool = False,
     ) -> dict:
         """Explicit re-run: single items (``indexes``) or a suffix (``from_index``)."""
+        with self._job_guard(job_id, command=True):
+            return self._retry_guarded(
+                job_id, indexes, from_index, confirm_uncertain, include_complete
+            )
+
+    def _retry_guarded(self, job_id, indexes, from_index, confirm_uncertain, include_complete):
         now = time.time()
         with self.lock, self.db:
             self._require(job_id)
@@ -456,7 +474,7 @@ class JobEngine(EngineRuntime):
         return fixed
 
     def delete(self, job_id: str) -> None:
-        with self.lock, self.db:
+        with self._job_guard(job_id, command=True), self.lock, self.db:
             job = self._require(job_id)
             if job["state"] in ("running",):
                 raise JobConflict("stop the job before deleting it")

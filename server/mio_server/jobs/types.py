@@ -48,8 +48,8 @@ class JobNotFound(JobError):
 
 
 class ExecError(RuntimeError):
-    """Raised by executors.  ``sent``: False = provably never reached upstream (safe failure);
-    True / None = may have reached upstream (→ uncertain)."""
+    """Raised by executors. ``sent``: False = definitive failure (not accepted, or upstream
+    confirmed execution failed); True = outcome unknown; None = use the last checkpoint."""
 
     def __init__(
         self, message: str, kind: str = "error", sent: bool | None = None, detail: Any = None

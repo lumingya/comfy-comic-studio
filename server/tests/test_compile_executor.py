@@ -1,21 +1,25 @@
 import io
 import tempfile
 import unittest
+import urllib.error
+import urllib.request
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from PIL import Image
 
 from mio_server.assets import AssetStore
 from mio_server.comfy import compile as C
 from mio_server.comfy.bindings import BindingError
-from mio_server.comfy.client import ComfyError, OutputImage, RunResult
+from mio_server.comfy.client import ComfyClient, ComfyError, OutputImage, RunResult
 from mio_server.comfy.diagnostics import diagnose, model_catalog
 from mio_server.comfy.executor import ComfyRenderExecutor
 from mio_server.jobs import COMFY, ItemSpec, JobEngine
 from mio_server.render_models import WorkflowConfig
 from mio_server.storage import SQLiteStore
 
+from . import test_comfy_client as fake_comfy
 from .test_jobs import drain
 
 
@@ -126,11 +130,11 @@ class FakeClient:
     def run(self, graph, outputs, on_event=None, timeout=0, on_queued=None, cancelled=None):
         FakeClient.graphs.append(graph)
         if FakeClient.mode == "rejected":
-            raise ComfyError("prompt invalid", detail={"node_errors": {}})
+            raise ComfyError("prompt invalid", detail={"node_errors": {}}, kind="rejected")
         on_queued(f"p{len(FakeClient.graphs)}")
         on_event({"type": "progress", "value": 1, "max": 2})
         if FakeClient.mode == "timeout":
-            raise ComfyError("等待 ComfyUI 超时")
+            raise ComfyError("等待 ComfyUI 超时", kind="timeout")
         return RunResult(
             f"p{len(FakeClient.graphs)}",
             [OutputImage("9", "a.png", "", "output", png((len(FakeClient.graphs) * 40, 0, 0)))],
@@ -213,3 +217,63 @@ class ExecutorTests(unittest.TestCase):
         self.assertEqual(job["items"][0]["state"], "uncertain")
         self.assertEqual(len(FakeClient.graphs), 1)  # never resubmitted
         self.assertEqual(self.results, [])
+
+    def test_history_and_download_connection_loss_can_be_reconciled_without_resubmission(self):
+        for endpoint in ("/history/", "/view?"):
+            with self.subTest(endpoint=endpoint):
+                server, client = fake_comfy.ClientTests.start(self, "ok")
+                server.view_bytes = png()
+                self.engine.register(
+                    "comfy.render",
+                    ComfyRenderExecutor(
+                        self.assets,
+                        lambda base_url: ComfyClient(client.base_url),
+                        on_result=lambda job, item, result: self.results.append(result),
+                    ),
+                )
+                stage = C.compile_workflow(builtin("builtin_t2i_sdxl"), {"prompt": "x"})
+                server.history_outputs = {
+                    stage.outputs[0]: {"images": [{"filename": "a.png", "type": "output"}]}
+                }
+                job = self.engine.submit(
+                    "comfy.render", [ItemSpec(input={"stages": [stage.to_json()]}, resource=COMFY)]
+                )
+                urlopen = urllib.request.urlopen
+
+                def disconnected(request, *args, **kwargs):
+                    if endpoint in request.full_url:
+                        raise urllib.error.URLError(ConnectionResetError("response interrupted"))
+                    return urlopen(request, *args, **kwargs)
+
+                before = len(self.results)
+                with patch("urllib.request.urlopen", side_effect=disconnected):
+                    job = drain(self.engine, job["id"])
+                self.assertEqual(job["items"][0]["state"], "uncertain")
+                self.assertEqual(job["items"][0]["error"]["kind"], "connection_lost")
+                self.assertEqual(job["items"][0]["upstream"], "0:p1")
+                self.assertEqual(len(self.results), before)
+                self.assertEqual(len(server.submitted), 1)
+                self.engine.resolve(job["id"], 0, "reconcile")
+                self.assertEqual(self.engine.get(job["id"])["items"][0]["state"], "complete")
+                self.assertEqual(len(self.results), before + 1)
+                self.assertEqual(self.engine.reconcile_all(), 0)
+                self.assertEqual(len(server.submitted), 1)
+
+    def test_structured_failure_types_do_not_depend_on_error_language(self):
+        for kind, queued, expected in (
+            ("timeout", True, "uncertain"),
+            ("execution_error", True, "failed"),
+            ("unreachable", False, "failed"),
+            ("connection_lost", False, "uncertain"),
+            ("http", True, "uncertain"),
+        ):
+            with self.subTest(kind=kind, queued=queued):
+
+                def fail(graph, outputs, **kwargs):
+                    if queued:
+                        kwargs["on_queued"]("accepted")
+                    raise ComfyError("English-only failure message", kind=kind)
+
+                with patch.object(FakeClient, "run", side_effect=fail):
+                    job = drain(self.engine, self.submit()["id"])
+                self.assertEqual(job["items"][0]["state"], expected)

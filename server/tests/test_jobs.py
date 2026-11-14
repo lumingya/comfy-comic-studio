@@ -3,6 +3,7 @@ import tempfile
 import threading
 import time
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -178,6 +179,147 @@ class EngineTests(unittest.TestCase):
         engine.register("demo", Recorder(run))
         engine.wait(engine.submit("demo", items(6), window=2)["id"])
         self.assertEqual(peak[0], 2)
+
+    def test_cancel_waits_for_committing_result_without_blocking_other_jobs(self):
+        engine = self.make(pool=ResourcePool(local_capacity=2))
+        entered, release, cancel_started = (threading.Event() for _ in range(3))
+        self.addCleanup(release.set)
+        ex = Recorder()
+
+        def apply(job, item, result):
+            entered.set()
+            if not release.wait(3):
+                raise TimeoutError("test result callback was not released")
+            ex.applied.append((item["idx"], result))
+
+        ex.on_complete = apply
+        engine.register("slow-save", ex)
+        engine.register("other", Recorder())
+        job = engine.submit("slow-save", items(1))
+        self.assertTrue(entered.wait(2))
+
+        def cancel():
+            cancel_started.set()
+            return engine.cancel(job["id"])
+
+        with ThreadPoolExecutor() as callers:
+            stopped = callers.submit(cancel)
+            try:
+                self.assertTrue(cancel_started.wait(2))
+                other = engine.wait(engine.submit("other", items(1))["id"])
+                self.assertEqual(other["state"], "completed")
+                self.assertFalse(stopped.done())  # the accepted commit finishes before stop returns
+            finally:
+                release.set()
+            final = stopped.result(timeout=2)
+        self.assertEqual(final["items"][0]["state"], "complete")
+        self.assertIsNone(final["items"][0]["error"])
+        self.assertEqual(ex.applied, [(0, {"ok": 0})])
+        self.assertEqual(sum(e["type"] == "complete" for e in engine.events(job["id"])), 1)
+
+    def test_two_simultaneous_reconciliations_apply_only_once(self):
+        engine = self.make()
+        meet = threading.Barrier(2)
+
+        class Reconciler(Recorder):
+            def execute(self, ctx):
+                ctx.checkpoint("accepted")
+                raise ExecError("response lost", sent=True)
+
+            def reconcile(self, ctx):
+                meet.wait(timeout=2)
+                return {"image": "recovered"}
+
+        ex = Reconciler()
+        engine.register("demo", ex)
+        job = engine.wait(engine.submit("demo", items(1))["id"])
+        with ThreadPoolExecutor() as callers:
+            futures = [callers.submit(engine.resolve, job["id"], 0, "reconcile") for _ in range(2)]
+            for future in futures:
+                self.assertEqual(future.result(timeout=3)["items"][0]["state"], "complete")
+        self.assertEqual(ex.applied, [(0, {"image": "recovered"})])
+        self.assertEqual(sum(e["type"] == "complete" for e in engine.events(job["id"])), 1)
+
+    def test_cancel_during_reconciliation_discards_recovered_result(self):
+        engine = self.make()
+        entered, release = threading.Event(), threading.Event()
+
+        class Reconciler(Recorder):
+            def execute(self, ctx):
+                ctx.checkpoint("accepted")
+                raise ExecError("response lost", sent=True)
+
+            def reconcile(self, ctx):
+                entered.set()
+                release.wait(2)
+                return {"image": "recovered"}
+
+        ex = Reconciler()
+        engine.register("demo", ex)
+        job = engine.wait(engine.submit("demo", items(1))["id"])
+        with ThreadPoolExecutor() as callers:
+            recovered = callers.submit(engine.resolve, job["id"], 0, "reconcile")
+            try:
+                self.assertTrue(entered.wait(2))
+                final = engine.cancel(job["id"])
+                self.assertEqual(final["items"][0]["state"], "canceled")
+            finally:
+                release.set()
+            self.assertEqual(recovered.result(timeout=2)["items"][0]["state"], "canceled")
+        self.assertEqual(ex.applied, [])
+        self.assertNotIn("complete", [e["type"] for e in engine.events(job["id"])])
+
+    def test_listener_commands_do_not_invert_engine_and_commit_locks(self):
+        engine = self.make()
+        entered, release = threading.Event(), threading.Event()
+        self.addCleanup(release.set)
+        seen = []
+        ex = Recorder()
+
+        def apply(job, item, result):
+            entered.set()
+            release.wait(2)
+            ex.applied.append((item["idx"], result))
+
+        ex.on_complete = apply
+        engine.register("demo", ex)
+        job = engine.submit("demo", items(1))
+        self.assertTrue(entered.wait(2))
+
+        def listener(event):
+            if event["type"] == "paused":
+                try:
+                    engine.cancel(job["id"])
+                except JobConflict:
+                    seen.append("busy")
+
+        engine.subscribe(listener)
+        try:
+            engine.pause(job["id"])  # listener runs with the engine database lock held
+            self.assertEqual(seen, ["busy"])
+        finally:
+            release.set()
+        self.assertEqual(engine.wait(job["id"])["items"][0]["state"], "complete")
+        self.assertEqual(ex.applied, [(0, {"ok": 0})])
+
+    def test_result_hook_cannot_cancel_its_own_unfinished_commit(self):
+        engine = self.make()
+        seen = []
+        ex = Recorder()
+
+        def apply(job, item, result):
+            try:
+                engine.cancel(job["id"])
+            except JobConflict:
+                seen.append("busy")
+            ex.applied.append((item["idx"], result))
+
+        ex.on_complete = apply
+        engine.register("demo", ex)
+        final = engine.wait(engine.submit("demo", items(1))["id"])
+        self.assertEqual(seen, ["busy"])
+        self.assertEqual(final["items"][0]["state"], "complete")
+        self.assertEqual(ex.applied, [(0, {"ok": 0})])
 
     def test_pause_resume_and_suffix_rerun(self):
         engine = self.make(autostart=False)

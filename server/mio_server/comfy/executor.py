@@ -144,26 +144,22 @@ class ComfyRenderExecutor:
         except ComfyError as exc:
             if ctx.cancelled.is_set():
                 raise ExecError("已停止", kind="canceled", sent=bool(queued)) from None
-            if not queued:
-                # /prompt rejected (validation) or ComfyUI unreachable: nothing was executed.
-                raise ExecError(
-                    str(exc),
-                    kind="rejected" if exc.detail else "unreachable",
-                    sent=False,
-                    detail=exc.detail,
-                ) from None
-            timed_out = "超时" in str(exc)
+            # A history/download failure does not mean execution failed. Even without a
+            # prompt id, an interrupted POST response may have hidden an accepted prompt.
+            definitive = exc.kind in ("rejected", "execution_error") or (
+                not queued and exc.kind == "unreachable"
+            )
             raise ExecError(
                 str(exc),
-                kind="timeout" if timed_out else "execution_error",
-                sent=True if timed_out else False,
+                kind=exc.kind,
+                sent=not definitive,
                 detail=exc.detail,
             ) from None
         except OSError as exc:
             raise ExecError(
                 f"与 ComfyUI 的连接中断：{exc}",
                 kind="connection_lost",
-                sent=True if queued else False,
+                sent=True,
             ) from None
 
     def _store(self, data: bytes, prompt_id: str, node: str) -> dict:

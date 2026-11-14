@@ -8,6 +8,7 @@ opened it falls back to polling, so a run never depends on live previews.
 from __future__ import annotations
 
 import json
+import socket
 import struct
 import time
 import urllib.error
@@ -24,9 +25,15 @@ IMAGE_TYPES = {1: "jpeg", 2: "png", 3: "webp"}
 
 
 class ComfyError(RuntimeError):
-    def __init__(self, message: str, detail=None):
+    """Structured failure: only rejection/execution errors prove no usable result exists."""
+
+    def __init__(
+        self, message: str, detail=None, *, kind: str = "unknown", status: int | None = None
+    ):
         super().__init__(message)
         self.detail = detail
+        self.kind = kind
+        self.status = status
 
 
 @dataclass
@@ -77,9 +84,20 @@ class ComfyClient:
                 detail = json.loads(detail)
             except ValueError:
                 pass
-            raise ComfyError(f"ComfyUI {method} {path} 返回 {exc.code}", detail) from None
+            raise ComfyError(
+                f"ComfyUI {method} {path} 返回 {exc.code}", detail, kind="http", status=exc.code
+            ) from None
         except urllib.error.URLError as exc:
-            raise ComfyError(f"连不上 ComfyUI（{self.base_url}）：{exc.reason}") from None
+            kind = (
+                "unreachable"
+                if isinstance(exc.reason, (ConnectionRefusedError, socket.gaierror))
+                else "connection_lost"
+            )
+            raise ComfyError(
+                f"连不上 ComfyUI（{self.base_url}）：{exc.reason}", kind=kind
+            ) from None
+        except OSError as exc:
+            raise ComfyError(f"ComfyUI 连接中断：{exc}", kind="connection_lost") from None
 
     def get_json(self, path: str, timeout: float | None = None):
         return json.loads(self._request("GET", path, timeout=timeout))
@@ -124,7 +142,15 @@ class ComfyClient:
         try:
             result = self.post_json("/prompt", {"prompt": graph, "client_id": self.client_id})
         except ComfyError as exc:
-            raise ComfyError(describe_prompt_error(exc.detail) or str(exc), exc.detail) from None
+            rejected = (
+                exc.status is not None and 400 <= exc.status < 500 and exc.status not in (408, 429)
+            )
+            raise ComfyError(
+                describe_prompt_error(exc.detail) or str(exc),
+                exc.detail,
+                kind="rejected" if rejected else exc.kind,
+                status=exc.status,
+            ) from None
         return result["prompt_id"]
 
     def history(self, prompt_id: str) -> dict:
@@ -171,10 +197,15 @@ class ComfyClient:
             ws = WebSocket(ws_url, timeout=10)
         except (OSError, WebSocketError) as exc:
             emit({"type": "warning", "message": f"WebSocket 不可用，改为轮询：{exc}"})
-        prompt_id = self.queue_prompt(graph)
-        emit({"type": "queued", "prompt_id": prompt_id})
-        if on_queued:
-            on_queued(prompt_id)
+        try:
+            prompt_id = self.queue_prompt(graph)
+            emit({"type": "queued", "prompt_id": prompt_id})
+            if on_queued:
+                on_queued(prompt_id)
+        except Exception:
+            if ws:
+                ws.close()
+            raise
         node_seconds: dict[str, float] = {}
         cached: list[str] = []
         previews = 0
@@ -185,7 +216,7 @@ class ComfyClient:
                 self._poll(prompt_id, started, timeout)
         except TimeoutError:
             self.interrupt()
-            raise ComfyError(f"出图超时（{timeout:.0f} 秒），已请求中断") from None
+            raise ComfyError(f"出图超时（{timeout:.0f} 秒），已请求中断", kind="timeout") from None
         finally:
             if ws:
                 ws.close()
@@ -208,7 +239,7 @@ class ComfyClient:
         """Images and text outputs of a finished history entry (also used to reconcile)."""
         status = entry.get("status") or {}
         if status.get("status_str") == "error":
-            raise ComfyError("ComfyUI 执行失败", status.get("messages"))
+            raise ComfyError("ComfyUI 执行失败", status.get("messages"), kind="execution_error")
         wanted = {str(n) for n in output_nodes} if output_nodes else None
         images, texts = [], {}
         for node_id, out in (entry.get("outputs") or {}).items():
@@ -232,7 +263,7 @@ class ComfyClient:
             if time.monotonic() - started > timeout:
                 raise TimeoutError
             if self._cancelled():
-                raise ComfyError("出图已停止")
+                raise ComfyError("出图已停止", kind="canceled")
             try:
                 message = ws.recv()
             except TimeoutError:  # socket.timeout; partial frames stay buffered in ws
@@ -272,9 +303,10 @@ class ComfyClient:
                 raise ComfyError(
                     f"节点 {data.get('node_id')}（{data.get('node_type')}）出错：{data.get('exception_message', '').strip()}",
                     data,
+                    kind="execution_error",
                 )
             elif kind == "execution_interrupted":
-                raise ComfyError("出图被中断", data)
+                raise ComfyError("出图被中断", data, kind="execution_error")
             elif kind == "execution_success" and data.get("prompt_id") == prompt_id:
                 if current is not None:
                     node_seconds[current] = (
@@ -299,13 +331,13 @@ class ComfyClient:
             ):
                 return entry
             if time.monotonic() > deadline:
-                return entry
+                raise ComfyError("ComfyUI 尚未保存执行结果，请稍后核对", kind="timeout")
             time.sleep(0.25)
 
     def _poll(self, prompt_id, started, timeout) -> None:
         while time.monotonic() - started <= timeout:
             if getattr(self, "_cancelled", lambda: False)():
-                raise ComfyError("出图已停止")
+                raise ComfyError("出图已停止", kind="canceled")
             entry = self.history(prompt_id)
             if entry.get("outputs") or (entry.get("status") or {}).get("completed"):
                 return
