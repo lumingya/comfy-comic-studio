@@ -1153,6 +1153,7 @@ export const readerZh = {
   colophon2: '把未完的故事，留给下一束光。',
   info: '本幕文字',
   noCaption: '这一幕没有台词。',
+  savedStrip: '保存后的条漫，包含裁切、留白与嵌字',
   film: '分镜胶卷',
   mode: { auto: '自适应', single: '单页', continuous: '连续' },
   prev: '上一页',
@@ -1260,7 +1261,7 @@ export const readerZh = {
   zip: 'ZIP 图片资源包',
   pdf: 'PDF 图片画册',
   portableHelp:
-    'ZIP：简洁阅读版＋图片文件；PDF：逐页图片。两者不受单文件内联预算限制，图片同样按「图片处理」输出。',
+    'ZIP：简易阅读页＋图片文件；PDF：每格一页。两者不继承当前 HTML 或双页模板；独立台词仅在 ZIP 阅读页显示。图片按「图片处理」输出，不受单文件内联预算限制。',
   preparing: '正在准备 {{format}}…',
   done: {
     html: '离线画册已下载。',
@@ -1334,6 +1335,7 @@ export const readerEn: Widen<typeof readerZh> = {
   colophon2: 'Leave the unfinished story for the next ray of light.',
   info: 'Frame text',
   noCaption: 'No dialogue in this frame.',
+  savedStrip: 'Saved comic strip with crop, spacing and lettering',
   film: 'Filmstrip',
   mode: { auto: 'Adaptive', single: 'Single page', continuous: 'Continuous' },
   prev: 'Previous page',
@@ -1448,7 +1450,7 @@ export const readerEn: Widen<typeof readerZh> = {
   zip: 'ZIP image bundle',
   pdf: 'PDF picture book',
   portableHelp:
-    'ZIP: a simple reader plus the image files; PDF: one picture per page. Neither has the single-file budget; images follow “Image processing”.',
+    'ZIP: a simple reader plus image files; PDF: one panel per page. Neither uses the current HTML or spread template. Separate captions appear only in the ZIP reader. Images follow “Image processing” without the single-file inline budget.',
   preparing: 'Preparing {{format}}…',
   done: {
     html: 'Offline album downloaded.',

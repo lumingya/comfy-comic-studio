@@ -1,0 +1,7 @@
+{
+  "id": "qa-review",
+  "name": "QA review example",
+  "version": "0.1.0",
+  "description": "Explicit local QA requests without automatic candidate adoption.",
+  "main": "main.py"
+}

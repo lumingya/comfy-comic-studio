@@ -164,6 +164,13 @@ beforeEach(() => {
       limit: 50,
     },
     'GET /api/episodes/ep_1': episode,
+    'GET /api/episodes/ep_1/reading': {
+      revision: 'saved-reading-3',
+      width: 800,
+      height: 1500,
+      panel_boxes: { p0: [0, 170, 800, 1237] },
+      captions: { p0: '欢迎光临' },
+    },
     'GET /api/workshop': workshop,
     'GET /api/series/ws_1': workshop,
     'GET /api/series/ws_1/episodes': {
@@ -488,7 +495,7 @@ describe('every route mounts with API data', () => {
   it('画册集 → the reader dialog shows the adopted pages, nothing to edit', async () => {
     mount('/gallery/ser_1');
     const img = await screen.findByAltText('第 1 格');
-    expect(img.getAttribute('src')).toContain('/api/assets/');
+    expect(img.getAttribute('src')).toContain('/api/episodes/ep_1/panels/p0/image?');
     expect(document.querySelector('#page-position')?.textContent).toBe('01 / 01');
     expect(screen.getByRole('button', { name: '关闭画册' })).toBeInTheDocument();
     expect(screen.queryByLabelText('画面提示词')).toBeNull();
@@ -514,6 +521,13 @@ describe('every route mounts with API data', () => {
         limit: 50,
       },
       'GET /api/episodes/ep_1': episode,
+      'GET /api/episodes/ep_1/reading': {
+        revision: 'saved-reading-3',
+        width: 800,
+        height: 1500,
+        panel_boxes: { p0: [0, 170, 800, 1237] },
+        captions: { p0: '欢迎光临' },
+      },
       'GET /api/album-templates': [
         tpl('export-seamless', '无缝 · 纯图阅读'),
         tpl('mio-fit', '留白 · 完整画面'),

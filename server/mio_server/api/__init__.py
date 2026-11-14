@@ -9,13 +9,15 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from pathlib import Path, PurePosixPath
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request, WebSocketException
+from fastapi.requests import HTTPConnection
 from fastapi.responses import FileResponse, JSONResponse
 
 from .. import llm as L
 from ..bundle import BundleError
 from ..comfy.bindings import BindingError
 from ..context import AppContext
+from ..extensions.manifest import digest
 from ..jobs import JobConflict, JobError, JobNotFound
 from ..pipeline.assistant import AssistantError
 from ..pipeline.render import RenderError
@@ -114,8 +116,38 @@ def _mount_extensions(app: FastAPI) -> None:
     if manager is None:
         return
     for ext_id, router in manager.routers():
-        app.include_router(router, prefix=f"/api/ext/{ext_id}")
+        loaded = manager.loaded[ext_id]
+        pinned = manager.ctx.settings().extensions[ext_id].digest
+        app.include_router(
+            router,
+            prefix=f"/api/ext/{ext_id}",
+            dependencies=[Depends(_extension_guard(manager, ext_id, loaded, pinned))],
+        )
         manager.mounted.add(ext_id)
+
+
+def _extension_guard(manager, ext_id, loaded, pinned):
+    """A route belongs to one reviewed activation, never to a later load of the same id."""
+
+    def require_active(conn: HTTPConnection) -> None:
+        state = manager.ctx.settings().extensions.get(ext_id)
+        active = (
+            manager.loaded.get(ext_id) is loaded
+            and state is not None
+            and state.enabled
+            and state.digest == pinned
+        )
+        if active:
+            try:
+                active = digest(loaded.api.folder) == pinned
+            except OSError:
+                active = False
+        if not active:
+            if conn.scope["type"] == "websocket":
+                raise WebSocketException(code=1008, reason="extension is not active")
+            raise NotFound(f"扩展未启用、内容已变动或需要重启：{ext_id}")
+
+    return require_active
 
 
 def _handler(code: int, kind: str):

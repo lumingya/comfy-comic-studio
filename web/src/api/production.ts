@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, data } from './client';
 import { keys } from './keys';
-import type { Job, Strip } from './types';
+import type { Episode, Job, Series, Strip } from './types';
 
 function newKey(): string {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto
@@ -95,6 +95,40 @@ export function useSaveStrip(episodeId: string) {
 export function stripUrl(episodeId: string, bust: string | number) {
   const q = new URLSearchParams({ v: String(bust) });
   return `/api/episodes/${episodeId}/strip.png?${q}`;
+}
+
+/** Native reading uses the compositor's geometry and expanded captions for this saved snapshot. */
+export function useReadingPreview(
+  episode: Episode | undefined,
+  series: Series | undefined,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: ['reading-preview', episode, series],
+    enabled: enabled && !!episode && !!series,
+    retry: false,
+    queryFn: async ({ signal }) =>
+      data(
+        await api.GET('/api/episodes/{episode_id}/reading', {
+          params: { path: { episode_id: episode!.id }, query: { width: 1600 } },
+          signal,
+        }),
+      ),
+  });
+}
+
+export function readingPanelUrl(
+  episodeId: string,
+  panelId: string,
+  revision: string,
+  width = 1600,
+) {
+  const query = new URLSearchParams({ width: String(width), revision });
+  return `/api/episodes/${encodeURIComponent(episodeId)}/panels/${encodeURIComponent(panelId)}/image?${query}`;
+}
+
+export function readingStripUrl(episodeId: string, revision: string) {
+  return `/api/episodes/${encodeURIComponent(episodeId)}/strip.png?${new URLSearchParams({ width: '1600', revision })}`;
 }
 
 export function useExportPresets() {

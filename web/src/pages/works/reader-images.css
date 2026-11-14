@@ -1,0 +1,21 @@
+#reader-canvas .room-scroll .reader-saved-strip {
+  position: relative;
+  width: 100%;
+  margin-inline: auto;
+  padding: 0;
+  line-height: 0;
+}
+#reader-canvas .room-scroll .reader-saved-strip img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  margin: 0;
+}
+.reader-strip-anchor {
+  position: absolute;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}

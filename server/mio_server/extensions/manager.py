@@ -202,6 +202,7 @@ class ExtensionManager:
         return True
 
     def unload(self, ext_id: str) -> None:
+        self.mounted.discard(ext_id)
         loaded = self.loaded.pop(ext_id, None)
         if not loaded:
             return

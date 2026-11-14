@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..models import Episode, LetterStyle, PanelWidth
@@ -12,10 +12,41 @@ from ..pipeline import composition as CP
 from ..pipeline import pacing as PC
 from ..pipeline import readability as RD
 from ..pipeline.compiler import canvas_size
+from ..pipeline.reading import ReadingPreview
 from ..storage import NotFound
 from .deps import Ctx
 
 router = APIRouter(tags=["canvas"])
+
+
+@router.get("/episodes/{episode_id}/reading", response_model=ReadingPreview)
+def reading_preview(
+    ctx: Ctx,
+    episode_id: str,
+    variant_id: str | None = None,
+    width: int = Query(1600, ge=64, le=3200),
+) -> ReadingPreview:
+    """Read composited geometry and expanded captions without saving layout or calling models."""
+    return ctx.reading.get(ctx, episode_id, variant_id, width).preview
+
+
+@router.get(
+    "/episodes/{episode_id}/panels/{panel_id}/image",
+    response_class=Response,
+    responses={200: {"content": {"image/png": {"schema": {"type": "string", "format": "binary"}}}}},
+)
+def reading_panel_image(
+    ctx: Ctx,
+    episode_id: str,
+    panel_id: str,
+    variant_id: str | None = None,
+    width: int = Query(
+        1600, ge=64, le=3200, description="Maximum preview width; may be reduced to fit memory"
+    ),
+) -> Response:
+    """Adopted panel with saved framing and lettering; full-strip whitespace is outside its crop."""
+    data = ctx.reading.image(ctx, episode_id, panel_id, variant_id, width)
+    return Response(data, media_type="image/png", headers={"Cache-Control": "no-cache"})
 
 
 class PacingChanges(BaseModel):

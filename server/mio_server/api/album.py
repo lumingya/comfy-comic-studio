@@ -48,8 +48,13 @@ class PortableExport(BaseModel):
     episode_ids: list[str] = Field(min_length=1, max_length=50)
     format: Literal["zip", "pdf"] = "zip"
     variant_id: str | None = None
-    lettered: bool = True
-    show_captions: bool = True
+    lettered: bool = Field(
+        default=True,
+        description="Crop composited panels; false exports original adopted images without framing",
+    )
+    show_captions: bool = Field(
+        default=True, description="ZIP reader captions only; PDF contains one image per page"
+    )
     title: str = Field(default="", max_length=120)
     image_profile: M.Profile = "auto"
 

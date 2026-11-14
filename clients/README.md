@@ -8,6 +8,21 @@
 
 本机网页用的 `/api` 不需要令牌，只应该在本机或可信的局域网里访问。
 
+创作操作覆盖如下，界面与脚本使用同一规则：
+
+| 操作 | v2 接口（省略 `/api/v2`） |
+| --- | --- |
+| 分镜、角色与预设 | `/series`、`/episodes`、`/episodes/{id}/panels` |
+| 预览与装配 | `/workshop/assemble/preview`、`/workshop/assemble` |
+| 工作流与渠道 | `/workflows`、`/profiles`、`/instances`、`/settings` |
+| 明确生成与核对 | `/episodes/{id}/render`、`/jobs`、任务事件 / 取消 / 重试 / 恢复 |
+| 采用与排版 | `/episodes/{id}/takes/{take_id}/adopt`、`/episodes/{id}/strip` |
+| 阅读与输出 | `/episodes/{id}/reading`、`/episodes/{id}/panels/{panel_id}/image`、各导出接口 |
+| 专业处理 | `/episodes/{id}/edit`、`qa`、`finalize`、`assistant/*`、动态漫接口 |
+
+令牌签发、扩展安装与信任确认属于本机管理边界，不通过增加 `admin` 权限开放到 v2。
+可选质检扩展示例见 [qa-review](../examples/extensions/qa-review/README.md)，默认不增加主界面入口。
+
 ## 令牌与权限
 
 在「设置 → 模型与连接 → API 令牌」里生成令牌。明文令牌只显示一次，服务端只保存它的 sha256。
@@ -187,6 +202,28 @@ python clients/python/generate.py --check  # CI 用：不一致时失败
 ```
 
 生成器从服务端应用直接读 OpenAPI，不需要先启动服务。
+
+### 阅读、裁切与输出格式
+
+`GET /episodes/{id}/reading`（`read`）返回真正合成后的画布宽高、格坐标、展开后的台词及内容
+摘要 `revision`；`GET /episodes/{id}/panels/{panel_id}/image?width=1600` 返回保存了裁切和嵌字的
+采用单格 PNG。无采用图时前者返回空的格坐标和台词映射，后者为 404。`width` 是预览宽度上限（64–3200），
+缓存容量不足时可能降低分辨率，正式导出保持自己的分辨率策略。
+
+同一个工作区和快照的单格请求共用一次画布合成；作品变量、设定集、采用图及排版变化都会
+使缓存失效。图片响应不使用素材的永久缓存策略；客户端可把 `revision` 追加到 URL，确保
+嵌入的图片随内容刷新。这些读取不保存布局、不调用模型、不发出导出事件。
+
+| 接口 | 输出与留白行为 |
+| --- | --- |
+| `GET /episodes/{id}/strip.png` | 完整合成画布，包含手动留白及跨格文字 |
+| `GET /episodes/{id}/export?fmt=long\|slices\|pdf\|html` | 完整条漫；PDF 沿条漫切页，切片按平台宽高处理 |
+| `POST /export/album` | 选择 HTML 模板，默认取合成单格；模板间距替代条漫间距，格外文字在格界截断 |
+| `POST /export/portable` | ZIP 图片与简单阅读页，或每格一页 PDF；不接受 HTML 模板，不继承双页阅读布局 |
+
+后两种接口默认 `lettered:true`；`false` 直接使用原始采用图，裁切也不应用。
+Portable 的 `show_captions` 只控制 ZIP 阅读页，PDF 仅含图片。HTML 画册、ZIP、PDF 和可编辑
+`.mio.zip` 作品包分别服务不同用途，不能互相当作同一格式。
 
 ## AstrBot 插件
 

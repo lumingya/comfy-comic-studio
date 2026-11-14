@@ -345,6 +345,41 @@ class MioClient(_Base):
         """GET /episodes/{episode_id}/takes/{take_id}/image — Take Image."""
         return self._request("GET", f"/episodes/{_q(episode_id)}/takes/{_q(take_id)}/image")
 
+    def reading_preview(
+        self,
+        episode_id: str,
+        *,
+        variant_id: Any | None = None,
+        width: int | None = None,
+    ) -> Any:
+        """GET /episodes/{episode_id}/reading — Reading Preview.
+
+        Read composited geometry and expanded captions without saving layout or calling models.
+        """
+        return self._request(
+            "GET",
+            f"/episodes/{_q(episode_id)}/reading",
+            params={"variant_id": variant_id, "width": width},
+        )
+
+    def reading_panel_image(
+        self,
+        episode_id: str,
+        panel_id: str,
+        *,
+        variant_id: Any | None = None,
+        width: int | None = None,
+    ) -> Any:
+        """GET /episodes/{episode_id}/panels/{panel_id}/image — Reading Panel Image.
+
+        Adopted panel with saved framing and lettering; full-strip whitespace is outside its crop.
+        """
+        return self._request(
+            "GET",
+            f"/episodes/{_q(episode_id)}/panels/{_q(panel_id)}/image",
+            params={"variant_id": variant_id, "width": width},
+        )
+
     def sfx_presets(self) -> Any:
         """GET /lettering/sfx-presets — Sfx Presets.
 

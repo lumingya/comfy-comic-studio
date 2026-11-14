@@ -93,11 +93,8 @@ def episode_pages(
     images, _ = ES.adopted_images(ctx, ep, variant_id)
     crops: dict[str, Image.Image] = {}
     if lettered and images:
-        _, _, strip, full = ES.render_episode_strip(ctx, episode_id, variant_id)
-        for pid, box in strip.panel_boxes.items():
-            if pid in images:
-                x0, y0, x1, y1 = (round(v) for v in box)
-                crops[pid] = full.crop((x0, y0, x1, y1))
+        _, _, strip, full = ES.render_snapshot(ctx, series, ep, variant_id)
+        crops = dict(ES.panel_crops(ep, strip, full, variant_id))
     pages: list[Page | None] = []
     for i, panel in enumerate(ep.ordered_panels(), start=1):
         im = crops.get(panel.id) or images.get(panel.id)

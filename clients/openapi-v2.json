@@ -3315,11 +3315,13 @@
      },
      "lettered": {
       "default": true,
+      "description": "Crop composited panels; false exports original adopted images without framing",
       "title": "Lettered",
       "type": "boolean"
      },
      "show_captions": {
       "default": true,
+      "description": "ZIP reader captions only; PDF contains one image per page",
       "title": "Show Captions",
       "type": "boolean"
      },
@@ -4118,6 +4120,61 @@
      "auto_concurrency"
     ],
     "title": "QueueStatus",
+    "type": "object"
+   },
+   "ReadingPreview": {
+    "properties": {
+     "captions": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Captions",
+      "type": "object"
+     },
+     "height": {
+      "title": "Height",
+      "type": "integer"
+     },
+     "panel_boxes": {
+      "additionalProperties": {
+       "maxItems": 4,
+       "minItems": 4,
+       "prefixItems": [
+        {
+         "type": "number"
+        },
+        {
+         "type": "number"
+        },
+        {
+         "type": "number"
+        },
+        {
+         "type": "number"
+        }
+       ],
+       "type": "array"
+      },
+      "title": "Panel Boxes",
+      "type": "object"
+     },
+     "revision": {
+      "title": "Revision",
+      "type": "string"
+     },
+     "width": {
+      "title": "Width",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "revision",
+     "width",
+     "height",
+     "panel_boxes",
+     "captions"
+    ],
+    "title": "ReadingPreview",
     "type": "object"
    },
    "RenderProfile-Input": {
@@ -7693,6 +7750,94 @@
     ]
    }
   },
+  "/episodes/{episode_id}/panels/{panel_id}/image": {
+   "get": {
+    "description": "Adopted panel with saved framing and lettering; full-strip whitespace is outside its crop.",
+    "operationId": "reading_panel_image",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "episode_id",
+      "required": true,
+      "schema": {
+       "title": "Episode Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "panel_id",
+      "required": true,
+      "schema": {
+       "title": "Panel Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "variant_id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Variant Id"
+      }
+     },
+     {
+      "description": "Maximum preview width; may be reduced to fit memory",
+      "in": "query",
+      "name": "width",
+      "required": false,
+      "schema": {
+       "default": 1600,
+       "description": "Maximum preview width; may be reduced to fit memory",
+       "maximum": 3200,
+       "minimum": 64,
+       "title": "Width",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "image/png": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Reading Panel Image",
+    "tags": [
+     "canvas"
+    ]
+   }
+  },
   "/episodes/{episode_id}/panels/{panel_id}/prompt": {
    "get": {
     "description": "Compiled prompt in both dialects plus the automatically chosen reference images.",
@@ -7891,6 +8036,82 @@
     "summary": "Qa",
     "tags": [
      "production"
+    ]
+   }
+  },
+  "/episodes/{episode_id}/reading": {
+   "get": {
+    "description": "Read composited geometry and expanded captions without saving layout or calling models.",
+    "operationId": "reading_preview",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "episode_id",
+      "required": true,
+      "schema": {
+       "title": "Episode Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "variant_id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Variant Id"
+      }
+     },
+     {
+      "in": "query",
+      "name": "width",
+      "required": false,
+      "schema": {
+       "default": 1600,
+       "maximum": 3200,
+       "minimum": 64,
+       "title": "Width",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ReadingPreview"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Reading Preview",
+    "tags": [
+     "canvas"
     ]
    }
   },

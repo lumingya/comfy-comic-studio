@@ -31,6 +31,7 @@ from .pipeline import lettering as LT
 from .pipeline import providers as PV
 from .pipeline.cloud_jobs import CloudExecutor
 from .pipeline.qa import QAService
+from .pipeline.reading import ReadingCache
 from .pipeline.render import RenderService
 from .queue import ProductionQueue
 from .registry import Registry
@@ -67,6 +68,7 @@ class AppContext:
     webhooks: Dispatcher | None = None
     updater: Updater | None = None
     queue: ProductionQueue | None = None
+    reading: ReadingCache = field(default_factory=ReadingCache)
 
     @classmethod
     def create(
@@ -129,6 +131,7 @@ class AppContext:
             store.close,
             ctx.webhooks.close,
             ctx.queue.close,
+            ctx.reading.clear,
         ]
         return ctx
 

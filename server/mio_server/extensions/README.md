@@ -12,7 +12,7 @@
 - 以后扩展里任何文件变了，摘要就对不上，扩展状态会变成「文件已变动」，不再加载，要用户重新确认。
 - 带 `main` 或 `panels` 的扩展算作「含代码」，确认对话框里会有更醒目的警告。Python 代码和本程序拥有相同的权限，这里没有沙箱，信任靠的是用户自己的审阅。
 - 启动时设置环境变量 `MIO_SAFE_MODE=1`，所有扩展都不会加载。扩展把服务搞坏的时候用这个办法恢复。
-- 停用扩展时，它注册的所有东西（钩子、贡献、主题……）会按来源 `ext:<id>` 一起移除。新增的后端路由要重启服务后才生效。
+- 停用扩展时，它注册的所有东西（钩子、贡献、主题……）会按来源 `ext:<id>` 一起移除，已挂载的后端路由也会立即拒绝新请求（404）。路由绑定本次审核并加载的代码；文件变动、重新启用或重新审核后，旧路由不能继续使用，重启服务才会挂载新路由。已经提交的任务仍由任务引擎管理，需停止时单独取消。
 
 ## 目录结构
 
@@ -145,7 +145,15 @@ def deactivate():  # 可选：停用时调用
 - `slot: "episode"` 的面板会作为剧集页的一个标签页显示，URL 查询参数里带 `episode` 和 `series` 两个 id。
 - `slot: "settings"` 的面板显示在「设置 → 扩展」里。
 
-面板运行在 `sandbox="allow-scripts"` 的 iframe 里，没有 `allow-same-origin`。服务端还会给面板文件加上 `connect-src 'none'` 的 CSP。所以面板读不到应用的存储，也不能直接联网或调用接口。面板需要的数据，应该由扩展的 Python 部分通过自己的路由提供，再由用户在界面上触发。
+面板运行在 `sandbox="allow-scripts"` 的 iframe 里，没有 `allow-same-origin`。服务端还会给面板文件加上 `connect-src 'none'` 的 CSP。所以面板读不到应用的存储，也不能直接联网或调用接口，扩展自己的 Python 路由同样不能直接调用。当前没有通用请求桥；需要调用后端能力时，使用显式本机 CLI 或正式开放 API，不能仅因路由存在就从沙箱面板发起请求。
+
+## 显式 QA 扩展示例
+
+仓库的 [`examples/extensions/qa-review`](../../../examples/extensions/qa-review/README.md) 提供可选 QA
+入口、标准库 CLI 和完整打包步骤。安装与启用不提交任务，只有明确调用本机
+`POST /api/ext/qa-review/queue` 才评审所选候选，且固定 `auto_adopt=False`。
+示例使用不稳定的 `mio.internal.qa.submit`；远程程序继续使用带 `render` 权限的正式
+`POST /api/v2/episodes/{episode_id}/qa`。本例不添加主界面入口或沙箱网络请求桥。
 
 ## 打包与安装
 

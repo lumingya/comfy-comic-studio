@@ -612,6 +612,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/episodes/{episode_id}/reading": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Reading Preview
+         * @description Read composited geometry and expanded captions without saving layout or calling models.
+         */
+        get: operations["reading_preview_api_episodes__episode_id__reading_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/episodes/{episode_id}/panels/{panel_id}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Reading Panel Image
+         * @description Adopted panel with saved framing and lettering; full-strip whitespace is outside its crop.
+         */
+        get: operations["reading_panel_image_api_episodes__episode_id__panels__panel_id__image_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/lettering/sfx-presets": {
         parameters: {
             query?: never;
@@ -3326,11 +3366,13 @@ export interface components {
             variant_id?: string | null;
             /**
              * Lettered
+             * @description Crop composited panels; false exports original adopted images without framing
              * @default true
              */
             lettered?: boolean;
             /**
              * Show Captions
+             * @description ZIP reader captions only; PDF contains one image per page
              * @default true
              */
             show_captions?: boolean;
@@ -3695,6 +3737,28 @@ export interface components {
              * @description Panels per album when no default is set.
              */
             auto_concurrency: number;
+        };
+        /** ReadingPreview */
+        ReadingPreview: {
+            /** Revision */
+            revision: string;
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+            /** Panel Boxes */
+            panel_boxes: {
+                [key: string]: [
+                    number,
+                    number,
+                    number,
+                    number
+                ];
+            };
+            /** Captions */
+            captions: {
+                [key: string]: string;
+            };
         };
         /**
          * RenderProfile
@@ -5869,6 +5933,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reading_preview_api_episodes__episode_id__reading_get: {
+        parameters: {
+            query?: {
+                variant_id?: string | null;
+                width?: number;
+            };
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReadingPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reading_panel_image_api_episodes__episode_id__panels__panel_id__image_get: {
+        parameters: {
+            query?: {
+                variant_id?: string | null;
+                /** @description Maximum preview width; may be reduced to fit memory */
+                width?: number;
+            };
+            header?: never;
+            path: {
+                episode_id: string;
+                panel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
                 };
             };
             /** @description Validation Error */

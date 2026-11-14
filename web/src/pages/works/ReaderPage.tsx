@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { assetUrl } from '../../api/client';
+import { readingPanelUrl, readingStripUrl, useReadingPreview } from '../../api/production';
 import { useAlbumTemplates } from '../../api/open';
 import { useEpisode, useEpisodes, useSeries } from '../../api/series';
 import { Icon } from '../../app/icons';
@@ -26,6 +26,7 @@ import {
   type NativeLayout,
   type ReadingMode,
 } from './readingStage';
+import './reader-images.css';
 
 const MODE_KEY = 'mio.reader.mode';
 const LAYOUT_KEY = 'mio.reader.layout';
@@ -108,7 +109,7 @@ export default function ReaderPage() {
     }
   };
   const [film, setFilm] = useState(false);
-  const [sizes, setSizes] = useState<Record<string, { w: number; h: number }>>({});
+  const [loadedSizes, setSizes] = useState<Record<string, { w: number; h: number }>>({});
   const [view, setView] = useState({ w: 0, h: 0 });
   const [desktop, setDesktop] = useState(() =>
     typeof window.matchMedia === 'function' ? window.matchMedia(DESKTOP_QUERY).matches : true,
@@ -145,6 +146,11 @@ export default function ReaderPage() {
       ? 'layout'
       : '';
   usePageTitle(series.data?.title ?? t('reader.title'));
+  const reading = useReadingPreview(
+    episode.data,
+    series.data,
+    look === NATIVE && panel !== 'layout',
+  );
 
   useEffect(() => {
     const d = ref.current;
@@ -166,14 +172,26 @@ export default function ReaderPage() {
       .filter((p) => images[p.id!])
       .map((p) => ({
         id: p.id!,
-        asset: images[p.id!],
+        src: reading.data ? readingPanelUrl(ep.id, p.id, reading.data.revision) : '',
         title: p.description,
-        caption:
-          p.dialogues.find((d) => d.kind === 'narration')?.text ??
-          p.dialogues.map((d) => d.text).join(' '),
-        shape: (p.overrides.width ?? 0) > (p.overrides.height ?? Infinity) ? 'wide' : undefined,
+        caption: reading.data?.captions[p.id] ?? '',
       }));
-  }, [episode.data]);
+  }, [episode.data, reading.data]);
+  const currentSources = useRef(new Map<string, string>());
+  currentSources.current = new Map(pages.map((p) => [p.id, p.src]));
+  const sizes = useMemo(
+    () =>
+      Object.fromEntries(
+        pages.map((p) => {
+          const box = reading.data?.panel_boxes[p.id];
+          return [
+            p.id,
+            loadedSizes[p.src] ?? (box ? { w: box[2] - box[0], h: box[3] - box[1] } : undefined),
+          ];
+        }),
+      ),
+    [pages, loadedSizes, reading.data],
+  );
   const current = Math.min(page, Math.max(0, pages.length - 1));
   // Legacy reading-stage.js: fit each stage into one screen, except in continuous mode or on phones.
   const staged = desktop && stage !== 'continuous' && view.w > 0 && view.h > 0;
@@ -213,7 +231,7 @@ export default function ReaderPage() {
   const pageRef = useRef(current);
   pageRef.current = current;
   // Switching mode (or a re-layout as images load) keeps the page in view, like legacy build().
-  const layoutKey = `${epId}|${stage}|${staged}|${view.w}x${view.h}|${stages
+  const layoutKey = `${epId}|${reading.data?.revision}|${stage}|${staged}|${view.w}x${view.h}|${stages
     .map((x) => x.items.length)
     .join('')}|${pages.length}`;
   useLayoutEffect(() => {
@@ -305,6 +323,7 @@ export default function ReaderPage() {
   ) => {
     const p = pages[i];
     const size = sizes[p.id];
+    const shape = size && size.w > size.h ? 'wide' : undefined;
     return (
       <article
         key={p.id}
@@ -316,15 +335,19 @@ export default function ReaderPage() {
         }
         aria-label={opts.anchor ? t('reader.pageN', { n: i + 1 }) : undefined}
       >
-        <div className="room-page" data-shape={p.shape}>
+        <div className="room-page" data-shape={shape}>
           <img
-            src={assetUrl(p.asset, 1600)}
+            key={p.src}
+            src={p.src}
             alt={p.title}
-            data-shape={p.shape}
+            data-shape={shape}
             loading={i > 2 ? 'lazy' : undefined}
             onLoad={(e) => {
               const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
-              setSizes((m) => (m[p.id] ? m : { ...m, [p.id]: { w, h } }));
+              if (currentSources.current.get(p.id) !== p.src || !w || !h) return;
+              setSizes((m) =>
+                m[p.src]?.w === w && m[p.src]?.h === h ? m : { ...m, [p.src]: { w, h } },
+              );
             }}
           />
           <span className="room-page-number">{String(i + 1).padStart(2, '0')}</span>
@@ -382,13 +405,14 @@ export default function ReaderPage() {
         else close();
       }}
     >
-      {series.error || episodes.error || episode.error ? (
+      {series.error || episodes.error || episode.error || reading.error ? (
         <QueryError
-          error={series.error || episodes.error || episode.error}
+          error={series.error || episodes.error || episode.error || reading.error}
           onRetry={() => {
             void series.refetch();
             void episodes.refetch();
             void episode.refetch();
+            void reading.refetch();
           }}
         />
       ) : null}
@@ -490,8 +514,39 @@ export default function ReaderPage() {
             style={staged ? ({ '--mio-stage-height': `${view.h}px` } as CSSProperties) : undefined}
           >
             <div className={`room-scroll ${staged ? 'mio-stage-pages' : ''}`}>
-              {episode.isLoading || series.isLoading ? (
+              {episode.isLoading || series.isLoading || (pages.length > 0 && reading.isPending) ? (
                 <p className="room-empty">{t('reader.loading')}</p>
+              ) : reading.error ? null : stage === 'continuous' &&
+                reading.data &&
+                epId &&
+                pages.length ? (
+                <div
+                  className="reader-saved-strip"
+                  style={{
+                    maxWidth: reading.data.width,
+                    aspectRatio: `${reading.data.width} / ${Math.max(1, reading.data.height)}`,
+                  }}
+                >
+                  <img
+                    key={reading.data.revision}
+                    src={readingStripUrl(epId, reading.data.revision)}
+                    alt={t('reader.savedStrip')}
+                    width={reading.data.width}
+                    height={reading.data.height}
+                  />
+                  {pages.map((p, i) => {
+                    const top = reading.data.panel_boxes[p.id]?.[1] ?? 0;
+                    return (
+                      <span
+                        key={p.id}
+                        data-page-anchor={i}
+                        className="reader-strip-anchor"
+                        aria-hidden="true"
+                        style={{ top: `${(100 * top) / Math.max(1, reading.data.height)}%` }}
+                      />
+                    );
+                  })}
+                </div>
               ) : !pages.length ? (
                 <p className="room-empty">{t('reader.empty')}</p>
               ) : staged ? (
@@ -508,7 +563,7 @@ export default function ReaderPage() {
                     }
                     style={
                       {
-                        '--mio-stage-backdrop': `url("${assetUrl(pages[stage.start].asset, 512)}")`,
+                        '--mio-stage-backdrop': `url("${pages[stage.start].src}")`,
                       } as CSSProperties
                     }
                   >
@@ -576,7 +631,13 @@ export default function ReaderPage() {
             aria-label={t('reader.pageN', { n: i + 1 })}
             onClick={() => go(i)}
           >
-            <img src={assetUrl(p.asset, 256)} alt="" loading="lazy" />
+            {reading.data && epId ? (
+              <img
+                src={readingPanelUrl(epId, p.id, reading.data.revision, 256)}
+                alt=""
+                loading="lazy"
+              />
+            ) : null}
           </button>
         ))}
       </div>
