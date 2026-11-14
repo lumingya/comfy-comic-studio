@@ -1,8 +1,44 @@
+import json
 import unittest
+from unittest.mock import patch
 
+from mio_server import llm as L
+from mio_server import settings as SET
 from mio_server.pipeline import prompts as P
 from mio_server.pipeline import script as S
+from tests.api_harness import ApiCase
 from tests.story_fixture import make_story
+
+
+class ScriptGenerationTests(ApiCase):
+    def test_public_generate_uses_configured_text_model(self):
+        self.ctx.store.put_doc(
+            SET.AppSettings(llm=SET.LLMSettings(text_models=["claude-opus-5.5"]))
+        )
+        self.ctx.llm_factory = SET.llm_factory(self.ctx.store)
+        response = {"choices": [{"message": {"content": json.dumps(make_story())}}]}
+        with patch.object(L.Client, "_post", return_value=response) as post:
+            _, episode = self.make_episode()
+        self.assertEqual(len(episode["panels"]), 12)
+        post.assert_called_once()
+        self.assertEqual(post.call_args.args[1]["model"], "claude-opus-5.5")
+
+    def test_plain_client_default_and_explicit_model_override(self):
+        response = {"choices": [{"message": {"content": json.dumps(make_story())}}]}
+        for client, options, expected in (
+            (L.Client(), {}, L.TEXT_MODELS[0]),
+            (
+                SET.ConfiguredClient(SET.LLMSettings(text_models=["configured-model"])),
+                {"models": ["explicit-model"]},
+                "explicit-model",
+            ),
+        ):
+            with self.subTest(model=expected):
+                with patch.object(L.Client, "_post", return_value=response) as post:
+                    story, _ = S.generate_script("A quiet cafe after the rain.", client, **options)
+                self.assertEqual(len(story["panels"]), 12)
+                post.assert_called_once()
+                self.assertEqual(post.call_args.args[1]["model"], expected)
 
 
 class ScriptValidationTests(unittest.TestCase):

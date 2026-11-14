@@ -274,8 +274,6 @@ def validate_story(story: dict, min_panels: int = 12, max_panels: int = 16) -> l
 
 def generate_script(sentence: str, client, min_panels: int = 12, max_panels: int = 16, models=None):
     """One sentence -> validated story dict (plus the LLM reply for timing/model info)."""
-    from ..llm import TEXT_MODELS
-
     system = SYSTEM_PROMPT.format(
         min_panels=min_panels, max_panels=max_panels, max_chars=MAX_BUBBLE_CHARS
     )
@@ -285,9 +283,9 @@ def generate_script(sentence: str, client, min_panels: int = 12, max_panels: int
     ]
     data, reply = client.chat_json(
         messages,
-        models or TEXT_MODELS,
         validate=lambda d: validate_story(normalize_story(d), min_panels, max_panels),
         repairs=2,
+        **({"models": models} if models is not None else {}),
     )
     return normalize_story(data), reply
 
