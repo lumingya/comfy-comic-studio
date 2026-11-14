@@ -1,6 +1,8 @@
+import io
 import unittest
+from unittest.mock import patch
 
-from PIL import Image
+from PIL import Image, ImageChops, ImageDraw, ImageFont
 
 from mio_server.models import (
     Dialogue,
@@ -12,6 +14,7 @@ from mio_server.models import (
     Series,
 )
 from mio_server.pipeline import backdrop as BD
+from mio_server.pipeline import layout as LY
 from mio_server.pipeline import lettering as LT
 from mio_server.pipeline import story as ST
 from mio_server.pipeline import strip as SP
@@ -115,6 +118,47 @@ class SfxTests(unittest.TestCase):
 
 
 class PlacementTests(unittest.TestCase):
+    def test_custom_size_renders_with_pillow_memory_font_without_system_fonts(self):
+        with patch.object(LY, "find_font", return_value=None):
+            style = LY.Style(font_path=None, bold_path=None)
+        self.assertIsNone(style.font_path)
+        self.assertIsNone(style.bold_path)
+        fonts = {
+            "text": LY.load_font(style.font_path, style.font_size),
+            "caption": LY.load_font(style.bold_path or style.font_path, style.caption_size),
+        }
+        for font in fonts.values():
+            self.assertIsInstance(font, ImageFont.FreeTypeFont)
+            self.assertIsInstance(font.path, io.BytesIO)
+            self.assertEqual(font.path.read(), b"")  # the failing reload used this exhausted stream
+        for kind in (
+            DialogueKind.speech,
+            DialogueKind.thought,
+            DialogueKind.narration,
+            DialogueKind.caption,
+        ):
+            for vertical in (False, True):
+                with self.subTest(kind=kind, vertical=vertical):
+                    image = Image.new("RGB", (320, 240), "white")
+                    blank = image.copy()
+                    layer = LetteringLayer(
+                        kind=kind,
+                        text="Memory font",
+                        box=(20, 20, 300, 220),
+                        font_size=24,
+                        vertical=vertical,
+                    )
+                    with patch.object(LY, "draw_bubble", wraps=LY.draw_bubble) as draw:
+                        LT.draw_layer(image, ImageDraw.Draw(image), layer, fonts, style)
+                    drawn_font = LY.font_for(kind.value, draw.call_args.args[2])
+                    self.assertEqual(drawn_font.size, 24)
+                    self.assertEqual(
+                        drawn_font.font_bytes, LY.font_for(kind.value, fonts).font_bytes
+                    )
+                    self.assertIsNotNone(ImageChops.difference(image, blank).getbbox())
+        self.assertEqual(fonts["text"].size, style.font_size)
+        self.assertEqual(fonts["caption"].size, style.caption_size)
+
     def test_estimated_faces_follow_positions(self):
         series, episode, _ = project(1)
         panel = episode.panels[0]

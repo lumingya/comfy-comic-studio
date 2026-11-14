@@ -265,7 +265,17 @@ def draw_layer(
         return
     font = LY.font_for(layer.kind.value, fonts)
     if layer.font_size and layer.font_size != font.size:
-        font = LY.load_font(font.path if hasattr(font, "path") else None, layer.font_size)
+        if hasattr(font, "font_variant"):
+            # Pillow's default FreeType font has an exhausted BytesIO path; font_variant
+            # rebuilds it from cached font_bytes while preserving the selected font face.
+            font = font.font_variant(size=layer.font_size)
+        else:
+            path = (
+                style.bold_path or style.font_path
+                if layer.kind == DialogueKind.caption
+                else style.font_path
+            )
+            font = LY.load_font(path, layer.font_size)
         fonts = {**fonts, {"caption": "caption"}.get(layer.kind.value, "text"): font}
     vertical = layer.vertical and layer.kind != DialogueKind.caption
     if vertical:
