@@ -1,0 +1,77 @@
+/* Specificity keeps the existing page/mobile styles from restoring fixed columns. */
+.resizable-split.resizable-split {
+  display: grid;
+  grid-template-columns: var(--split-primary) var(--split-gutter) minmax(0, 1fr);
+  column-gap: 0;
+  min-width: 0;
+}
+.resizable-split > * {
+  min-width: 0;
+}
+.resizable-split > .split-handle {
+  align-self: stretch;
+  position: relative;
+  min-height: 64px;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+  outline: none;
+}
+.split-handle::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 50%;
+  width: 1px;
+  background: var(--line);
+}
+.split-handle::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: calc(50% - 1px);
+  width: 3px;
+  height: 28px;
+  border-radius: 3px;
+  background: var(--muted);
+  opacity: 0.4;
+}
+.split-handle:hover::after,
+.split-handle:focus-visible::after,
+.resizable-split[data-resizing] > .split-handle::after {
+  background: var(--accent);
+  opacity: 1;
+}
+.split-handle:focus-visible {
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.resizable-split[data-resizing] {
+  cursor: col-resize;
+  user-select: none;
+}
+.resizable-split.workshop-editor > .workshop-frames {
+  padding-right: 0;
+  border-right: 0;
+}
+.resizable-split.resizable-split[data-stacked] {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 20px;
+}
+.resizable-split[data-stacked] > .split-handle {
+  display: none;
+}
+.resizable-split[data-stacked] > .workshop-frames {
+  position: static;
+  max-height: 260px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 15px;
+}
+.resizable-split[data-stacked] > .config-rail {
+  flex-direction: row;
+  max-height: none;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.resizable-split[data-stacked] > .config-rail > * {
+  flex: 0 0 180px;
+}

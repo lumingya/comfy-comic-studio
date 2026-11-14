@@ -1,3 +1,4 @@
+import { ResizableSplit } from '../../components/ResizableSplit';
 import { ArrowDown, ArrowUp, Cloud, Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -533,7 +534,11 @@ export function ProfilesSection() {
       ) : profiles.isLoading ? (
         <Loading />
       ) : (
-        <div className="config-split">
+        <ResizableSplit
+          className="config-split"
+          storageKey="profiles"
+          label={t('config.profile.list')}
+        >
           <nav className="config-rail" aria-label={t('config.profile.list')}>
             {list.map((p) => (
               <button
@@ -581,7 +586,7 @@ export function ProfilesSection() {
               <Empty>{t('config.profile.empty')}</Empty>
             )}
           </section>
-        </div>
+        </ResizableSplit>
       )}
       <div className="config-next">
         <span>{t('config.profile.nextHint')}</span>

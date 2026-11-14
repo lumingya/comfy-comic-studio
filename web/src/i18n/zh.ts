@@ -20,6 +20,9 @@ const zh = {
     removeRecent: '从最近打开中移除「{{title}}」',
   },
   common: {
+    resizePanel: '调整{{name}}宽度',
+    panelWidth: '{{width}} 像素',
+    resizeHint: '拖动调整宽度；方向键微调，Home / End 到边界，双击或 Enter 恢复默认。',
     duplicate: '复制',
     save: '保存',
     saved: '已保存',

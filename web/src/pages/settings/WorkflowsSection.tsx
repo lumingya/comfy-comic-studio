@@ -1,3 +1,4 @@
+import { ResizableSplit } from '../../components/ResizableSplit';
 import { Copy, Download, Stethoscope, Trash2, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -133,7 +134,11 @@ export function WorkflowsSection() {
       ) : !list.length ? (
         <Empty title={t('config.workflow.empty')}>{t('config.workflow.emptyHint')}</Empty>
       ) : (
-        <div className="config-split">
+        <ResizableSplit
+          className="config-split"
+          storageKey="workflows"
+          label={t('config.workflow.list')}
+        >
           <nav className="config-rail" aria-label={t('config.workflow.list')}>
             <TextInput
               value={search}
@@ -250,7 +255,7 @@ export function WorkflowsSection() {
               <WorkflowEditor key={active.id} id={active.id} onDirty={setDirty} />
             </div>
           ) : null}
-        </div>
+        </ResizableSplit>
       )}
       <div className="config-next">
         <span>{t('config.workflow.nextHint')}</span>

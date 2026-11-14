@@ -1,3 +1,4 @@
+import { ResizableSplit } from '../../components/ResizableSplit';
 import { Activity, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -247,7 +248,11 @@ export function InstancesSection() {
       ) : !active ? (
         <Empty title={t('settings.noInstances')}>{t('config.instance.emptyHint')}</Empty>
       ) : (
-        <div className="config-split">
+        <ResizableSplit
+          className="config-split"
+          storageKey="instances"
+          label={t('config.instance.list')}
+        >
           <nav className="config-rail" aria-label={t('config.instance.list')}>
             {list.map((instance) => (
               <button
@@ -290,7 +295,7 @@ export function InstancesSection() {
               }}
             />
           </section>
-        </div>
+        </ResizableSplit>
       )}
       <div className="config-next">
         <span>{t('config.instance.nextHint')}</span>

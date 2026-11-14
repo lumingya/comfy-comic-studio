@@ -37,6 +37,16 @@ function start(fail = false) {
   return calls;
 }
 describe('storyboard editing recovery', () => {
+  it('resizes the frame list without changing the active frame or saving story content', () => {
+    const calls = start();
+    const handle = screen.getByRole('separator');
+    const before = Number(handle.getAttribute('aria-valuenow'));
+    fireEvent.keyDown(handle, { key: 'ArrowRight' });
+    expect(handle).toHaveAttribute('aria-valuenow', String(before + 10));
+    expect(document.querySelector('[data-editor-key]')).toHaveAttribute('data-editor-key', 'p0');
+    expect(calls.filter((c) => c.method === 'PATCH')).toHaveLength(0);
+    fireEvent.keyDown(handle, { key: 'Enter' });
+  });
   it('saves prompt and negative from one coherent draft instead of overwriting the previous override', async () => {
     const calls = start();
     fireEvent.change(prompt(), { target: { value: 'new prompt' } });

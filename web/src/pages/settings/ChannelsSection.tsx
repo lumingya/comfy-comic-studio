@@ -1,3 +1,4 @@
+import { ResizableSplit } from '../../components/ResizableSplit';
 import { Cloud, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -368,7 +369,11 @@ export function ChannelsSection() {
             {t('config.cloud.emptyHint')}
           </Empty>
         ) : (
-          <div className="config-split">
+          <ResizableSplit
+            className="config-split"
+            storageKey="channels"
+            label={t('config.cloud.list')}
+          >
             <nav className="config-rail" aria-label={t('config.cloud.list')}>
               {list.map((c) => (
                 <button
@@ -423,7 +428,7 @@ export function ChannelsSection() {
                 ) : null}
               </section>
             ) : null}
-          </div>
+          </ResizableSplit>
         )}
         <div className="config-next">
           <span>{t('config.cloud.nextHint')}</span>

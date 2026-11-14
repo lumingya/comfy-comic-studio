@@ -34,6 +34,7 @@ import {
 } from '../../app/useAutoDraft';
 import { shortcutBlocked } from '../../app/shortcuts';
 import { SaveState } from '../../components/SaveState';
+import { ResizableSplit } from '../../components/ResizableSplit';
 import { captionText, replaceCaption } from './caption';
 import { BatchFramesDialog, type BatchFramesResult } from './BatchFramesDialog';
 import { MAX_FRAMES, restoredOrder } from './frameBatch';
@@ -605,7 +606,13 @@ export default function StoryboardEditor() {
 
   return (
     <>
-      <div className="workshop-editor" ref={editorRef}>
+      <ResizableSplit
+        className="workshop-editor"
+        ref={editorRef}
+        storageKey="storyboard"
+        label={t('ws.story.framesLabel')}
+        defaultWidth={240}
+      >
         <nav className="workshop-frames" aria-label={t('ws.story.framesLabel')}>
           <div
             className="workshop-frames-list desktop-list"
@@ -635,6 +642,7 @@ export default function StoryboardEditor() {
                 data-selection-open
                 aria-selected={selection.has(p.id!) || undefined}
                 aria-current={p.id === active?.id ? 'true' : undefined}
+                title={p.description || t('ws.story.frameN', { n: i + 1 })}
               >
                 <small>{String(i + 1).padStart(2, '0')}</small>
                 <span>{p.description || t('ws.story.frameN', { n: i + 1 })}</span>
@@ -690,7 +698,7 @@ export default function StoryboardEditor() {
             <p className="help">{t('ws.story.noFrames')}</p>
           </section>
         )}
-      </div>
+      </ResizableSplit>
       {batch ? (
         <BatchFramesDialog
           existing={panels.length}

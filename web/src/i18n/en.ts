@@ -23,6 +23,10 @@ const en: Widen<Dict> = {
     removeRecent: 'Remove “{{title}}” from recent',
   },
   common: {
+    resizePanel: 'Resize {{name}}',
+    panelWidth: '{{width}} pixels',
+    resizeHint:
+      'Drag to resize; use arrow keys, Home / End for limits, double-click or Enter to reset.',
     duplicate: 'Duplicate',
     save: 'Save',
     saved: 'Saved',
