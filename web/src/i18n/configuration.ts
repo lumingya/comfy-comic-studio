@@ -109,6 +109,7 @@ export const configZh = {
       width: '画面宽度',
       height: '画面高度',
       output: '结果图片节点',
+      inspect: '过程预览节点',
     },
     automatic: '自动识别 / 使用节点标题标记',
     unbound: '当前没有识别到绑定',
@@ -121,7 +122,7 @@ export const configZh = {
     configJson: '高级映射与参数 JSON',
     configHint: '一对多映射、默认值、节点覆盖和变体，不限制工作流能力',
     configExample:
-      'mapping 支持 /节点/inputs/字段 或路径数组；values 为默认值，overrides 为 JSON Pointer 覆盖。其他已有配置会原样保留。',
+      'mapping 支持 /节点/inputs/字段 或路径数组；output 与 inspect 使用 /节点 选择输出，不改动连线。values 为默认值，overrides 为 JSON Pointer 覆盖。其他已有配置会原样保留。',
     graphJson: '原始工作流 JSON',
     graphHint: '直接编辑 ComfyUI API 节点图',
     builtinHint: '内置节点图只读；先复制，再编辑。映射和运行参数仍可修改。',
@@ -143,8 +144,43 @@ export const configZh = {
     next: '选择生成工作流',
     diagnoseInstance: '检查哪台 ComfyUI',
     diagnoseSaved: '诊断针对已保存的工作流，不包括当前未保存的修改。',
+    inspection: {
+      title: '导入预检 · {{name}}',
+      intro: '先查看识别结果，再决定是否保存。预检不会出图，也不会更改工作流库。',
+      save: '保存工作流',
+      format: '文件格式',
+      formats: {
+        api: 'ComfyUI API',
+        mio: 'Mio 工作流包',
+        ui: 'ComfyUI 界面工作流',
+        invalid: '无法识别',
+      },
+      recognized: '已识别绑定',
+      outputs: '输出节点',
+      missing: '尚未绑定：{{fields}}',
+      missingHint:
+        '这些参数将沿用工作流原值。需要由 Mio 控制时，可在保存后设置映射；多个候选不会自动任选其一。',
+      candidates: '查看可能的绑定目标',
+      candidatesHint: '候选仅供人工选择；未自动写入映射',
+      dependencies: '节点与模型依赖',
+      dependencyHint: '这里只列出依赖名称。保存后可选择一台 ComfyUI，诊断实际安装情况。',
+      unchecked: '尚未连接 ComfyUI 检查节点与模型；当前结果仅来自文件内容。',
+      ready: '可以保存。编译通过表示节点图可组装，实际可运行性请在保存后诊断。',
+      needsMapping: '文件可以保存。当前编译还需要补齐映射或参数，请参考上方问题。',
+      rawHint: '原文件只读保留，保存前可核对',
+      diagnoseOk: '所选分支的静态检查通过。',
+      diagnosticScope:
+        '检查范围：节点图和 ComfyUI 声明的参数约束；不会运行插件自定义校验，也不会提交生成任务。',
+      checkedNodes: '本次检查 {{count}} 个所选分支节点。',
+      missingInput: '#{{node}} 缺少必填输入：{{input}}',
+      invalidLink: '#{{node}} 的 {{input}} 连线无效：目标 #{{target}}，输出序号 {{index}}',
+      invalidInput: '#{{node}} 的 {{input}} 参数无效：{{reason}}',
+      allowed: '可选值：{{values}}',
+    },
   },
   profile: {
+    bindingRequired:
+      '此套装尚未绑定出图服务。可以先编辑；明确选择所需的渠道或本地实例并保存后，才能生成。',
     title: '出图配置',
     intro: '这是生成任务实际使用的方案。常用项只需选出图方式、工作流或渠道、候选数量。',
     list: '出图配置列表',
@@ -353,6 +389,7 @@ export const configEn = {
       width: 'Image width',
       height: 'Image height',
       output: 'Image output node',
+      inspect: 'Intermediate preview node',
     },
     automatic: 'Auto-detect / use node title tags',
     unbound: 'No binding detected',
@@ -366,7 +403,7 @@ export const configEn = {
     configHint:
       'One-to-many mappings, defaults, node overrides and variants — without restricting workflow capabilities',
     configExample:
-      'mapping accepts /node/inputs/field paths or arrays. values holds defaults; overrides holds JSON Pointer overrides. Other existing configuration is preserved.',
+      'mapping accepts /node/inputs/field paths or arrays. output and inspect select /node without changing links. values holds defaults; overrides holds JSON Pointer overrides. Other existing configuration is preserved.',
     graphJson: 'Raw workflow JSON',
     graphHint: 'Edit the ComfyUI API graph directly',
     builtinHint:
@@ -392,8 +429,49 @@ export const configEn = {
     next: 'Choose a workflow for generation',
     diagnoseInstance: 'ComfyUI server to check',
     diagnoseSaved: 'Diagnostics use the saved workflow, not your unsaved changes.',
+    inspection: {
+      title: 'Import preview · {{name}}',
+      intro:
+        'Review the recognized settings before saving. This preview does not generate images or change your workflow library.',
+      save: 'Save workflow',
+      format: 'File format',
+      formats: {
+        api: 'ComfyUI API',
+        mio: 'Mio workflow package',
+        ui: 'ComfyUI editor workflow',
+        invalid: 'Unrecognized',
+      },
+      recognized: 'Recognized bindings',
+      outputs: 'Output nodes',
+      missing: 'Unbound: {{fields}}',
+      missingHint:
+        'These parameters keep their workflow values. Add mappings after saving if Mio should control them. Ambiguous candidates are never chosen automatically.',
+      candidates: 'Possible binding targets',
+      candidatesHint: 'Suggestions for manual selection; no mappings have been changed',
+      dependencies: 'Node & model dependencies',
+      dependencyHint:
+        'These are dependency names only. After saving, choose a ComfyUI server to check what is installed.',
+      unchecked:
+        'Nodes and models have not been checked against ComfyUI. This preview only examines the file.',
+      ready:
+        'Ready to save. Compilation means the graph can be assembled; diagnose it after saving to check the server.',
+      needsMapping:
+        'This file can be saved. Compilation still needs mappings or parameter values; see the issues above.',
+      rawHint: 'Review the original file, preserved as read-only',
+      diagnoseOk: 'Static checks passed for the selected branch.',
+      diagnosticScope:
+        'Checks cover the graph and parameter constraints declared by ComfyUI. Custom plugin validators are not run, and no generation job is submitted.',
+      checkedNodes: 'Checked {{count}} nodes in the selected branch.',
+      missingInput: '#{{node}} is missing required input: {{input}}',
+      invalidLink:
+        '#{{node}} has an invalid {{input}} link: target #{{target}}, output index {{index}}',
+      invalidInput: '#{{node}} has an invalid {{input}} value: {{reason}}',
+      allowed: 'Allowed values: {{values}}',
+    },
   },
   profile: {
+    bindingRequired:
+      'This kit has no generation service yet. You can edit it now; explicitly choose the required channel or local instances and save before generating.',
     title: 'Render profiles',
     intro:
       'These are the profiles generation tasks actually use. Start with a route, workflow or channel, and candidate count.',

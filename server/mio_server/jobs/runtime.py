@@ -310,14 +310,25 @@ class EngineRuntime:
             job = self._job_dict(
                 self.db.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone()
             )
+        delivery = None
         if state == "complete" and apply:
+            # Commit before invoking domain code: a crash must not lose a received result.
+            delivery = self._record_delivery(row, result)
             executor = self.executors.get(job["kind"])
             hook = getattr(executor, "on_complete", None)
             if hook:
                 self._applying_jobs.add(job_id)
                 try:
                     with self._callback_scope():
-                        hook(job, self._item_dict(row), result)
+                        hook(
+                            job,
+                            {
+                                **self._item_dict(row),
+                                "delivery_id": self._delivery_id(delivery),
+                                "delivery_sha": delivery["result_sha"],
+                            },
+                            result,
+                        )
                 except Exception as exc:
                     log.exception("on_complete failed")
                     state, error = (
@@ -344,7 +355,23 @@ class EngineRuntime:
             if updated.rowcount != 1:
                 self._event(job_id, idx, "stale_result", {"state": state})
                 return
-            self._event(job_id, idx, state, {"error": error} if error else {})
+            if delivery is not None:
+                self.db.execute(
+                    "UPDATE job_deliveries SET state = ?, updated = ?, error = ? "
+                    "WHERE job_id = ? AND idx = ? AND attempt = ?",
+                    (
+                        "applied" if state == "complete" else "pending",
+                        now,
+                        error.get("message") if error else None,
+                        job_id,
+                        idx,
+                        delivery["attempt"],
+                    ),
+                )
+            event_data = {"error": error} if error else {}
+            if delivery is not None:
+                event_data["delivery_id"] = self._delivery_id(delivery)
+            self._event(job_id, idx, state, event_data)
             if state == "failed":
                 failures = self.db.execute(
                     "SELECT COUNT(*) FROM job_items WHERE job_id = ? AND state = 'failed'",

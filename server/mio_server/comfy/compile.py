@@ -177,6 +177,7 @@ def compile_workflow(
     stage_values: dict | None = None,
     slot_overrides: dict | None = None,
     guard: list[str] | None = None,
+    rules: B.BindingRules = (),
 ) -> Compiled:
     config: WorkflowConfig = doc.config
     var_cfg = config.variants.get(variant or "", {}) if variant else {}
@@ -186,10 +187,10 @@ def compile_workflow(
         applied = slots.apply(graph, doc.slots or {}, slot_overrides)
         graph = applied["workflow"]
         warnings.extend(applied["notices"])
-    bound, problems = B.resolve(graph, config.mapping or None)
+    bound, problems = B.resolve(graph, config.mapping or None, rules=rules)
     warnings.extend(problems)
     merged = _merge(config.values, var_cfg.get("values"), stage_values, values)
-    for kind in ("prompt", "region") + IMAGE_KINDS:
+    for kind in ("prompt", "negative", "seed", "width", "height", "region") + IMAGE_KINDS:
         wanted = [k for k in merged if k == kind or k.startswith(kind + ":")]
         for key in wanted:
             base, _, qual = key.partition(":")
@@ -224,9 +225,9 @@ def compile_workflow(
     )
 
 
-def describe(doc: WorkflowDoc) -> dict:
+def describe(doc: WorkflowDoc, *, rules: B.BindingRules = ()) -> dict:
     """Binding report for the UI: which Mio values land where, and which variants exist."""
-    bound, problems = B.resolve(doc.graph, doc.config.mapping or None)
+    bound, problems = B.resolve(doc.graph, doc.config.mapping or None, rules=rules)
     variants = sorted({b.qualifier for b in bound if b.kind == "output" and b.qualifier})
     image_inputs = sorted(
         {

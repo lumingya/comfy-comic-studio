@@ -4,6 +4,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import type { RenderProfile } from '../../api/types';
 import { mockFetch, renderWithProviders } from '../../test/utils';
 import { ProfilesSection } from './ProfilesSection';
+import { imageChannel } from '../../test/configuration';
 
 const profile: RenderProfile = {
   id: 'profile_default',
@@ -14,6 +15,7 @@ const profile: RenderProfile = {
   edits: {},
   candidates: 1,
   instances: [],
+  binding_required: false,
   base_width: 832,
   quality_tags: null,
   negative_tags: null,
@@ -26,6 +28,42 @@ const profile: RenderProfile = {
 };
 
 afterEach(() => vi.unstubAllGlobals());
+
+it.each(['', 'images'])(
+  'only binds an imported profile after an explicit channel selection: %s',
+  async (channel) => {
+    const imported = {
+      ...profile,
+      id: 'kit-profile',
+      name: 'Imported profile',
+      cloud_shape: true,
+      binding_required: true,
+      cloud_channel: 'unbound-kit-profile',
+    };
+    const calls = mockFetch({
+      'GET /api/profiles': [imported],
+      'GET /api/workflows': [],
+      'GET /api/instances': { instances: [] },
+      'GET /api/settings': { image_channels: [imageChannel] },
+      'PUT /api/profiles/kit-profile': (body: unknown) => body,
+    });
+    const user = userEvent.setup();
+    const { container } = renderWithProviders(<ProfilesSection />);
+    await screen.findByText(/此套装尚未绑定出图服务/);
+    await waitFor(() =>
+      expect(screen.getByRole('option', { name: imageChannel.label })).toBeInTheDocument(),
+    );
+    const select = Array.from(container.querySelectorAll('select')).find((element) =>
+      Array.from(element.options).some((option) => option.value === 'images'),
+    )!;
+    await user.selectOptions(select, channel);
+    await user.click(screen.getByRole('button', { name: '保存' }));
+    await waitFor(() => expect(calls.some((call) => call.method === 'PUT')).toBe(true));
+    const saved = calls.find((call) => call.method === 'PUT')!.body as RenderProfile;
+    expect(saved.binding_required).toBe(channel === '');
+    expect(saved.cloud_channel).toBe(channel);
+  },
+);
 
 it('saves a newly added stage without UI-only fields rejected by the strict server model', async () => {
   const calls = mockFetch({

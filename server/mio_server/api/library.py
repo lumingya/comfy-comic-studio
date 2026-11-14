@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from .. import imaging
 from ..comfy import adapters
 from ..comfy import compile as C
+from ..comfy import inspection as I
 from ..comfy import workflow_slots as slots
 from ..comfy.client import ComfyError
 from ..comfy.diagnostics import diagnose, model_catalog
@@ -75,12 +76,16 @@ def _analyze(graph: dict) -> dict | None:
         return None
 
 
+def _rules(ctx):
+    return tuple((f"{c.source}:{c.id}", c.value) for c in ctx.registry.all("workflow_binding"))
+
+
 # --------------------------------------------------------------- workflows
 @router.get("/workflows")
 def list_workflows(ctx: Ctx) -> list[dict]:
     out = []
     for doc in ctx.store.list_docs("workflow"):
-        info = C.describe(doc)
+        info = C.describe(doc, rules=_rules(ctx))
         out.append(
             {
                 "id": doc.id,
@@ -96,6 +101,12 @@ def list_workflows(ctx: Ctx) -> list[dict]:
     return out
 
 
+@router.post("/workflows/inspect", response_model=I.Inspection)
+def inspect_workflow(ctx: Ctx, body: I.InspectRequest) -> I.Inspection:
+    """Preview import and selected-output dependencies without saving or contacting a service."""
+    return I.inspect(body, rules=_rules(ctx))
+
+
 @router.post("/workflows", status_code=status.HTTP_201_CREATED)
 def import_workflow(ctx: Ctx, body: WorkflowImport) -> dict:
     _check_api_format(body.graph)
@@ -106,15 +117,15 @@ def import_workflow(ctx: Ctx, body: WorkflowImport) -> dict:
         notes=body.notes,
         slots=_analyze(body.graph),
     )
-    C.describe(doc)  # raises on broken manual mappings
+    C.describe(doc, rules=_rules(ctx))  # raises on broken manual mappings
     ctx.store.put_doc(doc)
-    return {**doc.model_dump(), "describe": C.describe(doc)}
+    return {**doc.model_dump(), "describe": C.describe(doc, rules=_rules(ctx))}
 
 
 @router.get("/workflows/{workflow_id}")
 def get_workflow(ctx: Ctx, workflow_id: str) -> dict:
     doc = ctx.store.get_doc("workflow", workflow_id)
-    return {**doc.model_dump(), "describe": C.describe(doc)}
+    return {**doc.model_dump(), "describe": C.describe(doc, rules=_rules(ctx))}
 
 
 @router.patch("/workflows/{workflow_id}")
@@ -129,9 +140,9 @@ def patch_workflow(ctx: Ctx, workflow_id: str, body: WorkflowPatch) -> dict:
     if body.config is not None:
         changes["config"] = body.config
     doc = WorkflowDoc.model_validate({**doc.model_dump(), **changes})
-    C.describe(doc)
+    C.describe(doc, rules=_rules(ctx))
     ctx.store.put_doc(doc)
-    return {**doc.model_dump(), "describe": C.describe(doc)}
+    return {**doc.model_dump(), "describe": C.describe(doc, rules=_rules(ctx))}
 
 
 @router.post("/workflows/{workflow_id}/copy", status_code=status.HTTP_201_CREATED)
@@ -169,19 +180,32 @@ def compile_preview(ctx: Ctx, workflow_id: str, body: CompileRequest) -> dict:
     """Dry run: the exact graph Mio would queue for these values (编译结果可见)."""
     doc = ctx.store.get_doc("workflow", workflow_id)
     return C.compile_workflow(
-        doc, body.values, variant=body.variant, overrides=body.overrides
+        doc, body.values, variant=body.variant, overrides=body.overrides, rules=_rules(ctx)
     ).to_json()
 
 
 @router.post("/workflows/{workflow_id}/diagnose")
-def diagnose_workflow(ctx: Ctx, workflow_id: str, instance_id: str = "comfy_local") -> dict:
+def diagnose_workflow(
+    ctx: Ctx, workflow_id: str, instance_id: str = "comfy_local", body: CompileRequest | None = None
+) -> dict:
     doc = ctx.store.get_doc("workflow", workflow_id)
     inst = ctx.store.get_doc("instance", instance_id)
     try:
         info = ctx.comfy_client_factory(inst.base_url).object_info()
     except (ComfyError, OSError) as exc:
         raise ValueError(f"无法读取 {inst.name} 的 /object_info：{exc}") from None
-    return {**diagnose(doc.graph, info), "models": model_catalog(info), "instance": inst.id}
+    request = body or CompileRequest()
+    compiled = C.compile_workflow(
+        doc, request.values, variant=request.variant, overrides=request.overrides, rules=_rules(ctx)
+    )
+    return {
+        **diagnose(compiled.graph, info),
+        "models": model_catalog(info),
+        "instance": inst.id,
+        "variant": request.variant,
+        "selected_nodes": list(compiled.graph),
+        "warnings": compiled.warnings,
+    }
 
 
 @router.post("/workflows/{workflow_id}/capture-state")

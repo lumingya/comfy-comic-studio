@@ -15,6 +15,8 @@ from .cloud import CloudRenderer
 
 
 class CloudExecutor:
+    replay_safe = True
+
     def __init__(self, assets, llm_factory, render_service, backend=None):
         self.assets = assets
         self.llm_factory = llm_factory

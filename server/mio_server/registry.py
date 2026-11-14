@@ -25,6 +25,7 @@ POINTS = {
     "pipeline_step": "管线步骤：质检、上色、翻译、修脸……",
     "provider": "出图与 LLM 渠道",
     "workflow_template": "ComfyUI 工作流模板与绑定预设",
+    "workflow_binding": "ComfyUI 节点绑定识别规则（分析、编译与出图共用）",
     "layout": "版式、分格样式、气泡样式、字体",
     "script_template": "剧本模板（LLM 提示词）",
     "panel": "界面面板：React 组件挂在指定插槽",

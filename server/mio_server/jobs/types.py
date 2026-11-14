@@ -32,6 +32,11 @@ CREATE TABLE IF NOT EXISTS job_events (
     seq INTEGER PRIMARY KEY AUTOINCREMENT, job_id TEXT NOT NULL, idx INTEGER, type TEXT NOT NULL,
     data_json TEXT NOT NULL DEFAULT '{}', at REAL NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_events_job ON job_events(job_id, seq);
+CREATE TABLE IF NOT EXISTS job_deliveries (
+    job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE, idx INTEGER NOT NULL,
+    attempt INTEGER NOT NULL, state TEXT NOT NULL, result_sha TEXT NOT NULL,
+    result_json TEXT NOT NULL, created REAL NOT NULL, updated REAL NOT NULL, error TEXT,
+    PRIMARY KEY(job_id, idx, attempt));
 CREATE TABLE IF NOT EXISTS state_leases (
     endpoint TEXT PRIMARY KEY, token TEXT NOT NULL UNIQUE, job_id TEXT NOT NULL,
     idx INTEGER NOT NULL, epoch INTEGER NOT NULL, base_url TEXT NOT NULL, data_json TEXT NOT NULL,

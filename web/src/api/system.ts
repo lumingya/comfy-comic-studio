@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, data, raw } from './client';
 import { keys } from './keys';
+import type { components } from './schema';
 import type {
   AppSettings,
   ComfyInstance,
@@ -41,20 +42,19 @@ export function useRegistry() {
 }
 
 // --------------------------------------------------------------- workflows
-interface NodeInput {
-  node: string;
-  class_type: string;
-  input: string;
-  value: string;
+export type WorkflowInspection = components['schemas']['Inspection'];
+export type WorkflowDiagnostic = components['schemas']['DiagnosticReport'];
+
+export interface Diagnosis extends WorkflowDiagnostic {
+  instance: string;
+  models: Record<string, string[]>;
+  variant?: string | null;
+  selected_nodes?: string[];
+  warnings?: string[];
 }
 
-export interface Diagnosis {
-  ok: boolean;
-  instance: string;
-  missing_nodes: { class_type: string; nodes: string[] }[];
-  missing_models: NodeInput[];
-  invalid_values: (NodeInput & { allowed: string[] })[];
-  models: Record<string, string[]>;
+export async function inspectWorkflow(body: components['schemas']['InspectRequest']) {
+  return data(await api.POST('/api/workflows/inspect', { body }));
 }
 
 export function useWorkflows() {
@@ -163,10 +163,11 @@ export function useCopyWorkflow() {
 
 export function useDiagnoseWorkflow() {
   return useMutation({
-    mutationFn: async (vars: { id: string; instance: string }) =>
+    mutationFn: async (vars: { id: string; instance: string; variant?: string | null }) =>
       data(
         await api.POST('/api/workflows/{workflow_id}/diagnose', {
           params: { path: { workflow_id: vars.id }, query: { instance_id: vars.instance } },
+          body: { variant: vars.variant ?? null },
         }),
       ) as unknown as Diagnosis,
   });

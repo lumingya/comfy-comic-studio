@@ -30,6 +30,7 @@ from . import (
     canvas,
     extensions,
     jobs,
+    kits,
     library,
     manual,
     motion,
@@ -96,6 +97,7 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
         album,
         motion,
         workshop,
+        kits,
     ):
         app.include_router(module.router, prefix="/api")
     app.include_router(access.tokens, prefix="/api")

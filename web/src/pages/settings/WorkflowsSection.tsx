@@ -11,7 +11,6 @@ import {
   useInstances,
   useWorkflow,
   useWorkflows,
-  type Diagnosis,
 } from '../../api/system';
 import type { WorkflowConfig } from '../../api/types';
 import { QueryError } from '../../app/errors';
@@ -20,38 +19,7 @@ import { toast, toastError } from '../../components/toast';
 import { Empty, Field, FilePick, Loading, Modal, Select, TextInput } from '../../components/ui';
 import { ConfigurationGuard, jsonObject, saveJson, useDiscardChanges } from './ConfigurationParts';
 import { WorkflowEditor } from './WorkflowEditor';
-
-function DiagnosisView({ d }: { d: Diagnosis }) {
-  const { t } = useTranslation();
-  if (d.ok) return <div className="notice ok">{t('settings.diagnoseOk')}</div>;
-  return (
-    <div className="col" style={{ gap: 10 }}>
-      {d.missing_nodes.map((m) => (
-        <div key={m.class_type} className="notice error">
-          {t('settings.missingNode', { name: m.class_type })}{' '}
-          <span className="mono small">#{m.nodes.join(', #')}</span>
-        </div>
-      ))}
-      {d.missing_models.map((m) => (
-        <div key={`${m.node}${m.input}`} className="notice warn">
-          {t('settings.missingModel', { name: m.value })}{' '}
-          <span className="mono small">
-            #{m.node} {m.class_type}.{m.input}
-          </span>
-        </div>
-      ))}
-      {d.invalid_values.map((m) => (
-        <div key={`${m.node}${m.input}v`} className="notice warn">
-          <span className="mono small">
-            #{m.node} {m.input}
-          </span>{' '}
-          = {m.value}
-          <div className="small muted">{m.allowed.slice(0, 6).join(', ')}</div>
-        </div>
-      ))}
-    </div>
-  );
-}
+import { DiagnosisView, WorkflowImportPreview } from './WorkflowInspection';
 
 export function WorkflowsSection() {
   const { t } = useTranslation();
@@ -67,6 +35,14 @@ export function WorkflowsSection() {
   const [dirty, setDirty] = useState(false);
   const [diagnosing, setDiagnosing] = useState(false);
   const [instance, setInstance] = useState('');
+  const [diagnosisVariant, setDiagnosisVariant] = useState('');
+  const [pendingImport, setPendingImport] = useState<{
+    workflow: Record<string, unknown>;
+    name: string;
+    graph: Record<string, unknown>;
+    config?: WorkflowConfig;
+    notes: string;
+  } | null>(null);
   const list = workflows.data ?? [];
   const active = list.find((w) => w.id === selected) ?? list[0];
   const detail = useWorkflow(active?.id);
@@ -83,32 +59,22 @@ export function WorkflowsSection() {
   };
 
   const onFile = async (file: File) => {
-    if (!(await discard(dirty))) return;
     try {
       const parsed = jsonObject(await file.text());
       const bundled =
         parsed.graph && typeof parsed.graph === 'object' && !Array.isArray(parsed.graph);
       const graph = bundled ? (parsed.graph as Record<string, unknown>) : parsed;
-      if (Array.isArray(graph.nodes)) throw new Error(t('config.workflow.uiFormat'));
-      importWf.mutate(
-        {
-          name:
-            bundled && typeof parsed.name === 'string'
-              ? parsed.name
-              : file.name.replace(/\.json$/i, ''),
-          graph,
-          ...(bundled && parsed.config ? { config: parsed.config as WorkflowConfig } : {}),
-          notes: bundled && typeof parsed.notes === 'string' ? parsed.notes : '',
-        },
-        {
-          onSuccess: (doc) => {
-            setDirty(false);
-            setSelected(doc.id);
-            toast(t('settings.imported'));
-          },
-          onError: toastError,
-        },
-      );
+      importWf.reset();
+      setPendingImport({
+        workflow: parsed,
+        name:
+          bundled && typeof parsed.name === 'string'
+            ? parsed.name
+            : file.name.replace(/\.json$/i, ''),
+        graph,
+        ...(bundled && parsed.config ? { config: parsed.config as WorkflowConfig } : {}),
+        notes: bundled && typeof parsed.notes === 'string' ? parsed.notes : '',
+      });
     } catch (error) {
       toastError(error);
     }
@@ -122,7 +88,7 @@ export function WorkflowsSection() {
           <h2>{t('config.workflow.title')}</h2>
           <p>{t('config.workflow.intro')}</p>
         </div>
-        <FilePick accept=".json" disabled={busy} onFile={onFile}>
+        <FilePick accept=".json" disabled={busy || !!pendingImport} onFile={onFile}>
           <Upload size={15} />
           {t('settings.importWorkflow')}
         </FilePick>
@@ -174,6 +140,7 @@ export function WorkflowsSection() {
                   className="btn sm"
                   onClick={() => {
                     diagnose.reset();
+                    setDiagnosisVariant('');
                     setDiagnosing(true);
                   }}
                 >
@@ -263,6 +230,27 @@ export function WorkflowsSection() {
           {t('config.workflow.next')}
         </Link>
       </div>
+      {pendingImport ? (
+        <WorkflowImportPreview
+          workflow={pendingImport.workflow}
+          name={pendingImport.name}
+          saving={importWf.isPending}
+          saveError={importWf.error}
+          onClose={() => setPendingImport(null)}
+          onSave={async () => {
+            if (!(await discard(dirty))) return;
+            const { workflow: _workflow, ...body } = pendingImport;
+            importWf.mutate(body, {
+              onSuccess: (doc) => {
+                setDirty(false);
+                setSelected(doc.id);
+                setPendingImport(null);
+                toast(t('settings.imported'));
+              },
+            });
+          }}
+        />
+      ) : null}
       <Modal
         open={diagnosing}
         onOpenChange={setDiagnosing}
@@ -272,10 +260,13 @@ export function WorkflowsSection() {
           <button
             type="button"
             className="btn primary"
-            disabled={!instanceId || diagnose.isPending}
+            disabled={!instanceId || !detail.data || diagnose.isPending}
             onClick={() =>
               active &&
-              diagnose.mutate({ id: active.id, instance: instanceId }, { onError: toastError })
+              diagnose.mutate(
+                { id: active.id, instance: instanceId, variant: diagnosisVariant || null },
+                { onError: toastError },
+              )
             }
           >
             <Stethoscope size={15} />
@@ -283,6 +274,21 @@ export function WorkflowsSection() {
           </button>
         }
       >
+        {detail.data?.describe.variants?.length ? (
+          <Field label={t('config.workflow.variant')}>
+            <Select
+              value={diagnosisVariant}
+              onChange={(value) => {
+                setDiagnosisVariant(value);
+                diagnose.reset();
+              }}
+              options={[
+                { value: '', label: t('common.auto') },
+                ...detail.data.describe.variants.map((value) => ({ value, label: value })),
+              ]}
+            />
+          </Field>
+        ) : null}
         {instances.isError ? (
           <QueryError error={instances.error} onRetry={instances.refetch} />
         ) : instanceId ? (
@@ -305,6 +311,18 @@ export function WorkflowsSection() {
         {dirty ? <p className="notice warn">{t('config.workflow.diagnoseSaved')}</p> : null}
         {diagnose.data ? (
           <div className="config-result">
+            {diagnose.data.selected_nodes ? (
+              <p className="small muted">
+                {t('config.workflow.inspection.checkedNodes', {
+                  count: diagnose.data.selected_nodes.length,
+                })}
+              </p>
+            ) : null}
+            {(diagnose.data.warnings ?? []).map((warning, i) => (
+              <p className="notice warn" key={i}>
+                {warning}
+              </p>
+            ))}
             <DiagnosisView d={diagnose.data} />
           </div>
         ) : null}

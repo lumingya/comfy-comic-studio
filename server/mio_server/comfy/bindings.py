@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import copy
 import re
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 
 TAG_RE = re.compile(r"\[mio:([a-z][a-z0-9_-]*)(?::([a-z0-9_.-]+))?(?:=([^\]\s]+))?\]", re.I)
@@ -67,7 +68,7 @@ DEFAULT_FIELDS = {
 }
 TEXT_FIELDS = ("text", "prompt", "positive", "string", "value", "text_g", "text_l")
 SAMPLER_CLASSES = {"KSampler", "KSamplerAdvanced", "SamplerCustom", "SamplerCustomAdvanced"}
-LATENT_CLASSES = {"EmptyLatentImage", "EmptySD3LatentImage"}
+LATENT_CLASSES = {"EmptyLatentImage", "EmptySD3LatentImage", "EmptyFluxLatentImage"}
 OUTPUT_CLASSES = {"SaveImage", "PreviewImage"}
 TEXT_ENCODER_HINT = ("TextEncode",)
 CORE_KINDS = ("prompt", "negative", "seed", "width", "height", "output")
@@ -85,6 +86,9 @@ class Binding:
     qualifier: str | None = None
     source: str = "tag"  # tag | mapping | heuristic
     part: str | None = None  # key of a dict value (``area`` → x / y / width / height)
+
+
+BindingRules = Iterable[tuple[str, Callable[[dict], Iterable[Binding | dict]]]]
 
 
 def is_link(value) -> bool:
@@ -170,6 +174,24 @@ def mapping_bindings(graph: dict, mapping: dict | None) -> list[Binding]:
         kind, _, qualifier = key.partition(":")
         for pointer in [pointers] if isinstance(pointers, str) else pointers:
             parts = _split_pointer(pointer)
+            if kind in SELECT_KINDS:
+                if (
+                    not parts
+                    or parts[0] not in graph
+                    or not (
+                        len(parts) == 1
+                        or (
+                            len(parts) == 3
+                            and parts[1] == "inputs"
+                            and parts[2] in graph[parts[0]].get("inputs", {})
+                        )
+                    )
+                ):
+                    raise BindingError(f"映射 {key}：请选择存在的节点 /<节点>")
+                result.append(
+                    Binding(kind, parts[0], qualifier=qualifier or None, source="mapping")
+                )
+                continue
             if len(parts) != 3 or parts[1] != "inputs" or parts[0] not in graph:
                 raise BindingError(f"映射 {key}：指针 {pointer} 必须形如 /<节点>/inputs/<字段>")
             if parts[2] not in graph[parts[0]].get("inputs", {}):
@@ -187,19 +209,25 @@ def heuristic_bindings(graph: dict, missing: set[str]) -> list[Binding]:
     found: list[Binding] = []
     for node_id, node in graph.items():
         cls, inputs = node.get("class_type", ""), node.get("inputs") or {}
-        if cls in SAMPLER_CLASSES:
-            for kind, port in (("prompt", "positive"), ("negative", "negative")):
+        if cls in SAMPLER_CLASSES | {"BasicGuider", "CFGGuider"}:
+            ports = (
+                (("prompt", "conditioning"),)
+                if cls == "BasicGuider"
+                else (("prompt", "positive"), ("negative", "negative"))
+            )
+            for kind, port in ports:
                 if kind in missing and is_link(inputs.get(port)):
                     src_id = inputs[port][0]
                     src = graph.get(src_id) or {}
                     if any(h in src.get("class_type", "") for h in TEXT_ENCODER_HINT):
-                        field = _default_field(kind, src.get("inputs") or {})
-                        if field and not is_link(src["inputs"][field]):
-                            found.append(Binding(kind, src_id, field, None, "heuristic"))
-            if "seed" in missing:
-                field = _default_field("seed", inputs)
-                if field:
-                    found.append(Binding("seed", node_id, field, None, "heuristic"))
+                        sources = _encoder_text_sources(graph, src_id)
+                        if len(sources) == 1:
+                            target, field = sources[0]
+                            found.append(Binding(kind, target, field, None, "heuristic"))
+        if cls in SAMPLER_CLASSES | {"RandomNoise"} and "seed" in missing:
+            field = _default_field("seed", inputs)
+            if field:
+                found.append(Binding("seed", node_id, field, None, "heuristic"))
         if cls in LATENT_CLASSES:
             for kind in ("width", "height", "batch"):
                 field = _default_field(kind, inputs)
@@ -210,13 +238,71 @@ def heuristic_bindings(graph: dict, missing: set[str]) -> list[Binding]:
     return list(dict.fromkeys(found))
 
 
-def resolve(graph: dict, mapping: dict | None = None) -> tuple[list[Binding], list[str]]:
+def _encoder_text_sources(graph: dict, encoder: str) -> list[tuple[str, str]]:
+    """Follow only the encoder's text inputs; multiple upstream literals require a choice."""
+    found: set[tuple[str, str]] = set()
+    seen: set[str] = set()
+
+    pending = [(encoder, True)]
+    while pending:
+        node_id, encoder_input = pending.pop()
+        if node_id in seen:
+            continue
+        seen.add(node_id)
+        for field, value in graph.get(node_id, {}).get("inputs", {}).items():
+            if encoder_input and field not in TEXT_FIELDS:
+                continue
+            if is_link(value):
+                pending.append((value[0], False))
+            elif isinstance(value, str) and not FILE_KEYS.search(field):
+                found.add((node_id, field))
+
+    return sorted(found)
+
+
+def rule_bindings(graph: dict, rules: BindingRules, have: set[str]):
+    """Run isolated extension rules; invalid output rejects that rule, never rewrites links."""
+    found, problems = [], []
+    for source, rule in rules:
+        try:
+            proposed = list(rule(copy.deepcopy(graph)))
+            valid = []
+            for item in proposed:
+                b = Binding(**item) if isinstance(item, dict) else item
+                if not isinstance(b, Binding) or b.kind not in VALUE_KINDS | SELECT_KINDS:
+                    raise BindingError("规则返回了未知绑定类型")
+                if b.qualifier is not None and not isinstance(b.qualifier, str):
+                    raise BindingError("规则 qualifier 必须是字符串")
+                if b.node not in graph:
+                    raise BindingError(f"规则指向不存在的节点 {b.node}")
+                if b.kind in SELECT_KINDS:
+                    if b.field is not None:
+                        raise BindingError("输出与检查绑定只能选择节点")
+                elif b.field not in graph[b.node]["inputs"] or is_link(
+                    graph[b.node]["inputs"][b.field]
+                ):
+                    raise BindingError(f"规则必须指向可写字面值：{b.node}.{b.field}")
+                if b.part is not None and (b.kind != "area" or b.part not in AREA_PARTS):
+                    raise BindingError("规则的 part 只适用于区域绑定")
+                if b.kind not in have:
+                    valid.append(Binding(b.kind, b.node, b.field, b.qualifier, source, b.part))
+            found.extend(valid)
+            have.update(b.kind for b in valid)
+        except Exception as exc:
+            problems.append(f"绑定规则 {source} 无法应用：{type(exc).__name__}: {exc}")
+    return found, problems
+
+
+def resolve(
+    graph: dict, mapping: dict | None = None, *, rules: BindingRules = ()
+) -> tuple[list[Binding], list[str]]:
     """All bindings by priority: tags, then mappings, then heuristics for kinds still missing."""
     tags, problems = tag_bindings(graph)
     maps = mapping_bindings(graph, mapping)
     have = {b.kind for b in tags + maps}
+    extra, rule_problems = rule_bindings(graph, rules, have)
     missing = (set(CORE_KINDS) | {"batch"}) - have
-    return tags + maps + heuristic_bindings(graph, missing), problems
+    return tags + maps + extra + heuristic_bindings(graph, missing), problems + rule_problems
 
 
 def summary(bindings: list[Binding]) -> dict:

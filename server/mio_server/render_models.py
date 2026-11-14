@@ -45,7 +45,8 @@ class WorkflowDoc(StrictModel):
         for node_id, node in graph.items():
             if (
                 not isinstance(node, dict)
-                or "class_type" not in node
+                or not isinstance(node.get("class_type"), str)
+                or not node["class_type"].strip()
                 or not isinstance(node.get("inputs"), dict)
             ):
                 raise ValueError(
@@ -72,6 +73,10 @@ class RenderProfile(StrictModel):
 
     id: str = Field(default_factory=lambda: new_id("profile"))
     name: str
+    binding_required: bool = Field(
+        default=False,
+        description="Imported without destination services. Preview/edit are allowed; generation requires explicit configuration first.",
+    )
     dialect: Literal["tags", "natural"] = "tags"
     draft: list[RenderStage] = Field(default_factory=list)
     final: list[RenderStage] = Field(default_factory=list)

@@ -764,6 +764,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/workflows/inspect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Inspect Workflow
+         * @description Preview import and selected-output dependencies without saving or contacting a service.
+         */
+        post: operations["inspect_workflow_api_workflows_inspect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/workflows/{workflow_id}": {
         parameters: {
             query?: never;
@@ -1030,6 +1050,46 @@ export interface paths {
         get: operations["job_events_api_jobs__job_id__events_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{job_id}/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Job Result Deliveries
+         * @description Persisted results awaiting local application, including previous attempts.
+         */
+        get: operations["job_result_deliveries_api_jobs__job_id__deliveries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{job_id}/items/{idx}/replay-result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Replay Job Result
+         * @description Apply a received result without sending another generation request.
+         */
+        post: operations["replay_job_result_api_jobs__job_id__items__idx__replay_result_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1831,6 +1891,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/creation-kits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Creation Kits */
+        get: operations["list_creation_kits_api_creation_kits_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/creation-kits/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Export Creation Kit */
+        post: operations["export_creation_kit_api_creation_kits_export_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/creation-kits/inspect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Inspect Creation Kit */
+        post: operations["inspect_creation_kit_api_creation_kits_inspect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/creation-kits/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Creation Kit */
+        post: operations["import_creation_kit_api_creation_kits_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/creation-kits/{series_id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview Creation Kit */
+        post: operations["preview_creation_kit_api_creation_kits__series_id__preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/creation-kits/{series_id}/assemble": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Assemble Creation Kit */
+        post: operations["assemble_creation_kit_api_creation_kits__series_id__assemble_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tokens": {
         parameters: {
             query?: never;
@@ -2255,6 +2417,21 @@ export interface components {
             /** Styles */
             styles: components["schemas"]["Style-Output"][];
         };
+        /** BindingTarget */
+        BindingTarget: {
+            /** Kind */
+            kind: string;
+            /** Node */
+            node: string;
+            /** Field */
+            field?: string | null;
+            /** Qualifier */
+            qualifier?: string | null;
+            /** Source */
+            source: string;
+            /** Part */
+            part?: string | null;
+        };
         /** Character */
         "Character-Input": {
             /** Id */
@@ -2592,6 +2769,32 @@ export interface components {
              */
             strength: number;
         };
+        /** Dependency */
+        Dependency: {
+            /** Class Type */
+            class_type: string;
+            /** Nodes */
+            nodes: string[];
+        };
+        /** DiagnosticReport */
+        DiagnosticReport: {
+            /** Ok */
+            ok: boolean;
+            /** Missing Nodes */
+            missing_nodes: components["schemas"]["Dependency"][];
+            /** Missing Models */
+            missing_models: Record<string, unknown>[];
+            /** Invalid Values */
+            invalid_values: Record<string, unknown>[];
+            /** Missing Inputs */
+            missing_inputs: Record<string, unknown>[];
+            /** Invalid Links */
+            invalid_links: Record<string, unknown>[];
+            /** Invalid Inputs */
+            invalid_inputs: Record<string, unknown>[];
+            /** Scope */
+            scope: string;
+        };
         /** Dialogue */
         Dialogue: {
             /** Speaker Id */
@@ -2705,6 +2908,15 @@ export interface components {
              */
             revision?: number | null;
         };
+        /** ExternalRequirement */
+        ExternalRequirement: {
+            /** Profile Id */
+            profile_id: string;
+            /** Local */
+            local: boolean;
+            /** Cloud */
+            cloud: boolean;
+        };
         /** Face */
         Face: {
             /** Box */
@@ -2751,6 +2963,177 @@ export interface components {
             score: number;
             /** Missing */
             missing: string[];
+        };
+        /** InspectRequest */
+        InspectRequest: {
+            /** Workflow */
+            workflow: Record<string, unknown>;
+            config?: components["schemas"]["WorkflowConfig"] | null;
+            /** Variant */
+            variant?: string | null;
+            /** Values */
+            values?: Record<string, unknown>;
+            /** Overrides */
+            overrides?: Record<string, unknown>;
+            /** Object Info */
+            object_info?: {
+                [key: string]: Record<string, unknown>;
+            } | null;
+        };
+        /** Inspection */
+        Inspection: {
+            /**
+             * Format
+             * @enum {string}
+             */
+            format: "api" | "mio" | "ui" | "invalid";
+            /**
+             * Importable
+             * @default false
+             */
+            importable?: boolean;
+            /**
+             * Compilable
+             * @default false
+             */
+            compilable?: boolean;
+            /** Bindings */
+            bindings?: components["schemas"]["BindingTarget"][];
+            /** Candidates */
+            candidates?: components["schemas"]["BindingTarget"][];
+            /** Missing */
+            missing?: string[];
+            /** Output Nodes */
+            output_nodes?: string[];
+            /** Variants */
+            variants?: string[];
+            /** Selected Nodes */
+            selected_nodes?: string[];
+            /** Dependencies */
+            dependencies?: components["schemas"]["Dependency"][];
+            /** Models */
+            models?: components["schemas"]["ModelDependency"][];
+            /** Issues */
+            issues?: components["schemas"]["Issue"][];
+            diagnostics?: components["schemas"]["DiagnosticReport"] | null;
+        };
+        /** Issue */
+        Issue: {
+            /** Code */
+            code: string;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "error" | "warning" | "info";
+            /** Message */
+            message: string;
+            /** Kind */
+            kind?: string | null;
+        };
+        /** KitAssembly */
+        KitAssembly: {
+            /** Episode Id */
+            episode_id: string;
+            /** Preset Ids */
+            preset_ids?: string[];
+            /**
+             * Title
+             * @default
+             */
+            title?: string;
+            /** Variables */
+            variables?: {
+                [key: string]: string;
+            };
+            /** Idempotency Key */
+            idempotency_key: string;
+        };
+        /** KitDocumentSummary */
+        KitDocumentSummary: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** KitEpisodeSummary */
+        KitEpisodeSummary: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Panels */
+            panels: number;
+        };
+        /** KitImport */
+        KitImport: {
+            /** Archive Base64 */
+            archive_base64: string;
+            /** Profiles */
+            profiles?: {
+                [key: string]: components["schemas"]["ProfileDestination"];
+            };
+            /** Idempotency Key */
+            idempotency_key: string;
+        };
+        /** KitImported */
+        KitImported: {
+            /** Series Id */
+            series_id: string;
+            /** Episode Ids */
+            episode_ids: string[];
+            /** Preset Ids */
+            preset_ids: string[];
+            /** Id Map */
+            id_map: {
+                [key: string]: {
+                    [key: string]: string;
+                };
+            };
+            /** Unbound Profile Ids */
+            unbound_profile_ids: string[];
+        };
+        /** KitInspection */
+        KitInspection: {
+            /** Title */
+            title: string;
+            /** Sha256 */
+            sha256: string;
+            /** Episodes */
+            episodes: components["schemas"]["KitEpisodeSummary"][];
+            /** Presets */
+            presets: components["schemas"]["KitPresetSummary"][];
+            /** Profiles */
+            profiles: components["schemas"]["KitDocumentSummary"][];
+            /** Workflows */
+            workflows: components["schemas"]["KitDocumentSummary"][];
+            /** Asset Count */
+            asset_count: number;
+            /** External */
+            external: components["schemas"]["ExternalRequirement"][];
+            /** Warnings */
+            warnings: string[];
+        };
+        /** KitPresetSummary */
+        KitPresetSummary: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+        };
+        /** KitSelection */
+        KitSelection: {
+            /** Series Id */
+            series_id: string;
+            /** Episode Ids */
+            episode_ids: string[];
+            /** Preset Ids */
+            preset_ids?: string[];
+            /**
+             * Title
+             * @default
+             */
+            title?: string;
         };
         /** LayoutRequest */
         LayoutRequest: {
@@ -3025,6 +3408,15 @@ export interface components {
              * @default sdxl
              */
             model_family: string;
+        };
+        /** ModelDependency */
+        ModelDependency: {
+            /** Node */
+            node: string;
+            /** Field */
+            field: string;
+            /** Value */
+            value: string;
         };
         /** MotionExport */
         MotionExport: {
@@ -3588,6 +3980,19 @@ export interface components {
             /** Profile Id */
             profile_id?: string | null;
         };
+        /** ProfileDestination */
+        ProfileDestination: {
+            /**
+             * Unbound
+             * @description Import for editing without selecting a service; rendering stays blocked until configured.
+             * @default false
+             */
+            unbound?: boolean;
+            /** Instances */
+            instances?: string[] | null;
+            /** Cloud Channel */
+            cloud_channel?: string | null;
+        };
         /** Prop */
         "Prop-Input": {
             /** Id */
@@ -3770,6 +4175,12 @@ export interface components {
             /** Name */
             name: string;
             /**
+             * Binding Required
+             * @description Imported without destination services. Preview/edit are allowed; generation requires explicit configuration first.
+             * @default false
+             */
+            binding_required?: boolean;
+            /**
              * Dialect
              * @default tags
              * @enum {string}
@@ -3842,6 +4253,12 @@ export interface components {
             id: string;
             /** Name */
             name: string;
+            /**
+             * Binding Required
+             * @description Imported without destination services. Preview/edit are allowed; generation requires explicit configuration first.
+             * @default false
+             */
+            binding_required: boolean;
             /**
              * Dialect
              * @default tags
@@ -4066,11 +4483,11 @@ export interface components {
             status: components["schemas"]["SeriesStatus"];
             /**
              * Kind
-             * @description album = a book on the shelf; workshop = the storyboards and presets of the 创作工坊 (never listed as a book).
+             * @description album = a book on the shelf; workshop = the storyboards and presets of the 创作工坊; kit = a reusable creation kit (neither is listed as a book).
              * @default album
              * @enum {string}
              */
-            kind: "album" | "workshop";
+            kind: "album" | "workshop" | "kit";
             /**
              * Presets
              * @description Workshop presets.
@@ -4124,11 +4541,11 @@ export interface components {
             status: components["schemas"]["SeriesStatus"];
             /**
              * Kind
-             * @description album = a book on the shelf; workshop = the storyboards and presets of the 创作工坊 (never listed as a book).
+             * @description album = a book on the shelf; workshop = the storyboards and presets of the 创作工坊; kit = a reusable creation kit (neither is listed as a book).
              * @default album
              * @enum {string}
              */
-            kind: "album" | "workshop";
+            kind: "album" | "workshop" | "kit";
             /**
              * Presets
              * @description Workshop presets.
@@ -6224,6 +6641,39 @@ export interface operations {
             };
         };
     };
+    inspect_workflow_api_workflows_inspect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InspectRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Inspection"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_workflow_api_workflows__workflow_id__get: {
         parameters: {
             query?: never;
@@ -6396,7 +6846,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CompileRequest"] | null;
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -6929,6 +7383,69 @@ export interface operations {
                 };
                 content: {
                     "application/json": Record<string, unknown>[];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    job_result_deliveries_api_jobs__job_id__deliveries_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>[];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    replay_job_result_api_jobs__job_id__items__idx__replay_result_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+                idx: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
                 };
             };
             /** @description Validation Error */
@@ -8285,6 +8802,186 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QueueStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_creation_kits_api_creation_kits_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Series"][];
+                };
+            };
+        };
+    };
+    export_creation_kit_api_creation_kits_export_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KitSelection"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    inspect_creation_kit_api_creation_kits_inspect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KitInspection"];
+                };
+            };
+        };
+    };
+    import_creation_kit_api_creation_kits_import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KitImport"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KitImported"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_creation_kit_api_creation_kits__series_id__preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KitAssembly"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssemblyPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assemble_creation_kit_api_creation_kits__series_id__assemble_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KitAssembly"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Assembled"];
                 };
             };
             /** @description Validation Error */

@@ -431,6 +431,13 @@ class MioClient(_Base):
         """POST /workflows — Import Workflow."""
         return self._request("POST", "/workflows", json=body)
 
+    def inspect_workflow(self, body: dict | list | None = None) -> Any:
+        """POST /workflows/inspect — Inspect Workflow.
+
+        Preview import and selected-output dependencies without saving or contacting a service.
+        """
+        return self._request("POST", "/workflows/inspect", json=body)
+
     def get_workflow(self, workflow_id: str) -> Any:
         """GET /workflows/{workflow_id} — Get Workflow."""
         return self._request("GET", f"/workflows/{_q(workflow_id)}")
@@ -454,12 +461,19 @@ class MioClient(_Base):
         """
         return self._request("POST", f"/workflows/{_q(workflow_id)}/compile", json=body)
 
-    def diagnose_workflow(self, workflow_id: str, *, instance_id: str | None = None) -> Any:
+    def diagnose_workflow(
+        self,
+        workflow_id: str,
+        body: dict | list | None = None,
+        *,
+        instance_id: str | None = None,
+    ) -> Any:
         """POST /workflows/{workflow_id}/diagnose — Diagnose Workflow."""
         return self._request(
             "POST",
             f"/workflows/{_q(workflow_id)}/diagnose",
             params={"instance_id": instance_id},
+            json=body,
         )
 
     def capture_workflow_state(self, workflow_id: str, *, instance_id: str | None = None) -> Any:
@@ -553,6 +567,20 @@ class MioClient(_Base):
             f"/jobs/{_q(job_id)}/events",
             params={"after": after, "limit": limit},
         )
+
+    def job_result_deliveries(self, job_id: str) -> Any:
+        """GET /jobs/{job_id}/deliveries — Job Result Deliveries.
+
+        Persisted results awaiting local application, including previous attempts.
+        """
+        return self._request("GET", f"/jobs/{_q(job_id)}/deliveries")
+
+    def replay_job_result(self, job_id: str, idx: int) -> Any:
+        """POST /jobs/{job_id}/items/{idx}/replay-result — Replay Job Result.
+
+        Apply a received result without sending another generation request.
+        """
+        return self._request("POST", f"/jobs/{_q(job_id)}/items/{_q(idx)}/replay-result")
 
     def get_job_state_recovery(self, job_id: str) -> Any:
         """GET /jobs/{job_id}/state-recovery — Get Job State Recovery.
@@ -800,6 +828,78 @@ class MioClient(_Base):
         """
         return self._request("PUT", "/workshop/queue/order", json=body)
 
+    def list_extensions(self) -> Any:
+        """GET /extensions — List Extensions."""
+        return self._request("GET", "/extensions")
+
+    def install_extension(self, body: bytes, *, replace: bool | None = None) -> Any:
+        """POST /extensions — Install Extension.
+
+        Raw body = zipped extension folder.  Installed disabled; review, then enable.
+        """
+        return self._request("POST", "/extensions", params={"replace": replace}, content=body)
+
+    def enable_extension(self, ext_id: str, body: dict | list | None = None) -> Any:
+        """POST /extensions/{ext_id}/enable — Enable Extension.
+
+        Enable exactly the reviewed content (``digest`` from the listing).
+        """
+        return self._request("POST", f"/extensions/{_q(ext_id)}/enable", json=body)
+
+    def disable_extension(self, ext_id: str) -> Any:
+        """POST /extensions/{ext_id}/disable — Disable Extension."""
+        return self._request("POST", f"/extensions/{_q(ext_id)}/disable")
+
+    def remove_extension(self, ext_id: str) -> Any:
+        """DELETE /extensions/{ext_id} — Remove Extension."""
+        return self._request("DELETE", f"/extensions/{_q(ext_id)}")
+
+    def extension_panels(self) -> Any:
+        """GET /extension-panels — Extension Panels.
+
+        UI panels of active extensions; the web app shows them in sandboxed iframes.
+        """
+        return self._request("GET", "/extension-panels")
+
+    def list_themes(self) -> Any:
+        """GET /themes — List Themes."""
+        return self._request("GET", "/themes")
+
+    def import_theme(self, body: dict | list | None = None) -> Any:
+        """POST /themes — Import Theme.
+
+        Import a theme file (JSON).  Built-in and extension ids cannot be overwritten.
+        """
+        return self._request("POST", "/themes", json=body)
+
+    def delete_theme(self, theme_id: str) -> Any:
+        """DELETE /themes/{theme_id} — Delete Theme."""
+        return self._request("DELETE", f"/themes/{_q(theme_id)}")
+
+    def list_creation_kits(self) -> Any:
+        """GET /creation-kits — List Creation Kits."""
+        return self._request("GET", "/creation-kits")
+
+    def export_creation_kit(self, body: dict | list | None = None) -> Any:
+        """POST /creation-kits/export — Export Creation Kit."""
+        return self._request("POST", "/creation-kits/export", json=body)
+
+    def inspect_creation_kit(self, body: bytes) -> Any:
+        """POST /creation-kits/inspect — Inspect Creation Kit."""
+        return self._request("POST", "/creation-kits/inspect", content=body)
+
+    def import_creation_kit(self, body: dict | list | None = None) -> Any:
+        """POST /creation-kits/import — Import Creation Kit."""
+        return self._request("POST", "/creation-kits/import", json=body)
+
+    def preview_creation_kit(self, series_id: str, body: dict | list | None = None) -> Any:
+        """POST /creation-kits/{series_id}/preview — Preview Creation Kit."""
+        return self._request("POST", f"/creation-kits/{_q(series_id)}/preview", json=body)
+
+    def assemble_creation_kit(self, series_id: str, body: dict | list | None = None) -> Any:
+        """POST /creation-kits/{series_id}/assemble — Assemble Creation Kit."""
+        return self._request("POST", f"/creation-kits/{_q(series_id)}/assemble", json=body)
+
     def list_webhooks(self) -> Any:
         """GET /webhooks — List Webhooks."""
         return self._request("GET", "/webhooks")
@@ -829,3 +929,18 @@ class MioClient(_Base):
     def webhook_deliveries(self, hook_id: str) -> Any:
         """GET /webhooks/{hook_id}/deliveries — Webhook Deliveries."""
         return self._request("GET", f"/webhooks/{_q(hook_id)}/deliveries")
+
+    def list_tokens(self) -> Any:
+        """GET /tokens — List Tokens."""
+        return self._request("GET", "/tokens")
+
+    def create_token(self, body: dict | list | None = None) -> Any:
+        """POST /tokens — Create Token.
+
+        The plaintext ``token`` is returned only here, once.
+        """
+        return self._request("POST", "/tokens", json=body)
+
+    def revoke_token(self, token_id: str) -> Any:
+        """DELETE /tokens/{token_id} — Revoke Token."""
+        return self._request("DELETE", f"/tokens/{_q(token_id)}")

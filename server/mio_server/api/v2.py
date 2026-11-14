@@ -5,7 +5,7 @@ It is the same domain API as the UI's ``/api`` (same routers, models and error f
 the UI has is reachable.  The differences:
 
 * every route needs a bearer token (:mod:`mio_server.auth`) with the right scope;
-* token management and extensions are not exposed at all;
+* management operations, including tokens and extensions, require the admin scope;
 * its own OpenAPI document lives at ``/api/v2/openapi.json`` and drives the generated clients
   (``clients/python/mio_client.py``).
 """
@@ -22,7 +22,9 @@ from . import (
     access,
     album,
     canvas,
+    extensions,
     jobs,
+    kits,
     library,
     motion,
     production,
@@ -33,7 +35,20 @@ from . import (
 )
 
 V2_VERSION = "2.0"
-ROUTERS = (series, production, canvas, library, jobs, album, motion, system, update, workshop)
+ROUTERS = (
+    series,
+    production,
+    canvas,
+    library,
+    jobs,
+    album,
+    motion,
+    system,
+    update,
+    workshop,
+    extensions,
+    kits,
+)
 # operationId = route function name (= generated client method); generic names get context.
 RENAMES = {
     "render": "render_episode",
@@ -105,6 +120,7 @@ def build_v2(ctx, errors) -> FastAPI:
     for module in ROUTERS:
         app.include_router(module.router, dependencies=guard)
     app.include_router(access.hooks, dependencies=guard)
+    app.include_router(access.tokens, dependencies=guard)
     app.openapi = lambda: _openapi(app)
     return app
 

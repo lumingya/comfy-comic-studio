@@ -59,6 +59,7 @@ export function newProfile(name: string, workflow = '', cloud = false): RenderPr
     edits: {},
     candidates: 1,
     instances: [],
+    binding_required: false,
     base_width: 832,
     quality_tags: null,
     negative_tags: null,
@@ -277,6 +278,13 @@ function ProfileEditor({
         : p.draft.slice(1)
       : [];
   const needsLocal = !p.cloud_shape || p.cloud_refine;
+  const destinationsBound =
+    (!needsLocal ||
+      (p.instances.length > 0 &&
+        p.instances.every((id) =>
+          instances.data?.instances.some((instance) => instance.id === id && instance.enabled),
+        ))) &&
+    (!p.cloud_shape || channels.some((channel) => channel.id === p.cloud_channel));
   const missingWorkflow = localStages
     .filter((s) => s.enabled)
     .some((s) => !(workflows.data ?? []).some((w) => w.id === s.workflow_id));
@@ -284,7 +292,7 @@ function ProfileEditor({
   const invalid =
     !p.name.trim() ||
     missingWorkflow ||
-    missingChannel ||
+    (missingChannel && !p.binding_required) ||
     noStages ||
     p.candidates < 1 ||
     p.candidates > 16;
@@ -292,7 +300,14 @@ function ProfileEditor({
   const submit = () => {
     if (invalid || pending) return;
     save.mutate(
-      { profile: { ...p, name: p.name.trim() }, isNew },
+      {
+        profile: {
+          ...p,
+          name: p.name.trim(),
+          binding_required: p.binding_required && !destinationsBound,
+        },
+        isNew,
+      },
       {
         onSuccess: () => {
           setDraft(null);
@@ -314,6 +329,9 @@ function ProfileEditor({
       }}
     >
       <fieldset disabled={pending}>
+        {p.binding_required ? (
+          <p className="notice">{t('config.profile.bindingRequired')}</p>
+        ) : null}
         <div className="config-section-head">
           <Field label={t('common.name')}>
             <TextInput value={p.name} onChange={(name) => set({ name })} />
@@ -453,7 +471,7 @@ function ProfileEditor({
                   onChange={(event) =>
                     set({
                       instances: event.target.checked
-                        ? [...p.instances, instance.id]
+                        ? [...p.instances.filter((id) => !id.startsWith('unbound-')), instance.id]
                         : p.instances.filter((id) => id !== instance.id),
                     })
                   }

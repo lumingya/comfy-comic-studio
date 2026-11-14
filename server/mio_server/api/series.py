@@ -83,7 +83,7 @@ def list_series(ctx: Ctx, deleted: bool = False) -> list[SeriesCard]:
     stats = ctx.store.series_stats()
     cards = []
     for series in ctx.store.list_series(deleted=deleted):
-        if series.kind == "workshop":
+        if series.kind != "album":
             continue
         s = stats.get(series.id, {})
         data = series.model_dump()

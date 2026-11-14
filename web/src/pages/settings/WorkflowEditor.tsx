@@ -7,7 +7,7 @@ import { toast, toastError } from '../../components/toast';
 import { Field, Loading, Select, TextArea, TextInput } from '../../components/ui';
 import { Advanced, ConfigurationSaveBar, jsonObject, saveJson } from './ConfigurationParts';
 
-const CORE = ['prompt', 'negative', 'seed', 'width', 'height', 'output'] as const;
+const CORE = ['prompt', 'negative', 'seed', 'width', 'height', 'output', 'inspect'] as const;
 const pointer = (s: string) => s.replace(/~/g, '~0').replace(/\//g, '~1');
 const pretty = (value: unknown) => JSON.stringify(value, null, 2);
 const formOf = (doc: WorkflowDocument) => ({
@@ -79,9 +79,17 @@ function WorkflowForm({
     Object.entries(value.inputs).map(([input, current]) => ({
       value: `/${pointer(node)}/inputs/${pointer(input)}`,
       label: `#${node} · ${value._meta?.title || value.class_type} → ${input}`,
-      linked: Array.isArray(current),
+      linked:
+        Array.isArray(current) &&
+        current.length === 2 &&
+        typeof current[0] === 'string' &&
+        Number.isInteger(current[1]),
     })),
   );
+  const nodes = Object.entries(doc.graph).map(([node, value]) => ({
+    value: `/${pointer(node)}`,
+    label: `#${node} · ${value._meta?.title || value.class_type}`,
+  }));
   const setMapping = (key: string, target: string) => {
     if (!config || target === '__multiple__') return;
     const next = { ...mapping };
@@ -137,12 +145,14 @@ function WorkflowForm({
           {CORE.map((key) => {
             const manual = mapping[key];
             const multi = Array.isArray(manual) && manual.length > 1;
-            const value = multi
+            const target = multi
               ? '__multiple__'
               : Array.isArray(manual)
                 ? (manual[0] ?? '')
                 : (manual ?? '');
-            const options = fields.filter((f) => key === 'output' || !f.linked);
+            const nodeSelector = key === 'output' || key === 'inspect';
+            const value = nodeSelector ? target.replace(/\/inputs\/.*$/, '') : target;
+            const options = nodeSelector ? nodes : fields.filter((f) => !f.linked);
             const missing =
               value && value !== '__multiple__' && !options.some((f) => f.value === value);
             return (

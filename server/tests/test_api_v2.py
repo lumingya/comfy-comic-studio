@@ -73,8 +73,9 @@ class ApiV2Tests(ApiCase):
         )
         self.assertEqual(gen.status_code, 403)  # spending needs "render"
         self.assertEqual(self.v2("GET", "/settings", write).status_code, 403)
-        for hidden in ("/tokens", "/extensions"):
-            self.assertEqual(self.v2("GET", hidden, self.token("admin", "read")).status_code, 404)
+        for managed in ("/tokens", "/extensions"):
+            self.assertEqual(self.v2("GET", managed, read).status_code, 403)
+            self.assertEqual(self.v2("GET", managed, self.token("admin")).status_code, 200)
 
         token_id = read.split("_")[1] + "_" + read.split("_")[2]
         self.ok(self.client.delete(f"/api/tokens/{token_id}"), 204)
@@ -86,7 +87,7 @@ class ApiV2Tests(ApiCase):
         schema = self.ok(self.client.get("/api/v2/openapi.json"))
         self.assertIn("bearer", schema["components"]["securitySchemes"])
         self.assertIn("/series", schema["paths"])
-        self.assertNotIn("/tokens", schema["paths"])
+        self.assertIn("/tokens", schema["paths"])
         ui = self.ok(self.client.get("/openapi.json"))
         self.assertFalse(any(p.startswith("/api/v2") for p in ui["paths"]))
 

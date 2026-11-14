@@ -11,10 +11,10 @@ Scopes, from least to most powerful:
 * ``render`` – anything that can spend money or GPU time: generating scripts, rendering, finalize,
   edits, QA, the assistant, retrying or resuming jobs, and starting or resuming the workshop
   queue.  This replaces v1's ``trusted: true`` confirmation.
-* ``admin`` – settings, ComfyUI instances, webhooks, legacy import.
+* ``admin`` – settings, ComfyUI instances, webhooks, legacy import, tokens and extensions.
 
-Token management and extensions are never reachable through v2.  Tokens and extensions can only
-be managed from the local UI.
+The first token is created through the local API. Admin tokens can manage subsequent tokens and
+extensions through v2, including enabling the exact reviewed extension digest.
 """
 
 from __future__ import annotations
@@ -39,10 +39,10 @@ RENDER_RE = re.compile(
     r"^/(series/[^/]+/episodes/generate"
     r"|episodes/[^/]+/(render|finalize|edit|qa|assistant/propose)"
     r"|jobs/[^/]+/(retry|resume)"
-    r"|jobs/[^/]+/items/[^/]+/restore-state"
+    r"|jobs/[^/]+/items/[^/]+/(restore-state|replay-result)"
     r"|workshop/queue/(start|resume))$"
 )
-ADMIN_RE = re.compile(r"^/(settings|instances|webhooks|legacy|update)(/|$)")
+ADMIN_RE = re.compile(r"^/(settings|instances|webhooks|legacy|update|tokens|extensions)(/|$)")
 
 
 class ApiToken(StrictModel):

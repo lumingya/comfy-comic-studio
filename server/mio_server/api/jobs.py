@@ -49,6 +49,18 @@ def job_events(ctx: Ctx, job_id: str, after: int = 0, limit: int = 200) -> list[
     return ctx.engine.events(job_id, after, min(max(limit, 1), 1000))
 
 
+@router.get("/jobs/{job_id}/deliveries")
+def job_result_deliveries(ctx: Ctx, job_id: str) -> list[dict]:
+    """Persisted results awaiting local application, including previous attempts."""
+    return ctx.engine.deliveries(job_id)
+
+
+@router.post("/jobs/{job_id}/items/{idx}/replay-result")
+def replay_job_result(ctx: Ctx, job_id: str, idx: int) -> dict:
+    """Apply a received result without sending another generation request."""
+    return ctx.engine.replay_result(job_id, idx)
+
+
 @router.get("/jobs/{job_id}/state-recovery")
 def get_job_state_recovery(ctx: Ctx, job_id: str) -> list[dict]:
     """Saved frontend-state restoration records, including canceled tasks."""

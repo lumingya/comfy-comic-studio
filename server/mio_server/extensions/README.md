@@ -140,6 +140,26 @@ def deactivate():  # 可选：停用时调用
 
 举个例子，新增一种云端出图渠道类型的做法是：写一个 `HttpChannel` 的子类，实现 `_once(http, prompt, refs) -> bytes`，然后用 `mio.contribute("cloud_adapter", "my_kind", MyChannel)` 注册。注册后，「设置 → 云端出图」的类型下拉框里就会出现 `my_kind`。
 
+### 工作流识别规则
+
+`workflow_binding` 的贡献是纯函数 `fn(graph) -> Iterable[Binding | dict]`，接收工作流副本，
+返回 `kind/node/field` 等绑定字段。例如为自定义节点贡献提示词识别：
+
+```python
+def activate(mio):
+    def identify(graph):
+        for node_id, node in graph.items():
+            if node["class_type"] == "MyPromptNode" and isinstance(node["inputs"].get("text"), str):
+                yield {"kind": "prompt", "node": node_id, "field": "text"}
+
+    mio.contribute("workflow_binding", "my-prompts", identify, title="自定义提示词节点")
+```
+
+规则同时参与导入检查、编译预览与实际任务冻结；优先级为明确标签 / 手动映射、扩展、核心启发式。
+规则只补充缺失的种类，不覆盖作者的显式选择；无效目标、试图写入连线或规则异常会成为诊断警告。
+停用扩展后不再使用其规则，已提交任务保留冻结结果。输出绑定选择节点，不是写输入：
+`{"kind":"output","node":"42"}`；取图仍要求 ComfyUI history 的标准 `images` 输出。
+
 ## 界面面板
 
 - `slot: "episode"` 的面板会作为剧集页的一个标签页显示，URL 查询参数里带 `episode` 和 `series` 两个 id。
@@ -156,6 +176,10 @@ def deactivate():  # 可选：停用时调用
 `POST /api/v2/episodes/{episode_id}/qa`。本例不添加主界面入口或沙箱网络请求桥。
 
 ## 打包与安装
+
+这些管理操作也可通过 `/api/v2/extensions` 完成，需 `admin` 令牌。安装、读取摘要、明确启用、
+停用和删除沿用本机界面的同一实现；新增路由仍在重启后挂载。主题列表与导入 / 删除也有 v2
+接口，分别使用 `read` / `write`。扩展自定义路由的开放调用契约单独定义，不自动获得管理权限。
 
 1. 把扩展目录打成 zip。`mio-extension.json` 可以在 zip 根目录，也可以在唯一的顶层文件夹里。
 2. 在「设置 → 扩展 → 安装扩展」里选择这个 zip。

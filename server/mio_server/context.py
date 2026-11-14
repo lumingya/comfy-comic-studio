@@ -111,6 +111,9 @@ class AppContext:
         ctx.refresh_instances()
         ctx._register_builtins()
         render.hooks = ctx.registry.hooks
+        render.binding_rules = lambda: [
+            (f"{c.source}:{c.id}", c.value) for c in ctx.registry.all("workflow_binding")
+        ]
         engine.subscribe(lambda event: ctx.hooks.action("job.event", event))
         ctx.tokens = TokenStore(store)
         ctx.updater = Updater(ctx.data_dir, INSTALL_ROOT)
@@ -133,6 +136,8 @@ class AppContext:
             ctx.queue.close,
             ctx.reading.clear,
         ]
+        # Executors (including reviewed extensions) must exist before replaying local results.
+        engine.recover_deliveries()
         return ctx
 
     # ------------------------------------------------------------- helpers

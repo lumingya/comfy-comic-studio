@@ -107,15 +107,17 @@ class DiagnosticsTests(unittest.TestCase):
             "1": {
                 "class_type": "CustomSampler",
                 "inputs": {"sampler": "euler", "text": "free text", "model": ["2", 0]},
-            }
+            },
+            "2": {"class_type": "Source", "inputs": {}},
         }
         info = {
+            "Source": {"output": ["MODEL"]},
             "CustomSampler": {
                 "input": {
                     "required": {"sampler": [["euler"]], "text": ["STRING"]},
                     "optional": {"model": [["literal"]]},
                 }
-            }
+            },
         }
         report = diagnose(graph, info)
         self.assertTrue(report["ok"])

@@ -34,6 +34,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Callable
 
+from .delivery import DeliveryRuntime
 from .lease import FileLease
 from .pool import InstanceSlot, ResourcePool
 from .runtime import EngineRuntime
@@ -56,7 +57,7 @@ from .types import (  # noqa: F401  (re-exported)
 log = logging.getLogger("mio.jobs")
 
 
-class JobEngine(EngineRuntime):
+class JobEngine(DeliveryRuntime, EngineRuntime):
     def __init__(
         self,
         path: str | Path = ":memory:",
@@ -126,7 +127,9 @@ class JobEngine(EngineRuntime):
                 }
                 state = (
                     "uncertain"
-                    if r["sent"] or self.state_leases.get(r["job_id"], r["idx"])
+                    if r["sent"]
+                    or self.state_leases.get(r["job_id"], r["idx"])
+                    or self._pending_delivery(r["job_id"], r["idx"])
                     else "pending"
                 )
                 self.db.execute(
@@ -335,6 +338,11 @@ class JobEngine(EngineRuntime):
             self._require(job_id)
             self.db.execute("UPDATE jobs SET canceled = 1, updated = ? WHERE id = ?", (now, job_id))
             self.db.execute(
+                "UPDATE job_deliveries SET state = 'discarded', updated = ? "
+                "WHERE job_id = ? AND state = 'pending'",
+                (now, job_id),
+            )
+            self.db.execute(
                 "UPDATE job_items SET state = 'canceled', updated = ?, epoch = epoch + 1 "
                 "WHERE job_id = ? AND state IN ('pending', 'uncertain')",
                 (now, job_id),
@@ -407,6 +415,10 @@ class JobEngine(EngineRuntime):
                 {"complete"} if include_complete else set()
             )
             for r in chosen:
+                if self._pending_delivery(job_id, r["idx"]):
+                    raise JobConflict(
+                        "a received result is awaiting delivery; replay it before retrying"
+                    )
                 if r["state"] == "running":
                     raise JobConflict(f"item {r['idx']} is still running")
                 if r["state"] == "uncertain" and not confirm_uncertain:
@@ -433,6 +445,12 @@ class JobEngine(EngineRuntime):
 
     def resolve(self, job_id: str, idx: int, action: str, result: dict | None = None) -> dict:
         """Resolve an uncertain item: ``failed`` | ``complete`` (with result) | ``reconcile``."""
+        with self.lock:
+            pending = self._pending_delivery(job_id, idx)
+        if pending:
+            if action == "reconcile":
+                return self.replay_result(job_id, idx)
+            raise JobConflict("a received result is awaiting delivery; replay it or cancel the job")
         if self.state_leases.get(job_id, idx):
             if action != "reconcile":
                 raise JobConflict("restore the endpoint state before resolving this item")
@@ -538,6 +556,10 @@ class JobEngine(EngineRuntime):
     def delete(self, job_id: str) -> None:
         with self._job_guard(job_id, command=True), self.lock, self.db:
             job = self._require(job_id)
+            if any(d["state"] == "pending" for d in self.deliveries(job_id)):
+                raise JobConflict(
+                    "a received result is awaiting delivery; replay it or cancel the job"
+                )
             if self.state_leases.list(job_id):
                 raise JobConflict("restore the endpoint state before deleting this job")
             if job["state"] in ("running",):

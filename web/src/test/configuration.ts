@@ -73,6 +73,7 @@ export const configProfile: RenderProfile = {
   edits: {},
   candidates: 3,
   instances: ['comfy_test'],
+  binding_required: false,
   base_width: 832,
   quality_tags: null,
   negative_tags: null,

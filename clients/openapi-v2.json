@@ -657,6 +657,62 @@
     "title": "Bible",
     "type": "object"
    },
+   "BindingTarget": {
+    "properties": {
+     "field": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Field"
+     },
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "node": {
+      "title": "Node",
+      "type": "string"
+     },
+     "part": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Part"
+     },
+     "qualifier": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Qualifier"
+     },
+     "source": {
+      "title": "Source",
+      "type": "string"
+     }
+    },
+    "required": [
+     "kind",
+     "node",
+     "source"
+    ],
+    "title": "BindingTarget",
+    "type": "object"
+   },
    "Character-Input": {
     "additionalProperties": false,
     "properties": {
@@ -1419,6 +1475,98 @@
     "title": "ControlInput",
     "type": "object"
    },
+   "Dependency": {
+    "properties": {
+     "class_type": {
+      "title": "Class Type",
+      "type": "string"
+     },
+     "nodes": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Nodes",
+      "type": "array"
+     }
+    },
+    "required": [
+     "class_type",
+     "nodes"
+    ],
+    "title": "Dependency",
+    "type": "object"
+   },
+   "DiagnosticReport": {
+    "properties": {
+     "invalid_inputs": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "title": "Invalid Inputs",
+      "type": "array"
+     },
+     "invalid_links": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "title": "Invalid Links",
+      "type": "array"
+     },
+     "invalid_values": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "title": "Invalid Values",
+      "type": "array"
+     },
+     "missing_inputs": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "title": "Missing Inputs",
+      "type": "array"
+     },
+     "missing_models": {
+      "items": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "title": "Missing Models",
+      "type": "array"
+     },
+     "missing_nodes": {
+      "items": {
+       "$ref": "#/components/schemas/Dependency"
+      },
+      "title": "Missing Nodes",
+      "type": "array"
+     },
+     "ok": {
+      "title": "Ok",
+      "type": "boolean"
+     },
+     "scope": {
+      "title": "Scope",
+      "type": "string"
+     }
+    },
+    "required": [
+     "ok",
+     "missing_nodes",
+     "missing_models",
+     "invalid_values",
+     "missing_inputs",
+     "invalid_links",
+     "invalid_inputs",
+     "scope"
+    ],
+    "title": "DiagnosticReport",
+    "type": "object"
+   },
    "Dialogue": {
     "additionalProperties": false,
     "properties": {
@@ -1516,6 +1664,19 @@
      "kind"
     ],
     "title": "EditRequest",
+    "type": "object"
+   },
+   "EnableRequest": {
+    "properties": {
+     "digest": {
+      "title": "Digest",
+      "type": "string"
+     }
+    },
+    "required": [
+     "digest"
+    ],
+    "title": "EnableRequest",
     "type": "object"
    },
    "Episode": {
@@ -1719,6 +1880,30 @@
     "title": "EpisodePatch",
     "type": "object"
    },
+   "ExternalRequirement": {
+    "additionalProperties": false,
+    "properties": {
+     "cloud": {
+      "title": "Cloud",
+      "type": "boolean"
+     },
+     "local": {
+      "title": "Local",
+      "type": "boolean"
+     },
+     "profile_id": {
+      "title": "Profile Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "profile_id",
+     "local",
+     "cloud"
+    ],
+    "title": "ExternalRequirement",
+    "type": "object"
+   },
    "Face": {
     "additionalProperties": false,
     "properties": {
@@ -1877,6 +2062,499 @@
      "missing"
     ],
     "title": "IdentityCheck",
+    "type": "object"
+   },
+   "InspectRequest": {
+    "properties": {
+     "config": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/WorkflowConfig"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "object_info": {
+      "anyOf": [
+       {
+        "additionalProperties": {
+         "additionalProperties": true,
+         "type": "object"
+        },
+        "maxProperties": 20000,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Object Info"
+     },
+     "overrides": {
+      "additionalProperties": true,
+      "title": "Overrides",
+      "type": "object"
+     },
+     "values": {
+      "additionalProperties": true,
+      "title": "Values",
+      "type": "object"
+     },
+     "variant": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Variant"
+     },
+     "workflow": {
+      "additionalProperties": true,
+      "maxProperties": 20000,
+      "title": "Workflow",
+      "type": "object"
+     }
+    },
+    "required": [
+     "workflow"
+    ],
+    "title": "InspectRequest",
+    "type": "object"
+   },
+   "Inspection": {
+    "properties": {
+     "bindings": {
+      "items": {
+       "$ref": "#/components/schemas/BindingTarget"
+      },
+      "title": "Bindings",
+      "type": "array"
+     },
+     "candidates": {
+      "items": {
+       "$ref": "#/components/schemas/BindingTarget"
+      },
+      "title": "Candidates",
+      "type": "array"
+     },
+     "compilable": {
+      "default": false,
+      "title": "Compilable",
+      "type": "boolean"
+     },
+     "dependencies": {
+      "items": {
+       "$ref": "#/components/schemas/Dependency"
+      },
+      "title": "Dependencies",
+      "type": "array"
+     },
+     "diagnostics": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/DiagnosticReport"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "format": {
+      "enum": [
+       "api",
+       "mio",
+       "ui",
+       "invalid"
+      ],
+      "title": "Format",
+      "type": "string"
+     },
+     "importable": {
+      "default": false,
+      "title": "Importable",
+      "type": "boolean"
+     },
+     "issues": {
+      "items": {
+       "$ref": "#/components/schemas/Issue"
+      },
+      "title": "Issues",
+      "type": "array"
+     },
+     "missing": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Missing",
+      "type": "array"
+     },
+     "models": {
+      "items": {
+       "$ref": "#/components/schemas/ModelDependency"
+      },
+      "title": "Models",
+      "type": "array"
+     },
+     "output_nodes": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Output Nodes",
+      "type": "array"
+     },
+     "selected_nodes": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Selected Nodes",
+      "type": "array"
+     },
+     "variants": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Variants",
+      "type": "array"
+     }
+    },
+    "required": [
+     "format"
+    ],
+    "title": "Inspection",
+    "type": "object"
+   },
+   "Issue": {
+    "properties": {
+     "code": {
+      "title": "Code",
+      "type": "string"
+     },
+     "kind": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Kind"
+     },
+     "message": {
+      "title": "Message",
+      "type": "string"
+     },
+     "severity": {
+      "enum": [
+       "error",
+       "warning",
+       "info"
+      ],
+      "title": "Severity",
+      "type": "string"
+     }
+    },
+    "required": [
+     "code",
+     "severity",
+     "message"
+    ],
+    "title": "Issue",
+    "type": "object"
+   },
+   "KitAssembly": {
+    "additionalProperties": false,
+    "properties": {
+     "episode_id": {
+      "title": "Episode Id",
+      "type": "string"
+     },
+     "idempotency_key": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Idempotency Key",
+      "type": "string"
+     },
+     "preset_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Preset Ids",
+      "type": "array"
+     },
+     "title": {
+      "default": "",
+      "maxLength": 120,
+      "title": "Title",
+      "type": "string"
+     },
+     "variables": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Variables",
+      "type": "object"
+     }
+    },
+    "required": [
+     "episode_id",
+     "idempotency_key"
+    ],
+    "title": "KitAssembly",
+    "type": "object"
+   },
+   "KitDocumentSummary": {
+    "additionalProperties": false,
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "name"
+    ],
+    "title": "KitDocumentSummary",
+    "type": "object"
+   },
+   "KitEpisodeSummary": {
+    "additionalProperties": false,
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "panels": {
+      "title": "Panels",
+      "type": "integer"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "title",
+     "panels"
+    ],
+    "title": "KitEpisodeSummary",
+    "type": "object"
+   },
+   "KitImport": {
+    "additionalProperties": false,
+    "properties": {
+     "archive_base64": {
+      "maxLength": 89478488,
+      "minLength": 1,
+      "title": "Archive Base64",
+      "type": "string"
+     },
+     "idempotency_key": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Idempotency Key",
+      "type": "string"
+     },
+     "profiles": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/ProfileDestination"
+      },
+      "title": "Profiles",
+      "type": "object"
+     }
+    },
+    "required": [
+     "archive_base64",
+     "idempotency_key"
+    ],
+    "title": "KitImport",
+    "type": "object"
+   },
+   "KitImported": {
+    "additionalProperties": false,
+    "properties": {
+     "episode_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Episode Ids",
+      "type": "array"
+     },
+     "id_map": {
+      "additionalProperties": {
+       "additionalProperties": {
+        "type": "string"
+       },
+       "type": "object"
+      },
+      "title": "Id Map",
+      "type": "object"
+     },
+     "preset_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Preset Ids",
+      "type": "array"
+     },
+     "series_id": {
+      "title": "Series Id",
+      "type": "string"
+     },
+     "unbound_profile_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Unbound Profile Ids",
+      "type": "array"
+     }
+    },
+    "required": [
+     "series_id",
+     "episode_ids",
+     "preset_ids",
+     "id_map",
+     "unbound_profile_ids"
+    ],
+    "title": "KitImported",
+    "type": "object"
+   },
+   "KitInspection": {
+    "additionalProperties": false,
+    "properties": {
+     "asset_count": {
+      "title": "Asset Count",
+      "type": "integer"
+     },
+     "episodes": {
+      "items": {
+       "$ref": "#/components/schemas/KitEpisodeSummary"
+      },
+      "title": "Episodes",
+      "type": "array"
+     },
+     "external": {
+      "items": {
+       "$ref": "#/components/schemas/ExternalRequirement"
+      },
+      "title": "External",
+      "type": "array"
+     },
+     "presets": {
+      "items": {
+       "$ref": "#/components/schemas/KitPresetSummary"
+      },
+      "title": "Presets",
+      "type": "array"
+     },
+     "profiles": {
+      "items": {
+       "$ref": "#/components/schemas/KitDocumentSummary"
+      },
+      "title": "Profiles",
+      "type": "array"
+     },
+     "sha256": {
+      "title": "Sha256",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "warnings": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+     },
+     "workflows": {
+      "items": {
+       "$ref": "#/components/schemas/KitDocumentSummary"
+      },
+      "title": "Workflows",
+      "type": "array"
+     }
+    },
+    "required": [
+     "title",
+     "sha256",
+     "episodes",
+     "presets",
+     "profiles",
+     "workflows",
+     "asset_count",
+     "external",
+     "warnings"
+    ],
+    "title": "KitInspection",
+    "type": "object"
+   },
+   "KitPresetSummary": {
+    "additionalProperties": false,
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "title"
+    ],
+    "title": "KitPresetSummary",
+    "type": "object"
+   },
+   "KitSelection": {
+    "additionalProperties": false,
+    "properties": {
+     "episode_ids": {
+      "items": {
+       "type": "string"
+      },
+      "minItems": 1,
+      "title": "Episode Ids",
+      "type": "array"
+     },
+     "preset_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Preset Ids",
+      "type": "array"
+     },
+     "series_id": {
+      "title": "Series Id",
+      "type": "string"
+     },
+     "title": {
+      "default": "",
+      "maxLength": 120,
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "series_id",
+     "episode_ids"
+    ],
+    "title": "KitSelection",
     "type": "object"
    },
    "LayoutRequest": {
@@ -2472,6 +3150,29 @@
      "model_family"
     ],
     "title": "LoraRef",
+    "type": "object"
+   },
+   "ModelDependency": {
+    "properties": {
+     "field": {
+      "title": "Field",
+      "type": "string"
+     },
+     "node": {
+      "title": "Node",
+      "type": "string"
+     },
+     "value": {
+      "title": "Value",
+      "type": "string"
+     }
+    },
+    "required": [
+     "node",
+     "field",
+     "value"
+    ],
+    "title": "ModelDependency",
     "type": "object"
    },
    "MotionExport": {
@@ -3726,6 +4427,44 @@
     "title": "PreviewRequest",
     "type": "object"
    },
+   "ProfileDestination": {
+    "additionalProperties": false,
+    "properties": {
+     "cloud_channel": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cloud Channel"
+     },
+     "instances": {
+      "anyOf": [
+       {
+        "items": {
+         "type": "string"
+        },
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Instances"
+     },
+     "unbound": {
+      "default": false,
+      "description": "Import for editing without selecting a service; rendering stays blocked until configured.",
+      "title": "Unbound",
+      "type": "boolean"
+     }
+    },
+    "title": "ProfileDestination",
+    "type": "object"
+   },
    "Prop-Input": {
     "additionalProperties": false,
     "properties": {
@@ -4188,6 +4927,12 @@
       "title": "Base Width",
       "type": "integer"
      },
+     "binding_required": {
+      "default": false,
+      "description": "Imported without destination services. Preview/edit are allowed; generation requires explicit configuration first.",
+      "title": "Binding Required",
+      "type": "boolean"
+     },
      "candidates": {
       "default": 3,
       "maximum": 16.0,
@@ -4326,6 +5071,12 @@
       "title": "Base Width",
       "type": "integer"
      },
+     "binding_required": {
+      "default": false,
+      "description": "Imported without destination services. Preview/edit are allowed; generation requires explicit configuration first.",
+      "title": "Binding Required",
+      "type": "boolean"
+     },
      "candidates": {
       "default": 3,
       "maximum": 16.0,
@@ -4450,6 +5201,7 @@
     "required": [
      "id",
      "name",
+     "binding_required",
      "dialect",
      "draft",
      "final",
@@ -4885,10 +5637,11 @@
      },
      "kind": {
       "default": "album",
-      "description": "album = a book on the shelf; workshop = the storyboards and presets of the 创作工坊 (never listed as a book).",
+      "description": "album = a book on the shelf; workshop = the storyboards and presets of the 创作工坊; kit = a reusable creation kit (neither is listed as a book).",
       "enum": [
        "album",
-       "workshop"
+       "workshop",
+       "kit"
       ],
       "title": "Kind",
       "type": "string"
@@ -5034,10 +5787,11 @@
      },
      "kind": {
       "default": "album",
-      "description": "album = a book on the shelf; workshop = the storyboards and presets of the 创作工坊 (never listed as a book).",
+      "description": "album = a book on the shelf; workshop = the storyboards and presets of the 创作工坊; kit = a reusable creation kit (neither is listed as a book).",
       "enum": [
        "album",
-       "workshop"
+       "workshop",
+       "kit"
       ],
       "title": "Kind",
       "type": "string"
@@ -5811,6 +6565,40 @@
     "title": "TakeStatus",
     "type": "string"
    },
+   "TokenCreate": {
+    "properties": {
+     "expires_at": {
+      "default": "",
+      "title": "Expires At",
+      "type": "string"
+     },
+     "name": {
+      "maxLength": 60,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+     },
+     "scopes": {
+      "items": {
+       "enum": [
+        "read",
+        "write",
+        "render",
+        "admin"
+       ],
+       "type": "string"
+      },
+      "minItems": 1,
+      "title": "Scopes",
+      "type": "array"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "TokenCreate",
+    "type": "object"
+   },
    "ValidationError": {
     "properties": {
      "ctx": {
@@ -6498,6 +7286,277 @@
     "summary": "Import Bundle",
     "tags": [
      "system"
+    ]
+   }
+  },
+  "/creation-kits": {
+   "get": {
+    "operationId": "list_creation_kits",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/Series"
+         },
+         "title": "Response List Creation Kits",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "List Creation Kits",
+    "tags": [
+     "creation-kits"
+    ]
+   }
+  },
+  "/creation-kits/export": {
+   "post": {
+    "operationId": "export_creation_kit",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/KitSelection"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Export Creation Kit",
+    "tags": [
+     "creation-kits"
+    ]
+   }
+  },
+  "/creation-kits/import": {
+   "post": {
+    "operationId": "import_creation_kit",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/KitImport"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/KitImported"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Import Creation Kit",
+    "tags": [
+     "creation-kits"
+    ]
+   }
+  },
+  "/creation-kits/inspect": {
+   "post": {
+    "operationId": "inspect_creation_kit",
+    "requestBody": {
+     "content": {
+      "application/octet-stream": {
+       "schema": {
+        "format": "binary",
+        "type": "string"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/KitInspection"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Inspect Creation Kit",
+    "tags": [
+     "creation-kits"
+    ]
+   }
+  },
+  "/creation-kits/{series_id}/assemble": {
+   "post": {
+    "operationId": "assemble_creation_kit",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/KitAssembly"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Assembled"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Assemble Creation Kit",
+    "tags": [
+     "creation-kits"
+    ]
+   }
+  },
+  "/creation-kits/{series_id}/preview": {
+   "post": {
+    "operationId": "preview_creation_kit",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/KitAssembly"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AssemblyPreview"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Preview Creation Kit",
+    "tags": [
+     "creation-kits"
     ]
    }
   },
@@ -8939,6 +9998,275 @@
     ]
    }
   },
+  "/extension-panels": {
+   "get": {
+    "description": "UI panels of active extensions; the web app shows them in sandboxed iframes.",
+    "operationId": "extension_panels",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         "title": "Response Extension Panels",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Extension Panels",
+    "tags": [
+     "extensions"
+    ]
+   }
+  },
+  "/extensions": {
+   "get": {
+    "operationId": "list_extensions",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response List Extensions",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "List Extensions",
+    "tags": [
+     "extensions"
+    ]
+   },
+   "post": {
+    "description": "Raw body = zipped extension folder.  Installed disabled; review, then enable.",
+    "operationId": "install_extension",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "replace",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Replace",
+       "type": "boolean"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/octet-stream": {
+       "schema": {
+        "format": "binary",
+        "type": "string"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Install Extension",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Install Extension",
+    "tags": [
+     "extensions"
+    ]
+   }
+  },
+  "/extensions/{ext_id}": {
+   "delete": {
+    "operationId": "remove_extension",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ext_id",
+      "required": true,
+      "schema": {
+       "title": "Ext Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Remove Extension",
+    "tags": [
+     "extensions"
+    ]
+   }
+  },
+  "/extensions/{ext_id}/disable": {
+   "post": {
+    "operationId": "disable_extension",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ext_id",
+      "required": true,
+      "schema": {
+       "title": "Ext Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Disable Extension",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Disable Extension",
+    "tags": [
+     "extensions"
+    ]
+   }
+  },
+  "/extensions/{ext_id}/enable": {
+   "post": {
+    "description": "Enable exactly the reviewed content (``digest`` from the listing).",
+    "operationId": "enable_extension",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ext_id",
+      "required": true,
+      "schema": {
+       "title": "Ext Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EnableRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Enable Extension",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Enable Extension",
+    "tags": [
+     "extensions"
+    ]
+   }
+  },
   "/instances": {
    "get": {
     "operationId": "list_instances",
@@ -9370,6 +10698,59 @@
     ]
    }
   },
+  "/jobs/{job_id}/deliveries": {
+   "get": {
+    "description": "Persisted results awaiting local application, including previous attempts.",
+    "operationId": "job_result_deliveries",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "job_id",
+      "required": true,
+      "schema": {
+       "title": "Job Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         "title": "Response Job Result Deliveries",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Job Result Deliveries",
+    "tags": [
+     "jobs"
+    ]
+   }
+  },
   "/jobs/{job_id}/events": {
    "get": {
     "operationId": "job_events",
@@ -9437,6 +10818,65 @@
      }
     ],
     "summary": "Job Events",
+    "tags": [
+     "jobs"
+    ]
+   }
+  },
+  "/jobs/{job_id}/items/{idx}/replay-result": {
+   "post": {
+    "description": "Apply a received result without sending another generation request.",
+    "operationId": "replay_job_result",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "job_id",
+      "required": true,
+      "schema": {
+       "title": "Job Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "idx",
+      "required": true,
+      "schema": {
+       "title": "Idx",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Replay Job Result",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Replay Job Result",
     "tags": [
      "jobs"
     ]
@@ -10784,6 +12224,241 @@
     ]
    }
   },
+  "/themes": {
+   "get": {
+    "operationId": "list_themes",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         "title": "Response List Themes",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "List Themes",
+    "tags": [
+     "extensions"
+    ]
+   },
+   "post": {
+    "description": "Import a theme file (JSON).  Built-in and extension ids cannot be overwritten.",
+    "operationId": "import_theme",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "additionalProperties": true,
+        "title": "Body",
+        "type": "object"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Import Theme",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Import Theme",
+    "tags": [
+     "extensions"
+    ]
+   }
+  },
+  "/themes/{theme_id}": {
+   "delete": {
+    "operationId": "delete_theme",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "theme_id",
+      "required": true,
+      "schema": {
+       "title": "Theme Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Delete Theme",
+    "tags": [
+     "extensions"
+    ]
+   }
+  },
+  "/tokens": {
+   "get": {
+    "operationId": "list_tokens",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response List Tokens",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "List Tokens",
+    "tags": [
+     "access"
+    ]
+   },
+   "post": {
+    "description": "The plaintext ``token`` is returned only here, once.",
+    "operationId": "create_token",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/TokenCreate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Create Token",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Create Token",
+    "tags": [
+     "access"
+    ]
+   }
+  },
+  "/tokens/{token_id}": {
+   "delete": {
+    "operationId": "revoke_token",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "token_id",
+      "required": true,
+      "schema": {
+       "title": "Token Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Revoke Token",
+    "tags": [
+     "access"
+    ]
+   }
+  },
   "/trash": {
    "get": {
     "operationId": "list_trash",
@@ -11360,6 +13035,53 @@
     ]
    }
   },
+  "/workflows/inspect": {
+   "post": {
+    "description": "Preview import and selected-output dependencies without saving or contacting a service.",
+    "operationId": "inspect_workflow",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/InspectRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Inspection"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Inspect Workflow",
+    "tags": [
+     "library"
+    ]
+   }
+  },
   "/workflows/{workflow_id}": {
    "delete": {
     "operationId": "delete_workflow",
@@ -11697,6 +13419,23 @@
       }
      }
     ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "anyOf": [
+         {
+          "$ref": "#/components/schemas/CompileRequest"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "title": "Body"
+       }
+      }
+     }
+    },
     "responses": {
      "200": {
       "content": {

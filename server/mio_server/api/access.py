@@ -1,4 +1,4 @@
-"""Open-API access management: API tokens (local UI only) and webhooks."""
+"""Access management: API tokens and webhooks (admin scope on the open API)."""
 
 from __future__ import annotations
 

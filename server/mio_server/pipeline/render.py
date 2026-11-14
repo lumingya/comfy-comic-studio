@@ -84,6 +84,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         self.store, self.assets, self.engine = store, assets, engine
         self.hooks = HookBus()  # replaced by the registry's bus in AppContext
         self.cloud_backend = lambda channel_id: None  # wired by CloudExecutor
+        self.binding_rules = lambda: ()  # wired to the live registry by AppContext
         self._rng = random.Random()
         self._local = threading.local()
 
@@ -120,6 +121,11 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         pid = profile_id or (series.default_profile_id if series else None) or "profile_default"
         return self.store.get_doc("profile", pid)
 
+    @staticmethod
+    def require_bound_profile(profile: RenderProfile) -> None:
+        if profile.binding_required:
+            raise RenderError(f"出图配置「{profile.name}」尚未绑定服务，请先选择实例或云端渠道")
+
     # ------------------------------------------------------------- compile
     def _compile_stage(
         self,
@@ -130,7 +136,8 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         variant: str | None = None,
     ) -> tuple[dict, str | None, list[str]]:
         doc = self.workflow(stage.workflow_id)
-        info = describe(doc)
+        rules = tuple(self.binding_rules())
+        info = describe(doc, rules=rules)
         values, composition_warnings = self.resolve_composition(info, values)
         for key in [k for k in values if k.startswith("ref:")]:
             if key not in info["image_inputs"] and "ref" not in info["image_inputs"]:
@@ -153,6 +160,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
                 overrides={**stage.overrides, **(overrides or {})},
                 stage_values=stage.values,
                 slot_overrides=slot,
+                rules=rules,
             )
         except LibraryError as exc:
             warnings.append(f"LoRA 未写入（{exc}），按工作流原样运行")
@@ -162,6 +170,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
                 variant=stage.variant or variant,
                 overrides={**stage.overrides, **(overrides or {})},
                 stage_values=stage.values,
+                rules=rules,
             )
         except B.BindingError as exc:
             raise RenderError(f"{doc.name}：{exc}") from None
@@ -334,6 +343,8 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
             for panel in panels
         ]
         routes = {prof.cloud_shape for _, _, prof in selected}
+        for _, _, prof in selected:
+            self.require_bound_profile(prof)
         if len(routes) > 1:
             raise RenderError("同一批任务不能混用本地与云端出图配置，请分开提交")
         if routes == {True}:
@@ -423,6 +434,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
             if panel is None:
                 continue
             profile = self.profile(profile_id or panel.overrides.profile_id, series)
+            self.require_bound_profile(profile)
             if not profile.final:
                 raise RenderError(f"出图配置 {profile.name} 没有成品档阶段")
             snap = take.parameter_snapshot
@@ -475,9 +487,9 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         meta = result.get("meta") or item["input"].get("meta") or {}
         created: list[str] = []
 
-        def mutate(ep: Episode) -> None:
+        def mutate(ep: Episode) -> list[str]:
             if ep.panel(meta["panel_id"]) is None:
-                return  # panel deleted meanwhile: the job keeps the result, nothing to attach to
+                return []  # deleted panel: retain the result without recreating the panel
             parent = ep.take(meta["parent_take_id"]) if meta.get("parent_take_id") else None
             replaced = False
             for img in result.get("images") or []:
@@ -549,8 +561,16 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
                     take.status = TakeStatus.adopted
                 ep.takes.append(take)
                 created.append(take.id)
+            return created
 
-        self.store.update_episode(meta["episode_id"], mutate)
+        if item.get("delivery_id"):
+            created, applied = self.store.apply_episode_delivery(
+                meta["episode_id"], item["delivery_id"], item["delivery_sha"], mutate
+            )
+            if not applied:
+                return created
+        else:
+            self.store.update_episode(meta["episode_id"], mutate)
         for take_id in created:
             self.hooks.action(
                 "take.created",
@@ -560,6 +580,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
                     "take_id": take_id,
                     "stage": meta.get("stage", "draft"),
                     "job_id": job["id"],
+                    "delivery_id": item.get("delivery_id"),
                 },
             )
         return created

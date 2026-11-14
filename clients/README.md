@@ -3,7 +3,7 @@
 `/api/v2` 是给机器人、脚本和其他程序用的开放接口。它和网页界面用的 `/api` 是**同一套领域接口**：同样的路由、模型和错误格式 `{detail, kind}`，由领域模型自动生成，所以界面上能做的事都能通过 API 做。两者的区别：
 
 - `/api/v2` 的领域操作都要带令牌：`Authorization: Bearer mio_…`；`/meta` 和 OpenAPI 文档用于公开发现，不返回作品或密钥；
-- 令牌管理和扩展管理不对外开放；
+- 令牌与扩展生命周期管理使用 `admin` 权限；扩展启用仍须提交审核过的内容摘要；
 - 它有自己的 OpenAPI 文档 `/api/v2/openapi.json`（仓库里的快照是 [`openapi-v2.json`](openapi-v2.json)），客户端就是从这份文档生成的。
 
 本机网页用的 `/api` 不需要令牌，只应该在本机或可信的局域网里访问。
@@ -20,7 +20,9 @@
 | 阅读与输出 | `/episodes/{id}/reading`、`/episodes/{id}/panels/{panel_id}/image`、各导出接口 |
 | 专业处理 | `/episodes/{id}/edit`、`qa`、`finalize`、`assistant/*`、动态漫接口 |
 
-令牌签发、扩展安装与信任确认属于本机管理边界，不通过增加 `admin` 权限开放到 v2。
+令牌签发、吊销、扩展安装 / 启用 / 停用 / 删除及主题操作均可通过 v2 完成。
+首次令牌通过本机 `/api/tokens` 或设置页创建；后续由 `admin` 令牌调用 `/api/v2/tokens` 管理。
+安装扩展只保存为停用状态；读取 `/api/v2/extensions` 的摘要并明确提交到启用接口后才加载。
 可选质检扩展示例见 [qa-review](../examples/extensions/qa-review/README.md)，默认不增加主界面入口。
 
 ## 令牌与权限
@@ -32,9 +34,13 @@
 | `read` | 作品、工坊、任务等读取，以及订阅任务事件的 WebSocket；配置管理类读取仍需 `admin` |
 | `write` | 编辑作品、剧本、画布，采用或淘汰出图结果，导出 |
 | `render` | 会消耗算力或额度的操作：一句话生成剧本、出图、定稿、修图、质检、剧本助手、重跑任务 |
-| `admin` | 设置、ComfyUI 实例、Webhook、数据导入、更新 |
+| `admin` | 设置、ComfyUI 实例、Webhook、数据导入、更新、令牌及扩展生命周期 |
 
 权限之间**不互相包含**，例如出图的机器人通常需要 `read + write + render`。令牌可以设置过期时间，也可以随时吊销。
+
+`admin` 包含签发其他令牌和启用扩展代码的管理权，应分配给需要管理工作区的程序。
+主题列表和面板目录使用 `read`，导入 / 删除用户主题使用 `write`；扩展文件读取使用 `admin`。
+接口覆盖测试会核对每个已记录的本机操作都存在有鉴权的 v2 操作，防止新增功能遗漏开放接口。
 
 浏览器里的 WebSocket 不能设置请求头，这时可以把令牌放在查询参数里：`?access_token=mio_…`。
 
@@ -94,6 +100,40 @@ assembled = mio.assemble(request)
 网络响应丢失后，用同一个 `idempotency_key` 和同一请求重试会返回原作品；键已使用但请求不同
 返回 409。工坊模板后来改动或删除不会让同键重放重复创建。需要另一部作品时使用新键；
 修改输入后也应换键。预览不锁定模板版本，首次装配以提交时模板为准。
+
+### 工作流导入检查
+
+`POST /workflows/inspect` 接收 `{"workflow": API图或Mio工作流包}`，返回有类型的格式、绑定来源、
+候选、未绑定参数、选中节点、模型依赖与问题清单。它不写库、不联网、不出图；可选 `object_info`
+由调用方提供以核对节点与模型。`compilable` 表示可由 Mio 编译，`diagnostics.ok` 仅表示通过已声明
+节点约束的静态检查，不执行自定义 `VALIDATE_INPUTS`。界面 `nodes/links` 文件会给出 API 导出指引。
+
+工作流输出映射使用 `config.mapping.output="/节点ID"`，独立于输入字段；提示词等输入映射仍不能
+覆盖连线。`POST /workflows/{id}/diagnose` 可传编译请求的 `variant/values/overrides`，只诊断对应实际图。
+
+### 创作套装
+
+`POST /creation-kits/export` 按 `series_id/episode_ids/preset_ids/title` 导出 `.mio-kit.zip`。
+`POST /creation-kits/inspect` 接受原始 zip，只读返回内容与外部服务依赖。
+`POST /creation-kits/import` 接收 `archive_base64`、`idempotency_key` 和 `profiles` 目标映射。
+每个源配置必须明确选择 `instances` / `cloud_channel`，或明确 `{"unbound":true}` 延后绑定。
+套装不包含服务密钥；同 ID 工作流会重新映射，避免误用目标工作区的另一份配置。
+
+导入结果是独立 `kind=kit` 资源，用 `/creation-kits` 列出，不混入画册书架。
+`POST /creation-kits/{series_id}/preview` 和 `/assemble` 接受 `episode_id/preset_ids/title/variables/idempotency_key`，
+使用同一装配规则生成独立作品。模板修改不追改已装配作品。未绑定配置允许编辑与预览，生成前须
+通过出图配置 API 设置服务并将 `binding_required` 设为 `false`。所有操作无需自动调用模型。
+
+### 已收到结果的恢复
+
+`GET /jobs/{id}/deliveries` 需要 `read`，查询本地结果的待应用 / 已应用 / 丢弃状态。
+`POST /jobs/{id}/items/{idx}/replay-result` 需要 `render`，重放本地结果的保存，不重复原生成请求；
+混合路线可补交已经冻结的后续精修任务。存在待应用结果时，普通生成重试和删除任务会被拒绝。
+重启后仅对明确支持幂等回放的执行器尝试恢复，第三方执行器需显式声明 `replay_safe=True`。
+
+作品候选与交付回执同事务保存，重放不会再次采用旧图、重复候选或改变后来手工修改的采用状态。
+取消后不再补写，但不撤销此前已经保存的结果。网络响应到执行器落盘之前仍遵循 `uncertain`
+对账语义；事件不是严格恰好一次交付，`delivery_id` 可用于消费者去重。
 
 ### 本地、纯云端与显式混合
 

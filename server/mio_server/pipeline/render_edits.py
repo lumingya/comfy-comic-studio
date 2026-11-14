@@ -67,6 +67,7 @@ class EditsMixin:
         profile = self.profile(
             profile_id or (panel.overrides.profile_id if panel else None), series
         )
+        self.require_bound_profile(profile)
         snap = take.parameter_snapshot
         prompt = params.get("prompt") or snap.get("prompt", "")
         negative = params.get("negative") or snap.get("negative", "")

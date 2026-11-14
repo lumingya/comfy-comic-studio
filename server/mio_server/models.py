@@ -664,10 +664,10 @@ class Series(StrictModel):
     title: str
     subtitle: str = ""
     status: SeriesStatus = SeriesStatus.draft
-    kind: Literal["album", "workshop"] = Field(
+    kind: Literal["album", "workshop", "kit"] = Field(
         default="album",
         description="album = a book on the shelf; workshop = the storyboards and presets of the "
-        "创作工坊 (never listed as a book).",
+        "创作工坊; kit = a reusable creation kit (neither is listed as a book).",
     )
     presets: list[Preset] = Field(default_factory=list, description="Workshop presets.")
     bible: Bible = Field(default_factory=Bible)

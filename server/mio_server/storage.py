@@ -11,6 +11,7 @@ latest document inside the lock, so a finishing job never overwrites a concurren
 
 from __future__ import annotations
 
+import json
 import sqlite3
 import threading
 from contextlib import contextmanager
@@ -77,6 +78,9 @@ CREATE TABLE IF NOT EXISTS episode_snapshots (
 CREATE TABLE IF NOT EXISTS assembly_receipts (
     idempotency_key TEXT PRIMARY KEY, request_sha TEXT NOT NULL,
     series_id TEXT NOT NULL, episode_id TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS delivery_receipts (
+    delivery_id TEXT PRIMARY KEY, episode_id TEXT NOT NULL, result_sha TEXT NOT NULL,
+    value_json TEXT NOT NULL, created_at TEXT NOT NULL);
 """
 
 # Saved states kept per episode for "restore this panel to how it was" (oldest pruned).
@@ -102,6 +106,7 @@ class SQLiteStore:
     def __init__(self, path: str | Path):
         self.path = Path(path)
         self.lock = threading.RLock()
+        self._savepoint_seq = 0
         if str(self.path) != ":memory:":
             self.path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(str(self.path), check_same_thread=False)
@@ -117,15 +122,31 @@ class SQLiteStore:
 
     @contextmanager
     def tx(self) -> Iterator[sqlite3.Connection]:
-        with self.lock, self._conn:
-            yield self._conn
+        """Composable atomic writes; nested store methods never commit their caller's work.
+
+        Use execute, not executescript, inside this context: SQLite's executescript commits
+        the active transaction before running its script. Schema bootstrap is separate below.
+        """
+        with self.lock:
+            self._savepoint_seq += 1
+            name = f"mio_tx_{self._savepoint_seq}"
+            self._conn.execute(f"SAVEPOINT {name}")
+            try:
+                yield self._conn
+            except BaseException:
+                self._conn.execute(f"ROLLBACK TO SAVEPOINT {name}")
+                self._conn.execute(f"RELEASE SAVEPOINT {name}")
+                raise
+            else:
+                self._conn.execute(f"RELEASE SAVEPOINT {name}")
 
     def _rows(self, sql: str, args: tuple = ()) -> list[sqlite3.Row]:
         with self.lock:
             return self._conn.execute(sql, args).fetchall()
 
     def migrate(self) -> None:
-        with self.tx() as db:
+        # executescript is only used during bootstrap, before callers can open transactions.
+        with self.lock, self._conn as db:
             db.executescript(SCHEMA)
             for table, column, ddl in (
                 ("series", "deleted_at", "TEXT"),
@@ -414,7 +435,7 @@ class SQLiteStore:
                     (episode.id, current, now_iso(), row["payload_json"]),
                 )
             episode.updated_at = now_iso()
-            episode.revision += 1
+            episode.revision = current + 1
             payload = episode.model_dump_json()
             db.execute(
                 """UPDATE episodes SET title = ?, episode_order = ?, panel_count = ?, updated_at = ?, deleted_at = ?,
@@ -441,6 +462,26 @@ class SQLiteStore:
                 (episode.id, episode.id, SNAPSHOT_LIMIT),
             )
         return episode
+
+    def apply_episode_delivery(self, episode_id, delivery_id, result_sha, fn):
+        """Save a result and its receipt together; replay returns the original value unchanged."""
+        with self.tx() as db:
+            row = db.execute(
+                "SELECT * FROM delivery_receipts WHERE delivery_id = ?", (delivery_id,)
+            ).fetchone()
+            if row:
+                if row["result_sha"] != result_sha or row["episode_id"] != episode_id:
+                    raise Conflict("delivery id reused with a different result")
+                return json.loads(row["value_json"]), False
+            episode = self.get_episode(episode_id)
+            value = fn(episode)
+            payload = json.dumps(value, ensure_ascii=False, allow_nan=False)
+            self.save_episode(Episode.model_validate(episode.model_dump()))
+            db.execute(
+                "INSERT INTO delivery_receipts VALUES (?, ?, ?, ?, ?)",
+                (delivery_id, episode_id, result_sha, payload, now_iso()),
+            )
+            return value, True
 
     def episode_snapshots(self, episode_id: str) -> list[tuple[int, str, Episode]]:
         """Saved states, newest first: ``(revision, created_at, episode)``."""

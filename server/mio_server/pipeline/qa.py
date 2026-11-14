@@ -117,6 +117,8 @@ def auto_pick(episode: Episode, panel_id: str, variant_id: str | None = None) ->
 class QAService:
     """Submits ``qa.check`` jobs and applies their verdicts."""
 
+    replay_safe = True
+
     def __init__(self, store, assets, engine, llm_factory):
         self.store, self.assets, self.engine, self.llm_factory = store, assets, engine, llm_factory
 
@@ -233,4 +235,9 @@ class QAService:
             if auto:
                 auto_pick(ep, take.panel_id, take.variant_id)
 
-        self.store.update_episode(item["input"]["episode_id"], mutate)
+        if item.get("delivery_id"):
+            self.store.apply_episode_delivery(
+                item["input"]["episode_id"], item["delivery_id"], item["delivery_sha"], mutate
+            )
+        else:
+            self.store.update_episode(item["input"]["episode_id"], mutate)

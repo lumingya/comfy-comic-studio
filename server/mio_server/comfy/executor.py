@@ -34,6 +34,16 @@ class ComfyRenderExecutor:
         self.on_result = on_result
         self.timeout = timeout
 
+    @property
+    def replay_safe(self) -> bool:
+        # The built-in callback commits a receipt with the work. Arbitrary extension
+        # callbacks must not accidentally inherit that guarantee.
+        from ..pipeline.render import RenderService
+
+        return self.on_result is None or (
+            getattr(self.on_result, "__func__", None) is RenderService.apply_result
+        )
+
     # ---------------------------------------------------------------- execute
     def execute(self, ctx: ItemContext) -> dict:
         if ctx.instance is None:
