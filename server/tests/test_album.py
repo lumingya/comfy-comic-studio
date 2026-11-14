@@ -40,6 +40,16 @@ def metadata(doc: str) -> dict:
     return json.loads(raw.group(1))
 
 
+def adopt_two_frames(case: ApiCase, episode: dict) -> dict:
+    # Export contracts need multiple pages, not all twelve frames from the script fixture.
+    # Keep the real render/store/adopt path within drain's budget on slower CI disks.
+    trimmed = case.ctx.store.update_episode(
+        episode["id"], lambda ep: setattr(ep, "panels", ep.ordered_panels()[:2])
+    )
+    case.assertEqual(len(trimmed.panels), 2)
+    return case.adopt_all(trimmed.model_dump(mode="json"))
+
+
 class TemplateTests(unittest.TestCase):
     def test_every_builtin_renders_offline_and_safely(self):
         templates = builtin_templates()
@@ -91,7 +101,7 @@ class TemplateTests(unittest.TestCase):
 class AlbumApiTests(ApiCase):
     def test_export_album_lettered_and_raw(self):
         _, ep = self.make_episode()
-        ep = self.adopt_all(ep)
+        ep = adopt_two_frames(self, ep)
         body = {"episode_ids": [ep["id"]], "template_id": "export-ink", "title": "雨夜合集"}
         res = self.ok(self.client.post("/api/export/album", json=body))
         self.assertIn("text/html", res.headers["content-type"])
@@ -257,7 +267,7 @@ class MediaTests(unittest.TestCase):
 class ExportChannelTests(ApiCase):
     def test_album_image_profiles_report_what_they_did(self):
         _, ep = self.make_episode()
-        ep = self.adopt_all(ep)
+        ep = adopt_two_frames(self, ep)
         body = {"episode_ids": [ep["id"]], "template_id": "export-ink", "lettered": False}
         for profile, mime in (("clean", None), ("publish", "image/webp"), ("archive", None)):
             with self.subTest(profile):
@@ -280,28 +290,38 @@ class ExportChannelTests(ApiCase):
         import zipfile
 
         _, ep = self.make_episode()
-        ep = self.adopt_all(ep)
+        ep = adopt_two_frames(self, ep)
         body = {"episode_ids": [ep["id"]], "title": "雨夜"}
         res = self.ok(self.client.post("/api/export/portable", json={**body, "format": "zip"}))
         self.assertIn(".zip", res.headers["content-disposition"])
-        names = zipfile.ZipFile(io.BytesIO(res.content)).namelist()
-        self.assertIn("index.html", names)
-        self.assertIn("manifest.json", names)
-        self.assertEqual(len([n for n in names if n.startswith("images/")]), len(ep["panels"]))
+        with zipfile.ZipFile(io.BytesIO(res.content)) as archive:
+            names = archive.namelist()
+            self.assertIn("index.html", names)
+            self.assertIn("manifest.json", names)
+            images = [n for n in names if n.startswith("images/")]
+            self.assertEqual(len(images), len(ep["panels"]))
+            files = json.loads(archive.read("manifest.json"))["books"][0]["files"]
+            self.assertEqual([entry["name"] for entry in files], images)
+            for name in images:
+                with Image.open(io.BytesIO(archive.read(name))) as image:
+                    image.load()
+                    self.assertGreater(min(image.size), 0)
         pdf = self.ok(
             self.client.post(
                 "/api/export/portable", json={**body, "format": "pdf", "image_profile": "publish"}
             )
         )
         self.assertTrue(pdf.content.startswith(b"%PDF"))
+        self.assertEqual(len(re.findall(rb"/Type\s*/Page\b", pdf.content)), len(ep["panels"]))
         self.assertEqual(json.loads(pdf.headers["x-mio-export"])["profile"], "publish")
 
     def test_slice_plan_and_quality(self):
         _, ep = self.make_episode()
-        ep = self.adopt_all(ep)
+        ep = adopt_two_frames(self, ep)
         plan = self.ok(self.client.get(f"/api/episodes/{ep['id']}/slices?preset=kuaikan"))
         self.assertEqual((plan["preset"], plan["width"]), ("kuaikan", 750))
         self.assertEqual(sum(plan["heights"]), plan["height"])
+        self.assertGreaterEqual(len(plan["heights"]), 2)
         self.assertTrue(all(h <= 1500 for h in plan["heights"]))
         url = f"/api/episodes/{ep['id']}/export?fmt=long"
         self.assertEqual(self.ok(self.client.get(url)).headers["content-type"], "image/png")
