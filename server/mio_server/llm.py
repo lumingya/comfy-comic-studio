@@ -179,10 +179,16 @@ class Client:
         if self.pace <= 0:
             return
         with self._pace_lock:
-            delay = self._last_request + self.pace - time.monotonic()
-            if delay > 0:
+            deadline = self._last_request + self.pace
+            while True:
+                now = time.monotonic()
+                delay = deadline - now
+                if delay <= 0:
+                    self._last_request = now
+                    return
+                # Sleep may return before the monotonic clock reaches the deadline.
+                # Recheck under the shared lock before admitting the next request.
                 time.sleep(delay)
-            self._last_request = time.monotonic()
 
     def _post(self, path: str, payload: dict, timeout: float | None) -> dict:
         self._wait_turn()

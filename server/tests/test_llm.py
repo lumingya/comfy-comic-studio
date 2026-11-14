@@ -4,6 +4,7 @@ import json
 import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from unittest.mock import patch
 
 from mio_server import llm as L
 
@@ -206,6 +207,30 @@ class ClientTests(unittest.TestCase):
     def test_no_image_is_an_error(self):
         with self.assertRaises(L.LLMError):
             self.client.generate_image("apple", models=("plain",), retries=0)
+
+
+class PaceTests(unittest.TestCase):
+    def test_early_wakeup_does_not_release_a_request_before_its_deadline(self):
+        for first_sleep_elapsed in (0.0, 0.25):
+            with self.subTest(first_sleep_elapsed=first_sleep_elapsed):
+                client = L.Client(pace=0.5)
+                clock = [10.0]
+                sleeps = []
+
+                def sleep(delay):
+                    sleeps.append(delay)
+                    self.assertLessEqual(len(sleeps), 2)
+                    clock[0] += first_sleep_elapsed if len(sleeps) == 1 else delay
+
+                with (
+                    patch.object(L.time, "monotonic", side_effect=lambda: clock[0]),
+                    patch.object(L.time, "sleep", side_effect=sleep),
+                ):
+                    client._wait_turn()
+                    first_request = clock[0]
+                    client._wait_turn()
+                self.assertGreaterEqual(clock[0] - first_request, client.pace)
+                self.assertEqual(sleeps, [0.5, 0.5 - first_sleep_elapsed])
 
 
 class HelperTests(unittest.TestCase):
