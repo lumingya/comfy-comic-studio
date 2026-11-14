@@ -4715,6 +4715,7 @@
      },
      "height": {
       "default": 0,
+      "minimum": 0.0,
       "title": "Height",
       "type": "integer"
      },
@@ -4815,6 +4816,7 @@
      },
      "height": {
       "default": 0,
+      "minimum": 0.0,
       "title": "Height",
       "type": "integer"
      },

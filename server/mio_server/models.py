@@ -409,10 +409,24 @@ class Strip(StrictModel):
     panel_boxes: dict[str, Box] = Field(default_factory=dict)
     crops: dict[str, Box] = Field(default_factory=dict, description="Normalized crop per panel.")
     lettering: list[LetteringLayer] = Field(default_factory=list)
-    height: int = 0
+    height: int = Field(default=0, ge=0)
     manual: bool = Field(
         default=False, description="Boxes were dragged by hand; relayout keeps them."
     )
+
+    @field_validator("panel_boxes", "crops")
+    @classmethod
+    def valid_geometry(cls, value: dict[str, Box], info) -> dict[str, Box]:
+        for box in value.values():
+            x0, y0, x1, y1 = box
+            if not all(math.isfinite(v) for v in box) or x1 <= x0 or y1 <= y0:
+                raise ValueError("Boxes must be finite rectangles with positive width and height")
+            if info.field_name == "crops":
+                if min(box) < 0 or max(box) > 1:
+                    raise ValueError("Crop coordinates must be between 0 and 1")
+            elif x1 - x0 < 1 or y1 - y0 < 1:
+                raise ValueError("Panel boxes must be at least one pixel wide and high")
+        return value
 
 
 class Episode(StrictModel):

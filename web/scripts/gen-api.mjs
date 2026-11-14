@@ -19,7 +19,11 @@ const dump = [
 ].join('\n');
 
 function run(python) {
-  return execFileSync(python, ['-c', dump], { cwd: server, encoding: 'utf8', maxBuffer: 64 << 20 });
+  return execFileSync(python, ['-X', 'utf8', '-c', dump], {
+    cwd: server,
+    encoding: 'utf8',
+    maxBuffer: 64 << 20,
+  });
 }
 
 const candidates = [process.env.PYTHON, 'python', 'python3'].filter(Boolean);

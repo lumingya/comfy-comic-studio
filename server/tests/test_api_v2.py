@@ -247,7 +247,7 @@ class ClientAndBotTests(ApiCase):
         import subprocess
 
         done = subprocess.run(
-            [sys.executable, str(CLIENTS / "python" / "generate.py"), "--check"],
+            [sys.executable, "-X", "utf8", str(CLIENTS / "python" / "generate.py"), "--check"],
             capture_output=True,
             text=True,
             encoding="utf-8",

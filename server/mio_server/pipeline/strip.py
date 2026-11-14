@@ -12,6 +12,8 @@ cross-panel bubbles, SFX and vertical text live in ``lettering``.
 
 from __future__ import annotations
 
+import math
+
 from PIL import Image, ImageDraw
 
 from ..models import DialogueKind, Episode, LetteringLayer, PanelWidth, Series, Strip, parse_ratio
@@ -27,12 +29,14 @@ END_SPACE = 220
 def _crop(im: Image.Image, ratio: float, crop: tuple | None) -> Image.Image:
     if crop:
         x1, y1, x2, y2 = crop
+        left = min(im.width - 1, round(x1 * im.width))
+        top = min(im.height - 1, round(y1 * im.height))
         return im.crop(
             (
-                round(x1 * im.width),
-                round(y1 * im.height),
-                round(x2 * im.width),
-                round(y2 * im.height),
+                left,
+                top,
+                max(left + 1, round(x2 * im.width)),
+                max(top + 1, round(y2 * im.height)),
             )
         )
     from ..imaging import crop_box
@@ -229,7 +233,18 @@ def layout(
     strip.height = height
     if relayout_lettering:
         strip.lettering = auto_lettering(series, episode, strip, boxes, scaled, faces or {}, style)
+    strip.height = content_height(strip)
     return strip, scaled
+
+
+def content_height(strip: Strip) -> int:
+    """Keep bottom lettering and moved panels above the ending, including speech tails."""
+    bottoms = [b[3] for b in strip.panel_boxes.values()]
+    for layer in strip.lettering:
+        bottoms.append(layer.box[3])
+        if layer.tail_to:
+            bottoms.append(layer.tail_to[1])
+    return max(strip.height, math.ceil(max(bottoms, default=0)) + END_SPACE)
 
 
 def render(

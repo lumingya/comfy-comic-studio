@@ -29,5 +29,11 @@ def render_episode_strip(ctx, episode_id: str, variant_id: str | None = None):
     if not images:
         raise ValueError("还没有采用任何一格的图片")
     stale = not ep.strip.panel_boxes or bool(set(images) - set(ep.strip.panel_boxes))
-    strip, scaled = SP.layout(series, ep, images, faces, relayout_lettering=stale)
+    # Rendering must not silently reflow saved geometry after script/width edits. Only the
+    # explicit layout action does that. Missing adopted panels can still be laid out below it.
+    rendering = ep.model_copy(deep=True)
+    rendering.strip.manual = bool(ep.strip.panel_boxes)
+    strip, scaled = SP.layout(series, rendering, images, faces, relayout_lettering=stale)
+    strip.manual = ep.strip.manual
+    strip.height = max(strip.height, ep.strip.height) if stale else SP.content_height(ep.strip)
     return series, ep, strip, SP.render(series, ep, strip, scaled)

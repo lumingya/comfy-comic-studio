@@ -16,7 +16,7 @@ export function StripStage(props: {
   scale: number;
   selection: Selection;
   onSelect: (s: Selection) => void;
-  onPanelBox: (id: string, box: Box) => void;
+  onPanelBox: (id: string, box: Box, crop?: Box) => void;
   onLetter: (id: string, patch: Partial<LetteringLayer>) => void;
 }) {
   const { strip, scale } = props;
@@ -78,7 +78,7 @@ export function StripStage(props: {
               bottom: colorAt(bands, box[3], strip.background),
             }}
             onSelect={() => props.onSelect({ type: 'panel', id })}
-            onChange={(b) => props.onPanelBox(id, b)}
+            onChange={(b, crop) => props.onPanelBox(id, b, crop)}
           />
         ))}
         {strip.lettering.map((l) => (

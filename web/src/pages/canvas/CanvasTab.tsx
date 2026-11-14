@@ -2,9 +2,11 @@ import {
   CheckCircle2,
   LayoutTemplate,
   Plus,
+  Redo2,
   Save,
   Sparkles,
   TriangleAlert,
+  Undo2,
   Wand2,
   ZoomIn,
   ZoomOut,
@@ -22,8 +24,10 @@ import { useEpisodeContext } from '../episode/EpisodePage';
 import { pickAdopted } from './adopted';
 import { LetterInspector } from './LetterInspector';
 import { PacingDialog } from './PacingDialog';
+import { PanelInspector } from './PanelInspector';
 import { DEFAULT_STYLE } from './sfx';
 import { StripStage, type Selection } from './StripStage';
+import { useStripHistory } from './useStripHistory';
 
 type Box = [number, number, number, number];
 
@@ -31,7 +35,7 @@ function newLayer(strip: Strip, kind: 'caption' | 'sfx'): LetteringLayer {
   const y = Math.max(40, Math.round(strip.height / 2));
   const sfx = kind === 'sfx';
   return {
-    id: `letter_${Date.now().toString(16)}`,
+    id: `letter_${Date.now().toString(16)}_${Math.random().toString(16).slice(2)}`,
     panel_id: null,
     kind,
     text: sfx ? '砰！' : '…',
@@ -82,38 +86,33 @@ export default function CanvasTab() {
   const { episode, series } = useEpisodeContext();
   const layout = useLayoutStrip(episode.id);
   const save = useSaveStrip(episode.id);
-  const [strip, setStrip] = useState<Strip>(episode.strip);
-  const [dirty, setDirtyState] = useState(false);
-  const dirtyRef = useRef(false);
-  const setDirty = (value: boolean) => {
-    dirtyRef.current = value;
-    setDirtyState(value);
-  };
+  const history = useStripHistory(episode.strip);
+  const { strip, dirty, change } = history;
+  const saving = useRef(false);
+  const layingOut = useRef(false);
   const [selection, setSelection] = useState<Selection>(null);
   const [scale, setScale] = useState(0.6);
   const [pacing, setPacing] = useState(false);
-  useUnsavedGuard(dirty, true);
-  const stripRef = useRef(strip);
-  stripRef.current = strip;
+  useUnsavedGuard(dirty || save.isPending, true);
 
   // A new server copy (auto layout, pacing) replaces the canvas — but never unsaved edits.
   useEffect(() => {
-    if (!dirtyRef.current) setStrip(episode.strip);
+    if (!saving.current && !layingOut.current) history.receive(episode.strip);
   }, [episode.strip]);
 
   const saveStrip = () => {
-    if (save.isPending) return;
-    const snapshot = stripRef.current;
+    if (saving.current || layingOut.current) return;
+    const snapshot = history.current();
+    saving.current = true;
     save.mutate(snapshot, {
       onSuccess: (stored) => {
-        if (stripRef.current === snapshot) {
-          stripRef.current = stored;
-          setStrip(stored);
-          setDirty(false);
-        }
+        history.acknowledge(snapshot, stored);
         toast(t('common.saved'));
       },
       onError: toastError,
+      onSettled: () => {
+        saving.current = false;
+      },
     });
   };
 
@@ -122,11 +121,8 @@ export default function CanvasTab() {
     [episode.panels],
   );
   const images = useMemo(() => pickAdopted(episode.takes), [episode.takes]);
-  const change = (next: Strip) => {
-    stripRef.current = next;
-    setStrip(next);
-    setDirty(true);
-  };
+  const panelId =
+    selection?.type === 'panel' && strip.panel_boxes[selection.id] ? selection.id : null;
   const letter =
     selection?.type === 'letter' ? strip.lettering.find((l) => l.id === selection.id) : undefined;
   const editLetter = (id: string, patch: Partial<LetteringLayer>) =>
@@ -141,10 +137,21 @@ export default function CanvasTab() {
   };
 
   const autoLayout = (relayout: boolean) => {
-    if (dirtyRef.current || save.isPending || layout.isPending) return;
+    if (dirty || saving.current || layingOut.current) return;
+    const snapshot = history.current();
+    layingOut.current = true;
     layout.mutate(
       { relayout_lettering: relayout },
-      { onSuccess: () => toast(t('canvas.laidOut')), onError: toastError },
+      {
+        onSuccess: (stored) => {
+          history.acknowledge(snapshot, stored);
+          toast(t('canvas.laidOut'));
+        },
+        onError: toastError,
+        onSettled: () => {
+          layingOut.current = false;
+        },
+      },
     );
   };
 
@@ -165,6 +172,7 @@ export default function CanvasTab() {
   return (
     <div
       className="canvas-layout"
+      tabIndex={0}
       onKeyDown={(e) => {
         if (
           !shortcutBlocked(e, e.currentTarget, true) &&
@@ -172,12 +180,43 @@ export default function CanvasTab() {
           e.key.toLowerCase() === 's'
         ) {
           e.preventDefault();
-          if (dirty && !save.isPending) saveStrip();
+          if (dirty && !save.isPending && !layout.isPending) saveStrip();
+          return;
+        }
+        if (!shortcutBlocked(e, e.currentTarget) && (e.metaKey || e.ctrlKey) && !e.altKey) {
+          const key = e.key.toLowerCase();
+          if (key === 'z' || key === 'y') {
+            e.preventDefault();
+            if (key === 'y' || e.shiftKey) history.redo();
+            else history.undo();
+          }
         }
       }}
     >
       <div className="canvas-toolbar">
-        <button className="btn" onClick={() => setPacing(true)} disabled={dirty}>
+        <button
+          className="btn ghost icon"
+          aria-label={t('canvas.undo')}
+          title={t('canvas.undoHint')}
+          disabled={!history.canUndo}
+          onClick={history.undo}
+        >
+          <Undo2 size={15} />
+        </button>
+        <button
+          className="btn ghost icon"
+          aria-label={t('canvas.redo')}
+          title={t('canvas.redoHint')}
+          disabled={!history.canRedo}
+          onClick={history.redo}
+        >
+          <Redo2 size={15} />
+        </button>
+        <button
+          className="btn"
+          onClick={() => setPacing(true)}
+          disabled={dirty || save.isPending || layout.isPending}
+        >
           <Wand2 size={15} /> {t('pacing.open')}
         </button>
         <button
@@ -224,7 +263,7 @@ export default function CanvasTab() {
         {dirty ? <span className="chip warn">{t('canvas.unsaved')}</span> : null}
         <button
           className="btn primary"
-          disabled={!dirty || save.isPending}
+          disabled={!dirty || save.isPending || layout.isPending}
           title="Ctrl+S"
           onClick={saveStrip}
         >
@@ -240,8 +279,13 @@ export default function CanvasTab() {
             scale={scale}
             selection={selection}
             onSelect={setSelection}
-            onPanelBox={(id, box: Box) =>
-              change({ ...strip, manual: true, panel_boxes: { ...strip.panel_boxes, [id]: box } })
+            onPanelBox={(id, box: Box, crop?: Box) =>
+              change({
+                ...strip,
+                manual: true,
+                panel_boxes: { ...strip.panel_boxes, [id]: box },
+                crops: crop ? { ...strip.crops, [id]: crop } : strip.crops,
+              })
             }
             onLetter={(id, patch) => editLetter(id, { ...patch, locked: true })}
           />
@@ -256,6 +300,20 @@ export default function CanvasTab() {
                 change({ ...strip, lettering: strip.lettering.filter((l) => l.id !== letter.id) });
                 setSelection(null);
               }}
+            />
+          ) : panelId ? (
+            <PanelInspector
+              key={panelId}
+              assetId={images[panelId]}
+              box={strip.panel_boxes[panelId] as Box}
+              crop={strip.crops[panelId] as Box | undefined}
+              onCrop={(crop) => {
+                const crops = { ...strip.crops };
+                if (crop) crops[panelId] = crop;
+                else delete crops[panelId];
+                change({ ...strip, crops });
+              }}
+              onBack={() => setSelection(null)}
             />
           ) : (
             <div className="col" style={{ gap: 12 }}>

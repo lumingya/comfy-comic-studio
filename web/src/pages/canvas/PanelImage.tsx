@@ -3,6 +3,7 @@ import { assetUrl } from '../../api/client';
 import type { Panel } from '../../api/types';
 import { useImage } from './useImage';
 import { css, type RGB } from './backdrop';
+import { cropFor, framingFor } from './crop';
 
 type Box = [number, number, number, number];
 
@@ -61,7 +62,7 @@ export function PanelImage(props: {
   selected: boolean;
   edge: { top: RGB; bottom: RGB };
   onSelect: () => void;
-  onChange: (box: Box) => void;
+  onChange: (box: Box, crop?: Box) => void;
 }) {
   const image = useImage(props.assetId ? assetUrl(props.assetId, 1200) : null);
   const [x0, y0, x1, y1] = props.box;
@@ -102,7 +103,12 @@ export function PanelImage(props: {
         const nw = Math.max(40, w * n.scaleX());
         const nh = Math.max(40, h * n.scaleY());
         n.scale({ x: 1, y: 1 });
-        props.onChange([n.x(), n.y(), n.x() + nw, n.y() + nh]);
+        const box: Box = [n.x(), n.y(), n.x() + nw, n.y() + nh];
+        const crop =
+          image && props.crop
+            ? cropFor(image, box, framingFor(image, props.box, props.crop))
+            : undefined;
+        props.onChange(box, crop);
       }}
     >
       {image ? (
