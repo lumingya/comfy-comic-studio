@@ -967,9 +967,10 @@ export default function AssemblyTab() {
           initialStory={params.get('story') ?? undefined}
           onClose={() => {
             setOpen(false);
-            if (params.has('story') || params.has('new')) {
+            if (params.has('story') || params.has('new') || params.has('kit')) {
               params.delete('story');
               params.delete('new');
+              params.delete('kit');
               setParams(params, { replace: true });
             }
           }}

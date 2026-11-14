@@ -42,7 +42,8 @@ RENDER_RE = re.compile(
     r"|jobs/[^/]+/items/[^/]+/(restore-state|replay-result)"
     r"|workshop/queue/(start|resume))$"
 )
-ADMIN_RE = re.compile(r"^/(settings|instances|webhooks|legacy|update|tokens|extensions)(/|$)")
+ADMIN_RE = re.compile(r"^/(settings|instances|webhooks|legacy|update|tokens|extensions|ext)(/|$)")
+READ_POST_RE = re.compile(r"^/series/[^/]+/variables/(find|preview)$")
 
 
 class ApiToken(StrictModel):
@@ -102,6 +103,8 @@ def required_scope(method: str, path: str) -> str:
         return "admin"
     if method in ("GET", "HEAD", "OPTIONS", "WS"):
         return "read"
+    if method == "POST" and READ_POST_RE.match(path):
+        return "read"
     if RENDER_RE.match(path):
         return "render"
     return "write"
@@ -114,7 +117,7 @@ class TokenStore:
         self.store = store
         self._touched: dict[str, float] = {}
 
-    def verify(self, raw: str, method: str, path: str) -> ApiToken:
+    def verify(self, raw: str, method: str, path: str, *, scope: Scope | None = None) -> ApiToken:
         from .storage import NotFound
 
         match = TOKEN_RE.match(raw or "")
@@ -129,7 +132,7 @@ class TokenStore:
             raise AuthError("API 令牌不存在或已撤销")
         if token.expired():
             raise AuthError("API 令牌已过期")
-        need = required_scope(method, path)
+        need = scope or required_scope(method, path)
         if need not in token.scopes:
             raise AuthError(f"令牌缺少权限：{need}", 403)
         now = time.monotonic()

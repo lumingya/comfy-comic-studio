@@ -5,15 +5,16 @@ from __future__ import annotations
 from typing import Literal
 from urllib.parse import quote
 
-from fastapi import APIRouter, Response, status
+from fastapi import Response, status
 from pydantic import BaseModel, Field
 
 from ..album import media as M
 from ..album import templates as T
 from ..album.build import episode_book, episode_pages
-from ..album.render import AlbumOptions, render_album
+from ..album.render import AlbumOptions
 from ..storage import NotFound
 from .deps import Ctx
+from .operations import Router as APIRouter
 
 router = APIRouter(tags=["album"])
 
@@ -126,7 +127,7 @@ def export_album(ctx: Ctx, body: AlbumExport) -> Response:
         books, stats = build("publish")
         stats.auto_compressed = True
     stats.over_budget = M.over_budget(stats)
-    html = render_album(
+    html = ctx.registry.get("exporter", "album")(
         tpl,
         books,
         AlbumOptions(

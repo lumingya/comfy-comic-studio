@@ -390,7 +390,8 @@ class SQLiteStore:
         )[0]["n"]
         rows = self._rows(
             f"""SELECT e.id, e.series_id, e.title, e.episode_order, e.panel_count, e.created_at,
-                   e.updated_at, {EPISODE_ADOPTED} AS adopted, {EPISODE_COVER} AS cover
+                   e.updated_at, json_extract(e.payload_json, '$.revision') AS revision,
+                   {EPISODE_ADOPTED} AS adopted, {EPISODE_COVER} AS cover
                FROM episodes e WHERE e.series_id = ? AND e.deleted_at IS NULL
                ORDER BY e.episode_order, e.id LIMIT ? OFFSET ?""",
             (series_id, limit, offset),
@@ -402,6 +403,7 @@ class SQLiteStore:
                 "title": r["title"],
                 "order": r["episode_order"],
                 "panel_count": r["panel_count"],
+                "revision": r["revision"],
                 "adopted_count": r["adopted"],
                 "cover_asset_id": r["cover"],
                 "created_at": r["created_at"],

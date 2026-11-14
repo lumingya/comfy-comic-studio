@@ -1,4 +1,5 @@
 import { BookText, ChevronRight, ListOrdered } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet, useLocation, useOutletContext, useParams } from 'react-router-dom';
 import { usePatchSeries, useSeries } from '../../api/series';
@@ -6,7 +7,8 @@ import type { Series } from '../../api/types';
 import { QueryError } from '../../app/errors';
 import { usePageTitle } from '../../app/title';
 import { toastError } from '../../components/toast';
-import { InlineTitle, Loading, Select } from '../../components/ui';
+import { ActionMenu, InlineTitle, Loading, Select } from '../../components/ui';
+import { CheckpointDialog } from '../workshop/CheckpointDialog';
 
 export function useSeriesContext() {
   return useOutletContext<{ series: Series }>();
@@ -17,6 +19,7 @@ const STATUSES = ['draft', 'active', 'archived'] as const;
 export default function SeriesPage() {
   const { t } = useTranslation();
   const { seriesId } = useParams();
+  const [checkpointsOpen, setCheckpointsOpen] = useState(false);
   const query = useSeries(seriesId);
   const patch = usePatchSeries(seriesId ?? '');
   const section = useLocation().pathname.split('/').pop();
@@ -68,6 +71,9 @@ export default function SeriesPage() {
           onChange={(status) => patch.mutate({ status }, { onError: toastError })}
           options={STATUSES.map((s) => ({ value: s, label: t(`series.status.${s}`) }))}
         />
+        <ActionMenu
+          actions={[{ label: t('recovery.title'), onSelect: () => setCheckpointsOpen(true) }]}
+        />
       </header>
       <nav className="tabs-list">
         <NavLink to="episodes" className={tab}>
@@ -78,6 +84,13 @@ export default function SeriesPage() {
         </NavLink>
       </nav>
       <Outlet key={series.id} context={{ series }} />
+      {checkpointsOpen ? (
+        <CheckpointDialog
+          seriesId={series.id}
+          title={series.title}
+          onClose={() => setCheckpointsOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

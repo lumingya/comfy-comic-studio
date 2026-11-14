@@ -23,7 +23,7 @@ import {
   usePatchPanel,
   useReorderPanels,
 } from '../../api/series';
-import type { Panel, PanelOverrides } from '../../api/types';
+import type { Episode, Panel, PanelOverrides } from '../../api/types';
 import { useWorkshop } from '../../api/workshop';
 import { Icon } from '../../app/icons';
 import {
@@ -47,6 +47,7 @@ import {
   importStoryboards,
 } from './storyActions';
 import { useEpisodeContext } from '../episode/EpisodePage';
+import { TransferDialog } from '../longform/TransferDialog';
 import {
   PromptSurface,
   variableUsage,
@@ -279,6 +280,15 @@ export default function StoryboardEditor() {
     return () => document.removeEventListener('keydown', onKey);
   });
   const [batch, setBatch] = useState(false);
+  const [transfer, setTransfer] = useState<{ episode: Episode; ids: string[] } | null>(null);
+  const openTransfer = async (ids: string[]) => {
+    try {
+      await flush();
+      setTransfer({ episode: qc.getQueryData<Episode>(keys.episode(episode.id)) ?? episode, ids });
+    } catch (error) {
+      toastError(error);
+    }
+  };
   const importPanels = useImportPanels(episode.id!);
 
   /** Legacy workshop-add-frame: a blank 「第 N 幕」 at the end (or right after `anchor`), opened. */
@@ -517,6 +527,11 @@ export default function StoryboardEditor() {
               disabled: duplicate.isPending,
               onSelect: () => void copySelected(ids),
             },
+            {
+              label: t('longform.transfer'),
+              icon: <Icon name="copy" sm />,
+              onSelect: () => void openTransfer(ids),
+            },
           ],
         },
         {
@@ -573,6 +588,11 @@ export default function StoryboardEditor() {
             hint: t('ws.story.menu.copyHint'),
             disabled: duplicate.isPending,
             onSelect: () => void copySelected([focus.id!]),
+          },
+          {
+            label: t('longform.transfer'),
+            icon: <Icon name="copy" sm />,
+            onSelect: () => void openTransfer([focus.id!]),
           },
           {
             label: t('ws.story.menu.moveUp'),
@@ -730,6 +750,14 @@ export default function StoryboardEditor() {
         />
       ) : null}
       {exporter.element}
+      {transfer ? (
+        <TransferDialog
+          episode={transfer.episode}
+          panelIds={transfer.ids}
+          onClose={() => setTransfer(null)}
+          onDone={selection.clear}
+        />
+      ) : null}
     </>
   );
 }

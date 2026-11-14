@@ -1,4 +1,7 @@
 import { interactionZh } from './interaction';
+import { longformZh } from './longform';
+import { kitsZh } from './creationKits';
+import { recoveryZh } from './recovery';
 import { guideZh } from './guide';
 import { configZh } from './configuration';
 import { routeZh } from './route';
@@ -6,6 +9,9 @@ import { cloudRequestZh } from './cloudRequest';
 import { readerZh, wsZh } from './ws';
 /** Chinese (primary). Keys are grouped by screen; English mirrors this shape exactly. */
 const zh = {
+  longform: longformZh,
+  kits: kitsZh,
+  recovery: recoveryZh,
   route: routeZh,
   cloudRequest: cloudRequestZh,
   interaction: interactionZh,

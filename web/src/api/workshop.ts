@@ -4,6 +4,7 @@ import { api, data } from './client';
 import { keys } from './keys';
 import type { QueueStatus, Series } from './types';
 import type { components } from './schema';
+import type { KitAssembly } from './creationKits';
 
 export type Preset = Series['presets'][number];
 export type PresetEntry = Preset['entries'][number];
@@ -57,25 +58,51 @@ export type AssemblyPreview = components['schemas']['AssemblyPreview'];
 export type AssemblyVariable = components['schemas']['AssemblyVariable'];
 
 /** The server compiles the same snapshot that assembly will save; no client substitution. */
-export function useAssemblyPreview(body: AssembleVars, enabled: boolean) {
+function kitAssembly(body: AssembleVars): KitAssembly {
+  return {
+    episode_id: body.storyboard_id,
+    preset_ids: body.preset_ids,
+    title: body.title,
+    variables: body.variables,
+    idempotency_key: body.idempotency_key ?? 'preview',
+  };
+}
+
+export function useAssemblyPreview(body: AssembleVars, enabled: boolean, kitId?: string) {
   return useQuery({
-    queryKey: ['workshop', 'assembly-preview', body],
+    queryKey: ['workshop', 'assembly-preview', kitId ?? '', body],
     enabled: enabled && !!body.storyboard_id,
     retry: false,
     queryFn: async ({ signal }) =>
-      data(await api.POST('/api/workshop/assemble/preview', { body, signal })),
+      kitId
+        ? data(
+            await api.POST('/api/creation-kits/{series_id}/preview', {
+              params: { path: { series_id: kitId } },
+              body: kitAssembly(body),
+              signal,
+            }),
+          )
+        : data(await api.POST('/api/workshop/assemble/preview', { body, signal })),
   });
 }
 
 /** Storyboard + presets → a new album waiting in the queue (no model call). */
-export function useAssemble() {
+export function useAssemble(kitId?: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (body: AssembleVars) =>
-      data(await api.POST('/api/workshop/assemble', { body })),
+      kitId
+        ? data(
+            await api.POST('/api/creation-kits/{series_id}/assemble', {
+              params: { path: { series_id: kitId } },
+              body: kitAssembly(body),
+            }),
+          )
+        : data(await api.POST('/api/workshop/assemble', { body })),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['series'] });
       qc.invalidateQueries({ queryKey: ['episodes'] });
+      qc.invalidateQueries({ queryKey: keys.queue });
     },
   });
 }

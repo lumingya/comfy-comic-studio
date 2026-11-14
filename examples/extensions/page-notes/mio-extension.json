@@ -1,0 +1,7 @@
+{
+  "id": "page-notes",
+  "name": "Page notes and portable JPEG",
+  "version": "0.1.0",
+  "description": "Adds a scoped summary route, a JPEG exporter and an optional title wrapper without changing the main interface.",
+  "main": "main.py"
+}

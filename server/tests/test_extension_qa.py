@@ -156,7 +156,7 @@ class QAExtensionTests(ApiCase):
         self.assertEqual(self.ok(self.remount().post(ROUTE)), {"version": "new"})
         self.assertEqual(self.ctx.engine.list(), [])
 
-    def test_extension_route_remains_local_and_keeps_origin_guard(self):
+    def test_extension_route_requires_render_token_and_keeps_local_origin_guard(self):
         self.enable()
         active = self.remount()
         self.assertEqual(
@@ -166,9 +166,22 @@ class QAExtensionTests(ApiCase):
             403,
         )
         self.assertEqual(
-            active.post("/api/v2/ext/qa-review/queue", json=self.body).status_code, 404
+            active.post("/api/v2/ext/qa-review/queue", json=self.body).status_code, 401
         )
         self.assertEqual(self.ctx.engine.list(), [])
+        for scope, code in (("read", 403), ("write", 403), ("render", 200)):
+            token = self.ok(
+                active.post("/api/tokens", json={"name": "QA", "scopes": [scope]}), 201
+            )["token"]
+            self.assertEqual(
+                active.post(
+                    "/api/v2/ext/qa-review/queue",
+                    json=self.body,
+                    headers={"Authorization": f"Bearer {token}"},
+                ).status_code,
+                code,
+            )
+        self.assertEqual(len(self.ctx.engine.list()), 1)
 
 
 class QACliTests(unittest.TestCase):

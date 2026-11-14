@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
-
 from ..update import UpdateError
 from .deps import Ctx
+from .operations import Router as APIRouter
 
 router = APIRouter(tags=["update"])
 

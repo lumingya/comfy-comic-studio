@@ -12,6 +12,7 @@ import threading
 import time
 from contextlib import contextmanager
 
+from .operations import operation_serialized
 from .pool import COMFY, LOCAL, Candidate
 from .types import (  # noqa: F401
     ITEM_STATES,
@@ -70,6 +71,7 @@ class EngineRuntime:
         finally:
             self._callback_context.active = active
 
+    @operation_serialized
     def tick(self) -> int:
         """One scheduling pass (the background loop calls this; tests may call it directly)."""
         with self.lock:
@@ -122,6 +124,7 @@ class EngineRuntime:
             self.wake.wait(self.poll)
             self.wake.clear()
 
+    @operation_serialized
     def _claim(self, cand: Candidate, instance_id: str | None) -> ItemContext | None:
         now = time.time()
         with self.lock, self.pool.lock:

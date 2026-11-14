@@ -1,6 +1,6 @@
 """Portable creation kits; saving or assembling never calls a model."""
 
-from fastapi import APIRouter, Request, Response, status
+from fastapi import Request, Response, status
 
 from .. import creation_kits as K
 from ..assembly import AssemblyPreview
@@ -9,6 +9,7 @@ from ..creation_kits.models import KitAssembly, KitImport, KitImported, KitInspe
 from ..models import Series
 from .deps import Ctx
 from .library import BINARY_BODY, read_body
+from .operations import Router as APIRouter
 from .workshop import Assembled
 
 router = APIRouter(tags=["creation-kits"])

@@ -18,6 +18,7 @@ from typing import Any, Callable
 from .hooks import HookBus
 
 POINTS = {
+    "operation": "界面与开放 API 共用的操作包装器（鉴权与参数校验之后执行）",
     "job_executor": "统一任务引擎的执行器（按 job kind）",
     "exporter": "导出器：切片、长图、PDF、网页阅读……",
     "slice_preset": "平台切片预设",
@@ -56,6 +57,7 @@ class Registry:
     def __init__(self):
         self._lock = threading.RLock()
         self._items: dict[str, dict[str, Contribution]] = {p: {} for p in POINTS}
+        self._layers: dict[str, dict[str, list[Contribution]]] = {p: {} for p in POINTS}
         self._listeners: dict[str, list[Callable[[dict], None]]] = {}
         self.hooks = HookBus()
 
@@ -78,6 +80,9 @@ class Registry:
                     f"{point}:{id} already registered by {self._items[point][id].source}"
                 )
             item = Contribution(point, id, value, source, title, meta)
+            layers = self._layers[point].setdefault(id, [])
+            layers[:] = [layer for layer in layers if layer.source != source]
+            layers.append(item)
             self._items[point][id] = item
         self.emit("registry.changed", {"point": point, "id": id, "source": source})
         return item
@@ -91,16 +96,36 @@ class Registry:
 
     def unregister(self, point: str, id: str) -> None:
         with self._lock:
-            self._items.get(point, {}).pop(id, None)
+            layers = self._layers.get(point, {}).get(id, [])
+            if not layers:
+                return
+            removed = layers.pop()
+            self._reveal(point, id)
+        self.emit("registry.changed", {"point": point, "id": id, "source": removed.source})
+
+    def _reveal(self, point: str, id: str) -> None:
+        layers = self._layers[point][id]
+        if layers:
+            self._items[point][id] = layers[-1]
+        else:
+            self._items[point].pop(id, None)
+            del self._layers[point][id]
+
+    def layers(self, point: str, id: str) -> list[Contribution]:
+        """Snapshot from original to newest, for explicitly composable extension points."""
+        with self._lock:
+            return list(self._layers.get(point, {}).get(id, []))
 
     def unregister_source(self, source: str) -> int:
         """Remove every contribution and hook handler of one source (an extension)."""
         with self._lock:
             removed = 0
-            for items in self._items.values():
-                for key in [k for k, c in items.items() if c.source == source]:
-                    del items[key]
-                    removed += 1
+            for point, items in self._layers.items():
+                for key, layers in list(items.items()):
+                    kept = [c for c in layers if c.source != source]
+                    removed += len(layers) - len(kept)
+                    items[key] = kept
+                    self._reveal(point, key)
         removed += self.hooks.remove_source(source)
         if removed:
             self.emit("registry.changed", {"source": source, "removed": removed})

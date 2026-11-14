@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, status
+from fastapi import status
 from pydantic import BaseModel, Field
 
 from .. import workshop as W
 from ..assembly import AssemblyPreview
 from ..models import Episode, Series, WorkshopQueue
 from .deps import Ctx
+from .operations import Router as APIRouter
 
 router = APIRouter(tags=["workshop"])
 

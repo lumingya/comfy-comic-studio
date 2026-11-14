@@ -7,13 +7,15 @@ export function AssemblyReview({
   body,
   variables,
   onVariables,
+  kitId,
 }: {
   body: AssembleVars;
   variables: Record<string, string>;
   onVariables: (next: Record<string, string>) => void;
+  kitId?: string;
 }) {
   const { t } = useTranslation();
-  const preview = useAssemblyPreview(body, true);
+  const preview = useAssemblyPreview(body, true, kitId);
   const [expanded, setExpanded] = useState(false);
   const details = useRef<HTMLDetailsElement>(null);
   const panels = useRef(new Map<string, HTMLElement>());

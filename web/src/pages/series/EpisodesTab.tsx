@@ -14,18 +14,10 @@ import { QueryError } from '../../app/errors';
 import { relativeTime } from '../../app/format';
 import { useRecents } from '../../app/recents';
 import { toastError } from '../../components/toast';
-import {
-  ActionMenu,
-  Empty,
-  Field,
-  Loading,
-  Modal,
-  Progress,
-  TextArea,
-  TextInput,
-} from '../../components/ui';
+import { Empty, Field, Loading, Modal, Progress, TextArea, TextInput } from '../../components/ui';
 import { useUndoTrash } from '../../components/undo';
 import { useSeriesContext } from './SeriesPage';
+import { EpisodeOrganizeMenu } from '../longform/EpisodeOrganizeMenu';
 
 function GenerateDialog(props: {
   seriesId: string;
@@ -84,7 +76,17 @@ function GenerateDialog(props: {
   );
 }
 
-function EpisodeRow({ ep, onTrash }: { ep: EpisodeSummary; onTrash: () => void }) {
+function EpisodeRow({
+  ep,
+  onTrash,
+  canMoveUp,
+  canMoveDown,
+}: {
+  ep: EpisodeSummary;
+  onTrash: () => void;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+}) {
   const { t, i18n } = useTranslation();
   const done = ep.panel_count > 0 && ep.adopted_count >= ep.panel_count;
   return (
@@ -118,7 +120,10 @@ function EpisodeRow({ ep, onTrash }: { ep: EpisodeSummary; onTrash: () => void }
           {relativeTime(ep.updated_at, i18n.language)}
         </small>
       </Link>
-      <ActionMenu
+      <EpisodeOrganizeMenu
+        episode={ep}
+        canMoveUp={canMoveUp}
+        canMoveDown={canMoveDown}
         actions={[
           {
             label: t('common.delete'),
@@ -198,10 +203,12 @@ export default function EpisodesTab() {
       ) : null}
       {page.data?.items.length ? (
         <ol className="episode-list">
-          {page.data.items.map((ep) => (
+          {page.data.items.map((ep, index) => (
             <EpisodeRow
               key={ep.id}
               ep={ep}
+              canMoveUp={offset + index > 0}
+              canMoveDown={offset + index < total - 1}
               onTrash={() =>
                 trash.mutate(ep.id, {
                   onSuccess: () => {

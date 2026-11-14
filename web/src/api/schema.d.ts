@@ -524,6 +524,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/export/formats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Formats */
+        get: operations["export_formats_api_export_formats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/episodes/{episode_id}/slices": {
         parameters: {
             query?: never;
@@ -740,6 +757,93 @@ export interface paths {
          * @description Regions, regional prompts and the auto pose skeleton exactly as a render would use them.
          */
         post: operations["composition_preview_api_episodes__episode_id__panels__panel_id__composition_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{series_id}/head": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Work Head */
+        get: operations["get_work_head_api_series__series_id__head_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{series_id}/checkpoints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Checkpoints */
+        get: operations["list_checkpoints_api_series__series_id__checkpoints_get"];
+        put?: never;
+        /** Create Checkpoint */
+        post: operations["create_checkpoint_api_series__series_id__checkpoints_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{series_id}/checkpoints/{checkpoint_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Checkpoint */
+        get: operations["get_checkpoint_api_series__series_id__checkpoints__checkpoint_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Checkpoint */
+        delete: operations["delete_checkpoint_api_series__series_id__checkpoints__checkpoint_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{series_id}/checkpoints/{checkpoint_id}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Preview Checkpoint */
+        get: operations["preview_checkpoint_api_series__series_id__checkpoints__checkpoint_id__preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{series_id}/checkpoints/{checkpoint_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore Checkpoint */
+        post: operations["restore_checkpoint_api_series__series_id__checkpoints__checkpoint_id__restore_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -998,6 +1102,108 @@ export interface paths {
         get: operations["get_asset_api_assets__asset_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{series_id}/panels/transfer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Transfer Panels */
+        post: operations["transfer_panels_api_series__series_id__panels_transfer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/episodes/{episode_id}/copy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Copy Episode */
+        post: operations["copy_episode_api_episodes__episode_id__copy_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{series_id}/episodes/reorder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reorder Episodes */
+        post: operations["reorder_episodes_api_series__series_id__episodes_reorder_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{series_id}/variables/find": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Find Variables */
+        post: operations["find_variables_api_series__series_id__variables_find_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{series_id}/variables/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview Variables */
+        post: operations["preview_variables_api_series__series_id__variables_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/series/{series_id}/variables/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply Variables */
+        post: operations["apply_variables_api_series__series_id__variables_apply_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1993,6 +2199,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/operations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Operations
+         * @description Discover typed operations and their active wrappers; schemas remain in OpenAPI.
+         */
+        get: operations["list_operations_api_operations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/tokens": {
         parameters: {
             query?: never;
@@ -2520,6 +2746,110 @@ export interface components {
              */
             trigger: string;
         };
+        /** Checkpoint */
+        Checkpoint: {
+            /** Id */
+            id: string;
+            /** Series Id */
+            series_id: string;
+            /** Name */
+            name: string;
+            /** Created At */
+            created_at: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "manual" | "pre_restore";
+            /** Head */
+            head: string;
+            /** Episode Count */
+            episode_count: number;
+            /** Deleted Episode Count */
+            deleted_episode_count: number;
+            /** Asset Count */
+            asset_count: number;
+            snapshot: components["schemas"]["WorkSnapshot"];
+            /** Asset Ids */
+            asset_ids: string[];
+        };
+        /** CheckpointCreate */
+        CheckpointCreate: {
+            /** Name */
+            name: string;
+            /** Expected Head */
+            expected_head?: string | null;
+        };
+        /** CheckpointPreview */
+        CheckpointPreview: {
+            /** Checkpoint Id */
+            checkpoint_id: string;
+            /** Series Id */
+            series_id: string;
+            /** Current Head */
+            current_head: string;
+            /** Target Head */
+            target_head: string;
+            /** Series Changed */
+            series_changed: boolean;
+            /** Added Episode Ids */
+            added_episode_ids: string[];
+            /** Changed Episode Ids */
+            changed_episode_ids: string[];
+            /** Removed Episode Ids */
+            removed_episode_ids: string[];
+            /** Missing Asset Ids */
+            missing_asset_ids: string[];
+            /** Reference Errors */
+            reference_errors: string[];
+            /** Active Job Ids */
+            active_job_ids: string[];
+            /** Can Restore */
+            can_restore: boolean;
+        };
+        /** CheckpointRestore */
+        CheckpointRestore: {
+            /** Expected Head */
+            expected_head: string;
+        };
+        /** CheckpointRestored */
+        CheckpointRestored: {
+            /** Checkpoint Id */
+            checkpoint_id: string;
+            /** Series Id */
+            series_id: string;
+            /** Head */
+            head: string;
+            pre_restore_checkpoint: components["schemas"]["CheckpointSummary"];
+            /** Restored Episode Ids */
+            restored_episode_ids: string[];
+            /** Trashed Episode Ids */
+            trashed_episode_ids: string[];
+        };
+        /** CheckpointSummary */
+        CheckpointSummary: {
+            /** Id */
+            id: string;
+            /** Series Id */
+            series_id: string;
+            /** Name */
+            name: string;
+            /** Created At */
+            created_at: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "manual" | "pre_restore";
+            /** Head */
+            head: string;
+            /** Episode Count */
+            episode_count: number;
+            /** Deleted Episode Count */
+            deleted_episode_count: number;
+            /** Asset Count */
+            asset_count: number;
+        };
         /** CloneRequest */
         CloneRequest: {
             /**
@@ -2874,6 +3204,36 @@ export interface components {
              */
             revision: number;
         };
+        /** EpisodeCopy */
+        EpisodeCopy: {
+            /** Revision */
+            revision: number;
+            /** Title */
+            title?: string | null;
+            /**
+             * Include Locked
+             * @default false
+             */
+            include_locked?: boolean;
+        };
+        /** EpisodeCopyResult */
+        EpisodeCopyResult: {
+            episode: components["schemas"]["Episode"];
+            /** Panel Ids */
+            panel_ids: {
+                [key: string]: string;
+            };
+            /** Take Ids */
+            take_ids: {
+                [key: string]: string;
+            };
+            /** Lettering Ids */
+            lettering_ids: {
+                [key: string]: string;
+            };
+            /** Notes */
+            notes: string[];
+        };
         /** EpisodeCreate */
         EpisodeCreate: {
             /** Title */
@@ -2907,6 +3267,20 @@ export interface components {
              * @description Optimistic concurrency check.
              */
             revision?: number | null;
+        };
+        /** EpisodeReorder */
+        EpisodeReorder: {
+            /** Order */
+            order: string[];
+            /** Revisions */
+            revisions: {
+                [key: string]: number;
+            };
+            /**
+             * Include Locked
+             * @default false
+             */
+            include_locked?: boolean;
         };
         /** ExternalRequirement */
         ExternalRequirement: {
@@ -3137,6 +3511,11 @@ export interface components {
         };
         /** LayoutRequest */
         LayoutRequest: {
+            /**
+             * Layout Id
+             * @default strip.default
+             */
+            layout_id?: string;
             /**
              * Relayout Lettering
              * @default true
@@ -3738,6 +4117,36 @@ export interface components {
         PanelRestore: {
             /** Revision */
             revision: number;
+        };
+        /** PanelTransfer */
+        PanelTransfer: {
+            /** Source Episode Id */
+            source_episode_id: string;
+            /** Target Episode Id */
+            target_episode_id: string;
+            /** Source Revision */
+            source_revision: number;
+            /** Target Revision */
+            target_revision: number;
+            /** Panel Ids */
+            panel_ids: string[];
+            /**
+             * Mode
+             * @default copy
+             * @enum {string}
+             */
+            mode?: "copy" | "move";
+            /**
+             * Include Locked
+             * @default false
+             */
+            include_locked?: boolean;
+            /**
+             * Break Bridges
+             * @description Explicitly disconnect bubbles crossing the selection boundary.
+             * @default false
+             */
+            break_bridges?: boolean;
         };
         /**
          * PanelWidth
@@ -4878,6 +5287,30 @@ export interface components {
              */
             expires_at?: string;
         };
+        /** TransferResult */
+        TransferResult: {
+            source: components["schemas"]["Episode"];
+            target: components["schemas"]["Episode"];
+            /** Panel Ids */
+            panel_ids: {
+                [key: string]: string;
+            };
+            /** Take Ids */
+            take_ids: {
+                [key: string]: string;
+            };
+            /** Lettering Ids */
+            lettering_ids: {
+                [key: string]: string;
+            };
+            /**
+             * Layout Offset Y
+             * @default 0
+             */
+            layout_offset_y: number;
+            /** Notes */
+            notes: string[];
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -4890,6 +5323,136 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, unknown>;
+        };
+        /** VariableApply */
+        VariableApply: {
+            /** Key */
+            key: string;
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "rename" | "replace";
+            /**
+             * Value
+             * @description New key for rename; literal text for replace (inserted once, not expanded).
+             */
+            value: string;
+            /**
+             * Include Locked
+             * @default false
+             */
+            include_locked?: boolean;
+            /** Expected Head */
+            expected_head: string;
+        };
+        /** VariableChange */
+        VariableChange: {
+            /** Owner Id */
+            owner_id: string;
+            /** Path */
+            path: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "text" | "definition" | "binding";
+            /** Before */
+            before: string;
+            /** After */
+            after: string;
+            /**
+             * Locked
+             * @default false
+             */
+            locked: boolean;
+        };
+        /** VariableOccurrence */
+        VariableOccurrence: {
+            /** Owner Id */
+            owner_id: string;
+            /** Path */
+            path: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "text" | "definition" | "binding";
+            /** Value */
+            value: string;
+            /**
+             * Count
+             * @default 1
+             */
+            count: number;
+            /**
+             * Locked
+             * @default false
+             */
+            locked: boolean;
+        };
+        /** VariableOperation */
+        VariableOperation: {
+            /** Key */
+            key: string;
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "rename" | "replace";
+            /**
+             * Value
+             * @description New key for rename; literal text for replace (inserted once, not expanded).
+             */
+            value: string;
+            /**
+             * Include Locked
+             * @default false
+             */
+            include_locked?: boolean;
+        };
+        /** VariablePreview */
+        VariablePreview: {
+            /** Head */
+            head: string;
+            /** Changes */
+            changes: components["schemas"]["VariableChange"][];
+            /** Conflicts */
+            conflicts: string[];
+            /** Fields */
+            fields: string[];
+        };
+        /** VariableQuery */
+        VariableQuery: {
+            /** Key */
+            key: string;
+        };
+        /** VariableResult */
+        VariableResult: {
+            /** Head */
+            head: string;
+            /** Changes */
+            changes: components["schemas"]["VariableChange"][];
+            /** Conflicts */
+            conflicts: string[];
+            /** Fields */
+            fields: string[];
+            /** Previous Head */
+            previous_head: string;
+            series: components["schemas"]["Series"];
+            /** Episodes */
+            episodes: components["schemas"]["Episode"][];
+        };
+        /** VariableSearch */
+        VariableSearch: {
+            /** Head */
+            head: string;
+            /** Key */
+            key: string;
+            /** Occurrences */
+            occurrences: components["schemas"]["VariableOccurrence"][];
+            /** Fields */
+            fields: string[];
         };
         /**
          * VariantSet
@@ -4946,6 +5509,19 @@ export interface components {
              * @default false
              */
             rotate_secret?: boolean;
+        };
+        /** WorkHead */
+        WorkHead: {
+            /** Series Id */
+            series_id: string;
+            /** Head */
+            head: string;
+        };
+        /** WorkSnapshot */
+        WorkSnapshot: {
+            series: components["schemas"]["Series"];
+            /** Episodes */
+            episodes: components["schemas"]["Episode"][];
         };
         /**
          * WorkflowConfig
@@ -6173,7 +6749,7 @@ export interface operations {
     export_api_episodes__episode_id__export_get: {
         parameters: {
             query?: {
-                fmt?: "slices" | "long" | "pdf" | "html";
+                fmt?: string;
                 preset?: string;
                 variant_id?: string | null;
                 /** @description 0 = lossless PNG; else JPEG / WebP quality */
@@ -6203,6 +6779,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_formats_api_export_formats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>[];
                 };
             };
         };
@@ -6575,6 +7171,233 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompositionPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_work_head_api_series__series_id__head_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkHead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_checkpoints_api_series__series_id__checkpoints_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckpointSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_checkpoint_api_series__series_id__checkpoints_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckpointCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Checkpoint"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_checkpoint_api_series__series_id__checkpoints__checkpoint_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+                checkpoint_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Checkpoint"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_checkpoint_api_series__series_id__checkpoints__checkpoint_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+                checkpoint_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_checkpoint_api_series__series_id__checkpoints__checkpoint_id__preview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+                checkpoint_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckpointPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_checkpoint_api_series__series_id__checkpoints__checkpoint_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+                checkpoint_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckpointRestore"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CheckpointRestored"];
                 };
             };
             /** @description Validation Error */
@@ -7256,6 +8079,216 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    transfer_panels_api_series__series_id__panels_transfer_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PanelTransfer"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    copy_episode_api_episodes__episode_id__copy_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EpisodeCopy"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeCopyResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reorder_episodes_api_series__series_id__episodes_reorder_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EpisodeReorder"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Episode"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    find_variables_api_series__series_id__variables_find_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VariableQuery"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VariableSearch"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_variables_api_series__series_id__variables_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VariableOperation"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VariablePreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_variables_api_series__series_id__variables_apply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VariableApply"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VariableResult"];
                 };
             };
             /** @description Validation Error */
@@ -8991,6 +10024,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_operations_api_operations_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>[];
                 };
             };
         };

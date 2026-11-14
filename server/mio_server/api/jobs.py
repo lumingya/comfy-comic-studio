@@ -6,10 +6,11 @@ import asyncio
 import contextlib
 from typing import Any, Literal
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 from .deps import Ctx
+from .operations import Router as APIRouter
 
 router = APIRouter(tags=["jobs"])
 QUEUE_LIMIT = 500

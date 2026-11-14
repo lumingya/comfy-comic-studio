@@ -8,6 +8,27 @@
 
 本机网页用的 `/api` 不需要令牌，只应该在本机或可信的局域网里访问。
 
+`GET /api/v2/operations` 可发现所有核心 HTTP 操作及扩展包装来源，详细请求与响应类型在 OpenAPI。
+扩展自定义路由同时挂在 `/api/v2/ext/<id>`，默认需要 `admin`；扩展可明确声明 read / write / render 权限。
+无论从本机还是 v2 调用，都使用相同的类型校验、业务规则和已启用扩展；扩展 SDK 见
+[`server/mio_server/extensions/README.md`](../server/mio_server/extensions/README.md)。
+
+## 长篇整理与检查点
+
+- `POST /series/{id}/panels/transfer`：同作品内跨话复制或移动，传来源 / 目标 ID、两边 revision 和选择的 panel IDs。
+  复制会重映射候选和画布引用；锁定内容或跨选择边界的引用默认拒绝，跨边界气泡需要显式拆开。
+  不同画布宽度且已有图形内容时拒绝自动搬运。追加选区保留相对位置，源画布留白不自动压缩。
+- `POST /episodes/{id}/copy` 和 `POST /series/{id}/episodes/reorder`：复制整话或按完整话列表与 revisions 原子重排。
+- `POST /series/{id}/variables/find`、`preview`、`apply`：精确处理合法 `{变量}`，保留 `{{转义}}`。
+  预览返回明确字段、差异、冲突和 head；应用必须使用该 `expected_head`。不修改候选生成历史与未知扩展 JSON。
+  find / preview 使用 read，实际修改使用 write。
+- `GET /series/{id}/head`；`GET/POST /series/{id}/checkpoints`；`GET/DELETE /series/{id}/checkpoints/{checkpoint_id}`；
+  `GET .../{checkpoint_id}/preview`；`POST .../{checkpoint_id}/restore`，恢复请求传 `expected_head`。
+  恢复前自动保存当前内容为保护检查点。目标引用缺失、版本过时、相关作业未结束或有待交付结果时拒绝恢复。
+
+这些路径均相对 `/api/v2`。检查点包括作品、设定集、预设、话和回收站内容；不包含图片字节和全局服务配置，
+不能替代工作区备份。原作品需仍存在，已彻底清除的作品不能凭检查点重建。
+
 创作操作覆盖如下，界面与脚本使用同一规则：
 
 | 操作 | v2 接口（省略 `/api/v2`） |

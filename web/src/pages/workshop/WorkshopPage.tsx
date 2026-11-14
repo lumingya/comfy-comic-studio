@@ -20,6 +20,9 @@ import { Loading } from '../../components/ui';
 import type { EpisodeContext } from '../episode/EpisodePage';
 import { createStoryboard, importStoryboards } from './storyActions';
 import { useStoryboardExport } from './ExportPicker';
+import { CreationKitImport } from './CreationKitImport';
+import { CheckpointDialog } from './CheckpointDialog';
+import { EpisodeOrganizeMenu } from '../longform/EpisodeOrganizeMenu';
 import { PromptSurface } from './PromptSurface';
 import StoryboardEditor, { useKnownVariables, usePromptSources } from './StoryboardEditor';
 
@@ -114,7 +117,22 @@ function StoryEmpty() {
   const navigate = useNavigate();
   const create = useCreateEpisode(ws.data?.id ?? '');
   return (
-    <WorkshopFrame tab="story">
+    <WorkshopFrame
+      tab="story"
+      actions={
+        <CreationKitImport
+          label={t('ws.import')}
+          legacyLabel={t('kits.json')}
+          onLegacy={() => {
+            void importStoryboards(create)
+              .then(({ last }) => {
+                if (last) navigate(`/workshop/story/${last}`);
+              })
+              .catch(toastError);
+          }}
+        />
+      }
+    >
       <div className="eco-empty">
         <h3>{t('ws.story.emptyTitle')}</h3>
         <p>{t('ws.story.emptyBody')}</p>
@@ -148,6 +166,7 @@ export function StoryTab() {
   const patch = usePatchEpisode(episodeId ?? '');
   const create = useCreateEpisode(ws.data?.id ?? '');
   const [renaming, setRenaming] = useState(false);
+  const [checkpointsOpen, setCheckpointsOpen] = useState(false);
   const cancelRename = useRef(false);
   const [draft, setDraft] = useState('');
   const { visit, forget } = useRecents();
@@ -212,15 +231,11 @@ export function StoryTab() {
       tab="story"
       actions={
         <>
-          <button
-            type="button"
-            className="btn"
-            onClick={importBoards}
-            title={t('ws.story.importHint')}
-          >
-            <Icon name="download" />
-            {t('ws.import')}
-          </button>
+          <CreationKitImport
+            label={t('ws.import')}
+            legacyLabel={t('kits.json')}
+            onLegacy={() => void importBoards()}
+          />
           <button
             type="button"
             className="btn"
@@ -289,6 +304,11 @@ export function StoryTab() {
         </label>
         <Autosave saving={patch.isPending} error={patch.isError} />
         <div>
+          <EpisodeOrganizeMenu
+            episode={ep}
+            onCopied={(copy) => navigate(`/workshop/story/${copy.id}`)}
+            actions={[{ label: t('recovery.title'), onSelect: () => setCheckpointsOpen(true) }]}
+          />
           <button
             type="button"
             className="btn"
@@ -324,6 +344,13 @@ export function StoryTab() {
         context={{ episode: ep, series: ws.data } satisfies EpisodeContext}
       />
       {exporter.element}
+      {checkpointsOpen ? (
+        <CheckpointDialog
+          seriesId={ws.data.id}
+          title={ws.data.title}
+          onClose={() => setCheckpointsOpen(false)}
+        />
+      ) : null}
     </WorkshopFrame>
   );
 }

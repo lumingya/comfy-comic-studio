@@ -312,6 +312,10 @@ class MioClient(_Base):
             params={"fmt": fmt, "preset": preset, "variant_id": variant_id, "quality": quality},
         )
 
+    def export_formats(self) -> Any:
+        """GET /export/formats — Export Formats."""
+        return self._request("GET", "/export/formats")
+
     def slice_plan(
         self,
         episode_id: str,
@@ -421,6 +425,46 @@ class MioClient(_Base):
             "POST",
             f"/episodes/{_q(episode_id)}/panels/{_q(panel_id)}/composition",
             params={"dialect": dialect},
+        )
+
+    def get_work_head(self, series_id: str) -> Any:
+        """GET /series/{series_id}/head — Get Work Head."""
+        return self._request("GET", f"/series/{_q(series_id)}/head")
+
+    def list_checkpoints(self, series_id: str) -> Any:
+        """GET /series/{series_id}/checkpoints — List Checkpoints."""
+        return self._request("GET", f"/series/{_q(series_id)}/checkpoints")
+
+    def create_checkpoint(self, series_id: str, body: dict | list | None = None) -> Any:
+        """POST /series/{series_id}/checkpoints — Create Checkpoint."""
+        return self._request("POST", f"/series/{_q(series_id)}/checkpoints", json=body)
+
+    def get_checkpoint(self, series_id: str, checkpoint_id: str) -> Any:
+        """GET /series/{series_id}/checkpoints/{checkpoint_id} — Get Checkpoint."""
+        return self._request("GET", f"/series/{_q(series_id)}/checkpoints/{_q(checkpoint_id)}")
+
+    def delete_checkpoint(self, series_id: str, checkpoint_id: str) -> Any:
+        """DELETE /series/{series_id}/checkpoints/{checkpoint_id} — Delete Checkpoint."""
+        return self._request("DELETE", f"/series/{_q(series_id)}/checkpoints/{_q(checkpoint_id)}")
+
+    def preview_checkpoint(self, series_id: str, checkpoint_id: str) -> Any:
+        """GET /series/{series_id}/checkpoints/{checkpoint_id}/preview — Preview Checkpoint."""
+        return self._request(
+            "GET",
+            f"/series/{_q(series_id)}/checkpoints/{_q(checkpoint_id)}/preview",
+        )
+
+    def restore_checkpoint(
+        self,
+        series_id: str,
+        checkpoint_id: str,
+        body: dict | list | None = None,
+    ) -> Any:
+        """POST /series/{series_id}/checkpoints/{checkpoint_id}/restore — Restore Checkpoint."""
+        return self._request(
+            "POST",
+            f"/series/{_q(series_id)}/checkpoints/{_q(checkpoint_id)}/restore",
+            json=body,
         )
 
     def list_workflows(self) -> Any:
@@ -537,6 +581,30 @@ class MioClient(_Base):
     def get_asset(self, asset_id: str, *, thumb: int | None = None) -> Any:
         """GET /assets/{asset_id} — Get Asset."""
         return self._request("GET", f"/assets/{_q(asset_id)}", params={"thumb": thumb})
+
+    def transfer_panels(self, series_id: str, body: dict | list | None = None) -> Any:
+        """POST /series/{series_id}/panels/transfer — Transfer Panels."""
+        return self._request("POST", f"/series/{_q(series_id)}/panels/transfer", json=body)
+
+    def copy_episode(self, episode_id: str, body: dict | list | None = None) -> Any:
+        """POST /episodes/{episode_id}/copy — Copy Episode."""
+        return self._request("POST", f"/episodes/{_q(episode_id)}/copy", json=body)
+
+    def reorder_episodes(self, series_id: str, body: dict | list | None = None) -> Any:
+        """POST /series/{series_id}/episodes/reorder — Reorder Episodes."""
+        return self._request("POST", f"/series/{_q(series_id)}/episodes/reorder", json=body)
+
+    def find_variables(self, series_id: str, body: dict | list | None = None) -> Any:
+        """POST /series/{series_id}/variables/find — Find Variables."""
+        return self._request("POST", f"/series/{_q(series_id)}/variables/find", json=body)
+
+    def preview_variables(self, series_id: str, body: dict | list | None = None) -> Any:
+        """POST /series/{series_id}/variables/preview — Preview Variables."""
+        return self._request("POST", f"/series/{_q(series_id)}/variables/preview", json=body)
+
+    def apply_variables(self, series_id: str, body: dict | list | None = None) -> Any:
+        """POST /series/{series_id}/variables/apply — Apply Variables."""
+        return self._request("POST", f"/series/{_q(series_id)}/variables/apply", json=body)
 
     def list_jobs(
         self,
@@ -899,6 +967,13 @@ class MioClient(_Base):
     def assemble_creation_kit(self, series_id: str, body: dict | list | None = None) -> Any:
         """POST /creation-kits/{series_id}/assemble — Assemble Creation Kit."""
         return self._request("POST", f"/creation-kits/{_q(series_id)}/assemble", json=body)
+
+    def list_operations(self) -> Any:
+        """GET /operations — List Operations.
+
+        Discover typed operations and their active wrappers; schemas remain in OpenAPI.
+        """
+        return self._request("GET", "/operations")
 
     def list_webhooks(self) -> Any:
         """GET /webhooks — List Webhooks."""

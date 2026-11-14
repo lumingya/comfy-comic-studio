@@ -5,12 +5,13 @@ from __future__ import annotations
 from typing import Literal
 from urllib.parse import quote
 
-from fastapi import APIRouter, Response
+from fastapi import Response
 from pydantic import BaseModel, Field
 
-from ..motion.export import MotionOptions, episode_motion, render_motion
+from ..motion.export import MotionOptions, episode_motion
 from ..motion.plan import MOVES, plan_episode
 from .deps import Ctx
+from .operations import Router as APIRouter
 
 router = APIRouter(tags=["motion"])
 
@@ -54,7 +55,7 @@ def export_motion(ctx: Ctx, body: MotionExport) -> Response:
         max_width=body.max_width,
     )
     timeline = episode_motion(ctx, body.episode_id, body.variant_id, opts)
-    data = render_motion(timeline, opts).encode("utf-8")
+    data = ctx.registry.get("exporter", "motion")(timeline, opts).encode("utf-8")
     filename = f"{timeline['series']}_{timeline['title']}_动态漫.html"
     ctx.hooks.action(
         "episode.exported",

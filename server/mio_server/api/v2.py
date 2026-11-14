@@ -22,24 +22,30 @@ from . import (
     access,
     album,
     canvas,
+    checkpoints,
     extensions,
     jobs,
     kits,
     library,
+    longform,
     motion,
+    operations,
     production,
     series,
     system,
     update,
     workshop,
 )
+from .extension_routes import mount_extensions
 
 V2_VERSION = "2.0"
 ROUTERS = (
     series,
     production,
     canvas,
+    checkpoints,
     library,
+    longform,
     jobs,
     album,
     motion,
@@ -48,6 +54,7 @@ ROUTERS = (
     workshop,
     extensions,
     kits,
+    operations,
 )
 # operationId = route function name (= generated client method); generic names get context.
 RENAMES = {
@@ -83,8 +90,14 @@ def token_of(conn: HTTPConnection) -> ApiToken:
     if root and path.startswith(root):
         path = path[len(root) :]
     try:
+        scope = None
+        if path.startswith("/ext/"):
+            route = conn.scope.get("route")
+            scope = (getattr(route, "openapi_extra", None) or {}).get("x-mio-scope")
+            if scope is not None and scope not in SCOPES:
+                raise AuthError("扩展路由声明了无效的权限", 403)
         return conn.app.state.ctx.tokens.verify(
-            raw, "WS" if websocket else conn.scope["method"], path
+            raw, "WS" if websocket else conn.scope["method"], path, scope=scope
         )
     except AuthError as exc:
         if websocket:
@@ -121,6 +134,7 @@ def build_v2(ctx, errors) -> FastAPI:
         app.include_router(module.router, dependencies=guard)
     app.include_router(access.hooks, dependencies=guard)
     app.include_router(access.tokens, dependencies=guard)
+    mount_extensions(app, prefix="/ext", authenticate=token_of)
     app.openapi = lambda: _openapi(app)
     return app
 

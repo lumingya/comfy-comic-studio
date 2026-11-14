@@ -40,7 +40,8 @@ cancel。重新启用或重新确认变更的代码后，需要重启服务才�
 
 示例使用 `mio.internal.qa.submit`，`mio.internal` 是**不稳定 API**，升级后应重新审查和测试。
 远程程序使用正式开放 API `POST /api/v2/episodes/{episode_id}/qa`，带 `render` 权限令牌，
-并在请求体中明确传 `take_ids`、`idempotency_key` 和 `auto_adopt:false`；本扩展路由不开放到 v2。
+并在请求体中明确传 `take_ids`、`idempotency_key` 和 `auto_adopt:false`。本扩展也提供
+`POST /api/v2/ext/qa-review/queue`，同样要求 `render`，使用上面的三个字段并固定不自动采用。
 
 扩展 HTML 面板仍受 `sandbox="allow-scripts"` 与 `connect-src 'none'` 限制，不能直接调用本路由。
 本例没有添加任意网络请求桥；请使用上述 CLI 或正式开放 API。

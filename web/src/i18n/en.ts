@@ -1,4 +1,7 @@
 import { interactionEn } from './interaction';
+import { longformEn } from './longform';
+import { kitsEn } from './creationKits';
+import { recoveryEn } from './recovery';
 import type { Dict } from './zh';
 import { guideEn } from './guide';
 import { configEn } from './configuration';
@@ -9,6 +12,9 @@ import { readerEn, wsEn } from './ws';
 type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };
 
 const en: Widen<Dict> = {
+  longform: longformEn,
+  kits: kitsEn,
+  recovery: recoveryEn,
   route: routeEn,
   cloudRequest: cloudRequestEn,
   interaction: interactionEn,

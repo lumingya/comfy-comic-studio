@@ -1,4 +1,4 @@
-import { FolderInput, Pencil, Search, Star } from 'lucide-react';
+import { Pencil, Search, Star } from 'lucide-react';
 import {
   useEffect,
   useMemo,
@@ -22,7 +22,10 @@ import { usePageTitle } from '../../app/title';
 import { useUI } from '../../app/ui-store';
 import { ContextMenu, useContextMenu, type ContextGroup } from '../../components/ContextMenu';
 import { toast, toastError } from '../../components/toast';
-import { Empty, FilePick, InlineTitle } from '../../components/ui';
+import { Empty, InlineTitle } from '../../components/ui';
+import { CreationKitImport } from '../workshop/CreationKitImport';
+import { CreationKitExport } from '../workshop/CreationKitExport';
+import { CheckpointDialog } from '../workshop/CheckpointDialog';
 import { CoverPicker } from './CoverPicker';
 import { BookMenuButton, Parchment, Showcase, ShowcaseNav, StarButton } from './Showcase';
 import { ExportBooks, RenameBooks } from './ShelfDialogs';
@@ -324,6 +327,8 @@ export default function WorksPage() {
   const [coverFor, setCoverFor] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<SeriesCard[] | null>(null);
   const [exporting, setExporting] = useState<SeriesCard[] | null>(null);
+  const [kitExport, setKitExport] = useState<string | null>(null);
+  const [checkpointWork, setCheckpointWork] = useState<SeriesCard | null>(null);
   // Multi-select (legacy desktop selection): Ctrl / ⌘ / Shift + click, right-click for batch
   // actions, Ctrl+A / Esc / Delete. 批量管理 is the touch fallback that makes a tap select.
   const [bulk, setBulk] = useState(false);
@@ -332,7 +337,7 @@ export default function WorksPage() {
   const showGrid = view === 'grid' || bulk;
   const bulkActions = useBulkActions(() => selection.clear());
   const menu = useContextMenu<ShelfContext>();
-  const dialogOpen = !!coverFor || !!renaming || !!exporting;
+  const dialogOpen = !!coverFor || !!renaming || !!exporting || !!kitExport || !!checkpointWork;
   const setBulkMode = (on: boolean) => {
     setBulk(on);
     selection.clear();
@@ -588,11 +593,20 @@ export default function WorksPage() {
             onSelect: () =>
               void download(`/api/series/${id}/bundle`, `${one.title}.mio.zip`).catch(toastError),
           },
+          {
+            label: t('kits.export'),
+            icon: <Icon name="upload" sm />,
+            onSelect: () => setKitExport(id),
+          },
         ],
       },
       {
         heading: t('classic.shelf.organize'),
         items: [
+          {
+            label: t('recovery.title'),
+            onSelect: () => setCheckpointWork(one),
+          },
           {
             label: t('classic.shelf.moveUp'),
             icon: <Icon name="up" sm />,
@@ -668,10 +682,13 @@ export default function WorksPage() {
             <p>{t('works.sub')}</p>
           </div>
           <div className="resource-actions">
-            <FilePick accept=".zip" onFile={onBundle} disabled={importBundle.isPending}>
-              <Icon name="download" />
-              {t('works.importBundle')}
-            </FilePick>
+            <CreationKitImport
+              label={t('works.importBundle')}
+              legacyLabel={t('works.importBundle')}
+              legacyAccept=".zip"
+              onLegacyFile={onBundle}
+              disabled={importBundle.isPending}
+            />
             <button className="btn primary" onClick={create}>
               <Icon name="plus" />
               {t('works.newSeries')}
@@ -685,9 +702,13 @@ export default function WorksPage() {
           <WorksHero
             onCreate={create}
             importAction={
-              <FilePick accept=".zip" onFile={onBundle}>
-                <FolderInput size={15} /> {t('works.importBundle')}
-              </FilePick>
+              <CreationKitImport
+                label={t('works.importBundle')}
+                legacyLabel={t('works.importBundle')}
+                legacyAccept=".zip"
+                onLegacyFile={onBundle}
+                disabled={importBundle.isPending}
+              />
             }
           />
         ) : null}
@@ -825,6 +846,16 @@ export default function WorksPage() {
             open
             collectionTitle={collectionTitle}
             onOpenChange={(open) => !open && setExporting(null)}
+          />
+        ) : null}
+        {kitExport ? (
+          <CreationKitExport seriesId={kitExport} onClose={() => setKitExport(null)} />
+        ) : null}
+        {checkpointWork ? (
+          <CheckpointDialog
+            seriesId={checkpointWork.id}
+            title={checkpointWork.title}
+            onClose={() => setCheckpointWork(null)}
           />
         ) : null}
       </section>

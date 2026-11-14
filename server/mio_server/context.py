@@ -29,6 +29,7 @@ from .motion import export as MX
 from .pipeline import export as X
 from .pipeline import lettering as LT
 from .pipeline import providers as PV
+from .pipeline import strip as SP
 from .pipeline.cloud_jobs import CloudExecutor
 from .pipeline.qa import QAService
 from .pipeline.reading import ReadingCache
@@ -110,6 +111,14 @@ class AppContext:
             store.put_doc(ComfyInstance(id="comfy_local"))
         ctx.refresh_instances()
         ctx._register_builtins()
+        ctx.registry.on(
+            "registry.changed",
+            lambda event: (
+                ctx.reading.clear()
+                if event.get("point") == "layout" or "removed" in event
+                else None
+            ),
+        )
         render.hooks = ctx.registry.hooks
         render.binding_rules = lambda: [
             (f"{c.source}:{c.id}", c.value) for c in ctx.registry.all("workflow_binding")
@@ -177,7 +186,7 @@ class AppContext:
             self.engine.register(kind, executor)
             reg.register("job_executor", kind, executor, title=kind)
         for fmt in X.FORMATS:
-            reg.register("exporter", fmt, X.export, title=fmt)
+            reg.register("exporter", fmt, X.export, title=fmt, interface="strip")
         for pid, preset in X.PRESETS.items():
             reg.register("slice_preset", pid, preset, title=preset.label)
         reg.register(
@@ -196,7 +205,7 @@ class AppContext:
             reg.register("pipeline_step", step, step, title=title)
         for wid, (name, _) in BUILTINS.items():
             reg.register("workflow_template", wid, wid, title=name)
-        reg.register("layout", "strip.default", "strip", title="条漫默认版式")
+        reg.register("layout", "strip.default", SP.layout, title="条漫默认版式")
         reg.register("script_template", "generate", "generate", title="一句话生成剧本")
         reg.register("script_template", "revise", "revise", title="按要求修改剧本（可审阅 diff）")
         reg.register("provider", "comfyui", "comfyui", title="ComfyUI（本地 / 局域网，多实例）")
@@ -210,8 +219,12 @@ class AppContext:
             reg.register(
                 "album_template", tpl.id, tpl, source="user", title=tpl.title, replace=True
             )
-        reg.register("exporter", "album", AR.render_album, title="画册（离线 HTML 模板）")
-        reg.register("exporter", "motion", MX.render_motion, title="动态漫（离线播放器）")
+        reg.register(
+            "exporter", "album", AR.render_album, title="画册（离线 HTML 模板）", interface="album"
+        )
+        reg.register(
+            "exporter", "motion", MX.render_motion, title="动态漫（离线播放器）", interface="motion"
+        )
         for kind, cls in PV.KINDS.items():
             reg.register("cloud_adapter", kind, cls, title=cls.what)
         for name in LT.SFX_PRESETS:

@@ -5,7 +5,7 @@ from __future__ import annotations
 import mimetypes
 import os
 
-from fastapi import APIRouter, Request, Response, status
+from fastapi import Request, Response, status
 from pydantic import BaseModel
 
 from .. import themes as TH
@@ -13,6 +13,7 @@ from ..extensions.manifest import ManifestError, inside
 from ..storage import NotFound
 from .deps import Ctx
 from .library import BINARY_BODY, read_body
+from .operations import Router as APIRouter
 
 router = APIRouter(tags=["extensions"])
 

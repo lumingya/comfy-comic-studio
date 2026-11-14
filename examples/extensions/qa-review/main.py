@@ -12,7 +12,7 @@ class ReviewRequest(BaseModel):
 
 
 def activate(mio):
-    @mio.router.post("/queue")
+    @mio.route("POST", "/queue", scope="render")
     def queue_review(body: ReviewRequest) -> dict:
         # internal is intentionally an unstable extension API; see the example README.
         return mio.internal.qa.submit(

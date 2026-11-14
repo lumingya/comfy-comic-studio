@@ -389,11 +389,11 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         return max(1, len(self.engine.pool.instances) or 1) * 2
 
     def render(self, episode_id: str, *args, idempotency_key: str | None = None, **kw) -> dict:
-        with self.seeded(idempotency_key):
+        with self.engine.hold_operation(), self.seeded(idempotency_key):
             return self._render(episode_id, *args, idempotency_key=idempotency_key, **kw)
 
     def finalize(self, episode_id: str, *args, idempotency_key: str | None = None, **kw) -> dict:
-        with self.seeded(idempotency_key):
+        with self.engine.hold_operation(), self.seeded(idempotency_key):
             return self._finalize(episode_id, *args, idempotency_key=idempotency_key, **kw)
 
     def _variants(self, series: Series, variant_ids):

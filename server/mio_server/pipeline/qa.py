@@ -12,6 +12,7 @@ from __future__ import annotations
 import statistics
 
 from ..jobs import LOCAL, ExecError, ItemContext, ItemSpec
+from ..jobs.operations import operation_serialized
 from ..models import Episode, Face, IdentityCheck, QAResult, TakeStatus
 from . import judge as J
 from .refs import pick_character_ref
@@ -122,6 +123,7 @@ class QAService:
     def __init__(self, store, assets, engine, llm_factory):
         self.store, self.assets, self.engine, self.llm_factory = store, assets, engine, llm_factory
 
+    @operation_serialized
     def submit(
         self,
         episode_id: str,

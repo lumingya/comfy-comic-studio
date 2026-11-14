@@ -1,0 +1,28 @@
+.creation-kit-form,
+.creation-kit-bindings,
+.creation-kit-profile {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.creation-kit-profile {
+  padding: 12px 0;
+}
+
+.creation-kit-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.creation-kit-form ul {
+  padding-left: 20px;
+}
+
+.creation-kit-source {
+  max-width: 420px;
+  margin-bottom: 20px;
+}

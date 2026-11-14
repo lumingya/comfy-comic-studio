@@ -133,6 +133,7 @@ export function configurationRoutes(extra: Record<string, unknown> = {}) {
     'GET /api/settings': configSettings,
     'GET /api/registry': { cloud_adapter: [] },
     'GET /api/profiles': [configProfile],
+    'GET /api/creation-kits': [],
     'GET /api/instances': { instances: [configInstance], pool: {} },
     'GET /api/workflows': [configSummary],
     'GET /api/workflows/wf_demo': configWorkflow,

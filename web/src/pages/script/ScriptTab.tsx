@@ -44,6 +44,7 @@ import { ContextMenu, useContextMenu, type ContextGroup } from '../../components
 import { toast, toastError } from '../../components/toast';
 import { Empty, Modal, NumberInput, TextArea } from '../../components/ui';
 import { useEpisodeContext } from '../episode/EpisodePage';
+import { TransferDialog } from '../longform/TransferDialog';
 import { BatchEditDialog, type BatchBody } from './BatchEditDialog';
 import { PanelEditor } from './PanelEditor';
 import { PanelList } from './PanelList';
@@ -66,6 +67,18 @@ export default function ScriptTab() {
   const candidates = useUI((s) => s.candidates);
   const [synopsis, setSynopsis] = useState<string | null>(null);
   const [batch, setBatch] = useState<string[] | null>(null);
+  const [transfer, setTransfer] = useState<{ episode: Episode; ids: string[] } | null>(null);
+  const openTransfer = async (list: string[]) => {
+    try {
+      await flushEditors();
+      setTransfer({
+        episode: qc.getQueryData<Episode>(keys.episode(episode.id)) ?? episode,
+        ids: list,
+      });
+    } catch (error) {
+      toastError(error);
+    }
+  };
   const [moveTarget, setMoveTarget] = useState<{ ids: string[]; to: number } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const importAfter = useRef<string | null>(null);
@@ -374,6 +387,11 @@ export default function ScriptTab() {
             icon: allLocked ? <Unlock size={14} /> : <Lock size={14} />,
             onSelect: () => setLocked(list, !allLocked),
           },
+          {
+            label: t('longform.transfer'),
+            icon: <Copy size={14} />,
+            onSelect: () => void openTransfer(list),
+          },
         ],
       },
       {
@@ -569,6 +587,14 @@ export default function ScriptTab() {
           panels={byId(batch)}
           busy={patchMany.isPending}
           onSubmit={submitBatch}
+        />
+      ) : null}
+      {transfer ? (
+        <TransferDialog
+          episode={transfer.episode}
+          panelIds={transfer.ids}
+          onClose={() => setTransfer(null)}
+          onDone={selection.clear}
         />
       ) : null}
       <Modal

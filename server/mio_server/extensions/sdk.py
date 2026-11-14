@@ -17,6 +17,8 @@ from typing import Any, Callable
 
 from fastapi import APIRouter
 
+from ..auth import SCOPES
+
 
 class ExtensionAPI:
     def __init__(self, ext_id: str, folder: Path, ctx):
@@ -44,13 +46,37 @@ class ExtensionAPI:
 
         return add(fn) if fn is not None else add
 
+    def operation(self, id: str):
+        """Wrap a typed HTTP operation, e.g. ``POST /episodes/{episode_id}/render``.
+
+        The handler receives ``next`` and the validated endpoint arguments. It may
+        ``await next(**changed_arguments)`` once, or return a replacement result. Newest
+        wrappers run outermost; disabling this source restores the previous chain.
+        """
+
+        def add(handler):
+            self.contribute("operation", id, handler, replace=True)
+            return handler
+
+        return add
+
     # --------------------------------------------------------------- routes
     @property
     def router(self) -> APIRouter:
-        """FastAPI router mounted at ``/api/ext/<id>``.  New routes need a server restart."""
+        """Mounted locally and at ``/api/v2/ext/<id>``; v2 defaults to admin scope.
+
+        New routes need a restart. Use :meth:`route` to declare a narrower v2 scope.
+        """
         if self._router is None:
             self._router = APIRouter(tags=[f"ext:{self.id}"])
         return self._router
+
+    def route(self, method: str, path: str, *, scope: str = "admin", **kwargs):
+        """Register a normal typed FastAPI route with an explicit v2 permission."""
+        if scope not in SCOPES:
+            raise ValueError(f"unknown API scope: {scope}")
+        extra = {**kwargs.pop("openapi_extra", {}), "x-mio-scope": scope}
+        return self.router.api_route(path, methods=[method.upper()], openapi_extra=extra, **kwargs)
 
     # ------------------------------------------------------------- settings
     def load_settings(self) -> dict:

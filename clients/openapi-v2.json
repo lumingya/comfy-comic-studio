@@ -895,6 +895,308 @@
     "title": "Character",
     "type": "object"
    },
+   "Checkpoint": {
+    "additionalProperties": false,
+    "properties": {
+     "asset_count": {
+      "title": "Asset Count",
+      "type": "integer"
+     },
+     "asset_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Asset Ids",
+      "type": "array"
+     },
+     "created_at": {
+      "title": "Created At",
+      "type": "string"
+     },
+     "deleted_episode_count": {
+      "title": "Deleted Episode Count",
+      "type": "integer"
+     },
+     "episode_count": {
+      "title": "Episode Count",
+      "type": "integer"
+     },
+     "head": {
+      "title": "Head",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "kind": {
+      "enum": [
+       "manual",
+       "pre_restore"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "series_id": {
+      "title": "Series Id",
+      "type": "string"
+     },
+     "snapshot": {
+      "$ref": "#/components/schemas/WorkSnapshot"
+     }
+    },
+    "required": [
+     "id",
+     "series_id",
+     "name",
+     "created_at",
+     "kind",
+     "head",
+     "episode_count",
+     "deleted_episode_count",
+     "asset_count",
+     "snapshot",
+     "asset_ids"
+    ],
+    "title": "Checkpoint",
+    "type": "object"
+   },
+   "CheckpointCreate": {
+    "additionalProperties": false,
+    "properties": {
+     "expected_head": {
+      "anyOf": [
+       {
+        "pattern": "^[0-9a-f]{64}$",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Expected Head"
+     },
+     "name": {
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "CheckpointCreate",
+    "type": "object"
+   },
+   "CheckpointPreview": {
+    "additionalProperties": false,
+    "properties": {
+     "active_job_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Active Job Ids",
+      "type": "array"
+     },
+     "added_episode_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Added Episode Ids",
+      "type": "array"
+     },
+     "can_restore": {
+      "title": "Can Restore",
+      "type": "boolean"
+     },
+     "changed_episode_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Changed Episode Ids",
+      "type": "array"
+     },
+     "checkpoint_id": {
+      "title": "Checkpoint Id",
+      "type": "string"
+     },
+     "current_head": {
+      "title": "Current Head",
+      "type": "string"
+     },
+     "missing_asset_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Missing Asset Ids",
+      "type": "array"
+     },
+     "reference_errors": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Reference Errors",
+      "type": "array"
+     },
+     "removed_episode_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Removed Episode Ids",
+      "type": "array"
+     },
+     "series_changed": {
+      "title": "Series Changed",
+      "type": "boolean"
+     },
+     "series_id": {
+      "title": "Series Id",
+      "type": "string"
+     },
+     "target_head": {
+      "title": "Target Head",
+      "type": "string"
+     }
+    },
+    "required": [
+     "checkpoint_id",
+     "series_id",
+     "current_head",
+     "target_head",
+     "series_changed",
+     "added_episode_ids",
+     "changed_episode_ids",
+     "removed_episode_ids",
+     "missing_asset_ids",
+     "reference_errors",
+     "active_job_ids",
+     "can_restore"
+    ],
+    "title": "CheckpointPreview",
+    "type": "object"
+   },
+   "CheckpointRestore": {
+    "additionalProperties": false,
+    "properties": {
+     "expected_head": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Expected Head",
+      "type": "string"
+     }
+    },
+    "required": [
+     "expected_head"
+    ],
+    "title": "CheckpointRestore",
+    "type": "object"
+   },
+   "CheckpointRestored": {
+    "additionalProperties": false,
+    "properties": {
+     "checkpoint_id": {
+      "title": "Checkpoint Id",
+      "type": "string"
+     },
+     "head": {
+      "title": "Head",
+      "type": "string"
+     },
+     "pre_restore_checkpoint": {
+      "$ref": "#/components/schemas/CheckpointSummary"
+     },
+     "restored_episode_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Restored Episode Ids",
+      "type": "array"
+     },
+     "series_id": {
+      "title": "Series Id",
+      "type": "string"
+     },
+     "trashed_episode_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Trashed Episode Ids",
+      "type": "array"
+     }
+    },
+    "required": [
+     "checkpoint_id",
+     "series_id",
+     "head",
+     "pre_restore_checkpoint",
+     "restored_episode_ids",
+     "trashed_episode_ids"
+    ],
+    "title": "CheckpointRestored",
+    "type": "object"
+   },
+   "CheckpointSummary": {
+    "additionalProperties": false,
+    "properties": {
+     "asset_count": {
+      "title": "Asset Count",
+      "type": "integer"
+     },
+     "created_at": {
+      "title": "Created At",
+      "type": "string"
+     },
+     "deleted_episode_count": {
+      "title": "Deleted Episode Count",
+      "type": "integer"
+     },
+     "episode_count": {
+      "title": "Episode Count",
+      "type": "integer"
+     },
+     "head": {
+      "title": "Head",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "kind": {
+      "enum": [
+       "manual",
+       "pre_restore"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "series_id": {
+      "title": "Series Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "series_id",
+     "name",
+     "created_at",
+     "kind",
+     "head",
+     "episode_count",
+     "deleted_episode_count",
+     "asset_count"
+    ],
+    "title": "CheckpointSummary",
+    "type": "object"
+   },
    "CloneRequest": {
     "properties": {
      "title": {
@@ -1770,6 +2072,83 @@
     "title": "Episode",
     "type": "object"
    },
+   "EpisodeCopy": {
+    "additionalProperties": false,
+    "properties": {
+     "include_locked": {
+      "default": false,
+      "title": "Include Locked",
+      "type": "boolean"
+     },
+     "revision": {
+      "minimum": 0.0,
+      "title": "Revision",
+      "type": "integer"
+     },
+     "title": {
+      "anyOf": [
+       {
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Title"
+     }
+    },
+    "required": [
+     "revision"
+    ],
+    "title": "EpisodeCopy",
+    "type": "object"
+   },
+   "EpisodeCopyResult": {
+    "additionalProperties": false,
+    "properties": {
+     "episode": {
+      "$ref": "#/components/schemas/Episode"
+     },
+     "lettering_ids": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Lettering Ids",
+      "type": "object"
+     },
+     "notes": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Notes",
+      "type": "array"
+     },
+     "panel_ids": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Panel Ids",
+      "type": "object"
+     },
+     "take_ids": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Take Ids",
+      "type": "object"
+     }
+    },
+    "required": [
+     "episode",
+     "panel_ids",
+     "take_ids",
+     "lettering_ids",
+     "notes"
+    ],
+    "title": "EpisodeCopyResult",
+    "type": "object"
+   },
    "EpisodeCreate": {
     "additionalProperties": false,
     "properties": {
@@ -1878,6 +2257,37 @@
      }
     },
     "title": "EpisodePatch",
+    "type": "object"
+   },
+   "EpisodeReorder": {
+    "additionalProperties": false,
+    "properties": {
+     "include_locked": {
+      "default": false,
+      "title": "Include Locked",
+      "type": "boolean"
+     },
+     "order": {
+      "items": {
+       "type": "string"
+      },
+      "maxItems": 10000,
+      "title": "Order",
+      "type": "array"
+     },
+     "revisions": {
+      "additionalProperties": {
+       "type": "integer"
+      },
+      "title": "Revisions",
+      "type": "object"
+     }
+    },
+    "required": [
+     "order",
+     "revisions"
+    ],
+    "title": "EpisodeReorder",
     "type": "object"
    },
    "ExternalRequirement": {
@@ -2559,6 +2969,11 @@
    },
    "LayoutRequest": {
     "properties": {
+     "layout_id": {
+      "default": "strip.default",
+      "title": "Layout Id",
+      "type": "string"
+     },
      "relayout_lettering": {
       "default": true,
       "title": "Relayout Lettering",
@@ -3970,6 +4385,67 @@
      "revision"
     ],
     "title": "PanelRestore",
+    "type": "object"
+   },
+   "PanelTransfer": {
+    "additionalProperties": false,
+    "properties": {
+     "break_bridges": {
+      "default": false,
+      "description": "Explicitly disconnect bubbles crossing the selection boundary.",
+      "title": "Break Bridges",
+      "type": "boolean"
+     },
+     "include_locked": {
+      "default": false,
+      "title": "Include Locked",
+      "type": "boolean"
+     },
+     "mode": {
+      "default": "copy",
+      "enum": [
+       "copy",
+       "move"
+      ],
+      "title": "Mode",
+      "type": "string"
+     },
+     "panel_ids": {
+      "items": {
+       "type": "string"
+      },
+      "maxItems": 1000,
+      "minItems": 1,
+      "title": "Panel Ids",
+      "type": "array"
+     },
+     "source_episode_id": {
+      "title": "Source Episode Id",
+      "type": "string"
+     },
+     "source_revision": {
+      "minimum": 0.0,
+      "title": "Source Revision",
+      "type": "integer"
+     },
+     "target_episode_id": {
+      "title": "Target Episode Id",
+      "type": "string"
+     },
+     "target_revision": {
+      "minimum": 0.0,
+      "title": "Target Revision",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "source_episode_id",
+     "target_episode_id",
+     "source_revision",
+     "target_revision",
+     "panel_ids"
+    ],
+    "title": "PanelTransfer",
     "type": "object"
    },
    "PanelWidth": {
@@ -6599,6 +7075,61 @@
     "title": "TokenCreate",
     "type": "object"
    },
+   "TransferResult": {
+    "additionalProperties": false,
+    "properties": {
+     "layout_offset_y": {
+      "default": 0,
+      "title": "Layout Offset Y",
+      "type": "number"
+     },
+     "lettering_ids": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Lettering Ids",
+      "type": "object"
+     },
+     "notes": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Notes",
+      "type": "array"
+     },
+     "panel_ids": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Panel Ids",
+      "type": "object"
+     },
+     "source": {
+      "$ref": "#/components/schemas/Episode"
+     },
+     "take_ids": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Take Ids",
+      "type": "object"
+     },
+     "target": {
+      "$ref": "#/components/schemas/Episode"
+     }
+    },
+    "required": [
+     "source",
+     "target",
+     "panel_ids",
+     "take_ids",
+     "lettering_ids",
+     "layout_offset_y",
+     "notes"
+    ],
+    "title": "TransferResult",
+    "type": "object"
+   },
    "ValidationError": {
     "properties": {
      "ctx": {
@@ -6637,6 +7168,318 @@
      "type"
     ],
     "title": "ValidationError",
+    "type": "object"
+   },
+   "VariableApply": {
+    "additionalProperties": false,
+    "properties": {
+     "action": {
+      "enum": [
+       "rename",
+       "replace"
+      ],
+      "title": "Action",
+      "type": "string"
+     },
+     "expected_head": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Expected Head",
+      "type": "string"
+     },
+     "include_locked": {
+      "default": false,
+      "title": "Include Locked",
+      "type": "boolean"
+     },
+     "key": {
+      "pattern": "^[^\\s{}]{1,64}$",
+      "title": "Key",
+      "type": "string"
+     },
+     "value": {
+      "description": "New key for rename; literal text for replace (inserted once, not expanded).",
+      "maxLength": 100000,
+      "title": "Value",
+      "type": "string"
+     }
+    },
+    "required": [
+     "key",
+     "action",
+     "value",
+     "expected_head"
+    ],
+    "title": "VariableApply",
+    "type": "object"
+   },
+   "VariableChange": {
+    "additionalProperties": false,
+    "properties": {
+     "after": {
+      "title": "After",
+      "type": "string"
+     },
+     "before": {
+      "title": "Before",
+      "type": "string"
+     },
+     "kind": {
+      "enum": [
+       "text",
+       "definition",
+       "binding"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "locked": {
+      "default": false,
+      "title": "Locked",
+      "type": "boolean"
+     },
+     "owner_id": {
+      "title": "Owner Id",
+      "type": "string"
+     },
+     "path": {
+      "title": "Path",
+      "type": "string"
+     }
+    },
+    "required": [
+     "owner_id",
+     "path",
+     "kind",
+     "before",
+     "after",
+     "locked"
+    ],
+    "title": "VariableChange",
+    "type": "object"
+   },
+   "VariableOccurrence": {
+    "additionalProperties": false,
+    "properties": {
+     "count": {
+      "default": 1,
+      "title": "Count",
+      "type": "integer"
+     },
+     "kind": {
+      "enum": [
+       "text",
+       "definition",
+       "binding"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "locked": {
+      "default": false,
+      "title": "Locked",
+      "type": "boolean"
+     },
+     "owner_id": {
+      "title": "Owner Id",
+      "type": "string"
+     },
+     "path": {
+      "title": "Path",
+      "type": "string"
+     },
+     "value": {
+      "title": "Value",
+      "type": "string"
+     }
+    },
+    "required": [
+     "owner_id",
+     "path",
+     "kind",
+     "value",
+     "count",
+     "locked"
+    ],
+    "title": "VariableOccurrence",
+    "type": "object"
+   },
+   "VariableOperation": {
+    "additionalProperties": false,
+    "properties": {
+     "action": {
+      "enum": [
+       "rename",
+       "replace"
+      ],
+      "title": "Action",
+      "type": "string"
+     },
+     "include_locked": {
+      "default": false,
+      "title": "Include Locked",
+      "type": "boolean"
+     },
+     "key": {
+      "pattern": "^[^\\s{}]{1,64}$",
+      "title": "Key",
+      "type": "string"
+     },
+     "value": {
+      "description": "New key for rename; literal text for replace (inserted once, not expanded).",
+      "maxLength": 100000,
+      "title": "Value",
+      "type": "string"
+     }
+    },
+    "required": [
+     "key",
+     "action",
+     "value"
+    ],
+    "title": "VariableOperation",
+    "type": "object"
+   },
+   "VariablePreview": {
+    "additionalProperties": false,
+    "properties": {
+     "changes": {
+      "items": {
+       "$ref": "#/components/schemas/VariableChange"
+      },
+      "title": "Changes",
+      "type": "array"
+     },
+     "conflicts": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Conflicts",
+      "type": "array"
+     },
+     "fields": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Fields",
+      "type": "array"
+     },
+     "head": {
+      "title": "Head",
+      "type": "string"
+     }
+    },
+    "required": [
+     "head",
+     "changes",
+     "conflicts",
+     "fields"
+    ],
+    "title": "VariablePreview",
+    "type": "object"
+   },
+   "VariableQuery": {
+    "additionalProperties": false,
+    "properties": {
+     "key": {
+      "pattern": "^[^\\s{}]{1,64}$",
+      "title": "Key",
+      "type": "string"
+     }
+    },
+    "required": [
+     "key"
+    ],
+    "title": "VariableQuery",
+    "type": "object"
+   },
+   "VariableResult": {
+    "additionalProperties": false,
+    "properties": {
+     "changes": {
+      "items": {
+       "$ref": "#/components/schemas/VariableChange"
+      },
+      "title": "Changes",
+      "type": "array"
+     },
+     "conflicts": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Conflicts",
+      "type": "array"
+     },
+     "episodes": {
+      "items": {
+       "$ref": "#/components/schemas/Episode"
+      },
+      "title": "Episodes",
+      "type": "array"
+     },
+     "fields": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Fields",
+      "type": "array"
+     },
+     "head": {
+      "title": "Head",
+      "type": "string"
+     },
+     "previous_head": {
+      "title": "Previous Head",
+      "type": "string"
+     },
+     "series": {
+      "$ref": "#/components/schemas/Series"
+     }
+    },
+    "required": [
+     "head",
+     "changes",
+     "conflicts",
+     "fields",
+     "previous_head",
+     "series",
+     "episodes"
+    ],
+    "title": "VariableResult",
+    "type": "object"
+   },
+   "VariableSearch": {
+    "additionalProperties": false,
+    "properties": {
+     "fields": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Fields",
+      "type": "array"
+     },
+     "head": {
+      "title": "Head",
+      "type": "string"
+     },
+     "key": {
+      "title": "Key",
+      "type": "string"
+     },
+     "occurrences": {
+      "items": {
+       "$ref": "#/components/schemas/VariableOccurrence"
+      },
+      "title": "Occurrences",
+      "type": "array"
+     }
+    },
+    "required": [
+     "head",
+     "key",
+     "occurrences",
+     "fields"
+    ],
+    "title": "VariableSearch",
     "type": "object"
    },
    "VariantSet-Input": {
@@ -6797,6 +7640,46 @@
      }
     },
     "title": "WebhookPatch",
+    "type": "object"
+   },
+   "WorkHead": {
+    "additionalProperties": false,
+    "properties": {
+     "head": {
+      "title": "Head",
+      "type": "string"
+     },
+     "series_id": {
+      "title": "Series Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "series_id",
+     "head"
+    ],
+    "title": "WorkHead",
+    "type": "object"
+   },
+   "WorkSnapshot": {
+    "additionalProperties": false,
+    "properties": {
+     "episodes": {
+      "items": {
+       "$ref": "#/components/schemas/Episode"
+      },
+      "title": "Episodes",
+      "type": "array"
+     },
+     "series": {
+      "$ref": "#/components/schemas/Series"
+     }
+    },
+    "required": [
+     "series",
+     "episodes"
+    ],
+    "title": "WorkSnapshot",
     "type": "object"
    },
    "WorkflowConfig": {
@@ -6995,7 +7878,11 @@
     "summary": "List Templates",
     "tags": [
      "album"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /album-templates"
    },
    "post": {
     "description": "Import a template file (the legacy ``formatVersion: 1`` format works unchanged).",
@@ -7044,7 +7931,12 @@
     "summary": "Import Template",
     "tags": [
      "album"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /album-templates"
    }
   },
   "/album-templates/{template_id}": {
@@ -7084,7 +7976,12 @@
     "summary": "Delete Template",
     "tags": [
      "album"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "template_id"
+    ],
+    "x-mio-operation": "DELETE /album-templates/{template_id}"
    },
    "get": {
     "operationId": "get_album_template",
@@ -7131,7 +8028,12 @@
     "summary": "Get Template",
     "tags": [
      "album"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "template_id"
+    ],
+    "x-mio-operation": "GET /album-templates/{template_id}"
    }
   },
   "/assets": {
@@ -7191,7 +8093,13 @@
     "summary": "Upload Asset",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "request",
+     "filename"
+    ],
+    "x-mio-operation": "POST /assets"
    }
   },
   "/assets/{asset_id}": {
@@ -7246,7 +8154,13 @@
     "summary": "Get Asset",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "asset_id",
+     "thumb"
+    ],
+    "x-mio-operation": "GET /assets/{asset_id}"
    }
   },
   "/bundles": {
@@ -7286,7 +8200,12 @@
     "summary": "Import Bundle",
     "tags": [
      "system"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "request"
+    ],
+    "x-mio-operation": "POST /bundles"
    }
   },
   "/creation-kits": {
@@ -7316,7 +8235,11 @@
     "summary": "List Creation Kits",
     "tags": [
      "creation-kits"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /creation-kits"
    }
   },
   "/creation-kits/export": {
@@ -7360,7 +8283,12 @@
     "summary": "Export Creation Kit",
     "tags": [
      "creation-kits"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /creation-kits/export"
    }
   },
   "/creation-kits/import": {
@@ -7406,7 +8334,12 @@
     "summary": "Import Creation Kit",
     "tags": [
      "creation-kits"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /creation-kits/import"
    }
   },
   "/creation-kits/inspect": {
@@ -7443,7 +8376,12 @@
     "summary": "Inspect Creation Kit",
     "tags": [
      "creation-kits"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "request"
+    ],
+    "x-mio-operation": "POST /creation-kits/inspect"
    }
   },
   "/creation-kits/{series_id}/assemble": {
@@ -7500,7 +8438,13 @@
     "summary": "Assemble Creation Kit",
     "tags": [
      "creation-kits"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /creation-kits/{series_id}/assemble"
    }
   },
   "/creation-kits/{series_id}/preview": {
@@ -7557,7 +8501,13 @@
     "summary": "Preview Creation Kit",
     "tags": [
      "creation-kits"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /creation-kits/{series_id}/preview"
    }
   },
   "/episodes/{episode_id}": {
@@ -7597,7 +8547,12 @@
     "summary": "Trash Episode",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id"
+    ],
+    "x-mio-operation": "DELETE /episodes/{episode_id}"
    },
    "get": {
     "operationId": "get_episode",
@@ -7642,7 +8597,12 @@
     "summary": "Get Episode",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id"
+    ],
+    "x-mio-operation": "GET /episodes/{episode_id}"
    },
    "patch": {
     "operationId": "patch_episode",
@@ -7697,7 +8657,13 @@
     "summary": "Patch Episode",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "payload"
+    ],
+    "x-mio-operation": "PATCH /episodes/{episode_id}"
    }
   },
   "/episodes/{episode_id}/assistant/apply": {
@@ -7756,7 +8722,13 @@
     "summary": "Apply",
     "tags": [
      "production"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/assistant/apply"
    }
   },
   "/episodes/{episode_id}/assistant/propose": {
@@ -7815,7 +8787,76 @@
     "summary": "Propose",
     "tags": [
      "production"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/assistant/propose"
+   }
+  },
+  "/episodes/{episode_id}/copy": {
+   "post": {
+    "operationId": "copy_episode",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "episode_id",
+      "required": true,
+      "schema": {
+       "title": "Episode Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EpisodeCopy"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EpisodeCopyResult"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Copy Episode",
+    "tags": [
+     "longform"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/copy"
    }
   },
   "/episodes/{episode_id}/edit": {
@@ -7874,7 +8915,13 @@
     "summary": "Edit",
     "tags": [
      "production"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/edit"
    }
   },
   "/episodes/{episode_id}/export": {
@@ -7896,12 +8943,6 @@
       "required": false,
       "schema": {
        "default": "slices",
-       "enum": [
-        "slices",
-        "long",
-        "pdf",
-        "html"
-       ],
        "title": "Fmt",
        "type": "string"
       }
@@ -7981,7 +9022,16 @@
     "summary": "Export",
     "tags": [
      "production"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "fmt",
+     "preset",
+     "variant_id",
+     "quality"
+    ],
+    "x-mio-operation": "GET /episodes/{episode_id}/export"
    }
   },
   "/episodes/{episode_id}/finalize": {
@@ -8040,7 +9090,13 @@
     "summary": "Finalize",
     "tags": [
      "production"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/finalize"
    }
   },
   "/episodes/{episode_id}/motion-plan": {
@@ -8106,7 +9162,13 @@
     "summary": "Motion Plan",
     "tags": [
      "motion"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "variant_id"
+    ],
+    "x-mio-operation": "GET /episodes/{episode_id}/motion-plan"
    }
   },
   "/episodes/{episode_id}/pacing/apply": {
@@ -8163,7 +9225,13 @@
     "summary": "Pacing Apply",
     "tags": [
      "canvas"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/pacing/apply"
    }
   },
   "/episodes/{episode_id}/pacing/suggest": {
@@ -8210,7 +9278,12 @@
     "summary": "Pacing Suggest",
     "tags": [
      "canvas"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/pacing/suggest"
    }
   },
   "/episodes/{episode_id}/panels": {
@@ -8267,7 +9340,13 @@
     "summary": "Add Panel",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "payload"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/panels"
    }
   },
   "/episodes/{episode_id}/panels/batch": {
@@ -8325,7 +9404,13 @@
     "summary": "Patch Panels",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "payload"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/panels/batch"
    }
   },
   "/episodes/{episode_id}/panels/batch-delete": {
@@ -8382,7 +9467,13 @@
     "summary": "Delete Panels",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "payload"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/panels/batch-delete"
    }
   },
   "/episodes/{episode_id}/panels/import": {
@@ -8439,7 +9530,13 @@
     "summary": "Import Panels",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "payload"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/panels/import"
    }
   },
   "/episodes/{episode_id}/panels/reorder": {
@@ -8496,7 +9593,13 @@
     "summary": "Reorder Panels",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "payload"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/panels/reorder"
    }
   },
   "/episodes/{episode_id}/panels/{panel_id}": {
@@ -8553,7 +9656,13 @@
     "summary": "Delete Panel",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "panel_id"
+    ],
+    "x-mio-operation": "DELETE /episodes/{episode_id}/panels/{panel_id}"
    },
    "patch": {
     "operationId": "patch_panel",
@@ -8617,7 +9726,14 @@
     "summary": "Patch Panel",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "panel_id",
+     "payload"
+    ],
+    "x-mio-operation": "PATCH /episodes/{episode_id}/panels/{panel_id}"
    }
   },
   "/episodes/{episode_id}/panels/{panel_id}/composition": {
@@ -8688,7 +9804,14 @@
     "summary": "Composition Preview",
     "tags": [
      "canvas"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "panel_id",
+     "dialect"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/panels/{panel_id}/composition"
    }
   },
   "/episodes/{episode_id}/panels/{panel_id}/duplicate": {
@@ -8744,7 +9867,13 @@
     "summary": "Duplicate Panel",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "panel_id"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/panels/{panel_id}/duplicate"
    }
   },
   "/episodes/{episode_id}/panels/{panel_id}/history": {
@@ -8806,7 +9935,13 @@
     "summary": "Panel History",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "panel_id"
+    ],
+    "x-mio-operation": "GET /episodes/{episode_id}/panels/{panel_id}/history"
    }
   },
   "/episodes/{episode_id}/panels/{panel_id}/image": {
@@ -8894,7 +10029,15 @@
     "summary": "Reading Panel Image",
     "tags": [
      "canvas"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "panel_id",
+     "variant_id",
+     "width"
+    ],
+    "x-mio-operation": "GET /episodes/{episode_id}/panels/{panel_id}/image"
    }
   },
   "/episodes/{episode_id}/panels/{panel_id}/prompt": {
@@ -8969,7 +10112,14 @@
     "summary": "Panel Prompt",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "panel_id",
+     "variant_id"
+    ],
+    "x-mio-operation": "GET /episodes/{episode_id}/panels/{panel_id}/prompt"
    }
   },
   "/episodes/{episode_id}/panels/{panel_id}/restore": {
@@ -9036,7 +10186,14 @@
     "summary": "Restore Panel",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "panel_id",
+     "payload"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/panels/{panel_id}/restore"
    }
   },
   "/episodes/{episode_id}/qa": {
@@ -9095,7 +10252,13 @@
     "summary": "Qa",
     "tags": [
      "production"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/qa"
    }
   },
   "/episodes/{episode_id}/reading": {
@@ -9171,7 +10334,14 @@
     "summary": "Reading Preview",
     "tags": [
      "canvas"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "variant_id",
+     "width"
+    ],
+    "x-mio-operation": "GET /episodes/{episode_id}/reading"
    }
   },
   "/episodes/{episode_id}/render": {
@@ -9230,7 +10400,13 @@
     "summary": "Render",
     "tags": [
      "production"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/render"
    }
   },
   "/episodes/{episode_id}/restore": {
@@ -9279,7 +10455,12 @@
     "summary": "Restore Episode",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/restore"
    }
   },
   "/episodes/{episode_id}/slices": {
@@ -9355,7 +10536,14 @@
     "summary": "Slice Plan",
     "tags": [
      "production"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "preset",
+     "variant_id"
+    ],
+    "x-mio-operation": "GET /episodes/{episode_id}/slices"
    }
   },
   "/episodes/{episode_id}/strip": {
@@ -9413,7 +10601,13 @@
     "summary": "Save Strip",
     "tags": [
      "production"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "strip"
+    ],
+    "x-mio-operation": "PUT /episodes/{episode_id}/strip"
    }
   },
   "/episodes/{episode_id}/strip.png": {
@@ -9484,7 +10678,14 @@
     "summary": "Strip Png",
     "tags": [
      "production"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "variant_id",
+     "width"
+    ],
+    "x-mio-operation": "GET /episodes/{episode_id}/strip.png"
    }
   },
   "/episodes/{episode_id}/strip/layout": {
@@ -9541,7 +10742,13 @@
     "summary": "Layout Strip",
     "tags": [
      "production"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/strip/layout"
    }
   },
   "/episodes/{episode_id}/strip/report": {
@@ -9607,7 +10814,13 @@
     "summary": "Strip Report",
     "tags": [
      "canvas"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "variant_id"
+    ],
+    "x-mio-operation": "GET /episodes/{episode_id}/strip/report"
    }
   },
   "/episodes/{episode_id}/takes/{take_id}/adopt": {
@@ -9663,7 +10876,13 @@
     "summary": "Adopt Take",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "take_id"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/takes/{take_id}/adopt"
    }
   },
   "/episodes/{episode_id}/takes/{take_id}/image": {
@@ -9717,7 +10936,13 @@
     "summary": "Take Image",
     "tags": [
      "production"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "take_id"
+    ],
+    "x-mio-operation": "GET /episodes/{episode_id}/takes/{take_id}/image"
    }
   },
   "/episodes/{episode_id}/takes/{take_id}/reject": {
@@ -9773,7 +10998,13 @@
     "summary": "Reject Take",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "take_id"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/takes/{take_id}/reject"
    }
   },
   "/episodes/{episode_id}/takes/{take_id}/restore": {
@@ -9829,7 +11060,13 @@
     "summary": "Restore Take",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "take_id"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/takes/{take_id}/restore"
    }
   },
   "/export/album": {
@@ -9874,7 +11111,47 @@
     "summary": "Export Album",
     "tags": [
      "album"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /export/album"
+   }
+  },
+  "/export/formats": {
+   "get": {
+    "operationId": "export_formats",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         "title": "Response Export Formats",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Export Formats",
+    "tags": [
+     "production"
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /export/formats"
    }
   },
   "/export/motion": {
@@ -9919,7 +11196,12 @@
     "summary": "Export Motion",
     "tags": [
      "motion"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /export/motion"
    }
   },
   "/export/portable": {
@@ -9964,7 +11246,12 @@
     "summary": "Export Portable",
     "tags": [
      "album"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /export/portable"
    }
   },
   "/export/presets": {
@@ -9995,7 +11282,11 @@
     "summary": "Export Presets",
     "tags": [
      "production"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /export/presets"
    }
   },
   "/extension-panels": {
@@ -10027,7 +11318,11 @@
     "summary": "Extension Panels",
     "tags": [
      "extensions"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /extension-panels"
    }
   },
   "/extensions": {
@@ -10055,7 +11350,11 @@
     "summary": "List Extensions",
     "tags": [
      "extensions"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /extensions"
    },
    "post": {
     "description": "Raw body = zipped extension folder.  Installed disabled; review, then enable.",
@@ -10115,7 +11414,13 @@
     "summary": "Install Extension",
     "tags": [
      "extensions"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "request",
+     "replace"
+    ],
+    "x-mio-operation": "POST /extensions"
    }
   },
   "/extensions/{ext_id}": {
@@ -10155,7 +11460,12 @@
     "summary": "Remove Extension",
     "tags": [
      "extensions"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "ext_id"
+    ],
+    "x-mio-operation": "DELETE /extensions/{ext_id}"
    }
   },
   "/extensions/{ext_id}/disable": {
@@ -10204,7 +11514,12 @@
     "summary": "Disable Extension",
     "tags": [
      "extensions"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "ext_id"
+    ],
+    "x-mio-operation": "POST /extensions/{ext_id}/disable"
    }
   },
   "/extensions/{ext_id}/enable": {
@@ -10264,7 +11579,13 @@
     "summary": "Enable Extension",
     "tags": [
      "extensions"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "ext_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /extensions/{ext_id}/enable"
    }
   },
   "/instances": {
@@ -10292,7 +11613,11 @@
     "summary": "List Instances",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /instances"
    },
    "post": {
     "operationId": "create_instance",
@@ -10336,7 +11661,12 @@
     "summary": "Create Instance",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /instances"
    }
   },
   "/instances/{instance_id}": {
@@ -10376,7 +11706,12 @@
     "summary": "Delete Instance",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "instance_id"
+    ],
+    "x-mio-operation": "DELETE /instances/{instance_id}"
    },
    "put": {
     "operationId": "put_instance",
@@ -10431,7 +11766,13 @@
     "summary": "Put Instance",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "instance_id",
+     "body"
+    ],
+    "x-mio-operation": "PUT /instances/{instance_id}"
    }
   },
   "/instances/{instance_id}/health": {
@@ -10480,7 +11821,12 @@
     "summary": "Instance Health",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "instance_id"
+    ],
+    "x-mio-operation": "GET /instances/{instance_id}/health"
    }
   },
   "/jobs": {
@@ -10559,7 +11905,14 @@
     "summary": "List Jobs",
     "tags": [
      "jobs"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "owner",
+     "active",
+     "limit"
+    ],
+    "x-mio-operation": "GET /jobs"
    }
   },
   "/jobs/{job_id}": {
@@ -10599,7 +11952,12 @@
     "summary": "Delete Job",
     "tags": [
      "jobs"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "job_id"
+    ],
+    "x-mio-operation": "DELETE /jobs/{job_id}"
    },
    "get": {
     "operationId": "get_job",
@@ -10646,7 +12004,12 @@
     "summary": "Get Job",
     "tags": [
      "jobs"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "job_id"
+    ],
+    "x-mio-operation": "GET /jobs/{job_id}"
    }
   },
   "/jobs/{job_id}/cancel": {
@@ -10695,7 +12058,12 @@
     "summary": "Cancel",
     "tags": [
      "jobs"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "job_id"
+    ],
+    "x-mio-operation": "POST /jobs/{job_id}/cancel"
    }
   },
   "/jobs/{job_id}/deliveries": {
@@ -10748,7 +12116,12 @@
     "summary": "Job Result Deliveries",
     "tags": [
      "jobs"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "job_id"
+    ],
+    "x-mio-operation": "GET /jobs/{job_id}/deliveries"
    }
   },
   "/jobs/{job_id}/events": {
@@ -10820,7 +12193,14 @@
     "summary": "Job Events",
     "tags": [
      "jobs"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "job_id",
+     "after",
+     "limit"
+    ],
+    "x-mio-operation": "GET /jobs/{job_id}/events"
    }
   },
   "/jobs/{job_id}/items/{idx}/replay-result": {
@@ -10879,7 +12259,13 @@
     "summary": "Replay Job Result",
     "tags": [
      "jobs"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "job_id",
+     "idx"
+    ],
+    "x-mio-operation": "POST /jobs/{job_id}/items/{idx}/replay-result"
    }
   },
   "/jobs/{job_id}/items/{idx}/resolve": {
@@ -10948,7 +12334,14 @@
     "summary": "Resolve",
     "tags": [
      "jobs"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "job_id",
+     "idx",
+     "body"
+    ],
+    "x-mio-operation": "POST /jobs/{job_id}/items/{idx}/resolve"
    }
   },
   "/jobs/{job_id}/items/{idx}/restore-state": {
@@ -11017,7 +12410,14 @@
     "summary": "Restore Job Item State",
     "tags": [
      "jobs"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "job_id",
+     "idx",
+     "body"
+    ],
+    "x-mio-operation": "POST /jobs/{job_id}/items/{idx}/restore-state"
    }
   },
   "/jobs/{job_id}/pause": {
@@ -11066,7 +12466,12 @@
     "summary": "Pause",
     "tags": [
      "jobs"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "job_id"
+    ],
+    "x-mio-operation": "POST /jobs/{job_id}/pause"
    }
   },
   "/jobs/{job_id}/resume": {
@@ -11115,7 +12520,12 @@
     "summary": "Resume",
     "tags": [
      "jobs"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "job_id"
+    ],
+    "x-mio-operation": "POST /jobs/{job_id}/resume"
    }
   },
   "/jobs/{job_id}/retry": {
@@ -11175,7 +12585,13 @@
     "summary": "Retry",
     "tags": [
      "jobs"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "job_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /jobs/{job_id}/retry"
    }
   },
   "/jobs/{job_id}/state-recovery": {
@@ -11228,7 +12644,12 @@
     "summary": "Get Job State Recovery",
     "tags": [
      "jobs"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "job_id"
+    ],
+    "x-mio-operation": "GET /jobs/{job_id}/state-recovery"
    }
   },
   "/legacy/import": {
@@ -11277,7 +12698,12 @@
     "summary": "Legacy Import",
     "tags": [
      "system"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /legacy/import"
    }
   },
   "/legacy/scan": {
@@ -11333,7 +12759,12 @@
     "summary": "Legacy Scan",
     "tags": [
      "system"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "root"
+    ],
+    "x-mio-operation": "GET /legacy/scan"
    }
   },
   "/lettering/sfx-presets": {
@@ -11364,7 +12795,11 @@
     "summary": "Sfx Presets",
     "tags": [
      "canvas"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /lettering/sfx-presets"
    }
   },
   "/meta": {
@@ -11389,6 +12824,43 @@
     "tags": [
      "meta"
     ]
+   }
+  },
+  "/operations": {
+   "get": {
+    "description": "Discover typed operations and their active wrappers; schemas remain in OpenAPI.",
+    "operationId": "list_operations",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         "title": "Response List Operations",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "List Operations",
+    "tags": [
+     "operations"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "request"
+    ],
+    "x-mio-operation": "GET /operations"
    }
   },
   "/profiles": {
@@ -11418,7 +12890,11 @@
     "summary": "List Profiles",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /profiles"
    },
    "post": {
     "operationId": "create_profile",
@@ -11462,7 +12938,12 @@
     "summary": "Create Profile",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /profiles"
    }
   },
   "/profiles/{profile_id}": {
@@ -11502,7 +12983,12 @@
     "summary": "Delete Profile",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "profile_id"
+    ],
+    "x-mio-operation": "DELETE /profiles/{profile_id}"
    },
    "get": {
     "operationId": "get_profile",
@@ -11547,7 +13033,12 @@
     "summary": "Get Profile",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "profile_id"
+    ],
+    "x-mio-operation": "GET /profiles/{profile_id}"
    },
    "put": {
     "operationId": "put_profile",
@@ -11602,7 +13093,13 @@
     "summary": "Put Profile",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "profile_id",
+     "body"
+    ],
+    "x-mio-operation": "PUT /profiles/{profile_id}"
    }
   },
   "/registry": {
@@ -11630,7 +13127,11 @@
     "summary": "Registry",
     "tags": [
      "system"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /registry"
    }
   },
   "/series": {
@@ -11683,7 +13184,12 @@
     "summary": "List Series",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "deleted"
+    ],
+    "x-mio-operation": "GET /series"
    },
    "post": {
     "operationId": "create_series",
@@ -11727,7 +13233,12 @@
     "summary": "Create Series",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "payload"
+    ],
+    "x-mio-operation": "POST /series"
    }
   },
   "/series/{series_id}": {
@@ -11767,7 +13278,12 @@
     "summary": "Trash Series",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id"
+    ],
+    "x-mio-operation": "DELETE /series/{series_id}"
    },
    "get": {
     "operationId": "get_series",
@@ -11812,7 +13328,12 @@
     "summary": "Get Series",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id"
+    ],
+    "x-mio-operation": "GET /series/{series_id}"
    },
    "patch": {
     "operationId": "patch_series",
@@ -11867,7 +13388,13 @@
     "summary": "Patch Series",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id",
+     "payload"
+    ],
+    "x-mio-operation": "PATCH /series/{series_id}"
    }
   },
   "/series/{series_id}/bundle": {
@@ -11912,7 +13439,379 @@
     "summary": "Export Bundle",
     "tags": [
      "system"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id"
+    ],
+    "x-mio-operation": "GET /series/{series_id}/bundle"
+   }
+  },
+  "/series/{series_id}/checkpoints": {
+   "get": {
+    "operationId": "list_checkpoints",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/CheckpointSummary"
+         },
+         "title": "Response List Checkpoints",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "List Checkpoints",
+    "tags": [
+     "checkpoints"
+    ],
+    "x-mio-arguments": [
+     "series_id",
+     "ctx"
+    ],
+    "x-mio-operation": "GET /series/{series_id}/checkpoints"
+   },
+   "post": {
+    "operationId": "create_checkpoint",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CheckpointCreate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Checkpoint"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Create Checkpoint",
+    "tags": [
+     "checkpoints"
+    ],
+    "x-mio-arguments": [
+     "series_id",
+     "body",
+     "ctx"
+    ],
+    "x-mio-operation": "POST /series/{series_id}/checkpoints"
+   }
+  },
+  "/series/{series_id}/checkpoints/{checkpoint_id}": {
+   "delete": {
+    "operationId": "delete_checkpoint",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "checkpoint_id",
+      "required": true,
+      "schema": {
+       "title": "Checkpoint Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Delete Checkpoint",
+    "tags": [
+     "checkpoints"
+    ],
+    "x-mio-arguments": [
+     "series_id",
+     "checkpoint_id",
+     "ctx"
+    ],
+    "x-mio-operation": "DELETE /series/{series_id}/checkpoints/{checkpoint_id}"
+   },
+   "get": {
+    "operationId": "get_checkpoint",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "checkpoint_id",
+      "required": true,
+      "schema": {
+       "title": "Checkpoint Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Checkpoint"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Get Checkpoint",
+    "tags": [
+     "checkpoints"
+    ],
+    "x-mio-arguments": [
+     "series_id",
+     "checkpoint_id",
+     "ctx"
+    ],
+    "x-mio-operation": "GET /series/{series_id}/checkpoints/{checkpoint_id}"
+   }
+  },
+  "/series/{series_id}/checkpoints/{checkpoint_id}/preview": {
+   "get": {
+    "operationId": "preview_checkpoint",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "checkpoint_id",
+      "required": true,
+      "schema": {
+       "title": "Checkpoint Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CheckpointPreview"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Preview Checkpoint",
+    "tags": [
+     "checkpoints"
+    ],
+    "x-mio-arguments": [
+     "series_id",
+     "checkpoint_id",
+     "ctx"
+    ],
+    "x-mio-operation": "GET /series/{series_id}/checkpoints/{checkpoint_id}/preview"
+   }
+  },
+  "/series/{series_id}/checkpoints/{checkpoint_id}/restore": {
+   "post": {
+    "operationId": "restore_checkpoint",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "checkpoint_id",
+      "required": true,
+      "schema": {
+       "title": "Checkpoint Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/CheckpointRestore"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/CheckpointRestored"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Restore Checkpoint",
+    "tags": [
+     "checkpoints"
+    ],
+    "x-mio-arguments": [
+     "series_id",
+     "checkpoint_id",
+     "body",
+     "ctx"
+    ],
+    "x-mio-operation": "POST /series/{series_id}/checkpoints/{checkpoint_id}/restore"
    }
   },
   "/series/{series_id}/episodes": {
@@ -11984,7 +13883,14 @@
     "summary": "List Episodes",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id",
+     "offset",
+     "limit"
+    ],
+    "x-mio-operation": "GET /series/{series_id}/episodes"
    },
    "post": {
     "operationId": "create_episode",
@@ -12039,7 +13945,13 @@
     "summary": "Create Episode",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id",
+     "payload"
+    ],
+    "x-mio-operation": "POST /series/{series_id}/episodes"
    }
   },
   "/series/{series_id}/episodes/generate": {
@@ -12097,7 +14009,195 @@
     "summary": "Generate Episode",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id",
+     "payload"
+    ],
+    "x-mio-operation": "POST /series/{series_id}/episodes/generate"
+   }
+  },
+  "/series/{series_id}/episodes/reorder": {
+   "post": {
+    "operationId": "reorder_episodes",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/EpisodeReorder"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/Episode"
+         },
+         "title": "Response Reorder Episodes",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Reorder Episodes",
+    "tags": [
+     "longform"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /series/{series_id}/episodes/reorder"
+   }
+  },
+  "/series/{series_id}/head": {
+   "get": {
+    "operationId": "get_work_head",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/WorkHead"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Get Work Head",
+    "tags": [
+     "checkpoints"
+    ],
+    "x-mio-arguments": [
+     "series_id",
+     "ctx"
+    ],
+    "x-mio-operation": "GET /series/{series_id}/head"
+   }
+  },
+  "/series/{series_id}/panels/transfer": {
+   "post": {
+    "operationId": "transfer_panels",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PanelTransfer"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/TransferResult"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Transfer Panels",
+    "tags": [
+     "longform"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /series/{series_id}/panels/transfer"
    }
   },
   "/series/{series_id}/restore": {
@@ -12144,7 +14244,201 @@
     "summary": "Restore Series",
     "tags": [
      "series"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id"
+    ],
+    "x-mio-operation": "POST /series/{series_id}/restore"
+   }
+  },
+  "/series/{series_id}/variables/apply": {
+   "post": {
+    "operationId": "apply_variables",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/VariableApply"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/VariableResult"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Apply Variables",
+    "tags": [
+     "longform"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /series/{series_id}/variables/apply"
+   }
+  },
+  "/series/{series_id}/variables/find": {
+   "post": {
+    "operationId": "find_variables",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/VariableQuery"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/VariableSearch"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Find Variables",
+    "tags": [
+     "longform"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /series/{series_id}/variables/find"
+   }
+  },
+  "/series/{series_id}/variables/preview": {
+   "post": {
+    "operationId": "preview_variables",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/VariableOperation"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/VariablePreview"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Preview Variables",
+    "tags": [
+     "longform"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /series/{series_id}/variables/preview"
    }
   },
   "/settings": {
@@ -12172,7 +14466,11 @@
     "summary": "Get Settings",
     "tags": [
      "system"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /settings"
    },
    "patch": {
     "description": "Deep-merges one level; sending the masked api key back keeps the stored one.",
@@ -12221,7 +14519,12 @@
     "summary": "Patch Settings",
     "tags": [
      "system"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "patch"
+    ],
+    "x-mio-operation": "PATCH /settings"
    }
   },
   "/themes": {
@@ -12252,7 +14555,11 @@
     "summary": "List Themes",
     "tags": [
      "extensions"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /themes"
    },
    "post": {
     "description": "Import a theme file (JSON).  Built-in and extension ids cannot be overwritten.",
@@ -12301,7 +14608,12 @@
     "summary": "Import Theme",
     "tags": [
      "extensions"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /themes"
    }
   },
   "/themes/{theme_id}": {
@@ -12341,7 +14653,12 @@
     "summary": "Delete Theme",
     "tags": [
      "extensions"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "theme_id"
+    ],
+    "x-mio-operation": "DELETE /themes/{theme_id}"
    }
   },
   "/tokens": {
@@ -12369,7 +14686,11 @@
     "summary": "List Tokens",
     "tags": [
      "access"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /tokens"
    },
    "post": {
     "description": "The plaintext ``token`` is returned only here, once.",
@@ -12416,7 +14737,12 @@
     "summary": "Create Token",
     "tags": [
      "access"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /tokens"
    }
   },
   "/tokens/{token_id}": {
@@ -12456,7 +14782,12 @@
     "summary": "Revoke Token",
     "tags": [
      "access"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "token_id"
+    ],
+    "x-mio-operation": "DELETE /tokens/{token_id}"
    }
   },
   "/trash": {
@@ -12484,7 +14815,11 @@
     "summary": "List Trash",
     "tags": [
      "system"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /trash"
    }
   },
   "/trash/expire": {
@@ -12512,7 +14847,11 @@
     "summary": "Expire",
     "tags": [
      "system"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "POST /trash/expire"
    }
   },
   "/trash/{kind}/{item_id}": {
@@ -12566,7 +14905,13 @@
     "summary": "Purge",
     "tags": [
      "system"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "kind",
+     "item_id"
+    ],
+    "x-mio-operation": "DELETE /trash/{kind}/{item_id}"
    }
   },
   "/update": {
@@ -12594,7 +14939,11 @@
     "summary": "Update Status",
     "tags": [
      "update"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /update"
    }
   },
   "/update/check": {
@@ -12622,7 +14971,11 @@
     "summary": "Check Update",
     "tags": [
      "update"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "POST /update/check"
    }
   },
   "/update/download": {
@@ -12651,7 +15004,11 @@
     "summary": "Download Update",
     "tags": [
      "update"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "POST /update/download"
    }
   },
   "/webhooks": {
@@ -12679,7 +15036,11 @@
     "summary": "List Webhooks",
     "tags": [
      "webhooks"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /webhooks"
    },
    "post": {
     "description": "The signing ``secret`` is shown in full only here and after ``rotate_secret``.",
@@ -12728,7 +15089,12 @@
     "summary": "Create Webhook",
     "tags": [
      "webhooks"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /webhooks"
    }
   },
   "/webhooks/{hook_id}": {
@@ -12768,7 +15134,12 @@
     "summary": "Delete Webhook",
     "tags": [
      "webhooks"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "hook_id"
+    ],
+    "x-mio-operation": "DELETE /webhooks/{hook_id}"
    },
    "patch": {
     "operationId": "update_webhook",
@@ -12825,7 +15196,13 @@
     "summary": "Update Webhook",
     "tags": [
      "webhooks"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "hook_id",
+     "body"
+    ],
+    "x-mio-operation": "PATCH /webhooks/{hook_id}"
    }
   },
   "/webhooks/{hook_id}/deliveries": {
@@ -12877,7 +15254,12 @@
     "summary": "Webhook Deliveries",
     "tags": [
      "webhooks"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "hook_id"
+    ],
+    "x-mio-operation": "GET /webhooks/{hook_id}/deliveries"
    }
   },
   "/webhooks/{hook_id}/test": {
@@ -12927,7 +15309,12 @@
     "summary": "Test Webhook",
     "tags": [
      "webhooks"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "hook_id"
+    ],
+    "x-mio-operation": "POST /webhooks/{hook_id}/test"
    }
   },
   "/whoami": {
@@ -12986,7 +15373,11 @@
     "summary": "List Workflows",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /workflows"
    },
    "post": {
     "operationId": "import_workflow",
@@ -13032,7 +15423,12 @@
     "summary": "Import Workflow",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /workflows"
    }
   },
   "/workflows/inspect": {
@@ -13079,7 +15475,12 @@
     "summary": "Inspect Workflow",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /workflows/inspect"
    }
   },
   "/workflows/{workflow_id}": {
@@ -13119,7 +15520,12 @@
     "summary": "Delete Workflow",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "workflow_id"
+    ],
+    "x-mio-operation": "DELETE /workflows/{workflow_id}"
    },
    "get": {
     "operationId": "get_workflow",
@@ -13166,7 +15572,12 @@
     "summary": "Get Workflow",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "workflow_id"
+    ],
+    "x-mio-operation": "GET /workflows/{workflow_id}"
    },
    "patch": {
     "operationId": "patch_workflow",
@@ -13223,7 +15634,13 @@
     "summary": "Patch Workflow",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "workflow_id",
+     "body"
+    ],
+    "x-mio-operation": "PATCH /workflows/{workflow_id}"
    }
   },
   "/workflows/{workflow_id}/capture-state": {
@@ -13283,7 +15700,13 @@
     "summary": "Capture Workflow State",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "workflow_id",
+     "instance_id"
+    ],
+    "x-mio-operation": "POST /workflows/{workflow_id}/capture-state"
    }
   },
   "/workflows/{workflow_id}/compile": {
@@ -13343,7 +15766,13 @@
     "summary": "Compile Preview",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "workflow_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /workflows/{workflow_id}/compile"
    }
   },
   "/workflows/{workflow_id}/copy": {
@@ -13392,7 +15821,12 @@
     "summary": "Copy Workflow",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "workflow_id"
+    ],
+    "x-mio-operation": "POST /workflows/{workflow_id}/copy"
    }
   },
   "/workflows/{workflow_id}/diagnose": {
@@ -13468,7 +15902,14 @@
     "summary": "Diagnose Workflow",
     "tags": [
      "library"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "workflow_id",
+     "instance_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /workflows/{workflow_id}/diagnose"
    }
   },
   "/workshop": {
@@ -13495,7 +15936,11 @@
     "summary": "Get Workshop",
     "tags": [
      "workshop"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /workshop"
    }
   },
   "/workshop/assemble": {
@@ -13542,7 +15987,12 @@
     "summary": "Assemble",
     "tags": [
      "workshop"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /workshop/assemble"
    }
   },
   "/workshop/assemble/preview": {
@@ -13589,7 +16039,12 @@
     "summary": "Preview Assembly",
     "tags": [
      "workshop"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /workshop/assemble/preview"
    }
   },
   "/workshop/preview": {
@@ -13636,7 +16091,12 @@
     "summary": "Preview Preset",
     "tags": [
      "workshop"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /workshop/preview"
    }
   },
   "/workshop/queue": {
@@ -13663,7 +16123,11 @@
     "summary": "Get Queue",
     "tags": [
      "workshop"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /workshop/queue"
    },
    "patch": {
     "description": "默认并发: panels per album for albums without their own setting (None = automatic).",
@@ -13708,7 +16172,12 @@
     "summary": "Patch Queue",
     "tags": [
      "workshop"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "PATCH /workshop/queue"
    }
   },
   "/workshop/queue/clear": {
@@ -13735,7 +16204,11 @@
     "summary": "Clear Queue",
     "tags": [
      "workshop"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "POST /workshop/queue/clear"
    }
   },
   "/workshop/queue/order": {
@@ -13782,7 +16255,12 @@
     "summary": "Order Queue",
     "tags": [
      "workshop"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "PUT /workshop/queue/order"
    }
   },
   "/workshop/queue/pause": {
@@ -13809,7 +16287,11 @@
     "summary": "Pause Queue",
     "tags": [
      "workshop"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "POST /workshop/queue/pause"
    }
   },
   "/workshop/queue/remove": {
@@ -13856,7 +16338,12 @@
     "summary": "Remove From Queue",
     "tags": [
      "workshop"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /workshop/queue/remove"
    }
   },
   "/workshop/queue/resume": {
@@ -13882,7 +16369,11 @@
     "summary": "Resume Queue",
     "tags": [
      "workshop"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "POST /workshop/queue/resume"
    }
   },
   "/workshop/queue/start": {
@@ -13929,7 +16420,12 @@
     "summary": "Start Queue",
     "tags": [
      "workshop"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /workshop/queue/start"
    }
   },
   "/workshop/tasks/{series_id}/clone": {
@@ -13994,7 +16490,13 @@
     "summary": "Clone Task",
     "tags": [
      "workshop"
-    ]
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /workshop/tasks/{series_id}/clone"
    }
   }
  },

@@ -22,6 +22,7 @@ import threading
 from pathlib import Path
 
 from .jobs import JobNotFound
+from .jobs.operations import operation_serialized
 from .models import Series, WorkshopQueue
 from .storage import NotFound
 
@@ -219,6 +220,7 @@ class ProductionQueue:
                 self._save(q)
 
     # ------------------------------------------------------------------ the lane
+    @operation_serialized
     def advance(self) -> WorkshopQueue:
         with self.lock:
             q = self.state()
@@ -246,6 +248,7 @@ class ProductionQueue:
                 break
             return self._save(q)
 
+    @operation_serialized
     def _start_album(self, album_id: str) -> dict | None:
         series = self.store.get_series(album_id)
         if series.deleted_at or series.kind != "album":

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import quote
 
-from fastapi import APIRouter, Request, Response, status
+from fastapi import Request, Response, status
 from pydantic import BaseModel
 
 from .. import bundle as B
@@ -16,6 +16,7 @@ from ..models import now_iso
 from ..storage import Conflict
 from .deps import Ctx
 from .library import BINARY_BODY, read_body
+from .operations import Router as APIRouter
 
 router = APIRouter(tags=["system"])
 MAX_BUNDLE = 1024 * 1024 * 1024

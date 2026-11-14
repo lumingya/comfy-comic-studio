@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, status
+from fastapi import status
 from pydantic import BaseModel, Field
 
 from .. import auth as AU
 from ..webhooks import EVENTS, Webhook
 from .deps import Ctx
+from .operations import Router as APIRouter
 
 tokens = APIRouter(tags=["access"])
 hooks = APIRouter(tags=["webhooks"])

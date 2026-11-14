@@ -36,6 +36,7 @@ from typing import Any, Callable
 
 from .delivery import DeliveryRuntime
 from .lease import FileLease
+from .operations import OperationRuntime, operation_serialized
 from .pool import InstanceSlot, ResourcePool
 from .runtime import EngineRuntime
 from .state_leases import StateLeases
@@ -57,7 +58,7 @@ from .types import (  # noqa: F401  (re-exported)
 log = logging.getLogger("mio.jobs")
 
 
-class JobEngine(DeliveryRuntime, EngineRuntime):
+class JobEngine(OperationRuntime, DeliveryRuntime, EngineRuntime):
     def __init__(
         self,
         path: str | Path = ":memory:",
@@ -70,6 +71,7 @@ class JobEngine(DeliveryRuntime, EngineRuntime):
         self.pool = pool or ResourcePool()
         self.executors: dict[str, Any] = {}
         self.lock = threading.RLock()
+        self._operation_lock = threading.RLock()
         self._job_guards: dict[str, tuple[threading.RLock, int]] = {}
         self._applying_jobs: set[str] = set()
         self._callback_context = threading.local()
@@ -150,6 +152,7 @@ class JobEngine(DeliveryRuntime, EngineRuntime):
                 self._aggregate(job_id)
 
     # ================================================================== public API
+    @operation_serialized
     def submit(
         self,
         kind: str,
@@ -380,6 +383,7 @@ class JobEngine(DeliveryRuntime, EngineRuntime):
                 log.warning("abort hook failed: %s", exc)
         return self.get(job_id)
 
+    @operation_serialized
     def retry(
         self,
         job_id: str,

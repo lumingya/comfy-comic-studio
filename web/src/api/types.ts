@@ -63,6 +63,7 @@ export interface EpisodeSummary {
   series_id: string;
   title: string;
   order: number;
+  revision?: number;
   panel_count: number;
   /** Panels with an adopted base-variant take. */
   adopted_count: number;

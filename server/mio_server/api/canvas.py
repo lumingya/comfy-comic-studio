@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from fastapi import APIRouter, Query, Response
+from fastapi import Query, Response
 from pydantic import BaseModel, ConfigDict, Field
 
 from ..models import Episode, LetterStyle, PanelWidth
@@ -15,6 +15,7 @@ from ..pipeline.compiler import canvas_size
 from ..pipeline.reading import ReadingPreview
 from ..storage import NotFound
 from .deps import Ctx
+from .operations import Router as APIRouter
 
 router = APIRouter(tags=["canvas"])
 

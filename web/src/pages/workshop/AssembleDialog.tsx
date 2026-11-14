@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useCreationKits } from '../../api/creationKits';
 import { useEpisode, useEpisodes } from '../../api/series';
 import { useProfiles, useSettings } from '../../api/system';
 import { useAssemble, useWorkshop, type Preset } from '../../api/workshop';
@@ -7,9 +9,11 @@ import { Icon } from '../../app/icons';
 import { useRenderRoute } from '../../app/renderRoute';
 import { toast, toastError } from '../../components/toast';
 import { ownCancel } from '../../components/topLayer';
+import { QueryError } from '../../app/errors';
 import { AssemblyCanvas, EMPTY_DESIGN, canvasTasks, type CanvasDesign } from './AssemblyCanvas';
 import { AssemblyReview } from './AssemblyReview';
 import { AssemblyIntents } from './assemblyIntent';
+import './creation-kits.css';
 
 const STEPS = ['story', 'presets', 'name'] as const;
 
@@ -27,29 +31,39 @@ export default function AssembleDialog({
 }) {
   const { t } = useTranslation();
   const ref = useRef<HTMLDialogElement>(null);
+  const [params] = useSearchParams();
+  const [kitId, setKitId] = useState(params.get('kit') ?? '');
+  const kits = useCreationKits();
   const ws = useWorkshop();
-  const boards = useEpisodes(ws.data?.id);
+  const source = kitId ? kits.data?.find((kit) => kit.id === kitId) : ws.data;
+  const sourcePending = kitId ? kits.isPending : ws.isPending;
+  const boards = useEpisodes(source?.id);
   const profiles = useProfiles();
   const settings = useSettings();
   const collection = settings.data?.collection_title || t('classic.shelf.defaultTitle');
-  const assemble = useAssemble();
+  const assemble = useAssemble(kitId || undefined);
   const [mode, setMode] = useState<'wizard' | 'canvas'>('wizard');
   const [design, setDesign] = useState<CanvasDesign>(EMPTY_DESIGN);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState(0);
-  const [story, setStory] = useState(initialStory ?? '');
+  const [story, setStory] = useState(kitId ? '' : (initialStory ?? ''));
   const [profile, setProfile] = useState('');
   const [chosen, setChosen] = useState<string[] | null>(null);
   const [title, setTitle] = useState<string | null>(null);
   const [variables, setVariables] = useState<Record<string, string>>({});
   const intents = useRef(new AssemblyIntents());
-  const presets = ws.data?.presets ?? [];
+  const presets = source?.presets ?? [];
   const items = boards.data?.items ?? [];
   const storyId = story || items[0]?.id;
   const board = items.find((b) => b.id === storyId);
   const { data: storyboard } = useEpisode(storyId);
-  const route = useRenderRoute(profile, ws.data?.default_profile_id, ws.isPending, false);
+  const route = useRenderRoute(
+    kitId ? '' : profile,
+    source?.default_profile_id,
+    sourcePending,
+    false,
+  );
 
   useEffect(() => {
     const d = ref.current;
@@ -67,8 +81,10 @@ export default function AssembleDialog({
   const defaultTitle = [board?.title, first ? displayName(first) : ''].filter(Boolean).join(' · ');
   const name = title ?? defaultTitle.slice(0, 120);
   const profileList = profiles.data ?? [];
-  const profileId = profile;
+  const profileId = kitId ? '' : profile;
   const profileName = route.profile?.name ?? t('ws.assemble.profileDefault');
+  const routeSummary =
+    kitId && route.profile?.binding_required ? t('kits.pendingBinding') : route.summary;
   const request = {
     storyboard_id: storyId ?? '',
     preset_ids: picked,
@@ -77,6 +93,19 @@ export default function AssembleDialog({
     variables,
   };
   const intentKey = intents.current.keyFor('wizard', request);
+  const changeSource = (id: string) => {
+    setKitId(id);
+    setStory('');
+    setProfile('');
+    setChosen(null);
+    setTitle(null);
+    setVariables({});
+    setDesign(EMPTY_DESIGN);
+    setConfirming(false);
+    setStep(0);
+    intents.current = new AssemblyIntents();
+    assemble.reset();
+  };
   // Synchronize per-node intent keys when request contents change, ignoring canvas movement.
   design.stories.forEach((node) =>
     intents.current.keyFor(node.id, {
@@ -167,25 +196,35 @@ export default function AssembleDialog({
         <span className="label" id="designer-channel-label">
           {t('ws.assemble.channel')}
         </span>
-        <p aria-labelledby="designer-channel-label">{route.summary}</p>
+        <p aria-labelledby="designer-channel-label">{routeSummary}</p>
       </div>
       <div className="field">
-        <label className="label" htmlFor="designer-profile">
+        <label className="label" htmlFor={kitId ? undefined : 'designer-profile'}>
           {t('ws.assemble.profile')}
         </label>
-        <select
-          id="designer-profile"
-          value={profileId}
-          onChange={(e) => setProfile(e.target.value)}
-        >
-          <option value="">{t('ws.assemble.profileDefault')}</option>
-          {profileList.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-        <p className="help">{t('ws.assemble.profileHelp')}</p>
+        {kitId ? (
+          <>
+            <p>{profileName}</p>
+            <p className="help">{t('kits.kitProfile')}</p>
+            <Link className="btn small" to="/engine?tab=profiles">
+              {t('kits.configure')}
+            </Link>
+          </>
+        ) : (
+          <select
+            id="designer-profile"
+            value={profileId}
+            onChange={(e) => setProfile(e.target.value)}
+          >
+            <option value="">{t('ws.assemble.profileDefault')}</option>
+            {profileList.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        )}
+        {!kitId ? <p className="help">{t('ws.assemble.profileHelp')}</p> : null}
         {storyboard?.panels.some((panel) => panel.overrides.profile_id) ? (
           <p className="help">{t('route.panelOverrides')}</p>
         ) : null}
@@ -214,6 +253,34 @@ export default function AssembleDialog({
         </button>
       </header>
       <div className="modal-body">
+        <div className="field creation-kit-source">
+          <label className="label" htmlFor="designer-source">
+            {t('kits.source')}
+          </label>
+          <select
+            id="designer-source"
+            value={kitId}
+            disabled={assemble.isPending || busy}
+            onChange={(event) => changeSource(event.target.value)}
+          >
+            <option value="">{t('kits.workshop')}</option>
+            {kitId && !kits.data?.some((kit) => kit.id === kitId) ? (
+              <option value={kitId}>
+                {sourcePending ? t('kits.loadingSource') : t('kits.missingSource')}
+              </option>
+            ) : null}
+            {(kits.data ?? []).map((kit) => (
+              <option key={kit.id} value={kit.id}>
+                {kit.title}
+              </option>
+            ))}
+          </select>
+          {kits.isError ? <QueryError error={kits.error} onRetry={kits.refetch} /> : null}
+          {kitId && !sourcePending && !source && !kits.isError ? (
+            <p className="notice warn">{t('kits.missingSource')}</p>
+          ) : null}
+          {boards.isError ? <QueryError error={boards.error} onRetry={boards.refetch} /> : null}
+        </div>
         <div className="designer-head">
           <div className="designer-modes" role="group" aria-label={t('ws.assemble.mode')}>
             {(['wizard', 'canvas'] as const).map((m) => (
@@ -430,6 +497,7 @@ export default function AssembleDialog({
                     </section>
                     <AssemblyReview
                       body={request}
+                      kitId={kitId || undefined}
                       variables={variables}
                       onVariables={setVariables}
                     />
@@ -458,7 +526,7 @@ export default function AssembleDialog({
                         </div>
                         <div className="designer-summary-row">
                           <dt>{t('ws.assemble.channel')}</dt>
-                          <dd>{route.summary}</dd>
+                          <dd>{routeSummary}</dd>
                         </div>
                         <div className="designer-summary-row">
                           <dt>{t('ws.assemble.profile')}</dt>
@@ -505,7 +573,7 @@ export default function AssembleDialog({
           <button
             type="button"
             className="btn primary"
-            disabled={!design.stories.length || busy}
+            disabled={!source || !design.stories.length || busy}
             title={design.stories.length ? undefined : t('ws.canvas.needStory')}
             onClick={() => void submitCanvas()}
           >
@@ -524,7 +592,7 @@ export default function AssembleDialog({
           <button
             type="button"
             className="btn primary"
-            disabled={!storyId}
+            disabled={!source || !storyId}
             onClick={() => setStep(step + 1)}
           >
             <Icon name="arrow" />
@@ -534,7 +602,7 @@ export default function AssembleDialog({
           <button
             type="button"
             className="btn primary"
-            disabled={!storyId || name.length > 120 || assemble.isPending}
+            disabled={!source || !storyId || name.length > 120 || assemble.isPending}
             onClick={submit}
           >
             <Icon name="plus" />

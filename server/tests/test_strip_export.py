@@ -152,5 +152,7 @@ class RegistryTests(unittest.TestCase):
         reg.register("exporter", "long", "v2", replace=True, source="ext.demo")
         self.assertEqual(reg.describe()["exporter"][0]["source"], "ext.demo")
         reg.unregister("exporter", "long")
+        self.assertIs(reg.get("exporter", "long"), long_exporter)
+        reg.unregister("exporter", "long")
         with self.assertRaises(RegistryError):
             reg.get("exporter", "long")

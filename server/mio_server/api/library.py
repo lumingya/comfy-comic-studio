@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Request, Response, status
+from fastapi import Request, Response, status
 from pydantic import BaseModel, Field
 
 from .. import imaging
@@ -18,6 +18,7 @@ from ..models import now_iso
 from ..render_models import Asset, ComfyInstance, RenderProfile, WorkflowConfig, WorkflowDoc
 from ..storage import Conflict
 from .deps import Ctx
+from .operations import Router as APIRouter
 
 router = APIRouter(tags=["library"])
 

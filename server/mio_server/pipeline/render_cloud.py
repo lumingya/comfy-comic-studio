@@ -6,6 +6,7 @@ import copy
 
 from ..comfy.compile import asset_value, find_placeholders
 from ..jobs import COMFY, ItemSpec
+from ..jobs.operations import operation_serialized
 from .render_edits import RenderError
 
 CLOUD_SOURCE = "__cloud_source__"
@@ -79,6 +80,7 @@ class CloudRefinementMixin:
             },
         }
 
+    @operation_serialized
     def refine_shape(self, episode_id: str, take_id: str, plan: dict) -> dict | None:
         episode = self.store.get_episode(episode_id)
         take = episode.take(take_id)

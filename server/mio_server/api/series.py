@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Query, status
+from fastapi import Query, status
 from pydantic import BaseModel, Field
 
 from ..models import (
@@ -24,6 +24,7 @@ from ..pipeline.compiler import preview as prompt_preview
 from ..pipeline.refs import select_references
 from ..storage import NotFound
 from .deps import Ctx
+from .operations import Router as APIRouter
 
 router = APIRouter(tags=["series"])
 

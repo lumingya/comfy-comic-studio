@@ -112,7 +112,9 @@ def deactivate():  # 可选：停用时调用
 | --- | --- |
 | `mio.hook(name, fn=None, *, priority=100)` | 注册钩子，可以当装饰器用。`priority` 越小越先执行 |
 | `mio.contribute(point, id, value, *, title="")` | 往注册表的扩展点里添加一项 |
-| `mio.router` | FastAPI `APIRouter`，挂在 `/api/ext/<id>` 下。新增路由要重启服务后生效 |
+| `mio.router` | FastAPI `APIRouter`，同时挂在 `/api/ext/<id>` 与 `/api/v2/ext/<id>`；v2 默认要求 admin，新增路由要重启 |
+| `mio.route(method, path, scope="admin", **kwargs)` | 注册有明确权限的自定义路由，例如只读查询用 `scope="read"`，出图用 `scope="render"` |
+| `mio.operation(id)` | 包装界面和 v2 共用的核心操作，参见下节 |
 | `mio.load_settings()` / `mio.save_settings(data)` | 扩展自己的 JSON 设置，存在 `<数据目录>/extension-data/<id>.json` |
 | `mio.log` | `logging.Logger`，名字是 `mio.ext.<id>` |
 | `mio.internal` | 整个 `AppContext`（全部存储和服务）。这是**不稳定**的后门，可能随版本变化 |
@@ -136,7 +138,41 @@ def deactivate():  # 可选：停用时调用
 
 ### 扩展点
 
-`mio.contribute` 支持的扩展点：`job_executor`、`exporter`、`slice_preset`、`prompt_dialect`、`pipeline_step`、`provider`、`workflow_template`、`layout`、`script_template`、`panel`、`command`、`route`、`theme`、`album_template`、`sfx_preset`、`cloud_adapter`。完整列表和说明见 `GET /api/registry`，或者 `mio_server/registry.py` 里的 `POINTS`。
+`GET /api/registry` 列出贡献目录。已直接连接核心执行路径的契约包括 `operation`、`workflow_binding`、`exporter`、`slice_preset`、`layout`、`theme`、`album_template`、`sfx_preset` 和 `cloud_adapter`。
+其他名称目前可描述能力，但不能仅注册一个名称就改变任务执行。尤其是 `job_executor` 的目录项不支持热替换运行中的执行器；新增任务执行器仍需内部引擎接口及独立的结果重放契约。
+`replace=True` 可覆盖同 ID 贡献；同来源更新只保留一层，停用来源会恢复上一层。加载失败也会移除失败来源，不会把被覆盖的核心实现丢掉。
+
+### 包装核心操作
+
+`GET /api/v2/operations` 返回核心 HTTP 操作的 ID、实际参数名称、所需权限与当前包装来源；OpenAPI 的
+`x-mio-operation` 与 `x-mio-arguments` 提供同一信息。ID 是相对 `/api` 的 `METHOD /path/{parameter}`。
+包装发生在认证与请求校验之后，响应仍按接口声明校验；不包含静态文件、健康检查、WebSocket 和后台内部服务调用。
+
+```python
+def activate(mio):
+    @mio.operation("POST /series")
+    async def title_prefix(next, ctx, payload):
+        payload = payload.model_copy(update={"title": "日常 · " + payload.title})
+        return await next(payload=payload)
+```
+
+支持同步或异步包装器；`next` 是异步函数，最多调用一次。新启用的包装器位于外层，可传修改后的同名参数、
+处理返回值或直接返回替代结果。扩展应维持原 API 类型与业务约束；安装的 Python 扩展是受信任代码。
+失败会向调用者报告，**不会自动重试核心写操作**，因为核心可能已经成功。直接返回 `Response` 与普通 FastAPI
+路由一样绕过响应模型验证。停用扩展影响之后的新调用，已经开始的请求继续使用其捕获的包装链。
+
+### 导出和版式
+
+`exporter` 的 `interface="strip"` 契约是
+`fn(image, strip, fmt, *, preset_id, title, subtitle, quality) -> (bytes, mime, filename)`，
+由 `GET /episodes/{id}/export?fmt=<贡献ID>` 调用，`GET /export/formats` 可发现格式。
+已有 `album` 与 `motion` 导出器分别使用原画册和动态漫函数签名，也经过注册表调用。
+`layout` 使用 `fn(series, episode, images, faces, *, relayout_lettering) -> (Strip, scaled_images)`；
+替换 `strip.default` 会同时影响自动排版与阅读合成，须尊重已保存的手动构图。显式排版请求也可传 `layout_id`。
+更换版式贡献会清空阅读缓存。
+
+可直接打包的 [`page-notes`](../../../examples/extensions/page-notes/README.md) 示例同时演示操作包装、
+真实 JPEG 导出与带 `read` 权限的扩展查询。所有实例与候选数据均来自已有作品，不触发生成。
 
 举个例子，新增一种云端出图渠道类型的做法是：写一个 `HttpChannel` 的子类，实现 `_once(http, prompt, refs) -> bytes`，然后用 `mio.contribute("cloud_adapter", "my_kind", MyChannel)` 注册。注册后，「设置 → 云端出图」的类型下拉框里就会出现 `my_kind`。
 
@@ -172,14 +208,16 @@ def activate(mio):
 仓库的 [`examples/extensions/qa-review`](../../../examples/extensions/qa-review/README.md) 提供可选 QA
 入口、标准库 CLI 和完整打包步骤。安装与启用不提交任务，只有明确调用本机
 `POST /api/ext/qa-review/queue` 才评审所选候选，且固定 `auto_adopt=False`。
-示例使用不稳定的 `mio.internal.qa.submit`；远程程序继续使用带 `render` 权限的正式
-`POST /api/v2/episodes/{episode_id}/qa`。本例不添加主界面入口或沙箱网络请求桥。
+示例使用不稳定的 `mio.internal.qa.submit`；远程程序可使用带 `render` 权限的正式
+`POST /api/v2/episodes/{episode_id}/qa`，或同权限的 `POST /api/v2/ext/qa-review/queue`。
+本例不添加主界面入口或沙箱网络请求桥。
 
 ## 打包与安装
 
 这些管理操作也可通过 `/api/v2/extensions` 完成，需 `admin` 令牌。安装、读取摘要、明确启用、
 停用和删除沿用本机界面的同一实现；新增路由仍在重启后挂载。主题列表与导入 / 删除也有 v2
-接口，分别使用 `read` / `write`。扩展自定义路由的开放调用契约单独定义，不自动获得管理权限。
+接口，分别使用 `read` / `write`。扩展自定义路由默认需 `admin`，可用 `mio.route` 明确声明更窄权限；
+同一份请求类型、响应和启用摘要检查用于本机与 v2。路由内容变动、停用或重新加载后，旧挂载拒绝新请求。
 
 1. 把扩展目录打成 zip。`mio-extension.json` 可以在 zip 根目录，也可以在唯一的顶层文件夹里。
 2. 在「设置 → 扩展 → 安装扩展」里选择这个 zip。

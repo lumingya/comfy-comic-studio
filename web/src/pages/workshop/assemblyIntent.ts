@@ -1,10 +1,8 @@
-import type { AssembleVars } from '../../api/workshop';
-
 /** Keep one key for retries of an unchanged request, independently for each canvas node. */
 export class AssemblyIntents {
   private entries = new Map<string, { fingerprint: string; key: string }>();
 
-  keyFor(id: string, body: AssembleVars) {
+  keyFor(id: string, body: object) {
     const fingerprint = JSON.stringify(body);
     const previous = this.entries.get(id);
     if (previous?.fingerprint === fingerprint) return previous.key;
