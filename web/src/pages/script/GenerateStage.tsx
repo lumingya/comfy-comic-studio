@@ -7,7 +7,7 @@ import { assetUrl } from '../../api/client';
 import { useActiveRenders, useLive, type ActiveItem } from '../../api/jobs';
 import { useTakeAction, type TakeAction } from '../../api/series';
 import type { Episode, Take } from '../../api/types';
-import { useComfyHealth } from '../../app/comfy';
+import { useRenderRoute } from '../../app/renderRoute';
 import { useUI } from '../../app/ui-store';
 import { toastError } from '../../components/toast';
 import { Modal } from '../../components/ui';
@@ -98,13 +98,15 @@ function CandidateCard(props: { take: Take; onZoom: () => void; onAct: (a: TakeA
 export function GenerateStage(props: {
   episode: Episode;
   panelId: string;
+  profileId?: string | null;
+  defaultProfileId?: string | null;
   onGenerate: (count: number) => void;
   busy?: boolean;
 }) {
   const { t } = useTranslation();
   const count = useUI((s) => s.candidates);
   const setCount = useUI((s) => s.setCandidates);
-  const comfy = useComfyHealth();
+  const route = useRenderRoute(props.profileId, props.defaultProfileId);
   const action = useTakeAction(props.episode.id!);
   const [zoomId, setZoomId] = useState<string | null>(null);
   const live = (useActiveRenders(props.episode.id!).byPanel[props.panelId] ?? []).filter(
@@ -148,7 +150,7 @@ export function GenerateStage(props: {
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  const blocked = comfy.state === 'offline' || comfy.state === 'unset';
+  const blocked = ['offline', 'unset', 'missing'].includes(route.state);
   return (
     <section
       className={`stage ${live.length ? 'is-live' : ''}`}
@@ -187,10 +189,13 @@ export function GenerateStage(props: {
 
       {blocked ? (
         <div className="notice warn stage-notice">
-          {comfy.state === 'unset' ? t('classic.stage.noComfy') : t('classic.stage.comfyDown')}{' '}
-          <Link to="/settings?tab=instances">{t('classic.stage.openInstances')}</Link>
+          {route.detail} <Link to={route.to}>{t('route.configure')}</Link>
         </div>
-      ) : null}
+      ) : (
+        <p className="small muted" title={route.detail}>
+          {route.summary} · {t(`route.state.${route.state}`)}
+        </p>
+      )}
 
       {live.length || shown.length ? (
         <div className="stage-grid">

@@ -1,9 +1,11 @@
 import { interactionZh } from './interaction';
 import { guideZh } from './guide';
 import { configZh } from './configuration';
+import { routeZh } from './route';
 import { readerZh, wsZh } from './ws';
 /** Chinese (primary). Keys are grouped by screen; English mirrors this shape exactly. */
 const zh = {
+  route: routeZh,
   interaction: interactionZh,
   config: configZh,
   app: { name: 'Mio', tagline: '条漫工作室', offline: '与服务器的实时连接已断开，正在重连…' },

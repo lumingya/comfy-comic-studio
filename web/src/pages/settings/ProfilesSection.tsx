@@ -63,6 +63,7 @@ export function newProfile(name: string, workflow = '', cloud = false): RenderPr
     quality_tags: null,
     negative_tags: null,
     cloud_shape: cloud,
+    cloud_refine: false,
     model_group: null,
     cloud_channel: '',
     created_at: now,
@@ -258,7 +259,8 @@ function ProfileEditor({
   }, [dirty, onDirty]);
   const set = (change: Partial<RenderProfile>) => setDraft({ ...p, ...change });
   const channels = settings.data?.image_channels ?? [];
-  const missingChannel = !!p.cloud_channel && !channels.some((c) => c.id === p.cloud_channel);
+  const missingChannel =
+    p.cloud_shape && !!p.cloud_channel && !channels.some((c) => c.id === p.cloud_channel);
   const channelOptions = [
     { value: '', label: t('settings.channels.default') },
     ...channels.map((c) => ({ value: c.id, label: c.label || c.id })),
@@ -266,11 +268,19 @@ function ProfileEditor({
       ? [{ value: p.cloud_channel, label: t('config.missing', { id: p.cloud_channel }) }]
       : []),
   ];
-  // Only the stages edited here are validated; other stored stages are kept as they are.
-  const missingWorkflow = (p.cloud_shape ? [] : p.draft).some(
-    (s) => !(workflows.data ?? []).some((w) => w.id === s.workflow_id),
-  );
-  const noStages = !p.cloud_shape && !p.draft.some((s) => s.enabled);
+  // Validate only stages required by the selected route; preserve other stored stages.
+  const localStages = !p.cloud_shape
+    ? p.draft
+    : p.cloud_refine
+      ? p.final.length
+        ? p.final
+        : p.draft.slice(1)
+      : [];
+  const needsLocal = !p.cloud_shape || p.cloud_refine;
+  const missingWorkflow = localStages
+    .filter((s) => s.enabled)
+    .some((s) => !(workflows.data ?? []).some((w) => w.id === s.workflow_id));
+  const noStages = needsLocal && !localStages.some((s) => s.enabled);
   const invalid =
     !p.name.trim() ||
     missingWorkflow ||
@@ -338,11 +348,16 @@ function ProfileEditor({
         <div className="grid-2">
           <Field label={t('config.profile.route')}>
             <Select
-              value={p.cloud_shape ? 'cloud' : 'local'}
-              onChange={(value) => set({ cloud_shape: value === 'cloud' })}
+              value={p.cloud_shape ? (p.cloud_refine ? 'hybrid' : 'cloud') : 'local'}
+              onChange={(value) =>
+                set({ cloud_shape: value !== 'local', cloud_refine: value === 'hybrid' })
+              }
               options={[
                 { value: 'local', label: t('config.profile.local') },
                 { value: 'cloud', label: t('config.profile.cloud') },
+                ...(p.cloud_shape && p.cloud_refine
+                  ? [{ value: 'hybrid', label: t('route.hybrid') }]
+                  : []),
               ]}
             />
           </Field>
@@ -357,6 +372,7 @@ function ProfileEditor({
         </div>
         {p.cloud_shape ? (
           <>
+            {p.cloud_refine ? <p className="notice">{t('route.hybridHint')}</p> : null}
             <Field label={t('settings.cloudChannel')} hint={t('config.profile.cloudHint')}>
               <Select
                 value={p.cloud_channel}
@@ -377,7 +393,7 @@ function ProfileEditor({
             onChange={(draft) => set({ draft })}
           />
         )}
-        {workflows.isError ? (
+        {needsLocal && workflows.isError ? (
           <QueryError error={workflows.error} onRetry={workflows.refetch} />
         ) : null}
         {settings.isError ? <QueryError error={settings.error} onRetry={settings.refetch} /> : null}
@@ -484,9 +500,9 @@ function ProfileEditor({
         pending={pending}
         invalid={
           invalid ||
-          workflows.isLoading ||
+          (needsLocal && workflows.isLoading) ||
           settings.isLoading ||
-          workflows.isError ||
+          (needsLocal && workflows.isError) ||
           settings.isError
         }
         onCancel={() => {
@@ -556,7 +572,11 @@ export function ProfilesSection() {
               >
                 <strong>{p.name}</strong>
                 <small>
-                  {p.cloud_shape ? t('config.profile.cloud') : t('config.profile.local')}
+                  {p.cloud_shape
+                    ? p.cloud_refine
+                      ? t('route.hybrid')
+                      : t('config.profile.cloud')
+                    : t('config.profile.local')}
                 </small>
               </button>
             ))}

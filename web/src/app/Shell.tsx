@@ -8,7 +8,6 @@ import { ConfirmHost } from '../components/confirm';
 import { HelpDrawer, QuickStart, useHelp, useHelpShortcut } from '../components/HelpDrawer';
 import { Toaster } from '../components/toast';
 import { CommandPalette, useCommand } from './CommandPalette';
-import { useComfyHealth } from './comfy';
 import { CollectionSwitch } from './CollectionSwitch';
 import { Icon } from './icons';
 import { NAV } from './nav';
@@ -129,24 +128,13 @@ function Sidebar() {
   );
 }
 
-function ServiceChip() {
+function RenderSettingsLink() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const health = useComfyHealth();
-  const state = t(`classic.comfy.${health.state}`);
-  const tone =
-    health.state === 'online' ? 'tone-good' : health.state === 'checking' ? '' : 'tone-bad';
   return (
-    <button
-      type="button"
-      className={`image-service-chip ${tone}`}
-      title={health.detail || state}
-      aria-label={t('legacy.service', { name: 'ComfyUI', state })}
-      onClick={() => navigate('/engine?tab=instances')}
-    >
-      <i className="dot" aria-hidden />
-      <span>ComfyUI · {state}</span>
-    </button>
+    <Link className="image-service-chip" to="/engine?tab=profiles">
+      <Icon name="settings" sm />
+      <span>{t('ws.assemble.profile')}</span>
+    </Link>
   );
 }
 
@@ -165,7 +153,7 @@ function Topbar() {
         <strong>{section}</strong>
       </div>
       <span className="spacer" />
-      <ServiceChip />
+      <RenderSettingsLink />
       <button className="top-queue" onClick={() => navigate('/jobs')} title={t('nav.jobs')}>
         <Icon name="nodes" sm />
         {t('legacy.queue')} <b>{data?.length ?? 0}</b>

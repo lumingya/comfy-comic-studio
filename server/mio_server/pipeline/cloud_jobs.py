@@ -63,11 +63,10 @@ class CloudExecutor:
     def on_complete(self, job: dict, item: dict, result: dict) -> None:
         created = self.render.apply_result(job, item, result)
         meta = result.get("meta") or {}
-        if item["input"]["mode"] == "shape" and meta.get("refine") and created:
+        refinement = item["input"].get("refinement")
+        if item["input"]["mode"] == "shape" and refinement is not None and created:
             self.render.refine_shape(
                 meta["episode_id"],
                 created[0],
-                meta["profile_id"],
-                adopt_first=bool(meta.get("refine_adopt_first")),
-                adopt_replace=bool(meta.get("refine_adopt_replace")),
+                refinement,
             )

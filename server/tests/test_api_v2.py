@@ -90,6 +90,36 @@ class ApiV2Tests(ApiCase):
         ui = self.ok(self.client.get("/openapi.json"))
         self.assertFalse(any(p.startswith("/api/v2") for p in ui["paths"]))
 
+    def test_cloud_refinement_is_explicit_in_profiles_and_v2(self):
+        admin = self.token("admin", "read", "write")
+        for prefix in ("/api", "/api/v2"):
+            headers = {"Authorization": f"Bearer {admin}"} if prefix.endswith("v2") else {}
+            profile = self.ok(
+                self.client.post(
+                    prefix + "/profiles",
+                    headers=headers,
+                    json={"name": "Cloud", "cloud_shape": True},
+                ),
+                201,
+            )
+            self.assertFalse(profile["cloud_refine"])
+            response = self.client.put(
+                prefix + "/profiles/" + profile["id"],
+                headers=headers,
+                json={**profile, "cloud_refine": True},
+            )
+            self.assertTrue(self.ok(response)["cloud_refine"])
+            invalid = self.client.put(
+                prefix + "/profiles/" + profile["id"],
+                headers=headers,
+                json={**profile, "cloud_refine": True, "cloud_shape": False},
+            )
+            self.assertEqual(invalid.status_code, 422)
+        self.assertEqual(self.ctx.engine.list(), [])
+        schema = self.ok(self.client.get("/api/v2/openapi.json"))
+        model = schema["components"]["schemas"]["RenderProfile-Input"]
+        self.assertFalse(model["properties"]["cloud_refine"]["default"])
+
 
 class Receiver:
     def __init__(self, *statuses):

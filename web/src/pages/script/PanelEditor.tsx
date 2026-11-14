@@ -547,6 +547,8 @@ export function PanelEditor(props: {
         <GenerateStage
           episode={episode}
           panelId={draft.id!}
+          profileId={draft.overrides.profile_id}
+          defaultProfileId={series.default_profile_id}
           onGenerate={(n) => void generate(n)}
           busy={render.isPending}
         />

@@ -3474,10 +3474,16 @@ export interface components {
             negative_tags?: string[] | null;
             /**
              * Cloud Shape
-             * @description Hybrid: cloud 'max' shapes, local unifies style
+             * @description Generate candidates through the selected cloud channel
              * @default false
              */
             cloud_shape?: boolean;
+            /**
+             * Cloud Refine
+             * @description Explicit hybrid route: refine cloud results with the local final/draft tail
+             * @default false
+             */
+            cloud_refine?: boolean;
             /**
              * Model Group
              * @description Scheduler affinity key; default = checkpoint
@@ -3541,10 +3547,16 @@ export interface components {
             negative_tags: string[] | null;
             /**
              * Cloud Shape
-             * @description Hybrid: cloud 'max' shapes, local unifies style
+             * @description Generate candidates through the selected cloud channel
              * @default false
              */
             cloud_shape: boolean;
+            /**
+             * Cloud Refine
+             * @description Explicit hybrid route: refine cloud results with the local final/draft tail
+             * @default false
+             */
+            cloud_refine: boolean;
             /**
              * Model Group
              * @description Scheduler affinity key; default = checkpoint

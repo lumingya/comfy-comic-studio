@@ -4,6 +4,7 @@ import { useEpisodes } from '../../api/series';
 import { useProfiles, useSettings } from '../../api/system';
 import { useAssemble, useBoardVariables, useWorkshop, type Preset } from '../../api/workshop';
 import { Icon } from '../../app/icons';
+import { useRenderRoute } from '../../app/renderRoute';
 import { toast, toastError } from '../../components/toast';
 import { ownCancel } from '../../components/topLayer';
 import { AssemblyCanvas, EMPTY_DESIGN, canvasTasks, type CanvasDesign } from './AssemblyCanvas';
@@ -43,7 +44,8 @@ export default function AssembleDialog({
   const items = boards.data?.items ?? [];
   const storyId = story || items[0]?.id;
   const board = items.find((b) => b.id === storyId);
-  const { vars } = useBoardVariables(storyId);
+  const { vars, episode: storyboard } = useBoardVariables(storyId);
+  const route = useRenderRoute(profile, ws.data?.default_profile_id, ws.isPending, false);
 
   useEffect(() => {
     const d = ref.current;
@@ -67,8 +69,7 @@ export default function AssembleDialog({
   const name = title ?? defaultTitle;
   const profileList = profiles.data ?? [];
   const profileId = profile;
-  const profileName =
-    profileList.find((p) => p.id === profileId)?.name ?? t('ws.assemble.profileDefault');
+  const profileName = route.profile?.name ?? t('ws.assemble.profileDefault');
 
   const toggle = (id: string) =>
     setChosen(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
@@ -142,12 +143,10 @@ export default function AssembleDialog({
         <h4>{t('ws.assemble.env')}</h4>
       </header>
       <div className="field">
-        <label className="label" htmlFor="designer-channel">
+        <span className="label" id="designer-channel-label">
           {t('ws.assemble.channel')}
-        </label>
-        <select id="designer-channel" value="comfyui" disabled>
-          <option value="comfyui">ComfyUI</option>
-        </select>
+        </span>
+        <p aria-labelledby="designer-channel-label">{route.summary}</p>
       </div>
       <div className="field">
         <label className="label" htmlFor="designer-profile">
@@ -166,6 +165,9 @@ export default function AssembleDialog({
           ))}
         </select>
         <p className="help">{t('ws.assemble.profileHelp')}</p>
+        {storyboard?.panels.some((panel) => panel.overrides.profile_id) ? (
+          <p className="help">{t('route.panelOverrides')}</p>
+        ) : null}
       </div>
     </section>
   );
@@ -413,7 +415,7 @@ export default function AssembleDialog({
                         </div>
                         <div className="designer-summary-row">
                           <dt>{t('ws.assemble.channel')}</dt>
-                          <dd>ComfyUI</dd>
+                          <dd>{route.summary}</dd>
                         </div>
                         <div className="designer-summary-row">
                           <dt>{t('ws.assemble.profile')}</dt>

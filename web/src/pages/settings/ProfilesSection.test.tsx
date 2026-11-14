@@ -18,6 +18,7 @@ const profile: RenderProfile = {
   quality_tags: null,
   negative_tags: null,
   cloud_shape: false,
+  cloud_refine: false,
   model_group: null,
   cloud_channel: '',
   created_at: '2026-09-27T00:00:00Z',

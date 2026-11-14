@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { episode, job, series } from '../test/fixtures';
+import { configInstance, configProfile, configSettings } from '../test/configuration';
 import { useHelp, useQuickStart } from '../components/HelpDrawer';
 import { mockFetch } from '../test/utils';
 import { makeQueryClient, routes } from './App';
@@ -26,6 +27,7 @@ vi.mock('react-konva', () => {
 });
 
 let calls: ReturnType<typeof mockFetch> = [];
+let responses: Record<string, unknown>;
 
 const prompt = {
   tags: {
@@ -141,7 +143,7 @@ beforeEach(() => {
       close() {}
     },
   );
-  calls = mockFetch({
+  responses = {
     'GET /api/series': [series],
     'GET /api/series/ser_1': series,
     'GET /api/series/ser_1/episodes': {
@@ -247,7 +249,8 @@ beforeEach(() => {
         url: '/api/extensions/demo/files/panel.html',
       },
     ],
-  });
+  };
+  calls = mockFetch(responses);
 });
 
 afterEach(() => {
@@ -267,6 +270,76 @@ function mount(path: string) {
 }
 
 describe('every route mounts with API data', () => {
+  const cloudProfile = {
+    ...configProfile,
+    id: 'cloud',
+    name: '云端配置',
+    cloud_shape: true,
+    cloud_channel: 'images',
+  };
+  function cloudRoutes() {
+    Object.assign(responses, {
+      'GET /api/settings': configSettings,
+      'GET /api/profiles': [configProfile, cloudProfile],
+      'GET /api/workshop': { ...workshop, default_profile_id: configProfile.id },
+      'GET /api/instances': { instances: [configInstance] },
+      'GET /api/instances/comfy_test/health': { ok: false, stats: {} },
+    });
+  }
+
+  it.each(['series', 'panel'])(
+    'cloud %s selection has no background local probes from the shell or closed help',
+    async (selection) => {
+      cloudRoutes();
+      responses['GET /api/series/ser_1'] = {
+        ...series,
+        default_profile_id: selection === 'series' ? cloudProfile.id : configProfile.id,
+      };
+      responses['GET /api/episodes/ep_1'] = {
+        ...episode,
+        panels: episode.panels.map((panel) => ({
+          ...panel,
+          overrides: {
+            ...panel.overrides,
+            profile_id: selection === 'panel' ? cloudProfile.id : null,
+          },
+        })),
+      };
+      mount('/workshop/assembly/ep_1/script');
+      await screen.findByText('纯云端出图 · 主力图像服务 · 已配置');
+      expect(screen.getByRole('link', { name: '出图配置' })).toHaveAttribute(
+        'href',
+        '/engine?tab=profiles',
+      );
+      expect(document.querySelector('.stage-notice')).toBeNull();
+      expect(screen.queryByText(/ComfyUI.*未连接/)).toBeNull();
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(calls.filter((call) => call.url.endsWith('/health'))).toEqual([]);
+    },
+  );
+
+  it('assembly switches a local workshop default to cloud without background local health requests', async () => {
+    cloudRoutes();
+    mount('/workshop/assembly?new=1');
+    const dialog = await screen.findByRole('dialog', { name: '新建生成任务' });
+    await within(dialog).findByText('本地 ComfyUI');
+    fireEvent.change(within(dialog).getByLabelText('出图配置'), {
+      target: { value: cloudProfile.id },
+    });
+    await within(dialog).findByText('纯云端出图 · 主力图像服务');
+    expect(screen.getByRole('link', { name: '出图配置' })).toHaveAttribute(
+      'href',
+      '/engine?tab=profiles',
+    );
+    expect(screen.queryByText(/ComfyUI.*未连接/)).toBeNull();
+    expect(calls.filter((call) => call.url.endsWith('/health'))).toEqual([]);
+    fireEvent.click(within(dialog).getByRole('button', { name: '关闭' }));
+    fireEvent.click(screen.getByRole('button', { name: '开箱检查' }));
+    const help = await screen.findByRole('dialog', { name: '装配与队列' });
+    expect(within(help).getByText(/此处检查工坊默认配置/)).toBeInTheDocument();
+    await waitFor(() => expect(calls.some((call) => call.url.endsWith('/health'))).toBe(true));
+  });
+
   it('home: the legacy landing with the setup checklist', async () => {
     mount('/');
     expect(await screen.findByText('让灵感成册。')).toBeInTheDocument();
@@ -413,12 +486,14 @@ describe('every route mounts with API data', () => {
 
   it('help drawer: page help, 开箱检查, tutorials, then the quick start', async () => {
     mount('/workshop/assembly');
-    // The queue shows how much setup is left; the chip opens the checklist.
-    fireEvent.click(await screen.findByText(/开箱检查还差 \d 项/));
+    // The queue opens the workshop checklist only on demand.
+    fireEvent.click(await screen.findByRole('button', { name: '开箱检查' }));
     const drawer = await screen.findByRole('dialog', { name: '装配与队列' });
     expect(within(drawer).getByText(/任务加入后处于待命状态/)).toBeInTheDocument();
     expect(within(drawer).getByText('开箱检查')).toBeInTheDocument();
-    expect(within(drawer).getByText('还没有保存的工作流。')).toBeInTheDocument();
+    expect(
+      within(drawer).getByText('出图配置不存在或无法读取：profile_default'),
+    ).toBeInTheDocument();
     // The storyboard uses {天气}, which no preset defines.
     expect(
       await within(drawer).findByText('「海风来信」用到的变量 {天气} 还没有预设定义。'),

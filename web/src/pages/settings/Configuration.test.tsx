@@ -206,6 +206,7 @@ describe('render profiles', () => {
     await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
     expect(calls.find((c) => c.method === 'POST')!.body).toMatchObject({
       cloud_shape: true,
+      cloud_refine: false,
       draft: [],
       final: [],
       edits: {},
@@ -239,6 +240,32 @@ describe('render profiles', () => {
     expect(saved.final).toEqual(stored.final);
     expect(saved.edits).toEqual(stored.edits);
     expect(screen.queryByText('成品、修图与多阶段流程')).toBeNull();
+  });
+
+  it('labels an API hybrid explicitly and disables refinement when switching to pure cloud', async () => {
+    const hybrid: RenderProfile = {
+      ...configProfile,
+      cloud_shape: true,
+      cloud_refine: true,
+      final: configProfile.draft,
+    };
+    const calls = mockFetch(
+      configurationRoutes({
+        'GET /api/profiles': [hybrid],
+        'PUT /api/profiles/profile_default': (body: unknown) => body,
+      }),
+    );
+    renderWithProviders(<ProfilesSection />);
+    await screen.findByText(/此配置通过 API 启用了本地精修/);
+    fireEvent.change(screen.getByLabelText('出图方式'), { target: { value: 'cloud' } });
+    await userEvent.click(screen.getByRole('button', { name: '保存' }));
+    await waitFor(() =>
+      expect(calls.find((call) => call.method === 'PUT')?.body).toMatchObject({
+        cloud_shape: true,
+        cloud_refine: false,
+        final: configProfile.draft,
+      }),
+    );
   });
 });
 

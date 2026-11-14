@@ -172,7 +172,9 @@ class RenderTests(Harness):
         self.assertEqual(ep.takes[-1].edits[-1].params["route"], "cloud")
 
     def test_hybrid_shape_then_local_refine(self):
-        profile = self.render.profile(None).model_copy(update={"id": "hybrid", "cloud_shape": True})
+        profile = self.render.profile(None).model_copy(
+            update={"id": "hybrid", "cloud_shape": True, "cloud_refine": True}
+        )
         self.store.put_doc(profile)
         with mock.patch.object(cloud_jobs, "CloudRenderer", FakeCloudRenderer):
             ep = self.run_job(self.render.render(self.episode.id, ["p02"], profile_id="hybrid"))

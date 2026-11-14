@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from .models import StrictModel, new_id, now_iso
 
@@ -84,7 +84,11 @@ class RenderProfile(StrictModel):
     quality_tags: list[str] | None = None
     negative_tags: list[str] | None = None
     cloud_shape: bool = Field(
-        default=False, description="Hybrid: cloud 'max' shapes, local unifies style"
+        default=False, description="Generate candidates through the selected cloud channel"
+    )
+    cloud_refine: bool = Field(
+        default=False,
+        description="Explicit hybrid route: refine cloud results with the local final/draft tail",
     )
     model_group: str | None = Field(
         default=None, description="Scheduler affinity key; default = checkpoint"
@@ -94,6 +98,12 @@ class RenderProfile(StrictModel):
     )
     created_at: str = Field(default_factory=now_iso)
     updated_at: str = Field(default_factory=now_iso)
+
+    @model_validator(mode="after")
+    def explicit_hybrid(self):
+        if self.cloud_refine and not self.cloud_shape:
+            raise ValueError("cloud_refine requires cloud_shape")
+        return self
 
 
 class ComfyInstance(StrictModel):

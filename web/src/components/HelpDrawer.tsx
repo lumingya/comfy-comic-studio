@@ -7,7 +7,7 @@ import { useJobs } from '../api/jobs';
 import { useEpisodes, useSeriesList } from '../api/series';
 import { useSettings, useWorkflows } from '../api/system';
 import { useWorkshop } from '../api/workshop';
-import { useComfyHealth } from '../app/comfy';
+import { useRenderRoute } from '../app/renderRoute';
 import { Icon, type IconName } from '../app/icons';
 import { useSetupChecks, useNewStory, type SetupCheck } from '../app/setup';
 import { toast, toastError } from './toast';
@@ -245,16 +245,14 @@ export function CheckItem({
   );
 }
 
-/** 装配与队列: 「开箱检查还差 N 项」 next to the start buttons. */
+/** Assembly opens the workshop checklist on demand, without polling a different route. */
 export function SetupRemaining() {
   const { t } = useTranslation();
   const set = useHelp((s) => s.set);
-  const left = useSetupChecks().filter((c) => c.state !== 'done').length;
-  if (!left) return null;
   return (
     <button type="button" className="setup-remaining" onClick={() => set(true, 'checklist')}>
       <Icon name="help" />
-      <span>{t('guide.remaining', { n: left })}</span>
+      <span>{t('guide.checklist')}</span>
     </button>
   );
 }
@@ -327,10 +325,10 @@ function Keys() {
 
 function useDiagnostics(page: HelpPage, checks: SetupCheck[]) {
   const { t, i18n } = useTranslation();
-  const comfy = useComfyHealth();
   const workflows = useWorkflows();
   const books = useSeriesList();
   const ws = useWorkshop();
+  const route = useRenderRoute(undefined, ws.data?.default_profile_id, ws.isPending);
   const boards = useEpisodes(ws.data?.id);
   const settings = useSettings();
   const jobs = useJobs(undefined, true);
@@ -348,9 +346,7 @@ function useDiagnostics(page: HelpPage, checks: SetupCheck[]) {
       matchMedia?.('(pointer:coarse)')?.matches ? d('touch') : d('mouse'),
     ].join(' · ')}`,
     `${d('browser')}：${navigator.userAgent}`,
-    `${d('service')}：ComfyUI · ${comfy.url || '—'} · ${t(`classic.comfy.${comfy.state}`)}${
-      comfy.state === 'offline' && comfy.detail !== comfy.url ? ` · ${comfy.detail}` : ''
-    }`,
+    `${d('service')}（${t('ws.assemble.profileDefault')}）：${route.summary} · ${t(`route.state.${route.state}`)} · ${route.detail}`,
     `${d('workflows')}：${(workflows.data ?? []).map((w) => w.name).join('、') || '—'}`,
     `${d('shelf')}：${settings.data?.collection_title || '—'} · ${t('guide.diag.shelfValue', {
       books: books.data?.length ?? 0,
@@ -493,6 +489,7 @@ function HelpDrawerBody() {
               {t('guide.progress', { done, total: checks.length })}
             </span>
           </header>
+          <p className="help-note">{t('route.checklistScope')}</p>
           <ol className="help-checks">
             {checks.map((c) => (
               <CheckItem key={c.id} check={c} onAct={c.fix?.stay ? undefined : close} />
@@ -623,6 +620,7 @@ function QuickStartBody() {
         <i style={{ width: `${checks.length ? (done / checks.length) * 100 : 0}%` }} />
       </div>
       <div className="quickstart-body">
+        <p className="help-note">{t('route.checklistScope')}</p>
         <ol className="help-checks quickstart-steps" aria-label={t('guide.quick.steps')}>
           {checks.map((c) => (
             <CheckItem

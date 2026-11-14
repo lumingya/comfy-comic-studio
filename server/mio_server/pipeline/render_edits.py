@@ -6,10 +6,12 @@ Mixed into :class:`~mio_server.pipeline.render.RenderService`; relies on its ``s
 
 from __future__ import annotations
 
+from itertools import groupby
+
 from .. import imaging
 from ..comfy.compile import asset_value
 from ..jobs import COMFY, LOCAL, ItemSpec
-from ..models import Episode, Take, TakeStatus, parse_ratio
+from ..models import Episode, Take, parse_ratio
 from .compiler import compile_panel
 from .node_overrides import node_overrides
 from .refs import select_references
@@ -171,36 +173,28 @@ class EditsMixin:
         series,
         episode,
         profile,
-        panel_ids,
+        selected,
         idempotency_key,
         priority,
         qa,
         *,
         candidates=None,
-        variant_ids=None,
         adopt_first=False,
         adopt_replace=False,
     ) -> dict:
         from .story import apply_variant, to_story
 
         specs = []
-        for variant in self._variants(series, variant_ids):
+        for _, entries in groupby(selected, key=lambda entry: entry[0].id if entry[0] else None):
+            entries = list(entries)
+            variant = entries[0][0]
             bible = apply_variant(series.bible, variant)
             story = to_story(series, episode, variant)
-            for panel in episode.ordered_panels():
-                if panel_ids is not None and panel.id not in panel_ids:
-                    continue
-                prof = self.profile(
-                    panel.overrides.profile_id
-                    or (variant.profile_id if variant else None)
-                    or profile.id
-                )
-                if not prof.cloud_shape:
-                    raise RenderError("同一批任务不能混用本地与云端出图配置，请分开提交")
+            for _, panel, prof in entries:
                 refs = select_references(bible, panel, include_scene=False)
                 sheets = {r.owner: r.asset_id for r in refs if r.owner != "manual"}
                 pv = next(p for p in story["panels"] if p["id"] == panel.id)
-                refine = any(s.enabled for s in (prof.final or prof.draft[1:]))
+                refine = prof.cloud_refine
                 for k in range(candidates or prof.candidates):
                     pp = compile_panel(
                         series,
@@ -217,7 +211,7 @@ class EditsMixin:
                         "episode_id": episode.id,
                         "panel_id": panel.id,
                         "variant_id": variant.id if variant else None,
-                        "stage": "shape",
+                        "stage": "shape" if refine else "draft",
                         "seed": pp.seed,
                         "prompt": pp.positive,
                         "negative": pp.negative,
@@ -235,6 +229,7 @@ class EditsMixin:
                         "adopt_replace": adopt_replace and k == 0 and not refine,
                         "refine_adopt_replace": adopt_replace and k == 0 and refine,
                     }
+                    refinement = self.plan_cloud_refinement(prof, meta) if refine else None
                     specs.append(
                         ItemSpec(
                             input={
@@ -245,9 +240,10 @@ class EditsMixin:
                                 "prompt": pp.positive,
                                 "channel": prof.cloud_channel,
                                 "meta": meta,
+                                "refinement": refinement,
                             },
                             resource=LOCAL,
-                            label=f"第 {panel.order + 1} 格 · 云端定形 · 候选 {k + 1}",
+                            label=f"第 {panel.order + 1} 格 · 云端出图 · 候选 {k + 1}",
                         )
                     )
         if not specs:
@@ -255,65 +251,14 @@ class EditsMixin:
         return self.engine.submit(
             "cloud.render",
             specs,
-            {"episode_id": episode.id, "profile_id": profile.id, "purpose": "hybrid", "qa": qa},
-            title=f"{episode.title} · 云端定形",
+            {
+                "episode_id": episode.id,
+                "profile_id": profile.id,
+                "purpose": "hybrid" if any(s.input["refinement"] for s in specs) else "cloud",
+                "qa": qa,
+            },
+            title=f"{episode.title} · 云端出图",
             idempotency_key=idempotency_key,
             priority=priority,
-            owner=episode.id,
-        )
-
-    def refine_shape(
-        self,
-        episode_id: str,
-        take_id: str,
-        profile_id: str,
-        *,
-        adopt_first: bool = False,
-        adopt_replace: bool = False,
-    ) -> dict | None:
-        """Hybrid second step: local style unification of a cloud-shaped take."""
-        episode = self.store.get_episode(episode_id)
-        take = episode.take(take_id)
-        profile = self.store.get_doc("profile", profile_id)
-        chain = [s for s in (profile.final or profile.draft[1:]) if s.enabled]
-        if take is None or not chain:
-            return None
-        snap = take.parameter_snapshot
-        values = {
-            "prompt": snap.get("prompt", ""),
-            "negative": snap.get("negative", ""),
-            "seed": take.seed or 0,
-            "init": asset_value(take.asset_id),
-        }
-        stages, feeds = self._chain(
-            chain, values, {k: v for k, v in values.items() if k != "init"}, {}, []
-        )
-        meta = {
-            **{k: snap.get(k) for k in ("prompt", "negative")},
-            "episode_id": episode.id,
-            "panel_id": take.panel_id,
-            "variant_id": take.variant_id,
-            "stage": "draft",
-            "seed": take.seed,
-            "profile_id": profile.id,
-            "parent_take_id": take.id,
-            "edit": {"kind": "refine", "params": {"route": "hybrid"}},
-            "adopt_first": adopt_first,
-            "adopt_replace": adopt_replace,
-            "adopt": take.status == TakeStatus.adopted,
-        }
-        spec = ItemSpec(
-            input={"stages": stages, "feeds": feeds, "meta": meta},
-            resource=COMFY,
-            group=profile.model_group or stages[0].get("checkpoint") or "",
-            instances=tuple(profile.instances),
-            label="本地统一画风",
-        )
-        return self.engine.submit(
-            "comfy.render",
-            [spec],
-            {"episode_id": episode.id, "purpose": "hybrid-refine"},
-            title="本地统一画风",
-            idempotency_key=f"refine:{take.id}",
             owner=episode.id,
         )

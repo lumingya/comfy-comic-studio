@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { assetUrl } from '../api/client';
@@ -6,7 +5,7 @@ import { useCreateEpisode, useEpisodes, useSeriesList } from '../api/series';
 import { useWorkflows } from '../api/system';
 import { useBoardVariables, useWorkshop } from '../api/workshop';
 import { toastError } from '../components/toast';
-import { useComfyHealth } from './comfy';
+import { useRenderRoute } from './renderRoute';
 import { useRecents } from './recents';
 
 export type CheckState = 'done' | 'todo' | 'checking';
@@ -44,10 +43,9 @@ export function useNewStory() {
 export function useSetupChecks(): SetupCheck[] {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const qc = useQueryClient();
-  const comfy = useComfyHealth();
   const workflows = useWorkflows();
   const ws = useWorkshop();
+  const route = useRenderRoute(undefined, ws.data?.default_profile_id, ws.isPending);
   const boards = useEpisodes(ws.data?.id);
   const books = useSeriesList();
   const recents = useRecents((s) => s.items);
@@ -61,64 +59,68 @@ export function useSetupChecks(): SetupCheck[] {
     ...presets.flatMap((p) => p.entries.map((e) => e.key)),
   ]);
   const missing = vars.filter((v) => !defined.has(v)).map((v) => `{${v}}`);
-  const wf = workflows.data ?? [];
+  const stages =
+    (route.kind === 'hybrid'
+      ? route.profile?.final.length
+        ? route.profile.final
+        : route.profile?.draft.slice(1)
+      : route.profile?.draft
+    )?.filter((stage) => stage.enabled) ?? [];
+  const validWorkflows =
+    stages.length > 0 &&
+    stages.every((stage) => workflows.data?.some((workflow) => workflow.id === stage.workflow_id));
   const made = [...(books.data ?? [])]
     .filter((b) => (b.adopted_count ?? 0) > 0)
     .sort((a, b) => (b.updated_at ?? '').localeCompare(a.updated_at ?? ''))[0];
   const c = 'guide.checks';
 
-  const service: SetupCheck =
-    comfy.state === 'online'
-      ? {
-          id: 'service',
-          title: t(`${c}.service`),
-          state: 'done',
-          detail: t(`${c}.serviceOk`, { url: comfy.url }),
-        }
-      : comfy.state === 'unset'
-        ? {
-            id: 'service',
-            title: t(`${c}.service`),
-            state: 'todo',
-            detail: t(`${c}.serviceUnset`),
-            fix: {
-              label: t(`${c}.serviceSettings`),
-              run: () => navigate('/engine?tab=instances'),
-            },
-          }
+  const serviceDone = route.state === 'online' || route.state === 'configured';
+  const service: SetupCheck = {
+    id: 'service',
+    title: t(`${c}.service`),
+    state: serviceDone ? 'done' : route.state === 'checking' ? 'checking' : 'todo',
+    detail: `${route.summary} · ${route.detail}`,
+    fix: serviceDone
+      ? undefined
+      : {
+          label: t('route.configure'),
+          run: () => navigate(route.to),
+        },
+  };
+  const workflow: SetupCheck = {
+    id: 'workflow',
+    title: t('route.workflowTitle'),
+    state: !route.profile
+      ? route.state === 'checking'
+        ? 'checking'
+        : 'todo'
+      : route.kind === 'cloud'
+        ? 'done'
+        : workflows.isPending
+          ? 'checking'
+          : validWorkflows
+            ? 'done'
+            : 'todo',
+    detail: !route.profile
+      ? route.detail
+      : route.kind === 'cloud'
+        ? t('route.cloudWorkflow')
+        : workflows.isPending
+          ? t('route.workflowChecking')
+          : t(validWorkflows ? 'route.workflowReady' : 'route.workflowMissing', {
+              name: route.profile.name,
+            }),
+    fix:
+      route.profile && (route.kind === 'cloud' || validWorkflows)
+        ? undefined
         : {
-            id: 'service',
-            title: t(`${c}.service`),
-            state: comfy.state === 'checking' ? 'checking' : 'todo',
-            detail:
-              comfy.state === 'checking'
-                ? t(`${c}.serviceChecking`)
-                : t(`${c}.serviceBad`, { url: comfy.url || 'http://127.0.0.1:8188' }),
-            fix: {
-              label: t(`${c}.test`),
-              run: () => void qc.invalidateQueries({ queryKey: ['comfy-health'] }),
-              stay: true,
-            },
-          };
+            label: t('route.configure'),
+            run: () => navigate('/engine?tab=profiles'),
+          },
+  };
   return [
     service,
-    wf.length
-      ? {
-          id: 'workflow',
-          title: t(`${c}.workflow`),
-          state: 'done',
-          detail: t(`${c}.workflowOk`, { title: wf[0].name, count: wf.length }),
-        }
-      : {
-          id: 'workflow',
-          title: t(`${c}.workflow`),
-          state: workflows.isLoading ? 'checking' : 'todo',
-          detail: t(`${c}.workflowNone`),
-          fix: {
-            label: t(`${c}.importWorkflow`),
-            run: () => navigate('/engine?tab=workflows'),
-          },
-        },
+    workflow,
     !story
       ? {
           id: 'material',

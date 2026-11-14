@@ -3638,9 +3638,15 @@
       "title": "Cloud Channel",
       "type": "string"
      },
+     "cloud_refine": {
+      "default": false,
+      "description": "Explicit hybrid route: refine cloud results with the local final/draft tail",
+      "title": "Cloud Refine",
+      "type": "boolean"
+     },
      "cloud_shape": {
       "default": false,
-      "description": "Hybrid: cloud 'max' shapes, local unifies style",
+      "description": "Generate candidates through the selected cloud channel",
       "title": "Cloud Shape",
       "type": "boolean"
      },
@@ -3770,9 +3776,15 @@
       "title": "Cloud Channel",
       "type": "string"
      },
+     "cloud_refine": {
+      "default": false,
+      "description": "Explicit hybrid route: refine cloud results with the local final/draft tail",
+      "title": "Cloud Refine",
+      "type": "boolean"
+     },
      "cloud_shape": {
       "default": false,
-      "description": "Hybrid: cloud 'max' shapes, local unifies style",
+      "description": "Generate candidates through the selected cloud channel",
       "title": "Cloud Shape",
       "type": "boolean"
      },
@@ -3885,6 +3897,7 @@
      "quality_tags",
      "negative_tags",
      "cloud_shape",
+     "cloud_refine",
      "model_group",
      "cloud_channel",
      "created_at",

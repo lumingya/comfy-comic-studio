@@ -6,8 +6,8 @@
                  ``final`` chain (no reliance on ComfyUI cache reuse, see ROADMAP §6.4).
 * ``edit``     – single-take inpaint / outpaint (local workflow) or instruction edit (workflow
                  or cloud ``max``).
-* hybrid       – ``profile.cloud_shape``: cloud shapes the panel from references, then the local
-                 ``final``/``draft[1:]`` chain unifies the style (「云端定形，本地定画风」).
+* cloud        – ``profile.cloud_shape``: cloud generates the candidate; only an explicit
+                 ``cloud_refine`` opt-in schedules the frozen local refinement chain.
 
 Everything a job needs is compiled and frozen at submit time; results come back through
 ``apply_result`` which appends takes with :meth:`SQLiteStore.update_episode` (atomic, never
@@ -33,6 +33,7 @@ from . import variables as V
 from .compiler import compile_panel
 from .node_overrides import node_overrides
 from .refs import reference_values, select_references
+from .render_cloud import CloudRefinementMixin
 from .render_composition import KEY as COMPOSITION
 from .render_composition import CompositionMixin
 from .render_edits import PREVIOUS, EditsMixin, RenderError  # noqa: F401
@@ -77,7 +78,7 @@ def panel_values(series: Series, panel) -> dict:
     return out
 
 
-class RenderService(CompositionMixin, EditsMixin):
+class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
     def __init__(self, store, assets, engine):
         self.store, self.assets, self.engine = store, assets, engine
         self.hooks = HookBus()  # replaced by the registry's bus in AppContext
@@ -302,44 +303,51 @@ class RenderService(CompositionMixin, EditsMixin):
         episode = self.store.get_episode(episode_id)
         series = self.store.get_series(episode.series_id)
         profile = self.profile(profile_id, series)
-        if profile.cloud_shape:
-            return self._render_hybrid(
-                series,
-                episode,
-                profile,
-                panel_ids,
-                idempotency_key,
-                priority,
-                qa,
-                candidates=candidates,
-                variant_ids=variant_ids,
-                adopt_first=adopt_first,
-                adopt_replace=adopt_replace,
-            )
         panels = [p for p in episode.ordered_panels() if panel_ids is None or p.id in panel_ids]
         if not panels:
             raise RenderError("没有要出图的格")
         variants = self._variants(series, variant_ids)
-        specs = []
-        for variant in variants:
-            for panel in panels:
-                prof = self.profile(
+        selected = [
+            (
+                variant,
+                panel,
+                self.profile(
                     panel.overrides.profile_id
                     or (variant.profile_id if variant else None)
                     or profile.id
-                )
-                if prof.cloud_shape:
-                    raise RenderError("同一批任务不能混用本地与云端出图配置，请分开提交")
-                specs += self.plan_panel(
-                    series,
-                    episode,
-                    panel,
-                    prof,
-                    candidates=candidates or prof.candidates,
-                    variant=variant,
-                    adopt_first=adopt_first,
-                    adopt_replace=adopt_replace,
-                )
+                ),
+            )
+            for variant in variants
+            for panel in panels
+        ]
+        routes = {prof.cloud_shape for _, _, prof in selected}
+        if len(routes) > 1:
+            raise RenderError("同一批任务不能混用本地与云端出图配置，请分开提交")
+        if routes == {True}:
+            return self._render_hybrid(
+                series,
+                episode,
+                profile,
+                selected,
+                idempotency_key,
+                priority,
+                qa,
+                candidates=candidates,
+                adopt_first=adopt_first,
+                adopt_replace=adopt_replace,
+            )
+        specs = []
+        for variant, panel, prof in selected:
+            specs += self.plan_panel(
+                series,
+                episode,
+                panel,
+                prof,
+                candidates=candidates or prof.candidates,
+                variant=variant,
+                adopt_first=adopt_first,
+                adopt_replace=adopt_replace,
+            )
         title = f"{series.title} · {episode.title} · {len(panels)} 格草稿"
         return self.engine.submit(
             "comfy.render",

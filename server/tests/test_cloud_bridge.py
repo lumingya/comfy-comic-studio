@@ -22,11 +22,13 @@ from .test_render_qa import FakeCloudRenderer, Harness
 class CloudBridgeTests(Harness):
     def profile(self, refine=False):
         profile = self.render.profile(None).model_copy(
-            update={"id": "cloud-test", "cloud_shape": True, "candidates": 1}
+            update={
+                "id": "cloud-test",
+                "cloud_shape": True,
+                "cloud_refine": refine,
+                "candidates": 1,
+            }
         )
-        if not refine:
-            profile.final = []
-            profile.draft = profile.draft[:1]
         return self.store.put_doc(profile)
 
     def test_cloud_one_click_adopts_without_manual_board_step(self):
@@ -38,6 +40,8 @@ class CloudBridgeTests(Harness):
                 )
             )
         self.assertIsNotNone(ep.adopted("p02"))
+        self.assertEqual(ep.adopted("p02").stage, "draft")
+        self.assertFalse(any(j["kind"] == "comfy.render" for j in self.engine.list()))
 
     def test_hybrid_adopts_after_local_refinement_not_just_cloud_shape(self):
         profile = self.profile(refine=True)
