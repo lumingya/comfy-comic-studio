@@ -302,9 +302,10 @@ class ConversionTests(unittest.TestCase):
     def test_running_worker_lease_blocks_conversion_without_output(self):
         worker = Jobs(str(self.data / 'execution'), Mock())
         try:
-            with self.assertRaises(LibraryError) as err:
+            with patch.object(conversion, 'inventory', side_effect=AssertionError('lease required before inventory')), self.assertRaises(LibraryError) as err:
                 self.convert()
             self.assertEqual(err.exception.code, 'source_running'); self.assertFalse(self.output.exists())
+            self.assertEqual(list(self.output.parent.glob('.' + self.output.name + '.converting-*')), [])
         finally:
             worker.close()
 

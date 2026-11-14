@@ -136,8 +136,6 @@ class Source:
         self.cache = OrderedDict()
         self.cache_bytes = 0
         self.read_assets = set()
-        self.initial_inventory = inventory(self.data)
-        self.initial_legacy_images = inventory(self.project / 'images')
         self.format = ''
         self.journal = False
 
@@ -682,7 +680,7 @@ def convert(source, output, *, source_stopped=False, dry_run=False, project=None
         raise ConversionError('Output must be separate from the source data directory')
     builder = None
     with stopped_source(src.data):
-        # Re-snapshot after acquiring the worker lease, before reading any content.
+        # Snapshot only after acquiring the worker lease: a live SQLite WAL may disappear.
         src.initial_inventory = inventory(src.data)
         src.initial_legacy_images = inventory(src.project / 'images')
         config = src.config()
