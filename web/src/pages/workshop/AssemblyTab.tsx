@@ -18,7 +18,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api, assetUrl, data } from '../../api/client';
-import { useJobControl, useJobs, useLive, useRetryJob } from '../../api/jobs';
+import { useJobControl, useJobs, useRetryJob } from '../../api/jobs';
 import { keys } from '../../api/keys';
 import { useRender, useRenderEpisode } from '../../api/production';
 import { useProfiles } from '../../api/system';
@@ -1141,7 +1141,6 @@ function TaskCard({
   const patch = usePatchSeries(album.id!);
   const control = useJobControl();
   const retry = useRetryJob();
-  const offline = useLive((s) => s.connected === false);
   const [renaming, setRenaming] = useState(false);
   const [preview, setPreview] = useState<{ asset: string; n: number } | null>(null);
   const panels = useMemo(
@@ -1155,7 +1154,6 @@ function TaskCard({
   const details = useQueries({
     queries: watched.map((j) => ({
       queryKey: keys.job(j.id),
-      refetchInterval: offline && ACTIVE.includes(j.state) ? 3000 : (false as const),
       queryFn: async () =>
         data(
           await api.GET('/api/jobs/{job_id}', { params: { path: { job_id: j.id } } }),

@@ -104,12 +104,26 @@ const REFRESH = new Set([
   'submitted',
   'canceled',
   'resumed',
+  'retried',
+  'started',
   'failure_limit',
   'reconcile_miss',
 ]);
 
 /** Item outcomes (`_finish` in jobs/runtime.py emits the item's new state as the event type). */
-const ITEM_DONE = new Set(['complete', 'failed']);
+const ITEM_DONE = new Set(['complete', 'failed', 'uncertain', 'canceled', 'skipped']);
+const SYNC_KEYS = new Set(['jobs', 'job', 'episode', 'episodes', 'series', keys.queue[0]]);
+
+function clearLive(jobId?: string, idx?: number) {
+  const live = useLive.getState();
+  const keep = ([key]: [string, unknown]) =>
+    jobId !== undefined &&
+    (idx === undefined ? !key.startsWith(`${jobId}:`) : key !== `${jobId}:${idx}`);
+  live.set({
+    progress: Object.fromEntries(Object.entries(live.progress).filter(keep)),
+    previews: Object.fromEntries(Object.entries(live.previews).filter(keep)),
+  });
+}
 
 /** Connects once (mounted by the shell) and turns engine events into cache invalidations. */
 export function useJobEvents() {
@@ -117,20 +131,75 @@ export function useJobEvents() {
   useEffect(() => {
     let socket: WebSocket | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
+    let pollTimer: ReturnType<typeof setTimeout> | undefined;
     let closed = false;
+    let connected = false;
+    let polling = false;
     let delay = 1000;
 
+    const refresh = (cancelRefetch = false, jobId?: string) =>
+      qc.invalidateQueries(
+        {
+          predicate: ({ queryKey }) =>
+            SYNC_KEYS.has(String(queryKey[0])) &&
+            (queryKey[0] !== 'job' || !jobId || queryKey[1] === jobId),
+        },
+        { cancelRefetch },
+      );
+
+    // One fallback for every visible consumer, including newly submitted jobs and adopted takes.
+    // Await each round: slow/offline HTTP requests must not accumulate overlapping polls.
+    const poll = async () => {
+      clearTimeout(pollTimer);
+      if (closed || connected || document.hidden || polling) return;
+      polling = true;
+      try {
+        await refresh();
+      } finally {
+        polling = false;
+        if (!closed && !connected && !document.hidden) pollTimer = setTimeout(poll, 3000);
+      }
+    };
+    const onVisible = () => {
+      clearTimeout(pollTimer);
+      if (document.hidden || closed) return;
+      if (connected) void refresh(true);
+      else void poll();
+    };
+
     const connect = () => {
+      if (closed) return;
       const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
-      socket = new WebSocket(`${proto}://${window.location.host}/api/ws/jobs`);
-      socket.onopen = () => {
+      const current = new WebSocket(`${proto}://${window.location.host}/api/ws/jobs`);
+      socket = current;
+      current.onopen = () => {
+        if (closed || socket !== current) return;
+        connected = true;
         delay = 1000;
+        clearTimeout(pollTimer);
+        clearLive();
         useLive.getState().set({ connected: true });
+        // Events are not replayed. This also closes the first-fetch/first-connection gap.
+        if (!document.hidden) void refresh(true);
       };
-      socket.onmessage = (msg) => handle(JSON.parse(msg.data));
-      socket.onclose = () => {
+      current.onmessage = (msg) => {
+        if (closed || socket !== current || !connected) return;
+        try {
+          const event: unknown = JSON.parse(msg.data);
+          if (event && typeof event === 'object' && 'type' in event && 'job_id' in event)
+            handle(event as JobEvent);
+        } catch {
+          // Ignore a malformed frame; the next event or snapshot refresh still works.
+        }
+      };
+      current.onclose = () => {
+        if (closed || socket !== current) return;
+        socket = null;
+        connected = false;
+        clearLive();
         useLive.getState().set({ connected: false });
-        if (!closed) timer = setTimeout(connect, (delay = Math.min(delay * 2, 15000)));
+        void poll();
+        timer = setTimeout(connect, (delay = Math.min(delay * 2, 15000)));
       };
     };
 
@@ -152,25 +221,27 @@ export function useJobEvents() {
         live.set({ previews: { ...live.previews, [key]: `data:${mime};base64,${d.data}` } });
       }
       const itemDone = ITEM_DONE.has(event.type) && typeof event.idx === 'number';
+      if (itemDone || event.type === 'started') clearLive(event.job_id, event.idx ?? undefined);
+      if (event.type === 'canceled' || event.type === 'retried') clearLive(event.job_id);
       if (REFRESH.has(event.type) || itemDone) {
-        qc.invalidateQueries({ queryKey: ['jobs'] });
-        qc.invalidateQueries({ queryKey: keys.job(event.job_id) });
         // A finished item has already written (and with adopt_first adopted) its take: the
         // reader, its template preview, candidates and the queue card show it right away instead
         // of when the whole job ends.
-        qc.invalidateQueries({ queryKey: ['episode'] });
-        qc.invalidateQueries({ queryKey: ['episodes'] });
-        qc.invalidateQueries({ queryKey: ['series'] });
-        // The server lane starts the next album when a job finishes.
-        qc.invalidateQueries({ queryKey: keys.queue });
+        void refresh(true, event.job_id);
       }
     };
 
+    document.addEventListener('visibilitychange', onVisible);
     connect();
     return () => {
       closed = true;
       clearTimeout(timer);
+      clearTimeout(pollTimer);
+      document.removeEventListener('visibilitychange', onVisible);
+      if (socket) socket.onopen = socket.onmessage = socket.onclose = null;
       socket?.close();
+      clearLive();
+      useLive.getState().set({ connected: null });
     };
   }, [qc]);
 }
@@ -186,11 +257,9 @@ export interface ActiveItem {
 /** In-flight items of this episode's active jobs, grouped by panel (for live previews). */
 export function useActiveRenders(episodeId: string) {
   const jobs = useJobs(episodeId, true);
-  const offline = useLive((s) => s.connected === false);
   const details = useQueries({
     queries: (jobs.data ?? []).map((j) => ({
       queryKey: keys.job(j.id),
-      refetchInterval: offline ? 3000 : false,
       queryFn: async () =>
         data(
           await api.GET('/api/jobs/{job_id}', { params: { path: { job_id: j.id } } }),
