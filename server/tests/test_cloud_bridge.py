@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from types import SimpleNamespace
 from unittest import mock
 
 import httpx
@@ -40,6 +41,9 @@ class CloudBridgeTests(Harness):
 
     def test_hybrid_adopts_after_local_refinement_not_just_cloud_shape(self):
         profile = self.profile(refine=True)
+        # Draining the cloud job also ticks the whole queue. Hold local work until the
+        # intermediate shape has been checked, regardless of worker scheduling speed.
+        self.engine.pool.set_instances([])
         with mock.patch.object(cloud_jobs, "CloudRenderer", FakeCloudRenderer):
             ep = self.run_job(
                 self.render.render(
@@ -47,10 +51,17 @@ class CloudBridgeTests(Harness):
                 )
             )
         self.assertIsNone(ep.adopted("p02"))
+        shape = next(t for t in ep.takes if t.stage == "shape")
+        self.assertEqual(shape.status, TakeStatus.candidate)
         refine = next(j for j in self.engine.list() if j["kind"] == "comfy.render")
+        self.assertEqual(refine["state"], "queued")
+        self.engine.pool.set_instances(
+            [SimpleNamespace(id="c1", base_url="http://x", capacity=2, enabled=True)]
+        )
         ep = self.run_job(refine)
         self.assertIsNotNone(ep.adopted("p02"))
         self.assertEqual(ep.adopted("p02").stage, "draft")
+        self.assertEqual(ep.adopted("p02").parent_take_id, shape.id)
 
     def test_cloud_respects_candidate_count_and_variant_ids(self):
         profile = self.profile()

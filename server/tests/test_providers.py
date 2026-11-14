@@ -191,8 +191,17 @@ class ChannelExecutorTests(ApiCase):
         ch = {"id": "mine", "kind": "fake"}
         self.ok(self.client.patch("/api/settings", json={"image_channels": [ch]}))
         _, ep = self.make_episode()
-        ep = self.adopt_all(ep)
+        self.drain(
+            self.ok(
+                self.client.post(
+                    f"/api/episodes/{ep['id']}/render",
+                    json={"panel_ids": [ep["panels"][0]["id"]], "candidates": 1},
+                )
+            )
+        )
+        ep = self.ok(self.client.get(f"/api/episodes/{ep['id']}"))
         take = ep["takes"][0]
+        self.ok(self.client.post(f"/api/episodes/{ep['id']}/takes/{take['id']}/adopt"))
         body = {
             "take_id": take["id"],
             "kind": "edit",
