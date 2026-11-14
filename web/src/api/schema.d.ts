@@ -1589,6 +1589,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/workshop/assemble/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Assembly
+         * @description Inspect final prompts, reader dialogue and variable provenance without creating an album.
+         */
+        post: operations["preview_assembly_api_workshop_assemble_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/workshop/preview": {
         parameters: {
             query?: never;
@@ -2031,11 +2051,79 @@ export interface components {
             title?: string;
             /** Profile Id */
             profile_id?: string | null;
+            /** Variables */
+            variables?: {
+                [key: string]: string;
+            };
+            /** Idempotency Key */
+            idempotency_key?: string | null;
         };
         /** Assembled */
         Assembled: {
             series: components["schemas"]["Series"];
             episode: components["schemas"]["Episode"];
+        };
+        /** AssemblyPanelPreview */
+        AssemblyPanelPreview: {
+            /** Panel Id */
+            panel_id: string;
+            /** Title */
+            title: string;
+            /** Order */
+            order: number;
+            /** Profile Id */
+            profile_id: string;
+            /**
+             * Dialect
+             * @enum {string}
+             */
+            dialect: "tags" | "natural";
+            /** Positive */
+            positive: string;
+            /** Negative */
+            negative: string;
+            /** Dialogues */
+            dialogues: string[];
+            /** Variables */
+            variables: components["schemas"]["AssemblyVariable"][];
+        };
+        /** AssemblyPreview */
+        AssemblyPreview: {
+            /** Title */
+            title: string;
+            /** Storyboard Id */
+            storyboard_id: string;
+            /** Profile Id */
+            profile_id: string;
+            /** Preset Ids */
+            preset_ids: string[];
+            /** Panels */
+            panels: components["schemas"]["AssemblyPanelPreview"][];
+        };
+        /** AssemblyVariable */
+        AssemblyVariable: {
+            /** Key */
+            key: string;
+            /** Field */
+            field: string;
+            /** Value */
+            value: string | null;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "builtin" | "workshop" | "preset" | "request" | "panel" | "missing";
+            /** Source Id */
+            source_id?: string | null;
+            /** Source Title */
+            source_title?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "resolved" | "empty" | "missing" | "cycle" | "depth_limit";
+            /** Chain */
+            chain: string[];
         };
         /** Asset */
         Asset: {
@@ -7750,6 +7838,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Assembled"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_assembly_api_workshop_assemble_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssembleRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssemblyPreview"];
                 };
             };
             /** @description Validation Error */

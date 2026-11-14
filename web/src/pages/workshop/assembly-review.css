@@ -1,0 +1,81 @@
+.assembly-review {
+  margin-top: 18px;
+}
+.assembly-review details > summary {
+  cursor: pointer;
+  padding: 10px 0;
+  font-weight: 600;
+}
+.assembly-review article {
+  border-top: 1px solid var(--line);
+  padding: 14px 0;
+  outline-offset: 4px;
+}
+.assembly-review h5 {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+}
+.assembly-review-problems,
+.assembly-review-values {
+  padding: 0;
+  list-style: none;
+}
+.assembly-review-problems .btn {
+  white-space: normal;
+  text-align: left;
+}
+.assembly-review-text {
+  margin: 0;
+}
+.assembly-review-text dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.assembly-review-text dd {
+  margin: 4px 0 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.assembly-review-values li {
+  display: grid;
+  gap: 4px;
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+.assembly-review-values li span,
+.assembly-review-values li small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.assembly-review-values q {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.assembly-review-variables {
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.assembly-review-variables label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.assembly-review-variables input {
+  flex: 1;
+  min-width: 120px;
+}
+.assembly-preset-order {
+  margin: 12px 0;
+  padding-left: 24px;
+}
+.assembly-preset-order li {
+  padding: 4px 0;
+}
+.assembly-preset-order .btn {
+  margin-left: 6px;
+  padding: 3px 6px;
+}

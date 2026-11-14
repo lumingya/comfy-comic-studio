@@ -74,6 +74,9 @@ CREATE TABLE IF NOT EXISTS assets (
 CREATE TABLE IF NOT EXISTS episode_snapshots (
     episode_id TEXT NOT NULL REFERENCES episodes(id) ON DELETE CASCADE, revision INTEGER NOT NULL,
     created_at TEXT NOT NULL, payload_json TEXT NOT NULL, PRIMARY KEY(episode_id, revision));
+CREATE TABLE IF NOT EXISTS assembly_receipts (
+    idempotency_key TEXT PRIMARY KEY, request_sha TEXT NOT NULL,
+    series_id TEXT NOT NULL, episode_id TEXT NOT NULL);
 """
 
 # Saved states kept per episode for "restore this panel to how it was" (oldest pruned).
@@ -151,21 +154,63 @@ class SQLiteStore:
     # ------------------------------------------------------------------ series
     def create_series(self, series: Series) -> Series:
         with self.tx() as db:
-            db.execute(
-                """INSERT INTO series(id, title, subtitle, status, created_at, updated_at, deleted_at, payload_json)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    series.id,
-                    series.title,
-                    series.subtitle,
-                    series.status.value,
-                    series.created_at,
-                    series.updated_at,
-                    series.deleted_at,
-                    series.model_dump_json(),
-                ),
-            )
+            self._insert_series(db, series)
         return series
+
+    @staticmethod
+    def _insert_series(db, series: Series) -> None:
+        db.execute(
+            """INSERT INTO series(id, title, subtitle, status, created_at, updated_at, deleted_at, payload_json)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                series.id,
+                series.title,
+                series.subtitle,
+                series.status.value,
+                series.created_at,
+                series.updated_at,
+                series.deleted_at,
+                series.model_dump_json(),
+            ),
+        )
+
+    def assembly_receipt(self, key: str, request_sha: str) -> tuple[Series, Episode] | None:
+        """Return the original album before callers read mutable storyboard sources."""
+        with self.lock:
+            rows = self._rows("SELECT * FROM assembly_receipts WHERE idempotency_key = ?", (key,))
+            if not rows:
+                return None
+            receipt = rows[0]
+            if receipt["request_sha"] != request_sha:
+                raise Conflict("idempotency key reused with a different assembly request")
+            # Receipts intentionally survive deletion: a retry must not recreate a purged album.
+            return self.get_series(receipt["series_id"]), self.get_episode(receipt["episode_id"])
+
+    def create_assembly(
+        self,
+        series: Series,
+        episode: Episode,
+        *,
+        idempotency_key: str | None = None,
+        request_sha: str = "",
+    ) -> tuple[Series, Episode]:
+        """Persist both snapshots and their receipt with a single commit."""
+        if episode.series_id != series.id:
+            raise ValueError("assembled episode does not belong to the album")
+        with self.tx() as db:
+            if idempotency_key:
+                previous = self.assembly_receipt(idempotency_key, request_sha)
+                if previous:
+                    return previous
+            self._insert_series(db, series)
+            self._insert_episode(db, episode)
+            if idempotency_key:
+                db.execute(
+                    "INSERT INTO assembly_receipts(idempotency_key, request_sha, series_id, episode_id) "
+                    "VALUES (?, ?, ?, ?)",
+                    (idempotency_key, request_sha, series.id, episode.id),
+                )
+        return series, episode
 
     def get_series(self, series_id: str, include_deleted: bool = False) -> Series:
         rows = self._rows("SELECT payload_json FROM series WHERE id = ?", (series_id,))
@@ -266,22 +311,26 @@ class SQLiteStore:
         with self.tx() as db:
             self.get_series(episode.series_id)
             self._check_order(db, episode)
-            db.execute(
-                """INSERT INTO episodes(id, series_id, title, episode_order, panel_count, created_at, updated_at,
-                   deleted_at, payload_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    episode.id,
-                    episode.series_id,
-                    episode.title,
-                    episode.order,
-                    len(episode.panels),
-                    episode.created_at,
-                    episode.updated_at,
-                    episode.deleted_at,
-                    episode.model_dump_json(),
-                ),
-            )
+            self._insert_episode(db, episode)
         return episode
+
+    @staticmethod
+    def _insert_episode(db, episode: Episode) -> None:
+        db.execute(
+            """INSERT INTO episodes(id, series_id, title, episode_order, panel_count, created_at, updated_at,
+               deleted_at, payload_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                episode.id,
+                episode.series_id,
+                episode.title,
+                episode.order,
+                len(episode.panels),
+                episode.created_at,
+                episode.updated_at,
+                episode.deleted_at,
+                episode.model_dump_json(),
+            ),
+        )
 
     def next_episode_order(self, series_id: str) -> int:
         rows = self._rows(

@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { api, data } from './client';
 import { keys } from './keys';
 import type { QueueStatus, Series } from './types';
+import type { components } from './schema';
 
 export type Preset = Series['presets'][number];
 export type PresetEntry = Preset['entries'][number];
@@ -48,6 +49,22 @@ export interface AssembleVars {
   preset_ids: string[];
   title: string;
   profile_id?: string | null;
+  variables?: Record<string, string>;
+  idempotency_key?: string;
+}
+
+export type AssemblyPreview = components['schemas']['AssemblyPreview'];
+export type AssemblyVariable = components['schemas']['AssemblyVariable'];
+
+/** The server compiles the same snapshot that assembly will save; no client substitution. */
+export function useAssemblyPreview(body: AssembleVars, enabled: boolean) {
+  return useQuery({
+    queryKey: ['workshop', 'assembly-preview', body],
+    enabled: enabled && !!body.storyboard_id,
+    retry: false,
+    queryFn: async ({ signal }) =>
+      data(await api.POST('/api/workshop/assemble/preview', { body, signal })),
+  });
 }
 
 /** Storyboard + presets → a new album waiting in the queue (no model call). */

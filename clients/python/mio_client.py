@@ -691,6 +691,13 @@ class MioClient(_Base):
         """
         return self._request("POST", "/workshop/assemble", json=body)
 
+    def preview_assembly(self, body: dict | list | None = None) -> Any:
+        """POST /workshop/assemble/preview — Preview Assembly.
+
+        Inspect final prompts, reader dialogue and variable provenance without creating an album.
+        """
+        return self._request("POST", "/workshop/assemble/preview", json=body)
+
     def preview_preset(self, body: dict | list | None = None) -> Any:
         """POST /workshop/preview — Preview Preset.
 

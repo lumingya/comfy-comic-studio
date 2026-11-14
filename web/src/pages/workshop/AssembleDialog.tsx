@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useEpisodes } from '../../api/series';
+import { useEpisode, useEpisodes } from '../../api/series';
 import { useProfiles, useSettings } from '../../api/system';
-import { useAssemble, useBoardVariables, useWorkshop, type Preset } from '../../api/workshop';
+import { useAssemble, useWorkshop, type Preset } from '../../api/workshop';
 import { Icon } from '../../app/icons';
 import { useRenderRoute } from '../../app/renderRoute';
 import { toast, toastError } from '../../components/toast';
 import { ownCancel } from '../../components/topLayer';
 import { AssemblyCanvas, EMPTY_DESIGN, canvasTasks, type CanvasDesign } from './AssemblyCanvas';
+import { AssemblyReview } from './AssemblyReview';
+import { AssemblyIntents } from './assemblyIntent';
 
 const STEPS = ['story', 'presets', 'name'] as const;
 
@@ -40,11 +42,13 @@ export default function AssembleDialog({
   const [profile, setProfile] = useState('');
   const [chosen, setChosen] = useState<string[] | null>(null);
   const [title, setTitle] = useState<string | null>(null);
+  const [variables, setVariables] = useState<Record<string, string>>({});
+  const intents = useRef(new AssemblyIntents());
   const presets = ws.data?.presets ?? [];
   const items = boards.data?.items ?? [];
   const storyId = story || items[0]?.id;
   const board = items.find((b) => b.id === storyId);
-  const { vars, episode: storyboard } = useBoardVariables(storyId);
+  const { data: storyboard } = useEpisode(storyId);
   const route = useRenderRoute(profile, ws.data?.default_profile_id, ws.isPending, false);
 
   useEffect(() => {
@@ -54,35 +58,46 @@ export default function AssembleDialog({
     else d.setAttribute('open', '');
   }, []);
 
-  // Auto-pick: the first preset that defines every variable the storyboard uses.
-  const auto = useMemo(() => {
-    const full = presets.find((p) => vars.every((v) => p.entries.some((e) => e.key === v)));
-    return full ? [full.id!] : presets.slice(0, 1).map((p) => p.id!);
-  }, [presets, vars]);
+  const auto = useMemo(() => presets.slice(0, 1).map((p) => p.id!), [presets]);
   const picked = chosen ?? auto;
-  const covered = new Set(
-    presets.filter((p) => picked.includes(p.id!)).flatMap((p) => p.entries.map((e) => e.key)),
-  );
-  const missing = vars.filter((v) => !covered.has(v));
+  const ordered = picked
+    .map((id) => presets.find((p) => p.id === id))
+    .filter((p): p is Preset => !!p);
   const first = presets.find((p) => p.id === picked[0]);
   const defaultTitle = [board?.title, first ? displayName(first) : ''].filter(Boolean).join(' · ');
-  const name = title ?? defaultTitle;
+  const name = title ?? defaultTitle.slice(0, 120);
   const profileList = profiles.data ?? [];
   const profileId = profile;
   const profileName = route.profile?.name ?? t('ws.assemble.profileDefault');
+  const request = {
+    storyboard_id: storyId ?? '',
+    preset_ids: picked,
+    title: name,
+    profile_id: profileId || null,
+    variables,
+  };
+  const intentKey = intents.current.keyFor('wizard', request);
+  // Synchronize per-node intent keys when request contents change, ignoring canvas movement.
+  design.stories.forEach((node) =>
+    intents.current.keyFor(node.id, {
+      storyboard_id: node.storyId,
+      preset_ids: design.presets
+        .filter((p) => design.edges.some((edge) => edge.story === node.id && edge.preset === p.id))
+        .map((p) => p.presetId),
+      title: node.title.trim(),
+      profile_id: profileId || null,
+    }),
+  );
+  intents.current.retain(['wizard', ...design.stories.map((node) => node.id)]);
 
   const toggle = (id: string) =>
     setChosen(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
   const submit = () =>
     assemble.mutate(
-      {
-        storyboard_id: storyId!,
-        preset_ids: picked,
-        title: name,
-        profile_id: profileId || null,
-      },
+      { ...request, idempotency_key: intentKey },
       {
         onSuccess: () => {
+          intents.current.clear('wizard');
           toast(t('ws.assemble.added'));
           close();
         },
@@ -113,8 +128,14 @@ export default function AssembleDialog({
     setBusy(true);
     let done = 0;
     try {
-      for (const task of tasks) {
-        await assemble.mutateAsync({ ...task, profile_id: profileId || null });
+      for (const [i, task] of tasks.entries()) {
+        const body = { ...task, profile_id: profileId || null };
+        const node = design.stories[i].id;
+        await assemble.mutateAsync({
+          ...body,
+          idempotency_key: intents.current.keyFor(node, body),
+        });
+        intents.current.clear(node);
         done += 1;
       }
       toast(t('ws.canvas.added', { count: done }));
@@ -286,6 +307,7 @@ export default function AssembleDialog({
                             setStory(e.target.value);
                             setChosen(null);
                             setTitle(null);
+                            setVariables({});
                           }}
                         >
                           {items.map((b) => (
@@ -340,20 +362,36 @@ export default function AssembleDialog({
                     );
                   })}
                 </div>
-                <p className="help designer-presets-status" role="status">
-                  {missing.length
-                    ? t('ws.assemble.coverMissing', {
-                        used: vars.length,
-                        picked: picked.length,
-                        covered: vars.length - missing.length,
-                        names: missing.map((m) => `{${m}}`).join('、'),
-                      })
-                    : t('ws.assemble.coverOk', {
-                        used: vars.length,
-                        picked: picked.length,
-                        covered: vars.length,
-                      })}
-                </p>
+                <ol className="assembly-preset-order" aria-label={t('ws.assemble.presetOrder')}>
+                  {ordered.map((preset, index) => (
+                    <li key={preset.id}>
+                      <span>{preset.title}</span>
+                      {([-1, 1] as const).map((direction) => (
+                        <button
+                          type="button"
+                          className="btn ghost"
+                          key={direction}
+                          disabled={index + direction < 0 || index + direction >= picked.length}
+                          aria-label={t(
+                            direction < 0 ? 'ws.assemble.moveUp' : 'ws.assemble.moveDown',
+                            { title: preset.title },
+                          )}
+                          onClick={() => {
+                            const next = [...picked];
+                            [next[index], next[index + direction]] = [
+                              next[index + direction],
+                              next[index],
+                            ];
+                            setChosen(next);
+                          }}
+                        >
+                          <Icon name={direction < 0 ? 'up' : 'down'} sm />
+                        </button>
+                      ))}
+                    </li>
+                  ))}
+                </ol>
+                <p className="help">{t('ws.assemble.reviewNext')}</p>
               </section>
             ) : (
               <section className="designer-step" data-step="2">
@@ -375,7 +413,7 @@ export default function AssembleDialog({
                         <input
                           id="designer-title"
                           value={name}
-                          maxLength={150}
+                          maxLength={120}
                           placeholder={t('ws.assemble.albumNameHint')}
                           onChange={(e) => setTitle(e.target.value)}
                         />
@@ -390,6 +428,11 @@ export default function AssembleDialog({
                         <div className="help">{t('ws.assemble.collectionHelp')}</div>
                       </div>
                     </section>
+                    <AssemblyReview
+                      body={request}
+                      variables={variables}
+                      onVariables={setVariables}
+                    />
                   </div>
                   <aside className="designer-side">
                     <section className="designer-card designer-summary-card">
@@ -426,14 +469,14 @@ export default function AssembleDialog({
                         <div className="designer-summary-row is-chips">
                           <dt>{t('ws.assemble.presets')}</dt>
                           <dd>
-                            {presets
-                              .filter((p) => picked.includes(p.id!))
-                              .map((p) => (
-                                <span className="designer-summary-chip" key={p.id}>
-                                  <span>{p.title}</span>
-                                  <b>{t('ws.assemble.items', { count: p.entries.length })}</b>
+                            {ordered.map((p, index) => (
+                              <span className="designer-summary-chip" key={p.id}>
+                                <span>
+                                  {index + 1}. {p.title}
                                 </span>
-                              ))}
+                                <b>{t('ws.assemble.items', { count: p.entries.length })}</b>
+                              </span>
+                            ))}
                           </dd>
                         </div>
                       </dl>
@@ -490,7 +533,7 @@ export default function AssembleDialog({
             <button
               type="button"
               className="btn primary"
-              disabled={!storyId || assemble.isPending}
+              disabled={!storyId || name.length > 120 || assemble.isPending}
               onClick={submit}
             >
               <Icon name="plus" />

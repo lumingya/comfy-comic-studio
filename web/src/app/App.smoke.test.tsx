@@ -185,6 +185,36 @@ beforeEach(() => {
     'GET /api/episodes/sb_1': storyboard,
     'PATCH /api/series/ws_1': (body: unknown) => ({ ...workshop, ...(body as object) }),
     'POST /api/workshop/assemble': { series: series, episode: episode },
+    'POST /api/workshop/assemble/preview': {
+      title: '海风来信',
+      storyboard_id: 'sb_1',
+      profile_id: '',
+      preset_ids: ['pre_1'],
+      panels: [
+        {
+          panel_id: 'p0',
+          title: '海风来信',
+          order: 0,
+          profile_id: '',
+          dialect: 'tags',
+          positive: 'lin xia, {天气}',
+          negative: '',
+          dialogues: [],
+          variables: [
+            {
+              key: '天气',
+              field: 'overrides.raw_prompt',
+              value: null,
+              source: 'missing',
+              source_id: null,
+              source_title: null,
+              status: 'missing',
+              chain: ['天气'],
+            },
+          ],
+        },
+      ],
+    },
     'POST /api/workshop/preview': {
       series: { ...series, id: 'ser_pv', title: '林夏 · 夏日 · 试绘', subtitle: '预设试绘' },
       episode: { ...episode, id: 'ep_pv', series_id: 'ser_pv' },
@@ -288,7 +318,7 @@ describe('every route mounts with API data', () => {
       };
       mount(`/workshop/assembly/ep_1/${tab}`);
       // Wait for the lazy route and episode queries before interacting with its candidates.
-      const zooms = await screen.findAllByRole('button', { name: '查看大图' }, { timeout: 5000 });
+      const zooms = await screen.findAllByRole('button', { name: '查看大图' }, { timeout: 10000 });
       fireEvent.click(zooms[0]);
       const dialog = await screen.findByRole('dialog');
       expect(within(dialog).getByText(/1024×1536.*未应用（渠道不支持）/)).toBeInTheDocument();
@@ -298,6 +328,8 @@ describe('every route mounts with API data', () => {
       expect(within(dialog).getByRole('row', { name: /种子/ })).toHaveTextContent('42');
       expect(within(dialog).getByRole('row', { name: /参考图/ })).toHaveTextContent('合成参考图');
     },
+    // The first lazy route competes with the full suite's parallel module transforms.
+    15000,
   );
 
   const cloudProfile = {
@@ -696,8 +728,11 @@ describe('every route mounts with API data', () => {
     await screen.findByRole('dialog', { name: '新建生成任务' });
     await screen.findByRole('option', { name: /海风来信/ });
     fireEvent.click(screen.getByRole('button', { name: '下一步' }));
-    expect(await screen.findByText(/还缺 \{天气\}/)).toBeInTheDocument();
+    expect(await screen.findByText(/下一步可核对实际替换结果/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '下一步' }));
+    expect(
+      await screen.findByRole('button', { name: /第 1 幕.*原始提示词.*天气.*未定义/ }),
+    ).toBeInTheDocument();
     expect(screen.getByLabelText('画册名称')).toHaveValue('海风来信 · 林夏');
     fireEvent.click(screen.getByRole('button', { name: '添加待命任务' }));
     await waitFor(() =>

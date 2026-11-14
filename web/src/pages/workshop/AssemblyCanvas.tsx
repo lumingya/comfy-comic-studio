@@ -91,7 +91,7 @@ export function AssemblyCanvas({
         {
           id: nodeId(),
           storyId: id,
-          title: t('ws.canvas.newAlbum', { title: boardTitle(id) }),
+          title: t('ws.canvas.newAlbum', { title: boardTitle(id) }).slice(0, 120),
           x: 35,
           y: 30 + d.stories.length * 180,
         },
@@ -261,7 +261,7 @@ export function AssemblyCanvas({
                 {t('ws.canvas.outputName')}
                 <input
                   value={n.title}
-                  maxLength={150}
+                  maxLength={120}
                   onChange={(e) =>
                     onChange({
                       ...d,

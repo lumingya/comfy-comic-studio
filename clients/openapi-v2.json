@@ -141,6 +141,19 @@
    },
    "AssembleRequest": {
     "properties": {
+     "idempotency_key": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Idempotency Key"
+     },
      "preset_ids": {
       "items": {
        "type": "string"
@@ -168,6 +181,13 @@
       "maxLength": 120,
       "title": "Title",
       "type": "string"
+     },
+     "variables": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Variables",
+      "type": "object"
      }
     },
     "required": [
@@ -190,6 +210,193 @@
      "episode"
     ],
     "title": "Assembled",
+    "type": "object"
+   },
+   "AssemblyPanelPreview": {
+    "properties": {
+     "dialect": {
+      "enum": [
+       "tags",
+       "natural"
+      ],
+      "title": "Dialect",
+      "type": "string"
+     },
+     "dialogues": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Dialogues",
+      "type": "array"
+     },
+     "negative": {
+      "title": "Negative",
+      "type": "string"
+     },
+     "order": {
+      "title": "Order",
+      "type": "integer"
+     },
+     "panel_id": {
+      "title": "Panel Id",
+      "type": "string"
+     },
+     "positive": {
+      "title": "Positive",
+      "type": "string"
+     },
+     "profile_id": {
+      "title": "Profile Id",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "variables": {
+      "items": {
+       "$ref": "#/components/schemas/AssemblyVariable"
+      },
+      "title": "Variables",
+      "type": "array"
+     }
+    },
+    "required": [
+     "panel_id",
+     "title",
+     "order",
+     "profile_id",
+     "dialect",
+     "positive",
+     "negative",
+     "dialogues",
+     "variables"
+    ],
+    "title": "AssemblyPanelPreview",
+    "type": "object"
+   },
+   "AssemblyPreview": {
+    "properties": {
+     "panels": {
+      "items": {
+       "$ref": "#/components/schemas/AssemblyPanelPreview"
+      },
+      "title": "Panels",
+      "type": "array"
+     },
+     "preset_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Preset Ids",
+      "type": "array"
+     },
+     "profile_id": {
+      "title": "Profile Id",
+      "type": "string"
+     },
+     "storyboard_id": {
+      "title": "Storyboard Id",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "title",
+     "storyboard_id",
+     "profile_id",
+     "preset_ids",
+     "panels"
+    ],
+    "title": "AssemblyPreview",
+    "type": "object"
+   },
+   "AssemblyVariable": {
+    "properties": {
+     "chain": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Chain",
+      "type": "array"
+     },
+     "field": {
+      "title": "Field",
+      "type": "string"
+     },
+     "key": {
+      "title": "Key",
+      "type": "string"
+     },
+     "source": {
+      "enum": [
+       "builtin",
+       "workshop",
+       "preset",
+       "request",
+       "panel",
+       "missing"
+      ],
+      "title": "Source",
+      "type": "string"
+     },
+     "source_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Source Id"
+     },
+     "source_title": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Source Title"
+     },
+     "status": {
+      "enum": [
+       "resolved",
+       "empty",
+       "missing",
+       "cycle",
+       "depth_limit"
+      ],
+      "title": "Status",
+      "type": "string"
+     },
+     "value": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Value"
+     }
+    },
+    "required": [
+     "key",
+     "field",
+     "value",
+     "source",
+     "status",
+     "chain"
+    ],
+    "title": "AssemblyVariable",
     "type": "object"
    },
    "Asset": {
@@ -11373,6 +11580,53 @@
      }
     ],
     "summary": "Assemble",
+    "tags": [
+     "workshop"
+    ]
+   }
+  },
+  "/workshop/assemble/preview": {
+   "post": {
+    "description": "Inspect final prompts, reader dialogue and variable provenance without creating an album.",
+    "operationId": "preview_assembly",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AssembleRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/AssemblyPreview"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Preview Assembly",
     "tags": [
      "workshop"
     ]

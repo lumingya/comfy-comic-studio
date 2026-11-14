@@ -6,6 +6,7 @@ from fastapi import APIRouter, status
 from pydantic import BaseModel, Field
 
 from .. import workshop as W
+from ..assembly import AssemblyPreview
 from ..models import Episode, Series, WorkshopQueue
 from .deps import Ctx
 
@@ -17,6 +18,8 @@ class AssembleRequest(BaseModel):
     preset_ids: list[str] = Field(default_factory=list)
     title: str = Field(default="", max_length=120)
     profile_id: str | None = None
+    variables: dict[str, str] = Field(default_factory=dict)
+    idempotency_key: str | None = Field(default=None, min_length=1, max_length=200)
 
 
 class PreviewRequest(BaseModel):
@@ -46,12 +49,25 @@ def get_workshop(ctx: Ctx) -> Series:
 def assemble(ctx: Ctx, body: AssembleRequest) -> Assembled:
     """Storyboard + presets → a new album waiting in the queue.  Makes no model call; start it
     with ``POST /episodes/{id}/render``."""
-    W.ensure_workshop(ctx.store, getattr(ctx, "legacy_root", None))
     series, episode = W.assemble(
-        ctx.store, body.storyboard_id, body.preset_ids, body.title, body.profile_id
+        ctx.store,
+        body.storyboard_id,
+        body.preset_ids,
+        body.title,
+        body.profile_id,
+        body.variables,
+        body.idempotency_key,
     )
     ctx.queue.track(series.id)
     return Assembled(series=series, episode=episode)
+
+
+@router.post("/workshop/assemble/preview", response_model=AssemblyPreview)
+def preview_assembly(ctx: Ctx, body: AssembleRequest) -> AssemblyPreview:
+    """Inspect final prompts, reader dialogue and variable provenance without creating an album."""
+    return W.assembly_preview(
+        ctx.store, body.storyboard_id, body.preset_ids, body.title, body.profile_id, body.variables
+    )
 
 
 @router.post("/workshop/preview", response_model=Assembled, status_code=status.HTTP_201_CREATED)

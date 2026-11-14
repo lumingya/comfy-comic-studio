@@ -14,9 +14,12 @@ character presets), so the old 分镜工坊 / 预设工坊 content is where the 
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 from pathlib import Path
 
+from .assembly import AssemblyPreview, build_snapshot, inspect_snapshot
 from .models import (
     Episode,
     Panel,
@@ -176,49 +179,62 @@ def assemble(
     preset_ids: list[str],
     title: str,
     profile_id: str | None = None,
+    variables: dict[str, str] | None = None,
+    idempotency_key: str | None = None,
 ) -> tuple[Series, Episode]:
     """Storyboard + presets → a new album waiting in the queue (no model is called)."""
-    workshop = ensure_workshop(store)
-    board = store.get_episode(storyboard_id)
-    if board.series_id != workshop.id:
-        raise NotFound(f"storyboard not found: {storyboard_id}")
-    by_id = {p.id: p for p in workshop.presets}
-    missing = [pid for pid in preset_ids if pid not in by_id]
-    if missing:
-        raise NotFound(f"preset not found: {missing[0]}")
-    if not board.panels:
-        raise ValueError("分镜还没有分幕，请先添加至少一幕再装配")
-    chosen_profile = profile_id or workshop.default_profile_id
-    if chosen_profile:
-        store.get_doc("profile", chosen_profile)
-    variables = dict(workshop.variables)
-    for pid in preset_ids:
-        variables.update(by_id[pid].variables())
-    album = store.create_series(
-        Series(
-            title=title.strip() or board.title,
-            kind="album",
-            # The presets it was assembled from, as a snapshot (the queue card's 预设 line).
-            presets=[by_id[pid].model_copy(deep=True) for pid in preset_ids],
-            bible=workshop.bible.model_copy(deep=True),
-            variants=[v.model_copy(deep=True) for v in workshop.variants],
-            variables=variables,
-            default_profile_id=chosen_profile,
+    request = {
+        "storyboard_id": storyboard_id,
+        "preset_ids": preset_ids,
+        "title": title,
+        "profile_id": profile_id,
+        "variables": variables or {},
+    }
+    request_sha = hashlib.sha256(
+        json.dumps(request, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()
+    ).hexdigest()
+    with store.lock:
+        if idempotency_key:
+            previous = store.assembly_receipt(idempotency_key, request_sha)
+            if previous:
+                return previous
+        snapshot = _assembly_snapshot(
+            store, storyboard_id, preset_ids, title, profile_id, variables
         )
-    )
-    panels = [Panel.model_validate(p.model_dump()) for p in board.ordered_panels()]
-    episode = store.create_episode(
-        Episode(
-            series_id=album.id,
-            title=board.title,
-            order=0,
-            synopsis=board.synopsis,
-            base_prompt=board.base_prompt,
-            panels=panels,
-            strip=board.strip.model_copy(deep=True),
+        return store.create_assembly(
+            snapshot.series,
+            snapshot.episode,
+            idempotency_key=idempotency_key,
+            request_sha=request_sha,
         )
+
+
+def _assembly_snapshot(store, storyboard_id, preset_ids, title, profile_id, variables):
+    workshop = find_workshop(store)
+    if workshop is None:
+        raise NotFound("workshop not found")
+    snapshot = build_snapshot(
+        workshop, store.get_episode(storyboard_id), preset_ids, title, profile_id, variables
     )
-    return album, episode
+    if snapshot.series.default_profile_id:
+        store.get_doc("profile", snapshot.series.default_profile_id)
+    return snapshot
+
+
+def assembly_preview(
+    store,
+    storyboard_id: str,
+    preset_ids: list[str],
+    title: str = "",
+    profile_id: str | None = None,
+    variables: dict[str, str] | None = None,
+) -> AssemblyPreview:
+    """Inspect the same prospective album as assemble, without writes or remote calls."""
+    with store.lock:
+        snapshot = _assembly_snapshot(
+            store, storyboard_id, preset_ids, title, profile_id, variables
+        )
+        return inspect_snapshot(store, snapshot, storyboard_id)
 
 
 def preview(

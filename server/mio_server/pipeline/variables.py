@@ -83,21 +83,24 @@ def series_table(
     return values
 
 
+def _expand_at(text: str, values: dict[str, str], depth: int) -> str:
+    """Expand using the caller's remaining budget; preserve escapes until the final pass."""
+
+    def sub(match: re.Match) -> str:
+        token = match.group(0)
+        if token in ("{{", "}}"):
+            return token
+        name = match.group(1).strip()
+        if name not in values:
+            return token
+        value = str(values[name])
+        return _expand_at(value, values, depth + 1) if depth < MAX_DEPTH else value
+
+    return PATTERN.sub(sub, text)
+
+
 def expand(text: str, values: dict[str, str]) -> str:
-    def one(s: str, depth: int) -> str:
-        def sub(m: re.Match) -> str:
-            token = m.group(0)
-            if token in ("{{", "}}"):
-                return token  # unescaped once, after the last pass
-            name = m.group(1).strip()
-            if name not in values:
-                return token
-            value = str(values[name])
-            return one(value, depth + 1) if depth < MAX_DEPTH else value
-
-        return PATTERN.sub(sub, s)
-
-    return one(text, 0).replace("{{", "{").replace("}}", "}") if text else text
+    return _expand_at(text, values, 0).replace("{{", "{").replace("}}", "}") if text else text
 
 
 _BLANK = "\x00"
@@ -149,3 +152,51 @@ def unknown(text: str, values: dict[str, str]) -> list[str]:
             if m.group(1) and m.group(1).strip() not in values
         }
     )
+
+
+def trace(text: str, values: dict[str, str]) -> list[dict]:
+    """Explain actual variable references without re-scanning expanded escaped braces.
+
+    Diagnostics never change expansion or reject author text. ``chain`` includes each
+    referenced key from the source field to this entry, including a repeated cycle key.
+    """
+    rows, seen = [], set()
+
+    def visit(source: str, chain: tuple[str, ...], depth: int) -> None:
+        for match in PATTERN.finditer(source or ""):
+            if not match.group(1):
+                continue
+            key = match.group(1).strip()
+            path = (*chain, key)
+            if path in seen:
+                continue
+            seen.add(path)
+            raw = str(values[key]) if key in values else None
+            if raw is None:
+                status = "missing"
+            elif key in chain:
+                status = "cycle"
+            elif not raw.strip():
+                status = "empty"
+            elif depth >= MAX_DEPTH and any(m.group(1) for m in PATTERN.finditer(raw)):
+                status = "depth_limit"
+            else:
+                status = "resolved"
+            value = raw
+            if value is not None:
+                if depth < MAX_DEPTH:
+                    value = _expand_at(value, values, depth + 1)
+                value = value.replace("{{", "{").replace("}}", "}")
+            rows.append(
+                {
+                    "key": key,
+                    "value": value,
+                    "status": status,
+                    "chain": list(path),
+                }
+            )
+            if status == "resolved" and depth < MAX_DEPTH:
+                visit(raw, path, depth + 1)
+
+    visit(text, (), 0)
+    return rows

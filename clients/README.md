@@ -42,8 +42,9 @@ mio.wait_job(job["id"])  # 轮询到完成 / 失败 / 取消
 
 ### 工坊装配（与界面相同的链路）
 
-`GET /api/v2/workshop` 需要 `read`；`POST /api/v2/workshop/assemble` 需要 `write`，只做快照，
-不消耗模型额度。后续出图仍需 `render`。例如：
+`GET /api/v2/workshop` 需要 `read`；装配预览和装配使用 `write`，不消耗模型额度。
+`POST /api/v2/workshop/assemble/preview` 只返回替换结果与诊断，不创建作品或任务；
+`POST /api/v2/workshop/assemble` 原子保存画册和分幕快照。后续出图仍需 `render`。例如：
 
 ```python
 workshop = mio.get_workshop()
@@ -51,18 +52,33 @@ boards = mio.list_episodes(workshop["id"])["items"]
 board = next((b for b in boards if b["panel_count"] > 0), None)
 if board is None:
     raise ValueError("请先在分镜工坊创建至少一幕")
-assembled = mio.assemble(
-    {
-        "storyboard_id": board["id"],
-        "preset_ids": [p["id"] for p in workshop["presets"][:1]],
-        "title": "API 装配示例",
-    }
-)
+request = {
+    "storyboard_id": board["id"],
+    "preset_ids": [p["id"] for p in workshop["presets"][:1]],
+    "title": "API 装配示例",
+    "variables": {"character_display_name": "七海"},  # 只用于这部作品
+    "idempotency_key": "my-script-assembly-001",  # 每次新的创作意图使用新键
+}
+review = mio.preview_assembly(request)
+for panel in review["panels"]:
+    print(panel["title"], panel["positive"], panel["negative"], panel["dialogues"])
+    for variable in panel["variables"]:
+        if variable["status"] in ("missing", "cycle", "depth_limit"):
+            print(variable["field"], variable["chain"], variable["status"])
+assembled = mio.assemble(request)
 # 检查预设变量和出图配置后，才显式调用 render_episode。
 # body={"candidates": 1, "adopt_first": True} 会填入尚未有采用图的分格。
 ```
 
 装配会固定当前分镜、预设、变量和画布设置；修改工坊模板不会追改已装配画册。
+变量优先级为逐格 `$变量` → 本次 `variables` → 按 `preset_ids` 顺序后者覆盖前者 → 工坊变量
+→ 内置变量。空字符串也是有效覆盖；未知提示词变量保留原文，阅读台词中的未知普通变量留空。
+预览按实际逐格出图配置编译，变量记录包含来源、字段和嵌套引用链；这是核心编译结果，
+扩展仍可能在生成时修改提示词。
+
+网络响应丢失后，用同一个 `idempotency_key` 和同一请求重试会返回原作品；键已使用但请求不同
+返回 409。工坊模板后来改动或删除不会让同键重放重复创建。需要另一部作品时使用新键；
+修改输入后也应换键。预览不锁定模板版本，首次装配以提交时模板为准。
 
 ### 本地、纯云端与显式混合
 

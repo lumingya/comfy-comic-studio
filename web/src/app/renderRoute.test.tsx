@@ -171,7 +171,17 @@ describe('render routes', () => {
   });
 
   it('shows the selected assembly route in the final summary and only creates a snapshot', async () => {
-    const calls = mockFetch({ ...base(), 'POST /api/workshop/assemble': { series, episode } });
+    const calls = mockFetch({
+      ...base(),
+      'POST /api/workshop/assemble': { series, episode },
+      'POST /api/workshop/assemble/preview': {
+        title: '',
+        storyboard_id: 'sb',
+        profile_id: cloud.id,
+        preset_ids: [],
+        panels: [],
+      },
+    });
     renderWithProviders(<AssembleDialog onClose={vi.fn()} />);
     const dialog = await screen.findByRole('dialog');
     await within(dialog).findByText('纯云端出图 · 主力图像服务');
@@ -185,12 +195,16 @@ describe('render routes', () => {
     expect(within(dialog).getByText('纯云端出图 · 主力图像服务')).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole('button', { name: '添加待命任务' }));
     await waitFor(() =>
-      expect(calls.find((call) => call.method === 'POST')?.body).toMatchObject({
+      expect(calls.find((call) => call.url === '/api/workshop/assemble')?.body).toMatchObject({
         profile_id: cloud.id,
       }),
     );
-    expect(calls.filter((call) => call.method === 'POST').map((call) => call.url)).toEqual([
-      '/api/workshop/assemble',
-    ]);
+    expect(
+      calls
+        .filter((call) => call.method === 'POST')
+        .every((call) =>
+          ['/api/workshop/assemble', '/api/workshop/assemble/preview'].includes(call.url),
+        ),
+    ).toBe(true);
   });
 });
