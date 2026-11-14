@@ -84,7 +84,7 @@ describe('cloud channel configuration', () => {
     const user = userEvent.setup();
     renderWithProviders(<ChannelsSection />);
     await screen.findByDisplayValue('主力图像服务');
-    await user.selectOptions(screen.getByLabelText('类型'), 'novelai');
+    await user.selectOptions(screen.getByLabelText(/^类型/), 'novelai');
     expect(screen.getByLabelText(/^宽/)).toHaveValue(832);
     expect(screen.queryByLabelText(/^输出尺寸/)).toBeNull();
     await expand('高级参数与标识');

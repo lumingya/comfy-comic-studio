@@ -487,60 +487,60 @@ export default function AssembleDialog({
             )}
           </div>
         )}
-        <div className="modal-footer designer-footer">
-          <span className="designer-footer-hint">
-            {mode === 'canvas'
-              ? t('ws.canvas.footer', {
-                  stories: design.stories.length,
-                  edges: design.edges.length,
-                })
-              : t('ws.assemble.stepOf', { n: step + 1, total: STEPS.length })}
-          </span>
-          <span className="grow" />
-          <button type="button" className="btn ghost" onClick={close}>
-            {t('ws.cancel')}
+      </div>
+      <div className="modal-footer designer-footer">
+        <span className="designer-footer-hint">
+          {mode === 'canvas'
+            ? t('ws.canvas.footer', {
+                stories: design.stories.length,
+                edges: design.edges.length,
+              })
+            : t('ws.assemble.stepOf', { n: step + 1, total: STEPS.length })}
+        </span>
+        <span className="grow" />
+        <button type="button" className="btn ghost" onClick={close}>
+          {t('ws.cancel')}
+        </button>
+        {mode === 'canvas' ? (
+          <button
+            type="button"
+            className="btn primary"
+            disabled={!design.stories.length || busy}
+            title={design.stories.length ? undefined : t('ws.canvas.needStory')}
+            onClick={() => void submitCanvas()}
+          >
+            <Icon name="plus" />
+            {confirming
+              ? t('ws.canvas.confirm', { count: design.stories.length })
+              : t('ws.canvas.submit')}
           </button>
-          {mode === 'canvas' ? (
-            <button
-              type="button"
-              className="btn primary"
-              disabled={!design.stories.length || busy}
-              title={design.stories.length ? undefined : t('ws.canvas.needStory')}
-              onClick={() => void submitCanvas()}
-            >
-              <Icon name="plus" />
-              {confirming
-                ? t('ws.canvas.confirm', { count: design.stories.length })
-                : t('ws.canvas.submit')}
-            </button>
-          ) : step > 0 ? (
-            <button type="button" className="btn" onClick={() => setStep(step - 1)}>
-              <Icon name="arrow" className="is-back" />
-              {t('ws.assemble.prev')}
-            </button>
-          ) : null}
-          {mode === 'canvas' ? null : step < STEPS.length - 1 ? (
-            <button
-              type="button"
-              className="btn primary"
-              disabled={!storyId}
-              onClick={() => setStep(step + 1)}
-            >
-              <Icon name="arrow" />
-              {t('ws.assemble.next')}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="btn primary"
-              disabled={!storyId || name.length > 120 || assemble.isPending}
-              onClick={submit}
-            >
-              <Icon name="plus" />
-              {t('ws.assemble.submit')}
-            </button>
-          )}
-        </div>
+        ) : step > 0 ? (
+          <button type="button" className="btn" onClick={() => setStep(step - 1)}>
+            <Icon name="arrow" className="is-back" />
+            {t('ws.assemble.prev')}
+          </button>
+        ) : null}
+        {mode === 'canvas' ? null : step < STEPS.length - 1 ? (
+          <button
+            type="button"
+            className="btn primary"
+            disabled={!storyId}
+            onClick={() => setStep(step + 1)}
+          >
+            <Icon name="arrow" />
+            {t('ws.assemble.next')}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="btn primary"
+            disabled={!storyId || name.length > 120 || assemble.isPending}
+            onClick={submit}
+          >
+            <Icon name="plus" />
+            {t('ws.assemble.submit')}
+          </button>
+        )}
       </div>
     </dialog>
   );

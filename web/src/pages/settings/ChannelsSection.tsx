@@ -76,7 +76,7 @@ function ChannelFields({
             placeholder={t('config.cloud.namePlaceholder')}
           />
         </Field>
-        <Field label={t('settings.channels.kind')}>
+        <Field label={t('settings.channels.kind')} hint={t('config.cloud.kindHint')}>
           <Select
             value={c.kind}
             onChange={(kind) => set({ kind })}

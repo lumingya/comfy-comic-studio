@@ -159,9 +159,9 @@ export const guideZh = {
     materialNone: '当前画册集还没有分镜。',
     materialMissing: '「{{story}}」用到的变量 {{names}} 还没有预设定义。',
     materialOk: '{{stories}} 个分镜 · {{presets}} 个预设',
-    trial: '试跑',
-    trialOk: '已生成「{{title}}」',
-    trialNone: '还没有生成过画面。先装配一个只有一两幕的生成任务试一试。',
+    trial: '可阅读画面',
+    trialOk: '「{{title}}」已有画面（示例或导入的画面也计入此项）。',
+    trialNone: '还没有可阅读画面。生成或导入图片并采用后，即可打开画册阅读。',
   },
   quick: {
     title: '快速开始 · 从灵感到一本画册',
@@ -174,7 +174,7 @@ export const guideZh = {
       service: '选择 ComfyUI、NovelAI 或 OpenAI 兼容服务，填写地址或 API Key。',
       workflow: '导入 ComfyUI 的 API 工作流，把提示词和种子映射到节点。',
       material: '写一个分镜，再准备覆盖它全部变量的预设。',
-      trial: '用图像服务生成第一本画册。',
+      trial: '生成或导入画面，打开画册阅读。',
     },
     items: {
       reader: { title: '阅读与编辑', intro: '打开画册，调整图片、气泡和文字。' },
@@ -340,9 +340,10 @@ export const guideEn: Widen<typeof guideZh> = {
     materialNone: 'This collection has no storyboard yet.',
     materialMissing: '“{{story}}” uses {{names}}, which no preset defines yet.',
     materialOk: '{{stories}} storyboards · {{presets}} presets',
-    trial: 'Trial run',
-    trialOk: 'Rendered “{{title}}”',
-    trialNone: 'Nothing rendered yet. Try a task with just one or two scenes first.',
+    trial: 'Pictures to read',
+    trialOk: 'Pictures available in “{{title}}” (samples and imports also count).',
+    trialNone:
+      'No pictures to read yet. Generate or import pictures, adopt them, then open the album.',
   },
   quick: {
     title: 'Quick start · from an idea to an album',
@@ -356,7 +357,7 @@ export const guideEn: Widen<typeof guideZh> = {
         'Choose ComfyUI, NovelAI or an OpenAI-compatible service and enter its address or API key.',
       workflow: 'Import a ComfyUI API workflow and map the prompt and seed to its nodes.',
       material: 'Write a storyboard, then prepare presets that cover all of its variables.',
-      trial: 'Render your first album with the image service.',
+      trial: 'Generate or import pictures, then open the album to read.',
     },
     items: {
       reader: {

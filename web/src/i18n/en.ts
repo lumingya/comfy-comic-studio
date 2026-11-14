@@ -1154,7 +1154,7 @@ const en: Widen<Dict> = {
       title1: 'Turn stories into frames,',
       title2: 'and ideas into albums.',
       lead: 'Mio is a comic studio that runs on your computer: write the storyboard and cast, connect ComfyUI or a cloud image service, render a whole album at once, then read, export and share it page by page.',
-      start: 'Start with a scene',
+      start: 'Open storyboards',
       sample: 'Open the sample album',
       browse: 'Browse my albums',
       reassurance: 'You can edit storyboards and read albums before connecting any model.',

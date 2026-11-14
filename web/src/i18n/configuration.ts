@@ -33,6 +33,8 @@ export const configZh = {
     intro: '左侧选择渠道，右侧编辑。保存配置不会调用模型，也不会产生出图费用。',
     nameHint: '给自己看的名称，不会影响密钥或已有引用。',
     namePlaceholder: '例如：日常出图、备用服务',
+    kindHint:
+      '按服务示例的请求路径选择：/chat/completions 选「聊天接口出图」，/images/generations 选 OpenAI Images。',
     sharedAddress: '留空沿用文本模型 API 地址',
     sharedModel: '文本模型 API 中的出图模型',
     protocol: {
@@ -255,6 +257,8 @@ export const configEn = {
       'Select a channel to edit. Saving never calls a model or submits a paid generation request.',
     nameHint: 'A display name. Renaming it does not affect keys or existing references.',
     namePlaceholder: 'For example: everyday images, backup service',
+    kindHint:
+      'Match the request path in your service’s example: /chat/completions → Chat API images; /images/generations → OpenAI Images.',
     sharedAddress: 'Leave blank to use the text model endpoint',
     sharedModel: 'the image model in Text model API',
     protocol: {

@@ -324,6 +324,31 @@ a.workspace-profile-button {
 :where(dialog#modal, dialog#reader, dialog#guide-dialog)[open] {
   animation: modalin 0.2s;
 }
+/* Keep wizard actions outside its scroll area so they cannot cover preset controls. */
+#modal.assembly-designer[open] {
+  display: flex;
+  flex-direction: column;
+  max-height: 90dvh;
+}
+#modal.assembly-designer > .modal-head,
+#modal.assembly-designer > .designer-footer {
+  flex: none;
+}
+#modal.assembly-designer > .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+}
+#modal.assembly-designer > .designer-footer {
+  position: static;
+  margin: 0 28px;
+}
+@media (max-width: 760px) {
+  #modal.assembly-designer > .designer-footer {
+    margin-inline: 16px;
+  }
+}
 @keyframes modalin {
   from {
     opacity: 0;
