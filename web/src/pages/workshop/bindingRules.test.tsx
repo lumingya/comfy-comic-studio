@@ -10,32 +10,36 @@ const b = (changes: object) => ({ ...blankBinding(), node_id: '12', ...changes }
 const preset = (id: string, bindings: Preset['bindings']): Preset => ({
   id,
   title: id,
-  positive_prompt: '',
-  negative_prompt: '',
   groups: [],
   entries: [{ id: 'v', key: 'lora', label: 'LoRA', value: 'nanami', hint: '', group_id: null }],
   bindings,
 });
 
 describe('preset node bindings (legacy workshop-binding-save)', () => {
-  it('keeps positive and negative additions through export and import', () => {
+  it('keeps user-defined prompt variables while dropping retired preset additions', () => {
     const original = {
       ...preset('p', []),
       positive_prompt: '水彩, {color}',
       negative_prompt: '文字, 水印',
+      entries: [
+        { id: 'negative', key: '负向词', label: '', value: '文字, 水印', hint: '', group_id: null },
+      ],
     };
-    expect(presetFromFile(presetToFile(original))).toMatchObject({
-      positive_prompt: original.positive_prompt,
-      negative_prompt: original.negative_prompt,
-      entries: original.entries,
+    const exported = presetToFile(original);
+    const imported = presetFromFile(original);
+    expect(exported).not.toHaveProperty('positive_prompt');
+    expect(exported).not.toHaveProperty('negative_prompt');
+    expect(imported).not.toHaveProperty('positive_prompt');
+    expect(imported).not.toHaveProperty('negative_prompt');
+    expect(imported.entries).toEqual(original.entries);
+    expect(presetFromFile(exported).entries).toEqual(original.entries);
+    const legacy = presetFromFile({
+      entries: [],
+      positive_prompt: '水彩',
+      negative_prompt: '模糊',
     });
-    expect(presetFromFile({ entries: [], groups: [] })).toMatchObject({
-      positive_prompt: '',
-      negative_prompt: '',
-    });
-    expect(
-      presetFromFile({ entries: [], positive_prompt: '保留', negative_prompt: '模糊' }),
-    ).toMatchObject({ positive_prompt: '保留', negative_prompt: '模糊' });
+    expect(legacy).not.toHaveProperty('positive_prompt');
+    expect(legacy).not.toHaveProperty('negative_prompt');
   });
   it('checks what the server checks', () => {
     expect(bindingProblem(b({ node_id: ' ' }), [])).toBe('target');

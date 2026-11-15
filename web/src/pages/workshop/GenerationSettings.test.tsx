@@ -41,13 +41,13 @@ describe('generation controls', () => {
     expect(screen.getByRole('button', { name: 'Submit' })).toBeEnabled();
   });
 
-  it('persists preset additions without changing the variable library', async () => {
+  it('edits user-defined negative variables without dedicated prompt additions', async () => {
     const preset = {
       id: 'p',
       title: 'Watercolor',
       groups: [],
       bindings: [],
-      entries: [{ id: 'v', key: 'color', label: 'Color', value: 'blue', hint: '', group_id: null }],
+      entries: [{ id: 'v', key: 'negative', label: '负向词', value: '', hint: '', group_id: null }],
     };
     const workshop = { ...series, id: 'ws', kind: 'workshop', presets: [preset] };
     const calls = mockFetch(
@@ -58,15 +58,12 @@ describe('generation controls', () => {
       }),
     );
     renderWithProviders(<PresetsTab />, '/workshop/presets');
-    fireEvent.change(await screen.findByLabelText('正向追加词'), {
-      target: { value: 'watercolor, {color}' },
-    });
-    fireEvent.change(screen.getByLabelText('负向追加词'), { target: { value: 'watermark' } });
+    fireEvent.change(await screen.findByLabelText('负向词'), { target: { value: 'watermark' } });
+    expect(screen.queryByLabelText('正向追加词')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('负向追加词')).not.toBeInTheDocument();
     await waitFor(() =>
       expect(calls.find((call) => call.method === 'PATCH')?.body).toMatchObject({
-        presets: [
-          { ...preset, positive_prompt: 'watercolor, {color}', negative_prompt: 'watermark' },
-        ],
+        presets: [{ ...preset, entries: [{ ...preset.entries[0], value: 'watermark' }] }],
       }),
     );
   });

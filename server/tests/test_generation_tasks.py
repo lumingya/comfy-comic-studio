@@ -114,13 +114,17 @@ class GenerationTaskTests(ApiCase):
             self.dimensions(self.render(first["episode"]["id"])["items"][0]), (640, 896)
         )
 
-    def test_preset_append_expands_in_raw_preview_and_render_and_survives_source_edits(self):
+    def test_preset_variables_are_available_in_explicit_panel_prompts(self):
         preset = Preset(
             title="Watercolor",
-            entries=[PresetEntry(key="tone", value="blue")],
-            positive_prompt="{tone} watercolor",
-            negative_prompt="{tone} ink",
+            entries=[
+                PresetEntry(key="tone", value="blue"),
+                PresetEntry(key="exclusions", value="{tone} ink"),
+            ],
         )
+        self.board.panels[0].overrides.raw_prompt = "a quiet room, watercolor"
+        self.board.panels[0].overrides.raw_negative = "{exclusions}"
+        self.ctx.store.save_episode(self.board)
         self.ctx.store.update_series(
             self.workshop["id"], lambda series: setattr(series, "presets", [preset])
         )
@@ -132,7 +136,7 @@ class GenerationTaskTests(ApiCase):
         preview = self.ok(self.client.post("/api/workshop/assemble/preview", json=request))[
             "panels"
         ][0]
-        self.assertEqual(preview["positive"], "a quiet room, blue watercolor")
+        self.assertEqual(preview["positive"], "a quiet room, watercolor")
         self.assertEqual(preview["negative"], "blue ink")
         self.assertTrue(
             any(v["key"] == "tone" and v["source"] == "preset" for v in preview["variables"])
@@ -146,6 +150,47 @@ class GenerationTaskTests(ApiCase):
         self.assertEqual(
             (meta["prompt"], meta["negative"]), (preview["positive"], preview["negative"])
         )
+
+    def test_retired_preset_fragments_do_not_change_prompts_or_exported_presets(self):
+        preset = Preset.model_validate(
+            {
+                "title": "Old preset",
+                "entries": [{"key": "negative", "value": "unused ink"}],
+                "positive_prompt": "hidden positive {missing_positive}",
+                "negative_prompt": "hidden negative {missing_negative}",
+            }
+        )
+        self.ctx.store.update_series(
+            self.workshop["id"], lambda series: setattr(series, "presets", [preset])
+        )
+        request = {
+            "storyboard_id": self.board.id,
+            "preset_ids": [preset.id],
+            "generation": {"workflow_id": self.workflow.id},
+        }
+        report = self.ok(self.client.post("/api/workshop/assemble/preview", json=request))[
+            "panels"
+        ][0]
+        self.assertEqual(report["positive"], "a quiet room")
+        self.assertEqual(report["negative"], "")
+        self.assertEqual(report["variables"], [])
+        made = self.ok(self.client.post("/api/workshop/assemble", json=request), 201)
+        meta = self.render(made["episode"]["id"])["items"][0]["input"]["meta"]
+        self.assertEqual((meta["prompt"], meta["negative"]), ("a quiet room", ""))
+        response = self.client.post(
+            "/api/creation-kits/export",
+            json={
+                "series_id": made["series"]["id"],
+                "episode_ids": [made["episode"]["id"]],
+                "preset_ids": [preset.id],
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        payload, _ = unpack(response.content)
+        exported = payload.series.presets[0].model_dump()
+        self.assertNotIn("positive_prompt", exported)
+        self.assertNotIn("negative_prompt", exported)
+        self.assertEqual(exported["entries"][0]["value"], "unused ink")
 
     def test_explicit_profile_fragments_are_preserved_in_snapshot_and_raw_render(self):
         profile = RenderProfile(
@@ -168,7 +213,7 @@ class GenerationTaskTests(ApiCase):
         self.assertEqual(self.dimensions(job["items"][0]), (704, 960))
 
     def test_preset_preview_retry_after_lost_response_keeps_one_task_and_frozen_values(self):
-        preset = Preset(title="Blue", positive_prompt="blue ink")
+        preset = Preset(title="Blue", entries=[PresetEntry(key="tone", value="blue")])
         self.ctx.store.update_series(
             self.workshop["id"], lambda series: setattr(series, "presets", [preset])
         )
@@ -187,7 +232,7 @@ class GenerationTaskTests(ApiCase):
         )
         retry = self.ok(self.client.post("/api/workshop/preview", json=body), 201)
         self.assertEqual(retry["series"]["id"], albums[0].id)
-        self.assertEqual(retry["series"]["presets"][0]["positive_prompt"], "blue ink")
+        self.assertEqual(retry["series"]["presets"][0]["entries"][0]["value"], "blue")
         self.assertEqual(len(self.ctx.store.list_episodes(albums[0].id)), 1)
         self.assertEqual(
             len([item for item in self.ctx.store.list_series() if item.kind == "album"]), 1
@@ -197,7 +242,7 @@ class GenerationTaskTests(ApiCase):
         self.assertEqual(changed.status_code, 409)
 
     def test_kit_preset_preview_uses_same_idempotent_contract(self):
-        preset = Preset(title="Kit look", negative_prompt="noise")
+        preset = Preset(title="Kit look", entries=[PresetEntry(key="tone", value="noise")])
         kit = self.ctx.store.create_series(Series(title="Kit", kind="kit", presets=[preset]))
         path = f"/api/creation-kits/{kit.id}/preview-preset"
         body = {

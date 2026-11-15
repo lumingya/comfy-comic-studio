@@ -174,16 +174,6 @@ def inspect_snapshot(store, snapshot: AssemblySnapshot, storyboard_id: str) -> A
             for field, text in _fields(panel).items()
             for row in V.trace(text, values)
         ]
-        variables.extend(
-            AssemblyVariable(
-                **row,
-                field=f"presets.{preset.id}.{field}",
-                **sources.get(row["key"], {"source": "missing"}),
-            )
-            for preset in series.presets
-            for field in ("positive_prompt", "negative_prompt")
-            for row in V.trace(getattr(preset, field), values)
-        )
         panels.append(
             AssemblyPanelPreview(
                 panel_id=panel.id,

@@ -12,8 +12,6 @@ const preset = (id: string): Preset => ({
   groups: [],
   bindings: [],
   entries: [],
-  positive_prompt: '',
-  negative_prompt: '',
 });
 const routes = () =>
   configurationRoutes({

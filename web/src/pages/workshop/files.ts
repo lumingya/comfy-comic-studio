@@ -112,9 +112,9 @@ export function presetFromFile(raw: unknown): Preset {
   const d = (raw ?? {}) as Obj;
   if (Array.isArray(d.entries) && Array.isArray(d.groups))
     return {
-      ...(d as unknown as Preset),
-      positive_prompt: str(d.positive_prompt),
-      negative_prompt: str(d.negative_prompt),
+      title: str(d.title) || '导入的预设',
+      groups: d.groups as Preset['groups'],
+      entries: d.entries as Preset['entries'],
       bindings: Array.isArray(d.bindings) ? (d.bindings as Preset['bindings']) : [],
       id: localId('preset'),
     };
@@ -126,8 +126,6 @@ export function presetFromFile(raw: unknown): Preset {
     return {
       id: localId('preset'),
       title: str(d.title) || '导入的预设',
-      positive_prompt: str(d.positive_prompt),
-      negative_prompt: str(d.negative_prompt),
       groups,
       entries: (d.entries as Obj[])
         .filter((e) => e && e.key && (e.type ?? 'text') === 'text')
@@ -171,5 +169,12 @@ function legacyBindings(raw: unknown): Preset['bindings'] {
 }
 
 export function presetToFile(p: Preset) {
-  return { schema: 'mio.preset.v1', ...p };
+  return {
+    schema: 'mio.preset.v1',
+    id: p.id,
+    title: p.title,
+    groups: p.groups,
+    entries: p.entries,
+    bindings: p.bindings,
+  };
 }

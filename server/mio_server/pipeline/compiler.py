@@ -2,7 +2,7 @@
 
 Every automated layer can be taken over (ROADMAP §2.1):
 * ``overrides.raw_prompt`` skips the compiler entirely (raw mode);
-* ``overrides.append_prompt`` / ``negative_prompt`` extend the compiled result;
+* panel prompt overrides extend the compiled result;
 * ``overrides.width/height/seed`` pin the canvas and the seed.
 """
 
@@ -113,29 +113,21 @@ def compile_panel(
             loras.extend(l.model_dump() for l in ch.loras)
     style_negative = ", ".join(style.negative) if style else ""
     table = V.table(series, panel, bible, style.id if style else None)
-    preset_positive = [preset.positive_prompt for preset in series.presets]
-    preset_negative = [preset.negative_prompt for preset in series.presets]
     texts = [
         ov.raw_prompt or "",
         ov.raw_negative or "",
         ov.append_prompt,
         ov.negative_prompt,
-        *preset_positive,
-        *preset_negative,
     ]
     unresolved = sorted({name for t in texts for name in V.unknown(t, table)})
     raw, raw_neg, append, extra_neg = (
         V.expand(t, table) if t else t
         for t in (ov.raw_prompt, ov.raw_negative, ov.append_prompt, ov.negative_prompt)
     )
-    preset_pos = _join(*(V.expand(text, table) for text in preset_positive))
-    preset_neg = _join(*(V.expand(text, table) for text in preset_negative))
     if raw is not None:
         neg = raw_neg if raw_neg is not None else _join(", ".join(negative or []), style_negative)
-        if preset_neg:
-            neg = _join(neg, preset_neg)
         return PanelPrompt(
-            _join(raw, ", ".join(quality or []), preset_pos) if quality or preset_pos else raw,
+            _join(raw, ", ".join(quality or [])) if quality else raw,
             neg,
             width,
             height,
@@ -161,8 +153,8 @@ def compile_panel(
         text, refs = P.natural(story, pv, with_refs=True, reference_slots=slots)
         if style and style.description:
             text = f"{text} Style: {style.description}."
-        positive = _join(text, append, ", ".join(quality or []), preset_pos)
-        neg = _join(", ".join(negative or []), style_negative, extra_neg, preset_neg)
+        positive = _join(text, append, ", ".join(quality or []))
+        neg = _join(", ".join(negative or []), style_negative, extra_neg)
         return PanelPrompt(
             positive,
             neg,
@@ -185,8 +177,6 @@ def compile_panel(
     pos_parts += [(t, "append") for t in _split(append)]
     neg_parts += [(t, "style_negative") for t in _split(style_negative)]
     neg_parts += [(t, "extra") for t in _split(extra_neg)]
-    pos_parts += [(t, "preset") for t in _split(preset_pos)]
-    neg_parts += [(t, "preset") for t in _split(preset_neg)]
     refs = [c["id"] for c in pv["characters"]]
     return PanelPrompt(
         ", ".join(t for t, _ in pos_parts),

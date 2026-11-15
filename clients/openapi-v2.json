@@ -5382,16 +5382,6 @@
       "title": "Id",
       "type": "string"
      },
-     "negative_prompt": {
-      "default": "",
-      "title": "Negative Prompt",
-      "type": "string"
-     },
-     "positive_prompt": {
-      "default": "",
-      "title": "Positive Prompt",
-      "type": "string"
-     },
      "title": {
       "title": "Title",
       "type": "string"
@@ -5432,16 +5422,6 @@
       "title": "Id",
       "type": "string"
      },
-     "negative_prompt": {
-      "default": "",
-      "title": "Negative Prompt",
-      "type": "string"
-     },
-     "positive_prompt": {
-      "default": "",
-      "title": "Positive Prompt",
-      "type": "string"
-     },
      "title": {
       "title": "Title",
       "type": "string"
@@ -5452,9 +5432,7 @@
      "title",
      "groups",
      "entries",
-     "bindings",
-     "positive_prompt",
-     "negative_prompt"
+     "bindings"
     ],
     "title": "Preset",
     "type": "object"

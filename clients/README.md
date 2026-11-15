@@ -34,8 +34,8 @@ NovelAI 返回明确标记的内置参考目录，ComfyUI 返回节点公开的�
 `POST /api/v2/workflows/{workflow_id}/trial` 需要 `render` 权限，接受 `prompt`、可选 `negative_prompt`、
 `instance_id`、宽高、`values`、`overrides` 与 `idempotency_key`，实际生成一张并返回 `series`、`episode`、`job`。
 通过普通任务事件、详情和取消接口跟踪执行；`/compile` 仍只预览提交数据，不出图。
-预设的 `positive_prompt` / `negative_prompt` 按所选顺序追加并展开变量，raw 模式也适用，
-`/workshop/assemble/preview` 返回与执行一致的最终提示词。
+预设通过 `entries` 定义普通变量，不自动追加正负提示词。分镜的 `overrides.raw_prompt` /
+`overrides.raw_negative` 显式引用 `{变量名}`，`/workshop/assemble/preview` 返回与执行一致的最终提示词。
 
 ## 长篇整理与检查点
 

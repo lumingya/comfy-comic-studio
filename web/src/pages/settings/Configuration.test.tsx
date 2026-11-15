@@ -351,7 +351,7 @@ describe('workflow editor', () => {
     const calls = mockFetch(configurationRoutes());
     renderWithProviders(<WorkflowsSection />);
     await screen.findByDisplayValue('测试工作流');
-    await expand('高级映射与参数 JSON');
+    await expand('编辑 JSON');
     fireEvent.change(screen.getByLabelText('高级映射与参数 JSON'), {
       target: { value: '{ invalid' },
     });
@@ -360,33 +360,23 @@ describe('workflow editor', () => {
     expect(calls.some((c) => c.method === 'PATCH')).toBe(false);
   });
 
-  it('compiles a saved workflow without submitting any generation request', async () => {
-    const calls = mockFetch(
-      configurationRoutes({
-        'POST /api/workflows/wf_demo/compile': {
-          graph: configWorkflow.graph,
-          outputs: ['9'],
-          warnings: [],
-        },
-      }),
-    );
+  it('keeps one JSON entry, preserves drafts between views, and blocks exporting unsaved edits', async () => {
+    const calls = mockFetch(configurationRoutes());
     renderWithProviders(<WorkflowsSection />);
     await screen.findByDisplayValue('测试工作流');
-    await expand('查看提交数据');
-    await userEvent.click(screen.getByRole('button', { name: '生成提交数据' }));
-    expect(await screen.findByText('节点图与绑定报告')).toBeInTheDocument();
-    const writes = calls.filter((c) => c.method !== 'GET');
-    expect(writes).toHaveLength(1);
-    expect(writes[0]).toMatchObject({
-      method: 'POST',
-      url: '/api/workflows/wf_demo/compile',
-      body: { values: { prompt: 'a quiet street', seed: 1 }, variant: null },
-    });
+    expect(screen.queryByText('查看提交数据')).toBeNull();
+    expect(screen.queryByText('查看完整绑定报告')).toBeNull();
+    expect(screen.queryByText('工作流备注')).toBeNull();
+    await expand('编辑 JSON');
+    const config = `${JSON.stringify(configWorkflow.config)} `;
+    fireEvent.change(screen.getByLabelText('高级映射与参数 JSON'), { target: { value: config } });
+    await userEvent.click(screen.getByRole('button', { name: '节点图' }));
+    expect(screen.getByLabelText('原始工作流 JSON')).not.toHaveAttribute('readonly');
+    await userEvent.click(screen.getByRole('button', { name: '参数配置' }));
+    expect(screen.getByLabelText('高级映射与参数 JSON')).toHaveValue(config);
     fireEvent.change(screen.getByLabelText('名称'), { target: { value: '尚未保存的修改' } });
-    expect(screen.getByRole('button', { name: '生成提交数据' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '导出工作流与映射' })).toBeDisabled();
-    await expand('原始工作流 JSON');
-    expect(screen.getByRole('button', { name: '导出原始 API JSON' })).toBeDisabled();
+    expect(calls.every((call) => call.method === 'GET')).toBe(true);
   });
 
   it('keeps built-in graphs read-only while leaving their mappings editable', async () => {
@@ -398,7 +388,8 @@ describe('workflow editor', () => {
     );
     renderWithProviders(<WorkflowsSection />);
     await screen.findByDisplayValue('测试工作流');
-    await expand('原始工作流 JSON');
+    await expand('编辑 JSON');
+    await userEvent.click(screen.getByRole('button', { name: '节点图' }));
     expect(screen.getByLabelText('原始工作流 JSON')).toHaveAttribute('readonly');
     expect(screen.getByRole('button', { name: '删除工作流' })).toBeDisabled();
     expect(screen.getByLabelText(/^正向提示词/)).toBeEnabled();

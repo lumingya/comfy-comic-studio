@@ -85,7 +85,7 @@ it('mounts JSON editors on demand and keeps unsaved contents after closing and r
   await screen.findByDisplayValue('测试工作流');
   expect(screen.queryByRole('textbox', { name: '原始工作流 JSON' })).toBeNull();
   expect(screen.queryByRole('textbox', { name: '高级映射与参数 JSON' })).toBeNull();
-  const summary = screen.getByText('高级映射与参数 JSON', { selector: 'summary strong' });
+  const summary = screen.getByText('编辑 JSON', { selector: 'summary strong' });
   await userEvent.click(summary);
   const editor = await screen.findByRole('textbox', { name: '高级映射与参数 JSON' });
   const draft = JSON.stringify({ ...configWorkflow.config, values: { steps: 47 } });

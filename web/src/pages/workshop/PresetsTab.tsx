@@ -52,8 +52,6 @@ function blankPreset(title: string): Preset {
   return {
     id: localId('preset'),
     title,
-    positive_prompt: '',
-    negative_prompt: '',
     groups: [people, visual],
     entries: [
       e('character_display_name', '角色展示名 / 旁白', people.id),
@@ -447,7 +445,7 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
           </button>
           <button
             type="button"
-            className="btn"
+            className="btn danger"
             disabled={presets.length < 2}
             onClick={async () => {
               if (
@@ -504,24 +502,6 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
           }}
         />
       ) : null}
-      <section
-        className="preset-prompt-fragments generation-settings-row"
-        aria-label={t('ws.generation.presetPrompts')}
-      >
-        {(['positive_prompt', 'negative_prompt'] as const).map((key) => (
-          <div className="field" key={key}>
-            <label className="label" htmlFor={`preset-${key}`}>
-              {t(`ws.generation.${key}`)}
-            </label>
-            <textarea
-              id={`preset-${key}`}
-              rows={3}
-              value={current[key] ?? ''}
-              onChange={(event) => update((p) => ({ ...p, [key]: event.target.value }))}
-            />
-          </div>
-        ))}
-      </section>
       <div className="settings-form-toolbar">
         <div className="settings-toolbar-label">
           {t('ws.presets.variables')} <span>{current.entries.length}</span>
@@ -875,7 +855,7 @@ function PreviewFigure({
   );
 }
 
-/** Legacy 「预设独立试绘」 modal: a prompt (prefilled with the preset's variables) and the
+/** Legacy 「预设独立试绘」 modal: an explicitly written prompt and the
  * workflow to use; submitting adds a one-frame standby task to the assembly queue. */
 function PreviewDialog({
   kitId,
@@ -893,7 +873,7 @@ function PreviewDialog({
   const { t } = useTranslation();
   const queue = useQueueAction();
   const preview = usePreviewPreset(kitId);
-  const [prompt, setPrompt] = useState(() => preset.entries.map((e) => `{${e.key}}`).join(', '));
+  const [prompt, setPrompt] = useState('');
   const [generation, setGeneration] = useState<GenerationOptions>();
   const [readyToStart, setReadyToStart] = useState(false);
   const [busy, setBusy] = useState(false);

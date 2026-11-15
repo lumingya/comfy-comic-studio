@@ -645,8 +645,19 @@ class Preset(StrictModel):
     groups: list[PresetGroup] = Field(default_factory=list)
     entries: list[PresetEntry] = Field(default_factory=list)
     bindings: list[PresetBinding] = Field(default_factory=list)
-    positive_prompt: str = ""
-    negative_prompt: str = ""
+
+    @model_validator(mode="before")
+    @classmethod
+    def _discard_retired_prompt_fragments(cls, value):
+        # Existing workspace records include these retired fields, even when empty.
+        # They no longer affect prompts or appear in saved/exported presets.
+        if isinstance(value, dict):
+            return {
+                key: item
+                for key, item in value.items()
+                if key not in {"positive_prompt", "negative_prompt"}
+            }
+        return value
 
     @model_validator(mode="after")
     def _one_binding_per_input(self) -> Preset:

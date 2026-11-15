@@ -717,21 +717,25 @@ describe('every route mounts with API data', () => {
     expect(await screen.findByRole('dialog', { name: '新建生成任务' })).toBeInTheDocument();
   });
 
-  it('预设工坊: 独立试绘 starts a one-frame task with the preset variables prefilled', async () => {
+  it('预设工坊: 独立试绘 requires an explicit prompt and preserves its variable references', async () => {
     responses['GET /api/profiles'] = [configProfile];
     responses['POST /api/workshop/queue/start'] = {};
     const router = mount('/workshop/presets');
     fireEvent.click(await screen.findByRole('button', { name: '独立试绘' }));
     const dialog = await screen.findByRole('dialog', { name: '预设独立试绘' });
     const prompt = within(dialog).getByLabelText('画面描述') as HTMLTextAreaElement;
-    expect(prompt.value).toBe('{character}, {outfit}');
-    fireEvent.change(prompt, { target: { value: '{character} wearing {outfit}, portrait' } });
+    expect(prompt.value).toBe('');
     await waitFor(() =>
       expect(within(dialog).getByLabelText('出图工作流或云端服务')).toBeEnabled(),
     );
     fireEvent.change(within(dialog).getByLabelText('出图工作流或云端服务'), {
       target: { value: `profile:${configProfile.id}` },
     });
+    const start = within(dialog).getByRole('button', { name: '开始生成' });
+    expect(start).toBeDisabled();
+    fireEvent.click(start);
+    expect(calls.some((c) => c.url === '/api/workshop/preview')).toBe(false);
+    fireEvent.change(prompt, { target: { value: '{character} wearing {outfit}, portrait' } });
     await waitFor(() =>
       expect(within(dialog).getByRole('button', { name: '开始生成' })).toBeEnabled(),
     );

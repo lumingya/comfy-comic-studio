@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useCompileWorkflow, useSaveWorkflow, useWorkflow } from '../../api/system';
+import { useSaveWorkflow, useWorkflow } from '../../api/system';
 import type { WorkflowConfig, WorkflowDocument } from '../../api/types';
 import { QueryError } from '../../app/errors';
 import { toast, toastError } from '../../components/toast';
-import { Field, Loading, Select, TextArea, TextInput } from '../../components/ui';
-import { Advanced, ConfigurationSaveBar, jsonObject, saveJson } from './ConfigurationParts';
+import { Field, Loading, TextArea, TextInput } from '../../components/ui';
+import { Advanced, ConfigurationSaveBar, jsonObject } from './ConfigurationParts';
 import { WorkflowMappings } from './WorkflowMappings';
 
 const pretty = (value: unknown) => JSON.stringify(value, null, 2);
@@ -32,12 +32,8 @@ function WorkflowForm({
 }) {
   const { t } = useTranslation();
   const save = useSaveWorkflow();
-  const compile = useCompileWorkflow();
   const [draft, setDraft] = useState<ReturnType<typeof formOf> | null>(null);
-  const [previewValues, setPreviewValues] = useState(
-    '{\n  "prompt": "a quiet street",\n  "seed": 1\n}',
-  );
-  const [variant, setVariant] = useState('');
+  const [jsonTab, setJsonTab] = useState<'config' | 'graph'>('config');
   const original = useMemo(() => formOf(doc), [doc]);
   const form = draft ?? original;
   const dirty =
@@ -51,7 +47,6 @@ function WorkflowForm({
   }, [dirty, onDirty]);
   const set = (change: Partial<typeof form>) => {
     setDraft({ ...form, ...change });
-    compile.reset();
   };
   const graph = useMemo(() => {
     try {
@@ -98,7 +93,6 @@ function WorkflowForm({
       {
         onSuccess: () => {
           setDraft(null);
-          compile.reset();
           toast(t('common.saved'));
         },
         onError: toastError,
@@ -130,107 +124,43 @@ function WorkflowForm({
           onChange={(config) => set({ config: pretty(config) })}
         />
         <div className="config-workflow-tools">
-          <Advanced lazy title={t('config.workflow.bindings')}>
-            <dl className="config-facts">
-              {Object.entries(doc.describe.bindings ?? {}).map(([key, targets]) => (
-                <div key={key}>
-                  <dt className="mono">{key}</dt>
-                  <dd>{targets.join(' · ')}</dd>
-                </div>
+          <Advanced lazy title={t('config.workflow.editJson')}>
+            <div className="config-toolbar" role="group" aria-label={t('config.workflow.editJson')}>
+              {(['config', 'graph'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  className={`btn sm${jsonTab === tab ? ' active' : ''}`}
+                  aria-pressed={jsonTab === tab}
+                  onClick={() => setJsonTab(tab)}
+                >
+                  {t(`config.workflow.${tab}Tab`)}
+                </button>
               ))}
-            </dl>
-            {!Object.keys(doc.describe.bindings ?? {}).length ? (
-              <p className="small muted">{t('config.workflow.unbound')}</p>
-            ) : null}
-            <p className="small muted">{t('config.workflow.savedReport')}</p>
-          </Advanced>
-          <Advanced lazy title={t('config.workflow.configJson')}>
-            <Field label={t('config.workflow.configJson')}>
-              <TextArea mono rows={12} value={form.config} onChange={(config) => set({ config })} />
-            </Field>
-          </Advanced>
-          <Advanced lazy title={t('config.workflow.graphJson')}>
-            {doc.source === 'builtin' ? (
-              <p className="small muted">{t('config.workflow.builtinHint')}</p>
-            ) : null}
-            <Field label={t('config.workflow.graphJson')}>
+            </div>
+            {jsonTab === 'config' ? (
               <TextArea
+                aria-label={t('config.workflow.configJson')}
                 mono
-                rows={16}
-                readOnly={doc.source === 'builtin'}
-                value={form.graph}
-                onChange={(graph) => set({ graph })}
+                rows={14}
+                value={form.config}
+                onChange={(config) => set({ config })}
               />
-            </Field>
-            <button
-              type="button"
-              className="btn sm"
-              disabled={dirty}
-              title={dirty ? t('config.workflow.saveFirst') : undefined}
-              onClick={() => saveJson(doc.graph, `${doc.name}.json`)}
-            >
-              {t('config.workflow.exportGraph')}
-            </button>
-          </Advanced>
-          <Advanced lazy title={t('config.workflow.preview')}>
-            <p className="small muted">{t('config.workflow.previewHint')}</p>
-            <Field label={t('config.workflow.previewValues')}>
-              <TextArea
-                mono
-                rows={5}
-                value={previewValues}
-                onChange={(value) => {
-                  setPreviewValues(value);
-                  compile.reset();
-                }}
-              />
-            </Field>
-            {doc.describe.variants?.length ? (
-              <Field label={t('config.workflow.variant')}>
-                <Select
-                  value={variant}
-                  onChange={(value) => {
-                    setVariant(value);
-                    compile.reset();
-                  }}
-                  options={[
-                    { value: '', label: t('common.auto') },
-                    ...doc.describe.variants.map((value) => ({ value, label: value })),
-                  ]}
-                />
-              </Field>
-            ) : null}
-            {dirty ? <p className="notice warn">{t('config.workflow.saveFirst')}</p> : null}
-            <button
-              type="button"
-              className="btn"
-              disabled={dirty || compile.isPending}
-              onClick={() => {
-                try {
-                  compile.mutate(
-                    { id: doc.id, values: jsonObject(previewValues), variant: variant || null },
-                    { onError: toastError },
-                  );
-                } catch {
-                  toastError(new Error(t('config.workflow.invalidJson')));
-                }
-              }}
-            >
-              {t('config.workflow.compile')}
-            </button>
-            {compile.data ? (
+            ) : (
               <>
-                <p className="small muted">{t('config.workflow.previewResult')}</p>
-                <pre className="config-code" tabIndex={0}>
-                  {pretty(compile.data)}
-                </pre>
+                {doc.source === 'builtin' ? (
+                  <p className="small muted">{t('config.workflow.builtinHint')}</p>
+                ) : null}
+                <TextArea
+                  aria-label={t('config.workflow.graphJson')}
+                  mono
+                  rows={14}
+                  readOnly={doc.source === 'builtin'}
+                  value={form.graph}
+                  onChange={(graph) => set({ graph })}
+                />
               </>
-            ) : null}
-          </Advanced>
-          <Advanced lazy title={t('config.workflow.notes')}>
-            <Field label={t('config.workflow.notes')}>
-              <TextArea rows={3} value={form.notes} onChange={(notes) => set({ notes })} />
-            </Field>
+            )}
           </Advanced>
         </div>
         {jsonError ? (
@@ -243,10 +173,7 @@ function WorkflowForm({
         dirty={dirty}
         pending={save.isPending}
         invalid={!!jsonError || !form.name.trim()}
-        onCancel={() => {
-          setDraft(null);
-          compile.reset();
-        }}
+        onCancel={() => setDraft(null)}
       />
     </form>
   );

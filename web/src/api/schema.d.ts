@@ -4795,16 +4795,6 @@ export interface components {
             entries?: components["schemas"]["PresetEntry-Input"][];
             /** Bindings */
             bindings?: components["schemas"]["PresetBinding-Input"][];
-            /**
-             * Positive Prompt
-             * @default
-             */
-            positive_prompt?: string;
-            /**
-             * Negative Prompt
-             * @default
-             */
-            negative_prompt?: string;
         };
         /**
          * Preset
@@ -4824,16 +4814,6 @@ export interface components {
             entries: components["schemas"]["PresetEntry-Output"][];
             /** Bindings */
             bindings: components["schemas"]["PresetBinding-Output"][];
-            /**
-             * Positive Prompt
-             * @default
-             */
-            positive_prompt: string;
-            /**
-             * Negative Prompt
-             * @default
-             */
-            negative_prompt: string;
         };
         /**
          * PresetBinding

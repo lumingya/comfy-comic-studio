@@ -6651,9 +6651,6 @@ select.choice-list:focus-visible {
   flex-wrap: wrap;
   flex-shrink: 0;
 }
-.workshop-heading-actions .btn:not(.primary) {
-  background: transparent;
-}
 @media (max-width: 760px) {
   .workshop-heading-actions {
     width: 100%;

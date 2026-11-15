@@ -20,8 +20,6 @@ vi.mock('../../components/confirm', () => ({
 const preset = (id: string, value: string) => ({
   id,
   title: `${id} preset`,
-  positive_prompt: '',
-  negative_prompt: '',
   groups: [],
   bindings: [],
   entries: [
@@ -279,6 +277,8 @@ describe('workshop creation-kit sources', () => {
       target: { value: 'preview hero' },
     });
     fireEvent.click(screen.getByRole('button', { name: '独立试绘' }));
+    expect(screen.getByLabelText('画面描述')).toHaveValue('');
+    fireEvent.change(screen.getByLabelText('画面描述'), { target: { value: '{hero}' } });
     await waitFor(() => expect(screen.getByLabelText('出图工作流或云端服务')).toBeEnabled());
     fireEvent.change(screen.getByLabelText('出图工作流或云端服务'), {
       target: { value: `profile:${configProfile.id}` },
