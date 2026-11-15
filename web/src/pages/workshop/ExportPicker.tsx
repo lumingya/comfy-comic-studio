@@ -9,6 +9,7 @@ import { exportCreationKit } from '../../api/creationKits';
 import { QueryError } from '../../app/errors';
 import { flushEditors } from '../../app/useAutoDraft';
 import './creation-kits.css';
+import './export-picker.css';
 import { exportStoryboards, listStoryboards } from './storyActions';
 
 export interface ExportItem {
@@ -80,6 +81,7 @@ export function ExportPicker({
   };
   return (
     <Modal
+      id="workshop-export-dialog"
       open
       onOpenChange={(open) => !open && !busy && onClose()}
       title={title}

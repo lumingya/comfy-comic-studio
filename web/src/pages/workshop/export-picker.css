@@ -1,0 +1,74 @@
+/* One scroll owner keeps wheel input inside the content, with actions always in view. */
+.overlay:has(+ #workshop-export-dialog) {
+  z-index: 81;
+}
+
+#workshop-export-dialog {
+  z-index: 82;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 32px);
+  overflow: hidden;
+  padding: 0;
+}
+
+#workshop-export-dialog > h2 {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 20px 52px 16px 22px;
+}
+
+#workshop-export-dialog > .workshop-export-sheet {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 22px 20px;
+  align-content: start;
+}
+
+#workshop-export-dialog .workshop-export-list {
+  max-height: none;
+  overflow: visible;
+}
+
+#workshop-export-dialog > .dialog-foot {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 16px 22px;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+
+@media (max-width: 520px) {
+  #workshop-export-dialog {
+    width: calc(100vw - 20px);
+    max-height: calc(100dvh - 20px);
+  }
+
+  #workshop-export-dialog > h2 {
+    padding: 18px 48px 14px 16px;
+  }
+
+  #workshop-export-dialog > .workshop-export-sheet {
+    padding: 0 16px 16px;
+  }
+
+  #workshop-export-dialog .workshop-export-tools {
+    flex-wrap: wrap;
+  }
+
+  #workshop-export-dialog > .dialog-foot {
+    padding: 12px 16px;
+  }
+
+  #workshop-export-dialog .workshop-export-item {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  #workshop-export-dialog .workshop-export-item em {
+    flex-shrink: 0;
+  }
+}
