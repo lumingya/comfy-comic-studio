@@ -31,7 +31,8 @@ class BackupExtensionDataTests(unittest.TestCase):
     def setUp(self):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
-        self.root = Path(temporary.name)
+        # Windows TEMP may use an 8.3 alias; match the resolved paths inspected by production.
+        self.root = Path(temporary.name).resolve()
         self.data = self.root / "workspace"
         self.ctx = AppContext.create(self.data, autostart=False, seed_instance=False)
         self.addCleanup(lambda: self.ctx.close() if self.ctx else None)
