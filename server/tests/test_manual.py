@@ -12,6 +12,7 @@ from unittest import mock
 from mio_server.api import manual
 
 from .api_harness import ApiCase
+from .release_fixture import write_release_seed
 
 
 class Links(HTMLParser):
@@ -86,9 +87,14 @@ class ManualTest(ApiCase):
         )
         release = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(release)
-        included = {path.relative_to(repo).as_posix() for path in release.files()}
-        for name in manual.FILES.values():
-            self.assertIn("server/mio_server/manual/" + name, included)
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            write_release_seed(root)
+            shutil.copytree(manual.MANUAL, root / "server/mio_server/manual")
+            with mock.patch.object(release, "ROOT", root):
+                included = {path.relative_to(root).as_posix() for path in release.files()}
+            for name in manual.FILES.values():
+                self.assertIn("server/mio_server/manual/" + name, included)
         # Emulate a release's isolated handbook folder: no repository / legacy tree alongside it.
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp) / "manual"

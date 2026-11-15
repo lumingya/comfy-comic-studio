@@ -28,6 +28,8 @@ from unittest import mock
 import bootstrap
 from mio_server.__main__ import browser_host, open_when_ready
 
+from .release_fixture import write_release_seed
+
 ROOT = Path(__file__).resolve().parents[2]
 SERVER = ROOT / "server"
 BAT = ROOT / "start.bat"
@@ -142,7 +144,15 @@ class ShellScriptTests(unittest.TestCase):
             import build_release
         finally:
             sys.path.remove(str(ROOT / "tools"))
-        names = {p.relative_to(ROOT).as_posix() for p in build_release.files()}
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            write_release_seed(root)
+            for name in ("start.bat", "start.sh", "server/bootstrap.py", "server/requirements.txt"):
+                target = root / name
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(ROOT / name, target)
+            with mock.patch.object(build_release, "ROOT", root):
+                names = {p.relative_to(root).as_posix() for p in build_release.files()}
         self.assertLessEqual({"start.bat", "start.sh", "server/bootstrap.py"}, names)
         self.assertIn("server/requirements.txt", names)
 

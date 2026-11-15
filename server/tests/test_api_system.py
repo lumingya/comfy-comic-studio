@@ -9,6 +9,8 @@ import unittest
 import zipfile
 from pathlib import Path
 
+from PIL import Image
+
 from mio_server.comfy.compile import BUILTINS
 from mio_server.importer import seed_albums
 from mio_server.models import CloudRequestSnapshot
@@ -230,8 +232,29 @@ class BundleLegacyAssistantTests(ApiCase):
         copy_shipped_legacy(root, kinds=(*LEGACY_KINDS, "albums", "settings"))
         self.ok(self.client.patch("/api/settings", json={"collection_title": "遇见你，真好"}))
         report = seed_albums(self.ctx, root)
-        self.assertEqual(len(report.albums), 1)
-        [card] = self.ok(self.client.get("/api/series"))
+        self.assertEqual(len(report.albums), 2)
+        cards = self.ok(self.client.get("/api/series"))
+        card = next(c for c in cards if c["id"] == "series_album_edition_letter")
+        rain = next(c for c in cards if c["id"] == "series_album_edition_rain_letter")
+        self.assertEqual(rain["title"], "雨停以后，信会抵达")
+        self.assertEqual((rain["panel_count"], rain["adopted_count"]), (4, 4))
+        [rain_ep] = self.ok(self.client.get(f"/api/series/{rain['id']}/episodes"))["items"]
+        rain_episode = self.ok(self.client.get(f"/api/episodes/{rain_ep['id']}"))
+        for panel in rain_episode["panels"]:
+            self.assertEqual(panel["aspect_ratio"], "4:3")
+            self.assertEqual(
+                (panel["overrides"]["width"], panel["overrides"]["height"]), (1448, 1086)
+            )
+            self.assertTrue(panel["overrides"]["raw_prompt"])
+            self.assertTrue(panel["dialogues"][0]["text"])
+        self.assertEqual(report.warnings, [])
+        for take in rain_episode["takes"]:
+            image_response = self.client.get(f"/api/assets/{take['asset_id']}")
+            self.assertEqual(image_response.status_code, 200)
+            self.assertLess(len(image_response.content), 1024 * 1024)
+            with Image.open(io.BytesIO(image_response.content)) as image:
+                self.assertEqual((image.format, image.size), ("WEBP", (1448, 1086)))
+                self.assertFalse(any(image.info.get(k) for k in ("exif", "icc_profile", "xmp")))
         self.assertEqual(card["title"], "海风与未寄出的信")
         self.assertTrue(card["subtitle"].startswith("那些没说出口的话"))
         self.assertEqual((card["panel_count"], card["adopted_count"]), (1, 1))
@@ -251,13 +274,15 @@ class BundleLegacyAssistantTests(ApiCase):
         )
         # Only once: a trashed or renamed shelf is not brought back on the next start.
         self.ok(self.client.delete(f"/api/series/{card['id']}"), 204)
+        self.ok(self.client.patch(f"/api/series/{rain['id']}", json={"title": "我的画册"}))
         self.assertIsNone(seed_albums(self.ctx, root))
-        self.assertEqual(self.ok(self.client.get("/api/series")), [])
+        [retained] = self.ok(self.client.get("/api/series"))
+        self.assertEqual(retained["title"], "我的画册")
         # The manual import knows the book is already there.
         again = self.ok(self.client.post("/api/legacy/import", json={"root": str(root)}))
         self.assertEqual(again["albums"], [])
         self.assertEqual(
-            self.ok(self.client.get("/api/legacy/scan", params={"root": str(root)}))["albums"], 1
+            self.ok(self.client.get("/api/legacy/scan", params={"root": str(root)}))["albums"], 2
         )
 
     def test_first_start_takes_the_legacy_collection_name(self):

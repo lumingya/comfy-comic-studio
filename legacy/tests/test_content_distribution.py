@@ -16,7 +16,7 @@ class ContentDistributionTests(unittest.TestCase):
     def test_genuinely_new_external_workspace_gets_real_shipped_content(self):
         with tempfile.TemporaryDirectory() as temp:
             s=self.store(Path(temp)/'new');self.assertTrue(initialize(s,ROOT))
-            self.assertEqual(s.library.catalog('albums')['total'],1)
+            self.assertEqual(s.library.catalog('albums')['total'],2)
             self.assertEqual(s.library.catalog('layouts')['total'],7)
             self.assertTrue(bootstrap(s)['cover'].startswith('data:image/webp;base64,'));s.library.close()
     def test_existing_empty_workspace_gets_catalogs_not_resurrected_entities(self):

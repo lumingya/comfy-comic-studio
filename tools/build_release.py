@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import sys
@@ -33,8 +34,31 @@ SKIP_SUFFIXES = {".pyc", ".pyo"}
 FIXED_TIME = (2020, 1, 1, 0, 0, 0)
 
 
+def shipped_manifest(data: Path) -> dict:
+    """Reuse the release-only verifier without claiming the generic ``tools`` namespace.
+
+    The legacy helpers are build dependencies only; the packaged server imports its own seeds.
+    """
+    legacy = Path(__file__).resolve().parents[1] / "legacy"
+    spec = importlib.util.spec_from_file_location(
+        "_mio_distribution_check", legacy / "tools/check_distribution.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    original_path = sys.path[:]
+    try:
+        sys.path.insert(0, str(legacy))
+        spec.loader.exec_module(module)
+        return module.require_verified_distribution(data)
+    finally:
+        sys.path[:] = original_path
+
+
 def files() -> list[Path]:
-    out = []
+    # Runtime data must never be discovered recursively. The same explicit, verified seed list
+    # is used by the legacy packager; edited local defaults fail closed instead of being shipped.
+    data = ROOT / "data"
+    manifest = shipped_manifest(data)
+    out = [data / "distribution.json", *(data / name for name in manifest["files"])]
     for entry in INCLUDE:
         path = ROOT / entry
         if path.is_file():
@@ -53,14 +77,24 @@ def files() -> list[Path]:
 
 def build_zip(target: Path, version: str) -> None:
     top = f"mio-studio-{version}"
+    manifest_path = ROOT / "data/distribution.json"
+    manifest_bytes = manifest_path.read_bytes()
+    paths = files()
+    if manifest_path.read_bytes() != manifest_bytes:
+        raise ValueError("Shipped data manifest changed while packaging")
+    checksums = json.loads(manifest_bytes)["files"]
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
-        for path in files():
+        for path in paths:
             rel = path.relative_to(ROOT).as_posix()
+            raw = manifest_bytes if path == manifest_path else path.read_bytes()
+            if rel.startswith("data/") and path != manifest_path:
+                if hashlib.sha256(raw).hexdigest() != checksums.get(rel.removeprefix("data/")):
+                    raise ValueError(f"Shipped data changed while packaging: {rel}")
             info = zipfile.ZipInfo(f"{top}/{rel}", FIXED_TIME)
             info.compress_type = zipfile.ZIP_DEFLATED
             executable = rel.endswith(".sh")
             info.external_attr = (0o100755 if executable else 0o100644) << 16
-            zf.writestr(info, path.read_bytes())
+            zf.writestr(info, raw)
 
 
 def load_key(key_file: str | None) -> bytes | None:

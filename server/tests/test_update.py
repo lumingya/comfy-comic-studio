@@ -6,10 +6,12 @@ import hashlib
 import importlib.util
 import io
 import json
+import sys
 import tempfile
 import unittest
 import zipfile
 from pathlib import Path
+from unittest.mock import patch
 
 import httpx
 
@@ -24,6 +26,7 @@ from mio_server.update import (
 from mio_server.update.manifest import key_id
 
 from .api_harness import ApiCase
+from .release_fixture import write_release_seed
 
 ROOT = Path(__file__).resolve().parents[2]
 # RFC 8032 §7.1, test 1
@@ -207,19 +210,128 @@ class BuildReleaseTests(unittest.TestCase):
         spec.loader.exec_module(module)
         return module
 
+    def fixture(self, root):
+        shipped = write_release_seed(root)
+        for name in (
+            "server/mio_server/__init__.py",
+            "clients/python/mio_client.py",
+            "start.bat",
+            "server/tests/test_private.py",
+            "server/data/private.json",
+            "server/mio_server/__pycache__/cached.pyc",
+            "legacy/server.py",
+            "data/albums/personal/album.json",
+            "data/settings/secrets.json",
+        ):
+            path = root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("fixture content", encoding="utf-8")
+        return shipped
+
     def test_package_contents_and_reproducible_zip(self):
         br = self.load()
-        names = [p.relative_to(ROOT).as_posix() for p in br.files()]
-        self.assertIn("server/mio_server/__init__.py", names)
-        self.assertIn("clients/python/mio_client.py", names)
-        self.assertIn("start.bat", names)
-        self.assertFalse([n for n in names if "/tests/" in n or n.startswith("server/data/")])
-        self.assertFalse([n for n in names if "__pycache__" in n or n.startswith("legacy/")])
         with tempfile.TemporaryDirectory() as tmp:
-            a, b = Path(tmp) / "a.zip", Path(tmp) / "b.zip"
-            br.build_zip(a, "4.0.0")
-            br.build_zip(b, "4.0.0")
+            root = Path(tmp)
+            shipped = self.fixture(root)
+            a, b = root / "a.zip", root / "b.zip"
+            with patch.object(br, "ROOT", root):
+                search_path = sys.path[:]
+                tools_module = sys.modules.get("tools")
+                names = [p.relative_to(root).as_posix() for p in br.files()]
+                self.assertEqual(sys.path, search_path)
+                self.assertIs(sys.modules.get("tools"), tools_module)
+                self.assertIn("server/mio_server/__init__.py", names)
+                self.assertIn("clients/python/mio_client.py", names)
+                self.assertIn("start.bat", names)
+                self.assertFalse(
+                    [n for n in names if "/tests/" in n or n.startswith("server/data/")]
+                )
+                self.assertFalse(
+                    [n for n in names if "__pycache__" in n or n.startswith("legacy/")]
+                )
+                self.assertEqual(
+                    {n for n in names if n.startswith("data/")},
+                    {"data/distribution.json", *("data/" + name for name in shipped)},
+                )
+                br.build_zip(a, "4.0.0")
+                br.build_zip(b, "4.0.0")
             self.assertEqual(a.read_bytes(), b.read_bytes())
+            with zipfile.ZipFile(a) as archive:
+                for name, raw in shipped.items():
+                    self.assertEqual(archive.read("mio-studio-4.0.0/data/" + name), raw)
+
+    def test_edited_missing_unsafe_or_linked_seed_files_fail_closed(self):
+        br = self.load()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shipped = self.fixture(root)
+            manifest_path = root / "data/distribution.json"
+            original_manifest = manifest_path.read_text("utf-8")
+            name = next(iter(shipped))
+            path = root / "data" / name
+            with patch.object(br, "ROOT", root):
+                path.write_bytes(b"personal edits must not ship")
+                with self.assertRaisesRegex(Exception, "Release data differs"):
+                    br.files()
+                path.unlink()
+                with self.assertRaisesRegex(Exception, "Release data differs"):
+                    br.files()
+                path.write_bytes(shipped[name])
+                manifest = json.loads(original_manifest)
+                manifest["files"]["../private.json"] = "a" * 64
+                manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+                with self.assertRaisesRegex(Exception, "Unsafe resource path"):
+                    br.files()
+                manifest_path.write_text(original_manifest, encoding="utf-8")
+                original_link_check = Path.is_symlink
+                with patch.object(
+                    Path, "is_symlink", lambda p: p == path or original_link_check(p)
+                ):
+                    with self.assertRaisesRegex(Exception, "Symbolic links"):
+                        br.files()
+
+    def test_seed_change_after_enumeration_is_not_written_to_release(self):
+        br = self.load()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shipped = self.fixture(root)
+            seed = root / "data" / next(iter(shipped))
+            original_files = br.files
+
+            def change_after_validation():
+                paths = original_files()
+                seed.write_bytes(b"personal edit during packaging")
+                return paths
+
+            with patch.object(br, "ROOT", root), patch.object(br, "files", change_after_validation):
+                with self.assertRaisesRegex(ValueError, "changed while packaging"):
+                    br.build_zip(root / "release.zip", "4.0.0")
+            with zipfile.ZipFile(root / "release.zip") as archive:
+                self.assertNotIn("mio-studio-4.0.0/data/albums/demo/album.json", archive.namelist())
+
+    def test_manifest_addition_after_enumeration_does_not_create_incomplete_release(self):
+        br = self.load()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            self.fixture(root)
+            manifest_path = root / "data/distribution.json"
+            original_files = br.files
+
+            def add_after_validation():
+                paths = original_files()
+                raw = b"new reviewed image"
+                name = "albums/demo/images/new.webp"
+                (root / "data" / name).write_bytes(raw)
+                manifest = json.loads(manifest_path.read_bytes())
+                manifest["files"][name] = hashlib.sha256(raw).hexdigest()
+                manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+                return paths
+
+            target = root / "release.zip"
+            with patch.object(br, "ROOT", root), patch.object(br, "files", add_after_validation):
+                with self.assertRaisesRegex(ValueError, "manifest changed while packaging"):
+                    br.build_zip(target, "4.0.0")
+            self.assertFalse(target.exists())
 
 
 if __name__ == "__main__":

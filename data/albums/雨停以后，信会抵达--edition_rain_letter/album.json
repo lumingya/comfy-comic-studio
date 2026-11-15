@@ -1,0 +1,72 @@
+{
+  "id": "edition_rain_letter",
+  "projectId": "collection_summer",
+  "title": "雨停以后，信会抵达",
+  "subtitle": "一封绕了远路的信，一次恰好抵达的温暖。",
+  "characterName": "原创",
+  "characterDescription": "28 岁成年女邮差，深棕色齐耳短发，鼠尾草绿色雨衣，芥末黄色围巾，棕色斜挎皮革邮袋；骑奶油白色自行车。花店主人是约 65 岁成年女性，银发挽髻、暖象牙色开衫。",
+  "synopsis": "雨后的小镇，年轻邮差捡起一封被风遗落的信，把等待送回了花店门前。四幕手工分镜，水彩与留白。",
+  "referenceHint": "第二至第四幕可选择第一幕图像作人物、服装、配色与建筑参考，不照搬构图。",
+  "tags": [
+    "水彩",
+    "治愈",
+    "四幕故事",
+    "留白示范"
+  ],
+  "totalSteps": 4,
+  "generatedSteps": 4,
+  "status": "complete",
+  "inProgress": false,
+  "liked": false,
+  "likes": 0,
+  "createdAt": 1794691200000,
+  "updatedAt": 1794691200000,
+  "completedAt": 1794691200000,
+  "theme": 0,
+  "steps": [
+    {
+      "stepIndex": 0,
+      "name": "雨停的早晨",
+      "prompt": "A watercolor comic of an adult postal carrier with short dark bob, sage raincoat, mustard scarf and brown leather mailbag walking a cream bicycle across a stone bridge in a quiet riverside town after rain. Cream houses, teal shutters, wet cobblestones. Muted sage, warm ivory and soft gold, delicate ink outlines, paper grain, generous negative space. Single scene. No text, no lettering, no logos.",
+      "negative": "text, watermark, collage, extra limbs, distorted hands, harsh contrast, clutter",
+      "caption": "雨停了，小镇的清晨又有了回声。",
+      "width": 1448,
+      "height": 1086,
+      "image": "images/2a836c45a472ced64ead08aac7a1a4e50d2cadef7886d751f1dccaf09299eb5a.webp"
+    },
+    {
+      "stepIndex": 1,
+      "name": "风留下的信",
+      "prompt": "An elegant single-panel watercolor comic illustration, soft ink outlines, delicate paper grain, muted sage green, butter yellow and warm ivory palette, generous clean negative space, quiet cinematic composition, gentle daylight after rain. The same 28-year-old woman postal carrier throughout: short dark brown bob haircut, sage-green raincoat, mustard scarf, brown leather crossbody mailbag. Small riverside town with cream stucco houses, teal shutters and wet cobblestones. Refined European illustrated storybook style. One scene only, no panels within the image, no letters, no lettering, no captions, no logos.\nClose cinematic scene: the same postal carrier crouches beside a puddle under a teal wooden bench, gently picking up a cream envelope with a red wax seal, protected beneath one dry yellow leaf. Her brown bob, sage raincoat, mustard scarf and brown mailbag match the first scene exactly. Wet cobblestones reflect the bright sky; focus on careful hands and rediscovery, no readable text.",
+      "negative": "text, watermark, collage, extra limbs, distorted hands, harsh contrast, clutter",
+      "caption": "一封未抵达的信，正等着被看见。",
+      "width": 1448,
+      "height": 1086,
+      "image": "images/ca50899be8bd2c4565c377a85d6170cbab1187b4fde3a8f374e4ebc4e8b8cd7e.webp"
+    },
+    {
+      "stepIndex": 2,
+      "name": "门前的重逢",
+      "prompt": "An elegant single-panel watercolor comic illustration, soft ink outlines, delicate paper grain, muted sage green, butter yellow and warm ivory palette, generous clean negative space, quiet cinematic composition, gentle daylight after rain. The same 28-year-old woman postal carrier throughout: short dark brown bob haircut, sage-green raincoat, mustard scarf, brown leather crossbody mailbag. Small riverside town with cream stucco houses, teal shutters and wet cobblestones. Refined European illustrated storybook style. One scene only, no panels within the image, no letters, no lettering, no captions, no logos.\nMedium shot at the doorstep of a tiny cream stucco flower shop with teal shutters and pots of white daisies. The same young adult postal carrier, short dark brown bob, sage-green raincoat, mustard scarf and brown satchel, returns the cream red-wax-sealed envelope to a smiling 65-year-old woman florist with silver hair in a bun and a warm ivory cardigan. Two adults, tender expressions, natural hands, airy ivory negative space.",
+      "negative": "text, watermark, collage, extra limbs, distorted hands, harsh contrast, clutter",
+      "caption": "“谢谢你，它是我等了很久的消息。”",
+      "width": 1448,
+      "height": 1086,
+      "image": "images/27f5f004a651ccb52d8cff7ffb8af5ff1247dc7de9b598fa865cca433668bbd8.webp"
+    },
+    {
+      "stepIndex": 3,
+      "name": "抵达的不只是信",
+      "prompt": "An elegant single-panel watercolor comic illustration, soft ink outlines, delicate paper grain, muted sage green, butter yellow and warm ivory palette, generous clean negative space, quiet cinematic composition, gentle daylight after rain. The same 28-year-old woman postal carrier throughout: short dark brown bob haircut, sage-green raincoat, mustard scarf, brown leather crossbody mailbag. Small riverside town with cream stucco houses, teal shutters and wet cobblestones. Refined European illustrated storybook style. One scene only, no panels within the image, no letters, no lettering, no captions, no logos.\nWide closing scene: seen from behind at a gentle three-quarter angle, the same adult postal carrier with short dark bob, sage-green raincoat, mustard scarf and brown leather crossbody bag rides her cream bicycle down the sunlit riverside lane. In the background the silver-haired elderly florist stands in the teal flower-shop doorway waving, holding the cream envelope with red wax seal to her heart. Clouds opening, calm pale golden light, generous open sky, peaceful hopeful ending.",
+      "negative": "text, watermark, collage, extra limbs, distorted hands, harsh contrast, clutter",
+      "caption": "有些温暖，绕了远路，也会抵达。",
+      "width": 1448,
+      "height": 1086,
+      "image": "images/9d2d443b53ad676c9efc77d96d76dd833a0cf60d2d0d1e40282c4e3b1c69827d.webp"
+    }
+  ],
+  "curatedDemo": true,
+  "demoContentRevision": 1,
+  "schema": "mio.resource.v2",
+  "kind": "albums"
+}

@@ -115,7 +115,7 @@ class DistributionPolicyTests(unittest.TestCase):
         content = bootstrap(store)
         self.assertNotIn(decode(self.story_content)['id'], [t['id'] for t in content['config']['templates']])
         self.assertEqual(content['contentProblems'], [{'file': relative, 'reason': 'missing'}])
-        self.assertEqual(store.library.catalog('albums')['total'], 1)
+        self.assertEqual(store.library.catalog('albums')['total'], 2)
 
     def test_missing_catalog_retains_existing_copy_and_repair_clears_warning(self):
         store = self.store()
