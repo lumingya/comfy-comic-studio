@@ -10,6 +10,12 @@
       "title": "Border",
       "type": "integer"
      },
+     "deduplicate_captions": {
+      "default": false,
+      "description": "Omit dialogue lines already fully visible in a lettered panel",
+      "title": "Deduplicate Captions",
+      "type": "boolean"
+     },
      "episode_ids": {
       "items": {
        "type": "string"
@@ -4970,6 +4976,12 @@
    },
    "PortableExport": {
     "properties": {
+     "deduplicate_captions": {
+      "default": false,
+      "description": "Omit dialogue lines already fully visible in a lettered panel",
+      "title": "Deduplicate Captions",
+      "type": "boolean"
+     },
      "episode_ids": {
       "items": {
        "type": "string"
@@ -5854,6 +5866,14 @@
        "type": "string"
       },
       "title": "Captions",
+      "type": "object"
+     },
+     "display_captions": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "description": "Per-panel dialogue excluding complete lines already embedded in its image",
+      "title": "Display Captions",
       "type": "object"
      },
      "height": {

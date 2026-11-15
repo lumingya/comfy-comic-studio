@@ -1,3 +1,17 @@
+import type { Strip } from '../../api/types';
+
+/** Saved layout choices take precedence over the reader's plain-image defaults. */
+export function hasSavedReadingLayout(strip: Strip | undefined): boolean {
+  return (
+    !!strip &&
+    !!(
+      Object.keys(strip.panel_boxes).length ||
+      Object.keys(strip.crops).length ||
+      strip.lettering.length
+    )
+  );
+}
+
 /**
  * Reader geometry, ported from legacy `js/reading-stage.js` (the native `mio-fit` stage).
  *

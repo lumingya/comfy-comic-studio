@@ -28,6 +28,7 @@ export interface ExportDraft {
   border: number;
   signature: string;
   captions: boolean;
+  deduplicateCaptions: boolean;
   prompts: boolean;
   profile: Profile;
   preset: string;
@@ -40,13 +41,17 @@ const DEFAULT_DRAFT: ExportDraft = {
   border: 0,
   signature: '',
   captions: true,
+  deduplicateCaptions: true,
   prompts: false,
   profile: 'auto',
   preset: 'webtoon',
   quality: 'q90',
 };
 
-type StoredDraft = Omit<ExportDraft, 'signature'> & { signature: string | null };
+type StoredDraft = Omit<ExportDraft, 'signature'> & {
+  signature: string | null;
+  captionPreference?: boolean;
+};
 
 /**
  * The export draft, remembered across sessions like the legacy studioUI.exportDraft — except
@@ -66,11 +71,20 @@ export function useExportDraft(): [ExportDraft, (patch: Partial<ExportDraft>) =>
   const update = (patch: Partial<ExportDraft>) =>
     setDraft((d) => {
       const next = { ...d, ...patch };
+      if (patch.captions !== undefined) next.captionPreference = patch.captions;
       const { signature: _signature, ...kept } = next;
       localStorage.setItem(DRAFT_KEY, JSON.stringify(kept));
       return next;
     });
-  return [{ ...draft, signature: draft.signature ?? fallback }, update];
+  return [
+    {
+      ...draft,
+      captions: draft.captionPreference ?? true,
+      deduplicateCaptions: draft.captionPreference !== true,
+      signature: draft.signature ?? fallback,
+    },
+    update,
+  ];
 }
 
 /** `value` after it stopped changing for `ms`; compared by content, so literals don't loop. */
@@ -94,6 +108,7 @@ function albumBody(
     template_id: p.templateId,
     lettered: p.lettered,
     show_captions: d.captions,
+    deduplicate_captions: d.deduplicateCaptions,
     show_prompts: d.prompts,
     theme_color: d.themeColor,
     border: d.border,
@@ -117,8 +132,6 @@ export function TemplatePreview(props: {
   lettered: boolean;
   draft: ExportDraft;
   revision?: number;
-  /** Adopted pictures / panels, for the legacy status line 整册阅读 · 已生成 N / M 幕. */
-  progress?: { done: number; total: number };
 }) {
   const { t } = useTranslation();
   const frame = useRef<HTMLIFrameElement>(null);
@@ -156,20 +169,15 @@ export function TemplatePreview(props: {
     const at = previewSpots.get(spot);
     if (at) frame.current?.contentWindow?.postMessage({ type: 'mio-reader-restore', ...at }, '*');
   };
-  // Legacy #presentation-preview-status: one line above the album, kept while it re-renders.
+  // Reserve space only for actionable loading/error feedback, not a permanent success banner.
   const status = q.error
     ? t('reader.previewFailed', { message: (q.error as Error).message })
     : !q.data
       ? q.isFetching
         ? t('reader.previewLoading')
         : ''
-      : props.progress
-        ? [
-            t('reader.previewStatus', props.progress),
-            q.isFetching ? t('reader.previewUpdating') : '',
-          ]
-            .filter(Boolean)
-            .join(' · ')
+      : q.isFetching
+        ? t('reader.previewUpdating')
         : '';
   return (
     <div className="presentation-preview-wrap">
@@ -423,6 +431,7 @@ export function PresentationDrawer(props: {
           format,
           lettered: props.lettered,
           show_captions: d.captions,
+          deduplicate_captions: d.deduplicateCaptions,
           title: props.title,
           image_profile: d.profile,
         },
@@ -466,7 +475,6 @@ export function PresentationDrawer(props: {
     >
       <header>
         <div>
-          <small>PRESENTATION STUDIO</small>
           <h2>{t('reader.drawerTitle')}</h2>
         </div>
         <button
@@ -561,6 +569,7 @@ export function PresentationDrawer(props: {
             episodeId: props.episodeId,
             lettered: props.lettered,
             captions: d.captions,
+            deduplicateCaptions: d.deduplicateCaptions,
           }}
           onSaved={(id) => {
             props.onLook(id);

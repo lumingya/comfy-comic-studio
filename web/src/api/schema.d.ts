@@ -2674,6 +2674,12 @@ export interface components {
              */
             show_captions?: boolean;
             /**
+             * Deduplicate Captions
+             * @description Omit dialogue lines already fully visible in a lettered panel
+             * @default false
+             */
+            deduplicate_captions?: boolean;
+            /**
              * Show Prompts
              * @default false
              */
@@ -4605,6 +4611,12 @@ export interface components {
              */
             show_captions?: boolean;
             /**
+             * Deduplicate Captions
+             * @description Omit dialogue lines already fully visible in a lettered panel
+             * @default false
+             */
+            deduplicate_captions?: boolean;
+            /**
              * Title
              * @default
              */
@@ -4998,6 +5010,13 @@ export interface components {
             };
             /** Captions */
             captions: {
+                [key: string]: string;
+            };
+            /**
+             * Display Captions
+             * @description Per-panel dialogue excluding complete lines already embedded in its image
+             */
+            display_captions?: {
                 [key: string]: string;
             };
         };

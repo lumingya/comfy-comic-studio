@@ -19,6 +19,7 @@ import {
   DESKTOP_QUERY,
   READING_MODES,
   buildStages,
+  hasSavedReadingLayout,
   nativeLayout,
   readingMode,
   stageMode,
@@ -58,6 +59,7 @@ export default function ReaderPage() {
   const items = episodes.data?.items ?? [];
   const epId = params.get('ep') ?? items[0]?.id;
   const episode = useEpisode(epId);
+  const savedLayout = hasSavedReadingLayout(episode.data?.strip);
   const [mode, setMode] = useState<ReadingMode>(() => readingMode(localStorage.getItem(MODE_KEY)));
   const storeLayout = useUI((s) => s.defaultReaderMode);
   const [layout, setLayout] = useState<NativeLayout>(() => {
@@ -175,8 +177,11 @@ export default function ReaderPage() {
         src: reading.data ? readingPanelUrl(ep.id, p.id, reading.data.revision) : '',
         title: p.description,
         caption: reading.data?.captions[p.id] ?? '',
+        displayCaption: draft.deduplicateCaptions
+          ? (reading.data?.display_captions?.[p.id] ?? reading.data?.captions[p.id] ?? '')
+          : (reading.data?.captions[p.id] ?? ''),
       }));
-  }, [episode.data, reading.data]);
+  }, [episode.data, reading.data, draft.deduplicateCaptions]);
   const currentSources = useRef(new Map<string, string>());
   currentSources.current = new Map(pages.map((p) => [p.id, p.src]));
   const sizes = useMemo(
@@ -199,7 +204,7 @@ export default function ReaderPage() {
     () =>
       staged
         ? buildStages(
-            pages.map((p) => ({ id: p.id, caption: !!(captions && p.caption) })),
+            pages.map((p) => ({ id: p.id, caption: !!(captions && p.displayCaption) })),
             sizes,
             stage,
             view,
@@ -352,7 +357,9 @@ export default function ReaderPage() {
           />
           <span className="room-page-number">{String(i + 1).padStart(2, '0')}</span>
         </div>
-        {captions && p.caption ? <div className="scroll-caption">{p.caption}</div> : null}
+        {captions && p.displayCaption ? (
+          <div className="scroll-caption">{p.displayCaption}</div>
+        ) : null}
       </article>
     );
   };
@@ -397,6 +404,7 @@ export default function ReaderPage() {
       }`}
       aria-labelledby="reader-panel-label"
       data-mode={stage}
+      data-reader-view={panel === 'layout' ? 'layout' : nativeStage ? 'native' : 'preview'}
       onCancel={(e) => {
         // A dismissed file picker (版式 → 导入) or a nested dialog must not close the drawer.
         if (!ownCancel(e)) return;
@@ -426,7 +434,6 @@ export default function ReaderPage() {
         >
           <Icon name="close" />
         </button>
-        <span className="room-brand">Mio.</span>
         <span className="room-title grow" id="reader-panel-label">
           {series.data?.title}
           {items.length > 1 ? (
@@ -494,15 +501,14 @@ export default function ReaderPage() {
           </div>
         ) : drawerStage === 'platform' && epId ? (
           <SlicePreview episodeId={epId} preset={draft.preset} revision={episode.data?.revision} />
-        ) : !native && epId ? (
-          <div className="room-canvas" id="reader-canvas">
+        ) : !native && epId && episode.data ? (
+          <div className="room-canvas room-template" id="reader-canvas">
             <TemplatePreview
               episodeId={epId}
               templateId={look}
-              lettered
+              lettered={savedLayout}
               draft={draft}
               revision={episode.data?.revision}
-              progress={{ done: pages.length, total: episode.data?.panels.length ?? 0 }}
             />
           </div>
         ) : (
@@ -516,7 +522,8 @@ export default function ReaderPage() {
             <div className={`room-scroll ${staged ? 'mio-stage-pages' : ''}`}>
               {episode.isLoading || series.isLoading || (pages.length > 0 && reading.isPending) ? (
                 <p className="room-empty">{t('reader.loading')}</p>
-              ) : reading.error ? null : stage === 'continuous' &&
+              ) : reading.error ? null : savedLayout &&
+                stage === 'continuous' &&
                 reading.data &&
                 epId &&
                 pages.length ? (
@@ -581,24 +588,19 @@ export default function ReaderPage() {
               ) : (
                 pages.map((_, i) => renderPage(i, { anchor: true }))
               )}
-              {pages.length ? (
-                <div
-                  className={`mio-colophon ${staged ? 'mio-stage-ending' : ''}`}
-                  data-mio-colophon
-                  role="contentinfo"
-                >
-                  <p>
-                    {t('reader.colophon1')}
-                    <br />
-                    {t('reader.colophon2')}
-                  </p>
-                  <a
-                    href="https://github.com/lumingya/comfy-comic-studio"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Mio · github.com/lumingya/comfy-comic-studio
-                  </a>
+              {savedLayout &&
+              stage === 'continuous' &&
+              captions &&
+              pages.some((p) => p.displayCaption) ? (
+                <div className="reader-strip-captions">
+                  {pages
+                    .filter((p) => p.displayCaption)
+                    .map((p) => (
+                      <div className="scroll-caption" key={p.id}>
+                        <strong>{p.title}</strong>
+                        <p>{p.displayCaption}</p>
+                      </div>
+                    ))}
                 </div>
               ) : null}
             </div>
@@ -649,81 +651,83 @@ export default function ReaderPage() {
           </button>
         </div>
       ) : null}
-      <footer className="room-footer">
-        {nativeStage ? (
-          <>
-            <span className="native-reading-controls" hidden={layout !== 'webtoon'}>
-              {READING_MODES.map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  data-mode={m}
-                  aria-pressed={mode === m}
-                  onClick={() => setModeSaved(m)}
-                >
-                  {t(`reader.mode.${m}`)}
-                </button>
-              ))}
-            </span>
-            <span className="spacer" />
-            <div className="room-pagination">
-              <button
-                type="button"
-                className="ibtn"
-                title={t('reader.prev')}
-                aria-label={t('reader.prev')}
-                disabled={first <= 0}
-                onClick={() => step(-1)}
-              >
-                <Icon name="up" />
-              </button>
-              <span className="page-label" id="page-position">
-                {String(pages.length ? first + 1 : 0).padStart(2, '0')}
-                {range > 1 ? `–${String(first + range).padStart(2, '0')}` : ''} /{' '}
-                {String(pages.length).padStart(2, '0')}
+      {nativeStage ? (
+        <footer className="room-footer">
+          {nativeStage ? (
+            <>
+              <span className="native-reading-controls" hidden={layout !== 'webtoon'}>
+                {READING_MODES.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    data-mode={m}
+                    aria-pressed={mode === m}
+                    onClick={() => setModeSaved(m)}
+                  >
+                    {t(`reader.mode.${m}`)}
+                  </button>
+                ))}
               </span>
+              <span className="spacer" />
+              <div className="room-pagination">
+                <button
+                  type="button"
+                  className="ibtn"
+                  title={t('reader.prev')}
+                  aria-label={t('reader.prev')}
+                  disabled={first <= 0}
+                  onClick={() => step(-1)}
+                >
+                  <Icon name="up" />
+                </button>
+                <span className="page-label" id="page-position">
+                  {String(pages.length ? first + 1 : 0).padStart(2, '0')}
+                  {range > 1 ? `–${String(first + range).padStart(2, '0')}` : ''} /{' '}
+                  {String(pages.length).padStart(2, '0')}
+                </span>
+                <button
+                  type="button"
+                  className="ibtn"
+                  title={t('reader.next')}
+                  aria-label={t('reader.next')}
+                  disabled={first + range >= pages.length}
+                  onClick={() => step(1)}
+                >
+                  <Icon name="down" />
+                </button>
+              </div>
+              <span className="spacer" />
+            </>
+          ) : (
+            <span className="spacer" />
+          )}
+          <span className="room-scene-title">{nativeStage ? cur?.title : null}</span>
+          {nativeStage ? (
+            <>
               <button
                 type="button"
                 className="ibtn"
-                title={t('reader.next')}
-                aria-label={t('reader.next')}
-                disabled={first + range >= pages.length}
-                onClick={() => step(1)}
+                title={t('reader.film')}
+                aria-label={t('reader.film')}
+                aria-pressed={film}
+                onClick={() => setFilm(!film)}
               >
-                <Icon name="down" />
+                <Icon name="list" />
               </button>
-            </div>
-            <span className="spacer" />
-          </>
-        ) : (
-          <span className="spacer" />
-        )}
-        <span className="room-scene-title">{nativeStage ? cur?.title : null}</span>
-        {nativeStage ? (
-          <>
-            <button
-              type="button"
-              className="ibtn"
-              title={t('reader.film')}
-              aria-label={t('reader.film')}
-              aria-pressed={film}
-              onClick={() => setFilm(!film)}
-            >
-              <Icon name="list" />
-            </button>
-            <button
-              type="button"
-              className="ibtn"
-              title={t('reader.info')}
-              aria-label={t('reader.info')}
-              aria-pressed={info}
-              onClick={() => setInfo(!info)}
-            >
-              <Icon name="help" />
-            </button>
-          </>
-        ) : null}
-      </footer>
+              <button
+                type="button"
+                className="ibtn"
+                title={t('reader.info')}
+                aria-label={t('reader.info')}
+                aria-pressed={info}
+                onClick={() => setInfo(!info)}
+              >
+                <Icon name="help" />
+              </button>
+            </>
+          ) : null}
+        </footer>
+      ) : null}
       <PresentationDrawer
         open={panel === 'export'}
         onClose={() => navigate(`${base}${keep}`)}
@@ -737,9 +741,9 @@ export default function ReaderPage() {
         onDraft={setDraft}
         layout={layout}
         onLayout={setLayoutSaved}
-        episodeId={epId}
+        episodeId={episode.data?.id}
         title={series.data?.title ?? ''}
-        lettered
+        lettered={savedLayout}
         platformOpen={platformOpen}
         onPlatform={setPlatformOpen}
       />

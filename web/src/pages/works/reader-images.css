@@ -1,3 +1,67 @@
+#reader .room-template,
+#reader .room-layout {
+  padding: 0;
+  overflow: hidden;
+}
+#reader .room-template .presentation-preview-wrap {
+  min-height: 0;
+  overflow: hidden;
+}
+#reader .room-template iframe {
+  display: block;
+  flex: 1 1 0;
+}
+#reader:not([data-reader-view='native']) .presentation-drawer {
+  bottom: 0;
+}
+
+/* The layout toolbar occupies its own row; only the canvas and inspector scroll. */
+#reader .room-layout .canvas-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+#reader .room-layout .canvas-toolbar {
+  position: static;
+  flex: none;
+  margin: 0;
+  padding: 10px 16px;
+}
+#reader .room-layout .canvas-body {
+  flex: 1 1 0;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  min-height: 0;
+  overflow: hidden;
+  align-items: stretch;
+  gap: 12px;
+  padding: 12px;
+}
+#reader .room-layout .canvas-scroll,
+#reader .room-layout .canvas-inspector {
+  position: static;
+  min-width: 0;
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+#reader .room-layout .canvas-scroll {
+  justify-content: safe center;
+}
+@media (max-width: 760px) {
+  #reader .room-layout .canvas-body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(0, 0.7fr);
+    padding: 8px;
+    gap: 8px;
+  }
+  #reader .room-layout .canvas-toolbar {
+    padding: 8px;
+    gap: 6px;
+  }
+}
+
 #reader-canvas .room-scroll .reader-saved-strip {
   position: relative;
   width: 100%;

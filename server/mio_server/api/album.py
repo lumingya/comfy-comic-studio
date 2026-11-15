@@ -30,6 +30,9 @@ class AlbumExport(BaseModel):
     variant_id: str | None = None
     lettered: bool = Field(default=True, description="Crop panels from the lettered strip")
     show_captions: bool = True
+    deduplicate_captions: bool = Field(
+        default=False, description="Omit dialogue lines already fully visible in a lettered panel"
+    )
     show_prompts: bool = False
     theme_color: str = ""
     border: int = Field(default=0, ge=0, le=8)
@@ -55,6 +58,9 @@ class PortableExport(BaseModel):
     )
     show_captions: bool = Field(
         default=True, description="ZIP reader captions only; PDF contains one image per page"
+    )
+    deduplicate_captions: bool = Field(
+        default=False, description="Omit dialogue lines already fully visible in a lettered panel"
     )
     title: str = Field(default="", max_length=120)
     image_profile: M.Profile = "auto"
@@ -114,6 +120,7 @@ def export_album(ctx: Ctx, body: AlbumExport) -> Response:
                 eid,
                 variant_id=body.variant_id,
                 lettered=body.lettered,
+                deduplicate_captions=body.deduplicate_captions,
                 max_width=body.max_width,
                 profile=profile,
                 stats=stats,
@@ -193,6 +200,7 @@ def export_portable(ctx: Ctx, body: PortableExport) -> Response:
             eid,
             variant_id=body.variant_id,
             lettered=body.lettered,
+            deduplicate_captions=body.deduplicate_captions,
             profile=profile,
             stats=stats,
         )

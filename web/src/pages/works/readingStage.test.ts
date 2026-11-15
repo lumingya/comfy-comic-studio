@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { buildStages, nativeLayout, readingMode, stageMode, stageOf } from './readingStage';
+import { episode } from '../../test/fixtures';
+import {
+  buildStages,
+  hasSavedReadingLayout,
+  nativeLayout,
+  readingMode,
+  stageMode,
+  stageOf,
+} from './readingStage';
 
 const pages = ['a', 'b', 'c'].map((id) => ({ id, caption: false }));
 const portrait = { w: 800, h: 1200 };
@@ -7,6 +15,15 @@ const wide = { w: 1600, h: 900 };
 const view = { w: 1400, h: 900 };
 
 describe('reading stage', () => {
+  it('uses the same saved-layout decision for reading, template preview and export', () => {
+    const empty = { ...episode.strip, panel_boxes: {}, crops: {}, lettering: [] };
+    expect(hasSavedReadingLayout(empty)).toBe(false);
+    expect(hasSavedReadingLayout(undefined)).toBe(false);
+    expect(hasSavedReadingLayout({ ...empty, panel_boxes: episode.strip.panel_boxes })).toBe(true);
+    expect(hasSavedReadingLayout({ ...empty, crops: { p0: [0, 0, 0.5, 1] } })).toBe(true);
+    expect(hasSavedReadingLayout({ ...empty, lettering: episode.strip.lettering })).toBe(true);
+  });
+
   it('pairs portrait pages in auto mode on a wide stage', () => {
     const stages = buildStages(pages, { a: portrait, b: portrait, c: portrait }, 'auto', view);
     expect(stages.map((s) => s.items.length)).toEqual([2, 1]);

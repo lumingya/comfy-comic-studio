@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import unittest
+from html.parser import HTMLParser
 from pathlib import Path
 
 from PIL import Image
@@ -51,6 +52,49 @@ def adopt_two_frames(case: ApiCase, episode: dict) -> dict:
 
 
 class TemplateTests(unittest.TestCase):
+    def test_builtin_reader_starts_with_content_without_duplicate_cropped_cover(self):
+        class Document(HTMLParser):
+            def __init__(self):
+                super().__init__()
+                self.images = []
+                self.classes = set()
+
+            def handle_starttag(self, tag, attrs):
+                attrs = dict(attrs)
+                self.classes.update(attrs.get("class", "").split())
+                if tag == "img":
+                    self.images.append(attrs)
+
+        for tpl in builtin_templates():
+            if tpl.id in ("mio-fit", "export-seamless"):
+                continue
+            with self.subTest(tpl.id):
+                doc = render_album(tpl, books(), AlbumOptions(signature="Author signature"))
+                parsed = Document()
+                parsed.feed(doc)
+                # Each image is an actual frame; no extra first image is enlarged into a cover.
+                self.assertEqual(len(parsed.images), 4)
+                self.assertTrue(all("data-mio-asset" in image for image in parsed.images))
+                self.assertTrue(
+                    parsed.classes.isdisjoint(
+                        {"edition-cover", "edition-opening", "edition-end", "ag-cover", "ag-mast"}
+                    )
+                )
+                self.assertIn("Author signature", doc)
+                self.assertIn("便利店", doc)
+                self.assertIn("height:auto;max-width:100%;max-height:none;object-fit:contain", doc)
+
+    def test_custom_template_keeps_its_explicit_cover_and_crop_style(self):
+        custom = MINIMAL.replace(
+            "<section data-cc-book>",
+            '<section data-cc-book><img class="my-cover" src="{{coverImage}}" '
+            'style="height:200px;object-fit:cover">',
+        )
+        tpl = parse_template({"id": "my-cover", "title": "Custom cover", "html": custom})
+        doc = render_album(tpl, books())
+        self.assertIn('class="my-cover"', doc)
+        self.assertIn('style="height:200px;object-fit:cover"', doc)
+
     def test_every_builtin_renders_offline_and_safely(self):
         templates = builtin_templates()
         self.assertEqual(len(templates), 7)

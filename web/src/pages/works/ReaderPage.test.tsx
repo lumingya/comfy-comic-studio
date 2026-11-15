@@ -3,6 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { keys } from '../../api/keys';
+import type { Episode } from '../../api/types';
 import { useUI } from '../../app/ui-store';
 import { episode, series } from '../../test/fixtures';
 import { mockFetch } from '../../test/utils';
@@ -10,35 +11,44 @@ import ReaderPage from './ReaderPage';
 
 const savedEpisode = {
   ...episode,
+  strip: { ...episode.strip, lettering: [] },
   takes: [episode.takes[0], { ...episode.takes[0], id: 'second', panel_id: 'p1' }],
 };
+let currentEpisode: Episode = savedEpisode;
 const geometry = {
   revision: 'saved-crop-lettering-1',
   width: 800,
   height: 4000,
   panel_boxes: { p0: [0, 400, 800, 1600], p1: [0, 2600, 800, 3800] },
   captions: { p0: 'Resolved caption from server', p1: '' },
+  display_captions: {} as Record<string, string>,
 };
 let metadata = geometry;
 
-function mount(mode = 'single', layout = 'webtoon') {
+function mount(mode = 'single', layout = 'webtoon', suffix = '') {
   localStorage.setItem('mio.reader.mode', mode);
   localStorage.setItem('mio.reader.layout', layout);
   const calls = mockFetch({
     'GET /api/series/ser_1': series,
     'GET /api/series/ser_1/episodes': { items: [{ id: 'ep_1', title: '第一话' }] },
-    'GET /api/episodes/ep_1': savedEpisode,
+    'GET /api/episodes/ep_1': () => currentEpisode,
     'GET /api/episodes/ep_1/reading': () => metadata,
     'GET /api/album-templates': [],
     'GET /api/settings': {},
     'GET /api/export/presets': [],
+    'POST /api/export/album': () =>
+      new Response('<!doctype html><p>Complete saved composition</p>', {
+        headers: { 'content-type': 'text/html' },
+      }),
   });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={['/gallery/ser_1']}>
+      <MemoryRouter initialEntries={[`/gallery/ser_1${suffix}`]}>
         <Routes>
-          <Route path="/gallery/:seriesId" element={<ReaderPage />} />
+          <Route path="/gallery/:seriesId" element={<ReaderPage />}>
+            <Route path="layout" element={<div aria-label="Layout editor" role="region" />} />
+          </Route>
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -47,6 +57,7 @@ function mount(mode = 'single', layout = 'webtoon') {
 }
 
 beforeEach(() => {
+  currentEpisode = savedEpisode;
   metadata = structuredClone(geometry);
   localStorage.clear();
   useUI.setState({ defaultReaderMode: 'webtoon' });
@@ -95,6 +106,8 @@ describe('saved reading composition', () => {
         [...document.querySelectorAll('img')].some((img) => img.src.includes('/api/assets/')),
       ).toBe(false);
       expect(calls.every((call) => call.method === 'GET')).toBe(true);
+      expect(document.querySelector('.room-brand')).toBeNull();
+      expect(document.querySelector('[data-mio-colophon]')).toBeNull();
       if (layout !== 'spread') {
         fireEvent.click(screen.getByRole('button', { name: '下一页' }));
         expect(document.querySelector('#page-position')).toHaveTextContent('02 / 02');
@@ -103,6 +116,117 @@ describe('saved reading composition', () => {
       }
     },
   );
+
+  it('gives the template its own reading area without an empty footer or success banner', async () => {
+    localStorage.setItem('mio.reader.look', 'export-paper');
+    const { calls } = mount();
+    const frame = await screen.findByTitle('展示模板预览');
+    expect(frame).toHaveAttribute('srcdoc', expect.stringContaining('Complete saved composition'));
+    expect(document.getElementById('reader')).toHaveAttribute('data-reader-view', 'preview');
+    expect(frame.closest('.room-template')).not.toBeNull();
+    expect(document.querySelector('.room-footer')).toBeNull();
+    expect(document.getElementById('presentation-preview-status')).toBeNull();
+    expect(screen.getByRole('button', { name: '排版' })).toBeInTheDocument();
+    expect(calls.find((c) => c.url === '/api/export/album')?.body).toMatchObject({
+      lettered: true,
+      template_id: 'export-paper',
+    });
+  });
+
+  it('keeps reader actions outside the layout area without an unused reading footer', async () => {
+    mount('single', 'webtoon', '/layout');
+    const editor = await screen.findByRole('region', { name: 'Layout editor' });
+    expect(document.getElementById('reader')).toHaveAttribute('data-reader-view', 'layout');
+    expect(editor.closest('.room-layout')).not.toBeNull();
+    expect(document.querySelector('.room-footer')).toBeNull();
+    expect(screen.getByRole('button', { name: '排版' }).closest('.room-layout')).toBeNull();
+  });
+
+  it('reads unsaved art continuously with separate captions instead of an auto-lettered strip', async () => {
+    currentEpisode = {
+      ...savedEpisode,
+      strip: { ...savedEpisode.strip, panel_boxes: {}, crops: {}, lettering: [] },
+    };
+    metadata = {
+      ...geometry,
+      panel_boxes: { p0: [0, 0, 800, 400], p1: [0, 400, 800, 800] },
+    };
+    mount('continuous');
+    await screen.findByAltText('第 1 格');
+    expect(document.querySelector('.reader-saved-strip')).toBeNull();
+    expect(document.querySelector('.scroll-caption')).toHaveTextContent(
+      'Resolved caption from server',
+    );
+    expect(document.querySelectorAll('#reader-canvas img')).toHaveLength(2);
+  });
+
+  it('previews unlaid-out art without asking the template exporter to generate lettering', async () => {
+    currentEpisode = {
+      ...savedEpisode,
+      strip: { ...savedEpisode.strip, panel_boxes: {}, crops: {}, lettering: [] },
+    };
+    localStorage.setItem('mio.reader.look', 'export-paper');
+    const { calls } = mount();
+    await screen.findByTitle('展示模板预览');
+    expect(calls.find((c) => c.url === '/api/export/album')?.body).toMatchObject({
+      lettered: false,
+      show_captions: true,
+    });
+  });
+
+  it('keeps saved lettering but shows its scene text separately only when requested', async () => {
+    currentEpisode = { ...savedEpisode, strip: episode.strip };
+    metadata = { ...geometry, display_captions: { p0: '', p1: '' } };
+    // The former automatically saved default is not an explicit choice to duplicate text.
+    localStorage.setItem('mio.reader.export', JSON.stringify({ captions: true }));
+    mount();
+    const image = await screen.findByAltText('第 1 格');
+    expect(image).toHaveAttribute('src', expect.stringContaining('/panels/p0/image'));
+    expect(document.querySelector('.scroll-caption')).toBeNull();
+    fireEvent.click(screen.getAllByRole('button', { name: '本幕文字' })[0]);
+    expect(document.getElementById('room-info')).not.toHaveAttribute('hidden');
+    expect(document.getElementById('room-info')).toHaveTextContent('Resolved caption from server');
+  });
+
+  it('keeps uncovered panel text and partial captions beside a saved composition', async () => {
+    currentEpisode = { ...savedEpisode, strip: episode.strip };
+    metadata = {
+      ...geometry,
+      captions: { p0: 'Already embedded. Still below.', p1: 'Other panel narration' },
+      display_captions: { p0: 'Still below.', p1: 'Other panel narration' },
+    };
+    mount();
+    await screen.findByAltText('第 1 格');
+    expect([...document.querySelectorAll('.scroll-caption')].map((p) => p.textContent)).toEqual([
+      'Still below.',
+      'Other panel narration',
+    ]);
+  });
+
+  it('requests per-panel caption deduplication for saved templates without hiding all captions', async () => {
+    currentEpisode = { ...savedEpisode, strip: episode.strip };
+    localStorage.setItem('mio.reader.look', 'export-paper');
+    const { calls } = mount();
+    await screen.findByTitle('展示模板预览');
+    expect(calls.find((c) => c.url === '/api/export/album')?.body).toMatchObject({
+      lettered: true,
+      show_captions: true,
+      deduplicate_captions: true,
+    });
+  });
+
+  it('honors an explicit caption preference for a saved lettered template', async () => {
+    currentEpisode = { ...savedEpisode, strip: episode.strip };
+    localStorage.setItem('mio.reader.look', 'export-paper');
+    localStorage.setItem('mio.reader.export', JSON.stringify({ captionPreference: true }));
+    const { calls } = mount();
+    await screen.findByTitle('展示模板预览');
+    expect(calls.find((c) => c.url === '/api/export/album')?.body).toMatchObject({
+      lettered: true,
+      show_captions: true,
+      deduplicate_captions: false,
+    });
+  });
 
   it('uses one full strip with saved geometry anchors for continuous reading', async () => {
     mount('continuous');
@@ -115,7 +239,9 @@ describe('saved reading composition', () => {
     expect(document.querySelectorAll('#reader-canvas img')).toHaveLength(1);
     expect(document.querySelector('[data-page-anchor="0"]')).toHaveStyle({ top: '10%' });
     expect(document.querySelector('[data-page-anchor="1"]')).toHaveStyle({ top: '65%' });
-    expect(document.querySelector('.scroll-caption')).toBeNull();
+    expect(document.querySelector('.reader-strip-captions')).toHaveTextContent(
+      'Resolved caption from server',
+    );
     fireEvent.click(screen.getByRole('button', { name: '下一页' }));
     expect(document.querySelector('#page-position')).toHaveTextContent('02 / 02');
     fireEvent.click(screen.getByRole('button', { name: '单页' }));

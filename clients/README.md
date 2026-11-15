@@ -283,9 +283,10 @@ python clients/python/generate.py --check  # CI 用：不一致时失败
 
 ### 阅读、裁切与输出格式
 
-`GET /episodes/{id}/reading`（`read`）返回真正合成后的画布宽高、格坐标、展开后的台词及内容
-摘要 `revision`；`GET /episodes/{id}/panels/{panel_id}/image?width=1600` 返回保存了裁切和嵌字的
-采用单格 PNG。无采用图时前者返回空的格坐标和台词映射，后者为 404。`width` 是预览宽度上限（64–3200），
+`GET /episodes/{id}/reading`（`read`）返回阅读宽高、格坐标、完整台词 `captions`、去除已嵌入正文的
+`display_captions` 及内容摘要 `revision`；`GET /episodes/{id}/panels/{panel_id}/image?width=1600`
+返回采用单格 PNG。未保存排版时保留原图比例和透明通道；保存过分格、裁切或嵌字时尊重保存的版面。
+无采用图时前者返回空的格坐标和台词映射，后者为 404。`width` 是预览宽度上限（64–3200），
 缓存容量不足时可能降低分辨率，正式导出保持自己的分辨率策略。
 
 同一个工作区和快照的单格请求共用一次画布合成；作品变量、设定集、采用图及排版变化都会
@@ -300,6 +301,8 @@ python clients/python/generate.py --check  # CI 用：不一致时失败
 | `POST /export/portable` | ZIP 图片与简单阅读页，或每格一页 PDF；不接受 HTML 模板，不继承双页阅读布局 |
 
 后两种接口默认 `lettered:true`；`false` 直接使用原始采用图，裁切也不应用。
+`deduplicate_captions:true` 只去掉同格中已经完整嵌入且文字匹配的正文，保留其他对白与旁白；
+SFX 和跨边界裁断的文字不触发去重。该参数默认 `false`，应用阅读器默认开启。
 Portable 的 `show_captions` 只控制 ZIP 阅读页，PDF 仅含图片。HTML 画册、ZIP、PDF 和可编辑
 `.mio.zip` 作品包分别服务不同用途，不能互相当作同一格式。
 

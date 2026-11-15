@@ -18,7 +18,17 @@ from PIL import Image
 
 from mio_server.album.build import episode_pages
 from mio_server.context import AppContext
-from mio_server.models import Bible, Character, Dialogue, Episode, Panel, Series, Strip, Take
+from mio_server.models import (
+    Bible,
+    Character,
+    Dialogue,
+    Episode,
+    LetteringLayer,
+    Panel,
+    Series,
+    Strip,
+    Take,
+)
 from mio_server.pipeline import strip as SP
 from mio_server.pipeline.reading import ReadingCache
 
@@ -172,21 +182,101 @@ class ReadingTests(ApiCase):
         )
         self.assertEqual(self.ctx.engine.list(), [])
 
-    def test_unsaved_layout_metadata_matches_pixels_without_saving_layout(self):
+    def test_unsaved_layout_reads_full_originals_with_captions_without_auto_lettering(self):
         self.ctx.store.update_episode(self.ep.id, lambda ep: setattr(ep, "strip", Strip(width=320)))
         before = self.ctx.store.get_episode(self.ep.id).model_dump(mode="json")
-        metadata = self.ok(self.client.get(self.path + "/reading"))
-        self.assertEqual(set(metadata["panel_boxes"]), {"p1", "p2"})
-        full = self.ok(self.client.get(self.path + "/strip.png"))
-        with Image.open(io.BytesIO(full.content)) as image:
-            self.assertEqual(image.size, (metadata["width"], metadata["height"]))
-            for pid, box in metadata["panel_boxes"].items():
+        original = self.ctx.assets.read(self.asset.id)
+        with mock.patch.object(SP, "render", side_effect=AssertionError("implicit lettering")):
+            metadata = self.ok(self.client.get(self.path + "/reading"))
+            self.assertEqual(
+                metadata["panel_boxes"], {"p1": [0, 0, 200, 100], "p2": [0, 100, 200, 200]}
+            )
+            self.assertEqual(metadata["captions"], {"p1": "Mio arrives", "p2": "Ada：Mio"})
+            for pid in metadata["panel_boxes"]:
                 response = self.ok(self.client.get(self.path + f"/panels/{pid}/image"))
-                with Image.open(io.BytesIO(response.content)) as panel:
-                    expected = image.crop(tuple(round(value) for value in box))
-                    self.assertEqual(panel.size, expected.size)
-                    self.assertEqual(panel.tobytes(), expected.tobytes())
+                self.assert_pixels_equal(response.content, original)
         self.assertEqual(self.ctx.store.get_episode(self.ep.id).model_dump(mode="json"), before)
+
+    def test_explicit_lettered_export_still_auto_layouts_an_unsaved_episode(self):
+        self.ctx.store.update_episode(self.ep.id, lambda ep: setattr(ep, "strip", Strip(width=320)))
+        _, _, plain = episode_pages(self.ctx, self.ep.id, lettered=False, profile="clean")
+        _, _, lettered = episode_pages(self.ctx, self.ep.id, lettered=True, profile="clean")
+        self.assertEqual((plain[0].width, plain[0].height), (200, 100))
+        self.assertNotEqual((lettered[0].width, lettered[0].height), (200, 100))
+        self.assert_pixels_equal(plain[0].data, self.ctx.assets.read(self.asset.id))
+
+    def test_caption_deduplication_is_per_line_and_panel_and_ignores_sfx_and_clipped_text(self):
+        def edit(ep):
+            ep.panels[0].dialogues = [
+                Dialogue(kind="narration", text="{hero} arrives"),
+                Dialogue(kind="narration", text="More narration"),
+            ]
+            ep.strip.lettering = [
+                LetteringLayer(
+                    panel_id="p1", kind="caption", text="Mio   arrives", box=(50, 230, 170, 300)
+                ),
+                LetteringLayer(
+                    panel_id="p1", kind="sfx", text="More narration", box=(50, 230, 170, 300)
+                ),
+                LetteringLayer(panel_id="p2", kind="speech", text="Mio", box=(50, 580, 170, 650)),
+            ]
+
+        self.ctx.store.update_episode(self.ep.id, edit)
+        preview = self.ok(self.client.get(self.path + "/reading"))
+        self.assertEqual(preview["captions"]["p1"], "Mio arrives　More narration")
+        expected = {"p1": "More narration", "p2": "Ada：Mio"}
+        self.assertEqual(preview["display_captions"], expected)
+        body = {"episode_ids": [self.ep.id], "lettered": True, "deduplicate_captions": True}
+        doc = self.ok(self.client.post("/api/export/album", json=body)).text
+        marker = re.search(r'<script id="mio-album-data"[^>]*>(.*?)</script>', doc, re.S)
+        steps = json.loads(marker.group(1))["books"][0]["album"]["steps"]
+        self.assertEqual([step["caption"] for step in steps], list(expected.values()))
+        zip_response = self.ok(
+            self.client.post("/api/export/portable", json={**body, "format": "zip"})
+        )
+        with zipfile.ZipFile(io.BytesIO(zip_response.content)) as archive:
+            files = json.loads(archive.read("manifest.json"))["books"][0]["files"]
+            self.assertEqual([entry["caption"] for entry in files], list(expected.values()))
+        _, _, legacy = episode_pages(self.ctx, self.ep.id, lettered=True)
+        self.assertEqual(legacy[0].caption, preview["captions"]["p1"])
+        _, _, raw = episode_pages(self.ctx, self.ep.id, lettered=False, deduplicate_captions=True)
+        self.assertEqual(raw[0].caption, preview["captions"]["p1"])
+        self.ctx.store.update_episode(
+            self.ep.id, lambda ep: setattr(ep.strip.lettering[0], "kind", "sfx")
+        )
+        self.assertEqual(self.preview().preview.display_captions["p1"], preview["captions"]["p1"])
+
+    def test_plain_reading_preserves_png_and_webp_alpha_in_panels_and_thumbnails(self):
+        for fmt in ("PNG", "WEBP"):
+            with self.subTest(fmt=fmt):
+                with Image.new("RGBA", (200, 100), (20, 80, 150, 0)) as image:
+                    image.paste((20, 80, 150, 128), (50, 0, 150, 100))
+                    image.paste((20, 80, 150, 255), (150, 0, 200, 100))
+                    out = io.BytesIO()
+                    image.save(out, fmt, lossless=True)
+                original = out.getvalue()
+                asset = self.ctx.assets.put(original, source="test")
+
+                def replace(ep):
+                    ep.strip = Strip()
+                    for take in ep.takes:
+                        take.asset_id = asset.id
+
+                self.ctx.store.update_episode(self.ep.id, replace)
+                response = self.ok(self.client.get(self.path + "/panels/p1/image"))
+                with (
+                    Image.open(io.BytesIO(original)) as source,
+                    Image.open(io.BytesIO(response.content)) as panel,
+                ):
+                    self.assertEqual(panel.mode, "RGBA")
+                    self.assertEqual(panel.tobytes(), source.convert("RGBA").tobytes())
+                thumbnail = self.ok(self.client.get(self.path + "/panels/p1/image?width=64"))
+                with Image.open(io.BytesIO(thumbnail.content)) as panel:
+                    self.assertEqual(panel.mode, "RGBA")
+                    self.assertEqual(panel.size, (64, 32))
+                    self.assertEqual(panel.getpixel((0, 16))[3], 0)
+                    self.assertEqual(panel.getpixel((32, 16))[3], 128)
+                    self.assertEqual(panel.getpixel((63, 16))[3], 255)
 
     def test_no_adopted_image_has_empty_metadata_and_404(self):
         self.ctx.store.update_episode(self.ep.id, lambda ep: setattr(ep, "takes", []))

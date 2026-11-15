@@ -46,6 +46,7 @@ export function TemplateStudio(props: {
     episodeId: string | undefined;
     lettered: boolean;
     captions: boolean;
+    deduplicateCaptions?: boolean;
   };
   /** A template was saved or deleted: `id` is the one to show next in the reader. */
   onSaved: (id: string) => void;
@@ -182,6 +183,7 @@ export function TemplateStudio(props: {
           template: tpl,
           lettered: props.preview.lettered,
           show_captions: props.preview.captions,
+          deduplicate_captions: props.preview.deduplicateCaptions ?? true,
           image_profile: 'preview',
           max_width: 900,
         }

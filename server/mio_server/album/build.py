@@ -8,6 +8,8 @@ dialogue goes into the caption.
 from __future__ import annotations
 
 import base64
+import unicodedata
+from collections import Counter
 from dataclasses import dataclass
 
 from PIL import Image
@@ -60,15 +62,40 @@ def display_name(series: Series, values: dict[str, str] | None = None) -> str:
     return cast or V.display(str(series.variables.get("character") or ""), values).strip()
 
 
-def caption(series: Series, panel) -> str:
+def caption(series: Series, panel, embedded_strip=None) -> str:
+    """Dialogue not already visible in this panel's image, when a composition is supplied.
+
+    Match whole normalized lines only. SFX, another panel's text, and lettering clipped by a
+    panel edge cannot consume a dialogue line. Keep the full caption by omitting the strip.
+    """
     names = {c.id: c.name for c in series.bible.characters}
     values = V.table(series, panel)
+
+    def normalized(text):
+        return " ".join(unicodedata.normalize("NFC", text).split())
+
+    embedded = Counter()
+    box = embedded_strip.panel_boxes.get(panel.id) if embedded_strip else None
+    if box:
+        for layer in embedded_strip.lettering:
+            if layer.panel_id != panel.id or layer.kind == "sfx":
+                continue
+            if not (
+                box[0] <= layer.box[0] < layer.box[2] <= box[2]
+                and box[1] <= layer.box[1] < layer.box[3] <= box[3]
+            ):
+                continue
+            # The compositor paints layer.text literally; do not expand variables it did not draw.
+            embedded[normalized(layer.text)] += 1
     lines = []
     for d in panel.dialogues:
         if d.kind == DialogueKind.sfx:
             continue
         who = names.get(d.speaker_id or "", "")
         text = V.display(d.text, values)
+        if text.strip() and embedded[normalized(text)]:
+            embedded[normalized(text)] -= 1
+            continue
         if d.kind in (DialogueKind.narration, DialogueKind.caption) or not who:
             lines.append(text)
         else:
@@ -82,6 +109,7 @@ def episode_pages(
     *,
     variant_id: str | None = None,
     lettered: bool = True,
+    deduplicate_captions: bool = False,
     profile: str = "preview",
     max_width: int = 1400,
     stats: M.Stats | None = None,
@@ -92,9 +120,11 @@ def episode_pages(
     stats = stats if stats is not None else M.Stats(profile)
     images, _ = ES.adopted_images(ctx, ep, variant_id)
     crops: dict[str, Image.Image] = {}
+    composed_strip = None
     if lettered and images:
         _, _, strip, full = ES.render_snapshot(ctx, series, ep, variant_id)
         crops = dict(ES.panel_crops(ep, strip, full, variant_id))
+        composed_strip = strip
     pages: list[Page | None] = []
     for i, panel in enumerate(ep.ordered_panels(), start=1):
         im = crops.get(panel.id) or images.get(panel.id)
@@ -114,7 +144,7 @@ def episode_pages(
                 data=data,
                 mime=mime,
                 name=f"第 {i} 格",
-                caption=caption(series, panel),
+                caption=caption(series, panel, composed_strip if deduplicate_captions else None),
                 prompt=prompt,
                 width=im.width,
                 height=im.height,
@@ -130,6 +160,7 @@ def episode_book(
     *,
     variant_id: str | None = None,
     lettered: bool = True,
+    deduplicate_captions: bool = False,
     max_width: int = 1400,
     profile: str = "preview",
     stats: M.Stats | None = None,
@@ -139,6 +170,7 @@ def episode_book(
         episode_id,
         variant_id=variant_id,
         lettered=lettered,
+        deduplicate_captions=deduplicate_captions,
         profile=profile,
         max_width=max_width,
         stats=stats,
