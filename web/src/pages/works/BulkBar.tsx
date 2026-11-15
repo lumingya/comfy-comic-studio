@@ -6,7 +6,6 @@ import { useRestore } from '../../api/system';
 import type { SeriesCard } from '../../api/types';
 import { Icon } from '../../app/icons';
 import { useUI } from '../../app/ui-store';
-import { confirm } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
 
 /**
@@ -47,13 +46,6 @@ export function useBulkActions(onDeleted: () => void) {
   };
   const remove = async (books: SeriesCard[]) => {
     if (!books.length) return;
-    const ok = await confirm({
-      title: t('classic.shelf.bulkDeleteTitle', { count: books.length }),
-      description: t('classic.shelf.bulkDeleteHelp'),
-      confirmLabel: t('common.delete'),
-      danger: true,
-    });
-    if (!ok) return;
     setBusy(true);
     const done: SeriesCard[] = [];
     try {
@@ -147,7 +139,7 @@ export function BulkBar(props: {
         onClick={() => void a.remove(chosen)}
       >
         <Icon name="trash" sm />
-        {t('common.delete')}
+        {t('classic.shelf.deleteMany')}
       </button>
       <button
         type="button"

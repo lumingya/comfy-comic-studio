@@ -979,8 +979,8 @@ const zh = {
       forSelection: '对这 {{count}} 本画册',
       selectedTitle: '已选择 {{count}} 本画册',
       multiSubtitle: 'Ctrl / ⌘ + 右键可继续加选 · Esc 取消选择',
-      deleteOne: '删除画册…',
-      deleteMany: '批量删除…',
+      deleteOne: '移入回收站',
+      deleteMany: '移入回收站',
       exportTitle: '导出离线画册 · {{count}} 本',
       exportHelp:
         '选中的画册合并为一个离线 HTML，使用同一套版式。单本画册的预览、水印等更多选项在阅读页的「版式」面板里。',

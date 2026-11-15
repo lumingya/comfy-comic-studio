@@ -1,9 +1,10 @@
-import { fireEvent, screen, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useLocation, useNavigate } from 'react-router-dom';
 import type { SeriesCard } from '../../api/types';
 import { useUI } from '../../app/ui-store';
 import { confirm } from '../../components/confirm';
+import { useToasts } from '../../components/toast';
 import { series } from '../../test/fixtures';
 import { mockFetch, renderWithProviders } from '../../test/utils';
 import WorksPage from './WorksPage';
@@ -32,12 +33,13 @@ function LocationProbe() {
 
 async function mount(view: 'grid' | 'showcase' = 'grid') {
   useUI.setState({ worksView: view, starred: [] });
-  mockFetch({
+  const calls = mockFetch({
     'GET /api/series': books,
     'GET /api/settings': { collection_title: '交互测试画册集' },
     'GET /api/update': {},
     'GET /api/jobs': [],
     'GET /api/series/book_0/episodes': { items: [], total: 0, offset: 0, limit: 50 },
+    'DELETE /api/series/book_0': {},
   });
   renderWithProviders(
     <>
@@ -47,6 +49,7 @@ async function mount(view: 'grid' | 'showcase' = 'grid') {
     '/gallery',
   );
   await screen.findByRole('article', { name: '甲册' });
+  return calls;
 }
 const card = (name = '甲册') => screen.getByRole('article', { name });
 const cover = (name = '甲册') => within(card(name)).getByRole('button', { name });
@@ -56,7 +59,10 @@ const key = (value: string, mods = {}) =>
 const root = () => document.getElementById('gallery-results')!;
 
 beforeEach(() => vi.mocked(confirm).mockClear());
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  useToasts.getState().items.forEach((item) => useToasts.getState().dismiss(item.id));
+});
 
 describe('legacy shelf selection', () => {
   it('right-click is only a temporary context highlight; one Escape dismisses it and restores card focus', async () => {
@@ -180,8 +186,8 @@ describe('legacy shelf selection', () => {
     expect(picked()).toHaveLength(0);
   });
 
-  it('does not delete from Backspace, modified Delete, or a field; Delete still asks for confirmation', async () => {
-    await mount();
+  it('only plain Delete from the shelf moves selected albums to trash without confirmation', async () => {
+    const calls = await mount();
     fireEvent.click(cover(), { ctrlKey: true });
     key('Backspace');
     key('Delete', { ctrlKey: true });
@@ -192,20 +198,27 @@ describe('legacy shelf selection', () => {
     key('a', { ctrlKey: true });
     key('Escape');
     expect(confirm).not.toHaveBeenCalled();
+    expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
     expect(picked()).toHaveLength(1);
     root().focus();
     key('Delete');
-    expect(confirm).toHaveBeenCalledTimes(1);
+    await waitFor(() =>
+      expect(calls.filter((call) => call.method === 'DELETE')).toMatchObject([
+        { url: '/api/series/book_0' },
+      ]),
+    );
+    expect(confirm).not.toHaveBeenCalled();
   });
 
   it('blocks shelf shortcuts while a context menu or another dialog is open', async () => {
-    await mount();
+    const calls = await mount();
     fireEvent.click(cover(), { ctrlKey: true });
     fireEvent.contextMenu(card());
     key('a', { ctrlKey: true });
     key('Delete');
     expect(picked()).toHaveLength(1);
     expect(confirm).not.toHaveBeenCalled();
+    expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
     key('Escape');
     const dialog = document.createElement('dialog');
     dialog.open = true;
@@ -216,6 +229,7 @@ describe('legacy shelf selection', () => {
       key('Escape');
       expect(picked()).toHaveLength(1);
       expect(confirm).not.toHaveBeenCalled();
+      expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
     } finally {
       dialog.remove();
     }

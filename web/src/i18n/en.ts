@@ -1041,8 +1041,8 @@ const en: Widen<Dict> = {
       forSelection: 'For these {{count}} albums',
       selectedTitle: '{{count}} albums selected',
       multiSubtitle: 'Ctrl / ⌘ + right-click adds more · Esc clears',
-      deleteOne: 'Delete album…',
-      deleteMany: 'Delete all…',
+      deleteOne: 'Move to trash',
+      deleteMany: 'Move to trash',
       exportTitle: 'Export offline album · {{count}}',
       exportHelp:
         'The selected albums are bound into one offline HTML with one template. For a single album, the reader’s layout panel has the preview, watermark and more.',

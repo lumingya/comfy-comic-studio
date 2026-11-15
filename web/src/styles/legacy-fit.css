@@ -1,6 +1,32 @@
 /* Glue between the generated legacy stylesheet (legacy.css) and the React markup.
    Keep this small: anything here is a deliberate difference from legacy/styles.css. */
 
+/* The rail, content and fixed bars share one width, including when labels are hidden. */
+html[data-nav-collapsed='true'] {
+  --nav-width: 66px;
+}
+html[data-nav-collapsed='true'] .sidebar .brand {
+  padding-inline: 0;
+  justify-content: center;
+}
+html[data-nav-collapsed='true'] .sidebar .nav-collapse {
+  margin-inline: 12px;
+  padding-inline: 0;
+  justify-content: center;
+}
+html[data-nav-collapsed='true'] .sidebar .profile {
+  padding-inline: 0;
+}
+html[data-nav-collapsed='true'] .workspace-profile-button {
+  justify-content: center;
+}
+/* On phones and touch tablets navigation moves below the full-width content. */
+@media (max-width: 760px), (max-width: 950px) and (hover: none) and (pointer: coarse) {
+  html[data-nav-collapsed] {
+    --nav-width: 0px;
+  }
+}
+
 /* Legacy line icons (app/icons.tsx). Scoped to <svg> so `.btn.icon` buttons are untouched. */
 svg.icon {
   width: 18px;

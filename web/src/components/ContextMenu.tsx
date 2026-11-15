@@ -57,7 +57,7 @@ export function useContextMenu<T>() {
 }
 
 /**
- * Positioned menu rendered in a portal; closes on Escape, outside click, scroll or resize.
+ * Positioned menu rendered in a portal; closes on Escape, outside click/page scroll or resize.
  * Keyboard: ↑ ↓ move, Enter / Space activate.
  */
 export function ContextMenu(props: {
@@ -81,7 +81,10 @@ export function ContextMenu(props: {
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const { width, height } = el.getBoundingClientRect();
+    // The pop-in animation scales the visual rect. Position using its final layout size,
+    // otherwise a tall menu ends below the viewport when the animation reaches full size.
+    const width = el.offsetWidth;
+    const height = el.offsetHeight;
     const left = Math.max(4, Math.min(props.x, window.innerWidth - width - 4));
     const top = Math.max(4, Math.min(props.y, window.innerHeight - height - 4));
     setPos({ left, top });
@@ -91,6 +94,15 @@ export function ContextMenu(props: {
   }, [props.x, props.y]);
 
   useEffect(() => {
+    const menu = ref.current;
+    const wheel = (event: WheelEvent) => {
+      if (!menu || event.ctrlKey || !event.deltaY) return;
+      // Keep boundary wheel gestures inside the menu instead of scrolling the page and
+      // triggering its dismissal listener. Interior scrolling remains browser-native.
+      const atStart = menu.scrollTop <= 0;
+      const atEnd = menu.scrollTop + menu.clientHeight >= menu.scrollHeight - 1;
+      if ((event.deltaY < 0 && atStart) || (event.deltaY > 0 && atEnd)) event.preventDefault();
+    };
     const down = (e: globalThis.MouseEvent) => {
       if (!(e.target instanceof Node && ref.current?.contains(e.target))) onClose();
     };
@@ -136,6 +148,7 @@ export function ContextMenu(props: {
         onClose();
     };
     document.addEventListener('mousedown', down, true);
+    menu?.addEventListener('wheel', wheel, { passive: false });
     window.addEventListener('wheel', down, { passive: true });
     window.addEventListener('touchmove', scroll, { passive: true });
     document.addEventListener('keydown', key, true);
@@ -143,6 +156,7 @@ export function ContextMenu(props: {
     window.addEventListener('resize', onClose);
     return () => {
       document.removeEventListener('mousedown', down, true);
+      menu?.removeEventListener('wheel', wheel);
       document.removeEventListener('keydown', key, true);
       window.removeEventListener('scroll', scroll, true);
       window.removeEventListener('wheel', down);
@@ -162,8 +176,12 @@ export function ContextMenu(props: {
         left: pos.left,
         top: pos.top,
         zIndex: 110,
+        width: 'max-content',
+        minWidth: 'min(210px, calc(100vw - 8px))',
+        maxWidth: 'calc(100vw - 8px)',
         maxHeight: 'calc(100dvh - 8px)',
         overflowY: 'auto',
+        overscrollBehavior: 'contain',
       }}
       onContextMenu={(e) => e.preventDefault()}
     >
