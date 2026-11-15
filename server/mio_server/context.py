@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import os
+from contextlib import ExitStack
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
@@ -19,6 +20,7 @@ from .album import render as AR
 from .album.templates import builtin_templates
 from .assets import AssetStore
 from .auth import TokenStore
+from .backups.startup import prepare_workspace
 from .comfy.client import ComfyClient
 from .comfy.compile import BUILTINS
 from .comfy.executor import ComfyRenderExecutor
@@ -83,14 +85,50 @@ class AppContext:
         memory: bool = False,
     ) -> "AppContext":
         data_dir = Path(data_dir or default_data_dir())
+        with ExitStack() as startup:
+            lease = None if memory else prepare_workspace(data_dir)
+            if lease:
+                startup.callback(lease.release)
+            ctx = cls._create(
+                data_dir,
+                autostart=autostart,
+                llm_factory=llm_factory,
+                comfy_client_factory=comfy_client_factory,
+                seed_instance=seed_instance and not (lease and lease.restored),
+                memory=memory,
+                startup=startup,
+                restored=bool(lease and lease.restored),
+            )
+            if lease:
+                lease.acknowledge_startup()
+                ctx.closers.insert(0, lease.release)
+            startup.pop_all()
+            return ctx
+
+    @classmethod
+    def _create(
+        cls,
+        data_dir,
+        *,
+        autostart,
+        llm_factory,
+        comfy_client_factory,
+        seed_instance,
+        memory,
+        startup,
+        restored,
+    ) -> "AppContext":
+        data_dir = Path(data_dir or default_data_dir())
         data_dir.mkdir(parents=True, exist_ok=True)
         store = SQLiteStore(":memory:" if memory else data_dir / "mio.sqlite3")
+        startup.callback(store.close)
         assets = AssetStore(data_dir / "assets", store)
         engine = JobEngine(
             ":memory:" if memory else data_dir / "jobs.sqlite3",
             pool=ResourcePool(),
             autostart=autostart,
         )
+        startup.callback(engine.close)
         llm = llm_factory or SET.llm_factory(store)
         render = RenderService(store, assets, engine)
         render.seed_builtins()
@@ -127,20 +165,22 @@ class AppContext:
         ctx.tokens = TokenStore(store)
         ctx.updater = Updater(ctx.data_dir, INSTALL_ROOT)
         ctx.webhooks = Dispatcher(store, engine)
+        startup.callback(ctx.webhooks.close)
         ctx.webhooks.attach(ctx.hooks)
         ctx.extensions = ExtensionManager(ctx)
         ctx.extensions.load_all()
         try:
-            purged = ctx.trash.expire(ctx.settings().trash_days)
+            purged = 0 if restored else ctx.trash.expire(ctx.settings().trash_days)
             if purged:
                 log.info("trash: purged %d expired items", purged)
         except Exception:  # never block start-up on housekeeping
             log.exception("trash expiry failed")
         ctx.queue = ProductionQueue(store, engine, render, data_dir, autostart=autostart)
+        startup.callback(ctx.queue.close)
         # Closers run last-first: the lane thread stops before the engine and the store.
         ctx.closers += [
-            lambda: engine.close(wait=False),
             store.close,
+            engine.close,
             ctx.webhooks.close,
             ctx.queue.close,
             ctx.reading.clear,

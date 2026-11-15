@@ -14,6 +14,7 @@ import { AppearanceSection } from './AppearanceSection';
 import { GeneralSection } from './GeneralSection';
 import { ThemesSection } from './ThemesSection';
 import { UpdatesSection } from './UpdatesSection';
+import { BackupsSection } from './BackupsSection';
 
 /**
  * 你的工作室 (legacy renderCurrentIdentity): the studio name shown in the sidebar, the creator
@@ -141,6 +142,7 @@ function DataSection() {
   const importBundle = useImportBundle();
   return (
     <>
+      <BackupsSection />
       <section className="settings-section">
         <h2>{t('legacy.settings.dataTitle')}</h2>
         <p>{t('legacy.settings.dataBody')}</p>

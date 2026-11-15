@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import json
 import logging
+import secrets
+import threading
 from pathlib import Path
 from typing import Any, Callable
 
@@ -25,6 +27,8 @@ class ExtensionAPI:
         self.id = ext_id
         self.source = f"ext:{ext_id}"
         self.folder = folder
+        self.activation_id = secrets.token_urlsafe(24)
+        self._panel_slots = threading.BoundedSemaphore(4)
         self._ctx = ctx
         self._router: APIRouter | None = None
         self._settings_path = ctx.data_dir / "extension-data" / f"{ext_id}.json"

@@ -313,6 +313,16 @@ export interface ExtensionPanel {
   slot: 'episode' | 'settings';
   title: string;
   url: string;
+  activation?: string;
+  digest?: string;
+  requests?: PanelRequest[];
+}
+
+export interface PanelRequest {
+  id: string;
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  path: string;
+  scope: 'read' | 'write' | 'render' | 'admin';
 }
 
 export function useExtensionPanels(slot: ExtensionPanel['slot']) {

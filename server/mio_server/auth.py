@@ -42,8 +42,11 @@ RENDER_RE = re.compile(
     r"|jobs/[^/]+/items/[^/]+/(restore-state|replay-result)"
     r"|workshop/queue/(start|resume))$"
 )
-ADMIN_RE = re.compile(r"^/(settings|instances|webhooks|legacy|update|tokens|extensions|ext)(/|$)")
+ADMIN_RE = re.compile(
+    r"^/(settings|instances|webhooks|legacy|update|tokens|extensions|ext|backups)(/|$)"
+)
 READ_POST_RE = re.compile(r"^/series/[^/]+/variables/(find|preview)$")
+PANEL_REQUEST_RE = re.compile(r"^/extension-panels/[^/]+/[^/]+/requests$")
 
 
 class ApiToken(StrictModel):
@@ -103,7 +106,7 @@ def required_scope(method: str, path: str) -> str:
         return "admin"
     if method in ("GET", "HEAD", "OPTIONS", "WS"):
         return "read"
-    if method == "POST" and READ_POST_RE.match(path):
+    if method == "POST" and (READ_POST_RE.match(path) or PANEL_REQUEST_RE.match(path)):
         return "read"
     if RENDER_RE.match(path):
         return "render"

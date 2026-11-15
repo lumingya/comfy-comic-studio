@@ -110,11 +110,15 @@ class SQLiteStore:
         if str(self.path) != ":memory:":
             self.path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(str(self.path), check_same_thread=False)
-        self._conn.row_factory = sqlite3.Row
-        self._conn.execute("PRAGMA foreign_keys = ON")
-        if str(self.path) != ":memory:":
-            self._conn.execute("PRAGMA journal_mode = WAL")
-        self.migrate()
+        try:
+            self._conn.row_factory = sqlite3.Row
+            self._conn.execute("PRAGMA foreign_keys = ON")
+            if str(self.path) != ":memory:":
+                self._conn.execute("PRAGMA journal_mode = WAL")
+            self.migrate()
+        except BaseException:
+            self._conn.close()
+            raise
 
     def close(self) -> None:
         with self.lock:

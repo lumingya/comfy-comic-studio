@@ -21,6 +21,7 @@ from ..auth import SCOPES, ApiToken, AuthError
 from . import (
     access,
     album,
+    backups,
     canvas,
     checkpoints,
     extensions,
@@ -48,6 +49,7 @@ ROUTERS = (
     longform,
     jobs,
     album,
+    backups,
     motion,
     system,
     update,

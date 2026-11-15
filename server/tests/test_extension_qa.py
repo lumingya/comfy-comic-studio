@@ -25,7 +25,7 @@ class QAExtensionTests(ApiCase):
         super().setUp()
         package = io.BytesIO()
         with zipfile.ZipFile(package, "w") as archive:
-            for name in ("mio-extension.json", "main.py", "cli.py", "README.md"):
+            for name in ("mio-extension.json", "main.py", "cli.py", "panel.html", "README.md"):
                 archive.write(EXAMPLE / name, "qa-review/" + name)
         self.info = self.ok(self.client.post("/api/extensions", content=package.getvalue()), 201)
         series = self.ctx.store.create_series(Series(title="QA example"))
@@ -56,6 +56,35 @@ class QAExtensionTests(ApiCase):
 
     def remount(self):
         return TestClient(create_app(self.ctx, serve_web=False), base_url=LOCAL)
+
+    def test_panel_is_inert_until_explicit_bridge_request(self):
+        self.enable()
+        active = self.remount()
+        panel = self.ok(active.get("/api/extension-panels"))[0]
+        page = self.ok(active.get(panel["url"]))
+        self.assertIn("connect-src 'none'", page.headers["content-security-policy"])
+        self.assertIn("mio:panel:ready", page.text)
+        self.assertEqual(self.ctx.engine.list(), [])
+        base = {"activation": panel["activation"], "digest": panel["digest"]}
+        endpoint = "/api/extension-panels/qa-review/review/requests"
+        result = self.ok(
+            active.post(
+                endpoint,
+                json={
+                    **base,
+                    "request_id": "episode",
+                    "path_params": {"episode_id": self.episode.id},
+                },
+            )
+        )
+        self.assertEqual(result["data"]["id"], self.episode.id)
+        self.assertEqual(self.ctx.engine.list(), [])
+        queued = self.ok(
+            active.post(endpoint, json={**base, "request_id": "review", "body": self.body})
+        )
+        self.assertEqual(queued["status"], 200)
+        self.assertFalse(queued["data"]["snapshot"]["auto_adopt"])
+        self.assertEqual(len(self.ctx.engine.list()), 1)
 
     def test_installed_and_enabled_extensions_do_nothing_until_explicit_queue(self):
         self.assertEqual(self.info["status"], "disabled")

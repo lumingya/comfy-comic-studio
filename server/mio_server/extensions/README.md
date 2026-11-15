@@ -201,7 +201,50 @@ def activate(mio):
 - `slot: "episode"` 的面板会作为剧集页的一个标签页显示，URL 查询参数里带 `episode` 和 `series` 两个 id。
 - `slot: "settings"` 的面板显示在「设置 → 扩展」里。
 
-面板运行在 `sandbox="allow-scripts"` 的 iframe 里，没有 `allow-same-origin`。服务端还会给面板文件加上 `connect-src 'none'` 的 CSP。所以面板读不到应用的存储，也不能直接联网或调用接口，扩展自己的 Python 路由同样不能直接调用。当前没有通用请求桥；需要调用后端能力时，使用显式本机 CLI 或正式开放 API，不能仅因路由存在就从沙箱面板发起请求。
+面板运行在 `sandbox="allow-scripts"` 的 iframe 里，没有 `allow-same-origin`，并带有
+`connect-src 'none'` CSP。它不能直接联网或读取应用存储；通过受限操作桥访问清单明确声明的请求：
+
+```json
+{
+  "id": "review", "slot": "episode", "title": "候选评审", "entry": "panel.html",
+  "requests": [
+    {"id":"episode", "method":"GET", "path":"/episodes/{episode_id}", "scope":"read"},
+    {"id":"review", "method":"POST", "path":"/ext/my-ext/queue", "scope":"render"}
+  ]
+}
+```
+
+`path` 必须精确对应核心 OpenAPI 操作模板或本扩展的已挂载路由，不带 `/api` 前缀，不能是 URL、
+通配或其他扩展路由。`scope` 必须与实际接口权限一致；自定义路由未声明权限时需要 `admin`。
+每面板最多 32 个声明，只声明实际需要的接口。管理员允许敏感接口意味着面板可收到其原始 JSON
+结果，包括接口正常返回的设置或新建令牌；桥不会自行增加权限或向面板透露请求头。
+
+协议版本为 `1`。面板从 `location.hash` 的 `mio-session` 读取会话 nonce，然后向 `parent` 发送
+`{type:"mio:panel:ready", version:1, session}`。父窗口返回同会话的 `mio:panel:init`，包含
+`context:{episode_id?,series_id?}`、`requests` 与 `limits`。面板也必须检查 `event.source === parent`
+和会话。只有用户明确点击操作时，发送：
+
+```js
+parent.postMessage({
+  type: 'mio:panel:request', version: 1, session, rid: crypto.randomUUID(),
+  request_id: 'episode', path_params: { episode_id: context.episode_id },
+  // 可选 query（标量或字符串数组）和 JSON body；不能指定 URL、headers 或 context。
+}, '*');
+```
+
+回应为 `{type:"mio:panel:response", version:1, session, rid, status, ok, data}`；操作失败会返回
+原 HTTP 状态与 JSON 错误。父窗口只接受实际 iframe 的消息、匹配的随机会话与未使用的 `rid`。
+每会话最多 256 个请求、同时 4 个、输入 64 KiB、输出 1 MiB；只支持 JSON/204，不能下载文件、
+跟随重定向或递归调用桥。切换、重载或关闭面板会中止未完成请求并丢弃迟到结果。
+中止或超时不保证服务端写入未发生，变更操作应使用原接口的 revision / expected_head / 幂等键，
+先检查状态再显式重试。桥不会自动重试或启动生成任务。
+
+正式开放接口是 `POST /api/v2/extension-panels/{ext_id}/{panel_id}/requests`，请求体含
+`activation`、`digest`（来自面板目录）、`request_id`、`path_params`、`query`、`body` 和可选
+`context`。本机 UI 使用同路径的 `/api` 前缀。后端检查当前启用实例和摘要、声明白名单、真实路由
+及上下文存在性，随后调用原 FastAPI 路由，保留类型校验、操作包装和鉴权。v2 桥入口需要 `read`，
+目标操作仍要求其原有权限；`read` 令牌不能通过桥出图或管理设置。停用影响后续请求，已开始的操作
+可能继续完成；重新启用需要重新打开面板，自定义路由仍需重启挂载。
 
 ## 显式 QA 扩展示例
 
@@ -210,7 +253,7 @@ def activate(mio):
 `POST /api/ext/qa-review/queue` 才评审所选候选，且固定 `auto_adopt=False`。
 示例使用不稳定的 `mio.internal.qa.submit`；远程程序可使用带 `render` 权限的正式
 `POST /api/v2/episodes/{episode_id}/qa`，或同权限的 `POST /api/v2/ext/qa-review/queue`。
-本例不添加主界面入口或沙箱网络请求桥。
+示例提供可选面板，安装启用后才显示；读取候选和提交评审都需要明确点击，不添加主导航。
 
 ## 打包与安装
 

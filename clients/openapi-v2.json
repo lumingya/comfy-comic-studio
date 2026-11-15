@@ -581,6 +581,208 @@
     "title": "AssetRef",
     "type": "object"
    },
+   "BackupCreated": {
+    "additionalProperties": false,
+    "properties": {
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "inspection": {
+      "$ref": "#/components/schemas/BackupInspection"
+     }
+    },
+    "required": [
+     "id",
+     "inspection"
+    ],
+    "title": "BackupCreated",
+    "type": "object"
+   },
+   "BackupEntry": {
+    "additionalProperties": false,
+    "properties": {
+     "path": {
+      "title": "Path",
+      "type": "string"
+     },
+     "sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Sha256",
+      "type": "string"
+     },
+     "size": {
+      "minimum": 0.0,
+      "title": "Size",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "path",
+     "size",
+     "sha256"
+    ],
+    "title": "BackupEntry",
+    "type": "object"
+   },
+   "BackupHead": {
+    "additionalProperties": false,
+    "properties": {
+     "active_job_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Active Job Ids",
+      "type": "array"
+     },
+     "head": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Head"
+     }
+    },
+    "required": [
+     "head",
+     "active_job_ids"
+    ],
+    "title": "BackupHead",
+    "type": "object"
+   },
+   "BackupInspection": {
+    "additionalProperties": false,
+    "properties": {
+     "asset_count": {
+      "title": "Asset Count",
+      "type": "integer"
+     },
+     "checkpoint_count": {
+      "title": "Checkpoint Count",
+      "type": "integer"
+     },
+     "episode_count": {
+      "title": "Episode Count",
+      "type": "integer"
+     },
+     "job_count": {
+      "title": "Job Count",
+      "type": "integer"
+     },
+     "manifest": {
+      "$ref": "#/components/schemas/BackupManifest"
+     },
+     "series_count": {
+      "title": "Series Count",
+      "type": "integer"
+     },
+     "sha256": {
+      "title": "Sha256",
+      "type": "string"
+     },
+     "size": {
+      "title": "Size",
+      "type": "integer"
+     },
+     "warnings": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+     }
+    },
+    "required": [
+     "sha256",
+     "size",
+     "manifest",
+     "series_count",
+     "episode_count",
+     "asset_count",
+     "checkpoint_count",
+     "job_count",
+     "warnings"
+    ],
+    "title": "BackupInspection",
+    "type": "object"
+   },
+   "BackupManifest": {
+    "additionalProperties": false,
+    "properties": {
+     "created_at": {
+      "title": "Created At",
+      "type": "string"
+     },
+     "entries": {
+      "items": {
+       "$ref": "#/components/schemas/BackupEntry"
+      },
+      "title": "Entries",
+      "type": "array"
+     },
+     "exclusions": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Exclusions",
+      "type": "array"
+     },
+     "format": {
+      "const": "mio.workspace",
+      "default": "mio.workspace",
+      "title": "Format",
+      "type": "string"
+     },
+     "includes_credentials": {
+      "title": "Includes Credentials",
+      "type": "boolean"
+     },
+     "schema_version": {
+      "title": "Schema Version",
+      "type": "integer"
+     },
+     "source_head": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Source Head",
+      "type": "string"
+     },
+     "version": {
+      "const": 1,
+      "default": 1,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "format",
+     "version",
+     "schema_version",
+     "created_at",
+     "source_head",
+     "includes_credentials",
+     "exclusions",
+     "entries"
+    ],
+    "title": "BackupManifest",
+    "type": "object"
+   },
+   "BackupOptions": {
+    "additionalProperties": false,
+    "properties": {
+     "include_credentials": {
+      "default": false,
+      "description": "Include configured API credentials and tokens. Treat this archive as a secret.",
+      "title": "Include Credentials",
+      "type": "boolean"
+     }
+    },
+    "title": "BackupOptions",
+    "type": "object"
+   },
    "Bible-Input": {
     "additionalProperties": false,
     "properties": {
@@ -2677,6 +2879,7 @@
     "title": "Issue",
     "type": "object"
    },
+   "JsonValue": {},
    "KitAssembly": {
     "additionalProperties": false,
     "properties": {
@@ -4073,6 +4276,94 @@
     "title": "PanelBatch",
     "type": "object"
    },
+   "PanelBridgeRequest": {
+    "additionalProperties": false,
+    "properties": {
+     "activation": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Activation",
+      "type": "string"
+     },
+     "body": {
+      "$ref": "#/components/schemas/JsonValue"
+     },
+     "context": {
+      "$ref": "#/components/schemas/PanelContext"
+     },
+     "digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Digest",
+      "type": "string"
+     },
+     "path_params": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "maxProperties": 20,
+      "title": "Path Params",
+      "type": "object"
+     },
+     "query": {
+      "additionalProperties": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        },
+        {
+         "type": "number"
+        },
+        {
+         "type": "boolean"
+        },
+        {
+         "items": {
+          "type": "string"
+         },
+         "type": "array"
+        }
+       ]
+      },
+      "maxProperties": 40,
+      "title": "Query",
+      "type": "object"
+     },
+     "request_id": {
+      "maxLength": 48,
+      "minLength": 1,
+      "title": "Request Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "activation",
+     "digest",
+     "request_id"
+    ],
+    "title": "PanelBridgeRequest",
+    "type": "object"
+   },
+   "PanelBridgeResponse": {
+    "additionalProperties": false,
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/JsonValue"
+     },
+     "status": {
+      "title": "Status",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "status",
+     "data"
+    ],
+    "title": "PanelBridgeResponse",
+    "type": "object"
+   },
    "PanelCharacter": {
     "additionalProperties": false,
     "properties": {
@@ -4125,6 +4416,37 @@
      "position"
     ],
     "title": "PanelCharacter",
+    "type": "object"
+   },
+   "PanelContext": {
+    "additionalProperties": false,
+    "properties": {
+     "episode_id": {
+      "anyOf": [
+       {
+        "maxLength": 160,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Episode Id"
+     },
+     "series_id": {
+      "anyOf": [
+       {
+        "maxLength": 160,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Series Id"
+     }
+    },
+    "title": "PanelContext",
     "type": "object"
    },
    "PanelCreate": {
@@ -5990,6 +6312,106 @@
      "action"
     ],
     "title": "ResolveRequest",
+    "type": "object"
+   },
+   "RestoreApply": {
+    "additionalProperties": false,
+    "properties": {
+     "expected_archive_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Expected Archive Sha256",
+      "type": "string"
+     },
+     "expected_head": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Expected Head",
+      "type": "string"
+     }
+    },
+    "required": [
+     "expected_head",
+     "expected_archive_sha256"
+    ],
+    "title": "RestoreApply",
+    "type": "object"
+   },
+   "RestorePlan": {
+    "additionalProperties": false,
+    "properties": {
+     "created_at": {
+      "title": "Created At",
+      "type": "string"
+     },
+     "expected_head": {
+      "title": "Expected Head",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "inspection": {
+      "$ref": "#/components/schemas/BackupInspection"
+     },
+     "message": {
+      "default": "",
+      "title": "Message",
+      "type": "string"
+     },
+     "protection_backup_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Protection Backup Id"
+     },
+     "state": {
+      "default": "staged",
+      "enum": [
+       "staged",
+       "pending",
+       "installed",
+       "rejected",
+       "rolled_back"
+      ],
+      "title": "State",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "created_at",
+     "inspection",
+     "expected_head",
+     "state",
+     "protection_backup_id",
+     "message"
+    ],
+    "title": "RestorePlan",
+    "type": "object"
+   },
+   "RestoreScheduled": {
+    "additionalProperties": false,
+    "properties": {
+     "plan": {
+      "$ref": "#/components/schemas/RestorePlan"
+     },
+     "requires_restart": {
+      "const": true,
+      "default": true,
+      "title": "Requires Restart",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "plan",
+     "requires_restart"
+    ],
+    "title": "RestoreScheduled",
     "type": "object"
    },
    "RestoreStateRequest": {
@@ -8161,6 +8583,483 @@
      "thumb"
     ],
     "x-mio-operation": "GET /assets/{asset_id}"
+   }
+  },
+  "/backups": {
+   "post": {
+    "operationId": "create_workspace_backup",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/BackupOptions"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BackupCreated"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Create Workspace Backup",
+    "tags": [
+     "workspace-backups"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /backups"
+   }
+  },
+  "/backups/head": {
+   "get": {
+    "operationId": "workspace_backup_head",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BackupHead"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Workspace Backup Head",
+    "tags": [
+     "workspace-backups"
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /backups/head"
+   }
+  },
+  "/backups/inspect": {
+   "post": {
+    "operationId": "inspect_workspace_backup",
+    "requestBody": {
+     "content": {
+      "application/octet-stream": {
+       "schema": {
+        "format": "binary",
+        "type": "string"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BackupInspection"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Inspect Workspace Backup",
+    "tags": [
+     "workspace-backups"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "request"
+    ],
+    "x-mio-operation": "POST /backups/inspect"
+   }
+  },
+  "/backups/restore-plans": {
+   "post": {
+    "operationId": "stage_workspace_restore",
+    "requestBody": {
+     "content": {
+      "application/octet-stream": {
+       "schema": {
+        "format": "binary",
+        "type": "string"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RestorePlan"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Stage Workspace Restore",
+    "tags": [
+     "workspace-backups"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "request"
+    ],
+    "x-mio-operation": "POST /backups/restore-plans"
+   }
+  },
+  "/backups/restore-plans/{plan_id}": {
+   "get": {
+    "operationId": "get_workspace_restore_plan",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "plan_id",
+      "required": true,
+      "schema": {
+       "title": "Plan Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RestorePlan"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Get Workspace Restore Plan",
+    "tags": [
+     "workspace-backups"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "plan_id"
+    ],
+    "x-mio-operation": "GET /backups/restore-plans/{plan_id}"
+   }
+  },
+  "/backups/restore-plans/{plan_id}/apply": {
+   "post": {
+    "operationId": "apply_workspace_restore",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "plan_id",
+      "required": true,
+      "schema": {
+       "title": "Plan Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RestoreApply"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RestoreScheduled"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Apply Workspace Restore",
+    "tags": [
+     "workspace-backups"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "plan_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /backups/restore-plans/{plan_id}/apply"
+   }
+  },
+  "/backups/restore-plans/{plan_id}/cancel": {
+   "post": {
+    "operationId": "cancel_workspace_restore",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "plan_id",
+      "required": true,
+      "schema": {
+       "title": "Plan Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RestorePlan"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Cancel Workspace Restore",
+    "tags": [
+     "workspace-backups"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "plan_id"
+    ],
+    "x-mio-operation": "POST /backups/restore-plans/{plan_id}/cancel"
+   }
+  },
+  "/backups/{backup_id}": {
+   "delete": {
+    "operationId": "delete_workspace_backup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "backup_id",
+      "required": true,
+      "schema": {
+       "title": "Backup Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Delete Workspace Backup",
+    "tags": [
+     "workspace-backups"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "backup_id"
+    ],
+    "x-mio-operation": "DELETE /backups/{backup_id}"
+   },
+   "get": {
+    "operationId": "get_workspace_backup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "backup_id",
+      "required": true,
+      "schema": {
+       "title": "Backup Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BackupCreated"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Get Workspace Backup",
+    "tags": [
+     "workspace-backups"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "backup_id"
+    ],
+    "x-mio-operation": "GET /backups/{backup_id}"
+   }
+  },
+  "/backups/{backup_id}/download": {
+   "get": {
+    "operationId": "download_workspace_backup",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "backup_id",
+      "required": true,
+      "schema": {
+       "title": "Backup Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Download Workspace Backup",
+    "tags": [
+     "workspace-backups"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "backup_id"
+    ],
+    "x-mio-operation": "GET /backups/{backup_id}/download"
    }
   },
   "/bundles": {
@@ -11323,6 +12222,81 @@
      "ctx"
     ],
     "x-mio-operation": "GET /extension-panels"
+   }
+  },
+  "/extension-panels/{ext_id}/{panel_id}/requests": {
+   "post": {
+    "description": "Call only a reviewed panel's declared operation; target validation and scope still apply.",
+    "operationId": "panel_request",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ext_id",
+      "required": true,
+      "schema": {
+       "title": "Ext Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "panel_id",
+      "required": true,
+      "schema": {
+       "title": "Panel Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PanelBridgeRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PanelBridgeResponse"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Panel Request",
+    "tags": [
+     "extensions"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "request",
+     "ext_id",
+     "panel_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /extension-panels/{ext_id}/{panel_id}/requests"
    }
   },
   "/extensions": {

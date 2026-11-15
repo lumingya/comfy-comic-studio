@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, ValidationError
+from pydantic import Field, ValidationError, field_validator
 
 from ..models import StrictModel
 
@@ -32,11 +32,40 @@ class SlicePresetSpec(StrictModel):
     quality: int = Field(default=90, ge=40, le=100)
 
 
+class PanelRequestSpec(StrictModel):
+    id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]{0,47}$")
+    method: Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
+    path: str = Field(min_length=1, max_length=240)
+    scope: Literal["read", "write", "render", "admin"]
+
+    @field_validator("path")
+    @classmethod
+    def local_template(cls, value: str) -> str:
+        import re
+
+        if not re.fullmatch(
+            r"/(?:[A-Za-z0-9_.-]+|\{[A-Za-z_][A-Za-z0-9_]*\})(?:/(?:[A-Za-z0-9_.-]+|\{[A-Za-z_][A-Za-z0-9_]*\}))*",
+            value,
+        ):
+            raise ValueError("panel requests require an exact API path template, not a URL")
+        if any(part in (".", "..") for part in value.split("/")):
+            raise ValueError("panel request paths cannot traverse directories")
+        return value
+
+
 class PanelSpec(StrictModel):
     id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]{0,31}$")
     slot: Literal["episode", "settings"]
     title: str
     entry: str = Field(description="HTML file inside the extension folder")
+    requests: list[PanelRequestSpec] = Field(default_factory=list, max_length=32)
+
+    @field_validator("requests")
+    @classmethod
+    def unique_requests(cls, values: list[PanelRequestSpec]) -> list[PanelRequestSpec]:
+        if len({value.id for value in values}) != len(values):
+            raise ValueError("panel request IDs must be unique")
+        return values
 
 
 class Contributes(StrictModel):

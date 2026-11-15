@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>候选评审</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      font:
+        15px/1.7 system-ui,
+        sans-serif;
+    }
+    body {
+      max-width: 680px;
+      margin: 40px auto;
+      padding: 0 28px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 500;
+    }
+    p {
+      opacity: 0.72;
+    }
+    button {
+      font: inherit;
+      padding: 7px 18px;
+      border: 1px solid #8886;
+      border-radius: 7px;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+    label {
+      display: block;
+      margin: 12px 0;
+    }
+    input {
+      margin-right: 10px;
+    }
+    #takes {
+      margin: 24px 0;
+    }
+    #status {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+  </style>
+  <h1>候选评审</h1>
+  <p>
+    先读取本话候选，再选择要评审的图片。评审会使用已配置的视觉模型，可能消耗额度；结果只写入评审记录，不自动采用或淘汰。
+  </p>
+  <button id="load" disabled>读取候选</button>
+  <div id="takes"></div>
+  <button id="review" disabled>评审所选候选</button>
+  <p id="status" role="status">正在连接面板…</p>
+  <script>
+    const session = new URLSearchParams(location.hash.slice(1)).get(
+      "mio-session",
+    );
+    const pending = new Map();
+    let context = null;
+    let attempt = null;
+    let running = false;
+    const load = document.getElementById("load");
+    const review = document.getElementById("review");
+    const takes = document.getElementById("takes");
+    const status = document.getElementById("status");
+    const selected = () =>
+      [...takes.querySelectorAll("input:checked")].map((input) => input.value);
+    const update = () => {
+      review.disabled = running || selected().length === 0;
+      load.disabled = running || !context;
+    };
+    const request = (request_id, payload) =>
+      new Promise((resolve, reject) => {
+        const rid = crypto.randomUUID();
+        pending.set(rid, { resolve, reject });
+        parent.postMessage(
+          {
+            type: "mio:panel:request",
+            version: 1,
+            session,
+            rid,
+            request_id,
+            ...payload,
+          },
+          "*",
+        );
+      });
+    addEventListener("message", (event) => {
+      const message = event.data;
+      if (
+        event.source !== parent ||
+        !message ||
+        message.version !== 1 ||
+        message.session !== session
+      )
+        return;
+      if (message.type === "mio:panel:init") {
+        context = message.context;
+        status.textContent = context.episode_id
+          ? "点击读取候选开始。"
+          : "请从具体话的扩展标签打开面板。";
+        load.disabled = !context.episode_id;
+      }
+      if (message.type === "mio:panel:response") {
+        const waiting = pending.get(message.rid);
+        if (!waiting) return;
+        pending.delete(message.rid);
+        if (message.ok) waiting.resolve(message.data);
+        else
+          waiting.reject(
+            new Error(
+              typeof message.data?.detail === "string"
+                ? message.data.detail
+                : `请求失败（${message.status}）`,
+            ),
+          );
+      }
+    });
+    load.addEventListener("click", async () => {
+      running = true;
+      update();
+      status.textContent = "正在读取…";
+      try {
+        const episode = await request("episode", {
+          path_params: { episode_id: context.episode_id },
+        });
+        takes.replaceChildren();
+        attempt = null;
+        for (const take of episode.takes ?? []) {
+          const label = document.createElement("label");
+          const input = document.createElement("input");
+          input.type = "checkbox";
+          input.value = take.id;
+          input.addEventListener("change", () => {
+            attempt = null;
+            update();
+          });
+          const panel = episode.panels.find(
+            (panel) => panel.id === take.panel_id,
+          );
+          label.append(
+            input,
+            document.createTextNode(
+              `第 ${(panel?.order ?? 0) + 1} 格 · ${take.id} · ${take.status}`,
+            ),
+          );
+          takes.append(label);
+        }
+        status.textContent = episode.takes?.length
+          ? "选择候选后再提交评审。"
+          : "本话还没有候选图。";
+      } catch (error) {
+        status.textContent = error.message;
+      } finally {
+        running = false;
+        update();
+      }
+    });
+    review.addEventListener("click", async () => {
+      const ids = selected();
+      if (!ids.length || running) return;
+      // Retain this intent after transport failure, so another explicit click reuses its key.
+      attempt ??= {
+        episode_id: context.episode_id,
+        take_ids: ids,
+        idempotency_key: `qa-review-${crypto.randomUUID()}`,
+      };
+      running = true;
+      update();
+      status.textContent = "正在提交评审…";
+      try {
+        const job = await request("review", { body: attempt });
+        status.textContent = `已提交任务 ${job.id}，可在顶部队列查看进度。再次提交相同选择会返回同一任务。`;
+      } catch (error) {
+        status.textContent = `${error.message}\n不会自动重试。可先检查队列，再决定是否用同一请求重试。`;
+      } finally {
+        running = false;
+        update();
+      }
+    });
+    parent.postMessage({ type: "mio:panel:ready", version: 1, session }, "*");
+  </script>
+</html>

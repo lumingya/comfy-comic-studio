@@ -25,6 +25,7 @@ from ..update import UpdateError
 from . import (
     access,
     album,
+    backups,
     canvas,
     checkpoints,
     extensions,
@@ -99,6 +100,7 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
         system,
         extensions,
         album,
+        backups,
         motion,
         workshop,
         kits,

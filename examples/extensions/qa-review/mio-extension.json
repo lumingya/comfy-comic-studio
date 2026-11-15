@@ -3,5 +3,29 @@
   "name": "QA review example",
   "version": "0.1.0",
   "description": "Explicit local QA requests without automatic candidate adoption.",
-  "main": "main.py"
+  "main": "main.py",
+  "contributes": {
+    "panels": [
+      {
+        "id": "review",
+        "slot": "episode",
+        "title": "候选评审",
+        "entry": "panel.html",
+        "requests": [
+          {
+            "id": "episode",
+            "method": "GET",
+            "path": "/episodes/{episode_id}",
+            "scope": "read"
+          },
+          {
+            "id": "review",
+            "method": "POST",
+            "path": "/ext/qa-review/queue",
+            "scope": "render"
+          }
+        ]
+      }
+    ]
+  }
 }

@@ -1694,6 +1694,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/extension-panels/{ext_id}/{panel_id}/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Panel Request
+         * @description Call only a reviewed panel's declared operation; target validation and scope still apply.
+         */
+        post: operations["panel_request_api_extension_panels__ext_id___panel_id__requests_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/themes": {
         parameters: {
             query?: never;
@@ -1807,6 +1827,160 @@ export interface paths {
          *     Neither is bound by the single-file inline budget, so ``auto`` means 无损清洗 here.
          */
         post: operations["export_portable_api_export_portable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backups/head": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Workspace Backup Head */
+        get: operations["workspace_backup_head_api_backups_head_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Workspace Backup */
+        post: operations["create_workspace_backup_api_backups_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backups/inspect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Inspect Workspace Backup */
+        post: operations["inspect_workspace_backup_api_backups_inspect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backups/restore-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Stage Workspace Restore */
+        post: operations["stage_workspace_restore_api_backups_restore_plans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backups/restore-plans/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Workspace Restore Plan */
+        get: operations["get_workspace_restore_plan_api_backups_restore_plans__plan_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backups/restore-plans/{plan_id}/apply": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Apply Workspace Restore */
+        post: operations["apply_workspace_restore_api_backups_restore_plans__plan_id__apply_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backups/restore-plans/{plan_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Workspace Restore */
+        post: operations["cancel_workspace_restore_api_backups_restore_plans__plan_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backups/{backup_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Workspace Backup */
+        get: operations["get_workspace_backup_api_backups__backup_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Workspace Backup */
+        delete: operations["delete_workspace_backup_api_backups__backup_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/backups/{backup_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Workspace Backup */
+        get: operations["download_workspace_backup_api_backups__backup_id__download_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2621,6 +2795,84 @@ export interface components {
             /** Expression */
             expression: string | null;
         };
+        /** BackupCreated */
+        BackupCreated: {
+            /** Id */
+            id: string;
+            inspection: components["schemas"]["BackupInspection"];
+        };
+        /** BackupEntry */
+        BackupEntry: {
+            /** Path */
+            path: string;
+            /** Size */
+            size: number;
+            /** Sha256 */
+            sha256: string;
+        };
+        /** BackupHead */
+        BackupHead: {
+            /** Head */
+            head: string | null;
+            /** Active Job Ids */
+            active_job_ids: string[];
+        };
+        /** BackupInspection */
+        BackupInspection: {
+            /** Sha256 */
+            sha256: string;
+            /** Size */
+            size: number;
+            manifest: components["schemas"]["BackupManifest"];
+            /** Series Count */
+            series_count: number;
+            /** Episode Count */
+            episode_count: number;
+            /** Asset Count */
+            asset_count: number;
+            /** Checkpoint Count */
+            checkpoint_count: number;
+            /** Job Count */
+            job_count: number;
+            /** Warnings */
+            warnings: string[];
+        };
+        /** BackupManifest */
+        BackupManifest: {
+            /**
+             * Format
+             * @default mio.workspace
+             * @constant
+             */
+            format: "mio.workspace";
+            /**
+             * Version
+             * @default 1
+             * @constant
+             */
+            version: 1;
+            /** Schema Version */
+            schema_version: number;
+            /** Created At */
+            created_at: string;
+            /** Source Head */
+            source_head: string;
+            /** Includes Credentials */
+            includes_credentials: boolean;
+            /** Exclusions */
+            exclusions: string[];
+            /** Entries */
+            entries: components["schemas"]["BackupEntry"][];
+        };
+        /** BackupOptions */
+        BackupOptions: {
+            /**
+             * Include Credentials
+             * @description Include configured API credentials and tokens. Treat this archive as a secret.
+             * @default false
+             */
+            include_credentials?: boolean;
+        };
         /** Bible */
         "Bible-Input": {
             /** Characters */
@@ -3405,6 +3657,7 @@ export interface components {
             /** Kind */
             kind?: string | null;
         };
+        JsonValue: unknown;
         /** KitAssembly */
         KitAssembly: {
             /** Episode Id */
@@ -3998,6 +4251,31 @@ export interface components {
             /** Revision */
             revision?: number | null;
         };
+        /** PanelBridgeRequest */
+        PanelBridgeRequest: {
+            /** Activation */
+            activation: string;
+            /** Digest */
+            digest: string;
+            /** Request Id */
+            request_id: string;
+            /** Path Params */
+            path_params?: {
+                [key: string]: string;
+            };
+            /** Query */
+            query?: {
+                [key: string]: string | number | boolean | string[];
+            };
+            body?: components["schemas"]["JsonValue"];
+            context?: components["schemas"]["PanelContext"];
+        };
+        /** PanelBridgeResponse */
+        PanelBridgeResponse: {
+            /** Status */
+            status: number;
+            data: components["schemas"]["JsonValue"];
+        };
         /** PanelCharacter */
         PanelCharacter: {
             /** Character Id */
@@ -4025,6 +4303,13 @@ export interface components {
              * @enum {string}
              */
             position: "left" | "center" | "right" | "foreground" | "background" | "unspecified";
+        };
+        /** PanelContext */
+        PanelContext: {
+            /** Episode Id */
+            episode_id?: string | null;
+            /** Series Id */
+            series_id?: string | null;
         };
         /** PanelCreate */
         PanelCreate: {
@@ -4846,6 +5131,46 @@ export interface components {
             action: "reconcile" | "failed" | "resubmit";
             /** Result */
             result?: Record<string, unknown> | null;
+        };
+        /** RestoreApply */
+        RestoreApply: {
+            /** Expected Head */
+            expected_head: string;
+            /** Expected Archive Sha256 */
+            expected_archive_sha256: string;
+        };
+        /** RestorePlan */
+        RestorePlan: {
+            /** Id */
+            id: string;
+            /** Created At */
+            created_at: string;
+            inspection: components["schemas"]["BackupInspection"];
+            /** Expected Head */
+            expected_head: string;
+            /**
+             * State
+             * @default staged
+             * @enum {string}
+             */
+            state: "staged" | "pending" | "installed" | "rejected" | "rolled_back";
+            /** Protection Backup Id */
+            protection_backup_id: string | null;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+        };
+        /** RestoreScheduled */
+        RestoreScheduled: {
+            plan: components["schemas"]["RestorePlan"];
+            /**
+             * Requires Restart
+             * @default true
+             * @constant
+             */
+            requires_restart: true;
         };
         /** RestoreStateRequest */
         RestoreStateRequest: {
@@ -9155,6 +9480,42 @@ export interface operations {
             };
         };
     };
+    panel_request_api_extension_panels__ext_id___panel_id__requests_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ext_id: string;
+                panel_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PanelBridgeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PanelBridgeResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_themes_api_themes_get: {
         parameters: {
             query?: never;
@@ -9395,6 +9756,295 @@ export interface operations {
                 "application/json": components["schemas"]["PortableExport"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    workspace_backup_head_api_backups_head_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupHead"];
+                };
+            };
+        };
+    };
+    create_workspace_backup_api_backups_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BackupOptions"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    inspect_workspace_backup_api_backups_inspect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupInspection"];
+                };
+            };
+        };
+    };
+    stage_workspace_restore_api_backups_restore_plans_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestorePlan"];
+                };
+            };
+        };
+    };
+    get_workspace_restore_plan_api_backups_restore_plans__plan_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestorePlan"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_workspace_restore_api_backups_restore_plans__plan_id__apply_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestoreApply"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestoreScheduled"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_workspace_restore_api_backups_restore_plans__plan_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestorePlan"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_workspace_backup_api_backups__backup_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backup_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupCreated"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_workspace_backup_api_backups__backup_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backup_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_workspace_backup_api_backups__backup_id__download_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                backup_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

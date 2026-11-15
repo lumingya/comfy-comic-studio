@@ -723,6 +723,46 @@ class MioClient(_Base):
         """
         return self._request("POST", "/export/portable", json=body)
 
+    def workspace_backup_head(self) -> Any:
+        """GET /backups/head — Workspace Backup Head."""
+        return self._request("GET", "/backups/head")
+
+    def create_workspace_backup(self, body: dict | list | None = None) -> Any:
+        """POST /backups — Create Workspace Backup."""
+        return self._request("POST", "/backups", json=body)
+
+    def inspect_workspace_backup(self, body: bytes) -> Any:
+        """POST /backups/inspect — Inspect Workspace Backup."""
+        return self._request("POST", "/backups/inspect", content=body)
+
+    def stage_workspace_restore(self, body: bytes) -> Any:
+        """POST /backups/restore-plans — Stage Workspace Restore."""
+        return self._request("POST", "/backups/restore-plans", content=body)
+
+    def get_workspace_restore_plan(self, plan_id: str) -> Any:
+        """GET /backups/restore-plans/{plan_id} — Get Workspace Restore Plan."""
+        return self._request("GET", f"/backups/restore-plans/{_q(plan_id)}")
+
+    def apply_workspace_restore(self, plan_id: str, body: dict | list | None = None) -> Any:
+        """POST /backups/restore-plans/{plan_id}/apply — Apply Workspace Restore."""
+        return self._request("POST", f"/backups/restore-plans/{_q(plan_id)}/apply", json=body)
+
+    def cancel_workspace_restore(self, plan_id: str) -> Any:
+        """POST /backups/restore-plans/{plan_id}/cancel — Cancel Workspace Restore."""
+        return self._request("POST", f"/backups/restore-plans/{_q(plan_id)}/cancel")
+
+    def get_workspace_backup(self, backup_id: str) -> Any:
+        """GET /backups/{backup_id} — Get Workspace Backup."""
+        return self._request("GET", f"/backups/{_q(backup_id)}")
+
+    def delete_workspace_backup(self, backup_id: str) -> Any:
+        """DELETE /backups/{backup_id} — Delete Workspace Backup."""
+        return self._request("DELETE", f"/backups/{_q(backup_id)}")
+
+    def download_workspace_backup(self, backup_id: str) -> Any:
+        """GET /backups/{backup_id}/download — Download Workspace Backup."""
+        return self._request("GET", f"/backups/{_q(backup_id)}/download")
+
     def motion_plan(self, episode_id: str, *, variant_id: Any | None = None) -> Any:
         """GET /episodes/{episode_id}/motion-plan — Motion Plan.
 
@@ -928,6 +968,17 @@ class MioClient(_Base):
         UI panels of active extensions; the web app shows them in sandboxed iframes.
         """
         return self._request("GET", "/extension-panels")
+
+    def panel_request(self, ext_id: str, panel_id: str, body: dict | list | None = None) -> Any:
+        """POST /extension-panels/{ext_id}/{panel_id}/requests — Panel Request.
+
+        Call only a reviewed panel's declared operation; target validation and scope still apply.
+        """
+        return self._request(
+            "POST",
+            f"/extension-panels/{_q(ext_id)}/{_q(panel_id)}/requests",
+            json=body,
+        )
 
     def list_themes(self) -> Any:
         """GET /themes — List Themes."""

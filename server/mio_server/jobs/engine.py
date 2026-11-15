@@ -31,6 +31,7 @@ import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import ExitStack
 from pathlib import Path
 from typing import Any, Callable
 
@@ -78,22 +79,37 @@ class JobEngine(OperationRuntime, DeliveryRuntime, EngineRuntime):
         self.wake = threading.Event()
         self.closed = False
         self.poll = poll
-        self.lease = FileLease(self.path + ".lease") if self.path != ":memory:" else None
         if self.path != ":memory:":
             Path(self.path).parent.mkdir(parents=True, exist_ok=True)
-        self.db = sqlite3.connect(self.path, check_same_thread=False, timeout=10)
-        self.db.row_factory = sqlite3.Row
-        self.db.execute("PRAGMA foreign_keys = ON")
-        with self.db:
-            self.db.executescript(SCHEMA)
-        self.running: dict[tuple[str, int], ItemContext] = {}
-        self.listeners: list[Callable[[dict], None]] = []
-        self.workers = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="mio-job")
-        self.state_leases = StateLeases(self)
-        self._recover()
-        self.thread = threading.Thread(target=self._loop, name="mio-job-scheduler", daemon=True)
-        if autostart:
-            self.thread.start()
+        with ExitStack() as startup:
+            self.lease = FileLease(self.path + ".lease") if self.path != ":memory:" else None
+            if self.lease:
+                startup.callback(self.lease.release)
+            self.db = sqlite3.connect(self.path, check_same_thread=False, timeout=10)
+            startup.callback(self.db.close)
+            self.db.row_factory = sqlite3.Row
+            self.db.execute("PRAGMA foreign_keys = ON")
+            with self.db:
+                self.db.executescript(SCHEMA)
+            self.running: dict[tuple[str, int], ItemContext] = {}
+            self.listeners: list[Callable[[dict], None]] = []
+            self.workers = ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="mio-job")
+            startup.callback(self.workers.shutdown, wait=True, cancel_futures=True)
+            startup.callback(self._stop_failed_start)
+            self.state_leases = StateLeases(self)
+            self._recover()
+            self.thread = threading.Thread(target=self._loop, name="mio-job-scheduler", daemon=True)
+            if autostart:
+                self.thread.start()
+            startup.pop_all()
+
+    def _stop_failed_start(self) -> None:
+        """Bootstrap can fail before close()'s required fields exist."""
+        self.closed = True
+        self.wake.set()
+        thread = getattr(self, "thread", None)
+        if thread is not None and thread.is_alive():
+            thread.join(timeout=5)
 
     # ================================================================= lifecycle
     def register(self, kind: str, executor) -> None:

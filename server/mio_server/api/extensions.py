@@ -10,6 +10,12 @@ from pydantic import BaseModel
 
 from .. import themes as TH
 from ..extensions.manifest import ManifestError, inside
+from ..extensions.panel_bridge import (
+    PanelBridgeRequest,
+    PanelBridgeResponse,
+    active_panel,
+    dispatch_panel,
+)
 from ..storage import NotFound
 from .deps import Ctx
 from .library import BINARY_BODY, read_body
@@ -69,6 +75,10 @@ def extension_panels(ctx: Ctx) -> list[dict]:
         if info.status != "active" or info.manifest is None:
             continue
         for p in info.manifest.contributes.panels:
+            try:
+                _, loaded, pinned = active_panel(ctx, info.id, p.id)
+            except NotFound:
+                continue
             out.append(
                 {
                     "extension": info.id,
@@ -76,9 +86,20 @@ def extension_panels(ctx: Ctx) -> list[dict]:
                     "slot": p.slot,
                     "title": p.title,
                     "url": f"/api/extensions/{info.id}/files/{p.entry}",
+                    "activation": loaded.api.activation_id,
+                    "digest": pinned,
+                    "requests": [item.model_dump() for item in p.requests],
                 }
             )
     return out
+
+
+@router.post("/extension-panels/{ext_id}/{panel_id}/requests")
+async def panel_request(
+    ctx: Ctx, request: Request, ext_id: str, panel_id: str, body: PanelBridgeRequest
+) -> PanelBridgeResponse:
+    """Call only a reviewed panel's declared operation; target validation and scope still apply."""
+    return await dispatch_panel(ctx, request, ext_id, panel_id, body)
 
 
 @router.get("/extensions/{ext_id}/files/{path:path}", include_in_schema=False)
