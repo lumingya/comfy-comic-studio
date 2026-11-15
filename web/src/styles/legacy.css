@@ -62,19 +62,6 @@
   grid-template-columns: 1fr 1fr;
   gap: 18px;
 }
-.ibtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 5px;
-  color: var(--muted);
-}
-.ibtn:hover {
-  background: var(--hover);
-  color: var(--text);
-}
 .sidebar {
   position: fixed;
   inset: 0px auto 0px 0px;
@@ -685,44 +672,6 @@ dialog .toast-region {
   line-height: 1.9;
   color: var(--muted);
   margin: 0px 0px 17px;
-}
-.switch-track {
-  position: absolute;
-  inset: 0px;
-  border-radius: 20px;
-  background: var(--panel2);
-  border: 1px solid color-mix(in srgb, var(--muted) 27%, transparent);
-  transition:
-    background 0.2s,
-    border-color 0.2s;
-}
-.switch-track::after {
-  content: '';
-  position: absolute;
-  width: 13px;
-  height: 13px;
-  top: 3px;
-  left: 3px;
-  border-radius: 50%;
-  background: var(--muted);
-  transition:
-    transform 0.2s,
-    background 0.2s;
-}
-.switch input:checked + .switch-track {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-.switch input:checked + .switch-track::after {
-  transform: translateX(14px);
-  background: var(--on-accent);
-}
-.switch input:focus-visible + .switch-track {
-  outline: 2px solid var(--accent);
-  outline-offset: 4px;
-}
-.switch input:disabled + .switch-track {
-  opacity: 0.4;
 }
 @media (max-width: 1050px) {
   .settings-layout {

@@ -26,9 +26,9 @@
   width: min(560px, calc(100vw - 32px));
   max-height: calc(100vh - 48px);
   overflow: auto;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  background: var(--surface-panel);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-card);
   box-shadow: var(--shadow);
   padding: 24px;
 }
@@ -107,9 +107,9 @@
   z-index: 60;
   min-width: 170px;
   padding: 5px;
-  background: var(--panel);
+  background: var(--surface-panel);
   border: 1px solid var(--line-strong);
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   box-shadow: var(--shadow);
   transform-origin: var(--radix-dropdown-menu-content-transform-origin);
   animation: pop-in 0.14s var(--ease);
@@ -169,7 +169,7 @@
   font-size: 12px;
   background: var(--text);
   color: var(--bg);
-  border-radius: 5px;
+  border-radius: var(--radius-control);
 }
 
 /* ---- toasts ---- */
@@ -194,9 +194,9 @@
   padding: 11px 12px 11px 13px;
   font-size: 13px;
   line-height: 1.55;
-  background: var(--panel);
+  background: var(--surface-panel);
   border: 1px solid var(--line-strong);
-  border-radius: 10px;
+  border-radius: var(--radius-card);
   box-shadow: var(--shadow);
   animation: rise 0.22s var(--ease);
   pointer-events: auto;
@@ -405,8 +405,8 @@
   width: min(440px, 100vw);
   overflow: auto;
   padding: 24px 26px 32px;
-  background: var(--panel);
-  border-left: 1px solid var(--line);
+  background: var(--surface-panel);
+  border-left: 1px solid var(--control-border);
   box-shadow: var(--shadow);
 }
 

@@ -83,15 +83,15 @@ svg.icon.is-filled {
 /* Legacy form defaults (styles.css input/select/textarea) for the workshop, wizard and reader. */
 :where(.assembly-workshop, .assembly-designer, #reader)
   :where(input:not([type='checkbox'], [type='range'], [type='color']), select, textarea) {
-  background: var(--bg);
+  background: var(--control-surface);
   color: var(--text);
-  border: 1px solid var(--line);
-  border-radius: 6px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
   outline: none;
 }
 :where(.assembly-workshop, .assembly-designer, #reader)
   :where(input:not([type='checkbox'], [type='range'], [type='color']), select) {
-  height: 37px;
+  height: var(--control-height);
   padding: 0 11px;
   width: 100%;
 }
@@ -103,7 +103,7 @@ svg.icon.is-filled {
   line-height: 1.8;
 }
 :where(.assembly-workshop, .assembly-designer, #reader) :where(input, select, textarea):focus {
-  border-color: var(--accent2);
+  border-color: var(--control-focus);
 }
 :where(#sidebar, #topbar, .command-dialog, .shelf-toolbar) input {
   font: inherit;
@@ -218,12 +218,12 @@ a.workspace-profile-button {
 }
 .workshop-asset-head select,
 .workshop-asset-head input {
-  height: 37px;
+  height: var(--control-height);
   padding: 0 11px;
   width: 100%;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--bg);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  background: var(--control-surface);
   color: var(--text);
 }
 .workshop-progress {

@@ -1,8 +1,10 @@
-"""UI themes: named sets of colour tokens (the CSS variables in ``web/src/styles/base.css``).
+"""UI themes: named sets of safe CSS design tokens.
 
-A theme is inert data — only colour values, validated here — so users can import theme files and
-extensions can ship them without any trust prompt beyond enabling the extension.  Missing tokens
-fall back to the built-in theme of the same mode, so a theme may override just the accent.
+A theme is inert data — colours, bounded dimensions and shadows only — so users can import theme
+files and extensions can ship them without turning a theme into arbitrary CSS.  Missing colour
+tokens fall back to the built-in theme of the same mode, so a theme may override just the accent.
+Semantic control tokens are optional overrides; the CSS defaults remain responsible for deriving
+them from the palette when they are absent.
 """
 
 from __future__ import annotations
@@ -14,7 +16,7 @@ from pydantic import Field, ValidationError, field_validator
 
 from .models import StrictModel, now_iso
 
-TOKENS = (
+COLOR_TOKENS = (
     "bg",
     "bg-deep",
     "panel",
@@ -32,10 +34,127 @@ TOKENS = (
     "amber",
     "red",
     "blue",
-    "shadow",
+    "button-border",
+    "button-hover",
+    "button-primary",
+    "button-primary-text",
+    "button-danger",
+    "button-active",
+    "control-surface",
+    "control-border",
+    "control-focus",
+    "surface-panel",
+    "surface-raised",
 )
-COLOR_RE = re.compile(r"^(#[0-9a-fA-F]{3,8}|(rgb|rgba|hsl|hsla)\(\s*[0-9.,%/\sdeg]+\))$")
-SHADOW_RE = re.compile(r"^[0-9a-zA-Z#(),./%\s-]{1,160}$")
+SHADOW_TOKENS = ("shadow", "shadow-sm")
+LENGTH_TOKENS = (
+    "radius-control",
+    "radius-card",
+    "control-height",
+    "button-height",
+    "button-small-height",
+    "button-large-height",
+    "space-control",
+    "space-panel",
+)
+TOKENS = (*COLOR_TOKENS, *SHADOW_TOKENS, *LENGTH_TOKENS)
+
+NUMBER = r"[+-]?(?:[0-9]+(?:\.[0-9]+)?|\.[0-9]+)"
+HEX_RE = re.compile(r"#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})")
+COLOR_FUNCTION_RE = re.compile(r"(rgb|rgba|hsl|hsla)\(([^()]*)\)")
+LENGTH_RE = re.compile(rf"({NUMBER})(px|rem)?")
+# Keep dimensions useful without allowing an imported theme to create an unbounded layout.
+# Heights are positive; radii and spacing intentionally permit zero.
+LENGTH_LIMITS_PX = {
+    "radius-control": (0.0, 128.0),
+    "radius-card": (0.0, 256.0),
+    "control-height": (1.0, 256.0),
+    "button-height": (1.0, 256.0),
+    "button-small-height": (1.0, 256.0),
+    "button-large-height": (1.0, 256.0),
+    "space-control": (0.0, 256.0),
+    "space-panel": (0.0, 256.0),
+}
+
+
+def _length_px(value: str) -> float | None:
+    match = LENGTH_RE.fullmatch(value)
+    if not match:
+        return None
+    number = float(match.group(1))
+    if match.group(2) is None and number != 0:
+        return None
+    if match.group(2) == "rem":
+        number *= 16
+    return number
+
+
+def _channel(value: str, high: float, *, percent_only: bool = False) -> bool:
+    percent = value.endswith("%")
+    number = value[:-1] if percent else value
+    if percent_only and not percent:
+        return False
+    return bool(re.fullmatch(NUMBER, number)) and 0 <= float(number) <= (100 if percent else high)
+
+
+def _color(value: str) -> bool:
+    if value == "transparent" or HEX_RE.fullmatch(value):
+        return True
+    match = COLOR_FUNCTION_RE.fullmatch(value)
+    if not match:
+        return False
+    function, body = match.groups()
+    if "," in body:
+        if "/" in body:
+            return False
+        parts = [part.strip() for part in body.split(",")]
+        if len(parts) not in (3, 4):
+            return False
+        channels, alpha = parts[:3], parts[3:]
+    else:
+        parts = body.split("/")
+        if len(parts) > 2:
+            return False
+        channels = parts[0].split()
+        alpha = [parts[1].strip()] if len(parts) == 2 else []
+        if len(channels) != 3:
+            return False
+    if alpha and not _channel(alpha[0], 1):
+        return False
+    if function.startswith("rgb"):
+        return all(_channel(channel, 255) for channel in channels)
+    hue = channels[0].removesuffix("deg")
+    return bool(re.fullmatch(NUMBER, hue)) and all(
+        _channel(channel, 100, percent_only=True) for channel in channels[1:]
+    )
+
+
+def _shadow(value: str) -> bool:
+    if value == "none":
+        return True
+    if len(value) > 512:
+        return False
+    # Commas inside colour functions are not layer separators; nested functions are not allowed.
+    layers = re.split(r",(?![^()]*\))", value)
+    if len(layers) > 4:
+        return False
+    for layer in layers:
+        words = re.findall(r"(?:rgb|rgba|hsl|hsla)\([^()]*\)|\S+", layer.strip())
+        if not words:
+            return False
+        if "inset" in words:
+            words.remove("inset")
+        if words and _color(words[0]):
+            words.pop(0)
+        elif words and _color(words[-1]):
+            words.pop()
+        if not 2 <= len(words) <= 4:
+            return False
+        for index, word in enumerate(words):
+            dimension = _length_px(word)
+            if dimension is None or abs(dimension) > 1024 or (index == 2 and dimension < 0):
+                return False
+    return True
 
 
 class ThemeError(ValueError):
@@ -55,10 +174,17 @@ class Theme(StrictModel):
     def check_tokens(cls, tokens: dict[str, str]) -> dict[str, str]:
         for key, value in tokens.items():
             if key not in TOKENS:
-                raise ValueError(f"未知的配色令牌：{key}")
+                raise ValueError(f"未知的主题令牌：{key}")
             value = value.strip()
-            ok = SHADOW_RE.match(value) if key == "shadow" else COLOR_RE.match(value)
-            if not ok or "url" in value.lower():
+            if key in COLOR_TOKENS:
+                ok = _color(value)
+            elif key in SHADOW_TOKENS:
+                ok = _shadow(value)
+            else:
+                px = _length_px(value)
+                low, high = LENGTH_LIMITS_PX[key]
+                ok = px is not None and low <= px <= high
+            if not ok:
                 raise ValueError(f"{key} 的取值不合法：{value[:40]}")
         return {k: v.strip() for k, v in tokens.items()}
 
@@ -170,7 +296,11 @@ def parse_theme(data: dict) -> Theme:
 
 
 def resolved(theme: Theme) -> dict[str, str]:
-    """Every token, falling back to the built-in theme of the same mode."""
+    """Complete the base palette and retain explicitly supplied semantic overrides.
+
+    Semantic defaults stay in CSS, where they can follow the theme's palette instead of becoming
+    copies of the base theme's colours.  This keeps existing accent-only theme files effective.
+    """
     return {**BASE[theme.mode].tokens, **theme.tokens}
 
 

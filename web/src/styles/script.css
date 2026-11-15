@@ -219,11 +219,6 @@ details > summary {
   color: var(--accent);
 }
 
-.btn.icon.active {
-  background: var(--tint);
-  color: var(--accent);
-}
-
 .panel-thumb {
   flex: none;
   width: 38px;
@@ -248,11 +243,6 @@ details > summary {
   margin: 0;
   padding: 10px 0 12px;
   background: var(--bg);
-}
-
-.btn.ghost.active {
-  background: var(--tint);
-  color: var(--accent);
 }
 
 /* ---- prompt provenance ---- */

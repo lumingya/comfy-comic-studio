@@ -1,13 +1,36 @@
 /* Primitive components: buttons, fields, cards, dialogs, tabs, chips, toasts. */
+:root {
+  /* Small semantic surface: themes can change the whole control language here. */
+  --button-border: var(--line-strong);
+  --button-hover: var(--hover);
+  --button-primary: var(--accent);
+  --button-primary-text: var(--on-accent);
+  --button-danger: var(--red);
+  --button-active: var(--tint);
+  --control-surface: var(--bg);
+  --control-border: var(--line);
+  --control-focus: var(--accent-strong);
+  --surface-panel: var(--panel);
+  --surface-raised: var(--panel-2);
+  --radius-control: var(--radius-sm);
+  --radius-card: var(--radius);
+  --control-height: 36px;
+  --button-height: 34px;
+  --button-small-height: 28px;
+  --button-large-height: 42px;
+  --space-control: 6px;
+  --space-panel: 20px;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  min-height: 34px;
+  min-height: var(--button-height);
   padding: 0 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--button-border);
+  border-radius: var(--radius-control);
   background: transparent;
   color: var(--text);
   font-size: 13px;
@@ -23,7 +46,7 @@
 }
 
 .btn:hover:not(:disabled) {
-  background: var(--hover);
+  background: var(--button-hover);
   border-color: var(--muted);
 }
 
@@ -34,7 +57,7 @@
 .btn:focus-visible {
   outline: none;
   box-shadow: var(--ring);
-  border-color: var(--accent-strong);
+  border-color: var(--control-focus);
 }
 
 .btn:disabled,
@@ -44,16 +67,16 @@
 }
 
 .btn.primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
+  background: var(--button-primary);
+  border-color: var(--button-primary);
+  color: var(--button-primary-text);
   font-weight: 600;
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.12) inset;
 }
 
 .btn.primary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 88%, var(--text));
-  border-color: color-mix(in srgb, var(--accent) 88%, var(--text));
+  background: color-mix(in srgb, var(--button-primary) 88%, var(--text));
+  border-color: color-mix(in srgb, var(--button-primary) 88%, var(--text));
 }
 
 .btn.ghost {
@@ -63,35 +86,35 @@
 }
 
 .btn.ghost:hover:not(:disabled) {
-  background: var(--hover);
+  background: var(--button-hover);
   color: var(--text);
 }
 
 .btn.danger {
-  color: var(--red);
+  color: var(--button-danger);
 }
 
 .btn.danger:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--red) 12%, transparent);
-  border-color: color-mix(in srgb, var(--red) 45%, transparent);
-  color: var(--red);
+  background: color-mix(in srgb, var(--button-danger) 12%, transparent);
+  border-color: color-mix(in srgb, var(--button-danger) 45%, transparent);
+  color: var(--button-danger);
 }
 
 /* Solid variant for the confirm button of a destructive dialog. */
 .btn.danger.solid {
-  background: var(--red);
-  border-color: var(--red);
+  background: var(--button-danger);
+  border-color: var(--button-danger);
   color: var(--bg);
   font-weight: 600;
 }
 
 .btn.danger.solid:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--red) 88%, var(--text));
+  background: color-mix(in srgb, var(--button-danger) 88%, var(--text));
   color: var(--bg);
 }
 
 .btn.sm {
-  min-height: 28px;
+  min-height: var(--button-small-height);
   padding: 0 10px;
   font-size: 12px;
   gap: 5px;
@@ -106,6 +129,80 @@
 .btn.icon.sm {
   width: 26px;
   min-height: 26px;
+}
+
+.btn.lg {
+  min-height: var(--button-large-height);
+  padding: 0 22px;
+  font-size: 14px;
+}
+
+.btn.icon.active,
+.btn.ghost.active {
+  background: var(--button-active);
+  color: var(--accent);
+}
+
+/* Compact icon action used across the shell and reader. */
+.ibtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background var(--fast),
+    color var(--fast);
+}
+
+.ibtn:hover:not(:disabled) {
+  background: var(--button-hover);
+  color: var(--text);
+}
+
+.ibtn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+  color: var(--text);
+}
+
+/* Segmented controls share one surface and selected state. Pages only adjust layout. */
+.segmented {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+}
+
+.segmented button {
+  padding: 6px 14px;
+  border: 0;
+  border-radius: max(0px, calc(var(--radius-control) - 2px));
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background var(--fast),
+    color var(--fast);
+}
+
+.segmented button:hover:not(.active) {
+  color: var(--text);
+}
+
+.segmented button.active {
+  background: var(--button-active);
+  color: var(--accent);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
 }
 
 .kbd {
@@ -123,7 +220,7 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-control);
   min-width: 0;
 }
 
@@ -142,9 +239,9 @@
 .select,
 .textarea {
   width: 100%;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  background: var(--control-surface);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
   outline: none;
   transition:
     border-color var(--fast),
@@ -152,10 +249,10 @@
     background var(--fast);
 }
 
-.input:hover:not(:disabled):not(:focus),
-.select:hover:not(:disabled):not(:focus),
-.textarea:hover:not(:disabled):not(:focus) {
-  border-color: var(--line-strong);
+.input:hover:not(:disabled):not(:focus):not([aria-invalid='true']),
+.select:hover:not(:disabled):not(:focus):not([aria-invalid='true']),
+.textarea:hover:not(:disabled):not(:focus):not([aria-invalid='true']) {
+  border-color: var(--button-border);
 }
 
 .input::placeholder,
@@ -166,7 +263,7 @@
 
 .input,
 .select {
-  height: 36px;
+  height: var(--control-height);
   padding: 0 11px;
 }
 
@@ -180,7 +277,7 @@
 .input:focus,
 .select:focus,
 .textarea:focus {
-  border-color: var(--accent-strong);
+  border-color: var(--control-focus);
   box-shadow: var(--ring);
 }
 
@@ -224,7 +321,7 @@
 }
 
 .select option {
-  background: var(--panel);
+  background: var(--surface-panel);
   color: var(--text);
 }
 
@@ -233,7 +330,7 @@
   border-color: transparent;
 }
 
-.input.bare:hover {
+.input.bare:hover:not([aria-invalid='true']) {
   border-color: var(--line);
 }
 
@@ -252,6 +349,21 @@
   border-bottom-color: var(--accent);
 }
 
+.input[aria-invalid='true'],
+.select[aria-invalid='true'],
+.textarea[aria-invalid='true'],
+.tag-input[aria-invalid='true'] {
+  border-color: var(--red);
+}
+
+.input[aria-invalid='true']:focus,
+.select[aria-invalid='true']:focus,
+.textarea[aria-invalid='true']:focus,
+.tag-input[aria-invalid='true']:focus-within {
+  border-color: var(--red);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 22%, transparent);
+}
+
 .code {
   font: 12px/1.7 var(--mono);
 }
@@ -266,10 +378,10 @@ input[type='range'] {
 }
 
 .card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 20px;
+  background: var(--surface-panel);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-panel);
 }
 
 .card.flat {
@@ -325,7 +437,7 @@ input[type='range'] {
   gap: 5px;
   height: 22px;
   padding: 0 8px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-border);
   border-radius: 999px;
   font-size: 11.5px;
   color: var(--soft);
@@ -368,21 +480,21 @@ input[type='range'] {
   flex-wrap: wrap;
   gap: 5px;
   padding: 5px 6px;
-  min-height: 36px;
-  background: var(--bg);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
+  min-height: var(--control-height);
+  background: var(--control-surface);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
   transition:
     border-color var(--fast),
     box-shadow var(--fast);
 }
 
-.tag-input:hover:not(:focus-within) {
-  border-color: var(--line-strong);
+.tag-input:hover:not(:focus-within):not([aria-invalid='true']) {
+  border-color: var(--button-border);
 }
 
 .tag-input:focus-within {
-  border-color: var(--accent-strong);
+  border-color: var(--control-focus);
   box-shadow: var(--ring);
 }
 
@@ -405,7 +517,7 @@ input[type='range'] {
   color: var(--muted);
   border: 1px dashed var(--line-strong);
   border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--panel) 45%, transparent);
+  background: color-mix(in srgb, var(--surface-panel) 45%, transparent);
 }
 
 .empty-icon {
@@ -476,7 +588,7 @@ input[type='range'] {
         transparent
       )
       0 0 / 200% 100% no-repeat,
-    var(--panel-2);
+    var(--surface-raised);
   animation: shimmer 1.4s ease-in-out infinite;
 }
 
@@ -591,6 +703,50 @@ input[type='range'] {
 }
 .switch input:disabled {
   cursor: not-allowed;
+}
+
+.switch-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  border: 1px solid color-mix(in srgb, var(--muted) 27%, transparent);
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+
+.switch-track::after {
+  content: '';
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  top: 3px;
+  left: 3px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition:
+    transform 0.2s,
+    background 0.2s;
+}
+
+.switch input:checked + .switch-track {
+  background: var(--button-primary);
+  border-color: var(--button-primary);
+}
+
+.switch input:checked + .switch-track::after {
+  transform: translateX(14px);
+  background: var(--button-primary-text);
+}
+
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--control-focus);
+  outline-offset: 4px;
+}
+
+.switch input:disabled + .switch-track {
+  opacity: 0.4;
 }
 
 .table {

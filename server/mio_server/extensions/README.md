@@ -67,10 +67,16 @@ my-ext/
 }
 ```
 
-- `mode` 取 `light` 或 `dark`。没写的令牌会沿用对应模式内置主题（「纸」或「墨」）的值。
-- 可用的令牌：`bg`、`bg-deep`、`panel`、`panel-2`、`hover`、`line`、`line-strong`、`text`、`soft`、`muted`、`accent`、`accent-strong`、`on-accent`、`tint`、`amber`、`red`、`blue`、`shadow`。
-- 取值只能是颜色，`#hex`、`rgb()` 或 `hsl()` 都行。`shadow` 取 CSS 阴影值。含 `url(` 的值会被拒绝。
+- `mode` 取 `light` 或 `dark`。没写的基础色沿用对应模式内置主题；没写的控件变量由 CSS 从基础色派生。
+- 基础颜色：`bg`、`bg-deep`、`panel`、`panel-2`、`hover`、`line`、`line-strong`、`text`、`soft`、`muted`、`accent`、`accent-strong`、`on-accent`、`tint`、`amber`、`red`、`blue`。
+- 按钮颜色：`button-border`、`button-hover`、`button-primary`、`button-primary-text`、`button-danger`、`button-active`。普通按钮保持透明。
+- 控件与表面颜色：`control-surface`、`control-border`、`control-focus`、`surface-panel`、`surface-raised`。
+- 尺寸：`radius-control`、`radius-card`、`control-height`、`button-height`、`button-small-height`、`button-large-height`、`space-control`（字段内部间距）、`space-panel`（卡片内边距）。接受 `px`、`rem`；圆角与间距可用 `0`。尺寸上限为 256px，其中控件圆角上限为 128px；高度范围为 1–256px。校验按 1rem = 16px 计算上限。
+- 阴影：`shadow`、`shadow-sm`。接受 `none` 或最多四层 CSS 阴影，每层由颜色、2–4 个长度和可选的 `inset` 组成；长度绝对值不超过 1024px，模糊半径非负。
+- 颜色接受 `transparent`、`#hex`、`rgb()` / `rgba()`、`hsl()` / `hsla()`。主题不能包含任意 CSS 声明、`url()`、`var()` 或计算表达式。
 - 不装扩展也能用主题：在「设置 → 外观与阅读 → 主题」里直接导入同样格式的 JSON 文件。
+
+例如在上面的 `tokens` 中加入 `"radius-control": "10px"`、`"control-height": "40px"`、`"button-hover": "#302536"`，即可统一调整公共控件。具体维护入口与范围见 [UI 样式与主题](../../../docs/UI_STYLES.md)。
 
 ## 画册模板
 

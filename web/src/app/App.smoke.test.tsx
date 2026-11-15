@@ -573,7 +573,7 @@ describe('every route mounts with API data', () => {
     expect(within(drawer).getByText(/任务加入后处于待命状态/)).toBeInTheDocument();
     expect(within(drawer).getByText('开箱检查')).toBeInTheDocument();
     expect(
-      within(drawer).getByText('出图配置不存在或无法读取：profile_default'),
+      await within(drawer).findByText('出图配置不存在或无法读取：profile_default'),
     ).toBeInTheDocument();
     // The storyboard uses {天气}, which no preset defines.
     expect(

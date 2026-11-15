@@ -5,15 +5,18 @@
   gap: 10px;
   width: 100%;
   min-width: 0;
-  min-height: 38px;
-  padding: 9px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--bg);
+  min-height: var(--control-height);
+  padding: 0 11px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  background: var(--control-surface);
   color: var(--text);
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
+.searchable-select-trigger:hover:not(:disabled) {
+  border-color: var(--button-border);
 }
 .searchable-select-trigger > span {
   overflow: hidden;
@@ -28,8 +31,9 @@
   cursor: default;
 }
 .searchable-select-trigger:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: none;
+  border-color: var(--control-focus);
+  box-shadow: var(--ring);
 }
 .searchable-select-popover {
   z-index: 150;
@@ -39,11 +43,11 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--panel);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-card);
+  background: var(--surface-panel);
   color: var(--text);
-  box-shadow: 0 8px 24px #00000018;
+  box-shadow: var(--shadow-sm);
 }
 .searchable-select-search {
   display: flex;

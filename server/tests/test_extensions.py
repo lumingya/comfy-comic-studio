@@ -175,6 +175,58 @@ class ExtensionApiTests(ApiCase):
 
 
 class ThemeApiTests(ApiCase):
+    def test_semantic_theme_tokens_round_trip_through_user_import(self):
+        tokens = {
+            "button-border": "transparent",
+            "button-primary": "#448866",
+            "control-height": "2.5rem",
+            "radius-control": "0",
+            "space-panel": "24px",
+            "shadow-sm": "none",
+        }
+        created = self.ok(self.client.post("/api/themes", json={**THEME, "tokens": tokens}), 201)
+        stored = self.ctx.store.get_doc("theme", "forest")
+        listed = next(t for t in self.ok(self.client.get("/api/themes")) if t["id"] == "forest")
+        self.assertEqual(stored.tokens, tokens)
+        for name, value in tokens.items():
+            self.assertEqual(created["tokens"][name], value)
+            self.assertEqual(listed["tokens"][name], value)
+        self.assertEqual(created["source"], "user")
+        self.assertNotIn("surface-panel", created["tokens"])
+        invalid = {**THEME, "id": "invalid-css", "tokens": {"control-height": "calc(1rem)"}}
+        self.assertEqual(self.client.post("/api/themes", json=invalid).status_code, 400)
+        self.assertNotIn("invalid-css", {t["id"] for t in self.ok(self.client.get("/api/themes"))})
+
+    def test_extension_themes_share_the_typed_token_validation(self):
+        folder = write_ext(self.ctx.extensions.root, main="def activate(mio):\n    pass\n")
+        tokens = {
+            "control-surface": "transparent",
+            "radius-card": "12px",
+            "space-control": ".5rem",
+            "shadow-sm": "0 2px 8px rgb(0 0 0 / .2)",
+        }
+        (folder / "theme.json").write_text(
+            json.dumps({**THEME, "tokens": tokens}), encoding="utf-8"
+        )
+        (info,) = self.ok(self.client.get("/api/extensions"))["items"]
+        enabled = self.ok(
+            self.client.post("/api/extensions/demo/enable", json={"digest": info["digest"]})
+        )
+        self.assertEqual(enabled["status"], "active")
+        imported = next(t for t in self.ok(self.client.get("/api/themes")) if t["id"] == "forest")
+        for name, value in tokens.items():
+            self.assertEqual(imported["tokens"][name], value)
+
+        self.ok(self.client.post("/api/extensions/demo/disable"))
+        bad = {**THEME, "tokens": {"shadow-sm": "0 0 0 var(--unsafe)"}}
+        (folder / "theme.json").write_text(json.dumps(bad), encoding="utf-8")
+        (info,) = self.ok(self.client.get("/api/extensions"))["items"]
+        enabled = self.ok(
+            self.client.post("/api/extensions/demo/enable", json={"digest": info["digest"]})
+        )
+        self.assertEqual(enabled["status"], "error")
+        self.assertNotIn("forest", {t["id"] for t in self.ok(self.client.get("/api/themes"))})
+
     def test_builtins_import_and_delete(self):
         themes = {t["id"]: t for t in self.ok(self.client.get("/api/themes"))}
         self.assertTrue({"ink", "paper"} <= set(themes))

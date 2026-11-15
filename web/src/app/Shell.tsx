@@ -11,7 +11,7 @@ import { CommandPalette, useCommand } from './CommandPalette';
 import { CollectionSwitch } from './CollectionSwitch';
 import { Icon } from './icons';
 import { NAV } from './nav';
-import { useAppliedTheme, useThemeToggle } from './useTheme';
+import { ThemeProvider, useThemeToggle } from './useTheme';
 import { useUI } from './ui-store';
 
 /** The legacy Mio mark: four tilted comic panels. */
@@ -202,7 +202,6 @@ export function Shell() {
   const connected = useLive((s) => s.connected);
   const navigate = useNavigate();
   const { t } = useTranslation();
-  useAppliedTheme();
   useJobEvents();
   useHelpShortcut();
 
@@ -235,7 +234,7 @@ export function Shell() {
   }, [navigate]);
 
   return (
-    <>
+    <ThemeProvider>
       <Sidebar />
       <div className="app">
         <Topbar />
@@ -250,6 +249,6 @@ export function Shell() {
       <ConfirmHost />
       <HelpDrawer />
       <QuickStart />
-    </>
+    </ThemeProvider>
   );
 }
