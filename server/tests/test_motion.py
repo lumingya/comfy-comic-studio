@@ -153,7 +153,9 @@ class MotionApiTests(ApiCase):
         self.assertEqual(data["schema"], "mio.motion.v1")
         self.assertEqual(len(data["shots"]), len(ep["panels"]))
         self.assertEqual(data["shots"][0]["move"], "pan_left")
-        self.assertEqual([shot["hold"] for shot in data["shots"]], [s["hold"] for s in plan["shots"]])
+        self.assertEqual(
+            [shot["hold"] for shot in data["shots"]], [s["hold"] for s in plan["shots"]]
+        )
         self.assertTrue(all(shot["image"].startswith("data:image/") for shot in data["shots"]))
         self.assertEqual(exported[-1]["fmt"], "motion")
         raw = {"episode_id": ep["id"], "lettered": False, "aspect": "landscape", "voice": False}
