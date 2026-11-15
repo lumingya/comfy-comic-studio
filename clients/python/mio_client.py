@@ -821,6 +821,13 @@ class MioClient(_Base):
         """
         return self._request("PATCH", "/settings", json=body)
 
+    def fetch_models(self, body: dict | list | None = None) -> Any:
+        """POST /settings/models — Fetch Models.
+
+        List models using an unsaved draft; never saves settings or submits generation work.
+        """
+        return self._request("POST", "/settings/models", json=body)
+
     def get_registry(self) -> Any:
         """GET /registry — Registry."""
         return self._request("GET", "/registry")

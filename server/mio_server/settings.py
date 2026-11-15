@@ -11,6 +11,7 @@ from typing import Callable
 from pydantic import Field
 
 from . import llm as L
+from .api_urls import normalize_base
 from .models import StrictModel, now_iso
 from .pipeline.providers import ImageChannel
 
@@ -112,6 +113,27 @@ def apply_patch(settings: AppSettings, patch: dict) -> AppSettings:
             channel["api_key"] = stored[channel["id"]]
     data["id"], data["name"] = "app", "settings"
     updated = AppSettings.model_validate(data)
+    # Normalize only edited addresses. Loading or editing an unrelated field must not rewrite
+    # an existing service URL, especially an extension's own endpoint conventions.
+    llm_patch = patch.get("llm")
+    if (
+        isinstance(llm_patch, dict)
+        and "base_url" in llm_patch
+        and updated.llm.base_url != settings.llm.base_url
+    ):
+        updated.llm.base_url = (
+            normalize_base(updated.llm.base_url) if updated.llm.base_url.strip() else ""
+        )
+    if "image_channels" in patch:
+        original = {c.id: c for c in settings.image_channels}
+        for channel in updated.image_channels:
+            old = original.get(channel.id)
+            if channel.kind in {"openai_images", "chat_image"} and (
+                old is None or channel.base_url != old.base_url
+            ):
+                channel.base_url = (
+                    normalize_base(channel.base_url) if channel.base_url.strip() else ""
+                )
     # Validate changes at the write boundary, not when loading older settings: a broken old
     # channel must not prevent the user from opening the UI to repair it.
     if "image_channels" in patch or "image_channel" in patch:

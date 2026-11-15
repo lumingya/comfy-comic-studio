@@ -13,6 +13,16 @@
 无论从本机还是 v2 调用，都使用相同的类型校验、业务规则和已启用扩展；扩展 SDK 见
 [`server/mio_server/extensions/README.md`](../server/mio_server/extensions/README.md)。
 
+## 模型目录
+
+模型发现使用 `POST /api/v2/settings/models`（`admin`，客户端方法 `fetch_models`）。
+传 `kind`、`base_url`、`api_key` 与可选 `channel_id`，可查询未保存的连接草稿；不写配置、不调用生成。
+`kind` 支持 `openai`（共享文本/视觉/聊天出图）、`openai_images`、`chat_image`、`novelai`、`comfyui`。
+响应为 `models[{id,name,group}]`、`source`（`remote` 或 `bundled`）与 `notice`。
+NovelAI 返回明确标记的内置参考目录，ComfyUI 返回节点公开的模型选项；目录不保证模型能力或账户权限。
+密钥掩码只能用于对应已保存渠道与相同地址，地址改变后需重新传入或清除密钥。
+扩展可通过 `fetch_models` operation wrapper 为自定义渠道提供目录；客户端始终可手工指定模型 ID。
+
 ## 长篇整理与检查点
 
 - `POST /series/{id}/panels/transfer`：同作品内跨话复制或移动，传来源 / 目标 ID、两边 revision 和选择的 panel IDs。

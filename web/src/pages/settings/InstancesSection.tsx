@@ -23,6 +23,7 @@ import {
   TextInput,
 } from '../../components/ui';
 import { rid } from '../bible/BibleTab';
+import { ModelCatalog } from './ModelCatalog';
 import {
   Advanced,
   ConfigurationGuard,
@@ -154,6 +155,10 @@ function InstanceEditor({
             label={t('config.instance.enabled')}
           />
         </div>
+        <ModelCatalog
+          request={{ kind: 'comfyui', base_url: d.base_url, api_key: '' }}
+          disabled={!validHttpUrl(d.base_url) || pending}
+        />
         {health.data ? (
           <div className={`notice ${health.data.ok ? 'ok' : 'error'}`} role="status">
             {health.data.ok ? t('config.instance.connected') : t('config.instance.failed')}
@@ -191,7 +196,8 @@ function InstanceEditor({
       </fieldset>
       <ConfigurationSaveBar
         dirty={dirty}
-        pending={pending}
+        pending={save.isPending}
+        busy={pending}
         invalid={invalid}
         onCancel={() => {
           setDraft(null);

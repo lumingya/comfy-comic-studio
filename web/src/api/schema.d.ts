@@ -1488,6 +1488,26 @@ export interface paths {
         patch: operations["patch_settings_api_settings_patch"];
         trace?: never;
     };
+    "/api/settings/models": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Fetch Models
+         * @description List models using an unsaved draft; never saves settings or submits generation work.
+         */
+        post: operations["fetch_models_api_settings_models_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/registry": {
         parameters: {
             query?: never;
@@ -3032,6 +3052,21 @@ export interface components {
             /** Part */
             part?: string | null;
         };
+        /** CatalogModel */
+        CatalogModel: {
+            /** Id */
+            id: string;
+            /**
+             * Name
+             * @default
+             */
+            name: string;
+            /**
+             * Group
+             * @default
+             */
+            group: string;
+        };
         /** Character */
         "Character-Input": {
             /** Id */
@@ -4188,6 +4223,45 @@ export interface components {
              * @default sdxl
              */
             model_family: string;
+        };
+        /** ModelCatalog */
+        ModelCatalog: {
+            /** Models */
+            models: components["schemas"]["CatalogModel"][];
+            /**
+             * Source
+             * @default remote
+             * @enum {string}
+             */
+            source: "remote" | "bundled";
+            /**
+             * Notice
+             * @default
+             */
+            notice: string;
+        };
+        /** ModelCatalogRequest */
+        ModelCatalogRequest: {
+            /**
+             * Kind
+             * @default openai
+             */
+            kind?: string;
+            /**
+             * Base Url
+             * @default
+             */
+            base_url?: string;
+            /**
+             * Api Key
+             * @default
+             */
+            api_key?: string;
+            /**
+             * Channel Id
+             * @default
+             */
+            channel_id?: string;
         };
         /** ModelDependency */
         ModelDependency: {
@@ -9348,6 +9422,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fetch_models_api_settings_models_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ModelCatalogRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModelCatalog"];
                 };
             };
             /** @description Validation Error */

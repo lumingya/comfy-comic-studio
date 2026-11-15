@@ -13,8 +13,10 @@ import {
   Advanced,
   ConfigurationGuard,
   ConfigurationSaveBar,
+  SecretInput,
   validHttpUrl,
 } from './ConfigurationParts';
+import { ModelCatalog } from './ModelCatalog';
 
 export type { ImageChannel } from '../../api/types';
 const BUILTIN_KINDS = ['openai_images', 'novelai', 'chat_image'];
@@ -107,6 +109,11 @@ function ChannelFields({
           autoComplete="off"
         />
       </Field>
+      {!validHttpUrl(c.base_url, true) ? (
+        <p className="notice error" role="alert">
+          {t('config.invalidUrl')}
+        </p>
+      ) : null}
       <div className="grid-2">
         <Field
           label={t('settings.apiKey')}
@@ -118,25 +125,29 @@ function ChannelFields({
                 : t('config.cloud.keyHint')
           }
         >
-          <TextInput
-            mono
-            type="password"
-            autoComplete="new-password"
-            value={c.api_key}
-            onChange={(api_key) => set({ api_key })}
-          />
+          <SecretInput value={c.api_key} onChange={(api_key) => set({ api_key })} />
         </Field>
-        <Field
-          label={t('settings.channels.model')}
-          hint={builtin ? t('config.cloud.modelHint', { model }) : t('config.cloud.extensionModel')}
-        >
-          <TextInput
-            mono
-            value={c.model}
-            onChange={(model) => set({ model })}
-            placeholder={builtin ? model : ''}
+        <div className="config-model-field">
+          <Field
+            label={t('settings.channels.model')}
+            hint={
+              builtin ? t('config.cloud.modelHint', { model }) : t('config.cloud.extensionModel')
+            }
+          >
+            <TextInput
+              mono
+              value={c.model}
+              onChange={(model) => set({ model })}
+              placeholder={builtin ? model : ''}
+            />
+          </Field>
+          <ModelCatalog
+            request={{ kind: c.kind, base_url: c.base_url, api_key: c.api_key, channel_id: c.id }}
+            disabled={!validHttpUrl(c.base_url, true)}
+            selected={c.model ? [c.model] : []}
+            onSelect={(model) => set({ model })}
           />
-        </Field>
+        </div>
       </div>
       {images ? (
         <div className="grid-2">
@@ -176,6 +187,7 @@ function ChannelFields({
               value={c.width}
               min={64}
               max={2048}
+              step={64}
               onChange={(v) => set({ width: v ?? 832 })}
             />
           </Field>
@@ -184,6 +196,7 @@ function ChannelFields({
               value={c.height}
               min={64}
               max={2048}
+              step={64}
               onChange={(v) => set({ height: v ?? 1216 })}
             />
           </Field>
@@ -266,7 +279,8 @@ export function ChannelsSection() {
     ]),
   );
   const duplicate = new Set(list.map((c) => c.id)).size !== list.length;
-  const invalidUrl = list.some((c) => !validHttpUrl(c.base_url, true));
+  const invalidUrls = list.filter((c) => !validHttpUrl(c.base_url, true));
+  const invalidUrl = invalidUrls.length > 0;
   const users = (profiles.data ?? []).filter((p) => p.cloud_channel === active?.id);
   const used = active && (active.id === current || users.length > 0);
   const invalidDefault = !!current && !list.some((c) => c.id === current);
@@ -390,6 +404,9 @@ export function ChannelsSection() {
                     {t(`settings.channels.kinds.${c.kind}`, { defaultValue: c.kind })}
                     {c.id === current ? ` · ${t('config.cloud.defaultBadge')}` : ''}
                   </small>
+                  {!validHttpUrl(c.base_url, true) ? (
+                    <small className="danger">{t('config.cloud.invalidAddress')}</small>
+                  ) : null}
                 </button>
               ))}
             </nav>
@@ -443,7 +460,9 @@ export function ChannelsSection() {
         ) : null}
         {invalidUrl ? (
           <p className="notice error" role="alert">
-            {t('config.invalidUrl')}
+            {t('config.cloud.invalidAddresses', {
+              names: invalidUrls.map((c) => c.label || c.id).join('、'),
+            })}
           </p>
         ) : null}
         {invalidDefault ? (

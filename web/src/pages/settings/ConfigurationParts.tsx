@@ -4,6 +4,36 @@ import { useTranslation } from 'react-i18next';
 import { UNSAFE_DataRouterContext } from 'react-router-dom';
 import { useUnsavedGuard } from '../../app/autosave';
 import { confirm } from '../../components/confirm';
+import { TextInput } from '../../components/ui';
+
+/** A saved key is a server sentinel, never editable password text. */
+export function SecretInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const { t } = useTranslation();
+  const saved = value === '••••••';
+  return (
+    <span className="config-secret">
+      <TextInput
+        mono
+        type="password"
+        autoComplete="new-password"
+        value={saved ? '' : value}
+        placeholder={saved ? t('config.secret.saved') : ''}
+        onChange={onChange}
+      />
+      {value ? (
+        <button type="button" className="btn ghost sm" onClick={() => onChange('')}>
+          {t('config.secret.clear')}
+        </button>
+      ) : null}
+    </span>
+  );
+}
 
 /** The app uses a data router; isolated section previews may only have a MemoryRouter. */
 export function ConfigurationGuard({ dirty }: { dirty: boolean }) {
@@ -42,11 +72,13 @@ export function Advanced({
 export function ConfigurationSaveBar({
   dirty,
   pending,
+  busy = false,
   invalid = false,
   onCancel,
 }: {
   dirty: boolean;
   pending: boolean;
+  busy?: boolean;
   invalid?: boolean;
   onCancel: () => void;
 }) {
@@ -58,11 +90,11 @@ export function ConfigurationSaveBar({
         {pending ? t('config.saving') : t('config.unsaved')}
       </span>
       {dirty ? (
-        <button type="button" className="btn ghost" disabled={pending} onClick={onCancel}>
+        <button type="button" className="btn ghost" disabled={pending || busy} onClick={onCancel}>
           {t('common.cancel')}
         </button>
       ) : null}
-      <button type="submit" className="btn primary" disabled={!dirty || pending || invalid}>
+      <button type="submit" className="btn primary" disabled={!dirty || pending || busy || invalid}>
         {t('common.save')}
       </button>
     </div>

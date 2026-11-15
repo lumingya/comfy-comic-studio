@@ -460,46 +460,49 @@ function ProfileEditor({
               onChange={(value) => set({ model_group: value || null })}
             />
           </Field>
-          <div>
-            <h3>{t('settings.instances')}</h3>
-            <p className="small muted">{t('config.profile.instancesHint')}</p>
-            {(instances.data?.instances ?? []).map((instance) => (
-              <label className="config-check" key={instance.id}>
-                <input
-                  type="checkbox"
-                  checked={p.instances.includes(instance.id)}
-                  onChange={(event) =>
-                    set({
-                      instances: event.target.checked
-                        ? [...p.instances.filter((id) => !id.startsWith('unbound-')), instance.id]
-                        : p.instances.filter((id) => id !== instance.id),
-                    })
-                  }
-                />
-                {instance.name}{' '}
-                <small className="muted">
-                  {instance.enabled ? instance.base_url : t('config.instance.disabled')}
-                </small>
-              </label>
-            ))}
-            {p.instances
-              .filter(
-                (id) => !(instances.data?.instances ?? []).some((instance) => instance.id === id),
-              )
-              .map((id) => (
-                <button
-                  type="button"
-                  key={id}
-                  className="btn sm danger"
-                  onClick={() => set({ instances: p.instances.filter((value) => value !== id) })}
-                >
-                  {t('config.missing', { id })} · {t('common.remove')}
-                </button>
+          {needsLocal ? (
+            <div>
+              <h3>{t('settings.instances')}</h3>
+              <p className="small muted">{t('config.profile.instancesHint')}</p>
+              {(instances.data?.instances ?? []).map((instance) => (
+                <label className="config-check" key={instance.id}>
+                  <input
+                    type="checkbox"
+                    checked={p.instances.includes(instance.id)}
+                    disabled={!instance.enabled && !p.instances.includes(instance.id)}
+                    onChange={(event) =>
+                      set({
+                        instances: event.target.checked
+                          ? [...p.instances.filter((id) => !id.startsWith('unbound-')), instance.id]
+                          : p.instances.filter((id) => id !== instance.id),
+                      })
+                    }
+                  />
+                  {instance.name}{' '}
+                  <small className="muted">
+                    {instance.enabled ? instance.base_url : t('config.instance.disabled')}
+                  </small>
+                </label>
               ))}
-            {instances.isError ? (
-              <QueryError error={instances.error} onRetry={instances.refetch} />
-            ) : null}
-          </div>
+              {p.instances
+                .filter(
+                  (id) => !(instances.data?.instances ?? []).some((instance) => instance.id === id),
+                )
+                .map((id) => (
+                  <button
+                    type="button"
+                    key={id}
+                    className="btn sm danger"
+                    onClick={() => set({ instances: p.instances.filter((value) => value !== id) })}
+                  >
+                    {t('config.missing', { id })} · {t('common.remove')}
+                  </button>
+                ))}
+              {instances.isError ? (
+                <QueryError error={instances.error} onRetry={instances.refetch} />
+              ) : null}
+            </div>
+          ) : null}
         </Advanced>
         {(missingWorkflow || missingChannel || noStages) &&
         !workflows.isLoading &&

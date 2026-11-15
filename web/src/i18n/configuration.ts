@@ -1,5 +1,27 @@
 // Configuration workbench copy. Both locales expose the same keys.
 export const configZh = {
+  secret: {
+    saved: '已保存密钥，输入新密钥即可替换',
+    clear: '清除密钥',
+  },
+  models: {
+    fetch: '获取模型',
+    refresh: '刷新模型',
+    loading: '正在获取…',
+    catalog: '模型目录',
+    search: '搜索模型',
+    count: '共 {{count}} 个模型',
+    filtered: '{{shown}} / {{total}} 个模型',
+    remote: '服务返回的模型',
+    bundled: '内置参考列表',
+    empty: '暂未获取到模型，可手动填写模型 ID。',
+    emptyReadonly: '暂未获取到模型。',
+    noMatches: '没有匹配的模型',
+    manual: '仍可手动填写模型 ID。',
+    readOnly: '仅查看已安装模型；实际使用的模型由工作流决定。',
+    failed: '获取失败，请检查地址与连接后重试。',
+    retry: '重试',
+  },
   saving: '正在保存…',
   unsaved: '有未保存的修改',
   identifier: '系统标识（只读）',
@@ -29,6 +51,8 @@ export const configZh = {
       '写剧本用的文本模型在「设置 → 模型与连接」中配置，机器人访问 Mio 的 API 令牌也在那里。',
   },
   cloud: {
+    invalidAddress: '地址有误',
+    invalidAddresses: '以下渠道的地址有误：{{names}}。请填写完整的 http:// 或 https:// 基础地址。',
     title: '云端出图渠道',
     intro: '左侧选择渠道，右侧编辑。保存配置不会调用模型，也不会产生出图费用。',
     nameHint: '给自己看的名称，不会影响密钥或已有引用。',
@@ -47,7 +71,8 @@ export const configZh = {
     extensionHint: '扩展渠道：参数含义由扩展适配器决定；已有参数会完整保留。',
     chatAddressHint:
       '留空沿用文本与视觉 API。填写独立地址后使用本渠道密钥，不会转发文本服务的密钥。',
-    addressHint: '留空使用 {{address}}。填写基础地址，不要追加具体出图接口路径。',
+    addressHint:
+      '留空使用 {{address}}。可填写基础地址，粘贴完整 OpenAI 接口地址会在保存时自动整理。',
     maskedKey: '已保存，服务端不返回明文；保持不动即可沿用，清空后保存会移除密钥。',
     chatKeyHint: '地址留空时可沿用文本服务密钥；独立地址需要自己的密钥，免密代理可留空。',
     keyHint: '仅保存在本机服务端，调用时发送给该服务。免密代理可留空。',
@@ -243,11 +268,13 @@ export const configZh = {
     next: '导入与检查工作流',
   },
   general: {
+    visionModels: '视觉模型',
+    visionHint: '供图像理解与可选视觉工具使用，请选择支持图片输入的模型。',
     intro: '用于生成剧本。独立图像渠道在「工作流与 API 配置」中管理。',
-    addressHint: 'OpenAI 兼容基础地址；不要追加 /chat/completions。',
+    addressHint: 'OpenAI 兼容基础地址；粘贴完整接口地址会在保存时自动整理。',
     modelsHint: '输入后按 Enter 或逗号添加；按顺序尝试文本模型。',
-    models: '共享出图模型',
-    modelsAdvancedHint: '只在使用共享图像反代时配置',
+    models: '视觉与共享出图模型',
+    modelsAdvancedHint: '按需配置图像理解与共享聊天出图',
     imageHint: '共享聊天出图使用列表中的首个模型；付费结果不明确时不会自动切换模型重发。',
     request: '请求控制',
     requestHint: '超时与请求间隔，通常无需修改',
@@ -256,6 +283,28 @@ export const configZh = {
 };
 
 export const configEn = {
+  secret: {
+    saved: 'Key saved; enter a new key to replace it',
+    clear: 'Clear key',
+  },
+  models: {
+    fetch: 'Get models',
+    refresh: 'Refresh models',
+    loading: 'Loading models…',
+    catalog: 'Model catalog',
+    search: 'Search models',
+    count: '{{count}} models',
+    filtered: '{{shown}} / {{total}} models',
+    remote: 'Service models',
+    bundled: 'Built-in reference list',
+    empty: 'No models returned. You can enter a model ID manually.',
+    emptyReadonly: 'No models returned.',
+    noMatches: 'No matching models',
+    manual: 'You can still enter a model ID manually.',
+    readOnly: 'Installed models are shown for reference; the workflow chooses which to use.',
+    failed: 'Could not load models. Check the address and connection, then retry.',
+    retry: 'Retry',
+  },
   saving: 'Saving…',
   unsaved: 'Unsaved changes',
   identifier: 'System ID (read-only)',
@@ -288,6 +337,8 @@ export const configEn = {
       'Text models for story writing are set in Settings → Models & connections, together with API tokens for bots calling Mio.',
   },
   cloud: {
+    invalidAddress: 'Invalid address',
+    invalidAddresses: 'Invalid addresses in: {{names}}. Enter a full http:// or https:// base URL.',
     title: 'Cloud image channels',
     intro:
       'Select a channel to edit. Saving never calls a model or submits a paid generation request.',
@@ -309,8 +360,7 @@ export const configEn = {
       'Extension channel: parameter support is defined by the adapter. Existing parameters are preserved.',
     chatAddressHint:
       'Blank uses Text & vision API. An explicit endpoint uses this channel’s own key, never the text service’s key.',
-    addressHint:
-      'Blank uses {{address}}. Enter the base URL, without the specific generation endpoint path.',
+    addressHint: 'Blank uses {{address}}. Pasted OpenAI endpoint paths are cleaned up when saved.',
     maskedKey:
       'Stored; the server never returns the secret. Leave unchanged to keep it, or clear and save to remove it.',
     chatKeyHint:
@@ -546,11 +596,14 @@ export const configEn = {
     next: 'Import & check workflows',
   },
   general: {
+    visionModels: 'Vision models',
+    visionHint:
+      'Used by image understanding and optional visual tools. Choose models that accept images.',
     intro: 'For script generation. Manage dedicated image channels in Workflow & API setup.',
-    addressHint: 'OpenAI-compatible base URL, without /chat/completions.',
+    addressHint: 'OpenAI-compatible base URL. Pasted endpoint paths are cleaned up when saved.',
     modelsHint: 'Press Enter or comma to add a model. Text models are tried in order.',
-    models: 'Shared image models',
-    modelsAdvancedHint: 'Only needed for the shared image proxy',
+    models: 'Vision and shared image models',
+    modelsAdvancedHint: 'Optional image understanding and shared chat-image models',
     imageHint:
       'Shared chat-image generation uses the first model. Uncertain paid requests are not automatically resent through another model.',
     request: 'Request controls',

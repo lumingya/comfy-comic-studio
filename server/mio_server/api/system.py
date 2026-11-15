@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from .. import bundle as B
 from .. import settings as SET
 from ..importer import LEGACY_ROOT, LegacyImporter
+from ..model_catalog import ModelCatalog, ModelCatalogRequest, discover_models
 from ..models import now_iso
 from ..storage import Conflict
 from .deps import Ctx
@@ -31,6 +32,12 @@ class LegacyRequest(BaseModel):
 @router.get("/settings")
 def get_settings(ctx: Ctx) -> dict:
     return SET.public(ctx.settings())
+
+
+@router.post("/settings/models", response_model=ModelCatalog)
+def fetch_models(ctx: Ctx, body: ModelCatalogRequest) -> ModelCatalog:
+    """List models using an unsaved draft; never saves settings or submits generation work."""
+    return discover_models(body, ctx.settings())
 
 
 @router.patch("/settings")

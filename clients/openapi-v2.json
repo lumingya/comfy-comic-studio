@@ -1018,6 +1018,32 @@
     "title": "BindingTarget",
     "type": "object"
    },
+   "CatalogModel": {
+    "additionalProperties": false,
+    "properties": {
+     "group": {
+      "default": "",
+      "title": "Group",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "name": {
+      "default": "",
+      "title": "Name",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "group"
+    ],
+    "title": "CatalogModel",
+    "type": "object"
+   },
    "Character-Input": {
     "additionalProperties": false,
     "properties": {
@@ -3962,6 +3988,70 @@
      "model_family"
     ],
     "title": "LoraRef",
+    "type": "object"
+   },
+   "ModelCatalog": {
+    "additionalProperties": false,
+    "properties": {
+     "models": {
+      "items": {
+       "$ref": "#/components/schemas/CatalogModel"
+      },
+      "title": "Models",
+      "type": "array"
+     },
+     "notice": {
+      "default": "",
+      "title": "Notice",
+      "type": "string"
+     },
+     "source": {
+      "default": "remote",
+      "enum": [
+       "remote",
+       "bundled"
+      ],
+      "title": "Source",
+      "type": "string"
+     }
+    },
+    "required": [
+     "models",
+     "source",
+     "notice"
+    ],
+    "title": "ModelCatalog",
+    "type": "object"
+   },
+   "ModelCatalogRequest": {
+    "additionalProperties": false,
+    "properties": {
+     "api_key": {
+      "default": "",
+      "maxLength": 8192,
+      "title": "Api Key",
+      "type": "string"
+     },
+     "base_url": {
+      "default": "",
+      "maxLength": 2048,
+      "title": "Base Url",
+      "type": "string"
+     },
+     "channel_id": {
+      "default": "",
+      "maxLength": 32,
+      "title": "Channel Id",
+      "type": "string"
+     },
+     "kind": {
+      "default": "openai",
+      "pattern": "^[a-z0-9][a-z0-9_.-]{0,47}$",
+      "title": "Kind",
+      "type": "string"
+     }
+    },
+    "title": "ModelCatalogRequest",
     "type": "object"
    },
    "ModelDependency": {
@@ -16323,6 +16413,58 @@
      "patch"
     ],
     "x-mio-operation": "PATCH /settings"
+   }
+  },
+  "/settings/models": {
+   "post": {
+    "description": "List models using an unsaved draft; never saves settings or submits generation work.",
+    "operationId": "fetch_models",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ModelCatalogRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ModelCatalog"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Fetch Models",
+    "tags": [
+     "system"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /settings/models"
    }
   },
   "/themes": {

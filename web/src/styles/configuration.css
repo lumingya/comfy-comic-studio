@@ -160,6 +160,24 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
+.config-secret {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.config-secret > .input {
+  flex: 1;
+}
+.config-secret > .btn {
+  flex-shrink: 0;
+}
+.config-model-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 8px;
+}
 .config-section-head {
   display: flex;
   align-items: center;

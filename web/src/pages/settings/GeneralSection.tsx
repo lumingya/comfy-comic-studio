@@ -10,8 +10,10 @@ import {
   Advanced,
   ConfigurationGuard,
   ConfigurationSaveBar,
+  SecretInput,
   validHttpUrl,
 } from './ConfigurationParts';
+import { ModelCatalog } from './ModelCatalog';
 
 const editable = (s: AppSettings) => ({
   llm: s.llm,
@@ -32,6 +34,7 @@ export function GeneralSection() {
   const dirty =
     !!draft && JSON.stringify(editable(draft)) !== JSON.stringify(editable(settings.data));
   const invalid = !validHttpUrl(d.llm.base_url);
+  const modelRequest = { kind: 'openai', base_url: d.llm.base_url, api_key: d.llm.api_key };
   return (
     <form
       className="config-form"
@@ -74,25 +77,49 @@ export function GeneralSection() {
               d.llm.api_key === '••••••' ? t('config.cloud.maskedKey') : t('config.cloud.keyHint')
             }
           >
-            <TextInput
-              mono
-              type="password"
-              autoComplete="new-password"
-              value={d.llm.api_key}
-              onChange={(api_key) => llm({ api_key })}
-            />
+            <SecretInput value={d.llm.api_key} onChange={(api_key) => llm({ api_key })} />
           </Field>
         </div>
-        <Field label={t('settings.textModels')} hint={t('config.general.modelsHint')}>
-          <TagInput value={d.llm.text_models} onChange={(text_models) => llm({ text_models })} />
-        </Field>
-        <Advanced title={t('config.general.models')} hint={t('config.general.modelsAdvancedHint')}>
-          <Field label={t('settings.imageModels')} hint={t('config.general.imageHint')}>
-            <TagInput
-              value={d.llm.image_models}
-              onChange={(image_models) => llm({ image_models })}
-            />
+        <div className="config-model-field">
+          <Field label={t('settings.textModels')} hint={t('config.general.modelsHint')}>
+            <TagInput value={d.llm.text_models} onChange={(text_models) => llm({ text_models })} />
           </Field>
+          <ModelCatalog
+            request={modelRequest}
+            disabled={invalid}
+            selected={d.llm.text_models}
+            onSelect={(id) => llm({ text_models: [...new Set([...d.llm.text_models, id])] })}
+          />
+        </div>
+        <Advanced title={t('config.general.models')} hint={t('config.general.modelsAdvancedHint')}>
+          <div className="config-model-field">
+            <Field label={t('config.general.visionModels')} hint={t('config.general.visionHint')}>
+              <TagInput
+                value={d.llm.vision_models}
+                onChange={(vision_models) => llm({ vision_models })}
+              />
+            </Field>
+            <ModelCatalog
+              request={modelRequest}
+              disabled={invalid}
+              selected={d.llm.vision_models}
+              onSelect={(id) => llm({ vision_models: [...new Set([...d.llm.vision_models, id])] })}
+            />
+          </div>
+          <div className="config-model-field">
+            <Field label={t('settings.imageModels')} hint={t('config.general.imageHint')}>
+              <TagInput
+                value={d.llm.image_models}
+                onChange={(image_models) => llm({ image_models })}
+              />
+            </Field>
+            <ModelCatalog
+              request={modelRequest}
+              disabled={invalid}
+              selected={d.llm.image_models}
+              onSelect={(id) => llm({ image_models: [...new Set([...d.llm.image_models, id])] })}
+            />
+          </div>
           <Link className="btn ghost sm" to="/engine?tab=channels">
             {t('config.profile.manageChannels')}
           </Link>
@@ -134,7 +161,7 @@ export function GeneralSection() {
             />
           </Field>
         </Advanced>
-        {invalid && d.llm.base_url ? (
+        {invalid ? (
           <p className="notice error" role="alert">
             {t('config.invalidUrl')}
           </p>
