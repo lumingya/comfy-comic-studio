@@ -341,7 +341,10 @@ export default function CanvasTab() {
                   onChange={(background) => change({ ...strip, background })}
                 />
               </Field>
-              <Field label={t('canvas.direction')} hint={t('canvas.directionHint')}>
+              <Field
+                label={t('canvas.direction')}
+                hint={strip.text_direction === 'vertical' ? t('canvas.directionHint') : undefined}
+              >
                 <Select
                   value={strip.text_direction}
                   options={(['horizontal', 'vertical'] as const).map((d) => ({
@@ -351,7 +354,6 @@ export default function CanvasTab() {
                   onChange={(text_direction) => change({ ...strip, text_direction })}
                 />
               </Field>
-              <p className="small muted">{t('canvas.hint')}</p>
             </div>
           )}
         </aside>

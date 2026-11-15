@@ -100,7 +100,7 @@ export function ModelCatalog({
           )}
         </button>
         {current?.loading ? (
-          <span className="small muted" role="status">
+          <span className="sr-only" role="status">
             {t('config.models.loading')}
           </span>
         ) : null}
@@ -200,7 +200,7 @@ export function ModelCatalog({
               )}
             </>
           ) : null}
-          {!current.loading && (current.error || !!data?.models.length) ? (
+          {!current.loading && (current.error || (!onSelect && !!data?.models.length)) ? (
             <p className="small muted">
               {t(onSelect ? 'config.models.manual' : 'config.models.readOnly')}
             </p>

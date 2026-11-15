@@ -420,7 +420,6 @@ export function BackupsSection() {
   return (
     <section className="settings-section">
       <h2>{t('workspaceBackups.title')}</h2>
-      <p>{t('workspaceBackups.hint')}</p>
       <div className="row wrap">
         <button className="btn" onClick={() => setDialog('export')}>
           <Download size={15} />

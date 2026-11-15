@@ -203,16 +203,14 @@ export function PresentationDrawer(props: {
               options={FORMATS.map((value) => ({ value, label: t(`exportUi.formats.${value}`) }))}
             />
           </Field>
-          <p className="export-purpose">{t(`exportUi.hints.${format}`)}</p>
-          <p className="export-scope">
-            {t(
-              format === 'source'
-                ? 'exportUi.wholeWork'
-                : format === 'kit'
-                  ? 'exportUi.kitScope'
-                  : 'exportUi.scope',
-            )}
-          </p>
+          {format === 'pdf' || format === 'zip' || format === 'source' ? (
+            <p className="export-purpose">{t(`exportUi.hints.${format}`)}</p>
+          ) : null}
+          {format !== 'kit' ? (
+            <p className="export-scope">
+              {t(format === 'source' ? 'exportUi.wholeWork' : 'exportUi.scope')}
+            </p>
+          ) : null}
           {format === 'html' ? (
             <>
               <Field label={t('exportUi.layout')}>
@@ -248,7 +246,7 @@ export function PresentationDrawer(props: {
                   {t('exportUi.captions')}
                 </label>
               ) : null}
-              <Field label={t('reader.profile')} hint={t(`reader.profiles.${d.profile}.help`)}>
+              <Field label={t('reader.profile')}>
                 <Select
                   value={d.profile}
                   onChange={(profile) => onDraft({ profile: profile as Profile })}

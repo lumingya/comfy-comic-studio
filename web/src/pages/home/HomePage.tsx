@@ -7,7 +7,7 @@ import { usePageTitle } from '../../app/title';
 import { useUI } from '../../app/ui-store';
 import { CheckItem, manualHref } from '../../components/HelpDrawer';
 
-/** The legacy hero illustration: a sage comic page over a tilted card. */
+/** A comic page illustration for the home screen. */
 function HomeArt() {
   return (
     <div className="home-art" aria-hidden>
@@ -77,7 +77,6 @@ function HomeArt() {
         <circle cx="47" cy="203" r="7" stroke="var(--home-sage)" strokeWidth="3" />
         <circle cx="365" cy="224" r="3" fill="currentColor" opacity=".45" />
       </svg>
-      <span>STORY → FRAMES → ALBUM</span>
     </div>
   );
 }
@@ -107,7 +106,6 @@ function FirstRun() {
       <header>
         <div>
           <h2 id="first-run-title">{t('legacy.home.firstTitle')}</h2>
-          <p>{t('legacy.home.firstBody')}</p>
         </div>
         <button type="button" className="btn ghost small" onClick={() => setHidden(true)}>
           <Icon name="close" />
@@ -120,7 +118,6 @@ function FirstRun() {
             <Icon name={p.icon} />
             <span>
               <strong>{t(`legacy.home.paths.${p.id}`)}</strong>
-              <small>{t(`legacy.home.paths.${p.id}d`)}</small>
             </span>
             <span aria-hidden>↗</span>
           </button>
@@ -149,7 +146,7 @@ function FirstRun() {
   );
 }
 
-/** 首页 — the legacy landing: hero, three steps, GET STARTED, footer. */
+/** Creation shortcuts, setup checks, and the user guide. */
 export default function HomePage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -162,15 +159,10 @@ export default function HomePage() {
     <section id="mio-home" aria-labelledby="home-title">
       <header className="home-hero">
         <div className="home-intro">
-          <div className="home-eyebrow">
-            <span />
-            {t('legacy.home.eyebrow')}
-          </div>
           <h1 id="home-title">
             <span>{t('legacy.home.title1')}</span>
             <span className="home-title-accent">{t('legacy.home.title2')}</span>
           </h1>
-          <p className="home-lead">{t('legacy.home.lead')}</p>
           <div className="home-hero-actions">
             <button
               type="button"
@@ -194,23 +186,10 @@ export default function HomePage() {
               {t('legacy.home.browse')}
             </button>
           </div>
-          <p className="home-reassurance">{t('legacy.home.reassurance')}</p>
         </div>
         <HomeArt />
       </header>
-      <ol className="home-steps" aria-label={t('legacy.home.flow')}>
-        {(['s1', 's2', 's3'] as const).map((s, i) => (
-          <li key={s}>
-            <b>0{i + 1}</b>
-            <span>
-              <strong>{t(`legacy.home.steps.${s}`)}</strong>
-              <small>{t(`legacy.home.steps.${s}d`)}</small>
-            </span>
-          </li>
-        ))}
-      </ol>
       <section className="home-section home-get-started" aria-label={t('legacy.home.guide')}>
-        <div className="home-kicker">{t('legacy.home.kicker')}</div>
         <FirstRun />
         <a
           className="home-learning"
@@ -221,15 +200,10 @@ export default function HomePage() {
           <Icon name="book" />
           <span>
             <strong>{t('legacy.home.learnTitle')}</strong>
-            <small>{t('legacy.home.learnBody')}</small>
           </span>
           <b>{t('legacy.home.learnOpen')}</b>
         </a>
       </section>
-      <footer className="home-footer">
-        <span>{t('legacy.home.footerKicker')}</span>
-        <p>{t('legacy.home.footer')}</p>
-      </footer>
     </section>
   );
 }

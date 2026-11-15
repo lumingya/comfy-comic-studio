@@ -86,7 +86,6 @@ export function WorkflowsSection() {
       <div className="config-section-head">
         <div>
           <h2>{t('config.workflow.title')}</h2>
-          <p>{t('config.workflow.intro')}</p>
         </div>
         <FilePick accept=".json" disabled={busy || !!pendingImport} onFile={onFile}>
           <Upload size={15} />

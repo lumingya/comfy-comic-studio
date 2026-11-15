@@ -4821,6 +4821,7 @@ html[data-lettering='calligraphy'] .shelf-item h3 {
   display: flex;
   gap: 14px;
   flex-wrap: wrap;
+  margin-bottom: 20px;
 }
 .home-hero-actions .btn {
   min-height: 46px;
@@ -4918,7 +4919,7 @@ html[data-lettering='calligraphy'] .shelf-item h3 {
   color: var(--muted);
 }
 .home-section {
-  margin: 0px 0px 44px;
+  margin: 0px 0px 24px;
 }
 .home-kicker {
   font: 0.75rem/1.6 var(--mono);
@@ -4932,7 +4933,7 @@ html[data-lettering='calligraphy'] .shelf-item h3 {
   background: var(--panel);
 }
 #mio-home .first-run header {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 #mio-home .first-run #first-run-title {
   font-size: 1.6875rem;
@@ -4942,8 +4943,8 @@ html[data-lettering='calligraphy'] .shelf-item h3 {
   margin: 6px 0px 0px;
 }
 #mio-home .first-run-path {
-  padding: 20px;
-  min-height: 115px;
+  padding: 14px 16px;
+  min-height: 64px;
 }
 #mio-home .first-run-path strong {
   font-size: 0.875rem;
@@ -4953,8 +4954,8 @@ html[data-lettering='calligraphy'] .shelf-item h3 {
 }
 #mio-home .home-learning {
   margin: 0px;
-  min-height: 88px;
-  padding: 22px 28px;
+  min-height: 64px;
+  padding: 16px 20px;
   border-radius: 12px;
 }
 #mio-home .home-learning strong {

@@ -387,3 +387,15 @@ tr.item-uncertain td {
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
+.workshop-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.workshop-toolbar .workshop-tabs {
+  margin-bottom: 0;
+}

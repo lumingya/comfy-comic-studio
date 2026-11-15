@@ -39,7 +39,6 @@ export default function EnginePage() {
       active: local,
       icon: Workflow,
       title: t('config.page.local'),
-      text: t('config.page.localHint'),
       count: instances.data?.instances.length,
     },
     {
@@ -48,7 +47,6 @@ export default function EnginePage() {
       active: tab === 'channels',
       icon: Cloud,
       title: t('config.page.cloud'),
-      text: t('config.page.cloudHint'),
       count: settings.data?.image_channels?.length,
     },
     {
@@ -57,74 +55,66 @@ export default function EnginePage() {
       active: tab === 'profiles',
       icon: Layers,
       title: t('config.page.profiles'),
-      text: t('config.page.profilesHint'),
       count: profiles.data?.length,
     },
   ];
   return (
     <div className="view">
       <section className="wf-page config-page">
-        <header className="wf-bar">
-          <div className="wf-bar-title">
-            <span className="context-kicker">{t('legacy.engine.kicker')}</span>
-            <div className="wf-bar-heading">
-              <h1>{t('legacy.engine.title')}</h1>
-            </div>
-            <p className="wf-bar-lede">{t('config.page.intro')}</p>
-          </div>
+        <h1 className="sr-only">{t('legacy.engine.title')}</h1>
+        <div className="config-navigation">
+          <nav
+            className="config-services"
+            role="tablist"
+            aria-label={t('config.page.services')}
+            onKeyDown={(event) => {
+              const index = groups.findIndex((group) => group.active);
+              const next =
+                event.key === 'Home'
+                  ? 0
+                  : event.key === 'End'
+                    ? groups.length - 1
+                    : event.key === 'ArrowRight'
+                      ? (index + 1) % groups.length
+                      : event.key === 'ArrowLeft'
+                        ? (index + groups.length - 1) % groups.length
+                        : -1;
+              if (next < 0) return;
+              event.preventDefault();
+              open(groups[next].tab);
+              document.getElementById(`config-tab-${groups[next].id}`)?.focus();
+            }}
+          >
+            {groups.map((group) => (
+              <button
+                type="button"
+                key={group.id}
+                id={`config-tab-${group.id}`}
+                role="tab"
+                aria-selected={group.active}
+                aria-controls="config-panel"
+                tabIndex={group.active ? 0 : -1}
+                className={`config-service ${group.active ? 'active' : ''}`}
+                aria-current={group.active ? 'page' : undefined}
+                onClick={() => {
+                  if (!group.active) open(group.tab);
+                }}
+              >
+                <group.icon size={20} aria-hidden />
+                <span className="grow">
+                  <strong>{group.title}</strong>
+                </span>
+                {group.count !== undefined ? (
+                  <span className="config-count">{group.count}</span>
+                ) : null}
+              </button>
+            ))}
+          </nav>
           <Link className="btn ghost" to="/settings?tab=general">
             <SlidersHorizontal size={15} />
             {t('config.page.textApi')}
           </Link>
-        </header>
-        <nav
-          className="config-services"
-          role="tablist"
-          aria-label={t('config.page.services')}
-          onKeyDown={(event) => {
-            const index = groups.findIndex((group) => group.active);
-            const next =
-              event.key === 'Home'
-                ? 0
-                : event.key === 'End'
-                  ? groups.length - 1
-                  : event.key === 'ArrowRight'
-                    ? (index + 1) % groups.length
-                    : event.key === 'ArrowLeft'
-                      ? (index + groups.length - 1) % groups.length
-                      : -1;
-            if (next < 0) return;
-            event.preventDefault();
-            open(groups[next].tab);
-            document.getElementById(`config-tab-${groups[next].id}`)?.focus();
-          }}
-        >
-          {groups.map((group) => (
-            <button
-              type="button"
-              key={group.id}
-              id={`config-tab-${group.id}`}
-              role="tab"
-              aria-selected={group.active}
-              aria-controls="config-panel"
-              tabIndex={group.active ? 0 : -1}
-              className={`config-service ${group.active ? 'active' : ''}`}
-              aria-current={group.active ? 'page' : undefined}
-              onClick={() => {
-                if (!group.active) open(group.tab);
-              }}
-            >
-              <group.icon size={20} aria-hidden />
-              <span className="grow">
-                <strong>{group.title}</strong>
-                <small>{group.text}</small>
-              </span>
-              {group.count !== undefined ? (
-                <span className="config-count">{group.count}</span>
-              ) : null}
-            </button>
-          ))}
-        </nav>
+        </div>
         {local ? (
           <nav className="config-steps" aria-label={t('config.page.steps')}>
             <button

@@ -51,17 +51,14 @@ function HeroArt() {
   );
 }
 
-/** First run: what this is, one big "start" button, and the three steps it takes. */
+/** An empty collection with creation and import actions. */
 export function WorksHero(props: { onCreate: () => void; importAction?: ReactNode }) {
   const { t } = useTranslation();
-  const steps = ['one', 'two', 'three'] as const;
   return (
     <section className="works-hero">
       <div className="works-hero-main">
         <div className="hero-copy">
-          <div className="eyebrow">{t('classic.hero.eyebrow')}</div>
           <h2>{t('classic.hero.title')}</h2>
-          <p>{t('classic.hero.body')}</p>
           <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
             <button className="btn primary lg glow" onClick={props.onCreate}>
               <Sparkles size={16} /> {t('classic.hero.start')}
@@ -71,17 +68,6 @@ export function WorksHero(props: { onCreate: () => void; importAction?: ReactNod
         </div>
         <HeroArt />
       </div>
-      <ol className="hero-steps">
-        {steps.map((k, i) => (
-          <li key={k} style={{ animationDelay: `${120 + i * 60}ms` }}>
-            <span className="hero-step-no mono">{String(i + 1).padStart(2, '0')}</span>
-            <span>
-              <strong>{t(`classic.hero.steps.${k}.title`)}</strong>
-              <small>{t(`classic.hero.steps.${k}.body`)}</small>
-            </span>
-          </li>
-        ))}
-      </ol>
     </section>
   );
 }

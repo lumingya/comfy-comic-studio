@@ -2,8 +2,7 @@ export const longformZh = {
   organize: '整理',
   transfer: '复制或移动到其他话…',
   transferTitle: '整理所选 {{count}} 格',
-  transferHint:
-    '保持原顺序追加到同一作品的另一话，保留候选图与裁切。排版整体移到目标画布末尾，原话剩余内容的留白不变。',
+  transferHint: '按原顺序追加到目标画布末尾，保留候选图、取景与排版。',
   destination: '目标话 / 分镜',
   choose: '请选择目标',
   noTarget: '还没有其他话或分镜。先新建一话，再来整理。',
@@ -23,8 +22,7 @@ export const longformZh = {
   reordered: '已调整顺序',
   variables: '查找与整理变量…',
   variablesTitle: '整理变量',
-  variablesHint:
-    '查找当前作品所有话、预设与设定中的变量，再预览修改。只处理完整的变量引用，双大括号包围的转义文字会保留。',
+  variablesHint: '查找当前作品的变量引用；双大括号内的转义文字不参与修改。',
   key: '变量名',
   keyHint: '填写变量名，不包含大括号',
   find: '查找引用',
@@ -101,8 +99,7 @@ export const longformEn: typeof longformZh = {
   organize: 'Organize',
   transfer: 'Copy or move to another episode…',
   transferTitle: 'Organize {{count}} selected panels',
-  transferHint:
-    'Append in source order within this work, keeping takes and crops. Layout moves below the destination canvas; remaining source spacing stays in place.',
+  transferHint: 'Append in order below the destination canvas, keeping takes, framing and layout.',
   destination: 'Destination episode / storyboard',
   choose: 'Choose a destination',
   noTarget: 'There are no other episodes or storyboards yet. Create one first.',
@@ -122,8 +119,7 @@ export const longformEn: typeof longformZh = {
   reordered: 'Order updated',
   variables: 'Find and organize variables…',
   variablesTitle: 'Organize variables',
-  variablesHint:
-    'Find variables across the work’s episodes, presets and bible, then review changes. Only complete variable references match; double-brace escaped text stays intact.',
+  variablesHint: 'Find references in this work. Escaped text inside double braces stays unchanged.',
   key: 'Variable name',
   keyHint: 'Enter the key without braces',
   find: 'Find references',

@@ -120,7 +120,6 @@ function Sidebar() {
           <span className="avatar">{[...studio][0]}</span>
           <span className="grow">
             <strong>{studio}</strong>
-            <p>{t('legacy.studioSub')}</p>
           </span>
         </Link>
       </div>

@@ -77,7 +77,6 @@ export function usePromptSources(source: Series): PromptSources {
   }, [source]);
 }
 
-const HINT_KEY = 'cc-hint-multiselect';
 const promptOf = (p: Panel) => p.overrides.raw_prompt ?? '';
 /** Legacy 只选空白分幕: neither a prompt nor dialogue. */
 const isEmptyFrame = (p: Panel) => !promptOf(p).trim() && !captionText(p.dialogues).trim();
@@ -227,11 +226,6 @@ export default function StoryboardEditor() {
       toastError(error);
     }
   };
-  const [hintSeen, setHintSeen] = useState(() => localStorage.getItem(HINT_KEY) === 'seen');
-  const seeHint = () => {
-    localStorage.setItem(HINT_KEY, 'seen');
-    setHintSeen(true);
-  };
   const desktop = useDesktopSelection({
     itemAttribute: 'data-selection-id',
     selection,
@@ -372,7 +366,6 @@ export default function StoryboardEditor() {
           {
             label: t('ws.story.menu.addFramesDots'),
             icon: <Icon name="list" sm />,
-            hint: t('ws.story.menu.addFramesHint'),
             disabled: importPanels.isPending || panels.length >= MAX_FRAMES,
             onSelect: openBatch,
           },
@@ -380,7 +373,6 @@ export default function StoryboardEditor() {
             label: t('ws.story.menu.selectAll'),
             icon: <Icon name="check" sm />,
             shortcut: 'Ctrl/⌘ A',
-            hint: t('ws.story.menu.selectAllHint'),
             disabled: panels.length < 1,
             onSelect: selection.all,
           },
@@ -391,7 +383,6 @@ export default function StoryboardEditor() {
           {
             label: t('ws.story.toAssembly'),
             icon: <Icon name="arrow" sm />,
-            hint: t('ws.story.menu.toAssemblyHint'),
             onSelect: () =>
               navigate(workshopHref('/workshop/assembly', kitId, { story: episode.id })),
           },
@@ -443,7 +434,6 @@ export default function StoryboardEditor() {
           {
             label: t('ws.story.menu.exportPickDots'),
             icon: <Icon name="upload" sm />,
-            hint: t('ws.story.menu.exportPickHint'),
             onSelect: exporter.open,
           },
         ],
@@ -481,7 +471,6 @@ export default function StoryboardEditor() {
           onSelect: pickEmpty,
         },
       ],
-      note: t('ws.story.menu.selectHint'),
     };
     if (!focus) return [select];
     const index = panels.indexOf(focus);
@@ -517,7 +506,6 @@ export default function StoryboardEditor() {
             {
               label: t('ws.story.menu.copyMany'),
               icon: <Icon name="copy" sm />,
-              hint: t('ws.story.menu.copyManyHint'),
               disabled: duplicate.isPending,
               onSelect: () => void copySelected(ids),
             },
@@ -579,7 +567,6 @@ export default function StoryboardEditor() {
           {
             label: t('ws.story.menu.copyOne'),
             icon: <Icon name="copy" sm />,
-            hint: t('ws.story.menu.copyHint'),
             disabled: duplicate.isPending,
             onSelect: () => void copySelected([focus.id!]),
           },
@@ -663,14 +650,6 @@ export default function StoryboardEditor() {
               </button>
             ))}
           </div>
-          {panels.length > 1 && !hintSeen && !selection.ids.length ? (
-            <p className="multiselect-hint">
-              <span>{t('classic.shelf.multiHint')}</span>
-              <button type="button" className="link-button" onClick={seeHint}>
-                {t('classic.shelf.multiHintOk')}
-              </button>
-            </p>
-          ) : null}
           <div className="workshop-frames-actions">
             <button
               type="button"

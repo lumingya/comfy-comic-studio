@@ -207,7 +207,7 @@ export function ExportBooks(props: {
       open={props.open}
       onOpenChange={(open) => !busy && props.onOpenChange(open)}
       title={t('exportUi.batchTitle', { count: props.books.length })}
-      description={t('exportUi.batchHint')}
+      description={t(individual ? 'exportUi.batchSeparate' : 'exportUi.batchCombined')}
       footer={
         <>
           <button

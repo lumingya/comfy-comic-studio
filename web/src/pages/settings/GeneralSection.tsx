@@ -58,7 +58,6 @@ export function GeneralSection() {
         <div className="config-section-head">
           <div>
             <h2>{t('settings.llm')}</h2>
-            <p>{t('config.general.intro')}</p>
           </div>
         </div>
         <div className="grid-2">
@@ -73,9 +72,7 @@ export function GeneralSection() {
           </Field>
           <Field
             label={t('settings.apiKey')}
-            hint={
-              d.llm.api_key === '••••••' ? t('config.cloud.maskedKey') : t('config.cloud.keyHint')
-            }
+            hint={d.llm.api_key === '••••••' ? undefined : t('config.cloud.keyHint')}
           >
             <SecretInput value={d.llm.api_key} onChange={(api_key) => llm({ api_key })} />
           </Field>
@@ -91,7 +88,7 @@ export function GeneralSection() {
             onSelect={(id) => llm({ text_models: [...new Set([...d.llm.text_models, id])] })}
           />
         </div>
-        <Advanced title={t('config.general.models')} hint={t('config.general.modelsAdvancedHint')}>
+        <Advanced title={t('config.general.models')}>
           <div className="config-model-field">
             <Field label={t('config.general.visionModels')} hint={t('config.general.visionHint')}>
               <TagInput
@@ -124,7 +121,7 @@ export function GeneralSection() {
             {t('config.profile.manageChannels')}
           </Link>
         </Advanced>
-        <Advanced title={t('config.general.request')} hint={t('config.general.requestHint')}>
+        <Advanced title={t('config.general.request')}>
           <div className="grid-2">
             <Field label={t('settings.timeout')}>
               <NumberInput
@@ -145,7 +142,7 @@ export function GeneralSection() {
             </Field>
           </div>
         </Advanced>
-        <Advanced title={t('settings.safety')} hint={t('config.general.safetyHint')}>
+        <Advanced title={t('settings.safety')}>
           <Field label={t('settings.guardTerms')} hint={t('settings.guardHint')}>
             <TagInput
               value={d.guard_terms}

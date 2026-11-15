@@ -29,13 +29,9 @@ export const configZh = {
   missing: '已失效：{{id}}',
   invalidUrl: '请填写完整的 http:// 或 https:// 基础地址，不要包含账号、密码、查询参数或片段。',
   page: {
-    intro: '先连接出图服务，再选择生成时使用的出图配置。只配置你需要的那一种。',
     local: '本地 ComfyUI',
-    localHint: '连接服务 · 导入与映射工作流',
     cloud: '云端出图',
-    cloudHint: 'OpenAI / NovelAI / 图像反代',
     profiles: '出图配置',
-    profilesHint: '把工作流或渠道用于生成任务',
     textApi: '文本模型 API',
     services: '选择配置类型',
     steps: 'ComfyUI 配置顺序',
@@ -55,8 +51,7 @@ export const configZh = {
     invalidAddress: '地址有误',
     invalidAddresses: '以下渠道的地址有误：{{names}}。请填写完整的 http:// 或 https:// 基础地址。',
     title: '云端出图渠道',
-    intro: '左侧选择渠道，右侧编辑。保存配置不会调用模型，也不会产生出图费用。',
-    nameHint: '给自己看的名称，不会影响密钥或已有引用。',
+    intro: '保存配置不会出图或产生费用。',
     namePlaceholder: '例如：日常出图、备用服务',
     kindHint:
       '按服务示例的请求路径选择：/chat/completions 选「聊天接口出图」，/images/generations 选 OpenAI Images。',
@@ -114,7 +109,6 @@ export const configZh = {
   },
   workflow: {
     title: '工作流与参数映射',
-    intro: '导入 API 工作流，核对常用映射即可。原始节点图、任意参数和多目标映射都保留在高级项。',
     list: '工作流列表',
     search: '搜索工作流或模型',
     empty: '还没有工作流',
@@ -208,7 +202,6 @@ export const configZh = {
     bindingRequired:
       '此套装尚未绑定出图服务。可以先编辑；明确选择所需的渠道或本地实例并保存后，才能生成。',
     title: '出图配置',
-    intro: '这是生成任务实际使用的方案。常用项只需选出图方式、工作流或渠道、候选数量。',
     list: '出图配置列表',
     stageKind: '阶段用途',
     workflow: '阶段工作流',
@@ -225,9 +218,7 @@ export const configZh = {
     route: '出图方式',
     local: '本地 ComfyUI',
     cloud: '云端出图',
-    candidatesHint: '每幕生成几张候选；云端每张都可能计费。',
-    cloudHint: '这里选择的渠道才会用于此配置的云端出图。',
-    cloudBilling: '保存不会出图。真正开始生成时才会调用云端服务，每张都可能计费。',
+    cloudBilling: '云端生成可能按张计费；保存配置不会出图。',
     manageChannels: '管理云端渠道',
     mainStages: '基础出图工作流',
     promptAdvanced: '提示词与多服务调度',
@@ -247,7 +238,6 @@ export const configZh = {
   },
   instance: {
     title: '连接 ComfyUI 服务',
-    intro: '通常只需要本机这一台服务。连接成功后，再导入工作流并检查模型与节点。',
     address: 'ComfyUI 服务地址',
     addressHint: '填写基础地址，例如 http://127.0.0.1:8188。由 Mio 后端检查，无需设置浏览器跨域。',
     checking: '正在检查连接…',
@@ -270,13 +260,13 @@ export const configZh = {
   },
   general: {
     visionModels: '视觉模型',
-    visionHint: '供图像理解与可选视觉工具使用，请选择支持图片输入的模型。',
+    visionHint: '需要支持图片输入的模型。',
     intro: '用于生成剧本。独立图像渠道在「工作流与 API 配置」中管理。',
-    addressHint: 'OpenAI 兼容基础地址；粘贴完整接口地址会在保存时自动整理。',
-    modelsHint: '输入后按 Enter 或逗号添加；按顺序尝试文本模型。',
+    addressHint: 'OpenAI 兼容地址，完整接口路径会自动整理。',
+    modelsHint: '按 Enter 或逗号添加。',
     models: '视觉与共享出图模型',
     modelsAdvancedHint: '按需配置图像理解与共享聊天出图',
-    imageHint: '共享聊天出图使用列表中的首个模型；付费结果不明确时不会自动切换模型重发。',
+    imageHint: '使用首个模型；结果不明确时不会自动重发。',
     request: '请求控制',
     requestHint: '超时与请求间隔，通常无需修改',
     safetyHint: '提示词屏蔽与回收站保留时间',
@@ -314,14 +304,9 @@ export const configEn = {
   invalidUrl:
     'Enter an http:// or https:// base URL without credentials, query parameters or fragments.',
   page: {
-    intro:
-      'Connect an image service, then choose a render profile. Set up only the route you need.',
     local: 'Local ComfyUI',
-    localHint: 'Connect a server · import and map workflows',
     cloud: 'Cloud images',
-    cloudHint: 'OpenAI / NovelAI / image proxies',
     profiles: 'Render profiles',
-    profilesHint: 'Choose workflows or channels for generation',
     textApi: 'Text model API',
     services: 'Configuration type',
     steps: 'ComfyUI setup steps',
@@ -342,9 +327,7 @@ export const configEn = {
     invalidAddress: 'Invalid address',
     invalidAddresses: 'Invalid addresses in: {{names}}. Enter a full http:// or https:// base URL.',
     title: 'Cloud image channels',
-    intro:
-      'Select a channel to edit. Saving never calls a model or submits a paid generation request.',
-    nameHint: 'A display name. Renaming it does not affect keys or existing references.',
+    intro: 'Saving does not generate images or incur charges.',
     namePlaceholder: 'For example: everyday images, backup service',
     kindHint:
       'Match the request path in your service’s example: /chat/completions → Chat API images; /images/generations → OpenAI Images.',
@@ -418,8 +401,6 @@ export const configEn = {
   },
   workflow: {
     title: 'Workflows & parameter mapping',
-    intro:
-      'Import an API workflow and check the common mappings. Raw graphs, arbitrary parameters and multi-target mappings remain available under advanced options.',
     list: 'Workflow list',
     search: 'Search workflows or models',
     empty: 'No workflows yet',
@@ -525,8 +506,6 @@ export const configEn = {
     bindingRequired:
       'This kit has no generation service yet. You can edit it now; explicitly choose the required channel or local instances and save before generating.',
     title: 'Render profiles',
-    intro:
-      'These are the profiles generation tasks actually use. Start with a route, workflow or channel, and candidate count.',
     list: 'Render profile list',
     stageKind: 'Stage purpose',
     workflow: 'Stage workflow',
@@ -544,10 +523,7 @@ export const configEn = {
     route: 'Render route',
     local: 'Local ComfyUI',
     cloud: 'Cloud render',
-    candidatesHint: 'Candidates per panel. Each cloud candidate may incur a charge.',
-    cloudHint: 'This is the channel used for this profile’s cloud generation.',
-    cloudBilling:
-      'Saving does not generate images. The cloud service is called only when generation starts, and each image may be billed.',
+    cloudBilling: 'Cloud generation may charge per image. Saving does not generate images.',
     manageChannels: 'Manage cloud channels',
     mainStages: 'Base generation workflow',
     promptAdvanced: 'Prompts & multi-server scheduling',
@@ -572,8 +548,6 @@ export const configEn = {
   },
   instance: {
     title: 'Connect to ComfyUI',
-    intro:
-      'Usually a single local server is enough. After connecting, import a workflow and check its models and nodes.',
     address: 'ComfyUI server URL',
     addressHint:
       'Enter the base URL, e.g. http://127.0.0.1:8188. Mio’s backend checks it; browser CORS setup is not required.',
@@ -599,15 +573,13 @@ export const configEn = {
   },
   general: {
     visionModels: 'Vision models',
-    visionHint:
-      'Used by image understanding and optional visual tools. Choose models that accept images.',
+    visionHint: 'Requires a model that accepts images.',
     intro: 'For script generation. Manage dedicated image channels in Workflow & API setup.',
-    addressHint: 'OpenAI-compatible base URL. Pasted endpoint paths are cleaned up when saved.',
-    modelsHint: 'Press Enter or comma to add a model. Text models are tried in order.',
+    addressHint: 'OpenAI-compatible URL; full endpoint paths are normalized.',
+    modelsHint: 'Press Enter or comma to add.',
     models: 'Vision and shared image models',
     modelsAdvancedHint: 'Optional image understanding and shared chat-image models',
-    imageHint:
-      'Shared chat-image generation uses the first model. Uncertain paid requests are not automatically resent through another model.',
+    imageHint: 'Uses the first model; ambiguous results are not retried automatically.',
     request: 'Request controls',
     requestHint: 'Timeout and pacing — usually no changes needed',
     safetyHint: 'Prompt guard terms and trash retention',

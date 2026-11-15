@@ -224,7 +224,6 @@ export function InstancesSection() {
       <div className="config-section-head">
         <div>
           <h2>{t('config.instance.title')}</h2>
-          <p>{t('config.instance.intro')}</p>
         </div>
         <button
           type="button"

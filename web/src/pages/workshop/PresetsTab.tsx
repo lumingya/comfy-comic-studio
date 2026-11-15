@@ -576,7 +576,6 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
             <button type="button" className="btn small ghost" onClick={() => setPicked(new Set())}>
               {t('ws.presets.clearPick')}
             </button>
-            <span className="setting-selection-hint">{t('ws.presets.pickHint')}</span>
           </div>
         ) : null}
         {groups.map((g) => (
@@ -617,9 +616,7 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
         >
           {loose.length ? (
             <>
-              {groups.length ? (
-                <p className="setting-loose-hint">{t('ws.presets.looseHint')}</p>
-              ) : null}
+              {groups.length ? <p className="setting-loose-hint">{t('ws.presets.loose')}</p> : null}
               <div className="character-settings-grid">
                 {loose.map((e) => (
                   <EntryCard
@@ -709,7 +706,6 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
             label: t('ws.presets.addVar'),
             icon: <Icon name="plus" sm />,
             primary: true,
-            hint: t('ws.presets.menu.addVarHint'),
             onSelect: () => addEntry(null),
           },
           {
@@ -739,13 +735,11 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
           {
             label: t('ws.presets.preview'),
             icon: <Icon name="brush" sm />,
-            hint: t('ws.presets.menu.previewHint'),
             onSelect: () => setPreviewing(true),
           },
           {
             label: t('ws.presets.menu.newTaskDots'),
             icon: <Icon name="play" sm />,
-            hint: t('ws.presets.menu.newTaskHint'),
             onSelect: () => navigate(workshopHref('/workshop/assembly', kitId, { new: '1' })),
           },
         ],
@@ -795,7 +789,6 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
           {
             label: t('ws.presets.menu.exportPickDots'),
             icon: <Icon name="upload" sm />,
-            hint: t('ws.presets.menu.exportPickHint'),
             onSelect: () => setExporting(true),
           },
         ],
@@ -959,7 +952,6 @@ function PreviewDialog({
               </option>
             ))}
           </select>
-          <p className="help">{t('ws.assemble.profileHelp')}</p>
         </div>
       </form>
     </Modal>

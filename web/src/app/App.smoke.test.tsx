@@ -624,7 +624,7 @@ describe('every route mounts with API data', () => {
     expect(
       await screen.findByRole('tab', { name: '模型与连接', selected: true }),
     ).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: 'API 令牌与 Webhook' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'API 令牌' })).toBeInTheDocument();
     expect(await screen.findByText('还没有 Webhook')).toBeInTheDocument();
     expect(screen.getByText('接口地址')).toBeInTheDocument();
   });
@@ -659,7 +659,7 @@ describe('every route mounts with API data', () => {
     expect(
       document.querySelector('#workshop-frame-negative')!.closest('.prompt-surface')!
         .nextElementSibling,
-    ).toHaveClass('prompt-editor-foot');
+    ).not.toHaveClass('prompt-editor-foot');
     expect(screen.getByText('此幕画面参数')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '去装配此分镜' }));
     await waitFor(() => expect(router.state.location.pathname).toBe('/workshop/assembly'));
@@ -783,7 +783,8 @@ describe('every route mounts with API data', () => {
       'archive',
     ]);
     fireEvent.change(profile, { target: { value: 'publish' } });
-    expect(within(drawer).getByText(/长边不超过 2560 px/)).toBeInTheDocument();
+    expect(profile).toHaveValue('publish');
+    expect(profile.selectedOptions[0].textContent).toContain('2560 px');
     const zip = within(drawer).getByRole('button', { name: '导出' });
     await waitFor(() => expect(zip).toBeEnabled());
     fireEvent.click(zip);

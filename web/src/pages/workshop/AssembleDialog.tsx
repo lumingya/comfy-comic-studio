@@ -395,9 +395,6 @@ export default function AssembleDialog({
                 </header>
                 <div className="designer-story-settings">
                   <section className="designer-card">
-                    <header className="designer-card-head">
-                      <h4>{t('ws.assemble.whichStory')}</h4>
-                    </header>
                     <div className="field">
                       <label className="label" htmlFor="designer-story">
                         {t('ws.assemble.story')}
@@ -429,11 +426,6 @@ export default function AssembleDialog({
                   <h3>{t('ws.assemble.presetsTitle')}</h3>
                   <p>{t('ws.assemble.presetsLede')}</p>
                 </header>
-                {chosen === null && first ? (
-                  <p className="designer-auto-note">
-                    <span>{t('ws.assemble.autoNote', { title: first.title })}</span>
-                  </p>
-                ) : null}
                 <div
                   className="designer-presets"
                   role="group"
@@ -492,20 +484,15 @@ export default function AssembleDialog({
                     </li>
                   ))}
                 </ol>
-                <p className="help">{t('ws.assemble.reviewNext')}</p>
               </section>
             ) : (
               <section className="designer-step" data-step="2">
                 <header className="designer-step-head">
                   <h3>{t('ws.assemble.nameTitle')}</h3>
-                  <p>{t('ws.assemble.nameLede')}</p>
                 </header>
                 <div className="designer-columns designer-naming">
                   <div className="designer-main">
                     <section className="designer-card">
-                      <header className="designer-card-head">
-                        <h4>{t('ws.assemble.whatName')}</h4>
-                      </header>
                       <div className="field">
                         <label className="label" htmlFor="designer-title">
                           {t('ws.assemble.albumName')}
@@ -525,7 +512,6 @@ export default function AssembleDialog({
                         <select id="designer-project" value="default" disabled>
                           <option value="default">{collection}</option>
                         </select>
-                        <div className="help">{t('ws.assemble.collectionHelp')}</div>
                       </div>
                     </section>
                     <AssemblyReview

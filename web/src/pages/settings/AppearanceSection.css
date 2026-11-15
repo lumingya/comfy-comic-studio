@@ -1,3 +1,8 @@
+.settings-row.appearance-row {
+  min-height: 0;
+  padding: 12px 0;
+}
+
 .settings-row:has(> .appearance-setting) {
   flex-wrap: wrap;
 }

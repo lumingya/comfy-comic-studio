@@ -1,0 +1,21 @@
+#collection-home .edition-count {
+  margin-bottom: 14px;
+}
+#collection-home .edition-info h2 {
+  margin-bottom: 14px;
+}
+#collection-home .edition-info > .synopsis {
+  margin-bottom: 18px;
+}
+#collection-home .edition-byline {
+  margin: 14px 0 18px;
+}
+#collection-home .edition-entry {
+  padding-top: 16px;
+}
+#collection-home .works-hero .hero-copy h2 {
+  margin-bottom: 20px;
+}
+#collection-home .works-hero-main {
+  padding: 28px;
+}

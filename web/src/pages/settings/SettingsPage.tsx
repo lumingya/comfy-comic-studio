@@ -61,7 +61,6 @@ function WorkspaceSection() {
       <ConfigurationGuard dirty={dirty} />
       <section className="settings-section">
         <h2>{t('legacy.settings.workspaceTitle')}</h2>
-        <p>{t('legacy.settings.workspaceHint')}</p>
         <form
           className="identity-form"
           onSubmit={(e) => {
@@ -123,7 +122,6 @@ function WorkspaceSection() {
       <section className="settings-section">
         <h2>{t('legacy.settings.storageTitle')}</h2>
         <div className="service-context">{t('legacy.storage')}</div>
-        <p>{t('legacy.settings.storageBody')}</p>
         <div className="row">
           <Link className="btn" to="/settings?tab=data">
             <Icon name="disk" />
@@ -145,7 +143,6 @@ function DataSection() {
       <BackupsSection />
       <section className="settings-section">
         <h2>{t('legacy.settings.dataTitle')}</h2>
-        <p>{t('legacy.settings.dataBody')}</p>
         <div className="row">
           <FilePick
             accept=".zip"
@@ -189,12 +186,10 @@ function AppearanceAndThemes() {
 
 /** 模型与连接: the text model API, then API tokens and webhooks for bots and scripts. */
 function ModelsAndConnections() {
-  const { t } = useTranslation();
   return (
     <>
       <GeneralSection />
       <section className="settings-section">
-        <h2>{t('legacy.settings.accessTitle')}</h2>
         <AccessSection />
       </section>
     </>
@@ -251,12 +246,7 @@ export default function SettingsPage() {
   const Section = SECTIONS[tab];
   return (
     <div className="view">
-      <div className="page-heading">
-        <div>
-          <h1>{t('legacy.nav.settings')}</h1>
-          <p>{t('legacy.settings.lede')}</p>
-        </div>
-      </div>
+      <h1 className="sr-only">{t('legacy.nav.settings')}</h1>
       <div className="settings-layout">
         <nav
           className="settings-nav"

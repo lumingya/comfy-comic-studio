@@ -91,20 +91,23 @@ export function CharacterEditor({
           />
         </Field>
       </div>
-      <Field label={t('bible.promptTags')} hint={t('bible.promptTagsHint')}>
+      <Field label={t('bible.promptTags')}>
         <TagInput
           value={value.tag_description ?? []}
           onChange={(tag_description) => onChange({ tag_description })}
         />
       </Field>
-      <Field label={t('common.description')} hint={t('bible.descriptionHint')}>
+      <Field label={t('bible.description')}>
         <TextArea
           rows={2}
           value={value.description ?? ''}
           onChange={(description) => onChange({ description })}
         />
       </Field>
-      <Field label={t('bible.appearance')} hint={t('bible.appearanceHint')}>
+      <Field
+        label={t('bible.appearance')}
+        hint={!value.description?.trim() ? t('bible.appearanceHint') : undefined}
+      >
         <TagInput
           value={value.appearance ?? []}
           onChange={(appearance) => onChange({ appearance })}

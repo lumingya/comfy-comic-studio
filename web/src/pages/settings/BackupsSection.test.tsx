@@ -174,13 +174,15 @@ describe('workspace restore review', () => {
     await userEvent.click(within(dialog).getByRole('button', { name: '暂存恢复计划' }));
     const schedule = await within(dialog).findByRole('button', { name: '安排下次启动恢复' });
     expect(calls.some((call) => call.url.endsWith('/apply'))).toBe(false);
-    expect(within(dialog).getByText(/安排恢复时会在本机完整保存当前工作区/)).toBeVisible();
+    expect(within(dialog).getByText(/恢复前会完整备份当前工作区（含凭据）/)).toBeVisible();
     await userEvent.click(within(dialog).getByText('校验与计划详情'));
     expect(within(dialog).getByText(currentHead)).toBeVisible();
     expect(within(dialog).getByText(archiveSha)).toBeVisible();
     await userEvent.click(schedule);
     expect(await within(dialog).findByText('已安排恢复，请手动重启 Mio')).toBeVisible();
-    expect(within(dialog).getByText(/这里不会自动重启服务/)).toBeVisible();
+    expect(
+      within(dialog).getByText(/保存工作后重启 Mio；继续修改工作区会使本次恢复失效/),
+    ).toBeVisible();
     expect(calls.find((call) => call.url.endsWith('/apply'))?.body).toEqual({
       expected_head: currentHead,
       expected_archive_sha256: archiveSha,

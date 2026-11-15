@@ -132,17 +132,14 @@ export default function JobsPage() {
 
   return (
     <div className="page">
-      <header className="page-head">
-        <div>
-          <h1>{t('jobs.heading')}</h1>
-          <p>{t('jobs.sub')}</p>
-        </div>
+      <h1 className="sr-only">{t('jobs.heading')}</h1>
+      <div className="page-toolbar">
         <Switch
           checked={activeOnly}
           onChange={(v) => set({ active: v ? '1' : null, job: null })}
           label={t('jobs.activeOnly')}
         />
-      </header>
+      </div>
       {jobs.error ? <QueryError error={jobs.error} onRetry={jobs.refetch} /> : null}
       {jobs.isLoading ? <Loading /> : null}
       {jobs.data && !jobs.data.length ? (

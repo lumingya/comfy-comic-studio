@@ -203,7 +203,6 @@ export function PanelEditor(props: {
         <SlidersHorizontal size={14} />
         <span className="grow">
           <strong>{t('classic.inspector.title')}</strong>
-          <small>{t('classic.inspector.sub')}</small>
         </span>
         <button
           className="btn ghost icon sm"
@@ -481,20 +480,20 @@ export function PanelEditor(props: {
             aria-label={t('classic.editor.prompt')}
             placeholder={t('classic.editor.promptPlaceholder')}
           />
-          <div className="var-line">
-            <span className={`dot ${missing.length ? 'amber' : ''}`} aria-hidden />
-            <span>
-              {uses.length
-                ? t('classic.editor.varsFound', { count: uses.length })
-                : t('classic.editor.varsNone')}
-              {empty.length
-                ? ` · ${t('classic.editor.varsEmpty', { names: empty.join(', ') })}`
-                : ''}
-              {missing.length
-                ? ` · ${t('classic.editor.varsMissing', { names: missing.join(', ') })}`
-                : ''}
-            </span>
-          </div>
+          {uses.length ? (
+            <div className="var-line">
+              <span className={`dot ${missing.length ? 'amber' : ''}`} aria-hidden />
+              <span>
+                {t('classic.editor.varsFound', { count: uses.length })}
+                {empty.length
+                  ? ` · ${t('classic.editor.varsEmpty', { names: empty.join(', ') })}`
+                  : ''}
+                {missing.length
+                  ? ` · ${t('classic.editor.varsMissing', { names: missing.join(', ') })}`
+                  : ''}
+              </span>
+            </div>
+          ) : null}
           <div className="var-chips" aria-label={t('classic.editor.insert')}>
             <span className="muted small">{t('classic.editor.insert')}</span>
             {suggestedVariables(series).map((name) => (

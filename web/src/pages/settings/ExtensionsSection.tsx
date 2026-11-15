@@ -169,10 +169,7 @@ export function ExtensionsSection() {
           {t('settings.ext.safeMode')}
         </p>
       ) : null}
-      <div className="row">
-        <p className="small muted grow" style={{ margin: 0 }}>
-          {t('settings.ext.hint')}
-        </p>
+      <div className="row wrap" style={{ justifyContent: 'flex-end' }}>
         <Switch checked={replace} onChange={setReplace} label={t('settings.ext.replace')} />
         <FilePick
           accept=".zip"

@@ -14,7 +14,7 @@ export const workspaceBackupsZh = {
   download: '再次下载',
   restore: '从备份恢复…',
   restoreTitle: '恢复工作区',
-  restoreHint: '先检查备份内容，再暂存恢复计划。当前作品会继续保留，直到你安排恢复并手动重启 Mio。',
+  restoreHint: '检查并暂存备份，确认后将在下次启动时替换当前工作区。',
   choose: '选择工作区备份',
   fileLabel: '工作区备份文件',
   inspect: '检查文件',
@@ -25,13 +25,10 @@ export const workspaceBackupsZh = {
   staged: '恢复计划已暂存',
   apply: '安排下次启动恢复',
   scheduling: '正在保存当前保护备份并安排恢复…',
-  protection:
-    '安排恢复时会在本机完整保存当前工作区作为保护备份，包括本机凭据。恢复失败会保留或回退到原工作区；成功后原目录也会保留。',
-  offline:
-    '恢复后 ComfyUI 连接、Webhook 和扩展保持禁用，队列保持暂停；不会自动再次生成。重新配置需要的连接后再继续。',
+  protection: '恢复前会完整备份当前工作区（含凭据）；恢复失败会回退，成功后原目录仍保留。',
+  offline: '恢复后 ComfyUI 连接、Webhook 和扩展停用、队列暂停，需重新启用。',
   pending: '已安排恢复，请手动重启 Mio',
-  restart:
-    '保存手边工作后自行关闭并重新启动 Mio。这里不会自动重启服务；若继续修改工作区，本次恢复会因版本变化而被拒绝。',
+  restart: '保存工作后重启 Mio；继续修改工作区会使本次恢复失效。',
   cancel: '取消恢复安排',
   cancelStaged: '丢弃暂存计划',
   canceling: '正在取消恢复计划…',
@@ -75,8 +72,7 @@ export const workspaceBackupsZh = {
   rolledBack: '恢复未完成，已回退到原工作区。',
   dismiss: '收起',
   history: '本机保留记录',
-  historyHint:
-    '这里保留导出的备份、恢复计划及原目录。不会自动清理；删除计划后，保护备份仍需单独明确删除。',
+  historyHint: '记录不会自动清理；删除计划后，保护备份仍保留。',
   savedBackups: '备份文件',
   savedPlans: '恢复计划',
   retainedSize: '本机占用：{{size}}',
@@ -116,7 +112,7 @@ export const workspaceBackupsEn: typeof workspaceBackupsZh = {
   restore: 'Restore from backup…',
   restoreTitle: 'Restore workspace',
   restoreHint:
-    'Inspect the archive, then stage a restore plan. Current work stays intact until you schedule restoration and manually restart Mio.',
+    'Inspect and stage a backup. After confirmation, it replaces this workspace at the next startup.',
   choose: 'Choose workspace backup',
   fileLabel: 'Workspace backup file',
   inspect: 'Inspect file',
@@ -128,12 +124,11 @@ export const workspaceBackupsEn: typeof workspaceBackupsZh = {
   apply: 'Schedule restore at next startup',
   scheduling: 'Saving a protection backup and scheduling restoration…',
   protection:
-    'Scheduling saves a complete local protection backup of the current workspace, including credentials. A failed restore retains or returns to the original workspace; its directory is also kept after success.',
+    'Before restoring, a full backup including credentials is saved. Failures roll back; the original directory is kept after success.',
   offline:
-    'After restoration, ComfyUI connections, webhooks and extensions stay disabled, and the queue stays paused. Nothing generates automatically. Configure the connections you need before continuing.',
+    'ComfyUI connections, webhooks and extensions stay disabled and the queue stays paused until you re-enable them.',
   pending: 'Restore scheduled. Restart Mio manually.',
-  restart:
-    'Save your work, then close and reopen Mio yourself. This page will not restart the service. Further workspace changes will cause this restoration to be rejected.',
+  restart: 'Save your work and restart Mio. Further workspace changes invalidate this restoration.',
   cancel: 'Cancel scheduled restore',
   cancelStaged: 'Discard staged plan',
   canceling: 'Canceling the restore plan…',
@@ -181,7 +176,7 @@ export const workspaceBackupsEn: typeof workspaceBackupsZh = {
   dismiss: 'Dismiss',
   history: 'Locally retained records',
   historyHint:
-    'Exported backups, restore plans and previous directories stay here until explicitly deleted. Removing a plan keeps its protection backup for a separate deletion.',
+    'Records are not cleaned automatically. Deleting a plan keeps its protection backup.',
   savedBackups: 'Backup files',
   savedPlans: 'Restore plans',
   retainedSize: 'Local storage: {{size}}',

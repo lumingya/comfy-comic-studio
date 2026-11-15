@@ -1,24 +1,26 @@
 /* Configuration workbench: familiar shell, one selected item, progressive disclosure.
    Loaded after the legacy skin; all rules are scoped to avoid changing other workspaces. */
-.config-page .wf-bar {
+.config-navigation {
+  display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
 }
-.config-page .wf-bar > .btn {
+.config-navigation > .btn {
   flex-shrink: 0;
 }
 .config-services {
+  flex: 1;
+  min-width: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  margin-top: 24px;
 }
 .config-service {
   display: flex;
   align-items: center;
   gap: 14px;
   min-width: 0;
-  padding: 18px;
+  padding: 14px 18px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--panel);
@@ -46,13 +48,6 @@
   color: var(--text);
   font-size: 14px;
   font-weight: 600;
-}
-.config-service small {
-  display: block;
-  margin-top: 5px;
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.5;
 }
 .config-count {
   flex-shrink: 0;
@@ -524,17 +519,16 @@
     display: flex;
     flex: 1 1 240px;
   }
-  .config-page .wf-bar {
+  .config-navigation {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+  }
+  .config-navigation > .btn {
+    align-self: flex-end;
   }
   .config-services {
     grid-template-columns: 1fr;
     gap: 8px;
-    margin-top: 16px;
-  }
-  .config-service small {
-    margin-top: 2px;
   }
   .config-service {
     padding: 13px 15px;

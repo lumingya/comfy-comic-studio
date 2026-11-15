@@ -83,7 +83,6 @@ export function ExportPicker({
       open
       onOpenChange={(open) => !open && !busy && onClose()}
       title={title}
-      description={t('ws.exportPick.lead', { noun })}
       footer={
         <>
           <button type="button" className="btn ghost" disabled={busy} onClick={onClose}>

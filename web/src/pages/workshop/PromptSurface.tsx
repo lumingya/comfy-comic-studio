@@ -250,7 +250,7 @@ export function PromptSurface({
   const report = useMemo(() => variableReport(value, known), [value, known]);
   const unclosed = hasUnclosedBrace(value);
   const summary = !report.names.length
-    ? t('ws.prompt.hint')
+    ? ''
     : [
         t('ws.prompt.found', { count: report.names.length }),
         report.unknown.length
@@ -407,15 +407,17 @@ export function PromptSurface({
           }}
         />
       </div>
-      {foot ? (
+      {foot && (summary || unclosed) ? (
         <div className="prompt-editor-foot">
-          <div className="prompt-foot">
-            <i
-              className="dot"
-              data-state={report.unknown.length || report.empty.length ? 'warn' : 'ok'}
-            />
-            <span className="prompt-summary">{summary}</span>
-          </div>
+          {summary ? (
+            <div className="prompt-foot">
+              <i
+                className="dot"
+                data-state={report.unknown.length || report.empty.length ? 'warn' : 'ok'}
+              />
+              <span className="prompt-summary">{summary}</span>
+            </div>
+          ) : null}
           <p className="prompt-hint" hidden={!unclosed}>
             {t('ws.prompt.unclosed')}
           </p>

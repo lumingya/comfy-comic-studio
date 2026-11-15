@@ -100,10 +100,7 @@ export function ThemesSection() {
 
   return (
     <section className="col" style={{ gap: 14 }}>
-      <div className="row">
-        <p className="small muted grow" style={{ margin: 0 }}>
-          {t('settings.themes.hint')}
-        </p>
+      <div className="row" style={{ justifyContent: 'flex-end' }}>
         <FilePick accept=".json" onFile={onFile}>
           <Upload size={15} /> {t('settings.themes.import')}
         </FilePick>
@@ -122,7 +119,6 @@ export function ThemesSection() {
               <strong className="grow">{t('settings.themes.system')}</strong>
               {choice === SYSTEM ? <Check size={14} className="accent-text" /> : null}
             </div>
-            <span className="small muted">{t('settings.themes.systemHint')}</span>
           </button>
         </div>
         {list.map((theme) => (

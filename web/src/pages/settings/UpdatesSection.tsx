@@ -1,5 +1,5 @@
 import { QueryError } from '../../app/errors';
-import { Download, ExternalLink, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Download, ExternalLink, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUpdateAction, useUpdateStatus } from '../../api/open';
@@ -139,11 +139,7 @@ export function UpdatesSection() {
           <p className="small warn-text" style={{ margin: 0 }}>
             {t('settings.updates.noKeys')}
           </p>
-        ) : (
-          <p className="row small muted" style={{ margin: 0 }}>
-            <ShieldCheck size={14} /> {t('settings.updates.signed')}
-          </p>
-        )}
+        ) : null}
         <a className="small row" href={s.releases_page} target="_blank" rel="noreferrer">
           <ExternalLink size={13} /> {t('settings.updates.releases')}
         </a>

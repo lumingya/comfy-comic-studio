@@ -26,9 +26,7 @@ export default function ReaderTab() {
   return (
     <div className="reader" ref={frame}>
       <div className="reader-tools">
-        <span className="small muted grow">
-          {laidOut && !failed ? t('reader.composed') : t('reader.stacked')}
-        </span>
+        <span className="small muted grow">{!laidOut || failed ? t('reader.stacked') : null}</span>
         <button className="btn ghost sm" onClick={() => (setFailed(false), setBust(bust + 1))}>
           <RefreshCw size={13} /> {t('reader.refresh')}
         </button>

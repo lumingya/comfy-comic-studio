@@ -379,7 +379,7 @@ function ProfileEditor({
               ]}
             />
           </Field>
-          <Field label={t('board.candidates')} hint={t('config.profile.candidatesHint')}>
+          <Field label={t('board.candidates')}>
             <NumberInput
               value={p.candidates}
               min={1}
@@ -391,7 +391,7 @@ function ProfileEditor({
         {p.cloud_shape ? (
           <>
             {p.cloud_refine ? <p className="notice">{t('route.hybridHint')}</p> : null}
-            <Field label={t('settings.cloudChannel')} hint={t('config.profile.cloudHint')}>
+            <Field label={t('settings.cloudChannel')}>
               <Select
                 value={p.cloud_channel}
                 onChange={(cloud_channel) => set({ cloud_channel })}
@@ -563,7 +563,6 @@ export function ProfilesSection() {
       <div className="config-section-head">
         <div>
           <h2>{t('config.profile.title')}</h2>
-          <p>{t('config.profile.intro')}</p>
         </div>
       </div>
       {profiles.isError ? (

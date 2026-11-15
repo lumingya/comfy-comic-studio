@@ -1,7 +1,7 @@
-import { BookText, ChevronRight, ListOrdered } from 'lucide-react';
+import { BookText, ListOrdered } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, NavLink, Outlet, useLocation, useOutletContext, useParams } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useOutletContext, useParams } from 'react-router-dom';
 import { usePatchSeries, useSeries } from '../../api/series';
 import type { Series } from '../../api/types';
 import { QueryError } from '../../app/errors';
@@ -43,14 +43,11 @@ export default function SeriesPage() {
 
   return (
     <div className="page">
-      <nav className="crumbs" aria-label={t('nav.breadcrumbs')}>
-        <Link to="/gallery">{t('legacy.nav.gallery')}</Link>
-        <ChevronRight size={13} />
-        <span>{series.title}</span>
-      </nav>
-      <header className="page-head" style={{ marginBottom: 18 }}>
-        <div>
+      <h1 className="sr-only">{series.title}</h1>
+      <div className="page-toolbar">
+        <div className="series-details">
           <InlineTitle
+            className="input bare"
             value={series.title}
             label={t('common.title')}
             onSave={(title) => patch.mutateAsync({ title }, { onError: toastError })}
@@ -74,7 +71,7 @@ export default function SeriesPage() {
         <ActionMenu
           actions={[{ label: t('recovery.title'), onSelect: () => setCheckpointsOpen(true) }]}
         />
-      </header>
+      </div>
       <nav className="tabs-list">
         <NavLink to="episodes" className={tab}>
           <ListOrdered size={14} /> {t('series.episodes')}

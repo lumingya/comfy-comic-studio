@@ -45,6 +45,7 @@ import {
 import { WorksHero } from './WorksHero';
 import { useShelfReorder } from './useShelfReorder';
 import { useShelfSelection, type ShelfContext } from './useShelfSelection';
+import './works-copy.css';
 
 /** Legacy key: the one-line multi-select hint stays hidden once used or dismissed. */
 const HINT_KEY = 'cc-hint-multiselect';
@@ -383,10 +384,6 @@ export default function WorksPage() {
   const filterKey = `${filter.q}|${filter.filter}|${sort}`;
   useEffect(() => setFeatured(0), [filterKey]);
   const index = Math.min(featured, Math.max(0, books.length - 1));
-  const firstEditionId = useMemo(
-    () => [...items].sort((a, b) => (a.created_at ?? '').localeCompare(b.created_at ?? ''))[0]?.id,
-    [items],
-  );
   const coverSeries = items.find((s) => s.id === coverFor);
   const settings = useSettings();
   const collectionTitle = settings.data?.collection_title || t('classic.shelf.defaultTitle');
@@ -600,9 +597,7 @@ export default function WorksPage() {
       <section className="art-fade" id="collection-home">
         <div className="collection-heading">
           <div className="grow">
-            <div className="overline">{t('classic.works.eyebrow')}</div>
             <CollectionTitle />
-            <p>{t('works.sub')}</p>
           </div>
           <div className="resource-actions">
             <CreationKitImport
@@ -706,7 +701,6 @@ export default function WorksPage() {
               books={books}
               index={index}
               onIndex={setFeatured}
-              firstEditionId={firstEditionId}
               stateOf={stateOf}
               onMenu={openMenu}
               onResume={(s) => void resume([s])}
@@ -742,7 +736,6 @@ export default function WorksPage() {
               ))}
             </div>
           ) : null}
-          {list.data?.length ? <p className="collection-note">{t('classic.shelf.note')}</p> : null}
         </div>
         {menu.state ? (
           <ContextMenu

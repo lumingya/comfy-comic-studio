@@ -237,7 +237,6 @@ export default function BoardTab() {
             <span className="count">
               {t('board.batch.selected', { count: selection.ids.length })}
             </span>
-            <span className="small muted">{t('board.batch.hint')}</span>
             <span className="grow" />
             <button className="btn ghost sm" onClick={() => void actMany(selection.ids, 'adopt')}>
               <Check size={13} /> {t('board.adopt')}

@@ -5,13 +5,13 @@ import { Select } from '../../components/ui';
 import type { ReactNode } from 'react';
 import './AppearanceSection.css';
 
-function SettingsRow(props: { icon: IconName; title: string; body: string; control: ReactNode }) {
+function SettingsRow(props: { icon: IconName; title: string; body?: string; control: ReactNode }) {
   return (
-    <div className="settings-row">
+    <div className="settings-row appearance-row">
       <Icon name={props.icon} />
       <div className="grow">
         <h3>{props.title}</h3>
-        <p>{props.body}</p>
+        {props.body ? <p>{props.body}</p> : null}
       </div>
       {props.control}
     </div>
@@ -63,7 +63,6 @@ export function AppearanceSection() {
     <>
       <section className="settings-section">
         <h2>{t('legacy.settings.preferences.displayTitle')}</h2>
-        <p>{t('legacy.settings.preferences.displayHint')}</p>
         <SettingsRow
           icon="list"
           title={t('legacy.settings.preferences.lettering')}
@@ -85,7 +84,6 @@ export function AppearanceSection() {
         <SettingsRow
           icon="expand"
           title={t('legacy.settings.preferences.fontScale')}
-          body={t('legacy.settings.preferences.fontScaleHint')}
           control={
             <SettingSelect
               label={t('legacy.settings.preferences.fontScale')}
@@ -103,7 +101,6 @@ export function AppearanceSection() {
         <SettingsRow
           icon="list"
           title={t('legacy.settings.preferences.density')}
-          body={t('legacy.settings.preferences.densityHint')}
           control={
             <SettingSelect
               label={t('legacy.settings.preferences.density')}
@@ -120,7 +117,6 @@ export function AppearanceSection() {
         <SettingsRow
           icon="book"
           title={t('legacy.settings.preferences.reduceMotion')}
-          body={t('legacy.settings.preferences.reduceMotionHint')}
           control={
             <label className="switch">
               <input
@@ -137,11 +133,9 @@ export function AppearanceSection() {
       </section>
       <section className="settings-section">
         <h2>{t('legacy.settings.preferences.readerTitle')}</h2>
-        <p>{t('legacy.settings.preferences.readerHint')}</p>
         <SettingsRow
           icon="book"
           title={t('legacy.settings.preferences.defaultReaderMode')}
-          body={t('legacy.settings.preferences.defaultReaderModeHint')}
           control={
             <SettingSelect
               label={t('legacy.settings.preferences.defaultReaderMode')}

@@ -51,7 +51,6 @@ export function shelfDate(iso: string | undefined, language: string): string {
 export function Parchment({ series }: { series: SeriesCard }) {
   return (
     <span className="parchment">
-      <span className="parchment-mark">MIO · COLLECTION</span>
       <span className="parchment-title" data-text={series.title} />
       {series.subtitle ? <span className="parchment-sub" data-text={series.subtitle} /> : null}
       <span className="parchment-rule" />
@@ -118,7 +117,6 @@ export function Showcase(props: {
   books: SeriesCard[];
   index: number;
   onIndex: (i: number) => void;
-  firstEditionId?: string;
   stateOf: (series: SeriesCard) => ShelfState;
   onMenu: (series: SeriesCard, e: MouseEvent<HTMLButtonElement>) => void;
   onResume: (series: SeriesCard) => void;
@@ -200,16 +198,11 @@ export function Showcase(props: {
       </div>
       <div className="edition-info">
         <div className="edition-count">
-          {b.id === props.firstEditionId
-            ? t('classic.shelf.firstEdition')
-            : t('classic.shelf.visualStory')}{' '}
-          / {t('classic.shelf.frames', { count: b.panel_count ?? 0 })}
+          {t('classic.shelf.frames', { count: b.panel_count ?? 0 })}
         </div>
         <h2>{b.title}</h2>
-        <p className="synopsis">{b.synopsis || b.subtitle || t('classic.shelf.noSynopsis')}</p>
-        <div className="edition-byline">
-          {cast.length ? cast.slice(0, 3).join(' · ') : t('classic.shelf.original')}
-        </div>
+        {b.synopsis || b.subtitle ? <p className="synopsis">{b.synopsis || b.subtitle}</p> : null}
+        {cast.length ? <div className="edition-byline">{cast.slice(0, 3).join(' · ')}</div> : null}
         <div className="edition-entry">
           <Link to={to} className="read-link" data-shelf-open>
             {t('classic.shelf.open')} <ArrowRight size={14} />
@@ -235,10 +228,6 @@ export function Showcase(props: {
             <RefreshCw size={13} /> {t('classic.shelf.resume', { count: missing })}
           </button>
         ) : null}
-        <div className="edition-credit mono">
-          MIO
-          <span>{t('classic.shelf.credit')}</span>
-        </div>
       </div>
     </article>
   );

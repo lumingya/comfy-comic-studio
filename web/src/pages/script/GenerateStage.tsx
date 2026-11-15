@@ -119,7 +119,6 @@ export function GenerateStage(props: {
   const shown = takes.slice(0, 12);
   const zoom = takes.find((tk) => tk.id === zoomId) ?? null;
   const zoomAt = zoom ? shown.indexOf(zoom) : -1;
-  const picked = takes.some((tk) => tk.status === 'adopted');
 
   const act = (take: Take, a: TakeAction) =>
     action.mutate({ takeId: take.id, action: a }, { onError: toastError });
@@ -229,13 +228,6 @@ export function GenerateStage(props: {
       )}
 
       <footer className="stage-foot">
-        <span>
-          {picked
-            ? t('classic.stage.pickedHint')
-            : shown.length
-              ? t('classic.stage.pickHint')
-              : t('classic.stage.shortcut')}
-        </span>
         <span className="grow" />
         {takes.length > shown.length ? (
           <span className="muted">

@@ -49,7 +49,7 @@ const basePromptKey = (id: string) => `mio.basePrompt.${id}`;
 export type WorkshopTab = 'story' | 'presets' | 'assembly';
 const TABS: WorkshopTab[] = ['story', 'presets', 'assembly'];
 
-/** Legacy heading (kicker, title, one line) + the three quiet tabs, shared by every tab. */
+/** Navigation and actions shared by the workshop tabs. */
 export function WorkshopFrame({
   tab,
   actions,
@@ -66,31 +66,27 @@ export function WorkshopFrame({
   return (
     <div className="art-fade">
       <div className={`assembly-workshop is-${tab}`}>
-        <header className="workshop-heading">
-          <div>
-            <span className="context-kicker">{t('ws.kicker')}</span>
-            <h1>{t(`ws.head.${tab}`)}</h1>
-            <p>{t(`ws.lede.${tab}`)}</p>
-          </div>
+        <h1 className="sr-only">{t(`ws.head.${tab}`)}</h1>
+        <div className="workshop-toolbar">
+          <nav className="quiet-tabs workshop-tabs" aria-label={t('ws.tabsLabel')}>
+            {TABS.map((id) => (
+              <button
+                key={id}
+                type="button"
+                className={tab === id ? 'active' : ''}
+                aria-current={tab === id ? 'page' : undefined}
+                onClick={() => navigate(workshopHref(`/workshop/${id}`, params.get('kit') ?? ''))}
+              >
+                {t(`ws.tab.${id}`)}
+              </button>
+            ))}
+          </nav>
           {actions ? (
             <div className="workshop-heading-actions" role="group">
               {actions}
             </div>
           ) : null}
-        </header>
-        <nav className="quiet-tabs workshop-tabs" aria-label={t('ws.tabsLabel')}>
-          {TABS.map((id) => (
-            <button
-              key={id}
-              type="button"
-              className={tab === id ? 'active' : ''}
-              aria-current={tab === id ? 'page' : undefined}
-              onClick={() => navigate(workshopHref(`/workshop/${id}`, params.get('kit') ?? ''))}
-            >
-              {t(`ws.tab.${id}`)}
-            </button>
-          ))}
-        </nav>
+        </div>
         {tab !== 'assembly' ? <WorkshopSourcePicker key={tab} tab={tab} /> : null}
         {children}
       </div>

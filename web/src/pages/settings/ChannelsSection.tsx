@@ -71,7 +71,7 @@ function ChannelFields({
   return (
     <>
       <div className="grid-2">
-        <Field label={t('common.name')} hint={t('config.cloud.nameHint')}>
+        <Field label={t('common.name')}>
           <TextInput
             value={c.label}
             onChange={(label) => set({ label })}

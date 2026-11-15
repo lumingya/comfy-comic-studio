@@ -478,7 +478,6 @@ export default function AssemblyTab() {
           label: t('ws.queue.resumeAll'),
           icon: <Icon name="play" sm />,
           disabled: !canResume,
-          hint: t('ws.queue.menu.resumeAllHint'),
           onSelect: resumeAll,
         },
         {
@@ -511,7 +510,6 @@ export default function AssemblyTab() {
           label: t('ws.queue.resume'),
           icon: <Icon name="play" sm />,
           primary: true,
-          hint: t('ws.queue.resumeHint'),
           onSelect: () => run(jobs([task], 'resume')),
         }
       : a.canPause
@@ -557,7 +555,6 @@ export default function AssemblyTab() {
                 {
                   label: t('ws.queue.menu.enqueue'),
                   icon: <Icon name="list" sm />,
-                  hint: t('ws.queue.menu.enqueueHint'),
                   onSelect: () => queueRun([id]),
                 },
               ]
@@ -665,7 +662,6 @@ export default function AssemblyTab() {
             () => startable.forEach((x) => void startTask(x)),
             {
               primary: true,
-              hint: t('ws.queue.menu.startManyHint'),
             },
           ),
           ...entry(
@@ -673,9 +669,7 @@ export default function AssemblyTab() {
             'list',
             startable,
             () => queueRun(startable.map((x) => x.album.id!)),
-            {
-              hint: t('ws.queue.menu.sequenceManyHint'),
-            },
+            {},
           ),
         ],
       },

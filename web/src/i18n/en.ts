@@ -118,8 +118,7 @@ const en: Widen<Dict> = {
     episodes: 'Episodes',
     newEpisode: 'New episode',
     generate: 'From one sentence',
-    generateHint:
-      'Describe the episode in one sentence; the AI writes a 12–16 panel script and adds new characters and places to the bible.',
+    generateHint: 'Generates 12–16 panels and adds new characters and places to the bible.',
     sentencePlaceholder: 'e.g. An illustrator working late meets an old classmate at the konbini',
     generating: 'Writing the script…',
     panels: '{{count}} panels',
@@ -144,9 +143,10 @@ const en: Widen<Dict> = {
     age: 'Age',
     appearance: 'Appearance notes',
     appearanceHint:
-      'Joined into the description for natural-dialect models when no description is set; not added to tag prompts',
+      'Used in natural-language prompts when the description is empty; excluded from tags.',
     promptTags: 'Prompt tags',
     promptTagsHint: 'Added to prompts, e.g. short black hair, round eyewear',
+    description: 'Natural-language description',
     descriptionHint: 'Natural-language description for natural-dialect models',
     trigger: 'LoRA trigger',
     outfits: 'Outfits',
@@ -562,8 +562,7 @@ const en: Widen<Dict> = {
     undoHint: 'Undo (Ctrl / ⌘ + Z)',
     redoHint: 'Redo (Ctrl / ⌘ + Shift + Z, or Ctrl + Y)',
     crop: 'Image framing',
-    cropHint:
-      'Zoom and move the crop without stretching the image. Save to use it in reading and exports.',
+    cropHint: 'Saved framing applies to reading and exports.',
     cropZoom: 'Framing zoom',
     cropX: 'Horizontal framing (left → right)',
     cropY: 'Vertical framing (top → bottom)',
@@ -608,7 +607,7 @@ const en: Widen<Dict> = {
   pacing: {
     open: 'Auto pacing',
     heading: 'Auto pacing',
-    hint: 'Suggests width modes, ratios, gaps and transitions from shots, scene and time changes; tick the ones to accept. Locked panels stay untouched.',
+    hint: 'Only selected suggestions are applied. Locked panels stay untouched.',
     applied: 'Applied pacing to {{count}} panels',
     applyN: 'Apply {{count}} selected',
     none: 'The pacing already matches the suggestions.',
@@ -809,7 +808,7 @@ const en: Widen<Dict> = {
     },
     access: {
       tokens: 'API tokens',
-      tokensHint: 'Tokens for bots and scripts calling /api/v2. The local web UI needs none.',
+      tokensHint: 'For access to the Mio API.',
       createToken: 'Create token',
       tokenCreated: 'Token created',
       secretOnce: 'Shown only once — copy it now.',
@@ -822,8 +821,7 @@ const en: Widen<Dict> = {
       lastUsed: 'Last used',
       revoke: 'Revoke',
       webhooks: 'Webhooks',
-      webhooksHint:
-        'POSTs events to a URL, signed with HMAC (X-Mio-Signature); failures are retried.',
+      webhooksHint: 'Events are sent by POST; verify X-Mio-Signature.',
       events: 'Events',
       addWebhook: 'Add webhook',
       webhookCreated: 'Webhook added: signing secret',
@@ -846,7 +844,7 @@ const en: Widen<Dict> = {
       signed: 'Update packages are verified with Ed25519 signatures',
       releases: 'Open releases page',
       feed: 'Update manifest URL',
-      feedHint: 'Empty = GitHub releases; point it at a mirrored mio-release.json if you host one',
+      feedHint: 'Leave blank for GitHub, or enter a mirror’s mio-release.json URL.',
     },
     llm: 'Text models',
     llmHint: 'OpenAI-compatible endpoint used for script generation.',
@@ -1057,7 +1055,7 @@ const en: Widen<Dict> = {
     },
     hero: {
       eyebrow: 'THE FIRST EDITION',
-      title: 'Frame your story. Bind your ideas.',
+      title: 'No albums yet',
       body: 'Describe a scene, press Generate and pick your favourite from a few candidates — that is your first album started.',
       start: 'Create your first album',
       steps: {
@@ -1181,7 +1179,7 @@ const en: Widen<Dict> = {
       },
       kicker: 'GET STARTED',
       guide: 'First run and tutorials',
-      firstTitle: 'First light on the page',
+      firstTitle: 'Setup checklist',
       firstBody:
         'Image services are only called when you press Start on a render; costs depend on the service you pick.',
       hide: 'Hide guide',
@@ -1217,7 +1215,7 @@ const en: Widen<Dict> = {
         trialNone: 'Nothing rendered yet. Try a render with just one or two scenes.',
         run: 'Go render',
       },
-      learnTitle: 'Tutorial · start here',
+      learnTitle: 'User guide',
       learnBody: 'First render, prompt variables, shortcuts and FAQ',
       learnOpen: 'Open tutorial ↗',
       footerKicker: 'MIO / MADE FOR YOUR STORIES',
@@ -1267,7 +1265,6 @@ const en: Widen<Dict> = {
       progress: '{{done}} / {{total}} scenes adopted',
     },
     engine: {
-      kicker: 'Image production · services and workflows',
       title: 'Workflows & APIs',
       lede: 'Connect your local ComfyUI and wire storyboard prompts, models and parameters to workflow nodes.',
       channelKicker: 'Image services',
@@ -1309,8 +1306,7 @@ const en: Widen<Dict> = {
         displayTitle: 'Fonts & display',
         displayHint: 'Tune text, colour and density so long sessions stay comfortable.',
         lettering: 'Display typeface',
-        letteringHint:
-          'Only the UI headings and decorative text change; the editor stays readable.',
+        letteringHint: 'Used for headings and decorative text.',
         letteringEditorial: 'Books · elegant serif',
         letteringCalligraphy: 'Brush · Eastern calligraphy',
         letteringClassic: 'Archives · classical serif',
@@ -1339,7 +1335,7 @@ const en: Widen<Dict> = {
       storageTitle: 'Where things are saved',
       storageBody:
         'Works, storyboards and images live in the local data folder and are never uploaded.',
-      dataTitle: 'Import & backup',
+      dataTitle: 'Import album',
       themesTitle: 'Themes',
       accessTitle: 'API tokens & webhooks',
       dataBody: 'Import a .mio.zip bundle, or restore deleted works from the trash.',
