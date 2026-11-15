@@ -40,7 +40,8 @@ RENDER_RE = re.compile(
     r"|episodes/[^/]+/(render|finalize|edit|qa|assistant/propose)"
     r"|jobs/[^/]+/(retry|resume)"
     r"|jobs/[^/]+/items/[^/]+/(restore-state|replay-result|resolve)"
-    r"|workshop/queue/(start|resume))$"
+    r"|workshop/queue/(start|resume)"
+    r"|workflows/[^/]+/trial)$"
 )
 ADMIN_RE = re.compile(
     r"^/(settings|instances|webhooks|legacy|update|tokens|extensions|ext|backups)(/|$)"

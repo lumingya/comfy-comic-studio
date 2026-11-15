@@ -1,8 +1,7 @@
 import { ResizableSplit } from '../../components/ResizableSplit';
-import { Copy, Download, Stethoscope, Trash2, Upload } from 'lucide-react';
+import { Copy, Download, Play, Stethoscope, Trash2, Upload } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 import {
   useCopyWorkflow,
   useDeleteWorkflow,
@@ -20,6 +19,7 @@ import { Empty, Field, FilePick, Loading, Modal, Select, TextInput } from '../..
 import { ConfigurationGuard, jsonObject, saveJson, useDiscardChanges } from './ConfigurationParts';
 import { WorkflowEditor } from './WorkflowEditor';
 import { DiagnosisView, WorkflowImportPreview } from './WorkflowInspection';
+import { WorkflowTrial } from './WorkflowTrial';
 
 export function WorkflowsSection() {
   const { t } = useTranslation();
@@ -34,6 +34,7 @@ export function WorkflowsSection() {
   const [search, setSearch] = useState('');
   const [dirty, setDirty] = useState(false);
   const [diagnosing, setDiagnosing] = useState(false);
+  const [trialOpen, setTrialOpen] = useState(false);
   const [instance, setInstance] = useState('');
   const [diagnosisVariant, setDiagnosisVariant] = useState('');
   const [pendingImport, setPendingImport] = useState<{
@@ -136,7 +137,19 @@ export function WorkflowsSection() {
               <div className="config-toolbar">
                 <button
                   type="button"
+                  className="btn sm primary"
+                  disabled={dirty || !detail.data || busy}
+                  title={dirty ? t('config.workflow.trial.saveFirst') : undefined}
+                  onClick={() => setTrialOpen(true)}
+                >
+                  <Play size={14} />
+                  {t('config.workflow.trial.open')}
+                </button>
+                <button
+                  type="button"
                   className="btn sm"
+                  disabled={dirty || !detail.data}
+                  title={dirty ? t('config.workflow.saveFirst') : undefined}
                   onClick={() => {
                     diagnose.reset();
                     setDiagnosisVariant('');
@@ -144,7 +157,7 @@ export function WorkflowsSection() {
                   }}
                 >
                   <Stethoscope size={14} />
-                  {t('settings.diagnose')}
+                  {t('config.workflow.check')}
                 </button>
                 <button
                   type="button"
@@ -188,8 +201,7 @@ export function WorkflowsSection() {
                 <span className="grow" />
                 <button
                   type="button"
-                  className="btn ghost icon sm danger"
-                  aria-label={t('common.delete')}
+                  className="btn ghost sm danger"
                   title={
                     active.source === 'builtin'
                       ? t('config.workflow.builtinHint')
@@ -216,19 +228,26 @@ export function WorkflowsSection() {
                   }}
                 >
                   <Trash2 size={14} />
+                  {t('config.workflow.delete')}
                 </button>
               </div>
+              {dirty ? <p className="small muted">{t('config.workflow.trial.saveFirst')}</p> : null}
               <WorkflowEditor key={active.id} id={active.id} onDirty={setDirty} />
             </div>
           ) : null}
         </ResizableSplit>
       )}
-      <div className="config-next">
-        <span>{t('config.workflow.nextHint')}</span>
-        <Link className="btn sm" to="/engine?tab=profiles">
-          {t('config.workflow.next')}
-        </Link>
-      </div>
+      {active ? (
+        <WorkflowTrial
+          key={active.id}
+          workflowId={active.id}
+          name={active.name}
+          open={trialOpen}
+          onOpenChange={setTrialOpen}
+          dirty={dirty}
+          instances={instances.data?.instances ?? []}
+        />
+      ) : null}
       {pendingImport ? (
         <WorkflowImportPreview
           workflow={pendingImport.workflow}
@@ -253,8 +272,7 @@ export function WorkflowsSection() {
       <Modal
         open={diagnosing}
         onOpenChange={setDiagnosing}
-        title={t('settings.diagnoseTitle', { name: active?.name ?? '' })}
-        description={t('settings.diagnoseHint')}
+        title={t('config.workflow.checkTitle', { name: active?.name ?? '' })}
         footer={
           <button
             type="button"
@@ -269,7 +287,7 @@ export function WorkflowsSection() {
             }
           >
             <Stethoscope size={15} />
-            {t('settings.diagnose')}
+            {t('config.workflow.check')}
           </button>
         }
       >

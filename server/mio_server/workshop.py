@@ -19,9 +19,11 @@ import json
 import logging
 from pathlib import Path
 
+from . import generation as G
 from .assembly import AssemblyPreview, build_snapshot, inspect_snapshot
 from .models import (
     Episode,
+    GenerationOptions,
     Panel,
     PanelOverrides,
     Preset,
@@ -181,6 +183,7 @@ def assemble(
     profile_id: str | None = None,
     variables: dict[str, str] | None = None,
     idempotency_key: str | None = None,
+    generation: GenerationOptions | None = None,
 ) -> tuple[Series, Episode]:
     """Storyboard + presets → a new album waiting in the queue (no model is called)."""
     request = {
@@ -189,6 +192,7 @@ def assemble(
         "title": title,
         "profile_id": profile_id,
         "variables": variables or {},
+        "generation": generation.model_dump(exclude_unset=True) if generation else None,
     }
     request_sha = hashlib.sha256(
         json.dumps(request, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()
@@ -199,25 +203,40 @@ def assemble(
             if previous:
                 return previous
         snapshot = _assembly_snapshot(
-            store, storyboard_id, preset_ids, title, profile_id, variables
+            store, storyboard_id, preset_ids, title, profile_id, variables, generation
         )
-        return store.create_assembly(
+        result = store.create_assembly(
             snapshot.series,
             snapshot.episode,
             idempotency_key=idempotency_key,
             request_sha=request_sha,
         )
+        G.remember(store, snapshot.series.generation)
+        return result
 
 
-def _assembly_snapshot(store, storyboard_id, preset_ids, title, profile_id, variables):
+def _assembly_snapshot(
+    store, storyboard_id, preset_ids, title, profile_id, variables, generation=None
+):
     workshop = find_workshop(store)
     if workshop is None:
         raise NotFound("workshop not found")
     snapshot = build_snapshot(
         workshop, store.get_episode(storyboard_id), preset_ids, title, profile_id, variables
     )
-    if snapshot.series.default_profile_id:
-        store.get_doc("profile", snapshot.series.default_profile_id)
+    if (
+        profile_id
+        and generation
+        and any(
+            (
+                generation.workflow_id is not None,
+                generation.cloud_channel_id is not None,
+                generation.profile_id not in (None, profile_id),
+            )
+        )
+    ):
+        raise ValueError("请只选择一个出图来源")
+    G.attach(store, snapshot.series, snapshot.episode, generation)
     return snapshot
 
 
@@ -228,11 +247,12 @@ def assembly_preview(
     title: str = "",
     profile_id: str | None = None,
     variables: dict[str, str] | None = None,
+    generation: GenerationOptions | None = None,
 ) -> AssemblyPreview:
     """Inspect the same prospective album as assemble, without writes or remote calls."""
     with store.lock:
         snapshot = _assembly_snapshot(
-            store, storyboard_id, preset_ids, title, profile_id, variables
+            store, storyboard_id, preset_ids, title, profile_id, variables, generation
         )
         return inspect_snapshot(store, snapshot, storyboard_id)
 
@@ -245,19 +265,42 @@ def preview(
     profile_id: str | None = None,
     *,
     source_id: str | None = None,
+    generation: GenerationOptions | None = None,
+    idempotency_key: str | None = None,
 ) -> tuple[Series, Episode]:
     """预设工坊「独立试绘」: one prompt + the chosen presets → a one-frame album waiting in the
     queue (no storyboard involved).  The legacy workshop used it to check a character or style
     preset on its own; the album is marked with ``subtitle = PREVIEW_SUBTITLE`` so the preset page
     can list its results."""
+    request = {
+        "source_id": source_id,
+        "preset_ids": preset_ids,
+        "prompt": prompt,
+        "title": title,
+        "profile_id": profile_id,
+        "generation": generation.model_dump(exclude_unset=True) if generation else None,
+    }
+    request_sha = hashlib.sha256(
+        json.dumps(request, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()
+    ).hexdigest()
+    key = f"preset-preview:{idempotency_key}" if idempotency_key else None
     with store.tx():
+        if key:
+            previous = store.assembly_receipt(key, request_sha)
+            if previous:
+                return previous
         workshop = store.get_series(source_id) if source_id else ensure_workshop(store)
         if source_id and workshop.kind != "kit":
             raise NotFound(f"creation kit not found: {source_id}")
-        return _preview_source(store, workshop, preset_ids, prompt, title, profile_id)
+        album, episode = _preview_source(
+            store, workshop, preset_ids, prompt, title, profile_id, generation
+        )
+        result = store.create_assembly(album, episode, idempotency_key=key, request_sha=request_sha)
+        G.remember(store, album.generation)
+        return result
 
 
-def _preview_source(store, workshop, preset_ids, prompt, title, profile_id):
+def _preview_source(store, workshop, preset_ids, prompt, title, profile_id, generation=None):
     """Freeze the selected resource source and both new records in the caller's transaction."""
     by_id = {p.id: p for p in workshop.presets}
     missing = [pid for pid in preset_ids if pid not in by_id]
@@ -275,23 +318,20 @@ def _preview_source(store, workshop, preset_ids, prompt, title, profile_id):
     for pid in preset_ids:
         variables.update(by_id[pid].variables())
     first = by_id[preset_ids[0]]
-    album = store.create_series(
-        Series(
-            title=(title.strip() or f"{first.title} · 试绘")[:120],
-            subtitle=PREVIEW_SUBTITLE,
-            kind="album",
-            presets=[by_id[pid].model_copy(deep=True) for pid in preset_ids],
-            bible=workshop.bible.model_copy(deep=True),
-            variants=[v.model_copy(deep=True) for v in workshop.variants],
-            variables=variables,
-            default_profile_id=chosen_profile,
-        )
+    album = Series(
+        title=(title.strip() or f"{first.title} · 试绘")[:120],
+        subtitle=PREVIEW_SUBTITLE,
+        kind="album",
+        presets=[by_id[pid].model_copy(deep=True) for pid in preset_ids],
+        bible=workshop.bible.model_copy(deep=True),
+        variants=[v.model_copy(deep=True) for v in workshop.variants],
+        variables=variables,
+        default_profile_id=chosen_profile,
     )
     # Raw mode keeps the ``{变量}`` prompt as written; a fixed seed makes presets comparable.
     panel = Panel(order=0, description=text, overrides=PanelOverrides(raw_prompt=text, seed=1))
-    episode = store.create_episode(
-        Episode(series_id=album.id, title="试绘", order=0, synopsis=text, panels=[panel])
-    )
+    episode = Episode(series_id=album.id, title="试绘", order=0, synopsis=text, panels=[panel])
+    G.attach(store, album, episode, generation)
     return album, episode
 
 
@@ -315,6 +355,7 @@ def clone_task(store, series_id: str, title: str = "") -> tuple[Series, Episode]
             variants=[v.model_copy(deep=True) for v in source.variants],
             variables=dict(source.variables),
             default_profile_id=source.default_profile_id,
+            generation=source.generation.model_copy(deep=True) if source.generation else None,
         )
     )
     panels = [Panel.model_validate(p.model_dump()) for p in board.ordered_panels()]

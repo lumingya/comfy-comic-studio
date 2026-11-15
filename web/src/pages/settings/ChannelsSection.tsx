@@ -447,12 +447,6 @@ export function ChannelsSection() {
             ) : null}
           </ResizableSplit>
         )}
-        <div className="config-next">
-          <span>{t('config.cloud.nextHint')}</span>
-          <Link className="btn sm" to="/engine?tab=profiles">
-            {t('config.cloud.next')}
-          </Link>
-        </div>
         {duplicate ? (
           <p className="notice error" role="alert">
             {t('settings.channels.duplicate')}

@@ -8,6 +8,7 @@ import { workshopKey } from '../../api/workshop';
 import { confirm } from '../../components/confirm';
 import { episode, series } from '../../test/fixtures';
 import { mockFetch } from '../../test/utils';
+import { configProfile } from '../../test/configuration';
 import PresetsTab from './PresetsTab';
 import { StoryBody, StoryIndex, StoryTab } from './WorkshopPage';
 
@@ -19,6 +20,8 @@ vi.mock('../../components/confirm', () => ({
 const preset = (id: string, value: string) => ({
   id,
   title: `${id} preset`,
+  positive_prompt: '',
+  negative_prompt: '',
   groups: [],
   bindings: [],
   entries: [
@@ -263,21 +266,31 @@ describe('workshop creation-kit sources', () => {
 
   it('submits independent preset preview to the kit API only after saving the current preset', async () => {
     const calls = mockFetch(
-      routes({ 'POST /api/creation-kits/kit/preview-preset': { series, episode } }),
+      routes({
+        'GET /api/profiles': [configProfile],
+        'GET /api/workflows': [],
+        'GET /api/settings': { image_channels: [] },
+        'POST /api/creation-kits/kit/preview-preset': { series, episode },
+        'POST /api/workshop/queue/start': {},
+      }),
     );
     const { router } = mount();
     fireEvent.change(await screen.findByLabelText('Hero prompt'), {
       target: { value: 'preview hero' },
     });
     fireEvent.click(screen.getByRole('button', { name: '独立试绘' }));
-    fireEvent.click(screen.getByRole('button', { name: '添加待命试绘' }));
-    await waitFor(() =>
-      expect(calls.some((call) => call.url.endsWith('/preview-preset'))).toBe(true),
-    );
+    await waitFor(() => expect(screen.getByLabelText('出图工作流或云端服务')).toBeEnabled());
+    fireEvent.change(screen.getByLabelText('出图工作流或云端服务'), {
+      target: { value: `profile:${configProfile.id}` },
+    });
+    await waitFor(() => expect(screen.getByRole('button', { name: '开始生成' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: '开始生成' }));
+    await waitFor(() => expect(calls.some((call) => call.url.endsWith('/queue/start'))).toBe(true));
     const mutations = calls.filter((call) => call.method !== 'GET');
     expect(mutations.map((call) => call.url)).toEqual([
       '/api/series/kit',
       '/api/creation-kits/kit/preview-preset',
+      '/api/workshop/queue/start',
     ]);
     expect(mutations[1].body).toMatchObject({ preset_ids: ['imported'], prompt: '{hero}' });
     await screen.findByText('Assembly');

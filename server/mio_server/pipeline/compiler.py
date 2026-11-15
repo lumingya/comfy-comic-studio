@@ -97,6 +97,9 @@ def compile_panel(
 ) -> PanelPrompt:
     ov = panel.overrides
     width, height = canvas_size(panel, base_width=base_width)
+    if series.generation:
+        width = series.generation.width or width
+        height = series.generation.height or height
     width, height = ov.width or width, ov.height or height
     chosen_seed = ov.seed if ov.seed is not None else seed
     if chosen_seed is None:
@@ -110,16 +113,29 @@ def compile_panel(
             loras.extend(l.model_dump() for l in ch.loras)
     style_negative = ", ".join(style.negative) if style else ""
     table = V.table(series, panel, bible, style.id if style else None)
-    texts = [ov.raw_prompt or "", ov.raw_negative or "", ov.append_prompt, ov.negative_prompt]
+    preset_positive = [preset.positive_prompt for preset in series.presets]
+    preset_negative = [preset.negative_prompt for preset in series.presets]
+    texts = [
+        ov.raw_prompt or "",
+        ov.raw_negative or "",
+        ov.append_prompt,
+        ov.negative_prompt,
+        *preset_positive,
+        *preset_negative,
+    ]
     unresolved = sorted({name for t in texts for name in V.unknown(t, table)})
     raw, raw_neg, append, extra_neg = (
         V.expand(t, table) if t else t
         for t in (ov.raw_prompt, ov.raw_negative, ov.append_prompt, ov.negative_prompt)
     )
+    preset_pos = _join(*(V.expand(text, table) for text in preset_positive))
+    preset_neg = _join(*(V.expand(text, table) for text in preset_negative))
     if raw is not None:
-        neg = raw_neg if raw_neg is not None else _join(", ".join(P.NEGATIVE), style_negative)
+        neg = raw_neg if raw_neg is not None else _join(", ".join(negative or []), style_negative)
+        if preset_neg:
+            neg = _join(neg, preset_neg)
         return PanelPrompt(
-            raw,
+            _join(raw, ", ".join(quality or []), preset_pos) if quality or preset_pos else raw,
             neg,
             width,
             height,
@@ -145,8 +161,8 @@ def compile_panel(
         text, refs = P.natural(story, pv, with_refs=True, reference_slots=slots)
         if style and style.description:
             text = f"{text} Style: {style.description}."
-        positive = _join(text, append)
-        neg = _join(", ".join(negative) if negative is not None else "", style_negative, extra_neg)
+        positive = _join(text, append, ", ".join(quality or []), preset_pos)
+        neg = _join(", ".join(negative or []), style_negative, extra_neg, preset_neg)
         return PanelPrompt(
             positive,
             neg,
@@ -161,16 +177,16 @@ def compile_panel(
     style_tags = tuple(style.tag_description) if style and style.tag_description else P.STYLE_TAGS
     pos_parts, neg_parts = P.danbooru_parts(story, pv, extra_style=style_tags)
     pos_parts = [(P.escape_tag(t), s) for t, s in pos_parts]
-    if quality is not None:
-        # The render profile's own quality list replaces the built-in one.
-        rest = [(t, s) for t, s in pos_parts if s != "quality"]
-        pos_parts = P.sourced([(P.escape_tag(t), "profile") for t in quality] + rest)
-    if negative is not None:
-        neg_parts = [(t, "profile") for t in P.dedupe(negative)]
+    # Only explicitly configured quality / negative fragments are sent.
+    rest = [(t, s) for t, s in pos_parts if s != "quality"]
+    pos_parts = P.sourced([(P.escape_tag(t), "profile") for t in quality or []] + rest)
+    neg_parts = [(t, "profile") for t in P.dedupe(negative or [])]
     # The author's own text is appended verbatim (never deduped against generated tags).
     pos_parts += [(t, "append") for t in _split(append)]
     neg_parts += [(t, "style_negative") for t in _split(style_negative)]
     neg_parts += [(t, "extra") for t in _split(extra_neg)]
+    pos_parts += [(t, "preset") for t in _split(preset_pos)]
+    neg_parts += [(t, "preset") for t in _split(preset_neg)]
     refs = [c["id"] for c in pv["characters"]]
     return PanelPrompt(
         ", ".join(t for t, _ in pos_parts),

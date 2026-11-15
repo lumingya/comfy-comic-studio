@@ -9,9 +9,10 @@ import hashlib
 from ..assembly import build_snapshot, inspect_snapshot
 from ..asset_refs import referenced_assets
 from ..assets import sniff
+from ..generation import profile_for
 from ..models import Episode, Series, new_id, now_iso
 from ..pipeline.variables import PATTERN
-from ..render_models import Asset
+from ..render_models import Asset, WorkflowDoc
 from ..storage import Conflict, NotFound
 from .archive import MAX_ARCHIVE, pack, request_hash, unpack
 from .models import (
@@ -36,7 +37,11 @@ def export_kit(ctx, selection: KitSelection) -> bytes:
         if not set(selection.preset_ids) <= set(by_id):
             raise ValueError("所选预设不存在")
         series.presets = [by_id[pid] for pid in selection.preset_ids]
-        series.default_profile_id = series.default_profile_id or "profile_default"
+        series.default_profile_id = (
+            str(series.generation.profile["id"])
+            if series.generation
+            else series.default_profile_id or "profile_default"
+        )
         episodes = []
         for order, eid in enumerate(selection.episode_ids):
             ep = ctx.store.get_episode(eid).model_copy(deep=True)
@@ -61,13 +66,16 @@ def export_kit(ctx, selection: KitSelection) -> bytes:
             p.overrides.profile_id for e in episodes for p in e.panels if p.overrides.profile_id
         )
         profiles = [
-            ctx.store.get_doc("profile", pid).model_copy(deep=True) for pid in sorted(profile_ids)
+            profile_for(ctx.store, series, pid).model_copy(deep=True) for pid in sorted(profile_ids)
         ]
         workflow_ids = {
             s.workflow_id for p in profiles for s in [*p.draft, *p.final, *p.edits.values()]
         }
         workflows = [
-            ctx.store.get_doc("workflow", wid).model_copy(deep=True) for wid in sorted(workflow_ids)
+            WorkflowDoc.model_validate(series.generation.workflows[wid])
+            if series.generation and wid in series.generation.workflows
+            else ctx.store.get_doc("workflow", wid).model_copy(deep=True)
+            for wid in sorted(workflow_ids)
         ]
         external = [
             ExternalRequirement(
@@ -77,6 +85,8 @@ def export_kit(ctx, selection: KitSelection) -> bytes:
         ]
         for profile in profiles:
             profile.instances, profile.cloud_channel = [], ""
+        # A reusable kit must use its explicit destination bindings, never a source task snapshot.
+        series.generation = None
         ids = referenced_assets(series, episodes, [*profiles, *workflows])
         blobs = {aid: ctx.assets.read(aid) for aid in sorted(ids)}
         payload = KitPayload(
@@ -328,6 +338,8 @@ def kit(ctx, series_id):
 
 
 def _assembly_snapshot(ctx, series_id: str, request: KitAssembly):
+    from .. import generation as G
+
     source = kit(ctx, series_id)
     episode = ctx.store.get_episode(request.episode_id)
     snapshot = build_snapshot(
@@ -338,8 +350,7 @@ def _assembly_snapshot(ctx, series_id: str, request: KitAssembly):
         profile_id=request.profile_id,
         variables=request.variables,
     )
-    if snapshot.series.default_profile_id:
-        ctx.store.get_doc("profile", snapshot.series.default_profile_id)
+    G.attach(ctx.store, snapshot.series, snapshot.episode, request.generation)
     return snapshot
 
 
@@ -350,13 +361,22 @@ def preview_kit(ctx, series_id: str, request: KitAssembly):
 
 
 def assemble_kit(ctx, series_id: str, request: KitAssembly):
-    sha = request_hash({"series_id": series_id, **request.model_dump(exclude={"idempotency_key"})})
+    from .. import generation as G
+
+    sha = request_hash(
+        {
+            "series_id": series_id,
+            **request.model_dump(exclude={"idempotency_key"}, exclude_unset=True),
+        }
+    )
     key = "kit-assemble:" + hashlib.sha256(request.idempotency_key.encode()).hexdigest()
     with ctx.store.tx():
         previous = ctx.store.assembly_receipt(key, sha)
         if previous:
             return previous
         snapshot = _assembly_snapshot(ctx, series_id, request)
-        return ctx.store.create_assembly(
+        result = ctx.store.create_assembly(
             snapshot.series, snapshot.episode, idempotency_key=key, request_sha=sha
         )
+        G.remember(ctx.store, snapshot.series.generation)
+        return result

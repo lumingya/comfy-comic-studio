@@ -261,4 +261,4 @@ class ProductionQueue:
         missing = [p.id for p in episode.ordered_panels() if p.id not in adopted]
         if not missing:
             return None
-        return self.render.render(episode.id, missing, None, 1, None, adopt_first=True)
+        return self.render.render(episode.id, missing, None, None, None, adopt_first=True)

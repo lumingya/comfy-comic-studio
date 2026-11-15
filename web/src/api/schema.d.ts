@@ -944,6 +944,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/workflows/{workflow_id}/trial": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trial Workflow
+         * @description Generate exactly one image with normal job progress, cancellation and results.
+         */
+        post: operations["trial_workflow_api_workflows__workflow_id__trial_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/workflows/{workflow_id}/diagnose": {
         parameters: {
             query?: never;
@@ -2760,6 +2780,7 @@ export interface components {
             title?: string;
             /** Profile Id */
             profile_id?: string | null;
+            generation?: components["schemas"]["GenerationOptions"] | null;
             /** Variables */
             variables?: {
                 [key: string]: string;
@@ -3757,6 +3778,59 @@ export interface components {
             /** Title */
             title?: string | null;
         };
+        /**
+         * GenerationOptions
+         * @description The source and parameters chosen for one generation task.
+         */
+        GenerationOptions: {
+            /** Workflow Id */
+            workflow_id?: string | null;
+            /** Cloud Channel Id */
+            cloud_channel_id?: string | null;
+            /** Profile Id */
+            profile_id?: string | null;
+            /** Candidates */
+            candidates?: number | null;
+            /** Width */
+            width?: number | null;
+            /** Height */
+            height?: number | null;
+        };
+        /**
+         * GenerationSnapshot
+         * @description Captured render documents; changes to preferences never rewrite an existing task.
+         */
+        GenerationSnapshot: {
+            /** Workflow Id */
+            workflow_id: string | null;
+            /** Cloud Channel Id */
+            cloud_channel_id: string | null;
+            /** Profile Id */
+            profile_id: string | null;
+            /**
+             * Candidates
+             * @default 1
+             */
+            candidates: number;
+            /** Width */
+            width: number | null;
+            /** Height */
+            height: number | null;
+            /** Profile */
+            profile: Record<string, unknown>;
+            /** Profiles */
+            profiles: {
+                [key: string]: Record<string, unknown>;
+            };
+            /** Workflows */
+            workflows: {
+                [key: string]: Record<string, unknown>;
+            };
+            /** Channels */
+            channels: {
+                [key: string]: Record<string, unknown>;
+            };
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -3852,6 +3926,7 @@ export interface components {
             title?: string;
             /** Profile Id */
             profile_id?: string | null;
+            generation?: components["schemas"]["GenerationOptions"] | null;
             /** Variables */
             variables?: {
                 [key: string]: string;
@@ -4720,6 +4795,16 @@ export interface components {
             entries?: components["schemas"]["PresetEntry-Input"][];
             /** Bindings */
             bindings?: components["schemas"]["PresetBinding-Input"][];
+            /**
+             * Positive Prompt
+             * @default
+             */
+            positive_prompt?: string;
+            /**
+             * Negative Prompt
+             * @default
+             */
+            negative_prompt?: string;
         };
         /**
          * Preset
@@ -4739,6 +4824,16 @@ export interface components {
             entries: components["schemas"]["PresetEntry-Output"][];
             /** Bindings */
             bindings: components["schemas"]["PresetBinding-Output"][];
+            /**
+             * Positive Prompt
+             * @default
+             */
+            positive_prompt: string;
+            /**
+             * Negative Prompt
+             * @default
+             */
+            negative_prompt: string;
         };
         /**
          * PresetBinding
@@ -4901,6 +4996,9 @@ export interface components {
             title?: string;
             /** Profile Id */
             profile_id?: string | null;
+            generation?: components["schemas"]["GenerationOptions"] | null;
+            /** Idempotency Key */
+            idempotency_key?: string | null;
         };
         /** ProfileDestination */
         ProfileDestination: {
@@ -5518,6 +5616,7 @@ export interface components {
             };
             /** Default Profile Id */
             default_profile_id: string | null;
+            generation: components["schemas"]["GenerationSnapshot"] | null;
             /**
              * Cover Asset Id
              * @description Chosen cover image; None = automatic (the first image).
@@ -5576,6 +5675,7 @@ export interface components {
             };
             /** Default Profile Id */
             default_profile_id: string | null;
+            generation: components["schemas"]["GenerationSnapshot"] | null;
             /**
              * Cover Asset Id
              * @description Chosen cover image; None = automatic (the first image).
@@ -6183,6 +6283,35 @@ export interface components {
             config?: components["schemas"]["WorkflowConfig"] | null;
             /** Notes */
             notes?: string | null;
+        };
+        /** WorkflowTrialRequest */
+        WorkflowTrialRequest: {
+            /** Instance Id */
+            instance_id?: string | null;
+            /** Prompt */
+            prompt: string;
+            /**
+             * Negative Prompt
+             * @default
+             */
+            negative_prompt?: string;
+            /** Width */
+            width?: number | null;
+            /** Height */
+            height?: number | null;
+            /** Values */
+            values?: Record<string, unknown>;
+            /** Overrides */
+            overrides?: Record<string, unknown>;
+            /** Idempotency Key */
+            idempotency_key?: string | null;
+        };
+        /** WorkflowTrialResult */
+        WorkflowTrialResult: {
+            series: components["schemas"]["Series"];
+            episode: components["schemas"]["Episode"];
+            /** Job */
+            job: Record<string, unknown>;
         };
     };
     responses: never;
@@ -8249,6 +8378,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    trial_workflow_api_workflows__workflow_id__trial_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workflow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkflowTrialRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowTrialResult"];
                 };
             };
             /** @description Validation Error */

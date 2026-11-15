@@ -1,5 +1,5 @@
 import { ChevronDown } from 'lucide-react';
-import { useContext, type ReactNode } from 'react';
+import { useContext, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UNSAFE_DataRouterContext } from 'react-router-dom';
 import { useUnsavedGuard } from '../../app/autosave';
@@ -50,13 +50,21 @@ export function Advanced({
   title,
   hint,
   children,
+  lazy = false,
 }: {
   title: string;
   hint?: string;
-  children: ReactNode;
+  children: ReactNode | (() => ReactNode);
+  lazy?: boolean;
 }) {
+  const [visited, setVisited] = useState(!lazy);
   return (
-    <details className="config-advanced">
+    <details
+      className="config-advanced"
+      onToggle={(event) => {
+        if (event.currentTarget.open) setVisited(true);
+      }}
+    >
       <summary>
         <span className="grow">
           <strong>{title}</strong>
@@ -64,7 +72,11 @@ export function Advanced({
         </span>
         <ChevronDown size={16} aria-hidden />
       </summary>
-      <div className="config-advanced-body">{children}</div>
+      {visited ? (
+        <div className="config-advanced-body">
+          {typeof children === 'function' ? children() : children}
+        </div>
+      ) : null}
     </details>
   );
 }

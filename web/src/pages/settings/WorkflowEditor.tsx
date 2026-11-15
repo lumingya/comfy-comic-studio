@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCompileWorkflow, useSaveWorkflow, useWorkflow } from '../../api/system';
 import type { WorkflowConfig, WorkflowDocument } from '../../api/types';
@@ -6,9 +6,8 @@ import { QueryError } from '../../app/errors';
 import { toast, toastError } from '../../components/toast';
 import { Field, Loading, Select, TextArea, TextInput } from '../../components/ui';
 import { Advanced, ConfigurationSaveBar, jsonObject, saveJson } from './ConfigurationParts';
+import { WorkflowMappings } from './WorkflowMappings';
 
-const CORE = ['prompt', 'negative', 'seed', 'width', 'height', 'output', 'inspect'] as const;
-const pointer = (s: string) => s.replace(/~/g, '~0').replace(/\//g, '~1');
 const pretty = (value: unknown) => JSON.stringify(value, null, 2);
 const formOf = (doc: WorkflowDocument) => ({
   name: doc.name,
@@ -39,9 +38,13 @@ function WorkflowForm({
     '{\n  "prompt": "a quiet street",\n  "seed": 1\n}',
   );
   const [variant, setVariant] = useState('');
-  const original = formOf(doc);
+  const original = useMemo(() => formOf(doc), [doc]);
   const form = draft ?? original;
-  const dirty = !!draft && JSON.stringify(draft) !== JSON.stringify(original);
+  const dirty =
+    !!draft &&
+    Object.keys(original).some(
+      (key) => draft[key as keyof typeof draft] !== original[key as keyof typeof original],
+    );
   useEffect(() => {
     onDirty(dirty);
     return () => onDirty(false);
@@ -50,53 +53,36 @@ function WorkflowForm({
     setDraft({ ...form, ...change });
     compile.reset();
   };
-  let config: WorkflowConfig | null = null;
-  let graph: Record<string, unknown> | null = null;
-  let jsonError = '';
-  try {
-    graph = jsonObject(form.graph);
-    const parsed = jsonObject(form.config);
-    if (
-      parsed.mapping !== undefined &&
-      (!parsed.mapping || typeof parsed.mapping !== 'object' || Array.isArray(parsed.mapping))
-    )
-      throw new Error('mapping');
-    if (
-      parsed.mapping &&
-      !Object.values(parsed.mapping).every(
-        (value) =>
-          typeof value === 'string' ||
-          (Array.isArray(value) && value.every((entry) => typeof entry === 'string')),
+  const graph = useMemo(() => {
+    try {
+      return jsonObject(form.graph);
+    } catch {
+      return null;
+    }
+  }, [form.graph]);
+  const config = useMemo(() => {
+    try {
+      const parsed = jsonObject(form.config);
+      if (
+        parsed.mapping !== undefined &&
+        (!parsed.mapping || typeof parsed.mapping !== 'object' || Array.isArray(parsed.mapping))
       )
-    )
-      throw new Error('mapping targets');
-    config = parsed as WorkflowConfig;
-  } catch {
-    jsonError = t('config.workflow.invalidJson');
-  }
-  const mapping = config?.mapping ?? {};
-  const fields = Object.entries(doc.graph).flatMap(([node, value]) =>
-    Object.entries(value.inputs).map(([input, current]) => ({
-      value: `/${pointer(node)}/inputs/${pointer(input)}`,
-      label: `#${node} · ${value._meta?.title || value.class_type} → ${input}`,
-      linked:
-        Array.isArray(current) &&
-        current.length === 2 &&
-        typeof current[0] === 'string' &&
-        Number.isInteger(current[1]),
-    })),
-  );
-  const nodes = Object.entries(doc.graph).map(([node, value]) => ({
-    value: `/${pointer(node)}`,
-    label: `#${node} · ${value._meta?.title || value.class_type}`,
-  }));
-  const setMapping = (key: string, target: string) => {
-    if (!config || target === '__multiple__') return;
-    const next = { ...mapping };
-    if (target) next[key] = target;
-    else delete next[key];
-    set({ config: pretty({ ...config, mapping: next }) });
-  };
+        return null;
+      if (
+        parsed.mapping &&
+        !Object.values(parsed.mapping).every(
+          (value) =>
+            typeof value === 'string' ||
+            (Array.isArray(value) && value.every((entry) => typeof entry === 'string')),
+        )
+      )
+        return null;
+      return parsed as WorkflowConfig;
+    } catch {
+      return null;
+    }
+  }, [form.config]);
+  const jsonError = !graph || !config ? t('config.workflow.invalidJson') : '';
   const submit = () => {
     if (!config || !graph || !form.name.trim() || save.isPending) return;
     save.mutate(
@@ -132,64 +118,19 @@ function WorkflowForm({
         <Field label={t('common.name')}>
           <TextInput value={form.name} onChange={(name) => set({ name })} />
         </Field>
-        <div className="config-subheading">
-          <h3>{t('config.workflow.mapping')}</h3>
-          <p>{t('config.workflow.mappingHint')}</p>
-        </div>
         {doc.describe.problems?.map((problem, i) => (
           <div className="notice warn" key={i}>
             {problem}
           </div>
         ))}
-        <div className="config-mapping-grid">
-          {CORE.map((key) => {
-            const manual = mapping[key];
-            const multi = Array.isArray(manual) && manual.length > 1;
-            const target = multi
-              ? '__multiple__'
-              : Array.isArray(manual)
-                ? (manual[0] ?? '')
-                : (manual ?? '');
-            const nodeSelector = key === 'output' || key === 'inspect';
-            const value = nodeSelector ? target.replace(/\/inputs\/.*$/, '') : target;
-            const options = nodeSelector ? nodes : fields.filter((f) => !f.linked);
-            const missing =
-              value && value !== '__multiple__' && !options.some((f) => f.value === value);
-            return (
-              <Field
-                key={key}
-                label={t(`config.workflow.fields.${key}`)}
-                hint={
-                  (doc.describe.bindings?.[key] ?? []).join(' · ') || t('config.workflow.unbound')
-                }
-              >
-                <Select
-                  value={value}
-                  disabled={!config}
-                  onChange={(target) => setMapping(key, target)}
-                  options={[
-                    { value: '', label: t('config.workflow.automatic') },
-                    ...(multi
-                      ? [
-                          {
-                            value: '__multiple__',
-                            label: t('config.workflow.multiple', { count: manual.length }),
-                          },
-                        ]
-                      : []),
-                    ...(missing ? [{ value, label: t('config.missing', { id: value }) }] : []),
-                    ...options,
-                  ]}
-                />
-              </Field>
-            );
-          })}
-        </div>
-        <Advanced
-          title={t('config.workflow.advancedTools')}
-          hint={t('config.workflow.advancedHint')}
-        >
-          <Advanced title={t('config.workflow.bindings')} hint={t('config.workflow.bindingsHint')}>
+        <WorkflowMappings
+          graph={graph}
+          config={config}
+          bindings={doc.describe.bindings}
+          onChange={(config) => set({ config: pretty(config) })}
+        />
+        <div className="config-workflow-tools">
+          <Advanced lazy title={t('config.workflow.bindings')}>
             <dl className="config-facts">
               {Object.entries(doc.describe.bindings ?? {}).map(([key, targets]) => (
                 <div key={key}>
@@ -203,20 +144,15 @@ function WorkflowForm({
             ) : null}
             <p className="small muted">{t('config.workflow.savedReport')}</p>
           </Advanced>
-          <Advanced title={t('config.workflow.configJson')} hint={t('config.workflow.configHint')}>
+          <Advanced lazy title={t('config.workflow.configJson')}>
             <Field label={t('config.workflow.configJson')}>
               <TextArea mono rows={12} value={form.config} onChange={(config) => set({ config })} />
             </Field>
-            <p className="small muted">{t('config.workflow.configExample')}</p>
           </Advanced>
-          <Advanced
-            title={t('config.workflow.graphJson')}
-            hint={
-              doc.source === 'builtin'
-                ? t('config.workflow.builtinHint')
-                : t('config.workflow.graphHint')
-            }
-          >
+          <Advanced lazy title={t('config.workflow.graphJson')}>
+            {doc.source === 'builtin' ? (
+              <p className="small muted">{t('config.workflow.builtinHint')}</p>
+            ) : null}
             <Field label={t('config.workflow.graphJson')}>
               <TextArea
                 mono
@@ -236,7 +172,8 @@ function WorkflowForm({
               {t('config.workflow.exportGraph')}
             </button>
           </Advanced>
-          <Advanced title={t('config.workflow.preview')} hint={t('config.workflow.previewHint')}>
+          <Advanced lazy title={t('config.workflow.preview')}>
+            <p className="small muted">{t('config.workflow.previewHint')}</p>
             <Field label={t('config.workflow.previewValues')}>
               <TextArea
                 mono
@@ -290,12 +227,12 @@ function WorkflowForm({
               </>
             ) : null}
           </Advanced>
-          <Advanced title={t('config.workflow.notes')}>
+          <Advanced lazy title={t('config.workflow.notes')}>
             <Field label={t('config.workflow.notes')}>
               <TextArea rows={3} value={form.notes} onChange={(notes) => set({ notes })} />
             </Field>
           </Advanced>
-        </Advanced>
+        </div>
         {jsonError ? (
           <p className="notice error" role="alert">
             {jsonError}

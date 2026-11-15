@@ -9,6 +9,7 @@ export const series: Series = {
   status: 'active',
   kind: 'album',
   presets: [],
+  generation: null,
   bible: {
     characters: [
       {

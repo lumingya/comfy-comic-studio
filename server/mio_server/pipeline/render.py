@@ -23,6 +23,7 @@ from contextlib import contextmanager
 from ..comfy import bindings as B
 from ..comfy.compile import asset_value, builtin_workflows, compile_workflow, describe
 from ..comfy.workflow_slots import LibraryError
+from ..generation import profile_for
 from ..hooks import HookBus
 from ..jobs import COMFY, ItemSpec
 from ..models import Episode, Series, Take, TakeEdit, TakeStatus
@@ -115,11 +116,31 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
             self.store.put_doc(default_profile())
 
     def workflow(self, workflow_id: str) -> WorkflowDoc:
+        frozen = getattr(self._local, "generation", None)
+        if frozen and workflow_id in frozen.workflows:
+            return WorkflowDoc.model_validate(frozen.workflows[workflow_id])
         return self.store.get_doc("workflow", workflow_id)
 
     def profile(self, profile_id: str | None, series: Series | None = None) -> RenderProfile:
+        if series is not None:
+            return profile_for(self.store, series, profile_id)
+        frozen = getattr(self._local, "generation", None)
+        if frozen:
+            data = frozen.profile if profile_id is None else frozen.profiles.get(profile_id)
+            if data:
+                return RenderProfile.model_validate(data)
         pid = profile_id or (series.default_profile_id if series else None) or "profile_default"
         return self.store.get_doc("profile", pid)
+
+    @contextmanager
+    def task_snapshot(self, episode_id: str):
+        previous = getattr(self._local, "generation", None)
+        episode = self.store.get_episode(episode_id)
+        self._local.generation = self.store.get_series(episode.series_id).generation
+        try:
+            yield
+        finally:
+            self._local.generation = previous
 
     @staticmethod
     def require_bound_profile(profile: RenderProfile) -> None:
@@ -268,6 +289,15 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
                 COMPOSITION: prepared,
                 **extra,
             }
+            if series.generation:
+                # Task sizes stay as imported unless the author explicitly overrides them.
+                for name in ("width", "height"):
+                    if (
+                        getattr(series.generation, name) is None
+                        and getattr(panel.overrides, name) is None
+                        and name not in extra
+                    ):
+                        base.pop(name, None)
             later = {
                 "prompt": pp.positive,
                 "negative": pp.negative,
@@ -367,7 +397,8 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
                 episode,
                 panel,
                 prof,
-                candidates=candidates or prof.candidates,
+                candidates=candidates
+                or (series.generation.candidates if series.generation else prof.candidates),
                 variant=variant,
                 adopt_first=adopt_first,
                 adopt_replace=adopt_replace,
@@ -389,11 +420,19 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         return max(1, len(self.engine.pool.instances) or 1) * 2
 
     def render(self, episode_id: str, *args, idempotency_key: str | None = None, **kw) -> dict:
-        with self.engine.hold_operation(), self.seeded(idempotency_key):
+        with (
+            self.engine.hold_operation(),
+            self.seeded(idempotency_key),
+            self.task_snapshot(episode_id),
+        ):
             return self._render(episode_id, *args, idempotency_key=idempotency_key, **kw)
 
     def finalize(self, episode_id: str, *args, idempotency_key: str | None = None, **kw) -> dict:
-        with self.engine.hold_operation(), self.seeded(idempotency_key):
+        with (
+            self.engine.hold_operation(),
+            self.seeded(idempotency_key),
+            self.task_snapshot(episode_id),
+        ):
             return self._finalize(episode_id, *args, idempotency_key=idempotency_key, **kw)
 
     def _variants(self, series: Series, variant_ids):

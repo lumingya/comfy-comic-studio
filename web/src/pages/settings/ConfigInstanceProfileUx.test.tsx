@@ -84,7 +84,7 @@ it('hides local server selection for pure cloud while retaining existing binding
   renderWithProviders(<ProfilesSection />);
   const name = await screen.findByDisplayValue(cloud.name);
   expect(screen.getByText('云端生成可能按张计费；保存配置不会出图。')).toBeInTheDocument();
-  const advanced = screen.getByText('提示词与多服务调度').closest('summary')!;
+  const advanced = screen.getByText('调度选项').closest('summary')!;
   await userEvent.click(advanced);
   expect(screen.queryByRole('checkbox', { name: /测试 ComfyUI/ })).toBeNull();
   expect(screen.queryByText('不勾选表示使用所有已启用服务；需要固定服务时再勾选。')).toBeNull();
@@ -121,7 +121,7 @@ it.each([false, true])(
     renderWithProviders(<ProfilesSection />);
     await screen.findByDisplayValue(profile.name);
     expect(screen.queryByText('云端生成可能按张计费；保存配置不会出图。') !== null).toBe(hybrid);
-    await userEvent.click(screen.getByText('提示词与多服务调度').closest('summary')!);
+    await userEvent.click(screen.getByText('调度选项').closest('summary')!);
     const selected = await screen.findByRole('checkbox', { name: /测试 ComfyUI/ });
     expect(selected).toBeChecked();
     expect(selected).toBeEnabled();

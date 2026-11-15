@@ -37,8 +37,7 @@ const nodeId = () => `node_${Date.now().toString(36)}_${(seq += 1)}`;
 
 /**
  * The standby tasks a design produces: one per storyboard node, merging every preset linked to it
- * in the order the preset cards were added (no cartesian product). Throws a readable message when
- * a node has no preset or no name. Exported for tests.
+ * in the order the preset cards were added (no cartesian product). A story may use no preset.
  */
 export function canvasTasks(d: CanvasDesign, messages: { empty: string; unlinked: string }) {
   if (!d.stories.length) throw new Error(messages.empty);
@@ -46,8 +45,7 @@ export function canvasTasks(d: CanvasDesign, messages: { empty: string; unlinked
     const presetIds = d.presets
       .filter((p) => d.edges.some((e) => e.story === s.id && e.preset === p.id))
       .map((p) => p.presetId);
-    if (!presetIds.length || !s.title.trim())
-      throw new Error(messages.unlinked.replace('{{title}}', s.title || '—'));
+    if (!s.title.trim()) throw new Error(messages.unlinked.replace('{{title}}', s.title || '—'));
     return { storyboard_id: s.storyId, preset_ids: presetIds, title: s.title.trim() };
   });
 }

@@ -2,7 +2,7 @@ import { fireEvent, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Preset } from '../../api/workshop';
 import { renderWithProviders } from '../../test/utils';
-import { presetFromFile } from './files';
+import { presetFromFile, presetToFile } from './files';
 import { BindingDialog } from './PresetBindings';
 import { bindingProblem, blankBinding, normalizeBinding, sharedTargets } from './bindingRules';
 
@@ -10,12 +10,33 @@ const b = (changes: object) => ({ ...blankBinding(), node_id: '12', ...changes }
 const preset = (id: string, bindings: Preset['bindings']): Preset => ({
   id,
   title: id,
+  positive_prompt: '',
+  negative_prompt: '',
   groups: [],
   entries: [{ id: 'v', key: 'lora', label: 'LoRA', value: 'nanami', hint: '', group_id: null }],
   bindings,
 });
 
 describe('preset node bindings (legacy workshop-binding-save)', () => {
+  it('keeps positive and negative additions through export and import', () => {
+    const original = {
+      ...preset('p', []),
+      positive_prompt: '水彩, {color}',
+      negative_prompt: '文字, 水印',
+    };
+    expect(presetFromFile(presetToFile(original))).toMatchObject({
+      positive_prompt: original.positive_prompt,
+      negative_prompt: original.negative_prompt,
+      entries: original.entries,
+    });
+    expect(presetFromFile({ entries: [], groups: [] })).toMatchObject({
+      positive_prompt: '',
+      negative_prompt: '',
+    });
+    expect(
+      presetFromFile({ entries: [], positive_prompt: '保留', negative_prompt: '模糊' }),
+    ).toMatchObject({ positive_prompt: '保留', negative_prompt: '模糊' });
+  });
   it('checks what the server checks', () => {
     expect(bindingProblem(b({ node_id: ' ' }), [])).toBe('target');
     expect(bindingProblem(b({ node_id: '1 2' }), [])).toBe('node');

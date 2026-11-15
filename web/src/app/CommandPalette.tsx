@@ -84,10 +84,10 @@ export function CommandPalette() {
       },
       {
         id: 'queue',
-        label: t('legacy.palette.queue'),
+        label: t('ws.head.assembly'),
         kind: 'action',
         icon: 'nodes',
-        run: go('/jobs'),
+        run: go('/workshop/assembly'),
       },
       {
         id: 'theme',

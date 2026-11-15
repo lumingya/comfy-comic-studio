@@ -30,9 +30,20 @@ class EditsMixin:
         self, channel_id: str, requested: dict, *, allow_missing: bool = False
     ) -> dict:
         try:
-            return CR.freeze_request(
+            request = CR.freeze_request(
                 self.cloud_backend(channel_id), requested, channel_id=channel_id, rng=self.rng
             )
+            snapshot = getattr(self._local, "generation", None)
+            channel = snapshot.channels.get(channel_id) if snapshot else None
+            if channel:
+                if channel["kind"] != request["kind"]:
+                    raise LookupError("云端渠道类型已改变，请重新装配任务")
+                seed = request["options"].get("seed")
+                request["model"] = channel["model"]
+                request["options"] = dict(channel["options"])
+                if seed is not None:
+                    request["options"]["seed"] = seed
+            return request
         except LookupError as exc:
             if allow_missing:
                 return {
@@ -46,7 +57,11 @@ class EditsMixin:
 
     # ---------------------------------------------------------------- edit
     def edit(self, episode_id: str, *args, idempotency_key: str | None = None, **kw) -> dict:
-        with self.engine.hold_operation(), self.seeded(idempotency_key):
+        with (
+            self.engine.hold_operation(),
+            self.seeded(idempotency_key),
+            self.task_snapshot(episode_id),
+        ):
             return self._edit(episode_id, *args, idempotency_key=idempotency_key, **kw)
 
     def _edit(
@@ -241,7 +256,10 @@ class EditsMixin:
                 )
                 pv = next(p for p in story["panels"] if p["id"] == panel.id)
                 refine = prof.cloud_refine
-                for k in range(candidates or prof.candidates):
+                for k in range(
+                    candidates
+                    or (series.generation.candidates if series.generation else prof.candidates)
+                ):
                     pp = compile_panel(
                         series,
                         episode,
@@ -278,18 +296,23 @@ class EditsMixin:
                         "refine_adopt_replace": adopt_replace and k == 0 and refine,
                     }
                     refinement = self.plan_cloud_refinement(prof, meta) if refine else None
-                    request = self._cloud_request(
-                        prof.cloud_channel,
-                        {
-                            "prompt": pp.positive,
-                            "negative": pp.negative,
-                            "width": pp.width,
-                            "height": pp.height,
-                            "seed": pp.seed,
-                            "reference_mode": panel.reference_mode,
-                            "refs": meta["refs"],
-                        },
-                    )
+                    requested = {
+                        "prompt": pp.positive,
+                        "negative": pp.negative,
+                        "width": pp.width,
+                        "height": pp.height,
+                        "seed": pp.seed,
+                        "reference_mode": panel.reference_mode,
+                        "refs": meta["refs"],
+                    }
+                    if series.generation:
+                        for name in ("width", "height"):
+                            if (
+                                getattr(series.generation, name) is None
+                                and getattr(panel.overrides, name) is None
+                            ):
+                                requested.pop(name, None)
+                    request = self._cloud_request(prof.cloud_channel, requested)
                     specs.append(
                         ItemSpec(
                             input={

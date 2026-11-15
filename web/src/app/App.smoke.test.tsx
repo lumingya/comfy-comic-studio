@@ -376,10 +376,12 @@ describe('every route mounts with API data', () => {
       };
       mount('/workshop/assembly/ep_1/script');
       await screen.findByText('纯云端出图 · 主力图像服务 · 已配置');
-      expect(screen.getByRole('link', { name: '出图配置' })).toHaveAttribute(
-        'href',
-        '/engine?tab=profiles',
-      );
+      expect(screen.queryByRole('link', { name: '出图配置' })).toBeNull();
+      expect(
+        within(document.querySelector<HTMLElement>('#topbar')!).getByRole('button', {
+          name: '生成任务',
+        }),
+      ).toBeInTheDocument();
       expect(document.querySelector('.stage-notice')).toBeNull();
       expect(screen.queryByText(/ComfyUI.*未连接/)).toBeNull();
       expect(screen.queryByRole('dialog')).toBeNull();
@@ -391,18 +393,15 @@ describe('every route mounts with API data', () => {
     cloudRoutes();
     mount('/workshop/assembly?new=1');
     const dialog = await screen.findByRole('dialog', { name: '新建生成任务' });
-    const service = within(dialog).getByRole('combobox', { name: '图像服务' });
+    const service = within(dialog).getByRole('combobox', { name: '出图工作流或云端服务' });
     await waitFor(() => expect(service).toBeEnabled());
-    expect(service).toHaveValue('local');
+    await waitFor(() => expect(service).toHaveValue(`profile:${configProfile.id}`));
     fireEvent.change(service, {
-      target: { value: 'cloud' },
+      target: { value: 'channel:images' },
     });
-    expect(within(dialog).getByRole('combobox', { name: '出图配置' })).toHaveValue(cloudProfile.id);
-    await within(dialog).findByText('纯云端出图 · 主力图像服务');
-    expect(screen.getByRole('link', { name: '出图配置' })).toHaveAttribute(
-      'href',
-      '/engine?tab=profiles',
-    );
+    expect(service).toHaveValue('channel:images');
+    expect(within(dialog).getByRole('spinbutton', { name: '每幕生成张数' })).toHaveValue(1);
+    expect(screen.queryByRole('link', { name: '出图配置' })).toBeNull();
     expect(screen.queryByText(/ComfyUI.*未连接/)).toBeNull();
     expect(calls.filter((call) => call.url.endsWith('/health'))).toEqual([]);
     fireEvent.click(within(dialog).getByRole('button', { name: '关闭' }));
@@ -473,7 +472,7 @@ describe('every route mounts with API data', () => {
     expect(screen.queryByText('剧本助手')).toBeNull();
     // Per-panel render overrides and the one-frame test run are in the editor.
     expect(screen.getByText('出图参数覆盖（只对这一格）')).toBeInTheDocument();
-    expect(screen.getAllByText('试出这一格').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('生成与挑图').length).toBeGreaterThan(0);
     // ? opens the page help.
     fireEvent.keyDown(document.body, { key: '?' });
     expect(await screen.findByText('剧本：分格编辑')).toBeInTheDocument();
@@ -484,7 +483,7 @@ describe('every route mounts with API data', () => {
 
   it('episode → board with takes and live items', async () => {
     mount('/workshop/assembly/ep_1/board');
-    expect(await screen.findByText('全部出草稿')).toBeInTheDocument();
+    expect(await screen.findByText('全部生成')).toBeInTheDocument();
     expect(screen.getAllByText('已采用').length).toBeGreaterThan(0);
     expect(await screen.findByText('第 1 格 · 候选 1')).toBeInTheDocument();
     expect(screen.getByText('结果未确认，请到任务页处理')).toBeInTheDocument();
@@ -556,7 +555,10 @@ describe('every route mounts with API data', () => {
     expect(screen.queryByAltText('第 1 格')).toBeNull();
     const call = calls.find((c) => c.url === '/api/export/album');
     expect(call?.body).toMatchObject({ episode_ids: ['ep_1'], template_id: 'export-paper' });
-    expect(screen.getByText('版式 · 海风来信 · 电影长卷')).toBeInTheDocument();
+    expect(layouts).toHaveValue('export-paper');
+    expect(screen.queryByRole('button', { name: /^版式/ })).toBeNull();
+    const readerHeader = document.querySelector<HTMLElement>('.room-head')!;
+    expect(within(readerHeader).getAllByRole('button', { name: /^导出$/ })).toHaveLength(1);
     fireEvent.change(layouts, { target: { value: 'mio-fit' } });
     expect(await screen.findByAltText('第 1 格')).toBeInTheDocument();
     expect(screen.queryByTitle('展示模板预览')).toBeNull();
@@ -715,14 +717,25 @@ describe('every route mounts with API data', () => {
     expect(await screen.findByRole('dialog', { name: '新建生成任务' })).toBeInTheDocument();
   });
 
-  it('预设工坊: 独立试绘 queues a one-frame task with the preset variables prefilled', async () => {
+  it('预设工坊: 独立试绘 starts a one-frame task with the preset variables prefilled', async () => {
+    responses['GET /api/profiles'] = [configProfile];
+    responses['POST /api/workshop/queue/start'] = {};
     const router = mount('/workshop/presets');
     fireEvent.click(await screen.findByRole('button', { name: '独立试绘' }));
     const dialog = await screen.findByRole('dialog', { name: '预设独立试绘' });
     const prompt = within(dialog).getByLabelText('画面描述') as HTMLTextAreaElement;
     expect(prompt.value).toBe('{character}, {outfit}');
     fireEvent.change(prompt, { target: { value: '{character} wearing {outfit}, portrait' } });
-    fireEvent.click(within(dialog).getByRole('button', { name: '添加待命试绘' }));
+    await waitFor(() =>
+      expect(within(dialog).getByLabelText('出图工作流或云端服务')).toBeEnabled(),
+    );
+    fireEvent.change(within(dialog).getByLabelText('出图工作流或云端服务'), {
+      target: { value: `profile:${configProfile.id}` },
+    });
+    await waitFor(() =>
+      expect(within(dialog).getByRole('button', { name: '开始生成' })).toBeEnabled(),
+    );
+    fireEvent.click(within(dialog).getByRole('button', { name: '开始生成' }));
     await waitFor(() =>
       expect(calls.some((c) => c.method === 'POST' && c.url === '/api/workshop/preview')).toBe(
         true,
@@ -732,9 +745,13 @@ describe('every route mounts with API data', () => {
     expect(call.body).toMatchObject({
       preset_ids: ['pre_1'],
       prompt: '{character} wearing {outfit}, portrait',
-      profile_id: null,
+      generation: { profile_id: configProfile.id },
     });
-    expect(calls.some((c) => c.url.includes('/render'))).toBe(false);
+    await waitFor(() =>
+      expect(calls.find((c) => c.url === '/api/workshop/queue/start')?.body).toEqual({
+        album_ids: ['ser_pv'],
+      }),
+    );
     await waitFor(() => expect(router.state.location.pathname).toBe('/workshop/assembly'));
   });
 
@@ -745,9 +762,15 @@ describe('every route mounts with API data', () => {
     fireEvent.click(screen.getByRole('button', { name: '新建生成任务' }));
     await screen.findByRole('dialog', { name: '新建生成任务' });
     await screen.findByRole('option', { name: /海风来信/ });
+    await waitFor(() => expect(screen.getByLabelText('出图工作流或云端服务')).toBeEnabled());
+    fireEvent.change(screen.getByLabelText('出图工作流或云端服务'), {
+      target: { value: `profile:${configProfile.id}` },
+    });
     await waitFor(() => expect(screen.getByRole('button', { name: '下一步' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: '下一步' }));
-    expect(await screen.findByRole('checkbox', { name: /林夏/ })).toBeChecked();
+    const presetChoice = await screen.findByRole('checkbox', { name: /林夏/ });
+    expect(presetChoice).not.toBeChecked();
+    fireEvent.click(presetChoice);
     expect(screen.getByRole('list', { name: '预设应用顺序' })).toHaveTextContent('林夏');
     expect(screen.getByRole('button', { name: '下一步' })).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: '下一步' }));
@@ -755,7 +778,7 @@ describe('every route mounts with API data', () => {
       await screen.findByRole('button', { name: /第 1 幕.*原始提示词.*天气.*未定义/ }),
     ).toBeInTheDocument();
     expect(screen.getByLabelText('画册名称')).toHaveValue('海风来信 · 林夏');
-    fireEvent.click(screen.getByRole('button', { name: '添加待命任务' }));
+    fireEvent.click(screen.getByRole('button', { name: '稍后生成' }));
     await waitFor(() =>
       expect(calls.some((c) => c.method === 'POST' && c.url === '/api/workshop/assemble')).toBe(
         true,
@@ -846,15 +869,21 @@ describe('every route mounts with API data', () => {
     expect(screen.getByRole('button', { name: /林夏/, pressed: true })).toBeInTheDocument();
   });
 
-  it('generate queues the chosen number of candidates for this panel', async () => {
+  it('generate uses the frozen task count without overriding it in the request', async () => {
+    responses['GET /api/series/ser_1'] = {
+      ...series,
+      generation: { candidates: 4, profile: configProfile },
+    };
     mount('/workshop/assembly/ep_1/script');
-    fireEvent.click(await screen.findByRole('button', { name: '4', pressed: false }));
+    await screen.findByRole('button', { name: /生成 4 张/ });
+    expect(screen.queryByRole('button', { name: '4', pressed: false })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /生成 4 张/ }));
     await waitFor(() =>
       expect(calls.some((c) => c.method === 'POST' && c.url.includes('/render'))).toBe(true),
     );
     const call = calls.find((c) => c.method === 'POST' && c.url.includes('/render'))!;
-    expect(call.body).toMatchObject({ panel_ids: ['p0'], candidates: 4 });
+    expect(call.body).toMatchObject({ panel_ids: ['p0'] });
+    expect(call.body).not.toHaveProperty('candidates');
   });
 
   it('settings → data offers the .mio.zip import, no legacy import', async () => {
@@ -872,7 +901,7 @@ describe('every route mounts with API data', () => {
 
   it('board offers no retouch, QA or finalize actions', async () => {
     mount('/workshop/assembly/ep_1/board');
-    expect(await screen.findByText('全部出草稿')).toBeInTheDocument();
+    expect(await screen.findByText('全部生成')).toBeInTheDocument();
     expect(screen.queryByText('质检')).toBeNull();
     expect(screen.queryByText(/出成品档/)).toBeNull();
     expect(screen.queryByText('修图')).toBeNull();
@@ -929,7 +958,7 @@ describe('every route mounts with API data', () => {
     const router = mount('/settings?tab=instances');
     await waitFor(() => expect(router.state.location.pathname).toBe('/engine'));
     expect(
-      await screen.findByRole('tab', { name: /本地 ComfyUI/, selected: true }),
+      await screen.findByRole('tab', { name: /本地连接/, selected: true }),
     ).toBeInTheDocument();
   });
 });

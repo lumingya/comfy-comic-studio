@@ -23,6 +23,20 @@ NovelAI 返回明确标记的内置参考目录，ComfyUI 返回节点公开的�
 密钥掩码只能用于对应已保存渠道与相同地址，地址改变后需重新传入或清除密钥。
 扩展可通过 `fetch_models` operation wrapper 为自定义渠道提供目录；客户端始终可手工指定模型 ID。
 
+## 生成任务与试生成
+
+任务装配与预览接受 `generation`：`workflow_id`、`cloud_channel_id`、`profile_id` 至多指定一个，
+以及 `candidates`、可选 `width` / `height`。尺寸显式传 `null` 表示保留工作流原值；省略时可使用
+`settings.generation_defaults` 中按 `workflow:<id>` / `channel:<id>` / `profile:<id>` 保存的最近值。
+装配成功后保存最近值，预览不写入。任务冻结方案、工作流与云端模型参数；重跑和克隆使用该快照。
+云端地址与凭据在运行时读取当前连接，不写入快照；列表只返回轻量摘要，单个作品接口返回完整快照。
+
+`POST /api/v2/workflows/{workflow_id}/trial` 需要 `render` 权限，接受 `prompt`、可选 `negative_prompt`、
+`instance_id`、宽高、`values`、`overrides` 与 `idempotency_key`，实际生成一张并返回 `series`、`episode`、`job`。
+通过普通任务事件、详情和取消接口跟踪执行；`/compile` 仍只预览提交数据，不出图。
+预设的 `positive_prompt` / `negative_prompt` 按所选顺序追加并展开变量，raw 模式也适用，
+`/workshop/assemble/preview` 返回与执行一致的最终提示词。
+
 ## 长篇整理与检查点
 
 - `POST /series/{id}/panels/transfer`：同作品内跨话复制或移动，传来源 / 目标 ID、两边 revision 和选择的 panel IDs。

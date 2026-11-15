@@ -17,6 +17,7 @@ from ..comfy.diagnostics import diagnose, model_catalog
 from ..models import now_iso
 from ..render_models import Asset, ComfyInstance, RenderProfile, WorkflowConfig, WorkflowDoc
 from ..storage import Conflict
+from ..workflow_trial import WorkflowTrialRequest, WorkflowTrialResult, trial
 from .deps import Ctx
 from .operations import Router as APIRouter
 
@@ -183,6 +184,12 @@ def compile_preview(ctx: Ctx, workflow_id: str, body: CompileRequest) -> dict:
     return C.compile_workflow(
         doc, body.values, variant=body.variant, overrides=body.overrides, rules=_rules(ctx)
     ).to_json()
+
+
+@router.post("/workflows/{workflow_id}/trial", response_model=WorkflowTrialResult)
+def trial_workflow(ctx: Ctx, workflow_id: str, body: WorkflowTrialRequest) -> WorkflowTrialResult:
+    """Generate exactly one image with normal job progress, cancellation and results."""
+    return trial(ctx, workflow_id, body)
 
 
 @router.post("/workflows/{workflow_id}/diagnose")

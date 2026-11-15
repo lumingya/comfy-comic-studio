@@ -197,16 +197,19 @@ describe('kit assembly source', () => {
     );
     await screen.findByRole('option', { name: /Kit story/ });
     expect(screen.getByLabelText('分镜来源')).toHaveValue('kit_new');
-    expect(screen.getByText('待配置：套装可装配，选择服务后才能生成。')).toBeInTheDocument();
-    expect(screen.getByRole('combobox', { name: '出图配置' })).toHaveValue('');
+    await screen.findByText('此方案尚未绑定出图服务');
+    expect(screen.getByRole('combobox', { name: '出图工作流或云端服务' })).toHaveValue(
+      'profile:kit_profile',
+    );
     next();
-    expect(screen.getByRole('checkbox', { name: /kit_preset/ })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /kit_preset/ })).not.toBeChecked();
+    fireEvent.click(screen.getByRole('checkbox', { name: /kit_preset/ }));
     expect(screen.queryByRole('checkbox', { name: /workshop_preset/ })).toBeNull();
     next();
     await screen.findByText('已核对 1 幕，没有未解决的变量。');
-    fireEvent.click(screen.getByText('展开各幕替换结果'));
+    fireEvent.click(screen.getByText('查看各幕提示词'));
     expect(screen.getByText('SERVER COMPOSED')).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: '添加待命任务' }));
+    fireEvent.click(screen.getByRole('button', { name: '稍后生成' }));
     await waitFor(() =>
       expect(calls.some((call) => call.url.endsWith('/kit_new/assemble'))).toBe(true),
     );
@@ -217,7 +220,7 @@ describe('kit assembly source', () => {
       variables: {},
       idempotency_key: expect.any(String),
     });
-    expect(body).toHaveProperty('profile_id', null);
+    expect(body).toHaveProperty('generation.profile_id', 'kit_profile');
     expect(calls.some((call) => call.url === '/api/workshop/assemble')).toBe(false);
     expect(
       calls.some((call) => call.url.includes('/render') || call.url.includes('/generate')),
@@ -231,15 +234,21 @@ describe('kit assembly source', () => {
     });
     renderWithProviders(<AssembleDialog onClose={vi.fn()} />);
     await screen.findByRole('option', { name: /Workshop story/ });
+    await waitFor(() => expect(screen.getByLabelText('出图工作流或云端服务')).toBeEnabled());
+    fireEvent.change(screen.getByLabelText('出图工作流或云端服务'), {
+      target: { value: 'workflow:wf_demo' },
+    });
+    await waitFor(() => expect(screen.getByRole('button', { name: '下一步' })).toBeEnabled());
     next();
     next();
     fireEvent.change(screen.getByLabelText('画册名称'), { target: { value: 'Workshop draft' } });
     fireEvent.change(screen.getByLabelText('分镜来源'), { target: { value: 'kit_new' } });
     await screen.findByRole('option', { name: /Kit story/ });
+    await waitFor(() => expect(screen.getByRole('button', { name: '下一步' })).toBeEnabled());
     next();
     next();
     expect(screen.getByLabelText('画册名称')).not.toHaveValue('Workshop draft');
-    const submit = screen.getByRole('button', { name: '添加待命任务' });
+    const submit = screen.getByRole('button', { name: '稍后生成' });
     const sent = () =>
       calls
         .filter((call) => call.url.endsWith('/kit_new/assemble'))
@@ -258,17 +267,23 @@ describe('kit assembly source', () => {
       expect(submit).toBeEnabled();
     });
     expect(sent()[0].idempotency_key).toBe(sent()[1].idempotency_key);
-    expect(sent()[0].preset_ids).toEqual(['kit_preset']);
+    expect(sent()[0].preset_ids).toEqual([]);
     fireEvent.change(screen.getByLabelText('分镜来源'), { target: { value: '' } });
     await screen.findByRole('option', { name: /Workshop story/ });
+    await waitFor(() => expect(screen.getByLabelText('出图工作流或云端服务')).toBeEnabled());
+    fireEvent.change(screen.getByLabelText('出图工作流或云端服务'), {
+      target: { value: 'workflow:wf_demo' },
+    });
+    await waitFor(() => expect(screen.getByRole('button', { name: '下一步' })).toBeEnabled());
     next();
-    expect(screen.getByRole('checkbox', { name: /workshop_preset/ })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /workshop_preset/ })).not.toBeChecked();
     expect(screen.queryByRole('checkbox', { name: /kit_preset/ })).toBeNull();
     fireEvent.change(screen.getByLabelText('分镜来源'), { target: { value: 'kit_new' } });
     await screen.findByRole('option', { name: /Kit story/ });
+    await waitFor(() => expect(screen.getByRole('button', { name: '下一步' })).toBeEnabled());
     next();
     next();
-    fireEvent.click(screen.getByRole('button', { name: '添加待命任务' }));
+    fireEvent.click(screen.getByRole('button', { name: '稍后生成' }));
     await waitFor(() => expect(sent()).toHaveLength(3));
     expect(sent()[2].idempotency_key).not.toBe(sent()[1].idempotency_key);
   });
@@ -295,28 +310,35 @@ describe('kit assembly source', () => {
       '/workshop/assembly?new=1&kit=kit_new',
     );
     await screen.findByRole('option', { name: /Kit story/ });
-    expect(screen.getByLabelText('出图配置')).toHaveValue('');
-    fireEvent.change(screen.getByLabelText('图像服务'), { target: { value: 'cloud' } });
-    expect(screen.getByLabelText('出图配置')).toHaveValue('cloud');
+    await waitFor(() =>
+      expect(screen.getByLabelText('出图工作流或云端服务')).toHaveValue('profile:kit_profile'),
+    );
+    fireEvent.change(screen.getByLabelText('出图工作流或云端服务'), {
+      target: { value: 'profile:cloud' },
+    });
+    expect(screen.getByLabelText('出图工作流或云端服务')).toHaveValue('profile:cloud');
     fireEvent.change(screen.getByLabelText('分镜来源'), { target: { value: '' } });
     await screen.findByRole('option', { name: /Workshop story/ });
-    expect(screen.getByLabelText('图像服务')).toHaveValue('local');
-    expect(screen.getByLabelText('出图配置')).toHaveValue('');
+    await waitFor(() => expect(screen.getByLabelText('出图工作流或云端服务')).toHaveValue(''));
     fireEvent.change(screen.getByLabelText('分镜来源'), { target: { value: 'kit_new' } });
     await screen.findByRole('option', { name: /Kit story/ });
-    expect(screen.getByLabelText('出图配置')).toHaveValue('');
-    fireEvent.change(screen.getByLabelText('图像服务'), { target: { value: 'cloud' } });
+    await waitFor(() =>
+      expect(screen.getByLabelText('出图工作流或云端服务')).toHaveValue('profile:kit_profile'),
+    );
+    fireEvent.change(screen.getByLabelText('出图工作流或云端服务'), {
+      target: { value: 'profile:cloud' },
+    });
     next();
     next();
     await waitFor(() =>
       expect(calls.find((call) => call.url.endsWith('/kit_new/preview'))?.body).toMatchObject({
-        profile_id: 'cloud',
+        generation: { profile_id: 'cloud' },
       }),
     );
-    fireEvent.click(screen.getByRole('button', { name: '添加待命任务' }));
+    fireEvent.click(screen.getByRole('button', { name: '稍后生成' }));
     await waitFor(() =>
       expect(calls.find((call) => call.url.endsWith('/kit_new/assemble'))?.body).toMatchObject({
-        profile_id: 'cloud',
+        generation: { profile_id: 'cloud' },
       }),
     );
     expect(calls.some((call) => call.method === 'PATCH' || call.method === 'PUT')).toBe(false);

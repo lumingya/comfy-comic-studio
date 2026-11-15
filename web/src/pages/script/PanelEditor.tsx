@@ -5,7 +5,6 @@ import {
   Lock,
   PanelRightClose,
   PanelRightOpen,
-  Play,
   SlidersHorizontal,
   Trash2,
   Unlock,
@@ -16,7 +15,15 @@ import { ApiError } from '../../api/client';
 import { keys } from '../../api/keys';
 import { useRender } from '../../api/production';
 import { useDuplicatePanel, usePatchPanel } from '../../api/series';
-import { ANGLES, SHOTS, TIMES, type Episode, type Panel, type Series } from '../../api/types';
+import {
+  ANGLES,
+  SHOTS,
+  TIMES,
+  type Episode,
+  type Panel,
+  type RenderProfile,
+  type Series,
+} from '../../api/types';
 import { AutoSaveGuard, flushDraft } from '../../app/useAutoDraft';
 import { shortcutBlocked } from '../../app/shortcuts';
 import { useAutosave } from '../../app/autosave';
@@ -175,13 +182,13 @@ export function PanelEditor(props: {
 
   // Save first, then queue `count` candidates of this panel on the job engine.
   const generating = useRef(false);
-  const generate = async (count: number) => {
+  const generate = async () => {
     if (generating.current || render.isPending || nodeOverrides === null) return;
     generating.current = true;
     try {
       await flushDraft(autosave);
-      await render.mutateAsync({ panel_ids: [draft.id!], candidates: count, variant_ids: [null] });
-      toast(t('classic.stage.queuedToast', { count }));
+      await render.mutateAsync({ panel_ids: [draft.id!], variant_ids: [null] });
+      toast(t('board.queued'));
     } catch (error) {
       toastError(error);
     } finally {
@@ -362,7 +369,7 @@ export function PanelEditor(props: {
           autosave.flush().catch(toastError);
         } else if (mod && e.key === 'Enter') {
           e.preventDefault();
-          void generate(useUI.getState().candidates);
+          void generate();
         }
       }}
     >
@@ -383,14 +390,6 @@ export function PanelEditor(props: {
           <span className="sr-only">{t('script.panelNo', { n: props.index + 1 })}</span>
           <SaveState state={autosave.state} invalid={nodeOverrides === null} />
           <span className="editor-actions">
-            <button
-              className="btn ghost sm"
-              disabled={render.isPending}
-              onClick={() => void generate(1)}
-              title={t('script.renderOneHint')}
-            >
-              <Play size={14} /> {t('script.renderOne')}
-            </button>
             <button
               className="btn ghost icon sm"
               onClick={() => setHistory(true)}
@@ -548,7 +547,13 @@ export function PanelEditor(props: {
           panelId={draft.id!}
           profileId={draft.overrides.profile_id}
           defaultProfileId={series.default_profile_id}
-          onGenerate={(n) => void generate(n)}
+          candidates={series.generation?.candidates ?? undefined}
+          taskProfile={
+            (draft.overrides.profile_id
+              ? series.generation?.profiles[draft.overrides.profile_id]
+              : series.generation?.profile) as RenderProfile | undefined
+          }
+          onGenerate={() => void generate()}
           busy={render.isPending}
         />
       </div>

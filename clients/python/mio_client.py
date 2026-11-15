@@ -505,6 +505,13 @@ class MioClient(_Base):
         """
         return self._request("POST", f"/workflows/{_q(workflow_id)}/compile", json=body)
 
+    def trial_workflow(self, workflow_id: str, body: dict | list | None = None) -> Any:
+        """POST /workflows/{workflow_id}/trial — Trial Workflow.
+
+        Generate exactly one image with normal job progress, cancellation and results.
+        """
+        return self._request("POST", f"/workflows/{_q(workflow_id)}/trial", json=body)
+
     def diagnose_workflow(
         self,
         workflow_id: str,

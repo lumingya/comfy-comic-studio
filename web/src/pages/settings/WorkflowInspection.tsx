@@ -155,18 +155,21 @@ function InspectionView({ report }: { report: WorkflowInspection }) {
         </p>
       ) : null}
       {bindings.length ? (
-        <Advanced title={t('config.workflow.bindings')}>{targets(bindings)}</Advanced>
+        <Advanced lazy title={t('config.workflow.bindings')}>
+          {() => targets(bindings)}
+        </Advanced>
       ) : null}
       {candidates.length ? (
         <Advanced
+          lazy
           title={t('config.workflow.inspection.candidates')}
           hint={t('config.workflow.inspection.candidatesHint')}
         >
-          {targets(candidates)}
+          {() => targets(candidates)}
         </Advanced>
       ) : null}
       {(report.dependencies ?? []).length ? (
-        <Advanced title={t('config.workflow.inspection.dependencies')}>
+        <Advanced lazy title={t('config.workflow.inspection.dependencies')}>
           <dl className="config-facts">
             {report.dependencies!.map((dep) => (
               <div key={dep.class_type}>
@@ -270,12 +273,15 @@ export function WorkflowImportPreview({
         )}
         {saveError ? <QueryError error={saveError} /> : null}
         <Advanced
+          lazy
           title={t('config.workflow.graphJson')}
           hint={t('config.workflow.inspection.rawHint')}
         >
-          <pre className="config-code" tabIndex={0}>
-            {JSON.stringify(workflow, null, 2)}
-          </pre>
+          {() => (
+            <pre className="config-code" tabIndex={0}>
+              {JSON.stringify(workflow, null, 2)}
+            </pre>
+          )}
         </Advanced>
       </div>
     </Modal>

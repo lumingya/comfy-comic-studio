@@ -376,7 +376,6 @@ export default function ReaderPage() {
         }))
       : BUILTIN.map((b) => ({ id: b.id, title: t(`reader.look.${b.look}`), description: '' }))
   ).sort((a, b) => templateRank(a.id) - templateRank(b.id));
-  const lookTitle = list.find((x) => x.id === look)?.title ?? t('reader.look.fit');
   // What the stage shows while the drawer is open: the template or the platform cuts.
   const drawerStage = panel === 'export' && platformOpen ? 'platform' : '';
   // Reading mode, paging and the filmstrip drive the native stage only; templates, platform cuts
@@ -451,16 +450,6 @@ export default function ReaderPage() {
         </span>
         <button
           type="button"
-          className="btn small presentation-trigger"
-          aria-expanded={panel === 'export'}
-          aria-controls="presentation-drawer"
-          onClick={() => togglePanel('export')}
-        >
-          <Icon name="book" sm />
-          {t('reader.presentation', { look: lookTitle })}
-        </button>
-        <button
-          type="button"
           className="ibtn"
           title={fullscreen ? t('reader.fullscreenExit') : t('reader.fullscreen')}
           aria-label={fullscreen ? t('reader.fullscreenExit') : t('reader.fullscreen')}
@@ -472,6 +461,8 @@ export default function ReaderPage() {
         <button
           type="button"
           className="btn small room-export"
+          aria-expanded={panel === 'export'}
+          aria-controls="presentation-drawer"
           onClick={() => togglePanel('export')}
         >
           <Icon name="download" sm />

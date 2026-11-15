@@ -73,6 +73,8 @@ def preview_kit_preset(ctx: Ctx, series_id: str, body: PreviewRequest):
         body.title,
         body.profile_id,
         source_id=series_id,
+        generation=body.generation,
+        idempotency_key=body.idempotency_key,
     )
     ctx.queue.track(series.id)
     return Assembled(series=series, episode=episode)

@@ -38,7 +38,6 @@ import {
 } from '../../api/series';
 import type { Panel, PromptPreview } from '../../api/types';
 import { useSelection } from '../../app/selection';
-import { useUI } from '../../app/ui-store';
 import { confirm } from '../../components/confirm';
 import { ContextMenu, useContextMenu, type ContextGroup } from '../../components/ContextMenu';
 import { toast, toastError } from '../../components/toast';
@@ -64,7 +63,6 @@ export default function ScriptTab() {
   const reorder = useReorderPanels(episode.id!);
   const render = useRender(episode.id!);
   const patchEpisode = usePatchEpisode(episode.id!);
-  const candidates = useUI((s) => s.candidates);
   const [synopsis, setSynopsis] = useState<string | null>(null);
   const [batch, setBatch] = useState<string[] | null>(null);
   const [transfer, setTransfer] = useState<{ episode: Episode; ids: string[] } | null>(null);
@@ -230,7 +228,7 @@ export default function ScriptTab() {
       return;
     }
     render.mutate(
-      { panel_ids: list, candidates: list.length === 1 ? 1 : candidates, variant_ids: [null] },
+      { panel_ids: list, variant_ids: [null] },
       { onSuccess: () => toast(t('script.queued', { count: list.length })), onError: toastError },
     );
   };

@@ -27,14 +27,16 @@ describe('canvasTasks', () => {
     ]);
   });
 
-  it('rejects an empty board and unlinked or unnamed nodes', () => {
+  it('accepts stories without presets but rejects an empty board or unnamed nodes', () => {
     expect(() => canvasTasks({ stories: [], presets: [], edges: [] }, msgs)).toThrow('empty');
     const d: CanvasDesign = {
       stories: [{ id: 's1', storyId: 'sb', title: 'Lonely', ...node }],
       presets: [{ id: 'p1', presetId: 'pre', ...node }],
       edges: [],
     };
-    expect(() => canvasTasks(d, msgs)).toThrow('link Lonely');
+    expect(canvasTasks(d, msgs)).toEqual([
+      { storyboard_id: 'sb', preset_ids: [], title: 'Lonely' },
+    ]);
     const unnamed = {
       ...d,
       stories: [{ ...d.stories[0], title: ' ' }],

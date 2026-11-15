@@ -22,7 +22,7 @@ import { useSelection } from '../../app/selection';
 import { useUI } from '../../app/ui-store';
 import { ContextMenu, useContextMenu, type ContextGroup } from '../../components/ContextMenu';
 import { toast, toastError } from '../../components/toast';
-import { Empty, Modal, NumberInput, Progress, Switch } from '../../components/ui';
+import { Empty, Modal, Progress, Switch } from '../../components/ui';
 import { useEpisodeContext } from '../episode/EpisodePage';
 import { PendingCard, TakeCard } from './TakeCard';
 import { CloudRequestDetails, TakeParameterSummary } from '../../components/CloudRequestDetails';
@@ -84,7 +84,7 @@ export default function BoardTab() {
   const queued = () => toast(t('board.queued'));
   const run = (panelIds: string[] | null) =>
     render.mutate(
-      { panel_ids: panelIds, candidates: ui.candidates, variant_ids: [null] },
+      { panel_ids: panelIds, variant_ids: [null] },
       { onSuccess: queued, onError: toastError },
     );
   const act = (take: Take, a: TakeAction) =>
@@ -185,17 +185,6 @@ export default function BoardTab() {
   return (
     <div className="board">
       <div className="board-toolbar">
-        <label className="row small soft">
-          {t('board.candidates')}
-          <span style={{ width: 64 }}>
-            <NumberInput
-              value={ui.candidates}
-              min={1}
-              max={8}
-              onChange={(n) => ui.setCandidates(n ?? 1)}
-            />
-          </span>
-        </label>
         <Switch
           checked={ui.showRejected}
           onChange={ui.setShowRejected}

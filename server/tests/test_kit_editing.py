@@ -84,14 +84,14 @@ class KitEditingTests(ApiCase):
         self.assertFalse(self.ctx.engine.list())
 
     def test_album_and_episode_roll_back_together_when_preview_storage_fails(self):
-        original = self.ctx.store.create_episode
+        original = self.ctx.store._insert_episode
         before = [s.id for s in self.ctx.store.list_series()]
 
-        def fail_after_insert(episode):
-            original(episode)
+        def fail_after_insert(db, episode):
+            original(db, episode)
             raise RuntimeError("interrupted storage")
 
-        with patch.object(self.ctx.store, "create_episode", side_effect=fail_after_insert):
+        with patch.object(self.ctx.store, "_insert_episode", side_effect=fail_after_insert):
             with self.assertRaisesRegex(RuntimeError, "interrupted storage"):
                 self.preview()
         self.assertEqual(before, [s.id for s in self.ctx.store.list_series()])

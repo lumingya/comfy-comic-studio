@@ -44,6 +44,12 @@ class ExtensionState(StrictModel):
 DEFAULT_COLLECTION = "遇见你，真好"
 
 
+class GenerationDefaults(StrictModel):
+    candidates: int = Field(default=1, ge=1, le=16)
+    width: int | None = Field(default=None, ge=64, le=8192)
+    height: int | None = Field(default=None, ge=64, le=8192)
+
+
 class AppSettings(StrictModel):
     id: str = "app"
     name: str = "settings"
@@ -73,6 +79,7 @@ class AppSettings(StrictModel):
         default_factory=list, description="Extra cloud image channels (NovelAI, OpenAI Images…)"
     )
     image_channel: str = Field(default="", description="Default channel id; '' = LLM proxy")
+    generation_defaults: dict[str, GenerationDefaults] = Field(default_factory=dict)
     update_feed: str = Field(default="", description="Signed release manifest URL; '' = GitHub")
     updated_at: str = Field(default_factory=now_iso)
 

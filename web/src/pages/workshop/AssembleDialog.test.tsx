@@ -1,12 +1,20 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AssembleVars, AssemblyPreview, Preset } from '../../api/workshop';
-import { configProfile, configurationRoutes } from '../../test/configuration';
+import { configProfile, configSettings, configurationRoutes } from '../../test/configuration';
 import { episode, series } from '../../test/fixtures';
 import { mockFetch, renderWithProviders } from '../../test/utils';
 import AssembleDialog from './AssembleDialog';
 
-const preset = (id: string): Preset => ({ id, title: id, groups: [], bindings: [], entries: [] });
+const preset = (id: string): Preset => ({
+  id,
+  title: id,
+  groups: [],
+  bindings: [],
+  entries: [],
+  positive_prompt: '',
+  negative_prompt: '',
+});
 const routes = () =>
   configurationRoutes({
     'GET /api/workshop': { ...series, id: 'ws', presets: [preset('Alpha'), preset('Beta')] },
@@ -55,121 +63,159 @@ const next = () => fireEvent.click(screen.getByRole('button', { name: '下一步
 async function mount() {
   renderWithProviders(<AssembleDialog onClose={vi.fn()} />);
   await screen.findByRole('option', { name: /Story/ });
+  await waitFor(() => expect(screen.getByLabelText('出图工作流或云端服务')).toBeEnabled());
+  fireEvent.change(screen.getByLabelText('出图工作流或云端服务'), {
+    target: { value: 'workflow:wf_demo' },
+  });
+  await waitFor(() => expect(screen.getByRole('button', { name: '下一步' })).toBeEnabled());
   next();
 }
 afterEach(() => vi.unstubAllGlobals());
 
 describe('assembly image service selection', () => {
-  it('switches actual profiles with the service and sends only the selected cloud snapshot', async () => {
-    const cloud = {
-      ...configProfile,
-      id: 'cloud',
-      name: 'Cloud profile',
-      cloud_shape: true,
-      cloud_channel: 'images',
-    };
+  it('blocks an empty storyboard before the next step and links to its editor', async () => {
     const calls = mockFetch({
       ...routes(),
-      'GET /api/profiles': [cloud, configProfile],
+      'GET /api/series/ws/episodes': { items: [{ id: 'empty', title: 'Empty', panel_count: 0 }] },
+    });
+    renderWithProviders(<AssembleDialog onClose={vi.fn()} />);
+    await screen.findByText('此分镜尚无分幕');
+    await waitFor(() => expect(screen.getByLabelText('出图工作流或云端服务')).toBeEnabled());
+    fireEvent.change(screen.getByLabelText('出图工作流或云端服务'), {
+      target: { value: 'workflow:wf_demo' },
+    });
+    expect(screen.getByRole('button', { name: '下一步' })).toBeDisabled();
+    expect(screen.getByRole('link', { name: '编辑分镜' })).toHaveAttribute(
+      'href',
+      '/workshop/story/empty',
+    );
+    expect(calls.some((call) => call.method === 'POST')).toBe(false);
+  });
+  it('selects a workflow or channel directly and recalls each route independently', async () => {
+    const calls = mockFetch({
+      ...routes(),
+      'GET /api/settings': {
+        ...configSettings,
+        generation_defaults: {
+          'workflow:wf_demo': { candidates: 4, width: 768, height: 1024 },
+          'channel:images': { candidates: 2 },
+        },
+      },
       'POST /api/workshop/assemble/preview': preview,
       'POST /api/workshop/assemble': { series, episode },
     });
     renderWithProviders(<AssembleDialog onClose={vi.fn()} />);
-    await screen.findByRole('option', { name: /Story/ });
-    const service = screen.getByLabelText('图像服务');
-    const profile = screen.getByLabelText('出图配置');
-    expect(service).toHaveValue('local');
-    expect(profile).toHaveValue('');
-    fireEvent.change(service, { target: { value: 'cloud' } });
-    expect(profile).toHaveValue('cloud');
-    expect(within(profile).queryByRole('option', { name: configProfile.name })).toBeNull();
-    expect(screen.getByText('纯云端出图 · 主力图像服务')).toBeVisible();
-    fireEvent.change(service, { target: { value: 'local' } });
-    expect(profile).toHaveValue('');
-    fireEvent.change(service, { target: { value: 'cloud' } });
-    next();
-    next();
-    await waitFor(() =>
-      expect(calls.find((call) => call.url.endsWith('/assemble/preview'))?.body).toMatchObject({
-        profile_id: 'cloud',
-      }),
-    );
-    fireEvent.click(screen.getByRole('button', { name: '添加待命任务' }));
-    await waitFor(() =>
-      expect(calls.find((call) => call.url === '/api/workshop/assemble')?.body).toMatchObject({
-        profile_id: 'cloud',
-      }),
-    );
-    expect(
-      calls
-        .filter((call) => call.method !== 'GET')
-        .every((call) => call.url.startsWith('/api/workshop/assemble')),
-    ).toBe(true);
-  });
-
-  it('blocks missing-service submission in both modes and links to configuration', async () => {
-    const calls = mockFetch(routes());
-    const close = vi.fn();
-    renderWithProviders(<AssembleDialog onClose={close} />);
-    await screen.findByRole('option', { name: /Story/ });
-    fireEvent.change(screen.getByLabelText('图像服务'), { target: { value: 'cloud' } });
-    expect(screen.getByLabelText('出图配置')).toBeDisabled();
-    expect(screen.getByRole('status')).toHaveTextContent('尚未选择纯云端出图的出图配置');
+    const route = await screen.findByLabelText('出图工作流或云端服务');
+    await waitFor(() => expect(route).toBeEnabled());
+    expect(route).toHaveValue('');
     expect(screen.getByRole('button', { name: '下一步' })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: '画布连线' }));
-    fireEvent.click(screen.getByRole('button', { name: '调入分镜' }));
-    fireEvent.click(screen.getByRole('button', { name: '调入预设' }));
-    screen
-      .getAllByRole('checkbox', { hidden: true })
-      .forEach((checkbox) => fireEvent.click(checkbox));
-    expect(screen.getByRole('button', { name: '批量生成 · 加入待命' })).toBeDisabled();
-    expect(calls.some((call) => call.method !== 'GET')).toBe(false);
-    const configure = screen.getByRole('link', { name: '管理出图配置' });
-    expect(configure).toHaveAttribute('href', '/engine?tab=profiles');
-    fireEvent.click(configure);
-    expect(close).toHaveBeenCalledOnce();
+    expect(calls.some((call) => call.method === 'POST')).toBe(false);
+    fireEvent.change(route, { target: { value: 'workflow:wf_demo' } });
+    expect(screen.getByLabelText('每幕生成张数')).toHaveValue(4);
+    expect(screen.getByLabelText('宽度（像素）')).toHaveValue(768);
+    fireEvent.change(route, { target: { value: 'channel:images' } });
+    expect(screen.getByLabelText('每幕生成张数')).toHaveValue(2);
+    expect(screen.getByLabelText('画面尺寸')).toHaveValue('original');
+    next();
+    expect(screen.getByRole('checkbox', { name: /Alpha/ })).not.toBeChecked();
+    next();
+    fireEvent.click(screen.getByRole('button', { name: '稍后生成' }));
+    await waitFor(() =>
+      expect(calls.find((c) => c.url === '/api/workshop/assemble')?.body).toMatchObject({
+        preset_ids: [],
+        generation: { cloud_channel_id: 'images', candidates: 2, width: null, height: null },
+      }),
+    );
+    expect(calls.some((c) => c.url.endsWith('/queue/start'))).toBe(false);
   });
 
-  it('preserves a source hybrid profile and panel-specific configuration warning', async () => {
+  it('starts the assembled task only when Start generation is chosen', async () => {
+    const calls = mockFetch({
+      ...routes(),
+      'POST /api/workshop/assemble/preview': preview,
+      'POST /api/workshop/assemble': { series, episode },
+      'POST /api/workshop/queue/start': {},
+    });
+    await mount();
+    next();
+    fireEvent.click(screen.getByRole('button', { name: '开始生成' }));
+    await waitFor(() =>
+      expect(calls.find((c) => c.url.endsWith('/queue/start'))?.body).toEqual({
+        album_ids: [series.id],
+      }),
+    );
+  });
+
+  it('blocks submission without a workflow, cloud channel, or advanced plan', async () => {
     mockFetch({
       ...routes(),
-      'GET /api/workshop': { ...series, id: 'ws', default_profile_id: 'mixed' },
-      'GET /api/profiles': [
-        configProfile,
-        {
-          ...configProfile,
-          id: 'mixed',
-          name: 'Mixed profile',
-          cloud_shape: true,
-          cloud_refine: true,
-        },
-      ],
-      'GET /api/episodes/sb': {
-        ...episode,
-        id: 'sb',
-        panels: [
-          {
-            ...episode.panels[0],
-            overrides: { ...episode.panels[0].overrides, profile_id: configProfile.id },
-          },
-        ],
-      },
+      'GET /api/profiles': [],
+      'GET /api/workflows': [],
+      'GET /api/settings': { ...configSettings, image_channels: [] },
     });
     renderWithProviders(<AssembleDialog onClose={vi.fn()} />);
-    await screen.findByRole('option', { name: /Story/ });
-    expect(screen.getByLabelText('图像服务')).toHaveValue('hybrid');
-    expect(screen.getByLabelText('出图配置')).toHaveValue('');
-    await screen.findByText('部分分幕单独指定了出图配置，生成时优先使用分幕设置。');
-    expect(screen.getByRole('button', { name: '下一步' })).toBeEnabled();
-    fireEvent.change(screen.getByLabelText('图像服务'), { target: { value: 'local' } });
-    expect(screen.getByLabelText('出图配置')).toHaveValue(configProfile.id);
-    fireEvent.change(screen.getByLabelText('图像服务'), { target: { value: 'hybrid' } });
-    expect(screen.getByLabelText('出图配置')).toHaveValue('');
-    expect(screen.getByRole('button', { name: '下一步' })).toBeEnabled();
+    await screen.findByRole('link', { name: '配置工作流或 API' });
+    expect(screen.getByRole('button', { name: '下一步' })).toBeDisabled();
+  });
+
+  it('keeps an explicit source plan available alongside direct workflows', async () => {
+    mockFetch({
+      ...routes(),
+      'GET /api/workshop': { ...series, id: 'ws', default_profile_id: configProfile.id },
+    });
+    renderWithProviders(<AssembleDialog onClose={vi.fn()} />);
+    await waitFor(() =>
+      expect(screen.getByLabelText('出图工作流或云端服务')).toHaveValue(
+        `profile:${configProfile.id}`,
+      ),
+    );
   });
 });
 
 describe('assembly review and durable retry intent', () => {
+  it.each(['wizard', 'canvas'] as const)(
+    'retains a %s task when queue start returns a notice and retries the same intent',
+    async (mode) => {
+      let starts = 0;
+      const close = vi.fn();
+      const calls = mockFetch({
+        ...routes(),
+        'POST /api/workshop/assemble/preview': preview,
+        'POST /api/workshop/assemble': { series, episode },
+        'POST /api/workshop/queue/start': () =>
+          ++starts === 1 ? { notices: { [series.id]: '工作流缺少节点' } } : {},
+      });
+      renderWithProviders(<AssembleDialog onClose={close} />);
+      await screen.findByRole('option', { name: /Story/ });
+      await waitFor(() => expect(screen.getByLabelText('出图工作流或云端服务')).toBeEnabled());
+      fireEvent.change(screen.getByLabelText('出图工作流或云端服务'), {
+        target: { value: 'workflow:wf_demo' },
+      });
+      if (mode === 'canvas') {
+        fireEvent.click(screen.getByRole('button', { name: '画布连线' }));
+        fireEvent.click(screen.getByRole('button', { name: '调入分镜' }));
+      } else {
+        next();
+        next();
+      }
+      const start = screen.getByRole('button', { name: '开始生成' });
+      fireEvent.click(start);
+      await waitFor(() => {
+        expect(starts).toBe(1);
+        expect(start).toBeEnabled();
+      });
+      expect(close).not.toHaveBeenCalled();
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      if (mode === 'canvas') expect(screen.getAllByLabelText('输出画册名称')).toHaveLength(1);
+      fireEvent.click(start);
+      await waitFor(() => expect(close).toHaveBeenCalledOnce());
+      const sent = calls
+        .filter((call) => call.url === '/api/workshop/assemble')
+        .map((call) => call.body as AssembleVars);
+      expect(sent).toHaveLength(2);
+      expect(sent[0].idempotency_key).toBe(sent[1].idempotency_key);
+    },
+  );
   it('keeps real preset ordering and uses server substitutions with editable empty variables', async () => {
     const calls = mockFetch({
       ...routes(),
@@ -177,6 +223,7 @@ describe('assembly review and durable retry intent', () => {
       'POST /api/workshop/assemble': { series, episode },
     });
     await mount();
+    fireEvent.click(screen.getByRole('checkbox', { name: /Alpha/ }));
     fireEvent.click(screen.getByRole('checkbox', { name: /Beta/ }));
     fireEvent.click(screen.getByRole('button', { name: '上移 Beta' }));
     const order = screen.getByRole('list', { name: '预设应用顺序' });
@@ -202,7 +249,7 @@ describe('assembly review and durable retry intent', () => {
         '空值',
       ),
     );
-    fireEvent.click(screen.getByRole('button', { name: '添加待命任务' }));
+    fireEvent.click(screen.getByRole('button', { name: '稍后生成' }));
     await waitFor(() =>
       expect(calls.some((call) => call.url === '/api/workshop/assemble')).toBe(true),
     );
@@ -225,7 +272,7 @@ describe('assembly review and durable retry intent', () => {
     next();
     expect(await screen.findByRole('alert')).toHaveTextContent('暂时无法核对变量');
     expect(screen.queryByText(/没有未解决的变量/)).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '添加待命任务' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: '稍后生成' })).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: '重试预览' }));
     await screen.findByRole('button', { name: /第 1 幕.*weather/ });
   });
@@ -266,7 +313,7 @@ describe('assembly review and durable retry intent', () => {
     });
     await mount();
     next();
-    const submit = screen.getByRole('button', { name: '添加待命任务' });
+    const submit = screen.getByRole('button', { name: '稍后生成' });
     const sent = () =>
       calls
         .filter((call) => call.url === '/api/workshop/assemble')
@@ -302,11 +349,9 @@ describe('assembly review and durable retry intent', () => {
     fireEvent.click(screen.getByRole('button', { name: '调入预设' }));
     const checkboxes = screen.getAllByRole('checkbox', { hidden: true });
     checkboxes.forEach((checkbox) => fireEvent.click(checkbox));
-    fireEvent.click(screen.getByRole('button', { name: '批量生成 · 加入待命' }));
-    fireEvent.click(screen.getByRole('button', { name: '确认创建 2 个待命任务' }));
+    fireEvent.click(screen.getByRole('button', { name: '稍后生成' }));
     await waitFor(() => expect(screen.getAllByLabelText('输出画册名称')).toHaveLength(1));
-    fireEvent.click(screen.getByRole('button', { name: '批量生成 · 加入待命' }));
-    fireEvent.click(screen.getByRole('button', { name: '确认创建 1 个待命任务' }));
+    fireEvent.click(screen.getByRole('button', { name: '稍后生成' }));
     await waitFor(() =>
       expect(calls.filter((call) => call.url === '/api/workshop/assemble')).toHaveLength(3),
     );

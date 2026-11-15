@@ -1,5 +1,5 @@
 import { ResizableSplit } from '../../components/ResizableSplit';
-import { ArrowDown, ArrowUp, Cloud, Plus, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Plus, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
@@ -15,16 +15,7 @@ import type { RenderProfile, RenderStage, WorkflowSummary } from '../../api/type
 import { QueryError } from '../../app/errors';
 import { confirm } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
-import {
-  Empty,
-  Field,
-  Loading,
-  NumberInput,
-  Select,
-  Switch,
-  TagInput,
-  TextInput,
-} from '../../components/ui';
+import { Empty, Field, Loading, Select, Switch, TextInput } from '../../components/ui';
 import { rid } from '../bible/BibleTab';
 import {
   Advanced,
@@ -61,8 +52,8 @@ export function newProfile(name: string, workflow = '', cloud = false): RenderPr
     instances: [],
     binding_required: false,
     base_width: 832,
-    quality_tags: null,
-    negative_tags: null,
+    quality_tags: [],
+    negative_tags: [],
     cloud_shape: cloud,
     cloud_refine: false,
     model_group: null,
@@ -379,14 +370,6 @@ function ProfileEditor({
               ]}
             />
           </Field>
-          <Field label={t('board.candidates')}>
-            <NumberInput
-              value={p.candidates}
-              min={1}
-              max={16}
-              onChange={(value) => set({ candidates: value ?? 1 })}
-            />
-          </Field>
         </div>
         {p.cloud_shape ? (
           <>
@@ -415,44 +398,7 @@ function ProfileEditor({
           <QueryError error={workflows.error} onRetry={workflows.refetch} />
         ) : null}
         {settings.isError ? <QueryError error={settings.error} onRetry={settings.refetch} /> : null}
-        <Advanced title={t('config.profile.promptAdvanced')} hint={t('config.profile.promptHint')}>
-          <div className="grid-2">
-            <Field label={t('settings.dialect')}>
-              <Select
-                value={p.dialect}
-                options={[
-                  { value: 'tags', label: t('config.profile.tags') },
-                  { value: 'natural', label: t('config.profile.natural') },
-                ]}
-                onChange={(dialect) => set({ dialect })}
-              />
-            </Field>
-            {!p.cloud_shape ? (
-              <Field label={t('settings.baseWidth')} hint={t('config.profile.widthHint')}>
-                <NumberInput
-                  value={p.base_width}
-                  min={256}
-                  max={4096}
-                  step={64}
-                  onChange={(value) => set({ base_width: value ?? 832 })}
-                />
-              </Field>
-            ) : null}
-          </div>
-          <Field label={t('settings.qualityTags')}>
-            <TagInput
-              value={p.quality_tags ?? []}
-              onChange={(value) => set({ quality_tags: value.length ? value : null })}
-              placeholder={t('common.auto')}
-            />
-          </Field>
-          <Field label={t('settings.negativeTags')}>
-            <TagInput
-              value={p.negative_tags ?? []}
-              onChange={(value) => set({ negative_tags: value.length ? value : null })}
-              placeholder={t('common.auto')}
-            />
-          </Field>
+        <Advanced title={t('config.profile.promptAdvanced')}>
           <Field label={t('settings.modelGroup')} hint={t('settings.modelGroupHint')}>
             <TextInput
               mono
@@ -545,16 +491,10 @@ export function ProfilesSection() {
   const [dirty, setDirty] = useState(false);
   const list = profiles.data ?? [];
   const current = creating ?? list.find((p) => p.id === selected) ?? list[0];
-  const create = async (cloud = false) => {
+  const create = async () => {
     if (await discard(dirty)) {
       setDirty(false);
-      setCreating(
-        newProfile(
-          t(cloud ? 'config.profile.newCloudName' : 'settings.newProfile'),
-          workflows.data?.[0]?.id,
-          cloud,
-        ),
-      );
+      setCreating(newProfile(t('settings.newProfile'), workflows.data?.[0]?.id));
     }
   };
   return (
@@ -604,10 +544,6 @@ export function ProfilesSection() {
               <Plus size={14} />
               {t('settings.newProfile')}
             </button>
-            <button type="button" className="btn sm" onClick={() => void create(true)}>
-              <Cloud size={14} />
-              {t('config.profile.newCloud')}
-            </button>
           </nav>
           <section className="config-editor">
             {current ? (
@@ -628,12 +564,6 @@ export function ProfilesSection() {
           </section>
         </ResizableSplit>
       )}
-      <div className="config-next">
-        <span>{t('config.profile.nextHint')}</span>
-        <Link className="btn sm" to="/workshop/assembly">
-          {t('config.profile.next')}
-        </Link>
-      </div>
     </section>
   );
 }

@@ -63,7 +63,8 @@ class CompilerTests(unittest.TestCase):
         panel = episode.panel("p02")
         out = K.compile_panel(series, episode, panel, rng=random.Random(1))
         self.assertIn("bob cut", out.positive)
-        self.assertIn("nsfw", out.negative)
+        self.assertNotIn("nsfw", out.negative)
+        self.assertNotIn("masterpiece", out.positive)
         self.assertEqual(out.refs, ["lin"])
         self.assertEqual(out.width % 64, 0)
         self.assertLess(out.width, out.height)  # 2:3 portrait default
@@ -270,10 +271,10 @@ class ProvenanceTests(unittest.TestCase):
         by_source = {}
         for s in out.sources:
             by_source.setdefault(s["source"], []).append(s["tag"])
-        self.assertEqual(by_source["quality"][0], "masterpiece")
+        self.assertNotIn("quality", by_source)
         self.assertEqual(by_source["append"], ["rain", "(wet street, puddles:1.2)"])
         self.assertTrue(any(k.startswith("character:") for k in by_source))
-        self.assertEqual(out.negative_sources[0]["source"], "negative")
+        self.assertNotIn("negative", {item["source"] for item in out.negative_sources})
 
     def test_profile_quality_list_is_marked_as_such(self):
         series, episode = project()

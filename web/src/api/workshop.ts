@@ -10,6 +10,8 @@ export type Preset = Series['presets'][number];
 export type PresetEntry = Preset['entries'][number];
 export type PresetGroup = Preset['groups'][number];
 
+export type GenerationOptions = components['schemas']['GenerationOptions'];
+
 export const workshopKey = ['workshop'] as const;
 
 /** The hidden 创作工坊 series: its episodes are the storyboards, `presets` the presets. */
@@ -52,6 +54,7 @@ export interface AssembleVars {
   preset_ids: string[];
   title: string;
   profile_id?: string | null;
+  generation?: GenerationOptions;
   variables?: Record<string, string>;
   idempotency_key?: string;
 }
@@ -66,6 +69,7 @@ function kitAssembly(body: AssembleVars): KitAssembly {
     preset_ids: body.preset_ids,
     title: body.title,
     profile_id: body.profile_id,
+    generation: body.generation,
     variables: body.variables,
     idempotency_key: body.idempotency_key ?? 'preview',
   };
@@ -106,6 +110,7 @@ export function useAssemble(kitId?: string) {
       qc.invalidateQueries({ queryKey: ['series'] });
       qc.invalidateQueries({ queryKey: ['episodes'] });
       qc.invalidateQueries({ queryKey: keys.queue });
+      qc.invalidateQueries({ queryKey: keys.settings });
     },
   });
 }
@@ -118,6 +123,8 @@ export interface PreviewVars {
   prompt: string;
   title?: string;
   profile_id?: string | null;
+  generation?: GenerationOptions;
+  idempotency_key?: string;
 }
 
 /** 预设「独立试绘」: one prompt + presets → a one-frame album waiting in the queue. */
@@ -138,8 +145,18 @@ export function usePreviewPreset(kitId?: string) {
       qc.invalidateQueries({ queryKey: ['series'] });
       qc.invalidateQueries({ queryKey: ['episodes'] });
       qc.invalidateQueries({ queryKey: keys.queue });
+      qc.invalidateQueries({ queryKey: keys.settings });
     },
   });
+}
+
+/** Queue acceptance can fail with an HTTP 200 response; surface its task-specific reason. */
+export function requireQueueAccepted(
+  result: Pick<QueueStatus, 'notices' | 'fault'>,
+  seriesId: string,
+) {
+  const problem = result.notices?.[seriesId] || result.fault;
+  if (problem) throw new Error(problem);
 }
 
 /** 装配队列「克隆」: a new standby album with the task's frames, presets and profile. */

@@ -245,7 +245,7 @@ describe('ComfyUI connections', () => {
 });
 
 describe('render profiles', () => {
-  it('creates a cloud-only profile without copying another profile’s expensive settings or requiring ComfyUI', async () => {
+  it('uses one create action and can select cloud without copying another plan’s settings', async () => {
     const calls = mockFetch(
       configurationRoutes({
         'GET /api/workflows': [],
@@ -253,18 +253,20 @@ describe('render profiles', () => {
       }),
     );
     renderWithProviders(<ProfilesSection />);
-    await userEvent.click(await screen.findByRole('button', { name: '新建纯云端配置' }));
+    await userEvent.click(await screen.findByRole('button', { name: '新建方案' }));
+    expect(screen.queryByRole('button', { name: '新建纯云端配置' })).toBeNull();
+    fireEvent.change(screen.getByLabelText('出图方式'), { target: { value: 'cloud' } });
     await userEvent.click(screen.getByRole('button', { name: '保存' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
     expect(calls.find((c) => c.method === 'POST')!.body).toMatchObject({
       cloud_shape: true,
       cloud_refine: false,
-      draft: [],
       final: [],
       edits: {},
       instances: [],
       candidates: 1,
-      dialect: 'natural',
+      quality_tags: [],
+      negative_tags: [],
     });
   });
 
@@ -332,7 +334,8 @@ describe('workflow editor', () => {
     );
     renderWithProviders(<WorkflowsSection />);
     const prompt = await screen.findByLabelText(/^正向提示词/);
-    await userEvent.selectOptions(prompt, '/7/inputs/text');
+    await userEvent.click(prompt);
+    await userEvent.click(screen.getByRole('option', { name: '#7 · CLIPTextEncode → text' }));
     await userEvent.click(screen.getByRole('button', { name: '保存' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PATCH')).toBe(true));
     const body = calls.find((c) => c.method === 'PATCH')!.body as Partial<WorkflowDocument>;
@@ -369,9 +372,9 @@ describe('workflow editor', () => {
     );
     renderWithProviders(<WorkflowsSection />);
     await screen.findByDisplayValue('测试工作流');
-    await expand('编译预览 · 不出图');
-    await userEvent.click(screen.getByRole('button', { name: '编译已保存的工作流' }));
-    expect(await screen.findByText(/以下是将提交的节点图/)).toBeInTheDocument();
+    await expand('查看提交数据');
+    await userEvent.click(screen.getByRole('button', { name: '生成提交数据' }));
+    expect(await screen.findByText('节点图与绑定报告')).toBeInTheDocument();
     const writes = calls.filter((c) => c.method !== 'GET');
     expect(writes).toHaveLength(1);
     expect(writes[0]).toMatchObject({
@@ -380,7 +383,7 @@ describe('workflow editor', () => {
       body: { values: { prompt: 'a quiet street', seed: 1 }, variant: null },
     });
     fireEvent.change(screen.getByLabelText('名称'), { target: { value: '尚未保存的修改' } });
-    expect(screen.getByRole('button', { name: '编译已保存的工作流' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '生成提交数据' })).toBeDisabled();
     expect(screen.getByRole('button', { name: '导出工作流与映射' })).toBeDisabled();
     await expand('原始工作流 JSON');
     expect(screen.getByRole('button', { name: '导出原始 API JSON' })).toBeDisabled();
@@ -397,7 +400,7 @@ describe('workflow editor', () => {
     await screen.findByDisplayValue('测试工作流');
     await expand('原始工作流 JSON');
     expect(screen.getByLabelText('原始工作流 JSON')).toHaveAttribute('readonly');
-    expect(screen.getByRole('button', { name: '删除' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: '删除工作流' })).toBeDisabled();
     expect(screen.getByLabelText(/^正向提示词/)).toBeEnabled();
   });
 
@@ -415,10 +418,10 @@ describe('workflow editor', () => {
       }),
     );
     renderWithProviders(<WorkflowsSection />);
-    await userEvent.click(await screen.findByRole('button', { name: '诊断' }));
+    await userEvent.click(await screen.findByRole('button', { name: '检查依赖' }));
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByLabelText('检查哪台 ComfyUI')).toHaveValue('comfy_test');
-    await userEvent.click(within(dialog).getByRole('button', { name: '诊断' }));
+    await userEvent.click(within(dialog).getByRole('button', { name: '检查依赖' }));
     await waitFor(() =>
       expect(
         calls.some((c) => c.url === '/api/workflows/wf_demo/diagnose?instance_id=comfy_test'),
@@ -454,12 +457,12 @@ it('guards query-string tab changes, and cancel keeps the channel draft in place
   fireEvent.change(await screen.findByDisplayValue('主力图像服务'), {
     target: { value: '仍在编辑' },
   });
-  await userEvent.click(screen.getByRole('tab', { name: /出图配置/ }));
+  await userEvent.click(screen.getByRole('tab', { name: /高级出图方案/ }));
   const dialog = await screen.findByRole('dialog', { name: '离开此页？' });
   await userEvent.click(within(dialog).getByRole('button', { name: '取消' }));
   expect(router.state.location.search).toBe('?tab=channels');
   expect(screen.getByDisplayValue('仍在编辑')).toBeInTheDocument();
-  await userEvent.click(screen.getByRole('tab', { name: /出图配置/ }));
+  await userEvent.click(screen.getByRole('tab', { name: /高级出图方案/ }));
   await userEvent.click(
     within(await screen.findByRole('dialog')).getByRole('button', { name: '离开' }),
   );

@@ -91,6 +91,26 @@ describe('render routes', () => {
     expect(calls.some((call) => call.method !== 'GET')).toBe(false);
   });
 
+  it('renders a task snapshot without requiring its profile in the configuration library', async () => {
+    const calls = mockFetch({ ...base(), 'GET /api/profiles': [] });
+    const generate = vi.fn();
+    renderWithProviders(
+      <GenerateStage
+        episode={episode}
+        panelId="p0"
+        defaultProfileId="task:channel:images"
+        taskProfile={{ ...cloud, id: 'task:channel:images' }}
+        candidates={3}
+        onGenerate={generate}
+      />,
+    );
+    await screen.findByText(/纯云端出图 · 主力图像服务 · 已配置/);
+    expect(document.querySelector('.stage-notice')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /生成.*3/ }));
+    expect(generate).toHaveBeenCalledWith(3);
+    expect(calls.some((call) => call.url.endsWith('/health'))).toBe(false);
+  });
+
   it('checks all eligible instances and accepts a later reachable one, excluding other instances', async () => {
     const local = { ...configProfile, instances: ['down', 'up'] };
     const calls = mockFetch({
@@ -184,18 +204,27 @@ describe('render routes', () => {
     });
     renderWithProviders(<AssembleDialog onClose={vi.fn()} />);
     const dialog = await screen.findByRole('dialog');
-    await within(dialog).findByText('纯云端出图 · 主力图像服务');
-    fireEvent.change(within(dialog).getByLabelText('图像服务'), { target: { value: 'local' } });
-    expect(within(dialog).getByLabelText('出图配置')).toHaveValue(configProfile.id);
-    fireEvent.change(within(dialog).getByLabelText('图像服务'), { target: { value: 'cloud' } });
-    fireEvent.change(within(dialog).getByLabelText('出图配置'), { target: { value: cloud.id } });
+    await waitFor(() =>
+      expect(within(dialog).getByLabelText('出图工作流或云端服务')).toHaveValue(
+        `profile:${cloud.id}`,
+      ),
+    );
+    fireEvent.change(within(dialog).getByLabelText('出图工作流或云端服务'), {
+      target: { value: `profile:${configProfile.id}` },
+    });
+    expect(within(dialog).getByLabelText('出图工作流或云端服务')).toHaveValue(
+      `profile:${configProfile.id}`,
+    );
+    fireEvent.change(within(dialog).getByLabelText('出图工作流或云端服务'), {
+      target: { value: `profile:${cloud.id}` },
+    });
     fireEvent.click(within(dialog).getByRole('button', { name: '下一步' }));
     fireEvent.click(within(dialog).getByRole('button', { name: '下一步' }));
-    expect(within(dialog).getByText('纯云端出图 · 主力图像服务')).toBeInTheDocument();
-    fireEvent.click(within(dialog).getByRole('button', { name: '添加待命任务' }));
+    expect(within(dialog).getByText(cloud.name)).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole('button', { name: '稍后生成' }));
     await waitFor(() =>
       expect(calls.find((call) => call.url === '/api/workshop/assemble')?.body).toMatchObject({
-        profile_id: cloud.id,
+        generation: { profile_id: cloud.id },
       }),
     );
     expect(

@@ -127,20 +127,9 @@ function Sidebar() {
   );
 }
 
-function RenderSettingsLink() {
-  const { t } = useTranslation();
-  return (
-    <Link className="image-service-chip" to="/engine?tab=profiles">
-      <Icon name="settings" sm />
-      <span>{t('ws.assemble.profile')}</span>
-    </Link>
-  );
-}
-
 function Topbar() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { data } = useJobs(undefined, true);
   const theme = useThemeToggle();
   const openHelp = useHelp((s) => s.set);
   const section = useSection();
@@ -152,10 +141,13 @@ function Topbar() {
         <strong>{section}</strong>
       </div>
       <span className="spacer" />
-      <RenderSettingsLink />
-      <button className="top-queue" onClick={() => navigate('/jobs')} title={t('nav.jobs')}>
+      <button
+        className="top-queue"
+        onClick={() => navigate('/workshop/assembly')}
+        title={t('ws.head.assembly')}
+      >
         <Icon name="nodes" sm />
-        {t('legacy.queue')} <b>{data?.length ?? 0}</b>
+        {t('ws.head.assembly')}
       </button>
       <button
         type="button"

@@ -1,4 +1,4 @@
-import { Cloud, Layers, SlidersHorizontal, Workflow } from 'lucide-react';
+import { Cloud, Layers, Plug, SlidersHorizontal, Workflow } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useInstances, useProfiles, useSettings, useWorkflows } from '../../api/system';
@@ -7,7 +7,6 @@ import { ChannelsSection } from '../settings/ChannelsSection';
 import { InstancesSection } from '../settings/InstancesSection';
 import { ProfilesSection } from '../settings/ProfilesSection';
 import { WorkflowsSection } from '../settings/WorkflowsSection';
-import { Advanced } from '../settings/ConfigurationParts';
 
 const TABS = ['instances', 'workflows', 'profiles', 'channels'] as const;
 type Tab = (typeof TABS)[number];
@@ -18,13 +17,11 @@ const SECTIONS = {
   channels: ChannelsSection,
 };
 
-/** Service first, configuration second. Deep links from the previous UI remain valid. */
 export default function EnginePage() {
   const { t } = useTranslation();
   const [params, setParams] = useSearchParams();
   const requested = params.get('tab') as Tab | null;
   const tab = requested && TABS.includes(requested) ? requested : 'instances';
-  const local = tab === 'instances' || tab === 'workflows';
   const instances = useInstances();
   const workflows = useWorkflows();
   const profiles = useProfiles();
@@ -34,12 +31,20 @@ export default function EnginePage() {
   const Section = SECTIONS[tab];
   const groups = [
     {
-      id: 'local',
+      id: 'instances',
       tab: 'instances' as Tab,
-      active: local,
-      icon: Workflow,
+      active: tab === 'instances',
+      icon: Plug,
       title: t('config.page.local'),
       count: instances.data?.instances.length,
+    },
+    {
+      id: 'workflows',
+      tab: 'workflows' as Tab,
+      active: tab === 'workflows',
+      icon: Workflow,
+      title: t('config.page.workflows'),
+      count: workflows.data?.length,
     },
     {
       id: 'cloud',
@@ -94,7 +99,7 @@ export default function EnginePage() {
                 aria-selected={group.active}
                 aria-controls="config-panel"
                 tabIndex={group.active ? 0 : -1}
-                className={`config-service ${group.active ? 'active' : ''}`}
+                className={`config-service ${group.id === 'profiles' ? 'config-service-secondary' : ''} ${group.active ? 'active' : ''}`}
                 aria-current={group.active ? 'page' : undefined}
                 onClick={() => {
                   if (!group.active) open(group.tab);
@@ -115,35 +120,6 @@ export default function EnginePage() {
             {t('config.page.textApi')}
           </Link>
         </div>
-        {local ? (
-          <nav className="config-steps" aria-label={t('config.page.steps')}>
-            <button
-              type="button"
-              className={tab === 'instances' ? 'active' : ''}
-              aria-current={tab === 'instances' ? 'step' : undefined}
-              onClick={() => open('instances')}
-            >
-              <b>1</b>
-              {t('config.page.connect')}
-            </button>
-            <span aria-hidden>→</span>
-            <button
-              type="button"
-              className={tab === 'workflows' ? 'active' : ''}
-              aria-current={tab === 'workflows' ? 'step' : undefined}
-              onClick={() => open('workflows')}
-            >
-              <b>2</b>
-              {t('config.page.bind')}
-              {workflows.data ? <small> {workflows.data.length}</small> : null}
-            </button>
-            <span aria-hidden>→</span>
-            <button type="button" onClick={() => open('profiles')}>
-              <b>3</b>
-              {t('config.page.choose')}
-            </button>
-          </nav>
-        ) : null}
         <div
           id="config-panel"
           role="tabpanel"
@@ -151,28 +127,6 @@ export default function EnginePage() {
           className="wf-section settings-panel config-panel"
         >
           <Section />
-        </div>
-        <div className="config-help">
-          <Advanced title={t('config.page.helpTitle')}>
-            <dl className="config-facts">
-              <div>
-                <dt>{t('config.page.local')}</dt>
-                <dd>{t('config.page.localHelp')}</dd>
-              </div>
-              <div>
-                <dt>{t('config.page.cloud')}</dt>
-                <dd>{t('config.page.cloudHelp')}</dd>
-              </div>
-              <div>
-                <dt>{t('config.page.profiles')}</dt>
-                <dd>{t('config.page.profilesHelp')}</dd>
-              </div>
-              <div>
-                <dt>{t('config.page.textApi')}</dt>
-                <dd>{t('config.page.textHelp')}</dd>
-              </div>
-            </dl>
-          </Advanced>
         </div>
       </section>
     </div>

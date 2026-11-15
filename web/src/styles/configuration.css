@@ -3,7 +3,8 @@
 .config-navigation {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 .config-navigation > .btn {
   flex-shrink: 0;
@@ -11,20 +12,21 @@
 .config-services {
   flex: 1;
   min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .config-service {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 9px;
   min-width: 0;
-  padding: 14px 18px;
-  border: 1px solid var(--line);
+  padding: 11px 14px;
+  border: 1px solid transparent;
   border-radius: var(--radius);
-  background: var(--panel);
-  color: var(--soft);
+  background: transparent;
+  color: var(--text);
   text-align: left;
   cursor: pointer;
   font: inherit;
@@ -40,6 +42,10 @@
 .config-service.active {
   color: var(--accent);
 }
+.config-service-secondary {
+  margin-left: auto;
+  border-color: var(--line);
+}
 .config-service > svg {
   flex-shrink: 0;
 }
@@ -54,43 +60,8 @@
   padding: 3px 8px;
   border-radius: 6px;
   background: var(--bg);
-  color: var(--muted);
+  color: var(--soft);
   font: 12px var(--mono);
-}
-.config-steps {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-top: 18px;
-  color: var(--muted);
-  flex-wrap: wrap;
-}
-.config-steps button {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 7px 10px;
-  border: 0;
-  border-radius: 6px;
-  font: inherit;
-  font-size: 13px;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
-}
-.config-steps button.active,
-.config-steps button:hover {
-  background: var(--tint);
-  color: var(--accent);
-}
-.config-steps b {
-  display: grid;
-  place-items: center;
-  width: 21px;
-  height: 21px;
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  font: 11px var(--mono);
 }
 .config-panel {
   margin-top: 22px;
@@ -395,6 +366,75 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
+.config-mappings,
+.config-mapping-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.config-mappings {
+  gap: 16px;
+}
+.config-mapping-label,
+.config-mapping-target,
+.config-mapping-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+}
+.config-mapping-label {
+  justify-content: space-between;
+  min-height: 24px;
+}
+.config-mapping-field > small {
+  color: var(--soft);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.config-mapping-field .searchable-select-trigger {
+  font-size: 13px;
+}
+.config-mapping-add {
+  max-width: 560px;
+}
+.config-mapping-add > button,
+.config-mapping-target > button:last-child:not(:first-child) {
+  flex-shrink: 0;
+}
+.config-workflow-tools {
+  border-top: 1px solid var(--line);
+}
+.config-workflow-tools > .config-advanced {
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--line);
+}
+.config-workflow-tools > .config-advanced > summary {
+  padding: 12px 0;
+  color: var(--text);
+}
+.config-workflow-tools > .config-advanced > .config-advanced-body {
+  padding: 16px 0;
+}
+.config-trial-result {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.config-trial-result img {
+  display: block;
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+  border-radius: var(--radius);
+}
+.config-trial-result progress {
+  width: 100%;
+  accent-color: var(--accent);
+}
 .config-form .config-stage {
   border: 1px solid var(--line);
   border-radius: 7px;
@@ -471,15 +511,6 @@
 .config-result {
   margin-top: 16px;
 }
-.config-help {
-  margin-top: 24px;
-}
-.config-help .config-advanced {
-  border-color: transparent;
-}
-.config-help .config-advanced > summary {
-  padding-left: 0;
-}
 .config-form .notice {
   overflow-wrap: anywhere;
 }
@@ -527,8 +558,10 @@
     align-self: flex-end;
   }
   .config-services {
-    grid-template-columns: 1fr;
     gap: 8px;
+  }
+  .config-service-secondary {
+    margin-left: 0;
   }
   .config-service {
     padding: 13px 15px;
@@ -568,13 +601,6 @@
   }
   .config-save-bar .small {
     font-size: 11px;
-  }
-  .config-steps {
-    gap: 3px;
-  }
-  .config-steps button {
-    padding: 6px;
-    font-size: 12px;
   }
   .config-facts > div {
     grid-template-columns: 1fr;

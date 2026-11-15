@@ -1,33 +1,35 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useCreationKits } from '../../api/creationKits';
-import { useEpisode, useEpisodes, useSeries } from '../../api/series';
-import { useProfiles, useSettings } from '../../api/system';
-import type { RenderProfile } from '../../api/types';
-import { useAssemble, useWorkshop, type Preset } from '../../api/workshop';
+import { useEpisodes, useSeries } from '../../api/series';
+import { useSettings } from '../../api/system';
+import {
+  useAssemble,
+  useWorkshop,
+  useQueueAction,
+  requireQueueAccepted,
+  type GenerationOptions,
+  type Preset,
+} from '../../api/workshop';
 import { Icon } from '../../app/icons';
-import { resolveProfile, useRenderRoute } from '../../app/renderRoute';
 import { toast, toastError } from '../../components/toast';
 import { ownCancel } from '../../components/topLayer';
 import { QueryError } from '../../app/errors';
 import { AssemblyCanvas, EMPTY_DESIGN, canvasTasks, type CanvasDesign } from './AssemblyCanvas';
 import { AssemblyReview } from './AssemblyReview';
 import { AssemblyIntents } from './assemblyIntent';
+import { GenerationSettings, GenerationSummary, generationValid } from './GenerationSettings';
 import { workshopHref } from './workshopSource';
 import './creation-kits.css';
 import './assemble-dialog.css';
 
 const STEPS = ['story', 'presets', 'name'] as const;
-type ImageService = 'local' | 'cloud' | 'hybrid';
-const profileService = (profile: RenderProfile): ImageService =>
-  !profile.cloud_shape ? 'local' : profile.cloud_refine ? 'hybrid' : 'cloud';
-
 const displayName = (p: Preset) =>
   p.entries.find((e) => e.key === 'character_display_name')?.value.trim() ||
   p.title.split('·')[0].trim();
 
-/** 新建生成任务: storyboard + image service → presets → name, then 「添加待命任务」. */
+/** Storyboard, optional presets, and frozen generation settings form one task. */
 export default function AssembleDialog({
   initialStory,
   onClose,
@@ -45,18 +47,17 @@ export default function AssembleDialog({
   const source = kitId ? (kit.data?.kind === 'kit' ? kit.data : undefined) : ws.data;
   const sourcePending = kitId ? kit.isPending : ws.isPending;
   const boards = useEpisodes(source?.id);
-  const profiles = useProfiles();
   const settings = useSettings();
   const collection = settings.data?.collection_title || t('classic.shelf.defaultTitle');
   const assemble = useAssemble(kitId || undefined);
+  const queue = useQueueAction();
   const [mode, setMode] = useState<'wizard' | 'canvas'>('wizard');
   const [design, setDesign] = useState<CanvasDesign>(EMPTY_DESIGN);
-  const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState(0);
   const [story, setStory] = useState(initialStory ?? '');
-  const [profile, setProfile] = useState('');
-  const [serviceChoice, setServiceChoice] = useState<ImageService | null>(null);
+  const [generation, setGeneration] = useState<GenerationOptions>();
+  const [readyToStart, setReadyToStart] = useState(false);
   const [chosen, setChosen] = useState<string[] | null>(null);
   const [title, setTitle] = useState<string | null>(null);
   const [variables, setVariables] = useState<Record<string, string>>({});
@@ -65,8 +66,12 @@ export default function AssembleDialog({
   const items = boards.data?.items ?? [];
   const storyId = story ? items.find((item) => item.id === story)?.id : items[0]?.id;
   const board = items.find((b) => b.id === storyId);
-  const { data: storyboard } = useEpisode(storyId);
-  const route = useRenderRoute(profile, source?.default_profile_id, sourcePending, false);
+  const storyReady = !!board && board.panel_count > 0;
+  const canvasReady =
+    design.stories.length > 0 &&
+    design.stories.every((node) =>
+      items.some((item) => item.id === node.storyId && item.panel_count > 0),
+    );
 
   useEffect(() => {
     const d = ref.current;
@@ -75,49 +80,30 @@ export default function AssembleDialog({
     else d.setAttribute('open', '');
   }, []);
 
-  const auto = useMemo(() => presets.slice(0, 1).map((p) => p.id!), [presets]);
-  const picked = chosen ?? auto;
+  const picked = chosen ?? [];
   const ordered = picked
     .map((id) => presets.find((p) => p.id === id))
     .filter((p): p is Preset => !!p);
   const first = presets.find((p) => p.id === picked[0]);
   const defaultTitle = [board?.title, first ? displayName(first) : ''].filter(Boolean).join(' · ');
   const name = title ?? defaultTitle.slice(0, 120);
-  const profileList = profiles.data ?? [];
-  const profileId = profile;
-  const defaultProfile = resolveProfile(profileList, null, source?.default_profile_id).profile;
-  const service = serviceChoice ?? route.kind ?? 'local';
-  const serviceProfiles = profileList.filter((value) => profileService(value) === service);
-  const missingService = !profiles.isPending && (!route.profile || route.kind !== service);
-  const serviceReady = !profiles.isPending && !!route.profile && route.kind === service;
-  const chooseService = (next: ImageService) => {
-    setServiceChoice(next);
-    const fallback = defaultProfile && profileService(defaultProfile) === next;
-    setProfile(
-      fallback ? '' : (profileList.find((value) => profileService(value) === next)?.id ?? ''),
-    );
-    setConfirming(false);
-  };
-  const profileName = route.profile?.name ?? t('ws.assemble.profileDefault');
-  const routeSummary = route.profile?.binding_required ? t('kits.pendingBinding') : route.summary;
+  const serviceReady = generationValid(generation);
   const request = {
     storyboard_id: storyId ?? '',
     preset_ids: picked,
     title: name,
-    profile_id: profileId || null,
+    generation,
     variables,
   };
   const intentKey = intents.current.keyFor('wizard', request);
   const changeSource = (id: string) => {
     setKitId(id);
     setStory('');
-    setProfile('');
-    setServiceChoice(null);
+    setGeneration(undefined);
     setChosen(null);
     setTitle(null);
     setVariables({});
     setDesign(EMPTY_DESIGN);
-    setConfirming(false);
     setStep(0);
     intents.current = new AssemblyIntents();
     assemble.reset();
@@ -130,35 +116,41 @@ export default function AssembleDialog({
         .filter((p) => design.edges.some((edge) => edge.story === node.id && edge.preset === p.id))
         .map((p) => p.presetId),
       title: node.title.trim(),
-      profile_id: profileId || null,
+      generation,
     }),
   );
   intents.current.retain(['wizard', ...design.stories.map((node) => node.id)]);
 
   const toggle = (id: string) =>
     setChosen(picked.includes(id) ? picked.filter((x) => x !== id) : [...picked, id]);
-  const submit = () =>
-    assemble.mutate(
-      { ...request, idempotency_key: intentKey },
-      {
-        onSuccess: () => {
-          intents.current.clear('wizard');
-          toast(t('ws.assemble.added'));
-          close();
-        },
-        onError: toastError,
-      },
-    );
+  const submit = async (start: boolean) => {
+    if (!storyReady) return;
+    setBusy(true);
+    try {
+      const made = await assemble.mutateAsync({ ...request, idempotency_key: intentKey });
+      if (start) {
+        const result = await queue.mutateAsync({ action: 'start', ids: [made.series.id!] });
+        requireQueueAccepted(result, made.series.id!);
+      }
+      intents.current.clear('wizard');
+      toast(t(start ? 'ws.generation.started' : 'ws.assemble.added'));
+      close();
+    } catch (error) {
+      toastError(error);
+    } finally {
+      setBusy(false);
+    }
+  };
   const close = () => {
     ref.current?.close?.();
     onClose();
   };
   const changeDesign = (next: CanvasDesign) => {
     setDesign(next);
-    setConfirming(false);
   };
-  /** Canvas mode: one standby task per storyboard node, after an inline confirmation. */
-  const submitCanvas = async () => {
+  /** Canvas mode uses the same settings and queue as the guided form. */
+  const submitCanvas = async (start: boolean) => {
+    if (!canvasReady) return;
     let tasks;
     try {
       tasks = canvasTasks(design, {
@@ -169,17 +161,20 @@ export default function AssembleDialog({
       toastError(e);
       return;
     }
-    if (!confirming) return setConfirming(true);
     setBusy(true);
     let done = 0;
     try {
       for (const [i, task] of tasks.entries()) {
-        const body = { ...task, profile_id: profileId || null };
+        const body = { ...task, generation };
         const node = design.stories[i].id;
-        await assemble.mutateAsync({
+        const made = await assemble.mutateAsync({
           ...body,
           idempotency_key: intents.current.keyFor(node, body),
         });
+        if (start) {
+          const result = await queue.mutateAsync({ action: 'start', ids: [made.series.id!] });
+          requireQueueAccepted(result, made.series.id!);
+        }
         intents.current.clear(node);
         done += 1;
       }
@@ -195,90 +190,21 @@ export default function AssembleDialog({
         stories: left,
         edges: design.edges.filter((x) => left.some((n) => n.id === x.story)),
       });
-      setConfirming(false);
     } finally {
       setBusy(false);
     }
   };
   const environment = (
     <section className="designer-card designer-environment">
-      <header className="designer-card-head">
-        <h4>{t('ws.assemble.env')}</h4>
-      </header>
-      <div className="field">
-        <label className="label" htmlFor="designer-channel">
-          {t('ws.assemble.channel')}
-        </label>
-        <select
-          id="designer-channel"
-          value={service}
-          disabled={profiles.isPending || assemble.isPending || busy}
-          onChange={(event) => chooseService(event.target.value as ImageService)}
-        >
-          <option value="local">{t('route.local')}</option>
-          <option value="cloud">{t('route.cloud')}</option>
-          {route.kind === 'hybrid' ||
-          (defaultProfile && profileService(defaultProfile) === 'hybrid') ? (
-            <option value="hybrid">{t('route.hybrid')}</option>
-          ) : null}
-        </select>
-        {!missingService && (route.kind !== 'local' || route.profile?.binding_required) ? (
-          <p className="help">{routeSummary}</p>
-        ) : null}
-      </div>
-      <div className="field">
-        <label className="label" htmlFor="designer-profile">
-          {t('ws.assemble.profile')}
-        </label>
-        <select
-          id="designer-profile"
-          value={serviceReady ? profileId : ''}
-          disabled={!serviceProfiles.length || profiles.isPending || assemble.isPending || busy}
-          onChange={(event) => {
-            setProfile(event.target.value);
-            setServiceChoice(null);
-            setConfirming(false);
-          }}
-        >
-          {defaultProfile && profileService(defaultProfile) === service ? (
-            <option value="">
-              {t('ws.assemble.sourceProfile', { name: defaultProfile.name })}
-            </option>
-          ) : !serviceReady ? (
-            <option value="">{t('ws.assemble.noServiceProfile')}</option>
-          ) : null}
-          {serviceProfiles.map((value) => (
-            <option key={value.id} value={value.id}>
-              {value.name}
-            </option>
-          ))}
-        </select>
-        {missingService ? (
-          <p className="help" role="status">
-            {t('ws.assemble.serviceMissing', { service: t(`route.${service}`) })}
-          </p>
-        ) : route.profile?.binding_required ? null : route.state === 'missing' ? (
-          <p className="help" role="status">
-            {route.detail}
-          </p>
-        ) : null}
-        <Link
-          className="designer-configure"
-          to={
-            missingService || route.profile?.binding_required
-              ? '/engine?tab=profiles'
-              : route.state === 'missing'
-                ? route.to
-                : '/engine?tab=profiles'
-          }
-          onClick={close}
-        >
-          {t('ws.assemble.configureService')}
-        </Link>
-        {storyboard?.panels.some((panel) => panel.overrides.profile_id) ? (
-          <p className="help">{t('route.panelOverrides')}</p>
-        ) : null}
-      </div>
+      <GenerationSettings
+        value={generation}
+        onChange={setGeneration}
+        defaultProfile={source?.default_profile_id}
+        waiting={sourcePending}
+        onReadyChange={setReadyToStart}
+        disabled={busy}
+        onConfigure={close}
+      />
     </section>
   );
 
@@ -345,7 +271,6 @@ export default function AssembleDialog({
                 aria-pressed={mode === m}
                 onClick={() => {
                   setMode(m);
-                  setConfirming(false);
                 }}
               >
                 <Icon name={m === 'wizard' ? 'list' : 'nodes'} sm />
@@ -415,6 +340,17 @@ export default function AssembleDialog({
                           </option>
                         ))}
                       </select>
+                      {board && !storyReady ? (
+                        <div className="help" role="status">
+                          {t('ws.generation.emptyStory')}{' '}
+                          <Link
+                            to={workshopHref(`/workshop/story/${board.id}`, kitId)}
+                            onClick={close}
+                          >
+                            {t('ws.generation.editStory')}
+                          </Link>
+                        </div>
+                      ) : null}
                     </div>
                   </section>
                   {environment}
@@ -542,16 +478,7 @@ export default function AssembleDialog({
                             <span>{collection}</span>
                           </dd>
                         </div>
-                        <div className="designer-summary-row">
-                          <dt>{t('ws.assemble.channel')}</dt>
-                          <dd>{routeSummary}</dd>
-                        </div>
-                        <div className="designer-summary-row">
-                          <dt>{t('ws.assemble.profile')}</dt>
-                          <dd>
-                            <span>{profileName}</span>
-                          </dd>
-                        </div>
+                        <GenerationSummary value={generation} />
                         <div className="designer-summary-row is-chips">
                           <dt>{t('ws.assemble.presets')}</dt>
                           <dd>
@@ -560,7 +487,6 @@ export default function AssembleDialog({
                                 <span>
                                   {index + 1}. {p.title}
                                 </span>
-                                <b>{t('ws.assemble.items', { count: p.entries.length })}</b>
                               </span>
                             ))}
                           </dd>
@@ -587,18 +513,28 @@ export default function AssembleDialog({
         <button type="button" className="btn ghost" onClick={close}>
           {t('ws.cancel')}
         </button>
+        {mode === 'canvas' || step === STEPS.length - 1 ? (
+          <button
+            type="button"
+            className="btn"
+            disabled={
+              !source || !serviceReady || busy || (mode === 'canvas' ? !canvasReady : !storyReady)
+            }
+            onClick={() => void (mode === 'canvas' ? submitCanvas(false) : submit(false))}
+          >
+            {t('ws.generation.later')}
+          </button>
+        ) : null}
         {mode === 'canvas' ? (
           <button
             type="button"
             className="btn primary"
-            disabled={!source || !serviceReady || !design.stories.length || busy}
+            disabled={!source || !serviceReady || !readyToStart || !canvasReady || busy}
             title={design.stories.length ? undefined : t('ws.canvas.needStory')}
-            onClick={() => void submitCanvas()}
+            onClick={() => void submitCanvas(true)}
           >
             <Icon name="plus" />
-            {confirming
-              ? t('ws.canvas.confirm', { count: design.stories.length })
-              : t('ws.canvas.submit')}
+            {t('ws.generation.start')}
           </button>
         ) : step > 0 ? (
           <button type="button" className="btn" onClick={() => setStep(step - 1)}>
@@ -610,7 +546,7 @@ export default function AssembleDialog({
           <button
             type="button"
             className="btn primary"
-            disabled={!source || !storyId || !serviceReady}
+            disabled={!source || !storyReady || !serviceReady}
             onClick={() => setStep(step + 1)}
           >
             <Icon name="arrow" />
@@ -621,12 +557,18 @@ export default function AssembleDialog({
             type="button"
             className="btn primary"
             disabled={
-              !source || !storyId || !serviceReady || name.length > 120 || assemble.isPending
+              !source ||
+              !storyReady ||
+              !serviceReady ||
+              !readyToStart ||
+              name.length > 120 ||
+              assemble.isPending ||
+              busy
             }
-            onClick={submit}
+            onClick={() => void submit(true)}
           >
             <Icon name="plus" />
-            {t('ws.assemble.submit')}
+            {t('ws.generation.start')}
           </button>
         )}
       </div>

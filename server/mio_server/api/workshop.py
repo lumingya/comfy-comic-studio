@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from .. import workshop as W
 from ..assembly import AssemblyPreview
-from ..models import Episode, Series, WorkshopQueue
+from ..models import Episode, GenerationOptions, Series, WorkshopQueue
 from .deps import Ctx
 from .operations import Router as APIRouter
 
@@ -19,6 +19,7 @@ class AssembleRequest(BaseModel):
     preset_ids: list[str] = Field(default_factory=list)
     title: str = Field(default="", max_length=120)
     profile_id: str | None = None
+    generation: GenerationOptions | None = None
     variables: dict[str, str] = Field(default_factory=dict)
     idempotency_key: str | None = Field(default=None, min_length=1, max_length=200)
 
@@ -28,6 +29,8 @@ class PreviewRequest(BaseModel):
     prompt: str = Field(min_length=1, max_length=8000)
     title: str = Field(default="", max_length=120)
     profile_id: str | None = None
+    generation: GenerationOptions | None = None
+    idempotency_key: str | None = Field(default=None, min_length=1, max_length=200)
 
 
 class CloneRequest(BaseModel):
@@ -58,6 +61,7 @@ def assemble(ctx: Ctx, body: AssembleRequest) -> Assembled:
         body.profile_id,
         body.variables,
         body.idempotency_key,
+        body.generation,
     )
     ctx.queue.track(series.id)
     return Assembled(series=series, episode=episode)
@@ -67,7 +71,13 @@ def assemble(ctx: Ctx, body: AssembleRequest) -> Assembled:
 def preview_assembly(ctx: Ctx, body: AssembleRequest) -> AssemblyPreview:
     """Inspect final prompts, reader dialogue and variable provenance without creating an album."""
     return W.assembly_preview(
-        ctx.store, body.storyboard_id, body.preset_ids, body.title, body.profile_id, body.variables
+        ctx.store,
+        body.storyboard_id,
+        body.preset_ids,
+        body.title,
+        body.profile_id,
+        body.variables,
+        body.generation,
     )
 
 
@@ -77,7 +87,13 @@ def preview_preset(ctx: Ctx, body: PreviewRequest) -> Assembled:
     storyboard, no model call).  Start it with ``POST /episodes/{id}/render``."""
     W.ensure_workshop(ctx.store, getattr(ctx, "legacy_root", None))
     series, episode = W.preview(
-        ctx.store, body.preset_ids, body.prompt, body.title, body.profile_id
+        ctx.store,
+        body.preset_ids,
+        body.prompt,
+        body.title,
+        body.profile_id,
+        generation=body.generation,
+        idempotency_key=body.idempotency_key,
     )
     ctx.queue.track(series.id)
     return Assembled(series=series, episode=episode)

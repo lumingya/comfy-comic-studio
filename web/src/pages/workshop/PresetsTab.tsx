@@ -3,11 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { assetUrl } from '../../api/client';
 import { useSeriesList, useTrashSeries } from '../../api/series';
-import { useProfiles } from '../../api/system';
 import {
   PREVIEW_SUBTITLE,
   localId,
   usePreviewPreset,
+  useQueueAction,
+  requireQueueAccepted,
+  type GenerationOptions,
   useSavePresets,
   type Preset,
   type PresetEntry,
@@ -26,6 +28,8 @@ import { askAssetTitle } from './storyActions';
 import { downloadJson, pickJsonFiles, presetFromFile, presetToFile } from './files';
 import { ExportPicker } from './ExportPicker';
 import { BindingDialog, BindingsSection } from './PresetBindings';
+import { GenerationSettings, generationKey } from './GenerationSettings';
+import { AssemblyIntents } from './assemblyIntent';
 import { WorkshopFrame } from './WorkshopPage';
 import { useWorkshopSource, workshopHref } from './workshopSource';
 
@@ -48,6 +52,8 @@ function blankPreset(title: string): Preset {
   return {
     id: localId('preset'),
     title,
+    positive_prompt: '',
+    negative_prompt: '',
     groups: [people, visual],
     entries: [
       e('character_display_name', '角色展示名 / 旁白', people.id),
@@ -498,6 +504,24 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
           }}
         />
       ) : null}
+      <section
+        className="preset-prompt-fragments generation-settings-row"
+        aria-label={t('ws.generation.presetPrompts')}
+      >
+        {(['positive_prompt', 'negative_prompt'] as const).map((key) => (
+          <div className="field" key={key}>
+            <label className="label" htmlFor={`preset-${key}`}>
+              {t(`ws.generation.${key}`)}
+            </label>
+            <textarea
+              id={`preset-${key}`}
+              rows={3}
+              value={current[key] ?? ''}
+              onChange={(event) => update((p) => ({ ...p, [key]: event.target.value }))}
+            />
+          </div>
+        ))}
+      </section>
       <div className="settings-form-toolbar">
         <div className="settings-toolbar-label">
           {t('ws.presets.variables')} <span>{current.entries.length}</span>
@@ -867,22 +891,35 @@ function PreviewDialog({
   onQueued: (title: string) => void;
 }) {
   const { t } = useTranslation();
-  const profiles = useProfiles();
+  const queue = useQueueAction();
   const preview = usePreviewPreset(kitId);
   const [prompt, setPrompt] = useState(() => preset.entries.map((e) => `{${e.key}}`).join(', '));
-  const [profile, setProfile] = useState('');
+  const [generation, setGeneration] = useState<GenerationOptions>();
+  const [readyToStart, setReadyToStart] = useState(false);
   const [busy, setBusy] = useState(false);
+  const created = useRef<{ key: string; series: Series } | null>(null);
+  const intents = useRef(new AssemblyIntents());
   const submit = async () => {
     if (!prompt.trim() || busy) return;
     setBusy(true);
     try {
       await beforeSubmit();
-      const made = await preview.mutateAsync({
+      const request = {
         preset_ids: [preset.id!],
         prompt: prompt.trim(),
-        profile_id: profile || null,
+        generation,
+      };
+      const key = intents.current.keyFor('preset-preview', { ...request, preset });
+      if (created.current?.key !== key) {
+        const made = await preview.mutateAsync({ ...request, idempotency_key: key });
+        created.current = { key, series: made.series };
+      }
+      const result = await queue.mutateAsync({
+        action: 'start',
+        ids: [created.current.series.id!],
       });
-      onQueued(made.series.title);
+      requireQueueAccepted(result, created.current.series.id!);
+      onQueued(created.current.series.title);
     } catch (error) {
       toastError(error);
     } finally {
@@ -907,10 +944,10 @@ function PreviewDialog({
             type="submit"
             form="preset-preview-form"
             className="btn primary"
-            disabled={!prompt.trim() || busy}
+            disabled={!prompt.trim() || !generationKey(generation) || !readyToStart || busy}
           >
             <Icon name="plus" />
-            {t('ws.presets.previewAdd')}
+            {t('ws.generation.start')}
           </button>
         </>
       }
@@ -936,23 +973,14 @@ function PreviewDialog({
           />
           <p className="help">{t('ws.presets.previewPromptHelp')}</p>
         </div>
-        <div className="field">
-          <label className="label" htmlFor="preset-preview-profile">
-            {t('ws.assemble.profile')}
-          </label>
-          <select
-            id="preset-preview-profile"
-            value={profile}
-            onChange={(e) => setProfile(e.target.value)}
-          >
-            <option value="">{t('ws.assemble.profileDefault')}</option>
-            {(profiles.data ?? []).map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <GenerationSettings
+          id="preset-preview-generation"
+          value={generation}
+          onChange={setGeneration}
+          onReadyChange={setReadyToStart}
+          disabled={busy}
+          onConfigure={onClose}
+        />
       </form>
     </Modal>
   );

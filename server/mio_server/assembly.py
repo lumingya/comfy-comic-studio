@@ -7,7 +7,9 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from .generation import profile_for
 from .models import Episode, Panel, Series
+from .pipeline import cloud_request as CR
 from .pipeline import compiler
 from .pipeline import variables as V
 from .storage import NotFound
@@ -125,8 +127,38 @@ def inspect_snapshot(store, snapshot: AssemblySnapshot, storyboard_id: str) -> A
     default_profile = series.default_profile_id or "profile_default"
     panels = []
     for panel in episode.ordered_panels():
-        profile = store.get_doc("profile", panel.overrides.profile_id or default_profile)
+        profile = profile_for(store, series, panel.overrides.profile_id)
         compiled = compiler.preview(series, episode, panel, profile=profile)[profile.dialect]
+        channel = (
+            series.generation.channels.get(profile.cloud_channel) if series.generation else None
+        )
+        if profile.cloud_shape and channel:
+            requested = {
+                "prompt": compiled["positive"],
+                "negative": compiled["negative"],
+                "width": compiled["width"],
+                "height": compiled["height"],
+                "seed": compiled["seed"],
+                "refs": [],
+                "reference_mode": panel.reference_mode,
+            }
+            if series.generation:
+                for name in ("width", "height"):
+                    if (
+                        getattr(series.generation, name) is None
+                        and getattr(panel.overrides, name) is None
+                    ):
+                        requested[name] = None
+            effective = CR.snapshot(
+                {
+                    "channel_id": profile.cloud_channel,
+                    "kind": channel["kind"],
+                    "model": channel["model"],
+                    "options": {**channel["options"], "seed": compiled["seed"]},
+                    "requested": requested,
+                }
+            )["effective"]
+            compiled["positive"], compiled["negative"] = effective["prompt"], effective["negative"]
         values = V.table(series, panel)
         sources = {key: {"source": "builtin"} for key in values}
         sources.update(snapshot.sources)
@@ -142,6 +174,16 @@ def inspect_snapshot(store, snapshot: AssemblySnapshot, storyboard_id: str) -> A
             for field, text in _fields(panel).items()
             for row in V.trace(text, values)
         ]
+        variables.extend(
+            AssemblyVariable(
+                **row,
+                field=f"presets.{preset.id}.{field}",
+                **sources.get(row["key"], {"source": "missing"}),
+            )
+            for preset in series.presets
+            for field in ("positive_prompt", "negative_prompt")
+            for row in V.trace(getattr(preset, field), values)
+        )
         panels.append(
             AssemblyPanelPreview(
                 panel_id=panel.id,
@@ -158,7 +200,9 @@ def inspect_snapshot(store, snapshot: AssemblySnapshot, storyboard_id: str) -> A
     return AssemblyPreview(
         title=series.title,
         storyboard_id=storyboard_id,
-        profile_id=default_profile,
+        profile_id=series.generation.profile.get("id", default_profile)
+        if series.generation
+        else default_profile,
         preset_ids=[preset.id for preset in series.presets],
         panels=panels,
     )

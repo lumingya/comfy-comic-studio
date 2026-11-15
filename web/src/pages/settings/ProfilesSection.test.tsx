@@ -76,7 +76,7 @@ it('saves a newly added stage without UI-only fields rejected by the strict serv
   const user = userEvent.setup();
   const { container } = renderWithProviders(<ProfilesSection />);
   await screen.findByRole('button', { name: /Baseline profile/ });
-  await user.click(screen.getByRole('button', { name: '新出图配置' }));
+  await user.click(screen.getByRole('button', { name: '新建方案' }));
   const workflow = container.querySelectorAll<HTMLSelectElement>('.stage-row select')[1];
   await waitFor(() => expect(workflow).toHaveTextContent('Test workflow'));
   await user.selectOptions(workflow, 'wf-test');

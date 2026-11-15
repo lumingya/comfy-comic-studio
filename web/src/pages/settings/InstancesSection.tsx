@@ -2,7 +2,6 @@ import { ResizableSplit } from '../../components/ResizableSplit';
 import { Activity, Plus, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 import {
   useDeleteInstance,
   useInstanceHealth,
@@ -107,8 +106,7 @@ function InstanceEditor({
           {!isNew ? (
             <button
               type="button"
-              className="btn ghost icon danger"
-              aria-label={t('common.delete')}
+              className="btn ghost danger"
               onClick={async () => {
                 if (
                   await confirm({
@@ -122,6 +120,7 @@ function InstanceEditor({
               }}
             >
               <Trash2 size={15} />
+              {t('config.instance.delete')}
             </button>
           ) : null}
         </div>
@@ -173,7 +172,7 @@ function InstanceEditor({
             {t('config.invalidUrl')}
           </p>
         ) : null}
-        <Advanced title={t('config.instance.advanced')} hint={t('config.instance.advancedHint')}>
+        <Advanced title={t('config.instance.advanced')}>
           <div className="grid-2">
             <Field label={t('settings.capacity')} hint={t('config.instance.capacityHint')}>
               <NumberInput
@@ -241,7 +240,7 @@ export function InstancesSection() {
           }}
         >
           <Plus size={15} />
-          {t('settings.addInstance')}
+          {t('config.instance.add')}
         </button>
       </div>
       {instances.isError ? (
@@ -300,12 +299,6 @@ export function InstancesSection() {
           </section>
         </ResizableSplit>
       )}
-      <div className="config-next">
-        <span>{t('config.instance.nextHint')}</span>
-        <Link className="btn sm" to="/engine?tab=workflows">
-          {t('config.instance.next')}
-        </Link>
-      </div>
     </section>
   );
 }

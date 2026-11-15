@@ -15,7 +15,14 @@ from enum import Enum
 from typing import Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
 SHOTS = ("extreme_close", "close", "medium", "cowboy", "full", "wide")
 ANGLES = ("eye", "high", "low", "side", "back", "dutch")
@@ -638,6 +645,8 @@ class Preset(StrictModel):
     groups: list[PresetGroup] = Field(default_factory=list)
     entries: list[PresetEntry] = Field(default_factory=list)
     bindings: list[PresetBinding] = Field(default_factory=list)
+    positive_prompt: str = ""
+    negative_prompt: str = ""
 
     @model_validator(mode="after")
     def _one_binding_per_input(self) -> Preset:
@@ -659,6 +668,39 @@ class SeriesStatus(str, Enum):
     archived = "archived"
 
 
+class GenerationOptions(StrictModel):
+    """The source and parameters chosen for one generation task."""
+
+    workflow_id: str | None = None
+    cloud_channel_id: str | None = None
+    profile_id: str | None = None
+    candidates: int | None = Field(default=None, ge=1, le=16)
+    width: int | None = Field(default=None, ge=64, le=8192)
+    height: int | None = Field(default=None, ge=64, le=8192)
+
+    @model_validator(mode="after")
+    def one_source(self):
+        if (
+            sum(
+                value is not None
+                for value in (self.workflow_id, self.cloud_channel_id, self.profile_id)
+            )
+            > 1
+        ):
+            raise ValueError("请选择一个工作流、云端渠道或出图配置")
+        return self
+
+
+class GenerationSnapshot(GenerationOptions):
+    """Captured render documents; changes to preferences never rewrite an existing task."""
+
+    candidates: int = Field(default=1, ge=1, le=16)
+    profile: dict[str, object] = Field(default_factory=dict)
+    profiles: dict[str, dict[str, object]] = Field(default_factory=dict)
+    workflows: dict[str, dict[str, object]] = Field(default_factory=dict)
+    channels: dict[str, dict[str, object]] = Field(default_factory=dict)
+
+
 class Series(StrictModel):
     id: str = Field(default_factory=lambda: new_id("series"))
     title: str
@@ -676,6 +718,7 @@ class Series(StrictModel):
         default_factory=dict, description="{变量} values (advanced layer)."
     )
     default_profile_id: str | None = None
+    generation: GenerationSnapshot | None = None
     cover_asset_id: str | None = Field(
         default=None, description="Chosen cover image; None = automatic (the first image)."
     )
@@ -708,6 +751,31 @@ class SeriesCard(Series):
         default="",
         description="The first episode's synopsis with the album variables applied (the shelf's 简介)",
     )
+
+    @field_serializer("generation")
+    def generation_summary(self, value: GenerationSnapshot | None):
+        if value is None:
+            return None
+        data = value.model_dump(exclude={"profiles", "workflows", "channels"})
+        data["profile"] = {
+            key: value.profile[key]
+            for key in (
+                "id",
+                "name",
+                "dialect",
+                "cloud_shape",
+                "cloud_refine",
+                "cloud_channel",
+                "binding_required",
+                "candidates",
+            )
+            if key in value.profile
+        }
+        data["profile"]["draft"] = [
+            {key: stage[key] for key in ("id", "kind", "workflow_id", "enabled") if key in stage}
+            for stage in value.profile.get("draft", [])
+        ]
+        return data
 
 
 class SeriesCreate(StrictModel):

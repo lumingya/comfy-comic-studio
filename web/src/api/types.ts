@@ -220,6 +220,10 @@ export interface ImageChannel {
 }
 
 export interface AppSettings {
+  generation_defaults?: Record<
+    string,
+    { candidates: number; width?: number | null; height?: number | null }
+  >;
   image_channels?: ImageChannel[];
   image_channel?: string;
   llm: {

@@ -6,14 +6,11 @@ import { Link } from 'react-router-dom';
 import { assetUrl } from '../../api/client';
 import { useActiveRenders, useLive, type ActiveItem } from '../../api/jobs';
 import { useTakeAction, type TakeAction } from '../../api/series';
-import type { Episode, Take } from '../../api/types';
+import type { Episode, RenderProfile, Take } from '../../api/types';
 import { useRenderRoute } from '../../app/renderRoute';
-import { useUI } from '../../app/ui-store';
 import { toastError } from '../../components/toast';
 import { Modal } from '../../components/ui';
 import { CloudRequestDetails, TakeParameterSummary } from '../../components/CloudRequestDetails';
-
-const COUNTS = [1, 2, 4] as const;
 
 /** One queued / sampling image: the ComfyUI WebSocket preview streams in as it denoises. */
 function LiveCard({ item }: { item: ActiveItem }) {
@@ -101,13 +98,20 @@ export function GenerateStage(props: {
   panelId: string;
   profileId?: string | null;
   defaultProfileId?: string | null;
+  candidates?: number;
+  taskProfile?: RenderProfile | null;
   onGenerate: (count: number) => void;
   busy?: boolean;
 }) {
   const { t } = useTranslation();
-  const count = useUI((s) => s.candidates);
-  const setCount = useUI((s) => s.setCandidates);
-  const route = useRenderRoute(props.profileId, props.defaultProfileId);
+  const route = useRenderRoute(
+    props.profileId,
+    props.defaultProfileId,
+    false,
+    true,
+    props.taskProfile,
+  );
+  const count = props.candidates ?? route.profile?.candidates ?? 1;
   const action = useTakeAction(props.episode.id!);
   const [zoomId, setZoomId] = useState<string | null>(null);
   const live = (useActiveRenders(props.episode.id!).byPanel[props.panelId] ?? []).filter(
@@ -160,19 +164,6 @@ export function GenerateStage(props: {
         <div className="grow">
           <div className="eyebrow">{t('classic.stage.eyebrow')}</div>
           <h3>{t('classic.stage.title')}</h3>
-        </div>
-        <div className="segmented" role="group" aria-label={t('classic.stage.count')}>
-          {COUNTS.map((n) => (
-            <button
-              key={n}
-              type="button"
-              className={count === n ? 'active' : ''}
-              aria-pressed={count === n}
-              onClick={() => setCount(n)}
-            >
-              {n}
-            </button>
-          ))}
         </div>
         <button
           className={`btn primary generate ${live.length ? 'is-live' : ''}`}

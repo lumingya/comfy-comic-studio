@@ -32,11 +32,14 @@ export function useRenderRoute(
   fallback?: string | null,
   waiting = false,
   probeLocal = true,
+  taskProfile?: RenderProfile | null,
 ) {
   const { t } = useTranslation();
   const profiles = useProfiles();
   const settings = useSettings();
-  const { id, profile } = resolveProfile(profiles.data ?? [], override, fallback);
+  const selected = resolveProfile(profiles.data ?? [], override, fallback);
+  const profile = taskProfile ?? selected.profile;
+  const id = profile?.id ?? selected.id;
   const kind = !profile
     ? null
     : !profile.cloud_shape
@@ -47,10 +50,11 @@ export function useRenderRoute(
   const needsLocal = kind === 'local' || kind === 'hybrid';
   const comfy = useComfyHealth(profile?.instances, !waiting && needsLocal && probeLocal);
   const cloud = profile && settings.data ? resolveCloud(profile, settings.data) : null;
-  const loading = waiting || profiles.isPending || (kind !== 'local' && settings.isPending);
+  const loading =
+    waiting || (!taskProfile && profiles.isPending) || (kind !== 'local' && settings.isPending);
   const state: RouteState = loading
     ? 'checking'
-    : !profile || profiles.isError
+    : !profile || (!taskProfile && profiles.isError)
       ? 'missing'
       : kind !== 'local' && !cloud?.configured
         ? 'missing'
@@ -65,7 +69,7 @@ export function useRenderRoute(
   const label = kind ? t(`route.${kind}`) : t('route.chooseProfile');
   const summary = kind === 'cloud' || kind === 'hybrid' ? `${label} · ${channel}` : label;
   const to =
-    !profile || profiles.isError
+    !profile || (!taskProfile && profiles.isError)
       ? '/engine?tab=profiles'
       : kind !== 'local' && !cloud?.configured
         ? cloud?.id
@@ -78,7 +82,7 @@ export function useRenderRoute(
             : '/settings?tab=general';
   const detail = loading
     ? t('route.checking')
-    : !profile || profiles.isError
+    : !profile || (!taskProfile && profiles.isError)
       ? t('route.missingProfile', { id })
       : kind !== 'local' && !cloud?.configured
         ? t('route.missingChannel', { id: cloud?.id || t('route.chatFallback') })

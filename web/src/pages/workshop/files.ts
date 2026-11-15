@@ -113,6 +113,8 @@ export function presetFromFile(raw: unknown): Preset {
   if (Array.isArray(d.entries) && Array.isArray(d.groups))
     return {
       ...(d as unknown as Preset),
+      positive_prompt: str(d.positive_prompt),
+      negative_prompt: str(d.negative_prompt),
       bindings: Array.isArray(d.bindings) ? (d.bindings as Preset['bindings']) : [],
       id: localId('preset'),
     };
@@ -124,6 +126,8 @@ export function presetFromFile(raw: unknown): Preset {
     return {
       id: localId('preset'),
       title: str(d.title) || '导入的预设',
+      positive_prompt: str(d.positive_prompt),
+      negative_prompt: str(d.negative_prompt),
       groups,
       entries: (d.entries as Obj[])
         .filter((e) => e && e.key && (e.type ?? 'text') === 'text')

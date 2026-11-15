@@ -24,7 +24,7 @@ import { useRender, useRenderEpisode } from '../../api/production';
 import { useProfiles } from '../../api/system';
 import { useCloneTask, useQueue, useQueueAction } from '../../api/workshop';
 import { usePatchSeries, useSeriesList, useTrashSeries } from '../../api/series';
-import type { Episode, Job, QueueStatus, SeriesCard } from '../../api/types';
+import type { Episode, Job, QueueStatus, SeriesCard, RenderProfile } from '../../api/types';
 import { Icon } from '../../app/icons';
 import { confirm } from '../../components/confirm';
 import { toast, toastError } from '../../components/toast';
@@ -47,6 +47,7 @@ import {
   overridesSummary,
   pageNumbers,
   paging,
+  PAGE_SIZE,
   shiftId,
   type OverridePart,
 } from './queueView';
@@ -200,6 +201,25 @@ export default function AssemblyTab() {
   const taskIds = useMemo(() => tasks.map((task) => task.album.id!), [tasks]);
   const selection = useSelection(taskIds);
   const menu = useContextMenu<MenuPayload>();
+  const located = useRef('');
+  const requestedTask = params.get('task') ?? '';
+  useEffect(() => {
+    if (!requestedTask || located.current === requestedTask) return;
+    const index = taskIds.indexOf(requestedTask);
+    if (index >= 0) setPage(Math.floor(index / PAGE_SIZE));
+  }, [requestedTask, taskIds]);
+  useEffect(() => {
+    if (!requestedTask || located.current === requestedTask) return;
+    const card = Array.from(document.querySelectorAll<HTMLElement>('[data-production-task]')).find(
+      (node) => node.dataset.productionTask === requestedTask,
+    );
+    if (!card) return;
+    card.scrollIntoView?.({ block: 'nearest' });
+    card.focus();
+    const details = card.querySelector('details');
+    if (details) details.open = true;
+    located.current = requestedTask;
+  }, [requestedTask, page, tasks]);
 
   // A newly assembled task lands at the end: show the newest page again (legacy taskPage = ∞).
   const count = useRef(tasks.length);
@@ -243,6 +263,7 @@ export default function AssemblyTab() {
 
   const byIds = (ids: string[]) => tasks.filter((task) => ids.includes(task.album.id!));
   const profileOf = (album: SeriesCard) => {
+    if (album.generation?.profile) return album.generation.profile as unknown as RenderProfile;
     const list = profiles.data ?? [];
     return (
       list.find((p) => p.id === album.default_profile_id) ??
@@ -263,7 +284,6 @@ export default function AssemblyTab() {
       await renderEpisode.mutateAsync({
         episodeId: task.episode.id!,
         panel_ids: missing,
-        candidates: 1,
         adopt_first: true,
       });
     } catch (e) {
@@ -872,7 +892,7 @@ export default function AssemblyTab() {
                 profileName={profile?.name}
                 overrides={(profile?.draft ?? [])
                   .filter((s) => s.enabled !== false)
-                  .flatMap((s) => overridesSummary(s.overrides as Record<string, unknown>))}
+                  .flatMap((s) => overridesSummary((s.overrides ?? {}) as Record<string, unknown>))}
                 globalConcurrency={globalConcurrency}
                 notice={queue?.notices?.[task.album.id!]}
                 starting={starting.has(task.album.id!)}
@@ -1164,7 +1184,7 @@ function TaskCard({
     if (render.isPending || !ids.length) return;
     const replace = ids.some((id) => adopted.has(id));
     render.mutate(
-      { panel_ids: ids, candidates: 1, adopt_first: true, adopt_replace: replace },
+      { panel_ids: ids, adopt_first: true, adopt_replace: replace },
       { onError: toastError },
     );
   };

@@ -147,6 +147,16 @@
    },
    "AssembleRequest": {
     "properties": {
+     "generation": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/GenerationOptions"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "idempotency_key": {
       "anyOf": [
        {
@@ -2843,6 +2853,201 @@
     "title": "GenerateEpisode",
     "type": "object"
    },
+   "GenerationOptions": {
+    "additionalProperties": false,
+    "description": "The source and parameters chosen for one generation task.",
+    "properties": {
+     "candidates": {
+      "anyOf": [
+       {
+        "maximum": 16.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Candidates"
+     },
+     "cloud_channel_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cloud Channel Id"
+     },
+     "height": {
+      "anyOf": [
+       {
+        "maximum": 8192.0,
+        "minimum": 64.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Height"
+     },
+     "profile_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Profile Id"
+     },
+     "width": {
+      "anyOf": [
+       {
+        "maximum": 8192.0,
+        "minimum": 64.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Width"
+     },
+     "workflow_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Workflow Id"
+     }
+    },
+    "title": "GenerationOptions",
+    "type": "object"
+   },
+   "GenerationSnapshot": {
+    "additionalProperties": false,
+    "description": "Captured render documents; changes to preferences never rewrite an existing task.",
+    "properties": {
+     "candidates": {
+      "default": 1,
+      "maximum": 16.0,
+      "minimum": 1.0,
+      "title": "Candidates",
+      "type": "integer"
+     },
+     "channels": {
+      "additionalProperties": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "title": "Channels",
+      "type": "object"
+     },
+     "cloud_channel_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cloud Channel Id"
+     },
+     "height": {
+      "anyOf": [
+       {
+        "maximum": 8192.0,
+        "minimum": 64.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Height"
+     },
+     "profile": {
+      "additionalProperties": true,
+      "title": "Profile",
+      "type": "object"
+     },
+     "profile_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Profile Id"
+     },
+     "profiles": {
+      "additionalProperties": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "title": "Profiles",
+      "type": "object"
+     },
+     "width": {
+      "anyOf": [
+       {
+        "maximum": 8192.0,
+        "minimum": 64.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Width"
+     },
+     "workflow_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Workflow Id"
+     },
+     "workflows": {
+      "additionalProperties": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "title": "Workflows",
+      "type": "object"
+     }
+    },
+    "required": [
+     "workflow_id",
+     "cloud_channel_id",
+     "profile_id",
+     "candidates",
+     "width",
+     "height",
+     "profile",
+     "profiles",
+     "workflows",
+     "channels"
+    ],
+    "title": "GenerationSnapshot",
+    "type": "object"
+   },
    "HTTPValidationError": {
     "properties": {
      "detail": {
@@ -3095,6 +3300,16 @@
      "episode_id": {
       "title": "Episode Id",
       "type": "string"
+     },
+     "generation": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/GenerationOptions"
+       },
+       {
+        "type": "null"
+       }
+      ]
      },
      "idempotency_key": {
       "maxLength": 200,
@@ -5167,6 +5382,16 @@
       "title": "Id",
       "type": "string"
      },
+     "negative_prompt": {
+      "default": "",
+      "title": "Negative Prompt",
+      "type": "string"
+     },
+     "positive_prompt": {
+      "default": "",
+      "title": "Positive Prompt",
+      "type": "string"
+     },
      "title": {
       "title": "Title",
       "type": "string"
@@ -5207,6 +5432,16 @@
       "title": "Id",
       "type": "string"
      },
+     "negative_prompt": {
+      "default": "",
+      "title": "Negative Prompt",
+      "type": "string"
+     },
+     "positive_prompt": {
+      "default": "",
+      "title": "Positive Prompt",
+      "type": "string"
+     },
      "title": {
       "title": "Title",
       "type": "string"
@@ -5217,7 +5452,9 @@
      "title",
      "groups",
      "entries",
-     "bindings"
+     "bindings",
+     "positive_prompt",
+     "negative_prompt"
     ],
     "title": "Preset",
     "type": "object"
@@ -5476,6 +5713,29 @@
    },
    "PreviewRequest": {
     "properties": {
+     "generation": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/GenerationOptions"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "idempotency_key": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Idempotency Key"
+     },
      "preset_ids": {
       "items": {
        "type": "string"
@@ -6980,6 +7240,16 @@
       ],
       "title": "Deleted At"
      },
+     "generation": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/GenerationSnapshot"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "id": {
       "title": "Id",
       "type": "string"
@@ -7047,6 +7317,7 @@
      "variants",
      "variables",
      "default_profile_id",
+     "generation",
      "cover_asset_id",
      "concurrency",
      "created_at",
@@ -7130,6 +7401,16 @@
       "title": "Episode Count",
       "type": "integer"
      },
+     "generation": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/GenerationSnapshot"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "id": {
       "title": "Id",
       "type": "string"
@@ -7208,6 +7489,7 @@
      "variants",
      "variables",
      "default_profile_id",
+     "generation",
      "cover_asset_id",
      "concurrency",
      "created_at",
@@ -8705,6 +8987,111 @@
      }
     },
     "title": "WorkflowPatch",
+    "type": "object"
+   },
+   "WorkflowTrialRequest": {
+    "additionalProperties": false,
+    "properties": {
+     "height": {
+      "anyOf": [
+       {
+        "maximum": 8192.0,
+        "minimum": 64.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Height"
+     },
+     "idempotency_key": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Idempotency Key"
+     },
+     "instance_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Instance Id"
+     },
+     "negative_prompt": {
+      "default": "",
+      "maxLength": 8000,
+      "title": "Negative Prompt",
+      "type": "string"
+     },
+     "overrides": {
+      "additionalProperties": true,
+      "title": "Overrides",
+      "type": "object"
+     },
+     "prompt": {
+      "maxLength": 8000,
+      "minLength": 1,
+      "title": "Prompt",
+      "type": "string"
+     },
+     "values": {
+      "additionalProperties": true,
+      "title": "Values",
+      "type": "object"
+     },
+     "width": {
+      "anyOf": [
+       {
+        "maximum": 8192.0,
+        "minimum": 64.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Width"
+     }
+    },
+    "required": [
+     "prompt"
+    ],
+    "title": "WorkflowTrialRequest",
+    "type": "object"
+   },
+   "WorkflowTrialResult": {
+    "additionalProperties": false,
+    "properties": {
+     "episode": {
+      "$ref": "#/components/schemas/Episode"
+     },
+     "job": {
+      "additionalProperties": true,
+      "title": "Job",
+      "type": "object"
+     },
+     "series": {
+      "$ref": "#/components/schemas/Series"
+     }
+    },
+    "required": [
+     "series",
+     "episode",
+     "job"
+    ],
+    "title": "WorkflowTrialResult",
     "type": "object"
    }
   },
@@ -17850,6 +18237,70 @@
      "body"
     ],
     "x-mio-operation": "POST /workflows/{workflow_id}/diagnose"
+   }
+  },
+  "/workflows/{workflow_id}/trial": {
+   "post": {
+    "description": "Generate exactly one image with normal job progress, cancellation and results.",
+    "operationId": "trial_workflow",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "workflow_id",
+      "required": true,
+      "schema": {
+       "title": "Workflow Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/WorkflowTrialRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/WorkflowTrialResult"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Trial Workflow",
+    "tags": [
+     "library"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "workflow_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /workflows/{workflow_id}/trial"
    }
   },
   "/workshop": {
