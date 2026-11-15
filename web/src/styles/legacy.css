@@ -1735,7 +1735,6 @@ body dialog.art-reader {
   color: var(--reader-soft);
 }
 .room-info .btn {
-  background: var(--reader-line);
   border-color: color-mix(in srgb, var(--reader-soft) 14%, transparent);
   color: var(--reader-soft);
   font-size: 0.75rem;
@@ -3527,8 +3526,10 @@ html[data-lettering='calligraphy'] .shelf-item h3 {
 }
 #reader .room-head :is(.btn, .ibtn, select) {
   color: var(--reader-soft);
-  background: rgb(var(--glass-rgb) / 0.03);
   border-color: rgb(var(--glass-rgb) / 0.13);
+}
+#reader .room-head select {
+  background: rgb(var(--glass-rgb) / 0.03);
 }
 #reader .room-head :is(.btn, .ibtn):hover {
   background: rgb(var(--glass-rgb) / 0.07);

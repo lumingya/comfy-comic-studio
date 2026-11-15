@@ -8,7 +8,7 @@
   padding: 0 14px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
-  background: var(--panel);
+  background: transparent;
   color: var(--text);
   font-size: 13px;
   white-space: nowrap;
