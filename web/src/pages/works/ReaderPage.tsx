@@ -13,7 +13,8 @@ import { ownCancel } from '../../components/topLayer';
 import { useUI } from '../../app/ui-store';
 import { pickAdopted } from '../canvas/adopted';
 import type { EpisodeContext } from '../episode/EpisodePage';
-import { PresentationDrawer, SlicePreview, TemplatePreview, useExportDraft } from './presentation';
+import { SlicePreview, TemplatePreview, useExportDraft } from './presentation';
+import { PresentationDrawer } from './ExportDrawer';
 import { templateRank } from './templateFile';
 import {
   DESKTOP_QUERY,
@@ -365,14 +366,6 @@ export default function ReaderPage() {
   };
   const cur = pages[current];
   const native = look === NATIVE || !epId;
-  const hintOf = (id: string) =>
-    id === NATIVE
-      ? t('reader.lookHint.fit')
-      : id === 'export-seamless'
-        ? t('reader.lookHint.seamless')
-        : id === 'export-afterglow'
-          ? t('reader.lookHint.afterglow')
-          : t('reader.lookHint.html');
   const list = (
     templates.data?.length
       ? templates.data.map((x) => ({
@@ -736,15 +729,15 @@ export default function ReaderPage() {
         look={look}
         native={NATIVE}
         onLook={setLookSaved}
-        hintOf={hintOf}
         draft={draft}
         onDraft={setDraft}
         layout={layout}
         onLayout={setLayoutSaved}
         episodeId={episode.data?.id}
+        seriesId={seriesId}
+        episodes={items}
         title={series.data?.title ?? ''}
         lettered={savedLayout}
-        platformOpen={platformOpen}
         onPlatform={setPlatformOpen}
       />
     </dialog>

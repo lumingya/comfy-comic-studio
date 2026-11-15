@@ -1,6 +1,5 @@
 import { useState, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { download } from '../../api/client';
 import { useTrashSeries } from '../../api/series';
 import { useRestore } from '../../api/system';
 import type { SeriesCard } from '../../api/types';
@@ -9,8 +8,8 @@ import { useUI } from '../../app/ui-store';
 import { toast, toastError } from '../../components/toast';
 
 /**
- * Batch actions on shelf albums (legacy 批量选择与管理 / multi-select menu): star, export each as a
- * .mio.zip, or move them all to the trash with one undo. Shared by the status bar and the
+ * Batch actions on shelf albums: star or move them all to the trash with one undo.
+ * Shared by the status bar and the
  * right-click menu so labels and behaviour match.
  */
 export function useBulkActions(onDeleted: () => void) {
@@ -32,17 +31,6 @@ export function useBulkActions(onDeleted: () => void) {
         count: books.length,
       }),
     );
-  };
-  const exportAll = async (books: SeriesCard[]) => {
-    setBusy(true);
-    try {
-      for (const b of books) await download(`/api/series/${b.id}/bundle`, `${b.title}.mio.zip`);
-      if (books.length > 1) toast(t('classic.shelf.bulkExported', { count: books.length }));
-    } catch (e) {
-      toastError(e);
-    } finally {
-      setBusy(false);
-    }
   };
   const remove = async (books: SeriesCard[]) => {
     if (!books.length) return;
@@ -74,7 +62,7 @@ export function useBulkActions(onDeleted: () => void) {
       },
     });
   };
-  return { busy, allStarred, star, exportAll, remove };
+  return { busy, allStarred, star, remove };
 }
 
 /** The selection status bar above the shelf grid. */
@@ -87,6 +75,7 @@ export function BulkBar(props: {
   onExit: () => void;
   pinned?: boolean;
   onMore: (event: MouseEvent<HTMLButtonElement>) => void;
+  onExport: () => void;
 }) {
   const { t } = useTranslation();
   const { chosen, actions: a } = props;
@@ -126,11 +115,10 @@ export function BulkBar(props: {
         type="button"
         className="selection-action"
         disabled={!n || a.busy}
-        title={t('classic.shelf.bulkExportHint')}
-        onClick={() => void a.exportAll(chosen)}
+        onClick={props.onExport}
       >
         <Icon name="download" sm />
-        {t('classic.shelf.bulkExport')}
+        {t('common.export')}
       </button>
       <button
         type="button"

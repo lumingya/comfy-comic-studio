@@ -10,7 +10,7 @@ import {
 import { BulkBar, useBulkActions } from './BulkBar';
 import { useTranslation } from 'react-i18next';
 import { Outlet, useMatch, useNavigate, useSearchParams } from 'react-router-dom';
-import { assetUrl, download } from '../../api/client';
+import { assetUrl } from '../../api/client';
 import { useSeriesList } from '../../api/series';
 import { useImportBundle, usePatchSettings, useSettings } from '../../api/system';
 import type { SeriesCard } from '../../api/types';
@@ -24,8 +24,6 @@ import { ContextMenu, useContextMenu, type ContextGroup } from '../../components
 import { toast, toastError } from '../../components/toast';
 import { Empty, InlineTitle } from '../../components/ui';
 import { CreationKitImport } from '../workshop/CreationKitImport';
-import { CreationKitExport } from '../workshop/CreationKitExport';
-import { CheckpointDialog } from '../workshop/CheckpointDialog';
 import { CoverPicker } from './CoverPicker';
 import { BookMenuButton, Parchment, Showcase, ShowcaseNav, StarButton } from './Showcase';
 import { ExportBooks, RenameBooks } from './ShelfDialogs';
@@ -327,8 +325,6 @@ export default function WorksPage() {
   const [coverFor, setCoverFor] = useState<string | null>(null);
   const [renaming, setRenaming] = useState<SeriesCard[] | null>(null);
   const [exporting, setExporting] = useState<SeriesCard[] | null>(null);
-  const [kitExport, setKitExport] = useState<string | null>(null);
-  const [checkpointWork, setCheckpointWork] = useState<SeriesCard | null>(null);
   // Multi-select (legacy desktop selection): Ctrl / ⌘ / Shift + click, right-click for batch
   // actions, Ctrl+A / Esc / Delete. 批量管理 is the touch fallback that makes a tap select.
   const [bulk, setBulk] = useState(false);
@@ -337,7 +333,7 @@ export default function WorksPage() {
   const showGrid = view === 'grid' || bulk;
   const bulkActions = useBulkActions(() => selection.clear());
   const menu = useContextMenu<ShelfContext>();
-  const dialogOpen = !!coverFor || !!renaming || !!exporting || !!kitExport || !!checkpointWork;
+  const dialogOpen = !!coverFor || !!renaming || !!exporting;
   const setBulkMode = (on: boolean) => {
     setBulk(on);
     selection.clear();
@@ -428,11 +424,6 @@ export default function WorksPage() {
       setResuming((r) => r.filter((id) => !ids.includes(id)));
     }
   };
-  const open = (id: string) => {
-    setBulkMode(false);
-    selection.anchorAt(id);
-    navigate(`/gallery/${id}${gallerySearch(params)}`);
-  };
   /** ⋯ opens the right-click menu under the button (legacy book-menu on the shelf). */
   const openMenu = (series: SeriesCard, e: MouseEvent<HTMLButtonElement>) => {
     const target = e.currentTarget,
@@ -447,21 +438,11 @@ export default function WorksPage() {
     });
   };
 
-  /** Legacy singleBookContextItems / multiBookContextItems. */
-  const shelfMenu = (ids: string[], focusId?: string): ContextGroup[] => {
+  /** Everyday album actions; export choices live in the export screen. */
+  const shelfMenu = (ids: string[]): ContextGroup[] => {
     const targets = books.filter((b) => ids.includes(b.id!));
     const starredAll = bulkActions.allStarred(targets);
-    const selectAll = {
-      label: t('classic.shelf.selectFiltered'),
-      icon: <Icon name="check" sm />,
-      shortcut: 'Ctrl/⌘ A',
-      onSelect: () => {
-        selection.all();
-        shelf.ref.current?.focus({ preventScroll: true });
-      },
-    };
     if (targets.length > 1) {
-      const focus = targets.find((b) => b.id === focusId);
       return [
         {
           heading: t('classic.shelf.forSelection', { count: targets.length }),
@@ -477,40 +458,24 @@ export default function WorksPage() {
               onSelect: () => setRenaming(targets),
             },
             {
-              label: t('classic.shelf.exportOffline'),
+              label: t('common.export'),
               icon: <Icon name="download" sm />,
-              hint: t('classic.shelf.exportOfflineMultiHint'),
               onSelect: () => setExporting(targets),
             },
-            {
-              label: t('classic.shelf.shareSource'),
-              icon: <Icon name="upload" sm />,
-              hint: t('classic.shelf.bulkExportHint'),
-              disabled: bulkActions.busy,
-              onSelect: () => void bulkActions.exportAll(targets),
-            },
-            {
-              label: t('classic.shelf.resumeMenu'),
-              icon: <Icon name="refresh" sm />,
-              hint: t('classic.shelf.resumeMultiHint'),
-              disabled: !targets.some((b) => missingOf(b) > 0),
-              onSelect: () => void resume(targets),
-            },
+            ...(targets.some((b) => missingOf(b) > 0)
+              ? [
+                  {
+                    label: t('classic.shelf.resumeMenu'),
+                    icon: <Icon name="refresh" sm />,
+                    hint: t('classic.shelf.resumeMultiHint'),
+                    onSelect: () => void resume(targets),
+                  },
+                ]
+              : []),
           ],
         },
         {
           items: [
-            ...(focus
-              ? [
-                  {
-                    label: t('classic.shelf.openOnly'),
-                    icon: <Icon name="book" sm />,
-                    hint: focus.title,
-                    onSelect: () => open(focus.id!),
-                  },
-                ]
-              : []),
-            selectAll,
             {
               label: t('classic.shelf.clearSelection'),
               icon: <Icon name="close" sm />,
@@ -536,19 +501,11 @@ export default function WorksPage() {
     const one = targets[0];
     if (!one) return [];
     const id = one.id!,
-      at = bookIds.indexOf(id),
       missing = missingOf(one),
       busy = generating.has(id);
     return [
       {
         items: [
-          {
-            label: t('classic.shelf.open'),
-            icon: <Icon name="book" sm />,
-            primary: true,
-            shortcut: 'Enter',
-            onSelect: () => open(id),
-          },
           {
             label: starredAll ? t('classic.shelf.unstar') : t('classic.shelf.star'),
             icon: <Icon name="star" sm />,
@@ -559,17 +516,19 @@ export default function WorksPage() {
             icon: <Icon name="edit" sm />,
             onSelect: () => setRenaming(targets),
           },
-          {
-            label: t('classic.shelf.resumeMenu'),
-            icon: <Icon name="refresh" sm />,
-            disabled: !missing || busy || resuming.includes(id),
-            hint: busy
-              ? t('classic.shelf.resumeBusy')
-              : missing
-                ? t('classic.shelf.resumeHint', { count: missing })
-                : t('classic.shelf.resumeNone'),
-            onSelect: () => void resume(targets),
-          },
+          ...(missing > 0
+            ? [
+                {
+                  label: t('classic.shelf.resumeMenu'),
+                  icon: <Icon name="refresh" sm />,
+                  disabled: busy || resuming.includes(id),
+                  hint: busy
+                    ? t('classic.shelf.resumeBusy')
+                    : t('classic.shelf.resumeHint', { count: missing }),
+                  onSelect: () => void resume(targets),
+                },
+              ]
+            : []),
           {
             label: t('classic.shelf.changeCover'),
             icon: <Icon name="image" sm />,
@@ -578,48 +537,12 @@ export default function WorksPage() {
         ],
       },
       {
-        heading: t('classic.shelf.exportGroup'),
         items: [
           {
-            label: t('classic.shelf.exportOffline'),
+            label: t('common.export'),
             icon: <Icon name="download" sm />,
-            hint: t('classic.shelf.exportOfflineHint'),
             onSelect: () => navigate(`/gallery/${id}/export${gallerySearch(params)}`),
           },
-          {
-            label: t('classic.shelf.shareSource'),
-            icon: <Icon name="upload" sm />,
-            hint: t('classic.shelf.shareSourceHint'),
-            onSelect: () =>
-              void download(`/api/series/${id}/bundle`, `${one.title}.mio.zip`).catch(toastError),
-          },
-          {
-            label: t('kits.export'),
-            icon: <Icon name="upload" sm />,
-            onSelect: () => setKitExport(id),
-          },
-        ],
-      },
-      {
-        heading: t('classic.shelf.organize'),
-        items: [
-          {
-            label: t('recovery.title'),
-            onSelect: () => setCheckpointWork(one),
-          },
-          {
-            label: t('classic.shelf.moveUp'),
-            icon: <Icon name="up" sm />,
-            disabled: at <= 0,
-            onSelect: () => moveBook(id, bookIds[at - 1], false),
-          },
-          {
-            label: t('classic.shelf.moveDown'),
-            icon: <Icon name="down" sm />,
-            disabled: at < 0 || at >= bookIds.length - 1,
-            onSelect: () => moveBook(id, bookIds[at + 1], true),
-          },
-          { ...selectAll, hint: t('classic.shelf.selectFilteredHint') },
         ],
       },
       {
@@ -766,6 +689,7 @@ export default function WorksPage() {
               books={books}
               chosen={chosen}
               actions={bulkActions}
+              onExport={() => setExporting(chosen)}
               onAll={selection.all}
               onNone={selection.clear}
               onExit={() => setBulkMode(false)}
@@ -825,7 +749,7 @@ export default function WorksPage() {
             x={menu.state.x}
             y={menu.state.y}
             {...menuHead(menu.state.payload.ids)}
-            groups={shelfMenu(menu.state.payload.ids, menu.state.payload.focusId)}
+            groups={shelfMenu(menu.state.payload.ids)}
             returnFocus={menu.state.payload.target}
             onClose={menu.close}
           />
@@ -846,16 +770,6 @@ export default function WorksPage() {
             open
             collectionTitle={collectionTitle}
             onOpenChange={(open) => !open && setExporting(null)}
-          />
-        ) : null}
-        {kitExport ? (
-          <CreationKitExport seriesId={kitExport} onClose={() => setKitExport(null)} />
-        ) : null}
-        {checkpointWork ? (
-          <CheckpointDialog
-            seriesId={checkpointWork.id}
-            title={checkpointWork.title}
-            onClose={() => setCheckpointWork(null)}
           />
         ) : null}
       </section>

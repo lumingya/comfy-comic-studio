@@ -542,24 +542,24 @@ describe('every route mounts with API data', () => {
     localStorage.removeItem('mio.reader.look');
     mount('/gallery/ser_1/export');
     await screen.findByAltText('第 1 格');
-    const list = document.getElementById('presentation-template-list')!;
+    const layouts = screen.getByLabelText('画册版式');
     // The native stage (留白) is listed first; picking another template swaps in its preview.
-    const choices = await within(list).findAllByRole('button');
-    expect(choices.map((b) => b.querySelector('strong')?.textContent)).toEqual([
+    const choices = within(layouts).getAllByRole('option');
+    expect(choices.map((option) => option.textContent)).toEqual([
       '留白 · 完整画面',
       '无缝 · 纯图阅读',
       '海风来信 · 电影长卷',
     ]);
-    fireEvent.click(within(list).getByText('海风来信 · 电影长卷'));
+    fireEvent.change(layouts, { target: { value: 'export-paper' } });
     const frame = await screen.findByTitle('展示模板预览');
     expect(frame.getAttribute('srcdoc')).toContain('paper');
     expect(screen.queryByAltText('第 1 格')).toBeNull();
     const call = calls.find((c) => c.url === '/api/export/album');
     expect(call?.body).toMatchObject({ episode_ids: ['ep_1'], template_id: 'export-paper' });
     expect(screen.getByText('版式 · 海风来信 · 电影长卷')).toBeInTheDocument();
-    // Search filters the list.
-    fireEvent.change(screen.getByLabelText('搜索展示模板'), { target: { value: '无缝' } });
-    expect(within(list).getAllByRole('button')).toHaveLength(1);
+    fireEvent.change(layouts, { target: { value: 'mio-fit' } });
+    expect(await screen.findByAltText('第 1 格')).toBeInTheDocument();
+    expect(screen.queryByTitle('展示模板预览')).toBeNull();
     localStorage.removeItem('mio.reader.look');
   });
 
@@ -766,15 +766,16 @@ describe('every route mounts with API data', () => {
     expect(calls.some((c) => c.url.includes('/render'))).toBe(false);
   });
 
-  it('reader drawer: legacy order, 图片处理 and ZIP export', async () => {
+  it('reader drawer: one export action applies the chosen format and image processing', async () => {
     vi.stubGlobal(
       'URL',
       Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL() {} }),
     );
     mount('/gallery/ser_1/export');
     const drawer = await screen.findByRole('complementary', { name: '展示模板与导出' });
-    expect(within(drawer).getByRole('button', { name: /导出完整 HTML/ })).toBeInTheDocument();
-    const profile = within(drawer).getByLabelText('图片处理') as HTMLSelectElement;
+    expect(within(drawer).getAllByRole('button', { name: '导出' })).toHaveLength(1);
+    fireEvent.change(within(drawer).getByLabelText('导出格式'), { target: { value: 'zip' } });
+    const profile = within(drawer).getByLabelText(/^图片处理/) as HTMLSelectElement;
     expect([...profile.options].map((o) => o.value)).toEqual([
       'auto',
       'clean',
@@ -783,7 +784,7 @@ describe('every route mounts with API data', () => {
     ]);
     fireEvent.change(profile, { target: { value: 'publish' } });
     expect(within(drawer).getByText(/长边不超过 2560 px/)).toBeInTheDocument();
-    const zip = within(drawer).getByRole('button', { name: /ZIP 图片资源包/ });
+    const zip = within(drawer).getByRole('button', { name: '导出' });
     await waitFor(() => expect(zip).toBeEnabled());
     fireEvent.click(zip);
     await waitFor(() =>
@@ -793,19 +794,17 @@ describe('every route mounts with API data', () => {
       format: 'zip',
       image_profile: 'publish',
     });
-    // Template-free exports are not listed next to the template exports.
-    const platform = within(drawer).getByText('平台发布 · 切片与长图').closest('details')!;
-    expect(platform.open).toBe(false);
-    expect(within(drawer).queryByText('离线阅读页')).toBeNull();
+    expect(within(drawer).queryByLabelText('平台预设')).toBeNull();
+    expect(within(drawer).queryByLabelText('画册版式')).toBeNull();
     localStorage.removeItem('mio.reader.export');
   });
 
   it('reader drawer: the slice preview follows the platform preset', async () => {
     mount('/gallery/ser_1/export');
     const drawer = await screen.findByRole('complementary', { name: '展示模板与导出' });
-    const platform = within(drawer).getByText('平台发布 · 切片与长图').closest('details')!;
-    platform.open = true;
-    fireEvent(platform, new Event('toggle'));
+    fireEvent.change(within(drawer).getByLabelText('导出格式'), {
+      target: { value: 'slices' },
+    });
     expect(await screen.findByText('切片预览')).toBeInTheDocument();
     await screen.findByRole('option', { name: '国内平台' });
     fireEvent.change(within(drawer).getByLabelText('平台预设'), { target: { value: 'kuaikan' } });
@@ -894,7 +893,7 @@ describe('every route mounts with API data', () => {
 
   it('reader drawer offers no motion comic or version switch (Studio mode)', async () => {
     mount('/gallery/ser_1/export');
-    expect(await screen.findByText('本次展示与导出设置')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '导出画册' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /设置镜头并导出/ })).toBeNull();
     expect(screen.queryByLabelText('画面版本')).toBeNull();
   });

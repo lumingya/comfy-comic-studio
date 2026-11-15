@@ -1,9 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { api, data, downloadPost } from '../../api/client';
+import { api, data, download, downloadPost } from '../../api/client';
 import { useAlbumTemplates } from '../../api/open';
-import { episodePageQuery } from '../../api/series';
+import { exportCreationKit } from '../../api/creationKits';
+import { listStoryboards } from '../workshop/storyActions';
 import type { SeriesCard } from '../../api/types';
 import { toast, toastError } from '../../components/toast';
 import { Field, Modal, Select, TextInput } from '../../components/ui';
@@ -108,11 +109,10 @@ const lastLook = () => {
   }
 };
 
-/**
- * Legacy multi-select 导出离线画册…: the chosen albums bound into one offline HTML with one
- * template (POST /api/export/album with every album's episodes).  One album goes to the reader's
- * 版式 drawer instead, where the preview and all options live.
- */
+type BatchFormat = 'html' | 'pdf' | 'zip' | 'source' | 'kit';
+const BATCH_FORMATS: BatchFormat[] = ['html', 'pdf', 'zip', 'source', 'kit'];
+
+/** All batch export choices share one entry point and one explicit download action. */
 export function ExportBooks(props: {
   books: SeriesCard[];
   open: boolean;
@@ -120,14 +120,20 @@ export function ExportBooks(props: {
   collectionTitle: string;
 }) {
   const { t } = useTranslation();
-  const qc = useQueryClient();
   const templates = useAlbumTemplates();
+  const [format, setFormat] = useState<BatchFormat>('html');
   const [picked, setTemplateId] = useState(lastLook);
-  const [title, setTitle] = useState(props.collectionTitle);
+  const [title, setTitle] = useState(props.collectionTitle.slice(0, 120));
   // Legacy: the signature field starts from 设置 → 工作室's default album signature.
   const fallback = useSettings().data?.signature ?? '';
   const [signature, setSignature] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [includePresets, setIncludePresets] = useState(true);
+  const [captions, setCaptions] = useState(true);
+  const [profile, setProfile] = useState('auto');
+  const [completed, setCompleted] = useState<string[]>([]);
+  const [error, setError] = useState('');
+  const individual = format === 'source' || format === 'kit';
   const list = useMemo(
     () => [...(templates.data ?? [])].sort((a, b) => templateRank(a.id) - templateRank(b.id)),
     [templates.data],
@@ -137,27 +143,60 @@ export function ExportBooks(props: {
     ? picked
     : ((list.find((x) => x.id === 'export-paper') ?? list[0])?.id ?? picked);
   const run = async () => {
+    if (busy || !props.books.length) return;
     setBusy(true);
+    setError('');
     try {
-      const pages = await Promise.all(
-        props.books.map((b) => qc.fetchQuery(episodePageQuery(b.id!))),
-      );
-      const episode_ids = pages.flatMap((p) => p.items.map((e) => e.id!)).slice(0, 50);
-      if (!episode_ids.length) throw new Error(t('classic.shelf.exportEmpty'));
-      await downloadPost(
-        '/api/export/album',
-        {
+      if (individual) {
+        for (const book of props.books) {
+          if (completed.includes(book.id!)) continue;
+          if (format === 'source') {
+            await download(`/api/series/${book.id}/bundle`, `${book.title}.mio.zip`);
+          } else {
+            const episodes = await listStoryboards(book.id!);
+            const source = includePresets
+              ? data(
+                  await api.GET('/api/series/{series_id}', {
+                    params: { path: { series_id: book.id! } },
+                  }),
+                )
+              : undefined;
+            if (!episodes.length) throw new Error(t('classic.shelf.exportEmpty'));
+            await exportCreationKit({
+              series_id: book.id!,
+              episode_ids: episodes.map((episode) => episode.id!),
+              preset_ids: source?.presets?.map((preset) => preset.id) ?? [],
+              title: book.title.slice(0, 120),
+            });
+          }
+          setCompleted((ids) => [...ids, book.id!]);
+        }
+      } else {
+        const pages = await Promise.all(props.books.map((book) => listStoryboards(book.id!)));
+        const episode_ids = pages.flatMap((page) => page.map((episode) => episode.id!));
+        if (!episode_ids.length) throw new Error(t('classic.shelf.exportEmpty'));
+        if (episode_ids.length > 50)
+          throw new Error(t('exportUi.tooMany', { count: episode_ids.length }));
+        const options = {
           episode_ids,
-          template_id: templateId,
-          title: title.trim() || undefined,
-          signature: (signature ?? fallback).trim(),
-          image_profile: 'auto',
-        },
-        `${title.trim() || props.collectionTitle}.html`,
-      );
+          title: title.trim(),
+          image_profile: profile,
+          lettered: true,
+          show_captions: captions,
+          deduplicate_captions: true,
+        };
+        await downloadPost(
+          format === 'html' ? '/api/export/album' : '/api/export/portable',
+          format === 'html'
+            ? { ...options, template_id: templateId, signature: (signature ?? fallback).trim() }
+            : { ...options, format },
+          `${title.trim() || props.collectionTitle}.${format}`,
+        );
+      }
       toast(t('classic.shelf.exportDone', { count: props.books.length }));
       props.onOpenChange(false);
     } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
       toastError(e);
     } finally {
       setBusy(false);
@@ -166,35 +205,117 @@ export function ExportBooks(props: {
   return (
     <Modal
       open={props.open}
-      onOpenChange={props.onOpenChange}
-      title={t('classic.shelf.exportTitle', { count: props.books.length })}
-      description={t('classic.shelf.exportHelp')}
+      onOpenChange={(open) => !busy && props.onOpenChange(open)}
+      title={t('exportUi.batchTitle', { count: props.books.length })}
+      description={t('exportUi.batchHint')}
       footer={
         <>
-          <button type="button" className="btn" onClick={() => props.onOpenChange(false)}>
+          <button
+            type="button"
+            className="btn"
+            disabled={busy}
+            onClick={() => props.onOpenChange(false)}
+          >
             {t('common.cancel')}
           </button>
-          <button type="button" className="btn primary" disabled={busy} onClick={() => void run()}>
-            {busy ? t('classic.shelf.exporting') : t('classic.shelf.exportRun')}
+          <button
+            type="button"
+            className="btn primary"
+            disabled={busy || !props.books.length}
+            onClick={() => void run()}
+          >
+            {busy ? t('classic.shelf.exporting') : t('common.export')}
           </button>
         </>
       }
     >
-      <div className="book-export-form">
-        <Field label={t('classic.shelf.exportTemplate')}>
+      <fieldset
+        className="book-export-form"
+        disabled={busy}
+        style={{ border: 0, padding: 0, margin: 0 }}
+      >
+        <Field label={t('exportUi.format')}>
           <Select
-            value={templateId}
-            onChange={setTemplateId}
-            options={list.map((x) => ({ value: x.id, label: x.title }))}
+            value={format}
+            onChange={(value) => {
+              setFormat(value);
+              setCompleted([]);
+              setError('');
+            }}
+            options={BATCH_FORMATS.map((value) => ({
+              value,
+              label: t(`exportUi.formats.${value}`),
+            }))}
           />
         </Field>
-        <Field label={t('classic.shelf.exportName')}>
-          <TextInput value={title} maxLength={MAX_TITLE} onChange={setTitle} />
-        </Field>
-        <Field label={t('reader.signature')}>
-          <TextInput value={signature ?? fallback} maxLength={120} onChange={setSignature} />
-        </Field>
-      </div>
+        {format === 'html' ? (
+          <>
+            <Field label={t('classic.shelf.exportTemplate')}>
+              <Select
+                value={templateId}
+                onChange={setTemplateId}
+                options={list.map((x) => ({ value: x.id, label: x.title }))}
+              />
+            </Field>
+          </>
+        ) : null}
+        {!individual ? (
+          <>
+            <Field label={t('classic.shelf.exportName')}>
+              <TextInput value={title} maxLength={120} onChange={setTitle} />
+            </Field>
+            {format === 'html' ? (
+              <Field label={t('reader.signature')}>
+                <TextInput value={signature ?? fallback} maxLength={120} onChange={setSignature} />
+              </Field>
+            ) : null}
+            <Field label={t('exportUi.imageProfile')}>
+              <Select
+                value={profile}
+                onChange={setProfile}
+                options={['auto', 'clean', 'publish', 'archive'].map((value) => ({
+                  value,
+                  label: t(`reader.profiles.${value}.label`),
+                }))}
+              />
+            </Field>
+            {format !== 'pdf' ? (
+              <label>
+                <input
+                  type="checkbox"
+                  checked={captions}
+                  onChange={(event) => setCaptions(event.target.checked)}
+                />{' '}
+                {t('exportUi.captions')}
+              </label>
+            ) : null}
+          </>
+        ) : null}
+        {format === 'kit' ? (
+          <label>
+            <input
+              type="checkbox"
+              checked={includePresets}
+              onChange={(event) => {
+                setIncludePresets(event.target.checked);
+                setCompleted([]);
+                setError('');
+              }}
+            />{' '}
+            {t('exportUi.includePresets')}
+          </label>
+        ) : null}
+      </fieldset>
+      {error ? (
+        <p className="notice error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      {completed.length ? (
+        <p role="status" className="small muted">
+          {t('exportUi.partial', { done: completed.length, total: props.books.length })}
+        </p>
+      ) : null}
       <ul className="book-export-list">
         {props.books.map((b) => (
           <li key={b.id}>

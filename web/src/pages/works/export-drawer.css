@@ -1,0 +1,148 @@
+#reader .export-drawer {
+  width: min(420px, 100%);
+  top: 70px;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  color: var(--text);
+}
+#reader .export-drawer[hidden] {
+  display: none;
+}
+#reader .export-drawer > header {
+  flex: none;
+  margin: 0;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--line);
+}
+#reader .export-drawer h2 {
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 0;
+}
+#reader .export-drawer header p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 5px 0 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  max-width: 300px;
+}
+.export-drawer-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 16px 22px;
+}
+.export-drawer-body > fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+#reader .export-drawer .field {
+  margin: 0;
+  min-width: 0;
+}
+#reader .export-drawer .field > span:first-child {
+  font-size: 13px;
+}
+#reader .export-drawer :is(.input, .select-wrap) {
+  width: 100%;
+  min-width: 0;
+}
+#reader .export-drawer :is(.select, .input) {
+  font-size: 13px;
+}
+.export-purpose {
+  color: var(--soft);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: -9px 0 0;
+}
+.export-scope {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 14px;
+}
+.export-check {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.export-check input {
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+.export-advanced {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.export-advanced summary {
+  font-size: 13px;
+  cursor: pointer;
+}
+.export-advanced[open] > :not(summary) {
+  margin-top: 16px !important;
+}
+.export-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.export-content {
+  border: 0;
+  border-top: 1px solid var(--line);
+  padding: 12px 0 0;
+  margin: 0;
+  min-width: 0;
+}
+.export-content legend {
+  font-size: 13px;
+  padding-right: 10px;
+}
+.export-content .export-check {
+  margin: 8px 0;
+}
+.export-drawer-footer {
+  flex: none;
+  border-top: 1px solid var(--line);
+  padding: 14px 22px max(14px, env(safe-area-inset-bottom));
+  background: var(--panel);
+}
+.export-drawer-footer > .btn {
+  width: 100%;
+}
+.export-drawer-footer p {
+  margin: 0 0 12px;
+  font-size: 12px;
+  max-height: 70px;
+  overflow: auto;
+}
+@media (min-width: 761px) {
+  #reader.presentation-panel-open .room-stage,
+  #reader.presentation-panel-open .room-filmstrip {
+    margin-right: 420px;
+  }
+}
+@media (max-width: 760px) {
+  #reader .export-drawer {
+    width: 100%;
+  }
+  .export-drawer-body {
+    padding: 16px 20px;
+  }
+}

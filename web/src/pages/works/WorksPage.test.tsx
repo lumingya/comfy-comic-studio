@@ -106,28 +106,20 @@ describe('WorksPage', () => {
     expect(screen.getByText('雨夜便利店')).toBeInTheDocument();
   });
 
-  it('opens the album menu from ⋯ and moves an album in the manual order', async () => {
+  it('keeps a complete album menu concise and hides missing-scene actions', async () => {
     mockFetch({ 'GET /api/series': items, 'GET /api/update': {}, 'GET /api/jobs': [] });
     renderWithProviders(<WorksPage />);
     const card = (await screen.findByText('Night Shift')).closest('article')!;
     fireEvent.click(within(card).getByRole('button', { name: '画册操作' }));
     const menu = await screen.findByRole('menu');
     expect(within(menu).getByText('2 幕 · 林夏 · 已齐备')).toBeInTheDocument();
-    for (const label of [
-      '翻开这本画册',
-      '重命名…',
-      '补齐缺失分幕',
-      '导出离线画册…',
-      '分享画册源文件…',
-    ])
-      expect(within(menu).getByRole('menuitem', { name: new RegExp(label) })).toBeInTheDocument();
-    expect(within(menu).getByRole('menuitem', { name: /补齐缺失分幕/ })).toBeDisabled();
-    expect(within(menu).getByRole('menuitem', { name: /向后移动/ })).toBeDisabled();
-    fireEvent.click(within(menu).getByRole('menuitem', { name: /向前移动/ }));
-    const titles = screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
-    expect(titles).toEqual(['晴天修理铺', 'Night Shift', '雨夜便利店']);
-    expect(useUI.getState().shelfSort).toBe('manual');
-    expect(useUI.getState().shelfOrder).toEqual(['b', 'c', 'a']);
+    expect(
+      within(menu)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent),
+    ).toEqual(['星标收藏', '重命名…', '更换封面', '导出', '移入回收站Del']);
+    expect(within(menu).queryByRole('menuitem', { name: /补齐缺失分幕/ })).toBeNull();
+    expect(within(menu).queryByText('整理')).toBeNull();
   });
 
   it('renames an album from its menu', async () => {

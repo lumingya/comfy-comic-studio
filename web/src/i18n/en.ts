@@ -1,4 +1,5 @@
 import { interactionEn } from './interaction';
+import { exportEn } from './exportUi';
 import { workspaceBackupsEn } from './workspaceBackups';
 import { longformEn } from './longform';
 import { kitsEn } from './creationKits';
@@ -14,6 +15,7 @@ import { readerEn, wsEn } from './ws';
 type Widen<T> = { [K in keyof T]: T[K] extends string ? string : Widen<T[K]> };
 
 const en: Widen<Dict> = {
+  exportUi: exportEn,
   workspaceBackups: workspaceBackupsEn,
   longform: longformEn,
   kits: kitsEn,

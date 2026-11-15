@@ -78,6 +78,41 @@ describe('legacy shelf selection', () => {
     expect(card()).toHaveFocus();
   });
 
+  it('opens the single export screen without downloading from the menu', async () => {
+    const calls = await mount();
+    fireEvent.contextMenu(card());
+    const menu = screen.getByRole('menu');
+    fireEvent.click(within(menu).getByRole('menuitem', { name: '导出' }));
+    expect(screen.getByLabelText('测试路径')).toHaveTextContent('/gallery/book_0/export');
+    expect(calls.some((call) => call.url.includes('/bundle') || call.url.includes('/export'))).toBe(
+      false,
+    );
+  });
+
+  it('offers a single batch export choice and hides refill for a complete selection', async () => {
+    await mount();
+    fireEvent.click(cover(), { ctrlKey: true });
+    fireEvent.click(cover('乙册'), { ctrlKey: true });
+    fireEvent.contextMenu(card());
+    const menu = screen.getByRole('menu');
+    expect(
+      within(menu)
+        .getAllByRole('menuitem')
+        .map((item) => item.textContent),
+    ).toEqual(['批量星标', '批量重命名…', '导出', '取消选择Esc', '移入回收站Del']);
+  });
+
+  it('keeps Ctrl+A available while its duplicate menu entry is removed', async () => {
+    await mount();
+    root().focus();
+    key('a', { ctrlKey: true });
+    expect(picked()).toHaveLength(3);
+    fireEvent.contextMenu(card());
+    expect(
+      within(screen.getByRole('menu')).queryByRole('menuitem', { name: /选择当前筛选结果/ }),
+    ).toBeNull();
+  });
+
   it('Escape first closes the menu, then clears an intentional multi-selection', async () => {
     await mount();
     fireEvent.click(cover(), { ctrlKey: true });
