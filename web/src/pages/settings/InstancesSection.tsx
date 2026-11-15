@@ -125,7 +125,7 @@ function InstanceEditor({
             </button>
           ) : null}
         </div>
-        <Field label={t('config.instance.address')} hint={t('config.instance.addressHint')}>
+        <Field label={t('config.instance.address')}>
           <TextInput
             mono
             type="url"
@@ -166,9 +166,7 @@ function InstanceEditor({
               <p className="small">{String(health.data.stats.error)}</p>
             ) : null}
           </div>
-        ) : (
-          <p className="small muted">{t('config.instance.noGeneration')}</p>
-        )}
+        ) : null}
         {health.isError ? <QueryError error={health.error} onRetry={test} /> : null}
         {!validHttpUrl(d.base_url) && d.base_url ? (
           <p className="notice error" role="alert">
