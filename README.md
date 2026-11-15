@@ -57,5 +57,6 @@ npm --prefix web run build
 
 - 扩展（主题、画册模板、拟声字预设、钩子、后端路由、界面面板）：见 [扩展 SDK](server/mio_server/extensions/README.md) 与[可选质检示例](examples/extensions/qa-review/README.md)。
 - 开放 API v2、令牌、Webhook、Python 客户端与 AstrBot 插件：见 [clients/README.md](clients/README.md)。
+- 可复用创作、恢复备份和扩展实际调用点的验证范围：见[验收索引](docs/EXTENSIBILITY_ACCEPTANCE.md)。
 
 [MIT License](LICENSE)

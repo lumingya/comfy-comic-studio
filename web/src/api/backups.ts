@@ -6,10 +6,32 @@ export type BackupCreated = S['BackupCreated'];
 export type BackupInspection = S['BackupInspection'];
 export type BackupHead = S['BackupHead'];
 export type RestorePlan = S['RestorePlan'];
+export type BackupRecord = S['BackupRecord'];
+export type RestoreRecord = S['RestoreRecord'];
 export const MAX_WORKSPACE_BACKUP_BYTES = 2 * 1024 ** 3;
 
 export async function workspaceBackupHead() {
   return data(await api.GET('/api/backups/head'));
+}
+
+export async function listWorkspaceBackups(offset = 0, limit = 20) {
+  return data(await api.GET('/api/backups', { params: { query: { offset, limit } } }));
+}
+
+export async function listWorkspaceRestorePlans(offset = 0, limit = 20) {
+  return data(
+    await api.GET('/api/backups/restore-plans', { params: { query: { offset, limit } } }),
+  );
+}
+
+export async function deleteWorkspaceBackup(backupId: string) {
+  await api.DELETE('/api/backups/{backup_id}', { params: { path: { backup_id: backupId } } });
+}
+
+export async function deleteWorkspaceRestorePlan(planId: string) {
+  await api.DELETE('/api/backups/restore-plans/{plan_id}', {
+    params: { path: { plan_id: planId } },
+  });
 }
 
 export async function createWorkspaceBackup(includeCredentials = false) {

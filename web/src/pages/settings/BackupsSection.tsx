@@ -22,6 +22,7 @@ import {
 import { ApiError } from '../../api/client';
 import { flushEditors } from '../../app/useAutoDraft';
 import { FilePick, Modal } from '../../components/ui';
+import { BackupHistory, backupHistoryKey } from './BackupHistory';
 
 const lookupKey = (id: string | null) => ['workspace-restore-plan', id] as const;
 const exclusionNames: Record<string, string> = {
@@ -112,6 +113,7 @@ function PlanDetails({ plan }: { plan: RestorePlan }) {
 
 function ExportDialog({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
+  const qc = useQueryClient();
   const [includeCredentials, setIncludeCredentials] = useState(false);
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState<BackupCreated | null>(null);
@@ -124,6 +126,7 @@ function ExportDialog({ onClose }: { onClose: () => void }) {
       await flushEditors();
       const saved = await createWorkspaceBackup(includeCredentials);
       setCreated(saved);
+      void qc.invalidateQueries({ queryKey: backupHistoryKey });
       downloadWorkspaceBackup(saved.id);
     } catch (cause) {
       setError(cause as Error);
@@ -408,6 +411,7 @@ export function BackupsSection() {
     rememberRestorePlan(saved.id);
     qc.setQueryData(lookupKey(saved.id), saved);
     setPlanId(saved.id);
+    void qc.invalidateQueries({ queryKey: backupHistoryKey });
   };
   const dismiss = () => {
     rememberRestorePlan(null);
@@ -472,6 +476,16 @@ export function BackupsSection() {
           ) : null}
         </div>
       ) : null}
+      <BackupHistory
+        onReview={(saved) => {
+          savePlan(saved);
+          setDialog('restore');
+        }}
+        onDeletedPlan={(id) => {
+          qc.removeQueries({ queryKey: lookupKey(id) });
+          if (id === planId) dismiss();
+        }}
+      />
       {dialog === 'export' ? <ExportDialog onClose={() => setDialog(null)} /> : null}
       {dialog === 'restore' ? (
         <RestoreDialog initial={plan} onPlan={savePlan} onClose={() => setDialog(null)} />

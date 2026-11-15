@@ -7,6 +7,7 @@ the internal :class:`~mio_server.registry.Registry` exactly as future extensions
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 from contextlib import ExitStack
@@ -126,7 +127,7 @@ class AppContext:
         engine = JobEngine(
             ":memory:" if memory else data_dir / "jobs.sqlite3",
             pool=ResourcePool(),
-            autostart=autostart,
+            autostart=False,
         )
         startup.callback(engine.close)
         llm = llm_factory or SET.llm_factory(store)
@@ -138,7 +139,7 @@ class AppContext:
             store,
             assets,
             engine,
-            Registry(),
+            engine.registry,
             render,
             qa,
             Trash(store),
@@ -187,6 +188,8 @@ class AppContext:
         ]
         # Executors (including reviewed extensions) must exist before replaying local results.
         engine.recover_deliveries()
+        if autostart:
+            engine.start()
         return ctx
 
     # ------------------------------------------------------------- helpers
@@ -223,8 +226,13 @@ class AppContext:
             "qa.check": self.qa,
         }
         for kind, executor in executors.items():
-            self.engine.register(kind, executor)
-            reg.register("job_executor", kind, executor, title=kind)
+            self.engine.register(
+                kind,
+                executor,
+                source="builtin",
+                digest=hashlib.sha256(f"mio-executor-v1:{kind}".encode()).hexdigest(),
+                resources=("comfy",) if kind == "comfy.render" else ("local",),
+            )
         for fmt in X.FORMATS:
             reg.register("exporter", fmt, X.export, title=fmt, interface="strip")
         for pid, preset in X.PRESETS.items():

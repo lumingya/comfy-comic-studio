@@ -20,10 +20,14 @@ import shutil
 import sys
 import zipfile
 from dataclasses import dataclass, field
+from functools import wraps
 from pathlib import Path, PurePosixPath
 
 from pydantic import ValidationError
 
+from ..hooks import HOOKS
+from ..jobs.operations import operation_serialized
+from ..jobs.types import JobConflict
 from .manifest import MANIFEST, Manifest, ManifestError, digest, inside, read_manifest
 from .sdk import ExtensionAPI
 
@@ -35,6 +39,26 @@ MAX_ENTRIES = 2000
 
 class ExtensionError(ValueError):
     pass
+
+
+def catalog_transition(fn):
+    """Publish a whole lifecycle change, without holding a lock while extension code runs.
+
+    Lifecycle callers already hold the engine operation lock. The registry lock only makes
+    this marker atomic with HTTP wrapper snapshots; requests reject an incomplete catalog.
+    """
+
+    @wraps(fn)
+    def changing(self, *args, **kwargs):
+        with self.ctx.registry._lock:
+            self._catalog_transitions += 1
+        try:
+            return fn(self, *args, **kwargs)
+        finally:
+            with self.ctx.registry._lock:
+                self._catalog_transitions -= 1
+
+    return changing
 
 
 @dataclass
@@ -77,10 +101,19 @@ class Info:
 class ExtensionManager:
     def __init__(self, ctx, root: Path | None = None):
         self.ctx = ctx
+        self.engine = ctx.engine
         self.root = Path(root or ctx.data_dir / "extensions")
         self.loaded: dict[str, Loaded] = {}
         self.errors: dict[str, str] = {}
         self.mounted: set[str] = set()  # extensions whose router is part of the running app
+        self._catalog_transitions = 0
+
+    def operation_layers(self, operation: str):
+        """Capture only committed wrappers, or fail fast while activation is incomplete."""
+        with self.ctx.registry._lock:
+            if self._catalog_transitions:
+                raise JobConflict("extension catalog is changing; retry after activation finishes")
+            return self.ctx.registry.layers("operation", operation)
 
     # ------------------------------------------------------------ discovery
     def _state(self, ext_id: str):
@@ -148,6 +181,8 @@ class ExtensionManager:
         settings.updated_at = now_iso()
         self.ctx.store.put_doc(settings)
 
+    @operation_serialized
+    @catalog_transition
     def enable(self, ext_id: str, expected_digest: str) -> Info:
         """Enable exactly the reviewed content: ``expected_digest`` must match the folder."""
         info = self.info(ext_id)
@@ -155,11 +190,21 @@ class ExtensionManager:
             raise ExtensionError(info.error)
         if expected_digest != info.digest:
             raise ExtensionError("扩展内容与确认时不一致，请刷新后重新确认")
-        self.unload(ext_id)
+        if ext_id in self.loaded:
+            self.engine.ensure_executor_source_idle(f"ext:{ext_id}")
+        previous = self._state(ext_id)
         self._save_state(ext_id, True, info.digest)
-        self.load(ext_id)
+        if not self.load(ext_id):
+            settings = self.ctx.settings()
+            if previous is None:
+                settings.extensions.pop(ext_id, None)
+            else:
+                settings.extensions[ext_id] = previous
+            self.ctx.store.put_doc(settings)
         return self.info(ext_id)
 
+    @operation_serialized
+    @catalog_transition
     def disable(self, ext_id: str) -> Info:
         self.info(ext_id)  # existence check
         self.unload(ext_id)
@@ -167,6 +212,8 @@ class ExtensionManager:
         self.errors.pop(ext_id, None)
         return self.info(ext_id)
 
+    @operation_serialized
+    @catalog_transition
     def remove(self, ext_id: str) -> None:
         self.disable(ext_id)
         shutil.rmtree(self.root / ext_id)
@@ -183,37 +230,121 @@ class ExtensionManager:
             if state.enabled and (self.root / ext_id / MANIFEST).is_file():
                 self.load(ext_id)
 
+    @operation_serialized
+    @catalog_transition
     def load(self, ext_id: str) -> bool:
         info = self.info(ext_id)
         state = self._state(ext_id)
         if not (state and state.enabled) or info.manifest is None or state.digest != info.digest:
             return False
-        api = ExtensionAPI(ext_id, info.folder, self.ctx)
+        source = f"ext:{ext_id}"
+        previous = self.loaded.get(ext_id)
+        if previous:
+            self.engine.ensure_executor_source_idle(source)
+        snapshot = self._snapshot_source(source)
+        module_name = f"mio_ext_{ext_id}"
+        previous_modules = {
+            name: value
+            for name, value in list(sys.modules.items())
+            if name == module_name or name.startswith(module_name + ".")
+        }
+        for name in previous_modules:
+            sys.modules.pop(name, None)
+        api = ExtensionAPI(ext_id, info.folder, self.ctx, digest=info.digest)
         self.errors.pop(ext_id, None)
+        loading = self.engine.catalog_loading
+        self.engine.catalog_loading = True
+        if previous:
+            previous.api._enabled = False
+        self.ctx.registry.unregister_source(source)
         try:
+            # Also prevent stale package helper bytecode from defeating the reviewed digest.
+            for cached in info.folder.rglob("*.pyc"):
+                if "__pycache__" in cached.relative_to(info.folder).parts:
+                    cached.unlink()
             self._declarative(api, info.manifest)
             module = self._run_main(api, info.manifest) if info.manifest.main else None
+            if digest(info.folder) != info.digest:
+                raise ExtensionError("extension files changed during activation")
         except Exception as exc:  # contain every failure: roll back what was registered
-            self.ctx.registry.unregister_source(api.source)
+            api._enabled = False
+            self._restore_source(source, snapshot)
+            if previous:
+                previous.api._enabled = True
+            for name in list(sys.modules):
+                if name == module_name or name.startswith(module_name + "."):
+                    sys.modules.pop(name, None)
+            sys.modules.update(previous_modules)
             self.errors[ext_id] = f"{type(exc).__name__}: {exc}"
             log.exception("extension %s failed to load", ext_id)
             return False
+        finally:
+            self.engine.catalog_loading = loading
+            self.engine.refresh_executor_jobs()
+        if previous:
+            self._deactivate(ext_id, previous)
+        self.mounted.discard(ext_id)
         self.loaded[ext_id] = Loaded(api, module)
         return True
 
+    @operation_serialized
+    @catalog_transition
     def unload(self, ext_id: str) -> None:
+        self.engine.ensure_executor_source_idle(f"ext:{ext_id}")
         self.mounted.discard(ext_id)
         loaded = self.loaded.pop(ext_id, None)
         if not loaded:
             return
+        loaded.api._enabled = False
+        self._deactivate(ext_id, loaded)
+        self.ctx.registry.unregister_source(loaded.api.source)
+        self.engine.refresh_executor_jobs()
+        name = f"mio_ext_{ext_id}"
+        for key in list(sys.modules):
+            if key == name or key.startswith(name + "."):
+                sys.modules.pop(key, None)
+
+    @staticmethod
+    def _deactivate(ext_id: str, loaded: Loaded) -> None:
         deactivate = getattr(loaded.module, "deactivate", None)
         if callable(deactivate):
             try:
                 deactivate()
             except Exception:
                 log.exception("extension %s deactivate failed", ext_id)
-        self.ctx.registry.unregister_source(loaded.api.source)
-        sys.modules.pop(f"mio_ext_{ext_id}", None)
+
+    def _snapshot_source(self, source):
+        """Preserve contribution objects and their original fallback order for rollback."""
+        registry = self.ctx.registry
+        with registry._lock:
+            contributions = [
+                (point, key, index, item)
+                for point, items in registry._layers.items()
+                for key, layers in items.items()
+                for index, item in enumerate(layers)
+                if item.source == source
+            ]
+        handlers = [
+            (name, index, handler)
+            for name in HOOKS
+            for index, handler in enumerate(registry.hooks.handlers(name))
+            if handler.source == source
+        ]
+        return contributions, handlers
+
+    def _restore_source(self, source, snapshot):
+        registry = self.ctx.registry
+        registry.unregister_source(source)
+        contributions, handlers = snapshot
+        with registry._lock:
+            for point, key, index, item in contributions:
+                layers = registry._layers[point].setdefault(key, [])
+                layers.insert(index, item)
+                registry._items[point][key] = layers[-1]
+        with registry.hooks._lock:
+            for name, index, handler in handlers:
+                registry.hooks._handlers.setdefault(name, []).insert(index, handler)
+        registry.emit("registry.changed", {"source": source, "restored": True})
 
     def _declarative(self, api: ExtensionAPI, manifest: Manifest) -> None:
         from ..album.templates import parse_template
@@ -250,7 +381,9 @@ class ExtensionManager:
         module = importlib.util.module_from_spec(spec)
         sys.modules[name] = module
         try:
-            spec.loader.exec_module(module)
+            # Timestamp-based bytecode caches may describe different reviewed bytes after a
+            # same-second, same-length edit. Compile the entry point we actually hashed.
+            exec(compile(path.read_bytes(), str(path), "exec"), module.__dict__)
             activate = getattr(module, "activate", None)
             if not callable(activate):
                 raise ExtensionError(f"{manifest.main} 缺少 activate(mio) 函数")
@@ -267,6 +400,8 @@ class ExtensionManager:
                 yield ext_id, loaded.api._router
 
     # ------------------------------------------------------------- install
+    @operation_serialized
+    @catalog_transition
     def install(self, data: bytes, replace: bool = False) -> Info:
         """Install a zipped extension (manifest at the root or in one top-level folder)."""
         if len(data) > MAX_ZIP:
@@ -288,6 +423,8 @@ class ExtensionManager:
         target = self.root / manifest.id
         if target.exists() and not replace:
             raise ExtensionError(f"扩展 {manifest.id} 已存在")
+        if target.exists():
+            self.engine.ensure_executor_source_idle(f"ext:{manifest.id}")
         total = sum(zf.getinfo(n).file_size for n in names)
         if total > 4 * MAX_ZIP:
             raise ExtensionError("扩展包解压后过大")

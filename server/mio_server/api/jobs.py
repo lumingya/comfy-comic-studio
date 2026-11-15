@@ -9,6 +9,7 @@ from typing import Any, Literal
 from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
+from ..jobs.executors import ExecutorInfo, RebindExecutor
 from .deps import Ctx
 from .operations import Router as APIRouter
 
@@ -31,6 +32,16 @@ class ResolveRequest(BaseModel):
 class RestoreStateRequest(BaseModel):
     confirm_stopped: bool = False
     discard_result: bool = False
+
+
+@router.get("/job-executors", response_model=list[ExecutorInfo])
+def list_job_executors(ctx: Ctx):
+    return ctx.engine.executor_catalog()
+
+
+@router.post("/jobs/{job_id}/rebind-executor")
+def rebind_job_executor(ctx: Ctx, job_id: str, body: RebindExecutor) -> dict:
+    return ctx.engine.rebind_executor(job_id, body)
 
 
 @router.get("/jobs")

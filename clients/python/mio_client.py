@@ -606,6 +606,14 @@ class MioClient(_Base):
         """POST /series/{series_id}/variables/apply — Apply Variables."""
         return self._request("POST", f"/series/{_q(series_id)}/variables/apply", json=body)
 
+    def list_job_executors(self) -> Any:
+        """GET /job-executors — List Job Executors."""
+        return self._request("GET", "/job-executors")
+
+    def rebind_job_executor(self, job_id: str, body: dict | list | None = None) -> Any:
+        """POST /jobs/{job_id}/rebind-executor — Rebind Job Executor."""
+        return self._request("POST", f"/jobs/{_q(job_id)}/rebind-executor", json=body)
+
     def list_jobs(
         self,
         *,
@@ -731,6 +739,10 @@ class MioClient(_Base):
         """POST /backups — Create Workspace Backup."""
         return self._request("POST", "/backups", json=body)
 
+    def list_workspace_backups(self, *, offset: int | None = None, limit: int | None = None) -> Any:
+        """GET /backups — List Workspace Backups."""
+        return self._request("GET", "/backups", params={"offset": offset, "limit": limit})
+
     def inspect_workspace_backup(self, body: bytes) -> Any:
         """POST /backups/inspect — Inspect Workspace Backup."""
         return self._request("POST", "/backups/inspect", content=body)
@@ -738,6 +750,23 @@ class MioClient(_Base):
     def stage_workspace_restore(self, body: bytes) -> Any:
         """POST /backups/restore-plans — Stage Workspace Restore."""
         return self._request("POST", "/backups/restore-plans", content=body)
+
+    def list_workspace_restore_plans(
+        self,
+        *,
+        offset: int | None = None,
+        limit: int | None = None,
+    ) -> Any:
+        """GET /backups/restore-plans — List Workspace Restore Plans."""
+        return self._request(
+            "GET",
+            "/backups/restore-plans",
+            params={"offset": offset, "limit": limit},
+        )
+
+    def delete_workspace_restore_plan(self, plan_id: str) -> Any:
+        """DELETE /backups/restore-plans/{plan_id} — Delete Workspace Restore Plan."""
+        return self._request("DELETE", f"/backups/restore-plans/{_q(plan_id)}")
 
     def get_workspace_restore_plan(self, plan_id: str) -> Any:
         """GET /backups/restore-plans/{plan_id} — Get Workspace Restore Plan."""
@@ -962,6 +991,20 @@ class MioClient(_Base):
         """DELETE /extensions/{ext_id} — Remove Extension."""
         return self._request("DELETE", f"/extensions/{_q(ext_id)}")
 
+    def get_extension_settings(self, ext_id: str) -> Any:
+        """GET /extensions/{ext_id}/settings — Get Extension Settings.
+
+        Read bounded JSON settings without activating or executing an extension.
+        """
+        return self._request("GET", f"/extensions/{_q(ext_id)}/settings")
+
+    def put_extension_settings(self, ext_id: str, body: dict | list | None = None) -> Any:
+        """PUT /extensions/{ext_id}/settings — Put Extension Settings.
+
+        Atomically replace extension settings; the same storage contract is used by its SDK.
+        """
+        return self._request("PUT", f"/extensions/{_q(ext_id)}/settings", json=body)
+
     def extension_panels(self) -> Any:
         """GET /extension-panels — Extension Panels.
 
@@ -1018,6 +1061,13 @@ class MioClient(_Base):
     def assemble_creation_kit(self, series_id: str, body: dict | list | None = None) -> Any:
         """POST /creation-kits/{series_id}/assemble — Assemble Creation Kit."""
         return self._request("POST", f"/creation-kits/{_q(series_id)}/assemble", json=body)
+
+    def preview_kit_preset(self, series_id: str, body: dict | list | None = None) -> Any:
+        """POST /creation-kits/{series_id}/preview-preset — Preview Kit Preset.
+
+        Freeze a kit's selected presets into a one-panel standby album without generation.
+        """
+        return self._request("POST", f"/creation-kits/{_q(series_id)}/preview-preset", json=body)
 
     def list_operations(self) -> Any:
         """GET /operations — List Operations.

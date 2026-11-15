@@ -5,10 +5,12 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
+from ..jobs.types import JOB_SCHEMA_VERSION
 from ..models import now_iso
 from ..storage import SCHEMA_VERSION
 from .archive import MAX_DATABASE, MAX_UNPACKED, verify_workspace
 from .database import logical_head
+from .extension_data import copy_settings, with_extension_head
 from .models import BackupEntry, BackupManifest
 from .paths import sha_file
 from .privacy import sanitize
@@ -25,13 +27,13 @@ def quiescent(ctx):
 
 def current_head(ctx) -> str:
     with quiescent(ctx):
-        return logical_head(ctx.store._conn, ctx.engine.db)
+        return with_extension_head(logical_head(ctx.store._conn, ctx.engine.db), ctx.data_dir)
 
 
 def capture(ctx, destination: Path, include_credentials: bool) -> BackupManifest:
     """Caller holds quiescent(). SQLite backup is never called on an open write transaction."""
     destination.mkdir(parents=True, exist_ok=True)
-    source_head = logical_head(ctx.store._conn, ctx.engine.db)
+    database_head = logical_head(ctx.store._conn, ctx.engine.db)
     databases = []
     try:
         for name, source in (("mio.sqlite3", ctx.store._conn), ("jobs.sqlite3", ctx.engine.db)):
@@ -43,7 +45,14 @@ def capture(ctx, destination: Path, include_credentials: bool) -> BackupManifest
     finally:
         for db in databases:
             db.close()
-    total = 0
+    total = sum((destination / name).stat().st_size for name in ("mio.sqlite3", "jobs.sqlite3"))
+    total += copy_settings(
+        ctx.data_dir,
+        destination,
+        include_credentials=include_credentials,
+        byte_budget=MAX_UNPACKED - total,
+    )
+    source_head = with_extension_head(database_head, destination)
     for asset_id in ctx.store.asset_ids():
         asset = ctx.store.get_asset(asset_id)
         source = ctx.assets.path(asset)
@@ -68,6 +77,7 @@ def capture(ctx, destination: Path, include_credentials: bool) -> BackupManifest
                 )
             )
     manifest = BackupManifest(
+        jobs_schema_version=JOB_SCHEMA_VERSION,
         schema_version=SCHEMA_VERSION,
         created_at=now_iso(),
         source_head=source_head,

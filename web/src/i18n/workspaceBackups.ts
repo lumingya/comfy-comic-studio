@@ -74,6 +74,29 @@ export const workspaceBackupsZh = {
   rejected: '恢复未执行，当前工作区已保留。',
   rolledBack: '恢复未完成，已回退到原工作区。',
   dismiss: '收起',
+  history: '本机保留记录',
+  historyHint:
+    '这里保留导出的备份、恢复计划及原目录。不会自动清理；删除计划后，保护备份仍需单独明确删除。',
+  savedBackups: '备份文件',
+  savedPlans: '恢复计划',
+  retainedSize: '本机占用：{{size}}',
+  planSizes: '本机占用 {{total}} · 暂存文件 {{staged}} · 恢复前原目录 {{previous}}',
+  protectedByPlans: '被 {{count}} 份恢复计划保护引用，先清理对应计划后才能删除。',
+  cancelBeforeDelete: '计划正在等待恢复，先查看并取消安排，才能删除。',
+  startupProtected: '安装或启动仍需要这份记录，当前不能删除。',
+  deleteRecord: '删除「{{id}}」？',
+  deletePlanHint:
+    '删除这份恢复计划及其暂存文件、保留原目录（共 {{size}}）。当前工作区不受影响，保护备份会继续保留。此操作无法撤销。',
+  deleteBackupHint:
+    '删除本机的这份备份（{{size}}）。已下载到其他位置的副本不受影响。此操作无法撤销。',
+  page: '第 {{page}} 页 · 共 {{total}} 条',
+  states: {
+    staged: '已暂存',
+    pending: '等待重启恢复',
+    installed: '已恢复',
+    rejected: '已取消或拒绝',
+    rolled_back: '已回退',
+  },
 };
 
 export const workspaceBackupsEn: typeof workspaceBackupsZh = {
@@ -156,4 +179,28 @@ export const workspaceBackupsEn: typeof workspaceBackupsZh = {
   rejected: 'Restoration was not applied. The current workspace was retained.',
   rolledBack: 'Restoration could not finish. The original workspace was restored.',
   dismiss: 'Dismiss',
+  history: 'Locally retained records',
+  historyHint:
+    'Exported backups, restore plans and previous directories stay here until explicitly deleted. Removing a plan keeps its protection backup for a separate deletion.',
+  savedBackups: 'Backup files',
+  savedPlans: 'Restore plans',
+  retainedSize: 'Local storage: {{size}}',
+  planSizes: 'Local storage {{total}} · Staged files {{staged}} · Previous directory {{previous}}',
+  protectedByPlans:
+    'Referenced by {{count}} restore plans. Remove those plans before deleting this backup.',
+  cancelBeforeDelete: 'This plan is awaiting restoration. Review and cancel it before deletion.',
+  startupProtected: 'Installation or startup still needs this record. It cannot be deleted yet.',
+  deleteRecord: 'Delete “{{id}}”?',
+  deletePlanHint:
+    'Delete this plan, staged files and retained previous directory ({{size}}). The current workspace is unaffected and its protection backup stays available. This cannot be undone.',
+  deleteBackupHint:
+    'Delete this local backup ({{size}}). Copies downloaded elsewhere are unaffected. This cannot be undone.',
+  page: 'Page {{page}} · {{total}} records',
+  states: {
+    staged: 'Staged',
+    pending: 'Awaiting restart',
+    installed: 'Installed',
+    rejected: 'Canceled or rejected',
+    rolled_back: 'Rolled back',
+  },
 };

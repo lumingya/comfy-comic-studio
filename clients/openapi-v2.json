@@ -741,6 +741,11 @@
       "title": "Includes Credentials",
       "type": "boolean"
      },
+     "jobs_schema_version": {
+      "const": 2,
+      "title": "Jobs Schema Version",
+      "type": "integer"
+     },
      "schema_version": {
       "title": "Schema Version",
       "type": "integer"
@@ -761,6 +766,7 @@
      "format",
      "version",
      "schema_version",
+     "jobs_schema_version",
      "created_at",
      "source_head",
      "includes_credentials",
@@ -781,6 +787,97 @@
      }
     },
     "title": "BackupOptions",
+    "type": "object"
+   },
+   "BackupPage": {
+    "additionalProperties": false,
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/BackupRecord"
+      },
+      "title": "Items",
+      "type": "array"
+     },
+     "limit": {
+      "title": "Limit",
+      "type": "integer"
+     },
+     "next_offset": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Next Offset"
+     },
+     "offset": {
+      "title": "Offset",
+      "type": "integer"
+     },
+     "total": {
+      "title": "Total",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "items",
+     "total",
+     "offset",
+     "limit",
+     "next_offset"
+    ],
+    "title": "BackupPage",
+    "type": "object"
+   },
+   "BackupRecord": {
+    "additionalProperties": false,
+    "properties": {
+     "can_delete": {
+      "title": "Can Delete",
+      "type": "boolean"
+     },
+     "created_at": {
+      "title": "Created At",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "includes_credentials": {
+      "title": "Includes Credentials",
+      "type": "boolean"
+     },
+     "protection_plan_ids": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Protection Plan Ids",
+      "type": "array"
+     },
+     "retained_bytes": {
+      "title": "Retained Bytes",
+      "type": "integer"
+     },
+     "size": {
+      "title": "Size",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "id",
+     "created_at",
+     "size",
+     "retained_bytes",
+     "includes_credentials",
+     "protection_plan_ids",
+     "can_delete"
+    ],
+    "title": "BackupRecord",
     "type": "object"
    },
    "Bible-Input": {
@@ -2490,6 +2587,86 @@
      "revisions"
     ],
     "title": "EpisodeReorder",
+    "type": "object"
+   },
+   "ExecutorInfo": {
+    "additionalProperties": false,
+    "properties": {
+     "current": {
+      "title": "Current",
+      "type": "boolean"
+     },
+     "digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Digest",
+      "type": "string"
+     },
+     "kind": {
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Kind",
+      "type": "string"
+     },
+     "replay_safe": {
+      "title": "Replay Safe",
+      "type": "boolean"
+     },
+     "resources": {
+      "items": {
+       "enum": [
+        "local",
+        "comfy"
+       ],
+       "type": "string"
+      },
+      "title": "Resources",
+      "type": "array"
+     },
+     "source": {
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Source",
+      "type": "string"
+     }
+    },
+    "required": [
+     "kind",
+     "source",
+     "digest",
+     "current",
+     "replay_safe",
+     "resources"
+    ],
+    "title": "ExecutorInfo",
+    "type": "object"
+   },
+   "ExecutorRef": {
+    "additionalProperties": false,
+    "properties": {
+     "digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Digest",
+      "type": "string"
+     },
+     "kind": {
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Kind",
+      "type": "string"
+     },
+     "source": {
+      "maxLength": 160,
+      "minLength": 1,
+      "title": "Source",
+      "type": "string"
+     }
+    },
+    "required": [
+     "kind",
+     "source",
+     "digest"
+    ],
+    "title": "ExecutorRef",
     "type": "object"
    },
    "ExternalRequirement": {
@@ -5714,6 +5891,30 @@
     "title": "ReadingPreview",
     "type": "object"
    },
+   "RebindExecutor": {
+    "additionalProperties": false,
+    "properties": {
+     "expected": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ExecutorRef"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "target": {
+      "$ref": "#/components/schemas/ExecutorRef"
+     }
+    },
+    "required": [
+     "expected",
+     "target"
+    ],
+    "title": "RebindExecutor",
+    "type": "object"
+   },
    "RenderProfile-Input": {
     "additionalProperties": false,
     "description": "A pipeline of workflows.  ``draft`` runs per candidate, ``final`` only on adopted takes.",
@@ -6335,6 +6536,50 @@
     "title": "RestoreApply",
     "type": "object"
    },
+   "RestorePage": {
+    "additionalProperties": false,
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/RestoreRecord"
+      },
+      "title": "Items",
+      "type": "array"
+     },
+     "limit": {
+      "title": "Limit",
+      "type": "integer"
+     },
+     "next_offset": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Next Offset"
+     },
+     "offset": {
+      "title": "Offset",
+      "type": "integer"
+     },
+     "total": {
+      "title": "Total",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "items",
+     "total",
+     "offset",
+     "limit",
+     "next_offset"
+    ],
+    "title": "RestorePage",
+    "type": "object"
+   },
    "RestorePlan": {
     "additionalProperties": false,
     "properties": {
@@ -6392,6 +6637,91 @@
      "message"
     ],
     "title": "RestorePlan",
+    "type": "object"
+   },
+   "RestoreRecord": {
+    "additionalProperties": false,
+    "properties": {
+     "blocked_reason": {
+      "anyOf": [
+       {
+        "enum": [
+         "pending",
+         "installation",
+         "startup"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Blocked Reason"
+     },
+     "can_delete": {
+      "title": "Can Delete",
+      "type": "boolean"
+     },
+     "created_at": {
+      "title": "Created At",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "pending": {
+      "title": "Pending",
+      "type": "boolean"
+     },
+     "previous_bytes": {
+      "title": "Previous Bytes",
+      "type": "integer"
+     },
+     "protection_backup_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Protection Backup Id"
+     },
+     "retained_bytes": {
+      "title": "Retained Bytes",
+      "type": "integer"
+     },
+     "staged_bytes": {
+      "title": "Staged Bytes",
+      "type": "integer"
+     },
+     "state": {
+      "enum": [
+       "staged",
+       "pending",
+       "installed",
+       "rejected",
+       "rolled_back"
+      ],
+      "title": "State",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "created_at",
+     "state",
+     "protection_backup_id",
+     "retained_bytes",
+     "staged_bytes",
+     "previous_bytes",
+     "pending",
+     "can_delete",
+     "blocked_reason"
+    ],
+    "title": "RestoreRecord",
     "type": "object"
    },
    "RestoreScheduled": {
@@ -8586,6 +8916,71 @@
    }
   },
   "/backups": {
+   "get": {
+    "operationId": "list_workspace_backups",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "offset",
+      "required": false,
+      "schema": {
+       "default": 0,
+       "minimum": 0,
+       "title": "Offset",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 20,
+       "maximum": 100,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/BackupPage"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "List Workspace Backups",
+    "tags": [
+     "workspace-backups"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "offset",
+     "limit"
+    ],
+    "x-mio-operation": "GET /backups"
+   },
    "post": {
     "operationId": "create_workspace_backup",
     "requestBody": {
@@ -8709,6 +9104,71 @@
    }
   },
   "/backups/restore-plans": {
+   "get": {
+    "operationId": "list_workspace_restore_plans",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "offset",
+      "required": false,
+      "schema": {
+       "default": 0,
+       "minimum": 0,
+       "title": "Offset",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 20,
+       "maximum": 100,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/RestorePage"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "List Workspace Restore Plans",
+    "tags": [
+     "workspace-backups"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "offset",
+     "limit"
+    ],
+    "x-mio-operation": "GET /backups/restore-plans"
+   },
    "post": {
     "operationId": "stage_workspace_restore",
     "requestBody": {
@@ -8751,6 +9211,49 @@
    }
   },
   "/backups/restore-plans/{plan_id}": {
+   "delete": {
+    "operationId": "delete_workspace_restore_plan",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "plan_id",
+      "required": true,
+      "schema": {
+       "title": "Plan Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Delete Workspace Restore Plan",
+    "tags": [
+     "workspace-backups"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "plan_id"
+    ],
+    "x-mio-operation": "DELETE /backups/restore-plans/{plan_id}"
+   },
    "get": {
     "operationId": "get_workspace_restore_plan",
     "parameters": [
@@ -9407,6 +9910,70 @@
      "body"
     ],
     "x-mio-operation": "POST /creation-kits/{series_id}/preview"
+   }
+  },
+  "/creation-kits/{series_id}/preview-preset": {
+   "post": {
+    "description": "Freeze a kit's selected presets into a one-panel standby album without generation.",
+    "operationId": "preview_kit_preset",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PreviewRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Assembled"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Preview Kit Preset",
+    "tags": [
+     "creation-kits"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /creation-kits/{series_id}/preview-preset"
    }
   },
   "/episodes/{episode_id}": {
@@ -12562,6 +13129,133 @@
     "x-mio-operation": "POST /extensions/{ext_id}/enable"
    }
   },
+  "/extensions/{ext_id}/settings": {
+   "get": {
+    "description": "Read bounded JSON settings without activating or executing an extension.",
+    "operationId": "get_extension_settings",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ext_id",
+      "required": true,
+      "schema": {
+       "title": "Ext Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": {
+          "$ref": "#/components/schemas/JsonValue"
+         },
+         "title": "Response Get Extension Settings",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Get Extension Settings",
+    "tags": [
+     "extensions"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "ext_id"
+    ],
+    "x-mio-operation": "GET /extensions/{ext_id}/settings"
+   },
+   "put": {
+    "description": "Atomically replace extension settings; the same storage contract is used by its SDK.",
+    "operationId": "put_extension_settings",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ext_id",
+      "required": true,
+      "schema": {
+       "title": "Ext Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "additionalProperties": {
+         "$ref": "#/components/schemas/JsonValue"
+        },
+        "title": "Body",
+        "type": "object"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": {
+          "$ref": "#/components/schemas/JsonValue"
+         },
+         "title": "Response Put Extension Settings",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Put Extension Settings",
+    "tags": [
+     "extensions"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "ext_id",
+     "body"
+    ],
+    "x-mio-operation": "PUT /extensions/{ext_id}/settings"
+   }
+  },
   "/instances": {
    "get": {
     "operationId": "list_instances",
@@ -12801,6 +13495,40 @@
      "instance_id"
     ],
     "x-mio-operation": "GET /instances/{instance_id}/health"
+   }
+  },
+  "/job-executors": {
+   "get": {
+    "operationId": "list_job_executors",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/ExecutorInfo"
+         },
+         "title": "Response List Job Executors",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "List Job Executors",
+    "tags": [
+     "jobs"
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /job-executors"
    }
   },
   "/jobs": {
@@ -13446,6 +14174,71 @@
      "job_id"
     ],
     "x-mio-operation": "POST /jobs/{job_id}/pause"
+   }
+  },
+  "/jobs/{job_id}/rebind-executor": {
+   "post": {
+    "operationId": "rebind_job_executor",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "job_id",
+      "required": true,
+      "schema": {
+       "title": "Job Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/RebindExecutor"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Rebind Job Executor",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Rebind Job Executor",
+    "tags": [
+     "jobs"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "job_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /jobs/{job_id}/rebind-executor"
    }
   },
   "/jobs/{job_id}/resume": {

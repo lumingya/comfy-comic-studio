@@ -167,6 +167,7 @@ const assemblyReport: AssemblyPreview = {
 const assemblyRoutes = () =>
   configurationRoutes({
     'GET /api/creation-kits': [kit],
+    'GET /api/series/kit_new': kit,
     'GET /api/workshop': { ...series, id: 'ws', presets: [preset('workshop_preset')] },
     'GET /api/series/ws/episodes': {
       items: [{ id: 'ws_board', title: 'Workshop story', panel_count: 1 }],

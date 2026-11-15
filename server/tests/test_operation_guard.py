@@ -85,7 +85,7 @@ class OperationGuardTests(unittest.TestCase):
         thread.join(2)
         self.assertFalse(completed_inside_guard)
         self.assertTrue(done.is_set())
-        self.assertEqual(self.engine.get(job["id"])["state"], "queued")
+        self.assertEqual(self.engine.get(job["id"])["state"], "blocked")
 
     def test_restore_waits_for_render_planning_then_rejects_the_submitted_job(self):
         checkpoints = Checkpoints(self.ctx)

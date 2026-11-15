@@ -3,6 +3,7 @@
 from fastapi import Request, Response, status
 
 from .. import creation_kits as K
+from .. import workshop as W
 from ..assembly import AssemblyPreview
 from ..creation_kits.archive import MAX_ARCHIVE
 from ..creation_kits.models import KitAssembly, KitImport, KitImported, KitInspection, KitSelection
@@ -10,7 +11,7 @@ from ..models import Series
 from .deps import Ctx
 from .library import BINARY_BODY, read_body
 from .operations import Router as APIRouter
-from .workshop import Assembled
+from .workshop import Assembled, PreviewRequest
 
 router = APIRouter(tags=["creation-kits"])
 
@@ -54,5 +55,24 @@ def preview_creation_kit(ctx: Ctx, series_id: str, body: KitAssembly):
 )
 def assemble_creation_kit(ctx: Ctx, series_id: str, body: KitAssembly):
     series, episode = K.assemble_kit(ctx, series_id, body)
+    ctx.queue.track(series.id)
+    return Assembled(series=series, episode=episode)
+
+
+@router.post(
+    "/creation-kits/{series_id}/preview-preset",
+    response_model=Assembled,
+    status_code=status.HTTP_201_CREATED,
+)
+def preview_kit_preset(ctx: Ctx, series_id: str, body: PreviewRequest):
+    """Freeze a kit's selected presets into a one-panel standby album without generation."""
+    series, episode = W.preview(
+        ctx.store,
+        body.preset_ids,
+        body.prompt,
+        body.title,
+        body.profile_id,
+        source_id=series_id,
+    )
     ctx.queue.track(series.id)
     return Assembled(series=series, episode=episode)

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useCreationKits } from '../../api/creationKits';
-import { useEpisode, useEpisodes } from '../../api/series';
+import { useEpisode, useEpisodes, useSeries } from '../../api/series';
 import { useProfiles, useSettings } from '../../api/system';
 import { useAssemble, useWorkshop, type Preset } from '../../api/workshop';
 import { Icon } from '../../app/icons';
@@ -13,6 +13,7 @@ import { QueryError } from '../../app/errors';
 import { AssemblyCanvas, EMPTY_DESIGN, canvasTasks, type CanvasDesign } from './AssemblyCanvas';
 import { AssemblyReview } from './AssemblyReview';
 import { AssemblyIntents } from './assemblyIntent';
+import { workshopHref } from './workshopSource';
 import './creation-kits.css';
 
 const STEPS = ['story', 'presets', 'name'] as const;
@@ -35,8 +36,9 @@ export default function AssembleDialog({
   const [kitId, setKitId] = useState(params.get('kit') ?? '');
   const kits = useCreationKits();
   const ws = useWorkshop();
-  const source = kitId ? kits.data?.find((kit) => kit.id === kitId) : ws.data;
-  const sourcePending = kitId ? kits.isPending : ws.isPending;
+  const kit = useSeries(kitId || undefined);
+  const source = kitId ? (kit.data?.kind === 'kit' ? kit.data : undefined) : ws.data;
+  const sourcePending = kitId ? kit.isPending : ws.isPending;
   const boards = useEpisodes(source?.id);
   const profiles = useProfiles();
   const settings = useSettings();
@@ -47,7 +49,7 @@ export default function AssembleDialog({
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState(0);
-  const [story, setStory] = useState(kitId ? '' : (initialStory ?? ''));
+  const [story, setStory] = useState(initialStory ?? '');
   const [profile, setProfile] = useState('');
   const [chosen, setChosen] = useState<string[] | null>(null);
   const [title, setTitle] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export default function AssembleDialog({
   const intents = useRef(new AssemblyIntents());
   const presets = source?.presets ?? [];
   const items = boards.data?.items ?? [];
-  const storyId = story || items[0]?.id;
+  const storyId = story ? items.find((item) => item.id === story)?.id : items[0]?.id;
   const board = items.find((b) => b.id === storyId);
   const { data: storyboard } = useEpisode(storyId);
   const route = useRenderRoute(
@@ -276,10 +278,20 @@ export default function AssembleDialog({
             ))}
           </select>
           {kits.isError ? <QueryError error={kits.error} onRetry={kits.refetch} /> : null}
+          {kitId && kit.error ? <QueryError error={kit.error} onRetry={kit.refetch} /> : null}
           {kitId && !sourcePending && !source && !kits.isError ? (
             <p className="notice warn">{t('kits.missingSource')}</p>
           ) : null}
           {boards.isError ? <QueryError error={boards.error} onRetry={boards.refetch} /> : null}
+          {kitId && source ? (
+            <Link
+              className="btn small"
+              to={workshopHref(storyId ? `/workshop/story/${storyId}` : '/workshop/story', kitId)}
+              onClick={close}
+            >
+              {t('workshopSource.edit')}
+            </Link>
+          ) : null}
         </div>
         <div className="designer-head">
           <div className="designer-modes" role="group" aria-label={t('ws.assemble.mode')}>

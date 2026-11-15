@@ -12,7 +12,7 @@
 - 以后扩展里任何文件变了，摘要就对不上，扩展状态会变成「文件已变动」，不再加载，要用户重新确认。
 - 带 `main` 或 `panels` 的扩展算作「含代码」，确认对话框里会有更醒目的警告。Python 代码和本程序拥有相同的权限，这里没有沙箱，信任靠的是用户自己的审阅。
 - 启动时设置环境变量 `MIO_SAFE_MODE=1`，所有扩展都不会加载。扩展把服务搞坏的时候用这个办法恢复。
-- 停用扩展时，它注册的所有东西（钩子、贡献、主题……）会按来源 `ext:<id>` 一起移除，已挂载的后端路由也会立即拒绝新请求（404）。路由绑定本次审核并加载的代码；文件变动、重新启用或重新审核后，旧路由不能继续使用，重启服务才会挂载新路由。已经提交的任务仍由任务引擎管理，需停止时单独取消。
+- 停用扩展时，它注册的所有东西（钩子、贡献、主题……）会按来源 `ext:<id>` 一起移除，已挂载的后端路由也会立即拒绝新请求（404）。路由绑定本次审核并加载的代码；文件变动、重新启用或重新审核后，旧路由不能继续使用，重启服务才会挂载新路由。该来源有正在执行、结果不确定、等待保存结果或端点状态未恢复的任务时，会拒绝停用和替换；仅排队的任务可以保留，缺少原执行器时会阻塞。
 
 ## 目录结构
 
@@ -112,10 +112,12 @@ def deactivate():  # 可选：停用时调用
 | --- | --- |
 | `mio.hook(name, fn=None, *, priority=100)` | 注册钩子，可以当装饰器用。`priority` 越小越先执行 |
 | `mio.contribute(point, id, value, *, title="")` | 往注册表的扩展点里添加一项 |
+| `mio.job_executor(kind, executor, *, resources=("local",), replace=False, title="")` | 注册执行器，自动绑定已审核扩展的来源与摘要 |
+| `mio.submit_job(kind, items, snapshot=None, *, owner="", title="", idempotency_key=None)` | 提交本次启用且当前选中的执行器，`items` 使用 `mio_server.jobs.ItemSpec` |
 | `mio.router` | FastAPI `APIRouter`，同时挂在 `/api/ext/<id>` 与 `/api/v2/ext/<id>`；v2 默认要求 admin，新增路由要重启 |
 | `mio.route(method, path, scope="admin", **kwargs)` | 注册有明确权限的自定义路由，例如只读查询用 `scope="read"`，出图用 `scope="render"` |
 | `mio.operation(id)` | 包装界面和 v2 共用的核心操作，参见下节 |
-| `mio.load_settings()` / `mio.save_settings(data)` | 扩展自己的 JSON 设置，存在 `<数据目录>/extension-data/<id>.json` |
+| `mio.load_settings()` / `mio.save_settings(data)` | 扩展自己的 JSON 设置，存在 `<数据目录>/extension-data/<id>.json`，顶层对象、单文件最多 1 MiB；原子保存并随工作区备份恢复，含凭据时需明确选择包含凭据 |
 | `mio.log` | `logging.Logger`，名字是 `mio.ext.<id>` |
 | `mio.internal` | 整个 `AppContext`（全部存储和服务）。这是**不稳定**的后门，可能随版本变化 |
 
@@ -138,9 +140,48 @@ def deactivate():  # 可选：停用时调用
 
 ### 扩展点
 
-`GET /api/registry` 列出贡献目录。已直接连接核心执行路径的契约包括 `operation`、`workflow_binding`、`exporter`、`slice_preset`、`layout`、`theme`、`album_template`、`sfx_preset` 和 `cloud_adapter`。
-其他名称目前可描述能力，但不能仅注册一个名称就改变任务执行。尤其是 `job_executor` 的目录项不支持热替换运行中的执行器；新增任务执行器仍需内部引擎接口及独立的结果重放契约。
+`GET /api/registry` 列出贡献目录。已直接连接核心执行路径的契约包括 `operation`、`job_executor`、`workflow_binding`、`exporter`、`slice_preset`、`layout`、`theme`、`album_template`、`sfx_preset` 和 `cloud_adapter`。
+其他名称目前可描述能力，但不能仅注册一个名称就改变任务执行。
 `replace=True` 可覆盖同 ID 贡献；同来源更新只保留一层，停用来源会恢复上一层。加载失败也会移除失败来源，不会把被覆盖的核心实现丢掉。
+
+### 任务执行器
+
+`mio.contribute("job_executor", kind, executor, resources=("local",), replace=False)` 与
+`mio.job_executor(...)` 使用同一注册路径。执行器必须提供 `execute(ctx) -> dict`，可选方法为
+`on_complete(job, item, result)`、`reconcile(ctx) -> dict | None`、
+`recover_state(ctx, record, *, confirm_stopped=False, discard_result=False) -> dict`。
+资源只能选择已有的 `local` 或 `comfy`；资源容量和 ComfyUI 端点状态锁继续由任务引擎管理。
+`ctx.input`、`ctx.snapshot` 是提交时冻结的数据；通过 `ctx.mark_sent(upstream)` 或
+`ctx.checkpoint(upstream)` 记录已经发出的请求，通过 `ctx.on_abort(fn)` 注册该次执行的取消回调。
+修改作品的任务必须把作品或话的 ID 传为 `owner`；空 owner 会保守阻止所有作品的恢复管理操作。
+
+提交时保存 `(kind, source, digest)`：扩展摘要来自用户审核的整个扩展目录，内置执行器使用明确的
+`mio-executor-v1:<kind>` 契约摘要。内置执行/结果协议有不兼容变化时必须提升此版本。
+同 kind 的新覆盖只影响新提交；已经排队的任务仍精确解析仍在注册表中的旧来源层。
+运行中的任务捕获执行器对象，执行、结果回调和取消始终使用同一对象。
+重启后的核对、端点恢复与结果重放也必须找到相同来源和摘要，不能退回当前顶层执行器。
+没有绑定的任务不会因后来注册同名执行器而自动运行。`GET /api/v2/job-executors`（`read`）
+列出全部已加载层及其 `current`、`resources`、`replay_safe`；任务的 `executor` 字段报告原身份、
+是否可用，以及 `executor_missing` / `executor_unbound` 原因。
+
+返回结果会先写入持久交付记录，再调用 `on_complete`。只有明确声明 `replay_safe = True` 的执行器
+才允许重启自动交付或 `POST /jobs/{job_id}/items/{idx}/replay-result`（`render`）显式重放。
+结果已经收到但尚未完成交付时，`retry` 会拒绝再次执行。声明重放安全的回调需要用 `item['delivery_id']` 与
+`item['delivery_sha']` 将作品修改和去重回执放进同一事务；重复回调返回原结果，不得重复新增或采用。
+无需额外交付副作用、仅返回任务结果的执行器也可以声明重放安全。未声明的扩展保留结果并等待处理。
+
+只有零执行尝试、没有任何交付记录或端点状态租约的任务，才允许管理员显式使用
+`POST /api/v2/jobs/{job_id}/rebind-executor`，请求为
+`{"expected": <原身份或 null>, "target": {"kind":"...","source":"ext:...","digest":"..."}}`。
+目标必须已加载、kind 相同且支持任务资源；原身份不符会返回冲突。恢复原扩展摘要通常无需改绑。
+停用、替换与激活共享任务规划锁；激活失败会恢复旧贡献、钩子与启用状态，激活期间不能提交任务。
+扩展的 `activate` / `deactivate` 应只管理贡献与资源；任意外部写操作无法由加载器撤销。
+
+新任务入口由扩展自己的类型化 `mio.route(..., scope="render")` 提供，再调用 `mio.submit_job`。
+未提供通用任意任务提交 HTTP 接口，以保留核心出图规划校验。完整无需联网的示例在
+[`examples/extensions/text-metrics`](../../../examples/extensions/text-metrics/README.md)，涵盖提交、
+幂等、状态、重试和结果读取。直接修改 `mio.internal.registry` 或私有引擎字段属于不稳定逃生接口，
+不享有 SDK 的生命周期、身份和恢复保证；执行器依赖发生协议变化也应更新扩展内容并重新审核。
 
 ### 包装核心操作
 
@@ -160,6 +201,10 @@ def activate(mio):
 处理返回值或直接返回替代结果。扩展应维持原 API 类型与业务约束；安装的 Python 扩展是受信任代码。
 失败会向调用者报告，**不会自动重试核心写操作**，因为核心可能已经成功。直接返回 `Response` 与普通 FastAPI
 路由一样绕过响应模型验证。停用扩展影响之后的新调用，已经开始的请求继续使用其捕获的包装链。
+
+扩展安装、启停或重新加载尚未完成时，新的核心 HTTP 请求会快速返回 `409`，此时尚未执行包装器或核心操作，
+可在扩展变化完成后重试。包装链只在完整发布或回滚后捕获，捕获时的短锁不会跨异步执行持有。
+普通出图规划或备份占用任务操作锁时，不会因此拒绝只读 HTTP 请求。
 
 ### 导出和版式
 

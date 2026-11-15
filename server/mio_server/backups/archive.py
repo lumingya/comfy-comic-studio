@@ -11,8 +11,10 @@ import tempfile
 import zipfile
 from pathlib import Path
 
+from ..jobs.types import JOB_SCHEMA_VERSION
 from ..storage import SCHEMA_VERSION
 from .database import readonly, validate_databases
+from .extension_data import MAX_EXTENSION_JSON, allowed_extension_path, regular_path, settings_files
 from .models import BackupInspection, BackupManifest
 from .paths import sha_file
 
@@ -31,7 +33,7 @@ WARNINGS = [
 
 
 def allowed_path(name: str) -> bool:
-    if name in DATABASES:
+    if name in DATABASES or allowed_extension_path(name):
         return True
     match = ASSET_PATH.fullmatch(name)
     return bool(match and match[1] == match[2][:2])
@@ -67,11 +69,21 @@ def inspect_archive(path: Path, extract_to: Path | None = None) -> BackupInspect
                     if entry.filename == "manifest.json"
                     else MAX_DATABASE
                     if entry.filename in DATABASES
+                    else MAX_EXTENSION_JSON
+                    if allowed_extension_path(entry.filename)
                     else MAX_UNPACKED
                 )
                 if entry.file_size > limit:
                     raise ValueError("workspace archive member exceeds its size limit")
-            manifest = BackupManifest.model_validate_json(archive.read("manifest.json"))
+            manifest_data = json.loads(archive.read("manifest.json"))
+            if (
+                not isinstance(manifest_data, dict)
+                or manifest_data.get("jobs_schema_version") != JOB_SCHEMA_VERSION
+            ):
+                raise ValueError(
+                    "workspace archive jobs schema does not match this version; executor identities cannot be inferred"
+                )
+            manifest = BackupManifest.model_validate(manifest_data)
             if manifest.schema_version != SCHEMA_VERSION:
                 raise ValueError("workspace archive schema does not match this version")
             by_name = {entry.path: entry for entry in manifest.entries}
@@ -109,6 +121,16 @@ def inspect_archive(path: Path, extract_to: Path | None = None) -> BackupInspect
 
 def verify_workspace(root: Path, manifest: BackupManifest) -> dict:
     expected = {entry.path: entry for entry in manifest.entries}
+    regular_path(root)
+    pending = [root]
+    while pending:
+        for path in pending.pop().iterdir():
+            regular_path(path)
+            if path.is_dir():
+                pending.append(path)
+    extensions = {
+        name for name, _ in settings_files(root, include_credentials=manifest.includes_credentials)
+    }
     actual = {path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_file()}
     if any(path.is_symlink() for path in root.rglob("*")):
         raise ValueError("staged workspace contains a link")
@@ -123,7 +145,7 @@ def verify_workspace(root: Path, manifest: BackupManifest) -> dict:
     store, jobs = readonly(root / "mio.sqlite3"), readonly(root / "jobs.sqlite3")
     try:
         counts, assets = validate_databases(store, jobs)
-        if set(expected) != DATABASES | assets.keys():
+        if set(expected) != DATABASES | assets.keys() | extensions:
             raise ValueError("workspace asset files do not match asset metadata")
         for name, asset in assets.items():
             if expected[name].sha256 != asset.id or expected[name].size != asset.size:

@@ -12,6 +12,7 @@ from ..assets import MIME_EXT
 from ..checkpoints.models import Checkpoint
 from ..checkpoints.service import head_of
 from ..checkpoints.validation import assets_for
+from ..jobs.executors import ExecutorRef
 from ..jobs.types import ITEM_STATES
 from ..jobs.types import SCHEMA as JOB_SCHEMA
 from ..models import Episode, Series
@@ -31,6 +32,7 @@ STORE_COLUMNS = {
     "kit_receipts": "key sha result_json",
 }
 JOB_COLUMNS = {
+    "job_executor_bindings": "job_id kind source digest",
     "jobs": "id kind title state idempotency_key snapshot_json snapshot_sha window priority failure_limit paused blocked canceled owner error created updated",
     "job_items": "job_id idx state resource group_key instances label input_json updated epoch attempts sent upstream instance_id started finished error_json result_json",
     "job_events": "seq job_id idx type data_json at",
@@ -207,6 +209,13 @@ def validate_databases(store_db, jobs_db) -> tuple[dict, dict[str, Asset]]:
     for (state,) in jobs_db.execute("SELECT DISTINCT state FROM job_items"):
         if state not in ITEM_STATES:
             raise ValueError("backup contains unknown job states")
+    for row in jobs_db.execute(
+        "SELECT b.kind, b.source, b.digest, j.kind AS job_kind "
+        "FROM job_executor_bindings b JOIN jobs j ON j.id = b.job_id"
+    ):
+        ExecutorRef(kind=row["kind"], source=row["source"], digest=row["digest"])
+        if row["kind"] != row["job_kind"]:
+            raise ValueError("backup executor identity does not match its task kind")
     for table in ("jobs", "job_items", "job_deliveries"):
         columns = [
             col[1]

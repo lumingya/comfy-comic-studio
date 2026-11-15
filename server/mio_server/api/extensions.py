@@ -6,9 +6,11 @@ import mimetypes
 import os
 
 from fastapi import Request, Response, status
-from pydantic import BaseModel
+from pydantic import BaseModel, JsonValue
 
 from .. import themes as TH
+from ..backups.extension_data import load_settings, save_settings, settings_exist
+from ..extensions.manager import ExtensionError
 from ..extensions.manifest import ManifestError, inside
 from ..extensions.panel_bridge import (
     PanelBridgeRequest,
@@ -65,6 +67,37 @@ def disable_extension(ctx: Ctx, ext_id: str) -> dict:
 @router.delete("/extensions/{ext_id}", status_code=status.HTTP_204_NO_CONTENT)
 def remove_extension(ctx: Ctx, ext_id: str) -> None:
     _mgr(ctx).remove(ext_id)
+
+
+def _settings_target(ctx, ext_id: str):
+    # Data can outlive an uninstalled package. Never create arbitrary names through this API.
+    if settings_exist(ctx.data_dir, ext_id):
+        return
+    try:
+        info = _mgr(ctx).info(ext_id)
+    except ExtensionError:
+        raise NotFound("extension or retained settings not found") from None
+    if info.manifest is None:
+        raise NotFound("extension manifest is invalid")
+
+
+@router.get("/extensions/{ext_id}/settings", response_model=dict[str, JsonValue])
+def get_extension_settings(ctx: Ctx, ext_id: str) -> dict[str, JsonValue]:
+    """Read bounded JSON settings without activating or executing an extension."""
+    with ctx.engine.hold_operation():
+        _settings_target(ctx, ext_id)
+        return load_settings(ctx.data_dir, ext_id)
+
+
+@router.put("/extensions/{ext_id}/settings", response_model=dict[str, JsonValue])
+def put_extension_settings(
+    ctx: Ctx, ext_id: str, body: dict[str, JsonValue]
+) -> dict[str, JsonValue]:
+    """Atomically replace extension settings; the same storage contract is used by its SDK."""
+    with ctx.engine.hold_operation():
+        _settings_target(ctx, ext_id)
+        save_settings(ctx.data_dir, ext_id, body)
+        return load_settings(ctx.data_dir, ext_id)
 
 
 @router.get("/extension-panels")

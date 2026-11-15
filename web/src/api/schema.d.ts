@@ -1210,6 +1210,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/job-executors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Job Executors */
+        get: operations["list_job_executors_api_job_executors_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{job_id}/rebind-executor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rebind Job Executor */
+        post: operations["rebind_job_executor_api_jobs__job_id__rebind_executor_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/jobs": {
         parameters: {
             query?: never;
@@ -1674,6 +1708,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/extensions/{ext_id}/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Extension Settings
+         * @description Read bounded JSON settings without activating or executing an extension.
+         */
+        get: operations["get_extension_settings_api_extensions__ext_id__settings_get"];
+        /**
+         * Put Extension Settings
+         * @description Atomically replace extension settings; the same storage contract is used by its SDK.
+         */
+        put: operations["put_extension_settings_api_extensions__ext_id__settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/extension-panels": {
         parameters: {
             query?: never;
@@ -1857,7 +1915,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List Workspace Backups */
+        get: operations["list_workspace_backups_api_backups_get"];
         put?: never;
         /** Create Workspace Backup */
         post: operations["create_workspace_backup_api_backups_post"];
@@ -1891,7 +1950,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List Workspace Restore Plans */
+        get: operations["list_workspace_restore_plans_api_backups_restore_plans_get"];
         put?: never;
         /** Stage Workspace Restore */
         post: operations["stage_workspace_restore_api_backups_restore_plans_post"];
@@ -1912,7 +1972,8 @@ export interface paths {
         get: operations["get_workspace_restore_plan_api_backups_restore_plans__plan_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete Workspace Restore Plan */
+        delete: operations["delete_workspace_restore_plan_api_backups_restore_plans__plan_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2367,6 +2428,26 @@ export interface paths {
         put?: never;
         /** Assemble Creation Kit */
         post: operations["assemble_creation_kit_api_creation_kits__series_id__assemble_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/creation-kits/{series_id}/preview-preset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Kit Preset
+         * @description Freeze a kit's selected presets into a one-panel standby album without generation.
+         */
+        post: operations["preview_kit_preset_api_creation_kits__series_id__preview_preset_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2853,6 +2934,11 @@ export interface components {
             version: 1;
             /** Schema Version */
             schema_version: number;
+            /**
+             * Jobs Schema Version
+             * @constant
+             */
+            jobs_schema_version: 2;
             /** Created At */
             created_at: string;
             /** Source Head */
@@ -2872,6 +2958,36 @@ export interface components {
              * @default false
              */
             include_credentials?: boolean;
+        };
+        /** BackupPage */
+        BackupPage: {
+            /** Items */
+            items: components["schemas"]["BackupRecord"][];
+            /** Total */
+            total: number;
+            /** Offset */
+            offset: number;
+            /** Limit */
+            limit: number;
+            /** Next Offset */
+            next_offset: number | null;
+        };
+        /** BackupRecord */
+        BackupRecord: {
+            /** Id */
+            id: string;
+            /** Created At */
+            created_at: string;
+            /** Size */
+            size: number;
+            /** Retained Bytes */
+            retained_bytes: number;
+            /** Includes Credentials */
+            includes_credentials: boolean;
+            /** Protection Plan Ids */
+            protection_plan_ids: string[];
+            /** Can Delete */
+            can_delete: boolean;
         };
         /** Bible */
         "Bible-Input": {
@@ -3533,6 +3649,30 @@ export interface components {
              * @default false
              */
             include_locked?: boolean;
+        };
+        /** ExecutorInfo */
+        ExecutorInfo: {
+            /** Kind */
+            kind: string;
+            /** Source */
+            source: string;
+            /** Digest */
+            digest: string;
+            /** Current */
+            current: boolean;
+            /** Replay Safe */
+            replay_safe: boolean;
+            /** Resources */
+            resources: ("local" | "comfy")[];
+        };
+        /** ExecutorRef */
+        ExecutorRef: {
+            /** Kind */
+            kind: string;
+            /** Source */
+            source: string;
+            /** Digest */
+            digest: string;
         };
         /** ExternalRequirement */
         ExternalRequirement: {
@@ -4859,6 +4999,11 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /** RebindExecutor */
+        RebindExecutor: {
+            expected: components["schemas"]["ExecutorRef"] | null;
+            target: components["schemas"]["ExecutorRef"];
+        };
         /**
          * RenderProfile
          * @description A pipeline of workflows.  ``draft`` runs per candidate, ``final`` only on adopted takes.
@@ -5139,6 +5284,19 @@ export interface components {
             /** Expected Archive Sha256 */
             expected_archive_sha256: string;
         };
+        /** RestorePage */
+        RestorePage: {
+            /** Items */
+            items: components["schemas"]["RestoreRecord"][];
+            /** Total */
+            total: number;
+            /** Offset */
+            offset: number;
+            /** Limit */
+            limit: number;
+            /** Next Offset */
+            next_offset: number | null;
+        };
         /** RestorePlan */
         RestorePlan: {
             /** Id */
@@ -5161,6 +5319,32 @@ export interface components {
              * @default
              */
             message: string;
+        };
+        /** RestoreRecord */
+        RestoreRecord: {
+            /** Id */
+            id: string;
+            /** Created At */
+            created_at: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "staged" | "pending" | "installed" | "rejected" | "rolled_back";
+            /** Protection Backup Id */
+            protection_backup_id: string | null;
+            /** Retained Bytes */
+            retained_bytes: number;
+            /** Staged Bytes */
+            staged_bytes: number;
+            /** Previous Bytes */
+            previous_bytes: number;
+            /** Pending */
+            pending: boolean;
+            /** Can Delete */
+            can_delete: boolean;
+            /** Blocked Reason */
+            blocked_reason: ("pending" | "installation" | "startup") | null;
         };
         /** RestoreScheduled */
         RestoreScheduled: {
@@ -8627,6 +8811,61 @@ export interface operations {
             };
         };
     };
+    list_job_executors_api_job_executors_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExecutorInfo"][];
+                };
+            };
+        };
+    };
+    rebind_job_executor_api_jobs__job_id__rebind_executor_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RebindExecutor"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_jobs_api_jobs_get: {
         parameters: {
             query?: {
@@ -9460,6 +9699,78 @@ export interface operations {
             };
         };
     };
+    get_extension_settings_api_extensions__ext_id__settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ext_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: components["schemas"]["JsonValue"];
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_extension_settings_api_extensions__ext_id__settings_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ext_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: components["schemas"]["JsonValue"];
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: components["schemas"]["JsonValue"];
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     extension_panels_api_extension_panels_get: {
         parameters: {
             query?: never;
@@ -9797,6 +10108,38 @@ export interface operations {
             };
         };
     };
+    list_workspace_backups_api_backups_get: {
+        parameters: {
+            query?: {
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_workspace_backup_api_backups_post: {
         parameters: {
             query?: never;
@@ -9854,6 +10197,38 @@ export interface operations {
             };
         };
     };
+    list_workspace_restore_plans_api_backups_restore_plans_get: {
+        parameters: {
+            query?: {
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestorePage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     stage_workspace_restore_api_backups_restore_plans_post: {
         parameters: {
             query?: never;
@@ -9897,6 +10272,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["RestorePlan"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_workspace_restore_plan_api_backups_restore_plans__plan_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -10655,6 +11059,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["KitAssembly"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Assembled"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_kit_preset_api_creation_kits__series_id__preview_preset_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreviewRequest"];
             };
         };
         responses: {

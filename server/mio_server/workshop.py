@@ -243,12 +243,22 @@ def preview(
     prompt: str,
     title: str = "",
     profile_id: str | None = None,
+    *,
+    source_id: str | None = None,
 ) -> tuple[Series, Episode]:
     """预设工坊「独立试绘」: one prompt + the chosen presets → a one-frame album waiting in the
     queue (no storyboard involved).  The legacy workshop used it to check a character or style
     preset on its own; the album is marked with ``subtitle = PREVIEW_SUBTITLE`` so the preset page
     can list its results."""
-    workshop = ensure_workshop(store)
+    with store.tx():
+        workshop = store.get_series(source_id) if source_id else ensure_workshop(store)
+        if source_id and workshop.kind != "kit":
+            raise NotFound(f"creation kit not found: {source_id}")
+        return _preview_source(store, workshop, preset_ids, prompt, title, profile_id)
+
+
+def _preview_source(store, workshop, preset_ids, prompt, title, profile_id):
+    """Freeze the selected resource source and both new records in the caller's transaction."""
     by_id = {p.id: p for p in workshop.presets}
     missing = [pid for pid in preset_ids if pid not in by_id]
     if missing:

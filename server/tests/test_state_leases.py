@@ -176,6 +176,7 @@ class StateLeaseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             path = Path(folder) / "jobs.sqlite"
             first = self.make(path=path)
+            self.worker(first)
             job = first.submit("test", [spec(exclusive=True), spec()], window=2)["id"]
             ctx = first._claim(Candidate(job, 0, COMFY), "a")
             token = ctx.state_lease["token"]
@@ -353,6 +354,7 @@ class StateLeaseTests(unittest.TestCase):
         for failure in ("context", "commit"):
             with self.subTest(failure=failure):
                 engine = self.make()
+                self.worker(engine)
                 job = self.submit(engine, exclusive=True)
                 real_db = engine.db
 

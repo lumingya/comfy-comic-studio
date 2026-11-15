@@ -2,6 +2,7 @@ import { interactionEn } from './interaction';
 import { workspaceBackupsEn } from './workspaceBackups';
 import { longformEn } from './longform';
 import { kitsEn } from './creationKits';
+import { workshopSourceEn } from './workshopSource';
 import { recoveryEn } from './recovery';
 import type { Dict } from './zh';
 import { guideEn } from './guide';
@@ -16,6 +17,7 @@ const en: Widen<Dict> = {
   workspaceBackups: workspaceBackupsEn,
   longform: longformEn,
   kits: kitsEn,
+  workshopSource: workshopSourceEn,
   recovery: recoveryEn,
   route: routeEn,
   cloudRequest: cloudRequestEn,

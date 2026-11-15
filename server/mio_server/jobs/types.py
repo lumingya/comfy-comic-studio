@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 ITEM_STATES = ("pending", "running", "complete", "failed", "uncertain", "canceled", "skipped")
 TERMINAL = {"complete", "failed", "canceled", "skipped"}
+JOB_SCHEMA_VERSION = 2
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS jobs (
     id TEXT PRIMARY KEY, kind TEXT NOT NULL, title TEXT NOT NULL DEFAULT '', state TEXT NOT NULL,
@@ -41,6 +42,9 @@ CREATE TABLE IF NOT EXISTS state_leases (
     endpoint TEXT PRIMARY KEY, token TEXT NOT NULL UNIQUE, job_id TEXT NOT NULL,
     idx INTEGER NOT NULL, epoch INTEGER NOT NULL, base_url TEXT NOT NULL, data_json TEXT NOT NULL,
     UNIQUE(job_id, idx));
+CREATE TABLE IF NOT EXISTS job_executor_bindings (
+    job_id TEXT PRIMARY KEY REFERENCES jobs(id) ON DELETE CASCADE,
+    kind TEXT NOT NULL, source TEXT NOT NULL, digest TEXT NOT NULL);
 """
 
 
@@ -96,6 +100,7 @@ class ItemContext:
     cancelled: threading.Event = field(default_factory=threading.Event)
     abort_hooks: list[Callable[[], None]] = field(default_factory=list)
     state_lease: dict | None = None
+    executor_binding: Any = None
 
     def mark_sent(self, upstream: str | None = None) -> None:
         """Call *before* the request leaves the process: from now on a failure is uncertain."""

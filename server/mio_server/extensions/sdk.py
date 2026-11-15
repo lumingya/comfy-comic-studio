@@ -10,7 +10,6 @@ service.  It is explicitly **unstable** and may break between versions, but noth
 
 from __future__ import annotations
 
-import json
 import logging
 import secrets
 import threading
@@ -20,32 +19,89 @@ from typing import Any, Callable
 from fastapi import APIRouter
 
 from ..auth import SCOPES
+from ..jobs import ItemSpec
+from ..jobs.operations import operation_serialized
+from ..jobs.types import JobConflict
 
 
 class ExtensionAPI:
-    def __init__(self, ext_id: str, folder: Path, ctx):
+    def __init__(self, ext_id: str, folder: Path, ctx, *, digest: str = ""):
         self.id = ext_id
         self.source = f"ext:{ext_id}"
         self.folder = folder
         self.activation_id = secrets.token_urlsafe(24)
         self._panel_slots = threading.BoundedSemaphore(4)
         self._ctx = ctx
+        self.engine = ctx.engine
+        self.digest = digest
+        self._enabled = True
         self._router: APIRouter | None = None
         self._settings_path = ctx.data_dir / "extension-data" / f"{ext_id}.json"
         self.log = logging.getLogger(f"mio.ext.{ext_id}")
 
     # ------------------------------------------------------------ registry
+    @operation_serialized
     def contribute(self, point: str, id: str, value: Any, *, title: str = "", **meta):
         """Register a contribution at an extension point (see ``GET /api/registry``)."""
+        if not self._enabled:
+            raise JobConflict("this extension activation is no longer enabled")
+        if point == "job_executor":
+            return self.job_executor(id, value, title=title, **meta)
         return self._ctx.registry.register(
             point, id, value, source=self.source, title=title or id, **meta
+        )
+
+    @operation_serialized
+    def job_executor(self, kind, executor, *, resources=("local",), replace=False, title=""):
+        """Register executable jobs under this reviewed package's persistent identity."""
+        if not self._enabled:
+            raise JobConflict("this extension activation is no longer enabled")
+        return self.engine.register(
+            kind,
+            executor,
+            source=self.source,
+            digest=self.digest,
+            resources=resources,
+            replace=replace,
+            title=title,
+        )
+
+    @operation_serialized
+    def submit_job(
+        self,
+        kind: str,
+        items: list[ItemSpec],
+        snapshot: dict | None = None,
+        *,
+        owner: str = "",
+        title: str = "",
+        idempotency_key: str | None = None,
+    ):
+        """Submit this activation's currently selected executor; routes choose their scope.
+
+        Use a typed extension route with ``scope='render'``. Declare the work/episode being
+        changed as owner; an empty owner conservatively blocks all workspace management.
+        """
+        binding = self.engine.current_executor(kind)
+        if (
+            not self._enabled
+            or not binding
+            or binding.ref.source != self.source
+            or binding.ref.digest != self.digest
+        ):
+            raise JobConflict("this extension's executor is disabled or overridden")
+        return self.engine.submit(
+            kind, items, snapshot, owner=owner, title=title, idempotency_key=idempotency_key
         )
 
     def hook(self, name: str, fn: Callable | None = None, *, priority: int = 100):
         """Add a domain hook handler; usable directly or as ``@mio.hook("prompt.compiled")``."""
 
         def add(handler: Callable) -> Callable:
-            self._ctx.registry.hooks.add(name, handler, priority=priority, source=self.source)
+            with self.engine.hold_operation():
+                if not self._enabled:
+                    raise JobConflict("this extension activation is no longer enabled")
+                self._ctx.registry.hooks.add(name, handler, priority=priority, source=self.source)
             return handler
 
         return add(fn) if fn is not None else add
@@ -84,15 +140,16 @@ class ExtensionAPI:
 
     # ------------------------------------------------------------- settings
     def load_settings(self) -> dict:
-        try:
-            return json.loads(self._settings_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            return {}
+        from ..backups.extension_data import load_settings
+
+        with self.engine.hold_operation():
+            return load_settings(self._ctx.data_dir, self.id)
 
     def save_settings(self, data: dict) -> None:
-        self._settings_path.parent.mkdir(parents=True, exist_ok=True)
-        text = json.dumps(data, ensure_ascii=False, indent=2)
-        self._settings_path.write_text(text, encoding="utf-8")
+        from ..backups.extension_data import save_settings
+
+        with self.engine.hold_operation():
+            save_settings(self._ctx.data_dir, self.id, data)
 
     # --------------------------------------------------------- escape hatch
     @property

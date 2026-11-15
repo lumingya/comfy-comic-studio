@@ -33,9 +33,11 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
 from pathlib import Path
-from typing import Any, Callable
+from typing import Callable
 
+from ..registry import Registry
 from .delivery import DeliveryRuntime
+from .executors import ExecutorRuntime, ExecutorView
 from .lease import FileLease
 from .operations import OperationRuntime, operation_serialized
 from .pool import InstanceSlot, ResourcePool
@@ -59,7 +61,7 @@ from .types import (  # noqa: F401  (re-exported)
 log = logging.getLogger("mio.jobs")
 
 
-class JobEngine(OperationRuntime, DeliveryRuntime, EngineRuntime):
+class JobEngine(ExecutorRuntime, OperationRuntime, DeliveryRuntime, EngineRuntime):
     def __init__(
         self,
         path: str | Path = ":memory:",
@@ -70,7 +72,9 @@ class JobEngine(OperationRuntime, DeliveryRuntime, EngineRuntime):
     ):
         self.path = str(path)
         self.pool = pool or ResourcePool()
-        self.executors: dict[str, Any] = {}
+        self.registry = Registry()
+        self.executors = ExecutorView(self)
+        self.catalog_loading = False
         self.lock = threading.RLock()
         self._operation_lock = threading.RLock()
         self._job_guards: dict[str, tuple[threading.RLock, int]] = {}
@@ -112,8 +116,9 @@ class JobEngine(OperationRuntime, DeliveryRuntime, EngineRuntime):
             thread.join(timeout=5)
 
     # ================================================================= lifecycle
-    def register(self, kind: str, executor) -> None:
-        self.executors[kind] = executor
+    def start(self) -> None:
+        if not self.thread.is_alive() and not self.closed:
+            self.thread.start()
 
     def close(self, wait: bool = True) -> None:
         if self.closed:
@@ -164,7 +169,14 @@ class JobEngine(OperationRuntime, DeliveryRuntime, EngineRuntime):
                 self._event(
                     r["job_id"], r["idx"], "recovered", {"state": state, "upstream": r["upstream"]}
                 )
-            for job_id in {r["job_id"] for r in rows}:
+            affected = {r["job_id"] for r in rows}
+            affected.update(
+                row[0]
+                for row in self.db.execute(
+                    "SELECT DISTINCT job_id FROM job_items WHERE state = 'pending'"
+                )
+            )
+            for job_id in affected:
                 self._aggregate(job_id)
 
     # ================================================================== public API
@@ -183,6 +195,8 @@ class JobEngine(OperationRuntime, DeliveryRuntime, EngineRuntime):
         owner: str = "",
         paused: bool = False,
     ) -> dict:
+        if self.catalog_loading:
+            raise JobConflict("tasks cannot be submitted while extension activation is in progress")
         if not items:
             raise JobError("a job needs at least one item")
         snapshot = snapshot or {}
@@ -212,6 +226,9 @@ class JobEngine(OperationRuntime, DeliveryRuntime, EngineRuntime):
                         raise JobConflict("idempotency key reused with a different payload")
                     return self.get(row["id"])
             job_id = "job_" + uuid.uuid4().hex[:16]
+            binding = self.current_executor(kind)
+            if binding and any(item.resource not in binding.resources for item in items):
+                raise JobError("executor does not support the requested resources")
             self.db.execute(
                 """INSERT INTO jobs(id, kind, title, state, idempotency_key, snapshot_json, snapshot_sha, window,
                    priority, failure_limit, paused, owner, created, updated)
@@ -232,6 +249,8 @@ class JobEngine(OperationRuntime, DeliveryRuntime, EngineRuntime):
                     now,
                 ),
             )
+            if binding:
+                self._write_executor_ref(job_id, binding.ref)
             for idx, item in enumerate(items):
                 self.db.execute(
                     """INSERT INTO job_items(job_id, idx, state, resource, group_key, instances, label, input_json,
@@ -464,7 +483,7 @@ class JobEngine(OperationRuntime, DeliveryRuntime, EngineRuntime):
         return self.get(job_id)
 
     def resolve(self, job_id: str, idx: int, action: str, result: dict | None = None) -> dict:
-        """Resolve an uncertain item: ``failed`` | ``complete`` (with result) | ``reconcile``."""
+        """Resolve uncertain work; ``resubmit`` explicitly confirms retrying this item only."""
         with self.lock:
             pending = self._pending_delivery(job_id, idx)
         if pending:
@@ -479,13 +498,16 @@ class JobEngine(OperationRuntime, DeliveryRuntime, EngineRuntime):
         row = self._item_row(job_id, idx)
         if row["state"] != "uncertain":
             raise JobConflict(f"item {idx} is {row['state']}, not uncertain")
+        if action == "resubmit":
+            return self.retry(job_id, indexes=[idx], confirm_uncertain=True)
         if action == "reconcile":
             job = self.get(job_id, items=False)
-            executor = self.executors.get(job["kind"])
+            executor = self.job_executor(job_id, required=True).executor
             if not executor or not hasattr(executor, "reconcile"):
                 raise JobError("this job kind cannot reconcile automatically")
             ctx = self._context(job, row, self.pool.instance(row["instance_id"]))
-            result = executor.reconcile(ctx)
+            with self._callback_scope():
+                result = executor.reconcile(ctx)
             if result is None:
                 self._event(job_id, idx, "reconcile_miss", {"upstream": row["upstream"]})
                 return self.get(job_id)
@@ -517,7 +539,7 @@ class JobEngine(OperationRuntime, DeliveryRuntime, EngineRuntime):
                 record = self.state_leases.get(job_id, idx)
                 if record is None:
                     raise JobConflict("this item has no endpoint state to restore")
-                executor = self.executors.get(job["kind"])
+                executor = self.job_executor(job_id, required=True).executor
                 if not hasattr(executor, "recover_state"):
                     raise JobError("this job kind cannot restore endpoint state")
                 instance = InstanceSlot(row["instance_id"] or "", record["base_url"])
@@ -525,7 +547,8 @@ class JobEngine(OperationRuntime, DeliveryRuntime, EngineRuntime):
             options = {"confirm_stopped": confirm_stopped}
             if discard_result:
                 options["discard_result"] = True
-            report = executor.recover_state(ctx, record, **options)
+            with self._callback_scope():
+                report = executor.recover_state(ctx, record, **options)
             if not report.get("restored"):
                 return report
             # Cancellation is allowed to retain ownership; cleanup must never adopt its result.
@@ -562,7 +585,8 @@ class JobEngine(OperationRuntime, DeliveryRuntime, EngineRuntime):
             ).fetchall()
         fixed = 0
         for r in rows:
-            if hasattr(self.executors.get(r["kind"]), "reconcile"):
+            binding = self.job_executor(r["job_id"])
+            if binding and hasattr(binding.executor, "reconcile"):
                 try:
                     if (
                         self.resolve(r["job_id"], r["idx"], "reconcile")["items"][r["idx"]]["state"]

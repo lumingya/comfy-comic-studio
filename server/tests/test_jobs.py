@@ -340,6 +340,7 @@ class EngineTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             db = str(Path(tmp) / "jobs.sqlite3")
             engine = JobEngine(db, autostart=False)
+            engine.register("demo", Recorder(), digest="a" * 64)
             job = engine.submit("demo", items(2), window=2)
             for idx, sent in ((0, True), (1, False)):
                 ctx = engine._claim(Candidate(job["id"], idx, "local"), None)
@@ -356,7 +357,7 @@ class EngineTests(unittest.TestCase):
             again = JobEngine(db, autostart=False)
             try:  # close before the temp dir goes away (Windows cannot delete an open SQLite file)
                 ex = Reconciler()
-                again.register("demo", ex)
+                again.register("demo", ex, digest="a" * 64)
                 job = again.get(job["id"])
                 self.assertEqual([i["state"] for i in job["items"]], ["uncertain", "pending"])
                 self.assertEqual(job["state"], "blocked")

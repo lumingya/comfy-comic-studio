@@ -19,7 +19,7 @@ class ConstructorCleanupTests(unittest.TestCase):
     def reopen_engine(self, path):
         engine = JobEngine(path, autostart=False)
         try:
-            self.assertEqual(engine.submit("test", [ItemSpec({})])["state"], "queued")
+            self.assertEqual(engine.submit("test", [ItemSpec({})])["state"], "blocked")
         finally:
             engine.close()
 

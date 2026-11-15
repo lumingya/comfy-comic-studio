@@ -1,0 +1,7 @@
+{
+  "id": "text-metrics",
+  "name": "Text metrics jobs",
+  "version": "1.0.0",
+  "description": "A local, network-free example of typed job submission and durable results.",
+  "main": "main.py"
+}

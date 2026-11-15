@@ -23,15 +23,9 @@ import {
   usePatchPanel,
   useReorderPanels,
 } from '../../api/series';
-import type { Episode, Panel, PanelOverrides } from '../../api/types';
-import { useWorkshop } from '../../api/workshop';
+import type { Episode, Panel, PanelOverrides, Series } from '../../api/types';
 import { Icon } from '../../app/icons';
-import {
-  AutoSaveGuard,
-  flushDraft,
-  useAutoDraft,
-  type AutosaveController,
-} from '../../app/useAutoDraft';
+import { flushDraft, useAutoDraft, type AutosaveController } from '../../app/useAutoDraft';
 import { shortcutBlocked } from '../../app/shortcuts';
 import { SaveState } from '../../components/SaveState';
 import { ResizableSplit } from '../../components/ResizableSplit';
@@ -56,33 +50,31 @@ import {
   type PromptUsage,
 } from './PromptSurface';
 import { useStoryboardExport } from './ExportPicker';
+import { WorkshopDraftGuard, workshopHref } from './workshopSource';
 
 /** Every variable some preset defines (true when at least one gives it a value). */
-export function useKnownVariables(): KnownVariables {
-  const ws = useWorkshop();
+export function useKnownVariables(source: Series): KnownVariables {
   return useMemo(() => {
     const known: KnownVariables = new Map();
-    for (const p of ws.data?.presets ?? [])
+    for (const p of source.presets)
       for (const e of p.entries) known.set(e.key, known.get(e.key) || !!e.value.trim());
-    for (const [k, v] of Object.entries(ws.data?.variables ?? {}))
-      known.set(k, known.get(k) || !!v.trim());
+    for (const [k, v] of Object.entries(source.variables)) known.set(k, known.get(k) || !!v.trim());
     return known;
-  }, [ws.data]);
+  }, [source]);
 }
 
 /** Variable name → the presets defining it (title + value), in library order, for completion. */
-export function usePromptSources(): PromptSources {
-  const ws = useWorkshop();
+export function usePromptSources(source: Series): PromptSources {
   return useMemo(() => {
     const sources: PromptSources = new Map();
-    for (const p of ws.data?.presets ?? [])
+    for (const p of source.presets)
       for (const e of p.entries) {
         const list = sources.get(e.key) ?? [];
         list.push({ title: p.title, value: e.value });
         sources.set(e.key, list);
       }
     return sources;
-  }, [ws.data]);
+  }, [source]);
 }
 
 const HINT_KEY = 'cc-hint-multiselect';
@@ -102,8 +94,9 @@ export default function StoryboardEditor() {
   const qc = useQueryClient();
   const createBoard = useCreateEpisode(series.id!);
   const patchBoard = usePatchEpisode(episode.id!);
-  const known = useKnownVariables();
-  const sources = usePromptSources();
+  const known = useKnownVariables(series);
+  const sources = usePromptSources(series);
+  const kitId = series.kind === 'kit' ? series.id : undefined;
   const panels = useMemo(
     () => [...episode.panels].sort((a, b) => a.order - b.order),
     [episode.panels],
@@ -399,7 +392,8 @@ export default function StoryboardEditor() {
             label: t('ws.story.toAssembly'),
             icon: <Icon name="arrow" sm />,
             hint: t('ws.story.menu.toAssemblyHint'),
-            onSelect: () => navigate(`/workshop/assembly?story=${episode.id}`),
+            onSelect: () =>
+              navigate(workshopHref('/workshop/assembly', kitId, { story: episode.id })),
           },
         ],
       },
@@ -421,7 +415,7 @@ export default function StoryboardEditor() {
               const e = await createStoryboard(createBoard, t);
               if (!e) return;
               await qc.invalidateQueries({ queryKey: keys.episodesOf(series.id!) });
-              navigate(`/workshop/story/${e.id}`);
+              navigate(workshopHref(`/workshop/story/${e.id}`, kitId));
             }),
           },
           {
@@ -442,7 +436,7 @@ export default function StoryboardEditor() {
               const { last, count } = await importStoryboards(createBoard);
               if (!last) return;
               await qc.invalidateQueries({ queryKey: keys.episodesOf(series.id!) });
-              navigate(`/workshop/story/${last}`);
+              navigate(workshopHref(`/workshop/story/${last}`, kitId));
               toast(t('ws.imported', { count }));
             }),
           },
@@ -460,12 +454,12 @@ export default function StoryboardEditor() {
           {
             label: t('ws.tab.presets'),
             icon: <Icon name="brush" sm />,
-            onSelect: () => navigate('/workshop/presets'),
+            onSelect: () => navigate(workshopHref('/workshop/presets', kitId)),
           },
           {
             label: t('ws.tab.assembly'),
             icon: <Icon name="play" sm />,
-            onSelect: () => navigate('/workshop/assembly'),
+            onSelect: () => navigate(workshopHref('/workshop/assembly', kitId)),
           },
         ],
       },
@@ -877,7 +871,7 @@ function FramePage({
         }
       }}
     >
-      <AutoSaveGuard save={draft} includeSearch />
+      <WorkshopDraftGuard save={draft} />
       <div className="row" style={{ marginBottom: 10 }}>
         <SaveState state={draft.state} />
         <span className="grow" />

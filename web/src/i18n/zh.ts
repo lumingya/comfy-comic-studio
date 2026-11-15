@@ -2,6 +2,7 @@ import { interactionZh } from './interaction';
 import { workspaceBackupsZh } from './workspaceBackups';
 import { longformZh } from './longform';
 import { kitsZh } from './creationKits';
+import { workshopSourceZh } from './workshopSource';
 import { recoveryZh } from './recovery';
 import { guideZh } from './guide';
 import { configZh } from './configuration';
@@ -13,6 +14,7 @@ const zh = {
   workspaceBackups: workspaceBackupsZh,
   longform: longformZh,
   kits: kitsZh,
+  workshopSource: workshopSourceZh,
   recovery: recoveryZh,
   route: routeZh,
   cloudRequest: cloudRequestZh,

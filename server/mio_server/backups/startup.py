@@ -16,6 +16,7 @@ from pathlib import Path
 from ..jobs.lease import FileLease
 from .archive import verify_workspace
 from .database import logical_head
+from .extension_data import with_extension_head
 from .models import RestoreJournal, RestorePlan
 from .paths import atomic_json, read_json, recovery_root, safe_child, sha_file, sync_directory
 from .service import FileLeaseContext
@@ -60,7 +61,7 @@ def offline_head(workspace: Path) -> str:
             # WAL must be visible after an abrupt process exit, so do not use immutable=1.
             db = sqlite3.connect((workspace / name).as_uri() + "?mode=ro", uri=True)
             databases.append(db)
-        return logical_head(*databases)
+        return with_extension_head(logical_head(*databases), workspace)
     finally:
         for db in databases:
             db.close()

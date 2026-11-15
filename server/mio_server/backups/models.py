@@ -24,6 +24,7 @@ class BackupManifest(StrictModel):
     format: Literal["mio.workspace"] = "mio.workspace"
     version: Literal[1] = 1
     schema_version: int
+    jobs_schema_version: Literal[2]
     created_at: str
     source_head: str = Field(pattern=r"^[0-9a-f]{64}$")
     includes_credentials: bool
@@ -78,3 +79,42 @@ class RestoreJournal(StrictModel):
     expected_head: str
     archive_sha256: str
     phase: Literal["pending", "prepared", "old_moved", "installed", "rolling_back"] = "pending"
+
+
+class BackupRecord(StrictModel):
+    id: str
+    created_at: str
+    size: int
+    retained_bytes: int
+    includes_credentials: bool
+    protection_plan_ids: list[str]
+    can_delete: bool
+
+
+class RestoreRecord(StrictModel):
+    id: str
+    created_at: str
+    state: Literal["staged", "pending", "installed", "rejected", "rolled_back"]
+    protection_backup_id: str | None
+    retained_bytes: int
+    staged_bytes: int
+    previous_bytes: int
+    pending: bool
+    can_delete: bool
+    blocked_reason: Literal["pending", "installation", "startup"] | None = None
+
+
+class BackupPage(StrictModel):
+    items: list[BackupRecord]
+    total: int
+    offset: int
+    limit: int
+    next_offset: int | None
+
+
+class RestorePage(StrictModel):
+    items: list[RestoreRecord]
+    total: int
+    offset: int
+    limit: int
+    next_offset: int | None

@@ -25,11 +25,22 @@ async def invoke(handler, *args, **kwargs):
     return await result if inspect.isawaitable(result) else result
 
 
+def operation_layers(ctx, operation):
+    manager = getattr(ctx, "extensions", None)
+    return (
+        manager.operation_layers(operation)
+        if manager
+        else ctx.registry.layers("operation", operation)
+    )
+
+
 def wrap_endpoint(endpoint, operation):
     @wraps(endpoint)
     async def dispatch(**values):
         ctx = values["ctx"]
-        layers = ctx.registry.layers("operation", operation)
+        # A short, atomic publication check and snapshot. No lock crosses an await, and
+        # activation's own HTTP calls receive a retryable conflict instead of deadlocking.
+        layers = operation_layers(ctx, operation)
 
         async def call(index, arguments):
             if index < 0:
@@ -99,7 +110,7 @@ def list_operations(ctx: Ctx, request: Request) -> list[dict]:
                     "summary": spec.get("summary", ""),
                     "arguments": spec.get("x-mio-arguments", []),
                     "scope": required_scope(method.upper(), operation.split(" ", 1)[1]),
-                    "wrappers": [c.source for c in ctx.registry.layers("operation", operation)],
+                    "wrappers": [c.source for c in operation_layers(ctx, operation)],
                 }
             )
     return result

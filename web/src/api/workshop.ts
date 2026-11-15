@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { api, data } from './client';
+import { api, data, raw } from './client';
 import { keys } from './keys';
 import type { QueueStatus, Series } from './types';
 import type { components } from './schema';
-import type { KitAssembly } from './creationKits';
+import { creationKitsKey, type KitAssembly } from './creationKits';
 
 export type Preset = Series['presets'][number];
 export type PresetEntry = Preset['entries'][number];
@@ -13,10 +13,11 @@ export type PresetGroup = Preset['groups'][number];
 export const workshopKey = ['workshop'] as const;
 
 /** The hidden 创作工坊 series: its episodes are the storyboards, `presets` the presets. */
-export function useWorkshop() {
+export function useWorkshop(enabled = true) {
   return useQuery({
     queryKey: workshopKey,
     staleTime: 60_000,
+    enabled,
     queryFn: async () => withBindings(data(await api.GET('/api/workshop'))),
   });
 }
@@ -39,8 +40,9 @@ export function useSavePresets(workshopId: string | undefined) {
       ),
     onSuccess: (saved) => {
       const series = withBindings(saved);
-      qc.setQueryData(workshopKey, series);
+      if (series.kind === 'workshop') qc.setQueryData(workshopKey, series);
       qc.setQueryData(keys.series(series.id!), series);
+      if (series.kind === 'kit') qc.invalidateQueries({ queryKey: creationKitsKey });
     },
   });
 }
@@ -118,14 +120,23 @@ export interface PreviewVars {
 }
 
 /** 预设「独立试绘」: one prompt + presets → a one-frame album waiting in the queue. */
-export function usePreviewPreset() {
+export function usePreviewPreset(kitId?: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (body: PreviewVars) =>
-      data(await api.POST('/api/workshop/preview', { body })),
+    mutationFn: async (body: PreviewVars): Promise<components['schemas']['Assembled']> =>
+      kitId
+        ? (
+            await raw(`/api/creation-kits/${encodeURIComponent(kitId)}/preview-preset`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(body),
+            })
+          ).json()
+        : data(await api.POST('/api/workshop/preview', { body })),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['series'] });
       qc.invalidateQueries({ queryKey: ['episodes'] });
+      qc.invalidateQueries({ queryKey: keys.queue });
     },
   });
 }

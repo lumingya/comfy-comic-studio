@@ -129,6 +129,11 @@ class EngineRuntime:
         now = time.time()
         with self.lock, self.pool.lock:
             item = self._item_row(cand.job_id, cand.idx)
+            binding = self.job_executor(cand.job_id)
+            if binding is None or item["resource"] not in binding.resources:
+                with self.db:
+                    self._aggregate(cand.job_id)
+                return None
             exclusive = self._needs_state_lease(json.loads(item["input_json"]))
             if not self.pool.available(cand.resource, instance_id, exclusive):
                 return None
@@ -196,10 +201,11 @@ class EngineRuntime:
             instance,
             row["upstream"],
             state_lease=self.state_leases.get(job["id"], row["idx"]),
+            executor_binding=self.job_executor(job["id"]),
         )
 
     def _run(self, ctx: ItemContext, resource: str, instance_id: str | None) -> None:
-        executor = self.executors.get(ctx.kind)
+        executor = ctx.executor_binding.executor if ctx.executor_binding else None
         entered_executor = False
         try:
             if executor is None:
@@ -317,7 +323,26 @@ class EngineRuntime:
         if state == "complete" and apply:
             # Commit before invoking domain code: a crash must not lose a received result.
             delivery = self._record_delivery(row, result)
-            executor = self.executors.get(job["kind"])
+            running = self.running.get((job_id, idx))
+            binding = running.executor_binding if running else self.job_executor(job_id)
+            executor = binding.executor if binding else None
+            if executor is None:
+                with self.lock, self.db:
+                    self.db.execute(
+                        "UPDATE job_items SET state = 'failed', error_json = ? WHERE job_id = ? AND idx = ?",
+                        (
+                            canonical(
+                                {
+                                    "kind": "executor_missing",
+                                    "message": "Result retained; original executor is unavailable",
+                                }
+                            ),
+                            job_id,
+                            idx,
+                        ),
+                    )
+                    self._aggregate(job_id)
+                return
             hook = getattr(executor, "on_complete", None)
             if hook:
                 self._applying_jobs.add(job_id)
@@ -397,7 +422,8 @@ class EngineRuntime:
         job = self.db.execute(
             "SELECT paused, canceled, state FROM jobs WHERE id = ?", (job_id,)
         ).fetchone()
-        blocked = 1 if counts["uncertain"] else 0
+        missing = bool(counts["pending"] and self.job_executor(job_id) is None)
+        blocked = 1 if counts["uncertain"] or missing else 0
         total = sum(counts.values())
         if counts["running"]:
             state = "running"
@@ -468,8 +494,7 @@ class EngineRuntime:
             raise JobNotFound(f"item not found: {job_id}/{idx}")
         return row
 
-    @staticmethod
-    def _job_dict(row) -> dict:
+    def _job_dict(self, row) -> dict:
         return {
             "id": row["id"],
             "kind": row["kind"],
@@ -488,6 +513,7 @@ class EngineRuntime:
             "error": row["error"],
             "created": row["created"],
             "updated": row["updated"],
+            "executor": self.executor_status(row["id"]),
         }
 
     @staticmethod

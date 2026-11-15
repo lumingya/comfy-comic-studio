@@ -9,7 +9,6 @@ import {
   localId,
   usePreviewPreset,
   useSavePresets,
-  useWorkshop,
   type Preset,
   type PresetEntry,
   type PresetGroup,
@@ -28,8 +27,9 @@ import { downloadJson, pickJsonFiles, presetFromFile, presetToFile } from './fil
 import { ExportPicker } from './ExportPicker';
 import { BindingDialog, BindingsSection } from './PresetBindings';
 import { WorkshopFrame } from './WorkshopPage';
+import { useWorkshopSource, workshopHref } from './workshopSource';
 
-const PICK_KEY = 'mio.workshop.preset';
+const pickKey = (seriesId: string) => `mio.workshop.preset.${seriesId}`;
 /** Right-clicks on these keep the browser menu (legacy workshopContextSpec). */
 const NATIVE_MENU =
   'input,textarea,select,[contenteditable]:not([contenteditable="false"]),a[href],dialog,[role=dialog],.context-menu';
@@ -62,8 +62,13 @@ function blankPreset(title: string): Preset {
 
 /** 预设工坊: named sets of `{变量}` values, grouped, saved automatically. */
 export default function PresetsTab() {
-  const ws = useWorkshop();
-  if (ws.error) return <QueryError error={ws.error} onRetry={ws.refetch} />;
+  const ws = useWorkshopSource();
+  if (ws.error)
+    return (
+      <WorkshopFrame tab="presets">
+        <QueryError error={ws.error} onRetry={ws.refetch} />
+      </WorkshopFrame>
+    );
   if (!ws.data) return <Loading />;
   return <PresetsEditor key={ws.data.id} workshop={ws.data} />;
 }
@@ -71,8 +76,9 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
   const { t } = useTranslation();
   const save = useSavePresets(workshop.id);
   const draft = useAutoDraft(workshop.presets, (next) => save.mutateAsync(next), 700);
+  const kitId = workshop.kind === 'kit' ? workshop.id : undefined;
   const presets = draft.value;
-  const [pick, setPick] = useState(() => localStorage.getItem(PICK_KEY) ?? '');
+  const [pick, setPick] = useState(() => localStorage.getItem(pickKey(workshop.id)) ?? '');
   const [renaming, setRenaming] = useState(false);
   const cancelRename = useRef(false);
   const [editGroups, setEditGroups] = useState(false);
@@ -109,15 +115,28 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
   const navigate = useNavigate();
   // ?new=1 (help drawer / 开箱检查 「新建预设」): add a blank preset once and select it.
   const [params, setParams] = useSearchParams();
+  const newHandled = useRef(false);
   useEffect(() => {
-    if (!presets || !params.has('new')) return;
-    setParams({}, { replace: true });
+    if (!params.has('new')) {
+      newHandled.current = false;
+      return;
+    }
+    if (!presets || newHandled.current) return;
+    newHandled.current = true;
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        next.delete('new');
+        return next;
+      },
+      { replace: true },
+    );
     const p = blankPreset(t('ws.presets.untitled', { n: presets.length + 1 }));
     const next = [...presets, p];
     draft.change(next);
     void draft.flushAll().catch(toastError);
     setPick(p.id!);
-    localStorage.setItem(PICK_KEY, p.id!);
+    localStorage.setItem(pickKey(workshop.id), p.id!);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presets, params]);
   const commit = (next: Preset[] | ((previous: Preset[]) => Preset[]), now = false) => {
@@ -144,7 +163,7 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
   );
   const choose = (id: string) => {
     setPick(id);
-    localStorage.setItem(PICK_KEY, id);
+    localStorage.setItem(pickKey(workshop.id), id);
   };
   const update = (fn: (p: Preset) => Preset, now = false) =>
     commit((previous) => previous.map((p) => (p.id === current?.id ? fn(p) : p)), now);
@@ -237,7 +256,7 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
   if (!current)
     return (
       <WorkshopFrame tab="presets" actions={actions}>
-        <AutoSaveGuard save={draft} />
+        <AutoSaveGuard save={draft} includeSearch />
         <div className="eco-empty">
           <h3>{t('ws.presets.emptyTitle')}</h3>
           <p>{t('ws.presets.emptyBody')}</p>
@@ -331,7 +350,7 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
 
   return (
     <WorkshopFrame tab="presets" actions={actions}>
-      <AutoSaveGuard save={draft} />
+      <AutoSaveGuard save={draft} includeSearch />
       <div className="workshop-asset-head" ref={headRef}>
         <label>
           {t('ws.presets.current')}
@@ -449,7 +468,7 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
             <PreviewFigure
               key={album.id}
               album={album}
-              onOpen={() => navigate('/workshop/assembly')}
+              onOpen={() => navigate(workshopHref('/workshop/assembly', kitId))}
               onRemove={async () => {
                 if (
                   !(await confirm({
@@ -468,13 +487,14 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
       ) : null}
       {previewing ? (
         <PreviewDialog
+          kitId={kitId}
           preset={current}
           onClose={() => setPreviewing(false)}
           beforeSubmit={() => draft.flushAll()}
           onQueued={(title) => {
             setPreviewing(false);
             toast(t('ws.presets.previewQueued', { title }));
-            navigate('/workshop/assembly');
+            navigate(workshopHref('/workshop/assembly', kitId));
           }}
         />
       ) : null}
@@ -726,7 +746,7 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
             label: t('ws.presets.menu.newTaskDots'),
             icon: <Icon name="play" sm />,
             hint: t('ws.presets.menu.newTaskHint'),
-            onSelect: () => navigate('/workshop/assembly?new=1'),
+            onSelect: () => navigate(workshopHref('/workshop/assembly', kitId, { new: '1' })),
           },
         ],
       },
@@ -786,12 +806,12 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
           {
             label: t('ws.tab.story'),
             icon: <Icon name="story" sm />,
-            onSelect: () => navigate('/workshop/story'),
+            onSelect: () => navigate(workshopHref('/workshop/story', kitId)),
           },
           {
             label: t('ws.tab.assembly'),
             icon: <Icon name="play" sm />,
-            onSelect: () => navigate('/workshop/assembly'),
+            onSelect: () => navigate(workshopHref('/workshop/assembly', kitId)),
           },
         ],
       },
@@ -841,11 +861,13 @@ function PreviewFigure({
 /** Legacy 「预设独立试绘」 modal: a prompt (prefilled with the preset's variables) and the
  * workflow to use; submitting adds a one-frame standby task to the assembly queue. */
 function PreviewDialog({
+  kitId,
   preset,
   onClose,
   beforeSubmit,
   onQueued,
 }: {
+  kitId?: string;
   preset: Preset;
   onClose: () => void;
   beforeSubmit: () => Promise<unknown>;
@@ -853,7 +875,7 @@ function PreviewDialog({
 }) {
   const { t } = useTranslation();
   const profiles = useProfiles();
-  const preview = usePreviewPreset();
+  const preview = usePreviewPreset(kitId);
   const [prompt, setPrompt] = useState(() => preset.entries.map((e) => `{${e.key}}`).join(', '));
   const [profile, setProfile] = useState('');
   const [busy, setBusy] = useState(false);

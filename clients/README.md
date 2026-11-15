@@ -33,6 +33,11 @@
 恢复明确提交暂存计划的 `expected_head` 和 `inspection.sha256`，先保护当前工作区，再安排下次启动安装；不会立即替换或远程重启服务。
 默认导出移除已配置凭据，恢复后队列、扩展和外部回调保持停用。完整契约、停机命令与边界见[工作区备份与恢复](../docs/WORKSPACE_BACKUPS.md)。
 
+套装内容沿用 `/series/{id}`、`/series/{id}/episodes` 和 `/episodes/{id}` 的编辑接口。
+`POST /creation-kits/{series_id}/preview-preset` 接受 `preset_ids`、`prompt`、可选 `title` 与 `profile_id`，
+使用套装自身预设创建独立的一格待生成画册，不调用模型；需要 `write`。不存在的套装或预设不会回退默认工坊。
+编辑后重新导出、预览或装配使用最新源，已经创建的成品保留原快照。
+
 创作操作覆盖如下，界面与脚本使用同一规则：
 
 | 操作 | v2 接口（省略 `/api/v2`） |
@@ -48,7 +53,14 @@
 令牌签发、吊销、扩展安装 / 启用 / 停用 / 删除及主题操作均可通过 v2 完成。
 首次令牌通过本机 `/api/tokens` 或设置页创建；后续由 `admin` 令牌调用 `/api/v2/tokens` 管理。
 安装扩展只保存为停用状态；读取 `/api/v2/extensions` 的摘要并明确提交到启用接口后才加载。
+`GET/PUT /api/v2/extensions/{id}/settings` 读写扩展自身 JSON 设置，需要 `admin`，使用与 SDK 相同的原子保存规则。
+已安装但停用的扩展也可配置；卸载后已有设置可继续管理，未知 ID 不会凭空创建记录。设置会纳入工作区备份与恢复版本检查。
 可选质检扩展示例见 [qa-review](../examples/extensions/qa-review/README.md)，默认不增加主界面入口。
+
+`GET /api/v2/job-executors`（read）可发现真实执行器与精确身份，任务详情的 `executor` 给出原绑定及可用性。
+缺少执行器时先恢复原摘要的扩展。`POST /api/v2/jobs/{id}/rebind-executor` 仅供 admin 明确提交 `expected` / `target` 身份，
+并且任务必须尚未尝试且没有结果交付或端点租约。核对、端点恢复、结果重放及明确重提均需 `render`；
+`resolve` 的 `resubmit` 只重试所选不确定项，不改变执行器身份。完整本地扩展示例见 [text-metrics](../examples/extensions/text-metrics/README.md)。
 
 ## 令牌与权限
 

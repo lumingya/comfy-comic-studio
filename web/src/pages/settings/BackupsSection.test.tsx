@@ -26,6 +26,7 @@ const report: BackupInspection = {
     format: 'mio.workspace',
     version: 1,
     schema_version: 2,
+    jobs_schema_version: 2,
     source_head: 'f'.repeat(64),
     created_at: '2026-11-15T00:00:00Z',
     includes_credentials: false,

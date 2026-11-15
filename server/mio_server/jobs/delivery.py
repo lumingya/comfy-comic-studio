@@ -90,8 +90,8 @@ class DeliveryRuntime:
                 delivery = self._pending_delivery(job_id, idx)
                 if delivery is None:
                     raise JobConflict("this item has no result awaiting delivery")
-                executor = self.executors.get(job["kind"])
-                if not getattr(executor, "replay_safe", False):
+                binding = self.job_executor(job_id, required=True)
+                if not binding.replay_safe:
                     raise JobConflict("this executor has not declared replay-safe result delivery")
                 if delivery["attempt"] != row["attempts"]:
                     raise JobConflict("the stored result belongs to a different attempt")
@@ -116,7 +116,8 @@ class DeliveryRuntime:
             ).fetchall()
         count = 0
         for row in rows:
-            if not getattr(self.executors.get(row["kind"]), "replay_safe", False):
+            binding = self.job_executor(row["job_id"])
+            if not binding or not binding.replay_safe:
                 continue
             try:
                 job = self.replay_result(row["job_id"], row["idx"])

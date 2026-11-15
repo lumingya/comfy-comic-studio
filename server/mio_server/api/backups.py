@@ -4,7 +4,7 @@ import tempfile
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Request, Response
+from fastapi import Query, Request, Response
 from fastapi.responses import FileResponse
 from starlette.concurrency import run_in_threadpool
 
@@ -15,7 +15,9 @@ from ..backups.models import (
     BackupHead,
     BackupInspection,
     BackupOptions,
+    BackupPage,
     RestoreApply,
+    RestorePage,
     RestorePlan,
     RestoreScheduled,
 )
@@ -49,6 +51,13 @@ def create_workspace_backup(ctx: Ctx, body: BackupOptions):
     return Backups(ctx).export(body)
 
 
+@router.get("/backups", response_model=BackupPage)
+def list_workspace_backups(
+    ctx: Ctx, offset: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100)
+):
+    return Backups(ctx).list_backups(offset=offset, limit=limit)
+
+
 @router.post("/backups/inspect", response_model=BackupInspection, openapi_extra=BINARY_BODY)
 async def inspect_workspace_backup(ctx: Ctx, request: Request):
     async with uploaded(request) as path:
@@ -61,6 +70,19 @@ async def inspect_workspace_backup(ctx: Ctx, request: Request):
 async def stage_workspace_restore(ctx: Ctx, request: Request):
     async with uploaded(request) as path:
         return await run_in_threadpool(Backups(ctx).stage, path)
+
+
+@router.get("/backups/restore-plans", response_model=RestorePage)
+def list_workspace_restore_plans(
+    ctx: Ctx, offset: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100)
+):
+    return Backups(ctx).list_plans(offset=offset, limit=limit)
+
+
+@router.delete("/backups/restore-plans/{plan_id}", status_code=204)
+def delete_workspace_restore_plan(ctx: Ctx, plan_id: str):
+    Backups(ctx).delete_plan(plan_id)
+    return Response(status_code=204)
 
 
 @router.get("/backups/restore-plans/{plan_id}", response_model=RestorePlan)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import shutil
+import stat
 import tempfile
 from pathlib import Path
 
@@ -11,14 +12,19 @@ from ..models import new_id, now_iso
 from ..storage import Conflict, NotFound
 from .archive import inspect_archive, pack, verify_workspace
 from .database import logical_head
+from .extension_data import with_extension_head
 from .models import (
     BackupCreated,
     BackupHead,
     BackupInspection,
     BackupOptions,
+    BackupPage,
+    BackupRecord,
     RestoreApply,
     RestoreJournal,
+    RestorePage,
     RestorePlan,
+    RestoreRecord,
     RestoreScheduled,
 )
 from .paths import atomic_json, read_json, recovery_root, safe_child, sha_file
@@ -29,8 +35,9 @@ class Backups:
     def __init__(self, ctx):
         self.ctx = ctx
         self.root = recovery_root(ctx.data_dir)
-        if self.root.is_symlink():
-            raise ValueError("workspace recovery directory must not be a link")
+        _regular_path(self.root)
+        if self.root.resolve() != self.root:
+            raise ValueError("workspace recovery directory must not traverse links")
         self.root.mkdir(parents=True, exist_ok=True)
 
     def head(self) -> BackupHead:
@@ -39,7 +46,7 @@ class Backups:
 
     def _export_locked(self, options: BackupOptions) -> BackupCreated:
         identifier = new_id("backup")
-        target = safe_child(self.root / "exports", identifier)
+        target = self._folder("exports", identifier)
         target.mkdir(parents=True)
         try:
             with tempfile.TemporaryDirectory(prefix=".snapshot-", dir=self.root) as temporary:
@@ -59,12 +66,17 @@ class Backups:
             return self._export_locked(options)
 
     def get(self, identifier: str) -> BackupCreated:
-        path = safe_child(self.root / "exports", identifier)
-        return BackupCreated.model_validate(read_json(path / "record.json"))
+        path = self._folder("exports", identifier)
+        _regular_path(path / "record.json")
+        record = BackupCreated.model_validate(read_json(path / "record.json"))
+        if record.id != identifier:
+            raise Conflict("backup identity does not match its directory")
+        return record
 
     def download(self, identifier: str) -> Path:
         record = self.get(identifier)
-        path = safe_child(self.root / "exports", identifier) / "workspace.zip"
+        path = self._folder("exports", identifier) / "workspace.zip"
+        _regular_path(path)
         if not path.is_file() or sha_file(path) != record.inspection.sha256:
             raise Conflict("stored backup failed checksum verification")
         return path
@@ -75,7 +87,7 @@ class Backups:
 
     def stage(self, archive: Path) -> RestorePlan:
         identifier = new_id("restore")
-        target = safe_child(self.root / "plans", identifier)
+        target = self._folder("plans", identifier)
         target.mkdir(parents=True)
         try:
             shutil.copyfile(archive, target / "workspace.zip")
@@ -93,7 +105,8 @@ class Backups:
             raise
 
     def get_plan(self, identifier: str) -> RestorePlan:
-        path = safe_child(self.root / "plans", identifier)
+        path = self._folder("plans", identifier)
+        _regular_path(path / "plan.json")
         plan = RestorePlan.model_validate(read_json(path / "plan.json"))
         if plan.id != identifier:
             raise Conflict("restore plan identity does not match its directory")
@@ -114,10 +127,12 @@ class Backups:
                 ):
                     return RestoreScheduled(plan=plan)
                 raise Conflict("a different workspace restoration is already scheduled")
-            head = logical_head(self.ctx.store._conn, self.ctx.engine.db)
+            head = with_extension_head(
+                logical_head(self.ctx.store._conn, self.ctx.engine.db), self.ctx.data_dir
+            )
             if head != command.expected_head or plan.expected_head != command.expected_head:
                 raise Conflict("workspace changed since staging; stage the archive again")
-            folder = safe_child(self.root / "plans", identifier)
+            folder = self._folder("plans", identifier)
             if (
                 command.expected_archive_sha256 != plan.inspection.sha256
                 or sha_file(folder / "workspace.zip") != plan.inspection.sha256
@@ -145,7 +160,7 @@ class Backups:
                 if journal.plan_id != identifier or journal.phase != "pending":
                     raise Conflict("restoration installation has already started")
                 pending.unlink()
-            elif plan.state != "staged":
+            elif plan.state not in {"staged", "pending"}:
                 raise Conflict("this restore plan cannot be canceled")
             plan.state, plan.message = "rejected", "Canceled before restart."
             atomic_json(
@@ -157,13 +172,180 @@ class Backups:
     def delete(self, identifier: str) -> None:
         # Protection archives remain retained while a plan references them.
         with FileLeaseContext(self.root / "journal.lease"):
-            for path in (self.root / "plans").glob("restore_*/plan.json"):
-                if read_json(path).get("protection_backup_id") == identifier:
+            for plan in self._plans():
+                if plan.protection_backup_id == identifier:
                     raise Conflict("backup protects a restore plan and cannot be deleted")
-            path = safe_child(self.root / "exports", identifier)
-            if not path.is_dir():
-                raise NotFound("backup not found")
-            shutil.rmtree(path)
+            self.get(identifier)
+            path = self._folder("exports", identifier)
+            _remove_record(path, "record.json")
+
+    def _folder(self, kind: str, identifier: str) -> Path:
+        prefix = "backup_" if kind == "exports" else "restore_"
+        if not identifier.startswith(prefix):
+            raise NotFound("backup or restore plan not found")
+        _regular_path(self.root)
+        _regular_path(self.root / kind)
+        path = safe_child(self.root / kind, identifier)
+        _regular_path(path)
+        if self.root.resolve() != self.root or not path.resolve().is_relative_to(self.root):
+            raise ValueError("recovery path escapes the original recovery directory")
+        return path
+
+    def _folders(self, kind: str):
+        root = self.root / kind
+        _regular_path(root)
+        if not root.exists():
+            return
+        prefix = "backup_" if kind == "exports" else "restore_"
+        for child in root.iterdir():
+            if child.name.startswith(prefix):
+                yield self._folder(kind, child.name)
+
+    def _plans(self) -> list[RestorePlan]:
+        plans = []
+        for path in self._folders("plans"):
+            _regular_path(path / "plan.json")
+            if (path / "plan.json").exists():
+                plans.append(self.get_plan(path.name))
+        return plans
+
+    def _protected_plans(self) -> dict[str, str]:
+        protected = {}
+        for name, reason in (("pending.json", "installation"), ("restored.json", "startup")):
+            path = self.root / name
+            _regular_path(path)
+            if path.exists():
+                value = read_json(path)
+                identifier = value["plan_id"]
+                self._folder("plans", identifier)
+                protected[identifier] = reason
+        return protected
+
+    def list_backups(self, *, offset: int = 0, limit: int = 20) -> BackupPage:
+        _pagination(offset, limit)
+        with FileLeaseContext(self.root / "journal.lease"):
+            plans = self._plans()
+            records = []
+            for path in self._folders("exports"):
+                _regular_path(path / "record.json")
+                if (path / "record.json").exists():
+                    records.append(self.get(path.name))
+            records.sort(
+                key=lambda item: (item.inspection.manifest.created_at, item.id), reverse=True
+            )
+            items = []
+            for record in records[offset : offset + limit]:
+                references = sorted(p.id for p in plans if p.protection_backup_id == record.id)
+                items.append(
+                    BackupRecord(
+                        id=record.id,
+                        created_at=record.inspection.manifest.created_at,
+                        size=record.inspection.size,
+                        retained_bytes=_tree_bytes(self._folder("exports", record.id)),
+                        includes_credentials=record.inspection.manifest.includes_credentials,
+                        protection_plan_ids=references,
+                        can_delete=not references,
+                    )
+                )
+            return BackupPage(items=items, **_page_meta(len(records), offset, limit))
+
+    def list_plans(self, *, offset: int = 0, limit: int = 20) -> RestorePage:
+        _pagination(offset, limit)
+        with FileLeaseContext(self.root / "journal.lease"):
+            protected = self._protected_plans()
+            plans = sorted(self._plans(), key=lambda item: (item.created_at, item.id), reverse=True)
+            items = []
+            for plan in plans[offset : offset + limit]:
+                folder = self._folder("plans", plan.id)
+                reason = protected.get(plan.id) or ("pending" if plan.state == "pending" else None)
+                items.append(
+                    RestoreRecord(
+                        id=plan.id,
+                        created_at=plan.created_at,
+                        state=plan.state,
+                        protection_backup_id=plan.protection_backup_id,
+                        retained_bytes=_tree_bytes(folder),
+                        staged_bytes=_tree_bytes(folder / "workspace")
+                        + _tree_bytes(folder / "workspace.zip"),
+                        previous_bytes=_tree_bytes(folder / "previous"),
+                        pending=plan.state == "pending" or plan.id in protected,
+                        can_delete=reason is None,
+                        blocked_reason=reason,
+                    )
+                )
+            return RestorePage(items=items, **_page_meta(len(plans), offset, limit))
+
+    def delete_plan(self, identifier: str) -> None:
+        with FileLeaseContext(self.root / "journal.lease"):
+            plan = self.get_plan(identifier)
+            if plan.state == "pending" or identifier in self._protected_plans():
+                raise Conflict(
+                    "restore plan is scheduled or still needed by startup; cancel it first"
+                )
+            path = self._folder("plans", identifier)
+            # Preflight every descendant, including previous/incoming/failed directories. Reject
+            # symlinks and Windows junctions before deleting anything, even on older Python.
+            _remove_record(path, "plan.json")
+
+
+def _regular_path(path: Path):
+    try:
+        mode = path.lstat()
+    except FileNotFoundError:
+        return
+    if (
+        stat.S_ISLNK(mode.st_mode)
+        or getattr(mode, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
+    ):
+        raise ValueError("recovery path must not contain symbolic links or reparse points")
+    if not (stat.S_ISDIR(mode.st_mode) or stat.S_ISREG(mode.st_mode)):
+        raise ValueError("recovery path must contain only regular files and directories")
+
+
+def _tree_bytes(path: Path) -> int:
+    _regular_path(path)
+    if not path.exists():
+        return 0
+    if path.is_file():
+        return path.stat().st_size
+    total, pending = 0, [path]
+    while pending:
+        for child in pending.pop().iterdir():
+            _regular_path(child)
+            if child.is_dir():
+                pending.append(child)
+            else:
+                total += child.stat().st_size
+    return total
+
+
+def _remove_record(path: Path, metadata: str):
+    _tree_bytes(path)
+    # Keep the catalog record until payload cleanup succeeds. Interrupted/denied cleanup stays
+    # discoverable and can be retried instead of leaving an invisible retained workspace.
+    for child in path.iterdir():
+        if child.name == metadata:
+            continue
+        if child.is_dir():
+            shutil.rmtree(child)
+        else:
+            child.unlink()
+    (path / metadata).unlink()
+    path.rmdir()
+
+
+def _pagination(offset: int, limit: int):
+    if offset < 0 or not 1 <= limit <= 100:
+        raise ValueError("offset must be non-negative and limit must be between 1 and 100")
+
+
+def _page_meta(total: int, offset: int, limit: int) -> dict:
+    return dict(
+        total=total,
+        offset=offset,
+        limit=limit,
+        next_offset=offset + limit if offset + limit < total else None,
+    )
 
 
 class FileLeaseContext:
@@ -171,6 +353,8 @@ class FileLeaseContext:
         self.path = path
 
     def __enter__(self):
+        _regular_path(self.path.parent)
+        _regular_path(self.path)
         try:
             self.lease = FileLease(str(self.path))
         except RuntimeError:

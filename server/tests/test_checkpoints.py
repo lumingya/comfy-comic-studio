@@ -214,6 +214,9 @@ class CheckpointTests(unittest.TestCase):
     def test_canceled_worker_blocks_restore_until_it_has_exited(self):
         checkpoint = self.checkpoint()
         engine = self.ctx.engine
+        from types import SimpleNamespace
+
+        engine.register("test", SimpleNamespace(execute=lambda ctx: {}))
         job = engine.submit("test", [ItemSpec({})], owner=self.ep.id)
         item = engine._claim(Candidate(job["id"], 0, "local", "", (), (0, 0, 0)), None)
         engine.cancel(job["id"])

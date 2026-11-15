@@ -261,6 +261,9 @@ class ThirdPartyDeliveryTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "jobs.db"
             engine = JobEngine(path, autostart=False)
+            callback = mock.Mock()
+            callback.replay_safe = False
+            engine.register("external", callback)
             job = engine.submit("external", [ItemSpec({})])
             engine._claim(Candidate(job["id"], 0, "local", "", (), (0, 0, 0)), None)
             engine._record_delivery(engine._item_row(job["id"], 0), {"received": True})

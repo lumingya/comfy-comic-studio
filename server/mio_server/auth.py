@@ -39,7 +39,7 @@ RENDER_RE = re.compile(
     r"^/(series/[^/]+/episodes/generate"
     r"|episodes/[^/]+/(render|finalize|edit|qa|assistant/propose)"
     r"|jobs/[^/]+/(retry|resume)"
-    r"|jobs/[^/]+/items/[^/]+/(restore-state|replay-result)"
+    r"|jobs/[^/]+/items/[^/]+/(restore-state|replay-result|resolve)"
     r"|workshop/queue/(start|resume))$"
 )
 ADMIN_RE = re.compile(
@@ -102,7 +102,7 @@ def issue(name: str, scopes: list[str], expires_at: str = "") -> tuple[ApiToken,
 
 def required_scope(method: str, path: str) -> str:
     """Scope needed for ``method path`` (path relative to ``/api/v2``)."""
-    if ADMIN_RE.match(path):
+    if ADMIN_RE.match(path) or re.fullmatch(r"/jobs/[^/]+/rebind-executor", path):
         return "admin"
     if method in ("GET", "HEAD", "OPTIONS", "WS"):
         return "read"
