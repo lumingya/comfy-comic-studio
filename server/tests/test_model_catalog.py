@@ -315,11 +315,17 @@ class ModelCatalogApiTests(ApiCase):
         self.assertEqual(updated.image_channels[4].base_url, "")
 
     def test_draft_endpoint_preserves_persisted_settings_and_jobs(self):
+        # An empty store creates fresh defaults on every read, including a fresh timestamp.
+        # Persist a fixed baseline so this tests writes rather than wall-clock coincidence.
+        self.ctx.store.put_doc(AppSettings(updated_at="2000-01-01T00:00:00+00:00"))
         before = self.ctx.settings().model_dump()
         jobs = self.ok(self.client.get("/api/jobs"))
-        with mock.patch.object(
-            C, "_get_json", return_value={"data": [{"id": "draft-model"}]}
-        ) as get:
+        with (
+            mock.patch.object(
+                C, "_get_json", return_value={"data": [{"id": "draft-model"}]}
+            ) as get,
+            mock.patch.object(self.ctx.store, "put_doc", wraps=self.ctx.store.put_doc) as write,
+        ):
             result = self.ok(
                 self.client.post(
                     "/api/settings/models",
@@ -330,6 +336,7 @@ class ModelCatalogApiTests(ApiCase):
                     },
                 )
             )
+        write.assert_not_called()
         self.assertEqual(result["models"][0]["id"], "draft-model")
         get.assert_called_once_with("https://draft.test/v1/models", "draft-secret", None)
         self.assertEqual(self.ctx.settings().model_dump(), before)
