@@ -65,6 +65,7 @@ function kitAssembly(body: AssembleVars): KitAssembly {
     episode_id: body.storyboard_id,
     preset_ids: body.preset_ids,
     title: body.title,
+    profile_id: body.profile_id,
     variables: body.variables,
     idempotency_key: body.idempotency_key ?? 'preview',
   };

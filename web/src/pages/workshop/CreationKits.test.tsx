@@ -198,7 +198,7 @@ describe('kit assembly source', () => {
     await screen.findByRole('option', { name: /Kit story/ });
     expect(screen.getByLabelText('分镜来源')).toHaveValue('kit_new');
     expect(screen.getByText('待配置：套装可装配，选择服务后才能生成。')).toBeInTheDocument();
-    expect(screen.queryByRole('combobox', { name: '出图配置' })).toBeNull();
+    expect(screen.getByRole('combobox', { name: '出图配置' })).toHaveValue('');
     next();
     expect(screen.getByRole('checkbox', { name: /kit_preset/ })).toBeChecked();
     expect(screen.queryByRole('checkbox', { name: /workshop_preset/ })).toBeNull();
@@ -217,7 +217,7 @@ describe('kit assembly source', () => {
       variables: {},
       idempotency_key: expect.any(String),
     });
-    expect(body).not.toHaveProperty('profile_id');
+    expect(body).toHaveProperty('profile_id', null);
     expect(calls.some((call) => call.url === '/api/workshop/assemble')).toBe(false);
     expect(
       calls.some((call) => call.url.includes('/render') || call.url.includes('/generate')),
@@ -271,6 +271,55 @@ describe('kit assembly source', () => {
     fireEvent.click(screen.getByRole('button', { name: '添加待命任务' }));
     await waitFor(() => expect(sent()).toHaveLength(3));
     expect(sent()[2].idempotency_key).not.toBe(sent()[1].idempotency_key);
+  });
+
+  it('uses a chosen cloud profile for kit preview and assembly without changing the kit', async () => {
+    const cloud = {
+      ...configProfile,
+      id: 'cloud',
+      name: 'Cloud profile',
+      cloud_shape: true,
+      cloud_channel: 'images',
+    };
+    const calls = mockFetch({
+      ...assemblyRoutes(),
+      'GET /api/profiles': [
+        configProfile,
+        { ...configProfile, id: 'kit_profile', name: 'Kit profile' },
+        cloud,
+      ],
+      'POST /api/creation-kits/kit_new/assemble': { series, episode },
+    });
+    renderWithProviders(
+      <AssembleDialog onClose={vi.fn()} />,
+      '/workshop/assembly?new=1&kit=kit_new',
+    );
+    await screen.findByRole('option', { name: /Kit story/ });
+    expect(screen.getByLabelText('出图配置')).toHaveValue('');
+    fireEvent.change(screen.getByLabelText('图像服务'), { target: { value: 'cloud' } });
+    expect(screen.getByLabelText('出图配置')).toHaveValue('cloud');
+    fireEvent.change(screen.getByLabelText('分镜来源'), { target: { value: '' } });
+    await screen.findByRole('option', { name: /Workshop story/ });
+    expect(screen.getByLabelText('图像服务')).toHaveValue('local');
+    expect(screen.getByLabelText('出图配置')).toHaveValue('');
+    fireEvent.change(screen.getByLabelText('分镜来源'), { target: { value: 'kit_new' } });
+    await screen.findByRole('option', { name: /Kit story/ });
+    expect(screen.getByLabelText('出图配置')).toHaveValue('');
+    fireEvent.change(screen.getByLabelText('图像服务'), { target: { value: 'cloud' } });
+    next();
+    next();
+    await waitFor(() =>
+      expect(calls.find((call) => call.url.endsWith('/kit_new/preview'))?.body).toMatchObject({
+        profile_id: 'cloud',
+      }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: '添加待命任务' }));
+    await waitFor(() =>
+      expect(calls.find((call) => call.url.endsWith('/kit_new/assemble'))?.body).toMatchObject({
+        profile_id: 'cloud',
+      }),
+    );
+    expect(calls.some((call) => call.method === 'PATCH' || call.method === 'PUT')).toBe(false);
   });
 });
 

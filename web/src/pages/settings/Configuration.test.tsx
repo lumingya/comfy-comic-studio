@@ -17,7 +17,7 @@ import {
 import { mockFetch, renderWithProviders } from '../../test/utils';
 import EnginePage from '../engine/EnginePage';
 import { ChannelsSection, newChannel } from './ChannelsSection';
-import { jsonObject, validHttpUrl } from './ConfigurationParts';
+import { ConfigurationSaveBar, jsonObject, validHttpUrl } from './ConfigurationParts';
 import { GeneralSection } from './GeneralSection';
 import { InstancesSection } from './InstancesSection';
 import { ProfilesSection } from './ProfilesSection';
@@ -38,6 +38,58 @@ const expand = async (label: string) => {
   for (const details of ancestors) await userEvent.click(details.querySelector('summary')!);
   await userEvent.click(summary);
 };
+
+it('shows configuration actions only while changes or a request need attention', async () => {
+  const cancel = vi.fn();
+  const { rerender } = render(
+    <ConfigurationSaveBar dirty={false} pending={false} onCancel={cancel} />,
+  );
+  expect(screen.queryByRole('button', { name: '保存' })).toBeNull();
+  expect(screen.queryByRole('status')).toBeNull();
+  rerender(<ConfigurationSaveBar dirty={false} pending onCancel={cancel} />);
+  expect(screen.getByRole('status')).toHaveTextContent('正在保存…');
+  expect(screen.getByRole('button', { name: '保存' })).toBeDisabled();
+  rerender(<ConfigurationSaveBar dirty pending={false} invalid onCancel={cancel} />);
+  expect(screen.getByRole('status')).toHaveTextContent('有未保存的修改');
+  expect(screen.getByRole('button', { name: '保存' })).toBeDisabled();
+  await userEvent.click(screen.getByRole('button', { name: '取消' }));
+  expect(cancel).toHaveBeenCalledOnce();
+  rerender(<ConfigurationSaveBar dirty={false} pending={false} onCancel={cancel} />);
+  expect(screen.queryByRole('status')).toBeNull();
+});
+
+it('saves settings with Enter, then leaves only transient success feedback', async () => {
+  let finish!: (value: AppSettings) => void;
+  const calls = mockFetch(
+    configurationRoutes({
+      'PATCH /api/settings': () =>
+        new Promise<AppSettings>((resolve) => {
+          finish = resolve;
+        }),
+    }),
+  );
+  const user = userEvent.setup();
+  renderWithProviders(
+    <>
+      <GeneralSection />
+      <Toaster />
+    </>,
+  );
+  const address = await screen.findByDisplayValue('https://shared.test/v1');
+  expect(screen.queryByRole('button', { name: '保存' })).toBeNull();
+  expect(screen.queryByText('已保存')).toBeNull();
+  await user.clear(address);
+  await user.type(address, 'https://edited.test/v1{Enter}');
+  expect(await screen.findByText('正在保存…')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '保存' })).toBeDisabled();
+  await waitFor(() => expect(finish).toBeTypeOf('function'));
+  finish({ ...configSettings, llm: { ...configSettings.llm, base_url: 'https://edited.test/v1' } });
+  expect(await screen.findByText('已保存')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: '保存' })).toBeNull();
+  expect(screen.queryByText('有未保存的修改')).toBeNull();
+  expect(calls.filter((call) => call.method === 'PATCH')).toHaveLength(1);
+  await waitFor(() => expect(screen.queryByText('已保存')).toBeNull(), { timeout: 4500 });
+}, 8000);
 
 it('channel IDs are generated without collisions; no internal ID rename is needed', () => {
   expect(newChannel(['ch1', 'ch3']).id).toBe('ch2');

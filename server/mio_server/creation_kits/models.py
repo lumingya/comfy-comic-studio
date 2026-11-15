@@ -91,5 +91,6 @@ class KitAssembly(StrictModel):
     episode_id: str
     preset_ids: list[str] = Field(default_factory=list)
     title: str = Field(default="", max_length=120)
+    profile_id: str | None = None
     variables: dict[str, str] = Field(default_factory=dict)
     idempotency_key: str = Field(min_length=1, max_length=200)

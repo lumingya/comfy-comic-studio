@@ -3077,6 +3077,17 @@
       "title": "Preset Ids",
       "type": "array"
      },
+     "profile_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Profile Id"
+     },
      "title": {
       "default": "",
       "maxLength": 120,

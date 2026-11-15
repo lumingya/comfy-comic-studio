@@ -4,9 +4,10 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useCreationKits } from '../../api/creationKits';
 import { useEpisode, useEpisodes, useSeries } from '../../api/series';
 import { useProfiles, useSettings } from '../../api/system';
+import type { RenderProfile } from '../../api/types';
 import { useAssemble, useWorkshop, type Preset } from '../../api/workshop';
 import { Icon } from '../../app/icons';
-import { useRenderRoute } from '../../app/renderRoute';
+import { resolveProfile, useRenderRoute } from '../../app/renderRoute';
 import { toast, toastError } from '../../components/toast';
 import { ownCancel } from '../../components/topLayer';
 import { QueryError } from '../../app/errors';
@@ -15,8 +16,12 @@ import { AssemblyReview } from './AssemblyReview';
 import { AssemblyIntents } from './assemblyIntent';
 import { workshopHref } from './workshopSource';
 import './creation-kits.css';
+import './assemble-dialog.css';
 
 const STEPS = ['story', 'presets', 'name'] as const;
+type ImageService = 'local' | 'cloud' | 'hybrid';
+const profileService = (profile: RenderProfile): ImageService =>
+  !profile.cloud_shape ? 'local' : profile.cloud_refine ? 'hybrid' : 'cloud';
 
 const displayName = (p: Preset) =>
   p.entries.find((e) => e.key === 'character_display_name')?.value.trim() ||
@@ -51,6 +56,7 @@ export default function AssembleDialog({
   const [step, setStep] = useState(0);
   const [story, setStory] = useState(initialStory ?? '');
   const [profile, setProfile] = useState('');
+  const [serviceChoice, setServiceChoice] = useState<ImageService | null>(null);
   const [chosen, setChosen] = useState<string[] | null>(null);
   const [title, setTitle] = useState<string | null>(null);
   const [variables, setVariables] = useState<Record<string, string>>({});
@@ -60,12 +66,7 @@ export default function AssembleDialog({
   const storyId = story ? items.find((item) => item.id === story)?.id : items[0]?.id;
   const board = items.find((b) => b.id === storyId);
   const { data: storyboard } = useEpisode(storyId);
-  const route = useRenderRoute(
-    kitId ? '' : profile,
-    source?.default_profile_id,
-    sourcePending,
-    false,
-  );
+  const route = useRenderRoute(profile, source?.default_profile_id, sourcePending, false);
 
   useEffect(() => {
     const d = ref.current;
@@ -83,10 +84,22 @@ export default function AssembleDialog({
   const defaultTitle = [board?.title, first ? displayName(first) : ''].filter(Boolean).join(' · ');
   const name = title ?? defaultTitle.slice(0, 120);
   const profileList = profiles.data ?? [];
-  const profileId = kitId ? '' : profile;
+  const profileId = profile;
+  const defaultProfile = resolveProfile(profileList, null, source?.default_profile_id).profile;
+  const service = serviceChoice ?? route.kind ?? 'local';
+  const serviceProfiles = profileList.filter((value) => profileService(value) === service);
+  const missingService = !profiles.isPending && (!route.profile || route.kind !== service);
+  const serviceReady = !profiles.isPending && !!route.profile && route.kind === service;
+  const chooseService = (next: ImageService) => {
+    setServiceChoice(next);
+    const fallback = defaultProfile && profileService(defaultProfile) === next;
+    setProfile(
+      fallback ? '' : (profileList.find((value) => profileService(value) === next)?.id ?? ''),
+    );
+    setConfirming(false);
+  };
   const profileName = route.profile?.name ?? t('ws.assemble.profileDefault');
-  const routeSummary =
-    kitId && route.profile?.binding_required ? t('kits.pendingBinding') : route.summary;
+  const routeSummary = route.profile?.binding_required ? t('kits.pendingBinding') : route.summary;
   const request = {
     storyboard_id: storyId ?? '',
     preset_ids: picked,
@@ -99,6 +112,7 @@ export default function AssembleDialog({
     setKitId(id);
     setStory('');
     setProfile('');
+    setServiceChoice(null);
     setChosen(null);
     setTitle(null);
     setVariables({});
@@ -189,44 +203,78 @@ export default function AssembleDialog({
   const environment = (
     <section className="designer-card designer-environment">
       <header className="designer-card-head">
-        <span className="designer-kicker">
-          {mode === 'canvas' ? t('ws.canvas.kEnv') : t('ws.assemble.kEnv')}
-        </span>
         <h4>{t('ws.assemble.env')}</h4>
       </header>
       <div className="field">
-        <span className="label" id="designer-channel-label">
+        <label className="label" htmlFor="designer-channel">
           {t('ws.assemble.channel')}
-        </span>
-        <p aria-labelledby="designer-channel-label">{routeSummary}</p>
+        </label>
+        <select
+          id="designer-channel"
+          value={service}
+          disabled={profiles.isPending || assemble.isPending || busy}
+          onChange={(event) => chooseService(event.target.value as ImageService)}
+        >
+          <option value="local">{t('route.local')}</option>
+          <option value="cloud">{t('route.cloud')}</option>
+          {route.kind === 'hybrid' ||
+          (defaultProfile && profileService(defaultProfile) === 'hybrid') ? (
+            <option value="hybrid">{t('route.hybrid')}</option>
+          ) : null}
+        </select>
+        {!missingService && (route.kind !== 'local' || route.profile?.binding_required) ? (
+          <p className="help">{routeSummary}</p>
+        ) : null}
       </div>
       <div className="field">
-        <label className="label" htmlFor={kitId ? undefined : 'designer-profile'}>
+        <label className="label" htmlFor="designer-profile">
           {t('ws.assemble.profile')}
         </label>
-        {kitId ? (
-          <>
-            <p>{profileName}</p>
-            <p className="help">{t('kits.kitProfile')}</p>
-            <Link className="btn small" to="/engine?tab=profiles">
-              {t('kits.configure')}
-            </Link>
-          </>
-        ) : (
-          <select
-            id="designer-profile"
-            value={profileId}
-            onChange={(e) => setProfile(e.target.value)}
-          >
-            <option value="">{t('ws.assemble.profileDefault')}</option>
-            {profileList.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        )}
-        {!kitId ? <p className="help">{t('ws.assemble.profileHelp')}</p> : null}
+        <select
+          id="designer-profile"
+          value={serviceReady ? profileId : ''}
+          disabled={!serviceProfiles.length || profiles.isPending || assemble.isPending || busy}
+          onChange={(event) => {
+            setProfile(event.target.value);
+            setServiceChoice(null);
+            setConfirming(false);
+          }}
+        >
+          {defaultProfile && profileService(defaultProfile) === service ? (
+            <option value="">
+              {t('ws.assemble.sourceProfile', { name: defaultProfile.name })}
+            </option>
+          ) : !serviceReady ? (
+            <option value="">{t('ws.assemble.noServiceProfile')}</option>
+          ) : null}
+          {serviceProfiles.map((value) => (
+            <option key={value.id} value={value.id}>
+              {value.name}
+            </option>
+          ))}
+        </select>
+        {missingService ? (
+          <p className="help" role="status">
+            {t('ws.assemble.serviceMissing', { service: t(`route.${service}`) })}
+          </p>
+        ) : route.profile?.binding_required ? null : route.state === 'missing' ? (
+          <p className="help" role="status">
+            {route.detail}
+          </p>
+        ) : null}
+        <Link
+          className="designer-configure"
+          to={
+            missingService || route.profile?.binding_required
+              ? '/engine?tab=profiles'
+              : route.state === 'missing'
+                ? route.to
+                : '/engine?tab=profiles'
+          }
+          onClick={close}
+        >
+          {t('ws.assemble.configureService')}
+        </Link>
         {storyboard?.panels.some((panel) => panel.overrides.profile_id) ? (
           <p className="help">{t('route.panelOverrides')}</p>
         ) : null}
@@ -255,45 +303,39 @@ export default function AssembleDialog({
         </button>
       </header>
       <div className="modal-body">
-        <div className="field creation-kit-source">
-          <label className="label" htmlFor="designer-source">
-            {t('kits.source')}
-          </label>
-          <select
-            id="designer-source"
-            value={kitId}
-            disabled={assemble.isPending || busy}
-            onChange={(event) => changeSource(event.target.value)}
-          >
-            <option value="">{t('kits.workshop')}</option>
-            {kitId && !kits.data?.some((kit) => kit.id === kitId) ? (
-              <option value={kitId}>
-                {sourcePending ? t('kits.loadingSource') : t('kits.missingSource')}
-              </option>
-            ) : null}
-            {(kits.data ?? []).map((kit) => (
-              <option key={kit.id} value={kit.id}>
-                {kit.title}
-              </option>
-            ))}
-          </select>
-          {kits.isError ? <QueryError error={kits.error} onRetry={kits.refetch} /> : null}
-          {kitId && kit.error ? <QueryError error={kit.error} onRetry={kit.refetch} /> : null}
-          {kitId && !sourcePending && !source && !kits.isError ? (
-            <p className="notice warn">{t('kits.missingSource')}</p>
-          ) : null}
-          {boards.isError ? <QueryError error={boards.error} onRetry={boards.refetch} /> : null}
-          {kitId && source ? (
-            <Link
-              className="btn small"
-              to={workshopHref(storyId ? `/workshop/story/${storyId}` : '/workshop/story', kitId)}
-              onClick={close}
+        <div className="designer-toolbar">
+          <div className="field creation-kit-source">
+            <label className="label" htmlFor="designer-source">
+              {t('kits.source')}
+            </label>
+            <select
+              id="designer-source"
+              value={kitId}
+              disabled={assemble.isPending || busy}
+              onChange={(event) => changeSource(event.target.value)}
             >
-              {t('workshopSource.edit')}
-            </Link>
-          ) : null}
-        </div>
-        <div className="designer-head">
+              <option value="">{t('kits.workshop')}</option>
+              {kitId && !kits.data?.some((kit) => kit.id === kitId) ? (
+                <option value={kitId}>
+                  {sourcePending ? t('kits.loadingSource') : t('kits.missingSource')}
+                </option>
+              ) : null}
+              {(kits.data ?? []).map((kit) => (
+                <option key={kit.id} value={kit.id}>
+                  {kit.title}
+                </option>
+              ))}
+            </select>
+            {kitId && source ? (
+              <Link
+                className="btn small"
+                to={workshopHref(storyId ? `/workshop/story/${storyId}` : '/workshop/story', kitId)}
+                onClick={close}
+              >
+                {t('workshopSource.edit')}
+              </Link>
+            ) : null}
+          </div>
           <div className="designer-modes" role="group" aria-label={t('ws.assemble.mode')}>
             {(['wizard', 'canvas'] as const).map((m) => (
               <button
@@ -311,10 +353,13 @@ export default function AssembleDialog({
               </button>
             ))}
           </div>
-          <p className="designer-head-note">
-            {mode === 'canvas' ? t('ws.canvas.note') : t('ws.assemble.note')}
-          </p>
         </div>
+        {kits.isError ? <QueryError error={kits.error} onRetry={kits.refetch} /> : null}
+        {kitId && kit.error ? <QueryError error={kit.error} onRetry={kit.refetch} /> : null}
+        {kitId && !sourcePending && !source && !kits.isError ? (
+          <p className="notice warn">{t('kits.missingSource')}</p>
+        ) : null}
+        {boards.isError ? <QueryError error={boards.error} onRetry={boards.refetch} /> : null}
         {mode === 'canvas' ? (
           <>
             <div className="canvas-environment">
@@ -331,74 +376,51 @@ export default function AssembleDialog({
           </>
         ) : (
           <div className="designer-workbench">
-            <aside className="designer-navigation">
-              <div className="designer-brand">
-                MIO <span>PRODUCTION STUDIO</span>
-              </div>
-              <h2>
-                {t('ws.assemble.brand1')}
-                <br />
-                {t('ws.assemble.brand2')}
-              </h2>
-              <p>
-                {t('ws.assemble.brandLede1')}
-                <br />
-                {t('ws.assemble.brandLede2')}
-              </p>
-              <ol className="assembly-stepper" aria-label={t('ws.assemble.steps')}>
-                {STEPS.map((s, i) => (
-                  <li
-                    key={s}
-                    className={i === step ? 'active' : i < step ? 'done' : ''}
-                    aria-current={i === step ? 'step' : undefined}
-                  >
-                    <b>{i < step ? <Icon name="check" sm /> : i + 1}</b>
-                    <span>{t(`ws.assemble.step.${s}`)}</span>
-                  </li>
-                ))}
-              </ol>
-              <div className="designer-safety">
-                <Icon name="shield" sm /> {t('ws.assemble.safety1')}
-                <small>{t('ws.assemble.safety2')}</small>
-              </div>
-            </aside>
+            <ol className="assembly-stepper" aria-label={t('ws.assemble.steps')}>
+              {STEPS.map((s, i) => (
+                <li
+                  key={s}
+                  className={i === step ? 'active' : i < step ? 'done' : ''}
+                  aria-current={i === step ? 'step' : undefined}
+                >
+                  <b>{i < step ? <Icon name="check" sm /> : i + 1}</b>
+                  <span>{t(`ws.assemble.step.${s}`)}</span>
+                </li>
+              ))}
+            </ol>
             {step === 0 ? (
               <section className="designer-step" data-step="0">
                 <header className="designer-step-head">
                   <h3>{t('ws.assemble.storyTitle')}</h3>
-                  <p>{t('ws.assemble.storyLede')}</p>
                 </header>
-                <div className="designer-columns">
-                  <div className="designer-main">
-                    <section className="designer-card">
-                      <header className="designer-card-head">
-                        <span className="designer-kicker">{t('ws.assemble.kStory')}</span>
-                        <h4>{t('ws.assemble.whichStory')}</h4>
-                      </header>
-                      <div className="field">
-                        <label className="label" htmlFor="designer-story">
-                          {t('ws.assemble.story')}
-                        </label>
-                        <select
-                          id="designer-story"
-                          value={storyId ?? ''}
-                          onChange={(e) => {
-                            setStory(e.target.value);
-                            setChosen(null);
-                            setTitle(null);
-                            setVariables({});
-                          }}
-                        >
-                          {items.map((b) => (
-                            <option key={b.id} value={b.id}>
-                              {b.title} · {t('ws.story.frames', { count: b.panel_count })}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </section>
-                    {environment}
-                  </div>
+                <div className="designer-story-settings">
+                  <section className="designer-card">
+                    <header className="designer-card-head">
+                      <h4>{t('ws.assemble.whichStory')}</h4>
+                    </header>
+                    <div className="field">
+                      <label className="label" htmlFor="designer-story">
+                        {t('ws.assemble.story')}
+                      </label>
+                      <select
+                        id="designer-story"
+                        value={storyId ?? ''}
+                        onChange={(e) => {
+                          setStory(e.target.value);
+                          setChosen(null);
+                          setTitle(null);
+                          setVariables({});
+                        }}
+                      >
+                        {items.map((b) => (
+                          <option key={b.id} value={b.id}>
+                            {b.title} · {t('ws.story.frames', { count: b.panel_count })}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </section>
+                  {environment}
                 </div>
               </section>
             ) : step === 1 ? (
@@ -482,7 +504,6 @@ export default function AssembleDialog({
                   <div className="designer-main">
                     <section className="designer-card">
                       <header className="designer-card-head">
-                        <span className="designer-kicker">{t('ws.assemble.kName')}</span>
                         <h4>{t('ws.assemble.whatName')}</h4>
                       </header>
                       <div className="field">
@@ -517,7 +538,6 @@ export default function AssembleDialog({
                   <aside className="designer-side">
                     <section className="designer-card designer-summary-card">
                       <header className="designer-card-head">
-                        <span className="designer-kicker">{t('ws.assemble.kCheck')}</span>
                         <h4>{t('ws.assemble.summary')}</h4>
                       </header>
                       <dl className="designer-summary">
@@ -585,7 +605,7 @@ export default function AssembleDialog({
           <button
             type="button"
             className="btn primary"
-            disabled={!source || !design.stories.length || busy}
+            disabled={!source || !serviceReady || !design.stories.length || busy}
             title={design.stories.length ? undefined : t('ws.canvas.needStory')}
             onClick={() => void submitCanvas()}
           >
@@ -604,7 +624,7 @@ export default function AssembleDialog({
           <button
             type="button"
             className="btn primary"
-            disabled={!source || !storyId}
+            disabled={!source || !storyId || !serviceReady}
             onClick={() => setStep(step + 1)}
           >
             <Icon name="arrow" />
@@ -614,7 +634,9 @@ export default function AssembleDialog({
           <button
             type="button"
             className="btn primary"
-            disabled={!source || !storyId || name.length > 120 || assemble.isPending}
+            disabled={
+              !source || !storyId || !serviceReady || name.length > 120 || assemble.isPending
+            }
             onClick={submit}
           >
             <Icon name="plus" />

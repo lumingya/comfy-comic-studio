@@ -39,7 +39,7 @@ from mio_server.models import (
     VariantSet,
 )
 from mio_server.pipeline.providers import ImageChannel
-from mio_server.render_models import ComfyInstance
+from mio_server.render_models import ComfyInstance, RenderProfile
 from mio_server.settings import AppSettings
 from mio_server.storage import Conflict, NotFound
 
@@ -376,6 +376,10 @@ class CreationKitTests(unittest.TestCase):
         )
         album, ep = assemble_kit(self.target, result.series_id, body)
         self.assertEqual(album.kind, "album")
+        self.assertEqual(
+            album.default_profile_id,
+            self.target.store.get_series(result.series_id).default_profile_id,
+        )
         self.assertEqual(album.variables["color"], "red")
         self.target.store.update_episode(
             result.episode_ids[0], lambda e: setattr(e, "title", "Changed")
@@ -383,6 +387,89 @@ class CreationKitTests(unittest.TestCase):
         again = assemble_kit(self.target, result.series_id, body)
         self.assertEqual((again[0].id, again[1].id), (album.id, ep.id))
         self.assertEqual(self.target.store.get_episode(ep.id).title, "Rain")
+        self.assertEqual(self.target.engine.list(), [])
+
+    def test_assembly_profile_override_matches_preview_and_preserves_source_and_panel_choices(self):
+        result = import_kit(self.target, self.request())
+        source = self.target.store.get_series(result.series_id)
+        board = self.target.store.get_episode(result.episode_ids[0])
+        selected = self.target.store.put_doc(
+            RenderProfile(name="Selected cloud", cloud_shape=True, dialect="natural")
+        )
+        per_panel = self.target.store.put_doc(RenderProfile(name="Panel local", dialect="tags"))
+        board.panels.append(Panel(order=1, overrides=PanelOverrides(profile_id=per_panel.id)))
+        self.target.store.save_episode(board)
+        source_before = source.model_dump()
+        board_before = self.target.store.get_episode(board.id).model_dump()
+        body = KitAssembly(
+            episode_id=board.id, preset_ids=result.preset_ids, idempotency_key="profile-override"
+        )
+        default = preview_kit(self.target, source.id, body)
+        self.assertEqual(default.profile_id, source.default_profile_id)
+        self.assertEqual(default.panels[0].profile_id, source.default_profile_id)
+        body.profile_id = selected.id
+        before = self.counts()
+        preview = preview_kit(self.target, source.id, body)
+        self.assertEqual(self.counts(), before)
+        self.assertEqual(preview.profile_id, selected.id)
+        self.assertEqual(
+            [(p.profile_id, p.dialect) for p in preview.panels],
+            [(selected.id, "natural"), (per_panel.id, "tags")],
+        )
+        album, episode = assemble_kit(self.target, source.id, body)
+        self.assertEqual(album.default_profile_id, selected.id)
+        self.assertIsNone(episode.panels[0].overrides.profile_id)
+        self.assertEqual(episode.panels[1].overrides.profile_id, per_panel.id)
+        self.assertEqual(self.target.store.get_series(source.id).model_dump(), source_before)
+        self.assertEqual(self.target.store.get_episode(board.id).model_dump(), board_before)
+        self.assertEqual(self.target.engine.list(), [])
+
+    def test_missing_assembly_profile_is_rejected_even_when_every_panel_overrides_it(self):
+        result = import_kit(self.target, self.request())
+        source = self.target.store.get_series(result.series_id)
+        board = self.target.store.get_episode(result.episode_ids[0])
+        board.panels[0].overrides.profile_id = source.default_profile_id
+        self.target.store.save_episode(board)
+        body = KitAssembly(
+            episode_id=board.id, profile_id="missing-profile", idempotency_key="bad-profile"
+        )
+        before = self.counts()
+        for operation in (preview_kit, assemble_kit):
+            with self.subTest(operation=operation.__name__):
+                with self.assertRaises(NotFound):
+                    operation(self.target, source.id, body)
+                self.assertEqual(self.counts(), before)
+        valid = body.model_copy(update={"profile_id": source.default_profile_id})
+        album, _ = assemble_kit(self.target, source.id, valid)
+        self.assertEqual(album.default_profile_id, source.default_profile_id)
+        self.assertEqual(self.target.engine.list(), [])
+
+    def test_assembly_profile_is_part_of_idempotency_identity_and_original_replay(self):
+        result = import_kit(self.target, self.request())
+        selected = self.target.store.put_doc(RenderProfile(name="Selected"))
+        alternative = self.target.store.put_doc(RenderProfile(name="Alternative"))
+        body = KitAssembly(
+            episode_id=result.episode_ids[0],
+            profile_id=selected.id,
+            idempotency_key="same-profile-intent",
+        )
+        album, episode = assemble_kit(self.target, result.series_id, body)
+        for profile_id in (alternative.id, None):
+            with self.subTest(profile_id=profile_id):
+                with self.assertRaises(Conflict):
+                    assemble_kit(
+                        self.target,
+                        result.series_id,
+                        body.model_copy(update={"profile_id": profile_id}),
+                    )
+        self.target.store.delete_series(result.series_id)
+        with patch(
+            "mio_server.creation_kits.service._assembly_snapshot",
+            side_effect=AssertionError("receipt replay read source"),
+        ):
+            again = assemble_kit(self.target, result.series_id, body)
+        self.assertEqual((again[0].id, again[1].id), (album.id, episode.id))
+        self.assertEqual(again[0].default_profile_id, selected.id)
         self.assertEqual(self.target.engine.list(), [])
 
     def test_v2_api_exposes_inspect_import_preview_and_assemble(self):
@@ -403,19 +490,26 @@ class CreationKitTests(unittest.TestCase):
             )
             self.assertEqual(imported.status_code, 201, imported.text)
             result = imported.json()
+            profile = self.target.store.put_doc(
+                RenderProfile(name="API profile", dialect="natural")
+            )
             body = {
                 "episode_id": result["episode_ids"][0],
                 "preset_ids": result["preset_ids"],
                 "idempotency_key": "api-album",
+                "profile_id": profile.id,
             }
             preview = client.post(
                 f"/api/v2/creation-kits/{result['series_id']}/preview", headers=headers, json=body
             )
             self.assertEqual(preview.status_code, 200, preview.text)
+            self.assertEqual(preview.json()["profile_id"], profile.id)
+            self.assertEqual(preview.json()["panels"][0]["profile_id"], profile.id)
             assembled = client.post(
                 f"/api/v2/creation-kits/{result['series_id']}/assemble", headers=headers, json=body
             )
             self.assertEqual(assembled.status_code, 201, assembled.text)
+            self.assertEqual(assembled.json()["series"]["default_profile_id"], profile.id)
             self.assertEqual(len(client.get("/api/v2/creation-kits", headers=headers).json()), 1)
             self.assertEqual(len(client.get("/api/v2/series", headers=headers).json()), 1)
             self.assertEqual(self.target.engine.list(), [])

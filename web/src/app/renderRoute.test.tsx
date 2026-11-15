@@ -185,10 +185,9 @@ describe('render routes', () => {
     renderWithProviders(<AssembleDialog onClose={vi.fn()} />);
     const dialog = await screen.findByRole('dialog');
     await within(dialog).findByText('纯云端出图 · 主力图像服务');
-    fireEvent.change(within(dialog).getByLabelText('出图配置'), {
-      target: { value: configProfile.id },
-    });
-    await within(dialog).findByText('本地 ComfyUI');
+    fireEvent.change(within(dialog).getByLabelText('图像服务'), { target: { value: 'local' } });
+    expect(within(dialog).getByLabelText('出图配置')).toHaveValue(configProfile.id);
+    fireEvent.change(within(dialog).getByLabelText('图像服务'), { target: { value: 'cloud' } });
     fireEvent.change(within(dialog).getByLabelText('出图配置'), { target: { value: cloud.id } });
     fireEvent.click(within(dialog).getByRole('button', { name: '下一步' }));
     fireEvent.click(within(dialog).getByRole('button', { name: '下一步' }));

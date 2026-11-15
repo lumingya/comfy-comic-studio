@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AssembleVars, AssemblyPreview, Preset } from '../../api/workshop';
-import { configurationRoutes } from '../../test/configuration';
+import { configProfile, configurationRoutes } from '../../test/configuration';
 import { episode, series } from '../../test/fixtures';
 import { mockFetch, renderWithProviders } from '../../test/utils';
 import AssembleDialog from './AssembleDialog';
@@ -58,6 +58,116 @@ async function mount() {
   next();
 }
 afterEach(() => vi.unstubAllGlobals());
+
+describe('assembly image service selection', () => {
+  it('switches actual profiles with the service and sends only the selected cloud snapshot', async () => {
+    const cloud = {
+      ...configProfile,
+      id: 'cloud',
+      name: 'Cloud profile',
+      cloud_shape: true,
+      cloud_channel: 'images',
+    };
+    const calls = mockFetch({
+      ...routes(),
+      'GET /api/profiles': [cloud, configProfile],
+      'POST /api/workshop/assemble/preview': preview,
+      'POST /api/workshop/assemble': { series, episode },
+    });
+    renderWithProviders(<AssembleDialog onClose={vi.fn()} />);
+    await screen.findByRole('option', { name: /Story/ });
+    const service = screen.getByLabelText('图像服务');
+    const profile = screen.getByLabelText('出图配置');
+    expect(service).toHaveValue('local');
+    expect(profile).toHaveValue('');
+    fireEvent.change(service, { target: { value: 'cloud' } });
+    expect(profile).toHaveValue('cloud');
+    expect(within(profile).queryByRole('option', { name: configProfile.name })).toBeNull();
+    expect(screen.getByText('纯云端出图 · 主力图像服务')).toBeVisible();
+    fireEvent.change(service, { target: { value: 'local' } });
+    expect(profile).toHaveValue('');
+    fireEvent.change(service, { target: { value: 'cloud' } });
+    next();
+    next();
+    await waitFor(() =>
+      expect(calls.find((call) => call.url.endsWith('/assemble/preview'))?.body).toMatchObject({
+        profile_id: 'cloud',
+      }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: '添加待命任务' }));
+    await waitFor(() =>
+      expect(calls.find((call) => call.url === '/api/workshop/assemble')?.body).toMatchObject({
+        profile_id: 'cloud',
+      }),
+    );
+    expect(
+      calls
+        .filter((call) => call.method !== 'GET')
+        .every((call) => call.url.startsWith('/api/workshop/assemble')),
+    ).toBe(true);
+  });
+
+  it('blocks missing-service submission in both modes and links to configuration', async () => {
+    const calls = mockFetch(routes());
+    const close = vi.fn();
+    renderWithProviders(<AssembleDialog onClose={close} />);
+    await screen.findByRole('option', { name: /Story/ });
+    fireEvent.change(screen.getByLabelText('图像服务'), { target: { value: 'cloud' } });
+    expect(screen.getByLabelText('出图配置')).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent('尚未选择纯云端出图的出图配置');
+    expect(screen.getByRole('button', { name: '下一步' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: '画布连线' }));
+    fireEvent.click(screen.getByRole('button', { name: '调入分镜' }));
+    fireEvent.click(screen.getByRole('button', { name: '调入预设' }));
+    screen
+      .getAllByRole('checkbox', { hidden: true })
+      .forEach((checkbox) => fireEvent.click(checkbox));
+    expect(screen.getByRole('button', { name: '批量生成 · 加入待命' })).toBeDisabled();
+    expect(calls.some((call) => call.method !== 'GET')).toBe(false);
+    const configure = screen.getByRole('link', { name: '管理出图配置' });
+    expect(configure).toHaveAttribute('href', '/engine?tab=profiles');
+    fireEvent.click(configure);
+    expect(close).toHaveBeenCalledOnce();
+  });
+
+  it('preserves a source hybrid profile and panel-specific configuration warning', async () => {
+    mockFetch({
+      ...routes(),
+      'GET /api/workshop': { ...series, id: 'ws', default_profile_id: 'mixed' },
+      'GET /api/profiles': [
+        configProfile,
+        {
+          ...configProfile,
+          id: 'mixed',
+          name: 'Mixed profile',
+          cloud_shape: true,
+          cloud_refine: true,
+        },
+      ],
+      'GET /api/episodes/sb': {
+        ...episode,
+        id: 'sb',
+        panels: [
+          {
+            ...episode.panels[0],
+            overrides: { ...episode.panels[0].overrides, profile_id: configProfile.id },
+          },
+        ],
+      },
+    });
+    renderWithProviders(<AssembleDialog onClose={vi.fn()} />);
+    await screen.findByRole('option', { name: /Story/ });
+    expect(screen.getByLabelText('图像服务')).toHaveValue('hybrid');
+    expect(screen.getByLabelText('出图配置')).toHaveValue('');
+    await screen.findByText('部分分幕单独指定了出图配置，生成时优先使用分幕设置。');
+    expect(screen.getByRole('button', { name: '下一步' })).toBeEnabled();
+    fireEvent.change(screen.getByLabelText('图像服务'), { target: { value: 'local' } });
+    expect(screen.getByLabelText('出图配置')).toHaveValue(configProfile.id);
+    fireEvent.change(screen.getByLabelText('图像服务'), { target: { value: 'hybrid' } });
+    expect(screen.getByLabelText('出图配置')).toHaveValue('');
+    expect(screen.getByRole('button', { name: '下一步' })).toBeEnabled();
+  });
+});
 
 describe('assembly review and durable retry intent', () => {
   it('keeps real preset ordering and uses server substitutions with editable empty variables', async () => {

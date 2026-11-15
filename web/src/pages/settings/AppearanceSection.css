@@ -1,0 +1,22 @@
+.settings-row:has(> .appearance-setting) {
+  flex-wrap: wrap;
+}
+
+.settings-row > .appearance-setting {
+  flex: 0 0 auto;
+  width: max-content;
+  min-width: min(10.5rem, 100%);
+  max-width: 100%;
+}
+
+.settings-row:has(> .appearance-setting) > .grow {
+  flex-basis: 14rem;
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .settings-row > .appearance-setting {
+    flex-basis: 100%;
+    width: 100%;
+  }
+}

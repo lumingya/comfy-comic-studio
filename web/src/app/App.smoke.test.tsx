@@ -391,10 +391,13 @@ describe('every route mounts with API data', () => {
     cloudRoutes();
     mount('/workshop/assembly?new=1');
     const dialog = await screen.findByRole('dialog', { name: '新建生成任务' });
-    await within(dialog).findByText('本地 ComfyUI');
-    fireEvent.change(within(dialog).getByLabelText('出图配置'), {
-      target: { value: cloudProfile.id },
+    const service = within(dialog).getByRole('combobox', { name: '图像服务' });
+    await waitFor(() => expect(service).toBeEnabled());
+    expect(service).toHaveValue('local');
+    fireEvent.change(service, {
+      target: { value: 'cloud' },
     });
+    expect(within(dialog).getByRole('combobox', { name: '出图配置' })).toHaveValue(cloudProfile.id);
     await within(dialog).findByText('纯云端出图 · 主力图像服务');
     expect(screen.getByRole('link', { name: '出图配置' })).toHaveAttribute(
       'href',
@@ -736,13 +739,17 @@ describe('every route mounts with API data', () => {
   });
 
   it('装配: the 3-step wizard adds a standby task without generating', async () => {
+    responses['GET /api/profiles'] = [configProfile];
     mount('/workshop/assembly');
     expect(await screen.findByText('等待你的安排')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '新建生成任务' }));
     await screen.findByRole('dialog', { name: '新建生成任务' });
     await screen.findByRole('option', { name: /海风来信/ });
+    await waitFor(() => expect(screen.getByRole('button', { name: '下一步' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: '下一步' }));
-    expect(await screen.findByText(/下一步可核对实际替换结果/)).toBeInTheDocument();
+    expect(await screen.findByRole('checkbox', { name: /林夏/ })).toBeChecked();
+    expect(screen.getByRole('list', { name: '预设应用顺序' })).toHaveTextContent('林夏');
+    expect(screen.getByRole('button', { name: '下一步' })).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: '下一步' }));
     expect(
       await screen.findByRole('button', { name: /第 1 幕.*原始提示词.*天气.*未定义/ }),

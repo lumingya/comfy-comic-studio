@@ -327,14 +327,26 @@ def kit(ctx, series_id):
     return series
 
 
+def _assembly_snapshot(ctx, series_id: str, request: KitAssembly):
+    source = kit(ctx, series_id)
+    episode = ctx.store.get_episode(request.episode_id)
+    snapshot = build_snapshot(
+        source,
+        episode,
+        request.preset_ids,
+        request.title,
+        profile_id=request.profile_id,
+        variables=request.variables,
+    )
+    if snapshot.series.default_profile_id:
+        ctx.store.get_doc("profile", snapshot.series.default_profile_id)
+    return snapshot
+
+
 def preview_kit(ctx, series_id: str, request: KitAssembly):
     with ctx.store.lock:
-        source = kit(ctx, series_id)
-        episode = ctx.store.get_episode(request.episode_id)
-        snapshot = build_snapshot(
-            source, episode, request.preset_ids, request.title, variables=request.variables
-        )
-        return inspect_snapshot(ctx.store, snapshot, episode.id)
+        snapshot = _assembly_snapshot(ctx, series_id, request)
+        return inspect_snapshot(ctx.store, snapshot, request.episode_id)
 
 
 def assemble_kit(ctx, series_id: str, request: KitAssembly):
@@ -344,11 +356,7 @@ def assemble_kit(ctx, series_id: str, request: KitAssembly):
         previous = ctx.store.assembly_receipt(key, sha)
         if previous:
             return previous
-        source = kit(ctx, series_id)
-        episode = ctx.store.get_episode(request.episode_id)
-        snapshot = build_snapshot(
-            source, episode, request.preset_ids, request.title, variables=request.variables
-        )
+        snapshot = _assembly_snapshot(ctx, series_id, request)
         return ctx.store.create_assembly(
             snapshot.series, snapshot.episode, idempotency_key=key, request_sha=sha
         )

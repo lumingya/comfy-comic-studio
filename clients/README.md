@@ -158,7 +158,8 @@ assembled = mio.assemble(request)
 
 导入结果是独立 `kind=kit` 资源，用 `/creation-kits` 列出，不混入画册书架。
 `POST /creation-kits/{series_id}/preview` 和 `/assemble` 接受 `episode_id/preset_ids/title/variables/idempotency_key`，
-使用同一装配规则生成独立作品。模板修改不追改已装配作品。未绑定配置允许编辑与预览，生成前须
+可选 `profile_id` 覆盖本次作品的默认出图配置，省略则沿用套装；逐格配置仍优先。预览与装配共用校验，
+配置变更参与幂等请求比对，不改写源套装。模板修改不追改已装配作品。未绑定配置允许编辑与预览，生成前须
 通过出图配置 API 设置服务并将 `binding_required` 设为 `false`。所有操作无需自动调用模型。
 
 ### 已收到结果的恢复

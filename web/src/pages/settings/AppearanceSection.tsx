@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { useUI, DENSITY_OPTS, FONT_SCALE_OPTS, LETTERING_OPTS } from '../../app/ui-store';
 import { Icon, type IconName } from '../../app/icons';
+import { Select } from '../../components/ui';
 import type { ReactNode } from 'react';
+import './AppearanceSection.css';
 
 function SettingsRow(props: { icon: IconName; title: string; body: string; control: ReactNode }) {
   return (
@@ -16,26 +18,21 @@ function SettingsRow(props: { icon: IconName; title: string; body: string; contr
   );
 }
 
-function Select<K extends string>(props: {
-  id?: string;
+function SettingSelect<K extends string>(props: {
+  label: string;
   value: K;
   options: readonly K[];
   labels: Record<K, string>;
   onChange: (v: K) => void;
 }) {
   return (
-    <select
-      id={props.id}
-      className="inline-setting"
+    <Select
+      aria-label={props.label}
+      className="appearance-setting"
       value={props.value}
-      onChange={(e) => props.onChange(e.target.value as K)}
-    >
-      {props.options.map((v) => (
-        <option key={v} value={v}>
-          {props.labels[v]}
-        </option>
-      ))}
-    </select>
+      onChange={props.onChange}
+      options={props.options.map((value) => ({ value, label: props.labels[value] }))}
+    />
   );
 }
 
@@ -72,7 +69,8 @@ export function AppearanceSection() {
           title={t('legacy.settings.preferences.lettering')}
           body={t('legacy.settings.preferences.letteringHint')}
           control={
-            <Select
+            <SettingSelect
+              label={t('legacy.settings.preferences.lettering')}
               value={lettering}
               options={LETTERING_OPTS}
               labels={{
@@ -89,7 +87,8 @@ export function AppearanceSection() {
           title={t('legacy.settings.preferences.fontScale')}
           body={t('legacy.settings.preferences.fontScaleHint')}
           control={
-            <Select
+            <SettingSelect
+              label={t('legacy.settings.preferences.fontScale')}
               value={fontScale}
               options={FONT_SCALE_OPTS}
               labels={{
@@ -106,7 +105,8 @@ export function AppearanceSection() {
           title={t('legacy.settings.preferences.density')}
           body={t('legacy.settings.preferences.densityHint')}
           control={
-            <Select
+            <SettingSelect
+              label={t('legacy.settings.preferences.density')}
               value={density}
               options={DENSITY_OPTS}
               labels={{
@@ -126,6 +126,7 @@ export function AppearanceSection() {
               <input
                 type="checkbox"
                 role="switch"
+                aria-label={t('legacy.settings.preferences.reduceMotion')}
                 checked={reduceMotion}
                 onChange={(e) => setReduceMotion(e.target.checked)}
               />
@@ -142,7 +143,8 @@ export function AppearanceSection() {
           title={t('legacy.settings.preferences.defaultReaderMode')}
           body={t('legacy.settings.preferences.defaultReaderModeHint')}
           control={
-            <Select
+            <SettingSelect
+              label={t('legacy.settings.preferences.defaultReaderMode')}
               value={defaultReaderMode}
               options={['webtoon', 'spread', 'gallery']}
               labels={{
@@ -161,15 +163,15 @@ export function AppearanceSection() {
           <label className="label" htmlFor="ui-language">
             {t('legacy.settings.language')}
           </label>
-          <select
+          <Select
             id="ui-language"
-            className="input"
             value={i18n.language === 'en' ? 'en' : 'zh-CN'}
-            onChange={(e) => setLocale(e.target.value)}
-          >
-            <option value="zh-CN">简体中文</option>
-            <option value="en">English</option>
-          </select>
+            onChange={setLocale}
+            options={[
+              { value: 'zh-CN', label: '简体中文' },
+              { value: 'en', label: 'English' },
+            ]}
+          />
         </div>
       </section>
     </>

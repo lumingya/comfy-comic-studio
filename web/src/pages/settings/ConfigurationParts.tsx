@@ -51,10 +51,11 @@ export function ConfigurationSaveBar({
   onCancel: () => void;
 }) {
   const { t } = useTranslation();
+  if (!dirty && !pending) return null;
   return (
     <div className="config-save-bar" role="status">
       <span className={`grow small ${dirty ? 'warn-text' : 'muted'}`}>
-        {pending ? t('config.saving') : dirty ? t('config.unsaved') : t('common.saved')}
+        {pending ? t('config.saving') : t('config.unsaved')}
       </span>
       {dirty ? (
         <button type="button" className="btn ghost" disabled={pending} onClick={onCancel}>

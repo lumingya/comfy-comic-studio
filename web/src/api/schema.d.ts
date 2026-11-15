@@ -3809,6 +3809,8 @@ export interface components {
              * @default
              */
             title?: string;
+            /** Profile Id */
+            profile_id?: string | null;
             /** Variables */
             variables?: {
                 [key: string]: string;
