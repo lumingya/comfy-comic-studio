@@ -16,6 +16,9 @@ type CatalogState = {
   error?: string;
 };
 
+// Plugin-rich ComfyUI installations can expose thousands of model choices.
+const VISIBLE_MODEL_LIMIT = 100;
+
 export function ModelCatalog({
   request,
   selected = [],
@@ -146,7 +149,7 @@ export function ModelCatalog({
                   </label>
                   {models.length ? (
                     <ul className="model-catalog-list">
-                      {models.map((model) => {
+                      {models.slice(0, VISIBLE_MODEL_LIMIT).map((model) => {
                         const chosen = selected.includes(model.id);
                         const content = (
                           <>
@@ -184,6 +187,11 @@ export function ModelCatalog({
                       {t('config.models.noMatches')}
                     </p>
                   )}
+                  {models.length > VISIBLE_MODEL_LIMIT ? (
+                    <p className="small muted" role="status">
+                      {t('config.models.limited', { count: VISIBLE_MODEL_LIMIT })}
+                    </p>
+                  ) : null}
                 </>
               ) : (
                 <p className="small muted">

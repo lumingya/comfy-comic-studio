@@ -197,3 +197,31 @@ it('does not fetch while the parent configuration is unavailable', async () => {
   await userEvent.click(button);
   expect(calls).toHaveLength(0);
 });
+
+it('bounds a large model list while still searching and selecting from the entire catalog', async () => {
+  // The local ComfyUI discovery returned 12,078 plugin/model choices during live validation.
+  const calls = mockFetch({
+    'POST /api/settings/models': {
+      source: 'remote',
+      models: Array.from({ length: 12078 }, (_, index) => ({
+        id: `installed-model-${index}`,
+        group: 'CustomPlugin.model',
+      })),
+    },
+  });
+  const select = vi.fn();
+  render(<ModelCatalog request={request} onSelect={select} />);
+  await userEvent.click(screen.getByRole('button', { name: '获取模型' }));
+  expect(await screen.findByText('共 12078 个模型')).toBeInTheDocument();
+  expect(screen.getAllByRole('listitem')).toHaveLength(100);
+  expect(screen.getByText('显示前 100 项，请搜索缩小范围')).toBeInTheDocument();
+  expect(screen.queryByText('installed-model-12077')).toBeNull();
+  fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'installed-model-12077' } });
+  expect(screen.getAllByRole('listitem')).toHaveLength(1);
+  expect(screen.queryByText('显示前 100 项，请搜索缩小范围')).toBeNull();
+  await userEvent.click(
+    screen.getByRole('button', { name: 'installed-model-12077 CustomPlugin.model' }),
+  );
+  expect(select).toHaveBeenCalledWith('installed-model-12077');
+  expect(calls).toHaveLength(1);
+});
