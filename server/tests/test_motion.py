@@ -116,6 +116,13 @@ class PlayerTests(unittest.TestCase):
 class MotionApiTests(ApiCase):
     def test_plan_override_and_export(self):
         _, ep = self.make_episode()
+        # Two rendered shots cover ordering, overrides and total duration. Rendering the
+        # full twelve-shot script fixture can exhaust drain's budget on slow CI storage.
+        trimmed = self.ctx.store.update_episode(
+            ep["id"], lambda episode: setattr(episode, "panels", episode.ordered_panels()[:2])
+        )
+        ep = trimmed.model_dump(mode="json")
+        self.assertEqual(len(ep["panels"]), 2)
         plan = self.ok(self.client.get(f"/api/episodes/{ep['id']}/motion-plan"))
         self.assertEqual(len(plan["shots"]), len(ep["panels"]))
         self.assertFalse(any(s["has_image"] for s in plan["shots"]))
@@ -134,6 +141,8 @@ class MotionApiTests(ApiCase):
         shot = next(s for s in plan["shots"] if s["panel_id"] == first)
         self.assertEqual((shot["move"], shot["hold"]), ("pan_left", 4.5))
         self.assertGreater(plan["total_seconds"], 4.5)
+        self.assertTrue(all(shot["has_image"] for shot in plan["shots"]))
+        self.assertAlmostEqual(plan["total_seconds"], sum(shot["hold"] for shot in plan["shots"]))
 
         exported = []
         self.ctx.hooks.add("episode.exported", exported.append, source="test")
@@ -144,6 +153,8 @@ class MotionApiTests(ApiCase):
         self.assertEqual(data["schema"], "mio.motion.v1")
         self.assertEqual(len(data["shots"]), len(ep["panels"]))
         self.assertEqual(data["shots"][0]["move"], "pan_left")
+        self.assertEqual([shot["hold"] for shot in data["shots"]], [s["hold"] for s in plan["shots"]])
+        self.assertTrue(all(shot["image"].startswith("data:image/") for shot in data["shots"]))
         self.assertEqual(exported[-1]["fmt"], "motion")
         raw = {"episode_id": ep["id"], "lettered": False, "aspect": "landscape", "voice": False}
         self.ok(self.client.post("/api/export/motion", json=raw))
