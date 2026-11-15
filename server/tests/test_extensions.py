@@ -103,7 +103,13 @@ class ExtensionApiTests(ApiCase):
         self.assertIn("square", presets)
 
         _, ep = self.make_episode()
-        self.adopt_all(ep)
+        # One rendered panel proves the prompt hook is active; the other eleven fixture
+        # panels only add unrelated disk work to drain's deadline on slower Windows CI.
+        trimmed = self.ctx.store.update_episode(
+            ep["id"], lambda episode: setattr(episode, "panels", episode.ordered_panels()[:1])
+        )
+        self.adopt_all(trimmed.model_dump(mode="json"))
+        self.assertEqual(len(FakeClient.graphs), 1)
         self.assertIn("ext_marker_tag", json.dumps(FakeClient.graphs, ensure_ascii=False))
 
         client = TestClient(create_app(self.ctx, serve_web=False), base_url=LOCAL)  # "restart"
