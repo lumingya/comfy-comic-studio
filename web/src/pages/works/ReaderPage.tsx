@@ -581,7 +581,6 @@ export default function ReaderPage() {
                     .filter((p) => p.displayCaption)
                     .map((p) => (
                       <div className="scroll-caption" key={p.id}>
-                        <strong>{p.title}</strong>
                         <p>{p.displayCaption}</p>
                       </div>
                     ))}
@@ -598,7 +597,7 @@ export default function ReaderPage() {
         ) : null}
         {cur && nativeStage ? (
           <aside className="room-info" id="room-info" hidden={!info} aria-label={t('reader.info')}>
-            <h3>{cur.title || t('reader.pageN', { n: current + 1 })}</h3>
+            <h3>{t('reader.pageN', { n: current + 1 })}</h3>
             <p>{cur.caption || t('reader.noCaption')}</p>
           </aside>
         ) : null}
@@ -685,7 +684,7 @@ export default function ReaderPage() {
           ) : (
             <span className="spacer" />
           )}
-          <span className="room-scene-title">{nativeStage ? cur?.title : null}</span>
+          <span className="room-scene-title" aria-hidden="true" />
           {nativeStage ? (
             <>
               <button

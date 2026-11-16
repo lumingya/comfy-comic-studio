@@ -184,6 +184,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
                 stage_values=stage.values,
                 slot_overrides=slot,
                 rules=rules,
+                registry=self.engine.registry,
             )
         except LibraryError as exc:
             warnings.append(f"LoRA 未写入（{exc}），按工作流原样运行")
@@ -194,6 +195,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
                 overrides={**stage.overrides, **(overrides or {})},
                 stage_values=stage.values,
                 rules=rules,
+                registry=self.engine.registry,
             )
         except B.BindingError as exc:
             raise RenderError(f"{doc.name}：{exc}") from None
@@ -201,10 +203,11 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         data["graph"] = self.hooks.filter(
             "render.workflow", data["graph"], workflow_id=doc.id, stage=stage.kind
         )
-        from ..comfy.compile import validate_plan
+        from ..comfy.compile import validate_outputs, validate_plan
 
         try:
-            validate_plan(data["graph"], data["frontend_state"])
+            validate_plan(data["graph"], data["frontend_state"], self.engine.registry)
+            validate_outputs(data["graph"], data["output_adapters"], self.engine.registry)
         except B.BindingError as exc:
             raise RenderError(f"{doc.name}：{exc}") from None
         data["warnings"] = warnings + data["warnings"]
@@ -228,11 +231,17 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         if not active:
             raise RenderError("出图配置里没有启用的阶段")
         for n, stage in enumerate(active):
+            if stage.feed_output and (n == 0 or stage.feed != "previous"):
+                raise RenderError("输出选择只适用于接收上一阶段图片的后续阶段")
             chained = (n > 0 or start_with_previous) and stage.feed == "previous"
             values = dict(first_values if n == 0 else later_values)
             if chained and n > 0:
                 values["init"] = asset_value(PREVIOUS)
             data, feed, _ = self._compile_stage(stage, values, overrides, loras)
+            if stage.feed_output:
+                if stage.feed_output.node_id not in compiled[-1]["outputs"]:
+                    raise RenderError(f"上一阶段没有输出节点 {stage.feed_output.node_id}")
+                data["feed_output"] = stage.feed_output.model_dump()
             if chained and n > 0 and not feed:
                 raise RenderError(
                     f"阶段 {stage.id} 要接收上一阶段的图片，但工作流没有 [mio:init] 输入"

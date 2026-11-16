@@ -17,7 +17,13 @@ const defaultDraft: ExportDraft = {
   preset: 'webtoon',
   quality: 'q90',
 };
+const completed = { id: 'job_export', state: 'completed', items: [] };
 const routes = () => ({
+  'POST /api/export/jobs/album': completed,
+  'POST /api/export/jobs/portable': completed,
+  'POST /api/export/jobs/strip': completed,
+  'GET /api/jobs/job_export': completed,
+  'GET /api/export/jobs/job_export/file': {},
   'GET /api/export/presets': [
     { id: 'webtoon', label: '条漫平台', width: 800, max_height: 1280, format: 'JPEG' },
     { id: 'kuaikan', label: '国内平台', width: 750, max_height: 1500, format: 'JPEG' },
@@ -30,6 +36,7 @@ const run = () => fireEvent.click(screen.getByRole('button', { name: '导出' })
 function mount(overrides: Partial<ComponentProps<typeof PresentationDrawer>> = {}) {
   const onPlatform = vi.fn();
   const onClose = vi.fn();
+  let current = overrides;
   function Harness() {
     const [draft, setDraft] = useState(defaultDraft);
     const [look, setLook] = useState('export-paper');
@@ -55,12 +62,19 @@ function mount(overrides: Partial<ComponentProps<typeof PresentationDrawer>> = {
         title="海风来信"
         lettered
         onPlatform={onPlatform}
-        {...overrides}
+        {...current}
       />
     );
   }
-  renderWithProviders(<Harness />);
-  return { onPlatform, onClose };
+  const view = renderWithProviders(<Harness />);
+  return {
+    onPlatform,
+    onClose,
+    rerender: (patch: typeof overrides) => {
+      current = { ...current, ...patch };
+      view.rerender(<Harness />);
+    },
+  };
 }
 
 beforeEach(() => {
@@ -81,8 +95,8 @@ it.each(['html', 'pdf', 'zip'])(
   async (format) => {
     const calls = mockFetch({
       ...routes(),
-      'POST /api/export/album': {},
-      'POST /api/export/portable': {},
+      'POST /api/export/jobs/album': completed,
+      'POST /api/export/jobs/portable': completed,
     });
     mount();
     choose(format);
@@ -94,10 +108,12 @@ it.each(['html', 'pdf', 'zip'])(
       fireEvent.change(screen.getByLabelText('画册版式'), { target: { value: 'export-gallery' } });
     fireEvent.change(screen.getByLabelText(/^图片处理/), { target: { value: 'publish' } });
     run();
-    expect(await screen.findByRole('status')).toHaveTextContent('文件已下载');
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
     const requests = calls.filter((call) => call.method === 'POST');
     expect(requests).toHaveLength(1);
-    expect(requests[0].url).toBe(format === 'html' ? '/api/export/album' : '/api/export/portable');
+    expect(requests[0].url).toBe(
+      format === 'html' ? '/api/export/jobs/album' : '/api/export/jobs/portable',
+    );
     expect(requests[0].body).toMatchObject({
       episode_ids: ['ep_1'],
       title: '海风来信',
@@ -114,14 +130,14 @@ it.each(['html', 'pdf', 'zip'])(
   async (format) => {
     const calls = mockFetch({
       ...routes(),
-      'POST /api/export/album': {},
-      'POST /api/export/portable': {},
+      'POST /api/export/jobs/album': completed,
+      'POST /api/export/jobs/portable': completed,
     });
     const title = '海'.repeat(150);
     mount({ title });
     choose(format);
     run();
-    expect(await screen.findByRole('status')).toHaveTextContent('文件已下载');
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
     const requests = calls.filter((call) => call.method === 'POST');
     expect(requests).toHaveLength(1);
     expect(requests[0].body).toMatchObject({ title: title.slice(0, 120) });
@@ -140,19 +156,23 @@ it('exports slices with the chosen platform and quality', async () => {
   fireEvent.change(screen.getByLabelText('平台预设'), { target: { value: 'kuaikan' } });
   fireEvent.change(screen.getByLabelText('画质'), { target: { value: 'lossless' } });
   run();
-  expect(await screen.findByRole('status')).toHaveTextContent('文件已下载');
-  const requests = calls.filter((call) => call.url.includes('/ep_1/export?'));
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
+  const requests = calls.filter((call) => call.url === '/api/export/jobs/strip');
   expect(requests).toHaveLength(1);
-  expect(requests[0].url).toBe('/api/episodes/ep_1/export?fmt=slices&preset=kuaikan&quality=0');
-  expect(calls.some((call) => call.method === 'POST')).toBe(false);
+  expect(requests[0].body).toMatchObject({
+    episode_id: 'ep_1',
+    fmt: 'slices',
+    preset: 'kuaikan',
+    quality: 0,
+  });
   choose('html');
   expect(onPlatform).toHaveBeenLastCalledWith(false);
 });
 
 it.each([
-  ['lossless', ''],
-  ['q90', '&quality=90'],
-])(
+  ['lossless', null],
+  ['q90', 90],
+] as const)(
   'exports a long image with %s quality and no ineffective platform settings',
   async (quality, query) => {
     const calls = mockFetch({ ...routes(), 'GET /api/episodes/ep_1/export': {} });
@@ -169,11 +189,15 @@ it.each([
     expect(screen.queryByLabelText('画册版式')).toBeNull();
     fireEvent.change(screen.getByLabelText('画质'), { target: { value: quality } });
     run();
-    expect(await screen.findByRole('status')).toHaveTextContent('文件已下载');
-    const requests = calls.filter((call) => call.url.includes('/ep_1/export?'));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
+    const requests = calls.filter((call) => call.url === '/api/export/jobs/strip');
     expect(requests).toHaveLength(1);
-    expect(requests[0].url).toBe(`/api/episodes/ep_1/export?fmt=long${query}`);
-    expect(calls.some((call) => call.method === 'POST')).toBe(false);
+    expect(requests[0].body).toMatchObject({
+      episode_id: 'ep_1',
+      fmt: 'long',
+      preset: 'webtoon',
+      quality: query,
+    });
   },
 );
 
@@ -188,7 +212,7 @@ it('downloads the entire editable source without requiring a selected episode', 
   expect(screen.queryByLabelText('套装名称')).toBeNull();
   expect(screen.getByText('导出整本作品')).toBeInTheDocument();
   run();
-  expect(await screen.findByRole('status')).toHaveTextContent('文件已下载');
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('文件已下载'));
   expect(calls.filter((call) => call.url.includes('/bundle'))).toEqual([
     { method: 'GET', url: '/api/series/ser_1/bundle', body: undefined },
   ]);
@@ -218,7 +242,7 @@ it('includes only selected storyboards and presets in a creation kit, including 
   expect(screen.queryByLabelText('画册版式')).toBeNull();
   expect(screen.queryByLabelText(/^图片处理/)).toBeNull();
   run();
-  expect(await screen.findByRole('status')).toHaveTextContent('文件已下载');
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('文件已下载'));
   expect(calls.filter((call) => call.method === 'POST')).toEqual([
     {
       method: 'POST',
@@ -238,10 +262,10 @@ it('keeps the selected format after an export error and retries the same endpoin
   let attempts = 0;
   const calls = mockFetch({
     ...routes(),
-    'POST /api/export/portable': () =>
+    'POST /api/export/jobs/portable': () =>
       ++attempts === 1
         ? new Response(JSON.stringify({ detail: '导出暂时失败' }), { status: 503 })
-        : {},
+        : completed,
   });
   mount();
   choose('pdf');
@@ -251,9 +275,164 @@ it('keeps the selected format after an export error and retries the same endpoin
   expect(screen.getByRole('button', { name: '导出' })).toBeEnabled();
   run();
   await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
-  expect(await screen.findByRole('status')).toHaveTextContent('文件已下载');
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
   expect(calls.filter((call) => call.method === 'POST').map((call) => call.url)).toEqual([
-    '/api/export/portable',
-    '/api/export/portable',
+    '/api/export/jobs/portable',
+    '/api/export/jobs/portable',
   ]);
+  const posts = calls.filter((call) => call.method === 'POST');
+  expect(posts[0].body).toEqual(posts[1].body);
+});
+
+it('cancels the active export and retries that frozen job without a second submission', async () => {
+  let state = 'running';
+  const calls = mockFetch({
+    ...routes(),
+    'POST /api/export/jobs/album': { ...completed, state },
+    'GET /api/jobs/job_export': () => ({ ...completed, state }),
+    'POST /api/jobs/job_export/cancel': () => {
+      state = 'canceled';
+      return { ...completed, state };
+    },
+    'POST /api/jobs/job_export/retry': () => {
+      state = 'completed';
+      return completed;
+    },
+  });
+  mount();
+  run();
+  fireEvent.click(await screen.findByRole('button', { name: '取消' }));
+  await screen.findByRole('alert');
+  run();
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
+  expect(calls.filter((call) => call.method === 'POST').map((call) => call.url)).toEqual([
+    '/api/export/jobs/album',
+    '/api/jobs/job_export/cancel',
+    '/api/jobs/job_export/retry',
+  ]);
+});
+
+it('retries a failed task and downloads its result instead of rendering a new snapshot', async () => {
+  let failed = true;
+  const calls = mockFetch({
+    ...routes(),
+    'GET /api/jobs/job_export': () =>
+      failed
+        ? {
+            ...completed,
+            state: 'failed',
+            items: [{ error: { message: '磁盘空间不足' } }],
+          }
+        : completed,
+    'POST /api/jobs/job_export/retry': () => {
+      failed = false;
+      return completed;
+    },
+  });
+  mount();
+  run();
+  expect(await screen.findByRole('alert')).toHaveTextContent('磁盘空间不足');
+  run();
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
+  expect(calls.filter((call) => call.method === 'POST').map((call) => call.url)).toEqual([
+    '/api/export/jobs/album',
+    '/api/jobs/job_export/retry',
+  ]);
+});
+
+it('recovers a lost submission response using the same idempotency key', async () => {
+  let lost = true;
+  const calls = mockFetch({
+    ...routes(),
+    'POST /api/export/jobs/album': () => {
+      if (lost) {
+        lost = false;
+        throw new TypeError('network interrupted');
+      }
+      return completed;
+    },
+  });
+  mount();
+  run();
+  expect(await screen.findByRole('alert')).toHaveTextContent('network interrupted');
+  run();
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
+  const posts = calls.filter((call) => call.method === 'POST');
+  expect(posts).toHaveLength(2);
+  expect(posts[0].body).toEqual(posts[1].body);
+  expect(posts[0].body).toMatchObject({ idempotency_key: expect.stringMatching(/^export-/) });
+});
+
+it('downloads a completed result again after a network failure without retrying the task', async () => {
+  let lost = true;
+  const calls = mockFetch({
+    ...routes(),
+    'GET /api/export/jobs/job_export/file': () => {
+      if (lost) {
+        lost = false;
+        throw new TypeError('download interrupted');
+      }
+      return {};
+    },
+  });
+  mount();
+  run();
+  expect(await screen.findByRole('alert')).toHaveTextContent('download interrupted');
+  run();
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
+  expect(calls.filter((call) => call.method === 'POST')).toHaveLength(1);
+  expect(calls.filter((call) => call.url.endsWith('/file'))).toHaveLength(2);
+});
+
+it('starts a fresh export after a successful download so later edits are included', async () => {
+  const calls = mockFetch(routes());
+  mount();
+  run();
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
+  run();
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
+  const posts = calls.filter((call) => call.method === 'POST');
+  expect(posts).toHaveLength(2);
+  expect(posts[0].body).not.toEqual(posts[1].body);
+});
+
+it('closes while an export runs and resumes waiting when reopened without canceling or resubmitting', async () => {
+  let state = 'running';
+  const calls = mockFetch({
+    ...routes(),
+    'GET /api/jobs/job_export': () => ({ ...completed, state }),
+  });
+  const view = mount();
+  run();
+  await screen.findByRole('button', { name: '取消' });
+  const close = screen.getByRole('button', { name: '收起模板与导出' });
+  expect(close).toBeEnabled();
+  fireEvent.click(close);
+  expect(view.onClose).toHaveBeenCalledTimes(1);
+  view.rerender({ open: false });
+  state = 'completed';
+  view.rerender({ open: true });
+  run();
+  await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
+  expect(calls.filter((call) => call.method === 'POST')).toHaveLength(1);
+});
+
+it('clears an old task when switching episode and prevents its late result from replacing the new status', async () => {
+  let finish: ((value: unknown) => void) | undefined;
+  const calls = mockFetch({
+    ...routes(),
+    'GET /api/jobs/job_export': () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  });
+  const view = mount();
+  run();
+  await waitFor(() => expect(finish).toBeDefined());
+  view.rerender({ episodeId: 'ep_2', title: '第二话' });
+  finish!(completed);
+  await waitFor(() => expect(screen.getByRole('button', { name: '导出' })).toBeEnabled());
+  expect(screen.queryByRole('status')).toBeNull();
+  expect(screen.queryByRole('alert')).toBeNull();
+  expect(calls.some((call) => call.url.endsWith('/file'))).toBe(false);
 });

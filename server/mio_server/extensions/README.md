@@ -189,6 +189,28 @@ def deactivate():  # 可选：停用时调用
 幂等、状态、重试和结果读取。直接修改 `mio.internal.registry` 或私有引擎字段属于不稳定逃生接口，
 不享有 SDK 的生命周期、身份和恢复保证；执行器依赖发生协议变化也应更新扩展内容并重新审核。
 
+### ComfyUI 输出与插件状态
+
+`GET /api/v2/comfy-adapters` 列出适配器及其来源、摘要和契约版本。工作流配置用
+`output_adapters: {"节点 ID": {"id": "适配器 ID", "options": {}}}` 选择输出协议；
+`state_adapters: {"节点 ID": "适配器 ID"}` 选择状态协议。普通 history 图片和
+ParameterControlPanel 继续使用内置协议。新注册点不会增加默认页面。
+
+| 注册点 | 契约版本 1 |
+| --- | --- |
+| `comfy_output_adapter` | `freeze(node, options) -> JSON` 为纯函数；`collect(output, plan, transport) -> list[OutputImage]` 解析该节点的 history 输出。`OutputImage` 从 `mio_server.comfy.client` 导入，可返回图片字节或 filename/subfolder/type；核心校验图片并存入素材库。transport 只提供当前端点的 `view`。 |
+| `comfy_state_adapter` | `validate(state, *, nonempty=False)`、`change(saved, changes) -> state`、`capture(client, node_id) -> state`、`push(client, node_id, state)`。状态为 JSON 对象或列表；client 提供当前端点 HTTP 请求。核心持久记录原状态、独占端点并恢复状态，扩展不自行重做事务。 |
+
+SDK 自动绑定已审核包的来源和摘要。任务冻结该身份、输出解析计划、原状态及覆盖值，更新配置不改变已提交任务。
+缺少原适配器版本时，待执行任务阻塞且不增加尝试次数；运行中、结果不确定、待交付或待恢复状态时，禁止停用或替换其来源。
+核对和恢复使用同一解析协议，解析失败不自动重发生图。扩展 Python 代码仍是受信任代码，transport 不是安全沙盒。
+
+后续 `RenderStage` 可设置 `feed_output: {"node_id": "42", "index": 1}`，传入上一启用阶段
+节点 42 的第二张图片。未设置时沿用第一张。全部输出均保留；不存在节点或索引越界时明确失败，不回退。
+
+可安装示例：[内联图片](../../../examples/extensions/comfy-inline-images/README.md)（附无模型 Comfy 节点）和
+[参数面板协议](../../../examples/extensions/comfy-pcp-adapter/README.md)。这些示例展示已定义的协议，不承诺未知插件无需适配。
+
 ### 包装核心操作
 
 `GET /api/v2/operations` 返回核心 HTTP 操作的 ID、实际参数名称、所需权限与当前包装来源；OpenAPI 的
@@ -245,7 +267,9 @@ def activate(mio):
 规则同时参与导入检查、编译预览与实际任务冻结；优先级为明确标签 / 手动映射、扩展、核心启发式。
 规则只补充缺失的种类，不覆盖作者的显式选择；无效目标、试图写入连线或规则异常会成为诊断警告。
 停用扩展后不再使用其规则，已提交任务保留冻结结果。输出绑定选择节点，不是写输入：
-`{"kind":"output","node":"42"}`；取图仍要求 ComfyUI history 的标准 `images` 输出。
+`{"kind":"output","node":"42"}`；默认读取 ComfyUI history 的标准 `images` 输出，其他输出格式通过
+`comfy_output_adapter` 显式适配。长篇导出器可以加入[文件写入接口](../../../docs/EXPORT_JOBS.md#文件导出扩展)，
+逐区域生成并报告进度，旧式整图接口保持可用。
 
 ## 界面面板
 

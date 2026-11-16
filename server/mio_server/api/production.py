@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import Any, Literal
-from urllib.parse import quote
 
 from fastapi import Query, Response
 from pydantic import BaseModel, Field
@@ -162,9 +161,16 @@ def save_strip(ctx: Ctx, episode_id: str, strip: Strip) -> Strip:
 
 
 @router.get("/episodes/{episode_id}/strip.png")
-def strip_png(ctx: Ctx, episode_id: str, variant_id: str | None = None, width: int = 0) -> Response:
-    _, _, _, image = _render_strip(ctx, episode_id, variant_id)
-    return Response(X.long_image(image, "PNG", width), media_type="image/png")
+def strip_png(
+    ctx: Ctx,
+    episode_id: str,
+    variant_id: str | None = None,
+    width: int = Query(default=0, ge=0, le=4000),
+) -> Response:
+    return ctx.exports.response(
+        "strip",
+        {"episode_id": episode_id, "fmt": "long", "variant_id": variant_id, "preview_width": width},
+    )
 
 
 @router.get("/episodes/{episode_id}/export")
@@ -178,26 +184,16 @@ def export(
         default=None, ge=0, le=100, description="0 = lossless PNG; else JPEG / WebP quality"
     ),
 ) -> Response:
-    exporter = next((c for c in ctx.registry.all("exporter") if c.id == fmt), None)
-    if exporter is None or exporter.meta.get("interface") != "strip":
-        raise ValueError(f"未知的分镜导出格式：{fmt}")
-    slice_preset = X.with_quality(ctx.registry.get("slice_preset", preset), quality)
-    series, ep, strip, image = _render_strip(ctx, episode_id, variant_id)
-    data, mime, filename = exporter.value(
-        image,
-        strip,
-        fmt,
-        preset_id=slice_preset,
-        title=f"{series.title}_{ep.title}",
-        subtitle=ep.title,
-        quality=quality,
+    return ctx.exports.response(
+        "strip",
+        {
+            "episode_id": episode_id,
+            "fmt": fmt,
+            "preset": preset,
+            "variant_id": variant_id,
+            "quality": quality,
+        },
     )
-    ctx.hooks.action(
-        "episode.exported",
-        {"episode_id": episode_id, "fmt": fmt, "bytes": len(data), "filename": filename},
-    )
-    disposition = f"attachment; filename*=UTF-8''{quote(filename)}"
-    return Response(data, media_type=mime, headers={"Content-Disposition": disposition})
 
 
 @router.get("/export/formats")
@@ -213,17 +209,22 @@ def slice_plan(
     ctx: Ctx, episode_id: str, preset: str = "webtoon", variant_id: str | None = None
 ) -> dict:
     """Where a platform preset would cut the strip — drives the slice preview in the reader."""
+    from ..pipeline.file_export import plan_slices
+    from ..pipeline.regions import prepare_snapshot
+
     p = X.preset(ctx.registry.get("slice_preset", preset))
-    _, _, strip, image = _render_strip(ctx, episode_id, variant_id)
-    parts = X.slice_image(image, strip, p)
-    return {
-        "preset": p.id,
-        "width": parts[0].width,
-        "height": sum(part.height for part in parts),
-        "heights": [part.height for part in parts],
-        "format": p.fmt,
-        "quality": p.quality,
-    }
+    ep = ctx.store.get_episode(episode_id)
+    series = ctx.store.get_series(ep.series_id)
+    with prepare_snapshot(ctx, series, ep, variant_id) as snapshot:
+        width, height, ranges = plan_slices(snapshot.strip, p)
+        return {
+            "preset": p.id,
+            "width": width,
+            "height": height,
+            "heights": [b - a for a, b in ranges],
+            "format": p.fmt,
+            "quality": p.quality,
+        }
 
 
 @router.get("/export/presets")

@@ -556,6 +556,13 @@ class MioClient(_Base):
             params={"instance_id": instance_id},
         )
 
+    def comfy_adapters(self) -> Any:
+        """GET /comfy-adapters — Comfy Adapters.
+
+        Available adapter contracts and reviewed source identities.
+        """
+        return self._request("GET", "/comfy-adapters")
+
     def list_profiles(self) -> Any:
         """GET /profiles — List Profiles."""
         return self._request("GET", "/profiles")
@@ -745,16 +752,36 @@ class MioClient(_Base):
     def export_album(self, body: dict | list | None = None) -> Any:
         """POST /export/album — Export Album.
 
-        Self-contained offline HTML album; one book per episode.
+        Self-contained offline HTML album from an immutable document snapshot.
         """
         return self._request("POST", "/export/album", json=body)
 
     def export_portable(self, body: dict | list | None = None) -> Any:
         """POST /export/portable — Export Portable.
 
-        ZIP 图片资源包 (simple reader + image files) or PDF 图片画册 (one page per panel).
+        Write panel images to a ZIP or PDF without retaining every decoded page.
         """
         return self._request("POST", "/export/portable", json=body)
+
+    def submit_strip_export(self, body: dict | list | None = None) -> Any:
+        """POST /export/jobs/strip — Submit Strip Export."""
+        return self._request("POST", "/export/jobs/strip", json=body)
+
+    def submit_album_export(self, body: dict | list | None = None) -> Any:
+        """POST /export/jobs/album — Submit Album Export."""
+        return self._request("POST", "/export/jobs/album", json=body)
+
+    def submit_portable_export(self, body: dict | list | None = None) -> Any:
+        """POST /export/jobs/portable — Submit Portable Export."""
+        return self._request("POST", "/export/jobs/portable", json=body)
+
+    def download_export(self, job_id: str) -> Any:
+        """GET /export/jobs/{job_id}/file — Download Export."""
+        return self._request("GET", f"/export/jobs/{_q(job_id)}/file")
+
+    def delete_export(self, job_id: str) -> Any:
+        """DELETE /export/jobs/{job_id} — Delete Export."""
+        return self._request("DELETE", f"/export/jobs/{_q(job_id)}")
 
     def workspace_backup_head(self) -> Any:
         """GET /backups/head — Workspace Backup Head."""

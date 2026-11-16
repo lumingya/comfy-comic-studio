@@ -119,7 +119,10 @@ def resolve(ctx: Ctx, job_id: str, idx: int, body: ResolveRequest) -> dict:
 
 @router.delete("/jobs/{job_id}", status_code=204)
 def delete_job(ctx: Ctx, job_id: str) -> None:
+    kind = ctx.engine.get(job_id, items=False)["kind"]
     ctx.engine.delete(job_id)
+    if kind == "export.render":
+        ctx.exports.remove(job_id)
 
 
 @router.websocket("/ws/jobs")

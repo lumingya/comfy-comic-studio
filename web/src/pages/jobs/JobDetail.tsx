@@ -3,7 +3,7 @@ import { Ban, Pause, Play, RotateCcw } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { assetUrl } from '../../api/client';
+import { assetUrl, downloadFile } from '../../api/client';
 import { useJob, useJobControl, useLive, useResolveItem, useRetryJob } from '../../api/jobs';
 import type { JobItem } from '../../api/types';
 import { toastError } from '../../components/toast';
@@ -92,6 +92,16 @@ export function JobDetail({ id }: { id: string }) {
             ) : null}
           </div>
         </div>
+        {j.kind === 'export.render' && j.state === 'completed' ? (
+          <button
+            className="btn"
+            onClick={() =>
+              void downloadFile(`/api/export/jobs/${id}/file`, j.title).catch(toastError)
+            }
+          >
+            {t('common.download')}
+          </button>
+        ) : null}
         {ACTIVE.includes(j.state) && !j.paused ? (
           <button className="btn" disabled={control.isPending} onClick={() => act('pause')}>
             <Pause size={14} /> {t('jobs.pause')}

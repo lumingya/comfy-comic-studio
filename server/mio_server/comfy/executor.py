@@ -24,16 +24,36 @@ import time
 from ..jobs import ExecError, ItemContext
 from . import bindings as B
 from .client import ComfyClient, ComfyError, parse_preview  # noqa: F401  (re-export for tests)
-from .compile import PREVIOUS, asset_value, fill_placeholders, find_placeholders, validate_plan
+from .compile import (
+    PREVIOUS,
+    asset_value,
+    fill_placeholders,
+    find_placeholders,
+    validate_outputs,
+    validate_plan,
+)
 from .state_run import StateSession
 
 
 class ComfyRenderExecutor:
-    def __init__(self, assets, client_factory=ComfyClient, on_result=None, timeout: float = 900.0):
+    def __init__(
+        self,
+        assets,
+        client_factory=ComfyClient,
+        on_result=None,
+        timeout: float = 900.0,
+        *,
+        registry=None,
+    ):
         self.assets = assets
         self.client_factory = client_factory
         self.on_result = on_result
         self.timeout = timeout
+        self.registry = registry
+
+    def _configure(self, client, stage):
+        client.output_adapters = stage.get("output_adapters") or {}
+        client.adapter_registry = self.registry
 
     @property
     def replay_safe(self) -> bool:
@@ -65,10 +85,31 @@ class ComfyRenderExecutor:
         feeds = ctx.input.get("feeds") or [[] for _ in stages]
         guard = ctx.input.get("guard") or []
         previous: str | None = None
+        previous_images = []
         reports = []
         for n, stage in enumerate(stages):
             ctx.raise_if_cancelled()
-            validate_plan(stage["graph"], stage.get("frontend_state") or {})
+            validate_plan(stage["graph"], stage.get("frontend_state") or {}, self.registry)
+            validate_outputs(stage["graph"], stage.get("output_adapters") or {}, self.registry)
+            self._configure(client, stage)
+            if n and stage.get("feed_output"):
+                choice = stage["feed_output"]
+                selected = next(
+                    (
+                        im
+                        for im in previous_images
+                        if im["node"] == choice["node_id"] and im["index"] == choice["index"]
+                    ),
+                    None,
+                )
+                if selected is None:
+                    raise ExecError(
+                        f"上一阶段节点 {choice['node_id']} 没有第 {choice['index'] + 1} 张图片；后续阶段未提交",
+                        kind="output_selection",
+                        sent=False,
+                        detail={"stages": reports},
+                    )
+                previous = selected["asset_id"]
             uploads = dict(stage.get("uploads") or {})
             graph = stage["graph"]
             if n and feeds[n] and previous:
@@ -96,7 +137,10 @@ class ComfyRenderExecutor:
                 if session:
                     session.ended(failure={"kind": exc.kind, "message": str(exc)})
                 raise
-            images = [self._store(img.data, run.prompt_id, img.node) for img in run.images]
+            images = [
+                self._store(img.data, run.prompt_id, img.node, img.index) for img in run.images
+            ]
+            previous_images = images
             previous = images[0]["asset_id"]
             reports.append(
                 {
@@ -234,9 +278,15 @@ class ComfyRenderExecutor:
             if abort in ctx.abort_hooks:
                 ctx.abort_hooks.remove(abort)
 
-    def _store(self, data: bytes, prompt_id: str, node: str) -> dict:
+    def _store(self, data: bytes, prompt_id: str, node: str, index: int = 0) -> dict:
         asset = self.assets.put(data, source=f"comfy:{prompt_id}:{node}")
-        return {"asset_id": asset.id, "node": node, "width": asset.width, "height": asset.height}
+        return {
+            "asset_id": asset.id,
+            "node": node,
+            "index": index,
+            "width": asset.width,
+            "height": asset.height,
+        }
 
     # ---------------------------------------------------------------- recover
     def recover_state(self, ctx, record, *, confirm_stopped=False, discard_result=False):
@@ -260,6 +310,7 @@ class ComfyRenderExecutor:
                     if state != "terminal_success":
                         return {"restored": False, "status": "result_unavailable"}
                 stage = ctx.input["stages"][index]
+                self._configure(client, stage)
                 images, texts = client.collect(entry, stage["outputs"])
                 try:
                     self._validate_outputs(images, texts, stage, ctx.input.get("guard") or [])
@@ -268,7 +319,7 @@ class ComfyRenderExecutor:
                     # failures cannot. Keep that distinction durable across restart.
                     session.ended(failure={"kind": exc.kind, "message": str(exc)})
                 else:
-                    stored = [self._store(img.data, prompt, img.node) for img in images]
+                    stored = [self._store(img.data, prompt, img.node, img.index) for img in images]
                     stage_result = {"prompt_id": prompt, "images": stored, "reconciled": True}
                     result = {
                         "images": stored,
@@ -319,9 +370,10 @@ class ComfyRenderExecutor:
         if not entry or not entry.get("outputs"):
             return None
         last = ctx.input["stages"][-1]
+        self._configure(client, last)
         images, texts = client.collect(entry, last["outputs"])
         self._validate_outputs(images, texts, last, ctx.input.get("guard") or [])
-        stored = [self._store(img.data, prompt_id, img.node) for img in images]
+        stored = [self._store(img.data, prompt_id, img.node, img.index) for img in images]
         return {
             "images": stored,
             "stages": [

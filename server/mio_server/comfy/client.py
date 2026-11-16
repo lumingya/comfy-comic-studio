@@ -43,6 +43,7 @@ class OutputImage:
     subfolder: str
     type: str
     data: bytes = b""
+    index: int = 0
 
 
 @dataclass
@@ -292,11 +293,18 @@ class ComfyClient:
                     texts[node_id] = [str(t) for t in out[key]]
             if wanted is not None and node_id not in wanted:
                 continue
-            for img in out.get("images") or []:
+            adapter = getattr(self, "output_adapters", {}).get(node_id)
+            if adapter:
+                from .contracts import collect
+
+                images.extend(collect(self, node_id, out, adapter, self.adapter_registry))
+                continue
+            for index, img in enumerate(out.get("images") or []):
                 ref = OutputImage(
                     node_id, img["filename"], img.get("subfolder", ""), img.get("type", "output")
                 )
                 ref.data = self.view(ref.filename, ref.subfolder, ref.type)
+                ref.index = index
                 images.append(ref)
         return images, texts
 

@@ -11,6 +11,11 @@ from .models import StrictModel, new_id, now_iso
 StageKind = Literal["generate", "refine", "upscale", "face", "inpaint", "outpaint", "edit"]
 
 
+class OutputAdapterConfig(StrictModel):
+    id: str = Field(min_length=1)
+    options: dict[str, object] = Field(default_factory=dict)
+
+
 class WorkflowConfig(StrictModel):
     """Run configuration next to an API-format workflow (same keys as the spike runner)."""
 
@@ -22,7 +27,11 @@ class WorkflowConfig(StrictModel):
     guard: list[str] = Field(default_factory=list)
     variants: dict[str, dict] = Field(default_factory=dict)
     frontend: dict[str, dict] = Field(default_factory=dict)
-    state: dict[str, list] = Field(default_factory=dict, description="Frontend-only node snapshot.")
+    state: dict[str, list | dict] = Field(
+        default_factory=dict, description="Frontend-only node snapshot."
+    )
+    state_adapters: dict[str, str] = Field(default_factory=dict)
+    output_adapters: dict[str, OutputAdapterConfig] = Field(default_factory=dict)
 
 
 class WorkflowDoc(StrictModel):
@@ -55,6 +64,11 @@ class WorkflowDoc(StrictModel):
         return graph
 
 
+class StageOutput(StrictModel):
+    node_id: str = Field(min_length=1)
+    index: int = Field(default=0, ge=0)
+
+
 class RenderStage(StrictModel):
     id: str = Field(default_factory=lambda: new_id("stage"))
     kind: StageKind = "generate"
@@ -65,6 +79,10 @@ class RenderStage(StrictModel):
     enabled: bool = True
     feed: Literal["none", "previous"] = Field(
         default="previous", description="previous: the prior stage's image becomes [mio:init]"
+    )
+    feed_output: StageOutput | None = Field(
+        default=None,
+        description="Select a previous stage's output node and zero-based image index.",
     )
 
 

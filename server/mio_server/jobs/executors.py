@@ -10,6 +10,7 @@ from typing import Literal
 from pydantic import Field
 
 from ..models import StrictModel
+from . import dependencies
 from .operations import operation_serialized
 from .types import JobConflict, JobError
 
@@ -161,9 +162,9 @@ class ExecutorRuntime:
 
     def job_executor(self, job_id, *, required=False) -> ExecutorBinding | None:
         binding = self.resolve_executor(self.executor_ref(job_id))
-        if required and binding is None:
+        if required and (binding is None or dependencies.missing(self, job_id)):
             raise JobConflict(
-                "the task's exact executor is unavailable; load its original source and digest"
+                "the task's exact executor or adapter is unavailable; load its original source and digest"
             )
         return binding
 
@@ -171,6 +172,7 @@ class ExecutorRuntime:
         ref = self.executor_ref(job_id)
         binding = self.resolve_executor(ref)
         return {
+            "missing_dependencies": dependencies.missing(self, job_id),
             "ref": ref.model_dump() if ref else None,
             "available": binding is not None,
             "replay_safe": bool(binding and binding.replay_safe),
@@ -197,6 +199,14 @@ class ExecutorRuntime:
                 for row in rows
                 if (ref := self.executor_ref(row[0])) and (ref.kind, ref.digest) in loaded
             }
+            if kind is None:
+                affected.update(
+                    row[0]
+                    for row in self.db.execute("SELECT id FROM jobs").fetchall()
+                    if any(
+                        ref["source"] == source for ref in dependencies.job_references(self, row[0])
+                    )
+                )
             busy = {
                 jid
                 for (jid, _), ctx in self.running.items()
@@ -204,6 +214,7 @@ class ExecutorRuntime:
                 and ctx.executor_binding.ref.source == source
                 and (kind is None or ctx.executor_binding.ref.kind == kind)
             }
+            busy.update(jid for jid, _ in self.running if jid in affected)
             for jid in affected:
                 if (
                     self.db.execute(

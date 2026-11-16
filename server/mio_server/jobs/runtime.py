@@ -126,11 +126,17 @@ class EngineRuntime:
 
     @operation_serialized
     def _claim(self, cand: Candidate, instance_id: str | None) -> ItemContext | None:
+        from .dependencies import missing
+
         now = time.time()
         with self.lock, self.pool.lock:
             item = self._item_row(cand.job_id, cand.idx)
             binding = self.job_executor(cand.job_id)
-            if binding is None or item["resource"] not in binding.resources:
+            if (
+                binding is None
+                or item["resource"] not in binding.resources
+                or missing(self, cand.job_id)
+            ):
                 with self.db:
                     self._aggregate(cand.job_id)
                 return None
@@ -435,6 +441,8 @@ class EngineRuntime:
             self._aggregate(job_id)
 
     def _aggregate(self, job_id: str) -> None:
+        from .dependencies import missing as missing_dependencies
+
         counts = {s: 0 for s in ITEM_STATES}
         for r in self.db.execute(
             "SELECT state, COUNT(*) AS n FROM job_items WHERE job_id = ? GROUP BY state", (job_id,)
@@ -443,7 +451,10 @@ class EngineRuntime:
         job = self.db.execute(
             "SELECT paused, canceled, state FROM jobs WHERE id = ?", (job_id,)
         ).fetchone()
-        missing = bool(counts["pending"] and self.job_executor(job_id) is None)
+        missing = bool(
+            counts["pending"]
+            and (self.job_executor(job_id) is None or missing_dependencies(self, job_id))
+        )
         blocked = 1 if counts["uncertain"] or missing else 0
         total = sum(counts.values())
         if counts["running"]:

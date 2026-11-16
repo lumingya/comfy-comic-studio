@@ -18,6 +18,8 @@ from typing import Any, Callable
 from .hooks import HookBus
 
 POINTS = {
+    "comfy_output_adapter": "ComfyUI 自定义输出格式",
+    "comfy_state_adapter": "ComfyUI 插件状态协议",
     "operation": "界面与开放 API 共用的操作包装器（鉴权与参数校验之后执行）",
     "job_executor": "统一任务引擎的执行器（按 job kind）",
     "exporter": "导出器：切片、长图、PDF、网页阅读……",

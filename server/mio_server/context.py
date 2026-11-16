@@ -25,6 +25,7 @@ from .backups.startup import prepare_workspace
 from .comfy.client import ComfyClient
 from .comfy.compile import BUILTINS
 from .comfy.executor import ComfyRenderExecutor
+from .exporting import ExportService
 from .extensions import ExtensionManager
 from .hooks import HookBus
 from .jobs import JobEngine, ResourcePool
@@ -73,6 +74,7 @@ class AppContext:
     updater: Updater | None = None
     queue: ProductionQueue | None = None
     reading: ReadingCache = field(default_factory=ReadingCache)
+    exports: ExportService | None = None
 
     @classmethod
     def create(
@@ -170,6 +172,10 @@ class AppContext:
         ctx.webhooks.attach(ctx.hooks)
         ctx.extensions = ExtensionManager(ctx)
         ctx.extensions.load_all()
+        # Registering executors precedes their layout/exporter dependencies.
+        engine.refresh_executor_jobs()
+        if not memory:
+            ctx.exports.cleanup_startup()
         try:
             purged = 0 if restored else ctx.trash.expire(ctx.settings().trash_days)
             if purged:
@@ -215,15 +221,24 @@ class AppContext:
                 log.exception("close failed")
 
     def _register_builtins(self) -> None:
+        from .comfy.contracts import register_builtins
+        from .pipeline.file_export import write_export
+
         reg = self.registry
+        register_builtins(reg)
+        self.exports = ExportService(self)
         executors = {
             "comfy.render": ComfyRenderExecutor(
-                self.assets, self.comfy_client_factory, on_result=self.render.apply_result
+                self.assets,
+                self.comfy_client_factory,
+                on_result=self.render.apply_result,
+                registry=reg,
             ),
             "cloud.render": CloudExecutor(
                 self.assets, self.llm_factory, self.render, backend=self.image_backend
             ),
             "qa.check": self.qa,
+            "export.render": self.exports,
         }
         for kind, executor in executors.items():
             self.engine.register(
@@ -234,7 +249,16 @@ class AppContext:
                 resources=("comfy",) if kind == "comfy.render" else ("local",),
             )
         for fmt in X.FORMATS:
-            reg.register("exporter", fmt, X.export, title=fmt, interface="strip")
+            reg.register(
+                "exporter",
+                fmt,
+                X.export,
+                title=fmt,
+                interface="strip",
+                file_writer=write_export,
+                contract=1,
+                digest=hashlib.sha256(b"mio-file-export-v1").hexdigest(),
+            )
         for pid, preset in X.PRESETS.items():
             reg.register("slice_preset", pid, preset, title=preset.label)
         reg.register(
@@ -253,7 +277,14 @@ class AppContext:
             reg.register("pipeline_step", step, step, title=title)
         for wid, (name, _) in BUILTINS.items():
             reg.register("workflow_template", wid, wid, title=name)
-        reg.register("layout", "strip.default", SP.layout, title="条漫默认版式")
+        reg.register(
+            "layout",
+            "strip.default",
+            SP.layout,
+            title="条漫默认版式",
+            contract=1,
+            digest=hashlib.sha256(b"mio-strip-layout-v1").hexdigest(),
+        )
         reg.register("script_template", "generate", "generate", title="一句话生成剧本")
         reg.register("script_template", "revise", "revise", title="按要求修改剧本（可审阅 diff）")
         reg.register("provider", "comfyui", "comfyui", title="ComfyUI（本地 / 局域网，多实例）")
@@ -268,7 +299,13 @@ class AppContext:
                 "album_template", tpl.id, tpl, source="user", title=tpl.title, replace=True
             )
         reg.register(
-            "exporter", "album", AR.render_album, title="画册（离线 HTML 模板）", interface="album"
+            "exporter",
+            "album",
+            AR.render_album,
+            title="画册（离线 HTML 模板）",
+            interface="album",
+            contract=1,
+            digest=hashlib.sha256(b"mio-album-export-v1").hexdigest(),
         )
         reg.register(
             "exporter", "motion", MX.render_motion, title="动态漫（离线播放器）", interface="motion"

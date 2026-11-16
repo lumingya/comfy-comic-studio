@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { episode, job, series } from '../test/fixtures';
+import type { QueueStatus } from '../api/types';
 import { configInstance, configProfile, configSettings } from '../test/configuration';
 import { cloudRequest } from '../test/cloudRequest';
 import { useHelp, useQuickStart } from '../components/HelpDrawer';
@@ -29,6 +30,19 @@ vi.mock('react-konva', () => {
 
 let calls: ReturnType<typeof mockFetch> = [];
 let responses: Record<string, unknown>;
+const idleQueue: QueueStatus = {
+  id: 'queue',
+  order: [],
+  lane: [],
+  paused: false,
+  active: null,
+  active_job: null,
+  concurrency: null,
+  notices: {},
+  updated_at: '',
+  fault: null,
+  auto_concurrency: 2,
+};
 
 const prompt = {
   tags: {
@@ -172,6 +186,7 @@ beforeEach(() => {
       captions: { p0: '欢迎光临' },
     },
     'GET /api/workshop': workshop,
+    'GET /api/workshop/queue': idleQueue,
     'GET /api/series/ws_1': workshop,
     'GET /api/series/ws_1/episodes': {
       items: [
@@ -240,7 +255,9 @@ beforeEach(() => {
       format: 'JPEG',
       quality: 90,
     },
-    'POST /api/export/portable': () =>
+    'POST /api/export/jobs/portable': { id: 'export_1', state: 'queued', items: [] },
+    'GET /api/jobs/export_1': { id: 'export_1', state: 'completed', items: [] },
+    'GET /api/export/jobs/export_1/file': () =>
       new Response('zip', {
         status: 200,
         headers: {
@@ -293,6 +310,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   useHelp.setState({ open: false });
   useQuickStart.setState({ open: false });
 });
@@ -719,7 +737,11 @@ describe('every route mounts with API data', () => {
 
   it('预设工坊: 独立试绘 requires an explicit prompt and preserves its variable references', async () => {
     responses['GET /api/profiles'] = [configProfile];
-    responses['POST /api/workshop/queue/start'] = {};
+    responses['POST /api/workshop/queue/start'] = {
+      ...idleQueue,
+      order: ['ser_pv'],
+      lane: ['ser_pv'],
+    };
     const router = mount('/workshop/presets');
     fireEvent.click(await screen.findByRole('button', { name: '独立试绘' }));
     const dialog = await screen.findByRole('dialog', { name: '预设独立试绘' });
@@ -828,10 +850,12 @@ describe('every route mounts with API data', () => {
   });
 
   it('reader drawer: one export action applies the chosen format and image processing', async () => {
-    vi.stubGlobal(
-      'URL',
-      Object.assign(URL, { createObjectURL: () => 'blob:x', revokeObjectURL() {} }),
-    );
+    const downloads: string[] = [];
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      downloads.push(this.href);
+    });
     mount('/gallery/ser_1/export');
     const drawer = await screen.findByRole('complementary', { name: '展示模板与导出' });
     expect(within(drawer).getAllByRole('button', { name: '导出' })).toHaveLength(1);
@@ -850,12 +874,20 @@ describe('every route mounts with API data', () => {
     await waitFor(() => expect(zip).toBeEnabled());
     fireEvent.click(zip);
     await waitFor(() =>
-      expect(calls.some((c) => c.method === 'POST' && c.url === '/api/export/portable')).toBe(true),
+      expect(calls.some((c) => c.method === 'POST' && c.url === '/api/export/jobs/portable')).toBe(
+        true,
+      ),
     );
-    expect(calls.find((c) => c.url === '/api/export/portable')!.body).toMatchObject({
+    expect(calls.find((c) => c.url === '/api/export/jobs/portable')!.body).toMatchObject({
       format: 'zip',
       image_profile: 'publish',
+      idempotency_key: expect.stringMatching(/^export-/),
     });
+    await waitFor(() => expect(within(drawer).getByRole('status')).toHaveTextContent('下载已开始'));
+    expect(calls.filter((c) => c.url === '/api/export/jobs/portable')).toHaveLength(1);
+    expect(calls.some((c) => c.url === '/api/jobs/export_1')).toBe(true);
+    expect(calls.some((c) => c.url === '/api/export/jobs/export_1/file')).toBe(true);
+    expect(downloads).toEqual([`${window.location.origin}/api/export/jobs/export_1/file`]);
     expect(within(drawer).queryByLabelText('平台预设')).toBeNull();
     expect(within(drawer).queryByLabelText('画册版式')).toBeNull();
     localStorage.removeItem('mio.reader.export');

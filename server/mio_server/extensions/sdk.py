@@ -47,9 +47,26 @@ class ExtensionAPI:
             raise JobConflict("this extension activation is no longer enabled")
         if point == "job_executor":
             return self.job_executor(id, value, title=title, **meta)
-        return self._ctx.registry.register(
+        if "digest" in meta and meta["digest"] != self.digest:
+            raise ValueError("extension contributions use their reviewed package digest")
+        meta["digest"] = self.digest
+        meta.setdefault("contract", 1)
+        if point in ("comfy_output_adapter", "comfy_state_adapter"):
+            methods = (
+                ("freeze", "collect")
+                if point == "comfy_output_adapter"
+                else ("capture", "push", "change", "validate")
+            )
+            if meta["contract"] != 1 or any(not callable(getattr(value, m, None)) for m in methods):
+                raise ValueError("invalid Comfy adapter contract")
+        if meta.get("replace"):
+            self.engine.ensure_executor_source_idle(self.source)
+        contribution = self._ctx.registry.register(
             point, id, value, source=self.source, title=title or id, **meta
         )
+        if not self.engine.catalog_loading:
+            self.engine.refresh_executor_jobs()
+        return contribution
 
     @operation_serialized
     def job_executor(self, kind, executor, *, resources=("local",), replace=False, title=""):

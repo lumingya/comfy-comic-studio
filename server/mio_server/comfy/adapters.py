@@ -23,6 +23,9 @@ from .client import ComfyError
 class ParameterControlPanel:
     class_type = "ParameterControlPanel"
 
+    def validate(self, state, *, nonempty=False):
+        validate_state(state, nonempty=nonempty)
+
     def capture(self, client, node_id: str) -> list:
         query = urllib.parse.urlencode({"node_id": node_id})
         return client.get_json(f"/danbooru_gallery/pcp/load_config?{query}").get("parameters") or []
@@ -82,11 +85,24 @@ def validate_state(state, *, nonempty: bool = False) -> None:
         names.add(name)
 
 
-def desired_state(class_type: str, saved: list, changes: dict) -> list:
-    validate_state(saved, nonempty=True)
+def _adapter(class_type, ref=None, registry=None):
+    from .contracts import resolve
+
+    return resolve(registry, ref) if ref else ADAPTERS[class_type]
+
+
+def desired_state(class_type: str, saved, changes: dict, *, ref=None, registry=None):
+    adapter = _adapter(class_type, ref, registry)
+    if not isinstance(saved, (dict, list)) or not _json_value(saved):
+        raise ComfyError("插件状态必须是有效的 JSON 对象或列表")
+    adapter.validate(saved, nonempty=True)
     if not isinstance(changes, dict) or not _json_value(changes):
         raise ComfyError("参数面板覆盖值必须是有效的 JSON 对象")
-    return ADAPTERS[class_type].change(saved, copy.deepcopy(changes))
+    result = adapter.change(saved, copy.deepcopy(changes))
+    if not _json_value(result):
+        raise ComfyError("插件目标状态必须是有效的 JSON")
+    adapter.validate(result, nonempty=True)
+    return result
 
 
 def stateful_nodes(graph: dict) -> dict[str, str]:
@@ -97,7 +113,7 @@ def stateful_nodes(graph: dict) -> dict[str, str]:
     }
 
 
-def prepare_plan(client, plan: dict, journal_callback) -> list[dict]:
+def prepare_plan(client, plan: dict, journal_callback, registry=None) -> list[dict]:
     """Capture every before-state, then journal write intent before each remote write.
 
     The callback must durably persist its full argument or raise. A write can succeed remotely
@@ -105,15 +121,18 @@ def prepare_plan(client, plan: dict, journal_callback) -> list[dict]:
     """
     entries = []
     for node_id, item in plan.items():
-        adapter = ADAPTERS[item["class_type"]]
+        adapter = _adapter(item["class_type"], item.get("adapter"), registry)
         desired = copy.deepcopy(item["desired"])
-        validate_state(desired, nonempty=True)
+        adapter.validate(desired, nonempty=True)
         before = copy.deepcopy(adapter.capture(client, node_id))
-        validate_state(before)
+        if not _json_value(before):
+            raise ComfyError("插件原状态必须是有效的 JSON")
+        adapter.validate(before)
         entries.append(
             {
                 "node_id": node_id,
                 "class_type": item["class_type"],
+                "adapter": item.get("adapter"),
                 "before": before,
                 "desired": desired,
                 "write_intent": False,
@@ -128,7 +147,7 @@ def prepare_plan(client, plan: dict, journal_callback) -> list[dict]:
             continue
         entry.update(write_intent=True, status="applying")
         journal_callback(copy.deepcopy(entries))
-        adapter = ADAPTERS[entry["class_type"]]
+        adapter = _adapter(entry["class_type"], entry.get("adapter"), registry)
         adapter.push(client, entry["node_id"], copy.deepcopy(entry["desired"]))
         if adapter.capture(client, entry["node_id"]) != entry["desired"]:
             raise ComfyError(f"节点 {entry['node_id']} 参数面板写入后校验失败")
@@ -137,7 +156,7 @@ def prepare_plan(client, plan: dict, journal_callback) -> list[dict]:
     return entries
 
 
-def restore_plan(client, entries: list[dict], journal_callback) -> list[dict]:
+def restore_plan(client, entries: list[dict], journal_callback, registry=None) -> list[dict]:
     """Restore all intended writes in reverse order, preserving third-party changes.
 
     Failed reads/writes and conflicting values are returned for explicit reconciliation. Journal
@@ -152,7 +171,7 @@ def restore_plan(client, entries: list[dict], journal_callback) -> list[dict]:
         journal_callback(copy.deepcopy(entries))
         issue = None
         try:
-            adapter = ADAPTERS[entry["class_type"]]
+            adapter = _adapter(entry["class_type"], entry.get("adapter"), registry)
             current = adapter.capture(client, entry["node_id"])
             if current == entry["before"]:
                 entry["status"] = "restored"
@@ -176,12 +195,25 @@ def restore_plan(client, entries: list[dict], journal_callback) -> list[dict]:
     return issues
 
 
-def capture(client, graph: dict) -> dict:
+def capture(client, graph: dict, choices=None, registry=None) -> dict:
     """Current server-side state of every stateful node in ``graph``."""
-    return {
-        node_id: {"class_type": cls, "state": ADAPTERS[cls].capture(client, node_id)}
-        for node_id, cls in stateful_nodes(graph).items()
-    }
+    from .contracts import resolve, select
+
+    nodes = stateful_nodes(graph)
+    nodes.update({nid: graph[nid]["class_type"] for nid in (choices or {}) if nid in graph})
+    result = {}
+    for nid, cls in nodes.items():
+        ref = select(
+            registry, "comfy_state_adapter", (choices or {}).get(nid, "parameter-control-panel")
+        )
+        adapter = resolve(registry, ref)
+        state = adapter.capture(client, nid)
+        try:
+            adapter.validate(state)
+        except (ValueError, ComfyError) as exc:
+            raise ComfyError(f"节点 {nid} 状态不可用：{exc}") from exc
+        result[nid] = {"class_type": cls, "state": state}
+    return result
 
 
 def prepare(client, graph: dict, saved: dict | None = None, changes: dict | None = None) -> list:

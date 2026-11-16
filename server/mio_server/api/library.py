@@ -106,7 +106,7 @@ def list_workflows(ctx: Ctx) -> list[dict]:
 @router.post("/workflows/inspect", response_model=I.Inspection)
 def inspect_workflow(ctx: Ctx, body: I.InspectRequest) -> I.Inspection:
     """Preview import and selected-output dependencies without saving or contacting a service."""
-    return I.inspect(body, rules=_rules(ctx))
+    return I.inspect(body, rules=_rules(ctx), registry=ctx.registry)
 
 
 @router.post("/workflows", status_code=status.HTTP_201_CREATED)
@@ -182,7 +182,12 @@ def compile_preview(ctx: Ctx, workflow_id: str, body: CompileRequest) -> dict:
     """Dry run: the exact graph Mio would queue for these values (编译结果可见)."""
     doc = ctx.store.get_doc("workflow", workflow_id)
     return C.compile_workflow(
-        doc, body.values, variant=body.variant, overrides=body.overrides, rules=_rules(ctx)
+        doc,
+        body.values,
+        variant=body.variant,
+        overrides=body.overrides,
+        rules=_rules(ctx),
+        registry=ctx.registry,
     ).to_json()
 
 
@@ -204,7 +209,12 @@ def diagnose_workflow(
         raise ValueError(f"无法读取 {inst.name} 的 /object_info：{exc}") from None
     request = body or CompileRequest()
     compiled = C.compile_workflow(
-        doc, request.values, variant=request.variant, overrides=request.overrides, rules=_rules(ctx)
+        doc,
+        request.values,
+        variant=request.variant,
+        overrides=request.overrides,
+        rules=_rules(ctx),
+        registry=ctx.registry,
     )
     return {
         **diagnose(compiled.graph, info),
@@ -221,10 +231,15 @@ def capture_workflow_state(ctx: Ctx, workflow_id: str, instance_id: str = "comfy
     """Read existing frontend-node snapshots; callers explicitly save the returned config.state."""
     doc = ctx.store.get_doc("workflow", workflow_id)
     inst = ctx.store.get_doc("instance", instance_id)
-    if not adapters.stateful_nodes(doc.graph):
+    if not adapters.stateful_nodes(doc.graph) and not doc.config.state_adapters:
         raise ValueError("工作流没有支持捕获状态的参数面板节点")
     try:
-        captured = adapters.capture(ctx.comfy_client_factory(inst.base_url), doc.graph)
+        captured = adapters.capture(
+            ctx.comfy_client_factory(inst.base_url),
+            doc.graph,
+            doc.config.state_adapters,
+            ctx.registry,
+        )
     except Exception as exc:
         raise ValueError(
             f"无法读取 {inst.name} 的参数面板状态；请确认 ComfyUI 与对应插件可用：{exc}"
@@ -232,13 +247,40 @@ def capture_workflow_state(ctx: Ctx, workflow_id: str, instance_id: str = "comfy
     state = {}
     for node_id, item in captured.items():
         try:
-            adapters.validate_state(item["state"], nonempty=True)
+            from ..comfy.contracts import resolve, select
+
+            adapter = resolve(
+                ctx.registry,
+                select(
+                    ctx.registry,
+                    "comfy_state_adapter",
+                    doc.config.state_adapters.get(node_id, "parameter-control-panel"),
+                ),
+            )
+            adapter.validate(item["state"], nonempty=True)
         except ComfyError as exc:
             raise ValueError(
                 f"节点 {node_id} 状态不可用：{exc}。请先在 ComfyUI 中打开工作流并保存面板参数。"
             ) from None
         state[node_id] = item["state"]
     return {"state": state}
+
+
+@router.get("/comfy-adapters")
+def comfy_adapters(ctx: Ctx) -> list[dict]:
+    """Available adapter contracts and reviewed source identities."""
+    return [
+        {
+            "point": point,
+            "id": c.id,
+            "title": c.title,
+            "source": c.source,
+            "digest": c.meta.get("digest", ""),
+            "contract": c.meta.get("contract", 1),
+        }
+        for point in ("comfy_output_adapter", "comfy_state_adapter")
+        for c in ctx.registry.all(point)
+    ]
 
 
 # ---------------------------------------------------------------- profiles

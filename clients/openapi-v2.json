@@ -115,6 +115,133 @@
     "title": "AlbumExport",
     "type": "object"
    },
+   "AlbumExportJob": {
+    "properties": {
+     "border": {
+      "default": 0,
+      "maximum": 8.0,
+      "minimum": 0.0,
+      "title": "Border",
+      "type": "integer"
+     },
+     "deduplicate_captions": {
+      "default": false,
+      "description": "Omit dialogue lines already fully visible in a lettered panel",
+      "title": "Deduplicate Captions",
+      "type": "boolean"
+     },
+     "episode_ids": {
+      "items": {
+       "type": "string"
+      },
+      "maxItems": 50,
+      "minItems": 1,
+      "title": "Episode Ids",
+      "type": "array"
+     },
+     "idempotency_key": {
+      "anyOf": [
+       {
+        "maxLength": 160,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Idempotency Key"
+     },
+     "image_profile": {
+      "default": "preview",
+      "description": "图片处理: auto / clean (无损清洗) / publish (轻量发布) / archive (无损归档); preview = fast in-app preview encoding",
+      "enum": [
+       "auto",
+       "clean",
+       "publish",
+       "archive",
+       "preview"
+      ],
+      "title": "Image Profile",
+      "type": "string"
+     },
+     "lettered": {
+      "default": true,
+      "description": "Crop panels from the lettered strip",
+      "title": "Lettered",
+      "type": "boolean"
+     },
+     "max_width": {
+      "default": 1400,
+      "description": "Only used by the ``preview`` image profile",
+      "maximum": 4000.0,
+      "minimum": 320.0,
+      "title": "Max Width",
+      "type": "integer"
+     },
+     "show_captions": {
+      "default": true,
+      "title": "Show Captions",
+      "type": "boolean"
+     },
+     "show_prompts": {
+      "default": false,
+      "title": "Show Prompts",
+      "type": "boolean"
+     },
+     "signature": {
+      "default": "",
+      "maxLength": 120,
+      "title": "Signature",
+      "type": "string"
+     },
+     "template": {
+      "anyOf": [
+       {
+        "additionalProperties": true,
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "An unsaved template draft (模板工作室 live preview); validated like an import and used instead of ``template_id``",
+      "title": "Template"
+     },
+     "template_id": {
+      "default": "export-paper",
+      "title": "Template Id",
+      "type": "string"
+     },
+     "theme_color": {
+      "default": "",
+      "title": "Theme Color",
+      "type": "string"
+     },
+     "title": {
+      "default": "",
+      "maxLength": 120,
+      "title": "Title",
+      "type": "string"
+     },
+     "variant_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Variant Id"
+     }
+    },
+    "required": [
+     "episode_ids"
+    ],
+    "title": "AlbumExportJob",
+    "type": "object"
+   },
    "ApplyRequest": {
     "properties": {
      "accepted": {
@@ -4402,6 +4529,26 @@
     "title": "MotionExport",
     "type": "object"
    },
+   "OutputAdapterConfig": {
+    "additionalProperties": false,
+    "properties": {
+     "id": {
+      "minLength": 1,
+      "title": "Id",
+      "type": "string"
+     },
+     "options": {
+      "additionalProperties": true,
+      "title": "Options",
+      "type": "object"
+     }
+    },
+    "required": [
+     "id"
+    ],
+    "title": "OutputAdapterConfig",
+    "type": "object"
+   },
    "PacingApply": {
     "properties": {
      "base_revision": {
@@ -5397,6 +5544,93 @@
      "episode_ids"
     ],
     "title": "PortableExport",
+    "type": "object"
+   },
+   "PortableExportJob": {
+    "properties": {
+     "deduplicate_captions": {
+      "default": false,
+      "description": "Omit dialogue lines already fully visible in a lettered panel",
+      "title": "Deduplicate Captions",
+      "type": "boolean"
+     },
+     "episode_ids": {
+      "items": {
+       "type": "string"
+      },
+      "maxItems": 50,
+      "minItems": 1,
+      "title": "Episode Ids",
+      "type": "array"
+     },
+     "format": {
+      "default": "zip",
+      "enum": [
+       "zip",
+       "pdf"
+      ],
+      "title": "Format",
+      "type": "string"
+     },
+     "idempotency_key": {
+      "anyOf": [
+       {
+        "maxLength": 160,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Idempotency Key"
+     },
+     "image_profile": {
+      "default": "auto",
+      "enum": [
+       "auto",
+       "clean",
+       "publish",
+       "archive",
+       "preview"
+      ],
+      "title": "Image Profile",
+      "type": "string"
+     },
+     "lettered": {
+      "default": true,
+      "description": "Crop composited panels; false exports original adopted images without framing",
+      "title": "Lettered",
+      "type": "boolean"
+     },
+     "show_captions": {
+      "default": true,
+      "description": "ZIP reader captions only; PDF contains one image per page",
+      "title": "Show Captions",
+      "type": "boolean"
+     },
+     "title": {
+      "default": "",
+      "maxLength": 120,
+      "title": "Title",
+      "type": "string"
+     },
+     "variant_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Variant Id"
+     }
+    },
+    "required": [
+     "episode_ids"
+    ],
+    "title": "PortableExportJob",
     "type": "object"
    },
    "Preset-Input": {
@@ -6736,6 +6970,17 @@
       "title": "Feed",
       "type": "string"
      },
+     "feed_output": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/StageOutput-Input"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Select a previous stage's output node and zero-based image index."
+     },
      "id": {
       "title": "Id",
       "type": "string"
@@ -6805,6 +7050,17 @@
       "title": "Feed",
       "type": "string"
      },
+     "feed_output": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/StageOutput-Output"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Select a previous stage's output node and zero-based image index."
+     },
      "id": {
       "title": "Id",
       "type": "string"
@@ -6858,7 +7114,8 @@
      "values",
      "overrides",
      "enabled",
-     "feed"
+     "feed",
+     "feed_output"
     ],
     "title": "RenderStage",
     "type": "object"
@@ -7704,6 +7961,49 @@
     "title": "SeriesStatus",
     "type": "string"
    },
+   "StageOutput-Input": {
+    "additionalProperties": false,
+    "properties": {
+     "index": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Index",
+      "type": "integer"
+     },
+     "node_id": {
+      "minLength": 1,
+      "title": "Node Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "node_id"
+    ],
+    "title": "StageOutput",
+    "type": "object"
+   },
+   "StageOutput-Output": {
+    "additionalProperties": false,
+    "properties": {
+     "index": {
+      "default": 0,
+      "minimum": 0.0,
+      "title": "Index",
+      "type": "integer"
+     },
+     "node_id": {
+      "minLength": 1,
+      "title": "Node Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "node_id",
+     "index"
+    ],
+    "title": "StageOutput",
+    "type": "object"
+   },
    "Strip-Input": {
     "additionalProperties": false,
     "properties": {
@@ -7915,6 +8215,67 @@
      "manual"
     ],
     "title": "Strip",
+    "type": "object"
+   },
+   "StripExportJob": {
+    "additionalProperties": false,
+    "properties": {
+     "episode_id": {
+      "title": "Episode Id",
+      "type": "string"
+     },
+     "fmt": {
+      "default": "slices",
+      "title": "Fmt",
+      "type": "string"
+     },
+     "idempotency_key": {
+      "anyOf": [
+       {
+        "maxLength": 160,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Idempotency Key"
+     },
+     "preset": {
+      "default": "webtoon",
+      "title": "Preset",
+      "type": "string"
+     },
+     "quality": {
+      "anyOf": [
+       {
+        "maximum": 100.0,
+        "minimum": 0.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Quality"
+     },
+     "variant_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Variant Id"
+     }
+    },
+    "required": [
+     "episode_id"
+    ],
+    "title": "StripExportJob",
     "type": "object"
    },
    "Style-Input": {
@@ -8920,6 +9281,13 @@
       "title": "Mapping",
       "type": "object"
      },
+     "output_adapters": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/OutputAdapterConfig"
+      },
+      "title": "Output Adapters",
+      "type": "object"
+     },
      "overrides": {
       "additionalProperties": true,
       "title": "Overrides",
@@ -8927,11 +9295,26 @@
      },
      "state": {
       "additionalProperties": {
-       "items": {},
-       "type": "array"
+       "anyOf": [
+        {
+         "items": {},
+         "type": "array"
+        },
+        {
+         "additionalProperties": true,
+         "type": "object"
+        }
+       ]
       },
       "description": "Frontend-only node snapshot.",
       "title": "State",
+      "type": "object"
+     },
+     "state_adapters": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "State Adapters",
       "type": "object"
      },
      "values": {
@@ -10162,6 +10545,42 @@
      "request"
     ],
     "x-mio-operation": "POST /bundles"
+   }
+  },
+  "/comfy-adapters": {
+   "get": {
+    "description": "Available adapter contracts and reviewed source identities.",
+    "operationId": "comfy_adapters",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "additionalProperties": true,
+          "type": "object"
+         },
+         "title": "Response Comfy Adapters",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Comfy Adapters",
+    "tags": [
+     "library"
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /comfy-adapters"
    }
   },
   "/creation-kits": {
@@ -12665,6 +13084,8 @@
       "required": false,
       "schema": {
        "default": 0,
+       "maximum": 4000,
+       "minimum": 0,
        "title": "Width",
        "type": "integer"
       }
@@ -13091,7 +13512,7 @@
   },
   "/export/album": {
    "post": {
-    "description": "Self-contained offline HTML album; one book per episode.",
+    "description": "Self-contained offline HTML album from an immutable document snapshot.",
     "operationId": "export_album",
     "requestBody": {
      "content": {
@@ -13174,6 +13595,260 @@
     "x-mio-operation": "GET /export/formats"
    }
   },
+  "/export/jobs/album": {
+   "post": {
+    "operationId": "submit_album_export",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/AlbumExportJob"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "202": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Submit Album Export",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Submit Album Export",
+    "tags": [
+     "exports"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /export/jobs/album"
+   }
+  },
+  "/export/jobs/portable": {
+   "post": {
+    "operationId": "submit_portable_export",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PortableExportJob"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "202": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Submit Portable Export",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Submit Portable Export",
+    "tags": [
+     "exports"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /export/jobs/portable"
+   }
+  },
+  "/export/jobs/strip": {
+   "post": {
+    "operationId": "submit_strip_export",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/StripExportJob"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "202": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Submit Strip Export",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Submit Strip Export",
+    "tags": [
+     "exports"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /export/jobs/strip"
+   }
+  },
+  "/export/jobs/{job_id}": {
+   "delete": {
+    "operationId": "delete_export",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "job_id",
+      "required": true,
+      "schema": {
+       "title": "Job Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Delete Export",
+    "tags": [
+     "exports"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "job_id"
+    ],
+    "x-mio-operation": "DELETE /export/jobs/{job_id}"
+   }
+  },
+  "/export/jobs/{job_id}/file": {
+   "get": {
+    "operationId": "download_export",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "job_id",
+      "required": true,
+      "schema": {
+       "title": "Job Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Download Export",
+    "tags": [
+     "exports"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "job_id"
+    ],
+    "x-mio-operation": "GET /export/jobs/{job_id}/file"
+   }
+  },
   "/export/motion": {
    "post": {
     "description": "Self-contained offline motion-comic player (one HTML file, no network needed).",
@@ -13226,7 +13901,7 @@
   },
   "/export/portable": {
    "post": {
-    "description": "ZIP 图片资源包 (simple reader + image files) or PDF 图片画册 (one page per panel).\n\nNeither is bound by the single-file inline budget, so ``auto`` means 无损清洗 here.",
+    "description": "Write panel images to a ZIP or PDF without retaining every decoded page.",
     "operationId": "export_portable",
     "requestBody": {
      "content": {

@@ -74,6 +74,32 @@ export async function download(path: string, fallbackName: string): Promise<Resp
   return response;
 }
 
+/** Hand a completed, same-origin file to the browser without buffering it in JS.
+ * Check the headers first so missing/failed exports still surface as normal API errors.
+ * The browser owns the subsequent transfer and reports any interruption in its downloads UI.
+ */
+export async function downloadFile(
+  path: string,
+  fallbackName: string,
+  signal?: AbortSignal,
+): Promise<Response> {
+  signal?.throwIfAborted();
+  const response = await raw(path, { signal });
+  await response.body?.cancel();
+  signal?.throwIfAborted();
+  const link = document.createElement('a');
+  link.href = `${origin}${path}`;
+  link.download = responseFilename(response, fallbackName);
+  link.hidden = true;
+  document.body.append(link);
+  try {
+    link.click();
+  } finally {
+    link.remove();
+  }
+  return response;
+}
+
 /** Same as {@link download} for endpoints that take a JSON body (e.g. album export). */
 export async function downloadPost(
   path: string,
@@ -89,11 +115,15 @@ export async function downloadPost(
   return response;
 }
 
-async function saveResponse(response: Response, fallbackName: string): Promise<void> {
-  const blob = await response.blob();
+function responseFilename(response: Response, fallbackName: string): string {
   const header = response.headers.get('content-disposition') ?? '';
   const match = /filename\*=UTF-8''([^;]+)/i.exec(header);
-  const name = match ? decodeURIComponent(match[1]) : fallbackName;
+  return match ? decodeURIComponent(match[1]) : fallbackName;
+}
+
+async function saveResponse(response: Response, fallbackName: string): Promise<void> {
+  const blob = await response.blob();
+  const name = responseFilename(response, fallbackName);
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

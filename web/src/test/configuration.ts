@@ -67,6 +67,7 @@ export const configProfile: RenderProfile = {
       overrides: { '/3/inputs/steps': 25 },
       enabled: true,
       feed: 'previous',
+      feed_output: null,
     },
   ],
   final: [],

@@ -1,0 +1,7 @@
+{
+  "id": "comfy-pcp-adapter",
+  "name": "ComfyUI 参数面板适配器示例",
+  "version": "0.1.0",
+  "description": "用稳定适配器接口接入 ParameterControlPanel 的状态捕获与恢复。",
+  "main": "main.py"
+}

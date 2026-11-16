@@ -39,6 +39,14 @@ NovelAI 返回明确标记的内置参考目录，ComfyUI 返回节点公开的�
 
 ## 长篇整理与检查点
 
+长篇导出可提交 `POST /export/jobs/strip`、`album` 或 `portable`，使用现有任务查询、取消与重试接口，
+完成后从 `GET /export/jobs/{id}/file` 下载。提交需要 `write`，查询与下载需要 `read`，通用任务重试仍需要
+`render`。幂等键找回原任务，内容与扩展身份在提交时冻结；见[导出任务与文件写入扩展](../docs/EXPORT_JOBS.md)。
+
+`GET /comfy-adapters` 可发现已启用的输出与状态适配器；工作流通过 `output_adapters` / `state_adapters`
+显式选择。串联阶段的 `feed_output` 可指定上一阶段的输出节点及从零开始的图片序号。契约和示例见
+[扩展 SDK](../server/mio_server/extensions/README.md#comfyui-输出与插件状态)。
+
 - `POST /series/{id}/panels/transfer`：同作品内跨话复制或移动，传来源 / 目标 ID、两边 revision 和选择的 panel IDs。
   复制会重映射候选和画布引用；锁定内容或跨选择边界的引用默认拒绝，跨边界气泡需要显式拆开。
   不同画布宽度且已有图形内容时拒绝自动搬运。追加选区保留相对位置，源画布留白不自动压缩。

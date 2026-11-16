@@ -1,0 +1,7 @@
+{
+  "id": "comfy-inline-images",
+  "name": "ComfyUI 内联图片输出",
+  "version": "0.1.0",
+  "description": "读取示例节点的 images_base64 输出，可选择批次中的任意图片。",
+  "main": "main.py"
+}

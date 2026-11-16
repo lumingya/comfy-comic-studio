@@ -34,6 +34,7 @@ export const exportZh = {
   captions: '包含旁白与台词',
   imageProfile: '图片处理',
   done: '文件已下载',
+  started: '下载已开始',
 };
 export const exportEn = {
   title: 'Export album',
@@ -71,4 +72,5 @@ export const exportEn = {
   captions: 'Include narration and dialogue',
   imageProfile: 'Image processing',
   done: 'File downloaded',
+  started: 'Download started',
 };

@@ -1001,6 +1001,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/comfy-adapters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Comfy Adapters
+         * @description Available adapter contracts and reviewed source identities.
+         */
+        get: operations["comfy_adapters_api_comfy_adapters_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/profiles": {
         parameters: {
             query?: never;
@@ -1900,7 +1920,7 @@ export interface paths {
         put?: never;
         /**
          * Export Album
-         * @description Self-contained offline HTML album; one book per episode.
+         * @description Self-contained offline HTML album from an immutable document snapshot.
          */
         post: operations["export_album_api_export_album_post"];
         delete?: never;
@@ -1920,12 +1940,95 @@ export interface paths {
         put?: never;
         /**
          * Export Portable
-         * @description ZIP 图片资源包 (simple reader + image files) or PDF 图片画册 (one page per panel).
-         *
-         *     Neither is bound by the single-file inline budget, so ``auto`` means 无损清洗 here.
+         * @description Write panel images to a ZIP or PDF without retaining every decoded page.
          */
         post: operations["export_portable_api_export_portable_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/export/jobs/strip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Strip Export */
+        post: operations["submit_strip_export_api_export_jobs_strip_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/export/jobs/album": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Album Export */
+        post: operations["submit_album_export_api_export_jobs_album_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/export/jobs/portable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit Portable Export */
+        post: operations["submit_portable_export_api_export_jobs_portable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/export/jobs/{job_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Download Export */
+        get: operations["download_export_api_export_jobs__job_id__file_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/export/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Export */
+        delete: operations["delete_export_api_export_jobs__job_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2757,6 +2860,80 @@ export interface components {
              * @enum {string}
              */
             image_profile?: "auto" | "clean" | "publish" | "archive" | "preview";
+        };
+        /** AlbumExportJob */
+        AlbumExportJob: {
+            /** Episode Ids */
+            episode_ids: string[];
+            /**
+             * Template Id
+             * @default export-paper
+             */
+            template_id?: string;
+            /**
+             * Template
+             * @description An unsaved template draft (模板工作室 live preview); validated like an import and used instead of ``template_id``
+             */
+            template?: Record<string, unknown> | null;
+            /** Variant Id */
+            variant_id?: string | null;
+            /**
+             * Lettered
+             * @description Crop panels from the lettered strip
+             * @default true
+             */
+            lettered?: boolean;
+            /**
+             * Show Captions
+             * @default true
+             */
+            show_captions?: boolean;
+            /**
+             * Deduplicate Captions
+             * @description Omit dialogue lines already fully visible in a lettered panel
+             * @default false
+             */
+            deduplicate_captions?: boolean;
+            /**
+             * Show Prompts
+             * @default false
+             */
+            show_prompts?: boolean;
+            /**
+             * Theme Color
+             * @default
+             */
+            theme_color?: string;
+            /**
+             * Border
+             * @default 0
+             */
+            border?: number;
+            /**
+             * Signature
+             * @default
+             */
+            signature?: string;
+            /**
+             * Title
+             * @default
+             */
+            title?: string;
+            /**
+             * Max Width
+             * @description Only used by the ``preview`` image profile
+             * @default 1400
+             */
+            max_width?: number;
+            /**
+             * Image Profile
+             * @description 图片处理: auto / clean (无损清洗) / publish (轻量发布) / archive (无损归档); preview = fast in-app preview encoding
+             * @default preview
+             * @enum {string}
+             */
+            image_profile?: "auto" | "clean" | "publish" | "archive" | "preview";
+            /** Idempotency Key */
+            idempotency_key?: string | null;
         };
         /** ApplyRequest */
         ApplyRequest: {
@@ -4403,6 +4580,13 @@ export interface components {
              */
             max_width?: number;
         };
+        /** OutputAdapterConfig */
+        OutputAdapterConfig: {
+            /** Id */
+            id: string;
+            /** Options */
+            options?: Record<string, unknown>;
+        };
         /** PacingApply */
         PacingApply: {
             /** Base Revision */
@@ -4791,6 +4975,50 @@ export interface components {
              * @enum {string}
              */
             image_profile?: "auto" | "clean" | "publish" | "archive" | "preview";
+        };
+        /** PortableExportJob */
+        PortableExportJob: {
+            /** Episode Ids */
+            episode_ids: string[];
+            /**
+             * Format
+             * @default zip
+             * @enum {string}
+             */
+            format?: "zip" | "pdf";
+            /** Variant Id */
+            variant_id?: string | null;
+            /**
+             * Lettered
+             * @description Crop composited panels; false exports original adopted images without framing
+             * @default true
+             */
+            lettered?: boolean;
+            /**
+             * Show Captions
+             * @description ZIP reader captions only; PDF contains one image per page
+             * @default true
+             */
+            show_captions?: boolean;
+            /**
+             * Deduplicate Captions
+             * @description Omit dialogue lines already fully visible in a lettered panel
+             * @default false
+             */
+            deduplicate_captions?: boolean;
+            /**
+             * Title
+             * @default
+             */
+            title?: string;
+            /**
+             * Image Profile
+             * @default auto
+             * @enum {string}
+             */
+            image_profile?: "auto" | "clean" | "publish" | "archive" | "preview";
+            /** Idempotency Key */
+            idempotency_key?: string | null;
         };
         /**
          * Preset
@@ -5413,6 +5641,8 @@ export interface components {
              * @enum {string}
              */
             feed?: "none" | "previous";
+            /** @description Select a previous stage's output node and zero-based image index. */
+            feed_output?: components["schemas"]["StageOutput-Input"] | null;
         };
         /** RenderStage */
         "RenderStage-Output": {
@@ -5447,6 +5677,8 @@ export interface components {
              * @enum {string}
              */
             feed: "none" | "previous";
+            /** @description Select a previous stage's output node and zero-based image index. */
+            feed_output: components["schemas"]["StageOutput-Output"] | null;
         };
         /** Reorder */
         Reorder: {
@@ -5754,6 +5986,26 @@ export interface components {
          * @enum {string}
          */
         SeriesStatus: "draft" | "active" | "archived";
+        /** StageOutput */
+        "StageOutput-Input": {
+            /** Node Id */
+            node_id: string;
+            /**
+             * Index
+             * @default 0
+             */
+            index?: number;
+        };
+        /** StageOutput */
+        "StageOutput-Output": {
+            /** Node Id */
+            node_id: string;
+            /**
+             * Index
+             * @default 0
+             */
+            index: number;
+        };
         /** Strip */
         "Strip-Input": {
             /**
@@ -5869,6 +6121,27 @@ export interface components {
              * @default false
              */
             manual: boolean;
+        };
+        /** StripExportJob */
+        StripExportJob: {
+            /** Episode Id */
+            episode_id: string;
+            /**
+             * Fmt
+             * @default slices
+             */
+            fmt?: string;
+            /**
+             * Preset
+             * @default webtoon
+             */
+            preset?: string;
+            /** Variant Id */
+            variant_id?: string | null;
+            /** Quality */
+            quality?: number | null;
+            /** Idempotency Key */
+            idempotency_key?: string | null;
         };
         /** Style */
         "Style-Input": {
@@ -6255,7 +6528,15 @@ export interface components {
              * @description Frontend-only node snapshot.
              */
             state?: {
-                [key: string]: unknown[];
+                [key: string]: unknown[] | Record<string, unknown>;
+            };
+            /** State Adapters */
+            state_adapters?: {
+                [key: string]: string;
+            };
+            /** Output Adapters */
+            output_adapters?: {
+                [key: string]: components["schemas"]["OutputAdapterConfig"];
             };
         };
         /** WorkflowImport */
@@ -8493,6 +8774,26 @@ export interface operations {
             };
         };
     };
+    comfy_adapters_api_comfy_adapters_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>[];
+                };
+            };
+        };
+    };
     list_profiles_api_profiles_get: {
         parameters: {
             query?: never;
@@ -10365,6 +10666,165 @@ export interface operations {
                 content: {
                     "application/json": unknown;
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_strip_export_api_export_jobs_strip_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StripExportJob"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_album_export_api_export_jobs_album_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AlbumExportJob"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_portable_export_api_export_jobs_portable_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PortableExportJob"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_export_api_export_jobs__job_id__file_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_export_api_export_jobs__job_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

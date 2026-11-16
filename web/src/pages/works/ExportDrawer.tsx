@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { download, downloadPost } from '../../api/client';
+import { download, raw } from '../../api/client';
+import {
+  continueExport,
+  submitExport,
+  waitForExport,
+  type ExportKind,
+} from '../../api/exportTasks';
+import { useLive } from '../../api/jobs';
+import type { Job } from '../../api/types';
 import { exportCreationKit } from '../../api/creationKits';
 import { useImportAlbumTemplate, type AlbumTemplateInfo } from '../../api/open';
 import { useExportPresets } from '../../api/production';
@@ -53,6 +61,14 @@ export function PresentationDrawer(props: {
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
   const [failure, setFailure] = useState('');
+  const [exportJob, setExportJob] = useState<Job | null>(null);
+  const [canceling, setCanceling] = useState(false);
+  const ticket = useRef<{ signature: string; key: string; id?: string } | null>(null);
+  const waiting = useRef<AbortController | null>(null);
+  const progress = useLive((state) =>
+    exportJob ? state.progress[`${exportJob.id}:0`] : undefined,
+  );
+  useEffect(() => () => waiting.current?.abort(), []);
   const [studio, setStudio] = useState(false);
   const [kitTitle, setKitTitle] = useState<string | null>(null);
   const [episodeSelection, setEpisodes] = useState<string[] | null>(null);
@@ -86,10 +102,30 @@ export function PresentationDrawer(props: {
     setStatus('');
     setFailure('');
   }, [props.seriesId]);
+  useEffect(() => {
+    waiting.current?.abort();
+    waiting.current = null;
+    ticket.current = null;
+    setExportJob(null);
+    setBusy(false);
+    setCanceling(false);
+    setStatus('');
+    setFailure('');
+  }, [props.seriesId, props.episodeId, props.title]);
+  useEffect(() => {
+    if (!props.open) {
+      waiting.current?.abort();
+      waiting.current = null;
+      setBusy(false);
+      setCanceling(false);
+    }
+  }, [props.open]);
   const choose = (value: Format) => {
     setFormat(value);
     setStatus('');
     setFailure('');
+    ticket.current = null;
+    setExportJob(null);
   };
   const toggle = (ids: string[], id: string) =>
     ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
@@ -100,8 +136,38 @@ export function PresentationDrawer(props: {
       : format === 'kit'
         ? !source.data || !allEpisodes.data || !selectedEpisodes.length
         : !props.episodeId);
+  const background = async (kind: ExportKind, body: unknown, name: string, signal: AbortSignal) => {
+    const signature = JSON.stringify([kind, body]);
+    if (ticket.current?.signature !== signature) {
+      ticket.current = { signature, key: `export-${crypto.randomUUID()}` };
+      setExportJob(null);
+    }
+    const current = ticket.current;
+    const job = current.id
+      ? await continueExport(current.id, signal)
+      : await submitExport(kind, body, current.key, signal);
+    current.id = job.id;
+    signal.throwIfAborted();
+    setExportJob(job);
+    return waitForExport(job.id, name, setExportJob, signal);
+  };
+  const cancel = async () => {
+    if (!exportJob || canceling) return;
+    const currentId = exportJob.id;
+    setCanceling(true);
+    try {
+      await raw(`/api/jobs/${exportJob.id}/cancel`, { method: 'POST' });
+    } catch (error) {
+      if (ticket.current?.id === currentId) toastError(error);
+    } finally {
+      if (ticket.current?.id === currentId) setCanceling(false);
+    }
+  };
   const run = async () => {
-    if (disabled) return;
+    if (disabled || waiting.current) return;
+    const controller = new AbortController();
+    waiting.current = controller;
+    setCanceling(false);
     setBusy(true);
     setStatus('');
     setFailure('');
@@ -120,18 +186,19 @@ export function PresentationDrawer(props: {
           title: (kitTitle ?? props.title.slice(0, 120)).trim(),
         });
       else if (format === 'html')
-        result = await downloadPost(
-          '/api/export/album',
+        result = await background(
+          'album',
           {
             ...albumBody({ episodeId: ep, templateId: props.look, lettered: props.lettered }, d),
             title,
             image_profile: d.profile,
           },
           `${name}.html`,
+          controller.signal,
         );
       else if (format === 'zip' || format === 'pdf')
-        result = await downloadPost(
-          '/api/export/portable',
+        result = await background(
+          'portable',
           {
             episode_ids: [ep],
             format,
@@ -142,19 +209,45 @@ export function PresentationDrawer(props: {
             image_profile: d.profile,
           },
           `${name}.${format}`,
+          controller.signal,
         );
       else {
-        const params = new URLSearchParams({ fmt: format });
-        if (slices) params.set('preset', d.preset);
         const quality = QUALITIES[d.quality];
-        if (format === 'slices' || quality) params.set('quality', String(quality));
-        result = await download(`/api/episodes/${ep}/export?${params}`, name);
+        result = await background(
+          'strip',
+          {
+            episode_id: ep,
+            fmt: format,
+            preset: slices ? d.preset : 'webtoon',
+            quality: slices || quality ? quality : null,
+          },
+          name,
+          controller.signal,
+        );
       }
-      setStatus([t('exportUi.done'), report(result)].filter(Boolean).join(' '));
+      if (!controller.signal.aborted) {
+        ticket.current = null;
+        setExportJob(null);
+        setStatus(
+          [
+            t(format === 'source' || format === 'kit' ? 'exportUi.done' : 'exportUi.started'),
+            report(result),
+          ]
+            .filter(Boolean)
+            .join(' '),
+        );
+      }
     } catch (error) {
-      setFailure(error instanceof Error ? error.message : String(error));
+      if (controller.signal.aborted) return;
+      const message = error instanceof Error ? error.message : String(error);
+      setFailure(
+        ['canceled', 'blocked', 'paused'].includes(message) ? t(`jobs.states.${message}`) : message,
+      );
     } finally {
-      setBusy(false);
+      if (waiting.current === controller) {
+        waiting.current = null;
+        setBusy(false);
+      }
     }
   };
   const importFile = async (f: File) => {
@@ -187,7 +280,6 @@ export function PresentationDrawer(props: {
         <button
           type="button"
           className="ibtn"
-          disabled={busy}
           aria-label={t('reader.drawerClose')}
           onClick={props.onClose}
         >
@@ -430,6 +522,17 @@ export function PresentationDrawer(props: {
         </fieldset>
       </div>
       <footer className="export-drawer-footer">
+        {busy && exportJob ? (
+          <div className="row">
+            <span role="status">
+              {t(`jobs.states.${exportJob.state}`)}
+              {progress !== undefined ? ` · ${Math.round(progress * 100)}%` : ''}
+            </span>
+            <button className="btn" disabled={canceling} onClick={() => void cancel()}>
+              {t('common.cancel')}
+            </button>
+          </div>
+        ) : null}
         {failure ? (
           <p className="notice error" role="alert">
             {failure}

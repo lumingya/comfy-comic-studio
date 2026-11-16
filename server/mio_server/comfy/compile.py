@@ -19,9 +19,10 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ..render_models import WorkflowConfig, WorkflowDoc
+from ..render_models import OutputAdapterConfig, WorkflowConfig, WorkflowDoc
 from . import adapters
 from . import bindings as B
+from . import contracts as AC
 from . import workflow_slots as slots
 from .client import ComfyError
 
@@ -50,6 +51,7 @@ class Compiled:
     warnings: list[str] = field(default_factory=list)
     checkpoint: str = ""
     frontend_state: dict = field(default_factory=dict)
+    output_adapters: dict = field(default_factory=dict)
 
     def to_json(self) -> dict:
         return {
@@ -61,6 +63,7 @@ class Compiled:
             "warnings": self.warnings,
             "checkpoint": self.checkpoint,
             "frontend_state": copy.deepcopy(self.frontend_state),
+            "output_adapters": copy.deepcopy(self.output_adapters),
         }
 
 
@@ -115,24 +118,33 @@ def primary_checkpoint(graph: dict, bound: list[B.Binding]) -> str:
     return ""
 
 
-def validate_plan(graph: dict, plan: dict) -> None:
+def validate_plan(graph: dict, plan: dict, registry=None) -> None:
     """Reject hook changes that no longer match the compiled frontend-state snapshot."""
+    if not isinstance(plan, dict):
+        raise B.BindingError("工作流参数面板快照必须是对象")
     expected = adapters.stateful_nodes(graph)
-    if not isinstance(plan, dict) or set(expected) != set(plan):
+    expected.update({nid: graph.get(nid, {}).get("class_type") for nid in plan})
+    if set(expected) != set(plan):
         raise B.BindingError("工作流参数面板节点与编译快照不一致，请重新编译工作流")
     for node_id, class_type in expected.items():
         item = plan[node_id]
         if not isinstance(item, dict) or item.get("class_type") != class_type:
             raise B.BindingError(f"节点 {node_id} 的参数面板类型与编译快照不一致")
         try:
-            desired = adapters.desired_state(class_type, item.get("saved"), item.get("changes"))
+            desired = adapters.desired_state(
+                class_type,
+                item.get("saved"),
+                item.get("changes"),
+                ref=item.get("adapter"),
+                registry=registry,
+            )
             if item.get("desired") != desired:
                 raise ComfyError("参数面板目标值与编译快照不一致")
         except ComfyError as exc:
             raise B.BindingError(f"节点 {node_id}：{exc}") from exc
 
 
-def _frontend_plan(doc: WorkflowDoc, graph: dict, variant: dict) -> dict:
+def _frontend_plan(doc: WorkflowDoc, graph: dict, variant: dict, registry=None) -> dict:
     state = variant.get("state", {})
     frontend = variant.get("frontend", {})
     if not isinstance(state, dict) or not isinstance(frontend, dict):
@@ -140,13 +152,22 @@ def _frontend_plan(doc: WorkflowDoc, graph: dict, variant: dict) -> dict:
     for source in (doc.config.state, doc.config.frontend, state, frontend):
         for node_id in source:
             original = doc.graph.get(node_id)
-            if original is None or original.get("class_type") not in adapters.ADAPTERS:
+            if original is None or (
+                original.get("class_type") not in adapters.ADAPTERS
+                and node_id not in doc.config.state_adapters
+            ):
                 raise B.BindingError(f"配置指向不存在或类型不匹配的参数面板节点 {node_id}")
             if node_id in graph and graph[node_id].get("class_type") != original["class_type"]:
                 raise B.BindingError(f"节点 {node_id} 的参数面板类型已改变")
     saved = _merge(doc.config.state, state)
     plan = {}
-    for node_id, class_type in adapters.stateful_nodes(graph).items():
+    nodes = adapters.stateful_nodes(graph)
+    for nid in doc.config.state_adapters:
+        if nid not in doc.graph:
+            raise B.BindingError(f"状态适配器指向不存在的节点 {nid}")
+        if nid in graph:
+            nodes[nid] = graph[nid]["class_type"]
+    for node_id, class_type in nodes.items():
         if doc.graph.get(node_id, {}).get("class_type") != class_type:
             raise B.BindingError(f"节点 {node_id} 的参数面板类型已改变")
         base_changes = doc.config.frontend.get(node_id, {})
@@ -156,17 +177,39 @@ def _frontend_plan(doc: WorkflowDoc, graph: dict, variant: dict) -> dict:
         changes = _merge(base_changes, variant_changes)
         snapshot = copy.deepcopy(saved.get(node_id))
         try:
-            desired = adapters.desired_state(class_type, snapshot, changes)
+            ref = AC.select(
+                registry,
+                "comfy_state_adapter",
+                doc.config.state_adapters.get(node_id, "parameter-control-panel"),
+            )
+            desired = adapters.desired_state(
+                class_type, snapshot, changes, ref=ref, registry=registry
+            )
         except ComfyError as exc:
             raise B.BindingError(f"节点 {node_id}：{exc}") from exc
         plan[node_id] = {
+            "adapter": ref,
             "class_type": class_type,
             "saved": snapshot,
             "changes": copy.deepcopy(changes),
             "desired": desired,
         }
-    validate_plan(graph, plan)
+    validate_plan(graph, plan, registry)
     return plan
+
+
+def validate_outputs(graph: dict, plans: dict, registry=None) -> None:
+    """A render hook cannot silently change a frozen adapter's node or parsing plan."""
+    for node_id, frozen in plans.items():
+        node = graph.get(node_id)
+        if not node or node.get("class_type") != frozen["class_type"]:
+            raise B.BindingError(f"输出节点 {node_id} 与适配器快照不一致")
+        adapter = AC.resolve(registry, frozen["adapter"])
+        expected = AC.json_copy(
+            adapter.freeze(copy.deepcopy(node), AC.json_copy(frozen["options"]))
+        )
+        if expected != frozen["plan"]:
+            raise B.BindingError(f"输出节点 {node_id} 的解析计划与编译快照不一致")
 
 
 def compile_workflow(
@@ -179,6 +222,7 @@ def compile_workflow(
     slot_overrides: dict | None = None,
     guard: list[str] | None = None,
     rules: B.BindingRules = (),
+    registry=None,
 ) -> Compiled:
     config: WorkflowConfig = doc.config
     var_cfg = config.variants.get(variant or "", {}) if variant else {}
@@ -212,7 +256,30 @@ def compile_workflow(
     graph = B.apply_values(graph, bound, merged)
     graph, outputs = B.select_variant(graph, bound, variant)
     graph = B.apply_overrides(graph, _merge(config.overrides, var_cfg.get("overrides"), overrides))
-    frontend_state = _frontend_plan(doc, graph, var_cfg)
+    frontend_state = _frontend_plan(doc, graph, var_cfg, registry)
+    output_adapters = {}
+    selected_adapters = {node_id: OutputAdapterConfig(id="history-images") for node_id in outputs}
+    selected_adapters.update(doc.config.output_adapters)
+    for node_id, adapter_config in selected_adapters.items():
+        if node_id not in doc.graph:
+            raise B.BindingError(f"输出适配器指向不存在的节点 {node_id}")
+        if node_id not in graph:
+            continue
+        try:
+            ref = AC.select(registry, "comfy_output_adapter", adapter_config.id)
+            plan = AC.resolve(registry, ref).freeze(
+                copy.deepcopy(graph[node_id]), AC.json_copy(adapter_config.options)
+            )
+            output_adapters[node_id] = {
+                "adapter": ref,
+                "plan": AC.json_copy(plan),
+                "options": AC.json_copy(adapter_config.options),
+                "class_type": graph[node_id]["class_type"],
+            }
+        except (KeyError, ValueError, ComfyError) as exc:
+            raise B.BindingError(f"节点 {node_id} 输出适配器配置错误：{exc}") from exc
+        if node_id not in outputs:
+            outputs.append(node_id)
     terms = list(config.guard) + list(guard or [])
     if terms:
         skip = [(b.node, b.field) for b in bound if b.kind == "negative" and b.field]
@@ -231,6 +298,7 @@ def compile_workflow(
         warnings=warnings,
         checkpoint=primary_checkpoint(graph, bound),
         frontend_state=frontend_state,
+        output_adapters=output_adapters,
     )
 
 

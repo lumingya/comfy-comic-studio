@@ -84,8 +84,23 @@ it('saves a newly added stage without UI-only fields rejected by the strict serv
   await waitFor(() => expect(calls.some((c) => c.method === 'POST')).toBe(true));
   const saved = calls.find((c) => c.method === 'POST')!.body as RenderProfile;
   expect(saved.draft).toHaveLength(1);
-  expect(saved.draft[0]).toMatchObject({ workflow_id: 'wf-test', enabled: true, feed: 'previous' });
+  expect(saved.draft[0]).toMatchObject({
+    workflow_id: 'wf-test',
+    enabled: true,
+    feed: 'previous',
+    feed_output: null,
+  });
   expect(Object.keys(saved.draft[0]).sort()).toEqual(
-    ['id', 'kind', 'workflow_id', 'variant', 'values', 'overrides', 'enabled', 'feed'].sort(),
+    [
+      'id',
+      'kind',
+      'workflow_id',
+      'variant',
+      'values',
+      'overrides',
+      'enabled',
+      'feed',
+      'feed_output',
+    ].sort(),
   );
 });

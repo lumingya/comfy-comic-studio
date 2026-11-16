@@ -49,7 +49,7 @@ class StateSession:
         )
         self.idle()
         if plan:
-            adapters.prepare_plan(self.client, plan, self.entries)
+            adapters.prepare_plan(self.client, plan, self.entries, self.ctx.engine.registry)
         self.save(phase="prepared")
 
     def submitting(self):
@@ -70,7 +70,9 @@ class StateSession:
         )
 
     def restore(self):
-        issues = adapters.restore_plan(self.client, self.data.get("entries", []), self.entries)
+        issues = adapters.restore_plan(
+            self.client, self.data.get("entries", []), self.entries, self.ctx.engine.registry
+        )
         self.save(phase="restore_failed" if issues else "restored", issues=issues)
         if issues:
             raise ExecError(

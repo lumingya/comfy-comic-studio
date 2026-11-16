@@ -76,7 +76,7 @@ class Inspection(BaseModel):
     diagnostics: DiagnosticReport | None = None
 
 
-def inspect(request: InspectRequest, *, rules: B.BindingRules = ()) -> Inspection:
+def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=None) -> Inspection:
     """Never imports, mutates input, contacts ComfyUI or executes a workflow."""
     payload = request.workflow
     graph = payload.get("graph", payload)
@@ -126,7 +126,12 @@ def inspect(request: InspectRequest, *, rules: B.BindingRules = ()) -> Inspectio
     try:
         selected, result.output_nodes = B.select_variant(doc.graph, bound, request.variant)
         compiled = C.compile_workflow(
-            doc, request.values, variant=request.variant, overrides=request.overrides, rules=rules
+            doc,
+            request.values,
+            variant=request.variant,
+            overrides=request.overrides,
+            rules=rules,
+            registry=registry,
         )
         selected = compiled.graph
         result.compilable = True
