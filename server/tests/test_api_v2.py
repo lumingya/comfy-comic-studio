@@ -24,6 +24,16 @@ from .test_jobs import drain
 CLIENTS = Path(__file__).resolve().parents[2] / "clients"
 
 
+def two_panel_episode(case: ApiCase, episode: dict) -> dict:
+    # These contracts need multiple rendered panels, not all twelve script fixture panels.
+    # Keep real rendering, persistence and adoption inside drain's unchanged CI budget.
+    trimmed = case.ctx.store.update_episode(
+        episode["id"], lambda ep: setattr(ep, "panels", ep.ordered_panels()[:2])
+    )
+    case.assertEqual(len(trimmed.panels), 2)
+    return trimmed.model_dump(mode="json")
+
+
 class ScopeTests(unittest.TestCase):
     def test_scope_table(self):
         cases = {
@@ -149,7 +159,7 @@ class WebhookTests(ApiCase):
         self.assertIn("job.failed", listed["events"])
 
         _, ep = self.make_episode()
-        self.adopt_all(ep)
+        self.adopt_all(two_panel_episode(self, ep))
         self.ctx.webhooks.flush()
         events = rx.events()
         self.assertIn("job.completed", events)
@@ -258,7 +268,15 @@ class ClientAndBotTests(ApiCase):
             )
             engine = self.ctx.engine
             wait = lambda _self, job_id, **kw: drain(engine, job_id)  # noqa: E731 (no autostart)
-            with mock.patch.object(MioClient, "wait_job", wait):
+            generate = MioClient.generate_episode
+
+            def generate_pair(client, *args, **kwargs):
+                return two_panel_episode(self, generate(client, *args, **kwargs))
+
+            with (
+                mock.patch.object(MioClient, "generate_episode", generate_pair),
+                mock.patch.object(MioClient, "wait_job", wait),
+            ):
                 notes = []
                 episode, png = flow.draw(mio, "雨夜的便利店", progress=notes.append, width=320)
             self.assertTrue(png.startswith(b"\x89PNG"))
