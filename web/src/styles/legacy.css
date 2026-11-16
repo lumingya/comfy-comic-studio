@@ -1904,11 +1904,6 @@ body dialog.art-reader {
   }
 }
 @media (max-width: 760px) {
-  .room-head .room-export {
-    display: none;
-  }
-}
-@media (max-width: 760px) {
   .room-canvas {
     padding: 18px 8px;
   }
