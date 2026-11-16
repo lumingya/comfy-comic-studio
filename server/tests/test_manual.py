@@ -101,6 +101,21 @@ class ManualTest(ApiCase):
             self.assertIn("/api/v2/workshop/assemble", api_page)
             self.assertIn('id="automation"', api_page)
 
+    def test_bundled_resource_types_do_not_depend_on_system_mime_registration(self):
+        with mock.patch("starlette.responses.guess_type", return_value=(None, None)):
+            for path, expected in (
+                (manual.ZH, "text/html"),
+                ("/manual/assets/home.css", "text/css"),
+                ("/manual/assets/manual.js", "text/javascript"),
+                ("/manual/assets/coast.webp", "image/webp"),
+                ("/manual/docs/guide/img/flow.svg", "image/svg+xml"),
+            ):
+                with self.subTest(path=path):
+                    response = self.get(path)
+                    self.assertEqual(response.status_code, 200)
+                    self.assertEqual(response.headers["content-type"].split(";")[0], expected)
+                    self.assertEqual(response.headers["x-content-type-options"], "nosniff")
+
     def test_all_restored_help_links_point_to_existing_current_sections(self):
         for language in ("guide", "en"):
             for name, section in manual.GUIDES.items():

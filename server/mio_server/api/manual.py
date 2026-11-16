@@ -58,6 +58,13 @@ HEADERS = {
         "base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
     ),
 }
+MEDIA_TYPES = {
+    ".html": "text/html",
+    ".css": "text/css",
+    ".js": "text/javascript",
+    ".svg": "image/svg+xml",
+    ".webp": "image/webp",
+}
 router = APIRouter(include_in_schema=False)
 
 
@@ -96,5 +103,7 @@ def manual(path: str):
         root = MANUAL.resolve()
         target = (root / resource).resolve()
         if root in target.parents and target.is_file():
-            return FileResponse(target, headers=HEADERS)
+            # Windows MIME registration varies by installed applications and Python version.
+            # These bundled resources must retain their types under our nosniff policy.
+            return FileResponse(target, headers=HEADERS, media_type=MEDIA_TYPES[target.suffix])
     return _missing()
