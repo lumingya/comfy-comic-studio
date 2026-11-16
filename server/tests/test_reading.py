@@ -162,6 +162,137 @@ class ReadingTests(ApiCase):
             [[0, 0, 120, 120], [0, 0, 120, 60]],
         )
 
+    def test_panel_keeps_complete_caption_crossing_top_edge_without_duplicate_caption(self):
+        def edit(ep):
+            ep.strip.lettering = [
+                LetteringLayer(
+                    panel_id="p1",
+                    kind="caption",
+                    text="Mio arrives",
+                    box=(40, 160, 180, 220),
+                    font_size=16,
+                )
+            ]
+
+        self.ctx.store.update_episode(self.ep.id, edit)
+        _, _, pages = episode_pages(
+            self.ctx, self.ep.id, profile="clean", deduplicate_captions=True
+        )
+        self.assertEqual((pages[0].width, pages[0].height), (160, 200))
+        self.assertEqual(pages[0].caption, "")
+        preview = self.ok(self.client.get(self.path + "/reading"))
+        self.assertEqual(preview["panel_boxes"]["p1"], [30, 160, 190, 360])
+        self.assertEqual(preview["display_captions"]["p1"], "")
+        image = self.ok(self.client.get(self.path + "/panels/p1/image"))
+        self.assert_pixels_equal(image.content, pages[0].data)
+        with Image.open(io.BytesIO(image.content)) as im:
+            self.assertEqual(im.getpixel((5, 100)), (0, 0, 255))
+            self.assertEqual(im.getpixel((5, 5)), (255, 255, 255))
+            colors = im.crop((10, 0, 150, 60)).getcolors(140 * 60)
+            self.assertTrue(any(max(pixel) < 100 for _, pixel in colors))
+        body = {
+            "episode_ids": [self.ep.id],
+            "image_profile": "clean",
+            "lettered": True,
+            "deduplicate_captions": True,
+        }
+        html = self.ok(self.client.post("/api/export/album", json=body)).text
+        marker = re.search(r'<script id="mio-album-data"[^>]*>(.*?)</script>', html, re.S)
+        step = json.loads(marker.group(1))["books"][0]["album"]["steps"][0]
+        self.assertEqual(step["caption"], "")
+        self.assert_pixels_equal(
+            pages[0].data, AlbumImages(html).images[step["image"]["$mioImage"]]
+        )
+        zipped = self.ok(self.client.post("/api/export/portable", json={**body, "format": "zip"}))
+        with zipfile.ZipFile(io.BytesIO(zipped.content)) as zf:
+            entry = json.loads(zf.read("manifest.json"))["books"][0]["files"][0]
+            self.assertEqual(entry["caption"], "")
+            self.assert_pixels_equal(zf.read(entry["name"]), pages[0].data)
+        pdf = self.ok(self.client.post("/api/export/portable", json={**body, "format": "pdf"}))
+        first_box = re.findall(rb"/MediaBox\s*\[([^\]]+)\]", pdf.content)[0]
+        self.assertEqual([float(value) for value in first_box.split()], [0, 0, 120, 150])
+
+    def test_cross_panel_lettering_belongs_wholly_to_its_owner_without_neighbor_art(self):
+        def edit(ep):
+            ep.strip.lettering = [
+                LetteringLayer(
+                    panel_id="p1",
+                    bridge_to="p2",
+                    kind="speech",
+                    text="Mio arrives",
+                    box=(40, 580, 180, 650),
+                    tail_to=(110, 350),
+                    font_size=16,
+                )
+            ]
+
+        self.ctx.store.update_episode(self.ep.id, edit)
+        _, _, pages = episode_pages(
+            self.ctx, self.ep.id, profile="clean", deduplicate_captions=True
+        )
+        self.assertEqual((pages[0].width, pages[0].height), (160, 451))
+        self.assertEqual(pages[0].caption, "")
+        with Image.open(io.BytesIO(pages[0].data)) as first:
+            self.assertEqual(first.getpixel((155, 440)), (255, 255, 255))
+            self.assertEqual(first.getpixel((5, 5)), (0, 0, 255))
+        with Image.open(io.BytesIO(pages[1].data)) as second:
+            self.assertEqual(second.size, (160, 80))
+            self.assertEqual(second.convert("RGB").getcolors(160 * 80), [(160 * 80, (255, 0, 0))])
+
+    def test_standalone_panel_keeps_the_tip_of_a_tail_beyond_its_right_and_bottom_edges(self):
+        self.ctx.store.update_episode(
+            self.ep.id,
+            lambda ep: setattr(
+                ep.strip,
+                "lettering",
+                [
+                    LetteringLayer(
+                        panel_id="p1",
+                        kind="speech",
+                        text="Hello",
+                        box=(50, 230, 170, 300),
+                        tail_to=(240, 400),
+                        font_size=16,
+                    )
+                ],
+            ),
+        )
+        _, _, pages = episode_pages(self.ctx, self.ep.id, profile="clean")
+        with Image.open(io.BytesIO(pages[0].data)) as image:
+            self.assertEqual(image.size, (211, 201))
+            self.assertEqual(image.getpixel((210, 200)), (0, 0, 0))
+            self.assertEqual(image.getpixel((200, 0)), (255, 255, 255))
+
+    def test_panel_expanding_into_previous_frame_does_not_copy_previous_art_or_words(self):
+        def edit(ep):
+            ep.strip.lettering = [
+                LetteringLayer(
+                    panel_id="p1",
+                    kind="caption",
+                    text="Other panel",
+                    box=(70, 220, 180, 280),
+                    font_size=16,
+                ),
+                LetteringLayer(
+                    panel_id="p2",
+                    kind="speech",
+                    text="Mio",
+                    box=(80, 300, 220, 370),
+                    font_size=16,
+                ),
+            ]
+
+        self.ctx.store.update_episode(self.ep.id, edit)
+        _, _, pages = episode_pages(
+            self.ctx, self.ep.id, profile="clean", deduplicate_captions=True
+        )
+        self.assertEqual(pages[0].caption, "Mio arrives")
+        self.assertEqual(pages[1].caption, "")
+        with Image.open(io.BytesIO(pages[1].data)) as image:
+            self.assertEqual(image.size, (160, 380))
+            self.assertEqual(image.getpixel((5, 10)), (255, 255, 255))
+            self.assertEqual(image.getpixel((5, 320)), (255, 0, 0))
+
     def test_metadata_preserves_geometry_expands_captions_and_never_writes(self):
         before_ep = self.ctx.store.get_episode(self.ep.id).model_dump(mode="json")
         before_series = self.ctx.store.get_series(self.series.id).model_dump(mode="json")
@@ -205,7 +336,7 @@ class ReadingTests(ApiCase):
         self.assertNotEqual((lettered[0].width, lettered[0].height), (200, 100))
         self.assert_pixels_equal(plain[0].data, self.ctx.assets.read(self.asset.id))
 
-    def test_caption_deduplication_is_per_line_and_panel_and_ignores_sfx_and_clipped_text(self):
+    def test_caption_deduplication_is_per_line_and_panel_and_ignores_sfx(self):
         def edit(ep):
             ep.panels[0].dialogues = [
                 Dialogue(kind="narration", text="{hero} arrives"),
@@ -224,7 +355,7 @@ class ReadingTests(ApiCase):
         self.ctx.store.update_episode(self.ep.id, edit)
         preview = self.ok(self.client.get(self.path + "/reading"))
         self.assertEqual(preview["captions"]["p1"], "Mio arrives　More narration")
-        expected = {"p1": "More narration", "p2": "Ada：Mio"}
+        expected = {"p1": "More narration", "p2": ""}
         self.assertEqual(preview["display_captions"], expected)
         body = {"episode_ids": [self.ep.id], "lettered": True, "deduplicate_captions": True}
         doc = self.ok(self.client.post("/api/export/album", json=body)).text

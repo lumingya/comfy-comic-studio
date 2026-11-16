@@ -97,8 +97,8 @@ class ReadingCache:
         full = None
         originals = {}
         if ep.strip.panel_boxes or ep.strip.crops or ep.strip.lettering:
-            _, _, strip, full = ES.render_snapshot(ctx, series, ep, variant_id)
-            boxes = {p.id: strip.panel_boxes[p.id] for p in adopted}
+            _, _, strip, full = ES.render_snapshot(ctx, series, ep, variant_id, panel_images=True)
+            boxes = {p.id: ES.panel_crop_box(strip, p.id) for p in adopted}
             page_width, page_height = strip.width, full.height
         else:
             # Opening an album must not implicitly crop or letter its images. Those choices

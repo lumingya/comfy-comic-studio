@@ -1,8 +1,7 @@
 """Episodes → album books: one book per episode, one frame per panel (adopted take).
 
-``lettered=True`` crops each panel from the composited strip so bubbles and SFX come along
-(cross-panel bubbles are cut at the panel edge); otherwise the raw adopted image is used and the
-dialogue goes into the caption.
+``lettered=True`` keeps each panel's saved framing and complete owned bubbles and SFX on an
+expanded canvas; otherwise the raw adopted image is used and dialogue goes into the caption.
 """
 
 from __future__ import annotations
@@ -65,8 +64,9 @@ def display_name(series: Series, values: dict[str, str] | None = None) -> str:
 def caption(series: Series, panel, embedded_strip=None) -> str:
     """Dialogue not already visible in this panel's image, when a composition is supplied.
 
-    Match whole normalized lines only. SFX, another panel's text, and lettering clipped by a
-    panel edge cannot consume a dialogue line. Keep the full caption by omitting the strip.
+    Match whole normalized lines only. SFX and another panel's text cannot consume a dialogue
+    line. Standalone panel images preserve owned lettering beyond the artwork's edge.
+    Keep the full caption by omitting the strip.
     """
     names = {c.id: c.name for c in series.bible.characters}
     values = V.table(series, panel)
@@ -75,7 +75,11 @@ def caption(series: Series, panel, embedded_strip=None) -> str:
         return " ".join(unicodedata.normalize("NFC", text).split())
 
     embedded = Counter()
-    box = embedded_strip.panel_boxes.get(panel.id) if embedded_strip else None
+    box = (
+        ES.panel_crop_box(embedded_strip, panel.id)
+        if embedded_strip and panel.id in embedded_strip.panel_boxes
+        else None
+    )
     if box:
         for layer in embedded_strip.lettering:
             if layer.panel_id != panel.id or layer.kind == "sfx":
@@ -122,7 +126,7 @@ def episode_pages(
     crops: dict[str, Image.Image] = {}
     composed_strip = None
     if lettered and images:
-        _, _, strip, full = ES.render_snapshot(ctx, series, ep, variant_id)
+        _, _, strip, full = ES.render_snapshot(ctx, series, ep, variant_id, panel_images=True)
         crops = dict(ES.panel_crops(ep, strip, full, variant_id))
         composed_strip = strip
     pages: list[Page | None] = []
