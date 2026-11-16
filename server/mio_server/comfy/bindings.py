@@ -315,11 +315,13 @@ def summary(bindings: list[Binding]) -> dict:
 
 
 def _value_for(binding: Binding, values: dict):
-    """``ref:1`` beats ``ref`` so a qualifier can target one slot."""
+    """Qualified values win; an unqualified ref defaults to the first reference only."""
     if binding.qualifier is not None and f"{binding.kind}:{binding.qualifier}" in values:
         return True, values[f"{binding.kind}:{binding.qualifier}"]
     if binding.kind in values:
         return True, values[binding.kind]
+    if binding.kind == "ref" and binding.qualifier is None and "ref:1" in values:
+        return True, values["ref:1"]
     return False, None
 
 

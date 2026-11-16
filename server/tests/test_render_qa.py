@@ -5,6 +5,7 @@ from types import SimpleNamespace
 from unittest import mock
 
 from mio_server.assets import AssetStore
+from mio_server.comfy.compile import find_placeholders
 from mio_server.comfy.executor import ComfyRenderExecutor
 from mio_server.jobs import JobEngine
 from mio_server.models import AssetRef, Series, TakeStatus, VariantSet
@@ -13,10 +14,11 @@ from mio_server.pipeline import qa as Q
 from mio_server.pipeline import story as ST
 from mio_server.pipeline.cloud_jobs import CloudExecutor
 from mio_server.pipeline.render import RenderError, RenderService
+from mio_server.render_models import RenderStage
 from mio_server.storage import SQLiteStore
 
 from .story_fixture import make_story
-from .test_compile_executor import FakeClient, png
+from .test_compile_executor import FakeClient, image_pair_workflow, png
 from .test_jobs import drain
 
 
@@ -97,6 +99,60 @@ class Harness(unittest.TestCase):
 
 
 class RenderTests(Harness):
+    def test_draft_chain_fills_all_previous_targets_with_one_upload(self):
+        workflow = self.store.put_doc(image_pair_workflow())
+        profile = self.render.profile(None)
+        profile.draft.append(RenderStage(id="pair", kind="refine", workflow_id=workflow.id))
+        self.store.put_doc(profile)
+        job = self.render.render(self.episode.id, ["p02"], candidates=1)
+        plan = job["items"][0]["input"]
+        self.assertEqual(plan["feeds"], [[], ["/10/inputs/image", "/11/inputs/image"]])
+        self.assertEqual(plan["stages"][1]["uploads"], {})
+        ep = self.run_job(job)
+        self.assertEqual(len(ep.takes), 1)
+        result = self.engine.get(job["id"])["items"][0]["result"]
+        first = result["stages"][0]["images"][0]["asset_id"]
+        self.assertEqual(FakeClient.uploads, [f"mio_{first[:24]}.png"])
+        graph = FakeClient.graphs[1]
+        self.assertEqual(graph["10"]["inputs"]["image"], f"mio/{FakeClient.uploads[0]}")
+        self.assertEqual(graph["11"]["inputs"]["image"], graph["10"]["inputs"]["image"])
+        self.assertEqual(graph["12"]["inputs"], workflow.graph["12"]["inputs"])
+        self.assertEqual(find_placeholders(graph), {})
+
+    def test_automatic_references_fill_plain_ref_and_skip_unused_extra_slots(self):
+        workflow = self.store.put_doc(image_pair_workflow("ref", "ref"))
+        stage = RenderStage(id="pair", kind="generate", workflow_id=workflow.id)
+        data, _, _ = self.render._compile_stage(
+            stage, {"ref:1": {"$asset": "first"}, "ref:2": {"$asset": "unused"}}
+        )
+        self.assertEqual(
+            data["uploads"], {"/10/inputs/image": "first", "/11/inputs/image": "first"}
+        )
+        profile = self.render.profile(None)
+        profile.draft = [stage]
+        self.store.put_doc(profile)
+        self.run_job(self.render.render(self.episode.id, ["p02"], candidates=1))
+        ref = self.series.bible.character("lin").references[0].asset_id
+        self.assertEqual(FakeClient.uploads, [f"mio_{ref[:24]}.png"])
+        self.assertEqual(
+            FakeClient.graphs[0]["10"]["inputs"]["image"], f"mio/{FakeClient.uploads[0]}"
+        )
+
+    def test_single_edit_uploads_one_source_for_all_init_targets(self):
+        ep = self.run_job(self.render.render(self.episode.id, ["p02"], candidates=1))
+        take = ep.takes[0]
+        workflow = self.store.put_doc(image_pair_workflow())
+        profile = self.render.profile(None)
+        profile.edits["edit"] = RenderStage(id="pair", kind="refine", workflow_id=workflow.id)
+        self.store.put_doc(profile)
+        job = self.render.edit(self.episode.id, take.id, "edit", {"instruction": "adjust color"})
+        self.assertEqual(job["items"][0]["input"]["feeds"], [[]])
+        self.run_job(job)
+        self.assertEqual(FakeClient.uploads, [f"mio_{take.asset_id[:24]}.png"])
+        graph = FakeClient.graphs[-1]
+        self.assertEqual(graph["10"]["inputs"]["image"], graph["11"]["inputs"]["image"])
+        self.assertEqual(find_placeholders(graph), {})
+
     def test_draft_candidates_become_takes(self):
         job = self.render.render(self.episode.id, ["p02", "p03"], candidates=2)
         self.assertEqual(len(job["items"]), 4)

@@ -79,6 +79,68 @@ it('edits and removes individual targets of an existing mapping without replacin
   ).toEqual({ seed: '/3/inputs/seed', negative: '/7/inputs/text' });
 });
 
+it('saves qualified output and inspect mappings as multiple nodes without changing linked inputs', async () => {
+  let doc = structuredClone(configWorkflow);
+  doc.graph['42'] = {
+    class_type: 'PreviewImage',
+    _meta: { title: '草稿预览' },
+    inputs: { images: ['3', 0] },
+  };
+  doc.graph['43'] = {
+    class_type: 'PreviewImage',
+    _meta: { title: '备用预览' },
+    inputs: { images: ['3', 0] },
+  };
+  doc.graph['44'] = {
+    class_type: 'ShowText',
+    _meta: { title: '正向检查' },
+    inputs: { text: ['6', 0] },
+  };
+  doc.graph['45'] = {
+    class_type: 'ShowText',
+    _meta: { title: '负向检查' },
+    inputs: { text: ['7', 0] },
+  };
+  doc.config.mapping = { ...doc.config.mapping, 'inspect:final': '/44' };
+  const originalGraph = structuredClone(doc.graph);
+  const calls = mockFetch(
+    configurationRoutes({
+      'GET /api/workflows/wf_demo': () => doc,
+      'PATCH /api/workflows/wf_demo': (body: unknown) => (doc = { ...doc, ...(body as object) }),
+    }),
+  );
+  renderWithProviders(<WorkflowsSection />);
+  expect(await screen.findByRole('combobox', { name: 'inspect:final' })).toHaveTextContent(
+    '#44 · 正向检查',
+  );
+  await userEvent.click(screen.getByRole('combobox', { name: '为inspect:final添加目标' }));
+  await userEvent.click(screen.getByRole('option', { name: '#45 · 负向检查' }));
+
+  await userEvent.type(
+    screen.getByRole('textbox', { name: '参数名，例如 steps 或 control_strength' }),
+    'output:draft',
+  );
+  await userEvent.click(screen.getByRole('button', { name: '添加参数' }));
+  await userEvent.click(screen.getByRole('combobox', { name: 'output:draft' }));
+  await userEvent.click(screen.getByRole('option', { name: '#42 · 草稿预览' }));
+  await userEvent.click(screen.getByRole('combobox', { name: '为output:draft添加目标' }));
+  await userEvent.click(screen.getByRole('option', { name: '#43 · 备用预览' }));
+  await userEvent.click(screen.getByRole('button', { name: '保存' }));
+
+  await waitFor(() => expect(calls.find((call) => call.method === 'PATCH')).toBeDefined());
+  const patch = calls.find((call) => call.method === 'PATCH')!.body as Partial<WorkflowDocument>;
+  expect(patch.config).toEqual({
+    ...configWorkflow.config,
+    mapping: {
+      ...configWorkflow.config.mapping,
+      'inspect:final': ['/44', '/45'],
+      'output:draft': ['/42', '/43'],
+    },
+  });
+  expect(patch.graph).toBeUndefined();
+  expect(doc.graph).toEqual(originalGraph);
+});
+
 it('mounts JSON editors on demand and keeps unsaved contents after closing and reopening a panel', async () => {
   mockFetch(configurationRoutes());
   renderWithProviders(<WorkflowsSection />);

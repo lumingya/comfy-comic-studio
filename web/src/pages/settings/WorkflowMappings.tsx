@@ -90,7 +90,8 @@ export function WorkflowMappings({
           const label = isCore ? t(`config.workflow.fields.${key}`) : key;
           const manual = mapping[key];
           const targets = (Array.isArray(manual) ? manual : manual ? [manual] : []).filter(Boolean);
-          const nodeSelector = key === 'output' || key === 'inspect';
+          const kind = key.split(':', 1)[0];
+          const nodeSelector = kind === 'output' || kind === 'inspect';
           const options = nodeSelector ? nodes : fields;
           const available = options.filter((option) => !targets.includes(option.value));
           const detected = (bindings?.[key] ?? [])

@@ -37,6 +37,7 @@ BUILTINS = {
     ),
 }
 IMAGE_KINDS = ("init", "mask", "ref", "control")
+PREVIOUS = "__previous__"
 
 
 @dataclass
@@ -196,7 +197,15 @@ def compile_workflow(
             base, _, qual = key.partition(":")
             if merged[key] is None:
                 continue
-            if not any(b.kind == base and (not qual or b.qualifier in (None, qual)) for b in bound):
+            if not any(
+                b.kind == base
+                and (
+                    not qual
+                    or b.qualifier == qual
+                    or (b.qualifier is None and (base != "ref" or qual == "1"))
+                )
+                for b in bound
+            ):
                 if base in IMAGE_KINDS:
                     raise B.BindingError(f"工作流里没有 [mio:{key}] 输入节点，无法接收图片")
                 warnings.append(f"工作流没有 {key} 的绑定，值被忽略")

@@ -18,8 +18,6 @@ from .compiler import compile_panel
 from .node_overrides import node_overrides
 from .refs import select_references
 
-PREVIOUS = "__previous__"
-
 
 class RenderError(ValueError):
     pass
@@ -148,7 +146,7 @@ class EditsMixin:
             "edit": {"kind": kind, "params": record},
         }
         spec = ItemSpec(
-            input={"stages": [data], "feeds": [None], "meta": meta},
+            input={"stages": [data], "feeds": [[]], "meta": meta},
             resource=COMFY,
             group=profile.model_group or data.get("checkpoint") or "",
             instances=tuple(profile.instances),

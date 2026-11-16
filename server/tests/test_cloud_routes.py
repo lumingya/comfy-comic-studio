@@ -5,6 +5,7 @@ import threading
 from types import SimpleNamespace
 from unittest import mock
 
+from mio_server.comfy.compile import find_placeholders
 from mio_server.models import VariantSet
 from mio_server.pipeline import cloud_jobs
 from mio_server.pipeline.render import RenderError
@@ -12,11 +13,38 @@ from mio_server.pipeline.render_cloud import CLOUD_SOURCE, bind_cloud_source
 from mio_server.render_models import RenderStage
 from mio_server.storage import NotFound
 
-from .test_compile_executor import FakeClient
+from .test_compile_executor import FakeClient, image_pair_workflow
 from .test_render_qa import FakeCloudRenderer, Harness
 
 
 class CloudRouteTests(Harness):
+    def test_frozen_cloud_chain_fills_every_source_and_previous_target(self):
+        workflow = self.store.put_doc(image_pair_workflow())
+        stages = [
+            RenderStage(id=name, kind="refine", workflow_id=workflow.id)
+            for name in ("first", "second")
+        ]
+        profile = self.cloud_profile(cloud_refine=True, final=stages)
+        job = self.submit(profile, adopt_first=True)
+        plan = copy.deepcopy(job["items"][0]["input"]["refinement"])
+        self.assertEqual(plan["feeds"], [[], ["/10/inputs/image", "/11/inputs/image"]])
+        self.assertEqual(set(plan["stages"][0]["uploads"].values()), {CLOUD_SOURCE})
+        self.store.delete_doc("workflow", workflow.id)
+        self.engine.pool.set_instances([])
+        with mock.patch.object(cloud_jobs, "CloudRenderer", FakeCloudRenderer):
+            ep = self.run_job(job)
+        shape = ep.takes[0]
+        refine = next(j for j in self.engine.list() if j["kind"] == "comfy.render")
+        self.local_instance()
+        ep = self.run_job(refine)
+        self.assertEqual(ep.adopted("p02").parent_take_id, shape.id)
+        self.assertEqual(len(FakeClient.uploads), 2)
+        self.assertEqual(FakeClient.uploads[0], f"mio_{shape.asset_id[:24]}.png")
+        for graph in FakeClient.graphs:
+            self.assertEqual(graph["10"]["inputs"]["image"], graph["11"]["inputs"]["image"])
+            self.assertEqual(find_placeholders(graph), {})
+        self.assertEqual(self.engine.get(job["id"])["items"][0]["input"]["refinement"], plan)
+
     def cloud_profile(self, **changes):
         return self.store.put_doc(
             self.render.profile(None).model_copy(

@@ -3,7 +3,7 @@
 Item input (frozen at submit time)::
 
     {"stages": [Compiled.to_json(), ...],   # run in order; stage n+1 may take stage n's image
-     "feeds":  [null, "/10/inputs/image"],   # where the previous stage's image goes (or null)
+     "feeds":  [[], ["/10/inputs/image"]],  # all targets for the previous stage's image
      "guard":  ["term", ...],                # checked again on [mio:inspect] read-backs
      "meta":   {...}}                        # returned untouched; the render service uses it
 
@@ -18,12 +18,13 @@ Failure classification (see :class:`~mio_server.jobs.ExecError`):
 from __future__ import annotations
 
 import base64
+import copy
 import time
 
 from ..jobs import ExecError, ItemContext
 from . import bindings as B
 from .client import ComfyClient, ComfyError, parse_preview  # noqa: F401  (re-export for tests)
-from .compile import fill_placeholders, validate_plan
+from .compile import PREVIOUS, asset_value, fill_placeholders, find_placeholders, validate_plan
 from .state_run import StateSession
 
 
@@ -61,7 +62,7 @@ class ComfyRenderExecutor:
 
     def _execute(self, ctx, client, session):
         stages = ctx.input["stages"]
-        feeds = ctx.input.get("feeds") or [None] * len(stages)
+        feeds = ctx.input.get("feeds") or [[] for _ in stages]
         guard = ctx.input.get("guard") or []
         previous: str | None = None
         reports = []
@@ -71,15 +72,18 @@ class ComfyRenderExecutor:
             uploads = dict(stage.get("uploads") or {})
             graph = stage["graph"]
             if n and feeds[n] and previous:
-                node_id, _, field = feeds[n].strip("/").partition("/inputs/")
-                graph = {
-                    **graph,
-                    node_id: {
-                        **graph[node_id],
-                        "inputs": {**graph[node_id]["inputs"], field: {"$asset": previous}},
-                    },
-                }
-                uploads[feeds[n]] = previous
+                targets = feeds[n]
+                if isinstance(targets, str):
+                    # Already-frozen jobs recorded only the first target, but their graph
+                    # still identifies every input that receives this same previous image.
+                    targets = [targets] + [
+                        p for p, a in find_placeholders(graph).items() if a == PREVIOUS
+                    ]
+                graph = copy.deepcopy(graph)
+                for pointer in targets:
+                    node_id, _, field = pointer.removeprefix("/").partition("/inputs/")
+                    graph[node_id]["inputs"][field] = asset_value(previous)
+                uploads.update(dict.fromkeys(targets, previous))
             graph = self._upload(client, graph, uploads)
             if session:
                 session.prepare(n, stage.get("frontend_state") or {})

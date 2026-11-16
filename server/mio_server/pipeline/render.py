@@ -21,7 +21,7 @@ import threading
 from contextlib import contextmanager
 
 from ..comfy import bindings as B
-from ..comfy.compile import asset_value, builtin_workflows, compile_workflow, describe
+from ..comfy.compile import PREVIOUS, asset_value, builtin_workflows, compile_workflow, describe
 from ..comfy.workflow_slots import LibraryError
 from ..generation import profile_for
 from ..hooks import HookBus
@@ -37,7 +37,7 @@ from .refs import reference_values, select_references
 from .render_cloud import CloudRefinementMixin
 from .render_composition import KEY as COMPOSITION
 from .render_composition import CompositionMixin
-from .render_edits import PREVIOUS, EditsMixin, RenderError  # noqa: F401
+from .render_edits import EditsMixin, RenderError  # noqa: F401
 from .story import apply_variant
 
 
@@ -155,13 +155,15 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         overrides: dict | None = None,
         loras: list[dict] | None = None,
         variant: str | None = None,
-    ) -> tuple[dict, str | None, list[str]]:
+    ) -> tuple[dict, list[str], list[str]]:
         doc = self.workflow(stage.workflow_id)
         rules = tuple(self.binding_rules())
         info = describe(doc, rules=rules)
         values, composition_warnings = self.resolve_composition(info, values)
         for key in [k for k in values if k.startswith("ref:")]:
-            if key not in info["image_inputs"] and "ref" not in info["image_inputs"]:
+            if key not in info["image_inputs"] and not (
+                key == "ref:1" and "ref" in info["image_inputs"]
+            ):
                 values.pop(key)  # workflow has no reference input: references are simply not used
         slot = (
             {
@@ -207,7 +209,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
             raise RenderError(f"{doc.name}：{exc}") from None
         data["warnings"] = warnings + data["warnings"]
         data["workflow_id"], data["stage_id"], data["kind"] = doc.id, stage.id, stage.kind
-        feed = next((p for p, a in data["uploads"].items() if a == PREVIOUS), None)
+        feed = [p for p, a in data["uploads"].items() if a == PREVIOUS]
         if feed:
             data["uploads"] = {p: a for p, a in data["uploads"].items() if a != PREVIOUS}
         return data, feed, data["warnings"]
@@ -220,7 +222,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         overrides: dict,
         loras: list[dict],
         start_with_previous: bool = False,
-    ) -> tuple[list[dict], list[str | None]]:
+    ) -> tuple[list[dict], list[list[str]]]:
         compiled, feeds = [], []
         active = [s for s in stages if s.enabled]
         if not active:
@@ -236,7 +238,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
                     f"阶段 {stage.id} 要接收上一阶段的图片，但工作流没有 [mio:init] 输入"
                 )
             compiled.append(data)
-            feeds.append(feed if n > 0 else None)
+            feeds.append(feed if n > 0 else [])
         return compiled, feeds
 
     # --------------------------------------------------------------- draft

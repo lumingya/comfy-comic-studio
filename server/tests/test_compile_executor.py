@@ -16,7 +16,7 @@ from mio_server.comfy.client import ComfyClient, ComfyError, OutputImage, RunRes
 from mio_server.comfy.diagnostics import diagnose, model_catalog
 from mio_server.comfy.executor import ComfyRenderExecutor
 from mio_server.jobs import COMFY, ItemSpec, JobEngine
-from mio_server.render_models import WorkflowConfig
+from mio_server.render_models import WorkflowConfig, WorkflowDoc
 from mio_server.storage import SQLiteStore
 
 from . import test_comfy_client as fake_comfy
@@ -31,6 +31,30 @@ def png(color=(200, 80, 80), size=(64, 96)) -> bytes:
 
 def builtin(wid):
     return next(d for d in C.builtin_workflows() if d.id == wid)
+
+
+def image_pair_workflow(first="init", second="init"):
+    return WorkflowDoc(
+        id="image-pair",
+        name="Image pair",
+        graph={
+            "10": {
+                "class_type": "LoadImage",
+                "inputs": {"image": "original-a.png"},
+                "_meta": {"title": f"[mio:{first}]"},
+            },
+            "11": {
+                "class_type": "LoadImage",
+                "inputs": {"image": "original-b.png"},
+                "_meta": {"title": f"[mio:{second}]"},
+            },
+            "12": {
+                "class_type": "ImageBatch",
+                "inputs": {"image1": ["10", 0], "image2": ["11", 0]},
+            },
+            "13": {"class_type": "PreviewImage", "inputs": {"images": ["12", 0]}},
+        },
+    )
 
 
 class CompileTests(unittest.TestCase):
@@ -71,6 +95,28 @@ class CompileTests(unittest.TestCase):
             C.compile_workflow(
                 builtin("builtin_t2i_sdxl"), {"prompt": "x", "ref:1": C.asset_value("b" * 64)}
             )
+
+    def test_plain_reference_defaults_to_first_without_changing_numbered_slots(self):
+        doc = image_pair_workflow("ref", "ref:2")
+        refs = {"ref:1": C.asset_value("first"), "ref:2": C.asset_value("second")}
+        out = C.compile_workflow(doc, refs)
+        self.assertEqual(out.uploads, {"/10/inputs/image": "first", "/11/inputs/image": "second"})
+        explicit = C.compile_workflow(doc, {**refs, "ref": C.asset_value("explicit")})
+        self.assertEqual(
+            explicit.uploads, {"/10/inputs/image": "explicit", "/11/inputs/image": "second"}
+        )
+        numbered = C.compile_workflow(image_pair_workflow("ref:1", "ref:2"), refs)
+        self.assertEqual(numbered.uploads, out.uploads)
+        self.assertEqual(doc.graph["10"]["inputs"]["image"], "original-a.png")
+
+    def test_plain_reference_does_not_accept_an_unresolvable_numbered_value(self):
+        with self.assertRaisesRegex(BindingError, "ref:2"):
+            C.compile_workflow(image_pair_workflow("ref", "ref"), {"ref:2": C.asset_value("a")})
+        out = C.compile_workflow(
+            image_pair_workflow("ref", "ref:2"), {"ref:1": C.asset_value("first")}
+        )
+        self.assertEqual(out.uploads, {"/10/inputs/image": "first"})
+        self.assertEqual(out.graph["11"]["inputs"]["image"], "original-b.png")
 
     def test_overrides_and_guard(self):
         doc = builtin("builtin_t2i_sdxl")
@@ -247,6 +293,66 @@ class ExecutorTests(unittest.TestCase):
         self.assertIn(f"mio_{first[:24]}.png", FakeClient.uploads)
         self.assertEqual(result["meta"], {"panel": "p"})
         self.assertEqual(self.assets.read(result["images"][0]["asset_id"])[:4], b"\x89PNG")
+
+    def test_frozen_single_feed_fills_every_previous_placeholder_once(self):
+        first = C.compile_workflow(builtin("builtin_t2i_sdxl"), {})
+        second = C.compile_workflow(image_pair_workflow(), {"init": C.asset_value(C.PREVIOUS)})
+        frozen = second.to_json()
+        frozen["uploads"] = {}
+        job = self.engine.submit(
+            "comfy.render",
+            [
+                ItemSpec(
+                    input={
+                        "stages": [first.to_json(), frozen],
+                        "feeds": [None, "/10/inputs/image"],
+                    },
+                    resource=COMFY,
+                )
+            ],
+        )
+        done = drain(self.engine, job["id"])
+        self.assertEqual(done["state"], "completed", done)
+        graph = FakeClient.graphs[1]
+        self.assertEqual(graph["10"]["inputs"]["image"], graph["11"]["inputs"]["image"])
+        self.assertEqual(len(FakeClient.uploads), 1)
+        self.assertEqual(C.find_placeholders(graph), {})
+        self.assertEqual(done["items"][0]["input"]["stages"][1]["graph"], second.graph)
+
+    def test_feed_targets_keep_literal_input_names_for_new_and_frozen_plans(self):
+        doc = image_pair_workflow()
+        fields = {"10": "image/path/", "11": "image~1path"}
+        for node_id, field in fields.items():
+            node = doc.graph[node_id]
+            node["inputs"] = {field: node["inputs"]["image"]}
+            node["_meta"]["title"] = f"[mio:init={field}]"
+        first = C.compile_workflow(builtin("builtin_t2i_sdxl"), {})
+        second = C.compile_workflow(doc, {"init": C.asset_value(C.PREVIOUS)})
+        targets = list(second.uploads)
+        frozen = second.to_json()
+        frozen["uploads"] = {}
+        for feeds in ([None, targets[0]], [[], targets]):
+            with self.subTest(feeds=feeds):
+                FakeClient.uploads, FakeClient.graphs = [], []
+                job = self.engine.submit(
+                    "comfy.render",
+                    [
+                        ItemSpec(
+                            input={"stages": [first.to_json(), frozen], "feeds": feeds},
+                            resource=COMFY,
+                        )
+                    ],
+                )
+                done = drain(self.engine, job["id"])
+                self.assertEqual(done["state"], "completed", done)
+                graph = FakeClient.graphs[1]
+                self.assertEqual(len(FakeClient.uploads), 1)
+                for node_id, field in fields.items():
+                    self.assertEqual(
+                        graph[node_id]["inputs"], {field: f"mio/{FakeClient.uploads[0]}"}
+                    )
+                self.assertEqual(C.find_placeholders(graph), {})
+                self.assertEqual(done["items"][0]["input"]["stages"][1]["graph"], second.graph)
 
     def test_rejected_prompt_fails_without_uncertainty(self):
         FakeClient.mode = "rejected"
