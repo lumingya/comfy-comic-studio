@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from . import llm as L
 from . import settings as SET
-from .models import GenerationOptions, GenerationSnapshot, Series
+from .models import GenerationDefaults, GenerationOptions, GenerationSnapshot, Series
 from .pipeline.cloud_request import DEFAULT_MODELS, OPTION_KEYS
 from .render_models import RenderProfile, RenderStage
 from .storage import NotFound
@@ -53,15 +53,14 @@ def freeze(store, series: Series, options: GenerationOptions | None = None) -> G
         )
         options = options.model_copy(update={"profile_id": profile.id})
     remembered = app.generation_defaults.get(preference_key(options))
-    remembered = remembered.model_dump() if remembered else {}
+    defaults = series.generation_defaults or remembered
+    defaults = defaults.model_dump() if defaults else {}
     changes = {
         "candidates": options.candidates
-        or remembered.get("candidates")
+        or defaults.get("candidates")
         or (profile.candidates if explicit_profile else 1),
         **{
-            name: getattr(options, name)
-            if name in options.model_fields_set
-            else remembered.get(name)
+            name: getattr(options, name) if name in options.model_fields_set else defaults.get(name)
             for name in ("width", "height")
         },
     }
@@ -151,7 +150,7 @@ def remember(store, snapshot: GenerationSnapshot | None) -> None:
     if snapshot is None:
         return
     app = SET.load(store)
-    app.generation_defaults[preference_key(snapshot)] = SET.GenerationDefaults(
+    app.generation_defaults[preference_key(snapshot)] = GenerationDefaults(
         candidates=snapshot.candidates, width=snapshot.width, height=snapshot.height
     )
     store.put_doc(app)

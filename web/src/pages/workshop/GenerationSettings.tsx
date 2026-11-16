@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useProfiles, useSettings, useWorkflows } from '../../api/system';
 import type { GenerationOptions } from '../../api/workshop';
+import type { Series } from '../../api/types';
 import './assemble-dialog.css';
 
 export function generationKey(value: GenerationOptions | undefined) {
@@ -62,6 +63,7 @@ export function GenerationSettings({
   value,
   onChange,
   defaultProfile,
+  sourceDefaults,
   disabled,
   waiting = false,
   onReadyChange,
@@ -71,6 +73,7 @@ export function GenerationSettings({
   value: GenerationOptions | undefined;
   onChange: (value: GenerationOptions) => void;
   defaultProfile?: string | null;
+  sourceDefaults?: Series['generation_defaults'];
   disabled?: boolean;
   waiting?: boolean;
   onReadyChange?: (ready: boolean) => void;
@@ -88,7 +91,7 @@ export function GenerationSettings({
     const separator = key.indexOf(':');
     const kind = key.slice(0, separator);
     const routeId = key.slice(separator + 1);
-    const previous = defaults[key];
+    const previous = sourceDefaults ?? defaults[key];
     onChange({
       ...(kind === 'workflow'
         ? { workflow_id: routeId }

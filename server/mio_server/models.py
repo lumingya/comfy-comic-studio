@@ -679,6 +679,14 @@ class SeriesStatus(str, Enum):
     archived = "archived"
 
 
+class GenerationDefaults(StrictModel):
+    """Reusable task parameters without a workflow, service binding or credentials."""
+
+    candidates: int = Field(default=1, ge=1, le=16)
+    width: int | None = Field(default=None, ge=64, le=8192)
+    height: int | None = Field(default=None, ge=64, le=8192)
+
+
 class GenerationOptions(StrictModel):
     """The source and parameters chosen for one generation task."""
 
@@ -729,6 +737,7 @@ class Series(StrictModel):
         default_factory=dict, description="{变量} values (advanced layer)."
     )
     default_profile_id: str | None = None
+    generation_defaults: GenerationDefaults | None = None
     generation: GenerationSnapshot | None = None
     cover_asset_id: str | None = Field(
         default=None, description="Chosen cover image; None = automatic (the first image)."

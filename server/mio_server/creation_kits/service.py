@@ -10,7 +10,7 @@ from ..assembly import build_snapshot, inspect_snapshot
 from ..asset_refs import referenced_assets
 from ..assets import sniff
 from ..generation import profile_for
-from ..models import Episode, Series, new_id, now_iso
+from ..models import Episode, GenerationDefaults, Series, new_id, now_iso
 from ..pipeline.variables import PATTERN
 from ..render_models import Asset, WorkflowDoc
 from ..storage import Conflict, NotFound
@@ -85,6 +85,12 @@ def export_kit(ctx, selection: KitSelection) -> bytes:
         ]
         for profile in profiles:
             profile.instances, profile.cloud_channel = [], ""
+        if series.generation:
+            series.generation_defaults = GenerationDefaults(
+                candidates=series.generation.candidates,
+                width=series.generation.width,
+                height=series.generation.height,
+            )
         # A reusable kit must use its explicit destination bindings, never a source task snapshot.
         series.generation = None
         ids = referenced_assets(series, episodes, [*profiles, *workflows])

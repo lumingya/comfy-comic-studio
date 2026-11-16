@@ -492,6 +492,7 @@ function PresetsEditor({ workshop }: { workshop: Series }) {
       {previewing ? (
         <PreviewDialog
           kitId={kitId}
+          sourceDefaults={workshop.generation_defaults}
           preset={current}
           onClose={() => setPreviewing(false)}
           beforeSubmit={() => draft.flushAll()}
@@ -859,12 +860,14 @@ function PreviewFigure({
  * workflow to use; submitting adds a one-frame standby task to the assembly queue. */
 function PreviewDialog({
   kitId,
+  sourceDefaults,
   preset,
   onClose,
   beforeSubmit,
   onQueued,
 }: {
   kitId?: string;
+  sourceDefaults?: Series['generation_defaults'];
   preset: Preset;
   onClose: () => void;
   beforeSubmit: () => Promise<unknown>;
@@ -955,6 +958,7 @@ function PreviewDialog({
         </div>
         <GenerationSettings
           id="preset-preview-generation"
+          sourceDefaults={sourceDefaults}
           value={generation}
           onChange={setGeneration}
           onReadyChange={setReadyToStart}

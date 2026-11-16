@@ -12,7 +12,7 @@ from pydantic import Field
 
 from . import llm as L
 from .api_urls import normalize_base
-from .models import StrictModel, now_iso
+from .models import GenerationDefaults, StrictModel, now_iso
 from .pipeline.providers import ImageChannel
 
 MASK = "••••••"
@@ -42,12 +42,6 @@ class ExtensionState(StrictModel):
 
 # The legacy app's bundled collection; replaced by the real legacy name on first start.
 DEFAULT_COLLECTION = "遇见你，真好"
-
-
-class GenerationDefaults(StrictModel):
-    candidates: int = Field(default=1, ge=1, le=16)
-    width: int | None = Field(default=None, ge=64, le=8192)
-    height: int | None = Field(default=None, ge=64, le=8192)
 
 
 class AppSettings(StrictModel):

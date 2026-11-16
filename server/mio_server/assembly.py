@@ -94,6 +94,9 @@ def build_snapshot(
         variants=[variant.model_copy(deep=True) for variant in workshop.variants],
         variables=values,
         default_profile_id=profile_id or workshop.default_profile_id,
+        generation_defaults=workshop.generation_defaults.model_copy(deep=True)
+        if workshop.generation_defaults
+        else None,
     )
     episode = Episode(
         series_id=album.id,

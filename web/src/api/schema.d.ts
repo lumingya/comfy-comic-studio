@@ -3779,6 +3779,21 @@ export interface components {
             title?: string | null;
         };
         /**
+         * GenerationDefaults
+         * @description Reusable task parameters without a workflow, service binding or credentials.
+         */
+        GenerationDefaults: {
+            /**
+             * Candidates
+             * @default 1
+             */
+            candidates: number;
+            /** Width */
+            width: number | null;
+            /** Height */
+            height: number | null;
+        };
+        /**
          * GenerationOptions
          * @description The source and parameters chosen for one generation task.
          */
@@ -5596,6 +5611,7 @@ export interface components {
             };
             /** Default Profile Id */
             default_profile_id: string | null;
+            generation_defaults: components["schemas"]["GenerationDefaults"] | null;
             generation: components["schemas"]["GenerationSnapshot"] | null;
             /**
              * Cover Asset Id
@@ -5655,6 +5671,7 @@ export interface components {
             };
             /** Default Profile Id */
             default_profile_id: string | null;
+            generation_defaults: components["schemas"]["GenerationDefaults"] | null;
             generation: components["schemas"]["GenerationSnapshot"] | null;
             /**
              * Cover Asset Id

@@ -2853,6 +2853,52 @@
     "title": "GenerateEpisode",
     "type": "object"
    },
+   "GenerationDefaults": {
+    "additionalProperties": false,
+    "description": "Reusable task parameters without a workflow, service binding or credentials.",
+    "properties": {
+     "candidates": {
+      "default": 1,
+      "maximum": 16.0,
+      "minimum": 1.0,
+      "title": "Candidates",
+      "type": "integer"
+     },
+     "height": {
+      "anyOf": [
+       {
+        "maximum": 8192.0,
+        "minimum": 64.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Height"
+     },
+     "width": {
+      "anyOf": [
+       {
+        "maximum": 8192.0,
+        "minimum": 64.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Width"
+     }
+    },
+    "required": [
+     "candidates",
+     "width",
+     "height"
+    ],
+    "title": "GenerationDefaults",
+    "type": "object"
+   },
    "GenerationOptions": {
     "additionalProperties": false,
     "description": "The source and parameters chosen for one generation task.",
@@ -7228,6 +7274,16 @@
        }
       ]
      },
+     "generation_defaults": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/GenerationDefaults"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "id": {
       "title": "Id",
       "type": "string"
@@ -7295,6 +7351,7 @@
      "variants",
      "variables",
      "default_profile_id",
+     "generation_defaults",
      "generation",
      "cover_asset_id",
      "concurrency",
@@ -7389,6 +7446,16 @@
        }
       ]
      },
+     "generation_defaults": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/GenerationDefaults"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "id": {
       "title": "Id",
       "type": "string"
@@ -7467,6 +7534,7 @@
      "variants",
      "variables",
      "default_profile_id",
+     "generation_defaults",
      "generation",
      "cover_asset_id",
      "concurrency",

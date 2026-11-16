@@ -200,6 +200,7 @@ export default function AssembleDialog({
         value={generation}
         onChange={setGeneration}
         defaultProfile={source?.default_profile_id}
+        sourceDefaults={source?.generation_defaults}
         waiting={sourcePending}
         onReadyChange={setReadyToStart}
         disabled={busy}

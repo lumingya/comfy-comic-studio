@@ -2,7 +2,7 @@ import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { GenerationOptions } from '../../api/workshop';
-import { configurationRoutes } from '../../test/configuration';
+import { configurationRoutes, configSettings } from '../../test/configuration';
 import { series, episode } from '../../test/fixtures';
 import { mockFetch, renderWithProviders } from '../../test/utils';
 import { GenerationSettings, generationValid } from './GenerationSettings';
@@ -11,6 +11,46 @@ import PresetsTab from './PresetsTab';
 afterEach(() => vi.unstubAllGlobals());
 
 describe('generation controls', () => {
+  it.each([
+    { candidates: 2, width: 640, height: 896 },
+    { candidates: 2, width: 5120, height: null },
+    { candidates: 2, width: null, height: null },
+  ])('keeps imported task defaults ahead of remembered route settings: %j', async (defaults) => {
+    mockFetch(
+      configurationRoutes({
+        'GET /api/settings': {
+          ...configSettings,
+          generation_defaults: { 'workflow:wf_demo': { candidates: 8, width: 768, height: 1024 } },
+        },
+      }),
+    );
+    function Editor() {
+      const [value, setValue] = useState<GenerationOptions>();
+      return (
+        <>
+          <GenerationSettings value={value} onChange={setValue} sourceDefaults={defaults} />
+          <output data-testid="submitted">{JSON.stringify(value)}</output>
+        </>
+      );
+    }
+    renderWithProviders(<Editor />);
+    const route = await screen.findByLabelText('出图工作流或云端服务');
+    await waitFor(() => expect(route).toBeEnabled());
+    fireEvent.change(route, { target: { value: 'workflow:wf_demo' } });
+    expect(JSON.parse(screen.getByTestId('submitted').textContent!)).toEqual({
+      workflow_id: 'wf_demo',
+      ...defaults,
+    });
+    fireEvent.change(screen.getByLabelText('每幕生成张数'), { target: { value: '3' } });
+    fireEvent.change(screen.getByLabelText('画面尺寸'), { target: { value: 'original' } });
+    expect(JSON.parse(screen.getByTestId('submitted').textContent!)).toEqual({
+      workflow_id: 'wf_demo',
+      candidates: 3,
+      width: null,
+      height: null,
+    });
+  });
+
   it('allows count editing and blocks invalid dimensions before submission', async () => {
     mockFetch(configurationRoutes());
     function Editor() {

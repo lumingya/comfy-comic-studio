@@ -327,6 +327,9 @@ def _preview_source(store, workshop, preset_ids, prompt, title, profile_id, gene
         variants=[v.model_copy(deep=True) for v in workshop.variants],
         variables=variables,
         default_profile_id=chosen_profile,
+        generation_defaults=workshop.generation_defaults.model_copy(deep=True)
+        if workshop.generation_defaults
+        else None,
     )
     # Raw mode keeps the ``{变量}`` prompt as written; a fixed seed makes presets comparable.
     panel = Panel(order=0, description=text, overrides=PanelOverrides(raw_prompt=text, seed=1))
@@ -355,6 +358,9 @@ def clone_task(store, series_id: str, title: str = "") -> tuple[Series, Episode]
             variants=[v.model_copy(deep=True) for v in source.variants],
             variables=dict(source.variables),
             default_profile_id=source.default_profile_id,
+            generation_defaults=source.generation_defaults.model_copy(deep=True)
+            if source.generation_defaults
+            else None,
             generation=source.generation.model_copy(deep=True) if source.generation else None,
         )
     )
