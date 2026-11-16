@@ -13,6 +13,7 @@ cross-panel bubbles, SFX and vertical text live in ``lettering``.
 from __future__ import annotations
 
 import math
+from types import SimpleNamespace
 
 from PIL import Image, ImageDraw
 
@@ -299,7 +300,7 @@ def render(
 def cut_points(strip: Strip, height: int) -> list[int]:
     """Slice boundaries ≤ ``height`` apart, preferring gutters and never cutting a bubble."""
     fake = LY.StripResult(
-        Image.new("RGB", (1, max(1, strip.height))),
+        SimpleNamespace(height=max(1, strip.height)),
         [
             LY.Placement("", "speech", "", [], tuple(round(v) for v in l.box))
             for l in strip.lettering

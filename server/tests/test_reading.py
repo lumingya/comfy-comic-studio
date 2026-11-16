@@ -29,6 +29,7 @@ from mio_server.models import (
     Strip,
     Take,
 )
+from mio_server.pipeline import regions as R
 from mio_server.pipeline import strip as SP
 from mio_server.pipeline.reading import ReadingCache
 
@@ -450,7 +451,7 @@ class ReadingTests(ApiCase):
             ep.strip.panel_boxes["p1"] = (20, 200, 2020, 400)
 
         self.ctx.store.update_episode(self.ep.id, widen)
-        with mock.patch.object(SP, "render", wraps=SP.render) as render:
+        with mock.patch.object(R, "prepare_snapshot", wraps=R.prepare_snapshot) as render:
             metadata = self.ok(self.client.get(self.path + "/reading?width=1600"))
             self.assertEqual(metadata["panel_boxes"]["p1"], [20, 200, 2020, 400])
             for width, expected in ((256, (256, 26)), (1600, (1600, 160)), (3200, (2000, 200))):
@@ -489,7 +490,7 @@ class ReadingTests(ApiCase):
                 start.wait(timeout=10)
             return self.ctx.reading.image(self.ctx, self.ep.id, f"p{index}", None, 1600)
 
-        with mock.patch.object(SP, "render", wraps=SP.render) as render:
+        with mock.patch.object(R, "prepare_snapshot", wraps=R.prepare_snapshot) as render:
             with ThreadPoolExecutor(max_workers=10) as pool:
                 images = list(pool.map(read, range(50)))
             self.assertEqual(render.call_count, 1)
@@ -500,7 +501,7 @@ class ReadingTests(ApiCase):
         self.assertEqual(len(self.ctx.reading.entries), 1)
 
     def test_cache_invalidates_crop_adoption_series_variables_and_bible(self):
-        with mock.patch.object(SP, "render", wraps=SP.render) as render:
+        with mock.patch.object(R, "prepare_snapshot", wraps=R.prepare_snapshot) as render:
             initial = self.preview()
             self.ctx.store.update_episode(
                 self.ep.id, lambda ep: ep.strip.crops.update({"p1": (0, 0, 0.5, 1)})
@@ -549,7 +550,7 @@ class ReadingTests(ApiCase):
         self.assertIsNot(other.reading, self.ctx.reading)
         with (
             mock.patch.object(other.assets, "read", side_effect=self.ctx.assets.read),
-            mock.patch.object(SP, "render", wraps=SP.render) as render,
+            mock.patch.object(R, "prepare_snapshot", wraps=R.prepare_snapshot) as render,
         ):
             first = self.preview()
             second = other.reading.get(other, self.ep.id, None, 1600)
@@ -577,7 +578,7 @@ class ReadingTests(ApiCase):
         self.ctx.store.update_episode(self.ep.id, replace)
         cache = ReadingCache(max_bytes=1200, max_entries=2)
         self.addCleanup(cache.clear)
-        with mock.patch.object(SP, "render", wraps=SP.render) as render:
+        with mock.patch.object(R, "prepare_snapshot", wraps=R.prepare_snapshot) as render:
             first = cache.image(self.ctx, self.ep.id, "p1", None, 64)
             second = cache.image(self.ctx, self.ep.id, "p2", None, 64)
             self.assertEqual(render.call_count, 1)

@@ -7,8 +7,10 @@ expanded canvas; otherwise the raw adopted image is used and dialogue goes into 
 from __future__ import annotations
 
 import base64
+import io
 import unicodedata
 from collections import Counter
+from contextlib import nullcontext
 from dataclasses import dataclass
 
 from PIL import Image
@@ -117,45 +119,82 @@ def episode_pages(
     profile: str = "preview",
     max_width: int = 1400,
     stats: M.Stats | None = None,
+    checkpoint=lambda: None,
 ) -> tuple[Episode, Series, list[Page | None]]:
     """Every panel of an episode encoded for ``profile``; ``None`` where nothing is adopted yet."""
     ep: Episode = ctx.store.get_episode(episode_id)
     series: Series = ctx.store.get_series(ep.series_id)
-    stats = stats if stats is not None else M.Stats(profile)
-    images, _ = ES.adopted_images(ctx, ep, variant_id)
-    crops: dict[str, Image.Image] = {}
-    composed_strip = None
-    if lettered and images:
-        _, _, strip, full = ES.render_snapshot(ctx, series, ep, variant_id, panel_images=True)
-        crops = dict(ES.panel_crops(ep, strip, full, variant_id))
-        composed_strip = strip
-    pages: list[Page | None] = []
-    for i, panel in enumerate(ep.ordered_panels(), start=1):
-        im = crops.get(panel.id) or images.get(panel.id)
-        if im is None:
-            pages.append(None)
-            continue
-        original = None
-        if panel.id not in crops and profile in ("clean", "archive", "auto", "publish"):
-            take = ep.adopted(panel.id, variant_id)
-            original = ctx.assets.read(take.asset_id) if take else None
-        data, mime = M.process(
-            profile, original=original, image=im, stats=stats, max_width=max_width
+    pages = list(
+        iter_episode_pages(
+            ctx,
+            series,
+            ep,
+            variant_id=variant_id,
+            lettered=lettered,
+            deduplicate_captions=deduplicate_captions,
+            profile=profile,
+            max_width=max_width,
+            stats=stats,
+            checkpoint=checkpoint,
         )
-        prompt = compile_panel(series, ep, panel, dialect="tags", seed=0).positive
-        pages.append(
-            Page(
-                data=data,
-                mime=mime,
-                name=f"第 {i} 格",
-                caption=caption(series, panel, composed_strip if deduplicate_captions else None),
-                prompt=prompt,
-                width=im.width,
-                height=im.height,
-                palette=palette(im),
-            )
-        )
+    )
     return ep, series, pages
+
+
+def iter_episode_pages(
+    ctx,
+    series,
+    ep,
+    *,
+    variant_id=None,
+    lettered=True,
+    deduplicate_captions=False,
+    profile="preview",
+    max_width=1400,
+    stats=None,
+    checkpoint=lambda: None,
+):
+    """Encode one panel at a time from frozen documents; caller controls result retention."""
+    from ..pipeline.regions import prepare_snapshot
+
+    stats = stats if stats is not None else M.Stats(profile)
+    present = any(ep.adopted(p.id, variant_id) for p in ep.panels)
+    prepared = (
+        prepare_snapshot(ctx, series, ep, variant_id, checkpoint=checkpoint)
+        if lettered and present
+        else nullcontext(None)
+    )
+    with prepared as snapshot:
+        for i, panel in enumerate(ep.ordered_panels(), start=1):
+            checkpoint()
+            take = ep.adopted(panel.id, variant_id)
+            if take is None:
+                yield None
+                continue
+            original = None if snapshot else ctx.assets.read(take.asset_id)
+            if snapshot:
+                image = snapshot.render_panel(panel.id)
+            else:
+                with Image.open(io.BytesIO(original)) as source:
+                    image = source.convert("RGB")
+            with image as im:
+                data, mime = M.process(
+                    profile, original=original, image=im, stats=stats, max_width=max_width
+                )
+                prompt = compile_panel(series, ep, panel, dialect="tags", seed=0).positive
+                page = Page(
+                    data=data,
+                    mime=mime,
+                    name=f"第 {i} 格",
+                    caption=caption(
+                        series, panel, snapshot.strip if snapshot and deduplicate_captions else None
+                    ),
+                    prompt=prompt,
+                    width=im.width,
+                    height=im.height,
+                    palette=palette(im),
+                )
+            yield page
 
 
 def episode_book(
@@ -168,6 +207,7 @@ def episode_book(
     max_width: int = 1400,
     profile: str = "preview",
     stats: M.Stats | None = None,
+    checkpoint=lambda: None,
 ) -> Book:
     ep, series, pages = episode_pages(
         ctx,
@@ -178,6 +218,7 @@ def episode_book(
         profile=profile,
         max_width=max_width,
         stats=stats,
+        checkpoint=checkpoint,
     )
     frames = []
     for i, (panel, page) in enumerate(zip(ep.ordered_panels(), pages), start=1):

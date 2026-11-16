@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 from ..album.build import caption
 from ..storage import NotFound
 from . import episode_strip as ES
+from . import regions as R
 
 
 class ReadingPreview(BaseModel):
@@ -94,52 +95,48 @@ class ReadingCache:
                 {},
                 0,
             )
-        full = None
-        originals = {}
+        snapshot = None
         if ep.strip.panel_boxes or ep.strip.crops or ep.strip.lettering:
-            _, _, strip, full = ES.render_snapshot(ctx, series, ep, variant_id, panel_images=True)
+            snapshot = R.prepare_snapshot(ctx, series, ep, variant_id)
+            strip = snapshot.strip
             boxes = {p.id: ES.panel_crop_box(strip, p.id) for p in adopted}
-            page_width, page_height = strip.width, full.height
+            page_width, page_height = strip.width, strip.height
         else:
             # Opening an album must not implicitly crop or letter its images. Those choices
             # belong to an explicitly saved layout; plain reading puts dialogue below the art.
             # The strip compositor flattens to RGB. Plain reading preserves image transparency.
-            try:
-                for panel in adopted:
-                    take = ep.adopted(panel.id, variant_id)
-                    with Image.open(io.BytesIO(ctx.assets.read(take.asset_id))) as image:
-                        alpha = "A" in image.getbands() or "transparency" in image.info
-                        originals[panel.id] = image.convert("RGBA" if alpha else "RGB")
-            except Exception:
-                for image in originals.values():
-                    image.close()
-                raise
             boxes = {}
             page_width, page_height = 0, 0
             for panel in adopted:
-                image = originals[panel.id]
-                boxes[panel.id] = (0, page_height, image.width, page_height + image.height)
-                page_width = max(page_width, image.width)
-                page_height += image.height
+                take = ep.adopted(panel.id, variant_id)
+                with Image.open(io.BytesIO(ctx.assets.read(take.asset_id))) as image:
+                    boxes[panel.id] = (0, page_height, image.width, page_height + image.height)
+                    page_width = max(page_width, image.width)
+                    page_height += image.height
         try:
             # Never drop an oversized entry and repeat the full render on every panel request.
             # Lower the common preview width until all encoded panels fit the bounded cache.
             while True:
                 images = {}
-                crops = (
-                    ES.panel_crops(ep, strip, full, variant_id)
-                    if full is not None
-                    else ((pid, image.copy()) for pid, image in originals.items())
-                )
-                for panel_id, crop in crops:
+                size = 0
+                for panel in adopted:
+                    if snapshot:
+                        crop = snapshot.render_panel(panel.id)
+                    else:
+                        take = ep.adopted(panel.id, variant_id)
+                        with Image.open(io.BytesIO(ctx.assets.read(take.asset_id))) as image:
+                            alpha = "A" in image.getbands() or "transparency" in image.info
+                            crop = image.convert("RGBA" if alpha else "RGB")
                     try:
                         crop.thumbnail((width, max(1, round(crop.height * width / crop.width))))
                         out = io.BytesIO()
                         crop.save(out, "PNG")
-                        images[panel_id] = out.getvalue()
+                        images[panel.id] = out.getvalue()
+                        size += len(images[panel.id])
                     finally:
                         crop.close()
-                size = sum(map(len, images.values()))
+                    if size > self.max_bytes:
+                        break
                 if size <= self.max_bytes:
                     break
                 if width == 1:
@@ -153,7 +150,7 @@ class ReadingCache:
                     panel_boxes=boxes,
                     captions={p.id: caption(series, p) for p in adopted},
                     display_captions={
-                        p.id: caption(series, p, strip if full is not None else None)
+                        p.id: caption(series, p, strip if snapshot is not None else None)
                         for p in adopted
                     },
                 ),
@@ -161,10 +158,8 @@ class ReadingCache:
                 size,
             )
         finally:
-            if full is not None:
-                full.close()
-            for image in originals.values():
-                image.close()
+            if snapshot is not None:
+                snapshot.close()
 
     def image(self, ctx, episode_id, panel_id, variant_id, width):
         entry = self.get(ctx, episode_id, variant_id, width)

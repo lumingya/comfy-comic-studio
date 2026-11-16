@@ -89,6 +89,30 @@ def paint_track(canvas: Image.Image, background: str, panels: list, boxes: dict)
         before = stops[-1] if stops else base
 
 
+def paint_track_region(canvas, background, panels, boxes, origin, total_height):
+    """The same track sampled in global coordinates, without allocating full-height bands."""
+    base = parse_color(background) if HEX_RE.match(background or "") else (255, 255, 255)
+    before = base
+    _, top = origin
+    draw = ImageDraw.Draw(canvas)
+
+    def band(stops, start, end):
+        for y in range(max(start, top), min(end, top + canvas.height)):
+            color = sample(stops, (y - start) / max(1, end - start - 1))
+            draw.line((0, y - top, canvas.width, y - top), fill=color)
+
+    for i, panel in enumerate(panels):
+        _, y0, _, y1 = map(round, boxes[panel.id])
+        stops = parse_stops(panel.transition_background)
+        after = stops[0] if stops else base
+        if before != base or after != base:
+            band([before, after], y0, y1)
+        gap_end = total_height if i + 1 == len(panels) else round(boxes[panels[i + 1].id][1])
+        if stops and gap_end > y1:
+            band(stops, y1, gap_end)
+        before = stops[-1] if stops else base
+
+
 def color_at(canvas: Image.Image, y: int) -> RGB:
     return canvas.getpixel((0, min(max(0, y), canvas.height - 1)))[:3]
 
