@@ -10,6 +10,7 @@ let ep: Episode;
 vi.mock('../../components/confirm', () => ({ confirm: vi.fn().mockResolvedValue(true) }));
 vi.mock('../episode/EpisodePage', () => ({ useEpisodeContext: () => ({ episode: ep, series }) }));
 beforeEach(() => {
+  for (const item of useToasts.getState().items) useToasts.getState().dismiss(item.id);
   ep = structuredClone(episode);
   ep.id = 'sb_test';
 });
@@ -274,5 +275,99 @@ describe('bulk delete (legacy workshop-frame-delete-bulk)', () => {
     await waitFor(() => expect(calls.some((c) => c.url.endsWith('/panels/reorder'))).toBe(true));
     const reorder = calls.find((c) => c.url.endsWith('/panels/reorder'))!;
     expect(reorder.body).toMatchObject({ order: ['back0', 'p1'] });
+  });
+
+  it('restores the last edit saved immediately before deleting a frame', async () => {
+    const calls = mockFetch({
+      ...routes(),
+      'PATCH /api/episodes/sb_test/panels/p0': (body: unknown) => {
+        const changes = (body as { changes: object }).changes;
+        ep = {
+          ...ep,
+          panels: ep.panels.map((p) => (p.id === 'p0' ? { ...p, ...changes } : p)),
+        };
+        return ep;
+      },
+    });
+    renderWithProviders(<StoryboardEditor />);
+    fireEvent.change(prompt(), { target: { value: 'last edit before deletion' } });
+    fireEvent.click(rows()[0], { ctrlKey: true });
+    fireEvent.keyDown(document.activeElement!, { key: 'Delete' });
+    await waitFor(() => expect(ep.panels).toHaveLength(1));
+    await waitFor(() => expect(toasts()).toContain('已删除 1 幕分镜'));
+    const undo = useToasts.getState().items.find((i) => i.text === '已删除 1 幕分镜')!;
+    undo.action!.onClick();
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith('/panels/reorder'))).toBe(true));
+    expect(ep.panels.find((p) => p.id === 'back0')?.overrides.raw_prompt).toBe(
+      'last edit before deletion',
+    );
+  });
+
+  it('keeps the frame and its draft if saving the undo snapshot fails', async () => {
+    const calls = mockFetch({
+      ...routes(),
+      'PATCH /api/episodes/sb_test/panels/p0': () =>
+        new Response(JSON.stringify({ detail: 'offline' }), { status: 503 }),
+    });
+    renderWithProviders(<StoryboardEditor />);
+    fireEvent.change(prompt(), { target: { value: 'unsaved edit' } });
+    fireEvent.click(rows()[0], { ctrlKey: true });
+    fireEvent.keyDown(document.activeElement!, { key: 'Delete' });
+    await screen.findByText(/保存失败/);
+    expect(calls.some((c) => c.url.endsWith('/panels/batch-delete'))).toBe(false);
+    expect(ep.panels).toHaveLength(2);
+    expect(prompt()).toHaveValue('unsaved edit');
+  });
+});
+
+describe('starting templates and pending drafts', () => {
+  it('fills only prompts still empty after the active draft has been saved', async () => {
+    ep.base_prompt = 'starting template';
+    const calls = mockFetch({
+      'GET /api/workshop': series,
+      'PATCH /api/episodes/sb_test/panels/p0': (body: unknown) => {
+        const changes = (body as { changes: object }).changes;
+        ep = {
+          ...ep,
+          panels: ep.panels.map((p) => (p.id === 'p0' ? { ...p, ...changes } : p)),
+        };
+        return ep;
+      },
+      'PATCH /api/episodes/sb_test/panels/p1': (body: unknown) => {
+        const changes = (body as { changes: { overrides: object } }).changes;
+        ep = {
+          ...ep,
+          panels: ep.panels.map((p) =>
+            p.id === 'p1' ? { ...p, overrides: { ...p.overrides, ...changes.overrides } } : p,
+          ),
+        };
+        return ep;
+      },
+      'POST /api/episodes/sb_test/panels/batch': (body: unknown) => {
+        const { panel_ids, changes } = body as {
+          panel_ids: string[];
+          changes: { overrides: object };
+        };
+        ep = {
+          ...ep,
+          panels: ep.panels.map((p) =>
+            panel_ids.includes(p.id!)
+              ? { ...p, overrides: { ...p.overrides, ...changes.overrides } }
+              : p,
+          ),
+        };
+        return ep;
+      },
+    });
+    renderWithProviders(<StoryboardEditor />);
+    fireEvent.change(prompt(), { target: { value: 'newly written prompt' } });
+    fireEvent.click(rows()[0], { ctrlKey: true });
+    fireEvent.click(rows()[1], { shiftKey: true });
+    fireEvent.contextMenu(rows()[1]);
+    fireEvent.click(screen.getByRole('menuitem', { name: /为 2 幕空白提示词插入起手模板/ }));
+    await waitFor(() => expect(ep.panels[1].overrides.raw_prompt).toBe('starting template'));
+    expect(ep.panels[0].overrides.raw_prompt).toBe('newly written prompt');
+    expect(calls.filter((c) => c.method === 'PATCH')).toHaveLength(2);
+    expect(calls.some((c) => c.url.endsWith('/panels/batch'))).toBe(false);
   });
 });

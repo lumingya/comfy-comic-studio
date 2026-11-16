@@ -149,9 +149,11 @@ export default function StoryboardEditor() {
     )
       return;
     try {
-      if (editorSave.current) await flushDraft(editorSave.current).catch(() => undefined);
-      const original = [...panelIds];
-      const gone = panels.filter((p) => ids.includes(p.id!));
+      await flush();
+      const latest = qc.getQueryData<Episode>(keys.episode(episode.id)) ?? episode;
+      const savedPanels = [...latest.panels].sort((a, b) => a.order - b.order);
+      const original = savedPanels.map((p) => p.id!);
+      const gone = savedPanels.filter((p) => ids.includes(p.id!));
       await removeMany.mutateAsync(ids);
       if (active?.id && ids.includes(active.id)) editorSave.current?.discard();
       selection.clear();
@@ -205,13 +207,14 @@ export default function StoryboardEditor() {
   };
   /** Legacy 插入起手模板: fill the empty prompts among `ids` with the story's starting template. */
   const applyBase = async (ids: string[]) => {
-    const base = basePrompt();
-    const blank = panels
-      .filter((p) => ids.includes(p.id!) && !promptOf(p).trim())
-      .map((p) => p.id!);
-    if (!base || !blank.length) return;
     try {
       await flush();
+      const latest = qc.getQueryData<Episode>(keys.episode(episode.id)) ?? episode;
+      const base = latest.base_prompt ?? '';
+      const blank = latest.panels
+        .filter((p) => ids.includes(p.id!) && !promptOf(p).trim())
+        .map((p) => p.id!);
+      if (!base || !blank.length) return;
       if (blank.length === 1)
         await patchOne.mutateAsync({
           panelId: blank[0],
