@@ -759,6 +759,40 @@ describe('every route mounts with API data', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/workshop/assembly'));
   });
 
+  it.each([
+    { button: '单幕重跑', panelIds: ['p0'], rerun: true },
+    { button: '从此幕往后重跑', panelIds: ['p0', 'p1'], rerun: true },
+    { button: '单幕生成', panelIds: ['p1'], rerun: false },
+  ])('task $button requests candidates without replacing adopted frames', async (action) => {
+    responses['GET /api/series'] = [{ ...series, status: 'draft' }];
+    responses['GET /api/jobs'] = [];
+    responses['GET /api/workshop/queue'] = { order: ['ser_1'], lane: [], notices: {} };
+    responses['POST /api/episodes/ep_1/render'] = job;
+    mount('/workshop/assembly?task=ser_1');
+    const button = await screen.findByRole('button', { name: action.button });
+    await waitFor(() => expect(button).toBeEnabled());
+    if (action.rerun) {
+      expect(button).toHaveAttribute(
+        'title',
+        '新图保留为候选，采用后替换原图；没有采用图的分幕自动采用首张图',
+      );
+    }
+    fireEvent.click(button);
+    await waitFor(() =>
+      expect(
+        calls.filter((call) => call.method === 'POST' && call.url.endsWith('/render')),
+      ).toHaveLength(1),
+    );
+    expect(
+      calls.find((call) => call.method === 'POST' && call.url.endsWith('/render'))?.body,
+    ).toEqual({
+      panel_ids: action.panelIds,
+      adopt_first: true,
+      qa: false,
+      idempotency_key: expect.any(String),
+    });
+  });
+
   it('装配: the 3-step wizard adds a standby task without generating', async () => {
     responses['GET /api/profiles'] = [configProfile];
     mount('/workshop/assembly');

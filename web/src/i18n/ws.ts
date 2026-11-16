@@ -424,7 +424,7 @@ export const wsZh = {
     runFrom: '从此幕往后生成',
     rerunOne: '单幕重跑',
     rerunFrom: '从此幕往后重跑',
-    rerunHint: '重新生成这一幕，新图直接替换画册里的这一幕（旧图留在候选中）',
+    rerunHint: '新图保留为候选，采用后替换原图；没有采用图的分幕自动采用首张图',
     previewOf: '查看第 {{n}} 幕图片',
     pageBusy: '这一幕正在生成中，结束后再编辑',
     keptOriginal: '最近一次重跑失败，原图已保留',
@@ -1006,7 +1006,7 @@ export const wsEn: Widen<typeof wsZh> = {
     rerunOne: 'Rerun frame',
     rerunFrom: 'Rerun from here',
     rerunHint:
-      'Generate this frame again; the new image replaces it in the album (the old one stays a candidate)',
+      'New images stay as candidates until adopted. Frames without an adopted image use the first result.',
     previewOf: 'View frame {{n}}',
     pageBusy: 'This frame is generating; edit it when it finishes',
     keptOriginal: 'The last rerun failed; the original image was kept',

@@ -1179,14 +1179,10 @@ function TaskCard({
   const pages = pageProgress(episode, detailed);
   const failure = state === 'done' ? null : failureSummary(pages, detailed);
   const pageOf = (id: string): PageProgress => pages.get(id) ?? { state: 'standby' };
-  /** Legacy 单幕重跑 / 从此幕往后重跑: new images replace the ones already in the album. */
+  /** Reruns add candidates; only frames without an adopted image adopt the first result. */
   const rerun = (ids: string[]) => {
     if (render.isPending || !ids.length) return;
-    const replace = ids.some((id) => adopted.has(id));
-    render.mutate(
-      { panel_ids: ids, adopt_first: true, adopt_replace: replace },
-      { onError: toastError },
-    );
+    render.mutate({ panel_ids: ids, adopt_first: true }, { onError: toastError });
   };
   const retryFailed = () => {
     if (!failure) return;
@@ -1509,6 +1505,7 @@ function TaskCard({
                     type="button"
                     className="btn small ghost"
                     disabled={render.isPending || busy}
+                    title={tailAgain ? t('ws.queue.rerunHint') : undefined}
                     onClick={() => rerun(panels.slice(i).map((x) => x.id!))}
                   >
                     <Icon name="list" sm />
