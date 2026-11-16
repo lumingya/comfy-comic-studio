@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>Read, letter &amp; export · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">Skip to content</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/en/GUIDE.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="Handbook navigation">
+        <a class="home-label" href="/manual/docs/en/GUIDE.html">← All guides</a
+        ><a
+          data-language-link
+          href="/manual/docs/guide/read-and-share.html"
+          lang="zh-CN"
+          >中文</a
+        ><a href="/" class="open-app">Open studio ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/en/GUIDE.html">Mio / Handbook</a> / Read, letter
+          & export
+        </div>
+        <details class="mobile-toc">
+          <summary>Chapters</summary>
+          <nav>
+            <a href="/manual/docs/en/start.html">01 · Start here</a>
+            <a href="/manual/docs/en/connect-a-provider.html"
+              >02 · Services & keys</a
+            >
+            <a href="/manual/docs/en/workflow.html"
+              >03 · Workflows & profiles</a
+            >
+            <a href="/manual/docs/en/variables.html"
+              >04 · Variables & snapshots</a
+            >
+            <a href="/manual/docs/en/tasks.html"
+              >05 · Jobs & uncertain results</a
+            >
+            <a href="/manual/docs/en/read-and-share.html" aria-current="page"
+              >06 · Read, letter & export</a
+            >
+            <a href="/manual/docs/en/sharing.html"
+              >07 · Sharing editable work</a
+            >
+            <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+            <a href="/manual/docs/en/files.html">09 · Files & formats</a>
+            <a href="/manual/docs/en/mobile.html">10 · LAN access</a>
+            <a href="/manual/docs/en/troubleshooting.html"
+              >11 · Troubleshooting</a
+            >
+            <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="read-and-share">
+            <p class="chapter-kicker">CHAPTER 06 / THE MIO HANDBOOK</p>
+            <h1>Read, letter & export</h1>
+            <p>
+              Open an album from the <a href="/gallery">gallery</a>. The reader
+              shows adopted images. In its toolbar, the layout picker changes
+              the presentation template (not the images); the strip canvas
+              arranges panels, gutters, bubbles and sound effects; export opens
+              the export drawer.
+            </p>
+            <p>
+              Use Export in the album's context or “⋯” menu. Choose a file
+              format, adjust its options, then use the fixed Export button. HTML
+              offers layouts; PDF and image ZIP use panel images; platform
+              slices and long images use the canvas. Layout customization,
+              import and extra settings expand when needed. Multiple albums can
+              share one HTML, PDF or image ZIP (up to 50 episodes); editable
+              projects and creation kits download separately for each album.
+            </p>
+            <p>
+              Strip, gallery and spread views use the same album; there is no
+              need to create separate works. Reader templates and export formats
+              are separate choices. An HTML template does not become a freely
+              arranged print page; see the current PDF behavior below.
+            </p>
+            <p>
+              Without a saved layout, the reader shows complete original images
+              with captions underneath, without adding crops or bubbles. Saved
+              layouts retain framing and lettering; continuous reading preserves
+              the full canvas, whitespace and text across panels. By default,
+              only matching text already fully embedded in the same panel is
+              omitted from external captions. Remaining captions appear below
+              each image, or after a saved continuous canvas. Panel views and
+              HTML templates cut text at panel boundaries and use their own
+              spacing. Changing framing, adopted takes or series variables
+              refreshes the preview.
+            </p>
+            <p>
+              Long album menus scroll to their final action. Moving one or more
+              albums to the trash takes effect directly and can be undone or
+              restored from the trash. Permanent deletion still asks for
+              confirmation.
+            </p>
+            <p>
+              Deleting a panel also removes its canvas box, crop and lettering,
+              and clears bridges pointing to it. Other panels, independent text
+              and existing whitespace stay in place; adjust spacing manually
+              when needed. Candidate artwork and historical snapshots are
+              retained.
+            </p>
+            <p>
+              Select an image on the strip canvas to adjust zoom and
+              horizontal/vertical framing, or reset to automatic centre crop.
+              Undo/redo retains the last 100 edits (Ctrl / Cmd + Z, Ctrl / Cmd +
+              Shift + Z, or Ctrl + Y); text fields keep their native editing
+              shortcuts. Undo remains available after saving, but history ends
+              when you leave the canvas. Long images and platform slices
+              preserve saved framing and whitespace. Changes to script aspect
+              ratios only move existing boxes after an explicit layout action.
+            </p>
+            <div class="table-scroll">
+              <table>
+                <tr>
+                  <th>Output</th>
+                  <th>Meaning</th>
+                </tr>
+                <tr>
+                  <td>HTML album</td>
+                  <td>
+                    Selected HTML template with individual panel images and
+                    template spacing; an offline reader, not an editable project
+                    backup.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Image ZIP</td>
+                  <td>
+                    Panel images, a simple reader and a manifest, without the
+                    selected HTML or spread layout. Separate captions appear in
+                    its reader.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Album PDF</td>
+                  <td>
+                    One panel per page, without the selected HTML or spread
+                    layout; images are encoded, not a byte-perfect original
+                    archive. The captions option does not typeset separate
+                    captions into the PDF.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Platform slices / long image</td>
+                  <td>
+                    The adopted, composited strip, with platform sizing and a
+                    real slice preview.
+                  </td>
+                </tr>
+              </table>
+            </div>
+            <p>
+              HTML albums and portable ZIP/PDF default to composited panel
+              crops. Disabling in-image lettering (<code>lettered:false</code>
+              in the API) uses original adopted images and also skips saved
+              framing. Strip PDF exports through the API instead paginate the
+              full strip.
+            </p>
+            <h2 id="section-1">Image processing options</h2>
+            <p>
+              Auto starts with lossless metadata cleaning and may compress large
+              inline HTML. Publish encodes WebP up to 2560px on the long side.
+              Archive preserves original bytes only when not compositing
+              lettering; it may retain private workflow metadata. Hiding prompts
+              is a display option, not complete privacy scrubbing.
+            </p>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="Previous and next chapter">
+          <a rel="prev" href="/manual/docs/en/tasks.html"
+            >← Jobs & uncertain results</a
+          ><a rel="next" href="/manual/docs/en/sharing.html"
+            >Sharing editable work →</a
+          >
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/en/GUIDE.html#library">All guides ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="Chapters">
+        <div class="toc-label">THE HANDBOOK</div>
+        <nav>
+          <a href="/manual/docs/en/start.html">01 · Start here</a>
+          <a href="/manual/docs/en/connect-a-provider.html"
+            >02 · Services & keys</a
+          >
+          <a href="/manual/docs/en/workflow.html">03 · Workflows & profiles</a>
+          <a href="/manual/docs/en/variables.html"
+            >04 · Variables & snapshots</a
+          >
+          <a href="/manual/docs/en/tasks.html">05 · Jobs & uncertain results</a>
+          <a href="/manual/docs/en/read-and-share.html" aria-current="page"
+            >06 · Read, letter & export</a
+          >
+          <a href="/manual/docs/en/sharing.html">07 · Sharing editable work</a>
+          <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+          <a href="/manual/docs/en/files.html">09 · Files & formats</a>
+          <a href="/manual/docs/en/mobile.html">10 · LAN access</a>
+          <a href="/manual/docs/en/troubleshooting.html"
+            >11 · Troubleshooting</a
+          >
+          <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/en/GUIDE.html">All guides ↗</a
+          ><button class="print-link" type="button">Print / Save as PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

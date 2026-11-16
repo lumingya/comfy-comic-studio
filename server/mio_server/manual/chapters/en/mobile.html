@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>LAN access · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">Skip to content</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/en/GUIDE.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="Handbook navigation">
+        <a class="home-label" href="/manual/docs/en/GUIDE.html">← All guides</a
+        ><a
+          data-language-link
+          href="/manual/docs/guide/mobile.html"
+          lang="zh-CN"
+          >中文</a
+        ><a href="/" class="open-app">Open studio ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/en/GUIDE.html">Mio / Handbook</a> / LAN access
+        </div>
+        <details class="mobile-toc">
+          <summary>Chapters</summary>
+          <nav>
+            <a href="/manual/docs/en/start.html">01 · Start here</a>
+            <a href="/manual/docs/en/connect-a-provider.html"
+              >02 · Services & keys</a
+            >
+            <a href="/manual/docs/en/workflow.html"
+              >03 · Workflows & profiles</a
+            >
+            <a href="/manual/docs/en/variables.html"
+              >04 · Variables & snapshots</a
+            >
+            <a href="/manual/docs/en/tasks.html"
+              >05 · Jobs & uncertain results</a
+            >
+            <a href="/manual/docs/en/read-and-share.html"
+              >06 · Read, letter & export</a
+            >
+            <a href="/manual/docs/en/sharing.html"
+              >07 · Sharing editable work</a
+            >
+            <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+            <a href="/manual/docs/en/files.html">09 · Files & formats</a>
+            <a href="/manual/docs/en/mobile.html" aria-current="page"
+              >10 · LAN access</a
+            >
+            <a href="/manual/docs/en/troubleshooting.html"
+              >11 · Troubleshooting</a
+            >
+            <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="mobile">
+            <p class="chapter-kicker">CHAPTER 10 / THE MIO HANDBOOK</p>
+            <h1>LAN access</h1>
+            <p>
+              Only if needed, launch with <code>--host 0.0.0.0</code> and visit
+              the computer's LAN IP on port 8788 from a trusted device.
+              127.0.0.1 on your phone means the phone itself; ComfyUI addresses
+              are resolved by the backend computer.
+            </p>
+            <p class="notice warn">
+              Local <code>/api</code> has no login. Host and origin checks are
+              not account protection. Never expose it directly to the public
+              Internet or an untrusted network. Configure
+              <code>MIO_ALLOWED_HOSTS</code> for custom hostnames; automation
+              uses scoped API v2 tokens.
+            </p>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="Previous and next chapter">
+          <a rel="prev" href="/manual/docs/en/files.html">← Files & formats</a
+          ><a rel="next" href="/manual/docs/en/troubleshooting.html"
+            >Troubleshooting →</a
+          >
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/en/GUIDE.html#library">All guides ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="Chapters">
+        <div class="toc-label">THE HANDBOOK</div>
+        <nav>
+          <a href="/manual/docs/en/start.html">01 · Start here</a>
+          <a href="/manual/docs/en/connect-a-provider.html"
+            >02 · Services & keys</a
+          >
+          <a href="/manual/docs/en/workflow.html">03 · Workflows & profiles</a>
+          <a href="/manual/docs/en/variables.html"
+            >04 · Variables & snapshots</a
+          >
+          <a href="/manual/docs/en/tasks.html">05 · Jobs & uncertain results</a>
+          <a href="/manual/docs/en/read-and-share.html"
+            >06 · Read, letter & export</a
+          >
+          <a href="/manual/docs/en/sharing.html">07 · Sharing editable work</a>
+          <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+          <a href="/manual/docs/en/files.html">09 · Files & formats</a>
+          <a href="/manual/docs/en/mobile.html" aria-current="page"
+            >10 · LAN access</a
+          >
+          <a href="/manual/docs/en/troubleshooting.html"
+            >11 · Troubleshooting</a
+          >
+          <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/en/GUIDE.html">All guides ↗</a
+          ><button class="print-link" type="button">Print / Save as PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

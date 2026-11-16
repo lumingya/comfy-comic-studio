@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>Variables &amp; snapshots · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">Skip to content</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/en/GUIDE.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="Handbook navigation">
+        <a class="home-label" href="/manual/docs/en/GUIDE.html">← All guides</a
+        ><a
+          data-language-link
+          href="/manual/docs/guide/variables.html"
+          lang="zh-CN"
+          >中文</a
+        ><a href="/" class="open-app">Open studio ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/en/GUIDE.html">Mio / Handbook</a> / Variables &
+          snapshots
+        </div>
+        <details class="mobile-toc">
+          <summary>Chapters</summary>
+          <nav>
+            <a href="/manual/docs/en/start.html">01 · Start here</a>
+            <a href="/manual/docs/en/connect-a-provider.html"
+              >02 · Services & keys</a
+            >
+            <a href="/manual/docs/en/workflow.html"
+              >03 · Workflows & profiles</a
+            >
+            <a href="/manual/docs/en/variables.html" aria-current="page"
+              >04 · Variables & snapshots</a
+            >
+            <a href="/manual/docs/en/tasks.html"
+              >05 · Jobs & uncertain results</a
+            >
+            <a href="/manual/docs/en/read-and-share.html"
+              >06 · Read, letter & export</a
+            >
+            <a href="/manual/docs/en/sharing.html"
+              >07 · Sharing editable work</a
+            >
+            <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+            <a href="/manual/docs/en/files.html">09 · Files & formats</a>
+            <a href="/manual/docs/en/mobile.html">10 · LAN access</a>
+            <a href="/manual/docs/en/troubleshooting.html"
+              >11 · Troubleshooting</a
+            >
+            <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="variables">
+            <p class="chapter-kicker">CHAPTER 04 / THE MIO HANDBOOK</p>
+            <h1>Variables & snapshots</h1>
+            <p>
+              Prompts and dialogue accept <code>{name}</code>. Precedence is
+              panel-local <code>$name</code>, values supplied for this assembly,
+              selected presets (later wins), workshop variables, then built-ins.
+              You can reorder selected presets. Values may reference other
+              variables; <code>{{name}}</code> is a literal brace escape.
+              Unknown prompt variables remain unchanged for workflow wildcards;
+              unresolved ordinary names in reader dialogue are blanked.
+            </p>
+            <p>
+              Assembly copies the storyboard, presets, variables and canvas
+              settings into a new album. Editing workshop templates afterwards
+              does not update existing albums. Presets hold text variables.
+            </p>
+            <p>
+              The final assembly step previews each panel's positive and
+              negative prompts and reader dialogue using the server's compiler.
+              Missing values link to their panel and field; temporary values
+              affect only this new album. Empty strings are valid deliberate
+              overrides. Cycles and deep references are flagged for review.
+              Previewing does not contact image services; extensions may still
+              modify prompts during generation. Retrying the same unchanged
+              request in the dialog reuses its assembly result instead of
+              creating a duplicate.
+            </p>
+            <p>
+              Drag the thin divider between the storyboard list and its editor
+              to reveal long titles. Instances, workflows, profiles and cloud
+              channels have the same control. Focus the divider and use Left /
+              Right to resize, Home / End to reach the limits, or double-click
+              to reset. Each page remembers its width in this browser; narrow
+              windows preserve usable space on both sides. Presets retain their
+              single-column editor.
+            </p>
+            <p>
+              Storyboards edit titles, prompts, dialogue and parameters. After
+              assembly, open the album's panel editor from Assembly &amp; queue
+              to set shots, cast, reference images, control images and per-panel
+              render overrides, and to see history.
+            </p>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="Previous and next chapter">
+          <a rel="prev" href="/manual/docs/en/workflow.html"
+            >← Workflows & profiles</a
+          ><a rel="next" href="/manual/docs/en/tasks.html"
+            >Jobs & uncertain results →</a
+          >
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/en/GUIDE.html#library">All guides ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="Chapters">
+        <div class="toc-label">THE HANDBOOK</div>
+        <nav>
+          <a href="/manual/docs/en/start.html">01 · Start here</a>
+          <a href="/manual/docs/en/connect-a-provider.html"
+            >02 · Services & keys</a
+          >
+          <a href="/manual/docs/en/workflow.html">03 · Workflows & profiles</a>
+          <a href="/manual/docs/en/variables.html" aria-current="page"
+            >04 · Variables & snapshots</a
+          >
+          <a href="/manual/docs/en/tasks.html">05 · Jobs & uncertain results</a>
+          <a href="/manual/docs/en/read-and-share.html"
+            >06 · Read, letter & export</a
+          >
+          <a href="/manual/docs/en/sharing.html">07 · Sharing editable work</a>
+          <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+          <a href="/manual/docs/en/files.html">09 · Files & formats</a>
+          <a href="/manual/docs/en/mobile.html">10 · LAN access</a>
+          <a href="/manual/docs/en/troubleshooting.html"
+            >11 · Troubleshooting</a
+          >
+          <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/en/GUIDE.html">All guides ↗</a
+          ><button class="print-link" type="button">Print / Save as PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

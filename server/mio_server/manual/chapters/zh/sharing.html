@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>分享与可编辑作品包 · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">跳到正文</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/index.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="教程导航">
+        <a class="home-label" href="/manual/docs/index.html">← 全部教程</a
+        ><a data-language-link href="/manual/docs/en/sharing.html" lang="en"
+          >English</a
+        ><a href="/" class="open-app">打开工作台 ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/index.html">Mio / Handbook</a> /
+          分享与可编辑作品包
+        </div>
+        <details class="mobile-toc">
+          <summary>教程目录</summary>
+          <nav>
+            <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+            <a href="/manual/docs/guide/connect-a-provider.html"
+              >02 · 图像服务与密钥</a
+            >
+            <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+            <a href="/manual/docs/guide/variables.html"
+              >04 · 分镜、预设与变量</a
+            >
+            <a href="/manual/docs/guide/tasks.html"
+              >05 · 队列、候选与失败恢复</a
+            >
+            <a href="/manual/docs/guide/read-and-share.html"
+              >06 · 阅读、排版与导出</a
+            >
+            <a href="/manual/docs/guide/sharing.html" aria-current="page"
+              >07 · 分享与可编辑作品包</a
+            >
+            <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+            <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+            <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+            <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+            <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="sharing">
+            <p class="chapter-kicker">CHAPTER 07 / THE MIO HANDBOOK</p>
+            <h1>分享与可编辑作品包</h1>
+            <p>
+              给读者用 HTML、图片 ZIP 或 PDF；给另一个 Mio 工作区继续编辑，用
+              <code>.mio.zip</code> 作品包。两种 ZIP
+              不是同一种格式，不要把图片包当成项目导入。
+            </p>
+            <p>
+              导出作品包：画册的「⋯」菜单
+              →「导出」→「可编辑源文件」，或在画册集多选后点「导出」并选择相同格式。导入：「设置
+              → 数据与备份 → 导入 .mio.zip」。脚本调用用带令牌的
+              <code>/api/v2</code>：导出
+              <code>GET /api/v2/series/{id}/bundle</code>，导入
+              <code>POST /api/v2/bundles</code>（请求体是 ZIP 原始字节）。
+            </p>
+            <p>
+              作品包主要搬运作品内容和相关资产，并非完整服务器备份；实例连接、API
+              密钥、出图配置和扩展仍应单独核对。分享前检查角色参考图、提示词和图像元数据。
+            </p>
+            <h2 id="automation">外部程序与可选扩展</h2>
+            <p>
+              自动化使用带令牌的 <code>/api/v2</code>，接口清单见
+              <a href="/api/v2/docs">API 文档</a> 与
+              <a href="/api/v2/openapi.json">OpenAPI</a>。读取工坊用
+              <code>GET /api/v2/workshop</code>，替换预览用
+              <code>POST /api/v2/workshop/assemble/preview</code>，装配用
+              <code>POST /api/v2/workshop/assemble</code>。装配可传
+              <code>idempotency_key</code>
+              防止网络重试重复创建；只创建快照，生成需另行提交。按操作授予
+              read、write、render 或 admin 权限。
+            </p>
+            <p>
+              修图、质检、成品档、批量变体、剧本助手与动态漫已有后端接口，不是默认主界面的按钮。仓库
+              <code>examples/extensions/qa-review</code>
+              提供可选质检扩展示例，安装启用后仍需通过命令明确提交，且不会自动采用图片。停用或文件变动后，旧扩展路由立即拒绝新调用；重新启用后须重启以挂载新路由。首个令牌在本机创建，后续令牌与扩展管理可通过带
+              admin 权限的开放 API 完成。扩展自定义路由也有 v2
+              版本，权限由扩展明确声明；核心操作可由已启用扩展包装或替换。
+            </p>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="相邻章节">
+          <a rel="prev" href="/manual/docs/guide/read-and-share.html"
+            >← 阅读、排版与导出</a
+          ><a rel="next" href="/manual/docs/guide/backup.html"
+            >数据目录与备份 →</a
+          >
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/index.html#library">全部教程 ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="教程目录">
+        <div class="toc-label">本页内容</div>
+        <nav><a class="sub" href="#automation">外部程序与可选扩展</a></nav>
+        <hr />
+        <div class="toc-label">全部章节</div>
+        <nav>
+          <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+          <a href="/manual/docs/guide/connect-a-provider.html"
+            >02 · 图像服务与密钥</a
+          >
+          <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+          <a href="/manual/docs/guide/variables.html">04 · 分镜、预设与变量</a>
+          <a href="/manual/docs/guide/tasks.html">05 · 队列、候选与失败恢复</a>
+          <a href="/manual/docs/guide/read-and-share.html"
+            >06 · 阅读、排版与导出</a
+          >
+          <a href="/manual/docs/guide/sharing.html" aria-current="page"
+            >07 · 分享与可编辑作品包</a
+          >
+          <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+          <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+          <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+          <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+          <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/index.html">全部教程 ↗</a
+          ><button class="print-link" type="button">打印 / 保存为 PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

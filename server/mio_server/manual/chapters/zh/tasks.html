@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>队列、候选与失败恢复 · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">跳到正文</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/index.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="教程导航">
+        <a class="home-label" href="/manual/docs/index.html">← 全部教程</a
+        ><a data-language-link href="/manual/docs/en/tasks.html" lang="en"
+          >English</a
+        ><a href="/" class="open-app">打开工作台 ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/index.html">Mio / Handbook</a> /
+          队列、候选与失败恢复
+        </div>
+        <details class="mobile-toc">
+          <summary>教程目录</summary>
+          <nav>
+            <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+            <a href="/manual/docs/guide/connect-a-provider.html"
+              >02 · 图像服务与密钥</a
+            >
+            <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+            <a href="/manual/docs/guide/variables.html"
+              >04 · 分镜、预设与变量</a
+            >
+            <a href="/manual/docs/guide/tasks.html" aria-current="page"
+              >05 · 队列、候选与失败恢复</a
+            >
+            <a href="/manual/docs/guide/read-and-share.html"
+              >06 · 阅读、排版与导出</a
+            >
+            <a href="/manual/docs/guide/sharing.html"
+              >07 · 分享与可编辑作品包</a
+            >
+            <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+            <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+            <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+            <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+            <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="tasks">
+            <p class="chapter-kicker">CHAPTER 05 / THE MIO HANDBOOK</p>
+            <h1>队列、候选与失败恢复</h1>
+            <p>
+              顶栏和工坊都进入同一个「生成任务」页，完成开始、暂停、重试、挑图和单幕重画；需要排错时再进入执行详情。任务创建后保留生成参数与工作流快照，修改最近使用设置不会追改已有任务。装配成功不代表图像已经生成，任务完成也不代表所有候选都被采用。
+            </p>
+            <ul>
+              <li>
+                <strong>开始生成：</strong
+                >只补齐没有采用图的分幕。首次生成自动采用首个候选。
+              </li>
+              <li>
+                <strong>单幕重跑 / 从此幕开始：</strong
+                >可能为已有图片的分幕添加候选，不自动覆盖你已经采用的图片。在出图板比较并采用新图，再查看画册。
+              </li>
+              <li>
+                <strong>暂停 / 继续：</strong
+                >控制队列调度，不承诺撤回服务端已经收到的请求。取消也不代表云端退款。
+              </li>
+              <li>
+                <strong>失败：</strong
+                >查看任务详情中的具体错误、出图配置、模型与工作流；修复后再重试未完成项。
+              </li>
+              <li>
+                <strong>不确定（uncertain）：</strong
+                >请求可能已送达服务商。先核对上游记录，再选择认领结果、标记失败或明确确认重发；不要反复点击以免重复计费。
+              </li>
+              <li>
+                <strong>断线与停止：</strong>ComfyUI
+                接单后的历史读取或图片下载中断会保留为待核对；已知任务编号时可重取结果，不会自动重新出图。提交响应丢失、没有任务编号时仍需人工核对。停止先于结果保存生效时丢弃迟到结果；结果已经进入保存阶段时先完成本次保存，再返回停止。
+              </li>
+            </ul>
+            <p>
+              删除画册前应先停止它的活动任务。“清理已完成”把画册移出待生成队列，不是删除图片。任何永久删除都应先备份。
+            </p>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="相邻章节">
+          <a rel="prev" href="/manual/docs/guide/variables.html"
+            >← 分镜、预设与变量</a
+          ><a rel="next" href="/manual/docs/guide/read-and-share.html"
+            >阅读、排版与导出 →</a
+          >
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/index.html#library">全部教程 ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="教程目录">
+        <div class="toc-label">全部章节</div>
+        <nav>
+          <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+          <a href="/manual/docs/guide/connect-a-provider.html"
+            >02 · 图像服务与密钥</a
+          >
+          <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+          <a href="/manual/docs/guide/variables.html">04 · 分镜、预设与变量</a>
+          <a href="/manual/docs/guide/tasks.html" aria-current="page"
+            >05 · 队列、候选与失败恢复</a
+          >
+          <a href="/manual/docs/guide/read-and-share.html"
+            >06 · 阅读、排版与导出</a
+          >
+          <a href="/manual/docs/guide/sharing.html">07 · 分享与可编辑作品包</a>
+          <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+          <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+          <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+          <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+          <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/index.html">全部教程 ↗</a
+          ><button class="print-link" type="button">打印 / 保存为 PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

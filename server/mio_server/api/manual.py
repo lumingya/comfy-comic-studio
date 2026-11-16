@@ -1,7 +1,7 @@
 """Versioned, offline handbook bundled with the new server at ``/manual/``.
 
 The restored UI still links to the former ``docs/guide/*.html`` names. Resolve those names to
-current handbook sections instead of silently serving 3.2 instructions. Only explicitly listed
+current standalone chapters instead of silently serving 3.2 instructions. Only explicitly listed
 files are reachable; neither the legacy checkout nor a Markdown/CDN runtime is required.
 """
 
@@ -19,6 +19,10 @@ FILES = {
     "docs/index.html": "index.html",
     "docs/en/GUIDE.html": "en.html",
     "docs/guide/img/flow.svg": "flow.svg",
+    "assets/home.css": "assets/home.css",
+    "assets/reader.css": "assets/reader.css",
+    "assets/manual.js": "assets/manual.js",
+    "assets/coast.webp": "assets/coast.webp",
 }
 GUIDES = {
     "QUICKSTART": "start",
@@ -37,11 +41,20 @@ GUIDES = {
     "GLOSSARY": "glossary",
     "API": "sharing",
 }
+SECTIONS = tuple(dict.fromkeys(GUIDES.values()))
+for language, folder in (("guide", "zh"), ("en", "en")):
+    FILES.update(
+        {
+            f"docs/{language}/{section}.html": f"chapters/{folder}/{section}.html"
+            for section in SECTIONS
+        }
+    )
 HEADERS = {
     "Cache-Control": "no-cache",
     "X-Content-Type-Options": "nosniff",
     "Content-Security-Policy": (
-        "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; "
+        "default-src 'none'; style-src 'self'; img-src 'self'; "
+        "script-src 'self'; "
         "base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
     ),
 }
@@ -71,11 +84,13 @@ def manual(path: str):
     if name == "index.html":  # old handbook's "Open Mio" link
         return RedirectResponse("/")
     if name in ("README.html", "README.en.html"):
-        return RedirectResponse((EN if name == "README.en.html" else ZH) + "#start")
+        language = "en" if name == "README.en.html" else "guide"
+        return RedirectResponse(f"/manual/docs/{language}/start.html#start")
     if len(rel.parts) == 3 and rel.parts[:2] in (("docs", "guide"), ("docs", "en")):
         section = GUIDES.get(rel.stem) if rel.suffix == ".html" else None
         if section:
-            return RedirectResponse((EN if rel.parts[1] == "en" else ZH) + "#" + section)
+            anchor = "automation" if rel.stem == "API" else section
+            return RedirectResponse(f"/manual/docs/{rel.parts[1]}/{section}.html#{anchor}")
     resource = FILES.get(name)
     if resource:
         root = MANUAL.resolve()

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>Start here · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">Skip to content</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/en/GUIDE.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="Handbook navigation">
+        <a class="home-label" href="/manual/docs/en/GUIDE.html">← All guides</a
+        ><a data-language-link href="/manual/docs/guide/start.html" lang="zh-CN"
+          >中文</a
+        ><a href="/" class="open-app">Open studio ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/en/GUIDE.html">Mio / Handbook</a> / Start here
+        </div>
+        <details class="mobile-toc">
+          <summary>Chapters</summary>
+          <nav>
+            <a href="/manual/docs/en/start.html" aria-current="page"
+              >01 · Start here</a
+            >
+            <a href="/manual/docs/en/connect-a-provider.html"
+              >02 · Services & keys</a
+            >
+            <a href="/manual/docs/en/workflow.html"
+              >03 · Workflows & profiles</a
+            >
+            <a href="/manual/docs/en/variables.html"
+              >04 · Variables & snapshots</a
+            >
+            <a href="/manual/docs/en/tasks.html"
+              >05 · Jobs & uncertain results</a
+            >
+            <a href="/manual/docs/en/read-and-share.html"
+              >06 · Read, letter & export</a
+            >
+            <a href="/manual/docs/en/sharing.html"
+              >07 · Sharing editable work</a
+            >
+            <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+            <a href="/manual/docs/en/files.html">09 · Files & formats</a>
+            <a href="/manual/docs/en/mobile.html">10 · LAN access</a>
+            <a href="/manual/docs/en/troubleshooting.html"
+              >11 · Troubleshooting</a
+            >
+            <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="start">
+            <p class="chapter-kicker">CHAPTER 01 / THE MIO HANDBOOK</p>
+            <h1>Start here</h1>
+            <p class="notice">
+              <strong
+                >This is the Mio 4.x handbook: FastAPI + React, port
+                8788.</strong
+              >
+            </p>
+            <h2 id="section-1">Start Mio</h2>
+            <p>
+              A release needs Python 3.11+. Run the root
+              <code>start.bat</code> or <code>./start.sh</code>. Source
+              checkouts also need Node.js 20+: run
+              <code>npm ci --prefix web</code> and
+              <code>npm --prefix web run build</code>. Use
+              <code>start.bat --check</code> or
+              <code>./start.sh --check</code> to diagnose startup. Open
+              <strong>http://127.0.0.1:8788</strong>.
+            </p>
+            <ol class="steps">
+              <li>
+                <strong>Connect a service</strong>For local rendering, start
+                ComfyUI separately and configure an
+                <a href="/engine?tab=instances">instance</a> (usually
+                127.0.0.1:8188). For cloud rendering, add a
+                <a href="/engine?tab=channels">cloud channel</a>.
+              </li>
+              <li>
+                <strong>Connect an image service</strong>For local rendering,
+                import an API-format
+                <a href="/engine?tab=workflows">workflow</a>, check its
+                dependencies and generate one test image. For cloud rendering,
+                configure its address, key and model in
+                <a href="/engine?tab=channels">Cloud APIs</a>.
+              </li>
+              <li>
+                <strong>Write one panel</strong>Use
+                <a href="/workshop/story">Storyboards</a>, for example
+                <code>{character}, standing by a window, {style}</code>. Write
+                dialogue separately.
+              </li>
+              <li>
+                <strong>Define variables</strong>Use
+                <a href="/workshop/presets">Presets</a> to define character and
+                style. Wait for saving to finish.
+              </li>
+              <li>
+                <strong>Create a generation task</strong>In
+                <a href="/workshop/assembly">Generation tasks</a>, select a
+                storyboard, optional presets and a local workflow or cloud
+                service. Set images per scene and optional dimensions, review
+                the final prompts, then start generation or choose Generate
+                later. Cloud calls may cost money.
+              </li>
+              <li>
+                <strong>Adopt and export</strong>The first candidate is adopted
+                only if there is no adopted image. Reruns add candidates: adopt
+                a replacement on the board before expecting the reader to
+                change.
+              </li>
+            </ol>
+            <p>
+              For another work, reuse a storyboard and character presets, check
+              the substituted prompt preview and assemble a new album. Creating,
+              editing and assembling do not automatically call a script-writing
+              model.
+            </p>
+            <p>
+              You can read existing images, edit templates and assemble offline;
+              generation needs a working ComfyUI or cloud service.
+            </p>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="Previous and next chapter">
+          <a rel="next" href="/manual/docs/en/connect-a-provider.html"
+            >Services & keys →</a
+          >
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/en/GUIDE.html#library">All guides ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="Chapters">
+        <div class="toc-label">THE HANDBOOK</div>
+        <nav>
+          <a href="/manual/docs/en/start.html" aria-current="page"
+            >01 · Start here</a
+          >
+          <a href="/manual/docs/en/connect-a-provider.html"
+            >02 · Services & keys</a
+          >
+          <a href="/manual/docs/en/workflow.html">03 · Workflows & profiles</a>
+          <a href="/manual/docs/en/variables.html"
+            >04 · Variables & snapshots</a
+          >
+          <a href="/manual/docs/en/tasks.html">05 · Jobs & uncertain results</a>
+          <a href="/manual/docs/en/read-and-share.html"
+            >06 · Read, letter & export</a
+          >
+          <a href="/manual/docs/en/sharing.html">07 · Sharing editable work</a>
+          <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+          <a href="/manual/docs/en/files.html">09 · Files & formats</a>
+          <a href="/manual/docs/en/mobile.html">10 · LAN access</a>
+          <a href="/manual/docs/en/troubleshooting.html"
+            >11 · Troubleshooting</a
+          >
+          <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/en/GUIDE.html">All guides ↗</a
+          ><button class="print-link" type="button">Print / Save as PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

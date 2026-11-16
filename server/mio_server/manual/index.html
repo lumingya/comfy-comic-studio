@@ -1,161 +1,498 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mio · 使用手册</title><style>*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;background:#f6f7f4;color:#27352d;font:16px/1.85 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}a{color:#386b50;text-underline-offset:4px}a:hover{color:#132e20}header{padding:28px max(24px,calc((100vw - 1180px)/2));background:#24392d;color:#eef5e9;display:flex;justify-content:space-between;gap:20px;align-items:center}header a{color:#eef5e9}.brand{font-size:19px;letter-spacing:2px}.tag{font-size:11px;letter-spacing:2px;opacity:.7}.wrap{max-width:1180px;margin:0 auto;padding:44px 24px 90px;display:grid;grid-template-columns:210px minmax(0,1fr);gap:54px}aside{position:sticky;top:24px;align-self:start}aside b{display:block;font-size:12px;color:#708077;letter-spacing:2px;margin:0 0 14px}aside a{display:block;text-decoration:none;padding:4px 0;font-size:14px}h1{font-size:clamp(30px,4vw,48px);line-height:1.3;font-weight:600;margin:12px 0 22px;letter-spacing:-1px}h2{font-size:25px;line-height:1.4;margin:0 0 22px}h3{font-size:18px;margin:24px 0 8px}p{margin:12px 0}section{border-top:1px solid #d6dfd4;padding-top:30px;margin-top:42px}section:first-of-type{border:0;margin-top:26px}.lead{font-size:19px;color:#5a6a60}.eyebrow{color:#52705c;letter-spacing:2px;font-size:12px}.notice{padding:16px 20px;background:#e8efe3;border-left:3px solid #739765;border-radius:0 6px 6px 0;font-size:14px}.warn{background:#f3eee2;border-color:#b89750}code{font:13px/1.7 ui-monospace,Consolas,monospace;background:#e8ede6;padding:2px 5px;border-radius:3px;overflow-wrap:anywhere}pre{background:#24392d;color:#e8f1e3;padding:18px;border-radius:8px;overflow:auto;line-height:1.7}pre code{background:none;color:inherit;padding:0}table{border-collapse:collapse;width:100%;font-size:14px;margin:18px 0}th{text-align:left;background:#e9eee6;font-weight:600}th,td{border-bottom:1px solid #d6dfd4;padding:10px 12px;vertical-align:top}ul,ol{padding-left:24px}li{margin:7px 0}small,.muted{color:#69796e}figure{margin:24px 0}figure img{width:100%;max-height:200px}figcaption{font-size:12px;color:#748075;text-align:center}.steps{counter-reset:steps;list-style:none;padding:0}.steps>li{position:relative;padding:4px 0 16px 44px}.steps>li:before{counter-increment:steps;content:counter(steps,decimal-leading-zero);position:absolute;left:0;top:4px;color:#78916f;font-weight:700;font-size:18px}.steps strong{display:block}details{border:1px solid #d6dfd4;padding:12px 16px;margin:12px 0;border-radius:6px}summary{font-weight:600;cursor:pointer}.pill{display:inline-block;padding:2px 10px;border:1px solid #628168;border-radius:20px;font-size:12px;margin-right:6px}footer{border-top:1px solid #d6dfd4;margin-top:40px;padding-top:18px;font-size:12px;color:#6a7a6d}@media(max-width:800px){.wrap{display:block;padding:26px 20px 64px}aside{position:static;border-bottom:1px solid #d6dfd4;padding-bottom:20px;margin-bottom:30px}aside a{display:inline-block;margin-right:16px}header{padding:18px 20px;align-items:flex-start}header .tag{display:none}table{display:block;overflow:auto}h1{font-size:33px}}@media print{body{background:white}header,aside{display:none}.wrap{display:block;max-width:none;padding:0}section{break-inside:avoid}a{color:inherit}pre{white-space:pre-wrap}}</style></head>
-<body><header><div><div class="brand">MIO · 绘页</div><div class="tag">THE MIO HANDBOOK · 4.x</div></div><nav><a href="en/GUIDE.html">English</a> &nbsp; · &nbsp; <a href="/">打开 Mio</a></nav></header>
-<div class="wrap"><aside aria-label="目录"><b>使用手册 / CONTENTS</b><a href="#start">01 · 快速开始</a><a href="#connect-a-provider">02 · 图像服务与密钥</a><a href="#workflow">03 · 工作流与出图配置</a><a href="#variables">04 · 分镜、预设与变量</a><a href="#tasks">05 · 队列、候选与失败恢复</a><a href="#read-and-share">06 · 阅读、排版与导出</a><a href="#sharing">07 · 分享与可编辑作品包</a><a href="#backup">08 · 数据目录与备份</a><a href="#files">09 · 文件与格式</a><a href="#mobile">10 · 局域网访问</a><a href="#troubleshooting">11 · 常见问题</a><a href="#glossary">12 · 术语对照</a></aside><main><div class="eyebrow">LOCAL-FIRST COMIC STUDIO</div><h1>使用手册</h1><p class="lead">分镜、预设、出图与分享。</p>
-<p><span class="pill">8788</span><span class="pill">FastAPI + React</span><span class="pill">可离线阅读</span></p>
-<section id="start"><h2>01 · 快速开始</h2>
-<p class="notice"><strong>适用于 Mio 4.x：FastAPI 后端 + React 界面，默认端口 8788。</strong></p>
-<h3>启动与检查</h3>
-<p>发布包需要 <strong>Python 3.11+</strong>。解压后双击根目录 <code>start.bat</code>（Windows），或运行 <code>./start.sh</code>（macOS / Linux）。首次启动会创建虚拟环境并安装依赖。源码版另需 <strong>Node.js 20+</strong>：</p>
-<pre><code>npm ci --prefix web
-npm --prefix web run build
-# Windows
-start.bat --check
-start.bat
-# macOS / Linux
-./start.sh --check
-./start.sh</code></pre>
-<p>浏览器打开 <strong>http://127.0.0.1:8788</strong>。开发界面用 <code>npm --prefix web run dev</code>；Vite 会把 API、WebSocket 和本手册转发到 8788。Mio 不会代你启动 ComfyUI。</p>
-<figure><img src="guide/img/flow.svg" alt="分镜与预设装配为画册快照，开始生成后进入任务引擎，采用图片后阅读与导出"><figcaption>创作链路示意 · 不是界面截图</figcaption></figure>
-<ol class="steps">
-<li><strong>连接图像服务</strong>在 <a href="/engine?tab=instances">工作流与 API 配置 → ComfyUI 实例</a> 填写地址并测试。默认 <code>http://127.0.0.1:8188</code>。只用云端出图的话，见下一节。</li>
-<li><strong>准备图像服务</strong>本地出图：在<a href="/engine?tab=workflows">工作流</a>导入 API 格式工作流，检查依赖后「试生成一张」。云端出图：在<a href="/engine?tab=channels">云端 API</a>配置地址、密钥与模型。第一次只做一幕、一张图。</li>
-<li><strong>写一幕分镜</strong>进入 <a href="/workshop/story">创作工坊 → 分镜工坊</a>，新建分镜并添加一幕。正向提示词可写 <code>{character}, standing by a window, {style}</code>。台词单独填写，不需要把文字绘入图片。</li>
-<li><strong>填预设</strong>进入 <a href="/workshop/presets">预设工坊</a>，定义 <code>character</code>（如 <code>a young adult traveler, blue jacket</code>）与 <code>style</code>（如 <code>anime, soft lighting</code>）。等待保存完成再装配。</li>
-<li><strong>创建生成任务</strong>进入<a href="/workshop/assembly">生成任务</a>，选择分镜、可选预设、本地工作流或云端服务，设置每幕张数与尺寸。在最后一步检查最终提示词和台词，点击「开始生成」；只想保存任务时选择「稍后生成」。</li>
-<li><strong>检查结果并导出</strong>队列会自动采用每幕的首个候选（不替换已有采用图）。从 <a href="/gallery">画册集</a> 打开画册；如果重跑后画面不变，去出图板采用新图。失败原因看 <a href="/jobs">任务详情</a>。</li>
-</ol>
-<p>重复创作时可以直接选用已有分镜与角色预设：替换预设变量、检查提示词预览，再装配成新的画册。创建、编辑与装配都不会自动调用写剧本模型。</p>
-<p class="notice warn">查看已有图片、编辑分镜和装配可以离线进行；真正出图需要可用的 ComfyUI 或云端服务，云端可能计费。</p>
-</section>
-<section id="connect-a-provider"><h2>02 · 图像服务与密钥</h2>
-<table><thead><tr><th>服务</th><th>配置位置与必要条件</th><th>容易混淆的地方</th></tr></thead><tbody>
-<tr><td>本地 ComfyUI</td><td><a href="/engine?tab=instances">实例</a>中保存地址；先在 ComfyUI 自己的页面跑通工作流。</td><td>实例在线 ≠ 工作流的节点和模型都已安装。</td></tr>
-<tr><td>OpenAI Images / NovelAI</td><td><a href="/engine?tab=channels">云端 API</a>中保存类型、服务地址、模型与 API Key。</td><td>新建生成任务时直接选用该服务。</td></tr>
-<tr><td>聊天接口出图</td><td>在云端出图里新建 <code>chat_image</code> 渠道，填写地址与密钥。</td><td>未指定渠道且没有默认渠道时，使用「设置 → 模型与连接」中的连接与图像模型；普通聊天接口不一定会返回图片。</td></tr>
-</tbody></table>
-<p>新建任务可以直接选择本地工作流或云端服务。多工作流串联在「高级出图方案」配置；通过 API 启用的「云端 + 本地精修」会显示为混合路线。云端「已配置」不代表服务在线或额度充足，查看页面不会发起生图请求。</p>
-<h3>云端参数如何生效</h3>
-<p>逐格设置的画幅、负向与参考图随任务保存。渠道里的负向作为附加约束，渠道尺寸只在没有分镜画幅时作为默认值。提交后修改模板或渠道生成选项，不会追改任务；删除渠道或改变渠道类型会使旧任务明确失败。</p>
-<p>OpenAI Images 使用逐格尺寸，负向写入提示语，不发送种子；聊天接口的尺寸与负向都是提示约束，不保证输出精确像素，也不发送种子。NovelAI 使用独立负向和固定种子，尺寸按 64 对齐，超范围种子转为 32 位并留下记录。参考图的实际效果取决于服务，NovelAI 的 vibe 条件不等同于锁定人物身份。</p>
-<p>放大候选后展开「云端生成参数」，可对照请求值、实际提交值、输出图片尺寸与参考图来源。不支持种子的渠道不会显示一个虚假的生效种子。自动参考图优先选择出场角色，再用剩余位置补充场景与所选风格，默认最多四张；手动参考图按原顺序全部发送，关闭参考图时不发送图片。自定义聊天模型也会收到全部选定图片，数量超出服务限制时会明确报错。</p>
-<h3>获取与选择模型</h3>
-<p>填写地址与密钥后点击「获取模型」，无需先保存。文本、视觉、共享出图与独立云端渠道均可搜索目录并选择，也能直接填写模型 ID；多模型列表保留添加顺序。目录列出服务公开的模型，不保证每个模型都支持当前用途。服务不提供目录时，手动填写仍可使用。</p>
-<p>ComfyUI 的目录只查看节点公开的已安装模型，实际使用哪个模型由工作流决定。NovelAI 显示明确标记的内置参考列表，不代表已验证账户权限。获取目录不会生成图片，也不会保存配置。</p>
-<p>已保存密钥显示为空输入框的占位提示，输入新密钥即替换；「清除密钥」需要保存后生效。修改地址后获取模型，需要重新填写或清除密钥。粘贴完整 OpenAI 接口地址会在保存时整理为基础地址。不要把 API Key 写进提示词、截图、工作流说明或公开的分享包。</p>
-<p class="notice">云端适配器有离线请求 / 响应测试，但并不代表所有真实服务商或代理都已实测。先用中性题材、一个候选试跑，并确认你的服务商支持所选接口。</p>
-</section>
-<section id="workflow"><h2>03 · 工作流与出图配置</h2>
-<p>导入后先查看预检，再明确保存。预检列出已识别绑定、歧义和需要的节点 / 模型；详情默认折叠。输出映射选择输出节点，普通参数映射选择真正保存值的输入。诊断时可选择分支，检查实际选中的图；插件自身的校验仍以 ComfyUI 为准。</p>
-<p><a href="/engine?tab=workflows">工作流</a>是 ComfyUI 节点图，可在新建任务时直接选择。多个工作流串联时使用<a href="/engine?tab=profiles">高级出图方案</a>。每幕生成张数与尺寸在任务里设置，最近使用值按工作流记忆；尺寸留空保留工作流原值。</p>
-<ol><li>在 ComfyUI 导出 <strong>API 格式 JSON</strong>（节点含 <code>class_type</code> 和 <code>inputs</code>），再导入 Mio。带 <code>nodes/links</code> 的可视化编辑器 JSON 不能直接作为 API 工作流。</li>
-<li>内置工作流只作起点：先复制，再修改。把 CheckpointLoaderSimple 等节点里的模型名换成你安装的真实文件名；可在 JSON 编辑器中调整节点图与配置。</li>
-<li>映射选择器可搜索节点编号、标题与输入名。常用参数以外可以添加自定义参数，并绑定多个目标；「编辑 JSON」可切换参数配置与节点图。检查依赖后用「试生成一张」验证实际执行。</li>
-<li>多工作流串联时，在高级方案中「添加后处理工作流」。后一阶段接收上一步图片需要 <code>[mio:init]</code> 输入，并把「阶段图像输入」设为「接上一步输出」。未启用的阶段不会执行。</li>
-</ol>
-<p>原始提示词模式保留你写的文本；自动编译模式才会组合设定集、景别、风格等结构化字段。更改工作流不会自动刷新已经提交到任务引擎的请求快照；需要明确重新提交任务。</p>
-<p>显式混合任务会在提交前检查并固定本地精修工作流、参数与实例选择；云端运行期间修改或删除配置，不会替换该任务已固定的后续工作流。纯云端生成的候选可直接采用；进一步精修仍可主动通过专业 API 调用。</p>
-<h3>自定义节点与插件的兼容范围</h3>
-<p>Mio 提交的是 ComfyUI API 节点图。自定义节点只要能在 ComfyUI 后端通过 API 执行，就可保留在图中；不需要等待 Mio 为每个插件增加专用按钮。节点包、模型和依赖仍需在实际执行的 ComfyUI 实例上安装。</p>
-<ul><li>自动识别不完整时，可用节点标题 <code>[mio:prompt=字段名]</code> 指定字段，或用 JSON Pointer 映射到节点输入。一个值可写到多个输入；高级 JSON 编辑保留。绑定与参数覆盖不能覆盖节点连线或其中的节点编号 / 输出序号；需要修改值时，映射到上游节点实际保存文本或数值的输入。</li>
-<li>依赖 ComfyUI 网页脚本的控件、前端虚拟节点或特殊提交协议，不能仅凭导入成功证明可用。先确认 API 导出中已包含实际执行所需的值，再检查编译预览。ParameterControlPanel 已支持正式任务，须先通过工作流 API 捕获并保存 <code>config.state</code>；Mio 在写入前保存原值，独占该服务，结果落盘后恢复参数，中断后保留恢复记录。同一个 ComfyUI 使用唯一地址登记，执行期间避免其他客户端修改参数；其他前端状态插件仍需单独适配。</li>
-<li>自定义图片输出节点可标记 <code>[mio:output]</code>；最终取图仍要求服务在 <code>/history</code> 中返回标准 <code>images</code>。只返回视频、音频或自定义结果结构的节点不等于可直接作为漫画图片输出。</li>
-<li>导入成功证明格式可读；编译成功证明绑定能应用；诊断检查节点与部分模型条件。最终是否能生成预期图片，仍需在对应实例试跑。离线样本测试不等于执行了所有插件。</li></ul>
-</section>
-<section id="variables"><h2>04 · 分镜、预设与变量</h2>
-<p>分镜是可复用模板，预设保存变量。提示词和台词都可以使用 <code>{变量名}</code>；例如自行创建「负向词」变量，再在分镜的负向提示词中填写 <code>{负向词}</code>。只有显式引用的内容才会展开，预设不自动追加正负提示词，也不默认创建负向词变量。</p>
-<p>列表标题太长时，可拖动分镜列表和详情区之间的细分割线；实例、工作流、出图配置与云端渠道页也支持。分割线获得键盘焦点后，用左右方向键调整，Home / End 移到宽度边界，双击恢复默认。宽度按页面保存在当前浏览器；窄窗口会优先保留两侧可用空间。预设工坊保持单列编辑。</p>
-<table><thead><tr><th>规则</th><th>实际行为</th></tr></thead><tbody>
-<tr><td>优先级</td><td>内建变量 → 作品变量 → 每格的 <code>$变量名</code> 覆盖。后者优先。</td></tr>
-<tr><td>多个预设</td><td>按向导显示的选择顺序合并，可调整先后；同名变量以后面的预设为准。预览显示实际生效的来源。</td></tr>
-<tr><td>嵌套与字面花括号</td><td>值可以引用其他变量；用 <code>{{name}}</code> 输出字面 <code>{name}</code>。提示词中未知变量保留原文，阅读台词中的未知普通变量留空，不会自动猜值。</td></tr>
-<tr><td>装配快照</td><td>已装配画册保存分镜、预设、变量和画布设置。之后修改工坊模板，不会追改已装配的画册；要应用新模板，重新装配。</td></tr>
-<tr><td>预设类型</td><td>预设工坊里的变量都是文本变量。</td></tr>
-</tbody></table>
-<p>装配的最后一步按分幕预览正负提示词和阅读台词。缺失变量可定位到对应幕与字段，并填写仅供本次作品使用的值。优先级从高到低为：逐格 <code>$变量</code>、本次补值、所选预设（后者优先）、工坊变量、内置变量。空字符串是有效值，可用于主动留空；循环引用与过深引用会提示核对。提示词中的未知变量保留原文，方便使用工作流通配符；阅读台词中的未知普通变量会留空。预览不访问图像服务，扩展仍可在生成时追加处理。</p>
-<p>分镜工坊编辑标题、正负提示词、台词与参数。装配后，在「生成任务」里打开画册的逐幕编辑，可以设置镜头、出场角色、参考图、控制图、每幕出图覆盖，并查看历史。自动保存失败时先查看错误，不要立刻切换页面。装配请求失败后可在同一向导重试；未改请求时会复用原装配结果，不重复建画册。</p>
-</section>
-<section id="tasks"><h2>05 · 队列、候选与失败恢复</h2>
-<p>顶栏和工坊都进入同一个「生成任务」页，完成开始、暂停、重试、挑图和单幕重画；需要排错时再进入执行详情。任务创建后保留生成参数与工作流快照，修改最近使用设置不会追改已有任务。装配成功不代表图像已经生成，任务完成也不代表所有候选都被采用。</p>
-<ul><li><strong>开始生成：</strong>只补齐没有采用图的分幕。首次生成自动采用首个候选。</li>
-<li><strong>单幕重跑 / 从此幕开始：</strong>可能为已有图片的分幕添加候选，不自动覆盖你已经采用的图片。在出图板比较并采用新图，再查看画册。</li>
-<li><strong>暂停 / 继续：</strong>控制队列调度，不承诺撤回服务端已经收到的请求。取消也不代表云端退款。</li>
-<li><strong>失败：</strong>查看任务详情中的具体错误、出图配置、模型与工作流；修复后再重试未完成项。</li>
-<li><strong>不确定（uncertain）：</strong>请求可能已送达服务商。先核对上游记录，再选择认领结果、标记失败或明确确认重发；不要反复点击以免重复计费。</li>
-<li><strong>断线与停止：</strong>ComfyUI 接单后的历史读取或图片下载中断会保留为待核对；已知任务编号时可重取结果，不会自动重新出图。提交响应丢失、没有任务编号时仍需人工核对。停止先于结果保存生效时丢弃迟到结果；结果已经进入保存阶段时先完成本次保存，再返回停止。</li>
-</ul>
-<p>删除画册前应先停止它的活动任务。“清理已完成”把画册移出待生成队列，不是删除图片。任何永久删除都应先备份。</p>
-</section>
-<section id="read-and-share"><h2>06 · 阅读、排版与导出</h2>
-<p>删除分镜会同步移除对应画格、裁切与文字，解除指向它的跨格引用。其他格、独立文字及原有留白不自动压缩；需要收拢版面时再手动调整。候选素材和历史快照保留。</p>
-<p>选中画布中的图片后，可用放大、水平取景、垂直取景调整构图，或恢复自动居中裁切。撤销 / 重做支持最近 100 步修改（Ctrl / ⌘ + Z，Ctrl / ⌘ + Shift + Z 或 Ctrl + Y）；输入框内保留文字编辑快捷键。保存后仍可撤销，离开画布后不保留此历史。长图与平台切片使用保存的构图和留白，修改分镜比例后需要明确重新排版才会改变格的位置。</p>
-<p>从 <a href="/gallery">画册集</a> 打开画册。阅读室以已采用图片为准。顶栏的「版式」切换展示模板，只改变阅读外观，不会生成图片；「排版」打开条漫画布，调整分格、留白、气泡与拟声字；「导出」打开导出抽屉。</p>
-<p>画册的右键或「⋯」菜单统一从「导出」进入。先选择导出格式，再调整相关选项，最后点底部「导出」。HTML 可以选择版式；PDF 和图片 ZIP 使用逐格图片；平台切片与长图使用画布。自定义版式、导入和更多设置按需展开。多选画册可合并导出 HTML、PDF 或图片 ZIP（最多 50 话），源文件与创作套装则每本单独下载。</p>
-<p>不需要为条漫、画册或双页阅读分别创建作品：它们使用同一份画册内容。阅读模板与导出格式分别选择；HTML 模板不会自动转成可自由分格的印刷页面，PDF 的当前行为见下表。</p>
-<p>没有保存排版时，阅读器显示完整原图与图下旁白，不自动裁切或添加气泡。保存过排版后，单页与双页使用保存的取景和嵌字；连续阅读保留完整画布、留白与跨格文字。默认只去掉已经完整嵌入同格的重复正文，其余旁白继续显示；连续画布的未嵌正文列在画布后。单格阅读及 HTML 模板会在格界截断格外文字，间距由模板决定。修改裁切、采用图或作品变量后，预览会更新。</p>
-<p>画册菜单可以直接滚动到末项。单册或批量「移入回收站」后可撤销，也可到回收站恢复；永久删除仍需要确认。</p>
-<table><thead><tr><th>输出</th><th>用途与区别</th></tr></thead><tbody>
-<tr><td>单文件 HTML 画册</td><td>当前 HTML 模板、样式与逐格图片打包在网页内，可离线阅读。模板间距代替原条漫画布间距，不是可编辑工作区备份。</td></tr>
-<tr><td>图片 ZIP</td><td>逐格图片文件、简单阅读页与清单，不使用当前 HTML 或双页模板。独立台词可显示在简单阅读页。</td></tr>
-<tr><td>图片画册 PDF</td><td>每格一页，不继承 HTML 或双页模板，也不等于整条条漫切页。PDF 会编码图像，不是原图字节归档；“显示台词”不会把独立台词排进 PDF。</td></tr>
-<tr><td>平台切片 / 长图</td><td>基于采用图和条漫画布合成；切片按平台宽度、高度限制拆分。先检查真实切片预览。</td></tr>
-</tbody></table>
-<p>HTML 画册与图片 ZIP / PDF 默认使用合成后的逐格图片；关闭图片内排字（API <code>lettered:false</code>）会使用原始采用图，同时跳过保存的裁切。通过 API 导出的条漫 PDF 则沿完整条漫画布切页。</p>
-<h3>图片处理选项</h3>
-<ul><li><strong>自动：</strong>优先无损清洗；单文件 HTML 的内嵌图像超出预算时改为轻量发布。</li>
-<li><strong>无损清洗：</strong>对支持的原始 PNG / JPEG / WebP 去除提示词、工作流或 EXIF 等相关容器元数据，不重新生成画面。</li>
-<li><strong>轻量发布：</strong>重新编码 WebP，长边不超过 2560px，适合分享。</li>
-<li><strong>无损归档：</strong>没有排字裁切时保留原图字节及可能的工作流元数据，<strong>只建议本地存档</strong>。有排字的图片是重新合成的 PNG，不再是原始文件。</li>
-</ul>
-<p>显示 / 隐藏台词和提示词是呈现选项，不是全面隐私清理。发给别人之前检查导出内容；原图、提示词和嵌入的工作流可能包含私人信息。</p>
-</section>
-<section id="sharing"><h2>07 · 分享与可编辑作品包</h2>
-<p>给读者用 HTML、图片 ZIP 或 PDF；给另一个 Mio 工作区继续编辑，用 <code>.mio.zip</code> 作品包。两种 ZIP 不是同一种格式，不要把图片包当成项目导入。</p>
-<p>导出作品包：画册的「⋯」菜单 →「导出」→「可编辑源文件」，或在画册集多选后点「导出」并选择相同格式。导入：「设置 → 数据与备份 → 导入 .mio.zip」。脚本调用用带令牌的 <code>/api/v2</code>：导出 <code>GET /api/v2/series/{id}/bundle</code>，导入 <code>POST /api/v2/bundles</code>（请求体是 ZIP 原始字节）。</p>
-<p>作品包主要搬运作品内容和相关资产，并非完整服务器备份；实例连接、API 密钥、出图配置和扩展仍应单独核对。分享前检查角色参考图、提示词和图像元数据。</p>
-<h3>外部程序与可选扩展</h3>
-<p>自动化使用带令牌的 <code>/api/v2</code>，接口清单见 <a href="/api/v2/docs">API 文档</a> 与 <a href="/api/v2/openapi.json">OpenAPI</a>。读取工坊用 <code>GET /api/v2/workshop</code>，替换预览用 <code>POST /api/v2/workshop/assemble/preview</code>，装配用 <code>POST /api/v2/workshop/assemble</code>。装配可传 <code>idempotency_key</code> 防止网络重试重复创建；只创建快照，生成需另行提交。按操作授予 read、write、render 或 admin 权限。</p>
-<p>修图、质检、成品档、批量变体、剧本助手与动态漫已有后端接口，不是默认主界面的按钮。仓库 <code>examples/extensions/qa-review</code> 提供可选质检扩展示例，安装启用后仍需通过命令明确提交，且不会自动采用图片。停用或文件变动后，旧扩展路由立即拒绝新调用；重新启用后须重启以挂载新路由。首个令牌在本机创建，后续令牌与扩展管理可通过带 admin 权限的开放 API 完成。扩展自定义路由也有 v2 版本，权限由扩展明确声明；核心操作可由已启用扩展包装或替换。</p>
-</section>
-<section id="backup"><h2>08 · 数据目录与备份</h2>
-<p>分镜工坊的「创作存档」可保存命名快照，作品检查点也可通过开放 API 管理。恢复先显示差异，明确恢复时会自动保护当前内容；过时预览、缺失素材、活动或待核对任务会阻止恢复。检查点保存作品数据，不复制图片文件或全局服务配置；已经永久删除的作品不能靠检查点重建。</p>
-<p>用根启动器启动时，数据默认在 <code>server/data/runtime/v3</code>，包含 <code>mio.sqlite3</code>、<code>jobs.sqlite3</code> 与 <code>assets/</code>。自定义 <code>--data</code> 或 <code>MIO_V3_DATA</code> 时，以实际路径为准；手动从其他工作目录启动时，相对路径也会改变。</p>
-<p>「设置 → 数据与备份」可创建完整工作区备份，包含作品、任务、存档与素材。等待活动及待核对任务处理完毕后导出；默认不包含已配置的密钥和访问令牌，高级选项可明确包含凭据。</p>
-<ol><li>选择备份包，先检查作品、素材和任务数量；检查不会修改当前内容。</li>
-<li>暂存后明确安排恢复，程序会先保存当前工作区的保护备份。</li>
-<li>停止 Mio 服务并重新启动。关闭浏览器不等于停止服务；安排后继续编辑会使版本检查拒绝恢复，需要重新暂存。</li></ol>
-<p>重启前可以取消安排。恢复后扩展、ComfyUI 实例和 Webhook 保持停用，队列暂停，请重新核对配置。恢复目录在工作区旁的 <code>.&lt;工作区目录名&gt;.mio-recovery/</code>，保留保护备份和替换前的目录；保护备份包含凭据。包上限 2 GiB、展开后 4 GiB；超限时可停服后完整复制数据目录及恢复目录，不要漏掉素材。</p>
-<p>根目录的 <code>data/</code> 是随包示例：首次启动时把示例画册、分镜与预设载入数据目录，之后对 <code>data/</code> 的修改不会再同步过来。删除的作品先进入「设置 → 数据与备份」里的回收站，可在保留期内恢复。</p>
-<p class="notice warn">不要为了重置界面而删除数据库。需要从头开始时，先备份数据目录，再换一个空的 <code>--data</code> 目录启动。</p>
-</section>
-<section id="files"><h2>09 · 文件与格式</h2>
-<p>「创作套装」把所选分镜、预设、角色、画风、工作流与引用素材放在一起。工坊的导出格式可选「创作套装 ZIP」；画册菜单选「导出」，再选「创作套装」并勾选需要的分镜与预设。导入菜单里选择「导入创作套装」，先查看内容，再为每份出图配置明确选择服务或「先导入，稍后配置」。装配第一步的「分镜来源」可反复选择套装，不会改写原工坊。</p>
-<p>新建任务时可直接选择本地工作流、云端服务或高级方案。工坊与套装都支持本次选择，不改变来源资料；单独设置过方案的分幕仍优先使用自己的方案。</p>
-<p>要修改套装，在分镜工坊或预设工坊的「来源」里选择它，或从装配向导进入套装编辑。切换来源前会保存当前编辑；保存失败时留在原来源。套装的预设也能独立试绘：先创建一格待生成画册，再明确开始生成。编辑套装只影响之后装配的作品，不追改已装配画册。</p>
-<p>多选分幕后可复制或移动到同作品的其他话；「整理」菜单可复制整话、上下调整顺序或查找与整理变量。跨话整理会保留候选图、裁切和原话留白；锁定内容及跨边界气泡需明确选择处理方式。变量修改先预览差异，只处理完整变量引用，双大括号转义与历史候选不改。</p>
-<p>Mio 以作品、分集、分格、候选和资产为核心，数据都在数据目录的数据库与 <code>assets/</code> 里，不需要手动编辑 JSON 文件。</p>
-<p>分镜工坊的 JSON 导入 / 导出用于分镜模板；预设工坊的导入 / 导出用于文本预设；画册模板在阅读室「导出」中的版式选择区导入；作品备份请参考上一节。可复用工作流和高级出图方案在“工作流与 API 配置”中管理。</p>
-</section>
-<section id="mobile"><h2>10 · 局域网访问</h2>
-<p>默认仅允许本机访问。确有需要时，可用 <code>start.bat --host 0.0.0.0</code> 或 <code>./start.sh --host 0.0.0.0</code>，在同一可信局域网的设备上打开电脑的 <code>http://局域网IP:8788</code>，并按需配置防火墙。</p>
-<p><strong>不要在手机上填 127.0.0.1：</strong>那是手机自身。Mio 中的 ComfyUI 地址则由运行后端的电脑访问，本机 ComfyUI 仍可用 127.0.0.1:8188。</p>
-<p class="notice warn">本地 <code>/api</code> 没有登录认证，主机 / 来源检查不等于账号保护。不要直接暴露到公网或不可信网络。使用自定义主机名时才配置 <code>MIO_ALLOWED_HOSTS</code>；外部自动化接口使用作用域令牌保护的 <code>/api/v2</code>。</p>
-</section>
-<section id="troubleshooting"><h2>11 · 常见问题</h2>
-<details open><summary>按钮点了，看不到变化？</summary><p>先区分“保存模板”“装配快照”“开始请求”“生成候选”“采用图片”五步。检查保存错误和任务详情；已装配的画册看不到模板的新改动是快照行为，重跑后画册不变通常是新图还没有被采用。</p></details>
-<details><summary>ComfyUI 已连接，但出图失败</summary><p>在「工作流」中检查所选工作流的依赖与映射，再「试生成一张」。确认 Checkpoint / LoRA 文件名存在、自定义节点已安装；需要输入图片的工作流须提供对应图片，多阶段方案的后续工作流须连接上一步输出。</p></details>
-<details><summary>云端渠道已填，却仍在等 ComfyUI</summary><p>检查装配选择的配置、当前格的配置覆盖，以及是否通过 API 启用了「云端 + 本地精修」。仅添加渠道不会改变已有的本地配置；纯云端配置不会自动调用本地阶段。</p></details>
-<details><summary>替换后缺少角色名或台词内容</summary><p>在装配预览检查对应幕的变量来源与空值；提示词中的未知变量保留原文，阅读台词中的未知普通变量留空。修改工坊预设不会追改已装配画册。确认修改的是当前画册变量或重新装配。</p></details>
-<details><summary>下载 PDF / ZIP 或平台切片没有内容</summary><p>先确认有已采用图片，而不仅是候选。平台导出需要可合成的条漫；图片画册 PDF 与平台长图不是同一种输出。</p></details>
-<details><summary>更新代码后行为没变</summary><p>Python 服务通常需要重启。源码前端需要重新构建（根启动器也会检查界面是否需要重建）。先结束任务再重启，不要强制终止正在出图的请求。</p></details>
-<details><summary>教程在开发界面打不开</summary><p>确认后端 8788 正在运行，并重启改过代理配置的 Vite。手册随 server 一起打包，离线可用。</p></details>
-</section>
-<section id="glossary"><h2>12 · 术语对照</h2>
-<table><thead><tr><th>界面术语</th><th>后端含义</th></tr></thead><tbody>
-<tr><td>分镜 / 分幕</td><td>工坊中的 Episode / Panel；用于复用的模板。</td></tr>
-<tr><td>预设</td><td>有名称的文本变量集合；装配时合并成作品变量。</td></tr>
-<tr><td>画册 / 作品</td><td>Series；可含 Episode、采用图、设定集、变量及其他数据。</td></tr>
-<tr><td>出图配置</td><td>RenderProfile；不是工作流本身，也不是文字预设。</td></tr>
-<tr><td>任务 / 候选 / 采用</td><td>Job 是执行记录，Take 是一次输出；只有已采用的图才进入常规画册与条漫导出。</td></tr>
-</tbody></table></section>
-<footer>核对日期：2026-11-14。按钮名称如有变化，以对应页面和任务详情为准。</footer></main></div></body></html>
+
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Mio 绘页：本地优先的故事分镜、多渠道图像生产与画册工作台。创作指南、图像引擎、开放 API 与离线教程。"
+      name="description"
+    />
+    <meta content="#f5f4ec" name="theme-color" />
+    <title>Mio · 让灵感，有页可循。</title>
+    <link rel="stylesheet" href="/manual/assets/home.css" />
+  </head>
+  <body data-page="home">
+    <a class="skip-link" href="#main">跳到内容 / Skip to content</a>
+    <div class="wrap">
+      <header class="topbar">
+        <a
+          aria-label="Mio 教程首页"
+          class="brand"
+          href="/manual/docs/index.html"
+          ><svg
+            aria-hidden="true"
+            class="brand-icon"
+            fill="none"
+            viewBox="0 0 32 32"
+          >
+            <path
+              d="M16 9C11 4 5 6 3 7v20c5-2 9-1 13 2 4-3 8-4 13-2V7c-3-2-9-2-13 2Zm0 0v20"
+              stroke="currentColor"
+              stroke-width="1.6"
+            ></path>
+            <circle
+              cx="9"
+              cy="13"
+              r="2.5"
+              stroke="currentColor"
+              stroke-width="1.5"
+            ></circle></svg
+          ><span class="wordmark">Mio<i>.</i></span
+          ><span class="brand-note">A SPACE FOR STORIES</span></a
+        >
+        <nav aria-label="主导航" class="nav">
+          <a href="#chapters"
+            ><span class="zh">创作指南</span
+            ><span class="en-copy">Handbook</span></a
+          ><a
+            data-section="read-and-share"
+            href="/manual/docs/guide/read-and-share.html"
+            ><span class="zh">阅读与分享</span
+            ><span class="en-copy">Read &amp; share</span></a
+          ><a
+            class="language"
+            data-language-link
+            href="/manual/docs/en/GUIDE.html"
+            lang="en"
+            >English</a
+          ><a class="nav-app" href="/"
+            ><span class="zh">打开工作台</span
+            ><span class="en-copy">Open studio</span><span>↗</span></a
+          >
+        </nav>
+      </header>
+      <main id="main">
+        <section class="hero">
+          <div class="hero-copy">
+            <div class="eyebrow">
+              <i class="dot"></i> LOCAL-FIRST CREATIVE STUDIO
+            </div>
+            <h1>
+              <span class="zh">让灵感，<br /><em>有页可循。</em></span
+              ><span class="en-copy"
+                >A little story.<br /><em>A world<br />of pages.</em></span
+              >
+            </h1>
+            <p>
+              <span class="zh"
+                >把脑海里的故事，编成分镜、绘成画面、装订成册。<br />从第一幕到最后一页，Mio
+                陪你慢慢完成。</span
+              ><span class="en-copy"
+                >Turn a thought into a scene, a scene into an image,<br />and
+                those images into a book worth keeping.</span
+              >
+            </p>
+            <div class="hero-actions">
+              <a class="pill" href="/manual/docs/guide/start.html"
+                ><span class="zh">开始第一本画册</span
+                ><span class="en-copy">Make your first book</span
+                ><span>↗</span></a
+              ><a class="text-link" href="#chapters"
+                ><span class="zh">翻开创作指南</span
+                ><span class="en-copy">Explore the handbook</span> ↓</a
+              >
+            </div>
+            <div class="hero-foot">
+              <span
+                ><span class="zh">本地保存</span
+                ><span class="en-copy">Local-first</span></span
+              ><span
+                ><span class="zh">多渠道出图</span
+                ><span class="en-copy">Multiple providers</span></span
+              ><span
+                ><span class="zh">离线可读</span
+                ><span class="en-copy">Offline reading</span></span
+              >
+            </div>
+          </div>
+          <div aria-label="Mio 画册创作示意" class="studio-art">
+            <div class="art-grid"></div>
+            <div class="art-orbit"></div>
+            <svg aria-hidden="true" class="spark" viewBox="0 0 30 30">
+              <path
+                d="M15 2c0 9-4 13-13 13 9 0 13 4 13 13 0-9 4-13 13-13-9 0-13-4-13-13Z"
+                stroke-width="1.2"
+              ></path>
+            </svg>
+            <div class="book-back"></div>
+            <div class="book">
+              <div class="book-kicker">
+                <span>MIO ORIGINAL STORIES</span><span>VOL. 01</span>
+              </div>
+              <img
+                alt="柔和水彩风格的海岸小镇与灯塔"
+                class="art-img"
+                src="/manual/assets/coast.webp"
+              />
+              <div class="book-title">
+                <span class="zh">夏日来信</span
+                ><span class="en-copy">Summer, again.</span>
+              </div>
+              <div class="book-sub">A SMALL STORY BY THE SEA · 12 FRAMES</div>
+            </div>
+            <div class="tiny-badge">
+              <span class="zh">✦ 从一个小小的念头开始</span
+              ><span class="en-copy">✦ Begin with a small idea</span>
+            </div>
+            <div class="postcard">
+              <img
+                alt="海岸画面的分镜裁切示意"
+                class="art-img"
+                src="/manual/assets/coast.webp"
+              />
+              <p>
+                <span class="zh">风，把故事带了回来。</span
+                ><span class="en-copy">A story on the breeze.</span>
+              </p>
+            </div>
+            <span class="art-label">STORIES IN FRAMES / 001</span>
+          </div>
+        </section>
+        <div class="workflow-strip">
+          <span>THE CREATIVE<br />JOURNEY</span>
+          <ol>
+            <li>
+              <b>01</b><span class="zh">编排故事与分镜</span
+              ><span class="en-copy">Compose your scenes</span>
+            </li>
+            <li class="flow-arrow">⟶</li>
+            <li>
+              <b>02</b><span class="zh">选择你的图像引擎</span
+              ><span class="en-copy">Choose a provider</span>
+            </li>
+            <li class="flow-arrow">⟶</li>
+            <li>
+              <b>03</b><span class="zh">生成、阅读与分享</span
+              ><span class="en-copy">Create, read &amp; share</span>
+            </li>
+          </ol>
+        </div>
+        <section class="section" id="chapters">
+          <div class="section-head">
+            <div>
+              <span class="section-label">THE MIO HANDBOOK</span>
+              <h2>
+                <span class="zh">每一段创作，都有入口。</span
+                ><span class="en-copy">Find your next chapter.</span>
+              </h2>
+            </div>
+            <p>
+              <span class="zh"
+                >不必一次学会所有功能。选一条适合你的路线，<br />从此刻最想完成的事情开始。</span
+              ><span class="en-copy"
+                >You don't have to learn everything at once.<br />Start with the
+                part you want to create.</span
+              >
+            </p>
+          </div>
+          <div class="chapters">
+            <article class="chapter">
+              <div class="chapter-head">
+                <span class="chapter-no">01</span
+                ><span class="chapter-tag">CREATE / 编排</span>
+              </div>
+              <div aria-hidden="true" class="chapter-visual">
+                <div class="mini-frames">
+                  <img
+                    alt=""
+                    class="mini-frame art-img"
+                    src="/manual/assets/coast.webp"
+                  /><img
+                    alt=""
+                    class="mini-frame art-img"
+                    src="/manual/assets/coast.webp"
+                  /><img
+                    alt=""
+                    class="mini-frame art-img"
+                    src="/manual/assets/coast.webp"
+                  />
+                </div>
+              </div>
+              <h3>
+                <span class="zh">你的第一本画册</span
+                ><span class="en-copy">Your very first book.</span>
+              </h3>
+              <p>
+                <span class="zh"
+                  >从第一幕到第一张图，选用分镜与角色预设。把一段故事，变成可以翻阅的作品。</span
+                ><span class="en-copy"
+                  >Compose a scene, choose your character presets, and create
+                  your first image. Make a story you can turn the pages
+                  of.</span
+                >
+              </p>
+              <div class="chapter-links">
+                <a
+                  class="chapter-link-main"
+                  href="/manual/docs/guide/start.html"
+                  ><span class="zh">首次创作教程</span
+                  ><span class="en-copy">Getting started</span> ↗</a
+                ><a href="/manual/docs/guide/tasks.html"
+                  ><span class="zh">生成任务与队列</span
+                  ><span class="en-copy">Tasks &amp; queue</span></a
+                >
+              </div>
+            </article>
+            <article class="chapter">
+              <div class="chapter-head">
+                <span class="chapter-no">02</span
+                ><span class="chapter-tag">CONNECT / 连接</span>
+              </div>
+              <div class="chapter-visual">
+                <div class="provider-stack">
+                  <span class="provider-chip">ComfyUI</span
+                  ><span class="provider-chip">NovelAI</span
+                  ><span class="provider-chip">OpenAI API</span>
+                </div>
+              </div>
+              <h3>
+                <span class="zh">让工具，跟着故事走</span
+                ><span class="en-copy">Your tools, your way.</span>
+              </h3>
+              <p>
+                <span class="zh"
+                  >自由选择图像渠道，管理模型与本地密钥。保留熟悉的工作流，也拥抱不需要工作流的模型。</span
+                ><span class="en-copy"
+                  >Choose image providers, discover models and keep keys
+                  locally. Use workflows when you need them—not when you
+                  don't.</span
+                >
+              </p>
+              <div class="chapter-links">
+                <a
+                  class="chapter-link-main"
+                  href="/manual/docs/guide/connect-a-provider.html"
+                  ><span class="zh">图像服务与密钥</span
+                  ><span class="en-copy">Providers &amp; keys</span> ↗</a
+                ><a
+                  data-section="workflow"
+                  href="/manual/docs/guide/workflow.html"
+                  ><span class="zh">工作流教程</span
+                  ><span class="en-copy">Workflows</span></a
+                >
+              </div>
+            </article>
+            <article class="chapter">
+              <div class="chapter-head">
+                <span class="chapter-no">03</span
+                ><span class="chapter-tag">READ / 阅读</span>
+              </div>
+              <div aria-hidden="true" class="chapter-visual book-visual">
+                <small>MIO ORIGINAL STORIES</small><span>01 · 02 · 03</span
+                ><small>A STORY TO KEEP</small>
+              </div>
+              <h3>
+                <span class="zh">把故事，留在每一页</span
+                ><span class="en-copy">A story worth keeping.</span>
+              </h3>
+              <p>
+                <span class="zh"
+                  >挑选画面，安排留白与对白。翻阅完成的画册，再把作品导出、分享或留作下一次创作的起点。</span
+                ><span class="en-copy"
+                  >Choose your images, arrange the space and dialogue, then
+                  read, export and share the book you made.</span
+                >
+              </p>
+              <div class="chapter-links">
+                <a
+                  class="chapter-link-main"
+                  data-section="read-and-share"
+                  href="/manual/docs/guide/read-and-share.html"
+                  ><span class="zh">阅读、排版与导出</span
+                  ><span class="en-copy">Read, letter &amp; export</span> ↗</a
+                ><a
+                  data-section="sharing"
+                  href="/manual/docs/guide/sharing.html"
+                  ><span class="zh">分享可编辑作品</span
+                  ><span class="en-copy">Share editable work</span></a
+                >
+              </div>
+            </article>
+          </div>
+        </section>
+        <section class="library" id="library">
+          <div class="library-head">
+            <h2>
+              <span class="zh">找一个具体的答案。</span
+              ><span class="en-copy">A little more detail.</span>
+            </h2>
+            <label class="search"
+              ><span class="search-label">搜索教程 / Search guides</span
+              ><input
+                autocomplete="off"
+                id="guide-search"
+                placeholder="搜索教程、密钥、备份…"
+                type="search"
+              /><kbd>/</kbd></label
+            >
+          </div>
+          <div class="guide-grid" id="guide-grid">
+            <a
+              class="guide-link"
+              id="start"
+              data-section="start"
+              href="/manual/docs/guide/start.html"
+              ><span
+                ><span class="guide-title">快速开始</span
+                ><small>安装 · 第一幕 · 第一张图</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="connect-a-provider"
+              data-section="connect-a-provider"
+              href="/manual/docs/guide/connect-a-provider.html"
+              ><span
+                ><span class="guide-title">图像服务与密钥</span
+                ><small>云端与本地 · 模型 · 密钥</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="workflow"
+              data-section="workflow"
+              href="/manual/docs/guide/workflow.html"
+              ><span
+                ><span class="guide-title">工作流与出图配置</span
+                ><small>导入 · 映射 · 依赖 · 试生成</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="variables"
+              data-section="variables"
+              href="/manual/docs/guide/variables.html"
+              ><span
+                ><span class="guide-title">分镜、预设与变量</span
+                ><small>角色预设 · 提示词 · 装配快照</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="tasks"
+              data-section="tasks"
+              href="/manual/docs/guide/tasks.html"
+              ><span
+                ><span class="guide-title">队列、候选与失败恢复</span
+                ><small>生成 · 候选采用 · 重试与核对</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="read-and-share"
+              data-section="read-and-share"
+              href="/manual/docs/guide/read-and-share.html"
+              ><span
+                ><span class="guide-title">阅读、排版与导出</span
+                ><small>画布 · 留白 · HTML / PDF / 图片</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="sharing"
+              data-section="sharing"
+              href="/manual/docs/guide/sharing.html"
+              ><span
+                ><span class="guide-title">分享与可编辑作品包</span
+                ><small>可编辑源文件 · 开放 API · 扩展</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="backup"
+              data-section="backup"
+              href="/manual/docs/guide/backup.html"
+              ><span
+                ><span class="guide-title">数据目录与备份</span
+                ><small>创作存档 · 工作区备份 · 恢复</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="files"
+              data-section="files"
+              href="/manual/docs/guide/files.html"
+              ><span
+                ><span class="guide-title">文件与格式</span
+                ><small>创作套装 · 导入 · 复用与整理</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="mobile"
+              data-section="mobile"
+              href="/manual/docs/guide/mobile.html"
+              ><span
+                ><span class="guide-title">局域网访问</span
+                ><small>手机阅读 · 可信局域网</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="troubleshooting"
+              data-section="troubleshooting"
+              href="/manual/docs/guide/troubleshooting.html"
+              ><span
+                ><span class="guide-title">常见问题</span
+                ><small>连接 · 生成失败 · 日志</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="glossary"
+              data-section="glossary"
+              href="/manual/docs/guide/glossary.html"
+              ><span
+                ><span class="guide-title">术语对照</span
+                ><small>分镜 · 预设 · 任务 · 候选</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+          </div>
+          <p class="no-results" id="no-results" role="status" hidden>
+            <span class="zh">没有找到相关教程，试试“模型”“密钥”或“备份”。</span
+            ><span class="en-copy"
+              >No matches. Try “models”, “keys” or “backup”.</span
+            >
+          </p>
+        </section>
+        <section class="closing">
+          <div>
+            <h2>
+              <span class="zh">下一页，由你来写。</span
+              ><span class="en-copy">The next page is yours.</span>
+            </h2>
+            <p>
+              <span class="zh"
+                >不必等一个完美的故事。先从一幕开始，就很好。</span
+              ><span class="en-copy"
+                >It doesn't have to be a perfect story. One scene is a lovely
+                start.</span
+              >
+            </p>
+          </div>
+          <a class="pill" href="/"
+            ><span class="zh">进入 Mio 工作台</span
+            ><span class="en-copy">Open your Mio studio</span><span>↗</span></a
+          >
+        </section>
+      </main>
+      <footer class="footer">
+        <a class="brand" href="/manual/docs/index.html"
+          ><span class="wordmark">Mio<i>.</i></span
+          ><span>STORIES IN FRAMES</span></a
+        >
+        <div class="footer-links">
+          <a href="/manual/docs/index.html" lang="zh-CN">中文</a
+          ><a href="/manual/docs/en/GUIDE.html" lang="en">English</a
+          ><a href="#library"
+            ><span class="zh">全部教程</span
+            ><span class="en-copy">All guides</span></a
+          >
+        </div>
+        <span>LOCAL-FIRST · OPEN TO POSSIBILITY</span>
+      </footer>
+    </div>
+    <script src="/manual/assets/manual.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>数据目录与备份 · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">跳到正文</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/index.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="教程导航">
+        <a class="home-label" href="/manual/docs/index.html">← 全部教程</a
+        ><a data-language-link href="/manual/docs/en/backup.html" lang="en"
+          >English</a
+        ><a href="/" class="open-app">打开工作台 ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/index.html">Mio / Handbook</a> / 数据目录与备份
+        </div>
+        <details class="mobile-toc">
+          <summary>教程目录</summary>
+          <nav>
+            <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+            <a href="/manual/docs/guide/connect-a-provider.html"
+              >02 · 图像服务与密钥</a
+            >
+            <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+            <a href="/manual/docs/guide/variables.html"
+              >04 · 分镜、预设与变量</a
+            >
+            <a href="/manual/docs/guide/tasks.html"
+              >05 · 队列、候选与失败恢复</a
+            >
+            <a href="/manual/docs/guide/read-and-share.html"
+              >06 · 阅读、排版与导出</a
+            >
+            <a href="/manual/docs/guide/sharing.html"
+              >07 · 分享与可编辑作品包</a
+            >
+            <a href="/manual/docs/guide/backup.html" aria-current="page"
+              >08 · 数据目录与备份</a
+            >
+            <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+            <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+            <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+            <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="backup">
+            <p class="chapter-kicker">CHAPTER 08 / THE MIO HANDBOOK</p>
+            <h1>数据目录与备份</h1>
+            <p>
+              分镜工坊的「创作存档」可保存命名快照，作品检查点也可通过开放 API
+              管理。恢复先显示差异，明确恢复时会自动保护当前内容；过时预览、缺失素材、活动或待核对任务会阻止恢复。检查点保存作品数据，不复制图片文件或全局服务配置；已经永久删除的作品不能靠检查点重建。
+            </p>
+            <p>
+              用根启动器启动时，数据默认在
+              <code>server/data/runtime/v3</code>，包含
+              <code>mio.sqlite3</code>、<code>jobs.sqlite3</code> 与
+              <code>assets/</code>。自定义 <code>--data</code> 或
+              <code>MIO_V3_DATA</code>
+              时，以实际路径为准；手动从其他工作目录启动时，相对路径也会改变。
+            </p>
+            <p>
+              「设置 →
+              数据与备份」可创建完整工作区备份，包含作品、任务、存档与素材。等待活动及待核对任务处理完毕后导出；默认不包含已配置的密钥和访问令牌，高级选项可明确包含凭据。
+            </p>
+            <ol>
+              <li>
+                选择备份包，先检查作品、素材和任务数量；检查不会修改当前内容。
+              </li>
+              <li>暂存后明确安排恢复，程序会先保存当前工作区的保护备份。</li>
+              <li>
+                停止 Mio
+                服务并重新启动。关闭浏览器不等于停止服务；安排后继续编辑会使版本检查拒绝恢复，需要重新暂存。
+              </li>
+            </ol>
+            <p>
+              重启前可以取消安排。恢复后扩展、ComfyUI 实例和 Webhook
+              保持停用，队列暂停，请重新核对配置。恢复目录在工作区旁的
+              <code>.&lt;工作区目录名&gt;.mio-recovery/</code
+              >，保留保护备份和替换前的目录；保护备份包含凭据。包上限 2
+              GiB、展开后 4
+              GiB；超限时可停服后完整复制数据目录及恢复目录，不要漏掉素材。
+            </p>
+            <p>
+              根目录的
+              <code>data/</code>
+              是随包示例：首次启动时把示例画册、分镜与预设载入数据目录，之后对
+              <code>data/</code> 的修改不会再同步过来。删除的作品先进入「设置 →
+              数据与备份」里的回收站，可在保留期内恢复。
+            </p>
+            <p class="notice warn">
+              不要为了重置界面而删除数据库。需要从头开始时，先备份数据目录，再换一个空的
+              <code>--data</code> 目录启动。
+            </p>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="相邻章节">
+          <a rel="prev" href="/manual/docs/guide/sharing.html"
+            >← 分享与可编辑作品包</a
+          ><a rel="next" href="/manual/docs/guide/files.html">文件与格式 →</a>
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/index.html#library">全部教程 ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="教程目录">
+        <div class="toc-label">全部章节</div>
+        <nav>
+          <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+          <a href="/manual/docs/guide/connect-a-provider.html"
+            >02 · 图像服务与密钥</a
+          >
+          <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+          <a href="/manual/docs/guide/variables.html">04 · 分镜、预设与变量</a>
+          <a href="/manual/docs/guide/tasks.html">05 · 队列、候选与失败恢复</a>
+          <a href="/manual/docs/guide/read-and-share.html"
+            >06 · 阅读、排版与导出</a
+          >
+          <a href="/manual/docs/guide/sharing.html">07 · 分享与可编辑作品包</a>
+          <a href="/manual/docs/guide/backup.html" aria-current="page"
+            >08 · 数据目录与备份</a
+          >
+          <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+          <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+          <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+          <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/index.html">全部教程 ↗</a
+          ><button class="print-link" type="button">打印 / 保存为 PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

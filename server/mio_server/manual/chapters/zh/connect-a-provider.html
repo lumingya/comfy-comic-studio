@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>图像服务与密钥 · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">跳到正文</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/index.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="教程导航">
+        <a class="home-label" href="/manual/docs/index.html">← 全部教程</a
+        ><a
+          data-language-link
+          href="/manual/docs/en/connect-a-provider.html"
+          lang="en"
+          >English</a
+        ><a href="/" class="open-app">打开工作台 ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/index.html">Mio / Handbook</a> / 图像服务与密钥
+        </div>
+        <details class="mobile-toc">
+          <summary>教程目录</summary>
+          <nav>
+            <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+            <a
+              href="/manual/docs/guide/connect-a-provider.html"
+              aria-current="page"
+              >02 · 图像服务与密钥</a
+            >
+            <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+            <a href="/manual/docs/guide/variables.html"
+              >04 · 分镜、预设与变量</a
+            >
+            <a href="/manual/docs/guide/tasks.html"
+              >05 · 队列、候选与失败恢复</a
+            >
+            <a href="/manual/docs/guide/read-and-share.html"
+              >06 · 阅读、排版与导出</a
+            >
+            <a href="/manual/docs/guide/sharing.html"
+              >07 · 分享与可编辑作品包</a
+            >
+            <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+            <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+            <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+            <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+            <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="connect-a-provider">
+            <p class="chapter-kicker">CHAPTER 02 / THE MIO HANDBOOK</p>
+            <h1>图像服务与密钥</h1>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>服务</th>
+                    <th>配置位置与必要条件</th>
+                    <th>容易混淆的地方</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>本地 ComfyUI</td>
+                    <td>
+                      <a href="/engine?tab=instances">实例</a>中保存地址；先在
+                      ComfyUI 自己的页面跑通工作流。
+                    </td>
+                    <td>实例在线 ≠ 工作流的节点和模型都已安装。</td>
+                  </tr>
+                  <tr>
+                    <td>OpenAI Images / NovelAI</td>
+                    <td>
+                      <a href="/engine?tab=channels">云端 API</a
+                      >中保存类型、服务地址、模型与 API Key。
+                    </td>
+                    <td>新建生成任务时直接选用该服务。</td>
+                  </tr>
+                  <tr>
+                    <td>聊天接口出图</td>
+                    <td>
+                      在云端出图里新建
+                      <code>chat_image</code> 渠道，填写地址与密钥。
+                    </td>
+                    <td>
+                      未指定渠道且没有默认渠道时，使用「设置 →
+                      模型与连接」中的连接与图像模型；普通聊天接口不一定会返回图片。
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              新建任务可以直接选择本地工作流或云端服务。多工作流串联在「高级出图方案」配置；通过
+              API 启用的「云端 +
+              本地精修」会显示为混合路线。云端「已配置」不代表服务在线或额度充足，查看页面不会发起生图请求。
+            </p>
+            <h2 id="section-1">云端参数如何生效</h2>
+            <p>
+              逐格设置的画幅、负向与参考图随任务保存。渠道里的负向作为附加约束，渠道尺寸只在没有分镜画幅时作为默认值。提交后修改模板或渠道生成选项，不会追改任务；删除渠道或改变渠道类型会使旧任务明确失败。
+            </p>
+            <p>
+              OpenAI Images
+              使用逐格尺寸，负向写入提示语，不发送种子；聊天接口的尺寸与负向都是提示约束，不保证输出精确像素，也不发送种子。NovelAI
+              使用独立负向和固定种子，尺寸按 64 对齐，超范围种子转为 32
+              位并留下记录。参考图的实际效果取决于服务，NovelAI 的 vibe
+              条件不等同于锁定人物身份。
+            </p>
+            <p>
+              放大候选后展开「云端生成参数」，可对照请求值、实际提交值、输出图片尺寸与参考图来源。不支持种子的渠道不会显示一个虚假的生效种子。自动参考图优先选择出场角色，再用剩余位置补充场景与所选风格，默认最多四张；手动参考图按原顺序全部发送，关闭参考图时不发送图片。自定义聊天模型也会收到全部选定图片，数量超出服务限制时会明确报错。
+            </p>
+            <h2 id="section-2">获取与选择模型</h2>
+            <p>
+              填写地址与密钥后点击「获取模型」，无需先保存。文本、视觉、共享出图与独立云端渠道均可搜索目录并选择，也能直接填写模型
+              ID；多模型列表保留添加顺序。目录列出服务公开的模型，不保证每个模型都支持当前用途。服务不提供目录时，手动填写仍可使用。
+            </p>
+            <p>
+              ComfyUI
+              的目录只查看节点公开的已安装模型，实际使用哪个模型由工作流决定。NovelAI
+              显示明确标记的内置参考列表，不代表已验证账户权限。获取目录不会生成图片，也不会保存配置。
+            </p>
+            <p>
+              已保存密钥显示为空输入框的占位提示，输入新密钥即替换；「清除密钥」需要保存后生效。修改地址后获取模型，需要重新填写或清除密钥。粘贴完整
+              OpenAI 接口地址会在保存时整理为基础地址。不要把 API Key
+              写进提示词、截图、工作流说明或公开的分享包。
+            </p>
+            <p class="notice">
+              云端适配器有离线请求 /
+              响应测试，但并不代表所有真实服务商或代理都已实测。先用中性题材、一个候选试跑，并确认你的服务商支持所选接口。
+            </p>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="相邻章节">
+          <a rel="prev" href="/manual/docs/guide/start.html">← 快速开始</a
+          ><a rel="next" href="/manual/docs/guide/workflow.html"
+            >工作流与出图配置 →</a
+          >
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/index.html#library">全部教程 ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="教程目录">
+        <div class="toc-label">本页内容</div>
+        <nav>
+          <a class="sub" href="#section-1">云端参数如何生效</a
+          ><a class="sub" href="#section-2">获取与选择模型</a>
+        </nav>
+        <hr />
+        <div class="toc-label">全部章节</div>
+        <nav>
+          <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+          <a
+            href="/manual/docs/guide/connect-a-provider.html"
+            aria-current="page"
+            >02 · 图像服务与密钥</a
+          >
+          <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+          <a href="/manual/docs/guide/variables.html">04 · 分镜、预设与变量</a>
+          <a href="/manual/docs/guide/tasks.html">05 · 队列、候选与失败恢复</a>
+          <a href="/manual/docs/guide/read-and-share.html"
+            >06 · 阅读、排版与导出</a
+          >
+          <a href="/manual/docs/guide/sharing.html">07 · 分享与可编辑作品包</a>
+          <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+          <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+          <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+          <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+          <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/index.html">全部教程 ↗</a
+          ><button class="print-link" type="button">打印 / 保存为 PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

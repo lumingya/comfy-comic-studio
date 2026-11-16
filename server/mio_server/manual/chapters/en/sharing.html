@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>Sharing editable work · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">Skip to content</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/en/GUIDE.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="Handbook navigation">
+        <a class="home-label" href="/manual/docs/en/GUIDE.html">← All guides</a
+        ><a
+          data-language-link
+          href="/manual/docs/guide/sharing.html"
+          lang="zh-CN"
+          >中文</a
+        ><a href="/" class="open-app">Open studio ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/en/GUIDE.html">Mio / Handbook</a> / Sharing
+          editable work
+        </div>
+        <details class="mobile-toc">
+          <summary>Chapters</summary>
+          <nav>
+            <a href="/manual/docs/en/start.html">01 · Start here</a>
+            <a href="/manual/docs/en/connect-a-provider.html"
+              >02 · Services & keys</a
+            >
+            <a href="/manual/docs/en/workflow.html"
+              >03 · Workflows & profiles</a
+            >
+            <a href="/manual/docs/en/variables.html"
+              >04 · Variables & snapshots</a
+            >
+            <a href="/manual/docs/en/tasks.html"
+              >05 · Jobs & uncertain results</a
+            >
+            <a href="/manual/docs/en/read-and-share.html"
+              >06 · Read, letter & export</a
+            >
+            <a href="/manual/docs/en/sharing.html" aria-current="page"
+              >07 · Sharing editable work</a
+            >
+            <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+            <a href="/manual/docs/en/files.html">09 · Files & formats</a>
+            <a href="/manual/docs/en/mobile.html">10 · LAN access</a>
+            <a href="/manual/docs/en/troubleshooting.html"
+              >11 · Troubleshooting</a
+            >
+            <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="sharing">
+            <p class="chapter-kicker">CHAPTER 07 / THE MIO HANDBOOK</p>
+            <h1>Sharing editable work</h1>
+            <p>
+              Reader HTML, image ZIP and PDF are reader-facing outputs.
+              <code>.mio.zip</code> is an editable series bundle, not an image
+              ZIP or full server backup.
+            </p>
+            <p>
+              Export a bundle from an album's "⋯" menu → Export → Editable
+              project, or select several albums in the gallery and use the same
+              format. Import it in Settings → Data &amp; backup → Import
+              .mio.zip. Scripts use the token-protected API:
+              <code>GET /api/v2/series/{id}/bundle</code> and
+              <code>POST /api/v2/bundles</code> (raw ZIP body). Recheck
+              profiles, instance settings and keys after import.
+            </p>
+            <h2 id="automation">Automation and optional extensions</h2>
+            <p>
+              External programs use token-protected <code>/api/v2</code>: see
+              the <a href="/api/v2/docs">API reference</a> and
+              <a href="/api/v2/openapi.json">OpenAPI schema</a>. Read the
+              workshop with <code>GET /api/v2/workshop</code>, inspect
+              substitutions with
+              <code>POST /api/v2/workshop/assemble/preview</code>, then assemble
+              with <code>POST /api/v2/workshop/assemble</code>. Supply
+              <code>idempotency_key</code> to avoid duplicate albums when
+              retrying a request. Assembly only creates a snapshot; submit
+              generation separately. Grant read, write, render and admin scopes
+              according to the operations needed.
+            </p>
+            <p>
+              Editing, QA, finalization, variants, the script assistant and
+              motion export have backend APIs, without default buttons in the
+              main interface. The repository's
+              <code>examples/extensions/qa-review</code> demonstrates optional
+              QA: installation and activation do not submit work, an explicit
+              command does, and images are never adopted automatically. Disabled
+              or changed extensions reject new calls immediately; reactivation
+              requires a restart to mount new routes. Create the first token
+              locally; subsequent token and extension management is available
+              through the admin-scoped open API. Extension routes also have v2
+              versions with declared scopes, and enabled extensions can wrap or
+              replace core operations.
+            </p>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="Previous and next chapter">
+          <a rel="prev" href="/manual/docs/en/read-and-share.html"
+            >← Read, letter & export</a
+          ><a rel="next" href="/manual/docs/en/backup.html"
+            >Data folder & backup →</a
+          >
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/en/GUIDE.html#library">All guides ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="Chapters">
+        <div class="toc-label">ON THIS PAGE</div>
+        <nav>
+          <a class="sub" href="#automation"
+            >Automation and optional extensions</a
+          >
+        </nav>
+        <hr />
+        <div class="toc-label">THE HANDBOOK</div>
+        <nav>
+          <a href="/manual/docs/en/start.html">01 · Start here</a>
+          <a href="/manual/docs/en/connect-a-provider.html"
+            >02 · Services & keys</a
+          >
+          <a href="/manual/docs/en/workflow.html">03 · Workflows & profiles</a>
+          <a href="/manual/docs/en/variables.html"
+            >04 · Variables & snapshots</a
+          >
+          <a href="/manual/docs/en/tasks.html">05 · Jobs & uncertain results</a>
+          <a href="/manual/docs/en/read-and-share.html"
+            >06 · Read, letter & export</a
+          >
+          <a href="/manual/docs/en/sharing.html" aria-current="page"
+            >07 · Sharing editable work</a
+          >
+          <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+          <a href="/manual/docs/en/files.html">09 · Files & formats</a>
+          <a href="/manual/docs/en/mobile.html">10 · LAN access</a>
+          <a href="/manual/docs/en/troubleshooting.html"
+            >11 · Troubleshooting</a
+          >
+          <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/en/GUIDE.html">All guides ↗</a
+          ><button class="print-link" type="button">Print / Save as PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>Workflows &amp; profiles · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">Skip to content</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/en/GUIDE.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="Handbook navigation">
+        <a class="home-label" href="/manual/docs/en/GUIDE.html">← All guides</a
+        ><a
+          data-language-link
+          href="/manual/docs/guide/workflow.html"
+          lang="zh-CN"
+          >中文</a
+        ><a href="/" class="open-app">Open studio ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/en/GUIDE.html">Mio / Handbook</a> / Workflows &
+          profiles
+        </div>
+        <details class="mobile-toc">
+          <summary>Chapters</summary>
+          <nav>
+            <a href="/manual/docs/en/start.html">01 · Start here</a>
+            <a href="/manual/docs/en/connect-a-provider.html"
+              >02 · Services & keys</a
+            >
+            <a href="/manual/docs/en/workflow.html" aria-current="page"
+              >03 · Workflows & profiles</a
+            >
+            <a href="/manual/docs/en/variables.html"
+              >04 · Variables & snapshots</a
+            >
+            <a href="/manual/docs/en/tasks.html"
+              >05 · Jobs & uncertain results</a
+            >
+            <a href="/manual/docs/en/read-and-share.html"
+              >06 · Read, letter & export</a
+            >
+            <a href="/manual/docs/en/sharing.html"
+              >07 · Sharing editable work</a
+            >
+            <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+            <a href="/manual/docs/en/files.html">09 · Files & formats</a>
+            <a href="/manual/docs/en/mobile.html">10 · LAN access</a>
+            <a href="/manual/docs/en/troubleshooting.html"
+              >11 · Troubleshooting</a
+            >
+            <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="workflow">
+            <p class="chapter-kicker">CHAPTER 03 / THE MIO HANDBOOK</p>
+            <h1>Workflows & profiles</h1>
+            <p>
+              Import first shows recognized bindings, ambiguous inputs and
+              required nodes or models. Save explicitly after review. Output
+              mappings select nodes; parameter mappings select stored values.
+              Diagnose the selected branch against its actual graph; custom
+              plugin validation still belongs to ComfyUI.
+            </p>
+            <p>
+              Import ComfyUI <strong>API format</strong> with
+              <code>class_type</code> and <code>inputs</code>, not the visual
+              editor's nodes/links document. Copy built-in workflows before
+              editing. Set real installed checkpoint filenames in the graph;
+              check required custom nodes.
+            </p>
+            <p>
+              Search parameter targets by node ID, title or input name. Add
+              custom parameters and multiple targets when needed; Edit JSON
+              switches between parameters and the node graph. Check workflow
+              dependencies, then generate one test image. Choose a workflow
+              directly when assembling; images per scene and optional dimensions
+              belong to the task and remember recent values by workflow. Empty
+              dimensions preserve workflow values. Advanced plans can add
+              post-processing workflows; feeding a previous image requires an
+              <code>[mio:init]</code> input.
+            </p>
+            <p>
+              Explicit hybrid jobs validate and freeze their local refinement
+              graphs, parameters and instance selection before submission.
+              Editing or deleting the profile while the cloud request runs does
+              not replace that frozen follow-up. Pure cloud candidates can be
+              adopted directly; further refinement can be requested explicitly
+              through the professional API.
+            </p>
+            <h2 id="section-1">Custom-node compatibility</h2>
+            <p>
+              Mio submits a ComfyUI API graph. Custom nodes that execute through
+              the backend API can remain in that graph without a dedicated Mio
+              button. Install their packages, models and dependencies on the
+              executing instance. If automatic detection is incomplete, target a
+              field with <code>[mio:prompt=field_name]</code> or a JSON Pointer
+              mapping; one value can feed multiple inputs. Bindings and
+              overrides cannot replace a node link or its node ID / output
+              index. Target the upstream input that stores the actual text or
+              number instead.
+            </p>
+            <p>
+              Browser-only scripts, virtual frontend nodes and custom submission
+              protocols may need explicit adaptation. Check that the API export
+              contains the required values. ParameterControlPanel supports
+              production jobs after explicitly capturing and saving
+              <code>config.state</code> through the workflow API. Mio records
+              original values before writing, reserves that endpoint, saves
+              results before restoring state, and keeps recovery records after
+              interruptions. Use one canonical address per ComfyUI service and
+              avoid external clients changing its parameters while it runs.
+              Other browser-state plugins still need their own adapters. A
+              custom image output can be tagged <code>[mio:output]</code>, but
+              image retrieval still needs standard <code>images</code> in
+              <code>/history</code>; video, audio and custom result formats are
+              not automatically supported.
+            </p>
+            <p>
+              Import validates the document, compilation applies bindings, and
+              diagnostics check node availability and some model requirements.
+              Only a real run on that instance verifies execution and image
+              results; offline samples do not execute every plugin.
+            </p>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="Previous and next chapter">
+          <a rel="prev" href="/manual/docs/en/connect-a-provider.html"
+            >← Services & keys</a
+          ><a rel="next" href="/manual/docs/en/variables.html"
+            >Variables & snapshots →</a
+          >
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/en/GUIDE.html#library">All guides ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="Chapters">
+        <div class="toc-label">ON THIS PAGE</div>
+        <nav>
+          <a class="sub" href="#section-1">Custom-node compatibility</a>
+        </nav>
+        <hr />
+        <div class="toc-label">THE HANDBOOK</div>
+        <nav>
+          <a href="/manual/docs/en/start.html">01 · Start here</a>
+          <a href="/manual/docs/en/connect-a-provider.html"
+            >02 · Services & keys</a
+          >
+          <a href="/manual/docs/en/workflow.html" aria-current="page"
+            >03 · Workflows & profiles</a
+          >
+          <a href="/manual/docs/en/variables.html"
+            >04 · Variables & snapshots</a
+          >
+          <a href="/manual/docs/en/tasks.html">05 · Jobs & uncertain results</a>
+          <a href="/manual/docs/en/read-and-share.html"
+            >06 · Read, letter & export</a
+          >
+          <a href="/manual/docs/en/sharing.html">07 · Sharing editable work</a>
+          <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+          <a href="/manual/docs/en/files.html">09 · Files & formats</a>
+          <a href="/manual/docs/en/mobile.html">10 · LAN access</a>
+          <a href="/manual/docs/en/troubleshooting.html"
+            >11 · Troubleshooting</a
+          >
+          <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/en/GUIDE.html">All guides ↗</a
+          ><button class="print-link" type="button">Print / Save as PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

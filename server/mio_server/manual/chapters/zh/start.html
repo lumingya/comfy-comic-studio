@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>快速开始 · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">跳到正文</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/index.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="教程导航">
+        <a class="home-label" href="/manual/docs/index.html">← 全部教程</a
+        ><a data-language-link href="/manual/docs/en/start.html" lang="en"
+          >English</a
+        ><a href="/" class="open-app">打开工作台 ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/index.html">Mio / Handbook</a> / 快速开始
+        </div>
+        <details class="mobile-toc">
+          <summary>教程目录</summary>
+          <nav>
+            <a href="/manual/docs/guide/start.html" aria-current="page"
+              >01 · 快速开始</a
+            >
+            <a href="/manual/docs/guide/connect-a-provider.html"
+              >02 · 图像服务与密钥</a
+            >
+            <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+            <a href="/manual/docs/guide/variables.html"
+              >04 · 分镜、预设与变量</a
+            >
+            <a href="/manual/docs/guide/tasks.html"
+              >05 · 队列、候选与失败恢复</a
+            >
+            <a href="/manual/docs/guide/read-and-share.html"
+              >06 · 阅读、排版与导出</a
+            >
+            <a href="/manual/docs/guide/sharing.html"
+              >07 · 分享与可编辑作品包</a
+            >
+            <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+            <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+            <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+            <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+            <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="start">
+            <p class="chapter-kicker">CHAPTER 01 / THE MIO HANDBOOK</p>
+            <h1>快速开始</h1>
+            <p class="notice">
+              <strong
+                >适用于 Mio 4.x：FastAPI 后端 + React 界面，默认端口
+                8788。</strong
+              >
+            </p>
+            <h2 id="section-1">启动与检查</h2>
+            <p>
+              发布包需要 <strong>Python 3.11+</strong>。解压后双击根目录
+              <code>start.bat</code>（Windows），或运行
+              <code>./start.sh</code>（macOS /
+              Linux）。首次启动会创建虚拟环境并安装依赖。源码版另需
+              <strong>Node.js 20+</strong>：
+            </p>
+            <pre><code>npm ci --prefix web
+npm --prefix web run build
+# Windows
+start.bat --check
+start.bat
+# macOS / Linux
+./start.sh --check
+./start.sh</code></pre>
+            <p>
+              浏览器打开 <strong>http://127.0.0.1:8788</strong>。开发界面用
+              <code>npm --prefix web run dev</code>；Vite 会把 API、WebSocket
+              和本手册转发到 8788。Mio 不会代你启动 ComfyUI。
+            </p>
+            <figure>
+              <img
+                src="/manual/docs/guide/img/flow.svg"
+                alt="分镜与预设装配为画册快照，开始生成后进入任务引擎，采用图片后阅读与导出"
+              />
+              <figcaption>创作链路示意 · 不是界面截图</figcaption>
+            </figure>
+            <ol class="steps">
+              <li>
+                <strong>连接图像服务</strong>在
+                <a href="/engine?tab=instances"
+                  >工作流与 API 配置 → ComfyUI 实例</a
+                >
+                填写地址并测试。默认
+                <code>http://127.0.0.1:8188</code>。只用云端出图的话，见下一节。
+              </li>
+              <li>
+                <strong>准备图像服务</strong>本地出图：在<a
+                  href="/engine?tab=workflows"
+                  >工作流</a
+                >导入 API 格式工作流，检查依赖后「试生成一张」。云端出图：在<a
+                  href="/engine?tab=channels"
+                  >云端 API</a
+                >配置地址、密钥与模型。第一次只做一幕、一张图。
+              </li>
+              <li>
+                <strong>写一幕分镜</strong>进入
+                <a href="/workshop/story">创作工坊 → 分镜工坊</a
+                >，新建分镜并添加一幕。正向提示词可写
+                <code>{character}, standing by a window, {style}</code
+                >。台词单独填写，不需要把文字绘入图片。
+              </li>
+              <li>
+                <strong>填预设</strong>进入
+                <a href="/workshop/presets">预设工坊</a>，定义
+                <code>character</code>（如
+                <code>a young adult traveler, blue jacket</code>）与
+                <code>style</code>（如
+                <code>anime, soft lighting</code>）。等待保存完成再装配。
+              </li>
+              <li>
+                <strong>创建生成任务</strong>进入<a href="/workshop/assembly"
+                  >生成任务</a
+                >，选择分镜、可选预设、本地工作流或云端服务，设置每幕张数与尺寸。在最后一步检查最终提示词和台词，点击「开始生成」；只想保存任务时选择「稍后生成」。
+              </li>
+              <li>
+                <strong>检查结果并导出</strong
+                >队列会自动采用每幕的首个候选（不替换已有采用图）。从
+                <a href="/gallery">画册集</a>
+                打开画册；如果重跑后画面不变，去出图板采用新图。失败原因看
+                <a href="/jobs">任务详情</a>。
+              </li>
+            </ol>
+            <p>
+              重复创作时可以直接选用已有分镜与角色预设：替换预设变量、检查提示词预览，再装配成新的画册。创建、编辑与装配都不会自动调用写剧本模型。
+            </p>
+            <p class="notice warn">
+              查看已有图片、编辑分镜和装配可以离线进行；真正出图需要可用的
+              ComfyUI 或云端服务，云端可能计费。
+            </p>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="相邻章节">
+          <a rel="next" href="/manual/docs/guide/connect-a-provider.html"
+            >图像服务与密钥 →</a
+          >
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/index.html#library">全部教程 ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="教程目录">
+        <div class="toc-label">本页内容</div>
+        <nav><a class="sub" href="#section-1">启动与检查</a></nav>
+        <hr />
+        <div class="toc-label">全部章节</div>
+        <nav>
+          <a href="/manual/docs/guide/start.html" aria-current="page"
+            >01 · 快速开始</a
+          >
+          <a href="/manual/docs/guide/connect-a-provider.html"
+            >02 · 图像服务与密钥</a
+          >
+          <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+          <a href="/manual/docs/guide/variables.html">04 · 分镜、预设与变量</a>
+          <a href="/manual/docs/guide/tasks.html">05 · 队列、候选与失败恢复</a>
+          <a href="/manual/docs/guide/read-and-share.html"
+            >06 · 阅读、排版与导出</a
+          >
+          <a href="/manual/docs/guide/sharing.html">07 · 分享与可编辑作品包</a>
+          <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+          <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+          <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+          <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+          <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/index.html">全部教程 ↗</a
+          ><button class="print-link" type="button">打印 / 保存为 PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

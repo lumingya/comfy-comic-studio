@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>Services &amp; keys · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">Skip to content</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/en/GUIDE.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="Handbook navigation">
+        <a class="home-label" href="/manual/docs/en/GUIDE.html">← All guides</a
+        ><a
+          data-language-link
+          href="/manual/docs/guide/connect-a-provider.html"
+          lang="zh-CN"
+          >中文</a
+        ><a href="/" class="open-app">Open studio ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/en/GUIDE.html">Mio / Handbook</a> / Services &
+          keys
+        </div>
+        <details class="mobile-toc">
+          <summary>Chapters</summary>
+          <nav>
+            <a href="/manual/docs/en/start.html">01 · Start here</a>
+            <a
+              href="/manual/docs/en/connect-a-provider.html"
+              aria-current="page"
+              >02 · Services & keys</a
+            >
+            <a href="/manual/docs/en/workflow.html"
+              >03 · Workflows & profiles</a
+            >
+            <a href="/manual/docs/en/variables.html"
+              >04 · Variables & snapshots</a
+            >
+            <a href="/manual/docs/en/tasks.html"
+              >05 · Jobs & uncertain results</a
+            >
+            <a href="/manual/docs/en/read-and-share.html"
+              >06 · Read, letter & export</a
+            >
+            <a href="/manual/docs/en/sharing.html"
+              >07 · Sharing editable work</a
+            >
+            <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+            <a href="/manual/docs/en/files.html">09 · Files & formats</a>
+            <a href="/manual/docs/en/mobile.html">10 · LAN access</a>
+            <a href="/manual/docs/en/troubleshooting.html"
+              >11 · Troubleshooting</a
+            >
+            <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="connect-a-provider">
+            <p class="chapter-kicker">CHAPTER 02 / THE MIO HANDBOOK</p>
+            <h1>Services & keys</h1>
+            <p>
+              ComfyUI uses <a href="/engine?tab=instances">Instances</a>. OpenAI
+              Images, NovelAI and chat-image services use
+              <a href="/engine?tab=channels">Cloud channels</a>. With neither a
+              selected nor a default channel, cloud rendering uses the
+              connection and image model under Settings → Models &amp;
+              connections. A normal text service may not return images.
+            </p>
+            <p>
+              Tasks can select a workflow or cloud service directly. Advanced
+              generation plans provide workflow chains and scheduling options;
+              API-enabled hybrid plans explicitly run cloud generation followed
+              by local refinement. A configured cloud status does not certify
+              connectivity or credit; opening the page does not generate an
+              image.
+            </p>
+            <h2 id="section-1">Cloud parameter support</h2>
+            <p>
+              Panel dimensions, negative prompts and references are saved with
+              the job. Channel negatives add constraints; channel dimensions are
+              defaults only when no panel dimensions are supplied. Later
+              template or channel generation-setting changes do not rewrite the
+              job. Deleting its channel or changing its type fails explicitly.
+            </p>
+            <p>
+              OpenAI Images receives the panel size and negative prompt as a
+              text constraint, but no seed. Chat-image services receive
+              dimensions and negatives as prompt constraints, so exact output
+              pixels are not guaranteed; no image seed is sent. NovelAI uses
+              native negatives and a fixed seed, aligns dimensions to 64, and
+              records any conversion to a 32-bit seed. Its vibe references do
+              not guarantee character identity.
+            </p>
+            <p>
+              Enlarge a candidate and expand Cloud generation parameters to
+              compare requested values, submitted values, actual output
+              dimensions and reference sources. Unsupported seeds are not shown
+              as effective seeds. Automatic selection prioritizes the cast, then
+              fills remaining slots with scene and selected-style references, up
+              to four by default. All manual references retain their order;
+              reference mode off sends no images. Custom chat-image models
+              receive all selected images, with explicit errors when the service
+              rejects their count.
+            </p>
+            <h2 id="section-2">Find and choose models</h2>
+            <p>
+              Enter the connection details and click Get models without saving
+              first. Text, vision, shared image models and individual cloud
+              channels offer searchable catalogs while keeping manual IDs
+              available. Adding a model preserves list order. Catalog membership
+              does not establish suitability for a specific task; services
+              without catalogs still accept manual IDs.
+            </p>
+            <p>
+              ComfyUI lists installed models exposed by its nodes; workflows
+              select the model to use. NovelAI shows a labeled built-in
+              reference list, without verifying account access. Fetching models
+              neither saves settings nor generates images.
+            </p>
+            <p>
+              A saved key appears as a placeholder: typing replaces it, and
+              Clear key takes effect when saved. After changing the address,
+              re-enter or clear the key before fetching models. Pasted OpenAI
+              endpoint paths are normalized on save. Never place keys in prompts
+              or shared files. Offline adapter tests do not certify every live
+              provider or proxy: test one neutral panel and one candidate first.
+            </p>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="Previous and next chapter">
+          <a rel="prev" href="/manual/docs/en/start.html">← Start here</a
+          ><a rel="next" href="/manual/docs/en/workflow.html"
+            >Workflows & profiles →</a
+          >
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/en/GUIDE.html#library">All guides ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="Chapters">
+        <div class="toc-label">ON THIS PAGE</div>
+        <nav>
+          <a class="sub" href="#section-1">Cloud parameter support</a
+          ><a class="sub" href="#section-2">Find and choose models</a>
+        </nav>
+        <hr />
+        <div class="toc-label">THE HANDBOOK</div>
+        <nav>
+          <a href="/manual/docs/en/start.html">01 · Start here</a>
+          <a href="/manual/docs/en/connect-a-provider.html" aria-current="page"
+            >02 · Services & keys</a
+          >
+          <a href="/manual/docs/en/workflow.html">03 · Workflows & profiles</a>
+          <a href="/manual/docs/en/variables.html"
+            >04 · Variables & snapshots</a
+          >
+          <a href="/manual/docs/en/tasks.html">05 · Jobs & uncertain results</a>
+          <a href="/manual/docs/en/read-and-share.html"
+            >06 · Read, letter & export</a
+          >
+          <a href="/manual/docs/en/sharing.html">07 · Sharing editable work</a>
+          <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+          <a href="/manual/docs/en/files.html">09 · Files & formats</a>
+          <a href="/manual/docs/en/mobile.html">10 · LAN access</a>
+          <a href="/manual/docs/en/troubleshooting.html"
+            >11 · Troubleshooting</a
+          >
+          <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/en/GUIDE.html">All guides ↗</a
+          ><button class="print-link" type="button">Print / Save as PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>工作流与出图配置 · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">跳到正文</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/index.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="教程导航">
+        <a class="home-label" href="/manual/docs/index.html">← 全部教程</a
+        ><a data-language-link href="/manual/docs/en/workflow.html" lang="en"
+          >English</a
+        ><a href="/" class="open-app">打开工作台 ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/index.html">Mio / Handbook</a> /
+          工作流与出图配置
+        </div>
+        <details class="mobile-toc">
+          <summary>教程目录</summary>
+          <nav>
+            <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+            <a href="/manual/docs/guide/connect-a-provider.html"
+              >02 · 图像服务与密钥</a
+            >
+            <a href="/manual/docs/guide/workflow.html" aria-current="page"
+              >03 · 工作流与出图配置</a
+            >
+            <a href="/manual/docs/guide/variables.html"
+              >04 · 分镜、预设与变量</a
+            >
+            <a href="/manual/docs/guide/tasks.html"
+              >05 · 队列、候选与失败恢复</a
+            >
+            <a href="/manual/docs/guide/read-and-share.html"
+              >06 · 阅读、排版与导出</a
+            >
+            <a href="/manual/docs/guide/sharing.html"
+              >07 · 分享与可编辑作品包</a
+            >
+            <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+            <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+            <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+            <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+            <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="workflow">
+            <p class="chapter-kicker">CHAPTER 03 / THE MIO HANDBOOK</p>
+            <h1>工作流与出图配置</h1>
+            <p>
+              导入后先查看预检，再明确保存。预检列出已识别绑定、歧义和需要的节点
+              /
+              模型；详情默认折叠。输出映射选择输出节点，普通参数映射选择真正保存值的输入。诊断时可选择分支，检查实际选中的图；插件自身的校验仍以
+              ComfyUI 为准。
+            </p>
+            <p>
+              <a href="/engine?tab=workflows">工作流</a>是 ComfyUI
+              节点图，可在新建任务时直接选择。多个工作流串联时使用<a
+                href="/engine?tab=profiles"
+                >高级出图方案</a
+              >。每幕生成张数与尺寸在任务里设置，最近使用值按工作流记忆；尺寸留空保留工作流原值。
+            </p>
+            <ol>
+              <li>
+                在 ComfyUI 导出 <strong>API 格式 JSON</strong>（节点含
+                <code>class_type</code> 和 <code>inputs</code>），再导入 Mio。带
+                <code>nodes/links</code> 的可视化编辑器 JSON 不能直接作为 API
+                工作流。
+              </li>
+              <li>
+                内置工作流只作起点：先复制，再修改。把 CheckpointLoaderSimple
+                等节点里的模型名换成你安装的真实文件名；可在 JSON
+                编辑器中调整节点图与配置。
+              </li>
+              <li>
+                映射选择器可搜索节点编号、标题与输入名。常用参数以外可以添加自定义参数，并绑定多个目标；「编辑
+                JSON」可切换参数配置与节点图。检查依赖后用「试生成一张」验证实际执行。
+              </li>
+              <li>
+                多工作流串联时，在高级方案中「添加后处理工作流」。后一阶段接收上一步图片需要
+                <code>[mio:init]</code>
+                输入，并把「阶段图像输入」设为「接上一步输出」。未启用的阶段不会执行。
+              </li>
+            </ol>
+            <p>
+              原始提示词模式保留你写的文本；自动编译模式才会组合设定集、景别、风格等结构化字段。更改工作流不会自动刷新已经提交到任务引擎的请求快照；需要明确重新提交任务。
+            </p>
+            <p>
+              显式混合任务会在提交前检查并固定本地精修工作流、参数与实例选择；云端运行期间修改或删除配置，不会替换该任务已固定的后续工作流。纯云端生成的候选可直接采用；进一步精修仍可主动通过专业
+              API 调用。
+            </p>
+            <h2 id="section-1">自定义节点与插件的兼容范围</h2>
+            <p>
+              Mio 提交的是 ComfyUI API 节点图。自定义节点只要能在 ComfyUI
+              后端通过 API 执行，就可保留在图中；不需要等待 Mio
+              为每个插件增加专用按钮。节点包、模型和依赖仍需在实际执行的 ComfyUI
+              实例上安装。
+            </p>
+            <ul>
+              <li>
+                自动识别不完整时，可用节点标题
+                <code>[mio:prompt=字段名]</code> 指定字段，或用 JSON Pointer
+                映射到节点输入。一个值可写到多个输入；高级 JSON
+                编辑保留。绑定与参数覆盖不能覆盖节点连线或其中的节点编号 /
+                输出序号；需要修改值时，映射到上游节点实际保存文本或数值的输入。
+              </li>
+              <li>
+                依赖 ComfyUI
+                网页脚本的控件、前端虚拟节点或特殊提交协议，不能仅凭导入成功证明可用。先确认
+                API
+                导出中已包含实际执行所需的值，再检查编译预览。ParameterControlPanel
+                已支持正式任务，须先通过工作流 API 捕获并保存
+                <code>config.state</code>；Mio
+                在写入前保存原值，独占该服务，结果落盘后恢复参数，中断后保留恢复记录。同一个
+                ComfyUI
+                使用唯一地址登记，执行期间避免其他客户端修改参数；其他前端状态插件仍需单独适配。
+              </li>
+              <li>
+                自定义图片输出节点可标记
+                <code>[mio:output]</code>；最终取图仍要求服务在
+                <code>/history</code> 中返回标准
+                <code>images</code
+                >。只返回视频、音频或自定义结果结构的节点不等于可直接作为漫画图片输出。
+              </li>
+              <li>
+                导入成功证明格式可读；编译成功证明绑定能应用；诊断检查节点与部分模型条件。最终是否能生成预期图片，仍需在对应实例试跑。离线样本测试不等于执行了所有插件。
+              </li>
+            </ul>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="相邻章节">
+          <a rel="prev" href="/manual/docs/guide/connect-a-provider.html"
+            >← 图像服务与密钥</a
+          ><a rel="next" href="/manual/docs/guide/variables.html"
+            >分镜、预设与变量 →</a
+          >
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/index.html#library">全部教程 ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="教程目录">
+        <div class="toc-label">本页内容</div>
+        <nav>
+          <a class="sub" href="#section-1">自定义节点与插件的兼容范围</a>
+        </nav>
+        <hr />
+        <div class="toc-label">全部章节</div>
+        <nav>
+          <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+          <a href="/manual/docs/guide/connect-a-provider.html"
+            >02 · 图像服务与密钥</a
+          >
+          <a href="/manual/docs/guide/workflow.html" aria-current="page"
+            >03 · 工作流与出图配置</a
+          >
+          <a href="/manual/docs/guide/variables.html">04 · 分镜、预设与变量</a>
+          <a href="/manual/docs/guide/tasks.html">05 · 队列、候选与失败恢复</a>
+          <a href="/manual/docs/guide/read-and-share.html"
+            >06 · 阅读、排版与导出</a
+          >
+          <a href="/manual/docs/guide/sharing.html">07 · 分享与可编辑作品包</a>
+          <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+          <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+          <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+          <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+          <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/index.html">全部教程 ↗</a
+          ><button class="print-link" type="button">打印 / 保存为 PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>阅读、排版与导出 · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">跳到正文</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/index.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="教程导航">
+        <a class="home-label" href="/manual/docs/index.html">← 全部教程</a
+        ><a
+          data-language-link
+          href="/manual/docs/en/read-and-share.html"
+          lang="en"
+          >English</a
+        ><a href="/" class="open-app">打开工作台 ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/index.html">Mio / Handbook</a> /
+          阅读、排版与导出
+        </div>
+        <details class="mobile-toc">
+          <summary>教程目录</summary>
+          <nav>
+            <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+            <a href="/manual/docs/guide/connect-a-provider.html"
+              >02 · 图像服务与密钥</a
+            >
+            <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+            <a href="/manual/docs/guide/variables.html"
+              >04 · 分镜、预设与变量</a
+            >
+            <a href="/manual/docs/guide/tasks.html"
+              >05 · 队列、候选与失败恢复</a
+            >
+            <a href="/manual/docs/guide/read-and-share.html" aria-current="page"
+              >06 · 阅读、排版与导出</a
+            >
+            <a href="/manual/docs/guide/sharing.html"
+              >07 · 分享与可编辑作品包</a
+            >
+            <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+            <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+            <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+            <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+            <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="read-and-share">
+            <p class="chapter-kicker">CHAPTER 06 / THE MIO HANDBOOK</p>
+            <h1>阅读、排版与导出</h1>
+            <p>
+              删除分镜会同步移除对应画格、裁切与文字，解除指向它的跨格引用。其他格、独立文字及原有留白不自动压缩；需要收拢版面时再手动调整。候选素材和历史快照保留。
+            </p>
+            <p>
+              选中画布中的图片后，可用放大、水平取景、垂直取景调整构图，或恢复自动居中裁切。撤销
+              / 重做支持最近 100 步修改（Ctrl / ⌘ + Z，Ctrl / ⌘ + Shift + Z 或
+              Ctrl +
+              Y）；输入框内保留文字编辑快捷键。保存后仍可撤销，离开画布后不保留此历史。长图与平台切片使用保存的构图和留白，修改分镜比例后需要明确重新排版才会改变格的位置。
+            </p>
+            <p>
+              从
+              <a href="/gallery">画册集</a>
+              打开画册。阅读室以已采用图片为准。顶栏的「版式」切换展示模板，只改变阅读外观，不会生成图片；「排版」打开条漫画布，调整分格、留白、气泡与拟声字；「导出」打开导出抽屉。
+            </p>
+            <p>
+              画册的右键或「⋯」菜单统一从「导出」进入。先选择导出格式，再调整相关选项，最后点底部「导出」。HTML
+              可以选择版式；PDF 和图片 ZIP
+              使用逐格图片；平台切片与长图使用画布。自定义版式、导入和更多设置按需展开。多选画册可合并导出
+              HTML、PDF 或图片 ZIP（最多 50
+              话），源文件与创作套装则每本单独下载。
+            </p>
+            <p>
+              不需要为条漫、画册或双页阅读分别创建作品：它们使用同一份画册内容。阅读模板与导出格式分别选择；HTML
+              模板不会自动转成可自由分格的印刷页面，PDF 的当前行为见下表。
+            </p>
+            <p>
+              没有保存排版时，阅读器显示完整原图与图下旁白，不自动裁切或添加气泡。保存过排版后，单页与双页使用保存的取景和嵌字；连续阅读保留完整画布、留白与跨格文字。默认只去掉已经完整嵌入同格的重复正文，其余旁白继续显示；连续画布的未嵌正文列在画布后。单格阅读及
+              HTML
+              模板会在格界截断格外文字，间距由模板决定。修改裁切、采用图或作品变量后，预览会更新。
+            </p>
+            <p>
+              画册菜单可以直接滚动到末项。单册或批量「移入回收站」后可撤销，也可到回收站恢复；永久删除仍需要确认。
+            </p>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>输出</th>
+                    <th>用途与区别</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>单文件 HTML 画册</td>
+                    <td>
+                      当前 HTML
+                      模板、样式与逐格图片打包在网页内，可离线阅读。模板间距代替原条漫画布间距，不是可编辑工作区备份。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>图片 ZIP</td>
+                    <td>
+                      逐格图片文件、简单阅读页与清单，不使用当前 HTML
+                      或双页模板。独立台词可显示在简单阅读页。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>图片画册 PDF</td>
+                    <td>
+                      每格一页，不继承 HTML
+                      或双页模板，也不等于整条条漫切页。PDF
+                      会编码图像，不是原图字节归档；“显示台词”不会把独立台词排进
+                      PDF。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>平台切片 / 长图</td>
+                    <td>
+                      基于采用图和条漫画布合成；切片按平台宽度、高度限制拆分。先检查真实切片预览。
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              HTML 画册与图片 ZIP / PDF
+              默认使用合成后的逐格图片；关闭图片内排字（API
+              <code>lettered:false</code
+              >）会使用原始采用图，同时跳过保存的裁切。通过 API 导出的条漫 PDF
+              则沿完整条漫画布切页。
+            </p>
+            <h2 id="section-1">图片处理选项</h2>
+            <ul>
+              <li>
+                <strong>自动：</strong>优先无损清洗；单文件 HTML
+                的内嵌图像超出预算时改为轻量发布。
+              </li>
+              <li>
+                <strong>无损清洗：</strong>对支持的原始 PNG / JPEG / WebP
+                去除提示词、工作流或 EXIF 等相关容器元数据，不重新生成画面。
+              </li>
+              <li>
+                <strong>轻量发布：</strong>重新编码 WebP，长边不超过
+                2560px，适合分享。
+              </li>
+              <li>
+                <strong>无损归档：</strong
+                >没有排字裁切时保留原图字节及可能的工作流元数据，<strong>只建议本地存档</strong>。有排字的图片是重新合成的
+                PNG，不再是原始文件。
+              </li>
+            </ul>
+            <p>
+              显示 /
+              隐藏台词和提示词是呈现选项，不是全面隐私清理。发给别人之前检查导出内容；原图、提示词和嵌入的工作流可能包含私人信息。
+            </p>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="相邻章节">
+          <a rel="prev" href="/manual/docs/guide/tasks.html"
+            >← 队列、候选与失败恢复</a
+          ><a rel="next" href="/manual/docs/guide/sharing.html"
+            >分享与可编辑作品包 →</a
+          >
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/index.html#library">全部教程 ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="教程目录">
+        <div class="toc-label">本页内容</div>
+        <nav><a class="sub" href="#section-1">图片处理选项</a></nav>
+        <hr />
+        <div class="toc-label">全部章节</div>
+        <nav>
+          <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+          <a href="/manual/docs/guide/connect-a-provider.html"
+            >02 · 图像服务与密钥</a
+          >
+          <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+          <a href="/manual/docs/guide/variables.html">04 · 分镜、预设与变量</a>
+          <a href="/manual/docs/guide/tasks.html">05 · 队列、候选与失败恢复</a>
+          <a href="/manual/docs/guide/read-and-share.html" aria-current="page"
+            >06 · 阅读、排版与导出</a
+          >
+          <a href="/manual/docs/guide/sharing.html">07 · 分享与可编辑作品包</a>
+          <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+          <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+          <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+          <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+          <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/index.html">全部教程 ↗</a
+          ><button class="print-link" type="button">打印 / 保存为 PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

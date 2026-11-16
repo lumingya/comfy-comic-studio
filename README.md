@@ -39,7 +39,7 @@ npm --prefix web run build
 ## 使用教程
 
 启动后打开 **http://127.0.0.1:8788/manual/**，或从界面「帮助 / 使用教程」进入。
-[中文手册源码](server/mio_server/manual/index.html)与[英文手册源码](server/mio_server/manual/en.html)随服务器一起发布，离线可用。
+[中文教程中心](server/mio_server/manual/index.html)与[英文教程中心](server/mio_server/manual/en.html)随服务器一起发布，离线可用。首页保留书册插画、指南卡片与目录搜索，具体操作在独立章节中阅读。
 
 - 基本链路：**分镜 → 选用预设（可选）→ 选择工作流或云端服务 → 检查本次提示词与生成参数 → 开始生成 → 挑图 → 阅读 / 导出**。
 - 装配前按分幕检查正负提示词和台词，查看变量来源与缺失位置；本次补值只写入新画册。多个预设按显示的选择顺序合并，后面的同名值优先。

@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>Files &amp; formats · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">Skip to content</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/en/GUIDE.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="Handbook navigation">
+        <a class="home-label" href="/manual/docs/en/GUIDE.html">← All guides</a
+        ><a data-language-link href="/manual/docs/guide/files.html" lang="zh-CN"
+          >中文</a
+        ><a href="/" class="open-app">Open studio ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/en/GUIDE.html">Mio / Handbook</a> / Files &
+          formats
+        </div>
+        <details class="mobile-toc">
+          <summary>Chapters</summary>
+          <nav>
+            <a href="/manual/docs/en/start.html">01 · Start here</a>
+            <a href="/manual/docs/en/connect-a-provider.html"
+              >02 · Services & keys</a
+            >
+            <a href="/manual/docs/en/workflow.html"
+              >03 · Workflows & profiles</a
+            >
+            <a href="/manual/docs/en/variables.html"
+              >04 · Variables & snapshots</a
+            >
+            <a href="/manual/docs/en/tasks.html"
+              >05 · Jobs & uncertain results</a
+            >
+            <a href="/manual/docs/en/read-and-share.html"
+              >06 · Read, letter & export</a
+            >
+            <a href="/manual/docs/en/sharing.html"
+              >07 · Sharing editable work</a
+            >
+            <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+            <a href="/manual/docs/en/files.html" aria-current="page"
+              >09 · Files & formats</a
+            >
+            <a href="/manual/docs/en/mobile.html">10 · LAN access</a>
+            <a href="/manual/docs/en/troubleshooting.html"
+              >11 · Troubleshooting</a
+            >
+            <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="files">
+            <p class="chapter-kicker">CHAPTER 09 / THE MIO HANDBOOK</p>
+            <h1>Files & formats</h1>
+            <p>
+              Data is organized as series, episodes, panels, takes and assets,
+              stored in the data folder's database and <code>assets/</code>;
+              there are no JSON files to edit by hand. Storyboard JSON, preset
+              JSON, album templates (imported from the reader's layout picker),
+              image ZIP and project bundles each have their own purpose.
+              Reusable workflows and render profiles live in Workflows &amp;
+              APIs.
+            </p>
+            <p>
+              Creation kits package selected storyboards, presets, character and
+              style details, workflows and referenced assets. Choose Creation
+              kit ZIP in the workshop export picker, or Export → Creation kit in
+              the album menu and select its storyboards and presets. Import
+              first shows a preview; explicitly bind each profile to services or
+              choose Import now, configure later. Select the kit as the
+              storyboard source in the assembly wizard to reuse it without
+              replacing the workshop.
+            </p>
+            <p>
+              When creating a task, select a workflow, cloud service or advanced
+              plan directly. Workshop and kit sources both allow a choice for
+              this task without changing source material; explicit panel plans
+              still take priority. Presets supply variables only. Define an
+              exclusions variable yourself and use <code>{exclusions}</code> in
+              a scene's negative prompt. Presets do not append prompts or create
+              a default negative variable.
+            </p>
+            <p>
+              Choose a kit in the storyboard or preset workshop's source
+              selector to edit it, or open its editor from the assembly wizard.
+              Switching sources saves current edits first and stays put if
+              saving fails. Kit presets can also create a one-panel standby
+              preview album; generation starts only when explicitly requested.
+              Kit edits affect future assembly, while existing albums keep their
+              snapshots.
+            </p>
+            <p>
+              Select panels to copy or move them between episodes in the same
+              work. Organize actions duplicate or reorder episodes and find,
+              preview and rename variables. Transfers preserve takes, framing
+              and the source canvas's whitespace. Locked content and bubbles
+              crossing the selection boundary require explicit choices. Variable
+              operations preserve escaped double braces and candidate history.
+            </p>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="Previous and next chapter">
+          <a rel="prev" href="/manual/docs/en/backup.html"
+            >← Data folder & backup</a
+          ><a rel="next" href="/manual/docs/en/mobile.html">LAN access →</a>
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/en/GUIDE.html#library">All guides ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="Chapters">
+        <div class="toc-label">THE HANDBOOK</div>
+        <nav>
+          <a href="/manual/docs/en/start.html">01 · Start here</a>
+          <a href="/manual/docs/en/connect-a-provider.html"
+            >02 · Services & keys</a
+          >
+          <a href="/manual/docs/en/workflow.html">03 · Workflows & profiles</a>
+          <a href="/manual/docs/en/variables.html"
+            >04 · Variables & snapshots</a
+          >
+          <a href="/manual/docs/en/tasks.html">05 · Jobs & uncertain results</a>
+          <a href="/manual/docs/en/read-and-share.html"
+            >06 · Read, letter & export</a
+          >
+          <a href="/manual/docs/en/sharing.html">07 · Sharing editable work</a>
+          <a href="/manual/docs/en/backup.html">08 · Data folder & backup</a>
+          <a href="/manual/docs/en/files.html" aria-current="page"
+            >09 · Files & formats</a
+          >
+          <a href="/manual/docs/en/mobile.html">10 · LAN access</a>
+          <a href="/manual/docs/en/troubleshooting.html"
+            >11 · Troubleshooting</a
+          >
+          <a href="/manual/docs/en/glossary.html">12 · Glossary</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/en/GUIDE.html">All guides ↗</a
+          ><button class="print-link" type="button">Print / Save as PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

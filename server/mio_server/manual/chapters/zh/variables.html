@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>分镜、预设与变量 · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">跳到正文</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/index.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="教程导航">
+        <a class="home-label" href="/manual/docs/index.html">← 全部教程</a
+        ><a data-language-link href="/manual/docs/en/variables.html" lang="en"
+          >English</a
+        ><a href="/" class="open-app">打开工作台 ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/index.html">Mio / Handbook</a> /
+          分镜、预设与变量
+        </div>
+        <details class="mobile-toc">
+          <summary>教程目录</summary>
+          <nav>
+            <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+            <a href="/manual/docs/guide/connect-a-provider.html"
+              >02 · 图像服务与密钥</a
+            >
+            <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+            <a href="/manual/docs/guide/variables.html" aria-current="page"
+              >04 · 分镜、预设与变量</a
+            >
+            <a href="/manual/docs/guide/tasks.html"
+              >05 · 队列、候选与失败恢复</a
+            >
+            <a href="/manual/docs/guide/read-and-share.html"
+              >06 · 阅读、排版与导出</a
+            >
+            <a href="/manual/docs/guide/sharing.html"
+              >07 · 分享与可编辑作品包</a
+            >
+            <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+            <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+            <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+            <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+            <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="variables">
+            <p class="chapter-kicker">CHAPTER 04 / THE MIO HANDBOOK</p>
+            <h1>分镜、预设与变量</h1>
+            <p>
+              分镜是可复用模板，预设保存变量。提示词和台词都可以使用
+              <code>{变量名}</code
+              >；例如自行创建「负向词」变量，再在分镜的负向提示词中填写
+              <code>{负向词}</code
+              >。只有显式引用的内容才会展开，预设不自动追加正负提示词，也不默认创建负向词变量。
+            </p>
+            <p>
+              列表标题太长时，可拖动分镜列表和详情区之间的细分割线；实例、工作流、出图配置与云端渠道页也支持。分割线获得键盘焦点后，用左右方向键调整，Home
+              / End
+              移到宽度边界，双击恢复默认。宽度按页面保存在当前浏览器；窄窗口会优先保留两侧可用空间。预设工坊保持单列编辑。
+            </p>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>规则</th>
+                    <th>实际行为</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>优先级</td>
+                    <td>
+                      内建变量 → 作品变量 → 每格的
+                      <code>$变量名</code> 覆盖。后者优先。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>多个预设</td>
+                    <td>
+                      按向导显示的选择顺序合并，可调整先后；同名变量以后面的预设为准。预览显示实际生效的来源。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>嵌套与字面花括号</td>
+                    <td>
+                      值可以引用其他变量；用 <code>{{name}}</code> 输出字面
+                      <code>{name}</code
+                      >。提示词中未知变量保留原文，阅读台词中的未知普通变量留空，不会自动猜值。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>装配快照</td>
+                    <td>
+                      已装配画册保存分镜、预设、变量和画布设置。之后修改工坊模板，不会追改已装配的画册；要应用新模板，重新装配。
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>预设类型</td>
+                    <td>预设工坊里的变量都是文本变量。</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              装配的最后一步按分幕预览正负提示词和阅读台词。缺失变量可定位到对应幕与字段，并填写仅供本次作品使用的值。优先级从高到低为：逐格
+              <code>$变量</code
+              >、本次补值、所选预设（后者优先）、工坊变量、内置变量。空字符串是有效值，可用于主动留空；循环引用与过深引用会提示核对。提示词中的未知变量保留原文，方便使用工作流通配符；阅读台词中的未知普通变量会留空。预览不访问图像服务，扩展仍可在生成时追加处理。
+            </p>
+            <p>
+              分镜工坊编辑标题、正负提示词、台词与参数。装配后，在「生成任务」里打开画册的逐幕编辑，可以设置镜头、出场角色、参考图、控制图、每幕出图覆盖，并查看历史。自动保存失败时先查看错误，不要立刻切换页面。装配请求失败后可在同一向导重试；未改请求时会复用原装配结果，不重复建画册。
+            </p>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="相邻章节">
+          <a rel="prev" href="/manual/docs/guide/workflow.html"
+            >← 工作流与出图配置</a
+          ><a rel="next" href="/manual/docs/guide/tasks.html"
+            >队列、候选与失败恢复 →</a
+          >
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/index.html#library">全部教程 ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="教程目录">
+        <div class="toc-label">全部章节</div>
+        <nav>
+          <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+          <a href="/manual/docs/guide/connect-a-provider.html"
+            >02 · 图像服务与密钥</a
+          >
+          <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+          <a href="/manual/docs/guide/variables.html" aria-current="page"
+            >04 · 分镜、预设与变量</a
+          >
+          <a href="/manual/docs/guide/tasks.html">05 · 队列、候选与失败恢复</a>
+          <a href="/manual/docs/guide/read-and-share.html"
+            >06 · 阅读、排版与导出</a
+          >
+          <a href="/manual/docs/guide/sharing.html">07 · 分享与可编辑作品包</a>
+          <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+          <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+          <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+          <a href="/manual/docs/guide/troubleshooting.html">11 · 常见问题</a>
+          <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/index.html">全部教程 ↗</a
+          ><button class="print-link" type="button">打印 / 保存为 PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#f7f6f0" />
+    <title>常见问题 · Mio</title>
+    <link rel="stylesheet" href="/manual/assets/reader.css" />
+    <script src="/manual/assets/manual.js" defer></script>
+  </head>
+  <body data-page="reader">
+    <a class="skip-link" href="#document">跳到正文</a>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+    <header>
+      <div class="header-left">
+        <a class="brand" href="/manual/docs/index.html">Mio<span>.</span></a
+        ><span class="kicker">THE MIO HANDBOOK</span>
+      </div>
+      <nav class="header-actions" aria-label="教程导航">
+        <a class="home-label" href="/manual/docs/index.html">← 全部教程</a
+        ><a
+          data-language-link
+          href="/manual/docs/en/troubleshooting.html"
+          lang="en"
+          >English</a
+        ><a href="/" class="open-app">打开工作台 ↗</a>
+      </nav>
+    </header>
+    <div class="layout">
+      <main>
+        <div class="crumb">
+          <a href="/manual/docs/index.html">Mio / Handbook</a> / 常见问题
+        </div>
+        <details class="mobile-toc">
+          <summary>教程目录</summary>
+          <nav>
+            <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+            <a href="/manual/docs/guide/connect-a-provider.html"
+              >02 · 图像服务与密钥</a
+            >
+            <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+            <a href="/manual/docs/guide/variables.html"
+              >04 · 分镜、预设与变量</a
+            >
+            <a href="/manual/docs/guide/tasks.html"
+              >05 · 队列、候选与失败恢复</a
+            >
+            <a href="/manual/docs/guide/read-and-share.html"
+              >06 · 阅读、排版与导出</a
+            >
+            <a href="/manual/docs/guide/sharing.html"
+              >07 · 分享与可编辑作品包</a
+            >
+            <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+            <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+            <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+            <a
+              href="/manual/docs/guide/troubleshooting.html"
+              aria-current="page"
+              >11 · 常见问题</a
+            >
+            <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+          </nav>
+        </details>
+        <article class="document" id="document">
+          <section id="troubleshooting">
+            <p class="chapter-kicker">CHAPTER 11 / THE MIO HANDBOOK</p>
+            <h1>常见问题</h1>
+            <details open>
+              <summary>按钮点了，看不到变化？</summary>
+              <p>
+                先区分“保存模板”“装配快照”“开始请求”“生成候选”“采用图片”五步。检查保存错误和任务详情；已装配的画册看不到模板的新改动是快照行为，重跑后画册不变通常是新图还没有被采用。
+              </p>
+            </details>
+            <details>
+              <summary>ComfyUI 已连接，但出图失败</summary>
+              <p>
+                在「工作流」中检查所选工作流的依赖与映射，再「试生成一张」。确认
+                Checkpoint / LoRA
+                文件名存在、自定义节点已安装；需要输入图片的工作流须提供对应图片，多阶段方案的后续工作流须连接上一步输出。
+              </p>
+            </details>
+            <details>
+              <summary>云端渠道已填，却仍在等 ComfyUI</summary>
+              <p>
+                检查装配选择的配置、当前格的配置覆盖，以及是否通过 API
+                启用了「云端 +
+                本地精修」。仅添加渠道不会改变已有的本地配置；纯云端配置不会自动调用本地阶段。
+              </p>
+            </details>
+            <details>
+              <summary>替换后缺少角色名或台词内容</summary>
+              <p>
+                在装配预览检查对应幕的变量来源与空值；提示词中的未知变量保留原文，阅读台词中的未知普通变量留空。修改工坊预设不会追改已装配画册。确认修改的是当前画册变量或重新装配。
+              </p>
+            </details>
+            <details>
+              <summary>下载 PDF / ZIP 或平台切片没有内容</summary>
+              <p>
+                先确认有已采用图片，而不仅是候选。平台导出需要可合成的条漫；图片画册
+                PDF 与平台长图不是同一种输出。
+              </p>
+            </details>
+            <details>
+              <summary>更新代码后行为没变</summary>
+              <p>
+                Python
+                服务通常需要重启。源码前端需要重新构建（根启动器也会检查界面是否需要重建）。先结束任务再重启，不要强制终止正在出图的请求。
+              </p>
+            </details>
+            <details>
+              <summary>教程在开发界面打不开</summary>
+              <p>
+                确认后端 8788 正在运行，并重启改过代理配置的 Vite。手册随 server
+                一起打包，离线可用。
+              </p>
+            </details>
+          </section>
+        </article>
+        <nav class="chapter-nav" aria-label="相邻章节">
+          <a rel="prev" href="/manual/docs/guide/mobile.html">← 局域网访问</a
+          ><a rel="next" href="/manual/docs/guide/glossary.html">术语对照 →</a>
+        </nav>
+        <footer class="endnote">
+          <span>Mio · Stories in frames</span
+          ><a href="/manual/docs/index.html#library">全部教程 ↗</a>
+        </footer>
+      </main>
+      <aside class="toc" aria-label="教程目录">
+        <div class="toc-label">全部章节</div>
+        <nav>
+          <a href="/manual/docs/guide/start.html">01 · 快速开始</a>
+          <a href="/manual/docs/guide/connect-a-provider.html"
+            >02 · 图像服务与密钥</a
+          >
+          <a href="/manual/docs/guide/workflow.html">03 · 工作流与出图配置</a>
+          <a href="/manual/docs/guide/variables.html">04 · 分镜、预设与变量</a>
+          <a href="/manual/docs/guide/tasks.html">05 · 队列、候选与失败恢复</a>
+          <a href="/manual/docs/guide/read-and-share.html"
+            >06 · 阅读、排版与导出</a
+          >
+          <a href="/manual/docs/guide/sharing.html">07 · 分享与可编辑作品包</a>
+          <a href="/manual/docs/guide/backup.html">08 · 数据目录与备份</a>
+          <a href="/manual/docs/guide/files.html">09 · 文件与格式</a>
+          <a href="/manual/docs/guide/mobile.html">10 · 局域网访问</a>
+          <a href="/manual/docs/guide/troubleshooting.html" aria-current="page"
+            >11 · 常见问题</a
+          >
+          <a href="/manual/docs/guide/glossary.html">12 · 术语对照</a>
+        </nav>
+        <hr />
+        <div class="tools">
+          <a href="/manual/docs/index.html">全部教程 ↗</a
+          ><button class="print-link" type="button">打印 / 保存为 PDF</button>
+        </div>
+      </aside>
+    </div>
+  </body>
+</html>

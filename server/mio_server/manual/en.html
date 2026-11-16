@@ -1,91 +1,492 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mio · The Mio handbook</title><style>*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;background:#f6f7f4;color:#27352d;font:16px/1.85 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}a{color:#386b50;text-underline-offset:4px}a:hover{color:#132e20}header{padding:28px max(24px,calc((100vw - 1180px)/2));background:#24392d;color:#eef5e9;display:flex;justify-content:space-between;gap:20px;align-items:center}header a{color:#eef5e9}.brand{font-size:19px;letter-spacing:2px}.tag{font-size:11px;letter-spacing:2px;opacity:.7}.wrap{max-width:1180px;margin:0 auto;padding:44px 24px 90px;display:grid;grid-template-columns:210px minmax(0,1fr);gap:54px}aside{position:sticky;top:24px;align-self:start}aside b{display:block;font-size:12px;color:#708077;letter-spacing:2px;margin:0 0 14px}aside a{display:block;text-decoration:none;padding:4px 0;font-size:14px}h1{font-size:clamp(30px,4vw,48px);line-height:1.3;font-weight:600;margin:12px 0 22px;letter-spacing:-1px}h2{font-size:25px;line-height:1.4;margin:0 0 22px}h3{font-size:18px;margin:24px 0 8px}p{margin:12px 0}section{border-top:1px solid #d6dfd4;padding-top:30px;margin-top:42px}section:first-of-type{border:0;margin-top:26px}.lead{font-size:19px;color:#5a6a60}.eyebrow{color:#52705c;letter-spacing:2px;font-size:12px}.notice{padding:16px 20px;background:#e8efe3;border-left:3px solid #739765;border-radius:0 6px 6px 0;font-size:14px}.warn{background:#f3eee2;border-color:#b89750}code{font:13px/1.7 ui-monospace,Consolas,monospace;background:#e8ede6;padding:2px 5px;border-radius:3px;overflow-wrap:anywhere}pre{background:#24392d;color:#e8f1e3;padding:18px;border-radius:8px;overflow:auto;line-height:1.7}pre code{background:none;color:inherit;padding:0}table{border-collapse:collapse;width:100%;font-size:14px;margin:18px 0}th{text-align:left;background:#e9eee6;font-weight:600}th,td{border-bottom:1px solid #d6dfd4;padding:10px 12px;vertical-align:top}ul,ol{padding-left:24px}li{margin:7px 0}small,.muted{color:#69796e}figure{margin:24px 0}figure img{width:100%;max-height:200px}figcaption{font-size:12px;color:#748075;text-align:center}.steps{counter-reset:steps;list-style:none;padding:0}.steps>li{position:relative;padding:4px 0 16px 44px}.steps>li:before{counter-increment:steps;content:counter(steps,decimal-leading-zero);position:absolute;left:0;top:4px;color:#78916f;font-weight:700;font-size:18px}.steps strong{display:block}details{border:1px solid #d6dfd4;padding:12px 16px;margin:12px 0;border-radius:6px}summary{font-weight:600;cursor:pointer}.pill{display:inline-block;padding:2px 10px;border:1px solid #628168;border-radius:20px;font-size:12px;margin-right:6px}footer{border-top:1px solid #d6dfd4;margin-top:40px;padding-top:18px;font-size:12px;color:#6a7a6d}@media(max-width:800px){.wrap{display:block;padding:26px 20px 64px}aside{position:static;border-bottom:1px solid #d6dfd4;padding-bottom:20px;margin-bottom:30px}aside a{display:inline-block;margin-right:16px}header{padding:18px 20px;align-items:flex-start}header .tag{display:none}table{display:block;overflow:auto}h1{font-size:33px}}@media print{body{background:white}header,aside{display:none}.wrap{display:block;max-width:none;padding:0}section{break-inside:avoid}a{color:inherit}pre{white-space:pre-wrap}}</style></head>
-<body><header><div><div class="brand">MIO · 绘页</div><div class="tag">THE MIO HANDBOOK · 4.x</div></div><nav><a href="../index.html">中文</a> &nbsp; · &nbsp; <a href="/">Open Mio</a></nav></header>
-<div class="wrap"><aside aria-label="Contents"><b>CONTENTS</b><a href="#start">01 · Start here</a><a href="#connect-a-provider">02 · Services & keys</a><a href="#workflow">03 · Workflows & profiles</a><a href="#variables">04 · Variables & snapshots</a><a href="#tasks">05 · Jobs & uncertain results</a><a href="#read-and-share">06 · Read, letter & export</a><a href="#sharing">07 · Sharing editable work</a><a href="#backup">08 · Data folder & backup</a><a href="#files">09 · Files & formats</a><a href="#mobile">10 · LAN access</a><a href="#troubleshooting">11 · Troubleshooting</a><a href="#glossary">12 · Glossary</a></aside><main><div class="eyebrow">LOCAL-FIRST COMIC STUDIO</div><h1>The Mio handbook</h1><p class="lead">Storyboards, presets, rendering and sharing.</p>
-<p><span class="pill">8788</span><span class="pill">FastAPI + React</span><span class="pill">Offline handbook</span></p>
-<section id="start"><h2>01 · Start here</h2><p class="notice"><strong>This is the Mio 4.x handbook: FastAPI + React, port 8788.</strong></p>
-<p>A release needs Python 3.11+. Run the root <code>start.bat</code> or <code>./start.sh</code>. Source checkouts also need Node.js 20+: run <code>npm ci --prefix web</code> and <code>npm --prefix web run build</code>. Use <code>start.bat --check</code> or <code>./start.sh --check</code> to diagnose startup. Open <strong>http://127.0.0.1:8788</strong>.</p>
-<ol class="steps"><li><strong>Connect a service</strong>For local rendering, start ComfyUI separately and configure an <a href="/engine?tab=instances">instance</a> (usually 127.0.0.1:8188). For cloud rendering, add a <a href="/engine?tab=channels">cloud channel</a>.</li>
-<li><strong>Connect an image service</strong>For local rendering, import an API-format <a href="/engine?tab=workflows">workflow</a>, check its dependencies and generate one test image. For cloud rendering, configure its address, key and model in <a href="/engine?tab=channels">Cloud APIs</a>.</li>
-<li><strong>Write one panel</strong>Use <a href="/workshop/story">Storyboards</a>, for example <code>{character}, standing by a window, {style}</code>. Write dialogue separately.</li>
-<li><strong>Define variables</strong>Use <a href="/workshop/presets">Presets</a> to define character and style. Wait for saving to finish.</li>
-<li><strong>Create a generation task</strong>In <a href="/workshop/assembly">Generation tasks</a>, select a storyboard, optional presets and a local workflow or cloud service. Set images per scene and optional dimensions, review the final prompts, then start generation or choose Generate later. Cloud calls may cost money.</li>
-<li><strong>Adopt and export</strong>The first candidate is adopted only if there is no adopted image. Reruns add candidates: adopt a replacement on the board before expecting the reader to change.</li>
-</ol>
-<p>For another work, reuse a storyboard and character presets, check the substituted prompt preview and assemble a new album. Creating, editing and assembling do not automatically call a script-writing model.</p>
-<p>You can read existing images, edit templates and assemble offline; generation needs a working ComfyUI or cloud service.</p>
-</section>
-<section id="connect-a-provider"><h2>02 · Services & keys</h2><p>ComfyUI uses <a href="/engine?tab=instances">Instances</a>. OpenAI Images, NovelAI and chat-image services use <a href="/engine?tab=channels">Cloud channels</a>. With neither a selected nor a default channel, cloud rendering uses the connection and image model under Settings → Models &amp; connections. A normal text service may not return images.</p>
-<p>Tasks can select a workflow or cloud service directly. Advanced generation plans provide workflow chains and scheduling options; API-enabled hybrid plans explicitly run cloud generation followed by local refinement. A configured cloud status does not certify connectivity or credit; opening the page does not generate an image.</p>
-<h3>Cloud parameter support</h3>
-<p>Panel dimensions, negative prompts and references are saved with the job. Channel negatives add constraints; channel dimensions are defaults only when no panel dimensions are supplied. Later template or channel generation-setting changes do not rewrite the job. Deleting its channel or changing its type fails explicitly.</p>
-<p>OpenAI Images receives the panel size and negative prompt as a text constraint, but no seed. Chat-image services receive dimensions and negatives as prompt constraints, so exact output pixels are not guaranteed; no image seed is sent. NovelAI uses native negatives and a fixed seed, aligns dimensions to 64, and records any conversion to a 32-bit seed. Its vibe references do not guarantee character identity.</p>
-<p>Enlarge a candidate and expand Cloud generation parameters to compare requested values, submitted values, actual output dimensions and reference sources. Unsupported seeds are not shown as effective seeds. Automatic selection prioritizes the cast, then fills remaining slots with scene and selected-style references, up to four by default. All manual references retain their order; reference mode off sends no images. Custom chat-image models receive all selected images, with explicit errors when the service rejects their count.</p>
-<h3>Find and choose models</h3>
-<p>Enter the connection details and click Get models without saving first. Text, vision, shared image models and individual cloud channels offer searchable catalogs while keeping manual IDs available. Adding a model preserves list order. Catalog membership does not establish suitability for a specific task; services without catalogs still accept manual IDs.</p>
-<p>ComfyUI lists installed models exposed by its nodes; workflows select the model to use. NovelAI shows a labeled built-in reference list, without verifying account access. Fetching models neither saves settings nor generates images.</p>
-<p>A saved key appears as a placeholder: typing replaces it, and Clear key takes effect when saved. After changing the address, re-enter or clear the key before fetching models. Pasted OpenAI endpoint paths are normalized on save. Never place keys in prompts or shared files. Offline adapter tests do not certify every live provider or proxy: test one neutral panel and one candidate first.</p>
-</section>
-<section id="workflow"><h2>03 · Workflows & profiles</h2><p>Import first shows recognized bindings, ambiguous inputs and required nodes or models. Save explicitly after review. Output mappings select nodes; parameter mappings select stored values. Diagnose the selected branch against its actual graph; custom plugin validation still belongs to ComfyUI.</p><p>Import ComfyUI <strong>API format</strong> with <code>class_type</code> and <code>inputs</code>, not the visual editor's nodes/links document. Copy built-in workflows before editing. Set real installed checkpoint filenames in the graph; check required custom nodes.</p>
-<p>Search parameter targets by node ID, title or input name. Add custom parameters and multiple targets when needed; Edit JSON switches between parameters and the node graph. Check workflow dependencies, then generate one test image. Choose a workflow directly when assembling; images per scene and optional dimensions belong to the task and remember recent values by workflow. Empty dimensions preserve workflow values. Advanced plans can add post-processing workflows; feeding a previous image requires an <code>[mio:init]</code> input.</p>
-<p>Explicit hybrid jobs validate and freeze their local refinement graphs, parameters and instance selection before submission. Editing or deleting the profile while the cloud request runs does not replace that frozen follow-up. Pure cloud candidates can be adopted directly; further refinement can be requested explicitly through the professional API.</p>
-<h3>Custom-node compatibility</h3>
-<p>Mio submits a ComfyUI API graph. Custom nodes that execute through the backend API can remain in that graph without a dedicated Mio button. Install their packages, models and dependencies on the executing instance. If automatic detection is incomplete, target a field with <code>[mio:prompt=field_name]</code> or a JSON Pointer mapping; one value can feed multiple inputs. Bindings and overrides cannot replace a node link or its node ID / output index. Target the upstream input that stores the actual text or number instead.</p>
-<p>Browser-only scripts, virtual frontend nodes and custom submission protocols may need explicit adaptation. Check that the API export contains the required values. ParameterControlPanel supports production jobs after explicitly capturing and saving <code>config.state</code> through the workflow API. Mio records original values before writing, reserves that endpoint, saves results before restoring state, and keeps recovery records after interruptions. Use one canonical address per ComfyUI service and avoid external clients changing its parameters while it runs. Other browser-state plugins still need their own adapters. A custom image output can be tagged <code>[mio:output]</code>, but image retrieval still needs standard <code>images</code> in <code>/history</code>; video, audio and custom result formats are not automatically supported.</p>
-<p>Import validates the document, compilation applies bindings, and diagnostics check node availability and some model requirements. Only a real run on that instance verifies execution and image results; offline samples do not execute every plugin.</p>
-</section>
-<section id="variables"><h2>04 · Variables & snapshots</h2><p>Prompts and dialogue accept <code>{name}</code>. Precedence is panel-local <code>$name</code>, values supplied for this assembly, selected presets (later wins), workshop variables, then built-ins. You can reorder selected presets. Values may reference other variables; <code>{{name}}</code> is a literal brace escape. Unknown prompt variables remain unchanged for workflow wildcards; unresolved ordinary names in reader dialogue are blanked.</p>
-<p>Assembly copies the storyboard, presets, variables and canvas settings into a new album. Editing workshop templates afterwards does not update existing albums. Presets hold text variables.</p>
-<p>The final assembly step previews each panel's positive and negative prompts and reader dialogue using the server's compiler. Missing values link to their panel and field; temporary values affect only this new album. Empty strings are valid deliberate overrides. Cycles and deep references are flagged for review. Previewing does not contact image services; extensions may still modify prompts during generation. Retrying the same unchanged request in the dialog reuses its assembly result instead of creating a duplicate.</p>
-<p>Drag the thin divider between the storyboard list and its editor to reveal long titles. Instances, workflows, profiles and cloud channels have the same control. Focus the divider and use Left / Right to resize, Home / End to reach the limits, or double-click to reset. Each page remembers its width in this browser; narrow windows preserve usable space on both sides. Presets retain their single-column editor.</p>
-<p>Storyboards edit titles, prompts, dialogue and parameters. After assembly, open the album's panel editor from Assembly &amp; queue to set shots, cast, reference images, control images and per-panel render overrides, and to see history.</p>
-</section>
-<section id="tasks"><h2>05 · Jobs & uncertain results</h2><p>The top bar and workshop open the same Generation tasks page for starting, pausing, retrying and selecting images. Execution records are available from task details. Created tasks freeze their parameters and workflow documents; changing recent preferences does not alter them. Generation fills scenes with no adopted image. Reruns create candidates without silently overwriting your selection.</p>
-<p>If ComfyUI accepts a job but history or image download is interrupted, its result stays uncertain. With a known prompt ID, reconciliation retrieves it without resubmitting. A lost submission response without an ID still needs manual verification. Cancellation discards results that have not entered the save stage; if saving has already begun, that save finishes before cancellation returns.</p>
-<p>Pause affects scheduling, not necessarily a request already accepted upstream. Cancellation is not a refund. For <strong>uncertain</strong> results, check provider records before resolving or explicitly resubmitting: repeated paid calls can create duplicate charges. Inspect job details for actual failures.</p>
-</section>
-<section id="read-and-share"><h2>06 · Read, letter & export</h2><p>Open an album from the <a href="/gallery">gallery</a>. The reader shows adopted images. In its toolbar, the layout picker changes the presentation template (not the images); the strip canvas arranges panels, gutters, bubbles and sound effects; export opens the export drawer.</p>
-<p>Use Export in the album's context or “⋯” menu. Choose a file format, adjust its options, then use the fixed Export button. HTML offers layouts; PDF and image ZIP use panel images; platform slices and long images use the canvas. Layout customization, import and extra settings expand when needed. Multiple albums can share one HTML, PDF or image ZIP (up to 50 episodes); editable projects and creation kits download separately for each album.</p>
-<p>Strip, gallery and spread views use the same album; there is no need to create separate works. Reader templates and export formats are separate choices. An HTML template does not become a freely arranged print page; see the current PDF behavior below.</p>
-<p>Without a saved layout, the reader shows complete original images with captions underneath, without adding crops or bubbles. Saved layouts retain framing and lettering; continuous reading preserves the full canvas, whitespace and text across panels. By default, only matching text already fully embedded in the same panel is omitted from external captions. Remaining captions appear below each image, or after a saved continuous canvas. Panel views and HTML templates cut text at panel boundaries and use their own spacing. Changing framing, adopted takes or series variables refreshes the preview.</p>
-<p>Long album menus scroll to their final action. Moving one or more albums to the trash takes effect directly and can be undone or restored from the trash. Permanent deletion still asks for confirmation.</p>
-<p>Deleting a panel also removes its canvas box, crop and lettering, and clears bridges pointing to it. Other panels, independent text and existing whitespace stay in place; adjust spacing manually when needed. Candidate artwork and historical snapshots are retained.</p>
-<p>Select an image on the strip canvas to adjust zoom and horizontal/vertical framing, or reset to automatic centre crop. Undo/redo retains the last 100 edits (Ctrl / Cmd + Z, Ctrl / Cmd + Shift + Z, or Ctrl + Y); text fields keep their native editing shortcuts. Undo remains available after saving, but history ends when you leave the canvas. Long images and platform slices preserve saved framing and whitespace. Changes to script aspect ratios only move existing boxes after an explicit layout action.</p>
-<table><tr><th>Output</th><th>Meaning</th></tr>
-<tr><td>HTML album</td><td>Selected HTML template with individual panel images and template spacing; an offline reader, not an editable project backup.</td></tr>
-<tr><td>Image ZIP</td><td>Panel images, a simple reader and a manifest, without the selected HTML or spread layout. Separate captions appear in its reader.</td></tr>
-<tr><td>Album PDF</td><td>One panel per page, without the selected HTML or spread layout; images are encoded, not a byte-perfect original archive. The captions option does not typeset separate captions into the PDF.</td></tr>
-<tr><td>Platform slices / long image</td><td>The adopted, composited strip, with platform sizing and a real slice preview.</td></tr>
-</table><p>HTML albums and portable ZIP/PDF default to composited panel crops. Disabling in-image lettering (<code>lettered:false</code> in the API) uses original adopted images and also skips saved framing. Strip PDF exports through the API instead paginate the full strip.</p><p>Auto starts with lossless metadata cleaning and may compress large inline HTML. Publish encodes WebP up to 2560px on the long side. Archive preserves original bytes only when not compositing lettering; it may retain private workflow metadata. Hiding prompts is a display option, not complete privacy scrubbing.</p>
-</section>
-<section id="sharing"><h2>07 · Sharing editable work</h2><p>Reader HTML, image ZIP and PDF are reader-facing outputs. <code>.mio.zip</code> is an editable series bundle, not an image ZIP or full server backup.</p>
-<p>Export a bundle from an album's "⋯" menu → Export → Editable project, or select several albums in the gallery and use the same format. Import it in Settings → Data &amp; backup → Import .mio.zip. Scripts use the token-protected API: <code>GET /api/v2/series/{id}/bundle</code> and <code>POST /api/v2/bundles</code> (raw ZIP body). Recheck profiles, instance settings and keys after import.</p>
-<h3>Automation and optional extensions</h3>
-<p>External programs use token-protected <code>/api/v2</code>: see the <a href="/api/v2/docs">API reference</a> and <a href="/api/v2/openapi.json">OpenAPI schema</a>. Read the workshop with <code>GET /api/v2/workshop</code>, inspect substitutions with <code>POST /api/v2/workshop/assemble/preview</code>, then assemble with <code>POST /api/v2/workshop/assemble</code>. Supply <code>idempotency_key</code> to avoid duplicate albums when retrying a request. Assembly only creates a snapshot; submit generation separately. Grant read, write, render and admin scopes according to the operations needed.</p>
-<p>Editing, QA, finalization, variants, the script assistant and motion export have backend APIs, without default buttons in the main interface. The repository's <code>examples/extensions/qa-review</code> demonstrates optional QA: installation and activation do not submit work, an explicit command does, and images are never adopted automatically. Disabled or changed extensions reject new calls immediately; reactivation requires a restart to mount new routes. Create the first token locally; subsequent token and extension management is available through the admin-scoped open API. Extension routes also have v2 versions with declared scopes, and enabled extensions can wrap or replace core operations.</p>
-</section>
-<section id="backup"><h2>08 · Data folder & backup</h2><p>Named checkpoints preserve work data before editing. Preview changes before restoring; restoration protects the current state automatically and refuses stale previews, missing references and unfinished jobs. Checkpoints do not copy image files or global service configuration, and require the original work to still exist.</p><p>Root launchers default to <code>server/data/runtime/v3</code>, containing <code>mio.sqlite3</code>, <code>jobs.sqlite3</code> and <code>assets/</code>. <code>--data</code> / <code>MIO_V3_DATA</code> can change this; manual launches resolve relative paths from their working directory.</p>
-<p>Settings → Data &amp; backup can create workspace archives containing both databases, checkpoints and assets. Finish active or uncertain jobs first. Configured keys and API tokens are excluded by default; an advanced option explicitly includes credentials.</p>
-<p>Choose an archive and inspect its counts, then stage and explicitly schedule restoration. Mio first saves a protection backup of the current workspace. Stop and restart the server to install it; closing a browser tab does not stop the server. Further edits after scheduling invalidate the preview, so stage again. You can cancel before restarting.</p>
-<p>Restored extensions, ComfyUI instances and webhooks remain disabled, and the queue is paused. Review configuration before enabling them. The sibling <code>.&lt;workspace-name&gt;.mio-recovery/</code> directory retains the original workspace and protection backups, which include credentials. Archives are limited to 2 GiB, or 4 GiB unpacked; for larger workspaces, stop the service and copy both the entire data folder and recovery directory, including assets.</p>
-<p>The root <code>data/</code> folder holds bundled samples: the first start loads the sample albums, storyboards and presets into the data folder, and later edits to <code>data/</code> are not synced. Deleted works go to the trash in Settings → Data &amp; backup and can be restored during the retention period. To start fresh, back up and launch with an empty <code>--data</code> folder instead of deleting the database.</p>
-</section>
-<section id="files"><h2>09 · Files & formats</h2><p>Data is organized as series, episodes, panels, takes and assets, stored in the data folder's database and <code>assets/</code>; there are no JSON files to edit by hand. Storyboard JSON, preset JSON, album templates (imported from the reader's layout picker), image ZIP and project bundles each have their own purpose. Reusable workflows and render profiles live in Workflows &amp; APIs.</p>
-<p>Creation kits package selected storyboards, presets, character and style details, workflows and referenced assets. Choose Creation kit ZIP in the workshop export picker, or Export → Creation kit in the album menu and select its storyboards and presets. Import first shows a preview; explicitly bind each profile to services or choose Import now, configure later. Select the kit as the storyboard source in the assembly wizard to reuse it without replacing the workshop.</p>
-<p>When creating a task, select a workflow, cloud service or advanced plan directly. Workshop and kit sources both allow a choice for this task without changing source material; explicit panel plans still take priority. Presets supply variables only. Define an exclusions variable yourself and use <code>{exclusions}</code> in a scene's negative prompt. Presets do not append prompts or create a default negative variable.</p>
-<p>Choose a kit in the storyboard or preset workshop's source selector to edit it, or open its editor from the assembly wizard. Switching sources saves current edits first and stays put if saving fails. Kit presets can also create a one-panel standby preview album; generation starts only when explicitly requested. Kit edits affect future assembly, while existing albums keep their snapshots.</p>
-<p>Select panels to copy or move them between episodes in the same work. Organize actions duplicate or reorder episodes and find, preview and rename variables. Transfers preserve takes, framing and the source canvas's whitespace. Locked content and bubbles crossing the selection boundary require explicit choices. Variable operations preserve escaped double braces and candidate history.</p>
-</section>
-<section id="mobile"><h2>10 · LAN access</h2><p>Only if needed, launch with <code>--host 0.0.0.0</code> and visit the computer's LAN IP on port 8788 from a trusted device. 127.0.0.1 on your phone means the phone itself; ComfyUI addresses are resolved by the backend computer.</p>
-<p class="notice warn">Local <code>/api</code> has no login. Host and origin checks are not account protection. Never expose it directly to the public Internet or an untrusted network. Configure <code>MIO_ALLOWED_HOSTS</code> for custom hostnames; automation uses scoped API v2 tokens.</p>
-</section>
-<section id="troubleshooting"><h2>11 · Troubleshooting</h2><ul><li>No visible change: distinguish saving, assembly, generation, candidates and adoption. Check save errors and job details.</li>
-<li>ComfyUI online but jobs fail: check the selected profile, actual model filenames, installed nodes, mappings and init inputs.</li>
-<li>Cloud channel set but still waiting for ComfyUI: check the assembly profile, panel overrides and any explicit API hybrid setting. Adding a channel does not change an existing local profile; a pure cloud profile does not automatically call local stages.</li>
-<li>Unresolved dialogue variables: check the album snapshot, not just the workshop preset.</li>
-<li>Code updated but behavior unchanged: finish jobs and restart Python; rebuild the source UI and restart Vite if its proxy config changed.</li>
-<li>Handbook unavailable in development: backend 8788 must be running. The handbook ships with the server and works offline.</li>
-</ul></section>
-<section id="glossary"><h2>12 · Glossary</h2><p><strong>Storyboard / panel:</strong> reusable workshop Episode / Panel. <strong>Preset:</strong> named text variables. <strong>Album:</strong> a Series with episodes, takes and assets. <strong>Render profile:</strong> the pipeline, not a preset or workflow. <strong>Job:</strong> an execution record. <strong>Take:</strong> an image candidate; adopted takes appear in readers.</p>
-</section>
-<footer>Reviewed 2026-11-14. If a label differs, the page and job details are authoritative.</footer></main></div></body></html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width,initial-scale=1" name="viewport" />
+    <meta
+      content="Mio 绘页：本地优先的故事分镜、多渠道图像生产与画册工作台。创作指南、图像引擎、开放 API 与离线教程。"
+      name="description"
+    />
+    <meta content="#f5f4ec" name="theme-color" />
+    <title>Mio · Stories in frames</title>
+    <link rel="stylesheet" href="/manual/assets/home.css" />
+  </head>
+  <body class="en" data-page="home">
+    <a class="skip-link" href="#main">跳到内容 / Skip to content</a>
+    <div class="wrap">
+      <header class="topbar">
+        <a
+          aria-label="Mio handbook home"
+          class="brand"
+          href="/manual/docs/en/GUIDE.html"
+          ><svg
+            aria-hidden="true"
+            class="brand-icon"
+            fill="none"
+            viewBox="0 0 32 32"
+          >
+            <path
+              d="M16 9C11 4 5 6 3 7v20c5-2 9-1 13 2 4-3 8-4 13-2V7c-3-2-9-2-13 2Zm0 0v20"
+              stroke="currentColor"
+              stroke-width="1.6"
+            ></path>
+            <circle
+              cx="9"
+              cy="13"
+              r="2.5"
+              stroke="currentColor"
+              stroke-width="1.5"
+            ></circle></svg
+          ><span class="wordmark">Mio<i>.</i></span
+          ><span class="brand-note">A SPACE FOR STORIES</span></a
+        >
+        <nav aria-label="Main navigation" class="nav">
+          <a href="#chapters"
+            ><span class="zh">创作指南</span
+            ><span class="en-copy">Handbook</span></a
+          ><a
+            data-section="read-and-share"
+            href="/manual/docs/en/read-and-share.html"
+            ><span class="zh">阅读与分享</span
+            ><span class="en-copy">Read &amp; share</span></a
+          ><a
+            class="language"
+            data-language-link
+            href="/manual/docs/index.html"
+            lang="zh-CN"
+            >中文</a
+          ><a class="nav-app" href="/"
+            ><span class="zh">打开工作台</span
+            ><span class="en-copy">Open studio</span><span>↗</span></a
+          >
+        </nav>
+      </header>
+      <main id="main">
+        <section class="hero">
+          <div class="hero-copy">
+            <div class="eyebrow">
+              <i class="dot"></i> LOCAL-FIRST CREATIVE STUDIO
+            </div>
+            <h1>
+              <span class="zh">让灵感，<br /><em>有页可循。</em></span
+              ><span class="en-copy"
+                >A little story.<br /><em>A world<br />of pages.</em></span
+              >
+            </h1>
+            <p>
+              <span class="zh"
+                >把脑海里的故事，编成分镜、绘成画面、装订成册。<br />从第一幕到最后一页，Mio
+                陪你慢慢完成。</span
+              ><span class="en-copy"
+                >Turn a thought into a scene, a scene into an image,<br />and
+                those images into a book worth keeping.</span
+              >
+            </p>
+            <div class="hero-actions">
+              <a class="pill" href="/manual/docs/en/start.html"
+                ><span class="zh">开始第一本画册</span
+                ><span class="en-copy">Make your first book</span
+                ><span>↗</span></a
+              ><a class="text-link" href="#chapters"
+                ><span class="zh">翻开创作指南</span
+                ><span class="en-copy">Explore the handbook</span> ↓</a
+              >
+            </div>
+            <div class="hero-foot">
+              <span
+                ><span class="zh">本地保存</span
+                ><span class="en-copy">Local-first</span></span
+              ><span
+                ><span class="zh">多渠道出图</span
+                ><span class="en-copy">Multiple providers</span></span
+              ><span
+                ><span class="zh">离线可读</span
+                ><span class="en-copy">Offline reading</span></span
+              >
+            </div>
+          </div>
+          <div aria-label="An illustrated Mio storybook" class="studio-art">
+            <div class="art-grid"></div>
+            <div class="art-orbit"></div>
+            <svg aria-hidden="true" class="spark" viewBox="0 0 30 30">
+              <path
+                d="M15 2c0 9-4 13-13 13 9 0 13 4 13 13 0-9 4-13 13-13-9 0-13-4-13-13Z"
+                stroke-width="1.2"
+              ></path>
+            </svg>
+            <div class="book-back"></div>
+            <div class="book">
+              <div class="book-kicker">
+                <span>MIO ORIGINAL STORIES</span><span>VOL. 01</span>
+              </div>
+              <img
+                alt="A watercolor seaside town and lighthouse"
+                class="art-img"
+                src="/manual/assets/coast.webp"
+              />
+              <div class="book-title">
+                <span class="zh">夏日来信</span
+                ><span class="en-copy">Summer, again.</span>
+              </div>
+              <div class="book-sub">A SMALL STORY BY THE SEA · 12 FRAMES</div>
+            </div>
+            <div class="tiny-badge">
+              <span class="zh">✦ 从一个小小的念头开始</span
+              ><span class="en-copy">✦ Begin with a small idea</span>
+            </div>
+            <div class="postcard">
+              <img
+                alt="A seaside scene on a postcard"
+                class="art-img"
+                src="/manual/assets/coast.webp"
+              />
+              <p>
+                <span class="zh">风，把故事带了回来。</span
+                ><span class="en-copy">A story on the breeze.</span>
+              </p>
+            </div>
+            <span class="art-label">STORIES IN FRAMES / 001</span>
+          </div>
+        </section>
+        <div class="workflow-strip">
+          <span>THE CREATIVE<br />JOURNEY</span>
+          <ol>
+            <li>
+              <b>01</b><span class="zh">编排故事与分镜</span
+              ><span class="en-copy">Compose your scenes</span>
+            </li>
+            <li class="flow-arrow">⟶</li>
+            <li>
+              <b>02</b><span class="zh">选择你的图像引擎</span
+              ><span class="en-copy">Choose a provider</span>
+            </li>
+            <li class="flow-arrow">⟶</li>
+            <li>
+              <b>03</b><span class="zh">生成、阅读与分享</span
+              ><span class="en-copy">Create, read &amp; share</span>
+            </li>
+          </ol>
+        </div>
+        <section class="section" id="chapters">
+          <div class="section-head">
+            <div>
+              <span class="section-label">THE MIO HANDBOOK</span>
+              <h2>
+                <span class="zh">每一段创作，都有入口。</span
+                ><span class="en-copy">Find your next chapter.</span>
+              </h2>
+            </div>
+            <p>
+              <span class="zh"
+                >不必一次学会所有功能。选一条适合你的路线，<br />从此刻最想完成的事情开始。</span
+              ><span class="en-copy"
+                >You don't have to learn everything at once.<br />Start with the
+                part you want to create.</span
+              >
+            </p>
+          </div>
+          <div class="chapters">
+            <article class="chapter">
+              <div class="chapter-head">
+                <span class="chapter-no">01</span
+                ><span class="chapter-tag">CREATE / 编排</span>
+              </div>
+              <div aria-hidden="true" class="chapter-visual">
+                <div class="mini-frames">
+                  <img
+                    alt=""
+                    class="mini-frame art-img"
+                    src="/manual/assets/coast.webp"
+                  /><img
+                    alt=""
+                    class="mini-frame art-img"
+                    src="/manual/assets/coast.webp"
+                  /><img
+                    alt=""
+                    class="mini-frame art-img"
+                    src="/manual/assets/coast.webp"
+                  />
+                </div>
+              </div>
+              <h3>
+                <span class="zh">你的第一本画册</span
+                ><span class="en-copy">Your very first book.</span>
+              </h3>
+              <p>
+                <span class="zh"
+                  >从第一幕到第一张图，选用分镜与角色预设。把一段故事，变成可以翻阅的作品。</span
+                ><span class="en-copy"
+                  >Compose a scene, choose your character presets, and create
+                  your first image. Make a story you can turn the pages
+                  of.</span
+                >
+              </p>
+              <div class="chapter-links">
+                <a class="chapter-link-main" href="/manual/docs/en/start.html"
+                  ><span class="zh">首次创作教程</span
+                  ><span class="en-copy">Getting started</span> ↗</a
+                ><a href="/manual/docs/en/tasks.html"
+                  ><span class="zh">生成任务与队列</span
+                  ><span class="en-copy">Tasks &amp; queue</span></a
+                >
+              </div>
+            </article>
+            <article class="chapter">
+              <div class="chapter-head">
+                <span class="chapter-no">02</span
+                ><span class="chapter-tag">CONNECT / 连接</span>
+              </div>
+              <div class="chapter-visual">
+                <div class="provider-stack">
+                  <span class="provider-chip">ComfyUI</span
+                  ><span class="provider-chip">NovelAI</span
+                  ><span class="provider-chip">OpenAI API</span>
+                </div>
+              </div>
+              <h3>
+                <span class="zh">让工具，跟着故事走</span
+                ><span class="en-copy">Your tools, your way.</span>
+              </h3>
+              <p>
+                <span class="zh"
+                  >自由选择图像渠道，管理模型与本地密钥。保留熟悉的工作流，也拥抱不需要工作流的模型。</span
+                ><span class="en-copy"
+                  >Choose image providers, discover models and keep keys
+                  locally. Use workflows when you need them—not when you
+                  don't.</span
+                >
+              </p>
+              <div class="chapter-links">
+                <a
+                  class="chapter-link-main"
+                  href="/manual/docs/en/connect-a-provider.html"
+                  ><span class="zh">图像服务与密钥</span
+                  ><span class="en-copy">Providers &amp; keys</span> ↗</a
+                ><a data-section="workflow" href="/manual/docs/en/workflow.html"
+                  ><span class="zh">工作流教程</span
+                  ><span class="en-copy">Workflows</span></a
+                >
+              </div>
+            </article>
+            <article class="chapter">
+              <div class="chapter-head">
+                <span class="chapter-no">03</span
+                ><span class="chapter-tag">READ / 阅读</span>
+              </div>
+              <div aria-hidden="true" class="chapter-visual book-visual">
+                <small>MIO ORIGINAL STORIES</small><span>01 · 02 · 03</span
+                ><small>A STORY TO KEEP</small>
+              </div>
+              <h3>
+                <span class="zh">把故事，留在每一页</span
+                ><span class="en-copy">A story worth keeping.</span>
+              </h3>
+              <p>
+                <span class="zh"
+                  >挑选画面，安排留白与对白。翻阅完成的画册，再把作品导出、分享或留作下一次创作的起点。</span
+                ><span class="en-copy"
+                  >Choose your images, arrange the space and dialogue, then
+                  read, export and share the book you made.</span
+                >
+              </p>
+              <div class="chapter-links">
+                <a
+                  class="chapter-link-main"
+                  data-section="read-and-share"
+                  href="/manual/docs/en/read-and-share.html"
+                  ><span class="zh">阅读、排版与导出</span
+                  ><span class="en-copy">Read, letter &amp; export</span> ↗</a
+                ><a data-section="sharing" href="/manual/docs/en/sharing.html"
+                  ><span class="zh">分享可编辑作品</span
+                  ><span class="en-copy">Share editable work</span></a
+                >
+              </div>
+            </article>
+          </div>
+        </section>
+        <section class="library" id="library">
+          <div class="library-head">
+            <h2>
+              <span class="zh">找一个具体的答案。</span
+              ><span class="en-copy">A little more detail.</span>
+            </h2>
+            <label class="search"
+              ><span class="search-label">搜索教程 / Search guides</span
+              ><input
+                autocomplete="off"
+                id="guide-search"
+                placeholder="Find a guide, a key, a backup…"
+                type="search"
+              /><kbd>/</kbd></label
+            >
+          </div>
+          <div class="guide-grid" id="guide-grid">
+            <a
+              class="guide-link"
+              id="start"
+              data-section="start"
+              href="/manual/docs/en/start.html"
+              ><span
+                ><span class="guide-title">Start here</span
+                ><small>INSTALL / FIRST SCENE / FIRST IMAGE</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="connect-a-provider"
+              data-section="connect-a-provider"
+              href="/manual/docs/en/connect-a-provider.html"
+              ><span
+                ><span class="guide-title">Services & keys</span
+                ><small>LOCAL &amp; CLOUD / MODELS / KEYS</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="workflow"
+              data-section="workflow"
+              href="/manual/docs/en/workflow.html"
+              ><span
+                ><span class="guide-title">Workflows & profiles</span
+                ><small>IMPORT / MAPPING / TRIAL</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="variables"
+              data-section="variables"
+              href="/manual/docs/en/variables.html"
+              ><span
+                ><span class="guide-title">Variables & snapshots</span
+                ><small>PRESETS / PROMPTS / SNAPSHOTS</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="tasks"
+              data-section="tasks"
+              href="/manual/docs/en/tasks.html"
+              ><span
+                ><span class="guide-title">Jobs & uncertain results</span
+                ><small>GENERATE / ADOPT / RECOVER</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="read-and-share"
+              data-section="read-and-share"
+              href="/manual/docs/en/read-and-share.html"
+              ><span
+                ><span class="guide-title">Read, letter & export</span
+                ><small>CANVAS / LETTERING / EXPORT</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="sharing"
+              data-section="sharing"
+              href="/manual/docs/en/sharing.html"
+              ><span
+                ><span class="guide-title">Sharing editable work</span
+                ><small>EDITABLE PROJECTS / API / EXTENSIONS</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="backup"
+              data-section="backup"
+              href="/manual/docs/en/backup.html"
+              ><span
+                ><span class="guide-title">Data folder & backup</span
+                ><small>CHECKPOINTS / BACKUP / RESTORE</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="files"
+              data-section="files"
+              href="/manual/docs/en/files.html"
+              ><span
+                ><span class="guide-title">Files & formats</span
+                ><small>CREATION KITS / IMPORT / ORGANIZE</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="mobile"
+              data-section="mobile"
+              href="/manual/docs/en/mobile.html"
+              ><span
+                ><span class="guide-title">LAN access</span
+                ><small>MOBILE READING / TRUSTED LAN</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="troubleshooting"
+              data-section="troubleshooting"
+              href="/manual/docs/en/troubleshooting.html"
+              ><span
+                ><span class="guide-title">Troubleshooting</span
+                ><small>CONNECTIONS / FAILURES / LOGS</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+            <a
+              class="guide-link"
+              id="glossary"
+              data-section="glossary"
+              href="/manual/docs/en/glossary.html"
+              ><span
+                ><span class="guide-title">Glossary</span
+                ><small>STORYBOARDS / PRESETS / TAKES</small></span
+              ><span aria-hidden="true">↗</span></a
+            >
+          </div>
+          <p class="no-results" id="no-results" role="status" hidden>
+            <span class="zh">没有找到相关教程，试试“模型”“密钥”或“备份”。</span
+            ><span class="en-copy"
+              >No matches. Try “models”, “keys” or “backup”.</span
+            >
+          </p>
+        </section>
+        <section class="closing">
+          <div>
+            <h2>
+              <span class="zh">下一页，由你来写。</span
+              ><span class="en-copy">The next page is yours.</span>
+            </h2>
+            <p>
+              <span class="zh"
+                >不必等一个完美的故事。先从一幕开始，就很好。</span
+              ><span class="en-copy"
+                >It doesn't have to be a perfect story. One scene is a lovely
+                start.</span
+              >
+            </p>
+          </div>
+          <a class="pill" href="/"
+            ><span class="zh">进入 Mio 工作台</span
+            ><span class="en-copy">Open your Mio studio</span><span>↗</span></a
+          >
+        </section>
+      </main>
+      <footer class="footer">
+        <a class="brand" href="/manual/docs/en/GUIDE.html"
+          ><span class="wordmark">Mio<i>.</i></span
+          ><span>STORIES IN FRAMES</span></a
+        >
+        <div class="footer-links">
+          <a href="/manual/docs/index.html" lang="zh-CN">中文</a
+          ><a href="/manual/docs/en/GUIDE.html" lang="en">English</a
+          ><a href="#library"
+            ><span class="zh">全部教程</span
+            ><span class="en-copy">All guides</span></a
+          >
+        </div>
+        <span>LOCAL-FIRST · OPEN TO POSSIBILITY</span>
+      </footer>
+    </div>
+    <script src="/manual/assets/manual.js" defer></script>
+  </body>
+</html>
