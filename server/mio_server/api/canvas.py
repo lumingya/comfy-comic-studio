@@ -107,7 +107,9 @@ def pacing_apply(ctx: Ctx, episode_id: str, body: PacingApply) -> Episode:
 @router.get("/episodes/{episode_id}/strip/report")
 def strip_report(ctx: Ctx, episode_id: str, variant_id: str | None = None) -> dict:
     """Readability check of the saved strip (missing lines, faces covered, overlaps …)."""
-    ep = ctx.store.get_episode(episode_id)
+    with ctx.store.lock:
+        ep = ctx.store.get_episode(episode_id)
+        series = ctx.store.get_series(ep.series_id)
     faces = {}
     for panel in ep.ordered_panels():
         take = ep.adopted(panel.id, variant_id)
@@ -115,7 +117,7 @@ def strip_report(ctx: Ctx, episode_id: str, variant_id: str | None = None) -> di
             faces[panel.id] = [
                 {"box": list(f.box), "character": f.character_id} for f in take.faces
             ]
-    return RD.report(ep, ep.strip, faces)
+    return RD.report(series, ep, ep.strip, faces)
 
 
 class CompositionRegion(BaseModel):

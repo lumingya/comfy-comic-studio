@@ -12,9 +12,10 @@ Checks, all geometric and cheap enough to run after every layout:
 
 from __future__ import annotations
 
-from ..models import DialogueKind, Episode, Strip
+from ..models import DialogueKind, Episode, Series, Strip
 from . import layout as LY
 from . import strip as SP
+from . import variables as V
 
 FACE_LIMIT = 0.05
 
@@ -30,24 +31,33 @@ def _face_boxes(panel_box, faces: list[dict]) -> list[tuple]:
 
 
 def report(
-    episode: Episode, strip: Strip, faces: dict | None = None, slice_height: int = 1280
+    series: Series,
+    episode: Episode,
+    strip: Strip,
+    faces: dict | None = None,
+    slice_height: int = 1280,
 ) -> dict:
     faces = faces or {}
     layers = strip.lettering
     placed = {}
     for layer in layers:
+        # Saved lettering is painted literally; only source dialogue uses variables.
         placed.setdefault((layer.panel_id, layer.text), 0)
         placed[(layer.panel_id, layer.text)] += 1
     missing = []
     for panel in episode.ordered_panels():
         if panel.id not in strip.panel_boxes:
             continue
+        values = V.table(series, panel)
         for d in panel.dialogues:
-            key = (panel.id, d.text)
+            text = V.display(d.text, values)
+            if not text.strip():
+                continue
+            key = (panel.id, text)
             if placed.get(key, 0) > 0:
                 placed[key] -= 1
             else:
-                missing.append({"panel_id": panel.id, "text": d.text})
+                missing.append({"panel_id": panel.id, "text": text})
     face_hits, overlaps, order, outside = [], [], [], []
     for i, layer in enumerate(layers):
         box = layer.box
