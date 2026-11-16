@@ -1,0 +1,13 @@
+/* The shared .dialog rules define the surface; native top-layer dialogs center with margins. */
+#board-zoom.board-zoom-dialog {
+  inset: 0;
+  margin: auto;
+  transform: none;
+  color: var(--text);
+  max-height: calc(100dvh - 48px);
+  overscroll-behavior: contain;
+}
+
+#board-zoom::backdrop {
+  background: var(--overlay-background);
+}

@@ -1,20 +1,19 @@
 import { Check, Maximize2, RotateCcw, X } from 'lucide-react';
-import type { MouseEvent } from 'react';
+import { memo, type MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { assetUrl } from '../../api/client';
 import type { ActiveItem } from '../../api/jobs';
 import { useLive } from '../../api/jobs';
 import type { Take } from '../../api/types';
+import type { TakeAction } from '../../api/series';
 import { ActionMenu } from '../../components/ui';
 
-export function TakeCard(props: {
+export const TakeCard = memo(function TakeCard(props: {
   take: Take;
   checked?: boolean;
   context?: boolean;
-  onAdopt: () => void;
-  onReject: () => void;
-  onRestore: () => void;
-  onZoom: () => void;
+  onAction: (take: Take, action: TakeAction) => void;
+  onZoom: (id: string) => void;
   /** Ctrl / Shift click on the image (plain click zooms). */
   onSelect?: (mods: { ctrlKey: boolean; metaKey: boolean; shiftKey: boolean }) => void;
   onContextMenu?: (e: MouseEvent) => void;
@@ -36,7 +35,7 @@ export function TakeCard(props: {
           if (props.onSelect && (e.ctrlKey || e.metaKey || e.shiftKey)) {
             e.preventDefault();
             props.onSelect({ ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey });
-          } else props.onZoom();
+          } else props.onZoom(take.id);
         }}
         aria-label={t('board.zoom')}
       >
@@ -52,14 +51,14 @@ export function TakeCard(props: {
       </div>
       <figcaption className="take-actions">
         {take.status === 'rejected' ? (
-          <button className="btn ghost sm" onClick={props.onRestore}>
+          <button className="btn ghost sm" onClick={() => props.onAction(take, 'restore')}>
             <RotateCcw size={13} /> {t('board.restore')}
           </button>
         ) : (
           <>
             <button
               className={`btn sm ${take.status === 'adopted' ? 'is-adopted' : ''}`}
-              onClick={props.onAdopt}
+              onClick={() => props.onAction(take, 'adopt')}
               disabled={take.status === 'adopted'}
             >
               <Check size={13} />{' '}
@@ -68,7 +67,7 @@ export function TakeCard(props: {
             <button
               className="btn ghost icon sm"
               aria-label={t('board.reject')}
-              onClick={props.onReject}
+              onClick={() => props.onAction(take, 'reject')}
             >
               <X size={14} />
             </button>
@@ -77,13 +76,17 @@ export function TakeCard(props: {
         <span className="grow" />
         <ActionMenu
           actions={[
-            { label: t('board.zoom'), icon: <Maximize2 size={14} />, onSelect: props.onZoom },
+            {
+              label: t('board.zoom'),
+              icon: <Maximize2 size={14} />,
+              onSelect: () => props.onZoom(take.id),
+            },
           ]}
         />
       </figcaption>
     </figure>
   );
-}
+});
 
 /** Placeholder for a queued / running item: live sampler preview + progress when available. */
 export function PendingCard({ item }: { item: ActiveItem }) {

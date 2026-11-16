@@ -1,12 +1,15 @@
 /* Dialogs, menus, tooltips and toasts (Radix portals). */
 
+:root {
+  --overlay-background: rgb(0 0 0 / 0.55);
+}
+
 /* ---- dialog (Radix) ---- */
 .overlay {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgb(0 0 0 / 0.55);
-  backdrop-filter: blur(3px);
+  background: var(--overlay-background);
 }
 
 .overlay[data-state='open'] {

@@ -10,29 +10,31 @@ import {
   RotateCcw,
   X,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { assetUrl } from '../../api/client';
 import { useActiveRenders } from '../../api/jobs';
 import { useRender } from '../../api/production';
 import { useTakeAction, type TakeAction } from '../../api/series';
-import type { Panel, Take } from '../../api/types';
+import type { Take } from '../../api/types';
 import { useSelection } from '../../app/selection';
 import { useUI } from '../../app/ui-store';
 import { ContextMenu, useContextMenu, type ContextGroup } from '../../components/ContextMenu';
 import { toast, toastError } from '../../components/toast';
-import { Empty, Modal, Progress, Switch } from '../../components/ui';
+import { Empty, Progress, Switch } from '../../components/ui';
 import { useEpisodeContext } from '../episode/EpisodePage';
-import { PendingCard, TakeCard } from './TakeCard';
+import { BoardRow } from './BoardRow';
+import { BoardZoomDialog } from './BoardZoomDialog';
 import { CloudRequestDetails, TakeParameterSummary } from '../../components/CloudRequestDetails';
 
 export default function BoardTab() {
   const { t } = useTranslation();
   const { episode } = useEpisodeContext();
-  const ui = useUI();
-  const render = useRender(episode.id);
-  const action = useTakeAction(episode.id);
+  const showRejected = useUI((state) => state.showRejected);
+  const setShowRejected = useUI((state) => state.setShowRejected);
+  const { mutate: render, isPending: rendering } = useRender(episode.id);
+  const { mutate: takeAction, mutateAsync: takeActionAsync } = useTakeAction(episode.id);
   const { byPanel } = useActiveRenders(episode.id);
   const [zoomId, setZoomId] = useState<string | null>(null);
 
@@ -40,17 +42,41 @@ export default function BoardTab() {
     () => [...episode.panels].sort((a, b) => a.order - b.order),
     [episode.panels],
   );
-  // The board shows the base version; takes of other versions stay on the server untouched.
-  const takes = episode.takes.filter((tk) => !tk.variant_id);
-  const takesOf = (p: Panel) =>
-    takes
-      .filter((tk) => tk.panel_id === p.id && (ui.showRejected || tk.status !== 'rejected'))
-      .sort((a, b) => b.created_at.localeCompare(a.created_at));
-  const adopted = takes.filter((tk) => tk.status === 'adopted');
-  const adoptedPanels = new Set(adopted.map((tk) => tk.panel_id)).size;
+  // Index once per data update, rather than scanning and sorting all candidates per row
+  // whenever a selection, context menu or zoom changes. Other variants stay untouched.
+  const takeIndex = useMemo(() => {
+    const byId = new Map<string, Take>();
+    const byPanel = new Map<string, Take[]>();
+    const adopted = new Set<string>();
+    const populated = new Set<string>();
+    for (const take of episode.takes) {
+      if (take.variant_id) continue;
+      byId.set(take.id, take);
+      if (take.status === 'adopted') adopted.add(take.panel_id);
+      if (take.status !== 'rejected') populated.add(take.panel_id);
+      const group = byPanel.get(take.panel_id);
+      if (group) group.push(take);
+      else byPanel.set(take.panel_id, [take]);
+    }
+    for (const group of byPanel.values())
+      group.sort((a, b) => b.created_at.localeCompare(a.created_at));
+    return { byId, byPanel, adoptedPanels: adopted.size, populated };
+  }, [episode.takes]);
+  const rows = useMemo(
+    () =>
+      panels.map((panel) => {
+        const all = takeIndex.byPanel.get(panel.id) ?? [];
+        return {
+          panel,
+          takes: showRejected ? all : all.filter((take) => take.status !== 'rejected'),
+        };
+      }),
+    [panels, takeIndex, showRejected],
+  );
+  const { adoptedPanels } = takeIndex;
   // Zoom works on ids so the dialog follows live data (adopting shows at once).
-  const visible = panels.flatMap((p) => takesOf(p));
-  const visibleIds = useMemo(() => visible.map((tk) => tk.id), [visible]); // eslint-disable-line react-hooks/exhaustive-deps
+  const visible = useMemo(() => rows.flatMap((row) => row.takes), [rows]);
+  const visibleIds = useMemo(() => visible.map((tk) => tk.id), [visible]);
   const selection = useSelection(visibleIds);
   const menu = useContextMenu<DesktopContext>();
   const desktop = useDesktopSelection({
@@ -68,8 +94,8 @@ export default function BoardTab() {
     onCloseContext: menu.close,
   });
 
-  const takeById = (id: string) => takes.find((tk) => tk.id === id);
-  const zoom = visible.find((tk) => tk.id === zoomId) ?? takes.find((tk) => tk.id === zoomId);
+  const takeById = (id: string) => takeIndex.byId.get(id);
+  const zoom = zoomId ? takeIndex.byId.get(zoomId) : undefined;
   const zoomIndex = zoom ? visible.indexOf(zoom) : -1;
   const zoomPanel = zoom ? panels.findIndex((p) => p.id === zoom.panel_id) : -1;
   const step = (delta: number) => {
@@ -77,18 +103,32 @@ export default function BoardTab() {
     const next = visible[(Math.max(zoomIndex, 0) + delta + visible.length) % visible.length];
     setZoomId(next.id);
   };
-  const missing = panels.filter(
-    (p) => !p.locked && !takes.some((tk) => tk.panel_id === p.id && tk.status !== 'rejected'),
+  const missing = useMemo(
+    () => panels.filter((p) => !p.locked && !takeIndex.populated.has(p.id)),
+    [panels, takeIndex],
   );
 
-  const queued = () => toast(t('board.queued'));
-  const run = (panelIds: string[] | null) =>
-    render.mutate(
-      { panel_ids: panelIds, variant_ids: [null] },
-      { onSuccess: queued, onError: toastError },
-    );
-  const act = (take: Take, a: TakeAction) =>
-    action.mutate({ takeId: take.id, action: a }, { onError: toastError });
+  const run = useCallback(
+    (panelIds: string[] | null) =>
+      render(
+        { panel_ids: panelIds, variant_ids: [null] },
+        { onSuccess: () => toast(t('board.queued')), onError: toastError },
+      ),
+    [render, t],
+  );
+  const act = useCallback(
+    (take: Take, a: TakeAction) =>
+      takeAction({ takeId: take.id, action: a }, { onError: toastError }),
+    [takeAction],
+  );
+  const clearSelection = selection.clear;
+  const openZoom = useCallback(
+    (id: string) => {
+      clearSelection();
+      setZoomId(id);
+    },
+    [clearSelection],
+  );
   // Batch: sequential so exclusive adopts settle in list order (last adopted per panel wins).
   const actMany = async (ids: string[], a: TakeAction) => {
     try {
@@ -98,10 +138,10 @@ export default function BoardTab() {
         if (a === 'adopt' && take.status === 'adopted') continue;
         if (a === 'reject' && take.status === 'rejected') continue;
         if (a === 'restore' && take.status !== 'rejected') continue;
-        await action.mutateAsync({ takeId: id, action: a });
+        await takeActionAsync({ takeId: id, action: a });
       }
       toast(t(`board.batch.${a}`, { count: ids.length }));
-      if (a === 'reject' && !ui.showRejected) selection.clear();
+      if (a === 'reject' && !showRejected) selection.clear();
     } catch (error) {
       toastError(error);
     }
@@ -185,11 +225,7 @@ export default function BoardTab() {
   return (
     <div className="board">
       <div className="board-toolbar">
-        <Switch
-          checked={ui.showRejected}
-          onChange={ui.setShowRejected}
-          label={t('board.showRejected')}
-        />
+        <Switch checked={showRejected} onChange={setShowRejected} label={t('board.showRejected')} />
         <span className="board-summary small muted">
           {t('series.adoptedOf', { done: adoptedPanels, total: panels.length })}
           <Progress
@@ -200,12 +236,12 @@ export default function BoardTab() {
         <span className="grow" />
         <button
           className="btn"
-          disabled={!missing.length || render.isPending}
+          disabled={!missing.length || rendering}
           onClick={() => run(missing.map((p) => p.id))}
         >
           {t('board.renderMissing', { count: missing.length })}
         </button>
-        <button className="btn primary" disabled={render.isPending} onClick={() => run(null)}>
+        <button className="btn primary" disabled={rendering} onClick={() => run(null)}>
           <Play size={15} /> {t('board.renderAll')}
         </button>
       </div>
@@ -242,56 +278,26 @@ export default function BoardTab() {
           </div>
         ) : null}
         <div className="board-rows">
-          {panels.map((p, i) => {
-            const list = takesOf(p);
-            const pending = (byPanel[p.id] ?? []).filter((it) => !it.variantId);
-            return (
-              <section key={p.id} className="board-row">
-                <header className="board-row-head">
-                  <span className="panel-no mono">{String(i + 1).padStart(2, '0')}</span>
-                  <div className="grow">
-                    <div className="small">
-                      {p.shot ? <span className="chip">{t(`script.shots.${p.shot}`)}</span> : null}{' '}
-                      {p.description || p.dialogues[0]?.text}
-                    </div>
-                  </div>
-                  <Link className="btn ghost sm" to={`../script?panel=${p.id}`}>
-                    {t('common.edit')}
-                  </Link>
-                  <button
-                    className="btn sm"
-                    disabled={render.isPending}
-                    onClick={() => run([p.id])}
-                  >
-                    <Play size={13} /> {t('board.render')}
-                  </button>
-                </header>
-                <div className="take-strip">
-                  {pending.map((it) => (
-                    <PendingCard key={`${it.jobId}:${it.idx}`} item={it} />
-                  ))}
-                  {list.map((tk) => (
-                    <TakeCard
-                      key={tk.id}
-                      take={tk}
-                      checked={selection.has(tk.id)}
-                      context={menu.state?.payload.focusId === tk.id}
-                      onAdopt={() => act(tk, 'adopt')}
-                      onReject={() => act(tk, 'reject')}
-                      onRestore={() => act(tk, 'restore')}
-                      onZoom={() => {
-                        selection.clear();
-                        setZoomId(tk.id);
-                      }}
-                    />
-                  ))}
-                  {!list.length && !pending.length ? (
-                    <div className="take empty small muted">{t('board.noTakes')}</div>
-                  ) : null}
-                </div>
-              </section>
-            );
-          })}
+          {rows.map(({ panel, takes }, index) => (
+            <BoardRow
+              key={panel.id}
+              panel={panel}
+              index={index}
+              takes={takes}
+              pending={(byPanel[panel.id] ?? []).filter((item) => !item.variantId)}
+              selected={selection.set}
+              contextId={
+                menu.state?.payload.focusId &&
+                takeById(menu.state.payload.focusId)?.panel_id === panel.id
+                  ? menu.state.payload.focusId
+                  : undefined
+              }
+              rendering={rendering}
+              onRender={run}
+              onAction={act}
+              onZoom={openZoom}
+            />
+          ))}
         </div>
       </div>
       {menu.state ? (
@@ -303,11 +309,9 @@ export default function BoardTab() {
           onClose={menu.close}
         />
       ) : null}
-      <Modal
-        id="board-zoom"
+      <BoardZoomDialog
         open={!!zoom}
         onOpenChange={(o) => !o && setZoomId(null)}
-        size="lg"
         title={
           zoom
             ? `${t('script.panelNo', { n: zoomPanel + 1 })} · ${zoomIndex + 1} / ${visible.length}`
@@ -360,7 +364,7 @@ export default function BoardTab() {
             <CloudRequestDetails snapshot={zoom.cloud_request} />
           </>
         ) : null}
-      </Modal>
+      </BoardZoomDialog>
     </div>
   );
 }
