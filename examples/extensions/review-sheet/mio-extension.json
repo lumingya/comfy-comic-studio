@@ -1,0 +1,7 @@
+{
+  "id": "review-sheet",
+  "name": "审稿联系表",
+  "version": "0.1.0",
+  "description": "把已排版画面导出为可离线打印的缩略图审稿表，不修改作品。",
+  "main": "main.py"
+}
