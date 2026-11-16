@@ -19,6 +19,7 @@ import io
 import json
 import zipfile
 
+from .asset_refs import referenced_assets
 from .models import Episode, Series, new_id
 from .render_models import RenderProfile, WorkflowDoc
 from .storage import NotFound
@@ -31,26 +32,6 @@ MAX_UNPACKED = 4 * 1024**3  # zip-bomb guard: total uncompressed bytes
 
 class BundleError(ValueError):
     pass
-
-
-def _asset_ids(series: Series, episodes: list[Episode]) -> set[str]:
-    ids: set[str] = {series.cover_asset_id} if series.cover_asset_id else set()
-    b = series.bible
-    for item in [*b.characters, *b.locations, *b.props, *b.styles]:
-        ids.update(r.asset_id for r in item.references)
-    for ep in episodes:
-        for p in ep.panels:
-            ids.update(r.asset_id for r in p.references)
-        for t in ep.takes:
-            ids.add(t.asset_id)
-            if t.cloud_request:
-                ids.update(r.asset_id for r in t.cloud_request.requested.refs)
-                ids.update(r.asset_id for r in t.cloud_request.effective.refs)
-            for e in t.edits:
-                mask = e.params.get("mask_asset_id")
-                if isinstance(mask, str):
-                    ids.add(mask)
-    return ids
 
 
 def _profile_ids(series: Series, episodes: list[Episode]) -> set[str]:
@@ -88,14 +69,15 @@ def export_series(store, assets, series_id: str) -> bytes:
             z.writestr(f"workflows/{doc.id}.json", doc.model_dump_json(indent=1))
         for prof in profiles:
             z.writestr(f"profiles/{prof.id}.json", prof.model_dump_json(indent=1))
-        for aid in sorted(_asset_ids(series, episodes)):
+        for aid in sorted(referenced_assets(series, episodes, [*profiles, *workflows])):
             try:
                 path = assets.path(aid)
-            except NotFound:
-                continue
-            if path.exists():
+                if not path.is_file():
+                    raise NotFound(f"asset file missing: {aid}")
                 z.write(path, f"assets/{path.name}", compress_type=zipfile.ZIP_STORED)
-                asset_count += 1
+            except (NotFound, OSError):
+                raise BundleError(f"作品包缺少或无法读取素材：{aid}") from None
+            asset_count += 1
         manifest = {
             "format": FORMAT,
             "version": VERSION,
