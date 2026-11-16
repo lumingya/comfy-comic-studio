@@ -1,8 +1,8 @@
 """Coordinate work management with job planning without locking result callbacks out.
 
 Order: operation lock -> engine lock (short inspection) -> release engine lock -> work store.
-Completion keeps its existing job guard and never waits for the operation lock. Callbacks
-that start follow-up work fail fast under contention, leaving their durable result replayable.
+Completion callbacks never wait for the operation lock while holding their job guard. A worker
+may reapply a replay-safe result after releasing that guard when follow-up planning contends.
 """
 
 from contextlib import contextmanager
@@ -10,6 +10,10 @@ from functools import wraps
 from typing import Iterable
 
 from .types import JobConflict
+
+
+class OperationBusy(JobConflict):
+    """A callback cannot wait for planning while it holds a result or database lock."""
 
 
 def operation_serialized(fn):
@@ -30,7 +34,7 @@ class OperationRuntime:
         """Acquire before reading mutable work for a future submission, never under store.lock."""
         callback = getattr(self._callback_context, "active", False)
         if not self._operation_lock.acquire(blocking=not callback):
-            raise JobConflict("work management is in progress; retry this operation afterwards")
+            raise OperationBusy("work management is in progress; retry this operation afterwards")
         try:
             yield
         finally:

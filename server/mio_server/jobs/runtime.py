@@ -12,7 +12,7 @@ import threading
 import time
 from contextlib import contextmanager
 
-from .operations import operation_serialized
+from .operations import OperationBusy, operation_serialized
 from .pool import COMFY, LOCAL, Candidate
 from .types import (  # noqa: F401
     ITEM_STATES,
@@ -215,9 +215,24 @@ class EngineRuntime:
             ctx.raise_if_cancelled()
             entered_executor = True
             result = executor.execute(ctx)
-            self._finish(
-                ctx.job_id, ctx.idx, ctx.epoch, "complete", result=result or {}, apply=True
-            )
+            try:
+                self._finish(
+                    ctx.job_id,
+                    ctx.idx,
+                    ctx.epoch,
+                    "complete",
+                    result=result or {},
+                    apply=True,
+                    defer_busy=True,
+                )
+            except OperationBusy:
+                # The received result is durable. Leave the result guard before waiting for
+                # planning, then apply that same result once with the safe lock order. Keep
+                # its epoch so cancellation during the wait still wins. Never re-execute.
+                with self.hold_operation():
+                    self._finish(
+                        ctx.job_id, ctx.idx, ctx.epoch, "complete", result=result or {}, apply=True
+                    )
         except ExecError as exc:
             sent = exc.sent if exc.sent is not None else self._was_sent(ctx)
             state = "canceled" if isinstance(exc, Canceled) else ("uncertain" if sent else "failed")
@@ -297,11 +312,15 @@ class EngineRuntime:
         result: dict | None = None,
         error: dict | None = None,
         apply: bool = False,
+        *,
+        defer_busy: bool = False,
     ) -> None:
         with self._job_guard(job_id, command=True):
-            self._finish_guarded(job_id, idx, epoch, state, result, error, apply)
+            self._finish_guarded(job_id, idx, epoch, state, result, error, apply, defer_busy)
 
-    def _finish_guarded(self, job_id, idx, epoch, state, result, error, apply) -> None:
+    def _finish_guarded(
+        self, job_id, idx, epoch, state, result, error, apply, defer_busy=False
+    ) -> None:
         now = time.time()
         with self.lock:
             row = self.db.execute(
@@ -358,6 +377,8 @@ class EngineRuntime:
                             result,
                         )
                 except Exception as exc:
+                    if isinstance(exc, OperationBusy) and defer_busy and binding.replay_safe:
+                        raise
                     log.exception("on_complete failed")
                     state, error = (
                         "failed",

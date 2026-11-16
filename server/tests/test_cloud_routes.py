@@ -1,6 +1,7 @@
 """Cloud routes and immutable local follow-up plans, without external services."""
 
 import copy
+import threading
 from types import SimpleNamespace
 from unittest import mock
 
@@ -101,6 +102,56 @@ class CloudRouteTests(Harness):
         self.store.delete_doc("profile", profile.id)
         self.store.delete_doc("workflow", profile.final[0].workflow_id)
         self.check_frozen(job, plan)
+
+    def test_hybrid_completion_contended_by_planning_keeps_one_request_and_followup(self):
+        profile = self.cloud_profile(cloud_refine=True)
+        self.engine.pool.set_instances([])
+        job = self.submit(profile, adopt_first=True)
+        entered, release, contended = (threading.Event() for _ in range(3))
+        self.addCleanup(release.set)
+        operation_lock = self.engine._operation_lock
+        main_thread = threading.get_ident()
+
+        class ObservedLock:
+            def acquire(self, blocking=True):
+                if threading.get_ident() == main_thread:
+                    return operation_lock.acquire(blocking=blocking)
+                acquired = operation_lock.acquire(blocking=False)
+                if acquired:
+                    return True
+                contended.set()
+                return operation_lock.acquire() if blocking else False
+
+            def release(self):
+                operation_lock.release()
+
+        def panel(*args, **kwargs):
+            entered.set()
+            if not release.wait(2):
+                raise TimeoutError("test did not release the cloud response")
+            return FakeCloudRenderer(None).panel(*args, **kwargs)
+
+        renderer = mock.Mock()
+        renderer.panel.side_effect = panel
+        with mock.patch.object(self.engine, "_operation_lock", ObservedLock()):
+            with mock.patch.object(cloud_jobs, "CloudRenderer", return_value=renderer):
+                self.assertEqual(self.engine.tick(), 1)
+                self.assertTrue(entered.wait(2))
+                with self.engine.hold_operation():
+                    release.set()
+                    self.assertTrue(contended.wait(2))
+                done = self.engine.wait(job["id"])
+        self.assertEqual(done["state"], "completed", done["items"][0]["error"])
+        self.assertEqual(done["items"][0]["attempts"], 1)
+        renderer.panel.assert_called_once()
+        ep = self.store.get_episode(self.episode.id)
+        self.assertEqual(len(ep.takes), 1)
+        self.assertIsNone(ep.adopted("p02"))
+        refinements = [j for j in self.engine.list() if j["kind"] == "comfy.render"]
+        self.assertEqual(len(refinements), 1)
+        self.assertEqual(refinements[0]["idempotency_key"], f"refine:{ep.takes[0].id}")
+        self.assertEqual(self.engine.deliveries(job["id"])[0]["state"], "applied")
+        self.assertNotIn("failed", [event["type"] for event in self.engine.events(job["id"])])
 
     def test_refinement_submission_stays_idempotent_after_manual_parent_adoption(self):
         profile = self.cloud_profile(cloud_refine=True)
