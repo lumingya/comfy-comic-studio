@@ -95,6 +95,13 @@ def export_series(store, assets, series_id: str) -> bytes:
 
 
 def import_series(store, assets, data: bytes) -> dict:
+    # Nested store writes share this transaction: failed imports must not leave a partial
+    # album or visible recipe/asset metadata. Content-addressed files can safely be reused.
+    with store.tx():
+        return _import_series(store, assets, data)
+
+
+def _import_series(store, assets, data: bytes) -> dict:
     try:
         z = zipfile.ZipFile(io.BytesIO(data))
     except zipfile.BadZipFile:
@@ -122,21 +129,25 @@ def import_series(store, assets, data: bytes) -> dict:
                     bad.append(name)
                     continue
                 assets.put(blob, source="bundle")
-        for name in names:
-            if name.startswith("workflows/") and name.endswith(".json"):
-                doc = WorkflowDoc.model_validate_json(z.read(name))
-                if not _exists(store, "workflow", doc.id):
-                    store.put_doc(doc)
-            elif name.startswith("profiles/") and name.endswith(".json"):
-                prof = RenderProfile.model_validate_json(z.read(name))
-                if not _exists(store, "profile", prof.id):
-                    store.put_doc(prof)
+        workflows = [
+            WorkflowDoc.model_validate_json(z.read(name))
+            for name in names
+            if name.startswith("workflows/") and name.endswith(".json")
+        ]
+        profiles = [
+            RenderProfile.model_validate_json(z.read(name))
+            for name in names
+            if name.startswith("profiles/") and name.endswith(".json")
+        ]
         series = Series.model_validate_json(z.read("series.json"))
         episodes = [
             Episode.model_validate_json(z.read(n))
             for n in names
             if n.startswith("episodes/") and n.endswith(".json")
         ]
+    _remap_recipes(store, series, episodes, profiles, workflows)
+    for doc in [*workflows, *profiles]:
+        store.put_doc(doc)
     renamed = False
     try:
         store.get_series(series.id, include_deleted=True)
@@ -160,6 +171,56 @@ def import_series(store, assets, data: bytes) -> dict:
         "renamed": renamed,
         "bad_assets": bad,
     }
+
+
+def _remap_recipes(store, series, episodes, profiles, workflows) -> None:
+    """Keep imported recipes independent of destination IDs, including frozen snapshots."""
+    profile_ids = {
+        doc.id: new_id("profile") for doc in profiles if _exists(store, "profile", doc.id)
+    }
+    workflow_ids = {doc.id: new_id("wf") for doc in workflows if _exists(store, "workflow", doc.id)}
+
+    def remap_profile(profile):
+        profile.id = profile_ids.get(profile.id, profile.id)
+        for stage in [*profile.draft, *profile.final, *profile.edits.values()]:
+            stage.workflow_id = workflow_ids.get(stage.workflow_id, stage.workflow_id)
+        return profile
+
+    for workflow in workflows:
+        workflow.id = workflow_ids.get(workflow.id, workflow.id)
+    for profile in profiles:
+        remap_profile(profile)
+    series.default_profile_id = profile_ids.get(
+        series.default_profile_id, series.default_profile_id
+    )
+    for variant in series.variants:
+        variant.profile_id = profile_ids.get(variant.profile_id, variant.profile_id)
+    for episode in episodes:
+        for panel in episode.panels:
+            panel.overrides.profile_id = profile_ids.get(
+                panel.overrides.profile_id, panel.overrides.profile_id
+            )
+    frozen = series.generation
+    if frozen:
+        frozen.profile_id = profile_ids.get(frozen.profile_id, frozen.profile_id)
+        frozen.workflow_id = workflow_ids.get(frozen.workflow_id, frozen.workflow_id)
+        if frozen.profile:
+            frozen.profile = remap_profile(
+                RenderProfile.model_validate(frozen.profile)
+            ).model_dump()
+        frozen.profiles = {
+            profile_ids.get(pid, pid): remap_profile(
+                RenderProfile.model_validate(data)
+            ).model_dump()
+            for pid, data in frozen.profiles.items()
+        }
+        frozen.workflows = {
+            workflow_ids.get(wid, wid): {
+                **data,
+                "id": workflow_ids.get(data.get("id"), data.get("id")),
+            }
+            for wid, data in frozen.workflows.items()
+        }
 
 
 def _exists(store, kind: str, doc_id: str) -> bool:
