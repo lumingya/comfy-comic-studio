@@ -341,7 +341,7 @@ Portable 的 `show_captions` 只控制 ZIP 阅读页，PDF 仅含图片。HTML �
 | `/mio 任务` | 查看进行中的任务 |
 | `/mio 作品` | 列出作品 |
 
-插件配置项：`base_url`、`token`、`allowed_ids`（允许出图的用户，留空表示所有人）、`series_title`、`candidates`、`strip_width`、`timeout`、`render_timeout`。令牌需要 `read + write + render` 权限。
+插件配置项：`base_url`、`token`、`allowed_ids`（允许出图的用户，留空表示仅 AstrBot 管理员）、`series_title`、`candidates`、`strip_width`、`timeout`、`render_timeout`。令牌需要 `read + write + render` 权限。
 
 ## Webhook
 
