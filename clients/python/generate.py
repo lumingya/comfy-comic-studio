@@ -60,8 +60,12 @@ def method_source(path: str, verb: str, op: dict) -> str:
     args = ["self"] + [f"{py_name(p['name'])}: {py_type(p.get('schema', {}))}" for p in path_params]
     if body:
         media = next(iter(body.get("content", {"application/json": {}})))
-        binary = media != "application/json"
-        args.append("body: bytes" if binary else "body: dict | list | None = None")
+        if media == "multipart/form-data":
+            args.append("files: list[tuple[str, tuple[str, bytes]]]")
+        else:
+            args.append(
+                "body: dict | list | None = None" if media == "application/json" else "body: bytes"
+            )
     if query:
         args.append("*")
         for p in query:
@@ -84,7 +88,10 @@ def method_source(path: str, verb: str, op: dict) -> str:
         pairs = ", ".join(f'"{p["name"]}": {py_name(p["name"])}' for p in query)
         call.append(f"params={{{pairs}}}")
     if body:
-        call.append("content=body" if binary else "json=body")
+        if media == "multipart/form-data":
+            call.append("files=files")
+        else:
+            call.append("json=body" if media == "application/json" else "content=body")
     lines += wrap("        return self._request(", call, ")", 8)
     return "\n".join(lines)
 

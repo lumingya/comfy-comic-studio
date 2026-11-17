@@ -1949,7 +1949,7 @@ export interface paths {
         put?: never;
         /**
          * Import Theme
-         * @description Import a theme file (JSON).  Built-in and extension ids cannot be overwritten.
+         * @description Import a theme JSON document. Built-in, package and extension IDs cannot be overwritten.
          */
         post: operations["import_theme_api_themes_post"];
         delete?: never;
@@ -1988,11 +1988,51 @@ export interface paths {
         };
         /**
          * Export Theme Package
-         * @description Download an inert extension folder as a ZIP, ready to import on another installation.
+         * @description Download an inert theme folder as a ZIP, ready to import on another installation.
          */
         get: operations["export_theme_package_api_themes__theme_id__package_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/themes/package": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Theme Package
+         * @description Install a data-only theme ZIP into the workspace theme folder.
+         */
+        post: operations["import_theme_package_api_themes_package_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/themes/folder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Import Theme Folder
+         * @description Install a directly selected theme folder without routing it through extensions.
+         */
+        post: operations["import_theme_folder_api_themes_folder_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -10689,7 +10729,9 @@ export interface operations {
     };
     remove_extension_api_extensions__ext_id__delete: {
         parameters: {
-            query?: never;
+            query?: {
+                delete_data?: boolean;
+            };
             header?: never;
             path: {
                 ext_id: string;
@@ -10984,6 +11026,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_theme_package_api_themes_package_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/zip": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+        };
+    };
+    import_theme_folder_api_themes_folder_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    files: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
                 };
             };
         };

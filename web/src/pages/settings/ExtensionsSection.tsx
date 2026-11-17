@@ -1,4 +1,3 @@
-import { confirm } from '../../components/confirm';
 import { QueryError } from '../../app/errors';
 import { FolderOpen, Package, Power, PowerOff, ShieldAlert, Trash2, Upload } from 'lucide-react';
 import { useRef, useState } from 'react';
@@ -88,7 +87,9 @@ function ExtensionCard({ ext, onTrust }: { ext: ExtensionInfo; onTrust: () => vo
   const surfaces = useWorkspaceSurfaces();
   const surface = surfaces.data?.items.find((item) => item.extension_id === ext.id);
   const action = useExtensionAction();
-  const run = (name: string) =>
+  const [removing, setRemoving] = useState(false);
+  const [deleteData, setDeleteData] = useState(false);
+  const run = (name: 'enable' | 'disable') =>
     action.mutate({ id: ext.id, action: name }, { onError: toastError });
   return (
     <div className="card ext-card">
@@ -156,23 +157,56 @@ function ExtensionCard({ ext, onTrust }: { ext: ExtensionInfo; onTrust: () => vo
         {!ext.builtin ? (
           <button
             className="btn ghost icon sm danger"
-            aria-label={t('common.delete')}
+            aria-label={t('settings.ext.uninstall')}
             disabled={action.isPending}
-            onClick={async () => {
-              if (
-                await confirm({
-                  title: t('settings.ext.confirmRemove'),
-                  confirmLabel: t('common.delete'),
-                  danger: true,
-                })
-              )
-                run('remove');
+            onClick={() => {
+              setDeleteData(false);
+              setRemoving(true);
             }}
           >
             <Trash2 size={13} />
           </button>
         ) : null}
       </div>
+      <Modal
+        open={removing}
+        onOpenChange={(open) => !action.isPending && setRemoving(open)}
+        title={t('settings.ext.uninstallTitle', { name: ext.name })}
+        description={t('settings.ext.keepData')}
+        footer={
+          <>
+            <button
+              className="btn ghost"
+              disabled={action.isPending}
+              onClick={() => setRemoving(false)}
+            >
+              {t('common.cancel')}
+            </button>
+            <button
+              className="btn danger"
+              disabled={action.isPending}
+              onClick={() =>
+                action.mutate(
+                  { id: ext.id, action: 'remove', deleteData },
+                  { onSuccess: () => setRemoving(false), onError: toastError },
+                )
+              }
+            >
+              <Trash2 size={14} /> {t('settings.ext.uninstall')}
+            </button>
+          </>
+        }
+      >
+        <label className="row small soft" style={{ gap: 8 }}>
+          <input
+            type="checkbox"
+            checked={deleteData}
+            disabled={action.isPending}
+            onChange={(event) => setDeleteData(event.target.checked)}
+          />
+          {t('settings.ext.deleteData')}
+        </label>
+      </Modal>
     </div>
   );
 }

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import math
+import secrets
 import time
 import urllib.error
 import urllib.parse
@@ -37,6 +38,33 @@ def _q(value: Any) -> str:
     return urllib.parse.quote(str(value), safe="")
 
 
+def _multipart(files: list[tuple[str, tuple[str, bytes]]]) -> tuple[bytes, str]:
+    """Encode repeated file fields; each entry is ``(field, (filename, bytes))``."""
+
+    def quoted(value: str) -> str:
+        if (
+            not isinstance(value, str)
+            or not value
+            or any(ord(c) < 32 or ord(c) == 127 for c in value)
+        ):
+            raise ValueError("multipart names must be non-empty and contain no control characters")
+        return value.replace("\\", "\\\\").replace('"', '\\"')
+
+    boundary = "mio-" + secrets.token_hex(24)
+    chunks = []
+    for field, (filename, content) in files:
+        name, filename = quoted(field), quoted(filename)
+        if not isinstance(content, bytes):
+            raise TypeError("multipart file content must be bytes")
+        header = (
+            f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"; '
+            f'filename="{filename}"\r\nContent-Type: application/octet-stream\r\n\r\n'
+        )
+        chunks.extend((header.encode("utf-8"), content, b"\r\n"))
+    chunks.append(f"--{boundary}--\r\n".encode("ascii"))
+    return b"".join(chunks), f"multipart/form-data; boundary={boundary}"
+
+
 class _Base:
     def __init__(self, base_url: str = "http://127.0.0.1:8788", token: str = "", timeout=120.0):
         self.base = base_url.rstrip("/") + "/api/v2"
@@ -44,8 +72,18 @@ class _Base:
         self.timeout = timeout
 
     def _request(
-        self, method: str, path: str, *, params=None, json=None, content=None, timeout=None
+        self,
+        method: str,
+        path: str,
+        *,
+        params=None,
+        json=None,
+        content=None,
+        files=None,
+        timeout=None,
     ) -> Any:
+        if sum(value is not None for value in (json, content, files)) > 1:
+            raise ValueError("choose one request body: json, content or files")
         url = self.base + path
         query = {k: v for k, v in (params or {}).items() if v is not None}
         if query:
@@ -62,6 +100,8 @@ class _Base:
         elif content is not None:
             data = content
             headers["Content-Type"] = "application/octet-stream"
+        elif files is not None:
+            data, headers["Content-Type"] = _multipart(files)
         req = urllib.request.Request(url, data=data, method=method, headers=headers)
         try:
             with urllib.request.urlopen(
@@ -1099,9 +1139,13 @@ class MioClient(_Base):
         """POST /extensions/{ext_id}/disable — Disable Extension."""
         return self._request("POST", f"/extensions/{_q(ext_id)}/disable")
 
-    def remove_extension(self, ext_id: str) -> Any:
+    def remove_extension(self, ext_id: str, *, delete_data: bool | None = None) -> Any:
         """DELETE /extensions/{ext_id} — Remove Extension."""
-        return self._request("DELETE", f"/extensions/{_q(ext_id)}")
+        return self._request(
+            "DELETE",
+            f"/extensions/{_q(ext_id)}",
+            params={"delete_data": delete_data},
+        )
 
     def get_extension_settings(self, ext_id: str) -> Any:
         """GET /extensions/{ext_id}/settings — Get Extension Settings.
@@ -1142,7 +1186,7 @@ class MioClient(_Base):
     def import_theme(self, body: dict | list | None = None) -> Any:
         """POST /themes — Import Theme.
 
-        Import a theme file (JSON).  Built-in and extension ids cannot be overwritten.
+        Import a theme JSON document. Built-in, package and extension IDs cannot be overwritten.
         """
         return self._request("POST", "/themes", json=body)
 
@@ -1160,9 +1204,23 @@ class MioClient(_Base):
     def export_theme_package(self, theme_id: str) -> Any:
         """GET /themes/{theme_id}/package — Export Theme Package.
 
-        Download an inert extension folder as a ZIP, ready to import on another installation.
+        Download an inert theme folder as a ZIP, ready to import on another installation.
         """
         return self._request("GET", f"/themes/{_q(theme_id)}/package")
+
+    def import_theme_package(self, body: bytes) -> Any:
+        """POST /themes/package — Import Theme Package.
+
+        Install a data-only theme ZIP into the workspace theme folder.
+        """
+        return self._request("POST", "/themes/package", content=body)
+
+    def import_theme_folder(self, files: list[tuple[str, tuple[str, bytes]]]) -> Any:
+        """POST /themes/folder — Import Theme Folder.
+
+        Install a directly selected theme folder without routing it through extensions.
+        """
+        return self._request("POST", "/themes/folder", files=files)
 
     def list_creation_kits(self) -> Any:
         """GET /creation-kits — List Creation Kits."""

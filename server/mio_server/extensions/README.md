@@ -26,6 +26,8 @@ my-ext/
 └── panel.html           可选：界面面板
 ```
 
+运行数据统一放在 `<数据目录>/extensions_data/<id>/`，通过 `mio.data_dir` 获取。`settings.json` 由 SDK 设置接口使用；扩展自己的配置和文件使用其他名称或子目录，不写入程序包。卸载时默认保留此目录，用户勾选「同时删除扩展数据」后才删除；开放 API 对应 `DELETE /extensions/<id>?delete_data=true`。独立主题使用单独的 `themes/` 目录。
+
 ## `mio-extension.json`
 
 ```json
@@ -57,6 +59,8 @@ my-ext/
 - 所有路径都相对于扩展目录。绝对路径和 `..` 都会被拒绝。
 
 ## 主题
+
+扩展可以通过 `contributes.themes` 附带主题；这些主题随扩展启用和停用。独立主题不是扩展，使用 `themes/<id>/mio-theme.json` 与 `theme.json` 包格式，在「设置 → 外观与阅读」单独导入和管理。示例见仓库根目录 `themes/`。
 
 ```json
 {
@@ -135,10 +139,10 @@ def deactivate():  # 可选：停用时调用
 | `mio.submit_job(kind, items, snapshot=None, *, owner="", title="", idempotency_key=None)` | 提交本次启用且当前选中的执行器，`items` 使用 `mio_server.jobs.ItemSpec` |
 | `mio.router` | FastAPI `APIRouter`，启用时动态挂在 `/api/ext/<id>` 与 `/api/v2/ext/<id>`；v2 默认要求 admin |
 | `mio.service(value)` | 注册本扩展服务对象，停用和失败激活时回收；可提供 `close()` |
-| `mio.active`、`mio.data_dir`、`mio.host_app` | 当前激活状态、扩展专属数据目录 `<工作区数据目录>/<扩展 id>/`、宿主 ASGI 应用 |
+| `mio.active`、`mio.data_dir`、`mio.host_app` | 当前激活状态、扩展专属数据目录 `<工作区数据目录>/extensions_data/<扩展 id>/`、宿主 ASGI 应用 |
 | `mio.route(method, path, scope="admin", **kwargs)` | 注册有明确权限的自定义路由，例如只读查询用 `scope="read"`，出图用 `scope="render"` |
 | `mio.operation(id)` | 包装界面和 v2 共用的核心操作，参见下节 |
-| `mio.load_settings()` / `mio.save_settings(data)` | 扩展自己的 JSON 设置，存在 `<数据目录>/extension-data/<id>.json`，顶层对象、单文件最多 1 MiB；原子保存并随工作区备份恢复，含凭据时需明确选择包含凭据 |
+| `mio.load_settings()` / `mio.save_settings(data)` | 扩展自己的 JSON 设置，存在 `<数据目录>/extensions_data/<id>/settings.json`，顶层对象、单文件最多 1 MiB；原子保存并随工作区备份恢复，含凭据时需明确选择包含凭据 |
 | `mio.log` | `logging.Logger`，名字是 `mio.ext.<id>` |
 | `mio.internal` | 整个 `AppContext`（全部存储和服务）。这是**不稳定**的后门，可能随版本变化 |
 

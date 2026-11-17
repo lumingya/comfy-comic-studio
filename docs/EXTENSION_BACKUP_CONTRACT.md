@@ -8,7 +8,7 @@
 
 | 属性或方法 | 责任 |
 | --- | --- |
-| `root: str` | 工作区内独占的一级数据目录，不得占用 `assets`、`extension-data`、`extensions` 或 `updates` |
+| `root: str` | 固定为 `extensions_data/<扩展 id>`，只能声明所属扩展的数据；其中 `settings.json` 由宿主 SDK 管理，不由参与者重复处理 |
 | `allowed(name)` | 判断完整工作区相对路径是否属于该扩展允许的文件 |
 | `size_limit(name)` | 单文件字节上限；ZIP 解压前检查 |
 | `files(workspace, include_credentials=True)` | 逐项返回 `(相对路径, Path)`；校验目录、JSON、附件引用和文件配对；禁止链接、越界和临时文件 |
@@ -28,4 +28,4 @@
 python -m mio_server.backups inspect work.mio-workspace.zip --data /path/to/workspace
 ```
 
-AI 辅助的具体渠道、对话和图片规则位于它自己的 `core/backup.py`，主程序的备份模块只使用上述通用接口。
+AI 辅助的具体渠道、对话和图片规则位于它自己的 `core/backup.py`，主程序的备份模块只使用上述通用接口。其配置使用 `extensions_data/ai-assist/config.json`，避免与 SDK 的通用 `settings.json` 重名。卸载默认保留整个所属数据目录，只有用户选择一并删除时才清除。

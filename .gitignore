@@ -222,6 +222,8 @@ ehthumbs.db
 
 # v3 server runtime data when started from server/ (default data/runtime/v3 is cwd-relative)
 /server/data/
+# Extension runtime data when the workspace data directory is the checkout root.
+/extensions_data/
 # Optional link to ../data for running legacy browser E2E locally (see AGENTS.md)
 /legacy/data
 

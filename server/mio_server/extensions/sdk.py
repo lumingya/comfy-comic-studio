@@ -37,7 +37,6 @@ class ExtensionAPI:
         self._enabled = True
         self._services = []
         self._router: APIRouter | None = None
-        self._settings_path = ctx.data_dir / "extension-data" / f"{ext_id}.json"
         self.log = logging.getLogger(f"mio.ext.{ext_id}")
 
     # ------------------------------------------------------------ registry
@@ -47,7 +46,9 @@ class ExtensionAPI:
 
     @property
     def data_dir(self):
-        return self._ctx.data_dir / self.id
+        from ..backups.extension_data import extension_data_dir
+
+        return extension_data_dir(self._ctx.data_dir, self.id)
 
     @property
     def host_app(self):

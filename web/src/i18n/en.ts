@@ -745,17 +745,17 @@ const en: Widen<Dict> = {
       updates: 'Updates',
     },
     themes: {
-      hint: 'Themes only change UI colours and are stored in this browser. Import a theme JSON, or get one from an extension.',
+      hint: 'Import a JSON file or theme package. Extensions can also provide themes.',
       custom: 'Custom',
+      package: 'Standalone theme',
       extension: 'Extension',
-      managePackages: 'Theme folders & extensions',
       import: 'Import theme',
+      importFolder: 'Import folder',
       imported: 'Imported and applied',
       badFile: 'Not a valid theme JSON',
       system: 'Follow system',
       systemHint: 'Paper when light, Ink when dark',
-      missing:
-        'The chosen theme is gone (maybe its extension was disabled); following the system for now.',
+      missing: 'The selected theme is unavailable; following the system.',
       mode: { dark: 'Dark', light: 'Light' },
     },
     ext: {
@@ -782,7 +782,10 @@ const en: Widen<Dict> = {
         'This extension can run code and access your workspace. Only enable trusted sources.',
       digest: 'Content digest (SHA-256)',
       restartNeeded: 'Some changes take effect after restarting the server',
-      confirmRemove: 'Delete this extension and its files?',
+      uninstall: 'Uninstall',
+      uninstallTitle: 'Uninstall “{{name}}”',
+      keepData: 'Settings and usage data are kept by default.',
+      deleteData: 'Also delete extension data',
       safeMode: 'Safe mode (MIO_SAFE_MODE=1): no extension is loaded.',
       panelGone: 'This extension panel is no longer available (the extension may be disabled)',
       status: {

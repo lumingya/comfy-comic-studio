@@ -171,8 +171,8 @@ def disable_extension(ctx: Ctx, ext_id: str) -> dict:
 
 
 @router.delete("/extensions/{ext_id}", status_code=status.HTTP_204_NO_CONTENT)
-def remove_extension(ctx: Ctx, ext_id: str) -> None:
-    _mgr(ctx).remove(ext_id)
+def remove_extension(ctx: Ctx, ext_id: str, delete_data: bool = False) -> None:
+    _mgr(ctx).remove(ext_id, delete_data=delete_data)
 
 
 def _settings_target(ctx, ext_id: str):
@@ -270,7 +270,7 @@ def list_themes(ctx: Ctx) -> list[dict]:
 
 @router.post("/themes", status_code=status.HTTP_201_CREATED)
 def import_theme(ctx: Ctx, body: dict) -> dict:
-    """Import a theme file (JSON).  Built-in and extension ids cannot be overwritten."""
+    """Import a theme JSON document. Built-in, package and extension IDs cannot be overwritten."""
     theme = TH.parse_theme(body)
     existing = next((c for c in ctx.registry.all("theme") if c.id == theme.id), None)
     if existing and existing.source != "user":
@@ -285,6 +285,9 @@ def delete_theme(ctx: Ctx, theme_id: str) -> None:
     existing = next((c for c in ctx.registry.all("theme") if c.id == theme_id), None)
     if existing is None:
         raise NotFound(f"主题不存在：{theme_id}")
+    if existing.source == "theme-package":
+        ctx.theme_packages.remove(theme_id)
+        return
     if existing.source != "user":
         raise ValueError("只能删除自己导入的主题")
     ctx.store.delete_doc("theme", theme_id)

@@ -98,8 +98,12 @@ class ExtensionTestDiscoveryTests(unittest.TestCase):
                 "extensions/sample/core/__init__.py",
                 "extensions/sample/page/index.tsx",
                 "extensions/sample/readme.md",
+                "themes/sample/mio-theme.json",
+                "themes/sample/theme.json",
+                "themes/sample/README.md",
             }
             exclude = {
+                "extensions_data/sample/settings.json",
                 "extensions/sample/tests/test_core.py",
                 "extensions/sample/page/component.test.tsx",
                 "extensions/sample/page/component.spec.ts",

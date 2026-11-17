@@ -25,6 +25,12 @@ from pathlib import Path, PurePosixPath
 
 from pydantic import ValidationError
 
+from ..backups.extension_data import (
+    extension_data_dir,
+    regular_path,
+    validate_identifier,
+    validate_tree,
+)
 from ..hooks import HOOKS
 from ..jobs.operations import operation_serialized
 from ..jobs.types import JobConflict
@@ -79,6 +85,7 @@ class Info:
     restart_required: bool = False
     contributions: list[str] = field(default_factory=list)
     builtin: bool = False
+    has_data: bool = False
 
     def to_json(self) -> dict:
         m = self.manifest
@@ -98,6 +105,7 @@ class Info:
             "restart_required": self.restart_required,
             "contributions": self.contributions,
             "builtin": self.builtin,
+            "has_data": self.has_data,
         }
 
 
@@ -124,6 +132,7 @@ class ExtensionManager:
         return self.ctx.settings().extensions.get(ext_id)
 
     def info(self, ext_id: str) -> Info:
+        validate_identifier(ext_id)
         builtin = not (self.root / ext_id / MANIFEST).is_file()
         folder = (BUILTIN_ROOT if builtin else self.root) / ext_id
         if not (folder / MANIFEST).is_file():
@@ -133,7 +142,16 @@ class ExtensionManager:
             if manifest.id != ext_id:
                 raise ManifestError(f"清单 id（{manifest.id}）与目录名（{ext_id}）不一致")
         except ManifestError as exc:
-            return Info(ext_id, folder, None, "", "invalid", str(exc))
+            return Info(
+                ext_id,
+                folder,
+                None,
+                "",
+                "invalid",
+                str(exc),
+                builtin=builtin,
+                has_data=extension_data_dir(self.ctx.data_dir, ext_id).exists(),
+            )
         current = digest(folder)
         state = self._state(ext_id)
         if ext_id in self.loaded:
@@ -166,6 +184,7 @@ class ExtensionManager:
             restart,
             contributions,
             builtin,
+            extension_data_dir(self.ctx.data_dir, ext_id).exists(),
         )
 
     def list(self) -> list[Info]:
@@ -234,11 +253,38 @@ class ExtensionManager:
 
     @operation_serialized
     @catalog_transition
-    def remove(self, ext_id: str) -> None:
+    def remove(self, ext_id: str, *, delete_data: bool = False) -> None:
+        validate_identifier(ext_id)
+        regular_path(self.root)
+        root = self.root.absolute()
+        if root.resolve() != root:
+            raise ExtensionError("扩展目录不能包含链接或重解析点")
         if self.info(ext_id).builtin:
             raise ExtensionError("内置扩展可以关闭，不能卸载")
+        service = self.ctx.extension_services.get(ext_id)
+        if service is not None and getattr(service, "busy", False):
+            raise JobConflict("扩展仍有请求执行中，请等待结束后再卸载")
+        folder = root / ext_id
+        data = extension_data_dir(self.ctx.data_dir, ext_id)
+        validate_tree(folder)
+        if delete_data:
+            validate_tree(data)
         self.disable(ext_id)
-        shutil.rmtree(self.root / ext_id)
+        if service is not None and getattr(service, "busy", False):
+            raise JobConflict("扩展仍有请求执行中，请等待结束后再卸载")
+        # Deactivation runs extension code. Recheck every deletion target after those hooks,
+        # before deleting either area, so a replaced junction cannot redirect removal.
+        regular_path(root)
+        if self.root.absolute() != root or root.resolve() != root:
+            raise ExtensionError("扩展目录不能包含链接或重解析点")
+        validate_tree(folder)
+        if extension_data_dir(self.ctx.data_dir, ext_id) != data:
+            raise ExtensionError("扩展数据目录已改变，请刷新后重试")
+        if delete_data:
+            validate_tree(data)
+        shutil.rmtree(folder)
+        if delete_data and data.exists():
+            shutil.rmtree(data)
         settings = self.ctx.settings()
         settings.extensions.pop(ext_id, None)
         self.ctx.store.put_doc(settings)

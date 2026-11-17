@@ -1,4 +1,4 @@
-"""Bounded assistant data, separate from the extension SDK's flat JSON settings area."""
+"""Bounded assistant private data inside its isolated SDK data directory."""
 
 from __future__ import annotations
 
@@ -8,7 +8,8 @@ import shutil
 from contextlib import nullcontext
 from pathlib import Path
 
-from mio_server.backups.extension_data import regular_path
+from mio_server.backups.extension_data import ATOMIC_TEMP as SDK_TEMP
+from mio_server.backups.extension_data import extension_data_dir, regular_path
 from mio_server.backups.privacy import clean_url, has_embedded_secret
 from mio_server.storage import Conflict
 
@@ -16,23 +17,21 @@ MAX_AI_SETTINGS = 1024 * 1024
 MAX_AI_CONVERSATION = 32 * 1024 * 1024
 MAX_AI_METADATA = 64 * 1024
 MAX_AI_ATTACHMENT = 8 * 1024 * 1024
-CONVERSATION = re.compile(r"ai-assist/conversations/chat_[a-f0-9]{32}\.json")
-ATTACHMENT = re.compile(r"ai-assist/attachments/img_[a-f0-9]{32}\.(json|bin)")
-ATOMIC_TEMP = re.compile(
-    r"(?:settings|chat_[a-f0-9]{32}|img_[a-f0-9]{32})\.json\.[a-f0-9]{32}\.tmp"
-)
+CONVERSATION = re.compile(r"extensions_data/ai-assist/conversations/chat_[a-f0-9]{32}\.json")
+ATTACHMENT = re.compile(r"extensions_data/ai-assist/attachments/img_[a-f0-9]{32}\.(json|bin)")
+ATOMIC_TEMP = re.compile(r"(?:config|chat_[a-f0-9]{32}|img_[a-f0-9]{32})\.json\.[a-f0-9]{32}\.tmp")
 
 
 def allowed_ai_path(name: str) -> bool:
     return bool(
-        name == "ai-assist/settings.json"
+        name == "extensions_data/ai-assist/config.json"
         or CONVERSATION.fullmatch(name)
         or ATTACHMENT.fullmatch(name)
     )
 
 
 def ai_size_limit(name: str) -> int:
-    if name == "ai-assist/settings.json":
+    if name == "extensions_data/ai-assist/config.json":
         return MAX_AI_SETTINGS
     if CONVERSATION.fullmatch(name):
         return MAX_AI_CONVERSATION
@@ -91,7 +90,7 @@ def _settings(path: Path, *, redact: bool) -> dict:
 def assistant_files(workspace: Path, *, include_credentials: bool = True):
     """Validate committed files and attachment pairs without reading images into memory."""
     workspace = workspace.resolve()
-    root = workspace / "ai-assist"
+    root = extension_data_dir(workspace, "ai-assist")
     regular_path(root)
     if not root.exists():
         return
@@ -102,12 +101,17 @@ def assistant_files(workspace: Path, *, include_credentials: bool = True):
     while pending:
         for path in sorted(pending.pop().iterdir()):
             regular_path(path)
-            if ATOMIC_TEMP.fullmatch(path.name) and path.is_file():
+            if (
+                ATOMIC_TEMP.fullmatch(path.name) or SDK_TEMP.fullmatch(path.name)
+            ) and path.is_file():
                 continue
             name = path.relative_to(workspace).as_posix()
+            if name == "extensions_data/ai-assist/settings.json":
+                # The SDK's generic settings contract validates and snapshots this file.
+                continue
             if path.is_dir() and name in {
-                "ai-assist/conversations",
-                "ai-assist/attachments",
+                "extensions_data/ai-assist/conversations",
+                "extensions_data/ai-assist/attachments",
             }:
                 pending.append(path)
                 continue
@@ -141,7 +145,7 @@ def assistant_files(workspace: Path, *, include_credentials: bool = True):
             attachment_ids.add(path.stem)
     for name in sorted(files):
         path = files[name]
-        if name == "ai-assist/settings.json":
+        if name == "extensions_data/ai-assist/config.json":
             _private(_settings(path, redact=False), include_credentials)
         elif CONVERSATION.fullmatch(name):
             conversation = _object(path, MAX_AI_CONVERSATION)
@@ -180,7 +184,7 @@ def copy_assistant_data(
     for name, path in assistant_files(source):
         destination = target / name
         destination.parent.mkdir(parents=True, exist_ok=True)
-        if name == "ai-assist/settings.json":
+        if name == "extensions_data/ai-assist/config.json":
             settings = _settings(path, redact=not include_credentials)
             _private(settings, include_credentials)
             raw = json.dumps(settings, ensure_ascii=False, allow_nan=False).encode("utf-8")
@@ -213,7 +217,7 @@ def require_assistant_idle(ctx):
 
 
 class AssistantBackup:
-    root = "ai-assist"
+    root = "extensions_data/ai-assist"
     allowed = staticmethod(allowed_ai_path)
     size_limit = staticmethod(ai_size_limit)
     files = staticmethod(assistant_files)

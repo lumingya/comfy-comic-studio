@@ -24,20 +24,23 @@ const item = {
 const catalog = {
   source: { url: '', builtin: true, checked_at: '', error: '' },
   catalog_digest: 'catalog-sha',
-  items: [item, { ...item, id: 'theme-sample', name: '亚麻主题', tags: ['主题'] }],
+  items: [item, { ...item, id: 'theme-sample', name: '主题扩展', tags: ['themes'] }],
 };
 const routes = {
   'GET /api/extension-market': catalog,
   'GET /api/extensions': { items: [], safe_mode: false },
   'GET /api/extension-panels': [],
 };
-it('filters the market by search and category', async () => {
+it('searches extensions without treating theme contributions as separate packages', async () => {
   mockFetch(routes);
   renderWithProviders(<ExtensionsPage />);
   await screen.findByText('画稿助手');
-  fireEvent.click(screen.getByRole('button', { name: '主题' }));
+  expect(screen.getByText('主题扩展')).toBeInTheDocument();
+  fireEvent.change(screen.getByRole('textbox', { name: '搜索扩展' }), {
+    target: { value: '主题扩展' },
+  });
+  expect(screen.getByText('主题扩展')).toBeInTheDocument();
   expect(screen.queryByText('画稿助手')).toBeNull();
-  expect(screen.getByText('亚麻主题')).toBeInTheDocument();
   fireEvent.change(screen.getByRole('textbox', { name: '搜索扩展' }), {
     target: { value: '不存在' },
   });

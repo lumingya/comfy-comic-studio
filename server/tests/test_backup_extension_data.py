@@ -38,7 +38,7 @@ class BackupExtensionDataTests(unittest.TestCase):
         self.addCleanup(lambda: self.ctx.close() if self.ctx else None)
         self.service = Backups(self.ctx)
         self.sdk = ExtensionAPI("demo", self.data / "extensions" / "demo", self.ctx)
-        self.settings = self.data / "extension-data" / "demo.json"
+        self.settings = self.data / "extensions_data" / "demo" / "settings.json"
 
     def export(self, **options):
         return self.service.export(BackupOptions(**options))
@@ -79,14 +79,17 @@ class BackupExtensionDataTests(unittest.TestCase):
         self.sdk.save_settings(original)
         backup = self.export()
         with zipfile.ZipFile(self.service.download(backup.id)) as archive:
-            self.assertEqual(json.loads(archive.read("extension-data/demo.json")), original)
+            self.assertEqual(
+                json.loads(archive.read("extensions_data/demo/settings.json")), original
+            )
             self.assertFalse(any(name.startswith("extensions/") for name in archive.namelist()))
         self.sdk.save_settings({"label": "Current settings"})
         plan = self.service.stage(self.service.download(backup.id))
         scheduled = self.service.apply(plan.id, self.command(plan)).plan
         with zipfile.ZipFile(self.service.download(scheduled.protection_backup_id)) as archive:
             self.assertEqual(
-                json.loads(archive.read("extension-data/demo.json")), {"label": "Current settings"}
+                json.loads(archive.read("extensions_data/demo/settings.json")),
+                {"label": "Current settings"},
             )
         self.restart()
         self.assertEqual(self.sdk.load_settings(), original)
@@ -107,10 +110,12 @@ class BackupExtensionDataTests(unittest.TestCase):
                 included = self.export(include_credentials=True)
                 path = self.service.download(included.id)
                 with zipfile.ZipFile(path) as archive:
-                    self.assertEqual(json.loads(archive.read("extension-data/demo.json")), value)
+                    self.assertEqual(
+                        json.loads(archive.read("extensions_data/demo/settings.json")), value
+                    )
                 bad = self.rewrite_archive(
                     path,
-                    "extension-data/demo.json",
+                    "extensions_data/demo/settings.json",
                     json.dumps(value).encode(),
                     includes_credentials=False,
                 )
@@ -179,7 +184,8 @@ class BackupExtensionDataTests(unittest.TestCase):
         self.assertEqual(backup.inspection.manifest.source_head, before)
         with zipfile.ZipFile(self.service.download(backup.id)) as archive:
             self.assertEqual(
-                json.loads(archive.read("extension-data/demo.json")), {"version": "before"}
+                json.loads(archive.read("extensions_data/demo/settings.json")),
+                {"version": "before"},
             )
         self.assertEqual(self.sdk.load_settings(), {"version": "after"})
 
@@ -195,10 +201,10 @@ class BackupExtensionDataTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "1 MiB"):
             self.sdk.save_settings({"value": "x" * extension_data.MAX_EXTENSION_JSON})
         self.assertEqual(self.sdk.load_settings(), {"value": "old"})
-        self.assertEqual([p.name for p in self.settings.parent.iterdir()], ["demo.json"])
+        self.assertEqual([p.name for p in self.settings.parent.iterdir()], ["settings.json"])
 
-    def test_invalid_json_other_files_and_oversized_settings_reject_export(self):
-        self.settings.parent.mkdir()
+    def test_invalid_json_and_oversized_settings_reject_export(self):
+        self.settings.parent.mkdir(parents=True)
         invalid = [
             b"[]",
             b"null",
@@ -217,13 +223,15 @@ class BackupExtensionDataTests(unittest.TestCase):
         self.settings.write_bytes(b"{}")
         unexpected = self.settings.parent / "code.py"
         unexpected.write_bytes(b"print('not settings')")
-        with self.assertRaisesRegex(ValueError, "unsupported filename"):
-            self.export()
+        backup = self.export()
+        self.assertNotIn(
+            "extensions_data/demo/code.py",
+            {entry.path for entry in backup.inspection.manifest.entries},
+        )
         unexpected.unlink()
         directory = self.settings.parent / "nested.json"
         directory.mkdir()
-        with self.assertRaisesRegex(ValueError, "regular JSON files"):
-            self.export()
+        self.export()  # Private directories need a trusted participant before they are included.
 
     def test_save_commits_validated_snapshot_when_caller_changes_original_before_write(self):
         value = {"number": 1, "nested": {"text": "verified"}}
@@ -244,13 +252,13 @@ class BackupExtensionDataTests(unittest.TestCase):
         backup = self.export()
         source = self.service.download(backup.id)
         for name, raw in (
-            ("extension-data/demo.json", b"[]"),
-            ("extension-data/demo.json", b'{"a":1e309}'),
-            ("extension-data/demo.json", b" " * (extension_data.MAX_EXTENSION_JSON + 1)),
-            ("extension-data/demo.py", b"{}"),
-            ("extension-data/../other.json", b"{}"),
-            ("extension-data/UPPER.json", b"{}"),
-            ("extension-data/con.json", b"{}"),
+            ("extensions_data/demo/settings.json", b"[]"),
+            ("extensions_data/demo/settings.json", b'{"a":1e309}'),
+            ("extensions_data/demo/settings.json", b" " * (extension_data.MAX_EXTENSION_JSON + 1)),
+            ("extensions_data/demo/execute.py", b"{}"),
+            ("extensions_data/../other/settings.json", b"{}"),
+            ("extensions_data/UPPER/settings.json", b"{}"),
+            ("extensions_data/con/settings.json", b"{}"),
         ):
             with self.subTest(name=name, size=len(raw)):
                 bad = self.rewrite_archive(source, name, raw)
@@ -273,7 +281,7 @@ class BackupExtensionDataTests(unittest.TestCase):
             self.sdk.save_settings({"value": float("inf")})
         self.assertEqual(self.settings.read_bytes(), previous)
 
-    def test_interrupted_atomic_write_leftover_is_ignored_but_link_and_unknown_files_are_not(self):
+    def test_private_data_and_atomic_leftovers_are_not_copied_and_links_are_rejected(self):
         self.sdk.save_settings({"value": "committed"})
         head = self.service.head().head
         descriptor, name = tempfile.mkstemp(prefix=".write-", dir=self.settings.parent)
@@ -285,7 +293,8 @@ class BackupExtensionDataTests(unittest.TestCase):
         self.assertEqual(backup.inspection.manifest.source_head, head)
         with zipfile.ZipFile(self.service.download(backup.id)) as archive:
             self.assertEqual(
-                json.loads(archive.read("extension-data/demo.json")), {"value": "committed"}
+                json.loads(archive.read("extensions_data/demo/settings.json")),
+                {"value": "committed"},
             )
             self.assertFalse(any(".write-" in path for path in archive.namelist()))
         self.assertTrue(leftover.exists())
@@ -303,8 +312,9 @@ class BackupExtensionDataTests(unittest.TestCase):
                 self.export()
         unknown = self.settings.parent / ".write-manual.json"
         unknown.write_bytes(b"{}")
-        with self.assertRaisesRegex(ValueError, "unsupported filename"):
-            self.export()
+        backup = self.export()
+        with zipfile.ZipFile(self.service.download(backup.id)) as archive:
+            self.assertNotIn("extensions_data/demo/.write-manual.json", archive.namelist())
 
     def test_links_and_windows_reparse_points_are_not_read_or_copied(self):
         self.sdk.save_settings({"value": "local"})
@@ -382,4 +392,4 @@ class BackupExtensionDataTests(unittest.TestCase):
         self.assertEqual(
             client.get("/api/v2/extensions/INVALID/settings", headers=admin).status_code, 400
         )
-        self.assertFalse((self.data / "extension-data" / "missing.json").exists())
+        self.assertFalse((self.data / "extensions_data" / "missing" / "settings.json").exists())

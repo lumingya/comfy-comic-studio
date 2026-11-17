@@ -104,7 +104,7 @@ class ConversationStore:
 
     def settings(self):
         with self.lock:
-            path = self.root / "settings.json"
+            path = self.root / "config.json"
             if not path.exists():
                 return AssistSettings()
             return AssistSettings.model_validate_json(path.read_text(encoding="utf-8"))
@@ -122,7 +122,7 @@ class ConversationStore:
                     ):
                         raise ValueError("地址已改变，请重新填写此渠道的密钥")
                     channel.api_key = old[channel.id].api_key
-            write_json(self.root / "settings.json", settings.model_dump())
+            write_json(self.root / "config.json", settings.model_dump())
             return self.public_settings()
 
     def public_settings(self):

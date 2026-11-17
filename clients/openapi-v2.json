@@ -14577,6 +14577,16 @@
        "title": "Ext Id",
        "type": "string"
       }
+     },
+     {
+      "in": "query",
+      "name": "delete_data",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Delete Data",
+       "type": "boolean"
+      }
      }
     ],
     "responses": {
@@ -14605,7 +14615,8 @@
     ],
     "x-mio-arguments": [
      "ctx",
-     "ext_id"
+     "ext_id",
+     "delete_data"
     ],
     "x-mio-operation": "DELETE /extensions/{ext_id}"
    }
@@ -18042,7 +18053,7 @@
     "x-mio-operation": "GET /themes"
    },
    "post": {
-    "description": "Import a theme file (JSON).  Built-in and extension ids cannot be overwritten.",
+    "description": "Import a theme JSON document. Built-in, package and extension IDs cannot be overwritten.",
     "operationId": "import_theme",
     "requestBody": {
      "content": {
@@ -18094,6 +18105,107 @@
      "body"
     ],
     "x-mio-operation": "POST /themes"
+   }
+  },
+  "/themes/folder": {
+   "post": {
+    "description": "Install a directly selected theme folder without routing it through extensions.",
+    "operationId": "import_theme_folder",
+    "requestBody": {
+     "content": {
+      "multipart/form-data": {
+       "schema": {
+        "properties": {
+         "files": {
+          "items": {
+           "format": "binary",
+           "type": "string"
+          },
+          "type": "array"
+         }
+        },
+        "required": [
+         "files"
+        ],
+        "type": "object"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Import Theme Folder",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Import Theme Folder",
+    "tags": [
+     "themes"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "request"
+    ],
+    "x-mio-operation": "POST /themes/folder"
+   }
+  },
+  "/themes/package": {
+   "post": {
+    "description": "Install a data-only theme ZIP into the workspace theme folder.",
+    "operationId": "import_theme_package",
+    "requestBody": {
+     "content": {
+      "application/zip": {
+       "schema": {
+        "format": "binary",
+        "type": "string"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Import Theme Package",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Import Theme Package",
+    "tags": [
+     "themes"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "request"
+    ],
+    "x-mio-operation": "POST /themes/package"
    }
   },
   "/themes/{theme_id}": {
@@ -18194,7 +18306,7 @@
   },
   "/themes/{theme_id}/package": {
    "get": {
-    "description": "Download an inert extension folder as a ZIP, ready to import on another installation.",
+    "description": "Download an inert theme folder as a ZIP, ready to import on another installation.",
     "operationId": "export_theme_package",
     "parameters": [
      {

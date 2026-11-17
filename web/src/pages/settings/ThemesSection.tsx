@@ -1,13 +1,13 @@
 import { QueryError } from '../../app/errors';
 import { Check, Download, FolderOpen, Monitor, Trash2, Upload } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
 import { download } from '../../api/client';
 import {
   useDeleteTheme,
+  useImportThemeFolder,
   useImportTheme,
-  useInstallExtension,
+  useImportThemePackage,
   useThemes,
   type ThemeInfo,
 } from '../../api/open';
@@ -67,7 +67,13 @@ function ThemeCard(props: {
           {t(`settings.themes.mode.${theme.mode}`)}
           {theme.author ? ` · ${theme.author}` : ''}
           {theme.source !== 'builtin'
-            ? ` · ${t(theme.source === 'user' ? 'settings.themes.custom' : 'settings.themes.extension')}`
+            ? ` · ${t(
+                theme.source === 'user'
+                  ? 'settings.themes.custom'
+                  : theme.source === 'theme-package'
+                    ? 'settings.themes.package'
+                    : 'settings.themes.extension',
+              )}`
             : ''}
         </span>
       </button>
@@ -95,10 +101,11 @@ export function ThemesSection() {
   const choice = useUI((s) => s.theme);
   const setTheme = useUI((s) => s.setTheme);
   const importTheme = useImportTheme();
+  const importPackage = useImportThemePackage();
+  const importFolder = useImportThemeFolder();
   const deleteTheme = useDeleteTheme();
-  const installExtension = useInstallExtension();
-  const navigate = useNavigate();
   const [exporting, setExporting] = useState<string | null>(null);
+  const folderInput = useRef<HTMLInputElement>(null);
 
   const onExport = async (theme: ThemeInfo) => {
     setExporting(theme.id);
@@ -113,16 +120,13 @@ export function ThemesSection() {
 
   const onFile = async (file: File) => {
     if (file.name.toLowerCase().endsWith('.zip')) {
-      installExtension.mutate(
-        { file, replace: false },
-        {
-          onSuccess: () => {
-            toast(t('settings.ext.installed'));
-            navigate('/extensions?tab=installed');
-          },
-          onError: toastError,
-        },
-      );
+      importPackage.mutate(file, {
+        onSuccess: (theme) => (
+          toast(t('settings.themes.imported')),
+          setTheme(theme.id, theme.mode)
+        ),
+        onError: toastError,
+      });
       return;
     }
     try {
@@ -139,6 +143,16 @@ export function ThemesSection() {
     }
   };
 
+  const onFolder = (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.currentTarget.files ?? []);
+    event.currentTarget.value = '';
+    if (!files.length) return;
+    importFolder.mutate(files, {
+      onSuccess: (theme) => (toast(t('settings.themes.imported')), setTheme(theme.id, theme.mode)),
+      onError: toastError,
+    });
+  };
+
   if (themes.isError) return <QueryError error={themes.error} onRetry={themes.refetch} />;
   if (themes.isLoading) return <Loading />;
   const list = themes.data ?? [];
@@ -147,12 +161,26 @@ export function ThemesSection() {
   return (
     <section className="col" style={{ gap: 14 }}>
       <div className="row" style={{ justifyContent: 'flex-end' }}>
-        <Link className="btn" to="/extensions?tab=installed">
-          <FolderOpen size={15} /> {t('settings.themes.managePackages')}
-        </Link>
+        <button
+          className="btn"
+          disabled={importFolder.isPending || importTheme.isPending || importPackage.isPending}
+          onClick={() => folderInput.current?.click()}
+        >
+          <FolderOpen size={15} /> {t('settings.themes.importFolder')}
+        </button>
+        <input
+          ref={(node) => {
+            folderInput.current = node;
+            node?.setAttribute('webkitdirectory', '');
+          }}
+          type="file"
+          hidden
+          multiple
+          onChange={onFolder}
+        />
         <FilePick
           accept=".json,.zip"
-          disabled={importTheme.isPending || installExtension.isPending}
+          disabled={importTheme.isPending || importPackage.isPending || importFolder.isPending}
           onFile={onFile}
         >
           <Upload size={15} /> {t('settings.themes.import')}
@@ -183,7 +211,7 @@ export function ThemesSection() {
             onExport={() => void onExport(theme)}
             exporting={exporting !== null}
             onDelete={
-              theme.source === 'user'
+              ['user', 'theme-package'].includes(theme.source)
                 ? () =>
                     deleteTheme.mutate(theme.id, {
                       onSuccess: () => choice === theme.id && setTheme(SYSTEM),

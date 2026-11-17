@@ -13,6 +13,7 @@ export interface ThemeInfo {
 
 export interface ExtensionInfo {
   builtin?: boolean;
+  has_data?: boolean;
   id: string;
   name: string;
   version: string;
@@ -127,6 +128,31 @@ export function useImportTheme() {
   });
 }
 
+export function useImportThemePackage() {
+  const done = useInvalidate(k.themes);
+  return useMutation({
+    mutationFn: async (file: Blob) =>
+      (
+        await raw('/api/themes/package', { method: 'POST', body: file })
+      ).json() as Promise<ThemeInfo>,
+    onSuccess: done,
+  });
+}
+
+export function useImportThemeFolder() {
+  const done = useInvalidate(k.themes);
+  return useMutation({
+    mutationFn: async (files: File[]) => {
+      const form = new FormData();
+      files.forEach((file) => form.append('files', file, file.webkitRelativePath || file.name));
+      return (
+        await raw('/api/themes/folder', { method: 'POST', body: form })
+      ).json() as Promise<ThemeInfo>;
+    },
+    onSuccess: done,
+  });
+}
+
 export function useDeleteTheme() {
   const done = useInvalidate(k.themes);
   return useMutation({
@@ -156,9 +182,24 @@ export function useExtensionAction() {
     ['extension-market'],
   );
   return useMutation({
-    mutationFn: async ({ id, action, digest }: { id: string; action: string; digest?: string }) => {
-      if (action === 'remove') return json(`/api/extensions/${id}`, 'DELETE');
-      const info = await json<ExtensionInfo>(`/api/extensions/${id}/${action}`, 'POST', { digest });
+    mutationFn: async (
+      input:
+        | { id: string; action: 'remove'; deleteData: boolean }
+        | { id: string; action: 'enable' | 'disable'; digest?: string },
+    ) => {
+      const { id, action } = input;
+      if (action === 'remove')
+        return json(
+          `/api/extensions/${encodeURIComponent(id)}?delete_data=${input.deleteData}`,
+          'DELETE',
+        );
+      const info = await json<ExtensionInfo>(
+        `/api/extensions/${encodeURIComponent(id)}/${action}`,
+        'POST',
+        {
+          digest: input.digest,
+        },
+      );
       if (action === 'enable' && (info.error || info.status !== 'active')) {
         await done();
         throw new Error(info.error || info.status);

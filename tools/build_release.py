@@ -33,6 +33,7 @@ INCLUDE = [
     "web/dist",
     "clients",
     "extensions",
+    "themes",
     "start.bat",
     "start.sh",
     "README.md",

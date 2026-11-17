@@ -1,7 +1,6 @@
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { Route, Routes } from 'react-router-dom';
 import { download } from '../../api/client';
 import { useUI } from '../../app/ui-store';
 import { mockFetch, renderWithProviders } from '../../test/utils';
@@ -40,43 +39,60 @@ it('exports one independent package from the theme card without changing the act
     'custom-paper.zip',
   );
   expect(useUI.getState().theme).toBe('paper');
-  expect(screen.getByRole('link', { name: '主题文件夹与扩展' })).toHaveAttribute(
-    'href',
-    '/extensions?tab=installed',
-  );
 });
 
-it('installs ZIP through the shared extension endpoint and opens review without enabling it', async () => {
-  const requests: { url: string; method: string; body: unknown }[] = [];
+it('imports a standalone theme ZIP and applies it without entering extension review', async () => {
+  const imported = { ...custom, id: 'linen', source: 'theme-package' };
+  const requests: { url: string; method: string; body: BodyInit | null | undefined }[] = [];
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
       const request = input instanceof Request ? input : new Request(String(input), init);
       const url = new URL(request.url);
-      requests.push({ url: url.pathname + url.search, method: request.method, body: init?.body });
-      return new Response(
-        JSON.stringify(
-          request.method === 'GET' ? [custom] : { id: 'theme-test', status: 'disabled' },
-        ),
-        { headers: { 'Content-Type': 'application/json' } },
-      );
+      requests.push({ url: url.pathname, method: request.method, body: init?.body });
+      return new Response(JSON.stringify(request.method === 'GET' ? [custom] : imported), {
+        headers: { 'Content-Type': 'application/json' },
+      });
     }),
   );
-  const view = renderWithProviders(
-    <Routes>
-      <Route path="/" element={<ThemesSection />} />
-      <Route path="/extensions" element={<p>扩展审阅</p>} />
-    </Routes>,
-  );
+  const view = renderWithProviders(<ThemesSection />);
   await screen.findByRole('button', { name: '导出' });
-  const input = view.container.querySelector<HTMLInputElement>('input[type="file"]')!;
-  const archive = new File(['fixture ZIP'], 'shared-theme.zip', { type: 'application/zip' });
+  const input = view.container.querySelector<HTMLInputElement>('input[accept=".json,.zip"]')!;
+  const archive = new File(['fixture ZIP'], 'linen.zip', { type: 'application/zip' });
   await userEvent.upload(input, archive);
-  expect(await screen.findByText('扩展审阅')).toBeInTheDocument();
-  expect(requests.filter((r) => r.method === 'POST')).toEqual([
-    { url: '/api/extensions?replace=false', method: 'POST', body: archive },
+  await waitFor(() => expect(useUI.getState().theme).toBe('linen'));
+  expect(requests.filter((request) => request.method === 'POST')).toEqual([
+    { url: '/api/themes/package', method: 'POST', body: archive },
   ]);
-  expect(useUI.getState().theme).toBe('paper');
+  expect(screen.queryByText('扩展审阅')).toBeNull();
+});
+
+it('imports a standalone theme folder through the theme API', async () => {
+  const imported = { ...custom, id: 'linen', source: 'theme-package' };
+  const requests: { url: string; method: string; body: BodyInit | null | undefined }[] = [];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const request = input instanceof Request ? input : new Request(String(input), init);
+      const url = new URL(request.url);
+      requests.push({ url: url.pathname, method: request.method, body: init?.body });
+      return new Response(JSON.stringify(request.method === 'GET' ? [custom] : imported), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }),
+  );
+  const view = renderWithProviders(<ThemesSection />);
+  await screen.findByRole('button', { name: '导入文件夹' });
+  const input = view.container.querySelector<HTMLInputElement>('input[webkitdirectory]')!;
+  const file = new File([JSON.stringify(custom)], 'theme.json', { type: 'application/json' });
+  Object.defineProperty(file, 'webkitRelativePath', { value: 'linen/theme.json' });
+  Object.defineProperty(input, 'files', { configurable: true, value: [file] });
+  fireEvent.change(input);
+  await waitFor(() => expect(useUI.getState().theme).toBe('linen'));
+  const request = requests.find((entry) => entry.method === 'POST')!;
+  expect(request.url).toBe('/api/themes/folder');
+  expect(request.body).toBeInstanceOf(FormData);
+  expect((request.body as FormData).getAll('files')).toHaveLength(1);
 });
 
 it('preserves existing JSON import and applies the imported theme', async () => {
@@ -86,14 +102,14 @@ it('preserves existing JSON import and applies the imported theme', async () => 
   await screen.findByRole('button', { name: '导出' });
   const file = new File([JSON.stringify(document)], 'theme.json', { type: 'application/json' });
   Object.defineProperty(file, 'text', { value: async () => JSON.stringify(document) });
-  await userEvent.upload(view.container.querySelector('input[type="file"]')!, file);
+  await userEvent.upload(view.container.querySelector('input[accept=".json,.zip"]')!, file);
   await waitFor(() => expect(useUI.getState().theme).toBe('custom-paper'));
   expect(calls.filter((call) => call.method === 'POST')).toEqual([
     { method: 'POST', url: '/api/themes', body: JSON.parse(JSON.stringify(document)) },
   ]);
 });
 
-it('shows a failed import without navigating or replacing the existing theme', async () => {
+it('shows a failed theme package import without replacing the current theme', async () => {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -102,14 +118,29 @@ it('shows a failed import without navigating or replacing the existing theme', a
         ? new Response(JSON.stringify([custom]), {
             headers: { 'Content-Type': 'application/json' },
           })
-        : new Response(JSON.stringify({ detail: '扩展已存在' }), { status: 400 });
+        : new Response(JSON.stringify({ detail: '主题已存在' }), { status: 400 });
     }),
   );
   const view = renderWithProviders(<ThemesSection />);
   await screen.findByRole('button', { name: '导出' });
-  const input = view.container.querySelector<HTMLInputElement>('input[type="file"]')!;
+  const input = view.container.querySelector<HTMLInputElement>('input[accept=".json,.zip"]')!;
   await userEvent.upload(input, new File(['fixture'], 'theme.zip', { type: 'application/zip' }));
   await waitFor(() => expect(input).not.toBeDisabled());
-  expect(screen.getByRole('link', { name: '主题文件夹与扩展' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '导出' })).toBeInTheDocument();
   expect(useUI.getState().theme).toBe('paper');
+});
+
+it('allows deleting imported standalone packages but not extension-provided themes', async () => {
+  const packageTheme = { ...custom, id: 'linen', name: '素纸包', source: 'theme-package' };
+  const extensionTheme = { ...custom, id: 'accent', name: '扩展主题', source: 'ai-assist' };
+  const calls = mockFetch({
+    'GET /api/themes': [packageTheme, extensionTheme],
+    'DELETE /api/themes/linen': {},
+  });
+  const view = renderWithProviders(<ThemesSection />);
+  await screen.findByText('素纸包');
+  expect(view.container.querySelectorAll('button[aria-label="删除"]')).toHaveLength(1);
+  const packageCard = screen.getByText('素纸包').closest('.theme-card') as HTMLElement;
+  await userEvent.click(within(packageCard).getByRole('button', { name: '删除' }));
+  await waitFor(() => expect(calls.some((call) => call.url === '/api/themes/linen')).toBe(true));
 });

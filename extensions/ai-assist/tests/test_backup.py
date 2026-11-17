@@ -46,7 +46,9 @@ class AssistantBackupTests(unittest.TestCase):
         )
         self.chat = self.store.create("窗边小猫")
         self.attachment_id = "img_" + "a" * 32
-        self.attachment_path = self.data / "ai-assist/attachments" / f"{self.attachment_id}.bin"
+        self.attachment_path = (
+            self.data / "extensions_data/ai-assist/attachments" / f"{self.attachment_id}.bin"
+        )
         self.attachment_path.parent.mkdir(parents=True)
         self.attachment_path.write_bytes(b"tiny image fixture")
         write_json(
@@ -102,16 +104,18 @@ class AssistantBackupTests(unittest.TestCase):
         backup = self.export()
         self.assertEqual(backup.inspection.manifest.source_head, before)
         with zipfile.ZipFile(self.service.download(backup.id)) as archive:
-            settings = archive.read("ai-assist/settings.json")
+            settings = archive.read("extensions_data/ai-assist/config.json")
             self.assertNotIn(b"PRIVATE_AI_KEY", settings)
             self.assertNotIn(b"PRIVATE_URL", settings)
             channel = json.loads(settings)["channels"][0]
             self.assertNotIn("api_key", channel)
             self.assertEqual(channel["base_url"], "https://example.invalid/v1")
-            chat = json.loads(archive.read(f"ai-assist/conversations/{self.chat['id']}.json"))
+            chat = json.loads(
+                archive.read(f"extensions_data/ai-assist/conversations/{self.chat['id']}.json")
+            )
             self.assertEqual(chat["messages"], self.chat["messages"])
             self.assertEqual(
-                archive.read(f"ai-assist/attachments/{self.attachment_id}.bin"),
+                archive.read(f"extensions_data/ai-assist/attachments/{self.attachment_id}.bin"),
                 b"tiny image fixture",
             )
 
@@ -119,9 +123,11 @@ class AssistantBackupTests(unittest.TestCase):
         backup = self.export(include_credentials=True)
         path = self.service.download(backup.id)
         with zipfile.ZipFile(path) as archive:
-            raw = archive.read("ai-assist/settings.json")
+            raw = archive.read("extensions_data/ai-assist/config.json")
             self.assertEqual(json.loads(raw)["channels"][0]["api_key"], "PRIVATE_AI_KEY")
-        forged = self.rewrite(path, "ai-assist/settings.json", raw, includes_credentials=False)
+        forged = self.rewrite(
+            path, "extensions_data/ai-assist/config.json", raw, includes_credentials=False
+        )
         with self.assertRaisesRegex(ValueError, "embedded credentials"):
             Backups.inspect(forged)
 
@@ -212,16 +218,16 @@ class AssistantBackupTests(unittest.TestCase):
             editing.result(4)
         with zipfile.ZipFile(self.service.download(backup.id)) as archive:
             self.assertEqual(
-                json.loads(archive.read(f"ai-assist/conversations/{self.chat['id']}.json"))[
-                    "title"
-                ],
+                json.loads(
+                    archive.read(f"extensions_data/ai-assist/conversations/{self.chat['id']}.json")
+                )["title"],
                 "窗边小猫",
             )
         self.assertEqual(self.store.get(self.chat["id"])["title"], "After")
 
     def test_attachment_pair_limits_and_path_boundaries(self):
-        self.assertFalse(allowed_ai_path("ai-assist/attachments/../../outside.bin"))
-        self.assertFalse(allowed_ai_path("ai-assist/attachments/x.bin"))
+        self.assertFalse(allowed_ai_path("extensions_data/ai-assist/attachments/../../outside.bin"))
+        self.assertFalse(allowed_ai_path("extensions_data/ai-assist/attachments/x.bin"))
         self.assertFalse(allowed_ai_path("extension-data/ai-assist/settings.json"))
         with self.assertRaisesRegex(ValueError, "size limit"):
             copy_assistant_data(
@@ -234,12 +240,14 @@ class AssistantBackupTests(unittest.TestCase):
     def test_incomplete_atomic_files_are_ignored_but_invalid_committed_paths_rejected(
         self,
     ):
-        leftover = self.data / "ai-assist" / ("settings.json." + "b" * 32 + ".tmp")
+        leftover = self.data / "extensions_data/ai-assist" / ("config.json." + "b" * 32 + ".tmp")
         leftover.write_text("PRIVATE_INCOMPLETE", encoding="utf-8")
         backup = self.export()
         with zipfile.ZipFile(self.service.download(backup.id)) as archive:
             self.assertFalse(any(name.endswith(".tmp") for name in archive.namelist()))
-        (self.data / "ai-assist/execute.py").write_text("anything", encoding="utf-8")
+        (self.data / "extensions_data/ai-assist/execute.py").write_text(
+            "anything", encoding="utf-8"
+        )
         with self.assertRaisesRegex(ValueError, "forbidden path"):
             self.export()
 
@@ -252,11 +260,13 @@ class AssistantBackupTests(unittest.TestCase):
         }
         forged = self.rewrite(
             path,
-            f"ai-assist/conversations/{self.chat['id']}.json",
+            f"extensions_data/ai-assist/conversations/{self.chat['id']}.json",
             json.dumps(chat).encode(),
         )
         with self.assertRaisesRegex(ValueError, "missing attachment"):
             Backups.inspect(forged)
-        forged = self.rewrite(path, "ai-assist/settings.json", b'{"channels":[], "channels": []}')
+        forged = self.rewrite(
+            path, "extensions_data/ai-assist/config.json", b'{"channels":[], "channels": []}'
+        )
         with self.assertRaisesRegex(ValueError, "valid UTF-8 JSON"):
             Backups.inspect(forged)

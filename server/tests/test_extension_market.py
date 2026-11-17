@@ -71,7 +71,7 @@ class ExtensionMarketTests(ApiCase):
             result = self.ok(self.client.get("/api/extension-market?refresh=true"))
         fetch.assert_not_called()
         self.assertTrue(result["source"]["builtin"])
-        self.assertEqual({i["id"] for i in result["items"]}, {"ai-assist", "theme-linen"})
+        self.assertEqual({i["id"] for i in result["items"]}, {"ai-assist"})
         for item in result["items"]:
             self.assertEqual(item["source"], "bundled")
             self.assertTrue(item["installed"]["builtin"])

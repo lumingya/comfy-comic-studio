@@ -17,7 +17,7 @@
 
 ## 自定义主题
 
-主题 JSON 可在「设置 → 外观与阅读 → 主题」导入，也可由扩展提供。完整格式与取值规则见[扩展 SDK](../server/mio_server/extensions/README.md#主题)。
+独立主题包位于 `themes/<id>`，可在「设置 → 外观与阅读 → 主题」导入、导出和管理；扩展也可以通过 `contributes.themes` 附带主题。完整主题令牌与取值规则见[扩展 SDK](../server/mio_server/extensions/README.md#主题)。
 
 基础色未填写时使用对应明暗模式的默认色。控件语义变量未填写时由 CSS 从基础色派生：只改 `accent`，主按钮仍会随之变化；只有需要特殊外观时才填写 `button-primary` 等覆盖项。切换主题会移除上一主题的覆盖，避免圆角、尺寸或颜色残留。
 

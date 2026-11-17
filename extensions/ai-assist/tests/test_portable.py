@@ -59,7 +59,11 @@ class PortableTests(unittest.TestCase):
                     self.assertEqual(created.status_code, 201)
                     conversation_id = created.json()["id"]
                     self.assertTrue(
-                        (root / "data/ai-assist/conversations" / f"{conversation_id}.json").exists()
+                        (
+                            root
+                            / "data/extensions_data/ai-assist/conversations"
+                            / f"{conversation_id}.json"
+                        ).exists()
                     )
                     self.assertEqual(len(reviewed_packages(ctx.data_dir)), 1)
                     self.assertEqual(
@@ -84,7 +88,11 @@ class PortableTests(unittest.TestCase):
                     self.assertEqual(client.get("/api/extensions").json()["items"], [])
                     self.assertEqual(client.get("/api/ext/ai-assist/status").status_code, 404)
                     self.assertTrue(
-                        (root / "data/ai-assist/conversations" / f"{conversation_id}.json").exists()
+                        (
+                            root
+                            / "data/extensions_data/ai-assist/conversations"
+                            / f"{conversation_id}.json"
+                        ).exists()
                     )
                 finally:
                     ctx.close()

@@ -12,7 +12,8 @@ from .privacy import has_embedded_secret
 
 MAX_EXTENSION_JSON = 1024 * 1024
 # Keep the same extension ID syntax as extensions.manifest, without importing the SDK loader.
-EXTENSION_PATH = re.compile(r"extension-data/[a-z0-9][a-z0-9_-]{1,47}\.json")
+EXTENSION_ID = re.compile(r"[a-z0-9][a-z0-9_-]{1,47}")
+EXTENSION_PATH = re.compile(r"extensions_data/([a-z0-9][a-z0-9_-]{1,47})/settings\.json")
 # paths.atomic_json uses tempfile.mkstemp(prefix=".write-") with an eight-character suffix.
 ATOMIC_TEMP = re.compile(r"\.write-[a-z0-9_]{8}")
 RESERVED = {
@@ -26,7 +27,13 @@ RESERVED = {
 
 
 def allowed_extension_path(name: str) -> bool:
-    return EXTENSION_PATH.fullmatch(name) is not None and Path(name).stem not in RESERVED
+    match = EXTENSION_PATH.fullmatch(name)
+    return bool(match and match[1] not in RESERVED)
+
+
+def validate_identifier(identifier: str) -> None:
+    if not EXTENSION_ID.fullmatch(identifier) or identifier in RESERVED:
+        raise ValueError("invalid extension data identifier")
 
 
 def regular_path(path: Path):
@@ -45,11 +52,35 @@ def regular_path(path: Path):
 
 def _settings_root(workspace: Path) -> Path:
     workspace = workspace.resolve()
-    root = workspace / "extension-data"
+    root = workspace / "extensions_data"
     regular_path(root)
     if root.resolve() != root or (root.exists() and not root.is_dir()):
         raise ValueError("extension settings directory is not a regular local directory")
     return root
+
+
+def extension_data_dir(workspace: Path, identifier: str) -> Path:
+    validate_identifier(identifier)
+    path = _settings_root(workspace) / identifier
+    regular_path(path)
+    if path.resolve() != path or (path.exists() and not path.is_dir()):
+        raise ValueError("extension data must use a regular local directory")
+    return path
+
+
+def validate_tree(root: Path) -> None:
+    """Reject redirected descendants before removing a package or its private data."""
+    regular_path(root)
+    if not root.exists():
+        return
+    if not root.is_dir() or root.resolve() != root:
+        raise ValueError("extension data must use a regular local directory")
+    pending = [root]
+    while pending:
+        for path in pending.pop().iterdir():
+            regular_path(path)
+            if path.is_dir():
+                pending.append(path)
 
 
 def _pairs(pairs):
@@ -113,17 +144,16 @@ def settings_files(workspace: Path, *, include_credentials: bool = True):
     root = _settings_root(workspace)
     if not root.exists():
         return
-    for path in sorted(root.iterdir()):
-        regular_path(path)
-        if ATOMIC_TEMP.fullmatch(path.name):
-            if not path.is_file():
-                raise ValueError("extension settings temporary path must be a regular file")
-            # A killed writer may leave an incomplete temporary. Only committed .json files
-            # belong to the workspace head or backup; never read or export the leftover bytes.
+    for folder in sorted(root.iterdir()):
+        folder = extension_data_dir(workspace, folder.name)
+        # Only SDK settings are copied generically, including data retained after uninstall.
+        # Private data belongs to a reviewed package's backup participant.
+        for child in folder.iterdir():
+            regular_path(child)
+        path = folder / "settings.json"
+        if not path.exists():
             continue
-        name = f"extension-data/{path.name}"
-        if not allowed_extension_path(name):
-            raise ValueError("extension settings contain an unsupported filename")
+        name = f"extensions_data/{folder.name}/settings.json"
         raw, _ = _read(path, include_credentials=include_credentials)
         yield name, raw
 
@@ -150,29 +180,21 @@ def copy_settings(
 
 
 def load_settings(workspace: Path, identifier: str) -> dict:
-    name = f"extension-data/{identifier}.json"
-    if not allowed_extension_path(name):
-        raise ValueError("invalid extension settings identifier")
-    path = _settings_root(workspace) / f"{identifier}.json"
+    path = extension_data_dir(workspace, identifier) / "settings.json"
     regular_path(path)
     return _read(path)[1] if path.exists() else {}
 
 
 def settings_exist(workspace: Path, identifier: str) -> bool:
-    if not allowed_extension_path(f"extension-data/{identifier}.json"):
-        raise ValueError("invalid extension settings identifier")
-    path = _settings_root(workspace) / f"{identifier}.json"
+    path = extension_data_dir(workspace, identifier) / "settings.json"
     regular_path(path)
     return path.is_file()
 
 
 def save_settings(workspace: Path, identifier: str, value: dict) -> None:
-    name = f"extension-data/{identifier}.json"
-    if not allowed_extension_path(name):
-        raise ValueError("invalid extension settings identifier")
     # These formatting options match paths.atomic_json; the byte boundary is regression-tested.
     raw = json.dumps(value, ensure_ascii=False, sort_keys=True, allow_nan=False).encode("utf-8")
     validated = validate_settings(raw)
-    path = _settings_root(workspace) / f"{identifier}.json"
+    path = extension_data_dir(workspace, identifier) / "settings.json"
     regular_path(path)
     atomic_json(path, validated)

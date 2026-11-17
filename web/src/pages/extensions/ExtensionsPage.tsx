@@ -1,14 +1,5 @@
 import { useState } from 'react';
-import {
-  Download,
-  ExternalLink,
-  Palette,
-  Power,
-  Puzzle,
-  RefreshCw,
-  Search,
-  Settings2,
-} from 'lucide-react';
+import { Download, ExternalLink, Power, Puzzle, RefreshCw, Search, Settings2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 import { useExtensionMarket, useMarketAction, type MarketItem } from '../../api/extension-market';
 import { useExtensionAction, useExtensions, type ExtensionInfo } from '../../api/open';
@@ -20,9 +11,6 @@ import { ExtensionsSection, TrustDialog } from '../settings/ExtensionsSection';
 import { useMarketText } from './strings';
 import './extensions.css';
 
-const isTheme = (item: MarketItem) =>
-  item.tags.some((tag) => ['theme', '主题'].includes(tag.toLocaleLowerCase()));
-
 export default function ExtensionsPage() {
   const text = useMarketText();
   const [params, setParams] = useSearchParams();
@@ -32,21 +20,16 @@ export default function ExtensionsPage() {
   const action = useMarketAction();
   const enable = useExtensionAction();
   const [query, setQuery] = useState('');
-  const [kind, setKind] = useState('all');
   const [sourceOpen, setSourceOpen] = useState(false);
   const [sourceUrl, setSourceUrl] = useState('');
   const [selected, setSelected] = useState<MarketItem | null>(null);
   const [trusting, setTrusting] = useState<ExtensionInfo | null>(null);
   usePageTitle(installed ? text.installed : text.market);
-  const items = (catalog.data?.items ?? []).filter((item) => {
-    const theme = isTheme(item);
-    return (
-      (kind === 'all' || (kind === 'theme' ? theme : !theme)) &&
-      `${item.name} ${item.id} ${item.description} ${item.author} ${item.tags.join(' ')}`
-        .toLocaleLowerCase()
-        .includes(query.toLocaleLowerCase())
-    );
-  });
+  const items = (catalog.data?.items ?? []).filter((item) =>
+    `${item.name} ${item.id} ${item.description} ${item.author} ${item.tags.join(' ')}`
+      .toLocaleLowerCase()
+      .includes(query.toLocaleLowerCase()),
+  );
   const manage = () => {
     setSelected(null);
     setParams({ tab: 'installed' });
@@ -160,18 +143,6 @@ export default function ExtensionsPage() {
         <ExtensionsSection query={query} />
       ) : (
         <>
-          <div className="extension-filters">
-            {(['all', 'tools', 'theme'] as const).map((value) => (
-              <button
-                key={value}
-                className={`btn sm ${kind === value ? 'active' : 'ghost'}`}
-                aria-pressed={kind === value}
-                onClick={() => setKind(value)}
-              >
-                {text[value]}
-              </button>
-            ))}
-          </div>
           {catalog.data?.source.error && (
             <p className="small warn-text" role="status">
               {text.sourceError} <span>{catalog.data.source.error}</span>
@@ -193,7 +164,7 @@ export default function ExtensionsPage() {
                     aria-label={`${text.details} · ${item.name}`}
                   >
                     <span className="extension-emblem">
-                      {isTheme(item) ? <Palette size={25} /> : <Puzzle size={25} />}
+                      <Puzzle size={25} />
                     </span>
                     <span className="extension-card-heading">
                       <strong>{item.name}</strong>

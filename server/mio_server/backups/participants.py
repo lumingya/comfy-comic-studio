@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
-import re
 import sys
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -18,8 +17,9 @@ from pathlib import Path
 from types import ModuleType
 from typing import Protocol
 
-from .extension_data import regular_path, with_extension_head
+from .extension_data import allowed_extension_path, regular_path, with_extension_head
 from .paths import sha_file
+from .themes import allowed_theme_path, copy_themes, theme_files
 
 EXTENSIONS_ROOT = Path(__file__).resolve().parents[3] / "extensions"
 _CATALOG: ContextVar[tuple | None] = ContextVar("backup_participants", default=None)
@@ -90,8 +90,7 @@ def participants(workspace: Path | None = None) -> list[BackupParticipant]:
         if (
             participant is None
             or any(not callable(getattr(participant, method, None)) for method in methods)
-            or not re.fullmatch(r"[a-z0-9][a-z0-9_-]{1,47}", getattr(participant, "root", ""))
-            or participant.root in {"assets", "extension-data", "extensions", "updates"}
+            or getattr(participant, "root", "") != f"extensions_data/{manifest.id}"
             or participant.root in roots
         ):
             raise ValueError("invalid or duplicate extension backup participant")
@@ -111,7 +110,7 @@ def catalog_scope(workspace: Path | None):
 
 
 def owner(name: str, workspace: Path | None = None):
-    if not safe_member(name):
+    if not safe_member(name) or allowed_extension_path(name):
         return None
     for participant in participants(workspace):
         if name.startswith(participant.root + "/") and participant.allowed(name):
@@ -128,10 +127,14 @@ def safe_member(name: str) -> bool:
 
 
 def allowed_path(name: str, workspace: Path | None = None) -> bool:
-    return owner(name, workspace) is not None
+    return allowed_theme_path(name) or owner(name, workspace) is not None
 
 
 def size_limit(name: str, workspace: Path | None = None) -> int:
+    if allowed_theme_path(name):
+        from ..theme_packages import MAX_FILE
+
+        return MAX_FILE
     participant = owner(name, workspace)
     if participant is None:
         raise ValueError("unrecognized extension backup path")
@@ -141,6 +144,7 @@ def size_limit(name: str, workspace: Path | None = None) -> int:
 def data_files(
     workspace: Path, *, include_credentials: bool = True, trusted_workspace: Path | None = None
 ):
+    yield from theme_files(workspace)
     cached = _CATALOG.get()
     selected = (
         cached[1]
@@ -151,6 +155,7 @@ def data_files(
         for name, path in participant.files(workspace, include_credentials=include_credentials):
             if (
                 not safe_member(name)
+                or allowed_extension_path(name)
                 or not name.startswith(participant.root + "/")
                 or not participant.allowed(name)
             ):
@@ -176,17 +181,24 @@ def with_workspace_head(database_head: str, workspace: Path) -> str:
 
 
 def copy_data(source: Path, target: Path, *, include_credentials: bool, byte_budget: int) -> int:
-    total = 0
+    total = copy_themes(source, target, byte_budget=byte_budget)
+    settings_head = with_extension_head("0" * 64, target)
     for participant in participants(source):
+        if participant.allowed(f"{participant.root}/settings.json"):
+            raise ValueError("extension backup participants cannot claim SDK settings.json")
         total += participant.snapshot(
             source, target, include_credentials=include_credentials, byte_budget=byte_budget - total
         )
+        if with_extension_head("0" * 64, target) != settings_head:
+            raise ValueError("extension backup participant changed SDK settings.json")
         if total > byte_budget:
             raise ValueError("workspace exceeds the archive size limit")
     return total
 
 
 def acquire_locks(ctx, stack):
+    if getattr(ctx, "theme_packages", None) is not None:
+        stack.enter_context(ctx.theme_packages._lock)
     for participant in participants(ctx.data_dir):
         stack.enter_context(participant.lock(ctx))
 

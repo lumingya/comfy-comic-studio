@@ -42,6 +42,7 @@ from .queue import ProductionQueue
 from .registry import Registry
 from .render_models import ComfyInstance
 from .storage import SQLiteStore
+from .theme_packages import ThemePackageManager
 from .trash import Trash
 from .update import Updater
 from .webhooks import Dispatcher
@@ -69,6 +70,7 @@ class AppContext:
     comfy_client_factory: Callable = ComfyClient
     closers: list[Callable[[], None]] = field(default_factory=list)
     extensions: ExtensionManager | None = None
+    theme_packages: ThemePackageManager | None = None
     tokens: TokenStore | None = None
     webhooks: Dispatcher | None = None
     updater: Updater | None = None
@@ -159,6 +161,12 @@ class AppContext:
             store.put_doc(ComfyInstance(id="comfy_local"))
         ctx.refresh_instances()
         ctx._register_builtins()
+        ctx.theme_packages = ThemePackageManager(ctx)
+        ctx.theme_packages.load_all()
+        for theme in store.list_docs("theme"):
+            ctx.registry.register(
+                "theme", theme.id, theme, source="user", title=theme.name, replace=True
+            )
         ctx.registry.on(
             "registry.changed",
             lambda event: (
@@ -306,8 +314,6 @@ class AppContext:
         reg.register("provider", "comfyui", "comfyui", title="ComfyUI（本地 / 局域网，多实例）")
         for theme in TH.BUILTIN:
             reg.register("theme", theme.id, theme, title=theme.name)
-        for theme in self.store.list_docs("theme"):
-            reg.register("theme", theme.id, theme, source="user", title=theme.name, replace=True)
         for tpl in builtin_templates():
             reg.register("album_template", tpl.id, tpl, title=tpl.title)
         for tpl in self.store.list_docs("album_template"):
