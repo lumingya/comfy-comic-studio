@@ -1,8 +1,11 @@
 import { confirm } from '../../components/confirm';
 import { QueryError } from '../../app/errors';
-import { Package, Power, PowerOff, ShieldAlert, Trash2, Upload } from 'lucide-react';
-import { useState } from 'react';
+import { FolderOpen, Package, Power, PowerOff, ShieldAlert, Trash2, Upload } from 'lucide-react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
+import { useWorkspaceSurfaces } from '../../extensions/host';
+import { extensionFiles, extensionFolderError } from '../../extensions/packageFiles';
 import {
   useExtensionAction,
   useExtensions,
@@ -23,7 +26,7 @@ const STATUS_CHIP: Record<ExtensionInfo['status'], string> = {
 };
 
 /** Enabling an extension trusts one exact digest; code-running ones get a louder warning. */
-function TrustDialog(props: { ext: ExtensionInfo | null; onClose: () => void }) {
+export function TrustDialog(props: { ext: ExtensionInfo | null; onClose: () => void }) {
   const { t } = useTranslation();
   const action = useExtensionAction();
   const ext = props.ext;
@@ -82,6 +85,8 @@ function TrustDialog(props: { ext: ExtensionInfo | null; onClose: () => void }) 
 
 function ExtensionCard({ ext, onTrust }: { ext: ExtensionInfo; onTrust: () => void }) {
   const { t } = useTranslation();
+  const surfaces = useWorkspaceSurfaces();
+  const surface = surfaces.data?.items.find((item) => item.extension_id === ext.id);
   const action = useExtensionAction();
   const run = (name: string) =>
     action.mutate({ id: ext.id, action: name }, { onError: toastError });
@@ -101,7 +106,9 @@ function ExtensionCard({ ext, onTrust }: { ext: ExtensionInfo; onTrust: () => vo
       ) : null}
       <div className="ext-meta">
         <span className="chip mono">{ext.id}</span>
-        {ext.runs_code ? <span className="chip warn">{t('settings.ext.code')}</span> : null}
+        {ext.runs_code && !ext.builtin ? (
+          <span className="chip warn">{t('settings.ext.code')}</span>
+        ) : null}
         {ext.contributions.map((c) => (
           <span key={c} className="chip">
             {c}
@@ -124,44 +131,68 @@ function ExtensionCard({ ext, onTrust }: { ext: ExtensionInfo; onTrust: () => vo
             <PowerOff size={13} /> {t('settings.ext.disable')}
           </button>
         ) : ext.status !== 'invalid' ? (
-          <button className="btn primary sm" onClick={onTrust}>
+          <button
+            className="btn primary sm"
+            disabled={action.isPending}
+            onClick={
+              ext.builtin
+                ? () =>
+                    action.mutate(
+                      { id: ext.id, action: 'enable', digest: ext.digest },
+                      { onError: toastError },
+                    )
+                : onTrust
+            }
+          >
             <Power size={13} /> {t('settings.ext.enable')}
           </button>
         ) : null}
         <span className="grow" />
-        <button
-          className="btn ghost icon sm danger"
-          aria-label={t('common.delete')}
-          disabled={action.isPending}
-          onClick={async () => {
-            if (
-              await confirm({
-                title: t('settings.ext.confirmRemove'),
-                confirmLabel: t('common.delete'),
-                danger: true,
-              })
-            )
-              run('remove');
-          }}
-        >
-          <Trash2 size={13} />
-        </button>
+        {surface && ext.status === 'active' ? (
+          <Link className="btn sm" to={`/extensions/${ext.id}`}>
+            {surface.title}
+          </Link>
+        ) : null}
+        {!ext.builtin ? (
+          <button
+            className="btn ghost icon sm danger"
+            aria-label={t('common.delete')}
+            disabled={action.isPending}
+            onClick={async () => {
+              if (
+                await confirm({
+                  title: t('settings.ext.confirmRemove'),
+                  confirmLabel: t('common.delete'),
+                  danger: true,
+                })
+              )
+                run('remove');
+            }}
+          >
+            <Trash2 size={13} />
+          </button>
+        ) : null}
       </div>
     </div>
   );
 }
 
-export function ExtensionsSection() {
+export function ExtensionsSection({ query = '' }: { query?: string }) {
   const { t } = useTranslation();
   const list = useExtensions();
   const install = useInstallExtension();
   const [replace, setReplace] = useState(false);
   const [trusting, setTrusting] = useState<ExtensionInfo | null>(null);
+  const folderInput = useRef<HTMLInputElement>(null);
   const panels = useExtensionPanels('settings');
 
   if (list.isError) return <QueryError error={list.error} onRetry={list.refetch} />;
   if (list.isLoading) return <Loading />;
-  const items = list.data?.items ?? [];
+  const items = (list.data?.items ?? []).filter((item) =>
+    `${item.id} ${item.name} ${item.description ?? ''}`
+      .toLocaleLowerCase()
+      .includes(query.toLocaleLowerCase()),
+  );
   return (
     <section className="col" style={{ gap: 14 }}>
       {list.data?.safe_mode ? (
@@ -171,6 +202,42 @@ export function ExtensionsSection() {
       ) : null}
       <div className="row wrap" style={{ justifyContent: 'flex-end' }}>
         <Switch checked={replace} onChange={setReplace} label={t('settings.ext.replace')} />
+        <input
+          ref={(element) => {
+            folderInput.current = element;
+            element?.setAttribute('webkitdirectory', '');
+          }}
+          hidden
+          type="file"
+          multiple
+          onChange={(event) => {
+            const files = extensionFiles(Array.from(event.currentTarget.files ?? []));
+            event.currentTarget.value = '';
+            if (!files.length) return;
+            const problem = extensionFolderError(files);
+            if (problem) {
+              toastError(t(`settings.ext.${problem}`));
+              return;
+            }
+            install.mutate(
+              { files, replace },
+              {
+                onSuccess: (ext) => {
+                  toast(t('settings.ext.installed'));
+                  setTrusting(ext);
+                },
+                onError: toastError,
+              },
+            );
+          }}
+        />
+        <button
+          className="btn"
+          disabled={install.isPending}
+          onClick={() => folderInput.current?.click()}
+        >
+          <FolderOpen size={15} /> {t('settings.ext.installFolder')}
+        </button>
         <FilePick
           accept=".zip"
           disabled={install.isPending}

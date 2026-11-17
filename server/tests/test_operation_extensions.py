@@ -8,10 +8,13 @@ from pathlib import Path
 from fastapi.exceptions import ResponseValidationError
 from fastapi.testclient import TestClient
 from PIL import Image
+from starlette.requests import HTTPConnection
 
 from mio_server.api import create_app
+from mio_server.api.extension_routes import extension_guard
 from mio_server.models import Episode, Panel, Series, Take
 from mio_server.registry import Registry, RegistryError
+from mio_server.storage import NotFound
 
 from . import test_api_v2
 from .api_harness import LOCAL, ApiCase
@@ -139,15 +142,15 @@ def activate(mio):
         spec = schema["paths"]["/ext/operations/double"]["post"]
         self.assertEqual(spec["security"], [{"bearer": []}])
         self.assertEqual(spec["x-mio-scope"], "read")
+        old = self.ctx.extensions.loaded["operations"]
+        old_guard = extension_guard(self.ctx.extensions, "operations", old, old.api.digest)
         self.ctx.extensions.disable("operations")
         self.assertEqual(
             self.v2("POST", "/ext/operations/double", read, json={"value": 3}).status_code, 404
         )
         self.ctx.extensions.enable("operations", self.ctx.extensions.info("operations").digest)
-        self.assertEqual(
-            self.v2("POST", "/ext/operations/double", read, json={"value": 3}).status_code, 404
-        )
-        self.client = TestClient(create_app(self.ctx, serve_web=False), base_url=LOCAL)
+        with self.assertRaises(NotFound):
+            old_guard(HTTPConnection({"type": "http", "headers": []}))
         self.assertEqual(
             self.v2("POST", "/ext/operations/double", read, json={"value": 3}).status_code, 200
         )

@@ -12,6 +12,7 @@ export interface ThemeInfo {
 }
 
 export interface ExtensionInfo {
+  builtin?: boolean;
   id: string;
   name: string;
   version: string;
@@ -146,12 +147,24 @@ export function useExtensions() {
 }
 
 export function useExtensionAction() {
-  const done = useInvalidate(k.extensions, k.themes, k.albumTemplates, ['registry']);
+  const done = useInvalidate(
+    k.extensions,
+    k.themes,
+    k.albumTemplates,
+    ['registry'],
+    ['extension-surfaces'],
+    ['extension-market'],
+  );
   return useMutation({
-    mutationFn: ({ id, action, digest }: { id: string; action: string; digest?: string }) =>
-      action === 'remove'
-        ? json(`/api/extensions/${id}`, 'DELETE')
-        : json<ExtensionInfo>(`/api/extensions/${id}/${action}`, 'POST', { digest }),
+    mutationFn: async ({ id, action, digest }: { id: string; action: string; digest?: string }) => {
+      if (action === 'remove') return json(`/api/extensions/${id}`, 'DELETE');
+      const info = await json<ExtensionInfo>(`/api/extensions/${id}/${action}`, 'POST', { digest });
+      if (action === 'enable' && (info.error || info.status !== 'active')) {
+        await done();
+        throw new Error(info.error || info.status);
+      }
+      return info;
+    },
     onSuccess: done,
   });
 }
@@ -159,10 +172,19 @@ export function useExtensionAction() {
 export function useInstallExtension() {
   const done = useInvalidate(k.extensions);
   return useMutation({
-    mutationFn: async ({ file, replace }: { file: Blob; replace: boolean }) =>
-      (
-        await raw(`/api/extensions?replace=${replace}`, { method: 'POST', body: file })
-      ).json() as Promise<ExtensionInfo>,
+    mutationFn: async (input: { replace: boolean } & ({ file: Blob } | { files: File[] })) => {
+      let body: Blob | FormData;
+      let path = '/api/extensions';
+      if ('files' in input) {
+        const form = new FormData();
+        input.files.forEach((file) => form.append('files', file, file.webkitRelativePath));
+        body = form;
+        path += '/folder';
+      } else body = input.file;
+      return (
+        await raw(`${path}?replace=${input.replace}`, { method: 'POST', body })
+      ).json() as Promise<ExtensionInfo>;
+    },
     onSuccess: done,
   });
 }

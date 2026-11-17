@@ -15,6 +15,15 @@ def mount_extensions(app, *, prefix="/api/ext", authenticate=None):
     manager = app.state.ctx.extensions
     if manager is None:
         return
+    manager.apps.append((app, prefix, authenticate))
+    refresh_extensions(app, prefix=prefix, authenticate=authenticate)
+
+
+def refresh_extensions(app, *, prefix="/api/ext", authenticate=None):
+    manager = app.state.ctx.extensions
+    previous = getattr(app.state, "extension_routes", [])
+    app.router.routes[:] = [r for r in app.router.routes if not any(r is old for old in previous)]
+    app.state.extension_routes = []
     for ext_id, router in manager.routers():
         loaded = manager.loaded[ext_id]
         pinned = manager.ctx.settings().extensions[ext_id].digest
@@ -27,13 +36,27 @@ def mount_extensions(app, *, prefix="/api/ext", authenticate=None):
             suffix = hashlib.sha256(key.encode()).hexdigest()[:12]
             return f"ext_{ext}_{route.name}_{suffix}"
 
+        before = list(app.router.routes)
         app.include_router(
             router,
             prefix=f"{prefix}/{ext_id}",
             dependencies=guards,
             generate_unique_id_function=operation_id,
         )
+        added = [r for r in app.router.routes if not any(r is old for old in before)]
+        app.state.extension_routes.extend(added)
         manager.mounted.add(ext_id)
+    # Re-added extension routes precede the SPA catch-all. Router inclusion is atomic.
+    additions = app.state.extension_routes
+    app.router.routes[:] = [
+        r for r in app.router.routes if not any(r is added for added in additions)
+    ]
+    position = next(
+        (i for i, r in enumerate(app.router.routes) if getattr(r, "path", None) == "/{path:path}"),
+        len(app.router.routes),
+    )
+    app.router.routes[position:position] = additions
+    app.openapi_schema = None
 
 
 def extension_guard(manager, ext_id, loaded, pinned):

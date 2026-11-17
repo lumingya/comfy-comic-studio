@@ -28,8 +28,27 @@ from mio_server import __version__  # noqa: E402
 from mio_server.update.manifest import SCHEMA, sign_manifest  # noqa: E402
 
 REPO = "https://github.com/lumingya/comfy-comic-studio"
-INCLUDE = ["server", "web/dist", "clients", "start.bat", "start.sh", "README.md", "LICENSE"]
-SKIP_PARTS = {"__pycache__", ".ruff_cache", ".pytest_cache", "data", "tests", ".venv"}
+INCLUDE = [
+    "server",
+    "web/dist",
+    "clients",
+    "extensions",
+    "start.bat",
+    "start.sh",
+    "README.md",
+    "LICENSE",
+]
+SKIP_PARTS = {
+    "__pycache__",
+    ".ruff_cache",
+    ".pytest_cache",
+    "data",
+    "tests",
+    ".venv",
+    "node_modules",
+    ".git",
+    ".env",
+}
 SKIP_SUFFIXES = {".pyc", ".pyo"}
 FIXED_TIME = (2020, 1, 1, 0, 0, 0)
 
@@ -70,6 +89,8 @@ def files() -> list[Path]:
                 item.is_file()
                 and not (set(rel.parts) & SKIP_PARTS)
                 and item.suffix not in SKIP_SUFFIXES
+                and not item.name.startswith(".env.")
+                and not (entry == "extensions" and (".test." in item.name or ".spec." in item.name))
             ):
                 out.append(item)
     return sorted(out, key=lambda p: p.relative_to(ROOT).as_posix())

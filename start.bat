@@ -24,7 +24,8 @@ set "VPY=%CD%\.venv\Scripts\python.exe"
 if errorlevel 1 goto fail
 if not exist "web\dist\index.html" echo [mio] web\dist not built: API only. Build the UI with: npm --prefix web run build
 cd server
-"%VPY%" -m mio_server.update apply
+"%VPY%" -m mio_server.update apply --prepare-dependencies
+if errorlevel 1 goto fail
 "%VPY%" -m mio_server --open %*
 if errorlevel 1 goto crashed
 goto end

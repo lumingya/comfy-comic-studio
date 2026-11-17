@@ -16,6 +16,9 @@ from ..storage import SCHEMA_VERSION
 from .database import readonly, validate_databases
 from .extension_data import MAX_EXTENSION_JSON, allowed_extension_path, regular_path, settings_files
 from .models import BackupInspection, BackupManifest
+from .participants import allowed_path as allowed_participant_path
+from .participants import catalog_scope, data_files
+from .participants import size_limit as participant_size_limit
 from .paths import sha_file
 
 MAX_ARCHIVE = 2 * 1024**3
@@ -32,19 +35,32 @@ WARNINGS = [
 ]
 
 
-def allowed_path(name: str) -> bool:
-    if name in DATABASES or allowed_extension_path(name):
+def allowed_path(name: str, trusted_workspace: Path | None = None) -> bool:
+    if (
+        name in DATABASES
+        or allowed_extension_path(name)
+        or allowed_participant_path(name, trusted_workspace)
+    ):
         return True
     match = ASSET_PATH.fullmatch(name)
     return bool(match and match[1] == match[2][:2])
 
 
-def inspect_archive(path: Path, extract_to: Path | None = None) -> BackupInspection:
+def inspect_archive(
+    path: Path, extract_to: Path | None = None, *, trusted_workspace: Path | None = None
+) -> BackupInspection:
+    with catalog_scope(trusted_workspace):
+        return _inspect_archive(path, extract_to, trusted_workspace=trusted_workspace)
+
+
+def _inspect_archive(
+    path: Path, extract_to: Path | None = None, *, trusted_workspace: Path | None = None
+) -> BackupInspection:
     if path.stat().st_size > MAX_ARCHIVE:
         raise ValueError("workspace archive exceeds 2 GiB")
     if extract_to is None:
         with tempfile.TemporaryDirectory(prefix="mio-backup-verify-") as temporary:
-            return inspect_archive(path, Path(temporary))
+            return inspect_archive(path, Path(temporary), trusted_workspace=trusted_workspace)
     extract_to.mkdir(parents=True, exist_ok=True)
     if any(extract_to.iterdir()):
         raise ValueError("archive extraction requires an empty directory")
@@ -62,7 +78,9 @@ def inspect_archive(path: Path, extract_to: Path | None = None) -> BackupInspect
                     raise ValueError(
                         "workspace archive contains a link, directory or encrypted entry"
                     )
-                if entry.filename != "manifest.json" and not allowed_path(entry.filename):
+                if entry.filename != "manifest.json" and not allowed_path(
+                    entry.filename, trusted_workspace
+                ):
                     raise ValueError("workspace archive contains a forbidden path")
                 limit = (
                     MAX_MANIFEST
@@ -71,6 +89,8 @@ def inspect_archive(path: Path, extract_to: Path | None = None) -> BackupInspect
                     if entry.filename in DATABASES
                     else MAX_EXTENSION_JSON
                     if allowed_extension_path(entry.filename)
+                    else participant_size_limit(entry.filename, trusted_workspace)
+                    if allowed_participant_path(entry.filename, trusted_workspace)
                     else MAX_UNPACKED
                 )
                 if entry.file_size > limit:
@@ -89,7 +109,9 @@ def inspect_archive(path: Path, extract_to: Path | None = None) -> BackupInspect
             by_name = {entry.path: entry for entry in manifest.entries}
             if len(by_name) != len(manifest.entries) or set(names) != {"manifest.json", *by_name}:
                 raise ValueError("workspace archive manifest does not match its files")
-            if not DATABASES <= by_name.keys() or not all(allowed_path(name) for name in by_name):
+            if not DATABASES <= by_name.keys() or not all(
+                allowed_path(name, trusted_workspace) for name in by_name
+            ):
                 raise ValueError("workspace archive does not contain the required files")
             for name, expected in by_name.items():
                 entry = archive.getinfo(name)
@@ -107,7 +129,7 @@ def inspect_archive(path: Path, extract_to: Path | None = None) -> BackupInspect
                         output.write(chunk)
                 if count != expected.size or digest.hexdigest() != expected.sha256:
                     raise ValueError("workspace archive checksum mismatch")
-            counts = verify_workspace(extract_to, manifest)
+            counts = verify_workspace(extract_to, manifest, trusted_workspace=trusted_workspace)
         return BackupInspection(
             sha256=sha_file(path),
             size=path.stat().st_size,
@@ -119,7 +141,16 @@ def inspect_archive(path: Path, extract_to: Path | None = None) -> BackupInspect
         raise ValueError("invalid workspace archive") from exc
 
 
-def verify_workspace(root: Path, manifest: BackupManifest) -> dict:
+def verify_workspace(
+    root: Path, manifest: BackupManifest, *, trusted_workspace: Path | None = None
+) -> dict:
+    with catalog_scope(trusted_workspace):
+        return _verify_workspace(root, manifest, trusted_workspace=trusted_workspace)
+
+
+def _verify_workspace(
+    root: Path, manifest: BackupManifest, *, trusted_workspace: Path | None = None
+) -> dict:
     expected = {entry.path: entry for entry in manifest.entries}
     regular_path(root)
     pending = [root]
@@ -130,6 +161,14 @@ def verify_workspace(root: Path, manifest: BackupManifest) -> dict:
                 pending.append(path)
     extensions = {
         name for name, _ in settings_files(root, include_credentials=manifest.includes_credentials)
+    }
+    extension_files = {
+        name
+        for name, _ in data_files(
+            root,
+            include_credentials=manifest.includes_credentials,
+            trusted_workspace=trusted_workspace,
+        )
     }
     actual = {path.relative_to(root).as_posix() for path in root.rglob("*") if path.is_file()}
     if any(path.is_symlink() for path in root.rglob("*")):
@@ -145,7 +184,7 @@ def verify_workspace(root: Path, manifest: BackupManifest) -> dict:
     store, jobs = readonly(root / "mio.sqlite3"), readonly(root / "jobs.sqlite3")
     try:
         counts, assets = validate_databases(store, jobs)
-        if set(expected) != DATABASES | assets.keys() | extensions:
+        if set(expected) != DATABASES | assets.keys() | extensions | extension_files:
             raise ValueError("workspace asset files do not match asset metadata")
         for name, asset in assets.items():
             if expected[name].sha256 != asset.id or expected[name].size != asset.size:

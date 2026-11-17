@@ -35,6 +35,7 @@ log = logging.getLogger("mio.extensions")
 
 MAX_ZIP = 50 * 1024 * 1024
 MAX_ENTRIES = 2000
+BUILTIN_ROOT = Path(__file__).resolve().parents[3] / "extensions"
 
 
 class ExtensionError(ValueError):
@@ -77,6 +78,7 @@ class Info:
     error: str = ""
     restart_required: bool = False
     contributions: list[str] = field(default_factory=list)
+    builtin: bool = False
 
     def to_json(self) -> dict:
         m = self.manifest
@@ -95,6 +97,7 @@ class Info:
             "error": self.error,
             "restart_required": self.restart_required,
             "contributions": self.contributions,
+            "builtin": self.builtin,
         }
 
 
@@ -107,6 +110,7 @@ class ExtensionManager:
         self.errors: dict[str, str] = {}
         self.mounted: set[str] = set()  # extensions whose router is part of the running app
         self._catalog_transitions = 0
+        self.apps = []
 
     def operation_layers(self, operation: str):
         """Capture only committed wrappers, or fail fast while activation is incomplete."""
@@ -120,7 +124,8 @@ class ExtensionManager:
         return self.ctx.settings().extensions.get(ext_id)
 
     def info(self, ext_id: str) -> Info:
-        folder = self.root / ext_id
+        builtin = not (self.root / ext_id / MANIFEST).is_file()
+        folder = (BUILTIN_ROOT if builtin else self.root) / ext_id
         if not (folder / MANIFEST).is_file():
             raise ExtensionError(f"扩展不存在：{ext_id}")
         try:
@@ -150,7 +155,7 @@ class ExtensionManager:
                 for item in items
                 if item["source"] == source
             ]
-        restart = bool(loaded and loaded.api._router is not None and ext_id not in self.mounted)
+        restart = False
         return Info(
             ext_id,
             folder,
@@ -160,16 +165,18 @@ class ExtensionManager:
             self.errors.get(ext_id, ""),
             restart,
             contributions,
+            builtin,
         )
 
     def list(self) -> list[Info]:
-        if not self.root.is_dir():
-            return []
-        return [
-            self.info(p.name)
-            for p in sorted(self.root.iterdir())
+        identifiers = {
+            p.name
+            for root in (BUILTIN_ROOT, self.root)
+            if root.is_dir()
+            for p in root.iterdir()
             if p.is_dir() and (p / MANIFEST).is_file()
-        ]
+        }
+        return [self.info(identifier) for identifier in sorted(identifiers)]
 
     # --------------------------------------------------------------- state
     def _save_state(self, ext_id: str, enabled: bool, pinned: str) -> None:
@@ -194,14 +201,27 @@ class ExtensionManager:
             self.engine.ensure_executor_source_idle(f"ext:{ext_id}")
         previous = self._state(ext_id)
         self._save_state(ext_id, True, info.digest)
-        if not self.load(ext_id):
-            settings = self.ctx.settings()
-            if previous is None:
-                settings.extensions.pop(ext_id, None)
-            else:
-                settings.extensions[ext_id] = previous
-            self.ctx.store.put_doc(settings)
+        try:
+            success = self.load(ext_id)
+        except Exception:
+            self._restore_state(ext_id, previous)
+            raise
+        if not success:
+            self._restore_state(ext_id, previous)
+        else:
+            from .trust import remember_package
+
+            remember_package(self.ctx.data_dir, info.folder, info.digest)
         return self.info(ext_id)
+
+    def _restore_state(self, ext_id, previous):
+        """An activation error must not change the previous reviewed state."""
+        settings = self.ctx.settings()
+        if previous is None:
+            settings.extensions.pop(ext_id, None)
+        else:
+            settings.extensions[ext_id] = previous
+        self.ctx.store.put_doc(settings)
 
     @operation_serialized
     @catalog_transition
@@ -215,6 +235,8 @@ class ExtensionManager:
     @operation_serialized
     @catalog_transition
     def remove(self, ext_id: str) -> None:
+        if self.info(ext_id).builtin:
+            raise ExtensionError("内置扩展可以关闭，不能卸载")
         self.disable(ext_id)
         shutil.rmtree(self.root / ext_id)
         settings = self.ctx.settings()
@@ -227,12 +249,22 @@ class ExtensionManager:
             log.warning("MIO_SAFE_MODE=1: extensions are not loaded")
             return
         for ext_id, state in self.ctx.settings().extensions.items():
-            if state.enabled and (self.root / ext_id / MANIFEST).is_file():
+            if (
+                state.enabled
+                and not (self.root / ext_id / MANIFEST).is_file()
+                and (BUILTIN_ROOT / ext_id / MANIFEST).is_file()
+            ):
+                self._save_state(ext_id, True, self.info(ext_id).digest)
+                self.load(ext_id)
+            elif state.enabled and (self.root / ext_id / MANIFEST).is_file():
                 self.load(ext_id)
 
     @operation_serialized
     @catalog_transition
     def load(self, ext_id: str) -> bool:
+        previous_service = self.ctx.extension_services.get(ext_id)
+        if previous_service is not None and getattr(previous_service, "busy", False):
+            raise JobConflict("扩展的上次请求尚未结束，请稍后再启用")
         info = self.info(ext_id)
         state = self._state(ext_id)
         if not (state and state.enabled) or info.manifest is None or state.digest != info.digest:
@@ -268,9 +300,12 @@ class ExtensionManager:
                 raise ExtensionError("extension files changed during activation")
         except Exception as exc:  # contain every failure: roll back what was registered
             api._enabled = False
+            api.stop_services()
             self._restore_source(source, snapshot)
             if previous:
                 previous.api._enabled = True
+            if previous_service is not None:
+                self.ctx.extension_services[ext_id] = previous_service
             for name in list(sys.modules):
                 if name == module_name or name.startswith(module_name + "."):
                     sys.modules.pop(name, None)
@@ -285,6 +320,7 @@ class ExtensionManager:
             self._deactivate(ext_id, previous)
         self.mounted.discard(ext_id)
         self.loaded[ext_id] = Loaded(api, module)
+        self.refresh_routes()
         return True
 
     @operation_serialized
@@ -298,6 +334,7 @@ class ExtensionManager:
         loaded.api._enabled = False
         self._deactivate(ext_id, loaded)
         self.ctx.registry.unregister_source(loaded.api.source)
+        self.refresh_routes()
         self.engine.refresh_executor_jobs()
         name = f"mio_ext_{ext_id}"
         for key in list(sys.modules):
@@ -306,6 +343,7 @@ class ExtensionManager:
 
     @staticmethod
     def _deactivate(ext_id: str, loaded: Loaded) -> None:
+        loaded.api.stop_services()
         deactivate = getattr(loaded.module, "deactivate", None)
         if callable(deactivate):
             try:
@@ -372,9 +410,8 @@ class ExtensionManager:
     def _run_main(self, api: ExtensionAPI, manifest: Manifest):
         path = inside(api.folder, manifest.main or "")
         name = f"mio_ext_{api.id}"
-        package = path.name == "__init__.py"
         spec = importlib.util.spec_from_file_location(
-            name, path, submodule_search_locations=[str(path.parent)] if package else None
+            name, path, submodule_search_locations=[str(path.parent)]
         )
         if spec is None or spec.loader is None:
             raise ExtensionError(f"无法加载 {manifest.main}")
@@ -394,10 +431,21 @@ class ExtensionManager:
         return module
 
     def routers(self):
-        """``(ext_id, router)`` of loaded extensions that declared routes (mounted at start-up)."""
+        """``(ext_id, router)`` of loaded extensions with dynamically mounted routes."""
         for ext_id, loaded in self.loaded.items():
             if loaded.api._router is not None:
                 yield ext_id, loaded.api._router
+
+    def refresh_routes(self):
+        from ..api.extension_routes import refresh_extensions
+
+        for app, prefix, authenticate in self.apps:
+            refresh_extensions(app, prefix=prefix, authenticate=authenticate)
+
+    def close(self):
+        for loaded in list(self.loaded.values()):
+            loaded.api._enabled = False
+            loaded.api.stop_services()
 
     # ------------------------------------------------------------- install
     @operation_serialized
@@ -423,7 +471,7 @@ class ExtensionManager:
         target = self.root / manifest.id
         if target.exists() and not replace:
             raise ExtensionError(f"扩展 {manifest.id} 已存在")
-        if target.exists():
+        if target.exists() or manifest.id in self.loaded:
             self.engine.ensure_executor_source_idle(f"ext:{manifest.id}")
         total = sum(zf.getinfo(n).file_size for n in names)
         if total > 4 * MAX_ZIP:
@@ -433,7 +481,7 @@ class ExtensionManager:
         staging.mkdir(parents=True)
         try:
             for n in names:
-                rel = n[len(prefix) :]
+                rel = n[len(prefix) :].replace("\\", "/")
                 parts = PurePosixPath(rel).parts
                 if not rel or rel.startswith("/") or ".." in parts or ":" in rel:
                     raise ExtensionError(f"不安全的路径：{n}")
@@ -444,10 +492,12 @@ class ExtensionManager:
         except (ExtensionError, ManifestError):
             shutil.rmtree(staging, ignore_errors=True)
             raise
-        if target.exists():
+        if manifest.id in self.loaded:
             self.unload(manifest.id)
+        if target.exists():
             shutil.rmtree(target)
         staging.rename(target)
+        self._save_state(manifest.id, False, "")
         return self.info(manifest.id)
 
 

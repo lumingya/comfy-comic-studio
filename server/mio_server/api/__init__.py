@@ -29,6 +29,7 @@ from . import (
     canvas,
     checkpoints,
     export_jobs,
+    extension_market,
     extensions,
     jobs,
     kits,
@@ -40,6 +41,7 @@ from . import (
     production,
     series,
     system,
+    theme_packages,
     update,
     workshop,
 )
@@ -72,6 +74,8 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        if app.state.ctx.updater:
+            app.state.ctx.updater.startup_check(app.state.ctx.settings().update_feed)
         yield
         if owned:
             app.state.ctx.close()
@@ -99,7 +103,9 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
         longform,
         jobs,
         system,
+        extension_market,
         extensions,
+        theme_packages,
         album,
         export_jobs,
         backups,
@@ -114,6 +120,7 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
     app.include_router(update.router, prefix="/api")
     app.mount("/api/v2", build_v2(app.state.ctx, ERRORS))
     _mount_extensions(app)
+    app.state.ctx.host_app = app
     app.include_router(manual.router)  # the bundled current handbook, before the SPA fallback
 
     if serve_web and (WEB_DIST / "index.html").exists():

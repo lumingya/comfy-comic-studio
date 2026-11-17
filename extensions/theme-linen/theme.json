@@ -1,0 +1,25 @@
+{
+  "id": "theme-linen",
+  "name": "素纸",
+  "mode": "light",
+  "author": "Mio",
+  "tokens": {
+    "bg": "#f8f6f1",
+    "bg-deep": "#f0ede5",
+    "panel": "#fffdf8",
+    "panel-2": "#eeeadf",
+    "hover": "#e7e1d4",
+    "line": "#ded8cb",
+    "line-strong": "#c6bcaa",
+    "text": "#302b25",
+    "soft": "#62594c",
+    "muted": "#736958",
+    "accent": "#6a553b",
+    "accent-strong": "#806546",
+    "on-accent": "#fffdf8",
+    "tint": "#e9dfcd",
+    "button-hover": "#e7e1d4",
+    "control-surface": "transparent",
+    "shadow-sm": "0 2px 8px rgb(48 43 37 / 0.08)"
+  }
+}

@@ -1,6 +1,6 @@
-import { Cloud, Layers, Plug, SlidersHorizontal, Workflow } from 'lucide-react';
+import { Cloud, Layers, Plug, Workflow } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useInstances, useProfiles, useSettings, useWorkflows } from '../../api/system';
 import { usePageTitle } from '../../app/title';
 import { ChannelsSection } from '../settings/ChannelsSection';
@@ -115,10 +115,6 @@ export default function EnginePage() {
               </button>
             ))}
           </nav>
-          <Link className="btn ghost" to="/settings?tab=general">
-            <SlidersHorizontal size={15} />
-            {t('config.page.textApi')}
-          </Link>
         </div>
         <div
           id="config-panel"

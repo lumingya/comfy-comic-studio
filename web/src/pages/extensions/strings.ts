@@ -1,0 +1,58 @@
+import { useTranslation as useI18n } from 'react-i18next';
+
+const zh = {
+  market: '扩展市场',
+  installed: '已安装',
+  search: '搜索扩展',
+  source: '目录源',
+  refresh: '刷新',
+  all: '全部',
+  theme: '主题',
+  tools: '工具',
+  bundled: '随应用提供',
+  details: '查看详情',
+  install: '安装',
+  update: '更新',
+  enable: '启用',
+  manage: '管理',
+  empty: '没有找到扩展',
+  sourceTitle: '扩展目录源',
+  sourceUrl: '目录地址',
+  sourcePlaceholder: '留空使用随包目录',
+  cancel: '取消',
+  save: '保存',
+  homepage: '项目主页',
+  sourceError: '目录暂时无法刷新，正在显示已有内容。',
+  installedHint: '已安装，启用后可使用',
+  enableFailed: '扩展启用失败',
+};
+const en: typeof zh = {
+  market: 'Marketplace',
+  installed: 'Installed',
+  search: 'Search extensions',
+  source: 'Catalog source',
+  refresh: 'Refresh',
+  all: 'All',
+  theme: 'Themes',
+  tools: 'Tools',
+  bundled: 'Included with Mio',
+  details: 'View details',
+  install: 'Install',
+  update: 'Update',
+  enable: 'Enable',
+  manage: 'Manage',
+  empty: 'No extensions found',
+  sourceTitle: 'Extension catalog source',
+  sourceUrl: 'Catalog URL',
+  sourcePlaceholder: 'Leave blank for the bundled catalog',
+  cancel: 'Cancel',
+  save: 'Save',
+  homepage: 'Project page',
+  sourceError: 'The catalog could not refresh. Showing the available entries.',
+  installedHint: 'Installed; enable it to start',
+  enableFailed: 'Extension could not be enabled',
+};
+export function useMarketText() {
+  const { i18n } = useI18n();
+  return i18n.language.startsWith('en') ? en : zh;
+}

@@ -80,4 +80,7 @@ class OpenManagementTests(ApiCase):
         self.ok(self.v2("POST", path + "/disable", admin))
         self.assertNotIn("open-theme", {t["id"] for t in self.ok(self.v2("GET", "/themes", read))})
         self.ok(self.v2("DELETE", path, admin), 204)
-        self.assertEqual(self.ok(self.v2("GET", "/extensions", admin))["items"], [])
+        self.assertEqual(
+            [i for i in self.ok(self.v2("GET", "/extensions", admin))["items"] if not i["builtin"]],
+            [],
+        )

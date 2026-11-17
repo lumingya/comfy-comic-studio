@@ -1,0 +1,132 @@
+.extension-center {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.extension-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.extension-tabs {
+  display: flex;
+  align-self: stretch;
+  gap: 24px;
+  margin-right: auto;
+  border-bottom: 1px solid var(--line);
+}
+.extension-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--soft);
+  padding: 12px 0;
+  cursor: pointer;
+  font: inherit;
+}
+.extension-tabs button.active {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+.extension-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-control);
+  min-width: 180px;
+  color: var(--muted);
+}
+.extension-search input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  min-width: 0;
+  height: var(--control-height);
+  font: inherit;
+  width: 190px;
+}
+.extension-filters {
+  display: flex;
+  gap: 8px;
+}
+.extension-market-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 20px;
+}
+.extension-market-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: transparent;
+  overflow: hidden;
+}
+.extension-card-detail {
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  gap: 18px 14px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  padding: 24px;
+  cursor: pointer;
+  flex: 1;
+}
+.extension-card-detail:hover {
+  background: var(--button-hover);
+}
+.extension-emblem {
+  align-self: start;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  background: var(--tint);
+  color: var(--accent);
+  border-radius: var(--radius-control);
+}
+.extension-card-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.extension-card-description {
+  grid-column: 1 / -1;
+  color: var(--soft);
+  line-height: 1.7;
+}
+.extension-market-card footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 24px 20px;
+}
+.extension-detail-description {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.8;
+}
+@media (max-width: 700px) {
+  .extension-search {
+    flex: 1;
+  }
+  .extension-search input {
+    width: 100%;
+  }
+  .extension-tabs {
+    flex-basis: 100%;
+  }
+}

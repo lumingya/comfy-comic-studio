@@ -14,5 +14,5 @@ VPY="$PWD/.venv/bin/python"
 "$VPY" server/bootstrap.py
 [ -f web/dist/index.html ] || echo "[mio] web/dist not built: API only (npm ci --prefix web && npm --prefix web run build)"
 cd server
-"$VPY" -m mio_server.update apply
+"$VPY" -m mio_server.update apply --prepare-dependencies
 exec "$VPY" -m mio_server "$@"

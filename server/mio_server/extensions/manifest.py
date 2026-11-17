@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Literal
 
@@ -20,7 +21,7 @@ from ..models import StrictModel
 
 MANIFEST = "mio-extension.json"
 ID_PATTERN = r"^[a-z0-9][a-z0-9_-]{1,47}$"
-SKIP_DIRS = {"__pycache__", ".git", "node_modules"}
+SKIP_DIRS = {"__pycache__", ".git", "node_modules", ".ruff_cache", ".pytest_cache", ".venv"}
 
 
 class SlicePresetSpec(StrictModel):
@@ -76,6 +77,11 @@ class Contributes(StrictModel):
     panels: list[PanelSpec] = Field(default_factory=list)
 
 
+class WorkspaceSpec(StrictModel):
+    entry: str
+    title: str
+
+
 class Manifest(StrictModel):
     id: str = Field(pattern=ID_PATTERN)
     name: str
@@ -84,11 +90,13 @@ class Manifest(StrictModel):
     author: str = ""
     homepage: str = ""
     main: str | None = Field(default=None, description="Python entry: activate(mio) is called")
+    workspace: WorkspaceSpec | None = None
+    backup: str | None = None
     contributes: Contributes = Field(default_factory=Contributes)
 
     @property
     def runs_code(self) -> bool:
-        return bool(self.main or self.contributes.panels)
+        return bool(self.main or self.contributes.panels or self.workspace or self.backup)
 
 
 class ManifestError(ValueError):
@@ -109,7 +117,12 @@ def read_manifest(folder: Path) -> Manifest:
         first = exc.errors()[0]
         where = ".".join(str(p) for p in first["loc"])
         raise ManifestError(f"{MANIFEST} 字段 {where}：{first['msg']}") from None
-    for rel in [manifest.main or "", *manifest.contributes.themes]:
+    for rel in [
+        manifest.main or "",
+        manifest.backup or "",
+        manifest.workspace.entry if manifest.workspace else "",
+        *manifest.contributes.themes,
+    ]:
         if rel:
             inside(folder, rel)
     for rel in manifest.contributes.album_templates + [
@@ -130,13 +143,13 @@ def inside(folder: Path, rel: str) -> Path:
 
 def files(folder: Path) -> list[Path]:
     out = []
-    for path in sorted(folder.rglob("*")):
-        rel = path.relative_to(folder)
-        if any(part in SKIP_DIRS for part in rel.parts) or path.suffix in (".pyc", ".pyo"):
-            continue
-        if path.is_file():
-            out.append(path)
-    return out
+    for current, directories, names in os.walk(folder):
+        directories[:] = [name for name in directories if name not in SKIP_DIRS]
+        for name in names:
+            path = Path(current) / name
+            if path.suffix not in (".pyc", ".pyo") and path.is_file():
+                out.append(path)
+    return sorted(out)
 
 
 def digest(folder: Path) -> str:

@@ -25,13 +25,20 @@ jobs:
       - name: Checks
         run: |
           python -m pip install -r server/requirements-dev.txt
-          ruff check server
+          ruff check server extensions
           python -m unittest discover -s server/tests -t server -q
           python clients/python/generate.py --check
       - name: Build web
         run: |
           npm ci --prefix web --no-audit --no-fund
           npm --prefix web run build
+      - name: Verify standalone extension assets
+        working-directory: extensions/ai-assist/page
+        run: |
+          npm ci --no-audit --no-fund
+          npm test
+          npm run build
+          git diff --exit-code -- dist
       - name: Build release zip and signed manifest
         id: build
         env:

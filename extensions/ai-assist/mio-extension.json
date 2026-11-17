@@ -1,0 +1,10 @@
+{
+  "id": "ai-assist",
+  "name": "AI 辅助",
+  "version": "1.0.0",
+  "description": "聊天、写作与项目操作",
+  "author": "Mio",
+  "main": "main.py",
+  "workspace": {"entry": "page/dist/index.html", "title": "AI 辅助"},
+  "backup": "core/backup.py"
+}

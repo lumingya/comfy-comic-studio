@@ -10,9 +10,12 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
+from starlette.requests import HTTPConnection
 
 from mio_server.api import create_app
+from mio_server.api.extension_routes import extension_guard
 from mio_server.models import Episode, Panel, Series, Take, TakeStatus
+from mio_server.storage import NotFound
 
 from .api_harness import LOCAL, ApiCase
 
@@ -91,9 +94,8 @@ class QAExtensionTests(ApiCase):
         self.assertEqual(self.client.post(ROUTE, json=self.body).status_code, 404)
         self.assertEqual(self.ctx.engine.list(), [])
         enabled = self.enable()
-        self.assertTrue(enabled["restart_required"])
-        self.assertEqual(self.client.post(ROUTE, json=self.body).status_code, 404)
-        active = self.remount()
+        self.assertFalse(enabled["restart_required"])
+        active = self.client
         self.assertFalse(self.ctx.extensions.info("qa-review").restart_required)
         self.assertEqual(active.get(ROUTE).status_code, 405)
         self.assertEqual(self.ctx.engine.list(), [])
@@ -141,17 +143,18 @@ class QAExtensionTests(ApiCase):
         self.enable()
         active = self.remount()
         old = self.ctx.extensions.loaded["qa-review"]
+        old_guard = extension_guard(self.ctx.extensions, "qa-review", old, old.api.digest)
         self.ok(active.post("/api/extensions/qa-review/disable"))
         with patch.object(self.ctx.qa, "submit") as submit:
             self.assertEqual(active.post(ROUTE, json=self.body).status_code, 404)
             info = self.enable()
-            self.assertTrue(info["restart_required"])
+            self.assertFalse(info["restart_required"])
             self.assertIsNot(self.ctx.extensions.loaded["qa-review"], old)
-            self.assertEqual(active.post(ROUTE, json=self.body).status_code, 404)
+            with self.assertRaises(NotFound):
+                old_guard(HTTPConnection({"type": "http", "headers": []}))
             submit.assert_not_called()
         self.assertEqual(self.ctx.engine.list(), [])
-        refreshed = self.remount()
-        self.ok(refreshed.post(ROUTE, json=self.body))
+        self.ok(active.post(ROUTE, json=self.body))
         self.assertEqual(len(self.ctx.engine.list()), 1)
 
     def test_changed_or_untrusted_files_reject_requests_before_any_qa_submission(self):
@@ -168,7 +171,7 @@ class QAExtensionTests(ApiCase):
             submit.assert_not_called()
         self.assertEqual(self.ctx.engine.list(), [])
 
-    def test_changed_code_requires_new_activation_and_mount(self):
+    def test_changed_code_requires_new_activation_and_mounts_immediately(self):
         self.enable()
         active = self.remount()
         path = self.ctx.extensions.root / "qa-review" / "main.py"
@@ -181,8 +184,7 @@ class QAExtensionTests(ApiCase):
         )
         self.assertEqual(active.post(ROUTE, json=self.body).status_code, 404)
         self.enable()
-        self.assertEqual(active.post(ROUTE, json=self.body).status_code, 404)
-        self.assertEqual(self.ok(self.remount().post(ROUTE)), {"version": "new"})
+        self.assertEqual(self.ok(active.post(ROUTE)), {"version": "new"})
         self.assertEqual(self.ctx.engine.list(), [])
 
     def test_extension_route_requires_render_token_and_keeps_local_origin_guard(self):

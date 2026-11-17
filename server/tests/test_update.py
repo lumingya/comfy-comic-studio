@@ -196,6 +196,11 @@ class UpdateApiTests(ApiCase):
         self.ctx.updater.transport = httpx.MockTransport(
             lambda r: httpx.Response(200, content=manifest_for(b"zip"))
         )
+        self.ok(
+            self.client.patch(
+                "/api/settings", json={"update_feed": "https://example.test/mio-release.json"}
+            )
+        )
         res = self.client.post("/api/update/check")
         self.assertEqual(res.status_code, 400)
         self.assertIn("公钥", res.json()["detail"])

@@ -17,7 +17,10 @@ Mio · 绘页是同时支持云端与本地生图的便捷式漫画和本子创�
 | 技术栈 | FastAPI + React | 后端 Python 3.11+、Pydantic、SQLite；前端 Vite + React + TypeScript（strict） |
 | 参考硬件 | RTX 4060 Laptop 8 GB 显存 | 默认按 8 GB 档设计：出图分「草稿 / 成品」两档（§6.4） |
 | 模型 | 只用已装模型 | SDXL 动漫底模（Illustrious / NoobAI）、已有 LoRA、NoobAI tile ControlNet；需要参考图一致性时走云端定形（§6.4） |
-| LLM | 本地反代，OpenAI 兼容 | 剧本和视觉检查走同一个 OpenAI 兼容地址，密钥只留在本机 |
+| LLM | 可关闭的 AI 辅助扩展 | 文本、视觉和聊天渠道集中在扩展中，支持 OpenAI 兼容、DeepSeek 与 Gemini；图像服务独立配置，密钥只留在本机 |
+| 扩展分发 | 独立目录与一级扩展市场 | 代码、界面、样式、清单和说明聚合在 `extensions/<id>`；无需修改宿主即可导入，主题采用同一包机制 |
+
+2026-11-17：应用内版本目录与可关闭的 AI 辅助已实现。AI 业务、独立页面产物及测试集中在 `extensions/ai-assist/`；主题以同样的目录包分享。一级「扩展」提供随包目录、自定义市场源与文件夹/ZIP 导入，热启停共用通用 SDK。功能评审后修复启用结果、分类与断网发送恢复；实现、验收范围和发布端条件见[本轮记录](UPDATES_AI_ASSIST_2026-11-17.md)。
 
 ---
 

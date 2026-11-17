@@ -13,6 +13,7 @@ from functools import wraps
 from fastapi import APIRouter, Request
 from fastapi.routing import APIRoute
 from starlette.concurrency import run_in_threadpool
+from starlette.routing import compile_path
 
 from ..auth import required_scope
 from .deps import Ctx
@@ -75,7 +76,7 @@ class OperationRoute(APIRoute):
         methods = kwargs.get("methods") or ["GET"]
         if "ctx" not in inspect.signature(endpoint).parameters or len(methods) != 1:
             raise ValueError("core operations require a context and exactly one HTTP method")
-        operation = operation or f"{next(iter(methods)).upper()} {path}"
+        operation = operation or f"{next(iter(methods)).upper()} {compile_path(path)[1]}"
         extra = {
             **(kwargs.pop("openapi_extra", None) or {}),
             "x-mio-operation": operation,

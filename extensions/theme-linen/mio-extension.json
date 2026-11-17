@@ -1,0 +1,10 @@
+{
+  "id": "theme-linen",
+  "name": "素纸",
+  "version": "1.0.0",
+  "description": "暖白与墨褐的浅色主题",
+  "author": "Mio",
+  "contributes": {
+    "themes": ["theme.json"]
+  }
+}

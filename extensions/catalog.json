@@ -1,0 +1,7 @@
+{
+  "format_version": 1,
+  "items": [
+    { "id": "ai-assist", "tags": ["AI", "创作"] },
+    { "id": "theme-linen", "tags": ["主题"] }
+  ]
+}

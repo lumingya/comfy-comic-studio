@@ -16,8 +16,8 @@ from pathlib import Path
 from ..jobs.lease import FileLease
 from .archive import verify_workspace
 from .database import logical_head
-from .extension_data import with_extension_head
 from .models import RestoreJournal, RestorePlan
+from .participants import with_workspace_head
 from .paths import atomic_json, read_json, recovery_root, safe_child, sha_file, sync_directory
 from .service import FileLeaseContext
 
@@ -61,7 +61,7 @@ def offline_head(workspace: Path) -> str:
             # WAL must be visible after an abrupt process exit, so do not use immutable=1.
             db = sqlite3.connect((workspace / name).as_uri() + "?mode=ro", uri=True)
             databases.append(db)
-        return with_extension_head(logical_head(*databases), workspace)
+        return with_workspace_head(logical_head(*databases), workspace)
     finally:
         for db in databases:
             db.close()
@@ -152,13 +152,15 @@ def install_pending(workspace: Path) -> bool:
                 return False
             if sha_file(folder / "workspace.zip") != journal.archive_sha256:
                 raise ValueError("staged archive changed after scheduling")
-            verify_workspace(folder / "workspace", plan.inspection.manifest)
+            verify_workspace(
+                folder / "workspace", plan.inspection.manifest, trusted_workspace=workspace
+            )
             if incoming.exists():
                 # Only our disposable copy is removed. The reviewed archive and original work
                 # remain intact; an interruption while copying must be restartable.
                 shutil.rmtree(incoming)
             durable_copy(folder / "workspace", incoming)
-            verify_workspace(incoming, plan.inspection.manifest)
+            verify_workspace(incoming, plan.inspection.manifest, trusted_workspace=workspace)
             journal.phase = "prepared"
             atomic_json(pending, journal.model_dump(mode="json"))
         if journal.phase == "prepared":
@@ -182,11 +184,11 @@ def install_pending(workspace: Path) -> bool:
                 move_directory(incoming, workspace)
             elif incoming.exists() or not workspace.exists():
                 raise ValueError("unexpected replacement workspace state during installation")
-            verify_workspace(workspace, plan.inspection.manifest)
+            verify_workspace(workspace, plan.inspection.manifest, trusted_workspace=workspace)
             journal.phase = "installed"
             atomic_json(pending, journal.model_dump(mode="json"))
         if journal.phase == "installed":
-            verify_workspace(workspace, plan.inspection.manifest)
+            verify_workspace(workspace, plan.inspection.manifest, trusted_workspace=workspace)
             _finish(
                 root,
                 folder,

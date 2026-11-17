@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { Fragment, useEffect } from 'react';
+import { Puzzle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useJobEvents, useJobs, useLive } from '../api/jobs';
@@ -13,6 +14,7 @@ import { Icon } from './icons';
 import { NAV } from './nav';
 import { ThemeProvider, useThemeToggle } from './useTheme';
 import { useUI } from './ui-store';
+import { useWorkspaceSurfaces, WorkspaceExtensionOverlays } from '../extensions/host';
 
 /** The legacy Mio mark: four tilted comic panels. */
 export function BrandMark() {
@@ -35,6 +37,11 @@ export function useVersion() {
 function useSection(): string {
   const { t } = useTranslation();
   const path = useLocation().pathname;
+  const surfaces = useWorkspaceSurfaces();
+  const surface = surfaces.data?.items.find((item) =>
+    path.startsWith(`/extensions/${item.extension_id}`),
+  );
+  if (surface) return surface.title;
   if (path.startsWith('/workshop')) {
     const tab = path.split('/')[2] || 'story';
     return ['story', 'presets', 'assembly'].includes(tab)
@@ -57,6 +64,7 @@ function Sidebar() {
   const openCommand = useCommand((s) => s.set);
   const version = useVersion();
   const studio = useSettings().data?.studio_name?.trim() || t('legacy.studio');
+  const surfaces = useWorkspaceSurfaces();
   return (
     <aside className="sidebar" id="sidebar" aria-label={t('nav.main')}>
       <Link className="brand" to="/" aria-label={t('app.name')}>
@@ -80,7 +88,7 @@ function Sidebar() {
       <nav className="nav-list" aria-label={t('legacy.navLabel')}>
         {NAV.map((n) => {
           const active = n.match(path);
-          return (
+          const item = (
             <NavLink
               key={n.to}
               to={n.to}
@@ -97,6 +105,26 @@ function Sidebar() {
               ) : null}
               <b className="nav-key">{n.key}</b>
             </NavLink>
+          );
+          return n.key === ',' ? (
+            <Fragment key={n.to}>
+              {surfaces.data?.items
+                .filter((surface) => surface.mode === 'page')
+                .map((surface) => (
+                  <NavLink
+                    key={`${surface.extension_id}:${surface.id}`}
+                    to={`/extensions/${surface.extension_id}`}
+                    className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                    title={surface.title}
+                  >
+                    <Puzzle size={20} />
+                    <span>{surface.title}</span>
+                  </NavLink>
+                ))}
+              {item}
+            </Fragment>
+          ) : (
+            item
           );
         })}
       </nav>
@@ -202,6 +230,7 @@ export function Shell() {
   const connected = useLive((s) => s.connected);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const path = useLocation().pathname;
   useJobEvents();
   useHelpShortcut();
 
@@ -249,6 +278,7 @@ export function Shell() {
       <ConfirmHost />
       <HelpDrawer />
       <QuickStart />
+      <WorkspaceExtensionOverlays path={path} />
     </ThemeProvider>
   );
 }

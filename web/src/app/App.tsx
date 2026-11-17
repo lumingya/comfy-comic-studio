@@ -5,6 +5,7 @@ import { ApiError } from '../api/client';
 import { Loading } from '../components/ui';
 import { Shell } from './Shell';
 import { NotFound, RouteError } from './errors';
+import { WorkspaceExtensionPage } from '../extensions/host';
 
 const Home = lazy(() => import('../pages/home/HomePage'));
 const Works = lazy(() => import('../pages/works/WorksPage'));
@@ -28,6 +29,7 @@ const CanvasTab = lazy(() => import('../pages/canvas/CanvasTab'));
 const ExtensionTab = lazy(() => import('../pages/episode/ExtensionTab'));
 const Jobs = lazy(() => import('../pages/jobs/JobsPage'));
 const Settings = lazy(() => import('../pages/settings/SettingsPage'));
+const Extensions = lazy(() => import('../pages/extensions/ExtensionsPage'));
 
 const s = (node: ReactNode) => <Suspense fallback={<Loading />}>{node}</Suspense>;
 
@@ -36,6 +38,7 @@ const ENGINE_TABS = ['instances', 'workflows', 'profiles', 'channels'];
 function SettingsRoute() {
   const [params] = useSearchParams();
   const tab = params.get('tab') ?? '';
+  if (tab === 'extensions') return <Navigate to="/extensions?tab=installed" replace />;
   if (ENGINE_TABS.includes(tab)) return <Navigate to={`/engine?tab=${tab}`} replace />;
   return s(<Settings />);
 }
@@ -99,6 +102,8 @@ export const routes = [
       { path: 'episodes/:episodeId/*', element: s(<EpisodeRedirect />) },
       { path: 'jobs', element: s(<Jobs />) },
       { path: 'engine', element: s(<Engine />) },
+      { path: 'extensions', element: s(<Extensions />) },
+      { path: 'extensions/:extensionId', element: <WorkspaceExtensionPage /> },
       { path: 'settings', element: <SettingsRoute /> },
       { path: 'trash', element: <Navigate to="/settings?tab=data" replace /> },
       { path: '*', element: <NotFound /> },

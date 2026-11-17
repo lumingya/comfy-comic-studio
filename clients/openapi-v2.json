@@ -4378,6 +4378,38 @@
     "title": "LoraRef",
     "type": "object"
    },
+   "MarketInstallRequest": {
+    "properties": {
+     "expected_catalog_digest": {
+      "pattern": "^[a-fA-F0-9]{64}$",
+      "title": "Expected Catalog Digest",
+      "type": "string"
+     },
+     "expected_sha256": {
+      "pattern": "^[a-fA-F0-9]{64}$",
+      "title": "Expected Sha256",
+      "type": "string"
+     }
+    },
+    "required": [
+     "expected_catalog_digest",
+     "expected_sha256"
+    ],
+    "title": "MarketInstallRequest",
+    "type": "object"
+   },
+   "MarketSourceRequest": {
+    "properties": {
+     "url": {
+      "default": "",
+      "maxLength": 4000,
+      "title": "Url",
+      "type": "string"
+     }
+    },
+    "title": "MarketSourceRequest",
+    "type": "object"
+   },
    "ModelCatalog": {
     "additionalProperties": false,
     "properties": {
@@ -6554,6 +6586,21 @@
     "title": "RebindExecutor",
     "type": "object"
    },
+   "ReleaseInstall": {
+    "properties": {
+     "tag": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Tag",
+      "type": "string"
+     }
+    },
+    "required": [
+     "tag"
+    ],
+    "title": "ReleaseInstall",
+    "type": "object"
+   },
    "RenderProfile-Input": {
     "additionalProperties": false,
     "description": "A pipeline of workflows.  ``draft`` runs per candidate, ``final`` only on adopted takes.",
@@ -8603,6 +8650,56 @@
     "title": "TakeStatus",
     "type": "string"
    },
+   "Theme": {
+    "additionalProperties": false,
+    "properties": {
+     "author": {
+      "default": "",
+      "title": "Author",
+      "type": "string"
+     },
+     "created_at": {
+      "title": "Created At",
+      "type": "string"
+     },
+     "id": {
+      "pattern": "^[a-z0-9][a-z0-9_-]{1,47}$",
+      "title": "Id",
+      "type": "string"
+     },
+     "mode": {
+      "enum": [
+       "light",
+       "dark"
+      ],
+      "title": "Mode",
+      "type": "string"
+     },
+     "name": {
+      "maxLength": 60,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+     },
+     "tokens": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Tokens",
+      "type": "object"
+     }
+    },
+    "required": [
+     "id",
+     "name",
+     "mode",
+     "tokens",
+     "author",
+     "created_at"
+    ],
+    "title": "Theme",
+    "type": "object"
+   },
    "TokenCreate": {
     "properties": {
      "expires_at": {
@@ -8690,6 +8787,19 @@
      "notes"
     ],
     "title": "TransferResult",
+    "type": "object"
+   },
+   "UpdatePreferences": {
+    "properties": {
+     "auto_check": {
+      "title": "Auto Check",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "auto_check"
+    ],
+    "title": "UpdatePreferences",
     "type": "object"
    },
    "ValidationError": {
@@ -13984,6 +14094,179 @@
     "x-mio-operation": "GET /export/presets"
    }
   },
+  "/extension-market": {
+   "get": {
+    "operationId": "get_extension_market",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "refresh",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Refresh",
+       "type": "boolean"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Get Extension Market",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Get Extension Market",
+    "tags": [
+     "extensions"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "refresh"
+    ],
+    "x-mio-operation": "GET /extension-market"
+   }
+  },
+  "/extension-market/source": {
+   "put": {
+    "operationId": "set_extension_market_source",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/MarketSourceRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Set Extension Market Source",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Set Extension Market Source",
+    "tags": [
+     "extensions"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "PUT /extension-market/source"
+   }
+  },
+  "/extension-market/{ext_id}/install": {
+   "post": {
+    "operationId": "install_market_extension",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ext_id",
+      "required": true,
+      "schema": {
+       "title": "Ext Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/MarketInstallRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Install Market Extension",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Install Market Extension",
+    "tags": [
+     "extensions"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "ext_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /extension-market/{ext_id}/install"
+   }
+  },
   "/extension-panels": {
    "get": {
     "description": "UI panels of active extensions; the web app shows them in sandboxed iframes.",
@@ -14095,6 +14378,38 @@
     "x-mio-operation": "POST /extension-panels/{ext_id}/{panel_id}/requests"
    }
   },
+  "/extension-surfaces": {
+   "get": {
+    "operationId": "extension_surfaces",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Extension Surfaces",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Extension Surfaces",
+    "tags": [
+     "extensions"
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /extension-surfaces"
+   }
+  },
   "/extensions": {
    "get": {
     "operationId": "list_extensions",
@@ -14191,6 +14506,63 @@
      "replace"
     ],
     "x-mio-operation": "POST /extensions"
+   }
+  },
+  "/extensions/folder": {
+   "post": {
+    "description": "Import a portable extension directory; files are reviewed before activation.",
+    "operationId": "install_extension_folder",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "replace",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Replace",
+       "type": "boolean"
+      }
+     }
+    ],
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Install Extension Folder",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Install Extension Folder",
+    "tags": [
+     "extensions"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "request",
+     "replace"
+    ],
+    "x-mio-operation": "POST /extensions/folder"
    }
   },
   "/extensions/{ext_id}": {
@@ -14483,6 +14855,66 @@
      "body"
     ],
     "x-mio-operation": "PUT /extensions/{ext_id}/settings"
+   }
+  },
+  "/extensions/{ext_id}/workspace/{path}": {
+   "get": {
+    "operationId": "extension_workspace",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ext_id",
+      "required": true,
+      "schema": {
+       "title": "Ext Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "path",
+      "required": true,
+      "schema": {
+       "title": "Path",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Extension Workspace",
+    "tags": [
+     "extensions"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "ext_id",
+     "path"
+    ],
+    "x-mio-operation": "GET /extensions/{ext_id}/workspace/{path}"
    }
   },
   "/instances": {
@@ -17707,6 +18139,111 @@
      "theme_id"
     ],
     "x-mio-operation": "DELETE /themes/{theme_id}"
+   },
+   "get": {
+    "description": "Return an editable theme JSON document accepted by the existing import endpoint.",
+    "operationId": "get_theme",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "theme_id",
+      "required": true,
+      "schema": {
+       "title": "Theme Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Theme"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Get Theme",
+    "tags": [
+     "themes"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "theme_id"
+    ],
+    "x-mio-operation": "GET /themes/{theme_id}"
+   }
+  },
+  "/themes/{theme_id}/package": {
+   "get": {
+    "description": "Download an inert extension folder as a ZIP, ready to import on another installation.",
+    "operationId": "export_theme_package",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "theme_id",
+      "required": true,
+      "schema": {
+       "title": "Theme Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/zip": {
+        "schema": {
+         "format": "binary",
+         "type": "string"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Export Theme Package",
+    "tags": [
+     "themes"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "theme_id"
+    ],
+    "x-mio-operation": "GET /themes/{theme_id}/package"
    }
   },
   "/tokens": {
@@ -17994,9 +18531,53 @@
     "x-mio-operation": "GET /update"
    }
   },
+  "/update/cancel": {
+   "post": {
+    "operationId": "cancel_update",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Cancel Update",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Cancel Update",
+    "tags": [
+     "update"
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "POST /update/cancel"
+   }
+  },
   "/update/check": {
    "post": {
     "operationId": "check_update",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "background",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Background",
+       "type": "boolean"
+      }
+     }
+    ],
     "responses": {
      "200": {
       "content": {
@@ -18009,6 +18590,16 @@
        }
       },
       "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
      }
     },
     "security": [
@@ -18021,7 +18612,8 @@
      "update"
     ],
     "x-mio-arguments": [
-     "ctx"
+     "ctx",
+     "background"
     ],
     "x-mio-operation": "POST /update/check"
    }
@@ -18030,6 +18622,18 @@
    "post": {
     "description": "Download and verify, then stage; the launcher installs it on the next start.",
     "operationId": "download_update",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "background",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Background",
+       "type": "boolean"
+      }
+     }
+    ],
     "responses": {
      "200": {
       "content": {
@@ -18042,6 +18646,16 @@
        }
       },
       "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
      }
     },
     "security": [
@@ -18054,9 +18668,196 @@
      "update"
     ],
     "x-mio-arguments": [
-     "ctx"
+     "ctx",
+     "background"
     ],
     "x-mio-operation": "POST /update/download"
+   }
+  },
+  "/update/install": {
+   "post": {
+    "operationId": "install_release",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/ReleaseInstall"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Install Release",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Install Release",
+    "tags": [
+     "update"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /update/install"
+   }
+  },
+  "/update/preferences": {
+   "patch": {
+    "operationId": "update_preferences",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdatePreferences"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Update Preferences",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Update Preferences",
+    "tags": [
+     "update"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "PATCH /update/preferences"
+   }
+  },
+  "/update/releases": {
+   "get": {
+    "operationId": "release_catalog",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "page",
+      "required": false,
+      "schema": {
+       "default": 1,
+       "minimum": 1,
+       "title": "Page",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "per_page",
+      "required": false,
+      "schema": {
+       "default": 20,
+       "maximum": 50,
+       "minimum": 1,
+       "title": "Per Page",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "refresh",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Refresh",
+       "type": "boolean"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Release Catalog",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Release Catalog",
+    "tags": [
+     "update"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "page",
+     "per_page",
+     "refresh"
+    ],
+    "x-mio-operation": "GET /update/releases"
    }
   },
   "/webhooks": {

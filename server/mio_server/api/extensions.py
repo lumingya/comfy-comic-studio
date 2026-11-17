@@ -2,10 +2,16 @@
 
 from __future__ import annotations
 
+import io
 import mimetypes
 import os
+import zipfile
+from email import policy
+from email.parser import BytesParser
+from pathlib import PurePosixPath
 
 from fastapi import Request, Response, status
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, JsonValue
 
 from .. import themes as TH
@@ -57,6 +63,106 @@ async def install_extension(ctx: Ctx, request: Request, replace: bool = False) -
 def enable_extension(ctx: Ctx, ext_id: str, body: EnableRequest) -> dict:
     """Enable exactly the reviewed content (``digest`` from the listing)."""
     return _mgr(ctx).enable(ext_id, body.digest).to_json()
+
+
+@router.post("/extensions/folder", status_code=201)
+async def install_extension_folder(ctx: Ctx, request: Request, replace: bool = False) -> dict:
+    """Import a portable extension directory; files are reviewed before activation."""
+    content_type = request.headers.get("content-type", "")
+    if not content_type.startswith("multipart/form-data;") or any(
+        c in content_type for c in "\r\n"
+    ):
+        raise ValueError("请上传扩展文件夹")
+    raw = await read_body(request, 51 * 1024 * 1024, "扩展包超过 50 MB")
+    envelope = BytesParser(policy=policy.default).parsebytes(
+        ("Content-Type: " + content_type + "\r\nMIME-Version: 1.0\r\n\r\n").encode("ascii") + raw
+    )
+    buffer = io.BytesIO()
+    total = count = 0
+    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for item in envelope.iter_parts():
+            if item.get_param("name", header="content-disposition") != "files":
+                continue
+            name = (item.get_filename() or "").replace("\\", "/")
+            path = PurePosixPath(name)
+            if not name or path.is_absolute() or ".." in path.parts or ":" in name:
+                raise ValueError("文件夹包含不安全的路径")
+            if any(
+                part
+                in {
+                    "node_modules",
+                    ".git",
+                    "__pycache__",
+                    ".venv",
+                    ".cache",
+                    ".pytest_cache",
+                    ".ruff_cache",
+                }
+                or part.startswith(".env")
+                for part in path.parts
+            ):
+                continue
+            data = item.get_payload(decode=True) or b""
+            total += len(data)
+            count += 1
+            if total > 50 * 1024 * 1024 or count > 2000:
+                raise ValueError("扩展文件夹过大")
+            archive.writestr(name, data)
+    return _mgr(ctx).install(buffer.getvalue(), replace=replace).to_json()
+
+
+@router.get("/extension-surfaces")
+def extension_surfaces(ctx: Ctx) -> dict:
+    items = []
+    for contribution in ctx.registry.all("workspace_surface"):
+        identifier = contribution.source.removeprefix("ext:")
+        loaded = ctx.extensions.loaded.get(identifier)
+        if loaded is None:
+            continue
+        info = ctx.extensions.info(identifier)
+        if info.manifest is None or info.manifest.workspace is None:
+            continue
+        value = contribution.value() if callable(contribution.value) else contribution.value
+        entry = value.get("entry", info.manifest.workspace.entry)
+        if entry != info.manifest.workspace.entry:
+            continue
+        items.append(
+            {
+                "extension_id": identifier,
+                "id": contribution.id,
+                "title": value.get("title", info.manifest.workspace.title),
+                "mode": "page" if value.get("mode") == "page" else "floating",
+                "url": f"/api/extensions/{identifier}/workspace/{entry}",
+            }
+        )
+    return {"items": items}
+
+
+@router.get("/extensions/{ext_id}/workspace/{path:path}")
+def extension_workspace(ctx: Ctx, ext_id: str, path: str):
+    loaded = ctx.extensions.loaded.get(ext_id)
+    info = ctx.extensions.info(ext_id)
+    if loaded is None or info.manifest is None or info.manifest.workspace is None:
+        raise NotFound("扩展工作区未启用")
+    from ..extensions.manifest import digest
+
+    if digest(info.folder) != loaded.api.digest:
+        raise NotFound("扩展内容已改变，请重新启用")
+    root = PurePosixPath(info.manifest.workspace.entry).parent
+    relative = PurePosixPath(path)
+    if not relative.is_relative_to(root):
+        raise NotFound("扩展页面不存在")
+    file = inside(info.folder, path)
+    if not file.is_file() or file.suffix.lower() not in PANEL_TYPES | {".html", ".map"}:
+        raise NotFound("扩展页面不存在")
+    return FileResponse(
+        file,
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'self'",
+        },
+    )
 
 
 @router.post("/extensions/{ext_id}/disable")

@@ -61,7 +61,7 @@ def list_workspace_backups(
 @router.post("/backups/inspect", response_model=BackupInspection, openapi_extra=BINARY_BODY)
 async def inspect_workspace_backup(ctx: Ctx, request: Request):
     async with uploaded(request) as path:
-        return await run_in_threadpool(Backups.inspect, path)
+        return await run_in_threadpool(Backups.inspect, path, ctx.data_dir)
 
 
 @router.post(

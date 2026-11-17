@@ -75,6 +75,9 @@ class AppContext:
     queue: ProductionQueue | None = None
     reading: ReadingCache = field(default_factory=ReadingCache)
     exports: ExportService | None = None
+    extension_services: dict = field(default_factory=dict)
+    host_app: object | None = None
+    image_llm_factory: Callable | None = None
 
     @classmethod
     def create(
@@ -148,6 +151,10 @@ class AppContext:
             llm,
             comfy_client_factory,
         )
+        ctx.image_llm_factory = llm
+        # Explicit injection remains available to tests and embedded callers.
+        ctx.llm_factory = llm_factory or ctx.text_client
+        qa.llm_factory = ctx.llm_factory
         if seed_instance and not store.list_docs("instance"):
             store.put_doc(ComfyInstance(id="comfy_local"))
         ctx.refresh_instances()
@@ -191,6 +198,7 @@ class AppContext:
             ctx.webhooks.close,
             ctx.queue.close,
             ctx.reading.clear,
+            ctx.extensions.close,
         ]
         # Executors (including reviewed extensions) must exist before replaying local results.
         engine.recover_deliveries()
@@ -199,9 +207,17 @@ class AppContext:
         return ctx
 
     # ------------------------------------------------------------- helpers
+    def text_client(self):
+        providers = self.registry.all("text_provider")
+        if not providers:
+            from .jobs import JobConflict
+
+            raise JobConflict("请先启用提供文本模型的扩展")
+        return providers[-1].value()
+
     def image_backend(self, channel_id: str = ""):
         kinds = {c.id: c.value for c in self.registry.all("cloud_adapter")}
-        return SET.image_backend(self.settings(), self.llm_factory, channel_id, kinds=kinds)
+        return SET.image_backend(self.settings(), self.image_llm_factory, channel_id, kinds=kinds)
 
     def settings(self) -> SET.AppSettings:
         return SET.load(self.store)
@@ -235,7 +251,7 @@ class AppContext:
                 registry=reg,
             ),
             "cloud.render": CloudExecutor(
-                self.assets, self.llm_factory, self.render, backend=self.image_backend
+                self.assets, self.image_llm_factory, self.render, backend=self.image_backend
             ),
             "qa.check": self.qa,
             "export.render": self.exports,

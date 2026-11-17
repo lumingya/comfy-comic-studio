@@ -63,8 +63,8 @@ export const configZh = {
     namePlaceholder: '例如：日常出图、备用服务',
     kindHint:
       '按服务示例的请求路径选择：/chat/completions 选「聊天接口出图」，/images/generations 选 OpenAI Images。',
-    sharedAddress: '留空沿用文本模型 API 地址',
-    sharedModel: '文本模型 API 中的出图模型',
+    sharedAddress: '留空沿用默认图像代理地址',
+    sharedModel: '默认图像代理中的出图模型',
     protocol: {
       openai_images: 'Images 协议：文生图使用 /images/generations，带参考图时使用 /images/edits。',
       novelai:
@@ -73,12 +73,11 @@ export const configZh = {
         'Chat Completions 协议：使用 /chat/completions。需要能返回图片的模型或反代，不是普通文本聊天。',
     },
     extensionHint: '扩展渠道：参数含义由扩展适配器决定；已有参数会完整保留。',
-    chatAddressHint:
-      '留空沿用文本与视觉 API。填写独立地址后使用本渠道密钥，不会转发文本服务的密钥。',
+    chatAddressHint: '留空沿用默认图像代理。填写独立地址后使用本渠道密钥。',
     addressHint:
       '留空使用 {{address}}。可填写基础地址，粘贴完整 OpenAI 接口地址会在保存时自动整理。',
     maskedKey: '已保存，服务端不返回明文；保持不动即可沿用，清空后保存会移除密钥。',
-    chatKeyHint: '地址留空时可沿用文本服务密钥；独立地址需要自己的密钥，免密代理可留空。',
+    chatKeyHint: '独立地址使用本渠道密钥，免密代理可留空。',
     keyHint: '仅保存在本机服务端，调用时发送给该服务。免密代理可留空。',
     modelHint: '留空使用 {{model}}；兼容服务请填写它实际支持的模型 ID。',
     extensionModel: '填写扩展支持的模型 ID。',
@@ -99,8 +98,8 @@ export const configZh = {
     refStrength: '参考强度',
     idHint: '系统用它关联密钥和出图配置。需要改名请修改上方「名称」，不要更换 ID。',
     defaultHint: '仅在云端出图未指定渠道时使用；不会把本地任务自动改成云端任务。',
-    sharedDefault: '沿用文本模型 API 的出图模型',
-    sharedSettings: '配置共享 API',
+    sharedDefault: '默认图像代理',
+    sharedSettings: '配置默认图像代理',
     emptyHint: '可以添加独立的图像服务；如果只使用共享反代，不必再创建一个重复渠道。',
     list: '云端渠道列表',
     editor: '渠道编辑器',
@@ -384,8 +383,8 @@ export const configEn = {
     namePlaceholder: 'For example: everyday images, backup service',
     kindHint:
       'Match the request path in your service’s example: /chat/completions → Chat API images; /images/generations → OpenAI Images.',
-    sharedAddress: 'Leave blank to use the text model endpoint',
-    sharedModel: 'the image model in Text model API',
+    sharedAddress: 'Leave blank to use the default image proxy',
+    sharedModel: 'the default image proxy model',
     protocol: {
       openai_images:
         'Images protocol: /images/generations for text prompts, /images/edits when references are supplied.',
@@ -397,12 +396,12 @@ export const configEn = {
     extensionHint:
       'Extension channel: parameter support is defined by the adapter. Existing parameters are preserved.',
     chatAddressHint:
-      'Blank uses Text & vision API. An explicit endpoint uses this channel’s own key, never the text service’s key.',
+      'Blank uses the default image proxy. A separate endpoint uses this channel’s own key.',
     addressHint: 'Blank uses {{address}}. Pasted OpenAI endpoint paths are cleaned up when saved.',
     maskedKey:
       'Stored; the server never returns the secret. Leave unchanged to keep it, or clear and save to remove it.',
     chatKeyHint:
-      'A blank endpoint may inherit the text service key. A separate endpoint needs its own key; unauthenticated proxies may leave it blank.',
+      'A separate endpoint uses this channel’s own key; unauthenticated proxies may leave it blank.',
     keyHint:
       'Stored on your local server and sent to the configured provider when called. Leave blank for unauthenticated proxies.',
     modelHint: 'Blank uses {{model}}. For a compatible service, enter its supported model ID.',
@@ -431,8 +430,8 @@ export const configEn = {
       'Used to associate the key and render profiles. To rename a channel, edit its display name, not its ID.',
     defaultHint:
       'Used only when a cloud render does not name a channel. This does not turn local jobs into cloud jobs.',
-    sharedDefault: 'Use the image model from Text model API',
-    sharedSettings: 'Configure shared API',
+    sharedDefault: 'Default image proxy',
+    sharedSettings: 'Configure default image proxy',
     emptyHint:
       'Add a dedicated image service. No duplicate channel is needed if you only use the shared proxy.',
     list: 'Cloud channel list',

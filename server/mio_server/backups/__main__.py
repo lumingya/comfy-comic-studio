@@ -39,6 +39,9 @@ def main(argv=None):
     sub = parser.add_subparsers(dest="command", required=True)
     inspect = sub.add_parser("inspect")
     inspect.add_argument("archive", type=Path)
+    inspect.add_argument(
+        "--data", type=Path, help="workspace with reviewed extension data contracts"
+    )
     export = sub.add_parser("export")
     export.add_argument("--data", required=True, type=Path)
     export.add_argument("--output", required=True, type=Path)
@@ -55,7 +58,7 @@ def main(argv=None):
     install.add_argument("--data", required=True, type=Path)
     args = parser.parse_args(argv)
     if args.command == "inspect":
-        result = Backups.inspect(args.archive).model_dump(mode="json")
+        result = Backups.inspect(args.archive, args.data).model_dump(mode="json")
     elif args.command == "install":
         startup = prepare_workspace(args.data)
         try:

@@ -7,3 +7,6 @@
 
 # Distribution checksums are computed over stable UTF-8 bytes.
 *.json text eol=lf
+
+# Generated bundles preserve whitespace inside upstream CSS template strings.
+extensions/ai-assist/page/dist/assets/*.js whitespace=-blank-at-eol

@@ -12,7 +12,6 @@ from ..models import new_id, now_iso
 from ..storage import Conflict, NotFound
 from .archive import inspect_archive, pack, verify_workspace
 from .database import logical_head
-from .extension_data import with_extension_head
 from .models import (
     BackupCreated,
     BackupHead,
@@ -27,6 +26,7 @@ from .models import (
     RestoreRecord,
     RestoreScheduled,
 )
+from .participants import require_restore_idle, with_workspace_head
 from .paths import atomic_json, read_json, recovery_root, safe_child, sha_file
 from .snapshot import capture, current_head, quiescent
 
@@ -53,7 +53,9 @@ class Backups:
                 workspace = Path(temporary)
                 manifest = capture(self.ctx, workspace, options.include_credentials)
                 pack(workspace, manifest, target / "workspace.zip")
-            inspection = inspect_archive(target / "workspace.zip")
+            inspection = inspect_archive(
+                target / "workspace.zip", trusted_workspace=self.ctx.data_dir
+            )
             result = BackupCreated(id=identifier, inspection=inspection)
             atomic_json(target / "record.json", result.model_dump(mode="json"))
             return result
@@ -82,16 +84,19 @@ class Backups:
         return path
 
     @staticmethod
-    def inspect(path: Path) -> BackupInspection:
-        return inspect_archive(path)
+    def inspect(path: Path, trusted_workspace: Path | None = None) -> BackupInspection:
+        return inspect_archive(path, trusted_workspace=trusted_workspace)
 
     def stage(self, archive: Path) -> RestorePlan:
+        require_restore_idle(self.ctx)
         identifier = new_id("restore")
         target = self._folder("plans", identifier)
         target.mkdir(parents=True)
         try:
             shutil.copyfile(archive, target / "workspace.zip")
-            inspection = inspect_archive(target / "workspace.zip", target / "workspace")
+            inspection = inspect_archive(
+                target / "workspace.zip", target / "workspace", trusted_workspace=self.ctx.data_dir
+            )
             plan = RestorePlan(
                 id=identifier,
                 created_at=now_iso(),
@@ -114,6 +119,7 @@ class Backups:
 
     def apply(self, identifier: str, command: RestoreApply) -> RestoreScheduled:
         with FileLeaseContext(self.root / "journal.lease"), quiescent(self.ctx):
+            require_restore_idle(self.ctx)
             plan = self.get_plan(identifier)
             if plan.state not in {"staged", "pending"}:
                 raise Conflict("this restore plan is no longer staged")
@@ -127,7 +133,7 @@ class Backups:
                 ):
                     return RestoreScheduled(plan=plan)
                 raise Conflict("a different workspace restoration is already scheduled")
-            head = with_extension_head(
+            head = with_workspace_head(
                 logical_head(self.ctx.store._conn, self.ctx.engine.db), self.ctx.data_dir
             )
             if head != command.expected_head or plan.expected_head != command.expected_head:
@@ -138,7 +144,9 @@ class Backups:
                 or sha_file(folder / "workspace.zip") != plan.inspection.sha256
             ):
                 raise Conflict("staged archive changed; inspect and stage it again")
-            verify_workspace(folder / "workspace", plan.inspection.manifest)
+            verify_workspace(
+                folder / "workspace", plan.inspection.manifest, trusted_workspace=self.ctx.data_dir
+            )
             # This protection is intentionally complete and may contain credentials. It never
             # leaves the local recovery directory unless explicitly downloaded through admin API.
             protection = self._export_locked(BackupOptions(include_credentials=True))

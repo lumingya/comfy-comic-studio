@@ -34,7 +34,7 @@ it('replaces a saved password without the mask and makes clearing explicit', asy
   );
 });
 
-it('adds fetched models to text, vision and shared-image lists without replacing manual entries', async () => {
+it('adds image models without exposing or modifying the assistant text models', async () => {
   const calls = mockFetch(
     configurationRoutes({
       'POST /api/settings/models': catalog,
@@ -43,7 +43,7 @@ it('adds fetched models to text, vision and shared-image lists without replacing
   );
   renderWithProviders(<GeneralSection />);
   await screen.findByDisplayValue('https://shared.test/v1');
-  await userEvent.click(screen.getByText('视觉与共享出图模型'));
+  expect(screen.queryByText('文本模型')).toBeNull();
   for (const scope of screen.getAllByRole('region', { name: '模型目录' })) {
     await userEvent.click(within(scope).getByRole('button', { name: '获取模型' }));
     await userEvent.click(await within(scope).findByRole('button', { name: 'custom-model' }));
@@ -52,8 +52,8 @@ it('adds fetched models to text, vision and shared-image lists without replacing
   await userEvent.click(screen.getByRole('button', { name: '保存' }));
   await waitFor(() => expect(calls.some((call) => call.method === 'PATCH')).toBe(true));
   const llm = (calls.find((call) => call.method === 'PATCH')!.body as AppSettings).llm;
-  expect(llm.text_models).toEqual(['text-test', 'custom-model']);
-  expect(llm.vision_models).toEqual(['vision-test', 'custom-model']);
+  expect(llm.text_models).toBeUndefined();
+  expect(llm.vision_models).toBeUndefined();
   expect(llm.image_models).toEqual(['chat-image-test', 'custom-model']);
 });
 

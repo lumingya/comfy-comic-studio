@@ -925,16 +925,42 @@ class MioClient(_Base):
         """GET /update — Update Status."""
         return self._request("GET", "/update")
 
-    def check_update(self) -> Any:
+    def check_update(self, *, background: bool | None = None) -> Any:
         """POST /update/check — Check Update."""
-        return self._request("POST", "/update/check")
+        return self._request("POST", "/update/check", params={"background": background})
 
-    def download_update(self) -> Any:
+    def download_update(self, *, background: bool | None = None) -> Any:
         """POST /update/download — Download Update.
 
         Download and verify, then stage; the launcher installs it on the next start.
         """
-        return self._request("POST", "/update/download")
+        return self._request("POST", "/update/download", params={"background": background})
+
+    def release_catalog(
+        self,
+        *,
+        page: int | None = None,
+        per_page: int | None = None,
+        refresh: bool | None = None,
+    ) -> Any:
+        """GET /update/releases — Release Catalog."""
+        return self._request(
+            "GET",
+            "/update/releases",
+            params={"page": page, "per_page": per_page, "refresh": refresh},
+        )
+
+    def install_release(self, body: dict | list | None = None) -> Any:
+        """POST /update/install — Install Release."""
+        return self._request("POST", "/update/install", json=body)
+
+    def cancel_update(self) -> Any:
+        """POST /update/cancel — Cancel Update."""
+        return self._request("POST", "/update/cancel")
+
+    def update_preferences(self, body: dict | list | None = None) -> Any:
+        """PATCH /update/preferences — Update Preferences."""
+        return self._request("PATCH", "/update/preferences", json=body)
 
     def get_workshop(self) -> Any:
         """GET /workshop — Get Workshop.
@@ -1024,6 +1050,18 @@ class MioClient(_Base):
         """
         return self._request("PUT", "/workshop/queue/order", json=body)
 
+    def get_extension_market(self, *, refresh: bool | None = None) -> Any:
+        """GET /extension-market — Get Extension Market."""
+        return self._request("GET", "/extension-market", params={"refresh": refresh})
+
+    def set_extension_market_source(self, body: dict | list | None = None) -> Any:
+        """PUT /extension-market/source — Set Extension Market Source."""
+        return self._request("PUT", "/extension-market/source", json=body)
+
+    def install_market_extension(self, ext_id: str, body: dict | list | None = None) -> Any:
+        """POST /extension-market/{ext_id}/install — Install Market Extension."""
+        return self._request("POST", f"/extension-market/{_q(ext_id)}/install", json=body)
+
     def list_extensions(self) -> Any:
         """GET /extensions — List Extensions."""
         return self._request("GET", "/extensions")
@@ -1041,6 +1079,21 @@ class MioClient(_Base):
         Enable exactly the reviewed content (``digest`` from the listing).
         """
         return self._request("POST", f"/extensions/{_q(ext_id)}/enable", json=body)
+
+    def install_extension_folder(self, *, replace: bool | None = None) -> Any:
+        """POST /extensions/folder — Install Extension Folder.
+
+        Import a portable extension directory; files are reviewed before activation.
+        """
+        return self._request("POST", "/extensions/folder", params={"replace": replace})
+
+    def extension_surfaces(self) -> Any:
+        """GET /extension-surfaces — Extension Surfaces."""
+        return self._request("GET", "/extension-surfaces")
+
+    def extension_workspace(self, ext_id: str, path: str) -> Any:
+        """GET /extensions/{ext_id}/workspace/{path} — Extension Workspace."""
+        return self._request("GET", f"/extensions/{_q(ext_id)}/workspace/{_q(path)}")
 
     def disable_extension(self, ext_id: str) -> Any:
         """POST /extensions/{ext_id}/disable — Disable Extension."""
@@ -1096,6 +1149,20 @@ class MioClient(_Base):
     def delete_theme(self, theme_id: str) -> Any:
         """DELETE /themes/{theme_id} — Delete Theme."""
         return self._request("DELETE", f"/themes/{_q(theme_id)}")
+
+    def get_theme(self, theme_id: str) -> Any:
+        """GET /themes/{theme_id} — Get Theme.
+
+        Return an editable theme JSON document accepted by the existing import endpoint.
+        """
+        return self._request("GET", f"/themes/{_q(theme_id)}")
+
+    def export_theme_package(self, theme_id: str) -> Any:
+        """GET /themes/{theme_id}/package — Export Theme Package.
+
+        Download an inert extension folder as a ZIP, ready to import on another installation.
+        """
+        return self._request("GET", f"/themes/{_q(theme_id)}/package")
 
     def list_creation_kits(self) -> Any:
         """GET /creation-kits — List Creation Kits."""

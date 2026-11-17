@@ -16,7 +16,7 @@ from mio_server.render_models import ComfyInstance
 from mio_server.storage import Conflict
 
 from .test_compile_executor import FakeClient
-from .test_render_qa import FakeCloudRenderer
+from .test_render_qa import FakeCloudRenderer, FakeVLM
 
 
 class ProcessLost(BaseException):
@@ -42,7 +42,11 @@ class DeliveryTests(unittest.TestCase):
 
     def open(self):
         self.ctx = AppContext.create(
-            self.root, autostart=False, comfy_client_factory=FakeClient, seed_instance=False
+            self.root,
+            autostart=False,
+            comfy_client_factory=FakeClient,
+            seed_instance=False,
+            llm_factory=FakeVLM,
         )
 
     def reopen(self):

@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import re
 
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, PrivateAttr, ValidationError
 
 from . import ed25519
 
@@ -30,6 +30,7 @@ class Package(BaseModel):
 
 
 class Manifest(BaseModel):
+    _signed_data: dict = PrivateAttr(default_factory=dict)
     schema_: str = Field(alias="schema", default=SCHEMA)
     version: str = Field(pattern=VERSION_RE.pattern)
     published_at: str = ""
@@ -58,7 +59,7 @@ def sign_manifest(data: dict, secret: bytes) -> dict:
 def verify_manifest(raw: bytes, trusted: dict[str, str]) -> Manifest:
     """Parse and verify; raises :class:`UpdateError` with a user-facing reason."""
     if not trusted:
-        raise UpdateError("此版本没有内置发布公钥，无法验证更新包；请到发布页手动下载")
+        raise UpdateError("此版本没有内置发布公钥，无法验证更新包")
     try:
         data = json.loads(raw)
         manifest = Manifest.model_validate(data)
@@ -74,6 +75,7 @@ def verify_manifest(raw: bytes, trusted: dict[str, str]) -> Manifest:
     )
     if not ok:
         raise UpdateError("更新清单签名无效，已拒绝")
+    manifest._signed_data = data
     return manifest
 
 

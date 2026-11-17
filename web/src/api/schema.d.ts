@@ -1693,6 +1693,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/extension-market": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Extension Market */
+        get: operations["get_extension_market_api_extension_market_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/extension-market/source": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Extension Market Source */
+        put: operations["set_extension_market_source_api_extension_market_source_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/extension-market/{ext_id}/install": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Install Market Extension */
+        post: operations["install_market_extension_api_extension_market__ext_id__install_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/extensions": {
         parameters: {
             query?: never;
@@ -1728,6 +1779,60 @@ export interface paths {
          * @description Enable exactly the reviewed content (``digest`` from the listing).
          */
         post: operations["enable_extension_api_extensions__ext_id__enable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/extensions/folder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Install Extension Folder
+         * @description Import a portable extension directory; files are reviewed before activation.
+         */
+        post: operations["install_extension_folder_api_extensions_folder_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/extension-surfaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Extension Surfaces */
+        get: operations["extension_surfaces_api_extension_surfaces_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/extensions/{ext_id}/workspace/{path}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Extension Workspace */
+        get: operations["extension_workspace_api_extensions__ext_id__workspace__path__get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1860,11 +1965,35 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Get Theme
+         * @description Return an editable theme JSON document accepted by the existing import endpoint.
+         */
+        get: operations["get_theme_api_themes__theme_id__get"];
         put?: never;
         post?: never;
         /** Delete Theme */
         delete: operations["delete_theme_api_themes__theme_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/themes/{theme_id}/package": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Theme Package
+         * @description Download an inert extension folder as a ZIP, ready to import on another installation.
+         */
+        get: operations["export_theme_package_api_themes__theme_id__package_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2783,6 +2912,74 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/update/releases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Release Catalog */
+        get: operations["release_catalog_api_update_releases_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/update/install": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Install Release */
+        post: operations["install_release_api_update_install_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/update/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Update */
+        post: operations["cancel_update_api_update_cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/update/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Preferences */
+        patch: operations["update_preferences_api_update_preferences_patch"];
         trace?: never;
     };
 }
@@ -4491,6 +4688,21 @@ export interface components {
              */
             model_family: string;
         };
+        /** MarketInstallRequest */
+        MarketInstallRequest: {
+            /** Expected Catalog Digest */
+            expected_catalog_digest: string;
+            /** Expected Sha256 */
+            expected_sha256: string;
+        };
+        /** MarketSourceRequest */
+        MarketSourceRequest: {
+            /**
+             * Url
+             * @default
+             */
+            url?: string;
+        };
         /** ModelCatalog */
         ModelCatalog: {
             /** Models */
@@ -5420,6 +5632,11 @@ export interface components {
             expected: components["schemas"]["ExecutorRef"] | null;
             target: components["schemas"]["ExecutorRef"];
         };
+        /** ReleaseInstall */
+        ReleaseInstall: {
+            /** Tag */
+            tag: string;
+        };
         /**
          * RenderProfile
          * @description A pipeline of workflows.  ``draft`` runs per candidate, ``final`` only on adopted takes.
@@ -6249,6 +6466,29 @@ export interface components {
          * @enum {string}
          */
         TakeStatus: "candidate" | "adopted" | "rejected";
+        /** Theme */
+        Theme: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "light" | "dark";
+            /** Tokens */
+            tokens: {
+                [key: string]: string;
+            };
+            /**
+             * Author
+             * @default
+             */
+            author: string;
+            /** Created At */
+            created_at: string;
+        };
         /** TokenCreate */
         TokenCreate: {
             /** Name */
@@ -6284,6 +6524,11 @@ export interface components {
             layout_offset_y: number;
             /** Notes */
             notes: string[];
+        };
+        /** UpdatePreferences */
+        UpdatePreferences: {
+            /** Auto Check */
+            auto_check: boolean;
         };
         /** ValidationError */
         ValidationError: {
@@ -10139,6 +10384,105 @@ export interface operations {
             };
         };
     };
+    get_extension_market_api_extension_market_get: {
+        parameters: {
+            query?: {
+                refresh?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_extension_market_source_api_extension_market_source_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarketSourceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    install_market_extension_api_extension_market__ext_id__install_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ext_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarketInstallRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_extensions_api_extensions_get: {
         parameters: {
             query?: never;
@@ -10216,6 +10560,89 @@ export interface operations {
                 };
                 content: {
                     "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    install_extension_folder_api_extensions_folder_post: {
+        parameters: {
+            query?: {
+                replace?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    extension_surfaces_api_extension_surfaces_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+        };
+    };
+    extension_workspace_api_extensions__ext_id__workspace__path__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ext_id: string;
+                path: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
@@ -10470,6 +10897,37 @@ export interface operations {
             };
         };
     };
+    get_theme_api_themes__theme_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                theme_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Theme"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     delete_theme_api_themes__theme_id__delete: {
         parameters: {
             query?: never;
@@ -10487,6 +10945,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_theme_package_api_themes__theme_id__package_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                theme_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/zip": string;
+                };
             };
             /** @description Validation Error */
             422: {
@@ -12169,6 +12658,134 @@ export interface operations {
     };
     check_update_api_update_check_post: {
         parameters: {
+            query?: {
+                background?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_update_api_update_download_post: {
+        parameters: {
+            query?: {
+                background?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    release_catalog_api_update_releases_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                per_page?: number;
+                refresh?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    install_release_api_update_install_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReleaseInstall"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_update_api_update_cancel_post: {
+        parameters: {
             query?: never;
             header?: never;
             path?: never;
@@ -12187,14 +12804,18 @@ export interface operations {
             };
         };
     };
-    download_update_api_update_download_post: {
+    update_preferences_api_update_preferences_patch: {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePreferences"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -12203,6 +12824,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

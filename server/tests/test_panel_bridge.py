@@ -171,8 +171,8 @@ class PanelBridgeTests(ApiCase):
         self.assertEqual(self.call().status_code, 404)
         self.panel = self.ok(self.client.get("/api/extension-panels"))[0]
         self.assertEqual(self.ok(self.call())["status"], 200)
-        # Custom HTTP routes remain tied to the old activation until the app is restarted.
-        self.assertEqual(self.ok(self.call("run", body={"value": 1}))["status"], 404)
+        # The fresh panel uses newly mounted routes without reviving the old activation.
+        self.assertEqual(self.ok(self.call("run", body={"value": 1}))["status"], 200)
         (self.folder / "panel.html").write_text("changed", encoding="utf-8")
         self.assertEqual(self.call().status_code, 404)
         self.assertEqual(self.ok(self.client.get("/api/extension-panels")), [])

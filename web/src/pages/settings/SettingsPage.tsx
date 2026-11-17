@@ -9,7 +9,6 @@ import { ConfigurationGuard } from './ConfigurationParts';
 import { FilePick } from '../../components/ui';
 import { TrashSection } from '../trash/TrashPage';
 import { AccessSection } from './AccessSection';
-import { ExtensionsSection } from './ExtensionsSection';
 import { AppearanceSection } from './AppearanceSection';
 import { GeneralSection } from './GeneralSection';
 import { ThemesSection } from './ThemesSection';
@@ -184,7 +183,7 @@ function AppearanceAndThemes() {
   );
 }
 
-/** 模型与连接: the text model API, then API tokens and webhooks for bots and scripts. */
+/** Image proxy and external API access. Text AI belongs to the assistant extension. */
 function ModelsAndConnections() {
   return (
     <>
@@ -198,7 +197,7 @@ function ModelsAndConnections() {
 
 const GROUPS = [
   { id: 'common', tabs: ['workspace', 'appearance', 'general', 'data'] },
-  { id: 'system', tabs: ['extensions', 'updates'] },
+  { id: 'system', tabs: ['updates'] },
 ] as const;
 type Tab = (typeof GROUPS)[number]['tabs'][number];
 const TABS: readonly Tab[] = GROUPS.flatMap((g) => g.tabs);
@@ -210,7 +209,6 @@ const ICONS: Record<Tab, IconName> = {
   general: 'settings',
   data: 'disk',
   updates: 'refresh',
-  extensions: 'box',
 };
 
 /** Existing sections render their own headings; the new ones use legacy settings-section. */
@@ -220,7 +218,6 @@ const SECTIONS: Record<Tab, ComponentType> = {
   general: ModelsAndConnections,
   data: DataSection,
   updates: UpdatesSection,
-  extensions: ExtensionsSection,
 };
 
 /** 设置 — legacy layout: heading, grouped left nav, one section at a time. */

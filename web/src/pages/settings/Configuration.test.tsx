@@ -155,14 +155,17 @@ describe('cloud channel configuration', () => {
     });
   });
 
-  it('chat channels explain inheritance and do not advertise unsupported size or quality', async () => {
+  it('chat image channels inherit the image proxy and do not expose text AI or unsupported sizing', async () => {
     mockFetch(configurationRoutes());
     renderWithProviders(<ChannelsSection />);
     await userEvent.click(await screen.findByRole('button', { name: /备用代理/ }));
     expect(await screen.findByDisplayValue('备用代理')).toBeInTheDocument();
     expect(screen.queryByLabelText(/^输出尺寸/)).toBeNull();
     expect(screen.queryByLabelText(/^输出质量/)).toBeNull();
-    expect(screen.getByText(/不会转发文本服务的密钥/)).toBeInTheDocument();
+    expect(
+      screen.getByText('留空沿用默认图像代理。填写独立地址后使用本渠道密钥。'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/文本模型 API|文本服务的密钥/)).not.toBeInTheDocument();
   });
 
   it('does not let a default or referenced channel be deleted and silently fall back to another service', async () => {

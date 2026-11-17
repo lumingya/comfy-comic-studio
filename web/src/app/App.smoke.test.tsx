@@ -290,9 +290,12 @@ beforeEach(() => {
       dev_checkout: true,
       keys_configured: false,
       releases_page: 'https://example.invalid/releases',
+      auto_check: true,
+      activity: { phase: 'idle', error: '' },
       last_check: null,
       pending: null,
     },
+    'GET /api/update/releases': { items: [], page: 1, has_more: false },
     'GET /api/album-templates': [],
     'PATCH /api/episodes/ep_1/panels/p0': episode,
     'GET /api/extension-panels': [
@@ -615,15 +618,14 @@ describe('every route mounts with API data', () => {
     expect(screen.queryByRole('dialog', { name: '装配与队列' })).toBeNull();
   });
 
-  it('设置 has six tabs in two groups', async () => {
+  it('设置 keeps five tabs while extensions has its own first-level entry', async () => {
     mount('/settings');
-    const tabs = await screen.findAllByRole('tab');
+    const tabs = await screen.findAllByRole('tab', {}, { timeout: 10000 });
     expect(tabs.map((tab) => tab.textContent)).toEqual([
       '工作室',
       '外观与阅读',
-      '模型与连接',
+      '连接与访问',
       '数据与备份',
-      '扩展',
       '关于与更新',
     ]);
     expect(screen.getByText('常用')).toBeInTheDocument();
@@ -639,10 +641,10 @@ describe('every route mounts with API data', () => {
     expect((await screen.findAllByText('跟随系统')).length).toBeGreaterThan(0);
   });
 
-  it('模型与连接 shows the text model API and API tokens & webhooks', async () => {
+  it('连接与访问 shows image proxy settings and API tokens & webhooks', async () => {
     mount('/settings?tab=access');
     expect(
-      await screen.findByRole('tab', { name: '模型与连接', selected: true }),
+      await screen.findByRole('tab', { name: '连接与访问', selected: true }),
     ).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'API 令牌' })).toBeInTheDocument();
     expect(await screen.findByText('还没有 Webhook')).toBeInTheDocument();

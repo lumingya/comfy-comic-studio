@@ -1,18 +1,19 @@
 # Mio 扩展 SDK
 
-扩展是 `<数据目录>/extensions/<id>/` 下面的一个文件夹，打包成 zip 后在「设置 → 扩展」里安装。扩展可以做下面这些事：
+扩展是独立文件夹，在左侧「扩展 → 已安装」导入文件夹或 ZIP，也可复制到 `<数据目录>/extensions/<id>/`。随包扩展位于项目的 `extensions/`，使用同一个加载器；导入版同 ID 优先，卸载后恢复未启用的随包版本。扩展可以做下面这些事：
 
 - 只提供数据：主题、画册模板、拟声字样式、平台切片预设；
 - 提供 Python 代码：注册钩子、后端路由，或者往注册表里添加任意贡献（比如新的云端出图适配器、导出器）；
 - 提供界面面板：在沙箱 iframe 里显示一个 HTML 页面。
+- 提供完整工作区：自带前端构建产物，显示为悬浮窗或一级页面，无需修改宿主前端。
 
 ## 信任模型
 
 - 安装扩展后**不会自动启用**。用户点「启用」时，服务端会记下扩展文件夹当前的 sha256 摘要，也就是用户确认过的内容。
 - 以后扩展里任何文件变了，摘要就对不上，扩展状态会变成「文件已变动」，不再加载，要用户重新确认。
-- 带 `main` 或 `panels` 的扩展算作「含代码」，确认对话框里会有更醒目的警告。Python 代码和本程序拥有相同的权限，这里没有沙箱，信任靠的是用户自己的审阅。
+- 带 `main`、`panels`、`workspace` 或 `backup` 的扩展算作「含代码」。Python 和受信工作区拥有应用权限，依赖用户对来源和内容摘要的审阅；普通面板保留不含同源权限的沙箱。
 - 启动时设置环境变量 `MIO_SAFE_MODE=1`，所有扩展都不会加载。扩展把服务搞坏的时候用这个办法恢复。
-- 停用扩展时，它注册的所有东西（钩子、贡献、主题……）会按来源 `ext:<id>` 一起移除，已挂载的后端路由也会立即拒绝新请求（404）。路由绑定本次审核并加载的代码；文件变动、重新启用或重新审核后，旧路由不能继续使用，重启服务才会挂载新路由。该来源有正在执行、结果不确定、等待保存结果或端点状态未恢复的任务时，会拒绝停用和替换；仅排队的任务可以保留，缺少原执行器时会阻塞。
+- 停用扩展时，钩子、贡献、主题、工作区和路由按来源 `ext:<id>` 一起移除。启用与重新启用动态挂载新路由，无需重启；旧请求仍校验激活摘要。该来源有正在执行、结果不确定、等待保存结果或端点状态未恢复的任务时，会拒绝停用和替换；仅排队的任务可以保留，缺少原执行器时会阻塞。
 
 ## 目录结构
 
@@ -91,6 +92,18 @@ my-ext/
 
 ## Python 入口
 
+完整前端可在清单中声明：
+
+```json
+"workspace": { "title": "我的工具", "entry": "page/dist/index.html" }
+```
+
+激活时注册 `mio.contribute("workspace_surface", "main", {"mode": "page"})`，也可传返回此对象的函数；`mode` 为 `page` 或 `floating`。页面路径必须与清单一致。后端提供 `GET /api/extension-surfaces`，宿主按贡献挂载页面，不按扩展 ID 编写功能分支。
+
+前端依赖须打包在扩展自己的目录中，资源使用相对路径。页面可请求本机 API；联网模型请求应交给扩展自己的后端。iframe 的 hash 包含 `mio-session` 与 `floating`；页面向同源父窗口发送 `{type: "mio:workspace:ready", session}` 后，宿主回复 `mio:workspace:context`，带主题 `tokens`、`theme`、`locale` 和 `floating`。数据改变后发送 `mio:workspace:changed` 以刷新宿主。宿主同时校验来源窗口、origin 与 session。
+
+文本模型扩展可贡献 `text_provider`，值为返回客户端的工厂函数，客户端实现现有 `chat_json()` / `vision_json()` 契约；主程序在实际需要文本模型时解析贡献。备份参与者使用清单 `backup` 入口，见[扩展备份契约](../../../docs/EXTENSION_BACKUP_CONTRACT.md)。完整示例见 [`extensions/ai-assist`](../../../extensions/ai-assist/README.md)。
+
 ```python
 # main.py
 def activate(mio):
@@ -120,7 +133,9 @@ def deactivate():  # 可选：停用时调用
 | `mio.contribute(point, id, value, *, title="")` | 往注册表的扩展点里添加一项 |
 | `mio.job_executor(kind, executor, *, resources=("local",), replace=False, title="")` | 注册执行器，自动绑定已审核扩展的来源与摘要 |
 | `mio.submit_job(kind, items, snapshot=None, *, owner="", title="", idempotency_key=None)` | 提交本次启用且当前选中的执行器，`items` 使用 `mio_server.jobs.ItemSpec` |
-| `mio.router` | FastAPI `APIRouter`，同时挂在 `/api/ext/<id>` 与 `/api/v2/ext/<id>`；v2 默认要求 admin，新增路由要重启 |
+| `mio.router` | FastAPI `APIRouter`，启用时动态挂在 `/api/ext/<id>` 与 `/api/v2/ext/<id>`；v2 默认要求 admin |
+| `mio.service(value)` | 注册本扩展服务对象，停用和失败激活时回收；可提供 `close()` |
+| `mio.active`、`mio.data_dir`、`mio.host_app` | 当前激活状态、扩展专属数据目录 `<工作区数据目录>/<扩展 id>/`、宿主 ASGI 应用 |
 | `mio.route(method, path, scope="admin", **kwargs)` | 注册有明确权限的自定义路由，例如只读查询用 `scope="read"`，出图用 `scope="render"` |
 | `mio.operation(id)` | 包装界面和 v2 共用的核心操作，参见下节 |
 | `mio.load_settings()` / `mio.save_settings(data)` | 扩展自己的 JSON 设置，存在 `<数据目录>/extension-data/<id>.json`，顶层对象、单文件最多 1 MiB；原子保存并随工作区备份恢复，含凭据时需明确选择包含凭据 |

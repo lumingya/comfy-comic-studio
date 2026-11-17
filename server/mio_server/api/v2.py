@@ -25,6 +25,7 @@ from . import (
     canvas,
     checkpoints,
     export_jobs,
+    extension_market,
     extensions,
     jobs,
     kits,
@@ -35,6 +36,7 @@ from . import (
     production,
     series,
     system,
+    theme_packages,
     update,
     workshop,
 )
@@ -56,7 +58,9 @@ ROUTERS = (
     system,
     update,
     workshop,
+    extension_market,
     extensions,
+    theme_packages,
     kits,
     operations,
 )
@@ -100,9 +104,11 @@ def token_of(conn: HTTPConnection) -> ApiToken:
             scope = (getattr(route, "openapi_extra", None) or {}).get("x-mio-scope")
             if scope is not None and scope not in SCOPES:
                 raise AuthError("扩展路由声明了无效的权限", 403)
-        return conn.app.state.ctx.tokens.verify(
+        token = conn.app.state.ctx.tokens.verify(
             raw, "WS" if websocket else conn.scope["method"], path, scope=scope
         )
+        conn.state.api_token = token
+        return token
     except AuthError as exc:
         if websocket:
             raise WebSocketException(code=1008, reason=str(exc)) from None

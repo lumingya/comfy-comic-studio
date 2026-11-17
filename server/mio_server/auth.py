@@ -44,7 +44,7 @@ RENDER_RE = re.compile(
     r"|workflows/[^/]+/trial)$"
 )
 ADMIN_RE = re.compile(
-    r"^/(settings|instances|webhooks|legacy|update|tokens|extensions|ext|backups)(/|$)"
+    r"^/(settings|instances|webhooks|legacy|update|tokens|extensions|extension-market|ext|backups)(/|$)"
 )
 READ_POST_RE = re.compile(r"^/series/[^/]+/variables/(find|preview)$")
 PANEL_REQUEST_RE = re.compile(r"^/extension-panels/[^/]+/[^/]+/requests$")

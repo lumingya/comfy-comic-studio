@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
 import { usePatchSettings, useSettings } from '../../api/system';
 import type { AppSettings } from '../../api/types';
 import { QueryError } from '../../app/errors';
@@ -16,7 +15,13 @@ import {
 import { ModelCatalog } from './ModelCatalog';
 
 const editable = (s: AppSettings) => ({
-  llm: s.llm,
+  llm: {
+    base_url: s.llm.base_url,
+    api_key: s.llm.api_key,
+    image_models: s.llm.image_models,
+    timeout: s.llm.timeout,
+    pace: s.llm.pace,
+  },
   guard_terms: s.guard_terms,
   trash_days: s.trash_days,
 });
@@ -42,7 +47,7 @@ export function GeneralSection() {
         event.preventDefault();
         if (invalid || patch.isPending) return;
         patch.mutate(
-          { ...editable(d), llm: { ...d.llm, base_url: d.llm.base_url.trim() } },
+          { ...editable(d), llm: { ...editable(d).llm, base_url: d.llm.base_url.trim() } },
           {
             onSuccess: () => {
               setDraft(null);
@@ -57,7 +62,7 @@ export function GeneralSection() {
       <fieldset disabled={patch.isPending}>
         <div className="config-section-head">
           <div>
-            <h2>{t('settings.llm')}</h2>
+            <h2>{t('settings.imageModels')}</h2>
           </div>
         </div>
         <div className="grid-2">
@@ -78,49 +83,19 @@ export function GeneralSection() {
           </Field>
         </div>
         <div className="config-model-field">
-          <Field label={t('settings.textModels')} hint={t('config.general.modelsHint')}>
-            <TagInput value={d.llm.text_models} onChange={(text_models) => llm({ text_models })} />
+          <Field label={t('settings.imageModels')} hint={t('config.general.imageHint')}>
+            <TagInput
+              value={d.llm.image_models}
+              onChange={(image_models) => llm({ image_models })}
+            />
           </Field>
           <ModelCatalog
             request={modelRequest}
             disabled={invalid}
-            selected={d.llm.text_models}
-            onSelect={(id) => llm({ text_models: [...new Set([...d.llm.text_models, id])] })}
+            selected={d.llm.image_models}
+            onSelect={(id) => llm({ image_models: [...new Set([...d.llm.image_models, id])] })}
           />
         </div>
-        <Advanced title={t('config.general.models')}>
-          <div className="config-model-field">
-            <Field label={t('config.general.visionModels')} hint={t('config.general.visionHint')}>
-              <TagInput
-                value={d.llm.vision_models}
-                onChange={(vision_models) => llm({ vision_models })}
-              />
-            </Field>
-            <ModelCatalog
-              request={modelRequest}
-              disabled={invalid}
-              selected={d.llm.vision_models}
-              onSelect={(id) => llm({ vision_models: [...new Set([...d.llm.vision_models, id])] })}
-            />
-          </div>
-          <div className="config-model-field">
-            <Field label={t('settings.imageModels')} hint={t('config.general.imageHint')}>
-              <TagInput
-                value={d.llm.image_models}
-                onChange={(image_models) => llm({ image_models })}
-              />
-            </Field>
-            <ModelCatalog
-              request={modelRequest}
-              disabled={invalid}
-              selected={d.llm.image_models}
-              onSelect={(id) => llm({ image_models: [...new Set([...d.llm.image_models, id])] })}
-            />
-          </div>
-          <Link className="btn ghost sm" to="/engine?tab=channels">
-            {t('config.profile.manageChannels')}
-          </Link>
-        </Advanced>
         <Advanced title={t('config.general.request')}>
           <div className="grid-2">
             <Field label={t('settings.timeout')}>

@@ -40,8 +40,8 @@ jobs:
       - name: v3 server (lint + unit tests)
         run: |
           python -m pip install -r server/requirements-dev.txt
-          ruff check server
-          ruff format --check server
+          ruff check server extensions
+          ruff format --check server extensions
           python -m unittest discover -s server/tests -t server -q
       - name: API v2 clients and release tools (generated client current + lint)
         run: |
@@ -59,6 +59,14 @@ jobs:
           npm --prefix web run build
       - name: Shipped data manifest
         run: python legacy/tools/check_distribution.py
+      - name: Standalone assistant extension
+        working-directory: extensions/ai-assist/page
+        run: |
+          npm ci --no-audit --no-fund
+          npx prettier --check .
+          npm test
+          npm run build
+          git diff --exit-code -- dist
       - name: Legacy package smoke test
         run: python legacy/tools/package_project.py --output releases
 

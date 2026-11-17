@@ -80,7 +80,9 @@ class ExtensionApiTests(ApiCase):
         return self.ctx.extensions.root
 
     def enable(self, ext_id="demo", code=200):
-        info = next(i for i in self.ok(self.client.get("/api/extensions"))["items"])
+        info = next(
+            i for i in self.ok(self.client.get("/api/extensions"))["items"] if i["id"] == ext_id
+        )
         return self.ok(
             self.client.post(f"/api/extensions/{ext_id}/enable", json={"digest": info["digest"]}),
             code,
@@ -90,13 +92,13 @@ class ExtensionApiTests(ApiCase):
         write_ext(self.root())
         listing = self.ok(self.client.get("/api/extensions"))
         self.assertIn("prompt.compiled", {h["name"] for h in listing["hooks"]})
-        (item,) = listing["items"]
+        item = next(i for i in listing["items"] if i["id"] == "demo")
         self.assertEqual((item["status"], item["runs_code"]), ("disabled", True))
         bad = self.client.post("/api/extensions/demo/enable", json={"digest": "0" * 64})
         self.assertEqual(bad.status_code, 400)
         info = self.enable()
         self.assertEqual(info["status"], "active")
-        self.assertTrue(info["restart_required"])  # routes appear after a restart
+        self.assertFalse(info["restart_required"])  # routes mount dynamically
         self.assertIn("forest", {t["id"] for t in self.ok(self.client.get("/api/themes"))})
         self.assertIn("boom", self.ok(self.client.get("/api/lettering/sfx-presets")))
         presets = {p["id"] for p in self.ok(self.client.get("/api/export/presets"))}
@@ -156,17 +158,22 @@ class ExtensionApiTests(ApiCase):
         again = self.client.post("/api/extensions", content=buf.getvalue())
         self.assertEqual(again.status_code, 400)  # needs ?replace=true
 
-        evil = io.BytesIO()
-        with zipfile.ZipFile(evil, "w") as zf:
-            zf.writestr("mio-extension.json", json.dumps({"id": "evil", "name": "x"}))
-            zf.writestr("../escape.txt", "x")
-        self.assertEqual(
-            self.client.post("/api/extensions", content=evil.getvalue()).status_code, 400
-        )
-        self.assertFalse((self.root().parent / "escape.txt").exists())
+        for traversal in ("../escape.txt", "..\\escape.txt", "\\absolute.txt"):
+            with self.subTest(path=traversal):
+                evil = io.BytesIO()
+                with zipfile.ZipFile(evil, "w") as zf:
+                    zf.writestr("mio-extension.json", json.dumps({"id": "evil", "name": "x"}))
+                    zf.writestr(traversal, "x")
+                self.assertEqual(
+                    self.client.post("/api/extensions", content=evil.getvalue()).status_code, 400
+                )
+                self.assertFalse((self.root() / "escape.txt").exists())
 
         self.ok(self.client.delete("/api/extensions/demo"), 204)
-        self.assertEqual(self.ok(self.client.get("/api/extensions"))["items"], [])
+        self.assertEqual(
+            [i for i in self.ok(self.client.get("/api/extensions"))["items"] if not i["builtin"]],
+            [],
+        )
 
     def test_settings_patch_cannot_enable_extensions(self):
         write_ext(self.root())
@@ -208,7 +215,9 @@ class ThemeApiTests(ApiCase):
         (folder / "theme.json").write_text(
             json.dumps({**THEME, "tokens": tokens}), encoding="utf-8"
         )
-        (info,) = self.ok(self.client.get("/api/extensions"))["items"]
+        info = next(
+            i for i in self.ok(self.client.get("/api/extensions"))["items"] if i["id"] == "demo"
+        )
         enabled = self.ok(
             self.client.post("/api/extensions/demo/enable", json={"digest": info["digest"]})
         )
@@ -220,7 +229,9 @@ class ThemeApiTests(ApiCase):
         self.ok(self.client.post("/api/extensions/demo/disable"))
         bad = {**THEME, "tokens": {"shadow-sm": "0 0 0 var(--unsafe)"}}
         (folder / "theme.json").write_text(json.dumps(bad), encoding="utf-8")
-        (info,) = self.ok(self.client.get("/api/extensions"))["items"]
+        info = next(
+            i for i in self.ok(self.client.get("/api/extensions"))["items"] if i["id"] == "demo"
+        )
         enabled = self.ok(
             self.client.post("/api/extensions/demo/enable", json={"digest": info["digest"]})
         )

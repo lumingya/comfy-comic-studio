@@ -13,6 +13,7 @@
 | `server/` | 后端：FastAPI + Pydantic + SQLite（领域模型、任务引擎、ComfyUI 模块、出图管线、HTTP API） |
 | `web/` | 前端：Vite + React + TypeScript |
 | `clients/` | 开放 API v2 的 Python 客户端与 AstrBot 插件，见 [clients/README.md](clients/README.md) |
+| `extensions/` | 独立分发的随包扩展：每个目录自带清单、入口、资源与说明 |
 | `tools/` | 发布打包与签名密钥工具 |
 | `data/` | 随包示例数据：首次启动时把示例画册、分镜与预设载入工作区 |
 | `next/` | 技术验证（Spike）：ComfyUI 绑定、结构化剧本与效果基准的原型 |
@@ -54,9 +55,12 @@ npm --prefix web run build
 
 ## 更新
 
-「设置 → 关于与更新」可以检查新版本。更新包下载后，程序会先校验 Ed25519 签名和 sha256，通过后暂存起来，下次用 `start.bat` / `start.sh` 启动时自动安装。安装时 `server/data`、`data/` 和 `.venv` 保持不变；安装失败会自动回滚。git 检出的开发目录不会自动更新，请用 `git pull`。
+「设置 → 关于与更新」可浏览官方所有 Release、阅读更新日志，并选择版本升级或回退。每次启动在后台检查，也可手动检查。下载包通过 Ed25519 签名和 sha256 校验后暂存，下次用 `start.bat` / `start.sh` 启动时安装并更新依赖，失败会回滚。个人数据保留；Git 开发目录不覆盖源码。尚未发布版本或缺少可信签名时，页面会显示具体状态。
 
 ## 扩展与开放 API
+
+- **扩展**：左侧一级菜单提供「扩展市场」与「已安装」，可搜索目录、配置目录源，以及导入文件夹或 ZIP。安装后由用户启用，主题也能独立分享。
+- **AI 辅助**：在「扩展 → 已安装」开启，支持聊天、图片、多个模型渠道和受权限控制的项目操作；可选择悬浮窗或左侧菜单。完整前后端、测试与说明均在 [AI 辅助目录](extensions/ai-assist/README.md)，可单独导入另一份 Mio。
 
 - 扩展（主题、画册模板、拟声字预设、钩子、后端路由、界面面板）：见 [扩展 SDK](server/mio_server/extensions/README.md) 与[可选质检示例](examples/extensions/qa-review/README.md)。
 - 开放 API v2、令牌、Webhook、Python 客户端与 AstrBot 插件：见 [clients/README.md](clients/README.md)。

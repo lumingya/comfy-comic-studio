@@ -131,7 +131,10 @@ class GuardApiTests(ApiCase):
             zf.writestr("main.py", "def activate(mio):\n    raise SystemExit('pwned')\n")
         r = self.client.post("/api/extensions", content=buf.getvalue(), headers={"origin": EVIL})
         self.assertEqual(r.status_code, 403)
-        self.assertEqual(self.ok(self.client.get("/api/extensions"))["items"], [])
+        self.assertEqual(
+            [i for i in self.ok(self.client.get("/api/extensions"))["items"] if not i["builtin"]],
+            [],
+        )
 
 
 if __name__ == "__main__":

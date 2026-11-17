@@ -33,6 +33,13 @@ export const NAV: readonly {
     match: (p) => p.startsWith('/engine'),
   },
   {
+    to: '/extensions',
+    key: '4',
+    icon: 'box',
+    label: 'settings.tabs.extensions',
+    match: (p) => p === '/extensions',
+  },
+  {
     to: '/settings',
     key: ',',
     icon: 'settings',

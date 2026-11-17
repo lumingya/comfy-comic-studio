@@ -35,11 +35,44 @@ class ExtensionAPI:
         self.engine = ctx.engine
         self.digest = digest
         self._enabled = True
+        self._services = []
         self._router: APIRouter | None = None
         self._settings_path = ctx.data_dir / "extension-data" / f"{ext_id}.json"
         self.log = logging.getLogger(f"mio.ext.{ext_id}")
 
     # ------------------------------------------------------------ registry
+    @property
+    def active(self):
+        return self._enabled
+
+    @property
+    def data_dir(self):
+        return self._ctx.data_dir / self.id
+
+    @property
+    def host_app(self):
+        return self._ctx.host_app
+
+    def service(self, value):
+        """Register an owned runtime service; disable closes it before removal."""
+        self._ctx.extension_services[self.id] = value
+        self._services.append(value)
+        return value
+
+    def stop_services(self):
+        for value in reversed(self._services):
+            close = getattr(value, "close", None)
+            if callable(close):
+                try:
+                    close()
+                except Exception:
+                    self.log.exception("extension service close failed")
+            if self._ctx.extension_services.get(self.id) is value and not getattr(
+                value, "busy", False
+            ):
+                self._ctx.extension_services.pop(self.id, None)
+        self._services.clear()
+
     @operation_serialized
     def contribute(self, point: str, id: str, value: Any, *, title: str = "", **meta):
         """Register a contribution at an extension point (see ``GET /api/registry``)."""
@@ -142,7 +175,7 @@ class ExtensionAPI:
     def router(self) -> APIRouter:
         """Mounted locally and at ``/api/v2/ext/<id>``; v2 defaults to admin scope.
 
-        New routes need a restart. Use :meth:`route` to declare a narrower v2 scope.
+        Enable and disable update routes immediately. Use :meth:`route` for a narrower v2 scope.
         """
         if self._router is None:
             self._router = APIRouter(tags=[f"ext:{self.id}"])

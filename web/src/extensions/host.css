@@ -1,0 +1,62 @@
+.workspace-extension-page {
+  height: calc(100dvh - 150px);
+  min-height: 0;
+}
+.workspace-extension-floating[hidden] {
+  display: none;
+}
+.workspace-extension-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  flex: 1;
+}
+.workspace-extension-floating {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  right: 24px;
+  bottom: 50px;
+  z-index: 95;
+  width: 480px;
+  height: min(720px, calc(100dvh - 100px));
+  min-width: 340px;
+  min-height: 320px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - 60px);
+  resize: both;
+  overflow: hidden;
+  background: var(--surface-panel);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+.workspace-extension-handle {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px 6px 16px;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+  cursor: grab;
+  touch-action: none;
+  font-size: 12px;
+  color: var(--soft);
+}
+.workspace-extension-launcher {
+  position: fixed;
+  right: 24px;
+  bottom: 50px;
+  z-index: 95;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-sm);
+}
+@media (max-width: 700px) {
+  .workspace-extension-floating {
+    right: 12px;
+    width: calc(100vw - 24px);
+    min-width: 0;
+  }
+}

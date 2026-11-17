@@ -1,11 +1,21 @@
 import { QueryError } from '../../app/errors';
-import { Check, Monitor, Trash2, Upload } from 'lucide-react';
+import { Check, Download, FolderOpen, Monitor, Trash2, Upload } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDeleteTheme, useImportTheme, useThemes, type ThemeInfo } from '../../api/open';
+import { Link, useNavigate } from 'react-router-dom';
+import { download } from '../../api/client';
+import {
+  useDeleteTheme,
+  useImportTheme,
+  useInstallExtension,
+  useThemes,
+  type ThemeInfo,
+} from '../../api/open';
 import { SYSTEM } from '../../app/theme';
 import { useUI } from '../../app/ui-store';
 import { toast, toastError } from '../../components/toast';
 import { FilePick, Loading } from '../../components/ui';
+import './ThemesSection.css';
 
 /** A miniature app window painted with the theme's own tokens. */
 function Preview({ tokens }: { tokens: Record<string, string> }) {
@@ -39,6 +49,8 @@ function ThemeCard(props: {
   theme: ThemeInfo;
   active: boolean;
   onPick: () => void;
+  onExport: () => void;
+  exporting: boolean;
   onDelete?: () => void;
 }) {
   const { t } = useTranslation();
@@ -54,18 +66,25 @@ function ThemeCard(props: {
         <span className="small muted">
           {t(`settings.themes.mode.${theme.mode}`)}
           {theme.author ? ` · ${theme.author}` : ''}
-          {theme.source !== 'builtin' ? ` · ${theme.source}` : ''}
+          {theme.source !== 'builtin'
+            ? ` · ${t(theme.source === 'user' ? 'settings.themes.custom' : 'settings.themes.extension')}`
+            : ''}
         </span>
       </button>
-      {props.onDelete ? (
-        <button
-          className="btn ghost icon sm danger theme-card-delete"
-          aria-label={t('common.delete')}
-          onClick={props.onDelete}
-        >
-          <Trash2 size={13} />
+      <div className="theme-card-actions">
+        <button className="btn sm" disabled={props.exporting} onClick={props.onExport}>
+          <Download size={13} /> {t('common.export')}
         </button>
-      ) : null}
+        {props.onDelete ? (
+          <button
+            className="btn ghost icon sm danger"
+            aria-label={t('common.delete')}
+            onClick={props.onDelete}
+          >
+            <Trash2 size={13} />
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -77,8 +96,35 @@ export function ThemesSection() {
   const setTheme = useUI((s) => s.setTheme);
   const importTheme = useImportTheme();
   const deleteTheme = useDeleteTheme();
+  const installExtension = useInstallExtension();
+  const navigate = useNavigate();
+  const [exporting, setExporting] = useState<string | null>(null);
+
+  const onExport = async (theme: ThemeInfo) => {
+    setExporting(theme.id);
+    try {
+      await download(`/api/themes/${encodeURIComponent(theme.id)}/package`, `${theme.id}.zip`);
+    } catch (error) {
+      toastError(error);
+    } finally {
+      setExporting(null);
+    }
+  };
 
   const onFile = async (file: File) => {
+    if (file.name.toLowerCase().endsWith('.zip')) {
+      installExtension.mutate(
+        { file, replace: false },
+        {
+          onSuccess: () => {
+            toast(t('settings.ext.installed'));
+            navigate('/extensions?tab=installed');
+          },
+          onError: toastError,
+        },
+      );
+      return;
+    }
     try {
       const body = JSON.parse(await file.text());
       importTheme.mutate(body, {
@@ -101,7 +147,14 @@ export function ThemesSection() {
   return (
     <section className="col" style={{ gap: 14 }}>
       <div className="row" style={{ justifyContent: 'flex-end' }}>
-        <FilePick accept=".json" onFile={onFile}>
+        <Link className="btn" to="/extensions?tab=installed">
+          <FolderOpen size={15} /> {t('settings.themes.managePackages')}
+        </Link>
+        <FilePick
+          accept=".json,.zip"
+          disabled={importTheme.isPending || installExtension.isPending}
+          onFile={onFile}
+        >
           <Upload size={15} /> {t('settings.themes.import')}
         </FilePick>
       </div>
@@ -127,6 +180,8 @@ export function ThemesSection() {
             theme={theme}
             active={choice === theme.id}
             onPick={() => setTheme(theme.id, theme.mode)}
+            onExport={() => void onExport(theme)}
+            exporting={exporting !== null}
             onDelete={
               theme.source === 'user'
                 ? () =>
