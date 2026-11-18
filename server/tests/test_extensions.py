@@ -208,12 +208,69 @@ class ExtensionApiTests(ApiCase):
                     self.client.post("/api/extensions", content=evil.getvalue()).status_code, 400
                 )
                 self.assertFalse((self.root() / "escape.txt").exists())
+                self.assertFalse((self.root() / ".staging-evil").exists())
 
         self.ok(self.client.delete("/api/extensions/demo"), 204)
         self.assertEqual(
             [i for i in self.ok(self.client.get("/api/extensions"))["items"] if not i["builtin"]],
             [],
         )
+
+    def test_install_path_streams_archive_members(self):
+        source = write_ext(Path(self.tmp) / "path-src", ext_id="path-demo")
+        asset = source / "assets" / "nested" / "large.bin"
+        asset.parent.mkdir(parents=True)
+        asset.write_bytes(b"extension-stream-test" * 100_000)
+        archive = Path(self.tmp) / "path-demo.zip"
+        with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as output:
+            for path in source.rglob("*"):
+                if path.is_file():
+                    output.write(path, f"path-demo-1.0/{path.relative_to(source).as_posix()}")
+
+        with mock.patch.object(
+            zipfile.ZipFile, "read", side_effect=AssertionError("ZipFile.read buffers a member")
+        ):
+            info = self.ctx.extensions.install_path(archive)
+
+        self.assertEqual((info.id, info.status), ("path-demo", "disabled"))
+        installed_asset = self.root() / "path-demo" / "assets" / "nested" / "large.bin"
+        self.assertEqual(installed_asset.stat().st_size, asset.stat().st_size)
+
+    def test_folder_upload_streams_multipart_files_to_install(self):
+        source = write_ext(Path(self.tmp) / "folder-src", ext_id="folder-demo")
+        asset = source / "assets" / "sample.bin"
+        asset.parent.mkdir(parents=True)
+        asset.write_bytes(b"folder-stream-test" * 50_000)
+        files = [
+            (
+                "files",
+                (
+                    f"folder-demo-1.0/{path.relative_to(source).as_posix()}",
+                    path.read_bytes(),
+                    "application/octet-stream",
+                ),
+            )
+            for path in source.rglob("*")
+            if path.is_file()
+        ]
+
+        response = self.client.post("/api/extensions/folder", files=files)
+
+        info = self.ok(response, 201)
+        self.assertEqual((info["id"], info["status"]), ("folder-demo", "disabled"))
+        installed_asset = self.root() / "folder-demo" / "assets" / "sample.bin"
+        self.assertEqual(installed_asset.read_bytes(), asset.read_bytes())
+
+    def test_manager_install_keeps_bytes_compatibility(self):
+        source = write_ext(Path(self.tmp) / "bytes-src", ext_id="bytes-demo")
+        archive = io.BytesIO()
+        with zipfile.ZipFile(archive, "w") as output:
+            for path in source.iterdir():
+                output.write(path, f"bytes-demo-1.0/{path.name}")
+
+        info = self.ctx.extensions.install(archive.getvalue())
+
+        self.assertEqual((info.id, info.status), ("bytes-demo", "disabled"))
 
     def test_settings_patch_cannot_enable_extensions(self):
         write_ext(self.root())

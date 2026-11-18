@@ -12,12 +12,12 @@ Safety model:
 from __future__ import annotations
 
 import importlib.util
-import io
 import json
 import logging
 import os
 import shutil
 import sys
+import tempfile
 import zipfile
 from dataclasses import dataclass, field
 from functools import wraps
@@ -43,6 +43,8 @@ log = logging.getLogger("mio.extensions")
 
 MAX_ZIP = 50 * 1024 * 1024
 MAX_ENTRIES = 2000
+MAX_UNPACKED = 4 * MAX_ZIP
+MAX_MANIFEST_BYTES = 1024 * 1024
 BUILTIN_ROOT = Path(__file__).resolve().parents[3] / "extensions"
 
 
@@ -511,51 +513,96 @@ class ExtensionManager:
         """Install a zipped extension (manifest at the root or in one top-level folder)."""
         if len(data) > MAX_ZIP:
             raise ExtensionError("扩展包超过 50 MB")
+        with tempfile.TemporaryDirectory(prefix="mio-extension-install-") as temporary:
+            archive = Path(temporary) / "extension.zip"
+            with archive.open("wb") as output:
+                output.write(data)
+            return self._install_archive(archive, replace)
+
+    @operation_serialized
+    @catalog_transition
+    def install_path(self, path: Path, replace: bool = False) -> Info:
+        """Install a zipped extension directly from disk without buffering the archive."""
+        return self._install_archive(Path(path), replace)
+
+    def _install_archive(self, path: Path, replace: bool) -> Info:
         try:
-            zf = zipfile.ZipFile(io.BytesIO(data))
+            if path.stat().st_size > MAX_ZIP:
+                raise ExtensionError("扩展包超过 50 MB")
+        except OSError as exc:
+            raise ExtensionError(f"无法读取扩展包：{exc}") from None
+        try:
+            zf = zipfile.ZipFile(path)
+        except (OSError, zipfile.BadZipFile):
+            raise ExtensionError("不是合法的 zip 文件") from None
+        staging = None
+        try:
+            with zf:
+                entries = []
+                for entry in zf.infolist():
+                    if entry.is_dir():
+                        continue
+                    entries.append(entry)
+                    if len(entries) > MAX_ENTRIES:
+                        raise ExtensionError("扩展包文件过多")
+                names = [entry.filename for entry in entries]
+                if len(set(names)) != len(names):
+                    raise ExtensionError("扩展包包含重复路径")
+                prefix = _common_prefix(names)
+                manifest_name = prefix + MANIFEST
+                if manifest_name not in names:
+                    raise ExtensionError(f"扩展包里没有 {MANIFEST}")
+                manifest_info = next(entry for entry in entries if entry.filename == manifest_name)
+                if manifest_info.file_size > MAX_MANIFEST_BYTES:
+                    raise ExtensionError(f"{MANIFEST} 文件过大")
+                with zf.open(manifest_info) as stream:
+                    manifest_bytes = stream.read(MAX_MANIFEST_BYTES + 1)
+                if len(manifest_bytes) > MAX_MANIFEST_BYTES:
+                    raise ExtensionError(f"{MANIFEST} 文件过大")
+                try:
+                    manifest = Manifest.model_validate(json.loads(manifest_bytes))
+                except (ValueError, ValidationError) as exc:
+                    raise ExtensionError(f"{MANIFEST} 不合法：{exc}") from None
+                target = self.root / manifest.id
+                if target.exists() and not replace:
+                    raise ExtensionError(f"扩展 {manifest.id} 已存在")
+                if target.exists() or manifest.id in self.loaded:
+                    self.engine.ensure_executor_source_idle(f"ext:{manifest.id}")
+                total = sum(entry.file_size for entry in entries)
+                if total > MAX_UNPACKED:
+                    raise ExtensionError("扩展包解压后过大")
+                staging = self.root / f".staging-{manifest.id}"
+                shutil.rmtree(staging, ignore_errors=True)
+                staging.mkdir(parents=True)
+                extracted = 0
+                for entry in entries:
+                    n = entry.filename
+                    rel = n[len(prefix) :].replace("\\", "/")
+                    parts = PurePosixPath(rel).parts
+                    if not rel or rel.startswith("/") or ".." in parts or ":" in rel:
+                        raise ExtensionError(f"不安全的路径：{n}")
+                    dest = staging / rel
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    with zf.open(entry) as source, dest.open("wb") as output:
+                        while chunk := source.read(1024 * 1024):
+                            extracted += len(chunk)
+                            if extracted > MAX_UNPACKED:
+                                raise ExtensionError("扩展包解压后过大")
+                            output.write(chunk)
+                read_manifest(staging)
+                if manifest.id in self.loaded:
+                    self.unload(manifest.id)
+                if target.exists():
+                    shutil.rmtree(target)
+                staging.rename(target)
+                staging = None
+                self._save_state(manifest.id, False, "")
+                return self.info(manifest.id)
         except zipfile.BadZipFile:
             raise ExtensionError("不是合法的 zip 文件") from None
-        names = [n for n in zf.namelist() if not n.endswith("/")]
-        if len(names) > MAX_ENTRIES:
-            raise ExtensionError("扩展包文件过多")
-        prefix = _common_prefix(names)
-        if prefix + MANIFEST not in names:
-            raise ExtensionError(f"扩展包里没有 {MANIFEST}")
-        try:
-            manifest = Manifest.model_validate(json.loads(zf.read(prefix + MANIFEST)))
-        except (ValueError, ValidationError) as exc:
-            raise ExtensionError(f"{MANIFEST} 不合法：{exc}") from None
-        target = self.root / manifest.id
-        if target.exists() and not replace:
-            raise ExtensionError(f"扩展 {manifest.id} 已存在")
-        if target.exists() or manifest.id in self.loaded:
-            self.engine.ensure_executor_source_idle(f"ext:{manifest.id}")
-        total = sum(zf.getinfo(n).file_size for n in names)
-        if total > 4 * MAX_ZIP:
-            raise ExtensionError("扩展包解压后过大")
-        staging = self.root / f".staging-{manifest.id}"
-        shutil.rmtree(staging, ignore_errors=True)
-        staging.mkdir(parents=True)
-        try:
-            for n in names:
-                rel = n[len(prefix) :].replace("\\", "/")
-                parts = PurePosixPath(rel).parts
-                if not rel or rel.startswith("/") or ".." in parts or ":" in rel:
-                    raise ExtensionError(f"不安全的路径：{n}")
-                dest = staging / rel
-                dest.parent.mkdir(parents=True, exist_ok=True)
-                dest.write_bytes(zf.read(n))
-            read_manifest(staging)
-        except (ExtensionError, ManifestError):
-            shutil.rmtree(staging, ignore_errors=True)
-            raise
-        if manifest.id in self.loaded:
-            self.unload(manifest.id)
-        if target.exists():
-            shutil.rmtree(target)
-        staging.rename(target)
-        self._save_state(manifest.id, False, "")
-        return self.info(manifest.id)
+        finally:
+            if staging is not None:
+                shutil.rmtree(staging, ignore_errors=True)
 
 
 def _json(path: Path) -> dict:

@@ -3,22 +3,25 @@
 from __future__ import annotations
 
 import hashlib
-import io
 import mimetypes
 import os
+import tempfile
 import zipfile
 from email import policy
+from email.message import Message
 from email.parser import BytesParser
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 from urllib.parse import quote
 
 from fastapi import Request, Response, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, JsonValue
+from starlette.concurrency import run_in_threadpool
+from starlette.datastructures import UploadFile
 
 from .. import themes as TH
 from ..backups.extension_data import load_settings, save_settings, settings_exist
-from ..extensions.manager import ExtensionError
+from ..extensions.manager import MAX_ENTRIES, MAX_ZIP, ExtensionError
 from ..extensions.manifest import ManifestError, inside
 from ..extensions.panel_bridge import (
     PanelBridgeRequest,
@@ -29,7 +32,7 @@ from ..extensions.panel_bridge import (
 from ..storage import NotFound
 from ..theme_media import MAX_THEME_SCRIPT_BYTES, image_may_animate
 from .deps import Ctx
-from .library import BINARY_BODY, read_body
+from .library import BINARY_BODY
 from .operations import Router as APIRouter
 
 router = APIRouter(tags=["extensions"])
@@ -45,6 +48,136 @@ def _mgr(ctx):
     return ctx.extensions
 
 
+async def _multipart_uploads(request: Request) -> list[tuple[str, UploadFile]]:
+    content_type = request.headers.get("content-type", "")
+    envelope = Message()
+    envelope["content-type"] = content_type
+    boundary = envelope.get_param("boundary")
+    if not isinstance(boundary, str) or not boundary or len(boundary) > 200:
+        raise ValueError("请上传扩展文件夹")
+    delimiter = b"--" + boundary.encode("ascii", errors="strict")
+    opening = delimiter + b"\r\n"
+    closing = delimiter + b"--"
+    separator = b"\r\n" + delimiter
+    buffer = bytearray()
+    uploads: list[tuple[str, UploadFile]] = []
+    active: UploadFile | None = None
+    field_bytes = 0
+    total_files = total_bytes = body_bytes = fields = 0
+    state = "start"
+
+    async def write_part(data: bytes) -> None:
+        nonlocal field_bytes, total_bytes
+        if active is None:
+            field_bytes += len(data)
+            if field_bytes > 64 * 1024:
+                raise ValueError("扩展文件夹表单字段过大")
+            return
+        total_bytes += len(data)
+        if total_bytes > MAX_ZIP:
+            raise ValueError("扩展文件夹过大")
+        await active.write(data)
+
+    async def begin_part(headers: bytes) -> None:
+        nonlocal active, fields, total_files, field_bytes
+        message = BytesParser(policy=policy.default).parsebytes(headers + b"\r\n\r\n")
+        if message.get_content_disposition() != "form-data":
+            raise ValueError("扩展文件夹包含无效表单字段")
+        name = message.get_param("name", header="content-disposition")
+        if not isinstance(name, str) or not name:
+            raise ValueError("扩展文件夹包含无效表单字段")
+        filename = message.get_filename()
+        field_bytes = 0
+        if filename is None:
+            fields += 1
+            if fields > 8:
+                raise ValueError("扩展文件夹表单字段过多")
+            active = None
+            return
+        total_files += 1
+        if total_files > MAX_ENTRIES:
+            raise ValueError("扩展文件夹过大")
+        active = UploadFile(
+            file=tempfile.SpooledTemporaryFile(max_size=1024 * 1024, mode="w+b"),
+            filename=filename,
+        )
+        uploads.append((name, active))
+
+    async def finish_part() -> None:
+        nonlocal active, field_bytes
+        if active is not None:
+            await active.seek(0)
+        active = None
+        field_bytes = 0
+
+    async def process_buffer() -> None:
+        nonlocal state
+        while True:
+            if state == "start":
+                if buffer.startswith(opening):
+                    del buffer[: len(opening)]
+                    state = "headers"
+                elif buffer.startswith(closing):
+                    del buffer[: len(closing)]
+                    state = "done"
+                elif not any(candidate.startswith(buffer) for candidate in (opening, closing)):
+                    raise ValueError("扩展文件夹包含无效 multipart 数据")
+                else:
+                    return
+            elif state == "headers":
+                end = buffer.find(b"\r\n\r\n")
+                if end < 0:
+                    if len(buffer) > 64 * 1024:
+                        raise ValueError("扩展文件夹表单头过大")
+                    return
+                await begin_part(bytes(buffer[:end]))
+                del buffer[: end + 4]
+                state = "body"
+            elif state == "body":
+                start = buffer.find(separator)
+                if start < 0:
+                    safe = len(buffer) - len(separator) - 2
+                    if safe > 0:
+                        await write_part(bytes(buffer[:safe]))
+                        del buffer[:safe]
+                    return
+                end = start + len(separator)
+                if len(buffer) < end + 2:
+                    if start:
+                        await write_part(bytes(buffer[:start]))
+                        del buffer[:start]
+                    return
+                suffix = bytes(buffer[end : end + 2])
+                if suffix not in (b"\r\n", b"--"):
+                    await write_part(bytes(buffer[: start + 2]))
+                    del buffer[: start + 2]
+                    continue
+                await write_part(bytes(buffer[:start]))
+                del buffer[: end + 2]
+                await finish_part()
+                state = "headers" if suffix == b"\r\n" else "done"
+            else:
+                buffer.clear()
+                return
+
+    try:
+        async for chunk in request.stream():
+            body_bytes += len(chunk)
+            if body_bytes > MAX_ZIP + 1024 * 1024:
+                raise ValueError("扩展文件夹过大")
+            for offset in range(0, len(chunk), 64 * 1024):
+                buffer.extend(chunk[offset : offset + 64 * 1024])
+                await process_buffer()
+        await process_buffer()
+        if state != "done":
+            raise ValueError("扩展文件夹 multipart 数据不完整")
+        return uploads
+    except BaseException:
+        for _, upload in uploads:
+            await upload.close()
+        raise
+
+
 # -------------------------------------------------------------- extensions
 @router.get("/extensions")
 def list_extensions(ctx: Ctx) -> dict:
@@ -58,8 +191,19 @@ def list_extensions(ctx: Ctx) -> dict:
 @router.post("/extensions", status_code=status.HTTP_201_CREATED, openapi_extra=BINARY_BODY)
 async def install_extension(ctx: Ctx, request: Request, replace: bool = False) -> dict:
     """Raw body = zipped extension folder.  Installed disabled; review, then enable."""
-    data = await read_body(request, 50 * 1024 * 1024, "扩展包超过 50 MB")
-    return _mgr(ctx).install(data, replace=replace).to_json()
+    size = 0
+    with tempfile.TemporaryDirectory(prefix="mio-extension-upload-") as temporary:
+        archive = Path(temporary) / "extension.zip"
+        with archive.open("wb") as output:
+            async for chunk in request.stream():
+                size += len(chunk)
+                if size > MAX_ZIP:
+                    raise ValueError("扩展包超过 50 MB")
+                output.write(chunk)
+        if size == 0:
+            raise ValueError("请求体为空")
+        installed = await run_in_threadpool(_mgr(ctx).install_path, archive, replace)
+        return installed.to_json()
 
 
 @router.post("/extensions/{ext_id}/enable")
@@ -76,42 +220,54 @@ async def install_extension_folder(ctx: Ctx, request: Request, replace: bool = F
         c in content_type for c in "\r\n"
     ):
         raise ValueError("请上传扩展文件夹")
-    raw = await read_body(request, 51 * 1024 * 1024, "扩展包超过 50 MB")
-    envelope = BytesParser(policy=policy.default).parsebytes(
-        ("Content-Type: " + content_type + "\r\nMIME-Version: 1.0\r\n\r\n").encode("ascii") + raw
-    )
-    buffer = io.BytesIO()
-    total = count = 0
-    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-        for item in envelope.iter_parts():
-            if item.get_param("name", header="content-disposition") != "files":
-                continue
-            name = (item.get_filename() or "").replace("\\", "/")
-            path = PurePosixPath(name)
-            if not name or path.is_absolute() or ".." in path.parts or ":" in name:
-                raise ValueError("文件夹包含不安全的路径")
-            if any(
-                part
-                in {
-                    "node_modules",
-                    ".git",
-                    "__pycache__",
-                    ".venv",
-                    ".cache",
-                    ".pytest_cache",
-                    ".ruff_cache",
-                }
-                or part.startswith(".env")
-                for part in path.parts
-            ):
-                continue
-            data = item.get_payload(decode=True) or b""
-            total += len(data)
-            count += 1
-            if total > 50 * 1024 * 1024 or count > 2000:
-                raise ValueError("扩展文件夹过大")
-            archive.writestr(name, data)
-    return _mgr(ctx).install(buffer.getvalue(), replace=replace).to_json()
+    uploads = await _multipart_uploads(request)
+    try:
+        with tempfile.TemporaryDirectory(prefix="mio-extension-folder-") as temporary:
+            archive = Path(temporary) / "extension.zip"
+            total = count = 0
+            names = set()
+            with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as output:
+                for field, item in uploads:
+                    if field != "files":
+                        continue
+                    if not isinstance(item, UploadFile):
+                        raise ValueError("请上传扩展文件夹")
+                    name = (item.filename or "").replace("\\", "/")
+                    path = PurePosixPath(name)
+                    if not name or path.is_absolute() or ".." in path.parts or ":" in name:
+                        raise ValueError("文件夹包含不安全的路径")
+                    if any(
+                        part
+                        in {
+                            "node_modules",
+                            ".git",
+                            "__pycache__",
+                            ".venv",
+                            ".cache",
+                            ".pytest_cache",
+                            ".ruff_cache",
+                        }
+                        or part.startswith(".env")
+                        for part in path.parts
+                    ):
+                        continue
+                    if name in names:
+                        raise ValueError("文件夹包含重复路径")
+                    names.add(name)
+                    count += 1
+                    if count > MAX_ENTRIES:
+                        raise ValueError("扩展文件夹过大")
+                    with output.open(name, "w", force_zip64=True) as destination:
+                        while chunk := await item.read(1024 * 1024):
+                            total += len(chunk)
+                            if total > MAX_ZIP:
+                                raise ValueError("扩展文件夹过大")
+                            destination.write(chunk)
+            installed = await run_in_threadpool(_mgr(ctx).install_path, archive, replace)
+            return installed.to_json()
+    finally:
+        for _, upload in uploads:
+            await upload.close()
 
 
 @router.get("/extension-surfaces")
@@ -262,7 +418,7 @@ def extension_file(ctx: Ctx, ext_id: str, path: str) -> Response:
         "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; "
         "style-src 'self' 'unsafe-inline'; connect-src 'none'; frame-ancestors 'self'"
     )
-    return Response(target.read_bytes(), media_type=mime, headers={"Content-Security-Policy": csp})
+    return FileResponse(target, media_type=mime, headers={"Content-Security-Policy": csp})
 
 
 # ------------------------------------------------------------------ themes
