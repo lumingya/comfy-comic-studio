@@ -74,6 +74,11 @@ export function TrustDialog(props: { ext: ExtensionInfo | null; onClose: () => v
               <ShieldAlert size={16} /> {t('settings.ext.runsCode')}
             </p>
           ) : null}
+          {ext.has_requirements ? (
+            <p className="row warn-text small" style={{ margin: 0 }}>
+              <ShieldAlert size={16} /> {t('settings.ext.requirementsTrust')}
+            </p>
+          ) : null}
           <div className="small muted">{t('settings.ext.digest')}</div>
           <div className="secret-box">{ext.digest}</div>
         </div>

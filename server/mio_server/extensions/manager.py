@@ -34,6 +34,8 @@ from ..backups.extension_data import (
 from ..hooks import HOOKS
 from ..jobs.operations import operation_serialized
 from ..jobs.types import JobConflict
+from ..theme_media import validate_theme_resources
+from .dependencies import ensure_requirements
 from .manifest import MANIFEST, Manifest, ManifestError, digest, inside, read_manifest
 from .sdk import ExtensionAPI
 
@@ -86,6 +88,7 @@ class Info:
     contributions: list[str] = field(default_factory=list)
     builtin: bool = False
     has_data: bool = False
+    has_requirements: bool = False
 
     def to_json(self) -> dict:
         m = self.manifest
@@ -96,8 +99,9 @@ class Info:
             "description": m.description if m else "",
             "author": m.author if m else "",
             "homepage": m.homepage if m else "",
-            "runs_code": bool(m and m.runs_code),
+            "runs_code": bool(m and (m.runs_code or self.has_requirements)),
             "has_python": bool(m and m.main),
+            "has_requirements": self.has_requirements,
             "panels": [p.model_dump() for p in m.contributes.panels] if m else [],
             "digest": self.digest,
             "status": self.status,
@@ -185,6 +189,7 @@ class ExtensionManager:
             contributions,
             builtin,
             extension_data_dir(self.ctx.data_dir, ext_id).exists(),
+            (folder / "requirements.txt").is_file(),
         )
 
     def list(self) -> list[Info]:
@@ -336,6 +341,11 @@ class ExtensionManager:
             previous.api._enabled = False
         self.ctx.registry.unregister_source(source)
         try:
+            if digest(info.folder) != info.digest:
+                raise ExtensionError("扩展内容在依赖检查前发生变化，请重新审阅后启用")
+            ensure_requirements(info.folder)
+            if digest(info.folder) != info.digest:
+                raise ExtensionError("扩展内容在依赖检查期间发生变化，请重新审阅后启用")
             # Also prevent stale package helper bytecode from defeating the reviewed digest.
             for cached in info.folder.rglob("*.pyc"):
                 if "__pycache__" in cached.relative_to(info.folder).parts:
@@ -439,6 +449,7 @@ class ExtensionManager:
         c = manifest.contributes
         for rel in c.themes:
             theme = parse_theme(_json(inside(api.folder, rel)))
+            validate_theme_resources(api.folder, theme)
             api.contribute("theme", theme.id, theme, title=theme.name)
         for rel in c.album_templates:
             tpl = parse_template(_json(inside(api.folder, rel)))

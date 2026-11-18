@@ -36,6 +36,14 @@ describe('theme', () => {
     applyTheme(root, 'dark', { ...themes[0], tokens: { bg: '#000000' } });
     expect(root.style.getPropertyValue('--accent')).toBe('');
     expect(root.style.getPropertyValue('--bg')).toBe('#000000');
+    expect(root.dataset.themeBackground).toBe('false');
+    applyTheme(root, 'dark', {
+      ...themes[0],
+      background: { kind: 'video', url: '/video.mp4', opacity: 0.4 },
+    });
+    expect(root.dataset.themeBackground).toBe('true');
+    applyTheme(root, 'dark', themes[0], false);
+    expect(root.dataset.themeBackground).toBe('false');
   });
 
   it('toggles between ink and paper by default', () => {

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import io
 import mimetypes
 import os
@@ -9,6 +10,7 @@ import zipfile
 from email import policy
 from email.parser import BytesParser
 from pathlib import PurePosixPath
+from urllib.parse import quote
 
 from fastapi import Request, Response, status
 from fastapi.responses import FileResponse
@@ -25,6 +27,7 @@ from ..extensions.panel_bridge import (
     dispatch_panel,
 )
 from ..storage import NotFound
+from ..theme_media import MAX_THEME_SCRIPT_BYTES, image_may_animate
 from .deps import Ctx
 from .library import BINARY_BODY, read_body
 from .operations import Router as APIRouter
@@ -265,30 +268,56 @@ def extension_file(ctx: Ctx, ext_id: str, path: str) -> Response:
 # ------------------------------------------------------------------ themes
 @router.get("/themes")
 def list_themes(ctx: Ctx) -> list[dict]:
-    return [TH.to_json(c.value, c.source) for c in ctx.registry.all("theme")]
+    result = []
+    for contribution in ctx.registry.all("theme"):
+        theme = contribution.value
+        item = TH.to_json(theme, contribution.source)
+        if theme.background:
+            encoded = "/".join(
+                quote(part, safe="") for part in theme.background.file.split("/")[1:]
+            )
+            item["background"] = {
+                "kind": theme.background.kind,
+                "url": f"/api/themes/{quote(theme.id, safe='')}/assets/{encoded}",
+                "opacity": theme.background.opacity,
+            }
+            if theme.background.kind == "image":
+                try:
+                    from .theme_packages import _theme_file
+
+                    image_path = _theme_file(ctx, theme.id, theme.background.file)
+                    with image_path.open("rb") as image:
+                        item["background"]["animated"] = image_may_animate(
+                            theme.background.file, image.read(256 * 1024)
+                        )
+                except (NotFound, OSError, ValueError):
+                    item["background"]["animated"] = True
+        if theme.style_file:
+            item["style_url"] = f"/api/themes/{quote(theme.id, safe='')}/style"
+        if theme.script_file:
+            try:
+                from .theme_packages import _theme_file
+
+                script_path = _theme_file(ctx, theme.id, theme.script_file)
+                if script_path.stat().st_size > MAX_THEME_SCRIPT_BYTES:
+                    raise ValueError("theme.js exceeds 1 MB")
+                item["script_url"] = f"/api/themes/{quote(theme.id, safe='')}/script"
+                item["script_digest"] = hashlib.sha256(script_path.read_bytes()).hexdigest()
+            except (NotFound, OSError, ValueError):
+                pass
+        result.append(item)
+    return result
 
 
 @router.post("/themes", status_code=status.HTTP_201_CREATED)
 def import_theme(ctx: Ctx, body: dict) -> dict:
     """Import a theme JSON document. Built-in, package and extension IDs cannot be overwritten."""
     theme = TH.parse_theme(body)
+    if theme.background or theme.style_file or theme.script_file:
+        raise ValueError("含媒体、样式或脚本的主题必须通过主题包或文件夹导入")
     existing = next((c for c in ctx.registry.all("theme") if c.id == theme.id), None)
     if existing and existing.source != "user":
         raise ValueError(f"主题 id 已被占用：{theme.id}")
     ctx.store.put_doc(theme)
     ctx.registry.register("theme", theme.id, theme, source="user", title=theme.name, replace=True)
     return TH.to_json(theme, "user")
-
-
-@router.delete("/themes/{theme_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_theme(ctx: Ctx, theme_id: str) -> None:
-    existing = next((c for c in ctx.registry.all("theme") if c.id == theme_id), None)
-    if existing is None:
-        raise NotFound(f"主题不存在：{theme_id}")
-    if existing.source == "theme-package":
-        ctx.theme_packages.remove(theme_id)
-        return
-    if existing.source != "user":
-        raise ValueError("只能删除自己导入的主题")
-    ctx.store.delete_doc("theme", theme_id)
-    ctx.registry.unregister("theme", theme_id)

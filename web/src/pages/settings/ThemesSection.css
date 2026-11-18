@@ -5,3 +5,23 @@
   gap: 8px;
   padding: 0 12px 12px;
 }
+
+.theme-opacity,
+.theme-script-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.theme-opacity input {
+  flex: 1;
+  min-width: 60px;
+  accent-color: var(--accent);
+}
+
+.theme-script-toggle input {
+  accent-color: var(--accent);
+}

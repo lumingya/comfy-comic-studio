@@ -34,8 +34,14 @@ export function resolveTheme(
 const applied = new Set<string>();
 
 /** Write the resolved theme onto <html>: data-theme for the CSS fallbacks + token variables. */
-export function applyTheme(root: HTMLElement, mode: 'dark' | 'light', theme?: ThemeInfo): void {
+export function applyTheme(
+  root: HTMLElement,
+  mode: 'dark' | 'light',
+  theme?: ThemeInfo,
+  backgroundEnabled = Boolean(theme?.background?.url),
+): void {
   root.dataset.theme = mode;
+  root.dataset.themeBackground = backgroundEnabled ? 'true' : 'false';
   root.style.colorScheme = mode;
   for (const name of applied) root.style.removeProperty(`--${name}`);
   applied.clear();

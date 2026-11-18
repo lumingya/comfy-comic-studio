@@ -9,6 +9,10 @@ export interface ThemeInfo {
   author: string;
   source: string;
   tokens: Record<string, string>;
+  background?: { kind: 'image' | 'video'; url: string; opacity: number; animated?: boolean } | null;
+  style_url?: string | null;
+  script_url?: string | null;
+  script_digest?: string | null;
 }
 
 export interface ExtensionInfo {
@@ -21,6 +25,7 @@ export interface ExtensionInfo {
   author?: string;
   runs_code: boolean;
   has_python: boolean;
+  has_requirements: boolean;
   panels: { id: string; slot: string; title: string }[];
   digest: string;
   status: 'active' | 'error' | 'changed' | 'disabled' | 'invalid';

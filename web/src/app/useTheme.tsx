@@ -2,14 +2,27 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { useThemes } from '../api/open';
 import { applyTheme, resolveTheme, systemPrefersDark, toggled } from './theme';
 import { useUI } from './ui-store';
+import { ThemeBackdrop } from './themeBackdrop';
+import { themeScriptKey, useThemeScript } from './themeScript';
+import { ThemeStylesheet } from './themeStylesheet';
 
 const ThemeMode = createContext<'dark' | 'light' | null>(null);
 
 /** The shell owns theme resolution, the system subscription and writes to <html>. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const choice = useUI((s) => s.theme);
+  const setTheme = useUI((s) => s.setTheme);
+  const themeOpacity = useUI((s) => s.themeOpacity);
+  const paused = useUI((s) => s.themeBackgroundPaused);
+  const enabledThemeScripts = useUI((s) => s.enabledThemeScripts);
+  const reduceMotion = useUI((s) => s.reduceMotion);
   const themes = useThemes();
   const [prefersDark, setPrefersDark] = useState(systemPrefersDark);
+  const [reducedMotion, setReducedMotion] = useState(
+    () =>
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
 
   useEffect(() => {
     if (typeof window.matchMedia !== 'function') return;
@@ -20,11 +33,52 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return () => query.removeEventListener?.('change', onChange);
   }, []);
 
-  const resolved = resolveTheme(choice, themes.data ?? [], prefersDark);
   useEffect(() => {
-    applyTheme(document.documentElement, resolved.mode, resolved.theme);
-  }, [resolved.mode, resolved.theme]);
-  return <ThemeMode.Provider value={resolved.mode}>{children}</ThemeMode.Provider>;
+    if (typeof window.matchMedia !== 'function') return;
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = () => setReducedMotion(query.matches);
+    onChange();
+    query.addEventListener?.('change', onChange);
+    return () => query.removeEventListener?.('change', onChange);
+  }, []);
+
+  const resolved = resolveTheme(choice, themes.data ?? [], prefersDark);
+  const background = resolved.theme?.background;
+  const opacity = background ? (themeOpacity[resolved.id] ?? background.opacity) : 0;
+  useEffect(() => {
+    applyTheme(document.documentElement, resolved.mode, resolved.theme, opacity > 0);
+  }, [resolved.mode, resolved.theme, opacity]);
+  useEffect(() => {
+    const resetTheme = (event: KeyboardEvent) => {
+      if (
+        !(event.ctrlKey || event.metaKey) ||
+        !event.shiftKey ||
+        !['Digit0', 'Numpad0'].includes(event.code)
+      )
+        return;
+      event.preventDefault();
+      setTheme('system');
+    };
+    window.addEventListener('keydown', resetTheme);
+    return () => window.removeEventListener('keydown', resetTheme);
+  }, [setTheme]);
+  useThemeScript(
+    resolved.theme,
+    !reduceMotion &&
+      !reducedMotion &&
+      enabledThemeScripts.includes(themeScriptKey(resolved.theme) ?? ''),
+  );
+  return (
+    <ThemeMode.Provider value={resolved.mode}>
+      <ThemeStylesheet theme={resolved.theme} />
+      <ThemeBackdrop
+        background={background}
+        opacity={opacity}
+        paused={paused || reducedMotion || reduceMotion}
+      />
+      {children}
+    </ThemeMode.Provider>
+  );
 }
 
 /** Flip between the last dark and light themes (top bar button, command palette). */

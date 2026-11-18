@@ -1190,16 +1190,16 @@ class MioClient(_Base):
         """
         return self._request("POST", "/themes", json=body)
 
-    def delete_theme(self, theme_id: str) -> Any:
-        """DELETE /themes/{theme_id} — Delete Theme."""
-        return self._request("DELETE", f"/themes/{_q(theme_id)}")
-
     def get_theme(self, theme_id: str) -> Any:
         """GET /themes/{theme_id} — Get Theme.
 
         Return an editable theme JSON document accepted by the existing import endpoint.
         """
         return self._request("GET", f"/themes/{_q(theme_id)}")
+
+    def delete_theme(self, theme_id: str) -> Any:
+        """DELETE /themes/{theme_id} — Delete Theme."""
+        return self._request("DELETE", f"/themes/{_q(theme_id)}")
 
     def export_theme_package(self, theme_id: str) -> Any:
         """GET /themes/{theme_id}/package — Export Theme Package.

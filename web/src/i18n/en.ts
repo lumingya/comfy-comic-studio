@@ -745,7 +745,7 @@ const en: Widen<Dict> = {
       updates: 'Updates',
     },
     themes: {
-      hint: 'Import a JSON file or theme package. Extensions can also provide themes.',
+      hint: 'Import JSON, a theme folder, or ZIP. Scripts are off by default.',
       custom: 'Custom',
       package: 'Standalone theme',
       extension: 'Extension',
@@ -753,6 +753,12 @@ const en: Widen<Dict> = {
       importFolder: 'Import folder',
       imported: 'Imported and applied',
       badFile: 'Not a valid theme JSON',
+      backgroundOpacity: 'Background opacity',
+      pauseBackground: 'Pause background',
+      resumeBackground: 'Play background',
+      enableScript: 'Enable isolated script',
+      resetShortcut:
+        'If the appearance breaks, press Ctrl/Cmd + Shift + 0 to restore the system theme',
       system: 'Follow system',
       systemHint: 'Paper when light, Ink when dark',
       missing: 'The selected theme is unavailable; following the system.',
@@ -780,6 +786,8 @@ const en: Widen<Dict> = {
         'Only enable extensions from sources you trust. The digest below matches the current files; changes disable it again.',
       runsCode:
         'This extension can run code and access your workspace. Only enable trusted sources.',
+      requirementsTrust:
+        'Enabling installs missing packages into Mio’s shared Python environment; package code may run during installation.',
       digest: 'Content digest (SHA-256)',
       restartNeeded: 'Some changes take effect after restarting the server',
       uninstall: 'Uninstall',

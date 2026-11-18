@@ -16,6 +16,7 @@ const extension: ExtensionInfo = {
   has_data: true,
   runs_code: true,
   has_python: true,
+  has_requirements: false,
   panels: [],
   digest: 'reviewed-digest',
   status: 'disabled',

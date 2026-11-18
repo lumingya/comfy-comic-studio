@@ -41,7 +41,7 @@ it('exports one independent package from the theme card without changing the act
   expect(useUI.getState().theme).toBe('paper');
 });
 
-it('imports a standalone theme ZIP and applies it without entering extension review', async () => {
+it('imports a standalone theme ZIP without applying it or entering extension review', async () => {
   const imported = { ...custom, id: 'linen', source: 'theme-package' };
   const requests: { url: string; method: string; body: BodyInit | null | undefined }[] = [];
   vi.stubGlobal(
@@ -60,14 +60,15 @@ it('imports a standalone theme ZIP and applies it without entering extension rev
   const input = view.container.querySelector<HTMLInputElement>('input[accept=".json,.zip"]')!;
   const archive = new File(['fixture ZIP'], 'linen.zip', { type: 'application/zip' });
   await userEvent.upload(input, archive);
-  await waitFor(() => expect(useUI.getState().theme).toBe('linen'));
+  await waitFor(() => expect(requests.some((request) => request.method === 'POST')).toBe(true));
+  expect(useUI.getState().theme).toBe('paper');
   expect(requests.filter((request) => request.method === 'POST')).toEqual([
     { url: '/api/themes/package', method: 'POST', body: archive },
   ]);
   expect(screen.queryByText('扩展审阅')).toBeNull();
 });
 
-it('imports a standalone theme folder through the theme API', async () => {
+it('imports a standalone theme folder without applying it through the theme API', async () => {
   const imported = { ...custom, id: 'linen', source: 'theme-package' };
   const requests: { url: string; method: string; body: BodyInit | null | undefined }[] = [];
   vi.stubGlobal(
@@ -88,14 +89,57 @@ it('imports a standalone theme folder through the theme API', async () => {
   Object.defineProperty(file, 'webkitRelativePath', { value: 'linen/theme.json' });
   Object.defineProperty(input, 'files', { configurable: true, value: [file] });
   fireEvent.change(input);
-  await waitFor(() => expect(useUI.getState().theme).toBe('linen'));
+  await waitFor(() => expect(requests.some((entry) => entry.method === 'POST')).toBe(true));
   const request = requests.find((entry) => entry.method === 'POST')!;
+  expect(useUI.getState().theme).toBe('paper');
   expect(request.url).toBe('/api/themes/folder');
   expect(request.body).toBeInstanceOf(FormData);
   expect((request.body as FormData).getAll('files')).toHaveLength(1);
 });
 
-it('preserves existing JSON import and applies the imported theme', async () => {
+it('persists background opacity and keeps theme scripts explicitly opt-in', async () => {
+  const videoTheme = {
+    ...custom,
+    id: 'moving-paper',
+    source: 'theme-package',
+    background: {
+      kind: 'video',
+      url: '/api/themes/moving-paper/assets/assets/bg.mp4',
+      opacity: 0.3,
+    },
+    script_url: '/api/themes/moving-paper/script',
+    script_digest: 'a'.repeat(64),
+  };
+  mockFetch({ 'GET /api/themes': [videoTheme] });
+  renderWithProviders(<ThemesSection />);
+  const opacity = await screen.findByRole('slider', { name: '背景透明度' });
+  expect(opacity).toHaveValue('0.3');
+  const enableScript = screen.getByRole('checkbox', { name: '启用隔离脚本' });
+  expect(enableScript).not.toBeChecked();
+  await userEvent.click(enableScript);
+  fireEvent.change(opacity, { target: { value: '0.7' } });
+  await waitFor(() => expect(useUI.getState().themeOpacity['moving-paper']).toBe(0.7));
+  expect(useUI.getState().enabledThemeScripts).toContain('moving-paper:' + 'a'.repeat(64));
+});
+
+it('does not reuse script consent when a package changes under the same theme id', async () => {
+  useUI.setState({ enabledThemeScripts: ['moving-paper:' + 'a'.repeat(64)] });
+  mockFetch({
+    'GET /api/themes': [
+      {
+        ...custom,
+        id: 'moving-paper',
+        source: 'theme-package',
+        script_url: '/api/themes/moving-paper/script',
+        script_digest: 'b'.repeat(64),
+      },
+    ],
+  });
+  renderWithProviders(<ThemesSection />);
+  expect(await screen.findByRole('checkbox', { name: '启用隔离脚本' })).not.toBeChecked();
+});
+
+it('preserves existing JSON import without applying the imported theme', async () => {
   const document = { ...custom, source: undefined };
   const calls = mockFetch({ 'GET /api/themes': [custom], 'POST /api/themes': custom });
   const view = renderWithProviders(<ThemesSection />);
@@ -103,7 +147,8 @@ it('preserves existing JSON import and applies the imported theme', async () => 
   const file = new File([JSON.stringify(document)], 'theme.json', { type: 'application/json' });
   Object.defineProperty(file, 'text', { value: async () => JSON.stringify(document) });
   await userEvent.upload(view.container.querySelector('input[accept=".json,.zip"]')!, file);
-  await waitFor(() => expect(useUI.getState().theme).toBe('custom-paper'));
+  await waitFor(() => expect(calls.some((call) => call.method === 'POST')).toBe(true));
+  expect(useUI.getState().theme).toBe('paper');
   expect(calls.filter((call) => call.method === 'POST')).toEqual([
     { method: 'POST', url: '/api/themes', body: JSON.parse(JSON.stringify(document)) },
   ]);

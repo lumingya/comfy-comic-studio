@@ -12,6 +12,7 @@ import {
   type ThemeInfo,
 } from '../../api/open';
 import { SYSTEM } from '../../app/theme';
+import { themeScriptKey } from '../../app/themeScript';
 import { useUI } from '../../app/ui-store';
 import { toast, toastError } from '../../components/toast';
 import { FilePick, Loading } from '../../components/ui';
@@ -51,6 +52,12 @@ function ThemeCard(props: {
   onPick: () => void;
   onExport: () => void;
   exporting: boolean;
+  opacity: number;
+  onOpacityChange: (value: number) => void;
+  scriptEnabled: boolean;
+  onScriptEnabledChange: (enabled: boolean) => void;
+  backgroundPaused: boolean;
+  onBackgroundPausedChange: (paused: boolean) => void;
   onDelete?: () => void;
 }) {
   const { t } = useTranslation();
@@ -78,6 +85,23 @@ function ThemeCard(props: {
         </span>
       </button>
       <div className="theme-card-actions">
+        {theme.background?.kind === 'video' && props.active ? (
+          <button
+            className="btn sm"
+            aria-label={t(
+              props.backgroundPaused
+                ? 'settings.themes.resumeBackground'
+                : 'settings.themes.pauseBackground',
+            )}
+            onClick={() => props.onBackgroundPausedChange(!props.backgroundPaused)}
+          >
+            {t(
+              props.backgroundPaused
+                ? 'settings.themes.resumeBackground'
+                : 'settings.themes.pauseBackground',
+            )}
+          </button>
+        ) : null}
         <button className="btn sm" disabled={props.exporting} onClick={props.onExport}>
           <Download size={13} /> {t('common.export')}
         </button>
@@ -91,6 +115,31 @@ function ThemeCard(props: {
           </button>
         ) : null}
       </div>
+      {theme.background ? (
+        <label className="theme-opacity">
+          <span>{t('settings.themes.backgroundOpacity')}</span>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            aria-label={t('settings.themes.backgroundOpacity')}
+            value={props.opacity}
+            onChange={(event) => props.onOpacityChange(Number(event.currentTarget.value))}
+          />
+          <span className="small muted">{Math.round(props.opacity * 100)}%</span>
+        </label>
+      ) : null}
+      {theme.script_url ? (
+        <label className="theme-script-toggle">
+          <input
+            type="checkbox"
+            checked={props.scriptEnabled}
+            onChange={(event) => props.onScriptEnabledChange(event.currentTarget.checked)}
+          />
+          <span>{t('settings.themes.enableScript')}</span>
+        </label>
+      ) : null}
     </div>
   );
 }
@@ -100,6 +149,12 @@ export function ThemesSection() {
   const themes = useThemes();
   const choice = useUI((s) => s.theme);
   const setTheme = useUI((s) => s.setTheme);
+  const themeOpacity = useUI((s) => s.themeOpacity);
+  const setThemeOpacity = useUI((s) => s.setThemeOpacity);
+  const enabledThemeScripts = useUI((s) => s.enabledThemeScripts);
+  const setThemeScriptEnabled = useUI((s) => s.setThemeScriptEnabled);
+  const backgroundPaused = useUI((s) => s.themeBackgroundPaused);
+  const setBackgroundPaused = useUI((s) => s.setThemeBackgroundPaused);
   const importTheme = useImportTheme();
   const importPackage = useImportThemePackage();
   const importFolder = useImportThemeFolder();
@@ -121,10 +176,7 @@ export function ThemesSection() {
   const onFile = async (file: File) => {
     if (file.name.toLowerCase().endsWith('.zip')) {
       importPackage.mutate(file, {
-        onSuccess: (theme) => (
-          toast(t('settings.themes.imported')),
-          setTheme(theme.id, theme.mode)
-        ),
+        onSuccess: () => toast(t('settings.themes.imported')),
         onError: toastError,
       });
       return;
@@ -132,10 +184,7 @@ export function ThemesSection() {
     try {
       const body = JSON.parse(await file.text());
       importTheme.mutate(body, {
-        onSuccess: (theme) => (
-          toast(t('settings.themes.imported')),
-          setTheme(theme.id, theme.mode)
-        ),
+        onSuccess: () => toast(t('settings.themes.imported')),
         onError: toastError,
       });
     } catch {
@@ -148,7 +197,7 @@ export function ThemesSection() {
     event.currentTarget.value = '';
     if (!files.length) return;
     importFolder.mutate(files, {
-      onSuccess: (theme) => (toast(t('settings.themes.imported')), setTheme(theme.id, theme.mode)),
+      onSuccess: () => toast(t('settings.themes.imported')),
       onError: toastError,
     });
   };
@@ -186,6 +235,7 @@ export function ThemesSection() {
           <Upload size={15} /> {t('settings.themes.import')}
         </FilePick>
       </div>
+      <p className="small muted">{t('settings.themes.resetShortcut')}</p>
       <div className="theme-grid">
         <div className={`theme-card ${choice === SYSTEM ? 'active' : ''}`}>
           <button
@@ -208,6 +258,15 @@ export function ThemesSection() {
             theme={theme}
             active={choice === theme.id}
             onPick={() => setTheme(theme.id, theme.mode)}
+            opacity={themeOpacity[theme.id] ?? theme.background?.opacity ?? 0}
+            onOpacityChange={(value) => setThemeOpacity(theme.id, value)}
+            scriptEnabled={enabledThemeScripts.includes(themeScriptKey(theme) ?? '')}
+            onScriptEnabledChange={(enabled) => {
+              const key = themeScriptKey(theme);
+              if (key) setThemeScriptEnabled(key, enabled);
+            }}
+            backgroundPaused={backgroundPaused}
+            onBackgroundPausedChange={setBackgroundPaused}
             onExport={() => void onExport(theme)}
             exporting={exporting !== null}
             onDelete={

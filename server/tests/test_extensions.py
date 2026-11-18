@@ -118,8 +118,48 @@ class ExtensionApiTests(ApiCase):
         hello = self.ok(client.get("/api/ext/demo/hello"))
         self.assertEqual(hello, {"hi": "demo", "saved": {"count": 1}})
 
+    def test_requirements_wait_for_reviewed_enable_and_are_announced(self):
+        folder = write_ext(self.root())
+        (folder / "requirements.txt").write_text(
+            "mio-test-package-that-is-not-installed>=1\n", encoding="utf-8"
+        )
+        info = next(
+            item
+            for item in self.ok(self.client.get("/api/extensions"))["items"]
+            if item["id"] == "demo"
+        )
+        self.assertTrue(info["has_requirements"])
+        self.assertTrue(info["runs_code"])
+        with (
+            mock.patch(
+                "mio_server.extensions.manager.ensure_requirements",
+                return_value=("mio-test-package-that-is-not-installed>=1",),
+            ) as install,
+        ):
+            install.assert_not_called()
+            activated = self.enable()
+        self.assertEqual(activated["status"], "active")
+        install.assert_called_once_with(folder)
+
         self.ok(self.client.post("/api/extensions/demo/disable"))
         self.assertNotIn("forest", {t["id"] for t in self.ok(self.client.get("/api/themes"))})
+        self.assertFalse(self.ctx.registry.hooks.handlers("prompt.compiled"))
+
+    def test_requirements_change_during_preflight_blocks_extension_activation(self):
+        folder = write_ext(self.root())
+        (folder / "requirements.txt").write_text("first-package>=1\n", encoding="utf-8")
+
+        def alter_requirements(extension_folder):
+            (extension_folder / "requirements.txt").write_text(
+                "different-package>=1\n", encoding="utf-8"
+            )
+            return ()
+
+        with mock.patch(
+            "mio_server.extensions.manager.ensure_requirements", side_effect=alter_requirements
+        ):
+            enabled = self.enable()
+        self.assertEqual(enabled["status"], "error")
         self.assertFalse(self.ctx.registry.hooks.handlers("prompt.compiled"))
 
     def test_changed_files_block_loading_until_reviewed_again(self):
@@ -206,6 +246,13 @@ class ThemeApiTests(ApiCase):
 
     def test_extension_themes_share_the_typed_token_validation(self):
         folder = write_ext(self.ctx.extensions.root, main="def activate(mio):\n    pass\n")
+        (folder / "theme.css").write_text(
+            "@font-face { font-family: ThemeInk; src: url(assets/fonts/ink.woff2); }",
+            encoding="utf-8",
+        )
+        (folder / "theme.js").write_text("theme.setColor('accent', '#123456');", encoding="utf-8")
+        (folder / "assets" / "fonts").mkdir(parents=True)
+        (folder / "assets" / "fonts" / "ink.woff2").write_bytes(b"wOF2extension-font")
         tokens = {
             "control-surface": "transparent",
             "radius-card": "12px",
@@ -213,7 +260,15 @@ class ThemeApiTests(ApiCase):
             "shadow-sm": "0 2px 8px rgb(0 0 0 / .2)",
         }
         (folder / "theme.json").write_text(
-            json.dumps({**THEME, "tokens": tokens}), encoding="utf-8"
+            json.dumps(
+                {
+                    **THEME,
+                    "tokens": tokens,
+                    "style_file": "theme.css",
+                    "script_file": "theme.js",
+                }
+            ),
+            encoding="utf-8",
         )
         info = next(
             i for i in self.ok(self.client.get("/api/extensions"))["items"] if i["id"] == "demo"
@@ -223,8 +278,25 @@ class ThemeApiTests(ApiCase):
         )
         self.assertEqual(enabled["status"], "active")
         imported = next(t for t in self.ok(self.client.get("/api/themes")) if t["id"] == "forest")
+        self.assertRegex(imported["script_digest"], r"^[a-f0-9]{64}$")
+        self.assertEqual(
+            self.client.get(imported["script_url"]).text,
+            "theme.setColor('accent', '#123456');",
+        )
         for name, value in tokens.items():
             self.assertEqual(imported["tokens"][name], value)
+        self.assertEqual(
+            self.client.get(imported["style_url"]).status_code,
+            200,
+        )
+        package = self.ok(self.client.get("/api/themes/forest/package"))
+        with zipfile.ZipFile(io.BytesIO(package.content)) as archive:
+            root = archive.namelist()[0].split("/")[0]
+            self.assertEqual(archive.read(f"{root}/assets/fonts/ink.woff2"), b"wOF2extension-font")
+            self.assertIn(b"font-face", archive.read(f"{root}/theme.css"))
+            self.assertEqual(
+                archive.read(f"{root}/theme.js"), b"theme.setColor('accent', '#123456');"
+            )
 
         self.ok(self.client.post("/api/extensions/demo/disable"))
         bad = {**THEME, "tokens": {"shadow-sm": "0 0 0 var(--unsafe)"}}

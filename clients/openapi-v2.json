@@ -8658,6 +8658,16 @@
       "title": "Author",
       "type": "string"
      },
+     "background": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/ThemeBackground"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "created_at": {
       "title": "Created At",
       "type": "string"
@@ -8681,6 +8691,30 @@
       "title": "Name",
       "type": "string"
      },
+     "script_file": {
+      "anyOf": [
+       {
+        "const": "theme.js",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Script File"
+     },
+     "style_file": {
+      "anyOf": [
+       {
+        "const": "theme.css",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Style File"
+     },
      "tokens": {
       "additionalProperties": {
        "type": "string"
@@ -8694,10 +8728,46 @@
      "name",
      "mode",
      "tokens",
+     "background",
+     "style_file",
+     "script_file",
      "author",
      "created_at"
     ],
     "title": "Theme",
+    "type": "object"
+   },
+   "ThemeBackground": {
+    "additionalProperties": false,
+    "properties": {
+     "file": {
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "File",
+      "type": "string"
+     },
+     "kind": {
+      "enum": [
+       "image",
+       "video"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "opacity": {
+      "default": 0.35,
+      "maximum": 1.0,
+      "minimum": 0.0,
+      "title": "Opacity",
+      "type": "number"
+     }
+    },
+    "required": [
+     "kind",
+     "file",
+     "opacity"
+    ],
+    "title": "ThemeBackground",
     "type": "object"
    },
    "TokenCreate": {
@@ -18244,7 +18314,7 @@
     ],
     "summary": "Delete Theme",
     "tags": [
-     "extensions"
+     "themes"
     ],
     "x-mio-arguments": [
      "ctx",

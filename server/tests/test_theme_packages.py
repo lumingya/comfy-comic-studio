@@ -8,6 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from mio_server.theme_media import image_may_animate, validate_stylesheet
 from mio_server.theme_packages import (
     MAX_FILE,
     ThemePackageError,
@@ -27,9 +28,9 @@ THEME = {
 }
 
 
-def theme_files(theme=None, *, manifest_id=None, name=None):
+def theme_files(theme=None, *, manifest_id=None, name=None, resources=None):
     document = theme or THEME
-    return {
+    files = {
         "mio-theme.json": json.dumps(
             {
                 "id": manifest_id or document["id"],
@@ -43,6 +44,8 @@ def theme_files(theme=None, *, manifest_id=None, name=None):
         "theme.json": json.dumps(document).encode(),
         "README.md": b"Independent theme data.",
     }
+    files.update(resources or {})
+    return files
 
 
 def archive(files=None, *, prefix=""):
@@ -110,6 +113,210 @@ class ThemePackageTests(ApiCase):
         self.assertEqual(
             (Path(self.tmp) / "themes/my-theme/theme.json").read_bytes(), uploaded["theme.json"]
         )
+
+    def test_video_theme_round_trips_resources_and_serves_script_as_inert_text(self):
+        document = {
+            **THEME,
+            "background": {
+                "kind": "video",
+                "file": "assets/wallpaper.mp4",
+                "opacity": 0.42,
+            },
+            "script_file": "theme.js",
+        }
+        video = b"\x00\x00\x00\x18ftypisom" + b"theme-video-fixture"
+        script = b"theme.setColor('accent', '#123456');"
+        uploaded = theme_files(
+            document,
+            resources={"assets/wallpaper.mp4": video, "theme.js": script},
+        )
+        installed = self.ok(self.client.post("/api/themes/package", content=archive(uploaded)), 201)
+        theme_id = installed["id"]
+        entry = next(
+            item for item in self.ok(self.client.get("/api/themes")) if item["id"] == theme_id
+        )
+        self.assertEqual(
+            entry["background"],
+            {
+                "kind": "video",
+                "url": f"/api/themes/{theme_id}/assets/wallpaper.mp4",
+                "opacity": 0.42,
+            },
+        )
+        self.assertEqual(entry["script_url"], f"/api/themes/{theme_id}/script")
+        self.assertRegex(entry["script_digest"], r"^[a-f0-9]{64}$")
+        media = self.client.get(entry["background"]["url"], headers={"Range": "bytes=4-11"})
+        self.assertEqual(media.status_code, 206)
+        self.assertEqual(media.content, video[4:12])
+        self.assertEqual(media.headers["content-type"], "video/mp4")
+        self.assertEqual(media.headers["cache-control"], "no-cache")
+        self.assertEqual(
+            self.client.get(f"/api/themes/{theme_id}/assets/theme.js").status_code, 404
+        )
+        script_response = self.client.get(entry["script_url"])
+        self.assertEqual(script_response.text, script.decode())
+        self.assertTrue(script_response.headers["content-type"].startswith("text/plain"))
+        self.assertEqual(script_response.headers["x-content-type-options"], "nosniff")
+        self.assertIn("sandbox", script_response.headers["content-security-policy"])
+        self.assertEqual(script_response.headers["content-disposition"], "attachment")
+
+        exported = self.ok(self.client.get(f"/api/themes/{theme_id}/package"))
+        with zipfile.ZipFile(io.BytesIO(exported.content)) as package:
+            root = package.namelist()[0].split("/")[0]
+            self.assertEqual(package.read(f"{root}/assets/wallpaper.mp4"), video)
+            self.assertEqual(package.read(f"{root}/theme.js"), script)
+
+    def test_theme_css_uses_nested_local_assets_and_round_trips(self):
+        document = {
+            **THEME,
+            "id": "theme-css",
+            "style_file": "theme.css",
+            "background": {
+                "kind": "image",
+                "file": "assets/wallpapers/paper.png",
+                "opacity": 0.35,
+            },
+        }
+        stylesheet = (
+            b'body #root { display: grid; background-image: url("assets/wallpapers/paper.png"); }'
+            b'@font-face { font-family: "Theme Ink"; src: url(assets/fonts/ink.woff2); }'
+        )
+        image = b"\x89PNG\r\n\x1a\n" + b"portable-theme-image"
+        font = b"wOF2" + b"portable-theme-font"
+        uploaded = theme_files(
+            document,
+            resources={
+                "theme.css": stylesheet,
+                "assets/wallpapers/paper.png": image,
+                "assets/fonts/ink.woff2": font,
+            },
+        )
+        imported = self.ok(self.client.post("/api/themes/package", content=archive(uploaded)), 201)
+        theme_id = imported["id"]
+        entry = next(
+            item for item in self.ok(self.client.get("/api/themes")) if item["id"] == theme_id
+        )
+        self.assertEqual(entry["style_url"], f"/api/themes/{theme_id}/style")
+        self.assertEqual(
+            entry["background"]["url"], f"/api/themes/{theme_id}/assets/wallpapers/paper.png"
+        )
+        self.assertEqual(self.client.get(entry["style_url"]).content, stylesheet)
+        self.assertEqual(self.client.get(entry["background"]["url"]).content, image)
+        self.assertEqual(
+            self.client.get(f"/api/themes/{theme_id}/assets/fonts/ink.woff2").content, font
+        )
+
+        exported = self.ok(self.client.get(f"/api/themes/{theme_id}/package"))
+        with zipfile.ZipFile(io.BytesIO(exported.content)) as package:
+            root = package.namelist()[0].split("/")[0]
+            self.assertEqual(package.read(f"{root}/theme.css"), stylesheet)
+            self.assertEqual(package.read(f"{root}/assets/wallpapers/paper.png"), image)
+            self.assertEqual(package.read(f"{root}/assets/fonts/ink.woff2"), font)
+
+    def test_theme_css_rejects_external_urls_imports_and_unused_assets(self):
+        document = {**THEME, "id": "theme-css", "style_file": "theme.css"}
+        rejected_styles = (
+            b'@import "https://example.invalid/theme.css";',
+            b'/* @ */ @/**/import "https://example.invalid/theme.css";',
+            b"body { background: url(../wallpaper.png); }",
+            b'body { background: url("https://example.invalid/image.png"); }',
+        )
+        for stylesheet in rejected_styles:
+            with self.subTest(stylesheet=stylesheet):
+                package = archive(theme_files(document, resources={"theme.css": stylesheet}))
+                self.assertEqual(
+                    self.client.post("/api/themes/package", content=package).status_code, 400
+                )
+        package = archive(
+            theme_files(
+                document,
+                resources={
+                    "theme.css": b"body { color: var(--text); }",
+                    "assets/unused.png": b"\x89PNG\r\n\x1a\nfixture",
+                },
+            )
+        )
+        self.assertEqual(self.client.post("/api/themes/package", content=package).status_code, 400)
+
+    def test_stylesheet_accepts_non_ascii_selectors_without_external_resources(self):
+        self.assertEqual(validate_stylesheet(".主题卡 { color: red; }", set()), set())
+
+    def test_animated_image_probe_detects_common_containers(self):
+        apng = b"\x89PNG\r\n\x1a\n" + (0).to_bytes(4, "big") + b"acTL" + b"\0" * 8
+        webp = b"RIFF\x20\0\0\0WEBP" + b"ANIM\0\0\0\0"
+        static_webp = b"RIFF\x20\0\0\0WEBP" + b"VP8 " + b"\0\0\0\0"
+        self.assertTrue(image_may_animate("assets/paper.gif", b"GIF89a"))
+        self.assertTrue(image_may_animate("assets/paper.png", apng))
+        self.assertTrue(image_may_animate("assets/paper.webp", webp))
+        self.assertFalse(image_may_animate("assets/paper.webp", static_webp))
+
+    def test_theme_list_marks_animated_image_backgrounds(self):
+        document = {
+            **THEME,
+            "id": "animated-image",
+            "background": {
+                "kind": "image",
+                "file": "assets/wallpaper.webp",
+                "opacity": 0.25,
+            },
+        }
+        animated = b"RIFF\x20\0\0\0WEBP" + b"ANIM\0\0\0\0"
+        files = theme_files(document, resources={"assets/wallpaper.webp": animated})
+        installed = self.ok(self.client.post("/api/themes/package", content=archive(files)), 201)
+        listed = next(
+            item
+            for item in self.ok(self.client.get("/api/themes"))
+            if item["id"] == installed["id"]
+        )
+        self.assertTrue(listed["background"]["animated"])
+
+    def test_folder_import_preserves_nested_theme_resources(self):
+        document = {**THEME, "id": "nested-theme", "style_file": "theme.css"}
+        css = b"body { background-image: url(assets/images/paper.png); }"
+        image = b"\x89PNG\r\n\x1a\nfolder-theme-image"
+        uploaded = theme_files(
+            document,
+            resources={"theme.css": css, "assets/images/paper.png": image},
+        )
+        files = [
+            ("files", (f"nested-theme/{name}", data, "application/octet-stream"))
+            for name, data in uploaded.items()
+        ]
+        result = self.ok(self.client.post("/api/themes/folder", files=files), 201)
+        self.assertEqual(
+            (Path(self.tmp) / "themes/nested-theme/assets/images/paper.png").read_bytes(), image
+        )
+        entry = next(
+            item for item in self.ok(self.client.get("/api/themes")) if item["id"] == result["id"]
+        )
+        self.assertEqual(self.client.get(entry["style_url"]).content, css)
+
+    def test_media_theme_rejects_missing_assets_unsupported_files_and_mime_mismatch(self):
+        document = {
+            **THEME,
+            "background": {
+                "kind": "video",
+                "file": "assets/wallpaper.mp4",
+                "opacity": 0.5,
+            },
+        }
+        invalid = (
+            theme_files(document),
+            theme_files(document, resources={"assets/wallpaper.mp4": b"not a video"}),
+            theme_files(
+                document,
+                resources={
+                    "assets/wallpaper.mp4": b"\x00\x00\x00\x18ftypisom",
+                    "assets/unused.png": b"unused",
+                },
+            ),
+        )
+        for files in invalid:
+            with self.subTest(files=sorted(files)):
+                self.assertEqual(
+                    self.client.post("/api/themes/package", content=archive(files)).status_code,
+                    400,
+                )
 
     def test_packages_reload_from_runtime_folder_without_extension_activation(self):
         self.ok(self.client.post("/api/themes/package", content=archive()), 201)

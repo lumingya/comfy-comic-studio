@@ -9,9 +9,15 @@ export type LetteringStyle = (typeof LETTERING_OPTS)[number];
 interface UIState {
   /** 'system' or a theme id (see app/theme.ts). */
   theme: ThemeChoice;
+  themeOpacity: Record<string, number>;
+  themeBackgroundPaused: boolean;
+  enabledThemeScripts: string[];
   /** Last explicit theme id per mode, for the quick toggle (see theme.toggled). */
   recentThemes: Partial<Record<'dark' | 'light', string>>;
   setTheme: (theme: ThemeChoice, mode?: 'dark' | 'light') => void;
+  setThemeOpacity: (id: string, opacity: number) => void;
+  setThemeBackgroundPaused: (paused: boolean) => void;
+  setThemeScriptEnabled: (key: string, enabled: boolean) => void;
   showRejected: boolean;
   setShowRejected: (v: boolean) => void;
   candidates: number;
@@ -71,12 +77,29 @@ export const useUI = create<UIState>()(
   persist(
     (set) => ({
       theme: SYSTEM,
+      themeOpacity: {},
+      themeBackgroundPaused: false,
+      enabledThemeScripts: [],
       recentThemes: {},
       setTheme: (theme, mode) =>
         set((s) => ({
           theme,
           recentThemes:
             mode && theme !== SYSTEM ? { ...s.recentThemes, [mode]: theme } : s.recentThemes,
+        })),
+      setThemeOpacity: (id, opacity) =>
+        set((state) => ({
+          themeOpacity: {
+            ...state.themeOpacity,
+            [id]: Math.max(0, Math.min(1, opacity)),
+          },
+        })),
+      setThemeBackgroundPaused: (themeBackgroundPaused) => set({ themeBackgroundPaused }),
+      setThemeScriptEnabled: (key, enabled) =>
+        set((state) => ({
+          enabledThemeScripts: enabled
+            ? [...new Set([...state.enabledThemeScripts, key])]
+            : state.enabledThemeScripts.filter((item) => item !== key),
         })),
       showRejected: false,
       setShowRejected: (showRejected) => set({ showRejected }),
@@ -112,9 +135,12 @@ export const useUI = create<UIState>()(
     }),
     {
       name: 'mio.ui',
-      version: 1,
+      version: 2,
       partialize: (s) => ({
         theme: s.theme,
+        themeOpacity: s.themeOpacity,
+        themeBackgroundPaused: s.themeBackgroundPaused,
+        enabledThemeScripts: s.enabledThemeScripts,
         recentThemes: s.recentThemes,
         candidates: s.candidates,
         navCollapsed: s.navCollapsed,
@@ -135,6 +161,23 @@ export const useUI = create<UIState>()(
         return {
           ...state,
           theme: migrateChoice(state.theme),
+          themeOpacity: Object.fromEntries(
+            Object.entries(state.themeOpacity ?? {}).filter(
+              ([id, value]) =>
+                /^[a-z0-9][a-z0-9_-]{1,47}$/.test(id) &&
+                typeof value === 'number' &&
+                Number.isFinite(value) &&
+                value >= 0 &&
+                value <= 1,
+            ),
+          ),
+          themeBackgroundPaused: !!state.themeBackgroundPaused,
+          enabledThemeScripts: Array.isArray(state.enabledThemeScripts)
+            ? state.enabledThemeScripts.filter(
+                (key): key is string =>
+                  typeof key === 'string' && /^[a-z0-9][a-z0-9_-]{1,47}:[a-f0-9]{64}$/.test(key),
+              )
+            : [],
           recentThemes: state.recentThemes ?? {},
           worksView: state.worksView === 'grid' ? 'grid' : 'showcase',
           starred: Array.isArray(state.starred) ? state.starred : [],

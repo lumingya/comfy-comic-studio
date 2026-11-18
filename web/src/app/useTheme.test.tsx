@@ -23,19 +23,24 @@ function Toggle({ name }: { name: string }) {
 }
 
 describe('theme ownership', () => {
-  const listeners = new Set<() => void>();
+  const listeners = new Map<string, Set<() => void>>();
   let dark = true;
 
   beforeEach(() => {
     dark = true;
     listeners.clear();
     useUI.setState({ theme: 'system', recentThemes: {} });
-    vi.stubGlobal('matchMedia', () => ({
+    vi.stubGlobal('matchMedia', (query: string) => ({
       get matches() {
-        return dark;
+        return query === '(prefers-color-scheme: dark)' && dark;
       },
-      addEventListener: (_: string, listener: () => void) => listeners.add(listener),
-      removeEventListener: (_: string, listener: () => void) => listeners.delete(listener),
+      addEventListener: (_: string, listener: () => void) => {
+        const group = listeners.get(query) ?? new Set<() => void>();
+        group.add(listener);
+        listeners.set(query, group);
+      },
+      removeEventListener: (_: string, listener: () => void) =>
+        listeners.get(query)?.delete(listener),
     }));
   });
 
@@ -48,12 +53,12 @@ describe('theme ownership', () => {
         <Toggle name="palette" />
       </ThemeProvider>,
     );
-    expect(listeners.size).toBe(1);
+    expect(listeners.get('(prefers-color-scheme: dark)')?.size).toBe(1);
     expect(document.documentElement.dataset.theme).toBe('dark');
 
     act(() => {
       dark = false;
-      listeners.forEach((listener) => listener());
+      listeners.get('(prefers-color-scheme: dark)')?.forEach((listener) => listener());
     });
     expect(screen.getByRole('button', { name: 'toolbar: light' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'palette: light' })).toBeInTheDocument();
@@ -63,7 +68,7 @@ describe('theme ownership', () => {
     expect(useUI.getState().theme).toBe('ink');
     expect(screen.getByRole('button', { name: 'toolbar: dark' })).toBeInTheDocument();
     view.unmount();
-    expect(listeners.size).toBe(0);
+    expect([...listeners.values()].flatMap((group) => [...group])).toHaveLength(0);
   });
 
   it('clears custom control overrides when switching to an ordinary theme', () => {
@@ -77,5 +82,20 @@ describe('theme ownership', () => {
     fireEvent.click(screen.getByRole('button', { name: 'toolbar: dark' }));
     expect(document.documentElement.style.getPropertyValue('--radius-control')).toBe('');
     expect(document.documentElement.style.getPropertyValue('--bg')).toBe('#f3f5f0');
+  });
+
+  it('provides a keyboard recovery shortcut for a custom stylesheet that hides the UI', () => {
+    useUI.setState({ theme: 'custom' });
+    render(
+      <ThemeProvider>
+        <Toggle name="toolbar" />
+      </ThemeProvider>,
+    );
+    act(() => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { code: 'Digit0', ctrlKey: true, shiftKey: true }),
+      );
+    });
+    expect(useUI.getState().theme).toBe('system');
   });
 });

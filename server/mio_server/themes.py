@@ -1,10 +1,7 @@
-"""UI themes: named sets of safe CSS design tokens.
+"""UI themes: validated tokens and portable, explicitly enabled visual resources.
 
-A theme is inert data — colours, bounded dimensions and shadows only — so users can import theme
-files and extensions can ship them without turning a theme into arbitrary CSS.  Missing colour
-tokens fall back to the built-in theme of the same mode, so a theme may override just the accent.
-Semantic control tokens are optional overrides; the CSS defaults remain responsible for deriving
-them from the palette when they are absent.
+Missing colour tokens fall back to the built-in theme of the same mode. Theme scripts have a
+separate sandboxed runtime and can only update the allow-listed color tokens.
 """
 
 from __future__ import annotations
@@ -12,9 +9,10 @@ from __future__ import annotations
 import re
 from typing import Literal
 
-from pydantic import Field, ValidationError, field_validator
+from pydantic import Field, ValidationError, field_validator, model_validator
 
 from .models import StrictModel, now_iso
+from .theme_media import supports_background
 
 COLOR_TOKENS = (
     "bg",
@@ -161,11 +159,26 @@ class ThemeError(ValueError):
     pass
 
 
+class ThemeBackground(StrictModel):
+    kind: Literal["image", "video"]
+    file: str = Field(min_length=1, max_length=300)
+    opacity: float = Field(default=0.35, ge=0, le=1)
+
+    @model_validator(mode="after")
+    def check_media_kind(self):
+        if not supports_background(self.file, self.kind):
+            raise ValueError("主题背景类型与文件格式不匹配")
+        return self
+
+
 class Theme(StrictModel):
     id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]{1,47}$")
     name: str = Field(min_length=1, max_length=60)
     mode: Literal["light", "dark"]
     tokens: dict[str, str] = Field(default_factory=dict)
+    background: ThemeBackground | None = None
+    style_file: Literal["theme.css"] | None = None
+    script_file: Literal["theme.js"] | None = None
     author: str = ""
     created_at: str = Field(default_factory=now_iso)
 
@@ -312,4 +325,5 @@ def to_json(theme: Theme, source: str) -> dict:
         "author": theme.author,
         "source": source,
         "tokens": resolved(theme),
+        "background": theme.background.model_dump() if theme.background else None,
     }

@@ -6521,6 +6521,11 @@ export interface components {
             tokens: {
                 [key: string]: string;
             };
+            background: components["schemas"]["ThemeBackground"] | null;
+            /** Style File */
+            style_file: "theme.css" | null;
+            /** Script File */
+            script_file: "theme.js" | null;
             /**
              * Author
              * @default
@@ -6528,6 +6533,21 @@ export interface components {
             author: string;
             /** Created At */
             created_at: string;
+        };
+        /** ThemeBackground */
+        ThemeBackground: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "image" | "video";
+            /** File */
+            file: string;
+            /**
+             * Opacity
+             * @default 0.35
+             */
+            opacity: number;
         };
         /** TokenCreate */
         TokenCreate: {

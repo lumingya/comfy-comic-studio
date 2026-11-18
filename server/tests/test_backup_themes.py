@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from mio_server.backups import Backups
+from mio_server.backups.archive import inspect_archive
 from mio_server.backups.models import BackupOptions, RestoreApply
 from mio_server.context import AppContext
 from mio_server.theme_packages import package_theme
@@ -67,5 +68,49 @@ class BackupThemesTests(unittest.TestCase):
                 )
                 with self.assertRaises(ValueError):
                     Backups(ctx).export(BackupOptions())
+            finally:
+                ctx.close()
+
+    def test_theme_media_files_are_included_and_restored_without_loading_them_into_memory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            workspace = Path(directory).resolve() / "workspace"
+            ctx = AppContext.create(workspace, autostart=False, seed_instance=False)
+            try:
+                theme = parse_theme(
+                    {
+                        "id": "moving-wallpaper",
+                        "name": "Moving wallpaper",
+                        "mode": "dark",
+                        "background": {
+                            "kind": "video",
+                            "file": "assets/backgrounds/wallpaper.mp4",
+                            "opacity": 0.25,
+                        },
+                    }
+                )
+                video = b"\x00\x00\x00\x18ftypisom" + b"backup-video-fixture"
+                identifier, package = package_theme(
+                    theme, {"assets/backgrounds/wallpaper.mp4": video}
+                )
+                ctx.theme_packages.install_package(package)
+                service = Backups(ctx)
+                backup = service.export(BackupOptions())
+                paths = {entry.path for entry in backup.inspection.manifest.entries}
+                self.assertIn(f"themes/{identifier}/assets/backgrounds/wallpaper.mp4", paths)
+                with tempfile.TemporaryDirectory() as staging:
+                    destination = Path(staging)
+                    inspection = inspect_archive(
+                        service.download(backup.id),
+                        destination,
+                        trusted_workspace=workspace,
+                    )
+                    restored = destination / f"themes/{identifier}/assets/backgrounds/wallpaper.mp4"
+                    self.assertTrue(
+                        any(
+                            entry.path == restored.relative_to(destination).as_posix()
+                            for entry in inspection.manifest.entries
+                        )
+                    )
+                    self.assertEqual(restored.read_bytes(), video)
             finally:
                 ctx.close()
