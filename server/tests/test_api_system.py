@@ -16,7 +16,7 @@ from mio_server.importer import seed_albums
 from mio_server.models import CloudRequestSnapshot
 
 from .api_harness import WS, ApiCase, FakeLLM
-from .legacy_fixture import LEGACY_KINDS, copy_shipped_legacy
+from .shipped_data_fixture import SEED_KINDS, copy_shipped_data
 from .test_compile_executor import png
 
 GRAPH = {
@@ -217,7 +217,7 @@ class BundleLegacyAssistantTests(ApiCase):
 
     def test_legacy_import_via_api(self):
         root = Path(self.tmp) / "legacy"
-        copy_shipped_legacy(root)
+        copy_shipped_data(root)
         scan = self.ok(self.client.get("/api/legacy/scan", params={"root": str(root)}))
         self.assertGreaterEqual(scan["storyboards"], 1)
         report = self.ok(self.client.post("/api/legacy/import", json={"root": str(root)}))
@@ -229,7 +229,7 @@ class BundleLegacyAssistantTests(ApiCase):
 
     def test_first_start_brings_over_the_legacy_shelf(self):
         root = Path(self.tmp) / "legacy"
-        copy_shipped_legacy(root, kinds=(*LEGACY_KINDS, "albums", "settings"))
+        copy_shipped_data(root, kinds=(*SEED_KINDS, "albums", "settings"))
         self.ok(self.client.patch("/api/settings", json={"collection_title": "遇见你，真好"}))
         report = seed_albums(self.ctx, root)
         self.assertEqual(len(report.albums), 2)

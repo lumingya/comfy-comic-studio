@@ -6,6 +6,8 @@
 
 > 项目处于早期阶段，方向与待办见[路线图](docs/ROADMAP.md)。开发者和 AI 代理请先读 [AGENTS.md](AGENTS.md)。
 
+Mio 3.2 的旧版源码保留在 Git 标签 `legacy-v3.2`；`main` 只维护当前新版。
+
 ## 目录
 
 | 路径 | 内容 |

@@ -55,27 +55,18 @@ FIXED_TIME = (2020, 1, 1, 0, 0, 0)
 
 
 def shipped_manifest(data: Path) -> dict:
-    """Reuse the release-only verifier without claiming the generic ``tools`` namespace.
-
-    The legacy helpers are build dependencies only; the packaged server imports its own seeds.
-    """
-    legacy = Path(__file__).resolve().parents[1] / "legacy"
+    """Load the release-only data verifier without importing it as a runtime module."""
+    root = Path(__file__).resolve().parents[1]
     spec = importlib.util.spec_from_file_location(
-        "_mio_distribution_check", legacy / "tools/check_distribution.py"
+        "_mio_distribution_check", root / "tools/check_distribution.py"
     )
     module = importlib.util.module_from_spec(spec)
-    original_path = sys.path[:]
-    try:
-        sys.path.insert(0, str(legacy))
-        spec.loader.exec_module(module)
-        return module.require_verified_distribution(data)
-    finally:
-        sys.path[:] = original_path
+    spec.loader.exec_module(module)
+    return module.require_verified_distribution(data)
 
 
 def files() -> list[Path]:
-    # Runtime data must never be discovered recursively. The same explicit, verified seed list
-    # is used by the legacy packager; edited local defaults fail closed instead of being shipped.
+    # Runtime data must never be discovered recursively; edited seed files fail closed.
     data = ROOT / "data"
     manifest = shipped_manifest(data)
     out = [data / "distribution.json", *(data / name for name in manifest["files"])]

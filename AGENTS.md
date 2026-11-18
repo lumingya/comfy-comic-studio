@@ -19,8 +19,7 @@
 | `data/` | 随包示例数据（清单见 `data/distribution.json`）：首次启动时把示例画册、分镜与预设载入工作区。本机运行时状态大多被 `.gitignore` 忽略 |
 | `docs/` | 路线图 `ROADMAP.md` |
 | `next/` | 技术验证（Spike），只用标准库；说明见 [next/README.md](next/README.md) |
-| `tools/` | `build_release.py`（发布 zip + 签名清单 `mio-release.json`）、`release_keygen.py`（生成发布签名密钥；私钥只放仓库 Secret `MIO_RELEASE_KEY`，公钥写入 `server/mio_server/update/keys.py`） |
-| `legacy/` | 早期原型，不再维护，不要在这里加功能。CI 仍运行它的测试，随包数据工具也在 `legacy/tools/` 下 |
+| `tools/` | 发布打包与签名密钥工具；`check_distribution.py` 校验随包示例数据，`build_distribution.py` 更新清单，`protect_local_data.py` 保护本机示例数据修改 |
 
 ## 验证命令（提交前必跑，都很轻）
 
@@ -29,7 +28,7 @@ python -m unittest discover -s server/tests -t server -q   # 后端单测，约 
 ruff check server clients tools && ruff format --check server clients tools   # lint（行宽 100）
 python clients/python/generate.py --check                  # 生成的 API v2 客户端与接口一致
 python -m unittest discover -s next/tests -t next -q       # Spike（next/）单测，约 5 秒
-python legacy/tools/check_distribution.py                  # 随包数据与清单一致（以 CI 的干净检出为准）
+python tools/check_distribution.py                         # 随包示例数据与清单一致
 ```
 
 前端在 `web/` 下（先 `npm ci --prefix web`）：
@@ -42,7 +41,7 @@ npm --prefix web run build          # 产物在 web/dist（不提交）
 npm --prefix web run gen:api        # 接口变更后重新生成 API 类型（需要能 import fastapi 的 python）
 ```
 
-- CI（`.github/workflows/ci.yml`）每次推送都跑上面这些门禁，外加 `legacy/` 的构建、测试和打包冒烟，**必须保持绿色**。
+- CI（`.github/workflows/ci.yml`）每次推送都跑上面这些门禁、扩展构建和新版发行包冒烟，**必须保持绿色**。
 - **沙盒里禁止安装浏览器或跑 E2E**。
 - 开发时：`python -m mio_server`（默认 8788）+ `npm --prefix web run dev`（Vite 把 `/api` 与 WebSocket 代理到 8788）。
 
@@ -57,15 +56,15 @@ npm --prefix web run gen:api        # 接口变更后重新生成 API 类型（�
 
 ## 数据与隐私（重要）
 
-- **随包文件会被运行时改写**：本机运行会把状态写回 `data/` 下的随包文件。本机开发前先运行一次 `python legacy/tools/protect_local_data.py`（标记为 skip-worktree），避免个人状态被提交。
+- **随包文件会被运行时改写**：本机运行会把状态写回 `data/` 下的随包文件。本机开发前先运行一次 `python tools/protect_local_data.py`（标记为 skip-worktree），避免个人状态被提交。
 - **有意修改随包默认值时**：
-  1. `python legacy/tools/protect_local_data.py --undo`
+  1. `python tools/protect_local_data.py --undo`
   2. 修改文件
-  3. `python legacy/tools/build_distribution.py`
+  3. 审查目标文件后运行 `python tools/build_distribution.py --approve-changes`
   4. 提交
   5. 重新保护
 - **运行数据**默认在 `server/data/runtime/v3`，可用 `--data` 或环境变量 `MIO_V3_DATA` 放到仓库外。
-- **测试夹具**只能复制随包数据（`server/tests/legacy_fixture.py` 的 `copy_shipped_legacy`），不要整目录复制 `data/`。
+- **测试夹具**只能复制随包数据（`server/tests/shipped_data_fixture.py` 的 `copy_shipped_data`），不要整目录复制 `data/`。
 - **绝不提交**密钥、令牌、Cookie、会话抓包，也不要在对话或日志里回显它们。
 
 ## 运行环境备忘

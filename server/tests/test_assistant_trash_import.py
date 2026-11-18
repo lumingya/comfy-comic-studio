@@ -17,7 +17,7 @@ from mio_server.pipeline.render import panel_values
 from mio_server.storage import Conflict, NotFound, SQLiteStore
 from mio_server.trash import Trash
 
-from .legacy_fixture import copy_shipped_legacy
+from .shipped_data_fixture import copy_shipped_data
 from .story_fixture import make_story
 
 
@@ -138,7 +138,7 @@ class ImporterTests(unittest.TestCase):
         tmp = tempfile.TemporaryDirectory()
         self.addCleanup(tmp.cleanup)
         self.root = Path(tmp.name) / "data"
-        copy_shipped_legacy(self.root)
+        copy_shipped_data(self.root)
         self.store = SQLiteStore(":memory:")
         self.addCleanup(self.store.close)
 

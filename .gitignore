@@ -51,7 +51,6 @@ data/packages/
 data/scripts/
 data/styles/
 /images/
-/legacy/images/
 generated_images/
 releases/
 *.log
@@ -130,92 +129,11 @@ ehthumbs.db
 # Preserved local user data; never ship with source releases.
 /local-data/
 
+# Local remnants of the former v3 checkout are not part of main.
+/legacy/
+
 # Clean live-preview data, separate from preserved user data.
 /preview-data/
-
-# HTML documentation is rendered on demand or into release ZIPs.
-/legacy/docs/ARCHITECTURE_ACCEPTANCE.html
-/legacy/docs/ASSEMBLY_ACCEPTANCE.html
-/legacy/docs/ASSEMBLY_REFACTOR_PLAN.html
-/legacy/docs/CHANGELOG.html
-/legacy/docs/COMPUTED_VARIABLES.html
-/legacy/docs/CURRENT_STATUS.html
-/legacy/docs/DATA_LAYOUT.html
-/legacy/docs/DEVELOPMENT.html
-/legacy/docs/ECOSYSTEM_ACCEPTANCE.html
-/legacy/docs/ECOSYSTEM_GUIDE.html
-/legacy/docs/FILE_LIBRARY_V2_DEVELOPMENT.html
-/legacy/docs/IMAGE_PROVIDERS.html
-/legacy/docs/QUEUE_AND_COLLECTION_UPDATE.html
-/legacy/docs/README.en.html
-/legacy/docs/README.html
-/legacy/docs/RELEASE_1_0_1.html
-/legacy/docs/RELEASE_1_1_0.html
-/legacy/docs/RELEASE_1_1_1.html
-/legacy/docs/RELEASE_1_2_0.html
-/legacy/docs/RELEASE_1_2_1.html
-/legacy/docs/RELEASE_1_2_2.html
-/legacy/docs/RELEASE_2_0_0.html
-/legacy/docs/RELEASE_2_1_0.html
-/legacy/docs/RELEASE_2_2_0.html
-/legacy/docs/RELEASE_2_2_1.html
-/legacy/docs/RELEASE_2_2_2.html
-/legacy/docs/RELEASE_2_2_3.html
-/legacy/docs/RELEASE_2_3_0.html
-/legacy/docs/RELEASE_3_0_0.html
-/legacy/docs/RELEASE_CURRENT.html
-/legacy/docs/REVIEW_ACCEPTANCE.html
-/legacy/docs/SECURITY.html
-/legacy/docs/SETTINGS_WORKBENCH_V2.html
-/legacy/docs/UI_REDESIGN.html
-/legacy/docs/WORKFLOW_UPDATE.html
-/legacy/docs/acceptance-1.1.1/README.html
-/legacy/docs/acceptance-1.1/README.html
-/legacy/docs/acceptance-1.2.1/README.html
-/legacy/docs/acceptance-1.2/README.html
-/legacy/docs/acceptance-2.0/README.html
-/legacy/docs/acceptance-2.1/README.html
-/legacy/docs/acceptance-2.2.1/README.html
-/legacy/docs/acceptance-2.2.2/README.html
-/legacy/docs/acceptance-2.2.3/README.html
-/legacy/docs/acceptance-2.2/README.html
-/legacy/docs/acceptance-2.3.0/README.html
-/legacy/docs/acceptance/README.html
-/legacy/docs/api/README.html
-/legacy/docs/en/API.html
-/legacy/docs/en/CONTENT_AND_SHARING.html
-/legacy/docs/en/FILE_LIBRARY.html
-/legacy/docs/en/FILE_LIBRARY_CONVERSION.html
-/legacy/docs/en/FOUNDATION.html
-/legacy/docs/en/GUIDE.html
-/legacy/docs/en/MOBILE.html
-/legacy/docs/guide/BACKUP.html
-/legacy/docs/guide/CHANNELS_AND_KEYS.html
-/legacy/docs/guide/CONFIGURATION.html
-/legacy/docs/guide/CONTENT_AND_SHARING.html
-/legacy/docs/guide/FILE_LIBRARY.html
-/legacy/docs/guide/FILE_LIBRARY_CONVERSION.html
-/legacy/docs/guide/FOUNDATION.html
-/legacy/docs/guide/IMAGE_STUDIO.html
-/legacy/docs/guide/IMAGE_VARIABLES.html
-/legacy/docs/guide/MIGRATION.html
-/legacy/docs/guide/MOBILE.html
-/legacy/docs/guide/PRESENTATION.html
-/legacy/docs/guide/QUICKSTART.html
-/legacy/docs/guide/TROUBLESHOOTING.html
-/legacy/docs/guide/WORKFLOW.html
-/legacy/README.html
-
-/legacy/docs/AUDIT_FIX_2026-09-18.html
-
-# Current browser evidence is generated, not source.
-/legacy/docs/acceptance-architecture/
-/legacy/docs/acceptance-assembly/
-
-/legacy/docs/AUDIT_ROUND2_2026-09-18.html
-
-/legacy/docs/acceptance-first-use/
-/legacy/docs/FIRST_USE_2026-09-18.html
 
 # In-place updater: downloads, staging and program-file backups
 .mio-updates/
@@ -224,9 +142,6 @@ ehthumbs.db
 /server/data/
 # Extension runtime data when the workspace data directory is the checkout root.
 /extensions_data/
-# Optional link to ../data for running legacy browser E2E locally (see AGENTS.md)
-/legacy/data
-
 # Release build output (tools/build_release.py)
 /releases/
 /.venv/
