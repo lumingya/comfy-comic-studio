@@ -1,19 +1,31 @@
 """Independent theme package import/export, shared by local and open APIs."""
 
-from email import policy
-from email.parser import BytesParser
+import shutil
+import tempfile
 from pathlib import Path
 
 from fastapi import Request
 from fastapi.responses import FileResponse, Response
+from starlette.background import BackgroundTask
+from starlette.concurrency import run_in_threadpool
+from starlette.datastructures import UploadFile
 
 from ..storage import NotFound
 from ..theme_media import MAX_STYLESHEET_BYTES, asset_parts, validate_stylesheet
-from ..theme_packages import MAX_PACKAGE, SCRIPT, STYLE, _read_folder, _regular_path, package_theme
+from ..theme_packages import (
+    MAX_FILES,
+    MAX_PACKAGE,
+    SCRIPT,
+    STYLE,
+    _folder_files,
+    _read_folder,
+    _regular_path,
+    package_theme_to_file,
+)
 from ..themes import Theme
 from .deps import Ctx
-from .library import read_body
 from .operations import Router as APIRouter
+from .uploads import multipart_uploads
 
 router = APIRouter(tags=["themes"])
 
@@ -44,7 +56,7 @@ def export_theme_package(ctx: Ctx, theme_id: str) -> Response:
     if contribution is None:
         raise NotFound(f"主题不存在：{theme_id}")
     theme = contribution.value
-    resources = {}
+    resources: dict[str, Path] = {}
     if (theme.background or theme.script_file or theme.style_file) and contribution.source in {
         "builtin",
         "theme-package",
@@ -55,10 +67,11 @@ def export_theme_package(ctx: Ctx, theme_id: str) -> Response:
             else ctx.theme_packages.root
         )
         try:
-            _, _, stored = _read_folder(root / theme_id)
+            folder = root / theme_id
+            _read_folder(folder)
             resources = {
-                name: data
-                for name, data in stored.items()
+                name: path
+                for name, path in _folder_files(folder)
                 if name not in {"mio-theme.json", "theme.json", "README.md"}
             }
         except (OSError, ValueError) as exc:
@@ -74,6 +87,8 @@ def export_theme_package(ctx: Ctx, theme_id: str) -> Response:
 
             style_path = inside(loaded.api.folder, theme.style_file)
             _regular_path(style_path, directory=False)
+            if style_path.stat().st_size > MAX_STYLESHEET_BYTES:
+                raise NotFound("主题样式文件过大")
             stylesheet = style_path.read_text(encoding="utf-8")
             asset_root = loaded.api.folder / "assets"
             available = {
@@ -82,7 +97,7 @@ def export_theme_package(ctx: Ctx, theme_id: str) -> Response:
                 if path.is_file() and asset_parts(path.relative_to(loaded.api.folder).as_posix())
             }
             asset_names = validate_stylesheet(stylesheet, available)
-            resources[theme.style_file] = style_path.read_bytes()
+            resources[theme.style_file] = style_path
         if theme.background:
             asset_names.add(theme.background.file)
         for name in (*asset_names, theme.script_file):
@@ -91,12 +106,19 @@ def export_theme_package(ctx: Ctx, theme_id: str) -> Response:
 
                 path = inside(loaded.api.folder, name)
                 _regular_path(path, directory=False)
-                resources[name] = path.read_bytes()
-    package_id, payload = package_theme(theme, resources)
-    return Response(
-        payload,
+                resources[name] = path
+    temporary = tempfile.mkdtemp(prefix="mio-theme-export-")
+    package_path = Path(temporary) / "theme.zip"
+    try:
+        package_id = package_theme_to_file(theme, resources, package_path)
+    except BaseException:
+        shutil.rmtree(temporary, ignore_errors=True)
+        raise
+    return FileResponse(
+        package_path,
         media_type="application/zip",
         headers={"Content-Disposition": f'attachment; filename="{package_id}.zip"'},
+        background=BackgroundTask(shutil.rmtree, temporary, ignore_errors=True),
     )
 
 
@@ -112,8 +134,19 @@ def export_theme_package(ctx: Ctx, theme_id: str) -> Response:
 )
 async def import_theme_package(ctx: Ctx, request: Request) -> dict:
     """Install a data-only theme ZIP into the workspace theme folder."""
-    data = await read_body(request, MAX_PACKAGE, "主题包超过 128 MB")
-    return ctx.theme_packages.install_package(data)
+    length = request.headers.get("content-length", "")
+    if length.isdigit() and int(length) > MAX_PACKAGE:
+        raise ValueError("主题包超过 10 GiB")
+    with tempfile.TemporaryDirectory(prefix="mio-theme-upload-") as temporary:
+        archive = Path(temporary) / "theme.zip"
+        size = 0
+        with archive.open("xb") as output:
+            async for chunk in request.stream():
+                size += len(chunk)
+                if size > MAX_PACKAGE:
+                    raise ValueError("主题包超过 10 GiB")
+                output.write(chunk)
+        return await run_in_threadpool(ctx.theme_packages.install_package_path, archive)
 
 
 @router.post(
@@ -146,22 +179,22 @@ async def import_theme_folder(ctx: Ctx, request: Request) -> dict:
         char in content_type for char in "\r\n"
     ):
         raise ValueError("请上传主题文件夹")
-    raw = await read_body(request, MAX_PACKAGE + 256 * 1024, "主题文件夹超过 128 MB")
-    envelope = BytesParser(policy=policy.default).parsebytes(
-        ("Content-Type: " + content_type + "\r\nMIME-Version: 1.0\r\n\r\n").encode("ascii") + raw
+    uploads = await multipart_uploads(
+        request,
+        max_files=MAX_FILES,
+        max_file_bytes=MAX_PACKAGE,
+        max_body_bytes=MAX_PACKAGE + 2 * 1024 * 1024,
     )
-    files = []
-    total = 0
-    for item in envelope.iter_parts():
-        if item.get_param("name", header="content-disposition") != "files":
-            continue
-        name = item.get_filename() or ""
-        data = item.get_payload(decode=True) or b""
-        total += len(data)
-        if total > MAX_PACKAGE:
-            raise ValueError("主题文件夹超过 128 MB")
-        files.append((name, data))
-    return ctx.theme_packages.install_folder(files)
+    try:
+        streams = []
+        for field, upload in uploads:
+            if field != "files" or not isinstance(upload, UploadFile):
+                raise ValueError("请以 files 字段上传主题文件")
+            streams.append((upload.filename or "", upload.file))
+        return await run_in_threadpool(ctx.theme_packages.install_folder_streams, streams)
+    finally:
+        for _, upload in uploads:
+            await upload.close()
 
 
 def _theme_file(ctx, theme_id: str, name: str) -> Path:

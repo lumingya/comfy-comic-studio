@@ -210,6 +210,21 @@ class ExtensionApiTests(ApiCase):
                 self.assertFalse((self.root() / "escape.txt").exists())
                 self.assertFalse((self.root() / ".staging-evil").exists())
 
+        for alias in ("demo-1.0/./mio-extension.json", "demo-1.0//mio-extension.json"):
+            with self.subTest(path=alias):
+                evil = io.BytesIO()
+                with zipfile.ZipFile(evil, "w") as zf:
+                    zf.writestr(
+                        "demo-1.0/mio-extension.json",
+                        json.dumps({"id": "alias-demo", "name": "valid"}),
+                    )
+                    zf.writestr(alias, json.dumps({"id": "overwritten", "name": "evil"}))
+                self.assertEqual(
+                    self.client.post("/api/extensions", content=evil.getvalue()).status_code, 400
+                )
+                self.assertFalse((self.root() / "alias-demo").exists())
+                self.assertFalse((self.root() / ".staging-alias-demo").exists())
+
         self.ok(self.client.delete("/api/extensions/demo"), 204)
         self.assertEqual(
             [i for i in self.ok(self.client.get("/api/extensions"))["items"] if not i["builtin"]],

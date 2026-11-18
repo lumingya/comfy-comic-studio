@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from mio_server.backups import Backups
 from mio_server.backups.archive import inspect_archive
@@ -94,7 +95,23 @@ class BackupThemesTests(unittest.TestCase):
                 )
                 ctx.theme_packages.install_package(package)
                 service = Backups(ctx)
-                backup = service.export(BackupOptions())
+                media_path = (
+                    ctx.data_dir
+                    / "themes"
+                    / identifier
+                    / "assets"
+                    / "backgrounds"
+                    / "wallpaper.mp4"
+                )
+                original_read_bytes = Path.read_bytes
+
+                def reject_whole_media_read(path):
+                    if path == media_path:
+                        raise AssertionError("theme media must be copied without read_bytes")
+                    return original_read_bytes(path)
+
+                with patch.object(Path, "read_bytes", reject_whole_media_read):
+                    backup = service.export(BackupOptions())
                 paths = {entry.path for entry in backup.inspection.manifest.entries}
                 self.assertIn(f"themes/{identifier}/assets/backgrounds/wallpaper.mp4", paths)
                 with tempfile.TemporaryDirectory() as staging:

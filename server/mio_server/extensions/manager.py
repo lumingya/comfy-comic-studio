@@ -542,11 +542,20 @@ class ExtensionManager:
                 for entry in zf.infolist():
                     if entry.is_dir():
                         continue
+                    name = entry.filename
+                    parts = name.split("/")
+                    if (
+                        "\\" in name
+                        or "\x00" in name
+                        or name.startswith("/")
+                        or any(part in {"", ".", ".."} for part in parts)
+                    ):
+                        raise ExtensionError(f"不安全的路径：{name}")
                     entries.append(entry)
                     if len(entries) > MAX_ENTRIES:
                         raise ExtensionError("扩展包文件过多")
                 names = [entry.filename for entry in entries]
-                if len(set(names)) != len(names):
+                if len({name.casefold() for name in names}) != len(names):
                     raise ExtensionError("扩展包包含重复路径")
                 prefix = _common_prefix(names)
                 manifest_name = prefix + MANIFEST
@@ -583,13 +592,15 @@ class ExtensionManager:
                         raise ExtensionError(f"不安全的路径：{n}")
                     dest = staging / rel
                     dest.parent.mkdir(parents=True, exist_ok=True)
-                    with zf.open(entry) as source, dest.open("wb") as output:
+                    with zf.open(entry) as source, dest.open("xb") as output:
                         while chunk := source.read(1024 * 1024):
                             extracted += len(chunk)
                             if extracted > MAX_UNPACKED:
                                 raise ExtensionError("扩展包解压后过大")
                             output.write(chunk)
-                read_manifest(staging)
+                extracted_manifest = read_manifest(staging)
+                if extracted_manifest != manifest:
+                    raise ExtensionError("解压后的扩展清单与预检清单不一致")
                 if manifest.id in self.loaded:
                     self.unload(manifest.id)
                 if target.exists():

@@ -157,6 +157,13 @@ def digest(folder: Path) -> str:
     h = hashlib.sha256()
     for path in files(folder):
         rel = path.relative_to(folder).as_posix().encode("utf-8")
-        data = path.read_bytes()
-        h.update(len(rel).to_bytes(4, "big") + rel + len(data).to_bytes(8, "big") + data)
+        size = path.stat().st_size
+        h.update(len(rel).to_bytes(4, "big") + rel + size.to_bytes(8, "big"))
+        total = 0
+        with path.open("rb") as source:
+            while chunk := source.read(1024 * 1024):
+                h.update(chunk)
+                total += len(chunk)
+        if total != size:
+            raise OSError(f"extension file changed while hashing: {path.name}")
     return h.hexdigest()

@@ -3,6 +3,7 @@
 import io
 import json
 import stat
+import tempfile
 import zipfile
 from pathlib import Path
 from types import SimpleNamespace
@@ -10,10 +11,11 @@ from unittest.mock import patch
 
 from mio_server.theme_media import image_may_animate, validate_stylesheet
 from mio_server.theme_packages import (
-    MAX_FILE,
     ThemePackageError,
     ThemePackageManager,
+    _read_folder,
     package_theme,
+    package_theme_to_file,
 )
 from mio_server.themes import Theme, parse_theme
 
@@ -57,6 +59,37 @@ def archive(files=None, *, prefix=""):
 
 
 class ThemePackageTests(ApiCase):
+    def test_oversized_theme_script_is_rejected_before_reading_its_contents(self):
+        document = {**THEME, "script_file": "theme.js"}
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary) / document["id"]
+            folder.mkdir()
+            for name, data in theme_files(document, resources={"theme.js": b"x" * 33}).items():
+                (folder / name).write_bytes(data)
+
+            original_read_bytes = Path.read_bytes
+
+            def guarded_read_bytes(path):
+                if path.name == "theme.js":
+                    raise AssertionError("oversized theme script must not be read")
+                return original_read_bytes(path)
+
+            with (
+                patch("mio_server.theme_packages.MAX_SCRIPT", 32),
+                patch.object(Path, "read_bytes", guarded_read_bytes),
+                self.assertRaisesRegex(ThemePackageError, "主题脚本超过"),
+            ):
+                _read_folder(folder)
+
+            package = Path(temporary) / "oversized-script.zip"
+            package.write_bytes(archive(theme_files(document, resources={"theme.js": b"x" * 33})))
+            with (
+                patch("mio_server.theme_packages.MAX_SCRIPT", 32),
+                self.assertRaisesRegex(ThemePackageError, "主题脚本超过"),
+            ):
+                self.ctx.theme_packages.install_package_path(package)
+            self.assertFalse((Path(self.tmp) / "themes" / document["id"]).exists())
+
     def test_bundled_theme_loads_from_top_level_themes_not_extensions(self):
         result = self.ok(self.client.get("/api/themes"))
         themes = {item["id"]: item for item in result}
@@ -165,6 +198,50 @@ class ThemePackageTests(ApiCase):
             root = package.namelist()[0].split("/")[0]
             self.assertEqual(package.read(f"{root}/assets/wallpaper.mp4"), video)
             self.assertEqual(package.read(f"{root}/theme.js"), script)
+
+    def test_large_theme_media_package_and_install_stream_from_disk(self):
+        document = {
+            **THEME,
+            "background": {
+                "kind": "video",
+                "file": "assets/wallpaper.mp4",
+                "opacity": 0.42,
+            },
+        }
+        theme = parse_theme(document)
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            media = folder / "wallpaper.mp4"
+            media.write_bytes(b"\x00\x00\x00\x18ftypisom" + b"x" * (2 * 1024 * 1024))
+            package = folder / "theme.zip"
+            original_read_bytes = Path.read_bytes
+
+            def reject_whole_media_read(path):
+                if path == media:
+                    raise AssertionError("theme media must be streamed from disk")
+                return original_read_bytes(path)
+
+            with patch.object(Path, "read_bytes", reject_whole_media_read):
+                package_id = package_theme_to_file(theme, {"assets/wallpaper.mp4": media}, package)
+            archive_bytes = original_read_bytes(package)
+            with patch.object(Path, "read_bytes", reject_whole_media_read):
+                installed = self.ok(
+                    self.client.post("/api/themes/package", content=archive_bytes), 201
+                )
+                self.assertEqual(installed["id"], package_id)
+                self.assertEqual(
+                    (Path(self.tmp) / "themes" / package_id / "assets/wallpaper.mp4")
+                    .stat()
+                    .st_size,
+                    media.stat().st_size,
+                )
+                exported = self.ok(self.client.get(f"/api/themes/{package_id}/package"))
+                with zipfile.ZipFile(io.BytesIO(exported.content)) as archive:
+                    self.assertEqual(
+                        archive.getinfo(f"{package_id}/assets/wallpaper.mp4").file_size,
+                        media.stat().st_size,
+                    )
+                self.ctx.theme_packages.remove(package_id)
 
     def test_theme_css_uses_nested_local_assets_and_round_trips(self):
         document = {
@@ -375,10 +452,14 @@ class ThemePackageTests(ApiCase):
             archive({**safe, "entry.py": b"print('no')"}),
             archive({**safe, "mio-theme.json": b"{}"}),
             archive(theme_files({**THEME, "id": "con"})),
-            archive({**safe, "README.md": b"x" * (MAX_FILE + 1)}),
         ):
             self.assertEqual(
                 self.client.post("/api/themes/package", content=payload).status_code, 400
+            )
+        with patch("mio_server.theme_packages.MAX_FILE", 64):
+            oversized = archive({**safe, "README.md": b"x" * 65})
+            self.assertEqual(
+                self.client.post("/api/themes/package", content=oversized).status_code, 400
             )
         duplicated = io.BytesIO()
         with zipfile.ZipFile(duplicated, "w") as output:

@@ -7,9 +7,9 @@ checksum; the existing extension manager still requires a separate review/enable
 from __future__ import annotations
 
 import hashlib
-import io
 import json
 import re
+import tempfile
 import threading
 import time
 import zipfile
@@ -88,7 +88,9 @@ class Catalog(BaseModel):
         return value
 
 
-def _download(url: str, limit: int) -> bytes:
+def _download_to(url: str, limit: int, destination: Path) -> str:
+    digest = hashlib.sha256()
+    size = 0
     with httpx.Client(timeout=60, follow_redirects=True) as client:
         with client.stream("GET", url) as response:
             web_url(str(response.url))
@@ -96,18 +98,28 @@ def _download(url: str, limit: int) -> bytes:
             length = response.headers.get("content-length", "")
             if length.isdigit() and int(length) > limit:
                 raise ValueError("下载内容超过大小限制")
-            content = bytearray()
-            for chunk in response.iter_bytes():
-                content.extend(chunk)
-                if len(content) > limit:
-                    raise ValueError("下载内容超过大小限制")
-            return bytes(content)
+            with destination.open("xb") as output:
+                for chunk in response.iter_bytes(chunk_size=1024 * 1024):
+                    size += len(chunk)
+                    if size > limit:
+                        raise ValueError("下载内容超过大小限制")
+                    output.write(chunk)
+                    digest.update(chunk)
+    return digest.hexdigest()
 
 
-def _package_manifest(data: bytes) -> Manifest:
+def _download(url: str, limit: int) -> bytes:
+    """Download small catalogs in memory; extension packages use _download_to."""
+    with tempfile.TemporaryDirectory(prefix="mio-market-catalog-") as temporary:
+        path = Path(temporary) / "catalog.json"
+        _download_to(url, limit, path)
+        return path.read_bytes()
+
+
+def _package_manifest(path: Path) -> Manifest:
     """Read exactly the manifest the ZIP importer will use, without writing anything."""
     try:
-        with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        with zipfile.ZipFile(path) as archive:
             names = [name for name in archive.namelist() if not name.endswith("/")]
             roots = {PurePosixPath(name).parts[0] for name in names if name}
             prefix = ""
@@ -251,18 +263,20 @@ class Marketplace:
                 raise ValueError("随包扩展已安装，请查看并启用")
             if item["sha256"] != sha256.lower():
                 raise Conflict("所选扩展包已更改，请刷新后重试")
-            try:
-                payload = _download(item["package_url"], MAX_ZIP)
-            except (httpx.HTTPError, OSError) as exc:
-                raise ValueError("无法下载扩展包，请稍后重试") from exc
-            if hashlib.sha256(payload).hexdigest() != item["sha256"]:
-                raise ValueError("扩展包 SHA256 校验失败，未安装")
-            manifest = _package_manifest(payload)
-            if (manifest.id, manifest.version) != (ext_id, item["version"]):
-                raise ValueError("扩展包的 ID 或版本与目录不一致，未安装")
-            try:
-                self.ctx.extensions.info(ext_id)
-                replace = True
-            except ExtensionError:
-                replace = False
-            return self.ctx.extensions.install(payload, replace=replace).to_json()
+            with tempfile.TemporaryDirectory(prefix="mio-market-package-") as temporary:
+                package = Path(temporary) / "extension.zip"
+                try:
+                    package_digest = _download_to(item["package_url"], MAX_ZIP, package)
+                except (httpx.HTTPError, OSError) as exc:
+                    raise ValueError("无法下载扩展包，请稍后重试") from exc
+                if package_digest != item["sha256"]:
+                    raise ValueError("扩展包 SHA256 校验失败，未安装")
+                manifest = _package_manifest(package)
+                if (manifest.id, manifest.version) != (ext_id, item["version"]):
+                    raise ValueError("扩展包的 ID 或版本与目录不一致，未安装")
+                try:
+                    self.ctx.extensions.info(ext_id)
+                    replace = True
+                except ExtensionError:
+                    replace = False
+                return self.ctx.extensions.install_path(package, replace=replace).to_json()

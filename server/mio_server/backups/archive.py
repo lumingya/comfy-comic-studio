@@ -21,8 +21,8 @@ from .participants import catalog_scope, data_files
 from .participants import size_limit as participant_size_limit
 from .paths import sha_file
 
-MAX_ARCHIVE = 2 * 1024**3
-MAX_UNPACKED = 4 * 1024**3
+MAX_ARCHIVE = 12 * 1024**3
+MAX_UNPACKED = 16 * 1024**3
 MAX_DATABASE = 256 * 1024**2
 MAX_MANIFEST = 32 * 1024**2
 MAX_ENTRIES = 100_000
@@ -57,7 +57,7 @@ def _inspect_archive(
     path: Path, extract_to: Path | None = None, *, trusted_workspace: Path | None = None
 ) -> BackupInspection:
     if path.stat().st_size > MAX_ARCHIVE:
-        raise ValueError("workspace archive exceeds 2 GiB")
+        raise ValueError("workspace archive exceeds 12 GiB")
     if extract_to is None:
         with tempfile.TemporaryDirectory(prefix="mio-backup-verify-") as temporary:
             return inspect_archive(path, Path(temporary), trusted_workspace=trusted_workspace)
@@ -71,7 +71,7 @@ def _inspect_archive(
             if len(entries) > MAX_ENTRIES or len(set(names)) != len(names):
                 raise ValueError("workspace archive contains too many or duplicate entries")
             if sum(entry.file_size for entry in entries) > MAX_UNPACKED:
-                raise ValueError("workspace archive expands beyond 4 GiB")
+                raise ValueError("workspace archive expands beyond 16 GiB")
             for entry in entries:
                 mode = entry.external_attr >> 16
                 if entry.is_dir() or stat.S_ISLNK(mode) or entry.flag_bits & 1:
@@ -203,7 +203,7 @@ def pack(root: Path, manifest: BackupManifest, destination: Path) -> None:
             for entry in manifest.entries:
                 archive.write(root / entry.path, entry.path, compress_type=zipfile.ZIP_STORED)
         if temporary.stat().st_size > MAX_ARCHIVE:
-            raise ValueError("workspace archive exceeds 2 GiB")
+            raise ValueError("workspace archive exceeds 12 GiB")
         shutil.move(temporary, destination)
     finally:
         temporary.unlink(missing_ok=True)

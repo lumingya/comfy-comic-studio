@@ -5,11 +5,14 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import tempfile
 import zipfile
+from pathlib import Path
 from unittest.mock import patch
 
 import httpx
 
+from mio_server.extensions.manifest import digest
 from mio_server.extensions.marketplace import CATALOG_LIMIT, MAX_ZIP, _download, web_url
 
 from .api_harness import ApiCase
@@ -62,7 +65,14 @@ class ExtensionMarketTests(ApiCase):
             "expected_sha256": item["sha256"],
             **changes,
         }
-        with patch("mio_server.extensions.marketplace._download", return_value=payload) as fetch:
+
+        def write_package(url, limit, destination):
+            destination.write_bytes(payload)
+            return hashlib.sha256(payload).hexdigest()
+
+        with patch(
+            "mio_server.extensions.marketplace._download_to", side_effect=write_package
+        ) as fetch:
             result = self.client.post(f"/api/extension-market/{ext_id}/install", json=body)
         return result, fetch
 
@@ -84,7 +94,8 @@ class ExtensionMarketTests(ApiCase):
         self.assertEqual(listing["items"][-1]["action"], "install")
         response, fetch = self.install(listing, first)
         info = self.ok(response, 201)
-        fetch.assert_called_once_with("https://market.example/demo.zip", MAX_ZIP)
+        fetch.assert_called_once()
+        self.assertEqual(fetch.call_args.args[:2], ("https://market.example/demo.zip", MAX_ZIP))
         self.assertEqual(info["status"], "disabled")
         self.assertFalse(info["builtin"])
         updated = self.ok(self.client.get("/api/extension-market"))
@@ -215,3 +226,24 @@ class ExtensionMarketTests(ApiCase):
                 self.assertRaisesRegex(ValueError, "大小限制"),
             ):
                 _download("https://market.example/file", 4)
+
+    def test_extension_review_digest_streams_large_assets_from_disk(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            asset = folder / "large.bin"
+            asset.write_bytes(b"asset" * 500_000)
+            original_read_bytes = Path.read_bytes
+
+            def reject_large_read(path):
+                if path == asset:
+                    raise AssertionError("extension files must be hashed in chunks")
+                return original_read_bytes(path)
+
+            with patch.object(Path, "read_bytes", reject_large_read):
+                result = digest(folder)
+            expected = hashlib.sha256()
+            rel = b"large.bin"
+            size = asset.stat().st_size
+            expected.update(len(rel).to_bytes(4, "big") + rel + size.to_bytes(8, "big"))
+            expected.update(b"asset" * 500_000)
+            self.assertEqual(result, expected.hexdigest())

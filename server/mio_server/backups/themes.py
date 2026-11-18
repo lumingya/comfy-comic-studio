@@ -1,6 +1,7 @@
 """Portable themes are bounded inert package data, never extension code."""
 
 import re
+import shutil
 from pathlib import Path
 
 from ..theme_packages import _folder_files, _read_folder, allowed_package_path
@@ -23,7 +24,7 @@ def theme_files(workspace: Path):
         raise ValueError("theme packages must use a regular local directory")
     for folder in sorted(root.iterdir()):
         regular_path(folder)
-        _read_folder(folder, read_resources=False)
+        _read_folder(folder)
         for filename, path in _folder_files(folder):
             name = f"themes/{folder.name}/{filename}"
             if not allowed_theme_path(name):
@@ -34,11 +35,14 @@ def theme_files(workspace: Path):
 def copy_themes(source: Path, target: Path, *, byte_budget: int) -> int:
     total = 0
     for name, path in theme_files(source):
-        raw = path.read_bytes()
-        total += len(raw)
-        if total > byte_budget:
+        size = path.stat().st_size
+        if total + size > byte_budget:
             raise ValueError("workspace exceeds the archive size limit")
         destination = target / name
         destination.parent.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(raw)
+        shutil.copyfile(path, destination)
+        copied = destination.stat().st_size
+        if copied != size:
+            raise ValueError("theme file changed while creating the backup")
+        total += copied
     return total

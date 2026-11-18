@@ -36,7 +36,7 @@ async def uploaded(request: Request):
             async for chunk in request.stream():
                 size += len(chunk)
                 if size > MAX_ARCHIVE:
-                    raise ValueError("workspace archive exceeds 2 GiB")
+                    raise ValueError("workspace archive exceeds 12 GiB")
                 output.write(chunk)
         yield path
 

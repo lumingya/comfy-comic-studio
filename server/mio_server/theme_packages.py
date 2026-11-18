@@ -6,7 +6,6 @@ import hashlib
 import io
 import json
 import logging
-import os
 import re
 import shutil
 import stat
@@ -14,6 +13,7 @@ import tempfile
 import threading
 import zipfile
 from pathlib import Path, PurePosixPath
+from typing import BinaryIO, Iterable
 
 from .theme_media import (
     asset_parts,
@@ -31,11 +31,12 @@ README = "README.md"
 SCRIPT = "theme.js"
 STYLE = "theme.css"
 PACKAGE_FILES = {MANIFEST, THEME_FILE, README, SCRIPT, STYLE}
-MAX_PACKAGE = 128 * 1024 * 1024
-MAX_FILE = 100 * 1024 * 1024
+MAX_PACKAGE = 10 * 1024**3
+MAX_FILE = 10 * 1024**3
 MAX_METADATA = 2 * 1024 * 1024
 MAX_SCRIPT = 1024 * 1024
 MAX_FILES = 64
+COPY_CHUNK_SIZE = 1024 * 1024
 BUILTIN_ROOT = Path(__file__).resolve().parents[2] / "themes"
 RESERVED_IDS = {
     "con",
@@ -131,23 +132,16 @@ def _validate_manifest(raw: bytes) -> dict:
 
 
 def _validated_files(
-    files: dict[str, bytes], *, file_names: set[str] | None = None
+    files: dict[str, bytes],
+    *,
+    file_names: set[str] | None = None,
+    file_sizes: dict[str, int] | None = None,
 ) -> tuple[dict, Theme]:
     names = set(files) if file_names is None else file_names
+    sizes = file_sizes or {name: len(data) for name, data in files.items()}
+    _validate_file_sizes(names, sizes)
     if not {MANIFEST, THEME_FILE} <= names or any(not allowed_package_path(name) for name in names):
         raise ThemePackageError("主题包必须只包含清单、theme.json、说明及已声明资源")
-    if len(names) > MAX_FILES or sum(map(len, files.values())) > MAX_PACKAGE:
-        raise ThemePackageError("主题包解压后超过 128 MB 或文件过多")
-    if any(len(data) > MAX_FILE for data in files.values()):
-        raise ThemePackageError("单个主题文件超过 100 MB")
-    if any(
-        len(files[name]) > MAX_METADATA
-        for name in (MANIFEST, THEME_FILE, README, STYLE)
-        if name in files
-    ):
-        raise ThemePackageError("主题清单或说明超过 2 MB")
-    if len(files.get(SCRIPT, b"")) > MAX_SCRIPT:
-        raise ThemePackageError("主题脚本超过 1 MB")
     manifest = _validate_manifest(files[MANIFEST])
     try:
         document = json.loads(files[THEME_FILE].decode("utf-8"))
@@ -191,37 +185,56 @@ def _validated_files(
             raise ThemePackageError("主题包包含未被主题引用的资源")
     elif asset_names - ({theme.background.file} if theme.background else set()):
         raise ThemePackageError("主题资源必须由背景或 theme.css 声明")
-    for name, data in files.items():
-        if asset_parts(name) and not valid_media(name, data):
+    for name in names:
+        if asset_parts(name) and not valid_media(name, files.get(name, b"")):
             raise ThemePackageError(f"主题资源内容与文件格式不匹配或文件已损坏：{name}")
     if theme.background and theme.background.file not in names:
         raise ThemePackageError("主题声明的背景资源不存在")
     return manifest, theme
 
 
+def _validate_file_sizes(names: set[str], sizes: dict[str, int]) -> None:
+    if not {MANIFEST, THEME_FILE} <= names or any(not allowed_package_path(name) for name in names):
+        raise ThemePackageError("主题包必须只包含清单、theme.json、说明及已声明资源")
+    if (
+        set(sizes) != names
+        or len(names) > MAX_FILES
+        or sum(sizes.values()) > MAX_PACKAGE
+        or any(size < 0 or size > MAX_FILE for size in sizes.values())
+    ):
+        raise ThemePackageError("主题包超过 10 GiB 或文件过多")
+    if any(
+        sizes[name] > MAX_METADATA
+        for name in (MANIFEST, THEME_FILE, README, STYLE)
+        if name in names
+    ):
+        raise ThemePackageError("主题清单或说明超过 2 MB")
+    if sizes.get(SCRIPT, 0) > MAX_SCRIPT:
+        raise ThemePackageError("主题脚本超过 1 MB")
+
+
 def _read_folder(
-    folder: Path, *, read_resources: bool = True
+    folder: Path, *, enforce_folder_name: bool = True
 ) -> tuple[dict, Theme, dict[str, bytes]]:
     paths = _folder_files(folder)
     sizes = {name: path.stat().st_size for name, path in paths}
-    if sum(sizes.values()) > MAX_PACKAGE or any(size > MAX_FILE for size in sizes.values()):
-        raise ThemePackageError("主题包解压后超过 128 MB")
+    _validate_file_sizes(set(sizes), sizes)
     files = {}
     for name, path in paths:
-        if not read_resources and asset_parts(name):
+        if asset_parts(name):
             with path.open("rb") as source:
                 files[name] = source.read(64 * 1024 if name.lower().endswith(".png") else 12)
         else:
             files[name] = path.read_bytes()
-    manifest, theme = _validated_files(files, file_names=set(sizes))
-    if folder.name != manifest["id"]:
+    manifest, theme = _validated_files(files, file_names=set(sizes), file_sizes=sizes)
+    if enforce_folder_name and folder.name != manifest["id"]:
         raise ThemePackageError("主题清单 ID 与文件夹名称不一致")
     return manifest, theme, files
 
 
 def _unpack(data: bytes) -> tuple[dict, Theme, dict[str, bytes]]:
     if not data or len(data) > MAX_PACKAGE:
-        raise ThemePackageError("主题 ZIP 为空或超过 128 MB")
+        raise ThemePackageError("主题 ZIP 为空或超过 10 GiB")
     try:
         with zipfile.ZipFile(io.BytesIO(data)) as archive:
             infos = archive.infolist()
@@ -247,7 +260,7 @@ def _unpack(data: bytes) -> tuple[dict, Theme, dict[str, bytes]]:
                     directories.add("/".join(parts))
                     continue
                 if info.file_size > MAX_FILE:
-                    raise ThemePackageError("单个主题文件超过 100 MB")
+                    raise ThemePackageError("单个主题文件超过 10 GiB")
                 key = "/".join(parts).casefold()
                 if key in seen:
                     raise ThemePackageError("主题 ZIP 包含重复文件")
@@ -256,7 +269,7 @@ def _unpack(data: bytes) -> tuple[dict, Theme, dict[str, bytes]]:
             if not names:
                 raise ThemePackageError("主题 ZIP 不包含文件")
             if sum(info.file_size for info, _ in names) > MAX_PACKAGE:
-                raise ThemePackageError("主题包解压后超过 128 MB")
+                raise ThemePackageError("主题包解压后超过 10 GiB")
             roots = {parts[0] for _, parts in names}
             has_folder = len(roots) == 1 and all(
                 len(parts) >= 2
@@ -294,6 +307,107 @@ def _unpack(data: bytes) -> tuple[dict, Theme, dict[str, bytes]]:
     if has_folder and next(iter(roots)) != manifest["id"]:
         raise ThemePackageError("主题清单 ID 与 ZIP 文件夹名称不一致")
     return manifest, theme, files
+
+
+def _extract_zip_to_folder(archive_path: Path, folder: Path) -> tuple[dict, Theme]:
+    if not archive_path.is_file() or archive_path.stat().st_size > MAX_PACKAGE:
+        raise ThemePackageError("主题 ZIP 为空或超过 10 GiB")
+    try:
+        with zipfile.ZipFile(archive_path) as archive:
+            infos = archive.infolist()
+            if len(infos) > MAX_FILES + 3:
+                raise ThemePackageError("主题 ZIP 文件过多")
+            names: list[tuple[zipfile.ZipInfo, tuple[str, ...]]] = []
+            directories: set[str] = set()
+            seen: set[str] = set()
+            for info in infos:
+                name = info.filename
+                if "\\" in name or ":" in name:
+                    raise ThemePackageError("主题 ZIP 包含不安全路径")
+                raw_parts = name.removesuffix("/").split("/")
+                path = PurePosixPath(name)
+                parts = path.parts
+                if path.is_absolute() or not parts or any(p in {"", ".", ".."} for p in raw_parts):
+                    raise ThemePackageError("主题 ZIP 包含不安全路径")
+                mode = info.external_attr >> 16
+                kind = stat.S_IFMT(mode)
+                if (
+                    stat.S_ISLNK(mode)
+                    or (kind and not info.is_dir() and not stat.S_ISREG(mode))
+                    or info.flag_bits & 1
+                ):
+                    raise ThemePackageError("主题 ZIP 不支持链接、特殊文件或加密条目")
+                if info.is_dir():
+                    directories.add("/".join(parts))
+                    continue
+                if info.file_size > MAX_FILE:
+                    raise ThemePackageError("单个主题文件超过 10 GiB")
+                key = "/".join(parts).casefold()
+                if key in seen:
+                    raise ThemePackageError("主题 ZIP 包含重复文件")
+                seen.add(key)
+                names.append((info, parts))
+            if not names:
+                raise ThemePackageError("主题 ZIP 不包含文件")
+            if sum(info.file_size for info, _ in names) > MAX_PACKAGE:
+                raise ThemePackageError("主题包解压后超过 10 GiB")
+            roots = {parts[0] for _, parts in names}
+            has_folder = len(roots) == 1 and all(
+                len(parts) >= 2
+                and allowed_package_path("/".join(parts[1:]))
+                and parts[0] not in PACKAGE_FILES
+                and parts[0] != "assets"
+                for _, parts in names
+            )
+            root = next(iter(roots)) if has_folder else ""
+            normalized_names: set[str] = set()
+            normalized_seen: set[str] = set()
+            normalized_entries = []
+            for info, parts in names:
+                relative = parts[1:] if has_folder else parts
+                normalized = "/".join(relative)
+                if not allowed_package_path(normalized):
+                    raise ThemePackageError("主题 ZIP 包含不支持的路径或文件")
+                if normalized.casefold() in normalized_seen:
+                    raise ThemePackageError("主题 ZIP 包含重复文件")
+                normalized_seen.add(normalized.casefold())
+                normalized_names.add(normalized)
+                normalized_entries.append((info, relative, normalized))
+            sizes = {normalized: info.file_size for info, _, normalized in normalized_entries}
+            _validate_file_sizes(set(sizes), sizes)
+            for info, relative, _ in normalized_entries:
+                target = folder.joinpath(*relative)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                copied = 0
+                with archive.open(info) as source, target.open("xb") as output:
+                    while chunk := source.read(COPY_CHUNK_SIZE):
+                        copied += len(chunk)
+                        if copied > info.file_size or copied > MAX_FILE:
+                            raise ThemePackageError("主题 ZIP 条目超过声明大小")
+                        output.write(chunk)
+                if copied != info.file_size:
+                    raise ThemePackageError("主题 ZIP 条目大小与声明不一致")
+            expected_directories = set()
+            for name in normalized_names:
+                parts = name.split("/")
+                for depth in range(1, len(parts)):
+                    directory = "/".join(parts[:depth])
+                    if directory == "assets" or directory.startswith("assets/"):
+                        expected_directories.add(directory)
+            allowed_directories = expected_directories | ({root} if has_folder else set())
+            normalized_directories = {
+                "/".join(PurePosixPath(name).parts[1:] if has_folder else PurePosixPath(name).parts)
+                for name in directories
+                if not has_folder or name != root
+            }
+            if normalized_directories - allowed_directories:
+                raise ThemePackageError("主题 ZIP 包含不支持的目录")
+    except (zipfile.BadZipFile, OSError, RuntimeError, NotImplementedError) as exc:
+        raise ThemePackageError("无法读取主题 ZIP") from exc
+    manifest, theme, _ = _read_folder(folder, enforce_folder_name=False)
+    if has_folder and root != manifest["id"]:
+        raise ThemePackageError("主题清单 ID 与 ZIP 文件夹名称不一致")
+    return manifest, theme
 
 
 def package_theme(theme: Theme, resources: dict[str, bytes] | None = None) -> tuple[str, bytes]:
@@ -334,8 +448,8 @@ def package_theme(theme: Theme, resources: dict[str, bytes] | None = None) -> tu
             for name, content in files.items()
         }
     )
-    output = io.BytesIO()
-    with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+    payload = io.BytesIO()
+    with zipfile.ZipFile(payload, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for name, content in files.items():
             archive.writestr(
                 f"{package_id}/{name}",
@@ -344,10 +458,107 @@ def package_theme(theme: Theme, resources: dict[str, bytes] | None = None) -> tu
                 if name.startswith("assets/")
                 else zipfile.ZIP_DEFLATED,
             )
-    payload = output.getvalue()
-    if len(payload) > MAX_PACKAGE:
-        raise ThemePackageError("主题 ZIP 超过 128 MB")
-    return package_id, payload
+    result = payload.getvalue()
+    if len(result) > MAX_PACKAGE:
+        raise ThemePackageError("主题 ZIP 超过 10 GiB")
+    return package_id, result
+
+
+def package_theme_to_file(theme: Theme, resources: dict[str, Path], destination: Path) -> str:
+    """Write a validated theme ZIP while streaming resource files from disk."""
+    document = theme.model_dump(mode="json", exclude={"created_at"})
+    document["tokens"] = resolved(theme)
+    document.pop("id", None)
+    canonical = json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    sizes: dict[str, int] = {}
+    samples: dict[str, bytes] = {}
+    resource_hashes = {}
+    total_size = 0
+    for name, path in resources.items():
+        if not allowed_package_path(name) or not path.is_file():
+            raise ThemePackageError("主题包包含不支持或不存在的资源")
+        size = path.stat().st_size
+        total_size += size
+        if size > MAX_FILE or total_size > MAX_PACKAGE:
+            raise ThemePackageError("主题包超过 10 GiB")
+        sizes[name] = size
+        digest = hashlib.sha256()
+        with path.open("rb") as source:
+            sample_size = (
+                MAX_METADATA
+                if name == STYLE
+                else MAX_SCRIPT
+                if name == SCRIPT
+                else 64 * 1024
+                if name.lower().endswith(".png")
+                else 12
+            )
+            samples[name] = source.read(sample_size)
+            source.seek(0)
+            while chunk := source.read(COPY_CHUNK_SIZE):
+                digest.update(chunk)
+        resource_hashes[name] = digest.hexdigest()
+    canonical += json.dumps(resource_hashes, sort_keys=True, separators=(",", ":"))
+    package_id = "theme-" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
+    document["id"] = package_id
+    files = {
+        MANIFEST: json.dumps(
+            {
+                "id": package_id,
+                "name": theme.name,
+                "version": "1.0.0",
+                "author": theme.author,
+                "description": "",
+                "theme_file": THEME_FILE,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ).encode("utf-8")
+        + b"\n",
+        THEME_FILE: json.dumps(document, ensure_ascii=False, indent=2).encode("utf-8") + b"\n",
+        README: (
+            f"# {theme.name}\n\n"
+            "这是独立主题包，包含界面令牌和已声明资源；主题脚本只在隔离沙箱中运行。"
+            "可在「设置 → 外观与阅读」导入 ZIP，然后选择主题。\n"
+        ).encode("utf-8"),
+        **samples,
+    }
+    sizes.update({name: len(files[name]) for name in (MANIFEST, THEME_FILE, README)})
+    _validated_files(files, file_names=set(sizes), file_sizes=sizes)
+    try:
+        with zipfile.ZipFile(
+            destination, "w", compression=zipfile.ZIP_DEFLATED, allowZip64=True
+        ) as archive:
+            for name, data in files.items():
+                if name in resources:
+                    continue
+                archive.writestr(
+                    f"{package_id}/{name}",
+                    data,
+                    compress_type=(
+                        zipfile.ZIP_STORED if name.startswith("assets/") else zipfile.ZIP_DEFLATED
+                    ),
+                )
+            for name, path in resources.items():
+                info = zipfile.ZipInfo(f"{package_id}/{name}")
+                info.compress_type = (
+                    zipfile.ZIP_STORED if name.startswith("assets/") else zipfile.ZIP_DEFLATED
+                )
+                with archive.open(info, "w", force_zip64=True) as target, path.open("rb") as source:
+                    digest = hashlib.sha256()
+                    copied = 0
+                    while chunk := source.read(COPY_CHUNK_SIZE):
+                        copied += len(chunk)
+                        digest.update(chunk)
+                        target.write(chunk)
+                    if copied != sizes[name] or digest.hexdigest() != resource_hashes[name]:
+                        raise ThemePackageError("主题资源在导出期间发生变化")
+        if destination.stat().st_size > MAX_PACKAGE:
+            raise ThemePackageError("主题 ZIP 超过 10 GiB")
+    except BaseException:
+        destination.unlink(missing_ok=True)
+        raise
+    return package_id
 
 
 class ThemePackageManager:
@@ -370,7 +581,7 @@ class ThemePackageManager:
                 continue
             for folder in folders:
                 try:
-                    manifest, theme, _ = _read_folder(folder, read_resources=False)
+                    manifest, theme, _ = _read_folder(folder)
                     if manifest["id"] != folder.name:
                         raise ThemePackageError("主题清单 ID 与文件夹名称不一致")
                     if any(item.id == theme.id for item in self.ctx.registry.all("theme")):
@@ -384,97 +595,146 @@ class ThemePackageManager:
                     log.warning("skip invalid theme package %s: %s", folder, exc)
 
     def install_package(self, data: bytes) -> dict:
-        _, theme, files = _unpack(data)
-        return self._install(theme, files)
+        """Compatibility helper for callers that already hold a ZIP in memory."""
+        if not data or len(data) > MAX_PACKAGE:
+            raise ThemePackageError("主题 ZIP 为空或超过 10 GiB")
+        with tempfile.TemporaryDirectory(prefix="mio-theme-package-") as temporary:
+            archive = Path(temporary) / "theme.zip"
+            archive.write_bytes(data)
+            return self.install_package_path(archive)
 
-    def install_folder(self, files: list[tuple[str, bytes]]) -> dict:
-        normalized: dict[str, bytes] = {}
-        roots: set[str] = set()
-        seen: set[str] = set()
-        flat = False
-        for raw_name, data in files:
-            name = raw_name.replace("\\", "/")
-            raw_parts = name.split("/")
-            path = PurePosixPath(name)
-            if (
-                not name
-                or ":" in name
-                or path.is_absolute()
-                or any(p in {"", ".", ".."} for p in raw_parts)
-            ):
-                raise ThemePackageError("主题文件夹包含不安全路径")
-            parts = path.parts
-            if len(parts) == 1:
-                flat = True
-            elif parts[0] == "assets":
-                name = "/".join(parts)
-            elif len(parts) == 2:
-                roots.add(parts[0])
-                name = parts[1]
-            elif len(parts) >= 3 and parts[1] == "assets":
-                roots.add(parts[0])
-                name = "/".join(parts[1:])
-            else:
-                raise ThemePackageError("请选择直接包含 mio-theme.json 的主题文件夹")
-            key = name.casefold()
-            if not allowed_package_path(name) or key in seen:
-                raise ThemePackageError("主题文件夹包含重复或不支持的文件")
-            if not isinstance(data, bytes):
-                raise ThemePackageError("主题文件读取失败")
-            normalized[name] = data
-            seen.add(key)
-            if len(normalized) > MAX_FILES or sum(map(len, normalized.values())) > MAX_PACKAGE:
-                raise ThemePackageError("主题文件夹超过 128 MB 或文件过多")
-        if len(roots) > 1 or (roots and flat):
-            raise ThemePackageError("上传文件必须来自同一个主题文件夹")
-        _, theme = _validated_files(normalized)
-        if roots and next(iter(roots)) != theme.id:
-            raise ThemePackageError("主题清单 ID 与文件夹名称不一致")
-        return self._install(theme, normalized)
-
-    def _install(self, theme: Theme, files: dict[str, bytes]) -> dict:
+    def install_package_path(self, archive: Path) -> dict:
+        """Install a theme ZIP with bounded-memory extraction to a staging folder."""
         with self._lock:
-            if any(item.id == theme.id for item in self.ctx.registry.all("theme")):
-                raise ThemePackageError(f"主题 ID 已被占用：{theme.id}")
             _regular_path(self.root, directory=True, missing=True)
             self.root.mkdir(parents=True, exist_ok=True)
             _regular_path(self.root, directory=True)
-            target = self.root / theme.id
-            if _regular_path(target, directory=True, missing=True):
-                raise ThemePackageError(f"主题文件夹已存在：{theme.id}")
+            staging = Path(tempfile.mkdtemp(prefix=".theme-", dir=self.root))
+            try:
+                _, theme = _extract_zip_to_folder(Path(archive), staging)
+                return self._publish(theme, staging)
+            except BaseException:
+                self._discard_staging(staging)
+                raise
+
+    def install_folder(self, files: list[tuple[str, bytes]]) -> dict:
+        return self.install_folder_streams((name, io.BytesIO(data)) for name, data in files)
+
+    def install_folder_streams(self, files: Iterable[tuple[str, BinaryIO]]) -> dict:
+        """Install selected files directly from their upload streams."""
+        with self._lock:
+            _regular_path(self.root, directory=True, missing=True)
+            self.root.mkdir(parents=True, exist_ok=True)
+            _regular_path(self.root, directory=True)
+            staging = Path(tempfile.mkdtemp(prefix=".theme-", dir=self.root))
+            roots: set[str] = set()
+            seen: set[str] = set()
+            flat = False
+            total = 0
+            count = 0
+            try:
+                for raw_name, source in files:
+                    name = raw_name.replace("\\", "/")
+                    raw_parts = name.split("/")
+                    path = PurePosixPath(name)
+                    if (
+                        not name
+                        or ":" in name
+                        or path.is_absolute()
+                        or any(part in {"", ".", ".."} for part in raw_parts)
+                    ):
+                        raise ThemePackageError("主题文件夹包含不安全路径")
+                    parts = path.parts
+                    if len(parts) == 1:
+                        flat = True
+                    elif parts[0] == "assets":
+                        name = "/".join(parts)
+                    elif len(parts) == 2:
+                        roots.add(parts[0])
+                        name = parts[1]
+                    elif len(parts) >= 3 and parts[1] == "assets":
+                        roots.add(parts[0])
+                        name = "/".join(parts[1:])
+                    else:
+                        raise ThemePackageError("请选择直接包含 mio-theme.json 的主题文件夹")
+                    key = name.casefold()
+                    if not allowed_package_path(name) or key in seen:
+                        raise ThemePackageError("主题文件夹包含重复或不支持的文件")
+                    count += 1
+                    if count > MAX_FILES:
+                        raise ThemePackageError("主题文件过多")
+                    seen.add(key)
+                    target = staging / name
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    size = 0
+                    with target.open("xb") as output:
+                        while chunk := source.read(COPY_CHUNK_SIZE):
+                            size += len(chunk)
+                            total += len(chunk)
+                            if size > MAX_FILE or total > MAX_PACKAGE:
+                                raise ThemePackageError("主题文件夹超过 10 GiB")
+                            output.write(chunk)
+                if not count:
+                    raise ThemePackageError("主题文件夹不包含文件")
+                if len(roots) > 1 or (roots and flat):
+                    raise ThemePackageError("上传文件必须来自同一个主题文件夹")
+                manifest, theme, _ = _read_folder(staging, enforce_folder_name=False)
+                if roots and next(iter(roots)) != manifest["id"]:
+                    raise ThemePackageError("主题清单 ID 与文件夹名称不一致")
+                return self._publish(theme, staging)
+            except BaseException:
+                self._discard_staging(staging)
+                raise
+
+    def _install(self, theme: Theme, files: dict[str, bytes]) -> dict:
+        with self._lock:
+            _regular_path(self.root, directory=True, missing=True)
+            self.root.mkdir(parents=True, exist_ok=True)
+            _regular_path(self.root, directory=True)
             temporary = Path(tempfile.mkdtemp(prefix=".theme-", dir=self.root))
-            installed = False
             try:
                 for name, data in files.items():
                     path = temporary / name
                     path.parent.mkdir(parents=True, exist_ok=True)
-                    with path.open("xb") as output:
-                        output.write(data)
-                        output.flush()
-                        os.fsync(output.fileno())
-                _regular_path(self.root, directory=True)
-                _folder_entries(temporary)
-                if _regular_path(target, directory=True, missing=True):
-                    raise ThemePackageError(f"主题文件夹已存在：{theme.id}")
-                temporary.replace(target)
-                installed = True
-                self.ctx.registry.register(
-                    "theme", theme.id, theme, source="theme-package", title=theme.name
-                )
-                self._installed[theme.id] = target
+                    path.write_bytes(data)
+                _, installed_theme, _ = _read_folder(temporary, enforce_folder_name=False)
+                if installed_theme.id != theme.id:
+                    raise ThemePackageError("主题清单与 theme.json 的 ID 不一致")
+                return self._publish(theme, temporary)
             except BaseException:
-                # A changed root or a replacement link must never turn rollback into an
-                # external recursive delete. Leave suspicious files for manual recovery.
-                try:
-                    _regular_path(self.root, directory=True)
-                    leftover = target if installed else temporary
-                    if leftover.exists():
-                        _folder_entries(leftover)
-                        shutil.rmtree(leftover, ignore_errors=True)
-                except (OSError, ThemePackageError):
-                    log.warning("theme rollback left an unsafe path untouched: %s", theme.id)
+                self._discard_staging(temporary)
                 raise
-            return to_json(theme, "theme-package")
+
+    def _publish(self, theme: Theme, staging: Path) -> dict:
+        if any(item.id == theme.id for item in self.ctx.registry.all("theme")):
+            raise ThemePackageError(f"主题 ID 已被占用：{theme.id}")
+        _regular_path(self.root, directory=True)
+        target = self.root / theme.id
+        if _regular_path(target, directory=True, missing=True):
+            raise ThemePackageError(f"主题文件夹已存在：{theme.id}")
+        _folder_files(staging)
+        _regular_path(self.root, directory=True)
+        if _regular_path(target, directory=True, missing=True):
+            raise ThemePackageError(f"主题文件夹已存在：{theme.id}")
+        staging.replace(target)
+        try:
+            self.ctx.registry.register(
+                "theme", theme.id, theme, source="theme-package", title=theme.name
+            )
+        except BaseException:
+            self._discard_staging(target)
+            raise
+        self._installed[theme.id] = target
+        return to_json(theme, "theme-package")
+
+    def _discard_staging(self, folder: Path) -> None:
+        try:
+            _regular_path(self.root, directory=True)
+            if folder.absolute().parent == self.root.absolute() and folder.exists():
+                _folder_files(folder)
+                shutil.rmtree(folder, ignore_errors=True)
+        except (OSError, ThemePackageError):
+            log.warning("theme rollback left an unsafe path untouched: %s", folder)
 
     def remove(self, theme_id: str) -> None:
         with self._lock:
