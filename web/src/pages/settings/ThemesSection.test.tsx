@@ -57,6 +57,8 @@ it('imports a standalone theme ZIP without applying it or entering extension rev
   );
   const view = renderWithProviders(<ThemesSection />);
   await screen.findByRole('button', { name: '导出' });
+  await userEvent.click(screen.getByRole('button', { name: '导入主题' }));
+  await userEvent.click(screen.getByRole('menuitem', { name: '从 JSON / ZIP 文件导入' }));
   const input = view.container.querySelector<HTMLInputElement>('input[accept=".json,.zip"]')!;
   const archive = new File(['fixture ZIP'], 'linen.zip', { type: 'application/zip' });
   await userEvent.upload(input, archive);
@@ -83,7 +85,8 @@ it('imports a standalone theme folder without applying it through the theme API'
     }),
   );
   const view = renderWithProviders(<ThemesSection />);
-  await screen.findByRole('button', { name: '导入文件夹' });
+  await userEvent.click(await screen.findByRole('button', { name: '导入主题' }));
+  await userEvent.click(screen.getByRole('menuitem', { name: '从主题文件夹导入' }));
   const input = view.container.querySelector<HTMLInputElement>('input[webkitdirectory]')!;
   const file = new File([JSON.stringify(custom)], 'theme.json', { type: 'application/json' });
   Object.defineProperty(file, 'webkitRelativePath', { value: 'linen/theme.json' });

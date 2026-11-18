@@ -14,8 +14,9 @@ import {
 import { SYSTEM } from '../../app/theme';
 import { themeScriptKey } from '../../app/themeScript';
 import { useUI } from '../../app/ui-store';
+import { ContextMenu, useContextMenu } from '../../components/ContextMenu';
 import { toast, toastError } from '../../components/toast';
-import { FilePick, Loading } from '../../components/ui';
+import { Loading } from '../../components/ui';
 import './ThemesSection.css';
 
 /** A miniature app window painted with the theme's own tokens. */
@@ -160,6 +161,9 @@ export function ThemesSection() {
   const importFolder = useImportThemeFolder();
   const deleteTheme = useDeleteTheme();
   const [exporting, setExporting] = useState<string | null>(null);
+  const importMenu = useContextMenu<null>();
+  const importButton = useRef<HTMLButtonElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
   const folderInput = useRef<HTMLInputElement>(null);
 
   const onExport = async (theme: ThemeInfo) => {
@@ -211,12 +215,30 @@ export function ThemesSection() {
     <section className="col" style={{ gap: 14 }}>
       <div className="row" style={{ justifyContent: 'flex-end' }}>
         <button
+          ref={importButton}
           className="btn"
+          aria-haspopup="menu"
+          aria-expanded={!!importMenu.state}
           disabled={importFolder.isPending || importTheme.isPending || importPackage.isPending}
-          onClick={() => folderInput.current?.click()}
+          onClick={(event) => {
+            const rect = event.currentTarget.getBoundingClientRect();
+            importMenu.openAt(rect.left, rect.bottom + 4, null);
+          }}
         >
-          <FolderOpen size={15} /> {t('settings.themes.importFolder')}
+          <Upload size={15} /> {t('settings.themes.import')}
         </button>
+        <input
+          ref={fileInput}
+          type="file"
+          hidden
+          accept=".json,.zip"
+          disabled={importTheme.isPending || importPackage.isPending || importFolder.isPending}
+          onChange={(event) => {
+            const file = event.currentTarget.files?.[0];
+            event.currentTarget.value = '';
+            if (file) void onFile(file);
+          }}
+        />
         <input
           ref={(node) => {
             folderInput.current = node;
@@ -227,14 +249,32 @@ export function ThemesSection() {
           multiple
           onChange={onFolder}
         />
-        <FilePick
-          accept=".json,.zip"
-          disabled={importTheme.isPending || importPackage.isPending || importFolder.isPending}
-          onFile={onFile}
-        >
-          <Upload size={15} /> {t('settings.themes.import')}
-        </FilePick>
       </div>
+      {importMenu.state ? (
+        <ContextMenu
+          x={importMenu.state.x}
+          y={importMenu.state.y}
+          title={t('settings.themes.import')}
+          groups={[
+            {
+              items: [
+                {
+                  label: t('settings.themes.importFiles'),
+                  icon: <Upload size={15} />,
+                  onSelect: () => fileInput.current?.click(),
+                },
+                {
+                  label: t('settings.themes.importFolder'),
+                  icon: <FolderOpen size={15} />,
+                  onSelect: () => folderInput.current?.click(),
+                },
+              ],
+            },
+          ]}
+          onClose={importMenu.close}
+          returnFocus={importButton.current}
+        />
+      ) : null}
       <p className="small muted">{t('settings.themes.resetShortcut')}</p>
       <div className="theme-grid">
         <div className={`theme-card ${choice === SYSTEM ? 'active' : ''}`}>
