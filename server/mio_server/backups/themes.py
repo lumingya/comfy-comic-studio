@@ -6,6 +6,7 @@ from pathlib import Path
 
 from ..theme_packages import _folder_files, _read_folder, allowed_package_path
 from .extension_data import RESERVED, regular_path
+from .ui_data import wallpaper_container
 
 THEME_PATH = re.compile(r"themes/([a-z0-9][a-z0-9_-]{1,47})/(.+)")
 
@@ -24,6 +25,8 @@ def theme_files(workspace: Path):
         raise ValueError("theme packages must use a regular local directory")
     for folder in sorted(root.iterdir()):
         regular_path(folder)
+        if not (folder / "mio-theme.json").exists() and wallpaper_container(folder):
+            continue
         _read_folder(folder)
         for filename, path in _folder_files(folder):
             name = f"themes/{folder.name}/{filename}"

@@ -26,15 +26,14 @@ from pathlib import Path, PurePosixPath
 from pydantic import ValidationError
 
 from ..backups.extension_data import (
-    extension_data_dir,
     regular_path,
     validate_identifier,
     validate_tree,
 )
-from ..extension_preferences import extension_preferences_dir
 from ..hooks import HOOKS
 from ..jobs.operations import operation_serialized
 from ..jobs.types import JobConflict
+from ..private_store import PrivateStore
 from ..theme_media import validate_theme_resources
 from .dependencies import ensure_requirements
 from .manifest import MANIFEST, Manifest, ManifestError, digest, inside, read_manifest
@@ -163,9 +162,9 @@ class ExtensionManager:
                 "invalid",
                 str(exc),
                 builtin=builtin,
-                has_data=(
-                    extension_data_dir(self.ctx.data_dir, ext_id).exists()
-                    or extension_preferences_dir(self.ctx.data_dir, ext_id).exists()
+                has_data=any(
+                    path.exists()
+                    for path in PrivateStore(self.ctx.data_dir, "extension", ext_id).sources()
                 ),
             )
         current = digest(folder)
@@ -200,9 +199,9 @@ class ExtensionManager:
             restart,
             contributions,
             builtin,
-            (
-                extension_data_dir(self.ctx.data_dir, ext_id).exists()
-                or extension_preferences_dir(self.ctx.data_dir, ext_id).exists()
+            any(
+                path.exists()
+                for path in PrivateStore(self.ctx.data_dir, "extension", ext_id).sources()
             ),
             (folder / "requirements.txt").is_file(),
         )
@@ -298,12 +297,13 @@ class ExtensionManager:
         if service is not None and getattr(service, "busy", False):
             raise JobConflict("扩展仍有请求执行中，请等待结束后再卸载")
         folder = root / ext_id
-        data = extension_data_dir(self.ctx.data_dir, ext_id)
-        preferences = extension_preferences_dir(self.ctx.data_dir, ext_id)
+        private_data = tuple(
+            dict.fromkeys(PrivateStore(self.ctx.data_dir, "extension", ext_id).sources())
+        )
         validate_tree(folder)
         if delete_data:
-            validate_tree(data)
-            validate_tree(preferences)
+            for path in private_data:
+                validate_tree(path)
         self.disable(ext_id)
         if service is not None and getattr(service, "busy", False):
             raise JobConflict("扩展仍有请求执行中，请等待结束后再卸载")
@@ -313,18 +313,19 @@ class ExtensionManager:
         if self.root.absolute() != root or root.resolve() != root:
             raise ExtensionError("扩展目录不能包含链接或重解析点")
         validate_tree(folder)
-        if extension_data_dir(self.ctx.data_dir, ext_id) != data:
+        current_data = tuple(
+            dict.fromkeys(PrivateStore(self.ctx.data_dir, "extension", ext_id).sources())
+        )
+        if current_data != private_data:
             raise ExtensionError("扩展数据目录已改变，请刷新后重试")
-        if extension_preferences_dir(self.ctx.data_dir, ext_id) != preferences:
-            raise ExtensionError("扩展偏好目录已改变，请刷新后重试")
         if delete_data:
-            validate_tree(data)
-            validate_tree(preferences)
+            for path in private_data:
+                validate_tree(path)
         shutil.rmtree(folder)
-        if delete_data and data.exists():
-            shutil.rmtree(data)
-        if delete_data and preferences.exists():
-            shutil.rmtree(preferences)
+        if delete_data:
+            for path in private_data:
+                if path.exists():
+                    shutil.rmtree(path)
         settings = self.ctx.settings()
         settings.extensions.pop(ext_id, None)
         self.ctx.store.put_doc(settings)

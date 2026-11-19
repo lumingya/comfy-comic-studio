@@ -18751,6 +18751,16 @@
        "title": "Theme Id",
        "type": "string"
       }
+     },
+     {
+      "in": "query",
+      "name": "delete_data",
+      "required": false,
+      "schema": {
+       "default": false,
+       "title": "Delete Data",
+       "type": "boolean"
+      }
      }
     ],
     "responses": {
@@ -18779,7 +18789,8 @@
     ],
     "x-mio-arguments": [
      "ctx",
-     "theme_id"
+     "theme_id",
+     "delete_data"
     ],
     "x-mio-operation": "DELETE /themes/{theme_id}"
    },

@@ -93,14 +93,15 @@ class ThemePreferenceTests(ApiCase):
             files={"file": ("paper wall.png", PNG, "image/png")},
         )
         item = self.ok(uploaded, 201)
-        self.assertEqual(set(item), {"id", "filename", "kind", "url"})
+        self.assertEqual(set(item), {"id", "filename", "kind", "animated", "url"})
         self.assertRegex(item["id"], r"^wallpaper_[a-f0-9]{32}$")
         self.assertEqual(item["filename"], "paper wall.png")
         self.assertEqual(item["kind"], "image")
         self.assertEqual(item["url"], f"/api/themes/paper/wallpapers/{item['id']}/file")
 
-        folder = Path(self.tmp) / "themes" / "paper" / "user_wallpapers"
+        folder = Path(self.tmp) / "theme_data" / "paper" / "wallpapers"
         self.assertTrue((folder / f"{item['id']}.png").is_file())
+        self.assertFalse((Path(self.tmp) / "themes" / "paper").exists())
         self.assertEqual(
             self.ok(self.client.get("/api/themes/paper/wallpapers")), {"items": [item]}
         )
@@ -148,12 +149,57 @@ class ThemePreferenceTests(ApiCase):
             201,
         )
         self.assertEqual(item["kind"], "video")
+        self.assertIs(item["animated"], False)
         response = self.ok(self.client.get(item["url"]))
         self.assertEqual(response.content, mp4)
         self.assertEqual(response.headers["content-type"], "video/mp4")
 
+    def test_wallpaper_upload_and_existing_records_report_animation(self):
+        signature = b"\x89PNG\r\n\x1a\n"
+        png = signature + b"\x00\x00\x00\x00IDAT\x00\x00\x00\x00"
+        apng = signature + b"\x00\x00\x00\x08acTL" + b"\x00" * 12
+        for filename, payload, animated in (
+            ("still.png", png, False),
+            ("motion.png", apng, True),
+            ("motion.gif", b"GIF89a" + b"wallpaper", True),
+            ("still.webp", b"RIFF\x00\x00\x00\x00WEBPVP8 \x00\x00\x00\x00", False),
+            ("motion.webp", b"RIFF\x00\x00\x00\x00WEBPANIM\x00\x00\x00\x00", True),
+            ("still.jpg", b"\xff\xd8\xffwallpaper", False),
+        ):
+            with self.subTest(filename=filename):
+                uploaded = self.ok(
+                    self.client.post(
+                        "/api/themes/paper/wallpapers", files={"file": (filename, payload)}
+                    ),
+                    201,
+                )
+                self.assertIs(uploaded["animated"], animated)
+                folder = Path(self.tmp) / "theme_data" / "paper" / "wallpapers"
+                record = json.loads((folder / f"{uploaded['id']}.json").read_text("utf-8"))
+                self.assertEqual(set(record), {"id", "filename", "kind", "suffix"})
+                listed = self.ok(self.client.get("/api/themes/paper/wallpapers"))["items"]
+                self.assertEqual(
+                    next(item for item in listed if item["id"] == uploaded["id"]), uploaded
+                )
+
+    def test_wallpaper_animation_detection_reads_a_bounded_prefix(self):
+        from mio_server.theme_media import MAX_IMAGE_ANIMATION_PROBE, image_may_animate
+
+        payload = b"GIF89a" + b"x" * (MAX_IMAGE_ANIMATION_PROBE + 1024)
+        with patch(
+            "mio_server.api.theme_preferences.image_may_animate", wraps=image_may_animate
+        ) as probe:
+            item = self.ok(
+                self.client.post(
+                    "/api/themes/paper/wallpapers", files={"file": ("motion.gif", payload)}
+                ),
+                201,
+            )
+        self.assertIs(item["animated"], True)
+        self.assertEqual(len(probe.call_args.args[1]), MAX_IMAGE_ANIMATION_PROBE)
+
     def test_builtin_package_export_does_not_include_user_wallpapers(self):
-        """Package loading and export rely on the scanner's user_wallpapers exclusion."""
+        """New private uploads never become portable package files."""
         item = self.ok(
             self.client.post(
                 "/api/themes/paper/wallpapers",

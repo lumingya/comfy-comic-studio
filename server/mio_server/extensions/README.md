@@ -26,7 +26,7 @@ my-ext/
 └── panel.html           可选：界面面板
 ```
 
-SDK 的常规扩展数据位于 `<数据目录>/extensions_data/<id>/`，通过 `mio.data_dir` 获取；其中 `settings.json` 由 SDK 设置接口使用。扩展私有偏好单独保存在 `<数据目录>/extension_data/<id>/preferences.json`，通过 `GET` / `PUT /api/ext/{id}/preferences` 读写，不与全局设置或 SDK 的 `settings.json` 混用。卸载时默认保留扩展数据，用户勾选「同时删除扩展数据」后才删除；开放 API 对应 `DELETE /extensions/<id>?delete_data=true`。独立主题使用单独的 `themes/` 目录。
+SDK 的常规扩展数据位于 `<数据目录>/extensions_data/<id>/`，通过 `mio.data_dir` 获取；其中 `settings.json` 由 SDK 设置接口使用，`preferences.json` 由宿主私有偏好接口使用。`GET` / `PUT /api/ext/{id}/preferences` 不与全局设置或 SDK 的 `settings.json` 混用。旧单数 `extension_data/<id>/preferences.json` 仅回退读取并完整备份，新写只进入复数目录；存在两份时保留两份并以新目录为准。卸载时默认保留新旧扩展数据，用户勾选「同时删除扩展数据」后才校验并删除；开放 API 对应 `DELETE /extensions/<id>?delete_data=true`。独立主题使用单独的 `themes/` 包目录和 `theme_data/<id>/` 私有状态目录。主题私有状态不随贡献它的扩展停用而消失。
 
 ## `mio-extension.json`
 

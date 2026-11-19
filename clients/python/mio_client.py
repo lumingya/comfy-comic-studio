@@ -1233,9 +1233,13 @@ class MioClient(_Base):
         """
         return self._request("GET", f"/themes/{_q(theme_id)}")
 
-    def delete_theme(self, theme_id: str) -> Any:
+    def delete_theme(self, theme_id: str, *, delete_data: bool | None = None) -> Any:
         """DELETE /themes/{theme_id} — Delete Theme."""
-        return self._request("DELETE", f"/themes/{_q(theme_id)}")
+        return self._request(
+            "DELETE",
+            f"/themes/{_q(theme_id)}",
+            params={"delete_data": delete_data},
+        )
 
     def export_theme_package(self, theme_id: str) -> Any:
         """GET /themes/{theme_id}/package — Export Theme Package.

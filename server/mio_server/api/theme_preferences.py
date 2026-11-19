@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import json
-import math
 import os
 import re
-import stat
 import tempfile
 import uuid
 from pathlib import Path, PurePosixPath
@@ -16,8 +14,25 @@ from fastapi.responses import FileResponse
 from starlette.concurrency import run_in_threadpool
 from starlette.datastructures import UploadFile
 
+from ..private_store import (
+    MAX_WALLPAPER_BYTES,
+    MAX_WALLPAPER_RECORD,
+    WALLPAPER_ID,
+    PrivateStore,
+    atomic_write,
+    read_json_file,
+    regular_path,
+    validate_json,
+    validate_media_file,
+    validate_wallpaper_record,
+)
 from ..storage import NotFound
-from ..theme_media import MEDIA_FORMATS, supports_background, valid_media
+from ..theme_media import (
+    MAX_IMAGE_ANIMATION_PROBE,
+    MEDIA_FORMATS,
+    image_may_animate,
+    supports_background,
+)
 from .deps import Ctx
 from .operations import Router as APIRouter
 from .uploads import multipart_uploads
@@ -25,18 +40,7 @@ from .uploads import multipart_uploads
 router = APIRouter(tags=["themes"])
 
 MAX_PREFERENCES_BYTES = 1024 * 1024
-MAX_WALLPAPER_BYTES = 64 * 1024 * 1024
 MAX_MULTIPART_OVERHEAD = 1024 * 1024
-THEME_ID = re.compile(r"[a-z0-9][a-z0-9_-]{1,47}\Z")
-WALLPAPER_ID = re.compile(r"wallpaper_[a-f0-9]{32}\Z")
-RESERVED_IDS = {
-    "con",
-    "prn",
-    "aux",
-    "nul",
-    *(f"com{i}" for i in range(1, 10)),
-    *(f"lpt{i}" for i in range(1, 10)),
-}
 MIME_TYPES = {
     "jpg": "image/jpeg",
     "jpeg": "image/jpeg",
@@ -51,151 +55,58 @@ MIME_TYPES = {
 
 
 def _registered_theme(ctx, theme_id: str) -> None:
-    if not THEME_ID.fullmatch(theme_id) or theme_id in RESERVED_IDS:
-        raise NotFound("主题不存在")
+    try:
+        PrivateStore(ctx.data_dir, "theme", theme_id)
+    except ValueError as exc:
+        raise NotFound("主题不存在") from exc
     if not any(item.id == theme_id for item in ctx.registry.all("theme")):
         raise NotFound(f"主题不存在：{theme_id}")
 
 
 def _workspace(data_dir: Path) -> Path:
     root = Path(data_dir).absolute()
-    try:
-        metadata = root.lstat()
-    except OSError as exc:
-        raise ValueError("主题数据目录无效") from exc
-    if not stat.S_ISDIR(metadata.st_mode) or root.resolve() != root:
-        raise ValueError("主题数据目录必须是普通目录")
+    regular_path(root, directory=True, missing=False)
     return root
 
 
 def _contained(root: Path, path: Path) -> None:
-    try:
-        contained = path.resolve().is_relative_to(root)
-    except (OSError, RuntimeError) as exc:
-        raise ValueError("主题数据路径无效") from exc
-    if not contained:
-        raise ValueError("主题数据路径越界")
+    regular_path(path, root=root)
 
 
 def _directory(data_dir: Path, parts: tuple[str, ...], *, create: bool) -> Path:
     root = _workspace(data_dir)
     current = root
-    for index, part in enumerate(parts):
+    for part in parts:
         target = current / part
-        _contained(root, target)
-        try:
-            metadata = target.lstat()
-        except FileNotFoundError:
-            if not create:
-                return target.joinpath(*parts[index + 1 :])
+        if not regular_path(target, directory=True, root=root) and create:
             try:
                 target.mkdir()
             except FileExistsError:
                 pass
-            metadata = target.lstat()
-        if (
-            stat.S_ISLNK(metadata.st_mode)
-            or getattr(metadata, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
-            or not stat.S_ISDIR(metadata.st_mode)
-        ):
-            raise ValueError("主题数据路径不能包含链接或特殊文件")
-        _contained(root, target)
+            regular_path(target, directory=True, missing=False, root=root)
         current = target
     return current
 
 
 def _regular_file(path: Path, root: Path, *, missing: bool = False) -> bool:
-    _contained(root, path)
-    try:
-        metadata = path.lstat()
-    except FileNotFoundError:
-        if missing:
-            return False
-        raise
-    if (
-        stat.S_ISLNK(metadata.st_mode)
-        or getattr(metadata, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
-        or not stat.S_ISREG(metadata.st_mode)
-    ):
-        raise ValueError("主题数据文件不能是链接或特殊文件")
-    _contained(root, path)
-    return True
-
-
-def _pairs(pairs):
-    value = {}
-    for key, item in pairs:
-        if key in value:
-            raise ValueError("主题偏好设置包含重复 JSON 键")
-        value[key] = item
-    return value
-
-
-def _constant(_value):
-    raise ValueError("主题偏好设置包含无效数字")
-
-
-def _finite_float(value: str) -> float:
-    number = float(value)
-    if not math.isfinite(number):
-        raise ValueError("主题偏好设置包含无效数字")
-    return number
+    return regular_path(path, directory=False, missing=missing, root=root)
 
 
 def _validate_preferences(raw: bytes) -> dict:
-    if len(raw) > MAX_PREFERENCES_BYTES:
-        raise ValueError("主题偏好设置超过 1 MiB")
-    try:
-        value = json.loads(
-            raw.decode("utf-8"),
-            object_pairs_hook=_pairs,
-            parse_constant=_constant,
-            parse_float=_finite_float,
-        )
-    except (UnicodeDecodeError, json.JSONDecodeError, RecursionError, ValueError) as exc:
-        raise ValueError("主题偏好设置必须是有效 UTF-8 JSON") from exc
-    if not isinstance(value, dict):
-        raise ValueError("主题偏好设置必须是 JSON 对象")
-    return value
+    return validate_json(raw, limit=MAX_PREFERENCES_BYTES)
 
 
 def _load_preferences(data_dir: Path, theme_id: str) -> dict:
-    folder = _directory(data_dir, ("theme_data", theme_id), create=False)
-    path = folder / "preferences.json"
-    root = _workspace(data_dir)
-    if not _regular_file(path, root, missing=True):
-        return {}
-    if path.stat().st_size > MAX_PREFERENCES_BYTES:
-        raise ValueError("主题偏好设置超过 1 MiB")
-    with path.open("rb") as stream:
-        return _validate_preferences(stream.read(MAX_PREFERENCES_BYTES + 1))
+    return PrivateStore(data_dir, "theme", theme_id).load_json(limit=MAX_PREFERENCES_BYTES)
 
 
 def _write_atomic(path: Path, root: Path, raw: bytes) -> None:
     _regular_file(path, root, missing=True)
-    descriptor, temporary_name = tempfile.mkstemp(prefix=".theme-write-", dir=path.parent)
-    temporary = Path(temporary_name)
-    try:
-        with os.fdopen(descriptor, "wb") as stream:
-            stream.write(raw)
-            stream.flush()
-            os.fsync(stream.fileno())
-        _regular_file(temporary, root)
-        _regular_file(path, root, missing=True)
-        os.replace(temporary, path)
-    finally:
-        temporary.unlink(missing_ok=True)
+    atomic_write(path, raw)
 
 
 def _save_preferences(data_dir: Path, theme_id: str, value: dict) -> None:
-    try:
-        raw = json.dumps(value, ensure_ascii=False, sort_keys=True, allow_nan=False).encode("utf-8")
-    except (TypeError, ValueError, RecursionError) as exc:
-        raise ValueError("主题偏好设置必须是 JSON 对象") from exc
-    value = _validate_preferences(raw)
-    folder = _directory(data_dir, ("theme_data", theme_id), create=True)
-    root = _workspace(data_dir)
-    _write_atomic(folder / "preferences.json", root, raw)
+    PrivateStore(data_dir, "theme", theme_id).write_json(value, limit=MAX_PREFERENCES_BYTES)
 
 
 async def _request_body(request: Request, limit: int) -> bytes:
@@ -231,7 +142,13 @@ async def put_theme_preferences(ctx: Ctx, theme_id: str, request: Request) -> di
     if content_type != "application/json":
         raise ValueError("主题偏好设置必须使用 application/json")
     value = _validate_preferences(await _request_body(request, MAX_PREFERENCES_BYTES))
-    await run_in_threadpool(_save_preferences, ctx.data_dir, theme_id, value)
+
+    def save() -> None:
+        with ctx.engine.hold_operation():
+            _registered_theme(ctx, theme_id)
+            _save_preferences(ctx.data_dir, theme_id, value)
+
+    await run_in_threadpool(save)
     return value
 
 
@@ -249,7 +166,11 @@ def _filename_and_kind(filename: str) -> tuple[str, str, str]:
 
 
 def _wallpaper_folder(data_dir: Path, theme_id: str, *, create: bool) -> Path:
-    return _directory(data_dir, ("themes", theme_id, "user_wallpapers"), create=create)
+    return PrivateStore(data_dir, "theme", theme_id).directory("wallpapers", create=create)
+
+
+def _wallpaper_sources(data_dir: Path, theme_id: str) -> tuple[Path, ...]:
+    return PrivateStore(data_dir, "theme", theme_id).sources("wallpapers")
 
 
 def _wallpaper_id(value: str) -> str:
@@ -264,37 +185,39 @@ def _read_record(folder: Path, data_dir: Path, wallpaper_id: str) -> tuple[dict,
     metadata_path = folder / f"{wallpaper_id}.json"
     if not _regular_file(metadata_path, root, missing=True):
         raise NotFound("壁纸不存在")
-    if metadata_path.stat().st_size > 16 * 1024:
-        raise ValueError("壁纸元数据过大")
-    try:
-        with metadata_path.open("rb") as stream:
-            record = json.loads(stream.read(16 * 1024 + 1), object_pairs_hook=_pairs)
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError, RecursionError, ValueError) as exc:
-        raise ValueError("壁纸元数据无效") from exc
-    if (
-        not isinstance(record, dict)
-        or set(record) != {"id", "filename", "kind", "suffix"}
-        or record["id"] != wallpaper_id
-        or not isinstance(record["filename"], str)
-        or not record["filename"]
-        or len(record["filename"]) > 255
-        or any(
-            ord(char) < 32 or 127 <= ord(char) < 160 or char in "/\\" for char in record["filename"]
-        )
-        or not isinstance(record["suffix"], str)
-        or record["suffix"] not in MIME_TYPES
-        or PurePosixPath(record["filename"]).suffix.lower().removeprefix(".") != record["suffix"]
-        or record["kind"]
-        != next(
-            (group for group, formats in MEDIA_FORMATS.items() if record["suffix"] in formats),
-            None,
-        )
-    ):
-        raise ValueError("壁纸元数据无效")
+    record = validate_wallpaper_record(
+        read_json_file(metadata_path, limit=MAX_WALLPAPER_RECORD), wallpaper_id
+    )
     file_path = folder / f"{wallpaper_id}.{record['suffix']}"
     if not _regular_file(file_path, root, missing=True):
         raise NotFound("壁纸不存在")
+    validate_media_file(file_path, record["suffix"], limit=MAX_WALLPAPER_BYTES)
     return record, file_path, metadata_path
+
+
+def _find_record(data_dir: Path, theme_id: str, wallpaper_id: str) -> tuple[dict, Path, Path]:
+    wallpaper_id = _wallpaper_id(wallpaper_id)
+    root = _workspace(data_dir)
+    for folder in _wallpaper_sources(data_dir, theme_id):
+        if _regular_file(folder / f"{wallpaper_id}.json", root, missing=True):
+            return _read_record(folder, data_dir, wallpaper_id)
+    raise NotFound("壁纸不存在")
+
+
+def _wallpaper_item(record: dict, path: Path, theme_id: str) -> dict:
+    animated = False
+    if record["kind"] == "image":
+        with path.open("rb") as stream:
+            animated = image_may_animate(
+                f"assets/wallpaper.{record['suffix']}", stream.read(MAX_IMAGE_ANIMATION_PROBE)
+            )
+    return {
+        "id": record["id"],
+        "filename": record["filename"],
+        "kind": record["kind"],
+        "animated": animated,
+        "url": f"/api/themes/{theme_id}/wallpapers/{record['id']}/file",
+    }
 
 
 def _store_wallpaper(data_dir: Path, theme_id: str, upload: UploadFile) -> dict:
@@ -306,7 +229,6 @@ def _store_wallpaper(data_dir: Path, theme_id: str, upload: UploadFile) -> dict:
     metadata_path = folder / f"{wallpaper_id}.json"
     descriptor, temporary_name = tempfile.mkstemp(prefix=".wallpaper-", dir=folder)
     temporary = Path(temporary_name)
-    prefix = bytearray()
     size = 0
     try:
         upload.file.seek(0)
@@ -315,14 +237,11 @@ def _store_wallpaper(data_dir: Path, theme_id: str, upload: UploadFile) -> dict:
                 size += len(chunk)
                 if size > MAX_WALLPAPER_BYTES:
                     raise ValueError("壁纸文件超过大小限制")
-                if len(prefix) < 32:
-                    prefix.extend(chunk[: 32 - len(prefix)])
                 stream.write(chunk)
-            if not size or not valid_media(f"assets/wallpaper.{suffix}", bytes(prefix)):
-                raise ValueError("壁纸文件签名与扩展名不匹配")
             stream.flush()
             os.fsync(stream.fileno())
         _regular_file(temporary, root)
+        validate_media_file(temporary, suffix, limit=MAX_WALLPAPER_BYTES)
         os.replace(temporary, file_path)
         record = {"id": wallpaper_id, "filename": filename, "kind": kind, "suffix": suffix}
         raw = json.dumps(record, ensure_ascii=False, sort_keys=True).encode("utf-8")
@@ -331,35 +250,23 @@ def _store_wallpaper(data_dir: Path, theme_id: str, upload: UploadFile) -> dict:
         temporary.unlink(missing_ok=True)
         file_path.unlink(missing_ok=True)
         raise
-    return {
-        "id": wallpaper_id,
-        "filename": filename,
-        "kind": kind,
-        "url": f"/api/themes/{theme_id}/wallpapers/{wallpaper_id}/file",
-    }
+    return _wallpaper_item(record, file_path, theme_id)
 
 
 def _list_wallpapers(data_dir: Path, theme_id: str) -> list[dict]:
-    folder = _wallpaper_folder(data_dir, theme_id, create=False)
     root = _workspace(data_dir)
-    if not folder.exists():
-        return []
-    items = []
-    for path in folder.iterdir():
-        _regular_file(path, root)
-        match = re.fullmatch(r"(wallpaper_[a-f0-9]{32})\.json", path.name)
-        if not match:
+    items = {}
+    for folder in _wallpaper_sources(data_dir, theme_id):
+        if not regular_path(folder, directory=True, root=root):
             continue
-        record, _file_path, _metadata_path = _read_record(folder, data_dir, match[1])
-        items.append(
-            {
-                "id": record["id"],
-                "filename": record["filename"],
-                "kind": record["kind"],
-                "url": f"/api/themes/{theme_id}/wallpapers/{record['id']}/file",
-            }
-        )
-    return sorted(items, key=lambda item: item["id"])
+        for path in sorted(folder.iterdir()):
+            _regular_file(path, root)
+            match = re.fullmatch(r"(wallpaper_[a-f0-9]{32})\.json", path.name)
+            if not match or match[1] in items:
+                continue
+            record, file_path, _metadata_path = _read_record(folder, data_dir, match[1])
+            items[record["id"]] = _wallpaper_item(record, file_path, theme_id)
+    return [items[identifier] for identifier in sorted(items)]
 
 
 @router.get("/themes/{theme_id}/wallpapers")
@@ -405,7 +312,13 @@ async def upload_theme_wallpaper(ctx: Ctx, theme_id: str, request: Request) -> d
         upload = uploads[0][1]
         if not isinstance(upload, UploadFile):
             raise ValueError("壁纸上传字段无效")
-        return await run_in_threadpool(_store_wallpaper, ctx.data_dir, theme_id, upload)
+
+        def store() -> dict:
+            with ctx.engine.hold_operation():
+                _registered_theme(ctx, theme_id)
+                return _store_wallpaper(ctx.data_dir, theme_id, upload)
+
+        return await run_in_threadpool(store)
     finally:
         for _, upload in uploads:
             await upload.close()
@@ -414,12 +327,7 @@ async def upload_theme_wallpaper(ctx: Ctx, theme_id: str, request: Request) -> d
 @router.get("/themes/{theme_id}/wallpapers/{wallpaper_id}/file")
 def serve_theme_wallpaper(ctx: Ctx, theme_id: str, wallpaper_id: str) -> FileResponse:
     _registered_theme(ctx, theme_id)
-    folder = _wallpaper_folder(ctx.data_dir, theme_id, create=False)
-    record, path, _metadata = _read_record(folder, ctx.data_dir, wallpaper_id)
-    with path.open("rb") as stream:
-        prefix = stream.read(32)
-    if not valid_media(f"assets/wallpaper.{record['suffix']}", prefix):
-        raise NotFound("壁纸文件无效")
+    record, path, _metadata = _find_record(ctx.data_dir, theme_id, wallpaper_id)
     return FileResponse(
         path,
         media_type=MIME_TYPES[record["suffix"]],
@@ -436,8 +344,17 @@ def serve_theme_wallpaper(ctx: Ctx, theme_id: str, wallpaper_id: str) -> FileRes
 
 @router.delete("/themes/{theme_id}/wallpapers/{wallpaper_id}", status_code=204)
 def delete_theme_wallpaper(ctx: Ctx, theme_id: str, wallpaper_id: str) -> None:
-    _registered_theme(ctx, theme_id)
-    folder = _wallpaper_folder(ctx.data_dir, theme_id, create=False)
-    _record, path, metadata_path = _read_record(folder, ctx.data_dir, wallpaper_id)
-    path.unlink()
-    metadata_path.unlink()
+    with ctx.engine.hold_operation():
+        _registered_theme(ctx, theme_id)
+        wallpaper_id = _wallpaper_id(wallpaper_id)
+        root = _workspace(ctx.data_dir)
+        records = [
+            _read_record(folder, ctx.data_dir, wallpaper_id)
+            for folder in _wallpaper_sources(ctx.data_dir, theme_id)
+            if _regular_file(folder / f"{wallpaper_id}.json", root, missing=True)
+        ]
+        if not records:
+            raise NotFound("壁纸不存在")
+        for _record, path, metadata_path in records:
+            path.unlink()
+            metadata_path.unlink()

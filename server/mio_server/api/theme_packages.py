@@ -527,14 +527,30 @@ def theme_card_style(ctx: Ctx, theme_id: str) -> Response:
 
 
 @router.delete("/themes/{theme_id}", status_code=204)
-def delete_theme(ctx: Ctx, theme_id: str) -> None:
-    contribution = next((item for item in ctx.registry.all("theme") if item.id == theme_id), None)
-    if contribution is None:
-        raise NotFound(f"主题不存在：{theme_id}")
-    if contribution.source == "theme-package":
-        ctx.theme_packages.remove(theme_id)
-    elif contribution.source == "user":
-        ctx.store.delete_doc("theme", theme_id)
-        ctx.registry.unregister("theme", theme_id)
-    else:
-        raise ValueError("只能删除自己导入的主题")
+def delete_theme(ctx: Ctx, theme_id: str, delete_data: bool = False) -> None:
+    from ..backups.extension_data import validate_tree
+    from ..private_store import PrivateStore
+
+    with ctx.engine.hold_operation():
+        contribution = next(
+            (item for item in ctx.registry.all("theme") if item.id == theme_id), None
+        )
+        if contribution is None:
+            raise NotFound(f"主题不存在：{theme_id}")
+        if contribution.source == "theme-package":
+            ctx.theme_packages.remove(theme_id, delete_data=delete_data)
+        elif contribution.source == "user":
+            private_data = tuple(
+                dict.fromkeys(PrivateStore(ctx.data_dir, "theme", theme_id).sources())
+            )
+            if delete_data:
+                for path in private_data:
+                    validate_tree(path)
+            ctx.store.delete_doc("theme", theme_id)
+            ctx.registry.unregister("theme", theme_id)
+            if delete_data:
+                for path in private_data:
+                    if path.exists():
+                        shutil.rmtree(path)
+        else:
+            raise ValueError("只能删除自己导入的主题")

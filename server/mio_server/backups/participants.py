@@ -20,6 +20,10 @@ from typing import Protocol
 from .extension_data import allowed_extension_path, regular_path, with_extension_head
 from .paths import sha_file
 from .themes import allowed_theme_path, copy_themes, theme_files
+from .ui_data import allowed_path as allowed_ui_path
+from .ui_data import copy_data as copy_ui_data
+from .ui_data import data_files as ui_data_files
+from .ui_data import size_limit as ui_size_limit
 
 EXTENSIONS_ROOT = Path(__file__).resolve().parents[3] / "extensions"
 _CATALOG: ContextVar[tuple | None] = ContextVar("backup_participants", default=None)
@@ -110,7 +114,7 @@ def catalog_scope(workspace: Path | None):
 
 
 def owner(name: str, workspace: Path | None = None):
-    if not safe_member(name) or allowed_extension_path(name):
+    if not safe_member(name) or allowed_extension_path(name) or allowed_ui_path(name):
         return None
     for participant in participants(workspace):
         if name.startswith(participant.root + "/") and participant.allowed(name):
@@ -127,10 +131,12 @@ def safe_member(name: str) -> bool:
 
 
 def allowed_path(name: str, workspace: Path | None = None) -> bool:
-    return allowed_theme_path(name) or owner(name, workspace) is not None
+    return allowed_ui_path(name) or allowed_theme_path(name) or owner(name, workspace) is not None
 
 
 def size_limit(name: str, workspace: Path | None = None) -> int:
+    if allowed_ui_path(name):
+        return ui_size_limit(name)
     if allowed_theme_path(name):
         from ..theme_packages import MAX_FILE
 
@@ -145,6 +151,7 @@ def data_files(
     workspace: Path, *, include_credentials: bool = True, trusted_workspace: Path | None = None
 ):
     yield from theme_files(workspace)
+    yield from ui_data_files(workspace, include_credentials=include_credentials)
     cached = _CATALOG.get()
     selected = (
         cached[1]
@@ -156,6 +163,7 @@ def data_files(
             if (
                 not safe_member(name)
                 or allowed_extension_path(name)
+                or allowed_ui_path(name)
                 or not name.startswith(participant.root + "/")
                 or not participant.allowed(name)
             ):
@@ -182,15 +190,31 @@ def with_workspace_head(database_head: str, workspace: Path) -> str:
 
 def copy_data(source: Path, target: Path, *, include_credentials: bool, byte_budget: int) -> int:
     total = copy_themes(source, target, byte_budget=byte_budget)
-    settings_head = with_extension_head("0" * 64, target)
+    total += copy_ui_data(
+        source,
+        target,
+        include_credentials=include_credentials,
+        byte_budget=byte_budget - total,
+    )
+
+    def host_head() -> str:
+        digest = hashlib.sha256(with_extension_head("0" * 64, target).encode("ascii"))
+        for name, path in ui_data_files(target):
+            digest.update(name.encode("utf-8") + b"\0" + bytes.fromhex(sha_file(path)))
+        return digest.hexdigest()
+
+    settings_head = host_head()
     for participant in participants(source):
-        if participant.allowed(f"{participant.root}/settings.json"):
-            raise ValueError("extension backup participants cannot claim SDK settings.json")
+        if any(
+            participant.allowed(f"{participant.root}/{filename}")
+            for filename in ("settings.json", "preferences.json")
+        ):
+            raise ValueError("extension backup participants cannot claim host-owned settings")
         total += participant.snapshot(
             source, target, include_credentials=include_credentials, byte_budget=byte_budget - total
         )
-        if with_extension_head("0" * 64, target) != settings_head:
-            raise ValueError("extension backup participant changed SDK settings.json")
+        if host_head() != settings_head:
+            raise ValueError("extension backup participant changed host-owned settings")
         if total > byte_budget:
             raise ValueError("workspace exceeds the archive size limit")
     return total

@@ -11432,7 +11432,9 @@ export interface operations {
     };
     delete_theme_api_themes__theme_id__delete: {
         parameters: {
-            query?: never;
+            query?: {
+                delete_data?: boolean;
+            };
             header?: never;
             path: {
                 theme_id: string;

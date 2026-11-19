@@ -45,9 +45,11 @@ theme-linen/
 
 ### 主题私有设置与卡片样式
 
-主题可在 `theme.json` 声明 `settings_schema`，由设置页的「更多设置」面板渲染 `slider`、`switch`、`select` 与 `file_upload` 字段。动态壁纸选择使用 `options_source: "wallpapers"`；文件上传字段将媒体写入本机的 `<数据目录>/themes/<id>/user_wallpapers/`，不修改主题包，也不会进入主题 ZIP 导出。`GET` / `PUT /api/themes/{id}/preferences` 独立读写 `<数据目录>/theme_data/<id>/preferences.json`。壁纸清单、上传、媒体读取和删除接口分别为 `/api/themes/{id}/wallpapers` 及其 `{wallpaper_id}` 子路径；上传字段名为 `file`。后端校验文件类型、签名和大小。
+主题可在 `theme.json` 声明 `settings_schema`，由设置页的「更多设置」面板渲染 `slider`、`switch`、`select` 与 `file_upload` 字段。动态壁纸选择使用 `options_source: "wallpapers"`；文件上传字段将媒体写入本机的 `<数据目录>/theme_data/<id>/wallpapers/`，与主题包物理分离，也不会进入主题 ZIP 导出。`GET` / `PUT /api/themes/{id}/preferences` 独立读写同一所有权目录下的 `preferences.json`。旧 `themes/<id>/user_wallpapers/` 仅作为已知旧来源读取和备份，绝不自动删除；同名媒体以新位置优先。壁纸清单、上传、媒体读取和删除接口分别为 `/api/themes/{id}/wallpapers` 及其 `{wallpaper_id}` 子路径；上传字段名为 `file`。后端校验文件类型、签名和大小。
 
 也可声明 `settings_page: "settings.html"`。页面通过 `/api/themes/{id}/settings-page` 在无同源权限的 sandbox iframe 中提供；注入的 `window.theme` 只暴露异步 `getSettings()` 与 `updateSettings(settings)`，CSP 禁止网络连接与宿主 API。内联脚本使用每次响应生成的 nonce。若同时声明两种设置模式，设置页优先打开自定义页面。
+
+私有设置与上传壁纸会随完整工作区备份和重启恢复，并参与恢复前的内容版本检查；这与主题 ZIP 的公开分发范围不同。壁纸列表和上传结果包含 `animated` 标记，用户上传的动画图片与包内背景遵循同一减少动态效果策略。
 
 主题 `theme.css` 可额外声明严格以 `.theme-card[data-theme-id="<id>"]` 为根的选择器，供列表中的该主题卡片单独展示；其他规则不会通过卡片样式端点暴露。该卡片样式不要求主题处于启用状态。
 

@@ -126,7 +126,7 @@ class BackupParticipantsTests(unittest.TestCase):
         self.assertIsNone(P.owner("extensions_data/notes/settings.json"))
         with self.assertRaisesRegex(ValueError, "outside its data area"):
             list(P.data_files(self.workspace))
-        with self.assertRaisesRegex(ValueError, "cannot claim SDK"):
+        with self.assertRaisesRegex(ValueError, "cannot claim host-owned"):
             P.copy_data(
                 self.workspace, self.root / "output", include_credentials=True, byte_budget=1024
             )
@@ -144,8 +144,38 @@ class BackupParticipantsTests(unittest.TestCase):
         )
         target = self.root / "output"
         save_settings(target, "notes", {"value": "SDK"})
-        with self.assertRaisesRegex(ValueError, "changed SDK"):
+        with self.assertRaisesRegex(ValueError, "changed host-owned"):
             P.copy_data(self.workspace, target, include_credentials=True, byte_budget=1024)
+
+    def test_participant_cannot_claim_or_mutate_host_preferences(self):
+        from mio_server.extension_preferences import save_preferences
+
+        folder = self.package(self.shipped)
+        target = self.root / "output"
+        save_preferences(self.workspace, "notes", {"window": "current"})
+        self.assertIsNone(P.owner("extensions_data/notes/preferences.json"))
+        (folder / "backup.py").write_text(
+            CONTRACT.replace(
+                "        total = 0",
+                "        from mio_server.extension_preferences import save_preferences\n"
+                '        save_preferences(target, "notes", {"window": "tampered"})\n'
+                "        total = 0",
+            ),
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(ValueError, "changed host-owned"):
+            P.copy_data(self.workspace, target, include_credentials=True, byte_budget=1024)
+        (folder / "backup.py").write_text(
+            CONTRACT.replace(
+                'return name == "extensions_data/notes/items.json"',
+                'return name == "extensions_data/notes/preferences.json"',
+            ),
+            encoding="utf-8",
+        )
+        with self.assertRaisesRegex(ValueError, "cannot claim host-owned"):
+            P.copy_data(
+                self.workspace, self.root / "claim", include_credentials=True, byte_budget=1024
+            )
 
     def test_catalog_scope_verifies_trust_once_for_many_archive_entries(self):
         folder = self.package(self.root / "reviewed")

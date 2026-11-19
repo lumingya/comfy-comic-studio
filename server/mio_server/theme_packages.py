@@ -770,24 +770,48 @@ class ThemePackageManager:
                 raise
 
     def _publish(self, theme: Theme, staging: Path) -> dict:
+        from .backups.ui_data import wallpaper_container
+
         if any(item.id == theme.id for item in self.ctx.registry.all("theme")):
             raise ThemePackageError(f"主题 ID 已被占用：{theme.id}")
         _regular_path(self.root, directory=True)
         target = self.root / theme.id
-        if _regular_path(target, directory=True, missing=True):
+        retained = _regular_path(target, directory=True, missing=True)
+        if retained and not wallpaper_container(target):
             raise ThemePackageError(f"主题文件夹已存在：{theme.id}")
         _folder_files(staging)
         _regular_path(self.root, directory=True)
-        if _regular_path(target, directory=True, missing=True):
+        if _regular_path(target, directory=True, missing=True) and not (
+            retained and wallpaper_container(target)
+        ):
             raise ThemePackageError(f"主题文件夹已存在：{theme.id}")
-        staging.replace(target)
+        # A legacy private-only container survives uninstall. Publish only package
+        # entries into it; never move, overwrite or delete the retained media.
+        moved: list[str] = []
+        if retained:
+            try:
+                for path in staging.iterdir():
+                    path.replace(target / path.name)
+                    moved.append(path.name)
+            except BaseException:
+                for name in reversed(moved):
+                    (target / name).replace(staging / name)
+                raise
+        else:
+            staging.replace(target)
         try:
             self.ctx.registry.register(
                 "theme", theme.id, theme, source="theme-package", title=theme.name
             )
         except BaseException:
-            self._discard_staging(target)
+            if retained:
+                for name in reversed(moved):
+                    (target / name).replace(staging / name)
+            else:
+                self._discard_staging(target)
             raise
+        if retained:
+            staging.rmdir()
         self._installed[theme.id] = target
         return to_json(theme, "theme-package")
 
@@ -800,8 +824,11 @@ class ThemePackageManager:
         except (OSError, ThemePackageError):
             log.warning("theme rollback left an unsafe path untouched: %s", folder)
 
-    def remove(self, theme_id: str) -> None:
-        with self._lock:
+    def remove(self, theme_id: str, *, delete_data: bool = False) -> None:
+        from .backups.extension_data import validate_tree
+        from .private_store import PrivateStore
+
+        with self.ctx.engine.hold_operation(), self._lock:
             folder = self._installed.get(theme_id)
             if folder is None:
                 raise ThemePackageError("只能删除用户安装的独立主题包")
@@ -812,6 +839,24 @@ class ThemePackageManager:
                 self._installed.pop(theme_id, None)
                 raise ThemePackageError("主题文件夹不存在")
             _folder_entries(folder)
-            shutil.rmtree(folder)
+            private_data = tuple(
+                dict.fromkeys(PrivateStore(self.ctx.data_dir, "theme", theme_id).sources())
+            )
+            if delete_data:
+                for path in private_data:
+                    validate_tree(path)
+            for path in folder.iterdir():
+                if path.name == USER_WALLPAPERS:
+                    continue
+                if path.is_dir():
+                    shutil.rmtree(path)
+                else:
+                    path.unlink()
+            if delete_data:
+                for path in private_data:
+                    if path.exists():
+                        shutil.rmtree(path)
+            if not any(folder.iterdir()):
+                folder.rmdir()
             self._installed.pop(theme_id, None)
             self.ctx.registry.unregister("theme", theme_id)

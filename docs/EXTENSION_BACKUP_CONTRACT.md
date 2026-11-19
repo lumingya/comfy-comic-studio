@@ -8,7 +8,7 @@
 
 | 属性或方法 | 责任 |
 | --- | --- |
-| `root: str` | 固定为 `extensions_data/<扩展 id>`，只能声明所属扩展的数据；其中 `settings.json` 由宿主 SDK 管理，不由参与者重复处理 |
+| `root: str` | 固定为 `extensions_data/<扩展 id>`，只能声明所属扩展的数据；其中 `settings.json`（SDK 设置）和 `preferences.json`（宿主私有偏好）由宿主管理，不由参与者重复处理或改写 |
 | `allowed(name)` | 判断完整工作区相对路径是否属于该扩展允许的文件 |
 | `size_limit(name)` | 单文件字节上限；ZIP 解压前检查 |
 | `files(workspace, include_credentials=True)` | 逐项返回 `(相对路径, Path)`；校验目录、JSON、附件引用和文件配对；禁止链接、越界和临时文件 |
