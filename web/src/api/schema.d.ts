@@ -1946,13 +1946,20 @@ export interface paths {
         };
         /** Get Extension Preferences */
         get: operations["get_extension_preferences_api_ext__ext_id__preferences_get"];
-        /** Put Extension Preferences */
+        /**
+         * Put Extension Preferences
+         * @description Replace the complete object; omit If-Match only for an explicit unconditional replace.
+         */
         put: operations["put_extension_preferences_api_ext__ext_id__preferences_put"];
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Patch Extension Preferences
+         * @description Conditionally replace one subtree; callers retry only after fetching its current revision.
+         */
+        patch: operations["patch_extension_preferences_api_ext__ext_id__preferences_patch"];
         trace?: never;
     };
     "/api/themes": {
@@ -1985,13 +1992,20 @@ export interface paths {
         };
         /** Get Theme Preferences */
         get: operations["get_theme_preferences_api_themes__theme_id__preferences_get"];
-        /** Put Theme Preferences */
+        /**
+         * Put Theme Preferences
+         * @description Replace the complete object; If-Match optionally makes replacement conditional.
+         */
         put: operations["put_theme_preferences_api_themes__theme_id__preferences_put"];
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Patch Theme Preferences
+         * @description Conditionally replace one subtree without overwriting sibling preferences.
+         */
+        patch: operations["patch_theme_preferences_api_themes__theme_id__preferences_patch"];
         trace?: never;
     };
     "/api/themes/{theme_id}/wallpapers": {
@@ -11116,6 +11130,8 @@ export interface operations {
             /** @description Successful Response */
             200: {
                 headers: {
+                    /** @description Strong content revision for conditional preference writes */
+                    ETag?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -11123,6 +11139,13 @@ export interface operations {
                         [key: string]: components["schemas"]["JsonValue"];
                     };
                 };
+            };
+            /** @description Preference revision changed; reload before applying this intent */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -11138,7 +11161,9 @@ export interface operations {
     put_extension_preferences_api_ext__ext_id__preferences_put: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "if-match"?: string | null;
+            };
             path: {
                 ext_id: string;
             };
@@ -11153,6 +11178,8 @@ export interface operations {
             /** @description Successful Response */
             200: {
                 headers: {
+                    /** @description Strong content revision for conditional preference writes */
+                    ETag?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -11160,6 +11187,66 @@ export interface operations {
                         [key: string]: components["schemas"]["JsonValue"];
                     };
                 };
+            };
+            /** @description Preference revision changed; reload before applying this intent */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_extension_preferences_api_ext__ext_id__preferences_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ext_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Expected Revision */
+                    expected_revision: string;
+                    /** Path */
+                    path: string[];
+                    /** Value */
+                    value: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    /** @description Strong content revision for conditional preference writes */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: components["schemas"]["JsonValue"];
+                    };
+                };
+            };
+            /** @description Preference revision changed; reload before applying this intent */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -11239,11 +11326,20 @@ export interface operations {
             /** @description Successful Response */
             200: {
                 headers: {
+                    /** @description Strong content revision for conditional preference writes */
+                    ETag?: string;
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": Record<string, unknown>;
                 };
+            };
+            /** @description Preference revision changed; reload before applying this intent */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -11259,7 +11355,9 @@ export interface operations {
     put_theme_preferences_api_themes__theme_id__preferences_put: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "if-match"?: string | null;
+            };
             path: {
                 theme_id: string;
             };
@@ -11274,11 +11372,71 @@ export interface operations {
             /** @description Successful Response */
             200: {
                 headers: {
+                    /** @description Strong content revision for conditional preference writes */
+                    ETag?: string;
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": Record<string, unknown>;
                 };
+            };
+            /** @description Preference revision changed; reload before applying this intent */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_theme_preferences_api_themes__theme_id__preferences_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                theme_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Expected Revision */
+                    expected_revision: string;
+                    /** Path */
+                    path: string[];
+                    /** Value */
+                    value: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    /** @description Strong content revision for conditional preference writes */
+                    ETag?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Preference revision changed; reload before applying this intent */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

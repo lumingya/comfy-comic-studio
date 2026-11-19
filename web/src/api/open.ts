@@ -1,6 +1,7 @@
 /** P5 surfaces: themes, extensions, cloud channels, API tokens, webhooks, updates, album. */
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, data, raw } from './client';
+import { usePrivatePreferences, useWritePrivatePreferences } from './preferenceWrites';
 
 /** The same media contract is used by package backgrounds and private uploads. */
 export interface MediaDescriptor {
@@ -206,35 +207,31 @@ export function useDeleteTheme() {
 }
 
 export function useThemePreferences(themeId: string | null) {
-  return useQuery({
-    queryKey: ['theme-preferences', themeId],
-    enabled: !!themeId,
-    queryFn: () =>
-      json<Record<string, unknown>>(`/api/themes/${encodeURIComponent(themeId!)}/preferences`),
-  });
+  return usePrivatePreferences(
+    themeId ? `/api/themes/${encodeURIComponent(themeId)}/preferences` : null,
+    ['theme-preferences', themeId],
+  );
 }
 
 export function useSaveThemePreferences(themeId: string) {
-  const qc = useQueryClient();
-  const queryKey = ['theme-preferences', themeId] as const;
-  return useMutation({
-    mutationFn: (preferences: Record<string, unknown>) =>
-      json<Record<string, unknown>>(
-        `/api/themes/${encodeURIComponent(themeId)}/preferences`,
-        'PUT',
-        preferences,
-      ),
-    onMutate: async (preferences) => {
-      await qc.cancelQueries({ queryKey });
-      const previous = qc.getQueryData<Record<string, unknown>>(queryKey);
-      qc.setQueryData(queryKey, { ...previous, ...preferences });
-      return { previous };
-    },
-    onError: (_error, _preferences, context) => {
-      if (context?.previous !== undefined) qc.setQueryData(queryKey, context.previous);
-    },
-    onSuccess: (preferences) => qc.setQueryData(queryKey, preferences),
-  });
+  return useWritePrivatePreferences(`/api/themes/${encodeURIComponent(themeId)}/preferences`, [
+    'theme-preferences',
+    themeId,
+  ]);
+}
+
+export function useExtensionPreferences(extensionId: string) {
+  return usePrivatePreferences(`/api/ext/${encodeURIComponent(extensionId)}/preferences`, [
+    'extension-preferences',
+    extensionId,
+  ]);
+}
+
+export function useSaveExtensionPreferences(extensionId: string) {
+  return useWritePrivatePreferences(`/api/ext/${encodeURIComponent(extensionId)}/preferences`, [
+    'extension-preferences',
+    extensionId,
+  ]);
 }
 
 export function useThemeWallpapers(themeId: string | null) {

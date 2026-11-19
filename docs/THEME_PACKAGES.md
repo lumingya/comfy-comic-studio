@@ -68,6 +68,7 @@ theme-linen/
 - `GET /themes/{theme_id}/package`：导出独立主题 ZIP。
 - `DELETE /themes/{theme_id}`：删除用户 JSON 或独立导入的主题包；内置主题和扩展贡献不可删除。
 - `GET` / `PUT /themes/{theme_id}/preferences`：读取或替换该主题的私有 JSON 偏好。
+- `PATCH /themes/{theme_id}/preferences`：`{expected_revision, path, value}` 对一个对象子树进行条件替换；响应为完整对象，GET/PUT/PATCH 均返回强 ETag。revision 是去除 ETag 双引号的 64 位摘要。空 path 为整个对象；最多 16 个对象键，不能穿越数组/标量或使用 prototype 相关键；null 表示写入 null。冲突返回 409，应重新读取后由调用方决定是否重放明确子树意图。PUT 可带一个强 `If-Match`；未提供时仍表示明确的无条件整对象替换。
 - `GET /themes/{theme_id}/wallpapers`：列出该主题的本地壁纸。
 - `POST /themes/{theme_id}/wallpapers`：上传本地壁纸；multipart 字段为 `file`。
 - `GET /themes/{theme_id}/wallpapers/{wallpaper_id}/file`：读取已上传的媒体文件。

@@ -1,6 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import { Check, Trash2, Upload, X } from 'lucide-react';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
   useDeleteThemeWallpaper,
@@ -155,12 +156,17 @@ function ThemeSettingsFrame(props: {
   );
   const settingsRef = useRef(props.settings);
   const saveRef = useRef(props.save);
+  const updateRevision = useRef(0);
   settingsRef.current = props.settings;
   saveRef.current = props.save;
 
   useLayoutEffect(() => {
-    const post = (message: Record<string, unknown>) =>
-      frame.current?.contentWindow?.postMessage(message, '*');
+    let live = true;
+    const currentFrame = frame.current;
+    const post = (message: Record<string, unknown>) => {
+      if (live && frame.current === currentFrame)
+        currentFrame?.contentWindow?.postMessage(message, '*');
+    };
     const onMessage = (event: MessageEvent) => {
       if (
         event.origin !== 'null' ||
@@ -187,16 +193,20 @@ function ThemeSettingsFrame(props: {
         respond({ error: 'Invalid settings payload.' });
         return;
       }
+      const revision = ++updateRevision.current;
       void saveRef.current(event.data.settings).then(
         (settings) => {
-          settingsRef.current = settings;
+          if (live && revision === updateRevision.current) settingsRef.current = settings;
           respond({ settings });
         },
         () => respond({ error: 'Unable to save settings.' }),
       );
     };
     window.addEventListener('message', onMessage);
-    return () => window.removeEventListener('message', onMessage);
+    return () => {
+      live = false;
+      window.removeEventListener('message', onMessage);
+    };
   }, [session]);
 
   const pageUrl = new URL(props.pageUrl, window.location.href);
@@ -221,45 +231,99 @@ export function ThemeSettingsPanel({ theme, onClose }: { theme: ThemeInfo; onClo
   const savePreferences = useSaveThemePreferences(theme.id);
   const uploadWallpaper = useUploadThemeWallpaper(theme.id);
   const deleteWallpaper = useDeleteThemeWallpaper(theme.id);
+  const queryClient = useQueryClient();
   const [draft, setDraft] = useState<Record<string, unknown>>({});
   const draftRef = useRef(draft);
-  draftRef.current = draft;
+  const live = useRef(true);
+  const sequence = useRef(0);
+  const dirty = useRef(
+    new Map<
+      string,
+      { value: unknown; sequence: number; promise?: Promise<Record<string, unknown>> }
+    >(),
+  );
+  const frameDraft = useRef<{ value: Record<string, unknown>; sequence: number } | null>(null);
+  const syncDraft = useCallback(() => {
+    if (!live.current) return;
+    const current = queryClient.getQueryData<Record<string, unknown>>([
+      'theme-preferences',
+      theme.id,
+    ]);
+    const next = { ...(frameDraft.current?.value ?? current ?? {}) };
+    for (const [key, pending] of dirty.current) next[key] = pending.value;
+    draftRef.current = next;
+    setDraft(next);
+  }, [queryClient, theme.id]);
 
   useEffect(() => {
-    if (preferences.data) setDraft(preferences.data);
-  }, [preferences.data]);
+    live.current = true;
+    return () => {
+      live.current = false;
+    };
+  }, []);
 
-  const commit = (next = draftRef.current) => savePreferences.mutateAsync(next);
+  useEffect(() => {
+    if (preferences.data) syncDraft();
+  }, [preferences.data, syncDraft]);
+
+  const commit = (key: string) => {
+    const pending = dirty.current.get(key);
+    if (!pending) return Promise.resolve(draftRef.current);
+    if (pending.promise) return pending.promise;
+    const promise = savePreferences.mutateAsync({ path: [key], value: pending.value });
+    pending.promise = promise;
+    void promise
+      .catch((error) => {
+        if (live.current && dirty.current.get(key)?.sequence === pending.sequence)
+          toastError(error);
+      })
+      .finally(() => {
+        if (!live.current) return;
+        if (dirty.current.get(key)?.sequence === pending.sequence) dirty.current.delete(key);
+        syncDraft();
+      });
+    return promise;
+  };
   const update = (key: string, value: unknown, saveImmediately = true) => {
+    if (!live.current) return;
+    dirty.current.set(key, { value, sequence: ++sequence.current });
     const next = { ...draftRef.current, [key]: value };
     draftRef.current = next;
     setDraft(next);
-    if (saveImmediately) void commit(next).catch(toastError);
+    if (saveImmediately) void commit(key).catch(() => undefined);
   };
 
   const upload = async (file: File) => {
     try {
       const wallpaper = await uploadWallpaper.mutateAsync(file);
-      update('wallpaper_id', wallpaper.id);
+      if (live.current) update('wallpaper_id', wallpaper.id);
     } catch (error) {
-      toastError(error);
+      if (live.current) toastError(error);
     }
   };
 
   const remove = async (wallpaperId: string) => {
     try {
       await deleteWallpaper.mutateAsync(wallpaperId);
-      if (draftRef.current.wallpaper_id === wallpaperId) update('wallpaper_id', '');
+      if (live.current && draftRef.current.wallpaper_id === wallpaperId) update('wallpaper_id', '');
     } catch (error) {
-      toastError(error);
+      if (live.current) toastError(error);
     }
   };
 
   const saveFromFrame = async (next: Record<string, unknown>) => {
-    const saved = await commit(next);
-    draftRef.current = saved;
-    setDraft(saved);
-    return saved;
+    const current = ++sequence.current;
+    frameDraft.current = { value: next, sequence: current };
+    draftRef.current = next;
+    setDraft(next);
+    try {
+      return await savePreferences.mutateAsync({ path: [], value: next });
+    } finally {
+      if (live.current && frameDraft.current?.sequence === current) {
+        frameDraft.current = null;
+        syncDraft();
+      }
+    }
   };
 
   return (
@@ -287,7 +351,7 @@ export function ThemeSettingsPanel({ theme, onClose }: { theme: ThemeInfo; onClo
               <ThemeSettingsFrame
                 theme={theme}
                 pageUrl={theme.settings_page_url}
-                settings={preferences.data}
+                settings={draft}
                 save={saveFromFrame}
               />
             )
@@ -301,7 +365,7 @@ export function ThemeSettingsPanel({ theme, onClose }: { theme: ThemeInfo; onClo
                   value={draft[field.id] ?? field.default}
                   wallpapers={wallpapers.data?.items ?? []}
                   onChange={(value) => update(field.id, value, field.type !== 'slider')}
-                  onCommit={() => void commit().catch(toastError)}
+                  onCommit={() => void commit(field.id).catch(() => undefined)}
                   onUpload={(file) => void upload(file)}
                   busy={uploadWallpaper.isPending}
                 />

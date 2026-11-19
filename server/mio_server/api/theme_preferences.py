@@ -9,7 +9,7 @@ import tempfile
 import uuid
 from pathlib import Path, PurePosixPath
 
-from fastapi import Request
+from fastapi import Header, Request, Response
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
@@ -19,8 +19,11 @@ from ..private_store import (
     MAX_WALLPAPER_BYTES,
     MAX_WALLPAPER_RECORD,
     WALLPAPER_ID,
+    PreferencePatch,
     PrivateStore,
     atomic_write,
+    if_match_revision,
+    read_bounded_bytes,
     read_json_file,
     regular_path,
     validate_json,
@@ -43,6 +46,17 @@ router = APIRouter(tags=["themes"])
 
 MAX_PREFERENCES_BYTES = 1024 * 1024
 MAX_MULTIPART_OVERHEAD = 1024 * 1024
+PREFERENCE_RESPONSES = {
+    200: {
+        "headers": {
+            "ETag": {
+                "description": "Strong content revision for conditional preference writes",
+                "schema": {"type": "string", "pattern": r'^"[a-f0-9]{64}"$'},
+            }
+        }
+    },
+    409: {"description": "Preference revision changed; reload before applying this intent"},
+}
 
 
 class Wallpaper(MediaDescriptor):
@@ -110,25 +124,31 @@ def _save_preferences(data_dir: Path, theme_id: str, value: dict) -> None:
 
 
 async def _request_body(request: Request, limit: int) -> bytes:
+    content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    if content_type != "application/json":
+        raise ValueError("主题偏好设置必须使用 application/json")
     declared = request.headers.get("content-length", "")
     if declared.isdigit() and int(declared) > limit:
         raise ValueError("请求内容超过大小限制")
-    chunks = bytearray()
-    async for chunk in request.stream():
-        if len(chunks) + len(chunk) > limit:
-            raise ValueError("请求内容超过大小限制")
-        chunks.extend(chunk)
-    return bytes(chunks)
+    return await read_bounded_bytes(request.stream(), limit=limit)
 
 
-@router.get("/themes/{theme_id}/preferences")
-def get_theme_preferences(ctx: Ctx, theme_id: str) -> dict:
-    _registered_theme(ctx, theme_id)
-    return _load_preferences(ctx.data_dir, theme_id)
+def _preference_response(response: Response, value: dict) -> dict:
+    response.headers["ETag"] = f'"{PrivateStore.revision(value)}"'
+    response.headers["Cache-Control"] = "private, no-store"
+    return value
+
+
+@router.get("/themes/{theme_id}/preferences", responses=PREFERENCE_RESPONSES)
+def get_theme_preferences(ctx: Ctx, theme_id: str, response: Response) -> dict:
+    with ctx.engine.hold_operation():
+        _registered_theme(ctx, theme_id)
+        return _preference_response(response, _load_preferences(ctx.data_dir, theme_id))
 
 
 @router.put(
     "/themes/{theme_id}/preferences",
+    responses=PREFERENCE_RESPONSES,
     openapi_extra={
         "requestBody": {
             "required": True,
@@ -136,20 +156,55 @@ def get_theme_preferences(ctx: Ctx, theme_id: str) -> dict:
         }
     },
 )
-async def put_theme_preferences(ctx: Ctx, theme_id: str, request: Request) -> dict:
+async def put_theme_preferences(
+    ctx: Ctx,
+    theme_id: str,
+    request: Request,
+    response: Response,
+    if_match: str | None = Header(default=None),
+) -> dict:
+    """Replace the complete object; If-Match optionally makes replacement conditional."""
     _registered_theme(ctx, theme_id)
-    content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
-    if content_type != "application/json":
-        raise ValueError("主题偏好设置必须使用 application/json")
+    expected = if_match_revision(if_match)
     value = _validate_preferences(await _request_body(request, MAX_PREFERENCES_BYTES))
 
-    def save() -> None:
+    def save() -> dict:
         with ctx.engine.hold_operation():
             _registered_theme(ctx, theme_id)
-            _save_preferences(ctx.data_dir, theme_id, value)
+            return PrivateStore(ctx.data_dir, "theme", theme_id).replace_json(
+                value, expected_revision=expected, limit=MAX_PREFERENCES_BYTES
+            )
 
-    await run_in_threadpool(save)
-    return value
+    return _preference_response(response, await run_in_threadpool(save))
+
+
+@router.patch(
+    "/themes/{theme_id}/preferences",
+    responses=PREFERENCE_RESPONSES,
+    openapi_extra={
+        "requestBody": {
+            "required": True,
+            "content": {"application/json": {"schema": PreferencePatch.model_json_schema()}},
+        }
+    },
+)
+async def patch_theme_preferences(
+    ctx: Ctx, theme_id: str, request: Request, response: Response
+) -> dict:
+    """Conditionally replace one subtree without overwriting sibling preferences."""
+    _registered_theme(ctx, theme_id)
+    command = PreferencePatch.from_bytes(
+        await _request_body(request, MAX_PREFERENCES_BYTES), limit=MAX_PREFERENCES_BYTES
+    )
+
+    def save() -> dict:
+        with ctx.engine.hold_operation():
+            _registered_theme(ctx, theme_id)
+            return PrivateStore(ctx.data_dir, "theme", theme_id).patch_json(
+                command, limit=MAX_PREFERENCES_BYTES
+            )
+
+    return _preference_response(response, await run_in_threadpool(save))
 
 
 def _filename_and_kind(filename: str) -> tuple[str, str, str]:

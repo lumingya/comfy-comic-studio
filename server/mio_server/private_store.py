@@ -14,7 +14,11 @@ import os
 import re
 import stat
 import tempfile
+from collections.abc import AsyncIterable
 from pathlib import Path, PurePosixPath
+from typing import Annotated, Any
+
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 MAX_PRIVATE_JSON = 1024 * 1024
 MAX_JSON_DEPTH = 64
@@ -30,6 +34,72 @@ RESERVED_IDS = {
     *(f"com{i}" for i in range(1, 10)),
     *(f"lpt{i}" for i in range(1, 10)),
 }
+REVISION_PATTERN = r"^[a-f0-9]{64}$"
+PATCH_RESERVED_KEYS = frozenset({"__proto__", "prototype", "constructor"})
+PreferenceRevision = Annotated[
+    str, Field(strict=True, min_length=64, max_length=64, pattern=REVISION_PATTERN)
+]
+PreferenceKey = Annotated[
+    str,
+    Field(
+        strict=True,
+        min_length=1,
+        max_length=256,
+        json_schema_extra={"not": {"enum": sorted(PATCH_RESERVED_KEYS)}},
+    ),
+]
+
+
+class PreferencePatch(BaseModel):
+    """CAS replacement of one JSON subtree; arrays are values, never traversal paths."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    expected_revision: PreferenceRevision
+    path: list[PreferenceKey] = Field(max_length=16)
+    value: Any
+
+    @field_validator("path")
+    @classmethod
+    def safe_keys(cls, value: list[str]) -> list[str]:
+        if PATCH_RESERVED_KEYS.intersection(value):
+            raise ValueError("preference paths cannot contain prototype-related keys")
+        return value
+
+    @model_validator(mode="after")
+    def object_root(self):
+        if not self.path and not isinstance(self.value, dict):
+            raise ValueError("an empty preference path requires an object value")
+        return self
+
+    @classmethod
+    def from_bytes(cls, raw: bytes, *, limit: int = MAX_PRIVATE_JSON) -> "PreferencePatch":
+        value = validate_json(raw, limit=limit)
+        try:
+            return cls.model_validate(value)
+        except ValidationError:
+            # ValidationError.__str__ can expose arbitrary private values from the request.
+            raise ValueError("invalid private preference patch") from None
+
+
+def if_match_revision(value: str | None) -> str | None:
+    """PUT accepts one strong ETag; lists, wildcards and weak validators are unsupported."""
+    if value is None:
+        return None
+    match = re.fullmatch(r'"([a-f0-9]{64})"', value.strip())
+    if match is None:
+        raise ValueError("If-Match requires one strong preference ETag")
+    return match[1]
+
+
+async def read_bounded_bytes(chunks: AsyncIterable[bytes], *, limit: int) -> bytes:
+    """Bound actual streamed bytes before JSON decoding or Pydantic model validation."""
+    raw = bytearray()
+    async for chunk in chunks:
+        if len(raw) + len(chunk) > limit:
+            raise ValueError("private preferences exceed their request size limit")
+        raw.extend(chunk)
+    return bytes(raw)
 
 
 def validate_identifier(identifier: str) -> None:
@@ -346,6 +416,47 @@ class PrivateStore:
     ) -> None:
         raw = encode_json(value, limit=limit)
         atomic_write(self.file(name), raw)
+
+    @classmethod
+    def require_revision(cls, value: dict, expected_revision: str | None) -> None:
+        if expected_revision is not None and cls.revision(value) != expected_revision:
+            from .storage import Conflict
+
+            raise Conflict("private preferences changed; reload before applying this intent")
+
+    def replace_json(
+        self,
+        value: dict,
+        *,
+        expected_revision: str | None = None,
+        limit: int = MAX_PRIVATE_JSON,
+    ) -> dict:
+        """Caller holds the operation barrier across read, comparison and atomic commit."""
+        if expected_revision is not None:
+            self.require_revision(self.load_json(limit=limit), expected_revision)
+        frozen = validate_json(encode_json(value, limit=limit), limit=limit)
+        self.write_json(frozen, limit=limit)
+        return frozen
+
+    def patch_json(self, patch: PreferencePatch, *, limit: int = MAX_PRIVATE_JSON) -> dict:
+        """Replace exactly one object subtree while the caller holds the operation barrier."""
+        current = self.load_json(limit=limit)
+        self.require_revision(current, patch.expected_revision)
+        if not patch.path:
+            updated = patch.value
+        else:
+            updated = current
+            parent = updated
+            for key in patch.path[:-1]:
+                if key not in parent:
+                    parent[key] = {}
+                elif not isinstance(parent[key], dict):
+                    raise ValueError("preference patch cannot traverse a non-object subtree")
+                parent = parent[key]
+            parent[patch.path[-1]] = patch.value
+        frozen = validate_json(encode_json(updated, limit=limit), limit=limit)
+        self.write_json(frozen, limit=limit)
+        return frozen
 
     @staticmethod
     def revision(value: dict) -> str:

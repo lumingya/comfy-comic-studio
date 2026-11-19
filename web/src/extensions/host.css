@@ -40,6 +40,13 @@
   border-radius: 0;
   box-shadow: none;
 }
+.workspace-extension-floating[data-click-through='true'] {
+  pointer-events: none;
+  resize: none;
+}
+.workspace-extension-floating[data-click-through='true'] .workspace-extension-handle {
+  pointer-events: auto;
+}
 .workspace-extension-floating[data-transparent='true'] .workspace-extension-handle {
   background: transparent;
   border: 0;

@@ -33,6 +33,7 @@ WORKSPACE_BRIDGE_JS = r"""(() => {
   const session = new URLSearchParams(location.hash.slice(1)).get('mio-session');
   if (!session) return;
   const movedHandlers = new Set();
+  const lifecycleHandlers = new Set();
   const globalHandlers = new Map();
   const send = (type, payload = {}) =>
     parent.postMessage({ type, session, ...payload }, location.origin);
@@ -42,6 +43,18 @@ WORKSPACE_BRIDGE_JS = r"""(() => {
   window.addEventListener('message', async (event) => {
     if (!isHostMessage(event)) return;
     const message = event.data;
+    if (message.type === 'mio:workspace:context') {
+      for (const type of globalHandlers.keys())
+        send('mio:workspace:listen', { event: type, enabled: true });
+      return;
+    }
+    if (message.type === 'mio:workspace:lifecycle' &&
+        ['shown', 'hidden', 'focused', 'blurred'].includes(message.state)) {
+      for (const handler of lifecycleHandlers) {
+        try { handler(message.state); } catch {}
+      }
+      return;
+    }
     if (message.type === 'mio:workspace:moved') {
       for (const handler of movedHandlers) handler(message.position);
       return;
@@ -77,6 +90,11 @@ WORKSPACE_BRIDGE_JS = r"""(() => {
       if (typeof handler !== 'function') return () => {};
       movedHandlers.add(handler);
       return () => movedHandlers.delete(handler);
+    },
+    onLifecycle(handler) {
+      if (typeof handler !== 'function') return () => {};
+      lifecycleHandlers.add(handler);
+      return () => lifecycleHandlers.delete(handler);
     },
     onGlobalEvent(type, handler) {
       if (typeof type !== 'string' || !type || typeof handler !== 'function') return () => {};
@@ -120,6 +138,9 @@ def extension_surfaces(ctx: Ctx) -> dict:
             continue
         if info.manifest is None or info.manifest.workspace is None:
             continue
+        loaded = manager.loaded.get(identifier)
+        if loaded is None or loaded.api.digest != info.digest:
+            continue
         value = contribution.value() if callable(contribution.value) else contribution.value
         entry = value.get("entry", info.manifest.workspace.entry)
         if entry != info.manifest.workspace.entry:
@@ -127,6 +148,8 @@ def extension_surfaces(ctx: Ctx) -> dict:
         items.append(
             {
                 "extension_id": identifier,
+                "activation": loaded.api.activation_id,
+                "digest": loaded.api.digest,
                 "id": contribution.id,
                 "title": value.get("title", info.manifest.workspace.title),
                 "mode": "page" if value.get("mode") == "page" else "floating",
@@ -136,11 +159,16 @@ def extension_surfaces(ctx: Ctx) -> dict:
     for identifier, info in reviewed.items():
         if info is None or info.manifest is None:
             continue
+        loaded = manager.loaded.get(identifier)
+        if loaded is None or loaded.api.digest != info.digest:
+            continue
         for surface in info.manifest.contributes.floating_surfaces:
             entry = quote(surface.entry, safe="/")
             items.append(
                 {
                     "extension_id": identifier,
+                    "activation": loaded.api.activation_id,
+                    "digest": loaded.api.digest,
                     "id": surface.id,
                     "title": surface.title,
                     "mode": "floating",

@@ -1184,8 +1184,18 @@ class MioClient(_Base):
         return self._request("GET", f"/ext/{_q(ext_id)}/preferences")
 
     def put_extension_preferences(self, ext_id: str, body: dict | list | None = None) -> Any:
-        """PUT /ext/{ext_id}/preferences — Put Extension Preferences."""
+        """PUT /ext/{ext_id}/preferences — Put Extension Preferences.
+
+        Replace the complete object; omit If-Match only for an explicit unconditional replace.
+        """
         return self._request("PUT", f"/ext/{_q(ext_id)}/preferences", json=body)
+
+    def patch_extension_preferences(self, ext_id: str, body: dict | list | None = None) -> Any:
+        """PATCH /ext/{ext_id}/preferences — Patch Extension Preferences.
+
+        Conditionally replace one subtree; callers retry only after fetching its current revision.
+        """
+        return self._request("PATCH", f"/ext/{_q(ext_id)}/preferences", json=body)
 
     def list_themes(self) -> Any:
         """GET /themes — List Themes."""
@@ -1203,8 +1213,18 @@ class MioClient(_Base):
         return self._request("GET", f"/themes/{_q(theme_id)}/preferences")
 
     def put_theme_preferences(self, theme_id: str, body: dict | list | None = None) -> Any:
-        """PUT /themes/{theme_id}/preferences — Put Theme Preferences."""
+        """PUT /themes/{theme_id}/preferences — Put Theme Preferences.
+
+        Replace the complete object; If-Match optionally makes replacement conditional.
+        """
         return self._request("PUT", f"/themes/{_q(theme_id)}/preferences", json=body)
+
+    def patch_theme_preferences(self, theme_id: str, body: dict | list | None = None) -> Any:
+        """PATCH /themes/{theme_id}/preferences — Patch Theme Preferences.
+
+        Conditionally replace one subtree without overwriting sibling preferences.
+        """
+        return self._request("PATCH", f"/themes/{_q(theme_id)}/preferences", json=body)
 
     def list_theme_wallpapers(self, theme_id: str) -> Any:
         """GET /themes/{theme_id}/wallpapers — List Theme Wallpapers."""

@@ -1,12 +1,17 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Maximize2, Minimize2, MousePointer2, Puzzle } from 'lucide-react';
 import { raw } from '../api/client';
 import { Loading } from '../components/ui';
 import { QueryError } from '../app/errors';
-import type { FloatingPosition } from '../api/open';
+import {
+  useExtensionPreferences,
+  useSaveExtensionPreferences,
+  type FloatingPosition,
+} from '../api/open';
+import { toastError } from '../components/toast';
 import { dispatchByPriority, type ExtensionEventDecision } from './eventPipeline';
 import './host.css';
 
@@ -20,6 +25,8 @@ export interface WorkspaceSurface {
   global?: boolean;
   transparent?: boolean;
   default_position?: FloatingPosition;
+  activation?: string;
+  digest?: string;
 }
 
 type WorkspaceEventSubscription = {
@@ -31,7 +38,12 @@ type WorkspaceEventSubscription = {
 
 type WorkspaceEventCallbacks = {
   onSubscribe?: (subscription: WorkspaceEventSubscription, enabled: boolean) => void;
-  onEventResult?: (eventId: string, decision: ExtensionEventDecision) => void;
+  onEventResult?: (
+    eventId: string,
+    decision: ExtensionEventDecision,
+    frame: HTMLIFrameElement,
+    session: string,
+  ) => void;
   active?: boolean;
 };
 export function useWorkspaceSurfaces() {
@@ -54,6 +66,7 @@ function WorkspaceFrame({
   onSubscribe,
   onEventResult,
   active = true,
+  focused = false,
 }: {
   surface: WorkspaceSurface;
   floating: boolean;
@@ -61,12 +74,33 @@ function WorkspaceFrame({
   position?: { x: number; y: number };
   onResize?: (width: number, height: number) => void;
   onClickThrough?: (enabled: boolean) => void;
+  focused?: boolean;
 } & WorkspaceEventCallbacks) {
   const frame = useRef<HTMLIFrameElement>(null);
-  const session = useRef(crypto.randomUUID());
+  const [session] = useState(() => crypto.randomUUID());
   const subscriptions = useRef(new Set<'keydown'>());
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const latest = useRef({
+    surface,
+    floating,
+    onResize,
+    onClickThrough,
+    onSubscribe,
+    onEventResult,
+    active,
+    navigate,
+  });
+  latest.current = {
+    surface,
+    floating,
+    onResize,
+    onClickThrough,
+    onSubscribe,
+    onEventResult,
+    active,
+    navigate,
+  };
   const context = () => {
     const style = getComputedStyle(document.documentElement);
     const tokens = Object.fromEntries(
@@ -76,20 +110,21 @@ function WorkspaceFrame({
     );
     return {
       type: 'mio:workspace:context',
-      session: session.current,
+      session,
       tokens,
       theme: document.documentElement.dataset.theme,
       locale: document.documentElement.lang || 'zh-CN',
-      floating,
+      floating: latest.current.floating,
     };
   };
   useEffect(() => {
+    const ownedFrame = frame.current;
     const send = () => frame.current?.contentWindow?.postMessage(context(), location.origin);
     const listener = (event: MessageEvent) => {
       if (
         event.origin !== location.origin ||
         event.source !== frame.current?.contentWindow ||
-        event.data?.session !== session.current
+        event.data?.session !== session
       )
         return;
       if (event.data.type === 'mio:workspace:ready') send();
@@ -99,7 +134,7 @@ function WorkspaceFrame({
         Number.isFinite(event.data.width) &&
         Number.isFinite(event.data.height)
       )
-        onResize?.(
+        latest.current.onResize?.(
           Math.max(240, Math.min(1200, Math.round(event.data.width))),
           Math.max(200, Math.min(1000, Math.round(event.data.height))),
         );
@@ -107,7 +142,7 @@ function WorkspaceFrame({
         event.data.type === 'mio:workspace:click-through' &&
         typeof event.data.enabled === 'boolean'
       )
-        onClickThrough?.(event.data.enabled);
+        latest.current.onClickThrough?.(event.data.enabled);
       if (
         event.data.type === 'mio:workspace:listen' &&
         event.data.event === 'keydown' &&
@@ -117,9 +152,9 @@ function WorkspaceFrame({
         else subscriptions.current.delete('keydown');
         const currentFrame = frame.current;
         if (currentFrame)
-          onSubscribe?.(
-            { surface, frame: currentFrame, session: session.current, event: 'keydown' },
-            event.data.enabled && active,
+          latest.current.onSubscribe?.(
+            { surface: latest.current.surface, frame: currentFrame, session, event: 'keydown' },
+            event.data.enabled && latest.current.active,
           );
       }
       if (
@@ -127,21 +162,24 @@ function WorkspaceFrame({
         typeof event.data.eventId === 'string'
       ) {
         const decision = event.data.action;
-        onEventResult?.(
-          event.data.eventId,
-          decision === 'handled' || decision === 'stop_propagation' ? decision : 'continue',
-        );
+        if (frame.current)
+          latest.current.onEventResult?.(
+            event.data.eventId,
+            decision === 'handled' || decision === 'stop_propagation' ? decision : 'continue',
+            frame.current,
+            session,
+          );
       }
       if (
         event.data.type === 'mio:workspace:navigate' &&
         [
           '/',
-          `/extensions/${surface.extension_id}`,
+          `/extensions/${latest.current.surface.extension_id}`,
           '/extensions?tab=installed',
           '/settings?tab=extensions',
         ].includes(event.data.path)
       )
-        navigate(event.data.path);
+        latest.current.navigate(event.data.path);
     };
     const observer = new MutationObserver(send);
     observer.observe(document.documentElement, {
@@ -152,40 +190,57 @@ function WorkspaceFrame({
     return () => {
       observer.disconnect();
       window.removeEventListener('message', listener);
-      for (const subscribedEvent of subscriptions.current) {
-        const currentFrame = frame.current;
-        if (currentFrame)
-          onSubscribe?.(
-            { surface, frame: currentFrame, session: session.current, event: subscribedEvent },
+      if (ownedFrame)
+        for (const event of subscriptions.current)
+          latest.current.onSubscribe?.(
+            { surface: latest.current.surface, frame: ownedFrame, session, event },
             false,
           );
-      }
       subscriptions.current.clear();
     };
-  }, [
-    surface,
-    floating,
-    qc,
-    navigate,
-    onResize,
-    onClickThrough,
-    onSubscribe,
-    onEventResult,
-    active,
-  ]);
+  }, [qc, session]);
   useEffect(() => {
     const currentFrame = frame.current;
     if (!currentFrame || !onSubscribe) return;
     for (const event of subscriptions.current)
-      onSubscribe({ surface, frame: currentFrame, session: session.current, event }, active);
-  }, [active, onSubscribe, surface]);
+      onSubscribe({ surface: latest.current.surface, frame: currentFrame, session, event }, active);
+    return () => {
+      for (const event of subscriptions.current)
+        onSubscribe(
+          { surface: latest.current.surface, frame: currentFrame, session, event },
+          false,
+        );
+    };
+  }, [active, onSubscribe, session]);
+  const visibility = useRef<boolean | undefined>(undefined);
+  const focus = useRef(false);
+  const notifyLifecycle = () => {
+    const send = (state: 'shown' | 'hidden' | 'focused' | 'blurred') =>
+      frame.current?.contentWindow?.postMessage(
+        { type: 'mio:workspace:lifecycle', session, state },
+        location.origin,
+      );
+    if (focus.current && (!active || !focused)) {
+      send('blurred');
+      focus.current = false;
+    }
+    if (visibility.current !== active) {
+      send(active ? 'shown' : 'hidden');
+      visibility.current = active;
+    }
+    if (active && focused && !focus.current) {
+      send('focused');
+      focus.current = true;
+    }
+  };
+  useEffect(notifyLifecycle, [active, focused, session]);
   useEffect(() => {
     if (!position) return;
     frame.current?.contentWindow?.postMessage(
-      { type: 'mio:workspace:moved', session: session.current, position },
+      { type: 'mio:workspace:moved', session, position },
       location.origin,
     );
-  }, [position]);
+  }, [position, session]);
   return (
     <iframe
       ref={frame}
@@ -193,9 +248,22 @@ function WorkspaceFrame({
       title={surface.title}
       sandbox="allow-scripts allow-same-origin allow-downloads"
       referrerPolicy="no-referrer"
-      src={`${surface.url}#mio-session=${session.current}&floating=${floating ? '1' : '0'}`}
+      src={`${surface.url}#mio-session=${session}&floating=${floating ? '1' : '0'}`}
       style={{ pointerEvents: clickThrough ? 'none' : undefined }}
-      onLoad={() => frame.current?.contentWindow?.postMessage(context(), location.origin)}
+      onLoad={() => {
+        const currentFrame = frame.current;
+        if (currentFrame)
+          for (const event of subscriptions.current)
+            latest.current.onSubscribe?.(
+              { surface: latest.current.surface, frame: currentFrame, session, event },
+              false,
+            );
+        subscriptions.current.clear();
+        visibility.current = undefined;
+        focus.current = false;
+        currentFrame?.contentWindow?.postMessage(context(), location.origin);
+        notifyLifecycle();
+      }}
     />
   );
 }
@@ -220,7 +288,7 @@ export function WorkspaceExtensionPage() {
     );
   return (
     <div className="workspace-extension-page">
-      <WorkspaceFrame surface={surface} floating={false} />
+      <WorkspaceFrame key={surfaceIdentity(surface)} surface={surface} floating={false} />
     </div>
   );
 }
@@ -237,48 +305,59 @@ function compareSurfaces(left: WorkspaceSurface, right: WorkspaceSurface): numbe
   );
 }
 
+function surfaceIdentity(surface: WorkspaceSurface): string {
+  return JSON.stringify([
+    surface.extension_id,
+    surface.id,
+    surface.url,
+    surface.activation,
+    surface.digest,
+  ]);
+}
+
+function subscriptionKey(subscription: WorkspaceEventSubscription): string {
+  return `${subscription.surface.extension_id}:${subscription.surface.id}:${subscription.event}`;
+}
+
 function FloatingSurface({
   surface,
   index,
+  visible,
   onSubscribe,
   onEventResult,
 }: {
   surface: WorkspaceSurface;
   index: number;
+  visible: boolean;
   onSubscribe: WorkspaceEventCallbacks['onSubscribe'];
   onEventResult: WorkspaceEventCallbacks['onEventResult'];
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(true);
+  const [focused, setFocused] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const positionRef = useRef(position);
   positionRef.current = position;
   const [size, setSize] = useState({ width: 480, height: 560 });
+  const sizeRef = useRef(size);
+  sizeRef.current = size;
   const [clickThrough, setClickThrough] = useState(false);
+  const clickThroughRef = useRef(clickThrough);
+  clickThroughRef.current = clickThrough;
   const initialized = useRef(false);
   const drag = useRef<{ x: number; y: number; dx: number; dy: number } | null>(null);
   const panel = useRef<HTMLDivElement>(null);
+  const preferences = useExtensionPreferences(surface.extension_id);
+  const savePreferences = useSaveExtensionPreferences(surface.extension_id);
   const queryClient = useQueryClient();
-  const preferenceKey = ['extension-preferences', surface.extension_id] as const;
-  const preferences = useQuery({
-    queryKey: preferenceKey,
-    queryFn: async () =>
-      (
-        await raw(`/api/ext/${encodeURIComponent(surface.extension_id)}/preferences`)
-      ).json() as Promise<Record<string, unknown>>,
-    retry: false,
-  });
-  const savePreferences = useMutation({
-    mutationFn: async (value: Record<string, unknown>) =>
-      (
-        await raw(`/api/ext/${encodeURIComponent(surface.extension_id)}/preferences`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(value),
-        })
-      ).json() as Promise<Record<string, unknown>>,
-    onSuccess: (value) => queryClient.setQueryData(preferenceKey, value),
-  });
+  const live = useRef(true);
+  const writeSequence = useRef(0);
+  useEffect(() => {
+    live.current = true;
+    return () => {
+      live.current = false;
+    };
+  }, []);
   const anchor = surface.default_position ?? {
     x: 'right' as const,
     y: 'bottom' as const,
@@ -301,81 +380,135 @@ function FloatingSurface({
   );
   const persist = (
     nextPosition = positionRef.current,
-    nextSize = size,
-    nextClickThrough = clickThrough,
+    nextSize = sizeRef.current,
+    nextClickThrough = clickThroughRef.current,
   ) => {
-    const current = preferences.data ?? {};
-    const surfaces = isRecord(current.floating_surfaces) ? current.floating_surfaces : {};
-    const next = {
-      ...current,
-      floating_surfaces: {
-        ...surfaces,
-        [surface.id]: {
-          position: nextPosition,
-          size: nextSize,
-          clickThrough: nextClickThrough,
+    initialized.current = true;
+    const sequence = ++writeSequence.current;
+    savePreferences.mutate(
+      {
+        path: ['floating_surfaces', surface.id],
+        value: { position: nextPosition, size: nextSize, clickThrough: nextClickThrough },
+      },
+      {
+        onError: (error) => {
+          if (live.current && sequence === writeSequence.current) {
+            const current = queryClient.getQueryData<Record<string, unknown>>([
+              'extension-preferences',
+              surface.extension_id,
+            ]);
+            restore(current ?? {});
+            toastError(error);
+          }
         },
       },
+    );
+  };
+  const boundedSize = (width: number, height: number) => {
+    const availableWidth = Math.max(1, innerWidth - 24);
+    const availableHeight = Math.max(1, innerHeight - 60);
+    return {
+      width: Math.max(Math.min(240, availableWidth), Math.min(1200, availableWidth, width)),
+      height: Math.max(Math.min(200, availableHeight), Math.min(1000, availableHeight, height)),
     };
-    savePreferences.mutate(next);
   };
   const resize = (width: number, height: number) => {
-    const next = {
-      width: Math.max(240, Math.min(1200, width)),
-      height: Math.max(200, Math.min(1000, height)),
-    };
+    const next = boundedSize(width, height);
+    sizeRef.current = next;
     setSize(next);
     persist(positionRef.current, next);
   };
   const setPassThrough = (enabled: boolean) => {
+    clickThroughRef.current = enabled;
     setClickThrough(enabled);
-    persist(positionRef.current, size, enabled);
+    persist(positionRef.current, sizeRef.current, enabled);
   };
-
-  useEffect(() => {
-    if (!preferences.isSuccess || initialized.current) return;
-    const all = isRecord(preferences.data.floating_surfaces)
-      ? preferences.data.floating_surfaces
-      : {};
+  const restore = (value: Record<string, unknown>) => {
+    const all = isRecord(value.floating_surfaces) ? value.floating_surfaces : {};
     const rawSaved = all[surface.id];
     const saved = isRecord(rawSaved) ? rawSaved : {};
+    positionRef.current = { x: 0, y: 0 };
+    sizeRef.current = boundedSize(480, 560);
+    clickThroughRef.current = false;
     const savedPosition = saved.position;
     if (isRecord(savedPosition)) {
       const x = savedPosition.x;
       const y = savedPosition.y;
-      if (typeof x === 'number' && typeof y === 'number') {
+      if (
+        typeof x === 'number' &&
+        typeof y === 'number' &&
+        Number.isFinite(x) &&
+        Number.isFinite(y)
+      ) {
         positionRef.current = { x, y };
-        setPosition(positionRef.current);
       }
     }
     const savedSize = saved.size;
     if (isRecord(savedSize)) {
       const width = savedSize.width;
       const height = savedSize.height;
-      if (typeof width === 'number' && typeof height === 'number')
-        setSize({
-          width: Math.max(240, Math.min(1200, width)),
-          height: Math.max(200, Math.min(1000, height)),
-        });
+      if (
+        typeof width === 'number' &&
+        typeof height === 'number' &&
+        Number.isFinite(width) &&
+        Number.isFinite(height)
+      ) {
+        sizeRef.current = boundedSize(width, height);
+      }
     }
-    if (typeof saved.clickThrough === 'boolean') setClickThrough(saved.clickThrough);
+    if (typeof saved.clickThrough === 'boolean') {
+      clickThroughRef.current = saved.clickThrough;
+    }
+    setPosition(positionRef.current);
+    setSize(sizeRef.current);
+    setClickThrough(clickThroughRef.current);
+  };
+  useEffect(() => {
+    if (!preferences.isSuccess || initialized.current) return;
+    restore(preferences.data);
     initialized.current = true;
   }, [preferences.data, preferences.isSuccess, surface.id]);
-  useEffect(() => {
-    const clamp = () => {
-      const rect = panel.current?.getBoundingClientRect();
-      if (!rect || !open) return;
-      setPosition((value) => ({
-        x: value.x + Math.max(0, -rect.left) - Math.max(0, rect.right - innerWidth),
-        y: value.y + Math.max(0, -rect.top) - Math.max(0, rect.bottom - innerHeight),
-      }));
+  const clamp = useCallback(() => {
+    const rect = panel.current?.getBoundingClientRect();
+    if (!rect || !open || !visible || rect.width <= 0 || rect.height <= 0) return;
+    const current = positionRef.current;
+    const next = {
+      x:
+        current.x +
+        (rect.width > innerWidth
+          ? -rect.left
+          : Math.max(0, -rect.left) - Math.max(0, rect.right - innerWidth)),
+      y:
+        current.y +
+        (rect.height > innerHeight
+          ? -rect.top
+          : Math.max(0, -rect.top) - Math.max(0, rect.bottom - innerHeight)),
     };
+    if (next.x !== current.x || next.y !== current.y) {
+      positionRef.current = next;
+      setPosition(next);
+    }
+  }, [open, visible]);
+  useLayoutEffect(() => {
+    clamp();
+  });
+  useEffect(() => {
     window.addEventListener('resize', clamp);
     return () => window.removeEventListener('resize', clamp);
-  }, [open]);
+  }, [clamp]);
+  useEffect(() => {
+    const outside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !panel.current?.contains(event.target)) setFocused(false);
+    };
+    window.addEventListener('pointerdown', outside, true);
+    return () => window.removeEventListener('pointerdown', outside, true);
+  }, []);
+  useEffect(() => {
+    if (!open || !visible) setFocused(false);
+  }, [open, visible]);
   return (
     <>
-      {!open && (
+      {visible && !open && (
         <button
           className="btn workspace-extension-launcher"
           style={{ bottom: 50 + index * 48 }}
@@ -388,7 +521,16 @@ function FloatingSurface({
       <div
         ref={panel}
         className="workspace-extension-floating"
-        hidden={!open}
+        hidden={!open || !visible}
+        onPointerDownCapture={() => setFocused(true)}
+        onFocusCapture={() => setFocused(true)}
+        onBlurCapture={(event) => {
+          if (
+            !(event.relatedTarget instanceof Node) ||
+            !event.currentTarget.contains(event.relatedTarget)
+          )
+            setFocused(false);
+        }}
         onPointerUp={() => {
           const rect = panel.current?.getBoundingClientRect();
           if (
@@ -403,11 +545,15 @@ function FloatingSurface({
           height: size.height,
           transform: `translate(${position.x}px, ${position.y}px)`,
           zIndex: Math.max(1, Math.min(10000, 500 + (surface.priority ?? 0))),
+          pointerEvents: clickThrough ? 'none' : undefined,
+          resize: clickThrough ? 'none' : undefined,
         }}
         data-transparent={surface.transparent ? 'true' : undefined}
+        data-click-through={clickThrough ? 'true' : undefined}
       >
         <header
           className="workspace-extension-handle"
+          style={{ pointerEvents: clickThrough ? 'auto' : undefined }}
           onPointerDown={(event) => {
             if ((event.target as Element).closest('button,a')) return;
             drag.current = { x: event.clientX, y: event.clientY, dx: position.x, dy: position.y };
@@ -416,7 +562,7 @@ function FloatingSurface({
           onPointerMove={(event) => {
             if (!drag.current || !panel.current) return;
             const rect = panel.current.getBoundingClientRect();
-            setPosition({
+            const next = {
               x: Math.min(
                 position.x + innerWidth - rect.right,
                 Math.max(position.x - rect.left, drag.current.dx + event.clientX - drag.current.x),
@@ -425,7 +571,9 @@ function FloatingSurface({
                 position.y + innerHeight - rect.bottom,
                 Math.max(position.y - rect.top, drag.current.dy + event.clientY - drag.current.y),
               ),
-            });
+            };
+            positionRef.current = next;
+            setPosition(next);
           }}
           onPointerUp={() => {
             drag.current = null;
@@ -465,7 +613,8 @@ function FloatingSurface({
         <WorkspaceFrame
           surface={surface}
           floating
-          active={open}
+          active={open && visible}
+          focused={focused}
           clickThrough={clickThrough}
           position={position}
           onResize={resize}
@@ -480,19 +629,40 @@ function FloatingSurface({
 export function WorkspaceExtensionOverlays({ path }: { path: string }) {
   const surfaces = useWorkspaceSurfaces();
   const subscribers = useRef(new Map<string, WorkspaceEventSubscription>());
-  const pendingEvents = useRef(new Map<string, (decision: ExtensionEventDecision) => void>());
+  const pendingEvents = useRef(
+    new Map<
+      string,
+      {
+        subscription: WorkspaceEventSubscription;
+        finish: (decision: ExtensionEventDecision) => void;
+      }
+    >(),
+  );
   const ordered = [...(surfaces.data?.items ?? [])].sort(compareSurfaces);
   const onSubscribe = useCallback<NonNullable<WorkspaceEventCallbacks['onSubscribe']>>(
     (subscription, enabled) => {
-      const key = `${subscription.surface.extension_id}:${subscription.surface.id}:${subscription.event}`;
+      const key = subscriptionKey(subscription);
       if (enabled) subscribers.current.set(key, subscription);
-      else subscribers.current.delete(key);
+      else {
+        const current = subscribers.current.get(key);
+        if (current?.frame === subscription.frame && current.session === subscription.session)
+          subscribers.current.delete(key);
+        for (const pending of pendingEvents.current.values()) {
+          if (
+            pending.subscription.frame === subscription.frame &&
+            pending.subscription.session === subscription.session
+          )
+            pending.finish('continue');
+        }
+      }
     },
     [],
   );
   const onEventResult = useCallback<NonNullable<WorkspaceEventCallbacks['onEventResult']>>(
-    (eventId, decision) => {
-      pendingEvents.current.get(eventId)?.(decision);
+    (eventId, decision, frame, session) => {
+      const pending = pendingEvents.current.get(eventId);
+      if (pending?.subscription.frame === frame && pending.subscription.session === session)
+        pending.finish(decision);
     },
     [],
   );
@@ -500,6 +670,12 @@ export function WorkspaceExtensionOverlays({ path }: { path: string }) {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.isComposing || event.defaultPrevented) return;
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.shiftKey &&
+        ['Digit0', 'Numpad0'].includes(event.code)
+      )
+        return;
       const target = event.target;
       if (
         target instanceof Element &&
@@ -523,16 +699,22 @@ export function WorkspaceExtensionOverlays({ path }: { path: string }) {
         listeners,
         (subscription) => subscription.surface.priority ?? 0,
         (subscription) => {
+          const current = subscribers.current.get(subscriptionKey(subscription));
+          if (current?.frame !== subscription.frame || current.session !== subscription.session)
+            return Promise.resolve('continue');
           const eventId = crypto.randomUUID();
           return new Promise<ExtensionEventDecision>((resolve) => {
             const timeout = window.setTimeout(() => {
               pendingEvents.current.delete(eventId);
               resolve('continue');
             }, 250);
-            pendingEvents.current.set(eventId, (decision) => {
-              window.clearTimeout(timeout);
-              pendingEvents.current.delete(eventId);
-              resolve(decision);
+            pendingEvents.current.set(eventId, {
+              subscription,
+              finish: (decision) => {
+                window.clearTimeout(timeout);
+                pendingEvents.current.delete(eventId);
+                resolve(decision);
+              },
             });
             subscription.frame.contentWindow?.postMessage(
               {
@@ -550,7 +732,7 @@ export function WorkspaceExtensionOverlays({ path }: { path: string }) {
     window.addEventListener('keydown', onKeyDown, true);
     return () => {
       window.removeEventListener('keydown', onKeyDown, true);
-      for (const resolve of pendingEvents.current.values()) resolve('continue');
+      for (const pending of pendingEvents.current.values()) pending.finish('continue');
       pendingEvents.current.clear();
       subscribers.current.clear();
     };
@@ -560,16 +742,17 @@ export function WorkspaceExtensionOverlays({ path }: { path: string }) {
       {ordered
         .filter((item) => {
           if (item.mode !== 'floating') return false;
-          const owningPage =
-            path === `/extensions/${item.extension_id}` ||
-            path === `/extensions/${item.extension_id}/${item.id}`;
-          return !owningPage && item.global !== false;
+          return item.global !== false;
         })
         .map((surface, index) => (
           <FloatingSurface
-            key={`${surface.extension_id}:${surface.id}`}
+            key={surfaceIdentity(surface)}
             surface={surface}
             index={index}
+            visible={
+              path !== `/extensions/${surface.extension_id}` &&
+              path !== `/extensions/${surface.extension_id}/${surface.id}`
+            }
             onSubscribe={onSubscribe}
             onEventResult={onEventResult}
           />

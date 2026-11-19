@@ -30,6 +30,37 @@ class ThemePlatformContractTests(ApiCase):
                 self.assertIn(f'data-theme-id="{identifier}"', response.text)
                 self.assertNotIn('data-theme-id="self"', response.text)
 
+    def test_commented_card_identity_survives_export_and_keeps_comments(self):
+        css = b'.theme-card/*keep*/[data-theme-id="my-theme"] { color:red; }'
+        document = {**THEME, "style_file": "theme.css"}
+        self.ctx.theme_packages.install_package(
+            archive(theme_files(document, resources={"theme.css": css}))
+        )
+        before = self.ok(self.client.get("/api/themes/my-theme/card-style"))
+        self.assertIn("color:red", before.text)
+        exported = self.ok(self.client.get("/api/themes/my-theme/package")).content
+        installed = self.ok(self.client.post("/api/themes/package", content=exported), 201)
+        identifier = installed["id"]
+        full = self.ok(self.client.get(f"/api/themes/{identifier}/style"))
+        self.assertIn("/*keep*/", full.text)
+        self.assertIn(f'data-theme-id="{identifier}"', full.text)
+        self.assertIn(
+            "color:red", self.ok(self.client.get(f"/api/themes/{identifier}/card-style")).text
+        )
+
+    def test_scope_and_supports_selector_parameters_bind_without_rewriting_values(self):
+        from mio_server.theme_packages import _rebase_card_stylesheet
+
+        scope = '.theme-card[data-theme-id="self"]'
+        source = (
+            f"@scope ({scope}) {{ .title {{ content: '{scope}'; }} }}\n"
+            f"@supports selector({scope}) {{ {scope} {{ color:red }} }}"
+        ).encode()
+        bound = _rebase_card_stylesheet(source, "self", "new-theme").decode()
+        self.assertIn('@scope (.theme-card[data-theme-id="new-theme"])', bound)
+        self.assertIn('@supports selector(.theme-card[data-theme-id="new-theme"])', bound)
+        self.assertIn(f"content: '{scope}'", bound)
+
     def test_byte_and_file_zip_adapters_share_the_same_rejection_boundary(self):
         corpus = [
             {**theme_files(), "../outside.txt": b"bad"},

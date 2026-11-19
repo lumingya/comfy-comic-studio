@@ -393,8 +393,8 @@ def _rebase_card_stylesheet(data: bytes, old_id: str, new_id: str) -> bytes:
         source = data.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise ThemePackageError("theme.css 不是有效 UTF-8") from exc
-    scope = f'.theme-card[data-theme-id="{old_id}"]'
-    replacement = f'.theme-card[data-theme-id="{new_id}"]'
+    prefix = '.theme-card[data-theme-id="'
+    replacement = new_id
     edits: list[tuple[int, int]] = []
 
     def skip_comment(cursor: int) -> int:
@@ -410,9 +410,28 @@ def _rebase_card_stylesheet(data: bytes, old_id: str, new_id: str) -> bytes:
                 cursor = skip_comment(cursor)
             elif source[cursor] in "\"'":
                 cursor = _skip_string(source, cursor)
-            elif source.startswith(scope, cursor):
-                edits.append((cursor, cursor + len(scope)))
-                cursor += len(scope)
+            elif source[cursor] == ".":
+                # Comments may split selector tokens. Match their logical spelling,
+                # but replace only the quoted identity and retain every comment.
+                probe = cursor
+                for expected in prefix:
+                    while source.startswith("/*", probe):
+                        probe = skip_comment(probe)
+                    if probe >= end or source[probe] != expected:
+                        break
+                    probe += 1
+                else:
+                    identity_start = probe
+                    identity_end = probe + len(old_id)
+                    if source.startswith(old_id + '"', probe):
+                        probe = identity_end + 1
+                        while source.startswith("/*", probe):
+                            probe = skip_comment(probe)
+                        if probe < end and source[probe] == "]":
+                            edits.append((identity_start, identity_end))
+                            cursor = probe + 1
+                            continue
+                cursor += 1
             else:
                 cursor += 1
 
@@ -441,7 +460,10 @@ def _rebase_card_stylesheet(data: bytes, old_id: str, new_id: str) -> bytes:
                 skipped = bool(skipped_blocks and skipped_blocks[-1]) or bool(
                     re.match(r"--[A-Za-z0-9_-]+\s*:", header)
                 )
-                if not skipped and not header.startswith("@"):
+                if not skipped and (
+                    not header.startswith("@")
+                    or re.match(r"@(?:scope|supports)\b", header, re.IGNORECASE)
+                ):
                     selector(start, cursor)
                 skipped_blocks.append(skipped)
                 start = cursor + 1

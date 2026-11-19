@@ -180,6 +180,11 @@ class ExtensionApiTests(ApiCase):
         surfaces = self.ok(self.client.get("/api/extension-surfaces"))["items"]
         surface = next(item for item in surfaces if item["id"] == "palette")
         self.assertEqual(
+            surface["activation"], self.ctx.extensions.loaded["demo"].api.activation_id
+        )
+        self.assertEqual(surface["digest"], self.ctx.extensions.loaded["demo"].api.digest)
+        old_activation = surface["activation"]
+        self.assertEqual(
             {
                 key: surface[key]
                 for key in ("priority", "global", "transparent", "default_position", "mode")
@@ -196,6 +201,12 @@ class ExtensionApiTests(ApiCase):
         self.assertIn("<html>palette</html>", served.text)
         self.assertLess(served.text.index("workspace-bridge.js"), served.text.index("palette"))
         self.assertIn("Content-Security-Policy", served.headers)
+        self.ctx.extensions.disable("demo")
+        self.assertEqual(self.ok(self.client.get("/api/extension-surfaces"))["items"], [])
+        self.enable()
+        reloaded = self.ok(self.client.get("/api/extension-surfaces"))["items"][0]
+        self.assertNotEqual(reloaded["activation"], old_activation)
+        self.assertEqual(reloaded["digest"], surface["digest"])
 
     def test_workspace_bridge_injects_before_scripts_and_keeps_digest_guard(self):
         folder = write_ext(self.root(), main="def activate(mio):\n    pass\n")
@@ -228,6 +239,8 @@ class ExtensionApiTests(ApiCase):
             "mio:workspace:resize",
             "mio:workspace:click-through",
             "mio:workspace:moved",
+            "mio:workspace:lifecycle",
+            "onLifecycle(handler)",
             "mio:workspace:listen",
             "send('mio:workspace:listen', { event: type, enabled: true })",
             "send('mio:workspace:listen', { event: type, enabled: false })",

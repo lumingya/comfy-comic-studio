@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import Request
+from fastapi import Header, Request, Response
 from pydantic import JsonValue
 from starlette.concurrency import run_in_threadpool
 
@@ -11,15 +11,31 @@ from ..extension_preferences import (
     MAX_PREFERENCES_JSON,
     load_preferences,
     preferences_exist,
-    save_preferences,
-    validate_preferences,
 )
 from ..extensions.manager import ExtensionError
+from ..private_store import (
+    PreferencePatch,
+    PrivateStore,
+    if_match_revision,
+    read_bounded_bytes,
+    validate_json,
+)
 from ..storage import NotFound
 from .deps import Ctx
 from .operations import Router as APIRouter
 
 router = APIRouter(tags=["extensions"])
+PREFERENCE_RESPONSES = {
+    200: {
+        "headers": {
+            "ETag": {
+                "description": "Strong content revision for conditional preference writes",
+                "schema": {"type": "string", "pattern": r'^"[a-f0-9]{64}"$'},
+            }
+        }
+    },
+    409: {"description": "Preference revision changed; reload before applying this intent"},
+}
 
 
 def _settings_target(ctx, ext_id: str):
@@ -64,16 +80,35 @@ def _preferences_target(ctx: Ctx, ext_id: str) -> None:
         raise NotFound("extension manifest is invalid")
 
 
-@router.get("/ext/{ext_id}/preferences", response_model=dict[str, JsonValue])
-def get_extension_preferences(ctx: Ctx, ext_id: str) -> dict[str, JsonValue]:
+def _preference_response(response: Response, value: dict) -> dict:
+    response.headers["ETag"] = f'"{PrivateStore.revision(value)}"'
+    response.headers["Cache-Control"] = "private, no-store"
+    return value
+
+
+async def _preference_body(request: Request) -> bytes:
+    content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    if content_type != "application/json":
+        raise ValueError("extension preferences require application/json")
+    declared = request.headers.get("content-length", "")
+    if declared.isdigit() and int(declared) > MAX_PREFERENCES_JSON:
+        raise ValueError("extension preferences exceed 1 MiB")
+    return await read_bounded_bytes(request.stream(), limit=MAX_PREFERENCES_JSON)
+
+
+@router.get(
+    "/ext/{ext_id}/preferences", response_model=dict[str, JsonValue], responses=PREFERENCE_RESPONSES
+)
+def get_extension_preferences(ctx: Ctx, ext_id: str, response: Response) -> dict[str, JsonValue]:
     with ctx.engine.hold_operation():
         _preferences_target(ctx, ext_id)
-        return load_preferences(ctx.data_dir, ext_id)
+        return _preference_response(response, load_preferences(ctx.data_dir, ext_id))
 
 
 @router.put(
     "/ext/{ext_id}/preferences",
     response_model=dict[str, JsonValue],
+    responses=PREFERENCE_RESPONSES,
     openapi_extra={
         "requestBody": {
             "required": True,
@@ -82,19 +117,50 @@ def get_extension_preferences(ctx: Ctx, ext_id: str) -> dict[str, JsonValue]:
     },
 )
 async def put_extension_preferences(
-    ctx: Ctx, ext_id: str, request: Request
+    ctx: Ctx,
+    ext_id: str,
+    request: Request,
+    response: Response,
+    if_match: str | None = Header(default=None),
 ) -> dict[str, JsonValue]:
-    raw = bytearray()
-    async for chunk in request.stream():
-        if len(raw) + len(chunk) > MAX_PREFERENCES_JSON:
-            raise ValueError("extension preferences exceed 1 MiB")
-        raw.extend(chunk)
+    """Replace the complete object; omit If-Match only for an explicit unconditional replace."""
+    expected = if_match_revision(if_match)
+    body = validate_json(await _preference_body(request), limit=MAX_PREFERENCES_JSON)
 
     def replace_preferences() -> dict[str, JsonValue]:
-        body = validate_preferences(raw)
         with ctx.engine.hold_operation():
             _preferences_target(ctx, ext_id)
-            save_preferences(ctx.data_dir, ext_id, body)
-        return body
+            return PrivateStore(ctx.data_dir, "extension", ext_id).replace_json(
+                body, expected_revision=expected, limit=MAX_PREFERENCES_JSON
+            )
 
-    return await run_in_threadpool(replace_preferences)
+    return _preference_response(response, await run_in_threadpool(replace_preferences))
+
+
+@router.patch(
+    "/ext/{ext_id}/preferences",
+    response_model=dict[str, JsonValue],
+    responses=PREFERENCE_RESPONSES,
+    openapi_extra={
+        "requestBody": {
+            "required": True,
+            "content": {"application/json": {"schema": PreferencePatch.model_json_schema()}},
+        }
+    },
+)
+async def patch_extension_preferences(
+    ctx: Ctx, ext_id: str, request: Request, response: Response
+) -> dict[str, JsonValue]:
+    """Conditionally replace one subtree; callers retry only after fetching its current revision."""
+    command = PreferencePatch.from_bytes(
+        await _preference_body(request), limit=MAX_PREFERENCES_JSON
+    )
+
+    def patch_preferences() -> dict[str, JsonValue]:
+        with ctx.engine.hold_operation():
+            _preferences_target(ctx, ext_id)
+            return PrivateStore(ctx.data_dir, "extension", ext_id).patch_json(
+                command, limit=MAX_PREFERENCES_JSON
+            )
+
+    return _preference_response(response, await run_in_threadpool(patch_preferences))

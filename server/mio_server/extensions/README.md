@@ -126,6 +126,10 @@ SDK 的常规扩展数据位于 `<数据目录>/extensions_data/<id>/`，通过 
 
 浮窗优先级默认 `0`，数值越大基础层级越高；用户拖动后的位置、尺寸与鼠标穿透状态保存在该扩展的私有 preferences 文件。受信 workspace bridge 提供 `bridge.resize(width, height)`、`bridge.setClickThrough(enabled)`、`bridge.onMoved(callback)` 与 `bridge.onGlobalEvent("keydown", callback)`。全局快捷键订阅按优先级由高到低依次分发，处理器返回 `{handled: true}` 或 `{stop_propagation: true}` 时截断后续处理，否则继续传递。输入框、文本域、下拉框和可编辑区域不会触发此全局快捷键管线。
 
+`bridge.onLifecycle(handler)` 接收 `shown`、`hidden`、`focused`、`blurred` 通知。收起保留 iframe 文档与业务状态，同时挂起全局输入订阅；恢复重新注册。普通拖动、缩放与穿透不建立新会话；重载文档或改变目录中的 activation/digest 时撤销旧会话订阅。`Ctrl/Cmd+Shift+0` 专用于宿主主题逃生，不能被扩展分发截断。内容穿透时标题栏保留交互，偏好保存失败会反馈并重新读取权威值。
+
+私有偏好 GET/PUT 返回完整对象与强 ETag；`PATCH /api/ext/{id}/preferences` 使用 `{expected_revision, path, value}`，在同一操作屏障中比较摘要并原子替换一个对象子树。宿主仅写 `['floating_surfaces', surface_id]`，不覆盖扩展字段及兄弟窗口。空 path 为整对象，路径最多 16 个键、禁止原型键和标量/数组中间节点，null 为写入 null；旧 revision 返回 409。PUT 的可选 `If-Match` 只接受单个强 ETag；不带时是明确无条件整对象替换。窗口位置仍属于服务端私有状态，浏览器 localStorage 的主题选择与脚本授权不属于工作区备份。
+
 前端依赖须打包在扩展自己的目录中，资源使用相对路径。页面可请求本机 API；联网模型请求应交给扩展自己的后端。iframe 的 hash 包含 `mio-session` 与 `floating`；页面向同源父窗口发送 `{type: "mio:workspace:ready", session}` 后，宿主回复 `mio:workspace:context`，带主题 `tokens`、`theme`、`locale` 和 `floating`。数据改变后发送 `mio:workspace:changed` 以刷新宿主。宿主同时校验来源窗口、origin 与 session。
 
 文本模型扩展可贡献 `text_provider`，值为返回客户端的工厂函数，客户端实现现有 `chat_json()` / `vision_json()` 契约；主程序在实际需要文本模型时解析贡献。备份参与者使用清单 `backup` 入口，见[扩展备份契约](../../../docs/EXTENSION_BACKUP_CONTRACT.md)。完整示例见 [`extensions/ai-assist`](../../../extensions/ai-assist/README.md)。
