@@ -132,3 +132,9 @@ M0 结论：方案没有不可逆数据迁移或自动删除取舍，可以直�
 | F-FE-1 | React 回调变化撤销会话订阅 → iframe 文档/activation 所有权、稳定引用、active 挂起及失效会话回收 | `host.test.tsx` 同一 iframe 长会话、路由、目录刷新、派发中卸载 | M3 host 8 项、协议接线 22 项、前端全量 782 项通过；真实穿透/标题栏也通过 |
 | F-FE-2 | 无条件整对象并发写及旧响应回写 → CAS 子树、资源队列、序号/epoch、脏草稿与失败权威对账 | `test_preference_concurrency.py`、`preferenceWrites.test.tsx`、`ThemeSettingsPanel.test.tsx` | 后端 13 项并发矩阵、前端队列 10/面板 7 项及完整 pytest/Vitest 通过 |
 | F-FE-3 | 用户媒体适配丢失 animated → 同源 MediaDescriptor/MIME、Provider 与卡片共享有效背景 | `test_theme_platform_contract.py`、`useTheme.test.tsx`、`ThemesSection.test.tsx` | M2 前端 198 项（含 160 组合），全量 782 项，受影响 186 项通过；不冒充真实解码 |
+
+### M5 已完成：仅设计
+
+交付 [HIGH_EXTENSIBILITY_RFC.md](HIGH_EXTENSIBILITY_RFC.md)，以 `a23923c` 平台契约及 `d5a4164` 验收清理为基线，覆盖宿主槽位/上下文/同步快捷键、分层与事件驱动主题、窄版本 SDK/互操作/Sidecar、以及大包维护 Job。每项明确协议草图、所有权、状态机、分期文件、验收矩阵及回滚，不实现新运行能力。
+
+最终校读额外明确：组合定义属于服务端文档，浏览器激活选择不混入工作区备份承诺；私有媒体继续归原主题所有者；Sidecar 不是 OS 沙箱；维护 Job 只能以确切宿主身份获得屏障自排除，不让自身进度掩盖用户数据变化；HTML 设置页保留已接受边界。UTF-8、JSON 示例、相对链接及围栏检查通过，路线图同步。M5 只改文档，不重复运行已通过的代码门禁。
