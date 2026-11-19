@@ -12,10 +12,10 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from pathlib import Path
-from typing import Literal
+from pathlib import Path, PurePosixPath
+from typing import Annotated, Literal
 
-from pydantic import Field, ValidationError, field_validator
+from pydantic import Field, StrictInt, ValidationError, field_validator
 
 from ..models import StrictModel
 
@@ -59,6 +59,7 @@ class PanelSpec(StrictModel):
     slot: Literal["episode", "settings"]
     title: str
     entry: str = Field(description="HTML file inside the extension folder")
+    priority: int = Field(default=0, strict=True)
     requests: list[PanelRequestSpec] = Field(default_factory=list, max_length=32)
 
     @field_validator("requests")
@@ -69,12 +70,59 @@ class PanelSpec(StrictModel):
         return values
 
 
+class FloatingPosition(StrictModel):
+    x: Literal["left", "right"] | Annotated[StrictInt, Field(ge=0, le=10000)]
+    y: Literal["top", "bottom"] | Annotated[StrictInt, Field(ge=0, le=10000)]
+    offset: tuple[
+        Annotated[StrictInt, Field(ge=0, le=10000)],
+        Annotated[StrictInt, Field(ge=0, le=10000)],
+    ] = (20, 20)
+
+
+class FloatingSurfaceSpec(StrictModel):
+    id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]{0,31}$")
+    title: str = Field(min_length=1, max_length=120)
+    entry: str = Field(min_length=1, max_length=240)
+    global_: bool = Field(alias="global", strict=True)
+    transparent: bool = Field(default=True, strict=True)
+    default_position: FloatingPosition = Field(
+        default_factory=lambda: FloatingPosition(x="right", y="bottom")
+    )
+    priority: int = Field(default=0, strict=True)
+
+    @field_validator("title")
+    @classmethod
+    def non_blank_title(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("floating surface title must not be blank")
+        return value
+
+    @field_validator("entry")
+    @classmethod
+    def local_html_entry(cls, value: str) -> str:
+        if (
+            any(part in {"", ".", ".."} for part in value.split("/"))
+            or any(char in "\\:?#" or ord(char) < 32 for char in value)
+            or PurePosixPath(value).suffix.lower() != ".html"
+        ):
+            raise ValueError("floating surface entry must be a relative HTML path")
+        return value
+
+
 class Contributes(StrictModel):
     themes: list[str] = Field(default_factory=list, description="Theme JSON files")
     album_templates: list[str] = Field(default_factory=list, description="Album template JSON")
     sfx_presets: dict[str, dict] = Field(default_factory=dict)
     slice_presets: list[SlicePresetSpec] = Field(default_factory=list)
     panels: list[PanelSpec] = Field(default_factory=list)
+    floating_surfaces: list[FloatingSurfaceSpec] = Field(default_factory=list)
+
+    @field_validator("floating_surfaces")
+    @classmethod
+    def unique_surface_ids(cls, values: list[FloatingSurfaceSpec]) -> list[FloatingSurfaceSpec]:
+        if len({value.id for value in values}) != len(values):
+            raise ValueError("floating surface IDs must be unique within the extension")
+        return values
 
 
 class WorkspaceSpec(StrictModel):
@@ -96,7 +144,13 @@ class Manifest(StrictModel):
 
     @property
     def runs_code(self) -> bool:
-        return bool(self.main or self.contributes.panels or self.workspace or self.backup)
+        return bool(
+            self.main
+            or self.contributes.panels
+            or self.contributes.floating_surfaces
+            or self.workspace
+            or self.backup
+        )
 
 
 class ManifestError(ValueError):
@@ -129,6 +183,9 @@ def read_manifest(folder: Path) -> Manifest:
         p.entry for p in manifest.contributes.panels
     ]:
         inside(folder, rel)
+    for surface in manifest.contributes.floating_surfaces:
+        if not inside(folder, surface.entry).is_file():
+            raise ManifestError(f"floating surface entry is not an HTML file: {surface.entry}")
     return manifest
 
 

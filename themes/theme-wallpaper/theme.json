@@ -1,0 +1,57 @@
+{
+  "id": "theme-wallpaper",
+  "name": "壁纸播放器",
+  "mode": "dark",
+  "author": "Mio",
+  "style_file": "theme.css",
+  "tokens": {
+    "bg": "#10131a",
+    "bg-deep": "#0b0e14",
+    "panel": "#191e28",
+    "panel-2": "#222a36",
+    "hover": "#2b3544",
+    "line": "#303b4b",
+    "line-strong": "#49586c",
+    "text": "#edf3fb",
+    "soft": "#c0cad8",
+    "muted": "#9ba9bc",
+    "accent": "#82b7e9",
+    "accent-strong": "#a4cff5",
+    "on-accent": "#101722",
+    "tint": "#24364b",
+    "shadow-sm": "0 2px 8px rgb(0 0 0 / 0.18)"
+  },
+  "settings_schema": [
+    {
+      "id": "wallpaper_upload",
+      "type": "file_upload",
+      "label": "导入图片或视频壁纸",
+      "description": "文件保存在此主题的本机数据目录，不会写入主题包。",
+      "default": null
+    },
+    {
+      "id": "wallpaper_id",
+      "type": "select",
+      "label": "选择壁纸",
+      "description": "选择已经导入到此主题的本地壁纸。",
+      "default": null,
+      "options_source": "wallpapers"
+    },
+    {
+      "id": "playbackRate",
+      "type": "slider",
+      "label": "视频播放速度",
+      "description": "选择 0.5×、1× 或 2×。",
+      "default": 1.0,
+      "min": 0.5,
+      "max": 2.0,
+      "step": 0.5
+    },
+    {
+      "id": "loop",
+      "type": "switch",
+      "label": "循环播放",
+      "default": true
+    }
+  ]
+}

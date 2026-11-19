@@ -103,7 +103,7 @@ export const routes = [
       { path: 'jobs', element: s(<Jobs />) },
       { path: 'engine', element: s(<Engine />) },
       { path: 'extensions', element: s(<Extensions />) },
-      { path: 'extensions/:extensionId', element: <WorkspaceExtensionPage /> },
+      { path: 'extensions/:extensionId/:surfaceId?', element: <WorkspaceExtensionPage /> },
       { path: 'settings', element: <SettingsRoute /> },
       { path: 'trash', element: <Navigate to="/settings?tab=data" replace /> },
       { path: '*', element: <NotFound /> },

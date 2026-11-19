@@ -8703,6 +8703,57 @@
       ],
       "title": "Script File"
      },
+     "settings_page": {
+      "anyOf": [
+       {
+        "maxLength": 69,
+        "minLength": 6,
+        "pattern": "^[a-z0-9][a-z0-9_-]{0,63}\\.html$",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Settings Page"
+     },
+     "settings_schema": {
+      "anyOf": [
+       {
+        "items": {
+         "discriminator": {
+          "mapping": {
+           "file_upload": "#/components/schemas/ThemeFileUploadSetting",
+           "select": "#/components/schemas/ThemeSelectSetting",
+           "slider": "#/components/schemas/ThemeSliderSetting",
+           "switch": "#/components/schemas/ThemeSwitchSetting"
+          },
+          "propertyName": "type"
+         },
+         "oneOf": [
+          {
+           "$ref": "#/components/schemas/ThemeSliderSetting"
+          },
+          {
+           "$ref": "#/components/schemas/ThemeSwitchSetting"
+          },
+          {
+           "$ref": "#/components/schemas/ThemeSelectSetting"
+          },
+          {
+           "$ref": "#/components/schemas/ThemeFileUploadSetting"
+          }
+         ]
+        },
+        "maxItems": 32,
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Settings Schema"
+     },
      "style_file": {
       "anyOf": [
        {
@@ -8731,6 +8782,8 @@
      "background",
      "style_file",
      "script_file",
+     "settings_schema",
+     "settings_page",
      "author",
      "created_at"
     ],
@@ -8768,6 +8821,293 @@
      "opacity"
     ],
     "title": "ThemeBackground",
+    "type": "object"
+   },
+   "ThemeFileUploadSetting": {
+    "additionalProperties": false,
+    "properties": {
+     "default": {
+      "title": "Default",
+      "type": "null"
+     },
+     "description": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Description"
+     },
+     "id": {
+      "maxLength": 48,
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+      "title": "Id",
+      "type": "string"
+     },
+     "label": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+     },
+     "type": {
+      "const": "file_upload",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "label",
+     "description",
+     "type",
+     "default"
+    ],
+    "title": "ThemeFileUploadSetting",
+    "type": "object"
+   },
+   "ThemeSelectOption": {
+    "additionalProperties": false,
+    "properties": {
+     "label": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+     },
+     "value": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "integer"
+       },
+       {
+        "type": "number"
+       }
+      ],
+      "title": "Value"
+     }
+    },
+    "required": [
+     "value",
+     "label"
+    ],
+    "title": "ThemeSelectOption",
+    "type": "object"
+   },
+   "ThemeSelectSetting": {
+    "additionalProperties": false,
+    "properties": {
+     "default": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "integer"
+       },
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Default"
+     },
+     "description": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Description"
+     },
+     "id": {
+      "maxLength": 48,
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+      "title": "Id",
+      "type": "string"
+     },
+     "label": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+     },
+     "options": {
+      "items": {
+       "$ref": "#/components/schemas/ThemeSelectOption"
+      },
+      "maxItems": 32,
+      "title": "Options",
+      "type": "array"
+     },
+     "options_source": {
+      "anyOf": [
+       {
+        "const": "wallpapers",
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Options Source"
+     },
+     "type": {
+      "const": "select",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "label",
+     "description",
+     "type",
+     "default",
+     "options",
+     "options_source"
+    ],
+    "title": "ThemeSelectSetting",
+    "type": "object"
+   },
+   "ThemeSliderSetting": {
+    "additionalProperties": false,
+    "properties": {
+     "default": {
+      "maximum": 1000000.0,
+      "minimum": -1000000.0,
+      "title": "Default",
+      "type": "number"
+     },
+     "description": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Description"
+     },
+     "id": {
+      "maxLength": 48,
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+      "title": "Id",
+      "type": "string"
+     },
+     "label": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+     },
+     "max": {
+      "maximum": 1000000.0,
+      "minimum": -1000000.0,
+      "title": "Max",
+      "type": "number"
+     },
+     "min": {
+      "maximum": 1000000.0,
+      "minimum": -1000000.0,
+      "title": "Min",
+      "type": "number"
+     },
+     "step": {
+      "exclusiveMinimum": 0.0,
+      "maximum": 1000000.0,
+      "title": "Step",
+      "type": "number"
+     },
+     "type": {
+      "const": "slider",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "label",
+     "description",
+     "type",
+     "default",
+     "min",
+     "max",
+     "step"
+    ],
+    "title": "ThemeSliderSetting",
+    "type": "object"
+   },
+   "ThemeSwitchSetting": {
+    "additionalProperties": false,
+    "properties": {
+     "default": {
+      "title": "Default",
+      "type": "boolean"
+     },
+     "description": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Description"
+     },
+     "id": {
+      "maxLength": 48,
+      "minLength": 1,
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*$",
+      "title": "Id",
+      "type": "string"
+     },
+     "label": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Label",
+      "type": "string"
+     },
+     "type": {
+      "const": "switch",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "label",
+     "description",
+     "type",
+     "default"
+    ],
+    "title": "ThemeSwitchSetting",
     "type": "object"
    },
    "TokenCreate": {
@@ -14164,6 +14504,127 @@
     "x-mio-operation": "GET /export/presets"
    }
   },
+  "/ext/{ext_id}/preferences": {
+   "get": {
+    "operationId": "get_extension_preferences",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ext_id",
+      "required": true,
+      "schema": {
+       "title": "Ext Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": {
+          "$ref": "#/components/schemas/JsonValue"
+         },
+         "title": "Response Get Extension Preferences",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Get Extension Preferences",
+    "tags": [
+     "extensions"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "ext_id"
+    ],
+    "x-mio-operation": "GET /ext/{ext_id}/preferences"
+   },
+   "put": {
+    "operationId": "put_extension_preferences",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ext_id",
+      "required": true,
+      "schema": {
+       "title": "Ext Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": {
+          "$ref": "#/components/schemas/JsonValue"
+         },
+         "title": "Response Put Extension Preferences",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Put Extension Preferences",
+    "tags": [
+     "extensions"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "ext_id",
+     "request"
+    ],
+    "x-mio-operation": "PUT /ext/{ext_id}/preferences"
+   }
+  },
   "/extension-market": {
    "get": {
     "operationId": "get_extension_market",
@@ -18426,6 +18887,364 @@
      "theme_id"
     ],
     "x-mio-operation": "GET /themes/{theme_id}/package"
+   }
+  },
+  "/themes/{theme_id}/preferences": {
+   "get": {
+    "operationId": "get_theme_preferences",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "theme_id",
+      "required": true,
+      "schema": {
+       "title": "Theme Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Get Theme Preferences",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Get Theme Preferences",
+    "tags": [
+     "themes"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "theme_id"
+    ],
+    "x-mio-operation": "GET /themes/{theme_id}/preferences"
+   },
+   "put": {
+    "operationId": "put_theme_preferences",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "theme_id",
+      "required": true,
+      "schema": {
+       "title": "Theme Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "type": "object"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Put Theme Preferences",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Put Theme Preferences",
+    "tags": [
+     "themes"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "theme_id",
+     "request"
+    ],
+    "x-mio-operation": "PUT /themes/{theme_id}/preferences"
+   }
+  },
+  "/themes/{theme_id}/wallpapers": {
+   "get": {
+    "operationId": "list_theme_wallpapers",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "theme_id",
+      "required": true,
+      "schema": {
+       "title": "Theme Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response List Theme Wallpapers",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "List Theme Wallpapers",
+    "tags": [
+     "themes"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "theme_id"
+    ],
+    "x-mio-operation": "GET /themes/{theme_id}/wallpapers"
+   },
+   "post": {
+    "operationId": "upload_theme_wallpaper",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "theme_id",
+      "required": true,
+      "schema": {
+       "title": "Theme Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "multipart/form-data": {
+       "schema": {
+        "properties": {
+         "file": {
+          "format": "binary",
+          "type": "string"
+         }
+        },
+        "required": [
+         "file"
+        ],
+        "type": "object"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "additionalProperties": true,
+         "title": "Response Upload Theme Wallpaper",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Upload Theme Wallpaper",
+    "tags": [
+     "themes"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "theme_id",
+     "request"
+    ],
+    "x-mio-operation": "POST /themes/{theme_id}/wallpapers"
+   }
+  },
+  "/themes/{theme_id}/wallpapers/{wallpaper_id}": {
+   "delete": {
+    "operationId": "delete_theme_wallpaper",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "theme_id",
+      "required": true,
+      "schema": {
+       "title": "Theme Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "wallpaper_id",
+      "required": true,
+      "schema": {
+       "title": "Wallpaper Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "204": {
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Delete Theme Wallpaper",
+    "tags": [
+     "themes"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "theme_id",
+     "wallpaper_id"
+    ],
+    "x-mio-operation": "DELETE /themes/{theme_id}/wallpapers/{wallpaper_id}"
+   }
+  },
+  "/themes/{theme_id}/wallpapers/{wallpaper_id}/file": {
+   "get": {
+    "operationId": "serve_theme_wallpaper",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "theme_id",
+      "required": true,
+      "schema": {
+       "title": "Theme Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "path",
+      "name": "wallpaper_id",
+      "required": true,
+      "schema": {
+       "title": "Wallpaper Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Serve Theme Wallpaper",
+    "tags": [
+     "themes"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "theme_id",
+     "wallpaper_id"
+    ],
+    "x-mio-operation": "GET /themes/{theme_id}/wallpapers/{wallpaper_id}/file"
    }
   },
   "/tokens": {

@@ -66,9 +66,19 @@ class HookBusTests(unittest.TestCase):
         bus.add("prompt.compiled", lambda v, **k: v + ["b"], priority=200, source="x")
         bus.add("prompt.compiled", lambda v, **k: v + ["a"], priority=10, source="y")
         bus.add("prompt.compiled", lambda v, **k: 1 / 0, source="z")
-        self.assertEqual(bus.filter("prompt.compiled", []), ["a", "b"])
+        self.assertEqual(bus.filter("prompt.compiled", []), ["b", "a"])
         self.assertEqual(bus.remove_source("x"), 1)
         self.assertEqual(bus.filter("prompt.compiled", []), ["a"])
+
+    def test_equal_priority_hooks_keep_registration_order_and_priority_is_integer(self):
+        bus = HookBus()
+        bus.add("prompt.compiled", lambda value, **_: value + ["first"])
+        bus.add("prompt.compiled", lambda value, **_: value + ["second"], priority=0)
+        bus.add("prompt.compiled", lambda value, **_: value + ["high"], priority=10)
+        self.assertEqual(bus.filter("prompt.compiled", []), ["high", "first", "second"])
+        for priority in (True, 1.5, "3"):
+            with self.subTest(priority=priority), self.assertRaises(HookError):
+                bus.add("prompt.compiled", lambda value, **_: value, priority=priority)
 
     def test_unknown_hook_fails_loudly(self):
         with self.assertRaises(HookError):
@@ -117,6 +127,161 @@ class ExtensionApiTests(ApiCase):
         client = TestClient(create_app(self.ctx, serve_web=False), base_url=LOCAL)  # "restart"
         hello = self.ok(client.get("/api/ext/demo/hello"))
         self.assertEqual(hello, {"hi": "demo", "saved": {"count": 1}})
+
+    def test_manifest_panels_sort_by_priority_and_surface_metadata_is_exposed(self):
+        folder = write_ext(
+            self.root(),
+            main="def activate(mio):\n    pass\n",
+            panels=[
+                {"id": "normal", "slot": "settings", "title": "Normal", "entry": "normal.html"},
+                {
+                    "id": "high",
+                    "slot": "settings",
+                    "title": "High",
+                    "entry": "high.html",
+                    "priority": 50,
+                },
+                {
+                    "id": "tied",
+                    "slot": "settings",
+                    "title": "Tied",
+                    "entry": "tied.html",
+                    "priority": 50,
+                },
+            ],
+            floating_surfaces=[
+                {
+                    "id": "palette",
+                    "title": "Palette",
+                    "entry": "ui/index.html",
+                    "global": True,
+                    "transparent": False,
+                    "default_position": {"x": 24, "y": 36},
+                    "priority": 80,
+                }
+            ],
+        )
+        for entry in ("normal.html", "high.html", "tied.html"):
+            (folder / entry).write_text("<html></html>", encoding="utf-8")
+        (folder / "ui").mkdir()
+        (folder / "ui" / "index.html").write_text("<html>palette</html>", encoding="utf-8")
+
+        listed = next(
+            item
+            for item in self.ok(self.client.get("/api/extensions"))["items"]
+            if item["id"] == "demo"
+        )
+        self.assertEqual([panel["id"] for panel in listed["panels"]], ["high", "tied", "normal"])
+        self.enable()
+        panels = self.ok(self.client.get("/api/extension-panels"))
+        self.assertEqual([panel["id"] for panel in panels], ["high", "tied", "normal"])
+        self.assertEqual([panel["priority"] for panel in panels], [50, 50, 0])
+
+        surfaces = self.ok(self.client.get("/api/extension-surfaces"))["items"]
+        surface = next(item for item in surfaces if item["id"] == "palette")
+        self.assertEqual(
+            {
+                key: surface[key]
+                for key in ("priority", "global", "transparent", "default_position", "mode")
+            },
+            {
+                "priority": 80,
+                "global": True,
+                "transparent": False,
+                "default_position": {"x": 24, "y": 36, "offset": [20, 20]},
+                "mode": "floating",
+            },
+        )
+        served = self.client.get(surface["url"])
+        self.assertIn("<html>palette</html>", served.text)
+        self.assertLess(served.text.index("workspace-bridge.js"), served.text.index("palette"))
+        self.assertIn("Content-Security-Policy", served.headers)
+
+    def test_workspace_bridge_injects_before_scripts_and_keeps_digest_guard(self):
+        folder = write_ext(self.root(), main="def activate(mio):\n    pass\n")
+        (folder / "ui").mkdir()
+        (folder / "ui" / "index.html").write_text(
+            '<!doctype html><html><head><script src="app.js"></script></head></html>',
+            encoding="utf-8",
+        )
+        (folder / "ui" / "app.js").write_text("window.started = true;", encoding="utf-8")
+        manifest_path = folder / "mio-extension.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["workspace"] = {"entry": "ui/index.html", "title": "Workspace"}
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        self.enable()
+
+        page = self.client.get("/api/extensions/demo/workspace/ui/index.html")
+        self.assertEqual(page.status_code, 200)
+        self.assertLess(page.text.index("workspace-bridge.js"), page.text.index("app.js"))
+        self.assertEqual(
+            page.headers["content-security-policy"],
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; "
+            "object-src 'none'; base-uri 'none'; frame-ancestors 'self'",
+        )
+
+        bridge = self.client.get("/api/extensions/demo/workspace-bridge.js")
+        self.assertEqual(bridge.status_code, 200)
+        for protocol in (
+            "window, 'bridge'",
+            "mio:workspace:resize",
+            "mio:workspace:click-through",
+            "mio:workspace:moved",
+            "mio:workspace:listen",
+            "send('mio:workspace:listen', { event: type, enabled: true })",
+            "send('mio:workspace:listen', { event: type, enabled: false })",
+            "session, ...payload",
+            "mio:workspace:event-result",
+            "eventId: message.eventId, action",
+            "action = 'continue'",
+            "action = 'handled'",
+            "stop_propagation",
+        ):
+            self.assertIn(protocol, bridge.text)
+
+        (folder / "ui" / "app.js").write_text("window.changed = true;", encoding="utf-8")
+        self.assertEqual(
+            self.client.get("/api/extensions/demo/workspace/ui/index.html").status_code, 404
+        )
+        self.assertEqual(
+            self.client.get("/api/extensions/demo/workspace-bridge.js").status_code, 404
+        )
+
+    def test_extension_preferences_are_isolated_and_keep_settings_unchanged(self):
+        write_ext(self.root(), main="def activate(mio):\n    pass\n")
+        self.assertEqual(self.ok(self.client.get("/api/ext/demo/preferences")), {})
+        self.ok(self.client.put("/api/extensions/demo/settings", json={"legacy": 1}))
+        self.assertEqual(
+            self.ok(self.client.put("/api/ext/demo/preferences", json={"theme": "dark"})),
+            {"theme": "dark"},
+        )
+        preferences_path = self.ctx.data_dir / "extension_data" / "demo" / "preferences.json"
+        settings_path = self.ctx.data_dir / "extensions_data" / "demo" / "settings.json"
+        self.assertTrue(preferences_path.is_file())
+        self.assertEqual(self.ok(self.client.get("/api/ext/demo/preferences")), {"theme": "dark"})
+        self.assertEqual(json.loads(settings_path.read_text(encoding="utf-8")), {"legacy": 1})
+
+        write_ext(self.root(), ext_id="other", main="def activate(mio):\n    pass\n")
+        self.ok(self.client.put("/api/ext/other/preferences", json={"theme": "light"}))
+        self.assertEqual(self.ok(self.client.get("/api/ext/demo/preferences")), {"theme": "dark"})
+        for ext_id in ("../other", "demo/../../other", "DEMO"):
+            with self.subTest(ext_id=ext_id):
+                response = self.client.get(f"/api/ext/{ext_id}/preferences")
+                self.assertNotEqual(response.status_code, 200)
+
+        self.assertEqual(
+            self.client.delete("/api/extensions/demo?delete_data=true").status_code, 204
+        )
+        self.assertFalse(preferences_path.exists())
+        self.assertEqual(
+            json.loads(
+                (self.ctx.data_dir / "extension_data" / "other" / "preferences.json").read_text(
+                    encoding="utf-8"
+                )
+            ),
+            {"theme": "light"},
+        )
 
     def test_requirements_wait_for_reviewed_enable_and_are_announced(self):
         folder = write_ext(self.root())

@@ -43,6 +43,14 @@ theme-linen/
 
 主题 ZIP 与文件夹导入只接受清单、主题 JSON、可选说明、已声明脚本/样式和被引用的 `assets/` 资源。路径、重复项、压缩后大小、资源签名、CSS 外链、清单身份和主题令牌都会校验；安装写入独立主题目录。CSS 仅在选中主题时装载，脚本仅在用户明确开启后隔离运行。
 
+### 主题私有设置与卡片样式
+
+主题可在 `theme.json` 声明 `settings_schema`，由设置页的「更多设置」面板渲染 `slider`、`switch`、`select` 与 `file_upload` 字段。动态壁纸选择使用 `options_source: "wallpapers"`；文件上传字段将媒体写入本机的 `<数据目录>/themes/<id>/user_wallpapers/`，不修改主题包，也不会进入主题 ZIP 导出。`GET` / `PUT /api/themes/{id}/preferences` 独立读写 `<数据目录>/theme_data/<id>/preferences.json`。壁纸清单、上传、媒体读取和删除接口分别为 `/api/themes/{id}/wallpapers` 及其 `{wallpaper_id}` 子路径；上传字段名为 `file`。后端校验文件类型、签名和大小。
+
+也可声明 `settings_page: "settings.html"`。页面通过 `/api/themes/{id}/settings-page` 在无同源权限的 sandbox iframe 中提供；注入的 `window.theme` 只暴露异步 `getSettings()` 与 `updateSettings(settings)`，CSP 禁止网络连接与宿主 API。内联脚本使用每次响应生成的 nonce。若同时声明两种设置模式，设置页优先打开自定义页面。
+
+主题 `theme.css` 可额外声明严格以 `.theme-card[data-theme-id="<id>"]` 为根的选择器，供列表中的该主题卡片单独展示；其他规则不会通过卡片样式端点暴露。该卡片样式不要求主题处于启用状态。
+
 主题包总大小和单个文件上限均为 10 GiB，最多 64 个文件。导入、文件夹安装、ZIP 导出与工作区备份通过临时文件和分块复制处理媒体，不会把视频或完整 ZIP 一次性载入内存；较大文件仍需要足够的临时磁盘空间。工作区备份上限为压缩后 12 GiB、解压后 16 GiB。
 
 扩展仍可在 `mio-extension.json` 的 `contributes.themes` 中附带主题；此类主题只在对应扩展启用时注册，随扩展停用而移除。需要单独分发和管理的主题应放在 `themes/<id>`。
@@ -57,6 +65,11 @@ theme-linen/
 - `POST /themes/folder`：以 multipart 字段 `files` 导入主题文件夹。
 - `GET /themes/{theme_id}/package`：导出独立主题 ZIP。
 - `DELETE /themes/{theme_id}`：删除用户 JSON 或独立导入的主题包；内置主题和扩展贡献不可删除。
+- `GET` / `PUT /themes/{theme_id}/preferences`：读取或替换该主题的私有 JSON 偏好。
+- `GET /themes/{theme_id}/wallpapers`：列出该主题的本地壁纸。
+- `POST /themes/{theme_id}/wallpapers`：上传本地壁纸；multipart 字段为 `file`。
+- `GET /themes/{theme_id}/wallpapers/{wallpaper_id}/file`：读取已上传的媒体文件。
+- `DELETE /themes/{theme_id}/wallpapers/{wallpaper_id}`：删除用户壁纸。
 
 Python 客户端可递归上传文件夹中的文件：
 

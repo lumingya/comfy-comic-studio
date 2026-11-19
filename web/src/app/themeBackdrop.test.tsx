@@ -101,4 +101,37 @@ describe('theme image motion', () => {
     unmount();
     play.mockRestore();
   });
+
+  it('updates playback rate and loop mode when preferences change', () => {
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+    const view = render(
+      <ThemeBackdrop
+        background={{ kind: 'video', url: '/local-wallpaper.mp4', opacity: 0.4 }}
+        opacity={0.4}
+        paused={false}
+        playbackRate={0.5}
+        loop
+      />,
+    );
+    const video = document.body.querySelector<HTMLVideoElement>('.theme-backdrop video')!;
+    expect(video.playbackRate).toBe(0.5);
+    view.rerender(
+      <ThemeBackdrop
+        background={{ kind: 'video', url: '/local-wallpaper.mp4', opacity: 0.4 }}
+        opacity={0.4}
+        paused={false}
+        playbackRate={2}
+        loop={false}
+      />,
+    );
+    expect(video.playbackRate).toBe(2);
+    expect(video.loop).toBe(false);
+    const playCalls = play.mock.calls.length;
+    video.dispatchEvent(new Event('ended'));
+    expect(play).toHaveBeenCalledTimes(playCalls);
+    view.unmount();
+    play.mockRestore();
+  });
 });

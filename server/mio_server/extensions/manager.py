@@ -31,6 +31,7 @@ from ..backups.extension_data import (
     validate_identifier,
     validate_tree,
 )
+from ..extension_preferences import extension_preferences_dir
 from ..hooks import HOOKS
 from ..jobs.operations import operation_serialized
 from ..jobs.types import JobConflict
@@ -104,7 +105,13 @@ class Info:
             "runs_code": bool(m and (m.runs_code or self.has_requirements)),
             "has_python": bool(m and m.main),
             "has_requirements": self.has_requirements,
-            "panels": [p.model_dump() for p in m.contributes.panels] if m else [],
+            "panels": sorted(
+                [p.model_dump() for p in m.contributes.panels],
+                key=lambda panel: panel["priority"],
+                reverse=True,
+            )
+            if m
+            else [],
             "digest": self.digest,
             "status": self.status,
             "error": self.error,
@@ -156,7 +163,10 @@ class ExtensionManager:
                 "invalid",
                 str(exc),
                 builtin=builtin,
-                has_data=extension_data_dir(self.ctx.data_dir, ext_id).exists(),
+                has_data=(
+                    extension_data_dir(self.ctx.data_dir, ext_id).exists()
+                    or extension_preferences_dir(self.ctx.data_dir, ext_id).exists()
+                ),
             )
         current = digest(folder)
         state = self._state(ext_id)
@@ -190,7 +200,10 @@ class ExtensionManager:
             restart,
             contributions,
             builtin,
-            extension_data_dir(self.ctx.data_dir, ext_id).exists(),
+            (
+                extension_data_dir(self.ctx.data_dir, ext_id).exists()
+                or extension_preferences_dir(self.ctx.data_dir, ext_id).exists()
+            ),
             (folder / "requirements.txt").is_file(),
         )
 
@@ -203,6 +216,19 @@ class ExtensionManager:
             if p.is_dir() and (p / MANIFEST).is_file()
         }
         return [self.info(identifier) for identifier in sorted(identifiers)]
+
+    def reviewed_info(self, ext_id: str) -> Info | None:
+        """Resolve an active extension only while its files match the loaded digest."""
+        loaded = self.loaded.get(ext_id)
+        if loaded is None:
+            return None
+        try:
+            info = self.info(ext_id)
+        except ExtensionError:
+            return None
+        if info.status == "active" and info.digest == loaded.api.digest:
+            return info
+        return None
 
     # --------------------------------------------------------------- state
     def _save_state(self, ext_id: str, enabled: bool, pinned: str) -> None:
@@ -273,9 +299,11 @@ class ExtensionManager:
             raise JobConflict("扩展仍有请求执行中，请等待结束后再卸载")
         folder = root / ext_id
         data = extension_data_dir(self.ctx.data_dir, ext_id)
+        preferences = extension_preferences_dir(self.ctx.data_dir, ext_id)
         validate_tree(folder)
         if delete_data:
             validate_tree(data)
+            validate_tree(preferences)
         self.disable(ext_id)
         if service is not None and getattr(service, "busy", False):
             raise JobConflict("扩展仍有请求执行中，请等待结束后再卸载")
@@ -287,11 +315,16 @@ class ExtensionManager:
         validate_tree(folder)
         if extension_data_dir(self.ctx.data_dir, ext_id) != data:
             raise ExtensionError("扩展数据目录已改变，请刷新后重试")
+        if extension_preferences_dir(self.ctx.data_dir, ext_id) != preferences:
+            raise ExtensionError("扩展偏好目录已改变，请刷新后重试")
         if delete_data:
             validate_tree(data)
+            validate_tree(preferences)
         shutil.rmtree(folder)
         if delete_data and data.exists():
             shutil.rmtree(data)
+        if delete_data and preferences.exists():
+            shutil.rmtree(preferences)
         settings = self.ctx.settings()
         settings.extensions.pop(ext_id, None)
         self.ctx.store.put_doc(settings)

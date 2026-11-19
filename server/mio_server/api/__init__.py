@@ -42,6 +42,7 @@ from . import (
     series,
     system,
     theme_packages,
+    theme_preferences,
     update,
     workshop,
 )
@@ -105,6 +106,7 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
         system,
         extension_market,
         extensions,
+        theme_preferences,
         theme_packages,
         album,
         export_jobs,

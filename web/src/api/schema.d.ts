@@ -1897,6 +1897,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/ext/{ext_id}/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Extension Preferences */
+        get: operations["get_extension_preferences_api_ext__ext_id__preferences_get"];
+        /** Put Extension Preferences */
+        put: operations["put_extension_preferences_api_ext__ext_id__preferences_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/extension-panels": {
         parameters: {
             query?: never;
@@ -1953,6 +1971,76 @@ export interface paths {
          */
         post: operations["import_theme_api_themes_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/themes/{theme_id}/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Theme Preferences */
+        get: operations["get_theme_preferences_api_themes__theme_id__preferences_get"];
+        /** Put Theme Preferences */
+        put: operations["put_theme_preferences_api_themes__theme_id__preferences_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/themes/{theme_id}/wallpapers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Theme Wallpapers */
+        get: operations["list_theme_wallpapers_api_themes__theme_id__wallpapers_get"];
+        put?: never;
+        /** Upload Theme Wallpaper */
+        post: operations["upload_theme_wallpaper_api_themes__theme_id__wallpapers_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/themes/{theme_id}/wallpapers/{wallpaper_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Serve Theme Wallpaper */
+        get: operations["serve_theme_wallpaper_api_themes__theme_id__wallpapers__wallpaper_id__file_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/themes/{theme_id}/wallpapers/{wallpaper_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Theme Wallpaper */
+        delete: operations["delete_theme_wallpaper_api_themes__theme_id__wallpapers__wallpaper_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -6526,6 +6614,10 @@ export interface components {
             style_file: "theme.css" | null;
             /** Script File */
             script_file: "theme.js" | null;
+            /** Settings Schema */
+            settings_schema: (components["schemas"]["ThemeSliderSetting"] | components["schemas"]["ThemeSwitchSetting"] | components["schemas"]["ThemeSelectSetting"] | components["schemas"]["ThemeFileUploadSetting"])[] | null;
+            /** Settings Page */
+            settings_page: string | null;
             /**
              * Author
              * @default
@@ -6548,6 +6640,87 @@ export interface components {
              * @default 0.35
              */
             opacity: number;
+        };
+        /** ThemeFileUploadSetting */
+        ThemeFileUploadSetting: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Description */
+            description: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "file_upload";
+            /** Default */
+            default: null;
+        };
+        /** ThemeSelectOption */
+        ThemeSelectOption: {
+            /** Value */
+            value: string | boolean | number;
+            /** Label */
+            label: string;
+        };
+        /** ThemeSelectSetting */
+        ThemeSelectSetting: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Description */
+            description: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "select";
+            /** Default */
+            default: string | boolean | number | null;
+            /** Options */
+            options: components["schemas"]["ThemeSelectOption"][];
+            /** Options Source */
+            options_source: "wallpapers" | null;
+        };
+        /** ThemeSliderSetting */
+        ThemeSliderSetting: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Description */
+            description: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "slider";
+            /** Default */
+            default: number;
+            /** Min */
+            min: number;
+            /** Max */
+            max: number;
+            /** Step */
+            step: number;
+        };
+        /** ThemeSwitchSetting */
+        ThemeSwitchSetting: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Description */
+            description: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "switch";
+            /** Default */
+            default: boolean;
         };
         /** TokenCreate */
         TokenCreate: {
@@ -10850,6 +11023,76 @@ export interface operations {
             };
         };
     };
+    get_extension_preferences_api_ext__ext_id__preferences_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ext_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: components["schemas"]["JsonValue"];
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_extension_preferences_api_ext__ext_id__preferences_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ext_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": Record<string, unknown>;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: components["schemas"]["JsonValue"];
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     extension_panels_api_extension_panels_get: {
         parameters: {
             query?: never;
@@ -10947,6 +11190,203 @@ export interface operations {
                 content: {
                     "application/json": Record<string, unknown>;
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_theme_preferences_api_themes__theme_id__preferences_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                theme_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_theme_preferences_api_themes__theme_id__preferences_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                theme_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": Record<string, unknown>;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_theme_wallpapers_api_themes__theme_id__wallpapers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                theme_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_theme_wallpaper_api_themes__theme_id__wallpapers_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                theme_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    serve_theme_wallpaper_api_themes__theme_id__wallpapers__wallpaper_id__file_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                theme_id: string;
+                wallpaper_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_theme_wallpaper_api_themes__theme_id__wallpapers__wallpaper_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                theme_id: string;
+                wallpaper_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

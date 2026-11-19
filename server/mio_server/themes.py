@@ -7,9 +7,18 @@ separate sandboxed runtime and can only update the allow-listed color tokens.
 from __future__ import annotations
 
 import re
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import Field, ValidationError, field_validator, model_validator
+from pydantic import (
+    Field,
+    StrictBool,
+    StrictFloat,
+    StrictInt,
+    StrictStr,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 from .models import StrictModel, now_iso
 from .theme_media import supports_background
@@ -171,6 +180,149 @@ class ThemeBackground(StrictModel):
         return self
 
 
+def _safe_setting_label(value: str) -> str:
+    if (
+        not value.strip()
+        or "<" in value
+        or ">" in value
+        or any(ord(char) < 32 or ord(char) == 127 for char in value)
+    ):
+        raise ValueError("设置标签必须是非空纯文本")
+    return value
+
+
+ThemeSettingValue = (
+    StrictStr | StrictBool | StrictInt | Annotated[StrictFloat, Field(allow_inf_nan=False)]
+)
+
+
+def _validate_setting_value(value):
+    if isinstance(value, str):
+        if (
+            not value
+            or len(value) > 64
+            or re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/-]*", value) is None
+        ):
+            raise ValueError("选择项的值无效")
+    elif isinstance(value, (int, float)) and not isinstance(value, bool):
+        if abs(value) > 1_000_000:
+            raise ValueError("选择项的数值超出范围")
+    return value
+
+
+class ThemeSettingField(StrictModel):
+    id: str = Field(min_length=1, max_length=48, pattern=r"^[A-Za-z][A-Za-z0-9_-]*$")
+    label: str = Field(min_length=1, max_length=80)
+    description: str | None = Field(default=None, max_length=200)
+
+    @field_validator("id")
+    @classmethod
+    def validate_id(cls, value: str) -> str:
+        if value.casefold() in {
+            "constructor",
+            "prototype",
+            "tostring",
+            "tolocalestring",
+            "valueof",
+            "hasownproperty",
+            "isprototypeof",
+            "propertyisenumerable",
+            "then",
+        }:
+            raise ValueError("设置字段 ID 不安全")
+        return value
+
+    @field_validator("label")
+    @classmethod
+    def validate_label(cls, value: str) -> str:
+        return _safe_setting_label(value)
+
+    @field_validator("description")
+    @classmethod
+    def validate_description(cls, value: str | None) -> str | None:
+        return _safe_setting_label(value) if value is not None else None
+
+
+class ThemeSliderSetting(ThemeSettingField):
+    type: Literal["slider"]
+    default: StrictFloat = Field(ge=-1_000_000, le=1_000_000, allow_inf_nan=False)
+    min: StrictFloat = Field(ge=-1_000_000, le=1_000_000, allow_inf_nan=False)
+    max: StrictFloat = Field(ge=-1_000_000, le=1_000_000, allow_inf_nan=False)
+    step: StrictFloat = Field(gt=0, le=1_000_000, allow_inf_nan=False)
+
+    @model_validator(mode="after")
+    def validate_limits(self):
+        if self.min >= self.max or self.step > self.max - self.min:
+            raise ValueError("滑块范围或步长无效")
+        if not self.min <= self.default <= self.max:
+            raise ValueError("滑块默认值必须位于范围内")
+        return self
+
+
+class ThemeSwitchSetting(ThemeSettingField):
+    type: Literal["switch"]
+    default: StrictBool
+
+
+class ThemeSelectOption(StrictModel):
+    value: ThemeSettingValue
+    label: str = Field(min_length=1, max_length=80)
+
+    @field_validator("value")
+    @classmethod
+    def validate_value(cls, value):
+        return _validate_setting_value(value)
+
+    @field_validator("label")
+    @classmethod
+    def validate_label(cls, value: str) -> str:
+        return _safe_setting_label(value)
+
+
+class ThemeSelectSetting(ThemeSettingField):
+    type: Literal["select"]
+    default: ThemeSettingValue | None = None
+    options: list[ThemeSelectOption] = Field(default_factory=list, max_length=32)
+    options_source: Literal["wallpapers"] | None = None
+
+    @model_validator(mode="after")
+    def validate_options(self):
+        if self.default is not None:
+            _validate_setting_value(self.default)
+        if self.options_source == "wallpapers":
+            if self.options:
+                raise ValueError("动态壁纸选择不能同时声明静态选项")
+            return self
+        values = [str(option.value) for option in self.options]
+        if (
+            not self.options
+            or len(values) != len(set(values))
+            or self.default is None
+            or any(
+                type(option.value) is not type(self.default)
+                and str(option.value) == str(self.default)
+                for option in self.options
+            )
+            or not any(
+                type(option.value) is type(self.default) and option.value == self.default
+                for option in self.options
+            )
+        ):
+            raise ValueError("选择项必须唯一且包含默认值")
+        return self
+
+
+class ThemeFileUploadSetting(ThemeSettingField):
+    type: Literal["file_upload"]
+    default: None = None
+
+
+ThemeSetting = Annotated[
+    ThemeSliderSetting | ThemeSwitchSetting | ThemeSelectSetting | ThemeFileUploadSetting,
+    Field(discriminator="type"),
+]
+
+
 class Theme(StrictModel):
     id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]{1,47}$")
     name: str = Field(min_length=1, max_length=60)
@@ -179,8 +331,23 @@ class Theme(StrictModel):
     background: ThemeBackground | None = None
     style_file: Literal["theme.css"] | None = None
     script_file: Literal["theme.js"] | None = None
+    settings_schema: list[ThemeSetting] | None = Field(default=None, max_length=32)
+    settings_page: str | None = Field(
+        default=None,
+        min_length=6,
+        max_length=69,
+        pattern=r"^[a-z0-9][a-z0-9_-]{0,63}\.html$",
+    )
     author: str = ""
     created_at: str = Field(default_factory=now_iso)
+
+    @model_validator(mode="after")
+    def validate_settings_schema(self):
+        if self.settings_schema is not None:
+            identifiers = [field.id for field in self.settings_schema]
+            if len(identifiers) != len(set(identifiers)):
+                raise ValueError("主题设置字段 ID 必须唯一")
+        return self
 
     @field_validator("tokens")
     @classmethod
@@ -326,4 +493,15 @@ def to_json(theme: Theme, source: str) -> dict:
         "source": source,
         "tokens": resolved(theme),
         "background": theme.background.model_dump() if theme.background else None,
+        "settings_schema": (
+            [field.model_dump(mode="json") for field in theme.settings_schema]
+            if theme.settings_schema is not None
+            else []
+        ),
+        "settings_page_url": (
+            f"/api/themes/{theme.id}/settings-page"
+            if source == "theme-package" and theme.settings_page
+            else None
+        ),
+        "card_style_url": f"/api/themes/{theme.id}/card-style" if theme.style_file else None,
     }

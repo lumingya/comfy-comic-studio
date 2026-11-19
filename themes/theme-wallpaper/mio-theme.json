@@ -1,0 +1,8 @@
+{
+  "id": "theme-wallpaper",
+  "name": "壁纸播放器",
+  "version": "1.0.0",
+  "description": "可导入本地图片或视频作为主题背景，并调整播放选项。",
+  "author": "Mio",
+  "theme_file": "theme.json"
+}

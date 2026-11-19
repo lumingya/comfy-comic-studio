@@ -23,8 +23,8 @@
   z-index: 95;
   width: 480px;
   height: min(720px, calc(100dvh - 100px));
-  min-width: 340px;
-  min-height: 320px;
+  min-width: 240px;
+  min-height: 200px;
   max-width: calc(100vw - 24px);
   max-height: calc(100dvh - 60px);
   resize: both;
@@ -33,6 +33,16 @@
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
+}
+.workspace-extension-floating[data-transparent='true'] {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.workspace-extension-floating[data-transparent='true'] .workspace-extension-handle {
+  background: transparent;
+  border: 0;
 }
 .workspace-extension-handle {
   display: flex;

@@ -65,16 +65,18 @@ class HookBus:
         self._handlers: dict[str, list[Handler]] = {}
 
     def add(
-        self, name: str, fn: Callable, *, priority: int = 100, source: str = "builtin"
+        self, name: str, fn: Callable, *, priority: int = 0, source: str = "builtin"
     ) -> Callable[[], None]:
         """Register a handler; returns a function that removes it again."""
         if name not in HOOKS:
             raise HookError(f"未知的钩子：{name}（可用：{', '.join(sorted(HOOKS))}）")
+        if type(priority) is not int:
+            raise HookError("钩子优先级必须是整数")
         handler = Handler(name, fn, priority, source)
         with self._lock:
             items = self._handlers.setdefault(name, [])
             items.append(handler)
-            items.sort(key=lambda h: h.priority)
+            items.sort(key=lambda h: h.priority, reverse=True)
         return lambda: self._remove(handler)
 
     def _remove(self, handler: Handler) -> None:

@@ -37,6 +37,7 @@ from . import (
     series,
     system,
     theme_packages,
+    theme_preferences,
     update,
     workshop,
 )
@@ -60,6 +61,7 @@ ROUTERS = (
     workshop,
     extension_market,
     extensions,
+    theme_preferences,
     theme_packages,
     kits,
     operations,

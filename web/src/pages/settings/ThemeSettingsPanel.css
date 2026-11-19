@@ -1,0 +1,127 @@
+.theme-settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: rgb(0 0 0 / 0.35);
+}
+
+.theme-settings-dialog {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  z-index: 121;
+  display: flex;
+  flex-direction: column;
+  width: min(560px, calc(100vw - 32px));
+  max-height: min(720px, calc(100dvh - 32px));
+  transform: translate(-50%, -50%);
+  overflow: hidden;
+  background: var(--panel);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+}
+
+.theme-settings-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.theme-settings-header h2,
+.theme-settings-header [data-radix-dialog-title] {
+  margin: 0;
+}
+
+.theme-settings-header [data-radix-dialog-description] {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.theme-settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow: auto;
+  padding: 16px;
+}
+
+.theme-setting-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--soft);
+  font-size: 13px;
+}
+
+.theme-setting-label {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.theme-setting-field small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.theme-setting-slider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.theme-setting-slider input {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+.theme-setting-slider output {
+  min-width: 3ch;
+  color: var(--muted);
+  text-align: right;
+}
+
+.theme-upload-button {
+  position: relative;
+  align-self: flex-start;
+  overflow: hidden;
+}
+
+.theme-upload-button input {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.theme-wallpaper-list,
+.theme-wallpaper-manage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.theme-wallpaper-list li,
+.theme-wallpaper-manage-list li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.theme-settings-frame {
+  width: 100%;
+  min-height: 320px;
+  flex: 1;
+  border: 0;
+  background: transparent;
+}

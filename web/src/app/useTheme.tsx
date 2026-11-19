@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { useThemes } from '../api/open';
+import { useThemePreferences, useThemeWallpapers, useThemes } from '../api/open';
 import {
   applyTheme,
   resolveTheme,
@@ -20,9 +20,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setTheme = useUI((s) => s.setTheme);
   const themeOpacity = useUI((s) => s.themeOpacity);
   const paused = useUI((s) => s.themeBackgroundPaused);
-  const allowThemeVideoWithReducedMotion = useUI(
-    (s) => s.allowThemeVideoWithReducedMotion,
-  );
+  const allowThemeVideoWithReducedMotion = useUI((s) => s.allowThemeVideoWithReducedMotion);
   const enabledThemeScripts = useUI((s) => s.enabledThemeScripts);
   const reduceMotion = useUI((s) => s.reduceMotion);
   const themes = useThemes();
@@ -52,7 +50,24 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const resolved = resolveTheme(choice, themes.data ?? [], prefersDark);
-  const background = resolved.theme?.background;
+  const activeThemeId = resolved.theme?.id ?? null;
+  const preferences = useThemePreferences(activeThemeId);
+  const wallpapers = useThemeWallpapers(activeThemeId);
+  const selectedWallpaper = wallpapers.data?.items.find(
+    (wallpaper) => wallpaper.id === preferences.data?.wallpaper_id,
+  );
+  const background = selectedWallpaper
+    ? {
+        kind: selectedWallpaper.kind,
+        url: selectedWallpaper.url,
+        opacity: resolved.theme?.background?.opacity ?? 0.35,
+      }
+    : resolved.theme?.background;
+  const playbackRate =
+    typeof preferences.data?.playbackRate === 'number'
+      ? Math.max(0.25, Math.min(4, preferences.data.playbackRate))
+      : 1;
+  const loop = preferences.data?.loop !== false;
   const opacity = background ? (themeOpacity[resolved.id] ?? background.opacity) : 0;
   useEffect(() => {
     applyTheme(document.documentElement, resolved.mode, resolved.theme, opacity > 0);
@@ -89,6 +104,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           reducedMotion,
           allowThemeVideoWithReducedMotion,
         )}
+        playbackRate={playbackRate}
+        loop={loop}
       />
       {children}
     </ThemeMode.Provider>

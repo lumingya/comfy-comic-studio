@@ -11,6 +11,8 @@ vi.mock('../api/open', () => ({
       { id: 'custom', mode: 'dark', tokens: { 'radius-control': '12px' } },
     ],
   }),
+  useThemePreferences: () => ({ data: {} }),
+  useThemeWallpapers: () => ({ data: { items: [] } }),
 }));
 
 function Toggle({ name }: { name: string }) {

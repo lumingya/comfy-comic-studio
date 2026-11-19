@@ -13,6 +13,39 @@ export interface ThemeInfo {
   style_url?: string | null;
   script_url?: string | null;
   script_digest?: string | null;
+  card_style_url?: string | null;
+  settings_schema?: ThemeSettingField[];
+  settings_page_url?: string | null;
+}
+
+export interface ThemeSettingField {
+  id: string;
+  type: 'slider' | 'switch' | 'select' | 'file_upload';
+  label: string;
+  description?: string;
+  default?: string | number | boolean | null;
+  min?: number;
+  max?: number;
+  step?: number;
+  options?: { label: string; value: string | number | boolean }[];
+  options_source?: 'wallpapers';
+}
+
+export interface ThemeWallpaper {
+  id: string;
+  filename: string;
+  kind: 'image' | 'video';
+  url: string;
+}
+
+export interface ThemeWallpapers {
+  items: ThemeWallpaper[];
+}
+
+export interface FloatingPosition {
+  x: 'left' | 'right' | number;
+  y: 'top' | 'bottom' | number;
+  offset: [number, number];
 }
 
 export interface ExtensionInfo {
@@ -162,6 +195,76 @@ export function useDeleteTheme() {
   const done = useInvalidate(k.themes);
   return useMutation({
     mutationFn: (id: string) => json(`/api/themes/${encodeURIComponent(id)}`, 'DELETE'),
+    onSuccess: done,
+  });
+}
+
+export function useThemePreferences(themeId: string | null) {
+  return useQuery({
+    queryKey: ['theme-preferences', themeId],
+    enabled: !!themeId,
+    queryFn: () =>
+      json<Record<string, unknown>>(`/api/themes/${encodeURIComponent(themeId!)}/preferences`),
+  });
+}
+
+export function useSaveThemePreferences(themeId: string) {
+  const qc = useQueryClient();
+  const queryKey = ['theme-preferences', themeId] as const;
+  return useMutation({
+    mutationFn: (preferences: Record<string, unknown>) =>
+      json<Record<string, unknown>>(
+        `/api/themes/${encodeURIComponent(themeId)}/preferences`,
+        'PUT',
+        preferences,
+      ),
+    onMutate: async (preferences) => {
+      await qc.cancelQueries({ queryKey });
+      const previous = qc.getQueryData<Record<string, unknown>>(queryKey);
+      qc.setQueryData(queryKey, { ...previous, ...preferences });
+      return { previous };
+    },
+    onError: (_error, _preferences, context) => {
+      if (context?.previous !== undefined) qc.setQueryData(queryKey, context.previous);
+    },
+    onSuccess: (preferences) => qc.setQueryData(queryKey, preferences),
+  });
+}
+
+export function useThemeWallpapers(themeId: string | null) {
+  return useQuery({
+    queryKey: ['theme-wallpapers', themeId],
+    enabled: !!themeId,
+    queryFn: () => json<ThemeWallpapers>(`/api/themes/${encodeURIComponent(themeId!)}/wallpapers`),
+  });
+}
+
+export function useUploadThemeWallpaper(themeId: string) {
+  const qc = useQueryClient();
+  const queryKey = ['theme-wallpapers', themeId] as const;
+  return useMutation({
+    mutationFn: async (file: File) => {
+      const body = new FormData();
+      body.append('file', file, file.name);
+      return (
+        await raw(`/api/themes/${encodeURIComponent(themeId)}/wallpapers`, {
+          method: 'POST',
+          body,
+        })
+      ).json() as Promise<ThemeWallpaper>;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey }),
+  });
+}
+
+export function useDeleteThemeWallpaper(themeId: string) {
+  const done = useInvalidate(['theme-wallpapers', themeId]);
+  return useMutation({
+    mutationFn: (wallpaperId: string) =>
+      json<void>(
+        `/api/themes/${encodeURIComponent(themeId)}/wallpapers/${encodeURIComponent(wallpaperId)}`,
+        'DELETE',
+      ),
     onSuccess: done,
   });
 }

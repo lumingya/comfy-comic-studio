@@ -100,6 +100,23 @@ class ThemePackageTests(ApiCase):
             (Path(__file__).resolve().parents[2] / "themes/theme-linen/mio-theme.json").is_file()
         )
 
+    def test_wallpaper_theme_example_is_a_valid_bundled_package(self):
+        result = self.ok(self.client.get("/api/themes"))
+        themes = {item["id"]: item for item in result}
+        wallpaper = themes["theme-wallpaper"]
+        self.assertEqual(wallpaper["source"], "builtin")
+        self.assertEqual(wallpaper["card_style_url"], "/api/themes/theme-wallpaper/card-style")
+        self.assertEqual(
+            [(field["id"], field["type"]) for field in wallpaper["settings_schema"]],
+            [
+                ("wallpaper_upload", "file_upload"),
+                ("wallpaper_id", "select"),
+                ("playbackRate", "slider"),
+                ("loop", "switch"),
+            ],
+        )
+        self.assertEqual(self.ok(self.client.get(wallpaper["card_style_url"])).status_code, 200)
+
     def test_export_creates_independent_theme_zip_and_it_can_be_installed_and_removed(self):
         self.ok(self.client.post("/api/themes", json=THEME), 201)
         response = self.ok(self.client.get("/api/themes/my-theme/package"))
@@ -405,6 +422,290 @@ class ThemePackageTests(ApiCase):
         self.assertEqual(installed.value.tokens, THEME["tokens"])
         reloaded.remove("my-theme")
         self.assertFalse((Path(self.tmp) / "themes/my-theme").exists())
+
+    def test_theme_settings_schema_page_bridge_and_export(self):
+        document = {
+            **THEME,
+            "id": "theme-settings",
+            "settings_schema": [
+                {
+                    "id": "paper_opacity",
+                    "type": "slider",
+                    "label": "Paper opacity",
+                    "description": "Adjust the paper layer.",
+                    "default": 0.5,
+                    "min": 0,
+                    "max": 1,
+                    "step": 0.1,
+                },
+                {"id": "grain", "type": "switch", "label": "Grain", "default": True},
+                {
+                    "id": "palette",
+                    "type": "select",
+                    "label": "Palette",
+                    "default": "warm",
+                    "options": [
+                        {"label": "Warm", "value": "warm"},
+                        {"label": "Cool", "value": "cool"},
+                    ],
+                },
+                {"id": "wallpaper", "type": "file_upload", "label": "Wallpaper"},
+                {
+                    "id": "selected_wallpaper",
+                    "type": "select",
+                    "label": "Current wallpaper",
+                    "options_source": "wallpapers",
+                },
+            ],
+            "settings_page": "settings.html",
+        }
+        page = (
+            b"<!doctype html><html><body><button id='save'>Save</button>"
+            b"<script src='https://example.invalid/remote.js'></script>"
+            b"<script>window.pageReady=true;</script></body></html>"
+        )
+        result = self.ok(
+            self.client.post(
+                "/api/themes/package",
+                content=archive(theme_files(document, resources={"settings.html": page})),
+            ),
+            201,
+        )
+        self.assertEqual(result["settings_page_url"], "/api/themes/theme-settings/settings-page")
+        self.assertEqual(len(result["settings_schema"]), 5)
+        self.assertEqual(result["settings_schema"][3]["default"], None)
+
+        response = self.ok(self.client.get(result["settings_page_url"]))
+        page_text = response.text
+        self.assertLess(
+            page_text.index("Object.defineProperty"), page_text.index("window.pageReady")
+        )
+        self.assertIn("mio:theme:ready", page_text)
+        self.assertIn("mio:theme:request", page_text)
+        self.assertIn("mio:theme:response", page_text)
+        self.assertIn("event.source!==window.parent", page_text)
+        self.assertIn("getSettings:()=>send('getSettings')", page_text)
+        self.assertIn("updateSettings:settings=>", page_text)
+        self.assertIn("window.parent.postMessage(message,'*')", page_text)
+        self.assertIn("window.parent.postMessage({session,type:'mio:theme:ready'},'*')", page_text)
+        external_script = page_text[page_text.index("<script src=") :].split(">", 1)[0]
+        self.assertNotIn("nonce=", external_script)
+        self.assertNotIn("mio-theme-settings-request", page_text)
+        csp = response.headers["content-security-policy"]
+        for directive in (
+            "default-src 'none'",
+            "script-src 'nonce-",
+            "connect-src 'none'",
+            "object-src 'none'",
+            "frame-src 'none'",
+            "form-action 'none'",
+            "base-uri 'none'",
+            "sandbox allow-scripts",
+        ):
+            self.assertIn(directive, csp)
+        nonce = csp.split("script-src 'nonce-", 1)[1].split("'", 1)[0]
+        self.assertIn(f'<script nonce="{nonce}">', page_text)
+        self.assertIn(
+            f'<script nonce="{nonce}"', page_text[page_text.index("window.pageReady") - 80 :]
+        )
+        self.assertNotIn("script-src 'unsafe-inline'", csp)
+        self.assertNotIn("allow-same-origin", csp)
+        self.assertEqual(response.headers["x-content-type-options"], "nosniff")
+        self.assertIn("no-cache", response.headers["cache-control"])
+
+        package = self.ok(self.client.get("/api/themes/theme-settings/package"))
+        with zipfile.ZipFile(io.BytesIO(package.content)) as exported:
+            self.assertTrue(any(name.endswith("/settings.html") for name in exported.namelist()))
+        self.assertEqual(self.client.get("/api/themes/theme-linen/settings-page").status_code, 404)
+        schema_only = {**THEME, "id": "schema-only", "settings_schema": []}
+        self.ok(self.client.post("/api/themes", json=schema_only), 201)
+        self.assertEqual(self.client.get("/api/themes/schema-only/settings-page").status_code, 404)
+
+    def test_theme_settings_schema_and_page_paths_are_validated_on_import_and_reload(self):
+        camel_case = parse_theme(
+            {
+                **THEME,
+                "settings_schema": [
+                    {
+                        "id": "playbackRate",
+                        "type": "slider",
+                        "label": "Playback rate",
+                        "default": 1.0,
+                        "min": 0.5,
+                        "max": 2.0,
+                        "step": 0.5,
+                    }
+                ],
+            }
+        )
+        self.assertEqual(camel_case.settings_schema[0].id, "playbackRate")
+        invalid_schemas = [
+            [{"id": "__proto__", "type": "switch", "label": "Bad", "default": False}],
+            [{"id": "markup", "type": "switch", "label": "<b>unsafe</b>", "default": False}],
+            [
+                {
+                    "id": "slider",
+                    "type": "slider",
+                    "label": "Range",
+                    "default": 2,
+                    "min": 0,
+                    "max": 1,
+                    "step": 0.1,
+                }
+            ],
+            [
+                {
+                    "id": "choice",
+                    "type": "select",
+                    "label": "Choice",
+                    "default": "javascript:alert(1)",
+                    "options": [{"label": "Unsafe", "value": "javascript:alert(1)"}],
+                }
+            ],
+            [{"id": "upload", "type": "file_upload", "label": "Upload", "default": "C:/a.png"}],
+            [
+                {"id": "duplicate", "type": "switch", "label": "First", "default": False},
+                {"id": "duplicate", "type": "switch", "label": "Second", "default": True},
+            ],
+            [
+                {"id": f"setting_{index}", "type": "switch", "label": "Field", "default": False}
+                for index in range(33)
+            ],
+        ]
+        for schema in invalid_schemas:
+            with self.subTest(schema=schema):
+                with self.assertRaises(ValueError):
+                    parse_theme({**THEME, "settings_schema": schema})
+        for unsafe_path in (
+            "../settings.html",
+            "..\\settings.html",
+            "/settings.html",
+            "assets/page.html",
+        ):
+            with self.subTest(settings_page=unsafe_path):
+                with self.assertRaises(ValueError):
+                    parse_theme({**THEME, "settings_page": unsafe_path})
+        missing_page = {**THEME, "id": "missing-settings-page", "settings_page": "settings.html"}
+        self.assertEqual(
+            self.client.post(
+                "/api/themes/package", content=archive(theme_files(missing_page))
+            ).status_code,
+            400,
+        )
+
+        document = {
+            **THEME,
+            "id": "reload-settings",
+            "settings_schema": [
+                {"id": "enabled", "type": "switch", "label": "Enabled", "default": True}
+            ],
+            "settings_page": "settings.html",
+        }
+        result = self.ok(
+            self.client.post(
+                "/api/themes/package",
+                content=archive(
+                    theme_files(document, resources={"settings.html": b"<html></html>"})
+                ),
+            ),
+            201,
+        )
+        folder = Path(self.tmp) / "themes" / result["id"]
+        invalid = json.loads((folder / "theme.json").read_text(encoding="utf-8"))
+        invalid["settings_schema"][0]["default"] = "not-a-boolean"
+        (folder / "theme.json").write_text(json.dumps(invalid), encoding="utf-8")
+        self.ctx.registry.unregister("theme", result["id"])
+        with self.assertLogs("mio.themes", level="WARNING"):
+            ThemePackageManager(self.ctx).load_all()
+        self.assertNotIn(result["id"], {item.id for item in self.ctx.registry.all("theme")})
+
+    def test_user_wallpapers_are_ignored_during_import_reload_and_export(self):
+        document = {**THEME, "id": "wallpaper-theme", "style_file": "theme.css"}
+        files = theme_files(
+            document,
+            resources={
+                "theme.css": b'.theme-card[data-theme-id="wallpaper-theme"] { color: red; }',
+                "user_wallpapers/local.png": b"user-owned image bytes",
+            },
+        )
+        package = archive(files, prefix="wallpaper-theme/")
+        result = self.ok(self.client.post("/api/themes/package", content=package), 201)
+        folder = Path(self.tmp) / "themes" / result["id"]
+        self.assertFalse((folder / "user_wallpapers").exists())
+
+        local_media = folder / "user_wallpapers" / "user-upload.png"
+        local_media.parent.mkdir()
+        local_media.write_bytes(b"user-owned image bytes")
+        self.ctx.registry.unregister("theme", result["id"])
+        ThemePackageManager(self.ctx).load_all()
+        self.assertIn(result["id"], {item.id for item in self.ctx.registry.all("theme")})
+        self.assertTrue(local_media.is_file())
+
+        exported = self.ok(self.client.get(f"/api/themes/{result['id']}/package"))
+        with zipfile.ZipFile(io.BytesIO(exported.content)) as archive_file:
+            names = archive_file.namelist()
+        self.assertFalse(any("user_wallpapers" in name for name in names))
+        self.assertTrue(any(name.endswith("/theme.css") for name in names))
+
+        folder_theme = {**THEME, "id": "wallpaper-folder", "style_file": "theme.css"}
+        folder_files = theme_files(
+            folder_theme,
+            resources={
+                "theme.css": b"body { color: red; }",
+                "user_wallpapers/local.png": b"ignored",
+            },
+        )
+        upload = [
+            ("files", (f"wallpaper-folder/{name}", data, "application/octet-stream"))
+            for name, data in folder_files.items()
+        ]
+        folder_result = self.ok(self.client.post("/api/themes/folder", files=upload), 201)
+        self.assertFalse(
+            (Path(self.tmp) / "themes" / folder_result["id"] / "user_wallpapers").exists()
+        )
+
+    def test_card_stylesheet_endpoint_returns_only_exact_theme_card_rules(self):
+        theme_id = "card-theme"
+        stylesheet = (
+            b"body { color: red; }"
+            b'.theme-card[data-theme-id="card-theme"] { color: blue; }'
+            b'.theme-card[data-theme-id="card-theme"] .title { font-weight: bold; }'
+            b'.theme-card[data-theme-id="other-theme"] { color: green; }'
+            b'.theme-card[data-theme-id="card-theme"] + body { color: black; }'
+            b'.theme-card[data-theme-id="card-theme"], body { color: pink; }'
+        )
+        document = {**THEME, "id": theme_id, "style_file": "theme.css"}
+        self.ok(
+            self.client.post(
+                "/api/themes/package",
+                content=archive(theme_files(document, resources={"theme.css": stylesheet})),
+            ),
+            201,
+        )
+        listing = {item["id"]: item for item in self.ok(self.client.get("/api/themes"))}
+        self.assertEqual(listing[theme_id]["card_style_url"], f"/api/themes/{theme_id}/card-style")
+        response = self.ok(self.client.get(listing[theme_id]["card_style_url"]))
+        self.assertIn('.theme-card[data-theme-id="card-theme"] { color: blue; }', response.text)
+        self.assertIn('.theme-card[data-theme-id="card-theme"] .title', response.text)
+        for unsafe in ("body", "other-theme", "+ body", "color: pink"):
+            self.assertNotIn(unsafe, response.text)
+        self.assertEqual(response.headers["x-content-type-options"], "nosniff")
+        self.assertIn("no-cache", response.headers["cache-control"])
+        self.assertEqual(
+            self.ok(self.client.get(listing[theme_id]["style_url"])).content, stylesheet
+        )
+
+        no_card = {**THEME, "id": "no-card-theme", "style_file": "theme.css"}
+        self.ok(
+            self.client.post(
+                "/api/themes/package",
+                content=archive(
+                    theme_files(no_card, resources={"theme.css": b"body { color: red; }"})
+                ),
+            ),
+            201,
+        )
+        self.assertEqual(self.client.get("/api/themes/no-card-theme/card-style").status_code, 404)
 
     def test_json_roundtrip_and_user_theme_replacement_remain_available(self):
         imported = self.ok(self.client.post("/api/themes", json=THEME), 201)

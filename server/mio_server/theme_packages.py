@@ -35,6 +35,7 @@ MAX_PACKAGE = 10 * 1024**3
 MAX_FILE = 10 * 1024**3
 MAX_METADATA = 2 * 1024 * 1024
 MAX_SCRIPT = 1024 * 1024
+MAX_SETTINGS_PAGE = 2 * 1024 * 1024
 MAX_FILES = 64
 COPY_CHUNK_SIZE = 1024 * 1024
 BUILTIN_ROOT = Path(__file__).resolve().parents[2] / "themes"
@@ -46,6 +47,12 @@ RESERVED_IDS = {
     *(f"com{i}" for i in range(1, 10)),
     *(f"lpt{i}" for i in range(1, 10)),
 }
+SETTINGS_PAGE_NAME = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}\.html$")
+USER_WALLPAPERS = "user_wallpapers"
+
+
+def _is_user_wallpapers_path(parts: tuple[str, ...] | list[str], *, directory=False) -> bool:
+    return bool(parts and parts[0] == USER_WALLPAPERS and (directory or len(parts) > 1))
 
 
 class ThemePackageError(ValueError):
@@ -73,7 +80,11 @@ def _regular_path(path: Path, *, directory: bool, missing: bool = False) -> bool
 
 
 def allowed_package_path(name: str) -> bool:
-    return name in PACKAGE_FILES or asset_parts(name) is not None
+    return (
+        name in PACKAGE_FILES
+        or SETTINGS_PAGE_NAME.fullmatch(name) is not None
+        or asset_parts(name) is not None
+    )
 
 
 def _folder_files(folder: Path) -> list[tuple[str, Path]]:
@@ -89,6 +100,8 @@ def _folder_files(folder: Path) -> list[tuple[str, Path]]:
             is_directory = stat.S_ISDIR(metadata.st_mode)
             _regular_path(child, directory=is_directory)
             if is_directory:
+                if not relative and child.name == "user_wallpapers":
+                    continue
                 directories += 1
                 if not is_asset_directory(name) or directories > MAX_FILES:
                     raise ThemePackageError("主题文件夹包含不支持的目录")
@@ -155,7 +168,7 @@ def _validated_files(
         raise ThemePackageError("主题清单与 theme.json 的 ID 或名称不一致")
     asset_names = {name for name in names if asset_parts(name)}
     if names - asset_names - {MANIFEST, THEME_FILE, README} != {
-        name for name in (theme.script_file, theme.style_file) if name
+        name for name in (theme.script_file, theme.style_file, theme.settings_page) if name
     }:
         raise ThemePackageError("主题资源与 theme.json 中的声明不一致")
     if README in files:
@@ -168,6 +181,13 @@ def _validated_files(
             files[SCRIPT].decode("utf-8")
         except UnicodeDecodeError as exc:
             raise ThemePackageError("theme.js 不是有效 UTF-8") from exc
+    if theme.settings_page:
+        try:
+            files[theme.settings_page].decode("utf-8")
+        except KeyError:
+            raise ThemePackageError("主题设置页面不存在") from None
+        except UnicodeDecodeError as exc:
+            raise ThemePackageError("主题设置页面不是有效 UTF-8") from exc
     if theme.style_file:
         try:
             stylesheet = files[theme.style_file].decode("utf-8")
@@ -209,6 +229,8 @@ def _validate_file_sizes(names: set[str], sizes: dict[str, int]) -> None:
         if name in names
     ):
         raise ThemePackageError("主题清单或说明超过 2 MB")
+    if any(sizes[name] > MAX_SETTINGS_PAGE for name in names if SETTINGS_PAGE_NAME.fullmatch(name)):
+        raise ThemePackageError("主题设置页面超过 2 MB")
     if sizes.get(SCRIPT, 0) > MAX_SCRIPT:
         raise ThemePackageError("主题脚本超过 1 MB")
 
@@ -240,7 +262,7 @@ def _unpack(data: bytes) -> tuple[dict, Theme, dict[str, bytes]]:
             infos = archive.infolist()
             if len(infos) > MAX_FILES + 3:
                 raise ThemePackageError("主题 ZIP 文件过多")
-            names: list[tuple[zipfile.ZipInfo, tuple[str, ...]]] = []
+            entries: list[tuple[zipfile.ZipInfo, tuple[str, ...]]] = []
             directories: set[str] = set()
             seen: set[str] = set()
             for info in infos:
@@ -265,20 +287,29 @@ def _unpack(data: bytes) -> tuple[dict, Theme, dict[str, bytes]]:
                 if key in seen:
                     raise ThemePackageError("主题 ZIP 包含重复文件")
                 seen.add(key)
-                names.append((info, parts))
-            if not names:
+                entries.append((info, parts))
+            if not entries:
                 raise ThemePackageError("主题 ZIP 不包含文件")
-            if sum(info.file_size for info, _ in names) > MAX_PACKAGE:
+            if sum(info.file_size for info, _ in entries) > MAX_PACKAGE:
                 raise ThemePackageError("主题包解压后超过 10 GiB")
-            roots = {parts[0] for _, parts in names}
+            roots = {parts[0] for _, parts in entries}
             has_folder = len(roots) == 1 and all(
                 len(parts) >= 2
-                and allowed_package_path("/".join(parts[1:]))
+                and (
+                    _is_user_wallpapers_path(parts[1:]) or allowed_package_path("/".join(parts[1:]))
+                )
                 and parts[0] not in PACKAGE_FILES
                 and parts[0] != "assets"
-                for _, parts in names
+                for _, parts in entries
             )
             root = next(iter(roots)) if has_folder else ""
+            names = [
+                (info, parts)
+                for info, parts in entries
+                if not _is_user_wallpapers_path(parts[1:] if has_folder else parts)
+            ]
+            if not names:
+                raise ThemePackageError("主题 ZIP 不包含文件")
             files: dict[str, bytes] = {}
             for info, parts in names:
                 relative = parts[1:] if has_folder else parts
@@ -299,6 +330,11 @@ def _unpack(data: bytes) -> tuple[dict, Theme, dict[str, bytes]]:
                 for name in directories
                 if not has_folder or name != root
             }
+            normalized_directories = {
+                name
+                for name in normalized_directories
+                if not _is_user_wallpapers_path(tuple(name.split("/")), directory=True)
+            }
             if normalized_directories - allowed_directories:
                 raise ThemePackageError("主题 ZIP 包含不支持的目录")
     except (zipfile.BadZipFile, OSError, RuntimeError) as exc:
@@ -317,7 +353,7 @@ def _extract_zip_to_folder(archive_path: Path, folder: Path) -> tuple[dict, Them
             infos = archive.infolist()
             if len(infos) > MAX_FILES + 3:
                 raise ThemePackageError("主题 ZIP 文件过多")
-            names: list[tuple[zipfile.ZipInfo, tuple[str, ...]]] = []
+            entries: list[tuple[zipfile.ZipInfo, tuple[str, ...]]] = []
             directories: set[str] = set()
             seen: set[str] = set()
             for info in infos:
@@ -346,20 +382,29 @@ def _extract_zip_to_folder(archive_path: Path, folder: Path) -> tuple[dict, Them
                 if key in seen:
                     raise ThemePackageError("主题 ZIP 包含重复文件")
                 seen.add(key)
-                names.append((info, parts))
-            if not names:
+                entries.append((info, parts))
+            if not entries:
                 raise ThemePackageError("主题 ZIP 不包含文件")
-            if sum(info.file_size for info, _ in names) > MAX_PACKAGE:
+            if sum(info.file_size for info, _ in entries) > MAX_PACKAGE:
                 raise ThemePackageError("主题包解压后超过 10 GiB")
-            roots = {parts[0] for _, parts in names}
+            roots = {parts[0] for _, parts in entries}
             has_folder = len(roots) == 1 and all(
                 len(parts) >= 2
-                and allowed_package_path("/".join(parts[1:]))
+                and (
+                    _is_user_wallpapers_path(parts[1:]) or allowed_package_path("/".join(parts[1:]))
+                )
                 and parts[0] not in PACKAGE_FILES
                 and parts[0] != "assets"
-                for _, parts in names
+                for _, parts in entries
             )
             root = next(iter(roots)) if has_folder else ""
+            names = [
+                (info, parts)
+                for info, parts in entries
+                if not _is_user_wallpapers_path(parts[1:] if has_folder else parts)
+            ]
+            if not names:
+                raise ThemePackageError("主题 ZIP 不包含文件")
             normalized_names: set[str] = set()
             normalized_seen: set[str] = set()
             normalized_entries = []
@@ -399,6 +444,11 @@ def _extract_zip_to_folder(archive_path: Path, folder: Path) -> tuple[dict, Them
                 "/".join(PurePosixPath(name).parts[1:] if has_folder else PurePosixPath(name).parts)
                 for name in directories
                 if not has_folder or name != root
+            }
+            normalized_directories = {
+                name
+                for name in normalized_directories
+                if not _is_user_wallpapers_path(tuple(name.split("/")), directory=True)
             }
             if normalized_directories - allowed_directories:
                 raise ThemePackageError("主题 ZIP 包含不支持的目录")
@@ -489,6 +539,8 @@ def package_theme_to_file(theme: Theme, resources: dict[str, Path], destination:
                 if name == STYLE
                 else MAX_SCRIPT
                 if name == SCRIPT
+                else MAX_SETTINGS_PAGE
+                if SETTINGS_PAGE_NAME.fullmatch(name)
                 else 64 * 1024
                 if name.lower().endswith(".png")
                 else 12
@@ -623,6 +675,13 @@ class ThemePackageManager:
     def install_folder_streams(self, files: Iterable[tuple[str, BinaryIO]]) -> dict:
         """Install selected files directly from their upload streams."""
         with self._lock:
+            uploads = []
+            for upload in files:
+                if len(uploads) >= MAX_FILES:
+                    raise ThemePackageError("主题文件过多")
+                uploads.append(upload)
+            raw_names = {raw_name.replace("\\", "/") for raw_name, _ in uploads}
+            flat_package = {MANIFEST, THEME_FILE}.issubset(raw_names)
             _regular_path(self.root, directory=True, missing=True)
             self.root.mkdir(parents=True, exist_ok=True)
             _regular_path(self.root, directory=True)
@@ -633,7 +692,7 @@ class ThemePackageManager:
             total = 0
             count = 0
             try:
-                for raw_name, source in files:
+                for raw_name, source in uploads:
                     name = raw_name.replace("\\", "/")
                     raw_parts = name.split("/")
                     path = PurePosixPath(name)
@@ -645,6 +704,11 @@ class ThemePackageManager:
                     ):
                         raise ThemePackageError("主题文件夹包含不安全路径")
                     parts = path.parts
+                    if len(parts) >= 3 and parts[0] != "assets" and parts[1] == USER_WALLPAPERS:
+                        roots.add(parts[0])
+                        continue
+                    if flat_package and len(parts) >= 2 and parts[0] == USER_WALLPAPERS:
+                        continue
                     if len(parts) == 1:
                         flat = True
                     elif parts[0] == "assets":

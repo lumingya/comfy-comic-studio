@@ -1161,6 +1161,14 @@ class MioClient(_Base):
         """
         return self._request("PUT", f"/extensions/{_q(ext_id)}/settings", json=body)
 
+    def get_extension_preferences(self, ext_id: str) -> Any:
+        """GET /ext/{ext_id}/preferences — Get Extension Preferences."""
+        return self._request("GET", f"/ext/{_q(ext_id)}/preferences")
+
+    def put_extension_preferences(self, ext_id: str, body: dict | list | None = None) -> Any:
+        """PUT /ext/{ext_id}/preferences — Put Extension Preferences."""
+        return self._request("PUT", f"/ext/{_q(ext_id)}/preferences", json=body)
+
     def extension_panels(self) -> Any:
         """GET /extension-panels — Extension Panels.
 
@@ -1189,6 +1197,34 @@ class MioClient(_Base):
         Import a theme JSON document. Built-in, package and extension IDs cannot be overwritten.
         """
         return self._request("POST", "/themes", json=body)
+
+    def get_theme_preferences(self, theme_id: str) -> Any:
+        """GET /themes/{theme_id}/preferences — Get Theme Preferences."""
+        return self._request("GET", f"/themes/{_q(theme_id)}/preferences")
+
+    def put_theme_preferences(self, theme_id: str, body: dict | list | None = None) -> Any:
+        """PUT /themes/{theme_id}/preferences — Put Theme Preferences."""
+        return self._request("PUT", f"/themes/{_q(theme_id)}/preferences", json=body)
+
+    def list_theme_wallpapers(self, theme_id: str) -> Any:
+        """GET /themes/{theme_id}/wallpapers — List Theme Wallpapers."""
+        return self._request("GET", f"/themes/{_q(theme_id)}/wallpapers")
+
+    def upload_theme_wallpaper(
+        self,
+        theme_id: str,
+        files: list[tuple[str, tuple[str, bytes]]],
+    ) -> Any:
+        """POST /themes/{theme_id}/wallpapers — Upload Theme Wallpaper."""
+        return self._request("POST", f"/themes/{_q(theme_id)}/wallpapers", files=files)
+
+    def serve_theme_wallpaper(self, theme_id: str, wallpaper_id: str) -> Any:
+        """GET /themes/{theme_id}/wallpapers/{wallpaper_id}/file — Serve Theme Wallpaper."""
+        return self._request("GET", f"/themes/{_q(theme_id)}/wallpapers/{_q(wallpaper_id)}/file")
+
+    def delete_theme_wallpaper(self, theme_id: str, wallpaper_id: str) -> Any:
+        """DELETE /themes/{theme_id}/wallpapers/{wallpaper_id} — Delete Theme Wallpaper."""
+        return self._request("DELETE", f"/themes/{_q(theme_id)}/wallpapers/{_q(wallpaper_id)}")
 
     def get_theme(self, theme_id: str) -> Any:
         """GET /themes/{theme_id} — Get Theme.

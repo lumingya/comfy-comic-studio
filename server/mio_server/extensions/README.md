@@ -26,7 +26,7 @@ my-ext/
 └── panel.html           可选：界面面板
 ```
 
-运行数据统一放在 `<数据目录>/extensions_data/<id>/`，通过 `mio.data_dir` 获取。`settings.json` 由 SDK 设置接口使用；扩展自己的配置和文件使用其他名称或子目录，不写入程序包。卸载时默认保留此目录，用户勾选「同时删除扩展数据」后才删除；开放 API 对应 `DELETE /extensions/<id>?delete_data=true`。独立主题使用单独的 `themes/` 目录。
+SDK 的常规扩展数据位于 `<数据目录>/extensions_data/<id>/`，通过 `mio.data_dir` 获取；其中 `settings.json` 由 SDK 设置接口使用。扩展私有偏好单独保存在 `<数据目录>/extension_data/<id>/preferences.json`，通过 `GET` / `PUT /api/ext/{id}/preferences` 读写，不与全局设置或 SDK 的 `settings.json` 混用。卸载时默认保留扩展数据，用户勾选「同时删除扩展数据」后才删除；开放 API 对应 `DELETE /extensions/<id>?delete_data=true`。独立主题使用单独的 `themes/` 目录。
 
 ## `mio-extension.json`
 
@@ -104,6 +104,28 @@ my-ext/
 
 激活时注册 `mio.contribute("workspace_surface", "main", {"mode": "page"})`，也可传返回此对象的函数；`mode` 为 `page` 或 `floating`。页面路径必须与清单一致。后端提供 `GET /api/extension-surfaces`，宿主按贡献挂载页面，不按扩展 ID 编写功能分支。
 
+桌宠、悬浮球等可直接在 `contributes.floating_surfaces` 声明，无需 Python 注册：
+
+```json
+{
+  "contributes": {
+    "floating_surfaces": [
+      {
+        "id": "my-pet-widget",
+        "title": "桌宠助手",
+        "entry": "page/dist/widget.html",
+        "global": true,
+        "transparent": true,
+        "default_position": { "x": "right", "y": "bottom", "offset": [20, 20] },
+        "priority": 10
+      }
+    ]
+  }
+}
+```
+
+浮窗优先级默认 `0`，数值越大基础层级越高；用户拖动后的位置、尺寸与鼠标穿透状态保存在该扩展的私有 preferences 文件。受信 workspace bridge 提供 `bridge.resize(width, height)`、`bridge.setClickThrough(enabled)`、`bridge.onMoved(callback)` 与 `bridge.onGlobalEvent("keydown", callback)`。全局快捷键订阅按优先级由高到低依次分发，处理器返回 `{handled: true}` 或 `{stop_propagation: true}` 时截断后续处理，否则继续传递。输入框、文本域、下拉框和可编辑区域不会触发此全局快捷键管线。
+
 前端依赖须打包在扩展自己的目录中，资源使用相对路径。页面可请求本机 API；联网模型请求应交给扩展自己的后端。iframe 的 hash 包含 `mio-session` 与 `floating`；页面向同源父窗口发送 `{type: "mio:workspace:ready", session}` 后，宿主回复 `mio:workspace:context`，带主题 `tokens`、`theme`、`locale` 和 `floating`。数据改变后发送 `mio:workspace:changed` 以刷新宿主。宿主同时校验来源窗口、origin 与 session。
 
 文本模型扩展可贡献 `text_provider`，值为返回客户端的工厂函数，客户端实现现有 `chat_json()` / `vision_json()` 契约；主程序在实际需要文本模型时解析贡献。备份参与者使用清单 `backup` 入口，见[扩展备份契约](../../../docs/EXTENSION_BACKUP_CONTRACT.md)。完整示例见 [`extensions/ai-assist`](../../../extensions/ai-assist/README.md)。
@@ -133,7 +155,7 @@ def deactivate():  # 可选：停用时调用
 
 | 接口 | 说明 |
 | --- | --- |
-| `mio.hook(name, fn=None, *, priority=100)` | 注册钩子，可以当装饰器用。`priority` 越小越先执行 |
+| `mio.hook(name, fn=None, *, priority=0)` | 注册钩子，可以当装饰器用。`priority` 越大越先执行 |
 | `mio.contribute(point, id, value, *, title="")` | 往注册表的扩展点里添加一项 |
 | `mio.job_executor(kind, executor, *, resources=("local",), replace=False, title="")` | 注册执行器，自动绑定已审核扩展的来源与摘要 |
 | `mio.submit_job(kind, items, snapshot=None, *, owner="", title="", idempotency_key=None)` | 提交本次启用且当前选中的执行器，`items` 使用 `mio_server.jobs.ItemSpec` |

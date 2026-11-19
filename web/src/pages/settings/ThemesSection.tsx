@@ -1,6 +1,6 @@
 import { QueryError } from '../../app/errors';
-import { Check, Download, FolderOpen, Monitor, Trash2, Upload } from 'lucide-react';
-import { useRef, useState, type ChangeEvent } from 'react';
+import { Check, Download, FolderOpen, Monitor, Settings2, Trash2, Upload } from 'lucide-react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { download } from '../../api/client';
 import {
@@ -17,6 +17,7 @@ import { useUI } from '../../app/ui-store';
 import { ContextMenu, useContextMenu } from '../../components/ContextMenu';
 import { toast, toastError } from '../../components/toast';
 import { Loading } from '../../components/ui';
+import { ThemeSettingsPanel } from './ThemeSettingsPanel';
 import './ThemesSection.css';
 
 /** A miniature app window painted with the theme's own tokens. */
@@ -47,6 +48,19 @@ function Preview({ tokens }: { tokens: Record<string, string> }) {
   );
 }
 
+function ThemeCardStyles({ theme }: { theme: ThemeInfo }) {
+  useEffect(() => {
+    if (!theme.card_style_url) return;
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = theme.card_style_url;
+    link.dataset.themeCardStyle = theme.id;
+    document.head.append(link);
+    return () => link.remove();
+  }, [theme.id, theme.card_style_url]);
+  return null;
+}
+
 function ThemeCard(props: {
   theme: ThemeInfo;
   active: boolean;
@@ -65,100 +79,120 @@ function ThemeCard(props: {
 }) {
   const { t } = useTranslation();
   const { theme } = props;
+  const [settingsOpen, setSettingsOpen] = useState(false);
   return (
-    <div className={`theme-card ${props.active ? 'active' : ''}`}>
-      <button className="theme-card-main" aria-pressed={props.active} onClick={props.onPick}>
-        <Preview tokens={theme.tokens} />
-        <div className="row" style={{ gap: 6 }}>
-          <strong className="grow">{theme.name}</strong>
-          {props.active ? <Check size={14} className="accent-text" /> : null}
-        </div>
-        <span className="small muted">
-          {t(`settings.themes.mode.${theme.mode}`)}
-          {theme.author ? ` · ${theme.author}` : ''}
-          {theme.source !== 'builtin'
-            ? ` · ${t(
-                theme.source === 'user'
-                  ? 'settings.themes.custom'
-                  : theme.source === 'theme-package'
-                    ? 'settings.themes.package'
-                    : 'settings.themes.extension',
-              )}`
-            : ''}
-        </span>
-      </button>
-      <div className="theme-card-actions">
-        {theme.background?.kind === 'video' && props.active ? (
-          <button
-            className="btn sm"
-            aria-label={t(
-              props.backgroundPaused
-                ? 'settings.themes.resumeBackground'
-                : 'settings.themes.pauseBackground',
-            )}
-            onClick={() => props.onBackgroundPausedChange(!props.backgroundPaused)}
-          >
-            {t(
-              props.backgroundPaused
-                ? 'settings.themes.resumeBackground'
-                : 'settings.themes.pauseBackground',
-            )}
-          </button>
-        ) : null}
-        <button className="btn sm" disabled={props.exporting} onClick={props.onExport}>
-          <Download size={13} /> {t('common.export')}
+    <>
+      <ThemeCardStyles theme={theme} />
+      <div className={`theme-card ${props.active ? 'active' : ''}`} data-theme-id={theme.id}>
+        <button className="theme-card-main" aria-pressed={props.active} onClick={props.onPick}>
+          <Preview tokens={theme.tokens} />
+          <div className="row" style={{ gap: 6 }}>
+            <strong className="grow">{theme.name}</strong>
+            {props.active ? <Check size={14} className="accent-text" /> : null}
+          </div>
+          <span className="small muted">
+            {t(`settings.themes.mode.${theme.mode}`)}
+            {theme.author ? ` · ${theme.author}` : ''}
+            {theme.source !== 'builtin'
+              ? ` · ${t(
+                  theme.source === 'user'
+                    ? 'settings.themes.custom'
+                    : theme.source === 'theme-package'
+                      ? 'settings.themes.package'
+                      : 'settings.themes.extension',
+                )}`
+              : ''}
+          </span>
         </button>
-        {props.onDelete ? (
-          <button
-            className="btn ghost icon sm danger"
-            aria-label={t('common.delete')}
-            onClick={props.onDelete}
-          >
-            <Trash2 size={13} />
-          </button>
+        <div className="theme-card-actions">
+          <div className="theme-card-actions-left">
+            <button className="btn sm" disabled={props.exporting} onClick={props.onExport}>
+              <Download size={13} /> {t('common.export')}
+            </button>
+            {theme.settings_schema?.length || theme.settings_page_url ? (
+              <button
+                className="btn sm"
+                aria-label={t('settings.themes.openSettings', { name: theme.name })}
+                onClick={() => setSettingsOpen(true)}
+              >
+                <Settings2 size={13} /> {t('settings.themes.moreSettingsButton')}
+              </button>
+            ) : null}
+          </div>
+          <div className="theme-card-actions-right">
+            {theme.background?.kind === 'video' && props.active ? (
+              <button
+                className="btn sm"
+                aria-label={t(
+                  props.backgroundPaused
+                    ? 'settings.themes.resumeBackground'
+                    : 'settings.themes.pauseBackground',
+                )}
+                onClick={() => props.onBackgroundPausedChange(!props.backgroundPaused)}
+              >
+                {t(
+                  props.backgroundPaused
+                    ? 'settings.themes.resumeBackground'
+                    : 'settings.themes.pauseBackground',
+                )}
+              </button>
+            ) : null}
+            {props.onDelete ? (
+              <button
+                className="btn ghost icon sm danger"
+                aria-label={t('common.delete')}
+                onClick={props.onDelete}
+              >
+                <Trash2 size={13} />
+              </button>
+            ) : null}
+          </div>
+        </div>
+        {theme.background ? (
+          <label className="theme-opacity">
+            <span>{t('settings.themes.backgroundOpacity')}</span>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              aria-label={t('settings.themes.backgroundOpacity')}
+              value={props.opacity}
+              onChange={(event) => props.onOpacityChange(Number(event.currentTarget.value))}
+            />
+            <span className="small muted">{Math.round(props.opacity * 100)}%</span>
+          </label>
+        ) : null}
+        {theme.background?.kind === 'video' && props.active ? (
+          <label className="theme-motion-override">
+            <input
+              type="checkbox"
+              checked={props.allowVideoWithReducedMotion}
+              onChange={(event) =>
+                props.onAllowVideoWithReducedMotionChange(event.currentTarget.checked)
+              }
+            />
+            <span>
+              {t('settings.themes.playWithReducedMotion')}
+              <small>{t('settings.themes.playWithReducedMotionHint')}</small>
+            </span>
+          </label>
+        ) : null}
+        {theme.script_url ? (
+          <label className="theme-script-toggle">
+            <input
+              type="checkbox"
+              checked={props.scriptEnabled}
+              onChange={(event) => props.onScriptEnabledChange(event.currentTarget.checked)}
+            />
+            <span>{t('settings.themes.enableScript')}</span>
+          </label>
         ) : null}
       </div>
-      {theme.background ? (
-        <label className="theme-opacity">
-          <span>{t('settings.themes.backgroundOpacity')}</span>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            aria-label={t('settings.themes.backgroundOpacity')}
-            value={props.opacity}
-            onChange={(event) => props.onOpacityChange(Number(event.currentTarget.value))}
-          />
-          <span className="small muted">{Math.round(props.opacity * 100)}%</span>
-        </label>
+      {settingsOpen ? (
+        <ThemeSettingsPanel theme={theme} onClose={() => setSettingsOpen(false)} />
       ) : null}
-      {theme.background?.kind === 'video' && props.active ? (
-        <label className="theme-motion-override">
-          <input
-            type="checkbox"
-            checked={props.allowVideoWithReducedMotion}
-            onChange={(event) =>
-              props.onAllowVideoWithReducedMotionChange(event.currentTarget.checked)
-            }
-          />
-          <span>
-            {t('settings.themes.playWithReducedMotion')}
-            <small>{t('settings.themes.playWithReducedMotionHint')}</small>
-          </span>
-        </label>
-      ) : null}
-      {theme.script_url ? (
-        <label className="theme-script-toggle">
-          <input
-            type="checkbox"
-            checked={props.scriptEnabled}
-            onChange={(event) => props.onScriptEnabledChange(event.currentTarget.checked)}
-          />
-          <span>{t('settings.themes.enableScript')}</span>
-        </label>
-      ) : null}
-    </div>
+    </>
   );
 }
 
@@ -174,9 +208,7 @@ export function ThemesSection() {
   const backgroundPaused = useUI((s) => s.themeBackgroundPaused);
   const setBackgroundPaused = useUI((s) => s.setThemeBackgroundPaused);
   const allowVideoWithReducedMotion = useUI((s) => s.allowThemeVideoWithReducedMotion);
-  const setAllowVideoWithReducedMotion = useUI(
-    (s) => s.setAllowThemeVideoWithReducedMotion,
-  );
+  const setAllowVideoWithReducedMotion = useUI((s) => s.setAllowThemeVideoWithReducedMotion);
   const importTheme = useImportTheme();
   const importPackage = useImportThemePackage();
   const importFolder = useImportThemeFolder();

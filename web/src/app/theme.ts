@@ -37,9 +37,7 @@ export function shouldPauseThemeVideo(
   systemPrefersReducedMotion: boolean,
   allowSystemOverride: boolean,
 ): boolean {
-  return (
-    manuallyPaused || reduceMotion || (systemPrefersReducedMotion && !allowSystemOverride)
-  );
+  return manuallyPaused || reduceMotion || (systemPrefersReducedMotion && !allowSystemOverride);
 }
 
 const applied = new Set<string>();

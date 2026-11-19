@@ -109,11 +109,11 @@ function Sidebar() {
           return n.key === ',' ? (
             <Fragment key={n.to}>
               {surfaces.data?.items
-                .filter((surface) => surface.mode === 'page')
+                .filter((surface) => surface.mode === 'page' || surface.global === false)
                 .map((surface) => (
                   <NavLink
                     key={`${surface.extension_id}:${surface.id}`}
-                    to={`/extensions/${surface.extension_id}`}
+                    to={`/extensions/${surface.extension_id}/${surface.id}`}
                     className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
                     title={surface.title}
                   >

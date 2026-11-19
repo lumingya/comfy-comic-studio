@@ -145,7 +145,7 @@ class ExtensionAPI:
             kind, items, snapshot, owner=owner, title=title, idempotency_key=idempotency_key
         )
 
-    def hook(self, name: str, fn: Callable | None = None, *, priority: int = 100):
+    def hook(self, name: str, fn: Callable | None = None, *, priority: int = 0):
         """Add a domain hook handler; usable directly or as ``@mio.hook("prompt.compiled")``."""
 
         def add(handler: Callable) -> Callable:

@@ -6,6 +6,13 @@
   padding: 0 12px 12px;
 }
 
+.theme-card-actions-left,
+.theme-card-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .theme-opacity,
 .theme-script-toggle {
   display: flex;
