@@ -32,6 +32,13 @@ export function resolveTheme(
 }
 
 const applied = new Set<string>();
+const SURFACE_OPACITY: Record<string, number> = {
+  bg: 0.56,
+  'bg-deep': 0.62,
+  panel: 0.68,
+  'panel-2': 0.72,
+  hover: 0.78,
+};
 
 /** Write the resolved theme onto <html>: data-theme for the CSS fallbacks + token variables. */
 export function applyTheme(
@@ -46,8 +53,17 @@ export function applyTheme(
   for (const name of applied) root.style.removeProperty(`--${name}`);
   applied.clear();
   for (const [name, value] of Object.entries(theme?.tokens ?? {})) {
-    root.style.setProperty(`--${name}`, value);
+    const opacity = backgroundEnabled ? SURFACE_OPACITY[name] : undefined;
+    root.style.setProperty(
+      `--${name}`,
+      opacity === undefined ? value : `color-mix(in srgb, ${value} ${opacity * 100}%, transparent)`,
+    );
     applied.add(name);
+  }
+  if (backgroundEnabled) {
+    const side = mode === 'dark' ? '#17191b' : '#ecefe7';
+    root.style.setProperty('--side', `color-mix(in srgb, ${side} 68%, transparent)`);
+    applied.add('side');
   }
 }
 

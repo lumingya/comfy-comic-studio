@@ -1,6 +1,8 @@
 import { render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ThemeBackdrop } from './themeBackdrop';
+
+afterEach(() => vi.restoreAllMocks());
 
 describe('theme image motion', () => {
   it('pauses animated images while preserving static image backgrounds', () => {
@@ -34,5 +36,69 @@ describe('theme image motion', () => {
       'src',
       '/static.png',
     );
+  });
+
+  it('autoplays muted video, loops it, and restarts if playback ends', () => {
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+    const { unmount } = render(
+      <ThemeBackdrop
+        background={{ kind: 'video', url: '/wallpaper.mp4', opacity: 0.4 }}
+        opacity={0.4}
+        paused={false}
+      />,
+    );
+    const video = document.body.querySelector<HTMLVideoElement>('.theme-backdrop video')!;
+    expect(video).toHaveProperty('muted', true);
+    expect(video).toHaveProperty('loop', true);
+    expect(video).toHaveProperty('autoplay', true);
+    expect(video).toHaveAttribute('playsinline');
+    expect(play).toHaveBeenCalled();
+
+    const initialCalls = play.mock.calls.length;
+    video.dispatchEvent(new Event('ended'));
+    expect(play.mock.calls.length).toBeGreaterThan(initialCalls);
+    unmount();
+    expect(video).not.toHaveAttribute('src');
+    expect(video.paused).toBe(true);
+    play.mockRestore();
+  });
+
+  it('retries muted autoplay when media becomes playable', () => {
+    const play = vi
+      .spyOn(HTMLMediaElement.prototype, 'play')
+      .mockRejectedValueOnce(new Error('media is not ready'))
+      .mockResolvedValue();
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+    const { unmount } = render(
+      <ThemeBackdrop
+        background={{ kind: 'video', url: '/wallpaper.mp4', opacity: 0.4 }}
+        opacity={0.4}
+        paused={false}
+      />,
+    );
+    const video = document.body.querySelector('.theme-backdrop video')!;
+    expect(play).toHaveBeenCalledTimes(1);
+    video.dispatchEvent(new Event('canplay'));
+    expect(play).toHaveBeenCalledTimes(2);
+    unmount();
+  });
+
+  it('does not request playback while the background is paused', () => {
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue();
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
+    vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
+    const { unmount } = render(
+      <ThemeBackdrop
+        background={{ kind: 'video', url: '/wallpaper.mp4', opacity: 0.4 }}
+        opacity={0.4}
+        paused
+      />,
+    );
+    expect(play).not.toHaveBeenCalled();
+    unmount();
+    play.mockRestore();
   });
 });

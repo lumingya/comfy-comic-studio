@@ -46,6 +46,30 @@ describe('theme', () => {
     expect(root.dataset.themeBackground).toBe('false');
   });
 
+  it('makes core surfaces translucent only with a theme background', () => {
+    const root = document.createElement('div');
+    const selected = {
+      ...themes[0],
+      tokens: {
+        ...themes[0].tokens,
+        'bg-deep': '#121416',
+        panel: '#222222',
+        'panel-2': '#2a2a2a',
+        hover: '#333333',
+      },
+    };
+    applyTheme(root, 'dark', selected, true);
+    expect(root.style.getPropertyValue('--panel')).toContain('color-mix');
+    expect(root.style.getPropertyValue('--bg')).toContain('color-mix');
+    expect(root.style.getPropertyValue('--panel-2')).toContain('color-mix');
+    expect(root.style.getPropertyValue('--bg-deep')).toContain('color-mix');
+    expect(root.style.getPropertyValue('--hover')).toContain('color-mix');
+    expect(root.style.getPropertyValue('--side')).toContain('color-mix');
+    applyTheme(root, 'dark', selected);
+    expect(root.style.getPropertyValue('--panel')).toBe('#222222');
+    expect(root.style.getPropertyValue('--side')).toBe('');
+  });
+
   it('toggles between ink and paper by default', () => {
     expect(toggled('dark')).toBe('paper');
     expect(toggled('light')).toBe('ink');

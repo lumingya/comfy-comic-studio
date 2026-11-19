@@ -20,14 +20,34 @@ function BackgroundVideo({ url, paused }: { url: string; paused: boolean }) {
     if (!video) return;
     const syncPlayback = () => {
       if (paused || document.hidden) video.pause();
-      else void video.play().catch(() => undefined);
+      else if (video.paused) void video.play().catch(() => undefined);
+    };
+    const restartPlayback = () => {
+      if (paused || document.hidden) return;
+      video.currentTime = 0;
+      void video.play().catch(() => undefined);
     };
     syncPlayback();
+    video.addEventListener('canplay', syncPlayback);
+    video.addEventListener('ended', restartPlayback);
     document.addEventListener('visibilitychange', syncPlayback);
-    return () => document.removeEventListener('visibilitychange', syncPlayback);
+    return () => {
+      video.removeEventListener('canplay', syncPlayback);
+      video.removeEventListener('ended', restartPlayback);
+      document.removeEventListener('visibilitychange', syncPlayback);
+    };
   }, [url, paused]);
 
-  return <video ref={ref} muted loop playsInline preload={paused ? 'metadata' : 'auto'} />;
+  return (
+    <video
+      ref={ref}
+      autoPlay={!paused}
+      muted
+      loop
+      playsInline
+      preload={paused ? 'metadata' : 'auto'}
+    />
+  );
 }
 
 export function ThemeBackdrop({
