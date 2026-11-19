@@ -5,6 +5,9 @@ from __future__ import annotations
 import re
 import stat
 from pathlib import Path, PurePosixPath
+from typing import Literal
+
+from pydantic import BaseModel
 
 ASSET_PREFIX = "assets"
 MAX_ASSET_DEPTH = 8
@@ -15,6 +18,46 @@ MEDIA_FORMATS = {
     "image": frozenset({"jpg", "jpeg", "png", "gif", "webp", "avif"}),
     "video": frozenset({"mp4", "webm", "ogv"}),
 }
+MIME_TYPES = {
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "png": "image/png",
+    "gif": "image/gif",
+    "webp": "image/webp",
+    "avif": "image/avif",
+    "mp4": "video/mp4",
+    "webm": "video/webm",
+    "ogv": "video/ogg",
+    "woff": "font/woff",
+    "woff2": "font/woff2",
+    "ttf": "font/ttf",
+    "otf": "font/otf",
+}
+
+
+class MediaDescriptor(BaseModel):
+    kind: Literal["image", "video"]
+    url: str
+    animated: bool
+    mime_type: str
+
+
+def media_type(name: str) -> str:
+    return MIME_TYPES[PurePosixPath(name).suffix.lower().removeprefix(".")]
+
+
+def describe_media(path: Path, kind: str, url: str) -> dict:
+    animated = False
+    if kind == "image":
+        with path.open("rb") as stream:
+            animated = image_may_animate(
+                f"assets/{path.name}", stream.read(MAX_IMAGE_ANIMATION_PROBE)
+            )
+    return MediaDescriptor(
+        kind=kind, url=url, animated=animated, mime_type=media_type(path.name)
+    ).model_dump()
+
+
 ASSET_FORMATS = frozenset(
     {
         *MEDIA_FORMATS["image"],

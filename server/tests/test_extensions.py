@@ -256,7 +256,7 @@ class ExtensionApiTests(ApiCase):
             self.ok(self.client.put("/api/ext/demo/preferences", json={"theme": "dark"})),
             {"theme": "dark"},
         )
-        preferences_path = self.ctx.data_dir / "extension_data" / "demo" / "preferences.json"
+        preferences_path = self.ctx.data_dir / "extensions_data" / "demo" / "preferences.json"
         settings_path = self.ctx.data_dir / "extensions_data" / "demo" / "settings.json"
         self.assertTrue(preferences_path.is_file())
         self.assertEqual(self.ok(self.client.get("/api/ext/demo/preferences")), {"theme": "dark"})
@@ -276,7 +276,7 @@ class ExtensionApiTests(ApiCase):
         self.assertFalse(preferences_path.exists())
         self.assertEqual(
             json.loads(
-                (self.ctx.data_dir / "extension_data" / "other" / "preferences.json").read_text(
+                (self.ctx.data_dir / "extensions_data" / "other" / "preferences.json").read_text(
                     encoding="utf-8"
                 )
             ),

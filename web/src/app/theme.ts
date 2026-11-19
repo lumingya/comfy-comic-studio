@@ -1,4 +1,4 @@
-import type { ThemeInfo } from '../api/open';
+import type { ThemeInfo, ThemeWallpaper } from '../api/open';
 
 /** 'system' follows the OS; anything else is a theme id from /api/themes. */
 export type ThemeChoice = string;
@@ -38,6 +38,18 @@ export function shouldPauseThemeVideo(
   allowSystemOverride: boolean,
 ): boolean {
   return manuallyPaused || reduceMotion || (systemPrefersReducedMotion && !allowSystemOverride);
+}
+
+/** Resolve ownership once so the player and theme cards make the same media decisions. */
+export function effectiveThemeBackground(
+  theme: ThemeInfo | undefined,
+  preferences?: Record<string, unknown>,
+  wallpapers: readonly ThemeWallpaper[] = [],
+): ThemeInfo['background'] {
+  const selected = wallpapers.find((wallpaper) => wallpaper.id === preferences?.wallpaper_id);
+  return selected
+    ? { ...selected, opacity: theme?.background?.opacity ?? 0.35 }
+    : theme?.background;
 }
 
 const applied = new Set<string>();

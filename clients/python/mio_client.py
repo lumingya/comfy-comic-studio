@@ -1127,14 +1127,6 @@ class MioClient(_Base):
         """
         return self._request("POST", "/extensions/folder", params={"replace": replace})
 
-    def extension_surfaces(self) -> Any:
-        """GET /extension-surfaces — Extension Surfaces."""
-        return self._request("GET", "/extension-surfaces")
-
-    def extension_workspace(self, ext_id: str, path: str) -> Any:
-        """GET /extensions/{ext_id}/workspace/{path} — Extension Workspace."""
-        return self._request("GET", f"/extensions/{_q(ext_id)}/workspace/{_q(path)}")
-
     def disable_extension(self, ext_id: str) -> Any:
         """POST /extensions/{ext_id}/disable — Disable Extension."""
         return self._request("POST", f"/extensions/{_q(ext_id)}/disable")
@@ -1145,6 +1137,32 @@ class MioClient(_Base):
             "DELETE",
             f"/extensions/{_q(ext_id)}",
             params={"delete_data": delete_data},
+        )
+
+    def extension_surfaces(self) -> Any:
+        """GET /extension-surfaces — Extension Surfaces."""
+        return self._request("GET", "/extension-surfaces")
+
+    def extension_workspace(self, ext_id: str, path: str) -> Any:
+        """GET /extensions/{ext_id}/workspace/{path} — Extension Workspace."""
+        return self._request("GET", f"/extensions/{_q(ext_id)}/workspace/{_q(path)}")
+
+    def extension_panels(self) -> Any:
+        """GET /extension-panels — Extension Panels.
+
+        UI panels of active extensions; the web app shows them in sandboxed iframes.
+        """
+        return self._request("GET", "/extension-panels")
+
+    def panel_request(self, ext_id: str, panel_id: str, body: dict | list | None = None) -> Any:
+        """POST /extension-panels/{ext_id}/{panel_id}/requests — Panel Request.
+
+        Call only a reviewed panel's declared operation; target validation and scope still apply.
+        """
+        return self._request(
+            "POST",
+            f"/extension-panels/{_q(ext_id)}/{_q(panel_id)}/requests",
+            json=body,
         )
 
     def get_extension_settings(self, ext_id: str) -> Any:
@@ -1168,24 +1186,6 @@ class MioClient(_Base):
     def put_extension_preferences(self, ext_id: str, body: dict | list | None = None) -> Any:
         """PUT /ext/{ext_id}/preferences — Put Extension Preferences."""
         return self._request("PUT", f"/ext/{_q(ext_id)}/preferences", json=body)
-
-    def extension_panels(self) -> Any:
-        """GET /extension-panels — Extension Panels.
-
-        UI panels of active extensions; the web app shows them in sandboxed iframes.
-        """
-        return self._request("GET", "/extension-panels")
-
-    def panel_request(self, ext_id: str, panel_id: str, body: dict | list | None = None) -> Any:
-        """POST /extension-panels/{ext_id}/{panel_id}/requests — Panel Request.
-
-        Call only a reviewed panel's declared operation; target validation and scope still apply.
-        """
-        return self._request(
-            "POST",
-            f"/extension-panels/{_q(ext_id)}/{_q(panel_id)}/requests",
-            json=body,
-        )
 
     def list_themes(self) -> Any:
         """GET /themes — List Themes."""

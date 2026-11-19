@@ -9,9 +9,11 @@ import {
   useImportTheme,
   useImportThemePackage,
   useThemes,
+  useThemePreferences,
+  useThemeWallpapers,
   type ThemeInfo,
 } from '../../api/open';
-import { SYSTEM } from '../../app/theme';
+import { effectiveThemeBackground, SYSTEM } from '../../app/theme';
 import { themeScriptKey } from '../../app/themeScript';
 import { useUI } from '../../app/ui-store';
 import { ContextMenu, useContextMenu } from '../../components/ContextMenu';
@@ -67,7 +69,7 @@ function ThemeCard(props: {
   onPick: () => void;
   onExport: () => void;
   exporting: boolean;
-  opacity: number;
+  opacity?: number;
   onOpacityChange: (value: number) => void;
   scriptEnabled: boolean;
   onScriptEnabledChange: (enabled: boolean) => void;
@@ -79,6 +81,11 @@ function ThemeCard(props: {
 }) {
   const { t } = useTranslation();
   const { theme } = props;
+  const preferences = useThemePreferences(theme.id);
+  const wallpapers = useThemeWallpapers(theme.id);
+  const background = effectiveThemeBackground(theme, preferences.data, wallpapers.data?.items);
+  const opacity = props.opacity ?? background?.opacity ?? 0;
+  const hasMotion = background?.kind === 'video' || background?.animated;
   const [settingsOpen, setSettingsOpen] = useState(false);
   return (
     <>
@@ -120,7 +127,7 @@ function ThemeCard(props: {
             ) : null}
           </div>
           <div className="theme-card-actions-right">
-            {theme.background?.kind === 'video' && props.active ? (
+            {hasMotion && props.active ? (
               <button
                 className="btn sm"
                 aria-label={t(
@@ -148,7 +155,7 @@ function ThemeCard(props: {
             ) : null}
           </div>
         </div>
-        {theme.background ? (
+        {background ? (
           <label className="theme-opacity">
             <span>{t('settings.themes.backgroundOpacity')}</span>
             <input
@@ -157,13 +164,13 @@ function ThemeCard(props: {
               max="1"
               step="0.05"
               aria-label={t('settings.themes.backgroundOpacity')}
-              value={props.opacity}
+              value={opacity}
               onChange={(event) => props.onOpacityChange(Number(event.currentTarget.value))}
             />
-            <span className="small muted">{Math.round(props.opacity * 100)}%</span>
+            <span className="small muted">{Math.round(opacity * 100)}%</span>
           </label>
         ) : null}
-        {theme.background?.kind === 'video' && props.active ? (
+        {background?.kind === 'video' && props.active ? (
           <label className="theme-motion-override">
             <input
               type="checkbox"
@@ -351,7 +358,7 @@ export function ThemesSection() {
             theme={theme}
             active={choice === theme.id}
             onPick={() => setTheme(theme.id, theme.mode)}
-            opacity={themeOpacity[theme.id] ?? theme.background?.opacity ?? 0}
+            opacity={themeOpacity[theme.id]}
             onOpacityChange={(value) => setThemeOpacity(theme.id, value)}
             scriptEnabled={enabledThemeScripts.includes(themeScriptKey(theme) ?? '')}
             onScriptEnabledChange={(enabled) => {

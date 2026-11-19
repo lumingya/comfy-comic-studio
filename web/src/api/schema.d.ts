@@ -1805,40 +1805,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/extension-surfaces": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Extension Surfaces */
-        get: operations["extension_surfaces_api_extension_surfaces_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/extensions/{ext_id}/workspace/{path}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Extension Workspace */
-        get: operations["extension_workspace_api_extensions__ext_id__workspace__path__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/extensions/{ext_id}/disable": {
         parameters: {
             query?: never;
@@ -1873,23 +1839,16 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/extensions/{ext_id}/settings": {
+    "/api/extension-surfaces": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /**
-         * Get Extension Settings
-         * @description Read bounded JSON settings without activating or executing an extension.
-         */
-        get: operations["get_extension_settings_api_extensions__ext_id__settings_get"];
-        /**
-         * Put Extension Settings
-         * @description Atomically replace extension settings; the same storage contract is used by its SDK.
-         */
-        put: operations["put_extension_settings_api_extensions__ext_id__settings_put"];
+        /** Extension Surfaces */
+        get: operations["extension_surfaces_api_extension_surfaces_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -1897,17 +1856,16 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/ext/{ext_id}/preferences": {
+    "/api/extensions/{ext_id}/workspace/{path}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get Extension Preferences */
-        get: operations["get_extension_preferences_api_ext__ext_id__preferences_get"];
-        /** Put Extension Preferences */
-        put: operations["put_extension_preferences_api_ext__ext_id__preferences_put"];
+        /** Extension Workspace */
+        get: operations["extension_workspace_api_extensions__ext_id__workspace__path__get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -1949,6 +1907,48 @@ export interface paths {
          * @description Call only a reviewed panel's declared operation; target validation and scope still apply.
          */
         post: operations["panel_request_api_extension_panels__ext_id___panel_id__requests_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/extensions/{ext_id}/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Extension Settings
+         * @description Read bounded JSON settings without activating or executing an extension.
+         */
+        get: operations["get_extension_settings_api_extensions__ext_id__settings_get"];
+        /**
+         * Put Extension Settings
+         * @description Atomically replace extension settings; the same storage contract is used by its SDK.
+         */
+        put: operations["put_extension_settings_api_extensions__ext_id__settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ext/{ext_id}/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Extension Preferences */
+        get: operations["get_extension_preferences_api_ext__ext_id__preferences_get"];
+        /** Put Extension Preferences */
+        put: operations["put_extension_preferences_api_ext__ext_id__preferences_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -6946,6 +6946,29 @@ export interface components {
             /** Profile Id */
             profile_id: string | null;
         };
+        /** Wallpaper */
+        Wallpaper: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "image" | "video";
+            /** Url */
+            url: string;
+            /** Animated */
+            animated: boolean;
+            /** Mime Type */
+            mime_type: string;
+            /** Id */
+            id: string;
+            /** Filename */
+            filename: string;
+        };
+        /** Wallpapers */
+        Wallpapers: {
+            /** Items */
+            items: components["schemas"]["Wallpaper"][];
+        };
         /** WebhookPatch */
         WebhookPatch: {
             /** Name */
@@ -10837,6 +10860,68 @@ export interface operations {
             };
         };
     };
+    disable_extension_api_extensions__ext_id__disable_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ext_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_extension_api_extensions__ext_id__delete: {
+        parameters: {
+            query?: {
+                delete_data?: boolean;
+            };
+            header?: never;
+            path: {
+                ext_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     extension_surfaces_api_extension_surfaces_get: {
         parameters: {
             query?: never;
@@ -10889,13 +10974,11 @@ export interface operations {
             };
         };
     };
-    disable_extension_api_extensions__ext_id__disable_post: {
+    extension_panels_api_extension_panels_get: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                ext_id: string;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
@@ -10906,39 +10989,35 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, unknown>;
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": Record<string, unknown>[];
                 };
             };
         };
     };
-    remove_extension_api_extensions__ext_id__delete: {
+    panel_request_api_extension_panels__ext_id___panel_id__requests_post: {
         parameters: {
-            query?: {
-                delete_data?: boolean;
-            };
+            query?: never;
             header?: never;
             path: {
                 ext_id: string;
+                panel_id: string;
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PanelBridgeRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
-            204: {
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["PanelBridgeResponse"];
+                };
             };
             /** @description Validation Error */
             422: {
@@ -11093,62 +11172,6 @@ export interface operations {
             };
         };
     };
-    extension_panels_api_extension_panels_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": Record<string, unknown>[];
-                };
-            };
-        };
-    };
-    panel_request_api_extension_panels__ext_id___panel_id__requests_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                ext_id: string;
-                panel_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PanelBridgeRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PanelBridgeResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     list_themes_api_themes_get: {
         parameters: {
             query?: never;
@@ -11285,7 +11308,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, unknown>;
+                    "application/json": components["schemas"]["Wallpapers"];
                 };
             };
             /** @description Validation Error */
@@ -11323,7 +11346,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, unknown>;
+                    "application/json": components["schemas"]["Wallpaper"];
                 };
             };
             /** @description Validation Error */

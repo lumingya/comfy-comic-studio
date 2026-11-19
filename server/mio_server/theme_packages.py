@@ -16,6 +16,8 @@ from pathlib import Path, PurePosixPath
 from typing import BinaryIO, Iterable
 
 from .theme_media import (
+    _skip_string,
+    _strip_comments,
     asset_parts,
     is_asset_directory,
     valid_media,
@@ -38,6 +40,7 @@ MAX_SCRIPT = 1024 * 1024
 MAX_SETTINGS_PAGE = 2 * 1024 * 1024
 MAX_FILES = 64
 COPY_CHUNK_SIZE = 1024 * 1024
+_CARD_ID_MARKER = "self"
 BUILTIN_ROOT = Path(__file__).resolve().parents[2] / "themes"
 RESERVED_IDS = {
     "con",
@@ -257,92 +260,16 @@ def _read_folder(
 def _unpack(data: bytes) -> tuple[dict, Theme, dict[str, bytes]]:
     if not data or len(data) > MAX_PACKAGE:
         raise ThemePackageError("主题 ZIP 为空或超过 10 GiB")
-    try:
-        with zipfile.ZipFile(io.BytesIO(data)) as archive:
-            infos = archive.infolist()
-            if len(infos) > MAX_FILES + 3:
-                raise ThemePackageError("主题 ZIP 文件过多")
-            entries: list[tuple[zipfile.ZipInfo, tuple[str, ...]]] = []
-            directories: set[str] = set()
-            seen: set[str] = set()
-            for info in infos:
-                name = info.filename
-                if "\\" in name or ":" in name:
-                    raise ThemePackageError("主题 ZIP 包含不安全路径")
-                raw_parts = name.removesuffix("/").split("/")
-                path = PurePosixPath(name)
-                parts = path.parts
-                if path.is_absolute() or not parts or any(p in {"", ".", ".."} for p in raw_parts):
-                    raise ThemePackageError("主题 ZIP 包含不安全路径")
-                mode = info.external_attr >> 16
-                kind = stat.S_IFMT(mode)
-                if stat.S_ISLNK(mode) or (kind and not info.is_dir() and not stat.S_ISREG(mode)):
-                    raise ThemePackageError("主题 ZIP 不支持链接或特殊文件")
-                if info.is_dir():
-                    directories.add("/".join(parts))
-                    continue
-                if info.file_size > MAX_FILE:
-                    raise ThemePackageError("单个主题文件超过 10 GiB")
-                key = "/".join(parts).casefold()
-                if key in seen:
-                    raise ThemePackageError("主题 ZIP 包含重复文件")
-                seen.add(key)
-                entries.append((info, parts))
-            if not entries:
-                raise ThemePackageError("主题 ZIP 不包含文件")
-            if sum(info.file_size for info, _ in entries) > MAX_PACKAGE:
-                raise ThemePackageError("主题包解压后超过 10 GiB")
-            roots = {parts[0] for _, parts in entries}
-            has_folder = len(roots) == 1 and all(
-                len(parts) >= 2
-                and (
-                    _is_user_wallpapers_path(parts[1:]) or allowed_package_path("/".join(parts[1:]))
-                )
-                and parts[0] not in PACKAGE_FILES
-                and parts[0] != "assets"
-                for _, parts in entries
-            )
-            root = next(iter(roots)) if has_folder else ""
-            names = [
-                (info, parts)
-                for info, parts in entries
-                if not _is_user_wallpapers_path(parts[1:] if has_folder else parts)
-            ]
-            if not names:
-                raise ThemePackageError("主题 ZIP 不包含文件")
-            files: dict[str, bytes] = {}
-            for info, parts in names:
-                relative = parts[1:] if has_folder else parts
-                normalized = "/".join(relative)
-                if not allowed_package_path(normalized):
-                    raise ThemePackageError("主题 ZIP 包含不支持的路径或文件")
-                files[normalized] = archive.read(info)
-            expected_directories = set()
-            for name in files:
-                parts = name.split("/")
-                for depth in range(1, len(parts)):
-                    directory = "/".join(parts[:depth])
-                    if directory == "assets" or directory.startswith("assets/"):
-                        expected_directories.add(directory)
-            allowed_directories = expected_directories | ({root} if has_folder else set())
-            normalized_directories = {
-                "/".join(PurePosixPath(name).parts[1:] if has_folder else PurePosixPath(name).parts)
-                for name in directories
-                if not has_folder or name != root
-            }
-            normalized_directories = {
-                name
-                for name in normalized_directories
-                if not _is_user_wallpapers_path(tuple(name.split("/")), directory=True)
-            }
-            if normalized_directories - allowed_directories:
-                raise ThemePackageError("主题 ZIP 包含不支持的目录")
-    except (zipfile.BadZipFile, OSError, RuntimeError) as exc:
-        raise ThemePackageError("无法读取主题 ZIP") from exc
-    manifest, theme = _validated_files(files)
-    if has_folder and next(iter(roots)) != manifest["id"]:
-        raise ThemePackageError("主题清单 ID 与 ZIP 文件夹名称不一致")
-    return manifest, theme, files
+    # The byte adapter deliberately shares the disk importer's sole authority.
+    # Only callers requesting the legacy in-memory result materialize resource bytes.
+    with tempfile.TemporaryDirectory(prefix="mio-theme-bytes-") as temporary:
+        root = Path(temporary)
+        archive = root / "package.zip"
+        archive.write_bytes(data)
+        folder = root / "package"
+        folder.mkdir()
+        manifest, theme = _extract_zip_to_folder(archive, folder)
+        return manifest, theme, {name: path.read_bytes() for name, path in _folder_files(folder)}
 
 
 def _extract_zip_to_folder(archive_path: Path, folder: Path) -> tuple[dict, Theme]:
@@ -460,6 +387,84 @@ def _extract_zip_to_folder(archive_path: Path, folder: Path) -> tuple[dict, Them
     return manifest, theme
 
 
+def _rebase_card_stylesheet(data: bytes, old_id: str, new_id: str) -> bytes:
+    """Rebind literal card scopes in rule selectors, never in declaration values."""
+    try:
+        source = data.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ThemePackageError("theme.css 不是有效 UTF-8") from exc
+    scope = f'.theme-card[data-theme-id="{old_id}"]'
+    replacement = f'.theme-card[data-theme-id="{new_id}"]'
+    edits: list[tuple[int, int]] = []
+
+    def skip_comment(cursor: int) -> int:
+        end = source.find("*/", cursor + 2)
+        if end < 0:
+            raise ThemePackageError("theme.css contains an unterminated comment")
+        return end + 2
+
+    def selector(start: int, end: int) -> None:
+        cursor = start
+        while cursor < end:
+            if source.startswith("/*", cursor):
+                cursor = skip_comment(cursor)
+            elif source[cursor] in "\"'":
+                cursor = _skip_string(source, cursor)
+            elif source.startswith(scope, cursor):
+                edits.append((cursor, cursor + len(scope)))
+                cursor += len(scope)
+            else:
+                cursor += 1
+
+    cursor = start = parentheses = brackets = 0
+    skipped_blocks: list[bool] = []
+    while cursor < len(source):
+        char = source[cursor]
+        if source.startswith("/*", cursor):
+            cursor = skip_comment(cursor)
+            continue
+        if char in "\"'":
+            cursor = _skip_string(source, cursor)
+            continue
+        if char == "(":
+            parentheses += 1
+        elif char == ")":
+            parentheses -= 1
+        elif char == "[":
+            brackets += 1
+        elif char == "]":
+            brackets -= 1
+        elif parentheses == 0 and brackets == 0:
+            if char == "{":
+                header = _strip_comments(source[start:cursor]).lstrip()
+                # Custom properties can contain arbitrary balanced token blocks.
+                skipped = bool(skipped_blocks and skipped_blocks[-1]) or bool(
+                    re.match(r"--[A-Za-z0-9_-]+\s*:", header)
+                )
+                if not skipped and not header.startswith("@"):
+                    selector(start, cursor)
+                skipped_blocks.append(skipped)
+                start = cursor + 1
+            elif char in ";}":
+                if char == "}" and skipped_blocks:
+                    skipped_blocks.pop()
+                start = cursor + 1
+        cursor += 1
+
+    parts: list[str] = []
+    previous = 0
+    for start, end in edits:
+        parts.extend((source[previous:start], replacement))
+        previous = end
+    parts.append(source[previous:])
+    return "".join(parts).encode("utf-8")
+
+
+def _resource_identity(name: str, data: bytes, theme_id: str) -> bytes:
+    # Re-exporting an already rebound card must retain the same content-derived ID.
+    return _rebase_card_stylesheet(data, theme_id, _CARD_ID_MARKER) if name == STYLE else data
+
+
 def package_theme(theme: Theme, resources: dict[str, bytes] | None = None) -> tuple[str, bytes]:
     """Package validated theme data and referenced assets without executing its script."""
     resources = resources or {}
@@ -468,7 +473,8 @@ def package_theme(theme: Theme, resources: dict[str, bytes] | None = None) -> tu
     document.pop("id", None)
     canonical = json.dumps(document, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     resource_ids = {
-        name: hashlib.sha256(data).hexdigest() for name, data in sorted(resources.items())
+        name: hashlib.sha256(_resource_identity(name, data, theme.id)).hexdigest()
+        for name, data in sorted(resources.items())
     }
     canonical += json.dumps(resource_ids, sort_keys=True, separators=(",", ":"))
     package_id = "theme-" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
@@ -491,7 +497,12 @@ def package_theme(theme: Theme, resources: dict[str, bytes] | None = None) -> tu
         THEME_FILE: json.dumps(document, ensure_ascii=False, indent=2) + "\n",
         README: readme,
     }
-    files.update(resources)
+    files.update(
+        {
+            name: _rebase_card_stylesheet(data, theme.id, "self") if name == STYLE else data
+            for name, data in resources.items()
+        }
+    )
     _validated_files(
         {
             name: content if isinstance(content, bytes) else content.encode("utf-8")
@@ -550,9 +561,26 @@ def package_theme_to_file(theme: Theme, resources: dict[str, Path], destination:
             while chunk := source.read(COPY_CHUNK_SIZE):
                 digest.update(chunk)
         resource_hashes[name] = digest.hexdigest()
-    canonical += json.dumps(resource_hashes, sort_keys=True, separators=(",", ":"))
+        if name == STYLE and (
+            len(samples[name]) != size
+            or hashlib.sha256(samples[name]).hexdigest() != resource_hashes[name]
+        ):
+            raise ThemePackageError("主题样式在导出期间发生变化或超过大小限制")
+    identity_hashes = {
+        name: hashlib.sha256(_resource_identity(name, samples[name], theme.id)).hexdigest()
+        if name == STYLE
+        else digest
+        for name, digest in resource_hashes.items()
+    }
+    canonical += json.dumps(identity_hashes, sort_keys=True, separators=(",", ":"))
     package_id = "theme-" + hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
     document["id"] = package_id
+    overrides = (
+        {STYLE: _rebase_card_stylesheet(samples[STYLE], theme.id, "self")}
+        if STYLE in samples
+        else {}
+    )
+    source_sizes = dict(sizes)
     files = {
         MANIFEST: json.dumps(
             {
@@ -574,8 +602,10 @@ def package_theme_to_file(theme: Theme, resources: dict[str, Path], destination:
             "可在「设置 → 外观与阅读」导入 ZIP，然后选择主题。\n"
         ).encode("utf-8"),
         **samples,
+        **overrides,
     }
     sizes.update({name: len(files[name]) for name in (MANIFEST, THEME_FILE, README)})
+    sizes.update({name: len(data) for name, data in overrides.items()})
     _validated_files(files, file_names=set(sizes), file_sizes=sizes)
     try:
         with zipfile.ZipFile(
@@ -599,11 +629,14 @@ def package_theme_to_file(theme: Theme, resources: dict[str, Path], destination:
                 with archive.open(info, "w", force_zip64=True) as target, path.open("rb") as source:
                     digest = hashlib.sha256()
                     copied = 0
+                    if name in overrides:
+                        target.write(overrides[name])
                     while chunk := source.read(COPY_CHUNK_SIZE):
                         copied += len(chunk)
                         digest.update(chunk)
-                        target.write(chunk)
-                    if copied != sizes[name] or digest.hexdigest() != resource_hashes[name]:
+                        if name not in overrides:
+                            target.write(chunk)
+                    if copied != source_sizes[name] or digest.hexdigest() != resource_hashes[name]:
                         raise ThemePackageError("主题资源在导出期间发生变化")
         if destination.stat().st_size > MAX_PACKAGE:
             raise ThemePackageError("主题 ZIP 超过 10 GiB")

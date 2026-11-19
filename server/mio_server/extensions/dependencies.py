@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.metadata
 import json
+import re
 import stat
 import subprocess
 import sys
@@ -20,6 +21,7 @@ REQUIREMENTS_FILE = "requirements.txt"
 MAX_REQUIREMENTS_BYTES = 64 * 1024
 MAX_REQUIREMENTS = 100
 INSTALL_TIMEOUT_SECONDS = 300
+PACKAGE_NAME = re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?\Z")
 
 
 class RequirementError(ValueError):
@@ -83,6 +85,8 @@ def _satisfied(requirement: Requirement) -> bool:
 def _satisfied_with(
     requirement: Requirement, checked: set[tuple[str, str, tuple[str, ...]]]
 ) -> bool:
+    if requirement.url:
+        return False
     key = (
         canonicalize_name(requirement.name),
         str(requirement.specifier),
@@ -98,17 +102,115 @@ def _satisfied_with(
         return False
     if not requirement.specifier.contains(installed, prereleases=True):
         return False
-    for extra in requirement.extras:
-        for raw in distribution.requires or ():
-            try:
-                dependency = Requirement(raw)
-            except InvalidRequirement:
-                return False
-            if dependency.marker and not dependency.marker.evaluate(environment={"extra": extra}):
-                continue
-            if not _satisfied_with(dependency, checked):
-                return False
+    extras = {"", *requirement.extras}
+    for raw in distribution.requires or ():
+        try:
+            dependency = Requirement(raw)
+        except (InvalidRequirement, TypeError):
+            return False
+        if dependency.marker and not any(
+            dependency.marker.evaluate(environment={"extra": extra}) for extra in extras
+        ):
+            continue
+        if not _satisfied_with(dependency, checked):
+            return False
     return True
+
+
+def _package_version(name, version) -> tuple[str, Version]:
+    """Only index package identities expressible as exact pip requirements are supported."""
+    if (
+        not isinstance(name, str)
+        or not PACKAGE_NAME.fullmatch(name)
+        or not isinstance(version, str)
+        or version != version.strip()
+    ):
+        raise RequirementError("pip 依赖预检查计划包含无效的包名或版本")
+    try:
+        parsed = Version(version)
+        Requirement(f"{name}=={parsed}")
+    except (InvalidVersion, InvalidRequirement):
+        raise RequirementError("pip 依赖预检查计划包含无效的包名或版本") from None
+    return canonicalize_name(name), parsed
+
+
+def _installed_versions() -> dict[str, Version]:
+    """Freeze the shared environment, including packages absent from this dependency closure."""
+    installed = {}
+    for distribution in importlib.metadata.distributions():
+        name, version = _package_version(distribution.metadata.get("Name"), distribution.version)
+        if name in installed and installed[name] != version:
+            raise RequirementError("Mio 共用环境存在同名多版本包；请先解决版本冲突，未安装")
+        installed[name] = version
+    return installed
+
+
+def _unique_pairs(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate pip report key")
+        result[key] = value
+    return result
+
+
+def _install_plan(report_path: Path, requirements, installed) -> dict[str, Version]:
+    try:
+        report = json.loads(
+            report_path.read_text(encoding="utf-8"), object_pairs_hook=_unique_pairs
+        )
+        actions = report["install"]
+        if not isinstance(actions, list) or not actions:
+            raise ValueError
+    except (OSError, UnicodeError, ValueError, KeyError, TypeError):
+        raise RequirementError("pip 依赖预检查未返回有效计划") from None
+    direct = {canonicalize_name(requirement.name): requirement for _, requirement in requirements}
+    plan = {}
+    for action in actions:
+        if not isinstance(action, dict) or not isinstance(action.get("metadata"), dict):
+            raise RequirementError("pip 依赖预检查计划格式无效")
+        metadata = action["metadata"]
+        name, planned_version = _package_version(metadata.get("name"), metadata.get("version"))
+        download = action.get("download_info", {})
+        if (
+            action.get("is_direct", False) is not False
+            or not isinstance(download, dict)
+            or {"dir_info", "vcs_info"}.intersection(download)
+        ):
+            raise RequirementError("pip 依赖预检查计划包含无法固定的 URL、目录或 VCS 来源；未安装")
+        if name in plan:
+            raise RequirementError("pip 依赖预检查计划包含重复包；未安装")
+        # Check the snapshot and the current lookup. A package appearing during preflight
+        # cannot borrow a previously missing name to replace its now-installed version.
+        current = installed.get(name)
+        try:
+            distribution = importlib.metadata.distribution(name)
+        except importlib.metadata.PackageNotFoundError:
+            pass
+        else:
+            _, current_version = _package_version(name, distribution.version)
+            if current is not None and current != current_version:
+                raise RequirementError("Mio 共用环境在依赖预检查期间发生变化；未安装")
+            current = current_version
+        if current is not None and current != planned_version:
+            raise RequirementError(
+                f"依赖 {name} 将更改 Mio 共用环境中已安装的版本；请先解决版本冲突，未安装"
+            )
+        requirement = direct.get(name)
+        if requirement and not requirement.specifier.contains(planned_version, prereleases=True):
+            raise RequirementError(f"依赖 {name} 的计划版本不满足扩展要求；未安装")
+        plan[name] = planned_version
+    for name, requirement in direct.items():
+        if name in plan:
+            continue
+        try:
+            distribution = importlib.metadata.distribution(name)
+            _, version = _package_version(name, distribution.version)
+        except importlib.metadata.PackageNotFoundError:
+            raise RequirementError("pip 依赖预检查计划遗漏缺失的直接依赖；未安装") from None
+        if not requirement.specifier.contains(version, prereleases=True):
+            raise RequirementError("pip 依赖预检查计划遗漏不满足版本的直接依赖；未安装")
+    return plan
 
 
 def ensure_requirements(folder: Path) -> tuple[str, ...]:
@@ -117,6 +219,7 @@ def ensure_requirements(folder: Path) -> tuple[str, ...]:
     missing = [source for source, requirement in requirements if not _satisfied(requirement)]
     if not missing:
         return ()
+    installed_versions = _installed_versions()
     command = [
         sys.executable,
         "-m",
@@ -124,13 +227,12 @@ def ensure_requirements(folder: Path) -> tuple[str, ...]:
         "install",
         "--disable-pip-version-check",
         "--no-input",
-        *missing,
     ]
     try:
         with tempfile.TemporaryDirectory(prefix="mio-extension-requirements-") as temporary:
             report_path = Path(temporary) / "pip-report.json"
             preflight = subprocess.run(
-                [*command[:4], "--dry-run", "--report", str(report_path), *command[4:]],
+                [*command, "--dry-run", "--report", str(report_path), *missing],
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
@@ -140,52 +242,25 @@ def ensure_requirements(folder: Path) -> tuple[str, ...]:
             )
             if preflight.returncode:
                 raise RequirementError(f"pip 依赖预检查失败（退出码 {preflight.returncode}）")
-            try:
-                report = json.loads(report_path.read_text(encoding="utf-8"))
-                actions = report["install"]
-                if not isinstance(actions, list):
-                    raise ValueError
-            except (OSError, UnicodeError, ValueError, KeyError, TypeError):
-                raise RequirementError("pip 依赖预检查未返回有效计划") from None
-            direct = {
-                canonicalize_name(requirement.name): requirement for _, requirement in requirements
-            }
-            for action in actions:
-                if not isinstance(action, dict):
-                    raise RequirementError("pip 依赖预检查计划格式无效")
-                metadata = action.get("metadata", {})
-                if not isinstance(metadata, dict):
-                    raise RequirementError("pip 依赖预检查计划格式无效")
-                name, version = metadata.get("name"), metadata.get("version")
-                if not isinstance(name, str) or not isinstance(version, str):
-                    raise RequirementError("pip 依赖预检查计划格式无效")
-                try:
-                    planned_version = Version(version)
-                except InvalidVersion:
-                    raise RequirementError("pip 依赖预检查计划包含无效版本") from None
-                requirement = direct.get(canonicalize_name(name))
-                try:
-                    installed = importlib.metadata.distribution(name)
-                except importlib.metadata.PackageNotFoundError:
-                    if requirement and not requirement.specifier.contains(
-                        planned_version, prereleases=True
-                    ):
-                        raise RequirementError(f"依赖 {name} 的计划版本不满足扩展要求；未安装")
-                    continue
-                try:
-                    changed = Version(installed.version) != planned_version
-                except InvalidVersion:
-                    changed = True
-                if changed:
-                    raise RequirementError(
-                        f"依赖 {name} 将更改 Mio 共用环境中已安装的版本；请先解决版本冲突，未安装"
-                    )
-                if requirement and not requirement.specifier.contains(
-                    planned_version, prereleases=True
-                ):
-                    raise RequirementError(f"依赖 {name} 的计划版本不满足扩展要求；未安装")
+            plan = _install_plan(report_path, requirements, installed_versions)
+            if _installed_versions() != installed_versions:
+                raise RequirementError("Mio 共用环境在依赖预检查期间发生变化；未安装")
+            constraints = Path(temporary) / "constraints.txt"
+            constraints.write_text(
+                "".join(
+                    f"{name}=={version}\n"
+                    for name, version in sorted({**installed_versions, **plan}.items())
+                ),
+                encoding="utf-8",
+            )
             result = subprocess.run(
-                command,
+                [
+                    *command,
+                    "--no-deps",
+                    "--constraint",
+                    str(constraints),
+                    *(f"{name}=={version}" for name, version in sorted(plan.items())),
+                ],
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
@@ -197,6 +272,16 @@ def ensure_requirements(folder: Path) -> tuple[str, ...]:
         raise RequirementError(f"安装扩展依赖失败：{exc}") from None
     if result.returncode:
         raise RequirementError(f"pip 安装扩展依赖失败（退出码 {result.returncode}）")
+    actual_versions = _installed_versions()
+    if any(actual_versions.get(name) != version for name, version in installed_versions.items()):
+        raise RequirementError("pip 安装后 Mio 共用环境版本发生变化；请检查环境")
+    for name, version in plan.items():
+        try:
+            actual = Version(importlib.metadata.distribution(name).version)
+        except (importlib.metadata.PackageNotFoundError, InvalidVersion):
+            actual = None
+        if actual != version:
+            raise RequirementError(f"pip 安装后依赖 {name} 与预检查的固定版本不符")
     remaining = [requirement.name for _, requirement in requirements if not _satisfied(requirement)]
     if remaining:
         raise RequirementError("pip 安装后仍未满足依赖：" + ", ".join(remaining))

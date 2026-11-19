@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { useThemePreferences, useThemeWallpapers, useThemes } from '../api/open';
 import {
   applyTheme,
+  effectiveThemeBackground,
   resolveTheme,
   shouldPauseThemeVideo,
   systemPrefersDark,
@@ -53,16 +54,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const activeThemeId = resolved.theme?.id ?? null;
   const preferences = useThemePreferences(activeThemeId);
   const wallpapers = useThemeWallpapers(activeThemeId);
-  const selectedWallpaper = wallpapers.data?.items.find(
-    (wallpaper) => wallpaper.id === preferences.data?.wallpaper_id,
+  const background = effectiveThemeBackground(
+    resolved.theme,
+    preferences.data,
+    wallpapers.data?.items,
   );
-  const background = selectedWallpaper
-    ? {
-        kind: selectedWallpaper.kind,
-        url: selectedWallpaper.url,
-        opacity: resolved.theme?.background?.opacity ?? 0.35,
-      }
-    : resolved.theme?.background;
   const playbackRate =
     typeof preferences.data?.playbackRate === 'number'
       ? Math.max(0.25, Math.min(4, preferences.data.playbackRate))
@@ -102,7 +98,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           paused,
           reduceMotion,
           reducedMotion,
-          allowThemeVideoWithReducedMotion,
+          background?.kind === 'video' && allowThemeVideoWithReducedMotion,
         )}
         playbackRate={playbackRate}
         loop={loop}

@@ -74,3 +74,10 @@ M0 结论：方案没有不可逆数据迁移或自动删除取舍，可以直�
 新契约：PrivateStore 统一身份、祖先路径、严格 JSON 与原子保存；私有状态文件清单贯穿 head、快照、白名单及重启恢复。已知旧来源保留并完整备份；默认卸载保留数据，显式删除校验所属树。旧壁纸容器允许同 ID 重装，注册失败保留原私有文件。
 
 实跑：`test_private_store`、`test_theme_private_store`、`test_private_data_lifecycle`、`test_backup_ui_data`、`test_backup_participants`、`test_backup_themes`、`test_extension_data`、`test_theme_preferences`，61 项通过（28.172 秒）。SDK 适配额外覆盖 `test_backup_extension_data`，其所属 6 模块共 54 项通过。首次局部验收发现测试误用 `get_doc` 的不存在返回契约，改为断言 NotFound 后集成通过；没有放宽产品校验。M1 客户端与 TS OpenAPI 产物已重新生成。最终全量门禁另行记录。
+
+### M2 已完成
+
+根因：dry-run 与安装二次解析、主题 ID 与卡片选择器耦合、媒体适配丢失字段、ZIP 两份校验及 HTTP 职责混杂。
+新契约：精确 pins + 宿主版本 constraints + `--no-deps` 固定计划，安装后校验完整依赖闭包与原宿主版本；导出选择器规范为逻辑 `self` 并由服务端绑定；包内与上传媒体共享 MediaDescriptor、显式 MIME 和有效背景选择；内存 ZIP 适配复用磁盘权威校验；路由按 transport、surfaces、private、theme_catalog 拆分，权限与操作 ID 保持不变。
+
+实跑：主题/偏好/扩展/面板/依赖及新平台契约 91 项通过（27.057 秒）；前端 4 文件 198 项通过，含 160 条来源×媒体×动效组合；tsc、Ruff lint、301 文件格式、客户端 check 通过。初跑发现旧字段集合/目录断言和探测函数 patch 路径需要随契约调整；新增媒体组合测试还捕获统一助手未传 assets 命名空间，修正后上述整批通过。未将格式头部夹具视为真实解码验证。

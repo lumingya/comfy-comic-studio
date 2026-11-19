@@ -192,3 +192,100 @@ it('allows deleting imported standalone packages but not extension-provided them
   await userEvent.click(within(packageCard).getByRole('button', { name: '删除' }));
   await waitFor(() => expect(calls.some((call) => call.url === '/api/themes/linen')).toBe(true));
 });
+
+const media = [
+  { kind: 'image', mime_type: 'image/png', animated: false },
+  { kind: 'image', mime_type: 'image/gif', animated: true },
+  { kind: 'image', mime_type: 'image/png', animated: true },
+  { kind: 'image', mime_type: 'image/webp', animated: true },
+  { kind: 'video', mime_type: 'video/mp4', animated: false },
+] as const;
+
+it.each(
+  ['package', 'private'].flatMap((source) =>
+    media.map((descriptor) => ({ source, ...descriptor })),
+  ),
+)(
+  'uses effective $source $mime_type animated=$animated for the active card controls',
+  async ({ source, kind, animated, mime_type }) => {
+    useUI.setState({
+      theme: custom.id,
+      themeOpacity: {},
+      themeBackgroundPaused: false,
+      allowThemeVideoWithReducedMotion: false,
+    });
+    const background = { kind, animated, mime_type, url: '/package-media', opacity: 0.5 };
+    const wallpaper = {
+      kind,
+      animated,
+      mime_type,
+      url: '/private-media',
+      id: 'private',
+      filename: 'wallpaper',
+    };
+    mockFetch({
+      'GET /api/themes': [{ ...custom, background: source === 'package' ? background : null }],
+      [`GET /api/themes/${custom.id}/preferences`]:
+        source === 'private' ? { wallpaper_id: wallpaper.id } : {},
+      [`GET /api/themes/${custom.id}/wallpapers`]: {
+        items: source === 'private' ? [wallpaper] : [],
+      },
+    });
+    renderWithProviders(<ThemesSection />);
+    const slider = await screen.findByRole('slider', { name: '背景透明度' });
+    expect(slider).toHaveValue(source === 'package' ? '0.5' : '0.35');
+    const card = screen.getByText(custom.name).closest('.theme-card') as HTMLElement;
+    const controls = within(card);
+    const pause = controls.queryByRole('button', { name: '暂停背景' });
+    expect(Boolean(pause)).toBe(kind === 'video' || animated);
+    if (pause) {
+      await userEvent.click(pause);
+      expect(controls.getByRole('button', { name: '播放背景' })).toBeInTheDocument();
+      expect(useUI.getState().themeBackgroundPaused).toBe(true);
+    }
+    expect(
+      Boolean(controls.queryByRole('checkbox', { name: /系统减少动态效果时仍播放视频背景/ })),
+    ).toBe(kind === 'video');
+    fireEvent.change(slider, { target: { value: '0.7' } });
+    expect(useUI.getState().themeOpacity[custom.id]).toBe(0.7);
+  },
+);
+
+it('hides video controls when a private static image overrides a package video', async () => {
+  mockFetch({
+    'GET /api/themes': [
+      {
+        ...custom,
+        background: {
+          kind: 'video',
+          animated: false,
+          mime_type: 'video/mp4',
+          url: '/video',
+          opacity: 0.4,
+        },
+      },
+    ],
+    [`GET /api/themes/${custom.id}/preferences`]: { wallpaper_id: 'private' },
+    [`GET /api/themes/${custom.id}/wallpapers`]: {
+      items: [
+        {
+          id: 'private',
+          filename: 'static.png',
+          kind: 'image',
+          animated: false,
+          mime_type: 'image/png',
+          url: '/private.png',
+        },
+      ],
+    },
+  });
+  useUI.setState({ theme: custom.id });
+  renderWithProviders(<ThemesSection />);
+  await screen.findByRole('slider', { name: '背景透明度' });
+  await waitFor(() =>
+    expect(screen.queryByRole('button', { name: '暂停背景' })).not.toBeInTheDocument(),
+  );
+  expect(
+    screen.queryByRole('checkbox', { name: /系统减少动态效果时仍播放视频背景/ }),
+  ).not.toBeInTheDocument();
+});

@@ -93,7 +93,7 @@ class ThemePreferenceTests(ApiCase):
             files={"file": ("paper wall.png", PNG, "image/png")},
         )
         item = self.ok(uploaded, 201)
-        self.assertEqual(set(item), {"id", "filename", "kind", "animated", "url"})
+        self.assertEqual(set(item), {"id", "filename", "kind", "animated", "mime_type", "url"})
         self.assertRegex(item["id"], r"^wallpaper_[a-f0-9]{32}$")
         self.assertEqual(item["filename"], "paper wall.png")
         self.assertEqual(item["kind"], "image")
@@ -186,9 +186,7 @@ class ThemePreferenceTests(ApiCase):
         from mio_server.theme_media import MAX_IMAGE_ANIMATION_PROBE, image_may_animate
 
         payload = b"GIF89a" + b"x" * (MAX_IMAGE_ANIMATION_PROBE + 1024)
-        with patch(
-            "mio_server.api.theme_preferences.image_may_animate", wraps=image_may_animate
-        ) as probe:
+        with patch("mio_server.theme_media.image_may_animate", wraps=image_may_animate) as probe:
             item = self.ok(
                 self.client.post(
                     "/api/themes/paper/wallpapers", files={"file": ("motion.gif", payload)}

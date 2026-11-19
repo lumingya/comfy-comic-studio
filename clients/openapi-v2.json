@@ -9666,6 +9666,64 @@
     "title": "VariantSet",
     "type": "object"
    },
+   "Wallpaper": {
+    "properties": {
+     "animated": {
+      "title": "Animated",
+      "type": "boolean"
+     },
+     "filename": {
+      "title": "Filename",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "kind": {
+      "enum": [
+       "image",
+       "video"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "mime_type": {
+      "title": "Mime Type",
+      "type": "string"
+     },
+     "url": {
+      "title": "Url",
+      "type": "string"
+     }
+    },
+    "required": [
+     "kind",
+     "url",
+     "animated",
+     "mime_type",
+     "id",
+     "filename"
+    ],
+    "title": "Wallpaper",
+    "type": "object"
+   },
+   "Wallpapers": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/Wallpaper"
+      },
+      "title": "Items",
+      "type": "array"
+     }
+    },
+    "required": [
+     "items"
+    ],
+    "title": "Wallpapers",
+    "type": "object"
+   },
    "WebhookPatch": {
     "properties": {
      "enabled": {
@@ -14551,6 +14609,7 @@
     ],
     "summary": "Get Extension Preferences",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -14615,6 +14674,7 @@
     ],
     "summary": "Put Extension Preferences",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -14826,6 +14886,7 @@
     ],
     "summary": "Extension Panels",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -14897,6 +14958,7 @@
     ],
     "summary": "Panel Request",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -14933,6 +14995,7 @@
     ],
     "summary": "Extension Surfaces",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -14965,6 +15028,7 @@
     ],
     "summary": "List Extensions",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -15029,6 +15093,7 @@
     ],
     "summary": "Install Extension",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -15086,6 +15151,7 @@
     ],
     "summary": "Install Extension Folder",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -15142,6 +15208,7 @@
     ],
     "summary": "Remove Extension",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -15197,6 +15264,7 @@
     ],
     "summary": "Disable Extension",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -15262,6 +15330,7 @@
     ],
     "summary": "Enable Extension",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -15320,6 +15389,7 @@
     ],
     "summary": "Get Extension Settings",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -15389,6 +15459,7 @@
     ],
     "summary": "Put Extension Settings",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -15449,6 +15520,7 @@
     ],
     "summary": "Extension Workspace",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -18576,6 +18648,7 @@
     ],
     "summary": "List Themes",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -18629,6 +18702,7 @@
     ],
     "summary": "Import Theme",
     "tags": [
+     "extensions",
      "extensions"
     ],
     "x-mio-arguments": [
@@ -19036,9 +19110,7 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
-         "title": "Response List Theme Wallpapers",
-         "type": "object"
+         "$ref": "#/components/schemas/Wallpapers"
         }
        }
       },
@@ -19107,9 +19179,7 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
-         "title": "Response Upload Theme Wallpaper",
-         "type": "object"
+         "$ref": "#/components/schemas/Wallpaper"
         }
        }
       },

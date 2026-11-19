@@ -13,6 +13,7 @@ describe('theme image motion', () => {
           url: '/animated.gif',
           opacity: 0.4,
           animated: true,
+          mime_type: 'image/gif',
         }}
         opacity={0.4}
         paused
@@ -27,6 +28,7 @@ describe('theme image motion', () => {
           url: '/static.png',
           opacity: 0.4,
           animated: false,
+          mime_type: 'image/png',
         }}
         opacity={0.4}
         paused
@@ -44,7 +46,13 @@ describe('theme image motion', () => {
     vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
     const { unmount } = render(
       <ThemeBackdrop
-        background={{ kind: 'video', url: '/wallpaper.mp4', opacity: 0.4 }}
+        background={{
+          kind: 'video',
+          url: '/wallpaper.mp4',
+          opacity: 0.4,
+          animated: false,
+          mime_type: 'video/mp4',
+        }}
         opacity={0.4}
         paused={false}
       />,
@@ -74,7 +82,13 @@ describe('theme image motion', () => {
     vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
     const { unmount } = render(
       <ThemeBackdrop
-        background={{ kind: 'video', url: '/wallpaper.mp4', opacity: 0.4 }}
+        background={{
+          kind: 'video',
+          url: '/wallpaper.mp4',
+          opacity: 0.4,
+          animated: false,
+          mime_type: 'video/mp4',
+        }}
         opacity={0.4}
         paused={false}
       />,
@@ -92,7 +106,13 @@ describe('theme image motion', () => {
     vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
     const { unmount } = render(
       <ThemeBackdrop
-        background={{ kind: 'video', url: '/wallpaper.mp4', opacity: 0.4 }}
+        background={{
+          kind: 'video',
+          url: '/wallpaper.mp4',
+          opacity: 0.4,
+          animated: false,
+          mime_type: 'video/mp4',
+        }}
         opacity={0.4}
         paused
       />,
@@ -108,7 +128,13 @@ describe('theme image motion', () => {
     vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {});
     const view = render(
       <ThemeBackdrop
-        background={{ kind: 'video', url: '/local-wallpaper.mp4', opacity: 0.4 }}
+        background={{
+          kind: 'video',
+          url: '/local-wallpaper.mp4',
+          opacity: 0.4,
+          animated: false,
+          mime_type: 'video/mp4',
+        }}
         opacity={0.4}
         paused={false}
         playbackRate={0.5}
@@ -119,7 +145,13 @@ describe('theme image motion', () => {
     expect(video.playbackRate).toBe(0.5);
     view.rerender(
       <ThemeBackdrop
-        background={{ kind: 'video', url: '/local-wallpaper.mp4', opacity: 0.4 }}
+        background={{
+          kind: 'video',
+          url: '/local-wallpaper.mp4',
+          opacity: 0.4,
+          animated: false,
+          mime_type: 'video/mp4',
+        }}
         opacity={0.4}
         paused={false}
         playbackRate={2}

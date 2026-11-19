@@ -1,6 +1,14 @@
 /** P5 surfaces: themes, extensions, cloud channels, API tokens, webhooks, updates, album. */
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { api, data, raw } from './client';
+
+/** The same media contract is used by package backgrounds and private uploads. */
+export interface MediaDescriptor {
+  kind: 'image' | 'video';
+  url: string;
+  animated: boolean;
+  mime_type: string;
+}
 
 export interface ThemeInfo {
   id: string;
@@ -9,7 +17,7 @@ export interface ThemeInfo {
   author: string;
   source: string;
   tokens: Record<string, string>;
-  background?: { kind: 'image' | 'video'; url: string; opacity: number; animated?: boolean } | null;
+  background?: (MediaDescriptor & { opacity: number }) | null;
   style_url?: string | null;
   script_url?: string | null;
   script_digest?: string | null;
@@ -31,11 +39,9 @@ export interface ThemeSettingField {
   options_source?: 'wallpapers';
 }
 
-export interface ThemeWallpaper {
+export interface ThemeWallpaper extends MediaDescriptor {
   id: string;
   filename: string;
-  kind: 'image' | 'video';
-  url: string;
 }
 
 export interface ThemeWallpapers {

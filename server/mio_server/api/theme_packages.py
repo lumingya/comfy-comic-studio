@@ -19,6 +19,7 @@ from ..theme_media import (
     _skip_string,
     _strip_comments,
     asset_parts,
+    media_type,
     validate_stylesheet,
 )
 from ..theme_packages import (
@@ -29,6 +30,7 @@ from ..theme_packages import (
     STYLE,
     _folder_files,
     _read_folder,
+    _rebase_card_stylesheet,
     _regular_path,
     package_theme_to_file,
 )
@@ -265,6 +267,7 @@ def theme_asset(ctx: Ctx, theme_id: str, path: str) -> FileResponse:
     filename = _theme_file(ctx, theme_id, f"assets/{path}")
     return FileResponse(
         filename,
+        media_type=media_type(path),
         headers={
             "Cache-Control": "no-cache",
             "X-Content-Type-Options": "nosniff",
@@ -412,7 +415,9 @@ def _validated_stylesheet(ctx, theme_id: str) -> tuple[Path, str]:
         validate_stylesheet(source, assets)
     except (OSError, UnicodeError, ValueError) as exc:
         raise NotFound("主题样式无效") from exc
-    return filename, source
+    return filename, _rebase_card_stylesheet(source.encode("utf-8"), "self", theme_id).decode(
+        "utf-8"
+    )
 
 
 def _card_scoped_rules(source: str, theme_id: str) -> str:
@@ -501,10 +506,10 @@ def _card_scoped_rules(source: str, theme_id: str) -> str:
 
 
 @router.get("/themes/{theme_id}/style", include_in_schema=False)
-def theme_style(ctx: Ctx, theme_id: str) -> FileResponse:
-    filename, _ = _validated_stylesheet(ctx, theme_id)
-    return FileResponse(
-        filename,
+def theme_style(ctx: Ctx, theme_id: str) -> Response:
+    _, source = _validated_stylesheet(ctx, theme_id)
+    return Response(
+        source,
         media_type="text/css; charset=utf-8",
         headers={
             "Cache-Control": "no-cache",

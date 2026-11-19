@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { ThemeInfo } from '../api/open';
 import {
   applyTheme,
+  effectiveThemeBackground,
   migrateChoice,
   resolveTheme,
   shouldPauseThemeVideo,
@@ -54,7 +55,13 @@ describe('theme', () => {
     expect(root.dataset.themeBackground).toBe('false');
     applyTheme(root, 'dark', {
       ...themes[0],
-      background: { kind: 'video', url: '/video.mp4', opacity: 0.4 },
+      background: {
+        kind: 'video',
+        url: '/video.mp4',
+        opacity: 0.4,
+        animated: false,
+        mime_type: 'video/mp4',
+      },
     });
     expect(root.dataset.themeBackground).toBe('true');
     applyTheme(root, 'dark', themes[0], false);
@@ -95,5 +102,39 @@ describe('theme', () => {
     expect(toggled('dark', recent)).toBe('ext-cream');
     expect(toggled('light', recent)).toBe('ext-midnight');
     expect(toggled('light', { light: 'ext-cream' })).toBe('ink');
+  });
+
+  it('preserves a complete media descriptor, with a package fallback for missing private media', () => {
+    const background = {
+      kind: 'image' as const,
+      url: '/package.png',
+      opacity: 0.6,
+      animated: false,
+      mime_type: 'image/png',
+    };
+    const selected = { ...themes[0], background };
+    const wallpaper = {
+      id: 'private',
+      filename: 'private.webp',
+      kind: 'image' as const,
+      url: '/private.webp',
+      animated: true,
+      mime_type: 'image/webp',
+    };
+    expect(effectiveThemeBackground(selected, { wallpaper_id: 'missing' }, [wallpaper])).toBe(
+      background,
+    );
+    expect(effectiveThemeBackground(selected, { wallpaper_id: wallpaper.id }, [wallpaper])).toEqual(
+      {
+        ...wallpaper,
+        opacity: 0.6,
+      },
+    );
+    expect(
+      effectiveThemeBackground(themes[0], { wallpaper_id: wallpaper.id }, [wallpaper]),
+    ).toEqual({
+      ...wallpaper,
+      opacity: 0.35,
+    });
   });
 });

@@ -11,6 +11,7 @@ from pathlib import Path, PurePosixPath
 
 from fastapi import Request
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 from starlette.datastructures import UploadFile
 
@@ -28,9 +29,10 @@ from ..private_store import (
 )
 from ..storage import NotFound
 from ..theme_media import (
-    MAX_IMAGE_ANIMATION_PROBE,
     MEDIA_FORMATS,
-    image_may_animate,
+    MediaDescriptor,
+    describe_media,
+    media_type,
     supports_background,
 )
 from .deps import Ctx
@@ -41,17 +43,15 @@ router = APIRouter(tags=["themes"])
 
 MAX_PREFERENCES_BYTES = 1024 * 1024
 MAX_MULTIPART_OVERHEAD = 1024 * 1024
-MIME_TYPES = {
-    "jpg": "image/jpeg",
-    "jpeg": "image/jpeg",
-    "png": "image/png",
-    "gif": "image/gif",
-    "webp": "image/webp",
-    "avif": "image/avif",
-    "mp4": "video/mp4",
-    "webm": "video/webm",
-    "ogv": "video/ogg",
-}
+
+
+class Wallpaper(MediaDescriptor):
+    id: str
+    filename: str
+
+
+class Wallpapers(BaseModel):
+    items: list[Wallpaper]
 
 
 def _registered_theme(ctx, theme_id: str) -> None:
@@ -205,18 +205,12 @@ def _find_record(data_dir: Path, theme_id: str, wallpaper_id: str) -> tuple[dict
 
 
 def _wallpaper_item(record: dict, path: Path, theme_id: str) -> dict:
-    animated = False
-    if record["kind"] == "image":
-        with path.open("rb") as stream:
-            animated = image_may_animate(
-                f"assets/wallpaper.{record['suffix']}", stream.read(MAX_IMAGE_ANIMATION_PROBE)
-            )
     return {
+        **describe_media(
+            path, record["kind"], f"/api/themes/{theme_id}/wallpapers/{record['id']}/file"
+        ),
         "id": record["id"],
         "filename": record["filename"],
-        "kind": record["kind"],
-        "animated": animated,
-        "url": f"/api/themes/{theme_id}/wallpapers/{record['id']}/file",
     }
 
 
@@ -269,7 +263,7 @@ def _list_wallpapers(data_dir: Path, theme_id: str) -> list[dict]:
     return [items[identifier] for identifier in sorted(items)]
 
 
-@router.get("/themes/{theme_id}/wallpapers")
+@router.get("/themes/{theme_id}/wallpapers", response_model=Wallpapers)
 def list_theme_wallpapers(ctx: Ctx, theme_id: str) -> dict:
     _registered_theme(ctx, theme_id)
     return {"items": _list_wallpapers(ctx.data_dir, theme_id)}
@@ -278,6 +272,7 @@ def list_theme_wallpapers(ctx: Ctx, theme_id: str) -> dict:
 @router.post(
     "/themes/{theme_id}/wallpapers",
     status_code=201,
+    response_model=Wallpaper,
     openapi_extra={
         "requestBody": {
             "required": True,
@@ -330,7 +325,7 @@ def serve_theme_wallpaper(ctx: Ctx, theme_id: str, wallpaper_id: str) -> FileRes
     record, path, _metadata = _find_record(ctx.data_dir, theme_id, wallpaper_id)
     return FileResponse(
         path,
-        media_type=MIME_TYPES[record["suffix"]],
+        media_type=media_type(path.name),
         headers={
             "Cache-Control": "private, no-cache, no-store",
             "Content-Disposition": f'inline; filename="{record["id"]}.{record["suffix"]}"',

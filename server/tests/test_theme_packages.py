@@ -149,6 +149,58 @@ class ThemePackageTests(ApiCase):
         self.assertFalse(stored.exists())
         self.assertNotIn(root, {item["id"] for item in self.ok(self.client.get("/api/themes"))})
 
+    def test_bundled_card_styles_survive_export_import_and_reexport(self):
+        package = self.ok(self.client.get("/api/themes/theme-wallpaper/package"))
+        installed = self.ok(self.client.post("/api/themes/package", content=package.content), 201)
+        theme_id = installed["id"]
+        self.assertNotEqual(theme_id, "theme-wallpaper")
+        card = self.ok(self.client.get(f"/api/themes/{theme_id}/card-style"))
+        self.assertIn(f'.theme-card[data-theme-id="{theme_id}"]', card.text)
+        self.assertNotIn('data-theme-id="theme-wallpaper"', card.text)
+        full = self.ok(self.client.get(f"/api/themes/{theme_id}/style"))
+        self.assertIn(f'.theme-card[data-theme-id="{theme_id}"]', full.text)
+        exported = self.ok(self.client.get(f"/api/themes/{theme_id}/package"))
+        with zipfile.ZipFile(io.BytesIO(exported.content)) as archive_file:
+            manifest = json.loads(archive_file.read(f"{theme_id}/mio-theme.json"))
+        self.assertEqual(manifest["id"], theme_id)
+
+    def test_export_rebinds_only_card_selectors_in_both_packaging_paths(self):
+        theme = parse_theme({**THEME, "id": "card-theme", "style_file": "theme.css"})
+        scope = '.theme-card[data-theme-id="card-theme"]'
+        declaration = (
+            f"content: '{scope}'; --card-tokens: {{ {scope} {{ color: blue; }} }};"
+            ' background-image: url("assets/card-theme.png");'
+        )
+        stylesheet = (
+            f"/* {scope} */\n{scope} {{ {declaration} }}\n"
+            f"@media (min-width: 1px) {{ {scope}:hover {{ color: red; }} }}\n"
+            f"body {{ & {scope} {{ color: green; }} }}"
+        ).encode()
+        image = b"\x89PNG\r\n\x1a\n" + b"card-theme-image"
+        resources = {"theme.css": stylesheet, "assets/card-theme.png": image}
+        package_id, payload = package_theme(theme, resources)
+        rebound = '.theme-card[data-theme-id="self"]'
+        expected = (
+            f"/* {scope} */\n{rebound} {{ {declaration} }}\n"
+            f"@media (min-width: 1px) {{ {rebound}:hover {{ color: red; }} }}\n"
+            f"body {{ & {rebound} {{ color: green; }} }}"
+        ).encode()
+        with zipfile.ZipFile(io.BytesIO(payload)) as archive_file:
+            self.assertEqual(archive_file.read(f"{package_id}/theme.css"), expected)
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            style_path = folder / "theme.css"
+            style_path.write_bytes(stylesheet)
+            image_path = folder / "card-theme.png"
+            image_path.write_bytes(image)
+            package_path = folder / "theme.zip"
+            streamed_id = package_theme_to_file(
+                theme, {"theme.css": style_path, "assets/card-theme.png": image_path}, package_path
+            )
+            self.assertEqual(streamed_id, package_id)
+            with zipfile.ZipFile(package_path) as archive_file:
+                self.assertEqual(archive_file.read(f"{package_id}/theme.css"), expected)
+
     def test_folder_import_is_independent_and_api_data_is_selectable(self):
         uploaded = theme_files()
         files = [
@@ -191,6 +243,8 @@ class ThemePackageTests(ApiCase):
                 "kind": "video",
                 "url": f"/api/themes/{theme_id}/assets/wallpaper.mp4",
                 "opacity": 0.42,
+                "animated": False,
+                "mime_type": "video/mp4",
             },
         )
         self.assertEqual(entry["script_url"], f"/api/themes/{theme_id}/script")
