@@ -117,3 +117,18 @@ M0 结论：方案没有不可逆数据迁移或自动删除取舍，可以直�
 | 真实浏览器专项 | 系统 Chrome + 既有 Python Playwright，临时工作区/回环服务执行；成功项与已接受自导航边界见上，未安装浏览器 |
 
 额外边界：没有真实模型、GPU、云端或收费服务调用，没有真实 pip 安装测试，没有签名发布或跨浏览器/全编解码认证。本机数据不是可直接发行的干净默认数据。工具说明、诊断开启方式和一键浏览器命令见[平台 CTK](EXTENSION_PLATFORM_CTK.md)。M1–M4 的代码、生成物与受影响验证已通过，可进入仅设计的 M5。
+
+浏览器脚本在 Windows 上由父进程持有临时工作区，再结束并等待子进程后清理，避免 TerminateProcess 跳过子进程 finally。修正后真实专项重跑通过，父进程所属临时树残留为 0；此前本轮创建的 5 份探测树经专用 fixture 身份校验后清理，未匹配的路径不删除。
+
+### 八项发现的交付映射
+
+| 发现 | 根因 → 新契约 | 回归路径 | 实跑证据 |
+| --- | --- | --- | --- |
+| TB-1 | 内置主题私有壁纸目录被当成缺损包 → 包/私有状态物理分离，旧容器只按明确形态识别 | `test_backup_ui_data.py` 四来源上传→head→备份→真实重启 | M1 集成 61 项通过；真实扩展贡献夹具强化后单项通过 |
+| TB-2 | 偏好和媒体未接备份事实源 → 同一受验文件清单驱动摘要、快照、归档校验与重启恢复 | `test_backup_ui_data.py` 篡改、过期计划、保护备份、旧来源；`test_theme_private_store.py` | M1 集成通过，后端全量 pytest 通过 |
+| EX-1 | 单数偏好目录绕开 SDK/参与者 → 复数所有者目录写入，旧路径只读回退且完整保留/备份 | `test_private_store.py`、`test_private_data_lifecycle.py`、`test_backup_ui_data.py` | M1 集成与 M3 后端 71 项通过 |
+| EX-2 | 基础传递检查放在 extras 循环中，二次 pip 解析不固定 → 完整 closure/marker/cycle，精确计划和宿主约束，安装后验收 | `test_extension_dependencies.py` 元数据与子进程矩阵 | 22 项及 M2 后端 91 项通过，无真实 pip |
+| TB-3 | 内容身份改变而选择器绑定旧 ID → 逻辑 self，服务端按实际 ID 绑定；仅改选择器属性值并保留注释/声明 | `test_theme_packages.py`、`test_theme_platform_contract.py` 往返、注释、scope/supports | M2 91 项、后续平台契约和受影响 24 项通过 |
+| F-FE-1 | React 回调变化撤销会话订阅 → iframe 文档/activation 所有权、稳定引用、active 挂起及失效会话回收 | `host.test.tsx` 同一 iframe 长会话、路由、目录刷新、派发中卸载 | M3 host 8 项、协议接线 22 项、前端全量 782 项通过；真实穿透/标题栏也通过 |
+| F-FE-2 | 无条件整对象并发写及旧响应回写 → CAS 子树、资源队列、序号/epoch、脏草稿与失败权威对账 | `test_preference_concurrency.py`、`preferenceWrites.test.tsx`、`ThemeSettingsPanel.test.tsx` | 后端 13 项并发矩阵、前端队列 10/面板 7 项及完整 pytest/Vitest 通过 |
+| F-FE-3 | 用户媒体适配丢失 animated → 同源 MediaDescriptor/MIME、Provider 与卡片共享有效背景 | `test_theme_platform_contract.py`、`useTheme.test.tsx`、`ThemesSection.test.tsx` | M2 前端 198 项（含 160 组合），全量 782 项，受影响 186 项通过；不冒充真实解码 |

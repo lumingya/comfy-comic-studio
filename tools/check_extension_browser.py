@@ -17,12 +17,13 @@ import tempfile
 import time
 import urllib.request
 import zipfile
+from contextlib import nullcontext
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def serve(port: int) -> None:
+def serve(port: int, data_dir: Path) -> None:
     sys.path.insert(0, str(ROOT / "server"))
     import uvicorn
     from mio_server.api import create_app
@@ -54,7 +55,8 @@ def serve(port: int) -> None:
                 archive.writestr(name, content)
         ctx.theme_packages.install_package(buffer.getvalue())
 
-    with tempfile.TemporaryDirectory(prefix="mio-browser-workspace-") as temporary:
+    # The parent owns cleanup: Windows TerminateProcess does not run child finally blocks.
+    with nullcontext(data_dir) as temporary:
         ctx = AppContext.create(temporary, autostart=False, seed_instance=False)
         try:
             folder = ctx.extensions.root / "browser-pet"
@@ -158,9 +160,19 @@ def run(browser_path: str | None) -> dict:
         with urllib.request.urlopen(origin + "/__browser_state", timeout=2) as response:
             return json.load(response)
 
-    with tempfile.TemporaryFile() as log:
+    with (
+        tempfile.TemporaryDirectory(prefix="mio-browser-check-") as temporary,
+        tempfile.TemporaryFile() as log,
+    ):
         process = subprocess.Popen(
-            [sys.executable, str(Path(__file__).resolve()), "--serve", str(port)],
+            [
+                sys.executable,
+                str(Path(__file__).resolve()),
+                "--serve",
+                str(port),
+                "--data",
+                str(Path(temporary) / "workspace"),
+            ],
             cwd=ROOT,
             stdout=log,
             stderr=log,
@@ -305,10 +317,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--browser", help="Existing Chrome/Edge/Chromium executable")
     parser.add_argument("--serve", type=int, help=argparse.SUPPRESS)
+    parser.add_argument("--data", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--require-navigation-blocked", action="store_true")
     args = parser.parse_args()
     if args.serve:
-        serve(args.serve)
+        if args.data is None:
+            parser.error("the internal fixture server requires a parent-owned --data path")
+        serve(args.serve, args.data)
         return 0
     result = run(args.browser)
     print(json.dumps(result, ensure_ascii=False, indent=2))
