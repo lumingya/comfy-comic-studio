@@ -1,6 +1,6 @@
 # 创作与扩展能力验收索引
 
-本轮围绕工作流接入、可复用创作套装、长篇整理、恢复备份及全面开放 API 展开。主界面仍以手工编辑和明确开始生成为默认；专业工具通过可选扩展和 API 提供。不重复完整有图体验验收，不增加新的生图服务商。
+本索引将工作流接入、可复用创作套装、长篇整理、恢复备份和扩展操作连接到实际入口与可重放的回归测试。主界面以手工编辑和明确开始生成为默认；专业工具通过可选扩展和 API 提供。各版本的实跑结果与未覆盖范围须查阅对应验收记录，不能将测试入口清单当作真实服务认证。
 
 ## 用户操作与可重放证据
 
@@ -12,17 +12,18 @@
 | 长篇作品整理 | 跨话复制 / 移动分镜、整话复制 / 重排、精确变量查找 / 预览 / 应用；保留相对位置、留白与引用，冲突不部分写入 | `test_longform_panels.py`、`test_longform_variables.py`、`test_longform_api.py`；`longform.test.tsx` |
 | 撤回作品编辑 | 命名创作存档、差异预览、恢复前自动保护、明确删除；版本单调递增，相关活动或待交付任务阻止破坏性恢复 | `test_checkpoints.py`、`test_operation_guard.py`；`CheckpointDialog.test.tsx` |
 | 已收到结果不会重复应用 | 先持久化结果交付，作品修改与回执同事务；重启幂等补写，未知执行器不冒充可重放 | `test_result_delivery.py` |
-| 整个工作区恢复 | 两数据库、素材及纯 JSON 扩展设置；包校验、预检、暂存、明确安排、启动时安装与失败恢复；开放 API 与停机 CLI 共用规则 | `test_backup.py`、`test_constructor_cleanup.py`、`test_backup_extension_data.py`；`BackupsSection.test.tsx` |
+| 整个工作区恢复 | 两数据库、素材、用户安装的独立主题包、主题私有偏好与壁纸、扩展设置/偏好及已审阅参与者的数据；统一内容头、归档校验、暂存、明确安排和重启恢复；开放 API 与停机 CLI 共用规则 | `test_backup.py`、`test_constructor_cleanup.py`、`test_backup_extension_data.py`、`test_backup_themes.py`、`test_backup_ui_data.py`；`BackupsSection.test.tsx` |
 | 备份记录可管理 | 本机保留记录按需展开、分页、下载、明确清理；安装中与启动保护记录不可删除，删除计划不顺带删除保护备份 | `test_backup_catalog.py`；`BackupHistory.test.tsx` |
+| 主题与扩展窗口偏好一致写入 | 强 ETag/CAS 与对象子树更新保留兄弟字段；旧响应不能覆盖新意图；私有偏好参与备份与重启恢复 | `test_preference_concurrency.py`、`test_backup_ui_data.py`；`preferenceWrites.test.tsx`、`host.test.tsx` |
 
-上表测试源码位于 `server/tests/` 与 `web/src/` 对应模块；实际执行数量和阶段结果记录在[路线图](ROADMAP.md)。单测中模拟服务请求，不能据此声称所有 ComfyUI 插件已通过真实服务认证。依赖浏览器前端状态的插件需要具体适配；已实现的状态快照与恢复边界见[客户端说明](../clients/README.md)。
+上表测试源码位于 `server/tests/` 与 `web/src/` 对应模块；历史执行数量和阶段结果见[路线图](ROADMAP.md)，扩展/主题平台加固的实跑结果见[架构详解](../架构详解.md#83-实际执行记录与边界)。单测中模拟服务请求，不能据此声称所有 ComfyUI 插件已通过真实服务认证。依赖浏览器前端状态的插件需要具体适配；已实现的状态快照与恢复边界见[客户端说明](../clients/README.md)。
 
 ## 扩展如何真正改变行为
 
 - **核心 HTTP 操作**：本机界面与 `/api/v2` 使用同一业务路由和操作 ID。`GET /api/v2/operations` 发现请求模板、权限、参数名与包装来源；`mio.operation` 可组合或替换操作实现，保留认证及输入 / 输出类型校验。包装失败不会自动重试副作用。
 - **任务执行器**：`mio.job_executor` 与 `mio.contribute('job_executor', …)` 接入任务引擎。任务保存 `kind/source/digest`；执行、结果回调、核对与恢复使用原身份。缺失身份时保留待处理状态，不自动换成另一实现。管理员只能为从未尝试、无结果和端点租约的任务明确重绑。
 - **扩展自身设置**：SDK 和 `GET/PUT /api/v2/extensions/{id}/settings` 共用有大小限制的 JSON 原子保存；无需启用代码即可配置。设置与数据库一起参与备份版本检查，明确包含凭据的选项适用于这些数据。
-- **独立包与运行数据**：扩展在 `extensions/<id>/`、主题在 `themes/<id>/`、扩展数据在 `extensions_data/<id>/`；主题导入不启用扩展。卸载默认保留数据，选择清理才删除所属目录；停用钩子之后再次校验删除路径。回归见 `test_extension_data.py`、`test_theme_packages.py`、`test_backup_themes.py` 和 `ExtensionsSection.test.tsx`。
+- **独立包与运行数据**：扩展在 `extensions/<id>/`、主题在 `themes/<id>/`；扩展私有数据在 `extensions_data/<id>/`，主题私有偏好与壁纸在 `theme_data/<id>/`。主题导入不启用扩展；卸载默认保留私有数据，选择清理才删除所属目录，扩展停用钩子之后再次校验删除路径。已知旧路径作为受验来源保留、回退并纳入完整工作区备份；公开主题 ZIP 排除私有偏好和上传壁纸。回归见 `test_extension_data.py`、`test_private_data_lifecycle.py`、`test_theme_packages.py`、`test_backup_ui_data.py` 和 `ExtensionsSection.test.tsx`。
 - **扩展路由**：同一扩展可提供有类型的本机与 v2 接口，明确声明 read / write / render / admin；启用绑定所审阅摘要，停用或重新加载后旧路由失效。
 - **可选面板**：清单声明允许请求的路由和权限，沙箱面板通过有来源及会话校验的 JSON 桥调用原 API；主界面不出现默认专业工具。桥不向面板交出令牌或任意联网能力。
 - **具体处理阶段**：工作流绑定规则、云端适配器、提示词与节点图钩子、导出器、排版、主题、阅读模板、拟声字与切片预设都有实际调用点。其余注册表名称在 SDK 中明确标为能力目录，不声称登记即可改变执行。
@@ -33,8 +34,8 @@
 
 ## API 与边界
 
-OpenAPI、前端类型和两个 Python 客户端随接口生成并校验。当前生成快照包含 174 个唯一核心操作 ID；`test_open_management.py` 和 `test_operation_extensions.py` 核对所有有文档的核心本机 HTTP 操作都存在同业务 ID、受令牌保护的 v2 对应操作，独立审查还核对实际权限依赖。管理操作仍要求 admin，消耗模型或恢复任务结果的操作要求 render，read / write 不自动包含其他作用域。
+OpenAPI、前端类型、Python 客户端与 Bridge 运行常量随接口及协议声明生成并校验，具体流程见[平台 CTK](EXTENSION_PLATFORM_CTK.md)。核心操作目录以运行时 `GET /api/v2/operations` 和 OpenAPI 为准；`test_open_management.py` 和 `test_operation_extensions.py` 核对所有有文档的核心本机 HTTP 操作都存在同业务 ID、受令牌保护的 v2 对应操作。管理操作仍要求 admin，消耗模型或恢复任务结果的操作要求 render，read / write 不自动包含其他作用域。
 
-静态网页、扩展文件和 WebSocket 不属于 HTTP 操作包装器；任务内部回调也不绕行 HTTP。它们使用各自的文件、事件或执行器契约。UI 的临时选中状态、鼠标拖拽和窗口状态不是作品数据 API；持久化创作和管理操作可从 API 完成。扩展新增的任意能力应提供自己的有类型路由，原核心请求类型不会被无限扩展为无校验 JSON。
+静态网页、扩展文件和 WebSocket 不属于 HTTP 操作包装器；任务内部回调也不绕行 HTTP。它们使用各自的文件、事件或执行器契约。UI 的临时选择和一次拖拽过程仍是界面暂态；扩展浮窗的位置、尺寸等持久偏好通过 `GET/PUT/PATCH /api/v2/ext/{id}/preferences` 管理，主题偏好使用 `/api/v2/themes/{id}/preferences`，均与作品数据分开并随完整工作区备份恢复。浮窗只更新 `floating_surfaces.<surface_id>` 子树，不能覆盖扩展其他字段或兄弟 surface。扩展新增的业务能力应提供自己的有类型路由，原核心请求类型不会被无限扩展为无校验 JSON。
 
 工作区备份的体积、版本、凭据和断电边界见[备份与恢复](WORKSPACE_BACKUPS.md)。作品存档不代替图片字节备份。生图服务已执行但结果尚未到达本机的窗口仍需要核对上游，不能保证任意服务请求恰好执行一次。
