@@ -7,7 +7,18 @@ from pydantic import BaseModel, Field
 
 from .. import workshop as W
 from ..assembly import AssemblyPreview
-from ..models import Episode, GenerationOptions, Series, WorkshopQueue
+from ..models import (
+    Episode,
+    GenerationOptions,
+    Panel,
+    Preset,
+    PresetBinding,
+    PresetEntry,
+    PresetGroup,
+    Series,
+    WorkshopQueue,
+)
+from ..storage import Conflict, NotFound
 from .deps import Ctx
 from .operations import Router as APIRouter
 
@@ -40,6 +51,129 @@ class CloneRequest(BaseModel):
 class Assembled(BaseModel):
     series: Series
     episode: Episode
+
+
+class StoryboardCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=200)
+    synopsis: str = Field(default="", max_length=8000)
+    base_prompt: str = Field(default="", max_length=8000)
+    panels: list[Panel] = Field(default_factory=list, max_length=2000)
+
+
+class StoryboardPatch(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    synopsis: str | None = Field(default=None, max_length=8000)
+    base_prompt: str | None = Field(default=None, max_length=8000)
+    panels: list[Panel] | None = Field(default=None, max_length=2000)
+
+
+class PresetPatch(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    groups: list[PresetGroup] | None = Field(default=None, max_length=128)
+    entries: list[PresetEntry] | None = Field(default=None, max_length=2000)
+    bindings: list[PresetBinding] | None = Field(default=None, max_length=2000)
+
+
+def _workshop(ctx: Ctx) -> Series:
+    return W.ensure_workshop(ctx.store, getattr(ctx, "legacy_root", None))
+
+
+def _storyboard(ctx: Ctx, storyboard_id: str) -> Episode:
+    workshop = _workshop(ctx)
+    episode = ctx.store.get_episode(storyboard_id)
+    if episode.series_id != workshop.id:
+        raise NotFound(f"workshop storyboard not found: {storyboard_id}")
+    return episode
+
+
+@router.get("/workshop/storyboards")
+def list_storyboards(ctx: Ctx) -> list[Episode]:
+    workshop = _workshop(ctx)
+    return ctx.store.list_episodes(workshop.id)
+
+
+@router.get("/workshop/storyboards/{storyboard_id}", response_model=Episode)
+def get_storyboard(ctx: Ctx, storyboard_id: str) -> Episode:
+    return _storyboard(ctx, storyboard_id)
+
+
+@router.post("/workshop/storyboards", response_model=Episode, status_code=status.HTTP_201_CREATED)
+def create_storyboard(ctx: Ctx, body: StoryboardCreate) -> Episode:
+    workshop = _workshop(ctx)
+    panels = [panel.model_copy(update={"order": index}) for index, panel in enumerate(body.panels)]
+    with ctx.store.lock:
+        return ctx.store.create_episode(
+            Episode(
+                series_id=workshop.id,
+                title=body.title,
+                order=ctx.store.next_episode_order(workshop.id),
+                synopsis=body.synopsis,
+                base_prompt=body.base_prompt,
+                panels=panels,
+            )
+        )
+
+
+@router.patch("/workshop/storyboards/{storyboard_id}", response_model=Episode)
+def patch_storyboard(ctx: Ctx, storyboard_id: str, body: StoryboardPatch) -> Episode:
+    episode = _storyboard(ctx, storyboard_id)
+    changes = body.model_dump(exclude_unset=True)
+    if "panels" in changes and changes["panels"] is not None:
+        changes["panels"] = [
+            panel.model_copy(update={"order": index})
+            for index, panel in enumerate(body.panels or [])
+        ]
+        remaining = {panel.id for panel in changes["panels"]}
+        if any(take.panel_id not in remaining for take in episode.takes):
+            raise Conflict("不能移除已有出图结果的分幕")
+    updated = Episode.model_validate({**episode.model_dump(), **changes})
+    return ctx.store.save_episode(updated, expected_revision=episode.revision)
+
+
+@router.get("/workshop/presets", response_model=list[Preset])
+def list_presets(ctx: Ctx) -> list[Preset]:
+    return _workshop(ctx).presets
+
+
+@router.get("/workshop/presets/{preset_id}", response_model=Preset)
+def get_preset(ctx: Ctx, preset_id: str) -> Preset:
+    preset = next((item for item in _workshop(ctx).presets if item.id == preset_id), None)
+    if preset is None:
+        raise NotFound(f"workshop preset not found: {preset_id}")
+    return preset
+
+
+@router.post("/workshop/presets", response_model=Preset, status_code=status.HTTP_201_CREATED)
+def create_preset(ctx: Ctx, body: Preset) -> Preset:
+    workshop = _workshop(ctx)
+
+    def add(series):
+        if any(item.id == body.id for item in series.presets):
+            raise Conflict("预设 ID 已存在")
+        series.presets.append(body)
+
+    ctx.store.update_series(workshop.id, add)
+    return body
+
+
+@router.patch("/workshop/presets/{preset_id}", response_model=Preset)
+def patch_preset(ctx: Ctx, preset_id: str, body: PresetPatch) -> Preset:
+    workshop = _workshop(ctx)
+    current = next((item for item in workshop.presets if item.id == preset_id), None)
+    if current is None:
+        raise NotFound(f"workshop preset not found: {preset_id}")
+    changes = body.model_dump(exclude_unset=True)
+    updated = Preset.model_validate({**current.model_dump(), **changes, "id": preset_id})
+
+    def replace(series):
+        for index, item in enumerate(series.presets):
+            if item.id == preset_id:
+                series.presets[index] = updated
+                return
+        raise Conflict("预设已被同时删除，请刷新后重试")
+
+    ctx.store.update_series(workshop.id, replace)
+    return updated
 
 
 @router.get("/workshop", response_model=Series)

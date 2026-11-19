@@ -228,8 +228,14 @@ def compile_workflow(
     var_cfg = config.variants.get(variant or "", {}) if variant else {}
     graph = copy.deepcopy(doc.graph)
     warnings: list[str] = []
-    if slot_overrides and (slot_overrides.get("model") or slot_overrides.get("loras")):
-        applied = slots.apply(graph, doc.slots or {}, slot_overrides)
+    merged_slot_overrides = slots.merge_overrides(config.slot_overrides, slot_overrides)
+    if merged_slot_overrides:
+        plan = (
+            slots.ensure_plan(graph, doc.slots)
+            if merged_slot_overrides.get("groups")
+            else doc.slots or {}
+        )
+        applied = slots.apply(graph, plan, merged_slot_overrides)
         graph = applied["workflow"]
         warnings.extend(applied["notices"])
     bound, problems = B.resolve(graph, config.mapping or None, rules=rules)

@@ -38,6 +38,11 @@ class ScopeTests(unittest.TestCase):
     def test_scope_table(self):
         cases = {
             ("GET", "/series"): "read",
+            ("GET", "/workflows/wf_test/loras"): "read",
+            ("GET", "/workshop/storyboards"): "read",
+            ("GET", "/workshop/presets/preset_test"): "read",
+            ("POST", "/workshop/storyboards"): "write",
+            ("PATCH", "/workshop/presets/preset_test"): "write",
             ("WS", "/ws/jobs"): "read",
             ("POST", "/series"): "write",
             ("PATCH", "/episodes/e1/panels/p1"): "write",
@@ -92,6 +97,46 @@ class ApiV2Tests(ApiCase):
         self.assertEqual(self.v2("GET", "/series", read).status_code, 401)
         old = self.token("read", expires_at="2000-01-01T00:00:00Z")
         self.assertEqual(self.v2("GET", "/series", old).status_code, 401)
+
+    def test_storyboard_and_preset_resources_enforce_read_and_write_scopes(self):
+        reader = self.token("read")
+        self.assertEqual(self.v2("GET", "/workshop/storyboards").status_code, 401)
+        self.assertEqual(self.v2("GET", "/workshop/presets").status_code, 401)
+        for path in ("/workshop/storyboards", "/workshop/presets"):
+            self.assertEqual(self.v2("GET", path, reader).status_code, 200)
+        board_body = {
+            "title": "API scope board",
+            "panels": [{"order": 0, "description": "A quiet street"}],
+        }
+        preset_body = {"title": "API scope preset", "entries": [{"key": "mood", "value": "calm"}]}
+        self.assertEqual(
+            self.v2("POST", "/workshop/storyboards", reader, json=board_body).status_code,
+            403,
+        )
+        self.assertEqual(
+            self.v2("POST", "/workshop/presets", reader, json=preset_body).status_code,
+            403,
+        )
+
+        writer = self.token("read", "write")
+        board = self.v2("POST", "/workshop/storyboards", writer, json=board_body)
+        self.assertEqual(board.status_code, 201, board.text)
+        storyboard_id = board.json()["id"]
+        self.assertEqual(
+            self.v2(
+                "PATCH", f"/workshop/storyboards/{storyboard_id}", writer, json={"title": "Saved"}
+            ).status_code,
+            200,
+        )
+        preset = self.v2("POST", "/workshop/presets", writer, json=preset_body)
+        self.assertEqual(preset.status_code, 201, preset.text)
+        preset_id = preset.json()["id"]
+        self.assertEqual(
+            self.v2(
+                "PATCH", f"/workshop/presets/{preset_id}", writer, json={"title": "Updated"}
+            ).status_code,
+            200,
+        )
 
     def test_v2_schema_is_separate_and_secured(self):
         schema = self.ok(self.client.get("/api/v2/openapi.json"))

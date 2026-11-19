@@ -98,6 +98,7 @@ it('saves a newly added stage without UI-only fields rejected by the strict serv
       'variant',
       'values',
       'overrides',
+      'slot_overrides',
       'enabled',
       'feed',
       'feed_output',

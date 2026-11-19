@@ -241,6 +241,9 @@ class PanelOverrides(StrictModel):
     node_overrides: dict[str, object] = Field(
         default_factory=dict, description="JSON Pointer → value."
     )
+    slot_overrides: dict[str, object] = Field(
+        default_factory=dict, description="Panel-scoped model and LoRA slot overrides."
+    )
     profile_id: str | None = None
 
 

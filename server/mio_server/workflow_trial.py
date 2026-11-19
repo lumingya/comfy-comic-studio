@@ -20,6 +20,7 @@ class WorkflowTrialRequest(StrictModel):
     height: int | None = Field(default=None, ge=64, le=8192)
     values: dict[str, object] = Field(default_factory=dict)
     overrides: dict[str, object] = Field(default_factory=dict)
+    slot_overrides: dict[str, object] = Field(default_factory=dict)
     idempotency_key: str | None = Field(default=None, min_length=1, max_length=200)
 
 
@@ -76,6 +77,7 @@ def trial(ctx, workflow_id: str, body: WorkflowTrialRequest) -> WorkflowTrialRes
             profile.instances = [body.instance_id] if body.instance_id else []
             profile.draft[0].values = {**body.values, "batch": 1}
             profile.draft[0].overrides = dict(body.overrides)
+            profile.draft[0].slot_overrides = dict(body.slot_overrides)
             series.generation.profile = profile.model_dump()
             series.generation.profiles[profile.id] = profile.model_dump()
             series, episode = ctx.store.create_assembly(

@@ -8,10 +8,11 @@ import unittest
 from html.parser import HTMLParser
 from pathlib import Path
 
+from PIL import Image
+
 from mio_server.album.build import data_url, palette
 from mio_server.album.render import AlbumOptions, Book, Frame, render_album
 from mio_server.album.templates import TemplateError, builtin_templates, parse_template
-from PIL import Image
 
 from .api_harness import ApiCase
 

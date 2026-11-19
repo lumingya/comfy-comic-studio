@@ -71,7 +71,6 @@
      "template": {
       "anyOf": [
        {
-        "additionalProperties": true,
         "type": "object"
        },
        {
@@ -198,7 +197,6 @@
      "template": {
       "anyOf": [
        {
-        "additionalProperties": true,
         "type": "object"
        },
        {
@@ -257,7 +255,6 @@
      },
      "ops": {
       "items": {
-       "additionalProperties": true,
        "type": "object"
       },
       "title": "Ops",
@@ -1697,7 +1694,6 @@
       "type": "string"
      },
      "options": {
-      "additionalProperties": true,
       "description": "Applied generation options; excludes connection secrets",
       "title": "Options",
       "type": "object"
@@ -2067,12 +2063,14 @@
    "CompileRequest": {
     "properties": {
      "overrides": {
-      "additionalProperties": true,
       "title": "Overrides",
       "type": "object"
      },
+     "slot_overrides": {
+      "title": "Slot Overrides",
+      "type": "object"
+     },
      "values": {
-      "additionalProperties": true,
       "title": "Values",
       "type": "object"
      },
@@ -2179,7 +2177,66 @@
     "title": "CompositionRegion",
     "type": "object"
    },
-   "ControlInput": {
+   "ControlInput-Input": {
+    "additionalProperties": false,
+    "description": "One ControlNet input, bound to ``[mio:control:<kind>]`` (+ ``[mio:strength:<kind>]``).",
+    "properties": {
+     "asset_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Asset Id"
+     },
+     "kind": {
+      "default": "pose",
+      "enum": [
+       "pose",
+       "depth",
+       "canny",
+       "lineart"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "source": {
+      "default": "auto",
+      "description": "auto = skeleton drawn from character positions (pose only); asset = uploaded image; take = an existing take of this panel.",
+      "enum": [
+       "auto",
+       "asset",
+       "take"
+      ],
+      "title": "Source",
+      "type": "string"
+     },
+     "strength": {
+      "default": 0.8,
+      "maximum": 2.0,
+      "minimum": 0.0,
+      "title": "Strength",
+      "type": "number"
+     },
+     "take_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Take Id"
+     }
+    },
+    "title": "ControlInput",
+    "type": "object"
+   },
+   "ControlInput-Output": {
     "additionalProperties": false,
     "description": "One ControlNet input, bound to ``[mio:control:<kind>]`` (+ ``[mio:strength:<kind>]``).",
     "properties": {
@@ -2324,7 +2381,6 @@
     "properties": {
      "invalid_inputs": {
       "items": {
-       "additionalProperties": true,
        "type": "object"
       },
       "title": "Invalid Inputs",
@@ -2332,7 +2388,6 @@
      },
      "invalid_links": {
       "items": {
-       "additionalProperties": true,
        "type": "object"
       },
       "title": "Invalid Links",
@@ -2340,7 +2395,6 @@
      },
      "invalid_values": {
       "items": {
-       "additionalProperties": true,
        "type": "object"
       },
       "title": "Invalid Values",
@@ -2348,7 +2402,6 @@
      },
      "missing_inputs": {
       "items": {
-       "additionalProperties": true,
        "type": "object"
       },
       "title": "Missing Inputs",
@@ -2356,7 +2409,6 @@
      },
      "missing_models": {
       "items": {
-       "additionalProperties": true,
        "type": "object"
       },
       "title": "Missing Models",
@@ -2391,7 +2443,42 @@
     "title": "DiagnosticReport",
     "type": "object"
    },
-   "Dialogue": {
+   "Dialogue-Input": {
+    "additionalProperties": false,
+    "properties": {
+     "bridge": {
+      "default": false,
+      "description": "Cross-panel bubble: straddles the gutter to the next panel.",
+      "title": "Bridge",
+      "type": "boolean"
+     },
+     "kind": {
+      "$ref": "#/components/schemas/DialogueKind",
+      "default": "speech"
+     },
+     "speaker_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Speaker Id"
+     },
+     "text": {
+      "title": "Text",
+      "type": "string"
+     }
+    },
+    "required": [
+     "text"
+    ],
+    "title": "Dialogue",
+    "type": "object"
+   },
+   "Dialogue-Output": {
     "additionalProperties": false,
     "properties": {
      "bridge": {
@@ -2463,7 +2550,6 @@
       "type": "string"
      },
      "params": {
-      "additionalProperties": true,
       "title": "Params",
       "type": "object"
      },
@@ -2538,7 +2624,7 @@
      },
      "panels": {
       "items": {
-       "$ref": "#/components/schemas/Panel"
+       "$ref": "#/components/schemas/Panel-Output"
       },
       "title": "Panels",
       "type": "array"
@@ -3228,7 +3314,6 @@
      },
      "channels": {
       "additionalProperties": {
-       "additionalProperties": true,
        "type": "object"
       },
       "title": "Channels",
@@ -3259,7 +3344,6 @@
       "title": "Height"
      },
      "profile": {
-      "additionalProperties": true,
       "title": "Profile",
       "type": "object"
      },
@@ -3276,7 +3360,6 @@
      },
      "profiles": {
       "additionalProperties": {
-       "additionalProperties": true,
        "type": "object"
       },
       "title": "Profiles",
@@ -3308,7 +3391,6 @@
      },
      "workflows": {
       "additionalProperties": {
-       "additionalProperties": true,
        "type": "object"
       },
       "title": "Workflows",
@@ -3388,7 +3470,6 @@
       "anyOf": [
        {
         "additionalProperties": {
-         "additionalProperties": true,
          "type": "object"
         },
         "maxProperties": 20000,
@@ -3401,12 +3482,10 @@
       "title": "Object Info"
      },
      "overrides": {
-      "additionalProperties": true,
       "title": "Overrides",
       "type": "object"
      },
      "values": {
-      "additionalProperties": true,
       "title": "Values",
       "type": "object"
      },
@@ -3422,7 +3501,6 @@
       "title": "Variant"
      },
      "workflow": {
-      "additionalProperties": true,
       "maxProperties": 20000,
       "title": "Workflow",
       "type": "object"
@@ -4546,7 +4624,6 @@
      },
      "sfx_presets": {
       "additionalProperties": {
-       "additionalProperties": true,
        "type": "object"
       },
       "title": "Sfx Presets",
@@ -6164,7 +6241,6 @@
       "type": "string"
      },
      "options": {
-      "additionalProperties": true,
       "title": "Options",
       "type": "object"
      }
@@ -6331,7 +6407,7 @@
     "title": "PacingSuggestion",
     "type": "object"
    },
-   "Panel": {
+   "Panel-Input": {
     "additionalProperties": false,
     "properties": {
      "angle": {
@@ -6355,14 +6431,14 @@
      },
      "characters": {
       "items": {
-       "$ref": "#/components/schemas/PanelCharacter"
+       "$ref": "#/components/schemas/PanelCharacter-Input"
       },
       "title": "Characters",
       "type": "array"
      },
      "controls": {
       "items": {
-       "$ref": "#/components/schemas/ControlInput"
+       "$ref": "#/components/schemas/ControlInput-Input"
       },
       "title": "Controls",
       "type": "array"
@@ -6374,7 +6450,7 @@
      },
      "dialogues": {
       "items": {
-       "$ref": "#/components/schemas/Dialogue"
+       "$ref": "#/components/schemas/Dialogue-Input"
       },
       "title": "Dialogues",
       "type": "array"
@@ -6433,7 +6509,7 @@
      "motion": {
       "anyOf": [
        {
-        "$ref": "#/components/schemas/PanelMotion"
+        "$ref": "#/components/schemas/PanelMotion-Input"
        },
        {
         "type": "null"
@@ -6447,7 +6523,205 @@
       "type": "integer"
      },
      "overrides": {
-      "$ref": "#/components/schemas/PanelOverrides"
+      "$ref": "#/components/schemas/PanelOverrides-Input"
+     },
+     "props": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Props",
+      "type": "array"
+     },
+     "reference_mode": {
+      "default": "auto",
+      "enum": [
+       "auto",
+       "manual",
+       "off"
+      ],
+      "title": "Reference Mode",
+      "type": "string"
+     },
+     "references": {
+      "description": "Manual references.",
+      "items": {
+       "$ref": "#/components/schemas/AssetRef-Input"
+      },
+      "title": "References",
+      "type": "array"
+     },
+     "regional": {
+      "default": false,
+      "description": "Per-character regional prompts ([mio:region:N] slots).",
+      "title": "Regional",
+      "type": "boolean"
+     },
+     "shot": {
+      "default": "",
+      "enum": [
+       "",
+       "extreme_close",
+       "close",
+       "medium",
+       "cowboy",
+       "full",
+       "wide"
+      ],
+      "title": "Shot",
+      "type": "string"
+     },
+     "tags": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+     },
+     "time": {
+      "default": "",
+      "enum": [
+       "",
+       "morning",
+       "day",
+       "evening",
+       "night"
+      ],
+      "title": "Time",
+      "type": "string"
+     },
+     "transition_background": {
+      "default": "transparent",
+      "title": "Transition Background",
+      "type": "string"
+     },
+     "width_mode": {
+      "$ref": "#/components/schemas/PanelWidth",
+      "default": "full"
+     }
+    },
+    "required": [
+     "order"
+    ],
+    "title": "Panel",
+    "type": "object"
+   },
+   "Panel-Output": {
+    "additionalProperties": false,
+    "properties": {
+     "angle": {
+      "default": "",
+      "enum": [
+       "",
+       "eye",
+       "high",
+       "low",
+       "side",
+       "back",
+       "dutch"
+      ],
+      "title": "Angle",
+      "type": "string"
+     },
+     "aspect_ratio": {
+      "default": "2:3",
+      "title": "Aspect Ratio",
+      "type": "string"
+     },
+     "characters": {
+      "items": {
+       "$ref": "#/components/schemas/PanelCharacter-Output"
+      },
+      "title": "Characters",
+      "type": "array"
+     },
+     "controls": {
+      "items": {
+       "$ref": "#/components/schemas/ControlInput-Output"
+      },
+      "title": "Controls",
+      "type": "array"
+     },
+     "description": {
+      "default": "",
+      "title": "Description",
+      "type": "string"
+     },
+     "dialogues": {
+      "items": {
+       "$ref": "#/components/schemas/Dialogue-Output"
+      },
+      "title": "Dialogues",
+      "type": "array"
+     },
+     "gap_after": {
+      "default": 48,
+      "maximum": 1200.0,
+      "minimum": 0.0,
+      "title": "Gap After",
+      "type": "integer"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "inset_align": {
+      "default": "center",
+      "enum": [
+       "left",
+       "center",
+       "right"
+      ],
+      "title": "Inset Align",
+      "type": "string"
+     },
+     "inset_scale": {
+      "default": 0.78,
+      "description": "Inset width / strip.",
+      "maximum": 0.95,
+      "minimum": 0.4,
+      "title": "Inset Scale",
+      "type": "number"
+     },
+     "lighting": {
+      "default": "",
+      "title": "Lighting",
+      "type": "string"
+     },
+     "location_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Location Id"
+     },
+     "locked": {
+      "default": false,
+      "description": "Automation (assistant, auto-pick) may not touch it.",
+      "title": "Locked",
+      "type": "boolean"
+     },
+     "motion": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/PanelMotion-Output"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Dynamic comic; None = auto"
+     },
+     "order": {
+      "minimum": 0.0,
+      "title": "Order",
+      "type": "integer"
+     },
+     "overrides": {
+      "$ref": "#/components/schemas/PanelOverrides-Output"
      },
      "props": {
       "items": {
@@ -6564,7 +6838,6 @@
       "type": "object"
      },
      "changes": {
-      "additionalProperties": true,
       "title": "Changes",
       "type": "object"
      },
@@ -6682,7 +6955,56 @@
     "title": "PanelBridgeResponse",
     "type": "object"
    },
-   "PanelCharacter": {
+   "PanelCharacter-Input": {
+    "additionalProperties": false,
+    "properties": {
+     "action": {
+      "default": "",
+      "title": "Action",
+      "type": "string"
+     },
+     "character_id": {
+      "title": "Character Id",
+      "type": "string"
+     },
+     "expression": {
+      "default": "neutral",
+      "title": "Expression",
+      "type": "string"
+     },
+     "outfit": {
+      "default": "default",
+      "title": "Outfit",
+      "type": "string"
+     },
+     "position": {
+      "default": "unspecified",
+      "enum": [
+       "left",
+       "center",
+       "right",
+       "foreground",
+       "background",
+       "unspecified"
+      ],
+      "title": "Position",
+      "type": "string"
+     },
+     "tags": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+     }
+    },
+    "required": [
+     "character_id"
+    ],
+    "title": "PanelCharacter",
+    "type": "object"
+   },
+   "PanelCharacter-Output": {
     "additionalProperties": false,
     "properties": {
      "action": {
@@ -6782,7 +7104,6 @@
       "title": "After"
      },
      "panel": {
-      "additionalProperties": true,
       "title": "Panel",
       "type": "object"
      }
@@ -6822,7 +7143,6 @@
      },
      "panels": {
       "items": {
-       "additionalProperties": true,
        "type": "object"
       },
       "title": "Panels",
@@ -6835,7 +7155,45 @@
     "title": "PanelImport",
     "type": "object"
    },
-   "PanelMotion": {
+   "PanelMotion-Input": {
+    "additionalProperties": false,
+    "description": "Dynamic-comic camera for this panel (``auto`` = chosen from shot size, SFX and text).",
+    "properties": {
+     "hold": {
+      "anyOf": [
+       {
+        "maximum": 30.0,
+        "minimum": 0.5,
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Seconds on screen; None = from reading time",
+      "title": "Hold"
+     },
+     "move": {
+      "default": "auto",
+      "enum": [
+       "auto",
+       "still",
+       "push_in",
+       "pull_out",
+       "pan_left",
+       "pan_right",
+       "pan_up",
+       "pan_down",
+       "shake"
+      ],
+      "title": "Move",
+      "type": "string"
+     }
+    },
+    "title": "PanelMotion",
+    "type": "object"
+   },
+   "PanelMotion-Output": {
     "additionalProperties": false,
     "description": "Dynamic-comic camera for this panel (``auto`` = chosen from shot size, SFX and text).",
     "properties": {
@@ -6877,7 +7235,7 @@
     "title": "PanelMotion",
     "type": "object"
    },
-   "PanelOverrides": {
+   "PanelOverrides-Input": {
     "additionalProperties": false,
     "properties": {
      "append_prompt": {
@@ -6904,7 +7262,6 @@
       "type": "string"
      },
      "node_overrides": {
-      "additionalProperties": true,
       "description": "JSON Pointer → value.",
       "title": "Node Overrides",
       "type": "object"
@@ -6954,8 +7311,115 @@
       ],
       "title": "Seed"
      },
+     "slot_overrides": {
+      "description": "Panel-scoped model and LoRA slot overrides.",
+      "title": "Slot Overrides",
+      "type": "object"
+     },
      "values": {
-      "additionalProperties": true,
+      "description": "Extra [mio:*] values.",
+      "title": "Values",
+      "type": "object"
+     },
+     "width": {
+      "anyOf": [
+       {
+        "maximum": 4096.0,
+        "minimum": 64.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Width"
+     }
+    },
+    "title": "PanelOverrides",
+    "type": "object"
+   },
+   "PanelOverrides-Output": {
+    "additionalProperties": false,
+    "properties": {
+     "append_prompt": {
+      "default": "",
+      "title": "Append Prompt",
+      "type": "string"
+     },
+     "height": {
+      "anyOf": [
+       {
+        "maximum": 4096.0,
+        "minimum": 64.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Height"
+     },
+     "negative_prompt": {
+      "default": "",
+      "title": "Negative Prompt",
+      "type": "string"
+     },
+     "node_overrides": {
+      "description": "JSON Pointer → value.",
+      "title": "Node Overrides",
+      "type": "object"
+     },
+     "profile_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Profile Id"
+     },
+     "raw_negative": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Raw Negative"
+     },
+     "raw_prompt": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "Raw mode: skip the compiler entirely.",
+      "title": "Raw Prompt"
+     },
+     "seed": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Seed"
+     },
+     "slot_overrides": {
+      "description": "Panel-scoped model and LoRA slot overrides.",
+      "title": "Slot Overrides",
+      "type": "object"
+     },
+     "values": {
       "description": "Extra [mio:*] values.",
       "title": "Values",
       "type": "object"
@@ -6984,6 +7448,7 @@
      "height",
      "values",
      "node_overrides",
+     "slot_overrides",
      "profile_id"
     ],
     "title": "PanelOverrides",
@@ -6992,7 +7457,6 @@
    "PanelPatch": {
     "properties": {
      "changes": {
-      "additionalProperties": true,
       "title": "Changes",
       "type": "object"
      },
@@ -7593,6 +8057,70 @@
      "title"
     ],
     "title": "PresetGroup",
+    "type": "object"
+   },
+   "PresetPatch": {
+    "properties": {
+     "bindings": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/PresetBinding-Input"
+        },
+        "maxItems": 2000,
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Bindings"
+     },
+     "entries": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/PresetEntry-Input"
+        },
+        "maxItems": 2000,
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Entries"
+     },
+     "groups": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/PresetGroup-Input"
+        },
+        "maxItems": 128,
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Groups"
+     },
+     "title": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Title"
+     }
+    },
+    "title": "PresetPatch",
     "type": "object"
    },
    "PreviewRequest": {
@@ -8641,12 +9169,14 @@
       "type": "string"
      },
      "overrides": {
-      "additionalProperties": true,
       "title": "Overrides",
       "type": "object"
      },
+     "slot_overrides": {
+      "title": "Slot Overrides",
+      "type": "object"
+     },
      "values": {
-      "additionalProperties": true,
       "title": "Values",
       "type": "object"
      },
@@ -8721,12 +9251,14 @@
       "type": "string"
      },
      "overrides": {
-      "additionalProperties": true,
       "title": "Overrides",
       "type": "object"
      },
+     "slot_overrides": {
+      "title": "Slot Overrides",
+      "type": "object"
+     },
      "values": {
-      "additionalProperties": true,
       "title": "Values",
       "type": "object"
      },
@@ -8754,6 +9286,7 @@
      "variant",
      "values",
      "overrides",
+     "slot_overrides",
      "enabled",
      "feed",
      "feed_output"
@@ -8802,7 +9335,6 @@
      "result": {
       "anyOf": [
        {
-        "additionalProperties": true,
         "type": "object"
        },
        {
@@ -9645,6 +10177,99 @@
     "title": "StageOutput",
     "type": "object"
    },
+   "StoryboardCreate": {
+    "properties": {
+     "base_prompt": {
+      "default": "",
+      "maxLength": 8000,
+      "title": "Base Prompt",
+      "type": "string"
+     },
+     "panels": {
+      "items": {
+       "$ref": "#/components/schemas/Panel-Input"
+      },
+      "maxItems": 2000,
+      "title": "Panels",
+      "type": "array"
+     },
+     "synopsis": {
+      "default": "",
+      "maxLength": 8000,
+      "title": "Synopsis",
+      "type": "string"
+     },
+     "title": {
+      "maxLength": 200,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "title"
+    ],
+    "title": "StoryboardCreate",
+    "type": "object"
+   },
+   "StoryboardPatch": {
+    "properties": {
+     "base_prompt": {
+      "anyOf": [
+       {
+        "maxLength": 8000,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Base Prompt"
+     },
+     "panels": {
+      "anyOf": [
+       {
+        "items": {
+         "$ref": "#/components/schemas/Panel-Input"
+        },
+        "maxItems": 2000,
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Panels"
+     },
+     "synopsis": {
+      "anyOf": [
+       {
+        "maxLength": 8000,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Synopsis"
+     },
+     "title": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Title"
+     }
+    },
+    "title": "StoryboardPatch",
+    "type": "object"
+   },
    "Strip-Input": {
     "additionalProperties": false,
     "properties": {
@@ -10093,7 +10718,6 @@
       "type": "string"
      },
      "parameter_snapshot": {
-      "additionalProperties": true,
       "title": "Parameter Snapshot",
       "type": "object"
      },
@@ -10221,7 +10845,6 @@
       "type": "string"
      },
      "params": {
-      "additionalProperties": true,
       "title": "Params",
       "type": "object"
      }
@@ -11164,7 +11787,6 @@
     "properties": {
      "characters": {
       "additionalProperties": {
-       "additionalProperties": true,
        "type": "object"
       },
       "title": "Characters",
@@ -11213,7 +11835,6 @@
     "properties": {
      "characters": {
       "additionalProperties": {
-       "additionalProperties": true,
        "type": "object"
       },
       "title": "Characters",
@@ -11422,7 +12043,6 @@
     "properties": {
      "frontend": {
       "additionalProperties": {
-       "additionalProperties": true,
        "type": "object"
       },
       "title": "Frontend",
@@ -11461,8 +12081,11 @@
       "type": "object"
      },
      "overrides": {
-      "additionalProperties": true,
       "title": "Overrides",
+      "type": "object"
+     },
+     "slot_overrides": {
+      "title": "Slot Overrides",
       "type": "object"
      },
      "state": {
@@ -11473,7 +12096,6 @@
          "type": "array"
         },
         {
-         "additionalProperties": true,
          "type": "object"
         }
        ]
@@ -11490,13 +12112,11 @@
       "type": "object"
      },
      "values": {
-      "additionalProperties": true,
       "title": "Values",
       "type": "object"
      },
      "variants": {
       "additionalProperties": {
-       "additionalProperties": true,
        "type": "object"
       },
       "title": "Variants",
@@ -11519,7 +12139,6 @@
       ]
      },
      "graph": {
-      "additionalProperties": true,
       "title": "Graph",
       "type": "object"
      },
@@ -11555,7 +12174,6 @@
      "graph": {
       "anyOf": [
        {
-        "additionalProperties": true,
         "type": "object"
        },
        {
@@ -11637,7 +12255,6 @@
       "type": "string"
      },
      "overrides": {
-      "additionalProperties": true,
       "title": "Overrides",
       "type": "object"
      },
@@ -11647,8 +12264,11 @@
       "title": "Prompt",
       "type": "string"
      },
+     "slot_overrides": {
+      "title": "Slot Overrides",
+      "type": "object"
+     },
      "values": {
-      "additionalProperties": true,
       "title": "Values",
       "type": "object"
      },
@@ -11679,7 +12299,6 @@
       "$ref": "#/components/schemas/Episode"
      },
      "job": {
-      "additionalProperties": true,
       "title": "Job",
       "type": "object"
      },
@@ -11720,7 +12339,6 @@
        "application/json": {
         "schema": {
          "items": {
-          "additionalProperties": true,
           "type": "object"
          },
          "title": "Response List Album Templates",
@@ -11752,7 +12370,6 @@
      "content": {
       "application/json": {
        "schema": {
-        "additionalProperties": true,
         "title": "Body",
         "type": "object"
        }
@@ -11765,7 +12382,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Import Album Template",
          "type": "object"
         }
@@ -11862,7 +12478,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Get Album Template",
          "type": "object"
         }
@@ -12694,7 +13309,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Import Bundle",
          "type": "object"
         }
@@ -12729,7 +13343,6 @@
        "application/json": {
         "schema": {
          "items": {
-          "additionalProperties": true,
           "type": "object"
          },
          "title": "Response Comfy Adapters",
@@ -13306,7 +13919,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Assistant Apply",
          "type": "object"
         }
@@ -13371,7 +13983,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Assistant Propose",
          "type": "object"
         }
@@ -13499,7 +14110,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Edit Take",
          "type": "object"
         }
@@ -13674,7 +14284,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Finalize Episode",
          "type": "object"
         }
@@ -13746,7 +14355,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Motion Plan",
          "type": "object"
         }
@@ -14517,7 +15125,6 @@
        "application/json": {
         "schema": {
          "items": {
-          "additionalProperties": true,
           "type": "object"
          },
          "title": "Response Panel History",
@@ -14696,7 +15303,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Panel Prompt",
          "type": "object"
         }
@@ -14836,7 +15442,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Qa Episode",
          "type": "object"
         }
@@ -14984,7 +15589,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Render Episode",
          "type": "object"
         }
@@ -15039,7 +15643,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Restore Episode",
          "type": "object"
         }
@@ -15120,7 +15723,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Slice Plan",
          "type": "object"
         }
@@ -15400,7 +16002,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Strip Report",
          "type": "object"
         }
@@ -15741,7 +16342,6 @@
        "application/json": {
         "schema": {
          "items": {
-          "additionalProperties": true,
           "type": "object"
          },
          "title": "Response Export Formats",
@@ -15785,7 +16385,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Submit Album Export",
          "type": "object"
         }
@@ -15838,7 +16437,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Submit Portable Export",
          "type": "object"
         }
@@ -15891,7 +16489,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Submit Strip Export",
          "type": "object"
         }
@@ -16130,7 +16727,6 @@
        "application/json": {
         "schema": {
          "items": {
-          "additionalProperties": true,
           "type": "object"
          },
          "title": "Response Export Presets",
@@ -16460,7 +17056,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Get Extension Market",
          "type": "object"
         }
@@ -16513,7 +17108,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Set Extension Market Source",
          "type": "object"
         }
@@ -16577,7 +17171,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Install Market Extension",
          "type": "object"
         }
@@ -16623,7 +17216,6 @@
        "application/json": {
         "schema": {
          "items": {
-          "additionalProperties": true,
           "type": "object"
          },
          "title": "Response Extension Panels",
@@ -16734,7 +17326,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Extension Surfaces",
          "type": "object"
         }
@@ -16767,7 +17358,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response List Extensions",
          "type": "object"
         }
@@ -16822,7 +17412,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Install Extension",
          "type": "object"
         }
@@ -16912,7 +17501,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Install Extension Folder",
          "type": "object"
         }
@@ -17025,7 +17613,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Disable Extension",
          "type": "object"
         }
@@ -17091,7 +17678,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Enable Extension",
          "type": "object"
         }
@@ -17318,6 +17904,41 @@
     "x-mio-operation": "GET /extensions/{ext_id}/workspace/{path}"
    }
   },
+  "/image-adapters": {
+   "get": {
+    "description": "Discover built-in and extension image channels without exposing configuration secrets.",
+    "operationId": "image_adapters",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "type": "object"
+         },
+         "title": "Response Image Adapters",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Image Adapters",
+    "tags": [
+     "system"
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /image-adapters"
+   }
+  },
   "/instances": {
    "get": {
     "operationId": "list_instances",
@@ -17326,7 +17947,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response List Instances",
          "type": "object"
         }
@@ -17524,7 +18144,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Instance Health",
          "type": "object"
         }
@@ -17640,7 +18259,6 @@
        "application/json": {
         "schema": {
          "items": {
-          "additionalProperties": true,
           "type": "object"
          },
          "title": "Response List Jobs",
@@ -17741,7 +18359,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Get Job",
          "type": "object"
         }
@@ -17795,7 +18412,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Cancel Job",
          "type": "object"
         }
@@ -17851,7 +18467,6 @@
        "application/json": {
         "schema": {
          "items": {
-          "additionalProperties": true,
           "type": "object"
          },
          "title": "Response Job Result Deliveries",
@@ -17928,7 +18543,6 @@
        "application/json": {
         "schema": {
          "items": {
-          "additionalProperties": true,
           "type": "object"
          },
          "title": "Response Job Events",
@@ -17996,7 +18610,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Replay Job Result",
          "type": "object"
         }
@@ -18071,7 +18684,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Resolve Job Item",
          "type": "object"
         }
@@ -18147,7 +18759,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Restore Job Item State",
          "type": "object"
         }
@@ -18203,7 +18814,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Pause Job",
          "type": "object"
         }
@@ -18267,7 +18877,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Rebind Job Executor",
          "type": "object"
         }
@@ -18322,7 +18931,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Resume Job",
          "type": "object"
         }
@@ -18387,7 +18995,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Retry Job",
          "type": "object"
         }
@@ -18444,7 +19051,6 @@
        "application/json": {
         "schema": {
          "items": {
-          "additionalProperties": true,
           "type": "object"
          },
          "title": "Response Get Job State Recovery",
@@ -18500,7 +19106,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Legacy Import",
          "type": "object"
         }
@@ -18561,7 +19166,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Legacy Scan",
          "type": "object"
         }
@@ -18640,7 +19244,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Meta",
          "type": "object"
         }
@@ -18665,7 +19268,6 @@
        "application/json": {
         "schema": {
          "items": {
-          "additionalProperties": true,
           "type": "object"
          },
          "title": "Response List Operations",
@@ -18939,7 +19541,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Get Registry",
          "type": "object"
         }
@@ -19685,7 +20286,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response List Episodes",
          "type": "object"
         }
@@ -20278,7 +20878,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Get Settings",
          "type": "object"
         }
@@ -20308,7 +20907,6 @@
      "content": {
       "application/json": {
        "schema": {
-        "additionalProperties": true,
         "title": "Patch",
         "type": "object"
        }
@@ -20321,7 +20919,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Patch Settings",
          "type": "object"
         }
@@ -20417,7 +21014,6 @@
        "application/json": {
         "schema": {
          "items": {
-          "additionalProperties": true,
           "type": "object"
          },
          "title": "Response List Themes",
@@ -20450,7 +21046,6 @@
      "content": {
       "application/json": {
        "schema": {
-        "additionalProperties": true,
         "title": "Body",
         "type": "object"
        }
@@ -20463,7 +21058,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Import Theme",
          "type": "object"
         }
@@ -20530,7 +21124,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Import Theme Folder",
          "type": "object"
         }
@@ -20575,7 +21168,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Import Theme Package",
          "type": "object"
         }
@@ -20780,7 +21372,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Get Theme Preferences",
          "type": "object"
         }
@@ -20893,7 +21484,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Patch Theme Preferences",
          "type": "object"
         }
@@ -20986,7 +21576,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Put Theme Preferences",
          "type": "object"
         }
@@ -21281,7 +21870,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response List Tokens",
          "type": "object"
         }
@@ -21322,7 +21910,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Create Token",
          "type": "object"
         }
@@ -21410,7 +21997,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response List Trash",
          "type": "object"
         }
@@ -21442,7 +22028,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Expire Trash",
          "type": "object"
         }
@@ -21534,7 +22119,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Update Status",
          "type": "object"
         }
@@ -21566,7 +22150,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Cancel Update",
          "type": "object"
         }
@@ -21610,7 +22193,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Check Update",
          "type": "object"
         }
@@ -21666,7 +22248,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Download Update",
          "type": "object"
         }
@@ -21719,7 +22300,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Install Release",
          "type": "object"
         }
@@ -21772,7 +22352,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Update Preferences",
          "type": "object"
         }
@@ -21850,7 +22429,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Release Catalog",
          "type": "object"
         }
@@ -21895,7 +22473,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response List Webhooks",
          "type": "object"
         }
@@ -21925,7 +22502,6 @@
      "content": {
       "application/json": {
        "schema": {
-        "additionalProperties": true,
         "title": "Body",
         "type": "object"
        }
@@ -21938,7 +22514,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Create Webhook",
          "type": "object"
         }
@@ -22045,7 +22620,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Update Webhook",
          "type": "object"
         }
@@ -22101,7 +22675,6 @@
        "application/json": {
         "schema": {
          "items": {
-          "additionalProperties": true,
           "type": "object"
          },
          "title": "Response Webhook Deliveries",
@@ -22158,7 +22731,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Test Webhook",
          "type": "object"
         }
@@ -22201,7 +22773,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Whoami",
          "type": "object"
         }
@@ -22230,7 +22801,6 @@
        "application/json": {
         "schema": {
          "items": {
-          "additionalProperties": true,
           "type": "object"
          },
          "title": "Response List Workflows",
@@ -22272,7 +22842,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Import Workflow",
          "type": "object"
         }
@@ -22421,7 +22990,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Get Workflow",
          "type": "object"
         }
@@ -22483,7 +23051,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Patch Workflow",
          "type": "object"
         }
@@ -22549,7 +23116,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Capture Workflow State",
          "type": "object"
         }
@@ -22615,7 +23181,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Compile Preview",
          "type": "object"
         }
@@ -22670,7 +23235,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Copy Workflow",
          "type": "object"
         }
@@ -22751,7 +23315,6 @@
       "content": {
        "application/json": {
         "schema": {
-         "additionalProperties": true,
          "title": "Response Diagnose Workflow",
          "type": "object"
         }
@@ -22786,6 +23349,60 @@
      "body"
     ],
     "x-mio-operation": "POST /workflows/{workflow_id}/diagnose"
+   }
+  },
+  "/workflows/{workflow_id}/loras": {
+   "get": {
+    "description": "Describe the workflow's LoRA controls without contacting ComfyUI.",
+    "operationId": "workflow_loras",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "workflow_id",
+      "required": true,
+      "schema": {
+       "title": "Workflow Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "title": "Response Workflow Loras",
+         "type": "object"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Workflow Loras",
+    "tags": [
+     "library"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "workflow_id"
+    ],
+    "x-mio-operation": "GET /workflows/{workflow_id}/loras"
    }
   },
   "/workflows/{workflow_id}/trial": {
@@ -22985,6 +23602,202 @@
      "body"
     ],
     "x-mio-operation": "POST /workshop/assemble/preview"
+   }
+  },
+  "/workshop/presets": {
+   "get": {
+    "operationId": "list_presets",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/Preset-Output"
+         },
+         "title": "Response List Presets",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "List Presets",
+    "tags": [
+     "workshop"
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /workshop/presets"
+   },
+   "post": {
+    "operationId": "create_preset",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/Preset-Input"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Preset-Output"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Create Preset",
+    "tags": [
+     "workshop"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /workshop/presets"
+   }
+  },
+  "/workshop/presets/{preset_id}": {
+   "get": {
+    "operationId": "get_preset",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "preset_id",
+      "required": true,
+      "schema": {
+       "title": "Preset Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Preset-Output"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Get Preset",
+    "tags": [
+     "workshop"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "preset_id"
+    ],
+    "x-mio-operation": "GET /workshop/presets/{preset_id}"
+   },
+   "patch": {
+    "operationId": "patch_preset",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "preset_id",
+      "required": true,
+      "schema": {
+       "title": "Preset Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/PresetPatch"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Preset-Output"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Patch Preset",
+    "tags": [
+     "workshop"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "preset_id",
+     "body"
+    ],
+    "x-mio-operation": "PATCH /workshop/presets/{preset_id}"
    }
   },
   "/workshop/preview": {
@@ -23366,6 +24179,202 @@
      "body"
     ],
     "x-mio-operation": "POST /workshop/queue/start"
+   }
+  },
+  "/workshop/storyboards": {
+   "get": {
+    "operationId": "list_storyboards",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/Episode"
+         },
+         "title": "Response List Storyboards",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "List Storyboards",
+    "tags": [
+     "workshop"
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /workshop/storyboards"
+   },
+   "post": {
+    "operationId": "create_storyboard",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/StoryboardCreate"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Episode"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Create Storyboard",
+    "tags": [
+     "workshop"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body"
+    ],
+    "x-mio-operation": "POST /workshop/storyboards"
+   }
+  },
+  "/workshop/storyboards/{storyboard_id}": {
+   "get": {
+    "operationId": "get_storyboard",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "storyboard_id",
+      "required": true,
+      "schema": {
+       "title": "Storyboard Id",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Episode"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Get Storyboard",
+    "tags": [
+     "workshop"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "storyboard_id"
+    ],
+    "x-mio-operation": "GET /workshop/storyboards/{storyboard_id}"
+   },
+   "patch": {
+    "operationId": "patch_storyboard",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "storyboard_id",
+      "required": true,
+      "schema": {
+       "title": "Storyboard Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/StoryboardPatch"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Episode"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Patch Storyboard",
+    "tags": [
+     "workshop"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "storyboard_id",
+     "body"
+    ],
+    "x-mio-operation": "PATCH /workshop/storyboards/{storyboard_id}"
    }
   },
   "/workshop/tasks/{series_id}/clone": {

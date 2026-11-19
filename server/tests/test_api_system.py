@@ -127,6 +127,133 @@ class SettingsRegistryTests(ApiCase):
 
 
 class LibraryTests(ApiCase):
+    def test_workflow_lora_controls_are_stable_and_compile_independently(self):
+        graph = {
+            "1": {
+                "class_type": "CheckpointLoaderSimple",
+                "inputs": {"ckpt_name": "base.safetensors"},
+            },
+            "2": {
+                "class_type": "PooledLora",
+                "inputs": {
+                    "model": ["1", 0],
+                    "loras": [
+                        {"name": "ink.safetensors", "strength": 0.6, "active": True},
+                        {"name": "tone.safetensors", "strength": 0.8, "active": True},
+                    ],
+                },
+            },
+            "3": {"class_type": "KSampler", "inputs": {"model": ["2", 0]}},
+            "9": {"class_type": "SaveImage", "inputs": {"images": ["3", 0]}},
+        }
+        workflow = self.ok(
+            self.client.post("/api/workflows", json={"name": "controls", "graph": graph}), 201
+        )
+        controls = self.ok(self.client.get(f"/api/workflows/{workflow['id']}/loras"))
+        self.assertEqual(controls["adapter"], {"id": "workflow_slots.v3", "source": "builtin"})
+        group = controls["groups"][0]
+        self.assertTrue(group["supports_independent_toggle"])
+        self.assertEqual(
+            [item["name"] for item in group["loras"]], ["ink.safetensors", "tone.safetensors"]
+        )
+        first, second = group["loras"]
+        self.assertNotEqual(first["key"], second["key"])
+        self.assertTrue(first["enabled"])
+        compiled = self.ok(
+            self.client.post(
+                f"/api/workflows/{workflow['id']}/compile",
+                json={
+                    "slot_overrides": {
+                        "groups": [
+                            {
+                                "key": group["key"],
+                                "loras": [
+                                    {
+                                        "name": first["name"],
+                                        "strength": first["strength"],
+                                        "enabled": False,
+                                        "key": first["key"],
+                                    },
+                                    {
+                                        "name": second["name"],
+                                        "strength": second["strength"],
+                                        "enabled": True,
+                                        "key": second["key"],
+                                    },
+                                ],
+                            }
+                        ]
+                    }
+                },
+            )
+        )
+        self.assertEqual(
+            compiled["graph"]["2"]["inputs"]["loras"],
+            [
+                {"name": "ink.safetensors", "strength": 0, "active": False},
+                {"name": "tone.safetensors", "strength": 0.8, "active": True},
+            ],
+        )
+        persisted = self.ok(self.client.get(f"/api/workflows/{workflow['id']}"))
+        self.assertEqual(persisted["graph"], graph)
+
+
+class WorkshopResourceTests(ApiCase):
+    def test_storyboard_and_preset_resources_can_be_discovered_and_edited(self):
+        workshop = self.ok(self.client.get("/api/workshop"))
+        board = self.ok(
+            self.client.post(
+                "/api/workshop/storyboards",
+                json={
+                    "title": "外部创建的分镜",
+                    "synopsis": "海边的约定",
+                    "base_prompt": "soft evening light",
+                    "panels": [{"order": 12, "description": "A quiet beach"}],
+                },
+            ),
+            201,
+        )
+        self.assertEqual(board["series_id"], workshop["id"])
+        self.assertEqual(board["panels"][0]["order"], 0)
+        self.assertEqual(
+            self.ok(self.client.get("/api/workshop/storyboards/{id}".format(id=board["id"])))["id"],
+            board["id"],
+        )
+        self.assertIn(
+            board["id"],
+            {item["id"] for item in self.ok(self.client.get("/api/workshop/storyboards"))},
+        )
+        updated_board = self.ok(
+            self.client.patch(
+                f"/api/workshop/storyboards/{board['id']}",
+                json={"title": "海边约定", "panels": [{"order": 8, "description": "Wave"}]},
+            )
+        )
+        self.assertEqual(updated_board["title"], "海边约定")
+        self.assertEqual(updated_board["panels"][0]["order"], 0)
+
+        preset = self.ok(
+            self.client.post(
+                "/api/workshop/presets",
+                json={"title": "夜色", "entries": [{"key": "lighting", "value": "blue hour"}]},
+            ),
+            201,
+        )
+        self.assertEqual(
+            self.ok(self.client.get(f"/api/workshop/presets/{preset['id']}"))["title"], "夜色"
+        )
+        self.assertIn(
+            preset["id"],
+            {item["id"] for item in self.ok(self.client.get("/api/workshop/presets"))},
+        )
+        changed = self.ok(
+            self.client.patch(
+                f"/api/workshop/presets/{preset['id']}",
+                json={"entries": [{"key": "lighting", "value": "dawn"}]},
+            )
+        )
+        self.assertEqual(changed["entries"][0]["value"], "dawn")
+
     def test_workflow_import_compile_copy_delete(self):
         ui = self.client.post(
             "/api/workflows", json={"name": "ui", "graph": {"nodes": [], "links": []}}

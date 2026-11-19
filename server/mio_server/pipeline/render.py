@@ -21,6 +21,7 @@ import threading
 from contextlib import contextmanager
 
 from ..comfy import bindings as B
+from ..comfy import workflow_slots as slots
 from ..comfy.compile import PREVIOUS, asset_value, builtin_workflows, compile_workflow, describe
 from ..comfy.workflow_slots import LibraryError
 from ..generation import profile_for
@@ -154,6 +155,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         values: dict,
         overrides: dict | None = None,
         loras: list[dict] | None = None,
+        slot_overrides: dict | None = None,
         variant: str | None = None,
     ) -> tuple[dict, list[str], list[str]]:
         doc = self.workflow(stage.workflow_id)
@@ -174,6 +176,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
             if loras
             else None
         )
+        slot = slots.merge_overrides(slot, stage.slot_overrides, slot_overrides)
         warnings = list(composition_warnings)
         try:
             compiled = compile_workflow(
@@ -224,6 +227,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         later_values: dict,
         overrides: dict,
         loras: list[dict],
+        slot_overrides: dict | None = None,
         start_with_previous: bool = False,
     ) -> tuple[list[dict], list[list[str]]]:
         compiled, feeds = [], []
@@ -237,7 +241,9 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
             values = dict(first_values if n == 0 else later_values)
             if chained and n > 0:
                 values["init"] = asset_value(PREVIOUS)
-            data, feed, _ = self._compile_stage(stage, values, overrides, loras)
+            data, feed, _ = self._compile_stage(
+                stage, values, overrides, loras, slot_overrides=slot_overrides
+            )
             if stage.feed_output:
                 if stage.feed_output.node_id not in compiled[-1]["outputs"]:
                     raise RenderError(f"上一阶段没有输出节点 {stage.feed_output.node_id}")
@@ -316,7 +322,12 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
                 **extra,
             }
             stages, feeds = self._chain(
-                profile.draft, base, later, node_overrides(series, panel), pp.loras
+                profile.draft,
+                base,
+                later,
+                node_overrides(series, panel),
+                pp.loras,
+                panel.overrides.slot_overrides,
             )
             group = profile.model_group or stages[0].get("checkpoint") or ""
             meta = {
@@ -500,6 +511,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
                 {k: v for k, v in values.items() if k != "init"},
                 node_overrides(series, panel),
                 [],
+                panel.overrides.slot_overrides,
             )
             meta = {
                 "episode_id": episode.id,

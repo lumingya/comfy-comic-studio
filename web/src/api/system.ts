@@ -10,6 +10,7 @@ import type {
   WorkflowSummary,
   WorkflowDocument,
   WorkflowConfig,
+  ImageAdapterInfo,
 } from './types';
 
 // ---------------------------------------------------------------- settings
@@ -38,6 +39,15 @@ export function useRegistry() {
         string,
         { id: string; title: string; source?: string }[]
       >,
+  });
+}
+
+export function useImageAdapters() {
+  return useQuery({
+    queryKey: keys.imageAdapters,
+    staleTime: Infinity,
+    queryFn: async () =>
+      data(await api.GET('/api/image-adapters')) as unknown as ImageAdapterInfo[],
   });
 }
 

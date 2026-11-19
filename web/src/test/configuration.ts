@@ -23,6 +23,7 @@ export const imageChannel: ImageChannel = {
   scale: 5,
   sampler: 'k_euler_ancestral',
   ref_strength: 0.6,
+  extra_options: { quality_mode: 'draft' },
 };
 export const configSettings: AppSettings = {
   llm: {
@@ -65,6 +66,7 @@ export const configProfile: RenderProfile = {
       variant: null,
       values: { seed: 7 },
       overrides: { '/3/inputs/steps': 25 },
+      slot_overrides: {},
       enabled: true,
       feed: 'previous',
       feed_output: null,
@@ -132,7 +134,23 @@ export const configSummary: WorkflowSummary = {
 export function configurationRoutes(extra: Record<string, unknown> = {}) {
   return {
     'GET /api/settings': configSettings,
-    'GET /api/registry': { cloud_adapter: [] },
+    'GET /api/registry': { cloud_adapter: [{ id: 'vendor_images', title: 'Vendor images' }] },
+    'GET /api/image-adapters': [
+      {
+        id: 'vendor_images',
+        source: 'ext:vendor',
+        title: 'Vendor images',
+        capabilities: ['generate', 'reference'],
+        schema: {
+          properties: {
+            quality_mode: { type: 'string', title: 'Quality mode', enum: ['draft', 'final'] },
+          },
+        },
+        supports_reference: true,
+        supports_negative: false,
+        supports_seed: false,
+      },
+    ],
     'GET /api/profiles': [configProfile],
     'GET /api/creation-kits': [],
     'GET /api/instances': { instances: [configInstance], pool: {} },

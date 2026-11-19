@@ -393,6 +393,15 @@ def normalize_loras(items):
         if not math.isfinite(strength):
             raise LibraryError('LoRA 强度必须是有限数字')
         entry = {'name': name, 'strength': _round2(strength)}
+        if 'enabled' in raw:
+            if type(raw['enabled']) is not bool:
+                raise LibraryError('LoRA 开关必须是布尔值')
+            entry['enabled'] = raw['enabled']
+        key = raw.get('key')
+        if key is not None:
+            if not isinstance(key, str) or not key or len(key) > 512:
+                raise LibraryError('LoRA 标识无效')
+            entry['key'] = key
         clip = raw.get('clip')
         if clip not in (None, ''):
             try:
@@ -497,13 +506,20 @@ def _apply_chain(workflow, lora, loras, notices):
         chain.append({**tail, 'nodeId': new_id})
     for i, d in enumerate(chain):
         node = workflow[d['nodeId']]
-        if i < len(loras):
+        if i < len(loras) and loras[i].get('enabled', True):
             l = loras[i]
             _write_field(workflow, d['nodeId'], d['namePath'], lora_display_name(l['name'], 'file'))
             if d['strengthPath']:
                 _write_field(workflow, d['nodeId'], d['strengthPath'], l['strength'])
             if d['clipPath']:
                 _write_field(workflow, d['nodeId'], d['clipPath'], l.get('clip', l['strength']))
+            continue
+        if i < len(loras):
+            l = loras[i]
+            if d['strengthPath']:
+                _write_field(workflow, d['nodeId'], d['strengthPath'], 0)
+            if d['clipPath']:
+                _write_field(workflow, d['nodeId'], d['clipPath'], 0)
             continue
         users = _consumer_index(workflow).get(d['nodeId'], [])
         bypassable = bool(d['passthrough']) and all(
@@ -551,21 +567,23 @@ def _apply_stack(workflow, lora, loras):
                 entry['lora'] = lora_display_name(l['name'], 'file')
             else:
                 entry['name'] = lora_display_name(l['name'], 'file')
-            entry['on'] = True
-            entry['strength'] = l['strength']
+            enabled = l.get('enabled', True)
+            entry['on'] = enabled
+            entry['strength'] = l['strength'] if enabled else 0
             if 'strengthTwo' in entry:
-                entry['strengthTwo'] = l['clip'] if 'clip' in l else None
+                entry['strengthTwo'] = (l['clip'] if 'clip' in l else None) if enabled else 0
             continue
         switch_value = node['inputs'][slot['switchPath']] if slot['switchPath'] else None
         on, off = (True, False) if isinstance(switch_value, bool) else ('On', 'Off')
         if l is not None:
             _write_field(workflow, lora['nodeId'], slot['namePath'], lora_display_name(l['name'], 'file'))
+            enabled = l.get('enabled', True)
             for key in slot['strengthPaths']:
-                _write_field(workflow, lora['nodeId'], key, l['strength'])
+                _write_field(workflow, lora['nodeId'], key, l['strength'] if enabled else 0)
             for key in slot['clipPaths']:
-                _write_field(workflow, lora['nodeId'], key, l.get('clip', l['strength']))
+                _write_field(workflow, lora['nodeId'], key, l.get('clip', l['strength']) if enabled else 0)
             if slot['switchPath']:
-                _write_field(workflow, lora['nodeId'], slot['switchPath'], on)
+                _write_field(workflow, lora['nodeId'], slot['switchPath'], on if enabled else off)
         elif slot['switchPath']:
             _write_field(workflow, lora['nodeId'], slot['switchPath'], off)
         else:
@@ -964,8 +982,18 @@ def ensure_plan(workflow, slots=None, object_info=None):
     slots = slots or {}
     plan = slots.get('plan', slots if slots.get('version') == 3 else {})
     if plan.get('version') != 3 or plan.get('objectInfoHash') != info_hash(object_info) or plan.get('workflowHash') != info_hash(workflow):
-        return analyze(workflow, object_info, plan.get('manual'), slots)
-    return copy.deepcopy(plan)
+        plan = analyze(workflow, object_info, plan.get('manual'), slots)
+    else:
+        plan = copy.deepcopy(plan)
+    for group in plan.get('lora', {}).get('groups', []):
+        occurrences = {}
+        for item in group.get('pinned', []):
+            name_key = _name_key(item['name'])
+            occurrence = occurrences.get(name_key, 0)
+            occurrences[name_key] = occurrence + 1
+            item.setdefault('key', _lora_key(group['key'], name_key, occurrence))
+            item.setdefault('enabled', True)
+    return plan
 
 
 def normalize_overrides(overrides):
@@ -983,6 +1011,28 @@ def normalize_overrides(overrides):
         clean['model'] = filename(model)
     if 'loras' in overrides:
         clean['loras'] = normalize_loras(overrides['loras'])
+    if 'groups' in overrides:
+        groups = overrides['groups']
+        if not isinstance(groups, list) or len(groups) > 64:
+            raise LibraryError('LoRA 组覆盖必须是数组')
+        clean['groups'] = []
+        seen_groups = set()
+        for raw_group in groups:
+            if not isinstance(raw_group, dict):
+                raise LibraryError('LoRA 组覆盖格式无效')
+            key = raw_group.get('key')
+            if not isinstance(key, str) or not key or len(key) > 512 or key in seen_groups:
+                raise LibraryError('LoRA 组标识无效或重复')
+            seen_groups.add(key)
+            raw_loras = raw_group.get('loras', [])
+            values = normalize_loras(raw_loras)
+            for raw_lora, value in zip(raw_loras, values, strict=True):
+                for optional in ('strength', 'enabled', 'clip'):
+                    if optional not in raw_lora:
+                        value.pop(optional, None)
+            if any(not item.get('key') for item in values):
+                raise LibraryError('LoRA 组内每项都必须提供稳定标识')
+            clean['groups'].append({'key': key, 'loras': values})
     for key in ('unpin', 'disabled'):
         if key in overrides:
             values = overrides[key]
@@ -996,12 +1046,97 @@ def _name_key(name):
     return strip_extension(name.replace('\\', '/').lower())
 
 
+def _lora_key(group_key, name_key, occurrence=0):
+    digest = hashlib.sha256(
+        (group_key + '\0' + name_key + '\0' + str(occurrence)).encode('utf-8')
+    ).hexdigest()[:16]
+    return f"{group_key}:{digest}"
+
+
+def merge_overrides(*overrides):
+    """Merge slot overrides from defaults to the most specific task or panel layer."""
+    result = {}
+    for override in overrides:
+        if override is None:
+            continue
+        if not isinstance(override, dict):
+            raise LibraryError('LoRA 槽位覆盖必须是对象')
+        override = normalize_overrides(override)
+        if not override:
+            continue
+        for key, value in override.items():
+            if key == "model" and isinstance(result.get(key), dict) and isinstance(value, dict):
+                result[key] = {**result[key], **copy.deepcopy(value)}
+            elif key == "groups" and isinstance(value, list):
+                groups = {item.get("key"): copy.deepcopy(item) for item in result.get(key, [])}
+                for item in value:
+                    group_key = item.get("key") if isinstance(item, dict) else None
+                    if not group_key:
+                        raise LibraryError('LoRA 组覆盖格式无效')
+                    previous = groups.get(group_key, {"key": group_key, "loras": []})
+                    if not isinstance(previous.get("loras"), list) or not isinstance(
+                        item.get("loras", []), list
+                    ):
+                        raise LibraryError('LoRA 组内条目必须是数组')
+                    loras = {lora.get("key"): copy.deepcopy(lora) for lora in previous["loras"]}
+                    for lora in item.get("loras", []):
+                        lora_key = lora.get("key") if isinstance(lora, dict) else None
+                        if not lora_key:
+                            raise LibraryError('LoRA 项缺少稳定标识')
+                        loras[lora_key] = {**loras.get(lora_key, {}), **copy.deepcopy(lora)}
+                    previous["loras"] = list(loras.values())
+                    groups[group_key] = previous
+                result[key] = list(groups.values())
+            elif key == "loras" and isinstance(value, list):
+                loras = {
+                    _name_key(item["name"]): copy.deepcopy(item)
+                    for item in result.get(key, [])
+                    if isinstance(item, dict) and isinstance(item.get("name"), str)
+                }
+                for item in value:
+                    if not isinstance(item, dict) or not isinstance(item.get("name"), str):
+                        raise LibraryError('LoRA 覆盖条目格式无效')
+                    loras[_name_key(item["name"])] = copy.deepcopy(item)
+                result[key] = list(loras.values())
+            else:
+                result[key] = copy.deepcopy(value)
+    return result
+
+
 def _merged(pinned, additions, unpin):
     unpin_keys = {_name_key(u) for u in unpin}
     result = {_name_key(x['name']): copy.deepcopy(x) for x in pinned if _name_key(x['name']) not in unpin_keys}
     for item in additions:
-        result[_name_key(item['name'])] = copy.deepcopy(item)
+        key = _name_key(item['name'])
+        merged = copy.deepcopy(item)
+        previous = result.get(key)
+        if previous:
+            if 'key' in merged and merged['key'] != previous.get('key'):
+                raise LibraryError('LoRA 标识与工作流槽位不匹配')
+            if previous.get('key'):
+                merged.setdefault('key', previous['key'])
+            if 'enabled' in previous:
+                merged.setdefault('enabled', previous['enabled'])
+        result[key] = merged
     return list(result.values())
+
+
+def _apply_group_overrides(group, loras, overrides):
+    selected = next((item for item in overrides if item['key'] == group['key']), None)
+    if selected is None:
+        return loras
+    by_key = {item['key']: item for item in loras if item.get('key')}
+    for override in selected['loras']:
+        current = by_key.get(override['key'])
+        if current is None or current['name'] != override['name']:
+            raise LibraryError('LoRA 项标识与工作流槽位不匹配')
+        if 'enabled' in override:
+            current['enabled'] = override['enabled']
+        if 'strength' in override:
+            current['strength'] = override['strength']
+        if 'clip' in override:
+            current['clip'] = override['clip']
+    return loras
 
 
 def _write_object(wf, writer, loras):
@@ -1018,15 +1153,18 @@ def _write_object(wf, writer, loras):
     for lora in loras:
         e = copy.deepcopy(template)
         e['lora' if 'lora' in e and 'name' not in e else 'name'] = lora['name']
-        e.update(strength=lora['strength'], active=True)
+        enabled = lora.get('enabled', True)
+        e.update(strength=lora['strength'] if enabled else 0, active=enabled)
         if 'on' in e:
-            e['on'] = True
+            e['on'] = enabled
         if 'clipStrength' in e:
-            e['clipStrength'] = lora.get('clip', lora['strength'])
+            e['clipStrength'] = lora.get('clip', lora['strength']) if enabled else 0
         values.append(e)
     node['inputs'][path] = {**raw, '__value__': values} if wrapped else values
     for text_path in writer.get('textPaths', []):
-        node['inputs'][text_path] = ' '.join(format_tag(l, 'path') for l in loras)
+        node['inputs'][text_path] = ' '.join(
+            format_tag(lora, 'path') for lora in loras if lora.get('enabled', True)
+        )
 
 
 def apply(workflow, plan, overrides, object_info=None, positive=None):
@@ -1036,6 +1174,8 @@ def apply(workflow, plan, overrides, object_info=None, positive=None):
     if plan.get('version') != 3:
         plan = analyze(workflow, object_info, legacy=plan)
     clean = normalize_overrides(overrides)
+    if clean.get('groups'):
+        plan = ensure_plan(workflow, {'plan': plan}, object_info)
     result, notices, writes = copy.deepcopy(workflow or {}), [], []
     disabled = set(clean.get('disabled', []))
     model = clean.get('model')
@@ -1061,8 +1201,12 @@ def apply(workflow, plan, overrides, object_info=None, positive=None):
         notices.append('写入模型 '+key+' → '+value)
     if model and not any(w['kind'] == 'model' for w in writes):
         raise LibraryError('当前工作流没有可写入的模型映射（全部跳过）')
-    if 'loras' in clean or clean.get('unpin'):
+    if 'loras' in clean or clean.get('unpin') or clean.get('groups'):
         groups = copy.deepcopy(plan['lora']['groups'])
+        known_group_keys = {group['key'] for group in groups}
+        unknown_group_keys = {item['key'] for item in clean.get('groups', [])} - known_group_keys
+        if unknown_group_keys:
+            raise LibraryError('LoRA 组标识与工作流槽位不匹配')
         if clean.get('loras') and plan['lora'].get('synth') and plan['lora']['synth'].get('enabled', True) and 'synth:'+plan['lora']['synth']['after']['nodeId'] not in disabled and not any(g.get('enabled', g['active']) and g['key'] not in disabled for g in groups):
             synth = plan['lora']['synth']; after = synth['after']; src = after['nodeId']
             n, nid = 1, src+':lora'
@@ -1091,6 +1235,7 @@ def apply(workflow, plan, overrides, object_info=None, positive=None):
             upstream_names = {_name_key(l['name']) for other in groups if other['key'] in group.get('upstreamKeys', []) for l in other['pinned'] if _name_key(l['name']) not in unpin_keys}
             additions = [l for l in clean.get('loras', []) if _name_key(l['name']) in local_names or (group.get('append', True) and _name_key(l['name']) not in upstream_names)]
             final = _merged(group['pinned'], additions, clean.get('unpin', []))
+            final = _apply_group_overrides(group, final, clean.get('groups', []))
             if final == group['pinned']:
                 # Still count this as a valid destination for an empty user addition.
                 wrote = True
@@ -1109,19 +1254,21 @@ def apply(workflow, plan, overrides, object_info=None, positive=None):
             elif kind == 'stack':
                 _apply_stack(result, writer, final)
             elif kind == 'embedded':
-                if len(final) > 1:
+                active_loras = [item for item in final if item.get('enabled', True)]
+                if len(active_loras) > 1:
                     raise LibraryError('此工作流的加载器最多 1 个 LoRA')
                 d = writer['chain'][0]
-                if not final and not d['strengthPath']:
+                if not active_loras and not d['strengthPath']:
                     raise LibraryError('内嵌 LoRA 没有强度字段，无法安全禁用')
-                if final:
-                    _write_field(result, writer['nodeId'], writer['path'], final[0]['name'])
+                if active_loras:
+                    _write_field(result, writer['nodeId'], writer['path'], active_loras[0]['name'])
                 for path, clip in [(d['strengthPath'], False), (d['clipPath'], True)]:
                     if path:
-                        _write_field(result, writer['nodeId'], path, (final[0].get('clip', final[0]['strength']) if clip else final[0]['strength']) if final else 0)
+                        _write_field(result, writer['nodeId'], path, (active_loras[0].get('clip', active_loras[0]['strength']) if clip else active_loras[0]['strength']) if active_loras else 0)
             elif kind == 'object':
                 _write_object(result, writer, final)
             elif kind == 'syntax':
+                active_loras = [item for item in final if item.get('enabled', True)]
                 destinations = [group['origin']] if group.get('origin') else group['sites']
                 for site in destinations:
                     if site.get('active') is False and group['active']:
@@ -1129,7 +1276,7 @@ def apply(workflow, plan, overrides, object_info=None, positive=None):
                     node = result[site['nodeId']]
                     if _is_link(node['inputs'].get(site['path']), result):
                         node['inputs'][site['path']] = ''
-                    _apply_syntax(result, {**site, 'nameFormat': 'path', 'placement': 'append', 'mirror': False}, final, notices)
+                    _apply_syntax(result, {**site, 'nameFormat': 'path', 'placement': 'append', 'mirror': False}, active_loras, notices)
             else:
                 raise LibraryError('未知 LoRA 写入形态：'+kind)
             wrote = True

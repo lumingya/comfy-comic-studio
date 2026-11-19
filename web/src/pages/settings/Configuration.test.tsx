@@ -155,6 +155,29 @@ describe('cloud channel configuration', () => {
     });
   });
 
+  it('renders extension channel fields from adapter metadata and persists extra options', async () => {
+    const calls = mockFetch(
+      configurationRoutes({
+        'PATCH /api/settings': (body: unknown) => ({ ...configSettings, ...(body as object) }),
+      }),
+    );
+    const user = userEvent.setup();
+    renderWithProviders(<ChannelsSection />);
+    await screen.findByDisplayValue('主力图像服务');
+    await user.selectOptions(screen.getByLabelText(/^类型/), 'vendor_images');
+    await expand('高级参数与标识');
+    await screen.findByText('Quality mode', { selector: 'label span' });
+    const quality = screen
+      .getByText('Quality mode', { selector: 'label span' })
+      .parentElement?.querySelector('select')!;
+    expect(quality).toHaveValue('draft');
+    await user.selectOptions(quality, 'final');
+    await user.click(screen.getByRole('button', { name: '保存' }));
+    await waitFor(() => expect(calls.some((call) => call.method === 'PATCH')).toBe(true));
+    const patch = calls.find((call) => call.method === 'PATCH')!.body as AppSettings;
+    expect(patch.image_channels?.[0].extra_options).toEqual({ quality_mode: 'final' });
+  });
+
   it('chat image channels inherit the image proxy and do not expose text AI or unsupported sizing', async () => {
     mockFetch(configurationRoutes());
     renderWithProviders(<ChannelsSection />);

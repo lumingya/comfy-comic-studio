@@ -34,6 +34,7 @@ function newStage(kind: RenderStage['kind'], workflow_id = ''): RenderStage {
     variant: null,
     values: {},
     overrides: {},
+    slot_overrides: {},
     enabled: true,
     feed: 'previous',
     feed_output: null,

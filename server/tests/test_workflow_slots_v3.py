@@ -110,6 +110,125 @@ class V3Acceptance(unittest.TestCase):
         _,w,_=self.run_case('pin-append');self.assertEqual(w['2']['inputs']['lora_name'],'turbo');self.assertEqual(w['2:lora1']['inputs']['lora_name'],'A');self.assertEqual(w['3']['inputs']['model'],['2:lora1',0])
         _,w,_=self.run_case('unpin');self.assertEqual(w['2']['inputs']['lora_name'],'A');self.assertNotIn('2:lora1',w)
         _,w,_=self.run_case('same-name');self.assertEqual(w['2']['inputs']['strength_model'],.9);self.assertNotIn('2:lora1',w)
+
+    def test_pinned_lora_can_be_disabled_and_restored_by_stable_key(self):
+        workflow = basic()
+        workflow['2']['inputs'].update(strength_model=0.8, strength_clip=0.4)
+        plan = s.ensure_plan(workflow, s.analyze(workflow))
+        original = plan['lora']['groups'][0]['pinned'][0]
+        self.assertTrue(original['enabled'])
+        self.assertTrue(original['key'])
+        override = {
+            'loras': [
+                {
+                    'name': original['name'],
+                    'strength': original['strength'],
+                    'clip': original['clip'],
+                    'enabled': False,
+                    'key': original['key'],
+                }
+            ]
+        }
+        disabled = s.apply(workflow, plan, override)['workflow']
+        self.assertEqual(disabled['2']['inputs']['lora_name'], 'turbo')
+        self.assertEqual(disabled['2']['inputs']['strength_model'], 0)
+        self.assertEqual(disabled['3']['inputs']['model'], ['2', 0])
+        self.assertEqual(workflow['2']['inputs']['strength_model'], 0.8)
+        self.assertEqual(workflow['2']['inputs']['strength_clip'], 0.4)
+        restored = s.apply(
+            workflow,
+            plan,
+            {
+                'loras': [
+                    {
+                        **override['loras'][0],
+                        'enabled': True,
+                    }
+                ]
+            },
+        )['workflow']
+        self.assertEqual(restored, workflow)
+        with self.assertRaisesRegex(LibraryError, '标识'):
+            s.apply(
+                workflow,
+                plan,
+                {'loras': [{**override['loras'][0], 'key': 'another-slot'}]},
+            )
+
+    def test_group_scoped_lora_controls_match_stable_keys(self):
+        workflow = basic()
+        plan = s.ensure_plan(workflow, s.analyze(workflow))
+        group = plan['lora']['groups'][0]
+        pinned = group['pinned'][0]
+        result = s.apply(
+            workflow,
+            plan,
+            {
+                'groups': [
+                    {
+                        'key': group['key'],
+                        'loras': [
+                            {
+                                'key': pinned['key'],
+                                'name': pinned['name'],
+                                'strength': 0.6,
+                                'enabled': False,
+                            }
+                        ],
+                    }
+                ]
+            },
+        )['workflow']
+        self.assertEqual(result['2']['inputs']['strength_model'], 0)
+        self.assertEqual(workflow['2']['inputs']['strength_model'], 1)
+        with self.assertRaisesRegex(LibraryError, '槽位'):
+            s.apply(
+                workflow,
+                plan,
+                {
+                    'groups': [
+                        {
+                            'key': group['key'],
+                            'loras': [
+                                {
+                                    'key': 'unknown',
+                                    'name': pinned['name'],
+                                    'strength': 1,
+                                }
+                            ],
+                        }
+                    ]
+                },
+            )
+        with self.assertRaisesRegex(LibraryError, '组标识'):
+            s.apply(
+                workflow,
+                plan,
+                {'groups': [{'key': 'unknown-group', 'loras': []}]},
+            )
+
+    def test_slot_override_layers_merge_by_group_and_stable_lora_key(self):
+        group_key = "origin:custom:loras"
+        ink = {"key": "ink-key", "name": "ink", "strength": 0.5, "enabled": True}
+        tone = {"key": "tone-key", "name": "tone", "strength": 0.8, "enabled": True}
+        merged = s.merge_overrides(
+            {"groups": [{"key": group_key, "loras": [ink, tone]}]},
+            {
+                "groups": [
+                    {
+                        "key": group_key,
+                        "loras": [{"key": "ink-key", "name": "ink", "enabled": False}],
+                    }
+                ]
+            },
+        )
+        self.assertEqual(
+            merged["groups"][0]["loras"],
+            [
+                {**ink, "enabled": False},
+                tone,
+            ],
+        )
     def test_name_file_alias(self):
         _,w,_=self.run_case('same-file-extension');self.assertNotIn('2:lora1',w);self.assertEqual(w['2']['inputs']['strength_model'],.9)
 

@@ -24,6 +24,7 @@ class WorkflowConfig(StrictModel):
     )
     values: dict[str, object] = Field(default_factory=dict)
     overrides: dict[str, object] = Field(default_factory=dict)
+    slot_overrides: dict[str, object] = Field(default_factory=dict)
     guard: list[str] = Field(default_factory=list)
     variants: dict[str, dict] = Field(default_factory=dict)
     frontend: dict[str, dict] = Field(default_factory=dict)
@@ -76,6 +77,7 @@ class RenderStage(StrictModel):
     variant: str | None = Field(default=None, description="[mio:output:<variant>] to keep")
     values: dict[str, object] = Field(default_factory=dict)
     overrides: dict[str, object] = Field(default_factory=dict)
+    slot_overrides: dict[str, object] = Field(default_factory=dict)
     enabled: bool = True
     feed: Literal["none", "previous"] = Field(
         default="previous", description="previous: the prior stage's image becomes [mio:init]"

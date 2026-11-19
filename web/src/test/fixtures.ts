@@ -105,6 +105,7 @@ function panel(i: number, extra: Partial<Panel> = {}): Panel {
       height: null,
       values: {},
       node_overrides: {},
+      slot_overrides: {},
       profile_id: null,
     },
     motion: null,

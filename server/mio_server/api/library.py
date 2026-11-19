@@ -64,6 +64,7 @@ class CompileRequest(BaseModel):
     values: dict[str, Any] = Field(default_factory=dict)
     variant: str | None = None
     overrides: dict[str, Any] = Field(default_factory=dict)
+    slot_overrides: dict[str, Any] = Field(default_factory=dict)
 
 
 def _check_api_format(graph: dict) -> None:
@@ -130,6 +131,65 @@ def get_workflow(ctx: Ctx, workflow_id: str) -> dict:
     return {**doc.model_dump(), "describe": C.describe(doc, rules=_rules(ctx))}
 
 
+@router.get("/workflows/{workflow_id}/loras")
+def workflow_loras(ctx: Ctx, workflow_id: str) -> dict:
+    """Describe the workflow's LoRA controls without contacting ComfyUI."""
+    doc = ctx.store.get_doc("workflow", workflow_id)
+    plan = slots.ensure_plan(doc.graph, doc.slots)
+    groups = []
+    for group in plan.get("lora", {}).get("groups", []):
+        writer = group.get("writer", {})
+        embedded = group.get("kind") == "embedded"
+        can_toggle = bool(group.get("active")) and (
+            not embedded or bool(writer.get("chain") and writer["chain"][0].get("strengthPath"))
+        )
+        reason = ""
+        if not group.get("active"):
+            reason = group.get("warn") or "没有活跃的 LoRA 写入点"
+        elif embedded and not can_toggle:
+            reason = "此内嵌 LoRA 没有强度字段，无法安全关闭"
+        groups.append(
+            {
+                "key": group["key"],
+                "kind": group["kind"],
+                "active": bool(group.get("active")),
+                "range": writer.get("range", {"min": -5, "max": 5}),
+                "supports_independent_toggle": can_toggle,
+                "reason": reason,
+                "sites": group.get("sites", []),
+                "loras": [
+                    {
+                        "key": item["key"],
+                        "name": item["name"],
+                        "strength": item["strength"],
+                        "clip": item.get("clip"),
+                        "enabled": bool(item.get("enabled", True)),
+                        "source": "workflow",
+                        "pinned": True,
+                        "supports_independent_toggle": can_toggle,
+                        "supports_strength": True,
+                        "range": writer.get("range", {"min": -5, "max": 5}),
+                    }
+                    for item in group.get("pinned", [])
+                ],
+            }
+        )
+    return {
+        "workflow_id": doc.id,
+        "adapter": {"id": "workflow_slots.v3", "source": "builtin"},
+        "enabled": bool(plan.get("lora", {}).get("enabled")),
+        "reason": plan.get("lora", {}).get("reason", ""),
+        "supports_append": bool(
+            plan.get("lora", {}).get("synth")
+            or any(
+                group.get("active") and group.get("append")
+                for group in plan.get("lora", {}).get("groups", [])
+            )
+        ),
+        "groups": groups,
+    }
+
+
 @router.patch("/workflows/{workflow_id}")
 def patch_workflow(ctx: Ctx, workflow_id: str, body: WorkflowPatch) -> dict:
     doc = ctx.store.get_doc("workflow", workflow_id)
@@ -186,6 +246,7 @@ def compile_preview(ctx: Ctx, workflow_id: str, body: CompileRequest) -> dict:
         body.values,
         variant=body.variant,
         overrides=body.overrides,
+        slot_overrides=body.slot_overrides,
         rules=_rules(ctx),
         registry=ctx.registry,
     ).to_json()

@@ -34,8 +34,20 @@ NovelAI 返回明确标记的内置参考目录，ComfyUI 返回节点公开的�
 `POST /api/v2/workflows/{workflow_id}/trial` 需要 `render` 权限，接受 `prompt`、可选 `negative_prompt`、
 `instance_id`、宽高、`values`、`overrides` 与 `idempotency_key`，实际生成一张并返回 `series`、`episode`、`job`。
 通过普通任务事件、详情和取消接口跟踪执行；`/compile` 仍只预览提交数据，不出图。
+`GET /api/v2/workflows/{workflow_id}/loras`（`read`）返回槽位组、工作流自带 LoRA 的稳定键、权重范围和开关支持情况。
+试生成可传 `slot_overrides: {groups: [{key, loras: [{key, name, strength, clip?, enabled}]}]}`，只作用于本次冻结工作流，
+不改原工作流；同名 LoRA 必须使用各自的组键和项目键。
 预设通过 `entries` 定义普通变量，不自动追加正负提示词。分镜的 `overrides.raw_prompt` /
 `overrides.raw_negative` 显式引用 `{变量名}`，`/workshop/assemble/preview` 返回与执行一致的最终提示词。
+
+分镜与预设也可用通用资源路由独立查询和编辑：`GET /workshop/storyboards`、
+`GET /workshop/storyboards/{id}`、`POST /workshop/storyboards`、`PATCH /workshop/storyboards/{id}`，
+以及 `GET /workshop/presets`、`GET /workshop/presets/{id}`、`POST /workshop/presets`、
+`PATCH /workshop/presets/{id}`。读取需要 `read`，创建与编辑需要 `write`；更改分镜或预设不会追改已装配作品快照。
+
+云端渠道可用 `GET /api/v2/image-adapters`（`read`）发现。内置与扩展渠道统一返回能力及参数 schema；
+扩展通过 `cloud_adapter` 注册实现和声明元数据，`ImageChannel.extra_options` 保存其扩展配置。
+凭据类 extra option 会在设置响应与请求快照中脱敏，扩展应避免把秘密放进普通能力 schema。
 
 ## 长篇整理与检查点
 

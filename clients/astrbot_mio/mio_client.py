@@ -552,6 +552,13 @@ class MioClient(_Base):
         """DELETE /workflows/{workflow_id} — Delete Workflow."""
         return self._request("DELETE", f"/workflows/{_q(workflow_id)}")
 
+    def workflow_loras(self, workflow_id: str) -> Any:
+        """GET /workflows/{workflow_id}/loras — Workflow Loras.
+
+        Describe the workflow's LoRA controls without contacting ComfyUI.
+        """
+        return self._request("GET", f"/workflows/{_q(workflow_id)}/loras")
+
     def copy_workflow(self, workflow_id: str) -> Any:
         """POST /workflows/{workflow_id}/copy — Copy Workflow."""
         return self._request("POST", f"/workflows/{_q(workflow_id)}/copy")
@@ -924,6 +931,13 @@ class MioClient(_Base):
         """GET /registry — Registry."""
         return self._request("GET", "/registry")
 
+    def image_adapters(self) -> Any:
+        """GET /image-adapters — Image Adapters.
+
+        Discover built-in and extension image channels without exposing configuration secrets.
+        """
+        return self._request("GET", "/image-adapters")
+
     def list_trash(self) -> Any:
         """GET /trash — List Trash."""
         return self._request("GET", "/trash")
@@ -1001,6 +1015,38 @@ class MioClient(_Base):
     def update_preferences(self, body: dict | list | None = None) -> Any:
         """PATCH /update/preferences — Update Preferences."""
         return self._request("PATCH", "/update/preferences", json=body)
+
+    def list_storyboards(self) -> Any:
+        """GET /workshop/storyboards — List Storyboards."""
+        return self._request("GET", "/workshop/storyboards")
+
+    def create_storyboard(self, body: dict | list | None = None) -> Any:
+        """POST /workshop/storyboards — Create Storyboard."""
+        return self._request("POST", "/workshop/storyboards", json=body)
+
+    def get_storyboard(self, storyboard_id: str) -> Any:
+        """GET /workshop/storyboards/{storyboard_id} — Get Storyboard."""
+        return self._request("GET", f"/workshop/storyboards/{_q(storyboard_id)}")
+
+    def patch_storyboard(self, storyboard_id: str, body: dict | list | None = None) -> Any:
+        """PATCH /workshop/storyboards/{storyboard_id} — Patch Storyboard."""
+        return self._request("PATCH", f"/workshop/storyboards/{_q(storyboard_id)}", json=body)
+
+    def list_presets(self) -> Any:
+        """GET /workshop/presets — List Presets."""
+        return self._request("GET", "/workshop/presets")
+
+    def create_preset(self, body: dict | list | None = None) -> Any:
+        """POST /workshop/presets — Create Preset."""
+        return self._request("POST", "/workshop/presets", json=body)
+
+    def get_preset(self, preset_id: str) -> Any:
+        """GET /workshop/presets/{preset_id} — Get Preset."""
+        return self._request("GET", f"/workshop/presets/{_q(preset_id)}")
+
+    def patch_preset(self, preset_id: str, body: dict | list | None = None) -> Any:
+        """PATCH /workshop/presets/{preset_id} — Patch Preset."""
+        return self._request("PATCH", f"/workshop/presets/{_q(preset_id)}", json=body)
 
     def get_workshop(self) -> Any:
         """GET /workshop — Get Workshop.

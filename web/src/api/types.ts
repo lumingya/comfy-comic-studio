@@ -13,10 +13,10 @@ export type Prop = S['Prop-Output'];
 export type AssetRef = S['AssetRef-Output'];
 export type VariantSet = S['VariantSet-Output'];
 export type Episode = S['Episode'];
-export type Panel = S['Panel'];
-export type PanelCharacter = S['PanelCharacter'];
-export type PanelOverrides = S['PanelOverrides'];
-export type Dialogue = S['Dialogue'];
+export type Panel = S['Panel-Output'];
+export type PanelCharacter = S['PanelCharacter-Output'];
+export type PanelOverrides = S['PanelOverrides-Output'];
+export type Dialogue = S['Dialogue-Output'];
 export type Take = S['Take'];
 export type QueueStatus = S['QueueStatus'];
 export type QAResult = S['QAResult'];
@@ -27,7 +27,7 @@ export type RenderStage = S['RenderStage-Output'];
 export type ComfyInstance = S['ComfyInstance-Output'];
 export type Asset = S['Asset'];
 export type LetterStyle = S['LetterStyle-Output'];
-export type ControlInput = S['ControlInput'];
+export type ControlInput = S['ControlInput-Output'];
 export type PacingSuggestion = S['PacingSuggestion'];
 export type PacingPreview = S['PacingPreview'];
 export type PacingChanges = S['PacingChanges'];
@@ -217,6 +217,23 @@ export interface ImageChannel {
   scale: number;
   sampler: string;
   ref_strength: number;
+  extra_options: Record<string, unknown>;
+}
+
+export interface ImageAdapterInfo {
+  id: string;
+  source: string;
+  title: string;
+  capabilities: string[];
+  schema: {
+    properties?: Record<
+      string,
+      { type?: string; title?: string; description?: string; enum?: string[] }
+    >;
+  };
+  supports_reference?: boolean | null;
+  supports_negative?: boolean | null;
+  supports_seed?: boolean | null;
 }
 
 export interface AppSettings {

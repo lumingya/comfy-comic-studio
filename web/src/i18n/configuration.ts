@@ -73,6 +73,9 @@ export const configZh = {
         'Chat Completions 协议：使用 /chat/completions。需要能返回图片的模型或反代，不是普通文本聊天。',
     },
     extensionHint: '扩展渠道：参数含义由扩展适配器决定；已有参数会完整保留。',
+    extraOptionHint: '按此渠道适配器声明的参数填写；普通设置响应会自动遮蔽密钥字段。',
+    extraOptionsJson: '扩展参数（JSON）',
+    extraOptionsInvalid: '请输入 JSON 对象；无效文本不会保存。',
     chatAddressHint: '留空沿用默认图像代理。填写独立地址后使用本渠道密钥。',
     addressHint:
       '留空使用 {{address}}。可填写基础地址，粘贴完整 OpenAI 接口地址会在保存时自动整理。',
@@ -405,6 +408,10 @@ export const configEn = {
     },
     extensionHint:
       'Extension channel: parameter support is defined by the adapter. Existing parameters are preserved.',
+    extraOptionHint:
+      'Use parameters declared by this channel adapter. Secret-like fields are masked in settings responses.',
+    extraOptionsJson: 'Extension options (JSON)',
+    extraOptionsInvalid: 'Enter a JSON object. Invalid text will not be saved.',
     chatAddressHint:
       'Blank uses the default image proxy. A separate endpoint uses this channel’s own key.',
     addressHint: 'Blank uses {{address}}. Pasted OpenAI endpoint paths are cleaned up when saved.',

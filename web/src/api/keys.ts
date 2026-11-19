@@ -12,6 +12,7 @@ export const keys = {
   queue: ['workshop-queue'] as const,
   settings: ['settings'] as const,
   registry: ['registry'] as const,
+  imageAdapters: ['image-adapters'] as const,
   workflows: ['workflows'] as const,
   workflow: (id: string) => ['workflow', id] as const,
   profiles: ['profiles'] as const,

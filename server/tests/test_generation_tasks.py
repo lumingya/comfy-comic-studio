@@ -497,6 +497,66 @@ class GenerationTaskTests(ApiCase):
         )
         self.assertEqual(denied.status_code, 403)
 
+    def test_workflow_trial_freezes_per_lora_slot_overrides(self):
+        graph = {
+            "1": {
+                "class_type": "CheckpointLoaderSimple",
+                "inputs": {"ckpt_name": "base.safetensors"},
+            },
+            "2": {
+                "class_type": "LoraLoader",
+                "inputs": {
+                    "model": ["1", 0],
+                    "clip": ["1", 1],
+                    "lora_name": "ink.safetensors",
+                    "strength_model": 0.7,
+                    "strength_clip": 0.5,
+                },
+            },
+            "3": {"class_type": "KSampler", "inputs": {"model": ["2", 0]}},
+            "6": {
+                "class_type": "CLIPTextEncode",
+                "inputs": {"text": "", "clip": ["2", 1]},
+                "_meta": {"title": "[mio:prompt]"},
+            },
+            "9": {"class_type": "SaveImage", "inputs": {"images": ["3", 0]}},
+        }
+        workflow = self.ok(
+            self.client.post("/api/workflows", json={"name": "Trial LoRA", "graph": graph}),
+            201,
+        )
+        controls = self.ok(self.client.get(f"/api/workflows/{workflow['id']}/loras"))
+        lora = controls["groups"][0]["loras"][0]
+        result = self.ok(
+            self.client.post(
+                f"/api/workflows/{workflow['id']}/trial",
+                json={
+                    "prompt": "a quiet blue room",
+                    "slot_overrides": {
+                        "groups": [
+                            {
+                                "key": controls["groups"][0]["key"],
+                                "loras": [
+                                    {
+                                        "key": lora["key"],
+                                        "name": lora["name"],
+                                        "strength": 0.9,
+                                        "clip": 0.3,
+                                        "enabled": False,
+                                    }
+                                ],
+                            }
+                        ]
+                    },
+                },
+            )
+        )
+        job = self.ctx.engine.get(result["job"]["id"])
+        compiled_graph = job["items"][0]["input"]["stages"][0]["graph"]
+        self.assertEqual(compiled_graph["2"]["inputs"]["lora_name"], "ink.safetensors")
+        self.assertEqual(compiled_graph["2"]["inputs"]["strength_model"], 0)
+        self.assertEqual(compiled_graph["2"]["inputs"]["strength_clip"], 0)
+
     def test_cloud_source_freezes_model_and_options_without_credentials(self):
         channel = {
             "id": "testcloud",

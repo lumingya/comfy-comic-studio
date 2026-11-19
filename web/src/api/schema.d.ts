@@ -907,6 +907,26 @@ export interface paths {
         patch: operations["patch_workflow_api_workflows__workflow_id__patch"];
         trace?: never;
     };
+    "/api/workflows/{workflow_id}/loras": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Workflow Loras
+         * @description Describe the workflow's LoRA controls without contacting ComfyUI.
+         */
+        get: operations["workflow_loras_api_workflows__workflow_id__loras_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/workflows/{workflow_id}/copy": {
         parameters: {
             query?: never;
@@ -1557,6 +1577,26 @@ export interface paths {
         };
         /** Registry */
         get: operations["registry_api_registry_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/image-adapters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Image Adapters
+         * @description Discover built-in and extension image channels without exposing configuration secrets.
+         */
+        get: operations["image_adapters_api_image_adapters_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2520,6 +2560,78 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/workshop/storyboards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Storyboards */
+        get: operations["list_storyboards_api_workshop_storyboards_get"];
+        put?: never;
+        /** Create Storyboard */
+        post: operations["create_storyboard_api_workshop_storyboards_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workshop/storyboards/{storyboard_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Storyboard */
+        get: operations["get_storyboard_api_workshop_storyboards__storyboard_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Storyboard */
+        patch: operations["patch_storyboard_api_workshop_storyboards__storyboard_id__patch"];
+        trace?: never;
+    };
+    "/api/workshop/presets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Presets */
+        get: operations["list_presets_api_workshop_presets_get"];
+        put?: never;
+        /** Create Preset */
+        post: operations["create_preset_api_workshop_presets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workshop/presets/{preset_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Preset */
+        get: operations["get_preset_api_workshop_presets__preset_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Patch Preset */
+        patch: operations["patch_preset_api_workshop_presets__preset_id__patch"];
         trace?: never;
     };
     "/api/workshop": {
@@ -4007,6 +4119,8 @@ export interface components {
             variant?: string | null;
             /** Overrides */
             overrides?: Record<string, unknown>;
+            /** Slot Overrides */
+            slot_overrides?: Record<string, unknown>;
         };
         /** CompositionPreview */
         CompositionPreview: {
@@ -4041,7 +4155,35 @@ export interface components {
          * ControlInput
          * @description One ControlNet input, bound to ``[mio:control:<kind>]`` (+ ``[mio:strength:<kind>]``).
          */
-        ControlInput: {
+        "ControlInput-Input": {
+            /**
+             * Kind
+             * @default pose
+             * @enum {string}
+             */
+            kind?: "pose" | "depth" | "canny" | "lineart";
+            /**
+             * Source
+             * @description auto = skeleton drawn from character positions (pose only); asset = uploaded image; take = an existing take of this panel.
+             * @default auto
+             * @enum {string}
+             */
+            source?: "auto" | "asset" | "take";
+            /** Asset Id */
+            asset_id?: string | null;
+            /** Take Id */
+            take_id?: string | null;
+            /**
+             * Strength
+             * @default 0.8
+             */
+            strength?: number;
+        };
+        /**
+         * ControlInput
+         * @description One ControlNet input, bound to ``[mio:control:<kind>]`` (+ ``[mio:strength:<kind>]``).
+         */
+        "ControlInput-Output": {
             /**
              * Kind
              * @default pose
@@ -4113,7 +4255,22 @@ export interface components {
             scope: string;
         };
         /** Dialogue */
-        Dialogue: {
+        "Dialogue-Input": {
+            /** Speaker Id */
+            speaker_id?: string | null;
+            /** Text */
+            text: string;
+            /** @default speech */
+            kind?: components["schemas"]["DialogueKind"];
+            /**
+             * Bridge
+             * @description Cross-panel bubble: straddles the gutter to the next panel.
+             * @default false
+             */
+            bridge?: boolean;
+        };
+        /** Dialogue */
+        "Dialogue-Output": {
             /** Speaker Id */
             speaker_id: string | null;
             /** Text */
@@ -4175,7 +4332,7 @@ export interface components {
              */
             base_prompt: string;
             /** Panels */
-            panels: components["schemas"]["Panel"][];
+            panels: components["schemas"]["Panel-Output"][];
             /** Takes */
             takes: components["schemas"]["Take"][];
             strip: components["schemas"]["Strip-Output"];
@@ -5047,7 +5204,109 @@ export interface components {
             reasons?: string[];
         };
         /** Panel */
-        Panel: {
+        "Panel-Input": {
+            /** Id */
+            id?: string;
+            /** Order */
+            order: number;
+            /**
+             * Shot
+             * @default
+             * @enum {string}
+             */
+            shot?: "" | "extreme_close" | "close" | "medium" | "cowboy" | "full" | "wide";
+            /**
+             * Angle
+             * @default
+             * @enum {string}
+             */
+            angle?: "" | "eye" | "high" | "low" | "side" | "back" | "dutch";
+            /** Characters */
+            characters?: components["schemas"]["PanelCharacter-Input"][];
+            /** Location Id */
+            location_id?: string | null;
+            /** Props */
+            props?: string[];
+            /**
+             * Time
+             * @default
+             * @enum {string}
+             */
+            time?: "" | "morning" | "day" | "evening" | "night";
+            /**
+             * Lighting
+             * @default
+             */
+            lighting?: string;
+            /**
+             * Description
+             * @default
+             */
+            description?: string;
+            /** Tags */
+            tags?: string[];
+            /** Dialogues */
+            dialogues?: components["schemas"]["Dialogue-Input"][];
+            /** @default full */
+            width_mode?: components["schemas"]["PanelWidth"];
+            /**
+             * Inset Align
+             * @default center
+             * @enum {string}
+             */
+            inset_align?: "left" | "center" | "right";
+            /**
+             * Inset Scale
+             * @description Inset width / strip.
+             * @default 0.78
+             */
+            inset_scale?: number;
+            /**
+             * Aspect Ratio
+             * @default 2:3
+             */
+            aspect_ratio?: string;
+            /**
+             * Gap After
+             * @default 48
+             */
+            gap_after?: number;
+            /**
+             * Transition Background
+             * @default transparent
+             */
+            transition_background?: string;
+            /**
+             * Reference Mode
+             * @default auto
+             * @enum {string}
+             */
+            reference_mode?: "auto" | "manual" | "off";
+            /**
+             * References
+             * @description Manual references.
+             */
+            references?: components["schemas"]["AssetRef-Input"][];
+            /** Controls */
+            controls?: components["schemas"]["ControlInput-Input"][];
+            /**
+             * Regional
+             * @description Per-character regional prompts ([mio:region:N] slots).
+             * @default false
+             */
+            regional?: boolean;
+            /**
+             * Locked
+             * @description Automation (assistant, auto-pick) may not touch it.
+             * @default false
+             */
+            locked?: boolean;
+            overrides?: components["schemas"]["PanelOverrides-Input"];
+            /** @description Dynamic comic; None = auto */
+            motion?: components["schemas"]["PanelMotion-Input"] | null;
+        };
+        /** Panel */
+        "Panel-Output": {
             /** Id */
             id: string;
             /** Order */
@@ -5065,7 +5324,7 @@ export interface components {
              */
             angle: "" | "eye" | "high" | "low" | "side" | "back" | "dutch";
             /** Characters */
-            characters: components["schemas"]["PanelCharacter"][];
+            characters: components["schemas"]["PanelCharacter-Output"][];
             /** Location Id */
             location_id: string | null;
             /** Props */
@@ -5089,7 +5348,7 @@ export interface components {
             /** Tags */
             tags: string[];
             /** Dialogues */
-            dialogues: components["schemas"]["Dialogue"][];
+            dialogues: components["schemas"]["Dialogue-Output"][];
             /** @default full */
             width_mode: components["schemas"]["PanelWidth"];
             /**
@@ -5131,7 +5390,7 @@ export interface components {
              */
             references: components["schemas"]["AssetRef-Output"][];
             /** Controls */
-            controls: components["schemas"]["ControlInput"][];
+            controls: components["schemas"]["ControlInput-Output"][];
             /**
              * Regional
              * @description Per-character regional prompts ([mio:region:N] slots).
@@ -5144,9 +5403,9 @@ export interface components {
              * @default false
              */
             locked: boolean;
-            overrides: components["schemas"]["PanelOverrides"];
+            overrides: components["schemas"]["PanelOverrides-Output"];
             /** @description Dynamic comic; None = auto */
-            motion: components["schemas"]["PanelMotion"] | null;
+            motion: components["schemas"]["PanelMotion-Output"] | null;
         };
         /**
          * PanelBatch
@@ -5190,7 +5449,35 @@ export interface components {
             data: components["schemas"]["JsonValue"];
         };
         /** PanelCharacter */
-        PanelCharacter: {
+        "PanelCharacter-Input": {
+            /** Character Id */
+            character_id: string;
+            /**
+             * Outfit
+             * @default default
+             */
+            outfit?: string;
+            /**
+             * Expression
+             * @default neutral
+             */
+            expression?: string;
+            /**
+             * Action
+             * @default
+             */
+            action?: string;
+            /** Tags */
+            tags?: string[];
+            /**
+             * Position
+             * @default unspecified
+             * @enum {string}
+             */
+            position?: "left" | "center" | "right" | "foreground" | "background" | "unspecified";
+        };
+        /** PanelCharacter */
+        "PanelCharacter-Output": {
             /** Character Id */
             character_id: string;
             /**
@@ -5253,7 +5540,24 @@ export interface components {
          * PanelMotion
          * @description Dynamic-comic camera for this panel (``auto`` = chosen from shot size, SFX and text).
          */
-        PanelMotion: {
+        "PanelMotion-Input": {
+            /**
+             * Move
+             * @default auto
+             * @enum {string}
+             */
+            move?: "auto" | "still" | "push_in" | "pull_out" | "pan_left" | "pan_right" | "pan_up" | "pan_down" | "shake";
+            /**
+             * Hold
+             * @description Seconds on screen; None = from reading time
+             */
+            hold?: number | null;
+        };
+        /**
+         * PanelMotion
+         * @description Dynamic-comic camera for this panel (``auto`` = chosen from shot size, SFX and text).
+         */
+        "PanelMotion-Output": {
             /**
              * Move
              * @default auto
@@ -5267,7 +5571,50 @@ export interface components {
             hold: number | null;
         };
         /** PanelOverrides */
-        PanelOverrides: {
+        "PanelOverrides-Input": {
+            /**
+             * Raw Prompt
+             * @description Raw mode: skip the compiler entirely.
+             */
+            raw_prompt?: string | null;
+            /** Raw Negative */
+            raw_negative?: string | null;
+            /**
+             * Append Prompt
+             * @default
+             */
+            append_prompt?: string;
+            /**
+             * Negative Prompt
+             * @default
+             */
+            negative_prompt?: string;
+            /** Seed */
+            seed?: number | null;
+            /** Width */
+            width?: number | null;
+            /** Height */
+            height?: number | null;
+            /**
+             * Values
+             * @description Extra [mio:*] values.
+             */
+            values?: Record<string, unknown>;
+            /**
+             * Node Overrides
+             * @description JSON Pointer → value.
+             */
+            node_overrides?: Record<string, unknown>;
+            /**
+             * Slot Overrides
+             * @description Panel-scoped model and LoRA slot overrides.
+             */
+            slot_overrides?: Record<string, unknown>;
+            /** Profile Id */
+            profile_id?: string | null;
+        };
+        /** PanelOverrides */
+        "PanelOverrides-Output": {
             /**
              * Raw Prompt
              * @description Raw mode: skip the compiler entirely.
@@ -5301,6 +5648,11 @@ export interface components {
              * @description JSON Pointer → value.
              */
             node_overrides: Record<string, unknown>;
+            /**
+             * Slot Overrides
+             * @description Panel-scoped model and LoRA slot overrides.
+             */
+            slot_overrides: Record<string, unknown>;
             /** Profile Id */
             profile_id: string | null;
         };
@@ -5622,6 +5974,17 @@ export interface components {
             id: string;
             /** Title */
             title: string;
+        };
+        /** PresetPatch */
+        PresetPatch: {
+            /** Title */
+            title?: string | null;
+            /** Groups */
+            groups?: components["schemas"]["PresetGroup-Input"][] | null;
+            /** Entries */
+            entries?: components["schemas"]["PresetEntry-Input"][] | null;
+            /** Bindings */
+            bindings?: components["schemas"]["PresetBinding-Input"][] | null;
         };
         /** PreviewRequest */
         PreviewRequest: {
@@ -6051,6 +6414,8 @@ export interface components {
             values?: Record<string, unknown>;
             /** Overrides */
             overrides?: Record<string, unknown>;
+            /** Slot Overrides */
+            slot_overrides?: Record<string, unknown>;
             /**
              * Enabled
              * @default true
@@ -6087,6 +6452,8 @@ export interface components {
             values: Record<string, unknown>;
             /** Overrides */
             overrides: Record<string, unknown>;
+            /** Slot Overrides */
+            slot_overrides: Record<string, unknown>;
             /**
              * Enabled
              * @default true
@@ -6427,6 +6794,34 @@ export interface components {
              * @default 0
              */
             index: number;
+        };
+        /** StoryboardCreate */
+        StoryboardCreate: {
+            /** Title */
+            title: string;
+            /**
+             * Synopsis
+             * @default
+             */
+            synopsis?: string;
+            /**
+             * Base Prompt
+             * @default
+             */
+            base_prompt?: string;
+            /** Panels */
+            panels?: components["schemas"]["Panel-Input"][];
+        };
+        /** StoryboardPatch */
+        StoryboardPatch: {
+            /** Title */
+            title?: string | null;
+            /** Synopsis */
+            synopsis?: string | null;
+            /** Base Prompt */
+            base_prompt?: string | null;
+            /** Panels */
+            panels?: components["schemas"]["Panel-Input"][] | null;
         };
         /** Strip */
         "Strip-Input": {
@@ -7091,6 +7486,8 @@ export interface components {
             values?: Record<string, unknown>;
             /** Overrides */
             overrides?: Record<string, unknown>;
+            /** Slot Overrides */
+            slot_overrides?: Record<string, unknown>;
             /** Guard */
             guard?: string[];
             /** Variants */
@@ -7159,6 +7556,8 @@ export interface components {
             values?: Record<string, unknown>;
             /** Overrides */
             overrides?: Record<string, unknown>;
+            /** Slot Overrides */
+            slot_overrides?: Record<string, unknown>;
             /** Idempotency Key */
             idempotency_key?: string | null;
         };
@@ -9780,6 +10179,37 @@ export interface operations {
             };
         };
     };
+    workflow_loras_api_workflows__workflow_id__loras_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workflow_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     copy_workflow_api_workflows__workflow_id__copy_post: {
         parameters: {
             query?: never;
@@ -11123,6 +11553,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": Record<string, unknown>;
+                };
+            };
+        };
+    };
+    image_adapters_api_image_adapters_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>[];
                 };
             };
         };
@@ -13178,6 +13628,244 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_storyboards_api_workshop_storyboards_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Episode"][];
+                };
+            };
+        };
+    };
+    create_storyboard_api_workshop_storyboards_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoryboardCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Episode"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_storyboard_api_workshop_storyboards__storyboard_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                storyboard_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Episode"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_storyboard_api_workshop_storyboards__storyboard_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                storyboard_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoryboardPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Episode"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_presets_api_workshop_presets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Preset-Output"][];
+                };
+            };
+        };
+    };
+    create_preset_api_workshop_presets_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Preset-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Preset-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_preset_api_workshop_presets__preset_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                preset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Preset-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_preset_api_workshop_presets__preset_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                preset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PresetPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Preset-Output"];
                 };
             };
             /** @description Validation Error */
