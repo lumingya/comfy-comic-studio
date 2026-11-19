@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     // The motion-comic player ships with the server; its behaviour test reads it from there.
-    fs: { allow: ['.', '../server/mio_server/motion'] },
+    fs: { allow: ['.', '../server/mio_server/motion', '../server/mio_server/album'] },
     proxy: {
       '/api': { target: 'http://127.0.0.1:8788', ws: true },
       '/healthz': 'http://127.0.0.1:8788',
