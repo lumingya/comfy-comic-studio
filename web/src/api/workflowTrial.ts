@@ -11,7 +11,37 @@ export interface WorkflowTrialRequest {
   height?: number | null;
   values?: Record<string, unknown>;
   overrides?: Record<string, unknown>;
+  slot_overrides?: { groups: WorkflowLoraGroupOverride[] };
   idempotency_key: string;
+}
+
+export interface WorkflowLora {
+  key: string;
+  name: string;
+  strength: number;
+  clip?: number | null;
+  enabled: boolean;
+  source: string;
+  pinned: boolean;
+  supports_independent_toggle: boolean;
+  supports_strength: boolean;
+  range: { min: number; max: number };
+}
+
+export interface WorkflowLoraGroup {
+  key: string;
+  kind: string;
+  active: boolean;
+  range: { min: number; max: number };
+  supports_independent_toggle: boolean;
+  reason: string;
+  loras: WorkflowLora[];
+}
+
+export type WorkflowLoraOverride = WorkflowLora;
+export interface WorkflowLoraGroupOverride {
+  key: string;
+  loras: WorkflowLoraOverride[];
 }
 export interface WorkflowTrialResult {
   series: Series;

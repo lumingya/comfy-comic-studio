@@ -11,10 +11,37 @@ const result = {
   episode: { id: 'trial_episode', takes: [] },
   job: { id: 'trial_job', state: 'queued' },
 };
+const loraControls = {
+  groups: [
+    {
+      key: 'origin:2:loras',
+      kind: 'object',
+      active: true,
+      range: { min: -5, max: 5 },
+      supports_independent_toggle: true,
+      reason: '',
+      loras: [
+        {
+          key: 'origin:2:loras:ink',
+          name: 'ink.safetensors',
+          strength: 0.65,
+          clip: 0.4,
+          enabled: true,
+          source: 'workflow',
+          pinned: true,
+          supports_independent_toggle: true,
+          supports_strength: true,
+          range: { min: -5, max: 5 },
+        },
+      ],
+    },
+  ],
+};
 const trialRoutes = (extra: Record<string, unknown> = {}) =>
   configurationRoutes({
     'GET /api/jobs/trial_job': result.job,
     'GET /api/episodes/trial_episode': result.episode,
+    'GET /api/workflows/wf_demo/loras': loraControls,
     ...extra,
   });
 async function openTrial() {
@@ -60,6 +87,52 @@ it('creates one real trial task, preserves workflow dimensions by default and li
   expect(writes[0].body).not.toHaveProperty('width');
   expect(writes[0].body).not.toHaveProperty('height');
   expect(writes[0].body).not.toHaveProperty('candidates');
+});
+
+it('toggles a pinned LoRA for this trial, retains its weights, and can reset defaults', async () => {
+  const calls = mockFetch(
+    trialRoutes({
+      'POST /api/workflows/wf_demo/trial': result,
+    }),
+  );
+  renderWithProviders(<WorkflowsSection />);
+  const dialog = await openTrial();
+  const toggle = await within(dialog).findByRole('checkbox', { name: '启用 ink.safetensors' });
+  expect(toggle).toBeChecked();
+  const strength = within(dialog).getByRole('spinbutton', { name: 'ink.safetensors 模型强度' });
+  const clip = within(dialog).getByRole('spinbutton', { name: 'ink.safetensors CLIP 强度' });
+  expect(strength).toHaveValue(0.65);
+  expect(clip).toHaveValue(0.4);
+  await userEvent.click(toggle);
+  expect(toggle).not.toBeChecked();
+  expect(strength).toHaveValue(0.65);
+  fireEvent.change(strength, { target: { value: '0.9' } });
+  expect(strength).toHaveValue(0.9);
+  await userEvent.click(within(dialog).getByRole('button', { name: '恢复默认' }));
+  expect(toggle).toBeChecked();
+  expect(strength).toHaveValue(0.65);
+  expect(clip).toHaveValue(0.4);
+  await userEvent.click(toggle);
+  await userEvent.click(within(dialog).getByRole('button', { name: '试生成一张' }));
+  await within(dialog).findByText('已加入队列');
+  expect(calls.find((call) => call.url === '/api/workflows/wf_demo/trial')?.body).toMatchObject({
+    slot_overrides: {
+      groups: [
+        {
+          key: 'origin:2:loras',
+          loras: [
+            {
+              key: 'origin:2:loras:ink',
+              name: 'ink.safetensors',
+              enabled: false,
+              strength: 0.65,
+              clip: 0.4,
+            },
+          ],
+        },
+      ],
+    },
+  });
 });
 
 it('retries an unconfirmed request with the same idempotency key and input snapshot', async () => {

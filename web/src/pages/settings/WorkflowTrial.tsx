@@ -1,13 +1,22 @@
 import { Play } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { ApiError, assetUrl } from '../../api/client';
+import { ApiError, assetUrl, raw } from '../../api/client';
 import { useJob, useLive } from '../../api/jobs';
 import { useEpisode } from '../../api/series';
 import type { ComfyInstance } from '../../api/types';
-import { useWorkflowTrial, type WorkflowTrialRequest } from '../../api/workflowTrial';
+import {
+  useWorkflowTrial,
+  type WorkflowLoraGroup,
+  type WorkflowLoraGroupOverride,
+  type WorkflowTrialRequest,
+} from '../../api/workflowTrial';
 import { Field, Modal, NumberInput, Select, TextArea } from '../../components/ui';
+import { defaultLoraOverrides, LoraToggleList } from './LoraToggleList';
+import './WorkflowInspection.css';
+import './lora-toggle-list.css';
 
 export function WorkflowTrial({
   workflowId,
@@ -58,10 +67,27 @@ export function WorkflowTrial({
   const [instance, setInstance] = useState('');
   const [width, setWidth] = useState<number | null>(null);
   const [height, setHeight] = useState<number | null>(null);
+  const [loraGroups, setLoraGroups] = useState<WorkflowLoraGroup[]>([]);
+  const [loraOverrides, setLoraOverrides] = useState<WorkflowLoraGroupOverride[]>([]);
+  const loraQuery = useQuery({
+    queryKey: ['workflow-loras', workflowId],
+    enabled: open,
+    queryFn: async () => {
+      const response = await raw(`/api/workflows/${encodeURIComponent(workflowId)}/loras`);
+      if (!response.ok) throw new Error('LoRA controls unavailable');
+      return (await response.json()) as { groups: WorkflowLoraGroup[] };
+    },
+    staleTime: Infinity,
+  });
   const enabled = instances.filter((item) => item.enabled);
   const instanceId = enabled.find((item) => item.id === instance)?.id ?? enabled[0]?.id ?? '';
   const uncertain = trial.isError && !(trial.error instanceof ApiError && trial.error.status < 500);
   const locked = trial.isPending || uncertain || !!trial.data;
+  useEffect(() => {
+    if (!loraQuery.data) return;
+    setLoraGroups(loraQuery.data.groups);
+    setLoraOverrides(defaultLoraOverrides(loraQuery.data.groups));
+  }, [loraQuery.data]);
   const invalidSize = [width, height].some(
     (size) => size !== null && (!Number.isInteger(size) || size < 64 || size > 8192),
   );
@@ -83,6 +109,7 @@ export function WorkflowTrial({
         ...(width !== null ? { width } : {}),
         ...(height !== null ? { height } : {}),
         idempotency_key: crypto.randomUUID(),
+        ...(loraOverrides.length ? { slot_overrides: { groups: loraOverrides } } : {}),
       };
     }
     submitting.current = true;
@@ -174,6 +201,14 @@ export function WorkflowTrial({
                 />
               </Field>
             </div>
+            {loraGroups.length ? (
+              <LoraToggleList
+                groups={loraGroups}
+                value={loraOverrides}
+                onChange={setLoraOverrides}
+                disabled={locked}
+              />
+            ) : null}
           </fieldset>
         ) : null}
         {!trial.data && invalidSize ? (
