@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { ThemeInfo } from '../api/open';
-import { applyTheme, migrateChoice, resolveTheme, SYSTEM, toggled } from './theme';
+import {
+  applyTheme,
+  migrateChoice,
+  resolveTheme,
+  shouldPauseThemeVideo,
+  SYSTEM,
+  toggled,
+} from './theme';
 
 const theme = (id: string, mode: 'dark' | 'light', bg: string): ThemeInfo => ({
   id,
@@ -26,6 +33,14 @@ describe('theme', () => {
     expect(resolveTheme('paper', themes, true).mode).toBe('light');
     expect(resolveTheme('gone', themes, false).id).toBe('paper');
     expect(resolveTheme(SYSTEM, [], true)).toEqual({ id: 'ink', mode: 'dark', theme: undefined });
+  });
+
+  it('only overrides the system motion preference when explicitly enabled', () => {
+    expect(shouldPauseThemeVideo(false, false, true, false)).toBe(true);
+    expect(shouldPauseThemeVideo(false, false, true, true)).toBe(false);
+    expect(shouldPauseThemeVideo(false, true, true, true)).toBe(true);
+    expect(shouldPauseThemeVideo(true, false, false, true)).toBe(true);
+    expect(shouldPauseThemeVideo(false, false, false, false)).toBe(false);
   });
 
   it('writes tokens and removes the previous theme ones', () => {

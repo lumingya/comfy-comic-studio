@@ -59,6 +59,8 @@ function ThemeCard(props: {
   onScriptEnabledChange: (enabled: boolean) => void;
   backgroundPaused: boolean;
   onBackgroundPausedChange: (paused: boolean) => void;
+  allowVideoWithReducedMotion: boolean;
+  onAllowVideoWithReducedMotionChange: (allow: boolean) => void;
   onDelete?: () => void;
 }) {
   const { t } = useTranslation();
@@ -131,6 +133,21 @@ function ThemeCard(props: {
           <span className="small muted">{Math.round(props.opacity * 100)}%</span>
         </label>
       ) : null}
+      {theme.background?.kind === 'video' && props.active ? (
+        <label className="theme-motion-override">
+          <input
+            type="checkbox"
+            checked={props.allowVideoWithReducedMotion}
+            onChange={(event) =>
+              props.onAllowVideoWithReducedMotionChange(event.currentTarget.checked)
+            }
+          />
+          <span>
+            {t('settings.themes.playWithReducedMotion')}
+            <small>{t('settings.themes.playWithReducedMotionHint')}</small>
+          </span>
+        </label>
+      ) : null}
       {theme.script_url ? (
         <label className="theme-script-toggle">
           <input
@@ -156,6 +173,10 @@ export function ThemesSection() {
   const setThemeScriptEnabled = useUI((s) => s.setThemeScriptEnabled);
   const backgroundPaused = useUI((s) => s.themeBackgroundPaused);
   const setBackgroundPaused = useUI((s) => s.setThemeBackgroundPaused);
+  const allowVideoWithReducedMotion = useUI((s) => s.allowThemeVideoWithReducedMotion);
+  const setAllowVideoWithReducedMotion = useUI(
+    (s) => s.setAllowThemeVideoWithReducedMotion,
+  );
   const importTheme = useImportTheme();
   const importPackage = useImportThemePackage();
   const importFolder = useImportThemeFolder();
@@ -307,6 +328,8 @@ export function ThemesSection() {
             }}
             backgroundPaused={backgroundPaused}
             onBackgroundPausedChange={setBackgroundPaused}
+            allowVideoWithReducedMotion={allowVideoWithReducedMotion}
+            onAllowVideoWithReducedMotionChange={setAllowVideoWithReducedMotion}
             onExport={() => void onExport(theme)}
             exporting={exporting !== null}
             onDelete={

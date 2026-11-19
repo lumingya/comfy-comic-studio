@@ -714,6 +714,8 @@ const zh = {
       backgroundOpacity: '背景透明度',
       pauseBackground: '暂停背景',
       resumeBackground: '播放背景',
+      playWithReducedMotion: '系统减少动态效果时仍播放视频背景',
+      playWithReducedMotionHint: '只覆盖系统偏好；Mio 的减少动态效果与手动暂停仍生效。',
       enableScript: '启用隔离脚本',
       resetShortcut: '外观异常时按 Ctrl/Cmd + Shift + 0 恢复系统主题',
       system: '跟随系统',

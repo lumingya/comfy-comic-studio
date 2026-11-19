@@ -1,6 +1,12 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useThemes } from '../api/open';
-import { applyTheme, resolveTheme, systemPrefersDark, toggled } from './theme';
+import {
+  applyTheme,
+  resolveTheme,
+  shouldPauseThemeVideo,
+  systemPrefersDark,
+  toggled,
+} from './theme';
 import { useUI } from './ui-store';
 import { ThemeBackdrop } from './themeBackdrop';
 import { themeScriptKey, useThemeScript } from './themeScript';
@@ -14,6 +20,9 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setTheme = useUI((s) => s.setTheme);
   const themeOpacity = useUI((s) => s.themeOpacity);
   const paused = useUI((s) => s.themeBackgroundPaused);
+  const allowThemeVideoWithReducedMotion = useUI(
+    (s) => s.allowThemeVideoWithReducedMotion,
+  );
   const enabledThemeScripts = useUI((s) => s.enabledThemeScripts);
   const reduceMotion = useUI((s) => s.reduceMotion);
   const themes = useThemes();
@@ -74,7 +83,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       <ThemeBackdrop
         background={background}
         opacity={opacity}
-        paused={paused || reducedMotion || reduceMotion}
+        paused={shouldPauseThemeVideo(
+          paused,
+          reduceMotion,
+          reducedMotion,
+          allowThemeVideoWithReducedMotion,
+        )}
       />
       {children}
     </ThemeMode.Provider>

@@ -757,6 +757,9 @@ const en: Widen<Dict> = {
       backgroundOpacity: 'Background opacity',
       pauseBackground: 'Pause background',
       resumeBackground: 'Play background',
+      playWithReducedMotion: 'Play video when system prefers reduced motion',
+      playWithReducedMotionHint:
+        'Overrides the system preference only; Mio’s Reduce motion and manual pause still apply.',
       enableScript: 'Enable isolated script',
       resetShortcut:
         'If the appearance breaks, press Ctrl/Cmd + Shift + 0 to restore the system theme',

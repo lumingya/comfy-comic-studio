@@ -31,6 +31,17 @@ export function resolveTheme(
   return { id, mode, theme: themes.find((t) => t.id === id) };
 }
 
+export function shouldPauseThemeVideo(
+  manuallyPaused: boolean,
+  reduceMotion: boolean,
+  systemPrefersReducedMotion: boolean,
+  allowSystemOverride: boolean,
+): boolean {
+  return (
+    manuallyPaused || reduceMotion || (systemPrefersReducedMotion && !allowSystemOverride)
+  );
+}
+
 const applied = new Set<string>();
 const SURFACE_OPACITY: Record<string, number> = {
   bg: 0.56,

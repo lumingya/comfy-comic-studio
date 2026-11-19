@@ -11,12 +11,14 @@ interface UIState {
   theme: ThemeChoice;
   themeOpacity: Record<string, number>;
   themeBackgroundPaused: boolean;
+  allowThemeVideoWithReducedMotion: boolean;
   enabledThemeScripts: string[];
   /** Last explicit theme id per mode, for the quick toggle (see theme.toggled). */
   recentThemes: Partial<Record<'dark' | 'light', string>>;
   setTheme: (theme: ThemeChoice, mode?: 'dark' | 'light') => void;
   setThemeOpacity: (id: string, opacity: number) => void;
   setThemeBackgroundPaused: (paused: boolean) => void;
+  setAllowThemeVideoWithReducedMotion: (allow: boolean) => void;
   setThemeScriptEnabled: (key: string, enabled: boolean) => void;
   showRejected: boolean;
   setShowRejected: (v: boolean) => void;
@@ -79,6 +81,7 @@ export const useUI = create<UIState>()(
       theme: SYSTEM,
       themeOpacity: {},
       themeBackgroundPaused: false,
+      allowThemeVideoWithReducedMotion: false,
       enabledThemeScripts: [],
       recentThemes: {},
       setTheme: (theme, mode) =>
@@ -95,6 +98,8 @@ export const useUI = create<UIState>()(
           },
         })),
       setThemeBackgroundPaused: (themeBackgroundPaused) => set({ themeBackgroundPaused }),
+      setAllowThemeVideoWithReducedMotion: (allowThemeVideoWithReducedMotion) =>
+        set({ allowThemeVideoWithReducedMotion }),
       setThemeScriptEnabled: (key, enabled) =>
         set((state) => ({
           enabledThemeScripts: enabled
@@ -140,6 +145,7 @@ export const useUI = create<UIState>()(
         theme: s.theme,
         themeOpacity: s.themeOpacity,
         themeBackgroundPaused: s.themeBackgroundPaused,
+        allowThemeVideoWithReducedMotion: s.allowThemeVideoWithReducedMotion,
         enabledThemeScripts: s.enabledThemeScripts,
         recentThemes: s.recentThemes,
         candidates: s.candidates,
@@ -172,6 +178,7 @@ export const useUI = create<UIState>()(
             ),
           ),
           themeBackgroundPaused: !!state.themeBackgroundPaused,
+          allowThemeVideoWithReducedMotion: !!state.allowThemeVideoWithReducedMotion,
           enabledThemeScripts: Array.isArray(state.enabledThemeScripts)
             ? state.enabledThemeScripts.filter(
                 (key): key is string =>
