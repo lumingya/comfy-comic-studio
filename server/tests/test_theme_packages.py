@@ -538,10 +538,12 @@ class ThemePackageTests(ApiCase):
         self.assertIn("mio:theme:request", page_text)
         self.assertIn("mio:theme:response", page_text)
         self.assertIn("event.source!==window.parent", page_text)
-        self.assertIn("getSettings:()=>send('getSettings')", page_text)
+        self.assertIn("getSettings:()=>send(protocol.actions.getSettings)", page_text)
         self.assertIn("updateSettings:settings=>", page_text)
         self.assertIn("window.parent.postMessage(message,'*')", page_text)
-        self.assertIn("window.parent.postMessage({session,type:'mio:theme:ready'},'*')", page_text)
+        self.assertIn(
+            "window.parent.postMessage({session,type:protocol.types.ready},'*')", page_text
+        )
         external_script = page_text[page_text.index("<script src=") :].split(">", 1)[0]
         self.assertNotIn("nonce=", external_script)
         self.assertNotIn("mio-theme-settings-request", page_text)

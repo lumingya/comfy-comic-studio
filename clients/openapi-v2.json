@@ -2266,6 +2266,60 @@
     "title": "Dependency",
     "type": "object"
    },
+   "Diagnostic": {
+    "properties": {
+     "code": {
+      "title": "Code",
+      "type": "string"
+     },
+     "id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Id"
+     },
+     "kind": {
+      "enum": [
+       "extension",
+       "theme",
+       "private"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "message": {
+      "title": "Message",
+      "type": "string"
+     },
+     "severity": {
+      "enum": [
+       "info",
+       "warning",
+       "error"
+      ],
+      "title": "Severity",
+      "type": "string"
+     },
+     "source": {
+      "title": "Source",
+      "type": "string"
+     }
+    },
+    "required": [
+     "code",
+     "severity",
+     "kind",
+     "source",
+     "message"
+    ],
+    "title": "Diagnostic",
+    "type": "object"
+   },
    "DiagnosticReport": {
     "properties": {
      "invalid_inputs": {
@@ -2836,6 +2890,61 @@
      "digest"
     ],
     "title": "ExecutorRef",
+    "type": "object"
+   },
+   "ExtensionDiagnosticReport": {
+    "properties": {
+     "findings": {
+      "items": {
+       "$ref": "#/components/schemas/Diagnostic"
+      },
+      "title": "Findings",
+      "type": "array"
+     },
+     "format_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Format Version",
+      "type": "integer"
+     },
+     "id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Id"
+     },
+     "kind": {
+      "enum": [
+       "extension",
+       "theme",
+       "workspace"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "limitations": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Limitations",
+      "type": "array"
+     },
+     "valid": {
+      "title": "Valid",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "kind",
+     "valid",
+     "findings"
+    ],
+    "title": "ExtensionDiagnosticReport",
     "type": "object"
    },
    "ExternalRequirement": {
@@ -4409,6 +4518,1491 @@
     },
     "title": "MarketSourceRequest",
     "type": "object"
+   },
+   "MioContract_Contributes": {
+    "additionalProperties": false,
+    "properties": {
+     "album_templates": {
+      "description": "Album template JSON",
+      "items": {
+       "type": "string"
+      },
+      "title": "Album Templates",
+      "type": "array"
+     },
+     "floating_surfaces": {
+      "items": {
+       "$ref": "#/components/schemas/MioContract_FloatingSurfaceSpec"
+      },
+      "title": "Floating Surfaces",
+      "type": "array"
+     },
+     "panels": {
+      "items": {
+       "$ref": "#/components/schemas/MioContract_PanelSpec"
+      },
+      "title": "Panels",
+      "type": "array"
+     },
+     "sfx_presets": {
+      "additionalProperties": {
+       "additionalProperties": true,
+       "type": "object"
+      },
+      "title": "Sfx Presets",
+      "type": "object"
+     },
+     "slice_presets": {
+      "items": {
+       "$ref": "#/components/schemas/MioContract_SlicePresetSpec"
+      },
+      "title": "Slice Presets",
+      "type": "array"
+     },
+     "themes": {
+      "description": "Theme JSON files",
+      "items": {
+       "type": "string"
+      },
+      "title": "Themes",
+      "type": "array"
+     }
+    },
+    "title": "Contributes",
+    "type": "object"
+   },
+   "MioContract_EventDecision": {
+    "enum": [
+     "continue",
+     "handled",
+     "stop_propagation"
+    ],
+    "title": "EventDecision",
+    "type": "string"
+   },
+   "MioContract_FloatingPosition": {
+    "additionalProperties": false,
+    "properties": {
+     "offset": {
+      "default": [
+       20,
+       20
+      ],
+      "maxItems": 2,
+      "minItems": 2,
+      "prefixItems": [
+       {
+        "maximum": 10000,
+        "minimum": 0,
+        "type": "integer"
+       },
+       {
+        "maximum": 10000,
+        "minimum": 0,
+        "type": "integer"
+       }
+      ],
+      "title": "Offset",
+      "type": "array"
+     },
+     "x": {
+      "anyOf": [
+       {
+        "enum": [
+         "left",
+         "right"
+        ],
+        "type": "string"
+       },
+       {
+        "maximum": 10000,
+        "minimum": 0,
+        "type": "integer"
+       }
+      ],
+      "title": "X"
+     },
+     "y": {
+      "anyOf": [
+       {
+        "enum": [
+         "top",
+         "bottom"
+        ],
+        "type": "string"
+       },
+       {
+        "maximum": 10000,
+        "minimum": 0,
+        "type": "integer"
+       }
+      ],
+      "title": "Y"
+     }
+    },
+    "required": [
+     "x",
+     "y"
+    ],
+    "title": "FloatingPosition",
+    "type": "object"
+   },
+   "MioContract_FloatingSurfaceSpec": {
+    "additionalProperties": false,
+    "properties": {
+     "default_position": {
+      "$ref": "#/components/schemas/MioContract_FloatingPosition"
+     },
+     "entry": {
+      "maxLength": 240,
+      "minLength": 1,
+      "title": "Entry",
+      "type": "string"
+     },
+     "global": {
+      "title": "Global",
+      "type": "boolean"
+     },
+     "id": {
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$",
+      "title": "Id",
+      "type": "string"
+     },
+     "priority": {
+      "default": 0,
+      "title": "Priority",
+      "type": "integer"
+     },
+     "title": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+     },
+     "transparent": {
+      "default": true,
+      "title": "Transparent",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "title",
+     "entry",
+     "global"
+    ],
+    "title": "FloatingSurfaceSpec",
+    "type": "object"
+   },
+   "MioContract_JsonValue": {},
+   "MioContract_Manifest": {
+    "additionalProperties": false,
+    "properties": {
+     "author": {
+      "default": "",
+      "title": "Author",
+      "type": "string"
+     },
+     "backup": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "default": null,
+      "title": "Backup"
+     },
+     "contributes": {
+      "$ref": "#/components/schemas/MioContract_Contributes"
+     },
+     "description": {
+      "default": "",
+      "title": "Description",
+      "type": "string"
+     },
+     "homepage": {
+      "default": "",
+      "title": "Homepage",
+      "type": "string"
+     },
+     "id": {
+      "pattern": "^[a-z0-9][a-z0-9_-]{1,47}$",
+      "title": "Id",
+      "type": "string"
+     },
+     "main": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "default": null,
+      "description": "Python entry: activate(mio) is called",
+      "title": "Main"
+     },
+     "name": {
+      "title": "Name",
+      "type": "string"
+     },
+     "version": {
+      "default": "0.1.0",
+      "title": "Version",
+      "type": "string"
+     },
+     "workspace": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/MioContract_WorkspaceSpec"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "default": null
+     }
+    },
+    "required": [
+     "id",
+     "name"
+    ],
+    "title": "Manifest",
+    "type": "object"
+   },
+   "MioContract_PanelBridgeRequest": {
+    "additionalProperties": false,
+    "properties": {
+     "activation": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Activation",
+      "type": "string"
+     },
+     "body": {
+      "$ref": "#/components/schemas/MioContract_JsonValue",
+      "default": null
+     },
+     "context": {
+      "$ref": "#/components/schemas/MioContract_PanelContext"
+     },
+     "digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Digest",
+      "type": "string"
+     },
+     "path_params": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "maxProperties": 20,
+      "title": "Path Params",
+      "type": "object"
+     },
+     "query": {
+      "additionalProperties": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        },
+        {
+         "type": "number"
+        },
+        {
+         "type": "boolean"
+        },
+        {
+         "items": {
+          "type": "string"
+         },
+         "type": "array"
+        }
+       ]
+      },
+      "maxProperties": 40,
+      "title": "Query",
+      "type": "object"
+     },
+     "request_id": {
+      "maxLength": 48,
+      "minLength": 1,
+      "title": "Request Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "activation",
+     "digest",
+     "request_id"
+    ],
+    "title": "PanelBridgeRequest",
+    "type": "object"
+   },
+   "MioContract_PanelBridgeResponse": {
+    "additionalProperties": false,
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/MioContract_JsonValue",
+      "default": null
+     },
+     "status": {
+      "title": "Status",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "status"
+    ],
+    "title": "PanelBridgeResponse",
+    "type": "object"
+   },
+   "MioContract_PanelContext": {
+    "additionalProperties": false,
+    "properties": {
+     "episode_id": {
+      "anyOf": [
+       {
+        "maxLength": 160,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "default": null,
+      "title": "Episode Id"
+     },
+     "series_id": {
+      "anyOf": [
+       {
+        "maxLength": 160,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "default": null,
+      "title": "Series Id"
+     }
+    },
+    "title": "PanelContext",
+    "type": "object"
+   },
+   "MioContract_PanelFromFrame": {
+    "anyOf": [
+     {
+      "$ref": "#/components/schemas/MioContract_PanelReady"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_PanelRequestMessage"
+     }
+    ],
+    "title": "PanelFromFrame"
+   },
+   "MioContract_PanelInit": {
+    "additionalProperties": false,
+    "properties": {
+     "context": {
+      "$ref": "#/components/schemas/MioContract_PanelContext"
+     },
+     "limits": {
+      "$ref": "#/components/schemas/MioContract_PanelLimits"
+     },
+     "requests": {
+      "items": {
+       "$ref": "#/components/schemas/MioContract_PanelRequestSpec"
+      },
+      "title": "Requests",
+      "type": "array"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:panel:init",
+      "title": "Type",
+      "type": "string"
+     },
+     "version": {
+      "const": 1,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "session",
+     "version",
+     "type",
+     "context",
+     "requests",
+     "limits"
+    ],
+    "title": "PanelInit",
+    "type": "object"
+   },
+   "MioContract_PanelLimits": {
+    "additionalProperties": false,
+    "properties": {
+     "concurrent": {
+      "title": "Concurrent",
+      "type": "integer"
+     },
+     "requestBytes": {
+      "title": "Requestbytes",
+      "type": "integer"
+     },
+     "responseBytes": {
+      "title": "Responsebytes",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "requestBytes",
+     "responseBytes",
+     "concurrent"
+    ],
+    "title": "PanelLimits",
+    "type": "object"
+   },
+   "MioContract_PanelReady": {
+    "additionalProperties": false,
+    "properties": {
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:panel:ready",
+      "title": "Type",
+      "type": "string"
+     },
+     "version": {
+      "const": 1,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "session",
+     "version",
+     "type"
+    ],
+    "title": "PanelReady",
+    "type": "object"
+   },
+   "MioContract_PanelRequestMessage": {
+    "additionalProperties": false,
+    "properties": {
+     "body": {
+      "$ref": "#/components/schemas/MioContract_JsonValue",
+      "default": null
+     },
+     "path_params": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "maxProperties": 20,
+      "title": "Path Params",
+      "type": "object"
+     },
+     "query": {
+      "additionalProperties": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        },
+        {
+         "type": "number"
+        },
+        {
+         "type": "boolean"
+        },
+        {
+         "items": {
+          "type": "string"
+         },
+         "type": "array"
+        }
+       ]
+      },
+      "maxProperties": 40,
+      "title": "Query",
+      "type": "object"
+     },
+     "request_id": {
+      "maxLength": 48,
+      "minLength": 1,
+      "title": "Request Id",
+      "type": "string"
+     },
+     "rid": {
+      "pattern": "^[A-Za-z0-9_-]{1,80}$",
+      "title": "Rid",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:panel:request",
+      "title": "Type",
+      "type": "string"
+     },
+     "version": {
+      "const": 1,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "session",
+     "version",
+     "type",
+     "rid",
+     "request_id"
+    ],
+    "title": "PanelRequestMessage",
+    "type": "object"
+   },
+   "MioContract_PanelRequestSpec": {
+    "additionalProperties": false,
+    "properties": {
+     "id": {
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,47}$",
+      "title": "Id",
+      "type": "string"
+     },
+     "method": {
+      "enum": [
+       "GET",
+       "POST",
+       "PUT",
+       "PATCH",
+       "DELETE"
+      ],
+      "title": "Method",
+      "type": "string"
+     },
+     "path": {
+      "maxLength": 240,
+      "minLength": 1,
+      "title": "Path",
+      "type": "string"
+     },
+     "scope": {
+      "enum": [
+       "read",
+       "write",
+       "render",
+       "admin"
+      ],
+      "title": "Scope",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "method",
+     "path",
+     "scope"
+    ],
+    "title": "PanelRequestSpec",
+    "type": "object"
+   },
+   "MioContract_PanelResponseMessage": {
+    "additionalProperties": false,
+    "properties": {
+     "data": {
+      "$ref": "#/components/schemas/MioContract_JsonValue"
+     },
+     "ok": {
+      "title": "Ok",
+      "type": "boolean"
+     },
+     "rid": {
+      "title": "Rid",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "status": {
+      "title": "Status",
+      "type": "integer"
+     },
+     "type": {
+      "const": "mio:panel:response",
+      "title": "Type",
+      "type": "string"
+     },
+     "version": {
+      "const": 1,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "session",
+     "version",
+     "type",
+     "rid",
+     "status",
+     "data",
+     "ok"
+    ],
+    "title": "PanelResponseMessage",
+    "type": "object"
+   },
+   "MioContract_PanelSpec": {
+    "additionalProperties": false,
+    "properties": {
+     "entry": {
+      "description": "HTML file inside the extension folder",
+      "title": "Entry",
+      "type": "string"
+     },
+     "id": {
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$",
+      "title": "Id",
+      "type": "string"
+     },
+     "priority": {
+      "default": 0,
+      "title": "Priority",
+      "type": "integer"
+     },
+     "requests": {
+      "items": {
+       "$ref": "#/components/schemas/MioContract_PanelRequestSpec"
+      },
+      "maxItems": 32,
+      "title": "Requests",
+      "type": "array"
+     },
+     "slot": {
+      "enum": [
+       "episode",
+       "settings"
+      ],
+      "title": "Slot",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "slot",
+     "title",
+     "entry"
+    ],
+    "title": "PanelSpec",
+    "type": "object"
+   },
+   "MioContract_PanelToFrame": {
+    "anyOf": [
+     {
+      "$ref": "#/components/schemas/MioContract_PanelInit"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_PanelResponseMessage"
+     }
+    ],
+    "title": "PanelToFrame"
+   },
+   "MioContract_PlatformContracts": {
+    "additionalProperties": false,
+    "properties": {
+     "floating_position": {
+      "$ref": "#/components/schemas/MioContract_FloatingPosition"
+     },
+     "manifest": {
+      "$ref": "#/components/schemas/MioContract_Manifest"
+     },
+     "panel_call": {
+      "$ref": "#/components/schemas/MioContract_PanelBridgeRequest"
+     },
+     "panel_context": {
+      "$ref": "#/components/schemas/MioContract_PanelContext"
+     },
+     "panel_from_frame": {
+      "$ref": "#/components/schemas/MioContract_PanelFromFrame"
+     },
+     "panel_request_spec": {
+      "$ref": "#/components/schemas/MioContract_PanelRequestSpec"
+     },
+     "panel_result": {
+      "$ref": "#/components/schemas/MioContract_PanelBridgeResponse"
+     },
+     "panel_to_frame": {
+      "$ref": "#/components/schemas/MioContract_PanelToFrame"
+     },
+     "theme_settings_from_frame": {
+      "$ref": "#/components/schemas/MioContract_ThemeSettingsFromFrame"
+     },
+     "theme_settings_to_frame": {
+      "$ref": "#/components/schemas/MioContract_ThemeSettingsToFrame"
+     },
+     "workspace_from_frame": {
+      "$ref": "#/components/schemas/MioContract_WorkspaceFromFrame"
+     },
+     "workspace_to_frame": {
+      "$ref": "#/components/schemas/MioContract_WorkspaceToFrame"
+     }
+    },
+    "required": [
+     "manifest",
+     "floating_position",
+     "panel_request_spec",
+     "panel_context",
+     "panel_call",
+     "panel_result",
+     "panel_from_frame",
+     "panel_to_frame",
+     "workspace_from_frame",
+     "workspace_to_frame",
+     "theme_settings_from_frame",
+     "theme_settings_to_frame"
+    ],
+    "title": "PlatformContracts",
+    "type": "object"
+   },
+   "MioContract_SlicePresetSpec": {
+    "additionalProperties": false,
+    "properties": {
+     "fmt": {
+      "default": "JPEG",
+      "enum": [
+       "JPEG",
+       "PNG",
+       "WEBP"
+      ],
+      "title": "Fmt",
+      "type": "string"
+     },
+     "id": {
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$",
+      "title": "Id",
+      "type": "string"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "max_height": {
+      "maximum": 20000,
+      "minimum": 0,
+      "title": "Max Height",
+      "type": "integer"
+     },
+     "quality": {
+      "default": 90,
+      "maximum": 100,
+      "minimum": 40,
+      "title": "Quality",
+      "type": "integer"
+     },
+     "width": {
+      "maximum": 4000,
+      "minimum": 0,
+      "title": "Width",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "id",
+     "label",
+     "width",
+     "max_height"
+    ],
+    "title": "SlicePresetSpec",
+    "type": "object"
+   },
+   "MioContract_SurfaceLifecycle": {
+    "enum": [
+     "shown",
+     "hidden",
+     "focused",
+     "blurred"
+    ],
+    "title": "SurfaceLifecycle",
+    "type": "string"
+   },
+   "MioContract_ThemeSettingsFailed": {
+    "additionalProperties": false,
+    "properties": {
+     "error": {
+      "title": "Error",
+      "type": "string"
+     },
+     "requestId": {
+      "maxLength": 80,
+      "title": "Requestid",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:theme:response",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session",
+     "type",
+     "requestId",
+     "error"
+    ],
+    "title": "ThemeSettingsFailed",
+    "type": "object"
+   },
+   "MioContract_ThemeSettingsFromFrame": {
+    "anyOf": [
+     {
+      "$ref": "#/components/schemas/MioContract_ThemeSettingsReady"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_ThemeSettingsGet"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_ThemeSettingsUpdate"
+     }
+    ],
+    "title": "ThemeSettingsFromFrame"
+   },
+   "MioContract_ThemeSettingsGet": {
+    "additionalProperties": false,
+    "properties": {
+     "action": {
+      "const": "getSettings",
+      "title": "Action",
+      "type": "string"
+     },
+     "requestId": {
+      "maxLength": 80,
+      "title": "Requestid",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:theme:request",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session",
+     "type",
+     "requestId",
+     "action"
+    ],
+    "title": "ThemeSettingsGet",
+    "type": "object"
+   },
+   "MioContract_ThemeSettingsReady": {
+    "additionalProperties": false,
+    "properties": {
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:theme:ready",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session",
+     "type"
+    ],
+    "title": "ThemeSettingsReady",
+    "type": "object"
+   },
+   "MioContract_ThemeSettingsSaved": {
+    "additionalProperties": false,
+    "properties": {
+     "requestId": {
+      "maxLength": 80,
+      "title": "Requestid",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "settings": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/MioContract_JsonValue"
+      },
+      "title": "Settings",
+      "type": "object"
+     },
+     "type": {
+      "const": "mio:theme:response",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session",
+     "type",
+     "requestId",
+     "settings"
+    ],
+    "title": "ThemeSettingsSaved",
+    "type": "object"
+   },
+   "MioContract_ThemeSettingsToFrame": {
+    "anyOf": [
+     {
+      "$ref": "#/components/schemas/MioContract_ThemeSettingsSaved"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_ThemeSettingsFailed"
+     }
+    ],
+    "title": "ThemeSettingsToFrame"
+   },
+   "MioContract_ThemeSettingsUpdate": {
+    "additionalProperties": false,
+    "properties": {
+     "action": {
+      "const": "updateSettings",
+      "title": "Action",
+      "type": "string"
+     },
+     "requestId": {
+      "maxLength": 80,
+      "title": "Requestid",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "settings": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/MioContract_JsonValue"
+      },
+      "title": "Settings",
+      "type": "object"
+     },
+     "type": {
+      "const": "mio:theme:request",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session",
+     "type",
+     "requestId",
+     "action",
+     "settings"
+    ],
+    "title": "ThemeSettingsUpdate",
+    "type": "object"
+   },
+   "MioContract_WorkspaceChanged": {
+    "additionalProperties": false,
+    "properties": {
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:workspace:changed",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session",
+     "type"
+    ],
+    "title": "WorkspaceChanged",
+    "type": "object"
+   },
+   "MioContract_WorkspaceClickThrough": {
+    "additionalProperties": false,
+    "properties": {
+     "enabled": {
+      "title": "Enabled",
+      "type": "boolean"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:workspace:click-through",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session",
+     "type",
+     "enabled"
+    ],
+    "title": "WorkspaceClickThrough",
+    "type": "object"
+   },
+   "MioContract_WorkspaceContext": {
+    "additionalProperties": false,
+    "properties": {
+     "floating": {
+      "title": "Floating",
+      "type": "boolean"
+     },
+     "locale": {
+      "title": "Locale",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "theme": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "default": null,
+      "title": "Theme"
+     },
+     "tokens": {
+      "additionalProperties": {
+       "type": "string"
+      },
+      "title": "Tokens",
+      "type": "object"
+     },
+     "type": {
+      "const": "mio:workspace:context",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session",
+     "type",
+     "tokens",
+     "locale",
+     "floating"
+    ],
+    "title": "WorkspaceContext",
+    "type": "object"
+   },
+   "MioContract_WorkspaceEvent": {
+    "additionalProperties": false,
+    "properties": {
+     "event": {
+      "$ref": "#/components/schemas/MioContract_WorkspaceKeyEvent"
+     },
+     "eventId": {
+      "title": "Eventid",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:workspace:event",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session",
+     "type",
+     "eventId",
+     "event"
+    ],
+    "title": "WorkspaceEvent",
+    "type": "object"
+   },
+   "MioContract_WorkspaceEventResult": {
+    "additionalProperties": false,
+    "properties": {
+     "action": {
+      "$ref": "#/components/schemas/MioContract_EventDecision"
+     },
+     "eventId": {
+      "title": "Eventid",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:workspace:event-result",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session",
+     "type",
+     "eventId",
+     "action"
+    ],
+    "title": "WorkspaceEventResult",
+    "type": "object"
+   },
+   "MioContract_WorkspaceFromFrame": {
+    "anyOf": [
+     {
+      "$ref": "#/components/schemas/MioContract_WorkspaceReady"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_WorkspaceChanged"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_WorkspaceResize"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_WorkspaceClickThrough"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_WorkspaceListen"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_WorkspaceEventResult"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_WorkspaceNavigate"
+     }
+    ],
+    "title": "WorkspaceFromFrame"
+   },
+   "MioContract_WorkspaceKeyEvent": {
+    "additionalProperties": false,
+    "properties": {
+     "altKey": {
+      "title": "Altkey",
+      "type": "boolean"
+     },
+     "code": {
+      "title": "Code",
+      "type": "string"
+     },
+     "ctrlKey": {
+      "title": "Ctrlkey",
+      "type": "boolean"
+     },
+     "key": {
+      "title": "Key",
+      "type": "string"
+     },
+     "metaKey": {
+      "title": "Metakey",
+      "type": "boolean"
+     },
+     "repeat": {
+      "title": "Repeat",
+      "type": "boolean"
+     },
+     "shiftKey": {
+      "title": "Shiftkey",
+      "type": "boolean"
+     },
+     "type": {
+      "const": "keydown",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "type",
+     "key",
+     "code",
+     "altKey",
+     "ctrlKey",
+     "metaKey",
+     "shiftKey",
+     "repeat"
+    ],
+    "title": "WorkspaceKeyEvent",
+    "type": "object"
+   },
+   "MioContract_WorkspaceLifecycle": {
+    "additionalProperties": false,
+    "properties": {
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "state": {
+      "$ref": "#/components/schemas/MioContract_SurfaceLifecycle"
+     },
+     "type": {
+      "const": "mio:workspace:lifecycle",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session",
+     "type",
+     "state"
+    ],
+    "title": "WorkspaceLifecycle",
+    "type": "object"
+   },
+   "MioContract_WorkspaceListen": {
+    "additionalProperties": false,
+    "properties": {
+     "enabled": {
+      "title": "Enabled",
+      "type": "boolean"
+     },
+     "event": {
+      "const": "keydown",
+      "title": "Event",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:workspace:listen",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session",
+     "type",
+     "event",
+     "enabled"
+    ],
+    "title": "WorkspaceListen",
+    "type": "object"
+   },
+   "MioContract_WorkspaceMoved": {
+    "additionalProperties": false,
+    "properties": {
+     "position": {
+      "$ref": "#/components/schemas/MioContract_WorkspacePosition"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:workspace:moved",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session",
+     "type",
+     "position"
+    ],
+    "title": "WorkspaceMoved",
+    "type": "object"
+   },
+   "MioContract_WorkspaceNavigate": {
+    "additionalProperties": false,
+    "properties": {
+     "path": {
+      "title": "Path",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:workspace:navigate",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session",
+     "type",
+     "path"
+    ],
+    "title": "WorkspaceNavigate",
+    "type": "object"
+   },
+   "MioContract_WorkspacePosition": {
+    "additionalProperties": false,
+    "properties": {
+     "x": {
+      "title": "X",
+      "type": "number"
+     },
+     "y": {
+      "title": "Y",
+      "type": "number"
+     }
+    },
+    "required": [
+     "x",
+     "y"
+    ],
+    "title": "WorkspacePosition",
+    "type": "object"
+   },
+   "MioContract_WorkspaceReady": {
+    "additionalProperties": false,
+    "properties": {
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:workspace:ready",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "session",
+     "type"
+    ],
+    "title": "WorkspaceReady",
+    "type": "object"
+   },
+   "MioContract_WorkspaceResize": {
+    "additionalProperties": false,
+    "properties": {
+     "height": {
+      "title": "Height",
+      "type": "number"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:workspace:resize",
+      "title": "Type",
+      "type": "string"
+     },
+     "width": {
+      "title": "Width",
+      "type": "number"
+     }
+    },
+    "required": [
+     "session",
+     "type",
+     "width",
+     "height"
+    ],
+    "title": "WorkspaceResize",
+    "type": "object"
+   },
+   "MioContract_WorkspaceSpec": {
+    "additionalProperties": false,
+    "properties": {
+     "entry": {
+      "title": "Entry",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     }
+    },
+    "required": [
+     "entry",
+     "title"
+    ],
+    "title": "WorkspaceSpec",
+    "type": "object"
+   },
+   "MioContract_WorkspaceToFrame": {
+    "anyOf": [
+     {
+      "$ref": "#/components/schemas/MioContract_WorkspaceContext"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_WorkspaceMoved"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_WorkspaceLifecycle"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_WorkspaceEvent"
+     }
+    ],
+    "title": "WorkspaceToFrame"
    },
    "ModelCatalog": {
     "additionalProperties": false,
@@ -15265,6 +16859,38 @@
     "x-mio-operation": "POST /extensions"
    }
   },
+  "/extensions/diagnostics": {
+   "get": {
+    "description": "Read static package/private-state findings without running extension code or migrations.",
+    "operationId": "extension_diagnostics",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/ExtensionDiagnosticReport"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Extension Diagnostics",
+    "tags": [
+     "extensions",
+     "extensions"
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /extensions/diagnostics"
+   }
+  },
   "/extensions/folder": {
    "post": {
     "description": "Import a portable extension directory; files are reviewed before activation.",
@@ -21818,5 +23444,6 @@
   {
    "url": "/api/v2"
   }
- ]
+ ],
+ "x-mio-extension-contract-version": 1
 }

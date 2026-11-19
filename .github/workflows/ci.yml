@@ -31,14 +31,17 @@ jobs:
           python -m unittest discover -s server/tests -t server -q
       - name: API v2 clients and release tools (generated client current + lint)
         run: |
+          python tools/generate_extension_contracts.py --check
           python clients/python/generate.py --check
+          python tools/check_extension_package.py extensions/ai-assist
+          python tools/check_theme_package.py themes/theme-wallpaper
           ruff check clients tools
           ruff format --check clients tools
       - name: v4 web (API types current + format + typecheck + tests + build)
         run: |
           npm ci --prefix web --no-audit --no-fund
           npm --prefix web run gen:api
-          git diff --exit-code -- web/src/api/schema.d.ts
+          git diff --exit-code -- web/src/api/schema.d.ts web/src/api/extensionProtocol.ts
           npm --prefix web run format:check
           npm --prefix web run typecheck
           npm --prefix web test

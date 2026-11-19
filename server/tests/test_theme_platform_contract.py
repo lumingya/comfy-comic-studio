@@ -13,6 +13,30 @@ from .test_theme_packages import THEME, archive, theme_files
 
 
 class ThemePlatformContractTests(ApiCase):
+    def test_settings_csp_keeps_script_nonce_as_a_separate_directive(self):
+        document = {**THEME, "settings_page": "settings.html"}
+        self.ctx.theme_packages.install_package(
+            archive(
+                theme_files(
+                    document,
+                    resources={
+                        "settings.html": b"<!doctype html><script>window.ready=true</script>"
+                    },
+                )
+            )
+        )
+        response = self.ok(self.client.get("/api/themes/my-theme/settings-page"))
+        directives = {
+            part.strip().split()[0]: part.strip().split()[1:]
+            for part in response.headers["content-security-policy"].split(";")
+            if part.strip()
+        }
+        self.assertEqual(directives["sandbox"], ["allow-scripts"])
+        self.assertEqual(len(directives["script-src"]), 1)
+        self.assertTrue(directives["script-src"][0].startswith("'nonce-"))
+        nonce = directives["script-src"][0][len("'nonce-") : -1]
+        self.assertIn(f'nonce="{nonce}"', response.text)
+
     def test_logical_self_is_bound_in_full_and_card_css_after_two_round_trips(self):
         css = b'.theme-card[data-theme-id="self"] > .title { color: red; }'
         document = {**THEME, "style_file": "theme.css"}

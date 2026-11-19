@@ -14,6 +14,12 @@ import {
   type ThemeWallpaper,
 } from '../../api/open';
 import { toastError } from '../../components/toast';
+import {
+  BRIDGE,
+  type ThemeSettingsToFrame,
+  type ThemeSettingsSaved,
+  type ThemeSettingsFailed,
+} from '../../api/extensionProtocol';
 import './ThemeSettingsPanel.css';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -23,7 +29,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function isSmallJson(value: unknown): value is Record<string, unknown> {
   if (!isRecord(value)) return false;
   try {
-    return new TextEncoder().encode(JSON.stringify(value)).byteLength <= 64 * 1024;
+    return (
+      new TextEncoder().encode(JSON.stringify(value)).byteLength <= BRIDGE.themeSettings.maxBytes
+    );
   } catch {
     return false;
   }
@@ -163,7 +171,7 @@ function ThemeSettingsFrame(props: {
   useLayoutEffect(() => {
     let live = true;
     const currentFrame = frame.current;
-    const post = (message: Record<string, unknown>) => {
+    const post = (message: ThemeSettingsToFrame) => {
       if (live && frame.current === currentFrame)
         currentFrame?.contentWindow?.postMessage(message, '*');
     };
@@ -175,21 +183,26 @@ function ThemeSettingsFrame(props: {
         event.data.session !== session
       )
         return;
-      if (event.data.type !== 'mio:theme:request') return;
+      if (event.data.type !== BRIDGE.themeSettings.types.request) return;
       const requestId = event.data.requestId;
       if (typeof requestId !== 'string' || requestId.length > 80) return;
-      const respond = (result: Record<string, unknown>) =>
+      const respond = (
+        result: Pick<ThemeSettingsSaved, 'settings'> | Pick<ThemeSettingsFailed, 'error'>,
+      ) =>
         post({
-          type: 'mio:theme:response',
+          type: BRIDGE.themeSettings.types.response,
           session,
           requestId,
           ...result,
         });
-      if (event.data.action === 'getSettings') {
-        respond({ settings: settingsRef.current });
+      if (event.data.action === BRIDGE.themeSettings.actions.getSettings) {
+        respond({ settings: JSON.parse(JSON.stringify(settingsRef.current)) });
         return;
       }
-      if (event.data.action !== 'updateSettings' || !isSmallJson(event.data.settings)) {
+      if (
+        event.data.action !== BRIDGE.themeSettings.actions.updateSettings ||
+        !isSmallJson(event.data.settings)
+      ) {
         respond({ error: 'Invalid settings payload.' });
         return;
       }
@@ -197,7 +210,7 @@ function ThemeSettingsFrame(props: {
       void saveRef.current(event.data.settings).then(
         (settings) => {
           if (live && revision === updateRevision.current) settingsRef.current = settings;
-          respond({ settings });
+          respond({ settings: JSON.parse(JSON.stringify(settings)) });
         },
         () => respond({ error: 'Unable to save settings.' }),
       );

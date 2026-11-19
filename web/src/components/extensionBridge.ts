@@ -1,29 +1,21 @@
 import type { ExtensionPanel } from '../api/open';
+import {
+  BRIDGE,
+  type PanelContext as ContractPanelContext,
+  type PanelBridgeRequest,
+  type PanelBridgeResponse,
+  type PanelFromFrame,
+  type PanelToFrame,
+} from '../api/extensionProtocol';
 
-export const PANEL_REQUEST_LIMIT = 64 * 1024;
-export const PANEL_RESPONSE_LIMIT = 1024 * 1024;
-const MAX_CONCURRENT = 4;
-const MAX_REQUEST_IDS = 256;
+export const PANEL_REQUEST_LIMIT = BRIDGE.panel.limits.requestBytes;
+export const PANEL_RESPONSE_LIMIT = BRIDGE.panel.limits.responseBytes;
+const MAX_CONCURRENT = BRIDGE.panel.limits.concurrent;
+const MAX_REQUEST_IDS = BRIDGE.panel.limits.requestIds;
 
-export interface PanelContext {
-  episode_id?: string;
-  series_id?: string;
-}
-
-export interface PanelCall {
-  activation: string;
-  digest: string;
-  request_id: string;
-  path_params?: Record<string, string>;
-  query?: Record<string, unknown>;
-  body?: unknown;
-  context: PanelContext;
-}
-
-export interface PanelResult {
-  status: number;
-  data: unknown;
-}
+export type PanelContext = ContractPanelContext;
+export type PanelCall = PanelBridgeRequest;
+export type PanelResult = PanelBridgeResponse;
 
 function jsonSize(value: unknown): number {
   return new TextEncoder().encode(JSON.stringify(value)).byteLength;
@@ -50,20 +42,30 @@ export function createPanelBridge(options: {
   let disposed = false;
   let ready = false;
 
-  const reply = (message: Record<string, unknown>) => {
-    if (!disposed) options.frame()?.postMessage({ version: 1, session, ...message }, '*');
+  const envelope = { version: BRIDGE.panel.version, session };
+  const reply = (message: PanelToFrame) => {
+    if (!disposed) options.frame()?.postMessage(message, '*');
   };
   const error = (rid: string, status: number, detail: string) =>
-    reply({ type: 'mio:panel:response', rid, status, data: { detail }, ok: false });
+    reply({
+      ...envelope,
+      type: BRIDGE.panel.types.response,
+      rid,
+      status,
+      data: { detail },
+      ok: false,
+    });
 
   const handle = (event: MessageEvent) => {
     if (disposed || !options.frame() || event.source !== options.frame()) return;
     const message: unknown = event.data;
-    if (!record(message) || message.version !== 1 || message.session !== session) return;
-    if (message.type === 'mio:panel:ready') {
+    if (!record(message) || message.version !== BRIDGE.panel.version || message.session !== session)
+      return;
+    if (message.type === BRIDGE.panel.types.ready) {
       ready = true;
       reply({
-        type: 'mio:panel:init',
+        ...envelope,
+        type: BRIDGE.panel.types.init,
         context,
         requests: panel.requests ?? [],
         limits: {
@@ -74,7 +76,7 @@ export function createPanelBridge(options: {
       });
       return;
     }
-    if (!ready || message.type !== 'mio:panel:request') return;
+    if (!ready || message.type !== BRIDGE.panel.types.request) return;
     const { rid } = message;
     if (typeof rid !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/.test(rid)) return;
     if (seen.has(rid)) {
@@ -104,14 +106,16 @@ export function createPanelBridge(options: {
     seen.add(rid);
     const controller = new AbortController();
     pending.set(rid, controller);
+    // Shape validation remains at the typed HTTP bridge; the frame supplies no headers or URL.
+    const request = message as Extract<PanelFromFrame, { type: typeof BRIDGE.panel.types.request }>;
     const body: PanelCall = {
       activation: panel.activation,
       digest: panel.digest,
       request_id: declared.id,
       context,
-      path_params: message.path_params as Record<string, string> | undefined,
-      query: message.query as Record<string, unknown> | undefined,
-      body: message.body,
+      path_params: request.path_params,
+      query: request.query,
+      body: request.body,
     };
     void options
       .request(body, controller.signal)
@@ -123,9 +127,11 @@ export function createPanelBridge(options: {
             return;
           }
           reply({
-            type: 'mio:panel:response',
+            ...envelope,
+            type: BRIDGE.panel.types.response,
             rid,
             ...result,
+            data: result.data ?? null,
             ok: result.status >= 200 && result.status < 300,
           });
           if (result.status < 300 && declared.method !== 'GET') options.onMutation?.();

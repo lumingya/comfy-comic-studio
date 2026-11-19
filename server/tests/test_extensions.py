@@ -242,13 +242,13 @@ class ExtensionApiTests(ApiCase):
             "mio:workspace:lifecycle",
             "onLifecycle(handler)",
             "mio:workspace:listen",
-            "send('mio:workspace:listen', { event: type, enabled: true })",
-            "send('mio:workspace:listen', { event: type, enabled: false })",
+            "send(protocol.types.listen, { event: type, enabled: true })",
+            "send(protocol.types.listen, { event: type, enabled: false })",
             "session, ...payload",
             "mio:workspace:event-result",
             "eventId: message.eventId, action",
-            "action = 'continue'",
-            "action = 'handled'",
+            "action = protocol.decisions.continue_",
+            "action = protocol.decisions.handled",
             "stop_propagation",
         ):
             self.assertIn(protocol, bridge.text)

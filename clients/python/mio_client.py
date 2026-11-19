@@ -1197,6 +1197,13 @@ class MioClient(_Base):
         """
         return self._request("PATCH", f"/ext/{_q(ext_id)}/preferences", json=body)
 
+    def extension_diagnostics(self) -> Any:
+        """GET /extensions/diagnostics — Extension Diagnostics.
+
+        Read static package/private-state findings without running extension code or migrations.
+        """
+        return self._request("GET", "/extensions/diagnostics")
+
     def list_themes(self) -> Any:
         """GET /themes — List Themes."""
         return self._request("GET", "/themes")

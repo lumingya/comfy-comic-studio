@@ -88,3 +88,32 @@ M0 结论：方案没有不可逆数据迁移或自动删除取舍，可以直�
 新契约：强 ETag、同屏障 CAS/子树 PATCH；按 QueryClient/资源串行的意图队列和权威对账，整对象远程冲突不重放；草稿保留未提交字段，卸载后停止组件写回。浮窗只写所属子树，订阅跟随 iframe 文档与 activation/digest，active 仅挂起；增加四生命周期通知、窄屏夹取、容器穿透、失败反馈和逃生键硬保护。
 
 实跑：后端并发/偏好/备份等 6 模块 71 项通过（33.482 秒）；独立审查补出的注释分隔与 @scope/@supports 身份绑定由平台契约 5 项通过；前端队列 10、设置面板 7、浮窗 8，共 25 项通过；tsc 与相关 Prettier 通过。包含双线程 CAS 唯一胜者、Deferred 旧成功/旧失败、已观察 GET 新版本后旧 PATCH 迟到、双 QueryClient、卸载和同 iframe 长会话。真实浏览器专项在 M4 单独执行。
+
+### M4 已完成
+
+新契约与工程资产：
+
+- Manifest、Panel HTTP、Panel/Workspace/主题设置消息和限额由 `extensions/protocol.py` 统一声明并进入两份 OpenAPI；`extensionProtocol.ts` 为生成的类型/运行常量，生产消费者已接线。媒体类型也引用生成响应模型。
+- 只读 CTK 与管理员诊断 API 共用结构化发现；旧数据冲突、无索引媒体、卡片过滤和摘要变化可查，不执行外来代码或输出私有值。运行诊断必须显式启用，容量有界。
+- 流式对抗语料涵盖 104 种任意分块、伪边界、提前拒绝、断连/取消、磁盘临时文件回收；CSS 语料覆盖注释、转义、大小写、image-set、畸形闭合、兄弟选择器。
+- 四来源备份矩阵中的扩展主题经真实临时扩展包审阅/启用注册，重启恢复不执行归档代码；显式重装启用后读回已恢复状态。
+
+真实浏览器发现并修复了额外生产问题：设置页 CSP 在 `sandbox allow-scripts` 后缺分号，导致 `script-src` 被当作 sandbox flag、全部作者脚本和桥均无法运行。修复并增加按指令拆分的 nonce 回归。修复后，Chrome 157.0.8103.50 实际通过内容穿透底层按钮、标题栏交互、遮挡 CSS 下逃生，以及 fetch/图片/顶层导航阻断；**自身导航仍有 1 次请求到达探测端**。维护者明确选择“保留现有设置页，接受自导航外发限制”，这是对最初绝对断网表述的显式例外，未将其伪装成阻断通过，也未新增任何业务 API 权限。
+
+| 门禁 | 实际结果 |
+| --- | --- |
+| 后端 unittest 全量 | 1118 项，首跑 1 失败、1 跳过（367.815 秒）；唯一失败为新增 CTK 测试 `subprocess text=True` 遗漏 encoding。修复后受影响编码/CTK/主题/协议 24 项通过，强化后的四来源真实重启矩阵单项也通过。遵循仓库只重跑受影响验证，不声称重新跑过全量 unittest |
+| 后端 pytest 全量 | 系统已有 Python/pytest：1061 passed、2 skipped，另 892 subtests passed（712.68 秒）；两条 ZIP 重复成员警告来自拒绝测试。未向 `.venv` 或共享环境安装 pytest/第三方包 |
+| Ruff lint / format | server、extensions、clients、tools 全通过，313 个文件格式一致 |
+| Python 客户端/协议生成 | 均重新生成，两个 `--check` 通过 |
+| TS OpenAPI 一致性 | 再生成前后 SHA-256 相同，零漂移；CTK 模型命名与既有工作流诊断的冲突已改为 `ExtensionDiagnosticReport` 后验证 |
+| 前端 Prettier / tsc / Vite | 均通过；Vite 保留 >500 kB chunk 提示，不是构建失败 |
+| 前端 Vitest 全量 | 84 文件，782 项通过；白名单改为同源生成常量后受影响 4 文件 186 项通过 |
+| 独立 AI 扩展前端 | 22 项、Prettier、build 通过，dist 与既有提交无漂移 |
+| Spike | 80 项通过 |
+| CTK 随包实例 | AI 扩展与壁纸主题静态检查 valid=true；不是执行或代码信任认证 |
+| 本机发行清单 | check_distribution 和 build_distribution --check 均因原有 3 项差异拒绝通过；未重置个人数据、未调用 --approve-changes |
+| 同提交干净种子/发行 ZIP 冒烟 | 只用清单夹具及 Git 中已批准的 64 文件，校验通过；当前候选代码打包 431 成员、ZIP CRC 通过，临时产物已清理，未签名、未发布 |
+| 真实浏览器专项 | 系统 Chrome + 既有 Python Playwright，临时工作区/回环服务执行；成功项与已接受自导航边界见上，未安装浏览器 |
+
+额外边界：没有真实模型、GPU、云端或收费服务调用，没有真实 pip 安装测试，没有签名发布或跨浏览器/全编解码认证。本机数据不是可直接发行的干净默认数据。工具说明、诊断开启方式和一键浏览器命令见[平台 CTK](EXTENSION_PLATFORM_CTK.md)。M1–M4 的代码、生成物与受影响验证已通过，可进入仅设计的 M5。

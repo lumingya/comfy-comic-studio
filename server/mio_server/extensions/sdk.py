@@ -22,6 +22,7 @@ from ..auth import SCOPES
 from ..jobs import ItemSpec
 from ..jobs.operations import operation_serialized
 from ..jobs.types import JobConflict
+from .protocol import MAX_CONCURRENT
 
 
 class ExtensionAPI:
@@ -30,7 +31,7 @@ class ExtensionAPI:
         self.source = f"ext:{ext_id}"
         self.folder = folder
         self.activation_id = secrets.token_urlsafe(24)
-        self._panel_slots = threading.BoundedSemaphore(4)
+        self._panel_slots = threading.BoundedSemaphore(MAX_CONCURRENT)
         self._ctx = ctx
         self.engine = ctx.engine
         self.digest = digest

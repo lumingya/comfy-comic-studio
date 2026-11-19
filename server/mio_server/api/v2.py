@@ -41,6 +41,7 @@ from . import (
     update,
     workshop,
 )
+from .extension_contracts import install_contract_schemas
 from .extension_routes import mount_extensions
 
 V2_VERSION = "2.0"
@@ -148,6 +149,7 @@ def build_v2(ctx, errors) -> FastAPI:
     app.include_router(access.tokens, dependencies=guard)
     mount_extensions(app, prefix="/ext", authenticate=token_of)
     app.openapi = lambda: _openapi(app)
+    install_contract_schemas(app)
     return app
 
 

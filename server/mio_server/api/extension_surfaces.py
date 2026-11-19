@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import mimetypes
 import re
 from pathlib import PurePosixPath
@@ -17,6 +18,7 @@ from ..extensions.panel_bridge import (
     active_panel,
     dispatch_panel,
 )
+from ..extensions.protocol import client_constants
 from ..storage import NotFound
 from .deps import Ctx
 from .operations import Router as APIRouter
@@ -30,6 +32,7 @@ WORKSPACE_CSP = (
     "object-src 'none'; base-uri 'none'; frame-ancestors 'self'"
 )
 WORKSPACE_BRIDGE_JS = r"""(() => {
+  const protocol = __MIO_WORKSPACE_PROTOCOL__;
   const session = new URLSearchParams(location.hash.slice(1)).get('mio-session');
   if (!session) return;
   const movedHandlers = new Set();
@@ -43,48 +46,48 @@ WORKSPACE_BRIDGE_JS = r"""(() => {
   window.addEventListener('message', async (event) => {
     if (!isHostMessage(event)) return;
     const message = event.data;
-    if (message.type === 'mio:workspace:context') {
+    if (message.type === protocol.types.context) {
       for (const type of globalHandlers.keys())
-        send('mio:workspace:listen', { event: type, enabled: true });
+        send(protocol.types.listen, { event: type, enabled: true });
       return;
     }
-    if (message.type === 'mio:workspace:lifecycle' &&
-        ['shown', 'hidden', 'focused', 'blurred'].includes(message.state)) {
+    if (message.type === protocol.types.lifecycle &&
+        Object.values(protocol.lifecycle).includes(message.state)) {
       for (const handler of lifecycleHandlers) {
         try { handler(message.state); } catch {}
       }
       return;
     }
-    if (message.type === 'mio:workspace:moved') {
+    if (message.type === protocol.types.moved) {
       for (const handler of movedHandlers) handler(message.position);
       return;
     }
-    if (message.type !== 'mio:workspace:event' || message.eventId == null) return;
+    if (message.type !== protocol.types.event || message.eventId == null) return;
     const globalEvent = message.event;
     if (!globalEvent || typeof globalEvent.type !== 'string') return;
-    let action = 'continue';
+    let action = protocol.decisions.continue_;
     for (const handler of globalHandlers.get(globalEvent.type) || []) {
       try {
         const result = await handler(globalEvent);
-        if (result === 'stop_propagation' || (result && result.stop_propagation)) {
-          action = 'stop_propagation';
+        if (result === protocol.decisions.stopPropagation || (result && result.stop_propagation)) {
+          action = protocol.decisions.stopPropagation;
           break;
         }
-        if (result === true || result === 'handled' || (result && result.handled)) {
-          action = 'handled';
+        if (result === true || result === protocol.decisions.handled || (result && result.handled)) {
+          action = protocol.decisions.handled;
           break;
         }
       } catch {}
     }
-    send('mio:workspace:event-result', { eventId: message.eventId, action });
+    send(protocol.types.eventResult, { eventId: message.eventId, action });
   });
   const bridge = Object.freeze({
     resize(width, height) {
       if (Number.isFinite(width) && Number.isFinite(height))
-        send('mio:workspace:resize', { width, height });
+        send(protocol.types.resize, { width, height });
     },
     setClickThrough(enabled) {
-      if (typeof enabled === 'boolean') send('mio:workspace:click-through', { enabled });
+      if (typeof enabled === 'boolean') send(protocol.types.clickThrough, { enabled });
     },
     onMoved(handler) {
       if (typeof handler !== 'function') return () => {};
@@ -102,14 +105,14 @@ WORKSPACE_BRIDGE_JS = r"""(() => {
       if (!handlers) {
         handlers = new Set();
         globalHandlers.set(type, handlers);
-        send('mio:workspace:listen', { event: type, enabled: true });
+        send(protocol.types.listen, { event: type, enabled: true });
       }
       handlers.add(handler);
       return () => {
         handlers.delete(handler);
         if (!handlers.size) {
           globalHandlers.delete(type);
-          send('mio:workspace:listen', { event: type, enabled: false });
+          send(protocol.types.listen, { event: type, enabled: false });
         }
       };
     },
@@ -120,8 +123,8 @@ WORKSPACE_BRIDGE_JS = r"""(() => {
     value: bridge,
     writable: false,
   });
-  send('mio:workspace:ready');
-})();"""
+  send(protocol.types.ready);
+})();""".replace("__MIO_WORKSPACE_PROTOCOL__", json.dumps(client_constants()["workspace"]))
 
 
 @router.get("/extension-surfaces")

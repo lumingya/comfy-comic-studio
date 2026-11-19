@@ -95,7 +95,14 @@ class BackupUIDataTests(unittest.TestCase):
         )
         self.ctx.theme_packages.install_package(package)
         attached = parse_theme({"id": "attached-theme", "name": "Attached", "mode": "dark"})
-        self.ctx.registry.register("theme", attached.id, attached, source="ext:demo")
+        # Exercise a real reviewed declaration rather than manually injecting a source tag.
+        folder = write_ext(self.ctx.extensions.root, "demo", "def activate(mio):\n    pass\n")
+        (folder / "theme.json").write_text(attached.model_dump_json(), encoding="utf-8")
+        extension_package = io.BytesIO()
+        with zipfile.ZipFile(extension_package, "w") as extension_archive:
+            for path in folder.iterdir():
+                extension_archive.writestr(path.name, path.read_bytes())
+        self.ctx.extensions.enable("demo", self.ctx.extensions.info("demo").digest)
         themes = ["theme-wallpaper", "inline-theme", package_id, attached.id]
         wallpapers = {}
         for theme_id in themes:
@@ -128,7 +135,11 @@ class BackupUIDataTests(unittest.TestCase):
             self.assertEqual(current, {"loop": True})
         self.close()
         self.open()
-        self.ctx.registry.register("theme", attached.id, attached, source="ext:demo")
+        # Restoring data never executes archive code. Explicitly reinstall/review to
+        # make the contributed theme available, then read its already restored state.
+        self.assertNotIn("demo", self.ctx.extensions.loaded)
+        self.ctx.extensions.install(extension_package.getvalue())
+        self.ctx.extensions.enable("demo", self.ctx.extensions.info("demo").digest)
         for theme_id, item in wallpapers.items():
             with self.subTest(restored_theme=theme_id):
                 response = self.client.get(f"/api/themes/{theme_id}/preferences")

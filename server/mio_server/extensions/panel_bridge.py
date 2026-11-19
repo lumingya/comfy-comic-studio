@@ -13,44 +13,20 @@ from urllib.parse import quote
 
 import httpx
 from fastapi import HTTPException, Request
-from pydantic import Field, JsonValue
 from starlette.routing import compile_path
 
 from ..auth import required_scope
-from ..models import StrictModel
 from ..storage import NotFound
 from .manifest import PanelSpec, digest, read_manifest
-
-MAX_REQUEST_BYTES = 64 * 1024
-MAX_RESPONSE_BYTES = 1024 * 1024
-MAX_CONCURRENT = 4
+from .protocol import MAX_REQUEST_BYTES, MAX_RESPONSE_BYTES
+from .protocol import PanelBridgeRequest as PanelBridgeRequest
+from .protocol import PanelBridgeResponse as PanelBridgeResponse
+from .protocol import PanelContext as PanelContext
 
 
 class PanelResponseRejected(Exception):
     def __init__(self, status: int, detail: str):
         self.status, self.detail = status, detail
-
-
-class PanelContext(StrictModel):
-    episode_id: str | None = Field(default=None, max_length=160)
-    series_id: str | None = Field(default=None, max_length=160)
-
-
-class PanelBridgeRequest(StrictModel):
-    activation: str = Field(min_length=1, max_length=100)
-    digest: str = Field(pattern=r"^[0-9a-f]{64}$")
-    request_id: str = Field(min_length=1, max_length=48)
-    path_params: dict[str, str] = Field(default_factory=dict, max_length=20)
-    query: dict[str, str | int | float | bool | list[str]] = Field(
-        default_factory=dict, max_length=40
-    )
-    body: JsonValue = None
-    context: PanelContext = Field(default_factory=PanelContext)
-
-
-class PanelBridgeResponse(StrictModel):
-    status: int
-    data: JsonValue = None
 
 
 def active_panel(ctx, ext_id: str, panel_id: str, body=None) -> tuple[PanelSpec, object, str]:

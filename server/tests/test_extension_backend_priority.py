@@ -83,7 +83,7 @@ class ExtensionPreferencesStorageTests(unittest.TestCase):
 
             self.assertEqual(load_preferences(data_dir, "demo"), {"theme": "dark"})
             self.assertEqual(load_preferences(data_dir, "other"), {"theme": "light"})
-            self.assertTrue((data_dir / "extension_data" / "demo" / "preferences.json").is_file())
+            self.assertTrue((data_dir / "extensions_data" / "demo" / "preferences.json").is_file())
 
             for identifier in ("../other", "demo/../../other", "DEMO"):
                 with self.subTest(identifier=identifier), self.assertRaises(ValueError):

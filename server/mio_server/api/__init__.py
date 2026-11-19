@@ -46,6 +46,7 @@ from . import (
     update,
     workshop,
 )
+from .extension_contracts import install_contract_schemas
 from .extension_routes import mount_extensions as _mount_extensions
 from .guard import LocalGuard, env_hosts
 from .v2 import build_v2
@@ -82,6 +83,7 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
             app.state.ctx.close()
 
     app = FastAPI(title="Mio v3 API", version=API_VERSION, lifespan=lifespan)
+    install_contract_schemas(app)
     app.state.ctx = ctx or AppContext.create()
     # /api has no login: refuse cross-site writes and DNS-rebound hosts (see guard.py).
     app.add_middleware(LocalGuard, allowed=env_hosts())

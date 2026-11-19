@@ -4,6 +4,13 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Maximize2, Minimize2, MousePointer2, Puzzle } from 'lucide-react';
 import { raw } from '../api/client';
+import {
+  BRIDGE,
+  type WorkspaceToFrame,
+  type WorkspaceFromFrame,
+  type WorkspaceKeyEvent,
+  type SurfaceLifecycle,
+} from '../api/extensionProtocol';
 import { Loading } from '../components/ui';
 import { QueryError } from '../app/errors';
 import {
@@ -14,6 +21,10 @@ import {
 import { toastError } from '../components/toast';
 import { dispatchByPriority, type ExtensionEventDecision } from './eventPipeline';
 import './host.css';
+
+function postWorkspace(frame: HTMLIFrameElement | null, message: WorkspaceToFrame) {
+  frame?.contentWindow?.postMessage(message, location.origin);
+}
 
 export interface WorkspaceSurface {
   extension_id: string;
@@ -101,7 +112,10 @@ function WorkspaceFrame({
     active,
     navigate,
   };
-  const context = () => {
+  const context = (): Extract<
+    WorkspaceToFrame,
+    { type: typeof BRIDGE.workspace.types.context }
+  > => {
     const style = getComputedStyle(document.documentElement);
     const tokens = Object.fromEntries(
       Array.from({ length: style.length }, (_, index) => style.item(index))
@@ -109,7 +123,7 @@ function WorkspaceFrame({
         .map((key) => [key, style.getPropertyValue(key)]),
     );
     return {
-      type: 'mio:workspace:context',
+      type: BRIDGE.workspace.types.context,
       session,
       tokens,
       theme: document.documentElement.dataset.theme,
@@ -119,67 +133,70 @@ function WorkspaceFrame({
   };
   useEffect(() => {
     const ownedFrame = frame.current;
-    const send = () => frame.current?.contentWindow?.postMessage(context(), location.origin);
+    const send = () => postWorkspace(frame.current, context());
     const listener = (event: MessageEvent) => {
+      const value: unknown = event.data;
       if (
         event.origin !== location.origin ||
         event.source !== frame.current?.contentWindow ||
-        event.data?.session !== session
+        !isRecord(value) ||
+        value.session !== session
       )
         return;
-      if (event.data.type === 'mio:workspace:ready') send();
-      if (event.data.type === 'mio:workspace:changed') void qc.invalidateQueries();
+      const message = value as WorkspaceFromFrame;
+      if (message.type === BRIDGE.workspace.types.ready) send();
+      if (message.type === BRIDGE.workspace.types.changed) void qc.invalidateQueries();
       if (
-        event.data.type === 'mio:workspace:resize' &&
-        Number.isFinite(event.data.width) &&
-        Number.isFinite(event.data.height)
+        message.type === BRIDGE.workspace.types.resize &&
+        Number.isFinite(message.width) &&
+        Number.isFinite(message.height)
       )
         latest.current.onResize?.(
-          Math.max(240, Math.min(1200, Math.round(event.data.width))),
-          Math.max(200, Math.min(1000, Math.round(event.data.height))),
+          Math.max(240, Math.min(1200, Math.round(message.width))),
+          Math.max(200, Math.min(1000, Math.round(message.height))),
         );
       if (
-        event.data.type === 'mio:workspace:click-through' &&
-        typeof event.data.enabled === 'boolean'
+        message.type === BRIDGE.workspace.types.clickThrough &&
+        typeof message.enabled === 'boolean'
       )
-        latest.current.onClickThrough?.(event.data.enabled);
+        latest.current.onClickThrough?.(message.enabled);
       if (
-        event.data.type === 'mio:workspace:listen' &&
-        event.data.event === 'keydown' &&
-        typeof event.data.enabled === 'boolean'
+        message.type === BRIDGE.workspace.types.listen &&
+        message.event === 'keydown' &&
+        typeof message.enabled === 'boolean'
       ) {
-        if (event.data.enabled) subscriptions.current.add('keydown');
+        if (message.enabled) subscriptions.current.add('keydown');
         else subscriptions.current.delete('keydown');
         const currentFrame = frame.current;
         if (currentFrame)
           latest.current.onSubscribe?.(
             { surface: latest.current.surface, frame: currentFrame, session, event: 'keydown' },
-            event.data.enabled && latest.current.active,
+            message.enabled && latest.current.active,
           );
       }
       if (
-        event.data.type === 'mio:workspace:event-result' &&
-        typeof event.data.eventId === 'string'
+        message.type === BRIDGE.workspace.types.eventResult &&
+        typeof message.eventId === 'string'
       ) {
-        const decision = event.data.action;
+        const decision = message.action;
         if (frame.current)
           latest.current.onEventResult?.(
-            event.data.eventId,
+            message.eventId,
             decision === 'handled' || decision === 'stop_propagation' ? decision : 'continue',
             frame.current,
             session,
           );
       }
       if (
-        event.data.type === 'mio:workspace:navigate' &&
+        message.type === BRIDGE.workspace.types.navigate &&
         [
           '/',
           `/extensions/${latest.current.surface.extension_id}`,
           '/extensions?tab=installed',
           '/settings?tab=extensions',
-        ].includes(event.data.path)
+        ].includes(message.path)
       )
-        latest.current.navigate(event.data.path);
+        latest.current.navigate(message.path);
     };
     const observer = new MutationObserver(send);
     observer.observe(document.documentElement, {
@@ -215,11 +232,8 @@ function WorkspaceFrame({
   const visibility = useRef<boolean | undefined>(undefined);
   const focus = useRef(false);
   const notifyLifecycle = () => {
-    const send = (state: 'shown' | 'hidden' | 'focused' | 'blurred') =>
-      frame.current?.contentWindow?.postMessage(
-        { type: 'mio:workspace:lifecycle', session, state },
-        location.origin,
-      );
+    const send = (state: SurfaceLifecycle) =>
+      postWorkspace(frame.current, { type: BRIDGE.workspace.types.lifecycle, session, state });
     if (focus.current && (!active || !focused)) {
       send('blurred');
       focus.current = false;
@@ -236,10 +250,7 @@ function WorkspaceFrame({
   useEffect(notifyLifecycle, [active, focused, session]);
   useEffect(() => {
     if (!position) return;
-    frame.current?.contentWindow?.postMessage(
-      { type: 'mio:workspace:moved', session, position },
-      location.origin,
-    );
+    postWorkspace(frame.current, { type: BRIDGE.workspace.types.moved, session, position });
   }, [position, session]);
   return (
     <iframe
@@ -261,7 +272,7 @@ function WorkspaceFrame({
         subscriptions.current.clear();
         visibility.current = undefined;
         focus.current = false;
-        currentFrame?.contentWindow?.postMessage(context(), location.origin);
+        postWorkspace(currentFrame, context());
         notifyLifecycle();
       }}
     />
@@ -682,7 +693,7 @@ export function WorkspaceExtensionOverlays({ path }: { path: string }) {
         target.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"])')
       )
         return;
-      const payload = {
+      const payload: WorkspaceKeyEvent = {
         type: 'keydown',
         key: event.key,
         code: event.code,
@@ -707,7 +718,7 @@ export function WorkspaceExtensionOverlays({ path }: { path: string }) {
             const timeout = window.setTimeout(() => {
               pendingEvents.current.delete(eventId);
               resolve('continue');
-            }, 250);
+            }, BRIDGE.workspace.eventTimeoutMs);
             pendingEvents.current.set(eventId, {
               subscription,
               finish: (decision) => {
@@ -716,15 +727,12 @@ export function WorkspaceExtensionOverlays({ path }: { path: string }) {
                 resolve(decision);
               },
             });
-            subscription.frame.contentWindow?.postMessage(
-              {
-                type: 'mio:workspace:event',
-                eventId,
-                session: subscription.session,
-                event: payload,
-              },
-              location.origin,
-            );
+            postWorkspace(subscription.frame, {
+              type: BRIDGE.workspace.types.event,
+              eventId,
+              session: subscription.session,
+              event: payload,
+            });
           });
         },
       );

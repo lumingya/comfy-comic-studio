@@ -2,14 +2,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, data, raw } from './client';
 import { usePrivatePreferences, useWritePrivatePreferences } from './preferenceWrites';
+import type { components } from './schema';
+import type {
+  FloatingPosition as ManifestFloatingPosition,
+  PanelRequestSpec,
+} from './extensionProtocol';
 
 /** The same media contract is used by package backgrounds and private uploads. */
-export interface MediaDescriptor {
-  kind: 'image' | 'video';
-  url: string;
-  animated: boolean;
-  mime_type: string;
-}
+export type MediaDescriptor = Pick<
+  components['schemas']['Wallpaper'],
+  'kind' | 'url' | 'animated' | 'mime_type'
+>;
 
 export interface ThemeInfo {
   id: string;
@@ -40,20 +43,11 @@ export interface ThemeSettingField {
   options_source?: 'wallpapers';
 }
 
-export interface ThemeWallpaper extends MediaDescriptor {
-  id: string;
-  filename: string;
-}
+export type ThemeWallpaper = components['schemas']['Wallpaper'];
 
-export interface ThemeWallpapers {
-  items: ThemeWallpaper[];
-}
+export type ThemeWallpapers = components['schemas']['Wallpapers'];
 
-export interface FloatingPosition {
-  x: 'left' | 'right' | number;
-  y: 'top' | 'bottom' | number;
-  offset: [number, number];
-}
+export type FloatingPosition = Required<ManifestFloatingPosition>;
 
 export interface ExtensionInfo {
   builtin?: boolean;
@@ -492,12 +486,7 @@ export interface ExtensionPanel {
   requests?: PanelRequest[];
 }
 
-export interface PanelRequest {
-  id: string;
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-  path: string;
-  scope: 'read' | 'write' | 'render' | 'admin';
-}
+export type PanelRequest = PanelRequestSpec;
 
 export function useExtensionPanels(slot: ExtensionPanel['slot']) {
   return useQuery({

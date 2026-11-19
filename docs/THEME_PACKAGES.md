@@ -49,6 +49,8 @@ theme-linen/
 
 也可声明 `settings_page: "settings.html"`。页面通过 `/api/themes/{id}/settings-page` 在无同源权限的 sandbox iframe 中提供；注入的 `window.theme` 只暴露异步 `getSettings()` 与 `updateSettings(settings)`，CSP 禁止网络连接与宿主 API。内联脚本使用每次响应生成的 nonce。若同时声明两种设置模式，设置页优先打开自定义页面。
 
+浏览器边界（2026-11-19 实测并由维护者明确接受）：这里的网络限制阻断 fetch、资源加载等指定通道，**不能保证作者 DOM 脚本绝对断网**。Chrome 不支持 `navigate-to`，设置页仍能通过自身导航向目标地址发出请求，且可能将其已知设置放入地址。设置页继续保留，只应导入可信作者的页面；它仍没有宿主同源权限或业务 API 桥。不能以 `connect-src 'none'` 声称消除此限制。真实测试与只读诊断见[平台 CTK](EXTENSION_PLATFORM_CTK.md)。
+
 私有设置与上传壁纸会随完整工作区备份和重启恢复，并参与恢复前的内容版本检查；这与主题 ZIP 的公开分发范围不同。壁纸列表和上传结果包含 `animated` 标记，用户上传的动画图片与包内背景遵循同一减少动态效果策略。
 
 主题 `theme.css` 可额外声明严格以 `.theme-card[data-theme-id="self"]` 为根的选择器，供列表中的该主题卡片单独展示；宿主在完整样式与卡片样式端点按当前真实 ID 绑定逻辑根。旧显式 ID 根在导出时仅于选择器语法位置规范为 `self`，声明值、注释与 URL 不变。其他规则不会通过卡片样式端点暴露；该样式不要求主题被选中，重新导入改变 ID 后仍可使用。

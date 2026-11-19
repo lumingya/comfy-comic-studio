@@ -1962,6 +1962,26 @@ export interface paths {
         patch: operations["patch_extension_preferences_api_ext__ext_id__preferences_patch"];
         trace?: never;
     };
+    "/api/extensions/diagnostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Extension Diagnostics
+         * @description Read static package/private-state findings without running extension code or migrations.
+         */
+        get: operations["extension_diagnostics_api_extensions_diagnostics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/themes": {
         parameters: {
             query?: never;
@@ -4052,6 +4072,27 @@ export interface components {
             /** Nodes */
             nodes: string[];
         };
+        /** Diagnostic */
+        Diagnostic: {
+            /** Code */
+            code: string;
+            /**
+             * Severity
+             * @enum {string}
+             */
+            severity: "info" | "warning" | "error";
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "extension" | "theme" | "private";
+            /** Id */
+            id?: string | null;
+            /** Source */
+            source: string;
+            /** Message */
+            message: string;
+        };
         /** DiagnosticReport */
         DiagnosticReport: {
             /** Ok */
@@ -4251,6 +4292,28 @@ export interface components {
             source: string;
             /** Digest */
             digest: string;
+        };
+        /** ExtensionDiagnosticReport */
+        ExtensionDiagnosticReport: {
+            /**
+             * Format Version
+             * @default 1
+             * @constant
+             */
+            format_version?: 1;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "extension" | "theme" | "workspace";
+            /** Id */
+            id?: string | null;
+            /** Valid */
+            valid: boolean;
+            /** Findings */
+            findings: components["schemas"]["Diagnostic"][];
+            /** Limitations */
+            limitations?: string[];
         };
         /** ExternalRequirement */
         ExternalRequirement: {
@@ -7105,6 +7168,605 @@ export interface components {
             episode: components["schemas"]["Episode"];
             /** Job */
             job: Record<string, unknown>;
+        };
+        /** Contributes */
+        MioContract_Contributes: {
+            /**
+             * Themes
+             * @description Theme JSON files
+             */
+            themes?: string[];
+            /**
+             * Album Templates
+             * @description Album template JSON
+             */
+            album_templates?: string[];
+            /** Sfx Presets */
+            sfx_presets?: {
+                [key: string]: Record<string, unknown>;
+            };
+            /** Slice Presets */
+            slice_presets?: components["schemas"]["MioContract_SlicePresetSpec"][];
+            /** Panels */
+            panels?: components["schemas"]["MioContract_PanelSpec"][];
+            /** Floating Surfaces */
+            floating_surfaces?: components["schemas"]["MioContract_FloatingSurfaceSpec"][];
+        };
+        /**
+         * EventDecision
+         * @enum {string}
+         */
+        MioContract_EventDecision: "continue" | "handled" | "stop_propagation";
+        /** FloatingPosition */
+        MioContract_FloatingPosition: {
+            /** X */
+            x: ("left" | "right") | number;
+            /** Y */
+            y: ("top" | "bottom") | number;
+            /**
+             * Offset
+             * @default [
+             *       20,
+             *       20
+             *     ]
+             */
+            offset?: [
+                number,
+                number
+            ];
+        };
+        /** FloatingSurfaceSpec */
+        MioContract_FloatingSurfaceSpec: {
+            /** Id */
+            id: string;
+            /** Title */
+            title: string;
+            /** Entry */
+            entry: string;
+            /** Global */
+            global: boolean;
+            /**
+             * Transparent
+             * @default true
+             */
+            transparent?: boolean;
+            default_position?: components["schemas"]["MioContract_FloatingPosition"];
+            /**
+             * Priority
+             * @default 0
+             */
+            priority?: number;
+        };
+        MioContract_JsonValue: unknown;
+        /** Manifest */
+        MioContract_Manifest: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Version
+             * @default 0.1.0
+             */
+            version?: string;
+            /**
+             * Description
+             * @default
+             */
+            description?: string;
+            /**
+             * Author
+             * @default
+             */
+            author?: string;
+            /**
+             * Homepage
+             * @default
+             */
+            homepage?: string;
+            /**
+             * Main
+             * @description Python entry: activate(mio) is called
+             * @default null
+             */
+            main?: string | null;
+            /** @default null */
+            workspace?: components["schemas"]["MioContract_WorkspaceSpec"] | null;
+            /**
+             * Backup
+             * @default null
+             */
+            backup?: string | null;
+            contributes?: components["schemas"]["MioContract_Contributes"];
+        };
+        /** PanelBridgeRequest */
+        MioContract_PanelBridgeRequest: {
+            /** Activation */
+            activation: string;
+            /** Digest */
+            digest: string;
+            /** Request Id */
+            request_id: string;
+            /** Path Params */
+            path_params?: {
+                [key: string]: string;
+            };
+            /** Query */
+            query?: {
+                [key: string]: string | number | boolean | string[];
+            };
+            /** @default null */
+            body?: components["schemas"]["MioContract_JsonValue"];
+            context?: components["schemas"]["MioContract_PanelContext"];
+        };
+        /** PanelBridgeResponse */
+        MioContract_PanelBridgeResponse: {
+            /** Status */
+            status: number;
+            /** @default null */
+            data?: components["schemas"]["MioContract_JsonValue"];
+        };
+        /** PanelContext */
+        MioContract_PanelContext: {
+            /**
+             * Episode Id
+             * @default null
+             */
+            episode_id?: string | null;
+            /**
+             * Series Id
+             * @default null
+             */
+            series_id?: string | null;
+        };
+        /** PanelFromFrame */
+        MioContract_PanelFromFrame: components["schemas"]["MioContract_PanelReady"] | components["schemas"]["MioContract_PanelRequestMessage"];
+        /** PanelInit */
+        MioContract_PanelInit: {
+            /** Session */
+            session: string;
+            /**
+             * Version
+             * @constant
+             */
+            version: 1;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:panel:init";
+            context: components["schemas"]["MioContract_PanelContext"];
+            /** Requests */
+            requests: components["schemas"]["MioContract_PanelRequestSpec"][];
+            limits: components["schemas"]["MioContract_PanelLimits"];
+        };
+        /** PanelLimits */
+        MioContract_PanelLimits: {
+            /** Requestbytes */
+            requestBytes: number;
+            /** Responsebytes */
+            responseBytes: number;
+            /** Concurrent */
+            concurrent: number;
+        };
+        /** PanelReady */
+        MioContract_PanelReady: {
+            /** Session */
+            session: string;
+            /**
+             * Version
+             * @constant
+             */
+            version: 1;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:panel:ready";
+        };
+        /** PanelRequestMessage */
+        MioContract_PanelRequestMessage: {
+            /** Session */
+            session: string;
+            /**
+             * Version
+             * @constant
+             */
+            version: 1;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:panel:request";
+            /** Rid */
+            rid: string;
+            /** Request Id */
+            request_id: string;
+            /** Path Params */
+            path_params?: {
+                [key: string]: string;
+            };
+            /** Query */
+            query?: {
+                [key: string]: string | number | boolean | string[];
+            };
+            /** @default null */
+            body?: components["schemas"]["MioContract_JsonValue"];
+        };
+        /** PanelRequestSpec */
+        MioContract_PanelRequestSpec: {
+            /** Id */
+            id: string;
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+            /** Path */
+            path: string;
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "read" | "write" | "render" | "admin";
+        };
+        /** PanelResponseMessage */
+        MioContract_PanelResponseMessage: {
+            /** Session */
+            session: string;
+            /**
+             * Version
+             * @constant
+             */
+            version: 1;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:panel:response";
+            /** Rid */
+            rid: string;
+            /** Status */
+            status: number;
+            data: components["schemas"]["MioContract_JsonValue"];
+            /** Ok */
+            ok: boolean;
+        };
+        /** PanelSpec */
+        MioContract_PanelSpec: {
+            /** Id */
+            id: string;
+            /**
+             * Slot
+             * @enum {string}
+             */
+            slot: "episode" | "settings";
+            /** Title */
+            title: string;
+            /**
+             * Entry
+             * @description HTML file inside the extension folder
+             */
+            entry: string;
+            /**
+             * Priority
+             * @default 0
+             */
+            priority?: number;
+            /** Requests */
+            requests?: components["schemas"]["MioContract_PanelRequestSpec"][];
+        };
+        /** PanelToFrame */
+        MioContract_PanelToFrame: components["schemas"]["MioContract_PanelInit"] | components["schemas"]["MioContract_PanelResponseMessage"];
+        /** SlicePresetSpec */
+        MioContract_SlicePresetSpec: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Width */
+            width: number;
+            /** Max Height */
+            max_height: number;
+            /**
+             * Fmt
+             * @default JPEG
+             * @enum {string}
+             */
+            fmt?: "JPEG" | "PNG" | "WEBP";
+            /**
+             * Quality
+             * @default 90
+             */
+            quality?: number;
+        };
+        /**
+         * SurfaceLifecycle
+         * @enum {string}
+         */
+        MioContract_SurfaceLifecycle: "shown" | "hidden" | "focused" | "blurred";
+        /** ThemeSettingsFailed */
+        MioContract_ThemeSettingsFailed: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:theme:response";
+            /** Requestid */
+            requestId: string;
+            /** Error */
+            error: string;
+        };
+        /** ThemeSettingsFromFrame */
+        MioContract_ThemeSettingsFromFrame: components["schemas"]["MioContract_ThemeSettingsReady"] | components["schemas"]["MioContract_ThemeSettingsGet"] | components["schemas"]["MioContract_ThemeSettingsUpdate"];
+        /** ThemeSettingsGet */
+        MioContract_ThemeSettingsGet: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:theme:request";
+            /** Requestid */
+            requestId: string;
+            /**
+             * Action
+             * @constant
+             */
+            action: "getSettings";
+        };
+        /** ThemeSettingsReady */
+        MioContract_ThemeSettingsReady: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:theme:ready";
+        };
+        /** ThemeSettingsSaved */
+        MioContract_ThemeSettingsSaved: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:theme:response";
+            /** Requestid */
+            requestId: string;
+            /** Settings */
+            settings: {
+                [key: string]: components["schemas"]["MioContract_JsonValue"];
+            };
+        };
+        /** ThemeSettingsToFrame */
+        MioContract_ThemeSettingsToFrame: components["schemas"]["MioContract_ThemeSettingsSaved"] | components["schemas"]["MioContract_ThemeSettingsFailed"];
+        /** ThemeSettingsUpdate */
+        MioContract_ThemeSettingsUpdate: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:theme:request";
+            /** Requestid */
+            requestId: string;
+            /**
+             * Action
+             * @constant
+             */
+            action: "updateSettings";
+            /** Settings */
+            settings: {
+                [key: string]: components["schemas"]["MioContract_JsonValue"];
+            };
+        };
+        /** WorkspaceChanged */
+        MioContract_WorkspaceChanged: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:workspace:changed";
+        };
+        /** WorkspaceClickThrough */
+        MioContract_WorkspaceClickThrough: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:workspace:click-through";
+            /** Enabled */
+            enabled: boolean;
+        };
+        /** WorkspaceContext */
+        MioContract_WorkspaceContext: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:workspace:context";
+            /** Tokens */
+            tokens: {
+                [key: string]: string;
+            };
+            /**
+             * Theme
+             * @default null
+             */
+            theme?: string | null;
+            /** Locale */
+            locale: string;
+            /** Floating */
+            floating: boolean;
+        };
+        /** WorkspaceEvent */
+        MioContract_WorkspaceEvent: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:workspace:event";
+            /** Eventid */
+            eventId: string;
+            event: components["schemas"]["MioContract_WorkspaceKeyEvent"];
+        };
+        /** WorkspaceEventResult */
+        MioContract_WorkspaceEventResult: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:workspace:event-result";
+            /** Eventid */
+            eventId: string;
+            action: components["schemas"]["MioContract_EventDecision"];
+        };
+        /** WorkspaceFromFrame */
+        MioContract_WorkspaceFromFrame: components["schemas"]["MioContract_WorkspaceReady"] | components["schemas"]["MioContract_WorkspaceChanged"] | components["schemas"]["MioContract_WorkspaceResize"] | components["schemas"]["MioContract_WorkspaceClickThrough"] | components["schemas"]["MioContract_WorkspaceListen"] | components["schemas"]["MioContract_WorkspaceEventResult"] | components["schemas"]["MioContract_WorkspaceNavigate"];
+        /** WorkspaceKeyEvent */
+        MioContract_WorkspaceKeyEvent: {
+            /**
+             * Type
+             * @constant
+             */
+            type: "keydown";
+            /** Key */
+            key: string;
+            /** Code */
+            code: string;
+            /** Altkey */
+            altKey: boolean;
+            /** Ctrlkey */
+            ctrlKey: boolean;
+            /** Metakey */
+            metaKey: boolean;
+            /** Shiftkey */
+            shiftKey: boolean;
+            /** Repeat */
+            repeat: boolean;
+        };
+        /** WorkspaceLifecycle */
+        MioContract_WorkspaceLifecycle: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:workspace:lifecycle";
+            state: components["schemas"]["MioContract_SurfaceLifecycle"];
+        };
+        /** WorkspaceListen */
+        MioContract_WorkspaceListen: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:workspace:listen";
+            /**
+             * Event
+             * @constant
+             */
+            event: "keydown";
+            /** Enabled */
+            enabled: boolean;
+        };
+        /** WorkspaceMoved */
+        MioContract_WorkspaceMoved: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:workspace:moved";
+            position: components["schemas"]["MioContract_WorkspacePosition"];
+        };
+        /** WorkspaceNavigate */
+        MioContract_WorkspaceNavigate: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:workspace:navigate";
+            /** Path */
+            path: string;
+        };
+        /** WorkspacePosition */
+        MioContract_WorkspacePosition: {
+            /** X */
+            x: number;
+            /** Y */
+            y: number;
+        };
+        /** WorkspaceReady */
+        MioContract_WorkspaceReady: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:workspace:ready";
+        };
+        /** WorkspaceResize */
+        MioContract_WorkspaceResize: {
+            /** Session */
+            session: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:workspace:resize";
+            /** Width */
+            width: number;
+            /** Height */
+            height: number;
+        };
+        /** WorkspaceSpec */
+        MioContract_WorkspaceSpec: {
+            /** Entry */
+            entry: string;
+            /** Title */
+            title: string;
+        };
+        /** WorkspaceToFrame */
+        MioContract_WorkspaceToFrame: components["schemas"]["MioContract_WorkspaceContext"] | components["schemas"]["MioContract_WorkspaceMoved"] | components["schemas"]["MioContract_WorkspaceLifecycle"] | components["schemas"]["MioContract_WorkspaceEvent"];
+        /** PlatformContracts */
+        MioContract_PlatformContracts: {
+            manifest: components["schemas"]["MioContract_Manifest"];
+            floating_position: components["schemas"]["MioContract_FloatingPosition"];
+            panel_request_spec: components["schemas"]["MioContract_PanelRequestSpec"];
+            panel_context: components["schemas"]["MioContract_PanelContext"];
+            panel_call: components["schemas"]["MioContract_PanelBridgeRequest"];
+            panel_result: components["schemas"]["MioContract_PanelBridgeResponse"];
+            panel_from_frame: components["schemas"]["MioContract_PanelFromFrame"];
+            panel_to_frame: components["schemas"]["MioContract_PanelToFrame"];
+            workspace_from_frame: components["schemas"]["MioContract_WorkspaceFromFrame"];
+            workspace_to_frame: components["schemas"]["MioContract_WorkspaceToFrame"];
+            theme_settings_from_frame: components["schemas"]["MioContract_ThemeSettingsFromFrame"];
+            theme_settings_to_frame: components["schemas"]["MioContract_ThemeSettingsToFrame"];
         };
     };
     responses: never;
@@ -11255,6 +11917,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    extension_diagnostics_api_extensions_diagnostics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExtensionDiagnosticReport"];
                 };
             };
         };

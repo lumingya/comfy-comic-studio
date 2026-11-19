@@ -1,5 +1,6 @@
 """Independent theme package import/export, shared by local and open APIs."""
 
+import json
 import re
 import secrets
 import shutil
@@ -13,6 +14,7 @@ from starlette.background import BackgroundTask
 from starlette.concurrency import run_in_threadpool
 from starlette.datastructures import UploadFile
 
+from ..extensions.protocol import client_constants
 from ..storage import NotFound
 from ..theme_media import (
     MAX_STYLESHEET_BYTES,
@@ -333,12 +335,13 @@ def _nonce_inline_scripts(page: str, nonce: str) -> str:
 def _settings_bridge(nonce: str) -> str:
     return (
         f'<script nonce="{nonce}">(()=>{{'
+        f"const protocol={json.dumps(client_constants()['themeSettings'])};"
         "const session=new URLSearchParams(location.hash.slice(1)).get('mio-theme-session');"
         "if(!session||!/^[A-Za-z0-9_-]{20,80}$/.test(session))return;"
         "const pending=new Map();let nextRequestId=0;"
         "window.addEventListener('message',event=>{const message=event.data;"
         "if(event.source!==window.parent||!message||message.session!==session)return;"
-        "if(message.type!=='mio:theme:response'||typeof message.requestId!=='string')return;"
+        "if(message.type!==protocol.types.response||typeof message.requestId!=='string')return;"
         "const request=pending.get(message.requestId);if(!request)return;"
         "window.clearTimeout(request.timer);pending.delete(message.requestId);"
         "if(typeof message.error==='string')request.reject(new Error(message.error));"
@@ -346,21 +349,21 @@ def _settings_bridge(nonce: str) -> str:
         "function send(action,settings){return new Promise((resolve,reject)=>{"
         "const requestId=String(++nextRequestId);"
         "const timer=window.setTimeout(()=>{pending.delete(requestId);"
-        "reject(new Error('Settings request timed out'));},30000);"
+        "reject(new Error('Settings request timed out'));},protocol.timeoutMs);"
         "pending.set(requestId,{resolve,reject,timer});"
-        "const message={session,type:'mio:theme:request',requestId,action};"
-        "if(action==='updateSettings')message.settings=settings;"
+        "const message={session,type:protocol.types.request,requestId,action};"
+        "if(action===protocol.actions.updateSettings)message.settings=settings;"
         "window.parent.postMessage(message,'*');});}"
         "const bridge=Object.freeze(Object.assign(Object.create(null),{"
-        "getSettings:()=>send('getSettings'),"
+        "getSettings:()=>send(protocol.actions.getSettings),"
         "updateSettings:settings=>{if(settings===null||typeof settings!=='object'||Array.isArray(settings))"
         "return Promise.reject(new TypeError('Settings must be an object'));"
         "let encoded;try{encoded=JSON.stringify(settings);}catch{return Promise.reject(new TypeError('Invalid settings'));}"
-        "if(typeof encoded!=='string'||new TextEncoder().encode(encoded).length>65536)"
+        "if(typeof encoded!=='string'||new TextEncoder().encode(encoded).length>protocol.maxBytes)"
         "return Promise.reject(new TypeError('Settings are too large'));"
-        "return send('updateSettings',JSON.parse(encoded));}}));"
+        "return send(protocol.actions.updateSettings,JSON.parse(encoded));}}));"
         "Object.defineProperty(window,'theme',{value:bridge,enumerable:true,configurable:false,writable:false});"
-        "window.parent.postMessage({session,type:'mio:theme:ready'},'*');})();</script>"
+        "window.parent.postMessage({session,type:protocol.types.ready},'*');})();</script>"
     )
 
 
@@ -395,7 +398,7 @@ def theme_settings_page(ctx: Ctx, theme_id: str) -> Response:
         media_type="text/html; charset=utf-8",
         headers={
             "Cache-Control": "no-cache",
-            "Content-Security-Policy": f"{SETTINGS_PAGE_CSP} script-src 'nonce-{nonce}'",
+            "Content-Security-Policy": f"{SETTINGS_PAGE_CSP}; script-src 'nonce-{nonce}'",
             "X-Content-Type-Options": "nosniff",
         },
     )

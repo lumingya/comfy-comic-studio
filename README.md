@@ -70,5 +70,6 @@ npm --prefix web run build
 - 扩展可提供画册模板、拟声字预设、钩子、后端路由、界面面板，也可附带主题：见 [扩展 SDK](server/mio_server/extensions/README.md) 与[可选质检示例](examples/extensions/qa-review/README.md)。独立主题见[主题包说明](docs/THEME_PACKAGES.md)。
 - 开放 API v2、令牌、Webhook、Python 客户端与 AstrBot 插件：见 [clients/README.md](clients/README.md)。
 - 可复用创作、恢复备份和扩展实际调用点的验证范围：见[验收索引](docs/EXTENSIBILITY_ACCEPTANCE.md)。
+- 扩展/主题开发者可使用[只读 CTK 与协议诊断](docs/EXTENSION_PLATFORM_CTK.md)；设置页自身导航的已接受浏览器限制及本轮加固验收均在该文和[实施记录](docs/EXTENSION_PLATFORM_HARDENING_PLAN.md)中明确区分。
 
 [MIT License](LICENSE)
