@@ -23,6 +23,12 @@ LAYOUTS = {
     "manga": "Manga 双页",
     "artbook": "Artbook 艺术册",
     "flip": "交互画册",
+    "gallery": "ATELIER 展厅",
+    "folio": "FOLIO 典藏",
+    "cinema": "CINEMA 放映",
+    "editorial": "EDITORIAL 杂志",
+    "contact": "CONTACT 印样",
+    "chromatic": "CHROMATIC 长卷",
 }
 BUILTIN_DIR = Path(__file__).resolve().parent / "builtin"
 
@@ -63,7 +69,18 @@ class AlbumTemplate(BaseModel):
     description: str = ""
     author: str = ""
     version: str = ""
-    layout: Literal["webtoon", "manga", "artbook", "flip"] = "webtoon"
+    layout: Literal[
+        "webtoon",
+        "manga",
+        "artbook",
+        "flip",
+        "gallery",
+        "folio",
+        "cinema",
+        "editorial",
+        "contact",
+        "chromatic",
+    ] = "webtoon"
     options: TemplateOptions = Field(default_factory=TemplateOptions)
     html: str = Field(max_length=400_000)
     assets: dict[str, str] = Field(default_factory=dict, description="{{asset:key}} data URLs")

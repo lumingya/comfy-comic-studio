@@ -8,11 +8,10 @@ import unittest
 from html.parser import HTMLParser
 from pathlib import Path
 
-from PIL import Image
-
 from mio_server.album.build import data_url, palette
 from mio_server.album.render import AlbumOptions, Book, Frame, render_album
 from mio_server.album.templates import TemplateError, builtin_templates, parse_template
+from PIL import Image
 
 from .api_harness import ApiCase
 
@@ -97,7 +96,7 @@ class TemplateTests(unittest.TestCase):
 
     def test_every_builtin_renders_offline_and_safely(self):
         templates = builtin_templates()
-        self.assertEqual(len(templates), 7)
+        self.assertEqual(len(templates), 13)
         for tpl in templates:
             with self.subTest(tpl.id):
                 doc = render_album(tpl, books(), AlbumOptions(show_prompts=True, signature="Mio"))
@@ -116,6 +115,36 @@ class TemplateTests(unittest.TestCase):
                 self.assertEqual(meta["books"][1]["album"]["steps"][0]["image"], "")
                 key = steps[1]["image"]["$mioImage"]
                 self.assertEqual(len(re.findall(f'data-mio-asset="{key}"', doc)), 1)
+
+    def test_six_new_builtin_styles_are_distinct_and_v1_compatible(self):
+        expected = {
+            "export-atelier": ("gallery", "box-shadow:0 18px 52px", "ATELIER · 展厅典藏"),
+            "export-folio": ("folio", "border-right:1px solid", "FOLIO · 典藏精装"),
+            "export-cinema": ("cinema", "repeating-linear-gradient", "CINEMA · 暗房放映"),
+            "export-editorial": ("editorial", "grid-template-columns:4rem", "EDITORIAL · 杂志社论"),
+            "export-contact": ("contact", "rotate(-.3deg)", "CONTACT · 胶片印样"),
+            "export-chromatic": (
+                "chromatic",
+                "color-mix(in srgb,var(--accent) 15%",
+                "CHROMATIC · 流光长卷",
+            ),
+        }
+        templates = {template.id: template for template in builtin_templates()}
+        self.assertTrue(set(expected) <= templates.keys())
+        for template_id, (layout, marker, title) in expected.items():
+            with self.subTest(template_id):
+                template = templates[template_id]
+                self.assertEqual(template.formatVersion, 1)
+                self.assertEqual(template.layout, layout)
+                self.assertIn(marker, template.html)
+                self.assertNotIn("<script", template.html.lower())
+                self.assertIn("{{#books}}", template.html)
+                self.assertIn("{{#frames}}", template.html)
+                self.assertIn("{{image}}", template.html)
+                self.assertEqual(template.title, title)
+                rendered = render_album(template, books())
+                self.assertIn("mio-album-data", rendered)
+                self.assertIn("mio.album-html.v1", rendered)
 
     def test_captions_and_prompts_can_be_hidden(self):
         tpl = parse_template({"id": "mini", "title": "迷你", "html": MINIMAL})
