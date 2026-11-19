@@ -3996,6 +3996,16 @@ html[data-lettering='calligraphy'] .shelf-item h3 {
   border-right: 1px solid var(--line);
   padding-right: 24px;
 }
+.workshop-frame-filters {
+  display: grid;
+  gap: 8px;
+  padding: 0 6px 12px 0;
+}
+.workshop-frame-filters input,
+.workshop-frame-filters select {
+  width: 100%;
+  min-width: 0;
+}
 .workshop-frames-list {
   flex: 1 1 0%;
   min-height: 0px;

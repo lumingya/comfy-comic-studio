@@ -106,6 +106,23 @@ export default function StoryboardEditor() {
   );
   const [activeId, setActiveId] = useState<string | undefined>(panels[0]?.id);
   const active = panels.find((p) => p.id === activeId) ?? panels[0];
+  const [frameQuery, setFrameQuery] = useState('');
+  const [frameFilter, setFrameFilter] = useState<'all' | 'empty' | 'variables'>('all');
+  const visiblePanels = useMemo(() => {
+    const query = frameQuery.trim().toLocaleLowerCase();
+    return panels.filter((panel) => {
+      if (frameFilter === 'empty' && !isEmptyFrame(panel)) return false;
+      const prompt = promptOf(panel);
+      const negative = panel.overrides.raw_negative ?? '';
+      if (frameFilter === 'variables' && !/[{][^{}]+[}]/.test(`${prompt}\n${negative}`))
+        return false;
+      if (!query) return true;
+      const text = [panel.description, prompt, negative, captionText(panel.dialogues)]
+        .join('\n')
+        .toLocaleLowerCase();
+      return text.includes(query);
+    });
+  }, [frameFilter, frameQuery, panels]);
   const add = useAddPanel(episode.id!);
   const editorSave = useRef<AutosaveController | null>(null);
   const registerSave = useCallback((save: AutosaveController | null) => {
@@ -618,6 +635,26 @@ export default function StoryboardEditor() {
         defaultWidth={240}
       >
         <nav className="workshop-frames" aria-label={t('ws.story.framesLabel')}>
+          <div className="workshop-frame-filters">
+            <input
+              type="search"
+              aria-label={t('ws.story.searchFrames')}
+              placeholder={t('ws.story.searchFrames')}
+              value={frameQuery}
+              onChange={(event) => setFrameQuery(event.target.value)}
+            />
+            <select
+              aria-label={t('ws.story.filterFrames')}
+              value={frameFilter}
+              onChange={(event) =>
+                setFrameFilter(event.target.value as 'all' | 'empty' | 'variables')
+              }
+            >
+              <option value="all">{t('ws.story.frameFilter.all')}</option>
+              <option value="empty">{t('ws.story.frameFilter.empty')}</option>
+              <option value="variables">{t('ws.story.frameFilter.variables')}</option>
+            </select>
+          </div>
           <div
             className="workshop-frames-list desktop-list"
             ref={desktop.ref}
@@ -637,21 +674,29 @@ export default function StoryboardEditor() {
                 </button>
               </div>
             ) : null}
-            {panels.map((p, i) => (
-              <button
-                key={p.id}
-                type="button"
-                className={`${p.id === active?.id ? 'active' : ''} ${selection.has(p.id!) ? 'checked' : ''} ${menu.state?.payload.focusId === p.id ? 'is-context' : ''}`}
-                data-selection-id={p.id}
-                data-selection-open
-                aria-selected={selection.has(p.id!) || undefined}
-                aria-current={p.id === active?.id ? 'true' : undefined}
-                title={p.description || t('ws.story.frameN', { n: i + 1 })}
-              >
-                <small>{String(i + 1).padStart(2, '0')}</small>
-                <span>{p.description || t('ws.story.frameN', { n: i + 1 })}</span>
-              </button>
-            ))}
+            {visiblePanels.length === 0 ? (
+              <p className="help" role="status">
+                {t('ws.story.noFrameMatches')}
+              </p>
+            ) : null}
+            {visiblePanels.map((p) => {
+              const i = panels.indexOf(p);
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`${p.id === active?.id ? 'active' : ''} ${selection.has(p.id!) ? 'checked' : ''} ${menu.state?.payload.focusId === p.id ? 'is-context' : ''}`}
+                  data-selection-id={p.id}
+                  data-selection-open
+                  aria-selected={selection.has(p.id!) || undefined}
+                  aria-current={p.id === active?.id ? 'true' : undefined}
+                  title={p.description || t('ws.story.frameN', { n: i + 1 })}
+                >
+                  <small>{String(i + 1).padStart(2, '0')}</small>
+                  <span>{p.description || t('ws.story.frameN', { n: i + 1 })}</span>
+                </button>
+              );
+            })}
           </div>
           <div className="workshop-frames-actions">
             <button

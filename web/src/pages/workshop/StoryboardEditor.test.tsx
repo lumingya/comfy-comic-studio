@@ -77,6 +77,41 @@ describe('storyboard editing recovery', () => {
     expect(document.querySelector('[data-editor-key]')).toHaveAttribute('data-editor-key', 'p0');
     expect(prompt()).toHaveValue('keep me');
   });
+  it('filters visible frame rows without losing frames or changing the open editor', () => {
+    ep.panels[0].description = 'Doorway';
+    ep.panels[0].overrides.raw_prompt = '{character} waits';
+    ep.panels[1].dialogues = [];
+    ep.panels[1].overrides.raw_prompt = '';
+    start();
+
+    fireEvent.change(screen.getByRole('combobox', { name: '筛选分幕' }), {
+      target: { value: 'empty' },
+    });
+    expect(rows().map((row) => row.dataset.selectionId)).toEqual(['p1']);
+    expect(document.querySelector('[data-editor-key]')).toHaveAttribute('data-editor-key', 'p0');
+
+    fireEvent.change(screen.getByRole('combobox', { name: '筛选分幕' }), {
+      target: { value: 'variables' },
+    });
+    expect(rows().map((row) => row.dataset.selectionId)).toEqual(['p0']);
+    fireEvent.change(screen.getByRole('searchbox', { name: '搜索分幕…' }), {
+      target: { value: 'doorway' },
+    });
+    expect(rows().map((row) => row.dataset.selectionId)).toEqual(['p0']);
+
+    fireEvent.change(screen.getByRole('searchbox', { name: '搜索分幕…' }), {
+      target: { value: 'no match' },
+    });
+    expect(screen.getByRole('status')).toHaveTextContent('没有符合条件的分幕。');
+    fireEvent.change(screen.getByRole('searchbox', { name: '搜索分幕…' }), {
+      target: { value: '' },
+    });
+    fireEvent.change(screen.getByRole('combobox', { name: '筛选分幕' }), {
+      target: { value: 'all' },
+    });
+    expect(rows()).toHaveLength(2);
+    expect(document.querySelector('[data-editor-key]')).toHaveAttribute('data-editor-key', 'p0');
+  });
   it('edits the caption it displays rather than creating a second, contradictory line', async () => {
     start();
     const text = document.getElementById('workshop-frame-caption')!;
