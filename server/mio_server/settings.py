@@ -13,7 +13,9 @@ from pydantic import Field
 from . import llm as L
 from .api_urls import normalize_base
 from .models import GenerationDefaults, StrictModel, now_iso
-from .pipeline.providers import ImageChannel
+from .pipeline import providers as PV
+
+ImageChannel = PV.ImageChannel
 
 MASK = "••••••"
 PROTECTED = {"extensions", "api_tokens", "id", "name"}
@@ -92,6 +94,7 @@ def public(settings: AppSettings) -> dict:
     data["llm"]["api_key"] = MASK if settings.llm.api_key else ""
     for channel in data["image_channels"]:
         channel["api_key"] = MASK if channel["api_key"] else ""
+        channel["extra_options"] = PV.redact_extra_options(channel["extra_options"])
     return data
 
 
@@ -107,11 +110,16 @@ def apply_patch(settings: AppSettings, patch: dict) -> AppSettings:
     if data["llm"].get("api_key") == MASK:
         data["llm"]["api_key"] = settings.llm.api_key
     stored = {c.id: c.api_key for c in settings.image_channels}
+    stored_channels = {c.id: c for c in settings.image_channels}
     for channel in data.get("image_channels") or []:
         if isinstance(channel, dict) and channel.get("api_key") == MASK:
             if channel.get("id") not in stored:
                 raise ValueError("渠道 ID 已改变，无法沿用原密钥；请保留原 ID 或重新填写密钥")
             channel["api_key"] = stored[channel["id"]]
+        if isinstance(channel, dict) and channel.get("id") in stored_channels:
+            channel["extra_options"] = _restore_masked_options(
+                channel.get("extra_options", {}), stored_channels[channel["id"]].extra_options
+            )
     data["id"], data["name"] = "app", "settings"
     updated = AppSettings.model_validate(data)
     # Normalize only edited addresses. Loading or editing an unrelated field must not rewrite
@@ -144,6 +152,32 @@ def apply_patch(settings: AppSettings, patch: dict) -> AppSettings:
         if updated.image_channel and updated.image_channel not in ids:
             raise ValueError("默认云端渠道不存在；删除前请明确选择新的默认渠道")
     return updated
+
+
+def _restore_masked_options(value, stored):
+    """Keep secret-like extra options when a public masked settings object is resubmitted."""
+    from .pipeline.providers import SECRET_OPTION_NAME
+
+    if isinstance(value, list):
+        old = stored if isinstance(stored, list) else []
+        return [
+            _restore_masked_options(item, old[index] if index < len(old) else {})
+            for index, item in enumerate(value)
+        ]
+    if not isinstance(value, dict):
+        return value
+    stored = stored if isinstance(stored, dict) else {}
+    result = {}
+    for key, item in value.items():
+        if SECRET_OPTION_NAME.search(key) and item == MASK:
+            if key not in stored:
+                raise ValueError(f"渠道参数 {key} 已改变，无法沿用原密钥")
+            result[key] = stored[key]
+        elif isinstance(item, dict):
+            result[key] = _restore_masked_options(item, stored.get(key, {}))
+        else:
+            result[key] = item
+    return result
 
 
 class ConfiguredClient(L.Client):

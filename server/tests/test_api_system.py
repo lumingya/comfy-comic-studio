@@ -12,6 +12,7 @@ from pathlib import Path
 from PIL import Image
 
 from mio_server.comfy.compile import BUILTINS
+from mio_server.extensions.sdk import ExtensionAPI
 from mio_server.importer import seed_albums
 from mio_server.models import CloudRequestSnapshot
 
@@ -54,6 +55,75 @@ class SettingsRegistryTests(ApiCase):
         self.assertLessEqual({"comfy.render", "cloud.render", "qa.check"}, ids["job_executor"])
         self.assertIn("webtoon", ids["slice_preset"])
         self.assertLessEqual(set(BUILTINS), ids["workflow_template"])
+
+    def test_extra_option_credentials_are_masked_and_preserved_by_settings_api(self):
+        configured = self.ok(
+            self.client.patch(
+                "/api/settings",
+                json={
+                    "image_channels": [
+                        {
+                            "id": "vendor",
+                            "kind": "vendor_images",
+                            "extra_options": {
+                                "quality_mode": "draft",
+                                "auth": {"access_token": "never-return-this"},
+                            },
+                        }
+                    ]
+                },
+            )
+        )
+        self.assertNotIn("never-return-this", str(configured))
+        options = configured["image_channels"][0]["extra_options"]
+        self.assertEqual(options["auth"], "••••••")
+        updated = self.ok(
+            self.client.patch(
+                "/api/settings",
+                json={"image_channels": configured["image_channels"], "image_channel": "vendor"},
+            )
+        )
+        self.assertEqual(
+            self.ctx.settings().image_channels[0].extra_options["auth"]["access_token"],
+            "never-return-this",
+        )
+        self.assertNotIn("never-return-this", str(updated))
+
+    def test_image_adapter_discovery_is_public_and_v2_read_scoped(self):
+        class VendorAdapter:
+            pass
+
+        extension = ExtensionAPI("vendor", Path(self.tmp), self.ctx, digest="reviewed-digest")
+        extension.contribute(
+            "cloud_adapter",
+            "vendor_images",
+            VendorAdapter,
+            title="Vendor images",
+            capabilities=["generate", "reference"],
+            schema={"type": "object", "properties": {"quality": {"type": "string"}}},
+            supports_reference=True,
+            supports_negative=False,
+            supports_seed=False,
+        )
+        with self.assertRaises(ValueError):
+            extension.contribute(
+                "cloud_adapter", "bad_images", VendorAdapter, capabilities="generate"
+            )
+        local = self.ok(self.client.get("/api/image-adapters"))
+        vendor = next(item for item in local if item["id"] == "vendor_images")
+        self.assertEqual(vendor["capabilities"], ["generate", "reference"])
+        self.assertEqual(vendor["schema"]["properties"]["quality"]["type"], "string")
+        self.assertNotIn("value", vendor)
+
+        token = self.ok(self.client.post("/api/tokens", json={"name": "reader"}), 201)
+        denied = self.client.get("/api/v2/image-adapters")
+        self.assertEqual(denied.status_code, 401)
+        headers = {"Authorization": f"Bearer {token['token']}"}
+        public = self.ok(self.client.get("/api/v2/image-adapters", headers=headers))
+        self.assertEqual({item["id"] for item in public}, {item["id"] for item in local})
+        self.assertEqual(
+            self.client.post("/api/v2/image-adapters", headers=headers).status_code, 405
+        )
 
 
 class LibraryTests(ApiCase):

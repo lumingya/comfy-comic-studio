@@ -22,6 +22,7 @@ from ..auth import SCOPES
 from ..jobs import ItemSpec
 from ..jobs.operations import operation_serialized
 from ..jobs.types import JobConflict
+from ..pipeline.providers import validate_cloud_adapter_metadata
 from .protocol import MAX_CONCURRENT
 
 
@@ -94,10 +95,24 @@ class ExtensionAPI:
             )
             if meta["contract"] != 1 or any(not callable(getattr(value, m, None)) for m in methods):
                 raise ValueError("invalid Comfy adapter contract")
-        if meta.get("replace"):
+        if point == "cloud_adapter":
+            if not callable(value):
+                raise ValueError("cloud_adapter must be a channel factory")
+            if meta["contract"] != 1:
+                raise ValueError("unsupported cloud_adapter contract version")
+            descriptor = validate_cloud_adapter_metadata(meta)
+            meta = {"digest": self.digest, "contract": 1, **descriptor}
+        replace = bool(meta.pop("replace", False))
+        if replace:
             self.engine.ensure_executor_source_idle(self.source)
         contribution = self._ctx.registry.register(
-            point, id, value, source=self.source, title=title or id, **meta
+            point,
+            id,
+            value,
+            source=self.source,
+            title=title or id,
+            replace=replace,
+            **meta,
         )
         if not self.engine.catalog_loading:
             self.engine.refresh_executor_jobs()

@@ -14,6 +14,7 @@ from PIL import Image
 
 from mio_server import llm as L
 from mio_server import settings as SET
+from mio_server.pipeline import cloud_request as CR
 from mio_server.pipeline import providers as PV
 
 from .api_harness import ApiCase
@@ -170,6 +171,87 @@ class ChannelSettingsTests(unittest.TestCase):
         odd = SET.AppSettings(image_channels=[channel(kind="ext.kind")], image_channel="c1")
         with self.assertRaises(LookupError):
             SET.image_backend(odd, lambda: "llm")
+
+    def test_extra_options_are_bounded_json_and_masked_without_losing_secret(self):
+        with self.assertRaises(ValueError):
+            channel(extra_options={"bad": object()})
+        with self.assertRaises(ValueError):
+            channel(extra_options={"bad": float("nan")})
+        with self.assertRaises(ValueError):
+            channel(extra_options={"large": "x" * (32 * 1024)})
+
+        configured = channel(
+            extra_options={"quality_mode": "draft", "auth": {"api_token": "vendor-secret"}}
+        )
+        settings = SET.AppSettings(image_channels=[configured])
+        public = SET.public(settings)
+        self.assertEqual(public["image_channels"][0]["extra_options"]["quality_mode"], "draft")
+        self.assertEqual(public["image_channels"][0]["extra_options"]["auth"], SET.MASK)
+        updated = SET.apply_patch(
+            settings, {"image_channels": public["image_channels"], "image_channel": "c1"}
+        )
+        self.assertEqual(
+            updated.image_channels[0].extra_options["auth"]["api_token"], "vendor-secret"
+        )
+
+    def test_extension_options_freeze_and_rebind_without_secrets_in_snapshot(self):
+        current = channel(
+            kind="vendor",
+            extra_options={"quality": "draft", "auth": {"access_token": "current-secret"}},
+        )
+        request = CR.freeze_request(PV.ExtensionChannel(current, FakeKind, None), {"prompt": "x"})
+        public = CR.snapshot(request)
+        self.assertEqual(public["effective"]["options"]["quality"], "draft")
+        self.assertNotIn("current-secret", str(public["effective"]["options"]))
+
+        updated = current.model_copy(
+            update={"extra_options": {"quality": "production", "auth": {"access_token": "rotated"}}}
+        )
+
+        class Client:
+            channel = updated
+            image_models = ()
+
+        bound = CR.bind_request(Client(), request)
+        self.assertEqual(bound.channel.extra_options["quality"], "draft")
+        self.assertEqual(bound.channel.extra_options["auth"]["access_token"], "rotated")
+
+        class RequestAdapter:
+            channel = bound.channel
+
+            def generate_image_request(self, frozen, refs, timeout, retries):
+                return b"image", L.Reply(
+                    "", "vendor-model", 0.1, image_request={"options": self.channel.extra_options}
+                )
+
+        _, reply = CR.call(RequestAdapter(), request, [])
+        self.assertEqual(reply.image_request["options"]["auth"]["access_token"], "••••••")
+
+    def test_adapter_metadata_validation_and_public_schema_redaction(self):
+        from types import SimpleNamespace
+
+        descriptor = SimpleNamespace(
+            id="vendor",
+            source="ext:sample",
+            title="Vendor images",
+            meta={
+                "capabilities": ["generate", "reference"],
+                "schema": {
+                    "type": "object",
+                    "properties": {"quality": {"type": "string", "default": "secret?"}},
+                },
+                "supports_reference": True,
+                "supports_negative": False,
+                "supports_seed": False,
+                "api_key": "never-public",
+            },
+        )
+        public = PV.public_cloud_adapter(descriptor)
+        self.assertEqual(public["supports_reference"], True)
+        self.assertNotIn("api_key", public)
+        self.assertNotIn("default", public["schema"]["properties"]["quality"])
+        with self.assertRaises(ValueError):
+            PV.validate_cloud_adapter_metadata({"capabilities": "generate"})
 
 
 class FakeKind:

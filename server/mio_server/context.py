@@ -332,8 +332,21 @@ class AppContext:
         reg.register(
             "exporter", "motion", MX.render_motion, title="动态漫（离线播放器）", interface="motion"
         )
+        reg.register(
+            "cloud_adapter",
+            "chat_image",
+            None,
+            title="LLM 图像代理",
+            **PV.BUILTIN_METADATA["chat_image"],
+        )
         for kind, cls in PV.KINDS.items():
-            reg.register("cloud_adapter", kind, cls, title=cls.what)
+            reg.register(
+                "cloud_adapter",
+                kind,
+                cls,
+                title=cls.what,
+                **PV.BUILTIN_METADATA[kind],
+            )
         for name in LT.SFX_PRESETS:
             reg.register("sfx_preset", name, LT.preset_style(name), title=name)
         reg.register(

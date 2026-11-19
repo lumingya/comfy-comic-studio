@@ -20,18 +20,142 @@ from __future__ import annotations
 import base64
 import copy
 import io
+import json
+import math
 import re
 import time
 import zipfile
+from typing import Any
 
 import httpx
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from .. import llm as L
 from ..models import StrictModel
 from . import cloud_request as CR
 
 NOVELAI_BASE = "https://image.novelai.net"
+MAX_EXTRA_OPTIONS_BYTES = 32 * 1024
+SECRET_OPTION_NAME = re.compile(
+    r"(?:api[_-]?key|access[_-]?key|private[_-]?key|token|secret|password|passwd|"
+    r"credential|auth|authorization|bearer)",
+    re.I,
+)
+
+
+def _json_object(value: object) -> bool:
+    if value is None or type(value) in (str, bool, int):
+        return True
+    if type(value) is float:
+        return math.isfinite(value)
+    if type(value) is list:
+        return all(_json_object(item) for item in value)
+    if type(value) is dict:
+        return all(type(key) is str and _json_object(item) for key, item in value.items())
+    return False
+
+
+def validate_cloud_adapter_metadata(meta: dict) -> dict:
+    """Validate the small, public descriptor shared by built-in and extension channels."""
+    capabilities = meta.get("capabilities", [])
+    if (
+        not isinstance(capabilities, list)
+        or len(capabilities) > 32
+        or any(not isinstance(item, str) or not item or len(item) > 64 for item in capabilities)
+        or len(capabilities) != len(set(capabilities))
+    ):
+        raise ValueError("cloud_adapter capabilities must be a short list of unique names")
+    schema = meta.get("schema", {})
+    if not isinstance(schema, dict) or not _json_object(schema):
+        raise ValueError("cloud_adapter schema must be a JSON object")
+    if (
+        len(json.dumps(schema, ensure_ascii=False, allow_nan=False).encode("utf-8"))
+        > MAX_EXTRA_OPTIONS_BYTES
+    ):
+        raise ValueError("cloud_adapter schema is too large")
+    flags = {}
+    for key in ("supports_reference", "supports_negative", "supports_seed"):
+        value = meta.get(key)
+        if value is not None and type(value) is not bool:
+            raise ValueError(f"cloud_adapter {key} must be a boolean or omitted")
+        flags[key] = value
+    return {"capabilities": list(capabilities), "schema": copy.deepcopy(schema), **flags}
+
+
+def public_cloud_adapter(contribution) -> dict:
+    """Return only documented descriptor fields; registry internals stay private."""
+    descriptor = {
+        key: contribution.meta.get(key)
+        for key in (
+            "capabilities",
+            "schema",
+            "supports_reference",
+            "supports_negative",
+            "supports_seed",
+        )
+        if key in contribution.meta
+    }
+    meta = validate_cloud_adapter_metadata(descriptor)
+    meta["schema"] = _public_schema(meta["schema"])
+    title = contribution.title or contribution.id
+    if not isinstance(title, str) or len(title) > 120:
+        raise ValueError("cloud_adapter title must be a string of at most 120 characters")
+    return {
+        "id": contribution.id,
+        "source": contribution.source,
+        "title": title,
+        **meta,
+    }
+
+
+def _public_schema(value):
+    """Drop examples/defaults from public schemas so extensions cannot publish credentials."""
+    if isinstance(value, dict):
+        return {
+            key: _public_schema(item)
+            for key, item in value.items()
+            if key not in {"default", "example", "examples"}
+        }
+    if isinstance(value, list):
+        return [_public_schema(item) for item in value]
+    return value
+
+
+def redact_extra_options(value):
+    """Mask secret-like leaf values before settings cross the HTTP boundary."""
+    if isinstance(value, dict):
+        return {
+            key: "••••••" if SECRET_OPTION_NAME.search(key) else redact_extra_options(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [redact_extra_options(item) for item in value]
+    return copy.deepcopy(value)
+
+
+BUILTIN_METADATA = {
+    "chat_image": {
+        "capabilities": ["generate", "reference", "negative"],
+        "schema": {},
+        "supports_reference": True,
+        "supports_negative": True,
+        "supports_seed": False,
+    },
+    "openai_images": {
+        "capabilities": ["generate", "reference", "negative", "size"],
+        "schema": {},
+        "supports_reference": True,
+        "supports_negative": True,
+        "supports_seed": False,
+    },
+    "novelai": {
+        "capabilities": ["generate", "reference", "negative", "size", "seed"],
+        "schema": {},
+        "supports_reference": True,
+        "supports_negative": True,
+        "supports_seed": True,
+    },
+}
 
 
 class ImageChannel(StrictModel):
@@ -54,6 +178,22 @@ class ImageChannel(StrictModel):
     scale: float = Field(default=5.0, ge=0, le=20)
     sampler: str = "k_euler_ancestral"
     ref_strength: float = Field(default=0.6, ge=0, le=1)
+    extra_options: dict[str, Any] = Field(
+        default_factory=dict,
+        description="JSON options consumed by the selected extension channel adapter",
+    )
+
+    @field_validator("extra_options", mode="before")
+    @classmethod
+    def valid_extra_options(cls, value: object) -> dict:
+        if not isinstance(value, dict) or not _json_object(value):
+            raise ValueError("extra_options must contain only JSON-compatible values")
+        if (
+            len(json.dumps(value, ensure_ascii=False, allow_nan=False).encode("utf-8"))
+            > MAX_EXTRA_OPTIONS_BYTES
+        ):
+            raise ValueError("extra_options is too large (maximum 32 KiB)")
+        return value
 
 
 def _raise_for(resp: httpx.Response, what: str) -> None:

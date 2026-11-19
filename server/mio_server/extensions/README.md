@@ -292,7 +292,23 @@ def activate(mio):
 可直接打包的 [`page-notes`](../../../examples/extensions/page-notes/README.md) 示例同时演示操作包装、
 真实 JPEG 导出与带 `read` 权限的扩展查询。所有实例与候选数据均来自已有作品，不触发生成。
 
-举个例子，新增一种云端出图渠道类型的做法是：写一个 `HttpChannel` 的子类，实现 `_once(http, prompt, refs) -> bytes`，然后用 `mio.contribute("cloud_adapter", "my_kind", MyChannel)` 注册。注册后，「设置 → 云端出图」的类型下拉框里就会出现 `my_kind`。
+举个例子，新增一种云端出图渠道类型的做法是：写一个 `HttpChannel` 子类，实现 `_once(http, prompt, refs) -> bytes`，并用 `mio.contribute("cloud_adapter", "my_kind", MyChannel, ...)` 注册。扩展可选声明 `capabilities`、`schema`、`supports_reference`、`supports_negative`、`supports_seed`；元数据会经过校验并由 `GET /image-adapters`（开放 API v2 需 `read` 权限）公开发现。`schema` 是不超过 32 KiB 的 JSON 对象，发现结果会移除默认值与示例，避免把配置凭据当成公共默认值。
+
+```python
+mio.contribute(
+    "cloud_adapter",
+    "my_kind",
+    MyChannel,
+    title="My image service",
+    capabilities=["generate", "reference", "seed"],
+    schema={"type": "object", "properties": {"quality_mode": {"type": "string"}}},
+    supports_reference=True,
+    supports_negative=False,
+    supports_seed=True,
+)
+```
+
+渠道配置中可用 `extra_options` 保存最多 32 KiB 的 JSON 对象。任务会冻结普通配置选项，重试时保持相同参数；密钥类字段会从公开设置和请求快照中移除，并在执行时从当前渠道配置恢复。适配器通过传入的 `ImageChannel.extra_options` 读取自己的选项。旧适配器未声明能力时，系统继续把其参数能力和参考图支持标记为未知，不推测支持情况。
 
 ### 工作流识别规则
 

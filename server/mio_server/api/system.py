@@ -14,6 +14,7 @@ from .. import settings as SET
 from ..importer import LEGACY_ROOT, LegacyImporter
 from ..model_catalog import ModelCatalog, ModelCatalogRequest, discover_models
 from ..models import now_iso
+from ..pipeline.providers import public_cloud_adapter
 from ..storage import Conflict
 from .deps import Ctx
 from .library import BINARY_BODY, read_body
@@ -57,6 +58,12 @@ def patch_settings(ctx: Ctx, patch: dict[str, Any]) -> dict:
 @router.get("/registry")
 def registry(ctx: Ctx) -> dict:
     return ctx.registry.describe()
+
+
+@router.get("/image-adapters")
+def image_adapters(ctx: Ctx) -> list[dict]:
+    """Discover built-in and extension image channels without exposing configuration secrets."""
+    return [public_cloud_adapter(item) for item in ctx.registry.all("cloud_adapter")]
 
 
 # ------------------------------------------------------------------- trash

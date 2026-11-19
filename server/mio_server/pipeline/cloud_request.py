@@ -13,6 +13,12 @@ import re
 
 from .. import llm as L
 
+SECRET_OPTION_NAME = re.compile(
+    r"(?:api[_-]?key|access[_-]?key|private[_-]?key|token|secret|password|passwd|"
+    r"credential|auth[_-]?(?:token|key|secret|header)|authorization|bearer)",
+    re.I,
+)
+
 OPTION_KEYS = (
     "negative",
     "width",
@@ -25,6 +31,54 @@ OPTION_KEYS = (
     "ref_strength",
 )
 DEFAULT_MODELS = {"openai_images": "gpt-image-1", "novelai": "nai-diffusion-4-5-full"}
+
+
+def _without_secrets(value):
+    if isinstance(value, dict):
+        return {
+            key: _without_secrets(item)
+            for key, item in value.items()
+            if not SECRET_OPTION_NAME.search(key)
+        }
+    if isinstance(value, list):
+        return [_without_secrets(item) for item in value]
+    return copy.deepcopy(value)
+
+
+def _redact_request(value):
+    """Sanitize adapter-reported request snapshots before they reach stored job results."""
+    if isinstance(value, dict):
+        return {
+            key: "••••••" if SECRET_OPTION_NAME.search(key) else _redact_request(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_redact_request(item) for item in value]
+    return copy.deepcopy(value)
+
+
+def _secret_options(value):
+    if not isinstance(value, dict):
+        return {}
+    return {
+        key: copy.deepcopy(item) for key, item in value.items() if SECRET_OPTION_NAME.search(key)
+    }
+
+
+def _merge_secrets(frozen, current):
+    if isinstance(current, list):
+        old = frozen if isinstance(frozen, list) else []
+        return [
+            _merge_secrets(old[index] if index < len(old) else {}, item)
+            for index, item in enumerate(current)
+        ]
+    result = copy.deepcopy(frozen) if isinstance(frozen, dict) else {}
+    for key, value in _secret_options(current).items():
+        result[key] = value
+    for key, value in current.items() if isinstance(current, dict) else []:
+        if not SECRET_OPTION_NAME.search(key) and isinstance(value, dict):
+            result[key] = _merge_secrets(result.get(key), value)
+    return result
 
 
 def channel_of(client):
@@ -50,6 +104,10 @@ def freeze_request(client, requested: dict, *, channel_id: str = "", models=None
     if not model and kind == "chat_image":
         model = L.IMAGE_SINGLE[0]
     options = {k: getattr(channel, k) for k in OPTION_KEYS} if channel else {}
+    if channel:
+        # Extra settings are frozen for deterministic retries, but secret-like values are
+        # supplied from current settings at bind time, just like the channel API key.
+        options["extra_options"] = _without_secrets(channel.extra_options)
     # A retry or later execution must never draw a new NovelAI seed.
     if kind == "novelai":
         options["seed"] = requested.get("seed")
@@ -83,10 +141,13 @@ def bind_request(client, request: dict):
         raise LookupError("云端渠道已改变，请重新提交出图任务")
     frozen = copy.copy(client)
     if channel:
+        current_extra = channel.extra_options
+        frozen_extra = _merge_secrets(request["options"].get("extra_options", {}), current_extra)
         updated = channel.model_copy(
             update={
                 **{k: v for k, v in request["options"].items() if k in OPTION_KEYS},
                 "model": request["model"],
+                "extra_options": frozen_extra,
             }
         )
         if getattr(client, "channel", None) is channel:
@@ -117,6 +178,9 @@ def snapshot(request: dict) -> dict:
     if kind not in ("openai_images", "chat_image", "novelai"):
         effective["reference_mode"] = "unknown" if refs else "none"
         adjustments.append("adapter_capabilities_unknown")
+        # The adapter owns this opaque JSON object. Keep ordinary options frozen while
+        # excluding secrets from persisted jobs, results and diagnostic API responses.
+        effective["options"] = _without_secrets(options.get("extra_options", {}))
     else:
         negative = ", ".join(x for x in (wanted["negative"], options.get("negative", "")) if x)
         effective["negative"] = negative
@@ -185,7 +249,10 @@ def call(client, request: dict, refs, *, timeout=360.0, retries=0):
     """Opt in through an explicit method, never infer support from arbitrary **kwargs."""
     method = getattr(type(client), "generate_image_request", None)
     if callable(method):
-        return client.generate_image_request(request, refs, timeout=timeout, retries=retries)
+        data, reply = client.generate_image_request(request, refs, timeout=timeout, retries=retries)
+        if isinstance(reply.image_request, dict):
+            reply.image_request = _redact_request(reply.image_request)
+        return data, reply
     data, reply = client.generate_image(
         request["requested"]["prompt"],
         refs=refs,
