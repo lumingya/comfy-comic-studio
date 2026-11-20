@@ -11,52 +11,22 @@ import {
 import { useLive } from '../../api/jobs';
 import type { Job } from '../../api/types';
 import { exportCreationKit } from '../../api/creationKits';
-import { useImportAlbumTemplate, type AlbumTemplateInfo } from '../../api/open';
-import { useExportPresets } from '../../api/production';
 import { useSeries } from '../../api/series';
 import { Icon } from '../../app/icons';
 import { QueryError } from '../../app/errors';
-import { toast, toastError } from '../../components/toast';
-import { Field, Select, TextInput, NumberInput } from '../../components/ui';
-import {
-  albumBody,
-  PROFILES,
-  QUALITIES,
-  useReport,
-  type ExportDraft,
-  type Profile,
-  type Quality,
-} from './presentation';
-import { NATIVE_LAYOUTS, nativeLayout, type NativeLayout } from './readingStage';
+import { toastError } from '../../components/toast';
+import { Field, Select, TextInput } from '../../components/ui';
+import { albumBody, QUALITIES, useReport } from './presentation';
 import { TemplateStudio } from './TemplateStudio';
-import { parseTemplateFile } from './templateFile';
 import { listStoryboards } from '../workshop/storyActions';
+import { AlbumExportOptions, PlatformExportOptions } from './ExportOptions';
+import { ExportPreviewDialog } from './ExportPreviewDialog';
+import { FORMATS, type Format, type PresentationDrawerProps } from './exportTypes';
 import './export-drawer.css';
 
-type Format = 'html' | 'pdf' | 'zip' | 'slices' | 'long' | 'source' | 'kit';
-const FORMATS: Format[] = ['html', 'pdf', 'zip', 'slices', 'long', 'source', 'kit'];
-
-export function PresentationDrawer(props: {
-  open: boolean;
-  onClose: () => void;
-  templates: { id: string; title: string; description: string; accent?: string }[];
-  infos: AlbumTemplateInfo[];
-  look: string;
-  native: string;
-  onLook: (id: string) => void;
-  draft: ExportDraft;
-  onDraft: (patch: Partial<ExportDraft>) => void;
-  layout: NativeLayout;
-  onLayout: (layout: NativeLayout) => void;
-  seriesId: string | undefined;
-  episodes: { id?: string; title: string }[];
-  episodeId: string | undefined;
-  title: string;
-  lettered: boolean;
-  onPlatform: (open: boolean) => void;
-}) {
+export function PresentationDrawer(props: PresentationDrawerProps) {
   const { t } = useTranslation();
-  const { draft: d, onDraft } = props;
+  const { draft: d } = props;
   const [format, setFormat] = useState<Format>('html');
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState('');
@@ -70,6 +40,7 @@ export function PresentationDrawer(props: {
   );
   useEffect(() => () => waiting.current?.abort(), []);
   const [studio, setStudio] = useState(false);
+  const [trialReading, setTrialReading] = useState(false);
   const [kitTitle, setKitTitle] = useState<string | null>(null);
   const [episodeSelection, setEpisodes] = useState<string[] | null>(null);
   const [presetSelection, setPresets] = useState<string[]>([]);
@@ -80,18 +51,8 @@ export function PresentationDrawer(props: {
     enabled: props.open && format === 'kit' && !!props.seriesId,
     queryFn: () => listStoryboards(props.seriesId!),
   });
-  const presets = useExportPresets();
-  const importTpl = useImportAlbumTemplate();
-  const file = useRef<HTMLInputElement>(null);
   const report = useReport();
   const slices = format === 'slices';
-  const platform = slices || format === 'long';
-  const rendered = ['html', 'pdf', 'zip'].includes(format);
-  const native = props.look === props.native;
-  const preset = presets.data?.find((p) => p.id === d.preset);
-  const accent =
-    (props.infos.find((x) => x.id === props.look)?.options as { accent?: string })?.accent ??
-    '#8fae8b';
   useEffect(() => {
     props.onPlatform(props.open && slices);
   }, [props.open, slices, props.onPlatform]);
@@ -250,21 +211,6 @@ export function PresentationDrawer(props: {
       }
     }
   };
-  const importFile = async (f: File) => {
-    try {
-      const body = parseTemplateFile(await f.text(), f.name, {
-        invalid: t('reader.badTemplate'),
-        notTemplate: t('reader.notTemplate'),
-        badMeta: t('reader.badTemplateMeta'),
-        fromHtml: t('reader.templateFromHtml'),
-      });
-      const template = await importTpl.mutateAsync(body);
-      props.onLook(template.id);
-      toast(t('reader.imported', { title: template.title }));
-    } catch (error) {
-      toastError(error);
-    }
-  };
   return (
     <aside
       className="presentation-drawer export-drawer"
@@ -303,176 +249,13 @@ export function PresentationDrawer(props: {
               {t(format === 'source' ? 'exportUi.wholeWork' : 'exportUi.scope')}
             </p>
           ) : null}
-          {format === 'html' ? (
-            <>
-              <Field label={t('exportUi.layout')}>
-                <Select
-                  value={props.look}
-                  onChange={props.onLook}
-                  options={props.templates.map((x) => ({ value: x.id, label: x.title }))}
-                />
-              </Field>
-              {native ? (
-                <Field label={t('reader.readMode')}>
-                  <Select
-                    value={props.layout}
-                    onChange={(value) => props.onLayout(nativeLayout(value))}
-                    options={NATIVE_LAYOUTS.map((value) => ({
-                      value,
-                      label: t(`reader.layouts.${value}`),
-                    }))}
-                  />
-                </Field>
-              ) : null}
-            </>
-          ) : null}
-          {rendered ? (
-            <>
-              {format !== 'pdf' ? (
-                <label className="export-check">
-                  <input
-                    type="checkbox"
-                    checked={d.captions}
-                    onChange={(e) => onDraft({ captions: e.target.checked })}
-                  />
-                  {t('exportUi.captions')}
-                </label>
-              ) : null}
-              <Field label={t('reader.profile')}>
-                <Select
-                  value={d.profile}
-                  onChange={(profile) => onDraft({ profile: profile as Profile })}
-                  options={PROFILES.map((value) => ({
-                    value,
-                    label: t(`reader.profiles.${value}.label`),
-                  }))}
-                />
-              </Field>
-            </>
-          ) : null}
-          {format === 'html' && !native ? (
-            <details className="export-advanced">
-              <summary>{t('exportUi.more')}</summary>
-              <div className="export-grid">
-                <Field label={t('reader.themeColor')}>
-                  <span className="export-color-row">
-                    <input
-                      type="color"
-                      value={d.themeColor || accent}
-                      onChange={(e) => onDraft({ themeColor: e.target.value })}
-                    />
-                    {d.themeColor ? (
-                      <button
-                        type="button"
-                        className="btn ghost sm"
-                        onClick={() => onDraft({ themeColor: '' })}
-                      >
-                        {t('reader.themeReset')}
-                      </button>
-                    ) : null}
-                  </span>
-                </Field>
-                <Field label={t('reader.border')}>
-                  <NumberInput
-                    value={d.border}
-                    min={0}
-                    max={8}
-                    onChange={(border) =>
-                      onDraft({ border: Math.max(0, Math.min(8, border ?? 0)) })
-                    }
-                  />
-                </Field>
-              </div>
-              <Field label={t('reader.signature')}>
-                <TextInput
-                  value={d.signature}
-                  maxLength={120}
-                  onChange={(signature) => onDraft({ signature })}
-                />
-              </Field>
-              <label className="export-check">
-                <input
-                  type="checkbox"
-                  checked={d.prompts}
-                  onChange={(e) => onDraft({ prompts: e.target.checked })}
-                />
-                {t('reader.prompts')}
-              </label>
-            </details>
-          ) : null}
-          {format === 'html' ? (
-            <details className="export-advanced">
-              <summary>{t('exportUi.templateTools')}</summary>
-              <div className="presentation-tools">
-                <button
-                  type="button"
-                  className="btn sm"
-                  disabled={!props.infos.length}
-                  onClick={() => setStudio(true)}
-                >
-                  <Icon name="edit" sm />
-                  {t('reader.customize')}
-                </button>
-                <button
-                  type="button"
-                  className="btn sm"
-                  disabled={importTpl.isPending}
-                  onClick={() => file.current?.click()}
-                >
-                  <Icon name="upload" sm />
-                  {t('reader.importTemplate')}
-                </button>
-                <input
-                  hidden
-                  type="file"
-                  ref={file}
-                  accept=".html,.htm,.json"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    e.target.value = '';
-                    if (f) void importFile(f);
-                  }}
-                />
-              </div>
-            </details>
-          ) : null}
-          {platform ? (
-            <>
-              {slices ? (
-                <Field label={t('reader.platform.preset')}>
-                  <Select
-                    value={d.preset}
-                    onChange={(preset) => onDraft({ preset })}
-                    options={(presets.data ?? [])
-                      .filter((p) => p.width > 0)
-                      .map((p) => ({ value: p.id, label: p.label }))}
-                  />
-                </Field>
-              ) : null}
-              <Field label={t('reader.platform.quality')}>
-                <Select
-                  value={d.quality}
-                  onChange={(quality) => onDraft({ quality: quality as Quality })}
-                  options={(Object.keys(QUALITIES) as Quality[]).map((value) => ({
-                    value,
-                    label: t(`reader.platform.qualities.${value}`),
-                  }))}
-                />
-              </Field>
-              {slices && preset ? (
-                <p className="help">
-                  {t('reader.platform.spec', {
-                    width: preset.width,
-                    height: preset.max_height,
-                    format: d.quality === 'lossless' ? 'PNG' : preset.format,
-                  })}
-                </p>
-              ) : null}
-              {slices && presets.isError ? (
-                <QueryError error={presets.error} onRetry={presets.refetch} />
-              ) : null}
-            </>
-          ) : null}
+          <AlbumExportOptions
+            {...props}
+            format={format}
+            onPreview={() => setTrialReading(true)}
+            onStudio={() => setStudio(true)}
+          />
+          <PlatformExportOptions format={format} draft={d} onDraft={props.onDraft} />
           {format === 'kit' ? (
             <>
               <Field label={t('exportUi.kitName')}>
@@ -563,6 +346,15 @@ export function PresentationDrawer(props: {
           onClose={() => setStudio(false)}
         />
       ) : null}
+      <ExportPreviewDialog
+        open={trialReading && props.open}
+        onClose={() => setTrialReading(false)}
+        episodeId={props.episodeId}
+        templateId={props.look}
+        lettered={props.lettered}
+        draft={d}
+        title={props.title}
+      />
     </aside>
   );
 }
