@@ -75,7 +75,7 @@ class ThemePackageTests(ApiCase):
                 return original_read_bytes(path)
 
             with (
-                patch("mio_server.theme_packages.MAX_SCRIPT", 32),
+                patch("mio_server.theme_package_validation.MAX_SCRIPT", 32),
                 patch.object(Path, "read_bytes", guarded_read_bytes),
                 self.assertRaisesRegex(ThemePackageError, "主题脚本超过"),
             ):
@@ -84,7 +84,7 @@ class ThemePackageTests(ApiCase):
             package = Path(temporary) / "oversized-script.zip"
             package.write_bytes(archive(theme_files(document, resources={"theme.js": b"x" * 33})))
             with (
-                patch("mio_server.theme_packages.MAX_SCRIPT", 32),
+                patch("mio_server.theme_package_validation.MAX_SCRIPT", 32),
                 self.assertRaisesRegex(ThemePackageError, "主题脚本超过"),
             ):
                 self.ctx.theme_packages.install_package_path(package)
@@ -813,7 +813,7 @@ class ThemePackageTests(ApiCase):
             self.assertEqual(
                 self.client.post("/api/themes/package", content=payload).status_code, 400
             )
-        with patch("mio_server.theme_packages.MAX_FILE", 64):
+        with patch("mio_server.theme_package_validation.MAX_FILE", 64):
             oversized = archive({**safe, "README.md": b"x" * 65})
             self.assertEqual(
                 self.client.post("/api/themes/package", content=oversized).status_code, 400
