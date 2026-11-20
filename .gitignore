@@ -137,6 +137,7 @@ ehthumbs.db
 
 # In-place updater: downloads, staging and program-file backups
 .mio-updates/
+/.mio-update/
 
 # v3 server runtime data when started from server/ (default data/runtime/v3 is cwd-relative)
 /server/data/

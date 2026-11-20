@@ -101,9 +101,9 @@ class BatchFileTests(unittest.TestCase):
     def test_runs_bootstrap_update_and_server_in_order(self):
         code = "\n".join(bat_code_lines())
         steps = [
+            '"%VPY%" mio_update_bootstrap.py recover',
             '"%VPY%" server\\bootstrap.py',
-            "if errorlevel 1 goto fail",
-            '"%VPY%" -m mio_server.update apply',
+            '"%VPY%" ..\\mio_update_bootstrap.py apply %*',
             '"%VPY%" -m mio_server --open %*',
             "if errorlevel 1 goto crashed",
         ]
@@ -132,8 +132,9 @@ class ShellScriptTests(unittest.TestCase):
         text = SH.read_text("utf-8")
         for step in (
             "set -e",
+            '"$VPY" mio_update_bootstrap.py recover',
             '"$VPY" server/bootstrap.py',
-            '"$VPY" -m mio_server.update apply',
+            '"$VPY" ../mio_update_bootstrap.py apply "$@"',
             'exec "$VPY" -m mio_server "$@"',
         ):
             self.assertIn(step, text)
@@ -147,13 +148,21 @@ class ShellScriptTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             write_release_seed(root)
-            for name in ("start.bat", "start.sh", "server/bootstrap.py", "server/requirements.txt"):
+            for name in (
+                "start.bat",
+                "start.sh",
+                "mio_update_bootstrap.py",
+                "server/bootstrap.py",
+                "server/requirements.txt",
+            ):
                 target = root / name
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(ROOT / name, target)
             with mock.patch.object(build_release, "ROOT", root):
                 names = {p.relative_to(root).as_posix() for p in build_release.files()}
-        self.assertLessEqual({"start.bat", "start.sh", "server/bootstrap.py"}, names)
+        self.assertLessEqual(
+            {"start.bat", "start.sh", "mio_update_bootstrap.py", "server/bootstrap.py"}, names
+        )
         self.assertIn("server/requirements.txt", names)
 
 
@@ -277,7 +286,7 @@ class LauncherExecutionTests(unittest.TestCase):
         # CJK and an emoji: outside cp1252 and GBK alike
         folder = Path(tmp.name) / "Mio 空格 & (test)! 🎨"
         (folder / "server").mkdir(parents=True)
-        for name in ("start.bat", "start.sh"):
+        for name in ("start.bat", "start.sh", "mio_update_bootstrap.py"):
             shutil.copy2(ROOT / name, folder / name)
         for name in ("bootstrap.py", "requirements.txt"):
             shutil.copy2(SERVER / name, folder / "server" / name)

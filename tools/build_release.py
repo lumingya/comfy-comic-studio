@@ -36,6 +36,7 @@ INCLUDE = [
     "themes",
     "start.bat",
     "start.sh",
+    "mio_update_bootstrap.py",
     "README.md",
     "LICENSE",
 ]

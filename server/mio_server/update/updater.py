@@ -3,10 +3,12 @@
 * **check** fetches the signed manifest and compares versions.
 * **download** streams the zip into ``<data>/updates/`` and verifies size and sha256.
 * **stage** unpacks it to ``<data>/updates/staged/<version>/`` and writes ``pending.json``.
-* **apply** runs at the next start (``python -m mio_server.update apply``, called by the
-  launchers) while nothing is loaded: program files are moved into
-  ``<data>/updates/backup-<old>/`` and replaced.  User data (``data/``, ``server/data/``) is never
-  touched.  If anything fails, the files moved so far are restored.
+* **apply** runs at the next start through the stable root installation host.
+  Signed program entries are exchanged under an installation-root OS lease and a
+  persistent journal; backups live in ``<install>/.mio-update/tx-*/backup/``.
+  The stable host and launchers, and user data (``data/``, ``server/data/``), are
+  preserved. Interrupted exchanges restore the whole previous application before
+  dependencies or application modules are loaded on the next launch.
 
 A git checkout (``.git`` present) is a developer install: staging and applying refuse, use git.
 """
@@ -29,12 +31,13 @@ from .. import __version__
 from . import catalog
 from .keys import TRUSTED_KEYS
 from .manifest import Manifest, UpdateError, parse_version, verify_manifest
+from .recovery import host
 
 DEFAULT_FEED = (
     "https://github.com/lumingya/comfy-comic-studio/releases/latest/download/mio-release.json"
 )
 RELEASES_PAGE = catalog.RELEASES_PAGE
-PRESERVE = {"data", "server/data", ".git", ".venv", "releases"}
+PRESERVE = host.PRESERVE
 MAX_MANIFEST = 1024 * 1024
 
 
@@ -51,6 +54,23 @@ def serialized(operation):
             return operation(self, *args, **kwargs)
         finally:
             self._execution.release()
+
+    return guarded
+
+
+def installation_serialized(operation):
+    @serialized
+    @wraps(operation)
+    def guarded(self, *args, **kwargs):
+        try:
+            with host.installation_lease(self.root):
+                host.recover(self.root)
+                host.workspace_updates(self.dir.parent)
+                return operation(self, *args, **kwargs)
+        except host.RecoveryError as exc:
+            raise UpdateRecoveryError(str(exc)) from exc
+        except host.InstallError as exc:
+            raise UpdateError(str(exc)) from exc
 
     return guarded
 
@@ -228,7 +248,7 @@ class Updater:
         self._launch("preparing", prepare)
         return self.status()
 
-    @serialized
+    @installation_serialized
     def cancel_pending(self) -> dict:
         with self._lock:
             if self._worker is not None and self._worker.is_alive():
@@ -294,7 +314,7 @@ class Updater:
             raise UpdateError("更新清单格式不正确")
         return verify_manifest(json.dumps(data).encode(), self.keys)
 
-    @serialized
+    @installation_serialized
     def download(self) -> Path:
         m = self._need_manifest()
         self.dir.mkdir(parents=True, exist_ok=True)
@@ -324,7 +344,7 @@ class Updater:
         part.replace(target)
         return target
 
-    @serialized
+    @installation_serialized
     def download_and_stage(self) -> dict:
         if self.dev_checkout:
             raise UpdateError("开发目录不切换程序版本；请使用正式发行版")
@@ -333,10 +353,12 @@ class Updater:
         self.download()
         return self.stage()
 
-    @serialized
+    @installation_serialized
     def stage(self) -> dict:
         if self.dev_checkout:
             raise UpdateError("这是 git 开发目录，请用 git pull 更新")
+        if self.pending():
+            raise UpdateError("已有待安装版本，请先取消或重启应用")
         m = self._need_manifest()
         archive = self.dir / m.package.name
         if not archive.is_file() or _sha256(archive) != m.package.sha256:
@@ -356,60 +378,15 @@ class Updater:
         temporary.replace(self.dir / "pending.json")
         return pending
 
-    @serialized
+    @installation_serialized
     def apply_pending(self, validate: Callable[[], None] | None = None) -> dict | None:
         """Swap program files for the staged release; returns the applied record or None."""
-        pending = self.pending()
-        if pending is None:
-            return None
-        if self.dev_checkout:
-            raise UpdateError("这是 git 开发目录，拒绝覆盖；已保留待安装的更新")
-        # Re-verify the signed archive at launch, including after an interrupted shutdown.
-        # pending.json and unpacked files are runtime state, not a trust boundary.
-        manifest = verify_manifest(json.dumps(pending.get("manifest", {})).encode(), self.keys)
-        if manifest.version != pending["version"]:
-            raise UpdateError("待安装版本与签名清单不一致")
-        archive = self.dir / manifest.package.name
-        if (
-            not archive.is_file()
-            or archive.stat().st_size != manifest.package.size
-            or _sha256(archive) != manifest.package.sha256
-        ):
-            raise UpdateError("待安装包校验失败，未改动当前版本")
-        verified = self.dir / "apply-verified"
-        shutil.rmtree(verified, ignore_errors=True)
-        _safe_extract(archive, verified)
-        source = _package_root(verified)
-        backup = self.dir / f"backup-{self.current}-{time.time_ns()}"
-        moved: list[str] = []
-        try:
-            for rel in _entries(source):
-                current = self.root / rel
-                if current.exists():
-                    (backup / rel).parent.mkdir(parents=True, exist_ok=True)
-                    shutil.move(str(current), str(backup / rel))
-                moved.append(rel)
-                current.parent.mkdir(parents=True, exist_ok=True)
-                shutil.move(str(source / rel), str(current))
-            if validate:
-                validate()
-        except Exception:
-            for rel in reversed(moved):  # roll back
-                _remove(self.root / rel)
-                if (backup / rel).exists():
-                    shutil.move(str(backup / rel), str(self.root / rel))
-            if moved and validate:
-                try:
-                    validate()
-                except Exception as recovery:
-                    raise UpdateRecoveryError(
-                        "已恢复原程序，但依赖尚未恢复，请重新启动后重试"
-                    ) from recovery
-            raise
-        (self.dir / "pending.json").unlink()
-        shutil.rmtree(self.dir / "staged", ignore_errors=True)
-        shutil.rmtree(verified, ignore_errors=True)
-        return {**pending, "backup": str(backup)}
+        return host.apply_pending(
+            self.root,
+            self.dir.parent,
+            lambda raw: verify_manifest(raw, self.keys),
+            validate,
+        )
 
     # --------------------------------------------------------------- helpers
     def _need_manifest(self) -> Manifest:

@@ -7,19 +7,18 @@ do, and never blocks start-up on failure (the error is printed and the old versi
 from __future__ import annotations
 
 import argparse
-import os
-import subprocess
 import sys
 from pathlib import Path
 
 from ..context import default_data_dir
+from .recovery import host
 from .updater import Updater, UpdateRecoveryError
 
 INSTALL_ROOT = Path(__file__).resolve().parents[3]
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="mio_server.update")
+    parser = argparse.ArgumentParser(prog="mio_server.update", allow_abbrev=False)
     parser.add_argument("command", choices=["apply", "status"])
     parser.add_argument("--data", default=str(default_data_dir()))
     parser.add_argument("--prepare-dependencies", action="store_true")
@@ -31,14 +30,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
 
         def prepare():
-            result = subprocess.run(
-                [sys.executable, str(INSTALL_ROOT / "server/bootstrap.py")],
-                cwd=INSTALL_ROOT,
-                env={**os.environ, "MIO_SKIP_WEB_BUILD": "1", "PYTHONUTF8": "1"},
-                check=False,
-            )
-            if result.returncode:
-                raise RuntimeError("版本依赖安装失败")
+            host.prepare_dependencies(INSTALL_ROOT)
 
         applied = updater.apply_pending(validate=prepare if args.prepare_dependencies else None)
     except UpdateRecoveryError as exc:

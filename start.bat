@@ -20,11 +20,13 @@ if errorlevel 1 goto nopython
 if not exist ".venv\Scripts\python.exe" goto nopython
 :venv_ready
 set "VPY=%CD%\.venv\Scripts\python.exe"
+"%VPY%" mio_update_bootstrap.py recover
+if errorlevel 1 goto fail
 "%VPY%" server\bootstrap.py
 if errorlevel 1 goto fail
 if not exist "web\dist\index.html" echo [mio] web\dist not built: API only. Build the UI with: npm --prefix web run build
 cd server
-"%VPY%" -m mio_server.update apply --prepare-dependencies
+"%VPY%" ..\mio_update_bootstrap.py apply %*
 if errorlevel 1 goto fail
 "%VPY%" -m mio_server --open %*
 if errorlevel 1 goto crashed

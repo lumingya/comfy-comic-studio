@@ -41,6 +41,8 @@ jobs:
           ruff format --check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py
           ruff check clients tools
           ruff format --check clients tools
+          ruff check --config server/pyproject.toml mio_update_bootstrap.py
+          ruff format --check --config server/pyproject.toml mio_update_bootstrap.py
       - name: v4 web (API types current + format + typecheck + tests + build)
         run: |
           npm ci --prefix web --no-audit --no-fund
