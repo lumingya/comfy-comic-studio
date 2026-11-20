@@ -314,8 +314,11 @@
   background: var(--button-active);
 }
 .assist-config-body {
+  min-width: 0;
   min-height: 260px;
-  padding-top: 20px;
+  margin: 0;
+  border: 0;
+  padding: 20px 0 0;
 }
 .assist-channel-form {
   display: flex;

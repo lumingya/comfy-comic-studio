@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { AssistSettings as Settings } from './api';
@@ -148,6 +148,154 @@ describe('AI assistant configuration', () => {
     expect(onClose).not.toHaveBeenCalled();
     expect(onModeChange).not.toHaveBeenCalled();
     expect(screen.getByRole('combobox', { name: '显示方式' })).toHaveValue('page');
+  });
+
+  it('keeps edits made during a successful save and submits them only on the next save', async () => {
+    let finish!: (value: Settings) => void;
+    const pending = new Promise<Settings>((resolve) => {
+      finish = resolve;
+    });
+    let attempts = 0;
+    const calls = mockFetch({
+      'PUT /api/ext/ai-assist/settings': (body: unknown) => (++attempts === 1 ? pending : body),
+    });
+    const { onClose, onModeChange } = renderSettings();
+    fireEvent.change(screen.getByRole('textbox', { name: '名称' }), {
+      target: { value: '先保存名称' },
+    });
+    await userEvent.click(screen.getByRole('button', { name: '保存' }));
+    await waitFor(() => expect(calls.filter((c) => c.method === 'PUT')).toHaveLength(1));
+    fireEvent.change(screen.getByRole('textbox', { name: '模型' }), {
+      target: { value: 'last-user-intent' },
+    });
+    await act(async () => {
+      finish({ ...saved, channels: [{ ...saved.channels[0], name: '先保存名称' }] });
+      await pending;
+    });
+    await waitFor(() => expect(screen.getByRole('button', { name: '保存' })).toBeEnabled());
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onModeChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('textbox', { name: '模型' })).toHaveValue('last-user-intent');
+    expect((calls.find((c) => c.method === 'PUT')!.body as Settings).channels[0].model).toBe(
+      'old-model',
+    );
+    await userEvent.click(screen.getByRole('button', { name: '保存' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect((calls.filter((c) => c.method === 'PUT')[1].body as Settings).channels[0].model).toBe(
+      'last-user-intent',
+    );
+  });
+
+  it('keeps a post-submit reversal dirty against the saved snapshot and preserves it after failure', async () => {
+    let finish!: (value: Settings) => void;
+    const pending = new Promise<Settings>((resolve) => {
+      finish = resolve;
+    });
+    let attempts = 0;
+    const calls = mockFetch({
+      'PUT /api/ext/ai-assist/settings': (body: unknown) => {
+        if (++attempts === 1) return pending;
+        if (attempts === 2)
+          return new Response(JSON.stringify({ detail: '磁盘写入失败' }), { status: 500 });
+        return body;
+      },
+    });
+    const { onClose } = renderSettings();
+    const model = screen.getByRole('textbox', { name: '模型' });
+    fireEvent.change(model, { target: { value: 'submitted-model' } });
+    await userEvent.click(screen.getByRole('button', { name: '保存' }));
+    await waitFor(() => expect(calls.filter((c) => c.method === 'PUT')).toHaveLength(1));
+    fireEvent.change(model, { target: { value: 'old-model' } });
+    await act(async () => {
+      finish({ ...saved, channels: [{ ...saved.channels[0], model: 'submitted-model' }] });
+      await pending;
+    });
+    await waitFor(() => expect(screen.getByRole('button', { name: '保存' })).toBeEnabled());
+    expect(onClose).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: '保存' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('磁盘写入失败');
+    expect(model).toHaveValue('old-model');
+    expect(onClose).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: '保存' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
+    expect((calls.filter((c) => c.method === 'PUT')[2].body as Settings).channels[0].model).toBe(
+      'old-model',
+    );
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it.each(['模型与渠道', '操作权限', '显示方式'])(
+    'disables the entire %s form while saving a display mode change that can unload the iframe',
+    async (activeTab) => {
+      let finish!: (value: Settings) => void;
+      const pending = new Promise<Settings>((resolve) => {
+        finish = resolve;
+      });
+      const calls = mockFetch({
+        'PUT /api/ext/ai-assist/settings': () => pending,
+        'GET /api/ext/ai-assist/tools': { items: [] },
+      });
+      const { onClose, onModeChange } = renderSettings();
+      await userEvent.click(screen.getByRole('tab', { name: '显示方式' }));
+      await userEvent.selectOptions(screen.getByRole('combobox', { name: '显示方式' }), 'page');
+      await userEvent.click(screen.getByRole('tab', { name: activeTab }));
+      await userEvent.click(screen.getByRole('button', { name: '保存' }));
+      await waitFor(() => expect(calls.filter((c) => c.method === 'PUT')).toHaveLength(1));
+      for (const tab of screen.getAllByRole('tab')) expect(tab).toBeDisabled();
+      const form = document.querySelector('.assist-config-body')!;
+      for (const control of form.querySelectorAll('input, select, button'))
+        expect(control).toBeDisabled();
+      if (activeTab === '模型与渠道') {
+        const model = screen.getByRole('textbox', { name: '模型' });
+        await userEvent.type(model, 'unsaved-after-mode-submit');
+        expect(model).toHaveValue('old-model');
+      }
+      await userEvent.click(
+        screen.getByRole('tab', { name: activeTab === '模型与渠道' ? '显示方式' : '模型与渠道' }),
+      );
+      expect(screen.getByRole('tab', { name: activeTab })).toHaveAttribute('aria-selected', 'true');
+      expect(onModeChange).not.toHaveBeenCalled();
+      expect(onClose).not.toHaveBeenCalled();
+      await act(async () => {
+        finish({ ...saved, mode: 'page' });
+        await pending;
+      });
+      await waitFor(() => expect(onModeChange).toHaveBeenCalledWith('page'));
+      expect(onClose).toHaveBeenCalledOnce();
+      expect(calls.filter((c) => c.method === 'PUT')).toHaveLength(1);
+      expect((calls.find((c) => c.method === 'PUT')!.body as Settings).channels[0].model).toBe(
+        'old-model',
+      );
+    },
+  );
+
+  it('re-enables all fields with the intact draft after a display mode save fails', async () => {
+    let finish!: (value: Response) => void;
+    const pending = new Promise<Response>((resolve) => {
+      finish = resolve;
+    });
+    mockFetch({ 'PUT /api/ext/ai-assist/settings': () => pending });
+    const { onClose, onModeChange } = renderSettings();
+    fireEvent.change(screen.getByRole('textbox', { name: '模型' }), {
+      target: { value: 'keep-this-model' },
+    });
+    await userEvent.click(screen.getByRole('tab', { name: '显示方式' }));
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: '显示方式' }), 'page');
+    await userEvent.click(screen.getByRole('button', { name: '保存' }));
+    expect(screen.getByRole('combobox', { name: '显示方式' })).toBeDisabled();
+    await act(async () => {
+      finish(new Response(JSON.stringify({ detail: '磁盘写入失败' }), { status: 500 }));
+      await pending;
+    });
+    expect(await screen.findByRole('alert')).toHaveTextContent('磁盘写入失败');
+    expect(screen.getByRole('combobox', { name: '显示方式' })).toBeEnabled();
+    expect(screen.getByRole('combobox', { name: '显示方式' })).toHaveValue('page');
+    for (const tab of screen.getAllByRole('tab')) expect(tab).toBeEnabled();
+    await userEvent.click(screen.getByRole('tab', { name: '模型与渠道' }));
+    expect(screen.getByRole('textbox', { name: '模型' })).toHaveValue('keep-this-model');
+    expect(screen.getByRole('textbox', { name: '模型' })).toBeEnabled();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onModeChange).not.toHaveBeenCalled();
   });
 
   it('hides the previous model catalog after the same channel address changes', async () => {

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Download, Plus, Trash2 } from 'lucide-react';
 import {
   discoverAssistModels,
@@ -31,6 +31,11 @@ export function AssistSettings({
 }) {
   const text = useAssistText();
   const [draft, setDraft] = useState(settings);
+  const [savedDraft, setSavedDraft] = useState(settings);
+  const latestDraft = useRef(draft);
+  latestDraft.current = draft;
+  const initialMode = useRef(settings.mode);
+  const submittedMode = useRef(settings.mode);
   const [tab, setTab] = useState<'channels' | 'permissions' | 'appearance'>('channels');
   const [selected, setSelected] = useState(draft.active_channel_id || draft.channels[0]?.id || '');
   const [models, setModels] = useState<{ id: string; name?: string }[]>([]);
@@ -40,6 +45,7 @@ export function AssistSettings({
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const save = useAssistAction<Settings>();
+  const modeSavePending = save.isPending && submittedMode.current !== initialMode.current;
   const tools = useAssistTools(tab === 'permissions');
   const channel = draft.channels.find((c) => c.id === selected);
   const patchChannel = (patch: Partial<AssistChannel>) =>
@@ -61,8 +67,10 @@ export function AssistSettings({
     }));
     setSelected(id);
   };
-  const dirty = JSON.stringify(settings) !== JSON.stringify(draft);
+  const dirty = JSON.stringify(savedDraft) !== JSON.stringify(draft);
   const submit = () => {
+    if (save.isPending) return;
+    const snapshot = draft;
     const channels = draft.channels.map((c) => ({
       ...c,
       name: c.name.trim(),
@@ -75,13 +83,20 @@ export function AssistSettings({
       return;
     }
     const { storage_path: _path, ...body } = { ...draft, channels };
+    submittedMode.current = snapshot.mode;
+    setError('');
     save.mutate(
       { path: '/settings', method: 'PUT', body },
       {
         onSuccess: () => {
+          setSavedDraft(snapshot);
+          if (latestDraft.current !== snapshot) {
+            toast(text('savedWithChanges'));
+            return;
+          }
           toast(text('saved'));
           onClose();
-          if (draft.mode !== settings.mode) onModeChange(draft.mode);
+          if (snapshot.mode !== initialMode.current) onModeChange(snapshot.mode);
         },
         onError: (e) => setError(e.message),
       },
@@ -112,6 +127,7 @@ export function AssistSettings({
             className={`btn ghost ${tab === key ? 'active' : ''}`}
             role="tab"
             aria-selected={tab === key}
+            disabled={modeSavePending}
             onClick={() => setTab(key)}
           >
             {text(key)}
@@ -123,7 +139,7 @@ export function AssistSettings({
           {error}
         </p>
       ) : null}
-      <div className="assist-config-body">
+      <fieldset className="assist-config-body" disabled={modeSavePending}>
         {tab === 'channels' ? (
           <>
             <div className="row wrap">
@@ -382,7 +398,7 @@ export function AssistSettings({
             ) : null}
           </>
         ) : null}
-      </div>
+      </fieldset>
     </Modal>
   );
 }

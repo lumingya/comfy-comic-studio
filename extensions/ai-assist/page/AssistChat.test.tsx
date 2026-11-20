@@ -219,6 +219,172 @@ describe('AI assistant conversations', () => {
     expect(calls.filter((c) => c.method !== 'GET')).toHaveLength(0);
   });
 
+  it('isolates a deleted conversation pending request from the existing new draft', async () => {
+    const pending = {
+      id: 'chat_deleted',
+      key: 'original-key',
+      payload: { content: '旧消息', attachment_ids: ['old-image'] },
+    };
+    const oldDraft = {
+      text: '旧消息',
+      attachments: [{ id: 'old-image', name: '旧图.png', mime_type: 'image/png', url: '' }],
+      pending,
+    };
+    localStorage.setItem('mio.assist.conversation', 'chat_deleted');
+    sessionStorage.setItem('mio.assist.draft.chat_deleted', JSON.stringify(oldDraft));
+    sessionStorage.setItem(
+      'mio.assist.draft.new',
+      JSON.stringify({ text: '独立的新草稿', attachments: [] }),
+    );
+    const calls = mockFetch({
+      ...baseRoutes(),
+      'GET /api/ext/ai-assist/conversations': { items: [] },
+      'POST /api/ext/ai-assist/conversations': makeChat({ messages: [] }),
+      'POST /api/ext/ai-assist/conversations/chat_1/messages': makeChat(),
+    });
+    renderWithProviders(<AssistChat />);
+    await waitFor(() => expect(localStorage.getItem('mio.assist.conversation')).toBeNull());
+    expect(compose()).toHaveValue('独立的新草稿');
+    expect(compose()).not.toHaveAttribute('readonly');
+    expect(screen.getByRole('button', { name: '发送' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: '查询原请求' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: '旧图.png' })).not.toBeInTheDocument();
+    expect(JSON.parse(sessionStorage.getItem('mio.assist.draft.chat_deleted')!)).toEqual(oldDraft);
+    await waitFor(() =>
+      expect(JSON.parse(sessionStorage.getItem('mio.assist.draft.new')!).pending).toBeNull(),
+    );
+    expect(calls.filter((c) => c.method !== 'GET')).toHaveLength(0);
+    await userEvent.click(screen.getByRole('button', { name: '新对话' }));
+    await userEvent.click(screen.getByRole('button', { name: '发送' }));
+    await waitFor(() => expect(compose()).toHaveValue(''));
+    expect(calls.find((c) => c.url.endsWith('/messages'))!.body).toMatchObject({
+      content: '独立的新草稿',
+      attachment_ids: [],
+    });
+  });
+
+  it('recovers text from a contaminated new draft without restoring another conversation pending', async () => {
+    const pending = {
+      id: 'chat_deleted',
+      key: 'original-key',
+      payload: { content: '旧消息', attachment_ids: [] },
+    };
+    sessionStorage.setItem(
+      'mio.assist.draft.new',
+      JSON.stringify({ text: '保留可编辑正文', attachments: [], pending }),
+    );
+    const calls = mockFetch(baseRoutes());
+    renderWithProviders(<AssistChat />);
+    await screen.findByRole('option', { name: '我的渠道 · text-model' });
+    expect(compose()).toHaveValue('保留可编辑正文');
+    expect(compose()).not.toHaveAttribute('readonly');
+    expect(screen.getByRole('button', { name: '发送' })).toBeEnabled();
+    expect(JSON.parse(sessionStorage.getItem('mio.assist.draft.new')!).pending).toBeNull();
+    expect(calls.filter((c) => c.method !== 'GET')).toHaveLength(0);
+  });
+
+  it.each(['accepted', 'not_found', 'error'])(
+    'ignores a late %s receipt after the selected conversation returns 404',
+    async (outcome) => {
+      const oldDraft = {
+        text: '旧消息',
+        attachments: [],
+        pending: {
+          id: 'chat_deleted',
+          key: 'original-key',
+          payload: { content: '旧消息', attachment_ids: [] },
+        },
+      };
+      localStorage.setItem('mio.assist.conversation', 'chat_deleted');
+      sessionStorage.setItem('mio.assist.draft.chat_deleted', JSON.stringify(oldDraft));
+      let finishRead!: (value: Response) => void;
+      const read = new Promise<Response>((resolve) => {
+        finishRead = resolve;
+      });
+      let finishReceipt!: (value: unknown) => void;
+      const receipt = new Promise((resolve) => {
+        finishReceipt = resolve;
+      });
+      const calls = mockFetch({
+        ...baseRoutes(),
+        'GET /api/ext/ai-assist/conversations/chat_deleted': () => read,
+        'GET /api/ext/ai-assist/conversations/chat_deleted/requests/original-key': () => receipt,
+      });
+      renderWithProviders(<AssistChat />);
+      await userEvent.click(screen.getByRole('button', { name: '查询原请求' }));
+      await waitFor(() => expect(calls.some((c) => c.url.includes('/requests/'))).toBe(true));
+      await act(async () => {
+        finishRead(new Response(JSON.stringify({ detail: '对话不存在' }), { status: 404 }));
+        await read;
+      });
+      await waitFor(() => expect(compose()).not.toHaveAttribute('readonly'));
+      fireEvent.change(compose(), { target: { value: '新的可编辑草稿' } });
+      expect(screen.getByRole('button', { name: '发送' })).toBeEnabled();
+      await act(async () => {
+        finishReceipt(
+          outcome === 'error'
+            ? new Response(JSON.stringify({ detail: '旧回执读取失败' }), { status: 404 })
+            : {
+                found: outcome === 'accepted',
+                status: outcome,
+                conversation: makeChat({ id: 'chat_deleted' }),
+              },
+        );
+        await receipt;
+      });
+      expect(compose()).toHaveValue('新的可编辑草稿');
+      expect(screen.getByRole('button', { name: '发送' })).toBeEnabled();
+      expect(screen.queryByRole('button', { name: '查询原请求' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(JSON.parse(sessionStorage.getItem('mio.assist.draft.chat_deleted')!)).toEqual(
+        oldDraft,
+      );
+      expect(calls.filter((c) => c.method !== 'GET')).toHaveLength(0);
+    },
+  );
+
+  it('releases an in-flight send after a conversation 404 without losing its original pending record', async () => {
+    localStorage.setItem('mio.assist.conversation', 'chat_deleted');
+    let finishRead!: (value: Response) => void;
+    const read = new Promise<Response>((resolve) => {
+      finishRead = resolve;
+    });
+    let finishSend!: (value: Response) => void;
+    const send = new Promise<Response>((resolve) => {
+      finishSend = resolve;
+    });
+    const calls = mockFetch({
+      ...baseRoutes(),
+      'GET /api/ext/ai-assist/conversations/chat_deleted': () => read,
+      'POST /api/ext/ai-assist/conversations/chat_deleted/messages': () => send,
+      'POST /api/ext/ai-assist/conversations': makeChat({ messages: [] }),
+      'POST /api/ext/ai-assist/conversations/chat_1/messages': makeChat(),
+    });
+    renderWithProviders(<AssistChat />);
+    await screen.findByRole('option', { name: '我的渠道 · text-model' });
+    fireEvent.change(compose(), { target: { value: '旧消息' } });
+    await userEvent.click(screen.getByRole('button', { name: '发送' }));
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith('/messages'))).toBe(true));
+    const oldDraft = JSON.parse(sessionStorage.getItem('mio.assist.draft.chat_deleted')!);
+    await act(async () => {
+      finishRead(new Response(JSON.stringify({ detail: '对话不存在' }), { status: 404 }));
+      await read;
+    });
+    await waitFor(() => expect(compose()).not.toHaveAttribute('readonly'));
+    fireEvent.change(compose(), { target: { value: '新消息' } });
+    expect(screen.getByRole('button', { name: '发送' })).toBeEnabled();
+    await userEvent.click(screen.getByRole('button', { name: '发送' }));
+    await waitFor(() => expect(compose()).toHaveValue(''));
+    await act(async () => {
+      finishSend(new Response(JSON.stringify({ detail: '旧发送结束' }), { status: 404 }));
+      await send;
+    });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(JSON.parse(sessionStorage.getItem('mio.assist.draft.chat_deleted')!)).toEqual(oldDraft);
+    expect(calls.filter((c) => c.url.endsWith('/messages'))).toHaveLength(2);
+    expect(calls.filter((c) => c.url.includes('/requests/'))).toHaveLength(0);
+  });
+
   it('checks an unreceived request before explicitly retrying the same key and payload', async () => {
     localStorage.setItem('mio.assist.conversation', 'chat_1');
     let attempts = 0;

@@ -70,6 +70,10 @@ const messages = {
   draftHint: ['Enter 发送 · Shift + Enter 换行', 'Enter to send · Shift + Enter for a new line'],
   untitled: ['新对话', 'New conversation'],
   saved: ['已保存', 'Saved'],
+  savedWithChanges: [
+    '已保存提交的设置，后续修改尚未保存。',
+    'Submitted settings saved. Your newer changes are still unsaved.',
+  ],
   savedKey: ['已保存密钥，输入新密钥即可替换', 'Key saved; enter a replacement'],
   clearKey: ['清除密钥', 'Clear key'],
   configDirty: ['有尚未保存的设置', 'You have unsaved settings'],

@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import {
   ArrowUp,
   Check,
@@ -59,7 +59,7 @@ function readDraft(id: string | null): ComposerDraft {
       text,
       attachments,
       pending:
-        typeof pending?.id === 'string' && typeof pending?.key === 'string'
+        pending?.id === id && typeof pending?.id === 'string' && typeof pending?.key === 'string'
           ? {
               id: pending.id,
               key: pending.key,
@@ -164,6 +164,7 @@ export function AssistChat({
   );
   const conversation = useAssistConversation(selected);
   const action = useAssistAction();
+  const resetAction = action.reset;
   const configAction = useAssistAction();
   const request = useAssistRequest();
   const [showSettings, setShowSettings] = useState(false);
@@ -185,34 +186,45 @@ export function AssistChat({
   const log = useRef<HTMLDivElement>(null);
   const follow = useRef(true);
   const sending = useRef(false);
+  const composerEpoch = useRef(0);
   const pendingSend = useRef<PendingSend | null>(readDraft(selected).pending || null);
   const current = conversation.data;
   const running = isAssistRunning(current);
   const active = settings.data?.channels.find((c) => c.id === settings.data?.active_channel_id);
+  const restoreDraft = useCallback(
+    (id: string | null) => {
+      composerEpoch.current++;
+      sending.current = false;
+      resetAction();
+      const restored = readDraft(id);
+      select(id);
+      setDraft(restored.text);
+      setAttachments(restored.attachments);
+      setUnknown(!!restored.pending);
+      setNotReceived(false);
+      setRecovering(false);
+      setUploading(false);
+      pendingSend.current = restored.pending || null;
+      setSendError('');
+      setHistory(false);
+      follow.current = true;
+      if (id) localStorage.setItem('mio.assist.conversation', id);
+      else localStorage.removeItem('mio.assist.conversation');
+    },
+    [resetAction],
+  );
   const choose = (id: string | null) => {
     if (sending.current || uploading || recovering) return;
-    const restored = readDraft(id);
-    select(id);
-    setDraft(restored.text);
-    setAttachments(restored.attachments);
-    setUnknown(!!restored.pending);
-    setNotReceived(false);
-    pendingSend.current = restored.pending || null;
-    setSendError('');
-    setHistory(false);
-    follow.current = true;
-    if (id) localStorage.setItem('mio.assist.conversation', id);
-    else localStorage.removeItem('mio.assist.conversation');
+    restoreDraft(id);
   };
   useEffect(() => {
     saveDraft(selected, { text: draft, attachments, pending: pendingSend.current });
   }, [selected, draft, attachments, unknown, action.isPending]);
   useEffect(() => {
     if (conversation.error instanceof ApiError && conversation.error.status === 404) {
-      select(null);
-      localStorage.removeItem('mio.assist.conversation');
+      restoreDraft(null);
     }
-  }, [conversation.error]);
+  }, [conversation.error, restoreDraft]);
   useEffect(() => {
     if (follow.current && log.current) log.current.scrollTop = log.current.scrollHeight;
   }, [current?.messages.length, current?.run.status, selected]);
@@ -238,11 +250,13 @@ export function AssistChat({
   const recover = async (retry = false) => {
     const pending = pendingSend.current;
     if (!pending || sending.current || recovering) return;
+    const epoch = composerEpoch.current;
     sending.current = true;
     setRecovering(true);
     setSendError('');
     try {
       const receipt = await request.mutateAsync({ id: pending.id, key: pending.key });
+      if (composerEpoch.current !== epoch) return;
       if (receipt.found) {
         if (receipt.conversation?.id !== pending.id) throw new Error(text('requestUnknown'));
         delivered(pending);
@@ -254,11 +268,14 @@ export function AssistChat({
         }
       }
     } catch (error) {
+      if (composerEpoch.current !== epoch) return;
       setNotReceived(false);
       setSendError((error as Error).message);
     } finally {
-      sending.current = false;
-      setRecovering(false);
+      if (composerEpoch.current === epoch) {
+        sending.current = false;
+        setRecovering(false);
+      }
     }
   };
   const send = async () => {
@@ -272,12 +289,14 @@ export function AssistChat({
     )
       return;
     sending.current = true;
+    const epoch = composerEpoch.current;
     setSendError('');
     const payload = { content: draft.trim(), attachment_ids: attachments.map((a) => a.id) };
     try {
       let id = selected;
       if (!id) {
         const created = await action.mutateAsync({ path: '/conversations', body: {} });
+        if (composerEpoch.current !== epoch) return;
         id = created.id;
         select(id);
         localStorage.setItem('mio.assist.conversation', id);
@@ -289,12 +308,13 @@ export function AssistChat({
       saveDraft(id, { text: draft, attachments, pending: pendingSend.current });
       await submitPending(pending);
     } catch (error) {
+      if (composerEpoch.current !== epoch) return;
       if (pendingSend.current && (!(error instanceof ApiError) || error.status >= 500)) {
         setUnknown(true);
       } else pendingSend.current = null;
       setSendError((error as Error).message);
     } finally {
-      sending.current = false;
+      if (composerEpoch.current === epoch) sending.current = false;
     }
   };
   const addFiles = async (files: File[]) => {
@@ -311,16 +331,18 @@ export function AssistChat({
       return;
     }
     setUploading(true);
+    const epoch = composerEpoch.current;
     setSendError('');
     try {
       for (const file of files) {
         const result = await uploadAssistAttachment(file);
+        if (composerEpoch.current !== epoch) return;
         setAttachments((previous) => [...previous, result]);
       }
     } catch (error) {
-      setSendError((error as Error).message);
+      if (composerEpoch.current === epoch) setSendError((error as Error).message);
     } finally {
-      setUploading(false);
+      if (composerEpoch.current === epoch) setUploading(false);
     }
   };
   const exportChat = () => {
