@@ -13,7 +13,6 @@ from urllib.parse import quote, unquote
 import httpx
 from fastapi import HTTPException
 from PIL import Image
-from starlette.background import BackgroundTask
 from starlette.responses import JSONResponse, StreamingResponse
 
 from .protocol import MAX_DOWNLOAD_BYTES, MAX_IMAGE_BYTES, MAX_IMAGE_PIXELS, MAX_RESPONSE_BYTES
@@ -35,6 +34,20 @@ DOWNLOAD_TYPES = {
 class MediaRejected(Exception):
     def __init__(self, status: int, detail: str):
         self.status, self.detail = status, detail
+
+
+class _MediaResponse(StreamingResponse):
+    def __init__(self, content, *, close, **kwargs):
+        super().__init__(content, **kwargs)
+        self._close = close
+
+    async def __call__(self, scope, receive, send):
+        try:
+            await super().__call__(scope, receive, send)
+        finally:
+            # ASGI 2.4 send failures skip Starlette's background task. Own cleanup
+            # here even when response headers fail before the iterator is started.
+            self._close()
 
 
 def safe_filename(disposition: str, mime: str) -> str:
@@ -105,10 +118,16 @@ async def dispatch_media(request, spec, path, body, validate, still_active, rele
     producer lies about Content-Length. No target headers or paths come from the panel.
     """
     output = tempfile.TemporaryFile()
+    closed = False
 
     def close():
-        output.close()
-        release()
+        nonlocal closed
+        if not closed:
+            closed = True
+            try:
+                output.close()
+            finally:
+                release()
 
     total = 0
     response_status = 0
@@ -202,18 +221,15 @@ async def dispatch_media(request, spec, path, body, validate, still_active, rele
         filename = safe_filename(disposition, mime)
 
         def chunks():
-            try:
-                while chunk := output.read(64 * 1024):
-                    if not still_active():
-                        return
-                    yield chunk
-            finally:
-                close()
+            while chunk := output.read(64 * 1024):
+                if not still_active():
+                    return
+                yield chunk
 
-        return StreamingResponse(
+        return _MediaResponse(
             chunks(),
+            close=close,
             media_type=mime,
-            background=BackgroundTask(close),
             headers={
                 "Content-Length": str(total),
                 "Content-Disposition": "attachment; filename*=UTF-8''" + quote(filename),
