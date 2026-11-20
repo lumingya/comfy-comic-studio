@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>单格精修工作台</title>
+    <link rel="stylesheet" href="panel.css" />
+    <script src="bridge.js" defer></script>
+    <script src="jobs.js" defer></script>
+    <script src="logic.js" defer></script>
+    <script src="mask.js" defer></script>
+    <script src="panel.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <h1>单格精修</h1>
+      <p class="muted">
+        修补一处、延展画面，或写下修改指令。每次提交生成新候选，已采用图保留。
+      </p>
+      <div class="toolbar">
+        <button id="load" disabled>读取候选与配置</button
+        ><button id="new-intent" disabled>开始新的编辑请求</button>
+      </div>
+      <p id="status" role="status" aria-live="polite">正在连接面板…</p>
+      <div class="grid">
+        <section class="card">
+          <h2>原图与重绘区域</h2>
+          <label
+            >候选图<select id="take" disabled>
+              <option value="">请先读取候选</option>
+            </select></label
+          >
+          <div class="stage">
+            <img id="source-image" alt="当前编辑的原图" /><svg
+              id="mask"
+              viewBox="0 0 1 1"
+              preserveAspectRatio="none"
+              role="img"
+              aria-label="蒙版绘制区域；也可在蒙版坐标输入框用键盘编辑"
+            ></svg>
+          </div>
+          <div id="mask-tools">
+            <div class="toolbar">
+              <label
+                >工具<select id="mask-mode">
+                  <option value="rectangle">拖动矩形</option>
+                  <option value="polygon">点击多边形顶点</option>
+                </select></label
+              ><button id="finish">完成多边形</button
+              ><button id="undo">撤回区域</button
+              ><button id="clear">清空区域</button>
+            </div>
+            <small>着色区域会重绘；多边形绘制完后点击「完成多边形」。</small>
+            <details>
+              <summary>用坐标精确编辑蒙版</summary>
+              <label
+                >归一化坐标（0–1）<textarea id="mask-json" spellcheck="false">
+{"boxes":[],"polygons":[]}</textarea></label
+              ><button id="apply-mask">应用坐标</button>
+            </details>
+          </div>
+        </section>
+        <section class="card">
+          <h2>本次编辑</h2>
+          <label
+            >方式<select id="kind">
+              <option value="inpaint">局部重绘</option>
+              <option value="outpaint">扩展画布</option>
+              <option value="edit">指令编辑</option>
+            </select></label
+          >
+          <label>出图配置<select id="profile" disabled></select></label>
+          <p id="profile-stages" class="muted"></p>
+          <div id="inpaint-fields">
+            <label
+              >蒙版羽化 / 像素<input
+                id="feather"
+                type="number"
+                min="0"
+                max="128"
+                value="12"
+            /></label>
+          </div>
+          <div id="outpaint-fields" hidden>
+            <p class="muted">边距使用原图像素，顺序为左、上、右、下。</p>
+            <div class="fields">
+              <label
+                >左<input
+                  id="pad-left"
+                  type="number"
+                  min="0"
+                  max="2048"
+                  step="8"
+                  value="128" /></label
+              ><label
+                >上<input
+                  id="pad-top"
+                  type="number"
+                  min="0"
+                  max="2048"
+                  step="8"
+                  value="0"
+              /></label>
+              <label
+                >右<input
+                  id="pad-right"
+                  type="number"
+                  min="0"
+                  max="2048"
+                  step="8"
+                  value="128" /></label
+              ><label
+                >下<input
+                  id="pad-bottom"
+                  type="number"
+                  min="0"
+                  max="2048"
+                  step="8"
+                  value="0"
+              /></label>
+            </div>
+          </div>
+          <div id="edit-fields" hidden>
+            <label
+              >修改指令<textarea
+                id="instruction"
+                placeholder="例如：把窗外改为雨后的傍晚，保留人物与构图"
+                maxlength="10000"
+              ></textarea></label
+            ><label
+              >云端渠道 ID（可选）<input
+                id="channel"
+                placeholder="留空使用配置或默认渠道"
+            /></label>
+          </div>
+          <label
+            >本次正向提示词（留空沿用原图）<textarea id="prompt"></textarea>
+          </label>
+          <details>
+            <summary>负向词、重绘强度与种子</summary>
+            <label>负向提示词<textarea id="negative"></textarea></label>
+            <div class="fields">
+              <label
+                >重绘强度<input
+                  id="denoise"
+                  type="number"
+                  min="0"
+                  max="1"
+                  step=".01"
+                  placeholder="使用配置值" /></label
+              ><label
+                >种子<input
+                  id="seed"
+                  type="number"
+                  min="0"
+                  max="281474976710655"
+                  placeholder="自动"
+              /></label>
+            </div>
+          </details>
+          <p class="muted">
+            提交会调用选定服务，云端可能计费。相同编辑重复点击沿用同一幂等请求；需要再画一次时点击「开始新的编辑请求」。
+          </p>
+          <button id="submit" class="primary" disabled>
+            提交精修，新增候选
+          </button>
+        </section>
+      </div>
+      <section class="card">
+        <h2>任务进度</h2>
+        <label
+          >近期精修任务<select id="recent-jobs">
+            <option value="">读取候选后显示</option>
+          </select></label
+        >
+        <label
+          >任务 ID<input id="job-id" placeholder="也可粘贴已有任务 ID 继续查看"
+        /></label>
+        <div class="toolbar">
+          <button id="job-refresh">刷新任务</button
+          ><button id="job-cancel" disabled>停止任务</button
+          ><label
+            ><input id="watch" type="checkbox" checked />每 5 秒跟踪状态</label
+          >
+        </div>
+        <progress id="job-progress" value="0" max="1"></progress>
+        <p id="job-state">尚未选择任务</p>
+        <ul id="job-items"></ul>
+      </section>
+      <section class="card">
+        <h2>原图 / 精修候选</h2>
+        <label
+          >精修结果<select id="result">
+            <option value="">完成任务后可查看</option>
+          </select></label
+        >
+        <div class="pair">
+          <figure>
+            <img id="before-image" alt="精修前原图" />
+            <figcaption>原图</figcaption>
+          </figure>
+          <figure>
+            <img id="after-image" alt="新生成的精修候选" />
+            <figcaption>精修候选 · 返回挑图页明确采用</figcaption>
+          </figure>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

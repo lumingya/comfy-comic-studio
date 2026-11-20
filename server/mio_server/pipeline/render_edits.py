@@ -95,6 +95,8 @@ class EditsMixin:
         stage = profile.edits.get(kind)
         if stage is None:
             raise RenderError(f"出图配置 {profile.name} 没有「{kind}」工作流")
+        if not stage.enabled:
+            raise RenderError(f"出图配置 {profile.name} 的「{kind}」工作流已停用")
         image = self.assets.read(take.asset_id)
         size = imaging.size_of(image)
         values = {

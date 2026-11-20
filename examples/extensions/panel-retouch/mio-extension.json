@@ -1,0 +1,56 @@
+{
+  "id": "panel-retouch",
+  "name": "单格精修工作台",
+  "version": "1.0.0",
+  "description": "通过受控面板修补候选、扩展画面或执行编辑指令；结果作为新候选保留。",
+  "contributes": {
+    "panels": [
+      {
+        "id": "retouch",
+        "slot": "episode",
+        "title": "单格精修",
+        "entry": "panel.html",
+        "requests": [
+          {
+            "id": "episode",
+            "method": "GET",
+            "path": "/episodes/{episode_id}",
+            "scope": "read"
+          },
+          {
+            "id": "profiles",
+            "method": "GET",
+            "path": "/profiles",
+            "scope": "read"
+          },
+          {
+            "id": "image",
+            "method": "GET",
+            "path": "/episodes/{episode_id}/takes/{take_id}/image",
+            "scope": "read",
+            "response": "image"
+          },
+          {
+            "id": "edit",
+            "method": "POST",
+            "path": "/episodes/{episode_id}/edit",
+            "scope": "render"
+          },
+          { "id": "jobs", "method": "GET", "path": "/jobs", "scope": "read" },
+          {
+            "id": "job",
+            "method": "GET",
+            "path": "/jobs/{job_id}",
+            "scope": "read"
+          },
+          {
+            "id": "cancel",
+            "method": "POST",
+            "path": "/jobs/{job_id}/cancel",
+            "scope": "render"
+          }
+        ]
+      }
+    ]
+  }
+}

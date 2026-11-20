@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>成品档精修管线</title>
+    <link rel="stylesheet" href="panel.css" />
+    <script src="bridge.js" defer></script>
+    <script src="jobs.js" defer></script>
+    <script src="logic.js" defer></script>
+    <script src="panel.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <h1>成品精修</h1>
+      <p class="muted">
+        让选好的画面走完已配置的放大、细节与高清处理阶段。开始前可核对顺序，完成后逐格对比。
+      </p>
+      <div class="toolbar">
+        <button id="load" disabled>读取已采用草稿与配置</button
+        ><button id="new-intent" disabled>开始新的成品请求</button>
+      </div>
+      <p id="status" role="status" aria-live="polite">正在连接面板…</p>
+      <div class="grid">
+        <section class="card">
+          <h2>选择需要精修的画面</h2>
+          <div class="toolbar">
+            <button id="all" disabled>全选已采用草稿</button
+            ><button id="none" disabled>清空选择</button>
+          </div>
+          <div id="takes">
+            <p class="muted">
+              读取后显示当前已采用的草稿。候选与已有成品不会混入。
+            </p>
+          </div>
+          <label
+            >原图预览<select id="source">
+              <option value="">选择一格查看</option>
+            </select></label
+          >
+          <div class="stage">
+            <img id="source-image" alt="所选已采用草稿" />
+          </div>
+        </section>
+        <section class="card">
+          <h2>本次成品管线</h2>
+          <label>出图配置<select id="profile" disabled></select></label>
+          <ol id="stages"></ol>
+          <p id="stage-note" class="muted">
+            阶段来自高级出图配置，顺序与参数由服务端冻结。本面板不改动全局配置。
+          </p>
+          <label
+            ><input
+              id="consent"
+              type="checkbox"
+            />我确认：成品成功时会替换仍被采用的原草稿；原图作为候选保留。如果期间换了采用图，不追改新的选择。</label
+          >
+          <p class="muted">
+            提交会运行选定服务，可能消耗显存或云端额度。失败与停止均不自动重试。
+          </p>
+          <button id="submit" class="primary" disabled>
+            提交所选画面的成品精修
+          </button>
+        </section>
+      </div>
+      <section class="card">
+        <h2>任务进度</h2>
+        <label
+          >近期成品任务<select id="recent-jobs">
+            <option value="">读取后显示</option>
+          </select></label
+        >
+        <label
+          >任务 ID<input id="job-id" placeholder="也可粘贴已有任务 ID 继续查看"
+        /></label>
+        <div class="toolbar">
+          <button id="job-refresh">刷新任务</button
+          ><button id="job-cancel" disabled>停止任务</button
+          ><label
+            ><input id="watch" type="checkbox" checked />每 5 秒跟踪状态</label
+          >
+        </div>
+        <progress id="job-progress" value="0" max="1"></progress>
+        <p id="job-state">尚未选择任务</p>
+        <ul id="job-items"></ul>
+      </section>
+      <section class="card">
+        <h2>原图 / 成品对比</h2>
+        <label
+          >成品结果<select id="result">
+            <option value="">完成任务后可查看</option>
+          </select></label
+        >
+        <div class="pair">
+          <figure>
+            <img id="before-image" alt="成品处理前的原图" />
+            <figcaption>原草稿 · 始终保留</figcaption>
+          </figure>
+          <figure>
+            <img id="after-image" alt="成品管线处理后的画面" />
+            <figcaption id="result-status">成品</figcaption>
+          </figure>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
