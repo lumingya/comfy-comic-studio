@@ -92,7 +92,11 @@ class AppContext:
         seed_instance: bool = True,
         memory: bool = False,
     ) -> "AppContext":
-        data_dir = Path(data_dir or default_data_dir())
+        from .fs_paths import regular_path_metadata
+
+        data_dir = Path(data_dir or default_data_dir()).absolute()
+        regular_path_metadata(data_dir, directory=True, missing=True)
+        data_dir = data_dir.resolve()
         with ExitStack() as startup:
             lease = None if memory else prepare_workspace(data_dir)
             if lease:
