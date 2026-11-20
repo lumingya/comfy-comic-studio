@@ -90,6 +90,36 @@
               resolving or explicitly resubmitting: repeated paid calls can
               create duplicate charges. Inspect job details for actual failures.
             </p>
+            <h2 id="saved-results">Check received results after restart</h2>
+            <p>
+              Results already recorded in the local delivery ledger are checked
+              against their original jobs at startup and can be applied to the
+              work without calling the model again. A saved receipt makes
+              repeated recovery idempotent: it does not add another candidate or
+              reverse adoption changes made manually before recovery. Missing
+              reliable records, incomplete output or an uncertain upstream
+              submission still require reconciliation, not repeated retries.
+            </p>
+            <p>
+              External programs can inspect
+              <code>GET /api/v2/jobs/{id}/deliveries</code>, then explicitly
+              call
+              <code>POST /api/v2/jobs/{id}/items/{idx}/replay-result</code> to
+              apply an already received result. This is a local write, not
+              generation. It is rejected while the original worker is running,
+              endpoint state remains unrestored or the job is canceled.
+              Canceling later work does not roll back images already saved to
+              the episode.
+            </p>
+            <p>
+              Before publishing result images, the server records their owning
+              job and stage. On restart it can verify complete local files and
+              restore their metadata without requiring the cloud provider to
+              offer history. Partial files and intermediate stages retain their
+              data and staging records. The job identifies the stage and
+              available or missing assets; it does not automatically continue
+              later generation stages or treat incomplete images as candidates.
+            </p>
             <h2 id="orchestration">External orchestration and deliverables</h2>
             <p>
               Open API clients can call

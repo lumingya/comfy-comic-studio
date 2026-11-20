@@ -221,6 +221,16 @@ def deactivate():  # 可选：停用时调用
 `item['delivery_sha']` 将作品修改和去重回执放进同一事务；重复回调返回原结果，不得重复新增或采用。
 无需额外交付副作用、仅返回任务结果的执行器也可以声明重放安全。未声明的扩展保留结果并等待处理。
 
+需要发布结果文件的执行器可用 `ItemContext.publish_result(result, artifacts, stage=0, terminal=True)`。
+先用 `AssetStore.describe(data, source=...)` 在内存计算素材元数据，`artifacts` 传 `(Asset, bytes)` 条目，
+不要先 `assets.put()` 再返回未登记归属的结果。宿主在写文件前把原任务、尝试、epoch、执行器身份、
+结果摘要和素材清单写入既有 `job_deliveries` 的版本化 `publishing` 信封，再发布受管暂存文件、核验
+字节与媒体并登记元数据；完整终态进入原有 pending → 作品回执 → ack 流程。
+多阶段输出按从零递增的 `stage` 发布，中间阶段用 `terminal=False`。重启只核验和补登记本地文件，
+中间阶段或缺失文件保留 `uncertain` 及核对信息，不自动执行后续阶段或再次请求上游。
+完整不变量和文件系统边界见[架构说明](../../../架构详解.md#96-文件发布与持久结果交付)；
+这不是任意文件、外部副作用或物理断电的跨库事务保证。
+
 只有零执行尝试、没有任何交付记录或端点状态租约的任务，才允许管理员显式使用
 `POST /api/v2/jobs/{job_id}/rebind-executor`，请求为
 `{"expected": <原身份或 null>, "target": {"kind":"...","source":"ext:...","digest":"..."}}`。
@@ -343,7 +353,7 @@ def activate(mio):
 
 ## 界面面板
 
-- `slot: "episode"` 的面板会作为剧集页的一个标签页显示，URL 查询参数里带 `episode` 和 `series` 两个 id。
+- `slot: "episode"` 的面板出现在具体话的「扩展」菜单，选择后进入独立工具页；宿主初始化消息提供 `episode_id` 和 `series_id`。
 - `slot: "settings"` 的面板显示在「设置 → 扩展」里。
 
 面板运行在 `sandbox="allow-scripts"` 的 iframe 里，没有 `allow-same-origin`，并带有
@@ -379,8 +389,8 @@ parent.postMessage({
 
 回应为 `{type:"mio:panel:response", version:1, session, rid, status, ok, data}`；操作失败会返回
 原 HTTP 状态与 JSON 错误。父窗口只接受实际 iframe 的消息、匹配的随机会话与未使用的 `rid`。
-每会话最多 256 个请求、同时 4 个、输入 64 KiB、输出 1 MiB；只支持 JSON/204，不能下载文件、
-跟随重定向或递归调用桥。切换、重载或关闭面板会中止未完成请求并丢弃迟到结果。
+每会话最多 256 个请求、同时 4 个、输入 64 KiB，默认 JSON 输出最多 1 MiB，支持 JSON/204。
+不能跟随重定向或递归调用桥。切换、重载或关闭面板会中止未完成请求并丢弃迟到结果。
 中止或超时不保证服务端写入未发生，变更操作应使用原接口的 revision / expected_head / 幂等键，
 先检查状态再显式重试。桥不会自动重试或启动生成任务。
 
@@ -391,14 +401,47 @@ parent.postMessage({
 目标操作仍要求其原有权限；`read` 令牌不能通过桥出图或管理设置。停用影响后续请求，已开始的操作
 可能继续完成；重新启用需要重新打开面板，自定义路由按新激活实例即时重新挂载。
 
+清单请求可选声明 `response:"image"` 或 `response:"download"`，省略时仍为 JSON。
+图片仅允许 `GET` + `read`：宿主校验原图后通过 `mio:panel:media` 和 MessagePort 交付 Blob，
+由面板在自己的 opaque origin 创建临时 URL，不传宿主 Blob URL 字符串。换图及撤销时释放
+本地 URL、端口，并发送 `mio:panel:release`。下载走原操作权限，宿主准备文件后显示原生按钮，
+由用户手势完成保存；面板没有静默下载权限。完整消息、额度与复制示例见[媒体桥契约](../../../docs/EXTENSION_MEDIA_BRIDGE.md)。
+
 ## 显式 QA 扩展示例
 
-仓库的 [`examples/extensions/qa-review`](../../../examples/extensions/qa-review/README.md) 提供可选 QA
-入口、标准库 CLI 和完整打包步骤。安装与启用不提交任务，只有明确调用本机
-`POST /api/ext/qa-review/queue` 才评审所选候选，且固定 `auto_adopt=False`。
-示例使用不稳定的 `mio.internal.qa.submit`；远程程序可使用带 `render` 权限的正式
-`POST /api/v2/episodes/{episode_id}/qa`，或同权限的 `POST /api/v2/ext/qa-review/queue`。
-示例提供可选面板，安装启用后才显示；读取候选和提交评审都需要明确点击，不添加主导航。
+仓库的 [`examples/extensions/qa-review`](../../../examples/extensions/qa-review/README.md) 已改为纯声明
+面板：读取候选、明确提交核心 `POST /episodes/{episode_id}/qa`、再读取任务和逐幕评分清单。
+请求固定 `auto_adopt:false`，不自动采用或淘汰。它没有 Python 激活入口，不使用
+`mio.internal.qa.submit`，也不再挂载私有 `/ext/qa-review/queue` 路由。
+远程程序调用带 `render` 权限的 `POST /api/v2/episodes/{episode_id}/qa`；包内标准库 CLI
+只允许回环本机，调用 `/api/episodes/{episode_id}/qa`。安装、启用和打开工具不调用模型。
+
+## 专业工具、通用适配与自动化
+
+六个独立包均使用正式面板请求，不把专业能力接成基础主导航。操作、权限及采用差异见
+[专业扩展使用说明](../../../docs/PROFESSIONAL_EXTENSIONS.md)：
+
+| 包 | 职责与写入规则 |
+| --- | --- |
+| [panel-retouch](../../../examples/extensions/panel-retouch/README.md) | 局部重绘、外扩和指令编辑；新增候选，不替换原采用图，停用阶段拒绝执行 |
+| [qa-review](../../../examples/extensions/qa-review/README.md) | VLM 评分与逐幕问题定位；固定不自动采用 |
+| [finalize-studio](../../../examples/extensions/finalize-studio/README.md) | 已采用草稿的多阶段成品管线；明确确认后沿用原成品接替语义，保留原图 |
+| [variant-workshop](../../../examples/extensions/variant-workshop/README.md) | 原生版本的原子追加、冻结生成、跨版本对比、明确采用与导出 |
+| [script-review](../../../examples/extensions/script-review/README.md) | 按结构化操作审阅 Diff，携带 base_revision 应用明确接受的修改 |
+| [motion-studio](../../../examples/extensions/motion-studio/README.md) | 保存带修订号的镜头设置，预览运动并通过宿主按钮下载离线播放器 |
+
+复杂节点包使用已有 `workflow_slot_adapter`、`workflow_binding`、`comfy_output_adapter`，
+特定节点名和协议判断全部留在[独立参考包](../../../examples/extensions/comfy-complex-adapters/README.md)。
+[30 分钟开发指南](../../../docs/COMFY_ADAPTER_GUIDE.md)包含脚手架、输入连线与输出恢复的边界。
+[标准渠道包](../../../examples/extensions/standard-image-channels/README.md)以 `cloud_adapter` 提供
+Images、Chat 图像、NovelAI 风格和异步轮询四种明确线协议，不在核心增加服务商分支。
+这些包的离线契约测试不能替代用户实际安装版本和真实模型验证。
+
+[Markdown 自动化与 Webhook 工具](../../../clients/python/AUTOMATION.md)使用通用 API v2／Python SDK，
+支持分镜装配、幂等生成、显式采用和 Monograph HTML／PDF，以及签名校验和持久重放保护。
+自动采用须明确传 `--adopt-first`；接收端重放 ID 占用不等于业务动作恰好执行一次。
+限定宿主槽位与只读上下文事件的声明见[创作扩展槽位](../../../docs/CREATION_EXTENSION_SLOTS.md)，
+不扩大普通面板的网络、对象写入或跨扩展广播权限。
 
 ## 打包与安装
 

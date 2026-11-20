@@ -97,33 +97,107 @@
               according to the operations needed.
             </p>
             <p>
-              Editing, QA, finalization, variants, the script assistant and
-              motion export have backend APIs, without default buttons in the
-              main interface. The repository's
-              <code>examples/extensions/qa-review</code> demonstrates optional
-              QA: installation and activation do not submit work, an explicit
-              command does, and images are never adopted automatically. Disabled
-              or changed extensions reject new calls immediately; reactivation
-              requires a restart to mount new routes. Create the first token
-              locally; subsequent token and extension management is available
-              through the admin-scoped open API. Extension routes also have v2
-              versions with declared scopes, and enabled extensions can wrap or
-              replace core operations.
+              Create the first token locally; subsequent token and extension
+              management is available through the admin-scoped open API.
+              Extension routes also have v2 versions with declared scopes, and
+              enabled extensions can wrap or replace core operations.
             </p>
+            <h3 id="professional-tools">
+              Install six optional professional tools
+            </h3>
             <p>
-              Extensions stay decoupled from core files. A cloud image
-              extension registers a <code>cloud_adapter</code> with its title,
+              The source repository includes six independent packages under
+              <code>examples/extensions/</code>. Import a folder or ZIP in
+              Extension market / Installed, review its digest, enable it, then
+              open a specific episode and choose a tool from the Extensions menu
+              beside Board / Script. These tools add no fixed main-navigation
+              entries. Installing, enabling or opening a panel does not generate
+              images. Read the episode, select the targets and explicitly
+              submit. Image services, VLMs and text models may charge for calls.
+            </p>
+            <ul>
+              <li>
+                <code>panel-retouch</code>: rectangle or polygon masks,
+                outpainting and instruction editing. Results are new candidates;
+                the adopted original remains. Disabled edit stages cannot run.
+              </li>
+              <li>
+                <code>qa-review</code>: select candidates for assessment, then
+                inspect per-panel scores and issues. It never automatically
+                adopts or rejects images.
+              </li>
+              <li>
+                <code>finalize-studio</code>: select adopted drafts and a
+                multi-stage profile, confirm and submit. A successful final
+                replaces its original only while that original remains adopted;
+                the original is retained.
+              </li>
+              <li>
+                <code>variant-workshop</code>: derive versions from Bible styles
+                and character appearances, then generate, compare, adopt and
+                export each version separately. Generation never adopts
+                automatically.
+              </li>
+              <li>
+                <code>script-review</code>: review per-panel and sentence-level
+                diffs, then apply only checked operations. Revision conflicts
+                require a fresh review and cannot overwrite a newer script.
+              </li>
+              <li>
+                <code>motion-studio</code>: save camera movement and duration,
+                then export an offline player. It does not generate images or
+                change adoption.
+              </li>
+            </ul>
+            <p>
+              Original images use temporary media managed by the host and
+              released on replacement or close. Once a file is ready, click the
+              host's download button outside the panel to save it. Panels
+              receive no token and cannot connect directly to the network.
+              Disabling or changing a package revokes subsequent panel requests;
+              re-enable it and reopen the tool from the menu without restarting
+              the host. Already submitted core jobs remain in the queue and
+              require explicit cancellation. Uninstalling does not delete
+              candidates, QA records, variants or camera settings saved in the
+              work.
+            </p>
+            <h3 id="adapters-and-cli">Replaceable adapters and scripts</h3>
+            <p>
+              Extensions stay decoupled from core files. A cloud image extension
+              registers a <code>cloud_adapter</code> with its title,
               capabilities, parameter schema and reference-image, negative
               prompt and seed support. A workflow extension registers a
-              <code>workflow_slot_adapter</code> for slot inspection and
-              writes. Channel-specific settings live in
-              <code>extra_options</code>; ordinary values are frozen with the
-              task and secret-like fields stay out of public snapshots. Enabled
-              adapters appear in discovery and control
-              responses; disabling one makes new requests use core behavior or
-              report the missing adapter. The repository's
+              <code>workflow_slot_adapter</code> for slot inspection and writes.
+              Channel-specific settings live in <code>extra_options</code>;
+              ordinary values are frozen with the task and secret-like fields
+              stay out of public snapshots. Enabled adapters appear in discovery
+              and control responses; disabling one makes new requests use core
+              behavior or report the missing adapter. The repository's
               <code>examples/extensions/offline-cloud-adapter</code> is a
               network-free minimal example.
+            </p>
+            <p>
+              <code>standard-image-channels</code> implements explicit Images,
+              Chat image, NovelAI-style and asynchronous polling protocols.
+              <code>comfy-complex-adapters</code> covers multi-slot LoRAs,
+              staged sampling, reference inputs and specific outputs. Try tags
+              or manual mappings first for ordinary API nodes. Reference
+              packages do not install ComfyUI plugins or guarantee arbitrary
+              node compatibility. Adapters never automatically repeat a
+              generation submission; an accepted remote task may continue after
+              local cancellation, which is not a refund.
+            </p>
+            <p>
+              The source tool
+              <code>clients/python/markdown_album.py</code> turns UTF-8 Markdown
+              into a storyboard, selects presets, submits generation, polls and
+              exports default Monograph HTML and PDF. Automatic adoption
+              requires <code>--adopt-first</code>. Without it, generation stops
+              for manual selection; resume with the same command after adopting
+              images. Keep the token in <code>MIO_TOKEN</code>, outside command
+              arguments and resume files. The neighboring
+              <code>AUTOMATION.md</code> also covers Webhook subscriptions and
+              signature debugging.
             </p>
           </section>
         </article>
@@ -145,6 +219,8 @@
           <a class="sub" href="#automation"
             >Automation and optional extensions</a
           >
+          <a class="sub" href="#professional-tools">Six professional tools</a>
+          <a class="sub" href="#adapters-and-cli">Adapters and scripts</a>
         </nav>
         <hr />
         <div class="toc-label">THE HANDBOOK</div>

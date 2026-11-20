@@ -91,18 +91,79 @@
               read、write、render 或 admin 权限。
             </p>
             <p>
-              修图、质检、成品档、批量变体、剧本助手与动态漫已有后端接口，不是默认主界面的按钮。仓库
-              <code>examples/extensions/qa-review</code>
-              提供可选质检扩展示例，安装启用后仍需通过命令明确提交，且不会自动采用图片。停用或文件变动后，旧扩展路由立即拒绝新调用；重新启用后须重启以挂载新路由。首个令牌在本机创建，后续令牌与扩展管理可通过带
-              admin 权限的开放 API 完成。扩展自定义路由也有 v2
+              首个令牌在本机创建，后续令牌与扩展管理可通过带 admin 权限的开放
+              API 完成。 扩展自定义路由也有 v2
               版本，权限由扩展明确声明；核心操作可由已启用扩展包装或替换。
             </p>
+            <h3 id="professional-tools">按需安装六个专业工具</h3>
+            <p>
+              六个独立包在源码的
+              <code>examples/extensions/</code> 中，可在「扩展市场 /
+              已安装」导入目录或 ZIP，审阅摘要后启用，再从具体话「挑图 /
+              分镜」旁的「扩展」菜单选择工具。
+              它们不新增主导航；安装、启用和打开面板都不会出图。
+              先点击读取，再选择对象并明确提交。图像服务、VLM
+              与文本模型可能计费。
+            </p>
+            <ul>
+              <li>
+                <code>panel-retouch</code>
+                单格精修：矩形或多边形蒙版、外扩与指令编辑；结果新增候选，原采用图保留。停用的编辑阶段不能运行。
+              </li>
+              <li>
+                <code>qa-review</code>
+                候选评审：勾选候选后评审，逐幕查看评分与问题；不自动采用或淘汰。
+              </li>
+              <li>
+                <code>finalize-studio</code>
+                成品精修：选择已采用草稿与多阶段配置，确认后执行；成功成品接替仍采用的原草稿，原图继续保留。
+              </li>
+              <li>
+                <code>variant-workshop</code>
+                变体工坊：按设定集画风和角色外观派生版本，分别生成、对比、采用和导出；生成不自动采用。
+              </li>
+              <li>
+                <code>script-review</code> 剧本审阅：逐幕逐句查看
+                Diff，勾选后才应用；修订冲突要求重新审阅，不覆盖新稿。
+              </li>
+              <li>
+                <code>motion-studio</code>
+                动态漫：设置镜头运动和时长，保存后导出离线播放器；不生成图片或修改采用图。
+              </li>
+            </ul>
+            <p>
+              需要原图时，面板使用宿主管理的临时图片；换图和关闭时自动释放。文件准备好后，还需点击面板外的宿主下载按钮保存。
+              面板不会收到令牌，也不能自行联网。停用或文件变动立即撤销后续面板请求；重新启用后从菜单重新打开工具，无需重启宿主。
+              已提交任务仍由队列管理，需要停止时明确取消；卸载不删除已保存到作品中的候选、评审、变体或镜头。
+            </p>
+            <h3 id="adapters-and-cli">可替换的适配器与脚本</h3>
             <p>
               二次开发不需要修改核心：云端出图扩展通过
-              <code>cloud_adapter</code> 注册标题、能力、参数 schema 与参考图/负面词/种子支持；工作流扩展通过
-              <code>workflow_slot_adapter</code> 声明槽位识别和写入。渠道专属参数保存在
-              <code>extra_options</code>，普通配置随任务冻结，密钥类字段不会进入公开快照。启用后它们会出现在适配器发现接口和工作流控制面，停用后新请求立即回到核心能力或报告缺少适配器。仓库中的
-              <code>examples/extensions/offline-cloud-adapter</code> 是可离线测试的最小示例。
+              <code>cloud_adapter</code> 注册标题、能力、参数 schema
+              与参考图/负面词/种子支持；工作流扩展通过
+              <code>workflow_slot_adapter</code>
+              声明槽位识别和写入。渠道专属参数保存在
+              <code>extra_options</code
+              >，普通配置随任务冻结，密钥类字段不会进入公开快照。启用后它们会出现在适配器发现接口和工作流控制面，停用后新请求立即回到核心能力或报告缺少适配器。仓库中的
+              <code>examples/extensions/offline-cloud-adapter</code>
+              是可离线测试的最小示例。
+            </p>
+            <p>
+              <code>standard-image-channels</code> 提供 Images、Chat
+              图像、NovelAI 风格与异步轮询的明确协议；
+              <code>comfy-complex-adapters</code> 提供多槽
+              LoRA、分阶段采样、参考图和特殊输出适配。 普通 API
+              节点仍先用标签或手动映射，参考包不会自动安装 ComfyUI
+              插件，也不保证任意节点兼容。
+              云端生成请求不会在适配器内自动重复提交；已发出的远端任务可能继续运行，取消不代表退款。
+            </p>
+            <p>
+              源码中的 <code>clients/python/markdown_album.py</code> 可从 UTF-8
+              Markdown 建分镜、选预设、 提交生成、轮询并导出默认 Monograph HTML
+              和 PDF；自动采用必须明确传 <code>--adopt-first</code>。
+              省略时生成后等待人工挑图，再用原命令续跑。令牌放在
+              <code>MIO_TOKEN</code> 环境变量， 不放命令行或续跑文件；Webhook
+              订阅与签名调试见同目录的 <code>AUTOMATION.md</code>。
             </p>
           </section>
         </article>
@@ -120,7 +181,11 @@
       </main>
       <aside class="toc" aria-label="教程目录">
         <div class="toc-label">本页内容</div>
-        <nav><a class="sub" href="#automation">外部程序与可选扩展</a></nav>
+        <nav>
+          <a class="sub" href="#automation">外部程序与可选扩展</a
+          ><a class="sub" href="#professional-tools">六个专业工具</a
+          ><a class="sub" href="#adapters-and-cli">适配器与脚本</a>
+        </nav>
         <hr />
         <div class="toc-label">全部章节</div>
         <nav>
