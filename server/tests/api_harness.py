@@ -7,6 +7,7 @@ import io
 import json
 import tempfile
 import unittest
+from pathlib import Path
 from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
@@ -67,6 +68,8 @@ class ApiCase(unittest.TestCase):
             seed_instance=False,
         )
         self.addCleanup(self.ctx.close)  # runs before tmp.cleanup (LIFO) — Windows file locks
+        # A temporary database must not import the developer's local legacy data by default.
+        self.ctx.legacy_root = Path(tmp.name) / "empty-legacy"
         self.ctx.store.put_doc(ComfyInstance(id="c1", base_url="http://fake", capacity=2))
         self.ctx.refresh_instances()
         FakeClient.uploads, FakeClient.graphs, FakeClient.mode = [], [], "ok"

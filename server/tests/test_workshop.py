@@ -5,19 +5,24 @@ from __future__ import annotations
 from pathlib import Path
 
 from .api_harness import ApiCase
-
-EMPTY = Path(__file__).resolve().parent / "no-legacy-here"
+from .shipped_data_fixture import copy_shipped_data
 
 
 class WorkshopTest(ApiCase):
     def workshop(self):
         return self.ok(self.client.get("/api/workshop"))
 
+    def shipped_workshop(self):
+        self.ctx.legacy_root = copy_shipped_data(
+            Path(self.tmp) / "legacy-fixture", kinds=("storyboards", "presets/characters")
+        )
+        return self.workshop()
+
     def test_seeded_from_legacy_data_and_hidden_from_the_shelf(self):
-        ws = self.workshop()
+        ws = self.shipped_workshop()
         self.assertEqual(ws["kind"], "workshop")
         self.assertEqual(self.workshop()["id"], ws["id"])  # created once
-        # The repo's data/ may hold more legacy material than the demo; look the demo up by name.
+        # Only the manifest-approved public fixtures are available to this test.
         preset = next(p for p in ws["presets"] if p["title"] == "七海 · 标准角色设定")
         self.assertEqual([g["title"] for g in preset["groups"]], ["主角与服装", "画风与场景"])
         entry = next(e for e in preset["entries"] if e["key"] == "character_display_name")
@@ -29,14 +34,13 @@ class WorkshopTest(ApiCase):
         self.assertEqual(self.ok(self.client.get("/api/series")), [])
 
     def test_without_legacy_data_a_blank_storyboard_and_default_preset(self):
-        self.ctx.legacy_root = EMPTY
         ws = self.workshop()
         self.assertEqual(ws["presets"][0]["title"], "默认预设")
         boards = self.ok(self.client.get(f"/api/series/{ws['id']}/episodes"))["items"]
         self.assertEqual([b["title"] for b in boards], ["第一个分镜"])
 
     def test_assemble_snapshots_story_and_presets_then_one_click_fills_the_album(self):
-        ws = self.workshop()
+        ws = self.shipped_workshop()
         board = self.ok(self.client.get(f"/api/series/{ws['id']}/episodes"))["items"][0]
         preset = next(p for p in ws["presets"] if p["title"] == "七海 · 标准角色设定")
         out = self.ok(
@@ -134,7 +138,7 @@ class WorkshopTest(ApiCase):
         )
 
     def test_clone_task_copies_frames_presets_and_profile_but_no_images(self):
-        ws = self.workshop()
+        ws = self.shipped_workshop()
         board = self.ok(self.client.get(f"/api/series/{ws['id']}/episodes"))["items"][0]
         preset = next(p for p in ws["presets"] if p["title"] == "七海 · 标准角色设定")
         out = self.ok(
@@ -168,7 +172,7 @@ class WorkshopTest(ApiCase):
         self.assertEqual(self.client.post("/api/workshop/tasks/nope/clone").status_code, 404)
 
     def test_preview_makes_a_one_frame_album_for_the_preset(self):
-        ws = self.workshop()
+        ws = self.shipped_workshop()
         preset = next(p for p in ws["presets"] if p["title"] == "七海 · 标准角色设定")
         boards = self.ok(self.client.get(f"/api/series/{ws['id']}/episodes"))["total"]
         out = self.ok(

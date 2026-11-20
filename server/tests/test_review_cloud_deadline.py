@@ -20,8 +20,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from mio_server.llm import LLMError
 from PIL import Image
+
+from mio_server.llm import LLMError
 
 PACKAGE = Path(__file__).resolve().parents[2] / "examples/extensions/standard-image-channels"
 SPEC = importlib.util.spec_from_file_location(
