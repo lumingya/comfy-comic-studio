@@ -54,6 +54,69 @@ def store_with_story(n=6):
 
 
 class AssistantTests(unittest.TestCase):
+    def changed_script(self, series, episode):
+        revised = A.normalized_view(series, episode)
+        revised["characters"][0]["name"] = "Revised character"
+        revised["scenes"][0]["location"] = "Revised location"
+        revised["panels"][1]["description"] = "Revised panel"
+        return A.diff(series, episode, revised)
+
+    def assert_script_unchanged(self, store, series, episode, snapshots):
+        self.assertEqual(store.get_series(series.id).model_dump(), series.model_dump())
+        self.assertEqual(store.get_episode(episode.id).model_dump(), episode.model_dump())
+        self.assertEqual(store.episode_snapshots(episode.id), snapshots)
+
+    def test_stale_proposal_leaves_bible_episode_and_snapshots_unchanged(self):
+        store, series, episode = store_with_story()
+        self.addCleanup(store.close)
+        ops = self.changed_script(series, episode)
+        current = store.update_episode(episode.id, lambda ep: setattr(ep, "title", "Author edit"))
+        series = store.get_series(series.id)
+        snapshots = store.episode_snapshots(episode.id)
+
+        with self.assertRaises(Conflict):
+            A.apply(store, episode.id, ops, [op["id"] for op in ops], episode.revision)
+
+        self.assert_script_unchanged(store, series, current, snapshots)
+
+    def test_invalid_panel_op_rolls_back_preceding_bible_changes(self):
+        store, series, episode = store_with_story()
+        self.addCleanup(store.close)
+        ops = self.changed_script(series, episode)
+        panel_op = next(op for op in ops if op["op"] == "update_panel")
+        panel_op["after"]["dialogue"] = [{"speaker": "lin", "kind": "speech"}]
+        snapshots = store.episode_snapshots(episode.id)
+
+        with self.assertRaises(KeyError):
+            A.apply(store, episode.id, ops, [op["id"] for op in ops], episode.revision)
+
+        self.assert_script_unchanged(store, series, episode, snapshots)
+
+    def test_apply_composes_with_caller_transaction_and_commits_both_documents(self):
+        store, series, episode = store_with_story()
+        self.addCleanup(store.close)
+        ops = self.changed_script(series, episode)
+        accepted = [op["id"] for op in ops]
+        snapshots = store.episode_snapshots(episode.id)
+
+        with self.assertRaisesRegex(RuntimeError, "abort caller"):
+            with store.tx():
+                result = A.apply(store, episode.id, ops, accepted, episode.revision)
+                self.assertEqual(result, {"applied": accepted, "revision": episode.revision + 1})
+                self.assertEqual(
+                    store.get_series(series.id).bible.characters[0].name, "Revised character"
+                )
+                self.assertEqual(
+                    store.get_episode(episode.id).panel("p02").description, "Revised panel"
+                )
+                raise RuntimeError("abort caller")
+
+        self.assert_script_unchanged(store, series, episode, snapshots)
+        A.apply(store, episode.id, ops, accepted, episode.revision)
+        self.assertEqual(store.get_series(series.id).bible.characters[0].name, "Revised character")
+        self.assertEqual(store.get_series(series.id).bible.locations[0].name, "Revised location")
+        self.assertEqual(store.get_episode(episode.id).panel("p02").description, "Revised panel")
+
     def test_unchanged_story_has_no_ops(self):
         store, series, episode = store_with_story()
         self.addCleanup(store.close)

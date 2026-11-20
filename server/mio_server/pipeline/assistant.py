@@ -273,61 +273,66 @@ def propose(series: Series, episode: Episode, instruction: str, llm) -> dict:
 def apply(store, episode_id: str, ops: list[dict], accepted: list[str], base_revision: int) -> dict:
     """Apply the accepted ops.  Raises storage ``Conflict`` if the episode changed meanwhile."""
     chosen = [op for op in ops if op.get("id") in set(accepted) and not op.get("blocked")]
-    episode = store.get_episode(episode_id)
-    series_ops = [op for op in chosen if op["op"].endswith(("_character", "_location"))]
-    if series_ops:
+    # Bible edits and the episode CAS are one write. A stale revision or invalid
+    # operation must also undo earlier series edits and any episode snapshots.
+    with store.tx():
+        episode = store.get_episode(episode_id)
+        series_ops = [op for op in chosen if op["op"].endswith(("_character", "_location"))]
+        if series_ops:
 
-        def patch_series(series: Series) -> None:
-            bible = series.bible
-            for op in series_ops:
-                view = op["after"]
-                if op["op"] == "add_character" and not bible.character(op["target"]):
-                    new_bible, _ = from_story(
-                        {"title": "x", "characters": [view], "scenes": [], "panels": []}, series.id
-                    )
-                    bible.characters.extend(new_bible.characters)
-                elif op["op"] == "update_character" and (ch := bible.character(op["target"])):
-                    _character_patch(ch, view)
-                elif op["op"] == "add_location" and not bible.location(op["target"]):
-                    new_bible, _ = from_story(
-                        {"title": "x", "characters": [], "scenes": [view], "panels": []}, series.id
-                    )
-                    bible.locations.extend(new_bible.locations)
-                elif op["op"] == "update_location" and (loc := bible.location(op["target"])):
-                    loc.name = view.get("location") or loc.name
-                    loc.description = view.get("description", loc.description)
-                    loc.tags = list(view.get("tags") or [])
+            def patch_series(series: Series) -> None:
+                bible = series.bible
+                for op in series_ops:
+                    view = op["after"]
+                    if op["op"] == "add_character" and not bible.character(op["target"]):
+                        new_bible, _ = from_story(
+                            {"title": "x", "characters": [view], "scenes": [], "panels": []},
+                            series.id,
+                        )
+                        bible.characters.extend(new_bible.characters)
+                    elif op["op"] == "update_character" and (ch := bible.character(op["target"])):
+                        _character_patch(ch, view)
+                    elif op["op"] == "add_location" and not bible.location(op["target"]):
+                        new_bible, _ = from_story(
+                            {"title": "x", "characters": [], "scenes": [view], "panels": []},
+                            series.id,
+                        )
+                        bible.locations.extend(new_bible.locations)
+                    elif op["op"] == "update_location" and (loc := bible.location(op["target"])):
+                        loc.name = view.get("location") or loc.name
+                        loc.description = view.get("description", loc.description)
+                        loc.tags = list(view.get("tags") or [])
 
-        store.update_series(episode.series_id, patch_series)
-    bible = store.get_series(episode.series_id).bible
-    applied = [op["id"] for op in chosen]
+            store.update_series(episode.series_id, patch_series)
+        bible = store.get_series(episode.series_id).bible
+        applied = [op["id"] for op in chosen]
 
-    def patch_episode(ep: Episode) -> None:
-        panels = {p.id: p for p in ep.panels}
-        sequence = [p.id for p in ep.ordered_panels()]
-        for op in chosen:
-            target = panels.get(op["target"])
-            if op["op"] == "remove_panel" and target and not target.locked:
-                sequence.remove(target.id)
-                del panels[target.id]
-            elif op["op"] == "update_panel" and target and not target.locked:
-                panels[target.id] = panel_from_view(op["after"], target, bible)
-            elif op["op"] == "add_panel" and op["target"] not in panels:
-                panel = panel_from_view(op["after"], None, bible)
-                panels[panel.id] = panel
-                anchor = op.get("after_panel")
-                pos = sequence.index(anchor) + 1 if anchor in sequence else 0
-                sequence.insert(pos, panel.id)
-        reorder = next((op for op in chosen if op["op"] == "reorder"), None)
-        if reorder:
-            wanted = [pid for pid in reorder["order"] if pid in panels]
-            sequence = wanted + [pid for pid in sequence if pid not in wanted]
-        for i, pid in enumerate(sequence):
-            panels[pid].order = i
-        ep.panels = [panels[pid] for pid in sequence]
+        def patch_episode(ep: Episode) -> None:
+            panels = {p.id: p for p in ep.panels}
+            sequence = [p.id for p in ep.ordered_panels()]
+            for op in chosen:
+                target = panels.get(op["target"])
+                if op["op"] == "remove_panel" and target and not target.locked:
+                    sequence.remove(target.id)
+                    del panels[target.id]
+                elif op["op"] == "update_panel" and target and not target.locked:
+                    panels[target.id] = panel_from_view(op["after"], target, bible)
+                elif op["op"] == "add_panel" and op["target"] not in panels:
+                    panel = panel_from_view(op["after"], None, bible)
+                    panels[panel.id] = panel
+                    anchor = op.get("after_panel")
+                    pos = sequence.index(anchor) + 1 if anchor in sequence else 0
+                    sequence.insert(pos, panel.id)
+            reorder = next((op for op in chosen if op["op"] == "reorder"), None)
+            if reorder:
+                wanted = [pid for pid in reorder["order"] if pid in panels]
+                sequence = wanted + [pid for pid in sequence if pid not in wanted]
+            for i, pid in enumerate(sequence):
+                panels[pid].order = i
+            ep.panels = [panels[pid] for pid in sequence]
 
-    episode = store.update_episode(episode_id, patch_episode, expected_revision=base_revision)
-    return {"applied": applied, "revision": episode.revision}
+        episode = store.update_episode(episode_id, patch_episode, expected_revision=base_revision)
+        return {"applied": applied, "revision": episode.revision}
 
 
 def generate_episode(series: Series, sentence: str, llm, order: int) -> tuple[Bible, Episode]:
