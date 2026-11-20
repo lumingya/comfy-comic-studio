@@ -1,0 +1,26 @@
+{
+  "name": "Complex adapter contract fixture (offline)",
+  "notes": "Offline contract topology only. Install the actual node packages and fill all required inputs before a real ComfyUI run.",
+  "graph": {
+    "1": {"class_type": "CheckpointLoaderSimple", "inputs": {"ckpt_name": "neutral.safetensors"}},
+    "2": {"class_type": "Power Lora Loader (rgthree)", "inputs": {
+      "model": ["1", 0], "clip": ["1", 1],
+      "lora_1": {"on": true, "lora": "ink.safetensors", "strength": 0.4, "strengthTwo": 0.2, "note": "preserve first row"},
+      "lora_2": {"on": true, "lora": "ink.safetensors", "strength": 0.8, "strengthTwo": 0.6, "note": "preserve second row"}
+    }},
+    "3": {"class_type": "LoadImage", "inputs": {"image": "reference.png"}},
+    "4": {"class_type": "IPAdapterAdvanced", "inputs": {"model": ["2", 0], "image": ["3", 0], "weight": 0.6}},
+    "5": {"class_type": "LoadImage", "inputs": {"image": "pose.png"}},
+    "6": {"class_type": "ControlNetApplyAdvanced", "inputs": {"image": ["5", 0], "strength": 1.0}},
+    "7": {"class_type": "KSampler", "inputs": {"model": ["4", 0], "positive": ["6", 0], "seed": 1, "steps": 20, "cfg": 6.0, "denoise": 1.0, "sampler_name": "euler", "scheduler": "normal"}},
+    "8": {"class_type": "LatentUpscale", "inputs": {"samples": ["7", 0], "width": 1024, "height": 1024}},
+    "9": {"class_type": "KSampler", "_meta": {"title": "Hires [adapter-stage:hires]"}, "inputs": {"model": ["4", 0], "latent_image": ["8", 0], "seed": 2, "steps": 12, "cfg": 5.0, "denoise": 0.4}},
+    "10": {"class_type": "VAEDecode", "inputs": {"samples": ["9", 0], "vae": ["1", 2]}},
+    "11": {"class_type": "FaceDetailer", "inputs": {"image": ["10", 0], "model": ["4", 0], "seed": 3, "steps": 8, "cfg": 4.0, "denoise": 0.3}},
+    "12": {"class_type": "MioArtifactOutput", "inputs": {"images": ["11", 0]}}
+  },
+  "config": {
+    "output_adapters": {"12": {"id": "complex-artifacts"}},
+    "values": {"steps:hires": 10, "steps:detail": 6}
+  }
+}

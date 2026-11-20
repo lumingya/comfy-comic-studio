@@ -1,0 +1,7 @@
+{
+  "id": "comfy-complex-adapters",
+  "name": "ComfyUI 复杂工作流参考适配器",
+  "version": "0.1.0",
+  "description": "独立 LoRA 堆栈、分阶段采样、参考图权重与自定义 history 输出协议。",
+  "main": "main.py"
+}
