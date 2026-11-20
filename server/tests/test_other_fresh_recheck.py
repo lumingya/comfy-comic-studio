@@ -191,13 +191,20 @@ class OtherFreshClaimTests(unittest.TestCase):
 
                 try:
                     engine.register("fresh", Executor())
-                    first = engine.submit(
-                        "fresh",
-                        [ItemSpec({}), ItemSpec({})] if action == "self_pause" else [ItemSpec({})],
-                    )
-                    second = (
-                        first if action == "self_pause" else engine.submit("fresh", [ItemSpec({})])
-                    )
+                    with patch("mio_server.jobs.engine.time.time", return_value=1):
+                        first = engine.submit(
+                            "fresh",
+                            [ItemSpec({}), ItemSpec({})]
+                            if action == "self_pause"
+                            else [ItemSpec({})],
+                            priority=10,
+                            window=2,
+                        )
+                        second = (
+                            first
+                            if action == "self_pause"
+                            else engine.submit("fresh", [ItemSpec({})])
+                        )
 
                     def interrupt(event):
                         if event["job_id"] == first["id"] and event["type"] == "started":

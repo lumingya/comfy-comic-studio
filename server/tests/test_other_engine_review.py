@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from mio_server.assets import AssetStore
 from mio_server.importer import LegacyImporter
@@ -87,8 +88,11 @@ class PendingDispatchReviewTests(unittest.TestCase):
 
         try:
             engine.register("review", Executor())
-            first = engine.submit("review", [ItemSpec({})])
-            second = engine.submit("review", [ItemSpec({})])
+            # Windows can give both submissions the same timestamp. Specify the source
+            # priority so the test exercises a callback before the other planned claim.
+            with patch("mio_server.jobs.engine.time.time", return_value=1):
+                first = engine.submit("review", [ItemSpec({})], priority=10)
+                second = engine.submit("review", [ItemSpec({})])
 
             def pause_second(event):
                 if event["job_id"] == first["id"] and event["type"] == "started":
