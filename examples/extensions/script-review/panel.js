@@ -109,7 +109,7 @@ function renderProposal() {
           ) {
             difference(
               article,
-              `对白 · 第 ${index + 1} 句`,
+              `对白 · 第 ${(op.dialogue_index ?? index) + 1} 句`,
               before?.[index],
               after?.[index],
             );
@@ -161,7 +161,7 @@ $("propose").addEventListener("click", () =>
     stale = applied = uncertain = false;
     renderProposal();
     $("status").textContent =
-      "逐条勾选要接受的建议；未勾选即拒绝。锁定分幕的建议不能应用。";
+      "逐字段、逐句勾选要接受的建议；未勾选即拒绝。锁定分幕的建议不能应用。";
   }),
 );
 

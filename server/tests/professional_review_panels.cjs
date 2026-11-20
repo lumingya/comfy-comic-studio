@@ -187,9 +187,22 @@ async function script() {
         id: "op2",
         target: "p2",
         op: "update_panel",
-        summary: "Dialogue",
+        summary: "First sentence",
+        dialogue_action: "replace",
+        dialogue_index: 0,
         changes: {
           dialogue: [[{ text: "Long line" }], [{ text: "Short line" }]],
+        },
+      },
+      {
+        id: "op4",
+        target: "p2",
+        op: "update_panel",
+        summary: "Second sentence",
+        dialogue_action: "replace",
+        dialogue_index: 1,
+        changes: {
+          dialogue: [[{ text: "Old second" }], [{ text: "New second" }]],
         },
       },
       {
@@ -230,12 +243,19 @@ async function script() {
     assert.ok(p.$("apply").disabled);
     assert.ok(p.$("ops").textContent.includes("Short line"));
     assert.ok(p.$("ops").textContent.includes("Long line"));
+    assert.ok(p.$("ops").textContent.includes("对白 · 第 2 句"));
+    assert.equal(p.$("ops").querySelectorAll("input").length, 4);
     assert.ok(p.w.document.querySelector('input[value="op3"]').disabled);
     await p.click("accept-all");
-    assert.equal(p.$("ops").querySelectorAll("input:checked").length, 2);
+    assert.equal(p.$("ops").querySelectorAll("input:checked").length, 3);
     await p.click("reject-all");
     assert.equal(p.$("ops").querySelectorAll("input:checked").length, 0);
     p.choose("op2", true);
+    assert.equal(
+      p.w.document.querySelector('input[value="op4"]').checked,
+      false,
+      "a second sentence in the same panel stays independently rejected",
+    );
     await p.click("apply");
     const accepted = p.calls
       .filter((c) => c.request_id === "apply")

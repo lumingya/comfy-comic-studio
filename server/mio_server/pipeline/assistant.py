@@ -9,36 +9,34 @@ only script fields change — overrides, strip layout, references and takes stay
 
 from __future__ import annotations
 
+import copy
 import json
 
-from ..models import (
-    Bible,
-    Character,
-    Dialogue,
-    DialogueKind,
-    Episode,
-    Panel,
-    PanelCharacter,
-    Series,
-)
+from ..models import Bible, Character, Dialogue, DialogueKind, Episode, Panel, Series
+from ..storage import Conflict
 from . import script as S
+from .assistant_story import (
+    LABELS as LABELS,
+)
+from .assistant_story import (
+    VIEW_CHAR,
+    VIEW_LOC,
+    VIEW_PANEL,
+    _dialogue_edits,
+    _dialogues,
+    normalized_view,
+    panel_from_view,
+)
+from .assistant_story import (
+    _cast as _cast,
+)
+from .assistant_story import (
+    _changes as _changes,
+)
+from .assistant_story import (
+    diff as diff,
+)
 from .story import from_story, split_times, to_story
-
-VIEW_PANEL = ("shot", "angle", "scene", "description", "tags", "characters", "dialogue")
-VIEW_CHAR = ("name", "tags", "signature", "description")
-VIEW_LOC = ("location", "description", "tags")
-LABELS = {
-    "shot": "景别",
-    "angle": "角度",
-    "scene": "场景",
-    "description": "描述",
-    "tags": "标签",
-    "characters": "出场角色",
-    "dialogue": "对白",
-    "name": "名字",
-    "signature": "标志特征",
-    "location": "名称",
-}
 
 REVISE_PROMPT = """你是条漫剧本编辑。下面是当前剧本 JSON 和用户的修改要求。
 按要求修改后输出**完整的**剧本 JSON（字段结构与输入完全相同），不要任何解释。
@@ -52,192 +50,120 @@ class AssistantError(ValueError):
     pass
 
 
-def _changes(old: dict, new: dict, fields) -> dict:
-    return {f: [old.get(f), new.get(f)] for f in fields if old.get(f) != new.get(f)}
+def _character_patch(ch: Character, changes: dict) -> None:
+    for field, (_, value) in changes.items():
+        if field == "tags":
+            ch.tag_description = [tag for tag in value if tag != ch.trigger]
+        else:
+            setattr(ch, field, copy.deepcopy(value))
 
 
-def _labels(changes: dict) -> str:
-    return "、".join(LABELS.get(k, k) for k in changes)
+def _checked_changes(op: dict, current: dict, fields) -> dict:
+    changes = op.get("changes")
+    if not isinstance(changes, dict) or not changes or set(changes) - set(fields):
+        raise AssistantError("修改操作含无效字段")
+    for field, pair in changes.items():
+        if not isinstance(pair, list) or len(pair) != 2:
+            raise AssistantError("修改操作缺少修改前后的值")
+        if current.get(field) != pair[0]:
+            raise Conflict(f"审阅内容已改变：{op['target']} / {field}")
+        if type(pair[1]) is not type(pair[0]) or pair[0] == pair[1]:
+            raise AssistantError("修改操作的字段类型无效或没有差异")
+        if field in {"tags", "signature"} and any(not isinstance(tag, str) for tag in pair[1]):
+            raise AssistantError("标签与标志特征必须为文字列表")
+        if op["after"].get(field) != pair[1]:
+            raise AssistantError("修改操作与展示的差异不一致")
+    return changes
 
 
-def normalized_view(series: Series, episode: Episode) -> dict:
-    """The story view exactly as a revised answer will look after normalization."""
-    return S.normalize_story(split_times(to_story(series, episode))[0])
-
-
-def diff(series: Series, episode: Episode, revised: dict) -> list[dict]:
-    """Operations turning the current script view into ``revised`` (a normalized story dict).
-
-    Comparison happens on the story view (what the LLM saw), so v3-only data that the view
-    folds or omits (outfits, positions, lighting, overrides) never shows up as a change.
-    """
-    ops: list[dict] = []
-    current = normalized_view(series, episode)
-
-    def add(op: dict) -> None:
-        op["id"] = f"op{len(ops) + 1}"
-        op.setdefault("blocked", None)
-        ops.append(op)
-
-    old_chars = {c["id"]: c for c in current["characters"]}
-    for ch in revised.get("characters") or []:
-        if ch["id"] not in old_chars:
-            add(
-                {
-                    "op": "add_character",
-                    "target": ch["id"],
-                    "summary": f"新增角色「{ch['name']}」",
-                    "after": ch,
-                }
-            )
-        elif changes := _changes(old_chars[ch["id"]], ch, VIEW_CHAR):
-            add(
-                {
-                    "op": "update_character",
-                    "target": ch["id"],
-                    "changes": changes,
-                    "after": ch,
-                    "summary": f"修改角色「{ch['name']}」：{_labels(changes)}",
-                }
-            )
-    old_locs = {x["id"]: x for x in current["scenes"]}
-    for sc in revised.get("scenes") or []:
-        if sc["id"] not in old_locs:
-            add(
-                {
-                    "op": "add_location",
-                    "target": sc["id"],
-                    "summary": f"新增场景「{sc['location']}」",
-                    "after": sc,
-                }
-            )
-        elif changes := _changes(old_locs[sc["id"]], sc, VIEW_LOC):
-            add(
-                {
-                    "op": "update_location",
-                    "target": sc["id"],
-                    "changes": changes,
-                    "after": sc,
-                    "summary": f"修改场景「{sc['location']}」：{_labels(changes)}",
-                }
-            )
-
-    old_views = {p["id"]: p for p in current["panels"]}
-    panels = {p.id: p for p in episode.panels}
-    new_panels = [p for p in revised.get("panels") or []]
-    new_ids = [p["id"] for p in new_panels]
-    for panel in episode.ordered_panels():
-        if panel.id not in new_ids:
-            add(
-                {
-                    "op": "remove_panel",
-                    "target": panel.id,
-                    "summary": f"删除第 {panel.order + 1} 格",
-                    "before": old_views[panel.id],
-                    "blocked": "已锁定" if panel.locked else None,
-                }
-            )
-    for idx, pv in enumerate(new_panels):
-        old = panels.get(pv["id"])
-        if old is None:
-            anchor = next(
-                (new_ids[j] for j in range(idx - 1, -1, -1) if new_ids[j] in panels), None
-            )
-            add(
-                {
-                    "op": "add_panel",
-                    "target": pv["id"],
-                    "after_panel": anchor,
-                    "index": idx,
-                    "summary": f"新增一格（新第 {idx + 1} 格）",
-                    "after": pv,
-                }
-            )
-        elif changes := _changes(old_views[pv["id"]], pv, VIEW_PANEL):
-            add(
-                {
-                    "op": "update_panel",
-                    "target": pv["id"],
-                    "changes": changes,
-                    "after": pv,
-                    "summary": f"第 {old.order + 1} 格：{_labels(changes)}",
-                    "blocked": "已锁定" if old.locked else None,
-                }
-            )
-    kept_old = [p.id for p in episode.ordered_panels() if p.id in new_ids]
-    kept_new = [pid for pid in new_ids if pid in panels]
-    if kept_old != kept_new:
-        moved = [
-            pid
-            for pid in kept_old
-            if panels[pid].locked and kept_old.index(pid) != kept_new.index(pid)
-        ]
-        add(
-            {
-                "op": "reorder",
-                "target": episode.id,
-                "order": new_ids,
-                "summary": "调整格子顺序",
-                "blocked": "会移动已锁定的格" if moved else None,
-            }
-        )
-    return ops
-
-
-# ---------------------------------------------------------------- view → model
-def _dialogues(view: dict) -> list[Dialogue]:
-    out = []
-    for d in view.get("dialogue") or []:
-        kind = d.get("kind") if d.get("kind") in DialogueKind._value2member_map_ else "speech"
-        speaker = None if d.get("speaker") in (None, S.NARRATOR) else d["speaker"]
-        out.append(Dialogue(speaker_id=speaker, text=d["text"], kind=kind))
-    return out
-
-
-def _cast(view: dict, old: Panel | None, bible: Bible) -> list[PanelCharacter]:
-    before = {pc.character_id: pc for pc in (old.characters if old else [])}
-    cast = []
-    for c in view.get("characters") or []:
-        prev = before.get(c["id"])
-        ch = bible.character(c["id"])
-        outfit_tags = set(ch.outfits.get(prev.outfit, []) if ch and prev else [])
-        tags = [t for t in c.get("tags") or [] if t not in outfit_tags]
-        base = prev.model_dump() if prev else {"character_id": c["id"]}
-        cast.append(
-            PanelCharacter.model_validate(
-                {
-                    **base,
-                    "expression": c.get("expression") or "neutral",
-                    "action": c.get("action") or "",
-                    "tags": tags,
-                }
-            )
-        )
-    return cast
-
-
-def panel_from_view(view: dict, old: Panel | None, bible: Bible) -> Panel:
-    data = old.model_dump() if old else {"id": view["id"], "order": 0}
-    tags = [t for t in view.get("tags") or [] if not (old and old.lighting and t == old.lighting)]
-    data.update(
-        shot=view["shot"] if view.get("shot") in S.SHOTS else "medium",
-        angle=view["angle"] if view.get("angle") in S.ANGLES else "eye",
-        location_id=view.get("scene") or None,
-        description=view.get("description") or "",
-        tags=tags,
+def _sentence_edit(op: dict, before: list[dict]) -> tuple:
+    action, index, order = (
+        op.get("dialogue_action"),
+        op.get("dialogue_index"),
+        op.get("dialogue_order"),
     )
-    panel = Panel.model_validate(data)
-    panel.characters = _cast(view, old, bible)
-    panel.dialogues = _dialogues(view)
-    return panel
+    changes = op.get("changes")
+    if not isinstance(changes, dict):
+        raise AssistantError("无效的逐句修改操作")
+    pair = changes.get("dialogue")
+    lengths = {"add": (0, 1), "remove": (1, 0), "replace": (1, 1)}
+    if (
+        not isinstance(action, str)
+        or action not in lengths
+        or type(index) is not int
+        or type(order) is not int
+        or order < 0
+        or not 0 <= index <= len(before)
+        or not isinstance(pair, list)
+        or len(pair) != 2
+        or any(not isinstance(lines, list) for lines in pair)
+        or tuple(map(len, pair)) != lengths[action]
+        or set(changes) != {"dialogue"}
+    ):
+        raise AssistantError("无效的逐句修改操作")
+    old, new = pair
+    if action != "add" and (index == len(before) or before[index] != old[0]):
+        raise Conflict(f"审阅对白已改变：{op['target']} / {index + 1}")
+    if new:
+        line = new[0]
+        if (
+            not isinstance(line, dict)
+            or set(line) != {"speaker", "kind", "text"}
+            or not all(isinstance(value, str) for value in line.values())
+            or line["kind"] not in DialogueKind._value2member_map_
+            or not line["text"].strip()
+            or old == new
+        ):
+            raise AssistantError("无效的对白内容")
+        _dialogues({"dialogue": new})  # validate before the transaction can commit
+    return action, index, order, old[0] if old else None, new[0] if new else None
 
 
-def _character_patch(ch: Character, view: dict) -> None:
-    ch.name = view.get("name") or ch.name
-    ch.tag_description = [t for t in view.get("tags") or [] if t != ch.trigger]
-    ch.signature = list(view.get("signature") or [])
-    if view.get("description") and view["description"] != ", ".join(ch.appearance):
-        ch.description = view["description"]
+def _merge_dialogue(original: list[Dialogue], edits: list[tuple]) -> list[Dialogue]:
+    replacements, additions = {}, {}
+    for action, index, order, before, after in edits:
+        if action == "add":
+            additions.setdefault(index, []).append((order, after))
+        else:
+            if index in replacements:
+                raise AssistantError("同一句对白有重复操作")
+            replacements[index] = (before, after)
+    result = []
+    for index in range(len(original) + 1):
+        for _, line in sorted(additions.get(index, []), key=lambda item: item[0]):
+            result.extend(_dialogues({"dialogue": [line]}))
+        if index == len(original):
+            break
+        if index not in replacements:
+            result.append(original[index])
+            continue
+        before, after = replacements[index]
+        if after is None:
+            continue
+        line = original[index].model_copy(deep=True)
+        # In particular, keep bridge and any story fields that were not edited.
+        for field in ("speaker", "kind", "text"):
+            if before[field] != after[field]:
+                if field == "speaker":
+                    line.speaker_id = None if after[field] == S.NARRATOR else after[field]
+                else:
+                    setattr(line, field, after[field])
+        result.append(line)
+    return result
+
+
+def _panel_patch(panel: Panel, changes: dict, bible: Bible) -> None:
+    for field, (before, value) in changes.items():
+        if field == "dialogue":  # Also handle earlier, whole-dialogue proposals safely.
+            panel.dialogues = _merge_dialogue(panel.dialogues, list(_dialogue_edits(before, value)))
+        elif field == "characters":
+            panel.characters = _cast({field: value}, panel, bible)
+        elif field == "tags":
+            panel.tags = [tag for tag in value if tag != panel.lighting]
+        elif field == "scene":
+            panel.location_id = value or None
+        else:
+            setattr(panel, field, copy.deepcopy(value))
 
 
 def _revise_story(llm, story: dict, instruction: str) -> dict:
@@ -271,12 +197,112 @@ def propose(series: Series, episode: Episode, instruction: str, llm) -> dict:
 
 
 def apply(store, episode_id: str, ops: list[dict], accepted: list[str], base_revision: int) -> dict:
-    """Apply the accepted ops.  Raises storage ``Conflict`` if the episode changed meanwhile."""
-    chosen = [op for op in ops if op.get("id") in set(accepted) and not op.get("blocked")]
+    """Apply only accepted deltas, checking their before-values and the episode CAS."""
+    ids = [op.get("id") for op in ops]
+    if (
+        any(not isinstance(oid, str) or not oid for oid in ids)
+        or len(set(ids)) != len(ids)
+        or set(accepted) - set(ids)
+    ):
+        raise AssistantError("审阅操作标识无效或重复")
+    chosen = [op for op in ops if op["id"] in set(accepted) and not op.get("blocked")]
     # Bible edits and the episode CAS are one write. A stale revision or invalid
     # operation must also undo earlier series edits and any episode snapshots.
     with store.tx():
         episode = store.get_episode(episode_id)
+        series = store.get_series(episode.series_id)
+        current = normalized_view(series, episode)
+        views = {
+            "character": {view["id"]: view for view in current["characters"]},
+            "location": {view["id"]: view for view in current["scenes"]},
+            "panel": {view["id"]: view for view in current["panels"]},
+        }
+        fields = {"character": VIEW_CHAR, "location": VIEW_LOC, "panel": VIEW_PANEL}
+        touched = set()
+        sentence_edits = {}
+        for op in chosen:
+            kind, target = op.get("op"), op.get("target")
+            if not isinstance(kind, str) or not isinstance(target, str) or not target:
+                raise AssistantError("无效的审阅操作")
+            if kind == "reorder":
+                order = op.get("order")
+                if (
+                    target != episode.id
+                    or not isinstance(order, list)
+                    or any(not isinstance(pid, str) for pid in order)
+                    or len(set(order)) != len(order)
+                ):
+                    raise AssistantError("无效的分幕顺序")
+                key = (kind, target)
+            elif kind == "remove_panel":
+                panel = episode.panel(target)
+                if panel is None:
+                    raise Conflict("要删除的分幕已不存在")
+                if panel.locked:
+                    raise Conflict("不能修改已锁定的分幕")
+                key = ("panel", target, "remove")
+            elif kind in {
+                "add_character",
+                "add_location",
+                "add_panel",
+                "update_character",
+                "update_location",
+                "update_panel",
+            }:
+                action, entity = kind.split("_", 1)
+                view = op.get("after")
+                if not isinstance(view, dict) or view.get("id") != target:
+                    raise AssistantError("审阅操作缺少目标内容")
+                if action == "add":
+                    if target in views[entity]:
+                        raise Conflict("要新增的审阅对象已存在")
+                    key = (entity, target, "add")
+                else:
+                    before = views[entity].get(target)
+                    if before is None:
+                        raise Conflict("审阅对象已不存在")
+                    if entity == "panel":
+                        panel = episode.panel(target)
+                        if panel.locked:
+                            raise Conflict("不能修改已锁定的分幕")
+                        # Validate the complete proposal without writing undisplayed fields.
+                        panel_from_view(view, panel, series.bible)
+                    if "dialogue_action" in op:
+                        if entity != "panel":
+                            raise AssistantError("逐句操作必须指向分幕")
+                        edit = _sentence_edit(op, before["dialogue"])
+                        sentence_edits.setdefault(target, []).append(edit)
+                        key = (
+                            entity,
+                            target,
+                            "sentence",
+                            edit[1],
+                            edit[2] if edit[0] == "add" else -1,
+                        )
+                    else:
+                        changes = _checked_changes(op, before, fields[entity])
+                        keys = {(entity, target, field) for field in changes}
+                        if touched & keys:
+                            raise AssistantError("同一字段有重复操作")
+                        touched.update(keys)
+                        continue
+            else:
+                raise AssistantError("不支持的审阅操作")
+            if key in touched:
+                raise AssistantError("审阅操作重复")
+            touched.add(key)
+        for target in sentence_edits:
+            if ("panel", target, "dialogue") in touched:
+                raise AssistantError("不能混用整组与逐句对白操作")
+        removed = {op["target"] for op in chosen if op["op"] == "remove_panel"}
+        if any(op["op"] == "update_panel" and op["target"] in removed for op in chosen):
+            raise AssistantError("不能同时删除和修改同一分幕")
+        known = set(views["panel"]) | {op["target"] for op in chosen if op["op"] == "add_panel"}
+        if any(op["op"] == "reorder" and set(op["order"]) - known for op in chosen):
+            # A reorder can still name additions whose checkbox was rejected.
+            proposed = {op.get("target") for op in ops if op.get("op") == "add_panel"}
+            if any(op["op"] == "reorder" and set(op["order"]) - known - proposed for op in chosen):
+                raise AssistantError("分幕顺序含未知目标")
         series_ops = [op for op in chosen if op["op"].endswith(("_character", "_location"))]
         if series_ops:
 
@@ -284,24 +310,25 @@ def apply(store, episode_id: str, ops: list[dict], accepted: list[str], base_rev
                 bible = series.bible
                 for op in series_ops:
                     view = op["after"]
-                    if op["op"] == "add_character" and not bible.character(op["target"]):
+                    if op["op"] == "add_character":
                         new_bible, _ = from_story(
                             {"title": "x", "characters": [view], "scenes": [], "panels": []},
                             series.id,
                         )
                         bible.characters.extend(new_bible.characters)
                     elif op["op"] == "update_character" and (ch := bible.character(op["target"])):
-                        _character_patch(ch, view)
-                    elif op["op"] == "add_location" and not bible.location(op["target"]):
+                        _character_patch(ch, op["changes"])
+                    elif op["op"] == "add_location":
                         new_bible, _ = from_story(
                             {"title": "x", "characters": [], "scenes": [view], "panels": []},
                             series.id,
                         )
                         bible.locations.extend(new_bible.locations)
                     elif op["op"] == "update_location" and (loc := bible.location(op["target"])):
-                        loc.name = view.get("location") or loc.name
-                        loc.description = view.get("description", loc.description)
-                        loc.tags = list(view.get("tags") or [])
+                        for field, (_, value) in op["changes"].items():
+                            setattr(
+                                loc, "name" if field == "location" else field, copy.deepcopy(value)
+                            )
 
             store.update_series(episode.series_id, patch_series)
         bible = store.get_series(episode.series_id).bible
@@ -316,17 +343,44 @@ def apply(store, episode_id: str, ops: list[dict], accepted: list[str], base_rev
                     sequence.remove(target.id)
                     del panels[target.id]
                 elif op["op"] == "update_panel" and target and not target.locked:
-                    panels[target.id] = panel_from_view(op["after"], target, bible)
-                elif op["op"] == "add_panel" and op["target"] not in panels:
-                    panel = panel_from_view(op["after"], None, bible)
-                    panels[panel.id] = panel
-                    anchor = op.get("after_panel")
-                    pos = sequence.index(anchor) + 1 if anchor in sequence else 0
-                    sequence.insert(pos, panel.id)
+                    if "dialogue_action" not in op:
+                        _panel_patch(target, op["changes"], bible)
+            for target, edits in sentence_edits.items():
+                if target not in panels:
+                    raise AssistantError("不能同时删除和修改同一分幕")
+                panels[target].dialogues = _merge_dialogue(panels[target].dialogues, edits)
+            # Insert in proposal order, using all preceding anchors rather than reversing
+            # consecutive additions that used to share a single original anchor.
+            additions = sorted(
+                (op for op in chosen if op["op"] == "add_panel"), key=lambda op: op.get("index", 0)
+            )
+            for op in additions:
+                panel = panel_from_view(op["after"], None, bible)
+                panels[panel.id] = panel
+                anchors = op.get("after_panels", [op.get("after_panel")])
+                anchor = next((pid for pid in reversed(anchors) if pid in sequence), None)
+                following = next(
+                    (pid for pid in op.get("before_panels", []) if pid in sequence), None
+                )
+                pos = (
+                    sequence.index(anchor) + 1
+                    if anchor
+                    else sequence.index(following)
+                    if following
+                    else 0
+                )
+                sequence.insert(pos, panel.id)
             reorder = next((op for op in chosen if op["op"] == "reorder"), None)
             if reorder:
                 wanted = [pid for pid in reorder["order"] if pid in panels]
-                sequence = wanted + [pid for pid in sequence if pid not in wanted]
+                original = [pid for pid in sequence if pid in wanted]
+                if any(
+                    panels[pid].locked and original.index(pid) != wanted.index(pid)
+                    for pid in original
+                ):
+                    raise Conflict("不能移动已锁定的分幕")
+                replacement = iter(wanted)
+                sequence = [next(replacement) if pid in wanted else pid for pid in sequence]
             for i, pid in enumerate(sequence):
                 panels[pid].order = i
             ep.panels = [panels[pid] for pid in sequence]
