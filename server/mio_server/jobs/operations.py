@@ -56,7 +56,7 @@ class OperationRuntime:
                     "EXISTS (SELECT 1 FROM job_items i WHERE i.job_id = j.id "
                     "AND i.state IN ('pending', 'running', 'uncertain')) OR "
                     "EXISTS (SELECT 1 FROM job_deliveries d WHERE d.job_id = j.id "
-                    "AND d.state = 'pending') OR "
+                    "AND d.state IN ('pending', 'publishing')) OR "
                     "EXISTS (SELECT 1 FROM state_leases s WHERE s.job_id = j.id)"
                 ).fetchall()
             }

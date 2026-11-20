@@ -102,6 +102,10 @@ class ItemContext:
     state_lease: dict | None = None
     executor_binding: Any = None
 
+    def publish_result(self, result, artifacts, *, stage=0, terminal=True):
+        """Persist ownership before publishing output files; never calls an upstream."""
+        return self.engine.publish_result(self, result, artifacts, stage=stage, terminal=terminal)
+
     def mark_sent(self, upstream: str | None = None) -> None:
         """Call *before* the request leaves the process: from now on a failure is uncertain."""
         self.upstream = upstream or self.upstream

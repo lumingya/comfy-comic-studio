@@ -8,7 +8,6 @@ together; a completed HTTP request alone cannot provide that guarantee.
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import time
 
@@ -44,12 +43,17 @@ class DeliveryRuntime:
 
     def _pending_delivery(self, job_id, idx):
         return self.db.execute(
-            "SELECT * FROM job_deliveries WHERE job_id = ? AND idx = ? AND state = 'pending'",
+            "SELECT * FROM job_deliveries WHERE job_id = ? AND idx = ? "
+            "AND state IN ('pending', 'publishing') ORDER BY attempt DESC",
             (job_id, idx),
         ).fetchone()
 
     def _record_delivery(self, row, result):
         """Called under the job guard, before any completion callback can mutate a work."""
+        existing = self._pending_delivery(row["job_id"], row["idx"])
+        if existing:
+            if not self._restore_publication(row["job_id"], row["idx"]):
+                raise JobConflict("the local result publication is incomplete or only a stage")
         payload = canonical(result)
         sha = hashlib.sha256(payload.encode()).hexdigest()
         now = time.time()
@@ -90,6 +94,10 @@ class DeliveryRuntime:
                 delivery = self._pending_delivery(job_id, idx)
                 if delivery is None:
                     raise JobConflict("this item has no result awaiting delivery")
+            if not self._restore_publication(job_id, idx):
+                return self.get(job_id)
+            delivery = self._pending_delivery(job_id, idx)
+            with self.lock:
                 binding = self.job_executor(job_id, required=True)
                 if not binding.replay_safe:
                     raise JobConflict("this executor has not declared replay-safe result delivery")
@@ -100,7 +108,7 @@ class DeliveryRuntime:
                         "UPDATE job_items SET state = 'uncertain' WHERE job_id = ? AND idx = ?",
                         (job_id, idx),
                     )
-                result = json.loads(delivery["result_json"])
+                result = self._delivery_result(delivery)
             self._finish_guarded(job_id, idx, row["epoch"], "complete", result, None, True)
             record = self.state_leases.get(job_id, idx)
             if record and record["data"].get("phase") == "restored":
@@ -112,7 +120,7 @@ class DeliveryRuntime:
         with self.lock:
             rows = self.db.execute(
                 "SELECT d.job_id, d.idx, j.kind FROM job_deliveries d JOIN jobs j ON j.id = d.job_id "
-                "WHERE d.state = 'pending' AND j.canceled = 0"
+                "WHERE d.state IN ('pending', 'publishing') AND j.canceled = 0"
             ).fetchall()
         count = 0
         for row in rows:

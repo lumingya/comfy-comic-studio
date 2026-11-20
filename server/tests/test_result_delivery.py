@@ -8,12 +8,13 @@ from unittest import mock
 from fastapi.testclient import TestClient
 
 from mio_server.api import create_app
+from mio_server.comfy.executor import ComfyRenderExecutor
 from mio_server.context import AppContext
 from mio_server.jobs import Candidate, ItemSpec, JobConflict, JobEngine
 from mio_server.models import Episode, Panel, PanelOverrides, Series, TakeStatus
 from mio_server.pipeline import cloud_jobs
 from mio_server.render_models import ComfyInstance
-from mio_server.storage import Conflict
+from mio_server.storage import Conflict, SQLiteStore
 
 from .test_compile_executor import FakeClient
 from .test_render_qa import FakeCloudRenderer, FakeVLM
@@ -23,7 +24,7 @@ class ProcessLost(BaseException):
     pass
 
 
-class DeliveryTests(unittest.TestCase):
+class DeliveryCase(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
@@ -53,17 +54,20 @@ class DeliveryTests(unittest.TestCase):
         self.ctx.close()
         self.open()
 
-    def claim(self, job):
-        item = job["items"][0]
+    def claim(self, job, idx=0):
+        item = job["items"][idx]
         instance = "local" if item["resource"] == "comfy" else None
-        cand = Candidate(job["id"], 0, item["resource"], "", (), (0, 0, 0))
+        cand = Candidate(job["id"], idx, item["resource"], "", (), (0, 0, 0))
         return self.ctx.engine._claim(cand, instance)
 
-    def finish(self, job, hook="before"):
+    def finish(self, job, hook="before", idx=0):
         engine = self.ctx.engine
-        ctx = self.claim(job)
+        ctx = self.claim(job, idx)
         executor = engine.executors[job["kind"]]
         result = executor.execute(ctx)
+        if hook is None:
+            engine._finish(job["id"], idx, ctx.epoch, "complete", result=result, apply=True)
+            return result
         if hook == "before":
             original = engine._record_delivery
 
@@ -81,7 +85,7 @@ class DeliveryTests(unittest.TestCase):
 
             target, name = executor, "on_complete"
         with mock.patch.object(target, name, side_effect=crash), self.assertRaises(ProcessLost):
-            engine._finish(job["id"], 0, ctx.epoch, "complete", result=result, apply=True)
+            engine._finish(job["id"], idx, ctx.epoch, "complete", result=result, apply=True)
         return result
 
     def render_job(self):
@@ -89,6 +93,8 @@ class DeliveryTests(unittest.TestCase):
             self.episode.id, [self.panel.id], candidates=1, adopt_first=True
         )
 
+
+class DeliveryTests(DeliveryCase):
     def test_crash_before_apply_recovers_saved_result_without_comfy_submission(self):
         job = self.render_job()
         self.finish(job)
@@ -116,6 +122,110 @@ class DeliveryTests(unittest.TestCase):
         self.assertEqual(self.ctx.store.get_episode(self.episode.id).model_dump(), expected)
         self.assertEqual(self.ctx.engine.deliveries(job["id"])[0]["id"], delivery_id)
         self.assertEqual(self.ctx.engine.get(job["id"])["state"], "completed")
+        self.assertEqual(len(FakeClient.graphs), 1)
+
+    def test_partial_batch_recovers_receipts_and_assets_across_repeated_startups(self):
+        self.ctx.store.put_doc(ComfyInstance(id="local", base_url="http://fake", capacity=3))
+        self.ctx.refresh_instances()
+        job = self.ctx.render.render(self.episode.id, candidates=3, adopt_first=True)
+        results = [
+            self.finish(job, hook=hook, idx=idx)
+            for idx, hook in enumerate((None, "after", "before"))
+        ]
+        assets = {
+            image["asset_id"]: self.ctx.assets.read(image["asset_id"])
+            for result in results
+            for image in result["images"]
+        }
+        saved_ids = {t.id for t in self.ctx.store.get_episode(self.episode.id).takes}
+        self.assertEqual(len(saved_ids), 2)
+        self.assertEqual(
+            [d["state"] for d in self.ctx.engine.deliveries(job["id"])],
+            ["applied", "pending", "pending"],
+        )
+        with mock.patch.object(FakeClient, "run", side_effect=AssertionError("resubmitted")):
+            self.reopen()
+            expected = self.ctx.store.get_episode(self.episode.id).model_dump()
+            self.reopen()
+            self.assertEqual(self.ctx.store.get_episode(self.episode.id).model_dump(), expected)
+        episode = self.ctx.store.get_episode(self.episode.id)
+        self.assertEqual(len(episode.takes), 3)
+        self.assertTrue(saved_ids <= {t.id for t in episode.takes})
+        self.assertEqual(sum(t.status == TakeStatus.adopted for t in episode.takes), 1)
+        self.assertEqual({t.asset_id for t in episode.takes}, set(assets))
+        for asset_id, data in assets.items():
+            self.assertEqual(self.ctx.assets.path(asset_id).read_bytes(), data)
+        final = self.ctx.engine.get(job["id"])
+        self.assertEqual(final["state"], "completed")
+        self.assertEqual({item["state"] for item in final["items"]}, {"complete"})
+        self.assertEqual(self.ctx.engine.running, {})
+        self.assertEqual([item["attempts"] for item in final["items"]], [1, 1, 1])
+        self.assertEqual(
+            [d["state"] for d in self.ctx.engine.deliveries(job["id"])], ["applied"] * 3
+        )
+        self.assertEqual(self.ctx.engine.recover_deliveries(), 0)
+        self.assertEqual(len(FakeClient.graphs), 3)
+
+    def test_crash_during_startup_recovery_reuses_receipt_and_releases_workspace(self):
+        job = self.render_job()
+        self.finish(job)
+        self.ctx.close()
+        self.ctx = None
+        original = ComfyRenderExecutor.on_complete
+
+        def crash(executor, *args):
+            original(executor, *args)
+            raise ProcessLost()
+
+        with mock.patch.object(ComfyRenderExecutor, "on_complete", crash):
+            with self.assertRaises(ProcessLost):
+                self.open()
+        observer = SQLiteStore(self.root / "mio.sqlite3")
+        try:
+            expected = observer.get_episode(self.episode.id).model_dump()
+            self.assertEqual(len(expected["takes"]), 1)
+        finally:
+            observer.close()
+        self.open()
+        self.assertEqual(self.ctx.store.get_episode(self.episode.id).model_dump(), expected)
+        self.assertEqual(self.ctx.engine.get(job["id"])["state"], "completed")
+        self.assertEqual(self.ctx.engine.deliveries(job["id"])[0]["state"], "applied")
+        self.assertEqual(len(FakeClient.graphs), 1)
+
+    def test_duplicate_result_is_idempotent_and_conflicting_payload_cannot_replace_it(self):
+        job = self.render_job()
+        result = self.finish(job)
+        engine = self.ctx.engine
+        row = engine._item_row(job["id"], 0)
+        receipt = engine.deliveries(job["id"])[0]
+        engine._record_delivery(row, result)
+        self.assertEqual(engine.deliveries(job["id"]), [receipt])
+        with self.assertRaises(JobConflict):
+            engine._record_delivery(row, {**result, "different": True})
+        self.assertEqual(engine.deliveries(job["id"]), [receipt])
+        self.reopen()
+        completed = self.ctx.engine.get(job["id"])
+        self.assertEqual(completed["state"], "completed")
+        self.assertEqual(completed["items"][0]["result"], result)
+        self.assertEqual(len(self.ctx.store.get_episode(self.episode.id).takes), 1)
+        self.assertEqual(len(FakeClient.graphs), 1)
+
+    def test_executor_publishes_saved_asset_before_returning_to_job_runtime(self):
+        job = self.render_job()
+        ctx = self.claim(job)
+        result = self.ctx.engine.executors[job["kind"]].execute(ctx)
+        image = result["images"][0]
+        data = self.ctx.assets.read(image["asset_id"])
+        self.assertEqual(self.ctx.engine.deliveries(job["id"])[0]["state"], "pending")
+        with mock.patch.object(FakeClient, "history", side_effect=AssertionError("read upstream")):
+            self.reopen()
+        completed = self.ctx.engine.get(job["id"])
+        self.assertEqual(completed["state"], "completed")
+        self.assertEqual(completed["items"][0]["attempts"], 1)
+        self.assertEqual(self.ctx.assets.read(image["asset_id"]), data)
+        self.assertEqual(
+            self.ctx.store.get_episode(self.episode.id).takes[0].asset_id, image["asset_id"]
+        )
         self.assertEqual(len(FakeClient.graphs), 1)
 
     def test_failure_replay_does_not_execute_and_pending_cannot_be_retried(self):
@@ -227,13 +337,13 @@ class DeliveryTests(unittest.TestCase):
         )
         self.assertEqual(self.ctx.engine.get(qa["id"])["state"], "completed")
 
-    def test_cancellation_before_result_does_not_create_a_delivery(self):
+    def test_cancellation_after_execute_discards_published_result_without_adoption(self):
         job = self.render_job()
         ctx = self.claim(job)
         result = self.ctx.engine.executors[job["kind"]].execute(ctx)
         self.ctx.engine.cancel(job["id"])
         self.ctx.engine._finish(job["id"], 0, ctx.epoch, "complete", result=result, apply=True)
-        self.assertEqual(self.ctx.engine.deliveries(job["id"]), [])
+        self.assertEqual(self.ctx.engine.deliveries(job["id"])[0]["state"], "discarded")
         self.assertEqual(self.ctx.store.get_episode(self.episode.id).takes, [])
 
     def test_open_api_delivery_scope_and_explicit_replay(self):
@@ -261,6 +371,32 @@ class DeliveryTests(unittest.TestCase):
 
 
 class ThirdPartyDeliveryTests(unittest.TestCase):
+    def test_different_executor_digest_cannot_replay_an_unknown_pending_result(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "jobs.db"
+            engine = JobEngine(path, autostart=False)
+            original = mock.Mock(replay_safe=True)
+            engine.register("external", original, digest="a" * 64)
+            job = engine.submit("external", [ItemSpec({})])
+            engine._claim(Candidate(job["id"], 0, "local", "", (), (0, 0, 0)), None)
+            engine._record_delivery(engine._item_row(job["id"], 0), {"received": True})
+            engine.close()
+            engine = JobEngine(path, autostart=False)
+            try:
+                self.assertEqual(engine.recover_deliveries(), 0)
+                replacement = mock.Mock(replay_safe=True)
+                engine.register("external", replacement, digest="b" * 64)
+                self.assertEqual(engine.recover_deliveries(), 0)
+                replacement.execute.assert_not_called()
+                replacement.on_complete.assert_not_called()
+                self.assertEqual(engine.get(job["id"])["state"], "blocked")
+                self.assertEqual(engine.deliveries(job["id"])[0]["state"], "pending")
+                self.assertEqual(engine.get(job["id"])["items"][0]["result"], {"received": True})
+                with self.assertRaises(JobConflict):
+                    engine.replay_result(job["id"], 0)
+            finally:
+                engine.close()
+
     def test_unknown_callback_is_not_replayed_after_restart(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "jobs.db"

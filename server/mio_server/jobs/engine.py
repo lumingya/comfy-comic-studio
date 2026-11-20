@@ -41,6 +41,7 @@ from .executors import ExecutorRuntime, ExecutorView
 from .lease import FileLease
 from .operations import OperationRuntime, operation_serialized
 from .pool import InstanceSlot, ResourcePool
+from .publication import PublicationRuntime
 from .runtime import EngineRuntime
 from .state_leases import StateLeases
 from .types import (  # noqa: F401  (re-exported)
@@ -61,7 +62,9 @@ from .types import (  # noqa: F401  (re-exported)
 log = logging.getLogger("mio.jobs")
 
 
-class JobEngine(ExecutorRuntime, OperationRuntime, DeliveryRuntime, EngineRuntime):
+class JobEngine(
+    ExecutorRuntime, OperationRuntime, DeliveryRuntime, PublicationRuntime, EngineRuntime
+):
     def __init__(
         self,
         path: str | Path = ":memory:",
@@ -75,6 +78,7 @@ class JobEngine(ExecutorRuntime, OperationRuntime, DeliveryRuntime, EngineRuntim
         self.registry = Registry()
         self.executors = ExecutorView(self)
         self.catalog_loading = False
+        self.artifact_store = None
         self.lock = threading.RLock()
         self._operation_lock = threading.RLock()
         self._job_guards: dict[str, tuple[threading.RLock, int]] = {}
@@ -394,7 +398,7 @@ class JobEngine(ExecutorRuntime, OperationRuntime, DeliveryRuntime, EngineRuntim
             self.db.execute("UPDATE jobs SET canceled = 1, updated = ? WHERE id = ?", (now, job_id))
             self.db.execute(
                 "UPDATE job_deliveries SET state = 'discarded', updated = ? "
-                "WHERE job_id = ? AND state = 'pending'",
+                "WHERE job_id = ? AND state IN ('pending', 'publishing')",
                 (now, job_id),
             )
             self.db.execute(
@@ -505,8 +509,21 @@ class JobEngine(ExecutorRuntime, OperationRuntime, DeliveryRuntime, EngineRuntim
             pending = self._pending_delivery(job_id, idx)
         if pending:
             if action == "reconcile":
-                return self.replay_result(job_id, idx)
-            raise JobConflict("a received result is awaiting delivery; replay it or cancel the job")
+                staged = (
+                    pending["state"] == "publishing" and not self._publication(pending)["terminal"]
+                )
+                if self.state_leases.get(job_id, idx):
+                    self.restore_state(job_id, idx)
+                    return self.get(job_id)
+                if not staged:
+                    return self.replay_result(job_id, idx)
+                self._restore_publication(job_id, idx)
+                # An explicit read-only history lookup may find a later, already executed
+                # stage. Startup recovery itself never continues this pipeline.
+            else:
+                raise JobConflict(
+                    "a received result is awaiting delivery; replay it or cancel the job"
+                )
         if self.state_leases.get(job_id, idx):
             if action != "reconcile":
                 raise JobConflict("restore the endpoint state before resolving this item")
@@ -617,7 +634,7 @@ class JobEngine(ExecutorRuntime, OperationRuntime, DeliveryRuntime, EngineRuntim
     def delete(self, job_id: str) -> None:
         with self._job_guard(job_id, command=True), self.lock, self.db:
             job = self._require(job_id)
-            if any(d["state"] == "pending" for d in self.deliveries(job_id)):
+            if any(d["state"] in ("pending", "publishing") for d in self.deliveries(job_id)):
                 raise JobConflict(
                     "a received result is awaiting delivery; replay it or cancel the job"
                 )

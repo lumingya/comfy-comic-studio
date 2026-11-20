@@ -21,7 +21,7 @@ import base64
 import copy
 import time
 
-from ..jobs import ExecError, ItemContext
+from ..jobs import ExecError, ItemContext, JobConflict
 from . import bindings as B
 from .client import ComfyClient, ComfyError, parse_preview  # noqa: F401  (re-export for tests)
 from .compile import (
@@ -46,6 +46,7 @@ class ComfyRenderExecutor:
         registry=None,
     ):
         self.assets = assets
+        self.artifact_store = assets
         self.client_factory = client_factory
         self.on_result = on_result
         self.timeout = timeout
@@ -137,9 +138,7 @@ class ComfyRenderExecutor:
                 if session:
                     session.ended(failure={"kind": exc.kind, "message": str(exc)})
                 raise
-            images = [
-                self._store(img.data, run.prompt_id, img.node, img.index) for img in run.images
-            ]
+            images, artifacts = self._prepare_images(run.images, run.prompt_id)
             previous_images = images
             previous = images[0]["asset_id"]
             reports.append(
@@ -153,6 +152,18 @@ class ComfyRenderExecutor:
                     "images": images,
                     "live": run.live,
                 }
+            )
+            result = self._publish_prepared(
+                ctx,
+                {
+                    "images": images,
+                    "stages": reports,
+                    "instance": ctx.instance.id,
+                    "meta": ctx.input.get("meta") or {},
+                },
+                artifacts,
+                n,
+                n == len(stages) - 1,
             )
             if session:
                 # Persist the already-generated result before any restoration request can fail.
@@ -169,12 +180,7 @@ class ComfyRenderExecutor:
                     else None,
                 )
                 session.restore()
-        return {
-            "images": reports[-1]["images"],
-            "stages": reports,
-            "instance": ctx.instance.id,
-            "meta": ctx.input.get("meta") or {},
-        }
+        return result
 
     def _upload(self, client, graph: dict, uploads: dict[str, str]) -> dict:
         names = {}
@@ -278,15 +284,34 @@ class ComfyRenderExecutor:
             if abort in ctx.abort_hooks:
                 ctx.abort_hooks.remove(abort)
 
-    def _store(self, data: bytes, prompt_id: str, node: str, index: int = 0) -> dict:
-        asset = self.assets.put(data, source=f"comfy:{prompt_id}:{node}")
-        return {
-            "asset_id": asset.id,
-            "node": node,
-            "index": index,
-            "width": asset.width,
-            "height": asset.height,
-        }
+    def _prepare_images(self, images, prompt_id):
+        artifacts, entries = [], []
+        for image in images:
+            asset = self.assets.describe(image.data, source=f"comfy:{prompt_id}:{image.node}")
+            artifacts.append((asset, image.data))
+            entries.append(
+                {
+                    "asset_id": asset.id,
+                    "node": image.node,
+                    "index": image.index,
+                    "width": asset.width,
+                    "height": asset.height,
+                }
+            )
+        return entries, artifacts
+
+    @staticmethod
+    def _publish_prepared(ctx, result, artifacts, stage, terminal):
+        intent = ctx.engine.publication_intent(ctx.job_id, ctx.idx)
+        if intent and intent["stage"] == stage:
+            expected = intent["checkpoints"][-1]["artifacts"]
+            if [asset.id for asset, _ in artifacts] != [asset["id"] for asset in expected]:
+                raise ExecError(
+                    "取回图片与已保存的结果清单不一致", kind="artifact_mismatch", sent=True
+                )
+            artifacts = [(asset, pair[1]) for asset, pair in zip(expected, artifacts)]
+            result = intent["result"]
+        return ctx.publish_result(result, artifacts, stage=stage, terminal=terminal)
 
     # ---------------------------------------------------------------- recover
     def recover_state(self, ctx, record, *, confirm_stopped=False, discard_result=False):
@@ -296,6 +321,7 @@ class ComfyRenderExecutor:
             evidence, entry = session.settle(confirm_stopped=confirm_stopped)
             if not evidence["settled"]:
                 return {"restored": False, "status": evidence["status"]}
+            discard_result = discard_result or ctx.engine.get(ctx.job_id, items=False)["canceled"]
             if discard_result:
                 session.save(
                     result_pending=False,
@@ -304,6 +330,14 @@ class ComfyRenderExecutor:
                 )
             index = session.data.get("stage", -1)
             prompt = session.data.get("prompt_id")
+            local = None if discard_result else ctx.engine.local_result(ctx.job_id, ctx.idx)
+            if local and session.data.get("result_pending"):
+                result = local["result"]
+                session.save(
+                    result_pending=False,
+                    stage_result=result["stages"][-1],
+                    result=result if local["terminal"] else None,
+                )
             if session.data.get("result_pending"):
                 if not entry:
                     state, entry = client.execution_state(prompt)
@@ -319,7 +353,7 @@ class ComfyRenderExecutor:
                     # failures cannot. Keep that distinction durable across restart.
                     session.ended(failure={"kind": exc.kind, "message": str(exc)})
                 else:
-                    stored = [self._store(img.data, prompt, img.node, img.index) for img in images]
+                    stored, artifacts = self._prepare_images(images, prompt)
                     stage_result = {"prompt_id": prompt, "images": stored, "reconciled": True}
                     result = {
                         "images": stored,
@@ -328,6 +362,10 @@ class ComfyRenderExecutor:
                         "meta": ctx.input.get("meta") or {},
                         "reconciled": True,
                     }
+                    result = self._publish_prepared(
+                        ctx, result, artifacts, index, index == len(ctx.input["stages"]) - 1
+                    )
+                    stage_result = result["stages"][-1]
                     session.save(
                         result_pending=False,
                         stage_result=stage_result,
@@ -348,7 +386,7 @@ class ComfyRenderExecutor:
                 "result": session.data.get("result"),
                 "error": error,
             }
-        except (ComfyError, ExecError, OSError) as exc:
+        except (ComfyError, ExecError, JobConflict, OSError, ValueError) as exc:
             return {
                 "restored": False,
                 "status": getattr(exc, "kind", "restore_failed"),
@@ -373,8 +411,8 @@ class ComfyRenderExecutor:
         self._configure(client, last)
         images, texts = client.collect(entry, last["outputs"])
         self._validate_outputs(images, texts, last, ctx.input.get("guard") or [])
-        stored = [self._store(img.data, prompt_id, img.node, img.index) for img in images]
-        return {
+        stored, artifacts = self._prepare_images(images, prompt_id)
+        result = {
             "images": stored,
             "stages": [
                 {"prompt_id": prompt_id, "images": stored, "reconciled": True, "at": time.time()}
@@ -382,6 +420,7 @@ class ComfyRenderExecutor:
             "meta": ctx.input.get("meta") or {},
             "reconciled": True,
         }
+        return self._publish_prepared(ctx, result, artifacts, int(stage_index), True)
 
     def on_complete(self, job: dict, item: dict, result: dict) -> None:
         if self.on_result:

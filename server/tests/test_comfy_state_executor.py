@@ -192,7 +192,7 @@ class StateExecutorTests(unittest.TestCase):
 
     def test_result_storage_failure_keeps_state_until_result_can_be_saved(self):
         job = self.submit()
-        with patch.object(self.executor, "_store", side_effect=OSError("asset disk full")):
+        with patch.object(self.assets, "publish", side_effect=OSError("asset disk full")):
             self.assertEqual(self.run_job(job)["state"], "uncertain")
         self.assertIsNotNone(self.lease(job))
         self.assertEqual(self.client.parameters["1"], state())
@@ -234,7 +234,7 @@ class StateExecutorTests(unittest.TestCase):
         job = self.submit()
         self.run_job(job)
         self.client.finish()
-        with patch.object(self.executor, "_store", side_effect=OSError("asset disk full")):
+        with patch.object(self.assets, "publish", side_effect=OSError("asset disk full")):
             self.assertFalse(self.engine.restore_state(job, 0)["restored"])
         self.assertIsNotNone(self.lease(job))
         self.assertEqual(self.client.parameters["1"], state())
@@ -391,7 +391,11 @@ class StateExecutorTests(unittest.TestCase):
         self.run_job(job)
         self.client.finish()
         self.assertTrue(self.engine.restore_state(job, 0)["restored"])
-        self.assertEqual(self.item(job)["state"], "failed")
+        self.assertEqual(self.item(job)["state"], "uncertain")
+        item = self.item(job)
+        self.assertTrue(item["result"]["images"])
+        self.assertEqual(self.engine.deliveries(job)[0]["state"], "publishing")
+        self.assertEqual(self.engine.publication_intent(job, 0)["owner"]["job_id"], job)
         self.assertEqual(len(self.client.runs), 1)
         self.assertEqual(self.results, [])
         self.assert_released(job)

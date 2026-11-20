@@ -8,11 +8,12 @@ import re
 import sqlite3
 from pathlib import Path
 
-from ..assets import MIME_EXT
+from ..assets import MIME_EXT, AssetStore
 from ..checkpoints.models import Checkpoint
 from ..checkpoints.service import head_of
 from ..checkpoints.validation import assets_for
 from ..jobs.executors import ExecutorRef
+from ..jobs.publication import FORMAT, result_sha
 from ..jobs.types import ITEM_STATES
 from ..jobs.types import SCHEMA as JOB_SCHEMA
 from ..models import Episode, Series
@@ -155,6 +156,7 @@ def validate_databases(store_db, jobs_db) -> tuple[dict, dict[str, Asset]]:
     if not version or int(version[0]) != SCHEMA_VERSION:
         raise ValueError("backup was made for a different workspace schema")
     references: set[str] = set()
+    publication_assets = {}
 
     def walk(value, key=""):
         if isinstance(value, dict):
@@ -233,7 +235,9 @@ def validate_databases(store_db, jobs_db) -> tuple[dict, dict[str, Asset]]:
     ).fetchone():
         raise ValueError("backup contains active or uncertain jobs")
     if (
-        jobs_db.execute("SELECT 1 FROM job_deliveries WHERE state = 'pending'").fetchone()
+        jobs_db.execute(
+            "SELECT 1 FROM job_deliveries WHERE state IN ('pending', 'publishing')"
+        ).fetchone()
         or jobs_db.execute("SELECT 1 FROM state_leases").fetchone()
     ):
         raise ValueError("backup contains unresolved results or endpoint state")
@@ -262,6 +266,32 @@ def validate_databases(store_db, jobs_db) -> tuple[dict, dict[str, Asset]]:
                 f'SELECT "{column}" FROM "{table}" WHERE "{column}" IS NOT NULL'
             ):
                 walk(json.loads(raw))
+    for row in jobs_db.execute("SELECT * FROM job_deliveries"):
+        document = json.loads(row["result_json"])
+        if result_sha(document) == row["result_sha"]:
+            continue
+        if (
+            not isinstance(document, dict)
+            or document.get("format") != FORMAT
+            or document.get("publication_sha")
+            != result_sha(
+                {key: value for key, value in document.items() if key != "publication_sha"}
+            )
+            or result_sha(document.get("result")) != row["result_sha"]
+        ):
+            raise ValueError("backup contains an invalid result publication")
+        owner = document.get("owner", {})
+        if not isinstance(owner, dict) or not isinstance(document.get("artifacts"), list):
+            raise ValueError("backup contains an invalid publication manifest")
+        if any(
+            owner.get(key) != row[column]
+            for key, column in (("job_id", "job_id"), ("idx", "idx"), ("attempt", "attempt"))
+        ):
+            raise ValueError("backup result publication has a different owner")
+        for raw in document["artifacts"]:
+            asset = AssetStore.manifest(raw)
+            publication_assets[asset.id] = asset
+            references.add(asset.id)
     assets = {}
     for row in store_db.execute("SELECT * FROM assets"):
         asset = Asset.model_validate(dict(row))
@@ -270,6 +300,13 @@ def validate_databases(store_db, jobs_db) -> tuple[dict, dict[str, Asset]]:
         assets[f"assets/{asset.id[:2]}/{asset.id}.{MIME_EXT.get(asset.mime, 'bin')}"] = asset
     if not references <= {asset.id for asset in assets.values()}:
         raise ValueError("backup references missing asset metadata")
+    for asset in assets.values():
+        expected = publication_assets.get(asset.id)
+        if expected and any(
+            getattr(asset, key) != getattr(expected, key)
+            for key in ("mime", "size", "width", "height")
+        ):
+            raise ValueError("backup result publication metadata does not match its artifact")
     return {
         "series_count": store_db.execute("SELECT COUNT(*) FROM series").fetchone()[0],
         "episode_count": store_db.execute("SELECT COUNT(*) FROM episodes").fetchone()[0],

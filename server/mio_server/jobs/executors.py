@@ -222,7 +222,8 @@ class ExecutorRuntime:
                         (jid,),
                     ).fetchone()
                     or self.db.execute(
-                        "SELECT 1 FROM job_deliveries WHERE job_id = ? AND state = 'pending'",
+                        "SELECT 1 FROM job_deliveries WHERE job_id = ? "
+                        "AND state IN ('pending', 'publishing')",
                         (jid,),
                     ).fetchone()
                     or self.state_leases.list(jid)

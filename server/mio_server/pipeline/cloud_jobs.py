@@ -19,6 +19,7 @@ class CloudExecutor:
 
     def __init__(self, assets, llm_factory, render_service, backend=None):
         self.assets = assets
+        self.artifact_store = assets
         self.llm_factory = llm_factory
         self.render = render_service
         self.backend = backend  # callable(channel_id) -> image client; None = the LLM client
@@ -81,17 +82,18 @@ class CloudExecutor:
             # 429 after the client's own retries: the channel is throttling (legacy 服务限流).
             kind = "rate_limited" if exc.status == 429 else "cloud_error"
             raise ExecError(str(exc), kind=kind, sent=sent) from None
-        asset = self.assets.put(data, source=f"cloud:{meta.get('model')}")
+        asset = self.assets.describe(data, source=f"cloud:{meta.get('model')}")
         actual = meta.get("request")
         if not actual and request:
             unknown = {**request, "kind": "unknown"}
             actual = CR.snapshot(unknown)
             actual["kind"] = request["kind"]
-        return {
+        result = {
             "images": [{"asset_id": asset.id, "width": asset.width, "height": asset.height}],
             "cloud": actual,
             "meta": inp.get("meta") or {},
         }
+        return ctx.publish_result(result, [(asset, data)])
 
     def on_complete(self, job: dict, item: dict, result: dict) -> None:
         created = self.render.apply_result(job, item, result)

@@ -141,6 +141,8 @@ class AppContext:
             autostart=False,
         )
         startup.callback(engine.close)
+        engine.artifact_store = assets
+        assets.retained_results = engine.retained_result_assets
         llm = llm_factory or SET.llm_factory(store)
         render = RenderService(store, assets, engine)
         render.seed_builtins()

@@ -260,7 +260,11 @@ class EngineRuntime:
                 },
             )
         except Exception as exc:  # unexpected executor bug: uncertain if anything was sent
-            state = "uncertain" if self._was_sent(ctx) else "failed"
+            state = (
+                "uncertain"
+                if self._was_sent(ctx) or self._pending_delivery(ctx.job_id, ctx.idx)
+                else "failed"
+            )
             log.exception("executor %s crashed", ctx.kind)
             self._finish(
                 ctx.job_id,
@@ -397,6 +401,14 @@ class EngineRuntime:
                     )
                 finally:
                     self._applying_jobs.remove(job_id)
+        retained = self._pending_delivery(job_id, idx)
+        if retained and retained["state"] == "publishing" and state == "failed":
+            state = "uncertain"
+            error = {
+                "kind": "publication_interrupted",
+                "message": "结果归属与已保存素材已保留；未重新请求上游。",
+                "detail": error,
+            }
         with self.lock, self.db:
             updated = self.db.execute(
                 "UPDATE job_items SET state = ?, result_json = ?, error_json = ?, finished = ?, updated = ? "

@@ -168,7 +168,11 @@ class AdapterContracts(unittest.TestCase):
         job = self.engine.submit(
             "comfy.render", [ItemSpec({"stages": stages, "feeds": feeds}, resource=COMFY)]
         )
-        self.assertEqual(drain(self.engine, job["id"])["state"], "failed")
+        current = drain(self.engine, job["id"])
+        self.assertEqual(current["state"], "blocked")
+        self.assertEqual(current["items"][0]["state"], "uncertain")
+        self.assertTrue(current["items"][0]["result"]["images"])
+        self.assertEqual(self.engine.deliveries(job["id"])[0]["state"], "publishing")
         self.assertEqual(len(self.client.runs), 1)
         self.assertEqual(self.client.uploads, [])
 
@@ -225,11 +229,9 @@ class AdapterContracts(unittest.TestCase):
 
     def test_reconcile_custom_output_and_invalid_payload_do_not_resubmit(self):
         stage = compile_workflow(self.doc, {}, registry=self.registry).to_json()
-        context = SimpleNamespace(
-            upstream="0:p1",
-            instance=SimpleNamespace(base_url="http://test"),
-            input={"stages": [stage]},
-        )
+        job = self.engine.submit("comfy.render", [ItemSpec({"stages": [stage]}, resource=COMFY)])
+        context = self.engine._claim(Candidate(job["id"], 0, COMFY), "local")
+        context.checkpoint("0:p1")
         result = self.executor.reconcile(context)
         self.assertEqual(len(result["images"]), 2)
         self.assertEqual(result["images"][1]["index"], 1)
