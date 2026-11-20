@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import shutil
-import stat
 import tempfile
 from pathlib import Path
 
 from ..jobs.lease import FileLease
 from ..models import new_id, now_iso
+from ..private_store import regular_path
 from ..storage import Conflict, NotFound
 from .archive import inspect_archive, pack, verify_workspace
 from .database import logical_head
@@ -36,8 +36,6 @@ class Backups:
         self.ctx = ctx
         self.root = recovery_root(ctx.data_dir)
         _regular_path(self.root)
-        if self.root.resolve() != self.root:
-            raise ValueError("workspace recovery directory must not traverse links")
         self.root.mkdir(parents=True, exist_ok=True)
 
     def head(self) -> BackupHead:
@@ -195,7 +193,7 @@ class Backups:
         _regular_path(self.root / kind)
         path = safe_child(self.root / kind, identifier)
         _regular_path(path)
-        if self.root.resolve() != self.root or not path.resolve().is_relative_to(self.root):
+        if not path.resolve().is_relative_to(self.root.resolve()):
             raise ValueError("recovery path escapes the original recovery directory")
         return path
 
@@ -297,17 +295,8 @@ class Backups:
 
 
 def _regular_path(path: Path):
-    try:
-        mode = path.lstat()
-    except FileNotFoundError:
-        return
-    if (
-        stat.S_ISLNK(mode.st_mode)
-        or getattr(mode, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
-    ):
-        raise ValueError("recovery path must not contain symbolic links or reparse points")
-    if not (stat.S_ISDIR(mode.st_mode) or stat.S_ISREG(mode.st_mode)):
-        raise ValueError("recovery path must contain only regular files and directories")
+    # Check before resolving: an 8.3 alias is safe, but any redirected ancestor is not.
+    regular_path(path)
 
 
 def _tree_bytes(path: Path) -> int:

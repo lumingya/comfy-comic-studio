@@ -50,7 +50,7 @@ def _directory(path: Path) -> bool:
     regular_path(path)
     if not path.exists():
         return False
-    if not path.is_dir() or path.resolve() != path:
+    if not path.is_dir():
         raise ValueError("UI data requires regular local directories")
     return True
 
@@ -138,7 +138,8 @@ def _wallpapers(workspace: Path, area: str, child: str):
 
 
 def data_files(workspace: Path, *, include_credentials: bool = True):
-    workspace = workspace.resolve()
+    workspace = workspace.absolute()
+    regular_path(workspace, directory=True)
     for area in ("extensions_data", "extension_data", "theme_data"):
         yield from _preferences(workspace, area, include_credentials=include_credentials)
     yield from _wallpapers(workspace, "theme_data", "wallpapers")

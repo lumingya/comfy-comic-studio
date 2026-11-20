@@ -17,11 +17,11 @@ def allowed_theme_path(name: str) -> bool:
 
 
 def theme_files(workspace: Path):
-    root = workspace.resolve() / "themes"
+    root = workspace.absolute() / "themes"
     regular_path(root)
     if not root.exists():
         return
-    if not root.is_dir() or root.resolve() != root:
+    if not root.is_dir():
         raise ValueError("theme packages must use a regular local directory")
     for folder in sorted(root.iterdir()):
         regular_path(folder)
