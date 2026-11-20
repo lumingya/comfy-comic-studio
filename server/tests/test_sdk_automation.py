@@ -496,7 +496,10 @@ class SDKMarkdownAutomationTests(ApiCase):
         identifier = caught.exception.storyboard_id
         self.assertTrue(identifier)
         self.assertEqual(
-            json.loads((destination / "mio-automation.json").read_text())["creation"], "pending"
+            json.loads((destination / "mio-automation.json").read_text(encoding="utf-8"))[
+                "creation"
+            ],
+            "pending",
         )
         with patch.object(self.mio, "create_storyboard") as create:
             with self.assertRaises(self.automation.CreationPendingError):
