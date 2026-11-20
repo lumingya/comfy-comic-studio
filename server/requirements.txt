@@ -1,6 +1,8 @@
 # Runtime dependencies of the v3 server (server/).  Python >= 3.11.
-fastapi>=0.115
-pydantic>=2.9
+# OpenAPI snapshots are generated and tested with these versions.
+fastapi==0.134.0
+pydantic==2.10.6
+starlette==0.52.1
 uvicorn[standard]>=0.30
 httpx>=0.27
 Pillow>=10.4
