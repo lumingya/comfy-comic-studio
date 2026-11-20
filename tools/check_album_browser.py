@@ -128,6 +128,32 @@ def screenshot(page, directory: Path | None, name: str) -> None:
         page.screenshot(path=str(directory / f"{name}.png"), animations="disabled")
 
 
+def exercise_directory(page, shots: Path | None, name: str) -> dict:
+    from playwright.sync_api import expect
+
+    page.get_by_role("button", name="目录", exact=True).click()
+    expect(page.locator(".mio-tray")).to_be_visible()
+    bounds = assert_fit(page, ".mio-tray")
+    assert_fit(page, ".mio-controls")
+    expect(page.locator(".mio-thumbnails button")).to_have_count(4)
+    page.locator(".mio-thumbnails img").evaluate_all(
+        "images=>Promise.all(images.map(i=>i.decode()))"
+    )
+    labels = page.locator(".mio-thumbnails button").evaluate_all(
+        """buttons=>buttons.map(button=>{
+          const node=[...button.childNodes].find(n=>n.nodeType===3&&n.textContent.trim());
+          const range=document.createRange(); range.selectNodeContents(node);
+          const label=range.getBoundingClientRect(), image=button.querySelector('img').getBoundingClientRect();
+          const box=button.getBoundingClientRect();
+          return {text:node.textContent,below:label.top>=image.bottom-1,
+            fits:label.left>=box.left&&label.right<=box.right};
+        })"""
+    )
+    assert all(label["below"] and label["fits"] for label in labels), labels
+    screenshot(page, shots, name + "-directory")
+    return {"bounds": bounds, "labels": labels}
+
+
 def exercise_reader(page, template: str, shots: Path | None, name: str) -> dict:
     from playwright.sync_api import expect
 
@@ -141,12 +167,7 @@ def exercise_reader(page, template: str, shots: Path | None, name: str) -> dict:
         i["naturalWidth"] == 1448 and i["naturalHeight"] == 1086 for i in initial_artwork["images"]
     )
     screenshot(page, shots, name + "-initial")
-    page.get_by_role("button", name="目录", exact=True).click()
-    expect(page.locator(".mio-tray")).to_be_visible()
-    tray = assert_fit(page, ".mio-tray")
-    assert_fit(page, ".mio-controls")
-    expect(page.locator(".mio-thumbnails button")).to_have_count(4)
-    screenshot(page, shots, name + "-directory")
+    tray = exercise_directory(page, shots, name)
     page.locator(".mio-thumbnails button").last.click()
     expect(page.locator(".mio-tray")).to_be_hidden()
     expect(counter).to_have_text("4 / 4")
@@ -259,7 +280,7 @@ def exercise_extreme(page, path: Path, shots: Path | None, name: str) -> dict:
     }
 
 
-def run(browser_path: str | None, shots: Path | None, widths: list[int] | None = None) -> dict:
+def run(browser_path: str | None, shots: Path | None, widths=None, directory_only=False) -> dict:
     from playwright.sync_api import sync_playwright
 
     candidates = (
@@ -310,15 +331,18 @@ def run(browser_path: str | None, shots: Path | None, widths: list[int] | None =
                             case = {"template": template, "width": width, "theme": theme}
                             try:
                                 page.goto(files[template].as_uri(), wait_until="load")
-                                case.update(exercise_reader(page, template, shots, name))
-                                case["extreme"] = exercise_extreme(
-                                    page,
-                                    files[template + "-extreme"],
-                                    shots,
-                                    name,
-                                )
-                                exercise_motion(page)
-                                case["motion_preference_toggle"] = "passed"
+                                if directory_only:
+                                    case["directory"] = exercise_directory(page, shots, name)
+                                else:
+                                    case.update(exercise_reader(page, template, shots, name))
+                                    case["extreme"] = exercise_extreme(
+                                        page,
+                                        files[template + "-extreme"],
+                                        shots,
+                                        name,
+                                    )
+                                    exercise_motion(page)
+                                    case["motion_preference_toggle"] = "passed"
                                 assert not errors, errors
                                 assert not external, external
                                 case["status"] = "passed"
@@ -343,8 +367,9 @@ def main() -> int:
     parser.add_argument("--browser")
     parser.add_argument("--screenshots", type=Path)
     parser.add_argument("--width", type=int, choices=(1440, 390), action="append")
+    parser.add_argument("--directory-only", action="store_true")
     args = parser.parse_args()
-    report = run(args.browser, args.screenshots, args.width)
+    report = run(args.browser, args.screenshots, args.width, args.directory_only)
     print(json.dumps(report, ensure_ascii=False, indent=2))
     return int(report["failed"] > 0)
 
