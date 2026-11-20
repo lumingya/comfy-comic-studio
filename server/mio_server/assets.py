@@ -241,12 +241,38 @@ class AssetStore:
         removed = []
         with self._lock:
             retained = self.retained_results()
-            for asset_id in sorted(self.store.asset_ids() - referenced - retained):
+            registered = self.store.asset_ids()
+            for asset_id in sorted(registered - referenced - retained):
+                target = self._safe_path(self.manifest(self.store.get_asset(asset_id)))
                 try:
-                    self.path(asset_id).unlink(missing_ok=True)
+                    target.unlink(missing_ok=True)
                 finally:
                     self.store.forget_asset(asset_id)
                     removed.append(asset_id)
+            # Failed writes can leave files before metadata registration. Only an explicit
+            # GC may remove these, after the last journal owner has been deleted. The same
+            # lock excludes publish/restore while ownership and metadata are checked.
+            protected = registered | referenced | retained
+            regular_path_metadata(self.root, directory=True)
+            extensions = "|".join(sorted(set(MIME_EXT.values())))
+            pattern = re.compile(rf"\.([0-9a-f]{{64}})\.({extensions})\.publishing")
+            for directory in sorted(self.root.iterdir()):
+                if not re.fullmatch(r"[0-9a-f]{2}", directory.name):
+                    continue
+                regular_path_metadata(directory, directory=True)
+                for staging in sorted(directory.iterdir()):
+                    match = pattern.fullmatch(staging.name)
+                    if not match:
+                        continue
+                    asset_id = match[1]
+                    if asset_id[:2] != directory.name or asset_id in protected:
+                        continue
+                    metadata = regular_path_metadata(staging, directory=False)
+                    if metadata.st_nlink != 1:
+                        raise ValueError("result staging file must not be a hard link")
+                    staging.unlink()
+                    if asset_id not in removed:
+                        removed.append(asset_id)
         return removed
 
 

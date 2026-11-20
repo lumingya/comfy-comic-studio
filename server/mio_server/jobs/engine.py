@@ -509,17 +509,19 @@ class JobEngine(
             pending = self._pending_delivery(job_id, idx)
         if pending:
             if action == "reconcile":
-                staged = (
-                    pending["state"] == "publishing" and not self._publication(pending)["terminal"]
-                )
                 if self.state_leases.get(job_id, idx):
                     self.restore_state(job_id, idx)
                     return self.get(job_id)
-                if not staged:
+                if self._restore_publication(job_id, idx):
                     return self.replay_result(job_id, idx)
-                self._restore_publication(job_id, idx)
+                if (
+                    self._publication(pending)["terminal"]
+                    and not self.job_executor(job_id, required=True).replay_safe
+                ):
+                    raise JobConflict("this executor has not declared replay-safe result delivery")
                 # An explicit read-only history lookup may find a later, already executed
-                # stage. Startup recovery itself never continues this pipeline.
+                # stage or refill a terminal publication's missing files. Startup recovery
+                # itself only replays local artifacts and never looks up upstream history.
             else:
                 raise JobConflict(
                     "a received result is awaiting delivery; replay it or cancel the job"

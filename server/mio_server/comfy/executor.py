@@ -314,6 +314,38 @@ class ComfyRenderExecutor:
         return ctx.publish_result(result, artifacts, stage=stage, terminal=terminal)
 
     # ---------------------------------------------------------------- recover
+    def _repair_publication(self, ctx, client, intent):
+        missing = set()
+        for asset in intent["artifacts"]:
+            try:
+                if self.assets.restore(asset):
+                    continue
+            except (OSError, ValueError):
+                pass
+            missing.add(asset["id"])
+        for checkpoint in intent["checkpoints"]:
+            if not any(asset["id"] in missing for asset in checkpoint["artifacts"]):
+                continue
+            index = checkpoint["stage"]
+            reports = checkpoint["result"].get("stages") or []
+            prompt = reports[-1].get("prompt_id") if reports else None
+            if type(index) is not int or not 0 <= index < len(ctx.input["stages"]) or not prompt:
+                raise JobConflict("the retained checkpoint has no frozen stage or prompt")
+            try:
+                entry = client.history(prompt)
+            except ComfyError:
+                return False
+            if not entry or not entry.get("outputs"):
+                return False
+            stage = ctx.input["stages"][index]
+            self._configure(client, stage)
+            images, texts = client.collect(entry, stage["outputs"])
+            self._validate_outputs(images, texts, stage, ctx.input.get("guard") or [])
+            _, artifacts = self._prepare_images(images, prompt)
+            ctx.engine.restore_checkpoint(ctx, intent["publication_sha"], index, artifacts)
+            missing.difference_update(asset["id"] for asset in checkpoint["artifacts"])
+        return not missing
+
     def recover_state(self, ctx, record, *, confirm_stopped=False, discard_result=False):
         client = self.client_factory(record["base_url"])
         session = StateSession(ctx, client, record)
@@ -323,15 +355,26 @@ class ComfyRenderExecutor:
                 return {"restored": False, "status": evidence["status"]}
             discard_result = discard_result or ctx.engine.get(ctx.job_id, items=False)["canceled"]
             if discard_result:
-                session.save(
+                session.data.update(
                     result_pending=False,
                     result=None,
                     failure={"kind": "result_discarded", "message": "已明确放弃取回此任务结果。"},
                 )
+                ctx.engine.discard_state_result(ctx, session.record["token"], session.data)
+            else:
+                intent = ctx.engine.publication_intent(ctx.job_id, ctx.idx)
+                if intent and not self._repair_publication(ctx, client, intent):
+                    return {"restored": False, "status": "result_unavailable"}
             index = session.data.get("stage", -1)
             prompt = session.data.get("prompt_id")
             local = None if discard_result else ctx.engine.local_result(ctx.job_id, ctx.idx)
-            if local and session.data.get("result_pending"):
+            if (
+                local
+                and session.data.get("result_pending")
+                and local.get("stage") == index
+                and local["result"].get("stages")
+                and local["result"]["stages"][-1].get("prompt_id") == prompt
+            ):
                 result = local["result"]
                 session.save(
                     result_pending=False,
@@ -401,6 +444,12 @@ class ComfyRenderExecutor:
         if not stage_index.isdigit() or int(stage_index) != len(ctx.input["stages"]) - 1:
             return None  # an earlier stage was running: the final image cannot exist yet
         client = self.client_factory(ctx.instance.base_url)
+        intent = ctx.engine.publication_intent(ctx.job_id, ctx.idx)
+        if intent:
+            if not self._repair_publication(ctx, client, intent):
+                return None
+            if intent["terminal"]:
+                return intent["result"]
         try:
             entry = client.history(prompt_id)
         except ComfyError:

@@ -158,13 +158,13 @@ def validate_databases(store_db, jobs_db) -> tuple[dict, dict[str, Asset]]:
     references: set[str] = set()
     publication_assets = {}
 
-    def walk(value, key=""):
+    def walk(value, key="", diagnostic=frozenset()):
         if isinstance(value, dict):
             for child_key, child in value.items():
-                walk(child, child_key)
+                walk(child, child_key, diagnostic)
         elif isinstance(value, list):
             for child in value:
-                walk(child, key)
+                walk(child, key, diagnostic)
         elif (
             isinstance(value, str)
             and value
@@ -177,7 +177,9 @@ def validate_databases(store_db, jobs_db) -> tuple[dict, dict[str, Asset]]:
                 "asset_ids",
             }
         ):
-            if key != "$asset" or value not in {"__previous__", "__cloud_source__"}:
+            if value not in diagnostic and (
+                key != "$asset" or value not in {"__previous__", "__cloud_source__"}
+            ):
                 references.add(value)
 
     for table, model in (("series", Series), ("episodes", Episode), ("episode_snapshots", Episode)):
@@ -255,19 +257,15 @@ def validate_databases(store_db, jobs_db) -> tuple[dict, dict[str, Asset]]:
         ExecutorRef(kind=row["kind"], source=row["source"], digest=row["digest"])
         if row["kind"] != row["job_kind"]:
             raise ValueError("backup executor identity does not match its task kind")
-    for table in ("jobs", "job_items", "job_deliveries"):
-        columns = [
-            col[1]
-            for col in jobs_db.execute(f'PRAGMA table_info("{table}")')
-            if col[1].endswith("_json")
-        ]
-        for column in columns:
-            for (raw,) in jobs_db.execute(
-                f'SELECT "{column}" FROM "{table}" WHERE "{column}" IS NOT NULL'
-            ):
-                walk(json.loads(raw))
+    discarded_results = {}
     for row in jobs_db.execute("SELECT * FROM job_deliveries"):
         document = json.loads(row["result_json"])
+        diagnostic_assets = set()
+        if row["state"] == "discarded":
+            key = row["job_id"], row["idx"], row["result_sha"]
+            discarded_results.setdefault(key, {})[row["attempt"]] = diagnostic_assets
+        else:
+            walk(document)
         if result_sha(document) == row["result_sha"]:
             continue
         if (
@@ -291,7 +289,38 @@ def validate_databases(store_db, jobs_db) -> tuple[dict, dict[str, Asset]]:
         for raw in document["artifacts"]:
             asset = AssetStore.manifest(raw)
             publication_assets[asset.id] = asset
-            references.add(asset.id)
+            if row["state"] == "discarded":
+                diagnostic_assets.add(asset.id)
+            else:
+                references.add(asset.id)
+    for table in ("jobs", "job_items"):
+        columns = [
+            col[1]
+            for col in jobs_db.execute(f'PRAGMA table_info("{table}")')
+            if col[1].endswith("_json")
+        ]
+        for row in jobs_db.execute(f'SELECT * FROM "{table}"'):
+            discarded = None
+            if table == "job_items" and row["result_json"] is not None:
+                digest = result_sha(json.loads(row["result_json"]))
+                attempts = discarded_results.get((row["job_id"], row["idx"], digest), {})
+                source = max((a for a in attempts if a <= row["attempts"]), default=None)
+                discarded = attempts.get(source)
+            for column in columns:
+                if row[column] is None:
+                    continue
+                value = json.loads(row[column])
+                # A failed retry may still carry the previous attempt's exact result.
+                # Match its actual discarded source, never a future or unrelated attempt.
+                # Inputs, snapshots and unmatched item results remain strong references.
+                if discarded is not None and column == "result_json":
+                    continue
+                walk(
+                    value,
+                    diagnostic=discarded
+                    if discarded is not None and column == "error_json"
+                    else frozenset(),
+                )
     assets = {}
     for row in store_db.execute("SELECT * FROM assets"):
         asset = Asset.model_validate(dict(row))

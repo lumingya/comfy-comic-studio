@@ -242,11 +242,72 @@ class PublicationRuntime:
             row = self._pending_delivery(job_id, idx)
             return self._publication(row) if row and row["state"] == "publishing" else None
 
+    def restore_checkpoint(self, ctx, publication_sha, stage, artifacts):
+        """Refill an existing checkpoint without changing its owner, stage or manifest."""
+        store = self._artifact_store(ctx.job_id)
+        if store is None:
+            raise JobConflict("no artifact store is configured for this task")
+        artifacts = list(artifacts)
+        manifests = [store.manifest(asset).model_dump(mode="json") for asset, _ in artifacts]
+        with self._job_guard(ctx.job_id, command=True):
+            ctx.raise_if_cancelled()
+            with self.lock:
+                row = self._item_row(ctx.job_id, ctx.idx)
+                job = self._require(ctx.job_id)
+                delivery = self._pending_delivery(ctx.job_id, ctx.idx)
+                binding = self.job_executor(ctx.job_id, required=True)
+                if (
+                    job["canceled"]
+                    or row["state"] not in ("running", "uncertain")
+                    or row["epoch"] != ctx.epoch
+                    or row["attempts"] != ctx.attempt
+                    or delivery is None
+                    or delivery["attempt"] != ctx.attempt
+                    or (ctx.executor_binding and ctx.executor_binding.ref != binding.ref)
+                ):
+                    raise JobConflict("stale or canceled checkpoint restoration")
+                envelope = self._publication(delivery)
+                checkpoint = next((c for c in envelope["checkpoints"] if c["stage"] == stage), None)
+                if (
+                    envelope["publication_sha"] != publication_sha
+                    or checkpoint is None
+                    or checkpoint["artifacts"] != self._artifact_views(manifests)
+                ):
+                    raise JobConflict("recovered artifacts do not match the retained checkpoint")
+                known = {asset["id"]: asset for asset in envelope["artifacts"]}
+            for expected, (_, data) in zip(checkpoint["artifacts"], artifacts):
+                store.publish(known[expected["id"]], data)
+            self._restore_publication(ctx.job_id, ctx.idx, recovering=False)
+
     def _delivery_result(self, row):
         raw = json.loads(row["result_json"])
         if result_sha(raw) == row["result_sha"]:
             return raw  # Legacy executors return arbitrary JSON, including a format field.
         return self._publication(row)["result"]
+
+    def discard_state_result(self, ctx, token, state_data):
+        """Atomically abandon this attempt's delivery and its lease's pending result."""
+        with self._job_guard(ctx.job_id, command=True), self.lock, self.db:
+            row = self._item_row(ctx.job_id, ctx.idx)
+            lease = self.state_leases.get(ctx.job_id, ctx.idx)
+            if (
+                row["attempts"] != ctx.attempt
+                or row["epoch"] != ctx.epoch
+                or lease is None
+                or lease["token"] != token
+            ):
+                raise JobConflict("state result ownership changed while discarding")
+            self.db.execute(
+                "UPDATE job_deliveries SET state = 'discarded', updated = ?, error = NULL "
+                "WHERE job_id = ? AND idx = ? AND attempt = ? "
+                "AND state IN ('pending', 'publishing')",
+                (time.time(), ctx.job_id, ctx.idx, ctx.attempt),
+            )
+            self.db.execute(
+                "UPDATE state_leases SET data_json = ? WHERE token = ?",
+                (canonical(state_data), token),
+            )
+            self._event(ctx.job_id, ctx.idx, "result_discarded", {"attempt": ctx.attempt})
 
     def local_result(self, job_id, idx):
         """Inspect complete local artifacts without executing or looking up an upstream."""
@@ -260,10 +321,19 @@ class PublicationRuntime:
                 error = json.loads(self._item_row(job_id, idx)["error_json"] or "{}")
                 if error.get("detail", {}).get("missing_assets"):
                     return None
-            if row["state"] == "pending" and ready:
+            if (
+                row["state"] == "pending"
+                and ready
+                and result_sha(json.loads(row["result_json"])) == row["result_sha"]
+            ):
                 return {"result": self._delivery_result(row), "terminal": True}
             envelope = self._publication(row)
-            return {"result": envelope["result"], "terminal": envelope["terminal"]}
+            return {
+                "result": envelope["result"],
+                "terminal": envelope["terminal"],
+                "stage": envelope["stage"],
+                "owner": envelope["owner"],
+            }
 
     def retained_result_assets(self):
         """Keep journal-owned artifacts through GC, including staged and canceled results."""
