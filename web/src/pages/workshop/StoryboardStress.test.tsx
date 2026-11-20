@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Episode, Panel } from '../../api/types';
 import { confirm } from '../../components/confirm';
@@ -83,14 +83,15 @@ function start(extra: Parameters<typeof mockFetch>[0] = {}) {
 
 async function liftFirstFrame() {
   const measure = HTMLElement.prototype.getBoundingClientRect;
+  const geometry = new WeakMap<HTMLElement, DOMRect>();
+  const frameRows = document.querySelectorAll<HTMLElement>('.workshop-frame-row');
+  frameRows.forEach((row, index) => geometry.set(row, new DOMRect(0, index * 52, 200, 46)));
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
     this: HTMLElement,
   ) {
-    if (!this.matches('.workshop-frame-row')) return measure.call(this);
-    const index = [...this.parentElement!.querySelectorAll('.workshop-frame-row')].indexOf(this);
-    return new DOMRect(0, index * 52, 200, 46);
+    return geometry.get(this) ?? measure.call(this);
   });
-  const handle = screen.getByRole('button', { name: /^移动第 1 幕/ });
+  const handle = within(frameRows[0]).getByRole('button', { name: '移动第 1 幕' });
   handle.focus();
   fireEvent.keyDown(handle, { key: ' ', code: 'Space' });
   await act(async () => {

@@ -40,3 +40,18 @@ npm --prefix web test -- --run src/pages/settings/ChannelsExtension.test.tsx
 该批只证明 jsdom 中的数据一致性和交互行为，不证明真实鼠标拖动、移动设备帧率或视觉效果。主 agent 另行负责完整 CI 门禁与浏览器验收。
 
 本批最后一次 TypeScript strict 检查发生在主 agent 更新 `cloud_recipe` 类型与拆分渠道组件期间，观察到新组件 `Select` 缺失导入以及三处 RenderProfile 夹具缺少 `cloud_recipe`。已把确切位置交给主 agent；全仓 typecheck 的最终结果以主 agent 整合后门禁为准。
+
+## 全套门禁后的测试开销修正
+
+主 agent 的全套前端门禁运行 834 项时，833 项通过；本文件的键盘拖拽用例在并行负载下执行 5.19 秒，触发默认 5 秒限制。该用例原本已使用单次 `fireEvent.change`，没有逐字输入产生的重复渲染。
+
+检查定位到两处测试桩开销：每次读取行的矩形都重新查找并扫描 120 行；寻找第一个拖动按钮时，则对整页 240 多个按钮计算可访问名称。现在预先建立每行矩形的 `WeakMap`，几何查询直接取值，并把可访问性按钮查询限制在第一行内。真实 dnd-kit 键盘传感器、拖放操作、保存前置顺序、完整 120 个 ID 和 LoRA 保值断言全部保留；未修改生产代码、全局超时或单用例超时。
+
+```text
+# 修改前的单项基线：1381 ms，通过。
+npm --prefix web test -- --run src/pages/workshop/StoryboardStress.test.tsx -t 'flushes a pending edit'
+# 修改后：5 passed；拖拽项 1113 ms，全文件测试执行 4.61 秒。
+npm --prefix web test -- --run src/pages/workshop/StoryboardStress.test.tsx
+```
+
+以上耗时只用于观察测试额外开销；全套并行门禁是否通过仍由主 agent 重新运行的结果证明。
