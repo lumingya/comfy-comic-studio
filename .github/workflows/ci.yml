@@ -34,8 +34,11 @@ jobs:
         run: |
           python tools/generate_extension_contracts.py --check
           python clients/python/generate.py --check
-          python tools/check_extension_package.py extensions/ai-assist
-          python tools/check_theme_package.py themes/theme-wallpaper
+          python tools/check_extension_examples.py
+          python tools/check_doc_links.py --self-test
+          python tools/check_doc_links.py
+          ruff check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py
+          ruff format --check --config server/pyproject.toml examples/extensions/comfy-complex-adapters examples/extensions/standard-image-channels examples/extensions/qa-review/cli.py
           ruff check clients tools
           ruff format --check clients tools
       - name: v4 web (API types current + format + typecheck + tests + build)
@@ -46,6 +49,7 @@ jobs:
           npm --prefix web run format:check
           npm --prefix web run typecheck
           npm --prefix web test
+          python tools/check_extension_examples.py --panel-tests
           npm --prefix web run build
       - name: Shipped data manifest
         run: |

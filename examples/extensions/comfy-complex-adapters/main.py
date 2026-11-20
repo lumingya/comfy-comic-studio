@@ -113,9 +113,7 @@ def reference_bindings(graph):
         if cls not in {"IPAdapterAdvanced", "ControlNetApplyAdvanced"}:
             continue
         is_control = cls == "ControlNetApplyAdvanced"
-        qualifier = marker(
-            node, "control" if is_control else "ref", "pose" if is_control else "1"
-        )
+        qualifier = marker(node, "control" if is_control else "ref", "pose" if is_control else "1")
         weight = "strength" if is_control else "weight"
         if number(inputs.get(weight)):
             yield {
@@ -193,9 +191,7 @@ def safe_location(item):
 class ArtifactOutput:
     def freeze(self, node, options):
         if node.get("class_type") != "MioArtifactOutput" or options:
-            raise ValueError(
-                "This output protocol requires MioArtifactOutput with no options"
-            )
+            raise ValueError("This output protocol requires MioArtifactOutput with no options")
         return {"version": 1, "key": "artifacts", "max_images": MAX_IMAGES}
 
     def collect(self, output, plan, transport):
@@ -206,16 +202,11 @@ class ArtifactOutput:
             raise ValueError("Expected one to sixteen history artifacts")
         result = []
         for item in items:
-            if not isinstance(item, dict) or bool(item.get("base64")) == bool(
-                item.get("filename")
-            ):
+            if not isinstance(item, dict) or bool(item.get("base64")) == bool(item.get("filename")):
                 raise ValueError("Artifact requires exactly one byte or file source")
             if "base64" in item:
                 value = item["base64"]
-                if (
-                    not isinstance(value, str)
-                    or len(value) > (MAX_IMAGE_BYTES + 2) // 3 * 4
-                ):
+                if not isinstance(value, str) or len(value) > (MAX_IMAGE_BYTES + 2) // 3 * 4:
                     raise ValueError("Inline artifact exceeds the byte limit")
                 try:
                     payload = base64.b64decode(value, validate=True)
@@ -231,13 +222,7 @@ class ArtifactOutput:
 
 
 def activate(mio):
-    mio.contribute(
-        "workflow_slot_adapter", "complex-power-stack", PowerStack(), contract=1
-    )
+    mio.contribute("workflow_slot_adapter", "complex-power-stack", PowerStack(), contract=1)
     mio.contribute("workflow_binding", "complex-sampling", sampler_bindings, contract=1)
-    mio.contribute(
-        "workflow_binding", "complex-references", reference_bindings, contract=1
-    )
-    mio.contribute(
-        "comfy_output_adapter", "complex-artifacts", ArtifactOutput(), contract=1
-    )
+    mio.contribute("workflow_binding", "complex-references", reference_bindings, contract=1)
+    mio.contribute("comfy_output_adapter", "complex-artifacts", ArtifactOutput(), contract=1)

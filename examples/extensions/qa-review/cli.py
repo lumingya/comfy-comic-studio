@@ -41,9 +41,7 @@ def parser() -> argparse.ArgumentParser:
     queue = commands.add_parser("queue", help="explicitly submit QA for selected takes")
     queue.add_argument("--episode", required=True)
     queue.add_argument("--takes", nargs="+", required=True)
-    queue.add_argument(
-        "--key", required=True, help="reuse this key only for the identical request"
-    )
+    queue.add_argument("--key", required=True, help="reuse this key only for the identical request")
     return root
 
 
