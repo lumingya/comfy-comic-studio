@@ -13,7 +13,10 @@ from email.utils import parsedate_to_datetime
 from urllib.parse import urljoin
 
 import httpx
+from httpx import create_ssl_context
 from mio_server.llm import LLMError
+
+from .deadline import Deadline
 
 MAX_BYTES = 16 * 1024 * 1024
 
@@ -128,6 +131,18 @@ class Transfer:
         }
         if channel.api_key:
             headers["Authorization"] = f"Bearer {channel.api_key}"
+        self.native = transport is None
+        if self.native:
+            # A request watchdog must never act on a connection returned to a
+            # shared/idle pool. Each Transfer owns this HTTP/1-only transport;
+            # no socket is handed to another request after its response ends.
+            self.ssl_context = create_ssl_context(trust_env=False)
+            transport = httpx.HTTPTransport(
+                verify=self.ssl_context,
+                trust_env=False,
+                retries=0,
+                limits=httpx.Limits(max_keepalive_connections=0),
+            )
         self.http = httpx.Client(
             headers=headers,
             transport=transport,
@@ -206,8 +221,13 @@ class Transfer:
         if method == "POST":
             self.sent = True
         response = None
+        guard = Deadline(self, self.ssl_context) if self.native else None
+        if guard is not None:
+            guard.start()
         try:
             request = self.http.build_request(method, url, timeout=self.check(), **kwargs)
+            if guard is not None:
+                request.extensions["trace"] = guard.trace
             if artifact:
                 request.headers.pop("authorization", None)
                 request.headers.pop("cookie", None)
@@ -262,10 +282,12 @@ class Transfer:
                 chunks.append(chunk)
             return status, response.headers, b"".join(chunks)
         except (httpx.ConnectError, httpx.ConnectTimeout):
+            self.check()
             if method == "GET":
                 return 503, httpx.Headers(), b""
             raise error("Image service connection failed", sent=previous) from None
         except httpx.HTTPError:
+            self.check()
             if method == "GET":
                 return 503, httpx.Headers(), b""
             raise error(
@@ -273,6 +295,8 @@ class Transfer:
                 sent=self.sent,
             ) from None
         finally:
+            if guard is not None:
+                guard.close()
             if response is not None:
                 response.close()
 

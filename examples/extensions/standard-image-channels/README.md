@@ -9,7 +9,7 @@
 | `novel_style_images`     | `POST /ai/generate-image`；直接图片或有界 ZIP                                          | V3/V4 风格参数、原生负向词、64 对齐尺寸与 seed；本包不提供 vibe 编码 |
 | `async_images`           | 一次 `POST /jobs`，随后有界 `GET /jobs/{id}`                                           | 原生尺寸、负向词、可选 seed；提交与查询路径可配置                    |
 
-这是针对上述明确线协议的参考实现，**全部验收均为离线 MockTransport，不是官方服务认证或真实付费出图结果**。服务商的额外参数、CDN 或其他协议需要在独立扩展中适配。
+这是针对上述明确线协议的参考实现，**验收仅使用离线 MockTransport 与真实本地 HTTPServer，不是官方服务认证或真实付费出图结果**。服务商的额外参数、CDN 或其他协议需要在独立扩展中适配。
 
 ## 安装与配置
 
@@ -54,9 +54,11 @@
 
 **无论调用方传多少次 retries，每次调用最多一次收费生成 POST。** POST 读超时、断流、408、409、425、5xx、不可解析的成功响应或重定向都保留 `sent=True`；宿主据此等待核对，不自动重新出图。明确连接失败或非模糊 4xx 拒绝标为未发送成功；429 单独保留状态并登记有界 Retry-After 冷却，也不在适配器内重复 POST。错误文本从不复制上游响应体、请求 URL 或异常字符串。
 
-已提交任务只重试安全 GET：轮询受次数与总截止时间共同限制，下载最多 3 次；429 / 5xx / GET 传输失败不触发新提交。Retry-After 支持秒数与 HTTP 日期，最多等待 30 秒，并继续受总截止时间限制。HTTP 单次读写也使用剩余时间。
+已提交任务只重试安全 GET：轮询受次数与总截止时间共同限制，下载最多 3 次；429 / 5xx / GET 传输失败不触发新提交。Retry-After 支持秒数与 HTTP 日期，最多等待 30 秒，并继续受总截止时间限制。HTTP 单次读写使用剩余时间；原生 HTTP 传输另用请求专属 watchdog 在绝对截止或停止时 shutdown 并关闭本连接，打断已经阻塞的 TLS 握手、响应头、JSON 与图片读取。watchdog 不执行请求，返回前停止并 join；调用独享 HTTP/1 连接与 SSLContext，且不复用空闲连接，避免清理误伤其他调用。
 
-适配器的 `cancel()` 与扩展服务的 `close()` 可打断本地等待、后续轮询及分块读取检查。**cloud_adapter v1 没有逐任务取消回调**：核心任务取消不能主动关闭已在进行的 HTTP 请求，本包也不假定远端存在删除任务接口。取消、超时或退出后，已提交的远端任务可能继续运行，需要在服务端核对；本包不承诺跨进程恢复远端轮询。停用 / 关闭扩展会通知本激活创建的全部适配器停止后续请求。
+适配器的 `cancel()` / `close()` 与扩展服务的 `close()` 可打断本地等待、后续轮询及已阻塞的原生 HTTP 读取；watchdog 最多每 25 毫秒检查停止信号。**cloud_adapter v1 没有逐任务取消回调**：核心任务取消不能主动关闭已在进行的 HTTP 请求，本包也不假定远端存在删除任务接口。取消、超时或退出后，已提交的远端任务可能继续运行，需要在服务端核对；本包不承诺跨进程恢复远端轮询。停用 / 关闭扩展会通知本激活创建的全部适配器停止本地传输。注入的自定义 transport 由其实现负责中断阻塞操作，本包仍在其返回的分块间检查截止与停止信号。
+
+watchdog 从 TCP 建连完成、取得本请求 socket 后生效。DNS 解析及尚未交回 socket 的系统建连仍受 HTTPX / 操作系统底层机制约束：传入的是当前剩余 connect timeout，但不能承诺这些系统阶段在取消时立即中断，也不能把它们视为严格的可抢占总截止。
 
 下载只允许配置 API 的同一 scheme / host / port，拒绝内嵌用户名密码、其他源、文件协议与跳转；即使同源也移除 Authorization 和 Cookie。需要跨域 CDN 的服务请改用内联 base64 或单独适配，不能自动信任上游提供的任意 URL。所有响应有字节上限，图片限制为 PNG/JPEG/WebP、最多 16,777,216 像素，完整解码通过后仍保留原始字节。ZIP 不落盘，创建目录对象前逐条预检真实中央目录，最多 16 成员并限制元数据及总展开体积；不支持 ZIP64、分卷或自解压前缀。拒绝额外 HTTP 压缩编码，避免绕过传输体积限制。
 
@@ -68,8 +70,9 @@
 python tools/check_extension_package.py examples/extensions/standard-image-channels
 python -m mio_server.extensions.ctk extension examples/extensions/standard-image-channels
 python -m unittest discover -s server/tests -t server -p test_cloud_channel_packages.py -v
+python -m unittest discover -s server/tests -t server -p test_review_cloud_deadline.py -v
 ```
 
-第二条命令需将 `server/` 加入 `PYTHONPATH`，或从 `server/` 使用 `../examples/extensions/standard-image-channels`。CTK 只做静态包校验；单测另外验证四类线协议、生命周期、快照绑定、故障分类、轮询限额、取消、恶意 URL、体积限制及脱敏。不安装浏览器，不访问外网，不调用收费服务。
+第二条命令需将 `server/` 加入 `PYTHONPATH`，或从 `server/` 使用 `../examples/extensions/standard-image-channels`。CTK 只做静态包校验；单测另外验证四类线协议、生命周期、快照绑定、故障分类、轮询限额、取消、恶意 URL、体积限制及脱敏。本地 HTTPServer 回归覆盖首块后 stall 的总截止、JSON / 图片 / 响应头 / TLS 握手阻塞时停止、正常返回的 watchdog 清理及并发隔离。真实 HTTPS 响应体测试用 OpenSSL CLI 在 TEMP 中生成短效测试证书，结束即删；支持 PATH 中的 OpenSSL 与 Git for Windows 附带的 OpenSSL，不存在时明确跳过这部分证书测试。不安装浏览器，不访问外网，不调用收费服务。
 
 契约背景见[扩展 SDK](../../../server/mio_server/extensions/README.md)。
