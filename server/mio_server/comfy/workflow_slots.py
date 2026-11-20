@@ -5,6 +5,9 @@ import hashlib
 import json
 import math
 from datetime import datetime, timezone
+
+from . import slot_adapters as SA
+
 class LibraryError(ValueError):
     """Raised when a workflow slot plan cannot be applied."""
 
@@ -337,7 +340,7 @@ def _is_empty_name(name):
     return name is None or str(name).strip() == '' or str(name) == 'None'
 
 
-def _stack_current_loras(workflow, lora):
+def _stack_current_loras(workflow, lora, include_disabled=False):
     node = (workflow or {}).get(lora.get('nodeId'))
     if not isinstance(node, dict):
         return []
@@ -346,9 +349,11 @@ def _stack_current_loras(workflow, lora):
         raw = node['inputs'][slot['namePath']]
         if slot['objectStyle']:
             name = raw.get('lora') if raw.get('lora') is not None else raw.get('name')
-            if raw.get('on') is False or _is_empty_name(name):
+            if (raw.get('on') is False and not include_disabled) or _is_empty_name(name):
                 continue
             entry = {'name': str(name), 'strength': raw['strength'] if _is_number(raw.get('strength')) else 1}
+            if include_disabled:
+                entry['enabled'] = raw.get('on') is not False
             if _is_number(raw.get('strengthTwo')):
                 entry['clip'] = raw['strengthTwo']
             out.append(entry)
@@ -356,11 +361,13 @@ def _stack_current_loras(workflow, lora):
             if _is_empty_name(raw):
                 continue
             switch = node['inputs'][slot['switchPath']] if slot['switchPath'] else True
-            if switch is False or switch == 'Off':
+            if (switch is False or switch == 'Off') and not include_disabled:
                 continue
             strength = node['inputs'][slot['strengthPath']] if slot['strengthPath'] else 1
             clip = node['inputs'][slot['clipPath']] if slot['clipPath'] else None
             entry = {'name': str(raw), 'strength': strength if _is_number(strength) else 1}
+            if include_disabled:
+                entry['enabled'] = switch is not False and switch != 'Off'
             if _is_number(clip):
                 entry['clip'] = clip
             out.append(entry)
@@ -516,6 +523,7 @@ def _apply_chain(workflow, lora, loras, notices):
             continue
         if i < len(loras):
             l = loras[i]
+            _write_field(workflow, d['nodeId'], d['namePath'], lora_display_name(l['name'], 'file'))
             if d['strengthPath']:
                 _write_field(workflow, d['nodeId'], d['strengthPath'], 0)
             if d['clipPath']:
@@ -661,11 +669,20 @@ class Graph:
         outputs = self.info.get(self.wf.get(nid, {}).get('class_type'), {}).get('output', [])
         return str(outputs[slot]).upper() if 0 <= slot < len(outputs) else ''
 
-    def edge(self, nid, user, kind='MODEL'):
+    def edge(self, nid, user, kind='MODEL', seen=None):
         declared = self.output(nid, user['index'])
         if declared:
             return declared.endswith('MODEL') if kind == 'MODEL' else declared == kind
         key = user['key'].lower()
+        if key in ('on_true', 'on_false', 'tt_value', 'ff_value', 'true_input', 'false_input') or re.fullmatch(r'input_?\d+', key):
+            consumer = user['consumer']
+            if (consumer, user['key']) in self.blocked:
+                return False
+            seen = set() if seen is None else seen
+            if consumer in seen:
+                return False
+            seen = seen | {consumer}
+            return any(self.edge(consumer, downstream, kind, seen) for downstream in self.users.get(consumer, []))
         return bool(MODEL_INPUT.fullmatch(key)) if kind == 'MODEL' else key in ('lora_stack', 'prev_lora')
 
     def model_node(self, nid):
@@ -731,33 +748,18 @@ def trace_origin(workflow, link, object_info=None, sites=None):
     return {'nodeId': str(link[0]) if _is_link(link, workflow) else '', 'path': '', 'writable': False}
 
 
-def _site(nid, workflow, model_ids):
-    node = workflow[nid]
-    obj = _mirror_path_for(node, workflow)
-    slots = stack_slots(node, workflow)
-    desc = chain_descriptor(nid, workflow)
-    common = {'nodeId': nid}
-    if obj:
-        return {**common, 'kind': 'object', 'path': obj}
-    if slots:
-        return {**common, 'kind': 'stack', 'path': slots[0]['namePath'], 'slots': slots}
-    if desc:
-        return {**common, 'kind': 'embedded' if nid in model_ids else 'chain', 'path': desc['namePath'], 'chain': [desc]}
-    for key, value in node['inputs'].items():
-        if ('lora' in key.lower() and 'syntax' in key.lower()) or (isinstance(value, str) and '<lora:' in value):
-            return {**common, 'kind': 'syntax', 'path': key}
-    return None
-
-
-def _pinned(site, wf):
+def _pinned(site, wf, include_disabled=False):
     nid, kind, path = site['nodeId'], site['kind'], site['path']
     inputs = wf[nid]['inputs']
+    if kind == 'extension':
+        return copy.deepcopy(site['slot']['loras'])
     if kind == 'object':
         raw = inputs[path]
         entries = raw if isinstance(raw, list) else raw['__value__']
         return [dict(name=e.get('name', e.get('lora')), strength=_num(e.get('strength', 1)),
+                     **({'enabled': e.get('active') is not False and e.get('on') is not False} if include_disabled else {}),
                      **({'clip': _num(e['clipStrength'])} if e.get('clipStrength') not in (None, '') else {}))
-                for e in entries if e.get('active') is not False and e.get('on') is not False and not _is_empty_name(e.get('name', e.get('lora')))]
+                for e in entries if (include_disabled or e.get('active') is not False and e.get('on') is not False) and not _is_empty_name(e.get('name', e.get('lora')))]
     if kind == 'syntax':
         return parse_lora_syntax(inputs[path])['loras'] if isinstance(inputs[path], str) else []
     if kind in ('chain', 'embedded'):
@@ -766,10 +768,10 @@ def _pinned(site, wf):
             return []
         return [dict(name=d['value'], strength=d['strength'] if _is_number(d['strength']) else 1,
                      **({'clip': d['clip']} if _is_number(d['clip']) else {}))]
-    return _stack_current_loras(wf, {'nodeId': nid})
+    return _stack_current_loras(wf, {'nodeId': nid}, include_disabled)
 
 
-def analyze(workflow, object_info=None, manual=None, legacy=None):
+def analyze(workflow, object_info=None, manual=None, legacy=None, *, adapters=()):
     wf = workflow or {}
     g = Graph(wf, object_info)
     issues, targets = [], []
@@ -812,9 +814,14 @@ def analyze(workflow, object_info=None, manual=None, legacy=None):
             primary = normalized
         targets.append({**c, 'key': key, 'current': c['value'], 'role': role, 'enabled': role != 'other'})
     model_ids = {c.get('sourceNodeId', c['nodeId']) for c in candidates}
-    sites = {nid: s for nid in _node_ids(wf) if (s := _site(nid, wf, model_ids))}
+    sites = {}
+    for nid in _node_ids(wf):
+        if site := SA.find_site(nid, wf, model_ids, adapters):
+            sites[nid] = site
     for entry in manual or []:
         nid, path = str(entry.get('nodeId', '')), entry.get('path', '')
+        if sites.get(nid, {}).get('kind') == 'extension':
+            continue
         if nid not in wf or path not in wf[nid]['inputs']:
             issue('manual-missing', nid, '手动指定的字段不在工作流中'); continue
         value = wf[nid]['inputs'][path]
@@ -870,6 +877,8 @@ def analyze(workflow, object_info=None, manual=None, legacy=None):
             else:
                 key = 'direct:'+str(value[0])+':'+str(value[1])
                 origin = None
+        elif site['kind'] == 'extension':
+            key = 'adapter:' + site['adapter']['id'] + ':' + nid + ':' + site['path']
         else:
             key = 'origin:'+nid+':'+site['path']
         if key not in groups:
@@ -893,6 +902,9 @@ def analyze(workflow, object_info=None, manual=None, legacy=None):
         group['warn'] = '' if group['active'] else '无活跃应用点，默认不写入'
         # Declarative metadata for both executors: no browser-side discovery.
         writer = group['writer']; node = wf[writer['nodeId']]
+        if writer['kind'] == 'extension':
+            writer['range'] = writer['slot']['range']
+            continue
         writer['textPaths'] = [k for k, v in node['inputs'].items() if isinstance(v, str) and (k == 'text' or '<lora:' in v)] if writer['kind'] == 'object' else []
         ranges = []
         rules = _rules(node, object_info)
@@ -908,7 +920,7 @@ def analyze(workflow, object_info=None, manual=None, legacy=None):
         downstream = [other for other in groups if other is not group and other['active'] and group['active'] and any(
             g.reaches(a['nodeId'], b['nodeId']) for a in group['sites'] for b in other['sites'])]
         group['upstreamKeys'] = [other['key'] for other in groups if other is not group and other['active'] and any(g.reaches(a['nodeId'], b['nodeId']) for a in other['sites'] for b in group['sites'])]
-        group['append'] = not downstream
+        group['append'] = not downstream and group['writer'].get('slot', {}).get('can_append', True)
         upstream = [j for j, other in enumerate(groups) if any(g.reaches(a['nodeId'], b['nodeId']) for a in other['sites'] for b in group['sites'])]
         group['series'] = 'S'+str(min([i]+upstream)+1)
     def drives_sampler(target):
@@ -978,21 +990,20 @@ def _migrate(plan, legacy):
                 plan['issues'].append({'level': 'warn', 'code': 'legacy-missing', 'nodeId': str(old['nodeId']), 'text': '旧的自定义目标不在工作流中'})
 
 
-def ensure_plan(workflow, slots=None, object_info=None):
+def ensure_plan(workflow, slots=None, object_info=None, *, adapters=()):
     slots = slots or {}
     plan = slots.get('plan', slots if slots.get('version') == 3 else {})
-    if plan.get('version') != 3 or plan.get('objectInfoHash') != info_hash(object_info) or plan.get('workflowHash') != info_hash(workflow):
-        plan = analyze(workflow, object_info, plan.get('manual'), slots)
+    if (adapters or any(g['kind'] == 'extension' for g in plan.get('lora', {}).get('groups', []))
+        or plan.get('version') != 3 or plan.get('objectInfoHash') != info_hash(object_info)
+        or plan.get('workflowHash') != info_hash(workflow)):
+        legacy = {'plan': plan} if slots.get('version') == 3 else slots
+        plan = analyze(workflow, object_info, plan.get('manual'), legacy, adapters=adapters)
     else:
         plan = copy.deepcopy(plan)
     for group in plan.get('lora', {}).get('groups', []):
-        occurrences = {}
-        for item in group.get('pinned', []):
-            name_key = _name_key(item['name'])
-            occurrence = occurrences.get(name_key, 0)
-            occurrences[name_key] = occurrence + 1
-            item.setdefault('key', _lora_key(group['key'], name_key, occurrence))
-            item.setdefault('enabled', True)
+        if group['kind'] in ('stack', 'object'):
+            group['pinned'] = _pinned(group['writer'], workflow, include_disabled=True)
+        group['pinned'] = keyed_loras(group['key'], group.get('pinned', []))
     return plan
 
 
@@ -1025,13 +1036,19 @@ def normalize_overrides(overrides):
                 raise LibraryError('LoRA 组标识无效或重复')
             seen_groups.add(key)
             raw_loras = raw_group.get('loras', [])
-            values = normalize_loras(raw_loras)
-            for raw_lora, value in zip(raw_loras, values, strict=True):
+            if not isinstance(raw_loras, list) or len(raw_loras) > 64:
+                raise LibraryError('LoRA 组覆盖条目必须是数组，最多 64 项')
+            values = []
+            seen_keys = set()
+            for raw_lora in raw_loras:
+                value = normalize_loras([raw_lora])[0]
+                if not value.get('key') or value['key'] in seen_keys:
+                    raise LibraryError('LoRA 组内每项都必须提供唯一稳定标识')
+                seen_keys.add(value['key'])
                 for optional in ('strength', 'enabled', 'clip'):
                     if optional not in raw_lora:
                         value.pop(optional, None)
-            if any(not item.get('key') for item in values):
-                raise LibraryError('LoRA 组内每项都必须提供稳定标识')
+                values.append(value)
             clean['groups'].append({'key': key, 'loras': values})
     for key in ('unpin', 'disabled'):
         if key in overrides:
@@ -1051,6 +1068,17 @@ def _lora_key(group_key, name_key, occurrence=0):
         (group_key + '\0' + name_key + '\0' + str(occurrence)).encode('utf-8')
     ).hexdigest()[:16]
     return f"{group_key}:{digest}"
+
+
+def keyed_loras(group_key, loras):
+    result, occurrences = copy.deepcopy(loras), {}
+    for item in result:
+        name_key = _name_key(item['name'])
+        occurrence = occurrences.get(name_key, 0)
+        occurrences[name_key] = occurrence + 1
+        item.setdefault('key', _lora_key(group_key, name_key, occurrence))
+        item.setdefault('enabled', True)
+    return result
 
 
 def merge_overrides(*overrides):
@@ -1105,20 +1133,22 @@ def merge_overrides(*overrides):
 
 def _merged(pinned, additions, unpin):
     unpin_keys = {_name_key(u) for u in unpin}
-    result = {_name_key(x['name']): copy.deepcopy(x) for x in pinned if _name_key(x['name']) not in unpin_keys}
+    result = [copy.deepcopy(item) for item in pinned if _name_key(item['name']) not in unpin_keys]
     for item in additions:
-        key = _name_key(item['name'])
-        merged = copy.deepcopy(item)
-        previous = result.get(key)
-        if previous:
-            if 'key' in merged and merged['key'] != previous.get('key'):
+        name = _name_key(item['name'])
+        matches = [index for index, row in enumerate(result) if _name_key(row['name']) == name]
+        if not matches:
+            result.append(copy.deepcopy(item))
+            continue
+        if 'key' in item:
+            matches = [index for index in matches if result[index].get('key') == item['key']]
+            if not matches:
                 raise LibraryError('LoRA 标识与工作流槽位不匹配')
-            if previous.get('key'):
-                merged.setdefault('key', previous['key'])
-            if 'enabled' in previous:
-                merged.setdefault('enabled', previous['enabled'])
-        result[key] = merged
-    return list(result.values())
+        for index in matches:
+            previous = result[index]
+            selection = {field: previous[field] for field in ('key', 'enabled') if field in previous}
+            result[index] = {**selection, **copy.deepcopy(item)}
+    return result
 
 
 def _apply_group_overrides(group, loras, overrides):
@@ -1139,6 +1169,26 @@ def _apply_group_overrides(group, loras, overrides):
     return loras
 
 
+def resolved_loras(group, groups, overrides, *, stable_keys=False):
+    """Resolve one destination identically for control discovery and compilation."""
+    local_names = {_name_key(item['name']) for item in group['pinned']}
+    unpin_keys = {_name_key(name) for name in overrides.get('unpin', [])}
+    upstream_names = {
+        _name_key(item['name'])
+        for other in groups if other['key'] in group.get('upstreamKeys', [])
+        for item in other['pinned'] if _name_key(item['name']) not in unpin_keys
+    }
+    additions = [
+        item for item in overrides.get('loras', [])
+        if _name_key(item['name']) in local_names
+        or group.get('append', True) and _name_key(item['name']) not in upstream_names
+    ]
+    final = _merged(group['pinned'], additions, overrides.get('unpin', []))
+    if stable_keys:
+        final = keyed_loras(group['key'], final)
+    return _apply_group_overrides(group, final, overrides.get('groups', []))
+
+
 def _write_object(wf, writer, loras):
     node = wf[writer['nodeId']]; path = writer['path']
     raw = node['inputs'][path]
@@ -1150,8 +1200,13 @@ def _write_object(wf, writer, loras):
         raise LibraryError('LoRA 对象条目无效，请重新分析')
     template = entries[0] if entries else {'name': '', 'strength': 1, 'active': True, 'clipStrength': 1}
     values = []
+    occurrences = {}
     for lora in loras:
-        e = copy.deepcopy(template)
+        name_key = _name_key(lora['name'])
+        occurrence = occurrences.get(name_key, 0)
+        occurrences[name_key] = occurrence + 1
+        originals = [entry for entry in entries if _name_key(entry.get('name', entry.get('lora', ''))) == name_key]
+        e = copy.deepcopy(originals[occurrence] if occurrence < len(originals) else template)
         e['lora' if 'lora' in e and 'name' not in e else 'name'] = lora['name']
         enabled = lora.get('enabled', True)
         e.update(strength=lora['strength'] if enabled else 0, active=enabled)
@@ -1167,15 +1222,15 @@ def _write_object(wf, writer, loras):
         )
 
 
-def apply(workflow, plan, overrides, object_info=None, positive=None):
+def apply(workflow, plan, overrides, object_info=None, positive=None, *, adapters=()):
     """Execute a v3 plan on an in-memory copy. Legacy callers are analyzed in Python."""
     plan = plan or {}
     plan = plan.get('plan', plan)
     if plan.get('version') != 3:
-        plan = analyze(workflow, object_info, legacy=plan)
+        plan = analyze(workflow, object_info, legacy=plan, adapters=adapters)
     clean = normalize_overrides(overrides)
     if clean.get('groups'):
-        plan = ensure_plan(workflow, {'plan': plan}, object_info)
+        plan = ensure_plan(workflow, {'plan': plan}, object_info, adapters=adapters)
     result, notices, writes = copy.deepcopy(workflow or {}), [], []
     disabled = set(clean.get('disabled', []))
     model = clean.get('model')
@@ -1204,7 +1259,8 @@ def apply(workflow, plan, overrides, object_info=None, positive=None):
     if 'loras' in clean or clean.get('unpin') or clean.get('groups'):
         groups = copy.deepcopy(plan['lora']['groups'])
         known_group_keys = {group['key'] for group in groups}
-        unknown_group_keys = {item['key'] for item in clean.get('groups', [])} - known_group_keys
+        requested_keys = {item['key'] for item in clean.get('groups', [])}
+        unknown_group_keys = requested_keys - known_group_keys
         if unknown_group_keys:
             raise LibraryError('LoRA 组标识与工作流槽位不匹配')
         if clean.get('loras') and plan['lora'].get('synth') and plan['lora']['synth'].get('enabled', True) and 'synth:'+plan['lora']['synth']['after']['nodeId'] not in disabled and not any(g.get('enabled', g['active']) and g['key'] not in disabled for g in groups):
@@ -1227,15 +1283,13 @@ def apply(workflow, plan, overrides, object_info=None, positive=None):
             groups.append({'key': 'synth:'+src, 'kind': 'chain', 'writer': {'nodeId': nid, 'chain': [desc], 'range': synth.get('range', {'min': -5, 'max': 5})},
                            'active': True, 'enabled': True, 'append': True, 'pinned': [], 'sites': [{'nodeId': nid, 'path': 'lora_name'}]})
         wrote = False
-        unpin_keys = {_name_key(u) for u in clean.get('unpin', [])}
         for group in groups:
             if group['key'] in disabled or not group.get('enabled', group['active']):
+                if group['key'] in requested_keys and group['key'] not in disabled:
+                    raise LibraryError('LoRA 组当前不可写入')
                 notices.append('跳过 LoRA '+group['key']+'：'+(group.get('warn') or '未勾选')); continue
-            local_names = {_name_key(l['name']) for l in group['pinned']}
-            upstream_names = {_name_key(l['name']) for other in groups if other['key'] in group.get('upstreamKeys', []) for l in other['pinned'] if _name_key(l['name']) not in unpin_keys}
-            additions = [l for l in clean.get('loras', []) if _name_key(l['name']) in local_names or (group.get('append', True) and _name_key(l['name']) not in upstream_names)]
-            final = _merged(group['pinned'], additions, clean.get('unpin', []))
-            final = _apply_group_overrides(group, final, clean.get('groups', []))
+            stable_keys = bool(clean.get('groups')) or any('key' in item for item in group['pinned'])
+            final = resolved_loras(group, groups, clean, stable_keys=stable_keys)
             if final == group['pinned']:
                 # Still count this as a valid destination for an empty user addition.
                 wrote = True
@@ -1248,37 +1302,7 @@ def apply(workflow, plan, overrides, object_info=None, positive=None):
             for site in group['sites']:
                 if site.get('active') is False and group['active']:
                     notices.append('跳过 LoRA 站点 '+site['nodeId']+':'+site['path']+'：'+site.get('reason', '不活跃'))
-            kind = group['kind']
-            if kind == 'chain':
-                _apply_chain(result, writer, final, notices)
-            elif kind == 'stack':
-                _apply_stack(result, writer, final)
-            elif kind == 'embedded':
-                active_loras = [item for item in final if item.get('enabled', True)]
-                if len(active_loras) > 1:
-                    raise LibraryError('此工作流的加载器最多 1 个 LoRA')
-                d = writer['chain'][0]
-                if not active_loras and not d['strengthPath']:
-                    raise LibraryError('内嵌 LoRA 没有强度字段，无法安全禁用')
-                if active_loras:
-                    _write_field(result, writer['nodeId'], writer['path'], active_loras[0]['name'])
-                for path, clip in [(d['strengthPath'], False), (d['clipPath'], True)]:
-                    if path:
-                        _write_field(result, writer['nodeId'], path, (active_loras[0].get('clip', active_loras[0]['strength']) if clip else active_loras[0]['strength']) if active_loras else 0)
-            elif kind == 'object':
-                _write_object(result, writer, final)
-            elif kind == 'syntax':
-                active_loras = [item for item in final if item.get('enabled', True)]
-                destinations = [group['origin']] if group.get('origin') else group['sites']
-                for site in destinations:
-                    if site.get('active') is False and group['active']:
-                        continue
-                    node = result[site['nodeId']]
-                    if _is_link(node['inputs'].get(site['path']), result):
-                        node['inputs'][site['path']] = ''
-                    _apply_syntax(result, {**site, 'nameFormat': 'path', 'placement': 'append', 'mirror': False}, active_loras, notices)
-            else:
-                raise LibraryError('未知 LoRA 写入形态：'+kind)
+            SA.write_group(result, group, final, notices, adapters)
             wrote = True
             if not group['active']:
                 notices.append('手动启用不活跃 LoRA 组 '+group['key'])
