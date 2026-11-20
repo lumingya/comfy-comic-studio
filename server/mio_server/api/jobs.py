@@ -6,15 +6,18 @@ import asyncio
 import contextlib
 from typing import Any, Literal
 
+import anyio
 from fastapi import WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
+from ..auth import AuthError
 from ..jobs.executors import ExecutorInfo, RebindExecutor
 from .deps import Ctx
 from .operations import Router as APIRouter
 
 router = APIRouter(tags=["jobs"])
 QUEUE_LIMIT = 500
+AUTH_RECHECK_SECONDS = 1.0
 
 
 class RetryRequest(BaseModel):
@@ -129,6 +132,7 @@ def delete_job(ctx: Ctx, job_id: str) -> None:
 async def job_socket(ws: WebSocket, job_id: str | None = None, previews: bool = True) -> None:
     """Pushes every engine event (``submitted``, ``sent``, ``progress``, ``complete`` …)."""
     ctx = ws.app.state.ctx
+    token = getattr(ws.state, "api_token", None)
     await ws.accept()
     loop = asyncio.get_running_loop()
     queue: asyncio.Queue = asyncio.Queue(maxsize=QUEUE_LIMIT)
@@ -142,24 +146,50 @@ async def job_socket(ws: WebSocket, job_id: str | None = None, previews: bool = 
             loop.call_soon_threadsafe(_offer, queue, event)
 
     unsubscribe = ctx.engine.subscribe(push)
+    getter = receiver = None
+
+    def revalidate() -> None:
+        if token is not None:
+            ctx.tokens.revalidate(token, scope="read")
+
+    async def send(event: dict) -> None:
+        revalidate()
+        await ws.send_json(event)
+
     try:
-        await ws.send_json({"type": "hello", "active": ctx.engine.list(active_only=True)})
+        await send({"type": "hello", "active": ctx.engine.list(active_only=True)})
+        getter = asyncio.create_task(queue.get())
+        receiver = asyncio.create_task(ws.receive_text())
         while True:
-            getter = asyncio.ensure_future(queue.get())
-            receiver = asyncio.ensure_future(ws.receive_text())
-            done, pending = await asyncio.wait(
-                {getter, receiver}, return_when=asyncio.FIRST_COMPLETED
+            done, _ = await asyncio.wait(
+                {getter, receiver},
+                timeout=AUTH_RECHECK_SECONDS if token is not None else None,
+                return_when=asyncio.FIRST_COMPLETED,
             )
-            for task in pending:
-                task.cancel()
             if receiver in done:
                 receiver.result()  # raises WebSocketDisconnect when the client leaves
-                continue
-            await ws.send_json(getter.result())
+                receiver = asyncio.create_task(ws.receive_text())
+            if getter in done:
+                await send(getter.result())
+                getter = asyncio.create_task(queue.get())
+            else:
+                # Idle timeouts/client messages must also release expired credentials.
+                revalidate()
+    except AuthError as exc:
+        await ws.close(code=1008, reason=str(exc))
     except WebSocketDisconnect:
         pass
     finally:
         unsubscribe()
+        tasks = [task for task in (getter, receiver) if task is not None]
+        for task in tasks:
+            task.cancel()
+        # The ASGI request may already be inside a canceled scope on disconnect.
+        with anyio.CancelScope(shield=True):
+            await asyncio.gather(*tasks, return_exceptions=True)
+        # Release queued preview payloads rather than retaining them until later GC.
+        while not queue.empty():
+            queue.get_nowait()
 
 
 def _offer(queue: asyncio.Queue, event: dict) -> None:

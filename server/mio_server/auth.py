@@ -121,6 +121,21 @@ class TokenStore:
         self.store = store
         self._touched: dict[str, float] = {}
 
+    def revalidate(self, original: ApiToken, *, scope: Scope) -> None:
+        """Check a live connection's original credential without updating its activity."""
+        from .storage import NotFound
+
+        try:
+            current: ApiToken = self.store.get_doc("api_token", original.id)
+        except NotFound:
+            raise AuthError("API 令牌不存在或已撤销") from None
+        if not hmac.compare_digest(current.secret_hash, original.secret_hash):
+            raise AuthError("API 令牌不存在或已撤销")
+        if current.expired():
+            raise AuthError("API 令牌已过期")
+        if scope not in current.scopes:
+            raise AuthError(f"令牌缺少权限：{scope}", 403)
+
     def verify(self, raw: str, method: str, path: str, *, scope: Scope | None = None) -> ApiToken:
         from .storage import NotFound
 
