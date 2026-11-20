@@ -1,0 +1,75 @@
+{
+  "id": "variant-workshop",
+  "name": "批量变体工坊",
+  "version": "1.0.0",
+  "description": "从设定集角色与画风派生原生版本，明确生成、对比采用与导出。",
+  "contributes": {
+    "panels": [
+      {
+        "id": "variants",
+        "slot": "episode",
+        "title": "变体工坊",
+        "entry": "panel.html",
+        "requests": [
+          {
+            "id": "episode",
+            "method": "GET",
+            "path": "/episodes/{episode_id}",
+            "scope": "read"
+          },
+          {
+            "id": "series",
+            "method": "GET",
+            "path": "/series/{series_id}",
+            "scope": "read"
+          },
+          {
+            "id": "variants",
+            "method": "POST",
+            "path": "/series/{series_id}/variants",
+            "scope": "write"
+          },
+          {
+            "id": "render",
+            "method": "POST",
+            "path": "/episodes/{episode_id}/render",
+            "scope": "render"
+          },
+          {
+            "id": "job",
+            "method": "GET",
+            "path": "/jobs/{job_id}",
+            "scope": "read"
+          },
+          {
+            "id": "adopt",
+            "method": "POST",
+            "path": "/episodes/{episode_id}/takes/{take_id}/adopt",
+            "scope": "write"
+          },
+          {
+            "id": "take-image",
+            "method": "GET",
+            "path": "/episodes/{episode_id}/takes/{take_id}/image",
+            "scope": "read",
+            "response": "image"
+          },
+          {
+            "id": "export-album",
+            "method": "POST",
+            "path": "/export/album",
+            "scope": "write",
+            "response": "download"
+          },
+          {
+            "id": "export-pdf",
+            "method": "POST",
+            "path": "/export/portable",
+            "scope": "write",
+            "response": "download"
+          }
+        ]
+      }
+    ]
+  }
+}

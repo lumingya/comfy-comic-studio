@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>批量变体工坊</title>
+    <link rel="stylesheet" href="panel.css" />
+    <script src="model.js" defer></script>
+    <script src="bridge.js" defer></script>
+    <script src="panel.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <h1>批量变体工坊</h1>
+      <button id="load" disabled>读取作品</button>
+    </header>
+    <p class="muted">
+      复用设定集角色与画风。派生只保存版本；生成消耗已配置渠道的额度，候选需明确采用。
+    </p>
+    <p id="status" role="status">正在连接面板…</p>
+    <main id="workspace" hidden>
+      <section aria-labelledby="derive-title">
+        <h2 id="derive-title">派生版本</h2>
+        <label
+          >名称前缀 <input id="prefix" maxlength="40" placeholder="本轮"
+        /></label>
+        <label
+          >要替换外观的角色
+          <select id="target"></select
+        ></label>
+        <div class="choices">
+          <fieldset>
+            <legend>画风预设（不选则沿用）</legend>
+            <div id="styles"></div>
+          </fieldset>
+          <fieldset>
+            <legend>角色外观预设（不选则沿用）</legend>
+            <div id="characters"></div>
+          </fieldset>
+        </div>
+        <button id="derive">保存派生版本</button>
+      </section>
+      <section aria-labelledby="generate-title">
+        <h2 id="generate-title">生成与进度</h2>
+        <div id="versions"></div>
+        <div class="toolbar">
+          <label
+            >每幕候选
+            <input id="candidates" type="number" min="1" max="16" value="1"
+          /></label>
+          <button id="render">生成勾选版本</button>
+          <button id="refresh">刷新候选与进度</button>
+        </div>
+        <p id="job" class="muted"></p>
+      </section>
+      <section aria-labelledby="compare-title">
+        <h2 id="compare-title">对比与采用</h2>
+        <div class="toolbar">
+          <label
+            >分幕
+            <select id="panel"></select
+          ></label>
+          <label
+            >版本
+            <select id="version"></select
+          ></label>
+          <button id="show">读取候选</button>
+        </div>
+        <p class="muted">
+          最多同时读取两张原图对比。采用只影响同一分幕、同一版本，原版画面保留。
+        </p>
+        <div id="takes"></div>
+        <div id="comparison" class="comparison"></div>
+      </section>
+      <section aria-labelledby="export-title">
+        <h2 id="export-title">导出当前版本</h2>
+        <p class="muted">导出上方选中的版本；未采用的分幕不会成为成品。</p>
+        <div class="toolbar">
+          <select id="format" aria-label="导出格式">
+            <option value="html">典藏画集 HTML</option>
+            <option value="pdf">PDF</option>
+          </select>
+          <button id="export">准备下载</button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>动态漫工作台</title>
+    <link rel="stylesheet" href="panel.css" />
+    <script src="bridge.js" defer></script>
+    <script src="panel.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <h1>动态漫工作台</h1>
+      <button id="load" disabled>读取本话镜头</button>
+    </header>
+    <p id="status" role="status">正在连接面板…</p>
+    <div id="discard-confirm" hidden role="group" aria-label="重新读取确认">
+      <p>重新读取会放弃尚未保存的镜头草稿。</p>
+      <button id="discard">放弃草稿并重新读取</button>
+      <button id="keep">保留草稿</button>
+    </div>
+    <main id="editor" hidden>
+      <div class="workspace">
+        <section class="preview" aria-label="当前镜头预览">
+          <div id="stage" data-aspect="portrait">
+            <div id="camera"><img id="image" alt="" hidden /></div>
+            <p id="blank">尚未读取采用图</p>
+          </div>
+          <div class="playbar">
+            <button id="play" disabled>预览本镜</button>
+            <label class="scrubber"
+              >进度<input id="scrub" type="range" min="0" max="100" value="0"
+            /></label>
+          </div>
+          <p id="subtitle" class="subtitle"></p>
+          <small>镜头预览使用采用原图。导出时可选择保存的排版与嵌字。</small>
+        </section>
+        <section class="settings" aria-labelledby="shot-title">
+          <h2 id="shot-title">选择镜头</h2>
+          <p id="shot-description"></p>
+          <label>镜头运动<select id="move"></select></label>
+          <label
+            >停留秒数<input
+              id="hold"
+              type="number"
+              min="0.5"
+              max="30"
+              step="0.1"
+              placeholder="按台词自动"
+          /></label>
+          <small id="automatic"></small>
+          <div class="actions">
+            <button id="automatic-reset">按分镜与台词自动</button>
+            <button id="save">保存当前镜头</button>
+          </div>
+          <p id="dirty" aria-live="polite"></p>
+          <h2>离线播放器</h2>
+          <label
+            >画幅<select id="aspect">
+              <option value="portrait">竖屏 · 9:16</option>
+              <option value="landscape">横屏 · 16:9</option>
+            </select></label
+          >
+          <label class="check"
+            ><input
+              id="lettered"
+              type="checkbox"
+              checked
+            />使用保存的排版与嵌字</label
+          >
+          <label class="check"
+            ><input id="subtitles" type="checkbox" checked />默认显示字幕</label
+          >
+          <label class="check"
+            ><input id="voice" type="checkbox" />浏览器朗读（需本机语音）</label
+          >
+          <button id="export">导出离线预览 HTML</button>
+          <small
+            >导出完成后，点击宿主面板的下载按钮保存。文件可独立打开，无需联网。</small
+          >
+        </section>
+      </div>
+      <section class="timeline" aria-label="镜头列表">
+        <h2>镜头列表 <small id="total"></small></h2>
+        <div id="shots" role="list"></div>
+      </section>
+    </main>
+  </body>
+</html>

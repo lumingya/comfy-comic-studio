@@ -1,0 +1,50 @@
+{
+  "id": "motion-studio",
+  "name": "动态漫工作台",
+  "version": "1.0.0",
+  "description": "逐镜调整镜头与台词时长，预览采用图并导出离线动态漫播放器。",
+  "contributes": {
+    "panels": [
+      {
+        "id": "motion",
+        "slot": "episode",
+        "title": "动态漫",
+        "entry": "panel.html",
+        "requests": [
+          {
+            "id": "episode",
+            "method": "GET",
+            "path": "/episodes/{episode_id}",
+            "scope": "read"
+          },
+          {
+            "id": "motion-plan",
+            "method": "GET",
+            "path": "/episodes/{episode_id}/motion-plan",
+            "scope": "read"
+          },
+          {
+            "id": "patch-panel",
+            "method": "PATCH",
+            "path": "/episodes/{episode_id}/panels/{panel_id}",
+            "scope": "write"
+          },
+          {
+            "id": "take-image",
+            "method": "GET",
+            "path": "/episodes/{episode_id}/takes/{take_id}/image",
+            "scope": "read",
+            "response": "image"
+          },
+          {
+            "id": "export-motion",
+            "method": "POST",
+            "path": "/export/motion",
+            "scope": "write",
+            "response": "download"
+          }
+        ]
+      }
+    ]
+  }
+}
