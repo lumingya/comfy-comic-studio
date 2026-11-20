@@ -554,10 +554,12 @@ describe('every route mounts with API data', () => {
       'GET /api/album-templates': [
         tpl('export-seamless', '无缝 · 纯图阅读'),
         tpl('mio-fit', '留白 · 完整画面'),
-        tpl('export-paper', '海风来信 · 电影长卷'),
+        tpl('export-monograph', '典藏画集 · Monograph'),
       ],
       'POST /api/export/album': () =>
-        new Response('<!doctype html><p>paper</p>', { headers: { 'content-type': 'text/html' } }),
+        new Response('<!doctype html><p>monograph</p>', {
+          headers: { 'content-type': 'text/html' },
+        }),
     });
     localStorage.removeItem('mio.reader.look');
     mount('/gallery/ser_1/export');
@@ -568,15 +570,15 @@ describe('every route mounts with API data', () => {
     expect(choices.map((choice) => choice.getAttribute('aria-label'))).toEqual([
       '留白 · 完整画面',
       '无缝 · 纯图阅读',
-      '海风来信 · 电影长卷',
+      '典藏画集 · Monograph',
     ]);
-    fireEvent.click(within(layouts).getByRole('button', { name: '海风来信 · 电影长卷' }));
+    fireEvent.click(within(layouts).getByRole('button', { name: '典藏画集 · Monograph' }));
     const frame = await screen.findByTitle('展示模板预览');
-    expect(frame.getAttribute('srcdoc')).toContain('paper');
+    expect(frame.getAttribute('srcdoc')).toContain('monograph');
     expect(screen.queryByAltText('第 1 格')).toBeNull();
     const call = calls.find((c) => c.url === '/api/export/album');
-    expect(call?.body).toMatchObject({ episode_ids: ['ep_1'], template_id: 'export-paper' });
-    expect(within(layouts).getByRole('button', { name: '海风来信 · 电影长卷' })).toHaveAttribute(
+    expect(call?.body).toMatchObject({ episode_ids: ['ep_1'], template_id: 'export-monograph' });
+    expect(within(layouts).getByRole('button', { name: '典藏画集 · Monograph' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );

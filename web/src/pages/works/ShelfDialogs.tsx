@@ -103,9 +103,9 @@ export function RenameBooks(props: {
 const lastLook = () => {
   try {
     const look = localStorage.getItem('mio.reader.look') ?? '';
-    return look && look !== 'mio-fit' ? look : 'export-paper';
+    return look && look !== 'mio-fit' ? look : 'export-monograph';
   } catch {
-    return 'export-paper';
+    return 'export-monograph';
   }
 };
 
@@ -138,10 +138,10 @@ export function ExportBooks(props: {
     () => [...(templates.data ?? [])].sort((a, b) => templateRank(a.id) - templateRank(b.id)),
     [templates.data],
   );
-  // A template that was deleted since falls back to the paper one.
+  // A template that was deleted since falls back to the default collection edition.
   const templateId = list.some((x) => x.id === picked)
     ? picked
-    : ((list.find((x) => x.id === 'export-paper') ?? list[0])?.id ?? picked);
+    : ((list.find((x) => x.id === 'export-monograph') ?? list[0])?.id ?? picked);
   const run = async () => {
     if (busy || !props.books.length) return;
     setBusy(true);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseTemplateFile, TemplateFileError } from './templateFile';
+import { parseTemplateFile, templateRank, TemplateFileError } from './templateFile';
 
 const messages = {
   invalid: 'invalid',
@@ -12,6 +12,25 @@ const HTML =
   '<!doctype html><html><head><title>夏日长卷</title></head><body>' +
   '<table>{{#books}}<tr>{{#frames}}<td><img src="{{image}}"></td>{{/frames}}</tr>{{/books}}</table>' +
   '</body></html>';
+
+it('keeps the three offline editions together after the reader essentials', () => {
+  const ids = [
+    'my-import',
+    'export-folio',
+    'export-nocturne',
+    'mio-fit',
+    'export-monograph',
+    'export-seamless',
+  ];
+  expect(ids.sort((a, b) => templateRank(a) - templateRank(b))).toEqual([
+    'mio-fit',
+    'export-seamless',
+    'export-monograph',
+    'export-nocturne',
+    'export-folio',
+    'my-import',
+  ]);
+});
 
 describe('parseTemplateFile', () => {
   it('imports a JSON document as an independent copy', () => {

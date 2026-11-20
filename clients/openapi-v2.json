@@ -81,7 +81,7 @@
       "title": "Template"
      },
      "template_id": {
-      "default": "export-paper",
+      "default": "export-monograph",
       "title": "Template Id",
       "type": "string"
      },
@@ -207,7 +207,7 @@
       "title": "Template"
      },
      "template_id": {
-      "default": "export-paper",
+      "default": "export-monograph",
       "title": "Template Id",
       "type": "string"
      },

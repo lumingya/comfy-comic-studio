@@ -18,7 +18,7 @@ router = APIRouter(tags=["album"])
 
 class AlbumExport(BaseModel):
     episode_ids: list[str] = Field(min_length=1, max_length=50)
-    template_id: str = "export-paper"
+    template_id: str = "export-monograph"
     template: dict | None = Field(
         default=None,
         description="An unsaved template draft (模板工作室 live preview); validated like an import "

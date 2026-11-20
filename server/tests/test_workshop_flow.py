@@ -113,7 +113,7 @@ class WorkshopFlowTests(ApiCase):
         adapters = self.ok(self.client.get("/api/v2/image-adapters", headers=self.headers))
         self.assertTrue(adapters)
         templates = self.ok(self.client.get("/api/v2/album-templates", headers=self.headers))
-        self.assertIn("export-atelier", {item["id"] for item in templates})
+        self.assertIn("export-monograph", {item["id"] for item in templates})
         task_options = {
             "workflow_id": workflow["id"],
             "preset_ids": [preset["id"]],
@@ -165,7 +165,7 @@ class WorkshopFlowTests(ApiCase):
             with self.subTest(fmt=fmt):
                 body = {"format": fmt, "idempotency_key": f"book-{fmt}"}
                 if fmt == "html":
-                    body["template_id"] = "export-atelier"
+                    body["template_id"] = "export-monograph"
                 response = self.client.post(route + "/export", headers=writer, json=body)
                 export = self.ok(response, 202)
                 job_id = export["job_id"]

@@ -1,9 +1,11 @@
 .mio-controls,
 .mio-tray,
 .cc-lightbox {
-  color: #fff;
-  background: #17191f;
-  font: 14px system-ui;
+  color: #ece7df;
+  background: #111318ed;
+  -webkit-backdrop-filter: blur(22px) saturate(115%);
+  backdrop-filter: blur(22px) saturate(115%);
+  font: 12px/1.5 system-ui, sans-serif;
 }
 .mio-controls button,
 .mio-tray button,
@@ -12,10 +14,19 @@
   padding: 6px 10px;
   font: inherit;
   color: inherit;
-  border: 1px solid #ffffff42;
-  border-radius: 8px;
-  background: #ffffff12;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
   cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+.mio-controls button:hover:not(:disabled),
+.mio-tray button:hover,
+.cc-lightbox button:hover:not(:disabled),
+.mio-controls button[aria-pressed="true"],
+.cc-lightbox button[aria-pressed="true"] {
+  background: #c4a47c14;
+  border-color: #c4a47c55;
 }
 .mio-controls button:disabled,
 .cc-lightbox button:disabled {
@@ -25,7 +36,7 @@
 .mio-controls button:focus-visible,
 .mio-tray button:focus-visible,
 .cc-lightbox button:focus-visible {
-  outline: 2px solid #fff;
+  outline: 2px solid #c4a47c;
   outline-offset: 2px;
 }
 .mio-controls,
@@ -37,10 +48,10 @@
   width: max-content;
   max-width: calc(100% - 16px);
   box-sizing: border-box;
-  border: 1px solid #ffffff35;
-  border-radius: 16px;
-  box-shadow: 0 10px 32px #0006;
-  padding: 8px 10px;
+  border: 1px solid #c4a47c26;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px #0005, inset 0 1px 0 #ffffff08;
+  padding: 7px 10px;
 }
 .mio-controls {
   bottom: max(10px, env(safe-area-inset-bottom));
@@ -48,7 +59,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   transition: opacity 0.2s ease;
 }
 .mio-controls[data-idle]:not(:focus-within):not(:hover) {
@@ -64,8 +75,21 @@
 .mio-controls progress {
   flex-basis: 100%;
   width: 100%;
-  height: 3px;
-  accent-color: #cdd4ff;
+  height: 2px;
+  border: 0;
+  border-radius: 0;
+  appearance: none;
+  background: #c4a47c24;
+  accent-color: #c4a47c;
+}
+.mio-controls progress::-webkit-progress-bar {
+  background: #c4a47c24;
+}
+.mio-controls progress::-webkit-progress-value {
+  background: #c4a47c;
+}
+.mio-controls progress::-moz-progress-bar {
+  background: #c4a47c;
 }
 .mio-tray {
   bottom: max(106px, calc(env(safe-area-inset-bottom) + 96px));
@@ -90,8 +114,8 @@
   white-space: nowrap;
 }
 .mio-thumbnails button[aria-current] {
-  border-color: #fff;
-  background: #ffffff35;
+  border-color: #c4a47c88;
+  background: #c4a47c1c;
 }
 .mio-thumbnails img {
   width: 100%;
@@ -145,7 +169,7 @@ body[data-mio-paged] [data-cc-frame] {
   transition: opacity 0.35s ease;
 }
 .mio-ambient > [data-visible] {
-  opacity: 0.3;
+  opacity: 0.11;
 }
 .cc-lightbox {
   display: flex;
@@ -156,7 +180,7 @@ body[data-mio-paged] [data-cc-frame] {
   inset: 0;
   z-index: 110;
   padding: 8px;
-  background: #0a0c0ef5;
+  background: #0a0b0ef2;
   box-sizing: border-box;
 }
 .cc-lightbox figure {

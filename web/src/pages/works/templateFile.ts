@@ -74,19 +74,17 @@ export function parseTemplateFile(
   };
 }
 
-/** The legacy 版式 list order: 原图适配, 无缝, 余光, 海风来信, 墨与叙事, 白昼美术馆, 深夜放映室. */
-const LEGACY_ORDER = [
+/** Reader essentials first, followed by the three curated offline editions. */
+const BUILTIN_ORDER = [
   'mio-fit',
   'export-seamless',
-  'export-afterglow',
-  'export-paper',
-  'export-ink',
-  'export-gallery',
-  'export-flip',
+  'export-monograph',
+  'export-nocturne',
+  'export-folio',
 ];
 
-/** Sort key for a template id: the legacy order first, imported templates after it. */
+/** Built-in reading order, with independent imported templates after it. */
 export function templateRank(id: string): number {
-  const i = LEGACY_ORDER.indexOf(id);
-  return i < 0 ? LEGACY_ORDER.length : i;
+  const i = BUILTIN_ORDER.indexOf(id);
+  return i < 0 ? BUILTIN_ORDER.length : i;
 }

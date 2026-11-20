@@ -39,14 +39,14 @@ function mount(overrides: Partial<ComponentProps<typeof PresentationDrawer>> = {
   let current = overrides;
   function Harness() {
     const [draft, setDraft] = useState(defaultDraft);
-    const [look, setLook] = useState('export-paper');
+    const [look, setLook] = useState('export-monograph');
     return (
       <PresentationDrawer
         open
         onClose={onClose}
         templates={[
-          { id: 'export-paper', title: '纸页', description: '' },
-          { id: 'export-gallery', title: '展册', description: '' },
+          { id: 'export-monograph', title: '典藏画集', description: '' },
+          { id: 'export-nocturne', title: '暗房放映', description: '' },
         ]}
         infos={[]}
         look={look}
@@ -104,7 +104,7 @@ it.each(['html', 'pdf', 'zip'])(
     expect(screen.queryByRole('group', { name: '画册版式' }) !== null).toBe(format === 'html');
     expect(screen.queryByLabelText('包含旁白与台词') !== null).toBe(format !== 'pdf');
     expect(screen.queryByLabelText('平台预设')).toBeNull();
-    if (format === 'html') fireEvent.click(screen.getByRole('button', { name: '展册' }));
+    if (format === 'html') fireEvent.click(screen.getByRole('button', { name: '暗房放映' }));
     fireEvent.change(screen.getByLabelText(/^图片处理/), { target: { value: 'publish' } });
     run();
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
@@ -118,7 +118,7 @@ it.each(['html', 'pdf', 'zip'])(
       title: '海风来信',
       lettered: true,
       image_profile: 'publish',
-      ...(format === 'html' ? { template_id: 'export-gallery', signature: 'Mio' } : { format }),
+      ...(format === 'html' ? { template_id: 'export-nocturne', signature: 'Mio' } : { format }),
     });
     expect(calls.some((call) => call.url.includes('/bundle'))).toBe(false);
   },
@@ -392,12 +392,12 @@ it('selects visual template cards and opens a sandboxed full-screen trial read',
   });
   mount();
   choose('html');
-  fireEvent.click(screen.getByRole('button', { name: '展册' }));
-  expect(screen.getByRole('button', { name: '展册' })).toHaveAttribute('aria-pressed', 'true');
+  fireEvent.click(screen.getByRole('button', { name: '暗房放映' }));
+  expect(screen.getByRole('button', { name: '暗房放映' })).toHaveAttribute('aria-pressed', 'true');
   fireEvent.click(screen.getByText('更多设置'));
   fireEvent.change(screen.getByLabelText('主题色'), { target: { value: '#315b86' } });
   expect(
-    screen.getByRole('button', { name: '展册' }).querySelector('.export-template-thumb'),
+    screen.getByRole('button', { name: '暗房放映' }).querySelector('.export-template-thumb'),
   ).toHaveStyle({
     '--thumb-accent': '#315b86',
   });
@@ -405,7 +405,7 @@ it('selects visual template cards and opens a sandboxed full-screen trial read',
   const frame = await screen.findByTitle('画册全屏试读');
   expect(frame).toHaveAttribute('sandbox', 'allow-scripts allow-popups');
   expect(calls.filter((call) => call.url === '/api/export/album').at(-1)?.body).toMatchObject({
-    template_id: 'export-gallery',
+    template_id: 'export-nocturne',
     theme_color: '#315b86',
     image_profile: 'preview',
   });

@@ -203,6 +203,9 @@ assembled = mio.assemble(request)
   最近的出图作业和 `ready`。每个分幕都有可读取的采用图时 `ready` 为真。
 - `POST /episodes/{episode_id}/deliverables/export` 需要 `write`，返回 202 和 `job_id`。
   `format` 支持 `html`、`pdf`、`zip`、`png`，HTML 可传 `template_id`。
+  默认 `export-monograph`（典藏画集）使用暖白棉纸与作品铭牌；另有
+  `export-nocturne`（暗房放映）和 `export-folio`（精装对页）。三套均是完整离线 HTML，
+  保留完整导出画面、目录、灯箱与单／双页阅读；`mio-fit` 与 `export-seamless` 保留基础阅读用途。
   成品状态查询和导出均可选 `variant_id`。导出使用队列快照，可传 `idempotency_key`，
   通过 `GET /jobs/{job_id}` 查看进度，完成后用 `GET /export/jobs/{job_id}/file` 下载。
   查询作业和下载需要 `read`。
@@ -278,7 +281,7 @@ if task["job"]["state"] != "completed":
 saved = mio.save_episode_deliverable(
     task["episode"]["id"],
     Path("my-book.html"),
-    template_id="export-atelier",
+    template_id="export-monograph",
     idempotency_key="my-book-html-001",
 )
 print(saved)

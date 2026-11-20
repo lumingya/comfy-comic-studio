@@ -12,7 +12,7 @@ const books = [
 ] as SeriesCard[];
 const page = (id: string) => ({ items: [{ id }], total: 1 });
 const routes = () => ({
-  'GET /api/album-templates': [{ id: 'export-paper', title: '纸页', description: '' }],
+  'GET /api/album-templates': [{ id: 'export-monograph', title: '典藏画集', description: '' }],
   'GET /api/settings': { signature: 'Mio' },
   'GET /api/series/a/episodes': page('ep-a'),
   'GET /api/series/b/episodes': page('ep-b'),
@@ -29,6 +29,7 @@ const mount = () => {
 };
 
 beforeEach(() => {
+  localStorage.clear();
   vi.stubGlobal(
     'URL',
     Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:test'), revokeObjectURL: vi.fn() }),
@@ -36,6 +37,7 @@ beforeEach(() => {
   vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
 });
 afterEach(() => {
+  localStorage.clear();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   useToasts.getState().items.forEach((item) => useToasts.getState().dismiss(item.id));
@@ -50,9 +52,9 @@ it.each(['html', 'pdf', 'zip'])(
       'POST /api/export/portable': {},
     });
     const close = mount();
-    await screen.findByRole('option', { name: '纸页' });
+    await screen.findByRole('option', { name: '典藏画集' });
     choose(format);
-    expect(screen.queryByRole('option', { name: '纸页' }) !== null).toBe(format === 'html');
+    expect(screen.queryByRole('option', { name: '典藏画集' }) !== null).toBe(format === 'html');
     run();
     await waitFor(() => expect(close).toHaveBeenCalledWith(false));
     const requests = calls.filter((call) => call.method === 'POST');
@@ -65,7 +67,7 @@ it.each(['html', 'pdf', 'zip'])(
       lettered: true,
     });
     expect(requests[0].body).toMatchObject(
-      format === 'html' ? { template_id: 'export-paper', signature: 'Mio' } : { format },
+      format === 'html' ? { template_id: 'export-monograph', signature: 'Mio' } : { format },
     );
   },
 );
@@ -80,11 +82,31 @@ it('blocks a merge over 50 episodes without silently truncating or downloading',
     'POST /api/export/album': {},
   });
   const close = mount();
-  await screen.findByRole('option', { name: '纸页' });
+  await screen.findByRole('option', { name: '典藏画集' });
   run();
   expect(await screen.findByRole('alert')).toBeInTheDocument();
   expect(calls.some((call) => call.method === 'POST')).toBe(false);
   expect(close).not.toHaveBeenCalled();
+});
+
+it('uses Monograph after a previously selected template is removed', async () => {
+  localStorage.setItem('mio.reader.look', 'removed-template');
+  const calls = mockFetch({
+    ...routes(),
+    'GET /api/album-templates': [
+      { id: 'export-nocturne', title: '暗房放映', description: '' },
+      { id: 'export-monograph', title: '典藏画集', description: '' },
+    ],
+    'POST /api/export/album': {},
+  });
+  const close = mount();
+  await screen.findByRole('option', { name: '典藏画集' });
+  expect(screen.getAllByRole('combobox')[1]).toHaveValue('export-monograph');
+  run();
+  await waitFor(() => expect(close).toHaveBeenCalledWith(false));
+  expect(calls.find((call) => call.url === '/api/export/album')?.body).toMatchObject({
+    template_id: 'export-monograph',
+  });
 });
 
 it('downloads source bundles directly and retries only unfinished albums after a partial failure', async () => {

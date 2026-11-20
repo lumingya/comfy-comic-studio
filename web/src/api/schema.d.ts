@@ -3349,7 +3349,7 @@ export interface components {
             episode_ids: string[];
             /**
              * Template Id
-             * @default export-paper
+             * @default export-monograph
              */
             template_id?: string;
             /**
@@ -3421,7 +3421,7 @@ export interface components {
             episode_ids: string[];
             /**
              * Template Id
-             * @default export-paper
+             * @default export-monograph
              */
             template_id?: string;
             /**

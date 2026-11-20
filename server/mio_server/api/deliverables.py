@@ -110,7 +110,7 @@ def export_episode_deliverable(
         kind = "album"
         options = AlbumExport(
             episode_ids=[episode_id],
-            template_id=body.template_id or "export-paper",
+            template_id=body.template_id or "export-monograph",
             variant_id=body.variant_id,
             image_profile="auto",
         ).model_dump()

@@ -11,7 +11,7 @@ from pathlib import Path
 from PIL import Image
 
 from mio_server.album.build import data_url, palette
-from mio_server.album.render import AlbumOptions, Book, Frame, render_album
+from mio_server.album.render import AlbumOptions, Book, Frame, render_album, runtime_css
 from mio_server.album.templates import (
     AlbumTemplate,
     TemplateError,
@@ -102,7 +102,7 @@ class TemplateTests(unittest.TestCase):
 
     def test_every_builtin_renders_offline_and_safely(self):
         templates = builtin_templates()
-        self.assertEqual(len(templates), 13)
+        self.assertEqual(len(templates), 5)
         for tpl in templates:
             with self.subTest(tpl.id):
                 doc = render_album(tpl, books(), AlbumOptions(show_prompts=True, signature="Mio"))
@@ -122,27 +122,25 @@ class TemplateTests(unittest.TestCase):
                 key = steps[1]["image"]["$mioImage"]
                 self.assertEqual(len(re.findall(f'data-mio-asset="{key}"', doc)), 1)
 
-    def test_six_new_builtin_styles_are_distinct_and_v1_compatible(self):
+    def test_three_curated_builtin_styles_are_distinct_and_v1_compatible(self):
         expected = {
-            "export-atelier": ("gallery", "box-shadow:0 18px 52px", "ATELIER · 展厅典藏"),
-            "export-folio": ("folio", "border-right:1px solid", "FOLIO · 典藏精装"),
-            "export-cinema": ("cinema", "repeating-linear-gradient", "CINEMA · 暗房放映"),
-            "export-editorial": ("editorial", "grid-template-columns:4rem", "EDITORIAL · 杂志社论"),
-            "export-contact": ("contact", "rotate(-.3deg)", "CONTACT · 胶片印样"),
-            "export-chromatic": (
-                "chromatic",
-                "color-mix(in srgb,var(--accent) 15%",
-                "CHROMATIC · 流光长卷",
-            ),
+            "export-monograph": ("gallery", "双栏作品铭牌", "典藏画集 · Monograph"),
+            "export-nocturne": ("cinema", "影展字幕", "暗房放映 · Nocturne"),
+            "export-folio": ("folio", "中缝光影", "精装对页 · Folio"),
         }
         templates = {template.id: template for template in builtin_templates()}
-        self.assertTrue(set(expected) <= templates.keys())
+        self.assertEqual(set(templates), {*expected, "mio-fit", "export-seamless"})
         for template_id, (layout, marker, title) in expected.items():
             with self.subTest(template_id):
                 template = templates[template_id]
                 self.assertEqual(template.formatVersion, 1)
                 self.assertEqual(template.layout, layout)
-                self.assertIn(marker, template.html)
+                self.assertIn(marker, template.description)
+                self.assertIn("text-wrap:balance", template.html)
+                self.assertIn("width:8px;height:8px", template.html)
+                self.assertIn(
+                    "height:auto;max-width:100%;max-height:none;object-fit:contain", template.html
+                )
                 self.assertNotIn("<script", template.html.lower())
                 self.assertIn("{{#books}}", template.html)
                 self.assertIn("{{#frames}}", template.html)
@@ -157,6 +155,14 @@ class TemplateTests(unittest.TestCase):
         doc = render_album(tpl, books(), AlbumOptions(show_captions=False))
         self.assertNotIn("林：走吧", doc)
         self.assertNotIn("1girl", doc)
+
+    def test_reader_chrome_is_quiet_and_keeps_the_paper_visible(self):
+        css = runtime_css()
+        self.assertIn("backdrop-filter: blur(22px)", css)
+        self.assertIn("height: 2px", css)
+        self.assertIn("accent-color: #c4a47c", css)
+        self.assertIn("opacity: 0.11", css)
+        self.assertNotIn("border: 1px solid #ffffff", css)
 
     def test_validation(self):
         base = {"id": "t", "title": "T", "html": MINIMAL}
@@ -214,7 +220,7 @@ class AlbumApiTests(ApiCase):
     def test_export_album_lettered_and_raw(self):
         _, ep = self.make_episode()
         ep = adopt_two_frames(self, ep)
-        body = {"episode_ids": [ep["id"]], "template_id": "export-ink", "title": "雨夜合集"}
+        body = {"episode_ids": [ep["id"]], "template_id": "export-monograph", "title": "雨夜合集"}
         res = self.ok(self.client.post("/api/export/album", json=body))
         self.assertIn("text/html", res.headers["content-type"])
         self.assertIn("filename*=UTF-8''", res.headers["content-disposition"])
@@ -287,8 +293,8 @@ class AlbumApiTests(ApiCase):
 
     def test_template_import_list_delete(self):
         listed = {t["id"]: t for t in self.ok(self.client.get("/api/album-templates"))}
-        self.assertEqual(listed["export-flip"]["layout"], "flip")
-        legacy = json.loads((BUILTIN / "export-paper.json").read_text(encoding="utf-8"))
+        self.assertEqual(listed["export-folio"]["layout"], "folio")
+        legacy = json.loads((BUILTIN / "export-monograph.json").read_text(encoding="utf-8"))
         legacy_copy = {**legacy, "id": "my-paper", "title": "我的纸本"}
         created = self.ok(self.client.post("/api/album-templates", json=legacy_copy), 201)
         self.assertEqual(created["source"], "user")
@@ -296,7 +302,9 @@ class AlbumApiTests(ApiCase):
         self.assertEqual(full["html"], legacy["html"])
         clash = self.client.post("/api/album-templates", json=legacy)  # builtin id
         self.assertEqual(clash.status_code, 400)
-        self.assertEqual(self.client.delete("/api/album-templates/export-paper").status_code, 400)
+        self.assertEqual(
+            self.client.delete("/api/album-templates/export-monograph").status_code, 400
+        )
         self.ok(self.client.delete("/api/album-templates/my-paper"), 204)
         self.assertNotIn(
             "my-paper", {t["id"] for t in self.ok(self.client.get("/api/album-templates"))}
@@ -380,7 +388,7 @@ class ExportChannelTests(ApiCase):
     def test_album_image_profiles_report_what_they_did(self):
         _, ep = self.make_episode()
         ep = adopt_two_frames(self, ep)
-        body = {"episode_ids": [ep["id"]], "template_id": "export-ink", "lettered": False}
+        body = {"episode_ids": [ep["id"]], "template_id": "export-monograph", "lettered": False}
         for profile, mime in (("clean", None), ("publish", "image/webp"), ("archive", None)):
             with self.subTest(profile):
                 res = self.ok(

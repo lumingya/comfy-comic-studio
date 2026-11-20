@@ -33,7 +33,12 @@ function mount(mode = 'single', layout = 'webtoon', suffix = '') {
     'GET /api/series/ser_1/episodes': { items: [{ id: 'ep_1', title: '第一话' }] },
     'GET /api/episodes/ep_1': () => currentEpisode,
     'GET /api/episodes/ep_1/reading': () => metadata,
-    'GET /api/album-templates': [],
+    'GET /api/album-templates': [
+      { id: 'mio-fit', title: '留白', description: '', options: {} },
+      { id: 'export-monograph', title: '典藏画集', description: '', options: {} },
+      { id: 'export-nocturne', title: '暗房放映', description: '', options: {} },
+      { id: 'export-folio', title: '精装对页', description: '', options: {} },
+    ],
     'GET /api/settings': {},
     'GET /api/export/presets': [],
     'POST /api/export/album': () =>
@@ -87,6 +92,20 @@ afterEach(() => {
 });
 
 describe('saved reading composition', () => {
+  it('falls back to Monograph when the saved template is no longer installed', async () => {
+    localStorage.setItem('mio.reader.look', 'removed-template');
+    const { calls } = mount();
+    await screen.findByTitle('展示模板预览');
+    await waitFor(() => expect(localStorage.getItem('mio.reader.look')).toBe('export-monograph'));
+    const previews = calls.filter((call) => call.url === '/api/export/album');
+    expect(previews.length).toBeGreaterThan(0);
+    expect(
+      previews.every(
+        (call) => (call.body as { template_id: string }).template_id === 'export-monograph',
+      ),
+    ).toBe(true);
+  });
+
   it.each(['webtoon', 'gallery', 'spread'])(
     'uses composited panels and saved captions in %s',
     async (layout) => {
@@ -118,7 +137,7 @@ describe('saved reading composition', () => {
   );
 
   it('gives the template its own reading area without an empty footer or success banner', async () => {
-    localStorage.setItem('mio.reader.look', 'export-paper');
+    localStorage.setItem('mio.reader.look', 'export-monograph');
     const { calls } = mount();
     const frame = await screen.findByTitle('展示模板预览');
     expect(frame).toHaveAttribute('srcdoc', expect.stringContaining('Complete saved composition'));
@@ -129,12 +148,12 @@ describe('saved reading composition', () => {
     expect(screen.getByRole('button', { name: '排版' })).toBeInTheDocument();
     expect(calls.find((c) => c.url === '/api/export/album')?.body).toMatchObject({
       lettered: true,
-      template_id: 'export-paper',
+      template_id: 'export-monograph',
     });
   });
 
   it('round-trips the template preview frame and layout through the iframe protocol', async () => {
-    localStorage.setItem('mio.reader.look', 'export-paper');
+    localStorage.setItem('mio.reader.look', 'export-monograph');
     mount();
     const frame = (await screen.findByTitle('展示模板预览')) as HTMLIFrameElement;
     const child = frame.contentWindow!;
@@ -188,7 +207,7 @@ describe('saved reading composition', () => {
       ...savedEpisode,
       strip: { ...savedEpisode.strip, panel_boxes: {}, crops: {}, lettering: [] },
     };
-    localStorage.setItem('mio.reader.look', 'export-paper');
+    localStorage.setItem('mio.reader.look', 'export-monograph');
     const { calls } = mount();
     await screen.findByTitle('展示模板预览');
     expect(calls.find((c) => c.url === '/api/export/album')?.body).toMatchObject({
@@ -228,7 +247,7 @@ describe('saved reading composition', () => {
 
   it('requests per-panel caption deduplication for saved templates without hiding all captions', async () => {
     currentEpisode = { ...savedEpisode, strip: episode.strip };
-    localStorage.setItem('mio.reader.look', 'export-paper');
+    localStorage.setItem('mio.reader.look', 'export-monograph');
     const { calls } = mount();
     await screen.findByTitle('展示模板预览');
     expect(calls.find((c) => c.url === '/api/export/album')?.body).toMatchObject({
@@ -240,7 +259,7 @@ describe('saved reading composition', () => {
 
   it('honors an explicit caption preference for a saved lettered template', async () => {
     currentEpisode = { ...savedEpisode, strip: episode.strip };
-    localStorage.setItem('mio.reader.look', 'export-paper');
+    localStorage.setItem('mio.reader.look', 'export-monograph');
     localStorage.setItem('mio.reader.export', JSON.stringify({ captionPreference: true }));
     const { calls } = mount();
     await screen.findByTitle('展示模板预览');

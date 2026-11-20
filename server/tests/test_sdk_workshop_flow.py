@@ -139,7 +139,7 @@ class SDKWorkshopFlowTests(ApiCase):
         self.assertIn(board["id"], {row["id"] for row in catalogs["storyboards"]["items"]})
         self.assertIn(preset["id"], {row["id"] for row in catalogs["presets"]})
         self.assertIn(workflow["id"], {row["id"] for row in catalogs["workflows"]})
-        self.assertIn("export-atelier", {row["id"] for row in catalogs["templates"]})
+        self.assertIn("export-monograph", {row["id"] for row in catalogs["templates"]})
         self.assertTrue(catalogs["image_adapters"])
         self.assertIn(workflow["id"], catalogs["workflow_loras"])
         self.assertIn("", {row["id"] for row in catalogs["channels"]})
@@ -199,7 +199,7 @@ class SDKWorkshopFlowTests(ApiCase):
                         episode_id,
                         destination,
                         format=fmt,
-                        template_id="export-atelier" if fmt == "html" else None,
+                        template_id="export-monograph" if fmt == "html" else None,
                         background=background,
                         idempotency_key=f"sdk-book-{fmt}" if background else None,
                         timeout=15,
@@ -249,7 +249,7 @@ class SDKWorkshopFlowTests(ApiCase):
                 )
             self.assertFalse(destination.exists())
         count = len(self.requests)
-        for options in ({"format": "invalid"}, {"format": "pdf", "template_id": "export-atelier"}):
+        for options in ({"format": "invalid"}, {"format": "pdf", "template_id": "export-monograph"}):
             with self.subTest(options=options), self.assertRaises(ValueError):
                 self.mio.save_episode_deliverable(episode_id, destination, **options)
         destination.write_bytes(b"existing work")

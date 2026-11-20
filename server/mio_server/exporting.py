@@ -183,7 +183,7 @@ class ExportService:
                 T.parse_template(template)
                 if template
                 else self.ctx.registry.get(
-                    "album_template", options.get("template_id", "export-paper")
+                    "album_template", options.get("template_id", "export-monograph")
                 )
             )
             snapshot["template"] = template.model_dump(mode="json")

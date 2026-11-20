@@ -31,9 +31,9 @@ it('requests current artwork when export preview reopens with unchanged settings
     <PresentationDrawer
       open
       onClose={vi.fn()}
-      templates={[{ id: 'export-paper', title: 'Paper', description: '' }]}
+      templates={[{ id: 'export-monograph', title: 'Monograph', description: '' }]}
       infos={[]}
-      look="export-paper"
+      look="export-monograph"
       native="mio-fit"
       onLook={vi.fn()}
       draft={draft}
