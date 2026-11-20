@@ -34,9 +34,8 @@ requires the started listener's pause to stop the second claim.
   timestamps; the callback source still planned first, confirming the test premise.
 - The job-flag recheck remains under engine and pool locks before reading/claiming the
   item. All production pause/cancel logic and original safety assertions are preserved.
-- Ruff check and format checks passed for the two affected test files before the final
-  window fixture strengthening; the final two-method baseline and mutation rerun passed
-  after that strengthening.
+- Ruff check, format and diff whitespace checks passed for both affected test files after
+  the final window fixture strengthening, as did the two-method baseline and mutation probe.
 
 No remaining P0-P2 defect was established in this narrow test-order repair. This validates
 the fixtures and their sensitivity to the claim guard, not the full remote Windows suite.
