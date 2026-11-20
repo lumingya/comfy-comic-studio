@@ -5,6 +5,7 @@ import type {
   WorkflowLoraGroupOverride,
   WorkflowLoraOverride,
 } from '../../api/workflowTrial';
+import './lora-toggle-list.css';
 
 export function defaultLoraOverrides(groups: WorkflowLoraGroup[]): WorkflowLoraGroupOverride[] {
   return groups.map((group) => ({
@@ -17,16 +18,41 @@ export function LoraToggleList({
   groups,
   value,
   onChange,
+  onReset,
   disabled = false,
+  title,
+  toggleOverride,
+  onEdit,
+  resetLabel,
 }: {
   groups: WorkflowLoraGroup[];
   value: WorkflowLoraGroupOverride[];
-  onChange: (value: WorkflowLoraGroupOverride[]) => void;
+  onChange?: (value: WorkflowLoraGroupOverride[]) => void;
+  onReset?: () => void;
   disabled?: boolean;
+  title?: string;
+  resetLabel?: string;
+  onEdit?: (
+    groupKey: string,
+    loraKey: string,
+    changes: Partial<Pick<WorkflowLoraOverride, 'enabled' | 'strength' | 'clip'>>,
+  ) => void;
+  toggleOverride?: {
+    get: (groupKey: string, loraKey: string) => boolean | undefined;
+    set: (groupKey: string, loraKey: string, enabled: boolean | undefined) => void;
+  };
 }) {
   const { t } = useTranslation();
-  const update = (groupKey: string, loraKey: string, changes: Partial<WorkflowLoraOverride>) => {
-    onChange(
+  const update = (
+    groupKey: string,
+    loraKey: string,
+    changes: Partial<Pick<WorkflowLoraOverride, 'enabled' | 'strength' | 'clip'>>,
+  ) => {
+    if (onEdit) {
+      onEdit(groupKey, loraKey, changes);
+      return;
+    }
+    onChange?.(
       value.map((group) =>
         group.key !== groupKey
           ? group
@@ -39,18 +65,23 @@ export function LoraToggleList({
       ),
     );
   };
-  const reset = () => onChange(defaultLoraOverrides(groups));
+  const reset = onReset ?? (() => onChange?.(defaultLoraOverrides(groups)));
 
   return (
-    <section className="lora-toggle-list" aria-label={t('config.workflow.trial.lora.title')}>
+    <section
+      className="lora-toggle-list"
+      aria-label={title ?? t('config.workflow.trial.lora.title')}
+    >
       <div className="lora-toggle-list-head">
-        <div>
-          <strong>{t('config.workflow.trial.lora.title')}</strong>
-          <p className="small muted">{t('config.workflow.trial.lora.hint')}</p>
-        </div>
+        {!title ? (
+          <div>
+            <strong>{t('config.workflow.trial.lora.title')}</strong>
+            <p className="small muted">{t('config.workflow.trial.lora.hint')}</p>
+          </div>
+        ) : null}
         <button type="button" className="btn sm" onClick={reset} disabled={disabled}>
           <RotateCcw size={14} />
-          {t('config.workflow.trial.lora.reset')}
+          {resetLabel ?? t('config.workflow.trial.lora.reset')}
         </button>
       </div>
       {groups.map((group) => {
@@ -63,22 +94,49 @@ export function LoraToggleList({
             </legend>
             {group.loras.map((source) => {
               const lora = selected?.loras.find((item) => item.key === source.key) ?? source;
+              const mode = toggleOverride?.get(group.key, source.key);
+              const off = toggleOverride ? mode === false : !lora.enabled;
               return (
-                <div className="lora-toggle-row" key={source.key}>
+                <div className="lora-toggle-row" data-off={off || undefined} key={source.key}>
                   <div className="lora-toggle-identity">
                     <label className="lora-toggle-switch">
-                      <input
-                        type="checkbox"
-                        checked={lora.enabled}
-                        disabled={!source.supports_independent_toggle}
-                        aria-label={t('config.workflow.trial.lora.toggle', { name: source.name })}
-                        onChange={(event) =>
-                          update(group.key, source.key, { enabled: event.target.checked })
-                        }
-                      />
                       <span>{source.name}</span>
+                      {toggleOverride ? (
+                        <select
+                          disabled={!source.supports_independent_toggle}
+                          aria-label={source.name}
+                          value={mode === undefined ? 'inherit' : mode ? 'on' : 'off'}
+                          onChange={(event) =>
+                            toggleOverride.set(
+                              group.key,
+                              source.key,
+                              event.target.value === 'inherit'
+                                ? undefined
+                                : event.target.value === 'on',
+                            )
+                          }
+                        >
+                          <option value="inherit">{t('ws.generation.loraInherit')}</option>
+                          <option value="on">{t('ws.generation.loraOn')}</option>
+                          <option value="off">{t('ws.generation.loraOff')}</option>
+                        </select>
+                      ) : (
+                        <input
+                          type="checkbox"
+                          checked={lora.enabled}
+                          disabled={!source.supports_independent_toggle}
+                          aria-label={t('config.workflow.trial.lora.toggle', { name: source.name })}
+                          onChange={(event) =>
+                            update(group.key, source.key, { enabled: event.target.checked })
+                          }
+                        />
+                      )}
                     </label>
-                    <small className="muted">{source.source}</small>
+                    <small className="muted">
+                      {source.source === 'workflow'
+                        ? t('config.workflow.trial.lora.source')
+                        : source.source}
+                    </small>
                   </div>
                   <div className="lora-toggle-weight">
                     <label>

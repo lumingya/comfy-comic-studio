@@ -7,6 +7,8 @@ import { toast, toastError } from '../../components/toast';
 import { Field, Loading, TextArea, TextInput } from '../../components/ui';
 import { Advanced, ConfigurationSaveBar, jsonObject } from './ConfigurationParts';
 import { WorkflowMappings } from './WorkflowMappings';
+import { WorkflowLoraSummary } from './WorkflowLoraSummary';
+import { WorkflowDefaultLoras } from './WorkflowDefaultLoras';
 
 const pretty = (value: unknown) => JSON.stringify(value, null, 2);
 const formOf = (doc: WorkflowDocument) => ({
@@ -122,6 +124,14 @@ function WorkflowForm({
           config={config}
           bindings={doc.describe.bindings}
           onChange={(config) => set({ config: pretty(config) })}
+        />
+        <WorkflowLoraSummary controls={doc.lora_controls} />
+        <WorkflowDefaultLoras
+          controls={doc.lora_controls}
+          config={config}
+          savedConfig={doc.config}
+          onChange={(config) => set({ config: pretty(config) })}
+          disabled={!graph || form.graph !== original.graph}
         />
         <div className="config-workflow-tools">
           <Advanced lazy title={t('config.workflow.editJson')}>
