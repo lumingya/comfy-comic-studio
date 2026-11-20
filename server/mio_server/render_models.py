@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import Field, JsonValue, field_validator, model_validator
 
-from .cloud_options import validate_options
+from .cloud_options import SECRET_OPTION_NAME, validate_options
 from .models import StrictModel, new_id, now_iso
 
 StageKind = Literal["generate", "refine", "upscale", "face", "inpaint", "outpaint", "edit"]
@@ -99,7 +99,17 @@ class CloudRecipe(StrictModel):
     @field_validator("options", mode="before")
     @classmethod
     def bounded_options(cls, value):
-        return validate_options(value)
+        value = validate_options(value)
+        pending = [value]
+        while pending:
+            item = pending.pop()
+            if isinstance(item, dict):
+                if any(SECRET_OPTION_NAME.search(key) for key in item):
+                    raise ValueError("portable cloud recipes cannot contain credential fields")
+                pending.extend(item.values())
+            elif isinstance(item, list):
+                pending.extend(item)
+        return value
 
 
 class RenderProfile(StrictModel):

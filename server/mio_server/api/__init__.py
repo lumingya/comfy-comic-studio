@@ -10,6 +10,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path, PurePosixPath
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
 
 from .. import llm as L
@@ -52,6 +53,7 @@ from .extension_contracts import install_contract_schemas
 from .extension_routes import mount_extensions as _mount_extensions
 from .guard import LocalGuard, env_hosts
 from .v2 import build_v2
+from .validation import request_validation_error
 
 API_VERSION = "1"
 WEB_DIST = Path(__file__).resolve().parents[3] / "web" / "dist"
@@ -92,6 +94,7 @@ def create_app(ctx: AppContext | None = None, *, serve_web: bool = True) -> Fast
 
     for exc_type, code, kind in ERRORS:
         app.add_exception_handler(exc_type, _handler(code, kind))
+    app.add_exception_handler(RequestValidationError, request_validation_error)
 
     @app.get("/healthz")
     def healthz() -> dict:

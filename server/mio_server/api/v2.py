@@ -13,6 +13,7 @@ the UI has is reachable.  The differences:
 from __future__ import annotations
 
 from fastapi import Depends, FastAPI, Request, WebSocketException
+from fastapi.exceptions import RequestValidationError
 from fastapi.requests import HTTPConnection
 from fastapi.responses import JSONResponse
 
@@ -45,6 +46,7 @@ from . import (
 )
 from .extension_contracts import install_contract_schemas
 from .extension_routes import mount_extensions
+from .validation import request_validation_error
 
 V2_VERSION = "2.0"
 ROUTERS = (
@@ -136,6 +138,7 @@ def build_v2(ctx, errors) -> FastAPI:
     for exc_type, code, kind in errors:
         app.add_exception_handler(exc_type, _handler(code, kind))
     app.add_exception_handler(AuthError, _auth_handler)
+    app.add_exception_handler(RequestValidationError, request_validation_error)
 
     @app.get("/meta", tags=["meta"])
     def meta() -> dict:
