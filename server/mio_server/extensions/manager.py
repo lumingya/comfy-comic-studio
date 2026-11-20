@@ -253,16 +253,12 @@ class ExtensionManager:
         previous = self._state(ext_id)
         self._save_state(ext_id, True, info.digest)
         try:
-            success = self.load(ext_id)
+            success = self.load(ext_id, remember=True)
         except Exception:
             self._restore_state(ext_id, previous)
             raise
         if not success:
             self._restore_state(ext_id, previous)
-        else:
-            from .trust import remember_package
-
-            remember_package(self.ctx.data_dir, info.folder, info.digest)
         return self.info(ext_id)
 
     def _restore_state(self, ext_id, previous):
@@ -346,7 +342,7 @@ class ExtensionManager:
 
     @operation_serialized
     @catalog_transition
-    def load(self, ext_id: str) -> bool:
+    def load(self, ext_id: str, *, remember: bool = False) -> bool:
         previous_service = self.ctx.extension_services.get(ext_id)
         if previous_service is not None and getattr(previous_service, "busy", False):
             raise JobConflict("扩展的上次请求尚未结束，请稍后再启用")
@@ -388,6 +384,12 @@ class ExtensionManager:
             module = self._run_main(api, info.manifest) if info.manifest.main else None
             if digest(info.folder) != info.digest:
                 raise ExtensionError("extension files changed during activation")
+            if remember:
+                from .trust import remember_package
+
+                # Keep trust I/O inside the same rollback boundary as activation. A failed
+                # snapshot must not retire the previous instance or publish a live new one.
+                remember_package(self.ctx.data_dir, info.folder, info.digest)
         except Exception as exc:  # contain every failure: roll back what was registered
             api._enabled = False
             api.stop_services()
@@ -567,7 +569,7 @@ class ExtensionManager:
             zf = zipfile.ZipFile(path)
         except (OSError, zipfile.BadZipFile):
             raise ExtensionError("不是合法的 zip 文件") from None
-        staging = None
+        transaction = None
         try:
             with zf:
                 entries = []
@@ -612,9 +614,13 @@ class ExtensionManager:
                 total = sum(entry.file_size for entry in entries)
                 if total > MAX_UNPACKED:
                     raise ExtensionError("扩展包解压后过大")
-                staging = self.root / f".staging-{manifest.id}"
-                shutil.rmtree(staging, ignore_errors=True)
-                staging.mkdir(parents=True)
+                regular_path(self.root, directory=True)
+                self.root.mkdir(parents=True, exist_ok=True)
+                transaction = Path(
+                    tempfile.mkdtemp(prefix=f".install-{manifest.id}-", dir=self.root)
+                )
+                staging = transaction / "package"
+                staging.mkdir()
                 extracted = 0
                 for entry in entries:
                     n = entry.filename
@@ -633,19 +639,72 @@ class ExtensionManager:
                 extracted_manifest = read_manifest(staging)
                 if extracted_manifest != manifest:
                     raise ExtensionError("解压后的扩展清单与预检清单不一致")
-                if manifest.id in self.loaded:
-                    self.unload(manifest.id)
-                if target.exists():
-                    shutil.rmtree(target)
-                staging.rename(target)
-                staging = None
-                self._save_state(manifest.id, False, "")
+                self._publish_install(manifest.id, staging, target)
                 return self.info(manifest.id)
         except zipfile.BadZipFile:
             raise ExtensionError("不是合法的 zip 文件") from None
         finally:
-            if staging is not None:
-                shutil.rmtree(staging, ignore_errors=True)
+            # A failed rollback or abrupt interruption must retain the unique transaction's
+            # previous package. Never remove it just because publishing the new package failed.
+            if transaction is not None and not (transaction / "previous").exists():
+                shutil.rmtree(transaction, ignore_errors=True)
+
+    def _publish_install(self, ext_id: str, staging: Path, target: Path) -> None:
+        """Exchange same-volume directories before retiring the old running instance.
+
+        The engine operation barrier serializes lifecycle and backup operations. The workspace
+        lease already excludes a second live process; no fixed staging or backup path is reused.
+        """
+        previous = staging.parent / "previous"
+        state = self._state(ext_id)
+        validate_tree(target)
+        if target.exists():
+            try:
+                installed = read_manifest(target)
+            except ManifestError as exc:
+                raise ExtensionError("拒绝覆盖无法识别的扩展目录") from exc
+            if installed.id != ext_id:
+                raise ExtensionError("拒绝覆盖标识不一致的扩展目录")
+        journal = staging.parent / "transaction.json"
+        record = {
+            "extension_id": ext_id,
+            "previous_state": state.model_dump() if state else None,
+            "phase": "prepared",
+        }
+        journal.write_text(json.dumps(record), encoding="utf-8")
+        published = False
+        state_attempted = False
+        try:
+            if target.exists():
+                target.rename(previous)
+            staging.rename(target)
+            published = True
+            state_attempted = True
+            self._save_state(ext_id, False, "")
+            record["phase"] = "committed"
+            journal.write_text(json.dumps(record), encoding="utf-8")
+        except Exception:
+            # Both directories are owned by this invocation. Move rather than delete the
+            # candidate, and do not let finally erase the only surviving original on failure.
+            if published:
+                target.rename(staging)
+            if previous.exists():
+                previous.rename(target)
+            if state_attempted:
+                self._restore_state(ext_id, state)
+            raise
+        if ext_id in self.loaded:
+            self.unload(ext_id)
+        if previous.exists():
+            try:
+                validate_tree(previous)
+                shutil.rmtree(previous)
+            except (OSError, ValueError):
+                # Cleanup is after the commit. Keep its journal and old package for recovery;
+                # a locked obsolete file must not turn a successful install into an error.
+                log.warning(
+                    "installed extension %s; retained previous package at %s", ext_id, previous
+                )
 
 
 def _json(path: Path) -> dict:

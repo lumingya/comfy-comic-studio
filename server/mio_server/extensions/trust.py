@@ -3,6 +3,7 @@
 import json
 import re
 import shutil
+import tempfile
 from pathlib import Path
 
 from .manifest import MANIFEST, SKIP_DIRS, digest, read_manifest
@@ -20,7 +21,19 @@ def remember_package(workspace, folder, expected):
     destination = root / "trusted-extensions" / manifest.id / expected
     if not destination.exists():
         destination.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(folder, destination, ignore=shutil.ignore_patterns(*SKIP_DIRS, "*.pyc"))
+        temporary = Path(tempfile.mkdtemp(prefix=".snapshot-", dir=destination.parent))
+        try:
+            shutil.copytree(
+                folder,
+                temporary,
+                dirs_exist_ok=True,
+                ignore=shutil.ignore_patterns(*SKIP_DIRS, "*.pyc"),
+            )
+            if digest(temporary) != expected:
+                raise ValueError("reviewed extension snapshot changed")
+            temporary.rename(destination)
+        finally:
+            shutil.rmtree(temporary, ignore_errors=True)
     if digest(destination) != expected:
         raise ValueError("reviewed extension snapshot changed")
     index = root / "extension-trust.json"
