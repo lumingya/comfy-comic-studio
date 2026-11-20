@@ -7,8 +7,10 @@ was reused moves it to the end of the series instead of failing.
 
 from __future__ import annotations
 
+from contextlib import contextmanager, nullcontext
 from datetime import datetime, timedelta, timezone
 
+from .jobs.types import JobConflict
 from .models import now_iso
 from .storage import Conflict, NotFound
 
@@ -18,17 +20,46 @@ def _parse(ts: str) -> datetime:
 
 
 class Trash:
-    def __init__(self, store):
+    def __init__(self, store, engine=None):
         self.store = store
+        self.engine = engine
+
+    @contextmanager
+    def _guard(self, kind: str, item_id: str):
+        if self.engine is None:
+            yield
+            return
+        with self.engine.hold_operation():
+            owners = {item_id}
+            if kind == "series":
+                episodes = self.store._rows(
+                    "SELECT id FROM episodes WHERE series_id = ?", (item_id,)
+                )
+                owners.update(episode["id"] for episode in episodes)
+            elif kind == "episode":
+                owners.add(self.store.get_episode(item_id, include_deleted=True).series_id)
+            with self.engine.operation_guard(owners):
+                yield
 
     # ----------------------------------------------------------------- series
     def delete_series(self, series_id: str) -> None:
         def mark(series):
             series.deleted_at = now_iso()
 
-        self.store.update_series(series_id, mark)
+        with self._guard("series", series_id):
+            self.store.update_series(series_id, mark)
 
     def restore_series(self, series_id: str) -> None:
+        with self._restore_guard():
+            self._restore_series(series_id)
+
+    @contextmanager
+    def _restore_guard(self):
+        operation = self.engine.hold_operation() if self.engine is not None else nullcontext()
+        with operation, self.store.tx():
+            yield
+
+    def _restore_series(self, series_id: str) -> None:
         series = self.store.get_series(series_id, include_deleted=True)
         if not series.deleted_at:
             return
@@ -40,9 +71,14 @@ class Trash:
         def mark(ep):
             ep.deleted_at = now_iso()
 
-        self.store.update_episode(episode_id, mark)
+        with self._guard("episode", episode_id):
+            self.store.update_episode(episode_id, mark)
 
     def restore_episode(self, episode_id: str) -> dict:
+        with self._restore_guard():
+            return self._restore_episode(episode_id)
+
+    def _restore_episode(self, episode_id: str) -> dict:
         ep = self.store.get_episode(episode_id, include_deleted=True)
         self.store.get_series(ep.series_id)  # a trashed series must be restored first
         moved = False
@@ -89,6 +125,11 @@ class Trash:
         return {"items": items}
 
     def purge(self, kind: str, item_id: str) -> None:
+        with self._guard(kind, item_id):
+            with self.store.tx():
+                self._purge(kind, item_id)
+
+    def _purge(self, kind: str, item_id: str) -> None:
         if kind == "series":
             series = self.store.get_series(item_id, include_deleted=True)
             if not series.deleted_at:
@@ -111,6 +152,6 @@ class Trash:
                 try:
                     self.purge(item["kind"], item["id"])
                     purged += 1
-                except NotFound:
-                    pass  # an expired series already took its episodes with it
+                except (NotFound, JobConflict):
+                    pass  # Missing or busy work is retried by a later expiry pass.
         return purged

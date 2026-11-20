@@ -141,6 +141,8 @@ class SDKWorkshopFlowTests(ApiCase):
         self.assertIn(workflow["id"], {row["id"] for row in catalogs["workflows"]})
         self.assertIn("export-atelier", {row["id"] for row in catalogs["templates"]})
         self.assertTrue(catalogs["image_adapters"])
+        self.assertIn(workflow["id"], catalogs["workflow_loras"])
+        self.assertIn("", {row["id"] for row in catalogs["channels"]})
         self.assertEqual(self.mio.get_storyboard(board["id"])["title"], board["title"])
         self.assertEqual(self.mio.get_preset(preset["id"])["entries"], preset["entries"])
         controls = self.mio.workflow_loras(workflow["id"])

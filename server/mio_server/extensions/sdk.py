@@ -87,12 +87,12 @@ class ExtensionAPI:
             raise ValueError("extension contributions use their reviewed package digest")
         meta["digest"] = self.digest
         meta.setdefault("contract", 1)
-        if point in ("comfy_output_adapter", "comfy_state_adapter"):
-            methods = (
-                ("freeze", "collect")
-                if point == "comfy_output_adapter"
-                else ("capture", "push", "change", "validate")
-            )
+        adapter_methods = {
+            "comfy_output_adapter": ("freeze", "collect"),
+            "comfy_state_adapter": ("capture", "push", "change", "validate"),
+            "workflow_slot_adapter": ("inspect", "write"),
+        }
+        if methods := adapter_methods.get(point):
             if meta["contract"] != 1 or any(not callable(getattr(value, m, None)) for m in methods):
                 raise ValueError("invalid Comfy adapter contract")
         if point == "cloud_adapter":

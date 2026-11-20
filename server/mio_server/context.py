@@ -149,7 +149,7 @@ class AppContext:
             engine.registry,
             render,
             qa,
-            Trash(store),
+            Trash(store, engine),
             llm,
             comfy_client_factory,
         )
@@ -246,10 +246,12 @@ class AppContext:
 
     def _register_builtins(self) -> None:
         from .comfy.contracts import register_builtins
+        from .comfy.slot_adapters import register_builtins as register_slot_adapters
         from .pipeline.file_export import write_export
 
         reg = self.registry
         register_builtins(reg)
+        register_slot_adapters(reg)
         self.exports = ExportService(self)
         executors = {
             "comfy.render": ComfyRenderExecutor(

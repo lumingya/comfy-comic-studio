@@ -1,0 +1,7 @@
+{
+  "id": "offline-cloud-adapter",
+  "name": "离线云端渠道适配器示例",
+  "version": "0.1.0",
+  "description": "通过 cloud_adapter 与 extra_options 接入可测试的云端出图渠道。",
+  "main": "main.py"
+}

@@ -84,6 +84,7 @@ export const configProfile: RenderProfile = {
   cloud_refine: false,
   model_group: null,
   cloud_channel: '',
+  cloud_recipe: null,
   created_at: '2026-09-28T00:00:00Z',
   updated_at: '2026-09-28T00:00:00Z',
 };

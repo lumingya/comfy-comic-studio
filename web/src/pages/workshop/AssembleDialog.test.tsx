@@ -4,6 +4,7 @@ import type { AssembleVars, AssemblyPreview, Preset } from '../../api/workshop';
 import { configProfile, configSettings, configurationRoutes } from '../../test/configuration';
 import { episode, series } from '../../test/fixtures';
 import { mockFetch, renderWithProviders } from '../../test/utils';
+import { workflowLoras } from '../../test/workflowLoras';
 import AssembleDialog from './AssembleDialog';
 
 const preset = (id: string): Preset => ({
@@ -71,6 +72,40 @@ async function mount() {
 afterEach(() => vi.unstubAllGlobals());
 
 describe('assembly image service selection', () => {
+  it('sends only changed LoRA fields to both preview and assembly', async () => {
+    const calls = mockFetch({
+      ...routes(),
+      'GET /api/workflows/wf_demo/loras': workflowLoras,
+      'POST /api/workshop/assemble/preview': preview,
+      'POST /api/workshop/assemble': { series, episode },
+    });
+    renderWithProviders(<AssembleDialog onClose={vi.fn()} />);
+    const route = await screen.findByLabelText('出图工作流或云端服务');
+    await waitFor(() => expect(route).toBeEnabled());
+    fireEvent.change(route, { target: { value: 'workflow:wf_demo' } });
+    fireEvent.click(screen.getByText('本次任务的 LoRA'));
+    const toggle = await screen.findByRole('checkbox', { name: '启用 ink.safetensors' });
+    fireEvent.click(toggle);
+    expect(screen.getByRole('spinbutton', { name: 'ink.safetensors 模型强度' })).toHaveValue(0.65);
+    expect(screen.getByRole('checkbox', { name: '启用 shade.safetensors' })).toBeChecked();
+    next();
+    next();
+    await screen.findByRole('button', { name: /第 1 幕.*weather/ });
+    fireEvent.click(screen.getByRole('button', { name: '稍后生成' }));
+    await waitFor(() =>
+      expect(calls.some((call) => call.url === '/api/workshop/assemble')).toBe(true),
+    );
+    for (const url of ['/api/workshop/assemble/preview', '/api/workshop/assemble']) {
+      expect((calls.find((call) => call.url === url)?.body as AssembleVars).slot_overrides).toEqual(
+        {
+          groups: [
+            { key: 'group', loras: [{ key: 'ink', name: 'ink.safetensors', enabled: false }] },
+          ],
+        },
+      );
+    }
+  });
+
   it('blocks an empty storyboard before the next step and links to its editor', async () => {
     const calls = mockFetch({
       ...routes(),

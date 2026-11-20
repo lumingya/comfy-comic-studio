@@ -5,8 +5,8 @@ from __future__ import annotations
 from . import llm as L
 from . import settings as SET
 from .models import GenerationDefaults, GenerationOptions, GenerationSnapshot, Series
-from .pipeline.cloud_request import DEFAULT_MODELS, OPTION_KEYS
-from .render_models import RenderProfile, RenderStage
+from .pipeline.cloud_request import DEFAULT_MODELS, _without_secrets, channel_options
+from .render_models import CloudRecipe, RenderProfile, RenderStage
 from .storage import NotFound
 
 
@@ -89,14 +89,25 @@ def capture_channels(app, snapshot: GenerationSnapshot) -> None:
         model = (channel.model if channel else "") or DEFAULT_MODELS.get(kind, "")
         if not model and kind == "chat_image":
             model = next(iter(app.llm.image_models), L.IMAGE_SINGLE[0])
-        snapshot.channels[channel_id] = {
-            "kind": kind,
-            "model": model,
-            "options": {key: getattr(channel, key) for key in OPTION_KEYS} if channel else {},
-        }
+        recipe = data.get("cloud_recipe")
+        if recipe and recipe["kind"] != kind:
+            raise ValueError("套装云端参数与目标渠道类型不匹配，请选择相同类型的目标渠道")
+        snapshot.channels[channel_id] = (
+            _without_secrets(recipe)
+            if recipe
+            else {
+                "kind": kind,
+                "model": model,
+                "options": channel_options(channel),
+            }
+        )
+        data["cloud_recipe"] = CloudRecipe.model_validate(
+            snapshot.channels[channel_id]
+        ).model_dump()
         data["cloud_channel"] = channel_id
         if pid == snapshot.profile.get("id"):
             snapshot.profile["cloud_channel"] = channel_id
+            snapshot.profile["cloud_recipe"] = data["cloud_recipe"]
 
 
 def capture_workflows(store, snapshot: GenerationSnapshot) -> None:

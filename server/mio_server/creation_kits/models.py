@@ -6,6 +6,7 @@ from pydantic import Field
 
 from ..models import Episode, GenerationOptions, Series, StrictModel
 from ..render_models import RenderProfile, WorkflowDoc
+from ..slot_models import TaskLoRASelection, TaskSlotOverrides
 
 
 class KitSelection(StrictModel):
@@ -93,5 +94,7 @@ class KitAssembly(StrictModel):
     title: str = Field(default="", max_length=120)
     profile_id: str | None = None
     generation: GenerationOptions | None = None
+    loras: list[TaskLoRASelection] = Field(default_factory=list, max_length=128)
+    slot_overrides: TaskSlotOverrides | None = None
     variables: dict[str, str] = Field(default_factory=dict)
     idempotency_key: str = Field(min_length=1, max_length=200)

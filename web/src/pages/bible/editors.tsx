@@ -5,6 +5,7 @@ import type { Character, Location, Style } from '../../api/types';
 import { TIMES } from '../../api/types';
 import { Field, NumberInput, Select, TagInput, TextArea, TextInput } from '../../components/ui';
 import { References } from './References';
+import { rid } from './BibleTab';
 
 type Patch<T> = (patch: Partial<T>) => void;
 
@@ -129,7 +130,9 @@ export function CharacterEditor({
                 loras: names.map(
                   (name) =>
                     (value.loras ?? []).find((l) => l.name === name) ?? {
+                      key: rid('lora'),
                       name,
+                      enabled: true,
                       strength_model: 0.8,
                       strength_clip: 0.8,
                       model_family: '',

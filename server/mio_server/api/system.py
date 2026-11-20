@@ -66,6 +66,34 @@ def image_adapters(ctx: Ctx) -> list[dict]:
     return [public_cloud_adapter(item) for item in ctx.registry.all("cloud_adapter")]
 
 
+@router.get("/image-channels")
+def list_image_channels(ctx: Ctx) -> list[dict]:
+    """List selectable channel IDs with read scope, excluding endpoints and options."""
+    app = ctx.settings()
+    selected = next(
+        (channel for channel in app.image_channels if channel.id == app.image_channel), None
+    )
+    return [
+        {
+            "id": "",
+            "label": "默认图像服务",
+            "kind": selected.kind if selected else "chat_image",
+            "model": selected.model if selected else next(iter(app.llm.image_models), ""),
+            "default": not app.image_channel,
+        },
+        *[
+            {
+                "id": channel.id,
+                "label": channel.label or channel.id,
+                "kind": channel.kind,
+                "model": channel.model,
+                "default": channel.id == app.image_channel,
+            }
+            for channel in app.image_channels
+        ],
+    ]
+
+
 # ------------------------------------------------------------------- trash
 @router.get("/trash")
 def list_trash(ctx: Ctx) -> dict:
@@ -119,4 +147,5 @@ def legacy_scan(ctx: Ctx, root: str | None = None) -> dict:
 @router.post("/legacy/import")
 def legacy_import(ctx: Ctx, body: LegacyRequest) -> dict:
     """One-time import of old storyboards / presets / workflows; idempotent unless overwrite."""
-    return _legacy(ctx, body.root).run(overwrite=body.overwrite).to_json()
+    with ctx.engine.operation_guard():
+        return _legacy(ctx, body.root).run(overwrite=body.overwrite).to_json()

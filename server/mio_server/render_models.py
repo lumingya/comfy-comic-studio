@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, JsonValue, field_validator, model_validator
 
+from .cloud_options import validate_options
 from .models import StrictModel, new_id, now_iso
 
 StageKind = Literal["generate", "refine", "upscale", "face", "inpaint", "outpaint", "edit"]
@@ -88,6 +89,19 @@ class RenderStage(StrictModel):
     )
 
 
+class CloudRecipe(StrictModel):
+    """Portable ordinary request parameters; service bindings and secrets stay local."""
+
+    kind: str = Field(min_length=1, max_length=100)
+    model: str = Field(default="", max_length=300)
+    options: dict[str, JsonValue] = Field(default_factory=dict, max_length=64)
+
+    @field_validator("options", mode="before")
+    @classmethod
+    def bounded_options(cls, value):
+        return validate_options(value)
+
+
 class RenderProfile(StrictModel):
     """A pipeline of workflows.  ``draft`` runs per candidate, ``final`` only on adopted takes."""
 
@@ -121,6 +135,7 @@ class RenderProfile(StrictModel):
     cloud_channel: str = Field(
         default="", description="Image channel for cloud steps; '' = the settings default"
     )
+    cloud_recipe: CloudRecipe | None = None
     created_at: str = Field(default_factory=now_iso)
     updated_at: str = Field(default_factory=now_iso)
 

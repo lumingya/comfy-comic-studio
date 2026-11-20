@@ -54,6 +54,7 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
         validate_assignment=True,
+        hide_input_in_errors=True,
         # Response schemas mark defaulted fields as required, so generated TS types are exact.
         json_schema_serialization_defaults_required=True,
     )
@@ -103,7 +104,9 @@ class AssetRef(StrictModel):
 
 
 class LoraRef(StrictModel):
+    key: str = Field(default_factory=lambda: new_id("lora"), min_length=1, max_length=512)
     name: str
+    enabled: bool = True
     strength_model: float = 1.0
     strength_clip: float = 1.0
     model_family: str = "sdxl"

@@ -1,0 +1,7 @@
+{
+  "id": "comfy-slot-codec",
+  "name": "ComfyUI LoRA slot codec example",
+  "version": "0.1.0",
+  "description": "Shows how to expose packed LoRA settings as independent controls.",
+  "main": "main.py"
+}

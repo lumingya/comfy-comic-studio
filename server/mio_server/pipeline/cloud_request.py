@@ -12,12 +12,7 @@ import random
 import re
 
 from .. import llm as L
-
-SECRET_OPTION_NAME = re.compile(
-    r"(?:api[_-]?key|access[_-]?key|private[_-]?key|token|secret|password|passwd|"
-    r"credential|auth[_-]?(?:token|key|secret|header)|authorization|bearer)",
-    re.I,
-)
+from ..cloud_options import SECRET_OPTION_NAME
 
 OPTION_KEYS = (
     "negative",
@@ -57,28 +52,32 @@ def _redact_request(value):
     return copy.deepcopy(value)
 
 
-def _secret_options(value):
-    if not isinstance(value, dict):
+def _merge_secrets(frozen, current):
+    """Restore current credentials along existing paths without changing frozen values."""
+    if isinstance(frozen, list) and isinstance(current, list):
+        return [
+            _merge_secrets(item, current[index]) if index < len(current) else copy.deepcopy(item)
+            for index, item in enumerate(frozen)
+        ]
+    if not isinstance(frozen, dict) or not isinstance(current, dict):
+        return copy.deepcopy(frozen)
+    result = {key: _merge_secrets(value, current.get(key)) for key, value in frozen.items()}
+    result.update(
+        (key, copy.deepcopy(value))
+        for key, value in current.items()
+        if SECRET_OPTION_NAME.search(key)
+    )
+    return result
+
+
+def channel_options(channel) -> dict:
+    """Copy the ordinary settings shared by task snapshots and image requests."""
+    if channel is None:
         return {}
     return {
-        key: copy.deepcopy(item) for key, item in value.items() if SECRET_OPTION_NAME.search(key)
+        **{key: getattr(channel, key) for key in OPTION_KEYS},
+        "extra_options": _without_secrets(channel.extra_options),
     }
-
-
-def _merge_secrets(frozen, current):
-    if isinstance(current, list):
-        old = frozen if isinstance(frozen, list) else []
-        return [
-            _merge_secrets(old[index] if index < len(old) else {}, item)
-            for index, item in enumerate(current)
-        ]
-    result = copy.deepcopy(frozen) if isinstance(frozen, dict) else {}
-    for key, value in _secret_options(current).items():
-        result[key] = value
-    for key, value in current.items() if isinstance(current, dict) else []:
-        if not SECRET_OPTION_NAME.search(key) and isinstance(value, dict):
-            result[key] = _merge_secrets(result.get(key), value)
-    return result
 
 
 def channel_of(client):
@@ -103,11 +102,7 @@ def freeze_request(client, requested: dict, *, channel_id: str = "", models=None
         model = configured[0]
     if not model and kind == "chat_image":
         model = L.IMAGE_SINGLE[0]
-    options = {k: getattr(channel, k) for k in OPTION_KEYS} if channel else {}
-    if channel:
-        # Extra settings are frozen for deterministic retries, but secret-like values are
-        # supplied from current settings at bind time, just like the channel API key.
-        options["extra_options"] = _without_secrets(channel.extra_options)
+    options = channel_options(channel)
     # A retry or later execution must never draw a new NovelAI seed.
     if kind == "novelai":
         options["seed"] = requested.get("seed")
@@ -142,7 +137,9 @@ def bind_request(client, request: dict):
     frozen = copy.copy(client)
     if channel:
         current_extra = channel.extra_options
-        frozen_extra = _merge_secrets(request["options"].get("extra_options", {}), current_extra)
+        frozen_extra = _merge_secrets(
+            _without_secrets(request["options"].get("extra_options", {})), current_extra
+        )
         updated = channel.model_copy(
             update={
                 **{k: v for k, v in request["options"].items() if k in OPTION_KEYS},

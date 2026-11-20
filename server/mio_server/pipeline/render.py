@@ -16,11 +16,13 @@ overwrites concurrent edits).
 
 from __future__ import annotations
 
+import hashlib
 import random
 import threading
 from contextlib import contextmanager
 
 from ..comfy import bindings as B
+from ..comfy import slot_adapters as SA
 from ..comfy import workflow_slots as slots
 from ..comfy.compile import PREVIOUS, asset_value, builtin_workflows, compile_workflow, describe
 from ..comfy.workflow_slots import LibraryError
@@ -170,7 +172,18 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         slot = (
             {
                 "loras": [
-                    {"name": l["name"], "strength": l.get("strength_model", 1.0)} for l in loras
+                    {
+                        "name": l["name"],
+                        "strength": l.get("strength_model", 1.0),
+                        "clip": l.get("strength_clip", l.get("strength_model", 1.0)),
+                        "enabled": l.get("enabled", True),
+                        **(
+                            {"key": "reference:" + hashlib.sha256(l["key"].encode()).hexdigest()}
+                            if l.get("key")
+                            else {}
+                        ),
+                    }
+                    for l in loras
                 ]
             }
             if loras
@@ -190,6 +203,8 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
                 registry=self.engine.registry,
             )
         except LibraryError as exc:
+            if doc.config.slot_overrides or stage.slot_overrides or slot_overrides:
+                raise RenderError(f"{doc.name}：{exc}") from None
             warnings.append(f"LoRA 未写入（{exc}），按工作流原样运行")
             compiled = compile_workflow(
                 doc,
@@ -229,11 +244,14 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
         loras: list[dict],
         slot_overrides: dict | None = None,
         start_with_previous: bool = False,
+        *,
+        require_panel_groups: bool = True,
     ) -> tuple[list[dict], list[list[str]]]:
         compiled, feeds = [], []
         active = [s for s in stages if s.enabled]
         if not active:
             raise RenderError("出图配置里没有启用的阶段")
+        panel_slots = self._panel_slots_by_stage(active, slot_overrides, require_panel_groups)
         for n, stage in enumerate(active):
             if stage.feed_output and (n == 0 or stage.feed != "previous"):
                 raise RenderError("输出选择只适用于接收上一阶段图片的后续阶段")
@@ -242,7 +260,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
             if chained and n > 0:
                 values["init"] = asset_value(PREVIOUS)
             data, feed, _ = self._compile_stage(
-                stage, values, overrides, loras, slot_overrides=slot_overrides
+                stage, values, overrides, loras, slot_overrides=panel_slots[n]
             )
             if stage.feed_output:
                 if stage.feed_output.node_id not in compiled[-1]["outputs"]:
@@ -255,6 +273,40 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
             compiled.append(data)
             feeds.append(feed if n > 0 else [])
         return compiled, feeds
+
+    def _panel_slots_by_stage(self, stages, overrides, require_panel_groups):
+        if not overrides:
+            return [None] * len(stages)
+        common = slots.normalize_overrides(overrides)
+        groups = common.pop("groups", [])
+        workflow_id = overrides.get("workflow_id")
+        if workflow_id is not None and (not isinstance(workflow_id, str) or not workflow_id):
+            raise RenderError("分幕 LoRA 覆盖的工作流 ID 无效")
+        if not groups:
+            return [common] * len(stages)
+        available = SA.installed(self.engine.registry)
+        by_workflow = {}
+        matched = set()
+        for stage in stages:
+            if stage.workflow_id in by_workflow:
+                continue
+            if workflow_id is not None and workflow_id != stage.workflow_id:
+                by_workflow[stage.workflow_id] = common
+                continue
+            doc = self.workflow(stage.workflow_id)
+            plan = slots.ensure_plan(doc.graph, doc.slots, adapters=available)
+            known = {group["key"] for group in plan["lora"]["groups"]}
+            selected = [group for group in groups if group["key"] in known]
+            matched.update(group["key"] for group in selected)
+            by_workflow[stage.workflow_id] = {
+                **common,
+                **({"groups": selected} if selected else {}),
+            }
+        relevant = workflow_id is None or any(stage.workflow_id == workflow_id for stage in stages)
+        if (require_panel_groups or workflow_id is not None) and relevant:
+            if {group["key"] for group in groups} - matched:
+                raise RenderError("分幕 LoRA 槽位不在所选工作流中")
+        return [by_workflow[stage.workflow_id] for stage in stages]
 
     # --------------------------------------------------------------- draft
     def plan_panel(
@@ -512,6 +564,7 @@ class RenderService(CompositionMixin, CloudRefinementMixin, EditsMixin):
                 node_overrides(series, panel),
                 [],
                 panel.overrides.slot_overrides,
+                require_panel_groups=False,
             )
             meta = {
                 "episode_id": episode.id,

@@ -101,6 +101,30 @@
               adopted directly; further refinement can be requested explicitly
               through the professional API.
             </p>
+            <h2 id="lora-controls">LoRA slots and layered overrides</h2>
+            <p>
+              Workflow details and preflight expose each controllable LoRA with
+              its name, source, default switch, weight range and active
+              adapter. Workflow-owned <code>pinned</code> LoRAs stay enabled by
+              default. A task can disable, restore or retune one by stable
+              <code>key</code>, and appended LoRAs use the same shape. These
+              changes belong to the frozen task snapshot; the imported JSON is
+              never rewritten.
+            </p>
+            <p>
+              Overrides resolve as workflow defaults, then task values, then
+              <code>panel.overrides</code> for the current scene. Retries and
+              workflow trials use the same frozen rule. Staged workflows inspect
+              their own slots, so a similarly named slot in another stage is
+              not written by accident.
+            </p>
+            <p>
+              Custom nodes can register a <code>workflow_slot_adapter</code>
+              with <code>inspect</code> and <code>write</code> methods. The
+              adapter only writes declared inputs and returns a stable identity.
+              Disabling it leaves standard slots available and reports why an
+              adapter-owned slot cannot be controlled.
+            </p>
             <h2 id="section-1">Custom-node compatibility</h2>
             <p>
               Mio submits a ComfyUI API graph. Custom nodes that execute through

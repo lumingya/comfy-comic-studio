@@ -78,6 +78,8 @@ CREATE TABLE IF NOT EXISTS episode_snapshots (
 CREATE TABLE IF NOT EXISTS assembly_receipts (
     idempotency_key TEXT PRIMARY KEY, request_sha TEXT NOT NULL,
     series_id TEXT NOT NULL, episode_id TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS workshop_launch_receipts (
+    episode_id TEXT PRIMARY KEY, job_id TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS delivery_receipts (
     delivery_id TEXT PRIMARY KEY, episode_id TEXT NOT NULL, result_sha TEXT NOT NULL,
     value_json TEXT NOT NULL, created_at TEXT NOT NULL);
@@ -236,6 +238,19 @@ class SQLiteStore:
                     (idempotency_key, request_sha, series.id, episode.id),
                 )
         return series, episode
+
+    def workshop_launch(self, episode_id: str) -> str | None:
+        rows = self._rows(
+            "SELECT job_id FROM workshop_launch_receipts WHERE episode_id = ?", (episode_id,)
+        )
+        return rows[0]["job_id"] if rows else None
+
+    def record_workshop_launch(self, episode_id: str, job_id: str) -> None:
+        with self.tx() as db:
+            db.execute(
+                "INSERT INTO workshop_launch_receipts(episode_id, job_id) VALUES (?, ?)",
+                (episode_id, job_id),
+            )
 
     def get_series(self, series_id: str, include_deleted: bool = False) -> Series:
         rows = self._rows("SELECT payload_json FROM series WHERE id = ?", (series_id,))
@@ -543,6 +558,18 @@ class SQLiteStore:
         if not rows:
             raise NotFound(f"{kind} not found: {doc_id}")
         return DOC_KINDS[kind].model_validate_json(rows[0]["payload_json"])
+
+    def touch_api_token(self, token_id: str, secret_hash: str, used_at: str) -> bool:
+        """Update activity on the same live credential; never recreate a revoked document."""
+        with self.tx() as db:
+            cursor = db.execute(
+                """UPDATE documents
+                   SET payload_json = json_set(payload_json, '$.last_used_at', ?)
+                   WHERE kind = 'api_token' AND id = ?
+                     AND json_extract(payload_json, '$.secret_hash') = ?""",
+                (used_at, token_id, secret_hash),
+            )
+        return cursor.rowcount == 1
 
     def list_docs(self, kind: str) -> list[BaseModel]:
         rows = self._rows(

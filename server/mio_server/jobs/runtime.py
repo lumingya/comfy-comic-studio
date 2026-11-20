@@ -130,6 +130,11 @@ class EngineRuntime:
 
         now = time.time()
         with self.lock, self.pool.lock:
+            state = self.db.execute(
+                "SELECT paused, blocked, canceled FROM jobs WHERE id = ?", (cand.job_id,)
+            ).fetchone()
+            if state is None or state["paused"] or state["blocked"] or state["canceled"]:
+                return None
             item = self._item_row(cand.job_id, cand.idx)
             binding = self.job_executor(cand.job_id)
             if (

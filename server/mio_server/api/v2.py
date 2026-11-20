@@ -24,6 +24,7 @@ from . import (
     backups,
     canvas,
     checkpoints,
+    deliverables,
     export_jobs,
     extension_market,
     extensions,
@@ -40,6 +41,7 @@ from . import (
     theme_preferences,
     update,
     workshop,
+    workshop_tasks,
 )
 from .extension_contracts import install_contract_schemas
 from .extension_routes import mount_extensions
@@ -55,11 +57,13 @@ ROUTERS = (
     jobs,
     album,
     export_jobs,
+    deliverables,
     backups,
     motion,
     system,
     update,
     workshop,
+    workshop_tasks,
     extension_market,
     extensions,
     theme_preferences,
@@ -175,7 +179,10 @@ def _openapi(app: FastAPI) -> dict:
 
 def _handler(code: int, kind: str):
     async def handle(request: Request, exc: Exception) -> JSONResponse:
-        return JSONResponse(status_code=code, content={"detail": str(exc), "kind": kind})
+        content = {"detail": str(exc), "kind": kind}
+        if isinstance(getattr(exc, "code", None), str):
+            content["code"] = exc.code
+        return JSONResponse(status_code=code, content=content)
 
     return handle
 

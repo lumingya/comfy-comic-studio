@@ -312,6 +312,15 @@ mio.contribute(
 
 ### 工作流识别规则
 
+`workflow_slot_adapter` 契约版本 1 用于特殊 LoRA 输入形态。扩展实现两个纯函数式方法。
+`inspect(node)` 返回 `None` 或包含 `path` 和 `loras` 的描述。它只依赖 API 工作流节点，
+因此不连接 ComfyUI 也可得到与正式编译一致的扩展槽位。
+每条 LoRA 包含 `name`、可选 `strength`、`clip` 和 `enabled`。描述还可声明
+`range: {min, max}`、`can_disable`、`can_append` 和传给写入方法的 JSON `options`。
+`write(node, slot, loras)` 返回该节点现有输入键的修改字典。宿主传入副本，并在排队前写入编译图。
+当多个扩展认领同一节点时，当前注册目录中最近加入的适配器优先。停用扩展后，新分析回退到内置识别规则。
+示例见 [LoRA 槽位编解码器](../../../examples/extensions/comfy-slot-codec/README.md)。
+
 `workflow_binding` 的贡献是纯函数 `fn(graph) -> Iterable[Binding | dict]`，接收工作流副本，
 返回 `kind/node/field` 等绑定字段。例如为自定义节点贡献提示词识别：
 
@@ -405,3 +414,7 @@ parent.postMessage({
 覆盖安装同 id 的扩展时，要打开「覆盖同名」。
 
 测试可以参考 `server/tests/test_extensions.py`。
+
+云端渠道的 `extra_options` 限制为 32 KiB、最多 32 层的 JSON；普通 URL 参数不得嵌入账号、密码或令牌。凭据应使用 `api_key` 或名称明确的 token、auth、cookie、session 等字段：设置响应只返回脱敏占位，任务冻结和便携套装移除这些值，执行时仅沿原有结构补回当前凭据。不同出图配置即使绑定同一渠道，也各自保留普通参数配方。
+
+画册模板在 `{{#frames}}` 内还可读取 `frameIndex`（从 1 开始）、`total`（本话分幕数）、`progress`（当前序号／总数，0 到 1），以及 `number`、`panelCount`、`palette1/2/3`；作品级变量包含 `coverImage`、`synopsis` 与 `signature`。变量始终进行 HTML 和花括号转义；模板不能包含脚本或自动跳转。

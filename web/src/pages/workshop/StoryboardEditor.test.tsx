@@ -1,7 +1,9 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { episode, series } from '../../test/fixtures';
 import { mockFetch, renderWithProviders } from '../../test/utils';
+import { configSummary } from '../../test/configuration';
+import { workflowLoras } from '../../test/workflowLoras';
 import type { Episode } from '../../api/types';
 import { useToasts } from '../../components/toast';
 import StoryboardEditor from './StoryboardEditor';
@@ -14,13 +16,17 @@ beforeEach(() => {
   ep = structuredClone(episode);
   ep.id = 'sb_test';
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  const measure = HTMLElement.prototype.getBoundingClientRect;
+  if (vi.isMockFunction(measure)) measure.mockRestore();
+  vi.unstubAllGlobals();
+});
 const prompt = () => document.getElementById('workshop-frame-prompt') as HTMLTextAreaElement;
 const negative = () => document.getElementById('workshop-frame-negative') as HTMLTextAreaElement;
 const rows = () => [
   ...document.querySelectorAll<HTMLButtonElement>('.workshop-frames-list [data-selection-id]'),
 ];
-function start(fail = false) {
+function start(fail = false, routes: Parameters<typeof mockFetch>[0] = {}) {
   const calls = mockFetch({
     'GET /api/workshop': series,
     'PATCH /api/episodes/sb_test/panels/p0': (body: unknown) => {
@@ -33,11 +39,52 @@ function start(fail = false) {
       };
       return ep;
     },
+    ...routes,
   });
   renderWithProviders(<StoryboardEditor />);
   return calls;
 }
 describe('storyboard editing recovery', () => {
+  it('saves a workflow-specific scene LoRA and can restore task inheritance', async () => {
+    ep.panels[0].overrides.slot_overrides = { model: 'manual.safetensors' };
+    const calls = start(false, {
+      'GET /api/workflows': [configSummary],
+      'GET /api/workflows/wf_demo/loras': workflowLoras,
+    });
+    fireEvent.click(screen.getByText('此幕画面参数'));
+    fireEvent.click(screen.getByText('本幕的 LoRA'));
+    const workflow = await screen.findByRole('combobox', { name: '覆写适用的工作流' });
+    await waitFor(() => expect(workflow).toBeEnabled());
+    fireEvent.change(workflow, { target: { value: 'wf_demo' } });
+    const toggle = await screen.findByRole('combobox', { name: 'ink.safetensors' });
+    expect(toggle).toHaveValue('inherit');
+    fireEvent.change(toggle, { target: { value: 'on' } });
+    const strength = screen.getByRole('spinbutton', { name: 'ink.safetensors 模型强度' });
+    fireEvent.change(strength, { target: { value: '0.8' } });
+    fireEvent.change(strength, { target: { value: '0.65' } });
+    fireEvent.click(screen.getByRole('button', { name: '保存' }));
+    await waitFor(() =>
+      expect(ep.panels[0].overrides.slot_overrides).toEqual({
+        model: 'manual.safetensors',
+        workflow_id: 'wf_demo',
+        groups: [
+          {
+            key: 'group',
+            loras: [{ key: 'ink', name: 'ink.safetensors', enabled: true, strength: 0.65 }],
+          },
+        ],
+      }),
+    );
+    expect(ep.panels[1].overrides.slot_overrides).toEqual({});
+    fireEvent.change(toggle, { target: { value: 'inherit' } });
+    fireEvent.click(screen.getByRole('button', { name: '恢复默认' }));
+    fireEvent.click(screen.getByRole('button', { name: '保存' }));
+    await waitFor(() =>
+      expect(ep.panels[0].overrides.slot_overrides).toEqual({ model: 'manual.safetensors' }),
+    );
+    expect(calls.filter((call) => call.method === 'PATCH')).toHaveLength(2);
+  });
+
   it('resizes the frame list without changing the active frame or saving story content', () => {
     const calls = start();
     const handle = screen.getByRole('separator');
@@ -102,7 +149,8 @@ describe('storyboard editing recovery', () => {
     fireEvent.change(screen.getByRole('searchbox', { name: '搜索分幕…' }), {
       target: { value: 'no match' },
     });
-    expect(screen.getByRole('status')).toHaveTextContent('没有符合条件的分幕。');
+    expect(screen.getByText('没有符合条件的分幕。')).toHaveAttribute('role', 'status');
+    expect(screen.queryByRole('button', { name: /^移动第/ })).not.toBeInTheDocument();
     fireEvent.change(screen.getByRole('searchbox', { name: '搜索分幕…' }), {
       target: { value: '' },
     });
@@ -121,6 +169,37 @@ describe('storyboard editing recovery', () => {
     expect(ep.panels[0].dialogues).toHaveLength(1);
     expect(ep.panels[0].dialogues[0].kind).toBe('speech');
   });
+  it('expands unsaved frame variables, leaving escaped braces plain and marking missing values', async () => {
+    ep.panels[0].overrides.values = { $preview_label: '{description} near {scene}' };
+    const calls = start();
+    fireEvent.change(screen.getByRole('textbox', { name: '分幕名称' }), {
+      target: { value: 'The doorway' },
+    });
+    fireEvent.change(prompt(), {
+      target: { value: '{preview_label}, {{escaped}}, {unknown}' },
+    });
+    fireEvent.change(negative(), { target: { value: 'Avoid {character}' } });
+    fireEvent.change(document.getElementById('workshop-frame-caption')!, {
+      target: { value: 'We arrived at {scene}.' },
+    });
+    const summary = screen.getByText('变量展开预览');
+    const preview = within(summary.closest('details')!);
+    fireEvent.click(summary);
+    expect(await preview.findByText(/The doorway near convenience store/)).toHaveTextContent(
+      'The doorway near convenience store, {escaped}, {unknown}',
+    );
+    expect(preview.getByText('{unknown}', { selector: 'mark' })).toHaveAttribute(
+      'title',
+      '当前分镜没有定义此变量',
+    );
+    expect(preview.getByText('{character}', { selector: 'mark' })).toHaveAttribute(
+      'title',
+      '此变量在当前分镜中没有值',
+    );
+    expect(preview.queryByText('{escaped}', { selector: 'mark' })).not.toBeInTheDocument();
+    expect(preview.getByText('We arrived at convenience store.')).toBeInTheDocument();
+    expect(calls).toHaveLength(0);
+  });
   it('gives frame right-click a temporary target and supports range selection plus Escape', () => {
     start();
     fireEvent.contextMenu(rows()[1]);
@@ -134,6 +213,80 @@ describe('storyboard editing recovery', () => {
     expect(rows().filter((r) => r.getAttribute('aria-selected') === 'true')).toHaveLength(2);
     fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
     expect(rows().filter((r) => r.getAttribute('aria-selected') === 'true')).toHaveLength(0);
+  });
+});
+
+describe('sorting storyboard frames', () => {
+  const orderUrl = '/api/episodes/sb_test/panels/reorder';
+  const routes = {
+    [`POST ${orderUrl}`]: (body: unknown) => {
+      const { order } = body as { order: string[] };
+      ep = {
+        ...ep,
+        panels: ep.panels.map((panel) => ({ ...panel, order: order.indexOf(panel.id!) })),
+      };
+      return ep;
+    },
+  };
+
+  async function liftFirstFrame() {
+    const getRect = HTMLElement.prototype.getBoundingClientRect;
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      if (!this.matches('.workshop-frame-row')) return getRect.call(this);
+      const index = [...this.parentElement!.querySelectorAll('.workshop-frame-row')].indexOf(this);
+      return new DOMRect(0, index * 52, 200, 46);
+    });
+    const handle = screen.getByRole('button', { name: /^移动第 1 幕/ });
+    handle.focus();
+    fireEvent.keyDown(handle, { key: ' ', code: 'Space' });
+    // The sensor waits one task before listening on the document to avoid handling pickup twice.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(handle).toHaveAttribute('aria-pressed', 'true');
+    return handle;
+  }
+
+  it('persists a keyboard drop after flushing the draft, keeping the editor on the same frame', async () => {
+    const calls = start(false, routes);
+    fireEvent.change(prompt(), { target: { value: 'save before reordering' } });
+    const handle = await liftFirstFrame();
+    fireEvent.keyDown(handle, { key: 'ArrowDown', code: 'ArrowDown' });
+    await screen.findByText('当前位置为第 2 幕。');
+    fireEvent.keyDown(handle, { key: ' ', code: 'Space' });
+    await waitFor(() => expect(rows().map((row) => row.dataset.selectionId)).toEqual(['p1', 'p0']));
+    expect(calls.map((call) => call.url)).toEqual(['/api/episodes/sb_test/panels/p0', orderUrl]);
+    expect(calls[1].body).toMatchObject({ order: ['p1', 'p0'] });
+    expect(ep.panels[0].overrides.raw_prompt).toBe('save before reordering');
+    expect(document.querySelector('[data-editor-key]')).toHaveAttribute('data-editor-key', 'p0');
+    expect(handle).toHaveFocus();
+  });
+
+  it('cancels a keyboard drag without clearing the current multiselection or writing the order', async () => {
+    const calls = start(false, routes);
+    fireEvent.click(rows()[1], { ctrlKey: true });
+    const handle = await liftFirstFrame();
+    fireEvent.keyDown(handle, { key: 'ArrowDown', code: 'ArrowDown' });
+    await screen.findByText('当前位置为第 2 幕。');
+    fireEvent.keyDown(handle, { key: 'Escape', code: 'Escape' });
+    await screen.findByText('已取消移动。');
+    expect(rows()[1]).toHaveAttribute('aria-selected', 'true');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('leaves the order and draft available for retry when saving fails before a drop', async () => {
+    const calls = start(true, routes);
+    fireEvent.change(prompt(), { target: { value: 'pending change' } });
+    const handle = await liftFirstFrame();
+    fireEvent.keyDown(handle, { key: 'ArrowDown', code: 'ArrowDown' });
+    await screen.findByText('当前位置为第 2 幕。');
+    fireEvent.keyDown(handle, { key: ' ', code: 'Space' });
+    await screen.findByText(/保存失败/);
+    expect(calls.every((call) => call.url !== orderUrl)).toBe(true);
+    expect(rows().map((row) => row.dataset.selectionId)).toEqual(['p0', 'p1']);
+    expect(prompt()).toHaveValue('pending change');
   });
 });
 

@@ -3,6 +3,7 @@
 import base64
 from pathlib import Path
 
+from mio_server import llm as L
 from mio_server.auth import required_scope
 from mio_server.creation_kits import assemble_kit, import_kit
 from mio_server.creation_kits.archive import unpack
@@ -11,6 +12,7 @@ from mio_server.models import GenerationDefaults, Panel, PanelOverrides, Preset,
 from mio_server.render_models import RenderProfile, RenderStage
 
 from .api_harness import ApiCase
+from .test_providers import png
 
 
 class GenerationTaskTests(ApiCase):
@@ -598,3 +600,34 @@ class GenerationTaskTests(ApiCase):
         request = self.render(cloud["episode"]["id"])["items"][0]["input"]["request"]
         self.assertIsNone(request["requested"]["width"])
         self.assertEqual(request["options"]["size"], "1536x1024")
+
+    def test_assembled_extension_channel_uses_frozen_options_and_current_credentials(self):
+        seen = []
+
+        class Adapter:
+            def __init__(self, config, transport):
+                self.config = config
+
+            def generate_image(self, prompt, refs, models, timeout, retries):
+                seen.append(self.config.extra_options)
+                return png(), L.Reply("", "demo", 0.1)
+
+        self.ctx.registry.register("cloud_adapter", "freeze-demo", Adapter, source="ext:demo")
+        channel = {
+            "id": "demo",
+            "kind": "freeze-demo",
+            "model": "demo",
+            "extra_options": {"quality": "draft", "accounts": [{"token": "fixture-old"}]},
+        }
+        self.ok(self.client.patch("/api/settings", json={"image_channels": [channel]}))
+        result = self.assemble({"cloud_channel_id": "demo"})
+        frozen = result["series"]["generation"]["channels"]["demo"]["options"]["extra_options"]
+        self.assertEqual(frozen, {"quality": "draft", "accounts": [{}]})
+
+        channel["extra_options"] = {"quality": "final", "accounts": [{"token": "fixture-new"}]}
+        self.ok(self.client.patch("/api/settings", json={"image_channels": [channel]}))
+        job = self.render(result["episode"]["id"])
+        self.assertEqual(job["items"][0]["input"]["request"]["options"]["extra_options"], frozen)
+        self.drain(job)
+        self.assertEqual(seen, [{"quality": "draft", "accounts": [{"token": "fixture-new"}]}])
+        self.assertNotIn("fixture-new", str(self.ctx.engine.get(job["id"])))

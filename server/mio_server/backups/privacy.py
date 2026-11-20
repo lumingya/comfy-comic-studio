@@ -3,6 +3,7 @@
 import json
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
+from ..pipeline.cloud_request import SECRET_OPTION_NAME
 from ..settings import AppSettings
 
 SECRET_KEYS = {
@@ -32,6 +33,18 @@ def clean_url(value: str) -> str:
         if key.lower() not in SECRET_KEYS
     ]
     return urlunsplit((url.scheme, host, url.path, urlencode(query), ""))
+
+
+def clean_options(value):
+    if isinstance(value, dict):
+        return {
+            key: clean_options(child)
+            for key, child in value.items()
+            if key.lower() not in SECRET_KEYS and not SECRET_OPTION_NAME.search(key)
+        }
+    if isinstance(value, list):
+        return [clean_options(child) for child in value]
+    return clean_url(value) if isinstance(value, str) else value
 
 
 def has_embedded_secret(value) -> bool:
@@ -79,6 +92,7 @@ def sanitize(store_db, jobs_db, include_credentials: bool) -> list[str]:
                 for channel in value.get("image_channels", []):
                     channel["api_key"] = ""
                     channel["base_url"] = clean_url(channel["base_url"])
+                    channel["extra_options"] = clean_options(channel.get("extra_options", {}))
         elif kind == "instance":
             value["enabled"] = False
             if not include_credentials:

@@ -90,6 +90,27 @@
               resolving or explicitly resubmitting: repeated paid calls can
               create duplicate charges. Inspect job details for actual failures.
             </p>
+            <h2 id="orchestration">External orchestration and deliverables</h2>
+            <p>
+              Open API clients can call
+              <code>POST /api/v2/workshop/tasks</code> with a storyboard,
+              presets, a workflow or profile, variables, LoRA overrides, image
+              count and dimensions in one request. <code>auto_start</code>
+              starts the job after the assembly snapshot is frozen, while
+              <code>adopt_first</code> adopts the first candidate. Reusing an
+              <code>idempotency_key</code> returns the original task; changing
+              its parameters is rejected explicitly.
+            </p>
+            <p>
+              When an episode is ready, use
+              <code>GET /api/v2/episodes/{id}/deliverables</code> to inspect
+              available outputs, then
+              <code>POST /api/v2/episodes/{id}/deliverables/export</code> for
+              offline HTML, PDF, image ZIP or long PNG output with a selected
+              template. Exports may be asynchronous; poll the returned status
+              and download handle. Provider credentials never appear in the
+              deliverable response.
+            </p>
           </section>
         </article>
         <nav class="chapter-nav" aria-label="Previous and next chapter">

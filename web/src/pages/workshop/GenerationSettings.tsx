@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { useProfiles, useSettings, useWorkflows } from '../../api/system';
 import type { GenerationOptions } from '../../api/workshop';
 import type { Series } from '../../api/types';
+import type { LoraSlotOverrides } from '../../api/workflowLoras';
+import { WorkflowLoraOverrides } from './WorkflowLoraOverrides';
 import './assemble-dialog.css';
 
 export function generationKey(value: GenerationOptions | undefined) {
@@ -26,7 +28,13 @@ export function generationValid(value: GenerationOptions | undefined) {
   );
 }
 
-export function GenerationSummary({ value }: { value: GenerationOptions | undefined }) {
+export function GenerationSummary({
+  value,
+  slotOverrides,
+}: {
+  value: GenerationOptions | undefined;
+  slotOverrides?: LoraSlotOverrides;
+}) {
   const { t } = useTranslation();
   const workflows = useWorkflows();
   const profiles = useProfiles();
@@ -54,6 +62,12 @@ export function GenerationSummary({ value }: { value: GenerationOptions | undefi
             : t('ws.generation.originalSize')}
         </dd>
       </div>
+      {slotOverrides?.groups.length ? (
+        <div className="designer-summary-row">
+          <dt>{t('ws.generation.loraTask')}</dt>
+          <dd>{slotOverrides.groups.reduce((count, group) => count + group.loras.length, 0)}</dd>
+        </div>
+      ) : null}
     </>
   );
 }
@@ -69,6 +83,7 @@ export function GenerationSettings({
   onReadyChange,
   onConfigure,
   id = 'generation',
+  lora,
 }: {
   value: GenerationOptions | undefined;
   onChange: (value: GenerationOptions) => void;
@@ -79,6 +94,10 @@ export function GenerationSettings({
   onReadyChange?: (ready: boolean) => void;
   onConfigure?: () => void;
   id?: string;
+  lora?: {
+    value?: LoraSlotOverrides;
+    onChange: (value: LoraSlotOverrides | undefined) => void;
+  };
 }) {
   const { t } = useTranslation();
   const workflows = useWorkflows();
@@ -126,6 +145,7 @@ export function GenerationSettings({
       : profiles.data?.some((p) => p.id === value?.profile_id);
   const sized = value?.width != null || value?.height != null;
   const loading = settings.isPending || workflows.isPending || profiles.isPending;
+  const [showLora, setShowLora] = useState(false);
   const pendingBinding = !!profiles.data?.find((p) => p.id === value?.profile_id)?.binding_required;
   const valid = generationValid(value);
   useEffect(() => {
@@ -265,6 +285,24 @@ export function GenerationSettings({
         <p className="help" role="alert">
           {t('ws.generation.invalid')}
         </p>
+      ) : null}
+      {lora && exists && value?.workflow_id ? (
+        <details
+          className="quiet-advanced"
+          open={showLora}
+          onToggle={(event) => setShowLora(event.currentTarget.open)}
+        >
+          <summary>{t('ws.generation.loraTask')}</summary>
+          {showLora ? (
+            <WorkflowLoraOverrides
+              workflowId={value.workflow_id}
+              title={t('ws.generation.loraTask')}
+              value={lora.value?.groups ?? []}
+              onChange={(groups) => lora.onChange(groups.length ? { groups } : undefined)}
+              disabled={disabled}
+            />
+          ) : null}
+        </details>
       ) : null}
     </div>
   );

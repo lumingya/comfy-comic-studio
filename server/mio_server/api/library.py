@@ -11,6 +11,7 @@ from .. import imaging
 from ..comfy import adapters
 from ..comfy import compile as C
 from ..comfy import inspection as I
+from ..comfy import slot_adapters as SA
 from ..comfy import workflow_slots as slots
 from ..comfy.client import ComfyError
 from ..comfy.diagnostics import diagnose, model_catalog
@@ -67,9 +68,15 @@ class CompileRequest(BaseModel):
     slot_overrides: dict[str, Any] = Field(default_factory=dict)
 
 
+class WorkflowFormatError(ValueError):
+    code = "ui_format"
+
+
 def _check_api_format(graph: dict) -> None:
-    if isinstance(graph.get("nodes"), list) and "links" in graph:
-        raise ValueError("这是 ComfyUI 的界面格式；请在 ComfyUI 里用「导出 (API)」保存后再导入")
+    if isinstance(graph.get("nodes"), list):
+        raise WorkflowFormatError(
+            "这是 ComfyUI 的界面格式；请在 ComfyUI 里用「导出 (API)」保存后再导入"
+        )
 
 
 def _analyze(graph: dict) -> dict | None:
@@ -89,6 +96,8 @@ def list_workflows(ctx: Ctx) -> list[dict]:
     out = []
     for doc in ctx.store.list_docs("workflow"):
         info = C.describe(doc, rules=_rules(ctx))
+        plan = slots.ensure_plan(doc.graph, doc.slots, adapters=SA.installed(ctx.registry))
+        lora_groups = plan.get("lora", {}).get("groups", [])
         out.append(
             {
                 "id": doc.id,
@@ -98,6 +107,13 @@ def list_workflows(ctx: Ctx) -> list[dict]:
                 "variants": info["variants"],
                 "image_inputs": info["image_inputs"],
                 "checkpoint": info["checkpoint"],
+                "loras": {
+                    "enabled": bool(plan.get("lora", {}).get("enabled")),
+                    "groups": len(lora_groups),
+                    "supports_independent_toggle": any(
+                        SA.can_toggle(group) for group in lora_groups
+                    ),
+                },
                 "updated_at": doc.updated_at,
             }
         )
@@ -122,72 +138,28 @@ def import_workflow(ctx: Ctx, body: WorkflowImport) -> dict:
     )
     C.describe(doc, rules=_rules(ctx))  # raises on broken manual mappings
     ctx.store.put_doc(doc)
-    return {**doc.model_dump(), "describe": C.describe(doc, rules=_rules(ctx))}
+    return {
+        **doc.model_dump(),
+        "describe": C.describe(doc, rules=_rules(ctx)),
+        "lora_controls": SA.describe(doc, ctx.registry),
+    }
 
 
 @router.get("/workflows/{workflow_id}")
 def get_workflow(ctx: Ctx, workflow_id: str) -> dict:
     doc = ctx.store.get_doc("workflow", workflow_id)
-    return {**doc.model_dump(), "describe": C.describe(doc, rules=_rules(ctx))}
+    return {
+        **doc.model_dump(),
+        "describe": C.describe(doc, rules=_rules(ctx)),
+        "lora_controls": SA.describe(doc, ctx.registry),
+    }
 
 
 @router.get("/workflows/{workflow_id}/loras")
 def workflow_loras(ctx: Ctx, workflow_id: str) -> dict:
     """Describe the workflow's LoRA controls without contacting ComfyUI."""
     doc = ctx.store.get_doc("workflow", workflow_id)
-    plan = slots.ensure_plan(doc.graph, doc.slots)
-    groups = []
-    for group in plan.get("lora", {}).get("groups", []):
-        writer = group.get("writer", {})
-        embedded = group.get("kind") == "embedded"
-        can_toggle = bool(group.get("active")) and (
-            not embedded or bool(writer.get("chain") and writer["chain"][0].get("strengthPath"))
-        )
-        reason = ""
-        if not group.get("active"):
-            reason = group.get("warn") or "没有活跃的 LoRA 写入点"
-        elif embedded and not can_toggle:
-            reason = "此内嵌 LoRA 没有强度字段，无法安全关闭"
-        groups.append(
-            {
-                "key": group["key"],
-                "kind": group["kind"],
-                "active": bool(group.get("active")),
-                "range": writer.get("range", {"min": -5, "max": 5}),
-                "supports_independent_toggle": can_toggle,
-                "reason": reason,
-                "sites": group.get("sites", []),
-                "loras": [
-                    {
-                        "key": item["key"],
-                        "name": item["name"],
-                        "strength": item["strength"],
-                        "clip": item.get("clip"),
-                        "enabled": bool(item.get("enabled", True)),
-                        "source": "workflow",
-                        "pinned": True,
-                        "supports_independent_toggle": can_toggle,
-                        "supports_strength": True,
-                        "range": writer.get("range", {"min": -5, "max": 5}),
-                    }
-                    for item in group.get("pinned", [])
-                ],
-            }
-        )
-    return {
-        "workflow_id": doc.id,
-        "adapter": {"id": "workflow_slots.v3", "source": "builtin"},
-        "enabled": bool(plan.get("lora", {}).get("enabled")),
-        "reason": plan.get("lora", {}).get("reason", ""),
-        "supports_append": bool(
-            plan.get("lora", {}).get("synth")
-            or any(
-                group.get("active") and group.get("append")
-                for group in plan.get("lora", {}).get("groups", [])
-            )
-        ),
-        "groups": groups,
-    }
+    return SA.describe(doc, ctx.registry)
 
 
 @router.patch("/workflows/{workflow_id}")
@@ -204,7 +176,11 @@ def patch_workflow(ctx: Ctx, workflow_id: str, body: WorkflowPatch) -> dict:
     doc = WorkflowDoc.model_validate({**doc.model_dump(), **changes})
     C.describe(doc, rules=_rules(ctx))
     ctx.store.put_doc(doc)
-    return {**doc.model_dump(), "describe": C.describe(doc, rules=_rules(ctx))}
+    return {
+        **doc.model_dump(),
+        "describe": C.describe(doc, rules=_rules(ctx)),
+        "lora_controls": SA.describe(doc, ctx.registry),
+    }
 
 
 @router.post("/workflows/{workflow_id}/copy", status_code=status.HTTP_201_CREATED)
@@ -241,7 +217,7 @@ def delete_workflow(ctx: Ctx, workflow_id: str) -> None:
 def compile_preview(ctx: Ctx, workflow_id: str, body: CompileRequest) -> dict:
     """Dry run: the exact graph Mio would queue for these values (编译结果可见)."""
     doc = ctx.store.get_doc("workflow", workflow_id)
-    return C.compile_workflow(
+    compiled = C.compile_workflow(
         doc,
         body.values,
         variant=body.variant,
@@ -250,6 +226,7 @@ def compile_preview(ctx: Ctx, workflow_id: str, body: CompileRequest) -> dict:
         rules=_rules(ctx),
         registry=ctx.registry,
     ).to_json()
+    return {**compiled, "lora_controls": SA.describe(doc, ctx.registry, body.slot_overrides)}
 
 
 @router.post("/workflows/{workflow_id}/trial", response_model=WorkflowTrialResult)
@@ -274,6 +251,7 @@ def diagnose_workflow(
         request.values,
         variant=request.variant,
         overrides=request.overrides,
+        slot_overrides=request.slot_overrides,
         rules=_rules(ctx),
         registry=ctx.registry,
     )
@@ -284,6 +262,7 @@ def diagnose_workflow(
         "variant": request.variant,
         "selected_nodes": list(compiled.graph),
         "warnings": compiled.warnings,
+        "lora_controls": SA.describe(doc, ctx.registry, request.slot_overrides),
     }
 
 
@@ -339,7 +318,7 @@ def comfy_adapters(ctx: Ctx) -> list[dict]:
             "digest": c.meta.get("digest", ""),
             "contract": c.meta.get("contract", 1),
         }
-        for point in ("comfy_output_adapter", "comfy_state_adapter")
+        for point in ("comfy_output_adapter", "comfy_state_adapter", SA.POINT)
         for c in ctx.registry.all(point)
     ]
 

@@ -373,6 +373,8 @@ export default function ReaderPage() {
           title: x.title,
           description: x.description,
           accent: x.options?.accent,
+          layout: x.layout,
+          layoutName: x.layout_name,
         }))
       : BUILTIN.map((b) => ({ id: b.id, title: t(`reader.look.${b.look}`), description: '' }))
   ).sort((a, b) => templateRank(a.id) - templateRank(b.id));

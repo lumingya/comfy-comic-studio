@@ -101,11 +101,10 @@ it.each(['html', 'pdf', 'zip'])(
     mount();
     choose(format);
     expect(screen.getAllByRole('button', { name: '导出' })).toHaveLength(1);
-    expect(screen.queryByLabelText('画册版式') !== null).toBe(format === 'html');
+    expect(screen.queryByRole('group', { name: '画册版式' }) !== null).toBe(format === 'html');
     expect(screen.queryByLabelText('包含旁白与台词') !== null).toBe(format !== 'pdf');
     expect(screen.queryByLabelText('平台预设')).toBeNull();
-    if (format === 'html')
-      fireEvent.change(screen.getByLabelText('画册版式'), { target: { value: 'export-gallery' } });
+    if (format === 'html') fireEvent.click(screen.getByRole('button', { name: '展册' }));
     fireEvent.change(screen.getByLabelText(/^图片处理/), { target: { value: 'publish' } });
     run();
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
@@ -141,7 +140,7 @@ it.each(['html', 'pdf', 'zip'])(
     const requests = calls.filter((call) => call.method === 'POST');
     expect(requests).toHaveLength(1);
     expect(requests[0].body).toMatchObject({ title: title.slice(0, 120) });
-    expect(screen.getByText(title)).toBeInTheDocument();
+    expect(screen.getAllByText(title).length).toBeGreaterThan(0);
   },
 );
 
@@ -152,7 +151,7 @@ it('exports slices with the chosen platform and quality', async () => {
   await screen.findByRole('option', { name: '国内平台' });
   expect(onPlatform).toHaveBeenLastCalledWith(true);
   expect(screen.queryByLabelText(/^图片处理/)).toBeNull();
-  expect(screen.queryByLabelText('画册版式')).toBeNull();
+  expect(screen.queryByRole('group', { name: '画册版式' })).toBeNull();
   fireEvent.change(screen.getByLabelText('平台预设'), { target: { value: 'kuaikan' } });
   fireEvent.change(screen.getByLabelText('画质'), { target: { value: 'lossless' } });
   run();
@@ -186,7 +185,7 @@ it.each([
     expect(screen.queryByLabelText('平台预设')).toBeNull();
     expect(screen.queryByText(/750 px/)).toBeNull();
     expect(screen.queryByLabelText(/^图片处理/)).toBeNull();
-    expect(screen.queryByLabelText('画册版式')).toBeNull();
+    expect(screen.queryByRole('group', { name: '画册版式' })).toBeNull();
     fireEvent.change(screen.getByLabelText('画质'), { target: { value: quality } });
     run();
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
@@ -208,7 +207,7 @@ it('downloads the entire editable source without requiring a selected episode', 
   choose('source');
   expect(screen.getByRole('button', { name: '导出' })).toBeEnabled();
   expect(screen.queryByLabelText(/^图片处理/)).toBeNull();
-  expect(screen.queryByLabelText('画册版式')).toBeNull();
+  expect(screen.queryByRole('group', { name: '画册版式' })).toBeNull();
   expect(screen.queryByLabelText('套装名称')).toBeNull();
   expect(screen.getByText('导出整本作品')).toBeInTheDocument();
   run();
@@ -239,7 +238,7 @@ it('includes only selected storyboards and presets in a creation kit, including 
   fireEvent.click(screen.getByRole('checkbox', { name: '第二话' }));
   fireEvent.click(await screen.findByRole('checkbox', { name: '林夏' }));
   fireEvent.change(screen.getByLabelText('套装名称'), { target: { value: '海风创作套装' } });
-  expect(screen.queryByLabelText('画册版式')).toBeNull();
+  expect(screen.queryByRole('group', { name: '画册版式' })).toBeNull();
   expect(screen.queryByLabelText(/^图片处理/)).toBeNull();
   run();
   await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('文件已下载'));
@@ -382,6 +381,36 @@ it('downloads a completed result again after a network failure without retrying 
   await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('下载已开始'));
   expect(calls.filter((call) => call.method === 'POST')).toHaveLength(1);
   expect(calls.filter((call) => call.url.endsWith('/file'))).toHaveLength(2);
+});
+
+it('selects visual template cards and opens a sandboxed full-screen trial read', async () => {
+  const calls = mockFetch({
+    ...routes(),
+    'POST /api/export/album': new Response('<!doctype html><title>preview</title>', {
+      headers: { 'content-type': 'text/html' },
+    }),
+  });
+  mount();
+  choose('html');
+  fireEvent.click(screen.getByRole('button', { name: '展册' }));
+  expect(screen.getByRole('button', { name: '展册' })).toHaveAttribute('aria-pressed', 'true');
+  fireEvent.click(screen.getByText('更多设置'));
+  fireEvent.change(screen.getByLabelText('主题色'), { target: { value: '#315b86' } });
+  expect(
+    screen.getByRole('button', { name: '展册' }).querySelector('.export-template-thumb'),
+  ).toHaveStyle({
+    '--thumb-accent': '#315b86',
+  });
+  fireEvent.click(screen.getByRole('button', { name: '全屏试读' }));
+  const frame = await screen.findByTitle('画册全屏试读');
+  expect(frame).toHaveAttribute('sandbox', 'allow-scripts allow-popups');
+  expect(calls.filter((call) => call.url === '/api/export/album').at(-1)?.body).toMatchObject({
+    template_id: 'export-gallery',
+    theme_color: '#315b86',
+    image_profile: 'preview',
+  });
+  fireEvent.click(screen.getByRole('button', { name: '关闭试读' }));
+  expect(screen.getByTitle('画册全屏试读').closest('dialog')).not.toHaveAttribute('open');
 });
 
 it('starts a fresh export after a successful download so later edits are included', async () => {

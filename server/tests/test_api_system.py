@@ -219,10 +219,14 @@ class WorkshopResourceTests(ApiCase):
             self.ok(self.client.get("/api/workshop/storyboards/{id}".format(id=board["id"])))["id"],
             board["id"],
         )
-        self.assertIn(
-            board["id"],
-            {item["id"] for item in self.ok(self.client.get("/api/workshop/storyboards"))},
-        )
+        listed_boards = self.ok(self.client.get("/api/workshop/storyboards?offset=0&limit=10"))
+        self.assertIn(board["id"], {item["id"] for item in listed_boards["items"]})
+        self.assertEqual(listed_boards["limit"], 10)
+        self.assertLessEqual(len(listed_boards["items"]), 10)
+        self.assertNotIn("panels", listed_boards["items"][0])
+        page = self.ok(self.client.get("/api/workshop/storyboards?offset=1&limit=1"))
+        self.assertEqual((page["offset"], page["limit"], len(page["items"])), (1, 1, 1))
+        self.assertEqual(page["total"], listed_boards["total"])
         updated_board = self.ok(
             self.client.patch(
                 f"/api/workshop/storyboards/{board['id']}",
@@ -264,6 +268,10 @@ class WorkshopResourceTests(ApiCase):
         self.assertEqual(wf["describe"]["nodes"], 4)
         listed = {w["id"] for w in self.ok(self.client.get("/api/workflows"))}
         self.assertIn(wf["id"], listed)
+        summary = next(
+            item for item in self.ok(self.client.get("/api/workflows")) if item["id"] == wf["id"]
+        )
+        self.assertIn("loras", summary)
         compiled = self.ok(
             self.client.post(
                 f"/api/workflows/{wf['id']}/compile", json={"values": {"prompt": "1girl"}}

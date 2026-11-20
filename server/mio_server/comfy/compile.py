@@ -23,6 +23,7 @@ from ..render_models import OutputAdapterConfig, WorkflowConfig, WorkflowDoc
 from . import adapters
 from . import bindings as B
 from . import contracts as AC
+from . import slot_adapters as SA
 from . import workflow_slots as slots
 from .client import ComfyError
 
@@ -228,16 +229,15 @@ def compile_workflow(
     var_cfg = config.variants.get(variant or "", {}) if variant else {}
     graph = copy.deepcopy(doc.graph)
     warnings: list[str] = []
+    syntax_targets: set[tuple[str, str]] = set()
     merged_slot_overrides = slots.merge_overrides(config.slot_overrides, slot_overrides)
     if merged_slot_overrides:
-        plan = (
-            slots.ensure_plan(graph, doc.slots)
-            if merged_slot_overrides.get("groups")
-            else doc.slots or {}
-        )
-        applied = slots.apply(graph, plan, merged_slot_overrides)
+        installed = SA.installed(registry)
+        plan = slots.ensure_plan(graph, doc.slots, adapters=installed)
+        applied = slots.apply(graph, plan, merged_slot_overrides, adapters=installed)
         graph = applied["workflow"]
         warnings.extend(applied["notices"])
+        syntax_targets = SA.syntax_targets(applied["plan"])
     bound, problems = B.resolve(graph, config.mapping or None, rules=rules)
     warnings.extend(problems)
     merged = _merge(config.values, var_cfg.get("values"), stage_values, values)
@@ -259,7 +259,9 @@ def compile_workflow(
                 if base in IMAGE_KINDS:
                     raise B.BindingError(f"工作流里没有 [mio:{key}] 输入节点，无法接收图片")
                 warnings.append(f"工作流没有 {key} 的绑定，值被忽略")
+    before_bindings = graph
     graph = B.apply_values(graph, bound, merged)
+    SA.preserve_bound_tags(before_bindings, graph, syntax_targets)
     graph, outputs = B.select_variant(graph, bound, variant)
     graph = B.apply_overrides(graph, _merge(config.overrides, var_cfg.get("overrides"), overrides))
     frontend_state = _frontend_plan(doc, graph, var_cfg, registry)

@@ -156,7 +156,7 @@ def apply_patch(settings: AppSettings, patch: dict) -> AppSettings:
 
 def _restore_masked_options(value, stored):
     """Keep secret-like extra options when a public masked settings object is resubmitted."""
-    from .pipeline.providers import SECRET_OPTION_NAME
+    from .pipeline.cloud_request import SECRET_OPTION_NAME
 
     if isinstance(value, list):
         old = stored if isinstance(stored, list) else []
@@ -173,7 +173,7 @@ def _restore_masked_options(value, stored):
             if key not in stored:
                 raise ValueError(f"渠道参数 {key} 已改变，无法沿用原密钥")
             result[key] = stored[key]
-        elif isinstance(item, dict):
+        elif isinstance(item, (dict, list)):
             result[key] = _restore_masked_options(item, stored.get(key, {}))
         else:
             result[key] = item

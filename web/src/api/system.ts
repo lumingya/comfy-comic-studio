@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, data, raw } from './client';
 import { keys } from './keys';
 import type { components } from './schema';
+import type { WorkflowLoraControls } from './workflowLoras';
 import type {
   AppSettings,
   ComfyInstance,
@@ -45,14 +46,16 @@ export function useRegistry() {
 export function useImageAdapters() {
   return useQuery({
     queryKey: keys.imageAdapters,
-    staleTime: Infinity,
+    staleTime: 0,
     queryFn: async () =>
       data(await api.GET('/api/image-adapters')) as unknown as ImageAdapterInfo[],
   });
 }
 
 // --------------------------------------------------------------- workflows
-export type WorkflowInspection = components['schemas']['Inspection'];
+export type WorkflowInspection = Omit<components['schemas']['Inspection'], 'lora_controls'> & {
+  lora_controls?: WorkflowLoraControls | null;
+};
 export type WorkflowDiagnostic = components['schemas']['DiagnosticReport'];
 
 export interface Diagnosis extends WorkflowDiagnostic {
@@ -63,8 +66,10 @@ export interface Diagnosis extends WorkflowDiagnostic {
   warnings?: string[];
 }
 
-export async function inspectWorkflow(body: components['schemas']['InspectRequest']) {
-  return data(await api.POST('/api/workflows/inspect', { body }));
+export async function inspectWorkflow(
+  body: components['schemas']['InspectRequest'],
+): Promise<WorkflowInspection> {
+  return data(await api.POST('/api/workflows/inspect', { body })) as WorkflowInspection;
 }
 
 export function useWorkflows() {
@@ -124,6 +129,7 @@ export function useSaveWorkflow() {
       ) as unknown as WorkflowDocument,
     onSuccess: async (doc) => {
       qc.setQueryData(keys.workflow(doc.id), doc);
+      await qc.invalidateQueries({ queryKey: keys.workflowLoras(doc.id) });
       await qc.invalidateQueries({ queryKey: keys.workflows });
     },
   });

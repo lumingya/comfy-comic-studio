@@ -212,7 +212,7 @@ assembled = mio.assemble(request)
 高阶方法同样只使用标准库。实现维护在 `python/_runtime.py`，生成器将它合入两份
 `mio_client.py`；请勿直接编辑生成文件。
 
-- `discover_studio(offset=0, limit=50)` 返回分镜分页、预设、工作流、画册模板和云端适配器目录。
+- `discover_studio(offset=0, limit=50)` 返回分镜分页、预设、工作流及完整 LoRA 控制、画册模板、云端适配器和可选渠道 ID。`GET /image-channels` 需要 `read`，仅返回选择渠道所需的摘要，省略地址、密钥及专属选项。
   工作流的具体 LoRA 控件用 `workflow_loras(workflow_id)` 查询。
 - `create_storyboard(body)`、`create_preset(body)` 是生成的普通资源接口，适用于任意脚本、机器人或插件。
 - `generate_workshop_task(body, idempotency_key=..., timeout=1800, poll=2)` 明确启用出图并轮询
@@ -239,30 +239,47 @@ selection = []
 for group in controls["groups"]:
     if group["supports_independent_toggle"] and group["loras"]:
         lora = group["loras"][0]
-        selection = [{
-            "group_key": group["key"], "key": lora["key"],
-            "name": lora["name"], "enabled": False,
-        }]
+        selection = [
+            {
+                "group_key": group["key"],
+                "key": lora["key"],
+                "name": lora["name"],
+                "enabled": False,
+            }
+        ]
         break
-board = mio.create_storyboard({
-    "title": "Window light",
-    "panels": [{"order": 0, "overrides": {"raw_prompt": "a {subject} by a window"}}],
-})
-preset = mio.create_preset({
-    "title": "Interior", "entries": [{"key": "subject", "value": "red chair"}],
-})
-task = mio.generate_workshop_task({
-    "storyboard_id": board["id"], "preset_ids": [preset["id"]],
-    "workflow_id": workflow_id, "loras": selection,
-    "generation": {"candidates": 1}, "adopt_first": True,
-}, idempotency_key="my-workshop-intent-001")
+board = mio.create_storyboard(
+    {
+        "title": "Window light",
+        "panels": [{"order": 0, "overrides": {"raw_prompt": "a {subject} by a window"}}],
+    }
+)
+preset = mio.create_preset(
+    {
+        "title": "Interior",
+        "entries": [{"key": "subject", "value": "red chair"}],
+    }
+)
+task = mio.generate_workshop_task(
+    {
+        "storyboard_id": board["id"],
+        "preset_ids": [preset["id"]],
+        "workflow_id": workflow_id,
+        "loras": selection,
+        "generation": {"candidates": 1},
+        "adopt_first": True,
+    },
+    idempotency_key="my-workshop-intent-001",
+)
 if task["start_error"]:
     raise RuntimeError(task["start_error"])  # 保留任务与原键，处理原因后显式重试同一请求
 if task["job"]["state"] != "completed":
     raise RuntimeError(task["job"]["state"])
 saved = mio.save_episode_deliverable(
-    task["episode"]["id"], Path("my-book.html"),
-    template_id="export-atelier", idempotency_key="my-book-html-001",
+    task["episode"]["id"],
+    Path("my-book.html"),
+    template_id="export-atelier",
+    idempotency_key="my-book-html-001",
 )
 print(saved)
 ```

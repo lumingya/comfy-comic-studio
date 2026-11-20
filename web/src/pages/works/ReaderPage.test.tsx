@@ -133,6 +133,29 @@ describe('saved reading composition', () => {
     });
   });
 
+  it('round-trips the template preview frame and layout through the iframe protocol', async () => {
+    localStorage.setItem('mio.reader.look', 'export-paper');
+    mount();
+    const frame = (await screen.findByTitle('展示模板预览')) as HTMLIFrameElement;
+    const child = frame.contentWindow!;
+    const post = vi.spyOn(child, 'postMessage').mockImplementation(() => {});
+    const position = { y: 117, spread: 2, frame: 7, mode: 'single' };
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        source: child,
+        data: { type: 'mio-reader-state', ...position },
+      }),
+    );
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        source: window,
+        data: { type: 'mio-reader-state', y: 0, spread: 0 },
+      }),
+    );
+    fireEvent.load(frame);
+    expect(post).toHaveBeenCalledWith({ type: 'mio-reader-restore', ...position }, '*');
+  });
+
   it('keeps reader actions outside the layout area without an unused reading footer', async () => {
     mount('single', 'webtoon', '/layout');
     const editor = await screen.findByRole('region', { name: 'Layout editor' });

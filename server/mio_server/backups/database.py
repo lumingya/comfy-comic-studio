@@ -27,6 +27,7 @@ STORE_COLUMNS = {
     "assets": "id mime size width height source filename created_at",
     "episode_snapshots": "episode_id revision created_at payload_json",
     "assembly_receipts": "idempotency_key request_sha series_id episode_id",
+    "workshop_launch_receipts": "episode_id job_id",
     "delivery_receipts": "delivery_id episode_id result_sha value_json created_at",
     "work_checkpoints": "id series_id created_at summary_json payload_json",
     "kit_receipts": "key sha result_json",
@@ -39,7 +40,7 @@ JOB_COLUMNS = {
     "job_deliveries": "job_id idx attempt state result_sha result_json created updated error",
     "state_leases": "endpoint token job_id idx epoch base_url data_json",
 }
-OPTIONAL = {"work_checkpoints", "kit_receipts", "sqlite_sequence"}
+OPTIONAL = {"work_checkpoints", "kit_receipts", "workshop_launch_receipts", "sqlite_sequence"}
 
 
 def readonly(path: Path):

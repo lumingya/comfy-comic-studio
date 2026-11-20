@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from fastapi import status
+from fastapi import Query, status
 from pydantic import BaseModel, Field
 
 from .. import workshop as W
 from ..assembly import AssemblyPreview
+from ..comfy.slot_adapters import installed
 from ..models import (
     Episode,
     GenerationOptions,
@@ -18,6 +19,7 @@ from ..models import (
     Series,
     WorkshopQueue,
 )
+from ..slot_models import TaskLoRASelection, TaskSlotOverrides, task_slots
 from ..storage import Conflict, NotFound
 from .deps import Ctx
 from .operations import Router as APIRouter
@@ -31,6 +33,8 @@ class AssembleRequest(BaseModel):
     title: str = Field(default="", max_length=120)
     profile_id: str | None = None
     generation: GenerationOptions | None = None
+    loras: list[TaskLoRASelection] = Field(default_factory=list, max_length=128)
+    slot_overrides: TaskSlotOverrides | None = None
     variables: dict[str, str] = Field(default_factory=dict)
     idempotency_key: str | None = Field(default=None, min_length=1, max_length=200)
 
@@ -74,6 +78,26 @@ class PresetPatch(BaseModel):
     bindings: list[PresetBinding] | None = Field(default=None, max_length=2000)
 
 
+class StoryboardList(BaseModel):
+    items: list["StoryboardSummary"]
+    total: int
+    offset: int
+    limit: int
+
+
+class StoryboardSummary(BaseModel):
+    id: str
+    series_id: str
+    title: str
+    order: int
+    revision: int
+    panel_count: int
+    adopted_count: int
+    cover_asset_id: str | None
+    created_at: str
+    updated_at: str
+
+
 def _workshop(ctx: Ctx) -> Series:
     return W.ensure_workshop(ctx.store, getattr(ctx, "legacy_root", None))
 
@@ -86,10 +110,13 @@ def _storyboard(ctx: Ctx, storyboard_id: str) -> Episode:
     return episode
 
 
-@router.get("/workshop/storyboards")
-def list_storyboards(ctx: Ctx) -> list[Episode]:
+@router.get("/workshop/storyboards", response_model=StoryboardList)
+def list_storyboards(
+    ctx: Ctx, offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=200)
+) -> StoryboardList:
     workshop = _workshop(ctx)
-    return ctx.store.list_episodes(workshop.id)
+    items, total = ctx.store.episode_summaries(workshop.id, offset, limit)
+    return StoryboardList(items=items, total=total, offset=offset, limit=limit)
 
 
 @router.get("/workshop/storyboards/{storyboard_id}", response_model=Episode)
@@ -159,20 +186,22 @@ def create_preset(ctx: Ctx, body: Preset) -> Preset:
 @router.patch("/workshop/presets/{preset_id}", response_model=Preset)
 def patch_preset(ctx: Ctx, preset_id: str, body: PresetPatch) -> Preset:
     workshop = _workshop(ctx)
-    current = next((item for item in workshop.presets if item.id == preset_id), None)
-    if current is None:
+    if not any(item.id == preset_id for item in workshop.presets):
         raise NotFound(f"workshop preset not found: {preset_id}")
     changes = body.model_dump(exclude_unset=True)
-    updated = Preset.model_validate({**current.model_dump(), **changes, "id": preset_id})
+    updated = None
 
     def replace(series):
+        nonlocal updated
         for index, item in enumerate(series.presets):
             if item.id == preset_id:
+                updated = Preset.model_validate({**item.model_dump(), **changes, "id": preset_id})
                 series.presets[index] = updated
                 return
         raise Conflict("预设已被同时删除，请刷新后重试")
 
     ctx.store.update_series(workshop.id, replace)
+    assert updated is not None
     return updated
 
 
@@ -196,6 +225,8 @@ def assemble(ctx: Ctx, body: AssembleRequest) -> Assembled:
         body.variables,
         body.idempotency_key,
         body.generation,
+        slot_overrides=task_slots(body.slot_overrides, body.loras),
+        slot_adapters=installed(ctx.registry),
     )
     ctx.queue.track(series.id)
     return Assembled(series=series, episode=episode)
@@ -212,6 +243,8 @@ def preview_assembly(ctx: Ctx, body: AssembleRequest) -> AssemblyPreview:
         body.profile_id,
         body.variables,
         body.generation,
+        slot_overrides=task_slots(body.slot_overrides, body.loras),
+        slot_adapters=installed(ctx.registry),
     )
 
 

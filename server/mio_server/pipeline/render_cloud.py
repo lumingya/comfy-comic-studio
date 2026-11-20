@@ -34,7 +34,9 @@ def bind_cloud_source(plan: dict, asset_id: str) -> dict:
 
 
 class CloudRefinementMixin:
-    def plan_cloud_refinement(self, profile, meta: dict) -> dict:
+    def plan_cloud_refinement(
+        self, profile, meta: dict, slot_overrides: dict | None = None
+    ) -> dict:
         chain = [s for s in (profile.final or profile.draft[1:]) if s.enabled]
         if not chain:
             raise RenderError("云端精修配置里没有启用的本地阶段")
@@ -42,7 +44,7 @@ class CloudRefinementMixin:
             raise RenderError("云端精修的首个本地阶段必须接收云端图片")
         values = {k: meta[k] for k in ("prompt", "negative", "seed", "width", "height")}
         stages, feeds = self._chain(
-            chain, {**values, "init": asset_value(CLOUD_SOURCE)}, values, {}, []
+            chain, {**values, "init": asset_value(CLOUD_SOURCE)}, values, {}, [], slot_overrides
         )
         # Overrides or a render hook must not silently disconnect the cloud input.
         if CLOUD_SOURCE not in find_placeholders(stages[0]["graph"]).values():

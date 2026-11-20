@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { ApiError, assetUrl, raw } from '../../api/client';
+import { keys } from '../../api/keys';
 import { useJob, useLive } from '../../api/jobs';
 import { useEpisode } from '../../api/series';
 import type { ComfyInstance } from '../../api/types';
@@ -70,7 +71,7 @@ export function WorkflowTrial({
   const [loraGroups, setLoraGroups] = useState<WorkflowLoraGroup[]>([]);
   const [loraOverrides, setLoraOverrides] = useState<WorkflowLoraGroupOverride[]>([]);
   const loraQuery = useQuery({
-    queryKey: ['workflow-loras', workflowId],
+    queryKey: keys.workflowLoras(workflowId),
     enabled: open,
     queryFn: async () => {
       const response = await raw(`/api/workflows/${encodeURIComponent(workflowId)}/loras`);

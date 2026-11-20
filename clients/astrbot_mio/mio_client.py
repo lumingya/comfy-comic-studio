@@ -19,6 +19,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
 from typing import Any
 
 __all__ = ["MioClient", "MioError"]
@@ -123,6 +124,85 @@ class _Base:
         return _json.loads(raw) if "json" in ctype else raw
 
     # ---------------------------------------------------------------- helpers
+    def discover_studio(self, *, offset: int = 0, limit: int = 50) -> dict:
+        """Fetch the resource catalogs needed to start a workshop task."""
+        workflows = self.list_workflows()
+        return {
+            "storyboards": self.list_storyboards(offset=offset, limit=limit),
+            "presets": self.list_presets(),
+            "workflows": workflows,
+            "workflow_loras": {row["id"]: self.workflow_loras(row["id"]) for row in workflows},
+            "templates": self.list_album_templates(),
+            "image_adapters": self.image_adapters(),
+            "channels": self.list_image_channels(),
+        }
+
+    def generate_workshop_task(
+        self, body: dict, *, idempotency_key: str, timeout: float = 1800, poll: float = 2
+    ) -> dict:
+        """Create and start a task, then wait for its job without automatically retrying it."""
+        task = self.create_workshop_task(
+            {**body, "auto_start": True, "idempotency_key": idempotency_key}
+        )
+        if task.get("job_id"):
+            task["job"] = self.wait_job(task["job_id"], timeout=timeout, poll=poll)
+        return task
+
+    def save_episode_deliverable(
+        self,
+        episode_id: str,
+        destination: str | Path,
+        *,
+        format: str = "html",
+        template_id: str | None = None,
+        variant_id: str | None = None,
+        idempotency_key: str | None = None,
+        timeout: float = 1800,
+        poll: float = 2,
+        background: bool = True,
+    ) -> Path:
+        """Export to a new local file. An existing destination raises FileExistsError."""
+        path = Path(destination)
+        if path.exists():
+            raise FileExistsError(path)
+        if format not in {"html", "pdf", "zip", "png"}:
+            raise ValueError("format must be html, pdf, zip, or png")
+        if template_id is not None and format != "html":
+            raise ValueError("template_id is only supported for HTML export")
+        if background:
+            export = self.export_episode_deliverable(
+                episode_id,
+                {
+                    "format": format,
+                    "template_id": template_id,
+                    "variant_id": variant_id,
+                    "idempotency_key": idempotency_key,
+                },
+            )
+            job_id = export["job_id"]
+            job = self.wait_job(job_id, timeout=timeout, poll=poll)
+            if job["state"] != "completed":
+                raise MioError(409, "export_incomplete", f"job {job_id}: {job['state']}")
+            data = self.download_export(job_id)
+        else:
+            status = self.get_episode_deliverables(episode_id, variant_id=variant_id)
+            if not status["ready"]:
+                raise MioError(409, "export_incomplete", "episode has unadopted panels")
+            params = {"episode_ids": [episode_id], "variant_id": variant_id}
+            if format == "html":
+                if template_id is not None:
+                    params["template_id"] = template_id
+                data = self.export_album(params)
+            elif format == "png":
+                data = self.export_episode(episode_id, fmt="long", quality=0, variant_id=variant_id)
+            else:
+                data = self.export_portable({**params, "format": format})
+        if not isinstance(data, bytes) or not data:
+            raise MioError(502, "invalid_export", "export did not return file bytes")
+        with path.open("xb") as output:
+            output.write(data)
+        return path
+
     def wait_job(self, job_id: str, timeout: float = 1800, poll: float = 2.0) -> dict:
         """Poll for a terminal job; zero timeout expires without making a request."""
         if not math.isfinite(timeout) or timeout < 0:
@@ -830,6 +910,24 @@ class MioClient(_Base):
         """DELETE /export/jobs/{job_id} — Delete Export."""
         return self._request("DELETE", f"/export/jobs/{_q(job_id)}")
 
+    def get_episode_deliverables(self, episode_id: str, *, variant_id: Any | None = None) -> Any:
+        """GET /episodes/{episode_id}/deliverables — Get Episode Deliverables.
+
+        Count generated and adopted panels for the requested variant and report recent jobs.
+        """
+        return self._request(
+            "GET",
+            f"/episodes/{_q(episode_id)}/deliverables",
+            params={"variant_id": variant_id},
+        )
+
+    def export_episode_deliverable(self, episode_id: str, body: dict | list | None = None) -> Any:
+        """POST /episodes/{episode_id}/deliverables/export — Export Episode Deliverable.
+
+        Submit a frozen export. Use its job ID with the existing job and file routes.
+        """
+        return self._request("POST", f"/episodes/{_q(episode_id)}/deliverables/export", json=body)
+
     def workspace_backup_head(self) -> Any:
         """GET /backups/head — Workspace Backup Head."""
         return self._request("GET", "/backups/head")
@@ -938,6 +1036,13 @@ class MioClient(_Base):
         """
         return self._request("GET", "/image-adapters")
 
+    def list_image_channels(self) -> Any:
+        """GET /image-channels — List Image Channels.
+
+        List selectable channel IDs with read scope, excluding endpoints and options.
+        """
+        return self._request("GET", "/image-channels")
+
     def list_trash(self) -> Any:
         """GET /trash — List Trash."""
         return self._request("GET", "/trash")
@@ -1016,9 +1121,13 @@ class MioClient(_Base):
         """PATCH /update/preferences — Update Preferences."""
         return self._request("PATCH", "/update/preferences", json=body)
 
-    def list_storyboards(self) -> Any:
+    def list_storyboards(self, *, offset: int | None = None, limit: int | None = None) -> Any:
         """GET /workshop/storyboards — List Storyboards."""
-        return self._request("GET", "/workshop/storyboards")
+        return self._request(
+            "GET",
+            "/workshop/storyboards",
+            params={"offset": offset, "limit": limit},
+        )
 
     def create_storyboard(self, body: dict | list | None = None) -> Any:
         """POST /workshop/storyboards — Create Storyboard."""
@@ -1135,6 +1244,13 @@ class MioClient(_Base):
         Drag to reorder the task cards; the lane follows the new order.
         """
         return self._request("PUT", "/workshop/queue/order", json=body)
+
+    def create_workshop_task(self, body: dict | list | None = None) -> Any:
+        """POST /workshop/tasks — Create Workshop Task.
+
+        Assemble an album with write scope. Auto-start also requires render scope.
+        """
+        return self._request("POST", "/workshop/tasks", json=body)
 
     def get_extension_market(self, *, refresh: bool | None = None) -> Any:
         """GET /extension-market — Get Extension Market."""

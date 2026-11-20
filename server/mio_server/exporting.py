@@ -99,13 +99,15 @@ class ExportService:
         self.root.mkdir(exist_ok=True)
         self._writing = set()
 
-    def freeze(self, kind, options):
+    def freeze(self, kind, options, *, require_complete=False):
         ids = options.get("episode_ids") or [options["episode_id"]]
         with self.ctx.store.lock:
             episodes = [self.ctx.store.get_episode(eid) for eid in ids]
             series = {ep.series_id: self.ctx.store.get_series(ep.series_id) for ep in episodes}
             counts = {sid: self.ctx.store.episode_summaries(sid, 0, 1)[1] for sid in series}
         refs = [contribution_ref(find_contribution(self.ctx.registry, "layout", "strip.default"))]
+        if require_complete:
+            self._require_finished(episodes, series, options.get("variant_id"))
         snapshot = {
             "kind": kind,
             "options": dict(options),
@@ -143,7 +145,23 @@ class ExportService:
             raise ValueError("没有可导出的格，请先采用图片")
         return snapshot
 
-    def submit(self, kind, options, idempotency_key=None):
+    def _require_finished(self, episodes, series, variant_id):
+        for episode in episodes:
+            if variant_id is not None and all(
+                variant.id != variant_id for variant in series[episode.series_id].variants
+            ):
+                raise NotFound(f"variant not found: {variant_id}")
+            adopted = {
+                take.panel_id
+                for take in episode.takes
+                if take.variant_id == variant_id
+                and take.status == "adopted"
+                and self.ctx.assets.exists(take.asset_id)
+            }
+            if not episode.panels or any(panel.id not in adopted for panel in episode.panels):
+                raise JobConflict("请先为该话的每个分幕采用图片")
+
+    def submit(self, kind, options, idempotency_key=None, *, require_complete=False):
         engine = self.ctx.engine
         with engine.hold_operation():
             if idempotency_key:
@@ -161,7 +179,11 @@ class ExportService:
                     ):
                         raise JobConflict("此请求标识已用于其他导出设置")
                     return engine.get(previous["id"])
-            snapshot = self.freeze(kind, options)
+            snapshot = (
+                self.freeze(kind, options, require_complete=True)
+                if require_complete
+                else self.freeze(kind, options)
+            )
             title = options.get("title") or snapshot["episodes"][0]["title"]
             return engine.submit(
                 "export.render",

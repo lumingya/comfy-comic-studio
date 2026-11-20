@@ -21,6 +21,7 @@ from pathlib import Path
 
 from . import generation as G
 from .assembly import AssemblyPreview, build_snapshot, inspect_snapshot
+from .comfy import workflow_slots as slots
 from .models import (
     Episode,
     GenerationOptions,
@@ -32,6 +33,7 @@ from .models import (
     PresetGroup,
     Series,
 )
+from .render_models import RenderProfile, WorkflowDoc
 from .storage import NotFound
 
 log = logging.getLogger("mio.workshop")
@@ -184,6 +186,10 @@ def assemble(
     variables: dict[str, str] | None = None,
     idempotency_key: str | None = None,
     generation: GenerationOptions | None = None,
+    *,
+    slot_overrides: dict | None = None,
+    task_intent: dict[str, bool] | None = None,
+    slot_adapters: tuple = (),
 ) -> tuple[Series, Episode]:
     """Storyboard + presets → a new album waiting in the queue (no model is called)."""
     request = {
@@ -194,6 +200,10 @@ def assemble(
         "variables": variables or {},
         "generation": generation.model_dump(exclude_unset=True) if generation else None,
     }
+    if slot_overrides:
+        request["slot_overrides"] = slot_overrides
+    if task_intent is not None:
+        request["task_intent"] = task_intent
     request_sha = hashlib.sha256(
         json.dumps(request, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()
     ).hexdigest()
@@ -205,6 +215,7 @@ def assemble(
         snapshot = _assembly_snapshot(
             store, storyboard_id, preset_ids, title, profile_id, variables, generation
         )
+        _freeze_task_slots(snapshot.series, slot_overrides, slot_adapters)
         result = store.create_assembly(
             snapshot.series,
             snapshot.episode,
@@ -240,6 +251,51 @@ def _assembly_snapshot(
     return snapshot
 
 
+def _freeze_task_slots(series: Series, overrides: dict | None, adapters: tuple) -> None:
+    if not overrides:
+        return
+    generation = series.generation
+    assert generation is not None
+    profiles = {
+        pid: RenderProfile.model_validate(value) for pid, value in generation.profiles.items()
+    }
+    default_id = str(generation.profile["id"])
+    profiles.setdefault(default_id, RenderProfile.model_validate(generation.profile))
+    stages = []
+    for profile in profiles.values():
+        local = [*profile.draft, *profile.final, *profile.edits.values()]
+        if profile.cloud_shape:
+            refinement = profile.final or (profile.draft[1:] if profile.cloud_refine else [])
+            local = [*refinement, *profile.edits.values()]
+        stages.extend(
+            stage for stage in local if stage.enabled and stage.workflow_id in generation.workflows
+        )
+    common = slots.normalize_overrides(overrides)
+    groups = common.pop("groups", [])
+    matched, writable = set(), False
+    for stage in stages:
+        workflow = WorkflowDoc.model_validate(generation.workflows[stage.workflow_id])
+        plan = slots.ensure_plan(workflow.graph, workflow.slots, adapters=adapters)
+        if not plan["lora"]["enabled"]:
+            continue
+        active = {
+            group["key"]
+            for group in plan["lora"]["groups"]
+            if group.get("enabled", group["active"]) and not group.get("disabled")
+        }
+        selected = [group for group in groups if group["key"] in active]
+        matched.update(group["key"] for group in selected)
+        applied = {**common, **({"groups": selected} if selected else {})}
+        stage.slot_overrides = slots.merge_overrides(stage.slot_overrides, applied)
+        effective = slots.merge_overrides(workflow.config.slot_overrides, stage.slot_overrides)
+        slots.apply(workflow.graph, plan, effective, adapters=adapters)
+        writable = True
+    if {group["key"] for group in groups} - matched or not writable:
+        raise ValueError("LoRA 覆盖包含不可写入的工作流槽位")
+    generation.profiles = {pid: profile.model_dump() for pid, profile in profiles.items()}
+    generation.profile = generation.profiles[default_id]
+
+
 def assembly_preview(
     store,
     storyboard_id: str,
@@ -248,12 +304,16 @@ def assembly_preview(
     profile_id: str | None = None,
     variables: dict[str, str] | None = None,
     generation: GenerationOptions | None = None,
+    *,
+    slot_overrides: dict | None = None,
+    slot_adapters: tuple = (),
 ) -> AssemblyPreview:
     """Inspect the same prospective album as assemble, without writes or remote calls."""
     with store.lock:
         snapshot = _assembly_snapshot(
             store, storyboard_id, preset_ids, title, profile_id, variables, generation
         )
+        _freeze_task_slots(snapshot.series, slot_overrides, slot_adapters)
         return inspect_snapshot(store, snapshot, storyboard_id)
 
 

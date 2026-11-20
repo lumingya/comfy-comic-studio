@@ -110,6 +110,21 @@
               versions with declared scopes, and enabled extensions can wrap or
               replace core operations.
             </p>
+            <p>
+              Extensions stay decoupled from core files. A cloud image
+              extension registers a <code>cloud_adapter</code> with its title,
+              capabilities, parameter schema and reference-image, negative
+              prompt and seed support. A workflow extension registers a
+              <code>workflow_slot_adapter</code> for slot inspection and
+              writes. Channel-specific settings live in
+              <code>extra_options</code>; ordinary values are frozen with the
+              task and secret-like fields stay out of public snapshots. Enabled
+              adapters appear in discovery and control
+              responses; disabling one makes new requests use core behavior or
+              report the missing adapter. The repository's
+              <code>examples/extensions/offline-cloud-adapter</code> is a
+              network-free minimal example.
+            </p>
           </section>
         </article>
         <nav class="chapter-nav" aria-label="Previous and next chapter">

@@ -6,6 +6,7 @@ Mixed into :class:`~mio_server.pipeline.render.RenderService`; relies on its ``s
 
 from __future__ import annotations
 
+from copy import deepcopy
 from itertools import groupby
 
 from .. import imaging
@@ -25,20 +26,24 @@ class RenderError(ValueError):
 
 class EditsMixin:
     def _cloud_request(
-        self, channel_id: str, requested: dict, *, allow_missing: bool = False
+        self, channel_id: str, requested: dict, *, allow_missing: bool = False, recipe=None
     ) -> dict:
         try:
             request = CR.freeze_request(
                 self.cloud_backend(channel_id), requested, channel_id=channel_id, rng=self.rng
             )
             snapshot = getattr(self._local, "generation", None)
-            channel = snapshot.channels.get(channel_id) if snapshot else None
+            channel = (
+                recipe.model_dump()
+                if recipe is not None
+                else (snapshot.channels.get(channel_id) if snapshot else None)
+            )
             if channel:
                 if channel["kind"] != request["kind"]:
                     raise LookupError("云端渠道类型已改变，请重新装配任务")
                 seed = request["options"].get("seed")
                 request["model"] = channel["model"]
-                request["options"] = dict(channel["options"])
+                request["options"] = deepcopy(channel["options"])
                 if seed is not None:
                     request["options"]["seed"] = seed
             return request
@@ -132,7 +137,10 @@ class EditsMixin:
             record["pads"] = list(pads)
         if "denoise" in params:
             values["denoise"] = params["denoise"]
-        data, _, _ = self._compile_stage(stage, values, node_overrides(series, panel))
+        (panel_slots,) = self._panel_slots_by_stage([stage], panel.overrides.slot_overrides, False)
+        data, _, _ = self._compile_stage(
+            stage, values, node_overrides(series, panel), slot_overrides=panel_slots
+        )
         meta = {
             "episode_id": episode.id,
             "panel_id": take.panel_id,
@@ -293,7 +301,11 @@ class EditsMixin:
                         "adopt_replace": adopt_replace and k == 0 and not refine,
                         "refine_adopt_replace": adopt_replace and k == 0 and refine,
                     }
-                    refinement = self.plan_cloud_refinement(prof, meta) if refine else None
+                    refinement = (
+                        self.plan_cloud_refinement(prof, meta, panel.overrides.slot_overrides)
+                        if refine
+                        else None
+                    )
                     requested = {
                         "prompt": pp.positive,
                         "negative": pp.negative,
@@ -310,7 +322,9 @@ class EditsMixin:
                                 and getattr(panel.overrides, name) is None
                             ):
                                 requested.pop(name, None)
-                    request = self._cloud_request(prof.cloud_channel, requested)
+                    request = self._cloud_request(
+                        prof.cloud_channel, requested, recipe=prof.cloud_recipe
+                    )
                     specs.append(
                         ItemSpec(
                             input={

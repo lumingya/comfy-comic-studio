@@ -18,6 +18,7 @@ from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
+from .document import DocumentShell, document_shell
 from .templates import LAYOUTS, AlbumTemplate
 
 VAR_RE = re.compile(r"\{\{\s*([a-zA-Z][a-zA-Z0-9]*)\s*\}\}")
@@ -96,7 +97,15 @@ def fill(template: str, values: dict) -> str:
 
 @lru_cache(maxsize=1)
 def runtime() -> str:
-    return (Path(__file__).resolve().parent / "runtime.js").read_text(encoding="utf-8")
+    return "\n".join(
+        Path(__file__).with_name(name).read_text(encoding="utf-8")
+        for name in ("runtime_lightbox.js", "runtime.js")
+    )
+
+
+@lru_cache(maxsize=1)
+def runtime_css() -> str:
+    return Path(__file__).with_name("runtime.css").read_text(encoding="utf-8")
 
 
 def render_album(tpl: AlbumTemplate, books: list[Book], opts: AlbumOptions | None = None) -> str:
@@ -168,6 +177,9 @@ def render_album(tpl: AlbumTemplate, books: list[Book], opts: AlbumOptions | Non
                                 "assetKey": key,
                                 "name": f.name,
                                 "number": str(i + 1).zfill(2),
+                                "frameIndex": i + 1,
+                                "total": len(frames),
+                                "progress": (i + 1) / len(frames),
                                 "caption": f.caption if opts.show_captions else "",
                                 "prompt": f.prompt if opts.show_prompts else "",
                                 "imageNote": "" if f.image else "尚未生成",
@@ -184,13 +196,24 @@ def render_album(tpl: AlbumTemplate, books: list[Book], opts: AlbumOptions | Non
             parts.append(fill(FRAMES_RE.sub(render_frames, block, count=1), values))
         return "".join(parts)
 
-    doc = ASSET_RE.sub(lambda m: escaped(tpl.assets.get(m.group(1), "")), tpl.html)
-    doc = BOOKS_RE.sub(render_books, doc, count=1)
-    doc = fill(doc, globals_)
-    return _finish(doc, tpl, books, assets, tagged, opts)
+    # Parse the bounded template before it grows to contain the inlined images. Keep the
+    # structural tags outside template substitution so the injection offsets stay valid.
+    shell = document_shell(tpl.html)
+    head = ASSET_RE.sub(
+        lambda m: escaped(tpl.assets.get(m.group(1), "")),
+        tpl.html[shell.head_start : shell.head_end],
+    )
+    body = ASSET_RE.sub(
+        lambda m: escaped(tpl.assets.get(m.group(1), "")),
+        tpl.html[shell.body_start : shell.body_end],
+    )
+    body = BOOKS_RE.sub(render_books, body, count=1)
+    return _finish(
+        tpl, shell, fill(head, globals_), fill(body, globals_), books, assets, tagged, opts
+    )
 
 
-def _finish(doc, tpl, books, assets, tagged, opts) -> str:
+def _finish(tpl, shell: DocumentShell, head, body, books, assets, tagged, opts) -> str:
     nonce = secrets.token_hex(12)
     csp = (
         '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; img-src data:; '
@@ -198,21 +221,28 @@ def _finish(doc, tpl, books, assets, tagged, opts) -> str:
         "connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; "
         "form-action 'none';\">"
     )
-    extra = BASE_STYLE + ("" if opts.show_captions else "[data-cc-caption]{display:none!important}")
-    doc = re.sub(r"(<head\b[^>]*>)", lambda m: m.group(1) + csp, doc, count=1, flags=re.I)
-    doc = re.sub(r"</head>", lambda m: f"<style>{extra}</style></head>", doc, count=1, flags=re.I)
-    doc = re.sub(
-        r"<body\b([^>]*)>",
-        lambda m: f'<body{m.group(1)} data-layout="{tpl.layout}">',
-        doc,
-        count=1,
-        flags=re.I,
+    extra = (
+        BASE_STYLE
+        + runtime_css()
+        + ("" if opts.show_captions else "[data-cc-caption]{display:none!important}")
     )
     tail = f'<script nonce="{nonce}">{runtime()}</script>' + _metadata(books, assets, tagged, opts)
-    doc = re.sub(r"</body>", lambda m: tail + "</body>", doc, count=1, flags=re.I)
-    if not doc.lstrip().lower().startswith("<!doctype"):
-        doc = "<!DOCTYPE html>\n" + doc
-    return doc
+    prefix = tpl.html[: shell.head_start]
+    if not shell.has_doctype:
+        prefix = "<!DOCTYPE html>\n" + prefix.removeprefix("\ufeff")
+    return "".join(
+        (
+            prefix,
+            csp,
+            head,
+            f"<style>{extra}</style>",
+            tpl.html[shell.head_end : shell.body_start - 1],
+            f' data-layout="{tpl.layout}">',
+            body,
+            tail,
+            tpl.html[shell.body_end :],
+        )
+    )
 
 
 def _metadata(books, assets, tagged, opts) -> str:

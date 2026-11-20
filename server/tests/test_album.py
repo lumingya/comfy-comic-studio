@@ -12,7 +12,12 @@ from PIL import Image
 
 from mio_server.album.build import data_url, palette
 from mio_server.album.render import AlbumOptions, Book, Frame, render_album
-from mio_server.album.templates import TemplateError, builtin_templates, parse_template
+from mio_server.album.templates import (
+    AlbumTemplate,
+    TemplateError,
+    builtin_templates,
+    parse_template,
+)
 
 from .api_harness import ApiCase
 
@@ -165,6 +170,39 @@ class TemplateTests(unittest.TestCase):
                 parse_template({**base, "html": broken})
         with self.assertRaises(TemplateError):
             parse_template({**base, "assets": {"bg": "https://example.com/x.png"}})
+
+    def test_requires_actual_ordered_document_tags(self):
+        base = {"id": "t", "title": "T", "html": MINIMAL}
+        for broken in (
+            MINIMAL.replace("<head>", "").replace("</head>", ""),
+            MINIMAL.replace("<head>", "<!-- <head>").replace("</head>", "</head> -->"),
+            MINIMAL.replace("<body>", "").replace("</body>", ""),
+            MINIMAL.replace("<head>", "<p>before head</p><head>"),
+        ):
+            with self.subTest(html=broken):
+                with self.assertRaises(TemplateError):
+                    parse_template({**base, "html": broken})
+                stored = AlbumTemplate.model_validate({**base, "html": broken})
+                with self.assertRaises(ValueError):
+                    render_album(stored, books())
+
+    def test_injects_csp_and_reader_at_actual_document_tags(self):
+        custom = (
+            MINIMAL.replace("<head>", "<!-- <head></head> -->\n<HEAD data-note='>'>")
+            .replace("{{title}}", "A title with a literal </head> marker")
+            .replace("</head>", "</head >")
+            .replace("</body>", "<!-- </body> -->\n</body >")
+        )
+        tpl = parse_template({"id": "case", "title": "T", "html": custom})
+        doc = render_album(tpl, books())
+        self.assertIn("<!-- <head></head > -->\n<HEAD data-note='>'><meta http-equiv=", doc)
+        self.assertIn("<title>A title with a literal </head > marker</title>", doc)
+        self.assertIn("</style></head ><body data-layout=", doc)
+        self.assertIn("<!-- </body> -->\n<script nonce=", doc)
+        self.assertIn("</script></body ></html>", doc)
+        nonce = re.search(r"script-src 'nonce-([0-9a-f]+)'", doc).group(1)
+        self.assertIn(f'<script nonce="{nonce}">', doc)
+        self.assertEqual(metadata(doc)["schema"], "mio.album-html.v1")
 
     def test_palette_is_dominant_first(self):
         im = Image.new("RGB", (40, 40), "#ffffff")

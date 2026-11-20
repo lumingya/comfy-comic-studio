@@ -21,7 +21,6 @@ import base64
 import copy
 import io
 import json
-import math
 import re
 import time
 import zipfile
@@ -31,28 +30,20 @@ import httpx
 from pydantic import Field, field_validator
 
 from .. import llm as L
+from ..cloud_options import json_value, validate_options
 from ..models import StrictModel
 from . import cloud_request as CR
 
 NOVELAI_BASE = "https://image.novelai.net"
 MAX_EXTRA_OPTIONS_BYTES = 32 * 1024
-SECRET_OPTION_NAME = re.compile(
-    r"(?:api[_-]?key|access[_-]?key|private[_-]?key|token|secret|password|passwd|"
-    r"credential|auth|authorization|bearer)",
-    re.I,
+SECRET_SCHEMA_VALUE = re.compile(
+    r"(?i)(\b(?:api[_-]?key|access[_-]?token|token|secret|password|authorization|bearer)\b"
+    r"\s*(?:is\s+|[:=]\s*)\S+)"
 )
 
 
 def _json_object(value: object) -> bool:
-    if value is None or type(value) in (str, bool, int):
-        return True
-    if type(value) is float:
-        return math.isfinite(value)
-    if type(value) is list:
-        return all(_json_object(item) for item in value)
-    if type(value) is dict:
-        return all(type(key) is str and _json_object(item) for key, item in value.items())
-    return False
+    return json_value(value)
 
 
 def validate_cloud_adapter_metadata(meta: dict) -> dict:
@@ -109,15 +100,18 @@ def public_cloud_adapter(contribution) -> dict:
 
 
 def _public_schema(value):
-    """Drop examples/defaults from public schemas so extensions cannot publish credentials."""
+    """Strip fields that commonly carry configured values from the public descriptor."""
     if isinstance(value, dict):
         return {
             key: _public_schema(item)
             for key, item in value.items()
-            if key not in {"default", "example", "examples"}
+            if key not in {"default", "example", "examples", "const", "enum"}
+            and not CR.SECRET_OPTION_NAME.search(key)
         }
     if isinstance(value, list):
         return [_public_schema(item) for item in value]
+    if isinstance(value, str) and SECRET_SCHEMA_VALUE.search(value):
+        return "••••••"
     return value
 
 
@@ -125,7 +119,7 @@ def redact_extra_options(value):
     """Mask secret-like leaf values before settings cross the HTTP boundary."""
     if isinstance(value, dict):
         return {
-            key: "••••••" if SECRET_OPTION_NAME.search(key) else redact_extra_options(item)
+            key: "••••••" if CR.SECRET_OPTION_NAME.search(key) else redact_extra_options(item)
             for key, item in value.items()
         }
     if isinstance(value, list):
@@ -186,14 +180,7 @@ class ImageChannel(StrictModel):
     @field_validator("extra_options", mode="before")
     @classmethod
     def valid_extra_options(cls, value: object) -> dict:
-        if not isinstance(value, dict) or not _json_object(value):
-            raise ValueError("extra_options must contain only JSON-compatible values")
-        if (
-            len(json.dumps(value, ensure_ascii=False, allow_nan=False).encode("utf-8"))
-            > MAX_EXTRA_OPTIONS_BYTES
-        ):
-            raise ValueError("extra_options is too large (maximum 32 KiB)")
-        return value
+        return validate_options(value)
 
 
 def _raise_for(resp: httpx.Response, what: str) -> None:

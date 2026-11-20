@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useCreationKits } from '../../api/creationKits';
 import { useEpisodes, useSeries } from '../../api/series';
 import { useSettings } from '../../api/system';
+import type { LoraSlotOverrides } from '../../api/workflowLoras';
 import {
   useAssemble,
   useWorkshop,
@@ -57,6 +58,7 @@ export default function AssembleDialog({
   const [step, setStep] = useState(0);
   const [story, setStory] = useState(initialStory ?? '');
   const [generation, setGeneration] = useState<GenerationOptions>();
+  const [slotOverrides, setSlotOverrides] = useState<LoraSlotOverrides>();
   const [readyToStart, setReadyToStart] = useState(false);
   const [chosen, setChosen] = useState<string[] | null>(null);
   const [title, setTitle] = useState<string | null>(null);
@@ -88,11 +90,15 @@ export default function AssembleDialog({
   const defaultTitle = [board?.title, first ? displayName(first) : ''].filter(Boolean).join(' · ');
   const name = title ?? defaultTitle.slice(0, 120);
   const serviceReady = generationValid(generation);
+  const generationRequest = {
+    generation,
+    ...(generation?.workflow_id && slotOverrides ? { slot_overrides: slotOverrides } : {}),
+  };
   const request = {
     storyboard_id: storyId ?? '',
     preset_ids: picked,
     title: name,
-    generation,
+    ...generationRequest,
     variables,
   };
   const intentKey = intents.current.keyFor('wizard', request);
@@ -100,6 +106,7 @@ export default function AssembleDialog({
     setKitId(id);
     setStory('');
     setGeneration(undefined);
+    setSlotOverrides(undefined);
     setChosen(null);
     setTitle(null);
     setVariables({});
@@ -116,7 +123,7 @@ export default function AssembleDialog({
         .filter((p) => design.edges.some((edge) => edge.story === node.id && edge.preset === p.id))
         .map((p) => p.presetId),
       title: node.title.trim(),
-      generation,
+      ...generationRequest,
     }),
   );
   intents.current.retain(['wizard', ...design.stories.map((node) => node.id)]);
@@ -165,7 +172,7 @@ export default function AssembleDialog({
     let done = 0;
     try {
       for (const [i, task] of tasks.entries()) {
-        const body = { ...task, generation };
+        const body = { ...task, ...generationRequest };
         const node = design.stories[i].id;
         const made = await assemble.mutateAsync({
           ...body,
@@ -198,7 +205,11 @@ export default function AssembleDialog({
     <section className="designer-card designer-environment">
       <GenerationSettings
         value={generation}
-        onChange={setGeneration}
+        onChange={(next) => {
+          if (next.workflow_id !== generation?.workflow_id) setSlotOverrides(undefined);
+          setGeneration(next);
+        }}
+        lora={{ value: slotOverrides, onChange: setSlotOverrides }}
         defaultProfile={source?.default_profile_id}
         sourceDefaults={source?.generation_defaults}
         waiting={sourcePending}
@@ -479,7 +490,7 @@ export default function AssembleDialog({
                             <span>{collection}</span>
                           </dd>
                         </div>
-                        <GenerationSummary value={generation} />
+                        <GenerationSummary value={generation} slotOverrides={slotOverrides} />
                         <div className="designer-summary-row is-chips">
                           <dt>{t('ws.assemble.presets')}</dt>
                           <dd>

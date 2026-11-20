@@ -9,6 +9,7 @@ import {
 import { QueryError } from '../../app/errors';
 import { Field, Loading, Modal, Select } from '../../components/ui';
 import { Advanced } from './ConfigurationParts';
+import { WorkflowLoraSummary } from './WorkflowLoraSummary';
 import './WorkflowInspection.css';
 
 const display = (value: unknown): string =>
@@ -159,6 +160,7 @@ function InspectionView({ report }: { report: WorkflowInspection }) {
           {() => targets(bindings)}
         </Advanced>
       ) : null}
+      <WorkflowLoraSummary controls={report.lora_controls} />
       {candidates.length ? (
         <Advanced
           lazy

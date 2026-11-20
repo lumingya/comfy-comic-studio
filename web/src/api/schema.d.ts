@@ -1605,6 +1605,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/image-channels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Image Channels
+         * @description List selectable channel IDs with read scope, excluding endpoints and options.
+         */
+        get: operations["list_image_channels_api_image_channels_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/trash": {
         parameters: {
             query?: never;
@@ -2365,6 +2385,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/episodes/{episode_id}/deliverables": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Episode Deliverables
+         * @description Count generated and adopted panels for the requested variant and report recent jobs.
+         */
+        get: operations["get_episode_deliverables_api_episodes__episode_id__deliverables_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/episodes/{episode_id}/deliverables/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Export Episode Deliverable
+         * @description Submit a frozen export. Use its job ID with the existing job and file routes.
+         */
+        post: operations["export_episode_deliverable_api_episodes__episode_id__deliverables_export_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/backups/head": {
         parameters: {
             query?: never;
@@ -2872,6 +2932,29 @@ export interface paths {
          */
         put: operations["order_queue_api_workshop_queue_order_put"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/workshop/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Workshop Task
+         * @description Assemble an album with write scope. Auto-start also requires render scope.
+         *
+         *     A planning failure returns the assembled album with start_error. Retry the same request
+         *     with its original idempotency key to start that album after resolving the problem.
+         */
+        post: operations["create_workshop_task_api_workshop_tasks_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3429,6 +3512,9 @@ export interface components {
             /** Profile Id */
             profile_id?: string | null;
             generation?: components["schemas"]["GenerationOptions"] | null;
+            /** Loras */
+            loras?: components["schemas"]["TaskLoRASelection"][];
+            slot_overrides?: components["schemas"]["TaskSlotOverrides"] | null;
             /** Variables */
             variables?: {
                 [key: string]: string;
@@ -3991,6 +4077,40 @@ export interface components {
              */
             seed: "native" | "unsupported" | "unknown";
         };
+        /**
+         * CloudRecipe
+         * @description Portable ordinary request parameters; service bindings and secrets stay local.
+         */
+        "CloudRecipe-Input": {
+            /** Kind */
+            kind: string;
+            /**
+             * Model
+             * @default
+             */
+            model?: string;
+            /** Options */
+            options?: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+        };
+        /**
+         * CloudRecipe
+         * @description Portable ordinary request parameters; service bindings and secrets stay local.
+         */
+        "CloudRecipe-Output": {
+            /** Kind */
+            kind: string;
+            /**
+             * Model
+             * @default
+             */
+            model: string;
+            /** Options */
+            options: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+        };
         /** CloudReference */
         CloudReference: {
             /** Slot */
@@ -4207,6 +4327,33 @@ export interface components {
              */
             strength: number;
         };
+        /** DeliverableExport */
+        DeliverableExport: {
+            /** Job Id */
+            job_id: string;
+            /** State */
+            state: string;
+            /**
+             * Format
+             * @enum {string}
+             */
+            format: "html" | "pdf" | "zip" | "png";
+        };
+        /** DeliverableRequest */
+        DeliverableRequest: {
+            /**
+             * Format
+             * @default html
+             * @enum {string}
+             */
+            format?: "html" | "pdf" | "zip" | "png";
+            /** Template Id */
+            template_id?: string | null;
+            /** Variant Id */
+            variant_id?: string | null;
+            /** Idempotency Key */
+            idempotency_key?: string | null;
+        };
         /** Dependency */
         Dependency: {
             /** Class Type */
@@ -4395,6 +4542,25 @@ export interface components {
              */
             base_prompt?: string;
         };
+        /** EpisodeDeliverables */
+        EpisodeDeliverables: {
+            /** Episode Id */
+            episode_id: string;
+            /** Variant Id */
+            variant_id: string | null;
+            /** Panel Count */
+            panel_count: number;
+            /** Generated Panels */
+            generated_panels: number;
+            /** Adopted Panels */
+            adopted_panels: number;
+            /** Ready */
+            ready: boolean;
+            /** Formats */
+            formats: ("html" | "pdf" | "zip" | "png")[];
+            /** Jobs */
+            jobs: components["schemas"]["GenerationProgress"][];
+        };
         /** EpisodePatch */
         EpisodePatch: {
             /** Title */
@@ -4547,6 +4713,21 @@ export interface components {
             /** Height */
             height?: number | null;
         };
+        /** GenerationProgress */
+        GenerationProgress: {
+            /** Id */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** State */
+            state: string;
+            /** Total */
+            total: number;
+            /** Done */
+            done: number;
+            /** Failed */
+            failed: number;
+        };
         /**
          * GenerationSnapshot
          * @description Captured render documents; changes to preferences never rewrite an existing task.
@@ -4648,6 +4829,8 @@ export interface components {
             /** Issues */
             issues?: components["schemas"]["Issue"][];
             diagnostics?: components["schemas"]["DiagnosticReport"] | null;
+            /** Lora Controls */
+            lora_controls?: Record<string, unknown> | null;
         };
         /** Issue */
         Issue: {
@@ -4678,6 +4861,9 @@ export interface components {
             /** Profile Id */
             profile_id?: string | null;
             generation?: components["schemas"]["GenerationOptions"] | null;
+            /** Loras */
+            loras?: components["schemas"]["TaskLoRASelection"][];
+            slot_overrides?: components["schemas"]["TaskSlotOverrides"] | null;
             /** Variables */
             variables?: {
                 [key: string]: string;
@@ -5012,8 +5198,15 @@ export interface components {
         };
         /** LoraRef */
         "LoraRef-Input": {
+            /** Key */
+            key?: string;
             /** Name */
             name: string;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled?: boolean;
             /**
              * Strength Model
              * @default 1
@@ -5032,8 +5225,15 @@ export interface components {
         };
         /** LoraRef */
         "LoraRef-Output": {
+            /** Key */
+            key: string;
             /** Name */
             name: string;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
             /**
              * Strength Model
              * @default 1
@@ -6279,6 +6479,7 @@ export interface components {
              * @default
              */
             cloud_channel?: string;
+            cloud_recipe?: components["schemas"]["CloudRecipe-Input"] | null;
             /** Created At */
             created_at?: string;
             /** Updated At */
@@ -6358,6 +6559,7 @@ export interface components {
              * @default
              */
             cloud_channel: string;
+            cloud_recipe: components["schemas"]["CloudRecipe-Output"] | null;
             /** Created At */
             created_at: string;
             /** Updated At */
@@ -6812,6 +7014,17 @@ export interface components {
             /** Panels */
             panels?: components["schemas"]["Panel-Input"][];
         };
+        /** StoryboardList */
+        StoryboardList: {
+            /** Items */
+            items: components["schemas"]["StoryboardSummary"][];
+            /** Total */
+            total: number;
+            /** Offset */
+            offset: number;
+            /** Limit */
+            limit: number;
+        };
         /** StoryboardPatch */
         StoryboardPatch: {
             /** Title */
@@ -6822,6 +7035,29 @@ export interface components {
             base_prompt?: string | null;
             /** Panels */
             panels?: components["schemas"]["Panel-Input"][] | null;
+        };
+        /** StoryboardSummary */
+        StoryboardSummary: {
+            /** Id */
+            id: string;
+            /** Series Id */
+            series_id: string;
+            /** Title */
+            title: string;
+            /** Order */
+            order: number;
+            /** Revision */
+            revision: number;
+            /** Panel Count */
+            panel_count: number;
+            /** Adopted Count */
+            adopted_count: number;
+            /** Cover Asset Id */
+            cover_asset_id: string | null;
+            /** Created At */
+            created_at: string;
+            /** Updated At */
+            updated_at: string;
         };
         /** Strip */
         "Strip-Input": {
@@ -7066,6 +7302,63 @@ export interface components {
          * @enum {string}
          */
         TakeStatus: "candidate" | "adopted" | "rejected";
+        /** TaskGeneration */
+        TaskGeneration: {
+            /** Workflow Id */
+            workflow_id?: string | null;
+            /** Cloud Channel Id */
+            cloud_channel_id?: string | null;
+            /** Profile Id */
+            profile_id?: string | null;
+            /** Candidates */
+            candidates?: number | null;
+            /** Width */
+            width?: number | null;
+            /** Height */
+            height?: number | null;
+        };
+        /** TaskLoRA */
+        TaskLoRA: {
+            /** Name */
+            name: string;
+            /** Key */
+            key?: string | null;
+            /** Strength */
+            strength?: number | null;
+            /** Clip */
+            clip?: number | null;
+            /** Enabled */
+            enabled?: boolean | null;
+        };
+        /** TaskLoRAGroup */
+        TaskLoRAGroup: {
+            /** Key */
+            key: string;
+            /** Loras */
+            loras: components["schemas"]["TaskLoRA"][];
+        };
+        /** TaskLoRASelection */
+        TaskLoRASelection: {
+            /** Name */
+            name: string;
+            /** Key */
+            key?: string | null;
+            /** Strength */
+            strength?: number | null;
+            /** Clip */
+            clip?: number | null;
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Group Key */
+            group_key?: string | null;
+        };
+        /** TaskSlotOverrides */
+        TaskSlotOverrides: {
+            /** Loras */
+            loras?: components["schemas"]["TaskLoRA"][];
+            /** Groups */
+            groups?: components["schemas"]["TaskLoRAGroup"][];
+        };
         /** Theme */
         Theme: {
             /** Id */
@@ -7567,6 +7860,55 @@ export interface components {
             episode: components["schemas"]["Episode"];
             /** Job */
             job: Record<string, unknown>;
+        };
+        /** WorkshopTaskRequest */
+        WorkshopTaskRequest: {
+            /** Storyboard Id */
+            storyboard_id: string;
+            /** Preset Ids */
+            preset_ids?: string[];
+            /**
+             * Title
+             * @default
+             */
+            title?: string;
+            /** Workflow Id */
+            workflow_id?: string | null;
+            /** Profile Id */
+            profile_id?: string | null;
+            /** Cloud Channel */
+            cloud_channel?: string | null;
+            generation?: components["schemas"]["TaskGeneration"] | null;
+            /** Variables */
+            variables?: {
+                [key: string]: string;
+            };
+            /** Loras */
+            loras?: components["schemas"]["TaskLoRASelection"][];
+            slot_overrides?: components["schemas"]["TaskSlotOverrides"] | null;
+            /**
+             * Auto Start
+             * @default false
+             */
+            auto_start?: boolean;
+            /**
+             * Adopt First
+             * @default false
+             */
+            adopt_first?: boolean;
+            /** Idempotency Key */
+            idempotency_key?: string | null;
+        };
+        /** WorkshopTaskResult */
+        WorkshopTaskResult: {
+            series: components["schemas"]["Series"];
+            episode: components["schemas"]["Episode"];
+            /** Job */
+            job: Record<string, unknown> | null;
+            /** Job Id */
+            job_id: string | null;
+            /** Start Error */
+            start_error: string | null;
         };
         /** Contributes */
         MioContract_Contributes: {
@@ -11577,6 +11919,26 @@ export interface operations {
             };
         };
     };
+    list_image_channels_api_image_channels_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, unknown>[];
+                };
+            };
+        };
+    };
     list_trash_api_trash_get: {
         parameters: {
             query?: never;
@@ -13193,6 +13555,74 @@ export interface operations {
             };
         };
     };
+    get_episode_deliverables_api_episodes__episode_id__deliverables_get: {
+        parameters: {
+            query?: {
+                variant_id?: string | null;
+            };
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EpisodeDeliverables"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_episode_deliverable_api_episodes__episode_id__deliverables_export_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeliverableRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliverableExport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     workspace_backup_head_api_backups_head_get: {
         parameters: {
             query?: never;
@@ -13643,7 +14073,10 @@ export interface operations {
     };
     list_storyboards_api_workshop_storyboards_get: {
         parameters: {
-            query?: never;
+            query?: {
+                offset?: number;
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -13656,7 +14089,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Episode"][];
+                    "application/json": components["schemas"]["StoryboardList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -14232,6 +14674,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QueueStatus"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_workshop_task_api_workshop_tasks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkshopTaskRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkshopTaskResult"];
                 };
             };
             /** @description Validation Error */

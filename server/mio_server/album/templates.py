@@ -17,6 +17,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
+from .document import document_shell
+
 HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 LAYOUTS = {
     "webtoon": "Webtoon 长卷",
@@ -114,11 +116,17 @@ class AlbumTemplate(BaseModel):
 
 def parse_template(data: dict) -> AlbumTemplate:
     try:
-        return AlbumTemplate.model_validate(data)
+        template = AlbumTemplate.model_validate(data)
     except ValidationError as exc:
         first = exc.errors()[0]
         where = ".".join(str(p) for p in first["loc"])
         raise TemplateError(f"不是合法的画册模板（{where}）：{first['msg']}") from None
+    # Stored templates validated by older versions can still be listed and removed.
+    try:
+        document_shell(template.html)
+    except ValueError as exc:
+        raise TemplateError(f"不是合法的画册模板（html）：{exc}") from None
+    return template
 
 
 @lru_cache(maxsize=1)

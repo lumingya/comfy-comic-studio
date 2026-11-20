@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, ValidationError
 from ..render_models import WorkflowConfig, WorkflowDoc
 from . import bindings as B
 from . import compile as C
+from . import slot_adapters as SA
 from .diagnostics import MODEL_FILE, diagnose
 
 
@@ -74,6 +75,7 @@ class Inspection(BaseModel):
     models: list[ModelDependency] = Field(default_factory=list)
     issues: list[Issue] = Field(default_factory=list)
     diagnostics: DiagnosticReport | None = None
+    lora_controls: dict | None = None
 
 
 def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=None) -> Inspection:
@@ -111,6 +113,11 @@ def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=Non
         result.issues.append(Issue(code="invalid_format", severity="error", message=str(exc)))
         return result
     result.importable = True
+    try:
+        result.lora_controls = SA.describe(doc, registry, object_info=request.object_info)
+        result.lora_controls.pop("workflow_id")
+    except ValueError as exc:
+        result.issues.append(Issue(code="slot_error", severity="error", message=str(exc)))
     rules = tuple(rules)
     try:
         bound, problems = B.resolve(doc.graph, doc.config.mapping, rules=rules)
@@ -134,7 +141,7 @@ def inspect(request: InspectRequest, *, rules: B.BindingRules = (), registry=Non
             registry=registry,
         )
         selected = compiled.graph
-        result.compilable = True
+        result.compilable = not any(issue.severity == "error" for issue in result.issues)
         result.issues.extend(
             Issue(code="compile_warning", severity="warning", message=w)
             for w in compiled.warnings

@@ -143,5 +143,5 @@ class TokenStore:
         if now - self._touched.get(token.id, -1e9) > 60:
             self._touched[token.id] = now
             token.last_used_at = now_iso()
-            self.store.put_doc(token)
+            self.store.touch_api_token(token.id, token.secret_hash, token.last_used_at)
         return token

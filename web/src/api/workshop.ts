@@ -5,6 +5,7 @@ import { keys } from './keys';
 import type { QueueStatus, Series } from './types';
 import type { components } from './schema';
 import { creationKitsKey, type KitAssembly } from './creationKits';
+import type { LoraSlotOverrides } from './workflowLoras';
 
 export type Preset = Series['presets'][number];
 export type PresetEntry = Preset['entries'][number];
@@ -55,6 +56,7 @@ export interface AssembleVars {
   title: string;
   profile_id?: string | null;
   generation?: GenerationOptions;
+  slot_overrides?: LoraSlotOverrides;
   variables?: Record<string, string>;
   idempotency_key?: string;
 }
@@ -63,13 +65,14 @@ export type AssemblyPreview = components['schemas']['AssemblyPreview'];
 export type AssemblyVariable = components['schemas']['AssemblyVariable'];
 
 /** The server compiles the same snapshot that assembly will save; no client substitution. */
-function kitAssembly(body: AssembleVars): KitAssembly {
+function kitAssembly(body: AssembleVars): KitAssembly & { slot_overrides?: LoraSlotOverrides } {
   return {
     episode_id: body.storyboard_id,
     preset_ids: body.preset_ids,
     title: body.title,
     profile_id: body.profile_id,
     generation: body.generation,
+    slot_overrides: body.slot_overrides,
     variables: body.variables,
     idempotency_key: body.idempotency_key ?? 'preview',
   };

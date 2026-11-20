@@ -146,7 +146,7 @@ export function LoraToggleList({
                         type="range"
                         min={source.range.min}
                         max={source.range.max}
-                        step="0.05"
+                        step="any"
                         value={lora.strength}
                         disabled={!source.supports_strength}
                         onChange={(event) =>
@@ -159,7 +159,7 @@ export function LoraToggleList({
                       type="number"
                       min={source.range.min}
                       max={source.range.max}
-                      step="0.05"
+                      step="any"
                       value={lora.strength}
                       disabled={!source.supports_strength}
                       aria-label={t('config.workflow.trial.lora.strength', { name: source.name })}
@@ -178,7 +178,7 @@ export function LoraToggleList({
                         type="number"
                         min={source.range.min}
                         max={source.range.max}
-                        step="0.05"
+                        step="any"
                         value={lora.clip}
                         disabled={!source.supports_strength}
                         aria-label={t('config.workflow.trial.lora.clip', { name: source.name })}

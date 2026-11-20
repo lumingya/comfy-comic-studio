@@ -17,7 +17,9 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import lzma
 import zipfile
+import zlib
 
 from .asset_refs import referenced_assets
 from .models import Episode, Series, new_id
@@ -95,8 +97,7 @@ def export_series(store, assets, series_id: str) -> bytes:
 
 
 def import_series(store, assets, data: bytes) -> dict:
-    # Nested store writes share this transaction: failed imports must not leave a partial
-    # album or visible recipe/asset metadata. Content-addressed files can safely be reused.
+    # Nested writes roll back visible albums, recipes and asset metadata together.
     with store.tx():
         return _import_series(store, assets, data)
 
@@ -104,9 +105,25 @@ def import_series(store, assets, data: bytes) -> dict:
 def _import_series(store, assets, data: bytes) -> dict:
     try:
         z = zipfile.ZipFile(io.BytesIO(data))
-    except zipfile.BadZipFile:
+    except (zipfile.BadZipFile, OSError, ValueError):
         raise BundleError("不是有效的 .mio.zip 文件") from None
     with z:
+
+        def read_member(name):
+            try:
+                return z.read(name)
+            except (
+                KeyError,
+                zipfile.BadZipFile,
+                RuntimeError,
+                NotImplementedError,
+                EOFError,
+                OSError,
+                lzma.LZMAError,
+                zlib.error,
+            ):
+                raise BundleError("压缩包缺少必需文件或文件已损坏") from None
+
         names = z.namelist()
         if len(names) > MAX_ENTRIES or any(
             n.startswith("/") or ".." in n.split("/") for n in names
@@ -115,33 +132,40 @@ def _import_series(store, assets, data: bytes) -> dict:
         if sum(i.file_size for i in z.infolist()) > MAX_UNPACKED:
             raise BundleError("压缩包解压后超过 4 GB")
         try:
-            manifest = json.loads(z.read("manifest.json"))
+            manifest = json.loads(read_member("manifest.json"))
         except (KeyError, ValueError):
             raise BundleError("缺少 manifest.json") from None
-        if manifest.get("format") != FORMAT or int(manifest.get("version", 0)) > VERSION:
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("format") != FORMAT
+            or type(manifest.get("version")) is not int
+            or not 1 <= manifest["version"] <= VERSION
+        ):
             raise BundleError("不支持的包格式或版本，请升级 Mio")
+        if "series.json" not in names:
+            raise BundleError("压缩包缺少 series.json")
         bad = []
         for name in names:
             if name.startswith("assets/") and not name.endswith("/"):
-                blob = z.read(name)
+                blob = read_member(name)
                 sha = name.split("/")[-1].split(".")[0]
                 if hashlib.sha256(blob).hexdigest() != sha:
                     bad.append(name)
                     continue
                 assets.put(blob, source="bundle")
         workflows = [
-            WorkflowDoc.model_validate_json(z.read(name))
+            WorkflowDoc.model_validate_json(read_member(name))
             for name in names
             if name.startswith("workflows/") and name.endswith(".json")
         ]
         profiles = [
-            RenderProfile.model_validate_json(z.read(name))
+            RenderProfile.model_validate_json(read_member(name))
             for name in names
             if name.startswith("profiles/") and name.endswith(".json")
         ]
-        series = Series.model_validate_json(z.read("series.json"))
+        series = Series.model_validate_json(read_member("series.json"))
         episodes = [
-            Episode.model_validate_json(z.read(n))
+            Episode.model_validate_json(read_member(n))
             for n in names
             if n.startswith("episodes/") and n.endswith(".json")
         ]

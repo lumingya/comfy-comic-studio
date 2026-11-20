@@ -25,7 +25,7 @@ export type PromptUsage = Map<string, number>;
 export type VariableState = 'defined' | 'empty' | 'unknown';
 
 /** Same grammar as the server (`pipeline/variables.py`): `{{` / `}}` escape, names ≤ 64 chars. */
-const TOKEN = /\{\{|\}\}|\{([^{}\s][^{}]{0,63})\}/g;
+export const PROMPT_TOKEN = /\{\{|\}\}|\{([^{}\s][^{}]{0,63})\}/g;
 const NAME_CHAR = /[\p{L}\p{N}_]/u;
 
 export function variableState(key: string, known: KnownVariables): VariableState {
@@ -35,7 +35,7 @@ export function variableState(key: string, known: KnownVariables): VariableState
 /** Unique variables of a text, in order of first use, split by state (legacy promptVariableReport). */
 export function variableReport(text: string, known: KnownVariables) {
   const names: string[] = [];
-  for (const m of text.matchAll(TOKEN)) if (m[1] && !names.includes(m[1])) names.push(m[1]);
+  for (const m of text.matchAll(PROMPT_TOKEN)) if (m[1] && !names.includes(m[1])) names.push(m[1]);
   const by = (state: VariableState) => names.filter((k) => variableState(k, known) === state);
   return { names, defined: by('defined'), empty: by('empty'), unknown: by('unknown') };
 }
@@ -44,7 +44,8 @@ export function variableReport(text: string, known: KnownVariables) {
 export function variableUsage(texts: readonly string[]): PromptUsage {
   const counts: PromptUsage = new Map();
   for (const text of texts)
-    for (const m of text.matchAll(TOKEN)) if (m[1]) counts.set(m[1], (counts.get(m[1]) ?? 0) + 1);
+    for (const m of text.matchAll(PROMPT_TOKEN))
+      if (m[1]) counts.set(m[1], (counts.get(m[1]) ?? 0) + 1);
   return counts;
 }
 
@@ -61,7 +62,7 @@ export function hasUnclosedBrace(text: string): boolean {
 function paint(text: string, known: KnownVariables): ReactNode[] {
   const out: ReactNode[] = [];
   let at = 0;
-  for (const m of text.matchAll(TOKEN)) {
+  for (const m of text.matchAll(PROMPT_TOKEN)) {
     if (!m[1]) continue;
     const state = variableState(m[1], known);
     out.push(text.slice(at, m.index));

@@ -5,6 +5,7 @@ import type { WorkflowInspection } from '../../api/system';
 import type { WorkflowDocument } from '../../api/types';
 import { configWorkflow, configurationRoutes } from '../../test/configuration';
 import { mockFetch, renderWithProviders } from '../../test/utils';
+import { workflowLoras } from '../../test/workflowLoras';
 import { WorkflowsSection } from './WorkflowsSection';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -34,6 +35,26 @@ async function upload(container: HTMLElement, value: unknown, name = 'sample.jso
 }
 
 describe('workflow import preview', () => {
+  it('shows detected LoRAs and adapter provenance in saved and imported workflows', async () => {
+    const lora_controls = {
+      ...workflowLoras,
+      adapters: [{ id: 'adapter.loras', source: 'ext:demo' }],
+    };
+    mockFetch(
+      configurationRoutes({
+        'GET /api/workflows/wf_demo': { ...configWorkflow, lora_controls },
+        'POST /api/workflows/inspect': { ...inspection, lora_controls },
+      }),
+    );
+    const { container } = renderWithProviders(<WorkflowsSection />);
+    await userEvent.click(await screen.findByText('识别到的 LoRA'));
+    expect(screen.getByText('ink.safetensors')).toBeVisible();
+    const dialog = await upload(container, configWorkflow.graph);
+    await userEvent.click(await within(dialog).findByText('识别到的 LoRA'));
+    expect(within(dialog).getByText('ink.safetensors')).toBeVisible();
+    expect(within(dialog).getByText('adapter.loras · ext:demo')).toBeVisible();
+  });
+
   it('inspects before saving, keeps detailed reports collapsed, and cancel makes no library write', async () => {
     const calls = mockFetch(configurationRoutes({ 'POST /api/workflows/inspect': inspection }));
     const { container } = renderWithProviders(<WorkflowsSection />);

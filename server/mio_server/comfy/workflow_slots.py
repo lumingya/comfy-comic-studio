@@ -5,6 +5,7 @@ import hashlib
 import json
 import math
 from datetime import datetime, timezone
+from decimal import Decimal
 
 from . import slot_adapters as SA
 
@@ -332,7 +333,12 @@ def parse_lora_syntax(text):
 
 
 def _num(text):
-    value = float(text)
+    try:
+        value = float(text)
+    except (TypeError, ValueError):
+        raise LibraryError('LoRA 强度必须是有限数字') from None
+    if isinstance(text, bool) or not math.isfinite(value):
+        raise LibraryError('LoRA 强度必须是有限数字')
     return int(value) if value == int(value) else value
 
 
@@ -380,7 +386,7 @@ def _round2(value):
     return int(value) if value == int(value) else value
 
 
-def normalize_loras(items):
+def normalize_loras(items, partial=False):
     if not isinstance(items, list):
         raise LibraryError('LoRA 覆盖必须是数组')
     if len(items) > MAX_LORAS:
@@ -399,7 +405,10 @@ def normalize_loras(items):
             raise LibraryError('LoRA 强度必须是有限数字') from None
         if not math.isfinite(strength):
             raise LibraryError('LoRA 强度必须是有限数字')
-        entry = {'name': name, 'strength': _round2(strength)}
+        precise = partial or raw.get('key') is not None
+        entry = {'name': name, 'strength': strength if precise else _round2(strength)}
+        if partial and 'strength' not in raw:
+            entry.pop('strength')
         if 'enabled' in raw:
             if type(raw['enabled']) is not bool:
                 raise LibraryError('LoRA 开关必须是布尔值')
@@ -417,11 +426,12 @@ def normalize_loras(items):
                 raise LibraryError('LoRA CLIP 强度必须是有限数字') from None
             if not math.isfinite(clip):
                 raise LibraryError('LoRA CLIP 强度必须是有限数字')
-            entry['clip'] = _round2(clip)
-        if name in seen:
-            out[next(i for i, l in enumerate(out) if l['name'] == name)] = entry
+            entry['clip'] = clip if precise else _round2(clip)
+        identity = ('key', key) if key is not None else ('name', name)
+        if identity in seen:
+            out[next(i for i, l in enumerate(out) if (('key', l['key']) if 'key' in l else ('name', l['name'])) == identity)] = entry
             continue
-        seen.add(name)
+        seen.add(identity)
         out.append(entry)
     return out
 
@@ -436,11 +446,14 @@ def _write_field(workflow, node_id, key, value):
 
 
 def format_tag(lora, name_format):
+    def exact(value):
+        value = float(value)
+        return str(int(value)) if value == int(value) else format(Decimal(repr(value)), 'f')
     clip = ''
     if 'clip' in lora and lora['clip'] != lora['strength']:
-        clip = ':' + number_text(lora['clip'])
+        clip = ':' + exact(lora['clip'])
     name = lora_display_name(lora['name'], name_format).replace(':', '_')
-    return '<lora:' + name + ':' + number_text(lora['strength']) + clip + '>'
+    return '<lora:' + name + ':' + exact(lora['strength']) + clip + '>'
 
 
 def _apply_syntax(workflow, lora, loras, notices):
@@ -1021,7 +1034,7 @@ def normalize_overrides(overrides):
     elif model not in (None, ''):
         clean['model'] = filename(model)
     if 'loras' in overrides:
-        clean['loras'] = normalize_loras(overrides['loras'])
+        clean['loras'] = normalize_loras(overrides['loras'], partial=True)
     if 'groups' in overrides:
         groups = overrides['groups']
         if not isinstance(groups, list) or len(groups) > 64:
@@ -1117,14 +1130,15 @@ def merge_overrides(*overrides):
                 result[key] = list(groups.values())
             elif key == "loras" and isinstance(value, list):
                 loras = {
-                    _name_key(item["name"]): copy.deepcopy(item)
+                    ('key', item['key']) if item.get('key') else ('name', _name_key(item['name'])): copy.deepcopy(item)
                     for item in result.get(key, [])
                     if isinstance(item, dict) and isinstance(item.get("name"), str)
                 }
                 for item in value:
                     if not isinstance(item, dict) or not isinstance(item.get("name"), str):
                         raise LibraryError('LoRA 覆盖条目格式无效')
-                    loras[_name_key(item["name"])] = copy.deepcopy(item)
+                    identity = ('key', item['key']) if item.get('key') else ('name', _name_key(item['name']))
+                    loras[identity] = {**loras.get(identity, {}), **copy.deepcopy(item)}
                 result[key] = list(loras.values())
             else:
                 result[key] = copy.deepcopy(value)
@@ -1136,18 +1150,23 @@ def _merged(pinned, additions, unpin):
     result = [copy.deepcopy(item) for item in pinned if _name_key(item['name']) not in unpin_keys]
     for item in additions:
         name = _name_key(item['name'])
-        matches = [index for index, row in enumerate(result) if _name_key(row['name']) == name]
-        if not matches:
-            result.append(copy.deepcopy(item))
-            continue
         if 'key' in item:
-            matches = [index for index in matches if result[index].get('key') == item['key']]
-            if not matches:
+            matches = [index for index, row in enumerate(result) if row.get('key') == item['key']]
+            if any(_name_key(result[index]['name']) != name for index in matches):
                 raise LibraryError('LoRA 标识与工作流槽位不匹配')
+        else:
+            matches = [index for index, row in enumerate(result) if _name_key(row['name']) == name]
+        if not matches:
+            if ('key' in item and not item['key'].startswith('reference:')
+                and any(_name_key(row['name']) == name for row in pinned)):
+                raise LibraryError('LoRA 标识与工作流槽位不匹配')
+            result.append({'strength': 1, **copy.deepcopy(item)})
+            continue
         for index in matches:
             previous = result[index]
-            selection = {field: previous[field] for field in ('key', 'enabled') if field in previous}
-            result[index] = {**selection, **copy.deepcopy(item)}
+            result[index] = {**previous, **copy.deepcopy(item)}
+            if 'key' not in item and 'strength' in item and 'clip' not in item:
+                result[index].pop('clip', None)
     return result
 
 

@@ -1,4 +1,5 @@
 import type { components } from './schema';
+import type { WorkflowLoraControls } from './workflowLoras';
 
 type S = components['schemas'];
 
@@ -191,6 +192,7 @@ export interface WorkflowDocument {
   >;
   config: WorkflowConfig;
   notes: string;
+  lora_controls?: WorkflowLoraControls | null;
   describe: {
     bindings: Record<string, string[]>;
     problems: string[];

@@ -132,6 +132,7 @@ const k = {
   deliveries: (id: string) => ['webhook-deliveries', id] as const,
   update: ['update'] as const,
   albumTemplates: ['album-templates'] as const,
+  imageAdapters: ['image-adapters'] as const,
 };
 
 /** Untyped JSON call for endpoints whose schema is a free-form dict. */
@@ -285,6 +286,10 @@ export function useExtensionAction() {
     ['registry'],
     ['extension-surfaces'],
     ['extension-market'],
+    k.imageAdapters,
+    ['workflow-loras'],
+    ['workflow'],
+    ['workflows'],
   );
   return useMutation({
     mutationFn: async (
@@ -441,7 +446,17 @@ export interface AlbumTemplateDoc {
   description: string;
   author: string;
   version: string;
-  layout: 'webtoon' | 'manga' | 'artbook' | 'flip';
+  layout:
+    | 'webtoon'
+    | 'manga'
+    | 'artbook'
+    | 'flip'
+    | 'gallery'
+    | 'folio'
+    | 'cinema'
+    | 'editorial'
+    | 'contact'
+    | 'chromatic';
   options: {
     accent: string;
     background: string;

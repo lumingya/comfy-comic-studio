@@ -13,6 +13,7 @@ export const keys = {
   settings: ['settings'] as const,
   registry: ['registry'] as const,
   imageAdapters: ['image-adapters'] as const,
+  workflowLoras: (id: string) => ['workflow-loras', id] as const,
   workflows: ['workflows'] as const,
   workflow: (id: string) => ['workflow', id] as const,
   profiles: ['profiles'] as const,

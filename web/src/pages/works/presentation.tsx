@@ -104,7 +104,8 @@ export function albumBody(
 }
 
 /** Where the reader was in a template preview, kept across live refreshes (see runtime.js). */
-const previewSpots = new Map<string, { y: number; spread: number }>();
+type PreviewSpot = { y: number; spread: number; frame?: number; mode?: string };
+const previewSpots = new Map<string, PreviewSpot>();
 
 /**
  * The album rendered with a legacy HTML template (POST /api/export/album), shown in an iframe.
@@ -147,7 +148,13 @@ export function TemplatePreview(props: {
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
       if (e.source !== frame.current?.contentWindow || e.data?.type !== 'mio-reader-state') return;
-      previewSpots.set(spot, { y: Number(e.data.y) || 0, spread: Number(e.data.spread) || 0 });
+      const { y, spread, frame: activeFrame, mode } = e.data;
+      previewSpots.set(spot, {
+        y: Number(y) || 0,
+        spread: Number(spread) || 0,
+        ...(Number.isSafeInteger(activeFrame) ? { frame: activeFrame } : {}),
+        ...(mode === 'template' || mode === 'single' || mode === 'double' ? { mode } : {}),
+      });
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);

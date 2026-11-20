@@ -151,6 +151,37 @@ class NovelAITests(unittest.TestCase):
 
 
 class ChannelSettingsTests(unittest.TestCase):
+    def test_cookie_and_session_headers_are_masked_frozen_and_rotated_like_api_keys(self):
+        secrets = {"Cookie": "fixture-cookie", "X-Session-Key": "fixture-session"}
+        current = channel(kind="vendor", extra_options={"quality": "draft", "headers": secrets})
+        settings = SET.AppSettings(image_channels=[current])
+        public = SET.public(settings)
+        self.assertEqual(
+            public["image_channels"][0]["extra_options"]["headers"],
+            {key: SET.MASK for key in secrets},
+        )
+        restored = SET.apply_patch(settings, {"image_channels": public["image_channels"]})
+        self.assertEqual(restored.image_channels[0].extra_options["headers"], secrets)
+        request = CR.freeze_request(PV.ExtensionChannel(current, FakeKind, None), {"prompt": "x"})
+        self.assertEqual(request["options"]["extra_options"], {"quality": "draft", "headers": {}})
+
+        class Client:
+            channel = current.model_copy(
+                update={
+                    "extra_options": {
+                        "quality": "final",
+                        "headers": {key: "fixture-rotated" for key in secrets},
+                    }
+                }
+            )
+            image_models = ()
+
+        bound = CR.bind_request(Client(), request)
+        self.assertEqual(bound.channel.extra_options["quality"], "draft")
+        self.assertEqual(
+            bound.channel.extra_options["headers"], {key: "fixture-rotated" for key in secrets}
+        )
+
     def test_keys_are_masked_and_kept(self):
         s = SET.AppSettings(image_channels=[channel(kind="novelai")])
         pub = SET.public(s)
@@ -181,11 +212,16 @@ class ChannelSettingsTests(unittest.TestCase):
             channel(extra_options={"large": "x" * (32 * 1024)})
 
         configured = channel(
-            extra_options={"quality_mode": "draft", "auth": {"api_token": "vendor-secret"}}
+            extra_options={
+                "quality_mode": "draft",
+                "author": "Ada",
+                "auth": {"api_token": "vendor-secret"},
+            }
         )
         settings = SET.AppSettings(image_channels=[configured])
         public = SET.public(settings)
         self.assertEqual(public["image_channels"][0]["extra_options"]["quality_mode"], "draft")
+        self.assertEqual(public["image_channels"][0]["extra_options"]["author"], "Ada")
         self.assertEqual(public["image_channels"][0]["extra_options"]["auth"], SET.MASK)
         updated = SET.apply_patch(
             settings, {"image_channels": public["image_channels"], "image_channel": "c1"}
@@ -225,7 +261,80 @@ class ChannelSettingsTests(unittest.TestCase):
                 )
 
         _, reply = CR.call(RequestAdapter(), request, [])
-        self.assertEqual(reply.image_request["options"]["auth"]["access_token"], "••••••")
+        self.assertEqual(reply.image_request["options"]["auth"], "••••••")
+
+    def test_extension_secret_redaction_covers_bare_auth_and_nested_lists(self):
+        current = channel(
+            kind="vendor",
+            extra_options={"auth": "bare-secret", "accounts": [{"token": "list-secret"}]},
+        )
+        request = CR.freeze_request(PV.ExtensionChannel(current, FakeKind, None), {"prompt": "x"})
+        public = CR.snapshot(request)
+        self.assertNotIn("bare-secret", str(public))
+        self.assertNotIn("list-secret", str(public))
+
+        rotated = current.model_copy(
+            update={
+                "extra_options": {"auth": "bare-rotated", "accounts": [{"token": "list-rotated"}]}
+            }
+        )
+
+        class Client:
+            channel = rotated
+            image_models = ()
+
+        bound = CR.bind_request(Client(), request)
+        self.assertEqual(bound.channel.extra_options["auth"], "bare-rotated")
+        self.assertEqual(bound.channel.extra_options["accounts"][0]["token"], "list-rotated")
+
+    def test_extension_secret_merge_preserves_scalar_list_options(self):
+        current = channel(
+            kind="vendor",
+            extra_options={
+                "labels": ["draft", "fast"],
+                "accounts": [{"token": "old", "limit": 8}],
+                "modes": [None, "fast"],
+                "default": None,
+            },
+        )
+        request = CR.freeze_request(PV.ExtensionChannel(current, FakeKind, None), {"prompt": "x"})
+
+        class Client:
+            channel = current.model_copy(
+                update={
+                    "extra_options": {
+                        "labels": ["live"],
+                        "accounts": [{"token": "new", "limit": 9}, {"token": "unused"}],
+                        "modes": ["live", {"name": "live"}, False],
+                        "default": {"token": "unused"},
+                        "added": ["unused"],
+                    }
+                }
+            )
+            image_models = ()
+
+        bound = CR.bind_request(Client(), request)
+        self.assertEqual(
+            bound.channel.extra_options,
+            {
+                "labels": ["draft", "fast"],
+                "accounts": [{"token": "new", "limit": 8}],
+                "modes": [None, "fast"],
+                "default": None,
+            },
+        )
+
+    def test_settings_round_trip_keeps_credentials_inside_option_lists(self):
+        original = channel(extra_options={"accounts": [{"token": "stored", "limit": 4}]})
+        settings = SET.AppSettings(image_channels=[original])
+        public = SET.public(settings)
+        account = public["image_channels"][0]["extra_options"]["accounts"][0]
+        self.assertEqual(account["token"], SET.MASK)
+        account["limit"] = 8
+        updated = SET.apply_patch(settings, {"image_channels": public["image_channels"]})
+        self.assertEqual(
+            updated.image_channels[0].extra_options, {"accounts": [{"token": "stored", "limit": 8}]}
+        )
 
     def test_adapter_metadata_validation_and_public_schema_redaction(self):
         from types import SimpleNamespace
@@ -238,7 +347,16 @@ class ChannelSettingsTests(unittest.TestCase):
                 "capabilities": ["generate", "reference"],
                 "schema": {
                     "type": "object",
-                    "properties": {"quality": {"type": "string", "default": "secret?"}},
+                    "properties": {
+                        "quality": {
+                            "type": "string",
+                            "default": "secret?",
+                            "const": "credential-const",
+                            "enum": ["opaque-secret", "safe-choice"],
+                            "description": "token=description-secret",
+                        },
+                        "api_key": {"type": "string", "enum": ["secret-enum"]},
+                    },
                 },
                 "supports_reference": True,
                 "supports_negative": False,
@@ -250,6 +368,13 @@ class ChannelSettingsTests(unittest.TestCase):
         self.assertEqual(public["supports_reference"], True)
         self.assertNotIn("api_key", public)
         self.assertNotIn("default", public["schema"]["properties"]["quality"])
+        self.assertNotIn("const", public["schema"]["properties"]["quality"])
+        self.assertNotIn("enum", public["schema"]["properties"]["quality"])
+        self.assertNotIn(
+            "description-secret", public["schema"]["properties"]["quality"]["description"]
+        )
+        self.assertNotIn("enum", public["schema"]["properties"]["quality"])
+        self.assertNotIn("api_key", public["schema"]["properties"])
         with self.assertRaises(ValueError):
             PV.validate_cloud_adapter_metadata({"capabilities": "generate"})
 

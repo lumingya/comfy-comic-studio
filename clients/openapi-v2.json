@@ -294,6 +294,14 @@
       ],
       "title": "Idempotency Key"
      },
+     "loras": {
+      "items": {
+       "$ref": "#/components/schemas/TaskLoRASelection"
+      },
+      "maxItems": 128,
+      "title": "Loras",
+      "type": "array"
+     },
      "preset_ids": {
       "items": {
        "type": "string"
@@ -311,6 +319,16 @@
        }
       ],
       "title": "Profile Id"
+     },
+     "slot_overrides": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TaskSlotOverrides"
+       },
+       {
+        "type": "null"
+       }
+      ]
      },
      "storyboard_id": {
       "title": "Storyboard Id",
@@ -1814,6 +1832,70 @@
     "title": "CloudParameterModes",
     "type": "object"
    },
+   "CloudRecipe-Input": {
+    "additionalProperties": false,
+    "description": "Portable ordinary request parameters; service bindings and secrets stay local.",
+    "properties": {
+     "kind": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Kind",
+      "type": "string"
+     },
+     "model": {
+      "default": "",
+      "maxLength": 300,
+      "title": "Model",
+      "type": "string"
+     },
+     "options": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/JsonValue"
+      },
+      "maxProperties": 64,
+      "title": "Options",
+      "type": "object"
+     }
+    },
+    "required": [
+     "kind"
+    ],
+    "title": "CloudRecipe",
+    "type": "object"
+   },
+   "CloudRecipe-Output": {
+    "additionalProperties": false,
+    "description": "Portable ordinary request parameters; service bindings and secrets stay local.",
+    "properties": {
+     "kind": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Kind",
+      "type": "string"
+     },
+     "model": {
+      "default": "",
+      "maxLength": 300,
+      "title": "Model",
+      "type": "string"
+     },
+     "options": {
+      "additionalProperties": {
+       "$ref": "#/components/schemas/JsonValue"
+      },
+      "maxProperties": 64,
+      "title": "Options",
+      "type": "object"
+     }
+    },
+    "required": [
+     "kind",
+     "model",
+     "options"
+    ],
+    "title": "CloudRecipe",
+    "type": "object"
+   },
    "CloudReference": {
     "additionalProperties": false,
     "properties": {
@@ -2300,6 +2382,93 @@
      "strength"
     ],
     "title": "ControlInput",
+    "type": "object"
+   },
+   "DeliverableExport": {
+    "additionalProperties": false,
+    "properties": {
+     "format": {
+      "enum": [
+       "html",
+       "pdf",
+       "zip",
+       "png"
+      ],
+      "title": "Format",
+      "type": "string"
+     },
+     "job_id": {
+      "title": "Job Id",
+      "type": "string"
+     },
+     "state": {
+      "title": "State",
+      "type": "string"
+     }
+    },
+    "required": [
+     "job_id",
+     "state",
+     "format"
+    ],
+    "title": "DeliverableExport",
+    "type": "object"
+   },
+   "DeliverableRequest": {
+    "additionalProperties": false,
+    "properties": {
+     "format": {
+      "default": "html",
+      "enum": [
+       "html",
+       "pdf",
+       "zip",
+       "png"
+      ],
+      "title": "Format",
+      "type": "string"
+     },
+     "idempotency_key": {
+      "anyOf": [
+       {
+        "maxLength": 160,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Idempotency Key"
+     },
+     "template_id": {
+      "anyOf": [
+       {
+        "maxLength": 100,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Template Id"
+     },
+     "variant_id": {
+      "anyOf": [
+       {
+        "maxLength": 256,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Variant Id"
+     }
+    },
+    "title": "DeliverableRequest",
     "type": "object"
    },
    "Dependency": {
@@ -2791,6 +2960,74 @@
      "title"
     ],
     "title": "EpisodeCreate",
+    "type": "object"
+   },
+   "EpisodeDeliverables": {
+    "additionalProperties": false,
+    "properties": {
+     "adopted_panels": {
+      "title": "Adopted Panels",
+      "type": "integer"
+     },
+     "episode_id": {
+      "title": "Episode Id",
+      "type": "string"
+     },
+     "formats": {
+      "items": {
+       "enum": [
+        "html",
+        "pdf",
+        "zip",
+        "png"
+       ],
+       "type": "string"
+      },
+      "title": "Formats",
+      "type": "array"
+     },
+     "generated_panels": {
+      "title": "Generated Panels",
+      "type": "integer"
+     },
+     "jobs": {
+      "items": {
+       "$ref": "#/components/schemas/GenerationProgress"
+      },
+      "title": "Jobs",
+      "type": "array"
+     },
+     "panel_count": {
+      "title": "Panel Count",
+      "type": "integer"
+     },
+     "ready": {
+      "title": "Ready",
+      "type": "boolean"
+     },
+     "variant_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Variant Id"
+     }
+    },
+    "required": [
+     "episode_id",
+     "variant_id",
+     "panel_count",
+     "generated_panels",
+     "adopted_panels",
+     "ready",
+     "formats",
+     "jobs"
+    ],
+    "title": "EpisodeDeliverables",
     "type": "object"
    },
    "EpisodePatch": {
@@ -3301,6 +3538,45 @@
     "title": "GenerationOptions",
     "type": "object"
    },
+   "GenerationProgress": {
+    "additionalProperties": false,
+    "properties": {
+     "done": {
+      "title": "Done",
+      "type": "integer"
+     },
+     "failed": {
+      "title": "Failed",
+      "type": "integer"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "state": {
+      "title": "State",
+      "type": "string"
+     },
+     "total": {
+      "title": "Total",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "id",
+     "kind",
+     "state",
+     "total",
+     "done",
+     "failed"
+    ],
+    "title": "GenerationProgress",
+    "type": "object"
+   },
    "GenerationSnapshot": {
     "additionalProperties": false,
     "description": "Captured render documents; changes to preferences never rewrite an existing task.",
@@ -3572,6 +3848,17 @@
       "title": "Issues",
       "type": "array"
      },
+     "lora_controls": {
+      "anyOf": [
+       {
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Lora Controls"
+     },
      "missing": {
       "items": {
        "type": "string"
@@ -3677,6 +3964,14 @@
       "title": "Idempotency Key",
       "type": "string"
      },
+     "loras": {
+      "items": {
+       "$ref": "#/components/schemas/TaskLoRASelection"
+      },
+      "maxItems": 128,
+      "title": "Loras",
+      "type": "array"
+     },
      "preset_ids": {
       "items": {
        "type": "string"
@@ -3694,6 +3989,16 @@
        }
       ],
       "title": "Profile Id"
+     },
+     "slot_overrides": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TaskSlotOverrides"
+       },
+       {
+        "type": "null"
+       }
+      ]
      },
      "title": {
       "default": "",
@@ -4507,6 +4812,17 @@
    "LoraRef-Input": {
     "additionalProperties": false,
     "properties": {
+     "enabled": {
+      "default": true,
+      "title": "Enabled",
+      "type": "boolean"
+     },
+     "key": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Key",
+      "type": "string"
+     },
      "model_family": {
       "default": "sdxl",
       "title": "Model Family",
@@ -4536,6 +4852,17 @@
    "LoraRef-Output": {
     "additionalProperties": false,
     "properties": {
+     "enabled": {
+      "default": true,
+      "title": "Enabled",
+      "type": "boolean"
+     },
+     "key": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Key",
+      "type": "string"
+     },
      "model_family": {
       "default": "sdxl",
       "title": "Model Family",
@@ -4557,7 +4884,9 @@
      }
     },
     "required": [
+     "key",
      "name",
+     "enabled",
      "strength_model",
      "strength_clip",
      "model_family"
@@ -8753,6 +9082,16 @@
       "title": "Cloud Channel",
       "type": "string"
      },
+     "cloud_recipe": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/CloudRecipe-Input"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "cloud_refine": {
       "default": false,
       "description": "Explicit hybrid route: refine cloud results with the local final/draft tail",
@@ -8897,6 +9236,16 @@
       "title": "Cloud Channel",
       "type": "string"
      },
+     "cloud_recipe": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/CloudRecipe-Output"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
      "cloud_refine": {
       "default": false,
       "description": "Explicit hybrid route: refine cloud results with the local final/draft tail",
@@ -9022,6 +9371,7 @@
      "cloud_refine",
      "model_group",
      "cloud_channel",
+     "cloud_recipe",
      "created_at",
      "updated_at"
     ],
@@ -10212,6 +10562,37 @@
     "title": "StoryboardCreate",
     "type": "object"
    },
+   "StoryboardList": {
+    "properties": {
+     "items": {
+      "items": {
+       "$ref": "#/components/schemas/StoryboardSummary"
+      },
+      "title": "Items",
+      "type": "array"
+     },
+     "limit": {
+      "title": "Limit",
+      "type": "integer"
+     },
+     "offset": {
+      "title": "Offset",
+      "type": "integer"
+     },
+     "total": {
+      "title": "Total",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "items",
+     "total",
+     "offset",
+     "limit"
+    ],
+    "title": "StoryboardList",
+    "type": "object"
+   },
    "StoryboardPatch": {
     "properties": {
      "base_prompt": {
@@ -10268,6 +10649,71 @@
      }
     },
     "title": "StoryboardPatch",
+    "type": "object"
+   },
+   "StoryboardSummary": {
+    "properties": {
+     "adopted_count": {
+      "title": "Adopted Count",
+      "type": "integer"
+     },
+     "cover_asset_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cover Asset Id"
+     },
+     "created_at": {
+      "title": "Created At",
+      "type": "string"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "order": {
+      "title": "Order",
+      "type": "integer"
+     },
+     "panel_count": {
+      "title": "Panel Count",
+      "type": "integer"
+     },
+     "revision": {
+      "title": "Revision",
+      "type": "integer"
+     },
+     "series_id": {
+      "title": "Series Id",
+      "type": "string"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "updated_at": {
+      "title": "Updated At",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "series_id",
+     "title",
+     "order",
+     "revision",
+     "panel_count",
+     "adopted_count",
+     "cover_asset_id",
+     "created_at",
+     "updated_at"
+    ],
+    "title": "StoryboardSummary",
     "type": "object"
    },
    "Strip-Input": {
@@ -10866,6 +11312,283 @@
     ],
     "title": "TakeStatus",
     "type": "string"
+   },
+   "TaskGeneration": {
+    "additionalProperties": false,
+    "properties": {
+     "candidates": {
+      "anyOf": [
+       {
+        "maximum": 16.0,
+        "minimum": 1.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Candidates"
+     },
+     "cloud_channel_id": {
+      "anyOf": [
+       {
+        "maxLength": 256,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cloud Channel Id"
+     },
+     "height": {
+      "anyOf": [
+       {
+        "maximum": 8192.0,
+        "minimum": 64.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Height"
+     },
+     "profile_id": {
+      "anyOf": [
+       {
+        "maxLength": 256,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Profile Id"
+     },
+     "width": {
+      "anyOf": [
+       {
+        "maximum": 8192.0,
+        "minimum": 64.0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Width"
+     },
+     "workflow_id": {
+      "anyOf": [
+       {
+        "maxLength": 256,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Workflow Id"
+     }
+    },
+    "title": "TaskGeneration",
+    "type": "object"
+   },
+   "TaskLoRA": {
+    "additionalProperties": false,
+    "properties": {
+     "clip": {
+      "anyOf": [
+       {
+        "maximum": 100.0,
+        "minimum": -100.0,
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Clip"
+     },
+     "enabled": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Enabled"
+     },
+     "key": {
+      "anyOf": [
+       {
+        "maxLength": 512,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Key"
+     },
+     "name": {
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+     },
+     "strength": {
+      "anyOf": [
+       {
+        "maximum": 100.0,
+        "minimum": -100.0,
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Strength"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "TaskLoRA",
+    "type": "object"
+   },
+   "TaskLoRAGroup": {
+    "additionalProperties": false,
+    "properties": {
+     "key": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Key",
+      "type": "string"
+     },
+     "loras": {
+      "items": {
+       "$ref": "#/components/schemas/TaskLoRA"
+      },
+      "maxItems": 16,
+      "title": "Loras",
+      "type": "array"
+     }
+    },
+    "required": [
+     "key",
+     "loras"
+    ],
+    "title": "TaskLoRAGroup",
+    "type": "object"
+   },
+   "TaskLoRASelection": {
+    "additionalProperties": false,
+    "properties": {
+     "clip": {
+      "anyOf": [
+       {
+        "maximum": 100.0,
+        "minimum": -100.0,
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Clip"
+     },
+     "enabled": {
+      "anyOf": [
+       {
+        "type": "boolean"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Enabled"
+     },
+     "group_key": {
+      "anyOf": [
+       {
+        "maxLength": 512,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Group Key"
+     },
+     "key": {
+      "anyOf": [
+       {
+        "maxLength": 512,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Key"
+     },
+     "name": {
+      "maxLength": 300,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+     },
+     "strength": {
+      "anyOf": [
+       {
+        "maximum": 100.0,
+        "minimum": -100.0,
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Strength"
+     }
+    },
+    "required": [
+     "name"
+    ],
+    "title": "TaskLoRASelection",
+    "type": "object"
+   },
+   "TaskSlotOverrides": {
+    "additionalProperties": false,
+    "properties": {
+     "groups": {
+      "items": {
+       "$ref": "#/components/schemas/TaskLoRAGroup"
+      },
+      "maxItems": 64,
+      "title": "Groups",
+      "type": "array"
+     },
+     "loras": {
+      "items": {
+       "$ref": "#/components/schemas/TaskLoRA"
+      },
+      "maxItems": 16,
+      "title": "Loras",
+      "type": "array"
+     }
+    },
+    "title": "TaskSlotOverrides",
+    "type": "object"
    },
    "Theme": {
     "additionalProperties": false,
@@ -12312,6 +13035,193 @@
      "job"
     ],
     "title": "WorkflowTrialResult",
+    "type": "object"
+   },
+   "WorkshopTaskRequest": {
+    "additionalProperties": false,
+    "properties": {
+     "adopt_first": {
+      "default": false,
+      "title": "Adopt First",
+      "type": "boolean"
+     },
+     "auto_start": {
+      "default": false,
+      "title": "Auto Start",
+      "type": "boolean"
+     },
+     "cloud_channel": {
+      "anyOf": [
+       {
+        "maxLength": 256,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Cloud Channel"
+     },
+     "generation": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TaskGeneration"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "idempotency_key": {
+      "anyOf": [
+       {
+        "maxLength": 200,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Idempotency Key"
+     },
+     "loras": {
+      "items": {
+       "$ref": "#/components/schemas/TaskLoRASelection"
+      },
+      "maxItems": 128,
+      "title": "Loras",
+      "type": "array"
+     },
+     "preset_ids": {
+      "items": {
+       "maxLength": 256,
+       "minLength": 1,
+       "type": "string"
+      },
+      "maxItems": 128,
+      "title": "Preset Ids",
+      "type": "array"
+     },
+     "profile_id": {
+      "anyOf": [
+       {
+        "maxLength": 256,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Profile Id"
+     },
+     "slot_overrides": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TaskSlotOverrides"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "storyboard_id": {
+      "maxLength": 256,
+      "minLength": 1,
+      "title": "Storyboard Id",
+      "type": "string"
+     },
+     "title": {
+      "default": "",
+      "maxLength": 120,
+      "title": "Title",
+      "type": "string"
+     },
+     "variables": {
+      "additionalProperties": {
+       "maxLength": 8000,
+       "type": "string"
+      },
+      "maxProperties": 128,
+      "propertyNames": {
+       "maxLength": 256,
+       "minLength": 1
+      },
+      "title": "Variables",
+      "type": "object"
+     },
+     "workflow_id": {
+      "anyOf": [
+       {
+        "maxLength": 256,
+        "minLength": 1,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Workflow Id"
+     }
+    },
+    "required": [
+     "storyboard_id"
+    ],
+    "title": "WorkshopTaskRequest",
+    "type": "object"
+   },
+   "WorkshopTaskResult": {
+    "additionalProperties": false,
+    "properties": {
+     "episode": {
+      "$ref": "#/components/schemas/Episode"
+     },
+     "job": {
+      "anyOf": [
+       {
+        "type": "object"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Job"
+     },
+     "job_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Job Id"
+     },
+     "series": {
+      "$ref": "#/components/schemas/Series"
+     },
+     "start_error": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Start Error"
+     }
+    },
+    "required": [
+     "series",
+     "episode",
+     "job",
+     "job_id",
+     "start_error"
+    ],
+    "title": "WorkshopTaskResult",
     "type": "object"
    }
   },
@@ -14079,6 +14989,142 @@
      "body"
     ],
     "x-mio-operation": "POST /episodes/{episode_id}/copy"
+   }
+  },
+  "/episodes/{episode_id}/deliverables": {
+   "get": {
+    "description": "Count generated and adopted panels for the requested variant and report recent jobs.",
+    "operationId": "get_episode_deliverables",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "episode_id",
+      "required": true,
+      "schema": {
+       "title": "Episode Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "query",
+      "name": "variant_id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "maxLength": 256,
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Variant Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/EpisodeDeliverables"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Get Episode Deliverables",
+    "tags": [
+     "exports"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "variant_id"
+    ],
+    "x-mio-operation": "GET /episodes/{episode_id}/deliverables"
+   }
+  },
+  "/episodes/{episode_id}/deliverables/export": {
+   "post": {
+    "description": "Submit a frozen export. Use its job ID with the existing job and file routes.",
+    "operationId": "export_episode_deliverable",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "episode_id",
+      "required": true,
+      "schema": {
+       "title": "Episode Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/DeliverableRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "202": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/DeliverableExport"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Export Episode Deliverable",
+    "tags": [
+     "exports"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "body",
+     "response"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/deliverables/export"
    }
   },
   "/episodes/{episode_id}/edit": {
@@ -17937,6 +18983,41 @@
      "ctx"
     ],
     "x-mio-operation": "GET /image-adapters"
+   }
+  },
+  "/image-channels": {
+   "get": {
+    "description": "List selectable channel IDs with read scope, excluding endpoints and options.",
+    "operationId": "list_image_channels",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "type": "object"
+         },
+         "title": "Response List Image Channels",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "List Image Channels",
+    "tags": [
+     "system"
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /image-channels"
    }
   },
   "/instances": {
@@ -24184,20 +25265,51 @@
   "/workshop/storyboards": {
    "get": {
     "operationId": "list_storyboards",
+    "parameters": [
+     {
+      "in": "query",
+      "name": "offset",
+      "required": false,
+      "schema": {
+       "default": 0,
+       "minimum": 0,
+       "title": "Offset",
+       "type": "integer"
+      }
+     },
+     {
+      "in": "query",
+      "name": "limit",
+      "required": false,
+      "schema": {
+       "default": 50,
+       "maximum": 200,
+       "minimum": 1,
+       "title": "Limit",
+       "type": "integer"
+      }
+     }
+    ],
     "responses": {
      "200": {
       "content": {
        "application/json": {
         "schema": {
-         "items": {
-          "$ref": "#/components/schemas/Episode"
-         },
-         "title": "Response List Storyboards",
-         "type": "array"
+         "$ref": "#/components/schemas/StoryboardList"
         }
        }
       },
       "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
      }
     },
     "security": [
@@ -24210,7 +25322,9 @@
      "workshop"
     ],
     "x-mio-arguments": [
-     "ctx"
+     "ctx",
+     "offset",
+     "limit"
     ],
     "x-mio-operation": "GET /workshop/storyboards"
    },
@@ -24375,6 +25489,64 @@
      "body"
     ],
     "x-mio-operation": "PATCH /workshop/storyboards/{storyboard_id}"
+   }
+  },
+  "/workshop/tasks": {
+   "post": {
+    "description": "Assemble an album with write scope. Auto-start also requires render scope.\n\nA planning failure returns the assembled album with start_error. Retry the same request\nwith its original idempotency key to start that album after resolving the problem.",
+    "operationId": "create_workshop_task",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/WorkshopTaskRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/WorkshopTaskResult"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Create Workshop Task",
+    "tags": [
+     "workshop"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "body",
+     "request"
+    ],
+    "x-mio-conditional-scopes": {
+     "auto_start": [
+      "render"
+     ]
+    },
+    "x-mio-operation": "POST /workshop/tasks"
    }
   },
   "/workshop/tasks/{series_id}/clone": {

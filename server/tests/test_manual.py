@@ -101,6 +101,51 @@ class ManualTest(ApiCase):
             self.assertIn("/api/v2/workshop/assemble", api_page)
             self.assertIn('id="automation"', api_page)
 
+        expected = {
+            "guide": {
+                "variables": ("拖动排序", "变量预览", "逐幕 LoRA 覆盖"),
+                "workflow": ("lora-controls", "workflow_slot_adapter", "冻结快照"),
+                "tasks": ("orchestration", "/api/v2/workshop/tasks", "deliverables/export"),
+                "read-and-share": (
+                    "showcase-templates",
+                    "ATELIER",
+                    "FOLIO",
+                    "CINEMA",
+                    "EDITORIAL",
+                    "CONTACT",
+                    "CHROMATIC",
+                    "offline-reader",
+                    "缩略目录",
+                    "减少动态效果",
+                ),
+                "sharing": ("offline-cloud-adapter", "cloud_adapter", "extra_options"),
+            },
+            "en": {
+                "variables": ("Reorder scenes", "variable preview", "defaults untouched"),
+                "workflow": ("lora-controls", "workflow_slot_adapter", "frozen task snapshot"),
+                "tasks": ("orchestration", "/api/v2/workshop/tasks", "deliverables/export"),
+                "read-and-share": (
+                    "showcase-templates",
+                    "ATELIER",
+                    "FOLIO",
+                    "CINEMA",
+                    "EDITORIAL",
+                    "CONTACT",
+                    "CHROMATIC",
+                    "offline-reader",
+                    "thumbnail drawer",
+                    "Reduced-motion",
+                ),
+                "sharing": ("offline-cloud-adapter", "cloud_adapter", "extra_options"),
+            },
+        }
+        for language, chapters in expected.items():
+            for chapter, terms in chapters.items():
+                body = self.get(f"/manual/docs/{language}/{chapter}.html").text
+                for term in terms:
+                    with self.subTest(language=language, chapter=chapter, term=term):
+                        self.assertIn(term, body)
+
     def test_bundled_resource_types_do_not_depend_on_system_mime_registration(self):
         with mock.patch("starlette.responses.guess_type", return_value=(None, None)):
             for path, expected in (

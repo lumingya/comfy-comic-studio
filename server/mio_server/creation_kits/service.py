@@ -11,8 +11,9 @@ from ..asset_refs import referenced_assets
 from ..assets import sniff
 from ..generation import profile_for
 from ..models import Episode, GenerationDefaults, Series, new_id, now_iso
+from ..pipeline.cloud_request import _without_secrets
 from ..pipeline.variables import PATTERN
-from ..render_models import Asset, WorkflowDoc
+from ..render_models import Asset, CloudRecipe, WorkflowDoc
 from ..storage import Conflict, NotFound
 from .archive import MAX_ARCHIVE, pack, request_hash, unpack
 from .models import (
@@ -71,6 +72,12 @@ def export_kit(ctx, selection: KitSelection) -> bytes:
         workflow_ids = {
             s.workflow_id for p in profiles for s in [*p.draft, *p.final, *p.edits.values()]
         }
+        workflow_ids.update(
+            panel.overrides.slot_overrides["workflow_id"]
+            for episode in episodes
+            for panel in episode.panels
+            if panel.overrides.slot_overrides.get("workflow_id")
+        )
         workflows = [
             WorkflowDoc.model_validate(series.generation.workflows[wid])
             if series.generation and wid in series.generation.workflows
@@ -84,6 +91,15 @@ def export_kit(ctx, selection: KitSelection) -> bytes:
             for p in profiles
         ]
         for profile in profiles:
+            recipe = (
+                profile.cloud_recipe.model_dump()
+                if profile.cloud_recipe
+                else series.generation.channels.get(profile.cloud_channel)
+                if series.generation and profile.cloud_shape
+                else None
+            )
+            if recipe:
+                profile.cloud_recipe = CloudRecipe.model_validate(_without_secrets(recipe))
             profile.instances, profile.cloud_channel = [], ""
         if series.generation:
             series.generation_defaults = GenerationDefaults(
@@ -233,6 +249,11 @@ def _remap(payload, bindings):
             panel.location_id = ids["locations"].get(panel.location_id)
             panel.props = [ids["props"][pid] for pid in panel.props]
             panel.overrides.profile_id = ids["profiles"].get(panel.overrides.profile_id)
+            qualifier = panel.overrides.slot_overrides.get("workflow_id")
+            if qualifier is not None:
+                if qualifier not in ids["workflows"]:
+                    raise ValueError("分幕 LoRA 覆盖引用了套装以外的工作流")
+                panel.overrides.slot_overrides["workflow_id"] = ids["workflows"][qualifier]
             for character in panel.characters:
                 character.character_id = ids["characters"][character.character_id]
             for dialogue in panel.dialogues:
@@ -345,6 +366,9 @@ def kit(ctx, series_id):
 
 def _assembly_snapshot(ctx, series_id: str, request: KitAssembly):
     from .. import generation as G
+    from ..comfy.slot_adapters import installed
+    from ..slot_models import task_slots
+    from ..workshop import _freeze_task_slots
 
     source = kit(ctx, series_id)
     episode = ctx.store.get_episode(request.episode_id)
@@ -357,6 +381,11 @@ def _assembly_snapshot(ctx, series_id: str, request: KitAssembly):
         variables=request.variables,
     )
     G.attach(ctx.store, snapshot.series, snapshot.episode, request.generation)
+    _freeze_task_slots(
+        snapshot.series,
+        task_slots(request.slot_overrides, request.loras),
+        installed(ctx.registry),
+    )
     return snapshot
 
 

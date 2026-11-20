@@ -97,6 +97,13 @@
               admin 权限的开放 API 完成。扩展自定义路由也有 v2
               版本，权限由扩展明确声明；核心操作可由已启用扩展包装或替换。
             </p>
+            <p>
+              二次开发不需要修改核心：云端出图扩展通过
+              <code>cloud_adapter</code> 注册标题、能力、参数 schema 与参考图/负面词/种子支持；工作流扩展通过
+              <code>workflow_slot_adapter</code> 声明槽位识别和写入。渠道专属参数保存在
+              <code>extra_options</code>，普通配置随任务冻结，密钥类字段不会进入公开快照。启用后它们会出现在适配器发现接口和工作流控制面，停用后新请求立即回到核心能力或报告缺少适配器。仓库中的
+              <code>examples/extensions/offline-cloud-adapter</code> 是可离线测试的最小示例。
+            </p>
           </section>
         </article>
         <nav class="chapter-nav" aria-label="相邻章节">

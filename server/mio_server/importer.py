@@ -312,6 +312,10 @@ class LegacyImporter:
         return found
 
     def import_albums(self, report: ImportReport | None = None, overwrite: bool = False):
+        with self.store.tx():
+            return self._import_albums(report, overwrite)
+
+    def _import_albums(self, report: ImportReport | None = None, overwrite: bool = False):
         """Every legacy book → a series with one episode; images become adopted takes."""
         report = report or ImportReport()
         if self.assets is None:
@@ -330,8 +334,6 @@ class LegacyImporter:
         if existing and not overwrite:
             report.skipped.append(f"album {legacy_id}（已导入）")
             return
-        if existing:
-            self.store.delete_series(series_id)
         steps = sorted(
             (s for s in album.get("steps") or [] if isinstance(s, dict)),
             key=lambda s: s.get("stepIndex") if isinstance(s.get("stepIndex"), int) else 0,
@@ -379,7 +381,6 @@ class LegacyImporter:
                     description="导入自旧版画册（年龄为默认值，请核对）",
                 )
             ]
-        self.store.create_series(series)
         episode = Episode(
             id=_safe_id("episode_album", legacy_id),
             series_id=series_id,
@@ -389,7 +390,11 @@ class LegacyImporter:
             panels=panels,
             takes=takes,
         )
-        self.store.create_episode(episode)
+        with self.store.tx():
+            if existing:
+                self.store.delete_series(series_id)
+            self.store.create_series(series)
+            self.store.create_episode(episode)
         report.series.append(series_id)
         report.albums.append(series_id)
         report.episodes.append(episode.id)
@@ -409,6 +414,10 @@ class LegacyImporter:
             return None
 
     def run(self, overwrite: bool = False) -> ImportReport:
+        with self.store.tx():
+            return self._run(overwrite)
+
+    def _run(self, overwrite: bool = False) -> ImportReport:
         report = ImportReport()
         self.import_albums(report, overwrite)
         binding_ptrs: dict[str, str] = {}
@@ -463,13 +472,9 @@ class LegacyImporter:
         if existing and not overwrite:
             report.skipped.append(f"series {series_id}（已导入）")
             return
-        if existing:
-            self.store.delete_series(series_id)
         series = Series(id=series_id, title=titles.get(project) or project, variables=variables)
         series.bible.characters = characters
-        self.store.create_series(series)
-        report.series.append(series_id)
-        report.characters += [c.id for c in characters]
+        episodes = []
         order = 0
         for board in boards:
             if str(board.get("projectId") or "default") != project:
@@ -488,9 +493,17 @@ class LegacyImporter:
                 base_prompt=str(board.get("basePrompt") or ""),
                 panels=panels,
             )
-            self.store.create_episode(episode)
-            report.episodes.append(episode.id)
+            episodes.append(episode)
             order += 1
+        with self.store.tx():
+            if existing:
+                self.store.delete_series(series_id)
+            self.store.create_series(series)
+            for episode in episodes:
+                self.store.create_episode(episode)
+        report.series.append(series_id)
+        report.characters += [c.id for c in characters]
+        report.episodes += [episode.id for episode in episodes]
 
 
 def seed_albums(ctx, root: str | Path = LEGACY_ROOT) -> ImportReport | None:

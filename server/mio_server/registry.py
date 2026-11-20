@@ -22,6 +22,7 @@ POINTS = {
     "workspace_surface": "独立扩展工作区与悬浮窗",
     "comfy_output_adapter": "ComfyUI 自定义输出格式",
     "comfy_state_adapter": "ComfyUI 插件状态协议",
+    "workflow_slot_adapter": "ComfyUI 工作流节点槽位",
     "operation": "界面与开放 API 共用的操作包装器（鉴权与参数校验之后执行）",
     "job_executor": "统一任务引擎的执行器（按 job kind）",
     "exporter": "导出器：切片、长图、PDF、网页阅读……",

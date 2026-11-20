@@ -284,8 +284,21 @@ class JobEngine(ExecutorRuntime, OperationRuntime, DeliveryRuntime, EngineRuntim
                 job["items"] = [self._item_dict(r) for r in rows]
             return job
 
+    def find_submission(self, idempotency_key: str) -> dict | None:
+        """Find the frozen job for a logical request before consulting mutable inputs."""
+        with self.lock:
+            row = self.db.execute(
+                "SELECT id FROM jobs WHERE idempotency_key = ?", (idempotency_key,)
+            ).fetchone()
+            return self.get(row["id"]) if row else None
+
     def list(
-        self, owner: str | None = None, limit: int = 100, active_only: bool = False
+        self,
+        owner: str | None = None,
+        limit: int = 100,
+        active_only: bool = False,
+        *,
+        kinds: tuple[str, ...] = (),
     ) -> list[dict]:
         sql, args = "SELECT * FROM jobs", []
         conds = []
@@ -294,6 +307,10 @@ class JobEngine(ExecutorRuntime, OperationRuntime, DeliveryRuntime, EngineRuntim
             args.append(owner)
         if active_only:
             conds.append("state IN ('queued', 'running', 'paused', 'blocked')")
+        if kinds:
+            placeholders = ",".join("?" for _ in kinds)
+            conds.append(f"kind IN ({placeholders})")
+            args.extend(kinds)
         if conds:
             sql += " WHERE " + " AND ".join(conds)
         sql += " ORDER BY created DESC LIMIT ?"

@@ -60,6 +60,7 @@ export function newProfile(name: string, workflow = '', cloud = false): RenderPr
     cloud_refine: false,
     model_group: null,
     cloud_channel: '',
+    cloud_recipe: null,
     created_at: now,
     updated_at: now,
   };

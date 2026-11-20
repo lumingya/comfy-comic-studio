@@ -93,6 +93,16 @@
             <p>
               删除画册前应先停止它的活动任务。“清理已完成”把画册移出待生成队列，不是删除图片。任何永久删除都应先备份。
             </p>
+            <h2 id="orchestration">外部任务编排与成品直取</h2>
+            <p>
+              开放 API 的 <code>POST /api/v2/workshop/tasks</code> 可以一次提交分镜、预设、工作流或出图方案、变量、LoRA 覆盖、张数和尺寸。设置
+              <code>auto_start</code> 后会在冻结装配快照后启动任务，<code>adopt_first</code> 可自动采用首个候选；用同一个
+              <code>idempotency_key</code> 重试时会返回原任务，改参数则明确拒绝。
+            </p>
+            <p>
+              任务完成后，用 <code>GET /api/v2/episodes/{id}/deliverables</code> 查看可用成品，再通过
+              <code>POST /api/v2/episodes/{id}/deliverables/export</code> 按模板请求离线 HTML、PDF、图片 ZIP 或长图 PNG。导出任务可能异步完成；查询返回状态与下载标识，不会泄露渠道凭据。
+            </p>
           </section>
         </article>
         <nav class="chapter-nav" aria-label="相邻章节">

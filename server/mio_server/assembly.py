@@ -133,7 +133,11 @@ def inspect_snapshot(store, snapshot: AssemblySnapshot, storyboard_id: str) -> A
         profile = profile_for(store, series, panel.overrides.profile_id)
         compiled = compiler.preview(series, episode, panel, profile=profile)[profile.dialect]
         channel = (
-            series.generation.channels.get(profile.cloud_channel) if series.generation else None
+            profile.cloud_recipe.model_dump()
+            if profile.cloud_recipe
+            else series.generation.channels.get(profile.cloud_channel)
+            if series.generation
+            else None
         )
         if profile.cloud_shape and channel:
             requested = {

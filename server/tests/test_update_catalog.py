@@ -41,6 +41,9 @@ class ReleaseCatalogTests(unittest.TestCase):
     setUp = fixture.UpdaterTests.setUp
 
     def updater_for_catalog(self, versions=("4.1.0", "3.9.0")):
+        # Manifest and download must describe the same bytes, including ZIP timestamps.
+        archives = {version: release_zip(version) for version in versions}
+
         def handler(request):
             path = request.url.path
             if path.endswith("/releases"):
@@ -51,10 +54,10 @@ class ReleaseCatalogTests(unittest.TestCase):
                 )
             if path.endswith("mio-release.json"):
                 version = path.split("/")[-2].removeprefix("v")
-                return httpx.Response(200, content=manifest_for(release_zip(version), version))
+                return httpx.Response(200, content=manifest_for(archives[version], version))
             for version in versions:
                 if path.endswith(f"mio-studio-{version}.zip"):
-                    return httpx.Response(200, content=release_zip(version))
+                    return httpx.Response(200, content=archives[version])
             return httpx.Response(404)
 
         return Updater(

@@ -562,25 +562,28 @@ describe('every route mounts with API data', () => {
     localStorage.removeItem('mio.reader.look');
     mount('/gallery/ser_1/export');
     await screen.findByAltText('第 1 格');
-    const layouts = screen.getByLabelText('画册版式');
+    const layouts = screen.getByRole('group', { name: '画册版式' });
     // The native stage (留白) is listed first; picking another template swaps in its preview.
-    const choices = within(layouts).getAllByRole('option');
-    expect(choices.map((option) => option.textContent)).toEqual([
+    const choices = within(layouts).getAllByRole('button');
+    expect(choices.map((choice) => choice.getAttribute('aria-label'))).toEqual([
       '留白 · 完整画面',
       '无缝 · 纯图阅读',
       '海风来信 · 电影长卷',
     ]);
-    fireEvent.change(layouts, { target: { value: 'export-paper' } });
+    fireEvent.click(within(layouts).getByRole('button', { name: '海风来信 · 电影长卷' }));
     const frame = await screen.findByTitle('展示模板预览');
     expect(frame.getAttribute('srcdoc')).toContain('paper');
     expect(screen.queryByAltText('第 1 格')).toBeNull();
     const call = calls.find((c) => c.url === '/api/export/album');
     expect(call?.body).toMatchObject({ episode_ids: ['ep_1'], template_id: 'export-paper' });
-    expect(layouts).toHaveValue('export-paper');
+    expect(within(layouts).getByRole('button', { name: '海风来信 · 电影长卷' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
     expect(screen.queryByRole('button', { name: /^版式/ })).toBeNull();
     const readerHeader = document.querySelector<HTMLElement>('.room-head')!;
     expect(within(readerHeader).getAllByRole('button', { name: /^导出$/ })).toHaveLength(1);
-    fireEvent.change(layouts, { target: { value: 'mio-fit' } });
+    fireEvent.click(within(layouts).getByRole('button', { name: '留白 · 完整画面' }));
     expect(await screen.findByAltText('第 1 格')).toBeInTheDocument();
     expect(screen.queryByTitle('展示模板预览')).toBeNull();
     localStorage.removeItem('mio.reader.look');
