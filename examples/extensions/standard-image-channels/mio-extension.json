@@ -1,0 +1,7 @@
+{
+  "id": "standard-image-channels",
+  "name": "标准图像渠道",
+  "version": "0.1.0",
+  "description": "独立的兼容 Images、Chat 图像、NovelAI 风格及通用异步轮询渠道；无自动收费重试。",
+  "main": "main.py"
+}
