@@ -927,14 +927,17 @@ class ThemePackageTests(ApiCase):
     def test_install_does_not_create_missing_root_through_linked_parent(self):
         root = Path(self.tmp) / "themes"
         outside = Path(self.tmp) / "outside"
-        original = Path.resolve
+        original = Path.lstat
 
         def redirected(path, *args, **kwargs):
-            if path == root:
-                return outside / "themes"
+            if path == root.parent:
+                return SimpleNamespace(
+                    st_mode=stat.S_IFDIR,
+                    st_file_attributes=getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400),
+                )
             return original(path, *args, **kwargs)
 
-        with patch.object(Path, "resolve", new=redirected):
+        with patch.object(Path, "lstat", new=redirected):
             with self.assertRaises(ThemePackageError):
                 self.ctx.theme_packages.install_package(archive())
         self.assertFalse(root.exists())

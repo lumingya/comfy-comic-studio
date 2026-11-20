@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import re
-import stat
 from pathlib import Path, PurePosixPath
 from typing import Literal
 
 from pydantic import BaseModel
+
+from .fs_paths import regular_path_metadata
 
 ASSET_PREFIX = "assets"
 MAX_ASSET_DEPTH = 8
@@ -277,17 +278,9 @@ def validate_theme_resources(folder: Path, theme) -> None:
     def read_regular(relative: str, max_bytes: int | None = None) -> bytes:
         path = root / relative
         try:
-            metadata = path.lstat()
-        except OSError as exc:
-            raise ValueError(f"主题资源不存在：{relative}") from exc
-        if (
-            stat.S_ISLNK(metadata.st_mode)
-            or getattr(metadata, "st_file_attributes", 0)
-            & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
-            or not stat.S_ISREG(metadata.st_mode)
-            or path.resolve() != path.absolute()
-        ):
-            raise ValueError(f"主题资源不是普通文件：{relative}")
+            metadata = regular_path_metadata(path, directory=False)
+        except (OSError, ValueError) as exc:
+            raise ValueError(f"主题资源不是普通文件：{relative}") from exc
         if max_bytes is not None and metadata.st_size > max_bytes:
             raise ValueError(f"主题资源过大：{relative}")
         with path.open("rb") as source:

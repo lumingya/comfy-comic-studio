@@ -15,6 +15,7 @@ import zipfile
 from pathlib import Path, PurePosixPath
 from typing import BinaryIO, Iterable
 
+from .fs_paths import regular_path_metadata
 from .theme_media import (
     _skip_string,
     _strip_comments,
@@ -65,21 +66,9 @@ class ThemePackageError(ValueError):
 def _regular_path(path: Path, *, directory: bool, missing: bool = False) -> bool:
     """Check without following Windows junctions, symbolic links or special files."""
     try:
-        metadata = path.lstat()
-    except FileNotFoundError:
-        if missing:
-            if path.resolve() != path.absolute():
-                raise ThemePackageError("主题路径不能包含链接或重解析点") from None
-            return False
-        raise ThemePackageError("主题路径不存在") from None
-    if (
-        stat.S_ISLNK(metadata.st_mode)
-        or getattr(metadata, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
-        or not (stat.S_ISDIR(metadata.st_mode) if directory else stat.S_ISREG(metadata.st_mode))
-        or path.resolve() != path.absolute()
-    ):
-        raise ThemePackageError("主题路径不能包含链接、重解析点或特殊文件")
-    return True
+        return regular_path_metadata(path, directory=directory, missing=missing) is not None
+    except (OSError, ValueError) as exc:
+        raise ThemePackageError("主题路径不能包含链接、重解析点或特殊文件") from exc
 
 
 def allowed_package_path(name: str) -> bool:
