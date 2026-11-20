@@ -3,7 +3,6 @@ line-length = 100
 target-version = "py311"
 # Adapted from the v3 ecosystem implementation; source history remains in the legacy-v3.2 tag.
 extend-exclude = [
-    "mio_server/comfy/workflow_slots.py",
     "tests/test_workflow_slots.py",
     "tests/test_workflow_slots_v3.py",
 ]
