@@ -7,6 +7,7 @@ import html
 import json
 import math
 import struct
+import tempfile
 import zipfile
 import zlib
 from pathlib import Path
@@ -56,8 +57,8 @@ def render_slice(snapshot, width, top, bottom):
         )
 
 
-def write_pdf(images, path, *, quality=90, dpi=96, checkpoint=_noop, progress=_noop):
-    """Consume RGB-compatible PIL pages, closing each after writing its JPEG stream.
+def write_pdf(images, path, *, quality=90, dpi=96, lossless=True, checkpoint=_noop, progress=_noop):
+    """Consume pages, closing each after writing a file-backed image stream.
 
     Only PDF object offsets and page IDs accumulate; no decoded image list is retained.
     The caller owns failure cleanup if ``path`` is an already-open stream.
@@ -78,17 +79,35 @@ def write_pdf(images, path, *, quality=90, dpi=96, checkpoint=_noop, progress=_n
                 checkpoint()
                 page, content, picture = 3 + index * 3, 4 + index * 3, 5 + index * 3
                 w, h = image.width * 72 / dpi, image.height * 72 / dpi
-                data = X.encode(image, "JPEG", quality)
-                obj(
-                    picture,
-                    (
-                        f"<< /Type /XObject /Subtype /Image /Width {image.width} "
-                        f"/Height {image.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 "
-                        f"/Filter /DCTDecode /Length {len(data)} >>\nstream\n"
-                    ).encode()
-                    + data
-                    + b"\nendstream",
-                )
+                with tempfile.TemporaryFile() as encoded:
+                    if lossless:
+                        encoder = zlib.compressobj()
+                        for top in range(0, image.height, 64):
+                            checkpoint()
+                            with image.crop(
+                                (0, top, image.width, min(image.height, top + 64))
+                            ) as row:
+                                with row.convert("RGB") as rgb:
+                                    encoded.write(encoder.compress(rgb.tobytes()))
+                        encoded.write(encoder.flush())
+                    else:
+                        with image.convert("RGB") as rgb:
+                            rgb.save(encoded, "JPEG", quality=quality)
+                    size = encoded.tell()
+                    encoded.seek(0)
+                    offsets[picture] = stream.tell()
+                    filter_ = "FlateDecode" if lossless else "DCTDecode"
+                    stream.write(
+                        (
+                            f"{picture} 0 obj\n<< /Type /XObject /Subtype /Image /Width {image.width} "
+                            f"/Height {image.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 "
+                            f"/Filter /{filter_} /Length {size} >>\nstream\n"
+                        ).encode()
+                    )
+                    while chunk := encoded.read(65536):
+                        checkpoint()
+                        stream.write(chunk)
+                    stream.write(b"\nendstream\nendobj\n")
                 operators = f"q {w:.6f} 0 0 {h:.6f} 0 0 cm /Im0 Do Q\n".encode()
                 obj(
                     content,

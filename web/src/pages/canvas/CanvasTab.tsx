@@ -42,8 +42,8 @@ export default function CanvasTab() {
   const { t } = useTranslation();
   const { episode, series } = useEpisodeContext();
   const layout = useLayoutStrip(episode.id);
-  const save = useSaveStrip(episode.id, episode.revision);
-  const history = useStripHistory(episode.strip);
+  const save = useSaveStrip(episode.id);
+  const history = useStripHistory(episode.strip, episode.revision);
   const { strip, dirty, change } = history;
   const saving = useRef(false);
   const layingOut = useRef(false);
@@ -57,12 +57,12 @@ export default function CanvasTab() {
 
   // A new server copy (auto layout, pacing) replaces the canvas — but never unsaved edits.
   useEffect(() => {
-    if (!saving.current && !layingOut.current) history.receive(episode.strip);
-  }, [episode.strip]);
+    if (!saving.current && !layingOut.current) history.receive(episode.strip, episode.revision);
+  }, [episode.strip, episode.revision, save.isPending, layout.isPending]);
 
   const saveStrip = () => {
     if (saving.current || layingOut.current) return;
-    const snapshot = history.current();
+    const snapshot = history.snapshot();
     saving.current = true;
     save.mutate(snapshot, {
       onSuccess: (stored) => {
@@ -97,16 +97,20 @@ export default function CanvasTab() {
   );
   const avoidSelected = () => {
     if (saving.current || layingOut.current || avoid.isPending) return;
-    const snapshot = history.current();
-    const ids = snapshot.lettering
+    const snapshot = history.snapshot();
+    const ids = snapshot.strip.lettering
       .filter((l) => selectedIds.includes(l.id) && (l.kind === 'speech' || l.kind === 'thought'))
       .map((l) => l.id);
     if (!ids.length) return;
     avoid.mutate(
-      { base_revision: revision.current, strip: snapshot, layer_ids: ids },
+      { base_revision: snapshot.baseRevision, strip: snapshot.strip, layer_ids: ids },
       {
         onSuccess: (preview) => {
-          if (history.current() !== snapshot || revision.current !== preview.revision) {
+          if (
+            history.current() !== snapshot.strip ||
+            history.snapshot().baseRevision !== snapshot.baseRevision ||
+            revision.current !== preview.revision
+          ) {
             toast(t('canvas.avoidStale'));
             return;
           }
@@ -131,10 +135,10 @@ export default function CanvasTab() {
 
   const autoLayout = (relayout: boolean) => {
     if (dirty || saving.current || layingOut.current) return;
-    const snapshot = history.current();
+    const snapshot = history.snapshot();
     layingOut.current = true;
     layout.mutate(
-      { relayout_lettering: relayout },
+      { relayout_lettering: relayout, baseRevision: snapshot.baseRevision },
       {
         onSuccess: (stored) => {
           history.acknowledge(snapshot, stored);
@@ -372,7 +376,9 @@ export default function CanvasTab() {
         panels={panels}
         open={pacing}
         onOpenChange={setPacing}
-        onApplied={() => autoLayout(true)}
+        onApplied={(stored) => {
+          if (history.receive(stored.strip, stored.revision)) autoLayout(true);
+        }}
       />
     </div>
   );

@@ -1,17 +1,20 @@
-"""Episodes → album books: one book per episode, one frame per panel (adopted take).
+"""Episodes → books: complete saved canvas bands, or original adopted images.
 
-``lettered=True`` keeps each panel's saved framing and complete owned bubbles and SFX on an
-expanded canvas; otherwise the raw adopted image is used and dialogue goes into the caption.
+Saved geometry/lettering uses full-width bands in visual order. Without a saved composition,
+or with ``lettered=False``, original adopted images are never automatically ratio-cropped.
+The explicit internal ``panels`` mode serves standalone panel/reader contracts.
 """
 
 from __future__ import annotations
 
 import base64
 import io
+import secrets
 import unicodedata
 from collections import Counter
 from contextlib import nullcontext
 from dataclasses import dataclass
+from pathlib import Path
 
 from PIL import Image
 
@@ -31,7 +34,7 @@ def data_url(im: Image.Image, max_width: int, quality: int = 86) -> str:
 
 @dataclass
 class Page:
-    """One exported panel: encoded bytes plus the book metadata that goes with it."""
+    """One bounded canvas band or original image and its interchange metadata."""
 
     data: bytes
     mime: str
@@ -41,6 +44,8 @@ class Page:
     width: int
     height: int
     palette: list[str]
+    source_region: tuple[int, int, int, int] | None = None
+    composition: dict | None = None
 
 
 def palette(im: Image.Image, n: int = 3) -> list[str]:
@@ -120,8 +125,9 @@ def episode_pages(
     max_width: int = 1400,
     stats: M.Stats | None = None,
     checkpoint=lambda: None,
+    mode: str = "auto",
 ) -> tuple[Episode, Series, list[Page | None]]:
-    """Every panel of an episode encoded for ``profile``; ``None`` where nothing is adopted yet."""
+    """Encode a saved canvas partition, or original panels (None for missing originals)."""
     ep: Episode = ctx.store.get_episode(episode_id)
     series: Series = ctx.store.get_series(ep.series_id)
     pages = list(
@@ -136,6 +142,7 @@ def episode_pages(
             max_width=max_width,
             stats=stats,
             checkpoint=checkpoint,
+            mode=mode,
         )
     )
     return ep, series, pages
@@ -153,18 +160,60 @@ def iter_episode_pages(
     max_width=1400,
     stats=None,
     checkpoint=lambda: None,
+    mode="auto",
 ):
-    """Encode one panel at a time from frozen documents; caller controls result retention."""
+    """Encode one band/original at a time; callers control encoded result retention."""
+    from ..pipeline.export_composition import band_regions, has_composition, metadata
     from ..pipeline.regions import prepare_snapshot
 
     stats = stats if stats is not None else M.Stats(profile)
     present = any(ep.adopted(p.id, variant_id) for p in ep.panels)
+    saved = lettered and mode != "panels" and has_composition(ep)
     prepared = (
         prepare_snapshot(ctx, series, ep, variant_id, checkpoint=checkpoint)
-        if lettered and present
+        if saved or (mode == "panels" and lettered and present)
         else nullcontext(None)
     )
     with prepared as snapshot:
+        if saved:
+            panels = ep.ordered_panels()
+            remaining = {p.id for p in panels}
+            for i, box in enumerate(band_regions(snapshot), start=1):
+                checkpoint()
+                captions, prompts = [], []
+                for panel in panels:
+                    if panel.id not in remaining:
+                        continue
+                    bounds = snapshot.strip.panel_boxes.get(panel.id)
+                    anchor = (bounds[1] + bounds[3]) / 2 if bounds else 0
+                    anchor = max(0, min(snapshot.strip.height - 1, anchor))
+                    if box[1] <= anchor < box[3]:
+                        remaining.remove(panel.id)
+                        captions.append(
+                            caption(series, panel, snapshot.strip if deduplicate_captions else None)
+                        )
+                        prompts.append(
+                            compile_panel(series, ep, panel, dialect="tags", seed=0).positive
+                        )
+                with snapshot.render_region(box) as im:
+                    data, mime = M.process(
+                        profile, original=None, image=im, stats=stats, max_width=max_width
+                    )
+                    with Image.open(io.BytesIO(data)) as encoded:
+                        width, height = encoded.size
+                    yield Page(
+                        data=data,
+                        mime=mime,
+                        name=f"画布第 {i} 段",
+                        caption="　".join(filter(None, captions)),
+                        prompt="\n".join(prompts),
+                        width=width,
+                        height=height,
+                        palette=palette(im),
+                        source_region=box,
+                        composition=metadata(snapshot),
+                    )
+            return
         for i, panel in enumerate(ep.ordered_panels(), start=1):
             checkpoint()
             take = ep.adopted(panel.id, variant_id)
@@ -181,6 +230,8 @@ def iter_episode_pages(
                 data, mime = M.process(
                     profile, original=original, image=im, stats=stats, max_width=max_width
                 )
+                with Image.open(io.BytesIO(data)) as encoded:
+                    width, height = encoded.size
                 prompt = compile_panel(series, ep, panel, dialect="tags", seed=0).positive
                 page = Page(
                     data=data,
@@ -190,8 +241,8 @@ def iter_episode_pages(
                         series, panel, snapshot.strip if snapshot and deduplicate_captions else None
                     ),
                     prompt=prompt,
-                    width=im.width,
-                    height=im.height,
+                    width=width,
+                    height=height,
                     palette=palette(im),
                 )
             yield page
@@ -208,10 +259,16 @@ def episode_book(
     profile: str = "preview",
     stats: M.Stats | None = None,
     checkpoint=lambda: None,
+    mode: str = "auto",
+    spool_dir=None,
+    spooled=None,
 ) -> Book:
-    ep, series, pages = episode_pages(
+    ep = ctx.store.get_episode(episode_id)
+    series = ctx.store.get_series(ep.series_id)
+    pages = iter_episode_pages(
         ctx,
-        episode_id,
+        series,
+        ep,
         variant_id=variant_id,
         lettered=lettered,
         deduplicate_captions=deduplicate_captions,
@@ -219,24 +276,37 @@ def episode_book(
         max_width=max_width,
         stats=stats,
         checkpoint=checkpoint,
+        mode=mode,
     )
     frames = []
-    for i, (panel, page) in enumerate(zip(ep.ordered_panels(), pages), start=1):
+    composition = None
+    for i, page in enumerate(pages, start=1):
         if page is None:
+            panel = ep.ordered_panels()[i - 1]
             prompt = compile_panel(series, ep, panel, dialect="tags", seed=0).positive
             frames.append(
                 Frame(image="", name=f"第 {i} 格", caption=caption(series, panel), prompt=prompt)
             )
             continue
+        if spool_dir is not None:
+            token = "mio-spooled-" + secrets.token_hex(20)
+            file = Path(spool_dir) / token
+            file.write_bytes(page.data)
+            spooled[token] = (page.mime, file)
+            image = token
+        else:
+            image = f"data:{page.mime};base64," + base64.b64encode(page.data).decode("ascii")
+        composition = page.composition or composition
         frames.append(
             Frame(
-                image=f"data:{page.mime};base64," + base64.b64encode(page.data).decode("ascii"),
+                image=image,
                 name=page.name,
                 caption=page.caption,
                 prompt=page.prompt,
                 width=page.width,
                 height=page.height,
                 palette=page.palette,
+                source_region=page.source_region,
             )
         )
     # Text outside the panels uses the album's variables too: a synopsis written in the workshop
@@ -253,4 +323,5 @@ def episode_book(
         synopsis=V.display(ep.synopsis, values),
         character_name=display_name(series, values),
         story_title=episode_title if single else series.title,
+        composition=composition,
     )

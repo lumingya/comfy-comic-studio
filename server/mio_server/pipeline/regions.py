@@ -8,7 +8,9 @@ region and one lettering layer, not by the total strip height.
 from __future__ import annotations
 
 import io
+import math
 from collections.abc import Mapping
+from copy import copy
 
 from PIL import Image, ImageDraw
 
@@ -31,6 +33,38 @@ def _shift(layer, x, y):
             "tail_to": (layer.tail_to[0] - x, layer.tail_to[1] - y) if layer.tail_to else None,
         }
     )
+
+
+class _RegionDraw(ImageDraw.ImageDraw):
+    """Keep Pillow's fractional glyph origin on the global canvas at band seams.
+
+    Pillow truncates positions toward zero and passes the signed fraction to FreeType.
+    Translating a positive global origin to a negative local one otherwise changes that
+    fraction, shifting antialiased glyph pixels even though geometry moved by an integer.
+    """
+
+    def __init__(self, image, origin):
+        super().__init__(image)
+        self.origin = origin
+
+    def text(self, xy, text, fill=None, font=None, *args, **kwargs):
+        if font is None or not hasattr(font, "getmask2"):
+            return super().text(xy, text, fill, font, *args, **kwargs)
+        gx, gy = xy[0] + self.origin[0], xy[1] + self.origin[1]
+        phase = (math.modf(gx)[0], math.modf(gy)[0])
+        local_font = copy(font)
+
+        def getmask2(*mask_args, **mask_kwargs):
+            values = list(mask_args)
+            if len(values) > 8:
+                values[8] = phase
+            else:
+                mask_kwargs["start"] = phase
+            return font.getmask2(*values, **mask_kwargs)
+
+        local_font.getmask2 = getmask2
+        position = (int(gx) - self.origin[0], int(gy) - self.origin[1])
+        return super().text(position, text, fill, local_font, *args, **kwargs)
 
 
 class _PanelImages(Mapping):
@@ -78,7 +112,9 @@ class RenderSnapshot:
             p for p in episode.ordered_panels() if p.id in strip.panel_boxes and p.id in images
         ]
         self.layer_bounds = []
+        self.layer_sprites = []
         for layer in strip.lettering:
+            sprite = None
             x0, y0, x1, y1 = layer.box
             if layer.kind == "sfx":
                 x0, y0, x1, y1 = LT.sfx_box(
@@ -89,6 +125,7 @@ class RenderSnapshot:
                     ((x0 + x1) / 2, (y0 + y1) / 2),
                     layer.vertical,
                 )
+                sprite = (round(x0), round(y0), x1 - x0, y1 - y0)
             else:
                 # Hand-sized bubbles can overflow. A conservative glyph bound also covers
                 # vertical columns, thought tails and font bearings beyond the saved box.
@@ -99,6 +136,7 @@ class RenderSnapshot:
                 tx, ty = layer.tail_to
                 x0, y0, x1, y1 = min(x0, tx), min(y0, ty), max(x1, tx), max(y1, ty)
             self.layer_bounds.append((x0 - 8, y0 - 8, x1 + 8, y1 + 8))
+            self.layer_sprites.append(sprite)
 
     def close(self):
         if isinstance(self.images, _PanelImages):
@@ -124,7 +162,7 @@ class RenderSnapshot:
             BD.paint_track_region(
                 canvas, bg, self.panels, self.strip.panel_boxes, (x0, y0), self.strip.height
             )
-            draw = ImageDraw.Draw(canvas)
+            draw = _RegionDraw(canvas, (x0, y0))
             for panel in self.panels:
                 bx0, by0, bx1, by1 = map(round, self.strip.panel_boxes[panel.id])
                 if bx1 < x0 or bx0 >= x1 or by1 < y0 or by0 >= y1:
@@ -141,11 +179,25 @@ class RenderSnapshot:
                         (bx0 - x0, by0 - y0, bx1 - x0, by1 - y0), outline="black", width=3
                     )
             if lettering:
-                for layer, bounds in zip(self.strip.lettering, self.layer_bounds, strict=True):
+                for layer, bounds, sprite in zip(
+                    self.strip.lettering, self.layer_bounds, self.layer_sprites, strict=True
+                ):
                     if bounds[2] < x0 or bounds[0] >= x1 or bounds[3] < y0 or bounds[1] >= y1:
                         continue
                     self.checkpoint()
-                    LT.draw_layer(canvas, draw, _shift(layer, x0, y0), self.fonts, self.style)
+                    shifted = _shift(layer, x0, y0)
+                    if sprite is not None:
+                        # round(.5) is parity-sensitive. Round the global sprite origin
+                        # before translating, rather than rerounding an odd band's origin.
+                        left, top, width, height = sprite
+                        cx = left - x0 + width / 2
+                        cy = top - y0 + height / 2
+                        bx0, by0, bx1, by1 = shifted.box
+                        dx, dy = cx - (bx0 + bx1) / 2, cy - (by0 + by1) / 2
+                        shifted = shifted.model_copy(
+                            update={"box": (bx0 + dx, by0 + dy, bx1 + dx, by1 + dy)}
+                        )
+                    LT.draw_layer(canvas, draw, shifted, self.fonts, self.style, origin=(x0, y0))
 
             # Colours are sampled at the global x=0, as in the full-strip renderer.
             def ink(y):
@@ -158,6 +210,7 @@ class RenderSnapshot:
 
             if (
                 _decorations
+                and not self.strip.rasterized
                 and self.series.title
                 and SP.TITLE_SPACE
                 <= min((b[1] for b in self.strip.panel_boxes.values()), default=SP.TITLE_SPACE)
@@ -173,7 +226,12 @@ class RenderSnapshot:
                         fill=ink(ty),
                     )
             ey = self.strip.height - SP.END_SPACE / 2 - self.style.font_size / 2
-            if _decorations and y0 <= ey + self.style.font_size * 2 and y1 > ey:
+            if (
+                _decorations
+                and not self.strip.rasterized
+                and y0 <= ey + self.style.font_size * 2
+                and y1 > ey
+            ):
                 end = "— 完 —"
                 ew = self.fonts["text"].getlength(end)
                 dark = ink(ey) == "white"
@@ -230,6 +288,10 @@ def prepare_snapshot(ctx, series, ep, variant_id=None, *, checkpoint=_noop):
             faces[panel.id] = [
                 {"box": list(f.box), "character": f.character_id} for f in take.faces
             ]
+    if not assets and ep.strip.lettering:
+        strip = ep.strip.model_copy(deep=True)
+        strip.height = SP.content_height(strip)
+        return RenderSnapshot(series, ep, strip, {}, checkpoint)
     if not assets:
         raise ValueError("还没有采用任何一格的图片")
     stale = not ep.strip.panel_boxes or bool(set(assets) - set(ep.strip.panel_boxes))
@@ -254,7 +316,7 @@ def prepare_snapshot(ctx, series, ep, variant_id=None, *, checkpoint=_noop):
         strip.height = height
         images = _PanelImages(ctx, assets, strip, checkpoint)
         try:
-            if stale:
+            if stale and not ep.strip.lettering:
                 strip.lettering = SP.auto_lettering(
                     series, rendering, strip, boxes, images, faces, LY.Style(width=strip.width)
                 )

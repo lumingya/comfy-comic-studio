@@ -3421,7 +3421,7 @@ export interface components {
             variant_id?: string | null;
             /**
              * Lettered
-             * @description Crop panels from the lettered strip
+             * @description Preserve a saved canvas as complete full-width composition parts; without a saved composition, or when false, use complete adopted originals
              * @default true
              */
             lettered?: boolean;
@@ -3493,7 +3493,7 @@ export interface components {
             variant_id?: string | null;
             /**
              * Lettered
-             * @description Crop panels from the lettered strip
+             * @description Preserve a saved canvas as complete full-width composition parts; without a saved composition, or when false, use complete adopted originals
              * @default true
              */
             lettered?: boolean;
@@ -6093,7 +6093,7 @@ export interface components {
             variant_id?: string | null;
             /**
              * Lettered
-             * @description Crop composited panels; false exports original adopted images without framing
+             * @description Preserve complete saved canvas composition; without one, or when false, export complete adopted originals without additional framing
              * @default true
              */
             lettered?: boolean;
@@ -6135,7 +6135,7 @@ export interface components {
             variant_id?: string | null;
             /**
              * Lettered
-             * @description Crop composited panels; false exports original adopted images without framing
+             * @description Preserve complete saved canvas composition; without one, or when false, export complete adopted originals without additional framing
              * @default true
              */
             lettered?: boolean;
@@ -7292,6 +7292,12 @@ export interface components {
              * @default false
              */
             manual?: boolean;
+            /**
+             * Rasterized
+             * @description Imported complete canvas bands already contain title and ending decoration.
+             * @default false
+             */
+            rasterized?: boolean;
         };
         /** Strip */
         "Strip-Output": {
@@ -7350,6 +7356,12 @@ export interface components {
              * @default false
              */
             manual: boolean;
+            /**
+             * Rasterized
+             * @description Imported complete canvas bands already contain title and ending decoration.
+             * @default false
+             */
+            rasterized: boolean;
         };
         /** StripExportJob */
         StripExportJob: {
@@ -9998,7 +10010,9 @@ export interface operations {
     };
     layout_strip_api_episodes__episode_id__strip_layout_post: {
         parameters: {
-            query?: never;
+            query?: {
+                base_revision?: number | null;
+            };
             header?: never;
             path: {
                 episode_id: string;

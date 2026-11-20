@@ -37,6 +37,7 @@ from .models import (
     PanelOverrides,
     Series,
     SeriesStatus,
+    Strip,
     Take,
     TakeStatus,
 )
@@ -60,6 +61,45 @@ LEGACY_ROOT = Path(__file__).resolve().parents[2] / "data"
 ANONYMOUS = {"", "原创", "原创画册"}
 SCENE_PARAMS = {"seed", "steps", "cfg", "denoise", "width", "height", "sampler", "scheduler"}
 FRAME_DEFAULTS = {"steps": 24, "cfg": 7, "denoise": 1}
+
+
+def composition_strip(album, steps, panels, takes):
+    """Restore a v1 canvas as seamless raster bands, never claim editable lettering.
+
+    Only complete contiguous full-width partitions qualify. Missing/malformed metadata
+    uses the ordinary legacy frame import, rather than creating a half-empty canvas.
+    """
+    composition = album.get("composition")
+    if not isinstance(composition, dict) or not steps or len(takes) != len(steps):
+        return None
+    width, height = composition.get("width"), composition.get("height")
+    if type(width) is not int or not 320 <= width <= 2400 or type(height) is not int or height <= 0:
+        return None
+    boxes, cursor = {}, 0
+    for step, panel in zip(steps, panels, strict=True):
+        region = step.get("sourceRegion")
+        if not isinstance(region, (list, tuple)) or len(region) != 4:
+            return None
+        if any(type(v) is not int for v in region):
+            return None
+        x0, y0, x1, y1 = region
+        if (x0, y0, x1) != (0, cursor, width) or not cursor < y1 <= height:
+            return None
+        boxes[panel.id] = tuple(region)
+        cursor = y1
+    if cursor != height:
+        return None
+    # Album steps may be preview/publish resized. Explicit full-image crops prevent a
+    # second aspect-ratio crop when the encoded band's rounded dimensions differ.
+    return Strip(
+        width=width,
+        height=height,
+        margin=0,
+        manual=True,
+        rasterized=True,
+        panel_boxes=boxes,
+        crops={p.id: (0, 0, 1, 1) for p in panels},
+    )
 
 
 @dataclass
@@ -102,7 +142,9 @@ def ratio_of(width, height) -> str:
         w, h = int(width), int(height)
     except (TypeError, ValueError):
         return "2:3"
-    if w <= 0 or h <= 0:
+    # A complete canvas may end with a one-pixel band. Logical panel proportions
+    # are constrained, while imported image dimensions/sourceRegion must stay exact.
+    if w <= 0 or h <= 0 or not 0.1 <= w / h <= 10:
         return "2:3"
     g = math.gcd(w, h)
     w, h = w // g, h // g
@@ -389,6 +431,7 @@ class LegacyImporter:
             synopsis=series.subtitle,
             panels=panels,
             takes=takes,
+            strip=composition_strip(album, steps, panels, takes) or Strip(),
         )
         with self.store.tx():
             if existing:

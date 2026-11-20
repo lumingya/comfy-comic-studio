@@ -40,7 +40,7 @@
      },
      "lettered": {
       "default": true,
-      "description": "Crop panels from the lettered strip",
+      "description": "Preserve a saved canvas as complete full-width composition parts; without a saved composition, or when false, use complete adopted originals",
       "title": "Lettered",
       "type": "boolean"
      },
@@ -166,7 +166,7 @@
      },
      "lettered": {
       "default": true,
-      "description": "Crop panels from the lettered strip",
+      "description": "Preserve a saved canvas as complete full-width composition parts; without a saved composition, or when false, use complete adopted originals",
       "title": "Lettered",
       "type": "boolean"
      },
@@ -8680,7 +8680,7 @@
      },
      "lettered": {
       "default": true,
-      "description": "Crop composited panels; false exports original adopted images without framing",
+      "description": "Preserve complete saved canvas composition; without one, or when false, export complete adopted originals without additional framing",
       "title": "Lettered",
       "type": "boolean"
      },
@@ -8767,7 +8767,7 @@
      },
      "lettered": {
       "default": true,
-      "description": "Crop composited panels; false exports original adopted images without framing",
+      "description": "Preserve complete saved canvas composition; without one, or when false, export complete adopted originals without additional framing",
       "title": "Lettered",
       "type": "boolean"
      },
@@ -11546,6 +11546,12 @@
       "title": "Panel Boxes",
       "type": "object"
      },
+     "rasterized": {
+      "default": false,
+      "description": "Imported complete canvas bands already contain title and ending decoration.",
+      "title": "Rasterized",
+      "type": "boolean"
+     },
      "text_direction": {
       "default": "horizontal",
       "enum": [
@@ -11647,6 +11653,12 @@
       "title": "Panel Boxes",
       "type": "object"
      },
+     "rasterized": {
+      "default": false,
+      "description": "Imported complete canvas bands already contain title and ending decoration.",
+      "title": "Rasterized",
+      "type": "boolean"
+     },
      "text_direction": {
       "default": "horizontal",
       "enum": [
@@ -11673,7 +11685,8 @@
      "crops",
      "lettering",
      "height",
-     "manual"
+     "manual",
+     "rasterized"
     ],
     "title": "Strip",
     "type": "object"
@@ -17828,6 +17841,23 @@
        "title": "Episode Id",
        "type": "string"
       }
+     },
+     {
+      "in": "query",
+      "name": "base_revision",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "minimum": 0,
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Base Revision"
+      }
      }
     ],
     "requestBody": {
@@ -17874,7 +17904,8 @@
     "x-mio-arguments": [
      "ctx",
      "episode_id",
-     "body"
+     "body",
+     "base_revision"
     ],
     "x-mio-operation": "POST /episodes/{episode_id}/strip/layout"
    }

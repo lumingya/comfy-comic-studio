@@ -62,6 +62,7 @@ class Frame:
     width: int | None = None
     height: int | None = None
     palette: list[str] = field(default_factory=list)
+    source_region: tuple[int, int, int, int] | None = None
 
 
 @dataclass
@@ -71,6 +72,7 @@ class Book:
     synopsis: str = ""
     character_name: str = ""
     story_title: str = ""
+    composition: dict | None = None
 
 
 @dataclass
@@ -256,9 +258,13 @@ def _metadata(books, assets, tagged, opts) -> str:
                 entry["prompt"] = f.prompt
             if f.width and f.height:
                 entry["width"], entry["height"] = f.width, f.height
+            if f.source_region is not None:
+                entry["sourceRegion"] = list(f.source_region)
             entry["image"] = {"$mioImage": assets[f.image]} if f.image else ""
             steps.append(entry)
         album = {"title": book.title, "synopsis": book.synopsis, "totalSteps": len(steps)}
+        if book.composition is not None:
+            album["composition"] = book.composition
         payload["books"].append({"album": {**album, "steps": steps}, "storyboard": None})
     holder = "".join(
         f'<img data-mio-asset="{key}" src="{data}">'
@@ -269,3 +275,28 @@ def _metadata(books, assets, tagged, opts) -> str:
     text = text.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
     out = f'<template id="mio-shared-assets">{holder}</template>' if holder else ""
     return out + f'<script id="mio-album-data" type="application/json">{text}</script>'
+
+
+def write_album(tpl, books, path, opts, spooled, *, checkpoint=lambda: None):
+    """Render the bounded template/metadata, then stream file-backed image substitutions.
+
+    ``spooled`` maps unique inert tokens to (MIME, encoded file). The normal renderer sees
+    only these tiny tokens, retaining its escaping, asset deduplication and nonce policy.
+    No complete episode's encoded images or base64 document is held in memory.
+    """
+    document = render_album(tpl, books, opts)
+    pattern = re.compile("|".join(re.escape(token) for token in spooled)) if spooled else None
+    with Path(path).open("wb") as stream:
+        cursor = 0
+        for match in pattern.finditer(document) if pattern else ():
+            checkpoint()
+            stream.write(document[cursor : match.start()].encode("utf-8"))
+            mime, file = spooled[match.group()]
+            stream.write(f"data:{mime};base64,".encode("ascii"))
+            with Path(file).open("rb") as source:
+                while data := source.read(3 * 16384):
+                    checkpoint()
+                    stream.write(base64.b64encode(data))
+            cursor = match.end()
+        checkpoint()
+        stream.write(document[cursor:].encode("utf-8"))

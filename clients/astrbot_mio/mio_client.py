@@ -548,9 +548,20 @@ class MioClient(_Base):
         """POST /episodes/{episode_id}/qa — Qa."""
         return self._request("POST", f"/episodes/{_q(episode_id)}/qa", json=body)
 
-    def layout_strip(self, episode_id: str, body: dict | list | None = None) -> Any:
+    def layout_strip(
+        self,
+        episode_id: str,
+        body: dict | list | None = None,
+        *,
+        base_revision: Any | None = None,
+    ) -> Any:
         """POST /episodes/{episode_id}/strip/layout — Layout Strip."""
-        return self._request("POST", f"/episodes/{_q(episode_id)}/strip/layout", json=body)
+        return self._request(
+            "POST",
+            f"/episodes/{_q(episode_id)}/strip/layout",
+            params={"base_revision": base_revision},
+            json=body,
+        )
 
     def save_strip(
         self,

@@ -168,7 +168,7 @@ def publish(im: Image.Image, max_side: int = PUBLISH_MAX_SIDE) -> bytes:
 def preview(im: Image.Image, max_width: int, quality: int = 86) -> bytes:
     im = im.convert("RGB")
     if max_width and im.width > max_width:
-        im = im.resize((max_width, round(im.height * max_width / im.width)), Image.LANCZOS)
+        im = im.resize((max_width, max(1, round(im.height * max_width / im.width))), Image.LANCZOS)
     return _encode(im, "JPEG", quality=quality, optimize=True)
 
 

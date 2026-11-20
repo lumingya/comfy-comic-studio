@@ -479,6 +479,10 @@ class Strip(StrictModel):
     manual: bool = Field(
         default=False, description="Boxes were dragged by hand; relayout keeps them."
     )
+    rasterized: bool = Field(
+        default=False,
+        description="Imported complete canvas bands already contain title and ending decoration.",
+    )
 
     @field_validator("panel_boxes", "crops")
     @classmethod

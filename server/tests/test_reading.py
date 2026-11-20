@@ -114,8 +114,8 @@ class ReadingTests(ApiCase):
     def preview(self):
         return self.ctx.reading.get(self.ctx, self.ep.id, None, 1600)
 
-    def test_panel_png_matches_clean_export_with_saved_crop_and_lettering(self):
-        _, _, pages = episode_pages(self.ctx, self.ep.id, profile="clean")
+    def test_panel_png_matches_explicit_panel_export_with_saved_crop_and_lettering(self):
+        _, _, pages = episode_pages(self.ctx, self.ep.id, profile="clean", mode="panels")
         for pid, page, size, color in zip(
             ("p1", "p2"), pages, ((160, 160), (160, 80)), ((0, 0, 255), (255, 0, 0)), strict=True
         ):
@@ -138,7 +138,7 @@ class ReadingTests(ApiCase):
             self.assertEqual(image.size, (320, 1000))
             self.assertEqual(image.getpixel((100, 480)), (255, 255, 255))
 
-    def test_html_zip_and_pdf_use_composited_panel_dimensions(self):
+    def test_html_zip_and_pdf_use_complete_saved_composition_dimensions(self):
         _, _, pages = episode_pages(self.ctx, self.ep.id, profile="clean")
         body = {"episode_ids": [self.ep.id], "image_profile": "clean", "lettered": True}
         html = self.ok(self.client.post("/api/export/album", json=body)).text
@@ -156,11 +156,11 @@ class ReadingTests(ApiCase):
                 self.assertEqual(entry["caption"], page.caption)
         pdf = self.ok(self.client.post("/api/export/portable", json={**body, "format": "pdf"}))
         self.assertEqual(pdf.headers["content-type"], "application/pdf")
-        self.assertEqual(len(re.findall(rb"/Type\s*/Page\b", pdf.content)), 2)
+        self.assertEqual(len(re.findall(rb"/Type\s*/Page\b", pdf.content)), len(pages))
         media_boxes = re.findall(rb"/MediaBox\s*\[([^\]]+)\]", pdf.content)
         self.assertEqual(
             [[float(value) for value in box.split()] for box in media_boxes],
-            [[0, 0, 120, 120], [0, 0, 120, 60]],
+            [[0, 0, p.width * 0.75, p.height * 0.75] for p in pages],
         )
 
     def test_panel_keeps_complete_caption_crossing_top_edge_without_duplicate_caption(self):
@@ -177,7 +177,7 @@ class ReadingTests(ApiCase):
 
         self.ctx.store.update_episode(self.ep.id, edit)
         _, _, pages = episode_pages(
-            self.ctx, self.ep.id, profile="clean", deduplicate_captions=True
+            self.ctx, self.ep.id, profile="clean", deduplicate_captions=True, mode="panels"
         )
         self.assertEqual((pages[0].width, pages[0].height), (160, 200))
         self.assertEqual(pages[0].caption, "")
@@ -197,21 +197,25 @@ class ReadingTests(ApiCase):
             "lettered": True,
             "deduplicate_captions": True,
         }
+        _, _, composition_pages = episode_pages(
+            self.ctx, self.ep.id, profile="clean", deduplicate_captions=True
+        )
+        self.assertEqual(len(composition_pages), 1)
         html = self.ok(self.client.post("/api/export/album", json=body)).text
         marker = re.search(r'<script id="mio-album-data"[^>]*>(.*?)</script>', html, re.S)
         step = json.loads(marker.group(1))["books"][0]["album"]["steps"][0]
-        self.assertEqual(step["caption"], "")
+        self.assertEqual(step["caption"], "Ada：Mio")
         self.assert_pixels_equal(
-            pages[0].data, AlbumImages(html).images[step["image"]["$mioImage"]]
+            composition_pages[0].data, AlbumImages(html).images[step["image"]["$mioImage"]]
         )
         zipped = self.ok(self.client.post("/api/export/portable", json={**body, "format": "zip"}))
         with zipfile.ZipFile(io.BytesIO(zipped.content)) as zf:
             entry = json.loads(zf.read("manifest.json"))["books"][0]["files"][0]
-            self.assertEqual(entry["caption"], "")
-            self.assert_pixels_equal(zf.read(entry["name"]), pages[0].data)
+            self.assertEqual(entry["caption"], "Ada：Mio")
+            self.assert_pixels_equal(zf.read(entry["name"]), composition_pages[0].data)
         pdf = self.ok(self.client.post("/api/export/portable", json={**body, "format": "pdf"}))
         first_box = re.findall(rb"/MediaBox\s*\[([^\]]+)\]", pdf.content)[0]
-        self.assertEqual([float(value) for value in first_box.split()], [0, 0, 120, 150])
+        self.assertEqual([float(value) for value in first_box.split()], [0, 0, 240, 750])
 
     def test_cross_panel_lettering_belongs_wholly_to_its_owner_without_neighbor_art(self):
         def edit(ep):
@@ -229,7 +233,7 @@ class ReadingTests(ApiCase):
 
         self.ctx.store.update_episode(self.ep.id, edit)
         _, _, pages = episode_pages(
-            self.ctx, self.ep.id, profile="clean", deduplicate_captions=True
+            self.ctx, self.ep.id, profile="clean", deduplicate_captions=True, mode="panels"
         )
         self.assertEqual((pages[0].width, pages[0].height), (160, 451))
         self.assertEqual(pages[0].caption, "")
@@ -258,7 +262,7 @@ class ReadingTests(ApiCase):
                 ],
             ),
         )
-        _, _, pages = episode_pages(self.ctx, self.ep.id, profile="clean")
+        _, _, pages = episode_pages(self.ctx, self.ep.id, profile="clean", mode="panels")
         with Image.open(io.BytesIO(pages[0].data)) as image:
             self.assertEqual(image.size, (211, 201))
             self.assertEqual(image.getpixel((210, 200)), (0, 0, 0))
@@ -285,7 +289,7 @@ class ReadingTests(ApiCase):
 
         self.ctx.store.update_episode(self.ep.id, edit)
         _, _, pages = episode_pages(
-            self.ctx, self.ep.id, profile="clean", deduplicate_captions=True
+            self.ctx, self.ep.id, profile="clean", deduplicate_captions=True, mode="panels"
         )
         self.assertEqual(pages[0].caption, "Mio arrives")
         self.assertEqual(pages[1].caption, "")
@@ -329,12 +333,13 @@ class ReadingTests(ApiCase):
                 self.assert_pixels_equal(response.content, original)
         self.assertEqual(self.ctx.store.get_episode(self.ep.id).model_dump(mode="json"), before)
 
-    def test_explicit_lettered_export_still_auto_layouts_an_unsaved_episode(self):
+    def test_lettered_export_keeps_full_originals_for_an_unsaved_episode(self):
         self.ctx.store.update_episode(self.ep.id, lambda ep: setattr(ep, "strip", Strip(width=320)))
         _, _, plain = episode_pages(self.ctx, self.ep.id, lettered=False, profile="clean")
         _, _, lettered = episode_pages(self.ctx, self.ep.id, lettered=True, profile="clean")
         self.assertEqual((plain[0].width, plain[0].height), (200, 100))
-        self.assertNotEqual((lettered[0].width, lettered[0].height), (200, 100))
+        self.assertEqual((lettered[0].width, lettered[0].height), (200, 100))
+        self.assert_pixels_equal(lettered[0].data, self.ctx.assets.read(self.asset.id))
         self.assert_pixels_equal(plain[0].data, self.ctx.assets.read(self.asset.id))
 
     def test_caption_deduplication_is_per_line_and_panel_and_ignores_sfx(self):
@@ -362,14 +367,14 @@ class ReadingTests(ApiCase):
         doc = self.ok(self.client.post("/api/export/album", json=body)).text
         marker = re.search(r'<script id="mio-album-data"[^>]*>(.*?)</script>', doc, re.S)
         steps = json.loads(marker.group(1))["books"][0]["album"]["steps"]
-        self.assertEqual([step["caption"] for step in steps], list(expected.values()))
+        self.assertEqual([step["caption"] for step in steps], ["More narration"])
         zip_response = self.ok(
             self.client.post("/api/export/portable", json={**body, "format": "zip"})
         )
         with zipfile.ZipFile(io.BytesIO(zip_response.content)) as archive:
             files = json.loads(archive.read("manifest.json"))["books"][0]["files"]
-            self.assertEqual([entry["caption"] for entry in files], list(expected.values()))
-        _, _, legacy = episode_pages(self.ctx, self.ep.id, lettered=True)
+            self.assertEqual([entry["caption"] for entry in files], ["More narration"])
+        _, _, legacy = episode_pages(self.ctx, self.ep.id, lettered=True, mode="panels")
         self.assertEqual(legacy[0].caption, preview["captions"]["p1"])
         _, _, raw = episode_pages(self.ctx, self.ep.id, lettered=False, deduplicate_captions=True)
         self.assertEqual(raw[0].caption, preview["captions"]["p1"])

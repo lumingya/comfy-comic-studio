@@ -70,10 +70,16 @@ export function useRenderEpisode() {
 export function useLayoutStrip(episodeId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (vars: { relayout_lettering?: boolean }) =>
+    mutationFn: async ({
+      baseRevision,
+      ...vars
+    }: {
+      relayout_lettering?: boolean;
+      baseRevision: number;
+    }) =>
       data(
         await api.POST('/api/episodes/{episode_id}/strip/layout', {
-          params: ep(episodeId),
+          params: { ...ep(episodeId), query: { base_revision: baseRevision } },
           body: { relayout_lettering: true, ...vars },
         }),
       ),
@@ -81,15 +87,15 @@ export function useLayoutStrip(episodeId: string) {
   });
 }
 
-export function useSaveStrip(episodeId: string, baseRevision?: number) {
+export function useSaveStrip(episodeId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (strip: Strip) =>
+    mutationFn: async ({ strip, baseRevision }: { strip: Strip; baseRevision: number }) =>
       data(
         await api.PUT('/api/episodes/{episode_id}/strip', {
           params: {
             ...ep(episodeId),
-            query: baseRevision === undefined ? undefined : { base_revision: baseRevision },
+            query: { base_revision: baseRevision },
           },
           body: strip,
         }),

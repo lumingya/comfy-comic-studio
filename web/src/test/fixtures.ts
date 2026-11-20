@@ -146,6 +146,7 @@ export const episode: Episode = {
   panels: [panel(0), panel(1, { locked: true, dialogues: [] })],
   takes: [take('t1', 'p0', 'adopted'), take('t2', 'p0', 'candidate'), take('t3', 'p1', 'rejected')],
   strip: {
+    rasterized: false,
     width: 800,
     background: '#ffffff',
     margin: 24,

@@ -129,7 +129,9 @@ _render_strip = ES.render_episode_strip
 
 
 @router.post("/episodes/{episode_id}/strip/layout", response_model=Strip)
-def layout_strip(ctx: Ctx, episode_id: str, body: LayoutRequest) -> Strip:
+def layout_strip(
+    ctx: Ctx, episode_id: str, body: LayoutRequest, base_revision: int | None = Query(None, ge=0)
+) -> Strip:
     ep = ctx.store.get_episode(episode_id)
     series = ctx.store.get_series(ep.series_id)
     images, faces = _adopted_images(ctx, ep, body.variant_id)
@@ -143,7 +145,9 @@ def layout_strip(ctx: Ctx, episode_id: str, body: LayoutRequest) -> Strip:
         layers = ctx.hooks.filter("strip.lettering", strip.lettering, series=series, episode=ep)
         if isinstance(layers, list):
             strip.lettering = layers
-    ctx.store.update_episode(episode_id, lambda e: setattr(e, "strip", strip))
+    ctx.store.update_episode(
+        episode_id, lambda e: setattr(e, "strip", strip), expected_revision=base_revision
+    )
     return strip
 
 

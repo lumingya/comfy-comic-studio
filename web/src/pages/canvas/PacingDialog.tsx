@@ -2,7 +2,7 @@ import { Wand2 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePacingApply } from '../../api/canvas';
-import type { Panel, PacingPreview } from '../../api/types';
+import type { Episode, Panel, PacingPreview } from '../../api/types';
 import { toast, toastError } from '../../components/toast';
 import { Field, Modal, Select } from '../../components/ui';
 import { parseStops, css } from './backdrop';
@@ -30,7 +30,7 @@ export function PacingDialog(props: {
   panels: Panel[];
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  onApplied: () => void;
+  onApplied: (stored: Episode) => void;
 }) {
   const { t } = useTranslation();
   const suggest = useCanvasPacingSuggest(props.episodeId);
@@ -75,10 +75,10 @@ export function PacingDialog(props: {
           .map((s) => ({ panel_id: s.panel_id, changes: s.changes })),
       },
       {
-        onSuccess: () => {
+        onSuccess: (stored) => {
           toast(t('pacing.applied', { count: accepted.size }));
           props.onOpenChange(false);
-          props.onApplied();
+          props.onApplied(stored);
         },
         onError: toastError,
       },

@@ -245,7 +245,9 @@ def content_height(strip: Strip) -> int:
         bottoms.append(layer.box[3])
         if layer.tail_to:
             bottoms.append(layer.tail_to[1])
-    return max(strip.height, math.ceil(max(bottoms, default=0)) + END_SPACE)
+    return max(
+        strip.height, math.ceil(max(bottoms, default=0)) + (0 if strip.rasterized else END_SPACE)
+    )
 
 
 def render(
@@ -273,8 +275,10 @@ def render(
             draw.rectangle(box, outline="black", width=3)
     for layer in strip.lettering:
         LT.draw_layer(canvas, draw, layer, fonts, style)
-    if series.title and TITLE_SPACE <= (
-        min((b[1] for b in strip.panel_boxes.values()), default=TITLE_SPACE)
+    if (
+        not strip.rasterized
+        and series.title
+        and TITLE_SPACE <= (min((b[1] for b in strip.panel_boxes.values()), default=TITLE_SPACE))
     ):
         tw = fonts["title"].getlength(episode.title or series.title)
         ty = (TITLE_SPACE - style.title_size) / 2 - 10
@@ -288,12 +292,13 @@ def render(
     ew = fonts["text"].getlength(end)
     ey = strip.height - END_SPACE / 2 - style.font_size / 2
     dark = BD.ink_for(BD.color_at(canvas, round(ey))) == "white"
-    draw.text(
-        ((strip.width - ew) / 2, ey),
-        end,
-        font=fonts["text"],
-        fill=(200, 200, 200) if dark else (90, 90, 90),
-    )
+    if not strip.rasterized:
+        draw.text(
+            ((strip.width - ew) / 2, ey),
+            end,
+            font=fonts["text"],
+            fill=(200, 200, 200) if dark else (90, 90, 90),
+        )
     return canvas
 
 

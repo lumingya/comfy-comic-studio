@@ -97,22 +97,111 @@ def file_sha256(path: Path) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+# Mirror the service's Episode, Panel, Dialogue, PanelOverrides and Strip defaults.
+# Keep unknown fields: a newer service's extra business settings must fail closed.
+SUBMISSION_DEFAULTS = {
+    "episode": {
+        "synopsis": "",
+        "base_prompt": "",
+        "panels": [],
+        "takes": [],
+        "strip": {},
+        "deleted_at": None,
+    },
+    "panel": {
+        "shot": "",
+        "angle": "",
+        "characters": [],
+        "location_id": None,
+        "props": [],
+        "time": "",
+        "lighting": "",
+        "description": "",
+        "tags": [],
+        "dialogues": [],
+        "width_mode": "full",
+        "inset_align": "center",
+        "inset_scale": 0.78,
+        "aspect_ratio": "2:3",
+        "gap_after": 48,
+        "transition_background": "transparent",
+        "reference_mode": "auto",
+        "references": [],
+        "controls": [],
+        "regional": False,
+        "locked": False,
+        "overrides": {},
+        "motion": None,
+    },
+    "dialogue": {"speaker_id": None, "kind": "speech", "bridge": False},
+    "overrides": {
+        "raw_prompt": None,
+        "raw_negative": None,
+        "append_prompt": "",
+        "negative_prompt": "",
+        "seed": None,
+        "width": None,
+        "height": None,
+        "values": {},
+        "node_overrides": {},
+        "slot_overrides": {},
+        "profile_id": None,
+    },
+    "strip": {
+        "width": 800,
+        "background": "#ffffff",
+        "margin": 24,
+        "text_direction": "horizontal",
+        "panel_boxes": {},
+        "crops": {},
+        "lettering": [],
+        "height": 0,
+        "manual": False,
+        "rasterized": False,
+    },
+}
+SUBMISSION_METADATA = {
+    "episode": {"id", "series_id", "order", "created_at", "updated_at", "revision"},
+    "panel": {"id"},
+}
+
+
+def submission_content(value, kind):
+    """Normalize only documented defaults; retain all non-metadata content for equality."""
+    if not isinstance(value, dict):
+        raise ValueError("invalid storyboard content")
+    result = {**SUBMISSION_DEFAULTS[kind], **value}
+    for key in SUBMISSION_METADATA.get(kind, ()):
+        result.pop(key, None)
+    if kind == "episode":
+        result["panels"] = [submission_content(panel, "panel") for panel in result["panels"]]
+        result["strip"] = submission_content(result["strip"], "strip")
+    elif kind == "panel":
+        result["overrides"] = submission_content(result["overrides"], "overrides")
+        result["dialogues"] = [submission_content(row, "dialogue") for row in result["dialogues"]]
+    return result
+
+
 def matches_submission(expected, actual) -> bool:
-    if isinstance(expected, dict):
-        return isinstance(actual, dict) and all(
-            key in actual and matches_submission(value, actual[key])
-            for key, value in expected.items()
-        )
-    if isinstance(expected, list):
-        return (
-            isinstance(actual, list)
-            and len(expected) == len(actual)
-            and all(
-                matches_submission(left, right)
-                for left, right in zip(expected, actual, strict=True)
-            )
-        )
-    return expected == actual
+    try:
+        return submission_content(expected, "episode") == submission_content(actual, "episode")
+    except (TypeError, ValueError):
+        return False
+
+
+def stage_key(receipt: dict, original_key: str, stage: str) -> str:
+    """Preserve possibly submitted v1 keys; hash the full intent and stage for new keys."""
+    if receipt["version"] == 1:
+        if stage == "generation":
+            return original_key
+        legacy = f"{original_key}.{stage}"
+        if len(legacy) <= 160:
+            return legacy
+        # An overlong v1 export key was rejected before submission, so it is safe to replace.
+    digest = hashlib.sha256(
+        json.dumps([receipt["fingerprint"], stage], ensure_ascii=False).encode("utf-8")
+    ).hexdigest()
+    return f"mio.markdown.v2.{stage}.{digest}"
 
 
 def create_or_reconcile(client, board, receipt, path, bind_storyboard):
@@ -214,10 +303,12 @@ def run_album(
             raise ValueError(
                 "this destination belongs to another intent; use a new destination and key"
             )
+        if receipt.get("version") not in (1, 2):
+            raise ValueError("unsupported automation receipt version")
     else:
         if any((folder / f"album.{extension}").exists() for extension in ("html", "pdf")):
             raise FileExistsError("destination already contains an untracked album")
-        receipt = {"version": 1, "fingerprint": fingerprint, "exports": {}}
+        receipt = {"version": 2, "fingerprint": fingerprint, "exports": {}}
     create_or_reconcile(client, board, receipt, receipt_path, bind_storyboard)
     task = client.generate_workshop_task(
         {
@@ -228,7 +319,7 @@ def run_album(
             "generation": {"candidates": candidates},
             "adopt_first": bool(adopt_first),
         },
-        idempotency_key=idempotency_key,
+        idempotency_key=stage_key(receipt, idempotency_key, "generation"),
         timeout=timeout,
         poll=poll,
     )
@@ -258,7 +349,7 @@ def run_album(
             output,
             format=extension,
             template_id="export-monograph" if extension == "html" else None,
-            idempotency_key=f"{idempotency_key}.{extension}",
+            idempotency_key=stage_key(receipt, idempotency_key, extension),
             timeout=timeout,
             poll=poll,
         )

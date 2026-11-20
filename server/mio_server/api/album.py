@@ -25,7 +25,11 @@ class AlbumExport(BaseModel):
         "and used instead of ``template_id``",
     )
     variant_id: str | None = None
-    lettered: bool = Field(default=True, description="Crop panels from the lettered strip")
+    lettered: bool = Field(
+        default=True,
+        description="Preserve a saved canvas as complete full-width composition parts; "
+        "without a saved composition, or when false, use complete adopted originals",
+    )
     show_captions: bool = True
     deduplicate_captions: bool = Field(
         default=False, description="Omit dialogue lines already fully visible in a lettered panel"
@@ -51,7 +55,8 @@ class PortableExport(BaseModel):
     variant_id: str | None = None
     lettered: bool = Field(
         default=True,
-        description="Crop composited panels; false exports original adopted images without framing",
+        description="Preserve complete saved canvas composition; without one, or when false, "
+        "export complete adopted originals without additional framing",
     )
     show_captions: bool = Field(
         default=True, description="ZIP reader captions only; PDF contains one image per page"

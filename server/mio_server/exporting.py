@@ -189,8 +189,12 @@ class ExportService:
             snapshot["template"] = template.model_dump(mode="json")
         elif kind != "portable":
             raise ValueError("未知导出类型")
-        if kind != "album" and not any(
-            ep.adopted(p.id, options.get("variant_id")) for ep in episodes for p in ep.panels
+        if (
+            kind != "album"
+            and not any(
+                ep.adopted(p.id, options.get("variant_id")) for ep in episodes for p in ep.panels
+            )
+            and not any(ep.strip.lettering for ep in episodes)
         ):
             raise ValueError("没有可导出的格，请先采用图片")
         return snapshot
@@ -208,6 +212,8 @@ class ExportService:
                 and take.status == "adopted"
                 and self.ctx.assets.exists(take.asset_id)
             }
+            if not episode.panels and episode.strip.lettering:
+                continue
             if not episode.panels or any(panel.id not in adopted for panel in episode.panels):
                 raise JobConflict("请先为该话的每个分幕采用图片")
 
@@ -467,7 +473,7 @@ class ExportService:
                 ):
                     checkpoint()
                     done += 1
-                    progress(done, total)
+                    progress(done, max(done, total))
                     if page is not None:
                         yield n, i, page
 
@@ -480,7 +486,11 @@ class ExportService:
                         yield image
 
             write_pdf(
-                images(), path, quality=85 if profile == "publish" else 95, checkpoint=checkpoint
+                images(),
+                path,
+                quality=85 if profile == "publish" else 95,
+                lossless=profile != "publish",
+                checkpoint=checkpoint,
             )
             mime = "application/pdf"
         else:
@@ -496,8 +506,18 @@ class ExportService:
                     name = f"{folder}/{i:03d}.{M.ext_of(page.mime)}"
                     archive.writestr(name, page.data)
                     manifest["books"][n - 1]["files"].append(
-                        {"name": name, "caption": page.caption}
+                        {
+                            "name": name,
+                            "caption": page.caption,
+                            **(
+                                {"sourceRegion": list(page.source_region)}
+                                if page.source_region
+                                else {}
+                            ),
+                        }
                     )
+                    if page.composition:
+                        manifest["books"][n - 1]["composition"] = page.composition
                     caption = (
                         f"<figcaption>{html.escape(page.caption)}</figcaption>"
                         if opts.get("show_captions", True)
@@ -521,15 +541,18 @@ class ExportService:
                     f"<title>{html.escape(title)}</title><style>body{{margin:0;background:#faf9f6;color:#28332b;font:16px/1.7 system-ui}}main{{max-width:1000px;margin:auto;padding:24px}}figure{{margin:0 0 24px}}img{{display:block;width:100%;height:auto}}</style><main><h1>{html.escape(title)}</h1>{chapters}</main></html>",
                 )
             mime = "application/zip"
+        progress(done, done)
         return mime, f"{safe}.{fmt}", {"X-Mio-Export": stats.header()}
 
     @staticmethod
     def _album(ctx, snapshot, path, checkpoint, progress):
+        from .album.render import render_album, write_album
+
         opts = snapshot["options"]
         requested = opts.get("image_profile", "preview")
         profile = "clean" if requested == "auto" else requested
 
-        def build(profile):
+        def build(profile, spool_dir, spooled):
             stats = M.Stats(profile)
             books = []
             for i, eid in enumerate(opts["episode_ids"]):
@@ -545,31 +568,39 @@ class ExportService:
                         max_width=opts.get("max_width", 1400),
                         stats=stats,
                         checkpoint=checkpoint,
+                        spool_dir=spool_dir,
+                        spooled=spooled,
                     )
                 )
                 progress(i + 1, len(opts["episode_ids"]))
             return books, stats
 
-        books, stats = build(profile)
-        if requested == "auto" and M.over_budget(stats):
-            books, stats = build("publish")
-            stats.auto_compressed = True
-        stats.over_budget = M.over_budget(stats)
-        checkpoint()
-        tpl = T.AlbumTemplate.model_validate(snapshot["template"])
-        document = ctx.registry.get("exporter", "album")(
-            tpl,
-            books,
-            AlbumOptions(
+        renderer = ctx.registry.get("exporter", "album")
+        native = renderer is render_album
+        with tempfile.TemporaryDirectory(prefix="mio-album-") as folder:
+            spooled = {}
+            books, stats = build(profile, folder if native else None, spooled)
+            if requested == "auto" and M.over_budget(stats):
+                for _, file in spooled.values():
+                    file.unlink()
+                spooled.clear()
+                books, stats = build("publish", folder if native else None, spooled)
+                stats.auto_compressed = True
+            stats.over_budget = M.over_budget(stats)
+            checkpoint()
+            tpl = T.AlbumTemplate.model_validate(snapshot["template"])
+            options = AlbumOptions(
                 show_captions=opts.get("show_captions", True),
                 show_prompts=opts.get("show_prompts", False),
                 border=opts.get("border", 0),
                 signature=opts.get("signature", ""),
                 theme_color=opts.get("theme_color", ""),
                 collection_title=opts.get("title", ""),
-            ),
-        )
-        Path(path).write_text(document, encoding="utf-8")
+            )
+            if native:
+                write_album(tpl, books, path, options, spooled, checkpoint=checkpoint)
+            else:
+                Path(path).write_text(renderer(tpl, books, options), encoding="utf-8")
         title = opts.get("title") or books[0].title
         return "text/html", f"{title}_{tpl.id}.html", {"X-Mio-Export": stats.header()}
 

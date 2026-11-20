@@ -248,7 +248,13 @@ def sfx_box(text: str, font_path, size: int, style: LetterStyle, center, vertica
 
 # ----------------------------------------------------------------------------- drawing
 def draw_layer(
-    canvas: Image.Image, draw: ImageDraw.ImageDraw, layer: LetteringLayer, fonts: dict, style
+    canvas: Image.Image,
+    draw: ImageDraw.ImageDraw,
+    layer: LetteringLayer,
+    fonts: dict,
+    style,
+    *,
+    origin=(0, 0),
 ) -> None:
     x0, y0, x1, y1 = layer.box
     if layer.kind == DialogueKind.sfx:
@@ -289,8 +295,13 @@ def draw_layer(
         layer.kind.value,
         layer.text,
         lines,
-        tuple(round(v) for v in layer.box),
-        tuple(round(v) for v in layer.tail_to) if layer.tail_to else None,
+        tuple(
+            round(v + offset) - offset
+            for v, offset in zip(layer.box, (*origin, *origin), strict=True)
+        ),
+        tuple(round(v + offset) - offset for v, offset in zip(layer.tail_to, origin, strict=True))
+        if layer.tail_to
+        else None,
         layer.speaker_id,
         vertical=vertical,
     )
