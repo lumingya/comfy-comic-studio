@@ -3,8 +3,13 @@
 Reviewed baseline `0c948c5` against current `main` (`622e03d`) plus the staged,
 unstaged and new frontend/reader files present on 2026-11-20. This is a fresh
 source review, not a repetition of the earlier review conclusions. Ownership is
-this report only; no production code, generated artifacts or personal data were
-modified. The root agent owns fixes and the final combined verification run.
+this report and the three new regression files named below; no production code,
+generated artifacts or personal data were modified by this reviewer. The root
+agent owns fixes and the final combined verification run.
+
+Final status: **all three reported P2 issues were repaired by the root agent and
+verified with six new regressions. No unresolved P0-P2 issue remains in this
+review's inspected paths.** The original triggers and evidence remain below.
 
 ## Standards
 
@@ -62,6 +67,25 @@ findings while the root's full verification was running.
   adapter-derived control metadata. Add an enable/disable-to-trial regression
   that requires a new control request and the updated keys/capabilities.
 
+### P2: Reopening export preview can show artwork from before the latest adoption
+
+- Source: `web/src/pages/works/ExportDrawer.tsx:39-64`.
+- Trigger: open and close the new full-window export preview; adopt a different
+  image in the same episode; reopen the preview within five minutes with the same
+  template and export settings.
+- Evidence: `ExportPreviewDialog` keys its query by the request body only and
+  sets `staleTime: 5 * 60_000`. That body has no episode revision, and the parent
+  drawer supplies no revision prop. Re-enabling a fresh query therefore reuses
+  the previous exported HTML. By contrast, the existing main `TemplatePreview`
+  includes the episode revision in its query key expressly to handle adoption.
+- Effect: the export-before-download preview can disagree with the current
+  artwork and the actual export. The taskbook requires a useful preview of the
+  selected final album, not a previously rendered image set.
+- Minimal fix: revalidate whenever this preview opens, or pass the episode
+  revision through the drawer and include it in the query key. A regression
+  should close the preview, change the mocked artwork response without changing
+  body parameters, reopen it and require the new HTML.
+
 ## Inspected boundaries and limits
 
 - Read current drag/drop ordering, filtering, autosave serialization, batch
@@ -82,4 +106,33 @@ findings while the root's full verification was running.
   evidence, not claimed as newly executed tests. Visual quality, real pointer
   dragging and the final all-suite status remain with the root agent.
 
-Findings at review time: **Standards 0 P0-P2; Spec 2 P2**.
+## Repair verification
+
+- Root made lightbox `open()` return immediately when the dialog is already
+  open. `web/src/test/album-lightbox-wrapper.test.ts` contains two regressions:
+  the actual image click bubbles through the wrapping button, then either the
+  close button or Escape must restore the original overflow, non-inert reader
+  and controls, original inert sibling and trigger focus. It also reopens and
+  closes the lightbox a second time.
+- Root added the workflow-LoRA, workflow-detail and workflow-summary query
+  families to extension-action invalidation. `web/src/api/adapterCache.test.ts`
+  contains three regressions using the real mutation hook and an inactive
+  TanStack Query cache with `staleTime: Infinity`. Enable, disable and remove
+  each require new requests and updated adapter-derived controls/metadata.
+- Root changed export-preview freshness to `staleTime: 0`.
+  `web/src/pages/works/ExportPreviewFreshness.test.tsx` mounts the real drawer,
+  opens and closes the preview, changes the synthetic server artwork, then
+  reopens with identical body parameters. It requires a second request and the
+  updated iframe document.
+- The first five regressions were run before the production patches and all
+  failed on their exact reported conditions. After the three fixes, the full
+  set of **3 files / 6 regressions passed** with:
+
+  ```text
+  npm --prefix web test -- --run src/test/album-lightbox-wrapper.test.ts src/api/adapterCache.test.ts src/pages/works/ExportPreviewFreshness.test.tsx
+  ```
+
+  New test files also pass their focused Prettier and whitespace checks. The
+  root remains responsible for the final whole-repository test/type/build gates.
+
+Findings at review time: **Standards 0 P0-P2; Spec 3 P2, all fixed and verified**.
