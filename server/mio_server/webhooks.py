@@ -24,6 +24,7 @@ import threading
 import time
 import uuid
 from collections import deque
+from urllib.parse import urlsplit
 
 import httpx
 from pydantic import Field, field_validator
@@ -42,6 +43,35 @@ EVENTS = {
 }
 TERMINAL = {"completed": "job.completed", "failed": "job.failed", "canceled": "job.canceled"}
 RETRY_DELAYS = (2.0, 10.0)
+
+
+def validate_webhook_url(value: str) -> None:
+    """Validate writes and legacy configuration without echoing credentials or the URL."""
+    try:
+        if (
+            not isinstance(value, str)
+            or not value.startswith(("http://", "https://"))
+            or len(value) > 2000
+            or any(c.isspace() for c in value)
+        ):
+            raise ValueError
+        parts = urlsplit(value)
+        url = httpx.URL(value)
+        if (
+            parts.scheme not in {"http", "https"}
+            or not parts.hostname
+            or not url.host
+            or not url.is_absolute_url
+            or parts.username is not None
+            or parts.password is not None
+            or "\\" in value
+        ):
+            raise ValueError
+        # Both parsers are needed: urlsplit checks IPv6 brackets and the port range;
+        # HTTPX validates the URL that will actually be passed to the request client.
+        parts.port
+    except (ValueError, httpx.InvalidURL):
+        raise ValueError("Webhook URL must be a valid HTTP(S) URL without userinfo") from None
 
 
 class Webhook(StrictModel):
@@ -81,7 +111,9 @@ class Dispatcher:
         self._queue: queue.Queue = queue.Queue()
         self._thread: threading.Thread | None = None
         self._closed = False
-        self.sleep = time.sleep
+        self._lifecycle_lock = threading.Lock()
+        self._stopping = threading.Event()
+        self.sleep = self._stopping.wait
 
     # ----------------------------------------------------------------- intake
     def attach(self, hooks) -> None:
@@ -96,23 +128,25 @@ class Dispatcher:
                 self.emit(event, {"job_id": payload["job_id"], **payload["data"]})
 
     def emit(self, event: str, data: dict) -> None:
-        if self._closed:
-            return
-        self._queue.put((event, data))
-        if self._thread is None:
-            self._thread = threading.Thread(target=self._run, name="mio-webhooks", daemon=True)
-            self._thread.start()
+        with self._lifecycle_lock:
+            if self._closed:
+                return
+            self._queue.put((event, data))
+            if self._thread is None:
+                self._thread = threading.Thread(target=self._run, name="mio-webhooks", daemon=True)
+                self._thread.start()
 
     # ---------------------------------------------------------------- delivery
     def _run(self) -> None:
         while True:
             item = self._queue.get()
-            if item is None:
-                return
             try:
-                self._fan_out(*item)
-            except Exception:
-                log.exception("webhook fan-out failed")
+                if item is None:
+                    return
+                if not self._closed:
+                    self._fan_out(*item)
+            except Exception as exc:
+                log.warning("webhook fan-out failed (%s)", type(exc).__name__)
             finally:
                 self._queue.task_done()
 
@@ -129,7 +163,12 @@ class Dispatcher:
             except Exception:
                 pass
         for hook in hooks:
-            self.deliver(hook, event, data)
+            try:
+                self.deliver(hook, event, data)
+            except Exception as exc:
+                # One subscriber must not consume the event for later subscribers. Never
+                # log exception text: transports may include URLs or signing credentials.
+                log.warning("webhook delivery failed (%s)", type(exc).__name__)
 
     def deliver(self, hook: Webhook, event: str, data: dict, retries=RETRY_DELAYS) -> dict:
         delivery_id = uuid.uuid4().hex
@@ -138,10 +177,35 @@ class Dispatcher:
             ensure_ascii=False,
             default=str,
         ).encode("utf-8")
-        record = {"id": delivery_id, "event": event, "at": now_iso(), "status": None, "error": ""}
-        for attempt, delay in enumerate((0.0, *retries)):
+        record = {
+            "id": delivery_id,
+            "event": event,
+            "at": now_iso(),
+            "status": None,
+            "attempts": 0,
+            "error": "",
+        }
+        for delay in (0.0, *retries):
             if delay:
                 self.sleep(delay)
+            if self._closed:
+                record["error"] = "Webhook dispatcher closed"
+                break
+            try:
+                # Reload after every backoff. A previously sent request cannot be revoked,
+                # but no new attempt should keep using its stale address or signing key.
+                current = self.store.get_doc("webhook", hook.id)
+                validate_webhook_url(current.url)
+                if not current.secret.strip():
+                    raise ValueError("missing signing key")
+            except Exception:
+                record["error"] = "Webhook configuration unavailable or invalid"
+                break
+            # Manual test requests deliberately bypass enabled/event subscriptions while
+            # still requiring the current persisted URL and signing key.
+            if event != "ping" and (event not in EVENTS or not current.wants(event)):
+                record["error"] = "Webhook disabled or no longer subscribed"
+                break
             stamp = str(int(time.time()))
             headers = {
                 "Content-Type": "application/json",
@@ -149,17 +213,24 @@ class Dispatcher:
                 "X-Mio-Event": event,
                 "X-Mio-Delivery": delivery_id,
                 "X-Mio-Timestamp": stamp,
-                "X-Mio-Signature": sign(hook.secret, stamp, body),
+                "X-Mio-Signature": sign(current.secret, stamp, body),
             }
             try:
+                record["attempts"] += 1
                 with httpx.Client(timeout=15, transport=self.transport) as http:
-                    resp = http.post(hook.url, content=body, headers=headers)
-                record.update(status=resp.status_code, attempts=attempt + 1, error="")
+                    resp = http.post(current.url, content=body, headers=headers)
+                record.update(status=resp.status_code, error="")
                 if resp.status_code < 500 and resp.status_code != 429:
                     break
-                record["error"] = resp.text[:200]
+                record["error"] = f"HTTP {resp.status_code}"
+            except httpx.InvalidURL:
+                record.update(status=None, error="Webhook configuration unavailable or invalid")
+                break
             except httpx.HTTPError as exc:
-                record.update(status=None, attempts=attempt + 1, error=str(exc)[:200])
+                record.update(status=None, error=f"Webhook request failed ({type(exc).__name__})")
+            except Exception as exc:
+                record.update(status=None, error=f"Webhook delivery failed ({type(exc).__name__})")
+                break
         self.deliveries.setdefault(hook.id, deque(maxlen=30)).appendleft(record)
         return record
 
@@ -170,7 +241,17 @@ class Dispatcher:
             time.sleep(0.01)
 
     def close(self) -> None:
-        self._closed = True
-        if self._thread is not None:
-            self._queue.put(None)
-            self._thread.join(timeout=2)
+        """Stop intake, discard unstarted events, and wait for the in-flight request.
+
+        Backoff is interruptible. An already running HTTP request keeps its own timeout;
+        close returns only after the worker has exited rather than orphaning it.
+        """
+        with self._lifecycle_lock:
+            if not self._closed:
+                self._closed = True
+                self._stopping.set()
+                if self._thread is not None:
+                    self._queue.put(None)
+            thread = self._thread
+        if thread is not None and thread is not threading.current_thread():
+            thread.join()

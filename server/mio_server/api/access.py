@@ -6,7 +6,7 @@ from fastapi import status
 from pydantic import BaseModel, Field
 
 from .. import auth as AU
-from ..webhooks import EVENTS, Webhook
+from ..webhooks import EVENTS, Webhook, validate_webhook_url
 from .deps import Ctx
 from .operations import Router as APIRouter
 
@@ -66,6 +66,7 @@ def list_webhooks(ctx: Ctx) -> dict:
 @hooks.post("/webhooks", status_code=status.HTTP_201_CREATED)
 def create_webhook(ctx: Ctx, body: dict) -> dict:
     """The signing ``secret`` is shown in full only here and after ``rotate_secret``."""
+    validate_webhook_url(body.get("url"))
     hook = Webhook.model_validate({k: v for k, v in body.items() if k not in ("id", "secret")})
     ctx.store.put_doc(hook)
     return _public_hook(hook, reveal=True)
@@ -78,6 +79,7 @@ def update_webhook(ctx: Ctx, hook_id: str, body: WebhookPatch) -> dict:
     data.update(body.model_dump(exclude_none=True, exclude={"rotate_secret"}))
     if body.rotate_secret:
         data.pop("secret")
+    validate_webhook_url(data["url"])
     updated = Webhook.model_validate(data)
     ctx.store.put_doc(updated)
     return _public_hook(updated, reveal=body.rotate_secret)
