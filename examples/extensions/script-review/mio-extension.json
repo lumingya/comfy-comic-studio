@@ -1,0 +1,36 @@
+{
+  "id": "script-review",
+  "name": "剧本审阅与 Diff 助手",
+  "version": "1.0.0",
+  "description": "逐幕逐句审阅修改建议，逐条选择后显式应用。",
+  "contributes": {
+    "panels": [
+      {
+        "id": "review",
+        "slot": "episode",
+        "title": "剧本审阅",
+        "entry": "panel.html",
+        "requests": [
+          {
+            "id": "episode",
+            "method": "GET",
+            "path": "/episodes/{episode_id}",
+            "scope": "read"
+          },
+          {
+            "id": "propose",
+            "method": "POST",
+            "path": "/episodes/{episode_id}/assistant/propose",
+            "scope": "render"
+          },
+          {
+            "id": "apply",
+            "method": "POST",
+            "path": "/episodes/{episode_id}/assistant/apply",
+            "scope": "write"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,9 +1,8 @@
 {
   "id": "qa-review",
-  "name": "QA review example",
-  "version": "0.1.0",
-  "description": "Explicit local QA requests without automatic candidate adoption.",
-  "main": "main.py",
+  "name": "智能质检与辅助挑图",
+  "version": "1.0.0",
+  "description": "逐幕审阅真实 VLM 评分和问题清单，保留创作者的采用选择。",
   "contributes": {
     "panels": [
       {
@@ -21,8 +20,14 @@
           {
             "id": "review",
             "method": "POST",
-            "path": "/ext/qa-review/queue",
+            "path": "/episodes/{episode_id}/qa",
             "scope": "render"
+          },
+          {
+            "id": "job",
+            "method": "GET",
+            "path": "/jobs/{job_id}",
+            "scope": "read"
           }
         ]
       }

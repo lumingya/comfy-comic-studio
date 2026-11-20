@@ -1,4 +1,4 @@
-"""Explicit QA extension requests and revocation of mounted activation identities."""
+"""Pure QA panels preserve intent, authorization, digest revocation and CLI safeguards."""
 
 import argparse
 import importlib.util
@@ -9,18 +9,11 @@ import zipfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from fastapi.testclient import TestClient
-from starlette.requests import HTTPConnection
-
-from mio_server.api import create_app
-from mio_server.api.extension_routes import extension_guard
 from mio_server.models import Episode, Panel, Series, Take, TakeStatus
-from mio_server.storage import NotFound
 
-from .api_harness import LOCAL, ApiCase
+from .api_harness import ApiCase
 
-EXAMPLE = Path(__file__).resolve().parents[2] / "examples" / "extensions" / "qa-review"
-ROUTE = "/api/ext/qa-review/queue"
+EXAMPLE = Path(__file__).resolve().parents[2] / "examples/extensions/qa-review"
 
 
 class QAExtensionTests(ApiCase):
@@ -28,7 +21,7 @@ class QAExtensionTests(ApiCase):
         super().setUp()
         package = io.BytesIO()
         with zipfile.ZipFile(package, "w") as archive:
-            for name in ("mio-extension.json", "main.py", "cli.py", "panel.html", "README.md"):
+            for name in ("mio-extension.json", "cli.py", "panel.html", "panel.js", "README.md"):
                 archive.write(EXAMPLE / name, "qa-review/" + name)
         self.info = self.ok(self.client.post("/api/extensions", content=package.getvalue()), 201)
         series = self.ctx.store.create_series(Series(title="QA example"))
@@ -46,172 +39,137 @@ class QAExtensionTests(ApiCase):
             )
         )
         self.body = {
-            "episode_id": self.episode.id,
             "take_ids": [take.id for take in self.episode.takes],
             "idempotency_key": "qa-review-test",
+            "auto_adopt": False,
         }
+        self.endpoint = "/api/extension-panels/qa-review/review/requests"
 
     def enable(self):
         info = self.ctx.extensions.info("qa-review")
-        return self.ok(
+        enabled = self.ok(
             self.client.post("/api/extensions/qa-review/enable", json={"digest": info.digest})
         )
-
-    def remount(self):
-        return TestClient(create_app(self.ctx, serve_web=False), base_url=LOCAL)
-
-    def test_panel_is_inert_until_explicit_bridge_request(self):
-        self.enable()
-        active = self.remount()
-        panel = self.ok(active.get("/api/extension-panels"))[0]
-        page = self.ok(active.get(panel["url"]))
-        self.assertIn("connect-src 'none'", page.headers["content-security-policy"])
-        self.assertIn("mio:panel:ready", page.text)
-        self.assertEqual(self.ctx.engine.list(), [])
-        base = {"activation": panel["activation"], "digest": panel["digest"]}
-        endpoint = "/api/extension-panels/qa-review/review/requests"
-        result = self.ok(
-            active.post(
-                endpoint,
-                json={
-                    **base,
-                    "request_id": "episode",
-                    "path_params": {"episode_id": self.episode.id},
-                },
-            )
+        self.panel = next(
+            p
+            for p in self.ok(self.client.get("/api/extension-panels"))
+            if p["extension"] == "qa-review"
         )
-        self.assertEqual(result["data"]["id"], self.episode.id)
-        self.assertEqual(self.ctx.engine.list(), [])
-        queued = self.ok(
-            active.post(endpoint, json={**base, "request_id": "review", "body": self.body})
-        )
-        self.assertEqual(queued["status"], 200)
-        self.assertFalse(queued["data"]["snapshot"]["auto_adopt"])
-        self.assertEqual(len(self.ctx.engine.list()), 1)
+        return enabled
 
-    def test_installed_and_enabled_extensions_do_nothing_until_explicit_queue(self):
+    def intent(self, request_id="review", **kwargs):
+        return {
+            "activation": self.panel["activation"],
+            "digest": self.panel["digest"],
+            "request_id": request_id,
+            "path_params": {"episode_id": self.episode.id},
+            **({"body": self.body} if request_id == "review" else {}),
+            **kwargs,
+        }
+
+    def test_install_enable_and_read_are_inert_and_use_only_core_operations(self):
         self.assertEqual(self.info["status"], "disabled")
-        self.assertEqual(self.client.post(ROUTE, json=self.body).status_code, 404)
+        self.assertIsNone(self.ctx.extensions.info("qa-review").manifest.main)
+        self.assertEqual(self.ok(self.client.get("/api/extension-panels")), [])
+        self.assertFalse(self.enable()["restart_required"])
+        page = self.ok(self.client.get(self.panel["url"]))
+        self.assertIn("connect-src 'none'", page.headers["content-security-policy"])
+        self.assertIn('src="panel.js"', page.text)
+        script = self.ok(self.client.get("/api/extensions/qa-review/files/panel.js"))
+        self.assertIn("mio:panel:ready", script.text)
         self.assertEqual(self.ctx.engine.list(), [])
-        enabled = self.enable()
-        self.assertFalse(enabled["restart_required"])
-        active = self.client
-        self.assertFalse(self.ctx.extensions.info("qa-review").restart_required)
-        self.assertEqual(active.get(ROUTE).status_code, 405)
+        episode = self.ok(self.client.post(self.endpoint, json=self.intent("episode")))
+        self.assertEqual(episode["data"]["id"], self.episode.id)
         self.assertEqual(self.ctx.engine.list(), [])
-        with patch.object(self.ctx.qa, "submit", wraps=self.ctx.qa.submit) as submit:
-            first = self.ok(active.post(ROUTE, json=self.body))
-            repeat = self.ok(active.post(ROUTE, json=self.body))
-        self.assertEqual(first["id"], repeat["id"])
-        self.assertEqual(len(self.ctx.engine.list()), 1)
-        self.assertEqual(first["kind"], "qa.check")
-        self.assertFalse(first["snapshot"]["auto_adopt"])
-        submit.assert_called_with(
-            self.episode.id,
-            take_ids=self.body["take_ids"],
-            auto_adopt=False,
-            idempotency_key=self.body["idempotency_key"],
+        self.assertTrue(
+            all(not spec["path"].startswith("/ext/") for spec in self.panel["requests"])
         )
-        conflict = active.post(ROUTE, json={**self.body, "take_ids": self.body["take_ids"][:1]})
-        self.assertEqual(conflict.status_code, 409)
+
+    def test_explicit_queue_is_idempotent_and_result_never_changes_adoption(self):
+        self.enable()
+        first = self.ok(self.client.post(self.endpoint, json=self.intent()))["data"]
+        again = self.ok(self.client.post(self.endpoint, json=self.intent()))["data"]
+        self.assertEqual(first["id"], again["id"])
+        self.assertFalse(first["snapshot"]["auto_adopt"])
+        self.assertEqual(len(self.ctx.engine.list()), 1)
+        changed = self.intent(body={**self.body, "take_ids": self.body["take_ids"][:1]})
+        self.assertEqual(self.ok(self.client.post(self.endpoint, json=changed))["status"], 409)
         result = {"qa": {"passed": True, "score": 1.0}, "faces": []}
         with patch.object(self.ctx.qa, "execute", return_value=result):
-            self.ctx.engine.tick()
-            done = self.ctx.engine.wait(first["id"])
-        self.assertEqual(done["state"], "completed")
+            self.drain(first)
         stored = self.ctx.store.get_episode(self.episode.id)
         self.assertTrue(all(take.qa and take.qa.passed for take in stored.takes))
         self.assertEqual(
             [take.status for take in stored.takes], [TakeStatus.adopted, TakeStatus.candidate]
         )
 
-    def test_required_body_fields_and_extra_auto_adopt_cannot_trigger_work(self):
+    def test_typed_validation_and_declaration_whitelist_prevent_unintended_work(self):
         self.enable()
-        active = self.remount()
-        for field in self.body:
-            invalid = {key: value for key, value in self.body.items() if key != field}
-            with self.subTest(missing=field):
-                self.assertEqual(active.post(ROUTE, json=invalid).status_code, 422)
-        for overrides in ({"take_ids": []}, {"idempotency_key": ""}, {"auto_adopt": True}):
-            with self.subTest(overrides=overrides):
-                self.assertEqual(
-                    active.post(ROUTE, json={**self.body, **overrides}).status_code, 422
-                )
+        for body in ({"take_ids": "invalid"}, {**self.body, "votes": 8}):
+            with self.subTest(body=body):
+                reply = self.ok(self.client.post(self.endpoint, json=self.intent(body=body)))
+                self.assertEqual(reply["status"], 422)
+        self.assertEqual(
+            self.client.post(self.endpoint, json=self.intent("settings")).status_code, 403
+        )
+        self.assertEqual(
+            self.client.post(self.endpoint, json=self.intent(path_params={})).status_code, 422
+        )
+        self.assertEqual(
+            self.client.post(self.endpoint, json={**self.intent(), "headers": {}}).status_code, 422
+        )
         self.assertEqual(self.ctx.engine.list(), [])
 
-    def test_disable_revokes_mounted_route_and_reenable_does_not_revive_old_closure(self):
+    def test_disable_reenable_rejects_old_activation_without_submitting(self):
         self.enable()
-        active = self.remount()
-        old = self.ctx.extensions.loaded["qa-review"]
-        old_guard = extension_guard(self.ctx.extensions, "qa-review", old, old.api.digest)
-        self.ok(active.post("/api/extensions/qa-review/disable"))
-        with patch.object(self.ctx.qa, "submit") as submit:
-            self.assertEqual(active.post(ROUTE, json=self.body).status_code, 404)
-            info = self.enable()
-            self.assertFalse(info["restart_required"])
-            self.assertIsNot(self.ctx.extensions.loaded["qa-review"], old)
-            with self.assertRaises(NotFound):
-                old_guard(HTTPConnection({"type": "http", "headers": []}))
-            submit.assert_not_called()
+        old = self.intent()
+        self.ok(self.client.post("/api/extensions/qa-review/disable"))
+        self.assertEqual(self.client.post(self.endpoint, json=old).status_code, 404)
+        self.enable()
+        self.assertNotEqual(old["activation"], self.panel["activation"])
+        self.assertEqual(self.client.post(self.endpoint, json=old).status_code, 404)
         self.assertEqual(self.ctx.engine.list(), [])
-        self.ok(active.post(ROUTE, json=self.body))
-        self.assertEqual(len(self.ctx.engine.list()), 1)
+        self.assertEqual(
+            self.ok(self.client.post(self.endpoint, json=self.intent()))["status"], 200
+        )
 
-    def test_changed_or_untrusted_files_reject_requests_before_any_qa_submission(self):
+    def test_changed_or_untrusted_panel_files_reject_before_any_qa_submission(self):
         self.enable()
-        active = self.remount()
-        path = self.ctx.extensions.root / "qa-review" / "main.py"
+        path = self.ctx.extensions.root / "qa-review/panel.js"
         original = path.read_text(encoding="utf-8")
-        path.write_text(original + "\n# changed after review\n", encoding="utf-8")
+        path.write_text(original + "\n// changed after review\n", encoding="utf-8")
         with patch.object(self.ctx.qa, "submit") as submit:
-            self.assertEqual(active.post(ROUTE, json=self.body).status_code, 404)
+            self.assertEqual(self.client.post(self.endpoint, json=self.intent()).status_code, 404)
             path.write_text(original, encoding="utf-8")
             self.ctx.extensions._save_state("qa-review", True, "untrusted")
-            self.assertEqual(active.post(ROUTE, json=self.body).status_code, 404)
+            self.assertEqual(self.client.post(self.endpoint, json=self.intent()).status_code, 404)
             submit.assert_not_called()
-        self.assertEqual(self.ctx.engine.list(), [])
 
-    def test_changed_code_requires_new_activation_and_mounts_immediately(self):
+    def test_panel_requires_read_and_target_render_permission_and_same_origin(self):
         self.enable()
-        active = self.remount()
-        path = self.ctx.extensions.root / "qa-review" / "main.py"
-        path.write_text(
-            "def activate(mio):\n"
-            '    @mio.router.post("/queue")\n'
-            "    def changed():\n"
-            '        return {"version": "new"}\n',
-            encoding="utf-8",
-        )
-        self.assertEqual(active.post(ROUTE, json=self.body).status_code, 404)
-        self.enable()
-        self.assertEqual(self.ok(active.post(ROUTE)), {"version": "new"})
-        self.assertEqual(self.ctx.engine.list(), [])
-
-    def test_extension_route_requires_render_token_and_keeps_local_origin_guard(self):
-        self.enable()
-        active = self.remount()
         self.assertEqual(
-            active.post(
-                ROUTE, json=self.body, headers={"Origin": "https://other.test"}
+            self.client.post(
+                self.endpoint, json=self.intent(), headers={"Origin": "https://other.test"}
             ).status_code,
             403,
         )
-        self.assertEqual(
-            active.post("/api/v2/ext/qa-review/queue", json=self.body).status_code, 401
-        )
-        self.assertEqual(self.ctx.engine.list(), [])
-        for scope, code in (("read", 403), ("write", 403), ("render", 200)):
+        endpoint = self.endpoint.replace("/api/", "/api/v2/")
+        self.assertEqual(self.client.post(endpoint, json=self.intent()).status_code, 401)
+        for scopes, outer, inner in (
+            (["read"], 200, 403),
+            (["write"], 403, None),
+            (["render"], 403, None),
+            (["read", "render"], 200, 200),
+        ):
             token = self.ok(
-                active.post("/api/tokens", json={"name": "QA", "scopes": [scope]}), 201
+                self.client.post("/api/tokens", json={"name": "Review", "scopes": scopes}), 201
             )["token"]
-            self.assertEqual(
-                active.post(
-                    "/api/v2/ext/qa-review/queue",
-                    json=self.body,
-                    headers={"Authorization": f"Bearer {token}"},
-                ).status_code,
-                code,
+            result = self.client.post(
+                endpoint, json=self.intent(), headers={"Authorization": f"Bearer {token}"}
             )
+            self.assertEqual(result.status_code, outer)
+            if inner is not None:
+                self.assertEqual(result.json()["status"], inner)
         self.assertEqual(len(self.ctx.engine.list()), 1)
 
 
@@ -238,7 +196,7 @@ class QACliTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.cli.NoRedirect().redirect_request(None, None, 302, "", {}, "https://remote.test")
 
-    def test_cli_submits_only_explicit_queue_and_preserves_idempotency_key(self):
+    def test_cli_submits_only_explicit_core_qa_without_automatic_adoption(self):
         opener = Mock()
         opener.open.return_value.__enter__ = Mock(return_value=io.BytesIO(b'{"id":"job_qa"}'))
         opener.open.return_value.__exit__ = Mock(return_value=False)
@@ -251,14 +209,10 @@ class QACliTests(unittest.TestCase):
                     0,
                 )
         request = opener.open.call_args.args[0]
-        self.assertEqual(request.full_url, "http://127.0.0.1:8788" + ROUTE)
+        self.assertEqual(request.full_url, "http://127.0.0.1:8788/api/episodes/ep/qa")
         self.assertEqual(request.method, "POST")
         self.assertEqual(
             json.loads(request.data),
-            {
-                "episode_id": "ep",
-                "take_ids": ["take"],
-                "idempotency_key": "retry-1",
-            },
+            {"take_ids": ["take"], "idempotency_key": "retry-1", "auto_adopt": False},
         )
         self.assertEqual(json.loads(output.getvalue()), {"id": "job_qa"})

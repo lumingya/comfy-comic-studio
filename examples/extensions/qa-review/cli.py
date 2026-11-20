@@ -41,19 +41,21 @@ def parser() -> argparse.ArgumentParser:
     queue = commands.add_parser("queue", help="explicitly submit QA for selected takes")
     queue.add_argument("--episode", required=True)
     queue.add_argument("--takes", nargs="+", required=True)
-    queue.add_argument("--key", required=True, help="reuse this key only for the identical request")
+    queue.add_argument(
+        "--key", required=True, help="reuse this key only for the identical request"
+    )
     return root
 
 
 def main(argv=None) -> int:
     args = parser().parse_args(argv)
     body = {
-        "episode_id": args.episode,
         "take_ids": args.takes,
         "idempotency_key": args.key,
+        "auto_adopt": False,
     }
     request = urllib.request.Request(
-        args.url + "/api/ext/qa-review/queue",
+        args.url + "/api/episodes/" + urllib.parse.quote(args.episode, safe="") + "/qa",
         data=json.dumps(body).encode("utf-8"),
         headers={"Content-Type": "application/json"},
         method="POST",
@@ -63,7 +65,10 @@ def main(argv=None) -> int:
         with opener.open(request, timeout=30) as response:
             result = json.load(response)
     except urllib.error.HTTPError as exc:
-        print(f"HTTP {exc.code}: {exc.read().decode('utf-8', errors='replace')}", file=sys.stderr)
+        print(
+            f"HTTP {exc.code}: {exc.read().decode('utf-8', errors='replace')}",
+            file=sys.stderr,
+        )
         return 1
     except (OSError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
