@@ -182,6 +182,98 @@ assembled = mio.assemble(request)
 返回 409。工坊模板后来改动或删除不会让同键重放重复创建。需要另一部作品时使用新键；
 修改输入后也应换键。预览不锁定模板版本，首次装配以提交时模板为准。
 
+### 从分镜生成成品
+
+用 `GET /workshop/storyboards`、`GET /workshop/presets` 和 `GET /workflows` 获取资源 ID。
+以下路径与本节其他接口一样，使用 `/api/v2` 前缀。
+
+- `POST /workshop/tasks` 需要 `write`。传入 `storyboard_id`，可选 `preset_ids`、`title`、
+  `variables` 和 `generation`（`candidates`、`width`、`height`）。出图来源可指定顶层
+  `workflow_id`、`profile_id`、`cloud_channel` 之一，也可使用 `generation` 中的来源字段。
+- `loras` 可列出本次任务的 LoRA 覆写。固定槽位的 `group_key` 和 `key` 来自
+  `GET /workflows/{id}/loras`，并传入 `name` 及需要的 `enabled`、`strength`、`clip`。
+  也可用 `slot_overrides.groups` 按组提交。覆写冻结在主出图配置的首个本地阶段，分幕覆写优先。
+  `/workshop/assemble` 及其预览也接受这两种参数。
+- 设 `auto_start: true` 可提交出图，此时还需要 `render`。同时设 `adopt_first: true`，
+  可为还没有采用图的分幕自动采用第一张候选。响应包含 `series`、`episode`、`job_id`、`job` 和 `start_error`。
+  如果出图规划失败，画册仍已装配，`job_id` 为空，`start_error` 说明原因。
+  修正问题后可用相同请求和 `idempotency_key` 继续。提交成功后的同键重放会返回原作业，
+  作业已删除时返回 404，改变请求内容时返回 409。
+- `GET /episodes/{episode_id}/deliverables` 需要 `read`。返回分幕总数、已有候选图和采用图的分幕数、
+  最近的出图作业和 `ready`。每个分幕都有可读取的采用图时 `ready` 为真。
+- `POST /episodes/{episode_id}/deliverables/export` 需要 `write`，返回 202 和 `job_id`。
+  `format` 支持 `html`、`pdf`、`zip`、`png`，HTML 可传 `template_id`。
+  成品状态查询和导出均可选 `variant_id`。导出使用队列快照，可传 `idempotency_key`，
+  通过 `GET /jobs/{job_id}` 查看进度，完成后用 `GET /export/jobs/{job_id}/file` 下载。
+  查询作业和下载需要 `read`。
+
+### Python SDK：从资源发现到保存成品
+
+高阶方法同样只使用标准库。实现维护在 `python/_runtime.py`，生成器将它合入两份
+`mio_client.py`；请勿直接编辑生成文件。
+
+- `discover_studio(offset=0, limit=50)` 返回分镜分页、预设、工作流、画册模板和云端适配器目录。
+  工作流的具体 LoRA 控件用 `workflow_loras(workflow_id)` 查询。
+- `create_storyboard(body)`、`create_preset(body)` 是生成的普通资源接口，适用于任意脚本、机器人或插件。
+- `generate_workshop_task(body, idempotency_key=..., timeout=1800, poll=2)` 明确启用出图并轮询
+  至作业终态。它不会自动重跑失败作业；调用方要检查 `start_error` 和 `job.state`。
+- `save_episode_deliverable(episode_id, destination, format="html", ...)` 保存 `html/pdf/zip/png`。
+  默认提交异步导出并轮询，也可传 `background=False` 同步取得成品；只有 HTML 接受
+  `template_id`。导出需 `write`，轮询、查询和下载需 `read`。目标文件已存在时抛出
+  `FileExistsError`，不会覆盖。父目录须已存在。
+
+以下示例需要 `read + write + render` 令牌和已配置可用的生成服务。查询与建分镜不出图；
+调用 `generate_workshop_task` 才提交生成，真实云端可能计费。
+
+```python
+import os
+from pathlib import Path
+
+from mio_client import MioClient
+
+mio = MioClient("http://127.0.0.1:8788", token=os.environ["MIO_TOKEN"])
+catalogs = mio.discover_studio()
+workflow_id = "builtin_t2i_sdxl"  # 或使用 catalogs["workflows"] 中已检查过的工作流
+controls = mio.workflow_loras(workflow_id)
+selection = []
+for group in controls["groups"]:
+    if group["supports_independent_toggle"] and group["loras"]:
+        lora = group["loras"][0]
+        selection = [{
+            "group_key": group["key"], "key": lora["key"],
+            "name": lora["name"], "enabled": False,
+        }]
+        break
+board = mio.create_storyboard({
+    "title": "Window light",
+    "panels": [{"order": 0, "overrides": {"raw_prompt": "a {subject} by a window"}}],
+})
+preset = mio.create_preset({
+    "title": "Interior", "entries": [{"key": "subject", "value": "red chair"}],
+})
+task = mio.generate_workshop_task({
+    "storyboard_id": board["id"], "preset_ids": [preset["id"]],
+    "workflow_id": workflow_id, "loras": selection,
+    "generation": {"candidates": 1}, "adopt_first": True,
+}, idempotency_key="my-workshop-intent-001")
+if task["start_error"]:
+    raise RuntimeError(task["start_error"])  # 保留任务与原键，处理原因后显式重试同一请求
+if task["job"]["state"] != "completed":
+    raise RuntimeError(task["job"]["state"])
+saved = mio.save_episode_deliverable(
+    task["episode"]["id"], Path("my-book.html"),
+    template_id="export-atelier", idempotency_key="my-book-html-001",
+)
+print(saved)
+```
+
+新的创作意图使用新任务键；网络响应丢失后重放同一请求保留原键。仅导出另一种格式时使用
+新的导出键。省略 `adopt_first` 会保留人工挑图步骤，所有分幕采用完成后才能直取成品。
+可订阅下文 Webhook 的 `job.completed`，再调用成品查询与保存方法；Webhook 不替代服务端状态校验。
+
+仓库原有 `astrbot_mio` 是同一份生成客户端的消费者示例。扩展或其他平台可直接复用上面的
+通用流程；其 `flow.py` 仍保留原来的一句话创作演示，不需要专属后端接口。
+
 ### 工作流导入检查
 
 `POST /workflows/inspect` 接收 `{"workflow": API图或Mio工作流包}`，返回有类型的格式、绑定来源、
