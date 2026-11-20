@@ -72,7 +72,7 @@ class ApiCase(unittest.TestCase):
         FakeClient.uploads, FakeClient.graphs, FakeClient.mode = [], [], "ok"
         FakeLLM.edit = None
         self.client = TestClient(create_app(self.ctx, serve_web=False), base_url=LOCAL)
-        self.tmp = tmp.name
+        self.tmp = str(self.ctx.data_dir)
 
     # ------------------------------------------------------------ helpers
     def ok(self, response, code=200):

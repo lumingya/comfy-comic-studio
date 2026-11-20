@@ -289,8 +289,6 @@ class ExtensionManager:
         validate_identifier(ext_id)
         regular_path(self.root)
         root = self.root.absolute()
-        if root.resolve() != root:
-            raise ExtensionError("扩展目录不能包含链接或重解析点")
         if self.info(ext_id).builtin:
             raise ExtensionError("内置扩展可以关闭，不能卸载")
         service = self.ctx.extension_services.get(ext_id)
@@ -310,7 +308,7 @@ class ExtensionManager:
         # Deactivation runs extension code. Recheck every deletion target after those hooks,
         # before deleting either area, so a replaced junction cannot redirect removal.
         regular_path(root)
-        if self.root.absolute() != root or root.resolve() != root:
+        if self.root.absolute() != root:
             raise ExtensionError("扩展目录不能包含链接或重解析点")
         validate_tree(folder)
         current_data = tuple(

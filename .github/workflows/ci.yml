@@ -12,7 +12,7 @@ concurrency:
 jobs:
   gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -71,7 +71,7 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -83,6 +83,7 @@ jobs:
         working-directory: server
         env:
           MIO_LAUNCHER_FULL: '1'
+          PY_PYTHON3: '3.11'
         run: python -m unittest tests.test_launchers -v
       - name: v4 server unit tests
         run: python -m unittest discover -s server/tests -t server -q

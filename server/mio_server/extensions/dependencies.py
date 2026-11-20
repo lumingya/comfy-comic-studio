@@ -15,6 +15,7 @@ from packaging.requirements import InvalidRequirement, Requirement
 from packaging.utils import canonicalize_name
 from packaging.version import InvalidVersion, Version
 
+from ..private_store import regular_path
 from .manifest import inside
 
 REQUIREMENTS_FILE = "requirements.txt"
@@ -31,6 +32,11 @@ class RequirementError(ValueError):
 def _requirements(folder: Path) -> tuple[tuple[str, Requirement], ...]:
     candidate = folder / REQUIREMENTS_FILE
     try:
+        if not regular_path(candidate, directory=False):
+            return ()
+    except ValueError:
+        raise RequirementError("requirements.txt 必须是扩展目录中的普通文件") from None
+    try:
         metadata = candidate.lstat()
     except FileNotFoundError:
         return ()
@@ -42,8 +48,6 @@ def _requirements(folder: Path) -> tuple[tuple[str, Requirement], ...]:
     ):
         raise RequirementError("requirements.txt 必须是扩展目录中的普通文件")
     path = inside(folder, REQUIREMENTS_FILE)
-    if path.resolve() != path.absolute():
-        raise RequirementError("requirements.txt 必须位于扩展目录内")
     if path.stat().st_size > MAX_REQUIREMENTS_BYTES:
         raise RequirementError("requirements.txt 超过 64 KB")
     try:
