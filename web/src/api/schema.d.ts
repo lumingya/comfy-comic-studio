@@ -57,6 +57,29 @@ export interface paths {
         patch: operations["patch_series_api_series__series_id__patch"];
         trace?: never;
     };
+    "/api/series/{series_id}/variants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Append Variants
+         * @description Append native variants atomically; an existing ID is never replaced.
+         *
+         *     Retrying identical IDs and content adds nothing. A conflicting ID rejects the whole batch,
+         *     including conflicts within that batch, without exposing submitted or stored field values.
+         */
+        post: operations["append_variants_api_series__series_id__variants_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/series/{series_id}/restore": {
         parameters: {
             query?: never;
@@ -7671,6 +7694,11 @@ export interface components {
             /** Fields */
             fields: string[];
         };
+        /** VariantAppend */
+        VariantAppend: {
+            /** Variants */
+            variants: components["schemas"]["VariantSet-Input"][];
+        };
         /**
          * VariantSet
          * @description Batch variant (the old "character matrix"): the same script rendered with another bible set.
@@ -8674,6 +8702,41 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["SeriesPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Series"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    append_variants_api_series__series_id__variants_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                series_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VariantAppend"];
             };
         };
         responses: {

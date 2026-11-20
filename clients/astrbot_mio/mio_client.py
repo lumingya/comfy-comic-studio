@@ -265,6 +265,13 @@ class MioClient(_Base):
         """DELETE /series/{series_id} — Trash Series."""
         return self._request("DELETE", f"/series/{_q(series_id)}")
 
+    def append_variants(self, series_id: str, body: dict | list | None = None) -> Any:
+        """POST /series/{series_id}/variants — Append Variants.
+
+        Append native variants atomically; an existing ID is never replaced.
+        """
+        return self._request("POST", f"/series/{_q(series_id)}/variants", json=body)
+
     def restore_series(self, series_id: str) -> Any:
         """POST /series/{series_id}/restore — Restore Series."""
         return self._request("POST", f"/series/{_q(series_id)}/restore")

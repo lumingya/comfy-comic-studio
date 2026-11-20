@@ -12504,6 +12504,25 @@
     "title": "VariableSearch",
     "type": "object"
    },
+   "VariantAppend": {
+    "additionalProperties": false,
+    "properties": {
+     "variants": {
+      "items": {
+       "$ref": "#/components/schemas/VariantSet-Input"
+      },
+      "maxItems": 24,
+      "minItems": 1,
+      "title": "Variants",
+      "type": "array"
+     }
+    },
+    "required": [
+     "variants"
+    ],
+    "title": "VariantAppend",
+    "type": "object"
+   },
    "VariantSet-Input": {
     "additionalProperties": false,
     "description": "Batch variant (the old \"character matrix\"): the same script rendered with another bible set.\n\n``characters`` maps a character id to a partial Character patch (appearance, tags, loras…).",
@@ -21949,6 +21968,70 @@
      "body"
     ],
     "x-mio-operation": "POST /series/{series_id}/variables/preview"
+   }
+  },
+  "/series/{series_id}/variants": {
+   "post": {
+    "description": "Append native variants atomically; an existing ID is never replaced.\n\nRetrying identical IDs and content adds nothing. A conflicting ID rejects the whole batch,\nincluding conflicts within that batch, without exposing submitted or stored field values.",
+    "operationId": "append_variants",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "series_id",
+      "required": true,
+      "schema": {
+       "title": "Series Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/VariantAppend"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Series"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Append Variants",
+    "tags": [
+     "series"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "series_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /series/{series_id}/variants"
    }
   },
   "/settings": {

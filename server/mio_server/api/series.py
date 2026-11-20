@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from fastapi import Query, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from ..models import (
     Episode,
@@ -16,13 +17,15 @@ from ..models import (
     SeriesCard,
     SeriesCreate,
     SeriesPatch,
+    StrictModel,
     TakeStatus,
+    VariantSet,
 )
 from ..pipeline import assistant as A
 from ..pipeline import variables as V
 from ..pipeline.compiler import preview as prompt_preview
 from ..pipeline.refs import select_references
-from ..storage import NotFound
+from ..storage import Conflict, NotFound
 from .deps import Ctx
 from .operations import Router as APIRouter
 
@@ -77,6 +80,19 @@ class GenerateEpisode(BaseModel):
     title: str | None = None
 
 
+class VariantAppend(StrictModel):
+    variants: list[VariantSet] = Field(min_length=1, max_length=24)
+
+    @field_validator("variants")
+    @classmethod
+    def finite_json(cls, value: list[VariantSet]) -> list[VariantSet]:
+        try:
+            json.dumps([variant.model_dump(mode="python") for variant in value], allow_nan=False)
+        except ValueError:
+            raise ValueError("variants require finite JSON values") from None
+        return value
+
+
 # ------------------------------------------------------------------ series
 @router.get("/series", response_model=list[SeriesCard])
 def list_series(ctx: Ctx, deleted: bool = False) -> list[SeriesCard]:
@@ -128,6 +144,32 @@ def patch_series(ctx: Ctx, series_id: str, payload: SeriesPatch) -> Series:
         elif "concurrency" in changes:
             ctx.queue.retune(series)
     return series
+
+
+@router.post("/series/{series_id}/variants", response_model=Series)
+def append_variants(ctx: Ctx, series_id: str, body: VariantAppend) -> Series:
+    """Append native variants atomically; an existing ID is never replaced.
+
+    Retrying identical IDs and content adds nothing. A conflicting ID rejects the whole batch,
+    including conflicts within that batch, without exposing submitted or stored field values.
+    """
+
+    def append(series: Series) -> None:
+        known: dict[str, list[VariantSet]] = {}
+        for variant in series.variants:
+            known.setdefault(variant.id, []).append(variant)
+        additions = []
+        for variant in body.variants:
+            existing = known.get(variant.id)
+            if existing:
+                if any(item != variant for item in existing):
+                    raise Conflict("variant ID already exists with different content")
+            else:
+                additions.append(variant)
+                known[variant.id] = [variant]
+        series.variants.extend(additions)
+
+    return ctx.store.update_series(series_id, append)
 
 
 @router.delete("/series/{series_id}", status_code=status.HTTP_204_NO_CONTENT)
