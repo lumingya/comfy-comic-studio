@@ -41,6 +41,35 @@ JOB_COLUMNS = {
     "state_leases": "endpoint token job_id idx epoch base_url data_json",
 }
 OPTIONAL = {"work_checkpoints", "kit_receipts", "workshop_launch_receipts", "sqlite_sequence"}
+JOB_ID = re.compile(r"job_[0-9a-f]{1,60}")
+EXPORT_FILE = re.compile(r"[0-9]{1,19}-[0-9]{1,19}\.bin")
+
+
+def _job_id(value):
+    if not isinstance(value, str) or not JOB_ID.fullmatch(value):
+        raise ValueError("backup contains an invalid job identifier")
+
+
+def _validate_job_ids(store_db, jobs_db):
+    for (identifier,) in jobs_db.execute("SELECT id FROM jobs"):
+        _job_id(identifier)
+    for table in JOB_COLUMNS:
+        if table == "jobs":
+            continue
+        for (identifier,) in jobs_db.execute(f'SELECT job_id FROM "{table}"'):
+            _job_id(identifier)
+    if "workshop_launch_receipts" in tables(store_db):
+        for (identifier,) in store_db.execute("SELECT job_id FROM workshop_launch_receipts"):
+            _job_id(identifier)
+    for table in ("job_items", "job_deliveries"):
+        for (raw,) in jobs_db.execute(
+            f'SELECT i.result_json FROM "{table}" i JOIN jobs j ON j.id = i.job_id '
+            "WHERE j.kind = 'export.render' AND i.result_json IS NOT NULL"
+        ):
+            result = json.loads(raw)
+            name = result.get("file") if isinstance(result, dict) else None
+            if not isinstance(name, str) or not EXPORT_FILE.fullmatch(name):
+                raise ValueError("backup contains an invalid export result filename")
 
 
 def readonly(path: Path):
@@ -121,6 +150,7 @@ def logical_head(store_db, jobs_db) -> str:
 def validate_databases(store_db, jobs_db) -> tuple[dict, dict[str, Asset]]:
     validate_schema(store_db, STORE_COLUMNS)
     validate_schema(jobs_db, JOB_COLUMNS)
+    _validate_job_ids(store_db, jobs_db)
     version = store_db.execute("SELECT value FROM meta WHERE key = 'schema_version'").fetchone()
     if not version or int(version[0]) != SCHEMA_VERSION:
         raise ValueError("backup was made for a different workspace schema")
@@ -152,6 +182,10 @@ def validate_databases(store_db, jobs_db) -> tuple[dict, dict[str, Asset]]:
         for row in store_db.execute(f"SELECT * FROM {table}"):
             raw = row["payload_json"]
             value = model.model_validate_json(raw)
+            if isinstance(value, Episode):
+                for take in value.takes:
+                    if take.job_id is not None:
+                        _job_id(take.job_id)
             if table == "series" and (
                 value.id != row["id"]
                 or value.title != row["title"]

@@ -21,11 +21,15 @@ from .album import media as M
 from .album import templates as T
 from .album.build import episode_book
 from .album.render import AlbumOptions
+from .fs_paths import regular_path_metadata
 from .jobs import ItemSpec, JobConflict
 from .jobs.types import canonical
 from .models import Episode, Series
 from .pipeline import export as X
 from .storage import NotFound
+
+JOB_ID = re.compile(r"job_[0-9a-f]{1,60}")
+JOB_FILE = re.compile(r"[0-9]{1,19}-[0-9]{1,19}\.(?:partial|bin)")
 
 
 def contribution_ref(item):
@@ -95,9 +99,55 @@ class ExportService:
 
     def __init__(self, ctx):
         self.ctx = ctx
-        self.root = ctx.data_dir / "exports"
+        self.root = ctx.data_dir.absolute() / "exports"
+        self._regular_path(self.root, directory=True)
         self.root.mkdir(exist_ok=True)
         self._writing = set()
+
+    @staticmethod
+    def _regular_path(path, *, directory=False):
+        """Reject links, Windows reparse points and non-regular output nodes."""
+        attrs = regular_path_metadata(path, directory=directory, missing=True)
+        if attrs is None:
+            return
+        if not directory and attrs.st_nlink > 1:
+            raise ValueError("export path is not a regular owned path")
+
+    def _job_folder(self, job_id, *, create=False):
+        if not isinstance(job_id, str) or not JOB_ID.fullmatch(job_id):
+            raise NotFound("export job not found")
+        self._regular_path(self.root, directory=True)
+        folder = self.root / job_id
+        self._regular_path(folder, directory=True)
+        if folder.resolve().parent != self.root.resolve():
+            raise ValueError("export directory escapes its root")
+        if create:
+            folder.mkdir(exist_ok=True)
+            self._regular_path(folder, directory=True)
+        return folder
+
+    def _job_file(self, job_id, name):
+        if not isinstance(name, str) or not JOB_FILE.fullmatch(name):
+            raise NotFound("export file not found")
+        path = self._job_folder(job_id) / name
+        self._regular_path(path)
+        return path
+
+    def _unlink_output(self, path):
+        """Cleanup must recheck ownership after cancellation or a writer failure."""
+        try:
+            self._regular_path(self.root, directory=True)
+            if path.parent != self.root:
+                if not self._owned_directory(path.parent):
+                    return
+            self._regular_path(path)
+            path.unlink(missing_ok=True)
+        except (OSError, ValueError):
+            pass
+
+    def _remove_download(self, folder):
+        if folder.name.startswith("download-") and self._owned_directory(folder):
+            shutil.rmtree(folder, ignore_errors=True)
 
     def freeze(self, kind, options, *, require_complete=False):
         ids = options.get("episode_ids") or [options["episode_id"]]
@@ -196,27 +246,31 @@ class ExportService:
 
     def _owned_directory(self, folder):
         try:
+            self._regular_path(self.root, directory=True)
+            self._regular_path(folder, directory=True)
             attrs = folder.lstat()
             return (
-                folder.parent == self.root
+                folder.parent.resolve() == self.root.resolve()
                 and stat.S_ISDIR(attrs.st_mode)
                 and not getattr(attrs, "st_file_attributes", 0) & stat.FILE_ATTRIBUTE_REPARSE_POINT
+                and folder.resolve().parent == self.root.resolve()
             )
-        except OSError:
+        except (OSError, ValueError):
             return False
 
     def cleanup_startup(self):
         """Run under the workspace lease, before starting any worker or download."""
+        self._regular_path(self.root, directory=True)
         for folder in self.root.iterdir():
             if not self._owned_directory(folder):
                 continue
             if folder.name.startswith("download-"):
-                shutil.rmtree(folder, ignore_errors=True)
-            elif re.fullmatch(r"job_[0-9a-f]+", folder.name):
+                self._remove_download(folder)
+            elif JOB_ID.fullmatch(folder.name):
                 self._cleanup_job(folder.name)
 
     def _cleanup_job(self, job_id):
-        folder = self.root / job_id
+        folder = self._job_folder(job_id)
         if not self._owned_directory(folder):
             return
         engine = self.ctx.engine
@@ -241,12 +295,8 @@ class ExportService:
                 if writing_job == job_id:
                     keep.update(f"{stem}.{suffix}" for suffix in ("partial", "bin"))
             for path in folder.iterdir():
-                if path.name not in keep and re.fullmatch(r"\d+-\d+\.(partial|bin)", path.name):
-                    try:
-                        path.unlink(missing_ok=True)
-                    except OSError:
-                        # A still-closing file on Windows can be collected on the next pass.
-                        pass
+                if path.name not in keep and JOB_FILE.fullmatch(path.name):
+                    self._unlink_output(path)
 
     def _view(self, snapshot):
         return SimpleNamespace(
@@ -256,11 +306,14 @@ class ExportService:
         )
 
     def execute(self, item):
-        folder = self.root / item.job_id
-        folder.mkdir(exist_ok=True)
-        partial = folder / f"{item.epoch}-{item.attempt}.partial"
-        final = folder / f"{item.epoch}-{item.attempt}.bin"
-        item.on_abort(lambda: final.unlink(missing_ok=True))
+        if any(
+            type(value) is not int or not 0 <= value < 2**63 for value in (item.epoch, item.attempt)
+        ):
+            raise ValueError("invalid export attempt identity")
+        self._job_folder(item.job_id, create=True)
+        partial = self._job_file(item.job_id, f"{item.epoch}-{item.attempt}.partial")
+        final = self._job_file(item.job_id, f"{item.epoch}-{item.attempt}.bin")
+        item.on_abort(lambda: self._unlink_output(final))
         writing = (item.job_id, final.stem)
         with self.ctx.engine.lock:
             self._writing.add(writing)
@@ -273,13 +326,15 @@ class ExportService:
                 progress=lambda done, total: item.progress(value=done, max=total),
             )
             item.raise_if_cancelled()
+            self._job_file(item.job_id, partial.name)
+            self._job_file(item.job_id, final.name)
             partial.replace(final)
             item.raise_if_cancelled()
             info["file"] = final.name
             return info
         except BaseException:
-            partial.unlink(missing_ok=True)
-            final.unlink(missing_ok=True)
+            self._unlink_output(partial)
+            self._unlink_output(final)
             raise
         finally:
             with self.ctx.engine.lock:
@@ -321,7 +376,7 @@ class ExportService:
                 "headers": headers,
             }
         except BaseException:
-            Path(path).unlink(missing_ok=True)
+            self._unlink_output(Path(path))
             raise
 
     @staticmethod
@@ -519,31 +574,36 @@ class ExportService:
         return "text/html", f"{title}_{tpl.id}.html", {"X-Mio-Export": stats.header()}
 
     def result(self, job_id):
+        self._job_folder(job_id)
         job = self.ctx.engine.get(job_id)
         if job["kind"] != "export.render":
             raise NotFound("不是导出任务")
         if job["state"] != "completed":
             raise JobConflict("导出尚未完成")
         result = job["items"][0].get("result") or {}
-        name = result.get("file", "")
-        if not re.fullmatch(r"\d+-\d+\.bin", name):
+        if not isinstance(result, dict):
             raise NotFound("导出文件不存在")
-        path = self.root / job_id / name
+        name = result.get("file", "")
+        if not isinstance(name, str) or not JOB_FILE.fullmatch(name) or not name.endswith(".bin"):
+            raise NotFound("导出文件不存在")
+        path = self._job_file(job_id, name)
         if not path.is_file():
             raise NotFound("导出文件不存在，请重试导出任务")
         return path, result
 
     def remove(self, job_id):
-        if re.fullmatch(r"job_[0-9a-f]+", job_id):
-            shutil.rmtree(self.root / job_id, ignore_errors=True)
+        folder = self._job_folder(job_id)
+        if self._owned_directory(folder):
+            shutil.rmtree(folder, ignore_errors=True)
 
     def response(self, kind, options):
         from fastapi.responses import FileResponse
         from starlette.background import BackgroundTask
 
-        folder = tempfile.mkdtemp(prefix="download-", dir=self.root)
+        self._regular_path(self.root, directory=True)
+        folder = Path(tempfile.mkdtemp(prefix="download-", dir=self.root))
         try:
-            path = Path(folder) / "export.bin"
+            path = folder / "export.bin"
             info = self.write(self.freeze(kind, options), path)
             return FileResponse(
                 path,
@@ -553,8 +613,8 @@ class ExportService:
                     **info["headers"],
                     "Content-Disposition": f"attachment; filename*=UTF-8''{quote(info['filename'])}",
                 },
-                background=BackgroundTask(shutil.rmtree, folder, True),
+                background=BackgroundTask(self._remove_download, folder),
             )
         except BaseException:
-            shutil.rmtree(folder, ignore_errors=True)
+            self._remove_download(folder)
             raise
