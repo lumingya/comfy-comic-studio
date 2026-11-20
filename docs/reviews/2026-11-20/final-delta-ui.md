@@ -39,3 +39,18 @@ npm --prefix web test -- --run src/pages/settings/WorkflowDefaultLoras.test.tsx 
 ## 尚待实际布局核实的边界
 
 移动端模型强度标签已增加 `overflow-wrap: anywhere`，范围输入采用单列布局。静态检查注意到同一行的 `.lora-toggle-clip span` 尚无相同的换行或最小宽度规则；合法但很长的无空格文件名可能增大 CLIP 标签的最小内容宽度。已把 100 字符文件名加 `.safetensors` 的重现条件交给主 agent，在已有隔离浏览器中核实。该点在本审查范围内没有真实布局证据，未列为已确认的 P2；jsdom 通过不能证明此边界的视觉结果。
+
+## 精确小数权重的独立复核
+
+主 agent 随后确认并修复了一项 P2：工作流原有模型权重 `0.333333`、CLIP 权重 `0.271828` 不满足前端固定 `step="0.05"`；即使用户仅关闭 LoRA、权重没有变化，HTML 原生表单也会因 `stepMismatch` 阻止提交。本审查者没有修改生产代码，独立核对了最终差异并执行新测试。
+
+最终差异仅将模型强度范围输入、模型数字输入和 CLIP 数字输入的 `step` 改为 `any`。`type`、适配器给定的 `min`/`max`、禁用能力判定均保留；两类数字输入的 `Number.isFinite` 保护也未改变。
+
+```text
+npm --prefix web test -- --run src/pages/settings/LoraPrecision.test.tsx
+# 1 passed；测试执行 197 ms。
+```
+
+该测试挂载实际 `LoraToggleList` 和原生 `<form>`，先断言表单有效，再通过真实用户点击关闭开关和提交按钮，确认提交发生一次，关闭状态及两项完整精度权重原样保留。独立 jsdom 原生约束探针也得到：固定步进时两项 `stepMismatch=true`、表单无效；改为 `any` 后两项均无步进错误且表单有效。保留 `min=-5`、`max=5` 后，模型权重 `6` 仍触发 `rangeOverflow`，CLIP 权重 `-6` 仍触发 `rangeUnderflow`，两者均不能通过原生校验。
+
+复核结论：该精度缺陷已修复，未因取消固定步进而取消范围或有限数值保护。本次没有重复全套测试，也没有以主 agent 已跑的 11 项结果冒充本审查者的独立执行记录。
