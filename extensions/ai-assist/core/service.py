@@ -12,6 +12,7 @@ from mio_server.extensions.public import MASK, JobConflict, NotFound, now_iso
 from PIL import Image
 
 from . import providers
+from .attachments import attachment_url, valid_attachment_url
 from .operations import TOOLS, OperationBridge, sanitize
 from .storage import ConversationStore, uid, write_json
 
@@ -131,6 +132,8 @@ class AIAssist:
         if not path.is_file():
             raise NotFound("图片不存在")
         metadata = json.loads(path.read_text(encoding="utf-8"))
+        if valid_attachment_url(metadata.get("url"), attachment_id):
+            metadata["url"] = attachment_url(attachment_id)
         return metadata, path.with_suffix(".bin")
 
     def upload(self, data, filename):
@@ -155,7 +158,7 @@ class AIAssist:
             "name": filename[:160],
             "mime_type": mime,
             "size": len(data),
-            "url": f"/api/ext/{self.mio.id}/attachments/{attachment_id}",
+            "url": attachment_url(attachment_id),
         }
         with self.lock:
             (folder / (attachment_id + ".bin")).write_bytes(data)

@@ -13,6 +13,8 @@ from mio_server.backups.extension_data import extension_data_dir, regular_path
 from mio_server.backups.privacy import clean_url, has_embedded_secret
 from mio_server.storage import Conflict
 
+from .attachments import valid_attachment_url
+
 MAX_AI_SETTINGS = 1024 * 1024
 MAX_AI_CONVERSATION = 32 * 1024 * 1024
 MAX_AI_METADATA = 64 * 1024
@@ -138,7 +140,7 @@ def assistant_files(workspace: Path, *, include_credentials: bool = True):
                 or metadata.get("size") != files[sibling].stat().st_size
                 or metadata.get("mime_type")
                 not in {"image/png", "image/jpeg", "image/webp", "image/gif"}
-                or metadata.get("url") != f"/api/ai-assist/attachments/{path.stem}"
+                or not valid_attachment_url(metadata.get("url"), path.stem)
             ):
                 raise ValueError("AI assistant attachment metadata does not match its image")
             _private(metadata, include_credentials)
