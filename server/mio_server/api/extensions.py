@@ -2,6 +2,7 @@
 
 from . import (
     extension_diagnostics,
+    extension_host_slots,
     extension_private,
     extension_surfaces,
     extension_transport,
@@ -12,6 +13,7 @@ from .operations import Router
 router = Router(tags=["extensions"])
 for module in (
     extension_transport,
+    extension_host_slots,
     extension_surfaces,
     extension_private,
     extension_diagnostics,

@@ -148,7 +148,9 @@ def layout_strip(ctx: Ctx, episode_id: str, body: LayoutRequest) -> Strip:
 
 
 @router.put("/episodes/{episode_id}/strip", response_model=Strip)
-def save_strip(ctx: Ctx, episode_id: str, strip: Strip) -> Strip:
+def save_strip(
+    ctx: Ctx, episode_id: str, strip: Strip, base_revision: int | None = Query(None, ge=0)
+) -> Strip:
     """Hand edits from the canvas (moved / resized lettering, crops, boxes)."""
     ep = ctx.store.get_episode(episode_id)
     known = {p.id for p in ep.panels}
@@ -156,7 +158,9 @@ def save_strip(ctx: Ctx, episode_id: str, strip: Strip) -> Strip:
     if unknown:
         raise ValueError(f"未知的格：{', '.join(sorted(unknown))}")
     strip.height = SP.content_height(strip)
-    ctx.store.update_episode(episode_id, lambda e: setattr(e, "strip", strip))
+    ctx.store.update_episode(
+        episode_id, lambda e: setattr(e, "strip", strip), expected_revision=base_revision
+    )
     return strip
 
 

@@ -1,11 +1,12 @@
 import { Wand2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { usePacingApply, usePacingSuggest } from '../../api/canvas';
+import { usePacingApply } from '../../api/canvas';
 import type { Panel, PacingPreview } from '../../api/types';
 import { toast, toastError } from '../../components/toast';
-import { Modal } from '../../components/ui';
+import { Field, Modal, Select } from '../../components/ui';
 import { parseStops, css } from './backdrop';
+import { PACING_PRESETS, useCanvasPacingSuggest, type PacingPreset } from './canvasAssist';
 
 function Value(props: { field: string; value: unknown }) {
   const { t } = useTranslation();
@@ -32,22 +33,31 @@ export function PacingDialog(props: {
   onApplied: () => void;
 }) {
   const { t } = useTranslation();
-  const suggest = usePacingSuggest(props.episodeId);
+  const suggest = useCanvasPacingSuggest(props.episodeId);
   const apply = usePacingApply(props.episodeId);
   const [preview, setPreview] = useState<PacingPreview | null>(null);
   const [accepted, setAccepted] = useState<Set<string>>(new Set());
+  const [preset, setPreset] = useState<PacingPreset>('auto');
+  const sequence = useRef(0);
   const byId = new Map(props.panels.map((p) => [p.id, p]));
 
   useEffect(() => {
+    const request = ++sequence.current;
+    setPreview(null);
+    setAccepted(new Set());
     if (!props.open) return;
-    suggest.mutate(undefined, {
+    suggest.mutate(preset, {
       onSuccess: (p) => {
+        if (sequence.current !== request) return;
         setPreview(p);
         setAccepted(new Set(p.suggestions.map((s) => s.panel_id)));
       },
       onError: toastError,
     });
-  }, [props.open]);
+    return () => {
+      sequence.current++;
+    };
+  }, [props.open, props.episodeId, preset]);
 
   const toggle = (id: string) => {
     const next = new Set(accepted);
@@ -90,7 +100,7 @@ export function PacingDialog(props: {
             </button>
             <button
               className="btn primary"
-              disabled={!accepted.size || apply.isPending}
+              disabled={!accepted.size || apply.isPending || suggest.isPending}
               onClick={commit}
             >
               <Wand2 size={15} /> {t('pacing.applyN', { count: accepted.size })}
@@ -99,6 +109,14 @@ export function PacingDialog(props: {
         ) : undefined
       }
     >
+      <Field label={t('pacing.preset')}>
+        <Select
+          value={preset}
+          onChange={setPreset}
+          disabled={apply.isPending}
+          options={PACING_PRESETS.map((value) => ({ value, label: t(`pacing.presets.${value}`) }))}
+        />
+      </Field>
       {suggest.isPending ? <span className="spinner" /> : null}
       {preview && !items.length ? <div className="notice">{t('pacing.none')}</div> : null}
       {items.length ? (

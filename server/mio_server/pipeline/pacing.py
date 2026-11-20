@@ -18,11 +18,25 @@ optimistic revision check.  Locked panels are never touched.
 
 from __future__ import annotations
 
+from typing import Literal
+
 from ..models import DialogueKind, Episode, Panel, PanelWidth, Series
 
 FIELDS = ("width_mode", "aspect_ratio", "gap_after", "transition_background", "inset_align")
 MOOD = {"morning": "#f7efe2", "day": None, "evening": "#f4c9a1", "night": "#1b1f2e", "": None}
 GAPS = {"rapid": 24, "normal": 48, "talk": 72, "beat": 96, "scene": 280, "skip": 400, "end": 160}
+PacingPreset = Literal["auto", "compact", "lyrical", "cinematic"]
+
+
+def _preset(want: dict, preset: PacingPreset) -> None:
+    if preset == "compact":
+        want["gap_after"] = max(12, round(want["gap_after"] * 0.5))
+    elif preset == "lyrical":
+        want["gap_after"] = min(1200, round(want["gap_after"] * 1.8))
+    elif preset == "cinematic":
+        want.update(width_mode="full", aspect_ratio="16:9", gap_after=72)
+    elif preset != "auto":
+        raise ValueError(f"Unknown pacing preset: {preset}")
 
 
 def _time(series: Series, panel: Panel) -> str:
@@ -103,7 +117,7 @@ def _transition(series, panel, nxt, background: str) -> tuple[str, str]:
     return "transparent", ""
 
 
-def suggest(series: Series, episode: Episode) -> list[dict]:
+def suggest(series: Series, episode: Episode, preset: PacingPreset = "auto") -> list[dict]:
     """``[{panel_id, order, changes: {field: value}, reasons: [..]}]`` for panels that change."""
     panels = episode.ordered_panels()
     background = episode.strip.background
@@ -132,6 +146,7 @@ def suggest(series: Series, episode: Episode) -> list[dict]:
         want["transition_background"] = trans
         if why_trans:
             reasons.append(why_trans)
+        _preset(want, preset)
         if panel.locked:
             continue
         changes = {}

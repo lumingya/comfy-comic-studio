@@ -249,7 +249,10 @@ class SDKWorkshopFlowTests(ApiCase):
                 )
             self.assertFalse(destination.exists())
         count = len(self.requests)
-        for options in ({"format": "invalid"}, {"format": "pdf", "template_id": "export-monograph"}):
+        for options in (
+            {"format": "invalid"},
+            {"format": "pdf", "template_id": "export-monograph"},
+        ):
             with self.subTest(options=options), self.assertRaises(ValueError):
                 self.mio.save_episode_deliverable(episode_id, destination, **options)
         destination.write_bytes(b"existing work")

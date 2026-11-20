@@ -15,6 +15,9 @@ vi.mock('./StripStage', () => ({
   StripStage: (props: ComponentProps<typeof StripStage>) => (
     <div>
       <button onClick={() => props.onSelect({ type: 'panel', id: 'p0' })}>select panel</button>
+      <button onClick={() => props.onSelect({ type: 'letter', id: 'letter_1' })}>
+        select text
+      </button>
       <button onClick={() => props.onPanelBox('p0', [0, 200, 800, 1267])}>move panel</button>
       <button onClick={() => props.onSelect(null)}>deselect</button>
       <output data-testid="strip">{JSON.stringify(props.strip)}</output>
@@ -179,6 +182,9 @@ describe('canvas save and layout ordering', () => {
     fireEvent.click(screen.getByRole('button', { name: i18n.t('common.save') }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
     expect((calls.find((c) => c.method === 'PUT')!.body as Strip).crops.p0).toEqual(crop);
+    expect(calls.find((c) => c.method === 'PUT')!.url).toBe(
+      `/api/episodes/ep_1/strip?base_revision=${episode.revision}`,
+    );
     await waitFor(() => expect(screen.queryByText(i18n.t('canvas.unsaved'))).toBeNull());
     fireEvent.click(screen.getByRole('button', { name: i18n.t('canvas.cropReset') }));
     expect(strip().crops.p0).toBeUndefined();
@@ -209,5 +215,71 @@ describe('canvas save and layout ordering', () => {
     fireEvent.keyDown(scope, { key: 'z', ctrlKey: true });
     fireEvent.keyDown(scope, { key: 'y', ctrlKey: true });
     expect(width).toHaveValue(900);
+  });
+
+  it('aligns and synchronizes only selected layers in independent undo steps', () => {
+    mount();
+    const strip = (): Strip => JSON.parse(screen.getByTestId('strip').textContent!);
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('canvas.addText') }));
+    const second = strip().lettering[1].id;
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('canvas.addSfx') }));
+    const untouched = strip().lettering[2];
+    fireEvent.click(screen.getByRole('button', { name: 'select text' }));
+    fireEvent.change(screen.getByLabelText(i18n.t('canvas.fontSize')), { target: { value: '24' } });
+    fireEvent.click(screen.getByText(i18n.t('canvas.letterSelection')));
+    fireEvent.click(
+      screen.getByRole('checkbox', { name: i18n.t('canvas.selectLetter', { n: 2, text: '…' }) }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('canvas.syncLetterStyle') }));
+    expect(strip().lettering.find((layer) => layer.id === second)!.font_size).toBe(24);
+    expect(strip().lettering[2]).toEqual(untouched);
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('canvas.undo') }));
+    expect(strip().lettering[1].font_size).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('canvas.redo') }));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('canvas.alignments.left') }));
+    expect(strip().lettering[0].box[0]).toBe(strip().lettering[1].box[0]);
+    expect(strip().lettering[2]).toEqual(untouched);
+  });
+
+  it('discards an avoidance response when the canvas changed while it was pending', async () => {
+    let finish!: (value: unknown) => void;
+    const calls = mount({
+      'POST /api/episodes/ep_1/strip/avoid-lettering': () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    });
+    const strip = (): Strip => JSON.parse(screen.getByTestId('strip').textContent!);
+    fireEvent.click(screen.getByRole('button', { name: 'select text' }));
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('canvas.avoidBubbles') }));
+    await waitFor(() => expect(finish).toBeTypeOf('function'));
+    expect(calls.find((call) => call.url.includes('avoid-lettering'))!.body).toMatchObject({
+      base_revision: episode.revision,
+      layer_ids: ['letter_1'],
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'deselect' }));
+    fireEvent.change(screen.getByLabelText(i18n.t('canvas.width')), { target: { value: '900' } });
+    const moved = structuredClone(episode.strip);
+    moved.lettering[0].box = [20, 400, 260, 500];
+    finish({ revision: episode.revision, strip: moved, unresolved: [] });
+    await waitFor(() => expect(strip().width).toBe(900));
+    expect(strip().lettering[0].box).toEqual(episode.strip.lettering[0].box);
+    expect(calls.filter((call) => call.method === 'PUT')).toHaveLength(0);
+  });
+
+  it('keeps a draft and its undo history after a revision conflict', async () => {
+    mount({
+      'PUT /api/episodes/ep_1/strip': () =>
+        new Response(JSON.stringify({ detail: 'episode changed' }), { status: 409 }),
+    });
+    const width = screen.getByLabelText(i18n.t('canvas.width'));
+    fireEvent.change(width, { target: { value: '900' } });
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('common.save') }));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: i18n.t('common.save') })).toBeEnabled(),
+    );
+    expect(width).toHaveValue(900);
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('canvas.undo') }));
+    expect(width).toHaveValue(800);
   });
 });

@@ -552,12 +552,23 @@ class MioClient(_Base):
         """POST /episodes/{episode_id}/strip/layout — Layout Strip."""
         return self._request("POST", f"/episodes/{_q(episode_id)}/strip/layout", json=body)
 
-    def save_strip(self, episode_id: str, body: dict | list | None = None) -> Any:
+    def save_strip(
+        self,
+        episode_id: str,
+        body: dict | list | None = None,
+        *,
+        base_revision: Any | None = None,
+    ) -> Any:
         """PUT /episodes/{episode_id}/strip — Save Strip.
 
         Hand edits from the canvas (moved / resized lettering, crops, boxes).
         """
-        return self._request("PUT", f"/episodes/{_q(episode_id)}/strip", json=body)
+        return self._request(
+            "PUT",
+            f"/episodes/{_q(episode_id)}/strip",
+            params={"base_revision": base_revision},
+            json=body,
+        )
 
     def strip_png(
         self,
@@ -668,9 +679,20 @@ class MioClient(_Base):
         """
         return self._request("GET", "/lettering/sfx-presets")
 
-    def pacing_suggest(self, episode_id: str) -> Any:
+    def pacing_suggest(self, episode_id: str, *, preset: str | None = None) -> Any:
         """POST /episodes/{episode_id}/pacing/suggest — Pacing Suggest."""
-        return self._request("POST", f"/episodes/{_q(episode_id)}/pacing/suggest")
+        return self._request(
+            "POST",
+            f"/episodes/{_q(episode_id)}/pacing/suggest",
+            params={"preset": preset},
+        )
+
+    def avoid_lettering(self, episode_id: str, body: dict | list | None = None) -> Any:
+        """POST /episodes/{episode_id}/strip/avoid-lettering — Avoid Lettering.
+
+        Preview selected bubble moves without writing the work or invoking image models.
+        """
+        return self._request("POST", f"/episodes/{_q(episode_id)}/strip/avoid-lettering", json=body)
 
     def pacing_apply(self, episode_id: str, body: dict | list | None = None) -> Any:
         """POST /episodes/{episode_id}/pacing/apply — Pacing Apply."""
@@ -1439,6 +1461,10 @@ class MioClient(_Base):
             f"/extensions/{_q(ext_id)}",
             params={"delete_data": delete_data},
         )
+
+    def host_slots(self) -> Any:
+        """GET /extension-host-slots — Host Slots."""
+        return self._request("GET", "/extension-host-slots")
 
     def extension_surfaces(self) -> Any:
         """GET /extension-surfaces — Extension Surfaces."""

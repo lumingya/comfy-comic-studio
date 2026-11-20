@@ -729,6 +729,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/episodes/{episode_id}/strip/avoid-lettering": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Avoid Lettering
+         * @description Preview selected bubble moves without writing the work or invoking image models.
+         */
+        post: operations["avoid_lettering_api_episodes__episode_id__strip_avoid_lettering_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/episodes/{episode_id}/pacing/apply": {
         parameters: {
             query?: never;
@@ -1917,6 +1937,23 @@ export interface paths {
         post?: never;
         /** Remove Extension */
         delete: operations["remove_extension_api_extensions__ext_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/extension-host-slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Host Slots */
+        get: operations["host_slots_api_extension_host_slots_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -4791,6 +4828,83 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** HostPanelAction */
+        HostPanelAction: {
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "open_panel";
+            /** Panel Id */
+            panel_id: string;
+        };
+        /** HostSlotEntry */
+        HostSlotEntry: {
+            /**
+             * Version
+             * @default 1
+             * @constant
+             */
+            version: 1;
+            /** Id */
+            id: string;
+            /**
+             * Slot
+             * @enum {string}
+             */
+            slot: "command_palette" | "context_menu.episode" | "inspector.panel";
+            /** Title */
+            title: string;
+            /**
+             * Icon
+             * @default eye
+             * @enum {string}
+             */
+            icon: "eye" | "book" | "image" | "list" | "spark" | "nodes";
+            /**
+             * Priority
+             * @default 0
+             */
+            priority: number;
+            action: components["schemas"]["HostPanelAction"];
+            /** Extension */
+            extension: string;
+            panel: components["schemas"]["HostSlotPanel"];
+        };
+        /** HostSlotPanel */
+        HostSlotPanel: {
+            /** Id */
+            id: string;
+            /**
+             * Slot
+             * @enum {string}
+             */
+            slot: "episode" | "settings";
+            /** Title */
+            title: string;
+            /**
+             * Entry
+             * @description HTML file inside the extension folder
+             */
+            entry: string;
+            /**
+             * Priority
+             * @default 0
+             */
+            priority: number;
+            /** Requests */
+            requests: components["schemas"]["PanelRequestSpec"][];
+            /** Subscriptions */
+            subscriptions: ("creation.context.changed" | "selection.changed")[];
+            /** Extension */
+            extension: string;
+            /** Url */
+            url: string;
+            /** Activation */
+            activation: string;
+            /** Digest */
+            digest: string;
+        };
         /** IdentityCheck */
         IdentityCheck: {
             /** Character Id */
@@ -5088,6 +5202,22 @@ export interface components {
              * @default
              */
             preset: string;
+        };
+        /** LetteringAvoidPreview */
+        LetteringAvoidPreview: {
+            /** Revision */
+            revision: number;
+            strip: components["schemas"]["Strip-Output"];
+            /** Unresolved */
+            unresolved: string[];
+        };
+        /** LetteringAvoidRequest */
+        LetteringAvoidRequest: {
+            /** Base Revision */
+            base_revision: number;
+            strip: components["schemas"]["Strip-Input"];
+            /** Layer Ids */
+            layer_ids: string[];
         };
         /** LetteringLayer */
         "LetteringLayer-Input": {
@@ -5885,6 +6015,29 @@ export interface components {
             changes: Record<string, unknown>;
             /** Revision */
             revision?: number | null;
+        };
+        /** PanelRequestSpec */
+        PanelRequestSpec: {
+            /** Id */
+            id: string;
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+            /** Path */
+            path: string;
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "read" | "write" | "render" | "admin";
+            /**
+             * Response
+             * @default json
+             * @enum {string}
+             */
+            response: "json" | "image" | "download";
         };
         /** PanelRestore */
         PanelRestore: {
@@ -7960,6 +8113,110 @@ export interface components {
             panels?: components["schemas"]["MioContract_PanelSpec"][];
             /** Floating Surfaces */
             floating_surfaces?: components["schemas"]["MioContract_FloatingSurfaceSpec"][];
+            /** Host Slots */
+            host_slots?: components["schemas"]["MioContract_HostSlotSpec"][];
+        };
+        /** CreationContextV1 */
+        MioContract_CreationContextV1: {
+            /**
+             * Version
+             * @default 1
+             * @constant
+             */
+            version?: 1;
+            /** Seq */
+            seq: number;
+            /** Context Id */
+            context_id: string;
+            /**
+             * Route
+             * @default other
+             * @enum {string}
+             */
+            route?: "script" | "canvas" | "other";
+            /**
+             * Series Id
+             * @default null
+             */
+            series_id?: string | null;
+            /**
+             * Episode Id
+             * @default null
+             */
+            episode_id?: string | null;
+            selection?: components["schemas"]["MioContract_CreationSelection"];
+            revisions?: components["schemas"]["MioContract_CreationRevisions"];
+        };
+        /** CreationEvent */
+        MioContract_CreationEvent: {
+            /** Session */
+            session: string;
+            /**
+             * Version
+             * @constant
+             */
+            version: 1;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:creation:event";
+            /** Activation */
+            activation: string;
+            /** Digest */
+            digest: string;
+            /**
+             * Event
+             * @enum {string}
+             */
+            event: "creation.context.changed" | "selection.changed";
+            context: components["schemas"]["MioContract_CreationContextV1"];
+        };
+        /** CreationRevisions */
+        MioContract_CreationRevisions: {
+            /**
+             * Episode
+             * @default null
+             */
+            episode?: number | null;
+        };
+        /** CreationSelection */
+        MioContract_CreationSelection: {
+            /**
+             * Kind
+             * @default none
+             * @enum {string}
+             */
+            kind?: "none" | "panels";
+            /** Ids */
+            ids?: string[];
+            /**
+             * Truncated
+             * @default false
+             */
+            truncated?: boolean;
+        };
+        /** CreationSubscribe */
+        MioContract_CreationSubscribe: {
+            /** Session */
+            session: string;
+            /**
+             * Version
+             * @constant
+             */
+            version: 1;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:creation:subscribe";
+            /**
+             * Event
+             * @enum {string}
+             */
+            event: "creation.context.changed" | "selection.changed";
+            /** Enabled */
+            enabled: boolean;
         };
         /**
          * EventDecision
@@ -8005,6 +8262,46 @@ export interface components {
              * @default 0
              */
             priority?: number;
+        };
+        /** HostPanelAction */
+        MioContract_HostPanelAction: {
+            /**
+             * Kind
+             * @constant
+             */
+            kind: "open_panel";
+            /** Panel Id */
+            panel_id: string;
+        };
+        /** HostSlotSpec */
+        MioContract_HostSlotSpec: {
+            /**
+             * Version
+             * @default 1
+             * @constant
+             */
+            version?: 1;
+            /** Id */
+            id: string;
+            /**
+             * Slot
+             * @enum {string}
+             */
+            slot: "command_palette" | "context_menu.episode" | "inspector.panel";
+            /** Title */
+            title: string;
+            /**
+             * Icon
+             * @default eye
+             * @enum {string}
+             */
+            icon?: "eye" | "book" | "image" | "list" | "spark" | "nodes";
+            /**
+             * Priority
+             * @default 0
+             */
+            priority?: number;
+            action: components["schemas"]["MioContract_HostPanelAction"];
         };
         MioContract_JsonValue: unknown;
         /** Manifest */
@@ -8089,7 +8386,7 @@ export interface components {
             series_id?: string | null;
         };
         /** PanelFromFrame */
-        MioContract_PanelFromFrame: components["schemas"]["MioContract_PanelReady"] | components["schemas"]["MioContract_PanelRequestMessage"];
+        MioContract_PanelFromFrame: components["schemas"]["MioContract_PanelReady"] | components["schemas"]["MioContract_PanelRequestMessage"] | components["schemas"]["MioContract_PanelReleaseMessage"];
         /** PanelInit */
         MioContract_PanelInit: {
             /** Session */
@@ -8117,6 +8414,43 @@ export interface components {
             responseBytes: number;
             /** Concurrent */
             concurrent: number;
+            /** Imagebytes */
+            imageBytes: number;
+            /** Downloadbytes */
+            downloadBytes: number;
+            /** Mediabytes */
+            mediaBytes: number;
+            /** Mediaitems */
+            mediaItems: number;
+        };
+        /**
+         * PanelMediaMessage
+         * @description Metadata only; a native MessagePort is transferred outside the JSON envelope.
+         */
+        MioContract_PanelMediaMessage: {
+            /** Session */
+            session: string;
+            /**
+             * Version
+             * @constant
+             */
+            version: 1;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:panel:media";
+            /** Rid */
+            rid: string;
+            /** Media Id */
+            media_id: string;
+            /**
+             * Mime
+             * @enum {string}
+             */
+            mime: "image/png" | "image/jpeg" | "image/webp" | "image/gif";
+            /** Bytes */
+            bytes: number;
         };
         /** PanelReady */
         MioContract_PanelReady: {
@@ -8132,6 +8466,23 @@ export interface components {
              * @constant
              */
             type: "mio:panel:ready";
+        };
+        /** PanelReleaseMessage */
+        MioContract_PanelReleaseMessage: {
+            /** Session */
+            session: string;
+            /**
+             * Version
+             * @constant
+             */
+            version: 1;
+            /**
+             * Type
+             * @constant
+             */
+            type: "mio:panel:release";
+            /** Media Id */
+            media_id: string;
         };
         /** PanelRequestMessage */
         MioContract_PanelRequestMessage: {
@@ -8178,6 +8529,12 @@ export interface components {
              * @enum {string}
              */
             scope: "read" | "write" | "render" | "admin";
+            /**
+             * Response
+             * @default json
+             * @enum {string}
+             */
+            response?: "json" | "image" | "download";
         };
         /** PanelResponseMessage */
         MioContract_PanelResponseMessage: {
@@ -8224,9 +8581,11 @@ export interface components {
             priority?: number;
             /** Requests */
             requests?: components["schemas"]["MioContract_PanelRequestSpec"][];
+            /** Subscriptions */
+            subscriptions?: ("creation.context.changed" | "selection.changed")[];
         };
         /** PanelToFrame */
-        MioContract_PanelToFrame: components["schemas"]["MioContract_PanelInit"] | components["schemas"]["MioContract_PanelResponseMessage"];
+        MioContract_PanelToFrame: components["schemas"]["MioContract_PanelInit"] | components["schemas"]["MioContract_PanelResponseMessage"] | components["schemas"]["MioContract_PanelMediaMessage"];
         /** SlicePresetSpec */
         MioContract_SlicePresetSpec: {
             /** Id */
@@ -8536,6 +8895,9 @@ export interface components {
             workspace_to_frame: components["schemas"]["MioContract_WorkspaceToFrame"];
             theme_settings_from_frame: components["schemas"]["MioContract_ThemeSettingsFromFrame"];
             theme_settings_to_frame: components["schemas"]["MioContract_ThemeSettingsToFrame"];
+            creation_context: components["schemas"]["MioContract_CreationContextV1"];
+            creation_subscribe: components["schemas"]["MioContract_CreationSubscribe"];
+            creation_event: components["schemas"]["MioContract_CreationEvent"];
         };
     };
     responses: never;
@@ -9671,7 +10033,9 @@ export interface operations {
     };
     save_strip_api_episodes__episode_id__strip_put: {
         parameters: {
-            query?: never;
+            query?: {
+                base_revision?: number | null;
+            };
             header?: never;
             path: {
                 episode_id: string;
@@ -10045,7 +10409,9 @@ export interface operations {
     };
     pacing_suggest_api_episodes__episode_id__pacing_suggest_post: {
         parameters: {
-            query?: never;
+            query?: {
+                preset?: "auto" | "compact" | "lyrical" | "cinematic";
+            };
             header?: never;
             path: {
                 episode_id: string;
@@ -10061,6 +10427,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PacingPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    avoid_lettering_api_episodes__episode_id__strip_avoid_lettering_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                episode_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LetteringAvoidRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LetteringAvoidPreview"];
                 };
             };
             /** @description Validation Error */
@@ -12469,6 +12870,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    host_slots_api_extension_host_slots_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HostSlotEntry"][];
                 };
             };
         };

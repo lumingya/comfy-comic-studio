@@ -21,9 +21,16 @@ MAX_REQUEST_BYTES = 64 * 1024
 MAX_RESPONSE_BYTES = 1024 * 1024
 MAX_CONCURRENT = 4
 MAX_REQUEST_IDS = 256
+MAX_IMAGE_BYTES = 32 * 1024 * 1024
+MAX_DOWNLOAD_BYTES = 128 * 1024 * 1024
+MAX_MEDIA_BYTES = 64 * 1024 * 1024
+MAX_MEDIA_ITEMS = 8
+MAX_IMAGE_PIXELS = 16 * 1024 * 1024
 THEME_SETTINGS_BYTES = 64 * 1024
 THEME_SETTINGS_TIMEOUT_MS = 30000
 WORKSPACE_EVENT_TIMEOUT_MS = 250
+CREATION_BYTES = 16 * 1024
+CREATION_INTERVAL_MS = 100
 FiniteNumber = Annotated[FiniteFloat, Field(strict=True)]
 
 
@@ -32,6 +39,8 @@ class PanelTag(str, Enum):
     init = "mio:panel:init"
     request = "mio:panel:request"
     response = "mio:panel:response"
+    release = "mio:panel:release"
+    media = "mio:panel:media"
 
 
 class WorkspaceTag(str, Enum):
@@ -81,6 +90,52 @@ class PanelContext(StrictModel):
     series_id: str | None = Field(default=None, max_length=160)
 
 
+class CreationSelection(StrictModel):
+    kind: Literal["none", "panels"] = "none"
+    ids: list[Annotated[str, Field(min_length=1, max_length=128)]] = Field(
+        default_factory=list, max_length=100
+    )
+    truncated: StrictBool = False
+
+
+class CreationRevisions(StrictModel):
+    episode: int | None = Field(default=None, ge=0)
+
+
+class CreationContextV1(StrictModel):
+    version: Literal[1] = 1
+    seq: int = Field(ge=0)
+    context_id: str = Field(min_length=1, max_length=80)
+    route: Literal["script", "canvas", "other"] = "other"
+    series_id: str | None = Field(default=None, max_length=128)
+    episode_id: str | None = Field(default=None, max_length=128)
+    selection: CreationSelection = Field(default_factory=CreationSelection)
+    revisions: CreationRevisions = Field(default_factory=CreationRevisions)
+
+    @field_validator("version", mode="before")
+    @classmethod
+    def exact_version(cls, value):
+        if type(value) is not int:
+            raise ValueError("creation context version requires an integer")
+        return value
+
+
+class CreationSubscribe(SessionMessage):
+    version: Literal[1]
+    type: Literal["mio:creation:subscribe"]
+    event: Literal["creation.context.changed", "selection.changed"]
+    enabled: StrictBool
+
+
+class CreationEvent(SessionMessage):
+    version: Literal[1]
+    type: Literal["mio:creation:event"]
+    activation: str = Field(min_length=1, max_length=100)
+    digest: str = Field(pattern=r"^[0-9a-f]{64}$")
+    event: Literal["creation.context.changed", "selection.changed"]
+    context: CreationContextV1
+
+
 class PanelBridgeRequest(StrictModel):
     activation: str = Field(min_length=1, max_length=100)
     digest: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -128,6 +183,15 @@ class PanelLimits(StrictModel):
     requestBytes: int
     responseBytes: int
     concurrent: int
+    imageBytes: int
+    downloadBytes: int
+    mediaBytes: int
+    mediaItems: int
+
+
+class PanelReleaseMessage(PanelMessage):
+    type: Literal[PanelTag.release]
+    media_id: str = Field(pattern=r"^[A-Za-z0-9_-]{1,80}$")
 
 
 class PanelInit(PanelMessage):
@@ -145,11 +209,21 @@ class PanelResponseMessage(PanelMessage):
     ok: StrictBool
 
 
-class PanelFromFrame(RootModel[PanelReady | PanelRequestMessage]):
+class PanelMediaMessage(PanelMessage):
+    """Metadata only; a native MessagePort is transferred outside the JSON envelope."""
+
+    type: Literal[PanelTag.media]
+    rid: str = Field(pattern=r"^[A-Za-z0-9_-]{1,80}$")
+    media_id: str = Field(pattern=r"^[A-Za-z0-9_-]{1,80}$")
+    mime: Literal["image/png", "image/jpeg", "image/webp", "image/gif"]
+    bytes: int = Field(ge=0, le=MAX_IMAGE_BYTES)
+
+
+class PanelFromFrame(RootModel[PanelReady | PanelRequestMessage | PanelReleaseMessage]):
     pass
 
 
-class PanelToFrame(RootModel[PanelInit | PanelResponseMessage]):
+class PanelToFrame(RootModel[PanelInit | PanelResponseMessage | PanelMediaMessage]):
     pass
 
 
@@ -301,6 +375,9 @@ class PlatformContracts(StrictModel):
     workspace_to_frame: WorkspaceToFrame
     theme_settings_from_frame: ThemeSettingsFromFrame
     theme_settings_to_frame: ThemeSettingsToFrame
+    creation_context: CreationContextV1
+    creation_subscribe: CreationSubscribe
+    creation_event: CreationEvent
 
 
 def _enum_values(kind: type[Enum]) -> dict[str, str]:
@@ -310,6 +387,14 @@ def _enum_values(kind: type[Enum]) -> dict[str, str]:
 def client_constants() -> dict:
     return {
         "contractVersion": CONTRACT_VERSION,
+        "creation": {
+            "version": 1,
+            "subscribe": "mio:creation:subscribe",
+            "event": "mio:creation:event",
+            "events": ["creation.context.changed", "selection.changed"],
+            "maxBytes": CREATION_BYTES,
+            "intervalMs": CREATION_INTERVAL_MS,
+        },
         "panel": {
             "version": PANEL_VERSION,
             "types": _enum_values(PanelTag),
@@ -318,6 +403,11 @@ def client_constants() -> dict:
                 "responseBytes": MAX_RESPONSE_BYTES,
                 "concurrent": MAX_CONCURRENT,
                 "requestIds": MAX_REQUEST_IDS,
+                "imageBytes": MAX_IMAGE_BYTES,
+                "downloadBytes": MAX_DOWNLOAD_BYTES,
+                "mediaBytes": MAX_MEDIA_BYTES,
+                "mediaItems": MAX_MEDIA_ITEMS,
+                "imagePixels": MAX_IMAGE_PIXELS,
             },
         },
         "workspace": {

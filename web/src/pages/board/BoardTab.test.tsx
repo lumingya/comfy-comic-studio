@@ -167,7 +167,7 @@ describe('candidate board updates', () => {
     view.rerender(<BoardTab />);
     expect(cards()).toHaveLength(11);
     expect(document.querySelector('.take.pending')).toHaveClass('running');
-    fireEvent.click(screen.getByRole('switch'));
+    fireEvent.click(screen.getByRole('switch', { name: '显示弃用的候选' }));
     expect(cards()).toHaveLength(12);
     expect(cards()[0]).toHaveClass('rejected');
     fireEvent.click(within(cards()[0]).getByRole('button', { name: '撤销弃用' }));
@@ -178,5 +178,104 @@ describe('candidate board updates', () => {
     pending = { p1: [{ ...pending.p1[0], state: 'uncertain' }] };
     view.rerender(<BoardTab />);
     expect(document.querySelector('.take.pending')).toHaveClass('uncertain');
+  });
+
+  it('filters unadopted panels with stable numbering, ignoring adopted variants', () => {
+    ep.takes[0].status = 'adopted';
+    ep.takes.push({ ...take('variant', 'p1', 'adopted'), variant_id: 'variant-1' });
+    const view = renderWithProviders(<BoardTab />);
+    fireEvent.click(screen.getByRole('switch', { name: '未采用分幕' }));
+    expect(cards()).toHaveLength(8);
+    expect([...document.querySelectorAll('.panel-no')].map((node) => node.textContent)).toEqual([
+      '02',
+      '03',
+    ]);
+    fireEvent.click(imageButton(cards()[0]));
+    fireEvent.keyDown(window, { key: 'a' });
+    expect(actions.mutate).toHaveBeenLastCalledWith(
+      { takeId: 't7', action: 'adopt' },
+      expect.anything(),
+    );
+    ep = {
+      ...ep,
+      takes: ep.takes.map((item) => (item.id === 't7' ? { ...item, status: 'adopted' } : item)),
+    };
+    view.rerender(<BoardTab />);
+    expect(cards()).toHaveLength(4);
+    // After the current panel leaves the filter, Next starts at the next visible candidate.
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(within(screen.getByRole('dialog')).getByRole('presentation')).toHaveAttribute(
+      'src',
+      expect.stringContaining('asset_t11'),
+    );
+    fireEvent(screen.getByRole('dialog'), new Event('cancel', { cancelable: true }));
+    ep = {
+      ...ep,
+      takes: ep.takes.map((item) => (item.id === 't11' ? { ...item, status: 'adopted' } : item)),
+    };
+    view.rerender(<BoardTab />);
+    expect(cards()).toHaveLength(0);
+    expect(screen.getByText('所有分幕均已采用画面')).toBeInTheDocument();
+  });
+
+  it('compares original images within one panel and acts only on the explicitly selected side', () => {
+    renderWithProviders(<BoardTab />);
+    const renders = thumbnailsRendered().length;
+    fireEvent.click(imageButton(cards()[0]));
+    fireEvent.click(screen.getByRole('button', { name: '对比 C' }));
+    const left = screen.getByRole('img', { name: '固定候选' });
+    const right = screen.getByRole('img', { name: '浏览候选' });
+    expect(left).toHaveAttribute('src', expect.stringContaining('asset_t3'));
+    expect(right).toHaveAttribute('src', expect.stringContaining('asset_t2'));
+    expect(actions.mutate).not.toHaveBeenCalled();
+    expect(vi.mocked(assetUrl)).toHaveBeenCalledWith('asset_t3');
+    expect(vi.mocked(assetUrl)).toHaveBeenCalledWith('asset_t2');
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(right).toHaveAttribute('src', expect.stringContaining('asset_t1'));
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(right).toHaveAttribute('src', expect.stringContaining('asset_t2'));
+    expect(left).toHaveAttribute('src', expect.stringContaining('asset_t3'));
+    fireEvent.keyDown(window, { key: '1' });
+    fireEvent.keyDown(window, { key: 'a' });
+    expect(actions.mutate).toHaveBeenLastCalledWith(
+      { takeId: 't3', action: 'adopt' },
+      expect.anything(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: '2 浏览候选' }));
+    fireEvent.keyDown(window, { key: 'x' });
+    expect(actions.mutate).toHaveBeenLastCalledWith(
+      { takeId: 't2', action: 'reject' },
+      expect.anything(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: '原图细节' }));
+    expect(document.querySelector('.board-compare')).toHaveAttribute('data-detail', 'true');
+    const viewport = screen.getByRole('region', { name: '固定候选' });
+    fireEvent.keyDown(viewport, { key: 'ArrowRight' });
+    expect(right).toHaveAttribute('src', expect.stringContaining('asset_t2'));
+    fireEvent.keyDown(window, { key: 'c' });
+    expect(screen.queryByRole('img', { name: '固定候选' })).not.toBeInTheDocument();
+    expect(within(screen.getByRole('dialog')).getByRole('presentation')).toHaveAttribute(
+      'src',
+      expect.stringContaining('asset_t2'),
+    );
+    expect(thumbnailsRendered()).toHaveLength(renders);
+  });
+
+  it('disables comparison when a panel has only one visible candidate', () => {
+    ep.takes = [
+      take('only', 'p0', 'candidate'),
+      take('hidden', 'p0', 'rejected'),
+      {
+        ...take('variant', 'p0', 'candidate'),
+        variant_id: 'variant-1',
+      },
+    ];
+    renderWithProviders(<BoardTab />);
+    fireEvent.click(imageButton(cards()[0]));
+    expect(screen.getByRole('button', { name: '对比 C' })).toBeDisabled();
+    fireEvent.keyDown(window, { key: 'c' });
+    expect(document.querySelector('.board-compare')).not.toBeInTheDocument();
+    expect(actions.mutate).not.toHaveBeenCalled();
   });
 });

@@ -28,7 +28,7 @@ import { AutoSaveGuard, flushDraft } from '../../app/useAutoDraft';
 import { shortcutBlocked } from '../../app/shortcuts';
 import { useAutosave } from '../../app/autosave';
 import { useUI } from '../../app/ui-store';
-import { insertVariable, PromptField, scanVariables } from '../../components/PromptField';
+import { insertVariable, scanVariables } from '../../components/PromptField';
 import { SaveState } from '../../components/SaveState';
 import { toast, toastError } from '../../components/toast';
 import { Field, NumberInput, Select, TagInput, TextArea } from '../../components/ui';
@@ -40,6 +40,10 @@ import { CastEditor, DialogueEditor, PromptPreview } from './parts';
 import { RATIOS, WIDTHS } from './options';
 import { StripFields } from './StripFields';
 import { suggestedVariables, variableTable } from './variables';
+import { biblePromptSources } from './biblePrompts';
+import { PanelVariableFix } from './PanelVariableFix';
+import { ReferencePreview } from './ReferencePreview';
+import { PromptSurface } from '../workshop/PromptSurface';
 
 function parseOverrides(text: string): Record<string, unknown> | null {
   if (!text.trim()) return {};
@@ -102,7 +106,8 @@ export function PanelEditor(props: {
   const [draft, setDraft] = useState<Panel>(props.panel);
   const [nodeText, setNodeText] = useState(() => nodeJson(props.panel));
   const nodeOverrides = parseOverrides(nodeText);
-  const promptRef = useRef<HTMLTextAreaElement>(null);
+  const promptRef = useRef<HTMLDivElement>(null);
+  const [repairName, setRepairName] = useState<string | null>(null);
 
   const autosave = useAutosave(async () => {
     if (parseOverrides(nodeText) === null) throw new Error(t('common.invalidJson'));
@@ -153,11 +158,24 @@ export function PanelEditor(props: {
     );
   };
   const known = useMemo(() => variableTable(series, draft), [series, draft]);
+  const completionKnown = useMemo(
+    () => new Map(Object.entries(known).map(([key, value]) => [key, !!value.trim()])),
+    [known],
+  );
+  const completionSources = useMemo(
+    () =>
+      biblePromptSources(series, draft, {
+        bible: (name) => t('bibleAssist.bibleSource', { name }),
+        series: t('bibleAssist.seriesSource'),
+        panel: t('render.variables'),
+      }),
+    [series, draft, t],
+  );
   const uses = scanVariables(promptValue, known);
   const empty = uses.filter((u) => u.state === 'empty').map((u) => u.name);
   const missing = uses.filter((u) => u.state === 'missing').map((u) => u.name);
   const insert = (name: string) => {
-    const el = promptRef.current;
+    const el = promptRef.current?.querySelector('textarea') ?? null;
     const { text, caret } = insertVariable(el, promptValue, name);
     setPrompt(text);
     requestAnimationFrame(() => {
@@ -470,15 +488,17 @@ export function PanelEditor(props: {
               </button>
             </div>
           </div>
-          <PromptField
-            inputRef={promptRef}
-            value={promptValue}
-            onChange={setPrompt}
-            known={known}
-            minRows={4}
-            aria-label={t('classic.editor.prompt')}
-            placeholder={t('classic.editor.promptPlaceholder')}
-          />
+          <div className="panel-prompt-completion" ref={promptRef}>
+            <PromptSurface
+              value={promptValue}
+              onChange={setPrompt}
+              known={completionKnown}
+              sources={completionSources}
+              foot={false}
+              label={t('classic.editor.prompt')}
+              placeholder={t('classic.editor.promptPlaceholder')}
+            />
+          </div>
           {uses.length ? (
             <div className="var-line">
               <span className={`dot ${missing.length ? 'amber' : ''}`} aria-hidden />
@@ -491,6 +511,20 @@ export function PanelEditor(props: {
                   ? ` · ${t('classic.editor.varsMissing', { names: missing.join(', ') })}`
                   : ''}
               </span>
+            </div>
+          ) : null}
+          {empty.length || missing.length ? (
+            <div className="bible-variable-actions" aria-label={t('bibleAssist.fillTitle')}>
+              {[...empty, ...missing].map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  className="btn small ghost"
+                  onClick={() => setRepairName(name)}
+                >
+                  {t('bibleAssist.fill', { name: `{${name}}` })}
+                </button>
+              ))}
             </div>
           ) : null}
           <div className="var-chips" aria-label={t('classic.editor.insert')}>
@@ -512,6 +546,12 @@ export function PanelEditor(props: {
         <section className="editor-block">
           <div className="editor-label">
             <span>{t('classic.editor.cast')}</span>
+            <ReferencePreview
+              episodeId={episode.id!}
+              panelId={draft.id!}
+              series={series}
+              beforeOpen={() => flushDraft(autosave)}
+            />
           </div>
           <CastPicker
             value={draft.characters}
@@ -559,6 +599,18 @@ export function PanelEditor(props: {
       </div>
 
       {inspectorOpen ? inspector : null}
+
+      {repairName !== null ? (
+        <PanelVariableFix
+          key={repairName}
+          name={repairName}
+          initialValue={known[repairName] ?? ''}
+          episode={episode}
+          panelId={draft.id!}
+          beforeSave={() => flushDraft(autosave)}
+          onClose={() => setRepairName(null)}
+        />
+      ) : null}
 
       <HistoryDialog
         episodeId={episode.id!}

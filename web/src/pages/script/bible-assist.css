@@ -1,0 +1,65 @@
+.bible-assist > .cast-picker,
+.bible-assist > .field {
+  margin-block: 12px;
+}
+
+.cast-search {
+  width: min(100%, 320px);
+  margin-block-end: 8px;
+}
+
+.variable-fix-token {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.bible-variable-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-block: 8px;
+}
+
+.panel-prompt-completion textarea {
+  min-height: 8em;
+}
+
+.bible-reference-list {
+  display: grid;
+  gap: 16px;
+}
+
+.bible-reference-card {
+  display: grid;
+  grid-template-columns: minmax(0, 128px) minmax(0, 1fr);
+  gap: 12px;
+  margin: 0;
+  align-items: start;
+  overflow-wrap: anywhere;
+}
+
+.bible-reference-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 180px;
+  object-fit: contain;
+}
+
+.bible-reference-card figcaption {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+@media (max-width: 420px) {
+  .bible-reference-card {
+    grid-template-columns: minmax(0, 88px) minmax(0, 1fr);
+  }
+}

@@ -3701,6 +3701,184 @@
     "title": "HTTPValidationError",
     "type": "object"
    },
+   "HostPanelAction": {
+    "additionalProperties": false,
+    "properties": {
+     "kind": {
+      "const": "open_panel",
+      "title": "Kind",
+      "type": "string"
+     },
+     "panel_id": {
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$",
+      "title": "Panel Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "kind",
+     "panel_id"
+    ],
+    "title": "HostPanelAction",
+    "type": "object"
+   },
+   "HostSlotEntry": {
+    "additionalProperties": false,
+    "properties": {
+     "action": {
+      "$ref": "#/components/schemas/HostPanelAction"
+     },
+     "extension": {
+      "title": "Extension",
+      "type": "string"
+     },
+     "icon": {
+      "default": "eye",
+      "enum": [
+       "eye",
+       "book",
+       "image",
+       "list",
+       "spark",
+       "nodes"
+      ],
+      "title": "Icon",
+      "type": "string"
+     },
+     "id": {
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$",
+      "title": "Id",
+      "type": "string"
+     },
+     "panel": {
+      "$ref": "#/components/schemas/HostSlotPanel"
+     },
+     "priority": {
+      "default": 0,
+      "maximum": 100.0,
+      "minimum": -100.0,
+      "title": "Priority",
+      "type": "integer"
+     },
+     "slot": {
+      "enum": [
+       "command_palette",
+       "context_menu.episode",
+       "inspector.panel"
+      ],
+      "title": "Slot",
+      "type": "string"
+     },
+     "title": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+     },
+     "version": {
+      "const": 1,
+      "default": 1,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "version",
+     "id",
+     "slot",
+     "title",
+     "icon",
+     "priority",
+     "action",
+     "extension",
+     "panel"
+    ],
+    "title": "HostSlotEntry",
+    "type": "object"
+   },
+   "HostSlotPanel": {
+    "additionalProperties": false,
+    "properties": {
+     "activation": {
+      "title": "Activation",
+      "type": "string"
+     },
+     "digest": {
+      "title": "Digest",
+      "type": "string"
+     },
+     "entry": {
+      "description": "HTML file inside the extension folder",
+      "title": "Entry",
+      "type": "string"
+     },
+     "extension": {
+      "title": "Extension",
+      "type": "string"
+     },
+     "id": {
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$",
+      "title": "Id",
+      "type": "string"
+     },
+     "priority": {
+      "default": 0,
+      "title": "Priority",
+      "type": "integer"
+     },
+     "requests": {
+      "items": {
+       "$ref": "#/components/schemas/PanelRequestSpec"
+      },
+      "maxItems": 32,
+      "title": "Requests",
+      "type": "array"
+     },
+     "slot": {
+      "enum": [
+       "episode",
+       "settings"
+      ],
+      "title": "Slot",
+      "type": "string"
+     },
+     "subscriptions": {
+      "items": {
+       "enum": [
+        "creation.context.changed",
+        "selection.changed"
+       ],
+       "type": "string"
+      },
+      "maxItems": 2,
+      "title": "Subscriptions",
+      "type": "array"
+     },
+     "title": {
+      "title": "Title",
+      "type": "string"
+     },
+     "url": {
+      "title": "Url",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "slot",
+     "title",
+     "entry",
+     "priority",
+     "requests",
+     "subscriptions",
+     "extension",
+     "url",
+     "activation",
+     "digest"
+    ],
+    "title": "HostSlotPanel",
+    "type": "object"
+   },
    "IdentityCheck": {
     "additionalProperties": false,
     "properties": {
@@ -4438,6 +4616,60 @@
     "title": "LetterStyle",
     "type": "object"
    },
+   "LetteringAvoidPreview": {
+    "properties": {
+     "revision": {
+      "title": "Revision",
+      "type": "integer"
+     },
+     "strip": {
+      "$ref": "#/components/schemas/Strip-Output"
+     },
+     "unresolved": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Unresolved",
+      "type": "array"
+     }
+    },
+    "required": [
+     "revision",
+     "strip",
+     "unresolved"
+    ],
+    "title": "LetteringAvoidPreview",
+    "type": "object"
+   },
+   "LetteringAvoidRequest": {
+    "additionalProperties": false,
+    "properties": {
+     "base_revision": {
+      "minimum": 0.0,
+      "title": "Base Revision",
+      "type": "integer"
+     },
+     "layer_ids": {
+      "items": {
+       "type": "string"
+      },
+      "maxItems": 64,
+      "minItems": 1,
+      "title": "Layer Ids",
+      "type": "array"
+     },
+     "strip": {
+      "$ref": "#/components/schemas/Strip-Input"
+     }
+    },
+    "required": [
+     "base_revision",
+     "strip",
+     "layer_ids"
+    ],
+    "title": "LetteringAvoidRequest",
+    "type": "object"
+   },
    "LetteringLayer-Input": {
     "additionalProperties": false,
     "properties": {
@@ -4944,6 +5176,14 @@
       "title": "Floating Surfaces",
       "type": "array"
      },
+     "host_slots": {
+      "items": {
+       "$ref": "#/components/schemas/MioContract_HostSlotSpec"
+      },
+      "maxItems": 32,
+      "title": "Host Slots",
+      "type": "array"
+     },
      "panels": {
       "items": {
        "$ref": "#/components/schemas/MioContract_PanelSpec"
@@ -4975,6 +5215,223 @@
      }
     },
     "title": "Contributes",
+    "type": "object"
+   },
+   "MioContract_CreationContextV1": {
+    "additionalProperties": false,
+    "properties": {
+     "context_id": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Context Id",
+      "type": "string"
+     },
+     "episode_id": {
+      "anyOf": [
+       {
+        "maxLength": 128,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "default": null,
+      "title": "Episode Id"
+     },
+     "revisions": {
+      "$ref": "#/components/schemas/MioContract_CreationRevisions"
+     },
+     "route": {
+      "default": "other",
+      "enum": [
+       "script",
+       "canvas",
+       "other"
+      ],
+      "title": "Route",
+      "type": "string"
+     },
+     "selection": {
+      "$ref": "#/components/schemas/MioContract_CreationSelection"
+     },
+     "seq": {
+      "minimum": 0,
+      "title": "Seq",
+      "type": "integer"
+     },
+     "series_id": {
+      "anyOf": [
+       {
+        "maxLength": 128,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "default": null,
+      "title": "Series Id"
+     },
+     "version": {
+      "const": 1,
+      "default": 1,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "seq",
+     "context_id"
+    ],
+    "title": "CreationContextV1",
+    "type": "object"
+   },
+   "MioContract_CreationEvent": {
+    "additionalProperties": false,
+    "properties": {
+     "activation": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Activation",
+      "type": "string"
+     },
+     "context": {
+      "$ref": "#/components/schemas/MioContract_CreationContextV1"
+     },
+     "digest": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Digest",
+      "type": "string"
+     },
+     "event": {
+      "enum": [
+       "creation.context.changed",
+       "selection.changed"
+      ],
+      "title": "Event",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:creation:event",
+      "title": "Type",
+      "type": "string"
+     },
+     "version": {
+      "const": 1,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "session",
+     "version",
+     "type",
+     "activation",
+     "digest",
+     "event",
+     "context"
+    ],
+    "title": "CreationEvent",
+    "type": "object"
+   },
+   "MioContract_CreationRevisions": {
+    "additionalProperties": false,
+    "properties": {
+     "episode": {
+      "anyOf": [
+       {
+        "minimum": 0,
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "default": null,
+      "title": "Episode"
+     }
+    },
+    "title": "CreationRevisions",
+    "type": "object"
+   },
+   "MioContract_CreationSelection": {
+    "additionalProperties": false,
+    "properties": {
+     "ids": {
+      "items": {
+       "maxLength": 128,
+       "minLength": 1,
+       "type": "string"
+      },
+      "maxItems": 100,
+      "title": "Ids",
+      "type": "array"
+     },
+     "kind": {
+      "default": "none",
+      "enum": [
+       "none",
+       "panels"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "truncated": {
+      "default": false,
+      "title": "Truncated",
+      "type": "boolean"
+     }
+    },
+    "title": "CreationSelection",
+    "type": "object"
+   },
+   "MioContract_CreationSubscribe": {
+    "additionalProperties": false,
+    "properties": {
+     "enabled": {
+      "title": "Enabled",
+      "type": "boolean"
+     },
+     "event": {
+      "enum": [
+       "creation.context.changed",
+       "selection.changed"
+      ],
+      "title": "Event",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:creation:subscribe",
+      "title": "Type",
+      "type": "string"
+     },
+     "version": {
+      "const": 1,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "session",
+     "version",
+     "type",
+     "event",
+     "enabled"
+    ],
+    "title": "CreationSubscribe",
     "type": "object"
    },
    "MioContract_EventDecision": {
@@ -5098,6 +5555,89 @@
      "global"
     ],
     "title": "FloatingSurfaceSpec",
+    "type": "object"
+   },
+   "MioContract_HostPanelAction": {
+    "additionalProperties": false,
+    "properties": {
+     "kind": {
+      "const": "open_panel",
+      "title": "Kind",
+      "type": "string"
+     },
+     "panel_id": {
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$",
+      "title": "Panel Id",
+      "type": "string"
+     }
+    },
+    "required": [
+     "kind",
+     "panel_id"
+    ],
+    "title": "HostPanelAction",
+    "type": "object"
+   },
+   "MioContract_HostSlotSpec": {
+    "additionalProperties": false,
+    "properties": {
+     "action": {
+      "$ref": "#/components/schemas/MioContract_HostPanelAction"
+     },
+     "icon": {
+      "default": "eye",
+      "enum": [
+       "eye",
+       "book",
+       "image",
+       "list",
+       "spark",
+       "nodes"
+      ],
+      "title": "Icon",
+      "type": "string"
+     },
+     "id": {
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,31}$",
+      "title": "Id",
+      "type": "string"
+     },
+     "priority": {
+      "default": 0,
+      "maximum": 100,
+      "minimum": -100,
+      "title": "Priority",
+      "type": "integer"
+     },
+     "slot": {
+      "enum": [
+       "command_palette",
+       "context_menu.episode",
+       "inspector.panel"
+      ],
+      "title": "Slot",
+      "type": "string"
+     },
+     "title": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+     },
+     "version": {
+      "const": 1,
+      "default": 1,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "id",
+     "slot",
+     "title",
+     "action"
+    ],
+    "title": "HostSlotSpec",
     "type": "object"
    },
    "MioContract_JsonValue": {},
@@ -5309,6 +5849,9 @@
      },
      {
       "$ref": "#/components/schemas/MioContract_PanelRequestMessage"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_PanelReleaseMessage"
      }
     ],
     "title": "PanelFromFrame"
@@ -5364,6 +5907,22 @@
       "title": "Concurrent",
       "type": "integer"
      },
+     "downloadBytes": {
+      "title": "Downloadbytes",
+      "type": "integer"
+     },
+     "imageBytes": {
+      "title": "Imagebytes",
+      "type": "integer"
+     },
+     "mediaBytes": {
+      "title": "Mediabytes",
+      "type": "integer"
+     },
+     "mediaItems": {
+      "title": "Mediaitems",
+      "type": "integer"
+     },
      "requestBytes": {
       "title": "Requestbytes",
       "type": "integer"
@@ -5376,9 +5935,72 @@
     "required": [
      "requestBytes",
      "responseBytes",
-     "concurrent"
+     "concurrent",
+     "imageBytes",
+     "downloadBytes",
+     "mediaBytes",
+     "mediaItems"
     ],
     "title": "PanelLimits",
+    "type": "object"
+   },
+   "MioContract_PanelMediaMessage": {
+    "additionalProperties": false,
+    "description": "Metadata only; a native MessagePort is transferred outside the JSON envelope.",
+    "properties": {
+     "bytes": {
+      "maximum": 33554432,
+      "minimum": 0,
+      "title": "Bytes",
+      "type": "integer"
+     },
+     "media_id": {
+      "pattern": "^[A-Za-z0-9_-]{1,80}$",
+      "title": "Media Id",
+      "type": "string"
+     },
+     "mime": {
+      "enum": [
+       "image/png",
+       "image/jpeg",
+       "image/webp",
+       "image/gif"
+      ],
+      "title": "Mime",
+      "type": "string"
+     },
+     "rid": {
+      "pattern": "^[A-Za-z0-9_-]{1,80}$",
+      "title": "Rid",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:panel:media",
+      "title": "Type",
+      "type": "string"
+     },
+     "version": {
+      "const": 1,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "session",
+     "version",
+     "type",
+     "rid",
+     "media_id",
+     "mime",
+     "bytes"
+    ],
+    "title": "PanelMediaMessage",
     "type": "object"
    },
    "MioContract_PanelReady": {
@@ -5407,6 +6029,40 @@
      "type"
     ],
     "title": "PanelReady",
+    "type": "object"
+   },
+   "MioContract_PanelReleaseMessage": {
+    "additionalProperties": false,
+    "properties": {
+     "media_id": {
+      "pattern": "^[A-Za-z0-9_-]{1,80}$",
+      "title": "Media Id",
+      "type": "string"
+     },
+     "session": {
+      "maxLength": 100,
+      "minLength": 1,
+      "title": "Session",
+      "type": "string"
+     },
+     "type": {
+      "const": "mio:panel:release",
+      "title": "Type",
+      "type": "string"
+     },
+     "version": {
+      "const": 1,
+      "title": "Version",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "session",
+     "version",
+     "type",
+     "media_id"
+    ],
+    "title": "PanelReleaseMessage",
     "type": "object"
    },
    "MioContract_PanelRequestMessage": {
@@ -5514,6 +6170,16 @@
       "title": "Path",
       "type": "string"
      },
+     "response": {
+      "default": "json",
+      "enum": [
+       "json",
+       "image",
+       "download"
+      ],
+      "title": "Response",
+      "type": "string"
+     },
      "scope": {
       "enum": [
        "read",
@@ -5615,6 +6281,18 @@
       "title": "Slot",
       "type": "string"
      },
+     "subscriptions": {
+      "items": {
+       "enum": [
+        "creation.context.changed",
+        "selection.changed"
+       ],
+       "type": "string"
+      },
+      "maxItems": 2,
+      "title": "Subscriptions",
+      "type": "array"
+     },
      "title": {
       "title": "Title",
       "type": "string"
@@ -5636,6 +6314,9 @@
      },
      {
       "$ref": "#/components/schemas/MioContract_PanelResponseMessage"
+     },
+     {
+      "$ref": "#/components/schemas/MioContract_PanelMediaMessage"
      }
     ],
     "title": "PanelToFrame"
@@ -5643,6 +6324,15 @@
    "MioContract_PlatformContracts": {
     "additionalProperties": false,
     "properties": {
+     "creation_context": {
+      "$ref": "#/components/schemas/MioContract_CreationContextV1"
+     },
+     "creation_event": {
+      "$ref": "#/components/schemas/MioContract_CreationEvent"
+     },
+     "creation_subscribe": {
+      "$ref": "#/components/schemas/MioContract_CreationSubscribe"
+     },
      "floating_position": {
       "$ref": "#/components/schemas/MioContract_FloatingPosition"
      },
@@ -5692,7 +6382,10 @@
      "workspace_from_frame",
      "workspace_to_frame",
      "theme_settings_from_frame",
-     "theme_settings_to_frame"
+     "theme_settings_to_frame",
+     "creation_context",
+     "creation_subscribe",
+     "creation_event"
     ],
     "title": "PlatformContracts",
     "type": "object"
@@ -7805,6 +8498,62 @@
      "changes"
     ],
     "title": "PanelPatch",
+    "type": "object"
+   },
+   "PanelRequestSpec": {
+    "additionalProperties": false,
+    "properties": {
+     "id": {
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,47}$",
+      "title": "Id",
+      "type": "string"
+     },
+     "method": {
+      "enum": [
+       "GET",
+       "POST",
+       "PUT",
+       "PATCH",
+       "DELETE"
+      ],
+      "title": "Method",
+      "type": "string"
+     },
+     "path": {
+      "maxLength": 240,
+      "minLength": 1,
+      "title": "Path",
+      "type": "string"
+     },
+     "response": {
+      "default": "json",
+      "enum": [
+       "json",
+       "image",
+       "download"
+      ],
+      "title": "Response",
+      "type": "string"
+     },
+     "scope": {
+      "enum": [
+       "read",
+       "write",
+       "render",
+       "admin"
+      ],
+      "title": "Scope",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "method",
+     "path",
+     "scope",
+     "response"
+    ],
+    "title": "PanelRequestSpec",
     "type": "object"
    },
    "PanelRestore": {
@@ -15530,6 +16279,22 @@
        "title": "Episode Id",
        "type": "string"
       }
+     },
+     {
+      "in": "query",
+      "name": "preset",
+      "required": false,
+      "schema": {
+       "default": "auto",
+       "enum": [
+        "auto",
+        "compact",
+        "lyrical",
+        "cinematic"
+       ],
+       "title": "Preset",
+       "type": "string"
+      }
      }
     ],
     "responses": {
@@ -15565,7 +16330,8 @@
     ],
     "x-mio-arguments": [
      "ctx",
-     "episode_id"
+     "episode_id",
+     "preset"
     ],
     "x-mio-operation": "POST /episodes/{episode_id}/pacing/suggest"
    }
@@ -16837,6 +17603,23 @@
        "title": "Episode Id",
        "type": "string"
       }
+     },
+     {
+      "in": "query",
+      "name": "base_revision",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "minimum": 0,
+         "type": "integer"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Base Revision"
+      }
      }
     ],
     "requestBody": {
@@ -16883,7 +17666,8 @@
     "x-mio-arguments": [
      "ctx",
      "episode_id",
-     "strip"
+     "strip",
+     "base_revision"
     ],
     "x-mio-operation": "PUT /episodes/{episode_id}/strip"
    }
@@ -16966,6 +17750,70 @@
      "width"
     ],
     "x-mio-operation": "GET /episodes/{episode_id}/strip.png"
+   }
+  },
+  "/episodes/{episode_id}/strip/avoid-lettering": {
+   "post": {
+    "description": "Preview selected bubble moves without writing the work or invoking image models.",
+    "operationId": "avoid_lettering",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "episode_id",
+      "required": true,
+      "schema": {
+       "title": "Episode Id",
+       "type": "string"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/LetteringAvoidRequest"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/LetteringAvoidPreview"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Avoid Lettering",
+    "tags": [
+     "canvas"
+    ],
+    "x-mio-arguments": [
+     "ctx",
+     "episode_id",
+     "body"
+    ],
+    "x-mio-operation": "POST /episodes/{episode_id}/strip/avoid-lettering"
    }
   },
   "/episodes/{episode_id}/strip/layout": {
@@ -18099,6 +18947,41 @@
      "if_match"
     ],
     "x-mio-operation": "PUT /ext/{ext_id}/preferences"
+   }
+  },
+  "/extension-host-slots": {
+   "get": {
+    "operationId": "host_slots",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "items": {
+          "$ref": "#/components/schemas/HostSlotEntry"
+         },
+         "title": "Response Host Slots",
+         "type": "array"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "summary": "Host Slots",
+    "tags": [
+     "extensions",
+     "extensions"
+    ],
+    "x-mio-arguments": [
+     "ctx"
+    ],
+    "x-mio-operation": "GET /extension-host-slots"
    }
   },
   "/extension-market": {

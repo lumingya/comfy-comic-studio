@@ -1,19 +1,8 @@
 import { useDesktopSelection, type DesktopContext } from '../../app/useDesktopSelection';
-import { shortcutBlocked } from '../../app/shortcuts';
-import {
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Image,
-  Maximize2,
-  Play,
-  RotateCcw,
-  X,
-} from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Check, Image, Maximize2, Play, RotateCcw, X } from 'lucide-react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { assetUrl } from '../../api/client';
 import { useActiveRenders } from '../../api/jobs';
 import { useRender } from '../../api/production';
 import { useTakeAction, type TakeAction } from '../../api/series';
@@ -25,8 +14,7 @@ import { toast, toastError } from '../../components/toast';
 import { Empty, Progress, Switch } from '../../components/ui';
 import { useEpisodeContext } from '../episode/EpisodePage';
 import { BoardRow } from './BoardRow';
-import { BoardZoomDialog } from './BoardZoomDialog';
-import { CloudRequestDetails, TakeParameterSummary } from '../../components/CloudRequestDetails';
+import { BoardReview } from './BoardReview';
 
 export default function BoardTab() {
   const { t } = useTranslation();
@@ -37,6 +25,7 @@ export default function BoardTab() {
   const { mutate: takeAction, mutateAsync: takeActionAsync } = useTakeAction(episode.id);
   const { byPanel } = useActiveRenders(episode.id);
   const [zoomId, setZoomId] = useState<string | null>(null);
+  const [unadoptedOnly, setUnadoptedOnly] = useState(false);
 
   const panels = useMemo(
     () => [...episode.panels].sort((a, b) => a.order - b.order),
@@ -60,18 +49,21 @@ export default function BoardTab() {
     }
     for (const group of byPanel.values())
       group.sort((a, b) => b.created_at.localeCompare(a.created_at));
-    return { byId, byPanel, adoptedPanels: adopted.size, populated };
+    return { byId, byPanel, adopted, adoptedPanels: adopted.size, populated };
   }, [episode.takes]);
   const rows = useMemo(
     () =>
-      panels.map((panel) => {
-        const all = takeIndex.byPanel.get(panel.id) ?? [];
-        return {
-          panel,
-          takes: showRejected ? all : all.filter((take) => take.status !== 'rejected'),
-        };
-      }),
-    [panels, takeIndex, showRejected],
+      panels
+        .map((panel, index) => {
+          const all = takeIndex.byPanel.get(panel.id) ?? [];
+          return {
+            panel,
+            index,
+            takes: showRejected ? all : all.filter((take) => take.status !== 'rejected'),
+          };
+        })
+        .filter(({ panel }) => !unadoptedOnly || !takeIndex.adopted.has(panel.id)),
+    [panels, takeIndex, showRejected, unadoptedOnly],
   );
   const { adoptedPanels } = takeIndex;
   // Zoom works on ids so the dialog follows live data (adopting shows at once).
@@ -100,7 +92,8 @@ export default function BoardTab() {
   const zoomPanel = zoom ? panels.findIndex((p) => p.id === zoom.panel_id) : -1;
   const step = (delta: number) => {
     if (!visible.length) return;
-    const next = visible[(Math.max(zoomIndex, 0) + delta + visible.length) % visible.length];
+    const base = zoomIndex < 0 ? (delta > 0 ? -1 : 0) : zoomIndex;
+    const next = visible[(base + delta + visible.length) % visible.length];
     setZoomId(next.id);
   };
   const missing = useMemo(
@@ -184,30 +177,6 @@ export default function BoardTab() {
     ];
   };
 
-  // In the zoom view: ←/→ browse every take on the board, A adopts, X rejects.
-  useEffect(() => {
-    if (!zoom) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (
-        shortcutBlocked(e, document.getElementById('board-zoom')) ||
-        e.repeat ||
-        e.metaKey ||
-        e.ctrlKey ||
-        e.altKey
-      )
-        return;
-      if (e.key === 'ArrowRight') step(1);
-      else if (e.key === 'ArrowLeft') step(-1);
-      else if (e.key.toLowerCase() === 'a' && zoom.status !== 'adopted') act(zoom, 'adopt');
-      else if (e.key.toLowerCase() === 'x' && zoom.status !== 'rejected') act(zoom, 'reject');
-      else return;
-      e.preventDefault();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  });
-
   if (!panels.length)
     return (
       <Empty
@@ -226,6 +195,11 @@ export default function BoardTab() {
     <div className="board">
       <div className="board-toolbar">
         <Switch checked={showRejected} onChange={setShowRejected} label={t('board.showRejected')} />
+        <Switch
+          checked={unadoptedOnly}
+          onChange={setUnadoptedOnly}
+          label={t('board.unadoptedOnly')}
+        />
         <span className="board-summary small muted">
           {t('series.adoptedOf', { done: adoptedPanels, total: panels.length })}
           <Progress
@@ -278,7 +252,8 @@ export default function BoardTab() {
           </div>
         ) : null}
         <div className="board-rows">
-          {rows.map(({ panel, takes }, index) => (
+          {unadoptedOnly && !rows.length ? <Empty>{t('board.selectionComplete')}</Empty> : null}
+          {rows.map(({ panel, takes, index }) => (
             <BoardRow
               key={panel.id}
               panel={panel}
@@ -309,62 +284,22 @@ export default function BoardTab() {
           onClose={menu.close}
         />
       ) : null}
-      <BoardZoomDialog
-        open={!!zoom}
-        onOpenChange={(o) => !o && setZoomId(null)}
-        title={
-          zoom
-            ? `${t('script.panelNo', { n: zoomPanel + 1 })} · ${zoomIndex + 1} / ${visible.length}`
-            : ''
-        }
-        description={
-          zoom ? (
-            <>
-              {zoom.stage} · <TakeParameterSummary take={zoom} />
-            </>
-          ) : undefined
-        }
-        footer={
-          zoom ? (
-            <>
-              <button className="btn ghost" onClick={() => step(-1)}>
-                <ChevronLeft size={15} /> <span className="kbd">←</span>
-              </button>
-              <button className="btn ghost" onClick={() => step(1)}>
-                <span className="kbd">→</span> <ChevronRight size={15} />
-              </button>
-              <span className="grow" />
-              {zoom.status === 'rejected' ? (
-                <button className="btn" onClick={() => act(zoom, 'restore')}>
-                  {t('board.restore')}
-                </button>
-              ) : (
-                <button className="btn ghost danger" onClick={() => act(zoom, 'reject')}>
-                  <X size={15} /> {t('board.reject')} <span className="kbd">X</span>
-                </button>
-              )}
-              <button
-                className="btn primary"
-                disabled={zoom.status === 'adopted'}
-                onClick={() => act(zoom, 'adopt')}
-              >
-                <Check size={15} />
-                {zoom.status === 'adopted' ? t('board.adopted') : t('board.adopt')}
-                {zoom.status === 'adopted' ? null : <span className="kbd">A</span>}
-              </button>
-            </>
-          ) : null
-        }
-      >
-        {zoom ? (
-          <>
-            <div className="zoom">
-              <img src={assetUrl(zoom.asset_id)} alt="" />
-            </div>
-            <CloudRequestDetails snapshot={zoom.cloud_request} />
-          </>
-        ) : null}
-      </BoardZoomDialog>
+      {zoom ? (
+        <BoardReview
+          take={zoom}
+          takes={takeIndex.byId}
+          panelTakes={(takeIndex.byPanel.get(zoom.panel_id) ?? []).filter(
+            (take) => showRejected || take.status !== 'rejected',
+          )}
+          index={zoomIndex}
+          total={visible.length}
+          panelNumber={zoomPanel + 1}
+          onClose={() => setZoomId(null)}
+          onStep={step}
+          onOpen={setZoomId}
+          onAction={act}
+        />
+      ) : null}
     </div>
   );
 }

@@ -18,6 +18,7 @@ export function BoardZoomDialog(props: {
   description?: ReactNode;
   children: ReactNode;
   footer: ReactNode;
+  comparing?: boolean;
 }) {
   const { t } = useTranslation();
   const ref = useRef<HTMLDialogElement>(null);
@@ -71,7 +72,7 @@ export function BoardZoomDialog(props: {
     <dialog
       ref={ref}
       id="board-zoom"
-      className="dialog lg board-zoom-dialog"
+      className={`dialog lg board-zoom-dialog${props.comparing ? ' board-zoom-comparing' : ''}`}
       aria-labelledby={titleId}
       aria-describedby={props.description ? descriptionId : undefined}
       onCancel={(event) => {

@@ -5,16 +5,16 @@ import { PROMPT_TOKEN, variableUsage } from './PromptSurface';
 const MAX_DEPTH = 4; // Same substitution depth as the server.
 const PREVIEW_LENGTH = 12_000;
 
-type PreviewPart = { text: string; missing?: 'unknown' | 'empty' };
+type PreviewPart = { text: string; missing?: 'unknown' | 'empty'; name?: string };
 
 function expandForPreview(text: string, values: ReadonlyMap<string, string>): PreviewPart[] {
   const parts: PreviewPart[] = [];
   let remaining = PREVIEW_LENGTH;
   let truncated = false;
-  const append = (value: string, missing?: PreviewPart['missing']) => {
+  const append = (value: string, missing?: PreviewPart['missing'], name?: string) => {
     if (!value) return;
     if (value.length > remaining) truncated = true;
-    if (remaining > 0) parts.push({ text: value.slice(0, remaining), missing });
+    if (remaining > 0) parts.push({ text: value.slice(0, remaining), missing, name });
     remaining -= value.length;
   };
   const walk = (input: string, depth: number) => {
@@ -25,7 +25,7 @@ function expandForPreview(text: string, values: ReadonlyMap<string, string>): Pr
       if (!name) append(token[0]);
       else {
         const value = values.get(name.trim());
-        if (!value?.trim()) append(token, value === undefined ? 'unknown' : 'empty');
+        if (!value?.trim()) append(token, value === undefined ? 'unknown' : 'empty', name.trim());
         else if (depth < MAX_DEPTH) walk(value, depth + 1);
         else append(value.replaceAll('{{', '{').replaceAll('}}', '}'));
       }
@@ -44,11 +44,13 @@ export function FrameVariablePreview({
   negative,
   caption,
   values,
+  onResolve,
 }: {
   prompt: string;
   negative: string;
   caption: string;
   values: ReadonlyMap<string, string>;
+  onResolve?: (name: string) => void;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -75,19 +77,30 @@ export function FrameVariablePreview({
               <Fragment key={label}>
                 <dt>{label}</dt>
                 <dd className="prompt-resolved">
-                  {expandForPreview(text, values).map((part, i) =>
-                    part.missing ? (
+                  {expandForPreview(text, values).map((part, i) => {
+                    if (!part.missing) return <Fragment key={i}>{part.text}</Fragment>;
+                    const token = (
                       <mark
-                        key={i}
                         className={`${part.missing}-token`}
                         title={t(`ws.story.variablePreview.${part.missing}`)}
                       >
                         {part.text}
                       </mark>
+                    );
+                    return onResolve && part.name ? (
+                      <button
+                        key={i}
+                        type="button"
+                        className="variable-fix-token"
+                        aria-label={t('bibleAssist.fill', { name: `{${part.name}}` })}
+                        onClick={() => onResolve(part.name!)}
+                      >
+                        {token}
+                      </button>
                     ) : (
-                      <Fragment key={i}>{part.text}</Fragment>
-                    ),
-                  )}
+                      <Fragment key={i}>{token}</Fragment>
+                    );
+                  })}
                 </dd>
               </Fragment>
             ))}

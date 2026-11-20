@@ -34,6 +34,7 @@ import { CreationKitImport } from './CreationKitImport';
 import { CheckpointDialog } from './CheckpointDialog';
 import { EpisodeOrganizeMenu } from '../longform/EpisodeOrganizeMenu';
 import { PromptSurface } from './PromptSurface';
+import { EpisodeExtensionMenu } from '../../extensions/hostSlots';
 import StoryboardEditor, { useKnownVariables, usePromptSources } from './StoryboardEditor';
 import {
   useWorkshopSource,
@@ -537,6 +538,7 @@ export function TaskDetail() {
       <Navigate to={workshopHref(`/workshop/story/${episode.data.id}`, series.data.id)} replace />
     );
   const script = pathname.endsWith('/script');
+  const board = pathname.endsWith('/board');
   const base = `/workshop/assembly/${episodeId}/board`;
   return (
     <WorkshopFrame
@@ -566,8 +568,8 @@ export function TaskDetail() {
         <div className="segmented" role="group" aria-label={t('ws.task.views')}>
           <button
             type="button"
-            className={script ? '' : 'active'}
-            aria-pressed={!script}
+            className={board ? 'active' : ''}
+            aria-pressed={board}
             onClick={() => navigate(base)}
           >
             {t('ws.task.candidates')}
@@ -580,6 +582,7 @@ export function TaskDetail() {
           >
             {t('ws.task.script')}
           </button>
+          <EpisodeExtensionMenu episodeId={episode.data.id} />
         </div>
       </div>
       <div className="workspace-body workshop-body">

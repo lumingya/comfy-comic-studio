@@ -1,11 +1,9 @@
 import {
-  CheckCircle2,
   LayoutTemplate,
   Plus,
   Redo2,
   Save,
   Sparkles,
-  TriangleAlert,
   Undo2,
   Wand2,
   ZoomIn,
@@ -13,9 +11,8 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useStripReport } from '../../api/canvas';
 import { useLayoutStrip, useSaveStrip } from '../../api/production';
-import type { LetteringLayer, Strip } from '../../api/types';
+import type { LetteringLayer } from '../../api/types';
 import { shortcutBlocked } from '../../app/shortcuts';
 import { useUnsavedGuard } from '../../app/autosave';
 import { toast, toastError } from '../../components/toast';
@@ -25,67 +22,27 @@ import { pickAdopted } from './adopted';
 import { LetterInspector } from './LetterInspector';
 import { PacingDialog } from './PacingDialog';
 import { PanelInspector } from './PanelInspector';
-import { DEFAULT_STYLE } from './sfx';
+import { usePublishCreationContext } from '../../extensions/creationContext';
+import { ReadabilityBadge } from './CanvasReadability';
+import {
+  alignLetters,
+  newLayer,
+  selectedLetterIds,
+  syncLetterStyle,
+  toggleLetter,
+} from './canvasTools';
+import { LetterTools } from './LetterTools';
+import { useAvoidLettering } from './canvasAssist';
 import { StripStage, type Selection } from './StripStage';
 import { useStripHistory } from './useStripHistory';
 
 type Box = [number, number, number, number];
 
-function newLayer(strip: Strip, kind: 'caption' | 'sfx'): LetteringLayer {
-  const y = Math.max(40, Math.round(strip.height / 2));
-  const sfx = kind === 'sfx';
-  return {
-    id: `letter_${Date.now().toString(16)}_${Math.random().toString(16).slice(2)}`,
-    panel_id: null,
-    kind,
-    text: sfx ? '砰！' : '…',
-    speaker_id: null,
-    box: sfx ? [300, y, 500, y + 90] : [40, y, 320, y + 70],
-    tail_to: null,
-    vertical: false,
-    font_size: null,
-    locked: true,
-    bridge_to: null,
-    style: sfx ? DEFAULT_STYLE : null,
-  };
-}
-
-function ReadabilityBadge(props: { episodeId: string; bust: string }) {
-  const { t } = useTranslation();
-  const q = useStripReport(props.episodeId, props.bust);
-  const r = q.data;
-  if (!r) return null;
-  if (r.readable)
-    return (
-      <span className="chip ok" title={t('canvas.readableHint')}>
-        <CheckCircle2 size={13} /> {t('canvas.readable')}
-      </span>
-    );
-  const parts = (
-    [
-      ['missing', r.missing.length],
-      ['face_hits', r.face_hits.length],
-      ['overlaps', r.overlaps.length],
-      ['order', r.order.length],
-      ['outside', r.outside.length],
-      ['cut', r.cut.length],
-    ] as const
-  ).filter(([, n]) => n);
-  return (
-    <span
-      className="chip warn"
-      title={parts.map(([k, n]) => `${t(`canvas.problems.${k}`)} × ${n}`).join('\n')}
-    >
-      <TriangleAlert size={13} /> {t('canvas.problemsN', { count: r.problems })}
-    </span>
-  );
-}
-
 export default function CanvasTab() {
   const { t } = useTranslation();
   const { episode, series } = useEpisodeContext();
   const layout = useLayoutStrip(episode.id);
-  const save = useSaveStrip(episode.id);
+  const save = useSaveStrip(episode.id, episode.revision);
   const history = useStripHistory(episode.strip);
   const { strip, dirty, change } = history;
   const saving = useRef(false);
@@ -93,6 +50,9 @@ export default function CanvasTab() {
   const [selection, setSelection] = useState<Selection>(null);
   const [scale, setScale] = useState(0.6);
   const [pacing, setPacing] = useState(false);
+  const avoid = useAvoidLettering(episode.id);
+  const revision = useRef(episode.revision);
+  revision.current = episode.revision;
   useUnsavedGuard(dirty || save.isPending, true);
 
   // A new server copy (auto layout, pacing) replaces the canvas — but never unsaved edits.
@@ -123,8 +83,41 @@ export default function CanvasTab() {
   const images = useMemo(() => pickAdopted(episode.takes), [episode.takes]);
   const panelId =
     selection?.type === 'panel' && strip.panel_boxes[selection.id] ? selection.id : null;
+  usePublishCreationContext({
+    route: 'canvas',
+    series_id: series.id,
+    episode_id: episode.id,
+    panel_ids: panelId ? [panelId] : [],
+    revision: episode.revision,
+  });
   const letter =
     selection?.type === 'letter' ? strip.lettering.find((l) => l.id === selection.id) : undefined;
+  const selectedIds = selectedLetterIds(selection).filter((id) =>
+    strip.lettering.some((l) => l.id === id),
+  );
+  const avoidSelected = () => {
+    if (saving.current || layingOut.current || avoid.isPending) return;
+    const snapshot = history.current();
+    const ids = snapshot.lettering
+      .filter((l) => selectedIds.includes(l.id) && (l.kind === 'speech' || l.kind === 'thought'))
+      .map((l) => l.id);
+    if (!ids.length) return;
+    avoid.mutate(
+      { base_revision: revision.current, strip: snapshot, layer_ids: ids },
+      {
+        onSuccess: (preview) => {
+          if (history.current() !== snapshot || revision.current !== preview.revision) {
+            toast(t('canvas.avoidStale'));
+            return;
+          }
+          change(preview.strip);
+          if (preview.unresolved.length)
+            toast(t('canvas.avoidUnresolved', { count: preview.unresolved.length }));
+        },
+        onError: toastError,
+      },
+    );
+  };
   const editLetter = (id: string, patch: Partial<LetteringLayer>) =>
     change({
       ...strip,
@@ -292,15 +285,31 @@ export default function CanvasTab() {
         </div>
         <aside className="canvas-inspector card">
           {letter ? (
-            <LetterInspector
-              letter={letter}
-              series={series}
-              onEdit={(patch) => editLetter(letter.id, patch)}
-              onDelete={() => {
-                change({ ...strip, lettering: strip.lettering.filter((l) => l.id !== letter.id) });
-                setSelection(null);
-              }}
-            />
+            <>
+              <LetterInspector
+                letter={letter}
+                series={series}
+                onEdit={(patch) => editLetter(letter.id, patch)}
+                onDelete={() => {
+                  change({
+                    ...strip,
+                    lettering: strip.lettering.filter((l) => l.id !== letter.id),
+                  });
+                  setSelection(null);
+                }}
+              />
+              <LetterTools
+                strip={strip}
+                selected={selectedIds}
+                source={letter}
+                onToggle={(id) => setSelection(toggleLetter(selection, id, true))}
+                onAlign={(alignment) => change(alignLetters(strip, selectedIds, alignment))}
+                onSync={() => change(syncLetterStyle(strip, selectedIds, letter))}
+                onAvoid={avoidSelected}
+                avoiding={avoid.isPending}
+                disabled={save.isPending || layout.isPending}
+              />
+            </>
           ) : panelId ? (
             <PanelInspector
               key={panelId}

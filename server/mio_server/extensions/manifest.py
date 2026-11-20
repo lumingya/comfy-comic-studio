@@ -15,7 +15,7 @@ import os
 from pathlib import Path, PurePosixPath
 from typing import Annotated, Literal
 
-from pydantic import Field, StrictInt, ValidationError, field_validator
+from pydantic import Field, StrictInt, ValidationError, field_validator, model_validator
 
 from ..models import StrictModel
 
@@ -38,6 +38,15 @@ class PanelRequestSpec(StrictModel):
     method: Literal["GET", "POST", "PUT", "PATCH", "DELETE"]
     path: str = Field(min_length=1, max_length=240)
     scope: Literal["read", "write", "render", "admin"]
+    response: Literal["json", "image", "download"] = "json"
+
+    @model_validator(mode="after")
+    def binary_request_kind(self):
+        if self.response == "image" and (self.method != "GET" or self.scope != "read"):
+            raise ValueError("panel images require a read-only GET operation")
+        if self.response == "download" and self.method not in {"GET", "POST"}:
+            raise ValueError("panel downloads require a GET or POST operation")
+        return self
 
     @field_validator("path")
     @classmethod
@@ -61,6 +70,19 @@ class PanelSpec(StrictModel):
     entry: str = Field(description="HTML file inside the extension folder")
     priority: int = Field(default=0, strict=True)
     requests: list[PanelRequestSpec] = Field(default_factory=list, max_length=32)
+    subscriptions: list[Literal["creation.context.changed", "selection.changed"]] = Field(
+        default_factory=list, max_length=2
+    )
+
+    @model_validator(mode="after")
+    def read_only_subscriptions(self):
+        if len(set(self.subscriptions)) != len(self.subscriptions):
+            raise ValueError("panel subscriptions must be unique")
+        if self.subscriptions and not any(
+            request.method == "GET" and request.scope == "read" for request in self.requests
+        ):
+            raise ValueError("creation subscriptions require a declared read-only operation")
+        return self
 
     @field_validator("requests")
     @classmethod
@@ -109,6 +131,35 @@ class FloatingSurfaceSpec(StrictModel):
         return value
 
 
+class HostPanelAction(StrictModel):
+    kind: Literal["open_panel"]
+    panel_id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]{0,31}$")
+
+
+class HostSlotSpec(StrictModel):
+    version: Literal[1] = 1
+    id: str = Field(pattern=r"^[a-z0-9][a-z0-9_-]{0,31}$")
+    slot: Literal["command_palette", "context_menu.episode", "inspector.panel"]
+    title: str = Field(min_length=1, max_length=80)
+    icon: Literal["eye", "book", "image", "list", "spark", "nodes"] = "eye"
+    priority: int = Field(default=0, ge=-100, le=100, strict=True)
+    action: HostPanelAction
+
+    @field_validator("version", mode="before")
+    @classmethod
+    def exact_version(cls, value):
+        if type(value) is not int:
+            raise ValueError("host slot version requires an integer")
+        return value
+
+    @field_validator("title")
+    @classmethod
+    def nonblank_title(cls, value):
+        if not value.strip():
+            raise ValueError("host slot title cannot be blank")
+        return value
+
+
 class Contributes(StrictModel):
     themes: list[str] = Field(default_factory=list, description="Theme JSON files")
     album_templates: list[str] = Field(default_factory=list, description="Album template JSON")
@@ -116,6 +167,20 @@ class Contributes(StrictModel):
     slice_presets: list[SlicePresetSpec] = Field(default_factory=list)
     panels: list[PanelSpec] = Field(default_factory=list)
     floating_surfaces: list[FloatingSurfaceSpec] = Field(default_factory=list)
+    host_slots: list[HostSlotSpec] = Field(default_factory=list, max_length=32)
+
+    @model_validator(mode="after")
+    def owned_host_panels(self):
+        if len({panel.id for panel in self.panels}) != len(self.panels):
+            raise ValueError("panel IDs must be unique within the extension")
+        if len({slot.id for slot in self.host_slots}) != len(self.host_slots):
+            raise ValueError("host slot IDs must be unique within the extension")
+        panels = {panel.id: panel for panel in self.panels}
+        for slot in self.host_slots:
+            panel = panels.get(slot.action.panel_id)
+            if panel is None or panel.slot != "episode":
+                raise ValueError("host slots must open this extension's declared episode panel")
+        return self
 
     @field_validator("floating_surfaces")
     @classmethod

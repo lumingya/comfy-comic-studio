@@ -499,6 +499,7 @@ export interface ExtensionPanel {
   activation?: string;
   digest?: string;
   requests?: PanelRequest[];
+  subscriptions?: ('creation.context.changed' | 'selection.changed')[];
 }
 
 export type PanelRequest = PanelRequestSpec;

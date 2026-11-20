@@ -6,6 +6,7 @@ import type { Character, PanelCharacter, Series } from '../../api/types';
 import { Avatar } from '../../components/avatar';
 import { toast, toastError } from '../../components/toast';
 import { TextInput } from '../../components/ui';
+import './bible-assist.css';
 
 /** Same shape as the server's ids (`char_<12 hex>`). */
 const rid = (prefix: string) =>
@@ -42,7 +43,15 @@ export function CastPicker(props: {
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
   const [look, setLook] = useState('');
+  const [search, setSearch] = useState('');
   const chars = props.series.bible.characters;
+  const needle = search.trim().toLocaleLowerCase();
+  const matches = chars.filter((character) =>
+    [character.name, character.trigger, ...character.tag_description]
+      .join(' ')
+      .toLocaleLowerCase()
+      .includes(needle),
+  );
   const on = new Set(props.value.map((c) => c.character_id));
 
   const toggle = (id: string) =>
@@ -86,8 +95,31 @@ export function CastPicker(props: {
 
   return (
     <div className="cast-picker">
+      {chars.length ? (
+        <input
+          type="search"
+          className="cast-search"
+          value={search}
+          aria-label={t('bibleAssist.searchCast')}
+          placeholder={t('bibleAssist.searchCast')}
+          onChange={(event) => setSearch(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.nativeEvent.isComposing) return;
+            if (event.key === 'Enter' && matches.length === 1) {
+              event.preventDefault();
+              event.stopPropagation();
+              if (!on.has(matches[0].id!)) toggle(matches[0].id!);
+              setSearch('');
+            } else if (event.key === 'Escape' && search) {
+              event.preventDefault();
+              event.stopPropagation();
+              setSearch('');
+            }
+          }}
+        />
+      ) : null}
       <div className="cast-chips">
-        {chars.map((c) => (
+        {matches.map((c) => (
           <button
             key={c.id}
             type="button"
@@ -107,6 +139,7 @@ export function CastPicker(props: {
           </button>
         ) : null}
       </div>
+      {needle && !matches.length ? <p className="field-hint">{t('bibleAssist.noCast')}</p> : null}
       {!chars.length && !adding ? (
         <p className="field-hint">{t('classic.cast.emptyHint')}</p>
       ) : null}

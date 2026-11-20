@@ -81,12 +81,18 @@ export function useLayoutStrip(episodeId: string) {
   });
 }
 
-export function useSaveStrip(episodeId: string) {
+export function useSaveStrip(episodeId: string, baseRevision?: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (strip: Strip) =>
       data(
-        await api.PUT('/api/episodes/{episode_id}/strip', { params: ep(episodeId), body: strip }),
+        await api.PUT('/api/episodes/{episode_id}/strip', {
+          params: {
+            ...ep(episodeId),
+            query: baseRevision === undefined ? undefined : { base_revision: baseRevision },
+          },
+          body: strip,
+        }),
       ),
     onSuccess: () => qc.invalidateQueries({ queryKey: keys.episode(episodeId) }),
   });

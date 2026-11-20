@@ -7,13 +7,14 @@ from typing import Literal
 from fastapi import Query, Response
 from pydantic import BaseModel, ConfigDict, Field
 
-from ..models import Episode, LetterStyle, PanelWidth
+from ..models import Episode, LetterStyle, PanelWidth, Strip
+from ..pipeline import canvas_assist as CA
 from ..pipeline import composition as CP
 from ..pipeline import pacing as PC
 from ..pipeline import readability as RD
 from ..pipeline.compiler import canvas_size
 from ..pipeline.reading import ReadingPreview
-from ..storage import NotFound
+from ..storage import Conflict, NotFound
 from .deps import Ctx
 from .operations import Router as APIRouter
 
@@ -89,10 +90,43 @@ def sfx_presets(ctx: Ctx) -> dict[str, LetterStyle]:
 
 
 @router.post("/episodes/{episode_id}/pacing/suggest", response_model=PacingPreview)
-def pacing_suggest(ctx: Ctx, episode_id: str) -> PacingPreview:
+def pacing_suggest(ctx: Ctx, episode_id: str, preset: PC.PacingPreset = "auto") -> PacingPreview:
     ep = ctx.store.get_episode(episode_id)
     series = ctx.store.get_series(ep.series_id)
-    return PacingPreview(revision=ep.revision, suggestions=PC.suggest(series, ep))
+    return PacingPreview(revision=ep.revision, suggestions=PC.suggest(series, ep, preset))
+
+
+class LetteringAvoidRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    base_revision: int = Field(ge=0)
+    strip: Strip
+    layer_ids: list[str] = Field(min_length=1, max_length=64)
+
+
+class LetteringAvoidPreview(BaseModel):
+    revision: int
+    strip: Strip
+    unresolved: list[str]
+
+
+@router.post("/episodes/{episode_id}/strip/avoid-lettering", response_model=LetteringAvoidPreview)
+def avoid_lettering(
+    ctx: Ctx, episode_id: str, body: LetteringAvoidRequest
+) -> LetteringAvoidPreview:
+    """Preview selected bubble moves without writing the work or invoking image models."""
+    with ctx.store.lock:
+        ep = ctx.store.get_episode(episode_id)
+        if ep.revision != body.base_revision:
+            raise Conflict("Episode changed; reload before placing lettering")
+        sizes = {}
+        for panel_id in body.strip.panel_boxes:
+            take = ep.adopted(panel_id)
+            if take:
+                asset = ctx.store.get_asset(take.asset_id)
+                sizes[panel_id] = (asset.width or 1, asset.height or 1)
+    strip, unresolved = CA.avoid_lettering(ep, body.strip, body.layer_ids, sizes)
+    return LetteringAvoidPreview(revision=ep.revision, strip=strip, unresolved=unresolved)
 
 
 @router.post("/episodes/{episode_id}/pacing/apply", response_model=Episode)

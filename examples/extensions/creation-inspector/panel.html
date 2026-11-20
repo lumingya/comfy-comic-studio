@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>创作上下文</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font:
+          14px/1.7 system-ui,
+          sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        max-width: 780px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      h1 {
+        font-size: 21px;
+        font-weight: 500;
+        margin: 0 0 12px;
+      }
+      h2 {
+        font-size: 15px;
+        margin: 24px 0 8px;
+        font-weight: 600;
+      }
+      p,
+      dd,
+      li {
+        overflow-wrap: anywhere;
+      }
+      .hint,
+      dt {
+        opacity: 0.7;
+      }
+      dl {
+        display: grid;
+        grid-template-columns: 110px minmax(0, 1fr);
+        gap: 10px 16px;
+      }
+      dd {
+        margin: 0;
+        font:
+          13px/1.8 ui-monospace,
+          monospace;
+      }
+      ol {
+        padding-left: 24px;
+        font:
+          13px/1.8 ui-monospace,
+          monospace;
+      }
+      button {
+        background: transparent;
+        color: inherit;
+        border: 1px solid #8887;
+        border-radius: 6px;
+        padding: 7px 12px;
+        font: inherit;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      button:focus-visible {
+        outline: 2px solid #b69165;
+        outline-offset: 3px;
+      }
+      #status {
+        min-height: 1.7em;
+        white-space: pre-wrap;
+      }
+      @media (max-width: 420px) {
+        body {
+          padding: 16px;
+        }
+        dl {
+          grid-template-columns: 82px minmax(0, 1fr);
+          gap: 8px;
+        }
+      }
+    </style>
+    <script src="panel.js" defer></script>
+  </head>
+  <body>
+    <h1>创作上下文</h1>
+    <p class="hint">只读查看当前上下文与选区。作品内容不会在这里展开。</p>
+    <p id="status" role="status">正在连接面板…</p>
+    <dl aria-label="宿主上下文">
+      <dt>路由</dt>
+      <dd id="route">—</dd>
+      <dt>作品 ID</dt>
+      <dd id="series">—</dd>
+      <dt>话 ID</dt>
+      <dd id="episode">—</dd>
+      <dt>话修订号</dt>
+      <dd id="revision">—</dd>
+      <dt>事件序号</dt>
+      <dd id="seq">—</dd>
+      <dt>上下文 ID</dt>
+      <dd id="context">—</dd>
+      <dt>最近事件</dt>
+      <dd id="event">—</dd>
+    </dl>
+    <h2>选区 <span id="selection-count">0</span></h2>
+    <p id="selection-state" class="hint">无选区</p>
+    <ol id="selection" aria-label="选中的分格 ID"></ol>
+    <h2>服务端版本</h2>
+    <button id="read" disabled>核对本话版本</button>
+    <p id="read-result" class="hint">仅在点击后读取，不自动请求作品数据。</p>
+  </body>
+</html>

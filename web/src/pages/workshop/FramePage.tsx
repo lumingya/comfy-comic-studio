@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   useBatchPatchPanels,
@@ -15,6 +15,9 @@ import { SaveState } from '../../components/SaveState';
 import { toast, toastError } from '../../components/toast';
 import { useEpisodeContext } from '../episode/EpisodePage';
 import { variableTable } from '../script/variables';
+import { BibleAssist } from '../script/BibleAssist';
+import { biblePromptSources } from '../script/biblePrompts';
+import { PanelVariableFix } from '../script/PanelVariableFix';
 import { captionText, replaceCaption } from './caption';
 import { FrameLoraSettings } from './FrameLoraSettings';
 import { FrameVariablePreview } from './FrameVariablePreview';
@@ -65,6 +68,8 @@ export function FramePage({
       description: panel.description,
       overrides: panel.overrides,
       dialogues: panel.dialogues,
+      characters: panel.characters,
+      location_id: panel.location_id,
     }),
     [panel],
   );
@@ -76,6 +81,23 @@ export function FramePage({
     return () => registerSave(null);
   }, [registerSave, draft.flush]);
   const ov = draft.value.overrides;
+  const [repairName, setRepairName] = useState<string | null>(null);
+  const frameSources = useMemo(
+    () =>
+      new Map([
+        ...biblePromptSources(
+          series,
+          { ...panel, ...draft.value },
+          {
+            bible: (name) => t('bibleAssist.bibleSource', { name }),
+            series: t('bibleAssist.seriesSource'),
+            panel: t('render.variables'),
+          },
+        ),
+        ...sources,
+      ]),
+    [series, panel, draft.value, sources, t],
+  );
   const variableValues = useMemo(
     () => new Map(Object.entries(variableTable(series, { ...panel, ...draft.value }))),
     [series, panel, draft.value],
@@ -242,7 +264,7 @@ export function FramePage({
         id="workshop-frame-prompt"
         className="workshop-prompt"
         known={frameKnown}
-        sources={sources}
+        sources={frameSources}
         used={used}
         placeholder={t('ws.story.promptHint')}
         {...prompt}
@@ -275,7 +297,7 @@ export function FramePage({
         id="workshop-frame-negative"
         className="workshop-negative"
         known={frameKnown}
-        sources={sources}
+        sources={frameSources}
         used={used}
         placeholder={t('ws.story.negativeHint')}
         {...negative}
@@ -288,7 +310,7 @@ export function FramePage({
           id="workshop-frame-caption"
           className="workshop-caption"
           known={frameKnown}
-          sources={sources}
+          sources={frameSources}
           used={used}
           prose
           {...text}
@@ -299,7 +321,26 @@ export function FramePage({
         negative={negative.value}
         caption={text.value}
         values={variableValues}
+        onResolve={setRepairName}
       />
+      <BibleAssist
+        episode={episode}
+        series={series}
+        panel={{ ...panel, ...draft.value }}
+        onChange={(changes) => draft.change((previous) => ({ ...previous, ...changes }))}
+        beforePreview={() => draft.flushAll()}
+      />
+      {repairName !== null ? (
+        <PanelVariableFix
+          key={repairName}
+          name={repairName}
+          initialValue={variableValues.get(repairName) ?? ''}
+          episode={episode}
+          panelId={panel.id!}
+          beforeSave={() => draft.flushAll()}
+          onClose={() => setRepairName(null)}
+        />
+      ) : null}
       <details className="quiet-advanced">
         <summary>{t('ws.story.params')}</summary>
         <p className="help workshop-parameter-notice">{t('ws.story.paramsHelp')}</p>

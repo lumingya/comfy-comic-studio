@@ -118,6 +118,30 @@ async def dispatch_panel(
     _context(ctx, body.context)
     if not loaded.api._panel_slots.acquire(blocking=False):
         raise HTTPException(429, "panel request concurrency limit reached")
+    if spec.response != "json":
+        from .panel_media import dispatch_media
+
+        released = False
+
+        def release():
+            nonlocal released
+            if not released:
+                released = True
+                loaded.api._panel_slots.release()
+
+        try:
+            return await dispatch_media(
+                request,
+                spec,
+                path,
+                body,
+                lambda: active_panel(ctx, ext_id, panel_id, body),
+                lambda: loaded.api.active,
+                release,
+            )
+        except BaseException:
+            release()
+            raise
     total = 0
 
     async def bounded_app(scope, receive, send):

@@ -1,8 +1,12 @@
 import type { ExtensionPanel } from '../api/open';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { raw } from '../api/client';
 import { createPanelBridge, type PanelResult } from './extensionBridge';
+import { readPanelBinary, type PanelDownload } from './extensionMedia';
+import type { CreationContext } from '../extensions/creationContext';
+import { useCreationChannel } from '../extensions/useCreationChannel';
 
 /** Panel key used in routes: `<extension>.<panel>`. */
 export const panelKey = (p: ExtensionPanel) => `${p.extension}.${p.id}`;
@@ -16,10 +20,13 @@ export function ExtensionFrame(props: {
   panel: ExtensionPanel;
   params?: Record<string, string>;
   height?: number;
+  creationContext?: CreationContext;
 }) {
+  const { t } = useTranslation();
   const frame = useRef<HTMLIFrameElement>(null);
   const bridge = useRef<ReturnType<typeof createPanelBridge> | null>(null);
   const qc = useQueryClient();
+  const [download, setDownload] = useState<{ session: string; value: PanelDownload } | null>(null);
   const episode = props.params?.episode ?? props.params?.episode_id;
   const series = props.params?.series ?? props.params?.series_id;
   const declaration = JSON.stringify(props.panel);
@@ -30,6 +37,16 @@ export function ExtensionFrame(props: {
   }).toString();
   useEffect(() => {
     const panel = JSON.parse(declaration) as ExtensionPanel;
+    const send = (body: unknown, signal: AbortSignal) =>
+      raw(
+        `/api/extension-panels/${encodeURIComponent(panel.extension)}/${encodeURIComponent(panel.id)}/requests`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal,
+        },
+      );
     const current = createPanelBridge({
       panel,
       session,
@@ -39,17 +56,12 @@ export function ExtensionFrame(props: {
       },
       frame: () => frame.current?.contentWindow ?? null,
       request: async (body, signal) => {
-        const response = await raw(
-          `/api/extension-panels/${encodeURIComponent(panel.extension)}/${encodeURIComponent(panel.id)}/requests`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-            signal,
-          },
-        );
+        const response = await send(body, signal);
         return (await response.json()) as PanelResult;
       },
+      binaryRequest: async (body, kind, signal) =>
+        readPanelBinary(await send(body, signal), kind, signal),
+      onDownloadChange: (value) => setDownload(value ? { session, value } : null),
       onMutation: () => {
         void qc.invalidateQueries();
       },
@@ -62,17 +74,36 @@ export function ExtensionFrame(props: {
       bridge.current = null;
     };
   }, [declaration, session, episode, series, qc]);
+  const creationLoaded = useCreationChannel(frame, session, props.panel, props.creationContext);
   return (
-    <iframe
-      key={session}
-      ref={frame}
-      className="ext-frame"
-      title={props.panel.title}
-      sandbox="allow-scripts"
-      referrerPolicy="no-referrer"
-      src={`${props.panel.url}${query ? `?${query}` : ''}#mio-session=${session}`}
-      onLoad={() => bridge.current?.abort()}
-      style={{ height: props.height ?? 480 }}
-    />
+    <>
+      {download?.session === session ? (
+        <div className="row" role="status" style={{ minWidth: 0, flexWrap: 'wrap' }}>
+          <button className="btn" onClick={() => bridge.current?.saveDownload()}>
+            {t('common.download')}
+          </button>
+          <span className="grow small" style={{ overflowWrap: 'anywhere', minWidth: 0 }}>
+            {download.value.filename}
+          </span>
+          <button className="btn ghost" onClick={() => bridge.current?.clearDownload()}>
+            {t('common.cancel')}
+          </button>
+        </div>
+      ) : null}
+      <iframe
+        key={session}
+        ref={frame}
+        className="ext-frame"
+        title={props.panel.title}
+        sandbox="allow-scripts"
+        referrerPolicy="no-referrer"
+        src={`${props.panel.url}${query ? `?${query}` : ''}#mio-session=${session}`}
+        onLoad={() => {
+          bridge.current?.abort();
+          creationLoaded();
+        }}
+        style={{ height: props.height ?? 480 }}
+      />
+    </>
   );
 }

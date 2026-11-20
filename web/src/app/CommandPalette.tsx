@@ -9,6 +9,7 @@ import { setLocale } from '../i18n';
 import { Icon, type IconName } from './icons';
 import { NAV } from './nav';
 import { useThemeToggle } from './useTheme';
+import { HostSlotDialog, useHostSlotActions } from '../extensions/hostSlots';
 
 export const useCommand = create<{ open: boolean; set: (open: boolean) => void }>((set) => ({
   open: false,
@@ -34,6 +35,7 @@ export function CommandPalette() {
   const openHelp = useHelp((s) => s.set);
   const openQuick = useQuickStart((s) => s.set);
   const { groups } = useAllEpisodes();
+  const extensionActions = useHostSlotActions('command_palette');
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -147,8 +149,15 @@ export function CommandPalette() {
           run: go(`/workshop/${e.id}/script`),
         })),
       ),
+      ...extensionActions.map<Command>((action) => ({
+        id: `ext-${action.id}`,
+        label: action.title,
+        kind: 'action',
+        icon: action.icon,
+        run: action.run,
+      })),
     ];
-  }, [groups, i18n.language, navigate, openHelp, openQuick, t, theme]);
+  }, [groups, i18n.language, navigate, openHelp, openQuick, t, theme, extensionActions]);
 
   const q = query.trim().toLowerCase();
   const shown = q
@@ -178,70 +187,73 @@ export function CommandPalette() {
   };
 
   return (
-    <dialog
-      ref={dialog}
-      id="command-dialog"
-      className="command-dialog"
-      aria-label={t('legacy.palette.label')}
-      onClose={() => set(false)}
-      onCancel={(e) => ownCancel(e) && set(false)}
-      onClick={(e) => e.target === dialog.current && set(false)}
-    >
-      {open ? (
-        <>
-          <div className="command-input">
-            <span id="command-icon">
-              <Icon name="search" />
-            </span>
-            <input
-              type="text"
-              id="command-input"
-              autoComplete="off"
-              autoFocus
-              value={query}
-              placeholder={t('legacy.palette.placeholder')}
-              aria-label={t('legacy.palette.label')}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setActive(0);
-              }}
-              onKeyDown={onKeyDown}
-            />
-            <span>
-              <button
-                type="button"
-                className="ibtn"
-                title={t('legacy.palette.close')}
-                aria-label={t('legacy.palette.close')}
-                onClick={() => set(false)}
-              >
-                <Icon name="close" />
-              </button>
-            </span>
-          </div>
-          <div className="command-results" id="command-results" ref={list} role="listbox">
-            {shown.length ? (
-              shown.map((c, i) => (
+    <>
+      <dialog
+        ref={dialog}
+        id="command-dialog"
+        className="command-dialog"
+        aria-label={t('legacy.palette.label')}
+        onClose={() => set(false)}
+        onCancel={(e) => ownCancel(e) && set(false)}
+        onClick={(e) => e.target === dialog.current && set(false)}
+      >
+        {open ? (
+          <>
+            <div className="command-input">
+              <span id="command-icon">
+                <Icon name="search" />
+              </span>
+              <input
+                type="text"
+                id="command-input"
+                autoComplete="off"
+                autoFocus
+                value={query}
+                placeholder={t('legacy.palette.placeholder')}
+                aria-label={t('legacy.palette.label')}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setActive(0);
+                }}
+                onKeyDown={onKeyDown}
+              />
+              <span>
                 <button
-                  key={c.id}
-                  role="option"
-                  aria-selected={i === at}
-                  className={`command-item ${i === at ? 'active' : ''}`}
-                  onMouseEnter={() => setActive(i)}
-                  onClick={() => run(c)}
+                  type="button"
+                  className="ibtn"
+                  title={t('legacy.palette.close')}
+                  aria-label={t('legacy.palette.close')}
+                  onClick={() => set(false)}
                 >
-                  <Icon name={c.icon} />
-                  <span className="ellipsis">{c.label}</span>
-                  <small>{t(`legacy.palette.kinds.${c.kind}`)}</small>
+                  <Icon name="close" />
                 </button>
-              ))
-            ) : (
-              <p className="command-empty">{t('legacy.palette.empty')}</p>
-            )}
-          </div>
-          <div className="command-footer">{t('legacy.palette.footer')}</div>
-        </>
-      ) : null}
-    </dialog>
+              </span>
+            </div>
+            <div className="command-results" id="command-results" ref={list} role="listbox">
+              {shown.length ? (
+                shown.map((c, i) => (
+                  <button
+                    key={c.id}
+                    role="option"
+                    aria-selected={i === at}
+                    className={`command-item ${i === at ? 'active' : ''}`}
+                    onMouseEnter={() => setActive(i)}
+                    onClick={() => run(c)}
+                  >
+                    <Icon name={c.icon} />
+                    <span className="ellipsis">{c.label}</span>
+                    <small>{t(`legacy.palette.kinds.${c.kind}`)}</small>
+                  </button>
+                ))
+              ) : (
+                <p className="command-empty">{t('legacy.palette.empty')}</p>
+              )}
+            </div>
+            <div className="command-footer">{t('legacy.palette.footer')}</div>
+          </>
+        ) : null}
+      </dialog>
+      <HostSlotDialog />
+    </>
   );
 }

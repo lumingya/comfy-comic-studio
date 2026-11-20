@@ -48,6 +48,8 @@ import { BatchEditDialog, type BatchBody } from './BatchEditDialog';
 import { PanelEditor } from './PanelEditor';
 import { PanelList } from './PanelList';
 import { bundlePanels, downloadJson, PanelImportError, parsePanelBundle } from './panelIO';
+import { usePublishCreationContext } from '../../extensions/creationContext';
+import { useHostSlotMenu } from '../../extensions/hostSlots';
 
 export default function ScriptTab() {
   const { t } = useTranslation();
@@ -100,11 +102,19 @@ export default function ScriptTab() {
   const selectedId =
     requestedId && ids.includes(requestedId) ? requestedId : (panels[0]?.id ?? null);
   const selected = panels.find((p) => p.id === selectedId) ?? null;
+  usePublishCreationContext({
+    route: 'script',
+    series_id: series.id,
+    episode_id: episode.id,
+    panel_ids: selection.ids.length ? selection.ids : selectedId ? [selectedId] : [],
+    revision: episode.revision,
+  });
   const select = (id: string | null) => setParams(id ? { panel: id } : {}, { replace: true });
   const byId = (list: string[]) =>
     list.map((id) => panels.find((p) => p.id === id)!).filter(Boolean);
   const indexOf = (id: string) => ids.indexOf(id);
   const menu = useContextMenu<DesktopContext>();
+  const extensionMenu = useHostSlotMenu(menu.state?.payload.ids);
   const desktop = useDesktopSelection({
     itemAttribute: 'data-selection-id',
     selection,
@@ -571,7 +581,7 @@ export default function ScriptTab() {
         <ContextMenu
           x={menu.state.x}
           y={menu.state.y}
-          groups={menuGroups(menu.state.payload.ids)}
+          groups={[...menuGroups(menu.state.payload.ids), extensionMenu]}
           returnFocus={menu.state.payload.target}
           onClose={menu.close}
         />

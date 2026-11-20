@@ -5,9 +5,10 @@ import type { LetteringLayer, Panel, Strip } from '../../api/types';
 import { colorAt, konvaStops, trackBands } from './backdrop';
 import { Letter, TailHandle } from './Letter';
 import { PanelImage } from './PanelImage';
+import { selectedLetterIds, toggleLetter, type CanvasSelection } from './canvasTools';
 
 type Box = [number, number, number, number];
-export type Selection = { type: 'panel' | 'letter'; id: string } | null;
+export type Selection = CanvasSelection;
 
 export function StripStage(props: {
   strip: Strip;
@@ -32,10 +33,14 @@ export function StripStage(props: {
     props.selection?.type === 'letter'
       ? strip.lettering.find((l) => l.id === props.selection!.id)
       : undefined;
+  const selectedIds = selectedLetterIds(props.selection);
 
   useEffect(() => {
     const sel = props.selection;
-    const node = sel ? stage.current?.findOne(`#${sel.type}-${sel.id}`) : undefined;
+    const node =
+      sel && selectedLetterIds(sel).length <= 1
+        ? stage.current?.findOne(`#${sel.type}-${sel.id}`)
+        : undefined;
     tr.current?.nodes(node ? [node] : []);
     tr.current?.getLayer()?.batchDraw();
   }, [props.selection, strip]);
@@ -85,12 +90,22 @@ export function StripStage(props: {
           <Letter
             key={l.id}
             layer={l}
-            selected={selected?.id === l.id}
-            onSelect={() => props.onSelect({ type: 'letter', id: l.id })}
+            selected={selectedIds.includes(l.id)}
+            onSelect={(e) =>
+              props.onSelect(
+                toggleLetter(
+                  props.selection,
+                  l.id,
+                  e.evt.shiftKey || e.evt.ctrlKey || e.evt.metaKey,
+                ),
+              )
+            }
             onChange={(patch) => props.onLetter(l.id, patch)}
           />
         ))}
-        {selected?.tail_to && (selected.kind === 'speech' || selected.kind === 'thought') ? (
+        {selectedIds.length === 1 &&
+        selected?.tail_to &&
+        (selected.kind === 'speech' || selected.kind === 'thought') ? (
           <TailHandle
             tip={selected.tail_to as [number, number]}
             onChange={(tail_to) => props.onLetter(selected.id, { tail_to })}

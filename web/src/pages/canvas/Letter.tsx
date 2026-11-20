@@ -182,7 +182,7 @@ export function Sfx(props: { layer: LetteringLayer }) {
 export function Letter(props: {
   layer: LetteringLayer;
   selected: boolean;
-  onSelect: () => void;
+  onSelect: (event: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => void;
   onChange: (patch: Partial<LetteringLayer>) => void;
 }) {
   const { layer } = props;
@@ -226,6 +226,18 @@ export function Letter(props: {
         }}
       >
         <Sfx layer={layer} />
+        {props.selected ? (
+          <Rect
+            x={-w / 2}
+            y={-h / 2}
+            width={w}
+            height={h}
+            stroke="#3f7550"
+            strokeWidth={2}
+            dash={[4, 4]}
+            listening={false}
+          />
+        ) : null}
       </Group>
     );
   }

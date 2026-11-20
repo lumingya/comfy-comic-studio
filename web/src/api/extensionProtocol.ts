@@ -3,6 +3,14 @@ import type { components } from './schema';
 
 export const BRIDGE = {
   contractVersion: 1,
+  creation: {
+    version: 1,
+    subscribe: 'mio:creation:subscribe',
+    event: 'mio:creation:event',
+    events: ['creation.context.changed', 'selection.changed'],
+    maxBytes: 16384,
+    intervalMs: 100,
+  },
   panel: {
     version: 1,
     types: {
@@ -10,12 +18,19 @@ export const BRIDGE = {
       init: 'mio:panel:init',
       request: 'mio:panel:request',
       response: 'mio:panel:response',
+      release: 'mio:panel:release',
+      media: 'mio:panel:media',
     },
     limits: {
       requestBytes: 65536,
       responseBytes: 1048576,
       concurrent: 4,
       requestIds: 256,
+      imageBytes: 33554432,
+      downloadBytes: 134217728,
+      mediaBytes: 67108864,
+      mediaItems: 8,
+      imagePixels: 16777216,
     },
   },
   workspace: {

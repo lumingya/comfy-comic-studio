@@ -280,6 +280,7 @@ def extension_panels(ctx: Ctx) -> list[dict]:
                     "digest": pinned,
                     "priority": p.priority,
                     "requests": [item.model_dump() for item in p.requests],
+                    "subscriptions": p.subscriptions,
                 }
             )
     return sorted(out, key=lambda panel: panel["priority"], reverse=True)

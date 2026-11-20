@@ -19,6 +19,8 @@ const panel: ExtensionPanel = {
   requests: [
     { id: 'episode', method: 'GET', path: '/episodes/{episode_id}', scope: 'read' },
     { id: 'run', method: 'POST', path: '/ext/demo/run', scope: 'render' },
+    { id: 'image', method: 'GET', path: '/ext/demo/image', scope: 'read', response: 'image' },
+    { id: 'file', method: 'POST', path: '/ext/demo/file', scope: 'write', response: 'download' },
   ],
 };
 
@@ -31,6 +33,13 @@ function setup(
   const request = vi.fn(handler);
   const frame = { postMessage: vi.fn() } as unknown as Window;
   const mutation = vi.fn();
+  const binaryRequest = vi.fn(
+    async (_body: PanelCall, _kind: 'image' | 'download', _signal: AbortSignal) => ({
+      blob: new Blob(['image'], { type: 'image/png' }),
+      filename: 'image.png',
+    }),
+  );
+  const download = vi.fn();
   const bridge = createPanelBridge({
     panel,
     session: 'nonce',
@@ -38,6 +47,8 @@ function setup(
     frame: () => frame,
     request,
     onMutation: mutation,
+    binaryRequest,
+    onDownloadChange: download,
   });
   const send = (data: Record<string, unknown>, source: MessageEventSource = frame) =>
     bridge.handle(
@@ -52,7 +63,7 @@ function setup(
       path_params: { episode_id: 'ep' },
       ...extra,
     });
-  return { bridge, frame, request, mutation, send, ready, call };
+  return { bridge, frame, request, binaryRequest, download, mutation, send, ready, call };
 }
 
 describe('sandbox panel bridge', () => {
@@ -166,5 +177,65 @@ describe('sandbox panel bridge', () => {
     s.call('run', { request_id: 'run', body: { value: 1 } });
     await vi.waitFor(() => expect(s.mutation).toHaveBeenCalledOnce());
     expect(s.request).toHaveBeenCalledOnce();
+  });
+
+  it('chooses binary mode only from the reviewed declaration and clears pending downloads', async () => {
+    const s = setup();
+    s.ready();
+    s.call('download', { request_id: 'file', body: {} });
+    await vi.waitFor(() =>
+      expect(s.download).toHaveBeenCalledWith(expect.objectContaining({ filename: 'image.png' })),
+    );
+    expect(s.binaryRequest).toHaveBeenCalledOnce();
+    expect(s.binaryRequest.mock.calls[0][1]).toBe('download');
+    expect(s.request).not.toHaveBeenCalled();
+    s.call('read-json', { response: 'download' });
+    await vi.waitFor(() => expect(s.request).toHaveBeenCalledOnce());
+    expect(s.binaryRequest).toHaveBeenCalledOnce();
+    s.bridge.abort();
+    expect(s.download).toHaveBeenLastCalledWith(null);
+    s.bridge.dispose();
+  });
+
+  it('transfers image bytes only over the session port and closes it on explicit release', async () => {
+    const port1 = { postMessage: vi.fn(), close: vi.fn() };
+    const port2 = { close: vi.fn() };
+    vi.stubGlobal(
+      'MessageChannel',
+      class {
+        port1 = port1;
+        port2 = port2;
+      },
+    );
+    const s = setup();
+    try {
+      s.ready();
+      s.call('picture', { request_id: 'image' });
+      await vi.waitFor(() =>
+        expect(s.frame.postMessage).toHaveBeenCalledWith(
+          expect.objectContaining({
+            type: 'mio:panel:media',
+            rid: 'picture',
+            media_id: 'picture',
+            bytes: 5,
+          }),
+          '*',
+          [port2],
+        ),
+      );
+      expect(port1.postMessage).toHaveBeenCalledWith({ type: 'image', blob: expect.any(Blob) });
+      expect(s.frame.postMessage).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'mio:panel:response', rid: 'picture' }),
+        '*',
+      );
+      s.send({ type: 'mio:panel:release', media_id: 'picture', session: 'stale' });
+      expect(port1.close).not.toHaveBeenCalled();
+      s.send({ type: 'mio:panel:release', media_id: 'picture' });
+      expect(port1.postMessage).toHaveBeenLastCalledWith({ type: 'revoke' });
+      expect(port1.close).toHaveBeenCalledOnce();
+    } finally {
+      s.bridge.dispose();
+      vi.unstubAllGlobals();
+    }
   });
 });

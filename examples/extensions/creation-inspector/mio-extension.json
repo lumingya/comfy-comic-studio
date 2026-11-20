@@ -1,0 +1,54 @@
+{
+  "id": "creation-inspector",
+  "name": "创作上下文",
+  "version": "1.0.0",
+  "description": "只读查看宿主当前话、选区与修订号，展示声明式槽位和受控事件订阅。",
+  "contributes": {
+    "panels": [
+      {
+        "id": "inspect",
+        "slot": "episode",
+        "title": "创作上下文",
+        "entry": "panel.html",
+        "requests": [
+          {
+            "id": "episode",
+            "method": "GET",
+            "path": "/episodes/{episode_id}",
+            "scope": "read"
+          }
+        ],
+        "subscriptions": ["creation.context.changed", "selection.changed"]
+      }
+    ],
+    "host_slots": [
+      {
+        "id": "palette",
+        "version": 1,
+        "slot": "command_palette",
+        "title": "创作上下文",
+        "icon": "eye",
+        "priority": 0,
+        "action": { "kind": "open_panel", "panel_id": "inspect" }
+      },
+      {
+        "id": "context",
+        "version": 1,
+        "slot": "context_menu.episode",
+        "title": "创作上下文",
+        "icon": "eye",
+        "priority": 0,
+        "action": { "kind": "open_panel", "panel_id": "inspect" }
+      },
+      {
+        "id": "inspector",
+        "version": 1,
+        "slot": "inspector.panel",
+        "title": "创作上下文",
+        "icon": "eye",
+        "priority": 0,
+        "action": { "kind": "open_panel", "panel_id": "inspect" }
+      }
+    ]
+  }
+}

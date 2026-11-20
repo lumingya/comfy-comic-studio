@@ -53,7 +53,7 @@ def source() -> str:
     )
 
 
-def typescript(value, level=0) -> str:
+def typescript(value, level=0, column=0) -> str:
     """Emit the small JSON-compatible constants in the repository's TS house style."""
     padding = "  " * level
     inner = "  " * (level + 1)
@@ -61,12 +61,17 @@ def typescript(value, level=0) -> str:
         return (
             "{\n"
             + "".join(
-                f"{inner}{key}: {typescript(child, level + 1)},\n" for key, child in value.items()
+                f"{inner}{key}: {typescript(child, level + 1, len(inner) + len(key) + 2)},\n"
+                for key, child in value.items()
             )
             + padding
             + "}"
         )
     if isinstance(value, list):
+        if all(not isinstance(child, (dict, list)) for child in value):
+            inline = "[" + ", ".join(typescript(child, level + 1) for child in value) + "]"
+            if column + len(inline) <= 100:
+                return inline
         return (
             "[\n"
             + "".join(f"{inner}{typescript(child, level + 1)},\n" for child in value)

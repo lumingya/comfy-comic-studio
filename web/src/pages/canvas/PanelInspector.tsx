@@ -3,6 +3,7 @@ import { assetUrl } from '../../api/client';
 import { Field } from '../../components/ui';
 import { cropFor, framingFor, type Box, type Framing } from './crop';
 import { useImage } from './useImage';
+import { HostSlotButtons } from '../../extensions/hostSlots';
 
 export function PanelInspector(props: {
   assetId: string | undefined;
@@ -53,6 +54,7 @@ export function PanelInspector(props: {
       <button className="btn ghost" onClick={props.onBack}>
         {t('canvas.strip')}
       </button>
+      <HostSlotButtons />
     </div>
   );
 }
