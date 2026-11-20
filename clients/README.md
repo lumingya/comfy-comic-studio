@@ -495,20 +495,22 @@ X-Mio-Timestamp: 1790000000
 X-Mio-Signature: sha256=<hex>
 ```
 
-签名是 `HMAC-SHA256(secret, timestamp + "." + body)`。接收方要校验签名，还要拒绝时间戳太旧的请求：
+签名是 `HMAC-SHA256(secret, timestamp + "." + body)`。接收方应校验原始正文、时间窗、投递 ID 与事件头，并持久拒绝已经消费的投递 ID：
 
 ```python
-import hashlib, hmac, time
+from mio_client import verify_webhook
+from webhook_debug import SQLiteReplayStore
 
-
-def verify(secret: str, headers, body: bytes, tolerance: int = 300) -> bool:
-    stamp = headers["X-Mio-Timestamp"]
-    if abs(time.time() - int(stamp)) > tolerance:
-        return False
-    mac = hmac.new(secret.encode(), stamp.encode() + b"." + body, hashlib.sha256)
-    return hmac.compare_digest("sha256=" + mac.hexdigest(), headers["X-Mio-Signature"])
+replays = SQLiteReplayStore("../private-mio-replays.sqlite3")
+event = verify_webhook(body, headers, secret, replay_store=replays)
 ```
 
 投递失败（网络错误或 5xx）时会重试两次，间隔分别是 2 秒和 10 秒。设置页的「测试」按钮会立刻发一个 `ping` 事件，「投递记录」里能看到最近的结果。
 
+同一投递重试时可能重新签名，不能因首次签名时间窗结束而删除已消费 ID。持久 SQLite 示例会一直保留 ID；内存实现仅适合单进程会话，容量满时拒绝继续接收。业务处理还需将消费记录与自己的副作用放进同一事务，验签去重本身不承诺业务恰好执行一次。
+
 签名密钥只在创建 Webhook 时显示一次。以后要换密钥，可以 `PATCH /api/webhooks/{id}`，请求体带 `{"rotate_secret": true}`。
+
+## 平台无关自动化
+
+[自动化指南](python/AUTOMATION.md)提供 Markdown 分镜 → 预设 → 幂等生成 → 挑图 → Monograph HTML / PDF 的完整命令，以及 Webhook 订阅、监听、测试和投递排查工具。默认等待人工采用，只有明确传入 `--adopt-first` 才自动采用。分镜创建的未知结果会保留待核对回执；重启不会盲目再建资源或再次出图。
