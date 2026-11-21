@@ -82,7 +82,14 @@ def local_tls():
 
 @contextmanager
 def loopback(
-    *, download=False, delay=0.65, tail_delay=None, headers_only=False, tls=False, https=False
+    *,
+    download=False,
+    delay=0.65,
+    tail_delay=None,
+    headers_only=False,
+    tls=False,
+    https=False,
+    tls_close=False,
 ):
     """An actual socket sends a short first block, then stalls until released."""
     state = {
@@ -102,8 +109,19 @@ def loopback(
         def handle(self):
             try:
                 if tls:
-                    self.request.recv(4096)  # Receive ClientHello, never complete TLS.
+                    hello = bytearray()
+                    while len(hello) < 6:
+                        chunk = self.request.recv(4096)
+                        if not chunk:
+                            return
+                        hello.extend(chunk)
+                    # A live TLS ClientHello, not an empty or unrelated TCP read.
+                    if hello[:2] != b"\x16\x03" or hello[5] != 1:
+                        return
+                    state["tls_record"] = bytes(hello[:6])
                     state["first"].set()
+                    if tls_close:
+                        return
                     state["release"].wait(5)
                     return
                 super().handle()
@@ -155,14 +173,30 @@ def loopback(
 
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     resources = ExitStack()
-    if https:
+    if https or tls:
         try:
-            server_context, client_context = resources.enter_context(local_tls())
-            server.socket = server_context.wrap_socket(server.socket, server_side=True)
+            if https:
+                server_context, client_context = resources.enter_context(local_tls())
+                server.socket = server_context.wrap_socket(server.socket, server_side=True)
+            else:
+                # This peer never sends ServerHello or a certificate. Prepare its
+                # private client context before timing the handshake stall; loading
+                # the host trust store is unrelated and can exhaust a short budget.
+                client_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
             # Only this package's factory is replaced; httpx/ssl globals stay intact.
             resources.enter_context(
                 mock.patch.object(TRANSPORT, "create_ssl_context", return_value=client_context)
             )
+            if tls:
+                start = TRANSPORT.Deadline.start
+
+                def observe_start(guard):
+                    state["guard"] = guard
+                    start(guard)
+
+                resources.enter_context(
+                    mock.patch.object(TRANSPORT.Deadline, "start", observe_start)
+                )
         except BaseException:
             server.server_close()
             resources.close()
@@ -289,9 +323,28 @@ class CloudDeadlineReviewTests(unittest.TestCase):
             started = time.monotonic()
             with self.assertRaises(LLMError) as caught:
                 state["adapter"].generate_image("slow", timeout=1.2)
+            elapsed = time.monotonic() - started
+            guard = state.get("guard")
+            remaining = guard.transfer.deadline - time.monotonic() if guard else None
+            causes, seen, cause = [], set(), caught.exception
+            while cause is not None and id(cause) not in seen:
+                seen.add(id(cause))
+                causes.append((type(cause).__name__, getattr(cause, "errno", None)))
+                cause = cause.__cause__ or cause.__context__
+            details = f"elapsed={elapsed:.6f}s, remaining={remaining}, causes={causes}"
+            self.assertTrue(state["first"].is_set(), details)
+            self.assertLess(elapsed, 1.5, details)
+            self.assertIn("deadline", str(caught.exception), details)
+
+    def test_tls_peer_close_is_not_classified_as_deadline(self):
+        with loopback(tls=True, tls_close=True) as state:
+            with self.assertRaises(LLMError) as caught:
+                state["adapter"].generate_image("slow", timeout=3)
             self.assertTrue(state["first"].is_set())
-            self.assertLess(time.monotonic() - started, 1.5)
-            self.assertIn("deadline", str(caught.exception))
+            self.assertGreater(state["guard"].transfer.deadline - time.monotonic(), 1)
+            self.assertIn("connection failed", str(caught.exception))
+            self.assertNotIn("deadline", str(caught.exception))
+            self.assertFalse(caught.exception.sent)
 
     def test_tls_handshake_stall_is_interrupted_by_cancel_and_scope_close(self):
         for stop in ("cancel", "scope"):
