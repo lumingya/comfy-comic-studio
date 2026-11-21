@@ -1,0 +1,55 @@
+{
+  "id": "qa-review",
+  "name": "智能质检与辅助挑图",
+  "version": "1.0.0",
+  "description": "独立 VLM 质检面板：逐格与整话审阅、问题筛选和显式采纳。",
+  "contributes": {
+    "panels": [
+      {
+        "id": "review",
+        "slot": "episode",
+        "title": "候选评审",
+        "entry": "panel.html",
+        "requests": [
+          {
+            "id": "episode",
+            "method": "GET",
+            "path": "/episodes/{episode_id}",
+            "scope": "read"
+          },
+          {
+            "id": "review",
+            "method": "POST",
+            "path": "/episodes/{episode_id}/qa",
+            "scope": "render"
+          },
+          {
+            "id": "job",
+            "method": "GET",
+            "path": "/jobs/{job_id}",
+            "scope": "read"
+          },
+          {
+            "id": "adopt",
+            "method": "POST",
+            "path": "/episodes/{episode_id}/takes/{take_id}/adopt",
+            "scope": "write"
+          },
+          {
+            "id": "reject",
+            "method": "POST",
+            "path": "/episodes/{episode_id}/takes/{take_id}/reject",
+            "scope": "write"
+          },
+          {
+            "id": "image",
+            "method": "GET",
+            "path": "/assets/{asset_id}",
+            "scope": "read",
+            "response": "image"
+          }
+        ]
+      }
+    ]
+  }
+}

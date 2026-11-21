@@ -109,6 +109,17 @@ macOS / Linux 将最后一行换成 `./start.sh`。开发界面时另开终端�
 
 新节点、新渠道与专业工具通过扩展契约接入。接口面向通用外部调用，不要求绑定某个机器人或自动化平台。
 
+官方可选专业工作台已随包提供，安装后仍需审阅摘要并明确启用：
+
+| 扩展 | 能力 |
+| --- | --- |
+| [单格精修](extensions/panel-retouch/README.md) | 蒙版修图、外扩与指令编辑 |
+| [质检与挑图](extensions/qa-review/README.md) | VLM 评审、逐格复核与显式采纳 |
+| [成品精修](extensions/finalize-studio/README.md) | 已采用草稿的批量精修与回退 |
+| [变体工坊](extensions/variant-workshop/README.md) | 变体矩阵预览、批量生成与比较 |
+| [剧本助手](extensions/script-assistant/README.md) | 剧本和节奏建议的逐项审阅 |
+| [动态漫工作台](extensions/motion-studio/README.md) | 镜头、转场、配音试听与离线导出 |
+
 ## 仓库一览
 
 | 目录                                                | 内容                                      |

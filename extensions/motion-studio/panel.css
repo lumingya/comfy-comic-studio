@@ -1,0 +1,311 @@
+:root {
+  color-scheme: light dark;
+  font:
+    14px/1.6 system-ui,
+    sans-serif;
+  --motion-bg: var(--bg, #f2f0ea);
+  --motion-ink: var(--text, #252820);
+  --motion-soft: var(--soft, #585d54);
+  --motion-line: var(--line, #7774);
+  --motion-panel: var(--surface-panel, var(--panel, #fff));
+  --motion-raised: var(--surface-raised, var(--panel-2, #f8f7f2));
+  --motion-accent: var(--accent, #a47445);
+  --motion-focus: var(--control-focus, var(--accent, #a47445));
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: clamp(14px, 2.6vw, 28px);
+  color: var(--motion-ink);
+  background: var(--motion-bg);
+}
+header,
+.actions,
+.playbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+header {
+  justify-content: space-between;
+  gap: 16px;
+}
+h1 {
+  margin: 0;
+  font-size: clamp(20px, 2vw, 25px);
+  font-weight: 550;
+}
+h2 {
+  margin: 20px 0 10px;
+  font-size: 15px;
+  font-weight: 600;
+}
+.eyebrow {
+  margin: 0 0 3px;
+  color: var(--motion-accent);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+button,
+select,
+input[type="number"] {
+  min-height: 36px;
+  max-width: 100%;
+  border: 1px solid var(--control-border, var(--motion-line));
+  border-radius: var(--radius-control, 7px);
+  padding: 6px 10px;
+  background: var(--control-surface, transparent);
+}
+button {
+  cursor: pointer;
+}
+button:hover:enabled {
+  background: var(
+    --button-hover,
+    color-mix(in srgb, var(--motion-accent) 11%, transparent)
+  );
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--motion-focus);
+  outline-offset: 2px;
+}
+button.primary {
+  color: var(--button-primary-text, #fff);
+  background: var(--button-primary, var(--motion-accent));
+  border-color: transparent;
+}
+label {
+  display: grid;
+  gap: 5px;
+  margin: 11px 0;
+  font-size: 13px;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+small {
+  display: block;
+  color: var(--motion-soft);
+  font-size: 12px;
+}
+p {
+  overflow-wrap: anywhere;
+}
+#status {
+  min-height: 1.6em;
+  margin: 12px 0;
+  white-space: pre-line;
+  color: var(--motion-soft);
+}
+#discard-confirm {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--motion-line);
+  border-radius: 10px;
+  background: var(--motion-panel);
+}
+#discard-confirm p {
+  flex: 1 1 100%;
+  margin: 0;
+}
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(270px, 0.85fr);
+  align-items: start;
+  gap: clamp(14px, 2vw, 24px);
+}
+.preview,
+.settings {
+  min-width: 0;
+  padding: clamp(12px, 1.6vw, 18px);
+  border: 1px solid var(--motion-line);
+  border-radius: 12px;
+  background: var(--motion-panel);
+}
+#stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: min(100%, calc(67vh * 9 / 16));
+  aspect-ratio: 9/16;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #111315;
+  color: #f4f2ed;
+}
+#stage[data-aspect="landscape"] {
+  width: min(100%, calc(67vh * 16 / 9));
+  aspect-ratio: 16/9;
+}
+#stage:fullscreen {
+  width: min(100vw, calc(100vh * 9 / 16));
+  height: min(100vh, calc(100vw * 16 / 9));
+  max-width: 100vw;
+  max-height: 100vh;
+  border-radius: 0;
+}
+#stage[data-aspect="landscape"]:fullscreen {
+  width: min(100vw, calc(100vh * 16 / 9));
+  height: min(100vh, calc(100vw * 9 / 16));
+}
+#camera {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: center;
+}
+#image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+#blank,
+.preview-subtitle {
+  position: absolute;
+  inset: auto 16px;
+  margin: 0;
+  text-align: center;
+}
+#blank {
+  top: 48%;
+  color: #e7e3d9;
+}
+.preview-subtitle {
+  bottom: 8%;
+  z-index: 1;
+  color: white;
+  text-shadow: 0 1px 5px #000;
+  white-space: pre-line;
+  pointer-events: none;
+}
+.playbar {
+  margin-top: 10px;
+}
+.scrubber {
+  display: flex;
+  flex: 1 1 120px;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+  margin: 0;
+  white-space: nowrap;
+}
+.scrubber input {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--motion-accent);
+}
+.subtitle {
+  min-height: 2.8em;
+  margin: 8px 0;
+  white-space: pre-line;
+}
+#shot-description {
+  margin: 0 0 12px;
+  color: var(--motion-soft);
+}
+#automatic {
+  min-height: 1.6em;
+}
+#dirty {
+  min-height: 1.6em;
+  margin: 8px 0;
+  color: var(--motion-accent);
+}
+#export {
+  margin: 12px 0 8px;
+}
+.timeline {
+  margin-top: 18px;
+  padding: 2px clamp(12px, 1.6vw, 18px) 16px;
+  border: 1px solid var(--motion-line);
+  border-radius: 12px;
+  background: var(--motion-panel);
+}
+.timeline h2 small {
+  display: inline;
+  font-weight: 400;
+}
+#shots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+  gap: 8px;
+}
+.shot {
+  width: 100%;
+  min-width: 0;
+  text-align: left;
+  background: var(--motion-raised);
+}
+.shot strong,
+.shot span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.shot span {
+  color: var(--motion-soft);
+  font-size: 12px;
+}
+.shot[aria-pressed="true"] {
+  border-color: var(--motion-accent);
+  box-shadow: inset 0 0 0 1px var(--motion-accent);
+}
+#shots:empty::after {
+  content: attr(data-empty);
+  color: var(--motion-soft);
+  padding: 12px 0;
+}
+@media (max-width: 720px) {
+  body {
+    padding: 12px;
+  }
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .preview,
+  .settings {
+    padding: 12px;
+  }
+  #stage {
+    width: min(100%, calc(48vh * 9 / 16));
+  }
+  #stage[data-aspect="landscape"] {
+    width: min(100%, calc(44vh * 16 / 9));
+  }
+  #shots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #camera {
+    will-change: auto;
+  }
+  * {
+    scroll-behavior: auto !important;
+  }
+}

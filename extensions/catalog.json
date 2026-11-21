@@ -1,6 +1,12 @@
 {
   "format_version": 1,
   "items": [
-    { "id": "ai-assist", "tags": ["AI", "创作"] }
+    { "id": "ai-assist", "tags": ["AI", "创作"] },
+    { "id": "panel-retouch", "tags": ["修图", "出图"] },
+    { "id": "qa-review", "tags": ["质检", "候选"] },
+    { "id": "finalize-studio", "tags": ["精修", "成品"] },
+    { "id": "variant-workshop", "tags": ["变体", "批量"] },
+    { "id": "script-assistant", "tags": ["剧本", "AI"] },
+    { "id": "motion-studio", "tags": ["动态漫", "导出"] }
   ]
 }

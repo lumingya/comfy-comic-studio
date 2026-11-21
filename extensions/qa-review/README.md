@@ -1,0 +1,48 @@
+# 智能质检与辅助挑图
+
+这是一个独立、默认停用的官方扩展。安装后先审阅扩展来源与内容摘要，再明确启用。它从话页的扩展菜单打开为沙箱面板；未启用时不会增加主应用入口或后台工作。
+
+面板可读取逐幕候选和已有 VLM 报告，对所选候选或整话提交质检，查看工作任务进度，并按评审结果筛选。评分卡展示综合分、角色一致性、镜头 / 人物 / 动作检查、模型、评审票数与问题清单。问题点击后定位到相应分幕，候选图可按需预览。
+
+评审调用已配置的视觉模型，可能消耗额度。提交固定传 `auto_adopt: false`，不会自动改动候选状态。逐格采纳、拒绝，以及「采纳每幕最高分」均是单独的显式操作。批量采纳会逐格调用核心 API，因此遇到错误时可能部分完成；面板会报告已完成数，可重新读取当前状态。已锁定分幕会从批量采纳中略过；最高分按已完成且有票数的 QA 分数计算，平分时优先较新的候选。拒绝操作不可通过此面板撤回，应用原有候选界面仍可继续管理候选。
+
+过滤器所用严重度是面板本地归类，并非服务端返回字段：未评审或零票记录按「高」显示；失败且低于 50 分按「高」；其他失败或低于 75 分按「中」；其余按「低」。报告本身保留服务端原始分数与问题文本。
+
+面板消费宿主发送的 `mio:panel:init` 外观上下文与后续 `mio:panel:appearance` 更新，采用主应用色彩令牌、主题和中英文区域设置。布局适配窄视口并提供原生键盘控件、可见焦点、空态与错误反馈。没有候选图片时不请求图像；预览使用受限的声明式图片桥，不提供任意 URL、Cookie 或请求头能力。
+
+## 安装与验证
+
+在「设置 → 扩展」导入本目录或其 ZIP，审阅摘要后启用。停用后面板贡献会撤除，卸载默认保留作品及 QA 记录。
+
+```bash
+python tools/check_extension_package.py extensions/qa-review
+python -m unittest discover -s extensions/qa-review -p 'test_*.py' -q
+node extensions/qa-review/panel.test.cjs
+```
+
+ZIP 可用以下命令制作：
+
+```bash
+python -m zipfile -c qa-review.zip mio-extension.json panel.html panel.css panel.js cli.py README.md
+```
+
+## 声明的核心 API
+
+| 操作 | 权限 | 用途 |
+| --- | --- | --- |
+| `GET /episodes/{episode_id}` | `read` | 候选、分幕与 QA 报告 |
+| `POST /episodes/{episode_id}/qa` | `render` | 显式提交 VLM 评审 |
+| `GET /jobs/{job_id}` | `read` | 刷新评审任务 |
+| `POST /episodes/{episode_id}/takes/{take_id}/adopt` | `write` | 显式采纳候选 |
+| `POST /episodes/{episode_id}/takes/{take_id}/reject` | `write` | 显式拒绝候选 |
+| `GET /assets/{asset_id}` | `read` | 受限候选图像预览 |
+
+面板仅可通过宿主声明过的 API 操作；扩展安装后仍须审核摘要并启用。整话自动质检排除已拒绝的候选；审阅页面的显示过滤不会改变提交数据。报告与候选状态的权威值始终来自服务端。
+
+标准库 CLI 只允许本机回环来源，不跟随重定向，也不使用代理：
+
+```bash
+python extensions/qa-review/cli.py queue --episode episode_x --takes take_a take_b --key review-001
+```
+
+测试用模拟工作区和模型；不代表真实模型效果或付费渠道已验收。

@@ -1,0 +1,12 @@
+{
+  "id": "panel-retouch",
+  "name": "单格精修工作台",
+  "version": "1.1.0",
+  "description": "可选的独立修图工作区，局部重绘、外扩画面、指令编辑并管理候选。",
+  "author": "Mio",
+  "main": "main.py",
+  "workspace": {
+    "title": "单格精修",
+    "entry": "index.html"
+  }
+}

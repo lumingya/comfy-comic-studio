@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Motion Studio · 动态漫</title>
+    <link rel="stylesheet" href="panel.css" />
+    <script src="bridge.js" defer></script>
+    <script src="model.js" defer></script>
+    <script src="panel.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <div>
+        <p class="eyebrow" data-copy="eyebrow">MOTION STUDIO</p>
+        <h1 data-copy="title">动态漫工作台</h1>
+      </div>
+      <button id="load" disabled data-copy="load">读取本话镜头</button>
+    </header>
+    <p id="status" role="status" aria-live="polite">
+      正在连接面板…
+    </p>
+    <div id="discard-confirm" hidden role="group" aria-label="重新读取确认">
+      <p data-copy="discardHint">重新读取会放弃尚未保存的镜头草稿。</p>
+      <button id="discard" data-copy="discard">放弃草稿并重新读取</button>
+      <button id="keep" data-copy="keep">保留草稿</button>
+    </div>
+    <main id="editor" hidden>
+      <div class="workspace">
+        <section class="preview" aria-label="当前镜头预览">
+          <div id="stage" data-aspect="portrait">
+            <div id="camera"><img id="image" alt="" hidden /></div>
+            <p id="blank" data-copy="noImage">尚未读取采用图</p>
+            <p
+              id="preview-subtitle"
+              class="preview-subtitle"
+              aria-live="polite"
+            ></p>
+          </div>
+          <div class="playbar">
+            <button id="play" disabled data-copy="previewShot">预览本镜</button>
+            <button id="voice-preview" disabled data-copy="voicePreview">
+              试听台词
+            </button>
+            <button id="fullscreen" data-copy="fullscreen">全屏预览</button>
+            <label class="scrubber" for="scrub"
+              ><span data-copy="progress">进度</span
+              ><input id="scrub" type="range" min="0" max="100" value="0"
+            /></label>
+          </div>
+          <p id="subtitle" class="subtitle"></p>
+          <small data-copy="previewNote"
+            >预览使用采用原图；导出可选已保存的排版与嵌字。</small
+          >
+        </section>
+        <section class="settings" aria-labelledby="shot-title">
+          <h2 id="shot-title" data-copy="selectShot">选择镜头</h2>
+          <p id="shot-description"></p>
+          <label for="move"
+            ><span data-copy="cameraMove">镜头运动</span
+            ><select id="move"></select
+          ></label>
+          <label for="hold"
+            ><span data-copy="holdDuration">停留秒数</span
+            ><input
+              id="hold"
+              type="number"
+              min="0.5"
+              max="30"
+              step="0.1"
+              placeholder="按台词自动"
+          /></label>
+          <small id="automatic"></small>
+          <label for="transition"
+            ><span data-copy="transition">转场</span
+            ><select id="transition">
+              <option value="fade" data-copy="fade">柔和淡化</option>
+              <option value="cut" data-copy="cut">直接切换</option>
+              <option value="slide" data-copy="slide">横向推入</option>
+            </select></label
+          >
+          <div class="actions">
+            <button id="automatic-reset" data-copy="automaticReset">
+              按分镜与台词自动
+            </button>
+            <button id="save" data-copy="saveShot">保存当前镜头</button>
+          </div>
+          <p id="dirty" aria-live="polite"></p>
+          <h2 data-copy="offlinePlayer">离线播放器</h2>
+          <label for="aspect"
+            ><span data-copy="aspect">画幅</span
+            ><select id="aspect">
+              <option value="portrait" data-copy="portrait">竖屏 · 9:16</option>
+              <option value="landscape" data-copy="landscape">
+                横屏 · 16:9
+              </option>
+            </select></label
+          >
+          <label class="check"
+            ><input id="lettered" type="checkbox" checked /><span
+              data-copy="lettered"
+              >使用保存的排版与嵌字</span
+            ></label
+          >
+          <label class="check"
+            ><input id="subtitles" type="checkbox" checked /><span
+              data-copy="subtitles"
+              >默认显示字幕</span
+            ></label
+          >
+          <label class="check"
+            ><input id="voice" type="checkbox" /><span data-copy="voice"
+              >播放器默认朗读（需本机语音）</span
+            ></label
+          >
+          <button id="export" data-copy="export">导出离线动态漫</button>
+          <small data-copy="exportNote"
+            >导出完成后，点击宿主面板的下载按钮保存；文件可独立打开，无需联网。</small
+          >
+        </section>
+      </div>
+      <section class="timeline" aria-label="镜头列表">
+        <h2>
+          <span data-copy="timeline">镜头列表</span> <small id="total"></small>
+        </h2>
+        <div id="shots" role="list"></div>
+      </section>
+    </main>
+  </body>
+</html>

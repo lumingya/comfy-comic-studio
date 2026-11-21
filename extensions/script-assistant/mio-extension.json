@@ -1,0 +1,67 @@
+{
+  "id": "script-assistant",
+  "name": "剧本助手",
+  "version": "1.0.0",
+  "description": "按要求生成结构化剧本与节奏修改提案，逐条审阅后显式应用。",
+  "author": "Mio",
+  "contributes": {
+    "panels": [
+      {
+        "id": "assistant",
+        "slot": "episode",
+        "title": "剧本助手",
+        "entry": "panel.html",
+        "requests": [
+          {
+            "id": "episode",
+            "method": "GET",
+            "path": "/episodes/{episode_id}",
+            "scope": "read"
+          },
+          {
+            "id": "series",
+            "method": "GET",
+            "path": "/series/{series_id}",
+            "scope": "read"
+          },
+          {
+            "id": "propose",
+            "method": "POST",
+            "path": "/episodes/{episode_id}/assistant/propose",
+            "scope": "render"
+          },
+          {
+            "id": "apply",
+            "method": "POST",
+            "path": "/episodes/{episode_id}/assistant/apply",
+            "scope": "write"
+          },
+          {
+            "id": "pacing-suggest",
+            "method": "POST",
+            "path": "/episodes/{episode_id}/pacing/suggest",
+            "scope": "write"
+          },
+          {
+            "id": "pacing-apply",
+            "method": "POST",
+            "path": "/episodes/{episode_id}/pacing/apply",
+            "scope": "write"
+          },
+          {
+            "id": "work-head",
+            "method": "GET",
+            "path": "/series/{series_id}/head",
+            "scope": "read"
+          },
+          {
+            "id": "checkpoint",
+            "method": "POST",
+            "path": "/series/{series_id}/checkpoints",
+            "scope": "write"
+          }
+        ]
+      }
+    ]
+  }
+}

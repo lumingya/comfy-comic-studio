@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>批量变体矩阵</title>
+    <link rel="stylesheet" href="panel.css" />
+    <script src="model.js" defer></script>
+    <script src="bridge.js" defer></script>
+    <script src="panel.js" defer></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow" data-i18n="eyebrow">创作工具 · 变体</p>
+        <h1 data-i18n="title">批量变体矩阵</h1>
+      </div>
+      <button id="load" disabled data-i18n="load">读取作品</button>
+    </header>
+    <p class="lead" data-i18n="lead">
+      从角色与画风预设组合版本。生成前会展示幕数、候选数与预计工作量；候选需明确采用。
+    </p>
+    <p id="status" class="status" role="status" aria-live="polite">正在连接面板…</p>
+    <main id="workspace" hidden>
+      <section aria-labelledby="derive-title">
+        <div class="section-heading">
+          <span class="step">01</span>
+          <h2 id="derive-title" data-i18n="deriveTitle">派生版本</h2>
+        </div>
+        <div class="derive-controls">
+          <label>
+            <span data-i18n="prefix">名称前缀</span>
+            <input id="prefix" maxlength="40" data-i18n-placeholder="prefixPlaceholder" placeholder="本轮" />
+          </label>
+          <label>
+            <span data-i18n="target">替换外观的角色</span>
+            <select id="target"></select>
+          </label>
+        </div>
+        <div class="choices">
+          <fieldset>
+            <legend data-i18n="stylesLegend">画风预设（不选则沿用）</legend>
+            <div id="styles" class="check-list"></div>
+          </fieldset>
+          <fieldset>
+            <legend data-i18n="charactersLegend">角色外观预设（不选则沿用）</legend>
+            <div id="characters" class="check-list"></div>
+          </fieldset>
+        </div>
+        <div id="matrix-preview" class="matrix-preview" aria-live="polite"></div>
+        <button id="derive" class="primary" data-i18n="derive">保存派生版本</button>
+      </section>
+
+      <section aria-labelledby="generate-title">
+        <div class="section-heading">
+          <span class="step">02</span>
+          <h2 id="generate-title" data-i18n="generateTitle">生成与进度</h2>
+        </div>
+        <div id="versions" class="version-list" aria-label="要生成的版本"></div>
+        <fieldset class="panel-pick">
+          <legend data-i18n="panelsToRender">要生成的分幕</legend>
+          <div class="toolbar compact">
+            <button id="select-panels" type="button" class="quiet" data-i18n="selectAll">全选</button>
+            <button id="clear-panels" type="button" class="quiet" data-i18n="clear">清除</button>
+          </div>
+          <div id="render-panels" class="panel-list"></div>
+        </fieldset>
+        <div class="toolbar generation-controls">
+          <label>
+            <span data-i18n="candidates">每幕候选</span>
+            <input id="candidates" type="number" min="1" max="16" value="1" />
+          </label>
+          <button id="render" class="primary" data-i18n="render">生成所选版本</button>
+          <button id="refresh" class="quiet" data-i18n="refresh">刷新进度</button>
+        </div>
+        <p id="render-estimate" class="estimate" role="status"></p>
+        <p id="job" class="job-status" aria-live="polite"></p>
+      </section>
+
+      <section aria-labelledby="compare-title">
+        <div class="section-heading">
+          <span class="step">03</span>
+          <h2 id="compare-title" data-i18n="compareTitle">跨版本对比与采用</h2>
+        </div>
+        <div class="toolbar compare-controls">
+          <label>
+            <span data-i18n="panel">分幕</span>
+            <select id="panel"></select>
+          </label>
+          <label>
+            <span data-i18n="version">版本</span>
+            <select id="version"></select>
+          </label>
+          <label>
+            <span data-i18n="dimension">对比维度</span>
+            <select id="dimension">
+              <option value="all" data-i18n="dimensionAll">所有版本</option>
+              <option value="style" data-i18n="dimensionStyle">画风</option>
+              <option value="appearance" data-i18n="dimensionAppearance">角色外观</option>
+            </select>
+          </label>
+          <button id="show" data-i18n="show">读取候选</button>
+        </div>
+        <p class="muted" data-i18n="compareHint">可同时打开两张原图并排比较。采用只影响此分幕与此版本。</p>
+        <div id="takes" class="take-list"></div>
+        <div id="comparison" class="comparison" aria-live="polite"></div>
+      </section>
+
+      <section aria-labelledby="export-title">
+        <div class="section-heading">
+          <span class="step">04</span>
+          <h2 id="export-title" data-i18n="exportTitle">导出当前版本</h2>
+        </div>
+        <p class="muted" data-i18n="exportHint">只有已采用的分幕会进入导出成品。</p>
+        <div class="toolbar">
+          <label>
+            <span data-i18n="format">格式</span>
+            <select id="format" aria-label="导出格式">
+              <option value="html">HTML</option>
+              <option value="pdf">PDF</option>
+            </select>
+          </label>
+          <button id="export" data-i18n="export">准备下载</button>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,62 @@
+{
+  "id": "finalize-studio",
+  "name": "成品档精修管线",
+  "version": "1.0.0",
+  "description": "对明确选择的已采用草稿运行现有多阶段成品配置，跟踪任务并对比原图与成品。",
+  "contributes": {
+    "panels": [
+      {
+        "id": "finalize",
+        "slot": "episode",
+        "title": "成品精修",
+        "entry": "panel.html",
+        "requests": [
+          {
+            "id": "episode",
+            "method": "GET",
+            "path": "/episodes/{episode_id}",
+            "scope": "read"
+          },
+          {
+            "id": "profiles",
+            "method": "GET",
+            "path": "/profiles",
+            "scope": "read"
+          },
+          {
+            "id": "image",
+            "method": "GET",
+            "path": "/episodes/{episode_id}/takes/{take_id}/image",
+            "scope": "read",
+            "response": "image"
+          },
+          {
+            "id": "finalize",
+            "method": "POST",
+            "path": "/episodes/{episode_id}/finalize",
+            "scope": "render"
+          },
+          {
+            "id": "adopt",
+            "method": "POST",
+            "path": "/episodes/{episode_id}/takes/{take_id}/adopt",
+            "scope": "write"
+          },
+          { "id": "jobs", "method": "GET", "path": "/jobs", "scope": "read" },
+          {
+            "id": "job",
+            "method": "GET",
+            "path": "/jobs/{job_id}",
+            "scope": "read"
+          },
+          {
+            "id": "cancel",
+            "method": "POST",
+            "path": "/jobs/{job_id}/cancel",
+            "scope": "render"
+          }
+        ]
+      }
+    ]
+  }
+}

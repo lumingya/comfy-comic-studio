@@ -81,11 +81,63 @@ class ExtensionMarketTests(ApiCase):
             result = self.ok(self.client.get("/api/extension-market?refresh=true"))
         fetch.assert_not_called()
         self.assertTrue(result["source"]["builtin"])
-        self.assertEqual({i["id"] for i in result["items"]}, {"ai-assist"})
+        expected = {
+            "ai-assist",
+            "panel-retouch",
+            "qa-review",
+            "finalize-studio",
+            "variant-workshop",
+            "script-assistant",
+            "motion-studio",
+        }
+        self.assertEqual({i["id"] for i in result["items"]}, expected)
+        packages = {info.id: info for info in self.ctx.extensions.list()}
+        self.assertTrue(expected <= packages.keys())
+        for identifier in expected - {"ai-assist"}:
+            with self.subTest(extension=identifier):
+                self.assertEqual(packages[identifier].status, "disabled")
+                manifest = packages[identifier].manifest
+                self.assertTrue(manifest.contributes.panels or manifest.workspace)
         for item in result["items"]:
             self.assertEqual(item["source"], "bundled")
             self.assertTrue(item["installed"]["builtin"])
             self.assertEqual(item["action"], "enable")
+
+    def test_official_professional_workbenches_are_reviewed_disabled_and_mount_on_demand(self):
+        identifiers = {
+            "panel-retouch",
+            "qa-review",
+            "finalize-studio",
+            "variant-workshop",
+            "script-assistant",
+            "motion-studio",
+        }
+        listed = self.ok(self.client.get("/api/extensions"))["items"]
+        infos = {item["id"]: item for item in listed}
+        self.assertTrue(identifiers <= infos.keys())
+        for identifier in identifiers:
+            with self.subTest(extension=identifier):
+                info = infos[identifier]
+                self.assertEqual(info["status"], "disabled")
+                self.assertTrue(info["digest"])
+                enabled = self.ok(
+                    self.client.post(
+                        f"/api/extensions/{identifier}/enable", json={"digest": info["digest"]}
+                    )
+                )
+                self.assertEqual(enabled["status"], "active")
+                if identifier == "panel-retouch":
+                    surfaces = self.ok(self.client.get("/api/extension-surfaces"))["items"]
+                    self.assertIn(identifier, {item["extension_id"] for item in surfaces})
+                else:
+                    panels = self.ok(self.client.get("/api/extension-panels"))
+                    self.assertIn(identifier, {item["extension"] for item in panels})
+                disabled = self.ok(self.client.post(f"/api/extensions/{identifier}/disable"))
+                self.assertEqual(disabled["status"], "disabled")
+                panels = self.ok(self.client.get("/api/extension-panels"))
+                surfaces = self.ok(self.client.get("/api/extension-surfaces"))["items"]
+                self.assertNotIn(identifier, {item["extension"] for item in panels})
+                self.assertNotIn(identifier, {item["extension_id"] for item in surfaces})
 
     def test_download_installs_disabled_then_can_be_enabled_and_updated(self):
         first = package()

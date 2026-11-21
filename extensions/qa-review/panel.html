@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>智能质检</title>
+    <link rel="stylesheet" href="panel.css" />
+    <script src="panel.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <header class="heading">
+        <div>
+          <p class="eyebrow" data-i18n="eyebrow">候选工作台</p>
+          <h1 data-i18n="title">智能质检与辅助挑图</h1>
+        </div>
+        <span id="episode-count" class="count" aria-live="polite"></span>
+      </header>
+      <p class="intro" data-i18n="intro">
+        评审使用已配置的视觉模型，可能消耗额度。审查本身不会更改采用状态；采纳与拒绝均需明确操作。
+      </p>
+
+      <section class="controls" aria-label="评审操作">
+        <button
+          id="load"
+          class="button"
+          type="button"
+          disabled
+          data-i18n="load"
+        >
+          读取候选
+        </button>
+        <button
+          id="review-selected"
+          class="button primary"
+          type="button"
+          disabled
+          data-i18n="reviewSelected"
+        >
+          评审所选
+        </button>
+        <button
+          id="review-episode"
+          class="button"
+          type="button"
+          disabled
+          data-i18n="reviewEpisode"
+        >
+          评审整话
+        </button>
+        <button
+          id="refresh-job"
+          class="button"
+          type="button"
+          disabled
+          data-i18n="refresh"
+        >
+          刷新任务
+        </button>
+        <button
+          id="adopt-top"
+          class="button"
+          type="button"
+          disabled
+          data-i18n="adoptTop"
+        >
+          采纳每幕最高分
+        </button>
+        <label
+          class="filter-label"
+          for="severity-filter"
+          data-i18n="filterLabel"
+          >严重度筛选</label
+        >
+        <select id="severity-filter" aria-label="严重度筛选">
+          <option value="all" data-i18n="filterAll">全部</option>
+          <option value="high" data-i18n="filterHigh">高</option>
+          <option value="medium" data-i18n="filterMedium">中</option>
+          <option value="low" data-i18n="filterLow">低</option>
+        </select>
+      </section>
+      <p class="filter-note" data-i18n="filterNote">
+        严重度由本地按通过状态和分数归类；后端问题记录没有严重度字段。
+      </p>
+      <p
+        id="status"
+        class="status"
+        role="status"
+        aria-live="polite"
+        data-i18n="connecting"
+      >
+        正在连接面板…
+      </p>
+      <p id="job" class="job" role="status" aria-live="polite"></p>
+      <nav id="issues" class="issues" aria-label="问题定位"></nav>
+      <section id="takes" class="takes" aria-label="候选评分"></section>
+    </main>
+  </body>
+</html>
